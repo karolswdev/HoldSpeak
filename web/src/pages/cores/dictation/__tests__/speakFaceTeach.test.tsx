@@ -111,7 +111,8 @@ beforeEach(() => {
 /** Every token the face pushed into the footer's ONE receipt channel. */
 let announced: string[] = [];
 
-/** Type into the well and land the run (aim = THIS FIELD -> preview). */
+/** Type into the well and press `Try it here` (preview; betterment C8 —
+ *  the THIS FIELD aim left, Try it here does its job). */
 async function land() {
   announced = [];
   render(
@@ -122,7 +123,7 @@ async function land() {
   const well = await screen.findByLabelText("Utterance");
   await userEvent.click(well);
   await userEvent.paste("Ship the queue for platform on schedule");
-  await userEvent.keyboard("{Control>}{Enter}{/Control}");
+  await userEvent.click(screen.getByRole("button", { name: "Try it here" }));
   return await screen.findByRole("region", { name: "Pipeline result" });
 }
 
@@ -260,7 +261,7 @@ describe("the APPLIED chip", () => {
 /* HS-176 counsel C1 — the loop has to close on the path a Tuesday
    utterance actually takes.
 
-   `land()` above aims at THIS FIELD, so it previews through
+   `land()` above presses Try it here, so it previews through
    `/api/dictation/dry-run`. A real utterance is DELIVERED: aim FOCUSED
    APP, `/api/dictation/remote`. The deck reads `raw_text`,
    `corrections_applied` and `journal_id` off ONE `result` object

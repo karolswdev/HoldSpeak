@@ -2,7 +2,8 @@
 //
 // HS-170-04 — adapted to the settled face: the register strip now
 // lives behind > Details; the footer shows EgressChip THIS DEVICE +
-// receipt; the REHEARSE checkbox is now "DRY RUN" (CheckGadget token);
+// receipt; the REHEARSE checkbox became "DRY RUN", then (betterment C8)
+// the visible verb "Try it here" on the Types into row;
 // the Deliver/Rehearse button in the well is gone (the well is a
 // PadGadget with Talk, or type here — delivery happens on TALK release).
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
@@ -139,7 +140,7 @@ describe("Speak delivers for real (HS-112-02)", () => {
 
     await clickToggle(talk);
 
-    const receipt = await screen.findByText(/^LANDED \d+ MS -> FOCUSED APP$/);
+    const receipt = await screen.findByText(/^LANDED \d+ MS -> APP IN FRONT$/);
     expect(receipt).toBeVisible();
     // The LANDS IN row shows the latency token
     await waitFor(() => {
@@ -172,7 +173,7 @@ describe("Speak aim selector", () => {
         Promise.resolve({ success: true, delivered: true, final_text: "ship it friday" }),
     });
     const talk = await openDeck();
-    fireEvent.change(screen.getByRole("combobox", { name: "Aim" }), {
+    fireEvent.change(screen.getByRole("combobox", { name: "Types into" }), {
       target: { value: "agent" },
     });
 
@@ -184,19 +185,12 @@ describe("Speak aim selector", () => {
     expect(call.json.require_agent).toBe(true);
   });
 
-  it("THIS FIELD fills the well and delivers nothing", async () => {
-    const talk = await openDeck();
-    fireEvent.change(screen.getByRole("combobox", { name: "Aim" }), {
-      target: { value: "field" },
-    });
-
-    await clickToggle(talk);
-
-    await waitFor(() =>
-      expect(screen.getByLabelText("Utterance")).toHaveValue("ship it friday"),
-    );
-    expect(callsTo("/api/dictation/remote")).toHaveLength(0);
-    expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
+  it("a kept THIS FIELD aim reads as the app in front (betterment C8: Try it here took its job)", async () => {
+    localStorage.setItem("holdspeak.speakAim", "field");
+    await openDeck();
+    const pick = screen.getByRole("combobox", { name: "Types into" }) as HTMLSelectElement;
+    expect(pick).toHaveValue("focused");
+    expect(Array.from(pick.options).map((o) => o.textContent)).toEqual(["the app in front", "an agent"]);
   });
 
   it("remembers the aim across a remount", async () => {
@@ -205,7 +199,7 @@ describe("Speak aim selector", () => {
         <DictationCore />
       </MemoryRouter>,
     );
-    fireEvent.change(await screen.findByRole("combobox", { name: "Aim" }), {
+    fireEvent.change(await screen.findByRole("combobox", { name: "Types into" }), {
       target: { value: "agent" },
     });
     expect(localStorage.getItem("holdspeak.speakAim")).toBe("agent");
@@ -216,35 +210,36 @@ describe("Speak aim selector", () => {
         <DictationCore />
       </MemoryRouter>,
     );
-    expect(await screen.findByRole("combobox", { name: "Aim" })).toHaveValue(
+    expect(await screen.findByRole("combobox", { name: "Types into" })).toHaveValue(
       "agent",
     );
   });
 });
 
-describe("Speak REHEARSE stays explicit", () => {
-  it("previews through the dry run and delivers nothing when armed", async () => {
+describe("Speak REHEARSE stays explicit (betterment C8: Try it here)", () => {
+  it("Try it here previews the typed words through the dry run and delivers nothing", async () => {
     mockRoutes({
       "/api/dictation/dry-run": () =>
         Promise.resolve({ final_text: "ship it friday", total_ms: 120 }),
     });
-    const talk = await openDeck();
-    // HS-170-04: DRY RUN is a CheckGadget token variant
-    fireEvent.click(screen.getByRole("checkbox", { name: "DRY RUN" }));
-
-    await clickToggle(talk);
+    await openDeck();
+    fireEvent.change(screen.getByLabelText("Utterance"), { target: { value: "ship it friday" } });
+    fireEvent.click(screen.getByRole("button", { name: "Try it here" }));
 
     await waitFor(() => expect(callsTo("/api/dictation/dry-run")).toHaveLength(1));
+    expect(callsTo("/api/dictation/dry-run")[0].json.utterance).toBe("ship it friday");
     expect(callsTo("/api/dictation/remote")).toHaveLength(0);
     expect(await screen.findByText("REHEARSED · NOT DELIVERED")).toBeVisible();
   });
 
-  it("the DRY RUN toggle is on the LANDS IN row", async () => {
+  it("Try it here is on the Types into row, waits for words, and there is no DRY RUN latch", async () => {
     await openDeck();
-    const dryRun = screen.getByRole("checkbox", { name: "DRY RUN" });
-    expect(dryRun).toBeInTheDocument();
-    // Initially off
-    expect(dryRun).not.toBeChecked();
+    const row = screen.getByTestId("speak-types-into");
+    const tryIt = screen.getByRole("button", { name: "Try it here" });
+    expect(row.contains(tryIt)).toBe(true);
+    expect(tryIt).toBeDisabled();
+    expect(screen.queryByRole("checkbox", { name: "DRY RUN" })).toBeNull();
+    expect(row.textContent).not.toMatch(/LANDS IN|DRY RUN/i);
   });
 });
 
@@ -378,7 +373,7 @@ describe("Speak refusals land in-flow", () => {
         ),
     });
     const talk = await openDeck();
-    fireEvent.change(screen.getByRole("combobox", { name: "Aim" }), {
+    fireEvent.change(screen.getByRole("combobox", { name: "Types into" }), {
       target: { value: "agent" },
     });
 

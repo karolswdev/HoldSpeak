@@ -76,7 +76,8 @@ async function clickToggle(talk: HTMLElement) {
 // HS-170-04 — the old run row with Deliver/Rehearse/Retry/Copy/Keep-as-Note
 // is replaced by the TALK-release + OK/Wrong + teach flow. These tests now
 // exercise the deck's failure paths through the TALK release cycle, and
-// verify that the DRY RUN toggle routes through the dry-run endpoint.
+// verify that Try it here (betterment C8; once the DRY RUN toggle) routes
+// through the dry-run endpoint.
 
 describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
   beforeEach(() => {
@@ -89,7 +90,7 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
     mockRoutes();
   });
 
-  it("rehearses through the dry-run when DRY RUN is toggled on", async () => {
+  it("rehearses typed words through the dry-run on Try it here (betterment C8)", async () => {
     mockRoutes({
       "/api/dictation/dry-run": () =>
         Promise.resolve({ final_text: "ship it friday", total_ms: 120 }),
@@ -99,11 +100,9 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
         <DictationCore />
       </MemoryRouter>,
     );
-    const talk = await screen.findByRole("button", { name: "Talk" });
-    // Toggle DRY RUN on
-    fireEvent.click(screen.getByRole("checkbox", { name: "DRY RUN" }));
-
-    await clickToggle(talk);
+    await screen.findByRole("button", { name: "Talk" });
+    fireEvent.change(screen.getByLabelText("Utterance"), { target: { value: "ship it friday" } });
+    fireEvent.click(screen.getByRole("button", { name: "Try it here" }));
 
     await waitFor(() => {
       const calls = mocks.apiFetch.mock.calls.filter(

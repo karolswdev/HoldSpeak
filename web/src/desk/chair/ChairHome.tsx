@@ -5,7 +5,7 @@
 // sections (and the dead Needs-you section) are parked in
 // `_parked/ArrivalSections.tsx`.
 import "./chair-work.css";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Chair } from "./Chair";
 import { ChairDesk } from "./ChairDesk";
 import { Screen } from "../screen";
@@ -13,7 +13,11 @@ import { FirstRun } from "../firstrun/FirstRun";
 import { useDesk } from "../store";
 import { openNewThought } from "../newThought";
 import { Button } from "../../components/signal/Signal";
-import { MicButton } from "../components/MicButton";
+import { useTalk } from "../components/Talk";
+import { PadGadget } from "../surface/gadgets";
+import { useCompactViewport } from "../useCompactViewport";
+import { workBand } from "../components/window/windowGeometry";
+import type { PanelRect } from "../store/types";
 import { onReturnToTask } from "../returnToTask";
 import { refreshNeedsYou } from "../needsYou";
 import { burstTimer } from "../burstTimer";
@@ -136,41 +140,45 @@ export function coderAgeWord(item: { since?: string | null; waitStartedAt?: stri
 }
 
 // ── Capture Bar ────────────────────────────────────────────────────
+// Betterment capture C8: three large verbs from the top — Talk, New note,
+// Record. Talk keeps the one Talk rule (desk/components/Talk.tsx). New note
+// unfolds an empty note under the verbs and makes the record on the first
+// character, never on the press: a press with no typing leaves no record.
 
 function CaptureBar() {
   const [dictating, setDictating] = useState(false);
+  const [noting, setNoting] = useState(false);
 
   const handleMicText = useCallback((text: string) => {
     // Voice commands handled by the MicButton pipeline.
   }, []);
 
+  const { talkKey, setupRow } = useTalk(
+    { onText: handleMicText, label: "Talk", onState: (state) => setDictating(state === "listening") },
+    { testId: "arrival-talk-setup" },
+  );
+  useCaptureRoom(Boolean(setupRow) || noting);
+
   return (
     <footer className="arrival-capture-bar" data-testid="arrival-capture-bar">
-      <span className="arrival-capture-talk">
-        <MicButton
-          onText={handleMicText}
-          label="Talk"
-          variant="transport"
-          onState={(state) => setDictating(state === "listening")}
-        />
-      </span>
-      {/* HS-202-02 job 3 — this verb opened the Speak dictation router.
-          It opens a new note in the Thought window now (HS-201-12's
-          face), which is what its name says (04-sober-eye.md rank 3). */}
+      <span className="arrival-capture-talk arrival-capture-big">{talkKey}</span>
       <Button
-        variant="ghost"
-        onClick={() => void openNewThought()}
+        variant="secondary"
+        className="arrival-capture-big"
+        aria-expanded={noting}
+        onClick={() => setNoting((open) => !open)}
         data-testid="arrival-develop-thought"
       >
         {/* Betterment Q8 (one note): one kind, one name. */}
         New note
       </Button>
       <Button
-        variant="ghost"
+        variant="secondary"
+        className="arrival-capture-big"
         onClick={() => void useDesk.getState().startRecording()}
         data-testid="arrival-record-meeting"
       >
-        Record meeting
+        Record
       </Button>
       <Button
         variant="ghost"
@@ -179,6 +187,72 @@ function CaptureBar() {
       >
         Schedule
       </Button>
+      {setupRow ? <div className="arrival-capture-place">{setupRow}</div> : null}
+      {noting ? <FirstCharacterNote onDone={() => setNoting(false)} /> : null}
     </footer>
   );
+}
+
+/** An empty note under the verbs. Nothing is written until the first
+ *  character: then the note is made (or the empty one is used again) and its
+ *  window opens with these words in it (`openNewThought(firstWords)`). */
+function FirstCharacterNote({ onDone }: { onDone: () => void }) {
+  const [words, setWords] = useState("");
+  return (
+    <div
+      className="arrival-capture-place arrival-capture-note"
+      data-testid="arrival-new-note"
+      onKeyDown={(event) => {
+        if (event.key === "Escape") onDone();
+      }}
+    >
+      <PadGadget
+        label="New note"
+        placeholder="New note"
+        value={words}
+        rows={3}
+        autoFocus
+        onChange={(next) => {
+          setWords(next);
+          if (!next) return;
+          onDone();
+          void openNewThought(next);
+        }}
+      />
+    </div>
+  );
+}
+
+/** While a Capture verb's place is open (the speech setup, the new note),
+ *  Capture grows UP to hold it, its foot fixed, and its seat comes back when
+ *  the place closes (the rule of the parked aftercare card,
+ *  `_parked/aftercareCaptureEffects.ts`). A Capture he moved or sized keeps
+ *  his geometry; at 393 Capture already takes the work area. The rect is
+ *  this view's only (never saved). With no rect yet, chair.css grows the CSS
+ *  seat the same way (`.arrival-capture-place`). */
+const CAPTURE_ROOM_H = 212;
+
+function useCaptureRoom(open: boolean): void {
+  const compact = useCompactViewport();
+  const rect = useDesk((s) => s.panelRects["chair:capture"]);
+  const arranged = useDesk((s) => s.panelSaved.includes("chair:capture"));
+  const seat = useRef<PanelRect | null>(null);
+  useEffect(() => {
+    if (compact || arranged) {
+      seat.current = null;
+      return;
+    }
+    const desk = useDesk.getState();
+    if (open && rect && !seat.current) {
+      const foot = rect.y + rect.h;
+      const top = Math.max(workBand().top, foot - CAPTURE_ROOM_H);
+      if (top >= rect.y) return;
+      seat.current = rect;
+      desk.setPanelRect("chair:capture", { ...rect, y: top, h: foot - top });
+    } else if (!open && seat.current) {
+      const back = seat.current;
+      seat.current = null;
+      if (rect) desk.setPanelRect("chair:capture", back);
+    }
+  }, [compact, arranged, open, rect]);
 }

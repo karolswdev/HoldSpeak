@@ -123,7 +123,8 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     expect(within(region("Needs you")!).getByTestId("needs-drawer")).toBeTruthy();
     expect(within(region("Capture")!).getByTestId("arrival-capture-bar")).toBeTruthy();
     expect(within(region("Capture")!).getByRole("button", { name: "New note" })).toBeTruthy();
-    expect(within(region("Capture")!).getByRole("button", { name: "Record meeting" })).toBeTruthy();
+    // Betterment C8 words: `Record`, never `Record meeting`.
+    expect(within(region("Capture")!).getByRole("button", { name: "Record" })).toBeTruthy();
     expect(within(region("Capture")!).getByRole("button", { name: "Schedule" })).toBeTruthy();
     // registered for the front and the screen title; no Dock chip until iconified
     const ids = registrySnapshot.map((w) => w.id);

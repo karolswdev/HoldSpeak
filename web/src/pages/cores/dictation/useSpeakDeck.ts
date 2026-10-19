@@ -16,12 +16,13 @@ import type {
   DictationDryRunResponse,
   DictationReadinessResponse,
 } from "../core-types";
-import type { MicState } from "../../../desk/components/MicButton";
+import { TALK_STOP_EVENT, type MicState } from "../../../desk/components/MicButton";
 import type { SpokenRunFacts } from "../../../lib/micStreamSession";
 import {
   subscribeMicPhase,
   micCaptureSupported,
   micCaptureReason,
+  openMicRunning,
   type MicPhase,
 } from "../../../lib/micSession";
 import { FloorHeldError } from "../../../lib/audioFloor";
@@ -66,9 +67,12 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
   const [micState, setMicState] = useState<MicState>("idle");
   const [level, setLevel] = useState(0);
   // HS-112-02 — the delivery half of the deck.
-  const [aim, setAim] = useState(
-    () => localStorage.getItem(AIM_KEY) ?? "focused",
-  );
+  // Betterment C8: `This field` left the aim (Try it here does that job);
+  // a kept `field` reads as the app in front.
+  const [aim, setAim] = useState(() => {
+    const kept = localStorage.getItem(AIM_KEY);
+    return kept && kept !== "field" ? kept : "focused";
+  });
   const [rehearse, setRehearse] = useState(false);
   const [phase, setPhase] = useState<"idle" | "busy" | "landed" | "refused">(
     "idle",
@@ -354,6 +358,16 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
   useEffect(() => subscribeMicPhase(setMicPhase), []);
   // Leaving the room drops the stream: no grant outlives the deck.
   useEffect(() => () => openMicDrop(), []);
+  // Betterment C8: the menu bar's `Listening · Stop` ends the open mic too.
+  useEffect(() => {
+    const stop = () => {
+      if (!openMicRunning()) return;
+      openMicDrop();
+      setOpenMic(false);
+    };
+    window.addEventListener(TALK_STOP_EVENT, stop);
+    return () => window.removeEventListener(TALK_STOP_EVENT, stop);
+  }, []);
 
   const toggleOpenMic = async () => {
     if (openMic) {

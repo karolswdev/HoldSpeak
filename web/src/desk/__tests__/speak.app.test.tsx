@@ -15,7 +15,12 @@ import { inventedFields, recorded } from "../../test/wireShape";
 import JOURNAL_WIRE from "../../test/wire/dictation-journal.wire.json";
 import READINESS_WIRE from "../../test/wire/dictation-readiness.target.wire.json";
 
-const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  apiFetch: vi.fn(),
+  // Betterment C8: the Talk press that listens opens a stream session.
+  startStream: vi.fn(),
+  micPhase: null as null | ((phase: string) => void),
+}));
 
 vi.mock("../../lib/api", () => ({
   apiFetch: mocks.apiFetch,
@@ -29,9 +34,19 @@ vi.mock("../../runtime/RuntimeBus", () => ({
 // The Speak window (below) mounts the mic seams: no microphone in jsdom
 // (the pattern of pages/cores/__tests__/dictationWings.test.tsx).
 vi.mock("../../lib/micSession", () => ({
-  subscribeMicPhase: () => () => undefined,
+  subscribeMicPhase: (listener: (phase: string) => void) => {
+    mocks.micPhase = listener;
+    return () => undefined;
+  },
   micCaptureSupported: () => true,
   micCaptureReason: () => null,
+  openMicRunning: () => false,
+  startOpenMic: vi.fn(),
+  stopOpenMic: vi.fn(),
+}));
+vi.mock("../../lib/micStreamSession", () => ({
+  micStreamSupported: () => true,
+  startStreamSession: mocks.startStream,
 }));
 vi.mock("../../lib/openMic", () => ({ openMicDrop: vi.fn(), openMicListen: vi.fn() }));
 vi.mock("../../lib/speakToFill", () => ({
@@ -280,17 +295,19 @@ const AGAIN = "Ship the queue for platform in October";
 const SECRET_HEARD = "Set the token to placeholder";
 const SECRET_SAID = "Set the token to sk-live4f2a9c1b2d3e4f";
 
+/** Betterment C8: the DRY RUN latch is gone; `Try it here` (in `land`)
+ *  previews and types nothing. */
 async function latchDryRun() {
-  await userEvent.click(await screen.findByText("DRY RUN"));
+  await screen.findByTestId("speak-try-it-here");
 }
 
-/** Type one utterance in the well and land it (Ctrl+Enter, DRY RUN latched). */
+/** Type one utterance in the well and press `Try it here` (betterment C8). */
 async function land(text: string) {
   const well = await screen.findByLabelText("Utterance");
   await userEvent.clear(well);
   await userEvent.click(well);
   await userEvent.paste(text);
-  await userEvent.keyboard("{Control>}{Enter}{/Control}");
+  await userEvent.click(screen.getByTestId("speak-try-it-here"));
   const result = await screen.findByRole("region", { name: "Pipeline result" });
   await waitFor(() => expect(result.querySelector(".speak-result-text")?.textContent ?? "").toContain(text.split(" ").slice(-1)[0] === "October" ? "October" : text.split(" ")[0]));
   return result;
@@ -299,7 +316,7 @@ async function land(text: string) {
 const footerText = () => document.querySelector(".surface-footer-layout")?.textContent ?? "";
 
 describe("the Speak window at rest, over the hub's cold answers", () => {
-  it("the placeholder, an ENGINE state chip in a known state, Details folded, and a footer of Review and Export with no placement", async () => {
+  it("the placeholder, an ENGINE state chip in a known state, no Details (behind RAW), and a footer of Review and Export with no placement", async () => {
     // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_idle_1440
     // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_details_folded
     // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_footer_this_device
@@ -315,8 +332,9 @@ describe("the Speak window at rest, over the hub's cold answers", () => {
     expect(["not-set", "ready", "pending", "unknown", "waiting"]).toContain(
       container.querySelector(".speak-engine")!.getAttribute("data-engine-state"));
 
-    const trigger = container.querySelector(".surface-disclosure-trigger")!;
-    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    // Betterment C8: Details (the pipeline, the budget, the states) is
+    // behind RAW; it is not on the face at rest.
+    expect(container.querySelector(".surface-disclosure-trigger")).toBeNull();
     expect(container.querySelector(".surface-disclosure-body")).toBeNull();
 
     await waitFor(() => expect(footerText()).toContain("Review"));
@@ -577,5 +595,135 @@ describe("the HOTKEY custody block, from the hub's readiness answers", () => {
     await userEvent.click(screen.getByTestId("speak-hotkey-recheck"));
     await waitFor(() => expect(screen.queryByTestId("speak-hotkey")).toBeNull());
     expect(document.querySelector(".speak-face")!.textContent).not.toContain("HOTKEY");
+  });
+});
+
+// ── Betterment capture C8: the one Talk rule and the words ─────────────────
+//
+// The loop's cold boot is the real hub with no speech model
+// (`/api/setup/local-ai` answers `speech.state: will_download`). The answer
+// after setup is the real hub's with the model on the device
+// (fixtures/meetings-hub/p17t-ready.json, `speech.state: on_device`).
+import { act } from "@testing-library/react";
+import { MicLamp } from "../components/DeskChrome";
+import { TALK_STOP_EVENT } from "../components/MicButton";
+import { useBuilderTools } from "../builderTools";
+import { SPEECH_SETUP_EVENT } from "../firstrun/SpeechSetup";
+import READY_HUB from "./fixtures/meetings-hub/p17t-ready.json";
+
+/** Words no Speak face says any more (capture DESIGN.md §4, the words). */
+function expectNoOldWords(face: HTMLElement) {
+  const text = face.textContent ?? "";
+  for (const gone of [/LANDS IN/i, /DRY RUN/i, /MIC HELD/i, /Write a thought/i, /\bopen\b/i, /\blevel\b/i]) {
+    expect(text).not.toMatch(gone);
+  }
+}
+
+/** The loop's boot, and after `setUp()` the hub's answer with the model here. */
+function replaySpeech() {
+  replayLoop();
+  const loop = mocks.apiFetch.getMockImplementation()!;
+  let ready = false;
+  mocks.apiFetch.mockImplementation((url: string, init?: unknown) =>
+    ready && String(url) === "/api/setup/local-ai"
+      ? Promise.resolve(structuredClone((READY_HUB as Record<string, unknown>)["/api/setup/local-ai"]))
+      : loop(url, init));
+  return { setUp: () => { ready = true; } };
+}
+
+describe("C8: Speak in plain words, one Talk rule", () => {
+  beforeEach(() => {
+    mocks.startStream.mockReset();
+    mocks.startStream.mockResolvedValue({ stop: vi.fn(async () => ""), cancel: vi.fn(), retained: vi.fn(async () => false) });
+    useBuilderTools.getState().setOn(false);
+    // The well keeps a durable draft; each case starts with an empty box.
+    localStorage.clear();
+  });
+
+  it("no speech model: Talk is live, its press opens Set up speech in place; none of the old words", async () => {
+    replaySpeech();
+    const { container } = mountSpeak();
+    const talk = await screen.findByTestId("speak-speech-setup-key");
+    expect(talk).not.toBeDisabled();
+    expect(talk.getAttribute("aria-label")).toBe("Talk");
+    expect(screen.getByTestId("speak-fact").textContent).toBe("Talk sets up speech first");
+    // Nothing is offered before the press: the press opens it, in place.
+    expect(screen.queryByTestId("speak-speech-setup-verb")).toBeNull();
+    await userEvent.click(talk);
+    const verb = await screen.findByTestId("speak-speech-setup-verb");
+    expect(verb.textContent?.trim()).toMatch(/^Set up speech · \d+ MB$/);
+    expect(container.querySelector(".speak-plate")!.contains(verb)).toBe(true);
+    // Egress where the fetch happens (UX-CANON A.9): the host beside the verb.
+    expect(screen.getByTestId("speak-speech-setup").textContent?.toUpperCase()).toContain("HUGGINGFACE.CO");
+    // Types into: the app in front · Try it here.
+    const row = screen.getByTestId("speak-types-into");
+    expect(row.textContent).toContain("Types into");
+    expect((within(row).getByLabelText("Types into") as HTMLSelectElement).selectedOptions[0].textContent).toBe("the app in front");
+    expect(Array.from((within(row).getByLabelText("Types into") as HTMLSelectElement).options).map((o) => o.textContent))
+      .toEqual(["the app in front", "an agent"]);
+    expect(screen.getByTestId("speak-try-it-here")).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Open mic" })).toBeNull();
+    expectNoOldWords(container.querySelector(".speak-face") as HTMLElement);
+  });
+
+  it("then it listens: the model lands, the same press listens, and the key reads Listening · Stop", async () => {
+    const hub = replaySpeech();
+    mountSpeak();
+    await userEvent.click(await screen.findByTestId("speak-speech-setup-key"));
+    await screen.findByTestId("speak-speech-setup-verb");
+    expect(mocks.startStream).not.toHaveBeenCalled();
+    hub.setUp();
+    act(() => { window.dispatchEvent(new Event(SPEECH_SETUP_EVENT)); });
+    await waitFor(() => expect(mocks.startStream).toHaveBeenCalledTimes(1));
+    const key = await screen.findByRole("button", { name: "Listening · Stop" });
+    expect(key.textContent).toContain("Listening · Stop");
+    expect(screen.queryByTestId("speak-speech-setup-verb")).toBeNull();
+    expect(screen.getByTestId("speak-fact").textContent).not.toBe("Talk sets up speech first");
+    // The menu bar's Stop (TALK_STOP_EVENT) ends this capture, as a second press would.
+    const session = await mocks.startStream.mock.results[0].value;
+    act(() => { window.dispatchEvent(new Event(TALK_STOP_EVENT)); });
+    await waitFor(() => expect(session.stop).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Listening · Stop" })).toBeNull());
+  });
+
+  it("Try it here runs the typed words and shows the result; it types nothing into an app", async () => {
+    replaySpeech();
+    const { container } = mountSpeak();
+    const result = await land(HEARD);
+    expect(result.querySelector(".speak-result-text")!.textContent).toContain("Ship the queue");
+    expect(presses.map((p) => p.call)).toEqual(["POST /api/dictation/dry-run"]);
+    expect(presses.map((p) => p.call)).not.toContain("POST /api/dictation/remote");
+    expectNoOldWords(container.querySelector(".speak-face") as HTMLElement);
+  });
+
+  it("RAW (Builder tools) shows Details and the Open mic latch; off, the face has neither", async () => {
+    replaySpeech();
+    useBuilderTools.getState().setOn(true);
+    try {
+      const { container } = mountSpeak();
+      await screen.findByLabelText("Utterance");
+      expect(container.querySelector(".surface-disclosure-trigger")?.textContent).toContain("Details");
+      expect(screen.getByRole("button", { name: "Open mic" })).toBeTruthy();
+    } finally {
+      useBuilderTools.getState().setOn(false);
+    }
+  });
+
+  it("the menu bar says Listening · Stop, never MIC HELD, and Stop asks the Talk to stop", async () => {
+    const stops = vi.fn();
+    window.addEventListener(TALK_STOP_EVENT, stops);
+    try {
+      render(<MicLamp />);
+      act(() => mocks.micPhase?.("held"));
+      const lamp = await screen.findByTestId("desk-mic-lamp");
+      expect(lamp.textContent).toContain("Listening");
+      expect(lamp.textContent).not.toMatch(/held/i);
+      await userEvent.click(within(lamp).getByRole("button", { name: "Stop" }));
+      expect(stops).toHaveBeenCalledTimes(1);
+      act(() => mocks.micPhase?.("closed"));
+      expect(screen.queryByTestId("desk-mic-lamp")).toBeNull();
+    } finally {
+      window.removeEventListener(TALK_STOP_EVENT, stops);
+    }
   });
 });

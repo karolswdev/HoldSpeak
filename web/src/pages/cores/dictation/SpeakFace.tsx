@@ -2,15 +2,16 @@
 // One screen: talk, see it land, teach once.  Everything that was
 // the cockpit register strip folds behind > Details.
 //
-// Transport row (Talk MicButton transport + Open latch + LedMeter)
+// Transport row (Talk — the one Talk rule, desk/components/Talk.tsx — and
+//               the LedMeter; the Open latch only behind RAW)
 // Utterance well (PadGadget, placeholder "Talk, or type here")
-// LANDS IN row (target name · picker · DRY RUN toggle · latency token)
+// TYPES INTO row (Types into: the app in front ▾ · Try it here)  [C8 words]
 // RESULT row (landed text + OK/Wrong ghosts; Wrong unfolds teach row)
 // ENGINE row (DICTATION · model name · THIS DEVICE chip · READY chip;
 //             or NOT SET + Choose when no engine)
 // HOTKEY block (HS-200-05: only when the physical key is not proven up —
 //             the listener's state, and every macOS grant that is missing)
-// > Details (Disclosure: the old register strip, folded)
+// > Details (Disclosure: the old register strip, folded; behind RAW, C8)
 import { Fragment, useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { useAnnounce } from "./shared";
 import { useSpeakDeck } from "./useSpeakDeck";
@@ -22,7 +23,9 @@ import {
   AIM_FACT,
   refusalLabel,
 } from "./shared";
-import { MicButton, type MicState } from "../../../desk/surface/controls/MicButton";
+import { type MicState } from "../../../desk/surface/controls/MicButton";
+import { useTalk } from "../../../desk/components/Talk";
+import { useBuilderTools } from "../../../desk/builderTools";
 import { Button } from "../../../components/signal/Signal";
 import {
   LedMeter,
@@ -31,7 +34,6 @@ import {
   CycleGadget,
   PadGadget,
   EgressChip,
-  CheckGadget,
 } from "../../../desk/surface/gadgets";
 import { StateChip } from "../../../desk/surface/patterns";
 import { Disclosure } from "../../../desk/surface/patterns";
@@ -50,8 +52,7 @@ import { onReturnToTask, rememberTaskFocus } from "../../../desk/returnToTask";
 import { DICTATION_FAILURES } from "../../../lib/dictationRecovery";
 import type { MicPhase } from "../../../lib/micSession";
 import { readHotkeyCustody, type HotkeyCustody } from "./hotkeyCustody";
-import { SpeechSetup, useSpeechSetup } from "../../../desk/firstrun/SpeechSetup";
-import { SYSTEM } from "../../../desk/systemSprites";
+import { useSpeechSetup, type SpeechSetupState } from "../../../desk/firstrun/SpeechSetup";
 
 /** Whether a hostname is on a local/LAN network (RFC1918, loopback,
  *  link-local, CGNAT/Tailscale, or named local suffixes). Mirrors
@@ -311,10 +312,14 @@ export function SpeakFace() {
      rail below it, each broken one with the verb that fixes it. */
   const engineReady = detectStatus === "ok" && resolved.engineState === "READY";
   const enginePending = Boolean(resolved.name) && detectStatus === "pending";
+  // Betterment C8: no clean-up engine is not a fault for Speak (the words
+  // land as said). An engine that is chosen and not ready still is.
+  const engineFault = Boolean(resolved.name) && !engineReady && !enginePending;
   const toFix =
     (speech.notSetUp ? 1 : 0) +
-    (!engineReady && !enginePending ? 1 : 0) +
+    (engineFault ? 1 : 0) +
     (custody.show ? 1 : 0);
+  const raw = useBuilderTools((state) => state.on);
   const hotkey = custody.display || hotkeyDisplay(deck.readinessData);
 
   return (
@@ -322,7 +327,7 @@ export function SpeakFace() {
       <div className="speak-head">
         <h2 className="speak-fact" data-testid="speak-fact">
           {speech.notSetUp
-            ? "Set up speech to start"
+            ? "Talk sets up speech first"
             : toFix
               ? `${toFix} to fix`
               : "Ready to talk"}
@@ -332,14 +337,6 @@ export function SpeakFace() {
             <span>Hold <kbd className="speak-kbd">{hotkey}</kbd> anywhere</span>
           </span>
         ) : null}
-      </div>
-
-      {/* SETUP FIRST (refit r3): while the speech model is not on this
-          device, its setup leads, and `Set up speech` is the ONE primary.
-          One element in one place, so SpeechSetup keeps its "was missing"
-          memory and calls onReady when the model lands. */}
-      <div className="speak-setup" hidden={!speech.notSetUp} data-testid="speak-setup">
-        <SpeechSetup setup={speech} onReady={deck.refreshReadiness} testId="speak-speech-setup" />
       </div>
 
       {/* THE TALK PLATE: the focus object, with a Workbench title bar. */}
@@ -352,7 +349,8 @@ export function SpeakFace() {
           <TransportRow
             deck={deck}
             announce={announce}
-            waiting={speech.notSetUp}
+            speech={speech}
+            raw={raw}
           />
           <div className="speak-well">
             {/* HS-176-05 (ruling R13) — the well carries NO mic. `Talk` above is
@@ -374,7 +372,7 @@ export function SpeakFace() {
               }}
             />
           </div>
-          <LandsInRow deck={deck} />
+          <TypesIntoRow deck={deck} />
           {deck.result ? <ResultRow deck={deck} announce={announce} /> : null}
         </div>
       </article>
@@ -382,7 +380,7 @@ export function SpeakFace() {
       {/* THE CHECKS: engine and hotkey on one rail. The hotkey draws only
           when the key is known to be stopped. */}
       <ol className="speak-checks" aria-label="Checks">
-        <li className="speak-check" data-tone={engineReady ? "ok" : enginePending ? "idle" : "warn"}>
+        <li className="speak-check" data-tone={engineReady ? "ok" : enginePending || !resolved.name ? "idle" : "warn"}>
           <span className="speak-check-bead" aria-hidden="true" />
           <EngineRow engine={resolved.name} egress={resolved.egressLabel} engineState={resolved.engineState} keySet={resolved.keySet} detectStatus={detectStatus} readiness={deck} />
         </li>
@@ -394,9 +392,13 @@ export function SpeakFace() {
         ) : null}
       </ol>
 
-      <Disclosure label="Details" defaultOpen={false}>
-        <DetailsContent deck={deck} />
-      </Disclosure>
+      {/* Betterment C8: the pipeline, the budget and the states are
+          diagnostics: behind RAW (Settings ▸ System ▸ Builder tools). */}
+      {raw ? (
+        <Disclosure label="Details" defaultOpen={false}>
+          <DetailsContent deck={deck} />
+        </Disclosure>
+      ) : null}
     </div>
   );
 }
@@ -445,102 +447,95 @@ function PhasePill({ deck, toFix }: { deck: ReturnType<typeof useSpeakDeck>; toF
 
 /* ── Transport row ── */
 
-/** Talk while speech is not set up: the same key, dimmed, with its reason. */
-function TalkWaiting() {
-  return (
-    <Button
-      variant="chrome"
-      className="desk-mic gadget-transport-key is-unsupported speak-talk-waiting"
-      disabled
-      title="Set up speech first"
-      aria-label="Talk · Set up speech first"
-      data-testid="speak-talk-waiting"
-    >
-      <span className="gadget-transport-glyph" aria-hidden="true">
-        <img src={SYSTEM.micGlyph} alt="" width={16} height={16} className="desk-chrome-sprite" draggable={false} />
-      </span>
-      <span className="gadget-transport-word">Talk</span>
-    </Button>
-  );
-}
-
 function TransportRow({
   deck,
   announce,
-  waiting = false,
+  speech,
+  raw = false,
 }: {
   deck: ReturnType<typeof useSpeakDeck>;
   announce: (text: string, tone?: "ok" | "warn") => void;
-  /** Speech is not set up: Talk and Open wait, dimmed, with the reason. */
-  waiting?: boolean;
+  /** The face's one speech read, shared with the Talk rule. */
+  speech: SpeechSetupState;
+  /** RAW (Builder tools): the Open mic latch shows. */
+  raw?: boolean;
 }) {
-  return (
-    <div className="speak-transport" role="group" aria-label="Dictation transport" data-waiting={waiting || undefined}>
-      {waiting ? <TalkWaiting /> : <MicButton
-        variant="transport"
-        draftScope="dictation-dry-run-voice"
-        label="Talk"
-        onText={deck.onReleased}
-        onState={(next) => {
-          if (next === "busy") deck.releasedAt.current = performance.now();
-          if (next === "listening") {
-            deck.releasedAt.current = null;
-            deck.setPhase("idle");
-            deck.setLandedMs(null);
-            deck.setRefusal("");
-          }
-          deck.setMicState(next);
-        }}
-        onLevel={deck.setLevel}
-        onCommand={(fired) => {
+  const { talkKey, setupRow } = useTalk(
+    {
+      draftScope: "dictation-dry-run-voice",
+      label: "Talk",
+      onText: deck.onReleased,
+      onState: (next: MicState) => {
+        if (next === "busy") deck.releasedAt.current = performance.now();
+        if (next === "listening") {
+          deck.releasedAt.current = null;
+          deck.setPhase("idle");
           deck.setLandedMs(null);
-          if (fired.ok) {
-            deck.setPhase("landed");
-            deck.setRefusal("");
-            announce(`COMMAND · ${fired.preview}`);
-          } else {
-            deck.setPhase("refused");
-            deck.setRefusal("command_failed");
-            announce(`COMMAND FAILED · ${fired.preview}`, "warn");
-          }
-        }}
-        onFailure={(category) => {
+          deck.setRefusal("");
+        }
+        deck.setMicState(next);
+      },
+      onLevel: deck.setLevel,
+      onCommand: (fired) => {
+        deck.setLandedMs(null);
+        if (fired.ok) {
+          deck.setPhase("landed");
+          deck.setRefusal("");
+          announce(`COMMAND · ${fired.preview}`);
+        } else {
           deck.setPhase("refused");
-          deck.setRefusal(category);
-          deck.setLandedMs(null);
-          announce(DICTATION_FAILURES[category].message, "warn");
-        }}
-      />}
-      <TransportKey
-        label="Open mic"
-        word="Open"
-        glyph={"◉"}
-        active={deck.openMic}
-        disabled={waiting || !deck.captureSupported}
-        title={waiting ? "Set up speech first" : (deck.captureReason ?? undefined)}
-        onClick={() => void deck.toggleOpenMic()}
-      />
-      <span className="speak-transport-spacer" />
-      <LedMeter label="Level" value={deck.level} scanning={deck.micState === "busy"} />
-    </div>
+          deck.setRefusal("command_failed");
+          announce(`COMMAND FAILED · ${fired.preview}`, "warn");
+        }
+      },
+      onFailure: (category) => {
+        deck.setPhase("refused");
+        deck.setRefusal(category);
+        deck.setLandedMs(null);
+        announce(DICTATION_FAILURES[category].message, "warn");
+      },
+    },
+    // Speech setup is Speak's one job while the model is missing: primary.
+    { speech, testId: "speak-speech-setup", primary: true, onReady: deck.refreshReadiness },
+  );
+  return (
+    <>
+      <div className="speak-transport" role="group" aria-label="Dictation transport">
+        {talkKey}
+        {raw ? (
+          <TransportKey
+            label="Open mic"
+            word="Open"
+            glyph={"◉"}
+            active={deck.openMic}
+            disabled={speech.notSetUp || !deck.captureSupported}
+            title={speech.notSetUp ? "Set up speech first" : (deck.captureReason ?? undefined)}
+            onClick={() => void deck.toggleOpenMic()}
+          />
+        ) : null}
+        <span className="speak-transport-spacer" />
+        <LedMeter label="Audio level" labelHidden value={deck.level} scanning={deck.micState === "busy"} />
+      </div>
+      {setupRow ? <div className="speak-setup" data-testid="speak-setup">{setupRow}</div> : null}
+    </>
   );
 }
 
-/* ── LANDS IN row ── */
+/* ── TYPES INTO row (betterment C8 words) ──
+   `Types into: the app in front ▾ · Try it here`. Try it here replaces the
+   DRY RUN latch: it runs the words in the box through clean-up and shows
+   the result here; it types nothing into any app. */
 
-function LandsInRow({ deck }: { deck: ReturnType<typeof useSpeakDeck> }) {
-  const targetName =
-    presentValue((deck.readinessTarget as Record<string, unknown>).label) || "";
-
+function TypesIntoRow({ deck }: { deck: ReturnType<typeof useSpeakDeck> }) {
   return (
-    <div className="speak-lands-in">
-      <span className="speak-lands-in-caption">LANDS IN</span>
-      {targetName ? (
-        <>
-          <span className="speak-lands-in-dot">{"·"}</span>
-          <span className="speak-lands-in-target">{targetName}</span>
-        </>
-      ) : null}
+    <div className="speak-lands-in" data-testid="speak-types-into">
+      <span className="speak-lands-in-caption">Types into</span>
+      <CycleGadget
+        label="Types into"
+        value={deck.aim}
+        options={AIM_OPTIONS}
+        onChange={deck.pickAim}
+      />
       {deck.landedMs !== null ? (
         <>
           <span className="speak-lands-in-dot">{"·"}</span>
@@ -548,18 +543,16 @@ function LandsInRow({ deck }: { deck: ReturnType<typeof useSpeakDeck> }) {
         </>
       ) : null}
       <span className="speak-transport-spacer" />
-      <CycleGadget
-        label="Aim"
-        value={deck.aim}
-        options={AIM_OPTIONS}
-        onChange={deck.pickAim}
-      />
-      <CheckGadget
-        label="DRY RUN"
-        checked={deck.rehearse}
-        onChange={deck.setRehearse}
-        variant="token"
-      />
+      <Button
+        dense
+        variant="secondary"
+        loading={deck.busy && deck.phase !== "busy"}
+        disabled={!deck.utterance.trim()}
+        onClick={() => void deck.run()}
+        data-testid="speak-try-it-here"
+      >
+        Try it here
+      </Button>
     </div>
   );
 }
@@ -773,16 +766,17 @@ function EngineRow({
     );
   };
 
-  // No engine assigned at all
+  // No engine assigned at all. Betterment C8: not a fault for Speak — the
+  // words land as said. `Clean-up: off · Choose engine`.
   if (!engine) {
     return (
       <div className="speak-engine" data-engine-state="not-set">
-        <span className="speak-engine-caption">Engine</span>
+        <span className="speak-engine-caption">Clean-up</span>
         <span className="speak-engine-dot">{"·"}</span>
-        <StateChip state="warning" label="Not set" />
+        <StateChip state="idle" label="Off" />
         <span className="speak-transport-spacer" />
         <Button variant="ghost" dense onClick={openConcierge}>
-          Choose
+          Choose engine
         </Button>
       </div>
     );
@@ -794,7 +788,7 @@ function EngineRow({
   if (detectStatus === "pending") {
     return (
       <div className="speak-engine" data-engine-state="pending">
-        <span className="speak-engine-caption">Engine</span>
+        <span className="speak-engine-caption">Clean-up runs on</span>
         <span className="speak-engine-dot">{"·"}</span>
         <span className="speak-engine-name" data-muted="">{engine}</span>
         {egress !== "THIS DEVICE" && egress !== "CLOUD" && egress !== "LAN" ? (
@@ -810,7 +804,7 @@ function EngineRow({
   if (detectStatus === "failed" && !engineState) {
     return (
       <div className="speak-engine" data-engine-state="unknown">
-        <span className="speak-engine-caption">Engine</span>
+        <span className="speak-engine-caption">Clean-up runs on</span>
         <span className="speak-engine-dot">{"·"}</span>
         <span className="speak-engine-name">{engine}</span>
         {egress ? <EgressChip label={egress} /> : null}
@@ -863,7 +857,7 @@ function EngineRow({
 
   return (
     <div className="speak-engine" data-engine-state={dataState}>
-      <span className="speak-engine-caption">Engine</span>
+      <span className="speak-engine-caption">Clean-up runs on</span>
       <span className="speak-engine-dot">{"·"}</span>
       <span className="speak-engine-name">{engine}</span>
       <EgressChip label={egress} />

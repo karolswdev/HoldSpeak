@@ -261,3 +261,83 @@ describe("The capture bar: Schedule", () => {
 // lists an unfinished thought in THOUGHTS, and has no THOUGHTS section with
 // none. The hub's own answers to GET /api/thoughts?state=unfinished&limit=3
 // before and after one typed thought (tests/integration/test_face_wire_fences.py).
+
+// ── Betterment capture C8: Capture in plain words ─────────────────────────
+// The hub's own answers: GET /api/setup/local-ai with no speech model
+// (test/wire/setup-local-ai.wire.json), POST /api/notes
+// (test/wire/notes-create.wire.json) and the note's thought open
+// (test/wire/note.one-note.wire.json), all from
+// tests/integration/test_face_wire_fences.py / tests/unit/test_desk_note.py.
+import LOCAL_AI_WIRE from "../../test/wire/setup-local-ai.wire.json";
+import NOTE_CREATED from "../../test/wire/notes-create.wire.json";
+import ONE_NOTE from "../../test/wire/note.one-note.wire.json";
+
+function captureHub(posts: Array<[string, any]>) {
+  hub(weekStripDoor(), (path, init) => {
+    if (init?.method && init.method !== "GET") posts.push([path, init]);
+    if (path === "/api/setup/local-ai") return structuredClone(LOCAL_AI_WIRE.wire);
+    if (path === "/api/notes" && init?.method === "POST") return structuredClone(NOTE_CREATED.wire);
+    if (path === "/api/thoughts/open-note" && init?.method === "POST") return structuredClone(ONE_NOTE.open);
+    return undefined;
+  });
+}
+
+describe("C8: Capture — three large verbs, the one Talk rule, New note on the first character", () => {
+  it("Talk, New note, Record from the top; no `Write a thought`, no `Record meeting`", async () => {
+    captureHub([]);
+    render(<ChairHome />);
+    const bar = await screen.findByTestId("arrival-capture-bar");
+    await within(bar).findByTestId("arrival-talk-setup-key");
+    const big = Array.from(bar.querySelectorAll(".arrival-capture-big")).map((el) => el.textContent?.trim());
+    expect(big).toEqual(["Talk", "New note", "Record"]);
+    expect(bar.textContent).not.toMatch(/Write a thought|Record meeting/);
+  });
+
+  it("no speech model: Capture's Talk and the floor TALK open the same Set up speech in place", async () => {
+    captureHub([]);
+    // The Chair draws the floor (desk/screen/Screen.tsx) with its TALK.
+    render(<ChairHome />);
+    const bar = await screen.findByTestId("arrival-capture-bar");
+    const capture = await within(bar).findByTestId("arrival-talk-setup-key");
+    const floor = await within(await screen.findByTestId("desk-screen-talk")).findByTestId("desk-screen-talk-setup-key");
+    for (const key of [capture, floor]) expect(key).not.toBeDisabled();
+    fireEvent.click(capture);
+    fireEvent.click(floor);
+    const verbs = [
+      await within(bar).findByTestId("arrival-talk-setup-verb"),
+      await within(screen.getByTestId("desk-screen-talk")).findByTestId("desk-screen-talk-setup-verb"),
+    ];
+    for (const verb of verbs) expect(verb.textContent?.trim()).toMatch(/^Set up speech · 144 MB$/);
+    // Pressing Talk asks nothing of the hub: setup waits for its own press.
+    expect(wire.paths.filter(([, init]) => (init as any)?.method === "POST")).toEqual([]);
+  });
+
+  it("New note: a press with no typing leaves no record; the first character makes it and opens it", async () => {
+    const posts: Array<[string, any]> = [];
+    captureHub(posts);
+    useDesk.setState({ pullouts: [] } as never);
+    render(<ChairHome />);
+    const press = await screen.findByTestId("arrival-develop-thought");
+    fireEvent.click(press);
+    const note = await screen.findByTestId("arrival-new-note");
+    const words = within(note).getByRole("textbox", { name: "New note" });
+    expect(words).toHaveValue("");
+    // Escape folds it; a press again unfolds it. Nothing was written.
+    fireEvent.keyDown(words, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByTestId("arrival-new-note")).toBeNull());
+    fireEvent.click(press);
+    fireEvent.click(press);
+    await waitFor(() => expect(screen.queryByTestId("arrival-new-note")).toBeNull());
+    expect(posts.filter(([p]) => p === "/api/notes")).toEqual([]);
+
+    fireEvent.click(press);
+    fireEvent.change(within(await screen.findByTestId("arrival-new-note")).getByRole("textbox", { name: "New note" }), {
+      target: { value: "P" },
+    });
+    await waitFor(() => expect(posts.filter(([p]) => p === "/api/notes")).toHaveLength(1));
+    expect(posts.find(([p]) => p === "/api/notes")![1].json).toEqual({ title: "Thought", body_markdown: "", tags: [] });
+    await waitFor(() =>
+      expect(JSON.stringify(useDesk.getState().pullouts)).toContain(NOTE_CREATED.wire.note.id));
+    expect(screen.queryByTestId("arrival-new-note")).toBeNull();
+  });
+});
