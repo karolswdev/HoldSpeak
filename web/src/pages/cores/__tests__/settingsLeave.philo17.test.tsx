@@ -47,16 +47,15 @@ afterEach(() => vi.useRealTimers());
 
 describe("Settings leave send", () => {
   it("a save in flight + a newer edit + pagehide: the leave PUT goes out in the same tick", async () => {
+    // Betterment setup ST1: the calendar rows moved to Accounts; the first
+    // (in-flight) edit is Auto export, the newer one Auto-record.
     render(<SettingsCore scope="meetings" />);
-    const work = screen.getByTestId("calendar-source-src-work");
-    fireEvent.click(within(work).getByRole("button", { name: "Edit" }));
-    fireEvent.click(within(work.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: "Disable" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Auto export" }));
     await act(async () => { await vi.advanceTimersByTimeAsync(700); });
     expect(puts()).toHaveLength(1); // in flight, never answers
 
     // An unsent edit (debounced), then the page hides before the delay ends.
-    const autoExport = screen.getByRole("checkbox", { name: "Auto export" });
-    fireEvent.click(autoExport);
+    fireEvent.change(screen.getByRole("combobox", { name: "Auto-record mode" }), { target: { value: "room_linked" } });
     window.dispatchEvent(new Event("pagehide"));
 
     expect(puts()).toHaveLength(2);
@@ -65,9 +64,8 @@ describe("Settings leave send", () => {
     expect(init.json._revision).toBeUndefined();
     // Only the changed paths (never the whole stale document): the newer
     // unsent edit, plus the in-flight change (newest values win either way).
-    expect(Object.keys(init.json).sort()).toEqual(["calendar", "meeting"]);
-    expect(init.json.meeting).toEqual({ auto_export: true });
-    expect(init.json.calendar.sources[0]).toMatchObject({ id: "src-work", enabled: false });
+    expect(Object.keys(init.json).sort()).toEqual(["meeting"]);
+    expect(init.json.meeting).toEqual({ auto_export: true, auto_record: "room_linked" });
   });
 
   it("nothing unsent and nothing queued sends nothing on pagehide", () => {

@@ -53,7 +53,9 @@ const WELL_INPUT = { name: "Calendar URL or file path" };
 // replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_section
 // (rows, verbs, EVENTS, LAST READ, SNAPSHOT, the snapshot egress chip, Edit well, Remove confirm;
 // the auto-record and CALENDAR placement legs are in web/src/desk/__tests__/settings.app.test.tsx)
-describe("Meetings calendar source rows", () => {
+// Betterment setup ST1: Calendar's one home is Settings ▸ Accounts; the
+// block below moved there from Meetings unchanged.
+describe("Accounts calendar source rows", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.clearAllMocks();
@@ -63,7 +65,7 @@ describe("Meetings calendar source rows", () => {
   afterEach(() => vi.useRealTimers());
 
   it("renders two source rows with label, type, enabled state, the verbs, and the speak-to-fill mic on the well", () => {
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
     const work = screen.getByTestId("calendar-source-src-work");
     expect(within(work).getByText("Work")).toBeInTheDocument();
     expect(within(work).getByText("Calendar feed")).toBeInTheDocument();
@@ -93,7 +95,7 @@ describe("Meetings calendar source rows", () => {
   it("names the host on the HTTPS source's egress chip and wears NO chip on the file source (absence is the signal)", () => {
     // HS-175 counsel C9 (H2-2): egress where egress happens; a file source
     // carries no reassurance chip; local snapshot models also omit it.
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
     const chip = screen.getByText("work.example");
     expect(chip).toHaveClass("gadget-chip-egress");
     expect(chip).toHaveAttribute("data-scope", "cloud");
@@ -104,7 +106,7 @@ describe("Meetings calendar source rows", () => {
   });
 
   it("writes a changed URL through the sources wire from the row's Edit well", async () => {
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
     const work = screen.getByTestId("calendar-source-src-work");
     fireEvent.click(within(work).getByRole("button", { name: "Edit" }));
     const well = screen.getByTestId("calendar-well");
@@ -132,7 +134,7 @@ describe("Meetings calendar source rows", () => {
   it("adds a new source with a minted id from the Connect calendar well", async () => {
     const randomUUID = vi.spyOn(crypto, "randomUUID").mockReturnValue("a1b2c3d4-e5f6-7890-abcd-ef1234567890");
     try {
-      render(<SettingsCore scope="meetings" />);
+      render(<SettingsCore scope="integrations" />);
       fireEvent.click(screen.getByTestId("calendar-add-btn"));
       const well = screen.getByTestId("calendar-well");
       fireEvent.change(within(well).getByRole("textbox", WELL_INPUT), {
@@ -168,7 +170,7 @@ describe("Meetings calendar source rows", () => {
       if (url === "/api/settings" && init?.method === "PUT") return Promise.reject(refusal);
       return Promise.resolve({ settings: { ...settings, _revision: "calendar-r2" } });
     });
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
     fireEvent.click(screen.getByTestId("calendar-add-btn"));
     const well = screen.getByTestId("calendar-well");
     fireEvent.change(within(well).getByRole("textbox", WELL_INPUT), {
@@ -190,7 +192,7 @@ describe("Meetings calendar source rows", () => {
       if (url === "/api/settings" && init?.method === "PUT") return new Promise((resolve) => { finish = resolve; });
       return Promise.resolve({ sources: [] });
     });
-    render(<SettingsCore scope="meetings"/>);
+    render(<SettingsCore scope="integrations"/>);
     fireEvent.click(within(screen.getByTestId("calendar-source-src-work")).getByRole("button", { name: "Edit" }));
     fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://first.example/a.ics" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -210,7 +212,7 @@ describe("Meetings calendar source rows", () => {
       if (url === "/api/settings" && init?.method === "PUT") return new Promise((_yes, no) => { refuse = no; });
       return Promise.resolve({ ...settings, sources: [] });
     });
-    render(<SettingsCore scope="meetings"/>);
+    render(<SettingsCore scope="integrations"/>);
     fireEvent.click(screen.getByTestId("calendar-add-btn"));
     fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://first.example/a.ics" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -233,19 +235,21 @@ describe("Meetings calendar source rows", () => {
       if (url === "/api/calendar/sources" && accepted) return Promise.reject(new Error("Read unavailable"));
       return Promise.resolve({ sources: [] });
     });
-    render(<SettingsCore scope="meetings"/>);
+    render(<SettingsCore scope="integrations"/>);
     fireEvent.click(screen.getByTestId("calendar-add-btn"));
     fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://accepted.example/feed.ics" } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await act(async () => { await vi.advanceTimersByTimeAsync(0); });
     expect(screen.queryByTestId("calendar-well")).toBeNull();
-    expect(screen.getByText("Calendar read failed · Sources unchanged · Retry")).toBeVisible();
+    const failure = screen.getByText("Calendar read failed · Sources unchanged · Retry");
+    expect(failure).toBeVisible();
     expect(screen.queryByTestId("settings-save-failure")).toBeNull();
-    expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled();
+    // Accounts draws other reads too (Betterment setup ST1): the calendar's own Retry.
+    expect(within(failure.closest(".prefs-read-failure") as HTMLElement).getByRole("button", { name: "Retry" })).toBeEnabled();
   });
 
   it("removes a source after the in-world confirm step (never a modal)", async () => {
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
     const work = screen.getByTestId("calendar-source-src-work");
     fireEvent.click(within(work).getByRole("button", { name: "Edit" }));
     fireEvent.click(within(work.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: "Remove" }));
@@ -267,7 +271,7 @@ describe("Meetings calendar source rows", () => {
   });
 
   it("toggles a source's enabled state through the sources wire", async () => {
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
     const personal = screen.getByTestId("calendar-source-src-personal");
     fireEvent.click(within(personal).getByRole("button", { name: "Edit" }));
     fireEvent.click(within(personal.closest(".surface-ledger-row") as HTMLElement).getByRole("button", { name: "Enable" }));
@@ -297,7 +301,7 @@ describe("Snapshot verb refusal (HS-147-05)", () => {
   afterEach(() => vi.useRealTimers());
 
   it("surfaces a 422 upload refusal in the body with a short footer outcome", async () => {
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
 
     // Intercept the dynamically created file input
     let capturedInput: HTMLInputElement | null = null;
@@ -420,7 +424,7 @@ describe("HS-175 counsel: honest tokens on the calendar rows", () => {
   });
 
   it("counts EVENTS (never CALENDARS) and prints LAST READ in the viewer's local clock", async () => {
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
     const work = screen.getByTestId("calendar-source-src-work");
     expect(within(work).getByTestId("calendar-source-events").textContent).toBe("40 EVENTS");
@@ -430,7 +434,7 @@ describe("HS-175 counsel: honest tokens on the calendar rows", () => {
   });
 
   it("wears the vision model's egress chip beside Import image BEFORE any upload", async () => {
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
     const importAction = screen.getByRole("button", { name: "Import image" });
     const chip = within(importAction.parentElement!).getByText("192.168.1.43");
@@ -442,7 +446,7 @@ describe("HS-175 counsel: honest tokens on the calendar rows", () => {
   });
 
   it("edits the Snapshot name while keeping its generated path read-only and Disable / Remove available", async () => {
-    render(<SettingsCore scope="meetings" />);
+    render(<SettingsCore scope="integrations" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
     const snap = screen.getByTestId("calendar-source-src-snap");
     expect(within(snap).getByText("Snapshot")).toBeInTheDocument();

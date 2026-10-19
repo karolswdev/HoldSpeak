@@ -182,7 +182,44 @@ brief = read_block()
 log(f"first message ({len(brief)} chars): {brief[:400]!r}")
 fire("UserPromptSubmit", prompt=brief)
 transcript("user", brief)
+# Betterment AG10: like a real agent, it reads one desk object through the
+# hub's MCP with its launch credential (the meeting its brief names), then
+# changes one file in its worktree and commits it.
+def mcp_read(text):
+    import re
+    import urllib.request
+
+    url = os.environ.get("HOLDSPEAK_HUB_URL", "")
+    token = os.environ.get("HOLDSPEAK_AGENT_CREDENTIAL", "")
+    match = re.search(r"meeting:([A-Za-z0-9_.-]+)", text or "")
+    if not (url and token and match):
+        log(f"mcp read skipped (url={bool(url)} token={bool(token)} meeting={bool(match)})")
+        return
+    body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                       "params": {"name": "meeting.get", "arguments": {"meeting_id": match.group(1)}}}).encode()
+    request = urllib.request.Request(url.rstrip("/") + "/api/mcp", data=body, method="POST",
+                                     headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=20) as answer:
+            log(f"mcp meeting.get {match.group(1)}: {answer.read()[:160]!r}")
+    except Exception as exc:  # noqa: BLE001
+        log(f"mcp meeting.get failed: {exc}")
+
+
+def edit_and_commit():
+    path = os.path.join(CWD, "ROLLBACK.md")
+    with open(path, "a") as fh:
+        fh.write("The rollback flag lives in config/flags.yaml.\n")
+    for argv in (["git", "add", "ROLLBACK.md"],
+                 ["git", "-c", "user.name=Fake Claude", "-c", "user.email=fake@example.invalid",
+                  "commit", "-q", "-m", "Move the rollback flag into config"]):
+        done = subprocess.run(argv, cwd=CWD, capture_output=True, text=True)
+        log(f"{' '.join(argv[:2])} rc={done.returncode} {done.stderr[-160:]!r}")
+
+
+mcp_read(brief)
 work(["Read: the brief and the repo", "Bash: git status", "Bash: rg rollback"])
+edit_and_commit()
 
 question = ("I found two places for the rollback flag. Should it live in "
             "config/flags.yaml (shared with staging) or in an env var (per host)? "

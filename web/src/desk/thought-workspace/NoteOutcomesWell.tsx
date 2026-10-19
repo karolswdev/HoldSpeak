@@ -8,11 +8,15 @@
  * proposed on the desk, each with the note as its source. The rows stay
  * with the note: the window reads them again when it opens. */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { StringGadget } from "../surface/gadgets";
+import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
 import { ApiError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { OutcomeLedger, type OutcomeRow } from "../../pages/cores/history/OutcomeLedger";
 import { useDesk } from "../store";
-import { confirmNoteOutcome, findNoteOutcomes, readNoteOutcomes, type NoteOutcome } from "../noteOutcomes";
+import {
+  confirmNoteOutcome, dismissNoteOutcome, editNoteOutcome, findNoteOutcomes, readNoteOutcomes, type NoteOutcome,
+} from "../noteOutcomes";
 
 /** The hub's own words for a refusal; never a raw code. */
 function words(cause: unknown): string {
@@ -30,6 +34,8 @@ export interface NoteOutcomesState {
   confirming: string | null;
   find: () => Promise<void>;
   confirm: (row: NoteOutcome) => Promise<void>;
+  dismiss: (row: NoteOutcome) => Promise<void>;
+  edit: (row: NoteOutcome, fields: { text: string; owner_name?: string; due?: string }) => Promise<boolean>;
 }
 
 export function useNoteOutcomes(noteId: string): NoteOutcomesState {
@@ -71,15 +77,51 @@ export function useNoteOutcomes(noteId: string): NoteOutcomesState {
       if (live.current) setConfirming(null);
     }
   }, [noteId]);
-  return { rows, finding, startedAt, failure, confirming, find, confirm };
+  /* Betterment Q9 follow-up: a proposed row is edited or dismissed before
+     Confirm, as a meeting's rows are. */
+  const change = useCallback(async (row: NoteOutcome, call: () => Promise<{ rows?: NoteOutcome[] }>): Promise<boolean> => {
+    setConfirming(row.id); setFailure("");
+    try {
+      const answer = await call();
+      if (live.current) setRows(Array.isArray(answer?.rows) ? answer.rows : []);
+      return true;
+    } catch (cause) {
+      if (live.current) setFailure(words(cause));
+      return false;
+    } finally {
+      if (live.current) setConfirming(null);
+    }
+  }, []);
+  const dismiss = useCallback(async (row: NoteOutcome) => {
+    await change(row, () => dismissNoteOutcome(noteId, row.id));
+  }, [change, noteId]);
+  const edit = useCallback((row: NoteOutcome, fields: { text: string; owner_name?: string; due?: string }) =>
+    change(row, () => editNoteOutcome(noteId, row.id, fields)), [change, noteId]);
+  return { rows, finding, startedAt, failure, confirming, find, confirm, dismiss, edit };
 }
 
 export function NoteOutcomesWell({ outcomes }: { outcomes: NoteOutcomesState }) {
-  const { rows, confirming, confirm } = outcomes;
+  const { rows, confirming, confirm, dismiss, edit } = outcomes;
+  const [more, setMore] = useState<{ id: string; x: number; y: number; autoFocus: boolean } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; text: string; owner: string; due: string } | null>(null);
+  const moreRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   if (!rows.length) return null;
   const when = (due: string) => (due.trim() ? `by ${due.trim()}` : "no date");
+  const save = async (row: NoteOutcome) => {
+    if (!editing || editing.id !== row.id) return;
+    const fields = row.kind === "task"
+      ? { text: editing.text, owner_name: editing.owner, due: editing.due }
+      : { text: editing.text };
+    if (await edit(row, fields)) setEditing(null);
+  };
   const toRow = (row: NoteOutcome): OutcomeRow => {
     const made = row.state === "confirmed";
+    const open = editing?.id === row.id ? editing : null;
+    const entries: WorkMenuEntry[] = [
+      { type: "item", id: `edit-${row.id}`, label: open ? "Close edit" : "Edit",
+        onSelect: () => setEditing(open ? null : { id: row.id, text: row.text, owner: row.owner, due: row.due }) },
+      { type: "item", id: `dismiss-${row.id}`, label: "Dismiss", onSelect: () => void dismiss(row) },
+    ];
     return {
       key: row.id,
       plate: row.kind === "task" ? "ACT" : "DEC",
@@ -91,11 +133,58 @@ export function NoteOutcomesWell({ outcomes }: { outcomes: NoteOutcomesState }) 
       owner: row.owner,
       due: row.due,
       verbs: made ? null : (
-        <Button dense variant="secondary" loading={confirming === row.id} disabled={Boolean(confirming)}
-          aria-label={`Confirm: ${row.text}`} onClick={() => void confirm(row)}>
-          Confirm
-        </Button>
+        <>
+          {open ? (
+            <Button dense variant="secondary" loading={confirming === row.id} disabled={Boolean(confirming) || !open.text.trim()}
+              onClick={() => void save(row)}>
+              Save
+            </Button>
+          ) : (
+            <Button dense variant="secondary" loading={confirming === row.id} disabled={Boolean(confirming)}
+              aria-label={`Confirm: ${row.text}`} onClick={() => void confirm(row)}>
+              Confirm
+            </Button>
+          )}
+          <Button
+            ref={(element) => { moreRefs.current[row.id] = element; }}
+            dense
+            variant="ghost"
+            aria-label={`More for ${row.text}`}
+            aria-haspopup="menu"
+            aria-expanded={more?.id === row.id}
+            disabled={Boolean(confirming)}
+            onClick={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect();
+              setMore(more?.id === row.id ? null : { id: row.id, x: rect.left, y: rect.bottom, autoFocus: event.detail === 0 });
+            }}
+          >
+            More
+          </Button>
+          {more?.id === row.id ? (
+            <WorkMenu
+              label={`More actions for ${row.text}`}
+              x={more.x}
+              y={more.y}
+              entries={entries}
+              autoFocus={more.autoFocus}
+              returnFocus={() => moreRefs.current[row.id]?.focus()}
+              onClose={() => setMore(null)}
+            />
+          ) : null}
+        </>
       ),
+      children: open ? (
+        <div className="note-outcome-edit" data-testid="note-outcome-edit">
+          <StringGadget label={row.kind === "task" ? "Task" : "Decision"} value={open.text}
+            onChange={(value) => setEditing({ ...open, text: value })} disabled={Boolean(confirming)} />
+          {row.kind === "task" ? <>
+            <StringGadget label="Who?" value={open.owner} onChange={(value) => setEditing({ ...open, owner: value })}
+              disabled={Boolean(confirming)} />
+            <StringGadget label="When?" value={open.due} onChange={(value) => setEditing({ ...open, due: value })}
+              disabled={Boolean(confirming)} />
+          </> : null}
+        </div>
+      ) : undefined,
     };
   };
   return (

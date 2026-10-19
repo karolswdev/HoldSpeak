@@ -785,3 +785,44 @@ describe("Betterment daily D5: Brief and The week give way to Today", () => {
     expect(opens).toEqual(["intelligence:desk"]);
   });
 });
+
+// Betterment setup ST1: one home each. A desk saved with the Rhythm window or
+// Change places open closes that row on the hub and opens Settings at Rhythm
+// or at Wallpaper in its place, once; the hub never reopens the old window.
+describe("Betterment setup ST1: Rhythm and Change places open their Settings section", () => {
+  const settingsOpens = () => {
+    const opens: Array<[string, string | undefined]> = [];
+    const real = useDesk.getState().openSurfaceWindow;
+    useDesk.setState({ openSurfaceWindow: ((key: string, scope?: string, ...rest: unknown[]) => {
+      opens.push([key, scope]);
+      return (real as (...a: unknown[]) => unknown)(key, scope, ...rest);
+    }) as typeof real });
+    return opens;
+  };
+  const RETIRED = {
+    ...REGISTRY,
+    static: { ...REGISTRY.static, "surface-cadence": "configure-cadence", "surface-places": "change-places", "surface-settings": "configure-settings" },
+    retired: { ...REGISTRY.retired, "surface-cadence": "Rhythm is a section of Settings", "surface-places": "Wallpaper is a section of Settings" },
+  };
+
+  it("a saved surface-cadence and surface-places close on the hub; Settings opens at Rhythm and at Wallpaper, once each", async () => {
+    const opens = settingsOpens();
+    const { fake, hub } = start([
+      row("surface-cadence", { app: "configure-cadence", depth: 2, revision: 2 }),
+      row("surface-places", { app: "change-places", depth: 3, revision: 3 }),
+    ]);
+    const list = fake.transport.list;
+    fake.transport.list = vi.fn(async () => ({ ...(await list()), registry: RETIRED }));
+    await hub.start();
+    await flush(hub);
+    const closes = fake.calls.filter((c) => c.verb === "close").map((c) => c.id).sort();
+    expect(closes).toEqual(["surface-cadence", "surface-places"]);
+    expect(opens).toEqual([["configure-settings", "rhythm"], ["configure-settings", "wallpaper"]]);
+    expect(useDesk.getState().windowsById["surface-cadence"]).toBeUndefined();
+    expect(useDesk.getState().windowsById["surface-places"]).toBeUndefined();
+    // A later read opens nothing again.
+    hub.onFrame({ kind: "windows", id: "surface-settings" });
+    await flush(hub);
+    expect(opens).toHaveLength(2);
+  });
+});

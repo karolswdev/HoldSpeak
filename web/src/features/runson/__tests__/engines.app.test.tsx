@@ -504,6 +504,10 @@ describe("Engines — What runs where (Betterment E5)", () => {
     const options = within(whatRow("speech")).getByTestId("runson-what-options-speech");
     expect(within(options).queryByTestId("runson-what-option-speech-agent-claude")).toBeNull();
     expect(within(options).queryByTestId("runson-what-option-speech-engine-stub")).toBeNull();
+    // Betterment setup ST1: speech never follows Everything else (the hub
+    // reads no_assignment), so its clear option does not say it does.
+    expect(within(options).getByTestId("runson-what-option-speech-default").textContent).toBe("No engine");
+    expect(within(options).queryByText("Everything else")).toBeNull();
     fireEvent.click(within(whatRow("default")).getByTestId("runson-what-pick-default"));
     const defaults = within(whatRow("default")).getByTestId("runson-what-options-default");
     expect(within(defaults).getAllByRole("button").map((b) => b.getAttribute("data-testid"))).toEqual([
