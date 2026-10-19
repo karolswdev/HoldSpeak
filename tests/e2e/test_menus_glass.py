@@ -25,7 +25,7 @@ application drawn loaded, and fit, in the desk sweep.
 Also here (lane e2e-high-1):
 
 The shared chrome strips in a real browser: the keys on the menus, the
-Dock, the wing strips and the editor rail.
+Dock, the wing strips and the current note footer.
 
 Kept by the test diet (push 2, 2026-10-12), one file for the menus and the
 strips they share. Was tests/e2e/test_hs202_03_species_glass.py (whole: each
@@ -55,7 +55,7 @@ Escape", and both were overclaims):
      Tab order equals its DOM order and each of those stops computes a
      non-zero outline; ArrowDown/ArrowUp rove the open menu and Escape
      closes it; the wing strip holds exactly one Tab stop and ArrowRight
-     moves the selected wing; one rail stop computes a non-zero outline.
+     moves the selected wing; one note-footer stop computes a non-zero outline.
      At 393 it also measures the two strips 03 owns: every row of the dock
      and of the wing bar has a bounding height of at least 44px, and no two
      rows overlap (story 05's ruling — a plated Button owns 44px through a
