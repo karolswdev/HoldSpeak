@@ -149,6 +149,30 @@ def _quiet_start(local: datetime, start: int) -> datetime:
     return candidate.astimezone(timezone.utc)
 
 
+def read_quiet_hours(db: Any) -> tuple[int, int]:
+    """Betterment setup ST1: the ONE quiet-hours store, ``(start, end)``.
+
+    The heartbeat policy (``quiet_start`` / ``quiet_end``) is what Settings ▸
+    Rhythm writes and what the notices loop, the cadence tick and the
+    Telegram brief read. The old ``cadence.quiet_hours_*`` config keys stay in
+    the file and are no longer read. Defaults when the policy is absent or
+    unreadable.
+    """
+    try:
+        policy = db.cadence.get_policy(_HEARTBEAT_POLICY_ID)
+        config = (
+            policy.config if hasattr(policy, "config")
+            else (policy.get("config") if isinstance(policy, dict) else {})
+        ) if policy is not None else {}
+        config = config or {}
+        return (
+            int(config.get("quiet_start", _DEFAULT_QUIET_START)) % 24,
+            int(config.get("quiet_end", _DEFAULT_QUIET_END)) % 24,
+        )
+    except Exception:
+        return _DEFAULT_QUIET_START, _DEFAULT_QUIET_END
+
+
 def read_quiet_window(
     db: Database, now: datetime | None = None,
 ) -> tuple[datetime, datetime] | None:

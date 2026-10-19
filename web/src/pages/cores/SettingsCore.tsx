@@ -61,6 +61,7 @@ import { TtsSettingsBlock } from "./settingsTts";
 // PARKED (HS-170-03): CapabilityAssignmentsCore — reached via Concierge Adjust.
 // import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
 import { WallpaperModule } from "./settingsWallpaper";
+import { RhythmNoticeRows, RhythmSweepFold } from "./settingsRhythm";
 import { OwnerNameGroup, PeopleAccessModule } from "./settingsPeople";
 import { RuntimeDocsCore } from "./RuntimeDocsCore";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
@@ -1329,6 +1330,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const [highlight, setHighlight] = useState("");
   const [saving, setSaving] = useState(false);
   const [writtenAt, setWrittenAt] = useState("");
+  /** Betterment setup ST1: a Notify or quiet-hours write draws the
+   *  embedded sweep again (it reads the same heartbeat). */
+  const [heartbeatRevision, setHeartbeatRevision] = useState(0);
   const [refusal, setRefusal] = useState("");
   const [secretBusy, setSecretBusy] = useState("");
   // HS-168-03: connections receipt for the integrations module footer.
@@ -1377,7 +1381,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
       setCalReadError(readableError(error));
     } finally { setCalLoading(false); }
   }, []);
-  useEffect(() => { if (moduleId === "meetings") void loadCalSources(); }, [moduleId, loadCalSources]);
+  // Betterment setup ST1: Meetings reads it for Auto-record; Accounts, the
+  // calendar's one home, for the source rows.
+  useEffect(() => { if (moduleId === "meetings" || moduleId === "integrations") void loadCalSources(); }, [moduleId, loadCalSources]);
 
   /* HS-101 round 3 — the configuring archetype saves ON CHANGE
      (Article VII: no ceremony): every edit lands debounced. HS-111-01:
@@ -1829,6 +1835,182 @@ function SettingsFace({ hero, scope }: CoreProps) {
     });
 
   /* ── the authored owner-facing modules ── */
+  /* Betterment setup ST1: Calendar has one home, Settings ▸ Accounts. The
+     source rows, Add feed and Import image moved here from Meetings (the
+     HS-175-03 block, unchanged); Accounts' Calendar row chooses a calendar. */
+  const calendarSection = (): ReactNode => {
+        const data = resource.data;
+        const sourcesPath: string[] = ["calendar", "sources"];
+        const sources: Array<{
+          id: string;
+          label: string;
+          url: string;
+          enabled: boolean;
+        }> = (val(sourcesPath) as any[]) ?? [];
+        const patchSource = (
+          index: number,
+          patch: Record<string, unknown>,
+        ) => {
+          const next = sources.map((s, i) =>
+            i === index ? { ...s, ...patch } : s,
+          );
+          update(sourcesPath, next);
+        };
+        // HS-175-03: rows come from the settings sources (first paint
+        // carries them), the per-source egress fact from _calendar_sources,
+        // and counts / last-read / status from /api/calendar/sources.
+        const calFacts = new Map(
+          ((data._calendar_sources ?? []) as CalendarSourceFact[]).map((f) => [f.id ?? "", f]),
+        );
+        const calStats = new Map((calSources?.sources ?? []).map((s) => [s.id, s]));
+        const editingSource = sources.find((source) => source.id === calWellFor);
+        const editingIdentity = editingSource ? calendarSourceIdentity(editingSource, calStats.get(editingSource.id)?.type) : null;
+        const openCalWell = (target: string, prefill: string, name = "") => {
+          ++calWellGeneration.current;
+          setCalRemoveFor(null);
+          setCalWellFor(target);
+          setCalWellValue(prefill);
+          setCalWellName(name);
+          setCalWellError("");
+        };
+        const closeCalWell = () => {
+          ++calWellGeneration.current;
+          setCalWellFor(null);
+          setCalWellValue("");
+          setCalWellName("");
+          setCalWellError("");
+        };
+        const saveCalWell = async () => {
+          const url = calWellValue.trim();
+          if ((!url && !editingIdentity?.native) || calWellFor === null || calSavePending.current) return;
+          const generation = calWellGeneration.current;
+          calSavePending.current = true;
+          setCalWellSaving(true);
+          setCalWellError("");
+          const nextSources =
+            calWellFor === "new"
+              ? [...sources, { id: crypto.randomUUID(), label: calWellName.trim(), url, enabled: true }]
+              : sources.map((s) => (s.id === calWellFor ? { ...s, label: calWellName.trim(), ...(editingIdentity?.native || editingIdentity?.snapshot ? {} : { url }) } : s));
+          const ok = await commitMany([[sourcesPath, nextSources]]);
+          calSavePending.current = false;
+          setCalWellSaving(false);
+          if (generation !== calWellGeneration.current) return;
+          if (ok) {
+            closeCalWell();
+          } else {
+            setCalWellError("Not saved");
+          }
+        };
+        const calWell = (
+          <div className="prefs-calendar-well" data-testid="calendar-well">
+            <StringGadget label="Calendar name" caption value={calWellName} placeholder={editingIdentity?.type ?? "Calendar name"} onChange={(value) => { ++calWellGeneration.current; setCalWellName(value); setCalWellError(""); }} />
+            {!editingIdentity?.native && !editingIdentity?.snapshot ? (
+            <StringGadget
+              label="Calendar URL or file path"
+              value={calWellValue}
+              placeholder="Paste an ICS URL or a file path"
+              onChange={(value) => { ++calWellGeneration.current; setCalWellValue(value); setCalWellError(""); }}
+              caption
+              mic
+            />
+            ) : <FoldGadget title="Details"><code className="prefs-source-location">{editingSource?.url}</code></FoldGadget>}
+            {calWellError ? <span className="gadget-fact" role="alert">{calWellError}</span> : null}
+            <div className="prefs-calendar-well-actions">
+              <Button variant="ghost" dense onClick={closeCalWell}>Cancel</Button>
+              <Button dense loading={calWellSaving} disabled={!calWellValue.trim() && !editingIdentity?.native} onClick={() => void saveCalWell()}>Save</Button>
+            </div>
+          </div>
+        );
+    // HS-175-03: CALENDAR section replaces the 146 Calendar GadgetGroup.
+    // Source rows, the Connect calendar well, Snapshot.
+    return (
+              <div className="prefs-calendar-section"><GadgetGroup label="Calendar" material="inset" actions={
+                  <div data-testid="calendar-connect-row" className="prefs-inline-controls">
+                    <Button variant="secondary" dense onClick={() => openCalWell("new", "")} data-testid="calendar-add-btn">Add feed</Button>
+                    {(() => { const chip = snapshotEgressChip(calSources?.snapshot_egress); return chip ? <EgressChip label={chip.label} scope={chip.scope} title={chip.title} /> : null; })()}
+                    <Button variant="secondary" dense data-testid="calendar-snapshot-btn" onClick={() => {
+                      const input = document.createElement("input");
+                      input.type = "file"; input.accept = ".png,.jpg,.jpeg,.webp"; input.multiple = true;
+                      input.onchange = async () => {
+                        if (!input.files?.length) return;
+                        const fd = new FormData();
+                        for (let i = 0; i < Math.min(input.files.length, 3); i++) fd.append("files", input.files[i]);
+                        try { openSurface("review-calendar-snapshot", JSON.stringify(await apiFetch<Record<string, unknown>>("/api/calendar/snapshot", { method: "POST", body: fd }))); }
+                        catch (error) { setRefusal(readableError(error)); }
+                      }; input.click();
+                    }}>Import image</Button>
+                  </div>
+                }>
+                {calLoading && !calSources ? <span className="gadget-fact" role="status">Reading calendars…</span> : null}
+                {calReadError ? <div className="prefs-read-failure" role="alert"><span>Calendar read failed · Sources unchanged · Retry</span><Button dense variant="ghost" disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></div> : null}
+                {sources.length ? <SurfaceLedger count={null} cols="settings-calendar" label="Calendar sources">
+                  {sources.map((entry, index) => {
+                    const fact = calFacts.get(entry.id);
+                    const stat = calStats.get(entry.id);
+                    const host = fact?.egress && fact.host ? String(fact.host) : null;
+                    const identity = calendarSourceIdentity(entry, stat?.type);
+                    const label = identity.label;
+                    const type = identity.type;
+                    const minutes = fact?.refresh_seconds ? Math.round(fact.refresh_seconds / 60) : 15;
+                    const state = (!entry.enabled ? "idle" : stat?.status ?? "idle") as "success" | "failure" | "idle";
+                    const editing = calWellFor === entry.id;
+                    const removing = calRemoveFor === entry.id;
+                    return (
+                      <SurfaceLedgerRow
+                        key={entry.id}
+                        data-testid={`calendar-source-${entry.id}`}
+                        wrap
+                        lead={<StateChip state={state} icon={"●"} label="" />}
+                        primary={<span data-muted={!entry.enabled || undefined} style={!entry.enabled ? { color: "var(--text-muted)" } : undefined}>{label}</span>}
+                        cells={
+                          <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                            {label !== type ? <span className="gadget-fact">{type}</span> : null}
+                            {!entry.enabled ? <span className="gadget-fact">Disabled</span> : null}
+                            {/* HS-175 counsel C9 (H2-2): egress where egress happens --
+                                the host on an HTTPS source; a file source carries NO
+                                chip (absence is the signal, never a reassurance). */}
+                            {host
+                              ? <EgressChip label={host} scope="cloud" title={`Fetches ${label} from ${host} every ${minutes} minutes. No credentials or headers are sent.`} />
+                              : null}
+                            {/* C9(b): COUNT(DISTINCT uid) counts events -- named so. */}
+                            {(() => { const ct = stat ? countToken(stat.event_count, "EVENT") : null; return ct ? <span className="surface-token" data-chip data-testid="calendar-source-events">{ct}</span> : null; })()}
+                            {/* C8: the viewer's local clock from the ISO instant. */}
+                            {(() => { const clock = formatLocalClock(stat?.last_read_at) ?? stat?.last_read ?? null; return clock ? <span className="surface-token" data-chip data-testid="calendar-source-last-read">LAST READ {clock}</span> : null; })()}
+                          </span>
+                        }
+                        trailing={
+                          <>
+                            {/* C10 (H8-2): Edit is withheld on a SNAPSHOT row -- its
+                                path is generated by the upload and rewritten by it. */}
+                            <Button variant="secondary" dense data-testid="calendar-source-edit" onClick={(e) => { e.stopPropagation(); openCalWell(entry.id, entry.url, entry.label); }}>Edit</Button>
+                          </>
+                        }
+                        open={editing || removing}
+                        onToggle={() => {
+                          if (editing) closeCalWell(); else openCalWell(entry.id, entry.url, entry.label);
+                        }}
+                      >
+                        {editing ? <>{calWell}<div className="prefs-calendar-well-actions"><Button variant="ghost" dense data-testid="calendar-source-toggle" onClick={() => patchSource(index, { enabled: !entry.enabled })}>{entry.enabled ? "Disable" : "Enable"}</Button><Button variant="ghost" dense data-testid="calendar-source-remove" onClick={() => { closeCalWell(); setCalRemoveFor(entry.id); }}>Remove</Button></div></> : null}
+                        {removing ? (
+                          <div className="prefs-calendar-well" data-testid="calendar-remove-confirm">
+                            <span className="surface-token" data-chip data-tone="danger">REMOVE {label.toUpperCase()}</span>
+                            <div className="prefs-calendar-well-actions">
+                              <Button variant="danger" dense onClick={() => { setCalRemoveFor(null); update(sourcesPath, sources.filter((_, i) => i !== index)); }}>Remove</Button>
+                              <Button variant="ghost" dense onClick={() => setCalRemoveFor(null)}>Cancel</Button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </SurfaceLedgerRow>
+                  );
+                })}
+              </SurfaceLedger> : null}
+                {/* Add feed reuses the existing source editor. */}
+                {calWellFor === "new" ? calWell : null}
+                {/* PARKED (Settings audit): a full Connect row repeated Add. */}
+            </GadgetGroup></div>
+    );
+  };
+
   const renderModule = (id: string): ReactNode => {
     const data = resource.data;
     switch (id) {
@@ -2023,7 +2205,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
           </>} side={<TtsSettingsBlock />} />
         );
       case "wallpaper":
-        return <WallpaperModule />;
+        // Betterment setup ST1: the one Wallpaper home; the favorite marks
+        // came with it from the parked Change places window.
+        return <WallpaperModule showFavorites />;
       /* ── Meetings: display fact + intel row + capture + calendar + RAW (incl. actuators) ── */
       case "meetings": {
         const autoVal = String(val(["meeting", "intelligence_auto"]) ?? "every");
@@ -2049,31 +2233,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
         const lastRunReceipt = lastRunAt
           ? `LAST RAN ${wireClock(lastRunAt)}${lastRunS != null ? " · " + lastRunS + " S" : ""}`
           : null;
-        const sourcesPath: string[] = ["calendar", "sources"];
-        const sources: Array<{
-          id: string;
-          label: string;
-          url: string;
-          enabled: boolean;
-        }> = (val(sourcesPath) as any[]) ?? [];
-        const patchSource = (
-          index: number,
-          patch: Record<string, unknown>,
-        ) => {
-          const next = sources.map((s, i) =>
-            i === index ? { ...s, ...patch } : s,
-          );
-          update(sourcesPath, next);
-        };
-        // HS-175-03: rows come from the settings sources (first paint
-        // carries them), the per-source egress fact from _calendar_sources,
-        // and counts / last-read / status from /api/calendar/sources.
-        const calFacts = new Map(
-          ((data._calendar_sources ?? []) as CalendarSourceFact[]).map((f) => [f.id ?? "", f]),
-        );
-        const calStats = new Map((calSources?.sources ?? []).map((s) => [s.id, s]));
-        const editingSource = sources.find((source) => source.id === calWellFor);
-        const editingIdentity = editingSource ? calendarSourceIdentity(editingSource, calStats.get(editingSource.id)?.type) : null;
         const autoRecordValue = String(val(["meeting", "auto_record"]) ?? "off");
         const autoRecordControls = <span className="prefs-inline-controls">
           <CycleGadget label="Auto-record mode" value={autoRecordValue} options={[
@@ -2088,62 +2247,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
           ) : null}
           {autoRecordValue === "room_linked" && calSources?.matched_this_week ? <span className="gadget-fact" data-testid="matched-this-week">{countToken(calSources.matched_this_week, "MATCHED THIS WEEK")}</span> : null}
         </span>;
-        const openCalWell = (target: string, prefill: string, name = "") => {
-          ++calWellGeneration.current;
-          setCalRemoveFor(null);
-          setCalWellFor(target);
-          setCalWellValue(prefill);
-          setCalWellName(name);
-          setCalWellError("");
-        };
-        const closeCalWell = () => {
-          ++calWellGeneration.current;
-          setCalWellFor(null);
-          setCalWellValue("");
-          setCalWellName("");
-          setCalWellError("");
-        };
-        const saveCalWell = async () => {
-          const url = calWellValue.trim();
-          if ((!url && !editingIdentity?.native) || calWellFor === null || calSavePending.current) return;
-          const generation = calWellGeneration.current;
-          calSavePending.current = true;
-          setCalWellSaving(true);
-          setCalWellError("");
-          const nextSources =
-            calWellFor === "new"
-              ? [...sources, { id: crypto.randomUUID(), label: calWellName.trim(), url, enabled: true }]
-              : sources.map((s) => (s.id === calWellFor ? { ...s, label: calWellName.trim(), ...(editingIdentity?.native || editingIdentity?.snapshot ? {} : { url }) } : s));
-          const ok = await commitMany([[sourcesPath, nextSources]]);
-          calSavePending.current = false;
-          setCalWellSaving(false);
-          if (generation !== calWellGeneration.current) return;
-          if (ok) {
-            closeCalWell();
-          } else {
-            setCalWellError("Not saved");
-          }
-        };
-        const calWell = (
-          <div className="prefs-calendar-well" data-testid="calendar-well">
-            <StringGadget label="Calendar name" caption value={calWellName} placeholder={editingIdentity?.type ?? "Calendar name"} onChange={(value) => { ++calWellGeneration.current; setCalWellName(value); setCalWellError(""); }} />
-            {!editingIdentity?.native && !editingIdentity?.snapshot ? (
-            <StringGadget
-              label="Calendar URL or file path"
-              value={calWellValue}
-              placeholder="Paste an ICS URL or a file path"
-              onChange={(value) => { ++calWellGeneration.current; setCalWellValue(value); setCalWellError(""); }}
-              caption
-              mic
-            />
-            ) : <FoldGadget title="Details"><code className="prefs-source-location">{editingSource?.url}</code></FoldGadget>}
-            {calWellError ? <span className="gadget-fact" role="alert">{calWellError}</span> : null}
-            <div className="prefs-calendar-well-actions">
-              <Button variant="ghost" dense onClick={closeCalWell}>Cancel</Button>
-              <Button dense loading={calWellSaving} disabled={!calWellValue.trim() && !editingIdentity?.native} onClick={() => void saveCalWell()}>Save</Button>
-            </div>
-          </div>
-        );
         return (
           <>
             <SurfaceColumns variant="preferences" main={<>
@@ -2151,15 +2254,17 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 <GadgetRow label="Make summary">
                   <CycleGadget label="Auto-run the summary" value={autoVal} options={INTELLIGENCE_AUTO_OPTIONS} onChange={(next) => update(["meeting", "intelligence_auto"], next)} />
                 </GadgetRow>
-                <GadgetRow label="Engine" controlWidth="full">
+                {/* Betterment setup ST1: the engine is a fact line; Engines
+                    is its one home (`Engines ›` opens it at Meetings). */}
+                <GadgetRow label="Summaries run on" controlWidth="full">
                   <span className="prefs-summary-controls" data-testid="settings-summary-controls">
                     {summariesOff ? <StateChip state="idle" label="SUMMARIES OFF" data-testid="settings-summaries-off" />
                       : hasModel ? <>
                         <span className="prefs-value">{String(meetingsHub?.engine || "Assigned engine")}</span>
                         {intelHost && egressFor(intelHost).label ? <EgressChip label={egressFor(intelHost).label} scope={egressFor(intelHost).scope} /> : null}
-                      </> : <StateChip state="warning" label="NO MODEL" data-testid="settings-no-model" />}
-                    <Button variant="secondary" dense onClick={() => setNavigation({ module: "models", focus: "meetings" })} data-testid={!hasModel && !summariesOff ? "settings-choose-model" : undefined}>
-                      {hasModel || summariesOff ? "Change engine" : "Choose engine"}
+                      </> : <StateChip state="warning" label="NO ENGINE" data-testid="settings-no-model" />}
+                    <Button variant={!hasModel && !summariesOff ? "secondary" : "ghost"} dense onClick={() => setNavigation({ module: "models", focus: "meetings" })} data-testid="settings-engines-link">
+                      Engines ›
                     </Button>
                   </span>
                 </GadgetRow>
@@ -2196,93 +2301,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 </FoldGadget>
               </GadgetGroup>
             </>} side={<>
-              {/* HS-175-03: CALENDAR section replaces the 146 Calendar GadgetGroup.
-                  Source rows, the Connect calendar well, Auto-record, Snapshot. */}
-              <div className="prefs-calendar-section"><GadgetGroup label="Calendar" material="inset" actions={
-                  <div data-testid="calendar-connect-row" className="prefs-inline-controls">
-                    <Button dense variant={failedChangesRef.current.length ? "secondary" : "primary"} onClick={() => setNavigation({ module: "integrations", focus: "calendar" })}>Add calendar</Button>
-                    <Button variant="secondary" dense onClick={() => openCalWell("new", "")} data-testid="calendar-add-btn">Add feed</Button>
-                    {(() => { const chip = snapshotEgressChip(calSources?.snapshot_egress); return chip ? <EgressChip label={chip.label} scope={chip.scope} title={chip.title} /> : null; })()}
-                    <Button variant="secondary" dense data-testid="calendar-snapshot-btn" onClick={() => {
-                      const input = document.createElement("input");
-                      input.type = "file"; input.accept = ".png,.jpg,.jpeg,.webp"; input.multiple = true;
-                      input.onchange = async () => {
-                        if (!input.files?.length) return;
-                        const fd = new FormData();
-                        for (let i = 0; i < Math.min(input.files.length, 3); i++) fd.append("files", input.files[i]);
-                        try { openSurface("review-calendar-snapshot", JSON.stringify(await apiFetch<Record<string, unknown>>("/api/calendar/snapshot", { method: "POST", body: fd }))); }
-                        catch (error) { setRefusal(readableError(error)); }
-                      }; input.click();
-                    }}>Import image</Button>
-                  </div>
-                }>
-                {calLoading && !calSources ? <span className="gadget-fact" role="status">Reading calendars…</span> : null}
-                {calReadError ? <div className="prefs-read-failure" role="alert"><span>Calendar read failed · Sources unchanged · Retry</span><Button dense variant="ghost" disabled={calLoading} onClick={() => void loadCalSources()}>Retry</Button></div> : null}
-                {sources.length ? <SurfaceLedger count={null} cols="settings-calendar" label="Calendar sources">
-                  {sources.map((entry, index) => {
-                    const fact = calFacts.get(entry.id);
-                    const stat = calStats.get(entry.id);
-                    const host = fact?.egress && fact.host ? String(fact.host) : null;
-                    const identity = calendarSourceIdentity(entry, stat?.type);
-                    const label = identity.label;
-                    const type = identity.type;
-                    const minutes = fact?.refresh_seconds ? Math.round(fact.refresh_seconds / 60) : 15;
-                    const state = (!entry.enabled ? "idle" : stat?.status ?? "idle") as "success" | "failure" | "idle";
-                    const editing = calWellFor === entry.id;
-                    const removing = calRemoveFor === entry.id;
-                    return (
-                      <SurfaceLedgerRow
-                        key={entry.id}
-                        data-testid={`calendar-source-${entry.id}`}
-                        wrap
-                        lead={<StateChip state={state} icon={"●"} label="" />}
-                        primary={<span data-muted={!entry.enabled || undefined} style={!entry.enabled ? { color: "var(--text-muted)" } : undefined}>{label}</span>}
-                        cells={
-                          <span style={{ display: "inline-flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-                            {label !== type ? <span className="gadget-fact">{type}</span> : null}
-                            {!entry.enabled ? <span className="gadget-fact">Disabled</span> : null}
-                            {/* HS-175 counsel C9 (H2-2): egress where egress happens --
-                                the host on an HTTPS source; a file source carries NO
-                                chip (absence is the signal, never a reassurance). */}
-                            {host
-                              ? <EgressChip label={host} scope="cloud" title={`Fetches ${label} from ${host} every ${minutes} minutes. No credentials or headers are sent.`} />
-                              : null}
-                            {/* C9(b): COUNT(DISTINCT uid) counts events -- named so. */}
-                            {(() => { const ct = stat ? countToken(stat.event_count, "EVENT") : null; return ct ? <span className="surface-token" data-chip data-testid="calendar-source-events">{ct}</span> : null; })()}
-                            {/* C8: the viewer's local clock from the ISO instant. */}
-                            {(() => { const clock = formatLocalClock(stat?.last_read_at) ?? stat?.last_read ?? null; return clock ? <span className="surface-token" data-chip data-testid="calendar-source-last-read">LAST READ {clock}</span> : null; })()}
-                          </span>
-                        }
-                        trailing={
-                          <>
-                            {/* C10 (H8-2): Edit is withheld on a SNAPSHOT row -- its
-                                path is generated by the upload and rewritten by it. */}
-                            <Button variant="secondary" dense data-testid="calendar-source-edit" onClick={(e) => { e.stopPropagation(); openCalWell(entry.id, entry.url, entry.label); }}>Edit</Button>
-                          </>
-                        }
-                        open={editing || removing}
-                        onToggle={() => {
-                          if (editing) closeCalWell(); else openCalWell(entry.id, entry.url, entry.label);
-                        }}
-                      >
-                        {editing ? <>{calWell}<div className="prefs-calendar-well-actions"><Button variant="ghost" dense data-testid="calendar-source-toggle" onClick={() => patchSource(index, { enabled: !entry.enabled })}>{entry.enabled ? "Disable" : "Enable"}</Button><Button variant="ghost" dense data-testid="calendar-source-remove" onClick={() => { closeCalWell(); setCalRemoveFor(entry.id); }}>Remove</Button></div></> : null}
-                        {removing ? (
-                          <div className="prefs-calendar-well" data-testid="calendar-remove-confirm">
-                            <span className="surface-token" data-chip data-tone="danger">REMOVE {label.toUpperCase()}</span>
-                            <div className="prefs-calendar-well-actions">
-                              <Button variant="danger" dense onClick={() => { setCalRemoveFor(null); update(sourcesPath, sources.filter((_, i) => i !== index)); }}>Remove</Button>
-                              <Button variant="ghost" dense onClick={() => setCalRemoveFor(null)}>Cancel</Button>
-                          </div>
-                        </div>
-                      ) : null}
-                    </SurfaceLedgerRow>
-                  );
-                })}
-              </SurfaceLedger> : null}
-                {/* Add feed reuses the existing source editor. */}
-                {calWellFor === "new" ? calWell : null}
-                {/* PARKED (Settings audit): a full Connect row repeated Add. */}
-            </GadgetGroup></div>
             <GadgetGroup material="inset" label="Export">
               <GadgetRow label="Auto export" controlWidth="short">
                 <CheckGadget
@@ -2398,6 +2416,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
         return (
           <>
             <SurfaceColumns variant="preferences" main={<>
+              {/* Betterment setup ST1: quiet hours have one store, the
+                  heartbeat policy the notices loop reads; Notify moved here
+                  from the parked Rhythm window. */}
+              <RhythmNoticeRows
+                highlight={highlight}
+                onSaved={() => setWrittenAt(new Date().toTimeString().slice(0, 8))}
+                onWrite={() => setHeartbeatRevision((n) => n + 1)}
+              />
               <GadgetGroup material="inset" label="Cadence">
                 {check(["cadence", "enabled"], "Enabled")}
                 {cyc(
@@ -2405,16 +2431,6 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   "Pressure",
                   CADENCE_PRESSURE_OPTIONS,
                 )}
-                {num(["cadence", "quiet_hours_start"], "Quiet from", {
-                  unit: "h",
-                  min: 0,
-                  max: 23,
-                })}
-                {num(["cadence", "quiet_hours_end"], "Quiet until", {
-                  unit: "h",
-                  min: 0,
-                  max: 23,
-                })}
                 {num(["cadence", "max_nudges_per_day"], "Max nudges", {
                   unit: "/day",
                   min: 0,
@@ -2445,6 +2461,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 })}
                 {csv(["cadence_telegram", "allowed_chat_ids"], "Allowed chats")}
               </GadgetGroup>
+              {/* Betterment setup ST1: the parked Rhythm window's sweep
+                  interval, Run now, Where it runs, mutes and loops. */}
+              <RhythmSweepFold revision={heartbeatRevision} />
             </FoldGadget>
           </>
         );
@@ -2490,6 +2509,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
                 onBeforeCalendarChange={beforeCalendarChange}
                 onCalendarChanged={calendarChanged}
               />
+              {/* Betterment setup ST1: Calendar's one home is Accounts. The
+                  source rows, Add feed and Import image moved here from
+                  Meetings, under the Calendar row's Choose calendar. */}
+              {calendarSection()}
             </div>
             <div className="prefs-column">
               {/* PHILO-10-04 (B1): the Destinations group, under Tools. */}
