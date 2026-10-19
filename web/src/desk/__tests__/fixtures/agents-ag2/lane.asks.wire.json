@@ -1,12 +1,12 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-19T10:20:25.444238Z",
+  "captured_at": "2026-10-19T10:27:42.188034Z",
   "wire": {
     "answers": [],
     "attempt_events": [
       {
         "from": null,
-        "occurred_at": "2026-10-19T10:20:25.375489Z",
+        "occurred_at": "2026-10-19T10:27:42.127620Z",
         "reason": "created:launch",
         "to": "working"
       }
@@ -29,7 +29,7 @@
         "id": 5,
         "text": null,
         "tool": null,
-        "ts": "2026-10-19T10:20:25.360307Z"
+        "ts": "2026-10-19T10:27:42.114899Z"
       },
       {
         "detail": {},
@@ -38,7 +38,7 @@
         "id": 6,
         "text": "the brief",
         "tool": null,
-        "ts": "2026-10-19T10:20:25.372197Z"
+        "ts": "2026-10-19T10:27:42.124860Z"
       },
       {
         "detail": {},
@@ -47,7 +47,7 @@
         "id": 7,
         "text": null,
         "tool": "Bash",
-        "ts": "2026-10-19T10:20:25.373161Z"
+        "ts": "2026-10-19T10:27:42.125510Z"
       },
       {
         "detail": {},
@@ -56,7 +56,7 @@
         "id": 8,
         "text": "I found two places for the rollback flag. Should it live in config/flags.yaml (shared with staging) or in an env var (per host)? Answer 1 for config, 2 for env.",
         "tool": null,
-        "ts": "2026-10-19T10:20:25.373895Z"
+        "ts": "2026-10-19T10:27:42.126113Z"
       }
     ],
     "events_next_after": null,
@@ -69,9 +69,10 @@
       "pr_state": null
     },
     "gated": [],
+    "last_words": "I found two places for the rollback flag. Should it live in config/flags.yaml (shared with staging) or in an env var (per host)? Answer 1 for config, 2 for env.",
     "launch": {
       "agent": "claude",
-      "attempt_id": "att_ec8dd1322e134d05",
+      "attempt_id": "att_5aff9841b0564dec",
       "branch": "hs/action-m-platform-a1",
       "brief_sent_at": null,
       "brief_text": null,
@@ -80,7 +81,7 @@
       "gate": "gated",
       "instruction_state": "sent",
       "launch_id": "launch_ag0_ghost",
-      "launched_at": "2026-10-19T10:10:25.374611Z",
+      "launched_at": "2026-10-19T10:17:42.126817Z",
       "origin_ref": {
         "id": "m-platform-a1",
         "kind": "action"
@@ -97,14 +98,14 @@
       "worktree_path": null
     },
     "session": {
-      "created_at": "2026-10-19T10:20:25.360307Z",
+      "created_at": "2026-10-19T10:27:42.114899Z",
       "event_count": 4,
-      "last_assistant_text": "I found two places for the rollback flag. Should it live in config/flags.yaml (shared with staging) or in an env var (per host)? Answer 1 for config, 2 for env.",
+      "last_assistant_text": null,
       "last_tool_name": "Bash",
       "lifecycle": "waiting",
       "model": null,
       "state": "waiting",
-      "updated_at": "2026-10-19T10:20:25.373895Z"
+      "updated_at": "2026-10-19T10:27:42.126113Z"
     },
     "usage": null,
     "used": {
@@ -117,14 +118,14 @@
       "draft": null,
       "kind": "TO ANSWER",
       "question": "I found two places for the rollback flag. Should it live in config/flags.yaml (shared with staging) or in an env var (per host)? Answer 1 for config, 2 for env.",
-      "started": "2026-10-19T10:20:25.373895Z",
+      "started": "2026-10-19T10:27:42.126113Z",
       "turn_end": "asks",
-      "wait_id": "2026-10-19T10:20:25.373895Z#4",
+      "wait_id": "2026-10-19T10:27:42.126113Z#4",
       "wait_kind": "answer"
     },
     "worktree": {
       "not_read": "the launch has no worktree",
-      "read_at": 1792405224.925575
+      "read_at": 1792405661.68138
     }
   }
 }
