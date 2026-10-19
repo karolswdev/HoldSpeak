@@ -43,11 +43,13 @@ import {
 import { useSummaryRun } from "./history/useSummaryRun";
 import { IMPORT_ACCEPT } from "./history/importWhen";
 import { leadRunRowId } from "./history/CatalogRail";
+import { RecordHome } from "./history/RecordHome";
 import { AppTile, FigureStrip, type Figure } from "../../desk/surface/kit";
 import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
 import { objectWindowStandIn } from "../../desk/objectWindows";
 
-/** PHILO-17: the list window's faces: the list, and Record (import). */
+/** PHILO-17: the list window's faces: the list, and Record (capture C7: the
+ *  one home for recording; a chosen file opens the import form). */
 const LIST_WINGS = [
   { id: "outcomes", label: "Meetings" },
   { id: "record", label: "Record" },
@@ -370,18 +372,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       >
         Import
       </Button>
-      <input
-        ref={importPicker}
-        type="file"
-        hidden
-        accept={IMPORT_ACCEPT}
-        aria-label="Choose a recording or transcript"
-        data-testid="meetings-import-picker"
-        onChange={(event) => {
-          startImport(event.target.files?.[0]);
-          event.target.value = "";
-        }}
-      />
     </>
   );
 
@@ -435,6 +425,13 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       plugin={doorPlugin}
       queueStatus={queueStatus}
       setQueueStatus={setQueueStatus}
+    />
+  ) : wings.view === "record" && !importFile ? (
+    // Capture C7: Meetings ▸ Record is the one home for recording. A chosen
+    // file (Import, or a drop) opens the import form below.
+    <RecordHome
+      onRecord={() => openSurfaceOr("record-live", "/live", scope)}
+      onImport={() => importPicker.current?.click()}
     />
   ) : wings.view === "record" ? (
     <ImportSection
@@ -516,6 +513,20 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         }}
       >
         {face}
+        {/* Capture C7: the picker is mounted on every face, so Import on
+            Meetings ▸ Record opens it too. */}
+        <input
+          ref={importPicker}
+          type="file"
+          hidden
+          accept={IMPORT_ACCEPT}
+          aria-label="Choose a recording or transcript"
+          data-testid="meetings-import-picker"
+          onChange={(event) => {
+            startImport(event.target.files?.[0]);
+            event.target.value = "";
+          }}
+        />
       </div>
       <SurfaceFooter
         egress={footerEgress}

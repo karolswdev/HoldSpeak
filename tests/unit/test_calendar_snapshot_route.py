@@ -149,6 +149,46 @@ class TestConfirmEndpoint:
         assert data["success"] is True
         assert data["events_count"] == 1
 
+    def test_confirm_takes_a_capital_weekday(self, client, tmp_path, monkeypatch):
+        """Capture C7: the face sends the weekday as the model wrote it
+        ("Monday"); the confirm answered 500 (KeyError) before it lower-cased
+        it like the extract path does."""
+        written: list[bytes] = []
+        monkeypatch.setattr(
+            "holdspeak.web.routes.calendar_snapshot.write_ics_atomic",
+            lambda source_id, ics_bytes: written.append(ics_bytes) or tmp_path / f"{source_id}.ics",
+        )
+        monkeypatch.setattr(
+            "holdspeak.web.routes.calendar_snapshot.trigger_calendar_refresh",
+            lambda: True,
+        )
+        monkeypatch.setattr(
+            "holdspeak.web.routes.calendar_snapshot.register_snapshot_source",
+            lambda *a, **kw: {"success": True},
+        )
+        monkeypatch.setattr(
+            "holdspeak.web.routes.calendar_snapshot.Config.load",
+            lambda: MagicMock(calendar=MagicMock(sources=[])),
+        )
+        response = client.post(
+            "/api/calendar/snapshot/confirm",
+            json={
+                "anchor_date": "2026-08-24",
+                "events": [
+                    {"title": "Standup", "weekday": "Monday", "start_time": "09:00", "end_time": "09:30"},
+                    {"title": "Design review", "weekday": " FRIDAY ", "start_time": "14:00", "end_time": "15:00"},
+                ],
+            },
+        )
+        assert response.status_code == 200, response.text
+        assert response.json()["events_count"] == 2
+        ics = written[0].decode()
+        starts = [line.split(":", 1)[1] for line in ics.splitlines() if line.startswith("DTSTART:")]
+        assert len(starts) == 2, ics
+        from datetime import datetime as _dt
+        monday, friday = (_dt.strptime(v, "%Y%m%dT%H%M%SZ") for v in starts)
+        assert (friday - monday).total_seconds() == 4 * 86400 + 5 * 3600, starts
+
     def test_confirm_rejects_missing_anchor(self, client):
         response = client.post(
             "/api/calendar/snapshot/confirm",

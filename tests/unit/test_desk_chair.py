@@ -339,3 +339,132 @@ def test_unlink_over_the_route_drops_the_room_and_keeps_the_arm(db: Any, ics: st
     standup = _calendar_rows(_projection(db, ics))["ev-standup"]
     assert "project_name" not in standup
     assert standup["armed"]["recording_id"] == "rec-standup"
+
+
+# ── Capture C7: one home for recording (Coming up) ─────────────────────
+
+COMING_UP_FIXTURE = (
+    Path(__file__).parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "coming-up" / "coming-up.json"
+)
+
+
+def test_coming_up_arms_cancels_and_names_a_failed_fire(db: Any, ics: str) -> None:
+    """The list Meetings ▸ Record and Capture draw (web/src/pages/cores/history/ComingUp.tsx),
+    through the real routes at the real clock (the arm route refuses an event
+    in the past): a fire that raised (the rig's crash, RECON.md §6) is a
+    failed schedule with its reason; Record when it starts arms the follow-up
+    (it reads Records at HH:MM); Cancel disarms it. The face test replays
+    these answers (meetings.app.test.tsx, chair.app.test.tsx)."""
+    from holdspeak.scheduled_recording_conductor import ScheduledRecordingConductor
+
+    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+    sync_start = now - timedelta(minutes=15)
+    followup = now + timedelta(hours=1)
+    mira = now + timedelta(hours=2)
+    tomorrow = now + timedelta(days=1)
+    with db._connection() as conn:
+        _seed_calendar_event(conn, "ev-sync", "Payments platform sync", sync_start, sync_start + timedelta(hours=1))
+        _seed_calendar_event(conn, "ev-followup", "Platform design follow-up", followup, followup + timedelta(minutes=45))
+        _seed_calendar_event(conn, "ev-mira", "1:1 with Mira", mira, mira + timedelta(minutes=30))
+        _seed_calendar_event(conn, "ev-review", "Architecture review", tomorrow, tomorrow + timedelta(hours=1))
+        _seed_armed_recording(conn, "rec-sync", "Payments platform sync",
+                              (sync_start - timedelta(minutes=1)).timestamp(), "ev-sync")
+        conn.commit()
+
+    # The real fire, raising where the rig raised (voice_session is None).
+    def no_voice_session() -> Any:
+        raise AttributeError("'NoneType' object has no attribute 'active_owner'")
+
+    fire_at = (sync_start - timedelta(minutes=1)).timestamp()
+    conductor = ScheduledRecordingConductor(
+        clock=lambda: fire_at, db_factory=lambda: db, start_meeting_fn=MagicMock(),
+        stop_meeting_fn=MagicMock(), voice_floor_fn=no_voice_session, countdown_seconds=0.0,
+    )
+    conductor._tick()
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline and db.scheduled_recordings.get("rec-sync").state == "arming":
+        time.sleep(0.02)
+    time.sleep(0.1)
+    failed = db.scheduled_recordings.get("rec-sync")
+    assert failed.state == "refused" and failed.last_outcome == "fire_failed", failed
+
+    from holdspeak.principals import Principal, PrincipalKind
+
+    def door() -> dict[str, Any]:
+        return json.loads(json.dumps(_door_at(db, ics, now).get(Principal(PrincipalKind.OWNER, "owner")), default=str))
+
+    client = _client()
+    schedules_before = client.get("/api/scheduled-recordings").json()
+    sync = next(s for s in schedules_before["schedules"] if s["id"] == "rec-sync")
+    assert sync["did_not_record"]["reason"] == "'NoneType' object has no attribute 'active_owner'", sync
+    assert sync["did_not_record"]["at"], sync
+    door_before = door()
+    rows = _calendar_rows(door_before)
+    # The sync has started: the Door's upcoming lists only what starts later,
+    # so the failed fire is the schedule's own row on the face.
+    assert set(rows) == {"ev-followup", "ev-mira", "ev-review"}, rows
+    assert "armed" not in rows["ev-followup"]
+
+    arm = client.post("/api/scheduled-recordings", json={"calendar_event_id": "ev-followup"})
+    assert arm.status_code == 201, arm.text
+    recording_id = arm.json()["schedule"]["id"]
+    door_armed = door()
+    armed = _calendar_rows(door_armed)["ev-followup"]
+    assert armed["armed"]["recording_id"] == recording_id and armed["armed"]["arms_at"], armed
+
+    cancel = client.post(f"/api/scheduled-recordings/{recording_id}/cancel")
+    assert cancel.status_code == 200, cancel.text
+    door_cancelled = door()
+    assert "armed" not in _calendar_rows(door_cancelled)["ev-followup"]
+
+    recorded = {
+        "_now": now.isoformat().replace("+00:00", "Z"),
+        "GET /api/door (before)": door_before,
+        "GET /api/scheduled-recordings (before)": schedules_before,
+        "POST /api/scheduled-recordings": arm.json(),
+        "GET /api/door (armed)": door_armed,
+        "POST /api/scheduled-recordings/<id>/cancel": cancel.json(),
+        "GET /api/door (cancelled)": door_cancelled,
+    }
+    _recorded_coming_up(recorded)
+
+
+def _door_at(db: Any, calendar_url: str | None, now: datetime) -> Any:
+    from holdspeak.services.door_service import DoorService
+
+    base = _door(db, calendar_url)
+    base._clock = lambda: now
+    return base
+
+
+def _recorded_coming_up(recorded: dict[str, Any]) -> None:
+    """HOLDSPEAK_WIRE_WRITE=1 rewrites the face's fixture; otherwise the stored
+    answers must have the live answers' shape (titles, arms, keys; the clock
+    moves each run)."""
+    import os
+
+    def shape(body: dict[str, Any]) -> Any:
+        out: dict[str, Any] = {}
+        for key, value in body.items():
+            if key.startswith("GET /api/door"):
+                out[key] = [(r["id"], r.get("title"), "armed" in r, tuple(sorted(r))) for r in value["upcoming"]]
+            elif key.startswith("GET /api/scheduled-recordings"):
+                out[key] = [(s["id"], s["state"], s["last_outcome"], bool(s.get("did_not_record")), tuple(sorted(s)))
+                            for s in value["schedules"]]
+            elif isinstance(value, dict):
+                out[key] = tuple(sorted(value))
+        return out
+
+    if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        COMING_UP_FIXTURE.parent.mkdir(parents=True, exist_ok=True)
+        COMING_UP_FIXTURE.write_text(json.dumps({
+            "_source": "Recorded from the real routes and DoorService by tests/unit/test_desk_chair.py::"
+                       "test_coming_up_arms_cancels_and_names_a_failed_fire. HOLDSPEAK_WIRE_WRITE=1 "
+                       "rewrites this file; never hand-edit a field a test reads.",
+            **recorded,
+        }, indent=2, sort_keys=True, default=str) + "\n")
+    stored = json.loads(COMING_UP_FIXTURE.read_text())
+    stored.pop("_source", None)
+    live = {k: v for k, v in recorded.items() if k != "_now"}
+    stored_body = {k: v for k, v in stored.items() if k != "_now"}
+    assert shape(stored_body) == shape(live), "re-record with HOLDSPEAK_WIRE_WRITE=1"

@@ -556,7 +556,40 @@ class ScheduledRecordingConductor:
         from .runtime.announce_scope import announce_writes
 
         with announce_writes("scheduled_recording", "fire", schedule_id):
-            self._countdown_then_fire_body(db, schedule_id, fire_at, cancel_event)
+            try:
+                self._countdown_then_fire_body(db, schedule_id, fire_at, cancel_event)
+            except Exception as exc:
+                # Capture C7: a fire that raises never goes quiet. Before, the
+                # thread died here with no receipt and the schedule stuck in
+                # `arming` (RECON.md §6); the face then said nothing.
+                log.error(f"Scheduled recording fire raised for {schedule_id}: {exc}", exc_info=True)
+                self._fire_failed(db, schedule_id, exc)
+
+    def _fire_failed(self, db: Any, schedule_id: str, exc: BaseException) -> None:
+        """A `failed` receipt with the reason, a terminal state, the broadcast."""
+        self._arming.pop(schedule_id, None)
+        reason = str(exc) or type(exc).__name__
+        try:
+            sched = db.scheduled_recordings.get(schedule_id)
+            receipt_id = self._write_receipt(
+                db, schedule_id, "failed", "fire_failed", detail=reason,
+            )
+            db.scheduled_recordings.set_state(
+                schedule_id, "refused",
+                last_outcome="fire_failed",
+                last_receipt_id=receipt_id,
+                last_fired_at=self._clock(),
+                armed_at=None,
+                deadline_at=None,
+            )
+            broadcast("scheduled_recording.refused", {
+                "schedule_id": schedule_id, "title": getattr(sched, "title", ""),
+                "reason": reason, "receipt_id": receipt_id, "at": _now_iso(),
+            })
+            if sched is not None:
+                self._advance_after_terminal(db, sched, "fire_failed", receipt_id)
+        except Exception as inner:
+            log.error(f"Recording the failed fire for {schedule_id} failed: {inner}", exc_info=True)
 
     def _countdown_then_fire_body(
         self,
