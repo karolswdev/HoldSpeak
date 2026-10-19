@@ -624,7 +624,7 @@ for _family in FAMILIES:
 # database when sent by an external MCP client.
 _UI_ONLY_VERBS = {
     "desk.open", "object.open", "object.info", "object.edit", "object.rename",
-    "object.ask", "object.ask-project", "desk.toggle-view", "desk.overview",
+    "object.ask-about", "desk.toggle-view", "desk.overview",
     "desk.arrange", "desk.reset-layout", "desk.reset-to-seed", "system.search",
     "system.sheet", "window.close", "window.minimize", "window.cycle",
     "window.cycle-reverse", "window.snap-left", "window.snap-right", "window.maximize",

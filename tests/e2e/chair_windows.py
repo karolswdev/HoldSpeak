@@ -46,3 +46,18 @@ def open_chair_window(page: Any, name: str) -> Any:
             page.wait_for_function(
                 "el => el.getAttribute('aria-expanded') === 'true'", arg=since.element_handle())
     return win
+
+
+def go_group(page: Any, group: str, press: Any = None) -> Any:
+    """At 393 Go has one group, `New ▸` (PHILO-15 11, B21, owner ruling
+    2026-10-07; was C7 Q3 `Desk ▸ Object ▸ Window ▸`). With Go open, open
+    one group (the panel is replaced, a back row first) and return the menu."""
+    import re
+
+    row = page.locator(".desk-verbbar-menu [role='menuitem'][aria-haspopup='menu']").filter(
+        has=page.locator(".desk-menu-label", has_text=re.compile(rf"^{re.escape(group)}$")))
+    row.wait_for()
+    row.scroll_into_view_if_needed()
+    (press or (lambda loc: loc.click()))(row)
+    page.locator(".desk-verbbar-menu .desk-menu-back", has_text=group).wait_for()
+    return page.locator(".desk-verbbar-menu")

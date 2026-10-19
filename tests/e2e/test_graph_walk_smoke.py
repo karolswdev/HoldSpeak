@@ -59,6 +59,8 @@ ATLAS_FENCE = {
         "the desk (the Chair screen, chair-desk; PHILO-14 A1 closed the Needs "
         "you window that holds the arrival headline) is the promised result",
     ),
+    # Betterment daily D5 (#1336): through Today, which makes the brief when
+    # it opens; its Since yesterday fold reads "No changes".
     "case.j10.arrival_generate_brief.generated_empty": (
         "pass", "", "the empty brief says so on the face",
     ),
@@ -68,18 +70,23 @@ ATLAS_FENCE = {
         "pass", "", "the fixture WAV through the REAL import route mints a "
         "meeting; the trigger binds {meeting_id} and the row carries it",
     ),
-    "case.j10.arrival_generate_again.same_day_idempotent": (
-        "pass", "", "after new work, the clicked Generate's OWN response is the "
-        "same brief made again, and the face shows the new work",
-    ),
     # Astra round four, MISSED: the same-id claim lives in the protocol
     # sibling; the second POST must return the brief captured before it.
     "case.j10.route_generate_again.same_day_same_id": (
         "pass", "", "the second POST /api/brief/generate returns the SAME brief "
         "id that GET /api/brief/latest held before it",
     ),
-    # Reserved for W2's retention case (Astra round four). Skipped by name
-    # while the atlas does not carry it; it runs the moment it does.
+}
+
+#: Parked with Betterment daily D5 (#1336): the Brief window and its Generate
+#: press retired into Today, so these face cases are not_applicable in the
+#: atlas (declarations in docs/internal/philo/graph/parked-daily-d5-brief.json).
+#: Their fence lines as they stood; not run.
+PARKED_FROM_FENCE = {
+    "case.j10.arrival_generate_again.same_day_idempotent": (
+        "pass", "", "after new work, the clicked Generate's OWN response is the "
+        "same brief made again, and the face shows the new work",
+    ),
     "case.j10.arrival_generate_again.retained_after_reload": (
         "pass", "", "after the second POST and a reload, the same brief is "
         "retained on the face",
@@ -88,7 +95,7 @@ ATLAS_FENCE = {
 
 #: Cases reserved in the fence before the atlas carries them. A missing one
 #: SKIPS, naming itself; the orchestrator removes it from here once it lands.
-PENDING_IN_ATLAS = {"case.j10.arrival_generate_again.retained_after_reload"}
+PENDING_IN_ATLAS: set[str] = set()
 
 
 @pytest.mark.parametrize("case_id", sorted(ATLAS_FENCE))
@@ -138,7 +145,7 @@ def test_the_rig_drives_the_real_atlas(case_id, tmp_path):
             "POST", "/api/brief/generate", 200), answer
         assert first in json.dumps(answer["body"]), (first, answer["body"])
         assert answer["body"]["id"] == first
-    if case_id == "case.j10.arrival_generate_again.same_day_idempotent":
+    if case_id == "case.j10.arrival_generate_again.same_day_idempotent":  # parked (D5); kept as it stood
         # the identity came from the click's own POST (finding 3)
         chosen = record["trigger_response_capture"]["chosen"]
         assert chosen and (chosen["method"], chosen["path"]) == (

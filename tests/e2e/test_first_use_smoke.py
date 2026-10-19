@@ -335,9 +335,15 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
 
             # Job 5: one real UI setup gesture, with the LAN-named local fixture.
             _desk(page, base)
-            _needs(page)
-            # The A5 row verb's accessible name carries its row; read its word.
-            choose = page.locator(".needs-drawer [data-verb='setup']").filter(has_text="Choose an engine")
+            # Betterment daily D8: "No engine for summaries" asks in Needs you
+            # only when a meeting waits for a summary; this desk has none yet,
+            # so the owner's door is HoldSpeak > Engines (both widths).
+            mark = page.locator(".desk-mark")
+            assert _hit(mark), "The HoldSpeak menu is unreachable"
+            mark.click()
+            page.locator(".desk-menu-list").first.wait_for()
+            choose = page.locator("[role^=menuitem]").filter(
+                has=page.locator(".desk-menu-label", has_text=re.compile(r"^Engines$"))).last
             _loaded(choose)
             assert _hit(choose)
             choose.click()
@@ -406,7 +412,9 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             runs_on.wait_receipt(page, r"^SET ")
             assert runs_on.receipt(page).upper().startswith("SET "), runs_on.receipt(page)
             assert page.locator("[data-testid='runson-undo']").count() == 1
-            choose.wait_for(state="detached")
+            # The hub has its summary engine: no setup row asks for one.
+            assert not any(b.get("key") == "summary" for b in
+                           _api(page, "GET", "/api/desk/needs-you", token=TOKEN).get("blockers", []))
             settings = page.locator("#surface-settings")
             back = settings.get_by_role("button", name="Back from Settings" if width < 720 else "Close Settings", exact=True)
             back.click()
