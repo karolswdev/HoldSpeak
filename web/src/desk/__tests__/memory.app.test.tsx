@@ -220,17 +220,18 @@ describe("Desk memory (HS-526): relationship-aware recall", () => {
 });
 
 describe("Memory on the Desk: standing pages where the work lives", () => {
-  it("the Atlas Room: STANDING PAGES in the fixed order; ONE stale, STALE · 1 NEW SOURCE", async () => {
+  it("the Atlas Room: This week reads Risks and Changed from the project's pages, each line with its source", async () => {
     // replaces: tests/e2e/test_memory_faces_glass.py::test_memory_on_the_desk (face half: pages)
+    // Betterment P3: the pages are promoted into the Now wing's This week
+    // (Decided comes from the decision records, the one store for decisions).
     render(<ProjectMemoryCore scope="project:atlas" />);
-    const section = await screen.findByTestId("standing-pages");
-    const pages = within(section).getAllByTestId("standing-page");
-    expect(pages.map((p) => p.getAttribute("aria-label"))).toEqual(
-      ["What did we decide", "What is open and who owes it", "Risks and disputes", "What changed this week"],
-    );
-    const stale = pages.filter((p) => p.hasAttribute("data-stale"));
-    expect(stale.map((p) => p.getAttribute("aria-label"))).toEqual(["What changed this week"]);
-    expect(within(stale[0]).getByTestId("standing-page-stale").textContent).toContain("STALE · 1 NEW SOURCE");
+    const section = await screen.findByTestId("room-this-week");
+    const groups = within(section).getAllByTestId("this-week-group");
+    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["Risks", "Changed"]);
+    const changed = within(groups[1]).getAllByTestId("this-week-line");
+    expect(changed).toHaveLength(4);
+    const cutover = changed.find((l) => l.textContent?.includes("Cutover date is 10-17"))!;
+    expect(within(cutover).getByTestId("memory-ref").textContent).toBe("NOTE 10-11");
     expect(section.textContent).not.toContain("Harbor");
     expect(section.textContent).not.toMatch(/Rewrite/i);
   });

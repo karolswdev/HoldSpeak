@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, recovery includes AG10 #1367, ST1 #1347 and ST2 #1346. The running desk was last checked at `80ecb1add` (ST1 and Q9).
+**Last updated:** 2026-10-19, recovery includes AG10 #1367, ST1 #1347, P3 #1350 and ST2 #1346. The running desk was last checked at `80ecb1add`; P3 delivery follows merge.
 
-**Total: 72 of 117 slices merged**, with Send S7 still partial.
+**Total: 73 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -17,7 +17,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Engines | `engines/` | 8 of 8 |
 | The desk's tools (MCP) | `mcp/` | 7 of 7 |
 | Ask | `asking/` | 10 of 13 |
-| Projects | `projects/` | 3 of 11 |
+| Projects | `projects/` | 4 of 11 |
 | Agents | `agents/` | 11 of 16 |
 | Daily and Needs you | `daily/` | 10 of 11 |
 | Setup and Settings | `setup/` | 3 of 10 |
@@ -84,14 +84,14 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Q11 | Memory where he looks | Open |  |
 | Q12 | The Memory app | Open |  |
 
-## Projects (`projects/RECIPE.md`): 3 of 11
+## Projects (`projects/RECIPE.md`): 4 of 11
 
 | Slice | What | State | Note |
 |---|---|---|---|
 | P0 | Draft update never freezes the desk and never goes quiet | Done · #1253 |  |
 | P1 | Write update: a true draft in under a second, the engine's after | Done · #1283 |  |
 | P2 | Leave 1:1s out of updates | Done · #1276 |  |
-| P3 | The Now wing: where it stands in ten seconds | Open |  |
+| P3 | The Now wing: where it stands in ten seconds | Done · #1350 | Recovered meeting source chips; populated head facts and Now sections observed on an isolated hub at 1440/393. |
 | P4 | Projects and Decisions in Go; withhold dead verbs | Open |  |
 | P5 | Sources in one go | Open |  |
 | P6 | Nudge and Ask, in their homes | Open |  |
