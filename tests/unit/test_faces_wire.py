@@ -180,6 +180,10 @@ class TestIntelligenceRunRoute:
         called = {}
 
         class FakeIntelService:
+            # Capture C5b: the service also owns meeting.result.prepare.
+            def prepare_result(self, *args, **kwargs):
+                raise AssertionError("not called here")
+
             def run_intelligence(
                 self, principal, meeting_id, *, expected_selection_hash=None
             ):
@@ -215,6 +219,10 @@ class TestIntelligenceRunRoute:
         called = {}
 
         class FakeIntelService:
+            # Capture C5b: the service also owns meeting.result.prepare.
+            def prepare_result(self, *args, **kwargs):
+                raise AssertionError("not called here")
+
             def run_intelligence(
                 self, principal, meeting_id, *, expected_selection_hash=None
             ):

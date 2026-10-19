@@ -95,23 +95,18 @@ describe("Conductor F2 on the Chair", () => {
     [...document.querySelectorAll<HTMLElement>(".needs-row")]
       .find((r) => r.querySelector(".needs-row-name")?.textContent === name);
 
-  it("K5a + UX-CANON D: one object, one row: the item carries its agent's question, ASKS · age, Answer, Open", async () => {
+  it("K5a + UX-CANON D, Betterment AG9: one object, one row: the ask is the Agents row (question, Answer, Open)", async () => {
     render(<ChairHome />);
-    await waitFor(() => expect(needsRow("Write the rollback runbook")?.querySelector(".gadget-lamp")?.textContent)
-      .toBe("ASKS · 2 MIN"));
-    const row = needsRow("Write the rollback runbook")!;
-    // The item's icon and name; no separate agent row.
-    expect(row.getAttribute("data-kind")).toBe("action");
-    expect(document.querySelectorAll(".needs-row[data-kind='agent']")).toHaveLength(0);
-    expect([...document.querySelectorAll(".needs-row-name")].filter((n) => n.textContent?.includes("Write the rollback runbook"))).toHaveLength(1);
-    expect(row.querySelector(".needs-row-fact")?.textContent).toBe(QUESTION);
-    const answer = within(row).getByRole("button", { name: "Answer: Write the rollback runbook" });
+    const row = await screen.findByTestId("needs-agent-row");
+    expect(row.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(row.textContent).toContain(QUESTION);
+    // The item's own row is not drawn beside it: one row for the work.
+    expect(needsRow("Write the rollback runbook")).toBeUndefined();
+    expect(document.querySelectorAll("[data-testid='needs-agent-row']")).toHaveLength(1);
+    const answer = within(row).getByRole("button", { name: "Answer" });
     expect(answer.className).toMatch(/primary/);
     fireEvent.click(answer);
     expect(openCoderSession).toHaveBeenCalledWith("claude:c1", { answer: true });
-    fireEvent.click(within(row).getByRole("button", { name: "Open: Write the rollback runbook" }));
-    expect(openCoderSession).toHaveBeenLastCalledWith("claude:c1");
-    expect(row.querySelector("[data-testid='flight-chip']")).toBeNull();
   });
 
   it("K4a: an item an agent works and no question: the agent on the fact line, its state on the lamp, Open", async () => {
@@ -136,9 +131,7 @@ describe("Conductor F2 on the Chair", () => {
 
   it("F1 x F2: an in-flight row is the agent's: no Hand to coder, no owner to name", async () => {
     render(<ChairHome />);
-    await waitFor(() => expect(needsRow("Write the rollback runbook")?.querySelector(".gadget-lamp")?.textContent)
-      .toBe("ASKS · 2 MIN"));
-    const row = needsRow("Write the rollback runbook")!;
+    const row = await screen.findByTestId("needs-agent-row");
     expect(within(row).queryByRole("button", { name: /^Hand to coder/ })).toBeNull();
     expect(within(row).queryByRole("button", { name: /^Name an owner/ })).toBeNull();
     expect(row.textContent).not.toMatch(/UNASSIGNED|OWNER · UNKNOWN/);

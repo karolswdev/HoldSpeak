@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T05:00:36.318960Z",
+  "captured_at": "2026-10-19T04:23:11.738199Z",
   "wire": {
     "count": 1,
     "flights": [
@@ -12,7 +12,7 @@
         "id": "m-cutover-a1",
         "kind": "action",
         "launch_id": "launch_c2_runbook",
-        "launched_at": "2026-10-18T04:40:36.141579Z",
+        "launched_at": "2026-10-19T04:03:11.544859Z",
         "merged_at": null,
         "new": false,
         "origin_ref": "action:m-cutover-a1",
@@ -24,9 +24,11 @@
         },
         "project_id": "",
         "project_name": "",
+        "screen": null,
         "session_cleanup": null,
         "session_key": "claude:c1a0de00-runbook",
         "state": "pr_open",
+        "state_source": "hook",
         "title": "Write the rollback runbook",
         "turn_end": null,
         "turn_id": null
@@ -34,7 +36,7 @@
     ],
     "history": [],
     "launches": {
-      "cap": 3,
+      "cap": 6,
       "live": 0
     },
     "sessions": [
@@ -48,7 +50,7 @@
           "id": "m-cutover-a1",
           "kind": "action",
           "launch_id": "launch_c2_runbook",
-          "launched_at": "2026-10-18T04:40:36.141579Z",
+          "launched_at": "2026-10-19T04:03:11.544859Z",
           "merged_at": null,
           "new": false,
           "origin_ref": "action:m-cutover-a1",
@@ -60,9 +62,11 @@
           },
           "project_id": "",
           "project_name": "",
+          "screen": null,
           "session_cleanup": null,
           "session_key": "claude:c1a0de00-runbook",
           "state": "pr_open",
+          "state_source": "hook",
           "title": "Write the rollback runbook",
           "turn_end": null,
           "turn_id": null
@@ -79,11 +83,12 @@
           "target_transport": "unknown",
           "tmux_label": null
         },
+        "screen": null,
         "session": {
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-18T05:00:34.982501Z",
+          "created_at": "2026-10-19T04:23:10.377531Z",
           "cwd": "/tmp/rig/home/dev/wt/hs-action-runbook",
           "done_id": null,
           "event_count": 9,
@@ -110,9 +115,9 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": true,
-          "updated_at": "2026-10-18T05:00:36.139241Z",
-          "wait_id": "2026-10-18T05:00:36.139241Z#9",
-          "wait_started_at": "2026-10-18T05:00:36.139241Z"
+          "updated_at": "2026-10-19T04:23:11.541890Z",
+          "wait_id": "2026-10-19T04:23:11.541890Z#9",
+          "wait_started_at": "2026-10-19T04:23:11.541890Z"
         }
       }
     ]

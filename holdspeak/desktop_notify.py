@@ -170,14 +170,81 @@ def _entry(value: Any) -> dict[str, str]:
 
 # ── macOS notifier (osascript fallback) ──────────────────────────────
 
+#: Betterment daily D8: the hub's own address (``http://host:port``), set when
+#: the web server binds, so a notice's ``click_url`` (a desk path such as
+#: ``/?open=intelligence:desk``) can open the desk in the browser.
+_HUB_URL = ""
+#: Where Homebrew installs ``terminal-notifier`` (a hub started by launchd
+#: may not have these on its PATH).
+_TERMINAL_NOTIFIER_PATHS = ("/opt/homebrew/bin/terminal-notifier", "/usr/local/bin/terminal-notifier")
+
+
+def set_hub_url(url: str) -> None:
+    """Store the hub's address for :func:`absolute_url` (the web server calls it)."""
+    global _HUB_URL
+    _HUB_URL = str(url or "").rstrip("/")
+
+
+def absolute_url(click_url: str | None) -> str | None:
+    """A desk path as a full address on this hub; ``None`` with no hub address."""
+    if not click_url:
+        return None
+    if click_url.startswith(("http://", "https://")):
+        return click_url
+    if not _HUB_URL:
+        return None
+    return _HUB_URL + ("" if click_url.startswith("/") else "/") + click_url
+
+
+def _terminal_notifier() -> str | None:
+    """The ``terminal-notifier`` program, or ``None`` when it is not installed."""
+    import os
+    import shutil
+
+    found = shutil.which("terminal-notifier")
+    if found:
+        return found
+    for path in _TERMINAL_NOTIFIER_PATHS:
+        if os.access(path, os.X_OK):
+            return path
+    return None
+
+
+def _notify_terminal_notifier(program: str, title: str, body: str, url: str) -> bool:
+    """Post a notice that opens ``url`` when he presses it (Betterment daily D8).
+
+    ``osascript``'s ``display notification`` cannot carry a URL: pressing it
+    opens Script Editor. ``terminal-notifier -open`` can. No ``-sound``: a
+    notice is quiet."""
+    try:
+        done = subprocess.run(
+            [program, "-title", title, "-message", body, "-open", url],
+            timeout=5,
+            capture_output=True,
+            check=False,
+        )
+        return done.returncode == 0
+    except Exception as exc:
+        log.warning("terminal-notifier notification failed: %s", exc)
+        return False
+
 
 def _notify_macos(title: str, body: str, *, click_url: str | None = None) -> bool:
-    """Post a macOS notification via osascript.
+    """Post a macOS notification.
+
+    Betterment daily D8: a notice with a ``click_url`` goes through
+    ``terminal-notifier`` when it is installed, so pressing it opens that
+    desk address. Else (and when that post fails) it goes through osascript,
+    which cannot open an address: pressing it does nothing for the desk.
 
     UNUserNotificationCenter is NOT available in the venv (the PyObjC
     ``UserNotifications`` framework bridge is not installed).  The
     ``osascript`` path is the fallback named in the design.
     """
+    url = absolute_url(click_url)
+    program = _terminal_notifier() if url else None
+    if program and url and _notify_terminal_notifier(program, title, body, url):
+        return True
     # Escape double-quotes in the body/title for AppleScript string safety.
     safe_title = title.replace("\\", "\\\\").replace('"', '\\"')
     safe_body = body.replace("\\", "\\\\").replace('"', '\\"')

@@ -58,9 +58,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-10-12T06:00:00+00:00",
+       "ends_at": "2026-10-19T06:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-10-05T06:00:00+00:00",
+       "starts_at": "2026-10-12T06:00:00+00:00",
        "total": 0
       }
      },
@@ -68,14 +68,18 @@
       "projects": []
      },
      "/api/settings/heartbeat": {
+      "last_decision_at": null,
       "last_notified_count": 0,
       "last_notified_items": {},
       "last_notify_outcome": "",
       "last_remote_run_at": null,
       "last_sweep_at": null,
+      "morning_day": "",
       "muted_projects": [],
       "next_sweep_at": null,
       "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
       "quiet_hours": {
        "end": 8,
        "start": 22
@@ -90,14 +94,18 @@
    },
    {
     "answer": {
+     "last_decision_at": null,
      "last_notified_count": 0,
      "last_notified_items": {},
      "last_notify_outcome": "",
      "last_remote_run_at": null,
      "last_sweep_at": null,
+     "morning_day": "",
      "muted_projects": [],
      "next_sweep_at": null,
      "notify": "edge",
+     "notify_finished": true,
+     "prep_notified": [],
      "quiet_hours": {
       "end": 8,
       "start": 22
@@ -166,9 +174,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-10-12T06:00:00+00:00",
+       "ends_at": "2026-10-19T06:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-10-05T06:00:00+00:00",
+       "starts_at": "2026-10-12T06:00:00+00:00",
        "total": 0
       }
      },
@@ -176,14 +184,18 @@
       "projects": []
      },
      "/api/settings/heartbeat": {
+      "last_decision_at": null,
       "last_notified_count": 0,
       "last_notified_items": {},
       "last_notify_outcome": "",
       "last_remote_run_at": null,
       "last_sweep_at": null,
+      "morning_day": "",
       "muted_projects": [],
       "next_sweep_at": null,
       "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
       "quiet_hours": {
        "end": 8,
        "start": 22
@@ -200,8 +212,7 @@
    }
   ]
  },
- "mute": {
-  "project": "proj-4d07d14d4fef",
+ "finished": {
   "steps": [
    {
     "gets": {
@@ -260,38 +271,28 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-10-12T06:00:00+00:00",
+       "ends_at": "2026-10-19T06:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-10-05T06:00:00+00:00",
+       "starts_at": "2026-10-12T06:00:00+00:00",
        "total": 0
       }
      },
      "/api/projects": {
-      "projects": [
-       {
-        "context": {},
-        "created_at": "2026-10-11T16:23:52.123672",
-        "description": "",
-        "detection_threshold": 0.4,
-        "id": "proj-4d07d14d4fef",
-        "is_archived": false,
-        "keywords": [],
-        "meeting_count": 0,
-        "name": "Q4 Platform",
-        "team_members": [],
-        "updated_at": "2026-10-11T16:23:52.123672"
-       }
-      ]
+      "projects": []
      },
      "/api/settings/heartbeat": {
+      "last_decision_at": null,
       "last_notified_count": 0,
       "last_notified_items": {},
       "last_notify_outcome": "",
       "last_remote_run_at": null,
       "last_sweep_at": null,
+      "morning_day": "",
       "muted_projects": [],
       "next_sweep_at": null,
       "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
       "quiet_hours": {
        "end": 8,
        "start": 22
@@ -306,16 +307,248 @@
    },
    {
     "answer": {
+     "last_decision_at": null,
      "last_notified_count": 0,
      "last_notified_items": {},
      "last_notify_outcome": "",
      "last_remote_run_at": null,
      "last_sweep_at": null,
+     "morning_day": "",
+     "muted_projects": [],
+     "next_sweep_at": null,
+     "notify": "edge",
+     "notify_finished": false,
+     "prep_notified": [],
+     "quiet_hours": {
+      "end": 8,
+      "start": 22
+     },
+     "remote_hosts": [],
+     "report_merged_prs": true,
+     "runs_on": "local",
+     "sweep_every_minutes": 15
+    },
+    "body": {
+     "notify_finished": false
+    },
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 1,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-19T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-12T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": []
+     },
+     "/api/settings/heartbeat": {
+      "last_decision_at": null,
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": null,
+      "last_sweep_at": null,
+      "morning_day": "",
+      "muted_projects": [],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "notify_finished": false,
+      "prep_notified": [],
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 15
+     }
+    },
+    "method": "PUT",
+    "name": "PUT /api/settings/heartbeat",
+    "path": "/api/settings/heartbeat"
+   }
+  ]
+ },
+ "mute": {
+  "project": "proj-b9c8faee4a7d",
+  "steps": [
+   {
+    "gets": {
+     "/api/brief/latest": null,
+     "/api/cadence/history?limit=20": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "nudges": []
+     },
+     "/api/cadence/loops": {
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "loops": []
+     },
+     "/api/cadence/status": {
+      "brief_job": {
+       "enabled": true,
+       "hour": 6
+      },
+      "counts": {},
+      "egress": {
+       "label": "Local only",
+       "scope": "local"
+      },
+      "enabled": false,
+      "max_nudges_per_day": 12,
+      "policies": 0,
+      "pressure": "normal",
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "tick_interval_seconds": 300
+     },
+     "/api/door": {
+      "board": {
+       "active": [],
+       "now": [],
+       "overdue": [],
+       "unassigned": [],
+       "waiting": []
+      },
+      "calendar_configured": false,
+      "counts": {
+       "active": 0,
+       "now": 0,
+       "overdue": 0,
+       "upcoming_today": 0,
+       "waiting": 0
+      },
+      "people_store_state": "unconfigured",
+      "upcoming": [],
+      "week": {
+       "days": [],
+       "ends_at": "2026-10-19T06:00:00+00:00",
+       "has_calendar": false,
+       "starts_at": "2026-10-12T06:00:00+00:00",
+       "total": 0
+      }
+     },
+     "/api/projects": {
+      "projects": [
+       {
+        "context": {},
+        "created_at": "2026-10-18T21:49:14.394913",
+        "description": "",
+        "detection_threshold": 0.4,
+        "id": "proj-b9c8faee4a7d",
+        "is_archived": false,
+        "keywords": [],
+        "meeting_count": 0,
+        "name": "Q4 Platform",
+        "team_members": [],
+        "updated_at": "2026-10-18T21:49:14.394913"
+       }
+      ]
+     },
+     "/api/settings/heartbeat": {
+      "last_decision_at": null,
+      "last_notified_count": 0,
+      "last_notified_items": {},
+      "last_notify_outcome": "",
+      "last_remote_run_at": null,
+      "last_sweep_at": null,
+      "morning_day": "",
+      "muted_projects": [],
+      "next_sweep_at": null,
+      "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
+      "quiet_hours": {
+       "end": 8,
+       "start": 22
+      },
+      "remote_hosts": [],
+      "report_merged_prs": true,
+      "runs_on": "local",
+      "sweep_every_minutes": 15
+     }
+    },
+    "name": "before"
+   },
+   {
+    "answer": {
+     "last_decision_at": null,
+     "last_notified_count": 0,
+     "last_notified_items": {},
+     "last_notify_outcome": "",
+     "last_remote_run_at": null,
+     "last_sweep_at": null,
+     "morning_day": "",
      "muted_projects": [
-      "proj-4d07d14d4fef"
+      "proj-b9c8faee4a7d"
      ],
      "next_sweep_at": null,
      "notify": "edge",
+     "notify_finished": true,
+     "prep_notified": [],
      "quiet_hours": {
       "end": 8,
       "start": 22
@@ -327,7 +560,7 @@
     },
     "body": {
      "muted_projects": [
-      "proj-4d07d14d4fef"
+      "proj-b9c8faee4a7d"
      ]
     },
     "gets": {
@@ -386,9 +619,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-10-12T06:00:00+00:00",
+       "ends_at": "2026-10-19T06:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-10-05T06:00:00+00:00",
+       "starts_at": "2026-10-12T06:00:00+00:00",
        "total": 0
       }
      },
@@ -396,30 +629,34 @@
       "projects": [
        {
         "context": {},
-        "created_at": "2026-10-11T16:23:52.123672",
+        "created_at": "2026-10-18T21:49:14.394913",
         "description": "",
         "detection_threshold": 0.4,
-        "id": "proj-4d07d14d4fef",
+        "id": "proj-b9c8faee4a7d",
         "is_archived": false,
         "keywords": [],
         "meeting_count": 0,
         "name": "Q4 Platform",
         "team_members": [],
-        "updated_at": "2026-10-11T16:23:52.123672"
+        "updated_at": "2026-10-18T21:49:14.394913"
        }
       ]
      },
      "/api/settings/heartbeat": {
+      "last_decision_at": null,
       "last_notified_count": 0,
       "last_notified_items": {},
       "last_notify_outcome": "",
       "last_remote_run_at": null,
       "last_sweep_at": null,
+      "morning_day": "",
       "muted_projects": [
-       "proj-4d07d14d4fef"
+       "proj-b9c8faee4a7d"
       ],
       "next_sweep_at": null,
       "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
       "quiet_hours": {
        "end": 8,
        "start": 22
@@ -436,14 +673,18 @@
    },
    {
     "answer": {
+     "last_decision_at": null,
      "last_notified_count": 0,
      "last_notified_items": {},
      "last_notify_outcome": "",
      "last_remote_run_at": null,
      "last_sweep_at": null,
+     "morning_day": "",
      "muted_projects": [],
      "next_sweep_at": null,
      "notify": "edge",
+     "notify_finished": true,
+     "prep_notified": [],
      "quiet_hours": {
       "end": 8,
       "start": 22
@@ -512,9 +753,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-10-12T06:00:00+00:00",
+       "ends_at": "2026-10-19T06:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-10-05T06:00:00+00:00",
+       "starts_at": "2026-10-12T06:00:00+00:00",
        "total": 0
       }
      },
@@ -522,28 +763,32 @@
       "projects": [
        {
         "context": {},
-        "created_at": "2026-10-11T16:23:52.123672",
+        "created_at": "2026-10-18T21:49:14.394913",
         "description": "",
         "detection_threshold": 0.4,
-        "id": "proj-4d07d14d4fef",
+        "id": "proj-b9c8faee4a7d",
         "is_archived": false,
         "keywords": [],
         "meeting_count": 0,
         "name": "Q4 Platform",
         "team_members": [],
-        "updated_at": "2026-10-11T16:23:52.123672"
+        "updated_at": "2026-10-18T21:49:14.394913"
        }
       ]
      },
      "/api/settings/heartbeat": {
+      "last_decision_at": null,
       "last_notified_count": 0,
       "last_notified_items": {},
       "last_notify_outcome": "",
       "last_remote_run_at": null,
       "last_sweep_at": null,
+      "morning_day": "",
       "muted_projects": [],
       "next_sweep_at": null,
       "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
       "quiet_hours": {
        "end": 8,
        "start": 22
@@ -619,9 +864,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-10-12T06:00:00+00:00",
+       "ends_at": "2026-10-19T06:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-10-05T06:00:00+00:00",
+       "starts_at": "2026-10-12T06:00:00+00:00",
        "total": 0
       }
      },
@@ -629,14 +874,18 @@
       "projects": []
      },
      "/api/settings/heartbeat": {
+      "last_decision_at": null,
       "last_notified_count": 0,
       "last_notified_items": {},
       "last_notify_outcome": "",
       "last_remote_run_at": null,
       "last_sweep_at": null,
+      "morning_day": "",
       "muted_projects": [],
       "next_sweep_at": null,
       "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
       "quiet_hours": {
        "end": 8,
        "start": 22
@@ -651,14 +900,18 @@
    },
    {
     "answer": {
+     "last_decision_at": null,
      "last_notified_count": 0,
      "last_notified_items": {},
      "last_notify_outcome": "",
      "last_remote_run_at": null,
      "last_sweep_at": null,
+     "morning_day": "",
      "muted_projects": [],
      "next_sweep_at": null,
      "notify": "edge",
+     "notify_finished": true,
+     "prep_notified": [],
      "quiet_hours": {
       "end": 11,
       "start": 9
@@ -730,9 +983,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-10-12T06:00:00+00:00",
+       "ends_at": "2026-10-19T06:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-10-05T06:00:00+00:00",
+       "starts_at": "2026-10-12T06:00:00+00:00",
        "total": 0
       }
      },
@@ -740,14 +993,18 @@
       "projects": []
      },
      "/api/settings/heartbeat": {
+      "last_decision_at": null,
       "last_notified_count": 0,
       "last_notified_items": {},
       "last_notify_outcome": "",
       "last_remote_run_at": null,
       "last_sweep_at": null,
+      "morning_day": "",
       "muted_projects": [],
       "next_sweep_at": null,
       "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
       "quiet_hours": {
        "end": 11,
        "start": 9
@@ -824,9 +1081,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-10-12T06:00:00+00:00",
+       "ends_at": "2026-10-19T06:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-10-05T06:00:00+00:00",
+       "starts_at": "2026-10-12T06:00:00+00:00",
        "total": 0
       }
      },
@@ -834,14 +1091,18 @@
       "projects": []
      },
      "/api/settings/heartbeat": {
+      "last_decision_at": null,
       "last_notified_count": 0,
       "last_notified_items": {},
       "last_notify_outcome": "",
       "last_remote_run_at": null,
       "last_sweep_at": null,
+      "morning_day": "",
       "muted_projects": [],
       "next_sweep_at": null,
       "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
       "quiet_hours": {
        "end": 8,
        "start": 22
@@ -856,8 +1117,8 @@
    },
    {
     "answer": {
-     "at": "2026-10-11T22:23:51+00:00",
-     "duration_ms": 6.9,
+     "at": "2026-10-19T03:49:14+00:00",
+     "duration_ms": 8.7,
      "errors": 0,
      "follow_through": {
       "cleaned": [],
@@ -877,13 +1138,16 @@
      },
      "notify": {
       "complete": true,
-      "count": 1,
+      "count": 0,
       "escalatedItems": 0,
       "fired": false,
+      "frontWindow": null,
       "kind": "heartbeat.notify",
       "lastNotifiedCount": 0,
-      "newItems": 1,
-      "outcome": "not_posted_in_rig",
+      "morning": false,
+      "newItems": 0,
+      "noticeItems": [],
+      "outcome": "held_no_edge",
       "projectCount": 0
      },
      "outcomes": {
@@ -954,9 +1218,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-10-12T06:00:00+00:00",
+       "ends_at": "2026-10-19T06:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-10-05T06:00:00+00:00",
+       "starts_at": "2026-10-12T06:00:00+00:00",
        "total": 0
       }
      },
@@ -964,14 +1228,18 @@
       "projects": []
      },
      "/api/settings/heartbeat": {
+      "last_decision_at": "2026-10-19T03:49:14+00:00",
       "last_notified_count": 0,
       "last_notified_items": {},
-      "last_notify_outcome": "not_posted_in_rig",
+      "last_notify_outcome": "held_no_edge",
       "last_remote_run_at": null,
-      "last_sweep_at": "2026-10-11T22:23:51+00:00",
+      "last_sweep_at": "2026-10-19T03:49:14+00:00",
+      "morning_day": "",
       "muted_projects": [],
-      "next_sweep_at": "2026-10-11T22:38:51+00:00",
+      "next_sweep_at": "2026-10-19T04:04:14+00:00",
       "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
       "quiet_hours": {
        "end": 8,
        "start": 22
@@ -1047,9 +1315,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-10-12T06:00:00+00:00",
+       "ends_at": "2026-10-19T06:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-10-05T06:00:00+00:00",
+       "starts_at": "2026-10-12T06:00:00+00:00",
        "total": 0
       }
      },
@@ -1057,14 +1325,18 @@
       "projects": []
      },
      "/api/settings/heartbeat": {
+      "last_decision_at": null,
       "last_notified_count": 0,
       "last_notified_items": {},
       "last_notify_outcome": "",
-      "last_remote_run_at": "2026-10-11T22:23:52+00:00",
+      "last_remote_run_at": "2026-10-19T03:49:15+00:00",
       "last_sweep_at": null,
+      "morning_day": "",
       "muted_projects": [],
       "next_sweep_at": null,
       "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
       "quiet_hours": {
        "end": 8,
        "start": 22
@@ -1081,14 +1353,18 @@
    },
    {
     "answer": {
+     "last_decision_at": null,
      "last_notified_count": 0,
      "last_notified_items": {},
      "last_notify_outcome": "",
-     "last_remote_run_at": "2026-10-11T22:23:52+00:00",
+     "last_remote_run_at": "2026-10-19T03:49:15+00:00",
      "last_sweep_at": null,
+     "morning_day": "",
      "muted_projects": [],
      "next_sweep_at": null,
      "notify": "edge",
+     "notify_finished": true,
+     "prep_notified": [],
      "quiet_hours": {
       "end": 8,
       "start": 22
@@ -1159,9 +1435,9 @@
       "upcoming": [],
       "week": {
        "days": [],
-       "ends_at": "2026-10-12T06:00:00+00:00",
+       "ends_at": "2026-10-19T06:00:00+00:00",
        "has_calendar": false,
-       "starts_at": "2026-10-05T06:00:00+00:00",
+       "starts_at": "2026-10-12T06:00:00+00:00",
        "total": 0
       }
      },
@@ -1169,14 +1445,18 @@
       "projects": []
      },
      "/api/settings/heartbeat": {
+      "last_decision_at": null,
       "last_notified_count": 0,
       "last_notified_items": {},
       "last_notify_outcome": "",
-      "last_remote_run_at": "2026-10-11T22:23:52+00:00",
+      "last_remote_run_at": "2026-10-19T03:49:15+00:00",
       "last_sweep_at": null,
+      "morning_day": "",
       "muted_projects": [],
       "next_sweep_at": null,
       "notify": "edge",
+      "notify_finished": true,
+      "prep_notified": [],
       "quiet_hours": {
        "end": 8,
        "start": 22

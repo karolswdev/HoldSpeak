@@ -2,18 +2,18 @@
  "partial": {
   "gets": {
    "/api/brief/latest": {
-    "generated_at": "2026-10-11T16:31:01.109233-06:00",
-    "generated_label": "GENERATED OCT 11 16:31",
+    "generated_at": "2026-10-18T21:38:30.143854-06:00",
+    "generated_label": "GENERATED OCT 18 21:38",
     "headline": "3 sources not read.",
-    "id": "brief-d6aa7edc028941dfa305a6ff6024d6cf",
+    "id": "brief-59580ae95f5f48ed9b529c6de9d5a195",
     "is_empty": false,
     "ledger": {
      "operations": 0,
      "since": null
     },
-    "period_end": "2026-10-11T16:31:01.109233-06:00",
-    "period_label": "OCT 09-11",
-    "period_start": "2026-10-09T00:00:00-06:00",
+    "period_end": "2026-10-18T21:38:30.143854-06:00",
+    "period_label": "OCT 16-18",
+    "period_start": "2026-10-16T00:00:00-06:00",
     "person_sections_state": "unavailable",
     "sections": {
      "broke": [],
@@ -23,17 +23,8 @@
      "waiting": [
       {
        "created_at": null,
-       "detail": null,
-       "id": "brief-item-9a31918d472c43fcae315fbbda9572ea",
-       "priority": 330,
-       "section": "waiting",
-       "source_ref": "not_read:people",
-       "text": "NOT READ \u00b7 People (locked) \u00b7 Generate for the full brief"
-      },
-      {
-       "created_at": null,
        "detail": "Owner access is required",
-       "id": "brief-item-add34db0ebb14bd9b3031ab13ba80b88",
+       "id": "brief-item-5991b885fc85463586f5d77937bf3eae",
        "priority": 330,
        "section": "waiting",
        "source_ref": "not_read:assignments",
@@ -42,35 +33,38 @@
       {
        "created_at": null,
        "detail": "authority refused",
-       "id": "brief-item-ec0508ac8b3e44a78b608288dc6eeba4",
+       "id": "brief-item-c8541529c10044048d7dfdb2de15817c",
        "priority": 330,
        "section": "waiting",
        "source_ref": "not_read:decisions",
        "text": "NOT READ \u00b7 Decisions"
+      },
+      {
+       "created_at": null,
+       "detail": null,
+       "id": "brief-item-d78cbd2360d04c6e84ba28b8868bdf79",
+       "priority": 330,
+       "section": "waiting",
+       "source_ref": "not_read:people",
+       "text": "NOT READ \u00b7 People (locked) \u00b7 Generate for the full brief"
       }
      ]
     },
     "shelf": {},
     "stale": false,
-    "title": "Brief \u00b7 Sunday 11 Oct 2026"
+    "title": "Brief \u00b7 Sunday 18 Oct 2026"
    },
    "/api/desk/needs-you?fresh=1": {
     "arming": [],
-    "blockers": [
-     {
-      "key": "summary",
-      "label": "No engine for summaries",
-      "verb": "Choose an engine"
-     }
-    ],
+    "blockers": [],
     "complete": true,
-    "computedAt": "2026-10-11T16:31:01.151474-06:00",
-    "count": 1,
+    "computedAt": "2026-10-18T21:38:30.189932-06:00",
+    "count": 0,
     "coverage": [
      {
       "kind": "coder",
       "label": "Agents",
-      "observed_at": "2026-10-11T22:31:01.159549+00:00",
+      "observed_at": "2026-10-19T03:38:30.199751+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -80,12 +74,7 @@
     ],
     "failedMeetings": [],
     "items": [],
-    "members": [
-     {
-      "kind": "blocker",
-      "ref": "blocker:summary"
-     }
-    ],
+    "members": [],
     "mutedCount": 0,
     "next": null,
     "ownerNames": [
@@ -124,9 +113,9 @@
     "upcoming": [],
     "week": {
      "days": [],
-     "ends_at": "2026-10-12T06:00:00+00:00",
+     "ends_at": "2026-10-19T06:00:00+00:00",
      "has_calendar": false,
-     "starts_at": "2026-10-05T06:00:00+00:00",
+     "starts_at": "2026-10-12T06:00:00+00:00",
      "total": 0
     }
    },
@@ -1019,7 +1008,7 @@
      {
       "effective": {
        "assignment": {
-        "created_at": "2026-10-11T22:31:00.879286Z",
+        "created_at": "2026-10-19T03:38:29.888060Z",
         "effective_retry_policy_id": "retry.audio.transcription",
         "entries": [
          {
@@ -1032,7 +1021,7 @@
           "readiness": "unavailable"
          }
         ],
-        "id": "ia_3c769490007843c69247fe413bc6f3df",
+        "id": "ia_cc8510b96bae44c4a80476955a78e371",
         "issues": [
          {
           "code": "binding_not_ready",
@@ -1049,7 +1038,7 @@
          "capability_id": "speech.transcribe",
          "kind": "capability"
         },
-        "sha256": "sha256:1fbcc135641c8ca92c743ae8daa79227934ec3933f7232be872b7bd8e23695d5"
+        "sha256": "sha256:fecaaef8204f3ff72073ac70fca8d3323dfeeadcf019443e10dfed95c4dc85bf"
        },
        "capability_id": "speech.transcribe",
        "inherited_from": "capability",
@@ -1124,7 +1113,7 @@
       "has_override": false,
       "id": "workbench.item",
       "issues": [],
-      "label": "Workbench item",
+      "label": "Automation item",
       "queue": null
      },
      {
@@ -1153,57 +1142,41 @@
  "scheduled": {
   "gets": {
    "/api/brief/latest": {
-    "generated_at": "2026-10-11T06:00:00-06:00",
-    "generated_label": "GENERATED OCT 11 06:00",
-    "headline": "1 thing waiting.",
-    "id": "brief-5b812500048342ab9b73e5de90b30628",
-    "is_empty": false,
+    "generated_at": "2026-10-18T06:00:00-06:00",
+    "generated_label": "GENERATED OCT 18 06:00",
+    "headline": "No changes",
+    "id": "brief-8891d5f5e9b34912b71271d45a8e4312",
+    "is_empty": true,
     "ledger": {
      "operations": 0,
      "since": null
     },
-    "period_end": "2026-10-11T06:00:00-06:00",
-    "period_label": "OCT 09-11",
-    "period_start": "2026-10-09T00:00:00-06:00",
+    "period_end": "2026-10-18T06:00:00-06:00",
+    "period_label": "OCT 16-18",
+    "period_start": "2026-10-16T00:00:00-06:00",
     "person_sections_state": "unavailable",
     "sections": {
      "broke": [],
      "changed": [],
      "decisions": [],
      "this_week": [],
-     "waiting": [
-      {
-       "created_at": null,
-       "detail": "Choose an engine",
-       "id": "brief-item-a8eca62b9a3e43bab70c024dcef2df77",
-       "priority": 120,
-       "section": "waiting",
-       "source_ref": "blocker:summary",
-       "text": "No engine for summaries"
-      }
-     ]
+     "waiting": []
     },
     "shelf": {},
     "stale": true,
-    "title": "Brief \u00b7 Sunday 11 Oct 2026"
+    "title": "Brief \u00b7 Sunday 18 Oct 2026"
    },
    "/api/desk/needs-you?fresh=1": {
     "arming": [],
-    "blockers": [
-     {
-      "key": "summary",
-      "label": "No engine for summaries",
-      "verb": "Choose an engine"
-     }
-    ],
+    "blockers": [],
     "complete": true,
-    "computedAt": "2026-10-11T16:31:00.780037-06:00",
-    "count": 1,
+    "computedAt": "2026-10-18T21:38:29.804437-06:00",
+    "count": 0,
     "coverage": [
      {
       "kind": "coder",
       "label": "Agents",
-      "observed_at": "2026-10-11T22:31:00.788201+00:00",
+      "observed_at": "2026-10-19T03:38:29.814363+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -1213,12 +1186,7 @@
     ],
     "failedMeetings": [],
     "items": [],
-    "members": [
-     {
-      "kind": "blocker",
-      "ref": "blocker:summary"
-     }
-    ],
+    "members": [],
     "mutedCount": 0,
     "next": null,
     "ownerNames": [
@@ -1257,9 +1225,9 @@
     "upcoming": [],
     "week": {
      "days": [],
-     "ends_at": "2026-10-12T06:00:00+00:00",
+     "ends_at": "2026-10-19T06:00:00+00:00",
      "has_calendar": false,
-     "starts_at": "2026-10-05T06:00:00+00:00",
+     "starts_at": "2026-10-12T06:00:00+00:00",
      "total": 0
     }
    },
@@ -2152,7 +2120,7 @@
      {
       "effective": {
        "assignment": {
-        "created_at": "2026-10-11T22:31:00.449913Z",
+        "created_at": "2026-10-19T03:38:29.384638Z",
         "effective_retry_policy_id": "retry.audio.transcription",
         "entries": [
          {
@@ -2165,7 +2133,7 @@
           "readiness": "unavailable"
          }
         ],
-        "id": "ia_02493361bce34cb6854cedbae31cd603",
+        "id": "ia_59ef729c0fab44b2ba620c7166030624",
         "issues": [
          {
           "code": "binding_not_ready",
@@ -2182,7 +2150,7 @@
          "capability_id": "speech.transcribe",
          "kind": "capability"
         },
-        "sha256": "sha256:d6c5fe693754f68d886e95d90e1b8b55451c09ce0da42f31ff699730cfe03978"
+        "sha256": "sha256:fde1b4101f1ed50630f93368ee955af6d5a096b5e47c71cd5e47ff8c1d1e6be5"
        },
        "capability_id": "speech.transcribe",
        "inherited_from": "capability",
@@ -2257,7 +2225,7 @@
       "has_override": false,
       "id": "workbench.item",
       "issues": [],
-      "label": "Workbench item",
+      "label": "Automation item",
       "queue": null
      },
      {

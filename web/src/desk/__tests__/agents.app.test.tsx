@@ -27,9 +27,15 @@ import { WingSlotContext } from "../surface/wings";
 import { LaneWindow, __resetDraftEgress } from "../lane/LaneWindow";
 import { __resetLane, useLane } from "../lane/laneStore";
 import { branchFace } from "../lane/laneWire";
-import { menuChoices, questionChoices, wantsToRun } from "../agents/choices";
+import { questionChoices } from "../agents/choices";
+import { WhyThisStateBody, type ExplainWire } from "../agents/WhyThisState";
 import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../agentFlights";
 import { ConductorWindow } from "../conductor/ConductorWindow";
+import { agentsTileOf } from "../conductor/fleetTile";
+import { askedWord } from "../agents/AgentRow";
+import { AgentLine } from "../components/AgentLine";
+import { NeedRow } from "../needs/NeedsDrawer";
+import type { NeedFace } from "../needs/needsFace";
 import { __resetConductor } from "../conductor/store";
 import { useSteering } from "../steering";
 
@@ -487,9 +493,9 @@ describe("the agent faces say Agents and agent (Betterment AG1)", () => {
  * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
  * test_the_agents_read_asks_with_choices_and_answers_without_an_arm
  * (fixtures/agents-ag2: one agent asks "Answer 1 for config, 2 for env.",
- * one waits at a permission prompt; Normal mode, nothing armed). The screens
- * are the fake Claude Code's real panes read by the hub's own peek_pane
- * (wire/peek.ag2-*.wire.json). */
+ * one waits at a permission prompt; Normal mode, nothing armed). Betterment
+ * AG7: the command and the agent's own menu come from the hub's screen rules
+ * (fixtures/agents-ag7), no longer from the row's own read of the pane. */
 function ag2<T = unknown>(name: string): { captured_at: string; wire: T } {
   return hubWire<T>(`../fixtures/agents-ag2/${name}`);
 }
@@ -512,8 +518,6 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
       "/api/onboarding/agents": DETECT.wire,
       "/api/agent/launches/launch_ag0_ghost/lane": LANE_ASKS.wire,
       "/api/agent/launches/": { gated: [], wait: null },
-      "/api/coders/claude%3Aag0-ghost/peek": hubWire("peek.ag2-asks").wire,
-      "/api/coders/claude%3Aag2-held/peek": hubWire("peek.ag2-permission").wire,
       "/api/coders/claude%3Aag0-ghost/steer": { status: "delivered", pane_id: "%4242" },
       "/api/coders/claude%3Aag2-held/keys": { status: "delivered", pane_id: "%4243" },
     });
@@ -555,10 +559,9 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
       { text: "Use config, and add a test", submit: true, kind: "answer", wait_id: waitOf("ag0-ghost") }]]);
   });
 
-  it("Wants to run shows the command from the agent's screen; Allow sends Enter, Deny sends Escape", async () => {
+  it("Wants to run: Allow sends Enter, Deny sends Escape", async () => {
     const { held } = await rows();
     expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
-    await waitFor(() => expect(within(held).getByTestId("agent-row-command").textContent).toBe("rm -rf build/ && make release"));
     await act(async () => {
       fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
     });
@@ -574,19 +577,225 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
   });
 });
 
-describe("the screen parse on the recorded fake Claude Code panes (Betterment AG2)", () => {
-  it("reads the permission prompt's command and its own menu; the question screen has no menu", () => {
-    const permission = hubWire<{ peek: { lines: string[] } }>("peek.ag2-permission").wire.peek.lines;
-    expect(wantsToRun(permission)).toBe("rm -rf build/ && make release");
-    expect(menuChoices(permission)).toEqual([
-      { n: "1", label: "Yes" }, { n: "2", label: "No, and tell Claude what to do differently" },
-    ]);
-    const asks = hubWire<{ peek: { lines: string[] } }>("peek.ag2-asks").wire.peek.lines;
-    expect(menuChoices(asks)).toEqual([]);
-    expect(wantsToRun(asks)).toBeNull();
+describe("Needs you: an agent's ask is the Agents row (Betterment AG9)", () => {
+  it("one row for the piece of work, with the question, its choices and Answer inline", async () => {
+    const SESSIONS = ag2<{ sessions: unknown[]; flights: unknown[] }>("coders-sessions");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    serve({ "/api/agent/launches/": { gated: [], wait: null } });
+    useAgentFlights.setState({
+      sessions: SESSIONS.wire.sessions.map(fromWireSessionRow), flights: SESSIONS.wire.flights.map(fromWireFlight), loaded: true,
+    });
+    const face = { id: "action:x", kind: "action", name: "Write the on-call note", fact: "", askOf: "claude:ag0-ghost",
+      lamp: { label: "ASKS", tone: "ask" }, group: "agents", verbs: { kind: "none" } } as unknown as NeedFace;
+    render(<ul><NeedRow face={face} primary projects={false} /></ul>);
+    const row = await screen.findByTestId("needs-agent-row");
+    expect(row.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(within(row).getAllByTestId("agent-row-choice").map((b) => b.textContent)).toEqual(["1 · config", "2 · env"]);
+    expect(within(row).getByRole("button", { name: "Answer" })).toBeTruthy();
+  });
+});
+
+describe("the choices a question offers (Betterment AG2)", () => {
+  it("reads 'Answer 1 for …, 2 for …' in the question; a plain question has none", () => {
     expect(questionChoices("Ship it now? Answer 1 for yes, 2 for no, 3 for later.").map((c) => `${c.n} · ${c.label}`))
       .toEqual(["1 · yes", "2 · no", "3 · later"]);
     expect(questionChoices("Jordan or Avery?")).toEqual([]);
+  });
+});
+
+/* ── Betterment AG7: screen rules (the herdr port) ─────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_states_from_the_screen_when_no_hook_speaks
+ * (fixtures/agents-ag7): three agents with their hooks off; the hub's
+ * watcher read their real tmux panes (the fake Claude Code's recorded
+ * screens) with herdr's rules. */
+function ag7<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag7/${name}`);
+}
+
+describe("the screen says the state when no hook speaks (Betterment AG7)", () => {
+  const SESSIONS = ag7<{ flights: Array<Record<string, unknown>> }>("coders-sessions");
+  const WHY = ag7<ExplainWire>("explain.held");
+  const ANSWERED = ag7("answer.held");
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({
+      "/api/coders/sessions": SESSIONS.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/launch_ag7_held/answer": ANSWERED.wire,
+      "/api/agent/launches/": { gated: [], wait: null },
+    });
+  });
+
+  it("Wants to run shows the command the rules read; Allow sends Enter to its screen prompt (no hook)", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Release the rollback build" });
+    const held = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
+      .find((row) => row.dataset.objectId === "launch:launch_ag7_held")!;
+    expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
+    expect(within(held).getByTestId("agent-row-command").textContent).toMatch(/^rm -rf build\/ && make release/);
+    const flight = SESSIONS.wire.flights.find((f) => f.launch_id === "launch_ag7_held") as { screen: { since: string } };
+    await act(async () => {
+      fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
+    });
+    const posts = api.fetch.mock.calls.filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST");
+    expect(posts.map(([url, init]) => [url, (init as { json?: unknown }).json])).toEqual([
+      ["/api/agent/launches/launch_ag7_held/answer", { since: flight.screen.since, keys: ["Enter"] }],
+    ]);
+  });
+
+  it("Asks you shows the agent's last words and their choices; Done is New", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Move the rollback flag" });
+    const asks = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
+      .find((row) => row.dataset.objectId === "launch:launch_ag7_asks")!;
+    expect(asks.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(within(asks).getByTestId("agent-row-question").textContent).toContain("Should it live in config/flags.yaml");
+    expect(within(asks).getAllByTestId("agent-row-choice").map((b) => b.textContent)).toEqual(["1 · config", "2 · env"]);
+    const done = screen.getAllByTestId("conductor-row").find((row) => row.dataset.objectId === "launch:launch_ag7_done")!;
+    expect(within(done).getByTestId("conductor-pill").textContent).toBe("Done · New");
+  });
+
+  it("Why this state names the source, the rule, its file and the lines it matched", () => {
+    render(<WhyThisStateBody explain={WHY.wire} />);
+    expect(screen.getByTestId("lane-why-source").textContent).toBe("From: The agent's screen");
+    expect(screen.getByTestId("lane-why-rule").textContent).toBe(
+      "Rule: bash_permission_prompt · claude.toml 2026.10.11.1 (bundled)");
+    expect(screen.getByTestId("lane-why-evidence").textContent).toContain("Do you want to proceed?");
+    expect(screen.queryByTestId("lane-why-hook")).toBeNull();
+  });
+});
+
+/* ── Betterment AG8: the Agents list is the fleet ─────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_is_the_fleet (fixtures/agents-ag8): five agents on two
+ * Projects (one asks, one waits at a permission prompt, one finished and is
+ * New, one works, one finished and was opened) and one hand that waits for a
+ * free agent; then Start an agent's three requests and Cancel. */
+function ag8<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag8/${name}`);
+}
+
+describe("the Agents list is the fleet (Betterment AG8)", () => {
+  const SESSIONS = ag8<{ sessions: unknown[]; flights: unknown[] }>("coders-sessions");
+  const HAND_REFUSED = ag8<Record<string, unknown>>("hand.refused");
+  const order = (section: HTMLElement) =>
+    [...section.querySelectorAll<HTMLElement>("[data-object-id]")].map((el) => el.dataset.objectId);
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({
+      "/api/coders/sessions": SESSIONS.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/": { gated: [], wait: null },
+      "/api/projects": ag8("projects").wire,
+      "/api/notes": ag8("note.create").wire,
+    });
+  });
+
+  it("groups by project, the worst first; inside, Needs you, New, Working, Quiet; the head counts only what is there", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the on-call note" });
+    expect(screen.getByTestId("conductor-head").querySelector(".kit-disp")?.textContent)
+      .toBe("2 need you · 1 new · 1 working");
+    expect(screen.getByTestId("conductor-head").textContent).not.toMatch(/\b0\b/);
+    const groups = screen.getAllByTestId("conductor-project");
+    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["Ledger", "Platform"]);
+    expect(groups.map((g) => g.querySelector(".kit-pill")?.textContent)).toEqual(["Needs you", "Needs you"]);
+    // The hand that waits for a free agent stands after the working one.
+    expect(order(groups[0])).toEqual(["launch:launch_ag8_held", "launch:launch_ag8_work", expect.stringMatching(/^queue:/)]);
+    expect(order(groups[1])).toEqual(["launch:launch_ag8_ask", "launch:launch_ag8_new", "launch:launch_ag8_quiet"]);
+    const pills = within(groups[1]).getAllByTestId("conductor-pill").map((el) => el.textContent);
+    expect(pills).toEqual(["Done · New", "Quiet"]);
+    // The rig's agents lack their hooks: "On this Mac" shows (it shows only
+    // when something is missing), each with Connect.
+    expect(within(screen.getByTestId("conductor-coders")).getAllByTestId("conductor-pill").map((el) => el.textContent))
+      .toEqual(["Not connected", "Not connected"]);   // Claude Code, Codex (pi: hooks not checked)
+  });
+
+  it("the Dock tile carries the worst lamp, the mark for New and the count that needs him", () => {
+    const sessions = SESSIONS.wire.sessions.map(fromWireSessionRow);
+    const flights = SESSIONS.wire.flights.map(fromWireFlight);
+    expect(agentsTileOf(sessions, flights)).toEqual({
+      lamp: "ask", needYou: 2, fresh: true, words: "2 need you, 1 new, 1 working",
+    });
+    expect(agentsTileOf([], [])).toEqual({ lamp: null, needYou: 0, fresh: false, words: "" });
+  });
+
+  it("Start an agent in three presses: a note with his words, filed in the project, handed", async () => {
+    const calls: Array<[string, string, unknown]> = [];
+    const routes = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      const method = init?.method ?? "GET";
+      if (method !== "GET") calls.push([String(url), method, init?.json]);
+      if (String(url).includes("/resources/note%3A")) return ag8("resource.add").wire;
+      if (String(url) === "/api/agent/hand") throw new ApiError(409, "refused", HAND_REFUSED.wire);
+      return routes(url, init);
+    });
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the on-call note" });
+    fireEvent.click(screen.getByTestId("conductor-start"));                       // press 1
+    const words = await screen.findByTestId("conductor-start-words");
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Project" }).querySelectorAll("option").length).toBeGreaterThan(1));
+    fireEvent.change(screen.getByRole("combobox", { name: "Project" }), { target: { value: "p-platform" } });
+    fireEvent.change(words, { target: { value: "Add a rollback test" } });          // his words (or the mic)
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conductor-start-go"));                   // press 3
+    });
+    const note = ag8<{ note: { id?: string; note_id?: string } }>("note.create").wire.note;
+    const noteId = String(note.note_id ?? note.id);
+    expect(calls).toEqual([
+      ["/api/notes", "POST", { title: "Add a rollback test", body_markdown: "Add a rollback test", tags: ["agent"] }],
+      [`/api/projects/p-platform/resources/${encodeURIComponent(`note:${noteId}`)}`, "PUT", {}],
+      ["/api/agent/hand", "POST", { kind: "note", id: noteId, profile: "claude-default", project_id: "p-platform", queue: true }],
+    ]);
+    // The hub's own refusal, in words, where he pressed.
+    await waitFor(() => expect(screen.getByTestId("conductor-start-form").textContent).toMatch(/Not started · (NO REPOSITORY|REPOSITORY NOT REGISTERED)/));
+  });
+
+  it("a hand that waits for a free agent has Cancel; one press takes it out of the queue", async () => {
+    const calls: string[] = [];
+    const routes = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (init?.method === "DELETE") {
+        calls.push(String(url));
+        return ag8("queue.cancel").wire;
+      }
+      return routes(url, init);
+    });
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the on-call note" });
+    const cancel = screen.getByTestId("conductor-cancel-queued");
+    await act(async () => {
+      fireEvent.click(cancel);
+    });
+    expect(calls).toEqual([expect.stringMatching(/^\/api\/agent\/hand\/queue\/queue_/)]);
+  });
+
+  it("a desk object wears its agent's line; one press opens the agent's window", () => {
+    const flights = SESSIONS.wire.flights.map(fromWireFlight);
+    useAgentFlights.setState({ flights, sessions: [], loaded: true });
+    const done = flights.find((f) => f.launchId === "launch_ag8_new")!;
+    const { unmount } = render(<AgentLine objectRef={`action:${done.id}`} />);
+    expect(screen.getByTestId("desk-agent-line").textContent).toBe("Claude Code · Done · New");
+    unmount();
+    const { container } = render(<AgentLine objectRef="action:no-agent-here" />);
+    expect(container.textContent).toBe("");
+  });
+
+  it("an ask ten seconds old says Asked just now (not 1 min ago)", () => {
+    const now = Date.parse("2026-10-18T12:00:10Z");
+    expect(askedWord("1 MIN", Date.parse("2026-10-18T12:00:00Z"), now)).toBe("Asked just now");
+    expect(askedWord("1 MIN", Date.parse("2026-10-18T11:58:59Z"), now)).toBe("Asked 1 min ago");
+    expect(askedWord(undefined)).toBe("Asks");
   });
 });
 

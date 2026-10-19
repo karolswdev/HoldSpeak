@@ -498,6 +498,9 @@ async def run_workbench(workbench_id: str, principal: Any | None = None, *, memo
     )
 
 
+from .workbench_templates import MORNING_PREP_ID as _MORNING_PREP_ID  # noqa: E402
+
+
 class WorkbenchConductor:
     """Background scheduler that checks for due workbenches every 60 seconds."""
 
@@ -545,6 +548,16 @@ class WorkbenchConductor:
             db = get_database()
         except Exception:
             return
+
+        # Betterment daily D9 (owner decision 3): once an engine with the
+        # desk's tools exists, Morning prep is made On (once only).
+        try:
+            from .services.automation_runs import ensure_morning_prep
+
+            if ensure_morning_prep(db):
+                name(_MORNING_PREP_ID)
+        except Exception as exc:
+            log.warning(f"Conductor: Morning prep not made: {exc}")
 
         workbenches = db.workbenches.list()
         for wb in workbenches:

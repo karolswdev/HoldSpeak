@@ -222,3 +222,11 @@ def test_a_resuming_agent_holds_a_slot_and_a_failed_resume_does_not(tmp_path, db
     assert [r["launch_id"] for r in soon] == [launch_id]
     late = slot_holders(db, [record], now=pressed + timedelta(seconds=RESUME_WINDOW_SECONDS + 1))
     assert late == []
+
+
+def test_the_session_watcher_never_settles_a_stopped_launch_complete(tmp_path, db, monkeypatch, sessions):  # noqa: F811
+    """Betterment AG7 (#1316): the restart check ran first; the session
+    watcher's late settle keeps Stopped by restart."""
+    rig, launch_id = _stopped(tmp_path, db, monkeypatch, sessions)
+    assert rig.service._first.settle(launch_id) == STOPPED_BY_RESTART
+    assert rig.launches.get(launch_id)["state"] == STOPPED_BY_RESTART

@@ -95,16 +95,16 @@ describe("the thought's name follows the draft at once", () => {
     const words = useThoughtDraftWords(noteId);
     return <output>{windowName({ kind: "thought", title: words?.title ?? kept.title, body: words?.body ?? kept.body_markdown, keptBody: words?.keptBody ?? kept.body_markdown })}</output>;
   }
-  it("New thought, then the first words as they are typed, then the kept name again when the window closes", () => {
+  it("New note, then the first words as they are typed, then the kept name again when the window closes", () => {
     render(<Name noteId="n1" kept={{ title: "Thought", body_markdown: "" }} />);
-    expect(screen.getByRole("status")).toHaveTextContent("New thought");
+    expect(screen.getByRole("status")).toHaveTextContent("New note");
     let withdraw = () => {};
     act(() => { withdraw = publishThoughtDraft("n1", { title: "Thought", body: "Ask Priya whether", keptBody: "" }); });
     expect(screen.getByRole("status")).toHaveTextContent("Ask Priya whether");
     act(() => { publishThoughtDraft("n1", { title: "Cutover plan", body: "Ask Priya whether", keptBody: "" }); });
     expect(screen.getByRole("status")).toHaveTextContent("Cutover plan");
     act(() => withdraw());
-    expect(screen.getByRole("status")).toHaveTextContent("New thought");
+    expect(screen.getByRole("status")).toHaveTextContent("New note");
   });
 });
 

@@ -1064,7 +1064,7 @@ def test_a_starter_makes_one_automation_and_the_friday_walk_reads_a_result(tmp_p
     start = _record_gets("starters", client, ["/api/workbench-templates", "/api/workbenches"], "", tmp_path)
     starters = start["/api/workbench-templates"]["templates"]
     assert [s["id"] for s in starters] == [
-        "friday-team-update", "meeting-follow-ups", "one-on-one-prep", "summarize-a-drawer"]
+        "friday-team-update", "meeting-follow-ups", "one-on-one-prep", "summarize-a-drawer", "morning-prep"]
     friday = starters[0]
     assert (friday["schedule"], friday["sources"], friday["output_target"], friday["blanks"]) == (
         "0 15 * * 5", ["meetings:this_week", "notes:this_week"], "inbox", {})
@@ -1294,6 +1294,63 @@ def test_put_it_in_files_a_fresh_desk_inbox_and_new_results_show_until_opened(tm
     [delivery] = ran.json()["run"]["deliveries"]
     assert (delivery["outcome"], delivery["filed"]) == ("noted", False)
     assert db.directories.get(INBOX) is None
+
+
+def test_a_new_result_raises_one_quiet_notice_that_opens_the_automation(tmp_path: Path, monkeypatch) -> None:
+    """Betterment daily D8 (decision 2): a run that makes a new result raises
+    ONE quiet notice, "<name> has a new result", that opens the automation
+    window; Today's NEW line comes from the same result (A6). No notice while
+    the automation window is in front, with "Finished work" off, or in quiet
+    hours. A rig posts nothing and records why."""
+    from datetime import datetime as _dt
+
+    from holdspeak import desk_presence
+    from holdspeak.services import heartbeat_service as hb_module
+    from holdspeak.services.heartbeat_service import HeartbeatService
+
+    posts: list[tuple[str, str, Any]] = []
+
+    def notifier(title: str, body: str, *, click_url: Any = None) -> bool:
+        posts.append((title, body, click_url))
+        return True
+
+    monkeypatch.setattr(hb_module, "_notify_default", notifier)
+    desk_presence.clear()
+    db, client, _prompts, _ = _instruction_rig(tmp_path, monkeypatch, "wb-told")
+    wb = _make_automation(client, "wb-told")
+    assert client.put(f"/api/workbenches/{wb}", json={"name": "Friday team update"}).status_code == 200
+    heartbeat = HeartbeatService(db)
+    hour = _dt.now().hour
+    heartbeat.update_settings({"notify": "edge", "quiet_hours": {"start": (hour + 3) % 24, "end": (hour + 5) % 24}})
+
+    def run() -> None:
+        ran = client.post(f"/api/workbenches/{wb}/run", json={})
+        assert ran.status_code == 200, ran.text
+
+    run()
+    assert posts == [("HoldSpeak", "Friday team update has a new result", f"/?open=workbench:{wb}")], posts
+    assert client.get("/api/automations/new").json()["new_count"] == 1  # the Today line
+
+    try:  # the automation window in front: he is looking at it
+        desk_presence.report(f"pullout:workbench:{wb}", True)
+        run()
+        assert len(posts) == 1, posts
+    finally:
+        desk_presence.clear()
+
+    heartbeat.update_settings({"notify_finished": False})
+    run()
+    assert len(posts) == 1, posts
+    heartbeat.update_settings({"notify_finished": True, "quiet_hours": {"start": hour, "end": (hour + 1) % 24}})
+    run()
+    assert len(posts) == 1, posts  # quiet hours: the line in Today waits for him
+    assert client.get("/api/automations/new").json()["new_count"] == 4
+
+    # A rig (HOLDSPEAK_DESKTOP_NOTIFY=0, no notifier) posts nothing and says why.
+    monkeypatch.undo()
+    monkeypatch.setenv("HOLDSPEAK_DESKTOP_NOTIFY", "0")
+    heartbeat.update_settings({"quiet_hours": {"start": (hour + 3) % 24, "end": (hour + 5) % 24}})
+    assert HeartbeatService(db).finished_notice(wb, "Friday team update")["outcome"] == "not_posted_in_rig"
 
 
 def test_a_desk_with_its_own_inbox_drawer_gets_the_note_there(tmp_path: Path, monkeypatch) -> None:

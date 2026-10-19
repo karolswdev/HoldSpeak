@@ -65,6 +65,16 @@ def build_workbenches_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to read new automation results")
 
+    @router.get("/api/automations/prepared")
+    async def api_prepared_for_today(request: Request) -> Any:
+        """Betterment daily D9: Today's Prepared block (the newest result of an
+        automation whose Put it in is Today) and the automation Prepare now
+        runs. Each is null when there is none."""
+        try:
+            return JSONResponse(_svc().prepared_for_today(_principal(request)))
+        except Exception as exc:
+            return error_500(exc, log, "Failed to read the prepared day")
+
     @router.post("/api/workbenches")
     async def api_create_workbench(request: Request) -> Any:
         body = await _json_body(request)

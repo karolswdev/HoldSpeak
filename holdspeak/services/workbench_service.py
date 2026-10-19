@@ -739,6 +739,20 @@ class WorkbenchService:
 
         return new_results(self._db)
 
+    def prepared_for_today(self, principal: Principal) -> dict[str, Any]:
+        """Betterment daily D9: ``prepared`` (Today's Prepared block, or None)
+        and ``automation`` (the live automation whose Put it in is Today, the
+        one Prepare now runs; Morning prep first; or None)."""
+        from holdspeak.workbench_templates import MORNING_PREP_ID
+
+        from .automation_runs import prepared_for_today
+
+        prepared = prepared_for_today(self._db, principal)
+        live = [wb for wb in self._db.workbenches.list() if str(wb.output_target or "") == "today"]
+        live.sort(key=lambda wb: (wb.id != MORNING_PREP_ID, wb.id))
+        automation = {"id": live[0].id, "name": str(live[0].name or "Morning prep")} if live else None
+        return {"prepared": prepared, "automation": automation}
+
     def cancel_run(self, principal: Principal, parent_operation_id: str) -> str:
         """Cancel exactly the authenticated parent, never a Workbench lookup."""
         from holdspeak.kernel.runtime import _service
@@ -758,15 +772,19 @@ class WorkbenchService:
         return [{**starter, "schedule": cron_for(starter["when"]) if starter["when"]["kind"] == "schedule" else None}
                 for starter in list_templates()]
 
-    def make_from_starter(self, principal: Principal, starter: dict[str, Any]) -> dict[str, Any]:
+    def make_from_starter(
+        self, principal: Principal, starter: dict[str, Any], *, workbench_id: str = "",
+    ) -> dict[str, Any]:
         """Betterment A7: one automation with the starter's sentence and no
         agent (nothing is copied). A schedule is stored and stays Off: he
-        turns it On (a starter is not a recurring-inference approval)."""
+        turns it On (a starter is not a recurring-inference approval).
+        ``workbench_id``: a stable id (Betterment D9, Morning prep)."""
         from .automation_when import cron_for
 
         when = dict(starter["when"])
+        extra = {"id": workbench_id} if workbench_id else {}
         made = self.create_workbench(
-            principal, name=starter["name"], instruction=starter["instruction"],
+            principal, **extra, name=starter["name"], instruction=starter["instruction"],
             sources=list(starter["sources"]), output_target=starter["output_target"],
             schedule=cron_for(when) if when["kind"] == "schedule" else None, schedule_enabled=False,
         )

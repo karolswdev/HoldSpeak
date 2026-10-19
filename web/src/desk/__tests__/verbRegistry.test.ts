@@ -95,8 +95,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       .filter((v) => v.group === "new")
       .map((v) => v.id);
     expect(creates).toEqual([
-      "desk.new-note",
-      "desk.new-thought", // PHILO-13-16 (C6)
+      "desk.new-note", // Betterment Q8: also ⌃T (Write a thought is parked)
       "desk.new-decision",
       "desk.new-knowledge",
       // Betterment A8: one way to automate; New Workflow is parked.
@@ -149,8 +148,6 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
     const keys = VERBS.filter((v) => v.key).map((v) => [v.id, v.key]);
     expect(Object.fromEntries(keys)).toEqual({
       "desk.new-note": "⌃N",
-      // PHILO-13-16 (C6): the pop-key, a thought from any window.
-      "desk.new-thought": "⌃T",
       "desk.new-decision": "⌃⇧N",
       "desk.overview": "⌘⇧E",
       "desk.settle": "⌘⇧F",

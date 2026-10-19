@@ -926,6 +926,8 @@ OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
 
 #: Declared operations with no MCP exposure: the rig refuses them by name.
 OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create",
+                          # Betterment capture C5b: the meeting window's Prepare… press (HTTP only).
+                          "meeting.result.prepare",
                           # PHILO-9-02: the charter's HTTP capability exceptions.
                           "project.door.count", "project.watch.update", "project.watch.baseline",
                           # PHILO-10-03: the email key is a held input, HTTP only (never a tool argument).

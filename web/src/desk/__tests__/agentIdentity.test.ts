@@ -36,15 +36,15 @@ function wears(url: string | undefined, agent: "claude" | "codex", where: string
 }
 
 describe.each(["codex", "claude"] as const)("a %s agent keeps its face on every face", (agent) => {
-  it("the screen (compose)", () => {
+  it("the screen (compose): Betterment AG8, no per-agent icon on the floor", () => {
     const objects = composeScreen({
       items: { ...EMPTY_ITEMS } as never, projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0,
       sessions: [session(agent)], flights: [flight(agent)], filed: new Set(), persons: [], membersLoaded: true,
     });
-    const o = objects.find((x) => x.key === `coder:${agent}:s1`);
-    expect(o, "the agent object").toBeTruthy();
-    wears(o?.sprite, agent, "screen rest");
-    wears(o?.spriteSelected, agent, "screen selected");
+    // The Agents list is the fleet: the agent shows in the Agents drawer
+    // (its count) and on its Dock tile, never as its own desk icon.
+    expect(objects.find((x) => x.key === `coder:${agent}:s1`)).toBeUndefined();
+    expect(objects.find((x) => x.key === "drawer:conductor")?.count).toBe(1);
   });
 
   it("a Project drawer's members", () => {

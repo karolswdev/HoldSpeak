@@ -268,6 +268,19 @@ describe("Rhythm (recorded hub): the sweep, the mute tokens and quiet hours", ()
     expect(presses).toEqual(["PUT /api/settings/heartbeat", "PUT /api/settings/heartbeat"]);
   });
 
+  it("FINISHED WORK is on by default; off puts notify_finished false on the hub (Betterment daily D8)", async () => {
+    const steps = RHYTHM.finished.steps as Step[];
+    expect((steps[0].gets["/api/settings/heartbeat"] as { notify_finished: boolean }).notify_finished).toBe(true);
+    expect((steps[1].gets["/api/settings/heartbeat"] as { notify_finished: boolean }).notify_finished).toBe(false);
+    const presses = replay(steps);
+    render(<CadenceCore />);
+    const token = await screen.findByRole("checkbox", { name: "FINISHED WORK" });
+    await waitFor(() => expect((token as HTMLInputElement).checked).toBe(true));
+    fireEvent.click(token);
+    await waitFor(() => expect((screen.getByRole("checkbox", { name: "FINISHED WORK" }) as HTMLInputElement).checked).toBe(false));
+    expect(presses).toEqual(["PUT /api/settings/heartbeat"]);
+  });
+
   it("quiet hours around now: the Sweep reads HELD · QUIET UNTIL 11:00 and Notify reads HELD", async () => {
     // replaces: tests/e2e/test_hs171_rhythm_glass.py::TestRhythmFace::test_quiet_hours_held
     // The hub's answer after PUT quiet_hours 09-11; the viewer's clock is 10:00.

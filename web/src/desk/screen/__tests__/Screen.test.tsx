@@ -229,11 +229,10 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     for (const filed of ["meeting:m-standup", "decision:d-freeze", "people:p-jordan"]) expect(keys()).not.toContain(filed);
     // a loose object Needs you lists wears a lamp
     expect(icon(/^Vendor call, MEETING, NEEDS YOU/).querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("warn");
-    // the agents: `<Agent>: <item short name>`, the lamp by state
-    const asks = icon(/^Claude Code: rollback runbook, AGENT, ASKS/);
-    expect(asks.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
-    const works = icon(/^Codex: reconciliation job, AGENT, WORKS/);
-    expect(works.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("info");
+    // Betterment AG8: no per-agent icon on the floor (the Agents drawer,
+    // its Dock tile and Needs you carry the agents).
+    expect(screen.queryByRole("button", { name: /^Claude Code: rollback runbook/ })).toBeNull();
+    expect(keys().filter((k) => k?.startsWith("coder:"))).toEqual([]);
     // no chips on the screen: only lamps and count notches
     expect(document.querySelector(".desk-screen .state-chip, .desk-screen .surface-token")).toBeNull();
   });
@@ -252,7 +251,6 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(at(/^Agents/)).toEqual({ x: 20, y: 300 });
     expect(at(/^Needs you/)).toEqual({ x: 1300, y: 12 });
     expect(at(/^Archive/)).toEqual({ x: 1300, y: 660 });
-    expect(at(/^Claude Code: rollback runbook/)).toEqual({ x: 1170, y: 12 });
     expect(at(/^Vendor call/).x).toBe(210);
   });
 
@@ -312,8 +310,6 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     // PHILO-17 (2b): a person icon opens THAT person, in their own window.
     expect(shell.openPrimitive).toHaveBeenCalledWith("people:p-avery");
     expect(shell.openSurfaceOr).not.toHaveBeenCalledWith("open-people", "/", "people:p-avery");
-    fireEvent.keyDown(icon(/^Claude Code: rollback runbook/), { key: "Enter" });
-    expect(shell.openCoderSession).toHaveBeenCalledWith("claude:c1");
   });
 
   it("Astra's P1: a failed membership read keeps a filed object off the screen; Retry rereads only it", async () => {
@@ -558,10 +554,10 @@ describe("PHILO-17 objverbs — the Chair has the desk's one selection", () => {
     expect(keyContext()).toEqual({ selectedRef: "note:n-2" });
     expect(rename.ghost(keyContext())).toBeNull();
     expect(verbById("object.open")!.ghost(keyContext())).toBeNull();
-    // F2 runs Rename: the note's editor opens.
+    // F2 runs Rename: the note's one window (the sticky) opens (Betterment Q8).
     const ran = dispatchKey(new KeyboardEvent("keydown", { key: "F2", bubbles: true, cancelable: true }));
     expect(ran?.id).toBe("object.rename");
-    expect(useDesk.getState().editingId).toBe("n-2");
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("note:n-2");
   });
 
   it("the rubber band and a press on empty glass write the store too", async () => {
@@ -583,7 +579,7 @@ describe("PHILO-17 objverbs — the Chair has the desk's one selection", () => {
     const item = within(menu).getByRole("menuitem", { name: /^Rename/ });
     expect(item.getAttribute("aria-disabled")).not.toBe("true");
     fireEvent.click(item);
-    expect(useDesk.getState().editingId).toBe("n-2");
+    expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("note:n-2");
   });
 
   it("a drawer with no desk object opens no menu", async () => {

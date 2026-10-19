@@ -143,8 +143,9 @@ beforeEach(() => {
     panelMin: [], panelMax: [], panelRects: {} });
 });
 
+// Betterment Q8 (one note): New Note opens the sticky, not this editor; its
+// one-record and at-once tests are thoughtDoorAndReceipt.test.tsx's.
 const EDITOR_VERBS = [
-  ["desk.new-note", "/api/notes", "note"],
   ["desk.new-knowledge", "/api/kbs", "kb"],
   // Betterment AG1 (DECISIONS #3): New Agent left the Desk menu (parked).
 ] as const;
@@ -210,7 +211,6 @@ describe("a New verb opens its window at once, while the desk read is slow", () 
 
 describe("two quick presses make one record", () => {
   it.each([
-    ["desk.new-note", "/api/notes", "notes"],
     ["desk.new-knowledge", "/api/kbs", "kbs"],
   ] as const)("%s twice: one POST, one record, one window", async (id, path, bucket) => {
     // replaces: tests/e2e/test_new_verbs_open_glass.py::TestEveryNewVerbOpensItsWindow::test_two_quick_presses_make_one_record

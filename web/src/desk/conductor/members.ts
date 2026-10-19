@@ -20,6 +20,7 @@ import {
   isInFlight,
   liveAgentSessions,
   type AgentFlight,
+  type AgentScreen,
   type CoderSessionRow,
 } from "../agentFlights";
 import { agentName, agentState, shortItemName } from "../screen/compose";
@@ -33,7 +34,7 @@ import { wireDate } from "../surface/format";
 export const STALE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export type ConductorRole = "ready" | "live" | "stale";
-export type LiveState = "ask" | "held" | "idle" | "pr" | "work" | "done" | "queued";
+export type LiveState = "ask" | "held" | "idle" | "pr" | "work" | "done" | "queued" | "no_signal";
 
 export interface ConductorMember extends ObjectListRow {
   role: ConductorRole;
@@ -59,8 +60,13 @@ export interface ConductorMember extends ObjectListRow {
   turnId?: string | null;
   /** stale: the flight's state (Betterment AG6: `stopped_by_restart` offers Resume). */
   flightState?: AgentFlight["state"];
+  /** stale: the item its agent worked on (Hand again). */
+  origin?: { kind: string; id: string; title: string; projectId: string | null; agent: string };
   /** live: the desk's own answer (Betterment AG3). */
   deskAnswer?: AgentFlight["deskAnswer"];
+  /** live: the agent's screen as the hub's rules read it (Betterment AG7):
+   *  the command an approval wants to run, the numbered choices. */
+  screen?: AgentScreen | null;
 }
 
 export interface ConductorReads {
@@ -116,6 +122,9 @@ function liveLamp(state: LiveState, pr: number | null | undefined): { tone: Obje
     case "queued":
       // Betterment AG5: the hand waits for a free agent.
       return { tone: "info", label: "WAITS" };
+    case "no_signal":
+      // Betterment AG7: nothing told its state for ten minutes.
+      return { tone: "info", label: "NO SIGNAL" };
     default:
       return { tone: "info", label: "WORKS" };
   }
@@ -133,6 +142,9 @@ function sessionState(row: CoderSessionRow): LiveState {
 function flightState(flight: AgentFlight): LiveState {
   if (flight.state === "done") return "done";
   if (flight.state === "queued") return "queued";
+  if (flight.state === "no_signal") return "no_signal";
+  // Betterment AG7: an approval prompt the screen read is "Wants to run".
+  if (flight.state === "waiting" && flight.screen?.wait === "approve" && flight.stateSource === "screen") return "held";
   if (flight.state === "waiting") return flight.turnEnd === "idle" ? "idle" : "ask";
   if (flight.state === "pr_open" || flight.state === "merged") return "pr";
   return "work";
@@ -233,7 +245,8 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
     const state: LiveState = turned && sessionState(row) === "ask" ? turned : sessionState(row);
     const lamp = liveLamp(state, flight?.pr?.number);
     const raw = (row.raw?.session ?? row.raw ?? {}) as Record<string, unknown>;
-    const at = raw.updated_at;
+    // Betterment AG8: an ask is as old as its wait, not its last hook.
+    const at = (state === "ask" || state === "held") && raw.wait_started_at ? raw.wait_started_at : raw.updated_at;
     // A launched agent is its launch for the launch's whole life (Astra r1
     // on #947, P2): the session key is a fact on it, never its identity.
     add({
@@ -255,6 +268,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       isNew: state === "done" && Boolean(flight?.isNew),
       turnId: flight?.turnId ?? null,
       deskAnswer: flight?.deskAnswer ?? null,
+      screen: flight?.screen ?? row.screen ?? null,
       group: liveGroup(state),
       facts: {
         where: flight?.projectName || undefined,
@@ -299,6 +313,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       isNew: state === "done" && Boolean(flight.isNew),
       turnId: flight.turnId ?? null,
       deskAnswer: flight.deskAnswer ?? null,
+      screen: flight.screen ?? null,
       group: liveGroup(state),
       facts: {
         where: flight.projectName || undefined,
@@ -334,6 +349,8 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       state,
       receipt,
       flightState: flight.state,
+      // Gaps, Hand again: the item a stopped agent worked on.
+      origin: { kind: flight.kind, id: flight.id, title: flight.title, projectId: flight.projectId || null, agent: flight.agent },
       sessionKey: flight.sessionKey,
       launchId: flight.launchId,
       group: GROUP.stale,
@@ -369,8 +386,9 @@ export function conductorHead(
 ): ConductorHead {
   const live = members.filter((m) => m.role === "live");
   const ask = live.filter((m) => m.live === "ask" || m.live === "held").length;
-  // Betterment AG0: a finished agent is not at work; AG5: nor a queued hand.
-  const done = live.filter((m) => m.live === "done" || m.live === "queued").length;
+  // Betterment AG0: a finished agent is not at work; AG5: nor a queued hand;
+  // AG7: nor one that sends no signal.
+  const done = live.filter((m) => m.live === "done" || m.live === "queued" || m.live === "no_signal").length;
   return { atWork: live.length - ask - done, ask, launches };
 }
 
@@ -382,4 +400,99 @@ export function headWords(head: ConductorHead): string[] {
     head.ask > 0 ? `${head.ask} ASK` : "",
     cap && cap.live >= cap.cap ? `${cap.live} OF ${cap.cap}` : "",
   ].filter(Boolean);
+}
+
+/* ── Betterment AG8: the Agents list is the fleet ───────────────────────
+ * One glance tells him who needs him, who finished and who works
+ * (agents/DESIGN.md §4, "The Agents window"; herdr's sidebar). */
+
+/** Where a live agent stands in the list: Needs you, New, Working, Quiet. */
+export type FleetRank = 0 | 1 | 2 | 3;
+export const FLEET_WORD: Record<FleetRank, string> = { 0: "Needs you", 1: "New", 2: "Working", 3: "Quiet" };
+
+export function fleetRank(member: ConductorMember): FleetRank {
+  if (member.live === "ask" || member.live === "held") return 0;
+  if (member.live === "done") return member.isNew ? 1 : 3;
+  if (member.live === "idle" || member.live === "no_signal") return 3;
+  return 2;
+}
+
+/** The live agents in the fleet's order: Needs you (the oldest ask first),
+ *  New (the newest first), Working, Quiet (each newest first). */
+export function fleetOrder(members: readonly ConductorMember[]): ConductorMember[] {
+  const live = members.filter((m) => m.role === "live");
+  return live
+    .map((m, i) => [m, i] as const)
+    .sort(([a, ai], [b, bi]) => {
+      const rank = fleetRank(a) - fleetRank(b);
+      if (rank) return rank;
+      // A hand that waits for a free agent stands after the working ones.
+      const waits = Number(a.live === "queued") - Number(b.live === "queued");
+      if (waits) return waits;
+      const at = a.whenSort ?? 0;
+      const bt = b.whenSort ?? 0;
+      if (at !== bt) return fleetRank(a) === 0 ? at - bt : bt - at;
+      return ai - bi;
+    })
+    .map(([m]) => m);
+}
+
+export interface FleetCounts {
+  needYou: number;
+  fresh: number;
+  working: number;
+}
+
+export function fleetCounts(members: readonly ConductorMember[]): FleetCounts {
+  const live = members.filter((m) => m.role === "live");
+  return {
+    needYou: live.filter((m) => fleetRank(m) === 0).length,
+    fresh: live.filter((m) => fleetRank(m) === 1).length,
+    // A queued hand waits; it does not work.
+    working: live.filter((m) => fleetRank(m) === 2 && m.live !== "queued").length,
+  };
+}
+
+/** `2 need you · 1 new · 2 working`; only what is there (no zero). */
+export function fleetWords(counts: FleetCounts): string {
+  return [
+    counts.needYou ? `${counts.needYou} ${counts.needYou === 1 ? "needs" : "need"} you` : "",
+    counts.fresh ? `${counts.fresh} new` : "",
+    counts.working ? `${counts.working} working` : "",
+  ].filter(Boolean).join(" · ");
+}
+
+export interface FleetGroup {
+  /** The project's name; "" for agents on no project. */
+  project: string;
+  members: ConductorMember[];
+  /** The worst state of its agents (herdr's workspace rollup). */
+  worst: FleetRank;
+}
+
+/** The fleet by project, only when the agents span two or more projects;
+ *  else null (no group lines). The group with the worst state leads. */
+export function fleetGroups(members: readonly ConductorMember[]): FleetGroup[] | null {
+  const ordered = fleetOrder(members);
+  const projects = new Map<string, ConductorMember[]>();
+  for (const m of ordered) {
+    const name = String(m.facts.where ?? "");
+    projects.set(name, [...(projects.get(name) ?? []), m]);
+  }
+  if ([...projects.keys()].filter(Boolean).length < 2) return null;
+  return [...projects.entries()]
+    .map(([project, rows]) => ({
+      project,
+      members: rows,
+      worst: Math.min(...rows.map(fleetRank)) as FleetRank,
+    }))
+    .sort((a, b) => a.worst - b.worst || (a.project ? 0 : 1) - (b.project ? 0 : 1) || a.project.localeCompare(b.project));
+}
+
+/** The Dock tile's state: the worst lamp, a dot for New, the count that
+ *  needs him (null with no live agent: the tile says nothing). */
+export function fleetTile(members: readonly ConductorMember[]): { lamp: "ask" | "new" | "work" | null; needYou: number; fresh: boolean } {
+  const counts = fleetCounts(members);
+  const lamp = counts.needYou ? "ask" : counts.fresh ? "new" : counts.working ? "work" : null;
+  return { lamp, needYou: counts.needYou, fresh: counts.fresh > 0 };
 }

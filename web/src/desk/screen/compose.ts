@@ -207,17 +207,6 @@ export function agentState(row: CoderSessionRow): "ask" | "idle" | "done" | "wor
   return "work";
 }
 
-const AGENT_LAMP: Record<"ask" | "idle" | "done" | "work" | "pr", ObjectTone> = { ask: "ask", idle: "info", done: "ok", work: "info", pr: "ok" };
-
-function agentWordFor(row: CoderSessionRow): string {
-  const state = agentState(row);
-  if (state === "ask") return "ASKS";
-  if (state === "idle") return "IDLE";
-  if (state === "done") return row.flight?.isNew ? "NEW" : "DONE";
-  if (state === "pr") return row.flight?.pr?.number ? `PR #${row.flight.pr.number}` : "PR OPEN";
-  return "WORKS";
-}
-
 export function composeScreen(input: ScreenInputs): ScreenObject[] {
   const out: ScreenObject[] = [];
 
@@ -346,20 +335,9 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
     }
   }
 
-  // ── the live agents ──
-  for (const row of live) {
-    const state = agentState(row);
-    out.push({
-      key: `coder:${row.key}`,
-      role: "agent",
-      kind: "coder",
-      kindWord: "AGENT",
-      name: agentName(row),
-      ...sprites("coder", row.key, row.agent),
-      lamp: { tone: AGENT_LAMP[state], label: agentWordFor(row) },
-      target: { type: "agent", key: row.key },
-    });
-  }
+  // Betterment AG8: the per-agent desk icons left the floor (the Agents
+  // drawer, its Dock tile and Needs you carry them); parked in
+  // desk/_parked/agents/floorAgents.ts.
   return out;
 }
 
