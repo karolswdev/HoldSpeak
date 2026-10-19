@@ -45,6 +45,7 @@ import {
 } from "../ask";
 import { AboutPicker, aboutCandidates, type AboutCandidate } from "./about/AboutPicker";
 import { aboutTarget, type AboutChip } from "../askAbout";
+import { appendToNote, undoAppend, type NoteAppend } from "../noteAppend";
 import { HAND_MIME } from "../hand/drag";
 import { MicButton } from "./MicButton";
 import { apiFetch, readableError } from "../../lib/api";
@@ -178,6 +179,11 @@ export function AskPanel() {
   const [threadAbout, setThreadAbout] = useState<LookedAt[]>([]);
   // Betterment Q5: what Ask about this put in About (a note, a project, a person).
   const [seedAbout, setSeedAbout] = useState<AskContext[]>([]);
+  // Betterment Q8: the note this Ask was opened from (Ask about this on a
+  // note). Its answers can be added to it.
+  const [fromNote, setFromNote] = useState<{ id: string; title: string } | null>(null);
+  const [added, setAdded] = useState<Record<string, NoteAppend>>({});
+  const [adding, setAdding] = useState<string | null>(null);
   const [threadRead, setThreadRead] = useState<{ loading: boolean; error: string }>({ loading: false, error: "" });
   const [sent, setSent] = useState<AskRequestSnapshot | null>(null);
   const [running, setRunning] = useState(false);
@@ -269,6 +275,8 @@ export function AskPanel() {
     setTurns([]);
     setThreadAbout([]);
     setSeedAbout([]);
+    setFromNote(null);
+    setAdded({});
     setSent(null);
     setRunning(false);
     setFailedRun(null);
@@ -309,6 +317,8 @@ export function AskPanel() {
     if (askThread.threadId) void loadThread(askThread.threadId);
     else startNew();
     if (!askThread.threadId && askThread.about?.length) setSeedAbout(askThread.about.map((entry) => ({ ...entry })));
+    const notes = !askThread.threadId ? (askThread.about ?? []).filter((entry) => entry.kind === "note") : [];
+    if (notes.length === 1) setFromNote({ id: notes[0].id, title: notes[0].title });
     const question = askThread.question?.trim();
     if (!askThread.threadId && question) {
       setPrompt(question);
@@ -604,6 +614,42 @@ export function AskPanel() {
     if (ref && mounted.current) setSending(turn.key);
   };
 
+  /** Betterment Q8: Add to note appends the answer to the note Ask was
+   *  opened from; Undo puts the note back. */
+  const addToNote = async (turn: AskTurn) => {
+    if (!fromNote || adding || added[turn.key]) return;
+    setAdding(turn.key);
+    try {
+      const append = await appendToNote(fromNote.id, turn.answer);
+      if (mounted.current) setAdded((current) => ({ ...current, [turn.key]: append }));
+      void useDesk.getState().refresh();
+    } catch (cause) {
+      reportWriteFailure("Add to note", cause);
+    } finally {
+      if (mounted.current) setAdding(null);
+    }
+  };
+  const undoAdd = async (turn: AskTurn) => {
+    const append = added[turn.key];
+    if (!append || adding) return;
+    setAdding(turn.key);
+    try {
+      if (!await undoAppend(append)) {
+        reportWriteFailure("Undo", new Error("The note changed after the answer was added. Undo did not change it."));
+      } else if (mounted.current) {
+        setAdded((current) => {
+          const { [turn.key]: _gone, ...rest } = current;
+          return rest;
+        });
+      }
+      void useDesk.getState().refresh();
+    } catch (cause) {
+      reportWriteFailure("Undo", cause);
+    } finally {
+      if (mounted.current) setAdding(null);
+    }
+  };
+
   /** Betterment Q7: Allow once / Deny on a held call. */
   const decide = async (call: HeldCall, decision: "approve" | "deny") => {
     if (!held.threadId || deciding) return;
@@ -779,6 +825,9 @@ export function AskPanel() {
                   {threadId && !tasks[turn.key] && !(turn.used?.wrote ?? []).some((row) => row.ref.startsWith("action_item:")) ? (
                     <Button dense loading={makingTask === turn.key} onClick={() => void makeTask(turn)}>Make it a task</Button>
                   ) : null}
+                  {fromNote && !added[turn.key] ? (
+                    <Button dense loading={adding === turn.key} onClick={() => void addToNote(turn)}>Add to note</Button>
+                  ) : null}
                   {saved[turn.key] ? (
                     <Button dense variant="ghost" onClick={() => openRef(saved[turn.key])}>Open note</Button>
                   ) : (
@@ -800,6 +849,12 @@ export function AskPanel() {
                 ) : null}
                 <UsedLines used={usedWithTasks(turn.used, tasks[turn.key])} testPrefix="ask" lookedAt={false} />
                 {saved[turn.key] ? <span className="desk-ask-saved" role="status">Saved to your desk</span> : null}
+                {fromNote && added[turn.key] ? (
+                  <span className="desk-ask-saved desk-ask-added" role="status" data-testid="ask-added">
+                    Added to {fromNote.title || "the note"}
+                    <Button dense variant="ghost" loading={adding === turn.key} onClick={() => void undoAdd(turn)}>Undo</Button>
+                  </span>
+                ) : null}
                 {sending === turn.key && saved[turn.key] ? (
                   <div className="desk-ask-send-well" data-testid="ask-send">
                     <NoteSendWells id={saved[turn.key].slice("note:".length)} title={turn.question} />

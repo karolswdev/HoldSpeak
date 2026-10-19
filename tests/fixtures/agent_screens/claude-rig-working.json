@@ -1,0 +1,8 @@
+{
+  "agent": "claude",
+  "title": "⠋ fake-claude",
+  "expected_state": "working",
+  "rule_at_capture": "osc_title_working",
+  "source": "rig: docs/internal/betterment/agents/rig/fake_claude.py in tmux (hooks off)",
+  "captured_at": "2026-10-19T03:39:10.837837+00:00"
+}

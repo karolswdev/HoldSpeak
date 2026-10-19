@@ -1,0 +1,133 @@
+{
+  "_source": "Recorded from a real hub by tests/integration/test_desk_meetings.py::test_since_last_time_names_the_last_meeting_of_the_same_kind (GET /api/meetings/<review>/aftercare). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+  "aftercare": {
+    "decisions": [],
+    "is_empty": false,
+    "meeting_date": "2026-10-16T11:00:00",
+    "meeting_id": "af6b75c6",
+    "meeting_title": "Architecture review: idempotent retries",
+    "open_items": {
+      "by_owner": [
+        {
+          "count": 1,
+          "items": [
+            {
+              "due": "2026-10-21",
+              "id": "c6-rev-a1",
+              "meeting_id": "af6b75c6",
+              "owner": "Jun",
+              "provenance": null,
+              "review_state": "pending",
+              "source_timestamp": null,
+              "task": "Write the ADR for idempotent retries"
+            }
+          ],
+          "owner": "Jun"
+        },
+        {
+          "count": 1,
+          "items": [
+            {
+              "due": null,
+              "id": "c6-rev-a2",
+              "meeting_id": "af6b75c6",
+              "owner": "Theo",
+              "provenance": null,
+              "review_state": "pending",
+              "source_timestamp": null,
+              "task": "Update the reconciliation job to read the dedupe key"
+            }
+          ],
+          "owner": "Theo"
+        }
+      ],
+      "total": 2
+    },
+    "proposal_total": 0,
+    "since_last_meeting": {
+      "changed": true,
+      "closed_actions": [
+        {
+          "id": "c6-sync-a1",
+          "meeting_id": "d4621c97",
+          "owner": "Jun",
+          "status": "done",
+          "task": "Write the two idempotent-retry options on one page"
+        }
+      ],
+      "new_actions": [
+        {
+          "due": "2026-10-21",
+          "id": "c6-rev-a1",
+          "meeting_id": "af6b75c6",
+          "owner": "Jun",
+          "provenance": null,
+          "review_state": "pending",
+          "source_timestamp": null,
+          "task": "Write the ADR for idempotent retries"
+        },
+        {
+          "due": null,
+          "id": "c6-rev-a2",
+          "meeting_id": "af6b75c6",
+          "owner": "Theo",
+          "provenance": null,
+          "review_state": "pending",
+          "source_timestamp": null,
+          "task": "Update the reconciliation job to read the dedupe key"
+        }
+      ],
+      "new_decisions": [],
+      "previous_meeting": {
+        "date": "2026-10-15T10:00:00",
+        "id": "d4621c97",
+        "title": "Payments platform sync"
+      },
+      "still_open_actions": [
+        {
+          "id": "c6-sync-a2",
+          "meeting_id": "d4621c97",
+          "owner": "Theo",
+          "status": "pending",
+          "task": "Profile the reconciliation job"
+        },
+        {
+          "id": "c6-sync-a3",
+          "meeting_id": "d4621c97",
+          "owner": "Mira",
+          "status": "pending",
+          "task": "Draft the rollback runbook for the cutover"
+        }
+      ]
+    },
+    "triage": [
+      {
+        "due": "2026-10-21",
+        "gaps": [
+          "needs_review"
+        ],
+        "id": "c6-rev-a1",
+        "owner": "Jun",
+        "source": {
+          "meeting_id": "af6b75c6"
+        },
+        "status": "pending",
+        "text": "Write the ADR for idempotent retries"
+      },
+      {
+        "due": null,
+        "gaps": [
+          "needs_review",
+          "no_date"
+        ],
+        "id": "c6-rev-a2",
+        "owner": "Theo",
+        "source": {
+          "meeting_id": "af6b75c6"
+        },
+        "status": "pending",
+        "text": "Update the reconciliation job to read the dedupe key"
+      }
+    ]
+  }
+}

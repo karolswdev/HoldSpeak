@@ -58,6 +58,8 @@ type HeartbeatSettings = {
   remote_hosts?: string[];
   /** HS-174-08: last remote run timestamp (ISO). */
   last_remote_run_at?: string | null;
+  /** Betterment daily D8: a quiet notice when an automation has a new result. */
+  notify_finished?: boolean;
 };
 
 type SweepReceipt = {
@@ -233,6 +235,7 @@ export function CadenceCore({ hero }: CoreProps) {
     runs_on: raw?.runs_on ?? null,
     remote_hosts: Array.isArray(raw?.remote_hosts) ? raw.remote_hosts : [],
     last_remote_run_at: raw?.last_remote_run_at ?? null,
+    notify_finished: raw?.notify_finished ?? true,
   };
   const projects = projectsRes.data?.projects ?? [];
 
@@ -562,6 +565,15 @@ export function CadenceCore({ hero }: CoreProps) {
                 options={NOTIFY_OPTIONS}
                 disabled={saving || sweeping}
                 onChange={(v) => void putSetting({ notify: v })}
+              />
+              {/* Betterment daily D8 (decision 2): the quiet notice for a new
+                  automation result. Notify off turns it off too. */}
+              <CheckGadget
+                label="FINISHED WORK"
+                variant="token"
+                checked={settings.notify_finished !== false}
+                disabled={saving || sweeping || settings.notify === "off"}
+                onChange={(on) => void putSetting({ notify_finished: on })}
               />
             </>
           }

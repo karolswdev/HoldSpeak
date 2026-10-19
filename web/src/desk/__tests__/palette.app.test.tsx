@@ -309,11 +309,11 @@ describe("the palette's PROJECTS rows", () => {
 
 /* ── Enter on the first row opens THAT note (A-apps row 41, 2026-10-03) ──
  * The hub's answers are recorded by scripts/record_chrome_palette.py (one
- * boot: the note made by POST /api/notes, the reads before Develop, the
- * owner's Develop, the reads after). The palette opens the note the first
- * row names; the window the desk draws for that ref is the note's own
- * window, or, once developed, the Thought window OF THAT NOTE. No press and
- * no read writes anything (no thought, no note). */
+ * boot: the note made by POST /api/notes, the reads before it is opened, the
+ * window's open (POST /api/thoughts/open-note), the reads after, and a second
+ * open). The palette opens the note the first row names; the window the desk
+ * draws for that ref is the one note window (the sticky) OF THAT NOTE
+ * (Betterment Q8). The open is the only write, and it makes no new note. */
 describe("Enter on the first row opens the note it names", () => {
   const ref = `note:${enterHub.note_id}`;
   const writes = () => apiFetch.mock.calls
@@ -330,6 +330,12 @@ describe("Enter on the first row opens the note it names", () => {
     unrouted.length = 0;
     apiFetch.mockImplementation((path: string, init?: RequestInit) => {
       const method = (init?.method ?? "GET").toUpperCase();
+      // Betterment Q8: the window opens the note (the hub adopts a plain note
+      // the first time; the second open gives the same thought).
+      if (method === "POST" && path === "/api/thoughts/open-note") {
+        const opened = apiFetch.mock.calls.filter(([p, i]) => p === path && ((i as RequestInit | undefined)?.method ?? "").toUpperCase() === "POST").length;
+        return Promise.resolve(structuredClone(opened > 1 ? enterHub.reopen.answer : enterHub.open.answer));
+      }
       // The developed Thought window now reads the canonical Engines
       // assignment while it paints its run line. This read is part of the
       // open, and carries no write or new object.
@@ -373,17 +379,19 @@ describe("Enter on the first row opens the note it names", () => {
     return view;
   }
 
-  it("an ordinary note: Enter opens the note's own window; no thought is made", async () => {
+  it("a plain note: Enter opens it in the one note window (the sticky); no new note is made", async () => {
     // replaces: tests/e2e/test_palette_enter_opens_the_note_glass.py::TestEnterOpensTheFirstRow::test_enter_opens_the_note_the_first_row_names (part 1, 1440 Enter; the 393 tap runs the same row)
-    await replay(enterHub.before);
+    await replay({ ...enterHub.before, ...enterHub.after, "/api/notes": enterHub.before["/api/notes"] });
     await pressEnterOnLedger();
     const { container } = await drawWindow();
-    expect(await screen.findByRole("button", { name: "Develop this thought" })).toBeTruthy();
+    await vi.waitFor(() => expect(container.querySelector(".thought-workspace-window"), "the sticky is drawn").toBeTruthy());
+    expect(container.querySelectorAll(".thought-workspace-window")).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Develop this thought" })).toBeNull();
     const frame = container.querySelector(`[id="pullout:${ref}"]`);
     expect(frame?.getAttribute("aria-label")).toBe(enterHub.title);
-    expect(container.querySelector(".thought-workspace-window")).toBeNull();
+    expect(apiFetch.mock.calls.find(([p]) => p === "/api/thoughts/open-note")?.[1]).toMatchObject({ method: "POST", json: enterHub.open.request });
     expect(unrouted).toEqual([]);
-    expect(writes()).toEqual([]);
+    expect(writes()).toEqual(["/api/thoughts/open-note"]);
   });
 
   it("Betterment AG4: the selected note offers Hand to agent; one press opens the sheet on it and closes Search", async () => {
@@ -410,10 +418,10 @@ describe("Enter on the first row opens the note it names", () => {
     expect(writes()).toEqual([]);
   });
 
-  it("a developed note: the same Enter opens the Thought window OF THAT NOTE; no new note is made", async () => {
+  it("an opened note: the same Enter opens the sticky OF THAT NOTE; no new note is made", async () => {
     // replaces: tests/e2e/test_palette_enter_opens_the_note_glass.py::TestEnterOpensTheFirstRow::test_enter_opens_the_note_the_first_row_names (part 3, after Develop this thought)
     await replay(enterHub.after);
-    // The premise, from the hub's own reads: Develop made no second note.
+    // The premise, from the hub's own reads: the open made no second note.
     expect(notesOf(enterHub.after)).toEqual(notesOf(enterHub.before));
     await pressEnterOnLedger();
     const { container } = await drawWindow();
@@ -425,10 +433,9 @@ describe("Enter on the first row opens the note it names", () => {
     expect(container.querySelectorAll(".thought-workspace-window")).toHaveLength(1);
     const named = container.querySelector(`[id="pullout:${ref}"]`);
     expect(named?.getAttribute("aria-label")).toBe(enterHub.title);
-    expect(container.querySelector(".thought-note-title")?.textContent).toContain(enterHub.title);
     expect(screen.queryByRole("button", { name: "Develop this thought" })).toBeNull();
     expect(unrouted).toEqual([]);
-    expect(writes()).toEqual([]);
+    expect(writes()).toEqual(["/api/thoughts/open-note"]);
   });
 });
 

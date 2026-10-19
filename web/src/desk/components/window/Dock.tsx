@@ -20,6 +20,7 @@ import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, applicationForAction } from "../../applications";
 import { useAutomationNews } from "../../automationNews";
+import { useAgentsTile } from "../../conductor/fleetTile";
 import { useCompactViewport } from "../../useCompactViewport";
 import { openChairWindow, useChairWindows } from "../../chair/chairWindows";
 import {
@@ -254,6 +255,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // Betterment A6: the Automations tile stands on the Dock while a result is
   // NEW, with the NEW count (absent at zero: no tile, no "0").
   const news = useAutomationNews();
+  // Betterment AG8: the Agents tile carries the fleet's worst state, a mark
+  // for New and the count that needs him (nothing with no live agent).
+  const agentsTile = useAgentsTile();
   // PHILO-17 (needsyou, walker TAXES): the one number is on the Needs-you
   // icon and the bell only; the Intelligence tile carries no copy of it.
   // HS-99-04 — the dock chip menu (one menu vocabulary).
@@ -433,7 +437,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               (running && winId === front && !minimized ? " is-front" : "") +
               ""
             }
-            aria-label={`${application.label}${minimized ? ", iconified" : ""}`}
+            aria-label={`${application.label}${application.windowId === "conductor" && agentsTile.words ? `, ${agentsTile.words}` : ""}${minimized ? ", iconified" : ""}`}
             onClick={() => {
               const s = useDesk.getState();
               if (running && minimized) s.restorePanel(winId);
@@ -470,6 +474,14 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             )}
             <span className="desk-dock-label">{application.label}</span>
             {minimized ? seatLamp : null}
+            {application.windowId === "conductor" && agentsTile.lamp ? (
+              <span className="desk-dock-fleet" data-tone={agentsTile.lamp} data-testid="desk-dock-agents-lamp" aria-hidden="true" />
+            ) : null}
+            {application.windowId === "conductor" && agentsTile.needYou ? (
+              <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-agents-count" aria-hidden="true">
+                {agentsTile.needYou}
+              </span>
+            ) : null}
             {application.windowId === "surface-meetings" && recordingLabel ? (
               <span
                 className="desk-dock-state"

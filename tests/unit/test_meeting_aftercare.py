@@ -136,6 +136,7 @@ def test_since_last_meeting_real_diff(db):
         db,
         "prior",
         started_at=datetime(2026, 6, 1, 9, 0, 0),
+        segments=_segments(),
         title="Kickoff",
         action_items=[
             _action("p1", "Set up CI", owner="Bob", status="done"),
@@ -150,6 +151,7 @@ def test_since_last_meeting_real_diff(db):
         db,
         "current",
         started_at=datetime(2026, 6, 4, 10, 0, 0),
+        segments=_segments(),
         title="Follow-up",
         action_items=[
             _action("c1", "Draft spec", owner="alice"),  # carried over (not new)
@@ -309,6 +311,7 @@ def test_followup_draft_since_section(db):
         db,
         "prior",
         started_at=datetime(2026, 6, 1, 9, 0, 0),
+        segments=_segments(),
         title="Kickoff",
         action_items=[_action("p1", "Stand up CI", status="done")],
     )
@@ -317,6 +320,7 @@ def test_followup_draft_since_section(db):
         db,
         "current",
         started_at=datetime(2026, 6, 4, 10, 0, 0),
+        segments=_segments(),
         title="Follow-up",
         action_items=[_action("c1", "Wire the API", owner="Sam")],
     )
@@ -333,6 +337,7 @@ def test_no_change_since_last_meeting_is_quiet(db):
         db,
         "prior",
         started_at=datetime(2026, 6, 1, 9, 0, 0),
+        segments=_segments(),
         title="Kickoff",
         action_items=[_action("p1", "Draft spec", owner="alice")],
     )
@@ -342,6 +347,7 @@ def test_no_change_since_last_meeting_is_quiet(db):
         db,
         "current",
         started_at=datetime(2026, 6, 4, 10, 0, 0),
+        segments=_segments(),
         title="Repeat",
         action_items=[_action("c1", "Draft spec", owner="alice")],
     )
@@ -353,3 +359,82 @@ def test_no_change_since_last_meeting_is_quiet(db):
     assert since["new_decisions"] == []
     assert since["new_actions"] == []
     assert since["closed_actions"] == []
+
+
+# ── Betterment capture C6: the previous meeting of the same kind ─────────
+
+
+def _people_segments(*speakers):
+    return [
+        TranscriptSegment(text=f"{name} speaks", speaker=name, start_time=float(i), end_time=float(i) + 1)
+        for i, name in enumerate(speakers)
+    ]
+
+
+def _event(event_id, *, uid, starts_at):
+    from holdspeak.db.calendar_events import CalendarEvent
+
+    return CalendarEvent(
+        id=event_id, uid=uid, title=uid, starts_at=starts_at, ends_at=starts_at,
+        location=None, meeting_url=None, last_seen_at=0.0, subscription_revision="r1",
+    )
+
+
+def _save(db, meeting_id, day, hour, title, speakers, *, event_id=None):
+    db.meetings.save_meeting(MeetingState(
+        id=meeting_id, started_at=datetime(2026, 10, day, hour, 0, 0), title=title,
+        segments=_people_segments(*speakers), calendar_event_id=event_id,
+        intel=IntelSnapshot(timestamp=0.0, action_items=[]),
+    ))
+
+
+def _previous_title(db, meeting_id):
+    since = compute_meeting_aftercare(db, meeting_id)["since_last_meeting"]
+    return None if since is None else since["previous_meeting"]["title"]
+
+
+def test_previous_is_the_same_people_not_the_latest_meeting(db):
+    """The seed week: the Thursday sync, a later 1:1 with Theo the same day,
+    then Friday's review with the sync's people. Friday's last time is the
+    sync, not the 1:1 (the latest meeting before it). The sync has none."""
+    _save(db, "thu-sync", 15, 10, "Payments platform sync", ["Me", "Mira", "Theo", "Jun"])
+    _save(db, "thu-theo", 15, 14, "1:1 with Theo", ["Me", "Theo"])
+    _save(db, "fri-review", 16, 11, "Architecture review", ["Me", "Jun", "Mira", "Theo"])
+    assert _previous_title(db, "fri-review") == "Payments platform sync"
+    assert _previous_title(db, "thu-sync") is None
+    assert _previous_title(db, "thu-theo") is None
+
+
+def test_previous_prefers_the_calendar_series_then_the_project(db):
+    """Three meetings with the same people: the series wins over the project,
+    and the project wins over the people."""
+    db.calendar_events.replace_projection("r1", [
+        _event("ev-1", uid="weekly-sync", starts_at="2026-10-08T10:00:00"),
+        _event("ev-2", uid="weekly-sync", starts_at="2026-10-15T10:00:00"),
+    ], seen_at=0.0)
+    people = ["Me", "Mira", "Theo"]
+    _save(db, "sync-1", 8, 10, "Weekly sync (last week)", people, event_id="ev-1")
+    _save(db, "proj", 12, 10, "Cut-over planning", people)
+    _save(db, "other", 14, 10, "Same people, no project", people)
+    _save(db, "sync-2", 15, 10, "Weekly sync", people, event_id="ev-2")
+    project_id = "p-cutover"
+    db.projects.create_project(project_id=project_id, name="Cut-over")
+    assert _previous_title(db, "sync-2") == "Weekly sync (last week)"
+
+    for meeting_id in ("proj", "sync-2"):
+        db.projects.associate_meeting_project(
+            meeting_id=meeting_id, project_id=project_id, source="manual", confidence=1.0,
+        )
+    db.calendar_events.replace_projection("r2", [], seen_at=1.0)  # the series is gone
+    assert _previous_title(db, "sync-2") == "Cut-over planning"
+
+
+def test_since_lists_what_is_still_open_from_last_time(db):
+    _seed_meeting(db, "prior", started_at=datetime(2026, 6, 1, 9, 0, 0), segments=_segments(),
+                  title="Kickoff", action_items=[_action("p1", "Draft spec", owner="alice"),
+                                                 _action("p2", "Set up CI", status="done")])
+    _seed_meeting(db, "current", started_at=datetime(2026, 6, 4, 10, 0, 0), segments=_segments(),
+                  title="Follow-up", action_items=[])
+    since = compute_meeting_aftercare(db, "current")["since_last_meeting"]
+    assert [a["task"] for a in since["still_open_actions"]] == ["Draft spec"]
+    assert [a["task"] for a in since["closed_actions"]] == ["Set up CI"]

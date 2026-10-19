@@ -85,8 +85,8 @@ describe("the Conductor on the C4 seed", () => {
       expect(el!.textContent ?? "").toContain(lamp);
     }
     const head = screen.getByTestId("conductor-head");
-    expect(head.querySelector(".kit-disp")?.textContent).toBe("2 at work");
-    expect(head.textContent).toContain("1 ASK");
+    // Betterment AG8: the fact counts only what is there.
+    expect(head.querySelector(".kit-disp")?.textContent).toBe("1 needs you · 2 working");
     // The cap is the hub's count (no tmux session runs): no `N OF M`.
     expect(head.textContent).not.toContain(" OF ");
     expect(head.textContent).not.toContain("NOT READ");
@@ -98,6 +98,33 @@ describe("the Conductor on the C4 seed", () => {
   /** replaces: tests/e2e/test_philo14_c4_conductor_glass.py::test_the_conductor_drawer_at_1440_and_393 (Open, Stop confirm)
    *  PHILO-17 refit: Answer stays on the ask plate, Open on the row; the foot
    *  keeps the quiet verbs (Get Info, Stop). */
+  /** The desk sweep's flake (conductor at 393: still … moved 220 px): the
+   *  detect read answered first and drew the ready rows; the late sessions
+   *  read then put Needs you and At work above them. The window now reads
+   *  until the sessions answer, and draws its rows once, in their places. */
+  it("draws no agent row until the sessions read answers, then draws the asks above the ready agents", async () => {
+    let answerSessions: (value: unknown) => void = () => undefined;
+    const sessions = new Promise((resolve) => { answerSessions = resolve; });
+    api.fetch.mockImplementation(async (url: string) => {
+      if (String(url).startsWith("/api/coders/sessions")) return sessions;
+      if (url === "/api/onboarding/agents") return DETECT.wire;
+      throw new Error(`no captured hub answer for ${url}`);
+    });
+    render(<ConductorWindow />);
+    await vi.waitFor(() => expect(api.fetch).toHaveBeenCalledWith("/api/onboarding/agents"));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(document.querySelector("[data-object-id='agent:codex']")).toBeNull();
+    expect(screen.getByTestId("conductor-window").querySelector("[aria-busy='true']")).toBeTruthy();
+    answerSessions(SESSIONS.wire);
+    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    const ask = member("launch:launch_c4_runbook");
+    expect(ask).toBeTruthy();
+    expect(screen.getByTestId("conductor-window").querySelector("[aria-busy='true']")).toBeNull();
+    const codex = member("agent:codex");
+    if (codex) expect(ask!.compareDocumentPosition(codex) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("the asking agent's verbs are Get Info, Stop, Answer, Open; Stop confirms in place; Open opens its lane", async () => {
     render(<ConductorWindow />);
     fireEvent.click(await screen.findByRole("button", { name: "Write the rollback runbook" }));

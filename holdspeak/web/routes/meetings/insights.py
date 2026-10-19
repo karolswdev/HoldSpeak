@@ -50,4 +50,12 @@ def build_insights_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "Meeting not found"}, status_code=404)
         except Exception as exc:
             return error_500(exc, log, "Failed to load meeting artifacts")
+    @router.get("/api/meetings/{meeting_id}/prepared")
+    async def api_get_meeting_prepared(meeting_id: str, request: Request) -> Any:
+        try:
+            return JSONResponse(_service(ctx).prepared_results(_principal(request), meeting_id))
+        except NotFound:
+            return JSONResponse({"error": "Meeting not found"}, status_code=404)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to load the meeting's prepared results")
     return router

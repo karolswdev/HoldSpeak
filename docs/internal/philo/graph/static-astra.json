@@ -2109,7 +2109,7 @@
       "sha256": "72ca6bd084928e9a2f6191c2248c33d1b267cd3cdead0834c51f6cc750fad1a9"
     },
     {
-      "path": "web/src/pages/cores/history/ArtifactsLibrary.tsx",
+      "path": "web/src/pages/cores/history/_parked/ArtifactsLibrary.tsx",
       "sha256": "eb7ac2d7c399e3f34b569661d5a9a456b5bd8cf287964f426b70395ebbdb1b53"
     },
     {
@@ -34031,7 +34031,7 @@
       "sources": [
         {
           "revision": "c42963bcd154b7d199de501370f1643e14a3921d",
-          "path": "web/src/pages/cores/history/ArtifactsLibrary.tsx",
+          "path": "web/src/pages/cores/history/_parked/ArtifactsLibrary.tsx",
           "line": 85,
           "symbol": "ArtifactsLibrary",
           "claim": "The production JSX source declares onClick at this control site."

@@ -112,6 +112,21 @@ def build_thoughts_router(ctx: WebContext) -> APIRouter:
         except ServiceError as exc:
             return _error(exc)
 
+    # Betterment Q8 (one note): every note opens in the one note window. This
+    # returns the note's thought, adopting a plain note and resuming a
+    # finished one; the note's drawer never changes.
+    @router.post("/api/thoughts/open-note")
+    async def open_note(request: Request) -> Any:
+        body = await _json_body(request)
+        if body is None:
+            return JSONResponse({"error": "expected a JSON object"}, status_code=400)
+        try:
+            if set(body) - {"note_id"}:
+                raise ValidationError("thought open-note schema is closed", code="note_open_request_invalid")
+            return JSONResponse(application().open_note(principal(request), note_id=body.get("note_id")))
+        except ServiceError as exc:
+            return _error(exc)
+
     @router.get("/api/thoughts/default-context")
     async def get_default_context(request: Request) -> Any:
         try:

@@ -30,14 +30,16 @@ import {
   type MeetingDecision,
 } from "./useMeetingData";
 import { MeetingHeader, meetingOutcomeFact, meetingPipelineActive } from "./MeetingHeader";
+import { OutcomeLedger, type OutcomeRow } from "./OutcomeLedger";
 import { CaptureSlab } from "./CaptureSlab";
-import { ArtifactsLibrary } from "./ArtifactsLibrary";
+import { DraftReady, PreparedResults, resultServing } from "./PreparedResults";
 import { MeetingSendWellLazy as MeetingSendWell } from "../../../meetings/MeetingSendWellLazy";
 import { SendWellReadContext } from "../../../desk/surface/send/SendWell";
 import { MeetingDecideWell } from "../../../meetings/MeetingDecideWell";
 import { NeedsYouTable, showsRunSummary } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
 import { LookedAtWell } from "./LookedAtWell";
+import { SinceLastWell, readSinceLast } from "./SinceLastWell";
 import { AudioOnlyVerb } from "./TranscribeVerb";
 import { CycleGadget, StringGadget } from "../../../desk/surface/gadgets";
 import { WorkMenu, type WorkMenuEntry } from "../../../desk/components/DeskMenu";
@@ -49,27 +51,6 @@ import { openSourceRef } from "../../../desk/surface/citations";
 /** PHILO-17: the meeting window's foot asks its record to open the
  *  transcript fold (`detail`: the meeting id). */
 export const MEETING_TRANSCRIPT_OPEN = "holdspeak:meeting-transcript-open";
-
-/** One row of the meeting's outcomes ledgers. */
-type OutcomeRow = {
-  key: string;
-  plate: "DEC" | "ACT";
-  text: string;
-  meta: string;
-  tone?: "ask" | "ok";
-  actionItemId?: string;
-  proposalId?: string;
-  actionStatus?: string | null;
-  owner?: string;
-  due?: string;
-  projectId?: string | null;
-  personRelationshipId?: string | null;
-  segmentIndex?: number | null;
-  gap?: boolean;
-  deferredUntil?: string | null;
-  verbs?: ReactNode;
-  children?: ReactNode;
-};
 
 function deferredToken(value: unknown): string {
   const stamp = String(value ?? "").trim();
@@ -213,31 +194,6 @@ export function meetingOutcomes(
     });
   }
   return { decisions, commitments };
-}
-
-function OutcomeLedger({ label, rows, testId, controls }: { label: string; rows: OutcomeRow[]; testId: string; controls?: ReactNode }) {
-  if (!rows.length) return null;
-  return (
-    <SurfaceSection label={label} count={rows.length || null} data-testid={testId} className="meeting-outcome-section">
-      <SurfaceLedger label={label} cols="meeting-outcomes" controls={controls}>
-        <ul className="surface-ledger-rows">
-          {rows.map((row) => (
-            <SurfaceLedgerRow
-              key={row.key}
-              data-testid={`${testId}-row`}
-              primary={row.text}
-              meta={row.meta}
-              metaTone={row.tone}
-              trailing={row.verbs}
-              wrap
-              open={Boolean(row.children)}
-              expands={false}
-            >{row.children}</SurfaceLedgerRow>
-          ))}
-        </ul>
-      </SurfaceLedger>
-    </SurfaceSection>
-  );
 }
 
 export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting: Record<string, unknown> }) {
@@ -474,7 +430,10 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
         </Button>
       ) : null
     ) : null;
-    return <>{lifecycle}{actionLifecycle}{destinationVerbs(row, !pending)}{menu}</>;
+    // Betterment capture C5: the Result this action asked for is ready.
+    const serving = resultServing(data.prepared ?? [], row.actionItemId?.trim());
+    const draftReady = serving ? <DraftReady meetingId={String(meeting.id)} result={serving} /> : null;
+    return <>{draftReady}{lifecycle}{actionLifecycle}{destinationVerbs(row, !pending)}{menu}</>;
   };
   const peopleReadRow = commitments.find((row) => row.proposalId
     && (row.gap || editing[row.proposalId])
@@ -571,6 +530,11 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
     <>
       <OutcomeLedger label="Decisions" rows={withVerbs(decisions)} testId="meeting-decisions" controls={decisionsControls} />
       <OutcomeLedger label="Who owes what" rows={withVerbs(commitments)} testId="meeting-commitments" controls={controls} />
+      {/* Betterment capture C5: the Results the meeting prepared. */}
+      <PreparedResults meetingId={String(meeting.id)} results={data.prepared ?? []}
+        canPrepare={data.canPrepare ?? []}
+        selectionHash={readPlannedRoute(data.detail ?? meeting)?.selection_hash ?? null}
+        onChanged={data.refreshPrepared} />
     </>
   );
 }
@@ -665,7 +629,7 @@ export function MeetingDetail({
     detail,
     setDetail,
     segments,
-    artifactRows,
+
     intelOff,
     intelState,
     needsRows,
@@ -736,17 +700,17 @@ export function MeetingDetail({
           onDeleted();
         }}
       />
-      {view === "artifacts" ? (
-        <ArtifactsLibrary
-          artifactRows={artifactRows}
-          meetingTitle={meetingTitle}
-        />
-      ) : (
+      {/* Betterment capture C5: the ARTIFACTS wing is parked
+          (history/_parked/ArtifactsLibrary.tsx); its Results show under
+          Outcomes ▸ Prepared. */}
+      {(
         <>
           {/* PHILO-17 (the Today language): what was said first (the
               summary), then what was decided and who owes what, then the
               follow-up (Send), the transcript last. */}
           <MeetingSummarySlab intel={summaryIntel} receipt={runReceipt} saidOnFace={saidOnFace} />
+          {/* betterment/capture C6: what changed since the last meeting of this kind. */}
+          <SinceLastWell since={readSinceLast(data.aftercare)} meetingId={id} />
           <MeetingOutcomes data={data} meeting={meeting} />
           <NeedsYouTable
             needsRows={needsRows}

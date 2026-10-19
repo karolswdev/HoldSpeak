@@ -164,6 +164,18 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "agent_hand_preview_failed"}, status_code=500)
         return JSONResponse(result)
 
+    @router.delete("/api/agent/hand/queue/{queue_id}")
+    async def api_agent_hand_queue_cancel(queue_id: str) -> Any:
+        """Betterment AG8 (AG5 follow-up): Cancel a hand that waits for a free
+        agent. It leaves the queue and never starts; nothing else changes.
+        404 when the queue holds no such hand (it started, or was cancelled)."""
+        from ...services.agent_hand_queue import HandQueue
+
+        removed = await asyncio.to_thread(HandQueue().remove, queue_id)
+        if not removed:
+            return JSONResponse({"error": "queue_unknown", "code": "queue_unknown"}, status_code=404)
+        return JSONResponse({"queue_id": queue_id, "cancelled": True})
+
     @router.get("/api/agent/launches/{launch_id}")
     async def api_agent_launch(launch_id: str) -> Any:
         """One launch's delivery, read from the launch ledger (no driver, no
@@ -209,6 +221,56 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
         if lane is None:
             return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
         return JSONResponse(lane)
+
+    @router.get("/api/agent/launches/{launch_id}/explain")
+    async def api_agent_launch_explain(launch_id: str) -> Any:
+        """Betterment AG7, "Why this state": which source decided the agent's
+        state (the hook or a screen rule), the rule, the evidence lines, the
+        rule file and the age of the read (``agent_flights.explain_agent``)."""
+        from ...db import get_database
+        from ...services.agent_flights import explain_agent
+
+        try:
+            answer = await asyncio.to_thread(explain_agent, get_database(), f"launch:{launch_id}")
+        except Exception as exc:
+            log.error(f"launch explain failed: {exc}")
+            return JSONResponse({"error": "launch_explain_failed"}, status_code=500)
+        if answer is None:
+            return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
+        return JSONResponse(answer)
+
+    @router.post("/api/agent/launches/{launch_id}/answer")
+    async def api_agent_launch_answer(launch_id: str, request: Request) -> Any:
+        """Betterment AG7 gaps: answer an agent whose hooks are off, from its
+        row: ``{since, keys: ["Enter"|"Escape"|"1".."9"]}`` or ``{since,
+        text}``. ``since`` names the prompt he saw; the pane is read again
+        before the keystroke. Owner only. 409 with its code on a refusal."""
+        from ...agent_context.screen_watch import ScreenAnswerRefused, answer_launch
+        from ...delivery.direct_gesture_input import ProcessInputRefused
+
+        principal = getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            return JSONResponse({"error": "owner_required", "code": "owner_required"}, status_code=403)
+        try:
+            body = await request.json()
+        except Exception:
+            body = None
+        body = body if isinstance(body, dict) else {}
+        keys = body.get("keys")
+        try:
+            result = await asyncio.to_thread(
+                answer_launch, launch_id, since=str(body.get("since") or ""),
+                keys=[str(k) for k in keys] if isinstance(keys, list) else None,
+                text=str(body.get("text") or "") if keys is None else None,
+            )
+        except ScreenAnswerRefused as exc:
+            return JSONResponse({"error": exc.code, "code": exc.code, "status": exc.code, "detail": exc.detail}, status_code=409)
+        except ProcessInputRefused as exc:
+            return JSONResponse({"error": exc.reason, "code": exc.reason, "status": "transport_error"}, status_code=409)
+        except Exception as exc:
+            log.error(f"launch answer failed: {exc}")
+            return JSONResponse({"error": "launch_answer_failed"}, status_code=500)
+        return JSONResponse(result)
 
     @router.post("/api/agent/launches/{launch_id}/seen")
     async def api_agent_launch_seen(launch_id: str, request: Request) -> Any:

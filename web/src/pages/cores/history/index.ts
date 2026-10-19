@@ -6,7 +6,7 @@ export { ImportSection } from "./ImportSection";
 export { MeetingDetail } from "./MeetingDetail";
 export { MeetingHeader } from "./MeetingHeader";
 export { CaptureSlab } from "./CaptureSlab";
-export { ArtifactsLibrary } from "./ArtifactsLibrary";
+export { PreparedResults } from "./PreparedResults";
 export { NeedsYouTable } from "./NeedsYouTable";
 export { TranscriptWell } from "./TranscriptWell";
 export { SettledList } from "./SettledList";

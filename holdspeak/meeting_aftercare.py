@@ -7,7 +7,9 @@ after a meeting:
 - **What's still open for me?** the pending action items, grouped by owner.
 - **What did we decide?** the decisions captured for this meeting.
 - **What changed since last meeting?** a real diff of decisions and action
-  items against the chronologically previous meeting.
+  items against the previous meeting of the same kind (betterment capture
+  C6: the same calendar series, else the same project, else the same
+  people; else none).
 
 Nothing here writes, and nothing is fabricated. When there is no prior meeting,
 or nothing changed, the diff stays empty rather than inventing a delta. The
@@ -154,31 +156,94 @@ def _group_open_by_owner(
     ]
 
 
-def _previous_meeting(db: "Database", meeting: Any) -> Optional[Any]:
-    """Find the chronologically previous meeting by `started_at`.
+def _earlier(summary: Any, meeting: Any) -> bool:
+    """True when ``summary`` started strictly before ``meeting``.
 
-    The prior meeting is the one with the greatest `started_at` strictly before
-    this meeting's. `id` is the tie-break so the choice is deterministic when two
-    meetings share a timestamp.
+    ``id`` is the tie-break so the choice is deterministic when two meetings
+    share a timestamp; a meeting never picks itself.
     """
-    current_started = meeting.started_at
-    current_id = meeting.id
-    best = None
-    for summary in db.meetings.list_meetings(limit=10000):
-        if summary.id == current_id:
-            continue
-        if summary.started_at > current_started:
-            continue
-        if summary.started_at == current_started and summary.id >= current_id:
-            # Same instant: only count ids that order before us, to avoid a
-            # meeting picking itself or its same-instant successor.
-            continue
-        if best is None:
-            best = summary
-            continue
-        if (summary.started_at, summary.id) > (best.started_at, best.id):
-            best = summary
-    return best
+    if summary.id == meeting.id:
+        return False
+    if summary.started_at == meeting.started_at:
+        return summary.id < meeting.id
+    return summary.started_at < meeting.started_at
+
+
+def _series_key(db: "Database", event_id: Optional[str]) -> Optional[tuple[str, str]]:
+    """The calendar series of one event: its source and its ICS ``uid``
+    (every instance of a recurring event shares them). ``None`` when the
+    meeting has no event, or the event is no longer in the projection."""
+    if not event_id:
+        return None
+    try:
+        event = db.calendar_events.get(str(event_id))
+    except Exception:
+        return None
+    if event is None or not event.uid:
+        return None
+    return (event.source_id, event.uid)
+
+
+def _people(names: Any) -> frozenset[str]:
+    """The meeting's people without the owner, casefolded."""
+    try:
+        from .services.needs_you_membership import self_check
+
+        is_self = self_check()
+    except Exception:  # no config: only the reserved words mean the owner
+        is_self = lambda name: str(name).strip().casefold() in {"me", "i", "myself"}  # noqa: E731
+    out = set()
+    for name in names or ():
+        key = " ".join(str(name or "").split()).casefold()
+        if key and not is_self(key):
+            out.add(key)
+    return frozenset(out)
+
+
+def _previous_meeting(db: "Database", meeting: Any) -> Optional[Any]:
+    """Betterment capture C6: the last earlier meeting of the same kind.
+
+    In order: the last one of the same calendar series; else the last one in
+    the same project; else the last one with the same set of people (the
+    owner aside); else ``None``. A meeting that shares none of these has no
+    "last time", so the face draws no line.
+    """
+    summaries = db.meetings.list_meetings(limit=10000)
+    earlier = sorted(
+        (summary for summary in summaries if _earlier(summary, meeting)),
+        key=lambda summary: (summary.started_at, summary.id),
+        reverse=True,
+    )
+    if not earlier:
+        return None
+
+    series = _series_key(db, getattr(meeting, "calendar_event_id", None))
+    if series is not None:
+        for summary in earlier:
+            if summary.calendar_event_id and _series_key(db, summary.calendar_event_id) == series:
+                return summary
+
+    project_ids = [row["project_id"] for row in db.projects.get_meeting_projects(meeting.id)]
+    if project_ids:
+        same_project: set[str] = set()
+        for project_id in project_ids:
+            same_project.update(
+                str(row["id"]) for row in db.projects.get_project_meetings(project_id, limit=10000)
+            )
+        for summary in earlier:
+            if summary.id in same_project:
+                return summary
+
+    current = next((summary for summary in summaries if summary.id == meeting.id), None)
+    people = _people(
+        current.attendees if current is not None
+        else [getattr(segment, "speaker", None) for segment in (meeting.segments or [])]
+    )
+    if people:
+        for summary in earlier:
+            if _people(summary.attendees) == people:
+                return summary
+    return None
 
 
 def _since_last_meeting(
@@ -221,6 +286,18 @@ def _since_last_meeting(
         for item in prior_items
         if item.status in ("done", "dismissed")
     ]
+    # C6: last time's promises that are still not kept or dropped.
+    still_open_actions = [
+        {
+            "id": item.id,
+            "task": item.task,
+            "owner": _clean_owner(item.owner),
+            "status": item.status,
+            "meeting_id": item.meeting_id,
+        }
+        for item in prior_items
+        if str(item.status or "").lower() in ("pending", "open")
+    ]
 
     return {
         "previous_meeting": {
@@ -231,6 +308,7 @@ def _since_last_meeting(
         "new_decisions": new_decisions,
         "new_actions": new_actions,
         "closed_actions": closed_actions,
+        "still_open_actions": still_open_actions,
         "changed": bool(new_decisions or new_actions or closed_actions),
     }
 

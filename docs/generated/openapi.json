@@ -3460,6 +3460,46 @@
         "summary": "Api Agent Hand Preview"
       }
     },
+    "/api/agent/hand/queue/{queue_id}": {
+      "delete": {
+        "description": "Betterment AG8 (AG5 follow-up): Cancel a hand that waits for a free\nagent. It leaves the queue and never starts; nothing else changes.\n404 when the queue holds no such hand (it started, or was cancelled).",
+        "operationId": "api_agent_hand_queue_cancel_api_agent_hand_queue__queue_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "queue_id",
+            "required": true,
+            "schema": {
+              "title": "Queue Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Hand Queue Cancel Api Agent Hand Queue  Queue Id  Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Hand Queue Cancel"
+      }
+    },
     "/api/agent/launches/{launch_id}": {
       "get": {
         "description": "One launch's delivery, read from the launch ledger (no driver, no\nreconcile): the launch sheet's receipt follows it until the brief is\nsent, held or refused.",
@@ -3500,6 +3540,46 @@
         "summary": "Api Agent Launch"
       }
     },
+    "/api/agent/launches/{launch_id}/answer": {
+      "post": {
+        "description": "Betterment AG7 gaps: answer an agent whose hooks are off, from its\nrow: ``{since, keys: [\"Enter\"|\"Escape\"|\"1\"..\"9\"]}`` or ``{since,\ntext}``. ``since`` names the prompt he saw; the pane is read again\nbefore the keystroke. Owner only. 409 with its code on a refusal.",
+        "operationId": "api_agent_launch_answer_api_agent_launches__launch_id__answer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Launch Answer Api Agent Launches  Launch Id  Answer Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Launch Answer"
+      }
+    },
     "/api/agent/launches/{launch_id}/deliver": {
       "post": {
         "description": "Deliver the held brief of an existing launch (after a restart, a\nhook install or a refused send): resume on the launch, no relaunch.",
@@ -3538,6 +3618,46 @@
           }
         },
         "summary": "Api Agent Deliver"
+      }
+    },
+    "/api/agent/launches/{launch_id}/explain": {
+      "get": {
+        "description": "Betterment AG7, \"Why this state\": which source decided the agent's\nstate (the hook or a screen rule), the rule, the evidence lines, the\nrule file and the age of the read (``agent_flights.explain_agent``).",
+        "operationId": "api_agent_launch_explain_api_agent_launches__launch_id__explain_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Launch Explain Api Agent Launches  Launch Id  Explain Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Launch Explain"
       }
     },
     "/api/agent/launches/{launch_id}/lane": {
@@ -4795,6 +4915,25 @@
         "tags": [
           "automations"
         ]
+      }
+    },
+    "/api/automations/prepared": {
+      "get": {
+        "description": "Betterment daily D9: Today's Prepared block (the newest result of an\nautomation whose Put it in is Today) and the automation Prepare now\nruns. Each is null when there is none.",
+        "operationId": "api_prepared_for_today_api_automations_prepared_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Prepared For Today Api Automations Prepared Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Prepared For Today"
       }
     },
     "/api/automations/presets": {
@@ -17094,6 +17233,85 @@
         "summary": "Api Get Meeting Plugin Runs"
       }
     },
+    "/api/meetings/{meeting_id}/prepare": {
+      "post": {
+        "description": "Betterment capture C5b: Prepare\u2026 and Write again (one draft).",
+        "operationId": "api_prepare_meeting_result_api_meetings__meeting_id__prepare_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meeting_id",
+            "required": true,
+            "schema": {
+              "title": "Meeting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Prepare Meeting Result Api Meetings  Meeting Id  Prepare Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Prepare Meeting Result"
+      }
+    },
+    "/api/meetings/{meeting_id}/prepared": {
+      "get": {
+        "operationId": "api_get_meeting_prepared_api_meetings__meeting_id__prepared_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meeting_id",
+            "required": true,
+            "schema": {
+              "title": "Meeting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Get Meeting Prepared Api Meetings  Meeting Id  Prepared Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Get Meeting Prepared"
+      }
+    },
     "/api/meetings/{meeting_id}/projects": {
       "get": {
         "operationId": "api_meeting_projects_api_meetings__meeting_id__projects_get",
@@ -18814,6 +19032,132 @@
           }
         },
         "summary": "Api Update Note"
+      }
+    },
+    "/api/notes/{note_id}/outcomes": {
+      "get": {
+        "operationId": "read_api_notes__note_id__outcomes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Read Api Notes  Note Id  Outcomes Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Read"
+      }
+    },
+    "/api/notes/{note_id}/outcomes/find": {
+      "post": {
+        "operationId": "find_api_notes__note_id__outcomes_find_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Find Api Notes  Note Id  Outcomes Find Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Find"
+      }
+    },
+    "/api/notes/{note_id}/outcomes/{row_id}/confirm": {
+      "post": {
+        "operationId": "confirm_api_notes__note_id__outcomes__row_id__confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "title": "Note Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "row_id",
+            "required": true,
+            "schema": {
+              "title": "Row Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Confirm Api Notes  Note Id  Outcomes  Row Id  Confirm Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm"
       }
     },
     "/api/nudges/{step_id}/dismiss": {
@@ -27461,6 +27805,24 @@
           }
         },
         "summary": "For Note"
+      }
+    },
+    "/api/thoughts/open-note": {
+      "post": {
+        "operationId": "open_note_api_thoughts_open_note_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Open Note Api Thoughts Open Note Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Open Note"
       }
     },
     "/api/thoughts/{thought_id}": {

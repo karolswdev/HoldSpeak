@@ -358,7 +358,7 @@ def test_resource_unknown_project_refuses_typed(
 
 
 def test_mcp006_poisoned_family_does_not_suppress_project_tools(
-    db: Database, monkeypatch: pytest.MonkeyPatch,
+    db: Database, monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
     """MCP-006: a family whose import fails must not suppress project tools.
 
@@ -373,12 +373,22 @@ def test_mcp006_poisoned_family_does_not_suppress_project_tools(
     # Remove cached modules if somehow present
     sys.modules.pop(fq_poison, None)
 
-    # Create a poisoned module source
-    poison_path = Path(project_family.__file__).parent / f"{poison_name}.py"
+    # Create a poisoned module source in tmp_path, never inside holdspeak/:
+    # other tests walk the package tree in parallel (test_thread_tool_gate
+    # rglob), and a file that appears and vanishes there races them.
+    # The families package searches tmp_path too, so the REAL import path
+    # still finds the poison by its package name.
+    import holdspeak.mcp.families as _families_pkg
+
+    poison_path = tmp_path / f"{poison_name}.py"
     poison_path.write_text(
         "raise RuntimeError('MCP-006 deliberate poisoned family')\n",
         encoding="utf-8",
     )
+    monkeypatch.setattr(
+        _families_pkg, "__path__", [*_families_pkg.__path__, str(tmp_path)]
+    )
+    importlib.invalidate_caches()
 
     try:
         # Re-import the families __init__ with the poisoned family name injected.

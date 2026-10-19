@@ -10,7 +10,6 @@ import type { ReactNode } from "react";
 
 export const WINGS = [
   { id: "outcomes", label: "Outcomes" },
-  { id: "artifacts", label: "Artifacts" },
 ];
 /** The meeting record's faces: Outcomes owns review; Artifacts holds files. */
 export type DetailView = "outcomes" | "artifacts";

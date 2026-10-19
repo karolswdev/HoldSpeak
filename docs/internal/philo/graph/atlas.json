@@ -9890,7 +9890,8 @@
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "no brief generated"
+        "no brief generated",
+        "Today is not opened: it would make the brief (GET /api/brief/latest?ensure=1, Betterment daily D5)"
       ],
       "setup": [
         {
@@ -9906,69 +9907,6 @@
           "role": "button",
           "name": "Continue later",
           "optional": true
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 1440,
-          "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
-          "at_width": 1440,
-          "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
         }
       ],
       "trigger": {
@@ -9980,11 +9918,12 @@
       },
       "expected": {
         "predicate": {
-          "kind": "text_contains",
-          "value": "No brief yet"
+          "kind": "protocol_field",
+          "path": "/",
+          "value": null
         },
-        "observe_at": "[data-testid=arrival-brief]",
-        "words": "the response is null, and the Chair draws its generate branch rather than an empty box [the audit's stated observation location: protocol: GET /api/brief/latest; face: [data-testid=arrival-brief]]",
+        "observe_at": "protocol: GET /api/brief/latest",
+        "words": "with no brief made, GET /api/brief/latest (no ensure) answers null (holdspeak/web/routes/monday_brief.py latest). Betterment daily D5 (#1336) retired the Brief window and its 'No brief yet' branch (the old declaration is in docs/internal/philo/graph/parked-daily-d5-brief.json); Today never shows a no-brief state because it makes the brief when it opens.",
         "reads": [
           {
             "method": "GET",
@@ -9993,16 +9932,13 @@
         ]
       },
       "completion_bound_s": 20,
-      "viewports": [
-        1440,
-        393
-      ]
+      "viewports": []
     },
     {
       "id": "case.j10.arrival_generate_brief.populated",
       "job": "j10",
       "edge_ids": [
-        "edge.face.arrival_brief_generate"
+        "edge.route.brief_latest"
       ],
       "state_id": "state.briefs.populated",
       "applicability": "applicable",
@@ -10050,85 +9986,38 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 1440,
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          "why": "Betterment daily D5 (#1336): the Brief window retired into Today; Go lists Today at both widths."
         },
         {
           "kind": "ui",
           "action": "click",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
-          "at_width": 1440,
+          "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          "why": "Go > Today: Today makes the day's brief when it opens (GET /api/brief/latest?ensure=1, Betterment daily D5)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
+          "selector": "[data-testid=today-since]",
           "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          "why": "the Since yesterday fold draws only once the brief exists"
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "[data-testid=arrival-brief-generate]",
         "action": "click",
-        "adapter": "ui-pointer"
+        "selector": "[data-testid=today-since-toggle]",
+        "adapter": "ui-pointer",
+        "why": "unfold Since yesterday: its rows are the brief's lookback rows (BriefView.tsx SinceYesterday)"
       },
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "Review decision: Graph walk brief material J10"
+          "value": "Graph walk brief material J10"
         },
-        "observe_at": "[data-testid=arrival-brief] .surface-ledger",
-        "words": "ASTRA round 3 (finding 4): the populated brief is proven by the ITEM ROW the setup minted, never by the headline element (an empty headline passed `text_absent`). The setup creates one proposed desk decision through POST /api/decisions; one POST /api/brief/generate makes the brief; the Chair's populated branch (ChairHome.tsx:1114-1120) draws that item in the brief's row ledger (BriefSection, ChairHome.tsx:1847-1874) as 'Review decision: Graph walk brief material J10'. The ledger shows at most 3 rows (BRIEF_CAP, ChairHome.tsx:1829) and decisions are the last section on the face (:683), so a desk with more than two other visible items hides the row: that is a FAIL the council reads, not a pass. || one POST /api/brief/generate; the brief's OWN item stays on the face, and [data-testid=arrival-brief-receipt] carries the receipt [the audit's stated observation location: face: [data-testid=arrival-brief] .surface-ledger]",
-        "reads": [
-          {
-            "method": "GET",
-            "path": "/api/brief/latest"
-          }
-        ]
+        "observe_at": "[data-testid=today-since-rows]",
+        "words": "the populated brief is proven by the ITEM ROW the setup minted (Astra round 3, finding 4): one proposed decision through POST /api/decisions; Today makes the brief when it opens; Since yesterday unfolded draws its decisions row (BriefView.tsx SinceYesterday: kind REVIEW DECISION, then the title). Betterment daily D5 (#1336) moved it from the Brief window's ledger (the old declaration is in docs/internal/philo/graph/parked-daily-d5-brief.json)."
       },
       "completion_bound_s": 120,
       "viewports": [
@@ -10242,7 +10131,7 @@
       "trigger": {
         "kind": "ui",
         "action": "click",
-        "selector": ".desk-menu-list [role^='menuitem']:has-text('Today')",
+        "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
         "adapter": "ui-pointer",
         "why": "Go > Today: opening Today makes the day's brief (GET /api/brief/latest?ensure=1); there is no Generate (Betterment daily D5)."
       },
@@ -10267,7 +10156,7 @@
         "edge.face.arrival_load"
       ],
       "state_id": "state.briefs.reload_persisted",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its no-untriaged branch with the headline (ChairHome.tsx:1321-1352) -- REPRODUCED in this run by the setup steps above, never inherited from another run (every invocation is a fresh HOME)",
         "PHILO-15 01: a default engine is assigned (global) by the setup steps, so the brief carries no true 'No engine for summaries' item"
@@ -10441,76 +10330,6 @@
           "selector": "[data-testid=arrival-brief]"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "reload",
-        "adapter": "ui-navigation",
-        "then": [
-          {
-            "kind": "ui",
-            "action": "click",
-            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-            "at_width": 1440,
-            "adapter": "ui-pointer",
-            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
-            "at_width": 1440,
-            "adapter": "ui-pointer",
-            "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "adapter": "ui-pointer",
-            "selector": ".desk-verbbar-item[data-menu-id='window'] button",
-            "at_width": 1440,
-            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "adapter": "ui-pointer",
-            "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-            "at_width": 1440,
-            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "adapter": "ui-pointer",
-            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-            "at_width": 1440,
-            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "adapter": "ui-pointer",
-            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-            "at_width": 393,
-            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-          },
-          {
-            "kind": "ui",
-            "action": "click",
-            "adapter": "ui-pointer",
-            "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-            "at_width": 393,
-            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-          },
-          {
-            "kind": "ui",
-            "action": "wait_for",
-            "adapter": "ui-pointer",
-            "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-            "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-          }
-        ]
-      },
       "expected": {
         "predicate": {
           "kind": "text_contains",
@@ -10523,7 +10342,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PARKED 2026-10-18 (Betterment daily D5 (#1336)): the face's Generate press and the Brief window's headline are retired; after a reload Today makes a brief again when none is current, so the face cannot tell a kept brief from a new one. Betterment daily D5 (#1336): the Brief window retired into Today, which makes the day's brief when it opens (GET /api/brief/latest?ensure=1, web/src/desk/pullouts/views/TodayView.tsx); Today has no Generate (web/src/desk/pullouts/views/BriefView.tsx SinceYesterday). Successor: case.j10.route_generate_again.retained_after_reload (the same brief after a reload). The old declaration is kept in docs/internal/philo/graph/parked-daily-d5-brief.json."
     },
     {
       "id": "case.j10.arrival_generate_again.same_day_idempotent",
@@ -10883,7 +10703,7 @@
         {
           "kind": "ui",
           "action": "click",
-          "selector": ".desk-menu-list [role^='menuitem']:has-text('Today')",
+          "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
           "adapter": "ui-pointer",
           "why": "Go > Today: Today makes the first brief of the day when it opens (Betterment daily D5)."
         },
@@ -11199,7 +11019,7 @@
       "state_id": "state.briefs.reload_persisted",
       "applicability": "applicable",
       "preconditions": [
-        "a fresh isolated HOME with NOTHING material in the window, so the generated brief is empty and the Chair draws its own 'Generate again' verb (ChairHome.tsx:1136-1157). With untriaged items the Chair draws NO second verb at all (:1114) and this recipe cannot run.",
+        "a fresh isolated HOME with NOTHING material in the window, so the first brief is empty; Today makes it when it opens (Betterment daily D5); the case then POSTs generate again and reloads.",
         {
           "kind": "check",
           "predicate": {
@@ -11215,10 +11035,10 @@
           "predicate": {
             "kind": "attr_equals",
             "attr": "data-testid",
-            "value": "arrival-brief-headline"
+            "value": "today-since"
           },
-          "observe_at": "[data-testid=arrival-brief-headline]",
-          "why": "RETAINED: after the reload the first brief's own headline is on the face (ChairHome.tsx:1163), read back from GET /api/brief/latest, before the second POST"
+          "observe_at": "[data-testid=today-since]",
+          "why": "the brief exists: Today's Since yesterday fold draws only once GET /api/brief/latest?ensure=1 returned it (Betterment daily D5; was the Brief window)"
         },
         "PHILO-15 01: a default engine is assigned (global) by the setup steps, so the brief carries no true 'No engine for summaries' item"
       ],
@@ -11308,87 +11128,22 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 1440,
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          "why": "Betterment daily D5 (#1336): the Brief window retired into Today; Go lists Today at both widths."
         },
         {
           "kind": "ui",
           "action": "click",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
-          "at_width": 1440,
+          "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          "why": "Go > Today: Today makes the day's brief when it opens (GET /api/brief/latest?ensure=1, Betterment daily D5)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
+          "selector": "[data-testid=today-since]",
           "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": "[data-testid=arrival-brief-generate]",
-          "adapter": "ui-pointer"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "selector": "[data-testid=arrival-brief-receipt]",
-          "adapter": "ui-pointer"
-        },
-        {
-          "kind": "ui",
-          "action": "reload",
-          "adapter": "ui-navigation"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "selector": "[data-testid=arrival-brief-headline]",
-          "adapter": "ui-pointer"
+          "why": "the Since yesterday fold draws only once the brief exists"
         },
         {
           "kind": "api",
@@ -11432,12 +11187,12 @@
       "id": "case.j10.arrival_generate_again.next_day",
       "job": "j10",
       "edge_ids": [
-        "edge.face.arrival_brief_generate_again"
+        "edge.route.brief_latest"
       ],
       "state_id": "state.briefs.next_day_window",
       "applicability": "applicable",
       "preconditions": [
-        "case.j10.arrival_generate_brief.generated_empty reached in this run's setup (the Chair's Generate on a fresh HOME makes the empty brief)",
+        "Today on a fresh HOME makes the empty first brief when it opens (Betterment daily D5; was case.j10.arrival_generate_brief.generated_empty's Generate)",
         "the hub started WITH the brief producer clock seam (the case carries a producer-clock step); the machine clock is never moved",
         {
           "kind": "check",
@@ -11485,77 +11240,22 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 1440,
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          "why": "Betterment daily D5 (#1336): the Brief window retired into Today; Go lists Today at both widths."
         },
         {
           "kind": "ui",
           "action": "click",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
-          "at_width": 1440,
+          "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          "why": "Go > Today: Today makes the day's brief when it opens (GET /api/brief/latest?ensure=1, Betterment daily D5)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
+          "selector": "[data-testid=today-since]",
           "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": "[data-testid=arrival-brief-generate]",
-          "adapter": "ui-pointer",
-          "why": "day one: the Chair's Generate makes the EMPTY brief (a fresh HOME has nothing material)"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "selector": "[data-testid=arrival-brief-receipt]",
-          "adapter": "ui-pointer"
+          "why": "the Since yesterday fold draws only once the brief exists"
         },
         {
           "kind": "api",
@@ -11579,14 +11279,6 @@
           "why": "the decision is recorded AFTER the empty brief (PHILO-3-01's route); the decisions collector names every proposed desk decision 'Review decision: <title>' (holdspeak/services/monday_brief_service.py:765-773)"
         },
         {
-          "kind": "api",
-          "method": "POST",
-          "path": "/api/brief/generate",
-          "body": null,
-          "adapter": "http-route",
-          "why": "the same producer-day: generate returns the existing brief (monday_brief_service.py:205-213)"
-        },
-        {
           "kind": "check",
           "predicate": {
             "kind": "protocol_field",
@@ -11594,7 +11286,7 @@
             "value": []
           },
           "observe_at": "protocol: GET /api/brief/latest",
-          "why": "same-day idempotency: the retained brief still has NO decision item, so inclusion can only come from a new producer-day"
+          "why": "the day-one brief does not hold the decision: Today made it before the decision was recorded, and Today remakes a brief only when none is current for the producer's day (holdspeak/web/routes/monday_brief.py latest ensure). The old same-day POST is gone: since PHILO-15-09 a same-day generate regenerates (case.j10.route_generate_again.same_day_same_id)."
         },
         {
           "kind": "clock",
@@ -11607,41 +11299,60 @@
       ],
       "trigger": {
         "kind": "ui",
-        "action": "click",
-        "selector": "[data-testid=arrival-brief-generate]",
-        "adapter": "ui-pointer",
-        "why": "the Chair's 'Generate again' on the retained empty brief (ChairHome.tsx), now on the next producer-day",
-        "trigger_route": {
-          "method": "POST",
-          "path": "/api/brief/generate"
-        }
+        "action": "reload",
+        "adapter": "ui-navigation",
+        "why": "the next producer-day: Today opens again and makes the new day's brief (the old one is stale, holdspeak/web/routes/monday_brief.py latest ensure + _is_stale)",
+        "then": [
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-verbbar-item[data-menu-id='go'] button",
+            "adapter": "ui-pointer",
+            "why": "Betterment daily D5 (#1336): the Brief window retired into Today; Go lists Today at both widths."
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
+            "adapter": "ui-pointer",
+            "why": "Go > Today: Today makes the day's brief when it opens (GET /api/brief/latest?ensure=1, Betterment daily D5)."
+          },
+          {
+            "kind": "ui",
+            "action": "wait_for",
+            "selector": "[data-testid=today-since]",
+            "adapter": "ui-pointer",
+            "why": "the Since yesterday fold draws only once the brief exists"
+          },
+          {
+            "kind": "ui",
+            "action": "click",
+            "selector": "[data-testid=today-since-toggle]",
+            "adapter": "ui-pointer",
+            "why": "unfold Since yesterday: its rows are the brief's lookback rows (BriefView.tsx SinceYesterday)"
+          }
+        ]
       },
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "Review decision: Graph walk next-day decision J10"
+          "value": "Graph walk next-day decision J10"
         },
-        "observe_at": "[data-testid=arrival-brief] .surface-ledger",
-        "words": "RE-POINTED by PHILO-3-03 (owner's ruling 2026-09-23): the producer's day now moves through clock.python_wall's producer-clock mechanism. Day one: Generate makes an empty brief; the decision is recorded after it; a same-day generate keeps that brief (no decision item). The producer's day moves by one inside the rig's own hub; Generate again on the face draws the NEW brief's item row 'Review decision: Graph walk next-day decision J10'. Mirrors case.a3.brief_next_day.decision_on_the_face (atlas-phase3.json); the id half is case.a3.brief_next_day.new_id_with_the_decision. The sealed phase-2 passes that recorded this case as unreachable stay history.",
-        "reads": [
-          {
-            "method": "GET",
-            "path": "/api/brief/latest"
-          }
-        ]
+        "observe_at": "[data-testid=today-since-rows]",
+        "words": "Day one: Today makes an empty brief; the decision is recorded after it; the day-one brief still has no decision row (checked in setup). The producer's day moves by one inside the rig's own hub (clock.python_wall producer-clock); Today opened again makes the NEW day's brief and its Since yesterday rows draw 'Graph walk next-day decision J10'. Betterment daily D5 (#1336) moved it from the Brief window's Generate again (the old declaration is in docs/internal/philo/graph/parked-daily-d5-brief.json)."
       }
     },
     {
       "id": "case.j10.route_brief_generate.load_failure",
       "job": "j10",
       "edge_ids": [
-        "edge.face.arrival_brief_generate"
+        "edge.route.brief_latest"
       ],
       "state_id": "state.briefs.generation_failure",
       "applicability": "applicable",
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
-        "the generate call refused",
+        "the brief read Today makes refused",
         {
           "kind": "check",
           "predicate": {
@@ -11670,10 +11381,10 @@
         },
         {
           "kind": "boundary",
-          "label": "the generate call refused: the browser boundary answers that one write with HTTP 500; every other read stays real",
+          "label": "the brief read refused: the browser boundary answers Today's GET /api/brief/latest?ensure=1 with HTTP 500 once; every other read stays real",
           "substitute": "http_fault",
-          "method": "POST",
-          "path": "/api/brief/generate",
+          "method": "GET",
+          "path": "/api/brief/latest",
           "status": 500,
           "body": {
             "error": "substituted hub fault"
@@ -11685,79 +11396,24 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 1440,
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
-          "at_width": 1440,
-          "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          "why": "Betterment daily D5 (#1336): the Brief window retired into Today; Go lists Today at both widths."
         }
       ],
       "trigger": {
         "kind": "ui",
-        "selector": "[data-testid=arrival-brief-generate]",
         "action": "click",
-        "adapter": "ui-pointer"
+        "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
+        "adapter": "ui-pointer",
+        "why": "Go > Today: Today makes the day's brief when it opens (GET /api/brief/latest?ensure=1, Betterment daily D5)."
       },
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "BRIEF DID NOT GENERATE \u00b7 HTTP 500"
+          "value": "The brief could not be read"
         },
-        "observe_at": "[data-testid=arrival-brief-generate-failed]",
-        "words": "RE-POINTED by PHILO-4-01 round two (ratified canvas board 6b): a refused generation is named in the BRIEF section's own status slot, 'BRIEF DID NOT GENERATE \u00b7 HTTP 500' (ChairHome.tsx:718-726, the cause from briefLoadCause :152), and Generate stays in the section head (briefVerbs :695); it is never a silent no-op and never the old desk write-failure toast [the audit's stated observation location: face: the BRIEF section's failure line]"
+        "observe_at": "[data-testid=today-since-failed]",
+        "words": "a refused brief read is named in Today's Since yesterday slot ('The brief could not be read. Nothing changed. Press Retry.', BriefView.tsx SinceYesterday) with Retry beside it; never a silent empty fold. Betterment daily D5 (#1336) moved it from the Brief window's Generate failure line (the old declaration is in docs/internal/philo/graph/parked-daily-d5-brief.json)."
       },
       "completion_bound_s": 60,
       "viewports": [
@@ -11778,11 +11434,12 @@
         {
           "kind": "check",
           "predicate": {
-            "kind": "text_contains",
-            "value": "Brief ready"
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "today-since"
           },
-          "observe_at": "[data-testid=arrival-brief]",
-          "why": "GENERATE_BRIEF really produced a brief on the face"
+          "observe_at": "[data-testid=today-since]",
+          "why": "the brief exists: Today's Since yesterday fold draws only once GET /api/brief/latest?ensure=1 returned it (Betterment daily D5; was the Brief window)"
         },
         {
           "kind": "check",
@@ -11825,76 +11482,22 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 1440,
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          "why": "Betterment daily D5 (#1336): the Brief window retired into Today; Go lists Today at both widths."
         },
         {
           "kind": "ui",
           "action": "click",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
-          "at_width": 1440,
+          "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          "why": "Go > Today: Today makes the day's brief when it opens (GET /api/brief/latest?ensure=1, Betterment daily D5)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
+          "selector": "[data-testid=today-since]",
           "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": "[data-testid=arrival-brief-generate]",
-          "adapter": "ui-pointer"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "selector": "[data-testid=arrival-brief-receipt]",
-          "adapter": "ui-pointer"
+          "why": "the Since yesterday fold draws only once the brief exists"
         },
         {
           "kind": "api",
@@ -11951,11 +11554,12 @@
         {
           "kind": "check",
           "predicate": {
-            "kind": "text_contains",
-            "value": "Brief ready"
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "today-since"
           },
-          "observe_at": "[data-testid=arrival-brief]",
-          "why": "GENERATE_BRIEF really produced a brief on the face"
+          "observe_at": "[data-testid=today-since]",
+          "why": "the brief exists: Today's Since yesterday fold draws only once GET /api/brief/latest?ensure=1 returned it (Betterment daily D5; was the Brief window)"
         },
         {
           "kind": "check",
@@ -11998,76 +11602,22 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 1440,
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          "why": "Betterment daily D5 (#1336): the Brief window retired into Today; Go lists Today at both widths."
         },
         {
           "kind": "ui",
           "action": "click",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
-          "at_width": 1440,
+          "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          "why": "Go > Today: Today makes the day's brief when it opens (GET /api/brief/latest?ensure=1, Betterment daily D5)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
+          "selector": "[data-testid=today-since]",
           "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": "[data-testid=arrival-brief-generate]",
-          "adapter": "ui-pointer"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "selector": "[data-testid=arrival-brief-receipt]",
-          "adapter": "ui-pointer"
+          "why": "the Since yesterday fold draws only once the brief exists"
         },
         {
           "kind": "api",
@@ -12124,11 +11674,12 @@
         {
           "kind": "check",
           "predicate": {
-            "kind": "text_contains",
-            "value": "Brief ready"
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "today-since"
           },
-          "observe_at": "[data-testid=arrival-brief]",
-          "why": "GENERATE_BRIEF really produced a brief on the face"
+          "observe_at": "[data-testid=today-since]",
+          "why": "the brief exists: Today's Since yesterday fold draws only once GET /api/brief/latest?ensure=1 returned it (Betterment daily D5; was the Brief window)"
         },
         {
           "kind": "check",
@@ -12160,76 +11711,22 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 1440,
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          "why": "Betterment daily D5 (#1336): the Brief window retired into Today; Go lists Today at both widths."
         },
         {
           "kind": "ui",
           "action": "click",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
-          "at_width": 1440,
+          "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          "why": "Go > Today: Today makes the day's brief when it opens (GET /api/brief/latest?ensure=1, Betterment daily D5)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
+          "selector": "[data-testid=today-since]",
           "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-brief-generate]"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "adapter": "ui-pointer",
-          "selector": "[data-testid=arrival-brief-receipt]"
+          "why": "the Since yesterday fold draws only once the brief exists"
         }
       ],
       "trigger": {
@@ -12958,11 +12455,12 @@
         {
           "kind": "check",
           "predicate": {
-            "kind": "text_contains",
-            "value": "Brief ready"
+            "kind": "attr_equals",
+            "attr": "data-testid",
+            "value": "today-since"
           },
-          "observe_at": "[data-testid=arrival-brief]",
-          "why": "GENERATE_BRIEF really produced a brief on the face"
+          "observe_at": "[data-testid=today-since]",
+          "why": "the brief exists: Today's Since yesterday fold draws only once GET /api/brief/latest?ensure=1 returned it (Betterment daily D5; was the Brief window)"
         },
         {
           "kind": "check",
@@ -13005,76 +12503,22 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 1440,
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
+          "why": "Betterment daily D5 (#1336): the Brief window retired into Today; Go lists Today at both widths."
         },
         {
           "kind": "ui",
           "action": "click",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Needs you')",
-          "at_width": 1440,
+          "selector": ".desk-verbbar-menu [role^='menuitem']:has(.desk-menu-label:text-is('Today'))",
           "adapter": "ui-pointer",
-          "why": "Betterment shell S0 (#1257): Window > Desk shows only while a window is open; Go > Needs you (S1, #1259) opens one first. openChairWindow opens, never toggles."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='window'] button",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-menu [role='menuitem']:has-text('Desk')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 1440,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-verbbar-item[data-menu-id='go'] button",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "adapter": "ui-pointer",
-          "selector": ".desk-menu-list [role='menuitemcheckbox']:has-text('Brief')",
-          "at_width": 393,
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
+          "why": "Go > Today: Today makes the day's brief when it opens (GET /api/brief/latest?ensure=1, Betterment daily D5)."
         },
         {
           "kind": "ui",
           "action": "wait_for",
+          "selector": "[data-testid=today-since]",
           "adapter": "ui-pointer",
-          "selector": ".desk-window-shell.chair-window[aria-label='Brief']",
-          "why": "PHILO-14 A1 (#939): the Chair's windows start closed; open Brief the way the owner does (Window > Chair > Brief at 1440, Go > Brief at 393)."
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": "[data-testid=arrival-brief-generate]",
-          "adapter": "ui-pointer"
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "selector": "[data-testid=arrival-brief-receipt]",
-          "adapter": "ui-pointer"
+          "why": "the Since yesterday fold draws only once the brief exists"
         },
         {
           "kind": "api",
@@ -15537,7 +14981,7 @@
         "edge.face.arrival_run_intel"
       ],
       "state_id": "state.meetings.intel.ready",
-      "applicability": "applicable",
+      "applicability": "not_applicable",
       "preconditions": [
         "A real imported architect meeting reaches the summary producer through the recorded provider boundary.",
         {
@@ -15957,17 +15401,6 @@
           "selector": "[data-testid=arrival-run-intel]"
         }
       ],
-      "trigger": {
-        "kind": "ui",
-        "action": "click",
-        "adapter": "ui-by-viewport",
-        "selector": "[data-testid=arrival-run-intel]",
-        "trigger_route": {
-          "method": "POST",
-          "path": "/api/meetings/{meeting_id}/intelligence/run"
-        },
-        "why": "the real Arrival gesture admits the deferred producer job; the drainer's aftercare_ready signal reaches intelligenceAttention.ts"
-      },
       "expected": {
         "predicate": {
           "kind": "readable_text",
@@ -16031,7 +15464,8 @@
       "viewports": [
         1440,
         393
-      ]
+      ],
+      "reason": "PARKED 2026-10-18 (Betterment daily D5 (#1336)): the Arrival face this case drove (the Brief and The week windows, arrival-run-intel, arrival-aftercare-slot) is retired. Betterment daily D5 (#1336): the Brief window retired into Today, which makes the day's brief when it opens (GET /api/brief/latest?ensure=1, web/src/desk/pullouts/views/TodayView.tsx); Today has no Generate (web/src/desk/pullouts/views/BriefView.tsx SinceYesterday). Successor: case.philo603.toast.meetings_window (the same MEETING READY toast from the Meetings window). The old declaration is kept in docs/internal/philo/graph/parked-daily-d5-brief.json."
     },
     {
       "id": "case.philo603.toast.meetings_window",

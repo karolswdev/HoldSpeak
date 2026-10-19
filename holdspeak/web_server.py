@@ -276,6 +276,61 @@ def _record_restart_stops() -> None:
         log.warning(f"restart stop check failed: {exc}")
 
 
+#: Betterment AG9: the done turns already seen (``launch:turn``); None
+#: until the first read, which is the baseline (a restart notifies nothing).
+_DONE_SEEN: Optional[set[str]] = None
+
+
+def _agent_done_step() -> list[str]:
+    """Betterment AG9 (decision 2): each finished turn the owner has not
+    opened (Done · New) raises one quiet notification, the first time the
+    watcher sees it. Returns the launches it decided on. A failure is
+    logged and never stops the coder watcher."""
+    global _DONE_SEEN
+    try:
+        from .db import get_database, get_observer
+        from .services.agent_flights import agent_flights
+        from .services.heartbeat_service import HeartbeatService
+
+        db = get_database()
+        done = {
+            f"{f['launch_id']}:{f['turn_id']}": f for f in agent_flights(db)
+            if f.get("state") == "done" and f.get("new") and f.get("launch_id") and f.get("turn_id")
+        }
+        if _DONE_SEEN is None:
+            _DONE_SEEN = set(done)
+            return []
+        fresh = [key for key in done if key not in _DONE_SEEN]
+        _DONE_SEEN |= set(fresh)
+        if not fresh:
+            return []
+        heartbeat = HeartbeatService(db, observer=get_observer())
+        for key in fresh:
+            f = done[key]
+            heartbeat.notify_agent_done(
+                launch_id=str(f["launch_id"]), agent=str(f.get("agent") or ""),
+                title=str(f.get("title") or ""), turn_id=str(f["turn_id"]),
+            )
+        return [str(done[key]["launch_id"]) for key in fresh]
+    except Exception as exc:
+        log.debug(f"agent done step failed: {exc}")
+        return []
+
+
+def _screen_watch_step() -> list[str]:
+    """Betterment AG7: one read of every live agent's screen
+    (``agent_context.screen_watch.tick``); the frame keys whose face changed.
+    ``HOLDSPEAK_SCREEN_RULES=off`` reads nothing. A failure is logged and
+    never stops the coder watcher."""
+    try:
+        from .agent_context import screen_watch
+
+        return screen_watch.tick()
+    except Exception as exc:
+        log.debug(f"screen watch step failed: {exc}")
+        return []
+
+
 def _start_queued_hands(web_ctx: Any = None) -> None:
     """Betterment AG5: a hand that waits for a free agent starts when one is
     free (about each minute, beside the restart check). With nothing queued
@@ -717,6 +772,11 @@ class MeetingWebServer:
         from .principals import agent_credentials
 
         agent_credentials.set_hub_url(f"http://{self.host}:{self.port}")
+        # Betterment daily D8: a notice opens the desk on this hub.
+        from .desktop_notify import set_hub_url as set_notice_hub_url
+
+        notice_host = "127.0.0.1" if self.host in {"0.0.0.0", "::", ""} else self.host
+        set_notice_hub_url(f"http://{notice_host}:{self.port}")
         # PHILO-17 redact: uvicorn's own log lines pass the redactor too.
         from .logging_config import install_log_redaction
 
@@ -2016,6 +2076,7 @@ class MeetingWebServer:
             try:
                 path = agent_context.AGENT_CONTEXT_FILE
                 mtime = path.stat().st_mtime if path.exists() else None
+                mtime_moved = mtime != last_mtime
                 if mtime != last_mtime:
                     last_mtime = mtime
                     snapshot, transitions, entered = await asyncio.to_thread(
@@ -2044,6 +2105,24 @@ class MeetingWebServer:
                         notify_now = await asyncio.to_thread(_coder_answer_triage, entered)
                         if notify_now:
                             await asyncio.to_thread(_coder_awaiting_edge, notify_now)
+                # Betterment AG7: read each live agent's screen (its rules
+                # say its state where no hook speaks); a changed face is a
+                # coder frame too.
+                screen_changed = await asyncio.to_thread(_screen_watch_step)
+                # Betterment AG9: a finished turn notifies quietly (once).
+                if screen_changed or mtime_moved or _DONE_SEEN is None:
+                    await asyncio.to_thread(_agent_done_step)
+                for key in screen_changed:
+                    await self._ws.broadcast(
+                        BroadcastMessage(
+                            type="intel_status",
+                            data={
+                                "state": "ready",
+                                "scope": "coder",
+                                "capability": {"kind": "coder", "id": key, "name": "screen"},
+                            },
+                        )
+                    )
             except asyncio.CancelledError:
                 raise
             except Exception as e:

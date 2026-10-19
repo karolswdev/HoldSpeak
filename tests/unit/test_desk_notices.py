@@ -131,7 +131,7 @@ def test_the_morning_notice_replaces_the_backlog_and_names_the_first_meeting(hub
     local = start.astimezone()
     first = f" · first: 1:1 with Mira {local:%H:%M}" if local.date() == datetime.now().astimezone().date() else ""
     assert [body for _, body, _ in posts] == [f"4 need you{first}"], posts
-    assert posts[0][2] == "/intelligence"  # it opens Today
+    assert posts[0][2] == "/?open=intelligence:desk"  # it opens Today (a desk address)
     assert receipt["morning"] is True and receipt["outcome"] == "sent"
 
     # The same morning: nothing more (the rows were told once).
@@ -183,7 +183,7 @@ def test_ten_minutes_before_a_one_on_one_prep_is_ready_once(hub: Hub) -> None:
     service = _heartbeat(hub, notifier=notifier)
     receipt = service.prep_notices()
     assert posts == [(f"1:1 with Mira at {start.astimezone():%H:%M} · Prep ready",
-                      f"/people?person={seeded['Mira']}")], posts
+                      f"/?open=people:{seeded['Mira']}")], posts
     assert receipt["outcome"] == "sent"
     assert service.prep_notices()["outcome"] == "held_no_edge" and len(posts) == 1
 

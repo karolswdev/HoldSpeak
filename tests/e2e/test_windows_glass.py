@@ -1780,9 +1780,9 @@ class TestCloseMeansGone:
                 if width <= 720:
                     open_chair_window(page, "Capture")
                 self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
-                # A thought with no words is named `New thought` (windowName.ts).
-                _close_control(page, width, "New thought").wait_for()
-                self._close_and_prove(page, width, "New thought", "write-a-thought")
+                # A note with no words is named `New note` (windowName.ts, Betterment Q8).
+                _close_control(page, width, "New note").wait_for()
+                self._close_and_prove(page, width, "New note", "write-a-thought")
 
                 if width < 720:
                     # The phone home is Go. Find opens exact existing

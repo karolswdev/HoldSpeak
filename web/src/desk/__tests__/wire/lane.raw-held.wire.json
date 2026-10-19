@@ -1,12 +1,12 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-11T20:37:24.072429Z",
+  "captured_at": "2026-10-19T04:23:09.197813Z",
   "wire": {
     "answers": [],
     "attempt_events": [
       {
         "from": null,
-        "occurred_at": "2026-10-11T20:37:23.946544Z",
+        "occurred_at": "2026-10-19T04:23:09.023899Z",
         "reason": "created:launch",
         "to": "working"
       }
@@ -29,7 +29,7 @@
         "id": 1,
         "text": null,
         "tool": null,
-        "ts": "2026-10-11T20:37:22.776491Z"
+        "ts": "2026-10-19T04:23:07.858347Z"
       },
       {
         "detail": {},
@@ -38,7 +38,7 @@
         "id": 2,
         "text": "Write the ledger rollback runbook.",
         "tool": null,
-        "ts": "2026-10-11T20:37:22.777383Z"
+        "ts": "2026-10-19T04:23:07.859870Z"
       },
       {
         "detail": {
@@ -49,7 +49,7 @@
         "id": 3,
         "text": null,
         "tool": "Read",
-        "ts": "2026-10-11T20:37:22.778028Z"
+        "ts": "2026-10-19T04:23:07.861273Z"
       },
       {
         "detail": {
@@ -60,7 +60,7 @@
         "id": 4,
         "text": null,
         "tool": "Grep",
-        "ts": "2026-10-11T20:37:22.778615Z"
+        "ts": "2026-10-19T04:23:07.862416Z"
       },
       {
         "detail": {
@@ -71,7 +71,7 @@
         "id": 5,
         "text": null,
         "tool": "Read",
-        "ts": "2026-10-11T20:37:22.779187Z"
+        "ts": "2026-10-19T04:23:07.863576Z"
       },
       {
         "detail": {},
@@ -80,7 +80,7 @@
         "id": 6,
         "text": "I will draft the runbook from the freeze decision and the Nov 12 rollback window.",
         "tool": null,
-        "ts": "2026-10-11T20:37:22.779741Z"
+        "ts": "2026-10-19T04:23:07.864312Z"
       },
       {
         "detail": {
@@ -91,7 +91,7 @@
         "id": 7,
         "text": null,
         "tool": "Write",
-        "ts": "2026-10-11T20:37:22.780311Z"
+        "ts": "2026-10-19T04:23:07.864963Z"
       },
       {
         "detail": {
@@ -102,7 +102,7 @@
         "id": 8,
         "text": null,
         "tool": "Bash",
-        "ts": "2026-10-11T20:37:22.780869Z"
+        "ts": "2026-10-19T04:23:07.865585Z"
       },
       {
         "detail": {},
@@ -111,7 +111,7 @@
         "id": 9,
         "text": "The runbook needs a rollback owner. Jordan or Avery?",
         "tool": null,
-        "ts": "2026-10-11T20:37:23.944974Z"
+        "ts": "2026-10-19T04:23:09.021772Z"
       }
     ],
     "events_next_after": null,
@@ -173,7 +173,7 @@
         "args_head": "{\"command\":\"cd /private/var/folders/q7/T/hs-r2/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558 && pwd",
         "args_hidden": 133,
         "args_shown": "cd /private/var/folders/q7/T/hs-r2/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558 && pwd",
-        "created_at": 1791751043.952492,
+        "created_at": 1792383789.032875,
         "decided_at": null,
         "decided_by": null,
         "hold_reason": "OUTSIDE THE WORKTREE",
@@ -219,7 +219,7 @@
         "args_head": "{\"command\":\"psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
         "args_hidden": 90,
         "args_shown": "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
-        "created_at": 1791751043.963565,
+        "created_at": 1792383789.0480042,
         "decided_at": null,
         "decided_by": null,
         "hold_reason": "OUTSIDE THE WORKTREE",
@@ -265,7 +265,7 @@
         "args_head": "{\"command\":\"cat > /tmp/hs_huge.txt <<'EOF'\\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
         "args_hidden": 65927,
         "args_shown": "cat > /tmp/hs_huge.txt <<'EOF'\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        "created_at": 1791751043.975073,
+        "created_at": 1792383789.0634828,
         "decided_at": null,
         "decided_by": null,
         "hold_reason": "OUTSIDE THE WORKTREE",
@@ -309,7 +309,7 @@
     ],
     "launch": {
       "agent": "claude",
-      "attempt_id": "att_82954ab9f9c54bac",
+      "attempt_id": "att_c5e89b2e0d654bf6",
       "branch": "hs/write-the-rollback-runbook",
       "brief_sent_at": null,
       "brief_text": "Write the ledger rollback runbook.\n\nSources: the freeze decision; the Nov 12 window.\nChecks: the runbook names an owner.",
@@ -318,7 +318,7 @@
       "gate": "gated",
       "instruction_state": "sent",
       "launch_id": "launch_c2_runbook",
-      "launched_at": "2026-10-11T20:17:23.946909Z",
+      "launched_at": "2026-10-19T04:03:09.024322Z",
       "origin_ref": {
         "id": "m-cutover-a1",
         "kind": "action"
@@ -335,13 +335,13 @@
       "worktree_path": "~/dev/wt/hs-action-runbook"
     },
     "session": {
-      "created_at": "2026-10-11T20:37:22.776491Z",
+      "created_at": "2026-10-19T04:23:07.858347Z",
       "event_count": 9,
       "last_tool_name": "Bash",
       "lifecycle": "waiting",
       "model": null,
       "state": "waiting",
-      "updated_at": "2026-10-11T20:37:23.944974Z"
+      "updated_at": "2026-10-19T04:23:09.021772Z"
     },
     "usage": null,
     "wait": {
@@ -353,9 +353,9 @@
       },
       "kind": "TO ANSWER",
       "question": "The runbook needs a rollback owner. Jordan or Avery?",
-      "started": "2026-10-11T20:37:23.944974Z",
+      "started": "2026-10-19T04:23:09.021772Z",
       "turn_end": "asks",
-      "wait_id": "2026-10-11T20:37:23.944974Z#9",
+      "wait_id": "2026-10-19T04:23:09.021772Z#9",
       "wait_kind": "answer"
     },
     "worktree": {
@@ -363,8 +363,8 @@
       "branch": "hs/write-the-rollback-runbook",
       "commits": [
         {
-          "at": 1791751043,
-          "sha": "cbf3e8d",
+          "at": 1792383789,
+          "sha": "f958f23",
           "subject": "Draft the ledger rollback runbook"
         }
       ],
@@ -378,7 +378,7 @@
           "status": "A"
         }
       ],
-      "read_at": 1791751044.069719,
+      "read_at": 1792383789.1938958,
       "uncommitted": {
         "modified": 0,
         "staged": 0,

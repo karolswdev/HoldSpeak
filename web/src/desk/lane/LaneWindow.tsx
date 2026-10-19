@@ -19,6 +19,7 @@ import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { markLaunchSeen, useAgentFlights } from "../agentFlights";
+import { WhyThisState } from "../agents/WhyThisState";
 import { AgentWords, cutAtWord } from "../components/AgentWords";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ArmStrip, KeyPalette, PANE_STATE_LABEL } from "../components/SessionPullout";
@@ -182,7 +183,7 @@ function LaneFrame({ launchId }: { launchId: string }) {
           aria-pressed={raw}
           aria-label={raw ? "Story" : "Terminal"}
           data-testid="lane-raw"
-          disabled={!sessionKey}
+          disabled={!sessionKey && flight?.stateSource !== "screen"}
           onClick={() => useLane.getState().setRaw(!raw)}
         >
           {raw ? "Story" : "Terminal"}
@@ -807,6 +808,7 @@ function RawHeldCall({ call }: { call: LaneGated }) {
 
 function RawPane() {
   const lane = useLane((s) => s.lane);
+  const launchId = useLane((s) => s.launchId);
   const gated = lane && Array.isArray(lane.gated) ? lane.gated : [];
   const cut = gated.filter((g) => g.args_cut && (g.state === "held" || g.state === "pending"));
   const paneStatus = useSteering((s) => s.paneStatus);
@@ -820,6 +822,8 @@ function RawPane() {
   const postureAuthorized = useSteering((s) => s.postureAuthorized);
   return (
     <div className="lw-raw" data-testid="lane-raw-pane">
+      {/* Betterment AG7: the hook or the screen rule behind the state. */}
+      {launchId ? <WhyThisState launchId={launchId} /> : null}
       {cut.map((call) => (
         <RawHeldCall key={call.id} call={call} />
       ))}

@@ -23,6 +23,7 @@ from .directories import build_directories_router
 from .decisions import build_desk_decisions_router
 from .kbs import build_kbs_router
 from .notes import build_notes_router
+from .note_outcomes import build_note_outcomes_router
 from .thoughts import build_thoughts_router
 from .profiles import build_profiles_router
 from .model_profiles import build_model_profiles_router
@@ -34,6 +35,7 @@ from .invocations import build_invocations_router
 def build_primitives_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
     mount_router(router, build_notes_router(ctx))
+    mount_router(router, build_note_outcomes_router(ctx))
     mount_router(router, build_thoughts_router(ctx))
     mount_router(router, build_desk_decisions_router(ctx))
     mount_router(router, build_ask_router(ctx))

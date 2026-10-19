@@ -186,29 +186,21 @@ export const VERBS: Verb[] = [
     // ⌃ keys a page receives; the ⌘ keys stay bound where a browser passes
     // them (an installed app window).
     key: "⌃N",
-    altKeys: ["⌘N"],
+    // Betterment Q8 (one note): ⌃T (Write a thought) opens New Note too.
+    altKeys: ["⌘N", "⌃T"],
     glyph: KIND_GLYPH.note,
-    keywords: ["create", "write"],
+    keywords: ["create", "write", "thought", "idea", "capture"],
     ghost: never,
-    run: () => void useDesk.getState().createPrimitive("note"),
-  },
-  // PHILO-13-16 (C6) — the pop-key: a thought from any window in one key
-  // press (⌃T). At 393 the same verb is in the Desk menu; no key is assumed.
-  {
-    id: "desk.new-thought",
-    label: "Write a thought",
-    menu: "desk",
-    scope: "floor",
-    group: "new",
-    key: "⌃T",
-    glyph: KIND_GLYPH.note,
-    keywords: ["capture", "thought", "write", "idea"],
-    ghost: never,
+    // Betterment Q8: New Note opens the one note window (the sticky), never
+    // the form editor.
     run: async () => {
       const { openNewThought } = await import("./newThought");
       await openNewThought();
     },
   },
+  // Betterment Q8 (one note): Write a thought left the Desk menu; New Note
+  // opens the same sticky and takes ⌃T. Parked in
+  // desk/_parked/notes/writeAThoughtVerb.ts.
   {
     id: "desk.new-decision",
     label: "New Decision",

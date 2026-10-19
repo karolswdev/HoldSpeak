@@ -9,6 +9,9 @@
   min-width: 0;
 }
 
+/* `.desk-next .desk-pullout-body ul` (window-chrome.css) indents every list
+   in a window by 18 px; the matches are rows, not a bulleted list. */
+.desk-next .about-picker .about-matches,
 .about-matches {
   list-style: none;
   margin: 0;
@@ -19,11 +22,15 @@
   min-width: 0;
 }
 
-.about-match { min-width: 0; }
+.about-match { display: block; min-width: 0; }
 
 .about-match-press.btn {
   display: flex;
-  align-items: baseline;
+  /* Center, not baseline: at 393 the row is painted 44 px tall, and a
+     baseline row put the name at its top with an empty band below. */
+  align-items: center;
+  /* The row is painted at the touch height at 393: no halo margin. */
+  margin-block: 0;
   justify-content: space-between;
   gap: 12px;
   width: 100%;

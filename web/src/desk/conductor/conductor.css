@@ -310,3 +310,36 @@
 .desk-next .cw-ask > .cw-desk-answer { padding: 0 12px; }
 .desk-next .cw-desk-answer-text { flex: 1 1 14em; min-width: 0; overflow-wrap: anywhere; }
 .desk-next .cw-row-text > .cw-desk-answer { margin-top: 2px; }
+
+/* ── Betterment AG8: the Agents list is the fleet ─────────────────────────
+   The empty line, the project lines (the worst state of their agents) and
+   Start an agent, in place under the head. */
+.desk-next .cw-empty {
+  margin: 0;
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .cw-project-cap { justify-content: space-between; }
+.desk-next .cw-project-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .cw-start {
+  padding: 8px 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+}
+.desk-next .cw-start-none { font: 500 13px / 1.4 var(--font-sans); color: var(--wb-muted); }
+.desk-next .cw-start-verbs { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+/* Gaps: the project and agent pickers take their column (an uppercase face
+   clipped "CLAUDE CODE" in a select sized to its option at 393). */
+.desk-next .cw-start .gadget-cycle,
+.desk-next .cw-start .gadget-cycle select { width: 100%; }
+/* Gaps: a row whose verb is wide (Connect Claude Code) wraps the verb under
+   its words in a narrow window, never over its pill. */
+.desk-next .cw-row { flex-wrap: wrap; }
+.desk-next .cw-row > .cw-row-text { flex: 1 1 150px; }
+.desk-next .cw-row > .btn { margin-left: auto; }
