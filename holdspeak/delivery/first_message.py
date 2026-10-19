@@ -438,14 +438,6 @@ class FirstMessage:
         # stays on a restart-stopped agent.
         if str(record.get("state") or "") in STOPPED_STATES:
             return str(record.get("state"))
-        if self._tmux_server_gone():
-            # tmux itself went away (a tmux or Mac restart while the hub
-            # runs): the restart check decides, exactly as on hub start (an
-            # agent whose hook session ended by itself stays complete).
-            stopped = self._restart_stop(launch_id, str(record.get("session") or ""))
-            if stopped:
-                return stopped
-            record = self._svc._ledger.get(launch_id) or {}
         held = isinstance(record.get("pending_brief"), Mapping)
         delivered = record.get("instruction_state") == DELIVERED or (
             not held and record.get("instruction_state") in (None, DELIVERED)
@@ -469,35 +461,6 @@ class FirstMessage:
         # The receipt first, then the state a reader waits on.
         self._svc._ledger.update(launch_id, **updates)
         return state
-
-    def _tmux_server_gone(self) -> bool:
-        """tmux answers "no server running": every session went with it."""
-        run = self._svc._runner or coder_steering._default_runner
-        try:
-            completed = run(["tmux", "list-sessions"])
-        except (OSError, Exception):
-            return False
-        text = f"{completed.stderr or ''} {completed.stdout or ''}".lower()
-        return completed.returncode != 0 and ("no server running" in text or "error connecting" in text)
-
-    def _restart_stop(self, launch_id: str, session: str) -> Optional[str]:
-        """Run the restart check for this one launch (its session is gone);
-        the launch's state after it, when the check stopped it."""
-        from ..services.launch_lane import record_restart_stops
-
-        from types import SimpleNamespace
-
-        try:
-            stopped = record_restart_stops(
-                db=SimpleNamespace(work_attempts=self._svc._attempts),
-                ledger=self._svc._ledger,
-                alive=lambda name: False if name == session else None,
-            )
-        except Exception:
-            return None
-        if launch_id not in stopped:
-            return None
-        return str((self._svc._ledger.get(launch_id) or {}).get("state") or "") or None
 
     # the waiter --------------------------------------------------------------
 
