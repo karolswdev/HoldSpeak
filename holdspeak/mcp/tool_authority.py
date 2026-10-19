@@ -83,6 +83,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "dictation.get": WORK,
     "desk.snapshot": WORK,
     "desk.needs_you": WORK,
+    "today.get": WORK,
     "settings.hub": WORK,
     "decision_record.list": WORK,
     "decision_record.get": WORK,
