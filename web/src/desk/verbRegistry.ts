@@ -27,6 +27,7 @@ import { deleteSeatShown } from "./deleteSeat";
 import {
   closeFrontWindow,
   focusOrRestoreApp,
+  frontWindowId,
   minimizeFrontWindow,
   openWindowCount,
 } from "./components/window/windowRegistry";
@@ -112,6 +113,16 @@ export function verbLabel(v: Verb, ctx: VerbContext): string {
 function selected(ctx: VerbContext) {
   if (!ctx.selectedRef) return null;
   return objectByRef(useDesk.getState().items, ctx.selectedRef);
+}
+
+/** Betterment AG4: the work item to hand. The selected desk icon, else the
+ *  object of the window in front (`pullout:<ref>`): he hands what he reads. */
+function handTarget(ctx: VerbContext) {
+  const picked = selected(ctx);
+  if (picked) return picked;
+  const front = frontWindowId();
+  if (!front?.startsWith("pullout:")) return null;
+  return objectByRef(useDesk.getState().items, front.slice("pullout:".length));
 }
 
 const needSelection = (ctx: VerbContext): string | null =>
@@ -496,12 +507,12 @@ export const VERBS: Verb[] = [
     glyph: "⇥",
     keywords: ["agent", "claude", "codex", "pi", "coder", "launch", "delegate"],
     ghost: (ctx) => {
-      const o = selected(ctx);
+      const o = handTarget(ctx);
       if (!o) return "Select an object";
       return primitiveCan(o.kind, "hand") && handKindOf(o.kind) ? null : "Not a work item";
     },
     run: (ctx) => {
-      const o = selected(ctx);
+      const o = handTarget(ctx);
       const kind = o ? handKindOf(o.kind) : null;
       if (!o || !kind || !primitiveCan(o.kind, "hand")) return;
       openHand({ kind, id: o.id, title: String(o.title ?? "") || o.id });

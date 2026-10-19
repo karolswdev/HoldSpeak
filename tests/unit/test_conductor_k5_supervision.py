@@ -117,7 +117,7 @@ def test_the_gate_decides_a_launched_agents_call_by_yolo(launched, tmp_path, mon
 @pytest.mark.parametrize("mode, command, allowed, reason", [
     # YOLO: inside the own worktree passes; every escape waits.
     ("yolo", "rm -rf build && git add -A && git commit -m 'fix'", True, "yolo_inside_own_worktree"),
-    ("yolo", "git push -u origin hs/action-ai_1", True, "yolo_inside_own_worktree"),
+    ("yolo", "git push -u origin hs/fix-the-login-timeout", True, "yolo_inside_own_worktree"),
     ("yolo", "cat /etc/passwd", False, "yolo_outside_own_worktree"),
     ("yolo", "rm -rf ../x", False, "yolo_outside_own_worktree"),
     ("yolo", "cd .. && ls", False, "yolo_outside_own_worktree"),
@@ -775,7 +775,7 @@ def test_tool_gate_policy_matrix(mode, verdict, outcome, reason) -> None:
     ("git config user.email x@y", "outside", "git_shared_state"),
     ("rm -rf build", "inside", "in_worktree"),
     ("git add -A && git commit -m \"$(cat <<'EOF'\nFix it\n\nCo-Authored-By: x\nEOF\n)\"", "inside", "in_worktree"),
-    ("git push -u origin hs/action-ai_1", "inside", "git_push_launch_branch"),
+    ("git push -u origin hs/fix-the-login-timeout", "inside", "git_push_launch_branch"),
     ("pytest -q 2>&1 | tail -5", "inside", "in_worktree"),
     ("ls > /dev/null 2>&1", "inside", "in_worktree"),
 ])

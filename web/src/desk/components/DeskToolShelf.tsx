@@ -40,6 +40,8 @@ import {
   VERBS, offeredHere, verbById, verbLabel, weekVerbs, type VerbContext, type WeekPerson,
 } from "../verbRegistry";
 import { openPerson, refOpener } from "../openObject";
+import { handKindOf, handRefOf, openHand, type HandOrigin } from "../agentHand";
+import { primitiveCan } from "../../lib/primitives";
 import { primeSendTo, sendChoices, useSendToTick } from "../windowSend";
 import { useAllOpenWindows, useFrontWindowId } from "./window/windowRegistry";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
@@ -100,6 +102,9 @@ interface DeckRow {
   meetingMeta?: string;
   /** A contextual Send row stays visible but does not steal the first press. */
   preselect?: boolean;
+  /** Betterment AG4: a work item (action, note, meeting, decision) the
+   *  selected row hands to an agent with its own verb. */
+  hand?: HandOrigin;
   run(): void;
 }
 
@@ -644,6 +649,12 @@ export function DeskToolShelf() {
           meetingMeta: meetingMeta(item.ref),
           wrap: item.kind === "meeting",
           run: () => openPullout(qualifiedRef(item.kind, item.id)),
+          hand: (() => {
+            const handKind = handKindOf(item.kind);
+            return handKind && primitiveCan(item.kind, "hand")
+              ? { kind: handKind, id: item.id, title: item.title || item.id }
+              : undefined;
+          })(),
         });
       }
     }
@@ -797,6 +808,11 @@ export function DeskToolShelf() {
           origin: hit.retrieval_origin,
           at: hit.occurred_at,
         },
+        // Betterment AG4: an action, note, meeting or decision hit is a work item.
+        hand: (() => {
+          const ref = handRefOf(base);
+          return ref ? { ...ref, title } : undefined;
+        })(),
         // The hit can be older than its desk list (24 meetings, 24
         // artifacts, ...): hold its object so the next load reads it by id,
         // load, then open. A window whose object is not in the store is
@@ -1018,6 +1034,23 @@ export function DeskToolShelf() {
                           {/* PHILO-15 11 (B21): no ⌘ hint on a phone. */}
                           {row.keycap && !(typeof window !== "undefined" && window.innerWidth <= 720) ? <kbd>{row.keycap}</kbd> : null}
                         </Button>
+                        {/* Betterment AG4: the selected work item hands to an agent from here. */}
+                        {isSel && row.hand ? (
+                          <Button
+                            dense
+                            variant="secondary"
+                            className="desk-deck-hand"
+                            aria-label={`Hand to agent: ${row.hand.title}`}
+                            data-testid="palette-hand"
+                            onClick={() => {
+                              const origin = row.hand!;
+                              close();
+                              openHand(origin);
+                            }}
+                          >
+                            Hand to agent
+                          </Button>
+                        ) : null}
                       </li>
                     );
                   })}

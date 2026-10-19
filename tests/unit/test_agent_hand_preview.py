@@ -64,7 +64,7 @@ def test_preview_is_the_hands_brief_and_writes_nothing(tmp_path, db, monkeypatch
     assert result["text"] == brief["text"] and result["bytes"] == brief["bytes"]
     assert result["refs"] == brief["refs"] and "action:ai_1" in result["refs"]
     assert result["repo"] == str(rig.repo)
-    assert result["branch"] == "hs/action-ai_1" and result["worktree"] == "hs-action-ai_1"
+    assert result["branch"] == "hs/fix-the-login-timeout" and result["worktree"] == "hs-action-ai_1"
     assert result["control_mode"] == "yolo" and result["profile"] == "claude-default"
     assert result["refused"] == []
     assert len(result["acceptance"]) == 7

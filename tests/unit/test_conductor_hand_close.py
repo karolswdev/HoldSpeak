@@ -260,7 +260,8 @@ def test_hand_an_issue_launches_with_the_issue_as_origin(tmp_path, db, monkeypat
     try:
         assert rig.result["origin_ref"] == {"kind": "issue", "id": ISSUE_ID}
         assert rig.result["project_id"] == PROJECT
-        assert rig.result["worktree"] == {"name": f"hs-issue-{ISSUE_ID}", "branch": f"hs/issue-{ISSUE_ID}"}
+        # Betterment AG4: the branch is named by the issue's title.
+        assert rig.result["worktree"] == {"name": f"hs-issue-{ISSUE_ID}", "branch": "hs/reconciliation-job-slow-on-month-end"}
         record = rig.launches.get(rig.result["launch_id"])
         assert record["origin_ref"] == {"kind": "issue", "id": ISSUE_ID}
         typed = "\n".join(text for _pane, text in rig.typed)
@@ -736,8 +737,9 @@ def test_the_same_item_can_be_handed_again_after_cleanup(tmp_path, db, monkeypat
     assert again["launch_id"] != rig.result["launch_id"]
     assert again["origin_ref"] == {"kind": "action", "id": "ai_1"}
     name, branch = again["worktree"]["name"], again["worktree"]["branch"]
-    # K4 kept the merged branch hs/action-ai_1: the second hand-off takes round 2.
-    assert (name, branch) == ("hs-action-ai_1-2", "hs/action-ai_1-2")
+    # K4 kept the merged branch hs/fix-the-login-timeout: the second hand-off takes round 2
+    # (Betterment AG4: the branch is named by the item's title; the folder by its id).
+    assert (name, branch) == ("hs-action-ai_1-2", "hs/fix-the-login-timeout-2")
     assert (rig.repo.parent / name / ".git").exists(), "a real new worktree"
     assert _git(rig.repo.parent / name, "rev-parse", "--abbrev-ref", "HEAD") == branch
     rig.tmux.ended = True

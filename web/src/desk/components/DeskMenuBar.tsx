@@ -410,7 +410,15 @@ export function DeskMenuBar() {
   });
   const entries = (id: MenuId): WorkMenuEntry[] => {
     // Betterment shell S1: Go is the manifest's groups at both widths.
-    if (compact && id === "go") return phoneGo(goInputs());
+    // Betterment AG4: the phone has no Object menu: Go opens with the front
+    // window's object rows (Note ▸ Hand to agent), as the windowSend canon says.
+    if (compact && id === "go") {
+      const go = phoneGo(goInputs());
+      return objectTarget && objectRows.length
+        ? [{ type: "sub", id: "go-object", label: objectMenuTitle(objectTarget.kind), entries: objectRows },
+          { type: "sep", id: "go-object-sep" }, ...go]
+        : go;
+    }
     if (id === "go") return deskGo(goInputs());
     const out: WorkMenuEntry[] = [];
     menuEntries(id, out);

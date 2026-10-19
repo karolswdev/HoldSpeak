@@ -109,29 +109,80 @@ def item_exists(db: Any, kind: str, item_id: str) -> bool:
     return bool(hydrated.blocks) and not hydrated.unknown
 
 
-def worktree_spec(kind: str, item_id: str, round_: int = 1) -> dict[str, str]:
-    """``{mode: new, name: hs-<kind>-<id>, branch: hs/<kind>-<id>}``; a later
-    hand-off of the same item (``round_`` 2, 3, ...) adds ``-<round>``."""
+def item_title(db: Any, kind: str, item_id: str) -> str:
+    """The item's own title (its desk name), or ``""`` when it has none."""
+    from ..grounding import hydrate_refs_detailed
+
+    if kind == "issue":
+        from .agent_issue import read_issue
+
+        issue = read_issue(db, item_id) or {}
+        return str(issue.get("title") or "")
+    try:
+        hydrated = hydrate_refs_detailed(db, [], [], "summary", [f"{kind}:{item_id}"])
+    except Exception:
+        return ""
+    if not hydrated.blocks or hydrated.unknown:
+        return ""
+    title = str(hydrated.blocks[0].title or "")
+    return "" if title == item_id else title
+
+
+#: Betterment AG4: the most characters of a branch slug (whole words).
+BRANCH_SLUG_MAX = 40
+_SLUG_WORD = re.compile(r"[a-z0-9]+")
+
+
+def branch_slug(title: str, max_chars: int = BRANCH_SLUG_MAX) -> str:
+    """``Draft test scaffolding for flags`` -> ``draft-test-scaffolding-for-flags``:
+    lower-case ASCII words joined by ``-``, cut at a whole word; ``""`` when
+    the title has no such word (the branch then names the item)."""
+    import unicodedata
+
+    plain = unicodedata.normalize("NFKD", str(title or "")).encode("ascii", "ignore").decode().lower()
+    slug = ""
+    for word in _SLUG_WORD.findall(plain):
+        joined = f"{slug}-{word}" if slug else word
+        if len(joined) > max_chars:
+            break
+        slug = joined
+    return slug or (_SLUG_WORD.findall(plain) or [""])[0][:max_chars]
+
+
+def worktree_spec(kind: str, item_id: str, round_: int = 1, title: str = "") -> dict[str, str]:
+    """``{mode: new, name: hs-<kind>-<id>, branch: hs/<title-slug>}``; a later
+    hand-off of the same item (``round_`` 2, 3, ...) adds ``-<round>``.
+
+    Betterment AG4 (FOLLOWUPS AG1): the branch is named by the item's title
+    (``hs/draft-test-scaffolding-for-flags``), so the face reads it; with no
+    title it names the item (``hs/<kind>-<id>``). The worktree folder keeps
+    the item's id: a hand of the same item finds its folder again."""
     slug = _NAME_UNSAFE.sub("-", f"{kind}-{item_id}").strip("-.")[:60]
+    words = branch_slug(title)
+    branch = words or slug
     if round_ > 1:
         slug = f"{slug}-{round_}"
-    return {"mode": "new", "name": f"hs-{slug}", "branch": f"hs/{slug}"}
+        branch = f"{branch}-{round_}"
+    return {"mode": "new", "name": f"hs-{slug}", "branch": f"hs/{branch}"}
 
 
 #: The most hand-offs of one item that get their own worktree name.
 _MAX_ROUNDS = 50
 
 
-def free_worktree_spec(registry: Any, repo_path: Any, kind: str, item_id: str) -> dict[str, str]:
+def free_worktree_spec(
+    registry: Any, repo_path: Any, kind: str, item_id: str, title: str = "",
+) -> dict[str, str]:
     """The spec of this hand-off (Conductor R4, R1's walk).
 
     K4's cleanup removes a merged worktree but keeps its branch, so a second
-    hand-off of the same item cannot reuse ``hs/<kind>-<id>`` (``git worktree
-    add -b`` refuses an existing branch). The first round whose worktree
-    folder exists (a held or live launch: the caller's own rules apply) or
-    whose branch and folder are both free is the one used."""
+    hand-off of the same item cannot reuse its branch (``git worktree add
+    -b`` refuses an existing branch). The first round whose worktree folder
+    exists (a held or live launch: the caller's own rules apply) or whose
+    branch and folder are both free is the one used. Two items with the same
+    title get the same words: the second takes the next round."""
     for round_ in range(1, _MAX_ROUNDS + 1):
-        spec = worktree_spec(kind, item_id, round_)
+        spec = worktree_spec(kind, item_id, round_, title)
         try:
             folder = derive_worktree_path(repo_path, spec["name"])
         except LaunchRefused:
@@ -141,7 +192,7 @@ def free_worktree_spec(registry: Any, repo_path: Any, kind: str, item_id: str) -
         branch = registry._git(Path(repo_path), "rev-parse", "--verify", "--quiet", f"refs/heads/{spec['branch']}")
         if not branch:
             return spec
-    return worktree_spec(kind, item_id)
+    return worktree_spec(kind, item_id, 1, title)
 
 
 def _matches_repo(registry: Any, path: str, repositories: list[str]) -> bool:
@@ -362,7 +413,9 @@ class AgentHandService:
             raise AgentHandRefused(
                 "no_repository", "the item's Project names no local repository"
             )
-        spec = free_worktree_spec(launcher._registry, source.primary_path, kind, item_id)
+        spec = free_worktree_spec(
+            launcher._registry, source.primary_path, kind, item_id, item_title(self._db, kind, item_id),
+        )
         try:
             worktree_path = derive_worktree_path(source.primary_path, spec["name"])
         except LaunchRefused as exc:
@@ -835,6 +888,8 @@ __all__ = [
     "default_agent_hand_service",
     "resolve_project_repository",
     "worktree_spec",
+    "branch_slug",
+    "item_title",
 ]
 
 

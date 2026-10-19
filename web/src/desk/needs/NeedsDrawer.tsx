@@ -51,6 +51,7 @@ import { NoteSendWells } from "../documentSendsLazy";
 import { wireDate } from "../surface/format";
 import { cancelArming, useArmingOutcome } from "./arming";
 import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
+import { openHand } from "../agentHand";
 import { Disclosure } from "../surface/patterns/Disclosure";
 import { AddToProject } from "../AddToProject";
 import "./needs.css";
@@ -260,6 +261,9 @@ function NeedVerbsView({ face, primary, onWell, well }: {
           onSelect: () => void act("Later", () => followThrough(v.cardId, "snooze", { until: tomorrowDay() }), key) },
         ...(face.arrival ? [] : [{ type: "item" as const, id: "drop", label: "Drop", ghost: busy ? "Busy" : undefined,
           onSelect: () => void drop() }]),
+        // Betterment AG4: hand the action to an agent from where he reads it.
+        { type: "item", id: "hand", label: "Hand to agent",
+          onSelect: () => openHand({ kind: "action", id: v.cardId, title: face.name }) },
       ];
       return <>
         {v.direction === "theirs" ? (

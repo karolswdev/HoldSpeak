@@ -321,7 +321,7 @@ def test_hand_launches_claude_in_a_new_worktree_with_origin(tmp_path, db, monkey
     result = rig.hand.hand(OWNER, "action", "ai_1", instruction="Keep it small.")
 
     assert result["status"] == "launched", result
-    assert result["worktree"] == {"name": "hs-action-ai_1", "branch": "hs/action-ai_1"}
+    assert result["worktree"] == {"name": "hs-action-ai_1", "branch": "hs/fix-the-login-timeout"}
     assert result["story_ref"] == {"project": PROJECT, "story_id": "action-ai_1"}
     assert result["origin_ref"] == {"kind": "action", "id": "ai_1"}
     assert result["gate"] == "gated"
@@ -665,3 +665,36 @@ def test_a_trust_prompt_for_another_folder_gets_nothing(tmp_path, db, monkeypatc
     rig.tmux.ended = True
     assert rig.keys_sent == []
     assert record["instruction_state"] == "pending"
+
+
+# ── Betterment AG4: the branch is named by the item's title ──────────────
+
+
+def test_the_branch_slug_is_the_titles_words() -> None:
+    from holdspeak.services.agent_hand_service import branch_slug, worktree_spec
+
+    assert branch_slug("Draft test scaffolding for flags") == "draft-test-scaffolding-for-flags"
+    assert branch_slug("PAY-418 Reconciliation job slow on month-end data") == "pay-418-reconciliation-job-slow-on-month"
+    assert branch_slug("Écrire le runbook : rollback!") == "ecrire-le-runbook-rollback"
+    assert branch_slug("—") == ""
+    assert worktree_spec("note", "note_1", 1, "Draft test scaffolding") == {
+        "mode": "new", "name": "hs-note-note_1", "branch": "hs/draft-test-scaffolding"}
+    # No title: the branch names the item (the old form).
+    assert worktree_spec("note", "note_1") == {"mode": "new", "name": "hs-note-note_1", "branch": "hs/note-note_1"}
+    assert worktree_spec("note", "note_1", 2, "Draft")["branch"] == "hs/draft-2"
+
+
+def test_two_items_with_one_title_get_two_branches(tmp_path, db, monkeypatch) -> None:
+    """The second item's words are taken: it takes the next round (its own
+    folder and branch); the first item's folder is found by its id."""
+    import subprocess
+
+    rig = _rig(tmp_path, db, monkeypatch)
+    subprocess.run(["git", "-C", str(rig.repo), "branch", "hs/fix-the-login-timeout"], check=True)
+    result = rig.hand.hand(OWNER, "action", "ai_1")
+    assert result["status"] == "launched", result
+    assert result["worktree"] == {"name": "hs-action-ai_1-2", "branch": "hs/fix-the-login-timeout-2"}
+    head = subprocess.run(["git", "-C", str(rig.repo.parent / "hs-action-ai_1-2"), "rev-parse", "--abbrev-ref", "HEAD"],
+                          check=True, capture_output=True, text=True).stdout.strip()
+    assert head == "hs/fix-the-login-timeout-2"
+    rig.tmux.ended = True

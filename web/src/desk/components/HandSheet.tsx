@@ -38,6 +38,8 @@ import {
 import { AGENTS_PATH, AGENT_HOST, AGENT_NAME, type AgentId, type AgentsDetect } from "../firstrun/agentsStep";
 import { codeWords } from "../firstrun/AgentsCard";
 import { branchFace } from "../lane/laneWire";
+import { StringGadget } from "../surface/gadgets";
+import { useConductor } from "../conductor/store";
 import "./hand-sheet.css";
 
 export interface HandPreview {
@@ -286,6 +288,17 @@ function AgentSummary({ agent, detect }: { agent: AgentId; detect: AgentsDetect 
   );
 }
 
+/** Betterment AG4: *Where* in words: `Platform · new branch
+ *  draft-test-scaffolding` (the Project, else the repository; the branch the
+ *  hub named from the item's title, without its `hs/`). An older hub's id
+ *  branch reads `new branch`. */
+export function whereWords(place: string | null | undefined, branch: string | null | undefined): string {
+  const face = branchFace(branch);
+  const words = !face || face === "new branch" ? "new branch" : `new branch ${face.replace(/^hs\//, "")}`;
+  const name = String(place ?? "").trim();
+  return name ? `${name} · ${words}` : words;
+}
+
 /** The issue-body read as the sheet shows it: the host, and READING (the
  * preview is out), READ, or NOT READ. */
 export function trackerToken(
@@ -324,6 +337,9 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   const [launchError, setLaunchError] = useState<string | null>(null);
   const [launched, setLaunched] = useState<HandLaunch | null>(null);
   const [cloneDone, setCloneDone] = useState<HandClone | null>(null);
+  /** Betterment AG4: his own sentence, sent with the brief (`instruction`). */
+  const [sentence, setSentence] = useState("");
+  const projects = useDesk((s) => s.projects);
 
   useEffect(() => {
     useDesk.getState().restorePanel(HAND_WINDOW_ID);
@@ -383,11 +399,24 @@ function Sheet({ origin }: { origin: HandOrigin }) {
           kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null,
           // Betterment AG5: "Start when one is free" queues the hand at the limit.
           ...(queue ? { queue: true } : {}),
+          // Betterment AG4: his sentence goes into the brief.
+          ...(sentence.trim() ? { instruction: sentence.trim() } : {}),
         },
       });
       // The receipt belongs to the launch: its agent is frozen with it.
       if (answer?.clone) setCloneDone(answer.clone);
       setLaunched({ profile: launchProfile, ...(answer ?? {}) });
+      // Betterment AG4: Agents opens on the new agent's row (selected); the
+      // sheet closes once the brief is in (below), or stays with Send again.
+      const row = answer?.launch_id
+        ? `launch:${answer.launch_id}`
+        : (answer as { queue_id?: string } | null)?.queue_id
+          ? `queue:${(answer as { queue_id?: string }).queue_id}`
+          : null;
+      if (row) {
+        useConductor.getState().openWindow(null, row);
+        void useConductor.getState().readFlights();
+      }
     } catch (error) {
       const made = cloneOf(error);
       if (made) setCloneDone(made);
@@ -396,7 +425,14 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     } finally {
       setLaunching(false);
     }
-  }, [agent, launching, origin.id, origin.kind, origin.projectId]);
+  }, [agent, launching, origin.id, origin.kind, origin.projectId, sentence]);
+
+  // Betterment AG4: the sheet's work is done when the brief reached the agent
+  // (or the hand waits in the queue): it closes; Agents shows the agent. A
+  // brief not sent keeps the sheet with its reason and Send again.
+  useEffect(() => {
+    if (launched && (launched.status === "queued" || String(launched.instruction_state ?? "") === "sent")) close();
+  }, [launched, close]);
 
   // The preview on screen is the one for THIS item and THIS pick; a late answer
   // for another pick never arms Launch.
@@ -499,6 +535,17 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                 <pre className="desk-pullout-md desk-hand-text">{preview.text}</pre>
               </Disclosure>
             </SurfaceSection>
+            <SurfaceSection label="ADD A SENTENCE">
+              <StringGadget
+                label="Add a sentence"
+                value={sentence}
+                onChange={setSentence}
+                placeholder="Say or type what the agent should know"
+                micLabel="Speak a sentence"
+                disabled={frozen}
+                inputProps={{ "data-testid": "hand-sentence" } as Record<string, string>}
+              />
+            </SurfaceSection>
             <SurfaceSection label="WHERE">
               <span className="desk-hand-tokens" data-testid="hand-where">
                 {clone ? (
@@ -518,14 +565,18 @@ function Sheet({ origin }: { origin: HandOrigin }) {
                 ) : null}
                 {preview.repo ? (
                   <>
-                    <span className="surface-token" data-chip>{preview.repo_label || tilde(preview.repo)}</span>
+                    {/* Betterment AG4: one line, the Project and the branch named by the item. */}
+                    <span className="desk-hand-where" data-testid="hand-branch" title={preview.repo_label || tilde(preview.repo)}>
+                      {whereWords(
+                        projects.find((p) => p.id === preview.project_id)?.name || preview.repo_label || tilde(preview.repo),
+                        preview.branch,
+                      )}
+                    </span>
                     {preview.resume ? (
                       <span className="surface-token" data-chip data-testid="hand-resume">
                         RESUMES · BRIEF {codeWords(preview.resume.instruction_state || "pending")}
                       </span>
                     ) : null}
-                    {/* Betterment AG1: the branch as words, never the item's id. */}
-                    <span className="surface-token" data-chip data-testid="hand-branch">{branchFace(preview.branch).toUpperCase()}</span>
                   </>
                 ) : null}
                 <span className="surface-token" data-chip data-testid="hand-control">CONTROL · {mode}</span>

@@ -236,13 +236,13 @@ def test_a_branch_collision_releases_this_calls_hold_only(tmp_path, db, monkeypa
     rig = _rig(tmp_path, db, monkeypatch)
     other = str((tmp_path / "other-repo").resolve())
     coder_gate.save_gate_config(coder_gate.GateConfig(armed=False, repos={other: ["Bash"]}), rig.gate_path)
-    subprocess.run(["git", "-C", str(rig.repo), "branch", "hs/action-ai_1"], check=True)
+    subprocess.run(["git", "-C", str(rig.repo), "branch", "hs/fix-the-login-timeout"], check=True)
     # Conductor R4: a kept branch now moves the hand-off to round 2; the
     # collision this fence needs is a branch made after that choice (a race).
     from holdspeak.services import agent_hand_service
 
     monkeypatch.setattr(agent_hand_service, "free_worktree_spec",
-                        lambda _reg, _repo, kind, item_id: agent_hand_service.worktree_spec(kind, item_id))
+                        lambda _reg, _repo, kind, item_id, title="": agent_hand_service.worktree_spec(kind, item_id, 1, title))
     result = rig.hand.hand(OWNER, "action", "ai_1")
     assert result["status"] == "failed" and result["failure"]["stage"] == "worktree_create"
     assert not rig.worktree.exists() and rig.tmux.sessions == {}
