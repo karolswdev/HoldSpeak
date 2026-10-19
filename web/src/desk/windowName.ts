@@ -80,7 +80,7 @@ export function windowName(subject: WindowSubject, id?: string | null): string {
     case "decision":
       return named(subject.title) || firstWords(subject.text ?? "") || "New decision";
     case "knowledge":
-      return named(subject.name) || "New knowledge base";
+      return named(subject.name) || "New drawer";
     case "project":
       return named(subject.name) || "Project";
     case "session":
@@ -136,6 +136,8 @@ export function primitiveName(kind: string, record: unknown, id?: string | null,
 
 /** The kind word that goes first when two windows have the same name. */
 export function kindWord(kind: string): string {
+  // Betterment Q10: a knowledge collection is a drawer.
+  if (kind === "kb" || kind === "knowledge") return "Drawer";
   const k = kind.replace(/[_-]+/g, " ").trim();
   return k ? k.charAt(0).toUpperCase() + k.slice(1) : "";
 }

@@ -11,6 +11,8 @@ vi.mock("../surface/SurfaceFooter", () => ({
 vi.mock("../components/DeskFilingStrip", () => ({ DeskFilingStrip: () => <div data-testid="filing-strip" /> }));
 vi.mock("./editors", () => ({ INLINE_EDITOR_CONTENT: {} }));
 vi.mock("../../lib/api", async (original) => ({ ...(await original<typeof import("../../lib/api")>()), apiFetch: vi.fn() }));
+const openScreenRef = vi.hoisted(() => vi.fn());
+vi.mock("../screen/open", () => ({ openScreenRef }));
 
 // Exact selected rows from root's isolated real GET /api/notes and GET
 // /api/kbs answers, captured after accepted Note/Knowledge creates on
@@ -28,7 +30,7 @@ const object = (kb = mixed) => ({ kind: "kb" as const, id: kb.id, title: kb.name
 const memberRow = (ref: string) => {
   const identity = document.querySelector(`[data-member-ref="${ref}"]`);
   expect(identity).not.toBeNull();
-  return identity!.closest(".surface-ledger-row") as HTMLElement;
+  return identity!.closest(".surface-row") as HTMLElement;
 };
 
 beforeEach(() => {
@@ -40,6 +42,8 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
+// Betterment Q10 (Knowledge becomes drawers): a collection reads as a drawer:
+// its Contents are a drawer's rows (a press opens the member), "No items".
 describe("Knowledge reader membership", () => {
   it("retains available and unavailable stored members, with Open only on a real object", () => {
     render(<KbPullout object={object()} onClose={vi.fn()} />);
@@ -48,10 +52,10 @@ describe("Knowledge reader membership", () => {
     expect(available).toHaveTextContent(note.title);
     expect(missing).toHaveTextContent("Item unavailable");
     expect(missing).toHaveTextContent("Unavailable");
-    expect(within(missing).queryByRole("button", { name: /Open/ })).toBeNull();
-    expect(screen.queryByText("No entries")).toBeNull();
-    fireEvent.click(within(available).getByRole("button", { name: "Open note" }));
-    expect(openPullout).toHaveBeenCalledWith(mixed.memberIds[0]);
+    expect(within(missing).queryByRole("button")).toBeNull();
+    expect(screen.queryByText("No items")).toBeNull();
+    fireEvent.click(within(available).getByRole("button"));
+    expect(openScreenRef).toHaveBeenCalledWith(mixed.memberIds[0]);
     expect(screen.getByTestId("filing-strip")).toBeInTheDocument();
     expect(apiFetch).not.toHaveBeenCalled();
   });
@@ -59,7 +63,7 @@ describe("Knowledge reader membership", () => {
   it("keeps all-unavailable membership distinct from an empty collection and copies its ref", async () => {
     render(<KbPullout object={object(unavailable)} onClose={vi.fn()} />);
     expect(memberRow(unavailable.memberIds[0])).toHaveTextContent("Item unavailable");
-    expect(screen.queryByText("No entries")).toBeNull();
+    expect(screen.queryByText("No items")).toBeNull();
     expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     await waitFor(() => expect(copy).toHaveBeenCalledWith(unavailable.memberIds[0]));
@@ -75,9 +79,9 @@ describe("Knowledge reader membership", () => {
     expect(openEditor).toHaveBeenCalledWith(mixed.id);
   });
 
-  it("reserves No entries for genuinely empty stored membership", () => {
+  it("reserves No items for genuinely empty stored membership", () => {
     render(<KbPullout object={object({ ...mixed, memberIds: [] })} onClose={vi.fn()} />);
-    expect(screen.getByText("No entries")).toBeInTheDocument();
+    expect(screen.getByText("No items")).toBeInTheDocument();
     expect(screen.queryByText("Item unavailable")).toBeNull();
     expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
     expect(apiFetch).not.toHaveBeenCalled();

@@ -30,7 +30,7 @@ function FilingRefusal({
   );
 }
 
-/** The one filing disclosure: Zone, Knowledge, and Project membership. */
+/** The one filing disclosure: named drawers and project membership. */
 export function DeskFilingStrip({
   objectRef,
   objectKind,
@@ -116,12 +116,14 @@ export function DeskFilingStrip({
   const knowledgeHomes = knowledgeChoices.filter(
     (knowledge) => objectRef !== qualifiedRef("kb", knowledge.id),
   );
-  const knowledgeCount = (relationships.knowledge || []).length;
+  const collectionNames = knowledgeHomes
+    .filter((knowledge) => (relationships.knowledge || []).some((row: any) => row.knowledge_id === knowledge.id))
+    .map((knowledge) => String(knowledge.name || "Drawer"));
   const projectCount = (relationships.projects || []).length;
   const filedSummary = [
     parentZone ? String(parentZone.name || parentZone.id)
       : homeZone ? String(homeZone.name || homeZone.id) : "Desk root",
-    knowledgeCount ? `${knowledgeCount} Knowledge` : "",
+    ...collectionNames,
     projectCount ? `${projectCount} Project${projectCount === 1 ? "" : "s"}` : "",
   ]
     .filter(Boolean)
@@ -131,9 +133,9 @@ export function DeskFilingStrip({
     <>
       <FoldGadget title={`Filed · ${filedSummary}`}>
         <div className="desk-pullout-filed">
-          {zones.length > 0 && (
+          {(zones.length > 0 || knowledgeHomes.length > 0) && (
             <div className="desk-pullout-filed-axis">
-              <span className="surface-eyebrow">Zone</span>
+              <span className="surface-eyebrow">Drawers</span>
               <div className="desk-pullout-lineage">
                 {zones.map((zone) => {
                   const members = zone.memberIds || [];
@@ -141,7 +143,7 @@ export function DeskFilingStrip({
                   return (
                     <Button
                       variant="chrome"
-                      key={String(zone.id)}
+                      key={`directory:${zone.id}`}
                       className={`desk-chip quiet${inZone ? " in-zone" : ""}`}
                       aria-pressed={inZone}
                       onClick={() =>
@@ -155,13 +157,6 @@ export function DeskFilingStrip({
                     </Button>
                   );
                 })}
-              </div>
-            </div>
-          )}
-          {knowledgeHomes.length > 0 && (
-            <div className="desk-pullout-filed-axis">
-              <span className="surface-eyebrow">Knowledge</span>
-              <div className="desk-pullout-lineage">
                 {knowledgeHomes.map((knowledge) => {
                   const active = (relationships.knowledge || []).some(
                     (row: any) => row.knowledge_id === knowledge.id,
@@ -169,7 +164,7 @@ export function DeskFilingStrip({
                   return (
                     <Button
                       variant="chrome"
-                      key={knowledge.id}
+                      key={`kb:${knowledge.id}`}
                       className={`desk-chip quiet${active ? " in-zone" : ""}`}
                       aria-pressed={active}
                       onClick={() => void toggleRelationship("knowledge", knowledge.id, active)}

@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../lib/api";
@@ -34,11 +34,12 @@ vi.mock("../components/DeskWindow", async () => {
   const { useState } = await import("react");
   const { FootSlotContext } = await import("../surface/foot");
   return {
-    DeskWindowFrame: ({ children, onClose, beforeClose, onBack, label, minH, className }: { children: React.ReactNode; onClose: () => void; beforeClose?: () => Promise<boolean>; onBack?: () => void; label?: string; minH?: number; className?: string }) => {
+    DeskWindowFrame: ({ children, onClose, beforeClose, onBack, label, minH, className, actions }: { children: React.ReactNode; onClose: () => void; beforeClose?: () => Promise<boolean>; onBack?: () => void; label?: string; minH?: number; className?: string; actions?: React.ReactNode }) => {
       const [foot, setFoot] = useState<HTMLElement | null>(null);
       return <section aria-label="Thought" className={className} data-window-name={label} data-frame-min-height={minH} data-frame-close-guard={Boolean(beforeClose)}>
         <button onClick={() => { void (async () => { if (!beforeClose || await beforeClose()) onClose(); })(); }}>Close window</button>
         {onBack ? <button onClick={onBack}>Frame Back</button> : null}
+        {actions ? <span data-testid="frame-actions">{actions}</span> : null}
         <FootSlotContext.Provider value={foot}>{children}</FootSlotContext.Provider>
         <footer ref={setFoot} className="surface-footer" data-testid="frame-foot" />
       </section>;
@@ -673,23 +674,29 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     expect(screen.getByRole("textbox", { name: "Your answer" })).toHaveValue("Tuesday report");
   });
 
-  it("phone frame Back finds the portaled More door and returns with its Send menu closed", async () => {
+  it("Betterment Q8: on the phone every verb stays in the foot (no More) and Done sits in the title strip", async () => {
     vi.stubGlobal("matchMedia", () => ({ matches: true, media: "(max-width: 720px)", addEventListener: () => {}, removeEventListener: () => {} }));
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(async (current) => ({ thought: current }));
     const onClose = vi.fn();
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={onClose} />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "More actions" }));
-    fireEvent.click(screen.getByRole("menuitem", { name: "Send…" }));
+    const foot = await screen.findByTestId("frame-foot");
+    await waitFor(() => expect(within(foot).getAllByRole("button").map((b) => b.textContent))
+      .toEqual(["Ask about this", "Find the tasks", "Send…"]));
+    expect(screen.queryByRole("button", { name: "More actions" })).toBeNull();
+    const done = within(screen.getByTestId("frame-actions")).getByRole("button", { name: "Done" });
+
+    // Send… and the frame's Back keep working; Done leaves the strip while sending.
+    fireEvent.click(within(foot).getByRole("button", { name: "Send…" }));
     await screen.findByTestId("send-well");
-    expect(screen.queryByRole("button", { name: "Done" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("frame-actions")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Frame Back" }));
-    await waitFor(() => expect(screen.getByRole("button", { name: "More actions" })).toHaveFocus());
-    expect(screen.getByRole("button", { name: "More actions" }).closest(".thought-note-window")).toBeNull();
-    expect(screen.getByTestId("frame-foot")).toContainElement(screen.getByRole("button", { name: "More actions" }));
-    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "More actions" })).toHaveAttribute("aria-expanded", "false");
-    expect(onClose).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByRole("button", { name: "Send…" })).toHaveFocus());
+
+    fireEvent.click(within(screen.getByTestId("frame-actions")).getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect(done).toBeTruthy();
   });
 
 });
