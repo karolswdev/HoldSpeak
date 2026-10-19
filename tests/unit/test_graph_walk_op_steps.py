@@ -77,7 +77,7 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
         "windows.list", "windows.open", "windows.close", "windows.raise", "windows.arrange", "windows.seat",
         "note.outcomes.read", "note.find_tasks", "note.outcome.edit", "note.outcome.dismiss", "note.outcome.confirm",
     }
-    assert gw.OP_HTTP_ONLY == {"decision.status", "project.door.create",
+    assert gw.OP_HTTP_ONLY == {"decision.status", "project.door.create", "project.door.preview",
                                "project.door.count", "project.watch.update", "project.watch.baseline",
                                "channel.save_email_key", "channel.save_slack_webhook",
                                "agent_hooks.install", "calendar.open_settings",

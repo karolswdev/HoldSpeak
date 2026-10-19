@@ -4,13 +4,13 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (full recovery tape results; browser repairs)
+**Last updated:** 2026-10-19 (Projects P5/P6 verified)
 
 ## Current phase
 
-**Betterment recovery: 82/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 84/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `4ad08150f`, frontend `9f09358c6ae28b6d`, PID 63755 (#1376).
+backend `bc0c2fc74`, frontend `17244ee6934f6d61`, PID 97008 (#1377).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
@@ -62,9 +62,34 @@ Q11/Q12 #1375 is on the running desk. Its two existing pages render at
 fresh live-model page write is not observed. A separate check is tracing
 whether the selected Memory assignment also determines physical dispatch.
 
-P5/P6 remains held: pasted Jira/Confluence links discarded the site and could
-select another connected account. Exact site binding and declared preview
-admission are being repaired before this lane ships.
+P5/P6 #1377 preserves provider sites through paste, validation, preview and saved
+watches. Matching uses provider, site and scope; an unknown site or ambiguous
+bare key names the problem without selecting another account. Preview is an
+admitted owner HTTP operation. Found meetings and notes can be added together
+or removed from the selection; the same Door adds sources to an existing
+project. Waiting-on Nudges use the item's exact saved destination and stored
+action text. Preview and preparation do not send; the owner presses Send.
+The Room field keeps the shared Ask window and its project scope.
+Two-size isolated browser proof: five presses, three meetings and two notes;
+the existing-project Add sources path also passes. Focused provider/preview
+checks: 46; destination-bound nudge checks: two; initial related web: 4,138
+pass with one old request assertion, now corrected. Required final quick:
+six web, 96 affected pytest, 110 sweep, 27 canon and 1,116 repo guards pass.
+The added document kind passes the real Send/stale-preparation census; the
+API and exact identity-helper classifications are current. The phone reader
+allows only the recipe's declared, reachable filter choices; unreachable
+text and ordinary horizontal overflow still fail. P5/P6 is deployed; source import, database ownership and four HTTP checks pass.
+Live external provider authentication remains unobserved.
+
+The eleven retired-control and painted-plate browser findings pass across
+Conductor, note, graph-walk and kit checks (30 browser checks). The graph and
+current atlas checks also pass 756 focused cases. The next required sweep
+found the Memory RAW fold moving 421px on a held first read. Its independent
+answer, directory and belief reads now hold the lower controls until their
+first batch settles; Ask stays available. Focused verification is pending.
+Capture's separate default seat shift is traced to a Coming-up loading
+placeholder that reserves 240px before an empty result; the arranged-window
+checks remain green. That placement repair is still open.
 
 AG13 #1374 packages the HoldSpeak skill and prints it with `holdspeak --skill`.
 Claude launches discover the private copy through `--add-dir`; Codex launches

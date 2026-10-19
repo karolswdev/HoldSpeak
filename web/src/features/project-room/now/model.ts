@@ -2,7 +2,7 @@
  * Waiting on and This week (docs/internal/betterment/projects/DESIGN.md,
  * "The project window: Now"). No reads here; ProjectRoomCore and the
  * sections draw what these return. */
-import type { RoomHealthData, RoomNeedsYouItem, RoomNowData, RoomSnapshot } from "../model";
+import type { RoomHealthData, RoomNeedsYouItem, RoomNowData, RoomNudgeDestination, RoomSnapshot } from "../model";
 import { roomIsEmpty } from "../model";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -95,7 +95,15 @@ export function isMine(item: RoomNeedsYouItem): boolean {
   return item.direction !== "theirs";
 }
 
-export type WaitingItem = { title: string; due: string; late: boolean; actionItemId?: string };
+export type WaitingItem = {
+  title: string;
+  due: string;
+  late: boolean;
+  actionItemId?: string;
+  /** A destination is required before Now may offer an outbound Nudge. */
+  url?: string | null;
+  nudge?: RoomNudgeDestination;
+};
 export type WaitingPerson = { person: string; items: WaitingItem[] };
 
 /** Other people's owed items, one group per person: the person with the
@@ -109,7 +117,15 @@ export function waitingOn(items: RoomNeedsYouItem[], now: Date = new Date()): Wa
     const key = person.toLowerCase();
     const group = groups.get(key) ?? { person, items: [] };
     const due = dueWords(item.dueAt, now);
-    group.items.push({ title: item.title, due, late: due.endsWith("late"), actionItemId: item.actionItemId });
+    const waitingItem: WaitingItem = {
+      title: item.title,
+      due,
+      late: due.endsWith("late"),
+      actionItemId: item.actionItemId,
+    };
+    if (item.url) waitingItem.url = item.url;
+    if (item.nudge) waitingItem.nudge = item.nudge;
+    group.items.push(waitingItem);
     groups.set(key, group);
   }
   const late = (g: WaitingPerson) => g.items.filter((i) => i.late).length;
