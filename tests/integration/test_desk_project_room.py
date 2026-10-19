@@ -1203,6 +1203,96 @@ def _gh_not_signed_in(argv: list[str], **_kwargs: Any) -> subprocess.CompletedPr
 GITHUB_SOURCE = {"provider": "github", "scope": "acme/app", "watches": ["open_prs"]}
 
 
+def test_project_door_preview_and_create_links_found_material(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The real Door route checks pasted providers and files selected Found rows."""
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.primitive_service import PrimitiveService
+
+    owner = Principal(PrincipalKind.OWNER, "test")
+    with _hub(tmp_path, monkeypatch, gh_runner=_gh_signed_in) as hub:
+        db = hub.db
+        started = datetime.now().replace(microsecond=0) - timedelta(hours=2)
+        db.meetings.save_meeting(MeetingState(
+            id="m-door-found",
+            started_at=started,
+            ended_at=started + timedelta(minutes=30),
+            title="Payments migration review",
+            segments=[TranscriptSegment(
+                text="Payments migration is ready for the next cutover.",
+                speaker="Mira Okafor",
+                start_time=1.0,
+                end_time=4.0,
+            )],
+            intel=IntelSnapshot(timestamp=1.0, topics=["payments"], summary="Cutover review."),
+            intel_status="completed",
+        ))
+        note = PrimitiveService(db).create_note(
+            owner, title="Payments migration risks", body_markdown="Review payments cutover risk.",
+        )
+
+        preview = hub.ok("POST", "/api/projects/door/preview", {
+            "outcome": "Payments migration",
+            "pasted": "github.com/acme/app https://wiki.example.com/spaces/PAYM",
+        })
+        assert [(row["provider"], row["state"]) for row in preview["sources"]] == [
+            ("github", "checked"),
+            ("confluence", "not_checked"),
+        ], preview
+        found_ids = {item["id"] for item in preview["found"]}
+        assert {"m-door-found", note["id"]} <= found_ids, preview["found"]
+        assert preview["people"] == ["Mira Okafor"], preview["people"]
+
+        created = hub.ok("POST", "/api/projects/door", {
+            "outcome": "Payments migration",
+            "sources": [GITHUB_SOURCE],
+            "found": {"meeting_ids": ["m-door-found"], "note_ids": [note["id"]]},
+        })
+        project_id = created["projectId"]
+        resources = hub.ok("GET", f"/api/projects/{project_id}/resources")["resources"]
+        refs = {item["resource_ref"] for item in resources}
+        assert "note:" + note["id"] in refs, refs
+        assert any(item["resource_ref"] == "meeting:m-door-found" for item in resources), refs
+
+
+def test_project_room_offers_unfiled_meeting_that_mentions_project_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The Room producer offers a real transcript match until Add files it."""
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+
+    with _hub(tmp_path, monkeypatch) as hub:
+        project_id = hub.ok("POST", "/api/projects", {
+            "name": "Payments migration", "command_id": "room-match-project",
+        })["project"]["id"]
+        started = datetime.now().replace(microsecond=0) - timedelta(hours=1)
+        hub.db.meetings.save_meeting(MeetingState(
+            id="m-room-match",
+            started_at=started,
+            ended_at=started + timedelta(minutes=20),
+            title="Migration sync",
+            segments=[TranscriptSegment(
+                text="Payments migration needs a final owner before cutover.",
+                speaker="Mira Okafor",
+                start_time=1.0,
+                end_time=4.0,
+            )],
+            intel_status="completed",
+        ))
+
+        before = hub.ok("GET", f"/api/projects/{project_id}/room")
+        matches = [row for row in before["needsYou"]["items"] if row.get("kind") == "meeting_match"]
+        assert len(matches) == 1, before["needsYou"]
+        assert matches[0]["meeting_id"] == "m-room-match"
+        assert matches[0]["title"] == "mentions payments"
+        hub.ok("POST", f"/api/projects/{project_id}/meetings/m-room-match")
+
+        after = hub.ok("GET", f"/api/projects/{project_id}/room")
+        assert not [row for row in after["needsYou"]["items"] if row.get("kind") == "meeting_match"]
+
+
 def test_a_repository_added_in_the_room_stays_and_the_same_one_again_is_already_watched(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -2012,3 +2102,144 @@ def test_a_quiet_project_is_on_track_with_no_reason(tmp_path, monkeypatch):
         assert (room["health"]["project_state"], room["health"]["state_reason"]) == ("on_track", None)
         assert room["health"]["assessment"] == "on_track"
         assert room["now"]["risks"] == [] and room["now"]["decided"] == []
+
+
+def test_waiting_on_action_preserves_its_real_destination_for_nudge(tmp_path, monkeypatch):
+    """The active Now producer carries an explicit action destination through
+    Waiting on; a missing destination stays absent for the UI gate."""
+    with _hub(tmp_path, monkeypatch) as hub:
+        project_id = hub.ok("POST", "/api/projects", {
+            "name": "Payments migration", "command_id": f"p6-{uuid.uuid4().hex[:8]}",
+        })["project"]["id"]
+        db = hub.db
+        started = datetime.now() - timedelta(days=2)
+        _p3_meeting(
+            db, project_id, "p6-sync", "Payments migration review",
+            "Ania owns the migration review.", started, ("Me", "Ania"),
+            [{"id": "p6-action", "task": "Review migration PR", "owner": "Ania",
+              "due": (datetime.now() + timedelta(days=1)).date().isoformat(),
+              "status": "pending", "review_state": "accepted"}],
+        )
+        with db._connection() as conn:
+            conn.execute(
+                "UPDATE action_items SET source_ref=? WHERE id=?",
+                ("https://github.com/org/repo/pull/612", "p6-action"),
+            )
+        room = hub.ok("GET", f"/api/projects/{project_id}/room")
+        row = next(item for item in room["needsYou"]["items"] if item.get("action_item_id") == "p6-action")
+        assert row["direction"] == "theirs", row
+        assert row["url"] == "https://github.com/org/repo/pull/612", row
+
+
+def test_waiting_on_nudge_matches_saved_targets_and_uses_the_document_send_boundary(tmp_path, monkeypatch):
+    """Jira, Slack, and email Nudges come from real action rows and exact
+    active destinations.  A preview and prepare are safe; only the isolated
+    file destination is pressed to prove the existing Send boundary renders
+    the stored project nudge document."""
+    from holdspeak.db.channels import ChannelDestinationsRepository
+    from holdspeak.services.channel_contract import render_document
+
+    with _hub(tmp_path, monkeypatch) as hub:
+        project_id = hub.ok("POST", "/api/projects", {
+            "name": "Payments migration", "command_id": f"p6-generic-{uuid.uuid4().hex[:8]}",
+        })["project"]["id"]
+        db = hub.db
+        _p3_meeting(
+            db, project_id, "p6-generic-sync", "Payments migration review",
+            "Ania owns the migration review.",
+            datetime.now() - timedelta(days=2), ("Me", "Ania"),
+            [
+                {"id": "p6-jira", "task": "Review the Jira migration item", "owner": "Ania",
+                 "status": "pending", "review_state": "accepted"},
+                {"id": "p6-slack", "task": "Review the Slack migration thread", "owner": "Ania",
+                 "status": "pending", "review_state": "accepted"},
+                {"id": "p6-slack-thread", "task": "Review the Slack migration reply", "owner": "Ania",
+                 "status": "pending", "review_state": "accepted"},
+                {"id": "p6-email", "task": "Review the email migration request", "owner": "Ania",
+                 "status": "pending", "review_state": "accepted"},
+                {"id": "p6-jira-mismatch", "task": "Review the mismatched Jira item", "owner": "Ania",
+                 "status": "pending", "review_state": "accepted"},
+                {"id": "p6-slack-mismatch", "task": "Review the mismatched Slack thread", "owner": "Ania",
+                 "status": "pending", "review_state": "accepted"},
+                {"id": "p6-email-mismatch", "task": "Review the mismatched email request", "owner": "Ania",
+                 "status": "pending", "review_state": "accepted"},
+                {"id": "p6-missing", "task": "Review the item with no saved destination", "owner": "Ania",
+                 "status": "pending", "review_state": "accepted"},
+            ],
+        )
+        refs = {
+            "p6-jira": "https://acme.atlassian.net/browse/PAY-123",
+            "p6-slack": "slack:#payments-review",
+            "p6-slack-thread": "slack:#payments-review?thread_ts=171",
+            "p6-email": "mailto:reviewer@example.com",
+            "p6-jira-mismatch": "https://other.atlassian.net/browse/PAY-123",
+            "p6-slack-mismatch": "slack:#other-review",
+            "p6-email-mismatch": "mailto:someone-else@example.com",
+            "p6-missing": "https://unconfigured.atlassian.net/browse/PAY-999",
+        }
+        with db._connection() as conn:
+            for action_id, source_ref in refs.items():
+                conn.execute("UPDATE action_items SET source_ref=? WHERE id=?", (source_ref, action_id))
+            saved = (
+                ("p6-dest-jira", "Jira Payments", "jira", {"site": "acme.atlassian.net", "email": "owner@example.com"}, {"key": "PAY-123"}),
+                ("p6-dest-slack", "Slack Payments", "slack", {"key_ref": "slack-test"}, {"channel_label": "#payments-review"}),
+                ("p6-dest-slack-thread", "Slack Payments thread", "slack", {"key_ref": "slack-test"}, {"channel_label": "#payments-review", "thread_ts": "171"}),
+                ("p6-dest-email", "Email Payments", "email", {"provider": "sendgrid", "from_email": "owner@example.com", "from_name": "Owner", "key_ref": "sendgrid-test"}, {"to": ["reviewer@example.com"], "cc": []}),
+                ("p6-dest-jira-wrong-site", "Jira Wrong Site", "jira", {"site": "other.atlassian.net", "email": "owner@example.com"}, {"key": "PAY-999"}),
+                ("p6-dest-slack-wrong", "Slack Wrong", "slack", {"key_ref": "slack-test-2"}, {"channel_label": "#payments-archive"}),
+                ("p6-dest-email-wrong", "Email Wrong", "email", {"provider": "sendgrid", "from_email": "owner@example.com", "from_name": "Owner", "key_ref": "sendgrid-test-2"}, {"to": ["other@example.com"], "cc": []}),
+            )
+            for destination_id, name, channel, account, target in saved:
+                ChannelDestinationsRepository.insert_in_transaction(
+                    conn, destination_id=destination_id, name=name, channel=channel,
+                    account=account, target=target, synced=False,
+                )
+
+        room = hub.ok("GET", f"/api/projects/{project_id}/room")
+        by_action = {row.get("action_item_id"): row for row in room["needsYou"]["items"]}
+        assert by_action["p6-jira"]["nudge"]["destination_id"] == "p6-dest-jira", by_action["p6-jira"]
+        assert by_action["p6-jira"]["nudge"]["channel"] == "jira", by_action["p6-jira"]
+        assert by_action["p6-slack"]["nudge"]["destination_id"] == "p6-dest-slack", by_action["p6-slack"]
+        assert by_action["p6-slack-thread"]["nudge"]["destination_id"] == "p6-dest-slack-thread", by_action["p6-slack-thread"]
+        assert by_action["p6-email"]["nudge"]["destination_id"] == "p6-dest-email", by_action["p6-email"]
+        for action_id in ("p6-jira-mismatch", "p6-slack-mismatch", "p6-email-mismatch", "p6-missing"):
+            assert "nudge" not in by_action[action_id], by_action[action_id]
+
+        nudge_ref = by_action["p6-jira"]["nudge"]["document_ref"]
+        document = render_document(db, nudge_ref)
+        assert document.ref == nudge_ref
+        assert "Please review: Review the Jira migration item" in document.body_md
+        assert "caller" not in document.body_md.lower()
+        assert "NUDGE" == document.label
+
+        # Preview and prepare use the real channel service, but no real Jira,
+        # Slack, or email destination is sent in this proof.
+        for action_id, destination_id in (
+            ("p6-jira", "p6-dest-jira"),
+            ("p6-slack", "p6-dest-slack"),
+            ("p6-slack-thread", "p6-dest-slack-thread"),
+            ("p6-email", "p6-dest-email"),
+        ):
+            preview = hub.client.post("/api/channels/preview", json={
+                "document_ref": by_action[action_id]["nudge"]["document_ref"],
+                "destination_id": destination_id,
+            })
+            assert preview.status_code == 200, preview.text
+        assert hub.ok("GET", "/api/channels/sends")["sends"] == []
+
+        folder = tmp_path / "nudge-sent"
+        folder.mkdir()
+        file_dest = hub.ok("POST", "/api/channels/destinations", {
+            "name": "Nudge proof folder", "channel": "file", "folder": str(folder),
+        })["destination"]["id"]
+        prepared = hub.ok("POST", "/api/channels/sends", {
+            "document_ref": nudge_ref, "destination_id": file_dest,
+        })["send"]
+        assert prepared["state"] == "prepared", prepared
+        assert prepared["dispatch_started_at"] is None and prepared["send_operation_id"] is None, prepared
+        assert not list(folder.iterdir())
+        sent = hub.client.post("/api/channels/send", json={"send_id": prepared["id"]})
+        assert sent.status_code == 200 and sent.json()["send"]["state"] == "sent", sent.text
+        files = list(folder.glob("*.md"))
+        assert len(files) == 1
+        assert "Please review: Review the Jira migration item" in files[0].read_text(encoding="utf-8")

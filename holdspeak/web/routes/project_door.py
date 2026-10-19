@@ -1,6 +1,7 @@
 """HS-169-02: Project Door routes — the one-screen creation wire.
 
 POST /api/projects/door/count   — snapshot counts for the Door UI
+POST /api/projects/door/preview — validate pasted sources and find local material
 POST /api/projects/door         — create project + watches in one call
 
 Parse-and-serialize ONLY: the ProjectDoorService docstring law.
@@ -82,6 +83,38 @@ def build_project_door_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to count door sources")
 
+    @router.post("/preview")
+    async def door_preview(request: Request) -> Any:
+        """Parse a pasted source list and show only material the hub found."""
+        p = principal(request)
+        body, refused = await body_or_refusal(request, ops(), p, "project.door.preview")
+        if refused is not None:
+            return refused
+        try:
+            if ctx.project_door_service is None:
+                return JSONResponse(
+                    {"code": "service_unavailable", "message": "Door service not configured"},
+                    status_code=503,
+                )
+            result, kernel = ops().invoke_receipted(p, "project.door.preview", {
+                "outcome": body.get("outcome", ""),
+                "pasted": body.get("pasted", ""),
+            })
+            return JSONResponse({**result, **kernel_fields(kernel)} if isinstance(result, dict) else result)
+        except OperationRefused as exc:
+            return JSONResponse({"code": "validation", "message": exc.detail, **refusal_fields(exc)}, status_code=400)
+        except ValidationError as exc:
+            return JSONResponse(
+                {"code": exc.code, "message": exc.detail, **refusal_fields(exc)},
+                status_code=400,
+            )
+        except ServiceError as exc:
+            if (refused := kernel_refusal(exc)) is not None:
+                return refused
+            return _svc_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to preview door sources")
+
     @router.post("")
     async def door_create(request: Request) -> Any:
         # PHILO-9-02: conditional. With sources: admitted (armed watches read
@@ -123,6 +156,7 @@ def build_project_door_router(ctx: WebContext) -> APIRouter:
             # PHILO-9-01: the declared project.door.create, beside project.create.
             result, kernel = ops().invoke_receipted(p, "project.door.create", {
                 "outcome": outcome if isinstance(outcome, str) else "", "sources": sources,
+                **({"found": body.get("found")} if isinstance(body.get("found"), dict) else {}),
                 **({"project_id": project_id} if project_id else {}),
             })
             return JSONResponse({**result, **kernel_fields(kernel)} if isinstance(result, dict) else result)

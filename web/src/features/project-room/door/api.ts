@@ -24,11 +24,40 @@ export interface CreateResponse {
   projectId: string;
 }
 
+export type PreviewSourceState = "checked" | "cant_check" | "not_checked";
+
+export interface PreviewSource {
+  provider: string;
+  scope: string;
+  site?: string;
+  label: string;
+  state: PreviewSourceState;
+  reason: string | null;
+  connectionRef?: string;
+  spaceId?: string;
+}
+
+export interface PreviewFoundItem {
+  kind: "meeting" | "note";
+  id: string;
+  title: string;
+  detail: string;
+  attendees?: string[];
+  selected: boolean;
+}
+
+export interface PreviewResponse {
+  sources: PreviewSource[];
+  found: PreviewFoundItem[];
+  people: string[];
+}
+
 export interface DoorSourcePayload {
   provider: string;
-  scope: string | { connection_ref: string; projects: string[] };
+  scope: string | { connection_ref: string; projects: string[] } | { connection_ref: string; space_key: string; space_id: string };
   watches: string[];
   adjust?: Record<string, unknown>;
+  test_state?: "passed" | "not_checked";
 }
 
 /* ── Decoders ── */
@@ -65,7 +94,7 @@ function decodeCreateResponse(raw: Record<string, unknown>): CreateResponse {
 
 export async function doorCount(
   provider: string,
-  scope: string | { connection_ref: string; projects: string[] },
+  scope: string | { connection_ref: string; projects: string[] } | { connection_ref: string; space_key: string; space_id: string },
   watches: string[],
   adjust?: Record<string, unknown>,
 ): Promise<CountResponse> {
@@ -79,12 +108,58 @@ export async function doorCount(
 export async function doorCreate(
   outcome: string,
   sources: DoorSourcePayload[],
+  found?: { meeting_ids: string[]; note_ids: string[] },
 ): Promise<CreateResponse> {
   const raw = await apiFetch<Record<string, unknown>>(
     "/api/projects/door",
-    { method: "POST", json: { outcome, sources } },
+    { method: "POST", json: { outcome, sources, ...(found ? { found } : {}) } },
   );
   return decodeCreateResponse(raw);
+}
+
+function decodePreviewSource(raw: Record<string, unknown>): PreviewSource {
+  const state = raw.state === "checked" || raw.state === "cant_check" ? raw.state : "not_checked";
+  return {
+    provider: String(raw.provider ?? ""),
+    scope: String(raw.scope ?? ""),
+    site: typeof raw.site === "string" ? raw.site : undefined,
+    label: String(raw.label ?? raw.scope ?? ""),
+    state,
+    reason: typeof raw.reason === "string" ? raw.reason : null,
+    connectionRef: typeof raw.connection_ref === "string" ? raw.connection_ref : undefined,
+    spaceId: typeof raw.space_id === "string" ? raw.space_id : undefined,
+  };
+}
+
+function decodePreviewFound(raw: Record<string, unknown>): PreviewFoundItem {
+  return {
+    kind: raw.kind === "note" ? "note" : "meeting",
+    id: String(raw.id ?? ""),
+    title: String(raw.title ?? ""),
+    detail: String(raw.detail ?? ""),
+    attendees: Array.isArray(raw.attendees) ? raw.attendees.map(String) : undefined,
+    selected: raw.selected !== false,
+  };
+}
+
+function decodePreviewResponse(raw: Record<string, unknown>): PreviewResponse {
+  return {
+    sources: Array.isArray(raw.sources)
+      ? (raw.sources as Record<string, unknown>[]).map(decodePreviewSource)
+      : [],
+    found: Array.isArray(raw.found)
+      ? (raw.found as Record<string, unknown>[]).map(decodePreviewFound)
+      : [],
+    people: Array.isArray(raw.people) ? raw.people.map(String) : [],
+  };
+}
+
+export async function doorPreview(outcome: string, pasted: string): Promise<PreviewResponse> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    "/api/projects/door/preview",
+    { method: "POST", json: { outcome, pasted } },
+  );
+  return decodePreviewResponse(raw);
 }
 
 /** PHILO-17 U10: the same source rows, added to a project that exists
@@ -276,9 +351,12 @@ function decodeConfluenceDiscoveryResponse(
 }
 
 export async function discoverConfluence(
+  connectionRef: string,
   query?: string,
 ): Promise<ConfluenceDiscoveryResponse> {
   const params = new URLSearchParams();
+  params.set("connection_ref", connectionRef);
+  params.set("kind", "spaces");
   if (query) params.set("query", query);
   const qs = params.toString();
   const raw = await apiFetch<Record<string, unknown>>(

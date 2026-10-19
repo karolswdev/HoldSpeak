@@ -1507,9 +1507,21 @@ class MeetingWebServer:
                     **self._gh_watch_service_kwargs(),
                 ),
                 gh_runner=self._gh_runner,
+                github_adapter=GitHubProviderAdapter(
+                    db=get_database(), runner=self._gh_runner,
+                ),
                 jira_adapter=JiraProviderAdapter(
                     db=get_database(), runner=self._acli_runner,
                 ),
+                confluence_adapter=(
+                    self._build_confluence_adapter()
+                    or __import__(
+                        "holdspeak.services.confluence_provider", fromlist=["ConfluenceProviderAdapter"]
+                    ).ConfluenceProviderAdapter(db=get_database(), runner=self._acli_runner)
+                ),
+                db=get_database(),
+                meeting_service=meeting_service,
+                primitive_service=None,
             ),
             project_evidence_collector=ProjectEvidenceCollector(get_database()),
             # PHILO-9-02: one suggested-source service over the hub's ProjectService.

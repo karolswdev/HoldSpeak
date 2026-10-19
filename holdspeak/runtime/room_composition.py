@@ -42,6 +42,12 @@ def compose_room_services(services: Any, ctx: Any, db: Any, observer: Any) -> No
         door = ProjectDoorService(
             project_service=project,
             watch_service=_held("watch_service") or WatchService(db, observer=observer),
+            db=db,
+            github_adapter=_held("github_provider"),
+            jira_adapter=_held("jira_provider"),
+            confluence_adapter=_held("confluence_provider"),
+            meeting_service=_held("meeting_service"),
+            primitive_service=_held("primitive_service"),
         )
     # PHILO-9-02: the steward, the watches, the connections and the suggested
     # sources (the hub composes each; a partial context gets the bare builds
