@@ -4797,6 +4797,25 @@
         ]
       }
     },
+    "/api/automations/prepared": {
+      "get": {
+        "description": "Betterment daily D9: Today's Prepared block (the newest result of an\nautomation whose Put it in is Today) and the automation Prepare now\nruns. Each is null when there is none.",
+        "operationId": "api_prepared_for_today_api_automations_prepared_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Prepared For Today Api Automations Prepared Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Prepared For Today"
+      }
+    },
     "/api/automations/presets": {
       "get": {
         "operationId": "list_presets_api_automations_presets_get",

@@ -706,3 +706,116 @@
 .desk-next .today-fold-head:disabled {
   cursor: default;
 }
+
+/* ── Betterment daily D9: PREPARED, Morning prep's newest result. A raised
+   plate with the Workbench title bar (the NEXT card's grammar); one card
+   per meeting today in a row that wraps (one column at 393). ── */
+.desk-next .today-prepared {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 0 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent);
+  min-width: 0;
+}
+.desk-next .today-prepared-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  padding: 3px 10px;
+  border-bottom: 1px solid var(--wb-ink);
+  background: var(--wb-stipple-fine), var(--wb-blue);
+  color: var(--wb-ink);
+}
+.desk-next .today-prepared-label {
+  padding: 1px 6px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-raised);
+  font: 800 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+}
+.desk-next .today-prepared-by {
+  font: 700 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-ink);
+  overflow-wrap: anywhere;
+}
+.desk-next .today-prepared-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: 8px;
+  padding: 0 10px;
+}
+.desk-next .today-prepared-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--wb-ink);
+  background: var(--wb-well);
+  box-shadow: var(--wb-sunken);
+  min-width: 0;
+}
+.desk-next .today-prepared-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.desk-next .today-prepared-time {
+  font: 700 12px / 1.2 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-muted);
+}
+.desk-next .today-prepared-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 650 14px / 1.25 var(--font-display);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.desk-next .today-prepared-lines,
+.desk-next .today-prepared-list ul {
+  margin: 0;
+  padding-left: 18px;
+  font: 400 13px / 1.4 var(--font-ui, inherit);
+  color: var(--wb-text);
+  overflow-wrap: anywhere;
+}
+.desk-next .today-prepared-raise {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font: 400 13px / 1.4 var(--font-ui, inherit);
+  color: var(--wb-text);
+}
+.desk-next .today-prepared-raise-text {
+  flex: 1 1 160px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.desk-next .today-prepared-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 10px;
+}
+.desk-next .today-prepared-cap {
+  font: 700 12px / 1.3 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+}
+.desk-next .today-prepared-looked {
+  margin: 0;
+  padding: 0 10px;
+  font: 400 12px / 1.4 var(--font-ui, inherit);
+  color: var(--wb-muted);
+  overflow-wrap: anywhere;
+}
