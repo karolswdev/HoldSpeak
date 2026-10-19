@@ -22,7 +22,7 @@ import { gatedHead, type LaneGated, type LaneWait } from "../lane/laneWire";
 import { AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
 import type { ConductorMember } from "../conductor/members";
 import { useConductor } from "../conductor/store";
-import { questionChoices, menuChoices, wantsToRun, type AgentChoice } from "./choices";
+import { questionChoices, type AgentChoice } from "./choices";
 import type { DeskAnswer, DeskAnswerSource } from "../agentFlights";
 
 /** Betterment AG3: where the line the desk used comes from, in his words. */
@@ -109,26 +109,9 @@ export function useHeldCall(member: ConductorMember): {
   return { call, wait, error, reread };
 }
 
-/** The bottom of the agent's screen (read only; watching is free). An
- *  unread screen is no menu and no command: the row still answers. */
-export function usePaneTail(sessionKey: string | null | undefined, when: unknown): string[] {
-  const [lines, setLines] = useState<string[]>([]);
-  useEffect(() => {
-    let live = true;
-    if (!sessionKey) return;
-    void apiFetch<{ peek?: { status?: string; lines?: string[] } }>(
-      `/api/coders/${encodeURIComponent(sessionKey)}/peek?lines=40`,
-    )
-      .then((answer) => {
-        if (live && answer?.peek?.status === "live" && Array.isArray(answer.peek.lines)) setLines(answer.peek.lines);
-      })
-      .catch(() => undefined);
-    return () => {
-      live = false;
-    };
-  }, [sessionKey, when]);
-  return lines;
-}
+/* Betterment AG7: the row's own read of the pane (usePaneTail) and its
+ * parse are parked in desk/_parked/agents/paneParse.ts: the hub's screen
+ * rules read the command and the choices (member.screen). */
 
 /** `Asked 6 min ago`; `Asks` with no age. */
 function askedWord(when: string | undefined): string {
@@ -166,7 +149,6 @@ export interface AgentRowProps {
 
 export function AgentRow({ member, question, waitId, lead, selected, onSelect, onTerminal, onOpenAnswer, onOpen }: AgentRowProps) {
   const { call, wait, error: callError, reread } = useHeldCall(member);
-  const tail = usePaneTail(member.sessionKey, member.when);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
@@ -178,10 +160,14 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
 
   const held = member.live === "held" || Boolean(call) || wait?.kind === "TO APPROVE";
   const currentWait = String(wait?.wait_id ?? waitId ?? "");
-  const shownQuestion = String(wait?.question || question || "");
-  const command = call ? gatedHead(call) : held ? wantsToRun(tail) : null;
+  // Betterment AG7: an agent with no hook asks in its last words on screen.
+  const shownQuestion = String(wait?.question || question || (member.screen?.state === "asks" ? member.screen.said : "") || "");
+  // Betterment AG7: the gate's held call first, else what the hub's screen
+  // rules read on the agent's pane (the command, its own numbered menu).
+  const screenRead = member.screen ?? null;
+  const command = call ? gatedHead(call) : held ? screenRead?.command ?? null : null;
   const choices: AgentChoice[] = held ? [] : questionChoices(shownQuestion);
-  const menu: AgentChoice[] = held || choices.length ? [] : menuChoices(tail);
+  const menu: AgentChoice[] = held || choices.length ? [] : screenRead?.choices ?? [];
   const draft = wait?.draft?.text?.trim() || "";
   // Betterment AG3: the line the draft used, in his words; else why.
   const used = wait?.draft?.source;
@@ -338,7 +324,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
       ) : held ? (
         decided ? null : (
           <div className="cw-ask-verbs cw-ask-verbs--wide">
-            {call?.args_cut ? (
+            {call?.args_cut || (!call && !canKeys) ? (
               <Button dense variant={lead ? "primary" : "secondary"} onClick={onTerminal} data-testid="agent-row-terminal">
                 Terminal
               </Button>

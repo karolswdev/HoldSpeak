@@ -78,6 +78,10 @@ _CODEX_CURSOR = "›"  # the › that marks the selected choice and the composer
 DELIVERED = "sent"
 UNDELIVERED_END = "ended_undelivered"
 
+#: Launch states a stop wrote (a restart, the owner): the session watcher
+#: never settles them "complete" (Betterment AG7, #1316).
+STOPPED_STATES = frozenset({"stopped_by_restart", "stopped_by_owner"})
+
 
 # ── the trust prompt ─────────────────────────────────────────────────
 
@@ -429,6 +433,11 @@ class FirstMessage:
         from ..principals import Principal, PrincipalKind
 
         record = self._svc._ledger.get(launch_id) or {}
+        # Betterment AG7 (#1316): a stop already said why the session ended
+        # (a restart, the owner); "complete" never overwrites it, so Resume
+        # stays on a restart-stopped agent.
+        if str(record.get("state") or "") in STOPPED_STATES:
+            return str(record.get("state"))
         held = isinstance(record.get("pending_brief"), Mapping)
         delivered = record.get("instruction_state") == DELIVERED or (
             not held and record.get("instruction_state") in (None, DELIVERED)

@@ -901,6 +901,12 @@
     },
     {
       "transport": "mcp",
+      "entry_point": "coder.explain",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/coder.py); Betterment AG7"
+    },
+    {
+      "transport": "mcp",
       "entry_point": "coder.get",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/coder.py)"

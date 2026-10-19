@@ -987,6 +987,8 @@ READ_VERBS: frozenset[str] = frozenset({
     "evaluate", "inspect", "presets", "hub", "nudges", "shelf", "shelf_read",
     "resolve_grounding", "preview_use_default", "export", "proposals",
     "summary", "audit", "editor", "receipt", "detect", "probe", "results",
+    # Betterment AG7: coder.explain reads why an agent has its state.
+    "explain",
     "confluence_connections", "confluence_discover", "confluence_validate_space",
     "github_connection", "github_discover", "github_validate_repo", "github_pr_get",
     "jira_connection", "jira_connections", "jira_discover", "jira_search",

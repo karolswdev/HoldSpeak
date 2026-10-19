@@ -210,6 +210,23 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
         return JSONResponse(lane)
 
+    @router.get("/api/agent/launches/{launch_id}/explain")
+    async def api_agent_launch_explain(launch_id: str) -> Any:
+        """Betterment AG7, "Why this state": which source decided the agent's
+        state (the hook or a screen rule), the rule, the evidence lines, the
+        rule file and the age of the read (``agent_flights.explain_agent``)."""
+        from ...db import get_database
+        from ...services.agent_flights import explain_agent
+
+        try:
+            answer = await asyncio.to_thread(explain_agent, get_database(), f"launch:{launch_id}")
+        except Exception as exc:
+            log.error(f"launch explain failed: {exc}")
+            return JSONResponse({"error": "launch_explain_failed"}, status_code=500)
+        if answer is None:
+            return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
+        return JSONResponse(answer)
+
     @router.post("/api/agent/launches/{launch_id}/seen")
     async def api_agent_launch_seen(launch_id: str, request: Request) -> Any:
         """Betterment AG0: the owner opened this agent, so its done turn is

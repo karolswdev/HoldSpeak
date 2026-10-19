@@ -257,6 +257,9 @@ export function memberPill(member: ConductorMember): { word: string; tone: "ok" 
     case "queued":
       // Betterment AG5: at the working-at-once limit the hand waits.
       return { word: "Waits for a free agent", tone: "idle" };
+    case "no_signal":
+      // Betterment AG7: no hook and no screen rule for ten minutes.
+      return { word: "No signal", tone: "idle" };
     case "done":
       // Betterment AG0: Done · New until he opens it, then Quiet.
       return member.isNew ? { word: "Done · New", tone: "ok" } : { word: "Quiet", tone: "idle" };

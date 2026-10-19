@@ -126,6 +126,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "coder.list":   ("evidence_read",     False),
     "coder.get":    ("evidence_read",     False),
     "coder.audit":  ("evidence_read",     False),
+    "coder.explain": ("evidence_read",    False),
     # --- cadence family ---
     "cadence.status":          ("evidence_read",     False),
     "cadence.loops":           ("evidence_read",     False),

@@ -194,6 +194,7 @@ addopts = ["--strict-markers", "-ra"]
 [tool.hatch.build.targets.sdist]
 include = [
     "/LICENSE",
+    "/NOTICE",
     "/README.md",
     "/docs/product-language.json",
     "/docs/trust-destinations.json",
@@ -216,6 +217,8 @@ artifacts = [
     "holdspeak/static/_built/**",
     # pi's HoldSpeak extension (pi spike #1020): every pi launch loads it with -e.
     "holdspeak/agent_context/pi_extension/*.ts",
+    # Betterment AG7: herdr's agent rules (Apache-2.0, see NOTICE).
+    "holdspeak/agent_context/rules/*.toml",
 ]
 
 [tool.hatch.build.targets.wheel.force-include]

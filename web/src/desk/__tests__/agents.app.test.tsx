@@ -27,7 +27,8 @@ import { WingSlotContext } from "../surface/wings";
 import { LaneWindow, __resetDraftEgress } from "../lane/LaneWindow";
 import { __resetLane, useLane } from "../lane/laneStore";
 import { branchFace } from "../lane/laneWire";
-import { menuChoices, questionChoices, wantsToRun } from "../agents/choices";
+import { questionChoices } from "../agents/choices";
+import { WhyThisStateBody, type ExplainWire } from "../agents/WhyThisState";
 import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../agentFlights";
 import { ConductorWindow } from "../conductor/ConductorWindow";
 import { __resetConductor } from "../conductor/store";
@@ -487,9 +488,9 @@ describe("the agent faces say Agents and agent (Betterment AG1)", () => {
  * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
  * test_the_agents_read_asks_with_choices_and_answers_without_an_arm
  * (fixtures/agents-ag2: one agent asks "Answer 1 for config, 2 for env.",
- * one waits at a permission prompt; Normal mode, nothing armed). The screens
- * are the fake Claude Code's real panes read by the hub's own peek_pane
- * (wire/peek.ag2-*.wire.json). */
+ * one waits at a permission prompt; Normal mode, nothing armed). Betterment
+ * AG7: the command and the agent's own menu come from the hub's screen rules
+ * (fixtures/agents-ag7), no longer from the row's own read of the pane. */
 function ag2<T = unknown>(name: string): { captured_at: string; wire: T } {
   return hubWire<T>(`../fixtures/agents-ag2/${name}`);
 }
@@ -512,8 +513,6 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
       "/api/onboarding/agents": DETECT.wire,
       "/api/agent/launches/launch_ag0_ghost/lane": LANE_ASKS.wire,
       "/api/agent/launches/": { gated: [], wait: null },
-      "/api/coders/claude%3Aag0-ghost/peek": hubWire("peek.ag2-asks").wire,
-      "/api/coders/claude%3Aag2-held/peek": hubWire("peek.ag2-permission").wire,
       "/api/coders/claude%3Aag0-ghost/steer": { status: "delivered", pane_id: "%4242" },
       "/api/coders/claude%3Aag2-held/keys": { status: "delivered", pane_id: "%4243" },
     });
@@ -555,10 +554,9 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
       { text: "Use config, and add a test", submit: true, kind: "answer", wait_id: waitOf("ag0-ghost") }]]);
   });
 
-  it("Wants to run shows the command from the agent's screen; Allow sends Enter, Deny sends Escape", async () => {
+  it("Wants to run: Allow sends Enter, Deny sends Escape", async () => {
     const { held } = await rows();
     expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
-    await waitFor(() => expect(within(held).getByTestId("agent-row-command").textContent).toBe("rm -rf build/ && make release"));
     await act(async () => {
       fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
     });
@@ -574,19 +572,70 @@ describe("one press to answer and to allow (Betterment AG2)", () => {
   });
 });
 
-describe("the screen parse on the recorded fake Claude Code panes (Betterment AG2)", () => {
-  it("reads the permission prompt's command and its own menu; the question screen has no menu", () => {
-    const permission = hubWire<{ peek: { lines: string[] } }>("peek.ag2-permission").wire.peek.lines;
-    expect(wantsToRun(permission)).toBe("rm -rf build/ && make release");
-    expect(menuChoices(permission)).toEqual([
-      { n: "1", label: "Yes" }, { n: "2", label: "No, and tell Claude what to do differently" },
-    ]);
-    const asks = hubWire<{ peek: { lines: string[] } }>("peek.ag2-asks").wire.peek.lines;
-    expect(menuChoices(asks)).toEqual([]);
-    expect(wantsToRun(asks)).toBeNull();
+describe("the choices a question offers (Betterment AG2)", () => {
+  it("reads 'Answer 1 for …, 2 for …' in the question; a plain question has none", () => {
     expect(questionChoices("Ship it now? Answer 1 for yes, 2 for no, 3 for later.").map((c) => `${c.n} · ${c.label}`))
       .toEqual(["1 · yes", "2 · no", "3 · later"]);
     expect(questionChoices("Jordan or Avery?")).toEqual([]);
+  });
+});
+
+/* ── Betterment AG7: screen rules (the herdr port) ─────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_states_from_the_screen_when_no_hook_speaks
+ * (fixtures/agents-ag7): three agents with their hooks off; the hub's
+ * watcher read their real tmux panes (the fake Claude Code's recorded
+ * screens) with herdr's rules. */
+function ag7<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag7/${name}`);
+}
+
+describe("the screen says the state when no hook speaks (Betterment AG7)", () => {
+  const SESSIONS = ag7<{ flights: Array<Record<string, unknown>> }>("coders-sessions");
+  const WHY = ag7<ExplainWire>("explain.held");
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({
+      "/api/coders/sessions": SESSIONS.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/": { gated: [], wait: null },
+    });
+  });
+
+  it("Wants to run shows the command the rules read; with no hook to answer, Terminal leads", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Release the rollback build" });
+    const held = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
+      .find((row) => row.dataset.objectId === "launch:launch_ag7_held")!;
+    expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
+    expect(within(held).getByTestId("agent-row-command").textContent).toMatch(/^rm -rf build\/ && make release/);
+    expect(within(held).getByTestId("agent-row-terminal").textContent).toBe("Terminal");
+    expect(within(held).queryByRole("button", { name: "Allow" })).toBeNull();
+  });
+
+  it("Asks you shows the agent's last words and their choices; Done is New", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Move the rollback flag" });
+    const asks = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
+      .find((row) => row.dataset.objectId === "launch:launch_ag7_asks")!;
+    expect(asks.querySelector(".cw-ask-label")?.textContent).toBe("Asks you");
+    expect(within(asks).getByTestId("agent-row-question").textContent).toContain("Should it live in config/flags.yaml");
+    expect(within(asks).getAllByTestId("agent-row-choice").map((b) => b.textContent)).toEqual(["1 · config", "2 · env"]);
+    const done = screen.getAllByTestId("conductor-row").find((row) => row.dataset.objectId === "launch:launch_ag7_done")!;
+    expect(within(done).getByTestId("conductor-pill").textContent).toBe("Done · New");
+  });
+
+  it("Why this state names the source, the rule, its file and the lines it matched", () => {
+    render(<WhyThisStateBody explain={WHY.wire} />);
+    expect(screen.getByTestId("lane-why-source").textContent).toBe("From: The agent's screen");
+    expect(screen.getByTestId("lane-why-rule").textContent).toBe(
+      "Rule: bash_permission_prompt · claude.toml 2026.10.11.1 (bundled)");
+    expect(screen.getByTestId("lane-why-evidence").textContent).toContain("Do you want to proceed?");
+    expect(screen.queryByTestId("lane-why-hook")).toBeNull();
   });
 });
 
