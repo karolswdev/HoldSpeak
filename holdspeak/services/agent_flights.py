@@ -268,6 +268,18 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         "session_cleanup": (follow.get("cleanup") or {}).get("session"),
         "merged_at": evidence.get("merged_at") or None,
         "launch_id": record.get("launch_id"),
+        # Betterment AG11: a helper names the launch that started it. Keep the
+        # established wire shape for ordinary flights; the optional field
+        # appears only on a helper row.
+        **({"helper_of": str(record.get("helper_of"))} if record.get("helper_of") else {}),
+        # Secure helper requests are owner-facing actions on the parent row.
+        **({"helper_request": {
+            "request_id": str((record.get("helper_request") or {}).get("request_id") or ""),
+            "status": str((record.get("helper_request") or {}).get("status") or ""),
+            "instruction": str((record.get("helper_request") or {}).get("instruction") or ""),
+            "profile": (record.get("helper_request") or {}).get("profile"),
+        }} if isinstance(record.get("helper_request"), Mapping)
+           and (record.get("helper_request") or {}).get("status") == "awaiting_owner" else {}),
         # PHILO-14 C4: the launch's clocks (the Conductor's stale window).
         "launched_at": record.get("launched_at") or None,
         "ended_at": _ended_at(record, state, session, follow.get("close")),
@@ -438,7 +450,10 @@ def agent_flights(
         if not _launched(record):
             continue
         origin = record.get("origin_ref") or {}
-        newest[f"{origin.get('kind')}:{origin.get('id')}"] = record   # the ledger is oldest first
+        # Betterment AG11: a helper works the same item as its parent; it is
+        # its own flight (keyed by its parent too), never the item's newest.
+        helper = str(record.get("helper_of") or "")
+        newest[f"{origin.get('kind')}:{origin.get('id')}{'#helper:' + helper if helper else ''}"] = record
     return [_flight(db, record, by_key, clock) for record in newest.values()]
 
 

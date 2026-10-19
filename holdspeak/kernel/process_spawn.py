@@ -25,6 +25,9 @@ _ALLOWED = frozenset(
         "session_label",
         "options",
         "origin_ref",
+        # Betterment AG11: a helper launch records the launch that owns it;
+        # this is server supplied and remains inside the typed spawn envelope.
+        "helper_of",
     }
 )
 
@@ -38,6 +41,16 @@ class ProcessSpawnCodec:
     def __init__(self, service: Any, command_receipts: Any) -> None:
         self._service = service
         self._commands = command_receipts
+
+    def continuation_identities(self, native_id: str) -> tuple[str, ...]:
+        """Allow the launched process to make one causal child launch.
+
+        The parent spawn is still admitted and decided by the owner.  Its
+        signed warrant names only the launch credential that the spawn issued;
+        a helper spawn must carry that parent operation id so the broker can
+        apply the same owner derived authority.
+        """
+        return (f"agent:launch:{str(native_id).strip()}",)
 
     def validate(self, request: OperationRequest) -> Admission:
         args = request.arguments
