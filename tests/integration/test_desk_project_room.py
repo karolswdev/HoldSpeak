@@ -1987,6 +1987,7 @@ def test_the_now_wing_says_where_it_stands_from_this_weeks_meetings_and_notes(tm
         assert now["state"] == "ok"
         assert [d["text"] for d in now["decided"]] == ["Keep the old ledger read-only for 30 days"]
         assert now["decided"][0]["ref"].startswith("decision_record:")
+        assert now["decided"][0]["source_ref"] == "meeting:p3-arch"
         risks = {r["text"]: r for r in now["risks"]}
         assert risks["Rollback runbook is still a draft"]["ref"] == "note:p3-risks"
         assert risks["Card tokenization is blocked on the HSM key ceremony."]["token"].startswith("MTG ")

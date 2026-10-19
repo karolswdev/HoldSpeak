@@ -528,7 +528,7 @@ export type RoomNowData = {
   lastUpdateAt: string | null;
   meetingsThisWeek: number;
   risks: RoomNowLine[];
-  decided: { id: string; text: string; at: string; ref: string; source: string }[];
+  decided: { id: string; text: string; at: string; ref: string; source: string; sourceRef: string }[];
 };
 
 /* ── Room snapshot decoder ── */
@@ -893,6 +893,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
               at: String(r.at ?? ""),
               ref: String(r.ref ?? ""),
               source: String(r.source ?? ""),
+              sourceRef: String(r.source_ref ?? ""),
             })).filter((r) => r.text)
           : [],
       };

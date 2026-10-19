@@ -2333,12 +2333,16 @@ class ProjectService:
                 at = _wall(item.get("confirmed_at") or item.get("at"))
                 if at is None or at < since:
                     continue
+                source_ref = str(item.get("source_ref") or "")
+                if source_ref and not source_ref.startswith("meeting:"):
+                    source_ref = f"meeting:{source_ref}"
                 decided.append({
                     "id": item.get("id"),
                     "text": item.get("text"),
                     "at": item.get("confirmed_at") or item.get("at"),
                     "ref": f"decision_record:{item.get('id')}",
                     "source": item.get("meeting_title") or "",
+                    "source_ref": source_ref,
                 })
         return {
             "next_date": next_date,
@@ -2583,6 +2587,7 @@ class ProjectService:
                 f"""SELECT DISTINCT r.id, r.decision_text, r.created_at, r.lifecycle,
                            r.kind AS record_kind,
                            r.source_type AS record_source_type, r.source_id AS record_source_id,
+                           s.source_ref AS record_source_ref,
                            p.id AS proposal_id,
                            p.meeting_id AS proposal_meeting_id,
                            p.kind AS proposal_kind,
@@ -2658,6 +2663,7 @@ class ProjectService:
                 # opens and dedupes by identity, never by the text.
                 "source_type": row["record_source_type"],
                 "source_id": row["record_source_id"],
+                "source_ref": row["record_source_ref"],
             }
             if item["lifecycle"] == "superseded":
                 with self._db._connection() as succ_conn:

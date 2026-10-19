@@ -62,7 +62,7 @@ export function thisWeekGroups(now: RoomNowData | null, pages: StandingPageWire[
   const decided: Line[] = (now?.decided ?? []).map((d) => ({
     key: `decided:${d.id}`,
     text: d.text,
-    refs: [],
+    refs: d.sourceRef ? [{ ref: d.sourceRef, token: d.source || "MTG", opens: true }] : [],
     decisionId: d.id,
   }));
   const pageRisks = pageLines(pages, "risks-and-disputes");
