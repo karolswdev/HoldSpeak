@@ -1019,6 +1019,18 @@ def test_the_agents_read_states_from_the_screen_when_no_hook_speaks(
         assert any("Do you want to proceed?" in line for line in why["screen"]["evidence"])
         _keep("agents-ag7", "explain.held", why, tmp_path, hub)
         _keep("agents-ag7", "lane.held", _get(hub, "/api/agent/launches/launch_ag7_held/lane"), tmp_path, hub)
+        # Gaps: his Allow reaches the screen prompt of an agent with no hook
+        # (the real pane gets Enter); a stale prompt token sends nothing.
+        from tests.e2e.agents_lane_rig import TOKEN, _http
+
+        status, stale = _http(hub, "POST", "/api/agent/launches/launch_ag7_held/answer", TOKEN,
+                              {"since": "2026-01-01T00:00:00Z", "keys": ["Enter"]})
+        stale = stale if isinstance(stale, dict) else json.loads(stale)
+        assert status == 409 and stale["code"] == "wait_not_current", (status, stale)
+        status, sent = _http(hub, "POST", "/api/agent/launches/launch_ag7_held/answer", TOKEN,
+                             {"since": held["screen"]["since"], "keys": ["Enter"]})
+        assert status == 200 and sent["status"] == "delivered", (status, sent)
+        _keep("agents-ag7", "answer.held", sent, tmp_path, hub)
     finally:
         for launch_id in AG7_TASKS:
             subprocess.run(["tmux", "kill-session", "-t", f"hs-{launch_id}"], capture_output=True, timeout=10)

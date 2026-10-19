@@ -78,6 +78,8 @@ export interface AgentScreen {
   /** The agent's last words above its prompt (a finished turn). */
   said: string | null;
   at: string | null;
+  /** When this state began: the prompt's token an answer names. */
+  since: string | null;
 }
 
 export function fromWireScreen(body: any): AgentScreen | null {
@@ -93,6 +95,7 @@ export function fromWireScreen(body: any): AgentScreen | null {
       : [],
     said: body.said ? String(body.said) : null,
     at: body.at ? String(body.at) : null,
+    since: body.since ? String(body.since) : null,
   };
 }
 

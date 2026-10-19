@@ -540,6 +540,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             { id: "chair:capture", label: "Capture", glyph: "●", click: () => openChairWindow("chair:capture"), running: !chair.closed["chair:capture"], minimized: panelMin.includes("chair:capture") },
             { id: "surface-meetings", label: "Meetings", glyph: "▣", click: () => void import("../../shell").then((m) => m.openSurfaceOr("review-meetings", "/history", undefined, { origin: "dock" })), running: Boolean(windowsById["surface-meetings"]), minimized: panelMin.includes("surface-meetings") },
             { id: "surface-people", label: "People", glyph: "♧", click: () => void import("../../shell").then((m) => m.openSurfaceOr("open-people", "/", undefined, { origin: "dock" })), running: Boolean(windowsById["surface-people"]), minimized: panelMin.includes("surface-people") },
+            // Gaps (AG8 on the phone): the Agents tile stands while an agent
+            // is there, with its fleet's lamp and the count that needs him.
+            ...(agentsTile.lamp ? [{ id: "conductor", label: "Agents", glyph: "◉", click: () => void import("../../shell").then((m) => m.openSurfaceOr("open-conductor", "/conductor", undefined, { origin: "dock" })), running: Boolean(windowsById["conductor"]), minimized: panelMin.includes("conductor") }] : []),
           ].map((tile) => {
             const winId = tile.id === "intelligence:desk" ? "pullout:intelligence:desk" : tile.id;
             return (
@@ -549,7 +552,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               variant="chrome"
               data-app={tile.id}
               className={`desk-dock-launch desk-dock-app${tile.running && !tile.minimized ? " is-run" : ""}${tile.minimized ? " is-seated" : ""}`}
-              aria-label={`${tile.label}${tile.minimized ? ", iconified" : ""}`}
+              aria-label={`${tile.label}${tile.id === "conductor" && agentsTile.words ? `, ${agentsTile.words}` : ""}${tile.minimized ? ", iconified" : ""}`}
               onClick={() => {
                 if (tile.id === "chair:capture") tile.click();
                 else if (tile.running && tile.minimized) useDesk.getState().restorePanel(winId);
@@ -560,6 +563,12 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               <span aria-hidden="true">{tile.glyph}</span>
               <span className="desk-dock-label">{tile.label}</span>
               {tile.minimized ? seatLamp : null}
+              {tile.id === "conductor" && agentsTile.lamp ? (
+                <span className="desk-dock-fleet" data-tone={agentsTile.lamp} data-testid="desk-dock-agents-lamp" aria-hidden="true" />
+              ) : null}
+              {tile.id === "conductor" && agentsTile.needYou ? (
+                <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-agents-count" aria-hidden="true">{agentsTile.needYou}</span>
+              ) : null}
             </Button>
             );
           })}

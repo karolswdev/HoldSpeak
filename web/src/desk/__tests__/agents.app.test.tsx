@@ -33,6 +33,7 @@ import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../agentFli
 import { ConductorWindow } from "../conductor/ConductorWindow";
 import { agentsTileOf } from "../conductor/fleetTile";
 import { askedWord } from "../agents/AgentRow";
+import { AgentLine } from "../components/AgentLine";
 import { __resetConductor } from "../conductor/store";
 import { useSteering } from "../steering";
 
@@ -595,6 +596,7 @@ function ag7<T = unknown>(name: string): { captured_at: string; wire: T } {
 describe("the screen says the state when no hook speaks (Betterment AG7)", () => {
   const SESSIONS = ag7<{ flights: Array<Record<string, unknown>> }>("coders-sessions");
   const WHY = ag7<ExplainWire>("explain.held");
+  const ANSWERED = ag7("answer.held");
 
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ["Date"] });
@@ -604,19 +606,26 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
     serve({
       "/api/coders/sessions": SESSIONS.wire,
       "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/launch_ag7_held/answer": ANSWERED.wire,
       "/api/agent/launches/": { gated: [], wait: null },
     });
   });
 
-  it("Wants to run shows the command the rules read; with no hook to answer, Terminal leads", async () => {
+  it("Wants to run shows the command the rules read; Allow sends Enter to its screen prompt (no hook)", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Release the rollback build" });
     const held = within(screen.getByTestId("conductor-asks")).getAllByTestId("conductor-ask-row")
       .find((row) => row.dataset.objectId === "launch:launch_ag7_held")!;
     expect(held.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
     expect(within(held).getByTestId("agent-row-command").textContent).toMatch(/^rm -rf build\/ && make release/);
-    expect(within(held).getByTestId("agent-row-terminal").textContent).toBe("Terminal");
-    expect(within(held).queryByRole("button", { name: "Allow" })).toBeNull();
+    const flight = SESSIONS.wire.flights.find((f) => f.launch_id === "launch_ag7_held") as { screen: { since: string } };
+    await act(async () => {
+      fireEvent.click(within(held).getByRole("button", { name: "Allow" }));
+    });
+    const posts = api.fetch.mock.calls.filter(([, init]) => (init as { method?: string } | undefined)?.method === "POST");
+    expect(posts.map(([url, init]) => [url, (init as { json?: unknown }).json])).toEqual([
+      ["/api/agent/launches/launch_ag7_held/answer", { since: flight.screen.since, keys: ["Enter"] }],
+    ]);
   });
 
   it("Asks you shows the agent's last words and their choices; Done is New", async () => {
@@ -748,6 +757,17 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
       fireEvent.click(cancel);
     });
     expect(calls).toEqual([expect.stringMatching(/^\/api\/agent\/hand\/queue\/queue_/)]);
+  });
+
+  it("a desk object wears its agent's line; one press opens the agent's window", () => {
+    const flights = SESSIONS.wire.flights.map(fromWireFlight);
+    useAgentFlights.setState({ flights, sessions: [], loaded: true });
+    const done = flights.find((f) => f.launchId === "launch_ag8_new")!;
+    const { unmount } = render(<AgentLine objectRef={`action:${done.id}`} />);
+    expect(screen.getByTestId("desk-agent-line").textContent).toBe("Claude Code · Done · New");
+    unmount();
+    const { container } = render(<AgentLine objectRef="action:no-agent-here" />);
+    expect(container.textContent).toBe("");
   });
 
   it("an ask ten seconds old says Asked just now (not 1 min ago)", () => {

@@ -210,6 +210,9 @@ def screen_wire(row: Optional[ScreenRecord], now: datetime) -> Optional[dict[str
         "turn_id": row.turn_id,
         "said": row.said or None,
         "at": _iso(row.sampled_at),
+        # The prompt's token: when this state began. An answer names it, and
+        # a press on a prompt that changed meanwhile sends nothing.
+        "since": _iso(row.since),
     }
 
 
@@ -422,3 +425,79 @@ __all__ = [
     "HOOK_FRESH_SECONDS", "NO_SIGNAL_SECONDS", "SCREEN_RULES_ENV", "STORE", "ScreenRecord", "ScreenStore",
     "Target", "capture", "enabled", "explain", "hook_is_fresh", "merged_state", "screen_wire", "targets", "tick",
 ]
+
+
+# ── his press on a screen prompt (no hook to answer through) ─────────
+
+
+class ScreenAnswerRefused(RuntimeError):
+    def __init__(self, code: str, detail: str = "") -> None:
+        super().__init__(detail or code)
+        self.code = code
+        self.detail = detail or code
+
+
+#: What one press may send to a screen prompt: Allow (Enter), Deny (Escape),
+#: a numbered choice (its digit).
+ANSWER_KEYS = frozenset({"Enter", "Escape", *(str(n) for n in range(1, 10))})
+
+
+def first_pane(session_name: str, runner: Optional[Runner] = None) -> Optional[str]:
+    run = runner or _runner
+    try:
+        done = run(["tmux", "list-panes", "-t", session_name, "-F", "#{pane_id}"])
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    lines = (done.stdout or "").split()
+    return lines[0] if done.returncode == 0 and lines else None
+
+
+def answer_launch(
+    launch_id: str, *, since: str, keys: Optional[list[str]] = None, text: Optional[str] = None,
+    ledger: Any = None, store: Optional[ScreenStore] = None, runner: Optional[Runner] = None,
+    send: Optional[Callable[..., dict[str, Any]]] = None, now: Optional[datetime] = None,
+) -> dict[str, Any]:
+    """Betterment AG7 gaps: the owner answers an agent whose hooks are off,
+    from its row. ``since`` names the prompt he saw (the screen state's
+    start); the pane is read again just before the keystroke, and a prompt
+    that changed, left, or a pane that is gone sends nothing. Keys go
+    through the owner-gesture ``process.input`` path (receipted)."""
+    if ledger is None:
+        from ..delivery.factory_launch import LaunchLedger
+
+        ledger = LaunchLedger()
+    record = ledger.get(launch_id) or {}
+    if str(record.get("state") or "") not in RUNNING_LAUNCH_STATES:
+        raise ScreenAnswerRefused("launch_not_running", "the agent is not running")
+    if keys is None and not (text or "").strip():
+        raise ScreenAnswerRefused("empty_answer")
+    if keys is not None and (not keys or any(k not in ANSWER_KEYS for k in keys)):
+        raise ScreenAnswerRefused("unknown_key", ",".join(map(str, keys or [])))
+    key = f"launch:{launch_id}"
+    row = (store or STORE).get(key)
+    clock = now or datetime.now(timezone.utc)
+    state = merged_state(row, clock)
+    if row is None or state not in ("approve", "asks") or _iso(row.since) != since:
+        raise ScreenAnswerRefused("wait_not_current", "the question changed")
+    session = str(record.get("session") or "")
+    pane = first_pane(session, runner)
+    if not pane:
+        raise ScreenAnswerRefused("pane_gone", "the agent's terminal is gone")
+    seen = capture(pane, runner)
+    if seen is None:
+        raise ScreenAnswerRefused("pane_gone", "the agent's terminal is gone")
+    verdict = read_screen(row.agent, seen[0], title=seen[1])
+    live_blocked = verdict is not None and verdict.state == "blocked"
+    if state == "approve" and not live_blocked:
+        raise ScreenAnswerRefused("wait_not_current", "the prompt left the screen")
+    if state == "asks" and verdict is not None and verdict.state == "working":
+        raise ScreenAnswerRefused("wait_not_current", "the agent works again")
+    if send is None:
+        from ..delivery.direct_gesture_input import submit_process_input_from_owner_gesture as send
+    if keys is not None:
+        named = [k if k in ("Enter", "Escape") else {"literal": k} for k in keys]
+        result = send(pane=pane, keys=named, session_key=key, agent=row.agent)
+    else:
+        result = send(pane=pane, text=str(text).strip(), session_key=key, agent=row.agent)
+    return {"status": "delivered", "launch_id": launch_id, "pane_id": pane,
+            "operation_id": (result or {}).get("operation_id")}

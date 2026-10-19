@@ -239,6 +239,39 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "launch_unknown", "code": "launch_unknown"}, status_code=404)
         return JSONResponse(answer)
 
+    @router.post("/api/agent/launches/{launch_id}/answer")
+    async def api_agent_launch_answer(launch_id: str, request: Request) -> Any:
+        """Betterment AG7 gaps: answer an agent whose hooks are off, from its
+        row: ``{since, keys: ["Enter"|"Escape"|"1".."9"]}`` or ``{since,
+        text}``. ``since`` names the prompt he saw; the pane is read again
+        before the keystroke. Owner only. 409 with its code on a refusal."""
+        from ...agent_context.screen_watch import ScreenAnswerRefused, answer_launch
+        from ...delivery.direct_gesture_input import ProcessInputRefused
+
+        principal = getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            return JSONResponse({"error": "owner_required", "code": "owner_required"}, status_code=403)
+        try:
+            body = await request.json()
+        except Exception:
+            body = None
+        body = body if isinstance(body, dict) else {}
+        keys = body.get("keys")
+        try:
+            result = await asyncio.to_thread(
+                answer_launch, launch_id, since=str(body.get("since") or ""),
+                keys=[str(k) for k in keys] if isinstance(keys, list) else None,
+                text=str(body.get("text") or "") if keys is None else None,
+            )
+        except ScreenAnswerRefused as exc:
+            return JSONResponse({"error": exc.code, "code": exc.code, "status": exc.code, "detail": exc.detail}, status_code=409)
+        except ProcessInputRefused as exc:
+            return JSONResponse({"error": exc.reason, "code": exc.reason, "status": "transport_error"}, status_code=409)
+        except Exception as exc:
+            log.error(f"launch answer failed: {exc}")
+            return JSONResponse({"error": "launch_answer_failed"}, status_code=500)
+        return JSONResponse(result)
+
     @router.post("/api/agent/launches/{launch_id}/seen")
     async def api_agent_launch_seen(launch_id: str, request: Request) -> Any:
         """Betterment AG0: the owner opened this agent, so its done turn is

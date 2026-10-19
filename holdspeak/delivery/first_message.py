@@ -438,6 +438,17 @@ class FirstMessage:
         # stays on a restart-stopped agent.
         if str(record.get("state") or "") in STOPPED_STATES:
             return str(record.get("state"))
+        if self._tmux_restarted_since(record.get("launched_at")):
+            # Betterment AG7 gaps (#1316, the other order): the tmux server
+            # that answers now started AFTER this launch, so the session was
+            # taken by a tmux restart, not ended by its agent. The restart
+            # check decides (an agent whose hook session ended stays
+            # complete). No server at all proves nothing: tmux exits with its
+            # last session.
+            stopped = self._restart_stop(launch_id, str(record.get("session") or ""))
+            if stopped:
+                return stopped
+            record = self._svc._ledger.get(launch_id) or {}
         held = isinstance(record.get("pending_brief"), Mapping)
         delivered = record.get("instruction_state") == DELIVERED or (
             not held and record.get("instruction_state") in (None, DELIVERED)
@@ -461,6 +472,42 @@ class FirstMessage:
         # The receipt first, then the state a reader waits on.
         self._svc._ledger.update(launch_id, **updates)
         return state
+
+    def _tmux_restarted_since(self, launched_at: Any) -> bool:
+        """The running tmux server's start time (``#{start_time}``) is after
+        ``launched_at``. False when tmux answers nothing or the time is unread."""
+        from datetime import datetime
+
+        try:
+            launched = datetime.fromisoformat(str(launched_at or "").replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            return False
+        run = self._svc._runner or coder_steering._default_runner
+        try:
+            done = run(["tmux", "list-sessions", "-F", "#{start_time}"])
+            started = int(str(getattr(done, "stdout", "") or "").split()[0]) if done.returncode == 0 else 0
+        except Exception:
+            return False
+        return started > launched + 1
+
+    def _restart_stop(self, launch_id: str, session: str) -> Optional[str]:
+        """Run the restart check for this one launch (its session is gone);
+        the launch's state after it, when the check stopped it."""
+        from types import SimpleNamespace
+
+        from ..services.launch_lane import record_restart_stops
+
+        try:
+            stopped = record_restart_stops(
+                db=SimpleNamespace(work_attempts=self._svc._attempts),
+                ledger=self._svc._ledger,
+                alive=lambda name: False if name == session else None,
+            )
+        except Exception:
+            return None
+        if launch_id not in stopped:
+            return None
+        return str((self._svc._ledger.get(launch_id) or {}).get("state") or "") or None
 
     # the waiter --------------------------------------------------------------
 
