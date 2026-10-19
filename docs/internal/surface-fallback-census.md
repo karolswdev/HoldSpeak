@@ -297,6 +297,15 @@ and `web/src/desk/components/automation/model.ts` are `display-transport`:
 they show the engine the hub reports (`assignment_summary`). The browser
 selects nothing itself.
 
+**2026-10-19, Memory selected assignment repair.**
+`holdspeak/memory/engine.py::_resolve_selected_head` resolves the immutable
+assignment head Memory already selected through the planner's existing
+assignment and capability validation (143-04). It applies when the generic
+planner prefers or refuses an earlier HoldSpeak-made Background default
+that Memory skipped. It keeps unrelated callers' routing unchanged.
+The real page writer and runner, with a model leaf double, verify the
+owner-global deployment and terminal receipt; clearing that head invalidates
+the writer.
 **2026-10-19, Betterment P5/P6.**
 `holdspeak/services/project_door_service.py::_resolve_connection` binds a
 pasted provider site to one existing connected account, refusing an unknown
