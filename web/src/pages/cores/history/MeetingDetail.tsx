@@ -31,7 +31,7 @@ import {
 } from "./useMeetingData";
 import { MeetingHeader, meetingOutcomeFact, meetingPipelineActive } from "./MeetingHeader";
 import { CaptureSlab } from "./CaptureSlab";
-import { ArtifactsLibrary } from "./ArtifactsLibrary";
+import { DraftReady, PreparedResults, resultServing } from "./PreparedResults";
 import { MeetingSendWellLazy as MeetingSendWell } from "../../../meetings/MeetingSendWellLazy";
 import { SendWellReadContext } from "../../../desk/surface/send/SendWell";
 import { MeetingDecideWell } from "../../../meetings/MeetingDecideWell";
@@ -475,7 +475,10 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
         </Button>
       ) : null
     ) : null;
-    return <>{lifecycle}{actionLifecycle}{destinationVerbs(row, !pending)}{menu}</>;
+    // Betterment capture C5: the Result this action asked for is ready.
+    const serving = resultServing(data.prepared ?? [], row.actionItemId?.trim());
+    const draftReady = serving ? <DraftReady meetingId={String(meeting.id)} result={serving} /> : null;
+    return <>{draftReady}{lifecycle}{actionLifecycle}{destinationVerbs(row, !pending)}{menu}</>;
   };
   const peopleReadRow = commitments.find((row) => row.proposalId
     && (row.gap || editing[row.proposalId])
@@ -572,6 +575,8 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
     <>
       <OutcomeLedger label="Decisions" rows={withVerbs(decisions)} testId="meeting-decisions" controls={decisionsControls} />
       <OutcomeLedger label="Who owes what" rows={withVerbs(commitments)} testId="meeting-commitments" controls={controls} />
+      {/* Betterment capture C5: the Results the meeting prepared. */}
+      <PreparedResults meetingId={String(meeting.id)} results={data.prepared ?? []} />
     </>
   );
 }
@@ -666,7 +671,7 @@ export function MeetingDetail({
     detail,
     setDetail,
     segments,
-    artifactRows,
+
     intelOff,
     intelState,
     needsRows,
@@ -737,12 +742,10 @@ export function MeetingDetail({
           onDeleted();
         }}
       />
-      {view === "artifacts" ? (
-        <ArtifactsLibrary
-          artifactRows={artifactRows}
-          meetingTitle={meetingTitle}
-        />
-      ) : (
+      {/* Betterment capture C5: the ARTIFACTS wing is parked
+          (history/_parked/ArtifactsLibrary.tsx); its Results show under
+          Outcomes ▸ Prepared. */}
+      {(
         <>
           {/* PHILO-17 (the Today language): what was said first (the
               summary), then what was decided and who owes what, then the

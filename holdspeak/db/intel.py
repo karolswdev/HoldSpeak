@@ -379,6 +379,17 @@ def _plan_installed_plugin_members(
     decision = preview_route_from_transcript(
         profile=None, transcript=transcript, tags=None,
     ).to_dict()
+    # Betterment capture C5: the Results this meeting asked for by name (an
+    # ADR, a stakeholder update, a diagram) ride the same chain after the
+    # routed plugins, on the same route rules.  ``prepared`` names them, so a
+    # failed draft never holds the summary (``intel_queue``).
+    from ..meeting_plugins import prepared_plan
+
+    prepared = [
+        plugin_id for plugin_id in prepared_plan(transcript)
+        if plugin_id not in (decision.get("plugin_chain") or [])
+    ]
+    decision["plugin_chain"] = [*(decision.get("plugin_chain") or []), *prepared]
     registry = process_inference_capability_registry()
     members: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
@@ -436,6 +447,8 @@ def _plan_installed_plugin_members(
     }
     if skipped:
         route["plugin_chain_skipped"] = skipped
+    if prepared:
+        route["prepared"] = prepared
     return tuple(members), route
 
 

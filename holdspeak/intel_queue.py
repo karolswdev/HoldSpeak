@@ -734,10 +734,15 @@ def _process_bound_intel_job(
             chain = run_bound_meeting_plugin_chain(
                 db, meeting, bound=bound, job=job,
             )
+            # Betterment capture C5: a prepared Result (an ADR draft, an
+            # update) that failed keeps its error run record and its reason
+            # on the face; it never holds or retries the summary.
+            prepared = set(dict(getattr(job, "frozen_plugin_route", {}) or {}).get("prepared") or ())
             incomplete = sorted(
                 f"{plugin_id} ({status})"
                 for plugin_id, status in dict(chain.get("plugin_statuses") or {}).items()
                 if str(status).strip().lower() not in RESOLVED_PLUGIN_STATUSES
+                and plugin_id not in prepared
             )
             if incomplete:
                 detail = "Remaining routed intelligence did not finish: " + ", ".join(incomplete)

@@ -979,6 +979,28 @@ button.surface-edit-in-place:hover {
   color: var(--text-muted);
   font-size: var(--desk-surface-detail-size);
 }
+/* betterment/capture C5 — Prepared: a Result's verbs, its draft, its failure. */
+.desk-surface-body .meeting-prepared-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0 0 8px;
+}
+.desk-surface-body .meeting-prepared-verbs > .send-fold {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.desk-surface-body .meeting-prepared-draft {
+  padding: 4px 0 8px;
+  min-width: 0;
+}
+.desk-surface-body .meeting-prepared-failed {
+  margin: 0;
+  padding: 2px 0 6px;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
 /* HS-170-04 — speaker token in the transcript well. */
 .desk-surface-body .transcript-list .transcript-speaker {
   flex-shrink: 0;

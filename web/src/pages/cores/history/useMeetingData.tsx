@@ -14,6 +14,7 @@ import { apiFetch, readableError } from "../../../lib/api";
 import { useRuntimeBus } from "../../../runtime/RuntimeBus";
 import { asRows } from "../../pageSupport";
 import type { Receipt, NeedsRow } from "./helpers";
+import { readPrepared, type PreparedResult } from "./PreparedResults";
 import type { ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { presentValue } from "../../../desk/surface/format";
@@ -100,6 +101,8 @@ export interface MeetingData {
   completedActionIds: ReadonlySet<string>;
   authority: Record<string, unknown>;
   aftercare: Record<string, unknown>;
+  /** Betterment capture C5: the Results the meeting prepared. */
+  prepared: PreparedResult[];
   busy: boolean;
   decide: (
     proposal: Record<string, unknown>,
@@ -142,6 +145,7 @@ export const MEETING_READS_CAP_MS = 8000;
 /** The record's first reads, by name (useMeetingData). */
 const FIRST_READS = [
   "detail", "sendWell", "artifacts", "aftercare", "timeline", "proposals", "authority", "ftProposals", "decisions",
+  "prepared",
 ] as const;
 type FirstRead = (typeof FIRST_READS)[number];
 
@@ -169,6 +173,7 @@ export function useMeetingData(
   const [detail, setDetail] = useState<Record<string, unknown> | null>(meeting);
   const [artifacts, setArtifacts] = useState<Record<string, unknown>>({});
   const [aftercare, setAftercare] = useState<Record<string, unknown>>({});
+  const [prepared, setPrepared] = useState<PreparedResult[]>([]);
   const [timeline, setTimeline] = useState<Record<string, unknown>>({});
   const [proposals, setProposals] = useState<Record<string, unknown>>({});
   const [authority, setAuthority] = useState<Record<string, unknown>>({});
@@ -257,6 +262,10 @@ export function useMeetingData(
       .then(mine(newest(setAftercare)))
       .catch(() => { if (live && records === recordsSeq.current) setAftercare({}); })
       .finally(endNewest("aftercare"));
+    void apiFetch<unknown>(`/api/meetings/${encodeURIComponent(id)}/prepared`)
+      .then(mine(newest((body: unknown) => setPrepared(readPrepared(body)))))
+      .catch(() => { if (live && records === recordsSeq.current) setPrepared([]); })
+      .finally(endNewest("prepared"));
     void apiFetch<MeetingTimelineResponse>(
       `/api/meetings/${encodeURIComponent(id)}/intent-timeline`,
     )
@@ -315,6 +324,9 @@ export function useMeetingData(
       .then(mine(setAftercare)).catch(() => undefined).finally(endNewest("aftercare"));
     void apiFetch<MeetingProposalsResponse>(`/api/meetings/${encodeURIComponent(id)}/proposals`)
       .then(mine(setProposals)).catch(() => undefined).finally(endNewest("proposals"));
+    void apiFetch<unknown>(`/api/meetings/${encodeURIComponent(id)}/prepared`)
+      .then(mine((body: unknown) => setPrepared(readPrepared(body)))).catch(() => undefined)
+      .finally(endNewest("prepared"));
     const outcomeRead = ++outcomeReadSeq.current;
     void readOutcomeReview(id).then(mine((res: OutcomeReviewResponse) => {
       if (outcomeRead !== outcomeReadSeq.current) return;
@@ -624,6 +636,7 @@ export function useMeetingData(
     completedActionIds,
     authority,
     aftercare,
+    prepared,
     busy,
     decide,
     hasOutcomes,

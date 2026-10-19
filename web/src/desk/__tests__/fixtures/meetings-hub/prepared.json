@@ -1,0 +1,1702 @@
+{
+  "/api/decisions?scope=all&limit=500&meeting_id=c5-review": {
+    "decisions": [
+      {
+        "decided_at": "2026-10-16T17:01:06+00:00",
+        "id": "dec-c8294ca298605be3868f",
+        "lifecycle": "recorded",
+        "meeting_id": "c5-review",
+        "meeting_title": "Architecture review: idempotent retries",
+        "rationale": null,
+        "record_id": null,
+        "source": "meeting",
+        "source_artifact_id": "art-71160d75684dd2b2462f",
+        "text": "Rollout order: web client first, then mobile client in the release after next; Mira owns the rollout plan."
+      },
+      {
+        "decided_at": "2026-10-16T17:01:06+00:00",
+        "id": "dec-38033cffc3aa28251384",
+        "lifecycle": "recorded",
+        "meeting_id": "c5-review",
+        "meeting_title": "Architecture review: idempotent retries",
+        "rationale": null,
+        "record_id": null,
+        "source": "meeting",
+        "source_artifact_id": "art-71160d75684dd2b2462f",
+        "text": "The speaker will write a stakeholder update informing the support team that duplicate charges will stop after the mobile release."
+      },
+      {
+        "decided_at": "2026-10-16T17:00:48+00:00",
+        "id": "dec-748e20ddb0a1b279016a",
+        "lifecycle": "recorded",
+        "meeting_id": "c5-review",
+        "meeting_title": "Architecture review: idempotent retries",
+        "rationale": null,
+        "record_id": null,
+        "source": "meeting",
+        "source_artifact_id": "art-71160d75684dd2b2462f",
+        "text": "Jun will write the ADR for the idempotent-retry decision by Wednesday."
+      },
+      {
+        "decided_at": "2026-10-16T17:00:42+00:00",
+        "id": "dec-ab9519fa3931c8e714f6",
+        "lifecycle": "recorded",
+        "meeting_id": "c5-review",
+        "meeting_title": "Architecture review: idempotent retries",
+        "rationale": null,
+        "record_id": null,
+        "source": "meeting",
+        "source_artifact_id": "art-71160d75684dd2b2462f",
+        "text": "Theo will update the reconciliation job to read the dedupe key."
+      },
+      {
+        "decided_at": "2026-10-16T17:00:30+00:00",
+        "id": "dec-b2267c100e04ca97a715",
+        "lifecycle": "recorded",
+        "meeting_id": "c5-review",
+        "meeting_title": "Architecture review: idempotent retries",
+        "rationale": "Option B (server dedupe table keyed on merchant, amount, time window) would incorrectly block legitimate duplicate-amount payments; the gateway already supports an idempotency key header so only clients need to change.",
+        "record_id": null,
+        "source": "meeting",
+        "source_artifact_id": "art-71160d75684dd2b2462f",
+        "text": "Adopt Option A (client-sent idempotency/dedupe key via gateway header) for idempotent retries on payment requests; do not build a server-side dedupe table."
+      }
+    ],
+    "page": {
+      "count": 5,
+      "limit": 500,
+      "offset": 0,
+      "total": 5
+    }
+  },
+  "/api/meetings/c5-review/aftercare": {
+    "decisions": [
+      {
+        "decision": "Adopt Option A (client-sent idempotency/dedupe key via gateway header) for idempotent retries on payment requests; do not build a server-side dedupe table.",
+        "provenance": {
+          "segment_index": 5,
+          "segment_start": 30.0,
+          "source_timestamp": 30.0,
+          "speaker": "Me",
+          "text_preview": "Then the decision is: we adopt idempotent retries with a client dedupe key, option A. We do not build the server dedupe "
+        },
+        "rationale": "Option B (server dedupe table keyed on merchant, amount, time window) would incorrectly block legitimate duplicate-amount payments; the gateway already supports an idempotency key header so only clients need to change.",
+        "source_timestamp": 30.0
+      },
+      {
+        "decision": "Theo will update the reconciliation job to read the dedupe key.",
+        "provenance": {
+          "segment_index": 7,
+          "segment_start": 42.0,
+          "source_timestamp": 42.0,
+          "speaker": "Theo",
+          "text_preview": "Agreed. I'll update the reconciliation job to read the key."
+        },
+        "rationale": null,
+        "source_timestamp": 42.0
+      },
+      {
+        "decision": "Jun will write the ADR for the idempotent-retry decision by Wednesday.",
+        "provenance": {
+          "segment_index": 8,
+          "segment_start": 48.0,
+          "source_timestamp": 48.0,
+          "speaker": "Me",
+          "text_preview": "Jun, please write the ADR for this by Wednesday."
+        },
+        "rationale": null,
+        "source_timestamp": 48.0
+      },
+      {
+        "decision": "Rollout order: web client first, then mobile client in the release after next; Mira owns the rollout plan.",
+        "provenance": {
+          "segment_index": 11,
+          "segment_start": 66.0,
+          "source_timestamp": 66.0,
+          "speaker": "Me",
+          "text_preview": "Okay. Mira owns the rollout plan. And we should tell the support team that duplicate charges will stop after the mobile "
+        },
+        "rationale": null,
+        "source_timestamp": 66.0
+      },
+      {
+        "decision": "The speaker will write a stakeholder update informing the support team that duplicate charges will stop after the mobile release.",
+        "provenance": {
+          "segment_index": 11,
+          "segment_start": 66.0,
+          "source_timestamp": 66.0,
+          "speaker": "Me",
+          "text_preview": "Okay. Mira owns the rollout plan. And we should tell the support team that duplicate charges will stop after the mobile "
+        },
+        "rationale": null,
+        "source_timestamp": 66.0
+      }
+    ],
+    "is_empty": false,
+    "meeting_date": "2026-10-16T11:00:00",
+    "meeting_id": "c5-review",
+    "meeting_title": "Architecture review: idempotent retries",
+    "open_items": {
+      "by_owner": [
+        {
+          "count": 2,
+          "items": [
+            {
+              "due": "2026-10-21",
+              "id": "action-4e1461c1dc584e37",
+              "meeting_id": "c5-review",
+              "owner": "Jun",
+              "provenance": {
+                "segment_index": 5,
+                "segment_start": 30.0,
+                "source_timestamp": 30.0,
+                "speaker": "Me",
+                "text_preview": "Then the decision is: we adopt idempotent retries with a client dedupe key, option A. We do not build the server dedupe "
+              },
+              "review_state": "accepted",
+              "source_timestamp": 30.0,
+              "task": "Write the ADR for adopting idempotent retries with a client dedupe key (Option A)"
+            },
+            {
+              "due": "2026-10-21",
+              "id": "action_7c1cec2654f1076b602cfafe",
+              "meeting_id": "c5-review",
+              "owner": "Jun",
+              "provenance": null,
+              "review_state": "pending",
+              "source_timestamp": null,
+              "task": "Write the ADR for the idempotent retries decision"
+            }
+          ],
+          "owner": "Jun"
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "due": null,
+              "id": "action-c16d38985f4744c1",
+              "meeting_id": "c5-review",
+              "owner": "Me",
+              "provenance": {
+                "segment_index": 11,
+                "segment_start": 66.0,
+                "source_timestamp": 66.0,
+                "speaker": "Me",
+                "text_preview": "Okay. Mira owns the rollout plan. And we should tell the support team that duplicate charges will stop after the mobile "
+              },
+              "review_state": "accepted",
+              "source_timestamp": 66.0,
+              "task": "Write the stakeholder update informing the support team that duplicate charges will stop after the mobile release"
+            },
+            {
+              "due": null,
+              "id": "action_b79806367ff11e5f9812d980",
+              "meeting_id": "c5-review",
+              "owner": "Me",
+              "provenance": null,
+              "review_state": "pending",
+              "source_timestamp": null,
+              "task": "Write the stakeholder update telling the support team that duplicate charges will stop after the mobile release"
+            }
+          ],
+          "owner": "Me"
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "due": null,
+              "id": "action-27270c806fb64dbc",
+              "meeting_id": "c5-review",
+              "owner": "Mira",
+              "provenance": {
+                "segment_index": 10,
+                "segment_start": 60.0,
+                "source_timestamp": 60.0,
+                "speaker": "Mira",
+                "text_preview": "Rollout. I suggest web client first, then the mobile client in the release after next."
+              },
+              "review_state": "accepted",
+              "source_timestamp": 60.0,
+              "task": "Own and produce the rollout plan (web client first, then mobile client in the release after next)"
+            },
+            {
+              "due": null,
+              "id": "action_a8bc2042911a4b0cfb62b915",
+              "meeting_id": "c5-review",
+              "owner": "Mira",
+              "provenance": null,
+              "review_state": "pending",
+              "source_timestamp": null,
+              "task": "Own the rollout plan (web client first, then mobile client in the release after next)"
+            }
+          ],
+          "owner": "Mira"
+        },
+        {
+          "count": 2,
+          "items": [
+            {
+              "due": null,
+              "id": "action-aa58f63a89004ccb",
+              "meeting_id": "c5-review",
+              "owner": "Theo",
+              "provenance": {
+                "segment_index": 7,
+                "segment_start": 42.0,
+                "source_timestamp": 42.0,
+                "speaker": "Theo",
+                "text_preview": "Agreed. I'll update the reconciliation job to read the key."
+              },
+              "review_state": "accepted",
+              "source_timestamp": 42.0,
+              "task": "Update the reconciliation job to read the idempotency key"
+            },
+            {
+              "due": null,
+              "id": "action_790b12ff3aca9bb4f35fecd0",
+              "meeting_id": "c5-review",
+              "owner": "Theo",
+              "provenance": null,
+              "review_state": "pending",
+              "source_timestamp": null,
+              "task": "Update the reconciliation job to read the dedupe key"
+            }
+          ],
+          "owner": "Theo"
+        }
+      ],
+      "total": 8
+    },
+    "proposal_total": 5,
+    "since_last_meeting": null,
+    "triage": [
+      {
+        "due": null,
+        "gaps": [
+          "no_date"
+        ],
+        "id": "action-aa58f63a89004ccb",
+        "owner": "Theo",
+        "source": {
+          "meeting_id": "c5-review",
+          "segment": {
+            "segment_index": 7,
+            "segment_start": 42.0,
+            "source_timestamp": 42.0,
+            "speaker": "Theo",
+            "text_preview": "Agreed. I'll update the reconciliation job to read the key."
+          },
+          "source_timestamp": 42.0
+        },
+        "status": "open",
+        "text": "Update the reconciliation job to read the idempotency key"
+      },
+      {
+        "due": null,
+        "gaps": [
+          "no_date"
+        ],
+        "id": "action-27270c806fb64dbc",
+        "owner": "Mira",
+        "source": {
+          "meeting_id": "c5-review",
+          "segment": {
+            "segment_index": 10,
+            "segment_start": 60.0,
+            "source_timestamp": 60.0,
+            "speaker": "Mira",
+            "text_preview": "Rollout. I suggest web client first, then the mobile client in the release after next."
+          },
+          "source_timestamp": 60.0
+        },
+        "status": "open",
+        "text": "Own and produce the rollout plan (web client first, then mobile client in the release after next)"
+      },
+      {
+        "due": null,
+        "gaps": [
+          "no_date"
+        ],
+        "id": "action-c16d38985f4744c1",
+        "owner": "Me",
+        "source": {
+          "meeting_id": "c5-review",
+          "segment": {
+            "segment_index": 11,
+            "segment_start": 66.0,
+            "source_timestamp": 66.0,
+            "speaker": "Me",
+            "text_preview": "Okay. Mira owns the rollout plan. And we should tell the support team that duplicate charges will stop after the mobile "
+          },
+          "source_timestamp": 66.0
+        },
+        "status": "open",
+        "text": "Write the stakeholder update informing the support team that duplicate charges will stop after the mobile release"
+      },
+      {
+        "due": null,
+        "gaps": [
+          "needs_review",
+          "no_date"
+        ],
+        "id": "action_790b12ff3aca9bb4f35fecd0",
+        "owner": "Theo",
+        "source": {
+          "meeting_id": "c5-review"
+        },
+        "status": "pending",
+        "text": "Update the reconciliation job to read the dedupe key"
+      },
+      {
+        "due": "2026-10-21",
+        "gaps": [
+          "needs_review"
+        ],
+        "id": "action_7c1cec2654f1076b602cfafe",
+        "owner": "Jun",
+        "source": {
+          "meeting_id": "c5-review"
+        },
+        "status": "pending",
+        "text": "Write the ADR for the idempotent retries decision"
+      },
+      {
+        "due": null,
+        "gaps": [
+          "needs_review",
+          "no_date"
+        ],
+        "id": "action_a8bc2042911a4b0cfb62b915",
+        "owner": "Mira",
+        "source": {
+          "meeting_id": "c5-review"
+        },
+        "status": "pending",
+        "text": "Own the rollout plan (web client first, then mobile client in the release after next)"
+      },
+      {
+        "due": null,
+        "gaps": [
+          "needs_review",
+          "no_date"
+        ],
+        "id": "action_b79806367ff11e5f9812d980",
+        "owner": "Me",
+        "source": {
+          "meeting_id": "c5-review"
+        },
+        "status": "pending",
+        "text": "Write the stakeholder update telling the support team that duplicate charges will stop after the mobile release"
+      }
+    ]
+  },
+  "/api/meetings/c5-review/artifacts": {
+    "artifacts": [
+      {
+        "artifact_type": "stakeholder_update",
+        "body_markdown": "### Stakeholder Update Drafter\n\nTeam adopts client-side idempotent retries (dedupe key) for payment requests; server dedupe table dropped\n\n**Team adopts client-side idempotent retries (dedupe key) for payment requests; server dedupe table dropped**\n\n**Highlights**\n- Decision reached: Option A (client sends idempotency key; gateway rejects duplicates for 24 h) is the way forward\n- Gateway already supports the idempotency-key header, so no gateway-side changes are needed\n- Server-side dedupe table explicitly not built, reducing scope and eliminating the false-positive risk Mira flagged\n- Consensus confirmed by Mira and Theo in the meeting\n\n**Risks**\n- All four clients must be updated to send the dedupe key; mobile client ships on a two-week release cadence, slowing full coverage\n- Rollout is phased (web first, mobile in the release after next), so duplicate-charge exposure persists until the mobile release lands\n- Support team is not yet informed; customers may still report duplicate charges during the interim\n\n**Next steps**\n- Jun to write the ADR documenting the idempotent-retry decision by Wednesday\n- Theo to update the reconciliation job to read the new dedupe key\n- Mira to own and publish the phased rollout plan (web client first, mobile in the following release)\n- Speaker to draft and send the stakeholder update notifying the support team that duplicate charges will cease after the mobile release\n\n- Source windows: c5-review:full\n- Source plugin runs: 6",
+        "confidence": 1.0,
+        "created_at": "2026-10-18T23:28:03",
+        "id": "art-be0b27d1156e7f8095e0",
+        "meeting_id": "c5-review",
+        "origin": "meeting",
+        "plugin_id": "stakeholder_update_drafter",
+        "plugin_version": "0.1.0",
+        "sources": [
+          {
+            "source_ref": "c5-review:full",
+            "source_type": "intent_window"
+          },
+          {
+            "source_ref": "6",
+            "source_type": "plugin_run"
+          }
+        ],
+        "status": "draft",
+        "structured_json": {
+          "active_intents": [],
+          "dedupe_hash": "4412edae3ddf00edba7de1fec93ca50031f780f83f604adcc664080f41281ccf",
+          "plugin_id": "stakeholder_update_drafter",
+          "plugin_run_ids": [
+            "6"
+          ],
+          "run_count": 1,
+          "summary": "Team adopts client-side idempotent retries (dedupe key) for payment requests; server dedupe table dropped",
+          "update": {
+            "headline": "Team adopts client-side idempotent retries (dedupe key) for payment requests; server dedupe table dropped",
+            "highlights": [
+              "Decision reached: Option A (client sends idempotency key; gateway rejects duplicates for 24 h) is the way forward",
+              "Gateway already supports the idempotency-key header, so no gateway-side changes are needed",
+              "Server-side dedupe table explicitly not built, reducing scope and eliminating the false-positive risk Mira flagged",
+              "Consensus confirmed by Mira and Theo in the meeting"
+            ],
+            "next_steps": [
+              "Jun to write the ADR documenting the idempotent-retry decision by Wednesday",
+              "Theo to update the reconciliation job to read the new dedupe key",
+              "Mira to own and publish the phased rollout plan (web client first, mobile in the following release)",
+              "Speaker to draft and send the stakeholder update notifying the support team that duplicate charges will cease after the mobile release"
+            ],
+            "risks": [
+              "All four clients must be updated to send the dedupe key; mobile client ships on a two-week release cadence, slowing full coverage",
+              "Rollout is phased (web first, mobile in the release after next), so duplicate-charge exposure persists until the mobile release lands",
+              "Support team is not yet informed; customers may still report duplicate charges during the interim"
+            ]
+          },
+          "window_ids": [
+            "c5-review:full"
+          ]
+        },
+        "title": "Stakeholder Update Drafter",
+        "updated_at": "2026-10-18T23:28:03"
+      },
+      {
+        "artifact_type": "adr",
+        "body_markdown": "### Adr Drafter\n\n2 ADR(s); 2 accepted.\n\n**Client-side idempotency key for payment retries** \u2014 _accepted_\n- Context: Payment requests need idempotent retry support to prevent duplicate charges. Two options were evaluated: (A) each client sends an idempotency-key header and the gateway rejects a repeat key for 24 hours; (B) a server-side dedupe table keyed on merchant, amount, and a time window. Option B was rejected because it would incorrectly block two legitimate payments of the same amount within the window. Option A requires changes to all four clients, but the gateway already supports the idempotency-key header.\n- Decision: Adopt Option A: every client sends an idempotency key header with each payment request; the gateway rejects a second request bearing the same key for 24 hours. Do not build a server-side dedupe table.\n- Consequences: All four clients must be updated to send the key; the mobile client's two-week release cycle constrains the timeline. Theo will update the reconciliation job to read the key. Jun will write the formal ADR by Wednesday. A phased rollout is required (see companion ADR). Support team must be briefed that duplicate charges will only fully stop after the mobile release.\n\n**Phased rollout of idempotency-key support across clients** \u2014 _accepted_\n- Context: Four clients must adopt the idempotency-key header. The mobile client ships on a two-week cadence, making a simultaneous cutover impractical and leaving a window of partial protection.\n- Decision: Roll out to the web client first, then to the mobile client in the release after next. Mira owns the rollout plan.\n- Consequences: During the interim window, web-initiated payments are protected against duplicate charges but mobile-initiated payments are not. The support team must be informed (stakeholder update owned by Me) that duplicate charges will only cease entirely after the mobile release ships.\n\n- Source windows: c5-review:full\n- Source plugin runs: 5",
+        "confidence": 1.0,
+        "created_at": "2026-10-18T23:27:56",
+        "id": "art-73e8720ffeb2151bd73a",
+        "meeting_id": "c5-review",
+        "origin": "meeting",
+        "plugin_id": "adr_drafter",
+        "plugin_version": "0.1.0",
+        "sources": [
+          {
+            "source_ref": "c5-review:full",
+            "source_type": "intent_window"
+          },
+          {
+            "source_ref": "5",
+            "source_type": "plugin_run"
+          }
+        ],
+        "status": "draft",
+        "structured_json": {
+          "active_intents": [],
+          "adrs": [
+            {
+              "consequences": "All four clients must be updated to send the key; the mobile client's two-week release cycle constrains the timeline. Theo will update the reconciliation job to read the key. Jun will write the formal ADR by Wednesday. A phased rollout is required (see companion ADR). Support team must be briefed that duplicate charges will only fully stop after the mobile release.",
+              "context": "Payment requests need idempotent retry support to prevent duplicate charges. Two options were evaluated: (A) each client sends an idempotency-key header and the gateway rejects a repeat key for 24 hours; (B) a server-side dedupe table keyed on merchant, amount, and a time window. Option B was rejected because it would incorrectly block two legitimate payments of the same amount within the window. Option A requires changes to all four clients, but the gateway already supports the idempotency-key header.",
+              "decision": "Adopt Option A: every client sends an idempotency key header with each payment request; the gateway rejects a second request bearing the same key for 24 hours. Do not build a server-side dedupe table.",
+              "status": "accepted",
+              "title": "Client-side idempotency key for payment retries"
+            },
+            {
+              "consequences": "During the interim window, web-initiated payments are protected against duplicate charges but mobile-initiated payments are not. The support team must be informed (stakeholder update owned by Me) that duplicate charges will only cease entirely after the mobile release ships.",
+              "context": "Four clients must adopt the idempotency-key header. The mobile client ships on a two-week cadence, making a simultaneous cutover impractical and leaving a window of partial protection.",
+              "decision": "Roll out to the web client first, then to the mobile client in the release after next. Mira owns the rollout plan.",
+              "status": "accepted",
+              "title": "Phased rollout of idempotency-key support across clients"
+            }
+          ],
+          "dedupe_hash": "0aa38c8f4948648dd6930f92b731ab4e7a7b9da9e29e297096837e672fefb206",
+          "plugin_id": "adr_drafter",
+          "plugin_run_ids": [
+            "5"
+          ],
+          "run_count": 1,
+          "summary": "2 ADR(s); 2 accepted.",
+          "window_ids": [
+            "c5-review:full"
+          ]
+        },
+        "title": "Adr Drafter",
+        "updated_at": "2026-10-18T23:28:03"
+      },
+      {
+        "artifact_type": "decisions",
+        "body_markdown": "### Decision Capture\n\n5 decision(s); 0 open question(s).\n\n**Decisions**\n- Adopt Option A (client-sent idempotency/dedupe key via gateway header) for idempotent retries on payment requests; do not build a server-side dedupe table. \u2014 Option B (server dedupe table keyed on merchant, amount, time window) would incorrectly block legitimate duplicate-amount payments; the gateway already supports an idempotency key header so only clients need to change.\n- Theo will update the reconciliation job to read the dedupe key.\n- Jun will write the ADR for the idempotent-retry decision by Wednesday.\n- Rollout order: web client first, then mobile client in the release after next; Mira owns the rollout plan.\n- The speaker will write a stakeholder update informing the support team that duplicate charges will stop after the mobile release.\n\n- Source windows: c5-review:full\n- Source plugin runs: 4",
+        "confidence": 1.0,
+        "created_at": "2026-10-18T23:27:42",
+        "id": "art-71160d75684dd2b2462f",
+        "meeting_id": "c5-review",
+        "origin": "meeting",
+        "plugin_id": "decision_capture",
+        "plugin_version": "0.2.0",
+        "sources": [
+          {
+            "source_ref": "c5-review:full",
+            "source_type": "intent_window"
+          },
+          {
+            "source_ref": "4",
+            "source_type": "plugin_run"
+          }
+        ],
+        "status": "draft",
+        "structured_json": {
+          "active_intents": [],
+          "decisions": [
+            {
+              "decision": "Adopt Option A (client-sent idempotency/dedupe key via gateway header) for idempotent retries on payment requests; do not build a server-side dedupe table.",
+              "rationale": "Option B (server dedupe table keyed on merchant, amount, time window) would incorrectly block legitimate duplicate-amount payments; the gateway already supports an idempotency key header so only clients need to change.",
+              "source_timestamp": 30.0
+            },
+            {
+              "decision": "Theo will update the reconciliation job to read the dedupe key.",
+              "rationale": null,
+              "source_timestamp": 42.0
+            },
+            {
+              "decision": "Jun will write the ADR for the idempotent-retry decision by Wednesday.",
+              "rationale": null,
+              "source_timestamp": 48.0
+            },
+            {
+              "decision": "Rollout order: web client first, then mobile client in the release after next; Mira owns the rollout plan.",
+              "rationale": null,
+              "source_timestamp": 66.0
+            },
+            {
+              "decision": "The speaker will write a stakeholder update informing the support team that duplicate charges will stop after the mobile release.",
+              "rationale": null,
+              "source_timestamp": 66.0
+            }
+          ],
+          "dedupe_hash": "6d05c0ca72f18c3fa63b434373957d720cda7023239ab5ff327e24cb5c4e1d79",
+          "plugin_id": "decision_capture",
+          "plugin_run_ids": [
+            "4"
+          ],
+          "run_count": 1,
+          "summary": "5 decision(s); 0 open question(s).",
+          "window_ids": [
+            "c5-review:full"
+          ]
+        },
+        "title": "Decision Capture",
+        "updated_at": "2026-10-18T23:28:03"
+      },
+      {
+        "artifact_type": "action_items",
+        "body_markdown": "### Action Owner Enforcer\n\n4 action item(s); 3 missing an owner or due date.\n\n- [ ] Update the reconciliation job to read the idempotency key \u2014 owner: Theo \u00b7 due: \u2014  \u26a0\ufe0f missing due\n- [ ] Write the ADR for adopting idempotent retries with a client dedupe key (Option A) \u2014 owner: Jun \u00b7 due: Wednesday\n- [ ] Own and produce the rollout plan (web client first, then mobile client in the release after next) \u2014 owner: Mira \u00b7 due: \u2014  \u26a0\ufe0f missing due\n- [ ] Write the stakeholder update informing the support team that duplicate charges will stop after the mobile release \u2014 owner: Me \u00b7 due: \u2014  \u26a0\ufe0f missing due\n\n- Source windows: c5-review:full\n- Source plugin runs: 3",
+        "confidence": 1.0,
+        "created_at": "2026-10-18T23:27:29",
+        "id": "art-7f6718ffdfbc3f1dd9e5",
+        "meeting_id": "c5-review",
+        "origin": "meeting",
+        "plugin_id": "action_owner_enforcer",
+        "plugin_version": "0.1.0",
+        "sources": [
+          {
+            "source_ref": "c5-review:full",
+            "source_type": "intent_window"
+          },
+          {
+            "source_ref": "3",
+            "source_type": "plugin_run"
+          }
+        ],
+        "status": "draft",
+        "structured_json": {
+          "action_items": [
+            {
+              "due": null,
+              "gap": true,
+              "owner": "Theo",
+              "task": "Update the reconciliation job to read the idempotency key"
+            },
+            {
+              "due": "Wednesday",
+              "gap": false,
+              "owner": "Jun",
+              "task": "Write the ADR for adopting idempotent retries with a client dedupe key (Option A)"
+            },
+            {
+              "due": null,
+              "gap": true,
+              "owner": "Mira",
+              "task": "Own and produce the rollout plan (web client first, then mobile client in the release after next)"
+            },
+            {
+              "due": null,
+              "gap": true,
+              "owner": "Me",
+              "task": "Write the stakeholder update informing the support team that duplicate charges will stop after the mobile release"
+            }
+          ],
+          "active_intents": [],
+          "dedupe_hash": "92ef5189398f30429fe4f05020df5af63e5f23be7e303bba1747aa43a0d92904",
+          "plugin_id": "action_owner_enforcer",
+          "plugin_run_ids": [
+            "3"
+          ],
+          "run_count": 1,
+          "summary": "4 action item(s); 3 missing an owner or due date.",
+          "window_ids": [
+            "c5-review:full"
+          ]
+        },
+        "title": "Action Owner Enforcer",
+        "updated_at": "2026-10-18T23:28:03"
+      },
+      {
+        "artifact_type": "requirements",
+        "body_markdown": "### Requirements Extractor\n\n10 requirement(s) (3 functional, 6 constraint, 1 acceptance).\n\n**Functional**\n- Each client must send an idempotency (dedupe) key with every payment request.\n- The gateway must reject a second payment request that carries the same idempotency key within a 24-hour window.\n- The reconciliation job must read the idempotency key from payment records.\n\n**Constraints**\n- The solution must use the gateway's existing idempotency-key header; no new gateway API is to be built.\n- A server-side dedupe table (keyed on merchant, amount, time window) must NOT be implemented.\n- The solution must be compatible with all four existing clients.\n- The mobile client release cadence is every two weeks; the rollout must align with that cadence.\n- Rollout order: web client first, then mobile client in the release after next.\n- An ADR documenting the idempotent-retry decision must be delivered by Wednesday.\n\n**Acceptance criteria**\n- After the mobile client release, duplicate charges are eliminated.\n\n- Source windows: c5-review:full\n- Source plugin runs: 2",
+        "confidence": 1.0,
+        "created_at": "2026-10-18T23:27:25",
+        "id": "art-3276816dcb9adb674e4a",
+        "meeting_id": "c5-review",
+        "origin": "meeting",
+        "plugin_id": "requirements_extractor",
+        "plugin_version": "0.1.0",
+        "sources": [
+          {
+            "source_ref": "c5-review:full",
+            "source_type": "intent_window"
+          },
+          {
+            "source_ref": "2",
+            "source_type": "plugin_run"
+          }
+        ],
+        "status": "draft",
+        "structured_json": {
+          "active_intents": [],
+          "dedupe_hash": "25410875a1ab8a1828b21cf60f039e6b0f365ad2fa60e7dcf768b27683af39cd",
+          "plugin_id": "requirements_extractor",
+          "plugin_run_ids": [
+            "2"
+          ],
+          "requirements": [
+            {
+              "text": "Each client must send an idempotency (dedupe) key with every payment request.",
+              "type": "functional"
+            },
+            {
+              "text": "The gateway must reject a second payment request that carries the same idempotency key within a 24-hour window.",
+              "type": "functional"
+            },
+            {
+              "text": "The reconciliation job must read the idempotency key from payment records.",
+              "type": "functional"
+            },
+            {
+              "text": "The solution must use the gateway's existing idempotency-key header; no new gateway API is to be built.",
+              "type": "constraint"
+            },
+            {
+              "text": "A server-side dedupe table (keyed on merchant, amount, time window) must NOT be implemented.",
+              "type": "constraint"
+            },
+            {
+              "text": "The solution must be compatible with all four existing clients.",
+              "type": "constraint"
+            },
+            {
+              "text": "The mobile client release cadence is every two weeks; the rollout must align with that cadence.",
+              "type": "constraint"
+            },
+            {
+              "text": "Rollout order: web client first, then mobile client in the release after next.",
+              "type": "constraint"
+            },
+            {
+              "text": "An ADR documenting the idempotent-retry decision must be delivered by Wednesday.",
+              "type": "constraint"
+            },
+            {
+              "text": "After the mobile client release, duplicate charges are eliminated.",
+              "type": "acceptance"
+            }
+          ],
+          "run_count": 1,
+          "summary": "10 requirement(s) (3 functional, 6 constraint, 1 acceptance).",
+          "window_ids": [
+            "c5-review:full"
+          ]
+        },
+        "title": "Requirements Extractor",
+        "updated_at": "2026-10-18T23:28:03"
+      },
+      {
+        "artifact_type": "summary_items",
+        "body_markdown": "- Decision: Adopt idempotent retries with a client dedupe key (Option A); do not build the server dedupe table\n- Action: Update the reconciliation job to read the dedupe key\n- Action: Write the ADR for the idempotent retries decision\n- Action: Own the rollout plan (web client first, then mobile client in the release after next)\n- Action: Write the stakeholder update telling the support team that duplicate charges will stop after the mobile release",
+        "confidence": 1.0,
+        "created_at": "2026-10-18T23:27:15",
+        "id": "summary-items-c5-review",
+        "meeting_id": "c5-review",
+        "origin": "meeting",
+        "plugin_id": "meeting_summary",
+        "plugin_version": "1",
+        "sources": [],
+        "status": "draft",
+        "structured_json": {
+          "action_items": [
+            {
+              "action_item_id": "action_790b12ff3aca9bb4f35fecd0",
+              "due": null,
+              "owner": "Theo",
+              "task": "Update the reconciliation job to read the dedupe key"
+            },
+            {
+              "action_item_id": "action_7c1cec2654f1076b602cfafe",
+              "due": "Wednesday",
+              "owner": "Jun",
+              "task": "Write the ADR for the idempotent retries decision"
+            },
+            {
+              "action_item_id": "action_a8bc2042911a4b0cfb62b915",
+              "due": null,
+              "owner": "Mira",
+              "task": "Own the rollout plan (web client first, then mobile client in the release after next)"
+            },
+            {
+              "action_item_id": "action_b79806367ff11e5f9812d980",
+              "due": null,
+              "owner": "Me",
+              "task": "Write the stakeholder update telling the support team that duplicate charges will stop after the mobile release"
+            }
+          ],
+          "decisions": [
+            {
+              "decision": "Adopt idempotent retries with a client dedupe key (Option A); do not build the server dedupe table",
+              "rationale": "Option B would block two legitimate payments of the same amount within the window, and the gateway already supports an idempotency key header so only clients need to send it"
+            }
+          ],
+          "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2"
+        },
+        "title": "Architecture review: idempotent retries: decisions and actions",
+        "updated_at": "2026-10-18T23:27:15"
+      },
+      {
+        "artifact_type": "project_association",
+        "body_markdown": "### Project Detector\n\nNo projects configured or empty transcript.\n\n- Source windows: c5-review:full\n- Source plugin runs: 1",
+        "confidence": 0.0,
+        "created_at": "2026-10-18T23:27:15",
+        "id": "art-1ecb084c6cf0005e18ae",
+        "meeting_id": "c5-review",
+        "origin": "meeting",
+        "plugin_id": "project_detector",
+        "plugin_version": "0.1.0",
+        "sources": [
+          {
+            "source_ref": "c5-review:full",
+            "source_type": "intent_window"
+          },
+          {
+            "source_ref": "1",
+            "source_type": "plugin_run"
+          }
+        ],
+        "status": "needs_review",
+        "structured_json": {
+          "active_intents": [],
+          "dedupe_hash": "eb2999659b84ae0ed279c31c825cb1ecead775621f46ebd45aff5348f9598c8b",
+          "plugin_id": "project_detector",
+          "plugin_run_ids": [
+            "1"
+          ],
+          "run_count": 1,
+          "summary": "No projects configured or empty transcript.",
+          "window_ids": [
+            "c5-review:full"
+          ]
+        },
+        "title": "Project Detector",
+        "updated_at": "2026-10-18T23:28:03"
+      }
+    ],
+    "meeting_id": "c5-review"
+  },
+  "/api/meetings/c5-review/follow-through-proposals": {
+    "meeting_id": "c5-review",
+    "proposals": [
+      {
+        "acceptance": "accepted",
+        "action_item_id": "action-c16d38985f4744c1",
+        "claim_kind": "proposal",
+        "commitment_id": "commitment-8e8eb02c885145b6",
+        "created_at": "2026-10-19T05:28:03.360090+00:00",
+        "decided_at": "2026-10-19T05:28:03.361218+00:00",
+        "decision_record_id": "record-e63a919f30d94cfd",
+        "deferred_until": null,
+        "due": null,
+        "due_hint": null,
+        "due_supplied": null,
+        "edited_at": null,
+        "extraction_model": "qwen3.8-27b",
+        "extraction_revision": "73404ac056c89d8da23543c5ffb4b1f52cc0f7d722535a028335ddc3fcc7fd32",
+        "id": "prop-c6ab69d0114045f8",
+        "job_attempt": 1,
+        "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+        "kind": "action",
+        "meeting_id": "c5-review",
+        "model_host": "192.168.1.43",
+        "original_text": "Write the stakeholder update informing the support team that duplicate charges will stop after the mobile release",
+        "owner": "Me",
+        "owner_hint": "Me",
+        "owner_supplied": null,
+        "project_id": null,
+        "rationale": null,
+        "retry_key": "7f87e9e1056f7368ee2931acaf548ff2",
+        "segment_index": 11,
+        "segment_timestamp": 66.0,
+        "source_artifact_id": "art-7f6718ffdfbc3f1dd9e5",
+        "source_plugin": "action_owner_enforcer",
+        "span_end": 72.0,
+        "span_start": 66.0,
+        "speaker_label": null,
+        "state": "confirmed",
+        "support": "source_linked",
+        "support_record": null,
+        "text": "Write the stakeholder update informing the support team that duplicate charges will stop after the mobile release",
+        "text_edited": false,
+        "unknowns": [
+          {
+            "type": "due",
+            "value": "unknown"
+          }
+        ]
+      },
+      {
+        "acceptance": "accepted",
+        "action_item_id": "action-27270c806fb64dbc",
+        "claim_kind": "proposal",
+        "commitment_id": "commitment-c0e0cca9fdfd44f6",
+        "created_at": "2026-10-19T05:28:03.359859+00:00",
+        "decided_at": "2026-10-19T05:28:03.362176+00:00",
+        "decision_record_id": "record-6742b985cf164f9e",
+        "deferred_until": null,
+        "due": null,
+        "due_hint": null,
+        "due_supplied": null,
+        "edited_at": null,
+        "extraction_model": "qwen3.8-27b",
+        "extraction_revision": "73404ac056c89d8da23543c5ffb4b1f52cc0f7d722535a028335ddc3fcc7fd32",
+        "id": "prop-c474195452fe4afd",
+        "job_attempt": 1,
+        "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+        "kind": "action",
+        "meeting_id": "c5-review",
+        "model_host": "192.168.1.43",
+        "original_text": "Own and produce the rollout plan (web client first, then mobile client in the release after next)",
+        "owner": "Mira",
+        "owner_hint": "Mira",
+        "owner_supplied": null,
+        "project_id": null,
+        "rationale": null,
+        "retry_key": "1785e2cf9a29d6fc1d129a8801876b34",
+        "segment_index": 10,
+        "segment_timestamp": 60.0,
+        "source_artifact_id": "art-7f6718ffdfbc3f1dd9e5",
+        "source_plugin": "action_owner_enforcer",
+        "span_end": 66.0,
+        "span_start": 60.0,
+        "speaker_label": null,
+        "state": "confirmed",
+        "support": "source_linked",
+        "support_record": null,
+        "text": "Own and produce the rollout plan (web client first, then mobile client in the release after next)",
+        "text_edited": false,
+        "unknowns": [
+          {
+            "type": "due",
+            "value": "unknown"
+          }
+        ]
+      },
+      {
+        "acceptance": "accepted",
+        "action_item_id": "action-4e1461c1dc584e37",
+        "claim_kind": "proposal",
+        "commitment_id": "commitment-ddcfa80489aa42cc",
+        "created_at": "2026-10-19T05:28:03.359635+00:00",
+        "decided_at": "2026-10-19T05:28:03.362845+00:00",
+        "decision_record_id": "record-7c7dc2fbd44f4e1c",
+        "deferred_until": null,
+        "due": "Wednesday",
+        "due_hint": "Wednesday",
+        "due_supplied": null,
+        "edited_at": null,
+        "extraction_model": "qwen3.8-27b",
+        "extraction_revision": "73404ac056c89d8da23543c5ffb4b1f52cc0f7d722535a028335ddc3fcc7fd32",
+        "id": "prop-734164d584694ee0",
+        "job_attempt": 1,
+        "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+        "kind": "action",
+        "meeting_id": "c5-review",
+        "model_host": "192.168.1.43",
+        "original_text": "Write the ADR for adopting idempotent retries with a client dedupe key (Option A)",
+        "owner": "Jun",
+        "owner_hint": "Jun",
+        "owner_supplied": null,
+        "project_id": null,
+        "rationale": null,
+        "retry_key": "dc4cb8d202c89ef5ab75f6bdc3f1adb3",
+        "segment_index": 5,
+        "segment_timestamp": 30.0,
+        "source_artifact_id": "art-7f6718ffdfbc3f1dd9e5",
+        "source_plugin": "action_owner_enforcer",
+        "span_end": 36.0,
+        "span_start": 30.0,
+        "speaker_label": null,
+        "state": "confirmed",
+        "support": "source_linked",
+        "support_record": null,
+        "text": "Write the ADR for adopting idempotent retries with a client dedupe key (Option A)",
+        "text_edited": false,
+        "unknowns": []
+      },
+      {
+        "acceptance": "accepted",
+        "action_item_id": "action-aa58f63a89004ccb",
+        "claim_kind": "proposal",
+        "commitment_id": "commitment-0b32019ee3d34633",
+        "created_at": "2026-10-19T05:28:03.359401+00:00",
+        "decided_at": "2026-10-19T05:28:03.363467+00:00",
+        "decision_record_id": "record-57182d7492f549e2",
+        "deferred_until": null,
+        "due": null,
+        "due_hint": null,
+        "due_supplied": null,
+        "edited_at": null,
+        "extraction_model": "qwen3.8-27b",
+        "extraction_revision": "73404ac056c89d8da23543c5ffb4b1f52cc0f7d722535a028335ddc3fcc7fd32",
+        "id": "prop-1cf64cbeba6b4326",
+        "job_attempt": 1,
+        "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+        "kind": "action",
+        "meeting_id": "c5-review",
+        "model_host": "192.168.1.43",
+        "original_text": "Update the reconciliation job to read the idempotency key",
+        "owner": "Theo",
+        "owner_hint": "Theo",
+        "owner_supplied": null,
+        "project_id": null,
+        "rationale": null,
+        "retry_key": "93503fd1b2b1a619d4370cb811775629",
+        "segment_index": 7,
+        "segment_timestamp": 42.0,
+        "source_artifact_id": "art-7f6718ffdfbc3f1dd9e5",
+        "source_plugin": "action_owner_enforcer",
+        "span_end": 48.0,
+        "span_start": 42.0,
+        "speaker_label": null,
+        "state": "confirmed",
+        "support": "source_linked",
+        "support_record": null,
+        "text": "Update the reconciliation job to read the idempotency key",
+        "text_edited": false,
+        "unknowns": [
+          {
+            "type": "due",
+            "value": "unknown"
+          }
+        ]
+      },
+      {
+        "acceptance": "unreviewed",
+        "action_item_id": null,
+        "claim_kind": "proposal",
+        "commitment_id": null,
+        "created_at": "2026-10-19T05:28:03.359112+00:00",
+        "decided_at": null,
+        "decision_record_id": null,
+        "deferred_until": null,
+        "due": null,
+        "due_hint": null,
+        "due_supplied": null,
+        "edited_at": null,
+        "extraction_model": "qwen3.8-27b",
+        "extraction_revision": "73404ac056c89d8da23543c5ffb4b1f52cc0f7d722535a028335ddc3fcc7fd32",
+        "id": "prop-1281fc1d9cc74597",
+        "job_attempt": 1,
+        "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+        "kind": "decision",
+        "meeting_id": "c5-review",
+        "model_host": "192.168.1.43",
+        "original_text": "The speaker will write a stakeholder update informing the support team that duplicate charges will stop after the mobile release.",
+        "owner": null,
+        "owner_hint": null,
+        "owner_supplied": null,
+        "project_id": null,
+        "rationale": null,
+        "retry_key": "56ed93e8be2700b216e5f10668083fc4",
+        "segment_index": 10,
+        "segment_timestamp": 66.0,
+        "source_artifact_id": "art-71160d75684dd2b2462f",
+        "source_plugin": "decision_capture",
+        "span_end": 66.0,
+        "span_start": 60.0,
+        "speaker_label": null,
+        "state": "proposed",
+        "support": "source_linked",
+        "support_record": null,
+        "text": "The speaker will write a stakeholder update informing the support team that duplicate charges will stop after the mobile release.",
+        "text_edited": false,
+        "unknowns": []
+      },
+      {
+        "acceptance": "unreviewed",
+        "action_item_id": null,
+        "claim_kind": "proposal",
+        "commitment_id": null,
+        "created_at": "2026-10-19T05:28:03.358842+00:00",
+        "decided_at": null,
+        "decision_record_id": null,
+        "deferred_until": null,
+        "due": null,
+        "due_hint": null,
+        "due_supplied": null,
+        "edited_at": null,
+        "extraction_model": "qwen3.8-27b",
+        "extraction_revision": "73404ac056c89d8da23543c5ffb4b1f52cc0f7d722535a028335ddc3fcc7fd32",
+        "id": "prop-b34229f71d614c18",
+        "job_attempt": 1,
+        "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+        "kind": "decision",
+        "meeting_id": "c5-review",
+        "model_host": "192.168.1.43",
+        "original_text": "Rollout order: web client first, then mobile client in the release after next; Mira owns the rollout plan.",
+        "owner": null,
+        "owner_hint": null,
+        "owner_supplied": null,
+        "project_id": null,
+        "rationale": null,
+        "retry_key": "cf23b661fd2917e6be3682ec92b1204c",
+        "segment_index": 10,
+        "segment_timestamp": 66.0,
+        "source_artifact_id": "art-71160d75684dd2b2462f",
+        "source_plugin": "decision_capture",
+        "span_end": 66.0,
+        "span_start": 60.0,
+        "speaker_label": null,
+        "state": "proposed",
+        "support": "source_linked",
+        "support_record": null,
+        "text": "Rollout order: web client first, then mobile client in the release after next; Mira owns the rollout plan.",
+        "text_edited": false,
+        "unknowns": []
+      },
+      {
+        "acceptance": "unreviewed",
+        "action_item_id": null,
+        "claim_kind": "proposal",
+        "commitment_id": null,
+        "created_at": "2026-10-19T05:28:03.358629+00:00",
+        "decided_at": null,
+        "decision_record_id": null,
+        "deferred_until": null,
+        "due": null,
+        "due_hint": null,
+        "due_supplied": null,
+        "edited_at": null,
+        "extraction_model": "qwen3.8-27b",
+        "extraction_revision": "73404ac056c89d8da23543c5ffb4b1f52cc0f7d722535a028335ddc3fcc7fd32",
+        "id": "prop-2ea6df9de5e64b12",
+        "job_attempt": 1,
+        "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+        "kind": "decision",
+        "meeting_id": "c5-review",
+        "model_host": "192.168.1.43",
+        "original_text": "Jun will write the ADR for the idempotent-retry decision by Wednesday.",
+        "owner": null,
+        "owner_hint": null,
+        "owner_supplied": null,
+        "project_id": null,
+        "rationale": null,
+        "retry_key": "9aaf6437fab39a2427fdca35a19b502e",
+        "segment_index": 7,
+        "segment_timestamp": 48.0,
+        "source_artifact_id": "art-71160d75684dd2b2462f",
+        "source_plugin": "decision_capture",
+        "span_end": 48.0,
+        "span_start": 42.0,
+        "speaker_label": null,
+        "state": "proposed",
+        "support": "source_linked",
+        "support_record": null,
+        "text": "Jun will write the ADR for the idempotent-retry decision by Wednesday.",
+        "text_edited": false,
+        "unknowns": []
+      },
+      {
+        "acceptance": "unreviewed",
+        "action_item_id": null,
+        "claim_kind": "proposal",
+        "commitment_id": null,
+        "created_at": "2026-10-19T05:28:03.358416+00:00",
+        "decided_at": null,
+        "decision_record_id": null,
+        "deferred_until": null,
+        "due": null,
+        "due_hint": null,
+        "due_supplied": null,
+        "edited_at": null,
+        "extraction_model": "qwen3.8-27b",
+        "extraction_revision": "73404ac056c89d8da23543c5ffb4b1f52cc0f7d722535a028335ddc3fcc7fd32",
+        "id": "prop-92ebdf8ff7194fb9",
+        "job_attempt": 1,
+        "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+        "kind": "decision",
+        "meeting_id": "c5-review",
+        "model_host": "192.168.1.43",
+        "original_text": "Theo will update the reconciliation job to read the dedupe key.",
+        "owner": null,
+        "owner_hint": null,
+        "owner_supplied": null,
+        "project_id": null,
+        "rationale": null,
+        "retry_key": "2fa9a210f4aa36924e73a05dcec9ddfd",
+        "segment_index": 6,
+        "segment_timestamp": 42.0,
+        "source_artifact_id": "art-71160d75684dd2b2462f",
+        "source_plugin": "decision_capture",
+        "span_end": 42.0,
+        "span_start": 36.0,
+        "speaker_label": null,
+        "state": "proposed",
+        "support": "source_linked",
+        "support_record": null,
+        "text": "Theo will update the reconciliation job to read the dedupe key.",
+        "text_edited": false,
+        "unknowns": []
+      },
+      {
+        "acceptance": "unreviewed",
+        "action_item_id": null,
+        "claim_kind": "proposal",
+        "commitment_id": null,
+        "created_at": "2026-10-19T05:28:03.358129+00:00",
+        "decided_at": null,
+        "decision_record_id": null,
+        "deferred_until": null,
+        "due": null,
+        "due_hint": null,
+        "due_supplied": null,
+        "edited_at": null,
+        "extraction_model": "qwen3.8-27b",
+        "extraction_revision": "73404ac056c89d8da23543c5ffb4b1f52cc0f7d722535a028335ddc3fcc7fd32",
+        "id": "prop-5429564a9741462e",
+        "job_attempt": 1,
+        "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+        "kind": "decision",
+        "meeting_id": "c5-review",
+        "model_host": "192.168.1.43",
+        "original_text": "Adopt Option A (client-sent idempotency/dedupe key via gateway header) for idempotent retries on payment requests; do not build a server-side dedupe table.",
+        "owner": null,
+        "owner_hint": null,
+        "owner_supplied": null,
+        "project_id": null,
+        "rationale": "Option B (server dedupe table keyed on merchant, amount, time window) would incorrectly block legitimate duplicate-amount payments; the gateway already supports an idempotency key header so only clients need to change.",
+        "retry_key": "1a93e7508a89f4778311e6443b92e9a0",
+        "segment_index": 4,
+        "segment_timestamp": 30.0,
+        "source_artifact_id": "art-71160d75684dd2b2462f",
+        "source_plugin": "decision_capture",
+        "span_end": 30.0,
+        "span_start": 24.0,
+        "speaker_label": null,
+        "state": "proposed",
+        "support": "source_linked",
+        "support_record": null,
+        "text": "Adopt Option A (client-sent idempotency/dedupe key via gateway header) for idempotent retries on payment requests; do not build a server-side dedupe table.",
+        "text_edited": false,
+        "unknowns": []
+      }
+    ]
+  },
+  "/api/meetings/c5-review/intel-recovery": {
+    "actions": {
+      "retry": false,
+      "skip": false
+    },
+    "completed": [
+      {
+        "detail": "Saved",
+        "label": "Meeting"
+      },
+      {
+        "detail": "12 saved segments",
+        "label": "Transcript"
+      },
+      {
+        "detail": "Summary, topics, and action items saved",
+        "label": "Meeting analysis"
+      },
+      {
+        "detail": "7 saved artifacts",
+        "label": "Artifacts"
+      }
+    ],
+    "headline": "Meeting saved \u00b7 intelligence incomplete",
+    "job": {
+      "attempts": 1,
+      "last_error": null,
+      "next_retry_at": null,
+      "planned_route": {
+        "legs": [
+          {
+            "boundary": "lan",
+            "deployment_revision_id": "dep_ebedc72b9d372a2d8373da6e7d087981ecff953e2775c93f1b216a6cf6c0bc75",
+            "host": "192.168.1.43",
+            "ordinal": 1,
+            "profile_id": "lan-qwen",
+            "profile_revision": 1
+          }
+        ],
+        "reason_code": null,
+        "selection_hash": "sha256:8aade93b81c26df4e99fd44d9a130b70ee2be0755870f66ffbcadeb54d389b7d",
+        "status": "ready"
+      },
+      "requested_at": "2026-10-18T23:27:07.108936",
+      "retry_scheduled": false,
+      "run_receipt": {
+        "attempts": [
+          {
+            "host": "192.168.1.43",
+            "leg_ordinal": 1,
+            "operation_id": "op_ad6d4c1e5a6648c1b29d0c2c4302bb17",
+            "outcome": "succeeded"
+          }
+        ],
+        "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+        "meeting_id": "c5-review",
+        "outcome": "succeeded",
+        "receipt_id": "rr_1fbbf61a931d94fec2ad6f6aa99f9951",
+        "selection_hash": "sha256:8aade93b81c26df4e99fd44d9a130b70ee2be0755870f66ffbcadeb54d389b7d"
+      },
+      "status": "succeeded",
+      "updated_at": "2026-10-18T23:28:03.360258"
+    },
+    "last_refusal": null,
+    "local_publication": false,
+    "meeting_id": "c5-review",
+    "planned_route": {
+      "legs": [
+        {
+          "boundary": "lan",
+          "deployment_revision_id": "dep_ebedc72b9d372a2d8373da6e7d087981ecff953e2775c93f1b216a6cf6c0bc75",
+          "host": "192.168.1.43",
+          "ordinal": 1,
+          "profile_id": "lan-qwen",
+          "profile_revision": 1
+        }
+      ],
+      "reason_code": null,
+      "selection_hash": "sha256:8aade93b81c26df4e99fd44d9a130b70ee2be0755870f66ffbcadeb54d389b7d",
+      "status": "ready"
+    },
+    "remaining": {
+      "detail": "Meeting intelligence ready.",
+      "label": "Remaining meeting intelligence"
+    },
+    "run_receipt": {
+      "attempts": [
+        {
+          "host": "192.168.1.43",
+          "leg_ordinal": 1,
+          "operation_id": "op_ad6d4c1e5a6648c1b29d0c2c4302bb17",
+          "outcome": "succeeded"
+        }
+      ],
+      "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+      "meeting_id": "c5-review",
+      "outcome": "succeeded",
+      "receipt_id": "rr_1fbbf61a931d94fec2ad6f6aa99f9951",
+      "selection_hash": "sha256:8aade93b81c26df4e99fd44d9a130b70ee2be0755870f66ffbcadeb54d389b7d"
+    },
+    "state": "ready",
+    "visible": false
+  },
+  "/api/meetings/c5-review/intent-timeline": {
+    "meeting_id": "c5-review",
+    "transitions": [],
+    "windows": [
+      {
+        "active_intents": [],
+        "created_at": "2026-10-18T23:27:15.244484",
+        "end_seconds": 72.0,
+        "intent_scores": {
+          "architecture": 0.44,
+          "comms": 0.44,
+          "delivery": 0.0,
+          "incident": 0.0,
+          "product": 0.0
+        },
+        "meeting_id": "c5-review",
+        "metadata": {
+          "source": "meeting_plugins_bound",
+          "window": "full"
+        },
+        "override_intents": [],
+        "profile": "balanced",
+        "start_seconds": 0.0,
+        "tags": [],
+        "threshold": 0.6,
+        "transcript_excerpt": "Me: Architecture review. One topic: idempotent retries for payment requests. Jun wrote the options page.\nJun: Option A: the client sends a dedupe key with every payment request, and the gateway rejects a second request with the same key for twenty-four hours. Option B: a dedupe table on our server, keyed on merchant, amount and a time window.\nMira: Option B guesses. Two real payments of the same a",
+        "transcript_hash": "2895dc72717629a612bcd0a692b97c3deb8a7192a126d50a8b4960b81397a5ef",
+        "updated_at": "2026-10-18T23:27:15.244484",
+        "window_id": "c5-review:full"
+      }
+    ]
+  },
+  "/api/meetings/c5-review/prepared": {
+    "meeting_id": "c5-review",
+    "results": [
+      {
+        "body_markdown": "# Follow-up: Architecture review: idempotent retries\n2026-10-16\n\n## What we decided\n- Adopt Option A (client-sent idempotency/dedupe key via gateway header) for idempotent retries on payment requests; do not build a server-side dedupe table.. Why: Option B (server dedupe table keyed on merchant, amount, time window) would incorrectly block legitimate duplicate-amount payments; the gateway already supports an idempotency key header so only clients need to change.\n- Theo will update the reconciliation job to read the dedupe key.\n- Jun will write the ADR for the idempotent-retry decision by Wednesday.\n- Rollout order: web client first, then mobile client in the release after next; Mira owns the rollout plan.\n- The speaker will write a stakeholder update informing the support team that duplicate charges will stop after the mobile release.\n\n## Open items\n- Jun: Write the ADR for adopting idempotent retries with a client dedupe key (Option A) (due 2026-10-21)\n- Jun: Write the ADR for the idempotent retries decision (due 2026-10-21)\n- Me: Write the stakeholder update informing the support team that duplicate charges will stop after the mobile release\n- Me: Write the stakeholder update telling the support team that duplicate charges will stop after the mobile release\n- Mira: Own and produce the rollout plan (web client first, then mobile client in the release after next)\n- Mira: Own the rollout plan (web client first, then mobile client in the release after next)\n- Theo: Update the reconciliation job to read the idempotency key\n- Theo: Update the reconciliation job to read the dedupe key",
+        "document_ref": "meeting_followup:c5-review",
+        "kind": "followup",
+        "label": "Follow-up",
+        "serves": [],
+        "state": "ready",
+        "title": "Follow-up: Architecture review: idempotent retries"
+      },
+      {
+        "artifact_id": "art-73e8720ffeb2151bd73a",
+        "body_markdown": "**Client-side idempotency key for payment retries** \u2014 _accepted_\n- Context: Payment requests need idempotent retry support to prevent duplicate charges. Two options were evaluated: (A) each client sends an idempotency-key header and the gateway rejects a repeat key for 24 hours; (B) a server-side dedupe table keyed on merchant, amount, and a time window. Option B was rejected because it would incorrectly block two legitimate payments of the same amount within the window. Option A requires changes to all four clients, but the gateway already supports the idempotency-key header.\n- Decision: Adopt Option A: every client sends an idempotency key header with each payment request; the gateway rejects a second request bearing the same key for 24 hours. Do not build a server-side dedupe table.\n- Consequences: All four clients must be updated to send the key; the mobile client's two-week release cycle constrains the timeline. Theo will update the reconciliation job to read the key. Jun will write the formal ADR by Wednesday. A phased rollout is required (see companion ADR). Support team must be briefed that duplicate charges will only fully stop after the mobile release.\n\n**Phased rollout of idempotency-key support across clients** \u2014 _accepted_\n- Context: Four clients must adopt the idempotency-key header. The mobile client ships on a two-week cadence, making a simultaneous cutover impractical and leaving a window of partial protection.\n- Decision: Roll out to the web client first, then to the mobile client in the release after next. Mira owns the rollout plan.\n- Consequences: During the interim window, web-initiated payments are protected against duplicate charges but mobile-initiated payments are not. The support team must be informed (stakeholder update owned by Me) that duplicate charges will only cease entirely after the mobile release ships.",
+        "kind": "adr",
+        "label": "ADR draft",
+        "plugin_id": "adr_drafter",
+        "seconds": 14,
+        "serves": [
+          "action-4e1461c1dc584e37",
+          "action_7c1cec2654f1076b602cfafe"
+        ],
+        "state": "ready",
+        "title": "ADR: Client-side idempotency key for payment retries"
+      },
+      {
+        "artifact_id": "art-be0b27d1156e7f8095e0",
+        "body_markdown": "**Team adopts client-side idempotent retries (dedupe key) for payment requests; server dedupe table dropped**\n\n**Highlights**\n- Decision reached: Option A (client sends idempotency key; gateway rejects duplicates for 24 h) is the way forward\n- Gateway already supports the idempotency-key header, so no gateway-side changes are needed\n- Server-side dedupe table explicitly not built, reducing scope and eliminating the false-positive risk Mira flagged\n- Consensus confirmed by Mira and Theo in the meeting\n\n**Risks**\n- All four clients must be updated to send the dedupe key; mobile client ships on a two-week release cadence, slowing full coverage\n- Rollout is phased (web first, mobile in the release after next), so duplicate-charge exposure persists until the mobile release lands\n- Support team is not yet informed; customers may still report duplicate charges during the interim\n\n**Next steps**\n- Jun to write the ADR documenting the idempotent-retry decision by Wednesday\n- Theo to update the reconciliation job to read the new dedupe key\n- Mira to own and publish the phased rollout plan (web client first, mobile in the following release)\n- Speaker to draft and send the stakeholder update notifying the support team that duplicate charges will cease after the mobile release",
+        "kind": "stakeholder_update",
+        "label": "Update for stakeholders",
+        "plugin_id": "stakeholder_update_drafter",
+        "seconds": 7,
+        "serves": [
+          "action-c16d38985f4744c1",
+          "action_b79806367ff11e5f9812d980"
+        ],
+        "state": "ready",
+        "title": "Update for stakeholders"
+      }
+    ]
+  },
+  "/api/meetings/c5-review/prepared#writing": {
+    "meeting_id": "c5-review",
+    "results": [
+      {
+        "kind": "adr",
+        "label": "ADR draft",
+        "plugin_id": "adr_drafter",
+        "serves": [],
+        "since": "2026-10-18T23:27:07.262715",
+        "state": "writing"
+      },
+      {
+        "kind": "stakeholder_update",
+        "label": "Update for stakeholders",
+        "plugin_id": "stakeholder_update_drafter",
+        "serves": [],
+        "since": "2026-10-18T23:27:07.262715",
+        "state": "writing"
+      }
+    ]
+  },
+  "/api/meetings/c5-review/proposals": {
+    "meeting_id": "c5-review",
+    "proposals": []
+  },
+  "/api/meetings/c5-review?include_parked=true": {
+    "bookmarks": [],
+    "calendar_event_id": null,
+    "capture_checkpoint_at": null,
+    "capture_checkpoint_seconds": 0.0,
+    "capture_failure": null,
+    "capture_status": "finalized",
+    "devices": [],
+    "duration": 72.0,
+    "ended_at": "2026-10-16T11:01:12",
+    "formatted_duration": "01:12",
+    "id": "c5-review",
+    "intel": {
+      "action_items": [
+        {
+          "completed_at": null,
+          "created_at": "2026-10-19T05:27:15Z",
+          "delegated_at": null,
+          "due": null,
+          "id": "action_790b12ff3aca9bb4f35fecd0",
+          "owner": "Theo",
+          "review_state": "pending",
+          "reviewed_at": null,
+          "source_timestamp": null,
+          "status": "pending",
+          "task": "Update the reconciliation job to read the dedupe key"
+        },
+        {
+          "completed_at": null,
+          "created_at": "2026-10-19T05:27:15Z",
+          "delegated_at": null,
+          "due": "2026-10-21",
+          "id": "action_7c1cec2654f1076b602cfafe",
+          "owner": "Jun",
+          "review_state": "pending",
+          "reviewed_at": null,
+          "source_timestamp": null,
+          "status": "pending",
+          "task": "Write the ADR for the idempotent retries decision"
+        },
+        {
+          "completed_at": null,
+          "created_at": "2026-10-19T05:27:15Z",
+          "delegated_at": null,
+          "due": null,
+          "id": "action_a8bc2042911a4b0cfb62b915",
+          "owner": "Mira",
+          "review_state": "pending",
+          "reviewed_at": null,
+          "source_timestamp": null,
+          "status": "pending",
+          "task": "Own the rollout plan (web client first, then mobile client in the release after next)"
+        },
+        {
+          "completed_at": null,
+          "created_at": "2026-10-19T05:27:15Z",
+          "delegated_at": null,
+          "due": null,
+          "id": "action_b79806367ff11e5f9812d980",
+          "owner": "Me",
+          "review_state": "pending",
+          "reviewed_at": null,
+          "source_timestamp": null,
+          "status": "pending",
+          "task": "Write the stakeholder update telling the support team that duplicate charges will stop after the mobile release"
+        },
+        {
+          "completed_at": null,
+          "created_at": "2026-10-19T05:28:03.361189+00:00",
+          "delegated_at": "2026-10-19T05:28:03.361189+00:00",
+          "due": null,
+          "id": "action-c16d38985f4744c1",
+          "owner": "Me",
+          "review_state": "accepted",
+          "reviewed_at": null,
+          "source_timestamp": 66.0,
+          "status": "open",
+          "task": "Write the stakeholder update informing the support team that duplicate charges will stop after the mobile release"
+        },
+        {
+          "completed_at": null,
+          "created_at": "2026-10-19T05:28:03.362157+00:00",
+          "delegated_at": "2026-10-19T05:28:03.362157+00:00",
+          "due": null,
+          "id": "action-27270c806fb64dbc",
+          "owner": "Mira",
+          "review_state": "accepted",
+          "reviewed_at": null,
+          "source_timestamp": 60.0,
+          "status": "open",
+          "task": "Own and produce the rollout plan (web client first, then mobile client in the release after next)"
+        },
+        {
+          "completed_at": null,
+          "created_at": "2026-10-19T05:28:03.362831+00:00",
+          "delegated_at": "2026-10-19T05:28:03.362831+00:00",
+          "due": "2026-10-21",
+          "id": "action-4e1461c1dc584e37",
+          "owner": "Jun",
+          "review_state": "accepted",
+          "reviewed_at": null,
+          "source_timestamp": 30.0,
+          "status": "open",
+          "task": "Write the ADR for adopting idempotent retries with a client dedupe key (Option A)"
+        },
+        {
+          "completed_at": null,
+          "created_at": "2026-10-19T05:28:03.363453+00:00",
+          "delegated_at": "2026-10-19T05:28:03.363453+00:00",
+          "due": null,
+          "id": "action-aa58f63a89004ccb",
+          "owner": "Theo",
+          "review_state": "accepted",
+          "reviewed_at": null,
+          "source_timestamp": 42.0,
+          "status": "open",
+          "task": "Update the reconciliation job to read the idempotency key"
+        }
+      ],
+      "summary": "Architecture review on idempotent retries for payment requests. The team chose Option A (client-side dedupe key) over Option B (server-side dedupe table) to avoid blocking legitimate duplicate-amount payments. Rollout will start with the web client, followed by the mobile client in the next release. Jun will write the ADR by Wednesday, Theo will update the reconciliation job, Mira will own the rollout plan, and Me will write the stakeholder update to the support team.",
+      "timestamp": 72.0,
+      "topics": [
+        "Idempotent retries for payment requests"
+      ]
+    },
+    "intel_duration_s": 56,
+    "intel_job": {
+      "attempts": 1,
+      "last_error": null,
+      "next_retry_at": null,
+      "requested_at": "2026-10-18T23:27:07.108936",
+      "retry_scheduled": false,
+      "status": "succeeded",
+      "updated_at": "2026-10-18T23:28:03.360258"
+    },
+    "intel_model_host": "192.168.1.43",
+    "intel_status": {
+      "completed_at": "2026-10-18T23:28:03.360258",
+      "detail": "Meeting intelligence ready.",
+      "requested_at": "2026-10-18T23:27:07.108148",
+      "state": "ready"
+    },
+    "last_refusal": null,
+    "mic_label": "Me",
+    "parked": false,
+    "planned_route": {
+      "legs": [
+        {
+          "boundary": "lan",
+          "deployment_revision_id": "dep_ebedc72b9d372a2d8373da6e7d087981ecff953e2775c93f1b216a6cf6c0bc75",
+          "host": "192.168.1.43",
+          "ordinal": 1,
+          "profile_id": "lan-qwen",
+          "profile_revision": 1
+        }
+      ],
+      "reason_code": null,
+      "selection_hash": "sha256:8aade93b81c26df4e99fd44d9a130b70ee2be0755870f66ffbcadeb54d389b7d",
+      "status": "ready"
+    },
+    "provenance": "desktop",
+    "remote_label": "Remote",
+    "run_receipt": {
+      "attempts": [
+        {
+          "host": "192.168.1.43",
+          "leg_ordinal": 1,
+          "operation_id": "op_ad6d4c1e5a6648c1b29d0c2c4302bb17",
+          "outcome": "succeeded"
+        }
+      ],
+      "job_id": "ij_d0f0876948a0dcc5879d7e8f5c8ed726dc7cc29472ddf59382aae9b2901961b2",
+      "meeting_id": "c5-review",
+      "outcome": "succeeded",
+      "receipt_id": "rr_1fbbf61a931d94fec2ad6f6aa99f9951",
+      "selection_hash": "sha256:8aade93b81c26df4e99fd44d9a130b70ee2be0755870f66ffbcadeb54d389b7d"
+    },
+    "segments": [
+      {
+        "device_id": null,
+        "end_time": 6.0,
+        "is_bookmarked": false,
+        "speaker": "Me",
+        "speaker_id": null,
+        "start_time": 0.0,
+        "text": "Architecture review. One topic: idempotent retries for payment requests. Jun wrote the options page."
+      },
+      {
+        "device_id": null,
+        "end_time": 12.0,
+        "is_bookmarked": false,
+        "speaker": "Jun",
+        "speaker_id": null,
+        "start_time": 6.0,
+        "text": "Option A: the client sends a dedupe key with every payment request, and the gateway rejects a second request with the same key for twenty-four hours. Option B: a dedupe table on our server, keyed on merchant, amount and a time window."
+      },
+      {
+        "device_id": null,
+        "end_time": 18.0,
+        "is_bookmarked": false,
+        "speaker": "Mira",
+        "speaker_id": null,
+        "start_time": 12.0,
+        "text": "Option B guesses. Two real payments of the same amount within the window would be blocked. I don't like guessing with money."
+      },
+      {
+        "device_id": null,
+        "end_time": 24.0,
+        "is_bookmarked": false,
+        "speaker": "Theo",
+        "speaker_id": null,
+        "start_time": 18.0,
+        "text": "Option A needs every client to change. We have four clients. The mobile client releases every two weeks."
+      },
+      {
+        "device_id": null,
+        "end_time": 30.0,
+        "is_bookmarked": false,
+        "speaker": "Jun",
+        "speaker_id": null,
+        "start_time": 24.0,
+        "text": "The gateway already supports an idempotency key header. We only need the clients to send it."
+      },
+      {
+        "device_id": null,
+        "end_time": 36.0,
+        "is_bookmarked": false,
+        "speaker": "Me",
+        "speaker_id": null,
+        "start_time": 30.0,
+        "text": "Then the decision is: we adopt idempotent retries with a client dedupe key, option A. We do not build the server dedupe table."
+      },
+      {
+        "device_id": null,
+        "end_time": 42.0,
+        "is_bookmarked": false,
+        "speaker": "Mira",
+        "speaker_id": null,
+        "start_time": 36.0,
+        "text": "Agreed."
+      },
+      {
+        "device_id": null,
+        "end_time": 48.0,
+        "is_bookmarked": false,
+        "speaker": "Theo",
+        "speaker_id": null,
+        "start_time": 42.0,
+        "text": "Agreed. I'll update the reconciliation job to read the key."
+      },
+      {
+        "device_id": null,
+        "end_time": 54.0,
+        "is_bookmarked": false,
+        "speaker": "Me",
+        "speaker_id": null,
+        "start_time": 48.0,
+        "text": "Jun, please write the ADR for this by Wednesday."
+      },
+      {
+        "device_id": null,
+        "end_time": 60.0,
+        "is_bookmarked": false,
+        "speaker": "Jun",
+        "speaker_id": null,
+        "start_time": 54.0,
+        "text": "Will do."
+      },
+      {
+        "device_id": null,
+        "end_time": 66.0,
+        "is_bookmarked": false,
+        "speaker": "Mira",
+        "speaker_id": null,
+        "start_time": 60.0,
+        "text": "Rollout. I suggest web client first, then the mobile client in the release after next."
+      },
+      {
+        "device_id": null,
+        "end_time": 72.0,
+        "is_bookmarked": false,
+        "speaker": "Me",
+        "speaker_id": null,
+        "start_time": 66.0,
+        "text": "Okay. Mira owns the rollout plan. And we should tell the support team that duplicate charges will stop after the mobile release. I'll write the stakeholder update."
+      }
+    ],
+    "started_at": "2026-10-16T11:00:00",
+    "sync_modified_at": "2026-10-18T23:28:03.360258",
+    "tags": [],
+    "title": "Architecture review: idempotent retries",
+    "transcriptWords": 199,
+    "transcription_status": "complete",
+    "transcription_status_detail": null,
+    "unclearSpans": 0,
+    "web_url": null
+  },
+  "_now": "2026-10-19T05:28:04+00:00",
+  "_source": "Recorded from a real MeetingWebServer by tests/integration/test_meeting_plugins_engines.py::test_the_architecture_review_prepares_the_adr_and_the_stakeholder_update (the LAN engine's recorded replies; the meeting id is c5-review). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads."
+}
