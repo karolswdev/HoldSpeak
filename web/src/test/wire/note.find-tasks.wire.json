@@ -1,16 +1,16 @@
 {
  "_source": "The hub's own answers, captured by tests/unit/test_desk_note_outcomes.py::test_the_answers_are_recorded_for_the_face (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
- "note_id": "note_723449d43fe6",
+ "note_id": "note_58cfb281168a",
  "title": "Jun and the cutover weekend",
  "before": {
-  "note_id": "note_723449d43fe6",
+  "note_id": "note_58cfb281168a",
   "rows": []
  },
  "found": {
-  "note_id": "note_723449d43fe6",
+  "note_id": "note_58cfb281168a",
   "rows": [
    {
-    "id": "no_d194e32bdd414dfb",
+    "id": "no_19e78c838662485f",
     "kind": "task",
     "text": "Pair Jun with Mira on call for the cutover weekend",
     "owner": "Me",
@@ -18,11 +18,11 @@
     "rationale": "",
     "state": "proposed",
     "made_ref": "",
-    "found_at": "2026-10-19T11:33:25.509991+00:00",
+    "found_at": "2026-10-19T12:48:51.883635+00:00",
     "model": "qwen3.8-27b"
    },
    {
-    "id": "no_671f27524ab5446b",
+    "id": "no_6e4a1c90a2a24521",
     "kind": "task",
     "text": "Write the on-call handbook",
     "owner": "Theo Park",
@@ -30,11 +30,11 @@
     "rationale": "",
     "state": "proposed",
     "made_ref": "",
-    "found_at": "2026-10-19T11:33:25.509991+00:00",
+    "found_at": "2026-10-19T12:48:51.883635+00:00",
     "model": "qwen3.8-27b"
    },
    {
-    "id": "no_f4a669999cdd4762",
+    "id": "no_61991935f5f04b51",
     "kind": "decision",
     "text": "Theo owns the on-call handbook",
     "owner": "",
@@ -42,49 +42,114 @@
     "rationale": "to write it first before the cutover",
     "state": "proposed",
     "made_ref": "",
-    "found_at": "2026-10-19T11:33:25.509991+00:00",
+    "found_at": "2026-10-19T12:48:51.883635+00:00",
     "model": "qwen3.8-27b"
    }
   ]
  },
- "confirm_row": "no_671f27524ab5446b",
- "confirmed": {
-  "note_id": "note_723449d43fe6",
+ "edit_row": "no_19e78c838662485f",
+ "edit_request": {
+  "text": "Pair Jun with Mira on call",
+  "owner_name": "Me",
+  "due": "Friday"
+ },
+ "edited": {
+  "note_id": "note_58cfb281168a",
   "rows": [
    {
-    "id": "no_d194e32bdd414dfb",
+    "id": "no_19e78c838662485f",
     "kind": "task",
-    "text": "Pair Jun with Mira on call for the cutover weekend",
+    "text": "Pair Jun with Mira on call",
     "owner": "Me",
+    "due": "Friday",
+    "rationale": "",
+    "state": "proposed",
+    "made_ref": "",
+    "found_at": "2026-10-19T12:48:51.883635+00:00",
+    "model": "qwen3.8-27b"
+   },
+   {
+    "id": "no_6e4a1c90a2a24521",
+    "kind": "task",
+    "text": "Write the on-call handbook",
+    "owner": "Theo Park",
     "due": "",
     "rationale": "",
     "state": "proposed",
     "made_ref": "",
-    "found_at": "2026-10-19T11:33:25.509991+00:00",
+    "found_at": "2026-10-19T12:48:51.883635+00:00",
     "model": "qwen3.8-27b"
    },
    {
-    "id": "no_671f27524ab5446b",
+    "id": "no_61991935f5f04b51",
+    "kind": "decision",
+    "text": "Theo owns the on-call handbook",
+    "owner": "",
+    "due": "",
+    "rationale": "to write it first before the cutover",
+    "state": "proposed",
+    "made_ref": "",
+    "found_at": "2026-10-19T12:48:51.883635+00:00",
+    "model": "qwen3.8-27b"
+   }
+  ]
+ },
+ "dismiss_row": "no_61991935f5f04b51",
+ "dismissed": {
+  "note_id": "note_58cfb281168a",
+  "rows": [
+   {
+    "id": "no_19e78c838662485f",
+    "kind": "task",
+    "text": "Pair Jun with Mira on call",
+    "owner": "Me",
+    "due": "Friday",
+    "rationale": "",
+    "state": "proposed",
+    "made_ref": "",
+    "found_at": "2026-10-19T12:48:51.883635+00:00",
+    "model": "qwen3.8-27b"
+   },
+   {
+    "id": "no_6e4a1c90a2a24521",
+    "kind": "task",
+    "text": "Write the on-call handbook",
+    "owner": "Theo Park",
+    "due": "",
+    "rationale": "",
+    "state": "proposed",
+    "made_ref": "",
+    "found_at": "2026-10-19T12:48:51.883635+00:00",
+    "model": "qwen3.8-27b"
+   }
+  ]
+ },
+ "confirm_row": "no_6e4a1c90a2a24521",
+ "confirmed": {
+  "note_id": "note_58cfb281168a",
+  "rows": [
+   {
+    "id": "no_19e78c838662485f",
+    "kind": "task",
+    "text": "Pair Jun with Mira on call",
+    "owner": "Me",
+    "due": "Friday",
+    "rationale": "",
+    "state": "proposed",
+    "made_ref": "",
+    "found_at": "2026-10-19T12:48:51.883635+00:00",
+    "model": "qwen3.8-27b"
+   },
+   {
+    "id": "no_6e4a1c90a2a24521",
     "kind": "task",
     "text": "Write the on-call handbook",
     "owner": "Theo Park",
     "due": "",
     "rationale": "",
     "state": "confirmed",
-    "made_ref": "action_item:ai_d41d3303533d4d38bf5b73e3bc92d2eb",
-    "found_at": "2026-10-19T11:33:25.509991+00:00",
-    "model": "qwen3.8-27b"
-   },
-   {
-    "id": "no_f4a669999cdd4762",
-    "kind": "decision",
-    "text": "Theo owns the on-call handbook",
-    "owner": "",
-    "due": "",
-    "rationale": "to write it first before the cutover",
-    "state": "proposed",
-    "made_ref": "",
-    "found_at": "2026-10-19T11:33:25.509991+00:00",
+    "made_ref": "action_item:ai_54f2b6ab86bf4c048e55abc788fc7928",
+    "found_at": "2026-10-19T12:48:51.883635+00:00",
     "model": "qwen3.8-27b"
    }
   ]
