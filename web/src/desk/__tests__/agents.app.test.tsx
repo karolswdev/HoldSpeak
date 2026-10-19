@@ -690,3 +690,75 @@ describe("Resume after a restart (Betterment AG6)", () => {
     });
   });
 });
+
+/* ── Betterment AG3: the desk's own answers are visible ───────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_shows_the_desks_own_answer (fixtures/agents-ag3):
+ * under YOLO the real responder holds "Answer 1 for config, 2 for env.",
+ * answers `1` from the Project's decision (the recorded LAN draft), and the
+ * seen mark makes the answer old. */
+function ag3<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag3/${name}`);
+}
+
+describe("the desk's own answers are visible (Betterment AG3)", () => {
+  const DECISION = "The desk answered: 1, from your decision 'The rollback flag moves into config/flags.yaml.'";
+
+  function serveAg3(sessions: string) {
+    const read = ag3(sessions);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(read.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({
+      "/api/coders/sessions": read.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/launch_ag0_ghost/lane": ag3("lane.drafting").wire,
+      "/api/agent/launches/": { gated: [], wait: null },
+      "/api/coders/claude%3Aag0-ghost/peek": hubWire("peek.ag2-asks").wire,
+      "/api/coders/claude%3Aag0-done/peek": hubWire("peek.ag2-asks").wire,
+    });
+  }
+  const ghost = () => document.querySelector<HTMLElement>('[data-object-id="launch:launch_ag0_ghost"]')!;
+
+  it("while the desk drafts, the row says so and offers Answer it myself, then the answer box", async () => {
+    serveAg3("coders-sessions.drafting");
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the on-call note" });
+    const row = ghost();
+    expect(within(row).getByTestId("agent-row-drafting").textContent).toContain("The desk is drafting an answer");
+    expect(within(row).queryByTestId("agent-row-choices")).toBeNull();
+    fireEvent.click(within(row).getByRole("button", { name: "Answer it myself" }));
+    expect(within(row).queryByTestId("agent-row-drafting")).toBeNull();
+    await waitFor(() => expect(within(row).getAllByTestId("agent-row-choice").map((b) => b.textContent))
+      .toEqual(["1 · config", "2 · env"]));
+  });
+
+  it("after the desk answered: what it said and the decision it used, New until opened", async () => {
+    serveAg3("coders-sessions.answered");
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the on-call note" });
+    const line = within(ghost()).getByTestId("agent-row-desk-answer");
+    expect(line.textContent).toBe(`${DECISION}New`);
+    expect(line.textContent).not.toMatch(/Yes,/);
+    expect(within(line).getByTestId("agent-row-desk-answer-new").textContent).toBe("New");
+  });
+
+  it("after the seen mark the answer stays, without New", async () => {
+    serveAg3("coders-sessions.seen");
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the on-call note" });
+    const line = within(ghost()).getByTestId("agent-row-desk-answer");
+    expect(line.textContent).toBe(DECISION);
+  });
+
+  it("opening the agent marks the desk's answer seen at once", async () => {
+    const { markLaunchSeen } = await import("../agentFlights");
+    const answered = ag3<{ flights: unknown[] }>("coders-sessions.answered").wire;
+    useAgentFlights.setState({ flights: answered.flights.map(fromWireFlight), sessions: [], loaded: true });
+    api.fetch.mockResolvedValue({ launch_id: "launch_ag0_ghost", seen: null, answer_seen: "w" });
+    await markLaunchSeen("launch_ag0_ghost", null);
+    const flight = useAgentFlights.getState().flights.find((f) => f.launchId === "launch_ag0_ghost")!;
+    expect(flight.deskAnswer).toMatchObject({ state: "answered", text: "1", isNew: false });
+  });
+});

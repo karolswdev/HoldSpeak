@@ -7,6 +7,7 @@
       {
         "agent": "claude",
         "close": null,
+        "desk_answer": null,
         "ended_at": null,
         "id": "m-cutover-a0",
         "kind": "action",
@@ -28,6 +29,7 @@
       {
         "agent": "codex",
         "close": null,
+        "desk_answer": null,
         "ended_at": null,
         "id": "m-cutover-a1",
         "kind": "action",
@@ -49,6 +51,7 @@
       {
         "agent": "claude",
         "close": null,
+        "desk_answer": null,
         "ended_at": null,
         "id": "m-cutover-a2",
         "kind": "action",
@@ -84,6 +87,7 @@
         "flight": {
           "agent": "codex",
           "close": null,
+          "desk_answer": null,
           "ended_at": null,
           "id": "m-cutover-a1",
           "kind": "action",
@@ -155,6 +159,7 @@
         "flight": {
           "agent": "claude",
           "close": null,
+          "desk_answer": null,
           "ended_at": null,
           "id": "m-cutover-a0",
           "kind": "action",

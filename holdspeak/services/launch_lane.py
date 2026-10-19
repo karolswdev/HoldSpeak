@@ -282,6 +282,8 @@ def _wait(
             "verdict": str(answer.get("verdict") or ""),
             "reason": str(answer.get("reason") or ""),
             "text": str(answer.get("draft") or ""),
+            # Betterment AG3: the line the draft used ({text, kind, title}).
+            **({"source": answer["source"]} if answer.get("source") else {}),
         }
     return {
         "question": session.get("question"),
