@@ -868,6 +868,15 @@ def prepared_results(db: Any, meeting_id: str) -> dict[str, Any]:
     route = dict(getattr(summary_job, "frozen_plugin_route", {}) or {}) if summary_job is not None else {}
     planned = [str(p) for p in route.get("prepared") or [] if str(p) in _KIND_BY_PLUGIN]
     summary_active = summary_job is not None and str(summary_job.status) in _ACTIVE_JOB
+    if summary_active:
+        # Capture C5c: the drafts are written after the summary (a drafts-only
+        # job); while the summary is written, each one it will ask for waits.
+        meeting = db.meetings.get_meeting(meeting_id)
+        transcript = "\n".join(
+            f"{getattr(seg, 'speaker', '') or ''}: {getattr(seg, 'text', '') or ''}"
+            for seg in (getattr(meeting, "segments", None) or [])
+        )
+        planned = [*planned, *(p for p in prepared_plan(transcript) if p not in planned)]
     skipped = {
         str(item.get("plugin_id")): str(item.get("reason") or "")
         for item in route.get("plugin_chain_skipped") or [] if isinstance(item, Mapping)
