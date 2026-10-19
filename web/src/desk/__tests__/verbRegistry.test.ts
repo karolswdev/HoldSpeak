@@ -97,7 +97,6 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
     expect(creates).toEqual([
       "desk.new-note", // Betterment Q8: also ⌃T (Write a thought is parked)
       "desk.new-decision",
-      "desk.new-knowledge",
       // Betterment A8: one way to automate; New Workflow is parked.
       "desk.new-workbench",
       "desk.new-thread",

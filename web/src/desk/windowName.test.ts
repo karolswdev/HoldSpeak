@@ -40,8 +40,8 @@ describe("windowName: the name of the thing in the window", () => {
   });
 
   it("knowledge, project, session, settings, calendar, dossier", () => {
-    expect(windowName({ kind: "knowledge", name: "" })).toBe("New knowledge base");
-    expect(windowName({ kind: "knowledge", name: "kb_12ab34cd56" }, "kb_12ab34cd56")).toBe("New knowledge base");
+    expect(windowName({ kind: "knowledge", name: "" })).toBe("New drawer");
+    expect(windowName({ kind: "knowledge", name: "kb_12ab34cd56" }, "kb_12ab34cd56")).toBe("New drawer");
     expect(windowName({ kind: "knowledge", name: "Payments docs" })).toBe("Payments docs");
     expect(windowName({ kind: "project", name: "Payments ledger" })).toBe("Payments ledger");
     expect(windowName({ kind: "session", task: "Fix the cutover script", project: "Payments ledger", agent: "claude" }))

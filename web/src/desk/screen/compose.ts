@@ -223,6 +223,22 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
       target: { type: "ref", ref },
     });
   }
+  // Betterment Q10 (Knowledge becomes drawers): each knowledge collection
+  // is a drawer of the same name. Its members stay on the desk too (a
+  // collection is many-to-many; only a real drawer files its members away).
+  for (const kb of input.items.kb ?? []) {
+    if (!kb.name?.trim()) continue;
+    const ref = qualifiedRef("kb", kb.id);
+    out.push({
+      key: ref,
+      role: "drawer",
+      kind: "kb",
+      kindWord: "DRAWER",
+      name: kb.name,
+      ...sprites("directory", kb.id),
+      target: { type: "ref", ref },
+    });
+  }
   for (const project of input.items.project ?? []) {
     const n = input.projectCounts[project.id] ?? 0;
     const failed = Boolean(input.notRead?.[project.id]);
