@@ -15,7 +15,7 @@
       "builtin": true,
       "channel": "file",
       "connection": null,
-      "created_at": "2026-10-19T03:41:10+00:00",
+      "created_at": "2026-10-19T08:34:26+00:00",
       "id": "holdspeak-folder",
       "name": "HoldSpeak folder",
       "parked_at": null,
@@ -24,7 +24,7 @@
       "target": {
        "builtin": "documents",
        "display": "~/Documents/HoldSpeak/Sent",
-       "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.SOsnd2ayb0/Documents/HoldSpeak/Sent"
+       "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.zTwouDm9St/Documents/HoldSpeak/Sent"
       },
       "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af"
      }
@@ -118,13 +118,13 @@
     "arming": [],
     "blockers": [],
     "complete": true,
-    "computedAt": "2026-10-18T21:41:12.783448-06:00",
+    "computedAt": "2026-10-19T02:34:28.447075-06:00",
     "count": 0,
     "coverage": [
      {
       "kind": "coder",
       "label": "Agents",
-      "observed_at": "2026-10-19T03:41:12.878919+00:00",
+      "observed_at": "2026-10-19T08:34:28.523291+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -159,10 +159,10 @@
    "body": {
     "directories": [
      {
-      "created_at": "2026-10-19T03:41:10Z",
+      "created_at": "2026-10-19T08:34:26Z",
       "deleted": false,
       "id": "hs-seed-inbox",
-      "last_modified": "2026-10-19T03:41:10Z",
+      "last_modified": "2026-10-19T08:34:26Z",
       "member_ids": [],
       "name": "Inbox",
       "name_normalized": "inbox",
@@ -251,13 +251,13 @@
     "notes": [
      {
       "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
-      "created_at": "2026-10-19T03:41:10Z",
+      "created_at": "2026-10-19T08:34:26Z",
       "deleted": false,
-      "id": "note_cc6109412739",
-      "last_modified": "2026-10-19T03:41:10Z",
+      "id": "note_03df8539d51f",
+      "last_modified": "2026-10-19T08:34:26Z",
       "tags": [],
       "title": "Ledger cutover risks",
-      "updated_at": "2026-10-19T03:41:10Z"
+      "updated_at": "2026-10-19T08:34:26Z"
      }
     ]
    },
@@ -396,13 +396,13 @@
        "deleted": false,
        "id": "hs-seed-inbox",
        "kind": "directory",
-       "last_modified": "2026-10-19T03:41:10Z"
+       "last_modified": "2026-10-19T08:34:26Z"
       },
       "value": {
-       "created_at": "2026-10-19T03:41:10Z",
+       "created_at": "2026-10-19T08:34:26Z",
        "deleted": false,
        "id": "hs-seed-inbox",
-       "last_modified": "2026-10-19T03:41:10Z",
+       "last_modified": "2026-10-19T08:34:26Z",
        "name": "Inbox",
        "name_normalized": "inbox",
        "parent_id": null
@@ -419,16 +419,16 @@
        "deleted": false,
        "id": "desktop:intel",
        "kind": "model",
-       "last_modified": "2026-10-19T03:41:12Z"
+       "last_modified": "2026-10-19T08:34:28Z"
       },
       "value": {
        "capabilities": [
         "language"
        ],
-       "created_at": "2026-10-19T03:41:12Z",
+       "created_at": "2026-10-19T08:34:28Z",
        "deleted": false,
        "id": "desktop:intel",
-       "last_modified": "2026-10-19T03:41:12Z",
+       "last_modified": "2026-10-19T08:34:28Z",
        "name": "Qwen3.5-4B-Q4_K_M",
        "node": "desktop"
       }
@@ -438,19 +438,19 @@
      {
       "meta": {
        "deleted": false,
-       "id": "note_cc6109412739",
+       "id": "note_03df8539d51f",
        "kind": "note",
-       "last_modified": "2026-10-19T03:41:10Z"
+       "last_modified": "2026-10-19T08:34:26Z"
       },
       "value": {
        "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
-       "created_at": "2026-10-19T03:41:10Z",
+       "created_at": "2026-10-19T08:34:26Z",
        "deleted": false,
-       "id": "note_cc6109412739",
-       "last_modified": "2026-10-19T03:41:10Z",
+       "id": "note_03df8539d51f",
+       "last_modified": "2026-10-19T08:34:26Z",
        "tags": [],
        "title": "Ledger cutover risks",
-       "updated_at": "2026-10-19T03:41:10Z"
+       "updated_at": "2026-10-19T08:34:26Z"
       }
      }
     ],
@@ -463,85 +463,85 @@
       "meta": {
        "deleted": false,
        "expected_aggregate_revision": 0,
-       "id": "thought_53dd28651bc3",
+       "id": "thought_c814f1df3de2",
        "kind": "refinement_thought",
-       "last_modified": "2026-10-19T03:41:12Z",
+       "last_modified": "2026-10-19T08:34:28Z",
        "lifecycle_revision": 1,
        "next_aggregate_revision": 1
       },
       "value": {
        "aggregate_revision": 1,
        "attachment_revision": 0,
-       "attachment_sha256": "87d9c6550d660559f4b61e3351c2e210ba242c70bc2aacca3ac954fd098d148a",
+       "attachment_sha256": "d3ccb3a3f261aa61d062af50fe75d3034cd12e2eb300ddf02488cd2405f3ee56",
        "attachments": [],
        "commands": [
         {
-         "accepted_at": "2026-10-19T03:41:12Z",
+         "accepted_at": "2026-10-19T08:34:28Z",
          "aggregate_revision": 1,
-         "attachment_sha256": "87d9c6550d660559f4b61e3351c2e210ba242c70bc2aacca3ac954fd098d148a",
-         "canonical_sha256": "6c53b60cae351015373c4a8f4e0d6a87f358c3ce3f7c0e24baafa55cf120fee4",
+         "attachment_sha256": "d3ccb3a3f261aa61d062af50fe75d3034cd12e2eb300ddf02488cd2405f3ee56",
+         "canonical_sha256": "72f42d0d60f16873e82e1e87027040038962ad16a3ac11c3f8a1bf08826fbcc5",
          "canonical_version": 2,
          "command_kind": "adopt_note",
-         "lifecycle_sha256": "b872d83995fcaaa8441f066080c920177b3d811cf1ed7c28b039c7415237e0ed",
+         "lifecycle_sha256": "829d3c17899a3094d518abd33e7698e0dfeec6fa5edcf71ca61c2470d18f4472",
          "next_attachment_revision": 0,
          "next_lifecycle_revision": 1,
          "next_working_revision": 1,
          "prior_attachment_revision": 0,
          "prior_lifecycle_revision": 0,
          "prior_working_revision": 0,
-         "thought_id": "thought_53dd28651bc3"
+         "thought_id": "thought_c814f1df3de2"
         }
        ],
-       "create_payload_sha256": "d649715f6937ff9e5bed8f8994d3f030ac31df27b21109234216bbb7c1e3f8da",
-       "create_request_id": "open_note_9f858a37a35a",
-       "created_at": "2026-10-19T03:41:12Z",
+       "create_payload_sha256": "7fa451efab7734ce9e7168080e1b75a6752755ae6dd18c911bc8bee722c7382f",
+       "create_request_id": "open_note_1acae9133319",
+       "created_at": "2026-10-19T08:34:28Z",
        "deleted": false,
        "expected_aggregate_revision": 0,
-       "id": "thought_53dd28651bc3",
-       "last_modified": "2026-10-19T03:41:12Z",
+       "id": "thought_c814f1df3de2",
+       "last_modified": "2026-10-19T08:34:28Z",
        "lifecycle": [
         {
          "aggregate_revision": 1,
          "command": "adopt_note",
-         "entry_sha256": "b872d83995fcaaa8441f066080c920177b3d811cf1ed7c28b039c7415237e0ed",
+         "entry_sha256": "829d3c17899a3094d518abd33e7698e0dfeec6fa5edcf71ca61c2470d18f4472",
          "lifecycle_revision": 1,
-         "occurred_at": "2026-10-19T03:41:12Z",
+         "occurred_at": "2026-10-19T08:34:28Z",
          "prior_state": null,
          "state": "working",
-         "thought_id": "thought_53dd28651bc3"
+         "thought_id": "thought_c814f1df3de2"
         }
        ],
        "lifecycle_revision": 1,
        "next_aggregate_revision": 1,
-       "raw_captured_at": "2026-10-19T03:41:12Z",
+       "raw_captured_at": "2026-10-19T08:34:28Z",
        "raw_sha256": "788e6d15ca3c0f011fffbfac40a4cfc1a03535d0c0d32f3198fc54a00c6a095b",
        "raw_utf8_b64": "LSByZWNvbmNpbGlhdGlvbiBqb2Igc2xvdwotIHJvbGxiYWNrIHBsYW4gb3duZXI6IEpvcmRhbg==",
        "revisions": [
         {
-         "accepted_at": "2026-10-19T03:41:12Z",
+         "accepted_at": "2026-10-19T08:34:28Z",
          "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
          "content_sha256": "9cdbeca02ec0b960935f25f9a6c5f1318ee8d129a55d5590a1d831db501d35ef",
          "revision": 1,
          "tags": [],
          "tags_json": "[]",
-         "thought_id": "thought_53dd28651bc3",
+         "thought_id": "thought_c814f1df3de2",
          "title": "Ledger cutover risks"
         }
        ],
        "source": {
         "kind": "note",
-        "ref": "note:note_cc6109412739"
+        "ref": "note:note_03df8539d51f"
        },
        "state": "working",
        "working_note": {
         "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
-        "created_at": "2026-10-19T03:41:10Z",
+        "created_at": "2026-10-19T08:34:26Z",
         "deleted": false,
-        "id": "note_cc6109412739",
-        "last_modified": "2026-10-19T03:41:10Z",
+        "id": "note_03df8539d51f",
+        "last_modified": "2026-10-19T08:34:26Z",
         "tags": [],
         "title": "Ledger cutover risks",
-        "updated_at": "2026-10-19T03:41:10Z"
+        "updated_at": "2026-10-19T08:34:26Z"
        },
        "working_revision": 1
       }
@@ -552,23 +552,23 @@
    },
    "status": 200
   },
-  "/api/thoughts/for-note/note_cc6109412739": {
+  "/api/thoughts/for-note/note_03df8539d51f": {
    "body": {
     "ownership": "thought",
     "thought": {
      "aggregate_revision": 1,
      "attachment_revision": 0,
-     "attachment_sha256": "87d9c6550d660559f4b61e3351c2e210ba242c70bc2aacca3ac954fd098d148a",
+     "attachment_sha256": "d3ccb3a3f261aa61d062af50fe75d3034cd12e2eb300ddf02488cd2405f3ee56",
      "attachments": [],
      "continuity": {
       "code": "",
       "state": "idle"
      },
      "filing_status": "missing",
-     "id": "thought_53dd28651bc3",
+     "id": "thought_c814f1df3de2",
      "lifecycle_revision": 1,
-     "raw_captured_at": "2026-10-19T03:41:12Z",
-     "raw_id": "thought_53dd28651bc3",
+     "raw_captured_at": "2026-10-19T08:34:28Z",
+     "raw_id": "thought_c814f1df3de2",
      "raw_sha256": "788e6d15ca3c0f011fffbfac40a4cfc1a03535d0c0d32f3198fc54a00c6a095b",
      "source": {
       "kind": "note"
@@ -577,8 +577,8 @@
      "working_note": {
       "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
       "deleted": false,
-      "id": "note_cc6109412739",
-      "last_modified": "2026-10-19T03:41:10Z",
+      "id": "note_03df8539d51f",
+      "last_modified": "2026-10-19T08:34:26Z",
       "tags": [],
       "title": "Ledger cutover risks"
      },
@@ -587,7 +587,7 @@
    },
    "status": 200
   },
-  "/api/thoughts/thought_53dd28651bc3/context": {
+  "/api/thoughts/thought_c814f1df3de2/context": {
    "body": {
     "attachments": [],
     "default_context": {
@@ -603,34 +603,34 @@
    },
    "status": 200
   },
-  "/api/thoughts/thought_53dd28651bc3/original": {
+  "/api/thoughts/thought_c814f1df3de2/original": {
    "body": {
     "thought": {
      "aggregate_revision": 1,
      "attachment_revision": 0,
-     "attachment_sha256": "87d9c6550d660559f4b61e3351c2e210ba242c70bc2aacca3ac954fd098d148a",
+     "attachment_sha256": "d3ccb3a3f261aa61d062af50fe75d3034cd12e2eb300ddf02488cd2405f3ee56",
      "attachments": [],
      "continuity": {
       "code": "",
       "state": "idle"
      },
      "filing_status": "missing",
-     "id": "thought_53dd28651bc3",
+     "id": "thought_c814f1df3de2",
      "lifecycle_revision": 1,
-     "raw_captured_at": "2026-10-19T03:41:12Z",
-     "raw_id": "thought_53dd28651bc3",
+     "raw_captured_at": "2026-10-19T08:34:28Z",
+     "raw_id": "thought_c814f1df3de2",
      "raw_sha256": "788e6d15ca3c0f011fffbfac40a4cfc1a03535d0c0d32f3198fc54a00c6a095b",
      "raw_text": "- reconciliation job slow\n- rollback plan owner: Jordan",
      "source": {
       "kind": "note",
-      "ref": "note:note_cc6109412739"
+      "ref": "note:note_03df8539d51f"
      },
      "state": "working",
      "working_note": {
       "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
       "deleted": false,
-      "id": "note_cc6109412739",
-      "last_modified": "2026-10-19T03:41:10Z",
+      "id": "note_03df8539d51f",
+      "last_modified": "2026-10-19T08:34:26Z",
       "tags": [],
       "title": "Ledger cutover risks"
      },
@@ -639,7 +639,7 @@
    },
    "status": 200
   },
-  "/api/thoughts/thought_53dd28651bc3/workbench": {
+  "/api/thoughts/thought_c814f1df3de2/workbench": {
    "body": {
     "actions": {
      "ambient": [
@@ -673,7 +673,7 @@
      }
     },
     "process_scope": {
-     "hub_id": "hub_8fa643dc6acf56f5b2bb1dd7d75b63df",
+     "hub_id": "hub_0c43b1be4237a65976e4853982bb2273",
      "kind": "hub_local",
      "state": "unavailable"
     },
@@ -683,17 +683,17 @@
     "thought": {
      "aggregate_revision": 1,
      "attachment_revision": 0,
-     "attachment_sha256": "87d9c6550d660559f4b61e3351c2e210ba242c70bc2aacca3ac954fd098d148a",
+     "attachment_sha256": "d3ccb3a3f261aa61d062af50fe75d3034cd12e2eb300ddf02488cd2405f3ee56",
      "attachments": [],
      "continuity": {
       "code": "",
       "state": "idle"
      },
      "filing_status": "missing",
-     "id": "thought_53dd28651bc3",
+     "id": "thought_c814f1df3de2",
      "lifecycle_revision": 1,
-     "raw_captured_at": "2026-10-19T03:41:12Z",
-     "raw_id": "thought_53dd28651bc3",
+     "raw_captured_at": "2026-10-19T08:34:28Z",
+     "raw_id": "thought_c814f1df3de2",
      "raw_sha256": "788e6d15ca3c0f011fffbfac40a4cfc1a03535d0c0d32f3198fc54a00c6a095b",
      "source": {
       "kind": "note"
@@ -702,8 +702,8 @@
      "working_note": {
       "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
       "deleted": false,
-      "id": "note_cc6109412739",
-      "last_modified": "2026-10-19T03:41:10Z",
+      "id": "note_03df8539d51f",
+      "last_modified": "2026-10-19T08:34:26Z",
       "tags": [],
       "title": "Ledger cutover risks"
      },
@@ -712,8 +712,8 @@
     "workspace_cursor": {
      "aggregate_revision": 1,
      "continuity_revision": 0,
-     "hub_id": "hub_8fa643dc6acf56f5b2bb1dd7d75b63df",
-     "thought_id": "thought_53dd28651bc3"
+     "hub_id": "hub_0c43b1be4237a65976e4853982bb2273",
+     "thought_id": "thought_c814f1df3de2"
     },
     "workspace_state": "idle"
    },
@@ -754,7 +754,7 @@
       "builtin": true,
       "channel": "file",
       "connection": null,
-      "created_at": "2026-10-19T03:41:10+00:00",
+      "created_at": "2026-10-19T08:34:26+00:00",
       "id": "holdspeak-folder",
       "name": "HoldSpeak folder",
       "parked_at": null,
@@ -763,7 +763,7 @@
       "target": {
        "builtin": "documents",
        "display": "~/Documents/HoldSpeak/Sent",
-       "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.SOsnd2ayb0/Documents/HoldSpeak/Sent"
+       "folder": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/tmp.zTwouDm9St/Documents/HoldSpeak/Sent"
       },
       "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af"
      }
@@ -857,13 +857,13 @@
     "arming": [],
     "blockers": [],
     "complete": true,
-    "computedAt": "2026-10-18T21:41:12.783448-06:00",
+    "computedAt": "2026-10-19T02:34:28.447075-06:00",
     "count": 0,
     "coverage": [
      {
       "kind": "coder",
       "label": "Agents",
-      "observed_at": "2026-10-19T03:41:12.795406+00:00",
+      "observed_at": "2026-10-19T08:34:28.457618+00:00",
       "project_id": "",
       "reason": null,
       "repair": null,
@@ -898,10 +898,10 @@
    "body": {
     "directories": [
      {
-      "created_at": "2026-10-19T03:41:10Z",
+      "created_at": "2026-10-19T08:34:26Z",
       "deleted": false,
       "id": "hs-seed-inbox",
-      "last_modified": "2026-10-19T03:41:10Z",
+      "last_modified": "2026-10-19T08:34:26Z",
       "member_ids": [],
       "name": "Inbox",
       "name_normalized": "inbox",
@@ -990,13 +990,13 @@
     "notes": [
      {
       "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
-      "created_at": "2026-10-19T03:41:10Z",
+      "created_at": "2026-10-19T08:34:26Z",
       "deleted": false,
-      "id": "note_cc6109412739",
-      "last_modified": "2026-10-19T03:41:10Z",
+      "id": "note_03df8539d51f",
+      "last_modified": "2026-10-19T08:34:26Z",
       "tags": [],
       "title": "Ledger cutover risks",
-      "updated_at": "2026-10-19T03:41:10Z"
+      "updated_at": "2026-10-19T08:34:26Z"
      }
     ]
    },
@@ -1135,13 +1135,13 @@
        "deleted": false,
        "id": "hs-seed-inbox",
        "kind": "directory",
-       "last_modified": "2026-10-19T03:41:10Z"
+       "last_modified": "2026-10-19T08:34:26Z"
       },
       "value": {
-       "created_at": "2026-10-19T03:41:10Z",
+       "created_at": "2026-10-19T08:34:26Z",
        "deleted": false,
        "id": "hs-seed-inbox",
-       "last_modified": "2026-10-19T03:41:10Z",
+       "last_modified": "2026-10-19T08:34:26Z",
        "name": "Inbox",
        "name_normalized": "inbox",
        "parent_id": null
@@ -1158,16 +1158,16 @@
        "deleted": false,
        "id": "desktop:intel",
        "kind": "model",
-       "last_modified": "2026-10-19T03:41:10Z"
+       "last_modified": "2026-10-19T08:34:26Z"
       },
       "value": {
        "capabilities": [
         "language"
        ],
-       "created_at": "2026-10-19T03:41:10Z",
+       "created_at": "2026-10-19T08:34:26Z",
        "deleted": false,
        "id": "desktop:intel",
-       "last_modified": "2026-10-19T03:41:10Z",
+       "last_modified": "2026-10-19T08:34:26Z",
        "name": "Qwen3.5-4B-Q4_K_M",
        "node": "desktop"
       }
@@ -1177,19 +1177,19 @@
      {
       "meta": {
        "deleted": false,
-       "id": "note_cc6109412739",
+       "id": "note_03df8539d51f",
        "kind": "note",
-       "last_modified": "2026-10-19T03:41:10Z"
+       "last_modified": "2026-10-19T08:34:26Z"
       },
       "value": {
        "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
-       "created_at": "2026-10-19T03:41:10Z",
+       "created_at": "2026-10-19T08:34:26Z",
        "deleted": false,
-       "id": "note_cc6109412739",
-       "last_modified": "2026-10-19T03:41:10Z",
+       "id": "note_03df8539d51f",
+       "last_modified": "2026-10-19T08:34:26Z",
        "tags": [],
        "title": "Ledger cutover risks",
-       "updated_at": "2026-10-19T03:41:10Z"
+       "updated_at": "2026-10-19T08:34:26Z"
       }
      }
     ],
@@ -1203,20 +1203,20 @@
    },
    "status": 200
   },
-  "/api/thoughts/for-note/note_cc6109412739": {
+  "/api/thoughts/for-note/note_03df8539d51f": {
    "body": {
     "note": {
      "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
      "deleted": false,
-     "id": "note_cc6109412739",
-     "last_modified": "2026-10-19T03:41:10Z",
+     "id": "note_03df8539d51f",
+     "last_modified": "2026-10-19T08:34:26Z",
      "tags": [],
      "title": "Ledger cutover risks"
     },
     "ownership": "ordinary",
     "source_precondition": {
      "content_sha256": "9cdbeca02ec0b960935f25f9a6c5f1318ee8d129a55d5590a1d831db501d35ef",
-     "last_modified": "2026-10-19T03:41:10Z"
+     "last_modified": "2026-10-19T08:34:26Z"
     }
    },
    "status": 200
@@ -1240,23 +1240,23 @@
    "status": 200
   }
  },
- "note_id": "note_cc6109412739",
+ "note_id": "note_03df8539d51f",
  "open": {
   "answer": {
    "thought": {
     "aggregate_revision": 1,
     "attachment_revision": 0,
-    "attachment_sha256": "87d9c6550d660559f4b61e3351c2e210ba242c70bc2aacca3ac954fd098d148a",
+    "attachment_sha256": "d3ccb3a3f261aa61d062af50fe75d3034cd12e2eb300ddf02488cd2405f3ee56",
     "attachments": [],
     "continuity": {
      "code": "",
      "state": "idle"
     },
     "filing_status": "missing",
-    "id": "thought_53dd28651bc3",
+    "id": "thought_c814f1df3de2",
     "lifecycle_revision": 1,
-    "raw_captured_at": "2026-10-19T03:41:12Z",
-    "raw_id": "thought_53dd28651bc3",
+    "raw_captured_at": "2026-10-19T08:34:28Z",
+    "raw_id": "thought_c814f1df3de2",
     "raw_sha256": "788e6d15ca3c0f011fffbfac40a4cfc1a03535d0c0d32f3198fc54a00c6a095b",
     "source": {
      "kind": "note"
@@ -1265,8 +1265,8 @@
     "working_note": {
      "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
      "deleted": false,
-     "id": "note_cc6109412739",
-     "last_modified": "2026-10-19T03:41:10Z",
+     "id": "note_03df8539d51f",
+     "last_modified": "2026-10-19T08:34:26Z",
      "tags": [],
      "title": "Ledger cutover risks"
     },
@@ -1274,7 +1274,7 @@
    }
   },
   "request": {
-   "note_id": "note_cc6109412739"
+   "note_id": "note_03df8539d51f"
   }
  },
  "reopen": {
@@ -1282,17 +1282,17 @@
    "thought": {
     "aggregate_revision": 1,
     "attachment_revision": 0,
-    "attachment_sha256": "87d9c6550d660559f4b61e3351c2e210ba242c70bc2aacca3ac954fd098d148a",
+    "attachment_sha256": "d3ccb3a3f261aa61d062af50fe75d3034cd12e2eb300ddf02488cd2405f3ee56",
     "attachments": [],
     "continuity": {
      "code": "",
      "state": "idle"
     },
     "filing_status": "missing",
-    "id": "thought_53dd28651bc3",
+    "id": "thought_c814f1df3de2",
     "lifecycle_revision": 1,
-    "raw_captured_at": "2026-10-19T03:41:12Z",
-    "raw_id": "thought_53dd28651bc3",
+    "raw_captured_at": "2026-10-19T08:34:28Z",
+    "raw_id": "thought_c814f1df3de2",
     "raw_sha256": "788e6d15ca3c0f011fffbfac40a4cfc1a03535d0c0d32f3198fc54a00c6a095b",
     "source": {
      "kind": "note"
@@ -1301,8 +1301,8 @@
     "working_note": {
      "body_markdown": "- reconciliation job slow\n- rollback plan owner: Jordan",
      "deleted": false,
-     "id": "note_cc6109412739",
-     "last_modified": "2026-10-19T03:41:10Z",
+     "id": "note_03df8539d51f",
+     "last_modified": "2026-10-19T08:34:26Z",
      "tags": [],
      "title": "Ledger cutover risks"
     },
@@ -1310,9 +1310,9 @@
    }
   },
   "request": {
-   "note_id": "note_cc6109412739"
+   "note_id": "note_03df8539d51f"
   }
  },
- "thought_id": "thought_53dd28651bc3",
+ "thought_id": "thought_c814f1df3de2",
  "title": "Ledger cutover risks"
 }
