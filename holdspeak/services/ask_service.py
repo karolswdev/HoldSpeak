@@ -158,6 +158,27 @@ def readable_title(ref: str, title: str) -> str:
     return name
 
 
+#: The About kinds read as their records, not their title (Betterment Q5).
+_CONTAINER_KINDS = {"project": "project", "zone": "zone", "directory": "zone"}
+
+
+def _containers_as_refs(context: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[str]]:
+    """Split the About entries that are containers (a project, a drawer) from
+    the rest: each container becomes a qualified grounding ref."""
+    kept: list[dict[str, Any]] = []
+    refs: list[str] = []
+    for entry in context:
+        if isinstance(entry, dict):
+            ref = str(entry.get("ref") or "")
+            kind = (ref.split(":", 1)[0] if ":" in ref else str(entry.get("kind") or "")).strip().lower()
+            cid = ref.split(":", 1)[1] if ":" in ref else str(entry.get("id") or "").strip()
+            if kind in _CONTAINER_KINDS and cid:
+                refs.append(f"{_CONTAINER_KINDS[kind]}:{cid}")
+                continue
+        kept.append(entry)
+    return kept, refs
+
+
 @observe_service
 class AskService:
     def __init__(self, db: Database, hub_model: Callable[[], str] | None = None,
@@ -259,6 +280,16 @@ class AskService:
         # and grounding still read the question alone.
         asked = _with_history(prompt, history)
         lens = str(lens or "Ask").strip() or "Ask"
+        # Betterment Q5: a project or a drawer in About is read as its records
+        # (a project: its meetings, notes, decisions and open items; a drawer:
+        # its notes), never as its title alone. They go to the grounding refs,
+        # which hydrate a container by its members.
+        container_refs: list[str] = []
+        if frozen_grounding is None:
+            context, container_refs = _containers_as_refs(context or [])
+        if container_refs:
+            grounding = dict(grounding) if isinstance(grounding, dict) else {}
+            grounding["refs"] = list(dict.fromkeys([*(grounding.get("refs") or []), *container_refs]))
         material, context_ids, context_titles = self._assemble_material(context or [])
         frozen_system_instruction = ""
         if frozen_grounding is not None:

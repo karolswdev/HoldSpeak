@@ -8,35 +8,43 @@ import { useDesk } from "./store";
 import { primitiveCan } from "../lib/primitives";
 import { handKindOf } from "./agentHand";
 import { deleteSeatShown } from "./deleteSeat";
+import { askableKind } from "./askAbout";
 
 /** Object menus only list verbs the selected kind can run. State conditions
  * (for example a missing delete receipt) use the registry's ghost reason;
  * kind conditions are removed from this menu so every remaining row acts. */
-function offeredForKind(v: Verb, kind: WorldObject["kind"]): boolean {
+/** A kind's capability; a kind that is not a primitive (a person's window) has none. */
+function can(kind: string, capability: Parameters<typeof primitiveCan>[1]): boolean {
+  try {
+    return primitiveCan(kind as WorldObject["kind"], capability);
+  } catch {
+    return false;
+  }
+}
+
+function offeredForKind(v: Verb, kind: WorldObject["kind"] | string): boolean {
   switch (v.id) {
     case "object.open":
       return true;
     case "object.file":
       return kind !== "directory";
-    case "object.ask-project":
     case "object.draft-update":
       return kind === "project";
-    case "object.ask":
-      return primitiveCan(kind, "ask");
+    // Betterment Q5: Ask about this, on every object he can ask about.
+    case "object.ask-about":
+      return askableKind(kind);
     case "object.hand-to-agent":
-      return primitiveCan(kind, "hand") && handKindOf(kind) !== null;
-    case "object.continue-in-thread":
-      return new Set(["meeting", "note", "artifact", "decision", "recipe", "people"]).has(kind);
+      return can(kind, "hand") && handKindOf(kind as WorldObject["kind"]) !== null;
     case "object.edit":
-      return primitiveCan(kind, "edit");
+      return can(kind, "edit");
     case "object.rename":
-      return kind !== "directory" && primitiveCan(kind, "rename");
+      return kind !== "directory" && can(kind, "rename");
     case "object.duplicate":
-      return primitiveCan(kind, "duplicate");
+      return can(kind, "duplicate");
     case "object.delete":
-      return primitiveCan(kind, "delete") && deleteSeatShown();
+      return can(kind, "delete") && deleteSeatShown();
     case "object.archive":
-      return kind === "project" && primitiveCan(kind, "archive");
+      return kind === "project" && can(kind, "archive");
     default:
       return true;
   }
@@ -54,14 +62,19 @@ function item(v: Verb, ctx: VerbContext): WorkMenuEntry {
   };
 }
 
-/** The object menu: the object.* verbs, the danger group after a separator. */
+/** The object menu: the object.* verbs, the danger group after a separator.
+ *
+ * Betterment Q5: a row that does not apply is not shown: no greyed row with
+ * its excuse. A ref the desk does not hold as an item (a person's window, an
+ * older meeting) offers only the verbs that work without one. */
 export function objectMenuEntries(target: { ref: string }): WorkMenuEntry[] {
   const ctx: VerbContext = { selectedRef: target.ref };
   const verbs = menuVerbs("object");
   const object = objectByRef(useDesk.getState().items, target.ref);
-  const offered = object
-    ? verbs.filter((v) => offeredForKind(v, object.kind))
-    : verbs;
+  const kind = object?.kind ?? target.ref.split(":", 1)[0];
+  const offered = verbs
+    .filter((v) => offeredForKind(v, kind))
+    .filter((v) => !v.ghost(ctx));
   const ordinary = offered.filter((v) => v.group !== "danger");
   const danger = offered.filter((v) => v.group === "danger");
   return [
@@ -76,9 +89,18 @@ export function objectMenuEntries(target: { ref: string }): WorkMenuEntry[] {
  * Agents, workflows, Knowledge and Sequences are not on the desk, so their
  * windows carry their object verbs (Delete through the one receipt). */
 export function windowObjectRef(winId: string | null): string | null {
-  if (!winId || !winId.startsWith("pullout:")) return null;
+  if (!winId) return null;
+  // Betterment Q5: the Meetings window shows one meeting; its Object menu is that meeting's.
+  if (winId === "surface-meetings") {
+    const scope = String(useDesk.getState().windowsById?.[winId]?.scope ?? "");
+    return scope.startsWith("meeting:") && scope.length > "meeting:".length ? scope : null;
+  }
+  if (!winId.startsWith("pullout:")) return null;
   const ref = winId.slice("pullout:".length);
-  return objectByRef(useDesk.getState().items, ref) ? ref : null;
+  if (objectByRef(useDesk.getState().items, ref)) return ref;
+  // A person is not a desk item; her window is still hers (Betterment Q5).
+  if (ref.startsWith("people:") && ref !== "people:people" && !ref.startsWith("people:project:")) return ref;
+  return ref.startsWith("meeting:") && ref.length > "meeting:".length ? ref : null;
 }
 
 /** The window menu's `Object ▸`: the object verbs of the window's object.

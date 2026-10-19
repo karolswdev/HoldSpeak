@@ -89,8 +89,11 @@ export function menuBarObjectTarget(
   const ref = fromWindow ?? (selectedIds.length === 1 ? selectedIds[0] : null);
   if (!ref) return null;
   const object = objectByRef(items, ref);
-  if (!object) return null;
-  return { ref, kind: object.kind, fromWindow: Boolean(fromWindow) };
+  // Betterment Q5: a window's object the desk does not hold as an item (a
+  // person, an older meeting) is still the Object menu's target.
+  const kind = object?.kind ?? (fromWindow ? ref.split(":", 1)[0] : null);
+  if (!kind) return null;
+  return { ref, kind, fromWindow: Boolean(fromWindow) };
 }
 
 /** PARKED (betterment shell S1): the phone's hand-written Go lists. Go on

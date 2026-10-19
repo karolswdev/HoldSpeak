@@ -58,17 +58,16 @@ describe("Ask: visible receipt egress and ordinary status, no host and no receip
     return view;
   }
 
-  it("the Answer turn and footer disclose the actual LAN route, with no host string and no receipt id", async () => {
+  it("the Answer turn discloses the actual LAN route once, with no host string and no receipt id", async () => {
     const { container } = await askWith(LAN_ASK);
     const answerTurn = [...container.querySelectorAll(".surface-traffic-turn")]
       .find((node) => node.querySelector(".surface-traffic-prefix")?.textContent === "Answer")!;
     const lamp = answerTurn.querySelector(".gadget-lamp")!;
     expect(lamp).toHaveTextContent("LAN");
     await waitFor(() => expect(container.querySelector(".surface-traffic .gadget-lamp")).toBeVisible());
-    const chip = container.querySelector(".surface-footer-egress .gadget-chip-egress")!;
-    expect(chip.textContent).toBe("LAN");
-    expect(chip).toHaveAttribute("data-scope", "local");
-    await waitFor(() => expect(container.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeVisible());
+    // Betterment Q5 (FOLLOWUPS Q4): the route is said once, on the answer; the footer has no second chip.
+    expect(container.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeNull();
+    expect(container.querySelectorAll(".gadget-lamp")).toHaveLength(1);
     expect(container.querySelector(".surface-footer-receipt")!.textContent).toMatch(/^(Answered in [1-9]\d* s)?$/);
     expect(container.textContent).not.toContain("192.168.1.43");
     expect(container.textContent).not.toContain("a91f");
@@ -106,9 +105,7 @@ describe("Ask: visible receipt egress and ordinary status, no host and no receip
     const lamp = container.querySelector(".surface-traffic .gadget-lamp")!;
     expect(lamp.textContent).toBe("CLOUD");
     await waitFor(() => expect(container.querySelector(".surface-traffic .gadget-lamp")).toBeVisible());
-    const chip = container.querySelector(".surface-footer-egress .gadget-chip-egress")!;
-    expect(chip.textContent).toBe("CLOUD");
-    expect(chip).toHaveAttribute("data-scope", "cloud");
+    expect(container.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeNull();
     const error = container.querySelector("[data-testid=run-line][data-state=failure]")!;
     expect(error).toHaveTextContent("did not answer");
     expect(error).toBeVisible();
@@ -134,8 +131,8 @@ describe("Ask: visible receipt egress and ordinary status, no host and no receip
         route: { lamp: "private_network", host: "fallback-box", model: "fallback-model", receipt: "exec-fallback", fallback: true },
       };
       const view = await askWith(fallback, 200, () => clock.mockReturnValue(4_100));
-      const chip = view.container.querySelector(".surface-footer-egress .gadget-chip-egress")!;
-      expect(chip.textContent).toBe("LAN");
+      expect(view.container.querySelector(".surface-traffic .gadget-lamp")!.textContent).toBe("LAN");
+      expect(view.container.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeNull();
       const completedStatus = "Answered in 3 s · Fallback";
       expect(view.container.querySelector(".surface-footer-receipt")?.textContent).toBe(completedStatus);
       expect(view.container.querySelector("[data-testid=run-line]")).toBeNull();

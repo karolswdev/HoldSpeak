@@ -226,3 +226,27 @@ def test_a_picked_source_is_looked_at_by_its_name(hub) -> None:
     about = [r for r in thread["refs"] if r["origin"] == "reference"]
     assert [(r["ref_kind"], r["ref_id"], json.loads(r["frozen_json"])["title"]) for r in about] == [
         ("note", "n-mira", "1:1 with Mira")]
+
+
+def test_a_project_in_about_is_read_as_its_records(hub) -> None:
+    """Betterment Q5: a project chip in About (sent as the selection, as the
+    Room's Ask and Ask about this send it) grounds on the project's records,
+    not its title alone."""
+    hub.db.projects.create_project(project_id="p-ledger", name="Ledger cutover", description="", keywords=[])
+    hub.db.notes.upsert(
+        note_id="n-freeze", title="Freeze plan",
+        body_markdown="The quokka gate holds the freeze until the reconciliation job runs under ten minutes.",
+    )
+    hub.db.project_relationships.upsert(project_id="p-ledger", resource_ref="note:n-freeze")
+    client, seen = _ask_app(hub, ["The reconciliation job must run under ten minutes first."])
+    body = client.post("/api/ask", json={
+        "prompt": "What blocks the freeze?", "lens": "Ask", "thread": True,
+        "context": [{"id": "p-ledger", "kind": "project", "title": "Ledger cutover", "ref": "project:p-ledger"}],
+    }).json()
+    assert body["output"].startswith("The reconciliation job")
+    assert "quokka gate" in seen[-1], seen[-1][:2000]
+    assert {"ref": "note:n-freeze", "title": "Freeze plan"} in body["looked_at"]
+    # The question's About is still the project.
+    thread = client.get(f"/api/threads/{body['thread_id']}").json()
+    about = [(r["ref_kind"], r["ref_id"]) for r in thread["refs"] if r["origin"] == "reference"]
+    assert about == [("project", "p-ledger")]

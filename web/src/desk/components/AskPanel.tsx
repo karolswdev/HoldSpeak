@@ -43,27 +43,19 @@ import {
   type AskTurn,
   type LookedAt,
 } from "../ask";
-import {
-  buildGrounding,
-  emptyGrounding,
-  groundingReceiptRows,
-  groundingTokens,
-  railsTokens,
-  type GroundingSelection,
-  type RailsPick,
-} from "../grounding";
-import { GroundingSection } from "./GroundingSection";
-import { RailsPicker } from "./RailsPicker";
+import { AboutPicker, aboutCandidates, type AboutCandidate } from "./about/AboutPicker";
+import { aboutTarget, type AboutChip } from "../askAbout";
+import { HAND_MIME } from "../hand/drag";
 import { MicButton } from "./MicButton";
 import { apiFetch, readableError } from "../../lib/api";
-import { useOnDeskChanged } from "../useDeskChangedRefresh";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
 import { DeskWindowFrame } from "./DeskWindow";
 import { Material } from "../surface/Material";
 import { ScrollHint, SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
-import { LedMeter, FoldGadget, PadGadget } from "../surface/gadgets";
-import { RouteEgressChip, TurnLamp, routeFromWire, type TurnRoute } from "../turnRoute";
+import { FoldGadget, PadGadget } from "../surface/gadgets";
+import { TurnLamp, routeFromWire, type TurnRoute } from "../turnRoute";
+import { NoteSendWells } from "../documentSendsLazy";
 import { Button } from "../../components/signal/Signal";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { reportWriteFailure } from "../hooks/useWriteReceipt";
@@ -126,16 +118,9 @@ function progressWords(progress: AskProgress | null): string {
   return retryWords(progress.attempt, progress.of);
 }
 
-/** The budget figure: 0.3K / 16.4K. */
-const fmtK = (n: number): string => `${(n / 1000).toFixed(1)}K`;
 
 /** Forget waits this long for Undo before the thread is deleted. */
 export const FORGET_UNDO_MS = 10_000;
-
-/** The egress chip names the lamp, never the host (no host strings on Ask). */
-function withoutHost(route: TurnRoute): TurnRoute {
-  return { ...route, host: "" };
-}
 
 /** The face's record of a run he stopped. */
 function stoppedRun(): AskRunResult {
@@ -153,7 +138,17 @@ interface AskRequestSnapshot {
   prompt: string;
   lens: string;
   context: AskContext[];
-  grounding: ReturnType<typeof buildGrounding>;
+  grounding: Parameters<typeof runAsk>[0]["grounding"];
+}
+
+/** Betterment Q6: About's shortcut for no About at all. */
+const WHOLE_DESK = "desk:whole";
+const THIS_WEEK = "meetings:this_week";
+
+/** Monday 00:00 of this week, local time. */
+function weekStart(now = new Date()): number {
+  const day = (now.getDay() + 6) % 7;
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - day).getTime();
 }
 
 interface PendingForget {
@@ -181,6 +176,8 @@ export function AskPanel() {
   const [turns, setTurns] = useState<AskTurn[]>([]);
   // The About a reopened thread carries into its follow-ups.
   const [threadAbout, setThreadAbout] = useState<LookedAt[]>([]);
+  // Betterment Q5: what Ask about this put in About (a note, a project, a person).
+  const [seedAbout, setSeedAbout] = useState<AskContext[]>([]);
   const [threadRead, setThreadRead] = useState<{ loading: boolean; error: string }>({ loading: false, error: "" });
   const [sent, setSent] = useState<AskRequestSnapshot | null>(null);
   const [running, setRunning] = useState(false);
@@ -193,11 +190,10 @@ export function AskPanel() {
   const [recentOpen, setRecentOpen] = useState(false);
   const [recent, setRecent] = useState<{ loading: boolean; error: string; rows: ThreadWire[] }>({ loading: false, error: "", rows: [] });
   const [forgotten, setForgotten] = useState<PendingForget | null>(null);
-  const [grounding, setGrounding] = useState<GroundingSelection>(emptyGrounding());
-  const [rails, setRails] = useState<RailsPick[]>([]);
-  const [projects, setProjects] = useState<Array<{ id: string; name: string }>>([]);
-  const [projectsRead, setProjectsRead] = useState<{ loading: boolean; known: boolean; error: string }>({ loading: true, known: false, error: "" });
-  const projectsReads = useRef(0);
+  const projects = useDesk((s) => s.projects);
+  // Betterment Q6: the About picker (+) and the people it can find.
+  const [picking, setPicking] = useState(false);
+  const [people, setPeople] = useState<Array<{ id: string; name: string }>>([]);
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const [passageOpen, setPassageOpen] = useState(true);
   const readingRef = useRef<HTMLDivElement | null>(null);
@@ -272,6 +268,7 @@ export function AskPanel() {
     setThreadId(null);
     setTurns([]);
     setThreadAbout([]);
+    setSeedAbout([]);
     setSent(null);
     setRunning(false);
     setFailedRun(null);
@@ -311,6 +308,7 @@ export function AskPanel() {
     handledNonce.current = askThread.nonce;
     if (askThread.threadId) void loadThread(askThread.threadId);
     else startNew();
+    if (!askThread.threadId && askThread.about?.length) setSeedAbout(askThread.about.map((entry) => ({ ...entry })));
     const question = askThread.question?.trim();
     if (!askThread.threadId && question) {
       setPrompt(question);
@@ -326,13 +324,14 @@ export function AskPanel() {
 
   const [selectedPassage, setSelectedPassage] = useState<AskSelectionHandoff | null>(() => takeAskSelection());
   const context = useMemo(() => {
-    const selected = askContexts(items, selectedIds);
+    const picked = askContexts(items, selectedIds);
+    const selected = [...picked, ...seedAbout.filter((entry) => !picked.some((p) => p.ref === entry.ref))];
     const source = selectedPassage?.source;
     if (!source || source.ref !== selectedPassage.noteRef) return selected;
     // An explicit Note handoff names the saved source, even before a desk
     // collection read or after the floor drops a non-icon selection.
     return [...selected.filter((entry) => entry.ref !== source.ref), { ...source }];
-  }, [items, selectedIds, selectedPassage]);
+  }, [items, selectedIds, selectedPassage, seedAbout]);
   useEffect(() => {
     const onSelection = (event: Event) => {
       const next = (event as CustomEvent<AskSelectionHandoff | null>).detail;
@@ -354,40 +353,42 @@ export function AskPanel() {
       setSelectedPassage(null);
     }
   }, [context, items.note, selectedIds, selectedPassage]);
-  const readProjects = useCallback(async () => {
-    const order = ++projectsReads.current;
-    setProjectsRead((current) => ({ ...current, loading: true }));
-    try {
-      const body = await apiFetch<{ projects?: Array<{ id: string; name: string; is_archived?: boolean }> }>("/api/projects");
-      if (!mounted.current || order !== projectsReads.current) return;
-      setProjects((body.projects ?? []).filter((project) => !project.is_archived));
-      setProjectsRead({ loading: false, known: true, error: "" });
-    } catch (error) {
-      if (mounted.current && order === projectsReads.current) setProjectsRead((current) => ({ ...current, loading: false, error: readableError(error) }));
-    }
+  // Betterment Q6: About finds people by name (a locked or unset People
+  // store answers nothing: no people rows).
+  useEffect(() => {
+    let live = true;
+    void apiFetch<{ relationships?: Array<Record<string, unknown>> }>("/api/people/relationships")
+      .then((body) => {
+        if (!live) return;
+        setPeople((body?.relationships ?? []).flatMap((row) => {
+          const id = String(row.id ?? "");
+          const name = String(row.display_name ?? "").trim();
+          return id && name && row.state !== "archived" ? [{ id, name }] : [];
+        }));
+      })
+      .catch(() => undefined);
+    return () => { live = false; };
   }, []);
-  useEffect(() => { void readProjects(); }, [readProjects]);
-  useOnDeskChanged(() => { void readProjects(); });
   // Betterment Q7: can the Answers engine use the desk? (the engine line)
   const readDeskTools = useCallback(async () => {
     const can = await readAskEngineTools();
     if (mounted.current) setDeskTools(can);
   }, []);
   useEffect(() => { void readDeskTools(); }, [readDeskTools, engine.model]);
-  const groundableResources = useMemo(
-    () => [
-      ...(items.note || []).map((item) => ({ ref: qualifiedRef("note", item.id), kind: "Note", id: item.id, title: String(item.title || "Note with no title") })),
-      ...(items.kb || []).map((item) => ({ ref: qualifiedRef("kb", item.id), kind: "Knowledge", id: item.id, title: String(item.name || "Collection with no name") })),
-      ...(items.directory || []).map((item) => ({ ref: qualifiedRef("directory", item.id), kind: "Zone", id: item.id, title: String(item.name || "Drawer with no name") })),
-      ...projects.map((project) => ({ ref: `project:${project.id}`, kind: "Project", id: project.id, title: project.name || "Project with no name" })),
-    ],
-    [items, projects],
-  );
-  // The editor receives the server's compatible chain. The Ask window has no
-  // browser-selected destination whose context window it can invent.
-  const limitTokens = 16_384;
-  const groundTokens = groundingTokens(grounding) + railsTokens(rails);
-  const overBudget = groundTokens > limitTokens;
+  // Betterment Q6: everything About can find by name, grouped, newest first;
+  // the shortcuts (my whole desk, this week's meetings, each person, each
+  // project) before he types. Never modes, threads, results or roadmaps.
+  const candidates: AboutCandidate[] = useMemo(() => {
+    const listed = aboutCandidates(
+      { ...items, project: projects.map((p) => ({ kind: "project", id: p.id, name: p.name })) } as Parameters<typeof aboutCandidates>[0],
+      people,
+    ).filter((c) => c.kind !== "set" || c.ref === THIS_WEEK)
+      .map((c) => (c.kind === "person" || c.kind === "project" ? { ...c, shortcut: true } : c));
+    const decisions: AboutCandidate[] = (items.decision ?? []).map((d) => ({
+      ref: qualifiedRef("decision", d.id), kind: "decision", label: String(d.title || "Decision"), at: d.createdAt || undefined,
+    }));
+    return [{ ref: WHOLE_DESK, kind: "set", label: "My whole desk", terms: "everything all desk" }, ...listed, ...decisions];
+  }, [items, projects, people]);
 
   // About: the objects he chose (selection, pickers) and what a reopened
   // thread was about. Empty means his whole desk.
@@ -398,10 +399,54 @@ export function AskPanel() {
       rows.push({ ref, title });
     };
     for (const entry of context) add(entry.ref || qualifiedRef(entry.kind, entry.id), entry.title);
-    for (const entry of groundingReceiptRows(grounding)) add(entry.ref, entry.title);
     for (const entry of threadAbout) add(entry.ref, entry.title);
     return rows;
-  }, [context, grounding, threadAbout]);
+  }, [context, threadAbout]);
+
+  /** Betterment Q6: a pick (or a drop) becomes an About chip. */
+  const addAbout = useCallback((chip: AboutChip) => {
+    setSeedAbout((current) => (current.some((entry) => entry.ref === chip.ref) ? current : [...current, chip]));
+  }, []);
+  const pickAbout = (pick: AboutCandidate) => {
+    if (pick.ref === WHOLE_DESK) {
+      // No About: the question is about his whole desk.
+      setSeedAbout([]);
+      setThreadAbout([]);
+      useDesk.getState().setSelected([]);
+      setPicking(false);
+      return;
+    }
+    if (pick.ref === THIS_WEEK) {
+      addAbout({ id: "this_week", kind: "set", ref: THIS_WEEK, title: pick.label });
+      return;
+    }
+    const known = aboutTarget(pick.ref);
+    if (known) { addAbout(known); return; }
+    const [kind, ...rest] = pick.ref.split(":");
+    const id = rest.join(":");
+    // A person is read by her window's ref (people:<id>), not person:<id>.
+    if (kind === "person") addAbout({ id, kind: "people", ref: `people:${id}`, title: pick.label });
+    else if (id) addAbout({ id, kind, ref: pick.ref, title: pick.label });
+  };
+  const removeAbout = (ref: string) => {
+    setSeedAbout((current) => current.filter((entry) => entry.ref !== ref));
+    setThreadAbout((current) => current.filter((entry) => entry.ref !== ref));
+    const desk = useDesk.getState();
+    desk.setSelected(desk.selectedIds.filter((id) => !askContexts(items, [id]).some((entry) => entry.ref === ref)));
+  };
+  // Betterment Q6: a desk object dropped on the Ask window joins About.
+  const onAboutDragOver = (event: React.DragEvent) => {
+    if (!Array.from(event.dataTransfer?.types ?? []).includes(HAND_MIME)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  };
+  const onAboutDrop = (event: React.DragEvent) => {
+    const ref = event.dataTransfer?.getData(HAND_MIME);
+    if (!ref) return;
+    event.preventDefault();
+    const chip = aboutTarget(ref);
+    if (chip) addAbout(chip);
+  };
 
   const run = async (snapshot: AskRequestSnapshot, invocationId = mintInvocationId()) => {
     if (pendingRequest.current || !mounted.current) return;
@@ -454,24 +499,28 @@ export function AskPanel() {
   };
 
   const ask = () => {
-    if (!prompt.trim() || pendingRequest.current || overBudget) return;
+    if (!prompt.trim() || pendingRequest.current) return;
     const selection = selectedPassage?.text.trim() && context.some((entry) => entry.ref === selectedPassage.noteRef)
       ? { ...selectedPassage }
       : null;
     // Every nested value is built here. Later selections and picker changes
     // cannot rewrite Ask again.
     // A reopened thread's About rides its follow-ups as grounding refs.
-    const picked = buildGrounding(grounding, rails);
     const carried = threadAbout.map((row) => row.ref).filter((ref) => !context.some((entry) => entry.ref === ref));
-    const refs = Array.from(new Set([...(picked?.refs ?? []), ...carried]));
+    // "This week's meetings" is read as this week's meetings when he asks.
+    const since = weekStart();
+    const thisWeek = (items.meeting ?? [])
+      .filter((m) => Date.parse(String(m.startedAt || "")) >= since)
+      .slice(0, 12)
+      .map((m) => ({ id: m.id, kind: "meeting", title: String(m.title || "Meeting"), ref: qualifiedRef("meeting", m.id) }));
+    const asked = context.flatMap((entry) => (entry.ref === THIS_WEEK ? thisWeek : [{ ...entry }]));
+    const refs = Array.from(new Set(carried));
     const snapshot: AskRequestSnapshot = {
       question: prompt.trim(),
       prompt: selectionPrompt(prompt, selection),
       lens,
-      context: context.map((entry) => ({ ...entry })),
-      grounding: refs.length
-        ? { meeting_ids: [], artifact_ids: [], expand: "summary", ...picked, refs }
-        : picked,
+      context: asked,
+      grounding: refs.length ? { meeting_ids: [], artifact_ids: [], expand: "summary", refs } : null,
     };
     return run(snapshot);
   };
@@ -524,19 +573,35 @@ export function AskPanel() {
     await run(sent, next);
   };
 
-  const saveAsNote = async (turn: AskTurn) => {
-    if (saving || saved[turn.key]) return;
+  /** The answer's note: the one Save as note made, or a new one. */
+  const answerNote = async (turn: AskTurn, verb: string): Promise<string | null> => {
+    if (saved[turn.key]) return saved[turn.key];
+    if (saving) return null;
     setSaving(turn.key);
     const ref = await saveAnswerAsNote(turn);
-    if (!mounted.current) return;
+    if (!mounted.current) return null;
     setSaving(null);
     if (!ref) {
-      reportWriteFailure("Save as note", new Error("The answer was not saved as a note. It is still here; try again."));
-      return;
+      reportWriteFailure(verb, new Error("The answer was not saved as a note. It is still here; try again."));
+      return null;
     }
     setSaved((current) => ({ ...current, [turn.key]: ref }));
     markNew(ref.slice("note:".length));
     void useDesk.getState().refresh();
+    return ref;
+  };
+  const saveAsNote = async (turn: AskTurn) => {
+    if (saved[turn.key]) return;
+    await answerNote(turn, "Save as note");
+  };
+  /** Betterment Q5 (FOLLOWUPS Q4): Send… prepares a send of the answer. The
+   *  answer is kept as a note (the document a send carries), and the note's
+   *  Send well unfolds under the answer; he presses Send there. */
+  const [sending, setSending] = useState<string | null>(null);
+  const sendAnswer = async (turn: AskTurn) => {
+    if (sending === turn.key) { setSending(null); return; }
+    const ref = await answerNote(turn, "Send");
+    if (ref && mounted.current) setSending(turn.key);
   };
 
   /** Betterment Q7: Allow once / Deny on a held call. */
@@ -620,7 +685,6 @@ export function AskPanel() {
     ? ""
     : [
         promptRecovered ? "Draft kept" : "",
-        overBudget ? "Too many notes" : "",
         !failedRun && turns.length && finishedElapsedSeconds ? `Answered in ${finishedElapsedSeconds} s` : "",
         lastRoute?.fallback ? "Fallback" : "",
       ].filter(Boolean).join(" · ");
@@ -662,7 +726,7 @@ export function AskPanel() {
       defaultH={640}
       onClose={close}
     >
-      <div className="desk-pullout-body desk-ask-body" onKeyDown={(event) => {
+      <div className="desk-pullout-body desk-ask-body" data-testid="ask-body" onDragOver={onAboutDragOver} onDrop={onAboutDrop} onKeyDown={(event) => {
         // The frame owns Escape from this window. An IME uses Escape to
         // finish composition, so that event must not close the writer.
         if (event.key === "Escape" && event.nativeEvent.isComposing) event.stopPropagation();
@@ -678,29 +742,23 @@ export function AskPanel() {
           <div className="desk-ask-sources desk-ask-about" data-testid="ask-context">
             <span className="desk-ask-about-label">About</span>
             {about.length ? about.map((source) => (
-              <Button key={source.ref} dense variant="ghost" onClick={() => openRef(source.ref)}>{source.title}</Button>
+              <span className="desk-ask-about-chip" key={source.ref} data-testid="ask-about-chip">
+                {source.ref === THIS_WEEK
+                  ? <span className="desk-ask-about-set">{source.title}</span>
+                  : <Button dense variant="ghost" onClick={() => openRef(source.ref)}>{source.title}</Button>}
+                <Button dense variant="ghost" className="desk-ask-about-remove" aria-label={`Remove ${source.title}`} onClick={() => removeAbout(source.ref)}>✕</Button>
+              </span>
             )) : <span className="desk-ask-about-desk">My whole desk</span>}
-            {rails.map((source) => <span className="surface-token" key={`${source.repo}:${source.kind}:${source.id}`}>{source.title}</span>)}
-            {threadAbout.length ? <Button dense variant="ghost" aria-label="Clear About" onClick={() => setThreadAbout([])}>✕</Button> : null}
-          </div>
-          <div className="desk-ask-context-tools">
-            <GroundingSection
-              label="Add to About"
-              showBudget={false}
-              meetings={(items.meeting || []).map((m) => ({ id: m.id, title: String(m.title || "Meeting with no title"), startedAt: m.startedAt }))}
-              resources={groundableResources}
-              selection={grounding}
-              onChange={setGrounding}
-              limitTokens={limitTokens}
-              meter={false}
-            />
-            <RailsPicker showBudget={false} picks={rails} onChange={setRails} limitTokens={limitTokens} meter={false} />
-            {projectsRead.error ? <ActionNotice role="alert" tone="warn" action={{ label: "Retry Projects", onClick: () => void readProjects() }}>
-              <StateChip state="unreachable" label="Projects unavailable" />
-              {projectsRead.known ? <>{" · "}<StateChip state="warning" label="Last read" /></> : null}
-            </ActionNotice> : null}
+            <Button dense variant="ghost" className="desk-ask-about-add" aria-label="Add to About" aria-expanded={picking} onClick={() => setPicking((open) => !open)}>+</Button>
           </div>
         </div></ScrollHint>
+        {/* Betterment Q6: the one About picker, below the About line (never
+            inside its short scroll: the matches stay in view on a phone). */}
+        {picking ? (
+          <div className="desk-ask-about-picker">
+            <AboutPicker candidates={candidates} picked={about.map((row) => row.ref)} onPick={pickAbout} />
+          </div>
+        ) : null}
 
         {hasConversation ? <ScrollHint axis="y" scrollRef={readingRef} className="desk-ask-reading-wrap"><div ref={readingRef} className="conversation-reading desk-ask-reading" role="region" aria-label="Ask conversation" tabIndex={0}><SurfaceTraffic showEmpty={false}>
           {threadRead.loading ? <SurfaceTrafficTurn prefix="Ask"><RunLine phase="running" verb="Opening" /></SurfaceTrafficTurn> : null}
@@ -727,6 +785,7 @@ export function AskPanel() {
                     <Button dense loading={saving === turn.key} onClick={() => void saveAsNote(turn)}>Save as note</Button>
                   )}
                   <Button dense variant="ghost" onClick={() => void copy(turn.answer)}>Copy</Button>
+                  <Button dense variant="ghost" aria-expanded={sending === turn.key} onClick={() => void sendAnswer(turn)}>Send…</Button>
                 </>}
               >
                 <div className="desk-ask-answer"><Material>{turn.answer}</Material></div>
@@ -741,6 +800,11 @@ export function AskPanel() {
                 ) : null}
                 <UsedLines used={usedWithTasks(turn.used, tasks[turn.key])} testPrefix="ask" lookedAt={false} />
                 {saved[turn.key] ? <span className="desk-ask-saved" role="status">Saved to your desk</span> : null}
+                {sending === turn.key && saved[turn.key] ? (
+                  <div className="desk-ask-send-well" data-testid="ask-send">
+                    <NoteSendWells id={saved[turn.key].slice("note:".length)} title={turn.question} />
+                  </div>
+                ) : null}
               </SurfaceTrafficTurn>
             </div>
           ))}
@@ -845,23 +909,19 @@ export function AskPanel() {
               ) : (
                 <Button
                   variant="primary"
-                  disabled={!prompt.trim() || overBudget}
-                  title={overBudget ? "Too many notes" : undefined}
+                  disabled={!prompt.trim()}
                   onClick={() => void ask()}
                 >Ask</Button>
               )}
             </div>
           </div>
-          {overBudget ? <div className="desk-ask-rack-lip">
-            <LedMeter label={`Budget ${fmtK(groundTokens)}/${fmtK(limitTokens)}`} value={limitTokens > 0 ? groundTokens / limitTokens : 0} />
-          </div> : null}
         </div>
       </div>
 
+      {/* Betterment Q5 (FOLLOWUPS Q4): the route is said once, as the lamp on
+          the answer that left the machine (the Ask window names no host). */}
       <SurfaceFooter
-        className={lastRoute ? "turn-route-footer" : undefined}
-        egress={lastRoute ? <RouteEgressChip route={withoutHost(lastRoute)} /> : null}
-        receipt={copyReceipt || (statusLine ? <span className="surface-footer-receipt-line" data-tone={overBudget ? "danger" : undefined} role="status">{statusLine}</span> : null)}
+        receipt={copyReceipt || (statusLine ? <span className="surface-footer-receipt-line" role="status">{statusLine}</span> : null)}
         verbs={threadId || turns.length ? <>
           <FoldGadget title="More" className="desk-ask-more">
             <Button dense variant="ghost" onClick={forget}>Forget</Button>

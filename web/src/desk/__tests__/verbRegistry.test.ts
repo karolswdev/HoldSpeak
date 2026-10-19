@@ -74,7 +74,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
     const ids = VERBS.map((v) => v.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).toContain("go.ask");
-    expect(ids).toContain("object.ask");
+    expect(ids).toContain("object.ask-about");
     for (const v of VERBS) {
       expect(verbLabel(v, CTX).length).toBeGreaterThan(0);
       expect(["floor", "object", "go", "window", "system", "thread"]).toContain(v.scope);

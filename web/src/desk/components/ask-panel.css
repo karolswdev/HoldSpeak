@@ -294,3 +294,27 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+
+/* Betterment Q6: About is one line of chips, each with its ✕, then +. */
+.desk-ask-about-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--line);
+}
+.desk-ask-about-set {
+  font: 400 13px / 1.5 var(--font-sans);
+  padding-inline: 8px;
+}
+.desk-next .desk-ask-about-remove,
+.desk-next .desk-ask-about-add {
+  min-width: 28px;
+}
+.desk-ask-send-well {
+  margin-top: 8px;
+}
+.desk-ask-about-picker {
+  flex: none;
+  max-height: 45%;
+  overflow: auto;
+}

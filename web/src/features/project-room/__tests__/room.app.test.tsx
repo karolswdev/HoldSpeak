@@ -36,6 +36,8 @@ import R174 from "./room-wires/receipts174.json";
 // again (tests/unit/test_desk_room_ask.py records it from the real routes).
 import Q1 from "./room-wires/roomAskQ1.json";
 import { runAsk } from "../../../desk/ask";
+import { AskPanel } from "../../../desk/components/AskPanel";
+import ASK_THREAD from "../../../test/wire/ask.thread.wire.json";
 
 vi.mock("../../../desk/ask", async () => {
   const actual = await vi.importActual<typeof import("../../../desk/ask")>("../../../desk/ask");
@@ -1498,77 +1500,57 @@ describe("Betterment P1: Write update shows the records draft at once; the engin
   }, 15000);
 });
 
-/* ── Betterment Q1: the Room's Ask tells the truth ─────────────────── */
+/* ── Betterment Q5: the Room's Ask field opens the one Ask window ──── */
 
-describe("Betterment Q1: Ask this project says why in words, and Ask again answers", () => {
-  // The /api/ask and /api/ask-tasks reads go through `apiRequest` (fetch), so
-  // the recorded answers are served at fetch; the Room's other reads at apiFetch.
+describe("Betterment Q5: the Room's Ask field opens Ask with the project in About and runs it", () => {
+  // The /api/ask read goes through `apiRequest` (fetch): the recorded Ask answer
+  // (ask.thread.wire.json, tests/unit/test_desk_ask.py) is served at fetch; the
+  // Room's own reads at apiFetch (the recorded Room of roomAskQ1.json).
   const realRunAsk = vi.importActual<typeof import("../../../desk/ask")>("../../../desk/ask");
-  const fetched: string[] = [];
-  let unfinished: unknown = Q1.unfinished_after_resume;
+  const asked: Array<Record<string, unknown>> = [];
 
   function reply(status: number, body: unknown): Response {
     return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
   }
 
+  function AskHost() {
+    const open = useDesk((state) => state.askOpen);
+    return open ? <AskPanel /> : null;
+  }
+
   beforeEach(async () => {
     const actual = await realRunAsk;
     vi.mocked(runAsk).mockImplementation(actual.runAsk);
-    fetched.length = 0;
-    unfinished = Q1.unfinished_after_resume;
+    asked.length = 0;
+    useDesk.setState({ askOpen: false, askThread: null, selectedIds: [] });
     vi.stubGlobal("fetch", vi.fn(async (input: string, init: RequestInit = {}) => {
-      const path = String(input).split("?")[0];
-      const key = `${init.method ?? "GET"} ${path}`;
-      fetched.push(key);
-      const task = Q1.save.task.id;
-      if (key === `POST /api/projects/${Q1.project_id}/ask-tasks`) return reply(201, Q1.save);
-      if (key === "POST /api/ask") return reply(Q1.ask_failed.status, Q1.ask_failed.body);
-      if (key === `POST /api/ask-tasks/${task}/stopped`) { unfinished = Q1.unfinished_after_stop; return reply(200, Q1.stopped); }
-      if (key === `POST /api/ask-tasks/${task}/resume`) { unfinished = Q1.unfinished_after_resume; return reply(200, Q1.resume); }
-      if (key === "GET /api/ask-tasks") return reply(200, unfinished);
+      const key = `${init.method ?? "GET"} ${String(input).split("?")[0]}`;
+      if (key === "POST /api/ask") {
+        asked.push(JSON.parse(String(init.body)));
+        return reply(200, ASK_THREAD.first);
+      }
       return reply(404, {});
     }));
     wire({ [room(Q1.project_id)]: () => clone(Q1.room) });
   });
-  afterEach(() => { vi.unstubAllGlobals(); });
+  afterEach(() => { vi.unstubAllGlobals(); useDesk.setState({ askOpen: false, askThread: null }); });
 
-  it("the failure is the reason in words with Ask again, never the hub's sentence; Ask again answers", async () => {
-    const { container } = render(<WindowHarness scope={`project:${Q1.project_id}`} />);
+  it("Enter in the field: the Ask window shows the project chip, asks the question, and the answer is there", async () => {
+    const name = Q1.room.project.name;
+    render(<><WindowHarness scope={`project:${Q1.project_id}`} /><AskHost /></>);
     const well = await screen.findByLabelText("Ask this project");
-    fireEvent.change(well, { target: { value: Q1.save.task.purpose } });
+    fireEvent.change(well, { target: { value: "What blocks the freeze?" } });
     fireEvent.keyDown(well, { key: "Enter" });
 
-    const row = await screen.findByTestId(`room-unfinished-${Q1.save.task.id}`);
-    // The reason token the hub sent, in words (runWords.ts).
-    expect(within(row).getByText("Engine did not answer")).toBeInTheDocument();
-    // The hub's sentence and its route token never reach the face.
-    expect(container.textContent).not.toContain(Q1.ask_failed.body.error);
-    expect(container.textContent).not.toContain("did_not_answer");
-    // The code the row got is the reason token, never a sentence (B5).
-    expect(fetched).toContain(`POST /api/ask-tasks/${Q1.save.task.id}/stopped`);
-    expect(screen.queryByTestId("room-ask-error")).toBeNull();          // said once
-    expect(rawButtons(row)).toEqual([]);
-
-    fireEvent.click(within(row).getByRole("button", { name: `Ask again: ${Q1.save.task.purpose}` }));
-    expect(await screen.findByText(Q1.resume.answer.output)).toBeInTheDocument();
-    await waitFor(() => expect(screen.queryByTestId(`room-unfinished-${Q1.save.task.id}`)).toBeNull());
-    expect(screen.queryByTestId("room-ask-error")).toBeNull();
-  });
-
-  it("a Resume the hub refuses says why in words; a raw error never prints", async () => {
-    // The pre-fix hub's answer to this Resume (RECON step 9): a 500 whose
-    // `error` is the database's own sentence and no reason token.
-    unfinished = Q1.unfinished_after_stop;
-    const raw = "UNIQUE constraint failed: inference_adoption_material_snapshots.operation_id";
-    const base = vi.mocked(fetch).getMockImplementation()!;
-    vi.mocked(fetch).mockImplementation(async (input, init = {}) =>
-      String(input).endsWith("/resume") ? reply(500, { error: raw }) : base(input, init));
-    const { container } = render(<WindowHarness scope={`project:${Q1.project_id}`} />);
-    const row = await screen.findByTestId(`room-unfinished-${Q1.save.task.id}`);
-    fireEvent.click(within(row).getByRole("button", { name: `Ask again: ${Q1.save.task.purpose}` }));
-    const line = await screen.findByTestId("room-ask-error");
-    expect(line.textContent).toContain("Not answered");
-    expect(within(line).getByRole("button", { name: "Try again" })).toBeInTheDocument();
-    expect(container.textContent).not.toContain(raw);
+    expect(await screen.findByText(ASK_THREAD.first.output)).toBeInTheDocument();
+    expect(screen.getByTestId("ask-context")).toHaveTextContent(`About${name}`);
+    expect(asked).toHaveLength(1);
+    expect(asked[0].prompt).toBe("What blocks the freeze?");
+    expect(asked[0].thread).toBe(true);
+    expect(asked[0].context).toEqual([{ id: Q1.project_id, kind: "project", title: name, ref: `project:${Q1.project_id}` }]);
+    // The Room's own answer face and UNFINISHED list are parked; the field is empty again.
+    expect(screen.queryByTestId("room-ask-answer")).toBeNull();
+    expect(screen.queryByTestId("room-unfinished")).toBeNull();
+    expect(well).toHaveValue("");
   });
 });
