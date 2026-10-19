@@ -1,6 +1,7 @@
 // The pull-out chrome shell (HS-117-15): the DeskWindowFrame wrapper that
 // delegates body + footer to the kind-keyed content registry.
 // @ts-ignore — shared ESM module (see ../sprites.d.ts)
+import { AgentLine } from "./AgentLine";
 import "./pullout.css";
 import { refAgent, spriteUrl } from "../sprites";
 import { spriteVariantKey } from "../../lib/spriteVariants";
@@ -105,6 +106,8 @@ function PulloutFrame({
       onClose={close}
       actions={
         <>
+          {/* Betterment AG8 gaps: the agent that works on this object. */}
+          <AgentLine objectRef={`${o.kind}:${o.id}`} />
           {egress && (
             <span className={`egress-badge is-${egress.scope}`}>
               {egress.text}

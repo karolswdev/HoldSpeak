@@ -180,6 +180,10 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
   const drafting = !held && !mine && member.deskAnswer?.state === "drafting";
   const agentName = AGENT_NAME[member.agent as AgentId] ?? member.agent;
   const key = member.sessionKey;
+  // An agent whose hooks are off: its row answers its screen prompt.
+  const screenOnly = !key && Boolean(
+    member.launchId && member.screen?.since && (member.screen.state === "approve" || member.screen.state === "asks"),
+  );
 
   const after = async (word: string) => {
     setSent(word);
@@ -188,15 +192,27 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
   };
 
   const press = async (path: "steer" | "keys", body: Record<string, unknown>, word: string) => {
-    if (!key || pending.current) return;
+    if ((!key && !screenOnly) || pending.current) return;
     pending.current = true;
     setBusy(true);
     setFailure(null);
     try {
-      await apiFetch(`/api/coders/${encodeURIComponent(key)}/${path}`, {
-        method: "POST",
-        json: { ...body, kind: "answer", wait_id: currentWait },
-      });
+      if (key) {
+        await apiFetch(`/api/coders/${encodeURIComponent(key)}/${path}`, {
+          method: "POST",
+          json: { ...body, kind: "answer", wait_id: currentWait },
+        });
+      } else {
+        // An agent with no hook: his press goes to its screen prompt, named
+        // by when that prompt began (the hub reads the pane again first).
+        const keys = Array.isArray(body.keys)
+          ? (body.keys as Array<string | { literal: string }>).map((k) => (typeof k === "string" ? k : k.literal))
+          : undefined;
+        await apiFetch(`/api/agent/launches/${encodeURIComponent(String(member.launchId))}/answer`, {
+          method: "POST",
+          json: { since: member.screen?.since, ...(keys ? { keys } : { text: body.text }) },
+        });
+      }
       await after(word);
       if (path === "steer") setText("");
     } catch (error) {
@@ -264,7 +280,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
   };
 
   const decided = Boolean(call && call.id === decidedId);
-  const canKeys = Boolean(key && currentWait);
+  const canKeys = Boolean(key && currentWait) || screenOnly;
 
   return (
     <article

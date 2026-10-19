@@ -107,6 +107,7 @@ Routes: 794 (plus static mounts). iOS-consumed: 89. Web-consumed: 623.
 | POST | `/api/agent/hand/preview` | web |
 | DELETE | `/api/agent/hand/queue/{queue_id}` | web |
 | GET | `/api/agent/launches/{launch_id}` | web |
+| POST | `/api/agent/launches/{launch_id}/answer` | web |
 | POST | `/api/agent/launches/{launch_id}/deliver` | server only |
 | GET | `/api/agent/launches/{launch_id}/explain` | web |
 | GET | `/api/agent/launches/{launch_id}/lane` | web |

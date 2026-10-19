@@ -42,6 +42,7 @@ from .agent_hand_service import (
     AgentHandRefused,
     AgentHandService,
     _config_control_mode,
+    _hand_again_of,
     _launch_for_origin,
     item_exists,
     resolve_project_repository,
@@ -285,7 +286,9 @@ def preview_hand(
                 }
                 if actual != requested:
                     refused.append("launch_profile_mismatch")
-            else:
+            elif _hand_again_of(held) is None:
+                # Betterment AG7 gaps: an earlier agent of this item that
+                # stopped leaves its worktree to Hand again; any other refuses.
                 refused.append("worktree_duplicate")
         elif len(working_launches(launcher, db)) >= service.working_at_once:
             # Betterment AG5: not a dead end. The sheet's Launch reads
