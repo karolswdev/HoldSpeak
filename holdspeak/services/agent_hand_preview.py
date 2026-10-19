@@ -190,6 +190,7 @@ def preview_hand(
     instruction: Optional[str] = None,
     profile: Optional[str] = None,
     project_id: Optional[str] = None,
+    review_by: Optional[str] = None,
     reads: Optional[LaunchReads] = None,
 ) -> dict[str, Any]:
     """``{text, refs, bytes, people_cut, sources, acceptance, repo, repo_label, branch,
@@ -305,6 +306,11 @@ def preview_hand(
     except AgentBriefRefused as exc:
         raise AgentHandRefused(exc.reason, str(exc)) from exc
     text = held_text if held_text is not None else brief["text"]
+    # Review by is an explicit owner choice. The preview carries the choice
+    # back so a late answer for another selection cannot arm Launch.
+    from .agent_review import normalize_review_by
+
+    selected_review = normalize_review_by(review_by)
     return {
         "text": text,
         "refs": brief["refs"],
@@ -325,6 +331,7 @@ def preview_hand(
         # What the sheet asked for, and the agent the launch would really run.
         "requested_profile": requested,
         "profile": actual,
+        "review_by": selected_review,
         "resume": resume,
         "refused": refused,
         "engine": engine,

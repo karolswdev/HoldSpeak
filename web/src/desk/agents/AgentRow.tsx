@@ -20,7 +20,7 @@ import { AgentWords } from "../components/AgentWords";
 import { useGate } from "../gate";
 import { gatedHead, type LaneGated, type LaneWait } from "../lane/laneWire";
 import { AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
-import type { ConductorMember } from "../conductor/members";
+import { reviewWords, type ConductorMember } from "../conductor/members";
 import { useConductor } from "../conductor/store";
 import { questionChoices, type AgentChoice } from "./choices";
 import type { DeskAnswer, DeskAnswerSource } from "../agentFlights";
@@ -163,6 +163,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
   const [mine, setMine] = useState(false);
 
   const held = member.live === "held" || Boolean(call) || wait?.kind === "TO APPROVE";
+  const reviewNeedsYou = member.live === "needs_you";
   const currentWait = String(wait?.wait_id ?? waitId ?? "");
   // Betterment AG7: an agent with no hook asks in its last words on screen.
   const shownQuestion = String(wait?.question || question || (member.screen?.state === "asks" ? member.screen.said : "") || "");
@@ -290,10 +291,10 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
       data-object-id={member.id}
       data-selected={selected ? "" : undefined}
       data-testid="conductor-ask-row"
-      aria-label={`${agentName} ${held ? "wants to run" : "asks"}`}
+      aria-label={`${agentName} ${reviewNeedsYou ? "needs you" : held ? "wants to run" : "asks"}`}
     >
       <header className="cw-ask-bar">
-        <span className="cw-ask-label">{held ? "Wants to run" : "Asks you"}</span>
+        <span className="cw-ask-label">{reviewNeedsYou ? "Needs you" : held ? "Wants to run" : "Asks you"}</span>
         <span className="cw-ask-age">{askedWord(member.when, member.whenSort)}</span>
       </header>
       <div className="cw-ask-body">
@@ -307,6 +308,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
           <span className="cw-row-meta">
             <span>{agentName}</span>
             {member.facts.where ? <span className="kit-pill" data-tone="info">{String(member.facts.where)}</span> : null}
+            {reviewWords(member.review) ? <span data-testid="conductor-review">{reviewWords(member.review)}</span> : null}
           </span>
           {held ? (
             <>
@@ -339,6 +341,12 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
           <span className="cw-drafting-text" role="status">The desk is drafting an answer</span>
           <Button dense variant={lead ? "primary" : "secondary"} onClick={() => setMine(true)} data-testid="agent-row-answer-myself">
             Answer it myself
+          </Button>
+        </div>
+      ) : reviewNeedsYou ? (
+        <div className="cw-ask-verbs">
+          <Button dense variant={lead ? "primary" : "secondary"} onClick={onOpen} data-testid="conductor-open-review">
+            Open
           </Button>
         </div>
       ) : held ? (

@@ -96,6 +96,95 @@ _REF_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 _BRANCH_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._/-]{0,99}$")
 _FLAG_RE = re.compile(r"^--[A-Za-z0-9][A-Za-z0-9-]{0,63}$")
 
+
+def _replace_option(argv: list[str], flag: str, value: str) -> list[str]:
+    """Replace a profile option without allowing a reviewer override."""
+    out: list[str] = []
+    index = 0
+    while index < len(argv):
+        token = str(argv[index])
+        if token == flag:
+            index += 2
+            continue
+        if token.startswith(flag + "="):
+            index += 1
+            continue
+        out.append(argv[index])
+        index += 1
+    return [*out, flag, value]
+
+
+def _remove_variadic_option(argv: list[str], flag: str) -> list[str]:
+    """Remove one CLI option whose value consumes tokens until the next flag."""
+    out: list[str] = []
+    index = 0
+    while index < len(argv):
+        token = str(argv[index])
+        if token == flag:
+            index += 1
+            while index < len(argv) and not str(argv[index]).startswith("--"):
+                index += 1
+            continue
+        if token.startswith(flag + "="):
+            index += 1
+            continue
+        out.append(argv[index])
+        index += 1
+    return out
+
+
+def _replace_tools_option(argv: list[str], value: str) -> list[str]:
+    """Replace Claude's variadic ``--tools`` option with one safe list."""
+    out = _remove_variadic_option(argv, "--tools")
+    return [*out, "--tools", value]
+
+
+def _claude_read_only_argv(argv: list[str]) -> list[str]:
+    """Remove Claude permission escapes before adding its read-only tools."""
+    out = _replace_option(argv, "--permission-mode", "plan")
+    out = _remove_variadic_option(out, "--allowedTools")
+    out = [
+        token for token in out
+        if str(token) not in {"--dangerously-skip-permissions", "--allow-dangerously-skip-permissions"}
+    ]
+    return _replace_tools_option(out, "Read,Grep,Glob")
+
+
+def _codex_read_only_argv(argv: list[str]) -> list[str]:
+    """Remove profile escape hatches before adding Codex's read-only sandbox."""
+    out: list[str] = []
+    index = 0
+    boolean_flags = {
+        "--yolo", "--full-auto", "--approve-for-me",
+        "--dangerously-bypass-approvals-and-sandbox", "--no-sandbox",
+    }
+    pair_flags = {
+        "--sandbox", "-s", "--ask-for-approval", "-a", "--add-dir",
+    }
+    while index < len(argv):
+        token = str(argv[index])
+        lower = token.lower()
+        if lower in boolean_flags:
+            index += 1
+            continue
+        if lower.startswith(("--sandbox=", "--ask-for-approval=")):
+            index += 1
+            continue
+        if lower in pair_flags:
+            index += 2
+            continue
+        if lower in {"--config", "-c"} and index + 1 < len(argv):
+            config_value = str(argv[index + 1]).lower()
+            if config_value.startswith("sandbox_mode=") or config_value.startswith("sandbox_permissions="):
+                index += 2
+                continue
+        if lower.startswith(("--config=sandbox_mode=", "--config=sandbox_permissions=")):
+            index += 1
+            continue
+        out.append(argv[index])
+        index += 1
+    return _replace_option(out, "--sandbox", "read-only")
+
 #: The desk objects a launch may name as its origin (Hand to agent): the
 #: item the agent works on. Optional; carried on the launch record and the
 #: Work attempt so a later merge can close the item it came from.
@@ -818,6 +907,11 @@ class LaunchService:
     def record_admitted(
         self, launch_id: str, request: Mapping[str, Any], *, operation_id: str,
     ) -> None:
+        review = request.get("review") if isinstance(request.get("review"), Mapping) else {}
+        role = "reviewer" if str(review.get("role") or "").strip().lower() == "reviewer" else "builder"
+        if role == "reviewer" and review.get("read_only") is False:
+            raise LaunchRefused("reviewer_read_only_required", "reviewer launches are always read-only")
+        read_only = role == "reviewer"
         self._ledger.record(
             {
                 "launch_schema": LAUNCHES_SCHEMA,
@@ -825,6 +919,11 @@ class LaunchService:
                 "state": "admitted",
                 "operation_id": operation_id,
                 "request": dict(request),
+                # AG12: this is durable before the factory issues a credential
+                # or creates a process. It is immutable launch posture.
+                "role": role,
+                "read_only": read_only,
+                **({"review": dict(review)} if role == "reviewer" else {}),
                 "commands": {"worktree_create": None, "spawn": None, "instruction": None},
             }
         )
@@ -940,7 +1039,9 @@ class LaunchService:
         ):
             raise LaunchRefused("process_spawn_not_gated", "not gated")
 
-    def _codex_mode_args(self, argv: list[str], mode: Any, worktree_path: str) -> list[str]:
+    def _codex_mode_args(
+        self, argv: list[str], mode: Any, worktree_path: str, *, read_only: bool = False,
+    ) -> list[str]:
         """Codex's approval and sandbox by the Control mode at launch (R3,
         coordinator ruling 2026-10-06).
 
@@ -957,6 +1058,12 @@ class LaunchService:
         is kept."""
         from . import agent_mcp
 
+        if read_only:
+            # Reviewer posture wins over the hub's Normal/YOLO setting. The
+            # installed ``codex exec`` exposes the native read-only sandbox;
+            # it has no ``--ask-for-approval`` option, so do not invent one.
+            # The profile already carries ``--sandbox read-only``.
+            return []
         if agent_mcp.normalized_mode(mode) != "yolo":
             return ["--ask-for-approval", "on-request"]
         args = ["--ask-for-approval", "never"]
@@ -1122,6 +1229,7 @@ class LaunchService:
 
     def _agent_argv(
         self, executable: str, argv: list[str], launch_id: str, mode: Any, parent_operation_id: str,
+        *, read_only: bool = False,
     ) -> dict[str, Any]:
         """The agent's own flags on top of the profile argv: the rider and
         gate hooks, the HoldSpeak MCP, the Control mode's permission flags,
@@ -1141,25 +1249,35 @@ class LaunchService:
             # gate holds this worktree).
             from .. import coder_gate
 
+            if read_only:
+                argv = _claude_read_only_argv(argv)
             settings_path = coder_gate.write_spawn_settings()
             argv = [*argv, "--settings", str(settings_path)]
             # Conductor K6: the HoldSpeak MCP, from the launch's credential.
             mcp_config = agent_mcp.write_mcp_config(launch_id, self._mcp_config_dir)
-            allowed: tuple[str, ...] = ("Bash",) if parent_operation_id else ()
+            allowed: tuple[str, ...] = () if read_only else (("Bash",) if parent_operation_id else ())
             # Conductor R1: Normal and YOLO accept edits in the worktree.
-            argv = [*argv, *agent_mcp.claude_permission_args(mode, argv)]
-            argv = [*argv, *agent_mcp.claude_args(mcp_config, mode, allowed=allowed)]
+            argv = [*argv, *agent_mcp.claude_permission_args(mode, argv, read_only=read_only)]
+            argv = [*argv, *agent_mcp.claude_args(mcp_config, mode, allowed=allowed, read_only=read_only)]
+            if read_only:
+                # Verified against the installed Claude Code help: --tools is
+                # an explicit built-in allow-list; these tools cannot edit or
+                # execute shell commands.
+                argv = _replace_tools_option(argv, "Read,Grep,Glob")
             gated = bool(parent_operation_id)
         elif executable == "codex":
             from .. import coder_gate
             from ..principals import agent_credentials
+
+            if read_only:
+                argv = _codex_read_only_argv(argv)
 
             # Conductor R3: every Codex launch runs in its own process with the
             # rider and gate hooks (inert unless the gate holds this worktree).
             argv = [*argv, *coder_gate.codex_spawn_args()]
             # The approval and sandbox flags need the worktree's git folder:
             # added once the worktree exists (before the spawn).
-            codex_tail = agent_mcp.codex_args(agent_credentials.hub_url, mode)
+            codex_tail = agent_mcp.codex_args(agent_credentials.hub_url, mode, read_only=read_only)
             gated = bool(parent_operation_id)
         elif executable == "pi":
             from .. import coder_gate
@@ -1176,7 +1294,9 @@ class LaunchService:
                 hooks=coder_gate.pi_spawn_hooks(coder_gate.spawn_prefix()),
                 keyed=bool(engine.key_slot), directory=self._mcp_config_dir,
             )
-            argv = [*argv, *pi_launch.launch_args(engine, pi_folder)]
+            argv = [*argv, *pi_launch.launch_args(engine, pi_folder, read_only=read_only)]
+            if read_only:
+                argv = _replace_tools_option(argv, "read,grep,find,ls")
             env = pi_launch.launch_env(pi_folder, mcp_hold=not agent_mcp.pre_approved(mode))
             model_key_slot = engine.key_slot
             gated = bool(parent_operation_id)
@@ -1263,8 +1383,13 @@ class LaunchService:
         from . import agent_mcp
 
         mode = self._control_mode()
+        review = request.get("review") if isinstance(request.get("review"), Mapping) else {}
+        role = "reviewer" if str(review.get("role") or "").strip().lower() == "reviewer" else "builder"
+        if role == "reviewer" and review.get("read_only") is False:
+            raise LaunchRefused("reviewer_read_only_required", "reviewer launches are always read-only")
+        read_only = role == "reviewer"
         executable = str(profile.get("executable") or "")
-        agent_argv = self._agent_argv(executable, argv, launch_id, mode, parent_operation_id)
+        agent_argv = self._agent_argv(executable, argv, launch_id, mode, parent_operation_id, read_only=read_only)
         argv, codex_tail = agent_argv["argv"], agent_argv["codex_tail"]
         launch_env, model_key_slot = agent_argv["env"], agent_argv["model_key_slot"]
         if agent_argv["gated"]:
@@ -1294,12 +1419,19 @@ class LaunchService:
             "launched_at": _iso_now(self._wall_now()),
             # PHILO-14 C0: the control mode the launch ran under (the lane shows it).
             "control_mode": mode,
+            "role": role,
+            "read_only": read_only,
+            **({"review": dict(review)} if role == "reviewer" else {}),
             "mcp": {
                 "server": agent_mcp.SERVER_NAME,
                 "palette": "CONDUCTOR",
                 "pre_approved": agent_mcp.pre_approved(mode),
             },
         }
+
+        # Publish the immutable reviewer posture before any credential, grant,
+        # worktree or process side effect. Subsequent updates retain this row.
+        self._ledger.record(record)
 
         # 1. the DISTINCT worktree-create op, through the envelope.
         if pending_create is not None:
@@ -1327,7 +1459,7 @@ class LaunchService:
 
         # 2. spawn through the envelope: the node launch receipt.
         if executable == "codex":
-            argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path), *codex_tail]
+            argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path, read_only=read_only), *codex_tail]
         command = self.compose_command(
             argv, worktree_path, f"{project}/{story_id}",
             parent_operation_id=parent_operation_id, env=launch_env,
@@ -1343,6 +1475,8 @@ class LaunchService:
                     "scope_items": [f"{origin_ref['kind']}:{origin_ref['id']}"] if origin_ref else [],
                     # K6: the Project the agent may add to (a hand-off's own).
                     "project_id": project if origin_ref and project != "desk" else None,
+                    "role": role,
+                    "read_only": read_only,
                     # pi: the engine key's SLOT (the value is read at spawn).
                     **({"model_key_slot": model_key_slot} if model_key_slot else {}),
                 },
@@ -1435,11 +1569,11 @@ class LaunchService:
         record["state"] = "launched"
         # K6: the owner's press on the launch grants the launch identity
         # decision PROPOSALS (decision.create, status proposed) for its life.
-        record["mcp"]["decision_proposals"] = self._grant(principal, launch_id, None)
+        record["mcp"]["decision_proposals"] = "not_granted" if read_only else self._grant(principal, launch_id, None)
         # ... and additions (links, resources) to its own Project.
         launch_project = project if origin_ref and project != "desk" else None
         record["mcp"]["project_additions"] = (
-            self._grant(principal, launch_id, launch_project) if launch_project else "no_project"
+            "not_granted" if read_only else (self._grant(principal, launch_id, launch_project) if launch_project else "no_project")
         )
         self._ledger.record(record)
         return record
@@ -1679,10 +1813,15 @@ class LaunchService:
             self._require_process_gate(profile, worktree_path)
         executable = str(profile.get("executable") or "")
         mode = self._control_mode()
-        composed = self._agent_argv(executable, [executable, *profile["args"]], launch_id, mode, parent)
+        role = str(record.get("role") or "builder")
+        read_only = role == "reviewer"
+        composed = self._agent_argv(
+            executable, [executable, *profile["args"]], launch_id, mode, parent,
+            read_only=read_only,
+        )
         argv = composed["argv"]
         if executable == "codex":
-            argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path), *composed["codex_tail"]]
+            argv = [*argv, *self._codex_mode_args(argv, mode, worktree_path, read_only=read_only), *composed["codex_tail"]]
         argv = resume_argv(executable, argv, session_id)
         story = record.get("story_ref") or {}
         command = self.compose_command(
@@ -1699,6 +1838,8 @@ class LaunchService:
                 "name": session_name, "command": command, "launch_id": launch_id,
                 "scope_items": [f"{origin['kind']}:{origin['id']}"] if origin.get("kind") else [],
                 "project_id": project if origin.get("kind") and project != "desk" else None,
+                "role": role,
+                "read_only": read_only,
                 **({"model_key_slot": composed["model_key_slot"]} if composed["model_key_slot"] else {}),
             },
         })

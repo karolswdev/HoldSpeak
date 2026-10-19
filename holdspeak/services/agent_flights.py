@@ -280,10 +280,23 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
             "profile": (record.get("helper_request") or {}).get("profile"),
         }} if isinstance(record.get("helper_request"), Mapping)
            and (record.get("helper_request") or {}).get("status") == "awaiting_owner" else {}),
+        # Betterment AG12: the bounded builder/reviewer pair is durable on the
+        # launch ledger. Review rows read this optional fact; ordinary agents
+        # keep the established wire shape.
+        **({"review": _review_wire(record.get("review"))} if record.get("review") else {}),
         # PHILO-14 C4: the launch's clocks (the Conductor's stale window).
         "launched_at": record.get("launched_at") or None,
         "ended_at": _ended_at(record, state, session, follow.get("close")),
     }
+
+
+def _review_wire(value: Any) -> Optional[dict[str, Any]]:
+    try:
+        from .agent_review import review_wire
+
+        return review_wire(value)
+    except Exception:
+        return None
 
 
 #: Betterment AG7: the screen's word -> the flight's state and its turn end.

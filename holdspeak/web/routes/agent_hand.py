@@ -148,7 +148,8 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return preview_hand(
                 service, principal, kind, item_id,
                 instruction=body.get("instruction"), profile=body.get("profile"),
-                project_id=body.get("project_id"), reads=getattr(ctx, "agent_hand_reads", None),
+                project_id=body.get("project_id"), review_by=body.get("review_by"),
+                reads=getattr(ctx, "agent_hand_reads", None),
             )
 
         try:

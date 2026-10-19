@@ -27,6 +27,18 @@ export type FlightState =
   | "no_signal";
 export type AgentName = "claude" | "codex" | "pi";
 
+export interface AgentReview {
+  requested: "codex" | "claude" | "pi" | string;
+  status: string;
+  role: "builder" | "reviewer" | string;
+  builder?: string;
+  round: number;
+  rounds: number;
+  findingsLeft: Array<{ level: string; text: string }>;
+  reviewerLaunchId: string | null;
+  pairResult: { rounds?: number; findings_left?: Array<{ level: string; text: string }> } | null;
+}
+
 export interface AgentFlight {
   originRef: string;
   kind: string;
@@ -64,6 +76,8 @@ export interface AgentFlight {
   helperOf?: string | null;
   /** Betterment AG11: Secure asked the owner for one helper Allow press. */
   helperRequest?: { requestId: string; status: "awaiting_owner"; instruction: string; profile: string | null } | null;
+  /** Betterment AG12: the explicit builder/reviewer pair. */
+  review?: AgentReview | null;
   /** Betterment AG7: which source decided the state (`hook`, `screen`). */
   stateSource?: "hook" | "screen" | null;
   /** Betterment AG7: the agent's screen as the hub's rules read it. */
@@ -191,6 +205,19 @@ export function fromWireFlight(body: any): AgentFlight {
           profile: body.helper_request.profile ? String(body.helper_request.profile) : null,
         }
       : null,
+    review: body?.review ? {
+      requested: String(body.review.requested ?? ""),
+      status: String(body.review.status ?? ""),
+      role: String(body.review.role ?? "builder"),
+      builder: body.review.builder ? String(body.review.builder) : undefined,
+      round: Number(body.review.round ?? 0),
+      rounds: Number(body.review.rounds ?? body.review.round ?? 0),
+      findingsLeft: Array.isArray(body.review.findings_left)
+        ? body.review.findings_left.filter((f: any) => f && f.level).map((f: any) => ({ level: String(f.level), text: String(f.text ?? "") }))
+        : [],
+      reviewerLaunchId: body.review.reviewer_launch_id ? String(body.review.reviewer_launch_id) : null,
+      pairResult: body.review.pair_result && typeof body.review.pair_result === "object" ? body.review.pair_result : null,
+    } : null,
     stateSource: body?.state_source === "hook" || body?.state_source === "screen" ? body.state_source : null,
     screen: fromWireScreen(body?.screen),
   };
