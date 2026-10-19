@@ -2306,6 +2306,16 @@
       ]
     },
     {
+      "path": "/api/desk/presence",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.desk_windows",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/desk/projections",
       "methods": [
         "GET"

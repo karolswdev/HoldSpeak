@@ -361,6 +361,32 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
   });
 });
 
+// Betterment daily D8: a Mac whose HOME has no keychain (#1328). The hub's own
+// answers (tests/unit/test_desk_notices.py::
+// test_the_hub_says_people_is_not_set_up_on_this_mac): one line, no verb, never
+// "could not be read" with a Try again that cannot work.
+describe("People on a Mac with no keychain (Betterment daily D8)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("says People is not set up on this Mac, with no Try again", async () => {
+    const wire = week("people-no-key-store");
+    const asked: string[] = [];
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const path = String(input);
+      asked.push(path);
+      if (path in wire.before) return json(wire.before[path]);
+      throw new Error(`no recorded hub answer for GET ${path}`);
+    }));
+    render(<PeopleCore />);
+    const line = await screen.findByTestId("people-not-here");
+    expect(line.textContent).toBe("People is not set up on this Mac.");
+    expect(within(line).queryByRole("button")).toBeNull();
+    expect(screen.queryByTestId("people-read-failed")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(asked).toEqual(["/api/people/readiness"]);
+  });
+});
+
 function cleanupAndOpen(id: string) {
   document.body.innerHTML = "";
   render(<PeopleCore scope={`people:${id}:prep`} />);

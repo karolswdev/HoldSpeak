@@ -11050,6 +11050,25 @@
         "summary": "Api Desk Parked"
       }
     },
+    "/api/desk/presence": {
+      "post": {
+        "description": "Betterment daily D8: the window in front of the owner (memory only).\nThe heartbeat raises no notice about the window he is looking at.",
+        "operationId": "desk_presence_api_desk_presence_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Desk Presence Api Desk Presence Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Desk Presence"
+      }
+    },
     "/api/desk/projections": {
       "get": {
         "operationId": "api_list_projections_api_desk_projections_get",

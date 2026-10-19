@@ -113,13 +113,14 @@ def test_every_reader_reports_the_same_number(hub: Hub) -> None:
     answer = _ok(hub.client.get("/api/desk/needs-you"))
     refs = sorted(member["ref"] for member in answer["members"])
     # The overdue action, the People commitment and the decision that waits
-    # for review are members (owner ruling 2026-10-04); a hub with no summary
-    # engine has the one meeting-path blocker. The Brief counts the decision
-    # in the one number and does not say it again under "decision waiting".
+    # for review are members (owner ruling 2026-10-04). Betterment daily D8:
+    # no meeting waits for a summary here, so "No engine for summaries" does
+    # not ask. The Brief counts the decision in the one number and does not
+    # say it again under "decision waiting".
     assert refs == sorted([
-        minted["action"], "blocker:summary", minted["commitment"], minted["decision"],
+        minted["action"], minted["commitment"], minted["decision"],
     ]), refs
-    assert readers["route"] == 4, readers
+    assert readers["route"] == 3, readers
     assert "decision waiting" not in minted_brief_headline(hub)
     # Custody stays as it is: the owner's own route carries the commitment;
     # an MCP agent and the stored Brief get the count, never the text.

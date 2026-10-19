@@ -79,6 +79,49 @@ def _parse_aware(value: Any) -> datetime | None:
     return parsed if parsed.tzinfo is not None else parsed.replace(tzinfo=timezone.utc)
 
 
+#: Betterment daily D8: the morning notice opens Today.
+TODAY_URL = "/intelligence"
+
+
+def _notify_default(title: str, body: str, *, click_url: str | None = None) -> bool:
+    from holdspeak.desktop_notify import notify
+
+    return notify(title, body, click_url=click_url)
+
+
+def _desktop_on() -> bool:
+    from holdspeak.desktop_notify import desktop_notify_enabled
+
+    return desktop_notify_enabled()
+
+
+def _notice_worthy(item: dict[str, Any], today: Any, soon: list[dict[str, Any]]) -> bool:
+    """Betterment daily D8, the one notice rule for a Needs-you row.
+
+    Notifies: an agent that asks him (as before); a *mine* row due today or
+    late; a *to decide* row whose Project meets within 30 minutes (``soon``).
+    Never: *theirs*, a promise from a meeting he has not seen yet
+    (``arrival``), a *mine* row with no date or a later date. A row from
+    before D0 carries no ``direction`` and keeps the old rule (it notifies).
+    """
+    if item.get("source") in ("coder", "gate"):
+        return True
+    direction = item.get("direction")
+    if direction is None:
+        return True
+    if item.get("arrival"):
+        return False
+    if direction == "mine":
+        from holdspeak.services.needs_you_membership import _due_day
+
+        day = _due_day(item.get("dueAt"))
+        return bool(item.get("counted", True)) and day is not None and day <= today
+    if direction == "decide":
+        project = str(item.get("projectId") or "")
+        return bool(project) and any(str(event.get("project_id") or "") == project for event in soon)
+    return False
+
+
 def _in_window(hour: int, start: int, end: int) -> bool:
     if start == end:
         return False
@@ -262,6 +305,12 @@ class HeartbeatService:
             # restart re-notifies nothing and a same-count change fires.
             "last_notified_items": _as_item_map(config.get("last_notified_items")),
             "last_notify_outcome": str(config.get("last_notify_outcome") or ""),
+            # Betterment daily D8: the last notification decision (the morning
+            # notice needs a night between two decisions), the local day of
+            # the last morning notice, and the 1:1s whose "Prep ready" fired.
+            "last_decision_at": config.get("last_decision_at"),
+            "morning_day": str(config.get("morning_day") or ""),
+            "prep_notified": [str(k) for k in (config.get("prep_notified") or [])][-50:],
             # HS-174-08: remote runner settings.
             "runs_on": str(config.get("runs_on", "local")),
             "remote_hosts": self._compute_remote_hosts(),
@@ -322,6 +371,9 @@ class HeartbeatService:
             "last_notified_count": 0,
             "last_notified_items": {},
             "last_notify_outcome": "",
+            "last_decision_at": None,
+            "morning_day": "",
+            "prep_notified": [],
             # HS-174-08: remote runner defaults (computed values added in
             # get_settings; not stored).
             "runs_on": "local",
@@ -344,6 +396,9 @@ class HeartbeatService:
             "last_notified_count": settings.get("last_notified_count", 0),
             "last_notified_items": _as_item_map(settings.get("last_notified_items")),
             "last_notify_outcome": str(settings.get("last_notify_outcome") or ""),
+            "last_decision_at": settings.get("last_decision_at"),
+            "morning_day": str(settings.get("morning_day") or ""),
+            "prep_notified": [str(k) for k in (settings.get("prep_notified") or [])][-50:],
             # HS-174-08
             "runs_on": settings.get("runs_on", "local"),
             # Conductor R4
@@ -954,19 +1009,43 @@ class HeartbeatService:
             return str(item.get("notifyKey") or item.get("id")
                        or _item_id(str(item.get("projectId") or ""), item))
 
+        # Betterment daily D8 (owner decision 2): a notice is for something
+        # of his that needs him now, once. The calendar's next half hour
+        # decides the meeting-bound rows.
+        now_local = self._now_local()
+        soon = self._meetings_soon(now_local, minutes=30)
+        notice_rows = [it for it in unmuted if _notice_worthy(it, now_local.date(), soon)]
         current_ids = {
             _id_of(it): {"project": str(it.get("projectId") or ""),
                          "class": str(it.get("rankClass") or "")}
-            for it in unmuted
+            for it in notice_rows
         }
         present_ids = {_id_of(it) for it in all_items}
         # The members that are not attention rows (an engine blocker, a
-        # failed summary) are counted by the one rule, so they are edges too.
+        # failed summary) notify only when they block a meeting that starts
+        # within 30 minutes; else they wait in Needs you.
         for member in agg.get("members", []):
             if member.get("kind") == "attention" or not member.get("ref"):
                 continue
-            current_ids[str(member["ref"])] = {"project": "", "class": str(member["kind"])}
             present_ids.add(str(member["ref"]))
+            if soon:
+                current_ids[str(member["ref"])] = {"project": "", "class": str(member["kind"])}
+
+        # Betterment daily D8: no notice about the window he is looking at.
+        # A row he sees there is marked as told, so it never fires later.
+        from holdspeak import desk_presence
+
+        front = desk_presence.front_window()
+        seen_here: dict[str, dict[str, str]] = {}
+        if front in desk_presence.NEEDS_WINDOWS:
+            seen_here = dict(current_ids)
+        elif front in desk_presence.AGENT_WINDOWS:
+            seen_here = {
+                _id_of(it): current_ids[_id_of(it)] for it in notice_rows
+                if it.get("source") in ("coder", "gate") and _id_of(it) in current_ids
+            }
+        for key in seen_here:
+            current_ids.pop(key, None)
         # Prune only where the Project was FULLY observed on this pass: an
         # id whose Project has any source cant_check / stale / failed stays
         # remembered (recovery re-notifies nothing); an id whose Project no
@@ -996,11 +1075,38 @@ class HeartbeatService:
 
         quiet_start = settings["quiet_hours"]["start"]
         quiet_end = settings["quiet_hours"]["end"]
+        if seen_here:
+            edge.mark_fired(seen_here)
+
+        # Betterment daily D8: the first decision after a night of quiet
+        # hours is ONE morning notice in place of the night's backlog:
+        # "4 need you · first: 1:1 with Mira 09:30". It opens Today.
+        morning = self._morning_due(settings, now_local)
+        if morning:
+            settings["morning_day"] = now_local.date().isoformat()
+            if count > 0:
+                body = f"{count} need you"
+                first = self._first_meeting_today(now_local)
+                if first:
+                    body += f" · first: {first}"
+                notifier = self._notifier or _notify_default
+                fired = bool(notifier("HoldSpeak", body, click_url=TODAY_URL))
+                reason = "fired" if fired else (
+                    "not_posted_in_rig" if self._notifier is None and not _desktop_on() else "dispatch_failed")
+                # The morning notice tells every row there is, once.
+                edge.mark_fired(current_ids)
+                result = {"fired": fired, "held": False, "reason": reason,
+                          "newItems": len(current_ids), "escalatedItems": 0, "body": body}
+            else:
+                result = {"fired": False, "held": False, "reason": "no_edge",
+                          "newItems": 0, "escalatedItems": 0}
+        else:
+            result = None
 
         # The notification decision.  The quiet-hours instant is the same
         # injectable local clock the sweep reads (HS-200-03), never a
         # second wall-clock read.
-        result = heartbeat_notify(
+        result = result if result is not None else heartbeat_notify(
             count,
             project_count,
             edge=edge,
@@ -1017,7 +1123,7 @@ class HeartbeatService:
         # For mode "edge", rely on the edge detector (heartbeat_notify
         # already checked it).  For "every_sweep", skip the edge and fire
         # on any non-zero count not held by quiet hours.
-        if notify_mode == "every_sweep" and not result["fired"] and result["reason"] == "no_edge":
+        if notify_mode == "every_sweep" and not morning and not result["fired"] and result["reason"] == "no_edge":
             # Override edge: fire if count > 0 and not quiet.  The quiet
             # check is this sweep's own instant: heartbeat_notify returns
             # "no_edge" before it looks at quiet hours, so without it an
@@ -1049,6 +1155,9 @@ class HeartbeatService:
         # Map to receipt vocabulary.
         if result["fired"]:
             outcome = "sent"
+        elif seen_here and result["reason"] == "no_edge" and not current_ids:
+            # Betterment daily D8: he is looking at the window it is about.
+            outcome = "held_front_window"
         elif result.get("held") and result["reason"] == "quiet_hours":
             outcome = "held_quiet_hours"
         elif result["reason"] == "no_edge" and count == 0 and not complete:
@@ -1075,7 +1184,14 @@ class HeartbeatService:
             "escalatedItems": int(result.get("escalatedItems", 0)),
             "complete": complete,
             "lastNotifiedCount": persisted_edge,
+            # Betterment daily D8: the rows the rule offered, the morning
+            # notice, and the window in front (when it held a notice).
+            "noticeItems": sorted(current_ids),
+            "morning": bool(morning),
+            "frontWindow": front if seen_here else None,
         }
+        if result.get("body"):
+            receipt["body"] = result["body"]
 
         # Persist the edge state for restart survival: the notified set,
         # pruned per the recovery rule, and the count the settings face
@@ -1085,10 +1201,17 @@ class HeartbeatService:
         edge.prune(present_ids, observed_projects, known_projects)
         after = edge.notified
         new_count = count if result["fired"] else persisted_edge
+        # Betterment daily D8: the morning notice needs a decision before the
+        # last quiet end; the stamp is written only when it is older than
+        # that end (at most about once a day), never on every sweep.
+        stamp_due = self._decision_stamp_due(settings, now_local)
         if (after != before
                 or outcome != str(settings.get("last_notify_outcome") or "")
-                or new_count != persisted_edge):
-            self._persist_edge(new_count, after, outcome)
+                or new_count != persisted_edge
+                or stamp_due or morning):
+            self._persist_edge(new_count, after, outcome,
+                               decided_at=self._now_utc() if (stamp_due or morning) else None,
+                               morning_day=settings.get("morning_day") or None)
         self._write_notify_receipt(receipt)
         return receipt
 
@@ -1097,6 +1220,9 @@ class HeartbeatService:
         count: int,
         notified_items: dict[str, dict[str, str]] | None = None,
         outcome: str | None = None,
+        *,
+        decided_at: datetime | None = None,
+        morning_day: str | None = None,
     ) -> None:
         """Persist the last-notified count (and, HS-200-15, the notified
         item set and the last outcome) in the heartbeat policy config."""
@@ -1106,7 +1232,115 @@ class HeartbeatService:
             settings["last_notified_items"] = {k: dict(v) for k, v in notified_items.items()}
         if outcome is not None:
             settings["last_notify_outcome"] = outcome
+        if decided_at is not None:
+            settings["last_decision_at"] = decided_at.isoformat(timespec="seconds")
+        if morning_day:
+            settings["morning_day"] = morning_day
         self._persist(settings)
+
+    # ── Betterment daily D8: the calendar half of the notice rule ──────
+
+    def _upcoming(self, now_local: datetime) -> list[dict[str, Any]]:
+        """The hub's upcoming calendar events (the Door's read), or []."""
+        try:
+            from holdspeak.runtime import composition
+
+            door = composition.service("door_service", lambda: None) if composition.installed() else None
+            read = getattr(door, "_upcoming", None)
+            return list(read(now_local) or []) if callable(read) else []
+        except Exception as exc:
+            log.warning("heartbeat: the calendar read for notices failed: %s", exc)
+            return []
+
+    def _meetings_soon(self, now_local: datetime, *, minutes: int) -> list[dict[str, Any]]:
+        """The events that start within ``minutes`` from now."""
+        out = []
+        for event in self._upcoming(now_local):
+            start = _parse_aware(event.get("starts_at"))
+            if start is not None and timedelta(0) <= start - now_local <= timedelta(minutes=minutes):
+                out.append(event)
+        return out
+
+    def _first_meeting_today(self, now_local: datetime) -> str:
+        """``1:1 with Mira 09:30``: the next event of this local day, or ``""``."""
+        for event in self._upcoming(now_local):
+            start = _parse_aware(event.get("starts_at"))
+            if start is None or start < now_local:
+                continue
+            local = start.astimezone(now_local.tzinfo)
+            if local.date() != now_local.date():
+                return ""
+            return f"{str(event.get('title') or '').strip()} {local:%H:%M}".strip()
+        return ""
+
+    @staticmethod
+    def _last_quiet_end(settings: dict[str, Any], now_local: datetime) -> datetime | None:
+        start, end = settings["quiet_hours"]["start"], settings["quiet_hours"]["end"]
+        if start == end:
+            return None
+        quiet_end = now_local.replace(hour=end, minute=0, second=0, microsecond=0)
+        if quiet_end > now_local:
+            quiet_end -= timedelta(days=1)
+        return quiet_end
+
+    def _decision_stamp_due(self, settings: dict[str, Any], now_local: datetime) -> bool:
+        stamped = _parse_aware(settings.get("last_decision_at"))
+        if stamped is None:
+            return True
+        quiet_end = self._last_quiet_end(settings, now_local)
+        return quiet_end is not None and stamped < quiet_end and not self.in_quiet_hours(now_local)
+
+    def _morning_due(self, settings: dict[str, Any], now_local: datetime) -> bool:
+        """The first decision after a night of quiet hours: the last decision
+        was before this morning's quiet end, and now is after it."""
+        start, end = settings["quiet_hours"]["start"], settings["quiet_hours"]["end"]
+        if start == end or _in_window(now_local.hour, start, end):
+            return False
+        if settings.get("morning_day") == now_local.date().isoformat():
+            return False
+        last = _parse_aware(settings.get("last_decision_at"))
+        quiet_end = self._last_quiet_end(settings, now_local)
+        if last is None or quiet_end is None:
+            return False
+        return last < quiet_end
+
+    def prep_notices(self) -> dict[str, Any]:
+        """Betterment daily D8: 10 minutes before a 1:1, one notice:
+        "1:1 with Mira at 09:30 · Prep ready". Called on the heartbeat's
+        minute tick (a sweep runs every 15 minutes). Once per event; never in
+        quiet hours, with Notify off, or with People in front."""
+        from holdspeak import desk_presence
+
+        settings = self.get_settings()
+        if settings.get("notify") == "off":
+            return {"kind": "heartbeat.prep", "outcome": "off"}
+        now_local = self._now_local()
+        if self.in_quiet_hours(now_local):
+            return {"kind": "heartbeat.prep", "outcome": "held_quiet_hours"}
+        told = list(settings.get("prep_notified") or [])
+        fired: list[str] = []
+        for event in self._meetings_soon(now_local, minutes=10):
+            if not event.get("person_relationship_id"):
+                continue
+            key = f"{event.get('id') or event.get('title')}@{event.get('starts_at')}"
+            if key in told:
+                continue
+            told.append(key)
+            if desk_presence.front_window() == "surface-people":
+                continue
+            start = _parse_aware(event.get("starts_at"))
+            at = f"{start.astimezone(now_local.tzinfo):%H:%M}" if start else ""
+            body = f"{str(event.get('title') or '1:1').strip()} at {at} · Prep ready"
+            notifier = self._notifier or _notify_default
+            notifier("HoldSpeak", body, click_url=f"/people?person={event['person_relationship_id']}")
+            fired.append(body)
+        if fired or told != list(settings.get("prep_notified") or []):
+            settings["prep_notified"] = told[-50:]
+            self._persist(settings)
+        receipt = {"kind": "heartbeat.prep", "outcome": "sent" if fired else "held_no_edge", "bodies": fired}
+        if fired:
+            self._write_notify_receipt(receipt)
+        return receipt
 
     def _write_notify_receipt(self, receipt: dict[str, Any]) -> None:
         """Write a kernel receipt for the notification decision."""

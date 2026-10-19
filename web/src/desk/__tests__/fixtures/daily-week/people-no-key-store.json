@@ -1,0 +1,22 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_notices.py::test_the_hub_says_people_is_not_set_up_on_this_mac (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "before": {
+  "/api/people/readiness": {
+   "readiness": "no_key_store",
+   "state": "no_key_store",
+   "store": "absent",
+   "sync": "local_only",
+   "capture": "notes_only",
+   "reason_code": "people_store_no_key_store"
+  },
+  "/api/people/relationships?counts=1": {
+   "relationships": []
+  },
+  "/api/people/suggestions": {
+   "suggestions": []
+  }
+ },
+ "add": {
+  "detail": "people_key_store_unavailable"
+ }
+}

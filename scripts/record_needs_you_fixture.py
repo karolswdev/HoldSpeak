@@ -74,11 +74,29 @@ def _close() -> None:
     composition.install(composition.bare(label="record"))
 
 
+def _seed_waiting_meeting(hub: Any) -> None:
+    """Betterment daily D8: one recorded meeting with words and no summary, so
+    "No engine for summaries" has a meeting to ask for (a fresh desk with no
+    meeting has no row)."""
+    from datetime import datetime
+
+    from holdspeak.meeting_session.models import MeetingState, TranscriptSegment
+
+    start = datetime.now().replace(microsecond=0) - timedelta(hours=1)
+    hub.db.meetings.save_meeting(MeetingState(
+        id="m-cold-waits", started_at=start, ended_at=start + timedelta(minutes=20),
+        title="Cutover check-in",
+        segments=[TranscriptSegment(text="We freeze ledger writes on Friday.", speaker="Me",
+                                    start_time=0.0, end_time=5.0)],
+        intel_status="pending"))
+
+
 def cold() -> dict[str, Any]:
-    """A fresh HOME: no engine assigned, nothing seeded."""
+    """A fresh HOME: no engine assigned; one meeting waits for its summary."""
     with pytest.MonkeyPatch.context() as mp:
         hub = _boot("cold", mp)
         try:
+            _seed_waiting_meeting(hub)
             return {"gets": _gets(hub, COMMON_GETS)}
         finally:
             _close()

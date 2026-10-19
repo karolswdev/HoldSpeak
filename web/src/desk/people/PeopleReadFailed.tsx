@@ -12,6 +12,18 @@ export function peopleUnread(state: unknown): boolean {
   return UNREAD.has(String(state ?? ""));
 }
 
+/** Betterment daily D8: this Mac has no key store People can use (a HOME with
+ * no login keychain). Not a failed read: no Try again, never a loop. */
+export function peopleNotHere(state: unknown): boolean {
+  return String(state ?? "") === "no_key_store";
+}
+
+export function PeopleNotHere({ testId = "people-not-here" }: { testId?: string }) {
+  return <div className="people-read-failed" role="status" data-testid={testId}>
+    <span className="people-read-failed-line">People is not set up on this Mac.</span>
+  </div>;
+}
+
 export function PeopleReadFailed({ onRetry, detail = "", testId = "people-read-failed" }: { onRetry(): void; detail?: string; testId?: string }) {
   return <div className="people-read-failed" role="status" data-testid={testId}>
     <span className="people-read-failed-line">People could not be read. Nothing changed. Press Try again.</span>

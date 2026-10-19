@@ -134,6 +134,9 @@ export interface NeedsYouInputs {
   mutedProjectIds?: readonly string[] | ReadonlySet<string>;
   assignments?: AssignmentSummary | null;
   assignmentRead?: AssignmentRead;
+  /** Betterment daily D8: a meeting waits for a summary (the hub reads it);
+   * absent means yes. */
+  summaryWaits?: boolean;
   meetings?: readonly Meeting[];
   /** R4: the decisions that wait for the owner's review. */
   decisions?: readonly NeedsYouDecision[];
@@ -712,6 +715,7 @@ export function computeNeedsYou(
   const blockers = meetingPathBlockers(
     assignmentRead === "failed" ? null : assignments,
     assignmentRead,
+    input.summaryWaits ?? true,
   );
   const failedMeetings = [...(input.meetings ?? [])].filter(meetingNeedsYou);
   const members: NeedsYouMember[] = [

@@ -82,6 +82,11 @@ class NativeKeyStore:
         if backend_name not in self._ALLOWED_BACKENDS:
             raise PeopleKeyError("people_key_store_not_native")
 
+    def usable(self) -> bool:
+        """Betterment daily D8: False when this HOME has no keychain to hold
+        the People key (People is not set up on this Mac)."""
+        return not self._no_keychain
+
     def get(self, key_id: str) -> bytes:
         if self._no_keychain:
             raise PeopleKeyError("people_key_store_unavailable")
