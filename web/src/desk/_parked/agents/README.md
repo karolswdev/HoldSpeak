@@ -18,3 +18,6 @@ vitest exclude `_parked/`.
 - `paneParse.ts` (Betterment AG7, 2026-10-18): the Agents row's own read of
   the pane (`usePaneTail`) and its parse (`menuChoices`, `wantsToRun`). The
   hub's screen rules read the command and the choices now (`member.screen`).
+- `floorAgents.ts` (Betterment AG8, 2026-10-18): one desk icon per live agent
+  on the floor. The Agents list is the fleet; the Agents Dock tile carries
+  the worst state and the count that needs him.

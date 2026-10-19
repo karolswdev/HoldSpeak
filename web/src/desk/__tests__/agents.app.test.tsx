@@ -31,6 +31,8 @@ import { questionChoices } from "../agents/choices";
 import { WhyThisStateBody, type ExplainWire } from "../agents/WhyThisState";
 import { fromWireFlight, fromWireSessionRow, useAgentFlights } from "../agentFlights";
 import { ConductorWindow } from "../conductor/ConductorWindow";
+import { agentsTileOf } from "../conductor/fleetTile";
+import { askedWord } from "../agents/AgentRow";
 import { __resetConductor } from "../conductor/store";
 import { useSteering } from "../steering";
 
@@ -636,6 +638,120 @@ describe("the screen says the state when no hook speaks (Betterment AG7)", () =>
       "Rule: bash_permission_prompt · claude.toml 2026.10.11.1 (bundled)");
     expect(screen.getByTestId("lane-why-evidence").textContent).toContain("Do you want to proceed?");
     expect(screen.queryByTestId("lane-why-hook")).toBeNull();
+  });
+});
+
+/* ── Betterment AG8: the Agents list is the fleet ─────────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_the_agents_read_is_the_fleet (fixtures/agents-ag8): five agents on two
+ * Projects (one asks, one waits at a permission prompt, one finished and is
+ * New, one works, one finished and was opened) and one hand that waits for a
+ * free agent; then Start an agent's three requests and Cancel. */
+function ag8<T = unknown>(name: string): { captured_at: string; wire: T } {
+  return hubWire<T>(`../fixtures/agents-ag8/${name}`);
+}
+
+describe("the Agents list is the fleet (Betterment AG8)", () => {
+  const SESSIONS = ag8<{ sessions: unknown[]; flights: unknown[] }>("coders-sessions");
+  const HAND_REFUSED = ag8<Record<string, unknown>>("hand.refused");
+  const order = (section: HTMLElement) =>
+    [...section.querySelectorAll<HTMLElement>("[data-object-id]")].map((el) => el.dataset.objectId);
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(SESSIONS.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({
+      "/api/coders/sessions": SESSIONS.wire,
+      "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/": { gated: [], wait: null },
+      "/api/projects": ag8("projects").wire,
+      "/api/notes": ag8("note.create").wire,
+    });
+  });
+
+  it("groups by project, the worst first; inside, Needs you, New, Working, Quiet; the head counts only what is there", async () => {
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the on-call note" });
+    expect(screen.getByTestId("conductor-head").querySelector(".kit-disp")?.textContent)
+      .toBe("2 need you · 1 new · 1 working");
+    expect(screen.getByTestId("conductor-head").textContent).not.toMatch(/\b0\b/);
+    const groups = screen.getAllByTestId("conductor-project");
+    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["Ledger", "Platform"]);
+    expect(groups.map((g) => g.querySelector(".kit-pill")?.textContent)).toEqual(["Needs you", "Needs you"]);
+    expect(order(groups[0])).toEqual(["launch:launch_ag8_held", "launch:launch_ag8_work", expect.stringMatching(/^queue:/)]);
+    expect(order(groups[1])).toEqual(["launch:launch_ag8_ask", "launch:launch_ag8_new", "launch:launch_ag8_quiet"]);
+    const pills = within(groups[1]).getAllByTestId("conductor-pill").map((el) => el.textContent);
+    expect(pills).toEqual(["Done · New", "Quiet"]);
+    // Every Mac agent is connected in this rig: no "On this Mac" section.
+    expect(screen.queryByTestId("conductor-coders")).toBeNull();
+  });
+
+  it("the Dock tile carries the worst lamp, the mark for New and the count that needs him", () => {
+    const sessions = SESSIONS.wire.sessions.map(fromWireSessionRow);
+    const flights = SESSIONS.wire.flights.map(fromWireFlight);
+    expect(agentsTileOf(sessions, flights)).toEqual({
+      lamp: "ask", needYou: 2, fresh: true, words: "2 need you, 1 new, 1 working",
+    });
+    expect(agentsTileOf([], [])).toEqual({ lamp: null, needYou: 0, fresh: false, words: "" });
+  });
+
+  it("Start an agent in three presses: a note with his words, filed in the project, handed", async () => {
+    const calls: Array<[string, string, unknown]> = [];
+    const routes = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      const method = init?.method ?? "GET";
+      if (method !== "GET") calls.push([String(url), method, init?.json]);
+      if (String(url).includes("/resources/note%3A")) return ag8("resource.add").wire;
+      if (String(url) === "/api/agent/hand") throw new ApiError(409, "refused", HAND_REFUSED.wire);
+      return routes(url, init);
+    });
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the on-call note" });
+    fireEvent.click(screen.getByTestId("conductor-start"));                       // press 1
+    const words = await screen.findByTestId("conductor-start-words");
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Project" }).querySelectorAll("option").length).toBeGreaterThan(1));
+    fireEvent.change(screen.getByRole("combobox", { name: "Project" }), { target: { value: "p-platform" } });
+    fireEvent.change(words, { target: { value: "Add a rollback test" } });          // his words (or the mic)
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("conductor-start-go"));                   // press 3
+    });
+    const note = ag8<{ note: { id?: string; note_id?: string } }>("note.create").wire.note;
+    const noteId = String(note.note_id ?? note.id);
+    expect(calls).toEqual([
+      ["/api/notes", "POST", { title: "Add a rollback test", body_markdown: "Add a rollback test", tags: ["agent"] }],
+      [`/api/projects/p-platform/resources/${encodeURIComponent(`note:${noteId}`)}`, "PUT", {}],
+      ["/api/agent/hand", "POST", { kind: "note", id: noteId, profile: "claude-default", project_id: "p-platform", queue: true }],
+    ]);
+    // The hub's own refusal, in words, where he pressed.
+    await waitFor(() => expect(screen.getByTestId("conductor-start-form").textContent).toMatch(/Not started · (NO REPOSITORY|REPOSITORY NOT REGISTERED)/));
+  });
+
+  it("a hand that waits for a free agent has Cancel; one press takes it out of the queue", async () => {
+    const calls: string[] = [];
+    const routes = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (init?.method === "DELETE") {
+        calls.push(String(url));
+        return ag8("queue.cancel").wire;
+      }
+      return routes(url, init);
+    });
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the on-call note" });
+    const cancel = screen.getByTestId("conductor-cancel-queued");
+    await act(async () => {
+      fireEvent.click(cancel);
+    });
+    expect(calls).toEqual([expect.stringMatching(/^\/api\/agent\/hand\/queue\/queue_/)]);
+  });
+
+  it("an ask ten seconds old says Asked just now (not 1 min ago)", () => {
+    const now = Date.parse("2026-10-18T12:00:10Z");
+    expect(askedWord("1 MIN", Date.parse("2026-10-18T12:00:00Z"), now)).toBe("Asked just now");
+    expect(askedWord("1 MIN", Date.parse("2026-10-18T11:58:59Z"), now)).toBe("Asked 1 min ago");
+    expect(askedWord(undefined)).toBe("Asks");
   });
 });
 

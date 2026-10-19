@@ -155,11 +155,8 @@ function fixtureMembers() {
 const icon = (name: RegExp | string) => screen.getByRole("button", { name });
 const rowOf = (name: string) => screen.getByRole("button", { name }).closest("[data-object-id]") as HTMLElement;
 const pillOf = (name: string) => within(rowOf(name)).getByTestId("conductor-pill").textContent;
-/** The coders on this Mac fold away while coders work: unfold them. */
-const unfoldCoders = async () => {
-  const fold = await screen.findByTestId("conductor-coders-fold");
-  fireEvent.click(fold);
-};
+/* Betterment AG8: "On this Mac" shows only when something is missing (no
+ * fold to open). */
 
 describe("PHILO-14 C4 the Conductor members", () => {
   it("asking first, then at work, ready, stale: once each, with the screen's names and lamps", () => {
@@ -231,21 +228,21 @@ describe("PHILO-14 C4 the Conductor members", () => {
 });
 
 describe("PHILO-14 C4 the Conductor window", () => {
-  it("lists every member as a row with a plain pill; the head says 3 AT WORK · 1 ASK · 3 OF 3", async () => {
+  it("lists every live member as a row with a plain pill; the head says 1 needs you · 3 working · 3 OF 3", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Write the rollback runbook" });
     expect(pillOf("Shard the reconciliation job")).toBe("Working");
     expect(pillOf("scratch")).toBe("Working");
     expect(pillOf("Add the ledger freeze flag")).toBe("PR #412 open");
     expect(pillOf("Write the cutover checklist")).toBe("PR #413 merged · item closed · session stopped");
-    await unfoldCoders();
-    expect(pillOf("Codex")).toBe("Not installed");
-    expect(pillOf("Claude Code")).toBe("Ready");
+    // Betterment AG8: Claude Code can run and Codex is not wanted here:
+    // nothing is missing, so no "On this Mac".
+    expect(screen.queryByTestId("conductor-coders")).toBeNull();
     const head = screen.getByTestId("conductor-head").textContent ?? "";
-    // Phase 16 (the interior kit): `3 at work` is the window's one big fact;
-    // the ask (a lamp) and the cap are tokens on the strip beside it.
-    expect(screen.getByTestId("conductor-head").querySelector(".kit-disp")?.textContent).toBe("3 at work");
-    expect(head).toContain("1 ASK");
+    // Betterment AG8: the fact counts only what is there; the strip keeps
+    // the limit when he is at it.
+    expect(screen.getByTestId("conductor-head").querySelector(".kit-disp")?.textContent).toBe("1 needs you · 3 working");
+    expect(head).not.toContain("1 ASK");
     expect(head).toContain("3 OF 3");
     expect(head).not.toMatch(/\b0 /);
     expect(document.body.textContent).not.toMatch(/personas?/i);
@@ -258,10 +255,9 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(shell.lanes).toEqual([["l-recon"]]);
     fireEvent.click(within(rowOf("scratch")).getByRole("button", { name: "Open" }));
     expect(shell.sessions).toEqual([["claude:solo"]]);
-    await unfoldCoders();
-    fireEvent.click(icon("Claude Code"));
+    fireEvent.click(icon("Shard the reconciliation job"));
     fireEvent.click(screen.getByRole("button", { name: "Get Info" }));
-    expect(useConductor.getState().infos.map((m) => m.ref)).toEqual(["agent:claude"]);
+    expect(useConductor.getState().infos.map((m) => m.ref)).toEqual(["launch:l-recon"]);
   });
 
   it("the asking agent has Answer (the ask well); a working one has none; Stop is two presses", async () => {
@@ -326,13 +322,12 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(screen.getByTestId("conductor-stop-receipt").textContent).toBe("STOPPED · BY YOU");
   });
 
-  it("the asking agent comes first, then at work, the coders on this Mac, and the ended ones", async () => {
+  it("the asking agent comes first, then the working ones, and the stopped ones", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Write the rollback runbook" });
-    await unfoldCoders();
     const names = [...document.querySelectorAll(".conductor-window [data-object-id]")].map((el) => el.getAttribute("data-object-id"));
     expect(names[0]).toBe("launch:l-runbook");
-    expect(names.indexOf("agent:claude")).toBeGreaterThan(names.indexOf("launch:l-flag"));
+    expect(names).not.toContain("agent:claude");
     // The ended launches close the list, folded (in the hub's history order).
     expect(names.slice(-2)).toEqual(["launch:l-old", "launch:l-done"]);
   });
@@ -428,14 +423,12 @@ describe("PHILO-14 C4 the Conductor window", () => {
     render(<ConductorWindow />);
     const head = await screen.findByTestId("conductor-head");
     await waitFor(() => expect(head.textContent).toContain("2 ready"));
-    expect(head.textContent).toContain("3 ON THIS MAC");
     expect(head.textContent).not.toMatch(/harness/i);
-    // Nothing selected, Codex lacks hooks: Install hooks with its one line.
+    // Nothing selected, Codex lacks hooks: Connect with its one line.
     expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
     expect(screen.getByTestId("conductor-hooks-line").textContent).toBe(HOOKS_LINE);
-    // A selected agent with its hooks in: no line.
-    fireEvent.click(screen.getByRole("button", { name: "Claude Code" }));
-    expect(screen.queryByTestId("conductor-hooks-line")).toBeNull();
+    // Betterment AG8: "On this Mac" lists only what is missing: Codex.
+    expect(screen.queryByRole("button", { name: "Claude Code" })).toBeNull();
   });
 
   it("a failed sessions read is NOT READ with Retry, never an empty drawer", async () => {
@@ -636,11 +629,11 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", raw: true }]]);
   });
 
-  it("the coders on this Mac fold while coders work; ended launches fold", async () => {
+  it("On this Mac shows only when something is missing; stopped launches fold", async () => {
     render(<ConductorWindow />);
-    await screen.findByTestId("conductor-coders-fold");
+    await screen.findByRole("button", { name: "Write the rollback runbook" });
     expect(screen.queryByTestId("conductor-coders")).toBeNull();
-    expect(screen.getByText("Ended today")).toBeTruthy();
+    expect(screen.getByText("Stopped today")).toBeTruthy();
   });
 });
 

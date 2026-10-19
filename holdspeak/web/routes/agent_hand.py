@@ -164,6 +164,18 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "agent_hand_preview_failed"}, status_code=500)
         return JSONResponse(result)
 
+    @router.delete("/api/agent/hand/queue/{queue_id}")
+    async def api_agent_hand_queue_cancel(queue_id: str) -> Any:
+        """Betterment AG8 (AG5 follow-up): Cancel a hand that waits for a free
+        agent. It leaves the queue and never starts; nothing else changes.
+        404 when the queue holds no such hand (it started, or was cancelled)."""
+        from ...services.agent_hand_queue import HandQueue
+
+        removed = await asyncio.to_thread(HandQueue().remove, queue_id)
+        if not removed:
+            return JSONResponse({"error": "queue_unknown", "code": "queue_unknown"}, status_code=404)
+        return JSONResponse({"queue_id": queue_id, "cancelled": True})
+
     @router.get("/api/agent/launches/{launch_id}")
     async def api_agent_launch(launch_id: str) -> Any:
         """One launch's delivery, read from the launch ledger (no driver, no
