@@ -274,7 +274,7 @@ function LaneBody({
 
   return (
     <div className="desk-pullout-body lw-body" data-testid="lane-body" ref={bodyRef} onScroll={onScroll}>
-      <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} />
+      <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} done={done} />
       {done && !raw ? <ResultBlock lane={lane} screenSaid={screenSaid} /> : null}
       {unreadParts(lane).map(([part, reason]) => (
         <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
@@ -611,9 +611,12 @@ export function approveShowing(lane: LaneWire): boolean {
 }
 
 /** PHILO-17 THE REFIT: what the coder does now, as the lane's one headline. */
-export function laneDoing(lane: LaneWire, agent: string): { word: string; tone: "ok" | "warn" | "info" | "idle" } {
+export function laneDoing(lane: LaneWire, agent: string, done = false): { word: string; tone: "ok" | "warn" | "info" | "idle" } {
   const name = agent || "The agent";
   if (lane.launch.stopped) return { word: "Stopped by you", tone: "idle" };
+  // Betterment AG10: the flight knows the turn is done (also from a screen,
+  // with no hook to say it); the head never says "working" then.
+  if (done) return { word: `${name} is done`, tone: "ok" };
   const wait = isNotRead(lane.wait) ? null : lane.wait;
   if (heldNow(lane) || wait?.kind === "TO APPROVE") return { word: `${name} wants to run`, tone: "warn" };
   if (wait?.question && wait.kind === "TO ANSWER") return { word: `${name} asks you`, tone: "warn" };
@@ -626,8 +629,8 @@ export function laneDoing(lane: LaneWire, agent: string): { word: string; tone: 
   return { word: `${name} is working`, tone: "info" };
 }
 
-function LaneHead({ lane, agent, itemTitle }: { lane: LaneWire; agent: string; itemTitle: string }) {
-  const doing = laneDoing(lane, agent);
+function LaneHead({ lane, agent, itemTitle, done = false }: { lane: LaneWire; agent: string; itemTitle: string; done?: boolean }) {
+  const doing = laneDoing(lane, agent, done);
   return (
     <div className="lw-head" data-testid="lane-head">
       <span className="lw-head-sprite" aria-hidden="true">
