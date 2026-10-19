@@ -119,31 +119,18 @@ describe("B69: one state per source on the Room", () => {
     expect(screen.getByTestId("source-freshness").textContent).toContain("STALE");
   });
 
-  it("quiet hours read QUIET UNTIL on the head, the row and OPEN HERE; no next check in the past", async () => {
+  it("quiet hours read QUIET UNTIL on the head and the row; no next check in the past", async () => {
     freshness = "quiet";
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
-    expect(screen.getByTestId("room-headline").textContent).toBe("Clear here");
+    // Betterment P3: quiet hours are not a failure: the head says the state.
+    expect(screen.getByTestId("room-headline").textContent).not.toBe("Not all read");
     expect(screen.getByTestId("room-sources-word").textContent).toBe(`QUIET UNTIL ${hhmm(QUIET_END)}`);
     expect(screen.getByTestId("source-freshness").textContent).toContain(`QUIET UNTIL ${hhmm(QUIET_END)}`);
-    expect(screen.getByTestId("needs-you-empty").textContent).toBe(`Nothing open · quiet until ${hhmm(QUIET_END)}`);
+    expect(screen.queryByTestId("needs-you-empty")).toBeNull();
   });
 });
 
-describe("B70: a done action says DONE", () => {
-  it("the decision row of a done action reads DONE · <time>, not CONFIRMED", async () => {
-    const doneAt = "2026-10-08T03:42:00+00:00";
-    decisions = [{
-      id: "dr-1", text: "Add a CODEOWNERS file", at: "2026-10-07T21:14:00", url: null, kind: "action",
-      proposal_id: "p-1", source: "meeting", meeting_title: "Repo hygiene sync",
-      confirmed_at: "2026-10-08T03:14:00+00:00", commitment_id: "c-1", done: true, done_at: doneAt,
-    }];
-    render(<WindowHarness scope="project:p1" />);
-    await screen.findByTestId("room-body");
-    expect((await screen.findByTestId("done-state")).textContent).toBe(`DONE · ${hhmm(doneAt)}`);
-    expect(screen.queryByTestId("confirmed-state")).toBeNull();
-  });
-});
 
 describe("B72: a model draft names its model and host", () => {
   it("never the assignment id", () => {

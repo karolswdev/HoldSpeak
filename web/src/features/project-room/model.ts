@@ -233,6 +233,12 @@ export type RoomNeedsYouItem = {
   watchId?: string;
   /** Conductor R4: an issue row's entity in that Watch (kind `issue`). */
   entityId?: string;
+  /** Betterment P3: whose move the row is. `theirs` (another person owes
+   *  it) goes to Waiting on; everything else is his (Needs you). */
+  direction?: "mine" | "theirs";
+  /** Betterment P3: an owed item's owner and due date (Waiting on). */
+  owner?: string;
+  dueAt?: string;
 };
 
 /** Needs-you section data shape (when ok). */
@@ -304,6 +310,12 @@ export type RoomSourcesData = {
 export type RoomHealthData = {
   assessment: "at_risk" | "on_track";
   reason: string | null;
+  /** Betterment P3: where the project stands, in words: the state and the
+   *  one reason (from this week's risks, risk items, owed items past their
+   *  date, failing CI), with the ref it rests on. */
+  projectState?: "on_track" | "at_risk" | "blocked";
+  stateReason?: string | null;
+  stateRef?: string | null;
   inputs: {
     overdue: number;
     /** PHILO-9-01 (F2): how many of `overdue` are planned milestones past their date. */
@@ -497,6 +509,26 @@ export type RoomSnapshot = {
   steward: RoomSection<Record<string, never>>;
   /** HS-174-04: pipeline receipts (tolerant: absent when wire not landed). */
   receipts: RoomSection<RoomReceiptsData>;
+  /** Betterment P3: the Now wing's reads (absent on an older hub). */
+  now?: RoomSection<RoomNowData>;
+};
+
+/** Betterment P3: one line of This week, with the source it rests on. */
+export type RoomNowLine = {
+  text: string;
+  ref: string;
+  token: string;
+  source: string;
+  opens: boolean;
+};
+
+/** Betterment P3: the Now wing's reads beside the head's state. */
+export type RoomNowData = {
+  nextDate: { at: string; label: string } | null;
+  lastUpdateAt: string | null;
+  meetingsThisWeek: number;
+  risks: RoomNowLine[];
+  decided: { id: string; text: string; at: string; ref: string; source: string }[];
 };
 
 /* ── Room snapshot decoder ── */
@@ -620,6 +652,9 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
             prCount: r.count != null ? Number(r.count) : undefined,
             watchId: r.watchId != null && r.watchId !== "" ? String(r.watchId) : undefined,
             entityId: r.entity_id != null && r.entity_id !== "" ? String(r.entity_id) : undefined,
+            direction: r.direction === "theirs" ? "theirs" : r.direction === "mine" ? "mine" : undefined,
+            owner: r.owner != null && r.owner !== "" ? String(r.owner) : undefined,
+            dueAt: r.due_at != null && r.due_at !== "" ? String(r.due_at) : undefined,
           }))
         : [],
       count: Number(s.count ?? 0),
@@ -749,6 +784,10 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
       return {
         assessment: (s.assessment === "at_risk" ? "at_risk" : "on_track") as "at_risk" | "on_track",
         reason: s.reason != null ? String(s.reason) : null,
+        projectState: (s.project_state === "blocked" ? "blocked" : s.project_state === "at_risk" ? "at_risk"
+          : s.project_state === "on_track" ? "on_track" : undefined) as RoomHealthData["projectState"],
+        stateReason: typeof s.state_reason === "string" && s.state_reason ? s.state_reason : null,
+        stateRef: typeof s.state_ref === "string" && s.state_ref ? s.state_ref : null,
         inputs: {
           overdue: Number((s.inputs as Record<string, unknown> | undefined)?.overdue ?? 0),
           overdueMilestones: Number((s.inputs as Record<string, unknown> | undefined)?.overdueMilestones ?? 0),
@@ -832,6 +871,32 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
     updates: decodeSection<Record<string, never>>(raw.updates, () => ({} as Record<string, never>)),
     steward: decodeSection<Record<string, never>>(raw.steward, () => ({} as Record<string, never>)),
     // HS-174-04: pipeline receipts (tolerant: absent when wire not landed)
+    now: decodeSection<RoomNowData>(raw.now, (s) => {
+      const next = s.next_date as Record<string, unknown> | null | undefined;
+      return {
+        nextDate: next && next.at ? { at: String(next.at), label: String(next.label ?? "") } : null,
+        lastUpdateAt: s.last_update_at != null ? String(s.last_update_at) : null,
+        meetingsThisWeek: Number(s.meetings_this_week ?? 0),
+        risks: Array.isArray(s.risks)
+          ? (s.risks as Record<string, unknown>[]).map((r) => ({
+              text: String(r.text ?? ""),
+              ref: String(r.ref ?? ""),
+              token: String(r.token ?? ""),
+              source: String(r.source ?? ""),
+              opens: Boolean(r.opens),
+            })).filter((r) => r.text)
+          : [],
+        decided: Array.isArray(s.decided)
+          ? (s.decided as Record<string, unknown>[]).map((r) => ({
+              id: String(r.id ?? ""),
+              text: String(r.text ?? ""),
+              at: String(r.at ?? ""),
+              ref: String(r.ref ?? ""),
+              source: String(r.source ?? ""),
+            })).filter((r) => r.text)
+          : [],
+      };
+    }),
     receipts: decodeSection<RoomReceiptsData>(raw.receipts, (s) => ({
       items: Array.isArray(s.items)
         ? (s.items as Record<string, unknown>[]).map((r) => ({

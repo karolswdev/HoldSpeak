@@ -181,7 +181,8 @@ describe("PHILO-17 U30: Go ▸ Projects ▸ <name> opens the project's Room", ()
     }, { timeout: 5000 });
     expect(useDesk.getState().windowsById["surface-project-memory"]?.scope).toBe(`project:${S17.pid}`);
     const headline = await within(room).findByTestId("room-headline", undefined, { timeout: 5000 });
-    expect(headline.textContent).toBe("Clear here");
+    // Betterment P3: the head says the new project's state.
+    expect(headline.textContent).toMatch(/^(On track|New)$/);
     expect(room.textContent).toContain("Ledger cutover");
     expect(apiFetch.mock.calls.map(([url]) => String(url))).toContain(`/api/projects/${S17.pid}/room`);
     // Never a drawer: no drawer window in the store or on the page.

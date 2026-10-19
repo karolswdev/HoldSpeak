@@ -1,0 +1,168 @@
+/* Betterment P3, the Now wing (DESIGN.md "The project window: Now"):
+   two columns at a wide window (Needs you and Waiting on | This week), one
+   column on the phone in the design's order. Our material only: the
+   Workbench ink, the mono facts, the library Button. */
+
+.room-now-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px 16px;
+  align-items: start;
+}
+.room-now-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+@container surface (max-width: 639.9px) {
+  .room-now-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* The head's line under the state: the next date, the last update, the
+   week's meetings, in the mono facts. */
+.room-head .room-now-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 0;
+  font: 600 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.04em;
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+.room-head .room-headline[data-tone="warn"] { color: var(--wb-warn-ink, var(--wb-text)); }
+.room-head .room-headline[data-tone="danger"] { color: var(--wb-danger-ink, var(--wb-text)); }
+.room-head .room-headline[data-tone="ok"] { color: var(--wb-text); }
+.room-head .room-headline { overflow-wrap: anywhere; min-width: 0; flex: 1 1 18rem; }
+
+/* Waiting on: the person, then what they owe, one line. */
+.room-now-mono {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid color-mix(in srgb, var(--wb-ink) 45%, transparent);
+  background: var(--wb-field-hi);
+  font: 700 12px / 1 var(--font-mono);
+  color: var(--wb-text);
+}
+.room-now-person { font-weight: 650; }
+.room-now-owed {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  font: 500 13px / 1.35 var(--font-sans);
+  color: var(--wb-text);
+  min-width: 0;
+}
+.room-now-owed-item { overflow-wrap: anywhere; }
+.room-now-owed-item[data-tone="danger"] .room-now-due { color: var(--wb-danger-ink); }
+.room-now-due { color: var(--wb-muted); font-variant-numeric: tabular-nums; }
+
+/* This week: three groups, a line each with its source chip. */
+.room-now-week {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 var(--desk-surface-row-pad-x, 14px);
+}
+.room-now-group { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.room-now-group-title {
+  margin: 0;
+  font: 700 12px / 1.2 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+}
+.room-now-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.room-now-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--wb-text);
+}
+.room-now-text { overflow-wrap: anywhere; min-width: 0; }
+.room-now-decided.btn,
+.room-now-decided.btn--chrome {
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font: 600 13px / 1.4 var(--font-sans);
+  color: var(--wb-text);
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.room-now-decided:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* 393: Write update spans the width under the state (the first screen). */
+@container surface (max-width: 559.9px) {
+  .room-head .room-head-trailing { margin-left: 0; width: 100%; }
+  .room-head .room-head-trailing .btn,
+  .room-head .room-head-trailing .signal-button { width: 100%; min-height: 44px; }
+  .room-now-group .btn { min-height: 44px; }
+  .room-now-decided.btn,
+.room-now-decided.btn--chrome { min-height: 44px; display: inline-flex; align-items: center; }
+}
+
+/* The head's reason opens its source: the words are the press. */
+.room-head .room-headline-open.btn--chrome {
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.room-head .room-headline-open:hover { text-decoration: underline; text-underline-offset: 4px; }
+
+/* A proposal's title is its Edit press (chrome Button: no plate classes). */
+.room-proposal-title.btn--chrome {
+  color: var(--wb-text);
+  min-height: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+}
+.room-proposal-title.btn--chrome:hover .room-proposal-text { text-decoration: underline; text-underline-offset: 3px; }
+.room-head .room-headline-open.btn--chrome,
+.room-now-decided.btn--chrome,
+.room-proposal-title.btn--chrome { appearance: none; -webkit-appearance: none; border-radius: 0; }
+
+/* The ask well's visually hidden Submit (Enter submits; the Button is for
+   assistive tech) is never a 44 px target: the phone's target floor gave it
+   a 44 px box under the Result select once the Now wing brought the ask
+   into the first screen (the desk sweep at 393). */
+.room-ask-well .room-ask-submit-hidden {
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
