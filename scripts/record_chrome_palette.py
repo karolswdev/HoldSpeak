@@ -66,6 +66,8 @@ THOUGHT_GETS = (
     "/api/thoughts/{thought}/workbench",
     "/api/thoughts/{thought}/context",
     "/api/thoughts/{thought}/original",
+    # Betterment Q9: the sticky reads the note's outcome rows (Find the tasks).
+    "/api/notes/{note}/outcomes",
 )
 
 

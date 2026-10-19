@@ -1,0 +1,10 @@
+{
+ "_source": "A real engine's reply to the meeting analysis prompt over the Jun note, recorded by scripts/record_note_find_tasks_reply.py. Never hand-edit it.",
+ "recorded_at": "2026-10-19T04:02:30+00:00",
+ "engine": {
+  "base_url": "http://192.168.1.43:8080/v1",
+  "model": "qwen3.8-27b"
+ },
+ "note": "Jun is nervous about the cutover weekend. Maybe pair him with Mira on call, and write the on-call handbook first.\nTheo could own the handbook.",
+ "reply_text": "{\"topics\": [\"cutover weekend preparation\", \"on-call pairing\", \"on-call handbook\"], \"action_items\": [{\"task\": \"Pair Jun with Mira on call for the cutover weekend\", \"owner\": \"Me\", \"due\": null}, {\"task\": \"Write the on-call handbook\", \"owner\": \"Theo\", \"due\": null}], \"decisions\": [{\"decision\": \"Pair Jun with Mira on call for the cutover weekend\", \"rationale\": \"Jun is nervous about the cutover weekend\"}, {\"decision\": \"Theo owns the on-call handbook\", \"rationale\": \"to write it first before the cutover\"}], \"summary\": \"Jun is nervous about the cutover weekend; the team decided to pair him with Mira on call and assigned Theo to own and write the on-call handbook first.\"}"
+}

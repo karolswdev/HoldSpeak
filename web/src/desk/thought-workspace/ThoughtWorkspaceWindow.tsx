@@ -16,7 +16,8 @@ import {
 } from "../thoughts";
 import type { WorldObject } from "../world";
 import { Button } from "../../components/signal/Signal";
-import { PadGadget, ScrollHint, SurfaceFooter } from "../surface";
+import { PadGadget, RunLine, ScrollHint, SurfaceFooter } from "../surface";
+import { NoteOutcomesWell, useNoteOutcomes } from "./NoteOutcomesWell";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ThoughtSaveFault, useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
 import { ThoughtDocumentPane } from "./ThoughtDocumentPane";
@@ -170,6 +171,8 @@ function WorkspaceReady({
     flush: () => writer.flush(),
   };
   const draftNoteId = documentThought.working_note.id;
+  // Betterment Q9: Find the tasks; the rows stay with the note.
+  const outcomes = useNoteOutcomes(draftNoteId);
   useEffect(() => {
     setSelectedPassage((current) => current && current.body === writer.draft.body ? current : null);
   }, [writer.draft.body]);
@@ -397,6 +400,17 @@ function WorkspaceReady({
     }
   };
   reloadNoteRef.current = reloadNote;
+  /* Betterment Q9: the extraction reads the stored note, so the sole writer
+     saves first. */
+  const findTasks = async () => {
+    if (busy || outcomes.finding) return;
+    setBusy(true); say("");
+    try {
+      await writer.flush({ fence: true });
+    } catch (cause) { sayFault(cause); writer.release(); setBusy(false); return; }
+    writer.release(); setBusy(false);
+    await outcomes.find();
+  };
   /* The well sends the stored note, so the sole writer saves first. */
   const openSend = async () => {
     if (busy) return;
@@ -514,6 +528,13 @@ function WorkspaceReady({
       {messageVerb === "reload" ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button> : null}
     </p> : null}
 
+    {outcomes.finding ? <RunLine phase="running" verb="Finding the tasks" startedAt={outcomes.startedAt} /> : null}
+    {outcomes.failure ? <p className="thought-note-line" role="status">
+      {outcomes.failure}
+      <Button dense disabled={busy} onClick={() => void findTasks()}>Try again</Button>
+    </p> : null}
+    <NoteOutcomesWell outcomes={outcomes} />
+
     {actionWell === "project" ? <ProjectWell
       noteId={draftNoteId}
       onAdded={say}
@@ -532,11 +553,11 @@ function WorkspaceReady({
         {writer.conflicted
           ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
           : writer.failed ? <Button dense onClick={writer.retry}>Retry</Button> : null}
-        {/* Betterment Q8 (one note): the foot is Ask about this, Project ▾,
-            Send… and Done. Add a note, Copy, Task (a paste of the whole
-            note) and Finish / Resume left the face; Find the tasks joins
-            with Q9. */}
+        {/* Betterment Q8 (one note): the foot is Ask about this, Find the
+            tasks (Q9), Project ▾, Send… and Done. Add a note, Copy, Task (a
+            paste of the whole note) and Finish / Resume left the face. */}
         <Button dense disabled={busy} onClick={() => void askFromNote()}>Ask about this</Button>
+        <Button dense disabled={busy || outcomes.finding || !writer.draft.body.trim()} loading={outcomes.finding} onClick={() => void findTasks()}>Find the tasks</Button>
         {hasProjects ? <Button dense disabled={busy} aria-expanded={actionWell === "project"} onClick={() => void openActionWell("project")}>Project ▾</Button> : null}
         <Button ref={sendRef} dense disabled={busy} onClick={() => void openSend()}>Send…</Button>
         <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={onDone}>Done</Button>

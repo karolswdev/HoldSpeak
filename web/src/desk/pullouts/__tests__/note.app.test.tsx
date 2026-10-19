@@ -93,12 +93,12 @@ describe("Betterment Q8: every note opens in the one note window", () => {
     expect(screen.queryByRole("button", { name: "Develop this thought" })).toBeNull();
     expect(container.querySelector(`[id="pullout:${NOTE_REF}"]`)?.getAttribute("aria-label")).toBe(NOTE.title);
 
-    // The foot: Ask about this, Send… and Done (Project ▾ shows when he has
-    // a project; Find the tasks joins with Q9). No Finish, Resume, Task,
-    // Copy or Add a note.
+    // The foot: Ask about this, Find the tasks (Q9), Send… and Done
+    // (Project ▾ shows when he has a project). No Finish, Resume, Task, Copy
+    // or Add a note.
     const foot = container.querySelector(".thought-note-foot") as HTMLElement;
     const verbs = within(foot).getAllByRole("button").map((b) => b.textContent);
-    expect(verbs).toEqual(["Ask about this", "Send…", "Done"]);
+    expect(verbs).toEqual(["Ask about this", "Find the tasks", "Send…", "Done"]);
     // The open wrote nothing but the open itself.
     expect(calls.filter((c) => c.method !== "GET").map((c) => `${c.method} ${c.url}`)).toEqual(["POST /api/thoughts/open-note"]);
   });
@@ -157,5 +157,83 @@ describe("Betterment Q8: Add to note, in Ask opened from a note", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     expect(await screen.findByText(THREAD.first.output)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Add to note" })).toBeNull();
+  });
+});
+
+/* Betterment Q9 "Find the tasks": the hub half is
+ * tests/unit/test_desk_note_outcomes.py. It runs the meeting's extraction on
+ * the Jun note with a REAL recorded LAN engine reply, and records the reads
+ * and presses this window makes (web/src/test/wire/note.find-tasks.wire.json). */
+import FIND from "../../../test/wire/note.find-tasks.wire.json";
+
+describe("Betterment Q9: Find the tasks on a note", () => {
+  function hubWithFind({ refuse = false } = {}) {
+    const opens = [NOTE.open];
+    vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET");
+      calls.push({ url, method, body: init.body ? JSON.parse(String(init.body)) : undefined });
+      if (method === "POST" && url.endsWith("/api/thoughts/open-note")) return Promise.resolve(reply(opens[0]));
+      if (method === "GET" && url.endsWith(`/api/thoughts/${THOUGHT_ID}/workbench`)) return Promise.resolve(reply(NOTE.workbench));
+      if (method === "GET" && url.endsWith("/outcomes")) return Promise.resolve(reply(FIND.before));
+      if (method === "POST" && url.endsWith("/outcomes/find")) {
+        return Promise.resolve(refuse ? reply(FIND.refused.body, FIND.refused.status) : reply(FIND.found));
+      }
+      if (method === "POST" && url.endsWith("/confirm")) return Promise.resolve(reply(FIND.confirmed));
+      return Promise.resolve(reply({}));
+    }));
+  }
+
+  async function openNote() {
+    const view = render(<MemoryRouter><Pullout o={noteObject} pulloutId={NOTE_REF} /></MemoryRouter>);
+    await waitFor(() => expect(view.container.querySelector(".thought-note-foot")).not.toBeNull());
+    await waitFor(() => expect(view.container.textContent).toContain("Theo could own the handbook."));
+    return view;
+  }
+
+  it("one press shows the meeting's rows: the tasks with owners, and the proposed decision", async () => {
+    hubWithFind();
+    const { container } = await openNote();
+    expect(within(container.querySelector(".thought-note-foot") as HTMLElement).getAllByRole("button").map((b) => b.textContent))
+      .toEqual(["Ask about this", "Find the tasks", "Send…", "Done"]);
+    // The rows stay with the note: the window reads them when it opens.
+    expect(calls.some((c) => c.method === "GET" && c.url === `/api/notes/${NOTE.note_id}/outcomes`)).toBe(true);
+    expect(screen.queryByTestId("note-outcomes")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Find the tasks" }));
+    const tasks = await screen.findAllByTestId("note-commitments-row");
+    // The note is saved first (nothing unsaved here), then the hub runs the extraction.
+    expect(calls.some((c) => c.method === "POST" && c.url === `/api/notes/${NOTE.note_id}/outcomes/find`)).toBe(true);
+    expect(tasks.map((row) => row.textContent)).toEqual([
+      expect.stringContaining("Pair Jun with Mira on call for the cutover weekend"),
+      expect.stringContaining("Write the on-call handbook"),
+    ]);
+    expect(tasks[0]).toHaveTextContent("Me · no date");
+    expect(tasks[1]).toHaveTextContent("Theo Park · no date");
+    const decisions = screen.getAllByTestId("note-decisions-row");
+    expect(decisions.map((row) => row.textContent)).toEqual([expect.stringContaining("Theo owns the on-call handbook")]);
+  });
+
+  it("Confirm makes the task with one press; the row says so and loses its Confirm", async () => {
+    hubWithFind();
+    await openNote();
+    fireEvent.click(screen.getByRole("button", { name: "Find the tasks" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Confirm: Write the on-call handbook" }));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Confirm: Write the on-call handbook" })).toBeNull());
+    expect(calls.find((c) => c.url.endsWith("/confirm"))).toMatchObject({
+      method: "POST", url: `/api/notes/${NOTE.note_id}/outcomes/${FIND.confirm_row}/confirm`,
+    });
+    const theo = screen.getAllByTestId("note-commitments-row").find((row) => row.textContent?.includes("Write the on-call handbook"))!;
+    expect(theo).toHaveTextContent("Theo Park · Confirmed");
+    expect(screen.getByRole("button", { name: "Confirm: Pair Jun with Mira on call for the cutover weekend" })).toBeInTheDocument();
+  });
+
+  it("a refusal says why in the hub's words, with Try again", async () => {
+    hubWithFind({ refuse: true });
+    await openNote();
+    fireEvent.click(screen.getByRole("button", { name: "Find the tasks" }));
+    expect(await screen.findByText(FIND.refused.body.message)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(screen.queryByTestId("note-outcomes")).toBeNull();
   });
 });
