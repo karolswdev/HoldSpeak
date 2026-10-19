@@ -66,6 +66,16 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
         # Betterment M2: an agent CLI run records the item it ran for, so the
         # result shows the run's cost and what its agent used.
         with for_item(str(payload.get("item_id") or "")):
+            if self.desk_tools:
+                # MCP M5: an HTTP engine whose server takes tool calls runs
+                # the item through the hub's tool loop, with the desk's tools.
+                from .engine_tool_loop import answer_item
+
+                looped = answer_item(engine, payload, cancellation)
+                if looped is not None:
+                    result, tokens = looped
+                    self.tokens += tokens
+                    return result
             result = super().dispatch(engine, payload, cancellation)
         try:
             usage = dict(getattr(engine, "last_usage", None) or {})

@@ -138,6 +138,18 @@ def _server_takes_tools(endpoint: str, model: str, profile_id: str) -> str:
     The same questions the Check asks (``/models`` capabilities, llama.cpp
     ``/props``, and the one-token request only to a keyless private address),
     kept for ten minutes."""
+    try:
+        from ..intel.providers import profile_key_env
+
+        key_env = profile_key_env(profile_id)
+    except Exception:
+        key_env = ""
+    return server_takes_tools(endpoint, model, key_env=key_env)
+
+
+def server_takes_tools(endpoint: str, model: str, *, key_env: str = "") -> str:
+    """:func:`_server_takes_tools` for a caller that holds the engine, whose
+    key is in the env var ``key_env`` (MCP M5: an automation's HTTP engine)."""
     key = (endpoint, model)
     now = time.monotonic()
     with _support_lock:
@@ -148,10 +160,9 @@ def _server_takes_tools(endpoint: str, model: str, profile_id: str) -> str:
 
     api_key = ""
     try:
-        from ..intel.providers import profile_key_env
         from ..profile_key_store import resolve_profile_key
 
-        api_key = resolve_profile_key(profile_key_env(profile_id)) or ""
+        api_key = (resolve_profile_key(key_env) or "") if key_env else ""
     except Exception:
         api_key = ""
     answer = "unknown"
@@ -298,4 +309,4 @@ async def run_loop(
     }
 
 
-__all__ = ["CLI", "DESK_PROMPT", "LOOP", "NONE", "cancel_loop", "hold_words", "run_loop", "tools_mode"]
+__all__ = ["CLI", "DESK_PROMPT", "LOOP", "NONE", "cancel_loop", "hold_words", "run_loop", "server_takes_tools", "tools_mode"]
