@@ -48,6 +48,8 @@ def _helper_send(
     record: Mapping[str, Any],
     text: str,
     *,
+    session_key: str,
+    expected_wait_id: str = "",
     send: Optional[Callable[..., Any]] = None,
 ) -> dict[str, Any]:
     """Send through the registered steering authority for this helper.
@@ -60,6 +62,8 @@ def _helper_send(
     from ..delivery.commands import deliver_agent_text
     from ..operation_policy import describe_operation, resolve_policy
 
+    if not session_key:
+        raise HelperRefused("agent_not_ready", "the helper has not registered its session")
     pane = _pane(record)
     mode = str(record.get("control_mode") or "").strip().lower()
     if not mode:
@@ -94,11 +98,12 @@ def _helper_send(
         runner = lambda _argv: _PaneResolution(pane)
         audit = lambda **_kwargs: 0
     result = deliver_agent_text(
-        f"agent:launch:{caller}",
+        session_key,
         str(text).strip(),
         current_target=pane,
         agent=f"launch:{caller}",
         expected_pane_id=pane,
+        expected_wait_id=expected_wait_id,
         operation=operation.to_dict(),
         policy_snapshot=policy.to_dict(),
         runner=runner,
@@ -303,14 +308,22 @@ def prompt(
     record = _helper_record(caller, launch_id, ledger)
     if not str(text or "").strip():
         raise HelperRefused("empty_prompt", "say something", 400)
+    started = clock()
     before = helper_state(db, launch_id, ledger)
+    # A fresh launch can return before its hook registration. Wait within
+    # the same five-second bound; never type into an unidentified session.
+    while not before.get("session_key") and before["state"] not in ("asks", "approve", "stopped"):
+        if clock() - started >= STALL_SECONDS:
+            return {"launch_id": launch_id, "status": "agent_prompt_stalled", "state": before["state"]}
+        sleep(0.25)
+        before = helper_state(db, launch_id, ledger)
     if before["state"] in ("asks", "approve"):
         raise HelperRefused("agent_blocked", "the helper waits for an answer; use agent.answer")
     if before["state"] == "stopped":
         raise HelperRefused("agent_stopped", "the helper is not running")
-    _helper_send(caller, launch_id, record, str(text).strip(), send=send)
+    _helper_send(caller, launch_id, record, str(text).strip(),
+                 session_key=str(before.get("session_key") or ""), expected_wait_id="", send=send)
     # herdr: within 5 s the helper works (or asks); else it is stalled.
-    started = clock()
     moved = None
     while clock() - started < STALL_SECONDS:
         now = helper_state(db, launch_id, ledger)
@@ -375,7 +388,16 @@ def answer(
         raise HelperRefused("not_asking", "the helper asks nothing now")
     if not str(text or "").strip():
         raise HelperRefused("empty_answer", "say the answer", 400)
-    _helper_send(caller, launch_id, record, str(text).strip(), send=send)
+    from ..coder_steering import current_wait_episode
+
+    key = str(state.get("session_key") or "")
+    episode = current_wait_episode(key) if key else ""
+    if episode.endswith("|approve"):
+        raise HelperRefused("approval_is_owners", "an approval prompt is the owner's or the gate's")
+    if not episode.endswith("|answer"):
+        raise HelperRefused("not_asking", "the helper has no current question")
+    _helper_send(caller, launch_id, record, str(text).strip(),
+                 session_key=key, expected_wait_id=episode, send=send)
     return {"launch_id": launch_id, "status": "sent"}
 
 

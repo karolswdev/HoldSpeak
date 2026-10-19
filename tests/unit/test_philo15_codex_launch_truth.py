@@ -334,7 +334,12 @@ def test_the_codex_launch_mounts_the_conductor_palette_with_its_mutators() -> No
     # Betterment AG11: + the five helper tools (a launch and its one helper).
     ag11 = {"agent.start_helper", "agent.prompt", "agent.wait", "agent.read", "agent.answer"}
     assert ag11 <= palette
-    assert len(palette) == 138 + 6 + 1 + len(m3) + 1 + 1 + len(ag11)
+    # Tools follow their declared authority, not a historical tool count.
+    # Preserve the mutator checks above and refuse owner-only capabilities.
+    from holdspeak.mcp.tool_authority import TOOL_AUTHORITY, WORK
+    assert all(TOOL_AUTHORITY[name] == WORK for name in palette)
+    assert palette.isdisjoint({"channel.send", "channel.discard", "proposal.confirm",
+                               "proposal.dismiss", "people.relationship.create"})
 
 
 # ── 6. Astra r2 on #996: the wait episode, the FIFO, expiry, provenance ──

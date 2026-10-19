@@ -344,6 +344,6 @@
 .desk-next .cw-row > .cw-row-text { flex: 1 1 150px; }
 .desk-next .cw-row > .btn { margin-left: auto; }
 /* Betterment AG11: a helper stands indented under its parent. */
-.desk-next .cw-row[data-helper] { margin-left: 28px; border-left: 2px solid color-mix(in srgb, var(--wb-ink) 25%, transparent); }
+.desk-next .cw-row[data-helper] { margin-left: 28px; }
 .desk-next .cw-helpers { margin-left: 28px; }
 .desk-next .cw-helpers .cw-row[data-helper] { margin-left: 0; }

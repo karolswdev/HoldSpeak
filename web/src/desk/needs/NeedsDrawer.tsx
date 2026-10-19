@@ -185,6 +185,13 @@ function NeedVerbsView({ face, primary, onWell, well }: {
   };
 
   switch (v.kind) {
+    case "allow-helper":
+      return <Button dense variant={lead} loading={busy} disabled={busy}
+        aria-label={named("Allow helper")} data-testid="needs-row-verb" data-verb="allow-helper"
+        onClick={() => void act("Allow helper", () => apiFetch(
+          `/api/agent/launches/${encodeURIComponent(v.launchId)}/helper/allow`,
+          { method: "POST", json: { request_id: v.requestId } },
+        ), face.id)}>Allow helper</Button>;
     case "answer":
       return (
         <>

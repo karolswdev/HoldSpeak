@@ -142,6 +142,8 @@ def test_only_its_own_helper_and_never_an_approval(monkeypatch) -> None:
         helpers.answer(None, "L1", "H1", "1", send=lambda **kw: None, ledger=_Ledger(PARENT, HELPER))
     assert approval.value.code == "approval_is_owners"
     _states(monkeypatch, "asks")
+    from holdspeak import coder_steering
+    monkeypatch.setattr(coder_steering, "current_wait_episode", lambda key: "wait-1|answer")
     sent = []
     assert helpers.answer(None, "L1", "H1", " 1 ", send=lambda **kw: sent.append(kw),
                           ledger=_Ledger(PARENT, HELPER))["status"] == "sent"
@@ -180,3 +182,33 @@ def test_a_helper_gets_its_own_worktree_on_a_branch_from_its_parents(tmp_path, d
         helpers.start_helper(parent["launch_id"], instruction="again", profile=None, hand_service=rig.hand,
                              control_mode=lambda: "yolo", ledger=rig.launches)
     assert again.value.code == "helper_exists"
+
+
+@pytest.mark.parametrize("tool", ["prompt", "answer"])
+def test_helper_text_never_answers_a_permission_prompt_that_arrives_before_the_send(monkeypatch, tool) -> None:
+    from holdspeak import coder_steering
+
+    _states(monkeypatch, "asks" if tool == "answer" else "idle")
+    episodes = iter(["wait-1|answer", "wait-1|approve"] if tool == "answer" else ["wait-1|approve"])
+    monkeypatch.setattr(coder_steering, "current_wait_episode", lambda key: next(episodes))
+    sent = []
+    clock = _Clock()
+    with pytest.raises(helpers.HelperRefused) as refused:
+        if tool == "answer":
+            helpers.answer(None, "L1", "H1", "1", send=lambda **kw: sent.append(kw), ledger=_Ledger(PARENT, HELPER))
+        else:
+            helpers.prompt(None, "L1", "H1", "1", send=lambda **kw: sent.append(kw),
+                           clock=clock, sleep=clock.sleep, ledger=_Ledger(PARENT, HELPER))
+    assert refused.value.detail == "wait_not_current"
+    assert sent == []
+
+
+def test_prompt_waits_for_the_helpers_registration_before_typing(monkeypatch) -> None:
+    _states(monkeypatch, ("starting", None), ("idle", "claude:h1"), ("working", "claude:h1"))
+    clock = _Clock()
+    sent = []
+    result = helpers.prompt(None, "L1", "H1", "Review", send=lambda **kw: sent.append(kw),
+                            clock=clock, sleep=clock.sleep, ledger=_Ledger(PARENT, HELPER))
+    assert result["status"] == "sent"
+    assert clock.t == 0.25
+    assert sent == [{"pane": "%7", "text": "Review", "submit": True}]

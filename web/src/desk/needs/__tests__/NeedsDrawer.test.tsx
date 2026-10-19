@@ -184,6 +184,29 @@ async function mount() {
 }
 
 describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
+  it("a Secure helper request has one Allow press with its exact request id", async () => {
+    const allow = vi.fn();
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      if (String(path).startsWith("/api/desk/needs-you")) return {
+        ...ANSWER, count: 9, items: [...ITEMS, {
+          id: "coder:launch:parent:helper", ref: "coder:launch:parent:helper",
+          kind: "coder", source: "coder", title: "Review the runbook", question: "Review the runbook",
+          why: "TO APPROVE", severity: "warning", sessionKey: "", launchId: "parent",
+          agent: "claude", counted: true,
+          helperRequest: { status: "awaiting_owner", requestId: "helper-request-1" },
+        }],
+      } as never;
+      if (path === "/api/agent/launches/parent/helper/allow") { allow(init); return { status: "launched" } as never; }
+      return { ...DOOR } as never;
+    });
+    render(<NeedsDrawer />);
+    const button = await screen.findByRole("button", { name: /^Allow helper:/ });
+    fireEvent.click(button);
+    await waitFor(() => expect(allow).toHaveBeenCalledWith({
+      method: "POST", json: { request_id: "helper-request-1" },
+    }));
+  });
+
   it("heads with the hub's number, once, and nothing else", async () => {
     await mount();
     const drawer = screen.getByTestId("needs-drawer");
