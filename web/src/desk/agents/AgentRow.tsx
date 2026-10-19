@@ -24,6 +24,8 @@ import type { ConductorMember } from "../conductor/members";
 import { useConductor } from "../conductor/store";
 import { questionChoices, type AgentChoice } from "./choices";
 import type { DeskAnswer, DeskAnswerSource } from "../agentFlights";
+// The row is drawn in Agents and in Needs you (Betterment AG9): its style travels with it.
+import "../conductor/conductor.css";
 
 /** Betterment AG3: where the line the desk used comes from, in his words. */
 const SOURCE_WORD: Record<string, string> = {

@@ -367,3 +367,24 @@ describe("Today's Prepared block (Betterment daily D9), on the recorded run", ()
     expect(screen.queryByTestId("today-prepare-now")).toBeNull();
   });
 });
+
+/* Betterment AG9: Today's Agents line and a card per finished turn he has
+ * not opened, on the hub's recorded fleet (agents.app.test's fixtures/
+ * agents-ag8: two agents need him, one finished and is New). */
+import AG8 from "./fixtures/agents-ag8/coders-sessions.wire.json";
+
+describe("agents in Today (Betterment AG9)", () => {
+  it("says 2 agents need you · 1 finished, and the finished turn is a card with Open", async () => {
+    const { reads } = replay();
+    const base = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string }) =>
+      String(url).startsWith("/api/coders/sessions") ? (AG8 as { wire: unknown }).wire : base(url, init));
+    render(<TodayView />);
+    expect(await screen.findByTestId("today-agents")).toHaveTextContent("2 agents need you · 1 finished");
+    const cards = await screen.findAllByTestId("today-agent-result");
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toHaveTextContent("Claude Code finished Draft test scaffolding for flags");
+    expect(within(cards[0]).getByRole("button", { name: /^Open/ })).toBeTruthy();
+    expect(reads.some((url) => url.startsWith("/api/door"))).toBe(true);
+  });
+});

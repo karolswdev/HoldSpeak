@@ -126,8 +126,10 @@ describe("Conductor F2: transitions land on a mounted Chair", () => {
 
     sessions = SESSIONS;   // the agent asked: waiting
     act(() => emit("intel_status", { state: "ready", scope: "coder" }));
-    // One object, one row: the item carries its agent's question.
-    await waitFor(() => expect(lamp()).toBe("ASKS · 2 MIN"));
+    // One object, one row: Betterment AG9: the ask is the Agents row, and it
+    // stands for the item.
+    await waitFor(() => expect(screen.getByTestId("needs-agent-row").querySelector(".cw-ask-label")?.textContent).toBe("Asks you"));
+    expect(lamp()).toBeUndefined();
 
     // The PR merged; the close waits for the owner (Secure): the session stays.
     const merged = { ...FLIGHT_RUNBOOK, state: "merged", close: "awaiting_confirm", pr: { number: 413, url: "u", state: "merged" } };
