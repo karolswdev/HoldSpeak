@@ -765,8 +765,9 @@ PREPARED_KINDS: tuple[dict[str, str], ...] = (
      "label": "Update for stakeholders"},
     {"plugin_id": "mermaid_architecture", "artifact_type": "diagram", "label": "Architecture diagram"},
     # Capture C5b: kinds a meeting prepares only when he asks (Prepare…).
+    # (No Requirements list: requirements_extractor runs in every balanced
+    # summary's routed chain, so a second run would only dedupe.)
     {"plugin_id": "incident_timeline", "artifact_type": "incident_timeline", "label": "Incident timeline"},
-    {"plugin_id": "requirements_extractor", "artifact_type": "requirements", "label": "Requirements list"},
     {"plugin_id": "risk_heatmap", "artifact_type": "risk_register", "label": "Risks"},
     {"plugin_id": "milestone_planner", "artifact_type": "milestone_plan", "label": "Milestones"},
 )

@@ -3184,7 +3184,10 @@ class IntelRepository(BaseRepository):
             conn.execute("BEGIN IMMEDIATE")
             if conn.execute("SELECT 1 FROM meetings WHERE id=?", (meeting_id,)).fetchone() is None:
                 return "missing"
-            if conn.execute("SELECT 1 FROM segments WHERE meeting_id=? LIMIT 1", (meeting_id,)).fetchone() is None:
+            words = conn.execute(
+                "SELECT COUNT(*) AS n FROM segments WHERE meeting_id=?", (meeting_id,),
+            ).fetchone()
+            if not words or not int(words["n"]):
                 return "empty"
             live = conn.execute(
                 """SELECT 1 FROM intel_jobs WHERE meeting_id=?

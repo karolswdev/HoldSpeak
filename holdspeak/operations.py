@@ -486,7 +486,7 @@ MEETING_SUMMARY_RUN = OperationDescriptor(
 MEETING_RESULT_PREPARE = OperationDescriptor(
     name="meeting.result.prepare",
     version=1,
-    description="Write one Result of a meeting (an ADR draft, an update for stakeholders, a diagram, an incident timeline, a requirements list, risks, milestones) as a drafts-only job on the Meeting summaries route, with the selection hash read from meeting.read. The summary is never written again. Prepare… and Write again on the meeting window.",
+    description="Write one Result of a meeting (an ADR draft, an update for stakeholders, a diagram, an incident timeline, risks, milestones) as a drafts-only job on the Meeting summaries route, with the selection hash read from meeting.read. The summary is never written again. Prepare… and Write again on the meeting window.",
     args_schema={
         "type": "object",
         "properties": {
@@ -499,7 +499,7 @@ MEETING_RESULT_PREPARE = OperationDescriptor(
     },
     principal=_OWNER_PRINCIPAL,
     effect="write",
-    result="{meeting_id, plugin_id, state: queued, planned_route}",
+    result="the queued draft: its meeting_id, its plugin_id, state queued and the planned_route it runs on",
     refusals=_CONTRACT_REFUSALS + ("NotFound: unknown meeting", "ValidationError: not a preparable draft", "ConflictError: empty | stale selection hash | summaries_off | running"),
     completion="asynchronous; one runtime_queue frame when queued; read GET /api/meetings/{meeting_id}/prepared for the draft's state",
     exposure=("http:POST /api/meetings/{meeting_id}/prepare",),
