@@ -183,3 +183,26 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
     }
   });
 });
+
+// Betterment setup ST1: the parked Rhythm and Change places rows open
+// through their keys, which Settings registers as aliases (SurfaceWindows:
+// DESK_APPLICATION_ALIASES) at the section: ⌘⇧P and Search "Change places"
+// land on Settings ▸ Wallpaper, Search "Rhythm" on Settings ▸ Rhythm.
+describe("Betterment setup ST1: one home each", () => {
+  it("go.change-places (⌘⇧P) and go.configure-cadence open their key, which Settings hosts", () => {
+    const opened: Array<[string, string | undefined]> = [];
+    const offs = ["change-places", "configure-cadence"].map((key) =>
+      registerSurface(key, (scope) => opened.push([key, scope])));
+    try {
+      expect(verbById("go.change-places")?.key).toBe("⌘⇧P");
+      verbById("go.change-places")!.run(CTX);
+      verbById("go.configure-cadence")!.run(CTX);
+      expect(opened).toEqual([["change-places", undefined], ["configure-cadence", undefined]]);
+      // No live window answers for them: the Settings verbs exist instead.
+      expect(verbById("settings.rhythm")).toBeTruthy();
+      expect(verbById("settings.wallpaper")).toBeTruthy();
+    } finally {
+      offs.forEach((off) => off());
+    }
+  });
+});

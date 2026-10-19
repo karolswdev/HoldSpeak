@@ -1,0 +1,21 @@
+{
+  "last_decision_at": null,
+  "last_notified_count": 0,
+  "last_notified_items": {},
+  "last_notify_outcome": "",
+  "last_remote_run_at": null,
+  "last_sweep_at": null,
+  "morning_day": "",
+  "muted_projects": [],
+  "next_sweep_at": null,
+  "notify": "edge",
+  "prep_notified": [],
+  "quiet_hours": {
+    "end": 8,
+    "start": 21
+  },
+  "remote_hosts": [],
+  "report_merged_prs": true,
+  "runs_on": "local",
+  "sweep_every_minutes": 15
+}

@@ -334,39 +334,27 @@ describe("ConnectionsPane", () => {
   /* ── Calendar + Models link cards ── */
 
   describe("Calendar card", () => {
-    it("shows Connected with sources summary and Sources verb", async () => {
-      renderPane();
+    it("shows Connected with sources summary; Choose calendar is its verb (Betterment setup ST1: no Sources verb to Meetings)", async () => {
+      const onOpen = vi.fn();
+      renderPane(fullResponse(), { onOpen });
       const card = await screen.findByTestId("connections-calendar");
       expect(within(card).getByText("Calendar")).toBeInTheDocument();
       expect(within(card).getByText("2 sources")).toBeInTheDocument();
       expect(within(card).getByText("Connected")).toBeInTheDocument();
-      expect(within(card).getByText("Sources")).toBeInTheDocument();
-    });
-
-    it("opens meetings module when Sources is clicked", async () => {
-      const onOpen = vi.fn();
-      renderPane(fullResponse(), { onOpen });
-      const card = await screen.findByTestId("connections-calendar");
-      fireEvent.click(within(card).getByText("Sources"));
-      expect(onOpen).toHaveBeenCalledWith("meetings");
+      expect(within(card).queryByText("Sources")).toBeNull();
+      expect(within(card).getByRole("button", { name: "Choose calendar" })).toBeInTheDocument();
+      expect(onOpen).not.toHaveBeenCalled();
     });
   });
 
-  describe("Models card", () => {
-    it("shows assigned summary and Open Models verb", async () => {
+  // Betterment setup ST1: Accounts no longer shows `Runs on N of 7 assigned`;
+  // Engines is its one home (the card is parked in _parked/ConnectionsModelsCard.tsx).
+  describe("no engine row in Accounts", () => {
+    it("draws no Models card", async () => {
       renderPane();
-      const card = await screen.findByTestId("connections-models");
-      expect(within(card).getByText("Engines")).toBeInTheDocument();
-      expect(within(card).getByText("5 of 7 assigned")).toBeInTheDocument();
-      expect(within(card).getByText("Choose engines")).toBeInTheDocument();
-    });
-
-    it("opens models module when Open Models is clicked", async () => {
-      const onOpen = vi.fn();
-      renderPane(fullResponse(), { onOpen });
-      const card = await screen.findByTestId("connections-models");
-      fireEvent.click(within(card).getByText("Choose engines"));
-      expect(onOpen).toHaveBeenCalledWith("models");
+      await screen.findByTestId("connections-calendar");
+      expect(screen.queryByTestId("connections-models")).toBeNull();
+      expect(screen.queryByText(/of 7 assigned/)).toBeNull();
     });
   });
 

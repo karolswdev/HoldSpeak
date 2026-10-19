@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, main `eef501294` (batch seven interrupted; desk still on batch six `b8908dc72`).
+**Last updated:** 2026-10-19, recovery includes AG10 #1367 and ST1 #1347. The running desk was last checked at `bfe8bf5dd`; ST1 delivery follows merge.
 
-**Total: 69 of 117 slices merged**, with Send S7 still partial.
+**Total: 71 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -18,9 +18,9 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | The desk's tools (MCP) | `mcp/` | 7 of 7 |
 | Ask | `asking/` | 10 of 13 |
 | Projects | `projects/` | 3 of 11 |
-| Agents | `agents/` | 10 of 16 |
+| Agents | `agents/` | 11 of 16 |
 | Daily and Needs you | `daily/` | 10 of 11 |
-| Setup and Settings | `setup/` | 1 of 10 |
+| Setup and Settings | `setup/` | 2 of 10 |
 | Desk shell | `shell/` | 2 of 10 |
 | Send | `send/` | 1 of 8 |
 | Capture | `capture/` | 6 of 12 |
@@ -79,7 +79,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Q6 | The About picker | Done · #1335 | Shared picker A5 #1309; shortcuts/chips/drop #1335; phone chip layout fixed #1341. |
 | Q7 | Ask my whole desk | Done · #1305 |  |
 | Q8 | One note | Done · #1351 | Phone footer follow-up remains local at 1673f675e. |
-| Q9 | Find the tasks | Done · #1354 | Privacy fix #1362 merged; operations/MCP/Edit/Dismiss follow-up #1365 open. |
+| Q9 | Find the tasks | Done · #1354 | Privacy fix #1362 merged; operations/MCP/Edit/Dismiss follow-up #1365 merged. |
 | Q10 | Knowledge becomes drawers | Open |  |
 | Q11 | Memory where he looks | Open |  |
 | Q12 | The Memory app | Open |  |
@@ -100,7 +100,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | P9 | One decision record | Open |  |
 | P10 | Watches tell the truth underneath | Open |  |
 
-## Agents (`agents/RECIPE.md`): 10 of 16
+## Agents (`agents/RECIPE.md`): 11 of 16
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -114,7 +114,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | AG7 | Screen rules (the herdr port) | Done · #1348 | Gaps fixed in #1360; real-agent screen proof remains open. |
 | AG8 | The Agents list is the fleet | Done · #1357 | Gaps fixed in #1360; phone Dock decision remains open. |
 | AG9 | Agents in Today and Needs you; Done notifies | Done · #1361 |  |
-| AG10 | The Result of a turn | Open |  |
+| AG10 | The Result of a turn | Done · #1367 | Recovered local fixes supersede #1364; real hub/fake-agent Result and Terminal walked at 1440/393. |
 | AG11 | Agents that work together (MCP) | Open |  |
 | AG12 | Review by (builder and reviewer) | Open |  |
 | AG13 | A HoldSpeak skill | Open |  |
@@ -137,12 +137,12 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | D9 | Morning prep (after Automations A2–A6 and MCP M1; owner decision 3) | Done · #1342 |  |
 | D10 | MCP parity | Open |  |
 
-## Setup and Settings (`setup/RECIPE.md`): 1 of 10
+## Setup and Settings (`setup/RECIPE.md`): 2 of 10
 
 | Slice | What | State | Note |
 |---|---|---|---|
 | ST0 | Tell the truth | Done · #1261 | #1261 was "part 1" (speech never wired to a chat server; Voice says if speech works). |
-| ST1 | One home each: Rhythm, Wallpaper, Calendar, the engine line | Open |  |
+| ST1 | One home each: Rhythm, Wallpaper, Calendar, the engine line | Done · #1347 | Recovery adds phone stepper value geometry fix; two-size real browser check fails before and passes after. |
 | ST2 | Accounts that say Works, and Check that does not move acli | Open |  |
 | ST3 | Setup is one window of found things | Open |  |
 | ST4 | Use everything found, and the look on his network | Open |  |

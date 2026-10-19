@@ -96,7 +96,7 @@ export function TodayNeeds({ work, count, now, limit, primary, projects, loaded,
       ) : emptyDesk ? (
         <p className="today-needs-none" data-testid="today-empty-desk">
           <span>Your meetings and calendar fill this.</span>
-          <Button dense variant={calendarLead ? "primary" : "secondary"} onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>
+          <Button dense variant={calendarLead ? "primary" : "secondary"} onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>
             Connect calendar
           </Button>
         </p>

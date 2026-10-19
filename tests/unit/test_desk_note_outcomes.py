@@ -50,8 +50,8 @@ def _ok(response: Any, status: int = 200) -> Any:
     return response.json()
 
 
-@pytest.fixture
-def desk(hub, monkeypatch):  # noqa: F811
+def wire_recorded_engine(hub, monkeypatch) -> _RecordedEngine:
+    """The meeting-analysis engine answers with the recorded LAN reply."""
     from holdspeak.inference_capabilities import process_inference_capability_registry
     from holdspeak.kernel.runtime import _configure
     from tests.unit.test_phase143_inference_assignments import _profile
@@ -63,6 +63,12 @@ def desk(hub, monkeypatch):  # noqa: F811
     schema = process_inference_capability_registry().require("meeting.deferred_analysis")
     _profile(hub.db, "lan-engine", claims=("language", f"result_schema:{schema.output_schema_sha256}"))
     _assign(hub.db, "meeting.deferred_analysis", ["lan-engine"])
+    return engine
+
+
+@pytest.fixture
+def desk(hub, monkeypatch):  # noqa: F811
+    engine = wire_recorded_engine(hub, monkeypatch)
     _ok(hub.client.post("/api/people/setup"))
     theo = _ok(hub.client.post("/api/people/relationships", json={"display_name": "Theo Park"}), 201)["relationship"]
     note = _ok(hub.client.post("/api/notes", json={"title": TITLE, "body_markdown": REPLY["note"], "tags": []}), 201)["note"]
@@ -159,6 +165,11 @@ def test_the_answers_are_recorded_for_the_face(desk, tmp_path) -> None:
     before = _ok(desk.client.get(f"/api/notes/{desk.note_id}/outcomes"))
     found = _ok(desk.client.post(f"/api/notes/{desk.note_id}/outcomes/find"))
     theo_task = next(r for r in found["rows"] if r["owner"] == "Theo Park")
+    mine = next(r for r in found["rows"] if r["owner"] == "Me")
+    decision = next(r for r in found["rows"] if r["kind"] == "decision")
+    edit_request = {"text": "Pair Jun with Mira on call", "owner_name": "Me", "due": "Friday"}
+    edited = _ok(desk.client.post(f"/api/notes/{desk.note_id}/outcomes/{mine['id']}/edit", json=edit_request))
+    dismissed = _ok(desk.client.post(f"/api/notes/{desk.note_id}/outcomes/{decision['id']}/dismiss"))
     confirmed = _ok(desk.client.post(f"/api/notes/{desk.note_id}/outcomes/{theo_task['id']}/confirm"))
     # A refusal, as the face receives it: a note with no words yet.
     empty = _ok(desk.client.post("/api/notes", json={"title": "", "body_markdown": "", "tags": []}), 201)["note"]
@@ -166,6 +177,58 @@ def test_the_answers_are_recorded_for_the_face(desk, tmp_path) -> None:
     assert refusal.status_code == 422
     _record("note.find-tasks.wire", {
         "note_id": desk.note_id, "title": TITLE,
-        "before": before, "found": found, "confirm_row": theo_task["id"], "confirmed": confirmed,
+        "before": before, "found": found,
+        "edit_row": mine["id"], "edit_request": edit_request, "edited": edited,
+        "dismiss_row": decision["id"], "dismissed": dismissed,
+        "confirm_row": theo_task["id"], "confirmed": confirmed,
         "refused": {"status": refusal.status_code, "body": refusal.json()},
     }, tmp_path, "tests/unit/test_desk_note_outcomes.py::test_the_answers_are_recorded_for_the_face", folder=WIRE)
+
+
+def test_edit_and_dismiss_a_proposed_row_before_confirm(desk) -> None:
+    rows = _ok(desk.client.post(f"/api/notes/{desk.note_id}/outcomes/find"))["rows"]
+    mine = next(r for r in rows if r["owner"] == "Me")
+    decision = next(r for r in rows if r["kind"] == "decision")
+
+    # Edit: the words, a new owner (matched to People again) and a date.
+    edited = _ok(desk.client.post(f"/api/notes/{desk.note_id}/outcomes/{mine['id']}/edit",
+                                  json={"text": "Pair Jun with Mira on call", "owner_name": "Theo", "due": "Friday"}))["rows"]
+    row = next(r for r in edited if r["id"] == mine["id"])
+    assert (row["text"], row["owner"], row["due"], row["state"]) == (
+        "Pair Jun with Mira on call", "Theo Park", "Friday", "proposed")
+
+    # Dismiss: the row leaves, and a new Find never proposes it again.
+    after = _ok(desk.client.post(f"/api/notes/{desk.note_id}/outcomes/{decision['id']}/dismiss"))["rows"]
+    assert decision["id"] not in [r["id"] for r in after]
+    again = _ok(desk.client.post(f"/api/notes/{desk.note_id}/outcomes/find"))["rows"]
+    assert "Theo owns the on-call handbook" not in [r["text"] for r in again]
+    refused = desk.client.post(f"/api/notes/{desk.note_id}/outcomes/{decision['id']}/confirm")
+    assert refused.status_code == 409 and refused.json()["error"] == "note_outcome_dismissed"
+
+    # A confirmed row no longer changes.
+    task = next(r for r in again if r["text"] == "Write the on-call handbook")
+    _ok(desk.client.post(f"/api/notes/{desk.note_id}/outcomes/{task['id']}/confirm"))
+    late = desk.client.post(f"/api/notes/{desk.note_id}/outcomes/{task['id']}/edit", json={"text": "x"})
+    assert late.status_code == 409 and late.json()["error"] == "note_outcome_not_proposed"
+
+
+def test_mcp_reaches_the_same_operations(desk) -> None:
+    """MCP parity: an agent finds, reads, edits and confirms the same rows."""
+    from holdspeak.mcp.tool_authority import TOOL_AUTHORITY
+
+    for name in ("note.outcomes", "note.find_tasks", "note.outcome.edit", "note.outcome.dismiss",
+                 "note.outcome.confirm"):
+        assert TOOL_AUTHORITY[name] == "work", name
+    is_error, found = desk.mcp("note.find_tasks", {"note_id": desk.note_id})
+    assert not is_error, found
+    assert [r["text"] for r in found["rows"] if r["kind"] == "task"] == [
+        "Pair Jun with Mira on call for the cutover weekend", "Write the on-call handbook"]
+    theo_task = next(r for r in found["rows"] if r["owner"] == "Theo Park")
+    is_error, read = desk.mcp("note.outcomes", {"note_id": desk.note_id})
+    assert not is_error and read["rows"] == found["rows"]
+    is_error, confirmed = desk.mcp("note.outcome.confirm", {"note_id": desk.note_id, "row_id": theo_task["id"]})
+    assert not is_error, confirmed
+    made = next(r for r in confirmed["rows"] if r["id"] == theo_task["id"])
+    assert made["state"] == "confirmed" and made["made_ref"].startswith("action_item:")
+    # The HTTP read sees the MCP write: one service.
+    assert _ok(desk.client.get(f"/api/notes/{desk.note_id}/outcomes"))["rows"] == confirmed["rows"]

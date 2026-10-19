@@ -365,7 +365,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(offer.textContent).toBe("NO CALENDARConnect calendar");
     expect(screen.queryByTestId("needs-source-row")).toBeNull();
     fireEvent.click(screen.getByTestId("needs-drawer").querySelector("[data-verb='connect-calendar']")!);
-    expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "meetings");
+    expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "integration:calendar");
     // One count: the head says the number of rows under it.
     const rows = document.querySelectorAll("[data-testid='needs-list'] li.needs-row");
     expect(screen.getByTestId("arrival-display").textContent).toBe(`${rows.length} need you`);

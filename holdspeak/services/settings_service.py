@@ -204,6 +204,19 @@ def strip_secret_mutations(payload: dict[str, Any]) -> dict[str, Any]:
     return clean
 
 
+#: Betterment setup ST1: quiet hours have one store, the heartbeat policy
+#: (``PUT /api/settings/heartbeat``). These keys stay in the config file and
+#: are no longer read; a stale client's write of them is dropped.
+_RETIRED_CADENCE_KEYS = frozenset({"quiet_hours_start", "quiet_hours_end"})
+
+
+def _strip_retired_quiet_hours(patch: dict[str, Any]) -> dict[str, Any]:
+    cadence = patch.get("cadence") if isinstance(patch, dict) else None
+    if not isinstance(cadence, dict) or not (_RETIRED_CADENCE_KEYS & cadence.keys()):
+        return patch
+    return {**patch, "cadence": {k: v for k, v in cadence.items() if k not in _RETIRED_CADENCE_KEYS}}
+
+
 def _strip_legacy_endpoint_fields(payload: dict[str, Any]) -> dict[str, Any]:
     from holdspeak.config import LEGACY_ENDPOINT_FIELDS
 
@@ -373,7 +386,9 @@ class SettingsService:
         merged = deepcopy(current.to_dict())
         _merge_dict(
             merged,
-            _strip_legacy_endpoint_fields(strip_secret_mutations(patch)),
+            _strip_retired_quiet_hours(
+                _strip_legacy_endpoint_fields(strip_secret_mutations(patch))
+            ),
         )
 
         hotkey_data = merged.get("hotkey", {})
