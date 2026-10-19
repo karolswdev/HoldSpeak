@@ -17,7 +17,7 @@ it). Every record is made by the product's own verb.
   is still there after the old read and the new read have both landed.
 * New Decision asks the name first (PHILO-13-08): no record before the name;
   after the name its window opens inside 1.5 s.
-* The palette is the same door (1440, the Chair): New Knowledge, Enter.
+* (Betterment Q10: the palette leg, New Knowledge, left with the verb.)
   (Betterment AG1: New Agent left the Desk menu.)
 
 Was tests/e2e/test_new_verbs_open_glass.py. The press-to-window facts are also
@@ -64,9 +64,11 @@ WINDOW_IDS = "() => [...document.querySelectorAll('.desk-window')].map((w) => w.
 # Betterment Q4 ("One Ask window"): Desk ▸ New Thread opens the Ask window and
 # makes no record; the thread is kept when its first question is answered
 # (web/src/desk/__tests__/ask.app.test.tsx, "a thread opened anywhere opens in Ask").
+# Betterment Q8 (one note): New Note opens the sticky; its keys go to the note
+# body, not to a name field (tests/e2e/test_thought_glass.py proves the keys).
+# Betterment Q10: New Knowledge left the New list (a collection is a drawer).
 VERBS = [
-    ("New Note", "/api/notes", True),
-    ("New Knowledge", "/api/kbs", True),
+    ("New Note", "/api/notes", False),
 ]
 
 
@@ -212,21 +214,9 @@ class TestEveryNewVerbOpensItsWindow:
                 proof.append(f"New Decision: one POST /api/decisions after the name, window {win.get_attribute('id')}")
                 self._close(page, win, width)
 
-                if width >= 720 and face == "chair":
-                    # The palette is the same door.
-                    before, sent = page.evaluate(WINDOW_IDS), len(posts)
-                    page.locator("[aria-controls=desk-tool-shelf]").first.click()
-                    page.locator("[aria-controls=desk-palette-listbox]").fill("New Knowledge")
-                    # Object matches own the default press. The Knowledge made
-                    # above also matches this query, so select the command
-                    # through the palette's actual pointer selection first.
-                    command = page.locator("[id='desk-palette-option-desk.new-knowledge']")
-                    command.hover()
-                    page.locator("[id='desk-palette-option-desk.new-knowledge'][aria-selected=true]").wait_for()
-                    page.keyboard.press("Enter")
-                    win = self._new_window(page, before, "New Knowledge from the palette")
-                    assert posts[sent:].count("/api/kbs") == 1, posts[sent:]
-                    proof.append("palette New Knowledge: one POST /api/kbs, its window in front")
+                # Betterment Q10: the palette leg pressed New Knowledge, which
+                # left the New list; the palette's Enter on a New verb is now
+                # left untested in a browser (Search's Enter on a row is palette.app.test.tsx's).
 
                 (SHOTS / f"proof-{face}-{width}.txt").write_text("\n".join(proof) + "\n")
                 real = [e for e in errors if "ResizeObserver" not in e]
@@ -246,7 +236,7 @@ class TestEveryNewVerbOpensItsWindow:
             browser, page, errors, posts = self._page(pw, width)
             try:
                 proof: list[str] = []
-                legs = [("New Note", "/api/notes", "notes"), ("New Knowledge", "/api/kbs", "kbs")]
+                legs = [("New Note", "/api/notes", "notes")]  # Betterment Q10: no New Knowledge
                 for label, path, key in legs:
                     before, sent, kept = page.evaluate(WINDOW_IDS), len(posts), count(page, path, key)
                     if width >= 720 and label == "New Note":
