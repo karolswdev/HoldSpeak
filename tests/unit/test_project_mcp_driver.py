@@ -749,7 +749,7 @@ def test_legacy_family_untouched() -> None:
 # ────────────────────────────────────────────────────────────────────
 
 
-def test_project_family_tool_count_is_65() -> None:
+def test_project_family_tool_count_is_66() -> None:
     """The project family ships the expected number of tools."""
     # 17 original + 5 steward + 5 setup + 1 setup.clarify_jira_scope + 4 provider + 3 jira provider + 3 jira discover/search/validate + 7 watch = 45
     # HS-168-02: + connection.list / connection.recheck (45 -> 47).
@@ -758,7 +758,8 @@ def test_project_family_tool_count_is_65() -> None:
     # Interview: + four setup-proposal operations (53 -> 57).
     # PHILO-9-01: + the seven item and resource tools (57 -> 64).
     # PHILO-9-02: + project.mark_update_delivered (64 -> 65).
-    assert len(project_family.TOOLS) == 65
+    # Betterment MCP M6: + provider.github_pr_get (65 -> 66).
+    assert len(project_family.TOOLS) == 66
 
 
 def test_graduated_watch_states_constant() -> None:

@@ -1,0 +1,143 @@
+{
+ "about": "One real answer of the command GitHubProviderAdapter.pr_get runs, recorded by scripts/record_gh_pr_view.py with the owner's gh sign-in. Never hand-edit it.",
+ "recorded_at": "2026-10-19T00:12:43+00:00",
+ "command": [
+  "gh",
+  "pr",
+  "view",
+  "1301",
+  "-R",
+  "karolswdev/HoldSpeak",
+  "--json",
+  "number,title,body,url,state,isDraft,author,baseRefName,headRefName,additions,deletions,changedFiles,files,reviewRequests"
+ ],
+ "repository": "karolswdev/HoldSpeak",
+ "number": 1301,
+ "stdout": {
+  "additions": 1100,
+  "author": {
+   "id": "MDQ6VXNlcjUwMzAyMTQ0",
+   "is_bot": false,
+   "login": "karolswdev",
+   "name": "Karol"
+  },
+  "baseRefName": "main",
+  "body": "Betterment MCP slice **M2** (`docs/internal/betterment/mcp/RECIPE.md`).\n\n## What changed\n- **Recording (hub).** `POST /api/mcp` hands each answered call of an `agent:run:<run_id>` credential to `services/run_trace.record_call`, which adds one row to a new additive table `agent_run_calls`: tool, effect (`read` / `write` / `prepare`), the object touched as a qualified ref with its title, and the time. Refused calls add nothing; list/search calls keep `ref` empty.\n- **Link to the result.** `cli_engine_runs` gains `run_id` and `item_id` (additive). The workbench runner names the item around its engine call (`run_trace.for_item`, a contextvar), so a result finds its runs, its tool calls and its cost.\n- **Wire.** Each result in `GET /api/workbenches/{id}` (and `workbench.get` over MCP, the same payload) now carries `cost_usd` (the CLI's reported cost, summed over the item's runs; null if none) and `used` (`looked_at`, `wrote` with `undo` for what the run made, `prepared` with `send_id` and `destination`; null when nothing was touched). `workbench.results` does not exist yet (M3), so nothing was added there.\n- **Face.** `ResultCard` draws three folded lines: *Looked at* `3 meetings` (each read object by name, a link), *Wrote* `1 note` (link, plus **Undo** through the desk's one delete when a receipt seat is shown, else withheld), *Prepared* `1 send` (the document to its destination, with the existing Send fold). Nothing when empty. The head line already showed `cost_usd`; it now arrives.\n\n## How it was proven\n- T1 `tests/integration/test_desk_engines_tools.py::test_a_result_says_what_its_agent_looked_at_and_wrote_and_what_it_cost`: real hub, fake `claude` CLI that calls `meeting.list`, `meeting.get` x3, `desk.create` (a note), `channel.prepare` and a refused `channel.send`. Asserts the 3 meetings by title and ref, 1 note with undo and a real `/api/notes/{id}`, the prepared send with its destination and nothing in the folder, and the summed cost.\n- T2 `web/src/desk/__tests__/automation.app.test.tsx` \"Looked at, Wrote, Prepared\" (4 tests) on the recorded answers of that run (`automation-hub/used.json`, `HOLDSPEAK_WIRE_WRITE=1`). The other automation-hub answers were re-recorded for the two new result fields.\n- `scripts/quick_check.sh`: GREEN (vitest related 32 passed; pytest affected 935 passed, 1 skipped; desk sweep 108 passed; canon guards 24; repo guards 1062).\n\n## Not verified\n- Not seen live at 1440 and 393 with a real `used` result: the desk sweep has no seeded automation result with `used`; only the T2 render and the sweep's generic pass.\n- Undo end to end (the desk delete receipt taking the note) is proven only to the `OBJECT_DELETE_REQUEST` dispatch; the receipt has its own tests.\n- No real Claude Code or Codex run.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+  "changedFiles": 21,
+  "deletions": 198,
+  "files": [
+   {
+    "path": "holdspeak/db/schema.py",
+    "additions": 22,
+    "deletions": 1
+   },
+   {
+    "path": "holdspeak/intel/cli_engine.py",
+    "additions": 4,
+    "deletions": 2
+   },
+   {
+    "path": "holdspeak/intel/cli_engine_runs.py",
+    "additions": 35,
+    "deletions": 3
+   },
+   {
+    "path": "holdspeak/services/automation_runs.py",
+    "additions": 14,
+    "deletions": 1
+   },
+   {
+    "path": "holdspeak/services/run_trace.py",
+    "additions": 269,
+    "deletions": 0
+   },
+   {
+    "path": "holdspeak/services/workbench_runner.py",
+    "additions": 6,
+    "deletions": 1
+   },
+   {
+    "path": "holdspeak/web/routes/mcp_http.py",
+    "additions": 12,
+    "deletions": 1
+   },
+   {
+    "path": "tests/fixtures/db_schema_canonical.txt",
+    "additions": 4,
+    "deletions": 1
+   },
+   {
+    "path": "tests/fixtures/fake_agent_cli.py",
+    "additions": 13,
+    "deletions": 5
+   },
+   {
+    "path": "tests/integration/test_desk_engines_tools.py",
+    "additions": 115,
+    "deletions": 0
+   },
+   {
+    "path": "web/src/desk/__tests__/automation.app.test.tsx",
+    "additions": 98,
+    "deletions": 0
+   },
+   {
+    "path": "web/src/desk/__tests__/fixtures/automation-hub/empty.json",
+    "additions": 2,
+    "deletions": 2
+   },
+   {
+    "path": "web/src/desk/__tests__/fixtures/automation-hub/failed.json",
+    "additions": 30,
+    "deletions": 26
+   },
+   {
+    "path": "web/src/desk/__tests__/fixtures/automation-hub/forgot.json",
+    "additions": 42,
+    "deletions": 36
+   },
+   {
+    "path": "web/src/desk/__tests__/fixtures/automation-hub/one.json",
+    "additions": 21,
+    "deletions": 19
+   },
+   {
+    "path": "web/src/desk/__tests__/fixtures/automation-hub/opened.json",
+    "additions": 42,
+    "deletions": 36
+   },
+   {
+    "path": "web/src/desk/__tests__/fixtures/automation-hub/populated.json",
+    "additions": 46,
+    "deletions": 40
+   },
+   {
+    "path": "web/src/desk/__tests__/fixtures/automation-hub/used.json",
+    "additions": 194,
+    "deletions": 0
+   },
+   {
+    "path": "web/src/desk/components/automation/ResultCard.tsx",
+    "additions": 77,
+    "deletions": 17
+   },
+   {
+    "path": "web/src/desk/components/automation/automation.css",
+    "additions": 3,
+    "deletions": 0
+   },
+   {
+    "path": "web/src/desk/components/automation/model.ts",
+    "additions": 51,
+    "deletions": 7
+   }
+  ],
+  "headRefName": "feat/run-tool-trace",
+  "isDraft": false,
+  "number": 1301,
+  "reviewRequests": [],
+  "state": "MERGED",
+  "title": "feat(automations): Looked at, Wrote, Prepared and cost on each result (MCP M2)",
+  "url": "https://github.com/karolswdev/HoldSpeak/pull/1301"
+ }
+}

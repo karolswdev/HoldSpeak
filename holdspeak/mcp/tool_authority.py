@@ -245,6 +245,7 @@ TOOL_AUTHORITY: dict[str, str] = {
     "provider.github_connection": WORK,
     "provider.github_discover": WORK,
     "provider.github_validate_repo": WORK,
+    "provider.github_pr_get": WORK,  # MCP M6: one PR read, as his gh read
     "provider.jira_connections": WORK,
     "provider.jira_add_connection": CONFIG,  # a provider connection
     "provider.jira_connection": WORK,

@@ -58,6 +58,7 @@ LONG_TOOLS: dict[str, str] = {
     "provider.github_connection": "subprocess (gh)",
     "provider.github_discover": "subprocess (gh)",
     "provider.github_validate_repo": "subprocess (gh)",
+    "provider.github_pr_get": "subprocess (gh)",
     "provider.jira_connection": "subprocess (acli)",
     "provider.jira_discover": "subprocess (acli)",
     "provider.jira_search": "subprocess (acli)",

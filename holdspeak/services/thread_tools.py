@@ -237,6 +237,7 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "provider.github_connection": ("evidence_read", False),
     "provider.github_discover": ("evidence_read", False),
     "provider.github_validate_repo": ("evidence_read", False),
+    "provider.github_pr_get": ("evidence_read", False),  # MCP M6: MCP only
     "provider.list": ("evidence_read", False),
     # HS-166: the Jira provider family (reads) + the one row-creating verb.
     "provider.jira_connections": ("evidence_read", False),

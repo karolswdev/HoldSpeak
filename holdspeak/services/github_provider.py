@@ -1,7 +1,8 @@
 """GitHubProviderAdapter -- the V0 gh CLI provider for Project Room Watches.
 
 HS-161-01. Implements the SS11 provider adapter protocol subset P2a needs:
-manifest, connection_status, discover, validate_repo, snapshot.
+manifest, connection_status, discover, validate_repo, snapshot; and
+(Betterment MCP M6) pr_get, one pull request.
 
 THE KERNEL ANSWER: production gh calls reach the kernel through
 ``PermissionGate(github_cli.MANIFEST).run_read_subprocess()``, which validates
@@ -30,7 +31,8 @@ from typing import Any
 from holdspeak.db.automations import redact_source_error
 from holdspeak.connector_packs import github_cli
 from holdspeak.connector_runtime import PermissionGate
-from holdspeak.principals import Principal
+from holdspeak.kernel.subprocess_exec import LOCAL_OWNER
+from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.errors import ServiceError
 
 _log = logging.getLogger(__name__)
@@ -483,6 +485,49 @@ class GitHubProviderAdapter:
             "error_detail": detail or f"Repository validation failed: {clean}",
         }
 
+    # ── One pull request (MCP M6) ────────────────────────────────────
+
+    def pr_get(
+        self, principal: Principal, *, owner_repo: str = "", number: int | None = None, url: str = "",
+    ) -> dict[str, Any]:
+        """ONE bounded read of a pull request: what it is, its files and the
+        reviews it asks for (``gh pr view --json``).
+
+        The review starter's agent reads the PR it is about (Betterment MCP
+        M6). A provider read is work for every caller the MCP gate admitted
+        (``mcp/tool_authority.py``: reads of his connected providers post
+        nothing of his), and ``gh`` runs under his own sign-in, so an agent's
+        read runs as his local read. Nothing is written."""
+        repo, pr_number = _pr_target(owner_repo=owner_repo, number=number, url=url)
+        command = [
+            "gh", "pr", "view", str(pr_number),
+            "-R", repo,
+            "--json", PR_VIEW_FIELDS,
+        ]
+        reader = principal if principal.kind is PrincipalKind.OWNER else LOCAL_OWNER
+        try:
+            completed = self._run_gh(command, reader, timeout=15.0)
+        except Exception as exc:
+            raise ServiceError(
+                CODE_UNAVAILABLE, f"GitHub could not be read: {redact_source_error(exc)[:300]}",
+                context={"status": 503},
+            ) from exc
+        if completed.returncode != 0:
+            detail = redact_source_error(completed.stderr or "").strip()[:500]
+            code = _classify_gh_error(detail)
+            if "could not resolve" in detail.lower():  # gh's words for no such PR or repo
+                code = CODE_SCOPE_DENIED
+            raise ServiceError(
+                code, detail or f"Pull request {repo}#{pr_number} could not be read",
+                context={"status": 404 if code == CODE_SCOPE_DENIED else 503},
+            )
+        try:
+            row = json.loads(completed.stdout or "{}")
+        except ValueError as exc:
+            raise ServiceError(CODE_UNAVAILABLE, "gh answered something that is not JSON",
+                               context={"status": 502}) from exc
+        return pr_from_gh(row, repo)
+
     # ── Snapshot (delegates to existing GitHubWatchSource) ────────────
 
     def snapshot(
@@ -501,6 +546,70 @@ class GitHubProviderAdapter:
 
 
 # ── Module-level helpers ─────────────────────────────────────────────
+
+#: The fields ``pr_get`` asks ``gh pr view --json`` for.
+PR_VIEW_FIELDS = (
+    "number,title,body,url,state,isDraft,author,baseRefName,headRefName,"
+    "additions,deletions,changedFiles,files,reviewRequests"
+)
+#: A PR body longer than this is cut (the agent reads the files for the rest).
+PR_BODY_LIMIT = 8000
+_PR_URL = re.compile(r"github\.com/([^/\s]+/[^/\s]+)/pull/(\d+)")
+
+
+def _pr_target(*, owner_repo: str, number: int | None, url: str) -> tuple[str, int]:
+    """``(owner/name, number)`` from a PR URL, or from the repository and number."""
+    from holdspeak.services.errors import ValidationError
+
+    found = _PR_URL.search(str(url or ""))
+    if found:
+        return found.group(1), int(found.group(2))
+    repo = str(owner_repo or "").strip()
+    if "/" not in repo or repo.startswith("/") or repo.endswith("/") or not re.fullmatch(r"[\w.-]+/[\w.-]+", repo):
+        raise ValidationError("Name the pull request: its URL, or owner_repo (owner/name) and number")
+    try:
+        pr_number = int(number) if number is not None else 0
+    except (TypeError, ValueError):
+        pr_number = 0
+    if pr_number < 1:
+        raise ValidationError("number must be the pull request's number (1 or more)")
+    return repo, pr_number
+
+
+def _review_request_name(request: Any) -> str:
+    if not isinstance(request, dict):
+        return ""
+    return str(request.get("login") or request.get("slug") or request.get("name") or "")
+
+
+def pr_from_gh(row: dict[str, Any], repo: str) -> dict[str, Any]:
+    """The ``provider.github_pr_get`` answer from one ``gh pr view --json`` row."""
+    body = str(row.get("body") or "")
+    files = [
+        {"path": str(f.get("path") or ""), "additions": int(f.get("additions") or 0),
+         "deletions": int(f.get("deletions") or 0)}
+        for f in row.get("files") or [] if isinstance(f, dict) and f.get("path")
+    ]
+    author = row.get("author") if isinstance(row.get("author"), dict) else {}
+    return {
+        "repository": repo,
+        "number": int(row.get("number") or 0),
+        "title": str(row.get("title") or ""),
+        "url": str(row.get("url") or ""),
+        "state": str(row.get("state") or "").lower(),
+        "draft": bool(row.get("isDraft")),
+        "author": str(author.get("login") or ""),
+        "base": str(row.get("baseRefName") or ""),
+        "head": str(row.get("headRefName") or ""),
+        "body": body[:PR_BODY_LIMIT],
+        "body_cut": len(body) > PR_BODY_LIMIT,
+        "changed_files": int(row.get("changedFiles") or len(files)),
+        "additions": int(row.get("additions") or 0),
+        "deletions": int(row.get("deletions") or 0),
+        "files": files,
+        "review_requests": [n for n in (_review_request_name(r) for r in row.get("reviewRequests") or []) if n],
+    }
+
 
 def _is_unauthenticated(text: str) -> bool:
     """Detect the unauthenticated state from gh auth status output."""

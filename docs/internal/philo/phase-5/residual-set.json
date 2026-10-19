@@ -1573,6 +1573,12 @@
     },
     {
       "transport": "mcp",
+      "entry_point": "provider.github_pr_get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
+    },
+    {
+      "transport": "mcp",
       "entry_point": "provider.jira_add_connection",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
