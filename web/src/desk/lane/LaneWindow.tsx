@@ -20,6 +20,7 @@ import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { markLaunchSeen, useAgentFlights } from "../agentFlights";
 import { WhyThisState } from "../agents/WhyThisState";
+import { ResultBlock } from "./ResultBlock";
 import { AgentWords, cutAtWord } from "../components/AgentWords";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ArmStrip, KeyPalette, PANE_STATE_LABEL } from "../components/SessionPullout";
@@ -192,15 +193,18 @@ function LaneFrame({ launchId }: { launchId: string }) {
       open
       onClose={() => useLane.getState().close()}
     >
-      <LaneBody lane={lane} error={error} raw={raw} agent={agent} compact={compact} itemTitle={flight?.title ?? ""} />
+      <LaneBody lane={lane} error={error} raw={raw} agent={agent} compact={compact} itemTitle={flight?.title ?? ""}
+        done={flight?.state === "done"} />
       {lane ? <LaneFooter lane={lane} /> : null}
     </DeskWindowFrame>
   );
 }
 
 function LaneBody({
-  lane, error, raw, agent, compact, itemTitle,
+  lane, error, raw, agent, compact, itemTitle, done = false,
 }: {
+  /** Betterment AG10: the turn is done; its Result leads the Story. */
+  done?: boolean;
   lane: LaneWire | null;
   error: string | null;
   raw: boolean;
@@ -270,6 +274,7 @@ function LaneBody({
   return (
     <div className="desk-pullout-body lw-body" data-testid="lane-body" ref={bodyRef} onScroll={onScroll}>
       <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} />
+      {done && !raw ? <ResultBlock lane={lane} /> : null}
       {unreadParts(lane).map(([part, reason]) => (
         <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
       ))}
@@ -820,8 +825,15 @@ function RawPane() {
   const paneChangedAt = useSteering((s) => s.paneChangedAt);
   const armed = useSteering((s) => s.armed);
   const postureAuthorized = useSteering((s) => s.postureAuthorized);
+  // Betterment AG10: Terminal opens at the bottom: the prompt line, the
+  // newest output (the well itself follows the tail).
+  const rawRef = useRef<HTMLDivElement>(null);
+  const live = paneStatus === "live";
+  useEffect(() => {
+    if (live) rawRef.current?.querySelector(".terminal-well")?.scrollIntoView?.({ block: "end" });
+  }, [live]);
   return (
-    <div className="lw-raw" data-testid="lane-raw-pane">
+    <div className="lw-raw" data-testid="lane-raw-pane" ref={rawRef}>
       {/* Betterment AG7: the hook or the screen rule behind the state. */}
       {launchId ? <WhyThisState launchId={launchId} /> : null}
       {cut.map((call) => (
