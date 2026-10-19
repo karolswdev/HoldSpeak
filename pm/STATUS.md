@@ -4,28 +4,36 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (MCP tape repairs; Q11/Q12 deployed)
+**Last updated:** 2026-10-19 (full recovery tape results; browser repairs)
 
 ## Current phase
 
 **Betterment recovery: 82/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `1dfd11fe0`, frontend `9f09358c6ae28b6d`, PID 49677 (#1375).
+backend `4ad08150f`, frontend `9f09358c6ae28b6d`, PID 63755 (#1376).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
 The original baseline remains at `wt-betterment-tape-20261019`, pinned to
 `bd3acff8f`; its three browser shards exposed six stale controls now covered
 by #1370 and #1371. That run was superseded before browser shard four, with
-all results retained. A fresh full tape runs at low priority in
-`wt-desk-betterment-20261019-notes`, pinned to `ec3dde784`. It is incomplete. Its non-browser shards found four failures: two producer
+all results retained. The full tape completed at low priority in
+`wt-desk-betterment-20261019-notes`, pinned to `ec3dde784`: 16,840 pytest pass,
+four fail, 27 skip and one expected failure; 320 browser pass, 12 fail and one
+skip; 5,369 web pass and one fail. Its non-browser shards found four failures: two producer
 wires are fixed in D10; the curated MCP resource and launched-helper census
 checks are now repaired. The parked New knowledge verb is no longer published.
 The census requires the five helper tools to refuse an unlaunched principal
 with launch_only and HTTP 403; a valid launched principal still dispatches.
 Focused checks: 63 pass. Required quick check: 247 affected pytest, 110 sweep,
 27 canon and 1,116 repo guards pass. This fixes the identified cases; the
-pinned full tape does not cover subsequent main revisions. The populated Projects sweep also found rows
+pinned full tape does not cover subsequent main revisions. The twelve browser
+failures are five retired Rhythm-host expectations, three retired Conductor
+controls, two retired note-editor expectations, one 1px Button census and one
+Capture seat shift. The web failure is the explicit Record-home auto-record
+projection missing from the writer allowlist. Browser and web repairs are in
+progress; the geometry findings still require diagnosis. #1376 is deployed;
+identity, database ownership and four HTTP checks pass. The populated Projects sweep also found rows
 moving as independent status reads finish; its regression fails before the
 atomic first-read repair. After the repair, 4,090 web checks, 110 sweep cases,
 27 canon checks and 1,116 repo guards pass.
