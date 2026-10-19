@@ -46,3 +46,10 @@
     order: 98;
   }
 }
+/* Speak at 393: a live Talk key is a whole touch target to its corners
+   (the desk sweep's hit probe; a 6 px round corner is not pressable). */
+@container surface (max-width: 500px) {
+  .desk-next .speak-plate .speak-transport > .desk-mic.gadget-transport-key {
+    border-radius: 2px;
+  }
+}

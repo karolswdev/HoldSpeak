@@ -75,6 +75,11 @@ export function useTalk(
     }
   }, [asked, speech.ready]);
 
+  // While the speech read is out the face is still reading: it says so
+  // (aria-busy), so nothing reads it as settled before the answer lands and
+  // moves what is under it (the desk sweep's still fence; SpeechSetup's rule).
+  const reading =
+    speech.ai.read.kind === "loading" ? <span hidden aria-busy="true" data-testid={`${testId}-reading`} /> : null;
   if (speech.notSetUp) {
     return {
       talkKey: <TalkKey open={asked} onPress={() => setAsked((v) => !v)} testId={testId} />,
@@ -86,7 +91,12 @@ export function useTalk(
     };
   }
   return {
-    talkKey: <MicButton {...mic} variant="transport" label={mic.label ?? "Talk"} startSignal={start || mic.startSignal} />,
+    talkKey: (
+      <>
+        <MicButton {...mic} variant="transport" label={mic.label ?? "Talk"} startSignal={start || mic.startSignal} />
+        {reading}
+      </>
+    ),
     setupRow: null,
   };
 }
