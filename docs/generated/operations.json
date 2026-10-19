@@ -2326,9 +2326,53 @@
       }
     },
     {
+      "name": "project.door.preview",
+      "version": 1,
+      "description": "Parse pasted source links, validate their exact provider sites, and find matching local meetings and notes.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "description": "The outcome in your words; used to find local material."
+          },
+          "pasted": {
+            "type": "string",
+            "description": "Source links or keys to parse and check."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (HTTP auth middleware; MCP auth resolver) and passed to the project service unchanged",
+      "effect": "read",
+      "result": "parsed source rows with truthful provider state, plus matching meetings, notes, and people",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "ServiceError project_service_missing",
+        "ValidationError validation"
+      ],
+      "completion": "synchronous; no project or watch is created",
+      "exposure": [
+        "http:POST /api/projects/door/preview"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Provider validation reads an external site and is an owner Room operation.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
       "name": "project.door.create",
       "version": 1,
-      "description": "Make a project through the Door: the outcome in your words names it, and each GitHub or Jira source arms watches that read that provider on a schedule, then takes a baseline read. With project_id, the sources are added to that project (the Room's Add source) and no project is made.",
+      "description": "Make a project through the Door: the outcome in your words names it, and each provider source arms watches that read that provider on a schedule, then takes a baseline read. With project_id, the sources are added to that project (the Room's Add source) and no project is made.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -2337,11 +2381,18 @@
             "description": "The outcome you want, in your words; it names the project."
           },
           "sources": {
-            "description": "Optional list of {provider: github|jira, scope, watches, adjust}."
+            "description": "Optional list of {provider: github|jira|confluence, scope, watches, adjust}."
           },
           "project_id": {
             "type": "string",
             "description": "Optional: add the sources to this project (project.list returns the ids)."
+          },
+          "found": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "description": "Optional selected meeting_ids and note_ids found by the Door."
           }
         },
         "required": [],

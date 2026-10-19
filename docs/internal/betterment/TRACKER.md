@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, Q11/Q12 verified; running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-19, Projects P5/P6 verified; running-desk identity is in `pm/STATUS.md`.
 
-**Total: 82 of 117 slices merged**, with Send S7 still partial.
+**Total: 84 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -17,7 +17,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Engines | `engines/` | 8 of 8 |
 | The desk's tools (MCP) | `mcp/` | 7 of 7 |
 | Ask | `asking/` | 13 of 13 |
-| Projects | `projects/` | 5 of 11 |
+| Projects | `projects/` | 7 of 11 |
 | Agents | `agents/` | 13 of 16 |
 | Daily and Needs you | `daily/` | 11 of 11 |
 | Setup and Settings | `setup/` | 3 of 10 |
@@ -84,7 +84,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Q11 | Memory where he looks | Done · #1375 | Pages have their own pass budget and engine fallback; distinct person answers retain working sources. |
 | Q12 | The Memory app | Done · #1375 | Go opens desk answers, Why and links; whole-desk Ask and RAW Recall retained. |
 
-## Projects (`projects/RECIPE.md`): 5 of 11
+## Projects (`projects/RECIPE.md`): 7 of 11
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -93,8 +93,8 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | P2 | Leave 1:1s out of updates | Done · #1276 |  |
 | P3 | The Now wing: where it stands in ten seconds | Done · #1350 | Recovered meeting source chips; populated head facts and Now sections observed on an isolated hub at 1440/393. |
 | P4 | Projects and Decisions in Go; withhold dead verbs | Done · #1349 | State/reason in Projects, truthful Not read, scoped Write update in Search. |
-| P5 | Sources in one go | Open |  |
-| P6 | Nudge and Ask, in their homes | Open |  |
+| P5 | Sources in one go | Done · #1377 | Paste keeps exact site/account; Found adds meetings and notes together; existing-project sources use the same Door. |
+| P6 | Nudge and Ask, in their homes | Done · #1377 | Exact destination and stored action feed Send; shared Ask keeps project scope. |
 | P7 | The update is an automation; the steward folds in | Open |  |
 | P8 | The agent writes the update | Open |  |
 | P9 | One decision record | Open |  |

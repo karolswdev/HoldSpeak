@@ -397,6 +397,63 @@ export function DoorSourceRows({ ctrl }: { ctrl: DoorController }) {
   );
 }
 
+function DoorPreview({ ctrl }: { ctrl: DoorController }) {
+  const preview = ctrl.preview;
+  if (!preview) return null;
+  return (
+    <div className="door-preview" data-testid="door-preview">
+      <span className="door-section-label">FOUND</span>
+      {preview.sources.length ? (
+        <ul className="door-preview-sources" data-testid="door-preview-sources">
+          {preview.sources.map((source) => (
+            <li key={`${source.provider}:${source.site ?? ""}:${source.scope}`} className="door-preview-source">
+              <span>{source.label}</span>
+              <StateChip
+                state={source.state === "checked" ? "success" : source.state === "cant_check" ? "warning" : "idle"}
+                label={source.state === "checked" ? "CHECKED" : source.state === "cant_check" ? "CAN'T CHECK" : "NOT CHECKED"}
+              />
+              {source.reason ? <span className="door-preview-reason">{source.reason}</span> : null}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <span className="door-preview-empty">No source links found</span>
+      )}
+
+      {preview.found.length ? (
+        <>
+          <div className="door-preview-heading">
+            <span className="door-section-label">MEETINGS AND NOTES</span>
+            <Button dense variant="ghost" onClick={ctrl.selectAllFound} data-testid="door-found-add-all">
+              Add all
+            </Button>
+          </div>
+          <ul className="door-preview-found" data-testid="door-found">
+            {preview.found.map((item) => (
+              <li key={`${item.kind}:${item.id}`} className={item.selected ? "door-found-row" : "door-found-row door-found-removed"}>
+                <span>
+                  <strong>{item.title}</strong>
+                  {item.detail ? <small>{item.detail}</small> : null}
+                </span>
+                {item.selected ? (
+                  <Button dense variant="ghost" onClick={() => ctrl.removeFound(item.id)} data-testid={`door-found-remove-${item.id}`}>
+                    Remove
+                  </Button>
+                ) : <span>Removed</span>}
+              </li>
+            ))}
+          </ul>
+          {preview.people.length ? (
+            <span className="door-preview-people" data-testid="door-people">
+              PEOPLE · {preview.people.join(" · ")}
+            </span>
+          ) : null}
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 /** PHILO-17 U10: Add source in the Room: the same rows as New Project,
  *  added to this project. */
 export function AddSourcesWell({
@@ -489,6 +546,27 @@ export function DoorCore({ scope }: CoreProps) {
           SOURCES{scopedCount > 0 ? ` ${scopedCount}` : ""}
         </span>
         <DoorSourceRows ctrl={ctrl} />
+        <div className="door-source-paste" data-testid="door-source-paste">
+          <StringGadget
+            label="Paste source links"
+            placeholder="GitHub repository, Jira project or Confluence space"
+            value={ctrl.sourcePaste}
+            onChange={ctrl.setSourcePaste}
+            micLabel="Speak source links"
+            inputProps={{ "data-testid": "door-source-paste-input" } as ComponentPropsWithoutRef<"input">}
+          />
+          <Button
+            dense
+            variant="secondary"
+            disabled={!ctrl.sourcePaste.trim() || ctrl.previewing}
+            loading={ctrl.previewing}
+            onClick={ctrl.previewSources}
+            data-testid="door-source-check"
+          >
+            Check sources
+          </Button>
+        </div>
+        <DoorPreview ctrl={ctrl} />
       </div>
 
       {/* 3. Footer */}

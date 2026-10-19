@@ -5097,6 +5097,16 @@
       ]
     },
     {
+      "path": "/api/projects/door/preview",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.project_door",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/projects/{project_id}",
       "methods": [
         "DELETE"

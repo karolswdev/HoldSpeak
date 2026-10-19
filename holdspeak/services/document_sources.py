@@ -614,6 +614,52 @@ class _NoteSource:
         )
 
 
+class _ProjectNudgeSource:
+    """A reviewer request rendered from one stored project action.
+
+    The source id is ``<project_id>:<action_item_id>``.  The caller supplies
+    only that durable identity; the request text always comes from the stored
+    action and project rows.  This keeps a Nudge a declared document source,
+    rather than an endpoint that accepts arbitrary message text or creates a
+    hidden note.
+    """
+
+    kind = "project_nudge"
+
+    def render(self, db: Any, source_id: str) -> Document:
+        project_id, separator, action_id = str(source_id or "").partition(":")
+        if not separator or not project_id or not action_id:
+            raise _document_not_found("project nudge", source_id)
+        with db._connection() as conn:
+            row = conn.execute(
+                """SELECT p.name AS project_name, a.task, a.source_ref, m.title AS meeting_title
+                   FROM action_items a
+                   JOIN meeting_projects mp ON mp.meeting_id = a.meeting_id
+                   JOIN projects p ON p.id = mp.project_id
+                   LEFT JOIN meetings m ON m.id = a.meeting_id
+                   WHERE p.id = ? AND a.id = ?""",
+                (project_id, action_id),
+            ).fetchone()
+        if row is None:
+            raise _document_not_found("project nudge", source_id)
+        project_name = str(row["project_name"] or "Project").strip() or "Project"
+        task = str(row["task"] or "").strip()
+        if not task:
+            raise ChannelRefused(
+                "project_nudge_empty",
+                f"The action for project nudge {source_id} has no stored task",
+                status=400,
+            )
+        title = f"{project_name} · Review request"
+        return _make_document(
+            ref=f"{self.kind}:{source_id}",
+            title=title,
+            body_md=f"# {title}\n\nPlease review: {task}\n",
+            slug=_slug(f"{project_name} review request", "review-request"),
+            label="NUDGE",
+        )
+
+
 DOCUMENT_SOURCES: dict[str, DocumentSource] = {
     "project_update": _ProjectUpdateSource(),
     "monday_brief": _MondayBriefSource(),
@@ -625,6 +671,7 @@ DOCUMENT_SOURCES: dict[str, DocumentSource] = {
     "meeting_followup": _MeetingAftercareSource("meeting_followup"),
     "artifact": _ArtifactSource(),
     "note": _NoteSource(),
+    "project_nudge": _ProjectNudgeSource(),
 }
 
 
