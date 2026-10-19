@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-19T10:15:01.540719Z",
+  "captured_at": "2026-10-19T10:20:24.887850Z",
   "wire": {
     "count": 2,
     "flights": [
@@ -12,7 +12,7 @@
         "id": "m-platform-a0",
         "kind": "action",
         "launch_id": "launch_ag0_done",
-        "launched_at": "2026-10-19T10:05:01.506638Z",
+        "launched_at": "2026-10-19T10:10:24.854899Z",
         "merged_at": null,
         "new": true,
         "origin_ref": "action:m-platform-a0",
@@ -26,7 +26,7 @@
         "state_source": "hook",
         "title": "Draft test scaffolding for flags",
         "turn_end": "done",
-        "turn_id": "2026-10-19T10:15:01.492218Z#4"
+        "turn_id": "2026-10-19T10:20:24.840292Z#4"
       },
       {
         "agent": "claude",
@@ -36,7 +36,7 @@
         "id": "m-platform-a1",
         "kind": "action",
         "launch_id": "launch_ag0_ghost",
-        "launched_at": "2026-10-19T10:05:01.506638Z",
+        "launched_at": "2026-10-19T10:10:24.854899Z",
         "merged_at": null,
         "new": false,
         "origin_ref": "action:m-platform-a1",
@@ -66,8 +66,8 @@
         "pr": null,
         "project_id": "",
         "project_name": "",
-        "queue_id": "queue_88ed0dc096d5",
-        "queued_at": "2026-10-19T10:15:01.508414Z",
+        "queue_id": "queue_307dabec108e",
+        "queued_at": "2026-10-19T10:20:24.857086Z",
         "session_cleanup": null,
         "session_key": null,
         "state": "queued",
@@ -92,7 +92,7 @@
           "id": "m-platform-a0",
           "kind": "action",
           "launch_id": "launch_ag0_done",
-          "launched_at": "2026-10-19T10:05:01.506638Z",
+          "launched_at": "2026-10-19T10:10:24.854899Z",
           "merged_at": null,
           "new": true,
           "origin_ref": "action:m-platform-a0",
@@ -106,7 +106,7 @@
           "state_source": "hook",
           "title": "Draft test scaffolding for flags",
           "turn_end": "done",
-          "turn_id": "2026-10-19T10:15:01.492218Z#4"
+          "turn_id": "2026-10-19T10:20:24.840292Z#4"
         },
         "identity": {
           "agent_label": "Claude",
@@ -125,9 +125,9 @@
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-19T10:15:01.488602Z",
+          "created_at": "2026-10-19T10:20:24.836763Z",
           "cwd": "/tmp/rig/home/dev/platform",
-          "done_id": "2026-10-19T10:15:01.492218Z#4",
+          "done_id": "2026-10-19T10:20:24.840292Z#4",
           "event_count": 5,
           "hook_event_name": "Notification",
           "last_assistant_text": null,
@@ -152,9 +152,9 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": false,
-          "updated_at": "2026-10-19T10:15:01.508730Z",
-          "wait_id": "2026-10-19T10:15:01.508730Z#5",
-          "wait_started_at": "2026-10-19T10:15:01.508730Z"
+          "updated_at": "2026-10-19T10:20:24.857376Z",
+          "wait_id": "2026-10-19T10:20:24.857376Z#5",
+          "wait_started_at": "2026-10-19T10:20:24.857376Z"
         }
       },
       {
@@ -167,7 +167,7 @@
           "id": "m-platform-a1",
           "kind": "action",
           "launch_id": "launch_ag0_ghost",
-          "launched_at": "2026-10-19T10:05:01.506638Z",
+          "launched_at": "2026-10-19T10:10:24.854899Z",
           "merged_at": null,
           "new": false,
           "origin_ref": "action:m-platform-a1",
@@ -200,9 +200,9 @@
           "agent": "claude",
           "awaiting_response": true,
           "capture_messages": false,
-          "created_at": "2026-10-19T10:15:01.493510Z",
+          "created_at": "2026-10-19T10:20:24.841225Z",
           "cwd": "/tmp/rig/home/dev/platform",
-          "done_id": "2026-10-19T10:15:01.505878Z#4",
+          "done_id": "2026-10-19T10:20:24.854002Z#4",
           "event_count": 4,
           "hook_event_name": "Stop",
           "last_assistant_text": null,
@@ -227,9 +227,9 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": false,
-          "updated_at": "2026-10-19T10:15:01.505878Z",
-          "wait_id": "2026-10-19T10:15:01.505878Z#4",
-          "wait_started_at": "2026-10-19T10:15:01.505878Z"
+          "updated_at": "2026-10-19T10:20:24.854002Z",
+          "wait_id": "2026-10-19T10:20:24.854002Z#4",
+          "wait_started_at": "2026-10-19T10:20:24.854002Z"
         }
       }
     ]

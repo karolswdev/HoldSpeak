@@ -1216,6 +1216,6 @@ def test_the_lane_serves_the_result_of_a_done_turn(hub: str, tmp_path: Path) -> 
     finally:
         agent_credentials.revoke(credential.principal.identity)
     lane = _get(hub, "/api/agent/launches/launch_ag0_done/lane")
-    assert lane["session"]["last_assistant_text"] == AG0_DONE
+    assert lane["last_words"] == AG0_DONE
     assert [row["ref"] for row in lane["used"]["looked_at"]] == [f"note:{note_id}"], lane["used"]
     _keep("agents-ag10", "lane.done", lane, tmp_path, hub)

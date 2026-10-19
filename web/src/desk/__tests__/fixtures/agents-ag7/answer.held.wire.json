@@ -1,9 +1,9 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-19T10:15:06.474859Z",
+  "captured_at": "2026-10-19T10:20:29.812465Z",
   "wire": {
     "launch_id": "launch_ag7_held",
-    "operation_id": "op_2dda07a3f46e45c593c70ae217438896",
+    "operation_id": "op_00d79c5ee5f846c58eb7bb615106f806",
     "pane_id": "%0",
     "status": "delivered"
   }
