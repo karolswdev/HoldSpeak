@@ -11,5 +11,16 @@
   align-items: center;
   gap: 4px 8px;
   margin-top: 4px;
+  min-width: 0;
   white-space: normal;
+}
+
+/* A Room state reason is a fact, but long reasons still have to stay on the
+   phone's paper instead of forcing the Projects row past its right edge. */
+.projects-reason {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 18px;
 }

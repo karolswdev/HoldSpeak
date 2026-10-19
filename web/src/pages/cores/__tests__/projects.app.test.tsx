@@ -74,6 +74,37 @@ describe("P4: the Projects window", () => {
     expect(within(vendor).queryByTestId("projects-update")).toBeNull();
   });
 
+  it("uses the merged Room state and reason before the legacy assessment", async () => {
+    const paymentsPath = `/api/projects/${WIRE.payments}/room`;
+    const vendorPath = `/api/projects/${WIRE.vendor}/room`;
+    const blocked = structuredClone(gets[paymentsPath]) as { health: Record<string, unknown> };
+    blocked.health = {
+      ...blocked.health,
+      project_state: "blocked",
+      state_reason: "Security HSM ceremony unavailable",
+      reason: null,
+    };
+    const atRisk = structuredClone(gets[vendorPath]) as { health: Record<string, unknown> };
+    atRisk.health = {
+      ...atRisk.health,
+      project_state: "at_risk",
+      state_reason: "Tokenization waits on the HSM key ceremony",
+      reason: "OLD LEGACY REASON",
+    };
+    apiFetch.mockImplementation((path: string) => path === paymentsPath
+      ? Promise.resolve(blocked)
+      : path === vendorPath ? Promise.resolve(atRisk) : Promise.reject(new TypeError("Failed to fetch")));
+    useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
+    render(<ProjectsCore />);
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+    const [blockedRow, atRiskRow] = rows();
+    expect(within(blockedRow).getByTestId("projects-state").textContent).toBe("Blocked");
+    expect(within(blockedRow).getByTestId("projects-reason").textContent).toBe("SECURITY HSM CEREMONY UNAVAILABLE");
+    expect(within(atRiskRow).getByTestId("projects-state").textContent).toBe("At risk");
+    expect(within(atRiskRow).getByTestId("projects-reason").textContent).toBe("TOKENIZATION WAITS ON THE HSM KEY CEREMONY");
+  });
+
   it("one press on a name opens that project", async () => {
     useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
     render(<ProjectsCore />);

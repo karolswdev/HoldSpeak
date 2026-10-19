@@ -14,7 +14,7 @@ import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, SurfaceVerbs } from "../../desk/surface/Surface";
 import { wireDate } from "../../desk/surface/format";
-import { decodeRoomSnapshot, healthReasonWords, roomHealthWord, type RoomHealthData, type RoomSnapshot } from "../../features/project-room/model";
+import { decodeRoomSnapshot, healthReasonWords, roomHealthWord, type RoomSnapshot } from "../../features/project-room/model";
 import type { CoreProps } from "./core-types";
 import "./projects.css";
 
@@ -62,23 +62,17 @@ export function updateWords(update: Update | null, now: Date = new Date()): { wo
   return { words: `${published ? "Update sent" : "Update drafted"} ${dayWords(at)}`, fresh };
 }
 
-type SettledHealth = RoomHealthData & {
-  /** Betterment P3 fields; optional while this P4 tree reads older wires. */
-  projectState?: "on_track" | "at_risk" | "blocked";
-  stateReason?: string | null;
-};
-
 type ListHealth = {
   word: "AT RISK" | "BLOCKED" | "ON TRACK" | "NEW";
   tone: "fail" | "ok" | "info";
   reason: string | null;
 };
 
-/** Use P3's Room state when the newer wire is present, with the P4 fixture's
- * legacy assessment as a compatibility fallback until that wire is merged. */
+/** Use P3's Room state when the newer wire is present, with the legacy
+ * assessment as a compatibility fallback for older wires. */
 function listHealth(room: RoomSnapshot | null): ListHealth | null {
   if (!room || room.health.state !== "ok") return null;
-  const health = room.health as SettledHealth & { state: "ok" };
+  const health = room.health;
   if (health.projectState === "blocked") {
     return { word: "BLOCKED", tone: "fail", reason: health.stateReason || health.reason };
   }
@@ -175,7 +169,7 @@ export function ProjectsCore(_props: CoreProps) {
                             {health.word === "BLOCKED" ? "Blocked" : health.word === "AT RISK" ? "At risk" : health.word === "NEW" ? "New" : "On track"}
                           </span>
                         ) : null}
-                        {reason ? <span className="surface-token" data-tone="danger" data-testid="projects-reason">{reason}</span> : null}
+                        {reason ? <span className="surface-token projects-reason" data-tone="danger" data-testid="projects-reason">{reason.toUpperCase()}</span> : null}
                         {next ? <span className="surface-token" data-tone={next.late ? "danger" : undefined} data-testid="projects-next">{next.words}</span> : null}
                         {update?.fresh ? <span className="kit-pill" data-tone="accent" data-testid="projects-new-update">New update</span> : null}
                         {update ? <span className="surface-token" data-testid="projects-update">{update.words}</span> : null}
