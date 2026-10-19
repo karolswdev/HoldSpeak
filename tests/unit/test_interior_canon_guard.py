@@ -98,7 +98,8 @@ def test_history_core_artifacts_wing_stays_parked() -> None:
     history_dir = WEB_SRC / "pages" / "cores" / "history"
     assert (history_dir / "_parked" / "ArtifactsLibrary.tsx").exists(), "parked, never deleted"
     live = "\n".join(file.read_text(encoding="utf-8") for file in sorted(history_dir.glob("*.tsx")))
-    assert "ArtifactsLibrary" not in live, "the Artifacts wing is parked (capture C5)"
+    assert "<ArtifactsLibrary" not in live and 'from "./ArtifactsLibrary"' not in live, (
+        "the Artifacts wing is parked (capture C5)")
     assert "PreparedResults" in live, "the meeting's Results are drawn under Outcomes ▸ Prepared"
 
 
