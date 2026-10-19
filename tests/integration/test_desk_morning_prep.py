@@ -100,7 +100,7 @@ def test_morning_prep_is_made_on_once_and_its_result_is_todays_prepared_block(hu
     from holdspeak.services.automation_runs import ensure_morning_prep
     from holdspeak.workbench_templates import MORNING_PREP_ID
     from tests.fixtures.daily_week import WEEK, seed
-    from tests.unit.test_desk_brief import _calendar_today, _ensured
+    from tests.unit.test_desk_brief import _calendar_today
     from tests.unit.test_desk_speak import _record
 
     seeded = seed(hub, monday=date.today(), engine=True)
@@ -164,10 +164,11 @@ def test_morning_prep_is_made_on_once_and_its_result_is_todays_prepared_block(hu
     assert len(_ok(hub.client.get(f"/api/workbenches/{MORNING_PREP_ID}"))["workbench"]["results"]) == 1
     assert result["note_id"] is None
 
+    # The brief is left out: its rows depend on the weekday the test runs
+    # (Since yesterday / Since Friday), and the Prepared block does not read it.
     reads = {
         "/api/desk/needs-you?fresh=1": _ok(hub.client.get("/api/desk/needs-you?fresh=1")),
         "/api/door": _ok(hub.client.get("/api/door")),
-        "/api/brief/latest?ensure=1": _ensured(hub),  # type: ignore[arg-type]
         "/api/meetings?limit=40": _ok(hub.client.get("/api/meetings?limit=40")),
         "/api/automations/new": _ok(hub.client.get("/api/automations/new")),
         "/api/automations/prepared": after,
