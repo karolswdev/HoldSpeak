@@ -38,6 +38,7 @@ import { MeetingDecideWell } from "../../../meetings/MeetingDecideWell";
 import { NeedsYouTable, showsRunSummary } from "./NeedsYouTable";
 import { TranscriptWell } from "./TranscriptWell";
 import { LookedAtWell } from "./LookedAtWell";
+import { SinceLastWell, readSinceLast } from "./SinceLastWell";
 import { AudioOnlyVerb } from "./TranscribeVerb";
 import { CycleGadget, StringGadget } from "../../../desk/surface/gadgets";
 import { WorkMenu, type WorkMenuEntry } from "../../../desk/components/DeskMenu";
@@ -747,6 +748,8 @@ export function MeetingDetail({
               summary), then what was decided and who owes what, then the
               follow-up (Send), the transcript last. */}
           <MeetingSummarySlab intel={summaryIntel} receipt={runReceipt} saidOnFace={saidOnFace} />
+          {/* betterment/capture C6: what changed since the last meeting of this kind. */}
+          <SinceLastWell since={readSinceLast(data.aftercare)} meetingId={id} />
           <MeetingOutcomes data={data} meeting={meeting} />
           <NeedsYouTable
             needsRows={needsRows}

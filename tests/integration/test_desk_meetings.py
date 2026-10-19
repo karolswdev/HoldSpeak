@@ -646,3 +646,113 @@ def test_an_import_with_a_stated_start_is_listed_on_that_day(
         assert row_start.astimezone().strftime("%A") == "Thursday"
     finally:
         _stop(server)
+
+
+# ── Capture C6: Since last time ──────────────────────────────────────────────
+
+SINCE_TOKEN = "desk-meetings-since"
+SYNC_TXT = Path(__file__).parents[1] / "fixtures" / "capture_payments_platform_sync.txt"
+REVIEW_TXT = Path(__file__).parents[1] / "fixtures" / "capture_architecture_review.txt"
+SINCE_FIXTURE = (
+    Path(__file__).parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "meetings-hub" / "since-last.json"
+)
+# The promises the LAN engine wrote for the sync and the review in the
+# capture walk (docs/internal/betterment/capture/RECON.md §3).
+SYNC_ACTIONS = [
+    ("c6-sync-a1", "Write the two idempotent-retry options on one page", "Jun", "Thursday evening"),
+    ("c6-sync-a2", "Profile the reconciliation job", "Theo", "Thursday"),
+    ("c6-sync-a3", "Draft the rollback runbook for the cutover", "Mira", "Tuesday"),
+]
+REVIEW_ACTIONS = [
+    ("c6-rev-a1", "Write the ADR for idempotent retries", "Jun", "Wednesday"),
+    ("c6-rev-a2", "Update the reconciliation job to read the dedupe key", "Theo", None),
+]
+
+
+def test_since_last_time_names_the_last_meeting_of_the_same_kind(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The capture week, imported with its dates: the Thursday sync, a 1:1
+    with Theo later that Thursday, Friday's architecture review. Friday's
+    aftercare names the sync (the same people), not the later 1:1; what
+    closed, what is still open and what is new are each listed. The sync and
+    the 1:1 have no last time."""
+    from holdspeak.db import get_database
+    from holdspeak.meeting_session import IntelSnapshot
+
+    week = {
+        "sync": (SYNC_TXT, "Payments platform sync", datetime(2026, 10, 15, 10, 0, 0)),
+        "theo": (THEO_TXT, "1:1 with Theo", datetime(2026, 10, 15, 14, 0, 0)),
+        "review": (REVIEW_TXT, "Architecture review: idempotent retries", datetime(2026, 10, 16, 11, 0, 0)),
+    }
+    server, base = _boot(tmp_path, monkeypatch, token=SINCE_TOKEN)
+    try:
+        api = lambda method, path, body=None: _api(base, method, path, body, token=SINCE_TOKEN)  # noqa: E731
+        ids: dict[str, str] = {}
+        for key, (path, title, started) in week.items():
+            status, imported = _call(
+                base, "POST", "/api/meetings/import", token=SINCE_TOKEN, ok=False,
+                files={"file": (path.name, path.read_bytes(), "text/plain")},
+                data={"title": title, "started_at_ms": str(int(started.timestamp() * 1000))},
+            )
+            assert status == 202, imported
+            ids[key] = str(imported["meeting_id"])
+            assert _wait(lambda: bool(api("GET", f"/api/meetings/{ids[key]}").get("segments")), timeout=30)
+
+        # The promises each summary wrote (no engine in the rig).
+        db = get_database()
+        for key, actions in (("sync", SYNC_ACTIONS), ("review", REVIEW_ACTIONS)):
+            state = db.meetings.get_meeting(ids[key])
+            state.intel = IntelSnapshot(timestamp=1.0, summary="", action_items=[
+                {"id": item_id, "task": task, "owner": owner, "due": due, "status": "pending",
+                 "review_state": "pending", "source_timestamp": None,
+                 "created_at": week[key][2].isoformat()}
+                for item_id, task, owner, due in actions
+            ])
+            db.meetings.save_meeting(state)
+        # Jun wrote the options page before the review.
+        api("PATCH", "/api/all-action-items/c6-sync-a1", {"status": "done"})
+
+        review = api("GET", f"/api/meetings/{ids['review']}/aftercare")
+        since = review["since_last_meeting"]
+        assert since is not None, review
+        assert since["previous_meeting"]["id"] == ids["sync"], since
+        assert since["previous_meeting"]["title"] == "Payments platform sync"
+        assert since["previous_meeting"]["date"].startswith("2026-10-15"), since
+        assert [a["task"] for a in since["closed_actions"]] == [SYNC_ACTIONS[0][1]]
+        assert [a["task"] for a in since["still_open_actions"]] == [SYNC_ACTIONS[1][1], SYNC_ACTIONS[2][1]]
+        assert [a["task"] for a in since["new_actions"]] == [task for _, task, _, _ in REVIEW_ACTIONS]
+
+        for key in ("sync", "theo"):
+            assert api("GET", f"/api/meetings/{ids[key]}/aftercare")["since_last_meeting"] is None, key
+        _recorded_since(review)
+    finally:
+        _stop(server)
+
+
+def _recorded_since(review: dict[str, Any]) -> None:
+    """The face test's recorded answer (meetings.app.test.tsx): Friday's
+    aftercare as the hub served it. HOLDSPEAK_WIRE_WRITE=1 rewrites the file;
+    otherwise the stored diff must equal the live one (ids aside: an import
+    makes a new meeting id each run)."""
+    import os
+
+    def shape(body: dict[str, Any]) -> Any:
+        since = body["since_last_meeting"]
+        return {
+            "title": since["previous_meeting"]["title"],
+            "date": since["previous_meeting"]["date"][:10],
+            **{k: [a["task"] for a in since[k]] for k in ("closed_actions", "still_open_actions", "new_actions")},
+        }
+
+    if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+        SINCE_FIXTURE.write_text(json.dumps({
+            "_source": "Recorded from a real hub by tests/integration/test_desk_meetings.py::"
+                       "test_since_last_time_names_the_last_meeting_of_the_same_kind "
+                       "(GET /api/meetings/<review>/aftercare). HOLDSPEAK_WIRE_WRITE=1 rewrites this "
+                       "file; never hand-edit a field a test reads.",
+            "aftercare": review,
+        }, indent=2, sort_keys=True) + "\n")
+    stored = json.loads(SINCE_FIXTURE.read_text())["aftercare"]
+    assert shape(stored) == shape(review), "re-record with HOLDSPEAK_WIRE_WRITE=1"
+    assert set(stored["since_last_meeting"]) == set(review["since_last_meeting"]), "re-record"
