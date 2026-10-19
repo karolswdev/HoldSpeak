@@ -293,9 +293,13 @@ class ConfluenceProviderAdapter:
             # Betterment ST2: a Check never moves his terminal's acli account.
             before = current_acli_profile(self._registry_path)
             try:
-                return self._probe_under_lock(principal, site, email, canonical_ref)
+                result = self._probe_under_lock(principal, site, email, canonical_ref)
             finally:
-                switch_back_acli(self._run_acli, principal, "confluence", before, site, email)
+                restore_error = switch_back_acli(self._run_acli, principal, "confluence", before, site, email)
+            if restore_error:
+                result.update(state=STATE_DEGRADED, error_code=CODE_UNAVAILABLE, error_detail=restore_error)
+                self._persist_connection(canonical_ref, result)
+            return result
 
     def _probe_under_lock(
         self,

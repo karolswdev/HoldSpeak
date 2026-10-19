@@ -574,9 +574,13 @@ class JiraProviderAdapter:
             # the switch, and switch back to it after the status read.
             before = current_acli_profile(self._registry_path)
             try:
-                return self._probe_under_lock(principal, site, email, canonical_ref)
+                result = self._probe_under_lock(principal, site, email, canonical_ref)
             finally:
-                switch_back_acli(self._run_acli, principal, "jira", before, site, email)
+                restore_error = switch_back_acli(self._run_acli, principal, "jira", before, site, email)
+            if restore_error:
+                result.update(state=STATE_DEGRADED, error_code=CODE_UNAVAILABLE, error_detail=restore_error)
+                self._persist_connection(canonical_ref, result)
+            return result
 
     def _probe_under_lock(
         self,
@@ -1776,12 +1780,13 @@ def switch_back_acli(
     before: dict[str, Any] | None,
     site: str,
     email: str,
-) -> None:
+) -> str | None:
     """Betterment ST2: put acli back on the account it was on before a Check.
 
     ``run`` is the adapter's admitted ``_run_acli``; the caller holds
     ``_ACLI_LOCK``.  No switch when the previous account is unknown or is the
-    one just checked.  A failure is logged and never changes the Check result.
+    one just checked. Return a plain reason if restoration fails so Check
+    cannot report Works after moving the terminal's account.
     """
     if not before:
         return
@@ -1794,10 +1799,15 @@ def switch_back_acli(
     if not prev_site or not prev_email or (prev_norm, prev_email) == (site, email.lower()):
         return
     try:
-        run(["acli", product, "auth", "switch", "--site", prev_site, "--email", prev_email],
-            principal, timeout=10.0)
-    except Exception as exc:  # the Check result stands; the log names the class only
+        restored = run(["acli", product, "auth", "switch", "--site", prev_site, "--email", prev_email],
+                       principal, timeout=10.0)
+        if restored.returncode != 0:
+            _log.warning("acli %s could not restore the previous account", product)
+            return "acli could not restore the previous account"
+    except Exception as exc:
         _log.warning("acli %s switch-back failed: %s", product, type(exc).__name__)
+        return "acli could not restore the previous account"
+    return None
 
 
 def read_acli_profiles(path: Path) -> list[dict[str, Any]]:

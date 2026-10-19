@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, recovery includes AG10 #1367 and ST1 #1347. The running desk was last checked at `bfe8bf5dd`; ST1 delivery follows merge.
+**Last updated:** 2026-10-19, recovery includes AG10 #1367, ST1 #1347 and ST2 #1346. The running desk was last checked at `80ecb1add` (ST1 and Q9).
 
-**Total: 71 of 117 slices merged**, with Send S7 still partial.
+**Total: 72 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -20,7 +20,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Projects | `projects/` | 3 of 11 |
 | Agents | `agents/` | 11 of 16 |
 | Daily and Needs you | `daily/` | 10 of 11 |
-| Setup and Settings | `setup/` | 2 of 10 |
+| Setup and Settings | `setup/` | 3 of 10 |
 | Desk shell | `shell/` | 2 of 10 |
 | Send | `send/` | 1 of 8 |
 | Capture | `capture/` | 6 of 12 |
@@ -137,13 +137,13 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | D9 | Morning prep (after Automations A2–A6 and MCP M1; owner decision 3) | Done · #1342 |  |
 | D10 | MCP parity | Open |  |
 
-## Setup and Settings (`setup/RECIPE.md`): 2 of 10
+## Setup and Settings (`setup/RECIPE.md`): 3 of 10
 
 | Slice | What | State | Note |
 |---|---|---|---|
 | ST0 | Tell the truth | Done · #1261 | #1261 was "part 1" (speech never wired to a chat server; Voice says if speech works). |
 | ST1 | One home each: Rhythm, Wallpaper, Calendar, the engine line | Done · #1347 | Recovery adds phone stepper value geometry fix; two-size real browser check fails before and passes after. |
-| ST2 | Accounts that say Works, and Check that does not move acli | Open |  |
+| ST2 | Accounts that say Works, and Check that does not move acli | Done · #1346 | Stub-backed Jira/Confluence restoration, Found/Use and Remove/Undo; restoration failures stay degraded. |
 | ST3 | Setup is one window of found things | Open |  |
 | ST4 | Use everything found, and the look on his network | Open |  |
 | ST5 | Your people in Setup | Open |  |

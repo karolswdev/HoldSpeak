@@ -280,6 +280,37 @@ def test_a_check_of_the_current_account_does_not_switch_back(acli_home) -> None:
     assert acli.current("jira") == ALPHA
 
 
+@pytest.mark.parametrize("product", ["jira", "confluence"])
+@pytest.mark.parametrize("failure", ["exit", "exception"])
+def test_check_reports_when_acli_cannot_restore_the_previous_account(
+    acli_home, monkeypatch: pytest.MonkeyPatch, product: str, failure: str,
+) -> None:
+    import subprocess
+
+    boot, acli = acli_home
+    hub = boot()
+    hub.client.post(f"/api/providers/{product}/connections", json={"site": BETA, "email": EMAIL})
+    original = StubAcli.__call__
+
+    def cannot_restore(self: StubAcli, argv: list[str], **kw: Any):
+        if argv[2:4] == ["auth", "switch"] and argv[argv.index("--site") + 1] == ALPHA:
+            self.calls.append(list(argv))
+            if failure == "exception":
+                raise subprocess.TimeoutExpired(argv, 10)
+            return subprocess.CompletedProcess(argv, 1, stdout="", stderr="profile unavailable")
+        return original(self, argv, **kw)
+
+    monkeypatch.setattr(StubAcli, "__call__", cannot_restore)
+    response = hub.client.post(f"/api/connections/{product}/recheck", json={"ref": f"{BETA}|{EMAIL}"})
+    assert response.status_code == 200, response.text
+    row = next(c for c in response.json()["connections"] if c["account"]["site"] == BETA)
+    assert acli.current(product) == BETA
+    assert row["state"] == "degraded", row
+    assert row["reason"] == "acli could not restore the previous account", row
+    stored = next(c for c in _tools(hub)[product]["connections"] if c["account"]["site"] == BETA)
+    assert stored["state"] == "degraded" and stored["reason"] == row["reason"]
+
+
 def test_a_new_profile_in_acli_is_found_and_use_connects_it(acli_home) -> None:
     """A third profile in acli's file shows under Found (not connected); one Use connects it."""
     boot, acli = acli_home
