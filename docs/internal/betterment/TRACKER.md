@@ -81,8 +81,8 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Q8 | One note | Done · #1351 | Phone footer follow-up delivered with #1368. |
 | Q9 | Find the tasks | Done · #1354 | Privacy fix #1362 merged; operations/MCP/Edit/Dismiss follow-up #1365 merged. |
 | Q10 | Knowledge becomes drawers | Done · #1368 | Existing collections, About chips and filing use named drawers; data and tools retained. |
-| Q11 | Memory where he looks | Done | Pages have their own pass budget and engine fallback; distinct person answers retain working sources. |
-| Q12 | The Memory app | Done | Go opens desk answers, Why and links; whole-desk Ask and RAW Recall retained. |
+| Q11 | Memory where he looks | Done · #1375 | Pages have their own pass budget and engine fallback; distinct person answers retain working sources. |
+| Q12 | The Memory app | Done · #1375 | Go opens desk answers, Why and links; whole-desk Ask and RAW Recall retained. |
 
 ## Projects (`projects/RECIPE.md`): 5 of 11
 

@@ -150,6 +150,24 @@ def test_only_its_own_helper_and_never_an_approval(monkeypatch) -> None:
     assert sent[0]["text"] == "1"
 
 
+def test_mcp_helper_tool_accepts_a_launched_agent_context(monkeypatch) -> None:
+    """The global owner sweep may see ``launch_only``; a real launch identity
+    still reaches the helper family and its own-helper authority checks."""
+    from holdspeak.mcp.families import agent as agent_family
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.runtime import composition
+
+    monkeypatch.setattr(composition, "db_or", lambda _fallback: object())
+    monkeypatch.setattr(helpers, "read", lambda db, caller, launch_id, lines=40: {
+        "status": "read", "caller": caller, "launch_id": launch_id, "lines": lines,
+    })
+    result = agent_family.dispatch(
+        "agent.read", {"launch_id": "H1", "lines": 12},
+        Principal(PrincipalKind.AGENT, "agent:launch:L1"),
+    )
+    assert result == {"status": "read", "caller": "L1", "launch_id": "H1", "lines": 12}
+
+
 def test_wait_is_pinned_to_the_helpers_session(monkeypatch) -> None:
     _states(monkeypatch, ("working", "claude:h1"), ("working", "claude:h1"), ("working", "claude:OTHER"))
     clock = _Clock()
