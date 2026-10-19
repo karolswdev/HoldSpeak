@@ -30,7 +30,7 @@
   min-height: 520px;
 }
 
-.desk-next .desk-pullout.thought-workspace-window:where(:not(.is-sending):has(.thought-reads-well, .thought-note-ask-open)) {
+.desk-next .desk-pullout.thought-workspace-window:where(:not(.is-sending):has(.thought-reads-well, .thought-note-ask-open, .note-outcomes)) {
   /* A restored sticky can pin 360px. Open material needs room, within the
      existing cap; larger owner-arranged heights still win. */
   min-height: min(640px, calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom)));
@@ -585,4 +585,15 @@
   .desk-next .thought-workspace-window * {
     scroll-behavior: auto !important;
   }
+}
+
+/* Betterment Q9 (Find the tasks): the meeting's outcome rows under the note,
+   in the band's inset, scrolling on their own so the note keeps its room. */
+.desk-next .note-outcomes {
+  flex: none;
+  max-height: 46%;
+  overflow-y: auto;
+  padding: 8px clamp(22px, 3.4vw, 44px) 12px;
+  border-top: 1px solid var(--border-strong);
+  background: var(--surface-2);
 }
