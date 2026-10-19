@@ -4,9 +4,25 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-18 (betterment batch six delivered at `b8908dc72`)
+**Last updated:** 2026-10-19 (betterment delivery recovered; current main `eef501294`, desk `b8908dc72`)
 
 ## Current phase
+
+**Betterment delivery — Codex takes delivery, owner ruling 2026-10-19.**
+Batch seven stopped at Claude's usage limit. Main has 69 of 117 slice
+implementations merged; the owner's running desk still serves batch six
+at `b8908dc72` (runtime identity checked). Eight betterment PRs are open:
+#1346, #1347, #1349, #1350, #1355, #1363, #1364 and #1365.
+Local-only commits and unfinished edits are preserved in their original
+worktrees. In particular, AG10's latest fixes are not on its PR branch;
+Q11, AG11 and the remaining atlas repairs are uncommitted. The four confirmed failures are repaired in this recovery PR: API
+markdown/manifest parity and three recorded-wire checks in People/Today.
+The hub re-records its own answers; the Today face checks keep the task in
+its correct Needs-you home. Focused validation: four pytest checks and 28
+Today/People web checks pass. Pending-PR recovery and delivery continue. This is not a completion or owner-acceptance claim.
+Exact recovery map: `docs/internal/betterment/RECOVERY-2026-10-19.md`.
+Codex owns delivery for this task at the owner's request; implementation
+workers hold for SHIP and Codex verifies and merges.
 
 **Betterment batch six — delivered 2026-10-18 (main `b8908dc72`).** The
 desk's tools are complete (7 of 7): M5 #1330 (HTTP engines get the Ask

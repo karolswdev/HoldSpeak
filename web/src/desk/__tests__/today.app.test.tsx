@@ -71,6 +71,14 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
   it("with no press: the one number, the top rows of Needs you, the next 1:1 with Prep, Since and This week", async () => {
     const { reads, posts } = replay();
     render(<TodayView />);
+    expect(GETS["/api/desk/needs-you?fresh=1"].items).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        title: "Draft the rollback runbook",
+        direction: "theirs",
+        counted: false,
+        owner: "Mira",
+      }),
+    ]));
     // The one number the bell and the Dock say.
     expect(await screen.findByTestId("today-needs-count")).toHaveTextContent(String(GETS["/api/desk/needs-you?fresh=1"].count));
     expect(screen.getByTestId("today-needs-count").textContent).toBe("4");
@@ -95,7 +103,7 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
     expect(within(next).getByRole("button", { name: "Prep" })).toBeTruthy();
     // Since yesterday: folded to one line of counts, made with no press.
     const since = await screen.findByTestId("today-since");
-    expect(within(since).getByTestId("today-since-counts").textContent).toBe("2 decisions · 5 promises · 2 more");
+    expect(within(since).getByTestId("today-since-counts").textContent).toBe("2 meetings · 2 decisions · 1 promise · 2 more");
     expect(within(since).getByTestId("today-since-toggle")).toHaveAttribute("aria-expanded", "false");
     expect(reads).toContain("/api/brief/latest?ensure=1");
     expect(posts.some((p) => p.url.startsWith("/api/brief/generate"))).toBe(false);
@@ -134,7 +142,8 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
     const rows = await screen.findByTestId("today-since-rows");
     const texts = [...rows.querySelectorAll("[data-testid='brief-sf-row']")].map((r) => r.textContent ?? "");
     expect(texts.some((t) => t.includes("Adopt idempotent retries with a dedupe key"))).toBe(true);
-    expect(texts.some((t) => t.includes("Draft the rollback runbook"))).toBe(true);
+    expect(texts.some((t) => t.includes("Freeze ledger writes during the cutover"))).toBe(true);
+    expect(texts.some((t) => t.includes("Draft the rollback runbook"))).toBe(false);
     // The brief's waiting rows are Needs you's, above: never listed twice.
     expect(texts.some((t) => t.startsWith("Email Dana about the cutover window"))).toBe(false);
     expect(within(rows).getByTestId("today-since-decisions")).toHaveTextContent("Decisions");
