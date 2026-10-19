@@ -513,7 +513,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         </div>
         {calendar ? null : (
           <Button dense variant={lead === "calendar" ? "primary" : "secondary"}
-            onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>Connect calendar</Button>
+            onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>Connect calendar</Button>
         )}
       </div>
     </SpineNode>

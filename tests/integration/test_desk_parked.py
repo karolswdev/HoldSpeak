@@ -58,3 +58,41 @@ def test_park_a_meeting_and_a_project_see_both_restore_one(tmp_path: Path, monke
         assert any(p["id"] == "p-hiring" for p in _ok(base, "GET", "/api/projects")["projects"])
     finally:
         server.stop()
+
+
+# ── Betterment setup ST1: one home each (Rhythm, Wallpaper) ───────────
+
+
+@pytest.mark.parametrize(("window_id", "app"), [
+    ("surface-cadence", "configure-cadence"),
+    ("surface-places", "change-places"),
+])
+def test_the_parked_rhythm_and_places_windows_are_retired_and_a_saved_row_still_closes(
+    tmp_path: Path, window_id: str, app: str,
+) -> None:
+    """Betterment setup ST1: the Rhythm window and Change places are parked;
+    Settings ▸ Rhythm and Settings ▸ Wallpaper are their one home. The hub
+    refuses a NEW old window by name and lists it as retired (the browser
+    then closes a saved row and opens Settings at the section,
+    ``web/src/desk/compositor/__tests__/hubWindows.test.ts``); a row saved
+    before the slice still closes; Settings itself still opens."""
+    from holdspeak.db import Database
+    from holdspeak.services.desk_window_service import DeskWindowService
+    from holdspeak.services.errors import ValidationError
+
+    svc = DeskWindowService(Database(tmp_path / "w.db"), on_changed=lambda op, ids: None)
+    with pytest.raises(ValidationError) as refused:
+        svc.open(window_id)
+    assert refused.value.code == "window_retired"
+    registry = svc.list()["registry"]
+    assert registry["static"][window_id] == app
+    assert "Settings" in registry["retired"][window_id]
+    with svc._db._connection() as conn:  # noqa: SLF001 -- a row saved before the slice
+        conn.execute(
+            "INSERT INTO desk_windows (id, app, object_ref, depth, minimized, revision) VALUES (?, ?, ?, ?, ?, ?)",
+            (window_id, app, None, 1, 0, 1),
+        )
+    assert [w["id"] for w in svc.list()["windows"]] == [window_id]
+    assert svc.close(window_id)["closed"] is True
+    assert svc.list()["windows"] == []
+    assert svc.open("surface-settings")["app"] == "configure-settings"

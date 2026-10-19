@@ -344,7 +344,17 @@ def run_id_of(identity: Optional[str]) -> str:
     return text[len(RUN_IDENTITY_PREFIX):] if text.startswith(RUN_IDENTITY_PREFIX) else ""
 
 
+def launch_key_of(identity: Optional[str]) -> str:
+    """Betterment AG10: ``launch:<id>`` for an ``agent:launch:<id>`` identity
+    (a launched agent's credential); '' for any other. Its calls are kept
+    under that key (``use_by_trace``)."""
+    from .conductor_launch import LAUNCH_IDENTITY_PREFIX
+
+    text = str(identity or "")
+    return f"launch:{text[len(LAUNCH_IDENTITY_PREFIX):]}" if text.startswith(LAUNCH_IDENTITY_PREFIX) else ""
+
+
 __all__ = [
-    "PREPARE", "READ", "WRITE", "ask_trace", "current_item", "for_item", "item_trace", "record_call", "record_value",
+    "PREPARE", "READ", "WRITE", "ask_trace", "launch_key_of", "current_item", "for_item", "item_trace", "record_call", "record_value",
     "run_id_of", "use_by_item", "use_by_trace",
 ]

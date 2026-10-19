@@ -123,7 +123,10 @@ export function WhatRunsWhere({ ctrl }: { ctrl: RunsOnController }) {
                           if (editor.own) void ctrl.what.set(row.id, null);
                         }}
                       >
-                        Everything else
+                        {/* Betterment setup ST1 (FOLLOWUPS ST0/E5): speech
+                            never takes the default (a chat engine); with no
+                            row of its own it has no engine. */}
+                        {row.id === "speech" ? "No engine" : "Everything else"}
                       </Button>
                     </li>
                   ) : null}

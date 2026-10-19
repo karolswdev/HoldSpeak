@@ -2284,12 +2284,6 @@
       "entry_point": "holdspeak/web/routes/threads.py::build_threads_router.api_interview_promotions",
       "discriminator": "InterviewService",
       "reason": "route builds its own service instance instead of the hub's bound one"
-    },
-    {
-      "transport": "http",
-      "entry_point": "holdspeak/web/routes/primitives/note_outcomes.py::build_note_outcomes_router.service",
-      "discriminator": "NoteOutcomesService",
-      "reason": "route builds its own service instance instead of the hub's bound one (Betterment Q9 Find the tasks; not an operation yet)"
     }
   ]
 }

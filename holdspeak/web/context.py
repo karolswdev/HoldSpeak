@@ -94,6 +94,8 @@ class WebContext:
     # Phase 135: encrypted People sidecar service.  It is intentionally not a
     # normal database repository and carries no sync/export/memory collaborator.
     people_service: Optional[Any] = None
+    # Betterment Q9: Find the tasks (the note.outcome* operations).
+    note_outcomes_service: Optional[Any] = None
     sync_service: Optional[Any] = None
     actuator_service: Optional[Any] = None
 
