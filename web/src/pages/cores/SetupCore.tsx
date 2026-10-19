@@ -20,6 +20,7 @@ import { CoreResourceGuard, renderHeroSlot } from "./core-layout";
 import { deSnake, presentValue } from "../../desk/surface/format";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 import { RuntimeDocsCore, sortChecks } from "./RuntimeDocsCore";
+import { SetupFace, useSetupInventory } from "../../desk/firstrun/SetupFace";
 
 /** The doctor's "Speech model" check (holdspeak/commands/doctor.py). */
 const SPEECH_SECTION = "speech-model";
@@ -197,5 +198,13 @@ export function ParkedSetupCore({ hero }: CoreProps) {
 }
 
 export function SetupCore(props: CoreProps) {
-  return <RuntimeDocsCore {...props} speechTestId="setup-speech-setup" />;
+  const setup = useSetupInventory();
+  if (setup.loading && !setup.inventory) return <SurfaceState loading />;
+  if (setup.error && !setup.inventory) {
+    return <SurfaceState error={setup.error} onRetry={() => void setup.reload()} />;
+  }
+  if (!setup.inventory) {
+    return <SurfaceState error="Setup could not be read." onRetry={() => void setup.reload()} />;
+  }
+  return <SetupFace initial={setup.inventory} />;
 }

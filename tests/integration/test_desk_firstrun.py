@@ -66,6 +66,69 @@ def _ok(base: str, method: str, path: str, body: Any = None) -> Any:
     return payload
 
 
+def test_setup_face_inventory_is_producer_backed_and_network_scan_is_separate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ST3 reads the existing producers; ST4 is a separate explicit press."""
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        found = _ok(base, "GET", "/api/setup/found")
+        assert isinstance(found.get("rows"), list)
+        assert "first_run" in found
+        assert any(row.get("id") == "speech" for row in found["rows"])
+        assert "checkedAt" not in found
+
+        # The LAN route is only the approved network operation.  The test
+        # harness has no LAN engine, so a successful empty answer still proves
+        # that the route is separate from the files-only inventory read.
+        # The default rig fence keeps this route from probing the host. An
+        # injected deterministic LAN producer opts in in the dedicated scan
+        # tests; this integration check proves the Setup read stays separate.
+        checked = _ok(base, "POST", "/api/setup/lan")
+        assert isinstance(checked.get("rows"), list)
+        assert checked.get("checkedAt")
+        assert checked.get("disabled") is True
+    finally:
+        server.stop()
+
+
+def test_setup_lan_scan_uses_an_explicitly_enabled_injected_producer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ST4 uses the real route only after the rig opts into its producer."""
+    from holdspeak.services import lan_engine_discovery
+
+    monkeypatch.setattr(
+        lan_engine_discovery,
+        "scan_lan_engines",
+        lambda *, principal: {
+            "engines": [{
+                "id": "rig-qwen",
+                "name": "qwen3.8-27b",
+                "host": "127.0.0.1",
+                "base_url": "http://127.0.0.1:8099",
+            }],
+        },
+    )
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        # glass_infra deliberately turns the scan off while it boots. This
+        # test opts in only after the isolated server is ready.
+        monkeypatch.setenv("HOLDSPEAK_SETUP_LAN_SCAN", "on")
+        answer = _ok(base, "POST", "/api/setup/lan")
+        assert answer["rows"] == [{
+            "id": "rig-qwen",
+            "name": "qwen3.8-27b",
+            "host": "127.0.0.1",
+            "base_url": "http://127.0.0.1:8099",
+        }]
+        assert answer.get("disabled") is None
+        assert answer.get("operation_id"), "LAN egress must be admitted before the scan"
+        assert answer.get("receipt"), "LAN egress must end in a terminal receipt"
+    finally:
+        server.stop()
+
+
 class _Recorder:
     """Stores (or fences) one scenario's answers: ``<stage>|<METHOD> <path>``."""
 

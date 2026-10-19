@@ -63,7 +63,7 @@ import { TtsSettingsBlock } from "./settingsTts";
 import { WallpaperModule } from "./settingsWallpaper";
 import { RhythmNoticeRows, RhythmSweepFold } from "./settingsRhythm";
 import { OwnerNameGroup, PeopleAccessModule } from "./settingsPeople";
-import { RuntimeDocsCore } from "./RuntimeDocsCore";
+import { SetupCore } from "./SetupCore";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 import { Destinations } from "./connections/Destinations";
@@ -254,7 +254,7 @@ const SETTINGS_WINGS = [
   { id: "settings", label: "Settings" },
   { id: "models", label: "Engines" },
   { id: "integrations", label: "Accounts" },
-  { id: "guide", label: "Guide" },
+  { id: "setup", label: "Setup" },
 ];
 
 export function settingsScope(scope?: string): { module: string | null; focus?: string } {
@@ -263,6 +263,9 @@ export function settingsScope(scope?: string): { module: string | null; focus?: 
   if (head.startsWith("integration:")) {
     return { module: "integrations", focus: [head.slice("integration:".length), ...tail].filter(Boolean).join("::") };
   }
+  // The retired Guide deep link lands in the one Setup window. It is not a
+  // Settings wing, so new Settings navigation cannot create a second home.
+  if (head === "guide") return { module: "setup", focus: tail.length ? tail.join("::") : undefined };
   const module = MODULE_ALIASES[head] ?? (SETTINGS_WINGS.some((entry) => entry.id === head) || PREF_MODULES.some((entry) => entry.id === head) ? head : null);
   return { module, focus: tail.length ? tail.join("::") : undefined };
 }
@@ -2580,8 +2583,8 @@ function SettingsFace({ hero, scope }: CoreProps) {
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        {moduleId === "guide" ? (
-            <RuntimeDocsCore />
+        {moduleId === "setup" ? (
+            <SetupCore />
         ) : module ? (
           <div className="prefs-module" data-settings-module={module.id} data-settings-material={insetModule ? "inset" : undefined}>
             {!insetModule ? <h2 className="gadget-pane-title">{module.label}</h2> : (
@@ -2612,10 +2615,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
       </SurfaceState>
       </div>
       {/* HS-168-03: connections module shows its own receipt footer. */}
-      {moduleId === "guide" || moduleId === "models" ? null : (
+      {moduleId === "setup" || moduleId === "models" ? null : (
         <PrefStatusBar
           onBack={
-            module || moduleId === "guide"
+            module || moduleId === "setup"
               ? backToSettings
               : undefined
           }

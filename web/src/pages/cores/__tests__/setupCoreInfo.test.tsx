@@ -1,81 +1,49 @@
-// The Conductor K1 (Astra r1 finding 6): an INFO doctor check stays neutral on
-// the Setup core. It renders the existing lamp species unlit, never the
-// warning tone.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { SetupCore } from "../SetupCore";
-import { closeFirstRun, useFirstRunOpen } from "../../../desk/firstrun/reopen";
 
-function json(body: unknown) {
-  return new Response(JSON.stringify(body), {
-    status: 200,
-    headers: { "content-type": "application/json" },
-  });
+const inventory = {
+  rows: [
+    { id: "speech", kind: "speech", label: "Speech", state: "works", action: null },
+    { id: "connection:github:not-found", kind: "account", label: "GitHub", state: "does_not_work", reason: "No GitHub account was found on this Mac" },
+  ],
+  owner_name: "Karol",
+  people: [],
+  suggestions: [],
+  first_run: false,
+};
+
+function response(body: unknown) {
+  return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
 }
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe("SetupCore info lamp", () => {
-  it("renders an info check with the neutral unlit lamp", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        json({
-          overall: "ready",
-          first_run: false,
-          sections: [
-            { id: "coding-agents", label: "Coding agents", status: "info", detail: "no coding agent" },
-            { id: "ffmpeg", label: "ffmpeg", status: "warn", detail: "Not found" },
-          ],
-        }),
-      ),
-    );
-    render(<SetupCore />);
-    const info = await screen.findByTestId("guide-check-coding-agents");
-    expect(info.querySelector(".kit-pill")?.getAttribute("data-tone")).toBeNull();
-    expect(info.closest("details")?.open).toBe(false);
-    const warn = screen.getByTestId("guide-check-ffmpeg");
-    expect(warn.querySelector(".kit-pill")?.getAttribute("data-tone")).toBe("warn");
-  });
-});
+describe("SetupCore", () => {
+  it("uses the same producer-backed Setup face after first launch", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const path = String(input);
+      if (path.endsWith("/api/setup/found")) return response(inventory);
+      if (path.endsWith("/api/setup/lan")) return response({ rows: [] });
+      if (path.endsWith("/api/settings")) return response({ owner: { name: "Karol", aliases: [] }, _revision: "1" });
+      return response({});
+    }));
 
-describe("PHILO-17 U17: Setup opens the same Get ready cards", () => {
-  it.each([true, false])("first_run=%s: Get ready opens first run; no 'arrival' word, no /welcome", async (firstRun) => {
-    closeFirstRun();
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => json({ overall: "ready", first_run: firstRun, sections: [] })),
-    );
     render(<SetupCore />);
-    const verb = await screen.findByRole("button", { name: "Get ready" });
-    expect(document.body.textContent?.toLowerCase()).not.toContain("arrival");
-    expect(screen.queryByRole("button", { name: "Open Desk" })).toBeNull();
-    fireEvent.click(verb);
-    expect(useFirstRunOpen.getState().open).toBe(true);
-    closeFirstRun();
+    const face = await screen.findByTestId("setup-face");
+    expect(face).toHaveTextContent("Ready, Karol.");
+    expect(face).toHaveTextContent("Does not work");
   });
-});
 
-describe("PHILO-17 U19: Setup leads with the failing check", () => {
-  it("puts a failing check first, then a warning, then the rest in order", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        json({
-          overall: "blocked",
-          first_run: false,
-          sections: [
-            { id: "python", label: "Python", status: "pass" },
-            { id: "ffmpeg", label: "ffmpeg", status: "warn" },
-            { id: "db", label: "Database", status: "pass" },
-            { id: "speech-model", label: "Speech model", status: "fail" },
-          ],
-        }),
-      ),
-    );
+  it("does not reopen the retired runtime docs when inventory is unavailable", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      if (String(input).endsWith("/api/setup/found")) return Promise.reject(new Error("Setup inventory is unavailable"));
+      return response({});
+    }));
+
     render(<SetupCore />);
-    await screen.findByText("Speech model");
-    const titles = Array.from(document.querySelectorAll(".guide-row-name")).map((n) => n.textContent);
-    expect(titles).toEqual(["Speech model", "ffmpeg", "Python", "Database"]);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Setup inventory is unavailable");
+    expect(screen.queryByText("Readiness checks")).toBeNull();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
   });
 });

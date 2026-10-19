@@ -5114,6 +5114,10 @@ def _isolated_hub_env(
         # reaches an engine that runs on this machine (Ollama, LM Studio,
         # llama.cpp). Engines a case needs come from its doubles.
         "HOLDSPEAK_LOOPBACK_ENGINE_PORTS": "",
+        # Setup's automatic LAN look is a real owner operation. Never probe
+        # the machine's network from an isolated graph-walk hub; a LAN case
+        # opts in with its own injected producer.
+        "HOLDSPEAK_SETUP_LAN_SCAN": "off",
         # PHILO-16 R2: EventKit is per macOS user, not per HOME; a rig hub
         # never reads the owner's real calendars (holdspeak/macos_calendar.py).
         "HOLDSPEAK_MACOS_CALENDAR": "0",

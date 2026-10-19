@@ -224,6 +224,7 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
         "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install",
         "people_access.set",  # Conductor R7: only the owner sets People MCP access
         "calendar.open_settings",  # PHILO-15 04: only the owner opens the Calendars privacy pane
+        "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",  # Betterment ST3-ST5
         "project.repository.register",  # PHILO-15 16: only the owner names a Project's repository
         "agent.hand",  # Conductor K2: only the owner hands an item to an agent
     ]

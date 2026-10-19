@@ -94,6 +94,7 @@ def _expand_first_use_setup(page: Any) -> None:
     page.locator(".firstrun-chat, .firstrun-optional").evaluate_all("els => els.forEach(el => { el.open = true; })")
 
 
+@pytest.mark.skip(reason="Parked legacy card walk; the current Setup face walk covers both sizes.")
 @pytest.mark.parametrize("width,height", [(1440, 900), (393, 852)])
 def test_speech_and_first_words_stay_in_reach(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, height: int) -> None:
     """First-use composition and pointer ownership, without capture/download."""
@@ -141,6 +142,113 @@ def test_speech_and_first_words_stay_in_reach(tmp_path: Path, monkeypatch: pytes
             browser.close()
     finally:
         server.stop()
+
+
+@pytest.mark.parametrize("width,height", [(1440, 900), (393, 852)])
+def test_setup_face_uses_everything_adds_people_and_leaves_for_the_desk(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int, height: int,
+) -> None:
+    """ST3-ST5: the real Setup producers drive the two-size owner walk."""
+    _ensure_build()
+    source = Source()
+    source.hold.set()
+    _real_local_ai(monkeypatch, source)
+    server, base = _boot(tmp_path, monkeypatch, token="setup-st3-st5")
+    try:
+        # Seed one real calendar projection. PeopleService.suggestions reads
+        # this stored title and attendee list; the face never receives a
+        # screen-shaped fixture.
+        from holdspeak.db import get_database
+        from holdspeak.db.calendar_events import CalendarEvent
+
+        start = datetime.now(timezone.utc) + timedelta(days=1)
+        get_database().calendar_events.replace_projection(
+            "setup-glass",
+            [CalendarEvent(
+                id="setup-1-1", uid="setup-series", title="1:1 with Mira",
+                starts_at=start.isoformat().replace("+00:00", "Z"),
+                ends_at=(start + timedelta(minutes=30)).isoformat().replace("+00:00", "Z"),
+                location=None, meeting_url=None, last_seen_at=time.time(),
+                subscription_revision="setup-glass", source_id="work", source_label="Work",
+                attendees=("mira.okafor@example.com", "karol@example.com"),
+            )],
+            seen_at=time.time(), source_id="work", source_label="Work",
+        )
+        from holdspeak.config import Config
+
+        config = Config.load()
+        config.owner.name = "Karol"
+        config.owner.aliases = []
+        config.save()
+
+        with sync_playwright() as pw:
+            from tests._evidence import evidence_dir
+
+            browser = pw.chromium.launch()
+            page = browser.new_page(viewport={"width": width, "height": height}, device_scale_factor=2)
+            page.set_default_timeout(20_000)
+            page.goto(f"{base}/?token=setup-st3-st5", wait_until="load")
+            face = page.get_by_test_id("setup-face")
+            face.wait_for(timeout=30_000)
+            shots = evidence_dir("setup-st3-st5")
+
+            expect(face.get_by_test_id("setup-found")).to_contain_text("Speech")
+            expect(face).to_contain_text("huggingface.co")
+            expect(face).not_to_contain_text("3 GB")
+            people = face.get_by_test_id("setup-people")
+            expect(people).to_contain_text("Mira Okafor")
+            found_wire = _api(page, "GET", "/api/setup/found", token="setup-st3-st5")
+            mira = next(item for item in found_wire["suggestions"] if item["name"] == "Mira Okafor")
+            assert mira["series"]["label"] == "1:1 with Mira"
+            page.screenshot(path=str(shots / f"setup-found-{width}.png"), full_page=width < 720)
+
+            people.get_by_role("textbox", name="Your people", exact=True).fill(
+                "Mira Okafor, Theo Lindqvist, Jun Park"
+            )
+            with page.expect_response(
+                lambda response: response.url.endswith("/api/setup/people") and response.request.method == "POST"
+            ) as added:
+                people.get_by_role("button", name="Add", exact=True).click()
+            assert added.value.ok, added.value.text()
+            expect(people).to_contain_text("Mira Okafor, Theo Lindqvist, Jun Park")
+            relationships = _api(page, "GET", "/api/people/relationships", token="setup-st3-st5")["relationships"]
+            assert {row["display_name"] for row in relationships} >= {
+                "Mira Okafor", "Theo Lindqvist", "Jun Park",
+            }
+
+            with page.expect_response(
+                lambda response: response.url.endswith("/api/setup/use") and response.request.method == "POST"
+            ) as used:
+                page.get_by_role("button", name="Use everything found", exact=True).click()
+            assert used.value.ok, used.value.text()
+            expect(face.get_by_text("Works", exact=True).first).to_be_visible(timeout=30_000)
+            expect(face).to_contain_text("Ready, Karol.")
+            expect(face.get_by_role("button", name="Say one sentence", exact=True)).to_be_visible()
+            expect(face.get_by_role("button", name="Open my desk", exact=True)).to_be_visible()
+            page.screenshot(path=str(shots / f"setup-ready-{width}.png"), full_page=width < 720)
+
+            # The working inventory is a closed fold. Open my desk is the
+            # always-available egress and retains the stored people and setup.
+            works_summary = face.locator("details").filter(has_text="Works").locator("summary")
+            expect(works_summary).to_be_visible()
+            works_summary.click()
+            expect(face).to_contain_text("Speech")
+            face.get_by_role("button", name="Open my desk", exact=True).click()
+            expect(page.get_by_test_id("today-day")).to_be_visible(timeout=20_000)
+
+            # Setup is also the later menu window. Its working rows remain in
+            # the fold, and the finale's desk verb opens Today.
+            page.locator(".desk-mark").click()
+            _row(page, "Setup").click()
+            later = page.get_by_test_id("setup-face")
+            later.wait_for(timeout=15_000)
+            expect(later.locator("details").filter(has_text="Works").locator("summary")).to_be_visible()
+            later.get_by_role("button", name="Open my desk", exact=True).click()
+            expect(page.get_by_test_id("today-day")).to_be_visible(timeout=20_000)
+            browser.close()
+    finally:
+        server.stop()
+        source.close()
 
 pytest.importorskip("playwright.sync_api", reason="first-run glass needs Playwright")
 from playwright.sync_api import expect, sync_playwright  # noqa: E402
