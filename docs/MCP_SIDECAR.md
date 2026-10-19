@@ -1,7 +1,7 @@
 # MCP sidecar
 
 The MCP sidecar is the desk's programmable surface over stdio. It exposes
-272 tools across 46 families. Any MCP client (Claude Code, Cursor, a
+277 tools across 47 families. Any MCP client (Claude Code, Cursor, a
 custom script) can read and drive the desk without the web UI.
 
 This page is the MCP transport reference. Each tool description in the
@@ -358,9 +358,7 @@ database, FTS index or Cadence.
   `plugin_job.retry` re-queues a job. `plugin_job.cancel` marks a job completed.
   Both refuse a running job.
 - `coder.list`, `coder.get` and `coder.audit` read Coder sessions and the
-  steering audit. `coder.explain` tells why an agent has its state: its
-  hook, or the screen rule that matched, with the lines it matched. See
-  [Coder integration](CODER_INTEGRATION.md).
+  steering audit. See [Coder integration](CODER_INTEGRATION.md).
 - `agent.hand` hands one desk item (an action, a decision, a Project
   item, a note, a meeting or an artifact) to a coding agent. HoldSpeak
   writes a brief, makes a new git worktree in the Project repository and
@@ -371,7 +369,7 @@ database, FTS index or Cadence.
 
 <!-- BEGIN MCP TOOL ROSTER (machine-generated -- do not edit) -->
 
-**Registry totals:** 272 tools across 46 families.
+**Registry totals:** 277 tools across 47 families.
 
 #### agent (1)
 
@@ -566,6 +564,14 @@ database, FTS index or Cadence.
 - `monday_brief.get`
 - `monday_brief.shelf`
 - `monday_brief.shelf_read`
+
+#### note (5)
+
+- `note.find_tasks`
+- `note.outcome.confirm`
+- `note.outcome.dismiss`
+- `note.outcome.edit`
+- `note.outcomes`
 
 #### nudge (2)
 
@@ -887,7 +893,7 @@ use it.
 
 `tools_for_palette(palette)` returns only the tools in the palette. A
 client that lists tools through this filter sees 66 tools
-instead of 272.
+instead of 277.
 
 `dispatch_for_palette(name, arguments, principal, palette)` runs a tool
 only if `name` is in the palette. A name outside the palette gets a typed

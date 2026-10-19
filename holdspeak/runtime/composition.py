@@ -116,6 +116,7 @@ class RuntimeServices:
     onboarding_service: Optional[Any] = None        # the Conductor K1: agent_hooks.install
     agent_hand_service: Optional[Any] = None        # Conductor K2: Hand to agent
     desk_window_service: Optional[Any] = None       # PHILO-16 16b: the desk's windows
+    note_outcomes_service: Optional[Any] = None     # Betterment Q9: Find the tasks
 
     # --- operations ------------------------------------------------------
     cadence_service: Optional[Any] = None          # Config.load().cadence
@@ -535,6 +536,7 @@ def install_from_web_context(
     from holdspeak.services.memory_service import MemoryService
     from holdspeak.services.agent_hand_service import default_agent_hand_service
     from holdspeak.services.desk_window_service import DeskWindowService
+    from holdspeak.services.note_outcomes_service import NoteOutcomesService
 
     def _intel_notify(topic: str, value: Any) -> None:
         if services.broadcast is not None:
@@ -563,6 +565,7 @@ def install_from_web_context(
         ),
         # PHILO-16 16b: the windows.* rows bind to it (the MCP family).
         "desk_window_service": lambda: DeskWindowService(resolved_db),
+        "note_outcomes_service": lambda: NoteOutcomesService.composed(resolved_db, services, ctx),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)

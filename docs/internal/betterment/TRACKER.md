@@ -79,7 +79,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Q6 | The About picker | Done · #1335 | Shared picker A5 #1309; shortcuts/chips/drop #1335; phone chip layout fixed #1341. |
 | Q7 | Ask my whole desk | Done · #1305 |  |
 | Q8 | One note | Done · #1351 | Phone footer follow-up remains local at 1673f675e. |
-| Q9 | Find the tasks | Done · #1354 | Privacy fix #1362 merged; operations/MCP/Edit/Dismiss follow-up #1365 open. |
+| Q9 | Find the tasks | Done · #1354 | Privacy fix #1362 merged; operations/MCP/Edit/Dismiss follow-up #1365 merged. |
 | Q10 | Knowledge becomes drawers | Open |  |
 | Q11 | Memory where he looks | Open |  |
 | Q12 | The Memory app | Open |  |

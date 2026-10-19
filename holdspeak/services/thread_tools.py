@@ -148,6 +148,13 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "memory.search":    ("evidence_read",     False),
     "memory.observations": ("evidence_read",  False),
     "memory.page":      ("evidence_read",     False),
+    # --- note family (Betterment Q9: Find the tasks; MCP-only, in no thread
+    # palette: services/thread_modes._thread_side) ---
+    "note.outcomes":        ("evidence_read",   False),
+    "note.find_tasks":      ("effect_proposal", False),
+    "note.outcome.edit":    ("effect_proposal", False),
+    "note.outcome.dismiss": ("effect_proposal", False),
+    "note.outcome.confirm": ("effect_proposal", False),
     # --- people family (ALL sensitive) ---
     "people.readiness":            ("evidence_read",     True),
     "people.relationship.list":    ("evidence_read",     True),

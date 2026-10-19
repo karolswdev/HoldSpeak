@@ -4,33 +4,42 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (AG10 #1367 delivered at `bfe8bf5dd`; ST1 #1347 recovered)
+**Last updated:** 2026-10-19 (AG10 #1367 delivered; Q9 #1365 and ST1 #1347 merged)
 
 ## Current phase
 
-**Betterment recovery: AG10 delivered, ST1 merged.** Agent Result #1367
-recovers the local fixes absent from #1364 (now superseded). The real-hub
+**Betterment recovery: 71/117 recipe implementations merged.** Codex owns
+recovery and delivery at the owner's request. The desk is currently on
+backend `bfe8bf5dd`, frontend `bedf96ae4c253a4c`, PID 46690 (AG10 #1367).
+Four HTTP checks pass and the actual desk renders at 1440/393. These are
+delivery observations; owner acceptance remains separate. Full post-merge
+regression shards are queued with the low-priority machine lock at
+`wt-betterment-tape-20261019`, pinned to `bd3acff8f`.
+
+ST1 #1347 gives Rhythm, Wallpaper and Calendar one Settings home, preserves
+old doors and unifies quiet hours. Recovery fixed a real phone defect: two
+44 px stepper arrows left no room for the value. Its two-size browser test
+fails on the old CSS and passes after the fix, including a saved Increase
+press. The initial broad check passed 4,062 related web and 1,383 affected
+pytest checks but found two stale browser selectors. After updating the
+Engines navigation assertion, the final incremental quick check is green:
+18 browser, 106 sweep, 27 canon and 1,116 repo guards. ST1 is not yet on the
+owner's running desk.
+
+Q9 follow-up #1365 uses declared operations through HTTP and MCP, with Edit
+and Dismiss before Confirm. Dismissed rows stay dismissed. Quick check:
+118 related web, 6,457 affected pytest (7 skipped), 106 sweep, 27 canon,
+1,116 repo guards. Q9 is not yet on the owner's running desk.
+
+AG10 #1367 recovers the local fixes absent from superseded #1364. A real-hub
 fake-agent walk reads a meeting through MCP, commits a file and shows Done,
-one file changed, the branch and Looked at, at 1440 and 393. Its quick check
-is green (142 related web, 243 affected pytest, 106 sweep, 27 canon,
-1,116 repo guards). The owner's running desk reports backend `bfe8bf5dd`,
-frontend `bedf96ae4c253a4c`, PID 46690; four HTTP checks pass. Actual desk
-observations exist at both widths; these are delivery observations, not the
-owner's acceptance. Post-merge full regression shards are queued under the
-low-priority test lock in `wt-betterment-tape-20261019` at `bd3acff8f`.
+one file changed, branch and Looked at at 1440/393. Quick check: 142 related
+web, 243 affected pytest, 106 sweep, 27 canon, 1,116 repo guards.
 
-ST1 #1347 consolidates Rhythm, Wallpaper and Calendar into Settings, with
-one quiet-hours store and preserved old doors. The recovered face exposed a
-real phone bug: two 44 px stepper arrows left zero pixels for the value.
-The narrow CSS fix uses the value column. A real browser check fails on
-the old CSS and passes at 1440/393, including an Increase press saved by the
-hub. ST1 has not yet been observed on the owner's desk. Tracker: 71/117
-merged implementations; outstanding recipe and live checks remain explicit.
-
-**Betterment delivery — Codex takes delivery, owner ruling 2026-10-19.**
-Batch seven stopped at Claude's usage limit. Main has 69 of 117 slice
-implementations merged; the owner's running desk still serves batch six
-at `b8908dc72` (runtime identity checked). Eight betterment PRs are open:
+**Initial recovery snapshot — owner ruling 2026-10-19.**
+Batch seven stopped at Claude's usage limit. At recovery, main had 69 of
+117 slice implementations merged and the desk served batch six at
+`b8908dc72` (runtime identity checked). Eight betterment PRs were open:
 #1346, #1347, #1349, #1350, #1355, #1363, #1364 and #1365.
 Local-only commits and unfinished edits are preserved in their original
 worktrees. In particular, AG10's latest fixes are not on its PR branch;
