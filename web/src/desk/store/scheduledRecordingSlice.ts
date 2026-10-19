@@ -1,7 +1,7 @@
 /** Scheduled recording slice (HS-136-03): schedule CRUD, arming countdown
  * state from conductor broadcasts, and the create-window lifecycle. */
 import { ApiError, apiFetch, readableError } from "../../lib/api";
-import type { DeskState, ScheduledArmingState, ScheduledRecording, SliceCreator } from "./types";
+import type { ComingUpRead, DeskState, ScheduledArmingState, ScheduledRecording, SliceCreator, UpcomingRow } from "./types";
 import { OUTCOME_LINGER_MS } from "../linger";
 
 export type ScheduledRecordingSlice = Pick<
@@ -14,6 +14,9 @@ export type ScheduledRecordingSlice = Pick<
   | "deleteSchedule"
   | "cancelArmedSchedule"
   | "armEventRecording"
+  | "comingUp"
+  | "loadComingUp"
+  | "disableSchedule"
   | "applyScheduledRecordingEvent"
   | "openScheduleCreate"
   | "closeScheduleCreate"
@@ -24,6 +27,7 @@ export const createScheduledRecordingSlice: SliceCreator<ScheduledRecordingSlice
   scheduledRecordings: [],
   scheduledArming: null,
   scheduleCreateWindow: null,
+  comingUp: null,
 
   async loadSchedules() {
     try {
@@ -44,7 +48,7 @@ export const createScheduledRecordingSlice: SliceCreator<ScheduledRecordingSlice
         "/api/scheduled-recordings",
         { method: "POST", json: input },
       );
-      await get().loadSchedules();
+      await Promise.all([get().loadSchedules(), get().loadComingUp()]);
       return true;
     } catch {
       return false;
@@ -72,6 +76,7 @@ export const createScheduledRecordingSlice: SliceCreator<ScheduledRecordingSlice
         method: "POST",
       });
       void get().loadSchedules();
+      void get().loadComingUp();
       return { ok: true };
     } catch (err) {
       if (err instanceof ApiError) {
@@ -96,7 +101,35 @@ export const createScheduledRecordingSlice: SliceCreator<ScheduledRecordingSlice
         method: "POST",
         json: { calendar_event_id: eventId },
       });
-      await get().loadSchedules();
+      // Capture C7: one store; the arm shows in Meetings ▸ Record and Capture.
+      await Promise.all([get().loadSchedules(), get().loadComingUp()]);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
+  async loadComingUp() {
+    try {
+      const door = await apiFetch<{ upcoming?: UpcomingRow[]; calendar_configured?: boolean }>("/api/door");
+      if (!door || typeof door !== "object") return;
+      const next: ComingUpRead = {
+        rows: Array.isArray(door.upcoming) ? door.upcoming : [],
+        calendar: door.calendar_configured === true,
+      };
+      set({ comingUp: next });
+    } catch {
+      /* silent: the list keeps its last read */
+    }
+  },
+
+  async disableSchedule(id) {
+    try {
+      await apiFetch(`/api/scheduled-recordings/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        json: { enabled: false },
+      });
+      await Promise.all([get().loadSchedules(), get().loadComingUp()]);
       return true;
     } catch {
       return false;
@@ -131,6 +164,8 @@ export const createScheduledRecordingSlice: SliceCreator<ScheduledRecordingSlice
       void get().loadSchedules();
       return;
     }
+
+    if (type.startsWith("scheduled_recording.")) void get().loadComingUp();
 
     if (type === "scheduled_recording.refused") {
       const current = get().scheduledArming;

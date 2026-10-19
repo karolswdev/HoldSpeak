@@ -63,10 +63,15 @@ export function stopThoughtKeys(): void {
   window.removeEventListener("pointerdown", onPointerDown, true);
 }
 
-/** Keep every typed key from now (the press of `Write a thought`). */
-export function startThoughtKeys(): void {
-  if (kept !== null) return;
-  kept = "";
+/** Keep every typed key from now (the press of `Write a thought`).
+ *  `seed`: words already typed before the keeping began (Capture's New note
+ *  makes its note on the first character, betterment C8). */
+export function startThoughtKeys(seed = ""): void {
+  if (kept !== null) {
+    if (seed) kept = seed + kept;
+    return;
+  }
+  kept = seed;
   wanted = null;
   window.addEventListener("keydown", onKeyDown, true);
   window.addEventListener("keyup", onKeyUp, true);

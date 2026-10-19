@@ -61,6 +61,30 @@ export function ScheduleCreateWindow() {
   return <ScheduleCreateForm origin={chooser.origin} onClose={close} />;
 }
 
+/** Capture C7: the manual form, in place under Meetings ▸ Record ▸
+ *  Another time… (a meeting that is not on the calendar). The same fields,
+ *  drafts and create as the window. */
+export function ScheduleFormInline({ onDone }: { onDone: () => void }) {
+  const form = useScheduleForm(onDone);
+  return (
+    <div className="schedule-form-inline" data-testid="schedule-form-inline">
+      {form.fields}
+      <div className="surface-actions">
+        {form.error ? <span className="kit-pill" data-tone="danger" role="alert">{form.error}</span> : null}
+        <Button
+          variant="primary"
+          onClick={() => void form.submit()}
+          loading={form.submitting}
+          dense
+          data-testid="schedule-create-submit"
+        >
+          Schedule
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function ScheduleCreateForm({
   origin,
   onClose,
@@ -68,6 +92,47 @@ function ScheduleCreateForm({
   origin: { x: number; y: number } | null;
   onClose: () => void;
 }) {
+  const form = useScheduleForm(onClose, true);
+  return (
+    <DeskWindowFrame
+      id="schedule:__create__"
+      glyph="⏱"
+      label="Schedule recording"
+      title="Schedule recording"
+      minW={380}
+      minH={280}
+      fitContent
+      open
+      origin={origin}
+      onClose={onClose}
+      className="desk-pullout"
+    >
+      <div className="desk-pullout-body desk-surface-body">
+        {form.fields}
+      </div>
+      <SurfaceFooter
+        receipt={form.error ? <span className="surface-footer-receipt-line" data-tone="danger" role="alert">{form.error}</span>
+          : form.submitting ? <span className="surface-footer-receipt-line" role="status">Saving</span> : undefined}
+        verbs={<>
+          <Button variant="ghost" onClick={onClose} dense>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => void form.submit()}
+            loading={form.submitting}
+            dense
+            data-testid="schedule-create-submit"
+          >
+            Schedule
+          </Button>
+        </>}
+      />
+    </DeskWindowFrame>
+  );
+}
+
+function useScheduleForm(onClose: () => void, autoFocus = false) {
   // PHILO-13-07 (B2): the unsaved title and time return after a reload and
   // a close; a landed save clears them. The window is for a NEW record, so
   // the key is the one create window.
@@ -148,21 +213,7 @@ function ScheduleCreateForm({
     }
   }, [title, mode, dateTime, cronExpr, duration, onClose]);
 
-  return (
-    <DeskWindowFrame
-      id="schedule:__create__"
-      glyph="⏱"
-      label="Schedule recording"
-      title="Schedule recording"
-      minW={380}
-      minH={280}
-      fitContent
-      open
-      origin={origin}
-      onClose={onClose}
-      className="desk-pullout"
-    >
-      <div className="desk-pullout-body desk-surface-body">
+  const fields = (
         <GadgetGroup label="Recording" material="inset">
           <GadgetRow label="Title" controlWidth="full">
             <StringGadget
@@ -171,7 +222,7 @@ function ScheduleCreateForm({
               onChange={setTitle}
               placeholder="Scheduled recording"
               micDraftScope="schedule-title"
-              autoFocus
+              autoFocus={autoFocus}
             />
           </GadgetRow>
           <GadgetRow label="Mode" controlWidth="standard">
@@ -213,26 +264,6 @@ function ScheduleCreateForm({
             />
           </GadgetRow>
         </GadgetGroup>
-
-      </div>
-      <SurfaceFooter
-        receipt={error ? <span className="surface-footer-receipt-line" data-tone="danger" role="alert">{error}</span>
-          : submitting ? <span className="surface-footer-receipt-line" role="status">Saving</span> : undefined}
-        verbs={<>
-          <Button variant="ghost" onClick={onClose} dense>
-            Cancel
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => void handleSubmit()}
-            loading={submitting}
-            dense
-            data-testid="schedule-create-submit"
-          >
-            Schedule
-          </Button>
-        </>}
-      />
-    </DeskWindowFrame>
   );
+  return { fields, submit: handleSubmit, submitting, error };
 }

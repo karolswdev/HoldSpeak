@@ -8,7 +8,8 @@
 // stream — and the lamp reports the session's own phase, never a guess.
 //
 // HS-170-04: the register strip and mic-phase lamp now live behind
-// > Details (Disclosure, folded by default). Tests assert BEHAVIOR
+// > Details (Disclosure, folded by default). Betterment C8: the Open latch
+// and Details are behind RAW (Builder tools), on here. Tests assert BEHAVIOR
 // (delivery, refusals, floor claims) not register-strip DOM presence.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -16,6 +17,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DictationCore } from "../DictationCore";
 import { ApiError } from "../../../lib/api";
 import type { MicPhase } from "../../../lib/micSession";
+import { useBuilderTools } from "../../../desk/builderTools";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -136,6 +138,8 @@ async function latchOpen() {
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+  // Betterment C8: the Open mic latch is behind RAW (Builder tools).
+  useBuilderTools.getState().setOn(true);
   mocks.segment = null;
   mocks.openMicInterval.mockResolvedValue(undefined);
   mocks.closeMicInterval.mockResolvedValue(undefined);
@@ -195,7 +199,7 @@ describe("the open mic on the Speak deck (HS-112-06)", () => {
 
   it("obeys the deck's aim like a released TALK does", async () => {
     await latchOpen();
-    fireEvent.change(screen.getByRole("combobox", { name: "Aim" }), {
+    fireEvent.change(screen.getByRole("combobox", { name: "Types into" }), {
       target: { value: "agent" },
     });
 
@@ -209,17 +213,19 @@ describe("the open mic on the Speak deck (HS-112-06)", () => {
     expect(call.json.require_agent).toBe(true);
   });
 
-  it("rehearses instead of delivering while DRY RUN is latched", async () => {
+  it("has no DRY RUN latch any more: an ambient utterance delivers (betterment C8)", async () => {
+    // HS-170-04 made the rehearse checkbox "DRY RUN"; betterment C8 replaced
+    // it with `Try it here`, a verb for TYPED words. A spoken utterance
+    // travels the delivery road.
     await latchOpen();
-    // HS-170-04: the rehearse checkbox is now "DRY RUN" (CheckGadget token)
-    fireEvent.click(screen.getByRole("checkbox", { name: "DRY RUN" }));
+    expect(screen.queryByRole("checkbox", { name: "DRY RUN" })).toBeNull();
 
     await utterance("ship it friday");
 
     await waitFor(() =>
-      expect(callsTo("/api/dictation/dry-run")).toHaveLength(1),
+      expect(callsTo("/api/dictation/remote")).toHaveLength(1),
     );
-    expect(callsTo("/api/dictation/remote")).toHaveLength(0);
+    expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);
   });
 
   it("drops an empty transcript silently — silence spends nothing", async () => {

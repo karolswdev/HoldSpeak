@@ -258,7 +258,7 @@ describe("SpeakFace hands focus back to the verb it left (HS-200-41)", () => {
     const well = await screen.findByLabelText("Utterance");
     await userEvent.click(well);
     await userEvent.paste(UTTERANCE);
-    const choose = await screen.findByRole("button", { name: "Choose" });
+    const choose = await screen.findByRole("button", { name: "Choose engine" }); // betterment C8 words
     await userEvent.click(choose);
     // The engine row's handoff remembered the verb it was leaving.
     expect(taskFocusPending()).toBe(true);

@@ -188,8 +188,8 @@ def _shot(page: Any, name: str, width: int) -> Path:
     return path
 
 def _dry_run_on(page: Any) -> None:
-    """Latch DRY RUN so a landing PREVIEWS and types nothing on the host."""
-    page.locator(".gadget-check-token").filter(has_text="DRY RUN").click()
+    """Betterment C8: the DRY RUN latch is gone; `Try it here` (in `_land`)
+    previews and types nothing on the host. Kept as a no-op for the callers."""
 
 def _land(page: Any, text: str) -> Any:
     well = page.locator(".speak-well textarea")
@@ -201,7 +201,8 @@ def _land(page: Any, text: str) -> Any:
     # read as the second's). Wait for the text to change.
     shown = page.locator(".speak-result .speak-result-text")
     before = shown.first.inner_text() if shown.count() else None
-    well.press("Control+Enter")
+    # Betterment C8: `Try it here` puts the result in the box, types nothing.
+    page.get_by_test_id("speak-try-it-here").click()
     page.wait_for_function(
         """(before) => {
           const el = document.querySelector('.speak-result .speak-result-text');
