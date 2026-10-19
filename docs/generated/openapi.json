@@ -3540,6 +3540,46 @@
         "summary": "Api Agent Deliver"
       }
     },
+    "/api/agent/launches/{launch_id}/explain": {
+      "get": {
+        "description": "Betterment AG7, \"Why this state\": which source decided the agent's\nstate (the hook or a screen rule), the rule, the evidence lines, the\nrule file and the age of the read (``agent_flights.explain_agent``).",
+        "operationId": "api_agent_launch_explain_api_agent_launches__launch_id__explain_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Launch Explain Api Agent Launches  Launch Id  Explain Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Launch Explain"
+      }
+    },
     "/api/agent/launches/{launch_id}/lane": {
       "get": {
         "description": "One launch's lane (PHILO-14 C0): the launch with its brief, the\nfollow-through with the PR checks, the current wait with its draft,\nthe session's events (paged: ``?after=<event id>&limit=``), the gated\ncalls, the answers typed, the attempt's state changes, the worktree's\ncommits and files, and the usage. Owner only (the edge default).\nReads only (``services.launch_lane``).",

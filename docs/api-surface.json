@@ -427,6 +427,16 @@
       "consumers": []
     },
     {
+      "path": "/api/agent/launches/{launch_id}/explain",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agent/launches/{launch_id}/lane",
       "methods": [
         "GET"
