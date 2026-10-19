@@ -21,7 +21,10 @@ export type FlightState =
   | "queued"
   /** Betterment AG6: Resume was pressed; the agent has not reported yet,
    *  or not within the window (a shell waits in its worktree). */
-  | "resuming" | "resume_failed";
+  | "resuming" | "resume_failed"
+  /** Betterment AG7: an agent is there, but no hook and no screen rule told
+   *  its state for ten minutes. */
+  | "no_signal";
 export type AgentName = "claude" | "codex" | "pi";
 
 export interface AgentFlight {
@@ -57,6 +60,40 @@ export interface AgentFlight {
   /** Betterment AG3: the desk's own answer under YOLO (drafting, then what
    * it typed and the line it used; New until he opens the agent). */
   deskAnswer?: DeskAnswer | null;
+  /** Betterment AG7: which source decided the state (`hook`, `screen`). */
+  stateSource?: "hook" | "screen" | null;
+  /** Betterment AG7: the agent's screen as the hub's rules read it. */
+  screen?: AgentScreen | null;
+}
+
+/** Betterment AG7: what the hub's screen rules read on an agent's pane:
+ *  its state in the desk's words, and what a prompt on it asks (the command
+ *  an approval wants to run, the numbered choices). */
+export interface AgentScreen {
+  state: "working" | "approve" | "asks" | "done" | "idle" | "no_signal" | null;
+  rule: string | null;
+  wait: "approve" | "question" | null;
+  command: string | null;
+  choices: Array<{ n: string; label: string }>;
+  /** The agent's last words above its prompt (a finished turn). */
+  said: string | null;
+  at: string | null;
+}
+
+export function fromWireScreen(body: any): AgentScreen | null {
+  if (!body || typeof body !== "object") return null;
+  const states = ["working", "approve", "asks", "done", "idle", "no_signal"];
+  return {
+    state: states.includes(body.state) ? body.state : null,
+    rule: body.rule ? String(body.rule) : null,
+    wait: body.wait === "approve" || body.wait === "question" ? body.wait : null,
+    command: body.command ? String(body.command) : null,
+    choices: Array.isArray(body.choices)
+      ? body.choices.filter((c: any) => c && c.n).map((c: any) => ({ n: String(c.n), label: String(c.label ?? "") }))
+      : [],
+    said: body.said ? String(body.said) : null,
+    at: body.at ? String(body.at) : null,
+  };
 }
 
 /** Betterment AG3: where the line the desk used comes from. */
@@ -98,6 +135,8 @@ export interface CoderSessionRow {
   idle?: boolean;
   question: string;
   flight: AgentFlight | null;
+  /** Betterment AG7: the session's screen (null when no pane was read). */
+  screen?: AgentScreen | null;
   /** The wire row as it came, for faces that read more of it. */
   raw: Record<string, unknown>;
 }
@@ -110,7 +149,7 @@ export function agentWord(agent: string): string {
 
 const FLIGHT_STATES: readonly string[] = [
   "starting", "working", "waiting", "done", "pr_open", "merged", "ended", "expired", "stopped_by_restart", "queued",
-  "resuming", "resume_failed",
+  "resuming", "resume_failed", "no_signal",
 ];
 
 export function fromWireFlight(body: any): AgentFlight {
@@ -136,6 +175,8 @@ export function fromWireFlight(body: any): AgentFlight {
     queueId: body?.queue_id ? String(body.queue_id) : null,
     queuedAt: body?.queued_at ? String(body.queued_at) : null,
     deskAnswer: fromWireDeskAnswer(body?.desk_answer),
+    stateSource: body?.state_source === "hook" || body?.state_source === "screen" ? body.state_source : null,
+    screen: fromWireScreen(body?.screen),
   };
 }
 
@@ -155,6 +196,7 @@ export function fromWireSessionRow(row: any): CoderSessionRow {
     idle: isBlockedCoder(session as NeedsYouCoder) && coderTurnEnd(session as NeedsYouCoder) === "idle",
     question: String(session.question ?? ""),
     flight: row?.flight ? fromWireFlight(row.flight) : null,
+    screen: fromWireScreen(row?.screen),
     raw: row ?? {},
   };
 }
@@ -170,11 +212,12 @@ export function flightLabel(flight: AgentFlight): string | null {
   if (flight.state === "working") return `${agentWord(flight.agent)} · WORKING`;
   if (flight.state === "done") return `${agentWord(flight.agent)} · ${flight.isNew ? "DONE · NEW" : "DONE"}`;
   if (flight.state === "waiting") return `${agentWord(flight.agent)} · ${flight.turnEnd === "idle" ? "IDLE" : "WAITING"}`;
+  if (flight.state === "no_signal") return `${agentWord(flight.agent)} · NO SIGNAL`;
   return null;
 }
 
 export function flightTone(state: FlightState): "working" | "warning" | "active" | "success" | "idle" {
-  if (state === "starting" || state === "queued" || state === "resuming") return "idle";
+  if (state === "starting" || state === "queued" || state === "resuming" || state === "no_signal") return "idle";
   if (state === "done") return "success";
   return state === "waiting" ? "warning" : state === "pr_open" ? "active" : state === "merged" ? "success" : "working";
 }
@@ -230,7 +273,7 @@ export function flightForItem(flights: readonly AgentFlight[], item: Parameters<
  * shows its flight and not Hand to coder. */
 export function isInFlight(flight: AgentFlight | null | undefined): flight is AgentFlight {
   if (!flight) return false;
-  if (["queued", "starting", "resuming", "working", "waiting", "done", "pr_open"].includes(flight.state)) return true;
+  if (["queued", "starting", "resuming", "working", "waiting", "done", "pr_open", "no_signal"].includes(flight.state)) return true;
   return flight.state === "merged" && flight.close === "awaiting_confirm";
 }
 

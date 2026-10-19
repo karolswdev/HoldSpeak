@@ -906,3 +906,119 @@ def test_the_agents_read_shows_the_desks_own_answer(
     [ghost] = [f for f in quiet["flights"] if f["launch_id"] == "launch_ag0_ghost"]
     assert ghost["desk_answer"]["new"] is False, ghost
     _keep("agents-ag3", "coders-sessions.seen", quiet, tmp_path, hub)
+
+
+# ── Betterment AG7: screen rules (the herdr port) ──────────────────────
+
+AG7_SCREENS = REPO / "tests" / "fixtures" / "agent_screens"
+AG7_TASKS = {
+    "launch_ag7_held": "Release the rollback build",
+    "launch_ag7_asks": "Move the rollback flag",
+    "launch_ag7_done": "Add the rollback test",
+}
+
+
+def _ag7_show(session: str, screen: str, *, new: bool) -> None:
+    """A real tmux pane on the run's own tmux server (conftest's
+    TMUX_TMPDIR) that shows a recorded screen with its recorded title."""
+    import shlex
+    import subprocess
+
+    meta = json.loads((AG7_SCREENS / f"{screen}.json").read_text(encoding="utf-8"))
+    command = (
+        f"printf '\\033]0;%s\\007' {shlex.quote(meta['title'])}; "
+        f"cat {shlex.quote(str(AG7_SCREENS / f'{screen}.txt'))}; exec sleep 600"
+    )
+    argv = (["tmux", "new-session", "-d", "-s", session, "-x", "100", "-y", "30", command] if new
+            else ["tmux", "respawn-pane", "-k", "-t", session, command])
+    subprocess.run(argv, check=True, capture_output=True, timeout=10)
+
+
+def _ag7_seed() -> None:
+    """Three launches whose agents report no hook (the fake Claude Code with
+    its hooks off): only their screens tell their state."""
+    from holdspeak.db import get_database
+    from holdspeak.delivery.factory_launch import LaunchLedger
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    db = get_database()
+    start = (datetime.now() - timedelta(hours=1)).replace(microsecond=0)
+    tasks = list(AG7_TASKS.values())
+    db.meetings.save_meeting(MeetingState(
+        id="m-ag7", started_at=start, ended_at=start + timedelta(minutes=30), title="Platform sync",
+        segments=[TranscriptSegment(text="Ship the rollback flag.", speaker="Me", start_time=1.0, end_time=4.0)],
+        intel=IntelSnapshot(timestamp=1.0, topics=["flags"], summary="The flag ships.", action_items=[{
+            "id": f"m-ag7-a{i}", "task": task, "owner": None, "due": None, "status": "pending",
+            "review_state": "accepted", "source_timestamp": None, "created_at": start.isoformat()}
+            for i, task in enumerate(tasks)]),
+        intel_status="completed"))
+    iso = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat().replace("+00:00", "Z")
+    ledger = LaunchLedger()
+    with db._connection() as conn:
+        for launch_id, task in AG7_TASKS.items():
+            item = str(conn.execute("SELECT id FROM action_items WHERE task=? LIMIT 1", (task,)).fetchone()[0])
+            ledger.record({
+                "launch_schema": 1, "launch_id": launch_id, "state": "launched", "node_id": "this-node",
+                "profile_id": "claude-default", "gate": "gated", "branch": f"hs/action-{item}",
+                "session": f"hs-{launch_id}", "origin_ref": {"kind": "action", "id": item},
+                "launched_at": iso, "control_mode": "neutral", "instruction_state": "sent",
+            })
+
+
+def _ag7_wait(hub: str, want: dict[str, str]) -> dict[str, Any]:
+    """The hub's read once its screen watcher (every 2 s) shows ``want``."""
+    import time
+
+    deadline = time.monotonic() + 30
+    while True:
+        body = _get(hub, "/api/coders/sessions?include_ended=false")
+        states = {f["launch_id"]: f["state"] for f in body["flights"] if f["launch_id"] in want}
+        if all(states.get(k) == v for k, v in want.items()):
+            return body
+        assert time.monotonic() < deadline, states
+        time.sleep(0.5)
+
+
+def test_the_agents_read_states_from_the_screen_when_no_hook_speaks(
+    hub: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Betterment AG7 (the hub half): three agents whose hooks are off. The
+    hub's watcher reads each one's real tmux pane (recorded screens of the
+    rig's fake Claude Code, tests/fixtures/agent_screens) and the herdr rules
+    say Working, then Wants to run (with the command and the choices), Asks
+    you, and Done (New): a turn that went idle after the screen showed it
+    working. "Why this state" names the rule. The answers are recorded for
+    agents.app.test.tsx (fixtures/agents-ag7)."""
+    import subprocess
+
+    monkeypatch.setenv("HOLDSPEAK_SCREEN_RULES", "on")
+    _ag7_seed()
+    try:
+        _ag7_show("hs-launch_ag7_held", "claude-rig-permission", new=True)
+        _ag7_show("hs-launch_ag7_asks", "claude-rig-working", new=True)
+        _ag7_show("hs-launch_ag7_done", "claude-rig-working", new=True)
+        working = _ag7_wait(hub, {"launch_ag7_asks": "working", "launch_ag7_done": "working",
+                                  "launch_ag7_held": "waiting"})
+        assert all(f["state_source"] == "screen" for f in working["flights"] if f["launch_id"] in AG7_TASKS)
+        _ag7_show("hs-launch_ag7_asks", "claude-rig-asks", new=False)
+        _ag7_show("hs-launch_ag7_done", "claude-rig-done", new=False)
+        body = _ag7_wait(hub, {"launch_ag7_asks": "waiting", "launch_ag7_done": "done"})
+        flights = {f["launch_id"]: f for f in body["flights"]}
+        held, asks, done = flights["launch_ag7_held"], flights["launch_ag7_asks"], flights["launch_ag7_done"]
+        assert (held["turn_end"], held["screen"]["wait"]) == ("asks", "approve"), held
+        assert held["screen"]["command"].splitlines()[0] == "rm -rf build/ && make release"
+        assert [c["n"] for c in held["screen"]["choices"]] == ["1", "2"]
+        assert held["screen"]["rule"] == "bash_permission_prompt"
+        assert (asks["turn_end"], asks["screen"]["state"]) == ("asks", "asks"), asks
+        assert (done["new"], done["screen"]["state"]) == (True, "done"), done
+        assert done["turn_id"].startswith("screen:")
+        _keep("agents-ag7", "coders-sessions", body, tmp_path, hub)
+        why = _get(hub, "/api/agent/launches/launch_ag7_held/explain")
+        assert (why["source"], why["state"], why["screen"]["rule"]) == ("screen", "waiting", "bash_permission_prompt")
+        assert why["screen"]["rules_source"] == "bundled" and why["hook"] is None
+        assert any("Do you want to proceed?" in line for line in why["screen"]["evidence"])
+        _keep("agents-ag7", "explain.held", why, tmp_path, hub)
+        _keep("agents-ag7", "lane.held", _get(hub, "/api/agent/launches/launch_ag7_held/lane"), tmp_path, hub)
+    finally:
+        for launch_id in AG7_TASKS:
+            subprocess.run(["tmux", "kill-session", "-t", f"hs-{launch_id}"], capture_output=True, timeout=10)

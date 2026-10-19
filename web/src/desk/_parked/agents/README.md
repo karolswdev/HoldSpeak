@@ -15,3 +15,6 @@ vitest exclude `_parked/`.
   Automation starters.
 - `InstallHooksVerbs.tsx`: the unused export from `ConductorWindow.tsx`
   (one Install hooks verb per agent with nothing selected).
+- `paneParse.ts` (Betterment AG7, 2026-10-18): the Agents row's own read of
+  the pane (`usePaneTail`) and its parse (`menuChoices`, `wantsToRun`). The
+  hub's screen rules read the command and the choices now (`member.screen`).

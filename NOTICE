@@ -1,0 +1,19 @@
+HoldSpeak
+Copyright the HoldSpeak authors. Licensed under the Apache License, Version 2.0.
+
+This product includes data from herdr (https://github.com/herdrdev/herdr),
+Copyright the herdr authors, licensed under the Apache License, Version 2.0.
+
+- holdspeak/agent_context/rules/{claude,codex,pi,gemini,opencode}.toml are
+  herdr v0.9.5's agent detection rules (distribution/agent-detection/),
+  copied unchanged under a header that names their origin and license.
+- holdspeak/agent_context/screen_rules.py is a fresh Python engine for those
+  rules, written after herdr's src/detect/manifest.rs (its regions, its
+  contains / regex / line_regex / all / any / not gates and its priority
+  order). Our changes: Rust regex syntax is read as Python's (\x{...} and
+  \z), the override folder is ~/.config/holdspeak/agent-rules/, rules are
+  read from tmux (the pane's visible screen and its title), and no rule is
+  fetched from the network.
+
+Nothing is copied from herdr releases before 0.8.0 or from any fork of it
+that carries the AGPL.

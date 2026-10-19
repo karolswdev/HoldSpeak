@@ -20,6 +20,7 @@ import {
   isInFlight,
   liveAgentSessions,
   type AgentFlight,
+  type AgentScreen,
   type CoderSessionRow,
 } from "../agentFlights";
 import { agentName, agentState, shortItemName } from "../screen/compose";
@@ -33,7 +34,7 @@ import { wireDate } from "../surface/format";
 export const STALE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export type ConductorRole = "ready" | "live" | "stale";
-export type LiveState = "ask" | "held" | "idle" | "pr" | "work" | "done" | "queued";
+export type LiveState = "ask" | "held" | "idle" | "pr" | "work" | "done" | "queued" | "no_signal";
 
 export interface ConductorMember extends ObjectListRow {
   role: ConductorRole;
@@ -61,6 +62,9 @@ export interface ConductorMember extends ObjectListRow {
   flightState?: AgentFlight["state"];
   /** live: the desk's own answer (Betterment AG3). */
   deskAnswer?: AgentFlight["deskAnswer"];
+  /** live: the agent's screen as the hub's rules read it (Betterment AG7):
+   *  the command an approval wants to run, the numbered choices. */
+  screen?: AgentScreen | null;
 }
 
 export interface ConductorReads {
@@ -116,6 +120,9 @@ function liveLamp(state: LiveState, pr: number | null | undefined): { tone: Obje
     case "queued":
       // Betterment AG5: the hand waits for a free agent.
       return { tone: "info", label: "WAITS" };
+    case "no_signal":
+      // Betterment AG7: nothing told its state for ten minutes.
+      return { tone: "info", label: "NO SIGNAL" };
     default:
       return { tone: "info", label: "WORKS" };
   }
@@ -133,6 +140,9 @@ function sessionState(row: CoderSessionRow): LiveState {
 function flightState(flight: AgentFlight): LiveState {
   if (flight.state === "done") return "done";
   if (flight.state === "queued") return "queued";
+  if (flight.state === "no_signal") return "no_signal";
+  // Betterment AG7: an approval prompt the screen read is "Wants to run".
+  if (flight.state === "waiting" && flight.screen?.wait === "approve" && flight.stateSource === "screen") return "held";
   if (flight.state === "waiting") return flight.turnEnd === "idle" ? "idle" : "ask";
   if (flight.state === "pr_open" || flight.state === "merged") return "pr";
   return "work";
@@ -255,6 +265,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       isNew: state === "done" && Boolean(flight?.isNew),
       turnId: flight?.turnId ?? null,
       deskAnswer: flight?.deskAnswer ?? null,
+      screen: flight?.screen ?? row.screen ?? null,
       group: liveGroup(state),
       facts: {
         where: flight?.projectName || undefined,
@@ -299,6 +310,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       isNew: state === "done" && Boolean(flight.isNew),
       turnId: flight.turnId ?? null,
       deskAnswer: flight.deskAnswer ?? null,
+      screen: flight.screen ?? null,
       group: liveGroup(state),
       facts: {
         where: flight.projectName || undefined,
@@ -369,8 +381,9 @@ export function conductorHead(
 ): ConductorHead {
   const live = members.filter((m) => m.role === "live");
   const ask = live.filter((m) => m.live === "ask" || m.live === "held").length;
-  // Betterment AG0: a finished agent is not at work; AG5: nor a queued hand.
-  const done = live.filter((m) => m.live === "done" || m.live === "queued").length;
+  // Betterment AG0: a finished agent is not at work; AG5: nor a queued hand;
+  // AG7: nor one that sends no signal.
+  const done = live.filter((m) => m.live === "done" || m.live === "queued" || m.live === "no_signal").length;
   return { atWork: live.length - ask - done, ask, launches };
 }
 

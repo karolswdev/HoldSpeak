@@ -276,6 +276,20 @@ def _record_restart_stops() -> None:
         log.warning(f"restart stop check failed: {exc}")
 
 
+def _screen_watch_step() -> list[str]:
+    """Betterment AG7: one read of every live agent's screen
+    (``agent_context.screen_watch.tick``); the frame keys whose face changed.
+    ``HOLDSPEAK_SCREEN_RULES=off`` reads nothing. A failure is logged and
+    never stops the coder watcher."""
+    try:
+        from .agent_context import screen_watch
+
+        return screen_watch.tick()
+    except Exception as exc:
+        log.debug(f"screen watch step failed: {exc}")
+        return []
+
+
 def _start_queued_hands(web_ctx: Any = None) -> None:
     """Betterment AG5: a hand that waits for a free agent starts when one is
     free (about each minute, beside the restart check). With nothing queued
@@ -2044,6 +2058,20 @@ class MeetingWebServer:
                         notify_now = await asyncio.to_thread(_coder_answer_triage, entered)
                         if notify_now:
                             await asyncio.to_thread(_coder_awaiting_edge, notify_now)
+                # Betterment AG7: read each live agent's screen (its rules
+                # say its state where no hook speaks); a changed face is a
+                # coder frame too.
+                for key in await asyncio.to_thread(_screen_watch_step):
+                    await self._ws.broadcast(
+                        BroadcastMessage(
+                            type="intel_status",
+                            data={
+                                "state": "ready",
+                                "scope": "coder",
+                                "capability": {"kind": "coder", "id": key, "name": "screen"},
+                            },
+                        )
+                    )
             except asyncio.CancelledError:
                 raise
             except Exception as e:

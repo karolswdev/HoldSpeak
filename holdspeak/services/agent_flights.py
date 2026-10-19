@@ -30,6 +30,11 @@ A flight is one launch, newest per item. Its ``state``:
   shell in the worktree). The first report of the resumed session ends
   both: the flight reads the session's own state again;
 - ``starting``: no session is bound yet (the agent has not registered);
+- Betterment AG7: where no hook speaks (none is bound, or the bound one
+  went quiet while working), the agent's screen decides (``state_source``
+  ``screen``, ``agent_context.screen_watch``): working, waiting (it asks or
+  wants to run; ``idle`` when quiet), done, or ``no_signal`` when nothing
+  told its state for ten minutes;
 - ``ended``: the bound session ended (SessionEnd, sticky);
 - ``expired``: the bound session is past the dead window or gone from the
   registry.
@@ -207,6 +212,13 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
     if state == "waiting" and responder_turn == "done":
         state = "done"   # the responder read the turn end as a completion report
     turn_id = _turn_id(session) if state == "done" else None
+    # Betterment AG7: the screen fills in where no hook speaks (herdr's
+    # order: the hook first, then the rule, then No signal).
+    screen_row, state_source, screen_turn = _screen(record, session, state, clock)
+    screen_end: Optional[str] = None
+    if state_source == "screen":
+        state, screen_end = screen_turn
+        turn_id = screen_row.turn_id if state == "done" and screen_row is not None else None
     desk_answer = _desk_answer(record, session_key, session, clock)
     project_id, project_name = _project_of(db, kind, item_id)
     evidence = follow.get("evidence") or {}
@@ -224,10 +236,15 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         # PHILO-15 B48 (lane 14) and 15: the responder's record of the
         # current wait (done / idle: not the owner's) first, else the turn
         # end the session's last words read as.
-        "turn_end": "done" if state == "done" else (
+        "turn_end": "done" if state == "done" else screen_end if state_source == "screen" else (
             responder_turn
             or (_turn_end(session, pr_state) if state == "waiting" else None)
         ) if state in ("waiting", "pr_open") else None,
+        # Betterment AG7: which source decided the state (``hook``,
+        # ``screen``) and the screen's own read (its prompt's command and
+        # choices, the rule), for the faces and "Why this state".
+        "state_source": state_source,
+        "screen": _screen_wire(screen_row, clock),
         # Betterment AG0: the done turn's id, and whether the owner has not
         # opened the agent since (``POST /api/agent/launches/{id}/seen``).
         "turn_id": turn_id,
@@ -255,6 +272,47 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         "launched_at": record.get("launched_at") or None,
         "ended_at": _ended_at(record, state, session, follow.get("close")),
     }
+
+
+#: Betterment AG7: the screen's word -> the flight's state and its turn end.
+_SCREEN_FLIGHT: dict[str, tuple[str, Optional[str]]] = {
+    "working": ("working", None),
+    "approve": ("waiting", "asks"),
+    "asks": ("waiting", "asks"),
+    "done": ("done", None),
+    "idle": ("waiting", "idle"),
+    "no_signal": ("no_signal", None),
+}
+
+#: The flight states the screen may decide: no hook decided them.
+_SCREEN_FILLS = frozenset({"starting", "expired"})
+
+
+def _screen(
+    record: Mapping[str, Any], session: Any, state: str, clock: datetime,
+) -> tuple[Any, Optional[str], tuple[str, Optional[str]]]:
+    """Betterment AG7: ``(screen record, source, (state, turn end))``. The
+    source is ``screen`` when the screen decides: no hook session is bound
+    (the agent never registered, or its hooks are off) or the bound hook
+    went quiet while it said "working"; ``hook`` when a hook decided; else
+    ``None``."""
+    from ..agent_context.screen_watch import STORE, hook_is_fresh, merged_state
+
+    launch_id = str(record.get("launch_id") or "")
+    row = STORE.get(f"launch:{launch_id}") if launch_id else None
+    hooked = session is not None and state not in _SCREEN_FILLS
+    if str(record.get("state") or "") in ("launched", "registered") and row is not None:
+        word = merged_state(row, clock)
+        stale_work = hooked and state == "working" and not hook_is_fresh(session, clock)
+        if word and (state in _SCREEN_FILLS or stale_work):
+            return row, "screen", _SCREEN_FLIGHT[word]
+    return row, ("hook" if hooked else None), (state, None)
+
+
+def _screen_wire(row: Any, clock: datetime) -> Optional[dict[str, Any]]:
+    from ..agent_context.screen_watch import screen_wire
+
+    return screen_wire(row, clock)
 
 
 def _resume_state(record: Mapping[str, Any], session: Any, clock: datetime) -> Optional[str]:
@@ -385,7 +443,7 @@ def agent_flights(
 
 
 #: The states whose agent still holds the item (the faces' ``isInFlight``).
-_IN_FLIGHT = frozenset({"starting", "working", "waiting", "done", "pr_open", "resuming"})
+_IN_FLIGHT = frozenset({"starting", "working", "waiting", "done", "pr_open", "resuming", "no_signal"})
 
 #: An ended launch stays in the Conductor's history this long.
 HISTORY_WINDOW = timedelta(hours=24)
@@ -495,6 +553,32 @@ def slot_holders(
     return held
 
 
+def explain_agent(db: Any, target: str, *, ledger: Any = None, sessions: Optional[Iterable[Any]] = None,
+                  now: Optional[datetime] = None) -> Optional[dict[str, Any]]:
+    """Betterment AG7 (``coder.explain``, "Why this state"): why an agent has
+    its state. ``target`` is a launch (``launch:<id>`` or its bare id) or a
+    session key (``<agent>:<session_id>``). ``None`` for an unknown one."""
+    from ..agent_context.screen_watch import explain
+
+    ledger, by_key, clock = _registry(db, sessions, ledger, now)
+    target = str(target or "").strip()
+    launch_id = target[len("launch:"):] if target.startswith("launch:") else target
+    record = ledger.get(launch_id) if launch_id and ":" not in launch_id else None
+    if record and _launched(record):
+        flight = _flight(db, record, by_key, clock)
+        key = str(flight.get("session_key") or "")
+        out = explain(
+            f"launch:{launch_id}", session=by_key.get(key) if key else None,
+            state=flight["state"], source=flight.get("state_source") or "none", now=clock,
+        )
+        return {**out, "launch_id": launch_id, "session_key": key or None}
+    session = by_key.get(target)
+    if session is None:
+        return None
+    return {**explain(target, session=session, state=_session_state(session, clock), now=clock),
+            "launch_id": None, "session_key": target}
+
+
 def annotate_sessions(items: list[dict[str, Any]], flights: list[dict[str, Any]]) -> None:
     """Each session row that a flight names gets ``flight`` (its item)."""
     by_session = {f["session_key"]: f for f in flights if f.get("session_key")}
@@ -506,4 +590,4 @@ def annotate_sessions(items: list[dict[str, Any]], flights: list[dict[str, Any]]
             row["flight"] = flight
 
 
-__all__ = ["STOPPED_BY_RESTART", "agent_flights", "annotate_sessions", "flight_of_launch", "slot_holders"]
+__all__ = ["STOPPED_BY_RESTART", "agent_flights", "annotate_sessions", "explain_agent", "flight_of_launch", "slot_holders"]

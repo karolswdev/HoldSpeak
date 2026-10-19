@@ -222,3 +222,49 @@ def test_a_resuming_agent_holds_a_slot_and_a_failed_resume_does_not(tmp_path, db
     assert [r["launch_id"] for r in soon] == [launch_id]
     late = slot_holders(db, [record], now=pressed + timedelta(seconds=RESUME_WINDOW_SECONDS + 1))
     assert late == []
+
+
+def _registered(tmp_path, db, monkeypatch, sessions):  # noqa: F811
+    rig = _rig(tmp_path, db, monkeypatch)
+    launch_id = rig.hand.hand(OWNER, "action", "ai_1")["launch_id"]
+    rig.service.bind_rider_claims()
+    _wait_for(lambda: rig.launches.get(launch_id), "state", "registered")
+    sessions("SessionStart", source="startup")
+    sessions("UserPromptSubmit", prompt="the brief")
+    sessions("PostToolUse", tool_name="Bash")
+    return rig, launch_id
+
+
+def test_tmux_restarting_under_a_running_hub_keeps_resume(tmp_path, db, monkeypatch, sessions):  # noqa: F811
+    """Betterment AG7 (#1316): tmux restarts while the hub runs. The launch's
+    session watcher sees its session gone; tmux answers "no server running",
+    so the restart check decides (the agent did not end by itself): the
+    launch reads Stopped by restart, never "complete", and Resume works."""
+    from tests.unit import test_agent_hand
+
+    rig, launch_id = _registered(tmp_path, db, monkeypatch, sessions)
+    real_call = test_agent_hand._Tmux.__call__
+
+    def call(self, argv, cwd=None):
+        if argv[:2] == ["tmux", "list-sessions"]:
+            self.calls.append(list(argv))
+            if not self.sessions:
+                return self._err("no server running on /tmp/tmux-501/default")
+            return self._ok("\n".join(self.sessions) + "\n")
+        return real_call(self, argv, cwd)
+
+    monkeypatch.setattr(test_agent_hand._Tmux, "__call__", call)
+    rig.tmux.sessions.clear()   # tmux restarted: every session went with it
+    rig.tmux.meta.clear()
+    record = _wait_for(lambda: rig.launches.get(launch_id), "state", STOPPED_BY_RESTART)
+    assert record["stopped"]["by"] == "restart"
+    assert flight_of_launch(db, launch_id, ledger=rig.launches)["state"] == STOPPED_BY_RESTART
+    assert rig.hand.resume_after_restart(OWNER, launch_id)["resume"]["state"] == "resuming"
+
+
+def test_the_session_watcher_never_settles_a_stopped_launch_complete(tmp_path, db, monkeypatch, sessions):  # noqa: F811
+    """Betterment AG7 (#1316): the restart check ran first; the session
+    watcher's late settle keeps Stopped by restart."""
+    rig, launch_id = _stopped(tmp_path, db, monkeypatch, sessions)
+    assert rig.service._first.settle(launch_id) == STOPPED_BY_RESTART
+    assert rig.launches.get(launch_id)["state"] == STOPPED_BY_RESTART
