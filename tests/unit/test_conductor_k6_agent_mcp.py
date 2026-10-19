@@ -36,7 +36,7 @@ from typing import Any
 import pytest
 from starlette.testclient import TestClient
 
-from holdspeak import coder_factory, coder_gate
+from holdspeak import agent_skill, coder_factory, coder_gate
 from holdspeak.db import Database
 from holdspeak.delivery import agent_mcp
 from holdspeak.mcp.palettes import CONDUCTOR, PALETTE_NAMES, resolve_palette
@@ -421,6 +421,8 @@ def test_a_codex_launch_gets_the_mcp_flags(tmp_path, db, monkeypatch) -> None:
         "-c", 'mcp_servers.holdspeak.bearer_token_env_var="HOLDSPEAK_AGENT_CREDENTIAL"',
         "-c", 'mcp_servers.holdspeak.default_tools_approval_mode="approve"',
     ]
+    repo_skill = rig.worktree / ".agents" / "skills" / "holdspeak" / "SKILL.md"
+    assert repo_skill.read_text(encoding="utf-8") == agent_skill.skill_text()
     assert token not in command
     # No --mcp-config file for Codex.
     assert not (tmp_path / "rig" / "mcp" / f"{result['launch_id']}.json").exists()

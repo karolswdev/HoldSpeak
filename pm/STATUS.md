@@ -4,13 +4,13 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Projects first-read repair; D10 deployed)
+**Last updated:** 2026-10-19 (AG13 verified; Projects first-read repair deployed)
 
 ## Current phase
 
-**Betterment recovery: 79/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 80/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `3b90f077a`, frontend `b3e721200c71a964`, PID 76702 (#1372).
+backend `989957590`, frontend `10fa662b5db1b4ac`, PID 34377 (#1373).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
@@ -30,6 +30,18 @@ prior active profile switches to the checked account and cannot restore it.
 The reproduction uses a fake CLI; the owner’s auth state was not changed.
 A known-prior profile is restored by ST2; the unknown-prior case still needs
 a truthful read or a no-switch fallback.
+
+AG13 packages the HoldSpeak skill and prints it with `holdspeak --skill`.
+Claude launches discover the private copy through `--add-dir`; Codex launches
+discover the repository-native copy without changing CODEX_HOME or auth.
+Connect preserves foreign settings and installs user skills in their native
+roots. An offline native Codex probe finds the skill without a model call.
+The wheel contains the text. Required quick check: 1,305 affected pytest,
+110 sweep, 27 canon and 1,116 repo guards pass. Existing hooks-only readiness
+upgrades remain ST6. AG13 delivery follows merge.
+
+Projects repair #1373 is deployed. Its actual list is observed at 1440/393
+without page errors after the atomic first read.
 
 D10 #1372 makes `today.get` a declared read composed from the same Needs you,
 day, Since yesterday and Prepared producers as the Today face. Its real-hub
