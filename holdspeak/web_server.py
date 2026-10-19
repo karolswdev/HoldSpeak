@@ -276,6 +276,47 @@ def _record_restart_stops() -> None:
         log.warning(f"restart stop check failed: {exc}")
 
 
+#: Betterment AG9: the done turns already seen (``launch:turn``); None
+#: until the first read, which is the baseline (a restart notifies nothing).
+_DONE_SEEN: Optional[set[str]] = None
+
+
+def _agent_done_step() -> list[str]:
+    """Betterment AG9 (decision 2): each finished turn the owner has not
+    opened (Done · New) raises one quiet notification, the first time the
+    watcher sees it. Returns the launches it decided on. A failure is
+    logged and never stops the coder watcher."""
+    global _DONE_SEEN
+    try:
+        from .db import get_database, get_observer
+        from .services.agent_flights import agent_flights
+        from .services.heartbeat_service import HeartbeatService
+
+        db = get_database()
+        done = {
+            f"{f['launch_id']}:{f['turn_id']}": f for f in agent_flights(db)
+            if f.get("state") == "done" and f.get("new") and f.get("launch_id") and f.get("turn_id")
+        }
+        if _DONE_SEEN is None:
+            _DONE_SEEN = set(done)
+            return []
+        fresh = [key for key in done if key not in _DONE_SEEN]
+        _DONE_SEEN |= set(fresh)
+        if not fresh:
+            return []
+        heartbeat = HeartbeatService(db, observer=get_observer())
+        for key in fresh:
+            f = done[key]
+            heartbeat.notify_agent_done(
+                launch_id=str(f["launch_id"]), agent=str(f.get("agent") or ""),
+                title=str(f.get("title") or ""), turn_id=str(f["turn_id"]),
+            )
+        return [str(done[key]["launch_id"]) for key in fresh]
+    except Exception as exc:
+        log.debug(f"agent done step failed: {exc}")
+        return []
+
+
 def _screen_watch_step() -> list[str]:
     """Betterment AG7: one read of every live agent's screen
     (``agent_context.screen_watch.tick``); the frame keys whose face changed.
@@ -2038,6 +2079,7 @@ class MeetingWebServer:
             try:
                 path = agent_context.AGENT_CONTEXT_FILE
                 mtime = path.stat().st_mtime if path.exists() else None
+                mtime_moved = mtime != last_mtime
                 if mtime != last_mtime:
                     last_mtime = mtime
                     snapshot, transitions, entered = await asyncio.to_thread(
@@ -2069,7 +2111,11 @@ class MeetingWebServer:
                 # Betterment AG7: read each live agent's screen (its rules
                 # say its state where no hook speaks); a changed face is a
                 # coder frame too.
-                for key in await asyncio.to_thread(_screen_watch_step):
+                screen_changed = await asyncio.to_thread(_screen_watch_step)
+                # Betterment AG9: a finished turn notifies quietly (once).
+                if screen_changed or mtime_moved or _DONE_SEEN is None:
+                    await asyncio.to_thread(_agent_done_step)
+                for key in screen_changed:
                     await self._ws.broadcast(
                         BroadcastMessage(
                             type="intel_status",

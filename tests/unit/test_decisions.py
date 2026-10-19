@@ -775,6 +775,8 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
     assert names == [
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.transcribe", "meeting.summary.run",
+        # Betterment capture C5b: Prepare… and Write again.
+        "meeting.result.prepare",
         "brief.generate", "brief.latest", "brief.shelf.write", "brief.shelf.read",
         "thought.create", "thought.save", "thought.read", "thought.workbench.read", "thought.list",
         # PHILO-7-01: the desk slice, one row per (kind, verb).

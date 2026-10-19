@@ -207,6 +207,18 @@ def _drain(db: Any, meeting_id: str) -> None:
     assert job is not None and job.status == "succeeded", (job.status, job.last_error)
 
 
+def _drain_drafts(db: Any, meeting_id: str) -> Any:
+    """Capture C5c: run the drafts-only job queued when the summary published."""
+    from holdspeak.intel_queue import process_next_intel_job
+
+    jobs = db.intel.list_prepare_jobs(meeting_id)
+    assert jobs and jobs[0].status == "queued", [(j.status, j.last_error) for j in jobs]
+    assert process_next_intel_job() is True
+    job = db.intel.list_prepare_jobs(meeting_id)[0]
+    assert job.status == "succeeded", (job.status, job.last_error)
+    return job
+
+
 def test_the_architecture_review_import_runs_its_plugins_on_the_engines_engine(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -301,8 +313,8 @@ def test_the_architecture_review_prepares_the_adr_and_the_stakeholder_update(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """The review says "write the ADR" and "the stakeholder update": the
-    summary job plans both drafters (with the routed plugins, on the disclosed
-    route), the LAN engine writes them, and the meeting's Prepared read lists
+    summary publishes first, then a drafts-only job writes both drafters on
+    the disclosed route (capture C5c), the LAN engine writes them, and the meeting's Prepared read lists
     the follow-up, the ADR draft and the update, ready, each tied to the
     action it serves."""
     from holdspeak.meeting_plugins import prepared_results
@@ -325,16 +337,27 @@ def test_the_architecture_review_prepares_the_adr_and_the_stakeholder_update(
     meeting_ids.append(_import(db))
     meeting_id = meeting_ids[0]
     _drain(db, meeting_id)
-    if RECORD:
-        replies.write()
-    writing = seen["writing"]
-    assert [(row["kind"], row["state"]) for row in writing["results"] if row["kind"] != "followup"] == [
-        ("adr", "writing"), ("stakeholder_update", "writing")], writing
+    during = seen["writing"]
+    assert [(row["kind"], row["state"]) for row in during["results"] if row["kind"] != "followup"] == [
+        ("adr", "writing"), ("stakeholder_update", "writing")], during
 
+    # Capture C5c: the summary is published FIRST. The summary job planned no
+    # draft; the drafts wait in their own job, and the meeting is ready.
     job = db.intel.get_latest_intel_job(meeting_id)
     route = dict(job.frozen_plugin_route or {})
-    assert route.get("prepared") == ["adr_drafter", "stakeholder_update_drafter"], route
-    assert {"adr_drafter", "stakeholder_update_drafter"} <= set(route.get("plugin_chain") or []), route
+    assert not route.get("prepared"), route
+    assert not {"adr_drafter", "stakeholder_update_drafter"} & set(route.get("plugin_chain") or []), route
+    published = db.meetings.get_meeting(meeting_id)
+    assert published.intel_status == "ready" and published.intel.summary, published.intel_status
+    assert not [r for r in db.plugins.list_plugin_runs(meeting_id, limit=100)
+                if r.plugin_id in {"adr_drafter", "stakeholder_update_drafter"}]
+    writing = prepared_results(db, meeting_id)
+    assert [(row["kind"], row["state"]) for row in writing["results"] if row["kind"] != "followup"] == [
+        ("adr", "writing"), ("stakeholder_update", "writing")], writing
+    drafts = _drain_drafts(db, meeting_id)
+    assert dict(drafts.frozen_plugin_route or {}).get("prepared") == ["adr_drafter", "stakeholder_update_drafter"]
+    if RECORD:
+        replies.write()
     statuses = {run.plugin_id: run.status for run in db.plugins.list_plugin_runs(meeting_id, limit=100)}
     assert statuses.get("adr_drafter") == "success", statuses
     assert statuses.get("stakeholder_update_drafter") == "success", statuses
@@ -364,6 +387,7 @@ def test_a_failed_draft_never_holds_the_summary(
     db, _replies = _lan_rig(tmp_path, monkeypatch)
     meeting_id = _import(db)
     _drain(db, meeting_id)  # asserts the job SUCCEEDED
+    _drain_drafts(db, meeting_id)  # a failed draft still ends its job
 
     meeting = db.meetings.get_meeting(meeting_id)
     assert meeting.intel is not None and meeting.intel.summary, "the summary did not publish"
@@ -438,3 +462,70 @@ def _recorded_prepared(db: Any, meeting_id: str, *, writing: dict[str, Any]) -> 
         }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     stored = json.loads(PREPARED_FIXTURE.read_text(encoding="utf-8"))["/api/meetings/c5-review/prepared"]
     assert shape(stored) == shape(live), "re-record with HOLDSPEAK_WIRE_WRITE=1"
+
+
+# ── Capture C5b: Write again and Prepare… are drafts-only jobs ───────────────
+
+
+def test_write_again_runs_only_the_draft_and_never_the_summary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The ADR drafter failed on the summary run. Write again queues a
+    drafts-only job on the route he was shown: the ADR is written, the summary,
+    its run receipt and the meeting's summary state stay exactly as they were,
+    and the engine is asked for no second summary."""
+    from holdspeak.intel_queue import process_next_intel_job
+    from holdspeak.meeting_plugins import prepared_results
+    from holdspeak.services.errors import ConflictError, ValidationError
+    from holdspeak.services.meeting_intel_service import MeetingIntelService
+
+    monkeypatch.setenv("HOLDSPEAK_FAULT", "intel.plugin:adr_drafter")
+    db, replies = _lan_rig(tmp_path, monkeypatch)
+    meeting_id = _import(db)
+    _drain(db, meeting_id)
+    _drain_drafts(db, meeting_id)
+    monkeypatch.delenv("HOLDSPEAK_FAULT")
+    before = db.meetings.get_meeting(meeting_id)
+    receipt_before = db.intel.get_run_receipt(meeting_id)
+    summary_job = db.intel.get_latest_intel_job(meeting_id)
+    rows = {row["kind"]: row for row in prepared_results(db, meeting_id)["results"]}
+    assert rows["adr"]["state"] == "failed" and rows["adr"]["retry"] is True, rows["adr"]
+    summaries = replies.calls.count("summary")
+
+    service = MeetingIntelService(db)
+    route = project_route(db, invocation_id=f"meeting:{meeting_id}")
+    with pytest.raises(ValidationError):
+        service.prepare_result(OWNER, meeting_id, plugin_id="decision_capture",
+                               expected_selection_hash=route["selection_hash"])
+    queued = service.prepare_result(OWNER, meeting_id, plugin_id="adr_drafter",
+                                    expected_selection_hash=route["selection_hash"])
+    assert queued["state"] == "queued", queued
+    with pytest.raises(ConflictError):  # one live job per meeting
+        service.prepare_result(OWNER, meeting_id, plugin_id="risk_heatmap",
+                               expected_selection_hash=route["selection_hash"])
+    writing = {row["kind"]: row for row in prepared_results(db, meeting_id)["results"]}
+    assert writing["adr"]["state"] == "writing", writing["adr"]
+    # The meeting's summary state is not the drafts job's.
+    assert db.meetings.get_meeting(meeting_id).intel_status == before.intel_status == "ready"
+    assert db.intel.get_latest_intel_job(meeting_id).job_id == summary_job.job_id
+
+    assert process_next_intel_job() is True
+    after = db.meetings.get_meeting(meeting_id)
+    rows = {row["kind"]: row for row in prepared_results(db, meeting_id)["results"]}
+    assert rows["adr"]["state"] == "ready", rows["adr"]
+    assert "idempot" in rows["adr"]["body_markdown"].lower()
+    assert after.intel_status == "ready"
+    assert after.intel.summary == before.intel.summary
+    assert db.intel.get_run_receipt(meeting_id) == receipt_before
+    assert db.intel.get_latest_intel_job(meeting_id).job_id == summary_job.job_id
+    assert replies.calls.count("summary") == summaries, "the summary was written again"
+    jobs = db.intel.list_prepare_jobs(meeting_id)
+    assert jobs and jobs[0].status == "succeeded", [(j.job_id, j.status, j.last_error) for j in jobs]
+
+    # The Send document is the clean draft (no synthesis frame).
+    from holdspeak.services.document_sources import render_document
+
+    doc = render_document(db, f"artifact:{rows['adr']['artifact_id']}")
+    body = str(getattr(doc, "body_md", None) or getattr(doc, "markdown", None) or doc)
+    assert "Adr Drafter" not in body and "Source windows" not in body and "ADR(s)" not in body, body[:300]
+    assert body.startswith("# ADR: "), body[:120]

@@ -531,7 +531,10 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
       <OutcomeLedger label="Decisions" rows={withVerbs(decisions)} testId="meeting-decisions" controls={decisionsControls} />
       <OutcomeLedger label="Who owes what" rows={withVerbs(commitments)} testId="meeting-commitments" controls={controls} />
       {/* Betterment capture C5: the Results the meeting prepared. */}
-      <PreparedResults meetingId={String(meeting.id)} results={data.prepared ?? []} />
+      <PreparedResults meetingId={String(meeting.id)} results={data.prepared ?? []}
+        canPrepare={data.canPrepare ?? []}
+        selectionHash={readPlannedRoute(data.detail ?? meeting)?.selection_hash ?? null}
+        onChanged={data.refreshPrepared} />
     </>
   );
 }

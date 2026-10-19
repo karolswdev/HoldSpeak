@@ -223,12 +223,34 @@ PUBLICATION_PENDING_REASON = "Summary saved. Decisions and action items are not 
 # Readers must select a lineage leaf before deciding whether it is unresolved.
 # Filtering terminal successors first resurrects a failed ancestor after retry
 # success, which lies to the Desk and makes an already-ready Meeting retryable.
+#: Betterment capture C5b: a drafts-only job on a meeting (its Prepared
+#: Results).  It runs on the same claim, route bundle and child admission as
+#: the summary job, but it never owns the meeting's summary state: it is not
+#: in the meeting's job lineage and it never writes ``meetings.intel_*``.
+PREPARE_RESULTS_SLUG = "prepare-results"
+
+
+def is_prepare_work(displaced_work: Any) -> bool:
+    """True when a job's work descriptor is a drafts-only (Prepared) job."""
+    return PREPARE_RESULTS_SLUG in _work_descriptor(str(displaced_work or "[]"))[0]
+
+
+def _meeting_state_execute(conn: Any, job_id: Any, sql: str, params: Sequence[Any]) -> Any:
+    """Write the meeting's summary state, unless this job is a drafts-only job."""
+    row = conn.execute("SELECT displaced_work FROM intel_jobs WHERE job_id=?", (str(job_id),)).fetchone()
+    if row is not None and is_prepare_work(row["displaced_work"]):
+        return None
+    return conn.execute(sql, params)
+
+
 _CURRENT_LINEAGE_CTE = """
 WITH lineage_leaves AS (
     SELECT j.* FROM intel_jobs j
     WHERE NOT EXISTS (
         SELECT 1 FROM intel_jobs successor WHERE successor.origin_job_id=j.job_id
     )
+    -- Betterment capture C5b: a drafts-only job is never the meeting's job.
+    AND j.displaced_work NOT LIKE '%"prepare-results"%'
 ), current_jobs AS (
     SELECT *, ROW_NUMBER() OVER (
         PARTITION BY meeting_id
@@ -341,6 +363,7 @@ def has_recoverable_bound_publication(conn: Any, parent_operation_id: str) -> bo
 
 def _plan_installed_plugin_members(
     conn: Any, meeting_id: str, planned_route: Mapping[str, Any] | None = None,
+    *, only: Sequence[str] | None = None,
 ) -> tuple[tuple[dict[str, Any], ...], dict[str, Any]]:
     """Freeze the routed installed-plugin set from the composed registry.
 
@@ -383,13 +406,21 @@ def _plan_installed_plugin_members(
     # ADR, a stakeholder update, a diagram) ride the same chain after the
     # routed plugins, on the same route rules.  ``prepared`` names them, so a
     # failed draft never holds the summary (``intel_queue``).
-    from ..meeting_plugins import prepared_plan
+    from ..meeting_plugins import PREPARABLE_PLUGINS
 
-    prepared = [
-        plugin_id for plugin_id in prepared_plan(transcript)
-        if plugin_id not in (decision.get("plugin_chain") or [])
-    ]
-    decision["plugin_chain"] = [*(decision.get("plugin_chain") or []), *prepared]
+    if only is not None:
+        # Capture C5b: a drafts-only job plans exactly the drafts it was
+        # asked for (Prepare…, Write again), nothing routed.
+        prepared = [str(p) for p in only if str(p) in PREPARABLE_PLUGINS]
+        if not prepared:
+            raise ValueError("a drafts-only job names no preparable draft")
+        decision["plugin_chain"] = list(prepared)
+    else:
+        # Capture C5c: the summary job plans no drafts. They are written by a
+        # drafts-only job queued when the summary is published
+        # (intel_queue._queue_prepared_after_summary), so a slow engine
+        # never delays the summary.
+        prepared = []
     registry = process_inference_capability_registry()
     members: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
@@ -1697,6 +1728,10 @@ class IntelRepository(BaseRepository):
                     else:
                         plugin_members, plugin_route = _plan_installed_plugin_members(
                             conn, meeting_id, planned_route=planned_route,
+                            only=(
+                                list(_frozen_plugin_route(row).get("prepared") or ())
+                                if is_prepare_work(row["displaced_work"]) else None
+                            ),
                         )
                 except Exception as exc:
                     # An unknown/non-exact plugin can never be smuggled through
@@ -1891,7 +1926,7 @@ class IntelRepository(BaseRepository):
                  str(binding["parent_operation_id"]), str(binding["bundle_id"]),
                  int(row["attempts"]) + 1, now),
             )
-            conn.execute(
+            _meeting_state_execute(conn, job_id,
                 """UPDATE meetings SET intel_status='running',
                     intel_status_detail='Claimed deferred meeting intelligence.',
                     sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
@@ -1975,7 +2010,7 @@ class IntelRepository(BaseRepository):
             ) VALUES (?,?,?,'supersession_link',0,'queued',?,NULL,?)""",
             (meeting_id, fresh_id, job_id, reason, now),
         )
-        conn.execute(
+        _meeting_state_execute(conn, job_id,
             """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
                intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
             (reason, now, meeting_id),
@@ -2045,7 +2080,7 @@ class IntelRepository(BaseRepository):
                  int(job.executor_lease_epoch), time.time()),
             ).rowcount
             if changed:
-                conn.execute(
+                _meeting_state_execute(conn, str(job.job_id),
                     """UPDATE meetings SET intel_status='ready',intel_status_detail='Meeting intelligence ready.',
                        intel_completed_at=?,sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
                     (now, now, str(row["meeting_id"])),
@@ -2111,7 +2146,7 @@ class IntelRepository(BaseRepository):
                      int(job.executor_lease_epoch), time.time()),
                 ).rowcount
                 if changed:
-                    conn.execute(
+                    _meeting_state_execute(conn, str(job.job_id),
                         """UPDATE meetings SET intel_status='error',intel_status_detail=?,
                            intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
                            WHERE id=?""",
@@ -2175,7 +2210,7 @@ class IntelRepository(BaseRepository):
                  str(old["parent_operation_id"] or "") or None, str(old["bundle_id"] or "") or None,
                  attempt, error, retry_at_iso, utc_iso(now)),
             )
-            conn.execute(
+            _meeting_state_execute(conn, str(job.job_id),
                 """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
                     intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
                 (error, utc_iso(now), meeting_id),
@@ -2223,7 +2258,7 @@ class IntelRepository(BaseRepository):
                     (admission_attempt, utc_iso(now), SUMMARIES_OFF_DETAIL, job_id),
                 ).rowcount
                 if changed:
-                    conn.execute(
+                    _meeting_state_execute(conn, job_id,
                         """UPDATE meetings SET intel_status='skipped',intel_status_detail=?,
                            intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
                            WHERE id=?""",
@@ -2249,7 +2284,7 @@ class IntelRepository(BaseRepository):
                     (admission_attempt, utc_iso(now), detail, job_id),
                 ).rowcount
                 if changed:
-                    conn.execute(
+                    _meeting_state_execute(conn, job_id,
                         """UPDATE meetings SET intel_status='error',intel_status_detail=?,
                            intel_completed_at=NULL,sync_modified_at=?,updated_at=datetime('now')
                            WHERE id=?""",
@@ -2266,7 +2301,7 @@ class IntelRepository(BaseRepository):
                     (admission_attempt, utc_iso(retry_at_value), utc_iso(now), detail, job_id),
                 ).rowcount
                 if changed:
-                    conn.execute(
+                    _meeting_state_execute(conn, job_id,
                         """UPDATE meetings SET intel_status='queued',intel_status_detail=?,
                            sync_modified_at=?,updated_at=datetime('now') WHERE id=?""",
                         (detail, utc_iso(now), str(row["meeting_id"])),
@@ -3130,6 +3165,66 @@ class IntelRepository(BaseRepository):
     def requeue_intel_job(self, meeting_id: str, *, reason: Optional[str] = None) -> bool:
         """Requeue deferred intelligence processing for a meeting."""
         return self.request_intel_retry(meeting_id, reason=reason) == "queued"
+
+    # ── Betterment capture C5b: drafts-only jobs (Prepare…, Write again) ──
+
+    def request_prepared_results(
+        self, meeting_id: str, plugin_ids: Sequence[str], *, planned_route: Mapping[str, Any] | None,
+    ) -> str:
+        """Queue one drafts-only job for ``plugin_ids`` on a finished meeting.
+
+        Returns ``queued``; ``missing`` (no meeting); ``empty`` (no words);
+        ``running`` (a summary or a drafts job for this meeting is still
+        live, so the owner waits for it).  The meeting's summary state is
+        never touched: the job is outside its lineage.
+        """
+        ids = sorted({str(p).strip() for p in plugin_ids if str(p).strip()})
+        now = utc_now_iso()
+        with self._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            if conn.execute("SELECT 1 FROM meetings WHERE id=?", (meeting_id,)).fetchone() is None:
+                return "missing"
+            words = conn.execute(
+                "SELECT COUNT(*) AS n FROM segments WHERE meeting_id=?", (meeting_id,),
+            ).fetchone()
+            if not words or not int(words["n"]):
+                return "empty"
+            live = conn.execute(
+                """SELECT 1 FROM intel_jobs WHERE meeting_id=?
+                   AND status IN ('reserved','queued','claimed','running') LIMIT 1""",
+                (meeting_id,),
+            ).fetchone()
+            if live is not None:
+                return "running"
+            transcript_hash = _durable_transcript_hash(conn, meeting_id)
+            work = json.dumps(
+                {"slugs": [PREPARE_RESULTS_SLUG], "plugin_route": {"prepared": ids}},
+                sort_keys=True, separators=(",", ":"),
+            )
+            descriptor = _work_descriptor_sha256(meeting_id, transcript_hash, work)
+            job_id = _job_id(meeting_id, transcript_hash, descriptor, now, None)
+            conn.execute(
+                """INSERT INTO intel_jobs (
+                    job_id,meeting_id,origin_job_id,work_descriptor_sha256,
+                    transcript_hash,displaced_work,status,lifecycle_posture,
+                    requested_at,updated_at,attempts,last_error,planned_route_json
+                ) VALUES (?,?,NULL,?,?,?,'queued','queued',?,?,0,NULL,?)""",
+                (job_id, meeting_id, descriptor, transcript_hash, work, now, now, _json(planned_route)),
+            )
+        return "queued"
+
+    def list_prepare_jobs(self, meeting_id: str, *, limit: int = 20) -> list[IntelJob]:
+        """The meeting's drafts-only jobs, newest first."""
+        with self._connection() as conn:
+            rows = conn.execute(
+                """SELECT j.*, m.title AS meeting_title, m.started_at AS meeting_started_at,
+                          m.intel_status_detail AS intel_status_detail
+                   FROM intel_jobs j JOIN meetings m ON m.id=j.meeting_id
+                   WHERE j.meeting_id=? AND j.displaced_work LIKE '%"prepare-results"%'
+                   ORDER BY julianday(j.requested_at) DESC, j.updated_at DESC LIMIT ?""",
+                (meeting_id, int(limit)),
+            ).fetchall()
+        return [self._job_from_row(row) for row in rows]
 
     def request_intel_retry(
         self,
