@@ -140,6 +140,60 @@ def test_summary_controls_own_the_row_height(tmp_path: Path, monkeypatch: pytest
 
 
 
+@pytest.mark.parametrize("width", [1440, 393])
+def test_short_stepper_keeps_the_value_beside_its_touch_targets(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """The number must fit after the phone's two 44 px arrow targets."""
+    from playwright.sync_api import sync_playwright
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    out = evidence_dir("settings-short-steppers")
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            page = browser.new_page(
+                viewport={"width": width, "height": 900 if width == 1440 else 852},
+                reduced_motion="reduce",
+            )
+            directory = _settings_directory(page, base, TOKEN)
+            _api(page, "PUT", "/api/settings/heartbeat", {
+                "quiet_hours": {"start": 21, "end": 8},
+            }, token=TOKEN)
+            _open_directory_module(page, directory, "Rhythm", "rhythm")
+            value = page.get_by_role("spinbutton", name="Quiet from", exact=True)
+            value.wait_for()
+            page.wait_for_function(
+                "() => document.querySelector('input[aria-label=\"Quiet from\"]').value === '21'",
+            )
+            value.scroll_into_view_if_needed()
+            geometry = value.evaluate("""el => {
+                const style = getComputedStyle(el);
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                context.font = style.font;
+                return {
+                    available: el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+                    needed: context.measureText(el.value).width,
+                    input: el.getBoundingClientRect().toJSON(),
+                };
+            }""")
+            page.screenshot(path=str(out / f"rhythm-{width}.png"))
+            assert geometry["available"] >= geometry["needed"], geometry
+            increase = page.get_by_role("button", name="Increase Quiet from", exact=True)
+            _pointer_owned(page, increase, f"Increase Quiet from at {width}")
+            increase.click()
+            page.wait_for_function(
+                "() => document.querySelector('input[aria-label=\"Quiet from\"]').value === '22'",
+            )
+            saved = _api(page, "GET", "/api/settings/heartbeat", token=TOKEN)
+            assert saved["quiet_hours"]["start"] == 22
+            browser.close()
+    finally:
+        server.stop()
+
+
 class TestRemoteAccessGlass:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
