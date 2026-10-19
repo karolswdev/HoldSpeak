@@ -64,7 +64,7 @@ The menu shows an unavailable verb dimmed, with that reason.
 
 | Menu | Verbs |
 | --- | --- |
-| **Desk** | **New Note**, **Write a thought**, **New Decision**, **New Knowledge**, **New Agent**, **New Automation**, **New Zone**, **New Thread**, **New Project**, **Hide the menus** (Settle in), **List view** or **Spatial view**, **Arrange desk**, **Overview**, **Reset layout**, **Reset to seed…**, **Refresh from hub**, **Open Intelligence**, **Open People** |
+| **Desk** | **New Note**, **Write a thought**, **New Decision**, **New Knowledge**, **New Automation**, **New Thread**, **New Project**, **Hide the menus** (Settle in), **List view** or **Spatial view**, **Arrange desk**, **Overview**, **Reset layout**, **Reset to seed…**, **Refresh from hub**, **Open Intelligence**, **Open People** |
 | **Object** | **Open**, **Get Info**, **Ask this project**, **Ask AI**, **Continue in thread**, **Edit**, **Rename**, **Duplicate**, **Move to Zone**, **Delete**, **Focus** (Zone) |
 | **Go** | One entry for each tool in `DESK_APPLICATIONS`. An open window gets focus instead of a second copy. |
 | **Window** | **Close window**, **Iconify**, **Cycle windows**, **Cycle windows (reverse)**, **Snap left**, **Snap right**, **Zoom**, **To back**, and the four Chair windows |

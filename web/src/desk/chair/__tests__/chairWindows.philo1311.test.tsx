@@ -122,7 +122,7 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     // PHILO-14 A5: the Needs-you window body is the smart drawer.
     expect(within(region("Needs you")!).getByTestId("needs-drawer")).toBeTruthy();
     expect(within(region("Capture")!).getByTestId("arrival-capture-bar")).toBeTruthy();
-    expect(within(region("Capture")!).getByRole("button", { name: "Write a thought" })).toBeTruthy();
+    expect(within(region("Capture")!).getByRole("button", { name: "New note" })).toBeTruthy();
     expect(within(region("Capture")!).getByRole("button", { name: "Record meeting" })).toBeTruthy();
     expect(within(region("Capture")!).getByRole("button", { name: "Schedule" })).toBeTruthy();
     // registered for the front and the screen title; no Dock chip until iconified

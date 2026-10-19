@@ -951,6 +951,58 @@ button.surface-edit-in-place:hover {
   font-size: var(--desk-surface-detail-size);
   font-variant-numeric: tabular-nums;
 }
+/* betterment/capture C6 — Since last time: the line wraps at 393 (never
+   clipped); groups of linked rows. */
+.desk-surface-body .meetings-since-fold .surface-disclosure-trigger,
+.desk-surface-body .meetings-looked-at-fold .surface-disclosure-trigger {
+  max-width: 100%;
+  text-align: left;
+}
+.desk-surface-body .meetings-since-fold .surface-disclosure-label,
+.desk-surface-body .meetings-looked-at-fold .surface-disclosure-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.desk-surface-body .meetings-since {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.desk-surface-body .meetings-since-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-self: stretch;
+  min-width: 0;
+}
+.desk-surface-body .meetings-since-owner {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
+/* betterment/capture C5 — Prepared: a Result's verbs, its draft, its failure. */
+.desk-surface-body .meeting-prepared-verbs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.desk-surface-body .meeting-prepared-send {
+  padding: 0 0 8px;
+  min-width: 0;
+}
+.desk-surface-body .meeting-prepared-draft {
+  padding: 4px 0 8px;
+  min-width: 0;
+}
+.desk-surface-body .meeting-prepared-failed {
+  margin: 0;
+  padding: 2px 0 6px;
+  color: var(--text-muted);
+  font-size: var(--desk-surface-detail-size);
+}
 /* HS-170-04 — speaker token in the transcript well. */
 .desk-surface-body .transcript-list .transcript-speaker {
   flex-shrink: 0;

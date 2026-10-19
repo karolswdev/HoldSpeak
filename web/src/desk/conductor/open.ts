@@ -88,3 +88,24 @@ export async function stopMember(member: ConductorMember): Promise<LaneReceipt |
   useConductor.getState().setStop(member.ref, receipt);
   return receipt;
 }
+
+/** Betterment AG8 (AG5 follow-up): Cancel a hand that waits for a free
+ *  agent. It leaves the queue and never starts. A refusal lands on the
+ *  member (the receipt in the foot); the flights read again. */
+export async function cancelQueuedHand(member: ConductorMember): Promise<boolean> {
+  const queueId = member.ref.startsWith("queue:") ? member.ref.slice("queue:".length) : "";
+  if (!queueId) return false;
+  const at = Date.now();
+  try {
+    await apiFetch(`/api/agent/hand/queue/${encodeURIComponent(queueId)}`, { method: "DELETE" });
+    return true;
+  } catch (error) {
+    const code = String(((error as { payload?: Record<string, unknown> })?.payload ?? {}).code ?? "") || "hub_unreachable";
+    useConductor.getState().setStop(member.ref, {
+      word: "NOT CANCELLED", at, text: code === "queue_unknown" ? "it started or left the queue" : code.replace(/_/g, " "), tone: "fail",
+    });
+    return false;
+  } finally {
+    void useConductor.getState().readFlights();
+  }
+}

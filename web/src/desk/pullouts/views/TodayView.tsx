@@ -19,6 +19,7 @@ import { useNeedFaces, NeedsDroppedReceipt } from "../../needs/NeedsDrawer";
 import { TodayNeeds } from "../../needs/TodayNeeds";
 import type { NeedFace } from "../../needs/needsFace";
 import { SinceYesterday, type MondayBrief } from "./BriefView";
+import { PreparedBlock, type PreparedRead } from "./PreparedBlock";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { newsWords, useAutomationNews } from "../../automationNews";
 import { SurfaceFooter } from "../../surface/SurfaceFooter";
@@ -27,7 +28,25 @@ import { meetingRowState } from "../../../pages/cores/history/helpers";
 import { useSummaryRun } from "../../../pages/cores/history/useSummaryRun";
 import { executedReceipt, readPlannedRoute, readRunReceipt, routeReady } from "../../../meetings/summaryRoute";
 import { RouteDisclosure, RunAttempts } from "../../../meetings/RouteDisclosure";
+import { useAgentFlights, useAgentFlightsLive, type AgentFlight } from "../../agentFlights";
+import { conductorMembers, fleetCounts } from "../../conductor/members";
+import { AGENT_NAME, type AgentId } from "../../firstrun/agentsStep";
+import { openAgentLane } from "../../shell";
 import "./today.css";
+
+/** Betterment AG9: Today's Agents line, only what is there:
+ *  `2 agents need you · 1 finished`; "" with nothing. */
+export function agentsLine(needYou: number, finished: number): string {
+  return [
+    needYou ? `${needYou} ${needYou === 1 ? "agent needs" : "agents need"} you` : "",
+    finished ? `${finished} finished` : "",
+  ].filter(Boolean).join(" · ");
+}
+
+/** `Claude Code finished Draft test scaffolding`. */
+export function agentResultWords(flight: AgentFlight): string {
+  return `${AGENT_NAME[flight.agent as AgentId] ?? flight.agent} finished ${flight.title || "its work"}`;
+}
 
 const SPRITES = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/32/`;
 
@@ -209,8 +228,21 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const [door, setDoor] = useState<DoorRead | null>(null);
   const [meetings, setMeetings] = useState<MeetingRow[]>([]);
   const [brief, setBrief] = useState<MondayBrief | null>(null);
+  // Betterment daily D9: Morning prep's newest result (the Prepared block)
+  // and the automation Prepare now runs.
+  const [prepared, setPrepared] = useState<PreparedRead | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const rows = useNeedFaces();
+  // Betterment AG9: the agents: a line when one needs him or finished, and a
+  // card for each finished turn he has not opened (New).
+  useAgentFlightsLive();
+  const agentFlights = useAgentFlights((st) => st.flights);
+  const agentSessions = useAgentFlights((st) => st.sessions);
+  const agentCounts = useMemo(
+    () => fleetCounts(conductorMembers({ detect: null, sessions: agentSessions, flights: agentFlights, launchedAt: {} })),
+    [agentSessions, agentFlights]);
+  const finishedAgents = useMemo(() => agentFlights.filter((f) => f.state === "done" && f.isNew && f.launchId), [agentFlights]);
+  const agentsWords = agentsLine(agentCounts.needYou, finishedAgents.length);
   // Betterment A6: an automation's NEW result ("<name> has a new result").
   const news = useAutomationNews();
   const [loaded, setLoaded] = useState(false);
@@ -236,15 +268,18 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         again.current = false;
         // Betterment D4: the brief is made by the hub when none is current
         // (`ensure`), so Since yesterday needs no press.
-        const [doorRead, meetingRead, briefRead] = await Promise.all([
+        const [doorRead, meetingRead, briefRead, preparedRead] = await Promise.all([
           apiFetch<DoorRead>("/api/door").then((v) => ({ ok: true as const, v }), () => ({ ok: false as const })),
           apiFetch<{ meetings?: MeetingRow[] }>("/api/meetings?limit=40").then((v) => ({ ok: true as const, v }), () => ({ ok: false as const })),
           apiFetch<MondayBrief | null>("/api/brief/latest?ensure=1").then((v) => ({ ok: true as const, v }), () => ({ ok: false as const })),
+          apiFetch<PreparedRead>("/api/automations/prepared").then((v) => ({ ok: true as const, v }), () => ({ ok: false as const })),
         ]);
         if (doorRead.ok) setDoor(doorRead.v);
         else setDoor((current) => current);
         if (meetingRead.ok) setMeetings(meetingRead.v.meetings ?? []);
         if (briefRead.ok) setBrief(briefRead.v ?? null);
+        // A Prepared read that fails keeps the last block (never invents none).
+        if (preparedRead.ok) setPrepared(preparedRead.v ?? null);
         setFailed({ door: !doorRead.ok, meetings: !meetingRead.ok, brief: !briefRead.ok });
         setLoaded(true);
       } while (again.current);
@@ -291,7 +326,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   // An empty desk: no calendar, no meeting, nothing waits. One line says
   // what fills Today (Betterment D4).
   const emptyDesk = Boolean(door && !failed.door && !calendar && meetings.length === 0 && !hasWork && needsLoaded
-    && !news.rows?.length);
+    && !news.rows?.length && !prepared?.prepared && !agentsWords);
   const phone = typeof window !== "undefined" && window.matchMedia?.("(max-width: 600px)").matches;
   const week = useMemo(() => weekCounts(now, door, rows.work), [now, door, rows.work]);
 
@@ -486,7 +521,9 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
 
   // Betterment A6: each automation with a NEW result, newest first. Opening
   // its window reads the result, and the row goes (here, on the Dock, at home).
-  const newsNodes = (news.rows ?? []).map((row) => {
+  // Betterment D9: the automation that fills Prepared shows its NEW there.
+  const preparedId = prepared?.prepared?.workbench_id;
+  const newsNodes = (news.rows ?? []).filter((row) => row.workbench_id !== preparedId).map((row) => {
     const at = when(row.newest_at);
     return (
       <SpineNode key={row.workbench_id} kind="result" testId="today-new-result"
@@ -508,11 +545,28 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     );
   });
 
+  const agentResultNodes = finishedAgents.map((flight) => (
+    <SpineNode key={`agent:${flight.launchId}`} kind="result" testId="today-agent-result" time="">
+      <div className="today-row">
+        <div className="today-row-text">
+          <Button variant="chrome" className="today-row-title" onClick={() => openAgentLane(String(flight.launchId))}>
+            {agentResultWords(flight)}
+          </Button>
+        </div>
+        <Button dense variant="secondary" data-testid="today-open-agent-result"
+          aria-label={`Open ${flight.title}`} onClick={() => openAgentLane(String(flight.launchId))}>
+          Open
+        </Button>
+      </div>
+    </SpineNode>
+  ));
+
   const pastToday = finish.length ? (
     <li className="today-section" aria-hidden="true"><span>TO FINISH</span></li>
   ) : null;
 
   const ahead = events.length;
+  const prepareWith = prepared?.automation ?? null;
   return (
     <>
       {/* Busy until the first load ends: the day's rows land after it and
@@ -523,10 +577,25 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           <span className="today-strip">
             {ahead ? <span><b>{ahead}</b> {ahead === 1 ? "meeting ahead" : "meetings ahead"}</span> : null}
             {finish.length ? <span><b>{finish.length}</b> to finish</span> : null}
+            {agentsWords ? (
+              <Button variant="chrome" className="today-agents" data-testid="today-agents"
+                onClick={() => openSurfaceOr("open-conductor", "/conductor")}>
+                {agentsWords}
+              </Button>
+            ) : null}
           </span>
           <span className="today-head-sp" />
+          {prepareWith ? (
+            <Button dense variant="ghost" loading={busy === "prepare"} data-testid="today-prepare-now"
+              onClick={() => void act("prepare", "Not prepared. Try again", () =>
+                apiFetch(`/api/workbenches/${encodeURIComponent(prepareWith.id)}/run`, { method: "POST", json: {} }))}>
+              Prepare now
+            </Button>
+          ) : null}
+          {actError?.key === "prepare" ? <span className="kit-pill" data-tone="danger" role="status">{actError.text}</span> : null}
           <Button dense variant={lead === "record" ? "primary" : "secondary"} onClick={recordNow} data-testid="today-record-now">Record now</Button>
         </div>
+        <PreparedBlock read={prepared} events={door?.upcoming ?? []} />
         <div className="today-grid">
           <TodayNeeds work={rows.work} count={rows.needs.count} now={now} limit={phone ? NEEDS_TOP_PHONE : NEEDS_TOP}
             primary={lead === "needs"} projects={rows.multipleProjects} loaded={needsLoaded} emptyDesk={emptyDesk}
@@ -540,6 +609,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
             {doorFailedNode}
             {emptyNode}
             {justMadeNode}
+            {agentResultNodes}
             {newsNodes}
             {meetingsFailedNode}
             {pastToday}

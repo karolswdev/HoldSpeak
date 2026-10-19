@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-11T20:37:20.050458Z",
+  "captured_at": "2026-10-19T04:23:04.656373Z",
   "wire": {
     "proposals": [
       {
@@ -10,11 +10,11 @@
         "args_hidden": 0,
         "args_sha256": "8b179ee5f946713f586e72fcf034432cbf5d6536e1358fc9fc9d4cc0b15e3129",
         "args_shown": "ls /etc",
-        "created_at": 1791751040.033538,
+        "created_at": 1792383784.624684,
         "cwd": "/tmp/rig/wt",
         "decided_at": null,
         "decided_by": null,
-        "expires_at": 1791751640.033538,
+        "expires_at": 1792384384.624684,
         "hold_reason": "OUTSIDE THE WORKTREE",
         "id": "toolu_glass_approve",
         "operation": {
@@ -29,8 +29,8 @@
           "effect_class": "agent/tool_call_hold",
           "family": "tool_gate",
           "fixed_destination": true,
-          "kernel_operation_id": "op_1a16608c159c42149edde0359a5146d0",
-          "operation_id": "op_1a16608c159c42149edde0359a5146d0",
+          "kernel_operation_id": "op_523726e2f3e342e09fefdad6df951060",
+          "operation_id": "op_523726e2f3e342e09fefdad6df951060",
           "project_scope": null,
           "resource_scope": "Bash",
           "tool_call": {
@@ -85,11 +85,11 @@
         "args_hidden": 90,
         "args_sha256": "7af555d734f240dc818edfcf752d27af068a3b20c2cb3a5c9a562ea1cf3a2293",
         "args_shown": "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
-        "created_at": 1791751040.041965,
+        "created_at": 1792383784.6423192,
         "cwd": "/tmp/rig/wt",
         "decided_at": null,
         "decided_by": null,
-        "expires_at": 1791751640.041965,
+        "expires_at": 1792384384.6423192,
         "hold_reason": "OUTSIDE THE WORKTREE",
         "id": "toolu_glass_cut",
         "operation": {
@@ -104,8 +104,8 @@
           "effect_class": "agent/tool_call_hold",
           "family": "tool_gate",
           "fixed_destination": true,
-          "kernel_operation_id": "op_b38acb284c1b45bd88c7e6620918de7e",
-          "operation_id": "op_b38acb284c1b45bd88c7e6620918de7e",
+          "kernel_operation_id": "op_1c2cff2676ac49c786d02689e478dc3d",
+          "operation_id": "op_1c2cff2676ac49c786d02689e478dc3d",
           "project_scope": null,
           "resource_scope": "Bash",
           "tool_call": {

@@ -183,6 +183,16 @@ _CALL_RULES = (
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
     (
+        "holdspeak/agent_context/screen_watch.py",
+        "_runner",
+        "run",
+        1,
+    ): (
+        "Betterment AG7: `tmux capture-pane -p` and `tmux display-message -p "
+        "#{pane_title}`, a read of a live agent's visible screen and title for "
+        "the screen rules; it changes nothing"
+    ),
+    (
         "holdspeak/coder_factory.py",
         "process_start",
         "run",
@@ -452,6 +462,14 @@ _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
         "run",
         1,
     ): "local osascript notification dispatch, no egress",
+    # Betterment daily D8: the same local notice through terminal-notifier,
+    # which can open a desk address on this hub when pressed. No egress.
+    (
+        "holdspeak/desktop_notify.py",
+        "_notify_terminal_notifier",
+        "run",
+        1,
+    ): "local terminal-notifier notification dispatch (opens a loopback desk address), no egress",
     (
         "holdspeak/desktop_presence_cocoa.py",
         "_cocoa_notify",

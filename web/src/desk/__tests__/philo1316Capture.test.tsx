@@ -23,20 +23,25 @@ beforeEach(() => vi.mocked(openNewThought).mockClear());
 afterEach(() => { vi.useRealTimers(); vi.clearAllMocks(); document.body.replaceChildren(); });
 
 describe("the pop-key verb", () => {
-  it("is one registered verb in the Desk menu, with ⌃T shown as its key", () => {
-    const verb = verbById("desk.new-thought");
-    expect(verb).toMatchObject({ label: "Write a thought", menu: "desk", key: "⌃T" });
-    expect(menuVerbs("desk").map((v) => v.id)).toContain("desk.new-thought");
+  // Betterment Q8 (one note): Write a thought left the Desk menu (parked in
+  // desk/_parked/notes/writeAThoughtVerb.ts). New Note opens the same sticky
+  // and takes ⌃T.
+  it("⌃T is New Note's second key, and New Note is in the Desk menu", () => {
+    const verb = verbById("desk.new-note");
+    expect(verb).toMatchObject({ label: "New Note", menu: "desk", key: "⌃N" });
+    expect(verb!.altKeys).toContain("⌃T");
+    expect(verbById("desk.new-thought")).toBeUndefined();
+    expect(menuVerbs("desk").map((v) => v.id)).toContain("desk.new-note");
     expect(verb!.wide).toBeFalsy(); // offered at 393 too (no hardware key assumed)
   });
 
-  it("⌃T from a window (focus off any field) opens a new thought", async () => {
+  it("⌃T from a window (focus off any field) opens a new note in the sticky", async () => {
     const pane = document.createElement("div");
     pane.tabIndex = 0;
     document.body.appendChild(pane);
     const event = kd({ key: "t", ctrlKey: true });
     Object.defineProperty(event, "target", { value: pane });
-    expect(dispatchKey(event)?.id).toBe("desk.new-thought");
+    expect(dispatchKey(event)?.id).toBe("desk.new-note");
     expect(event.defaultPrevented).toBe(true);
     await flush();
     expect(openNewThought).toHaveBeenCalledTimes(1);

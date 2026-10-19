@@ -1,0 +1,65 @@
+{
+  "_source": "Recorded from the hub's Prepared read by tests/integration/test_meeting_plugins_engines.py::test_a_failed_draft_never_holds_the_summary (the ADR drafter failed at the hub's declared plugin fault point). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+  "prepared": {
+    "can_prepare": [
+      {
+        "kind": "diagram",
+        "label": "Architecture diagram",
+        "plugin_id": "mermaid_architecture"
+      },
+      {
+        "kind": "incident_timeline",
+        "label": "Incident timeline",
+        "plugin_id": "incident_timeline"
+      },
+      {
+        "kind": "risk_register",
+        "label": "Risks",
+        "plugin_id": "risk_heatmap"
+      },
+      {
+        "kind": "milestone_plan",
+        "label": "Milestones",
+        "plugin_id": "milestone_planner"
+      }
+    ],
+    "meeting_id": "c5-review",
+    "results": [
+      {
+        "body_markdown": "# Follow-up: Architecture review: idempotent retries\n2026-10-16\n\n## What we decided\n- Adopt idempotent retries using a client-sent dedupe key (Option A); do not build a server-side dedupe table.. Why: Option B would incorrectly block two legitimate payments of the same amount within the window; the gateway already supports an idempotency key header so only clients need to change.\n- Jun will write the ADR for the idempotent-retry decision by Wednesday.\n- Theo will update the reconciliation job to read the dedupe key.\n- Rollout order: web client first, then the mobile client in the release after next; Mira owns the rollout plan.\n- The speaker will write a stakeholder update informing the support team that duplicate charges will stop after the mobile release.\n\n## Open items\n- Jun: Write the ADR for the idempotent retries decision (Option A) (due 2026-10-21)\n- Jun: Write the ADR for the idempotent retries decision (due 2026-10-21)\n- Me: Write the stakeholder update telling the support team that duplicate charges will stop after the mobile release\n- Mira: Create the rollout plan (web client first, then mobile client in the release after next)\n- Mira: Own the rollout plan (web client first, then mobile client in the release after next)\n- Theo: Update the reconciliation job to read the dedupe key",
+        "document_ref": "meeting_followup:c5-review",
+        "kind": "followup",
+        "label": "Follow-up",
+        "serves": [],
+        "state": "ready",
+        "title": "Follow-up: Architecture review: idempotent retries"
+      },
+      {
+        "error": "HOLDSPEAK_FAULT=intel.plugin:adr_drafter injected failure",
+        "kind": "adr",
+        "label": "ADR draft",
+        "plugin_id": "adr_drafter",
+        "reason": "The engine did not finish this draft.",
+        "retry": true,
+        "serves": [
+          "action-23a2ba22b8954656",
+          "action_7cc17a2c42bdcedfcc02afbf"
+        ],
+        "state": "failed"
+      },
+      {
+        "artifact_id": "art-37f452b73f7357e928ce",
+        "body_markdown": "**Team adopts client-side idempotency keys (Option A) for payment retries; server dedupe table dropped**\n\n**Highlights**\n- Decision reached: adopt client dedupe key (idempotency key header) for all payment requests; gateway already supports it, so no gateway changes needed\n- Consensus confirmed by Mira and Theo; server-side dedupe table (Option B) explicitly rejected due to false-positive risk on same-amount payments\n- Rollout sequence agreed: web client first, then mobile client in the release after next\n\n**Risks**\n- All four clients must be updated to send the dedupe key; mobile client ships on a two-week cadence, delaying full coverage\n- Duplicate charges remain possible until the mobile release ships; support team must be briefed in the interim\n\n**Next steps**\n- Jun to write the ADR for Option A by Wednesday\n- Mira to own and publish the rollout plan (web \u2192 mobile)\n- Theo to update the reconciliation job to read the idempotency key\n- Speaker to draft stakeholder/support-team update noting duplicate charges will cease after the mobile release",
+        "kind": "stakeholder_update",
+        "label": "Update for stakeholders",
+        "plugin_id": "stakeholder_update_drafter",
+        "seconds": 6,
+        "serves": [
+          "action_13a5d3310cccc6ce79edeb4f"
+        ],
+        "state": "ready",
+        "title": "Update for stakeholders"
+      }
+    ]
+  }
+}

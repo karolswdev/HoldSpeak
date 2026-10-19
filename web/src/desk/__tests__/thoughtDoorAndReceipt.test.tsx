@@ -13,7 +13,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { keptReceipt } from "../keptReceipt";
 
 const apiFetch = vi.fn();
-const adoptThought = vi.fn();
+const openNoteThought = vi.fn();
 const thoughtForNote = vi.fn();
 const openPullout = vi.fn();
 const refresh = vi.fn(async () => undefined);
@@ -31,7 +31,7 @@ vi.mock("../hooks/useWriteReceipt", () => ({
   clearWriteFailure: (...args: unknown[]) => clearWriteFailure(...args),
 }));
 vi.mock("../thoughts", () => ({
-  adoptThought: (...args: unknown[]) => adoptThought(...args),
+  openNoteThought: (...args: unknown[]) => openNoteThought(...args),
   thoughtForNote: (...args: unknown[]) => thoughtForNote(...args),
 }));
 vi.mock("../store", () => ({
@@ -40,24 +40,19 @@ vi.mock("../store", () => ({
   }),
 }));
 
-describe("Write a thought opens a note in the Thought window", () => {
+describe("New Note opens a note in the sticky (Betterment Q8: was Write a thought)", () => {
   beforeEach(() => {
     apiFetch.mockReset();
-    adoptThought.mockReset();
+    openNoteThought.mockReset();
     thoughtForNote.mockReset();
     openPullout.mockReset();
     adoptCreated.mockReset();
     storeNotes = [];
   });
 
-  it("mints a note, adopts it as a Thought, and opens it", async () => {
+  it("mints a note, opens it as a thought on the hub, and opens its window", async () => {
     apiFetch.mockResolvedValue({ note: { id: "note_1" } });
-    thoughtForNote.mockResolvedValue({
-      ownership: "ordinary",
-      note: { id: "note_1" },
-      source_precondition: { content_sha256: "abc", last_modified: "t0" },
-    });
-    adoptThought.mockResolvedValue({ thought: { id: "th_1" }, default_context_receipt: {} });
+    openNoteThought.mockResolvedValue({ id: "th_1" });
     const { openNewThought } = await import("../newThought");
 
     await openNewThought();
@@ -66,9 +61,7 @@ describe("Write a thought opens a note in the Thought window", () => {
       "/api/notes",
       expect.objectContaining({ method: "POST" }),
     );
-    expect(adoptThought).toHaveBeenCalledWith(
-      expect.objectContaining({ note_id: "note_1" }),
-    );
+    expect(openNoteThought).toHaveBeenCalledWith("note_1");
     expect(openPullout).toHaveBeenCalledWith("note:note_1");
     // The store takes the create answer first: the window does not wait
     // for a desk read (inventory 2026-10-03, A-apps row 31).
@@ -154,7 +147,7 @@ describe("Write a thought opens a note in the Thought window", () => {
 
     expect(reportWriteFailure).toHaveBeenCalledTimes(1);
     const [verb, cause, retry] = reportWriteFailure.mock.calls[0];
-    expect(verb).toBe("Write a thought");
+    expect(verb).toBe("New Note");
     expect(String(cause)).toContain("hub refused the write");
     expect(typeof retry).toBe("function");
     // Nothing is opened over a note that was never made.

@@ -266,6 +266,9 @@ def _boot(
     # Betterment AG0: the hub asks tmux nothing about the seeded launches
     # (this hub shares the owner's tmux socket; the launches had no session).
     monkeypatch.setenv("HOLDSPEAK_RESTART_CHECK", "off")
+    # Betterment AG7: the hub reads no agent's screen (a test that walks one
+    # turns it on with its own TMUX_TMPDIR).
+    monkeypatch.setenv("HOLDSPEAK_SCREEN_RULES", "off")
     monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
     monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
     reset_database()

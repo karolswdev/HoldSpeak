@@ -17,6 +17,10 @@ os.environ.setdefault("HOLDSPEAK_CLI_ENGINES", "off")
 # of the fixture routes is real) whether it takes tool calls. A test of the
 # Ask tool loop turns it on and replays a recorded answer.
 os.environ.setdefault("HOLDSPEAK_ASK_SERVER_TOOLS", "off")
+# Betterment daily D8: a finished automation run raises a desktop notice. No
+# test posts one to the owner's Notification Center; a test of the post turns
+# it on (or injects a notifier).
+os.environ.setdefault("HOLDSPEAK_DESKTOP_NOTIFY", "0")
 
 import pytest
 import numpy as np

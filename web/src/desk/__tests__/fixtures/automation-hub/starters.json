@@ -70,6 +70,24 @@
       "about": "which drawer?"
      },
      "schedule": null
+    },
+    {
+     "id": "morning-prep",
+     "name": "Morning prep",
+     "description": "Prepares your day before you arrive: each meeting, what is yours, what to nudge.",
+     "instruction": "Prepare my day: for each meeting today, what each side owes and what to raise; list what is mine and due today or late; draft a nudge for each thing that is late from someone else. Use the desk's tools: today's calendar, Needs you, People and this week's meetings and notes.\n\nAnswer in this form. One section per meeting today, in time order:\n## HH:MM <meeting title>\n- <name> owes: <item> (due <day>)\n- I owe: <item>\n- Raise: <one point to raise>\nThen \"## Mine today\" with one line per item, and \"## Nudges\" with one line per drafted nudge (\"- <name>: <message>\"). Write \"- Nothing\" under a section with nothing.",
+     "sources": [
+      "meetings:this_week",
+      "notes:this_week"
+     ],
+     "when": {
+      "kind": "schedule",
+      "every": "weekday",
+      "time": "07:30"
+     },
+     "output_target": "today",
+     "blanks": {},
+     "schedule": "30 7 * * 1-5"
     }
    ]
   },

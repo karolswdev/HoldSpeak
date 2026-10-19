@@ -1,0 +1,126 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-19T09:32:18.471868Z",
+  "wire": {
+    "count": 0,
+    "flights": [
+      {
+        "agent": "claude",
+        "close": null,
+        "desk_answer": null,
+        "ended_at": null,
+        "id": "m-ag7-a0",
+        "kind": "action",
+        "launch_id": "launch_ag7_held",
+        "launched_at": "2026-10-19T09:27:14.053510Z",
+        "merged_at": null,
+        "new": false,
+        "origin_ref": "action:m-ag7-a0",
+        "pr": null,
+        "project_id": "",
+        "project_name": "",
+        "screen": {
+          "at": "2026-10-19T09:32:18.047300Z",
+          "choices": [
+            {
+              "label": "Yes",
+              "n": "1"
+            },
+            {
+              "label": "No, and tell Claude what to do differently",
+              "n": "2"
+            }
+          ],
+          "command": "rm -rf build/ && make release\nClean the build and release",
+          "rule": "bash_permission_prompt",
+          "said": null,
+          "since": "2026-10-19T09:32:15.992133Z",
+          "state": "approve",
+          "turn_id": null,
+          "wait": "approve"
+        },
+        "session_cleanup": null,
+        "session_key": null,
+        "state": "waiting",
+        "state_source": "screen",
+        "title": "Release the rollback build",
+        "turn_end": "asks",
+        "turn_id": null
+      },
+      {
+        "agent": "claude",
+        "close": null,
+        "desk_answer": null,
+        "ended_at": null,
+        "id": "m-ag7-a1",
+        "kind": "action",
+        "launch_id": "launch_ag7_asks",
+        "launched_at": "2026-10-19T09:27:14.053510Z",
+        "merged_at": null,
+        "new": false,
+        "origin_ref": "action:m-ag7-a1",
+        "pr": null,
+        "project_id": "",
+        "project_name": "",
+        "screen": {
+          "at": "2026-10-19T09:32:18.047300Z",
+          "choices": [],
+          "command": null,
+          "rule": "live_prompt_box",
+          "said": "I found two places for the rollback flag. Should it live in config/flags.yaml (shared with staging ) or in an env var (per host)? Answer 1 for config, 2 for env.",
+          "since": "2026-10-19T09:32:18.047300Z",
+          "state": "asks",
+          "turn_id": "screen:2026-10-19T09:32:18.047300Z",
+          "wait": null
+        },
+        "session_cleanup": null,
+        "session_key": null,
+        "state": "waiting",
+        "state_source": "screen",
+        "title": "Move the rollback flag",
+        "turn_end": "asks",
+        "turn_id": null
+      },
+      {
+        "agent": "claude",
+        "close": null,
+        "desk_answer": null,
+        "ended_at": null,
+        "id": "m-ag7-a2",
+        "kind": "action",
+        "launch_id": "launch_ag7_done",
+        "launched_at": "2026-10-19T09:27:14.053510Z",
+        "merged_at": null,
+        "new": true,
+        "origin_ref": "action:m-ag7-a2",
+        "pr": null,
+        "project_id": "",
+        "project_name": "",
+        "screen": {
+          "at": "2026-10-19T09:32:18.047300Z",
+          "choices": [],
+          "command": null,
+          "rule": "live_prompt_box",
+          "said": "Done. The rollback flag now lives in the place you chose, with a test. Branch is ready for review; I did not open a PR.",
+          "since": "2026-10-19T09:32:18.047300Z",
+          "state": "done",
+          "turn_id": "screen:2026-10-19T09:32:18.047300Z",
+          "wait": null
+        },
+        "session_cleanup": null,
+        "session_key": null,
+        "state": "done",
+        "state_source": "screen",
+        "title": "Add the rollback test",
+        "turn_end": "done",
+        "turn_id": "screen:2026-10-19T09:32:18.047300Z"
+      }
+    ],
+    "history": [],
+    "launches": {
+      "cap": 6,
+      "live": 3
+    },
+    "sessions": []
+  }
+}

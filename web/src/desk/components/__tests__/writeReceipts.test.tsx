@@ -329,7 +329,7 @@ describe("HS-132-06 populated-floor write receipts", () => {
     });
     await waitFor(() =>
       expect(q(".write-receipt-label")?.textContent).toBe(
-        "CREATE NOTE FAILED · HTTP 500",
+        "NEW NOTE FAILED · HTTP 500",
       ),
     );
     // In flow inside the system bar — not a floating overlay.
@@ -345,7 +345,7 @@ describe("HS-132-06 populated-floor write receipts", () => {
     await user.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(posts()).toBe(before + 1));
     expect(q(".write-receipt-label")?.textContent).toBe(
-      "CREATE NOTE FAILED · HTTP 500",
+      "NEW NOTE FAILED · HTTP 500",
     );
 
     // A landed retry clears the line: success is quiet.

@@ -61,7 +61,9 @@ async function openEverything(seat: "inspector" | "editor" = "inspector") {
   useDesk.getState().openScheduleCreate();
   useDesk.getState().openAsk();
   if (seat === "inspector") useDesk.getState().openToolInspector("project", "p-1");
-  else useDesk.getState().openEditor("note:n1");
+  // Betterment Q8: a note has no inline editor (it opens its sticky), so the
+  // editor seat is held by a Knowledge record.
+  else useDesk.getState().openEditor("knowledge:k1");
   return { useDeliveryTerminal, useSteering };
 }
 
@@ -83,6 +85,7 @@ async function reloadAndReturn(items?: Record<string, unknown>) {
 }
 
 const NOTE = { id: "n1", title: "Ledger risks", bodyMarkdown: "body", tags: [] };
+const KB = { id: "k1", name: "Ledger reading", description: "", items: [] };
 
 describe("B2 slice two: every remaining family returns after a reload", () => {
   it("dossier, terminal, Mission Control, session, Trust, tool inspector, Schedule, Ask and the editor come back; restore sends no write", async () => {
@@ -145,9 +148,9 @@ describe("B2 slice two: every remaining family returns after a reload", () => {
 
   it("the inline editor returns on its object after the first Desk read", async () => {
     await openEverything("editor");
-    expect(stored().places["window/editor"]).toBe('"note:n1"');
-    const after = await reloadAndReturn({ note: [NOTE] });
-    expect(after.desk.getState().editingId).toBe("note:n1");
+    expect(stored().places["window/editor"]).toBe('"knowledge:k1"');
+    const after = await reloadAndReturn({ kb: [KB] });
+    expect(after.desk.getState().editingId).toBe("knowledge:k1");
     expect(after.desk.getState().askOpen).toBe(true);
     after.terminal.getState().close();
     after.steering.getState().closeSession();
@@ -156,7 +159,7 @@ describe("B2 slice two: every remaining family returns after a reload", () => {
 
   it("the editor of a record that is gone is not reopened, and its record is forgotten", async () => {
     await openEverything("editor");
-    const after = await reloadAndReturn({ note: [] });
+    const after = await reloadAndReturn({ kb: [] });
     expect(after.desk.getState().editingId).toBeNull();
     expect(stored().places["window/editor"]).toBeUndefined();
     after.terminal.getState().close();

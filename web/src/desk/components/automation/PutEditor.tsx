@@ -1,7 +1,8 @@
 /** Betterment A6 — the Put it in editor (DESIGN §4, RECIPE A6).
  *
  * Where each result goes: My Inbox (a note, the default), Needs you (a row
- * due today), or a saved destination: a file in a folder, GitHub, Jira,
+ * due today), Today (Betterment daily D9: the newest result is Today's
+ * Prepared block), or a saved destination: a file in a folder, GitHub, Jira,
  * Confluence, email, Slack. A destination only PREPARES the send; he presses
  * Send on the result (the egress rule). One press on a choice saves it; the
  * line folds its value in place. Each destination row says where it goes. */
@@ -38,7 +39,7 @@ export function PutEditor({
   onChoose,
 }: {
   target: string | null | undefined;
-  /** Save one choice (`inbox`, `needs_you`, `destination:<id>`). */
+  /** Save one choice (`inbox`, `needs_you`, `today`, `destination:<id>`). */
   onChoose: (next: string) => Promise<void>;
 }) {
   const current = String(target ?? "inbox");
@@ -85,6 +86,7 @@ export function PutEditor({
       <ul className="automation-engine-list">
         {row("inbox", "My Inbox")}
         {row("needs_you", "Needs you")}
+        {row("today", "Today")}
       </ul>
       {saved.length ? (
         <section aria-label="Saved destinations">

@@ -12,12 +12,14 @@ its status: a route that refuses on this hub is replayed as that refusal.
 
 One boot, in order:
   1. the note is made (``POST /api/notes``);
-  2. the reads before Develop: the notes list, the note's thought status
-     (``ordinary``), and the reads its window makes;
-  3. the owner's Develop (``POST /api/thoughts/adopt``, the request
-     ``NotePullout`` sends);
-  4. the reads after Develop: the notes list, the thought status
-     (``thought``), and the reads the Thought window makes.
+  2. the reads before the note is opened: the notes list and the note's
+     thought status (``ordinary``);
+  3. the note's window opens it (``POST /api/thoughts/open-note``, the
+     request the one note window sends; Betterment Q8: the hub adopts a plain
+     note here, with no Develop press);
+  4. the reads after: the notes list, the thought status (``thought``), and
+     the reads the sticky makes;
+  5. the window opens it again (the same request; the same thought).
 
 Run it again when a producer's answer shape changes:
 
@@ -64,6 +66,8 @@ THOUGHT_GETS = (
     "/api/thoughts/{thought}/workbench",
     "/api/thoughts/{thought}/context",
     "/api/thoughts/{thought}/original",
+    # Betterment Q9: the sticky reads the note's outcome rows (Find the tasks).
+    "/api/notes/{note}/outcomes",
 )
 
 
@@ -93,24 +97,21 @@ def record() -> dict[str, Any]:
             before = {p.format(**fill): _read(c, p.format(**fill)) for p in NOTE_GETS}
             status = before[f"/api/thoughts/for-note/{note['id']}"]["body"]
             assert status["ownership"] == "ordinary", status
-            pre = status["source_precondition"]
-            adopt_body = {
-                "request_id": "palette-enter-develop",
-                "note_id": note["id"],
-                "expected_source_content_sha256": pre["content_sha256"],
-                "expected_source_last_modified": pre["last_modified"],
-            }
-            adopted = _ok(c.post("/api/thoughts/adopt", json=adopt_body), "POST /api/thoughts/adopt")
-            fill["thought"] = adopted["thought"]["id"]
+            open_body = {"note_id": note["id"]}
+            opened = _ok(c.post("/api/thoughts/open-note", json=open_body), "POST /api/thoughts/open-note")
+            fill["thought"] = opened["thought"]["id"]
             after = {p.format(**fill): _read(c, p.format(**fill)) for p in THOUGHT_GETS}
             assert after[f"/api/thoughts/for-note/{note['id']}"]["body"]["ownership"] == "thought", after
+            reopened = _ok(c.post("/api/thoughts/open-note", json=open_body), "POST /api/thoughts/open-note (again)")
+            assert reopened["thought"]["id"] == fill["thought"], reopened
             return {
                 "note_id": note["id"],
                 "thought_id": fill["thought"],
                 "title": TITLE,
                 "before": before,
-                "adopt": {"request": adopt_body, "answer": adopted},
+                "open": {"request": open_body, "answer": opened},
                 "after": after,
+                "reopen": {"request": open_body, "answer": reopened},
             }
         finally:
             from holdspeak.db import reset_database

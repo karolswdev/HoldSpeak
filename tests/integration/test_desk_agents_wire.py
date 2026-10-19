@@ -906,3 +906,275 @@ def test_the_agents_read_shows_the_desks_own_answer(
     [ghost] = [f for f in quiet["flights"] if f["launch_id"] == "launch_ag0_ghost"]
     assert ghost["desk_answer"]["new"] is False, ghost
     _keep("agents-ag3", "coders-sessions.seen", quiet, tmp_path, hub)
+
+
+# ── Betterment AG7: screen rules (the herdr port) ──────────────────────
+
+AG7_SCREENS = REPO / "tests" / "fixtures" / "agent_screens"
+AG7_TASKS = {
+    "launch_ag7_held": "Release the rollback build",
+    "launch_ag7_asks": "Move the rollback flag",
+    "launch_ag7_done": "Add the rollback test",
+}
+
+
+def _ag7_show(session: str, screen: str, *, new: bool) -> None:
+    """A real tmux pane on the run's own tmux server (conftest's
+    TMUX_TMPDIR) that shows a recorded screen with its recorded title."""
+    import shlex
+    import subprocess
+
+    meta = json.loads((AG7_SCREENS / f"{screen}.json").read_text(encoding="utf-8"))
+    command = (
+        f"printf '\\033]0;%s\\007' {shlex.quote(meta['title'])}; "
+        f"cat {shlex.quote(str(AG7_SCREENS / f'{screen}.txt'))}; exec sleep 600"
+    )
+    argv = (["tmux", "new-session", "-d", "-s", session, "-x", "100", "-y", "30", command] if new
+            else ["tmux", "respawn-pane", "-k", "-t", session, command])
+    subprocess.run(argv, check=True, capture_output=True, timeout=10)
+
+
+def _ag7_seed() -> None:
+    """Three launches whose agents report no hook (the fake Claude Code with
+    its hooks off): only their screens tell their state."""
+    from holdspeak.db import get_database
+    from holdspeak.delivery.factory_launch import LaunchLedger
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    db = get_database()
+    start = (datetime.now() - timedelta(hours=1)).replace(microsecond=0)
+    tasks = list(AG7_TASKS.values())
+    db.meetings.save_meeting(MeetingState(
+        id="m-ag7", started_at=start, ended_at=start + timedelta(minutes=30), title="Platform sync",
+        segments=[TranscriptSegment(text="Ship the rollback flag.", speaker="Me", start_time=1.0, end_time=4.0)],
+        intel=IntelSnapshot(timestamp=1.0, topics=["flags"], summary="The flag ships.", action_items=[{
+            "id": f"m-ag7-a{i}", "task": task, "owner": None, "due": None, "status": "pending",
+            "review_state": "accepted", "source_timestamp": None, "created_at": start.isoformat()}
+            for i, task in enumerate(tasks)]),
+        intel_status="completed"))
+    iso = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat().replace("+00:00", "Z")
+    ledger = LaunchLedger()
+    with db._connection() as conn:
+        for launch_id, task in AG7_TASKS.items():
+            item = str(conn.execute("SELECT id FROM action_items WHERE task=? LIMIT 1", (task,)).fetchone()[0])
+            ledger.record({
+                "launch_schema": 1, "launch_id": launch_id, "state": "launched", "node_id": "this-node",
+                "profile_id": "claude-default", "gate": "gated", "branch": f"hs/action-{item}",
+                "session": f"hs-{launch_id}", "origin_ref": {"kind": "action", "id": item},
+                "launched_at": iso, "control_mode": "neutral", "instruction_state": "sent",
+            })
+
+
+def _ag7_wait(hub: str, want: dict[str, str]) -> dict[str, Any]:
+    """The hub's read once its screen watcher (every 2 s) shows ``want``."""
+    import time
+
+    deadline = time.monotonic() + 30
+    while True:
+        body = _get(hub, "/api/coders/sessions?include_ended=false")
+        states = {f["launch_id"]: f["state"] for f in body["flights"] if f["launch_id"] in want}
+        if all(states.get(k) == v for k, v in want.items()):
+            return body
+        assert time.monotonic() < deadline, states
+        time.sleep(0.5)
+
+
+def test_the_agents_read_states_from_the_screen_when_no_hook_speaks(
+    hub: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Betterment AG7 (the hub half): three agents whose hooks are off. The
+    hub's watcher reads each one's real tmux pane (recorded screens of the
+    rig's fake Claude Code, tests/fixtures/agent_screens) and the herdr rules
+    say Working, then Wants to run (with the command and the choices), Asks
+    you, and Done (New): a turn that went idle after the screen showed it
+    working. "Why this state" names the rule. The answers are recorded for
+    agents.app.test.tsx (fixtures/agents-ag7)."""
+    import subprocess
+
+    monkeypatch.setenv("HOLDSPEAK_SCREEN_RULES", "on")
+    _ag7_seed()
+    try:
+        _ag7_show("hs-launch_ag7_held", "claude-rig-permission", new=True)
+        _ag7_show("hs-launch_ag7_asks", "claude-rig-working", new=True)
+        _ag7_show("hs-launch_ag7_done", "claude-rig-working", new=True)
+        working = _ag7_wait(hub, {"launch_ag7_asks": "working", "launch_ag7_done": "working",
+                                  "launch_ag7_held": "waiting"})
+        assert all(f["state_source"] == "screen" for f in working["flights"] if f["launch_id"] in AG7_TASKS)
+        _ag7_show("hs-launch_ag7_asks", "claude-rig-asks", new=False)
+        _ag7_show("hs-launch_ag7_done", "claude-rig-done", new=False)
+        body = _ag7_wait(hub, {"launch_ag7_asks": "waiting", "launch_ag7_done": "done"})
+        flights = {f["launch_id"]: f for f in body["flights"]}
+        held, asks, done = flights["launch_ag7_held"], flights["launch_ag7_asks"], flights["launch_ag7_done"]
+        assert (held["turn_end"], held["screen"]["wait"]) == ("asks", "approve"), held
+        assert held["screen"]["command"].splitlines()[0] == "rm -rf build/ && make release"
+        assert [c["n"] for c in held["screen"]["choices"]] == ["1", "2"]
+        assert held["screen"]["rule"] == "bash_permission_prompt"
+        assert (asks["turn_end"], asks["screen"]["state"]) == ("asks", "asks"), asks
+        assert (done["new"], done["screen"]["state"]) == (True, "done"), done
+        assert done["turn_id"].startswith("screen:")
+        _keep("agents-ag7", "coders-sessions", body, tmp_path, hub)
+        why = _get(hub, "/api/agent/launches/launch_ag7_held/explain")
+        assert (why["source"], why["state"], why["screen"]["rule"]) == ("screen", "waiting", "bash_permission_prompt")
+        assert why["screen"]["rules_source"] == "bundled" and why["hook"] is None
+        assert any("Do you want to proceed?" in line for line in why["screen"]["evidence"])
+        _keep("agents-ag7", "explain.held", why, tmp_path, hub)
+        _keep("agents-ag7", "lane.held", _get(hub, "/api/agent/launches/launch_ag7_held/lane"), tmp_path, hub)
+        # Gaps: his Allow reaches the screen prompt of an agent with no hook
+        # (the real pane gets Enter); a stale prompt token sends nothing.
+        from tests.e2e.agents_lane_rig import TOKEN, _http
+
+        status, stale = _http(hub, "POST", "/api/agent/launches/launch_ag7_held/answer", TOKEN,
+                              {"since": "2026-01-01T00:00:00Z", "keys": ["Enter"]})
+        stale = stale if isinstance(stale, dict) else json.loads(stale)
+        assert status == 409 and stale["code"] == "wait_not_current", (status, stale)
+        status, sent = _http(hub, "POST", "/api/agent/launches/launch_ag7_held/answer", TOKEN,
+                             {"since": held["screen"]["since"], "keys": ["Enter"]})
+        assert status == 200 and sent["status"] == "delivered", (status, sent)
+        _keep("agents-ag7", "answer.held", sent, tmp_path, hub)
+    finally:
+        for launch_id in AG7_TASKS:
+            subprocess.run(["tmux", "kill-session", "-t", f"hs-{launch_id}"], capture_output=True, timeout=10)
+
+
+# ── Betterment AG8: the Agents list is the fleet ───────────────────────
+
+AG8_LAUNCHES = (
+    # launch id, project, task, how its session stands
+    ("launch_ag8_ask", "Platform", "Write the on-call note", "asks"),
+    ("launch_ag8_held", "Ledger", "Release the ledger build", "held"),
+    ("launch_ag8_new", "Platform", "Draft test scaffolding for flags", "done"),
+    ("launch_ag8_work", "Ledger", "Review the ledger migration", "working"),
+    ("launch_ag8_quiet", "Platform", "Rename the rollback flag", "seen"),
+)
+
+
+AG8_QUEUED = "Tidy the ledger runbook"
+
+
+def _ag8_seed(home: Path) -> None:
+    """Five agents on two Projects through the hook ingest, in the fake
+    Claude Code's order: one asks, one waits at a permission prompt, one
+    finished (New), one works, one finished and was opened (Quiet)."""
+    import time
+
+    import holdspeak.agent_context as agent_context_pkg
+    from holdspeak.agent_context import event_log, ingest_agent_hook_event
+    from holdspeak.db import get_database
+    from holdspeak.delivery.factory_launch import LaunchLedger
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    db = get_database()
+    start = (datetime.now() - timedelta(hours=1)).replace(microsecond=0)
+    for project in ("Platform", "Ledger"):
+        db.projects.create_project(project_id=f"p-{project.lower()}", name=project)
+        tasks = [task for _l, p, task, _s in AG8_LAUNCHES if p == project]
+        if project == "Ledger":
+            tasks.append(AG8_QUEUED)   # handed at the limit: it waits
+        meeting = f"m-ag8-{project.lower()}"
+        db.meetings.save_meeting(MeetingState(
+            id=meeting, started_at=start, ended_at=start + timedelta(minutes=30), title=f"{project} sync",
+            segments=[TranscriptSegment(text="Hand these out.", speaker="Me", start_time=1.0, end_time=4.0)],
+            intel=IntelSnapshot(timestamp=1.0, topics=["agents"], summary="Work to hand.", action_items=[{
+                "id": f"{meeting}-a{i}", "task": task, "owner": None, "due": None, "status": "pending",
+                "review_state": "accepted", "source_timestamp": None, "created_at": start.isoformat()}
+                for i, task in enumerate(tasks)]),
+            intel_status="completed"))
+        db.projects.associate_meeting_project(meeting_id=meeting, project_id=f"p-{project.lower()}",
+                                              source="manual", confidence=1.0)
+    spool = {"state_path": agent_context_pkg.AGENT_CONTEXT_FILE, "events_spool_dir": event_log.default_spool_dir()}
+
+    def hook(sid: str, event: str, **payload: Any) -> None:
+        ingest_agent_hook_event(agent="claude", payload={
+            "session_id": sid, "cwd": str(home / "dev" / "platform"), "hook_event_name": event, **payload}, **spool)
+
+    iso = (datetime.now(timezone.utc) - timedelta(minutes=10)).isoformat().replace("+00:00", "Z")
+    ledger = LaunchLedger()
+    with db._connection() as conn:
+        for launch_id, _project, task, stands in AG8_LAUNCHES:
+            sid = launch_id.replace("launch_", "")
+            hook(sid, "SessionStart", source="startup")
+            hook(sid, "UserPromptSubmit", prompt="the brief")
+            hook(sid, "PostToolUse", tool_name="Bash", tool_input={"command": "git status"})
+            if stands == "asks":
+                hook(sid, "Stop", last_assistant_message=AG0_QUESTION, stop_hook_active=False)
+            elif stands == "held":
+                hook(sid, "Notification", notification_type="permission_prompt", message=AG2_HELD)
+            elif stands in ("done", "seen"):
+                hook(sid, "Stop", last_assistant_message=AG0_DONE, stop_hook_active=False)
+            time.sleep(1.1)   # each wait starts in its own second: the oldest ask leads
+            item = str(conn.execute("SELECT id FROM action_items WHERE task=? LIMIT 1", (task,)).fetchone()[0])
+            attempt = db.work_attempts.create(
+                source_id="src_platform", worktree_id=f"wt_{launch_id}", project="platform",
+                story_id=f"action-{item}", node_id="this-node", session_id=f"claude:{sid}",
+                target_id=f"tgt_{launch_id}", kind="launch", exact=True, claimed_by="launch:claude-default",
+                state="working", origin_ref=f"action:{item}")
+            ledger.record({
+                "launch_schema": 1, "launch_id": launch_id, "state": "launched", "node_id": "this-node",
+                "profile_id": "claude-default", "gate": "gated", "branch": f"hs/action-{item}",
+                "session": f"hs-{launch_id}", "origin_ref": {"kind": "action", "id": item},
+                "attempt_id": attempt.attempt_id, "launched_at": iso, "control_mode": "neutral",
+                "instruction_state": "sent",
+            })
+
+
+def test_the_agents_read_is_the_fleet(hub: str, tmp_path: Path) -> None:
+    """Betterment AG8 (the hub half): five agents on two Projects in mixed
+    states and one hand waiting for a free agent. The flights carry what the
+    fleet sorts and groups on (state, New, the Project, the wait's start);
+    Start an agent's three requests (a note, filed in the Project, handed)
+    and Cancel on a queued hand answer as recorded here for
+    agents.app.test.tsx (fixtures/agents-ag8)."""
+    from holdspeak.config import Config
+    from holdspeak.services.agent_hand_queue import HandQueue
+    from tests.e2e.agents_lane_rig import TOKEN, _http
+
+    config = Config.load()
+    config.control_mode = "neutral"   # Normal: the desk drafts, he answers
+    config.save()
+    _ag8_seed(tmp_path / "home")
+    status, seen = _http(hub, "POST", "/api/agent/launches/launch_ag8_quiet/seen", TOKEN, {})
+    assert status == 200 and seen["seen"], seen
+    from holdspeak.db import get_database
+
+    with get_database()._connection() as conn:
+        waiting = str(conn.execute("SELECT id FROM action_items WHERE task=? LIMIT 1", (AG8_QUEUED,)).fetchone()[0])
+    queued = HandQueue().add("action", waiting, profile="claude-default", project_id="p-ledger")
+    body = _get(hub, "/api/coders/sessions?include_ended=false")
+    flights = {f["launch_id"] or f.get("queue_id"): f for f in body["flights"]}
+    states = {k: (f["state"], f["new"], f["project_name"]) for k, f in flights.items() if k}
+    assert states["launch_ag8_ask"][0] == "waiting" and states["launch_ag8_held"][0] == "waiting"
+    assert states["launch_ag8_new"][:2] == ("done", True) and states["launch_ag8_quiet"][:2] == ("done", False)
+    assert states["launch_ag8_work"][0] == "working"
+    assert {p for _s, _n, p in states.values()} >= {"Platform", "Ledger"}
+    rows = {r["session"]["session_id"]: r["session"] for r in body["sessions"]}
+    assert rows["ag8_ask"]["wait_started_at"] < rows["ag8_held"]["wait_started_at"]
+    _keep("agents-ag8", "coders-sessions", body, tmp_path, hub)
+
+    # Start an agent: a note with his words, filed in the Project, handed.
+    projects = _get(hub, "/api/projects")
+    assert {p["name"] for p in projects["projects"]} >= {"Platform", "Ledger"}
+    _keep("agents-ag8", "projects", projects, tmp_path, hub)
+    status, note = _http(hub, "POST", "/api/notes", TOKEN, {
+        "title": "Add a rollback test", "body_markdown": "Add a rollback test", "tags": ["agent"]})
+    assert status == 201, note
+    _keep("agents-ag8", "note.create", note, tmp_path, hub)
+    note_id = note["note"].get("note_id") or note["note"]["id"]
+    status, filed = _http(hub, "PUT", f"/api/projects/p-platform/resources/note:{note_id}", TOKEN, {})
+    assert status == 200, filed
+    _keep("agents-ag8", "resource.add", filed, tmp_path, hub)
+    status, hand = _http(hub, "POST", "/api/agent/hand", TOKEN, {
+        "kind": "note", "id": note_id, "profile": "claude-default", "project_id": "p-platform", "queue": True})
+    if not isinstance(hand, dict):
+        hand = json.loads(hand)   # an HTTPError body comes back as text
+    # The rig's Project has no repository: the hub refuses with its code.
+    assert status == 409 and hand["code"] in {"no_repository", "repository_not_registered"}, (status, hand)
+    _keep("agents-ag8", "hand.refused", hand, tmp_path, hub)
+
+    # Cancel on the queued hand: it leaves the queue; a second press is 404.
+    status, cancelled = _http(hub, "DELETE", f"/api/agent/hand/queue/{queued['queue_id']}", TOKEN)
+    assert status == 200 and cancelled["cancelled"] is True, (status, cancelled)
+    _keep("agents-ag8", "queue.cancel", cancelled, tmp_path, hub)
+    status, again = _http(hub, "DELETE", f"/api/agent/hand/queue/{queued['queue_id']}", TOKEN)
+    assert status == 404, (status, again)
+    after = _get(hub, "/api/coders/sessions?include_ended=false")
+    assert not any(f.get("queue_id") == queued["queue_id"] for f in after["flights"])

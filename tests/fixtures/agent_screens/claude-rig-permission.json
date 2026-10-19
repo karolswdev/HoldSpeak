@@ -1,0 +1,8 @@
+{
+  "agent": "claude",
+  "title": "✳ fake-claude",
+  "expected_state": "blocked",
+  "rule_at_capture": "bash_permission_prompt",
+  "source": "rig: docs/internal/betterment/agents/rig/fake_claude.py in tmux (hooks off)",
+  "captured_at": "2026-10-19T03:39:31.101594+00:00"
+}

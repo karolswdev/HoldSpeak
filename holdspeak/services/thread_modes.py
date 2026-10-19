@@ -53,7 +53,9 @@ if TYPE_CHECKING:
 # results and the ``automation.*`` aliases are an agent's MCP tools; a
 # thread reads results through workbench.get, and the Desk palette (27,679
 # of 27,680 bytes) does not grow.
-_MCP_ONLY: frozenset[str] = frozenset({"people.suggestions", "workbench.results"})
+# Betterment AG7: coder.explain (why an agent has its state) is for agents
+# over MCP; the thread palettes do not grow.
+_MCP_ONLY: frozenset[str] = frozenset({"people.suggestions", "workbench.results", "coder.explain"})
 
 
 def _thread_side(name: str) -> bool:

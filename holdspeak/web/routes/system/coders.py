@@ -332,6 +332,17 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
             annotate_sessions(items, flights)
         except Exception as e:
             log.warning(f"agent flights unread: {e}")
+        # Betterment AG7: each session's screen as the watcher last read it
+        # (its prompt's command and choices; null when no pane was read).
+        try:
+            from ....agent_context.screen_watch import STORE, screen_wire
+
+            now = datetime.now(timezone.utc)
+            for row in items:
+                session = row.get("session") or {}
+                row["screen"] = screen_wire(STORE.get(f"{session.get('agent')}:{session.get('session_id')}"), now)
+        except Exception as e:
+            log.warning(f"agent screens unread: {e}")
         # PHILO-14 C4: the Conductor drawer's history (every launch that ended
         # in the last 24 h, each once) and the hub's own launch count against
         # its cap (`live_launches`, the count Hand to agent refuses at).

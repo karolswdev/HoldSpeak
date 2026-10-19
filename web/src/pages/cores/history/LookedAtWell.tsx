@@ -28,7 +28,9 @@ export function LookedAtWell({
   if (!items?.length) return null;
   const count = items.length; // never zero: an empty list draws no fold
   return (
-    <Disclosure label={`Looked at · ${count}`} variant="dense">
+    // C5b: the default fold (the dense one drew its body beside the trigger).
+    <div className="meetings-looked-at-fold">
+    <Disclosure label={`Looked at · ${count}`}>
       <SurfaceWell>
         <ul className="meetings-looked-at" data-testid="meeting-looked-at">
           {items.map((item) => (
@@ -42,5 +44,6 @@ export function LookedAtWell({
         </ul>
       </SurfaceWell>
     </Disclosure>
+    </div>
   );
 }

@@ -60,6 +60,11 @@ def seeded(db: Database):
             id="prior",
             started_at=datetime(2026, 6, 1, 9, 0, 0),
             title="Kickoff",
+            # C6: the last meeting with the same people is "last time".
+            segments=[
+                TranscriptSegment(text="Kick off", speaker="Me", start_time=0.0, end_time=5.0),
+                TranscriptSegment(text="Set up CI", speaker="alice", start_time=5.0, end_time=9.0),
+            ],
             intel=IntelSnapshot(
                 timestamp=0.0,
                 action_items=[_action("p1", "Set up CI", owner="Bob", status="done")],
