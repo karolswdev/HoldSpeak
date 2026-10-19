@@ -229,8 +229,8 @@ describe("PHILO-14 C3 the drag", () => {
     await renderDesk();
     const source = comms();
     expect(source).toHaveAttribute("draggable", "true");
-    // Not a work item: a person, an agent, the drawers do not lift.
-    expect(screen.getByRole("button", { name: /^Codex: reconciliation job, AGENT/ })).not.toHaveAttribute("draggable", "true");
+    // Not a work item: a person, the drawers do not lift.
+    expect(conductor()).not.toHaveAttribute("draggable", "true");
     const data = transfer();
     fireEvent.dragStart(source, { dataTransfer: data });
     expect(data.setData).toHaveBeenCalledWith("application/x-holdspeak-hand", "action:a-comms");
@@ -291,13 +291,12 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     expect(screen.queryByTestId("hand-confirm")).toBeNull();
   });
 
-  it("drop on an agent icon hands to that agent's kind (Codex)", async () => {
+  it("Betterment AG8: no agent icon on the floor; the Agents drawer is the one drop target", async () => {
     await renderDesk();
-    dragOnto(comms(), screen.getByRole("button", { name: /^Codex: reconciliation job, AGENT/ }));
+    expect(screen.queryByRole("button", { name: /^Codex: reconciliation job, AGENT/ })).toBeNull();
+    dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
-    await factIs(line, "CODEX · YOLO · hs/write-the-cutover-comms");
-    expect(within(line).getByText("API.OPENAI.COM")).toBeTruthy();
-    expect((posts("/api/agent/hand/preview")[0].init?.json as { profile: string }).profile).toBe("codex-default");
+    await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
   });
 
   it("at the working-at-once limit the verb reads Start when one is free and queues the hand (Betterment AG5)", async () => {
@@ -350,12 +349,11 @@ describe("PHILO-14 C3 Astra r1 on #946", () => {
     dragOnto(comms(), conductor());
     const line = await within(drawer()).findByTestId("hand-confirm");
     await factIs(line, "CLAUDE CODE · YOLO · hs/write-the-cutover-comms");
-    expect(screen.queryByRole("button", { name: /^Claude Code: cutover comms, AGENT/ })).toBeNull();
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
-    // The session registers on the second read after the launch: the poll waits for it.
-    expect(
-      await screen.findByRole("button", { name: /^Claude Code: cutover comms, AGENT/ }, { timeout: 6000 }),
-    ).toBeTruthy();
+    // The session registers on the second read after the launch: the poll
+    // waits for it. Betterment AG8: it is drawn in the Agents fleet (the
+    // flights store), not as its own desk icon.
+    await waitFor(() => expect(useAgentFlights.getState().sessions.map((r) => r.key)).toContain("claude:new1"), { timeout: 6000 });
     const reads = world.sessionReads;
     await new Promise((r) => setTimeout(r, 2500));
     expect(world.sessionReads).toBe(reads); // bounded: it stops once the agent is drawn
@@ -374,7 +372,8 @@ describe("PHILO-14 C3 Astra r1 on #946", () => {
     dragOnto(comms(), conductor());
     await screen.findByTestId("hand-sheet");
     expect(screen.getByRole("radio", { name: /Claude Code/ })).toBeChecked();
-    dragOnto(comms(), screen.getByRole("button", { name: /^Codex: reconciliation job, AGENT/ }));
+    // Betterment AG8: no Codex icon on the floor to drop on; the sheet flips.
+    fireEvent.click(screen.getByRole("radio", { name: /Codex/ }));
     await waitFor(() => expect(screen.getByRole("radio", { name: /Codex/ })).toBeChecked());
   });
 
@@ -404,10 +403,11 @@ describe("PHILO-14 C3 Secure and Normal: the sheet", () => {
   it.each(["safe", "neutral"])("%s: the drop opens the launch sheet on the dropped agent; no preview from the line", async (mode) => {
     world.mode = mode;
     await renderDesk();
-    dragOnto(comms(), screen.getByRole("button", { name: /^Codex: reconciliation job, AGENT/ }));
+    // Betterment AG8: the drop goes on the Agents drawer (no agent icons).
+    dragOnto(comms(), conductor());
     await waitFor(() => expect(useAgentHand.getState().origin).not.toBeNull());
     expect(useAgentHand.getState().origin).toMatchObject({
-      kind: "action", id: "a-comms", title: "Write the cutover comms", projectId: "p-ledger", agent: "codex",
+      kind: "action", id: "a-comms", title: "Write the cutover comms", projectId: "p-ledger",
     });
     expect(screen.queryByTestId("hand-confirm")).toBeNull();
     expect(posts("/api/agent/hand/preview")).toEqual([]);

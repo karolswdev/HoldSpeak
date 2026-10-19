@@ -688,7 +688,7 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
     // The rig's agents lack their hooks: "On this Mac" shows (it shows only
     // when something is missing), each with Connect.
     expect(within(screen.getByTestId("conductor-coders")).getAllByTestId("conductor-pill").map((el) => el.textContent))
-      .toEqual(["Not connected", "Not connected", "Not connected"]);
+      .toEqual(["Not connected", "Not connected"]);   // Claude Code, Codex (pi: hooks not checked)
   });
 
   it("the Dock tile carries the worst lamp, the mark for New and the count that needs him", () => {
