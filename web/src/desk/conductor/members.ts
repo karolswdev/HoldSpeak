@@ -59,6 +59,8 @@ export interface ConductorMember extends ObjectListRow {
   turnId?: string | null;
   /** stale: the flight's state (Betterment AG6: `stopped_by_restart` offers Resume). */
   flightState?: AgentFlight["state"];
+  /** live: the desk's own answer (Betterment AG3). */
+  deskAnswer?: AgentFlight["deskAnswer"];
 }
 
 export interface ConductorReads {
@@ -252,6 +254,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       launchId,
       isNew: state === "done" && Boolean(flight?.isNew),
       turnId: flight?.turnId ?? null,
+      deskAnswer: flight?.deskAnswer ?? null,
       group: liveGroup(state),
       facts: {
         where: flight?.projectName || undefined,
@@ -295,6 +298,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       launchId: flight.launchId,
       isNew: state === "done" && Boolean(flight.isNew),
       turnId: flight.turnId ?? null,
+      deskAnswer: flight.deskAnswer ?? null,
       group: liveGroup(state),
       facts: {
         where: flight.projectName || undefined,

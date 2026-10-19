@@ -97,6 +97,8 @@ export interface LaneDraft {
   verdict?: string;
   reason?: string;
   text?: string;
+  /** Betterment AG3: the line the draft used. */
+  source?: { text?: string; kind?: string; title?: string } | null;
 }
 
 export interface LaneWait {

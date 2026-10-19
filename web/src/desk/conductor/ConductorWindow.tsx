@@ -29,7 +29,7 @@ import { useDesk } from "../store";
 import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
 import { canRun, conductorHead, conductorMembers, headWords, type ConductorMember } from "./members";
 import { answerMember, answers, openMember, resumeAll, stopMember, stops } from "./open";
-import { AgentRow as AgentRowFace } from "../agents/AgentRow";
+import { AgentRow as AgentRowFace, DeskAnswerLine } from "../agents/AgentRow";
 import { openAgentLane } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
 import "../drawer/drawer.css";
@@ -326,6 +326,8 @@ function CoderRow({
           <Pill member={member} />
           {meta}
         </span>
+        {/* Betterment AG3: what the desk answered for him, New until opened. */}
+        <DeskAnswerLine answer={member.deskAnswer} />
       </div>
       {verb}
     </li>

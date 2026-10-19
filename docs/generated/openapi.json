@@ -3731,7 +3731,7 @@
     },
     "/api/agent/launches/{launch_id}/seen": {
       "post": {
-        "description": "Betterment AG0: the owner opened this agent, so its done turn is\nseen (``seen_wait_id`` on the launch; the flight is no longer\n``new``). ``{wait_id}`` names the turn he saw; without it, the\nlaunch's current done turn. ``{\"seen\": null}`` when no turn is done.",
+        "description": "Betterment AG0: the owner opened this agent, so its done turn is\nseen (``seen_wait_id`` on the launch; the flight is no longer\n``new``). ``{wait_id}`` names the turn he saw; without it, the\nlaunch's current done turn. ``{\"seen\": null}`` when no turn is done.\nThe desk's newest answer (Betterment AG3) is seen too\n(``seen_answer_id``).",
         "operationId": "api_agent_launch_seen_api_agent_launches__launch_id__seen_post",
         "parameters": [
           {

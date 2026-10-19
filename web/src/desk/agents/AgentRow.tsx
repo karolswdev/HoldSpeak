@@ -23,6 +23,48 @@ import { AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
 import type { ConductorMember } from "../conductor/members";
 import { useConductor } from "../conductor/store";
 import { questionChoices, menuChoices, wantsToRun, type AgentChoice } from "./choices";
+import type { DeskAnswer, DeskAnswerSource } from "../agentFlights";
+
+/** Betterment AG3: where the line the desk used comes from, in his words. */
+const SOURCE_WORD: Record<string, string> = {
+  decision: "your decision",
+  memory: "your memory",
+  meeting: "the meeting",
+  note: "the note",
+  brief: "the brief",
+};
+
+/** What the desk typed, without its voice and its quote: `The desk: Yes,
+ *  "…"` -> `Yes`; a choice is its number. */
+export function deskSaid(text: string): string {
+  const bare = text.replace(/^\s*the desk:\s*/i, "");
+  const head = bare.replace(/"[^"]*"|\u201c[^\u201d]*\u201d|`[^`]*`/g, " ").replace(/[\s,.:;]+$/g, "").replace(/\s+/g, " ").trim();
+  return head || bare.trim();
+}
+
+/** `The desk answered: 1, from your decision 'The rollback flag moves into
+ *  config/flags.yaml.'` */
+export function deskAnswerWords(answer: { text: string; source: DeskAnswerSource | null }): string {
+  const said = deskSaid(answer.text);
+  const source = answer.source;
+  if (!source?.text) return `The desk answered: ${said}`;
+  return `The desk answered: ${said}, from ${SOURCE_WORD[source.kind] ?? SOURCE_WORD.brief} '${source.text}'`;
+}
+
+/** The desk's answer on a row: the words, and New until he opens the agent. */
+export function DeskAnswerLine({ answer }: { answer: DeskAnswer | null | undefined }) {
+  if (answer?.state !== "answered") return null;
+  return (
+    <span className="cw-desk-answer" data-testid="agent-row-desk-answer" data-new={answer.isNew ? "" : undefined}>
+      <span className="cw-desk-answer-text">{deskAnswerWords(answer)}</span>
+      {answer.isNew ? (
+        <span className="kit-pill" data-tone="ok" data-testid="agent-row-desk-answer-new">
+          New
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 /** What the lane read says of this agent now: the gate's held call and the
  *  wait (its id and the desk's draft). Read from the launch's lane (its gated
@@ -131,6 +173,8 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
   const [decidedId, setDecidedId] = useState<string | null>(null);
   const [failure, setFailure] = useState<{ label: string; retry?(): void } | null>(null);
   const [sent, setSent] = useState<string | null>(null);
+  /** Betterment AG3: he chose to answer while the desk drafts. */
+  const [mine, setMine] = useState(false);
 
   const held = member.live === "held" || Boolean(call) || wait?.kind === "TO APPROVE";
   const currentWait = String(wait?.wait_id ?? waitId ?? "");
@@ -139,7 +183,13 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
   const choices: AgentChoice[] = held ? [] : questionChoices(shownQuestion);
   const menu: AgentChoice[] = held || choices.length ? [] : menuChoices(tail);
   const draft = wait?.draft?.text?.trim() || "";
-  const draftSource = wait?.draft?.reason?.trim() || "";
+  // Betterment AG3: the line the draft used, in his words; else why.
+  const used = wait?.draft?.source;
+  const draftSource = used?.text
+    ? `from ${SOURCE_WORD[used.kind ?? ""] ?? SOURCE_WORD.brief} '${used.text}'`
+    : wait?.draft?.reason?.trim() || "";
+  // Betterment AG3: the desk holds the question while it drafts (YOLO).
+  const drafting = !held && !mine && member.deskAnswer?.state === "drafting";
   const agentName = AGENT_NAME[member.agent as AgentId] ?? member.agent;
   const key = member.sessionKey;
 
@@ -277,7 +327,15 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
       {sent && !failure ? (
         <span className="cw-ask-sent" role="status" data-testid="agent-row-receipt">{`Sent · ${sent}`}</span>
       ) : null}
-      {held ? (
+      {!drafting ? <DeskAnswerLine answer={member.deskAnswer} /> : null}
+      {drafting ? (
+        <div className="cw-ask-verbs cw-drafting" data-testid="agent-row-drafting">
+          <span className="cw-drafting-text" role="status">The desk is drafting an answer</span>
+          <Button dense variant={lead ? "primary" : "secondary"} onClick={() => setMine(true)} data-testid="agent-row-answer-myself">
+            Answer it myself
+          </Button>
+        </div>
+      ) : held ? (
         decided ? null : (
           <div className="cw-ask-verbs cw-ask-verbs--wide">
             {call?.args_cut ? (

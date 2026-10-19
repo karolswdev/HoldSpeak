@@ -207,6 +207,7 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
     if state == "waiting" and responder_turn == "done":
         state = "done"   # the responder read the turn end as a completion report
     turn_id = _turn_id(session) if state == "done" else None
+    desk_answer = _desk_answer(record, session_key, session, clock)
     project_id, project_name = _project_of(db, kind, item_id)
     evidence = follow.get("evidence") or {}
     return {
@@ -231,6 +232,10 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         # opened the agent since (``POST /api/agent/launches/{id}/seen``).
         "turn_id": turn_id,
         "new": bool(turn_id) and turn_id != str(record.get("seen_wait_id") or ""),
+        # Betterment AG3: the desk's own answer under YOLO: ``drafting``
+        # while it holds his question, then ``answered`` (what it typed and
+        # the line it used), ``new`` until he opens the agent.
+        "desk_answer": desk_answer,
         "session_key": session_key or None,
         "pr": {
             "number": pr.get("number"),
@@ -278,6 +283,50 @@ def _turn_id(session: Any) -> Optional[str]:
     if session is None:
         return None
     return completed_turn(session) or (str(_field(session, "wait_id") or "") or None)
+
+
+def _desk_answer(
+    record: Mapping[str, Any], session_key: str, session: Any, clock: datetime,
+) -> Optional[dict[str, Any]]:
+    """Betterment AG3: what the desk does or did for him on this launch.
+
+    - ``{"state": "drafting"}``: a YOLO decision holds the session's CURRENT
+      wait (fresh): the desk drafts an answer; he can answer it himself.
+    - ``{"state": "answered", text, source, at, wait_id, new}``: the newest
+      answer the desk typed for this launch (``AnswerStore`` ``sent``), with
+      the line it used; ``new`` until he opened the agent
+      (``seen_answer_id`` on the launch).
+    - ``None``: the desk did nothing here."""
+    from ..agent_context.models import is_blocked
+    from .agent_responder import DECIDE_STALE_SECONDS, DECIDING, AnswerStore
+
+    try:
+        doc = AnswerStore().read()
+    except Exception:
+        return None
+    entry = doc["waits"].get(session_key) if session_key else None
+    if (
+        isinstance(entry, Mapping) and session is not None and is_blocked(session)
+        and entry.get("state") == DECIDING and entry.get("wait_id")
+        and entry.get("wait_id") == _field(session, "wait_id")
+        and clock.timestamp() - float(entry.get("at") or 0) < DECIDE_STALE_SECONDS
+    ):
+        return {"state": "drafting", "wait_id": str(entry.get("wait_id"))}
+    launch_id = str(record.get("launch_id") or "")
+    rows = [r for r in (doc["sent"].get(launch_id) or []) if isinstance(r, Mapping) and r.get("text")]
+    if not rows:
+        return None
+    last = rows[-1]
+    wait_id = str(last.get("wait_id") or "")
+    source = last.get("source") if isinstance(last.get("source"), Mapping) else {}
+    return {
+        "state": "answered",
+        "text": str(last.get("text") or ""),
+        "source": {k: str(source.get(k) or "") for k in ("text", "kind", "title")} if source.get("text") else None,
+        "at": datetime.fromtimestamp(float(last.get("at") or 0), timezone.utc).isoformat(),
+        "wait_id": wait_id or None,
+        "new": bool(wait_id) and wait_id != str(record.get("seen_answer_id") or ""),
+    }
 
 
 def _responder_turn(session_key: str, session: Any) -> Optional[str]:

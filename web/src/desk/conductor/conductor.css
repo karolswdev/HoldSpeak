@@ -287,3 +287,26 @@
   .desk-next .cw-ask .cw-ask-verbs--wide { flex-wrap: nowrap; justify-content: stretch; }
   .desk-next .cw-ask .cw-ask-verbs--wide > .btn { flex: 1 1 0; min-width: 0; max-width: none; white-space: nowrap; }
 }
+
+/* ── Betterment AG3: the desk's own answers ───────────────────────────────
+   While the desk drafts (YOLO), one line and Answer it myself. After it
+   answered, what it said and the line it used, New until he opens it. */
+.desk-next .cw-ask .cw-drafting { align-items: center; justify-content: space-between; }
+.desk-next .cw-drafting-text {
+  flex: 1 1 12em;
+  min-width: 0;
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .cw-desk-answer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .cw-ask > .cw-desk-answer { padding: 0 12px; }
+.desk-next .cw-desk-answer-text { flex: 1 1 14em; min-width: 0; overflow-wrap: anywhere; }
+.desk-next .cw-row-text > .cw-desk-answer { margin-top: 2px; }

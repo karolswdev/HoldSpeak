@@ -7,6 +7,7 @@
       {
         "agent": "claude",
         "close": null,
+        "desk_answer": null,
         "ended_at": null,
         "id": "m-platform-a0",
         "kind": "action",
@@ -28,6 +29,7 @@
       {
         "agent": "claude",
         "close": null,
+        "desk_answer": null,
         "ended_at": "2026-10-18T04:23:26.968716Z",
         "id": "m-platform-a1",
         "kind": "action",
@@ -51,6 +53,7 @@
       {
         "agent": "claude",
         "close": null,
+        "desk_answer": null,
         "ended_at": "2026-10-18T04:23:26.968716Z",
         "id": "m-platform-a1",
         "kind": "action",
@@ -80,6 +83,7 @@
         "flight": {
           "agent": "claude",
           "close": null,
+          "desk_answer": null,
           "ended_at": null,
           "id": "m-platform-a0",
           "kind": "action",

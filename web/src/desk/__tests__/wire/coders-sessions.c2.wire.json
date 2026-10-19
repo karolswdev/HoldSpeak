@@ -7,6 +7,7 @@
       {
         "agent": "claude",
         "close": null,
+        "desk_answer": null,
         "ended_at": null,
         "id": "m-cutover-a1",
         "kind": "action",
@@ -42,6 +43,7 @@
         "flight": {
           "agent": "claude",
           "close": null,
+          "desk_answer": null,
           "ended_at": null,
           "id": "m-cutover-a1",
           "kind": "action",

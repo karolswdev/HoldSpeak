@@ -54,6 +54,36 @@ export interface AgentFlight {
   /** Betterment AG5: a queued hand's id and when he pressed it. */
   queueId?: string | null;
   queuedAt?: string | null;
+  /** Betterment AG3: the desk's own answer under YOLO (drafting, then what
+   * it typed and the line it used; New until he opens the agent). */
+  deskAnswer?: DeskAnswer | null;
+}
+
+/** Betterment AG3: where the line the desk used comes from. */
+export interface DeskAnswerSource {
+  text: string;
+  kind: "decision" | "memory" | "meeting" | "note" | "brief" | string;
+  title: string;
+}
+
+export type DeskAnswer =
+  | { state: "drafting"; waitId: string | null }
+  | { state: "answered"; text: string; source: DeskAnswerSource | null; at: string | null; waitId: string | null; isNew: boolean };
+
+export function fromWireDeskAnswer(body: any): DeskAnswer | null {
+  if (body?.state === "drafting") return { state: "drafting", waitId: body.wait_id ? String(body.wait_id) : null };
+  if (body?.state !== "answered" || !body.text) return null;
+  const source = body.source && body.source.text
+    ? { text: String(body.source.text), kind: String(body.source.kind ?? "brief"), title: String(body.source.title ?? "") }
+    : null;
+  return {
+    state: "answered",
+    text: String(body.text),
+    source,
+    at: body.at ? String(body.at) : null,
+    waitId: body.wait_id ? String(body.wait_id) : null,
+    isNew: body.new === true,
+  };
 }
 
 export interface CoderSessionRow {
@@ -105,6 +135,7 @@ export function fromWireFlight(body: any): AgentFlight {
     launchId: body?.launch_id ? String(body.launch_id) : null,
     queueId: body?.queue_id ? String(body.queue_id) : null,
     queuedAt: body?.queued_at ? String(body.queued_at) : null,
+    deskAnswer: fromWireDeskAnswer(body?.desk_answer),
   };
 }
 
@@ -264,8 +295,13 @@ export const useAgentFlights = create<AgentFlightsState>((set, get) => ({
  * (Done · New becomes Quiet). The store says so at once; the hub keeps it. */
 export async function markLaunchSeen(launchId: string, turnId: string | null): Promise<void> {
   // `null`: the hub marks the launch's current done turn (the window opened).
+  // Betterment AG3: opening the agent also sees the desk's answer.
+  const seenAnswer = (f: AgentFlight) =>
+    turnId === null && f.deskAnswer?.state === "answered" ? { ...f.deskAnswer, isNew: false } : f.deskAnswer;
   const mark = (flights: AgentFlight[]) =>
-    flights.map((f) => (f.launchId === launchId && (turnId === null || f.turnId === turnId) ? { ...f, isNew: false } : f));
+    flights.map((f) =>
+      f.launchId === launchId && (turnId === null || f.turnId === turnId) ? { ...f, isNew: false, deskAnswer: seenAnswer(f) } : f,
+    );
   useAgentFlights.setState((s) => ({
     flights: mark(s.flights),
     sessions: s.sessions.map((row) => (row.flight ? { ...row, flight: mark([row.flight])[0] } : row)),

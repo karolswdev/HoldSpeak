@@ -7,6 +7,7 @@
       {
         "agent": "claude",
         "close": null,
+        "desk_answer": null,
         "ended_at": null,
         "id": "m-platform-a0",
         "kind": "action",
@@ -28,6 +29,7 @@
       {
         "agent": "claude",
         "close": null,
+        "desk_answer": null,
         "ended_at": null,
         "id": "m-platform-a1",
         "kind": "action",
@@ -108,6 +110,7 @@
         "flight": {
           "agent": "claude",
           "close": null,
+          "desk_answer": null,
           "ended_at": null,
           "id": "m-platform-a1",
           "kind": "action",
@@ -179,6 +182,7 @@
         "flight": {
           "agent": "claude",
           "close": null,
+          "desk_answer": null,
           "ended_at": null,
           "id": "m-platform-a0",
           "kind": "action",

@@ -215,7 +215,9 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
         """Betterment AG0: the owner opened this agent, so its done turn is
         seen (``seen_wait_id`` on the launch; the flight is no longer
         ``new``). ``{wait_id}`` names the turn he saw; without it, the
-        launch's current done turn. ``{"seen": null}`` when no turn is done."""
+        launch's current done turn. ``{"seen": null}`` when no turn is done.
+        The desk's newest answer (Betterment AG3) is seen too
+        (``seen_answer_id``)."""
         from ...db import get_database
         from ...delivery.factory_launch import LaunchLedger
         from ...services.agent_flights import flight_of_launch
@@ -234,7 +236,12 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             turn = str(body.get("wait_id") or flight.get("turn_id") or "")
             if turn:
                 ledger.update(launch_id, seen_wait_id=turn)
-            return {"launch_id": launch_id, "seen": turn or None}
+            # Betterment AG3: opening the agent also sees the desk's answer.
+            answer = flight.get("desk_answer") or {}
+            answered = str(answer.get("wait_id") or "") if answer.get("state") == "answered" else ""
+            if answered and (not body.get("wait_id") or body.get("wait_id") == answered):
+                ledger.update(launch_id, seen_answer_id=answered)
+            return {"launch_id": launch_id, "seen": turn or None, "answer_seen": answered or None}
 
         try:
             result = await asyncio.to_thread(run)
