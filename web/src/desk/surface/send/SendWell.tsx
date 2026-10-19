@@ -532,8 +532,10 @@ function PreviewFailed({ pv, eg, onRetry }: {
  *  no report. */
 export const SendWellReadContext = createContext<((resolved: boolean) => void) | null>(null);
 
-export function SendWell({ doc, sendsRead, onSettled, head }: {
+export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
   doc: DocRef; sendsRead: Read<Send[]>; onSettled?: () => void; head?: ReactNode;
+  /** Optional source-owned allow-list (for example a Room action's exact saved target). */
+  destinationIds?: string[];
 }) {
   useStore();
   const dests = useDestinations();
@@ -542,9 +544,14 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   const ref = doc.ref;
   // B2: the kept pick returns, onto a listed destination only. With no kept pick
   // and no destination but the built-in HoldSpeak folder (a fresh desk), the folder is picked.
-  const onlyBuiltin = dests.data?.length === 1 && dests.data[0].builtin ? dests.data[0].id : null;
-  const picked = store.picked.has(ref) ? store.picked.get(ref) ?? null
-    : ((k) => (k && dests.data?.some((d) => d.id === k) ? k : onlyBuiltin))(keptPlace(`send/pick/${ref}`));
+  const destinations = dests.data === null
+    ? null
+    : dests.data.filter((d) => !destinationIds || destinationIds.includes(d.id));
+  const onlyBuiltin = destinations?.length === 1 && destinations[0].builtin ? destinations[0].id : null;
+  const savedPick = store.picked.get(ref);
+  const picked = savedPick !== undefined && (savedPick === null || !destinationIds || destinationIds.includes(savedPick))
+    ? savedPick
+    : ((k) => (k && destinations?.some((d) => d.id === k) ? k : onlyBuiltin))(keptPlace(`send/pick/${ref}`));
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [previewTry, setPreviewTry] = useState(0);
   useEffect(() => {
@@ -597,7 +604,6 @@ export function SendWell({ doc, sendsRead, onSettled, head }: {
   const prepared = sends.filter((s) => !!s.prepare_operation_id);
   const waiting = prepared.filter((s) => s.state === "prepared");
   const openPrepared = store.preparedOpen.has(ref) ? store.preparedOpen.get(ref) : waiting[0]?.id ?? null;
-  const destinations = dests.data;
   const pendingReads = (destinations === null && !dests.failed) || (sendsRead.data === null && !sendsRead.failed);
 
   return (
@@ -913,13 +919,14 @@ export function PreparedChip({ docRef }: { docRef: string }) {
 type SendWellsProps = {
   doc: DocRef; head?: ReactNode; onSettled?: () => void;
   history?: (sends: Send[]) => ReactNode;
+  destinationIds?: string[];
 };
 
-function ReadSendWells({ doc, head, onSettled, history, sendsRead }: SendWellsProps & { sendsRead: Read<Send[]> }) {
+function ReadSendWells({ doc, head, onSettled, history, destinationIds, sendsRead }: SendWellsProps & { sendsRead: Read<Send[]> }) {
   const sends = mergeKnown(doc.ref, sendsRead.data ?? []);
   return (
     <>
-      <SendWell doc={doc} sendsRead={sendsRead} onSettled={onSettled} head={head} />
+      <SendWell doc={doc} sendsRead={sendsRead} onSettled={onSettled} head={head} destinationIds={destinationIds} />
       {history ? history(sends) : <SendHistory sends={sends} />}
     </>
   );

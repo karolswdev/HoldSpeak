@@ -22129,6 +22129,28 @@
         ]
       }
     },
+    "/api/projects/door/preview": {
+      "post": {
+        "description": "Parse a pasted source list and show only material the hub found.",
+        "operationId": "door_preview_api_projects_door_preview_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Door Preview Api Projects Door Preview Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Door Preview",
+        "tags": [
+          "project-door"
+        ]
+      }
+    },
     "/api/projects/{project_id}": {
       "delete": {
         "operationId": "api_archive_project_api_projects__project_id__delete",

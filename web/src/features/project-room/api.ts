@@ -40,6 +40,14 @@ export function fetchProjectMeetings(projectId: string) {
   );
 }
 
+/** Betterment P5: file a producer-matched meeting in this project. */
+export function associateMeeting(projectId: string, meetingId: string) {
+  return apiFetch<Record<string, unknown>>(
+    `/api/projects/${encodeURIComponent(projectId)}/meetings/${encodeURIComponent(meetingId)}`,
+    { method: "POST" },
+  );
+}
+
 export function fetchProjectDecisions(projectId: string) {
   return apiFetch<ProjectDecisionsResponse>(
     `/api/decisions?project_id=${encodeURIComponent(projectId)}&limit=500`,
