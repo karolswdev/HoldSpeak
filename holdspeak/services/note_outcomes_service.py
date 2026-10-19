@@ -239,14 +239,14 @@ class NoteOutcomesService:
         new_text = row["text"] if text is None else " ".join(str(text).split())
         if not new_text:
             raise ValidationError("the row needs words", code="note_outcome_text_required")
-        new_owner, person_id = row["owner"], row["person_id"]
+        new_owner = row["owner"]
         if owner_name is not None and row["kind"] == "task":
-            new_owner, person_id = self._owner(owner_name)
+            new_owner = self._owner(owner_name)
         new_due = row["due"] if due is None else " ".join(str(due).split())
         with self._db._connection() as conn:
             conn.execute(
-                "UPDATE note_outcomes SET text=?, owner=?, person_id=?, due=? WHERE id=? AND state='proposed'",
-                (new_text, new_owner, person_id, new_due, row_id),
+                "UPDATE note_outcomes SET text=?, owner=?, due=? WHERE id=? AND state='proposed'",
+                (new_text, new_owner, new_due, row_id),
             )
         return self.read(principal, note.id)
 

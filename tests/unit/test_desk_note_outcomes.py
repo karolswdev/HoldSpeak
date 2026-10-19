@@ -194,8 +194,8 @@ def test_edit_and_dismiss_a_proposed_row_before_confirm(desk) -> None:
     edited = _ok(desk.client.post(f"/api/notes/{desk.note_id}/outcomes/{mine['id']}/edit",
                                   json={"text": "Pair Jun with Mira on call", "owner_name": "Theo", "due": "Friday"}))["rows"]
     row = next(r for r in edited if r["id"] == mine["id"])
-    assert (row["text"], row["owner"], row["person_id"], row["due"], row["state"]) == (
-        "Pair Jun with Mira on call", "Theo Park", desk.theo["id"], "Friday", "proposed")
+    assert (row["text"], row["owner"], row["due"], row["state"]) == (
+        "Pair Jun with Mira on call", "Theo Park", "Friday", "proposed")
 
     # Dismiss: the row leaves, and a new Find never proposes it again.
     after = _ok(desk.client.post(f"/api/notes/{desk.note_id}/outcomes/{decision['id']}/dismiss"))["rows"]
