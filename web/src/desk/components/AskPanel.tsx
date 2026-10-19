@@ -751,12 +751,14 @@ export function AskPanel() {
             )) : <span className="desk-ask-about-desk">My whole desk</span>}
             <Button dense variant="ghost" className="desk-ask-about-add" aria-label="Add to About" aria-expanded={picking} onClick={() => setPicking((open) => !open)}>+</Button>
           </div>
-          {picking ? (
-            <div className="desk-ask-context-tools">
-              <AboutPicker candidates={candidates} picked={about.map((row) => row.ref)} onPick={pickAbout} />
-            </div>
-          ) : null}
         </div></ScrollHint>
+        {/* Betterment Q6: the one About picker, below the About line (never
+            inside its short scroll: the matches stay in view on a phone). */}
+        {picking ? (
+          <div className="desk-ask-about-picker">
+            <AboutPicker candidates={candidates} picked={about.map((row) => row.ref)} onPick={pickAbout} />
+          </div>
+        ) : null}
 
         {hasConversation ? <ScrollHint axis="y" scrollRef={readingRef} className="desk-ask-reading-wrap"><div ref={readingRef} className="conversation-reading desk-ask-reading" role="region" aria-label="Ask conversation" tabIndex={0}><SurfaceTraffic showEmpty={false}>
           {threadRead.loading ? <SurfaceTrafficTurn prefix="Ask"><RunLine phase="running" verb="Opening" /></SurfaceTrafficTurn> : null}

@@ -313,3 +313,8 @@
 .desk-ask-send-well {
   margin-top: 8px;
 }
+.desk-ask-about-picker {
+  flex: none;
+  max-height: 45%;
+  overflow: auto;
+}
