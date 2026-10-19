@@ -60,6 +60,10 @@ export interface ConductorMember extends ObjectListRow {
   turnId?: string | null;
   /** stale: the flight's state (Betterment AG6: `stopped_by_restart` offers Resume). */
   flightState?: AgentFlight["state"];
+  /** live: the launch that started this helper (Betterment AG11). */
+  helperOf?: string | null;
+  /** live: the Secure helper request waiting for the owner's one press. */
+  helperRequest?: AgentFlight["helperRequest"];
   /** stale: the item its agent worked on (Hand again). */
   origin?: { kind: string; id: string; title: string; projectId: string | null; agent: string };
   /** live: the desk's own answer (Betterment AG3). */
@@ -242,7 +246,9 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
     const launchId = flight?.launchId ?? null;
     // PHILO-15 15: a turn end the responder read as DONE / IDLE is not an ask.
     const turned = turnOf(flight);
-    const state: LiveState = turned && sessionState(row) === "ask" ? turned : sessionState(row);
+    const state: LiveState = flight?.helperRequest?.status === "awaiting_owner"
+      ? "held"
+      : turned && sessionState(row) === "ask" ? turned : sessionState(row);
     const lamp = liveLamp(state, flight?.pr?.number);
     const raw = (row.raw?.session ?? row.raw ?? {}) as Record<string, unknown>;
     // Betterment AG8: an ask is as old as its wait, not its last hook.
@@ -269,6 +275,8 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       turnId: flight?.turnId ?? null,
       deskAnswer: flight?.deskAnswer ?? null,
       screen: flight?.screen ?? row.screen ?? null,
+      helperOf: flight?.helperOf ?? null,
+      helperRequest: flight?.helperRequest ?? null,
       group: liveGroup(state),
       facts: {
         where: flight?.projectName || undefined,
@@ -287,7 +295,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
     const ref = flight.launchId ? `launch:${flight.launchId}` : flight.queueId ? `queue:${flight.queueId}` : null;
     if (!inFlight(flight) || !ref) continue;
     if (flight.sessionKey && liveKeys.has(flight.sessionKey)) continue;
-    const state = flightState(flight);
+    const state: LiveState = flight.helperRequest?.status === "awaiting_owner" ? "held" : flightState(flight);
     const lamp = flight.state === "starting"
       ? { tone: "info" as const, label: "STARTS" }
       : flight.state === "resuming"
@@ -314,6 +322,8 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       turnId: flight.turnId ?? null,
       deskAnswer: flight.deskAnswer ?? null,
       screen: flight.screen ?? null,
+      helperOf: flight.helperOf ?? null,
+      helperRequest: flight.helperRequest ?? null,
       group: liveGroup(state),
       facts: {
         where: flight.projectName || undefined,

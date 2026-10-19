@@ -20,9 +20,10 @@ reads that answer.
         Each is an attention row with a Review verb that opens it.
     R5  the coding agents (Claude Code, Codex) that wait for the owner's
         answer: a session in ``awaiting_response`` with a captured question,
-        updated in the last 30 minutes (``agent_context``'s recent default).
-        Each is an attention row of kind ``coder`` that ranks with the
-        due-today rows (a blocked agent costs time now).
+        updated in the last 30 minutes (``agent_context``'s recent default),
+        plus Secure helper requests awaiting one owner Allow press. Each is
+        an attention row of kind ``coder`` that ranks with the due-today rows
+        (a blocked agent costs time now).
 
 Owner ruling 2026-10-04: a row the owner is WAITING ON someone else for (it
 names an owner, and its reason is ``WAITING ON <owner>``) is listed and is
@@ -134,6 +135,66 @@ def door_items(
                 "_isUnassigned": column == "unassigned" and not has_owner,
                 "_toReview": column == "unassigned" and has_owner,
             })
+    return rows
+
+
+def helper_request_items(
+    flights: Iterable[Any], now: datetime | None = None,
+) -> list[dict[str, Any]]:
+    """R5: Secure helper requests waiting for the owner's Allow press.
+
+    A helper request has no agent session yet, so it cannot be represented by
+    :func:`coder_items`. The parent flight remains the durable owner-facing
+    projection until the owner consumes the request through the helper route.
+    """
+    clock = now or local_wall()
+    now_s = (clock if clock.tzinfo else clock.astimezone()).timestamp()
+    rows: list[dict[str, Any]] = []
+    for flight in flights:
+        record = flight if isinstance(flight, dict) else dict(flight or {})
+        request = record.get("helper_request")
+        launch_id = str(record.get("launch_id") or "")
+        if not launch_id or not isinstance(request, dict) or request.get("status") != "awaiting_owner":
+            continue
+        request_id = str(request.get("request_id") or "")
+        requested = str(request.get("requested_at") or record.get("launched_at") or "")
+        requested_s = _epoch_seconds(requested)
+        age = max(0, int(now_s - requested_s)) if requested_s is not None else 0
+        instruction = str(request.get("instruction") or "Allow the helper to start").strip()
+        ref = f"{CODER_SOURCE}:launch:{launch_id}:helper"
+        rows.append({
+            "id": ref,
+            "ref": ref,
+            "notifyKey": f"{ref}#{request_id}" if request_id else ref,
+            "projectId": str(record.get("project_id") or ""),
+            "projectName": str(record.get("project_name") or ""),
+            "title": _excerpt(instruction),
+            "why": TO_APPROVE,
+            "ageToken": requested,
+            "since": requested,
+            "dueAt": None,
+            "kind": CODER_SOURCE,
+            "source": CODER_SOURCE,
+            "verbHref": None,
+            "openRef": f"launch:{launch_id}",
+            "severity": "warning",
+            # The helper has no session until Allow starts it. Reusing the
+            # parent's key would make fold_asks hide this owner action inside
+            # the parent's ordinary question.
+            "sessionKey": "",
+            "launchId": launch_id,
+            "agent": str(record.get("agent") or ""),
+            "question": instruction,
+            "waitKind": "approve",
+            "waitStartedAt": requested,
+            "ageSeconds": age,
+            "helperRequest": {
+                "requestId": request_id,
+                "status": "awaiting_owner",
+                "instruction": instruction,
+                "profile": request.get("profile"),
+            },
+        })
     return rows
 
 
@@ -1060,7 +1121,8 @@ def compute_needs_you(
     coder_rows, gate_rows = correlate_gate_waits(
         coder_items(coders, clock), gate_items(holds, clock), holds, clock,
     )
-    singles = people + decision_items(decisions) + coder_rows + gate_rows
+    helper_rows = helper_request_items(flights, clock)
+    singles = people + decision_items(decisions) + coder_rows + gate_rows + helper_rows
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
@@ -1910,6 +1972,7 @@ def withhold_people_content(answer: dict[str, Any]) -> dict[str, Any]:
 __all__ = [
     "CODER_SOURCE",
     "coder_items",
+    "helper_request_items",
     "PEOPLE_ROW_TITLE",
     "PEOPLE_SOURCE",
     "is_people_row",

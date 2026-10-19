@@ -748,13 +748,43 @@
     }
   ],
   "measurements": {
-    "residual_identities": 253,
-    "residual_mcp": 198,
-    "residual_http": 55,
-    "http_constructions": 56,
-    "public_tools": 270
+    "residual_identities": 261,
+    "residual_mcp": 205,
+    "residual_http": 56,
+    "http_constructions": 57,
+    "public_tools": 277
   },
   "entries": [
+    {
+      "transport": "mcp",
+      "entry_point": "agent.answer",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/agent.py); Betterment AG11"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "agent.prompt",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/agent.py); Betterment AG11"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "agent.read",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/agent.py); Betterment AG11"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "agent.start_helper",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/agent.py); Betterment AG11"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "agent.wait",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/agent.py); Betterment AG11"
+    },
     {
       "transport": "mcp",
       "entry_point": "ask.cancel",

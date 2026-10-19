@@ -391,6 +391,15 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
 # launch made (the kernel cancels only its caller's own run as well); the
 # ``automation.*`` aliases keep their Workbench tool's rule.
 LAUNCH_RULES["workbench.cancel"] = (OWN, "workbench", "workbench_id")
+# Betterment AG11: the helper a launch starts is recorded as its own
+# (``launch:<id>``); every other helper tool names it.
+LAUNCH_RULES.update({
+    "agent.start_helper": (CREATE, "launch", "launch_id"),
+    "agent.prompt": (OWN, "launch", "launch_id"),
+    "agent.wait": (OWN, "launch", "launch_id"),
+    "agent.read": (OWN, "launch", "launch_id"),
+    "agent.answer": (OWN, "launch", "launch_id"),
+})
 LAUNCH_RULES.update({
     name.replace("workbench.", "automation.", 1): rule
     for name, rule in list(LAUNCH_RULES.items())

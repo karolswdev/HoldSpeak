@@ -341,6 +341,7 @@ class AgentHandService:
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
         queue: bool = False,
+        helper_of: Optional[str] = None,
     ) -> dict[str, Any]:
         """Hand the item. A clone this hand made is named on the answer AND on
         a later refusal (the launch can still fail after it): the face shows
@@ -350,7 +351,7 @@ class AgentHandService:
             answer = self._hand(
                 principal, kind, item_id, made,
                 instruction=instruction, profile=profile, project_id=project_id,
-                queue=queue,
+                queue=queue, helper_of=helper_of,
             )
         except ServiceError as exc:
             if made.get("clone"):
@@ -371,6 +372,7 @@ class AgentHandService:
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
         queue: bool = False,
+        helper_of: Optional[str] = None,
     ) -> dict[str, Any]:
         try:
             kind, item_id = parse_item_ref({"kind": kind, "id": item_id})
@@ -416,10 +418,21 @@ class AgentHandService:
         spec = free_worktree_spec(
             launcher._registry, source.primary_path, kind, item_id, item_title(self._db, kind, item_id),
         )
+        parent: Optional[Mapping[str, Any]] = None
+        if helper_of:
+            # Betterment AG11: a helper works in its own worktree, on a branch
+            # that starts at its parent's branch.
+            parent = launcher._ledger.get(helper_of) or {}
+            spec = {
+                "mode": "new", "name": f"{spec['name']}-helper", "branch": f"{spec['branch']}-helper",
+                **({"start_point": str(parent.get("branch"))} if parent.get("branch") else {}),
+            }
         try:
             worktree_path = derive_worktree_path(source.primary_path, spec["name"])
         except LaunchRefused as exc:
             raise AgentHandRefused.from_launch(exc) from exc
+        if worktree_path.exists() and helper_of:
+            raise AgentHandRefused("helper_exists", "this agent already has its one helper")
         if worktree_path.exists():
             # Handed before: an earlier launch of this item whose brief is
             # still held resumes on that launch; it is never relaunched.
@@ -505,6 +518,7 @@ class AgentHandService:
             "worktree": spec,
             "story_ref": story_ref,
             "origin_ref": {"kind": kind, "id": item_id},
+            **({"helper_of": helper_of} if helper_of else {}),
         }
         if agent.get("executable") in ("claude", "codex", "pi"):
             # Conductor R3: Codex is gated like Claude Code (its -c hooks);
@@ -635,11 +649,24 @@ class AgentHandService:
         worktree_path: Path, name: str,
     ) -> dict[str, Any]:
         prior = self._arm_gate(worktree_path, name)
+        parent_operation_id = ""
+        helper_of = str(request.get("helper_of") or "").strip()
+        if helper_of and getattr(getattr(principal, "kind", None), "value", "") == "agent":
+            # A helper is a causal child of the launch that requested it.  The
+            # parent's owner decided operation supplies the signed warrant;
+            # the broker checks that the launch credential is its named
+            # continuation identity before approving this child.
+            parent = launcher.launch_record(helper_of) or {}
+            parent_operation_id = str(parent.get("operation_id") or "").strip()
+            if not parent_operation_id:
+                self._release_gate(worktree_path, name, prior, "the parent launch has no live operation")
+                raise AgentHandRefused("helper_parent_missing", "the parent launch has no live operation")
         try:
             # The brief is held and typed once the rider registers the
             # session, so a folder-trust prompt or a slow start cannot eat it.
             result = launcher.submit_process_spawn(
-                request, text, principal, after_registration=True
+                request, text, principal, after_registration=True,
+                parent_operation_id=parent_operation_id,
             )
         except LaunchRefused as exc:
             self._release_gate(worktree_path, name, prior, "the launch refused before it ran")

@@ -331,7 +331,10 @@ def test_the_codex_launch_mounts_the_conductor_palette_with_its_mutators() -> No
     assert "provider.github_pr_get" in palette
     # Betterment AG7: + coder.explain (a WORK read: why an agent has its state).
     assert "coder.explain" in palette
-    assert len(palette) == 138 + 6 + 1 + len(m3) + 1 + 1
+    # Betterment AG11: + the five helper tools (a launch and its one helper).
+    ag11 = {"agent.start_helper", "agent.prompt", "agent.wait", "agent.read", "agent.answer"}
+    assert ag11 <= palette
+    assert len(palette) == 138 + 6 + 1 + len(m3) + 1 + 1 + len(ag11)
 
 
 # ── 6. Astra r2 on #996: the wait episode, the FIFO, expiry, provenance ──
