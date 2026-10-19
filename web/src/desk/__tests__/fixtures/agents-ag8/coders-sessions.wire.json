@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-19T04:24:50.358073Z",
+  "captured_at": "2026-10-19T10:15:07.116927Z",
   "wire": {
     "count": 5,
     "flights": [
@@ -12,7 +12,7 @@
         "id": "m-ag8-platform-a0",
         "kind": "action",
         "launch_id": "launch_ag8_ask",
-        "launched_at": "2026-10-19T04:14:44.710163Z",
+        "launched_at": "2026-10-19T10:05:01.492336Z",
         "merged_at": null,
         "new": false,
         "origin_ref": "action:m-ag8-platform-a0",
@@ -36,7 +36,7 @@
         "id": "m-ag8-ledger-a0",
         "kind": "action",
         "launch_id": "launch_ag8_held",
-        "launched_at": "2026-10-19T04:14:44.710163Z",
+        "launched_at": "2026-10-19T10:05:01.492336Z",
         "merged_at": null,
         "new": false,
         "origin_ref": "action:m-ag8-ledger-a0",
@@ -60,7 +60,7 @@
         "id": "m-ag8-platform-a1",
         "kind": "action",
         "launch_id": "launch_ag8_new",
-        "launched_at": "2026-10-19T04:14:44.710163Z",
+        "launched_at": "2026-10-19T10:05:01.492336Z",
         "merged_at": null,
         "new": true,
         "origin_ref": "action:m-ag8-platform-a1",
@@ -74,7 +74,7 @@
         "state_source": "hook",
         "title": "Draft test scaffolding for flags",
         "turn_end": "done",
-        "turn_id": "2026-10-19T04:24:46.949412Z#4"
+        "turn_id": "2026-10-19T10:15:03.729826Z#4"
       },
       {
         "agent": "claude",
@@ -84,7 +84,7 @@
         "id": "m-ag8-ledger-a1",
         "kind": "action",
         "launch_id": "launch_ag8_work",
-        "launched_at": "2026-10-19T04:14:44.710163Z",
+        "launched_at": "2026-10-19T10:05:01.492336Z",
         "merged_at": null,
         "new": false,
         "origin_ref": "action:m-ag8-ledger-a1",
@@ -108,7 +108,7 @@
         "id": "m-ag8-platform-a2",
         "kind": "action",
         "launch_id": "launch_ag8_quiet",
-        "launched_at": "2026-10-19T04:14:44.710163Z",
+        "launched_at": "2026-10-19T10:05:01.492336Z",
         "merged_at": null,
         "new": false,
         "origin_ref": "action:m-ag8-platform-a2",
@@ -122,7 +122,7 @@
         "state_source": "hook",
         "title": "Rename the rollback flag",
         "turn_end": "done",
-        "turn_id": "2026-10-19T04:24:49.187504Z#4"
+        "turn_id": "2026-10-19T10:15:05.956764Z#4"
       },
       {
         "agent": "claude",
@@ -138,8 +138,8 @@
         "pr": null,
         "project_id": "p-ledger",
         "project_name": "Ledger",
-        "queue_id": "queue_f49d7d1adef5",
-        "queued_at": "2026-10-19T04:24:50.308759Z",
+        "queue_id": "queue_377c8c1799c2",
+        "queued_at": "2026-10-19T10:15:07.071122Z",
         "session_cleanup": null,
         "session_key": null,
         "state": "queued",
@@ -164,7 +164,7 @@
           "id": "m-ag8-platform-a2",
           "kind": "action",
           "launch_id": "launch_ag8_quiet",
-          "launched_at": "2026-10-19T04:14:44.710163Z",
+          "launched_at": "2026-10-19T10:05:01.492336Z",
           "merged_at": null,
           "new": false,
           "origin_ref": "action:m-ag8-platform-a2",
@@ -178,7 +178,7 @@
           "state_source": "hook",
           "title": "Rename the rollback flag",
           "turn_end": "done",
-          "turn_id": "2026-10-19T04:24:49.187504Z#4"
+          "turn_id": "2026-10-19T10:15:05.956764Z#4"
         },
         "identity": {
           "agent_label": "Claude",
@@ -197,9 +197,9 @@
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-19T04:24:49.183868Z",
+          "created_at": "2026-10-19T10:15:05.953886Z",
           "cwd": "/tmp/rig/home/dev/platform",
-          "done_id": "2026-10-19T04:24:49.187504Z#4",
+          "done_id": "2026-10-19T10:15:05.956764Z#4",
           "event_count": 4,
           "hook_event_name": "Stop",
           "last_assistant_text": null,
@@ -224,7 +224,7 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": false,
-          "updated_at": "2026-10-19T04:24:49.187504Z",
+          "updated_at": "2026-10-19T10:15:05.956764Z",
           "wait_id": null,
           "wait_started_at": null
         }
@@ -239,7 +239,7 @@
           "id": "m-ag8-ledger-a1",
           "kind": "action",
           "launch_id": "launch_ag8_work",
-          "launched_at": "2026-10-19T04:14:44.710163Z",
+          "launched_at": "2026-10-19T10:05:01.492336Z",
           "merged_at": null,
           "new": false,
           "origin_ref": "action:m-ag8-ledger-a1",
@@ -272,7 +272,7 @@
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-19T04:24:48.062688Z",
+          "created_at": "2026-10-19T10:15:04.844328Z",
           "cwd": "/tmp/rig/home/dev/platform",
           "done_id": null,
           "event_count": 3,
@@ -299,7 +299,7 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": true,
-          "updated_at": "2026-10-19T04:24:48.064920Z",
+          "updated_at": "2026-10-19T10:15:04.846575Z",
           "wait_id": null,
           "wait_started_at": null
         }
@@ -314,7 +314,7 @@
           "id": "m-ag8-platform-a1",
           "kind": "action",
           "launch_id": "launch_ag8_new",
-          "launched_at": "2026-10-19T04:14:44.710163Z",
+          "launched_at": "2026-10-19T10:05:01.492336Z",
           "merged_at": null,
           "new": true,
           "origin_ref": "action:m-ag8-platform-a1",
@@ -328,7 +328,7 @@
           "state_source": "hook",
           "title": "Draft test scaffolding for flags",
           "turn_end": "done",
-          "turn_id": "2026-10-19T04:24:46.949412Z#4"
+          "turn_id": "2026-10-19T10:15:03.729826Z#4"
         },
         "identity": {
           "agent_label": "Claude",
@@ -347,9 +347,9 @@
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-19T04:24:46.946699Z",
+          "created_at": "2026-10-19T10:15:03.727521Z",
           "cwd": "/tmp/rig/home/dev/platform",
-          "done_id": "2026-10-19T04:24:46.949412Z#4",
+          "done_id": "2026-10-19T10:15:03.729826Z#4",
           "event_count": 4,
           "hook_event_name": "Stop",
           "last_assistant_text": null,
@@ -374,7 +374,7 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": false,
-          "updated_at": "2026-10-19T04:24:46.949412Z",
+          "updated_at": "2026-10-19T10:15:03.729826Z",
           "wait_id": null,
           "wait_started_at": null
         }
@@ -389,7 +389,7 @@
           "id": "m-ag8-ledger-a0",
           "kind": "action",
           "launch_id": "launch_ag8_held",
-          "launched_at": "2026-10-19T04:14:44.710163Z",
+          "launched_at": "2026-10-19T10:05:01.492336Z",
           "merged_at": null,
           "new": false,
           "origin_ref": "action:m-ag8-ledger-a0",
@@ -422,7 +422,7 @@
           "agent": "claude",
           "awaiting_response": false,
           "capture_messages": false,
-          "created_at": "2026-10-19T04:24:45.827771Z",
+          "created_at": "2026-10-19T10:15:02.610732Z",
           "cwd": "/tmp/rig/home/dev/platform",
           "done_id": null,
           "event_count": 4,
@@ -449,9 +449,9 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": true,
-          "updated_at": "2026-10-19T04:24:45.830512Z",
-          "wait_id": "2026-10-19T04:24:45.830512Z#4",
-          "wait_started_at": "2026-10-19T04:24:45.830512Z"
+          "updated_at": "2026-10-19T10:15:02.612805Z",
+          "wait_id": "2026-10-19T10:15:02.612805Z#4",
+          "wait_started_at": "2026-10-19T10:15:02.612805Z"
         }
       },
       {
@@ -464,7 +464,7 @@
           "id": "m-ag8-platform-a0",
           "kind": "action",
           "launch_id": "launch_ag8_ask",
-          "launched_at": "2026-10-19T04:14:44.710163Z",
+          "launched_at": "2026-10-19T10:05:01.492336Z",
           "merged_at": null,
           "new": false,
           "origin_ref": "action:m-ag8-platform-a0",
@@ -497,9 +497,9 @@
           "agent": "claude",
           "awaiting_response": true,
           "capture_messages": false,
-          "created_at": "2026-10-19T04:24:44.710245Z",
+          "created_at": "2026-10-19T10:15:01.492452Z",
           "cwd": "/tmp/rig/home/dev/platform",
-          "done_id": "2026-10-19T04:24:44.712590Z#4",
+          "done_id": "2026-10-19T10:15:01.495725Z#4",
           "event_count": 4,
           "hook_event_name": "Stop",
           "last_assistant_text": null,
@@ -524,9 +524,9 @@
           "tmux_window": null,
           "transcript_path": null,
           "turn_prompted": false,
-          "updated_at": "2026-10-19T04:24:44.712590Z",
-          "wait_id": "2026-10-19T04:24:44.712590Z#4",
-          "wait_started_at": "2026-10-19T04:24:44.712590Z"
+          "updated_at": "2026-10-19T10:15:01.495725Z",
+          "wait_id": "2026-10-19T10:15:01.495725Z#4",
+          "wait_started_at": "2026-10-19T10:15:01.495725Z"
         }
       }
     ]

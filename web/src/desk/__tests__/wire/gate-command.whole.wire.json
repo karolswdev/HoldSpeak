@@ -1,12 +1,12 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-19T04:23:09.201583Z",
+  "captured_at": "2026-10-19T10:15:05.255419Z",
   "wire": {
     "args_cut": true,
     "command": "cd /private/var/folders/q7/T/hs-r2/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558 && pwd && echo \"---BRANCH---\" && git branch --show-current && echo \"---STATUS---\" && git status && echo \"---LOG---\" && git log --oneline -5",
     "cwd": "/tmp/rig/home/dev/wt/hs-action-runbook",
     "declared_chars": 241,
-    "expires_at": 1792387389.032875,
+    "expires_at": 1792408505.1269948,
     "hold_reason": "OUTSIDE THE WORKTREE",
     "id": "toolu_cut_1440",
     "session_key": "claude:c1a0de00-runbook",
