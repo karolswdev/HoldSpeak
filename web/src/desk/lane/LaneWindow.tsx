@@ -256,7 +256,19 @@ function LaneBody({
   ) : (
     <FilesChanged data-testid="lane-files" files={worktree.files.map((f) => ({ path: f.path }))} />
   );
-  const rail = (
+  // AG10 face: a lane whose only entry is the brief (an agent with no hook
+  // reports no events) shows the brief as a plain fold, not a one-row rail.
+  const onlyBrief = laneEntries(lane, events).every((entry) => entry.kind === "brief") && !eventsNotRead && !more;
+  const rail = onlyBrief ? (
+    <div className="lw-col">
+      {isNotRead(lane.gated) ? <NotReadLine part="HELD" reason={lane.gated.not_read} /> : null}
+      {lane.launch.brief_text ? (
+        <FoldGadget title="Brief" className="lw-brief-fold">
+          <pre className="lw-brief" data-testid="lane-brief-text">{lane.launch.brief_text}</pre>
+        </FoldGadget>
+      ) : null}
+    </div>
+  ) : (
     <div className="lw-col">
       {eventsNotRead ? <NotReadLine part="TIMELINE" reason={eventsNotRead} testId="lane-events-not-read" /> : null}
       {isNotRead(lane.gated) ? <NotReadLine part="HELD" reason={lane.gated.not_read} /> : null}
