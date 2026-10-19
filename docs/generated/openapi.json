@@ -19120,6 +19120,102 @@
         "summary": "Confirm"
       }
     },
+    "/api/notes/{note_id}/outcomes/{row_id}/dismiss": {
+      "post": {
+        "operationId": "dismiss_api_notes__note_id__outcomes__row_id__dismiss_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "title": "Note Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "row_id",
+            "required": true,
+            "schema": {
+              "title": "Row Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Dismiss Api Notes  Note Id  Outcomes  Row Id  Dismiss Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dismiss"
+      }
+    },
+    "/api/notes/{note_id}/outcomes/{row_id}/edit": {
+      "post": {
+        "operationId": "edit_api_notes__note_id__outcomes__row_id__edit_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "title": "Note Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "row_id",
+            "required": true,
+            "schema": {
+              "title": "Row Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Edit Api Notes  Note Id  Outcomes  Row Id  Edit Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit"
+      }
+    },
     "/api/nudges/{step_id}/dismiss": {
       "post": {
         "operationId": "api_dismiss_nudge_api_nudges__step_id__dismiss_post",

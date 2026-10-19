@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 794 (plus static mounts). iOS-consumed: 89. Web-consumed: 623.
+Routes: 792 (plus static mounts). iOS-consumed: 89. Web-consumed: 619.
 
 ## device_audio_ws
 
@@ -105,10 +105,8 @@ Routes: 794 (plus static mounts). iOS-consumed: 89. Web-consumed: 623.
 |---|---|---|
 | POST | `/api/agent/hand` | web |
 | POST | `/api/agent/hand/preview` | web |
-| DELETE | `/api/agent/hand/queue/{queue_id}` | web |
 | GET | `/api/agent/launches/{launch_id}` | web |
 | POST | `/api/agent/launches/{launch_id}/deliver` | server only |
-| GET | `/api/agent/launches/{launch_id}/explain` | web |
 | GET | `/api/agent/launches/{launch_id}/lane` | web |
 | POST | `/api/agent/launches/{launch_id}/rebrief` | web |
 | POST | `/api/agent/launches/{launch_id}/rebrief/{press_id}/take-back` | web |
@@ -553,7 +551,6 @@ Routes: 794 (plus static mounts). iOS-consumed: 89. Web-consumed: 623.
 | GET | `/api/meetings/{meeting_id}/artifacts` | web |
 | GET | `/api/meetings/{meeting_id}/intent-timeline` | web |
 | GET | `/api/meetings/{meeting_id}/plugin-runs` | server only |
-| GET | `/api/meetings/{meeting_id}/prepared` | web |
 
 ## web.routes.meetings.intel
 
@@ -567,7 +564,6 @@ Routes: 794 (plus static mounts). iOS-consumed: 89. Web-consumed: 623.
 | POST | `/api/meetings/{meeting_id}/intel-recovery/retry` | web |
 | POST | `/api/meetings/{meeting_id}/intel-recovery/skip` | web |
 | POST | `/api/meetings/{meeting_id}/intelligence/run` | web |
-| POST | `/api/meetings/{meeting_id}/prepare` | web |
 
 ## web.routes.meetings.live
 
@@ -813,6 +809,8 @@ Routes: 794 (plus static mounts). iOS-consumed: 89. Web-consumed: 623.
 | GET | `/api/notes/{note_id}/outcomes` | web |
 | POST | `/api/notes/{note_id}/outcomes/find` | server only |
 | POST | `/api/notes/{note_id}/outcomes/{row_id}/confirm` | server only |
+| POST | `/api/notes/{note_id}/outcomes/{row_id}/dismiss` | server only |
+| POST | `/api/notes/{note_id}/outcomes/{row_id}/edit` | server only |
 
 ## web.routes.primitives.notes
 

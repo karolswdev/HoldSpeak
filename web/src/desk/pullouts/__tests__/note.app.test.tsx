@@ -180,6 +180,8 @@ describe("Betterment Q9: Find the tasks on a note", () => {
         return Promise.resolve(refuse ? reply(FIND.refused.body, FIND.refused.status) : reply(FIND.found));
       }
       if (method === "POST" && url.endsWith("/confirm")) return Promise.resolve(reply(FIND.confirmed));
+      if (method === "POST" && url.endsWith("/edit")) return Promise.resolve(reply(FIND.edited));
+      if (method === "POST" && url.endsWith("/dismiss")) return Promise.resolve(reply(FIND.dismissed));
       return Promise.resolve(reply({}));
     }));
   }
@@ -225,7 +227,37 @@ describe("Betterment Q9: Find the tasks on a note", () => {
     });
     const theo = screen.getAllByTestId("note-commitments-row").find((row) => row.textContent?.includes("Write the on-call handbook"))!;
     expect(theo).toHaveTextContent("Theo Park · Confirmed");
-    expect(screen.getByRole("button", { name: "Confirm: Pair Jun with Mira on call for the cutover weekend" })).toBeInTheDocument();
+  });
+
+  it("Edit changes a proposed row's words, owner and date before Confirm (as a meeting's rows)", async () => {
+    hubWithFind();
+    await openNote();
+    fireEvent.click(screen.getByRole("button", { name: "Find the tasks" }));
+    fireEvent.click(await screen.findByRole("button", { name: "More for Pair Jun with Mira on call for the cutover weekend" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Edit" }));
+    const editor = await screen.findByTestId("note-outcome-edit");
+    fireEvent.change(within(editor).getByRole("textbox", { name: "Task" }), { target: { value: FIND.edit_request.text } });
+    fireEvent.change(within(editor).getByRole("textbox", { name: "When?" }), { target: { value: FIND.edit_request.due } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(screen.queryByTestId("note-outcome-edit")).toBeNull());
+    expect(calls.find((c) => c.url.endsWith("/edit"))).toMatchObject({
+      method: "POST", url: `/api/notes/${NOTE.note_id}/outcomes/${FIND.edit_row}/edit`, body: FIND.edit_request,
+    });
+    const mine = screen.getAllByTestId("note-commitments-row").find((row) => row.textContent?.includes(FIND.edit_request.text))!;
+    expect(mine).toHaveTextContent("Me · by Friday");
+    expect(screen.getByRole("button", { name: `Confirm: ${FIND.edit_request.text}` })).toBeInTheDocument();
+  });
+
+  it("Dismiss takes a proposed row away", async () => {
+    hubWithFind();
+    await openNote();
+    fireEvent.click(screen.getByRole("button", { name: "Find the tasks" }));
+    fireEvent.click(await screen.findByRole("button", { name: "More for Theo owns the on-call handbook" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Dismiss" }));
+    await waitFor(() => expect(screen.queryByText("Theo owns the on-call handbook")).toBeNull());
+    expect(calls.find((c) => c.url.endsWith("/dismiss"))).toMatchObject({
+      method: "POST", url: `/api/notes/${NOTE.note_id}/outcomes/${FIND.dismiss_row}/dismiss`,
+    });
   });
 
   it("a refusal says why in the hub's words, with Try again", async () => {

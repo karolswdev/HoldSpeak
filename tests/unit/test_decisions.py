@@ -825,6 +825,9 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         # PHILO-16 16b: the desk's windows (the desk_window.* MCP tools).
         "windows.list", "windows.open", "windows.close", "windows.raise", "windows.arrange",
         "windows.seat",
+        # Betterment Q9: Find the tasks on a note (the note.* MCP tools).
+        "note.outcomes.read", "note.outcomes.find", "note.outcome.edit", "note.outcome.dismiss",
+        "note.outcome.confirm",
     ]
     # decision.list takes the empty object; its one optional argument is the
     # HTTP limit (round two: it passes through instead of slicing 500 rows).

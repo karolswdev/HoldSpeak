@@ -6490,6 +6490,245 @@
         "arguments": [],
         "enforced": true
       }
+    },
+    {
+      "name": "note.outcomes.read",
+      "version": 1,
+      "description": "Read the tasks and decisions found in one note. Read only.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "note_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport; the HTTP routes take the owner only",
+      "effect": "read",
+      "result": "{note_id, rows: [{id, kind: task|decision, text, owner, person_id, due, rationale, state: proposed|confirmed, made_ref, found_at, model}]}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown note"
+      ],
+      "completion": "synchronous",
+      "exposure": [
+        "http:GET /api/notes/{note_id}/outcomes",
+        "mcp:note.outcomes"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A read: computation without effect (Article XI.5).",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "note.outcomes.find",
+      "version": 1,
+      "description": "Find the tasks in one note: the meeting's extraction over the note, on the meeting-analysis engine. Rows are proposed; nothing else is made.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "note_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport; the HTTP routes take the owner only",
+      "effect": "write",
+      "result": "{note_id, rows: [{id, kind: task|decision, text, owner, person_id, due, rationale, state: proposed|confirmed, made_ref, found_at, model}]}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown note",
+        "no_engine",
+        "engine_failed",
+        "engine_unusable",
+        "note_empty"
+      ],
+      "completion": "synchronous (one engine call); note.outcomes.read returns the rows",
+      "exposure": [
+        "http:POST /api/notes/{note_id}/outcomes/find",
+        "mcp:note.find_tasks"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": true,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A model reads the note; its rows are proposals kept with the note.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "note.outcome.edit",
+      "version": 1,
+      "description": "Change a proposed row's words, owner or date before Confirm.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "string"
+          },
+          "row_id": {
+            "type": "string",
+            "description": "A row id from note.outcomes.read."
+          },
+          "text": {
+            "type": "string"
+          },
+          "owner_name": {
+            "type": "string",
+            "description": "Who owns the task: a name, or Me."
+          },
+          "due": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "note_id",
+          "row_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport; the HTTP routes take the owner only",
+      "effect": "write",
+      "result": "{note_id, rows: [{id, kind: task|decision, text, owner, person_id, due, rationale, state: proposed|confirmed, made_ref, found_at, model}]}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown note or row",
+        "note_outcome_not_proposed",
+        "note_outcome_text_required"
+      ],
+      "completion": "synchronous; note.outcomes.read returns the row",
+      "exposure": [
+        "http:POST /api/notes/{note_id}/outcomes/{row_id}/edit",
+        "mcp:note.outcome.edit"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A proposal's words, before the press that makes anything.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "note.outcome.dismiss",
+      "version": 1,
+      "description": "Take a proposed row away. It is never proposed again.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "string"
+          },
+          "row_id": {
+            "type": "string",
+            "description": "A row id from note.outcomes.read."
+          }
+        },
+        "required": [
+          "note_id",
+          "row_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport; the HTTP routes take the owner only",
+      "effect": "write",
+      "result": "{note_id, rows: [{id, kind: task|decision, text, owner, person_id, due, rationale, state: proposed|confirmed, made_ref, found_at, model}]}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown note or row",
+        "note_outcome_not_proposed"
+      ],
+      "completion": "synchronous; note.outcomes.read no longer lists the row",
+      "exposure": [
+        "http:POST /api/notes/{note_id}/outcomes/{row_id}/dismiss",
+        "mcp:note.outcome.dismiss"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A proposal is set aside; nothing is made.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "note.outcome.confirm",
+      "version": 1,
+      "description": "Confirm a row: a task becomes a Door item (Needs you, the person's window), a decision a proposed desk decision; the note is the source. Confirm again replays.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "note_id": {
+            "type": "string"
+          },
+          "row_id": {
+            "type": "string",
+            "description": "A row id from note.outcomes.read."
+          }
+        },
+        "required": [
+          "note_id",
+          "row_id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport; the HTTP routes take the owner only",
+      "effect": "write",
+      "result": "{note_id, rows: [{id, kind: task|decision, text, owner, person_id, due, rationale, state: proposed|confirmed, made_ref, found_at, model}]}; the row's made_ref names the task (action_item:<id>) or decision",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "NotFound: unknown note or row",
+        "note_outcome_dismissed",
+        "door_unavailable"
+      ],
+      "completion": "synchronous; made_ref names the record made",
+      "exposure": [
+        "http:POST /api/notes/{note_id}/outcomes/{row_id}/confirm",
+        "mcp:note.outcome.confirm"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "One task or one PROPOSED decision, as door.add_item; nothing is decided.",
+        "arguments": [],
+        "enforced": true
+      }
     }
   ]
 }
