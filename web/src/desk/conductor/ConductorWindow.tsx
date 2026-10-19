@@ -414,7 +414,13 @@ export function ConductorWindow() {
     if (selectedId && !selected) setSelectedId(null);
   }, [selectedId, selected]);
 
-  const loading = (reads.flightsState === "idle" || reads.flightsState === "loading") && !members.length;
+  // The flights read decides what stands ABOVE the agents on this Mac
+  // (Needs you, At work) and whether that list folds. Until it answers
+  // (ok or failed), the window says it is reading and draws no rows: the
+  // detect read alone used to draw the ready rows first, and the late
+  // sessions pushed them 220 px down at 393 (the desk sweep's still fence,
+  // under load).
+  const loading = reads.flightsState === "idle" || reads.flightsState === "loading";
   const failed = [
     reads.detectState === "failed" ? { part: "AGENTS", token: reads.detectFailure } : null,
     reads.flightsState === "failed" ? { part: "SESSIONS", token: "" } : null,
@@ -431,7 +437,7 @@ export function ConductorWindow() {
 
   const asks = members.filter((m) => m.role === "live" && (m.live === "ask" || m.live === "held"));
   const atWork = members.filter((m) => m.role === "live" && !(m.live === "ask" || m.live === "held"));
-  const ready = members.filter((m) => m.role === "ready");
+  const ready = loading ? [] : members.filter((m) => m.role === "ready");
   // Betterment AG6: an agent a restart stopped stands in its own section
   // with Resume (one press); the rest of today's ended agents fold.
   const stopped = members.filter((m) => m.role === "stale" && m.flightState === "stopped_by_restart" && m.launchId);
