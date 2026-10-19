@@ -71,7 +71,7 @@ class NoteOutcomesService:
             ).fetchall()
         return [{
             "id": row["id"], "kind": row["kind"], "text": row["text"],
-            "owner": row["owner"], "person_id": row["person_id"], "due": row["due"],
+            "owner": row["owner"], "due": row["due"],
             "rationale": row["rationale"], "state": row["state"], "made_ref": row["made_ref"],
             "found_at": row["found_at"], "model": row["model"],
         } for row in rows]
@@ -142,15 +142,19 @@ class NoteOutcomesService:
         decisions = _coerce_decisions(data["decisions"]) if "decisions" in data else []
         return (items, decisions), str(result.get("model") or "")
 
-    def _owner(self, raw: Any) -> tuple[str, str]:
-        """(owner, person_id): "Me" for his own; a People match by name."""
+    def _owner(self, raw: Any) -> str:
+        """The owner: "Me" for his own; a People match takes the person's name.
+
+        Only the NAME is kept in this plaintext table (the 138 law: no
+        People-referencing column outside the encrypted store); a person's
+        window matches it at read time, as it does a meeting's action items."""
         owner = " ".join(str(raw or "").split())
         if not owner:
-            return ME, ""
+            return ME
         try:
             from .needs_you_membership import self_check
             if self_check()(owner):
-                return ME, ""
+                return ME
         except Exception:
             pass
         if self._people is not None:
@@ -160,8 +164,8 @@ class NoteOutcomesService:
                 match = {}
             if match.get("link") == "linked" and match.get("relationship"):
                 person = match["relationship"]
-                return str(person.get("display_name") or owner), str(person.get("id") or "")
-        return owner, ""
+                return str(person.get("display_name") or owner)
+        return owner
 
     def find(self, principal: Principal, note_id: str) -> dict[str, Any]:
         note = self._note(note_id)
@@ -177,8 +181,8 @@ class NoteOutcomesService:
             task = str(item.task or "").strip()
             if not task or ("task", _key(task)) in kept_keys:
                 continue
-            owner, person_id = self._owner(item.owner)
-            found.append({"kind": "task", "text": task, "owner": owner, "person_id": person_id,
+            owner = self._owner(item.owner)
+            found.append({"kind": "task", "text": task, "owner": owner,
                           "due": str(item.due or "").strip(), "rationale": ""})
         task_keys = {_key(row["text"]) for row in found} | {key for kind, key in kept_keys if kind == "task"}
         for decision in decisions:
@@ -186,7 +190,7 @@ class NoteOutcomesService:
             # A task the reply also called a decision is one row: the task.
             if not words or _key(words) in task_keys or ("decision", _key(words)) in kept_keys:
                 continue
-            found.append({"kind": "decision", "text": words, "owner": "", "person_id": "",
+            found.append({"kind": "decision", "text": words, "owner": "",
                           "due": "", "rationale": str(decision.get("rationale") or "").strip()})
         with self._db._connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
@@ -195,10 +199,10 @@ class NoteOutcomesService:
                 "SELECT ordinal FROM note_outcomes WHERE note_id=?", (note.id,)).fetchall()])
             for offset, row in enumerate(found):
                 conn.execute(
-                    """INSERT INTO note_outcomes (id, note_id, ordinal, kind, text, owner, person_id, due,
-                       rationale, state, made_ref, model, found_at) VALUES (?,?,?,?,?,?,?,?,?,'proposed','',?,?)""",
+                    """INSERT INTO note_outcomes (id, note_id, ordinal, kind, text, owner, due,
+                       rationale, state, made_ref, model, found_at) VALUES (?,?,?,?,?,?,?,?,'proposed','',?,?)""",
                     ("no_" + uuid.uuid4().hex[:16], note.id, start + offset, row["kind"], row["text"],
-                     row["owner"], row["person_id"], row["due"], row["rationale"], model, now),
+                     row["owner"], row["due"], row["rationale"], model, now),
                 )
         return self.read(principal, note.id)
 
