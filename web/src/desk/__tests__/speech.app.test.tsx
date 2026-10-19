@@ -10,7 +10,7 @@
 // Live meeting's runtime socket (RuntimeBus) is the one other transport,
 // held quiet. The Runs on face is fenced in runs-on.app.test.tsx.
 
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../runtime/RuntimeBus", () => ({
@@ -77,10 +77,14 @@ function expectTheRow(testId: string, withLine = true) {
 describe("every speech face says speech is not set up", () => {
   // replaces: tests/e2e/test_philo17_speech_glass.py::test_every_speech_face_says_speech_is_not_set_up
 
-  it("Speak", async () => {
+  it("Speak: Talk is live and its press opens the setup in place (betterment C8, one Talk rule)", async () => {
     render(<SpeakFace />);
+    const talk = await screen.findByTestId("speak-speech-setup-key");
+    expect(talk).not.toBeDisabled();
+    fireEvent.click(talk);
     await screen.findByTestId("speak-speech-setup-verb");
-    expectTheRow("speak-speech-setup");
+    // The press is "where you pressed Talk": the verb alone, no sentence.
+    expectTheRow("speak-speech-setup", false);
   });
 
   it("Live meeting: the exact audio-only state, never the old Ready to record", async () => {

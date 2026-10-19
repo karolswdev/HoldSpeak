@@ -814,7 +814,7 @@ export async function loadAll(): Promise<LoadResult> {
         items.kb = wireArray(d, "kbs").filter((k) => !wireBool(k, "deleted")).map(fromWireKb).filter((x): x is KB => x !== null);
         status.kb = "live";
       })
-      .catch((e) => fail("kb", "Knowledge", e)),
+      .catch((e) => fail("kb", "Drawers", e)),
     apiFetch<Record<string, unknown>>("/api/directories")
       .then((d) => {
         const raw = wireArray(d, "directories");

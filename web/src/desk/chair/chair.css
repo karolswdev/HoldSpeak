@@ -122,8 +122,19 @@
   /* The aftercare card lands in the Capture window's slot (design §5): while
      it stands, Capture grows to hold it whole and Needs you gives up the same
      height, so the card is read where it lands (no covered half). */
+  /* Capture C7: the next two Coming-up rows sit under the capture verbs;
+     Capture grows to hold them (Needs you gives up the same height). */
+  .desk-next .chair-desk:has(.chair-window--capture [data-testid="arrival-coming-up"]) :is(.chair-window, .chair-window-closed) {
+    --chair-capture-h: 240px;
+  }
   .desk-next .chair-desk:has(.chair-window--capture [data-aftercare-slot]:not(:empty)) :is(.chair-window, .chair-window-closed) {
     --chair-capture-h: 300px;
+  }
+  /* Betterment C8: what a Capture verb opens (the speech setup, the new
+     note) is read where it opens: Capture grows to hold it, as for the
+     aftercare card above. */
+  .desk-next .chair-desk:has(.chair-window--capture .arrival-capture-place) :is(.chair-window, .chair-window-closed) {
+    --chair-capture-h: 212px;
   }
   .desk-next .chair-desk[data-layout="tiles"] .chair-window--needs,
   .desk-next .chair-desk[data-layout="tiles"] .chair-window-closed.chair-window--needs {
@@ -858,4 +869,62 @@
     min-height: 44px;
     min-width: 44px;
   }
+}
+
+/* ── Betterment capture C8: three large verbs (Talk, New note, Record) ── */
+.desk-next .arrival-capture-bar .arrival-capture-big {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 56px;
+  justify-content: center;
+}
+.desk-next .arrival-capture-bar .arrival-capture-talk.arrival-capture-big {
+  display: flex;
+  align-items: stretch;
+}
+.desk-next .arrival-capture-bar .arrival-capture-talk.arrival-capture-big > .desk-mic.gadget-transport-key {
+  flex: 1 1 auto;
+  width: auto;
+  height: auto;
+  min-height: 56px;
+  flex-direction: row;
+  gap: 8px;
+  padding: 0 12px;
+  font: 700 13px / 1 var(--font-sans);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.desk-next .arrival-capture-bar .btn.arrival-capture-big {
+  font-size: 13px;
+}
+/* The verbs start at the top of Capture (phone first), not mid-window. */
+.desk-next .chair-window--capture .chair-window-body {
+  justify-content: flex-start;
+}
+/* What a verb opens (the speech setup, the new note) has its own line. */
+.desk-next .arrival-capture-bar > .arrival-capture-place {
+  flex: 1 0 100%;
+  min-width: 0;
+}
+.desk-next .arrival-capture-place > .talk-setup {
+  display: flex;
+  width: 100%;
+}
+.desk-next .arrival-capture-note .gadget-pad {
+  display: flex;
+  width: 100%;
+}
+.desk-next .arrival-capture-note textarea {
+  flex: 1;
+  min-height: 72px;
+  resize: none;
+}
+@media (max-width: 480px) {
+  /* Phone first: the three verbs stack, full width. */
+  .desk-next .arrival-capture-bar .arrival-capture-big {
+    flex: 1 0 100%;
+  }
+}
+.desk-next .arrival-capture-place .speech-setup-verbs {
+  margin-left: 0;
 }

@@ -1775,14 +1775,25 @@ class TestCloseMeansGone:
                 _close_control(page, width, "Today").wait_for()
                 self._close_and_prove(page, width, "Today", "dock-intelligence")
 
-                # 3. Write a thought: `note:<id>` (newThought.ts) → the Thought window.
-                # PHILO-13-11 (slice two, R2): at 393 Capture opens from the Speak AppIcon.
-                if width <= 720:
-                    open_chair_window(page, "Capture")
+                # 3. New note: Go raises Capture even when it is already
+                # visible behind another window. The generic helper is a
+                # no-op for a shown window, so it cannot do this preparation.
+                page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                page.locator(".desk-verbbar-menu [role^='menuitem']").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Capture$"))).click()
                 self._press(page, page.get_by_test_id("arrival-develop-thought"), width)
-                # A note with no words is named `New note` (windowName.ts, Betterment Q8).
-                _close_control(page, width, "New note").wait_for()
-                self._close_and_prove(page, width, "New note", "write-a-thought")
+                # Betterment C8: the press unfolds an empty note under the
+                # verbs; the first character makes the record and opens its
+                # window, and the keys after it follow into the note.
+                page.get_by_test_id("arrival-new-note").locator("textarea").press("P")
+                page.keyboard.type("lan")
+                page.locator("[id^='pullout:note:']").first.wait_for()
+                page.wait_for_timeout(1200)
+                _settle(page)
+                # The note's first words name its window, else `New note`
+                # (windowName.ts, Betterment Q8).
+                label = next(w["label"] for w in self._open(page) if str(w["id"]).startswith("pullout:note:"))
+                self._close_and_prove(page, width, label, "write-a-thought")
 
                 if width < 720:
                     # The phone home is Go. Find opens exact existing

@@ -20,9 +20,10 @@ reads that answer.
         Each is an attention row with a Review verb that opens it.
     R5  the coding agents (Claude Code, Codex) that wait for the owner's
         answer: a session in ``awaiting_response`` with a captured question,
-        updated in the last 30 minutes (``agent_context``'s recent default).
-        Each is an attention row of kind ``coder`` that ranks with the
-        due-today rows (a blocked agent costs time now).
+        updated in the last 30 minutes (``agent_context``'s recent default),
+        plus Secure helper requests awaiting one owner Allow press. Each is
+        an attention row of kind ``coder`` that ranks with the due-today rows
+        (a blocked agent costs time now).
 
 Owner ruling 2026-10-04: a row the owner is WAITING ON someone else for (it
 names an owner, and its reason is ``WAITING ON <owner>``) is listed and is
@@ -39,7 +40,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import date, datetime, timedelta, timezone
-from holdspeak.timestamps import local_wall, parse_stamp, utc_now_iso
+from holdspeak.timestamps import local_wall, parse_stamp, utc_now, utc_now_iso
 from typing import Any, Callable, Iterable
 
 from .attention_ranking import dedup_items, rank_items
@@ -134,6 +135,66 @@ def door_items(
                 "_isUnassigned": column == "unassigned" and not has_owner,
                 "_toReview": column == "unassigned" and has_owner,
             })
+    return rows
+
+
+def helper_request_items(
+    flights: Iterable[Any], now: datetime | None = None,
+) -> list[dict[str, Any]]:
+    """R5: Secure helper requests waiting for the owner's Allow press.
+
+    A helper request has no agent session yet, so it cannot be represented by
+    :func:`coder_items`. The parent flight remains the durable owner-facing
+    projection until the owner consumes the request through the helper route.
+    """
+    clock = now or local_wall()
+    now_s = (clock if clock.tzinfo else clock.astimezone()).timestamp()
+    rows: list[dict[str, Any]] = []
+    for flight in flights:
+        record = flight if isinstance(flight, dict) else dict(flight or {})
+        request = record.get("helper_request")
+        launch_id = str(record.get("launch_id") or "")
+        if not launch_id or not isinstance(request, dict) or request.get("status") != "awaiting_owner":
+            continue
+        request_id = str(request.get("request_id") or "")
+        requested = str(request.get("requested_at") or record.get("launched_at") or "")
+        requested_s = _epoch_seconds(requested)
+        age = max(0, int(now_s - requested_s)) if requested_s is not None else 0
+        instruction = str(request.get("instruction") or "Allow the helper to start").strip()
+        ref = f"{CODER_SOURCE}:launch:{launch_id}:helper"
+        rows.append({
+            "id": ref,
+            "ref": ref,
+            "notifyKey": f"{ref}#{request_id}" if request_id else ref,
+            "projectId": str(record.get("project_id") or ""),
+            "projectName": str(record.get("project_name") or ""),
+            "title": _excerpt(instruction),
+            "why": TO_APPROVE,
+            "ageToken": requested,
+            "since": requested,
+            "dueAt": None,
+            "kind": CODER_SOURCE,
+            "source": CODER_SOURCE,
+            "verbHref": None,
+            "openRef": f"launch:{launch_id}",
+            "severity": "warning",
+            # The helper has no session until Allow starts it. Reusing the
+            # parent's key would make fold_asks hide this owner action inside
+            # the parent's ordinary question.
+            "sessionKey": "",
+            "launchId": launch_id,
+            "agent": str(record.get("agent") or ""),
+            "question": instruction,
+            "waitKind": "approve",
+            "waitStartedAt": requested,
+            "ageSeconds": age,
+            "helperRequest": {
+                "requestId": request_id,
+                "status": "awaiting_owner",
+                "instruction": instruction,
+                "profile": request.get("profile"),
+            },
+        })
     return rows
 
 
@@ -1060,7 +1121,8 @@ def compute_needs_you(
     coder_rows, gate_rows = correlate_gate_waits(
         coder_items(coders, clock), gate_items(holds, clock), holds, clock,
     )
-    singles = people + decision_items(decisions) + coder_rows + gate_rows
+    helper_rows = helper_request_items(flights, clock)
+    singles = people + decision_items(decisions) + coder_rows + gate_rows + helper_rows
     for row in singles:
         row["waiting"] = other(row)
     ranked = rank_items(merged + singles, clock)
@@ -1394,16 +1456,38 @@ def _read_decisions(db: Any, principal: Any) -> list[dict[str, Any]]:
     return out
 
 
-def _read_arming(db: Any) -> list[dict[str, Any]]:
-    """PHILO-15-09 (B11, ONE NUMBER): a scheduled recording about to start.
+def _read_arming(db: Any, now: datetime | None = None) -> list[dict[str, Any]]:
+    """Read active arming rows and a recent failed fire for Needs you.
 
-    The desk draws it as a row of Needs you (the countdown and Cancel), so
-    the one count counts it."""
+    A failed or missed fire remains actionable for that meeting's duration.
+    The service owns the receipt wording; this read only applies the same
+    relevance window as Meetings ▸ Record.
+    """
+    from .scheduled_recording_service import ScheduledRecordingService
+
+    now_epoch = (now or utc_now()).timestamp()
+    service = ScheduledRecordingService(db)
     rows = []
     for rec in db.scheduled_recordings.list_all():
         if str(getattr(rec, "state", "")) == "arming":
             rows.append({"scheduleId": str(rec.id), "title": str(rec.title or ""),
                          "armedAt": getattr(rec, "armed_at", None)})
+            continue
+        failed = service._did_not_record(rec)
+        if not failed:
+            continue
+        at = parse_stamp(failed.get("at"))
+        if at is None:
+            continue
+        age = now_epoch - at.timestamp()
+        if 0 <= age <= max(60, int(getattr(rec, "duration_minutes", 0)) * 60):
+            rows.append({
+                "scheduleId": str(rec.id),
+                "title": str(rec.title or ""),
+                "armedAt": None,
+                "didNotRecord": failed,
+                "calendarEventId": str(getattr(rec, "calendar_event_id", "") or ""),
+            })
     return rows
 
 
@@ -1665,7 +1749,7 @@ def compose(
     # recording that arms. An agent's ask is folded into its item above.
     arming: list[dict[str, Any]] = []
     try:
-        arming = _read_arming(db)
+        arming = _read_arming(db, now)
     except Exception as exc:
         log.warning("needs-you: the arming read failed: %s", exc)
     # PHILO-17 (needsyou): sources of one cause are one row, counted once.
@@ -1910,6 +1994,7 @@ def withhold_people_content(answer: dict[str, Any]) -> dict[str, Any]:
 __all__ = [
     "CODER_SOURCE",
     "coder_items",
+    "helper_request_items",
     "PEOPLE_ROW_TITLE",
     "PEOPLE_SOURCE",
     "is_people_row",

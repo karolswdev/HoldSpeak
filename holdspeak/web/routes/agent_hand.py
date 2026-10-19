@@ -400,6 +400,47 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             )
         return JSONResponse(result, status_code=202)
 
+    @router.post("/api/agent/launches/{launch_id}/helper/allow")
+    async def api_agent_helper_allow(launch_id: str, request: Request) -> Any:
+        """The owner's one press for a helper requested under Secure.
+
+        The agent's request is durable, but this route consumes it through
+        ``AgentHandService.hand`` so the ordinary worktree and process.spawn
+        kernel checks still decide whether the helper can start.
+        """
+        from ...services import agent_helpers
+        from ...services.agent_hand_service import default_agent_hand_service
+
+        principal = getattr(
+            request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session")
+        )
+        try:
+            body = await request.json()
+        except Exception:
+            body = None
+        body = body if isinstance(body, dict) else {}
+        request_id = str(body.get("request_id") or "").strip()
+        if not request_id:
+            return JSONResponse({"error": "request_id_required", "code": "request_id_required"}, status_code=400)
+        service = getattr(ctx, "agent_hand_service", None) or default_agent_hand_service(
+            delivery_service=getattr(ctx, "delivery_service", None)
+        )
+        try:
+            result = await asyncio.to_thread(
+                agent_helpers.allow_helper,
+                launch_id,
+                request_id=request_id,
+                principal=principal,
+                hand_service=service,
+            )
+        except ServiceError as exc:
+            payload = dict(exc.context)
+            status = int(payload.pop("status", 409))
+            return JSONResponse(
+                {"error": exc.code, "code": exc.code, "detail": exc.detail, **payload}, status_code=status
+            )
+        return JSONResponse(result, status_code=202 if result.get("status") == "launched" else 409)
+
     @router.post("/api/agent/launches/{launch_id}/resume")
     async def api_agent_resume(launch_id: str, request: Request) -> Any:
         """Betterment AG6: Resume an agent a restart stopped: a new terminal

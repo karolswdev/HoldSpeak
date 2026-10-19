@@ -1,0 +1,55 @@
+/* Betterment capture C8 — the one Talk rule (Talk.tsx).
+   While a Talk listens its key reads `Listening · Stop`: the key grows to
+   its word (a square key cannot hold it). The setup row it opens sits on
+   its own material, so it reads on the wallpaper and in any window. */
+.desk-next .desk-mic.gadget-transport-key.is-listening {
+  width: auto;
+  min-width: var(--size-key);
+  padding: 0 10px;
+  white-space: nowrap;
+}
+.desk-next .speak-plate .speak-transport > .desk-mic.gadget-transport-key.is-listening {
+  width: auto;
+  min-width: 104px;
+  padding: 0 14px;
+}
+.desk-next .talk-setup {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: var(--desk-window-etch);
+}
+.desk-next .speak-setup .talk-setup {
+  display: flex;
+  border: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+.desk-next .talk-setup > .speech-setup {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* The floor TALK: the row opens beside the key. */
+.desk-next .desk-screen-talk {
+  gap: 8px;
+  max-width: calc(100vw - 40px);
+}
+/* Speak at 393: Talk is the sticky foot of the plate; its setup opens just
+   above it, where the thumb pressed. */
+@container surface (max-width: 500px) {
+  .desk-next .speak-plate .speak-setup {
+    order: 98;
+  }
+}
+/* Speak at 393: a live Talk key is a whole touch target to its corners
+   (the desk sweep's hit probe; a 6 px round corner is not pressable). */
+@container surface (max-width: 500px) {
+  .desk-next .speak-plate .speak-transport > .desk-mic.gadget-transport-key {
+    border-radius: 2px;
+  }
+}

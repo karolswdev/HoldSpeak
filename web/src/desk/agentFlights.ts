@@ -60,6 +60,10 @@ export interface AgentFlight {
   /** Betterment AG3: the desk's own answer under YOLO (drafting, then what
    * it typed and the line it used; New until he opens the agent). */
   deskAnswer?: DeskAnswer | null;
+  /** Betterment AG11: the launch that started this helper. */
+  helperOf?: string | null;
+  /** Betterment AG11: Secure asked the owner for one helper Allow press. */
+  helperRequest?: { requestId: string; status: "awaiting_owner"; instruction: string; profile: string | null } | null;
   /** Betterment AG7: which source decided the state (`hook`, `screen`). */
   stateSource?: "hook" | "screen" | null;
   /** Betterment AG7: the agent's screen as the hub's rules read it. */
@@ -178,6 +182,15 @@ export function fromWireFlight(body: any): AgentFlight {
     queueId: body?.queue_id ? String(body.queue_id) : null,
     queuedAt: body?.queued_at ? String(body.queued_at) : null,
     deskAnswer: fromWireDeskAnswer(body?.desk_answer),
+    helperOf: body?.helper_of ? String(body.helper_of) : null,
+    helperRequest: body?.helper_request?.status === "awaiting_owner"
+      ? {
+          requestId: String(body.helper_request.request_id ?? ""),
+          status: "awaiting_owner",
+          instruction: String(body.helper_request.instruction ?? ""),
+          profile: body.helper_request.profile ? String(body.helper_request.profile) : null,
+        }
+      : null,
     stateSource: body?.state_source === "hook" || body?.state_source === "screen" ? body.state_source : null,
     screen: fromWireScreen(body?.screen),
   };

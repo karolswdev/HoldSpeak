@@ -3,11 +3,14 @@
 // read is asked at a recording epoch; a Start or a Stop while it is in flight
 // makes it stale, and it never moves the desk (nor, through it, the meeting's
 // window).
-import { act, render } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch, apiRequest } from "../../../lib/api";
 import { useDesk } from "../../store";
 import { RecordOrb } from "../RecordOrb";
+
+const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn() }));
+vi.mock("../../shell", () => ({ openSurfaceOr: shell.openSurfaceOr }));
 
 vi.mock("../../../lib/api", async (original) => ({
   ...(await original<typeof import("../../../lib/api")>()),
@@ -70,5 +73,21 @@ describe("Astra r2: the orb's first state read never undoes a newer Start or Sto
     });
     expect(useDesk.getState().recording).toBe("idle");
     expect(useDesk.getState().liveMeetingId).toBeNull();
+  });
+
+  it("a long press opens Meetings Record without starting a meeting", async () => {
+    vi.useFakeTimers();
+    try {
+      render(<RecordOrb />);
+      const orb = screen.getByRole("button", { name: "Record a meeting" });
+      fireEvent.pointerDown(orb);
+      await act(async () => { vi.advanceTimersByTime(500); });
+      expect(shell.openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "record");
+      fireEvent.pointerUp(orb);
+      fireEvent.click(orb);
+      expect(apiRequest).not.toHaveBeenCalledWith("/api/meeting/start", expect.anything());
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

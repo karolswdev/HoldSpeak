@@ -748,13 +748,43 @@
     }
   ],
   "measurements": {
-    "residual_identities": 253,
-    "residual_mcp": 198,
+    "residual_identities": 260,
+    "residual_mcp": 205,
     "residual_http": 55,
     "http_constructions": 56,
-    "public_tools": 270
+    "public_tools": 282
   },
   "entries": [
+    {
+      "transport": "mcp",
+      "entry_point": "agent.answer",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/agent.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "agent.prompt",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/agent.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "agent.read",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/agent.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "agent.start_helper",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/agent.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "agent.wait",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/agent.py)"
+    },
     {
       "transport": "mcp",
       "entry_point": "ask.cancel",
@@ -903,7 +933,7 @@
       "transport": "mcp",
       "entry_point": "coder.explain",
       "discriminator": "",
-      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/coder.py); Betterment AG7"
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/coder.py)"
     },
     {
       "transport": "mcp",
@@ -1573,13 +1603,13 @@
     },
     {
       "transport": "mcp",
-      "entry_point": "provider.github_validate_repo",
+      "entry_point": "provider.github_pr_get",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
     },
     {
       "transport": "mcp",
-      "entry_point": "provider.github_pr_get",
+      "entry_point": "provider.github_validate_repo",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/project.py)"
     },

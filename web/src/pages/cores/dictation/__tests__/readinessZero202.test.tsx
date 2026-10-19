@@ -24,6 +24,7 @@ vi.mock("../../../../lib/api", () => ({
 }));
 
 import { Readiness } from "../Readiness";
+import { useBuilderTools } from "../../../../desk/builderTools";
 
 const readiness = (runs: number) => ({
   config: { pipeline_enabled: true, backend: "mlx", max_total_latency_ms: 900 },
@@ -35,6 +36,8 @@ const readiness = (runs: number) => ({
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
+  // Betterment C8: the raw fold is behind RAW (Builder tools), on here.
+  useBuilderTools.getState().setOn(true);
 });
 
 describe("the gear door's Runs fact (A.8)", () => {
@@ -70,6 +73,14 @@ describe("the gear door's Runs fact (A.8)", () => {
     expect(await screen.findByText("Runs")).toBeInTheDocument();
     const row = screen.getByText("Runs").closest(".gadget-row");
     expect(row?.textContent).toContain("3");
+  });
+
+  it("RAW off: the raw readiness fold is not on the face (betterment C8)", async () => {
+    useBuilderTools.getState().setOn(false);
+    mocks.apiFetch.mockResolvedValue(readiness(0));
+    render(<Readiness />);
+    await screen.findByText("Delivery");
+    expect(screen.queryByText("RAW · READINESS")).toBeNull();
   });
 
   it("keeps the readiness wire behind a fold that says it is raw", async () => {

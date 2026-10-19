@@ -127,6 +127,12 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "coder.list":   ("evidence_read",     False),
     "coder.get":    ("evidence_read",     False),
     "coder.audit":  ("evidence_read",     False),
+    # Betterment AG11 (MCP-only: launched agents; no thread palette has them)
+    "agent.start_helper": ("effect_proposal", False),
+    "agent.prompt":       ("effect_proposal", False),
+    "agent.wait":         ("evidence_read",   False),
+    "agent.read":         ("evidence_read",   False),
+    "agent.answer":       ("effect_proposal", False),
     "coder.explain": ("evidence_read",    False),
     # --- cadence family ---
     "cadence.status":          ("evidence_read",     False),

@@ -78,6 +78,7 @@ export function SurfaceFooter({
   receipt,
   verbs,
   className,
+  fold = true,
 }: {
   egress?: ReactNode;
   receipt?: ReactNode;
@@ -85,8 +86,12 @@ export function SurfaceFooter({
   /** HS-169-02 — a face-scoped hook: the layout is portaled into the
    *  frame's foot slot, so a face cannot reach it by descendant selector. */
   className?: string;
+  /** Betterment Q8 (the note at 393): `false` keeps every verb on the phone,
+   *  wrapping to a second row, instead of folding the extras into More. For a
+   *  foot of a few short verbs that the owner reaches for every time. */
+  fold?: boolean;
 }) {
-  const compact = useCompactViewport();
+  const compact = useCompactViewport() && fold;
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLButtonElement | null>(null);
   const footerVerbs: FooterVerb[] = [];

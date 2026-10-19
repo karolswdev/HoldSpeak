@@ -129,6 +129,7 @@ const ANSWER = {
   complete: true,
 };
 
+const REAL_START = useDesk.getState().startRecording;
 let gateCalls: Array<{ path: string; json: unknown }> = [];
 const REAL_CANCEL = useDesk.getState().cancelArmedSchedule;
 let DOOR: Record<string, unknown> = { upcoming: [], calendar_configured: true };
@@ -139,7 +140,7 @@ beforeEach(() => {
   useDropped.getState().set(null);
   gateCalls = [];
   DOOR = { upcoming: [], calendar_configured: true };
-  useDesk.setState({ scheduledArming: null, cancelArmedSchedule: REAL_CANCEL } as never);
+  useDesk.setState({ scheduledArming: null, cancelArmedSchedule: REAL_CANCEL, startRecording: REAL_START } as never);
   useArmingOutcome.setState({ refusal: null, receipt: null, busy: false });
   (globalThis as { __resetNeedsYou?: () => void }).__resetNeedsYou?.();
   useAgentFlights.setState({ flights: [FLIGHT, WORKING], sessions: [] } as never);
@@ -184,6 +185,29 @@ async function mount() {
 }
 
 describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
+  it("a Secure helper request has one Allow press with its exact request id", async () => {
+    const allow = vi.fn();
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {
+      if (String(path).startsWith("/api/desk/needs-you")) return {
+        ...ANSWER, count: 9, items: [...ITEMS, {
+          id: "coder:launch:parent:helper", ref: "coder:launch:parent:helper",
+          kind: "coder", source: "coder", title: "Review the runbook", question: "Review the runbook",
+          why: "TO APPROVE", severity: "warning", sessionKey: "", launchId: "parent",
+          agent: "claude", counted: true,
+          helperRequest: { status: "awaiting_owner", requestId: "helper-request-1" },
+        }],
+      } as never;
+      if (path === "/api/agent/launches/parent/helper/allow") { allow(init); return { status: "launched" } as never; }
+      return { ...DOOR } as never;
+    });
+    render(<NeedsDrawer />);
+    const button = await screen.findByRole("button", { name: /^Allow helper:/ });
+    fireEvent.click(button);
+    await waitFor(() => expect(allow).toHaveBeenCalledWith({
+      method: "POST", json: { request_id: "helper-request-1" },
+    }));
+  });
+
   it("heads with the hub's number, once, and nothing else", async () => {
     await mount();
     const drawer = screen.getByTestId("needs-drawer");
@@ -353,6 +377,34 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await waitFor(() => expect(rows[0].querySelector(".gadget-lamp")?.textContent).not.toBe(first), { timeout: 2500 });
     fireEvent.click(rows[0].querySelector("[data-verb='cancel']")!);
     expect(cancel).toHaveBeenCalledWith("sch-1");
+  });
+
+  it("a failed fire stays in Needs you and Record now starts its calendar meeting", async () => {
+    const start = vi.fn().mockResolvedValue(undefined);
+    useDesk.setState({ startRecording: start });
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        return {
+          ...ANSWER,
+          arming: [{
+            scheduleId: "sch-failed",
+            calendarEventId: "event-ledger",
+            title: "Ledger cutover sync",
+            didNotRecord: { at: "2026-10-07T16:00:00Z", reason: "No microphone" },
+          }],
+        } as never;
+      }
+      return { ...DOOR } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
+    const failed = document.querySelector<HTMLElement>("[data-object-id='arming:sch-failed']");
+    expect(failed).toBeTruthy();
+    expect(failed?.querySelector(".needs-row-fact")?.textContent).toContain("Did not record");
+    expect(failed?.querySelector(".needs-row-fact")?.textContent).toContain("No microphone");
+    expect(face(failed!).verbs).toEqual(["Record now", "Open meetings"]);
+    fireEvent.click(failed!.querySelector("[data-verb='record']")!);
+    expect(start).toHaveBeenCalledWith({ calendarEventId: "event-ledger" });
   });
 
   it("NEXT is a quiet footer line; no calendar is an offer in the foot, never a row (PHILO-15-09 B11)", async () => {

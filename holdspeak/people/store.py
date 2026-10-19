@@ -71,7 +71,7 @@ class EncryptedPeopleStore:
         created_here = False
         try:
             self.key_store.put(key_id, key)
-            with self._connect(create=True) as conn:
+            with closing(self._connect(create=True)) as conn, conn:
                 created_here = True
                 self._schema(conn)
                 conn.execute("INSERT INTO meta(key, value) VALUES('key_id', ?)", (key_id,))
@@ -100,7 +100,7 @@ class EncryptedPeopleStore:
             return PeopleReadiness.UNCONFIGURED
         try:
             self._require_private_files()
-            with self._connect() as conn:
+            with closing(self._connect()) as conn, conn:
                 self._schema(conn)
                 key_id = self._key_id(conn)
                 key = self.key_store.get(key_id)
@@ -472,8 +472,12 @@ class EncryptedPeopleStore:
         self._require_private_path(self.path)
         for suffix in ("-wal", "-shm"):
             candidate = self.path.with_name(self.path.name + suffix)
-            if candidate.exists():
+            try:
                 self._require_private_path(candidate)
+            except FileNotFoundError:
+                # SQLite removes these optional files when its last connection
+                # closes. Their absence is valid, including during this stat.
+                continue
 
     @staticmethod
     def _require_private_path(path: Path) -> None:
