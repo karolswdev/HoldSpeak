@@ -4,18 +4,37 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (C7/C8 #1363 recovered; delivery follows merge)
+**Last updated:** 2026-10-19 (People readiness and recovered agent regression fixes)
 
 ## Current phase
 
 **Betterment recovery: 76/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `5fcb0e8f2`, frontend `9aa4aa4562561fb8`, PID 58304 (Q8/Q10).
+backend `1c8c98cbb`, frontend `b077f49ff9648551`, PID 1952 (C7/C8).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
 Remaining browser shards use the low-priority machine lock at
 `wt-betterment-tape-20261019`, pinned to `bd3acff8f`.
+
+Recovery follow-up #1370 fixes two reproduced People-store defects: optional SQLite
+journals can disappear during the permission check, and setup/readiness held
+connections until garbage collection. The journal race fails twice before the
+fix; three retained-connection checks fail before explicit closure. All 12
+People-store checks pass after both fixes. The required quick check passed
+285 affected pytest, 106 sweep, 27 canon and 1,116 repo guards; the three
+additional connection checks ran as a separate focused red/green proof.
+The two stale compact-agent browser assertions now check the full question,
+wrapping and drawer geometry; both pass. Six closed follow-up rows are parked
+in FOLLOWUPS-RESOLVED-2026-10-19.md. These repairs do not establish that every
+historic People 503 has the same cause. Delivery follows merge.
+
+The owner's Record home is observed at 1440/393, without page errors, after
+C7/C8 deployment. The terminal wrapper now imports that deployed source;
+15 existing Claude/Codex hook commands follow the wrapper. Previous files
+are parked beside their originals. New sessions use the updated commands;
+existing sessions can retain their startup hook configuration. The MCP
+sidecar remains a live-hub proxy. User-scope MCP/skill setup remains ST6.
 
 C7/C8 #1363 gives Meetings its Record wing, durable failed/missed occurrence
 words, and a Needs you Record now press that starts the named calendar
@@ -26,7 +45,7 @@ three old receipt/settings assertions and one window-focus browser case;
 the assertions now follow the current face and use the actual Go press.
 The final quick check is green: 21 web, 18 browser, 106 sweep, 27 canon and
 1,116 repo guards. Hardware microphone/recording use remains unobserved.
-Delivery follows this merge. The owner's existing drawer and its three
+C7/C8 is on the running desk. The owner's existing drawer and its three
 members were observed read-only at both sizes after Q8/Q10, without page errors.
 
 ST1 #1347 gives Rhythm, Wallpaper and Calendar one Settings home, preserves
@@ -1122,6 +1141,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- #1370 — People readiness closes SQLite connections and tolerates journal cleanup; full-question agent browser checks and follow-up reconciliation.
 
 - #1363 — Capture C7/C8: one recording home, truthful failed occurrences, direct Record now and saved speech handoff.
 
