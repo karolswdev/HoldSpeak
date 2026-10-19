@@ -423,16 +423,15 @@ describe("Settings › Meetings", () => {
     expect(rawButtons(container.querySelector(".prefs-module")!)).toEqual([]);
   });
 
-  it("Auto-record 5 MIN BEFORE and MATCHED THIS WEEK; Meetings has no calendar block (Betterment setup ST1)", async () => {
+  it("Auto-record links to Meetings Record; Meetings has no calendar block (Betterment setup ST1)", async () => {
     // replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_calendar_section (the auto-record leg)
     hub.state.settings.calendar = { ...hub.state.settings.calendar, sources: [{ id: "src-work", label: "WORK", url: "/Users/owner/work.ics", enabled: true }] };
     hub.state.calendar = { ...clone(calendarOneWire), matched_this_week: 1 };
     hub.state.settings.meeting.auto_record = "room_linked";
     render(<SettingsCore scope="meetings" />);
     const auto = await screen.findByTestId("settings-auto-record");
-    await waitFor(() => expect(within(auto).getByTestId("matched-this-week").textContent).toBe("1 MATCHED THIS WEEK"));
-    expect(auto.textContent).toContain("5 MIN BEFORE");
-    expect(auto.querySelector("select")).not.toBeNull();
+    expect(within(auto).getByTestId("settings-auto-record-link").textContent).toBe("Meetings › Record");
+    expect(auto.querySelector("select")).toBeNull();
     // Betterment setup ST1: Calendar's one home is Accounts.
     expect(document.querySelector(".prefs-calendar-section")).toBeNull();
     expect(screen.queryByTestId("calendar-source-src-work")).toBeNull();
@@ -469,14 +468,13 @@ describe("Settings › Meetings", () => {
     expect(within(well).getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 
-  it("Auto-record OFF: no MIN BEFORE and no MATCHED THIS WEEK", async () => {
+  it("Auto-record stays a link when OFF", async () => {
     // replaces: tests/e2e/test_hs175_settings_meetings_glass.py::TestSettingsCalendarSection::test_matched_absent_when_zero
     hub.state.calendar = { ...clone(calendarOneWire), auto_record: "off", matched_this_week: 1 };
     render(<SettingsCore scope="meetings" />);
     const auto = await screen.findByTestId("settings-auto-record");
     await waitFor(() => expect(hub.state.calls.some((c) => c.path === "/api/calendar/sources")).toBe(true));
-    expect(auto.textContent).not.toContain("MATCHED THIS WEEK");
-    expect(auto.textContent).not.toContain("MIN BEFORE");
+    expect(within(auto).getByTestId("settings-auto-record-link")).toHaveTextContent("Meetings › Record");
   });
 });
 
@@ -742,16 +740,11 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     expect(within(footer).getByRole("button", { name: "Retry" }).className).toContain("btn--primary");
   });
 
-  it("Auto-record reflects the edited setting even while calendar statistics report the earlier mode", async () => {
+  it("Auto-record always points to its Meetings Record home", async () => {
     hub.state.settings.meeting.auto_record = "off";
     hub.state.calendar = { ...clone(calendarOneWire), auto_record: "room_linked" };
     render(<SettingsCore scope="meetings" />);
-    const control = await screen.findByRole("combobox", { name: "Auto-record mode" });
-    expect(control).toHaveValue("off");
-    fireEvent.change(control, { target: { value: "all_calendar" } });
-    expect(control).toHaveValue("all_calendar");
-    await waitFor(() => expect(hub.state.settings.meeting.auto_record).toBe("all_calendar"), { timeout: 3000 });
-    expect(control).toHaveValue("all_calendar");
+    expect(await screen.findByTestId("settings-auto-record-link")).toHaveTextContent("Meetings › Record");
   });
 
   it("a failed runtime read offers a working Retry instead of a false identity", async () => {

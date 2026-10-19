@@ -1,11 +1,12 @@
 # Follow-ups found while building
 
 Each item names the slice or recipe that takes it. Remove an item when the
-PR that fixes it merges.
+PR that fixes it merges. The recovery reconciliation is retained in
+`FOLLOWUPS-RESOLVED-2026-10-19.md`.
 
 | Found in | Follow-up | Goes to |
 |---|---|---|
-| ~~Q0 (#1260)~~ FIXED in E3 #1294 | An engine added through the Model Library gets a 16,384-token context by default (`model_library_service.py:526`), although the LAN engine serves 49,152. The route also counts one token per byte (`inference_adoption_service.py:148-157`). Tools barely fit. Read the engine's real context size when Check runs, and count tokens properly. | Engines E3 |
+| C7 recovery #1363 | After a failed scheduled fire, the current Needs you read uses the saved failure until the occurrence expires. Verify that a successful manual Record now resolves this attention row while keeping the failed occurrence in recording history; hardware success is not yet observed. | Capture C10 / recording follow-through |
 | Q0 (#1260) | Interview's answer-only pass puts a system message after the user message, which Qwen's template rejects. | Asking Q4, or a small fix |
 | Q0 (#1260) | "Engine not reachable" is shown as "No engine for answers" (`ask_service.py` reason mapping). | Asking Q1 |
 | C2 (#1258) | Memory pages (what we decided, what is open) are not filtered by date, so a re-summary of an old meeting can still read later facts through a page. | Capture C6 |
@@ -13,7 +14,7 @@ PR that fixes it merges.
 | S1 (#1259) | A person is not a desk object, so a person has no Object menu. | Shell S4 or Daily D6 |
 | S1 (#1259) | The Builder tools switch is saved in the browser, not on the hub, so an agent cannot read or set it. | Shell S5 |
 | S0 (#1257) | Search for "automation" still finds nothing. | Shell S5 (Automations A1 adds the alias) |
-| ST0 (#1261) | Rest of ST0 not built: one Rhythm quiet-hours store (do it once, in ST1), Setup rows in words (the yellow Check chip), Other devices saved (`mcp_http.py:392-404` keeps it in memory only). | Setup ST1 |
+| ST0 (#1261) | ST1 #1347 delivered the one Rhythm quiet-hours store. Remaining ST0: Setup rows in words (the yellow Check chip), Other devices saved (`mcp_http.py:392-404` keeps it in memory only). | Setup ST1 |
 | ST0 (#1261) | The fix is in the Engines summary only. The runtime speech route still falls back to the default last; on a desk without speech's own capability row, a route plan could still reach the chat server. Check it. | Setup ST1 / Engines E5 |
 | E1 (#1273) | `CliEngine.cancel()` exists but nothing in the kernel calls it; an owner cancel waits for the timeout. | Engines E5 / Automations A3 (cancel) |
 | E1 (#1273) | A timed-out CLI is retried once before the fallback (two killed attempts). Consider no retry on timeout for CLI engines. | Engines E5 |
@@ -28,11 +29,10 @@ PR that fixes it merges.
 | A2 (#1280) | The Inbox zone exists only on a seeded desk; on a fresh desk the result note is filed nowhere. | Automations A6 |
 | A2 (#1280) | With auto-run off, an event's occurrence item waits until someone re-runs that item; Run now makes a fresh one instead. | Automations A4 |
 | A2 (#1280) | Engine and gh replies in its tests use the real wire shape but were not recorded live. | Re-record on the next live walk |
-| Process | The quick check runs only related tests; four reds reached main today unseen, and no main watcher was running. The orchestrator now runs the full suite after each batch of merges and redeploys the desk only when green. | Orchestrator |
+| Process | The quick check runs only related tests; four reds reached main today unseen, and no main watcher was running. Current fast cycle: required quick check before merge; deploy after each merge; the full suite runs after merge at low priority and failures are fixed forward. The recovery tape is running; its current results are in STATUS. | Orchestrator |
 | #1281 | `scripts/gen_docs.sh` stops at `generate_capability_docs.py`: `docs/internal/philo/data/desk.json` capability `tests[13]` names a TypeScript test title that no longer exists, so later generators do not run. | Small fix |
 | A3 (#1293) | At 393 the NEW chip on the newest result is not visible (pushed off the meta line). | Automations A4 |
 | A3 (#1293) | "What it has learned" shows a bare count ("2"); use words ("2 lessons") or nothing. | Automations A4 |
-| ~~A3 (#1293)~~ FIXED in M2 #1301 | Results carry no cost yet (E2 stores CLI cost per engine run, not on the result). | Automations A6 / MCP M2 |
 | E3 (#1294) | Job token budgets still cap the context: background 16,384, text/structured/tool 32,768 (`inference_capabilities.py:1235-1239`), so a 49,152 engine is capped where those apply. Budgets should follow the engine's real context. | Engines E5 |
 | E3 (#1294) | MCP `model_library.define_endpoint` does not accept `context_tokens`; first-run LAN still auto-picks the first model; re-adding an existing engine keeps its first context. | Engines E4 / MCP M4 / Setup ST3 |
 | AG1 (#1292) | The Automations window still says "No agents yet / New Agent" for saved personas; personas are retired as a face concept (DECISIONS #3). | Automations A4 |
@@ -68,16 +68,12 @@ PR that fixes it merges.
 | E7 (#1323) | Gemini CLI has no switch to turn web search and file reads off; accepted (the prompt already goes to Google). pi and Gemini get no desk tools yet. Sign-in for both reads "not known". | MCP M5 / Engines |
 | A10 (#1324) | Folder mode unverified on the real CLIs (Codex shell to read; read-only sandbox refuses apply_patch; `--setting-sources user` keeps Claude sign-in). A folder must be a git worktree. Result card chip still says CLOUD. | Next live walk |
 | A6 (#1322) | The phone Dock has no Automations tile; a NEW result shows in Today only. | Shell S3 |
-| A8 (#1325) | `docs/WEB_DESK.md` and `docs/DESK_OBJECT_MODEL.md` still list New Agent and New Zone (parked earlier). | Small fix |
 | #1328 | Only the keyring stores are guarded; a `security` CLI call (e.g. acli) from a scratch HOME could still pop. | Watch |
 | Sweep | `conductor at 393: still … moved 220 px` flakes in the desk sweep under load (seen in 3 lanes). | Small fix |
-| A6 lane | `tests/unit/test_project_mcp.py:370` writes and deletes a file inside `holdspeak/` while `test_thread_tool_gate.py` walks it in parallel: FileNotFoundError race. | Small fix |
 | M5 (#1330) | Not run on the real LAN box: the tool descriptions + task may overflow Qwen's 32k context, and the run then fails instead of retrying without tools. pi and Gemini still get no desk tools. | Next live walk |
 | M6 (#1331) | `provider.github_pr_get` is not in the ASK palette; reviewers part unproven (the recorded PR had none). Other provider reads (Jira etc.) are probably refused for agent runs (owner-only). `_build_github_adapter` passes `db` positionally. | MCP / Projects |
 | Q3 (#1332) | The touch fix in Search is unproven: the browser test passes on the old code too. | Watch |
 | Q5 (#1335) | Ask about a person sends her name only (no grounding on her meetings and notes); Ask about this from Meetings has no test; Send… under an answer not tried on a real destination. | Ask Q8+ |
-| Q6 (#1335) | At 393 the About chips sit in stray boxed frames with an odd indent. | Small fix |
 | AG3 (#1333) | "From your decision" proven only on recorded answers. "Asked 1 min ago" shows ~10 s after an ask. | Small fix |
 | AG4 (#1334) | The desk sweep cannot open the hand sheet (no T3 check); the Where line not tested on a recorded answer; drop on the Agents Dock tile not built. | Agents |
-| D5 (#1336) | Eleven atlas cases (no fence runs them) still click the retired Brief window, incl. `route_generate_again.retained_after_reload`, named as a successor (#1338). | Small fix |
 | D8 (#1337) | Not built: a quiet notice + NEW line in Today when an automation finishes (needs a seen flag on `workbench_runs`). The morning notice cannot open Today (osascript). Fixtures send-hub, palette-enter, chair-brief, needs-you.gate still hold the old "No engine for summaries" row; re-record. | Daily D9 |

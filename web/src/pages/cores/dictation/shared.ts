@@ -47,13 +47,14 @@ export const STATE_TOKENS: { id: string; label: string }[] = [
    the old speak-to-fill (the transcript lands in the well, nothing is
    delivered). The pick is the owner's, and it is remembered. */
 export const AIM_KEY = "holdspeak.speakAim";
+/* Betterment C8 words: `Types into: the app in front`. `This field` left the
+   pick: Speak's `Try it here` puts the result in the box. */
 export const AIM_OPTIONS = [
-  { value: "focused", label: "Focused app" },
-  { value: "agent", label: "Agent" },
-  { value: "field", label: "This field" },
+  { value: "focused", label: "the app in front" },
+  { value: "agent", label: "an agent" },
 ];
 export const AIM_FACT: Record<string, string> = {
-  focused: "FOCUSED APP",
+  focused: "APP IN FRONT",
   agent: "AGENT",
   field: "THIS FIELD",
 };

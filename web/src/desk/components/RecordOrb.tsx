@@ -6,19 +6,33 @@
 // anywhere (the /live page, the CLI, the iPad) shows here and the orb can
 // only stop it — never double-start.
 import "./record-orb.css";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDesk } from "../store";
 import { SYSTEM } from "../systemSprites";
 import { Button } from "../../components/signal/Signal";
+import { openSurfaceOr } from "../shell";
+
+const RECORD_WING_LONG_PRESS_MS = 500;
 
 export function RecordOrb() {
   const state = useDesk((s) => s.recording);
   const external = useDesk((s) => s.recordingExternal);
   const startedAt = useDesk((s) => s.recordingStartedAt);
   const [elapsed, setElapsed] = useState("");
+  const longPressTimer = useRef<number | null>(null);
+  const longPressed = useRef(false);
   const { subscribe } = useRuntimeBus();
+
+  const clearLongPress = () => {
+    if (longPressTimer.current !== null) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  useEffect(() => clearLongPress, []);
 
   // Live truth: any meeting_live/runtime_activity frame flips the orb.
   // The reducer lives in the store so the chrome Record chip mirrors it.
@@ -76,7 +90,24 @@ export function RecordOrb() {
       <Button
         variant="chrome"
         className={`desk-orb is-${state}`}
+        onPointerDown={() => {
+          longPressed.current = false;
+          clearLongPress();
+          longPressTimer.current = window.setTimeout(() => {
+            longPressTimer.current = null;
+            longPressed.current = true;
+            openSurfaceOr("review-meetings", "/history", "record");
+          }, RECORD_WING_LONG_PRESS_MS);
+        }}
+        onPointerUp={clearLongPress}
+        onPointerCancel={clearLongPress}
+        onPointerLeave={clearLongPress}
         onClick={() => {
+          clearLongPress();
+          if (longPressed.current) {
+            longPressed.current = false;
+            return;
+          }
           if (recording) {
             void useDesk.getState().stopRecording();
             return;

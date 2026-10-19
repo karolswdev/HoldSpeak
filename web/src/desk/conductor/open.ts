@@ -109,3 +109,25 @@ export async function cancelQueuedHand(member: ConductorMember): Promise<boolean
     void useConductor.getState().readFlights();
   }
 }
+
+/** Betterment AG11: consume one Secure helper request with the owner's press. */
+export async function allowHelper(member: ConductorMember): Promise<boolean> {
+  const launchId = member.launchId;
+  const requestId = member.helperRequest?.requestId;
+  if (!launchId || !requestId) return false;
+  try {
+    await apiFetch(`/api/agent/launches/${encodeURIComponent(launchId)}/helper/allow`, {
+      method: "POST",
+      body: JSON.stringify({ request_id: requestId }),
+    });
+    return true;
+  } catch (error) {
+    const code = String(((error as { payload?: Record<string, unknown> })?.payload ?? {}).code ?? "") || "hub_unreachable";
+    useConductor.getState().setStop(member.ref, {
+      word: "NOT ALLOWED", at: Date.now(), text: code.replace(/_/g, " "), tone: "fail",
+    });
+    return false;
+  } finally {
+    void useConductor.getState().readFlights();
+  }
+}

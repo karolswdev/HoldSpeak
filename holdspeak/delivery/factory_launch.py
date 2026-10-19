@@ -501,6 +501,12 @@ def execute_worktree_create(
         )
     run = runner or _default_git_runner
     argv = ["git", "-C", str(repo), "worktree", "add", str(resolved), "-b", branch]
+    # Betterment AG11: a helper's worktree starts at its parent's branch.
+    start_point = str(payload.get("start_point") or "")
+    if start_point:
+        if not valid_branch(start_point):
+            return _audited({"status": "branch_invalid", "detail": f"invalid start point: {start_point!r}"})
+        argv.append(start_point)
     try:
         completed = run(argv)
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -1108,6 +1114,7 @@ class LaunchService:
                 "branch": branch,
                 "repo_path": str(primary),
                 "path": str(candidate),
+                **({"start_point": str(spec["start_point"])} if spec.get("start_point") else {}),
             }
         raise LaunchRefused("worktree_mode_invalid", "worktree.mode must be existing|new")
 
@@ -1276,6 +1283,8 @@ class LaunchService:
             "branch": str((pending_create or {}).get("branch") or "") or self._again_branch(request),
             "story_ref": {"project": project, "story_id": story_id},
             "origin_ref": origin_ref,
+            # Betterment AG11: a helper names the launch that started it.
+            "helper_of": str(request.get("helper_of") or "") or None,
             "session": session_name,
             "target": None,
             "attempt_id": None,
@@ -1465,6 +1474,7 @@ class LaunchService:
         self, request: Mapping[str, Any], instruction: str, principal: Any,
         *,
         after_registration: bool = False,
+        parent_operation_id: str = "",
     ) -> dict[str, Any]:
         """Admit, approve and execute one ``process.spawn`` owner gesture.
 
@@ -1500,6 +1510,8 @@ class LaunchService:
             "arguments": {"launch_id": launch_id, **dict(request)},
             "placement": f"node:{self._local_node_id}",
         }
+        if parent_operation_id:
+            raw["parent_operation_id"] = str(parent_operation_id)
         handle = self._kernel.submit(raw, principal)
         if handle.get("state") == "refused":
             raise LaunchRefused(str((handle.get("receipt") or {}).get("outcome") or "kernel_refused"))

@@ -10,7 +10,7 @@
  *  This window is where agents live: the Agents application and the
  *  Arrival's AGENTS section fold into it (PROPOSAL §3, Movement C).
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
   AppHead,
@@ -41,7 +41,7 @@ import {
   type ConductorMember,
   type FleetRank,
 } from "./members";
-import { answerMember, answers, cancelQueuedHand, openMember, resumeAll, stopMember, stops } from "./open";
+import { allowHelper, answerMember, answers, cancelQueuedHand, openMember, resumeAll, stopMember, stops } from "./open";
 import { StartAgent } from "./StartAgent";
 import { handRefOf, openHand } from "../agentHand";
 import { AgentRow as AgentRowFace, DeskAnswerLine } from "../agents/AgentRow";
@@ -340,7 +340,10 @@ function CoderRow({
   onSelect,
   verb,
   meta,
+  helper,
 }: {
+  /** Betterment AG11: "Helper of …": the row is indented under its parent. */
+  helper?: string;
   member: ConductorMember;
   selected: boolean;
   onSelect(): void;
@@ -348,7 +351,8 @@ function CoderRow({
   meta?: ReactNode;
 }) {
   return (
-    <li className="cw-row" data-object-id={member.id} data-selected={selected ? "" : undefined} data-testid="conductor-row">
+    <li className="cw-row" data-object-id={member.id} data-selected={selected ? "" : undefined} data-testid="conductor-row"
+      data-helper={helper ? "" : undefined}>
       <Sprite member={member} />
       <div className="cw-row-text">
         <Button variant="chrome" className="cw-row-title" aria-pressed={selected} onClick={onSelect}>
@@ -356,6 +360,7 @@ function CoderRow({
         </Button>
         <span className="cw-row-meta">
           <Pill member={member} />
+          {helper ? <span data-testid="conductor-helper-of">{helper}</span> : null}
           {meta}
         </span>
         {/* Betterment AG3: what the desk answered for him, New until opened. */}
@@ -469,8 +474,13 @@ export function ConductorWindow() {
 
   // Betterment AG8: the fleet's order: Needs you (the oldest ask first),
   // New (the newest first), Working, Quiet; Stopped folds below.
-  const ordered = fleetOrder(members);
-  const groups = fleetGroups(members);
+  // Betterment AG11: a helper that does not need him stands under its
+  // parent (an indented row), not in its own place in the list.
+  const parentIds = new Set(members.map((m) => m.launchId).filter(Boolean) as string[]);
+  const nested = (m: ConductorMember) => Boolean(m.helperOf && parentIds.has(m.helperOf));
+  const helpersOf = (m: ConductorMember) => (m.launchId ? members.filter((h) => h.helperOf === m.launchId && nested(h)) : []);
+  const ordered = fleetOrder(members).filter((m) => !nested(m));
+  const groups = fleetGroups(members.filter((m) => !nested(m)));
   const counts = fleetCounts(members);
   const asks = ordered.filter((m) => fleetRank(m) === 0);
   const fresh = ordered.filter((m) => fleetRank(m) === 1);
@@ -510,10 +520,43 @@ export function ConductorWindow() {
     void cancelQueuedHand(m).finally(() => setCancelling(null));
   };
   const select = (id: string) => setSelectedId((now) => (now === id ? null : id));
+  const [allowingHelper, setAllowingHelper] = useState<string | null>(null);
 
+  /** A parent's helpers, indented under it (Betterment AG11). */
+  const helperRows = (m: ConductorMember) => {
+    const rows = helpersOf(m);
+    return rows.length ? (
+      <ul className="cw-well cw-helpers" data-testid="conductor-helpers" aria-label={`Helpers of ${rowTitle(m)}`}>
+        {rows.map((h) => fleetRank(h) === 0 ? askRow(h) : fleetRow(h, m))}
+      </ul>
+    ) : null;
+  };
   /** One agent that needs him: the whole job in its row. */
   const askRow = (m: ConductorMember) => (
-    <AgentRowFace
+    <Fragment key={m.id}>
+    {m.helperRequest ? (
+      <CoderRow
+        member={m}
+        selected={m.id === selectedId}
+        onSelect={() => select(m.id)}
+        meta={<span data-testid="conductor-helper-request">Secure asks: {m.helperRequest.instruction}</span>}
+        verb={
+          <Button
+            dense
+            variant="primary"
+            loading={allowingHelper === m.id}
+            disabled={allowingHelper !== null}
+            data-testid="conductor-allow-helper"
+            onClick={() => {
+              setAllowingHelper(m.id);
+              void allowHelper(m).finally(() => setAllowingHelper(null));
+            }}
+          >
+            Allow helper
+          </Button>
+        }
+      />
+    ) : <AgentRowFace
       key={m.id}
       member={m}
       question={question(m)}
@@ -527,13 +570,16 @@ export function ConductorWindow() {
       }}
       onOpenAnswer={() => answerMember(m)}
       onOpen={() => openMember(m)}
-    />
+    />}
+    {helperRows(m)}
+    </Fragment>
   );
   /** One agent that does not need him: New, Working or Quiet, one verb. */
-  const fleetRow = (m: ConductorMember) => (
+  const fleetRow = (m: ConductorMember, parent?: ConductorMember): ReactNode => (
+    <Fragment key={m.id}>
     <CoderRow
-      key={m.id}
       member={m}
+      helper={parent ? `Helper of ${rowTitle(parent)}` : undefined}
       selected={m.id === selectedId}
       onSelect={() => select(m.id)}
       meta={
@@ -563,6 +609,8 @@ export function ConductorWindow() {
         )
       }
     />
+    {parent ? null : helperRows(m)}
+    </Fragment>
   );
 
   return (
@@ -662,7 +710,7 @@ export function ConductorWindow() {
                 </h3>
                 {group.members.filter((m) => fleetRank(m) === 0).map(askRow)}
                 {group.members.some((m) => fleetRank(m) > 0) ? (
-                  <ul className="cw-well">{group.members.filter((m) => fleetRank(m) > 0).map(fleetRow)}</ul>
+                  <ul className="cw-well">{group.members.filter((m) => fleetRank(m) > 0).map((m) => fleetRow(m))}</ul>
                 ) : null}
               </section>
             ))
@@ -677,19 +725,19 @@ export function ConductorWindow() {
               {fresh.length ? (
                 <section className="cw-section" data-testid="conductor-new" aria-label="New">
                   <h3 className="cw-cap">NEW</h3>
-                  <ul className="cw-well">{fresh.map(fleetRow)}</ul>
+                  <ul className="cw-well">{fresh.map((m) => fleetRow(m))}</ul>
                 </section>
               ) : null}
               {working.length ? (
                 <section className="cw-section" data-testid="conductor-work" aria-label="Working">
                   <h3 className="cw-cap">WORKING</h3>
-                  <ul className="cw-well">{working.map(fleetRow)}</ul>
+                  <ul className="cw-well">{working.map((m) => fleetRow(m))}</ul>
                 </section>
               ) : null}
               {quiet.length ? (
                 <section className="cw-section" data-testid="conductor-quiet" aria-label="Quiet">
                   <h3 className="cw-cap">QUIET</h3>
-                  <ul className="cw-well">{quiet.map(fleetRow)}</ul>
+                  <ul className="cw-well">{quiet.map((m) => fleetRow(m))}</ul>
                 </section>
               ) : null}
             </>

@@ -46,6 +46,46 @@ NODE_TARGET_ID = "node"  # the node-scoped pseudo-target (spawn/rename)
 STEERING_VERBS = frozenset({"terminal.text", "terminal.keys"})
 PANE_VERBS = frozenset({"terminal.text", "terminal.keys", "factory.kill"})
 NODE_SCOPED_VERBS = frozenset({"factory.spawn", "factory.rename", "worktree.create"})
+
+
+def deliver_agent_text(
+    key: str,
+    text: str,
+    *,
+    current_target: Optional[str],
+    agent: str,
+    expected_pane_id: Optional[str],
+    expected_wait_id: Optional[str] = None,
+    operation: Mapping[str, Any],
+    policy_snapshot: Mapping[str, Any],
+    runner: Any = None,
+    transport: Any = None,
+    audit: Any = None,
+) -> dict[str, Any]:
+    """Route an agent helper's text through the existing steering chokepoint.
+
+    Helper MCP calls remain work at the tool boundary, while this terminal
+    effect still uses the same pane proof, policy snapshot, transport and
+    audit path as owner steering. Keeping the adapter here preserves the
+    single terminal executor census.
+    """
+    from .. import coder_steering
+
+    return coder_steering.deliver(
+        key,
+        text,
+        current_target=current_target,
+        agent=agent,
+        expected_pane_id=expected_pane_id,
+        expected_wait_id=expected_wait_id,
+        operation=operation,
+        policy_snapshot=policy_snapshot,
+        runner=runner,
+        transport=transport,
+        audit=audit,
+    )
+
+
 KNOWN_OPERATIONS = frozenset(
     {
         ("coder_steering", "terminal.text"),

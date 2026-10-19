@@ -37,6 +37,9 @@ import lookedAt from "./fixtures/meetings-hub/looked-at.json";
 import sinceLast from "./fixtures/meetings-hub/since-last.json";
 import prepared from "./fixtures/meetings-hub/prepared.json";
 import preparedFailed from "./fixtures/meetings-hub/prepared-failed.json";
+import comingUp from "./fixtures/coming-up/coming-up.json";
+import settingsWire from "./fixtures/settings-wire/settings.json";
+import { ComingUp } from "../../pages/cores/history/ComingUp";
 
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
@@ -724,5 +727,123 @@ describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => 
     await screen.findByTestId("meeting-prepared");
     expect(screen.queryByRole("tab", { name: /Artifacts/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Artifacts$/i })).toBeNull();
+  });
+});
+
+describe("One home for recording: Meetings ▸ Record (betterment/capture C7)", () => {
+  // The hub's own answers at its real clock
+  // (tests/unit/test_desk_chair.py::test_coming_up_arms_cancels_and_names_a_failed_fire):
+  // a fire that raised, three calendar meetings ahead, the arm and the cancel.
+  type Phase = "before" | "armed" | "cancelled";
+  const pad2 = (n: number) => String(n).padStart(2, "0");
+  const hhmm = (iso: string) => { const d = new Date(iso); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+  const wire = comingUp as unknown as Record<string, any>;
+
+  function recordHub() {
+    let phase: Phase = "before";
+    const writes: Array<{ path: string; method: string; json?: unknown }> = [];
+    vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
+      const url = String(path);
+      const method = init?.method ?? "GET";
+      if (method !== "GET") {
+        writes.push({ path: url, method, json: init?.json });
+        if (url === "/api/scheduled-recordings") { phase = "armed"; return structuredClone(wire["POST /api/scheduled-recordings"]); }
+        if (url.endsWith("/cancel")) { phase = "cancelled"; return structuredClone(wire["POST /api/scheduled-recordings/<id>/cancel"]); }
+        return {} as never;
+      }
+      if (url === "/api/door") return structuredClone(wire[`GET /api/door (${phase})`]);
+      if (url === "/api/scheduled-recordings") return structuredClone(wire["GET /api/scheduled-recordings (before)"]);
+      if (url === "/api/settings") return structuredClone(settingsWire) as never;
+      if (url.startsWith("/api/meetings?") && !url.includes("parked=true")) return (hs170 as Fixture)["/api/meetings?limit=100"] as never;
+      return {} as never;
+    });
+    return writes;
+  }
+
+  async function openRecordWing() {
+    useDesk.setState({ comingUp: null, scheduledRecordings: [] } as never);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(wire._now));
+    const writes = recordHub();
+    render(<Shell><HistoryCore /><div data-testid="capture"><ComingUp limit={2} data-testid="arrival-coming-up" /></div></Shell>);
+    fireEvent.click(await screen.findByRole("tab", { name: "Record" }));
+    const home = await screen.findByTestId("record-home");
+    return { writes, home };
+  }
+
+  /** The list once read (before its first read it is an empty, busy section). */
+  async function readList(testId: string): Promise<HTMLElement> {
+    await waitFor(() => expect(screen.getByTestId(testId).getAttribute("aria-busy")).toBeNull());
+    return screen.getByTestId(testId);
+  }
+
+  const rowOf = (root: HTMLElement, title: string) => {
+    const row = within(root).getAllByRole("listitem").find((li) => (li.textContent ?? "").includes(title));
+    if (!row) throw new Error(`no row ${title}`);
+    return row;
+  };
+
+  it("Record, Import, Coming up with the failed fire first, Another time…, the auto-record switch; no drop-zone page", async () => {
+    const { home } = await openRecordWing();
+    expect(within(home).getByTestId("record-home-record").textContent).toContain("Record");
+    expect(within(home).getByTestId("record-home-import").textContent).toBe("Import");
+    expect(screen.queryByText("Drop it here, or browse")).toBeNull();
+    const list = await readList("record-home-coming-up");
+    await waitFor(() => expect(within(list).getAllByRole("listitem")).toHaveLength(4));
+    expect(within(list).getAllByTestId("coming-up-title").map((t) => t.textContent)).toEqual([
+      "Payments platform sync", "Platform design follow-up", "1:1 with Mira", "Architecture review",
+    ]);
+    const sync = wire["GET /api/scheduled-recordings (before)"].schedules.find((s: any) => s.id === "rec-sync");
+    const failed = rowOf(list, "Payments platform sync");
+    expect(within(failed).getByTestId("coming-up-state").textContent)
+      .toBe(`Did not record · ${hhmm(sync.did_not_record.at)} · ${sync.did_not_record.reason}`);
+    expect(within(failed).getByRole("button", { name: "Record now" })).toBeTruthy();
+    // The reason is one of four plain phrases, never the exception text.
+    expect(["No microphone", "Another recording is running", "HoldSpeak was not running", "Something went wrong"])
+      .toContain(sync.did_not_record.reason);
+    expect(list.textContent).not.toMatch(/NoneType|Error|Traceback|attribute|'/);
+    // Tomorrow's meeting says its day.
+    expect(within(rowOf(list, "Architecture review")).getByTestId("coming-up-slot").textContent).toMatch(/^[A-Z][a-z]{2} \d\d:\d\d$/);
+    // The manual form, in place.
+    fireEvent.click(within(home).getByRole("button", { name: "Another time…" }));
+    expect(within(home).getByTestId("schedule-form-inline")).toBeTruthy();
+    expect(within(home).getByTestId("schedule-create-submit").textContent).toBe("Schedule");
+    // The calendar is set up, so the switch shows, read from the hub (Off).
+    const toggle = (await within(home).findByRole("checkbox", { name: "Record every meeting on my calendar" })) as HTMLInputElement;
+    expect(toggle.checked).toBe(false);
+    expect(rawButtons()).toEqual([]);
+  });
+
+  it("an arm made where Today makes it shows in Meetings ▸ Record and Capture; Cancel in Meetings disarms both", async () => {
+    const { home, writes } = await openRecordWing();
+    const list = await readList("record-home-coming-up");
+    const capture = await readList("arrival-coming-up");
+    await waitFor(() => expect(within(capture).getAllByRole("listitem")).toHaveLength(2));
+    expect(within(rowOf(list, "Platform design follow-up")).getByRole("button", { name: /when it starts/ })).toBeTruthy();
+
+    // Today's NEXT ▸ Record when it starts calls this store verb (TodayView.tsx).
+    await act(async () => { await useDesk.getState().armEventRecording("ev-followup"); });
+    const armed = wire["GET /api/door (armed)"].upcoming.find((r: any) => r.id === "ev-followup");
+    const word = `Records at ${hhmm(armed.armed.arms_at)}`;
+    await waitFor(() => expect(within(rowOf(list, "Platform design follow-up")).getByTestId("coming-up-state").textContent).toBe(word));
+    expect(within(rowOf(capture, "Platform design follow-up")).getByTestId("coming-up-state").textContent).toBe(word);
+    expect(writes).toEqual([{ path: "/api/scheduled-recordings", method: "POST", json: { calendar_event_id: "ev-followup" } }]);
+
+    fireEvent.click(within(rowOf(list, "Platform design follow-up")).getByRole("button", { name: "Cancel the recording of Platform design follow-up" }));
+    await waitFor(() => expect(within(rowOf(capture, "Platform design follow-up")).queryByTestId("coming-up-state")).toBeNull());
+    expect(within(rowOf(list, "Platform design follow-up")).queryByTestId("coming-up-state")).toBeNull();
+    expect(within(rowOf(capture, "Platform design follow-up")).getByRole("button", { name: /when it starts/ })).toBeTruthy();
+    expect(writes.map((w) => `${w.method} ${w.path}`)).toEqual([
+      "POST /api/scheduled-recordings",
+      `POST /api/scheduled-recordings/${armed.armed.recording_id}/cancel`,
+    ]);
+  });
+
+  it("the auto-record switch writes meeting.auto_record", async () => {
+    const { home, writes } = await openRecordWing();
+    const toggle = (await within(home).findByRole("checkbox", { name: "Record every meeting on my calendar" })) as HTMLInputElement;
+    fireEvent.click(toggle);
+    await waitFor(() => expect(writes).toEqual([{ path: "/api/settings", method: "PUT", json: { meeting: { auto_record: "all_calendar" } } }]));
+    expect(toggle.checked).toBe(true);
   });
 });

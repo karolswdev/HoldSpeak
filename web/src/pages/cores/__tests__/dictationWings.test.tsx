@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { DictationCore } from "../DictationCore";
 import { WingSlotContext } from "../../../desk/surface/wings";
+import { useBuilderTools } from "../../../desk/builderTools";
 
 const mocks = vi.hoisted(() => ({ apiFetch: vi.fn() }));
 
@@ -137,6 +138,8 @@ describe("the footer's Review", () => {
   });
 
   it("the gear is still the way to Configure", async () => {
+    // Betterment C8: the digest rides More diagnostics, behind RAW (on here).
+    useBuilderTools.getState().setOn(true);
     mount();
     await userEvent.click(
       await screen.findByRole("button", { name: "Configure dictation" }),
@@ -147,5 +150,19 @@ describe("the footer's Review", () => {
     // the digest stayed behind the gear; the corrections table did not
     expect(await screen.findByText(/WEEK/)).toBeTruthy();
     expect(document.querySelector(".speak-learned")).toBeNull();
+    useBuilderTools.getState().setOn(false);
+  });
+
+  it("RAW off: the door has no More diagnostics (betterment C8)", async () => {
+    useBuilderTools.getState().setOn(false);
+    mount();
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Configure dictation" }),
+    );
+    await waitFor(() =>
+      expect(document.querySelector(".surface-door")).toBeTruthy(),
+    );
+    expect(screen.queryByText("More diagnostics")).toBeNull();
+    expect(screen.queryByText("RAW · READINESS")).toBeNull();
   });
 });

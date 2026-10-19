@@ -170,7 +170,7 @@ describe("readHotkeyCustody", () => {
 describe("the HOTKEY block on the Speak face", () => {
   it("is absent when the key works — no decorative all-clear row", async () => {
     render(<SpeakFace />);
-    await screen.findByText("LANDS IN");
+    await screen.findByText("Types into"); // betterment C8 words
     expect(screen.queryByTestId("speak-hotkey")).toBeNull();
   });
 
@@ -221,7 +221,7 @@ describe("the HOTKEY block on the Speak face", () => {
       ],
     });
     render(<SpeakFace />);
-    await screen.findByText("LANDS IN");
+    await screen.findByText("Types into"); // betterment C8 words
     expect(screen.queryByTestId("speak-hotkey")).toBeNull();
   });
 

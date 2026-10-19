@@ -173,7 +173,9 @@ def build_calendar_snapshot_router(ctx: WebContext) -> APIRouter:
             events.append(
                 ExtractedEvent(
                     title=str(entry.get("title", "")),
-                    weekday=str(entry.get("weekday", "")),
+                    # The extract path lower-cases it too (calendar_snapshot_service.py);
+                    # WEEKDAY_MAP keys are lower-case, so "Monday" was a 500.
+                    weekday=str(entry.get("weekday", "")).lower().strip(),
                     start_time=str(entry.get("start_time", "")),
                     end_time=str(entry.get("end_time", "")),
                     location=entry.get("location"),
