@@ -48,9 +48,9 @@ import {
 import { MeetingDetail, MEETING_TRANSCRIPT_OPEN } from "./MeetingDetail";
 import { useSummaryRun } from "./useSummaryRun";
 
-/** The meeting window's one face. Betterment capture C5: the Artifacts
- *  wing is parked (its Results show under Outcomes ▸ Prepared), so the
- *  window draws no wing bar. */
+/** The meeting window's one wing (DESIGN §4: "One wing: Outcomes").
+ *  Betterment capture C5 parked the Artifacts wing; its Results show under
+ *  Outcomes ▸ Prepared. */
 export const MEETING_WINGS = [
   { id: "outcomes", label: "Outcomes" },
 ];
@@ -87,7 +87,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   // review face and receives that request after the migration.
   // An old `view=artifacts` link lands on Outcomes (C5 parked that wing).
   const initialView = "outcomes";
-  const wings = useCoreWings(MEETING_WINGS, initialView, undefined, false);
+  const wings = useCoreWings(MEETING_WINGS, initialView);
   const [meeting, setMeeting] = useState<Record<string, unknown> | null>(null);
   const [loadError, setLoadError] = useState("");
   // A source span opens on the Outcomes face and expands its transcript.

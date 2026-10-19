@@ -691,7 +691,7 @@ describe("the meeting prepares its Results (betterment/capture C5)", () => {
     expect(within(section).getByTestId("meeting-prepared-stakeholder_update").textContent).toContain("Open as note");
   });
 
-  it("the meeting window has no Artifacts wing", async () => {
+  it("the meeting window has one wing, Outcomes; no Artifacts wing", async () => {
     at(fixture);
     hub(fixture);
     render5();
