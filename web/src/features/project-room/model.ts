@@ -784,8 +784,8 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
       return {
         assessment: (s.assessment === "at_risk" ? "at_risk" : "on_track") as "at_risk" | "on_track",
         reason: s.reason != null ? String(s.reason) : null,
-        projectState: (s.project_state === "blocked" ? "blocked" : s.project_state === "at_risk" ? "at_risk"
-          : s.project_state === "on_track" ? "on_track" : undefined) as RoomHealthData["projectState"],
+        projectState: s.project_state === "blocked" ? "blocked" : s.project_state === "at_risk" ? "at_risk"
+          : s.project_state === "on_track" ? "on_track" : undefined,
         stateReason: typeof s.state_reason === "string" && s.state_reason ? s.state_reason : null,
         stateRef: typeof s.state_ref === "string" && s.state_ref ? s.state_ref : null,
         inputs: {
