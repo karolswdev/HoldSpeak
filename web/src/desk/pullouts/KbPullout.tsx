@@ -6,15 +6,17 @@ import { openSurfaceOr } from "../shell";
 import { qualifiedRef } from "../api";
 import { objectByRef } from "../world";
 import { DeskFilingStrip } from "../components/DeskFilingStrip";
-import { KIND_LABEL } from "../tools";
-import { kindWord } from "../windowName";
+// @ts-ignore — shared ESM module (see ../sprites.d.ts)
+import { refAgent, spriteUrl } from "../sprites";
+import { normalizeRef } from "../screen/compose";
+import { openScreenRef } from "../screen/open";
+import { productLabel } from "../../lib/productLanguage";
 import {
-  SurfaceLedger,
-  SurfaceLedgerRow,
+  SurfaceRow,
+  SurfaceRows,
   SurfaceSection,
   SurfaceState,
 } from "../surface/Surface";
-import { StateChip } from "../surface";
 import { INLINE_EDITOR_CONTENT } from "./editors";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
@@ -23,7 +25,7 @@ import { useEditorSession } from "./editors/useDebouncedSave";
 export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
   const editing = useDesk((s) => s.editingId === o.id);
-  const { openPullout, openEditor, closeEditor } = useDesk.getState();
+  const { openEditor, closeEditor } = useDesk.getState();
   const session = useEditorSession(closeEditor, editing ? registerClose : undefined);
   if (o.ref.kind !== "kb") return null;
   const ir = o.ref;
@@ -31,33 +33,41 @@ export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
   const resourceRef = qualifiedRef(o.kind, o.id);
   const { copy, receipt: copyReceipt } = useCopyReceipt();
 
-  const members = (ir.memberIds || [])
-    .map((m) => ({ ref: m, member: objectByRef(items, m) }));
+  // Betterment Q10 (Knowledge becomes drawers): a collection reads as a
+  // drawer, its Contents drawn as a drawer's are (DirectoryPullout).
+  const seen = new Set<string>();
+  const members = (ir.memberIds || []).flatMap((stored) => {
+    const member = objectByRef(items, normalizeRef(stored));
+    const ref = member ? qualifiedRef(member.kind, member.id) : stored;
+    if (seen.has(ref)) return [];
+    seen.add(ref);
+    return [{ ref, member }];
+  });
 
   return (
     <>
       <div className="desk-pullout-body desk-surface-body desk-editor-body">
         {editing && Content ? (
           <Content object={o} onClose={() => void session.done()} onWriter={session.onWriter} />
-        ) : members.length ? (
-          <SurfaceSection label="Entries">
-            <SurfaceLedger count={null} cols="room" label="Knowledge entries">
-              {members.map(({ ref, member }) => (
-                <SurfaceLedgerRow
-                  key={ref}
-                  wrap
-                  lineLabel={ref}
-                  primary={<span data-member-ref={ref} title={ref}>{member?.title || "Item unavailable"}</span>}
-                  meta={member ? KIND_LABEL[member.kind] || kindWord(member.kind) : undefined}
-                  cells={member ? undefined : <StateChip state="unreachable" label="Unavailable" />}
-                  trailing={member ? <Button dense variant="ghost" onClick={() => openPullout(ref)}>Open {kindWord(member.kind).toLowerCase()}</Button> : undefined}
-                />
-              ))}
-            </SurfaceLedger>
-          </SurfaceSection>
         ) : (
-          <SurfaceSection label="Entries">
-            <SurfaceState empty emptyLabel="No entries" />
+          <SurfaceSection label="Contents" count={members.length}>
+            {members.length ? (
+              <SurfaceRows>
+                {members.map(({ ref, member }) => (
+                  <SurfaceRow
+                    key={ref}
+                    glyph={member ? (
+                      <img src={spriteUrl(member.kind, member.id, "rest", refAgent(member.ref))} width={22} height={22} alt="" />
+                    ) : undefined}
+                    title={<span data-member-ref={ref}>{member?.title || "Item unavailable"}</span>}
+                    detail={member ? member.kind === "directory" || member.kind === "kb" ? "Drawer" : productLabel(member.kind) : "Unavailable"}
+                    onOpen={member ? () => openScreenRef(ref) : undefined}
+                  />
+                ))}
+              </SurfaceRows>
+            ) : (
+              <SurfaceState empty emptyLabel="No items" emptyGlyph="○" />
+            )}
           </SurfaceSection>
         )}
         {!editing && (

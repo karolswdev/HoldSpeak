@@ -41,7 +41,6 @@ describe("glyph population (HS-148-02)", () => {
     const kindMap: Record<string, string> = {
       "desk.new-note": "note",
       "desk.new-decision": "decision",
-      "desk.new-knowledge": "kb",
       "desk.new-workbench": "workbench",
       "desk.new-thread": "thread",
       "desk.new-project": "project",

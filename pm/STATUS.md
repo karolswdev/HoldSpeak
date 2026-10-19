@@ -4,13 +4,13 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (P3 #1350 delivered; ST2 #1346 merged)
+**Last updated:** 2026-10-19 (ST2 #1346 delivered; Q8/Q10 #1368 merged)
 
 ## Current phase
 
-**Betterment recovery: 73/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 74/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `50e7502a7`, frontend `e78bdddb6ee00c5d`, PID 44875 (P3).
+backend `1420b1b0c`, frontend `665e187d47b63165`, PID 50011 (ST2).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
@@ -56,7 +56,21 @@ Provider behavior is exercised with an isolated stub. Broad check: 4,069
 web and 385 pytest passed; the sweep hit an intermittent People brief 503.
 The final incremental quick check passed 335 pytest, 106 sweep, 27 canon
 and 1,116 repo guards. The People 503 remains open; this retry does not
-prove it fixed. ST2 awaits deployment.
+prove it fixed. ST2 is on the owner's running desk; runtime identity and four HTTP checks pass.
+
+Q8/Q10 #1368 recovers the phone note footer and existing Knowledge
+collections as named drawers, including members, About chips and the
+Filed strip. The old New Knowledge verb is parked; stored data and tools
+stay. The old menu-doc PR #1355 is incorporated and WEB_DESK.md now describes
+the current desk. Broad check: 4,241 web, 547 pytest, 106 sweep and 27 canon
+passed; one stale atlas guard failed. After updating the mutable cases and
+filing vocabulary, final incremental check passed 194 web, 106 sweep,
+27 canon and 1,116 repo guards. Four real-hub atlas walks pass at 1440/393:
+find an existing drawer, and add/remove a decision without removing the
+decision. Populated drawer and About-chip shots were also inspected at both
+widths. After merging delivered P3/ST2, the final merge check is green:
+106 sweep, 27 canon and 1,116 repo guards. Q10 awaits deployment;
+live-engine answers remain unverified.
 
 **Initial recovery snapshot — owner ruling 2026-10-19.**
 Batch seven stopped at Claude's usage limit. At recovery, main had 69 of

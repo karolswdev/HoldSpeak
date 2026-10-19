@@ -27,6 +27,7 @@ import { useThoughtWorkspaceController } from "./useThoughtWorkspaceController";
 import { NoteSendWells } from "../documentSendsLazy";
 import { SEND_OPEN, useAnnounceWindowDocument } from "../windowSend";
 import { useWindowId } from "../components/window/windowIdContext";
+import { useCompactViewport } from "../useCompactViewport";
 import { thoughtWriteLine } from "./thoughtReceipt";
 import "./thought-workspace.css";
 
@@ -127,6 +128,7 @@ function WorkspaceReady({
   const ignoreSelectionAfterEdit = useRef(false);
   const hasProjects = useDesk((state) => state.projects.some((project) => !project.is_archived));
   const winId = useWindowId();
+  const compact = useCompactViewport();
   const [revealRange, setRevealRange] = useState<{ start: number; end: number; focus?: boolean } | null>(null);
   /* HS-176-04 — the answer well is a PadGadget (the voice law): the ref
      holds its <label> and the focus reaches the textarea inside it. */
@@ -543,6 +545,9 @@ function WorkspaceReady({
 
     <SurfaceFooter
       className="thought-note-foot"
+      // Betterment Q8: on the phone the note's verbs wrap to two rows (never
+      // folded into More), and Done sits in the title strip.
+      fold={false}
       receipt={<>
         {/* PHILO-3-04: the receipt keeps its whole words and wraps; the
             library's wrap token ([data-wrap], surface-footer.css) lifts the
@@ -560,7 +565,7 @@ function WorkspaceReady({
         <Button dense disabled={busy || outcomes.finding || !writer.draft.body.trim()} loading={outcomes.finding} onClick={() => void findTasks()}>Find the tasks</Button>
         {hasProjects ? <Button dense disabled={busy} aria-expanded={actionWell === "project"} onClick={() => void openActionWell("project")}>Project ▾</Button> : null}
         <Button ref={sendRef} dense disabled={busy} onClick={() => void openSend()}>Send…</Button>
-        <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={onDone}>Done</Button>
+        {!compact ? <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={onDone}>Done</Button> : null}
       </span>}
     />
     </> : <>
@@ -624,6 +629,7 @@ export function ThoughtWorkspaceWindow({
   // The name of the thought: the owner's title, else its first words, else
   // `New thought`; from the draft on the glass when the window holds one.
   const words = useThoughtDraftWords(thought.working_note.id);
+  const compact = useCompactViewport();
   const name = windowName({
     kind: "thought",
     title: words?.title ?? thought.working_note.title,
@@ -648,6 +654,8 @@ export function ThoughtWorkspaceWindow({
     beforeClose={() => closeHandler.current()}
     onClose={onClose}
     onBack={sending ? () => setSending(false) : undefined}
+    // Betterment Q8: Done in the title strip on the phone.
+    actions={compact && !sending ? <Button dense variant="primary" className="thought-note-primary" onClick={() => void done()}>Done</Button> : undefined}
   >
     {controller.opening ? <div className="thought-workspace-opening" aria-busy="true"><span>Opening note…</span></div> : controller.error || !controller.projection ? <div className="thought-workspace-opening" role="alert"><span className="surface-token">Could not open. Note unchanged.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Try again</Button></div> : <>
       <div className="thought-workspace-preserved" inert={controller.restartDetected} aria-hidden={controller.restartDetected || undefined}>

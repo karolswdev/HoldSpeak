@@ -275,14 +275,46 @@ class PrimitiveService:
 
     # ── Knowledge bases ──────────────────────────────────────────────────
 
+    def _kb_view(self, kb: Any) -> dict[str, Any]:
+        """Betterment Q10 (Knowledge becomes drawers): a collection reads as a
+        drawer of its members. ``member_ids`` is the stored list and the live
+        member edges together: ``kb.add_member`` writes only the edge store,
+        so a collection filled through MCP read empty before."""
+        from ..db.relationships import qualified_ref
+
+        view = kb.to_dict()
+        edges = self._db.knowledge_memberships
+        live = [edge.resource_ref for edge in edges.list_for_knowledge(kb.id)]
+        members: list[str] = []
+        for stored in view.get("member_ids") or []:
+            try:
+                ref = qualified_ref(stored)
+            except ValueError:
+                members.append(stored)  # a legacy raw id: no edge can name it
+                continue
+            # kb.remove_member tombstones the edge only: a removed member left
+            # in the stored list is not drawn.
+            if ref in live or edges.get(kb.id, ref, include_deleted=True) is None:
+                members.append(stored)
+        def _q(value: str) -> str:
+            try:
+                return qualified_ref(value)
+            except ValueError:
+                return value
+
+        seen = {_q(member) for member in members}
+        members += [ref for ref in reversed(live) if ref not in seen]
+        view["member_ids"] = members
+        return view
+
     def list_kbs(self, principal: Principal) -> list[dict[str, Any]]:
-        return [k.to_dict() for k in self._db.kbs.list()]
+        return [self._kb_view(k) for k in self._db.kbs.list()]
 
     def get_kb(self, principal: Principal, kb_id: str) -> dict[str, Any]:
         kb = self._db.kbs.get(kb_id)
         if kb is None:
             raise NotFound("kb", kb_id)
-        return kb.to_dict()
+        return self._kb_view(kb)
 
     def create_kb(
         self,
