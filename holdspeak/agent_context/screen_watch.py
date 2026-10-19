@@ -4,7 +4,7 @@ Every 2 s the hub's coder watcher (``web_server._coder_frames_loop``) reads
 the visible screen and the title of each live agent's tmux pane and keeps
 one record per agent here, in memory:
 
-- the rule's verdict (``screen_rules.classify``): the state, the rule id,
+- the rule's verdict (``screen_rules.read_screen``): the state, the rule id,
   the evidence lines, the rule file and its version;
 - herdr's completion sequence: a turn that goes idle AFTER the screen showed
   it working is a finished turn (``turn_id``); a start-up idle, or an idle
@@ -32,7 +32,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Iterable, Mapping, Optional
 
 from ..logging_config import get_logger
-from .screen_rules import Verdict, classify, last_message, load_manifest, prompt_reading
+from .screen_rules import Verdict, read_screen, last_message, load_manifest, prompt_reading
 
 log = get_logger("agent_context.screen_watch")
 
@@ -337,7 +337,7 @@ def tick(
         if seen is None:
             continue
         screen, title = seen
-        verdict = classify(target.agent, screen, title=title)
+        verdict = read_screen(target.agent, screen, title=title)
         if verdict is None:
             continue
         read.append(target.key)

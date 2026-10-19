@@ -23,7 +23,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
-from holdspeak.agent_context.screen_rules import classify  # noqa: E402
+from holdspeak.agent_context.screen_rules import read_screen  # noqa: E402
 from holdspeak.agent_context.screen_watch import capture  # noqa: E402
 
 OUT = REPO / "tests" / "fixtures" / "agent_screens"
@@ -42,7 +42,7 @@ def main() -> int:
         print(f"tmux could not read {args.target!r}", file=sys.stderr)
         return 1
     screen, title = seen
-    verdict = classify(args.agent, screen, title=title)
+    verdict = read_screen(args.agent, screen, title=title)
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / f"{args.name}.txt").write_text(screen + "\n", encoding="utf-8")
     meta = {

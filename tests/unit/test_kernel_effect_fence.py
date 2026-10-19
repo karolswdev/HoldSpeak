@@ -183,6 +183,16 @@ _CALL_RULES = (
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
     (
+        "holdspeak/agent_context/screen_watch.py",
+        "_runner",
+        "run",
+        1,
+    ): (
+        "Betterment AG7: `tmux capture-pane -p` and `tmux display-message -p "
+        "#{pane_title}`, a read of a live agent's visible screen and title for "
+        "the screen rules; it changes nothing"
+    ),
+    (
         "holdspeak/coder_factory.py",
         "process_start",
         "run",

@@ -372,7 +372,7 @@ def _evidence(text: str) -> tuple[str, ...]:
     return tuple(line[:EVIDENCE_CHARS] for line in lines[-EVIDENCE_LINES:])
 
 
-def classify(agent: str, screen: str, *, title: str = "", progress: str = "",
+def read_screen(agent: str, screen: str, *, title: str = "", progress: str = "",
              manifest: Optional[Manifest] = None) -> Optional[Verdict]:
     """The state the screen shows, by the agent's rules; ``None`` for an
     agent with no rule file."""
@@ -493,7 +493,7 @@ def last_message(screen: str) -> str:
 
 
 __all__ = [
-    "BUNDLED_AGENTS", "IDLE_FALLBACK", "Manifest", "Rule", "Verdict", "classify", "last_message",
+    "BUNDLED_AGENTS", "IDLE_FALLBACK", "Manifest", "Rule", "Verdict", "read_screen", "last_message",
     "load_manifest", "menu_choices", "override_dir", "parse_manifest", "prompt_reading", "region",
     "rust_regex", "wants_to_run",
 ]

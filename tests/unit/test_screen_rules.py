@@ -22,14 +22,14 @@ import pytest
 
 from holdspeak.agent_context import screen_rules as rules
 from holdspeak.agent_context import screen_watch as watch
-from holdspeak.agent_context.screen_rules import classify, parse_manifest
+from holdspeak.agent_context.screen_rules import read_screen, parse_manifest
 
 SCREENS = Path(__file__).resolve().parents[1] / "fixtures" / "agent_screens"
 T0 = datetime(2026, 10, 18, 12, 0, tzinfo=timezone.utc)
 
 
 def _explain(manifest_text: str, screen: str) -> rules.Verdict:
-    return classify("codex", screen, manifest=parse_manifest(manifest_text, source="local override"))
+    return read_screen("codex", screen, manifest=parse_manifest(manifest_text, source="local override"))
 
 
 # ── the vendored files ────────────────────────────────────────────────
@@ -168,7 +168,7 @@ def test_a_local_override_wins_over_the_bundled_file(tmp_path: Path, monkeypatch
     monkeypatch.setattr(rules, "override_dir", lambda: tmp_path)
     (tmp_path / "codex.toml").write_text(
         'id = "codex"\nversion = "9999.1"\n[[rules]]\nid = "mine"\nstate = "blocked"\ncontains = ["my-marker"]\n')
-    verdict = classify("codex", "my-marker")
+    verdict = read_screen("codex", "my-marker")
     assert (verdict.state, verdict.rule, verdict.source, verdict.version) == ("blocked", "mine", "local override", "9999.1")
     # An override that does not parse falls back to the bundled file.
     (tmp_path / "codex.toml").write_text('id = "codex"\n[[rules]]\nid = "bad"\nstate = "blocked"\nregex = ["("]\n')
@@ -190,7 +190,7 @@ def test_screens_are_recorded() -> None:
 def test_each_recorded_screen_reads_as_the_state_it_showed(name: str) -> None:
     meta = json.loads((SCREENS / f"{name}.json").read_text(encoding="utf-8"))
     screen = (SCREENS / f"{name}.txt").read_text(encoding="utf-8").rstrip("\n")
-    verdict = classify(meta["agent"], screen, title=meta["title"])
+    verdict = read_screen(meta["agent"], screen, title=meta["title"])
     assert verdict is not None and verdict.state == meta["expected_state"], (name, verdict)
     assert verdict.rule is not None, f"{name}: no rule matched (the idle fallback is not a reading)"
 
@@ -221,7 +221,7 @@ def test_the_last_message_above_the_prompt_box() -> None:
 
 def _observe(store: watch.ScreenStore, name: str, at: datetime, key: str = "launch:l1") -> bool:
     screen, title = _screen(name)
-    verdict = classify("claude", screen, title=title)
+    verdict = read_screen("claude", screen, title=title)
     return store.observe(key, agent="claude", target="hs-l1", verdict=verdict, screen=screen, title=title, now=at)
 
 
@@ -250,7 +250,7 @@ def test_a_turn_is_done_only_after_the_screen_saw_work() -> None:
 
 def test_no_signal_after_ten_minutes_with_no_rule() -> None:
     store = watch.ScreenStore()
-    verdict = classify("claude", "a plain shell prompt $")
+    verdict = read_screen("claude", "a plain shell prompt $")
     assert verdict.fallback == rules.IDLE_FALLBACK
     store.observe("launch:l1", agent="claude", target="t", verdict=verdict, screen="$", title="", now=T0)
     assert watch.merged_state(store.get("launch:l1"), T0 + timedelta(minutes=9)) == "idle"
