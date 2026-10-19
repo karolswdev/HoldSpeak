@@ -8,7 +8,7 @@
  *  Project's drawer then lists the meeting as a member. The receipt is one
  *  token beside the Button: `IN <PROJECT>`, or `NOT ADDED · <reason>`.
  */
-import { useMemo, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { Button } from "../components/signal/Signal";
 import { apiFetch } from "../lib/api";
 import { WorkMenu, type WorkMenuEntry } from "./components/DeskMenu";
@@ -25,11 +25,14 @@ export function AddToProject({
   meetingId,
   variant = "ghost",
   className,
+  autoOpen = false,
   onReceipt,
 }: {
   meetingId: string;
   variant?: "ghost" | "secondary";
   className?: string;
+  /** Open the existing project picker when a parent action already named it. */
+  autoOpen?: boolean;
   /** A face with a receipt slot (a footer) shows the receipt there; without
    *  it the token sits beside the Button. */
   onReceipt?: (receipt: { text: string; tone: "ok" | "danger" }) => void;
@@ -45,6 +48,16 @@ export function AddToProject({
     else setOwnReceipt(next);
   };
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (!autoOpen || autoOpened.current || at || !buttonRef.current || !projects.length) return;
+    autoOpened.current = true;
+    const rect = buttonRef.current.getBoundingClientRect();
+    setAt({ x: rect.left, y: rect.bottom, keys: false });
+    apiFetch<{ projects?: { project_id: string }[] }>(meetingProjectsPath(meetingId))
+      .then((body) => setLinked((body.projects ?? []).map((p) => String(p.project_id))))
+      .catch(() => setLinked([]));
+  }, [autoOpen, at, meetingId, projects.length]);
   // No Project on the desk: no verb that does nothing (UX-CANON A.11).
   if (!meetingId || !projects.length) return null;
 

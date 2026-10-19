@@ -20,6 +20,7 @@ from holdspeak.services.project_door_service import (
     ProjectDoorService,
     _flatten_github_query,
     _flatten_jira_query,
+    parse_source_text,
 )
 
 _P = Principal(PrincipalKind.OWNER, "test")
@@ -210,8 +211,156 @@ class TestCreateWatches:
         proposals = captured[0]["proposals"]
         for p in proposals:
             assert p["state"] == "selected"
-            assert p["test_state"] == "passed"
+            assert p["test_state"] == "not_checked"
+            assert p["spec"]["test_state"] == "not_checked"
             assert p["spec"]
+
+
+class TestSourcePreview:
+    def test_parser_accepts_three_provider_links_once(self) -> None:
+        rows = parse_source_text(
+            "https://github.com/karolswdev/HoldSpeak "
+            "https://acme.atlassian.net/browse/KAN-42 https://acme.atlassian.net/projects/KAN KAN "
+            "https://acme.atlassian.net/wiki/spaces/ENG KAN"
+        )
+
+        assert [(row["provider"], row["scope"]) for row in rows] == [
+            ("github", "karolswdev/HoldSpeak"),
+            ("jira", "KAN"),
+            ("jira", "KAN"),
+            ("confluence", "ENG"),
+        ]
+        assert all(row["state"] == "not_checked" for row in rows)
+
+    def test_preview_reports_checked_and_local_matches(self) -> None:
+        github = MagicMock()
+        github.validate_repo.return_value = {"valid": True}
+        meetings = MagicMock()
+        meetings.list_meetings.return_value = {
+            "meetings": [{"id": "meeting_1", "title": "Ledger cutover", "started_at": "2026-10-17T09:00:00Z", "attendees": ["Ari"]}]
+        }
+        notes = MagicMock()
+        notes.list_notes.return_value = [{"id": "note_1", "title": "Ledger cutover", "body_markdown": "Review the cutover"}]
+
+        svc = ProjectDoorService(
+            github_adapter=github,
+            meeting_service=meetings,
+            primitive_service=notes,
+        )
+        result = svc.preview(_P, "Ledger cutover", "github.com/karolswdev/HoldSpeak")
+
+        assert result["sources"][0]["state"] == "checked"
+        assert [item["id"] for item in result["found"]] == ["meeting_1", "note_1"]
+        assert result["people"] == ["Ari"]
+
+    def test_parser_keeps_site_and_dedupes_by_provider_site_and_scope(self) -> None:
+        rows = parse_source_text(
+            "https://beta.atlassian.net/browse/KAN-42 "
+            "https://alpha.atlassian.net/projects/KAN "
+            "https://beta.atlassian.net/browse/KAN-9 "
+            "KAN"
+        )
+
+        assert [(row["provider"], row["site"], row["scope"]) for row in rows] == [
+            ("jira", "beta.atlassian.net", "KAN"),
+            ("jira", "alpha.atlassian.net", "KAN"),
+            ("jira", None, "KAN"),
+        ]
+        assert "beta.atlassian.net" in rows[0]["label"]
+
+    def test_two_connected_sites_validate_and_bind_in_paste_order(self) -> None:
+        class Connections:
+            def list_provider_connections(self, *, provider_id: str) -> list[dict[str, str]]:
+                return [
+                    {"state": "connected", "external_connection_ref": "beta.atlassian.net|b@example.com"},
+                    {"state": "connected", "external_connection_ref": "alpha.atlassian.net|a@example.com"},
+                ]
+
+        class DB:
+            automations = Connections()
+
+        jira = MagicMock()
+        jira.validate_scope.side_effect = lambda _principal, _ref, _scope: {
+            "valid": True, "connection_ref": "wrong.atlassian.net|wrong@example.com",
+        }
+        svc = ProjectDoorService(jira_adapter=jira, db=DB())
+
+        result = svc.preview(
+            _P, "", "https://alpha.atlassian.net/browse/KAN-1 https://beta.atlassian.net/browse/KAN-1",
+        )
+
+        assert [row["connection_ref"] for row in result["sources"]] == [
+            "alpha.atlassian.net|a@example.com", "beta.atlassian.net|b@example.com",
+        ]
+        assert [call.args[1] for call in jira.validate_scope.call_args_list] == [
+            "alpha.atlassian.net|a@example.com", "beta.atlassian.net|b@example.com",
+        ]
+
+    def test_unmatched_site_and_ambiguous_bare_key_do_not_validate(self) -> None:
+        class Connections:
+            def list_provider_connections(self, *, provider_id: str) -> list[dict[str, str]]:
+                return [
+                    {"state": "connected", "external_connection_ref": "alpha.atlassian.net|a@example.com"},
+                    {"state": "connected", "external_connection_ref": "beta.atlassian.net|b@example.com"},
+                ]
+
+        class DB:
+            automations = Connections()
+
+        jira = MagicMock()
+        svc = ProjectDoorService(jira_adapter=jira, db=DB())
+        result = svc.preview(
+            _P, "", "https://gamma.atlassian.net/browse/KAN-1 KAN-2",
+        )
+
+        assert [row["state"] for row in result["sources"]] == ["not_checked", "not_checked"]
+        assert "gamma.atlassian.net" in result["sources"][0]["reason"]
+        assert "Ambiguous" in result["sources"][1]["reason"]
+        jira.validate_scope.assert_not_called()
+
+    def test_confluence_uses_the_matching_site_account(self) -> None:
+        class Connections:
+            def list_provider_connections(self, *, provider_id: str) -> list[dict[str, str]]:
+                return [
+                    {"state": "connected", "external_connection_ref": "beta.atlassian.net|b@example.com"},
+                    {"state": "connected", "external_connection_ref": "alpha.atlassian.net|a@example.com"},
+                ]
+
+        class DB:
+            automations = Connections()
+
+        confluence = MagicMock()
+        confluence.validate_scope.side_effect = lambda _principal, _ref, _scope: {
+            "valid": True, "connection_ref": "wrong.atlassian.net|wrong@example.com",
+        }
+        svc = ProjectDoorService(confluence_adapter=confluence, db=DB())
+        result = svc.preview(_P, "", "https://alpha.atlassian.net/wiki/spaces/ENG")
+
+        assert result["sources"][0]["connection_ref"] == "alpha.atlassian.net|a@example.com"
+        confluence.validate_scope.assert_called_once_with(
+            _P, "alpha.atlassian.net|a@example.com", "ENG",
+        )
+
+    def test_created_jira_watches_keep_the_validated_connection(self) -> None:
+        captured: list[dict[str, Any]] = []
+
+        def mock_create(principal: Any, payload: dict, **kw: Any) -> dict:
+            captured.append(payload)
+            return {"project_id": "proj_test", "activated_watches": []}
+
+        project_service = MagicMock()
+        project_service.create_from_setup.side_effect = mock_create
+        svc = ProjectDoorService(project_service=project_service)
+        svc.create(_P, "Two sites", [
+            {"provider": "jira", "scope": {"connection_ref": "beta.atlassian.net|b@example.com", "projects": ["KAN"]}, "watches": ["overdue"]},
+            {"provider": "jira", "scope": {"connection_ref": "alpha.atlassian.net|a@example.com", "projects": ["KAN"]}, "watches": ["overdue"]},
+        ])
+
+        refs = [
+            proposal["spec"]["subject"]["scope"]["connection_ref"]
+            for proposal in captured[0]["proposals"]
+        ]
+        assert refs == ["beta.atlassian.net|b@example.com", "alpha.atlassian.net|a@example.com"]
 
 
 # ── (c) Zero sources = blank project ──────────────────────────────

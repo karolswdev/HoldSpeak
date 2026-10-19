@@ -1588,19 +1588,44 @@ PROJECT_CREATE = OperationDescriptor(
     admission=Admission("exempt", "A bare project: a project row, revision, change and event; no watch (Q1)."),
 )
 
+PROJECT_DOOR_PREVIEW = OperationDescriptor(
+    name="project.door.preview",
+    version=1,
+    description="Parse pasted source links, validate their exact provider sites, and find matching local meetings and notes.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "outcome": {"type": "string", "description": "The outcome in your words; used to find local material."},
+            "pasted": {"type": "string", "description": "Source links or keys to parse and check."},
+        },
+        "required": [],
+        "additionalProperties": False,
+    },
+    principal=_ROOM_PRINCIPAL,
+    effect="read",
+    result="parsed source rows with truthful provider state, plus matching meetings, notes, and people",
+    refusals=_CONTRACT_REFUSALS + ("ServiceError project_service_missing", "ValidationError validation"),
+    completion="synchronous; no project or watch is created",
+    exposure=("http:POST /api/projects/door/preview",),
+    service="project_door_service",
+    method="preview",
+    admission=Admission("admitted", "Provider validation reads an external site and is an owner Room operation."),
+)
+
 PROJECT_DOOR_CREATE = OperationDescriptor(
     name="project.door.create",
     version=1,
-    description="Make a project through the Door: the outcome in your words names it, and each GitHub or Jira source "
+    description="Make a project through the Door: the outcome in your words names it, and each provider source "
                 "arms watches that read that provider on a schedule, then takes a baseline read. With project_id, "
                 "the sources are added to that project (the Room's Add source) and no project is made.",
     args_schema={
         "type": "object",
         "properties": {
             "outcome": {"type": "string", "description": "The outcome you want, in your words; it names the project."},
-            "sources": {"description": "Optional list of {provider: github|jira, scope, watches, adjust}."},
+            "sources": {"description": "Optional list of {provider: github|jira|confluence, scope, watches, adjust}."},
             "project_id": {"type": "string", "description": "Optional: add the sources to this project "
                                                             "(project.list returns the ids)."},
+            "found": {"type": ["object", "null"], "description": "Optional selected meeting_ids and note_ids found by the Door."},
         },
         "required": [],
         "additionalProperties": False,
@@ -2190,7 +2215,7 @@ PROJECT_RESOURCE_REMOVE = OperationDescriptor(
 
 #: PHILO-9-01: the Room's rows, in export order.
 ROOM_OPERATIONS: tuple[OperationDescriptor, ...] = (
-    PROJECT_LIST, PROJECT_GET, PROJECT_ROOM, PROJECT_CREATE, PROJECT_DOOR_CREATE, PROJECT_UPDATE,
+    PROJECT_LIST, PROJECT_GET, PROJECT_ROOM, PROJECT_CREATE, PROJECT_DOOR_PREVIEW, PROJECT_DOOR_CREATE, PROJECT_UPDATE,
     PROJECT_ARCHIVE, PROJECT_RESTORE, PROJECT_LINK, PROJECT_UNLINK,
     PROJECT_OPEN_REVIEW, PROJECT_GET_DELTA, PROJECT_DECIDE_PROPOSAL, PROJECT_ACCEPT_REVIEW,
     PROJECT_LIST_UPDATES, PROJECT_DRAFT_UPDATE, PROJECT_UPDATE_DRAFT, PROJECT_PUBLISH_UPDATE,

@@ -357,7 +357,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         }
       />
       {requestedWell === "project" ? <div id={`meeting-${meetingId}-project`}>
-        <SurfaceWell head="Project"><AddToProject meetingId={meetingId}
+        <SurfaceWell head="Project"><AddToProject meetingId={meetingId} autoOpen
           onReceipt={(next) => setReceipt(next.tone === "danger" ? { text: next.text, tone: "danger" } : { text: next.text })} /></SurfaceWell>
       </div> : null}
       <>

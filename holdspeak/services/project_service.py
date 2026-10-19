@@ -26,8 +26,10 @@ import json
 import re
 import uuid
 from datetime import datetime, timedelta, timezone
+from email.utils import parseaddr
 from holdspeak.timestamps import local_wall, utc_now_iso
 from typing import Any, Optional
+from urllib.parse import parse_qs, unquote, urlparse
 
 from ..db.core import Database
 from ..db.relationships import qualified_ref
@@ -1305,6 +1307,16 @@ class ProjectService:
         except Exception as exc:
             _log.warning("room meeting actions as attention failed for %s: %s", project_id, exc)
 
+        # Betterment P5: meetings that mention a new project's own words are
+        # offered in NEEDS YOU until the owner files them.  This is a producer
+        # read from the real transcript index; it does not create a meeting
+        # association or claim that the match was accepted.  The Add verb on
+        # the face calls the existing project.link route.
+        try:
+            needs.extend(self._room_matching_meeting_items(project_id))
+        except Exception as exc:
+            _log.warning("room matching meetings failed for %s: %s", project_id, exc)
+
         # HS-173: review bottleneck items (resolved reviewers whose median
         # exceeds the threshold get a NEEDS YOU row).
         try:
@@ -1371,6 +1383,61 @@ class ProjectService:
         ))
 
         return {"items": needs, "count": len(needs)}
+
+    def _room_matching_meeting_items(self, project_id: str) -> list[dict[str, Any]]:
+        """Offer unfiled meetings whose transcript names this project.
+
+        Project words are deliberately bounded to the project name and its
+        explicit keywords.  Every result is still a suggestion: only the
+        existing ``project.link`` command turns it into a Room meeting.
+        """
+        project = self._require_project(project_id)
+        basis = [str(project.name or ""), *(str(word) for word in (project.keywords or []))]
+        words: list[str] = []
+        seen_words: set[str] = set()
+        for text in basis:
+            for word in re.findall(r"[A-Za-z0-9][A-Za-z0-9_-]{3,}", text.lower()):
+                if word not in seen_words:
+                    seen_words.add(word)
+                    words.append(word)
+        if not words:
+            return []
+
+        matches: dict[str, str] = {}
+        for word in words:
+            try:
+                for meeting_id, _segment in self._db.meetings.search_transcripts(word, limit=50):
+                    matches.setdefault(str(meeting_id), word)
+            except Exception:
+                continue
+
+        rows: list[dict[str, Any]] = []
+        for meeting_id, word in matches.items():
+            try:
+                linked = self._db.projects.get_meeting_projects(meeting_id)
+                if any(str(row.get("project_id")) == project_id for row in linked):
+                    continue
+                meeting = self._db.meetings.get_meeting(meeting_id)
+            except Exception:
+                continue
+            if meeting is None or bool(getattr(meeting, "parked", False)):
+                continue
+            started = getattr(meeting, "started_at", None)
+            rows.append({
+                "source": "meeting",
+                "kind": "meeting_match",
+                "title": f"mentions {word}",
+                "why": str(getattr(meeting, "title", "") or "Meeting"),
+                "since": started.isoformat() if hasattr(started, "isoformat") else str(started or ""),
+                "url": None,
+                "verb": "confirm",
+                "severity": "info",
+                "meeting_id": meeting_id,
+                "meeting_title": str(getattr(meeting, "title", "") or "Meeting"),
+                "meeting_started_at": started.isoformat() if hasattr(started, "isoformat") else str(started or ""),
+            })
+        rows.sort(key=lambda row: str(row.get("since") or ""), reverse=True)
+        return rows[:20]
 
     def _overdue_milestones(self, project_id: str, now: datetime) -> list[tuple[dict[str, Any], int]]:
         """PHILO-9-01 (F2): each milestone still ``planned`` after its due date, with its days late.
@@ -1532,7 +1599,7 @@ class ProjectService:
         with self._db._connection() as conn:
             rows = conn.execute(
                 """SELECT a.id, a.task, a.owner, a.due, a.status, a.created_at,
-                          a.meeting_id, m.title AS meeting_title
+                          a.source_ref, a.meeting_id, m.title AS meeting_title
                    FROM action_items a
                    JOIN meeting_projects mp ON mp.meeting_id = a.meeting_id
                    JOIN meetings m ON m.id = a.meeting_id
@@ -1566,21 +1633,125 @@ class ProjectService:
                 why, severity = "DUE · UNKNOWN", "info"
             else:
                 why, severity = f"WAITING ON {owner.upper()}", "info"
-            items.append({
+            source_ref = str(row["source_ref"] or "").strip()
+            item = {
                 "source": "meeting",
                 "kind": "action_item",
                 "title": str(row["task"] or "").strip() or "Untitled action",
                 "why": why,
                 "since": str(row["created_at"] or ""),
                 "due_at": due_at,
-                "url": None,
+                # A meeting action may carry a checked external place in
+                # source_ref. Preserve only an explicit URL so Now can gate
+                # its outbound Nudge on the same real destination.
+                "url": (source_ref
+                        if source_ref.startswith(("http://", "https://"))
+                        else None),
                 "verb": "open",
                 "severity": severity,
                 "action_item_id": str(row["id"]),
                 "meeting_id": str(row["meeting_id"] or ""),
                 "owner": owner,
-            })
+            }
+            nudge = self._room_nudge_destination(project_id, str(row["id"]), source_ref)
+            if nudge:
+                item["nudge"] = nudge
+            items.append(item)
         return items
+
+    @staticmethod
+    def _nudge_target(source_ref: str, destination: dict[str, Any]) -> bool:
+        """Match an action's stored destination to one saved target exactly.
+
+        Waiting on must never infer a recipient from a name or from a provider
+        account. Jira requires the site and key, Slack requires the saved
+        channel label (including any saved thread suffix), and email requires
+        an exact saved To/Cc address.
+        """
+        raw = str(source_ref or "").strip()
+        if not raw or destination.get("state") != "active":
+            return False
+        channel = str(destination.get("channel") or "")
+        try:
+            account = json.loads(destination.get("account_json") or "{}")
+            target = json.loads(destination.get("target_json") or "{}")
+        except (TypeError, ValueError):
+            return False
+        if not isinstance(account, dict) or not isinstance(target, dict):
+            return False
+
+        if channel == "jira":
+            parsed = urlparse(raw)
+            if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+                return False
+            parts = [unquote(part).strip() for part in parsed.path.split("/") if part.strip()]
+            try:
+                key = parts[parts.index("browse") + 1].split("?", 1)[0].split("#", 1)[0]
+            except (ValueError, IndexError):
+                return False
+            site = str(account.get("site") or "").strip().lower()
+            site = site.removeprefix("https://").removeprefix("http://").rstrip("/")
+            return bool(site and parsed.hostname.lower() == site
+                        and key == str(target.get("key") or "").strip())
+
+        if channel == "slack":
+            if raw.lower().startswith("slack://"):
+                candidate = raw[8:]
+            elif raw.lower().startswith("slack:"):
+                candidate = raw[6:]
+            else:
+                return False
+            # A source may name a channel alone or a saved thread on that
+            # channel. Keep both pieces exact when the destination stores a
+            # thread; a channel-only destination never claims a thread.
+            channel_ref, separator, query = candidate.partition("?")
+            thread_ref = ""
+            if separator:
+                values = parse_qs(query, keep_blank_values=False)
+                thread_ref = str((values.get("thread_ts") or values.get("thread") or [""])[0]).strip()
+            if "|" in channel_ref:
+                channel_ref, thread_ref = channel_ref.split("|", 1)
+                thread_ref = thread_ref.strip()
+            clean = lambda value: str(value or "").strip().lstrip("#").casefold()
+            saved_thread = str(target.get("thread_ts") or target.get("thread") or "").strip()
+            return bool(clean(channel_ref) and clean(channel_ref) == clean(target.get("channel_label"))
+                        and thread_ref == saved_thread)
+
+        if channel == "email":
+            candidate = raw[7:] if raw.lower().startswith("mailto:") else raw
+            candidate = unquote(candidate.split("?", 1)[0].strip()).casefold()
+            if not re.fullmatch(r"[^@\s]+@[^@\s]+", candidate):
+                return False
+            recipients = [*(target.get("to") or []), *(target.get("cc") or [])]
+            return candidate in {
+                parseaddr(str(value or ""))[1].strip().casefold() or str(value or "").strip().casefold()
+                for value in recipients
+            }
+
+        return False
+
+    def _room_nudge_destination(self, project_id: str, action_id: str, source_ref: str) -> dict[str, Any] | None:
+        """Return a Sendwell source only when the stored item has a saved target."""
+        if not source_ref:
+            return None
+        for destination in self._db.channel_destinations.list():
+            if not self._nudge_target(source_ref, destination):
+                continue
+            try:
+                target = json.loads(destination.get("target_json") or "{}")
+            except (TypeError, ValueError):
+                target = {}
+            target_label = str(target.get("key") or target.get("channel_label") or
+                               ", ".join(str(value) for value in (target.get("to") or [])) or "")
+            return {
+                "document_ref": f"project_nudge:{project_id}:{action_id}",
+                "destination_id": str(destination.get("id") or ""),
+                "destination_name": str(destination.get("name") or ""),
+                "channel": str(destination.get("channel") or ""),
+                "target": target_label,
+                "title": "Review request",
+            }
+        return None
 
     def _get_github_owner_login(self) -> str | None:
         """Get the GitHub owner login from the connection service."""
@@ -3519,6 +3690,7 @@ class ProjectService:
         mode = spec.get("mode", "yolo")
 
         # Insert via sanctioned repo helper (M-1: no third door)
+        stored_test_state = str(spec.get("test_state") or test_state or "not_checked")
         self._db.automations.create_watch_in_transaction(
             conn,
             watch_id=watch_id,
@@ -3537,7 +3709,7 @@ class ProjectService:
             state="active",
             revision=1,
             baseline_state=baseline_state,  # ACT-005: baseline without events
-            test_state=test_state,  # carried from proposal test (setup); "" when untested
+            test_state=stored_test_state,  # carried from the Door's real source check
             created_at=now_iso,
             updated_at=now_iso,
             # HS-200-43: ARM the row in the same transaction that

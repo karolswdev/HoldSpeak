@@ -9,6 +9,7 @@ import { useDoorController } from "../useDoorController";
 
 const mockDoorCount = vi.fn();
 const mockDoorCreate = vi.fn();
+const mockDoorPreview = vi.fn();
 const mockDoorAddSources = vi.fn();
 const mockDiscoverGitHub = vi.fn();
 const mockDiscoverJira = vi.fn();
@@ -17,6 +18,7 @@ const mockDiscoverConfluence = vi.fn();
 vi.mock("../api", () => ({
   doorCount: (...args: unknown[]) => mockDoorCount(...args),
   doorCreate: (...args: unknown[]) => mockDoorCreate(...args),
+  doorPreview: (...args: unknown[]) => mockDoorPreview(...args),
   doorAddSources: (...args: unknown[]) => mockDoorAddSources(...args),
   discoverGitHub: (...args: unknown[]) => mockDiscoverGitHub(...args),
   discoverJira: (...args: unknown[]) => mockDiscoverJira(...args),
@@ -269,6 +271,7 @@ beforeEach(() => {
   mockFetchConnections.mockResolvedValue({ tools: [] });
   mockDoorCount.mockResolvedValue(liveCountResponse("github"));
   mockDoorCreate.mockResolvedValue({ projectId: "proj_test_123" });
+  mockDoorPreview.mockResolvedValue({ sources: [], found: [], people: [] });
   mockDoorAddSources.mockResolvedValue({ projectId: "proj_room_1" });
   mockRecheckProvider.mockResolvedValue(null);
   mockAddAtlassianAccount.mockResolvedValue(undefined);
@@ -738,6 +741,42 @@ describe("DoorCore", () => {
           "project:proj_new_abc",
         );
       });
+    });
+  });
+
+  describe("source paste preview", () => {
+    it("shows checked and unchecked sources with matching material, and sends selected found rows on create", async () => {
+      mockFetchConnections.mockResolvedValue(connectedTools());
+      mockDoorPreview.mockResolvedValue({
+        sources: [
+          { provider: "github", scope: "acme/payments", label: "acme/payments", state: "checked", reason: null },
+          { provider: "confluence", scope: "PAYM", label: "Confluence PAYM", state: "not_checked", reason: "Not signed in on this Mac" },
+        ],
+        found: [
+          { kind: "meeting", id: "meeting-1", title: "Payments migration", detail: "2026-10-17", attendees: ["Mira"], selected: true },
+          { kind: "note", id: "note-1", title: "Payments risks", detail: "Note", selected: true },
+        ],
+        people: ["Mira"],
+      });
+      mockDoorCreate.mockResolvedValue({ projectId: "proj_preview" });
+      render(<DoorCore scope="" />);
+
+      fireEvent.change(screen.getByTestId("door-outcome-input"), { target: { value: "Payments migration" } });
+      fireEvent.change(screen.getByTestId("door-source-paste-input"), { target: { value: "github.com/acme/payments https://wiki.example.com/spaces/PAYM" } });
+      await act(async () => { fireEvent.click(screen.getByTestId("door-source-check")); });
+
+      await waitFor(() => expect(screen.getByTestId("door-found")).toBeTruthy());
+      expect(screen.getByText("CHECKED")).toBeTruthy();
+      expect(screen.getByText("NOT CHECKED")).toBeTruthy();
+      expect(screen.getByTestId("door-people").textContent).toContain("Mira");
+      fireEvent.click(screen.getByTestId("door-found-remove-note-1"));
+      fireEvent.click(screen.getByTestId("door-create"));
+
+      await waitFor(() => expect(mockDoorCreate).toHaveBeenCalledWith(
+        "Payments migration",
+        expect.any(Array),
+        { meeting_ids: ["meeting-1"], note_ids: [] },
+      ));
     });
   });
 
