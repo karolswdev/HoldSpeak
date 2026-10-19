@@ -72,3 +72,12 @@ PR that fixes it merges.
 | #1328 | Only the keyring stores are guarded; a `security` CLI call (e.g. acli) from a scratch HOME could still pop. | Watch |
 | Sweep | `conductor at 393: still … moved 220 px` flakes in the desk sweep under load (seen in 3 lanes). | Small fix |
 | A6 lane | `tests/unit/test_project_mcp.py:370` writes and deletes a file inside `holdspeak/` while `test_thread_tool_gate.py` walks it in parallel: FileNotFoundError race. | Small fix |
+| M5 (#1330) | Not run on the real LAN box: the tool descriptions + task may overflow Qwen's 32k context, and the run then fails instead of retrying without tools. pi and Gemini still get no desk tools. | Next live walk |
+| M6 (#1331) | `provider.github_pr_get` is not in the ASK palette; reviewers part unproven (the recorded PR had none). Other provider reads (Jira etc.) are probably refused for agent runs (owner-only). `_build_github_adapter` passes `db` positionally. | MCP / Projects |
+| Q3 (#1332) | The touch fix in Search is unproven: the browser test passes on the old code too. | Watch |
+| Q5 (#1335) | Ask about a person sends her name only (no grounding on her meetings and notes); Ask about this from Meetings has no test; Send… under an answer not tried on a real destination. | Ask Q8+ |
+| Q6 (#1335) | At 393 the About chips sit in stray boxed frames with an odd indent. | Small fix |
+| AG3 (#1333) | "From your decision" proven only on recorded answers. "Asked 1 min ago" shows ~10 s after an ask. | Small fix |
+| AG4 (#1334) | The desk sweep cannot open the hand sheet (no T3 check); the Where line not tested on a recorded answer; drop on the Agents Dock tile not built. | Agents |
+| D5 (#1336) | Eleven atlas cases (no fence runs them) still click the retired Brief window, incl. `route_generate_again.retained_after_reload`, named as a successor (#1338). | Small fix |
+| D8 (#1337) | Not built: a quiet notice + NEW line in Today when an automation finishes (needs a seen flag on `workbench_runs`). The morning notice cannot open Today (osascript). Fixtures send-hub, palette-enter, chair-brief, needs-you.gate still hold the old "No engine for summaries" row; re-record. | Daily D9 |
