@@ -122,6 +122,11 @@
   /* The aftercare card lands in the Capture window's slot (design §5): while
      it stands, Capture grows to hold it whole and Needs you gives up the same
      height, so the card is read where it lands (no covered half). */
+  /* Capture C7: the next two Coming-up rows sit under the capture verbs;
+     Capture grows to hold them (Needs you gives up the same height). */
+  .desk-next .chair-desk:has(.chair-window--capture [data-testid="arrival-coming-up"]) :is(.chair-window, .chair-window-closed) {
+    --chair-capture-h: 240px;
+  }
   .desk-next .chair-desk:has(.chair-window--capture [data-aftercare-slot]:not(:empty)) :is(.chair-window, .chair-window-closed) {
     --chair-capture-h: 300px;
   }

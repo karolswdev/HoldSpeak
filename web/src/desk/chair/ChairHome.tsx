@@ -25,6 +25,7 @@ import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { needYouWords } from "../surface";
 import { useOnCoderFrame } from "../useDeskChangedRefresh";
 import { useAgentFlightsLive } from "../agentFlights";
+import { ComingUp } from "../../pages/cores/history/ComingUp";
 
 /** Headline for the arrival: zero = "Nothing needs you" (UX-CANON A8).
  *  HS-200-07 (C4): the all-clear line is spoken ONLY over complete
@@ -122,6 +123,9 @@ function Arrival() {
             data-aftercare-slot="before-capture"
           />
           <CaptureBar />
+          {/* Capture C7: Schedule is replaced by the next two Coming-up rows
+              (the same list as Meetings ▸ Record and Today). */}
+          <ComingUp limit={2} data-testid="arrival-coming-up" />
         </>
       }
     />
@@ -179,13 +183,6 @@ function CaptureBar() {
         data-testid="arrival-record-meeting"
       >
         Record
-      </Button>
-      <Button
-        variant="ghost"
-        onClick={() => useDesk.getState().openScheduleCreate()}
-        data-testid="arrival-schedule"
-      >
-        Schedule
       </Button>
       {setupRow ? <div className="arrival-capture-place">{setupRow}</div> : null}
       {noting ? <FirstCharacterNote onDone={() => setNoting(false)} /> : null}

@@ -77,6 +77,12 @@ def _epoch_to_iso(epoch: Optional[float]) -> Optional[str]:
     ).replace("+00:00", "Z")
 
 
+# Capture C7: the fire outcomes that mean "it did not record". The reason is
+# the receipt's plain words (scheduled_recording_conductor.FAILURE_WORDS); a
+# receipt from before that table says "Something went wrong", never its text.
+_DID_NOT_RECORD = frozenset({"fire_failed", "start_failed", "refused"})
+
+
 def _schedule_dict(rec: ScheduledRecording) -> dict[str, Any]:
     d = asdict(rec)
     # Convert all epoch-seconds float fields to ISO-8601 strings (HS-136-03).
@@ -158,8 +164,34 @@ class ScheduledRecordingService:
         self._clock = clock or (lambda: datetime.now(tz=timezone.utc))
 
     def list_schedules(self, principal: Principal) -> list[dict[str, Any]]:
-        """List all scheduled recordings."""
-        return [_schedule_dict(r) for r in self.db.scheduled_recordings.list_all()]
+        """List all scheduled recordings.
+
+        Capture C7: each row carries ``did_not_record`` (``{at, reason}`` or
+        ``None``): its last fire failed, read from that fire's receipt, so
+        Meetings ▸ Record can say "Did not record · HH:MM · reason"."""
+        rows = []
+        for rec in self.db.scheduled_recordings.list_all():
+            row = _schedule_dict(rec)
+            row["did_not_record"] = self._did_not_record(rec)
+            rows.append(row)
+        return rows
+
+    def _did_not_record(self, rec: ScheduledRecording) -> Optional[dict[str, Any]]:
+        if rec.last_outcome not in _DID_NOT_RECORD or not rec.last_receipt_id:
+            return None
+        try:
+            with self.db._connection() as conn:
+                row = conn.execute(
+                    "SELECT result_ref, created_at FROM kernel_receipts WHERE receipt_id=?",
+                    (rec.last_receipt_id,),
+                ).fetchone()
+        except Exception:
+            row = None
+        from ..scheduled_recording_conductor import FAILURE_WORDS, SOMETHING_WRONG
+
+        at = float(row["created_at"]) if row and row["created_at"] is not None else rec.last_fired_at
+        said = str(row["result_ref"] or "") if row else ""
+        return {"at": _epoch_to_iso(at), "reason": said if said in FAILURE_WORDS else SOMETHING_WRONG}
 
     def get_schedule(self, principal: Principal, schedule_id: str) -> dict[str, Any]:
         """Get one scheduled recording by id."""

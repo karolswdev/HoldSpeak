@@ -1,7 +1,9 @@
 // The Chair app, The week window (HS-175-02 and its counsel C2, C5, C8, C9).
 // Betterment daily D5: The week and Brief windows retired into Today; their
 // cases are parked in __tests__/_parked/chairWeekBrief.d5.app.test.tsx. What
-// stays: the typed door rows, the NO CALENDAR offer, the NEXT clock, Schedule.
+// stays: the typed door rows, the NO CALENDAR offer, the NEXT clock. Capture C7
+// parked Schedule (__tests__/_parked/chairSchedule.c7.app.test.tsx); Coming up
+// replaces it.
 //
 // The test diet (2026-10-11) moves the arrival glass rig here. The real
 // ChairHome renders with its real desk store; only `apiFetch` is mocked, and
@@ -209,51 +211,51 @@ describe("The week: the viewer's local clock", () => {
 import { recordedGet } from "../../test/recordedHub";
 import BRIEF from "./fixtures/chair-brief/brief.recorded.json";
 
-// ── HS-144: the capture bar's Schedule opens the create window ────────────
-// The hub's own answers (tests/integration/test_face_wire_fences.py
-// `test_schedule_create_reads`): the create answer and the list after it.
-import { ScheduleCreateWindow } from "../components/ScheduleCreateWindow";
+// ── Capture C7: Schedule is replaced by the next two Coming-up rows ──────
+// The hub's own answers (tests/unit/test_desk_chair.py::
+// test_coming_up_arms_cancels_and_names_a_failed_fire, at its real clock):
+// a fire that raised, then the calendar; the arm and the cancel answers.
 import { useDesk } from "../store";
-import SCHEDULE_CREATED from "../../test/wire/scheduled-recordings.create.wire.json";
-import SCHEDULE_LIST from "../../test/wire/scheduled-recordings.list.wire.json";
+import COMING_UP from "./fixtures/coming-up/coming-up.json";
 
-describe("The capture bar: Schedule", () => {
-  it("Cancel closes the window and posts nothing; Create posts the title, closes the window and loads the saved row", async () => {
-    // replaces: tests/e2e/test_hs144_door_glass.py::test_upcoming_rail_schedule_create_round_trip_and_form_cancel
-    let saved = false;
-    const posts: Array<[string, any]> = [];
-    hub(weekStripDoor(), (path, init) => {
-      if (init?.method === "POST") posts.push([path, init]);
-      if (path === "/api/scheduled-recordings" && init?.method === "POST") {
-        saved = true;
-        return structuredClone(SCHEDULE_CREATED.wire);
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const hhmm = (iso: string) => { const d = new Date(iso); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+
+describe("Capture: Coming up in place of Schedule", () => {
+  it("shows the next two rows (a failed fire with Record now, then Record when it starts); arming says Records at HH:MM", async () => {
+    vi.setSystemTime(new Date(COMING_UP._now));
+    let phase: "before" | "armed" = "before";
+    const posts: string[] = [];
+    useDesk.setState({ comingUp: null, scheduledRecordings: [] } as never);
+    hub(COMING_UP["GET /api/door (before)"] as Json, (path, init) => {
+      if (init?.method === "POST") {
+        posts.push(path);
+        if (path === "/api/scheduled-recordings") { phase = "armed"; return structuredClone(COMING_UP["POST /api/scheduled-recordings"]); }
       }
-      if (path === "/api/scheduled-recordings") {
-        return saved ? structuredClone(SCHEDULE_LIST.wire) : { success: true, schedules: [] };
-      }
+      if (path === "/api/door") return structuredClone(COMING_UP[phase === "armed" ? "GET /api/door (armed)" : "GET /api/door (before)"]);
+      if (path === "/api/scheduled-recordings") return structuredClone(COMING_UP["GET /api/scheduled-recordings (before)"]);
       return undefined;
     });
-    useDesk.setState({ scheduleCreateWindow: null } as never);
-    render(<><ScheduleCreateWindow /><ChairHome /></>);
+    render(<ChairHome />);
+    await waitFor(() => expect(screen.getByTestId("arrival-coming-up").getAttribute("aria-busy")).toBeNull());
+    const list = screen.getByTestId("arrival-coming-up");
+    expect(screen.queryByTestId("arrival-schedule")).toBeNull();
+    await waitFor(() => expect(within(list).getAllByRole("listitem")).toHaveLength(2));
+    const [failed, next] = within(list).getAllByRole("listitem");
+    const sync = (COMING_UP["GET /api/scheduled-recordings (before)"] as Json).schedules
+      .find((s: Json) => s.id === "rec-sync");
+    expect(failed.textContent).toContain("Payments platform sync");
+    expect(within(failed).getByTestId("coming-up-state").textContent)
+      .toBe(`Did not record · ${hhmm(sync.did_not_record.at)} · ${sync.did_not_record.reason}`);
+    expect(within(failed).getByRole("button", { name: "Record now" })).toBeTruthy();
+    expect(next.textContent).toContain("Platform design follow-up");
 
-    const createWindow = () => document.getElementById("schedule:__create__");
-    fireEvent.click(await screen.findByTestId("arrival-schedule"));
-    await waitFor(() => expect(createWindow()).not.toBeNull());
-    fireEvent.click(within(createWindow()!).getByRole("button", { name: "Cancel" }));
-    await waitFor(() => expect(createWindow()).toBeNull());
-    expect(posts).toEqual([]);
-
-    fireEvent.click(screen.getByTestId("arrival-schedule"));
-    await waitFor(() => expect(createWindow()).not.toBeNull());
-    fireEvent.change(within(createWindow()!).getByRole("textbox", { name: "Title" }), {
-      target: { value: "Rail form recording" },
-    });
-    fireEvent.click(within(createWindow()!).getByTestId("schedule-create-submit"));
-    await waitFor(() => expect(createWindow()).toBeNull());
-    expect(posts.map(([p]) => p)).toEqual(["/api/scheduled-recordings"]);
-    expect(posts[0][1].json.title).toBe("Rail form recording");
-    await waitFor(() =>
-      expect(useDesk.getState().scheduledRecordings.map((r) => r.title)).toEqual(["Rail form recording"]));
+    fireEvent.click(within(next).getByRole("button", { name: "Record Platform design follow-up when it starts" }));
+    await waitFor(() => expect(within(list).getAllByTestId("coming-up-state")[1]?.textContent ?? "").toMatch(/^Records at /));
+    const armed = (COMING_UP["GET /api/door (armed)"] as Json).upcoming.find((r: Json) => r.id === "ev-followup");
+    expect(within(list).getAllByTestId("coming-up-state")[1].textContent).toBe(`Records at ${hhmm(armed.armed.arms_at)}`);
+    expect(within(list).getByRole("button", { name: "Cancel the recording of Platform design follow-up" })).toBeTruthy();
+    expect(posts).toEqual(["/api/scheduled-recordings"]);
   });
 });
 
