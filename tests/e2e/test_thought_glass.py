@@ -562,7 +562,9 @@ class TestTheThoughtSends:
                 if width >= 720:
                     assert foot.get_by_role("button", name="Send…", exact=True).is_disabled()
                 else:
-                    assert foot.get_by_role("button", name="More actions", exact=True).get_attribute("aria-expanded") == "false"
+                    # Betterment Q8: the foot has four verbs; at 393 they fold
+                    # into More only when they do not fit.
+                    assert page.get_by_role("menu", name="More actions", exact=True).count() == 0
                 assert self._saved_note(note_ref) == (revision, saved_body)
                 page.screenshot(path=str(SEND_SHOTS / f"thought-send-waits-{width}.png"))
                 mode["saves"] = "pass"

@@ -579,10 +579,9 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # form editor. Its first line names it (thoughtTitle.ts).
             editor = page.locator(".desk-window.thought-workspace-window")
             _loaded(editor.get_by_role("button", name="Done", exact=True))
-            # This new note has no earlier autosave. The window's own Saved
-            # receipt must appear for this edit, not elsewhere on the desk.
-            receipt = editor.get_by_role("status").filter(has_text=re.compile(r"^Saved "))
-            assert receipt.count() == 0, "New note already has a Saved receipt before typing"
+            # New Note uses the empty note the Capture door made above again
+            # (newThought.ts), so its window may already say when it was kept;
+            # the save of THIS edit is proven by its PATCH below.
             editor_id = editor.get_attribute("id")
             assert editor_id and editor_id.startswith("pullout:note:")
             typed = f"{NOTE_TITLE}\n{NOTE_BODY}"
@@ -748,7 +747,8 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 selected_note = _api(page, "GET", "/api/notes/" + selected_note_id, token=TOKEN)["note"]
                 assert selected_note["body_markdown"], "The Notes query selected an empty fixture"
                 destination = page.get_by_role("region", name=selected_note["title"], exact=True)
-                _loaded(destination.get_by_text(selected_note["body_markdown"], exact=True))
+                # The sticky draws each line of the note as its own line.
+                _loaded(destination.get_by_text(selected_note["body_markdown"].splitlines()[-1], exact=True))
             elif note_match:
                 destination = page.get_by_role("region", name=re.compile(r"^(Notes|Memory)$"))
                 _loaded(destination.get_by_text(NOTE_TITLE, exact=True))
