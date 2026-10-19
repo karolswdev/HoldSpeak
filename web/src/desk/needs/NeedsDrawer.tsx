@@ -14,7 +14,11 @@
  *  (ruling in the PR body): the object's own window and the Object menu
  *  carry it.
  */
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { AgentRow as AgentRowFace } from "../agents/AgentRow";
+import { conductorMembers, type ConductorMember } from "../conductor/members";
+import { answerMember, openMember } from "../conductor/open";
+import { openAgentLane } from "../shell";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { create } from "zustand";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
@@ -628,7 +632,44 @@ function DetailWell({ face }: { face: NeedFace }) {
   );
 }
 
+/** Betterment AG9: an agent's ask on Needs you is the agent's own row (the
+ *  Agents row: the question, its choices, Answer, Allow / Deny inline). One
+ *  row per piece of work: when the ask rides an item, this row stands for
+ *  the item. Null until the agents read knows the session (the plain row
+ *  draws meanwhile). */
+function useAskMember(sessionKey: string | undefined): ConductorMember | null {
+  const sessions = useAgentFlights((s) => s.sessions);
+  const flights = useAgentFlights((s) => s.flights);
+  return useMemo(() => {
+    if (!sessionKey) return null;
+    const members = conductorMembers({ detect: null, sessions, flights, launchedAt: {} });
+    return members.find((m) => m.sessionKey === sessionKey && (m.live === "ask" || m.live === "held")) ?? null;
+  }, [sessionKey, sessions, flights]);
+}
+
 export function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean; projects: boolean }) {
+  const member = useAskMember(face.askOf);
+  if (member) {
+    const question = useAgentFlights.getState().sessions.find((row) => row.key === member.sessionKey)?.question ?? "";
+    return (
+      <li className="needs-agent-row" data-testid="needs-agent-row" data-need-id={face.id}>
+        <AgentRowFace
+          member={member}
+          question={question}
+          lead={primary}
+          selected={false}
+          onSelect={() => { if (member.launchId) openAgentLane(member.launchId); }}
+          onTerminal={() => { if (member.launchId) openAgentLane(member.launchId, { sessionKey: member.sessionKey, raw: true }); }}
+          onOpenAnswer={() => answerMember(member)}
+          onOpen={() => openMember(member)}
+        />
+      </li>
+    );
+  }
+  return <PlainNeedRow face={face} primary={primary} projects={projects} />;
+}
+
+function PlainNeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean; projects: boolean }) {
   const [well, setWell] = useState<Well | null>(null);
   const project = projects && face.project ? face.project : null;
   return (

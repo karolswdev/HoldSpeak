@@ -1032,6 +1032,13 @@ class LaunchService:
             return True
         return bool((completed.stdout or "").strip())
 
+    def _again_branch(self, request: Mapping[str, Any]) -> str:
+        """Hand again keeps the earlier launch's branch (the tool gate lets
+        the agent push that branch only)."""
+        spec = request.get("worktree") or {}
+        again = str(spec.get("again_of") or "") if isinstance(spec, Mapping) else ""
+        return str((self._ledger.get(again) or {}).get("branch") or "") if again else ""
+
     def _resolve_worktree(
         self, request: Mapping[str, Any], source: Any
     ) -> tuple[str, str, Optional[dict[str, Any]]]:
@@ -1053,6 +1060,22 @@ class LaunchService:
             )
             if record is None:
                 raise LaunchRefused("worktree_unknown", f"unknown worktree {worktree_id!r}")
+            again = str(spec.get("again_of") or "")
+            if again:
+                # Betterment AG7 gaps, Hand again: the item's OWN worktree, made
+                # by an earlier launch of the same item whose agent no longer
+                # runs. Its uncommitted work is the work to continue.
+                prior = self._ledger.get(again) or {}
+                if (
+                    prior.get("origin_ref") != request.get("origin_ref")
+                    or str(prior.get("worktree_id") or "") != worktree_id
+                    or str(prior.get("state") or "") in ("starting", "launched", "registered")
+                ):
+                    raise LaunchRefused(
+                        "hand_again_refused",
+                        "only the item's own worktree, after its agent stopped, takes Hand again",
+                    )
+                return record.worktree_id, record.path, None
             if self._worktree_dirty(record.path):
                 raise LaunchRefused(
                     "worktree_dirty",
@@ -1250,7 +1273,7 @@ class LaunchService:
             "worktree_id": worktree_id,
             # Conductor K5: the branch this launch made; the tool gate lets a
             # YOLO agent push this branch only. Empty for an existing worktree.
-            "branch": str((pending_create or {}).get("branch") or ""),
+            "branch": str((pending_create or {}).get("branch") or "") or self._again_branch(request),
             "story_ref": {"project": project, "story_id": story_id},
             "origin_ref": origin_ref,
             "session": session_name,

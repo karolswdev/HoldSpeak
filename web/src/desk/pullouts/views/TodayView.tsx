@@ -28,7 +28,25 @@ import { meetingRowState } from "../../../pages/cores/history/helpers";
 import { useSummaryRun } from "../../../pages/cores/history/useSummaryRun";
 import { executedReceipt, readPlannedRoute, readRunReceipt, routeReady } from "../../../meetings/summaryRoute";
 import { RouteDisclosure, RunAttempts } from "../../../meetings/RouteDisclosure";
+import { useAgentFlights, useAgentFlightsLive, type AgentFlight } from "../../agentFlights";
+import { conductorMembers, fleetCounts } from "../../conductor/members";
+import { AGENT_NAME, type AgentId } from "../../firstrun/agentsStep";
+import { openAgentLane } from "../../shell";
 import "./today.css";
+
+/** Betterment AG9: Today's Agents line, only what is there:
+ *  `2 agents need you · 1 finished`; "" with nothing. */
+export function agentsLine(needYou: number, finished: number): string {
+  return [
+    needYou ? `${needYou} ${needYou === 1 ? "agent needs" : "agents need"} you` : "",
+    finished ? `${finished} finished` : "",
+  ].filter(Boolean).join(" · ");
+}
+
+/** `Claude Code finished Draft test scaffolding`. */
+export function agentResultWords(flight: AgentFlight): string {
+  return `${AGENT_NAME[flight.agent as AgentId] ?? flight.agent} finished ${flight.title || "its work"}`;
+}
 
 const SPRITES = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/32/`;
 
@@ -215,6 +233,16 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const [prepared, setPrepared] = useState<PreparedRead | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const rows = useNeedFaces();
+  // Betterment AG9: the agents: a line when one needs him or finished, and a
+  // card for each finished turn he has not opened (New).
+  useAgentFlightsLive();
+  const agentFlights = useAgentFlights((st) => st.flights);
+  const agentSessions = useAgentFlights((st) => st.sessions);
+  const agentCounts = useMemo(
+    () => fleetCounts(conductorMembers({ detect: null, sessions: agentSessions, flights: agentFlights, launchedAt: {} })),
+    [agentSessions, agentFlights]);
+  const finishedAgents = useMemo(() => agentFlights.filter((f) => f.state === "done" && f.isNew && f.launchId), [agentFlights]);
+  const agentsWords = agentsLine(agentCounts.needYou, finishedAgents.length);
   // Betterment A6: an automation's NEW result ("<name> has a new result").
   const news = useAutomationNews();
   const [loaded, setLoaded] = useState(false);
@@ -298,7 +326,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   // An empty desk: no calendar, no meeting, nothing waits. One line says
   // what fills Today (Betterment D4).
   const emptyDesk = Boolean(door && !failed.door && !calendar && meetings.length === 0 && !hasWork && needsLoaded
-    && !news.rows?.length && !prepared?.prepared);
+    && !news.rows?.length && !prepared?.prepared && !agentsWords);
   const phone = typeof window !== "undefined" && window.matchMedia?.("(max-width: 600px)").matches;
   const week = useMemo(() => weekCounts(now, door, rows.work), [now, door, rows.work]);
 
@@ -517,6 +545,22 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     );
   });
 
+  const agentResultNodes = finishedAgents.map((flight) => (
+    <SpineNode key={`agent:${flight.launchId}`} kind="result" testId="today-agent-result" time="">
+      <div className="today-row">
+        <div className="today-row-text">
+          <Button variant="chrome" className="today-row-title" onClick={() => openAgentLane(String(flight.launchId))}>
+            {agentResultWords(flight)}
+          </Button>
+        </div>
+        <Button dense variant="secondary" data-testid="today-open-agent-result"
+          aria-label={`Open ${flight.title}`} onClick={() => openAgentLane(String(flight.launchId))}>
+          Open
+        </Button>
+      </div>
+    </SpineNode>
+  ));
+
   const pastToday = finish.length ? (
     <li className="today-section" aria-hidden="true"><span>TO FINISH</span></li>
   ) : null;
@@ -533,6 +577,12 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           <span className="today-strip">
             {ahead ? <span><b>{ahead}</b> {ahead === 1 ? "meeting ahead" : "meetings ahead"}</span> : null}
             {finish.length ? <span><b>{finish.length}</b> to finish</span> : null}
+            {agentsWords ? (
+              <Button variant="chrome" className="today-agents" data-testid="today-agents"
+                onClick={() => openSurfaceOr("open-conductor", "/conductor")}>
+                {agentsWords}
+              </Button>
+            ) : null}
           </span>
           <span className="today-head-sp" />
           {prepareWith ? (
@@ -559,6 +609,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
             {doorFailedNode}
             {emptyNode}
             {justMadeNode}
+            {agentResultNodes}
             {newsNodes}
             {meetingsFailedNode}
             {pastToday}

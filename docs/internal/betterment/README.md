@@ -72,15 +72,15 @@ cluster workers follow `CLUSTER-BRIEF.md`.
 
 | Feature | Folder | State |
 |---|---|---|
-| Automations (today "Workbench") | `workbench/` | draft, owner decisions open |
-| Engines | `engines/` | draft, owner decisions open |
-| The desk's tools for every engine (MCP) | `mcp/` | draft, owner decisions open |
+| Automations (today "Workbench") | `workbench/` | decisions adopted; implementation tracked in TRACKER |
+| Engines | `engines/` | decisions adopted; implementation tracked in TRACKER |
+| The desk's tools for every engine (MCP) | `mcp/` | decisions adopted; implementation tracked in TRACKER |
 | Agents vs herdr (study) | `herdr/` | studied |
-| Asking, thinking and memory (Ask, Threads, Notes, Memory, Search) | `asking/` | draft, owner decisions open |
-| Projects, updates and decisions | `projects/` | draft, owner decisions open; P0 in build |
-| Agents (Conductor, herdr ideas) | `agents/` | draft, owner decisions open |
-| The daily surface, People and commitments | `daily/` | draft, owner decisions open |
-| Settings and setup | `setup/` | draft, owner decisions open |
-| The desk shell | `shell/` | draft, owner decisions open |
-| Delivery and send | `send/` | draft, owner decisions open |
-| Capture | `capture/` | draft, owner decisions open |
+| Asking, thinking and memory (Ask, Threads, Notes, Memory, Search) | `asking/` | decisions adopted; implementation tracked in TRACKER |
+| Projects, updates and decisions | `projects/` | decisions adopted; implementation tracked in TRACKER |
+| Agents (Conductor, herdr ideas) | `agents/` | decisions adopted; implementation tracked in TRACKER |
+| The daily surface, People and commitments | `daily/` | decisions adopted; implementation tracked in TRACKER |
+| Settings and setup | `setup/` | decisions adopted; implementation tracked in TRACKER |
+| The desk shell | `shell/` | decisions adopted; implementation tracked in TRACKER |
+| Delivery and send | `send/` | decisions adopted; implementation tracked in TRACKER |
+| Capture | `capture/` | decisions adopted; implementation tracked in TRACKER |

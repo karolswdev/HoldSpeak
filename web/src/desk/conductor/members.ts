@@ -60,6 +60,8 @@ export interface ConductorMember extends ObjectListRow {
   turnId?: string | null;
   /** stale: the flight's state (Betterment AG6: `stopped_by_restart` offers Resume). */
   flightState?: AgentFlight["state"];
+  /** stale: the item its agent worked on (Hand again). */
+  origin?: { kind: string; id: string; title: string; projectId: string | null; agent: string };
   /** live: the desk's own answer (Betterment AG3). */
   deskAnswer?: AgentFlight["deskAnswer"];
   /** live: the agent's screen as the hub's rules read it (Betterment AG7):
@@ -347,6 +349,8 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       state,
       receipt,
       flightState: flight.state,
+      // Gaps, Hand again: the item a stopped agent worked on.
+      origin: { kind: flight.kind, id: flight.id, title: flight.title, projectId: flight.projectId || null, agent: flight.agent },
       sessionKey: flight.sessionKey,
       launchId: flight.launchId,
       group: GROUP.stale,

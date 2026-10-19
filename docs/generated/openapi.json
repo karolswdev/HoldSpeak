@@ -3540,6 +3540,46 @@
         "summary": "Api Agent Launch"
       }
     },
+    "/api/agent/launches/{launch_id}/answer": {
+      "post": {
+        "description": "Betterment AG7 gaps: answer an agent whose hooks are off, from its\nrow: ``{since, keys: [\"Enter\"|\"Escape\"|\"1\"..\"9\"]}`` or ``{since,\ntext}``. ``since`` names the prompt he saw; the pane is read again\nbefore the keystroke. Owner only. 409 with its code on a refusal.",
+        "operationId": "api_agent_launch_answer_api_agent_launches__launch_id__answer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Launch Answer Api Agent Launches  Launch Id  Answer Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Launch Answer"
+      }
+    },
     "/api/agent/launches/{launch_id}/deliver": {
       "post": {
         "description": "Deliver the held brief of an existing launch (after a restart, a\nhook install or a refused send): resume on the launch, no relaunch.",

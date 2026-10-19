@@ -67,12 +67,15 @@ _SERVICES = _Services()
 def submit_process_input_from_owner_gesture(
     *,
     pane: str,
-    text: str,
+    text: str = "",
     session_key: str = "",
     agent: str = "",
     principal: Principal | None = None,
+    keys: list[Any] | None = None,
 ) -> dict[str, Any]:
-    """Bind one pane generation and synchronously receipt the owner's send."""
+    """Bind one pane generation and synchronously receipt the owner's send.
+    ``keys`` (Betterment AG7 gaps: his press on a screen prompt) sends named
+    keys (``Enter``, ``Escape``) or ``{"literal": "1"}`` instead of text."""
     owner = principal or Principal(PrincipalKind.OWNER, "owner-session")
     if owner.kind is not PrincipalKind.OWNER:
         raise ProcessInputRefused("process_input_owner_direct_gesture_required")
@@ -84,14 +87,12 @@ def submit_process_input_from_owner_gesture(
         "target_id": issued.get("target_id") or f"unresolved_{command_id[:16]}",
         "target_generation": issued.get("target_generation") or "unresolved",
         "command_id": command_id,
-        "operation": {"family": "coder_steering", "verb": "terminal.text"},
+        "operation": {"family": "coder_steering", "verb": "terminal.keys" if keys is not None else "terminal.text"},
         "payload": {
             "session_key": session_key or f"pane:{pane}",
-            "text": text,
             "agent": agent,
-            "submit": True,
-            "grounding_refs": [],
             "expected_pane_id": issued.get("pane_id") or "",
+            **({"keys": list(keys)} if keys is not None else {"text": text, "submit": True, "grounding_refs": []}),
         },
     }
     authority = {

@@ -71,6 +71,14 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
   it("with no press: the one number, the top rows of Needs you, the next 1:1 with Prep, Since and This week", async () => {
     const { reads, posts } = replay();
     render(<TodayView />);
+    expect(GETS["/api/desk/needs-you?fresh=1"].items).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        title: "Draft the rollback runbook",
+        direction: "theirs",
+        counted: false,
+        owner: "Mira",
+      }),
+    ]));
     // The one number the bell and the Dock say.
     expect(await screen.findByTestId("today-needs-count")).toHaveTextContent(String(GETS["/api/desk/needs-you?fresh=1"].count));
     expect(screen.getByTestId("today-needs-count").textContent).toBe("4");
@@ -95,7 +103,7 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
     expect(within(next).getByRole("button", { name: "Prep" })).toBeTruthy();
     // Since yesterday: folded to one line of counts, made with no press.
     const since = await screen.findByTestId("today-since");
-    expect(within(since).getByTestId("today-since-counts").textContent).toBe("2 decisions · 5 promises · 2 more");
+    expect(within(since).getByTestId("today-since-counts").textContent).toBe("2 meetings · 2 decisions · 1 promise · 2 more");
     expect(within(since).getByTestId("today-since-toggle")).toHaveAttribute("aria-expanded", "false");
     expect(reads).toContain("/api/brief/latest?ensure=1");
     expect(posts.some((p) => p.url.startsWith("/api/brief/generate"))).toBe(false);
@@ -134,7 +142,8 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
     const rows = await screen.findByTestId("today-since-rows");
     const texts = [...rows.querySelectorAll("[data-testid='brief-sf-row']")].map((r) => r.textContent ?? "");
     expect(texts.some((t) => t.includes("Adopt idempotent retries with a dedupe key"))).toBe(true);
-    expect(texts.some((t) => t.includes("Draft the rollback runbook"))).toBe(true);
+    expect(texts.some((t) => t.includes("Freeze ledger writes during the cutover"))).toBe(true);
+    expect(texts.some((t) => t.includes("Draft the rollback runbook"))).toBe(false);
     // The brief's waiting rows are Needs you's, above: never listed twice.
     expect(texts.some((t) => t.startsWith("Email Dana about the cutover window"))).toBe(false);
     expect(within(rows).getByTestId("today-since-decisions")).toHaveTextContent("Decisions");
@@ -365,5 +374,26 @@ describe("Today's Prepared block (Betterment daily D9), on the recorded run", ()
     await screen.findByTestId("today-needs-count");
     expect(screen.queryByTestId("today-prepared")).toBeNull();
     expect(screen.queryByTestId("today-prepare-now")).toBeNull();
+  });
+});
+
+/* Betterment AG9: Today's Agents line and a card per finished turn he has
+ * not opened, on the hub's recorded fleet (agents.app.test's fixtures/
+ * agents-ag8: two agents need him, one finished and is New). */
+import AG8 from "./fixtures/agents-ag8/coders-sessions.wire.json";
+
+describe("agents in Today (Betterment AG9)", () => {
+  it("says 2 agents need you · 1 finished, and the finished turn is a card with Open", async () => {
+    const { reads } = replay();
+    const base = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string }) =>
+      String(url).startsWith("/api/coders/sessions") ? (AG8 as { wire: unknown }).wire : base(url, init));
+    render(<TodayView />);
+    expect(await screen.findByTestId("today-agents")).toHaveTextContent("2 agents need you · 1 finished");
+    const cards = await screen.findAllByTestId("today-agent-result");
+    expect(cards).toHaveLength(1);
+    expect(cards[0]).toHaveTextContent("Claude Code finished Draft test scaffolding for flags");
+    expect(within(cards[0]).getByRole("button", { name: /^Open/ })).toBeTruthy();
+    expect(reads.some((url) => url.startsWith("/api/door"))).toBe(true);
   });
 });

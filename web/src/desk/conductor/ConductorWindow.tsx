@@ -43,6 +43,7 @@ import {
 } from "./members";
 import { answerMember, answers, cancelQueuedHand, openMember, resumeAll, stopMember, stops } from "./open";
 import { StartAgent } from "./StartAgent";
+import { handRefOf, openHand } from "../agentHand";
 import { AgentRow as AgentRowFace, DeskAnswerLine } from "../agents/AgentRow";
 import { openAgentLane } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
@@ -216,6 +217,17 @@ export function headFact(head: { atWork: number; ask: number }, members: readonl
   const ready = found.filter((m) => canRun(m.detect!)).length;
   if (ready > 0) return `${ready} ready`;
   return found.length ? "No agent ready" : "No agent";
+}
+
+/** Gaps: the stopped agents whose item takes Hand again (a new agent in
+ *  the same worktree; the hub checks it). */
+const HAND_AGAIN = new Set(["resume_failed", "stopped_by_restart", "ended", "expired"]);
+
+function handAgain(member: ConductorMember): void {
+  const o = member.origin;
+  const kind = handRefOf(`${o?.kind}:${o?.id}`)?.kind;
+  if (!o || !kind) return;
+  openHand({ kind, id: o.id, title: o.title, projectId: o.projectId, agent: o.agent as AgentId });
 }
 
 /** Betterment AG8: a project line's lamp, by its worst agent. */
@@ -747,9 +759,17 @@ export function ConductorWindow() {
                     onSelect={() => select(m.id)}
                     meta={m.when ? <span className="cw-mono">{agoWord(m.when)}</span> : null}
                     verb={
-                      <Button dense variant="ghost" onClick={() => openMember(m)}>
-                        Open
-                      </Button>
+                      <>
+                        {HAND_AGAIN.has(String(m.flightState)) && m.origin ? (
+                          // Gaps: a new agent continues in the same worktree.
+                          <Button dense variant="secondary" onClick={() => handAgain(m)} data-testid="conductor-hand-again">
+                            Hand again
+                          </Button>
+                        ) : null}
+                        <Button dense variant="ghost" onClick={() => openMember(m)}>
+                          Open
+                        </Button>
+                      </>
                     }
                   />
                 ))}
