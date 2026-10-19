@@ -6,7 +6,7 @@
  * read the project window makes), so the state here is the Room's state,
  * never a second rule. A row whose read fails says so; it never claims a
  * state it did not read. */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { useDesk } from "../../desk/store";
@@ -98,19 +98,27 @@ const RANK: Record<string, number> = { BLOCKED: 0, "AT RISK": 1, "ON TRACK": 2, 
 export function ProjectsCore(_props: CoreProps) {
   const projects = useDesk((s) => s.projects) ?? [];
   const [reads, setReads] = useState<Record<string, Read>>({});
+  const round = useRef(0);
   const ids = projects.map((p) => p.id).join(",");
 
   const load = useCallback(() => {
-    for (const id of ids ? ids.split(",") : []) {
-      apiFetch<Record<string, unknown>>(`/api/projects/${encodeURIComponent(id)}/room`)
-        .then((raw) => {
-          const recent = ((raw.updates as { recent?: Update[] } | undefined)?.recent ?? [])[0] ?? null;
-          setReads((now) => ({ ...now, [id]: { room: decodeRoomSnapshot(raw), update: recent } }));
-        })
-        .catch(() => setReads((now) => ({ ...now, [id]: "failed" })));
-    }
+    const current = ++round.current;
+    void Promise.all((ids ? ids.split(",") : []).map(async (id): Promise<[string, Read]> => {
+      try {
+        const raw = await apiFetch<Record<string, unknown>>(`/api/projects/${encodeURIComponent(id)}/room`);
+        const recent = ((raw.updates as { recent?: Update[] } | undefined)?.recent ?? [])[0] ?? null;
+        return [id, { room: decodeRoomSnapshot(raw), update: recent }];
+      } catch {
+        return [id, "failed"];
+      }
+    })).then((batch) => {
+      if (current === round.current) setReads(Object.fromEntries(batch));
+    });
   }, [ids]);
-  useEffect(load, [load]);
+  useEffect(() => {
+    load();
+    return () => { round.current++; };
+  }, [load]);
   useOnDeskChanged(load);
 
   const newProject = (
@@ -126,6 +134,12 @@ export function ProjectsCore(_props: CoreProps) {
         <SurfaceVerbs>{newProject}</SurfaceVerbs>
       </>
     );
+  }
+
+  // Rank one complete read. Partial replies otherwise move visible rows as
+  // each Room arrives. On refresh, keep the previous complete read in place.
+  if (projects.some((project) => reads[project.id] === undefined)) {
+    return <><SurfaceVerbs>{newProject}</SurfaceVerbs><SurfaceState loading /></>;
   }
 
   const rows = projects
