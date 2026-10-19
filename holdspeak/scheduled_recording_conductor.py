@@ -32,6 +32,32 @@ from .principals import Principal, PrincipalKind
 
 log = get_logger("scheduled_recording_conductor")
 
+# Capture C7: why a scheduled recording did not record, in the words the face
+# shows (the receipt's reason). Exception text never reaches a receipt or a
+# face; it goes to the log.
+NO_MICROPHONE = "No microphone"
+ANOTHER_RECORDING = "Another recording is running"
+NOT_RUNNING = "HoldSpeak was not running"
+SOMETHING_WRONG = "Something went wrong"
+FAILURE_WORDS = (NO_MICROPHONE, ANOTHER_RECORDING, NOT_RUNNING, SOMETHING_WRONG)
+
+_BUSY_MARKS = ("audio floor held", "meeting already active", "already recording")
+
+
+def failure_words(exc: BaseException) -> str:
+    """The plain words for a start that failed (the fixed table above)."""
+    text = str(exc).lower()
+    if any(mark in text for mark in _BUSY_MARKS):
+        return ANOTHER_RECORDING
+    from .audio import AudioRecorderError
+    from .meeting_recorder import MeetingRecorderError
+
+    if isinstance(exc, (AudioRecorderError, MeetingRecorderError)):
+        return NO_MICROPHONE
+    if type(exc).__name__ == "PortAudioError":
+        return NO_MICROPHONE
+    return SOMETHING_WRONG
+
 COUNTDOWN_SECONDS = 10
 # I10: bounded catch-up window. Missed fires older than this are collapsed
 # into a single missed receipt.
@@ -306,7 +332,8 @@ class ScheduledRecordingConductor:
                 )
                 receipt_id = self._write_receipt(
                     db, sched.id, "refused", "missed_interrupted_arming",
-                    detail="Hub restarted during countdown",
+                    # The plain words; the raw cause is logged above.
+                    detail=NOT_RUNNING,
                 )
                 db.scheduled_recordings.set_state(
                     sched.id, "missed",
@@ -333,7 +360,7 @@ class ScheduledRecordingConductor:
                     )
                     receipt_id = self._write_receipt(
                         db, sched.id, "refused", "missed",
-                        detail=f"Hub was down at scheduled time {sched.next_fire_at}",
+                        detail=NOT_RUNNING,
                     )
                     db.scheduled_recordings.set_state(
                         sched.id, "missed",
@@ -568,7 +595,7 @@ class ScheduledRecordingConductor:
     def _fire_failed(self, db: Any, schedule_id: str, exc: BaseException) -> None:
         """A `failed` receipt with the reason, a terminal state, the broadcast."""
         self._arming.pop(schedule_id, None)
-        reason = str(exc) or type(exc).__name__
+        reason = failure_words(exc)
         try:
             sched = db.scheduled_recordings.get(schedule_id)
             receipt_id = self._write_receipt(
@@ -642,9 +669,10 @@ class ScheduledRecordingConductor:
             if self._voice_floor_fn:
                 floor_owner = self._voice_floor_fn()
                 if floor_owner is not None:
+                    log.info(f"Scheduled recording {schedule_id} refused: audio floor held by {floor_owner!r}")
                     receipt_id = self._write_receipt(
                         db, schedule_id, "refused", "mic_floor_held",
-                        detail=f"Audio floor held by {floor_owner!r}",
+                        detail=ANOTHER_RECORDING,
                     )
                     db.scheduled_recordings.set_state(
                         schedule_id, "refused",
@@ -655,7 +683,7 @@ class ScheduledRecordingConductor:
                     )
                     broadcast("scheduled_recording.refused", {
                         "schedule_id": schedule_id, "title": sched.title,
-                        "reason": f"mic floor held by {floor_owner!r}",
+                        "reason": ANOTHER_RECORDING,
                         "receipt_id": receipt_id, "at": _now_iso(),
                     })
                     self._advance_after_terminal(db, sched, "refused", receipt_id)
@@ -726,10 +754,11 @@ class ScheduledRecordingConductor:
                     calendar_event_id=sched.calendar_event_id or None,
                 )
         except Exception as exc:
-            log.error(f"Scheduled recording fire failed for {schedule_id}: {exc}")
+            log.error(f"Scheduled recording fire failed for {schedule_id}: {exc}", exc_info=True)
+            words = failure_words(exc)
             error_receipt = self._write_receipt(
                 db, schedule_id, "failed", "start_failed",
-                detail=str(exc),
+                detail=words,
             )
             db.scheduled_recordings.set_state(
                 schedule_id, "refused",
@@ -739,7 +768,7 @@ class ScheduledRecordingConductor:
             )
             broadcast("scheduled_recording.refused", {
                 "schedule_id": schedule_id, "title": sched.title,
-                "reason": str(exc), "receipt_id": error_receipt, "at": _now_iso(),
+                "reason": words, "receipt_id": error_receipt, "at": _now_iso(),
             })
             self._advance_after_terminal(db, sched, "start_failed", error_receipt)
             return

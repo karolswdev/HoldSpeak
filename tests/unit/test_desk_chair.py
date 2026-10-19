@@ -396,7 +396,8 @@ def test_coming_up_arms_cancels_and_names_a_failed_fire(db: Any, ics: str) -> No
     client = _client()
     schedules_before = client.get("/api/scheduled-recordings").json()
     sync = next(s for s in schedules_before["schedules"] if s["id"] == "rec-sync")
-    assert sync["did_not_record"]["reason"] == "'NoneType' object has no attribute 'active_owner'", sync
+    # Capture C7: the plain words, never the exception text.
+    assert sync["did_not_record"]["reason"] == "Something went wrong", sync
     assert sync["did_not_record"]["at"], sync
     door_before = door()
     rows = _calendar_rows(door_before)

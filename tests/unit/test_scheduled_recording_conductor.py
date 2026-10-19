@@ -421,7 +421,8 @@ def test_mic_held_refusal_with_receipt(tmp_path):
         ).fetchone()
     assert row is not None
     assert row["outcome"] == "mic_floor_held"
-    assert "dictation" in row["result_ref"]
+    # Capture C7: the receipt says it in the face's words; the owner is logged.
+    assert row["result_ref"] == "Another recording is running"
 
 
 def test_mic_free_allows_fire(tmp_path):
@@ -681,7 +682,8 @@ def test_start_failure_recurring_advances(tmp_path):
     assert row is not None
     assert row["state"] == "failed"
     assert row["outcome"] == "start_failed"
-    assert "device gone" in row["result_ref"]
+    # Capture C7: plain words, never the exception text (it is logged).
+    assert row["result_ref"] == "Something went wrong"
 
 
 def test_start_failure_one_shot_disables(tmp_path):
@@ -744,11 +746,11 @@ def test_a_fire_that_raises_writes_a_failed_receipt_and_leaves_arming(tmp_path):
             "SELECT * FROM kernel_receipts WHERE receipt_id=?", (updated.last_receipt_id,),
         ).fetchone()
     assert row is not None and row["state"] == "failed" and row["outcome"] == "fire_failed"
-    assert "active_owner" in row["result_ref"]
+    assert row["result_ref"] == "Something went wrong"
 
     listed = ScheduledRecordingService(db).list_schedules(Principal(PrincipalKind.OWNER, "owner"))
     said = next(s for s in listed if s["id"] == sched.id)["did_not_record"]
-    assert said["reason"] == "'NoneType' object has no attribute 'active_owner'"
+    assert said["reason"] == "Something went wrong"
     assert said["at"] == "2001-09-09T01:46:40Z"
 
 
@@ -1003,13 +1005,13 @@ def test_manual_capture_blocks_scheduled_fire(tmp_path):
     assert updated.state == "refused"
     assert start_fn.call_count == 0
 
-    # Verify receipt names the floor owner
+    # Capture C7: the receipt says it in the face's words.
     with db._connection() as conn:
         row = conn.execute(
             "SELECT * FROM kernel_receipts WHERE receipt_id=?",
             (updated.last_receipt_id,),
         ).fetchone()
-    assert "meeting" in row["result_ref"]
+    assert row["result_ref"] == "Another recording is running"
 
 
 # -- I10: bounded catch-up --
@@ -1251,3 +1253,27 @@ def test_next_cron_fire():
 def test_next_cron_fire_invalid():
     assert next_cron_fire("bad") is None
     assert next_cron_fire("* * *") is None
+
+
+@pytest.mark.parametrize("exc, words", [
+    (RuntimeError("Cannot start meeting: audio floor held by 'hotkey'"), "Another recording is running"),
+    (RuntimeError("Meeting already active"), "Another recording is running"),
+    ("mic", "No microphone"),
+    ("audio", "No microphone"),
+    (AttributeError("'NoneType' object has no attribute 'active_owner'"), "Something went wrong"),
+    (KeyError("x"), "Something went wrong"),
+])
+def test_failure_words_are_the_fixed_table(exc, words):
+    """Capture C7: a start that failed is named in four plain phrases; the
+    exception text never is."""
+    from holdspeak.scheduled_recording_conductor import FAILURE_WORDS, failure_words
+
+    if exc == "mic":
+        from holdspeak.meeting_recorder import MeetingRecorderError
+        exc = MeetingRecorderError("Failed to start mic recording: Error querying device -1")
+    elif exc == "audio":
+        from holdspeak.audio import AudioRecorderError
+        exc = AudioRecorderError("Failed to start recording: [Errno -9996] Invalid input device")
+    said = failure_words(exc)
+    assert said == words and said in FAILURE_WORDS
+    assert str(exc) not in said

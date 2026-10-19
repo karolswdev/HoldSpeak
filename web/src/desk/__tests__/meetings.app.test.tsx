@@ -775,6 +775,10 @@ describe("One home for recording: Meetings ▸ Record (betterment/capture C7)", 
     expect(within(failed).getByTestId("coming-up-state").textContent)
       .toBe(`Did not record · ${hhmm(sync.did_not_record.at)} · ${sync.did_not_record.reason}`);
     expect(within(failed).getByRole("button", { name: "Record now" })).toBeTruthy();
+    // The reason is one of four plain phrases, never the exception text.
+    expect(["No microphone", "Another recording is running", "HoldSpeak was not running", "Something went wrong"])
+      .toContain(sync.did_not_record.reason);
+    expect(list.textContent).not.toMatch(/NoneType|Error|Traceback|attribute|'/);
     // Tomorrow's meeting says its day.
     expect(within(rowOf(list, "Architecture review")).getByTestId("coming-up-slot").textContent).toMatch(/^[A-Z][a-z]{2} \d\d:\d\d$/);
     // The manual form, in place.

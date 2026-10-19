@@ -77,13 +77,10 @@ def _epoch_to_iso(epoch: Optional[float]) -> Optional[str]:
     ).replace("+00:00", "Z")
 
 
-# Capture C7: the fire outcomes that mean "it did not record", and the words
-# the face says for each (empty: the receipt's own reason, the error text).
-_DID_NOT_RECORD: dict[str, str] = {
-    "fire_failed": "",
-    "start_failed": "",
-    "refused": "The microphone was in use",
-}
+# Capture C7: the fire outcomes that mean "it did not record". The reason is
+# the receipt's plain words (scheduled_recording_conductor.FAILURE_WORDS); a
+# receipt from before that table says "Something went wrong", never its text.
+_DID_NOT_RECORD = frozenset({"fire_failed", "start_failed", "refused"})
 
 
 def _schedule_dict(rec: ScheduledRecording) -> dict[str, Any]:
@@ -190,9 +187,11 @@ class ScheduledRecordingService:
                 ).fetchone()
         except Exception:
             row = None
+        from ..scheduled_recording_conductor import FAILURE_WORDS, SOMETHING_WRONG
+
         at = float(row["created_at"]) if row and row["created_at"] is not None else rec.last_fired_at
-        reason = _DID_NOT_RECORD[rec.last_outcome] or (str(row["result_ref"] or "") if row else "")
-        return {"at": _epoch_to_iso(at), "reason": reason or "The recording did not start"}
+        said = str(row["result_ref"] or "") if row else ""
+        return {"at": _epoch_to_iso(at), "reason": said if said in FAILURE_WORDS else SOMETHING_WRONG}
 
     def get_schedule(self, principal: Principal, schedule_id: str) -> dict[str, Any]:
         """Get one scheduled recording by id."""
