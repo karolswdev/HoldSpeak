@@ -27,8 +27,23 @@ import { AGENT_HOST, AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId, type A
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useDesk } from "../store";
 import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
-import { canRun, conductorHead, conductorMembers, headWords, type ConductorMember } from "./members";
-import { answerMember, answers, openMember, resumeAll, stopMember, stops } from "./open";
+import {
+  FLEET_WORD,
+  canRun,
+  conductorHead,
+  conductorMembers,
+  fleetCounts,
+  fleetGroups,
+  fleetOrder,
+  fleetRank,
+  fleetWords,
+  headWords,
+  type ConductorMember,
+  type FleetRank,
+} from "./members";
+import { answerMember, answers, cancelQueuedHand, openMember, resumeAll, stopMember, stops } from "./open";
+import { StartAgent } from "./StartAgent";
+import { handRefOf, openHand } from "../agentHand";
 import { AgentRow as AgentRowFace, DeskAnswerLine } from "../agents/AgentRow";
 import { openAgentLane } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
@@ -203,6 +218,20 @@ export function headFact(head: { atWork: number; ask: number }, members: readonl
   if (ready > 0) return `${ready} ready`;
   return found.length ? "No agent ready" : "No agent";
 }
+
+/** Gaps: the stopped agents whose item takes Hand again (a new agent in
+ *  the same worktree; the hub checks it). */
+const HAND_AGAIN = new Set(["resume_failed", "stopped_by_restart", "ended", "expired"]);
+
+function handAgain(member: ConductorMember): void {
+  const o = member.origin;
+  const kind = handRefOf(`${o?.kind}:${o?.id}`)?.kind;
+  if (!o || !kind) return;
+  openHand({ kind, id: o.id, title: o.title, projectId: o.projectId, agent: o.agent as AgentId });
+}
+
+/** Betterment AG8: a project line's lamp, by its worst agent. */
+const RANK_TONE: Record<FleetRank, "warn" | "ok" | "info" | undefined> = { 0: "warn", 1: "ok", 2: "info", 3: undefined };
 
 /** PHILO-17 U32: what Connect does, in one line, where it is offered. */
 export const HOOKS_LINE = "Connect: see the agent's work, hand it work";
@@ -383,7 +412,8 @@ export function ConductorWindow() {
   const sessions = useAgentFlights((s) => s.sessions);
   const flights = useAgentFlights((s) => s.flights);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [coldOpen, setColdOpen] = useState<boolean | null>(null);
+  // Betterment AG8: Start an agent unfolds in place.
+  const [starting, setStarting] = useState(false);
 
   const flightsKnown = reads.flightsState === "ok";
   const members = useMemo(
@@ -436,10 +466,17 @@ export function ConductorWindow() {
     if (member) useConductor.getState().openInfo(member);
   };
   const words = headWords(head);
-  const installed = (reads.detect?.agents ?? []).filter((a) => a.installed).length;
 
-  const asks = members.filter((m) => m.role === "live" && (m.live === "ask" || m.live === "held"));
-  const atWork = members.filter((m) => m.role === "live" && !(m.live === "ask" || m.live === "held"));
+  // Betterment AG8: the fleet's order: Needs you (the oldest ask first),
+  // New (the newest first), Working, Quiet; Stopped folds below.
+  const ordered = fleetOrder(members);
+  const groups = fleetGroups(members);
+  const counts = fleetCounts(members);
+  const asks = ordered.filter((m) => fleetRank(m) === 0);
+  const fresh = ordered.filter((m) => fleetRank(m) === 1);
+  const working = ordered.filter((m) => fleetRank(m) === 2);
+  const quiet = ordered.filter((m) => fleetRank(m) === 3);
+  // #1352: no rows until the sessions read answers.
   const ready = loading ? [] : members.filter((m) => m.role === "ready");
   // Betterment AG6: an agent a restart stopped stands in its own section
   // with Resume (one press); the rest of today's ended agents fold.
@@ -453,6 +490,9 @@ export function ConductorWindow() {
     void resumeAll(targets).finally(() => setResuming(null));
   };
   const fixable = ready.filter((m) => m.detect && m.detect.installed && needsHooks(m.detect));
+  // Betterment AG8: "On this Mac" shows only when something is missing: an
+  // agent whose hooks are not in, or no agent installed at all.
+  const missing = fixable.length ? fixable : ready.some((m) => m.detect?.installed) ? [] : ready;
   const question = (m: ConductorMember) => sessions.find((row) => row.key === m.sessionKey)?.question ?? "";
   const waitIdOf = (m: ConductorMember) => {
     const raw = sessions.find((row) => row.key === m.sessionKey)?.raw ?? {};
@@ -460,12 +500,70 @@ export function ConductorWindow() {
     return session.wait_id ? String(session.wait_id) : null;
   };
   // ONE filled primary per window: the first ask's Answer, else the first
-  // agent that lacks hooks.
-  const leadAsk = asks[0]?.id ?? null;
-  const leadFix = leadAsk ? null : fixable[0]?.id ?? null;
-  // The agents on this Mac fold away while agents work and none needs a fix.
-  const coldFolded = coldOpen === null ? !(fixable.length > 0 || (!asks.length && !atWork.length)) : !coldOpen;
+  // agent that lacks hooks, else Start an agent.
+  // While Start an agent is open, its Start is the one primary.
+  const leadAsk = starting ? null : asks[0]?.id ?? null;
+  const leadFix = leadAsk || starting ? null : fixable[0]?.id ?? null;
+  const [cancelling, setCancelling] = useState<string | null>(null);
+  const cancelQueued = (m: ConductorMember) => {
+    setCancelling(m.id);
+    void cancelQueuedHand(m).finally(() => setCancelling(null));
+  };
   const select = (id: string) => setSelectedId((now) => (now === id ? null : id));
+
+  /** One agent that needs him: the whole job in its row. */
+  const askRow = (m: ConductorMember) => (
+    <AgentRowFace
+      key={m.id}
+      member={m}
+      question={question(m)}
+      waitId={waitIdOf(m)}
+      lead={m.id === leadAsk}
+      selected={m.id === selectedId}
+      onSelect={() => select(m.id)}
+      onTerminal={() => {
+        if (m.launchId) openAgentLane(m.launchId, { sessionKey: m.sessionKey, raw: true });
+        else openMember(m);
+      }}
+      onOpenAnswer={() => answerMember(m)}
+      onOpen={() => openMember(m)}
+    />
+  );
+  /** One agent that does not need him: New, Working or Quiet, one verb. */
+  const fleetRow = (m: ConductorMember) => (
+    <CoderRow
+      key={m.id}
+      member={m}
+      selected={m.id === selectedId}
+      onSelect={() => select(m.id)}
+      meta={
+        <>
+          <span>{titleOfAgent(m)}</span>
+          {!groups && m.facts.where ? <span>{String(m.facts.where)}</span> : null}
+          {m.when ? <span className="cw-mono">{agoWord(m.when)}</span> : null}
+        </>
+      }
+      verb={
+        m.live === "queued" ? (
+          // Betterment AG8 (AG5 follow-up): a queued hand can be cancelled.
+          <Button
+            dense
+            variant="ghost"
+            loading={cancelling === m.id}
+            disabled={cancelling !== null}
+            onClick={() => cancelQueued(m)}
+            data-testid="conductor-cancel-queued"
+          >
+            Cancel
+          </Button>
+        ) : (
+          <Button dense variant="ghost" onClick={() => openMember(m)} data-testid="conductor-open">
+            Open
+          </Button>
+        )
+      }
+    />
+  );
 
   return (
     <DeskWindowFrame
@@ -490,7 +588,7 @@ export function ConductorWindow() {
       <div ref={bodyRef} className="desk-pullout-body drawer-body" data-testid="conductor-window">
         <div className="drawer-scroll cw">
           <div className="cw-head">
-            <AppHead fact={headFact(head, members)} className="cw-apphead" data-testid="conductor-head">
+            <AppHead fact={fleetWords(counts) || headFact(head, members)} className="cw-apphead" data-testid="conductor-head">
               <StatusStrip
                 items={[
                   ...failed.map((f) => ({
@@ -500,13 +598,9 @@ export function ConductorWindow() {
                     value: `NOT READ${f.token ? ` · ${f.token}` : ""}`,
                     testId: "conductor-not-read",
                   })),
-                  // `2 AT WORK` is the fact; the ask is a lamp (it needs him).
-                  ...words.filter((w) => !w.endsWith(" AT WORK")).map((w) => ({
-                    key: w,
-                    lamp: w.endsWith(" ASK") ? ("ask" as const) : undefined,
-                    text: w,
-                  })),
-                  installed > 0 ? { key: "agents", text: `${installed} ON THIS MAC` } : null,
+                  // Betterment AG8: the fact counts what is there; the strip
+                  // keeps only the limit, when he is at it.
+                  ...words.filter((w) => / OF /.test(w)).map((w) => ({ key: w, text: w })),
                 ]}
               />
             </AppHead>
@@ -527,96 +621,97 @@ export function ConductorWindow() {
                 Resume all
               </Button>
             ) : null}
+            <Button
+              dense
+              variant={starting || leadAsk || leadFix || stopped.length >= 2 ? "secondary" : "primary"}
+              aria-expanded={starting}
+              onClick={() => setStarting((open) => !open)}
+              data-testid="conductor-start"
+            >
+              Start an agent
+            </Button>
           </div>
 
-          {loading ? <SurfaceState loading /> : null}
-          {!loading && !members.length && !failed.length ? <SurfaceState empty emptyLabel="No agent found" /> : null}
-
-          {asks.length ? (
-            <section className="cw-section" data-testid="conductor-asks" aria-label="Needs you">
-              <h3 className="cw-cap">NEEDS YOU</h3>
-              {asks.map((m) => (
-                <AgentRowFace
-                  key={m.id}
-                  member={m}
-                  question={question(m)}
-                  waitId={waitIdOf(m)}
-                  lead={m.id === leadAsk}
-                  selected={m.id === selectedId}
-                  onSelect={() => select(m.id)}
-                  onTerminal={() => {
-                    if (m.launchId) openAgentLane(m.launchId, { sessionKey: m.sessionKey, raw: true });
-                    else openMember(m);
-                  }}
-                  onOpenAnswer={() => answerMember(m)}
-                  onOpen={() => openMember(m)}
-                />
-              ))}
-            </section>
+          {starting ? (
+            <StartAgent
+              onCancel={() => setStarting(false)}
+              onStarted={(row) => {
+                setStarting(false);
+                if (row) useConductor.getState().openWindow(null, row);
+                void useConductor.getState().readFlights();
+              }}
+            />
           ) : null}
 
-          {atWork.length ? (
-            <section className="cw-section" data-testid="conductor-work" aria-label="At work">
-              <h3 className="cw-cap">AT WORK</h3>
+          {loading ? <SurfaceState loading /> : null}
+          {!loading && !ordered.length && !stopped.length && !ended.length && !failed.length && !starting ? (
+            <p className="cw-empty" data-testid="conductor-empty">An agent works on one item for you, in its own branch.</p>
+          ) : null}
+
+          {groups ? (
+            groups.map((group) => (
+              <section
+                key={group.project || "-"}
+                className="cw-section cw-project"
+                data-testid="conductor-project"
+                aria-label={group.project || "No project"}
+              >
+                <h3 className="cw-cap cw-project-cap">
+                  <span className="cw-project-name">{group.project || "No project"}</span>
+                  <span className="kit-pill" data-tone={RANK_TONE[group.worst]} data-dot="">{FLEET_WORD[group.worst]}</span>
+                </h3>
+                {group.members.filter((m) => fleetRank(m) === 0).map(askRow)}
+                {group.members.some((m) => fleetRank(m) > 0) ? (
+                  <ul className="cw-well">{group.members.filter((m) => fleetRank(m) > 0).map(fleetRow)}</ul>
+                ) : null}
+              </section>
+            ))
+          ) : (
+            <>
+              {asks.length ? (
+                <section className="cw-section" data-testid="conductor-asks" aria-label="Needs you">
+                  <h3 className="cw-cap">NEEDS YOU</h3>
+                  {asks.map(askRow)}
+                </section>
+              ) : null}
+              {fresh.length ? (
+                <section className="cw-section" data-testid="conductor-new" aria-label="New">
+                  <h3 className="cw-cap">NEW</h3>
+                  <ul className="cw-well">{fresh.map(fleetRow)}</ul>
+                </section>
+              ) : null}
+              {working.length ? (
+                <section className="cw-section" data-testid="conductor-work" aria-label="Working">
+                  <h3 className="cw-cap">WORKING</h3>
+                  <ul className="cw-well">{working.map(fleetRow)}</ul>
+                </section>
+              ) : null}
+              {quiet.length ? (
+                <section className="cw-section" data-testid="conductor-quiet" aria-label="Quiet">
+                  <h3 className="cw-cap">QUIET</h3>
+                  <ul className="cw-well">{quiet.map(fleetRow)}</ul>
+                </section>
+              ) : null}
+            </>
+          )}
+
+          {missing.length ? (
+            <section className="cw-section" data-testid="conductor-coders" aria-label="On this Mac">
+              <h3 className="cw-cap">ON THIS MAC</h3>
               <ul className="cw-well">
-                {atWork.map((m) => (
+                {missing.map((m) => (
                   <CoderRow
                     key={m.id}
                     member={m}
                     selected={m.id === selectedId}
                     onSelect={() => select(m.id)}
-                    meta={
-                      <>
-                        <span>{titleOfAgent(m)}</span>
-                        {m.facts.where ? <span>{String(m.facts.where)}</span> : null}
-                        {m.when ? <span className="cw-mono">{agoWord(m.when)}</span> : null}
-                      </>
-                    }
-                    verb={
-                      m.live === "queued" ? undefined : (
-                        <Button dense variant="ghost" onClick={() => openMember(m)} data-testid="conductor-open">
-                          Open
-                        </Button>
-                      )
-                    }
+                    meta={m.detect?.version ? <span className="cw-mono">{m.detect.version}</span> : null}
+                    verb={<ReadyVerb member={m} lead={m.id === leadFix} />}
                   />
                 ))}
               </ul>
+              <HooksLine member={selected?.role === "ready" ? selected : null} />
             </section>
-          ) : null}
-
-          {ready.length ? (
-            coldFolded ? (
-              <div className="cw-fold">
-                <Button dense variant="ghost" aria-expanded={false} onClick={() => setColdOpen(true)} data-testid="conductor-coders-fold">
-                  Agents on this Mac
-                </Button>
-              </div>
-            ) : (
-              <section className="cw-section" data-testid="conductor-coders" aria-label="Agents on this Mac">
-                <h3 className="cw-cap">
-                  ON THIS MAC
-                  {asks.length || atWork.length ? (
-                    <Button dense variant="ghost" aria-expanded onClick={() => setColdOpen(false)} className="cw-cap-verb">
-                      Hide
-                    </Button>
-                  ) : null}
-                </h3>
-                <ul className="cw-well">
-                  {ready.map((m) => (
-                    <CoderRow
-                      key={m.id}
-                      member={m}
-                      selected={m.id === selectedId}
-                      onSelect={() => select(m.id)}
-                      meta={m.detect?.version ? <span className="cw-mono">{m.detect.version}</span> : null}
-                      verb={<ReadyVerb member={m} lead={m.id === leadFix} />}
-                    />
-                  ))}
-                </ul>
-                <HooksLine member={selected?.role === "ready" ? selected : null} />
-              </section>
-            )
           ) : null}
 
           {stopped.length ? (
@@ -654,7 +749,7 @@ export function ConductorWindow() {
           ) : null}
 
           {ended.length ? (
-            <FoldGadget title="Ended today" token={String(ended.length)} className="cw-ended">
+            <FoldGadget title="Stopped today" token={String(ended.length)} className="cw-ended">
               <ul className="cw-well" data-testid="conductor-ended">
                 {ended.map((m) => (
                   <CoderRow
@@ -664,9 +759,17 @@ export function ConductorWindow() {
                     onSelect={() => select(m.id)}
                     meta={m.when ? <span className="cw-mono">{agoWord(m.when)}</span> : null}
                     verb={
-                      <Button dense variant="ghost" onClick={() => openMember(m)}>
-                        Open
-                      </Button>
+                      <>
+                        {HAND_AGAIN.has(String(m.flightState)) && m.origin ? (
+                          // Gaps: a new agent continues in the same worktree.
+                          <Button dense variant="secondary" onClick={() => handAgain(m)} data-testid="conductor-hand-again">
+                            Hand again
+                          </Button>
+                        ) : null}
+                        <Button dense variant="ghost" onClick={() => openMember(m)}>
+                          Open
+                        </Button>
+                      </>
                     }
                   />
                 ))}

@@ -5158,7 +5158,6 @@ CREATE TABLE IF NOT EXISTS note_outcomes (
     kind TEXT NOT NULL,
     text TEXT NOT NULL,
     owner TEXT NOT NULL DEFAULT '',
-    person_id TEXT NOT NULL DEFAULT '',
     due TEXT NOT NULL DEFAULT '',
     rationale TEXT NOT NULL DEFAULT '',
     state TEXT NOT NULL DEFAULT 'proposed',

@@ -3460,6 +3460,46 @@
         "summary": "Api Agent Hand Preview"
       }
     },
+    "/api/agent/hand/queue/{queue_id}": {
+      "delete": {
+        "description": "Betterment AG8 (AG5 follow-up): Cancel a hand that waits for a free\nagent. It leaves the queue and never starts; nothing else changes.\n404 when the queue holds no such hand (it started, or was cancelled).",
+        "operationId": "api_agent_hand_queue_cancel_api_agent_hand_queue__queue_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "queue_id",
+            "required": true,
+            "schema": {
+              "title": "Queue Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Hand Queue Cancel Api Agent Hand Queue  Queue Id  Delete"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Hand Queue Cancel"
+      }
+    },
     "/api/agent/launches/{launch_id}": {
       "get": {
         "description": "One launch's delivery, read from the launch ledger (no driver, no\nreconcile): the launch sheet's receipt follows it until the brief is\nsent, held or refused.",
@@ -3498,6 +3538,46 @@
           }
         },
         "summary": "Api Agent Launch"
+      }
+    },
+    "/api/agent/launches/{launch_id}/answer": {
+      "post": {
+        "description": "Betterment AG7 gaps: answer an agent whose hooks are off, from its\nrow: ``{since, keys: [\"Enter\"|\"Escape\"|\"1\"..\"9\"]}`` or ``{since,\ntext}``. ``since`` names the prompt he saw; the pane is read again\nbefore the keystroke. Owner only. 409 with its code on a refusal.",
+        "operationId": "api_agent_launch_answer_api_agent_launches__launch_id__answer_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "launch_id",
+            "required": true,
+            "schema": {
+              "title": "Launch Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Agent Launch Answer Api Agent Launches  Launch Id  Answer Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Agent Launch Answer"
       }
     },
     "/api/agent/launches/{launch_id}/deliver": {
@@ -17151,6 +17231,46 @@
           }
         },
         "summary": "Api Get Meeting Plugin Runs"
+      }
+    },
+    "/api/meetings/{meeting_id}/prepare": {
+      "post": {
+        "description": "Betterment capture C5b: Prepare\u2026 and Write again (one draft).",
+        "operationId": "api_prepare_meeting_result_api_meetings__meeting_id__prepare_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meeting_id",
+            "required": true,
+            "schema": {
+              "title": "Meeting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Prepare Meeting Result Api Meetings  Meeting Id  Prepare Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Prepare Meeting Result"
       }
     },
     "/api/meetings/{meeting_id}/prepared": {

@@ -11,7 +11,6 @@ export interface NoteOutcome {
   kind: "task" | "decision";
   text: string;
   owner: string;
-  person_id: string;
   due: string;
   rationale: string;
   state: "proposed" | "confirmed";

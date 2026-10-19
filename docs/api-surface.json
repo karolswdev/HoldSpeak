@@ -409,9 +409,29 @@
       ]
     },
     {
+      "path": "/api/agent/hand/queue/{queue_id}",
+      "methods": [
+        "DELETE"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/agent/launches/{launch_id}",
       "methods": [
         "GET"
+      ],
+      "module": "web.routes.agent_hand",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/agent/launches/{launch_id}/answer",
+      "methods": [
+        "POST"
       ],
       "module": "web.routes.agent_hand",
       "consumers": [
@@ -3918,6 +3938,16 @@
       ],
       "module": "web.routes.meetings.insights",
       "consumers": []
+    },
+    {
+      "path": "/api/meetings/{meeting_id}/prepare",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.meetings.intel",
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/meetings/{meeting_id}/prepared",

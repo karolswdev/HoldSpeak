@@ -172,3 +172,6 @@
   flex-wrap: wrap;
   gap: 4px 10px;
 }
+
+/* Betterment AG9: an agent's ask is the Agents row, in the list. */
+.desk-next .needs-agent-row { list-style: none; margin: 0 0 6px; padding: 0; min-width: 0; }

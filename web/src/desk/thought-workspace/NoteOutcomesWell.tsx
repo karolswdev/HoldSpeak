@@ -90,7 +90,6 @@ export function NoteOutcomesWell({ outcomes }: { outcomes: NoteOutcomesState }) 
       tone: made ? "ok" : "ask",
       owner: row.owner,
       due: row.due,
-      personRelationshipId: row.person_id || null,
       verbs: made ? null : (
         <Button dense variant="secondary" loading={confirming === row.id} disabled={Boolean(confirming)}
           aria-label={`Confirm: ${row.text}`} onClick={() => void confirm(row)}>

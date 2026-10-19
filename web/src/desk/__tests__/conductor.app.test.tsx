@@ -85,8 +85,8 @@ describe("the Conductor on the C4 seed", () => {
       expect(el!.textContent ?? "").toContain(lamp);
     }
     const head = screen.getByTestId("conductor-head");
-    expect(head.querySelector(".kit-disp")?.textContent).toBe("2 at work");
-    expect(head.textContent).toContain("1 ASK");
+    // Betterment AG8: the fact counts only what is there.
+    expect(head.querySelector(".kit-disp")?.textContent).toBe("1 needs you · 2 working");
     // The cap is the hub's count (no tmux session runs): no `N OF M`.
     expect(head.textContent).not.toContain(" OF ");
     expect(head.textContent).not.toContain("NOT READ");

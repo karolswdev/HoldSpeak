@@ -24,6 +24,8 @@ import type { ConductorMember } from "../conductor/members";
 import { useConductor } from "../conductor/store";
 import { questionChoices, type AgentChoice } from "./choices";
 import type { DeskAnswer, DeskAnswerSource } from "../agentFlights";
+// The row is drawn in Agents and in Needs you (Betterment AG9): its style travels with it.
+import "../conductor/conductor.css";
 
 /** Betterment AG3: where the line the desk used comes from, in his words. */
 const SOURCE_WORD: Record<string, string> = {
@@ -113,9 +115,11 @@ export function useHeldCall(member: ConductorMember): {
  * parse are parked in desk/_parked/agents/paneParse.ts: the hub's screen
  * rules read the command and the choices (member.screen). */
 
-/** `Asked 6 min ago`; `Asks` with no age. */
-function askedWord(when: string | undefined): string {
+/** `Asked just now` (under a minute), `Asked 6 min ago`; `Asks` with no
+ *  age. Betterment AG8: "1 min ago" ten seconds after the ask was a lie. */
+export function askedWord(when: string | undefined, whenSort?: number, now: number = Date.now()): string {
   if (!when) return "Asks";
+  if (whenSort != null && now - whenSort < 60_000) return "Asked just now";
   if (/^\d+ (MIN|H)$/.test(when)) return `Asked ${when.toLowerCase()} ago`;
   return `Asked ${when.charAt(0)}${when.slice(1).toLowerCase()}`;
 }
@@ -178,6 +182,10 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
   const drafting = !held && !mine && member.deskAnswer?.state === "drafting";
   const agentName = AGENT_NAME[member.agent as AgentId] ?? member.agent;
   const key = member.sessionKey;
+  // An agent whose hooks are off: its row answers its screen prompt.
+  const screenOnly = !key && Boolean(
+    member.launchId && member.screen?.since && (member.screen.state === "approve" || member.screen.state === "asks"),
+  );
 
   const after = async (word: string) => {
     setSent(word);
@@ -186,15 +194,27 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
   };
 
   const press = async (path: "steer" | "keys", body: Record<string, unknown>, word: string) => {
-    if (!key || pending.current) return;
+    if ((!key && !screenOnly) || pending.current) return;
     pending.current = true;
     setBusy(true);
     setFailure(null);
     try {
-      await apiFetch(`/api/coders/${encodeURIComponent(key)}/${path}`, {
-        method: "POST",
-        json: { ...body, kind: "answer", wait_id: currentWait },
-      });
+      if (key) {
+        await apiFetch(`/api/coders/${encodeURIComponent(key)}/${path}`, {
+          method: "POST",
+          json: { ...body, kind: "answer", wait_id: currentWait },
+        });
+      } else {
+        // An agent with no hook: his press goes to its screen prompt, named
+        // by when that prompt began (the hub reads the pane again first).
+        const keys = Array.isArray(body.keys)
+          ? (body.keys as Array<string | { literal: string }>).map((k) => (typeof k === "string" ? k : k.literal))
+          : undefined;
+        await apiFetch(`/api/agent/launches/${encodeURIComponent(String(member.launchId))}/answer`, {
+          method: "POST",
+          json: { since: member.screen?.since, ...(keys ? { keys } : { text: body.text }) },
+        });
+      }
       await after(word);
       if (path === "steer") setText("");
     } catch (error) {
@@ -262,7 +282,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
   };
 
   const decided = Boolean(call && call.id === decidedId);
-  const canKeys = Boolean(key && currentWait);
+  const canKeys = Boolean(key && currentWait) || screenOnly;
 
   return (
     <article
@@ -274,7 +294,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
     >
       <header className="cw-ask-bar">
         <span className="cw-ask-label">{held ? "Wants to run" : "Asks you"}</span>
-        <span className="cw-ask-age">{askedWord(member.when)}</span>
+        <span className="cw-ask-age">{askedWord(member.when, member.whenSort)}</span>
       </header>
       <div className="cw-ask-body">
         <span className="cw-plate-sprite" aria-hidden="true">

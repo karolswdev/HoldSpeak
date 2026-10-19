@@ -79,11 +79,12 @@ def test_find_the_tasks_runs_the_meetings_extraction_and_matches_owners(desk) ->
     assert prompt["response_format"]["json_schema"]["name"] == "meeting_intel"
     assert "Jun is nervous about the cutover weekend" in prompt["user_prompt"]
 
-    tasks = [(r["text"], r["owner"], r["person_id"]) for r in found["rows"] if r["kind"] == "task"]
+    tasks = [(r["text"], r["owner"]) for r in found["rows"] if r["kind"] == "task"]
     assert tasks == [
-        ("Pair Jun with Mira on call for the cutover weekend", "Me", ""),
-        ("Write the on-call handbook", "Theo Park", desk.theo["id"]),
+        ("Pair Jun with Mira on call for the cutover weekend", "Me"),
+        ("Write the on-call handbook", "Theo Park"),
     ]
+    assert "person_id" not in found["rows"][0]  # the 138 law: names only in plaintext
     decisions = [r["text"] for r in found["rows"] if r["kind"] == "decision"]
     # A task the reply also named as a decision is one row: the task.
     assert decisions == ["Theo owns the on-call handbook"]

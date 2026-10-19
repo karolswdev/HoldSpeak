@@ -611,7 +611,7 @@ describe("Since last time (betterment/capture C6)", () => {
   });
 });
 
-describe("the meeting prepares its Results (betterment/capture C5)", () => {
+describe("the meeting prepares its Results (betterment/capture C5, C5b)", () => {
   /* The architecture review as a real hub served it after the LAN engine
    * wrote its summary and its drafts (fixtures/meetings-hub/prepared.json,
    * recorded by tests/integration/test_meeting_plugins_engines.py). */
@@ -619,24 +619,24 @@ describe("the meeting prepares its Results (betterment/capture C5)", () => {
   const PREPARED = "/api/meetings/c5-review/prepared";
   const render5 = () => render(<Shell><MeetingRecord meetingId="c5-review" onClose={() => undefined} /></Shell>);
 
-  it("Prepared · 3 under Who owes what: the follow-up, the ADR draft and the update; a row unfolds its draft", async () => {
+  it("Prepared · 3 under Who owes what: one line each, title and kind, Send first; the title reads the draft", async () => {
     at(fixture);
     hub(fixture);
     render5();
     const section = await screen.findByTestId("meeting-prepared");
-    expect(section.textContent).toMatch(/Prepared/);
     const commitments = screen.getByTestId("meeting-commitments");
     expect(commitments.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const adr = within(section).getByTestId("meeting-prepared-adr");
     expect(adr.textContent).toContain("ADR: ");
     expect(adr.textContent).toContain("ADR draft");
+    const verbs = within(adr).getAllByRole("button").map((b) => (b.textContent ?? "").trim());
+    expect(verbs).toEqual(["Send…", "Open as note", "Copy"]);
     expect(within(section).getByTestId("meeting-prepared-followup").textContent).toContain("Follow-up");
     expect(within(section).getByTestId("meeting-prepared-stakeholder_update").textContent).toContain("Update for stakeholders");
     expect(section.textContent).not.toMatch(/Drafter|ART 0|artifact/i);
     expect(screen.queryByTestId("meeting-prepared-draft")).toBeNull();
-    const read = within(adr.closest("li") as HTMLElement).getByRole("button", { name: "Read" });
-    expect(read.getAttribute("aria-expanded")).toBe("false");
-    fireEvent.click(read);
+    expect(adr.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(adr);
     const draft = await screen.findByTestId("meeting-prepared-draft");
     expect(draft.textContent).toMatch(/idempoten/i);
     expect(draft.textContent).not.toContain("###");
@@ -658,24 +658,26 @@ describe("the meeting prepares its Results (betterment/capture C5)", () => {
     expect(draft.closest("li")?.querySelector("[data-testid='meeting-prepared-adr']")).toBeTruthy();
   });
 
-  it("Open as note makes a note of the draft; Send opens the Send well; nothing is sent without a press", async () => {
+  it("Open as note makes a note of the draft; Send… opens the Send well under the line; nothing is sent", async () => {
     at(fixture);
     const calls = hub(fixture);
     render5();
-    const adr = (await screen.findByTestId("meeting-prepared-adr")).closest("li") as HTMLElement;
+    const adr = await screen.findByTestId("meeting-prepared-adr");
     fireEvent.click(within(adr).getByRole("button", { name: "Open as note" }));
     await waitFor(() => expect(calls.some((c) => c.path === "/api/notes" && c.init?.method === "POST")).toBe(true));
     const note = calls.find((c) => c.path === "/api/notes")!.init!.json as { title: string; body_markdown: string };
     expect(note.title).toMatch(/^ADR: /);
     expect(note.body_markdown).toMatch(/idempoten/i);
     expect(note.body_markdown).not.toContain("###");
-    fireEvent.click(within(adr).getByRole("button", { name: "Send" }));
-    await waitFor(() => expect(within(adr).getByRole("button", { name: "Hide" })).toBeTruthy());
+    fireEvent.click(within(adr).getByRole("button", { name: "Send…" }));
+    const well = await screen.findByTestId("meeting-prepared-send");
+    expect(well.closest("li")?.querySelector("[data-testid='meeting-prepared-adr']")).toBeTruthy();
+    expect(within(adr).getByRole("button", { name: "Hide" })).toBeTruthy();
     const posts = calls.filter((c) => c.init?.method === "POST").map((c) => c.path);
     expect(posts.filter((p) => /send|channel|deliver/i.test(p))).toEqual([]);
   });
 
-  it("while the summary is written, each draft says Writing… in place", async () => {
+  it("while a draft is written it says Writing… in place", async () => {
     at(fixture);
     hub(fixture, { [PREPARED]: fixture[`${PREPARED}#writing`] });
     render5();
@@ -684,14 +686,35 @@ describe("the meeting prepares its Results (betterment/capture C5)", () => {
     expect(within(adr).queryByRole("button", { name: "Open as note" })).toBeNull();
   });
 
-  it("a draft that failed says why, in words", async () => {
+  it("a failed draft says why, and Write again asks the hub for that one draft on the route he was shown", async () => {
     at(fixture);
-    hub(fixture, { [PREPARED]: preparedFailed.prepared });
+    const calls = hub(fixture, { [PREPARED]: preparedFailed.prepared });
     render5();
-    const section = await screen.findByTestId("meeting-prepared");
-    expect(within(section).getByTestId("meeting-prepared-failed").textContent).toBe("The engine did not finish this draft.");
-    const update = screen.getByTestId("meeting-prepared-stakeholder_update").closest("li") as HTMLElement;
-    expect(within(update).getByRole("button", { name: "Open as note" })).toBeTruthy();
+    const adr = await screen.findByTestId("meeting-prepared-adr");
+    const row = adr.closest("li") as HTMLElement;
+    expect(within(row).getByTestId("meeting-prepared-failed").textContent).toBe("The engine did not finish this draft.");
+    fireEvent.click(within(adr).getByRole("button", { name: "Write again" }));
+    await waitFor(() => expect(calls.some((c) => c.path === "/api/meetings/c5-review/prepare")).toBe(true));
+    const body = calls.find((c) => c.path === "/api/meetings/c5-review/prepare")!.init!.json as Record<string, unknown>;
+    expect(body.plugin_id).toBe("adr_drafter");
+    const detail = fixture["/api/meetings/c5-review?include_parked=true"] as { planned_route?: { selection_hash?: string } };
+    expect(body.expected_selection_hash).toBe(detail.planned_route?.selection_hash);
+  });
+
+  it("Prepare… lists the kinds not prepared yet and writes the one he picks", async () => {
+    at(fixture);
+    const calls = hub(fixture);
+    render5();
+    const prepareButton = await screen.findByRole("button", { name: "Prepare…" });
+    fireEvent.click(prepareButton);
+    const menu = await screen.findByRole("menu");
+    const labels = within(menu).getAllByRole("menuitem").map((m) => (m.textContent ?? "").trim());
+    expect(labels).toContain("Risks");
+    expect(labels).not.toContain("ADR draft");
+    fireEvent.click(within(menu).getByRole("menuitem", { name: "Risks" }));
+    await waitFor(() => expect(calls.some((c) => c.path === "/api/meetings/c5-review/prepare")).toBe(true));
+    expect((calls.find((c) => c.path === "/api/meetings/c5-review/prepare")!.init!.json as Record<string, unknown>).plugin_id)
+      .toBe("risk_heatmap");
   });
 
   it("the meeting window has one wing, Outcomes; no Artifacts wing", async () => {

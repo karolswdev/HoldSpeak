@@ -819,3 +819,12 @@
   color: var(--wb-muted);
   overflow-wrap: anywhere;
 }
+/* Betterment AG9: the Agents line opens Agents. */
+.desk-next .today-strip .today-agents {
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--wb-ember-ink);
+  cursor: pointer;
+}
