@@ -17,6 +17,7 @@ import { useAgentFlights } from "../agentFlights";
 import { projectOpenHere, useNeedsYou } from "../needsYou";
 import { Button } from "../../components/signal/Signal";
 import { Talk } from "../components/Talk";
+import { openNewThought } from "../newThought";
 import { useDesk } from "../store";
 import { WorkMenu } from "../components/DeskMenu";
 import { objectMenuEntries } from "../objectMenu";
@@ -240,7 +241,7 @@ export function Screen() {
         // Capture window's own control, at the screen's foot-left.
         <span className="desk-screen-talk arrival-capture-talk" data-testid="desk-screen-talk">
           {/* Betterment C8: the one Talk rule (desk/components/Talk.tsx). */}
-          <Talk onText={() => undefined} label="Talk" setupTestId="desk-screen-talk-setup" />
+          <Talk onText={(text) => void openNewThought(text)} label="Talk" setupTestId="desk-screen-talk-setup" />
         </span>
       )}
       {bare ? (

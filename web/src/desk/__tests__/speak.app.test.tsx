@@ -709,6 +709,29 @@ describe("C8: Speak in plain words, one Talk rule", () => {
     }
   });
 
+  it("the open mic receipt uses plain words", async () => {
+    const hub = replaySpeech();
+    useBuilderTools.getState().setOn(true);
+    try {
+      mountSpeak();
+      await screen.findByLabelText("Utterance");
+      hub.setUp();
+      act(() => { window.dispatchEvent(new Event(SPEECH_SETUP_EVENT)); });
+      const open = await screen.findByRole("button", { name: "Open mic" });
+      await waitFor(() => expect(open).not.toBeDisabled());
+
+      await userEvent.click(open);
+      await waitFor(() => expect(footerText()).toContain("Listening"));
+      expect(footerText()).not.toMatch(/OPEN MIC/i);
+
+      await userEvent.click(open);
+      await waitFor(() => expect(footerText()).toContain("Stopped listening"));
+      expect(footerText()).not.toMatch(/OPEN MIC/i);
+    } finally {
+      useBuilderTools.getState().setOn(false);
+    }
+  });
+
   it("the menu bar says Listening · Stop, never MIC HELD, and Stop asks the Talk to stop", async () => {
     const stops = vi.fn();
     window.addEventListener(TALK_STOP_EVENT, stops);

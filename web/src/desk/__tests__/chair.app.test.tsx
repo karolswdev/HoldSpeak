@@ -1,9 +1,7 @@
 // The Chair app, The week window (HS-175-02 and its counsel C2, C5, C8, C9).
 // Betterment daily D5: The week and Brief windows retired into Today; their
 // cases are parked in __tests__/_parked/chairWeekBrief.d5.app.test.tsx. What
-// stays: the typed door rows, the NO CALENDAR offer, the NEXT clock. Capture C7
-// parked Schedule (__tests__/_parked/chairSchedule.c7.app.test.tsx); Coming up
-// replaces it.
+// stays: the typed door rows, the NO CALENDAR offer, the NEXT clock, Coming up.
 //
 // The test diet (2026-10-11) moves the arrival glass rig here. The real
 // ChairHome renders with its real desk store; only `apiFetch` is mocked, and
@@ -20,11 +18,12 @@
 // a fixed Wednesday and no week edge can move a row.
 process.env.TZ = "America/Denver";
 
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "../../lib/api";
 import { ChairHome } from "../chair/ChairHome";
 import { openChairWindows } from "../chair/__tests__/fixtures/openChairWindows";
+import { claimThoughtKeys } from "../thoughtKeys";
 import { nextWord } from "../needs/needsFace";
 import WEEK_STRIP from "./wire/door.week-strip.wire.json";
 import { unfinishedThoughts } from "../thoughts";
@@ -41,7 +40,11 @@ vi.mock("../../runtime/RuntimeBus", () => ({
 }));
 // The THOUGHTS block below swaps in the hub's recorded answer; every other test reads none.
 vi.mock("../thoughts", () => ({ unfinishedThoughts: vi.fn(async () => ({ items: [] })) }));
-vi.mock("../components/MicButton", () => ({ MicButton: () => null }));
+vi.mock("../components/MicButton", () => ({
+  MicButton: ({ label = "Speak", onText }: { label?: string; onText: (text: string) => void }) => {
+    return <button data-testid={`mock-mic-${label}`} onClick={() => onText("Words from Talk")}>{label}</button>;
+  },
+}));
 
 // Wednesday 2026-10-07 10:00 in Denver (16:00 UTC).
 const NOW = new Date("2026-10-07T16:00:00Z");
@@ -211,18 +214,21 @@ describe("The week: the viewer's local clock", () => {
 import { recordedGet } from "../../test/recordedHub";
 import BRIEF from "./fixtures/chair-brief/brief.recorded.json";
 
-// ── Capture C7: Schedule is replaced by the next two Coming-up rows ──────
-// The hub's own answers (tests/unit/test_desk_chair.py::
-// test_coming_up_arms_cancels_and_names_a_failed_fire, at its real clock):
-// a fire that raised, then the calendar; the arm and the cancel answers.
+// ── Capture C7: Coming up replaces the old Schedule rail ─────────────────
+// The hub's own answers (tests/unit/test_desk_chair.py:
+// test_coming_up_arms_cancels_and_names_a_failed_fire) cover the same
+// failed-fire reason and armed follow-up at the service boundary.
 import { useDesk } from "../store";
 import COMING_UP from "./fixtures/coming-up/coming-up.json";
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
-const hhmm = (iso: string) => { const d = new Date(iso); return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+const hhmm = (iso: string) => {
+  const d = new Date(iso);
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+};
 
 describe("Capture: Coming up in place of Schedule", () => {
-  it("shows the next two rows (a failed fire with Record now, then Record when it starts); arming says Records at HH:MM", async () => {
+  it("shows a failed fire with Record now and an armed meeting with its cancel action", async () => {
     vi.setSystemTime(new Date(COMING_UP._now));
     let phase: "before" | "armed" = "before";
     const posts: string[] = [];
@@ -230,16 +236,22 @@ describe("Capture: Coming up in place of Schedule", () => {
     hub(COMING_UP["GET /api/door (before)"] as Json, (path, init) => {
       if (init?.method === "POST") {
         posts.push(path);
-        if (path === "/api/scheduled-recordings") { phase = "armed"; return structuredClone(COMING_UP["POST /api/scheduled-recordings"]); }
+        if (path === "/api/scheduled-recordings") {
+          phase = "armed";
+          return structuredClone(COMING_UP["POST /api/scheduled-recordings"]);
+        }
       }
-      if (path === "/api/door") return structuredClone(COMING_UP[phase === "armed" ? "GET /api/door (armed)" : "GET /api/door (before)"]);
-      if (path === "/api/scheduled-recordings") return structuredClone(COMING_UP["GET /api/scheduled-recordings (before)"]);
+      if (path === "/api/door") {
+        return structuredClone(COMING_UP[phase === "armed" ? "GET /api/door (armed)" : "GET /api/door (before)"]);
+      }
+      if (path === "/api/scheduled-recordings") {
+        return structuredClone(COMING_UP["GET /api/scheduled-recordings (before)"]);
+      }
       return undefined;
     });
     render(<ChairHome />);
     await waitFor(() => expect(screen.getByTestId("arrival-coming-up").getAttribute("aria-busy")).toBeNull());
     const list = screen.getByTestId("arrival-coming-up");
-    expect(screen.queryByTestId("arrival-schedule")).toBeNull();
     await waitFor(() => expect(within(list).getAllByRole("listitem")).toHaveLength(2));
     const [failed, next] = within(list).getAllByRole("listitem");
     const sync = (COMING_UP["GET /api/scheduled-recordings (before)"] as Json).schedules
@@ -284,6 +296,15 @@ function captureHub(posts: Array<[string, any]>) {
   });
 }
 
+function readySpeechWire(): Json {
+  const ready = structuredClone(LOCAL_AI_WIRE.wire) as Json;
+  ready.files = (ready.files as Json[]).map((file) =>
+    file.key === "whisper" ? { ...file, on_device: true } : file,
+  );
+  ready.speech = { ...ready.speech, ready: true, state: "on_device" };
+  return ready;
+}
+
 describe("C8: Capture — three large verbs, the one Talk rule, New note on the first character", () => {
   it("Talk, New note, Record from the top; no `Write a thought`, no `Record meeting`", async () => {
     captureHub([]);
@@ -312,6 +333,48 @@ describe("C8: Capture — three large verbs, the one Talk rule, New note on the 
     for (const verb of verbs) expect(verb.textContent?.trim()).toMatch(/^Set up speech · 144 MB$/);
     // Pressing Talk asks nothing of the hub: setup waits for its own press.
     expect(wire.paths.filter(([, init]) => (init as any)?.method === "POST")).toEqual([]);
+  });
+
+  async function spokenWordsReachNote(surface: "capture" | "floor") {
+    const posts: Array<[string, any]> = [];
+    hub(weekStripDoor(), (path, init) => {
+      if (init?.method && init.method !== "GET") posts.push([path, init]);
+      if (path === "/api/setup/local-ai") return readySpeechWire();
+      if (path === "/api/notes" && init?.method === "POST") return structuredClone(NOTE_CREATED.wire);
+      if (path === "/api/thoughts/open-note" && init?.method === "POST") return structuredClone(ONE_NOTE.open);
+      return undefined;
+    });
+    useDesk.setState({ pullouts: [], items: { note: [] } } as never);
+    let received = "";
+    const releaseKeys = claimThoughtKeys(String(NOTE_CREATED.wire.note.id), (text) => {
+      received = text;
+    });
+    render(<ChairHome />);
+    try {
+      const host = surface === "capture"
+        ? within(await screen.findByTestId("arrival-capture-bar"))
+        : within(await screen.findByTestId("desk-screen-talk"));
+      await act(async () => {
+        fireEvent.click(await host.findByTestId("mock-mic-Talk"));
+      });
+      await waitFor(() => expect(received).toBe("Words from Talk"));
+      expect(posts.map(([path]) => path)).toContain("/api/notes");
+      expect(posts.find(([path]) => path === "/api/notes")?.[1].json).toEqual({
+        title: "Thought",
+        body_markdown: "",
+        tags: [],
+      });
+    } finally {
+      releaseKeys();
+    }
+  }
+
+  it("spoken Capture words reach the New note editor handoff", async () => {
+    await spokenWordsReachNote("capture");
+  });
+
+  it("spoken floor Talk words reach the New note editor handoff", async () => {
+    await spokenWordsReachNote("floor");
   });
 
   it("New note: a press with no typing leaves no record; the first character makes it and opens it", async () => {

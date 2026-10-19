@@ -20,7 +20,6 @@ import {
   MIC_PHASE_FACT,
   MIC_PHASE_LIVE,
   AIM_OPTIONS,
-  AIM_FACT,
   refusalLabel,
 } from "./shared";
 import { type MicState } from "../../../desk/surface/controls/MicButton";

@@ -30,7 +30,6 @@ import { openMicDrop, openMicListen } from "../../../lib/openMic";
 import { presentValue } from "../../../desk/surface/format";
 import {
   AIM_KEY,
-  AIM_FACT,
   CORRECTION_FIELDS,
   teachReceiptFor,
   truncateSpan,
@@ -39,6 +38,11 @@ import {
   refusalCode,
   newDeliveryId,
 } from "./shared";
+
+const AIM_RECEIPT_LABEL: Record<string, string> = {
+  focused: "the app in front",
+  agent: "an agent",
+};
 
 export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => void) {
   const {
@@ -241,7 +245,7 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
         }),
       );
       setPhase("idle");
-      announce("REHEARSED · NOT DELIVERED");
+      announce("Preview ready · not sent");
       localStorage.setItem("holdspeak.projectRootOverride", projectRoot);
     } catch (reason) {
       const category = dictationFailure(reason);
@@ -320,7 +324,7 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
       const took = Math.round(performance.now() - since);
       setLandedMs(took);
       setPhase("landed");
-      announce(`LANDED ${took} MS -> ${AIM_FACT[aim]}`);
+      announce(`Sent to ${AIM_RECEIPT_LABEL[aim] ?? "the app in front"} · ${took} ms`);
     } catch (reason) {
       const code = refusalCode(reason);
       if (code) {
@@ -373,7 +377,7 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
     if (openMic) {
       openMicDrop();
       setOpenMic(false);
-      announce("OPEN MIC CLOSED");
+      announce("Stopped listening");
       return;
     }
     try {
@@ -404,11 +408,11 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
           setError(DICTATION_FAILURES[category].message);
           setPhase("refused");
           setRefusal(category);
-          announce("OPEN MIC CLOSED. CLICK TO SPEAK AGAIN", "warn");
+          announce("Stopped listening · Press Talk to start again", "warn");
         },
       });
       setOpenMic(true);
-      announce("OPEN MIC LISTENING");
+      announce("Listening");
     } catch (reason) {
       setOpenMic(false);
       // A floor refusal names its owner ("FLOOR HELD MEETING"); anything

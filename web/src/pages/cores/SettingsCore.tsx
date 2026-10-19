@@ -50,7 +50,7 @@ import {
 import { useWindowTitle } from "../../desk/surface/title";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressFor, hostPlace } from "../../desk/surface/egress";
-import { openSurface } from "../../desk/shell";
+import { openSurface, openSurfaceOr } from "../../desk/shell";
 import { useDesk } from "../../desk/store";
 import { announceTaskReturn } from "../../desk/returnToTask";
 import { HotkeyCapture } from "./settingsBespoke";
@@ -2233,20 +2233,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
         const lastRunReceipt = lastRunAt
           ? `LAST RAN ${wireClock(lastRunAt)}${lastRunS != null ? " · " + lastRunS + " S" : ""}`
           : null;
-        const autoRecordValue = String(val(["meeting", "auto_record"]) ?? "off");
-        const autoRecordControls = <span className="prefs-inline-controls">
-          <CycleGadget label="Auto-record mode" value={autoRecordValue} options={[
-            { value: "off", label: "Off" },
-            { value: "room_linked", label: "Room meetings" },
-            { value: "all_calendar", label: "All calendar meetings" },
-          ]} onChange={(next) => update(["meeting", "auto_record"], next)} />
-          {autoRecordValue !== "off" ? (
-            <span className="gadget-fact">
-              {Number(val(["meeting", "auto_record_lead_minutes"]) ?? calSources?.auto_record_lead_minutes ?? 5)} MIN BEFORE
-            </span>
-          ) : null}
-          {autoRecordValue === "room_linked" && calSources?.matched_this_week ? <span className="gadget-fact" data-testid="matched-this-week">{countToken(calSources.matched_this_week, "MATCHED THIS WEEK")}</span> : null}
-        </span>;
+        const autoRecordLink = <Button
+          variant="ghost"
+          dense
+          data-testid="settings-auto-record-link"
+          onClick={() => openSurfaceOr("review-meetings", "/history", "record")}
+        >Meetings › Record</Button>;
         return (
           <>
             <SurfaceColumns variant="preferences" main={<>
@@ -2280,7 +2272,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                     {String(val(["meeting", "system_audio_device"]) || "Auto")}
                   </span>
                 </GadgetRow>
-                <div data-testid="settings-auto-record"><GadgetRow label="Auto-record">{autoRecordControls}</GadgetRow></div>
+                <div data-testid="settings-auto-record"><GadgetRow label="Auto-record">{autoRecordLink}</GadgetRow></div>
                 <FoldGadget title="Audio devices">
                   <GadgetRow wide label="Mic device" fact="Custom name" controlWidth="full">
                     <StringGadget

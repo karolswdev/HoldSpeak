@@ -339,6 +339,7 @@ class ScheduledRecordingConductor:
                     sched.id, "missed",
                     last_outcome="missed_interrupted_arming",
                     last_receipt_id=receipt_id,
+                    last_fired_at=sched.armed_at or now,
                     armed_at=None,
                 )
                 broadcast("scheduled_recording.missed", {
@@ -366,6 +367,7 @@ class ScheduledRecordingConductor:
                         sched.id, "missed",
                         last_outcome="missed",
                         last_receipt_id=receipt_id,
+                        last_fired_at=sched.next_fire_at,
                     )
                     broadcast("scheduled_recording.missed", {
                         "schedule_id": sched.id, "title": sched.title,
@@ -764,6 +766,7 @@ class ScheduledRecordingConductor:
                 schedule_id, "refused",
                 last_outcome="start_failed",
                 last_receipt_id=error_receipt,
+                last_fired_at=self._clock(),
                 deadline_at=None,
             )
             broadcast("scheduled_recording.refused", {

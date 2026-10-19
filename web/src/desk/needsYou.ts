@@ -182,6 +182,8 @@ export interface NeedsYouResult {
 export interface NeedsYouArming {
   scheduleId: string;
   title: string;
+  armedAt?: string | null;
+  didNotRecord?: { at: string | null; reason: string } | null;
 }
 
 /** Pure membership dependencies. The default is the production attention
@@ -881,7 +883,17 @@ export function readNeedsYouAnswer(answer: NeedsYouAnswer | null | undefined): N
   // arms. The hub counts the same (`needs_you_membership.compose`).
   const arming = (Array.isArray(value.arming) ? value.arming : [])
     .filter((row) => row && row.scheduleId)
-    .map((row) => ({ scheduleId: String(row.scheduleId), title: String(row.title ?? "") }));
+    .map((row) => ({
+      scheduleId: String(row.scheduleId),
+      title: String(row.title ?? ""),
+      armedAt: row.armedAt == null ? null : String(row.armedAt),
+      didNotRecord: row.didNotRecord && typeof row.didNotRecord === "object"
+        ? {
+          at: row.didNotRecord.at == null ? null : String(row.didNotRecord.at),
+          reason: String(row.didNotRecord.reason ?? "Something went wrong"),
+        }
+        : null,
+    }));
   // PHILO-15 B60: a source held by quiet hours is listed, never counted.
   // PHILO-17 (needsyou): sources of one cause are one row, counted once.
   const unread = groupGaps((Array.isArray(value.coverage) ? value.coverage : [])

@@ -78,7 +78,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // in the same Meetings window.
   const wings = useCoreWings(
     scopedMeetingId ? [] : LIST_WINGS,
-    "outcomes",
+    scope === "record" ? "record" : "outcomes",
     scopedMeetingId ? undefined : "Meeting plumbing",
     !scopedMeetingId,
   );

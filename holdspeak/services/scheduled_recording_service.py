@@ -80,7 +80,13 @@ def _epoch_to_iso(epoch: Optional[float]) -> Optional[str]:
 # Capture C7: the fire outcomes that mean "it did not record". The reason is
 # the receipt's plain words (scheduled_recording_conductor.FAILURE_WORDS); a
 # receipt from before that table says "Something went wrong", never its text.
-_DID_NOT_RECORD = frozenset({"fire_failed", "start_failed", "refused"})
+_DID_NOT_RECORD = frozenset({
+    "fire_failed",
+    "start_failed",
+    "refused",
+    "missed",
+    "missed_interrupted_arming",
+})
 
 
 def _schedule_dict(rec: ScheduledRecording) -> dict[str, Any]:
@@ -189,7 +195,13 @@ class ScheduledRecordingService:
             row = None
         from ..scheduled_recording_conductor import FAILURE_WORDS, SOMETHING_WRONG
 
-        at = float(row["created_at"]) if row and row["created_at"] is not None else rec.last_fired_at
+        # A missed occurrence belongs to its scheduled fire time.  A receipt
+        # is written when the hub notices the miss, which can be much later.
+        # The conductor also stamps the attempted fire time for start and
+        # countdown failures, so prefer that durable occurrence timestamp.
+        at = rec.last_fired_at
+        if at is None and row and row["created_at"] is not None:
+            at = float(row["created_at"])
         said = str(row["result_ref"] or "") if row else ""
         return {"at": _epoch_to_iso(at), "reason": said if said in FAILURE_WORDS else SOMETHING_WRONG}
 

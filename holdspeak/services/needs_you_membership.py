@@ -39,7 +39,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import date, datetime, timedelta, timezone
-from holdspeak.timestamps import local_wall, parse_stamp, utc_now_iso
+from holdspeak.timestamps import local_wall, parse_stamp, utc_now, utc_now_iso
 from typing import Any, Callable, Iterable
 
 from .attention_ranking import dedup_items, rank_items
@@ -1394,16 +1394,37 @@ def _read_decisions(db: Any, principal: Any) -> list[dict[str, Any]]:
     return out
 
 
-def _read_arming(db: Any) -> list[dict[str, Any]]:
-    """PHILO-15-09 (B11, ONE NUMBER): a scheduled recording about to start.
+def _read_arming(db: Any, now: datetime | None = None) -> list[dict[str, Any]]:
+    """Read active arming rows and a recent failed fire for Needs you.
 
-    The desk draws it as a row of Needs you (the countdown and Cancel), so
-    the one count counts it."""
+    A failed or missed fire remains actionable for that meeting's duration.
+    The service owns the receipt wording; this read only applies the same
+    relevance window as Meetings ▸ Record.
+    """
+    from .scheduled_recording_service import ScheduledRecordingService
+
+    now_epoch = (now or utc_now()).timestamp()
+    service = ScheduledRecordingService(db)
     rows = []
     for rec in db.scheduled_recordings.list_all():
         if str(getattr(rec, "state", "")) == "arming":
             rows.append({"scheduleId": str(rec.id), "title": str(rec.title or ""),
                          "armedAt": getattr(rec, "armed_at", None)})
+            continue
+        failed = service._did_not_record(rec)
+        if not failed:
+            continue
+        at = parse_stamp(failed.get("at"))
+        if at is None:
+            continue
+        age = now_epoch - at.timestamp()
+        if 0 <= age <= max(60, int(getattr(rec, "duration_minutes", 0)) * 60):
+            rows.append({
+                "scheduleId": str(rec.id),
+                "title": str(rec.title or ""),
+                "armedAt": None,
+                "didNotRecord": failed,
+            })
     return rows
 
 
@@ -1665,7 +1686,7 @@ def compose(
     # recording that arms. An agent's ask is folded into its item above.
     arming: list[dict[str, Any]] = []
     try:
-        arming = _read_arming(db)
+        arming = _read_arming(db, now)
     except Exception as exc:
         log.warning("needs-you: the arming read failed: %s", exc)
     # PHILO-17 (needsyou): sources of one cause are one row, counted once.

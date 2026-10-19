@@ -419,11 +419,17 @@ function NeedVerbsView({ face, primary, onWell, well }: {
     case "arming":
       return (
         <>
-          <Button dense variant="danger" aria-label={named(v.refused ? "Retry cancel" : "Cancel")}
-            data-testid="needs-row-verb" data-verb={v.refused ? "retry" : "cancel"}
-            onClick={() => void cancelArming(v.scheduleId)}>{v.refused ? "Retry" : "Cancel"}</Button>
+          {v.failed ? (
+            <Button dense variant="secondary" aria-label={named("Record now")}
+              data-testid="needs-row-verb" data-verb="record"
+              onClick={() => openSurfaceOr("review-meetings", "/history", "record")}>Record now</Button>
+          ) : (
+            <Button dense variant="danger" aria-label={named(v.refused ? "Retry cancel" : "Cancel")}
+              data-testid="needs-row-verb" data-verb={v.refused ? "retry" : "cancel"}
+              onClick={() => void cancelArming(v.scheduleId)}>{v.refused ? "Retry" : "Cancel"}</Button>
+          )}
           <Button dense variant="ghost" aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
-            onClick={() => openSurfaceOr("review-meetings", "/history")}>Open meetings</Button>
+            onClick={() => openSurfaceOr("review-meetings", "/history", v.failed ? "record" : undefined)}>Open meetings</Button>
         </>
       );
     case "calendar":
@@ -908,9 +914,16 @@ export function useNeedFaces() {
       )]
       : []),
     ...hubArming.map((row) => ({
-      ...armingFace({ scheduleId: row.scheduleId, title: row.title }, 0),
-      fact: "Arms now",
-      lamp: { label: "ARMS", tone: "ask" as const },
+      ...armingFace(
+        { scheduleId: row.scheduleId, title: row.title },
+        0,
+        null,
+        row.didNotRecord,
+      ),
+      ...(row.didNotRecord ? {} : {
+        fact: "Arms now",
+        lamp: { label: "ARMS", tone: "ask" as const },
+      }),
     })),
   ];
   // The bus and the hub disagree on a countdown (one started, or ended):

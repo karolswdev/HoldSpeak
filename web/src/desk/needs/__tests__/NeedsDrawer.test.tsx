@@ -355,6 +355,31 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(cancel).toHaveBeenCalledWith("sch-1");
   });
 
+  it("a failed fire stays in Needs you with its reason and Record now", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        return {
+          ...ANSWER,
+          arming: [{
+            scheduleId: "sch-failed",
+            title: "Ledger cutover sync",
+            didNotRecord: { at: "2026-10-07T16:00:00Z", reason: "No microphone" },
+          }],
+        } as never;
+      }
+      return { ...DOOR } as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("9 need you");
+    const failed = document.querySelector<HTMLElement>("[data-object-id='arming:sch-failed']");
+    expect(failed).toBeTruthy();
+    expect(failed?.querySelector(".needs-row-fact")?.textContent).toContain("Did not record");
+    expect(failed?.querySelector(".needs-row-fact")?.textContent).toContain("No microphone");
+    expect(face(failed!).verbs).toEqual(["Record now", "Open meetings"]);
+    fireEvent.click(failed!.querySelector("[data-verb='record']")!);
+    expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "record");
+  });
+
   it("NEXT is a quiet footer line; no calendar is an offer in the foot, never a row (PHILO-15-09 B11)", async () => {
     const at = new Date();
     at.setHours(14, 0, 0, 0);

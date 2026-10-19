@@ -154,7 +154,9 @@ function CaptureBar() {
   const [noting, setNoting] = useState(false);
 
   const handleMicText = useCallback((text: string) => {
-    // Voice commands handled by the MicButton pipeline.
+    // Capture has no focused field. Give spoken words the same home as the
+    // New note verb, creating the note only when words arrive.
+    void openNewThought(text);
   }, []);
 
   const { talkKey, setupRow } = useTalk(

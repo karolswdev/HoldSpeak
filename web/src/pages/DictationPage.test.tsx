@@ -115,7 +115,7 @@ describe("DictationPage failure and rehearsal flows (HS-170-04)", () => {
       (c: unknown[]) => c[0] === "/api/dictation/remote",
     );
     expect(remoteCalls.length).toBe(0);
-    expect(await screen.findByText("REHEARSED · NOT DELIVERED")).toBeVisible();
+    expect(await screen.findByText("Preview ready · not sent")).toBeVisible();
   });
 
   it("announces a timeout failure in the receipt channel", async () => {

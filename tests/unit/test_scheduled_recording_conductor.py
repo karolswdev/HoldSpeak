@@ -867,6 +867,17 @@ def test_restart_resolves_interrupted_arming(tmp_path):
     assert updated.last_outcome == "missed_interrupted_arming"
     assert updated.last_receipt_id != ""
     assert updated.armed_at is None
+    assert updated.last_fired_at == clock() - 100
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.scheduled_recording_service import ScheduledRecordingService
+    failed = next(
+        row for row in ScheduledRecordingService(db).list_schedules(Principal(PrincipalKind.OWNER, "owner"))
+        if row["id"] == sched.id
+    )
+    assert failed["did_not_record"] == {
+        "at": "2001-09-09T01:45:00Z",
+        "reason": "HoldSpeak was not running",
+    }
     # Recurring: next_fire_at advanced
     assert updated.next_fire_at is not None
     assert updated.next_fire_at > clock()
