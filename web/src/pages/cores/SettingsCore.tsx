@@ -2615,7 +2615,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       </SurfaceState>
       </div>
       {/* HS-168-03: connections module shows its own receipt footer. */}
-      {moduleId === "setup" || moduleId === "models" ? null : (
+      {moduleId === "models" ? null : (
         <PrefStatusBar
           onBack={
             module || moduleId === "setup"

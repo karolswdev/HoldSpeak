@@ -23,6 +23,7 @@ import remoteRevokeWire from "./fixtures/settings-wire/remote-revoke.json";
 import settingsPutWire from "./fixtures/settings-wire/settings-put.json";
 import settingsWire from "./fixtures/settings-wire/settings.json";
 import identityWire from "./fixtures/settings-wire/system-identity.json";
+import setupFoundWire from "./fixtures/setup-st3-st5/found.json";
 import setupStatusWire from "./fixtures/trust-wire/status-virgin.json";
 import enginesWire from "./fixtures/runs-on-truth/no-record/0-open_api_concierge_detect.json";
 import localAiWire from "./fixtures/runs-on-truth/no-record/0-open_api_setup_local-ai.json";
@@ -97,6 +98,8 @@ function hubDouble() {
       }
       case "GET /api/system/identity": return answer(200, identityWire);
       case "GET /api/projects": return answer(200, projectsWire);
+      case "GET /api/setup/found": return answer(200, setupFoundWire);
+      case "POST /api/setup/lan": return answer(200, { rows: [] });
       case "GET /api/setup/status": return answer(200, setupStatusWire);
       case "GET /api/setup/local-ai": return answer(200, localAiWire.wire);
       case "GET /api/concierge/detect": return answer(200, enginesWire.wire);
@@ -256,7 +259,7 @@ describe("Settings navigation uses one selection", () => {
   const expectWing = (name: string) => expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
   const expectModule = (name: string) => expect(document.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe(name);
 
-  it("a scoped Engines entry can open Accounts, Settings, both hub doors, Guide and Back with matching wings", async () => {
+  it("a scoped Engines entry can open Accounts, Settings, both hub doors, Setup and Back with matching wings", async () => {
     const view = render(<SettingsWindow scope="models::writing_dictation" />);
     await screen.findByTestId("runson-root");
     expectWing("Engines");
@@ -279,9 +282,9 @@ describe("Settings navigation uses one selection", () => {
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     expectWing("Settings");
     expect(screen.getByTestId("settings-hub-accounts")).toBeInTheDocument();
-    pressWing("Guide");
-    expectWing("Guide");
-    await screen.findByTestId("guide");
+    pressWing("Setup");
+    expectWing("Setup");
+    await screen.findByTestId("setup-face");
     expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
 
     // A subsequent external scope is another entry, even on the same wing.
@@ -291,30 +294,30 @@ describe("Settings navigation uses one selection", () => {
     expectWing("Settings");
     fireEvent.click(screen.getByRole("button", { name: "Settings" }));
     expect(screen.getByTestId("settings-hub-choose")).toBeInTheDocument();
-    expect(screen.queryByTestId("guide")).toBeNull();
+    expect(screen.queryByTestId("setup-face")).toBeNull();
   });
 
-  it("Guide keeps an edit made before the save delay and has one footer", async () => {
+  it("Setup keeps an edit made before the save delay and has one footer", async () => {
     hub.state.settings.meeting.auto_export = false;
     render(<SettingsWindow scope="meetings" />);
     fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
-    pressWing("Guide");
-    await screen.findByTestId("guide");
+    pressWing("Setup");
+    await screen.findByTestId("setup-face");
     await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true), { timeout: 3000 });
-    expectWing("Guide");
+    expectWing("Setup");
     expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
     pressWing("Settings");
     fireEvent.click(within(ledgerRow("Meetings")!).getByRole("button", { name: "Open Meetings" }));
     expect(screen.getByRole("checkbox", { name: "Auto export" })).toBeChecked();
   });
 
-  it("opening the same external scope again leaves Guide and keeps the pending writer", async () => {
+  it("opening the same external scope again leaves Setup and keeps the pending writer", async () => {
     hub.state.settings.meeting.auto_export = false;
     useDesk.getState().openSurfaceWindow("configure-settings", "models");
     const view = render(<SettingsWindow scope="models" />);
     await screen.findByTestId("runson-root");
-    pressWing("Guide");
-    await screen.findByTestId("guide");
+    pressWing("Setup");
+    await screen.findByTestId("setup-face");
     act(() => useDesk.getState().openSurfaceWindow("configure-settings", "models"));
     expectModule("Engines");
     expectWing("Engines");
@@ -322,17 +325,18 @@ describe("Settings navigation uses one selection", () => {
     act(() => useDesk.getState().openSurfaceWindow("configure-settings", "meetings"));
     view.rerender(<SettingsWindow scope="meetings" />);
     fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
-    pressWing("Guide");
-    await screen.findByTestId("guide");
+    pressWing("Setup");
+    await screen.findByTestId("setup-face");
+    const settingsReadsBeforeEntry = hub.state.calls.filter((call) => call.method === "GET" && call.path === "/api/settings").length;
     act(() => useDesk.getState().openSurfaceWindow("configure-settings", "meetings"));
     expectModule("Meetings");
     expectWing("Settings");
     expect(screen.getByRole("checkbox", { name: "Auto export" })).toBeChecked();
     await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true), { timeout: 3000 });
-    expect(hub.state.calls.filter((call) => call.method === "GET" && call.path === "/api/settings")).toHaveLength(1);
+    expect(hub.state.calls.filter((call) => call.method === "GET" && call.path === "/api/settings")).toHaveLength(settingsReadsBeforeEntry);
   });
 
-  it("a pending write failure is visible in Guide; Try again resends the edit and restores its single footer", async () => {
+  it("a pending write failure is visible in Setup; Try again resends the edit and restores its single footer", async () => {
     hub.state.settings.meeting.auto_export = false;
     const base = hub.fetchStub;
     let fail = true;
@@ -345,19 +349,19 @@ describe("Settings navigation uses one selection", () => {
     }));
     render(<SettingsWindow scope="meetings" />);
     fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
-    pressWing("Guide");
-    await screen.findByTestId("guide");
+    pressWing("Setup");
+    await screen.findByTestId("setup-face");
     const retry = within(await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 })).getByRole("button", { name: "Retry" });
     expect(retry.closest('[role="alert"]')?.textContent).toContain("Settings connection lost");
-    expectWing("Guide");
-    expect(screen.getByTestId("guide")).toBeInTheDocument();
+    expectWing("Setup");
+    expect(screen.getByTestId("setup-face")).toBeInTheDocument();
     expect(hub.state.settings.meeting.auto_export).toBe(false);
     expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
 
     fail = false;
     fireEvent.click(retry);
     await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true));
-    await screen.findByTestId("guide");
+    await screen.findByTestId("setup-face");
     expect(screen.queryByText(/REFUSED/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
     expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);

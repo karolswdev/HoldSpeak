@@ -114,7 +114,7 @@ describe("Setup ST3–ST5", () => {
     render(<SetupFace initial={inventory({ rows: [inventory().rows[0]] })} />);
     fireEvent.click(screen.getByRole("button", { name: "Set up speech" }));
     await waitFor(() => expect(screen.getByText(/Not checked. Try again./)).toBeTruthy());
-    expect(screen.queryByText("Works")).toBeNull();
+    expect(screen.getByTestId("setup-found").textContent).not.toContain("Works");
     expect(screen.getByRole("button", { name: "Set up speech" })).toBeTruthy();
   });
 

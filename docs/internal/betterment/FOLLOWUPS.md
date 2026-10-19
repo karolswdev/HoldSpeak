@@ -6,6 +6,7 @@ PR that fixes it merges. The recovery reconciliation is retained in
 
 | Found in | Follow-up | Goes to |
 |---|---|---|
+| P5/P6 #1377 | Add matched material can silently skip a failed meeting/note link; keep the failed selection and show its producer error with Retry before claiming the batch is added. | Projects source follow-through |
 | C7 recovery #1363 | After a failed scheduled fire, the current Needs you read uses the saved failure until the occurrence expires. Verify that a successful manual Record now resolves this attention row while keeping the failed occurrence in recording history; hardware success is not yet observed. | Capture C10 / recording follow-through |
 | Q0 (#1260) | Interview's answer-only pass puts a system message after the user message, which Qwen's template rejects. | Asking Q4, or a small fix |
 | Q0 (#1260) | "Engine not reachable" is shown as "No engine for answers" (`ask_service.py` reason mapping). | Asking Q1 |
