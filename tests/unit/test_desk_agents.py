@@ -21,7 +21,7 @@ def heartbeat(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(factory_launch, "DEFAULT_LAUNCHES_PATH", tmp_path / "agent_launches.json")
     db = Database(tmp_path / "hub.db")
     hb = HeartbeatService(db, clock=lambda: NOON, local_zone=timezone.utc)
-    hb.update_settings({"notify": "all", "quiet_hours": {"start": 22, "end": 8}})
+    hb.update_settings({"notify": "edge", "quiet_hours": {"start": 22, "end": 8}})
     return hb, db, tmp_path
 
 
@@ -49,7 +49,7 @@ def test_no_notice_while_notify_is_off_or_in_quiet_hours(heartbeat) -> None:
     sent: list = []
     hb.update_settings({"notify": "off"})
     assert _done(hb, sent)["outcome"] == "off"
-    hb.update_settings({"notify": "all", "quiet_hours": {"start": 11, "end": 13}})
+    hb.update_settings({"notify": "edge", "quiet_hours": {"start": 11, "end": 13}})
     assert _done(hb, sent)["outcome"] == "held_quiet_hours"
     assert sent == []
 
