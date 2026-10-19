@@ -283,6 +283,30 @@ def build_providers_router(ctx: WebContext) -> APIRouter:
         except Exception as exc:
             return error_500(exc, log, "Failed to add Jira connection")
 
+    # ── DELETE /api/providers/{jira|confluence}/connections/{ref} ─────
+    # Betterment ST2: Accounts' Remove (with Undo on the face: Undo adds the
+    # row again).  It removes HoldSpeak's row only, never acli's profile.
+
+    @router.delete("/api/providers/{provider}/connections/{ref}")
+    async def atlassian_remove_connection(provider: str, ref: str, request: Request) -> Any:
+        """Remove one Jira or Confluence connection row."""
+        try:
+            adapter = {"jira": ctx.jira_provider, "confluence": ctx.confluence_provider}.get(provider)
+            if adapter is None:
+                return JSONResponse(
+                    {"code": "provider_not_configured",
+                     "message": f"{provider} provider is not configured"},
+                    status_code=404,
+                )
+            removed = adapter.remove_connection(principal(request), ref)
+            if not removed:
+                return JSONResponse({"code": "not_found", "message": "No such account"}, status_code=404)
+            return JSONResponse({"removed": True, "provider": provider, "connection_ref": ref})
+        except ValidationError as exc:
+            return JSONResponse({"code": exc.code, "message": exc.detail}, status_code=400)
+        except Exception as exc:
+            return error_500(exc, log, f"Failed to remove {provider} connection")
+
     # ── POST /api/providers/jira/connections/{ref}/recheck ────────────
 
     @router.post("/api/providers/jira/connections/{ref}/recheck")

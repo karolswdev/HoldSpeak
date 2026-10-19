@@ -61,7 +61,7 @@ describe("the shared cause: an empty title from the hub", () => {
       note_f050942fc320: "Ask Priya about the freeze",
       note_3eba286de7ff: "New note",
       th_9f8a7b6c5d4e: "New thread",
-      kb_12ab34cd56ef: "New knowledge base",
+      kb_12ab34cd56ef: "New drawer",
       m_0a1b2c3d4e5f: "Meeting, Oct 3, 21:06",
       d_0a1b2c3d4e5f: "New decision",
     });

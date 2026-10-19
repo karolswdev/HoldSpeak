@@ -65,6 +65,11 @@ export function aboutCandidates(
     if (!zone.name) continue;
     out.push({ ref: qualifiedRef("directory", zone.id), kind: "zone", label: `Notes in ${zone.name}`, terms: zone.name });
   }
+  // Betterment Q10: a knowledge collection is a drawer, found by its name.
+  for (const kb of items.kb ?? []) {
+    if (!kb.name?.trim()) continue;
+    out.push({ ref: qualifiedRef("kb", kb.id), kind: "zone", label: kb.name, terms: `${kb.name} drawer` });
+  }
   for (const meeting of items.meeting ?? []) {
     // Betterment Q6: a meeting is found by the people in it, too ("Mira").
     const people = (meeting.attendees ?? []).filter((name) => typeof name === "string").join(" ");

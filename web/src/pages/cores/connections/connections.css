@@ -157,3 +157,16 @@
 .connections-destinations .dest-form { margin-top:12px; }
 /* Parked rows have no expanded detail door; keep their full target readable. */
 .connections-destinations [data-testid="dest-parked-row"] .send-target { display:block; -webkit-line-clamp:unset; line-clamp:unset; overflow:visible; white-space:normal; overflow-wrap:anywhere; }
+
+/* Betterment ST2: a pressed account row: what uses it, Sign in again, Remove. */
+.connections-unfold {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+}
+.connections-unfold-uses {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1, 4px) var(--space-3, 12px);
+}

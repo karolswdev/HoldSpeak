@@ -207,6 +207,8 @@ export function accountChip(
   }
   const tool = c?.tools.find((t) => t.provider_id === d.channel);
   let state: ConnectionState = "not_configured";
+  // Betterment ST2: the Accounts row's own words (its reason) name the chip.
+  let words: { reason?: string; other_account?: boolean } | undefined = tool;
   if (d.channel === "github") {
     state = (d.connection?.state ?? tool?.state ?? "not_configured") as ConnectionState;
     const login = tool?.account?.login;
@@ -216,12 +218,13 @@ export function accountChip(
   } else {
     const conn = tool?.connections?.find((x) => x.account.site === d.account.site && x.account.email === d.account.email);
     state = (d.connection?.state ?? conn?.state ?? "not_configured") as ConnectionState;
+    words = conn;
   }
   if (!SIGN_IN_FAILED.has(state)) return null;
   const map: Record<string, "warning" | "failure"> = {
     owner_action_required: "warning", unavailable: "failure", degraded: "warning",
   };
-  return { state: map[state] ?? "warning", label: chipLabel(state, d.channel).toUpperCase(), code: state };
+  return { state: map[state] ?? "warning", label: chipLabel(state, d.channel, words ?? {}).toUpperCase(), code: state };
 }
 
 /* ── pieces ────────────────────────────────────────────────────────── */

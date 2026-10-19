@@ -10,7 +10,7 @@ import { RecipeEditor } from "./RecipeEditor";
 /** The eyebrow label shown in the editor header for each kind. */
 export const EDITOR_LABELS: Record<PrimitiveKind, string> = {
   note: "Note",
-  kb: "Knowledge",
+  kb: "Drawer",
   recipe: "Mode",
   workflow: "Workflow",
   decision: "Decision",

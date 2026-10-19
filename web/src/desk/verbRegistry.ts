@@ -214,17 +214,9 @@ export const VERBS: Verb[] = [
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("decision"),
   },
-  {
-    id: "desk.new-knowledge",
-    label: "New Knowledge",
-    menu: "desk",
-    scope: "floor",
-    group: "new",
-    glyph: KIND_GLYPH.kb,
-    keywords: ["create", "kb"],
-    ghost: never,
-    run: () => void useDesk.getState().createPrimitive("kb"),
-  },
+  // Betterment Q10 (DECISIONS #2, Knowledge becomes drawers): New Knowledge
+  // left the New list; each collection shows as a drawer. Parked in
+  // desk/_parked/knowledge/newKnowledgeVerb.ts. The kb data and kb.* tools stay.
   // Betterment AG1 (DECISIONS #3): New Agent left the Desk menu; parked in
   // desk/_parked/agents/newAgentVerb.ts.
   // Betterment A8 (DECISIONS #2, one way to automate): New Workflow left the
