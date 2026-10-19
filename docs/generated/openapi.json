@@ -17113,6 +17113,45 @@
         "summary": "Api Get Meeting Plugin Runs"
       }
     },
+    "/api/meetings/{meeting_id}/prepared": {
+      "get": {
+        "operationId": "api_get_meeting_prepared_api_meetings__meeting_id__prepared_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "meeting_id",
+            "required": true,
+            "schema": {
+              "title": "Meeting Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Get Meeting Prepared Api Meetings  Meeting Id  Prepared Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Get Meeting Prepared"
+      }
+    },
     "/api/meetings/{meeting_id}/projects": {
       "get": {
         "operationId": "api_meeting_projects_api_meetings__meeting_id__projects_get",

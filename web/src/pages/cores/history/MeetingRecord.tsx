@@ -2,8 +2,8 @@
 // meeting in its own window (`pullout:meeting:<id>`). The whole record moved
 // here from the Meetings window's detail pane: MeetingDetail as it was
 // (decisions above commitments, Needs you, the summary, Send, Decide, the
-// transcript), its three faces (Outcomes, Review, Artifacts) as the
-// window's wings, and its foot verbs (Open transcript, Send, Add to
+// transcript), its one face (Outcomes; betterment capture C5 parked the
+// Artifacts wing), and its foot verbs (Open transcript, Send, Add to
 // project, MD, SRT, Park).
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { WorkMenu, type WorkMenuEntry } from "../../../desk/components/DeskMenu";
@@ -48,10 +48,11 @@ import {
 import { MeetingDetail, MEETING_TRANSCRIPT_OPEN } from "./MeetingDetail";
 import { useSummaryRun } from "./useSummaryRun";
 
-/** The meeting window's faces (the Meetings window's detail wings). */
+/** The meeting window's one face. Betterment capture C5: the Artifacts
+ *  wing is parked (its Results show under Outcomes ▸ Prepared), so the
+ *  window draws no wing bar. */
 export const MEETING_WINGS = [
   { id: "outcomes", label: "Outcomes" },
-  { id: "artifacts", label: "Artifacts" },
 ];
 
 /** Phase 16: a foot verb brings a well on the open record into view (and,
@@ -84,8 +85,9 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   useEffect(() => { takeMeetingRequest(meetingId); }, [meetingId]);
   // Old deep links may still say `view=review`; Outcomes is now the one
   // review face and receives that request after the migration.
-  const initialView = request?.view === "artifacts" ? "artifacts" : "outcomes";
-  const wings = useCoreWings(MEETING_WINGS, initialView);
+  // An old `view=artifacts` link lands on Outcomes (C5 parked that wing).
+  const initialView = "outcomes";
+  const wings = useCoreWings(MEETING_WINGS, initialView, undefined, false);
   const [meeting, setMeeting] = useState<Record<string, unknown> | null>(null);
   const [loadError, setLoadError] = useState("");
   // A source span opens on the Outcomes face and expands its transcript.
@@ -149,7 +151,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
       const next = (event as CustomEvent<MeetingOpenRequest>).detail;
       if (!next || next.meetingId !== meetingId) return;
       takeMeetingRequest(meetingId);
-      setView(next.view === "artifacts" ? "artifacts" : "outcomes");
+      setView("outcomes");
       setSegment(next.segment);
     };
     window.addEventListener(MEETING_OPEN_EVENT, onOpen);

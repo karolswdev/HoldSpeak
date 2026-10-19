@@ -753,3 +753,155 @@ def run_bound_meeting_plugin_chain(
         "plugin_statuses": statuses,
         "artifacts_saved": artifacts_saved,
     }
+
+
+# ── Betterment capture C5: the Results a meeting prepares ───────────────────
+
+#: Each kind of Result, in the order the face lists them: the plugin that
+#: writes it, the artifact it saves and its name on the face.
+PREPARED_KINDS: tuple[dict[str, str], ...] = (
+    {"plugin_id": "adr_drafter", "artifact_type": "adr", "label": "ADR draft"},
+    {"plugin_id": "stakeholder_update_drafter", "artifact_type": "stakeholder_update",
+     "label": "Update for stakeholders"},
+    {"plugin_id": "mermaid_architecture", "artifact_type": "diagram", "label": "Architecture diagram"},
+)
+_KIND_BY_PLUGIN = {kind["plugin_id"]: kind for kind in PREPARED_KINDS}
+_ACTIVE_JOB = frozenset({"reserved", "queued", "claimed", "running"})
+
+
+def prepared_plan(transcript: str | None) -> list[str]:
+    """The drafter plugins this meeting asked for by name (C5).
+
+    The follow-up is always prepared, but it is the local aftercare draft
+    (``build_followup_draft``): it costs no engine time and cannot fail, so
+    it is not a plugin here.
+    """
+    from .plugins.router import action_triggered_plugins
+
+    return [p for p in action_triggered_plugins(transcript or "") if p in _KIND_BY_PLUGIN]
+
+
+def _draft_title(artifact: Any, label: str) -> str:
+    """A Result's name in his words: the ADR's own title, else the kind."""
+    data = artifact.structured_json if isinstance(artifact.structured_json, Mapping) else {}
+    adrs = data.get("adrs")
+    if isinstance(adrs, list) and adrs and isinstance(adrs[0], Mapping):
+        title = str(adrs[0].get("title") or "").strip()
+        if title:
+            return f"ADR: {title}"
+    return label
+
+
+def _draft_body(artifact: Any) -> str:
+    """The draft itself: the stored body without the synthesis frame (its
+    ``### <plugin title>`` head, its count line and its source lines)."""
+    lines = str(artifact.body_markdown or "").strip().splitlines()
+    if lines and lines[0].startswith("### "):
+        lines = lines[1:]
+        while lines and not lines[0].strip():
+            lines = lines[1:]
+        # The synthesis summary paragraph ("1 ADR(s); 1 accepted.").
+        while lines and lines[0].strip():
+            lines = lines[1:]
+    while lines and (not lines[-1].strip() or lines[-1].startswith("- Source ")):
+        lines = lines[:-1]
+    return "\n".join(lines).strip()
+
+
+def _failure_reason(error: str | None) -> str:
+    text = str(error or "").lower()
+    if "timeout" in text or "timed out" in text or "did not answer" in text:
+        return "The engine did not answer in time."
+    if "no_assignment" in text:
+        return "No engine is set for this draft."
+    if "route_not_shown" in text:
+        return "This draft would go to an engine you were not shown. It did not run."
+    return "The engine did not finish this draft."
+
+
+def prepared_results(db: Any, meeting_id: str) -> dict[str, Any]:
+    """The meeting's Prepared Results, for the meeting window (C5).
+
+    ``results``: the follow-up first (when the meeting has anything to follow
+    up), then each drafter the summary job planned, in ``PREPARED_KINDS``
+    order, with its state: ``writing`` (the job is still running, with
+    ``since``), ``ready`` (its artifact), or ``failed`` (a reason in words).
+    ``serves`` names the action items whose words ask for that Result (the
+    face's *Draft ready*).
+    """
+    from .meeting_aftercare import build_followup_draft, compute_meeting_aftercare
+    from .plugins.router import action_triggered_plugins
+
+    results: list[dict[str, Any]] = []
+    digest = compute_meeting_aftercare(db, meeting_id)
+    if digest is None:
+        return {"meeting_id": meeting_id, "results": []}
+    items = db.meetings.list_action_items(include_completed=True, meeting_id=meeting_id)
+    live_items = [item for item in items if str(item.status or "").lower() != "dismissed"]
+
+    def serves(plugin_id: str) -> list[str]:
+        return [str(item.id) for item in live_items if plugin_id in action_triggered_plugins(item.task)]
+
+    if not digest.get("is_empty"):
+        results.append({
+            "kind": "followup",
+            "label": "Follow-up",
+            "state": "ready",
+            "title": f"Follow-up: {digest.get('meeting_title') or 'Meeting'}",
+            "body_markdown": build_followup_draft(digest),
+            "document_ref": f"meeting_followup:{meeting_id}",
+            "serves": [str(item.id) for item in live_items if "follow-up" in str(item.task).lower()
+                       or "follow up" in str(item.task).lower()],
+        })
+
+    job = db.intel.get_latest_intel_job(meeting_id)
+    route = dict(getattr(job, "frozen_plugin_route", {}) or {}) if job is not None else {}
+    planned = [str(p) for p in route.get("prepared") or [] if str(p) in _KIND_BY_PLUGIN]
+    skipped = {
+        str(item.get("plugin_id")): str(item.get("reason") or "")
+        for item in route.get("plugin_chain_skipped") or [] if isinstance(item, Mapping)
+    }
+    window_id = f"{meeting_id}:{FULL_WINDOW_SUFFIX}"
+    runs: dict[str, Any] = {}
+    for run in db.plugins.list_plugin_runs(meeting_id, window_id=window_id, limit=5000):
+        prior = runs.get(run.plugin_id)
+        if prior is None or (run.updated_at, run.id) > (prior.updated_at, prior.id):
+            runs[run.plugin_id] = run
+    artifacts = db.plugins.list_artifacts(meeting_id, limit=500)
+    active = job is not None and str(job.status) in _ACTIVE_JOB
+
+    for kind in PREPARED_KINDS:
+        plugin_id = kind["plugin_id"]
+        if plugin_id not in planned:
+            continue
+        row: dict[str, Any] = {
+            "kind": kind["artifact_type"],
+            "plugin_id": plugin_id,
+            "label": kind["label"],
+            "serves": serves(plugin_id),
+        }
+        made = [a for a in artifacts if a.plugin_id == plugin_id and str(a.body_markdown or "").strip()]
+        run = runs.get(plugin_id)
+        if made:
+            artifact = max(made, key=lambda a: (a.updated_at, a.id))
+            row.update({
+                "state": "ready", "artifact_id": artifact.id,
+                "title": _draft_title(artifact, kind["label"]),
+                "body_markdown": _draft_body(artifact) or str(artifact.body_markdown or ""),
+                "seconds": round(float(run.duration_ms) / 1000.0) if run is not None else None,
+            })
+        elif plugin_id in skipped:
+            row.update({"state": "failed", "reason": _failure_reason(skipped[plugin_id]),
+                        "error": skipped[plugin_id]})
+        elif run is not None and str(run.status).lower() == "error":
+            row.update({"state": "failed", "reason": _failure_reason(run.error), "error": run.error})
+        elif run is None and active:
+            row.update({"state": "writing", "since": job.updated_at.isoformat()})
+        elif run is not None and str(run.status).lower() in COMPLETED_PLUGIN_STATUSES:
+            # The engine answered but wrote nothing to keep (an empty draft).
+            row.update({"state": "failed", "reason": "The engine wrote no draft from this meeting.",
+                        "error": run.error})
+        else:
+            row.update({"state": "failed", "reason": "This draft did not run.", "error": None})
+        results.append(row)
+    return {"meeting_id": meeting_id, "results": results}

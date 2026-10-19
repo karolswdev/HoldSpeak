@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from threading import Lock
-from typing import Mapping, Optional
+from typing import Iterable, Mapping, Optional
 
 from .contracts import RouteDecision
 from .signals import extract_intent_signals
@@ -38,6 +39,36 @@ _INTENT_PLUGIN_CHAIN: dict[str, list[str]] = {
     "incident": ["incident_timeline", "runbook_delta"],
     "comms": ["stakeholder_update_drafter", "decision_announcement_drafter"],
 }
+
+# Betterment capture C5: the Results a meeting asks for by name. A meeting
+# that says "write the ADR", "the stakeholder update", "tell the support team"
+# or "draw the diagram" gets that draft prepared after its summary, whatever
+# its intent scores. Each pattern reads what was SAID (the transcript at claim
+# time, an action's words on the face), never a score.
+ACTION_TRIGGERED_PLUGINS: tuple[tuple[str, "re.Pattern[str]"], ...] = (
+    ("adr_drafter", re.compile(r"(?-i:\bADRs?\b)|architecture decision record", re.IGNORECASE)),
+    (
+        "stakeholder_update_drafter",
+        re.compile(
+            r"stakeholder update|update (?:for|to) (?:the )?stakeholders"
+            r"|\b(?:tell|inform|update|let)\b[^.?!\n]{0,40}\b(?:team|stakeholders|leadership|customers)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "mermaid_architecture",
+        re.compile(r"\bdiagrams?\b|\bdraw (?:it|this|the architecture)\b", re.IGNORECASE),
+    ),
+)
+
+
+def action_triggered_plugins(texts: Iterable[str] | str | None) -> list[str]:
+    """The drafter plugins the given words ask for, in a fixed order."""
+    if texts is None:
+        return []
+    body = texts if isinstance(texts, str) else "\n".join(str(t or "") for t in texts)
+    return [plugin_id for plugin_id, pattern in ACTION_TRIGGERED_PLUGINS if pattern.search(body)]
+
 
 _COUNTER_LOCK = Lock()
 _ROUTER_COUNTERS: dict[str, int] = {

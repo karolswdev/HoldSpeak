@@ -278,3 +278,163 @@ def test_a_plugin_whose_route_was_not_shown_is_skipped_with_a_receipt(
     assert skipped and {item["reason"] for item in skipped} == {"route_not_shown"}
     assert db.plugins.list_plugin_runs(meeting_id, limit=100) == []
     assert replies.calls == ["summary"]
+
+
+# ── Capture C5: the meeting prepares its Results ─────────────────────────────
+
+PREPARED_FIXTURE = (
+    Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures"
+    / "meetings-hub" / "prepared.json"
+)
+
+
+def _lan_rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Any, _Replies]:
+    db, library = _rig(tmp_path, monkeypatch)
+    revision = _add_engine(library, "lan-qwen", LAN_ENDPOINT)
+    _assign(db, {"kind": "global"}, "lan-qwen", revision, "c5-default-engine")
+    replies = _Replies()
+    _engine_seam(monkeypatch, replies)
+    return db, replies
+
+
+def test_the_architecture_review_prepares_the_adr_and_the_stakeholder_update(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The review says "write the ADR" and "the stakeholder update": the
+    summary job plans both drafters (with the routed plugins, on the disclosed
+    route), the LAN engine writes them, and the meeting's Prepared read lists
+    the follow-up, the ADR draft and the update, ready, each tied to the
+    action it serves."""
+    from holdspeak.meeting_plugins import prepared_results
+
+    db, replies = _lan_rig(tmp_path, monkeypatch)
+    # While the summary is being written (the job claimed, its plan frozen),
+    # the Prepared read says each draft is being written.
+    from holdspeak.intel import engine as engine_module
+
+    seen: dict[str, Any] = {}
+    replaying = engine_module.MeetingIntel
+
+    class _Watching(replaying):  # type: ignore[misc,valid-type]
+        def analyze(self, transcript: str, **kwargs: Any) -> Any:
+            seen.setdefault("writing", prepared_results(db, meeting_ids[0]))
+            return super().analyze(transcript, **kwargs)
+
+    monkeypatch.setattr("holdspeak.intel.engine.MeetingIntel", _Watching)
+    meeting_ids: list[str] = []
+    meeting_ids.append(_import(db))
+    meeting_id = meeting_ids[0]
+    _drain(db, meeting_id)
+    if RECORD:
+        replies.write()
+    writing = seen["writing"]
+    assert [(row["kind"], row["state"]) for row in writing["results"] if row["kind"] != "followup"] == [
+        ("adr", "writing"), ("stakeholder_update", "writing")], writing
+
+    job = db.intel.get_latest_intel_job(meeting_id)
+    route = dict(job.frozen_plugin_route or {})
+    assert route.get("prepared") == ["adr_drafter", "stakeholder_update_drafter"], route
+    assert {"adr_drafter", "stakeholder_update_drafter"} <= set(route.get("plugin_chain") or []), route
+    statuses = {run.plugin_id: run.status for run in db.plugins.list_plugin_runs(meeting_id, limit=100)}
+    assert statuses.get("adr_drafter") == "success", statuses
+    assert statuses.get("stakeholder_update_drafter") == "success", statuses
+
+    body = prepared_results(db, meeting_id)
+    rows = {row["kind"]: row for row in body["results"]}
+    assert [row["kind"] for row in body["results"]] == ["followup", "adr", "stakeholder_update"], body
+    assert all(row["state"] == "ready" for row in body["results"]), body
+    assert rows["followup"]["document_ref"] == f"meeting_followup:{meeting_id}"
+    assert "idempot" in rows["adr"]["body_markdown"].lower(), rows["adr"]
+    assert rows["adr"]["artifact_id"] and rows["stakeholder_update"]["artifact_id"]
+    tasks = {str(item.id): item.task for item in db.meetings.list_action_items(
+        include_completed=True, meeting_id=meeting_id)}
+    assert any("ADR" in tasks[item_id] for item_id in rows["adr"]["serves"]), (rows["adr"]["serves"], tasks)
+    assert rows["stakeholder_update"]["serves"], tasks
+    _recorded_prepared(db, meeting_id, writing=writing)
+
+
+def test_a_failed_draft_never_holds_the_summary(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The ADR drafter fails (the hub's declared plugin fault point). The
+    summary still publishes; the Prepared row says it failed, in words."""
+    from holdspeak.meeting_plugins import prepared_results
+
+    monkeypatch.setenv("HOLDSPEAK_FAULT", "intel.plugin:adr_drafter")
+    db, _replies = _lan_rig(tmp_path, monkeypatch)
+    meeting_id = _import(db)
+    _drain(db, meeting_id)  # asserts the job SUCCEEDED
+
+    meeting = db.meetings.get_meeting(meeting_id)
+    assert meeting.intel is not None and meeting.intel.summary, "the summary did not publish"
+    rows = {row["kind"]: row for row in prepared_results(db, meeting_id)["results"]}
+    assert rows["adr"]["state"] == "failed", rows["adr"]
+    assert rows["adr"]["reason"] == "The engine did not finish this draft."
+    assert rows["stakeholder_update"]["state"] == "ready", rows["stakeholder_update"]
+    _recorded_failed(prepared_results(db, meeting_id), meeting_id)
+
+
+def _recorded_failed(body: dict[str, Any], meeting_id: str) -> None:
+    """The face test's recorded failed draft (prepared-failed.json)."""
+    path = PREPARED_FIXTURE.with_name("prepared-failed.json")
+    live = json.loads(json.dumps(body).replace(meeting_id, "c5-review"))
+    if RECORD:
+        path.write_text(json.dumps({
+            "_source": "Recorded from the hub's Prepared read by tests/integration/"
+                       "test_meeting_plugins_engines.py::test_a_failed_draft_never_holds_the_summary "
+                       "(the ADR drafter failed at the hub's declared plugin fault point). "
+                       "HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+            "prepared": live,
+        }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    stored = json.loads(path.read_text(encoding="utf-8"))["prepared"]
+    shape = lambda b: [(r["kind"], r["state"], r.get("reason")) for r in b["results"]]  # noqa: E731
+    assert shape(stored) == shape(live), "re-record with HOLDSPEAK_WIRE_WRITE=1"
+
+
+def _recorded_prepared(db: Any, meeting_id: str, *, writing: dict[str, Any]) -> None:
+    """The face test's recorded hub (meetings.app.test.tsx): every GET the
+    meeting window makes for this meeting, served by a real MeetingWebServer
+    over this database. HOLDSPEAK_WIRE_WRITE=1 rewrites the file; otherwise
+    the stored Prepared read must have the same shape as the live one."""
+    from fastapi.testclient import TestClient
+
+    from holdspeak.web_server import MeetingWebServer, WebRuntimeCallbacks
+
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(on_bookmark=lambda *_a, **_k: None, on_stop=lambda *_a, **_k: None,
+                            get_state=lambda: None),
+        host="127.0.0.1",
+    )
+    client = TestClient(server.app)
+    base = f"/api/meetings/{meeting_id}"
+    paths = [
+        f"{base}?include_parked=true", f"{base}/artifacts", f"{base}/aftercare",
+        f"{base}/intent-timeline", f"{base}/proposals", f"{base}/follow-through-proposals",
+        f"/api/decisions?scope=all&limit=500&meeting_id={meeting_id}", f"{base}/intel-recovery",
+        f"{base}/prepared",
+    ]
+    bodies = {}
+    for path in paths:
+        response = client.get(path)
+        assert response.status_code == 200, (path, response.status_code, response.text[:200])
+        bodies[path.replace(meeting_id, "c5-review")] = json.loads(
+            json.dumps(response.json()).replace(meeting_id, "c5-review"))
+
+    def shape(body: dict[str, Any]) -> Any:
+        return [(row["kind"], row["state"], len(row.get("serves") or [])) for row in body["results"]]
+
+    bodies["/api/meetings/c5-review/prepared#writing"] = json.loads(
+        json.dumps(writing).replace(meeting_id, "c5-review"))
+    live = bodies["/api/meetings/c5-review/prepared"]
+    if RECORD:
+        PREPARED_FIXTURE.write_text(json.dumps({
+            "_source": "Recorded from a real MeetingWebServer by tests/integration/"
+                       "test_meeting_plugins_engines.py::test_the_architecture_review_prepares_the_adr_"
+                       "and_the_stakeholder_update (the LAN engine's recorded replies; the meeting id is "
+                       "c5-review). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field "
+                       "a test reads.",
+            "_now": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            **bodies,
+        }, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    stored = json.loads(PREPARED_FIXTURE.read_text(encoding="utf-8"))["/api/meetings/c5-review/prepared"]
+    assert shape(stored) == shape(live), "re-record with HOLDSPEAK_WIRE_WRITE=1"

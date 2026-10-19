@@ -3910,6 +3910,16 @@
       "consumers": []
     },
     {
+      "path": "/api/meetings/{meeting_id}/prepared",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.meetings.insights",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/meetings/{meeting_id}/projects",
       "methods": [
         "GET"

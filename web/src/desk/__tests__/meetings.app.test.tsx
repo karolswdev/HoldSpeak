@@ -35,6 +35,8 @@ import p17t from "./fixtures/meetings-hub/p17t.json";
 import p17tReady from "./fixtures/meetings-hub/p17t-ready.json";
 import lookedAt from "./fixtures/meetings-hub/looked-at.json";
 import sinceLast from "./fixtures/meetings-hub/since-last.json";
+import prepared from "./fixtures/meetings-hub/prepared.json";
+import preparedFailed from "./fixtures/meetings-hub/prepared-failed.json";
 
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
@@ -606,5 +608,95 @@ describe("Since last time (betterment/capture C6)", () => {
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
     await screen.findByTestId("meeting-decisions");
     expect(screen.queryByRole("button", { name: /^Since / })).toBeNull();
+  });
+});
+
+describe("the meeting prepares its Results (betterment/capture C5)", () => {
+  /* The architecture review as a real hub served it after the LAN engine
+   * wrote its summary and its drafts (fixtures/meetings-hub/prepared.json,
+   * recorded by tests/integration/test_meeting_plugins_engines.py). */
+  const fixture = prepared as unknown as Fixture;
+  const PREPARED = "/api/meetings/c5-review/prepared";
+  const render5 = () => render(<Shell><MeetingRecord meetingId="c5-review" onClose={() => undefined} /></Shell>);
+
+  it("Prepared · 3 under Who owes what: the follow-up, the ADR draft and the update; a row unfolds its draft", async () => {
+    at(fixture);
+    hub(fixture);
+    render5();
+    const section = await screen.findByTestId("meeting-prepared");
+    expect(section.textContent).toMatch(/Prepared/);
+    const commitments = screen.getByTestId("meeting-commitments");
+    expect(commitments.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const adr = within(section).getByTestId("meeting-prepared-adr");
+    expect(adr.textContent).toContain("ADR: ");
+    expect(adr.textContent).toContain("ADR draft");
+    expect(within(section).getByTestId("meeting-prepared-followup").textContent).toContain("Follow-up");
+    expect(within(section).getByTestId("meeting-prepared-stakeholder_update").textContent).toContain("Update for stakeholders");
+    expect(section.textContent).not.toMatch(/Drafter|ART 0|artifact/i);
+    expect(screen.queryByTestId("meeting-prepared-draft")).toBeNull();
+    fireEvent.click(adr);
+    const draft = await screen.findByTestId("meeting-prepared-draft");
+    expect(draft.textContent).toMatch(/idempoten/i);
+    expect(draft.textContent).not.toContain("###");
+    expect(draft.textContent).not.toContain("Source windows");
+    expect(rawButtons()).toEqual([]);
+  });
+
+  it("an action whose words ask for the ADR says Draft ready, and its press opens the ADR draft", async () => {
+    at(fixture);
+    hub(fixture);
+    render5();
+    await screen.findByTestId("meeting-prepared");
+    const commitments = screen.getByTestId("meeting-commitments");
+    const ready = within(commitments).getAllByRole("button", { name: /^Draft ready: ADR: / });
+    expect(ready.length).toBeGreaterThan(0);
+    expect(within(commitments).getAllByRole("button", { name: /^Draft ready: Update for stakeholders/ }).length).toBeGreaterThan(0);
+    fireEvent.click(ready[0]);
+    const draft = await screen.findByTestId("meeting-prepared-draft");
+    expect(draft.closest("li")?.querySelector("[data-testid='meeting-prepared-adr']")).toBeTruthy();
+  });
+
+  it("Open as note makes a note of the draft; Send opens the Send well; nothing is sent without a press", async () => {
+    at(fixture);
+    const calls = hub(fixture);
+    render5();
+    const adr = await screen.findByTestId("meeting-prepared-adr");
+    fireEvent.click(within(adr).getByRole("button", { name: "Open as note" }));
+    await waitFor(() => expect(calls.some((c) => c.path === "/api/notes" && c.init?.method === "POST")).toBe(true));
+    const note = calls.find((c) => c.path === "/api/notes")!.init!.json as { title: string; body_markdown: string };
+    expect(note.title).toMatch(/^ADR: /);
+    expect(note.body_markdown).toMatch(/idempoten/i);
+    expect(note.body_markdown).not.toContain("###");
+    fireEvent.click(within(adr).getByRole("button", { name: "Send" }));
+    await waitFor(() => expect(within(adr).getByRole("button", { name: "Hide" })).toBeTruthy());
+    const posts = calls.filter((c) => c.init?.method === "POST").map((c) => c.path);
+    expect(posts.filter((p) => /send|channel|deliver/i.test(p))).toEqual([]);
+  });
+
+  it("while the summary is written, each draft says Writing… in place", async () => {
+    at(fixture);
+    hub(fixture, { [PREPARED]: fixture[`${PREPARED}#writing`] });
+    render5();
+    const adr = await screen.findByTestId("meeting-prepared-adr");
+    expect(within(adr).getByTestId("meeting-prepared-writing").textContent).toMatch(/^Writing… · \d+ s$/);
+    expect(within(adr).queryByRole("button", { name: "Open as note" })).toBeNull();
+  });
+
+  it("a draft that failed says why, in words", async () => {
+    at(fixture);
+    hub(fixture, { [PREPARED]: preparedFailed.prepared });
+    render5();
+    const section = await screen.findByTestId("meeting-prepared");
+    expect(within(section).getByTestId("meeting-prepared-failed").textContent).toBe("The engine did not finish this draft.");
+    expect(within(section).getByTestId("meeting-prepared-stakeholder_update").textContent).toContain("Open as note");
+  });
+
+  it("the meeting window has no Artifacts wing", async () => {
+    at(fixture);
+    hub(fixture);
+    render5();
+    await screen.findByTestId("meeting-prepared");
+    expect(screen.queryByRole("tab", { name: /Artifacts/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Artifacts$/i })).toBeNull();
   });
 });

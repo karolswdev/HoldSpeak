@@ -551,6 +551,7 @@ Routes: 786 (plus static mounts). iOS-consumed: 89. Web-consumed: 617.
 | GET | `/api/meetings/{meeting_id}/artifacts` | web |
 | GET | `/api/meetings/{meeting_id}/intent-timeline` | web |
 | GET | `/api/meetings/{meeting_id}/plugin-runs` | server only |
+| GET | `/api/meetings/{meeting_id}/prepared` | web |
 
 ## web.routes.meetings.intel
 
