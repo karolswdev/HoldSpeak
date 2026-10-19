@@ -4,9 +4,16 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Capture callback queue verified)
+**Last updated:** 2026-10-19 (Capture default placement verified)
 
 ## Current phase
+
+Capture now keeps its designed CSS seat while unarranged. A slow Coming up
+read no longer freezes the window against a temporary placeholder height; reopening
+uses the same default position. An owner move, resize or zoom keeps its saved
+geometry. Four focused browser cases pass, including moved and resized windows.
+Required quick: 4,103 web, 110 sweep, 27 canon and 1,116 repo guards pass.
+The Capture fence also passes at 1440/393.
 
 C9 #1379 moves PCM admission into a bounded queue and writes the buffer/journal on
 one writer thread. Stop seals admission, aborts native streams, flushes accepted
@@ -19,7 +26,7 @@ hardware is not exercised; C10’s child-process boundary remains in progress.
 
 **Betterment recovery: 85/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `adc8638bc`, frontend `17244ee6934f6d61`, PID 17616 (#1378).
+backend `9700d4c5c`, frontend `17244ee6934f6d61`, PID 49752 (#1379).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
@@ -40,8 +47,9 @@ pinned full tape does not cover subsequent main revisions. The twelve browser
 failures are five retired Rhythm-host expectations, three retired Conductor
 controls, two retired note-editor expectations, one 1px Button census and one
 Capture seat shift. The web failure is the explicit Record-home auto-record
-projection missing from the writer allowlist. Browser and web repairs are in
-progress; the geometry findings still require diagnosis. #1376 is deployed;
+projection missing from the writer allowlist. The Capture seat shift is repaired. Eleven browser expectation repairs and
+the Record-home writer allowlist correction remain in a checked delivery branch;
+their final required quick check is still pending. #1376 is deployed;
 identity, database ownership and four HTTP checks pass. The populated Projects sweep also found rows
 moving as independent status reads finish; its regression fails before the
 atomic first-read repair. After the repair, 4,090 web checks, 110 sweep cases,
