@@ -4,9 +4,25 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (five-app Dock delivery)
+**Last updated:** 2026-10-19 (native account sign-in delivery)
 
 ## Current phase
+
+ST8 starts the installed GitHub or Atlassian CLI browser sign-in from the
+Accounts row and seats its native terminal there. Keyboard input uses the
+existing admitted process input path and immutable target identity. On native
+exit, the existing Check re-reads the account before the row can say Works.
+Unsupported browser flows and failed/disappearing terminals give a named
+failure. Target setup failures clean only the newly created sign-in session.
+
+Root reviewed the owner-only operation and target mismatch refusal, then ran
+123 focused checks: 122 passed and the new operation exposed one missing
+producer case. The completed producer contract suite passes all 65 cases.
+Actual private-Hub browser cases at 1440/393 feed Enter through embedded xterm,
+the real command transport and native tmux process, then read back Works and
+the account login. Only provider CLI responses are recorded; owner credentials
+and real OAuth acceptance remain unobserved. The combined API census has
+810 routes and 674 OpenAPI paths. Required quick: ST8_QUICK_PENDING.
 
 Shell S3 gives the desktop Dock Today, Meetings, People, Agents and Speak;
 the phone has Today, Capture, Meetings, People and Agents. Both use the
