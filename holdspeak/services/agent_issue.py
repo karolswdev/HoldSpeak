@@ -24,7 +24,10 @@ log = get_logger("agent_issue")
 
 ISSUE_KIND = "issue"
 #: The Watch kinds whose entities are issues.
-ISSUE_WATCHES = frozenset({("jira", "issues"), ("gh", "issues"), ("github", "issues")})
+ISSUE_WATCHES = frozenset({
+    ("jira", "issues"), ("gh", "issues"), ("github", "issues"),
+    ("gh", "pull_requests"), ("github", "pull_requests"),
+})
 #: The longest body the brief carries (the brief cap still applies).
 BODY_MAX_CHARS = 8_000
 

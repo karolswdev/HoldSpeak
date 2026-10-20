@@ -90,6 +90,8 @@ class Document:
     slug: str = "document"
     #: A short source-owned label frozen into a prepared send's provenance.
     label: str = "DOCUMENT"
+    #: A source-owned warning shown above the preview and frozen with it.
+    preview_warning: Optional[str] = None
 
 
 class DocumentSource(Protocol):
@@ -388,14 +390,26 @@ def _outbound(body_md: str, claims: Any = None) -> tuple[list[list[str]], int]:
 
 
 def without_desk_marks(body_md: str, heading: str = "", claims: Any = None) -> str:
-    """An update's Markdown as it leaves the desk (Send, Copy), PHILO-15 B53
-    and Astra's rulings: a claim the model could not tie to evidence (the
-    ``[UNVERIFIED]`` mark) is OMITTED whole, continuation lines included,
-    never sent as a fact; a section left empty by that reads "Not checked.";
-    the last line counts what stayed on the desk. ``heading`` (the
-    document's identity) leads when given."""
-    sections, dropped = _outbound(body_md, claims)
-    text = "\n".join(line for lines in sections for line in lines).rstrip("\n") + "\n"
+    """An update's Markdown as it leaves the desk (Send, Copy).
+
+    When no claim is accepted, the owner can send the published words he saw:
+    remove only the desk-only marks and let the document warning explain the
+    unchecked state. Mixed updates keep the established omission behavior for
+    unverified claims. ``heading`` (the document's identity) leads when given.
+    """
+    if claims is not None and nothing_verified(body_md, claims):
+        # Decision 2: the owner may send a published update before he has
+        # accepted a claim. Keep the published words he saw, while removing
+        # the desk-only marker. The warning is carried by the Document.
+        text = "\n".join(
+            _ANY_MARK.sub("", _UNVERIFIED_MARK.sub("", line))
+            for line in str(body_md or "").splitlines()
+        )
+        text = text.rstrip("\n") + "\n"
+        dropped = 0
+    else:
+        sections, dropped = _outbound(body_md, claims)
+        text = "\n".join(line for lines in sections for line in lines).rstrip("\n") + "\n"
     if dropped:
         text += f"\n{dropped} claim{'' if dropped == 1 else 's'} not checked, kept on the desk.\n"
     if heading:
@@ -409,7 +423,7 @@ _EMPTY_WORDS = frozenset({"Not checked."})
 
 
 def nothing_verified(body_md: str, claims: Any = None) -> bool:
-    """True when the update must not leave the desk: NOTHING VERIFIED.
+    """True when the update needs the unchecked preview warning.
 
     ``claims`` given (PHILO-15 B64, Astra r1 P1-1): decided on the CLAIMS
     SET: no claim record is verified (a draft with no claims at all
@@ -455,23 +469,18 @@ def render_update(db: Any, update_id: str) -> Document:
     published = str(row.get("published_at") or "")[:10]
     title = f"{name} — update r{row.get('draft_revision') or 1}" + (f" ({published})" if published else "")
     revision = int(row.get("draft_revision") or 1)
-    # PHILO-15 B53: an unchecked claim never leaves the desk as a fact (the
-    # face keeps it, with its UNVERIFIED lamp).
     # The document names itself (PHILO-15 B53 ruling): "<Project> · Update · <date>".
     heading = f"{name} · Update" + (f" · {published}" if published else "")
     raw = str(row.get("body_md") or "")
     # PHILO-15 B64: verified means evidence refs or the owner's review; an
     # unreviewed inference stays on the desk like an unverified claim.
     claims = stored_claims(row)
-    if nothing_verified(raw, claims):
-        # Astra r2 ruling: an update whose every claim stays on the desk is not
-        # sent (its stored claims are kept; the owner checks them first).
-        raise ChannelRefused("nothing_verified",
-                             "NOTHING VERIFIED: every claim in this update is not checked; it stays on the desk",
-                             status=400)
+    unchecked = nothing_verified(raw, claims)
     body = without_desk_marks(raw, heading, claims)
     return Document(ref=f"project_update:{row['id']}", title=title, body_md=body,
-                    slug=_slug(name), label=f"REV {revision}")
+                    slug=_slug(name), label=f"REV {revision}",
+                    preview_warning=("Not checked yet: no claim in this update was accepted"
+                                     if unchecked else None))
 
 
 def _document_parts(document_ref: str) -> tuple[str, str]:
@@ -503,10 +512,13 @@ def render_document(db: Any, document_ref: str) -> Document:
 
 
 def frozen_document_json(document: Document) -> str:
-    """Serialize only the three provenance fields required by the design."""
+    """Serialize the frozen provenance fields and any source-owned warning."""
     import json
 
-    return json.dumps({"title": document.title, "slug": document.slug, "label": document.label},
+    value = {"title": document.title, "slug": document.slug, "label": document.label}
+    if document.preview_warning:
+        value["preview_warning"] = document.preview_warning
+    return json.dumps(value,
                       sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 
 
@@ -522,7 +534,9 @@ def document_from_json(document_ref: str, value: Any) -> Document:
     if not isinstance(value, Mapping):
         value = {}
     return Document(ref=str(document_ref), title=str(value.get("title") or ""), body_md="",
-                    slug=str(value.get("slug") or "document"), label=str(value.get("label") or "DOCUMENT"))
+                    slug=str(value.get("slug") or "document"), label=str(value.get("label") or "DOCUMENT"),
+                    preview_warning=(str(value.get("preview_warning"))
+                                     if value.get("preview_warning") else None))
 
 
 def naming(db: Any, document_ref: str, document_json: Any = None) -> Document:
@@ -974,11 +988,16 @@ def serialize_for(destination: Mapping[str, Any], document: Document) -> bytes:
     return chan.serialize(document)
 
 
-def preview_for(channel_name: str, payload: bytes, account_json: Any = None) -> dict[str, Any]:
+def preview_for(channel_name: str, payload: bytes, account_json: Any = None,
+                preview_warning: Optional[str] = None) -> dict[str, Any]:
     """The readable preview, derived from the frozen bytes (an addressed channel reads its account's provider)."""
     import json
 
     chan = channel(channel_name)
     if getattr(chan, "addressed", False):
-        return chan.preview(payload, json.loads(account_json or "{}"))
-    return chan.preview(payload)
+        preview = chan.preview(payload, json.loads(account_json or "{}"))
+    else:
+        preview = chan.preview(payload)
+    if preview_warning:
+        preview = {**preview, "warning": preview_warning}
+    return preview

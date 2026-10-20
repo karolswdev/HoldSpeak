@@ -53,6 +53,9 @@ PLAIN_SYSTEM_PROMPT = (
 SET_SOURCES: dict[str, str] = {
     "meetings:this_week": "This week's meetings",
     "notes:this_week": "This week's notes",
+    "decisions:this_week": "This week's decisions",
+    "jira:bugs:agent-ok": "Jira bugs labelled agent-ok",
+    "github:review_requests": "GitHub review requests",
 }
 #: A person (a People relationship). A run reads the name only: the People
 #: record stays on this device (an engine with the desk's tools may read it).
@@ -234,6 +237,11 @@ def _set_members(db: Any, ref: str, now: Optional[datetime] = None) -> list[str]
         query = ("SELECT id, COALESCE(NULLIF(updated_at, ''), created_at) AS at FROM notes "
                  "WHERE deleted = 0 AND id NOT LIKE 'note\\_result\\_%' ESCAPE '\\'")
         kind = "note"
+    elif ref == "decisions:this_week":
+        query = "SELECT id, COALESCE(NULLIF(updated_at, ''), created_at) AS at FROM decision_records WHERE deleted = 0"
+        kind = "decision_record"
+    elif ref in {"jira:bugs:agent-ok", "github:review_requests"}:
+        return _watch_set_members(db, ref)
     else:
         return []
     with db._connection() as conn:
@@ -244,6 +252,51 @@ def _set_members(db: Any, ref: str, now: Optional[datetime] = None) -> list[str]
         if at is not None and at >= since:
             dated.append((at, f"{kind}:{row['id']}"))
     return [ref for _at, ref in sorted(dated, reverse=True)]
+
+
+def _watch_set_members(db: Any, ref: str) -> list[str]:
+    """Read actual issue snapshots for the AG14 source starters."""
+    connector = "jira" if ref.startswith("jira:") else "gh"
+    with db._connection() as conn:
+        rows = conn.execute(
+            """SELECT id, query_kind, snapshot_json, last_success_at, last_error
+               FROM connector_watches
+               WHERE connector_id IN (?, ?)
+                 AND query_kind IN ('issues','pull_requests')
+                 AND enabled=1""",
+            (connector, "github" if connector == "gh" else connector),
+        ).fetchall()
+    found: list[str] = []
+    for row in rows:
+        # A starter is an action on the producer's current, healthy
+        # observation.  A cached snapshot with no successful refresh (or an
+        # outstanding provider error) is stale and must stay out of New
+        # automation.
+        if not str(row["last_success_at"] or "").strip() or str(row["last_error"] or "").strip():
+            continue
+        try:
+            snapshot = json.loads(row["snapshot_json"] or "{}")
+        except (TypeError, ValueError):
+            continue
+        entities = snapshot.get("entities") if isinstance(snapshot, dict) else snapshot
+        if isinstance(entities, dict):
+            entities = list(entities.values())
+        if not isinstance(entities, list):
+            continue
+        for entity in entities:
+            if not isinstance(entity, dict):
+                continue
+            labels = entity.get("labels") if isinstance(entity.get("labels"), list) else []
+            labels = {str(label.get("name") if isinstance(label, dict) else label).strip().lower() for label in labels}
+            reviews = entity.get("review_requests") or entity.get("reviewRequests") or []
+            if ref == "jira:bugs:agent-ok" and ("agent-ok" not in labels or str(entity.get("issue_type") or "").strip().lower() != "bug"):
+                continue
+            if ref == "github:review_requests" and not reviews:
+                continue
+            entity_id = str(entity.get("id") or entity.get("key") or entity.get("number") or "").strip()
+            if entity_id:
+                found.append(f"issue:{row['id']}.{entity_id}")
+    return list(dict.fromkeys(found))
 
 
 def _people_names() -> dict[str, str]:
@@ -321,6 +374,290 @@ def work_folder_of(wb: Any) -> Optional[str]:
 
 def occurrence_id(workbench_id: str, key: str) -> str:
     return "wbocc_" + hashlib.sha256(f"{workbench_id}:{key}".encode()).hexdigest()[:20]
+
+
+# ── AG14: one durable hand per source item ─────────────────────────────
+
+HAND_ITEM_PREFIX = "wbhand_"
+HAND_SOURCE_KINDS = frozenset({
+    "action", "artifact", "decision", "decision_record", "issue", "meeting",
+    "note", "project_item", "thread",
+})
+
+
+def hand_item_id(workbench_id: str, source_ref: str) -> str:
+    """Stable Workbench item identity for one source item.
+
+    The Workbench item is the existing durable item ledger.  Its context holds
+    the launch and queue receipt; no second automation run ledger is needed.
+    """
+    digest = hashlib.sha256(f"{workbench_id}:{source_ref}".encode()).hexdigest()[:20]
+    return HAND_ITEM_PREFIX + digest
+
+
+def hand_sources(db: Any, wb: Any) -> list[dict[str, str]]:
+    """Resolve the current About refs to handable desk items.
+
+    Relative sets are expanded at run time.  A source that is not an actual
+    desk item is omitted, so a hand automation never launches one generic
+    occurrence for an unreadable source.
+    """
+    from .agent_hand_service import item_exists, item_title
+
+    refs, _about = expand_sources(db, sources_of(wb))
+    found: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for ref in refs:
+        kind, sep, item_id = str(ref).partition(":")
+        kind, item_id = kind.strip(), item_id.strip()
+        if not sep or kind not in HAND_SOURCE_KINDS or not item_id:
+            continue
+        canonical = f"{kind}:{item_id}"
+        if canonical in seen:
+            continue
+        try:
+            exists = item_exists(db, kind, item_id)
+        except Exception:
+            exists = False
+        if not exists:
+            continue
+        seen.add(canonical)
+        try:
+            title = item_title(db, kind, item_id)
+        except Exception:
+            title = ""
+        found.append({"ref": canonical, "kind": kind, "id": item_id, "title": title or item_id})
+    return found
+
+
+def materialize_hand_items(db: Any, wb: Any) -> list[Any]:
+    """Create or read one occurrence item for every eligible source item."""
+    from ..timestamps import utc_now_iso
+
+    items: list[Any] = []
+    instruction = str(getattr(wb, "instruction", "") or "").strip()
+    for source in hand_sources(db, wb):
+        item_id = hand_item_id(wb.id, source["ref"])
+        context = {
+            OCCURRENCE: True,
+            "agent_hand": {
+                "source_ref": source["ref"],
+                "kind": source["kind"],
+                "id": source["id"],
+                "status": "pending",
+            },
+        }
+        # Materialisation itself is a race with another Run press.  Insert
+        # only when absent under the database write lock; an existing row's
+        # launch context is immutable to this step.
+        with db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            existing_row = conn.execute("SELECT id FROM workbench_items WHERE id=?", (item_id,)).fetchone()
+            if existing_row is None:
+                now = utc_now_iso()
+                conn.execute(
+                    """INSERT INTO workbench_items
+                       (id, workbench_id, title, body, priority, status,
+                        grounding_json, context_json, created_at, last_modified)
+                       VALUES (?, ?, ?, ?, 3, 'pending', ?, ?, ?, ?)""",
+                    (item_id, wb.id, source["title"], instruction,
+                     json.dumps({"refs": [source["ref"]]}, sort_keys=True),
+                     json.dumps(context, sort_keys=True), now, now),
+                )
+        existing = db.workbench_items.get(item_id, include_parked=True)
+        if existing is None:
+            continue
+        items.append(existing)
+    return items
+
+
+def _hand_context(item: Any) -> dict[str, Any]:
+    try:
+        value = json.loads(getattr(item, "context_json", "") or "{}")
+    except (TypeError, ValueError):
+        value = {}
+    return value if isinstance(value, dict) else {}
+
+
+def _persist_agent_result(
+    db: Any, *, item: Any, context: dict[str, Any], words: str,
+    flight: dict[str, Any],
+) -> Optional[tuple[dict[str, Any], dict[str, Any]]]:
+    """Link an agent Done turn to the existing result/artifact models."""
+    from ..timestamps import utc_now_iso
+
+    now = utc_now_iso()
+    launch_id = str((context.get("agent_hand") or {}).get("launch_id") or flight.get("launch_id") or "")
+    artifact_id = "artifact_" + hashlib.sha256(f"agent-hand:{item.id}:{launch_id}".encode()).hexdigest()[:16]
+    body = str(words or "").strip() or "Agent completed this item."
+    hand = dict(context.get("agent_hand") or {})
+    hand.update({"status": "done", "done_turn_id": str(flight.get("turn_id") or "")})
+    context["agent_hand"] = hand
+    egress = {"boundary": "local", "model": str(hand.get("profile") or flight.get("agent") or "")}
+    run_id = str(hand.get("run_id") or "")
+    with db._connection() as conn:
+        conn.execute(
+            """INSERT INTO artifacts (
+                id, meeting_id, origin, artifact_type, title, body_markdown,
+                structured_json, confidence, status, plugin_id, plugin_version,
+                source_run_id, source_item_id, created_at, updated_at
+            ) VALUES (?, NULL, 'run', 'agent_result', ?, ?, ?, 0.0, 'new',
+                      'automation_agent_hand', '1', ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET title=excluded.title,
+                body_markdown=excluded.body_markdown,
+                structured_json=excluded.structured_json,
+                status='new', updated_at=excluded.updated_at""",
+            (
+                artifact_id,
+                str(item.title or "Agent result"),
+                body,
+                json.dumps({"launch_id": launch_id, "source_ref": hand.get("source_ref") or ""}, sort_keys=True),
+                run_id or None,
+                item.id,
+                now,
+                now,
+            ),
+        )
+        conn.execute(
+            "INSERT OR IGNORE INTO artifact_sources (artifact_id, source_type, source_ref, created_at) VALUES (?, 'workbench_item', ?, ?)",
+            (artifact_id, item.id, now),
+        )
+        advanced = conn.execute(
+            """UPDATE workbench_items
+               SET status='done', result=?, result_egress_json=?, result_artifact_id=?,
+                   context_json=?, completed_at=?, last_modified=?
+               WHERE id=? AND status != 'done'""",
+            (body, json.dumps(egress, sort_keys=True), artifact_id, json.dumps(context, sort_keys=True), now, now, item.id),
+        ).rowcount
+        if advanced != 1:
+            return None
+    row = {
+        "artifact_id": artifact_id, "item_id": item.id, "workbench_id": item.workbench_id,
+        "title": item.title, "result": body,
+    }
+    return row, context
+
+
+def sync_agent_results(db: Any, workbench_id: Optional[str] = None) -> int:
+    """Turn each newly observed agent Done into one automation result."""
+    from ..timestamps import utc_now_iso
+    from ..agent_context import event_log
+    from .agent_flights import agent_flights
+    from .agent_helpers import last_words
+
+    # Native hooks spool their Stop event before updating the session. Drain
+    # the existing event log here so a result read observes the same words as
+    # the agent flight, including a hand that came from the shared queue.
+    try:
+        event_log.drain_spool(db._connection)
+    except Exception as exc:
+        log.debug("agent hand event spool not drained: %s", exc)
+
+    query = "SELECT * FROM workbench_items WHERE json_extract(context_json, '$.agent_hand.launch_id') IS NOT NULL AND parked=0"
+    params: list[Any] = []
+    if workbench_id:
+        query += " AND workbench_id=?"
+        params.append(workbench_id)
+    with db._connection() as conn:
+        rows = conn.execute(query, params).fetchall()
+    flights = {str(f.get("launch_id") or ""): f for f in agent_flights(db) if f.get("launch_id")}
+    changed = 0
+    delivered: list[dict[str, Any]] = []
+    for raw in rows:
+        item = db.workbench_items.get(str(raw["id"]), include_parked=True)
+        if item is None or item.status == "done":
+            continue
+        context = _hand_context(item)
+        hand = context.get("agent_hand") if isinstance(context.get("agent_hand"), dict) else {}
+        launch_id = str(hand.get("launch_id") or "")
+        flight = flights.get(launch_id)
+        if not flight or str(flight.get("state") or "") != "done":
+            continue
+        try:
+            words = last_words(db, launch_id)
+        except Exception:
+            words = None
+        words = str(words or flight.get("last_words") or flight.get("result") or "")
+        persisted = _persist_agent_result(db, item=item, context=context, words=words, flight=flight)
+        if persisted is None:
+            continue
+        row, context = persisted
+        delivered.append(row)
+        changed += 1
+    if delivered:
+        # Reuse the established automation egress and finished notice path.
+        from ..principals import Principal, PrincipalKind
+        owner = Principal(PrincipalKind.OWNER, "local-automation-conductor")
+        for row in delivered:
+            wb = db.workbenches.get(str(row["workbench_id"]), include_deleted=True)
+            if wb is None:
+                continue
+            try:
+                outcome = _deliver_one(db, owner, wb, row)
+                _finished_notices(db, [row])
+            except Exception as exc:
+                log.warning("agent result delivery failed for %s: %s", row["item_id"], exc)
+                outcome = {"outcome": "failed", "error": str(exc)}
+            with db._connection() as conn:
+                current = conn.execute("SELECT context_json FROM workbench_items WHERE id=?", (row["item_id"],)).fetchone()
+                try:
+                    updated = json.loads(current["context_json"] or "{}") if current else {}
+                except (TypeError, ValueError):
+                    updated = {}
+                if isinstance(updated, dict):
+                    updated.setdefault("agent_hand", {})["delivered"] = outcome.get("outcome")
+                    conn.execute("UPDATE workbench_items SET context_json=?, last_modified=? WHERE id=?", (json.dumps(updated, sort_keys=True), utc_now_iso(), row["item_id"]))
+    return changed
+
+
+def sync_agent_hand_launches(db: Any, answers: list[dict[str, Any]]) -> int:
+    """Attach queue starts to their existing Workbench hand occurrence.
+
+    ``HandQueue`` is shared by direct agent hands and Workbench runs, so its
+    durable entry carries the source ref and queue id.  When the existing hub
+    heartbeat starts one, connect that answer to the matching occurrence so
+    the normal Done/result projector can follow the launch id.
+    """
+    from ..timestamps import utc_now_iso
+
+    changed = 0
+    for answer in answers:
+        if str(answer.get("status") or "") != "launched" or not answer.get("launch_id"):
+            continue
+        queue_id = str(answer.get("queue_id") or "")
+        origin = answer.get("origin_ref") if isinstance(answer.get("origin_ref"), dict) else {}
+        kind = str(origin.get("kind") or "")
+        source_id = str(origin.get("id") or "")
+        if not queue_id or not kind or not source_id:
+            continue
+        with db._connection() as conn:
+            rows = conn.execute(
+                "SELECT id, context_json FROM workbench_items WHERE parked=0 AND json_extract(context_json, '$.agent_hand.queue_id')=?",
+                (queue_id,),
+            ).fetchall()
+            for row in rows:
+                try:
+                    context = json.loads(row["context_json"] or "{}")
+                except (TypeError, ValueError):
+                    context = {}
+                hand = context.get("agent_hand") if isinstance(context, dict) else None
+                if not isinstance(hand, dict) or str(hand.get("source_ref") or "") != f"{kind}:{source_id}":
+                    continue
+                if hand.get("launch_id"):
+                    continue
+                hand.update({
+                    "status": "launched",
+                    "launch_id": str(answer["launch_id"]),
+                    "attempt_id": str(answer.get("attempt_id") or ""),
+                    "profile": str(answer.get("profile") or hand.get("profile") or ""),
+                })
+                context["agent_hand"] = hand
+                conn.execute(
+                    "UPDATE workbench_items SET context_json=?, last_modified=? WHERE id=?",
+                    (json.dumps(context, sort_keys=True), utc_now_iso(), row["id"]),
+                )
+                changed += 1
+    return changed
 
 
 # ── the per-engine time limit ──────────────────────────────────────────
@@ -431,6 +768,7 @@ def new_results(db: Any) -> list[dict[str, Any]]:
     when it is opened (``open_result``), so the row goes everywhere at once.
     These rows are not Needs-you rows: an automation whose Put it in is
     Needs you adds its own Door item (``_to_needs_you``)."""
+    sync_agent_results(db)
     with db._connection() as conn:
         rows = conn.execute(
             """SELECT w.id AS workbench_id, w.name, COUNT(*) AS new_count,
@@ -457,6 +795,7 @@ def prepared_for_today(db: Any, principal: Any) -> Optional[dict[str, Any]]:
     (Morning prep), with its automation's name, the engine it runs on (the
     With line's name) and what its agent looked at. None when no such
     automation has a done result: Today then draws no block at all."""
+    sync_agent_results(db)
     with db._connection() as conn:
         row = conn.execute(
             """SELECT w.id AS workbench_id FROM workbench_items i
@@ -576,6 +915,7 @@ def results_of(db: Any, workbench_id: str, *, limit: int = 20) -> list[dict[str,
     item's runs (``cli_engine_runs``; None when none was reported), and
     ``used``, what its agent looked at, wrote and prepared
     (``services/run_trace.py``; None when it touched nothing)."""
+    sync_agent_results(db, workbench_id)
     with db._connection() as conn:
         rows = conn.execute(
             """SELECT i.id, i.title, i.status, i.result, i.result_artifact_id, i.completed_at,

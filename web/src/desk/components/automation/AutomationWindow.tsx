@@ -54,7 +54,7 @@ import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { WORKBENCH_RUN_FRAME_TYPES } from "../workbench/runLifecycle";
 import { SentenceLine } from "./SentenceLine";
 import { WhenEditor } from "./WhenEditor";
-import { WithEditor } from "./WithEditor";
+import { readNativeAgentOptions, WithEditor, type NativeAgentOption } from "./WithEditor";
 import { AboutChips, AboutEditor } from "./AboutEditor";
 import { PutEditor, PutValue } from "./PutEditor";
 import { useDropHand } from "../../hand";
@@ -91,36 +91,80 @@ const ABOUT_DROP_KINDS: ReadonlySet<string> = new Set([
 export const AUTOMATION_WINDOW_SIZE = { w: 920, h: 680 } as const;
 
 function DoEditor({
-  value,
+  kind,
+  instruction,
   saving,
   onSave,
   onCancel,
 }: {
-  value: string;
+  kind: "run" | "hand_to_agent";
+  instruction: string;
   saving: boolean;
-  onSave: (next: string) => void;
+  onSave: (kind: "run" | "hand_to_agent", instruction: string) => void;
   onCancel: () => void;
 }) {
-  const [draft, setDraft] = useState(value);
-  const changed = draft.trim() !== value.trim();
+  const [draftKind, setDraftKind] = useState(kind);
+  const [draft, setDraft] = useState(instruction);
+  const changed = draftKind !== kind || draft.trim() !== instruction.trim();
   return (
     <div className="automation-do-editor" data-testid="automation-do-editor">
+      <div className="automation-editor-verbs" aria-label="Do kind">
+        <Button dense variant={draftKind === "run" ? "secondary" : "ghost"}
+          aria-pressed={draftKind === "run"} onClick={() => setDraftKind("run")}>
+          Run
+        </Button>
+        <Button dense variant={draftKind === "hand_to_agent" ? "secondary" : "ghost"}
+          aria-pressed={draftKind === "hand_to_agent"} onClick={() => setDraftKind("hand_to_agent")}>
+          Hand to an agent
+        </Button>
+      </div>
       <PadGadget
-        label="What it does"
+        label={draftKind === "hand_to_agent" ? "Agent brief" : "What it does"}
         value={draft}
         onChange={setDraft}
         rows={4}
         autoGrow
         autoFocus
-        placeholder="Say what it should do each time"
+        placeholder={draftKind === "hand_to_agent" ? "Say what the agent should do" : "Say what it should do each time"}
       />
       <div className="automation-editor-verbs">
         <Button dense variant="secondary" disabled={!changed || !draft.trim()} loading={saving}
-          onClick={() => onSave(draft.trim())} data-testid="automation-do-save">
+          onClick={() => onSave(draftKind, draft.trim())} data-testid="automation-do-save">
           Save
         </Button>
         <Button dense variant="ghost" onClick={onCancel}>Cancel</Button>
       </div>
+    </div>
+  );
+}
+
+function ReviewEditor({
+  value,
+  saving,
+  onChoose,
+}: {
+  value: string;
+  saving: boolean;
+  onChoose: (value: string) => void;
+}) {
+  const [agents, setAgents] = useState<NativeAgentOption[] | null>(null);
+  useEffect(() => { void readNativeAgentOptions().then(setAgents).catch(() => setAgents([])); }, []);
+  const choices = [
+    ["none", "None"],
+    ...(agents ?? []).filter((agent) => agent.ready).map((agent) => [
+      agent.agentId,
+      agent.agentId === "codex" ? "Codex" : agent.label,
+    ] as const),
+  ] as ReadonlyArray<readonly [string, string]>;
+  return (
+    <div className="automation-editor-verbs" data-testid="automation-review-editor">
+      {choices.map(([key, label]) => (
+        <Button key={key} dense variant={value === key ? "secondary" : "ghost"}
+          loading={saving && value !== key} onClick={() => onChoose(key)}
+          aria-pressed={value === key}>
+          {label}
+        </Button>
+      ))}
     </div>
   );
 }
@@ -341,11 +385,11 @@ export function AutomationWindow({
     }
   };
 
-  const saveDo = async (instruction: string) => {
+  const saveDo = async (kind: "run" | "hand_to_agent", instruction: string) => {
     setSaving(true);
     setSaveError(null);
     try {
-      await updateWorkbenchField(workbenchId, { instruction });
+      await updateWorkbenchField(workbenchId, { do_kind: kind, instruction });
       setEditing(null);
       await load();
     } catch (error) {
@@ -393,6 +437,16 @@ export function AutomationWindow({
   const chooseEngine = async (profileId: string) => {
     setSaveError(null);
     await setAutomationEngine(workbenchId, { profile_id: profileId });
+    await load();
+  };
+
+  const chooseReview = async (reviewBy: string) => {
+    setSaveError(null);
+    try {
+      await updateWorkbenchField(workbenchId, { review_by: reviewBy });
+    } catch (error) {
+      setSaveError(readableError(error));
+    }
     await load();
   };
 
@@ -485,7 +539,9 @@ export function AutomationWindow({
   // tools is on.
   const builder = useBuilderTools((state) => state.on);
   const name = detail?.name || "Automation";
-  const doText = detail?.instruction_shown ?? "";
+  const doText = detail?.do_kind === "hand_to_agent"
+    ? "Hand to an agent"
+    : detail?.instruction_shown ?? "";
   const doLong = doText.split("\n").length > 3 || doText.length > 180;
   const sources = detail?.sources_shown ?? [];
   const happened = detail ? eventSubjectWords(detail) : null;
@@ -570,8 +626,9 @@ export function AutomationWindow({
                   </Button>
                 ) : undefined}
                 editor={
-                  <DoEditor key={doText} value={doText} saving={saving}
-                    onSave={(next) => void saveDo(next)} onCancel={() => setEditing(null)} />
+                  <DoEditor key={`${detail.do_kind}:${detail.instruction ?? ""}`} kind={detail.do_kind === "hand_to_agent" ? "hand_to_agent" : "run"}
+                    instruction={detail.instruction ?? ""} saving={saving}
+                    onSave={(kind, next) => void saveDo(kind, next)} onCancel={() => setEditing(null)} />
                 }
               >
                 <span className="automation-do-text" data-clamped={doLong && !doExpanded ? "" : undefined}>
@@ -623,11 +680,27 @@ export function AutomationWindow({
                     title={`The prompt goes: ${boundaryEgressLamp(detail.assignment_summary.boundary).label}`}
                     scope={["local", "same_device"].includes(detail.assignment_summary.boundary) ? "local" : "cloud"} />
                 ) : undefined}
-                editor={<WithEditor detail={detail} onUse={chooseEngine}
+                editor={<WithEditor detail={detail} handMode={detail.do_kind === "hand_to_agent"} onUse={chooseEngine}
                   onSpendLimit={saveSpendLimit} onPending={savingEngine} />}
               >
-                {engine ?? "Choose an engine"}
+                {detail.do_kind === "hand_to_agent"
+                  ? engine ?? "Choose an agent"
+                  : engine ?? "Choose an engine"}
               </SentenceLine>
+              {detail.do_kind === "hand_to_agent" ? (
+                <SentenceLine
+                  name="review"
+                  label="Review by"
+                  open={editing === "review"}
+                  onPress={() => toggle("review")}
+                  editor={<ReviewEditor value={detail.review_by || "none"} saving={saving}
+                    onChoose={(value) => void chooseReview(value)} />}
+                >
+                  {detail.review_by && detail.review_by !== "none"
+                    ? ({ claude: "Claude Code", codex: "Codex CLI", pi: "pi" }[detail.review_by] ?? detail.review_by)
+                    : "No review"}
+                </SentenceLine>
+              ) : null}
               <SentenceLine
                 name="put"
                 label="Put it in"

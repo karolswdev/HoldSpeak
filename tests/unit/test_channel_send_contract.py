@@ -747,19 +747,57 @@ def test_the_words_map_his_asks_and_never_say_an_agent_sends(hub: Hub) -> None:
     assert "destination_id" in tools["channel.prepare"]["inputSchema"]["properties"]
 
 
-def test_nothing_verified_is_refused_at_preview_and_prepare(hub: Hub, tmp_path: Path) -> None:
-    """PHILO-15 17 (Astra r2 ruling): a published update whose every claim is
-    unchecked is refused NOTHING VERIFIED by the real channel service, before
-    any byte is frozen or written; the stored update keeps its claims."""
+def test_nothing_verified_warns_and_owner_can_send_the_published_update(hub: Hub, tmp_path: Path) -> None:
+    """Send S8: the owner's press is the check for a published update.
+
+    The preview and prepared row carry the published words, with the desk-only
+    claim marks removed, while the warning and unchecked fact survive the
+    owner send, readback and delivery history. An agent still cannot send.
+    """
     body = ("## Progress\n\n- **[UNVERIFIED]** The rollout is complete.\n\n"
             "## Decisions\n\nNo decisions in this window.\n")
     _pid, update = room(hub, body=body)
     folder = tmp_path / "out"
     dest = destination(hub, folder)
     ref = f"project_update:{update}"
-    for path in ("/api/channels/preview", "/api/channels/sends"):
-        refused = hub.client.post(path, json={"document_ref": ref, "destination_id": dest})
-        assert refused.status_code == 400, refused.text
-        assert refused.json()["code"] == "nothing_verified", refused.text
+    before = hub.db.project_updates.get_update(update)
+    stored_body, stored_claims = before["body_md"], before["claims_json"]
+
+    preview = hub.client.post("/api/channels/preview", json={"document_ref": ref, "destination_id": dest})
+    assert preview.status_code == 200, preview.text
+    preview_body = preview.json()["preview"]
+    warning = "Not checked yet: no claim in this update was accepted"
+    assert preview_body["warning"] == warning
+    assert "The rollout is complete." in preview_body["text"]
+    assert "No decisions in this window." in preview_body["text"]
+    assert "UNVERIFIED" not in preview_body["text"]
+
+    prepared_response = hub.client.post("/api/channels/sends", json={"document_ref": ref, "destination_id": dest})
+    assert prepared_response.status_code == 200, prepared_response.text
+    prepared = prepared_response.json()["send"]
+    assert prepared["preview"] == preview_body
+    assert prepared["document_json"]["preview_warning"] == warning
+
+    agent = _agent(hub, identity=f"{AGENT_ID}-unchecked")
+    is_error, refused = _tool(agent, "channel.send", {"send_id": prepared["id"]})
+    assert is_error and refused["code"] == "owner_principal_required", refused
     assert not list(folder.glob("*.md"))
-    assert hub.db.project_updates.get_update(update)["body_md"] == body
+
+    sent = hub.client.post("/api/channels/send", json={"send_id": prepared["id"]})
+    assert sent.status_code == 200, sent.text
+    answer = sent.json()
+    assert answer["outcome"] == "sent", answer
+    path = Path(answer["send"]["proof"]["path"])
+    assert path.read_bytes() == preview_body["text"].encode()
+
+    reloaded = hub.client.get("/api/channels/sends", params={"send_id": prepared["id"]}).json()["sends"][0]
+    assert reloaded["preview"] == preview_body
+    assert reloaded["proof"]["unchecked"] is True
+    assert reloaded["proof"]["warning"] == warning
+    [delivery] = history(hub, update)
+    assert json.loads(delivery["proof_json"])["unchecked"] is True
+    assert json.loads(delivery["proof_json"])["warning"] == warning
+    receipt = op(hub, answer["operation_id"])
+    assert receipt["outcome"] == "succeeded"
+    after = hub.db.project_updates.get_update(update)
+    assert after["body_md"] == stored_body and after["claims_json"] == stored_claims

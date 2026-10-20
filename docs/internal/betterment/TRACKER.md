@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, Floor verified; S4 Search seam remains open. Running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-20, Floor verified; S4 Search seam remains open. Running-desk identity is in `pm/STATUS.md`.
 
-**Total: 102 of 117 slices merged**, with Send S7 still partial.
+**Total: 104 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -18,11 +18,11 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | The desk's tools (MCP) | `mcp/` | 7 of 7 |
 | Ask | `asking/` | 13 of 13 |
 | Projects | `projects/` | 10 of 11 |
-| Agents | `agents/` | 15 of 16 |
+| Agents | `agents/` | 16 of 16 |
 | Daily and Needs you | `daily/` | 11 of 11 |
 | Setup and Settings | `setup/` | 10 of 10 |
 | Desk shell | `shell/` | 4 of 10 |
-| Send | `send/` | 1 of 8 |
+| Send | `send/` | 2 of 8 |
 | Capture | `capture/` | 12 of 12 |
 
 ## Automations (`workbench/RECIPE.md`): 11 of 11
@@ -100,7 +100,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | P9 | One decision record | Open |  |
 | P10 | Watches tell the truth underneath | Done · #1399 | Runnable actions only; observations need no pending effect; MCP uses shared services. |
 
-## Agents (`agents/RECIPE.md`): 15 of 16
+## Agents (`agents/RECIPE.md`): 16 of 16
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -118,7 +118,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | AG11 | Agents that work together (MCP) | Done · #1369 | One owned helper, pinned waits, question-only answer, Secure owner Allow, nested rows. |
 | AG12 | Review by (builder and reviewer) | Done · #1385 | Bounded two-round pair; durable Result and read-only reviewer authority. |
 | AG13 | A HoldSpeak skill | Done · #1374 | Packaged skill, native launch discovery and Connect install; offline Codex discovery observed. |
-| AG14 | Automations that hand work to agents | Open |  |
+| AG14 | Automations that hand work to agents | Done · #1402 | Do Hand; native With; compatible Review; durable schedule/event authority and once-only queue. |
 | AG15 | Agents he started himself (decision 1) | Done · #1392 | Own native tmux agents show state and accept owner answers/approval; rig discovery stays off. |
 
 ## Daily and Needs you (`daily/RECIPE.md`): 11 of 11
@@ -167,7 +167,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S8 | The Window menu | Open |  |
 | S9 | Ask can arrange the desk (gated) | Open |  |
 
-## Send (`send/RECIPE.md`): 1 of 8
+## Send (`send/RECIPE.md`): 2 of 8
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -178,7 +178,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S5 | The Send sheet | Open |  |
 | S6 | Edit before Send | Open |  |
 | S7 | Automations put their result in a destination | Part | A6 #1322: Put it in can prepare a send to a saved destination. Check the rest of S7 against the recipe. |
-| S8 | "Not checked yet" warns (owner decision 2) | Open |  |
+| S8 | "Not checked yet" warns (owner decision 2) | Done · #1403 | Published unchecked words stay sendable; warning and receipt survive readback. |
 
 ## Capture (`capture/RECIPE.md`): 12 of 12
 
