@@ -14,9 +14,11 @@ The presence page's connection lamp supplies availability; a disconnected
 desk reads Desk not running and disables Stop. An idle update clears the
 recording title and stale Stop state, including after the panel linger.
 
-The visible-title check fails before the fix. All 29 focused presence checks
+The visible-title check fails before the fix. All 30 focused presence checks
 pass afterward, including the real Foundation Objective-C action target and
-the parent Stop-event bridge. The former focused runtime set also passed.
+the parent Stop-event bridge. A real Foundation dictionary regression also
+caught and fixes the disconnect read ignoring WebKit's native value.
+The former focused runtime set also passed.
 Native menu rendering and physical recording remain unobserved. Required
 quick: C12_QUICK_PENDING.
 

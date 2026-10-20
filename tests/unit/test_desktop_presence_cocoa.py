@@ -196,3 +196,16 @@ def test_menu_bar_shows_elapsed_recording_and_disconnect_then_clears_idle(monkey
     ui.refresh_status()
     assert button.title == ""
     assert ui.stop_menu_item.enabled is False
+
+
+def test_connection_projection_accepts_native_webkit_dictionary():
+    from types import SimpleNamespace
+    foundation = pytest.importorskip("Foundation")
+    result = foundation.NSDictionary.dictionaryWithObject_forKey_(False, "available")
+    observed = []
+    ui = object.__new__(_CocoaPresenceUI)
+    ui._desk_available = True
+    ui.refresh_status = lambda: observed.append(ui._desk_available)
+    ui.webview = SimpleNamespace(evaluateJavaScript_completionHandler_=lambda _script, callback: callback(result, None))
+    ui.poll_status()
+    assert observed == [False]

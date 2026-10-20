@@ -204,9 +204,13 @@ class _CocoaPresenceUI:
         """
 
         def _done(result: Any, _error: Any) -> None:
-            if not isinstance(result, dict) or not isinstance(result.get("available"), bool):
+            # WebKit returns NSDictionary, which supplies .get but is not
+            # a Python dict. Missing or non-boolean answers remain unknown.
+            get = getattr(result, "get", None)
+            available = get("available") if callable(get) else None
+            if not isinstance(available, bool):
                 return
-            self._desk_available = bool(result["available"])
+            self._desk_available = available
             self.refresh_status()
 
         try:
