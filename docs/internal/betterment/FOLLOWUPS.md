@@ -6,6 +6,7 @@ PR that fixes it merges. The recovery reconciliation is retained in
 
 | Found in | Follow-up | Goes to |
 |---|---|---|
+| S4 delivery | The floor and Keep behavior are verified. Mode recipes still enter Search as Agent rows; exclude the producer mode kind in the S5 Search work. S4 remains partial until this lands. | Shell S5 |
 | P7/P8 delivery | Room NEW currently follows any draft lifecycle, including an owner-created draft. Read the existing automation artifact NEW/read state and clear it through the existing result-open path. | Project update read state |
 | Q0 (#1260) | Interview's answer-only pass puts a system message after the user message, which Qwen's template rejects. | Asking Q4, or a small fix |
 | Q0 (#1260) | "Engine not reachable" is shown as "No engine for answers" (`ask_service.py` reason mapping). | Asking Q1 |

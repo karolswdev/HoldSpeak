@@ -8,6 +8,24 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+S4 delivers the explicit Floor: fresh desks show Inbox, Work, Personal,
+Reference and Archive. Meetings and people appear only after Keep on desk;
+Remove uses the existing membership operations, and removing a note files it
+in Inbox. Empty packaged Meetings/Decisions drawers and the Desk membership
+record are hidden. Existing records remain intact.
+
+The existing desk position store preserves first-seen rectangles across late
+producer replies. Root corrected a new-column overlap by reserving saved
+positions even while their source reply is pending. The real private-Hub walk
+imports three meetings and creates three people without new Floor icons,
+keeps one meeting, adds a late note, and appends 14 more projects. Every
+existing rectangle stays exact and no pair overlaps. Current 1440/393 shots
+and measured rows are under `.tmp/evidence-shots/s4-root/` in the Floor lane.
+All 19 seed and 63 web checks, type check and build pass.
+S4 remains partial: excluding mode recipes from Search belongs to the
+upcoming S5 Search change. This merge adds no completed slice.
+Required quick: S4_QUICK_PENDING.
+
 The main watcher pinned to 2833d225d found five failures after its first
 6,073-test shard passed. This fix re-records the actual Setup agent/Settings
 producer shapes, aligns Capture's backend window action with its manifest,
