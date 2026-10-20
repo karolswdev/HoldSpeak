@@ -28,6 +28,9 @@ receipt, one owner Send receipt, exact file bytes and a manual negative
 control. Preview width, settled visibility and contrast are measured and
 both screenshots are readable. Required quick: SEND_CONTENT_QUICK_PENDING.
 The first real Send recipe remains open for the owner’s five presses.
+Last observed running desk before this merge: backend `d78edeba4`,
+frontend `a7793ccf84711ab1`, PID 48353. Each merge deploys its exact source;
+`GET /api/system/identity` is the current running-desk authority.
 
 Wallpaper has one home in Settings Desk. New windows use the shared content
 size and placement rules; remembered heads move only when they collide, and
