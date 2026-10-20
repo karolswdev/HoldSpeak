@@ -4,9 +4,29 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (one decision record)
+**Last updated:** 2026-10-20 (Search and Floor adapters)
 
 ## Current phase
+
+Search uses one ranked stream, the last six successful opens, exact About
+for Cmd+Enter and live object verbs. Protected People support Open, Ask,
+Prep and Keep/Remove through the existing filing operation. Mode recipes
+keep their semantic kind. Builder tools is a hub preference with the saved
+revision, shared browser refresh and existing MCP settings access.
+
+Root passed 65 collected backend/browser cases, including real person
+Keep/Remove and Prep at 1440/393, exact Cmd+Enter About, phone search and
+Builder persistence across two browsers. The 150 focused web consumers,
+type check and build pass. The complete Settings wire group was recorded
+through both actual producer writers. P9's canonical decision prompt and
+front-project context are integrated. Required quick: S5_QUICK_PENDING.
+
+The older pinned full tape finished red: 16,962 Python and 314 browser
+cases passed, with five Python and four browser failures repaired by
+#1397/#1400. Its web run passed 5,351 and failed two Settings cases; both
+pass in the current focused run. A fresh full run must confirm integration.
+The S4/S1/S0 Search follow-ups and the already-fixed Interview ordering
+entry are reconciled with their retained proof.
 
 P9 gives each decision one canonical record. New Decision carries About and
 Why through the admitted decision.create path. Project This week, Decisions,
