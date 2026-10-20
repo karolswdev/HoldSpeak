@@ -4,7 +4,7 @@ This reference supplements [API surface](API_SURFACE.md). The existing real-app
 generator owns the route roster; this census adds static handler evidence.
 It does not invent request/response schemas for raw `Request` handlers.
 
-Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **782 method/route entries**.
+Census baseline snapshot: `675401a857b85336d4acaa8c65383dfc9636e4c8`. Handler evidence and test candidates are read from the current working tree at generation. **804 method/route entries**.
 
 **Verification boundary:** inspect the full endpoint ledger, `docs/generated/api-reference.json` (not in git; run `scripts/gen_docs.sh` to write it),
 and the [declared OpenAPI schemas](generated/openapi.json) for transport models.
@@ -39,7 +39,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.activity.nudges` | 4 |
 | `web.routes.activity.plugin_jobs` | 5 |
 | `web.routes.activity.rules` | 6 |
-| `web.routes.agent_hand` | 11 |
+| `web.routes.agent_hand` | 15 |
 | `web.routes.authority` | 7 |
 | `web.routes.automations` | 22 |
 | `web.routes.cadence` | 13 |
@@ -63,7 +63,7 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.desk_actuators` | 7 |
 | `web.routes.desk_parked` | 1 |
 | `web.routes.desk_seed` | 2 |
-| `web.routes.desk_windows` | 4 |
+| `web.routes.desk_windows` | 5 |
 | `web.routes.dictation.agent` | 5 |
 | `web.routes.dictation.blocks` | 6 |
 | `web.routes.dictation.floor` | 3 |
@@ -80,8 +80,8 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.meetings.action_items` | 7 |
 | `web.routes.meetings.aftercare` | 6 |
 | `web.routes.meetings.crud` | 12 |
-| `web.routes.meetings.insights` | 3 |
-| `web.routes.meetings.intel` | 8 |
+| `web.routes.meetings.insights` | 4 |
+| `web.routes.meetings.intel` | 9 |
 | `web.routes.meetings.live` | 5 |
 | `web.routes.meetings.speakers` | 3 |
 | `web.routes.memory` | 6 |
@@ -99,25 +99,26 @@ the shared RuntimeBus. Companion client tags come from the existing generator.
 | `web.routes.primitives.invocations` | 3 |
 | `web.routes.primitives.kbs` | 8 |
 | `web.routes.primitives.model_profiles` | 8 |
+| `web.routes.primitives.note_outcomes` | 5 |
 | `web.routes.primitives.notes` | 5 |
 | `web.routes.primitives.profiles` | 11 |
 | `web.routes.primitives.recipes` | 9 |
-| `web.routes.primitives.thoughts` | 20 |
-| `web.routes.primitives.workbenches` | 29 |
+| `web.routes.primitives.thoughts` | 21 |
+| `web.routes.primitives.workbenches` | 32 |
 | `web.routes.primitives.workflows` | 7 |
 | `web.routes.project_briefs` | 8 |
-| `web.routes.project_door` | 2 |
+| `web.routes.project_door` | 3 |
 | `web.routes.project_reviews` | 5 |
 | `web.routes.project_setup` | 12 |
 | `web.routes.project_updates` | 13 |
 | `web.routes.projections` | 2 |
 | `web.routes.projects` | 36 |
 | `web.routes.proposals` | 9 |
-| `web.routes.providers` | 17 |
+| `web.routes.providers` | 18 |
 | `web.routes.repositories` | 10 |
 | `web.routes.roadmaps` | 4 |
 | `web.routes.scheduled_recordings` | 6 |
-| `web.routes.setup` | 17 |
+| `web.routes.setup` | 21 |
 | `web.routes.steward` | 10 |
 | `web.routes.sync` | 3 |
 | `web.routes.system.agent_capabilities` | 1 |

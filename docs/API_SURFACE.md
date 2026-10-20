@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 800 (plus static mounts). iOS-consumed: 89. Web-consumed: 627.
+Routes: 804 (plus static mounts). iOS-consumed: 89. Web-consumed: 631.
 
 ## device_audio_ws
 
@@ -1132,14 +1132,18 @@ Routes: 800 (plus static mounts). iOS-consumed: 89. Web-consumed: 627.
 | POST | `/api/setup/first-value/start` | web |
 | POST | `/api/setup/first-value/{attempt_id}/event` | web |
 | POST | `/api/setup/first-value/{attempt_id}/finish` | web |
+| GET | `/api/setup/found` | web |
 | GET | `/api/setup/hub-default-summary` | web |
+| POST | `/api/setup/lan` | web |
 | GET | `/api/setup/local-ai` | web |
 | POST | `/api/setup/local-ai` | web |
 | POST | `/api/setup/local-ai/cancel` | server only |
 | PUT | `/api/setup/onboarding` | web |
+| POST | `/api/setup/people` | web |
 | GET | `/api/setup/runtime-options` | web |
 | POST | `/api/setup/runtime-test` | web |
 | GET | `/api/setup/status` | ios, web |
+| POST | `/api/setup/use` | web |
 
 ## web.routes.steward
 

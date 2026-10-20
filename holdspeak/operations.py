@@ -2263,6 +2263,9 @@ from holdspeak.room_operations import STEWARD_CONNECTOR_OPERATIONS  # noqa: E402
 from holdspeak.channel_operations import CHANNEL_OPERATIONS  # noqa: E402
 # The Conductor K1: the one-press agent hook install.
 from holdspeak.onboarding_operations import ONBOARDING_OPERATIONS  # noqa: E402
+# Betterment ST3-ST5: Setup's HTTP operations. They have no MCP exposure until
+# ST9, but the web face already reaches the shared registry now.
+from holdspeak.setup_operations import SETUP_OPERATIONS  # noqa: E402
 # Conductor K2: Hand to agent.
 from holdspeak.agent_operations import AGENT_OPERATIONS  # noqa: E402
 # PHILO-16 (16b): the desk's windows (the MCP rows).
@@ -2400,7 +2403,7 @@ DESCRIPTORS: tuple[OperationDescriptor, ...] = (
     ZONE_FILE, ZONE_UNFILE, ZONE_MEMBERS, KB_MEMBER_ADD, KB_MEMBER_REMOVE, KB_MEMBERS,
     DECISION_DELETE, DECISION_STATUS, DECISION_SUPERSEDE,
     KERNEL_RECEIPT_READ, MEMORY_OBSERVATIONS_READ, MEMORY_PAGE_READ,
-) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + AGENT_OPERATIONS \
+) + ROOM_OPERATIONS + STEWARD_CONNECTOR_OPERATIONS + CHANNEL_OPERATIONS + ONBOARDING_OPERATIONS + SETUP_OPERATIONS + AGENT_OPERATIONS \
     + DESK_WINDOW_OPERATIONS + NOTE_OUTCOME_OPERATIONS + (TODAY_GET,)
 
 #: The RuntimeServices / WebContext fields the catalogue binds to.

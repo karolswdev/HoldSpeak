@@ -180,7 +180,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       { key: "configure-integration" },
       { key: "configure-runs-on", scope: "models" },
       { key: "open-concierge", scope: "models" },
-      { key: "read-runtime-docs", scope: "guide" },
+      // The retired Guide alias is parked under _parked/setupGuideAlias.ts.
       // Betterment setup ST1: the parked Rhythm window and Change places.
       { key: "configure-cadence", scope: "rhythm" },
       { key: "change-places", scope: "wallpaper" },
@@ -245,6 +245,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
      and a Go/⌘K door with it. */
   {
     action: "configure-setup",
+    aliases: [{ key: "read-runtime-docs" }],
     windowId: "surface-setup",
     label: "Setup",
     description: "What this device is ready for, check by check.",

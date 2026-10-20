@@ -246,6 +246,9 @@ def _boot(
     monkeypatch.setenv("HOLDSPEAK_CLI_ENGINES", "off")
     # Betterment Q7: no Ask asks an engine's server whether it takes tools.
     monkeypatch.setenv("HOLDSPEAK_ASK_SERVER_TOOLS", "off")
+    # Setup's automatic LAN look is opt-in; this rig has no owner-approved
+    # network producer and must never probe the host network.
+    monkeypatch.setenv("HOLDSPEAK_SETUP_LAN_SCAN", "off")
     # PHILO-16 rig gaps (G3 closes): the same env as graph_walk's
     # `_isolated_hub_env`: no git system config, no real gh/acli, gh's config
     # and every key store inside this HOME, no desktop notification.
