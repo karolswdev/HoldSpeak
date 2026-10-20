@@ -386,6 +386,64 @@ class TestBlankProject:
         assert captured[0]["name"] == "Test blank"
 
 
+class TestFoundLinkResults:
+    def test_create_reports_each_leaf_result(self) -> None:
+        captured: list[dict[str, Any]] = []
+
+        def mock_create(principal: Any, payload: dict, **kw: Any) -> dict:
+            captured.append(payload)
+            return {"project_id": "proj_material", "activated_watches": []}
+
+        mock_ps = MagicMock()
+        mock_ps.create_from_setup.side_effect = mock_create
+        mock_ps.associate_meeting.return_value = True
+        mock_ps.add_resource.return_value = {"resource_ref": "note:n1"}
+
+        result = ProjectDoorService(project_service=mock_ps).create(
+            _P,
+            "Material project",
+            found={"meeting_ids": ["m1"], "note_ids": ["n1"]},
+        )
+
+        assert result["found_links"] == [
+            {"kind": "meeting", "id": "m1", "state": "linked", "error": None},
+            {"kind": "note", "id": "n1", "state": "linked", "error": None},
+        ]
+
+    def test_service_error_is_preserved_per_leaf(self) -> None:
+        mock_ps = MagicMock()
+        mock_ps.create_from_setup.return_value = {"project_id": "proj_material", "activated_watches": []}
+        mock_ps.associate_meeting.return_value = True
+        mock_ps.add_resource.side_effect = ServiceError("notes_unavailable", "Notes store is read-only")
+
+        result = ProjectDoorService(project_service=mock_ps).create(
+            _P,
+            "Material project",
+            found={"meeting_ids": ["m1"], "note_ids": ["n1"]},
+        )
+
+        assert result["found_links"] == [
+            {"kind": "meeting", "id": "m1", "state": "linked", "error": None},
+            {"kind": "note", "id": "n1", "state": "failed", "error": "Notes store is read-only"},
+        ]
+
+    def test_existing_project_can_retry_material_without_a_source(self) -> None:
+        mock_ps = MagicMock()
+        mock_ps.add_resource.return_value = {"resource_ref": "note:n1"}
+
+        result = ProjectDoorService(project_service=mock_ps).create(
+            _P,
+            project_id="proj_existing",
+            found={"meeting_ids": [], "note_ids": ["n1"]},
+        )
+
+        assert result["projectId"] == "proj_existing"
+        assert result["found_links"] == [
+            {"kind": "note", "id": "n1", "state": "linked", "error": None},
+        ]
+        mock_ps.add_source_watches.assert_not_called()
+
+
 # ── (d) Failing count: plain reason, create still works ───────────
 
 

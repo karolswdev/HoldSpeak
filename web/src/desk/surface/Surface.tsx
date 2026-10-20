@@ -492,6 +492,7 @@ export function PaneWell({
   raw,
   pane,
   changedAt,
+  onData,
 }: {
   /** The pane renders while the peek is live/resyncing. */
   live: boolean;
@@ -505,6 +506,8 @@ export function PaneWell({
   pane?: PaneGeometry | null;
   /** Epoch ms of the last content change — the Δ fact in the head. */
   changedAt?: number | null;
+  /** Optional live input for an embedded owner pane. */
+  onData?: (data: string) => void;
 }) {
   const preRef = useRef<HTMLPreElement | null>(null);
   const [query, setQuery] = useState("");
@@ -543,7 +546,7 @@ export function PaneWell({
         // The screen tone is set on the frame BEFORE xterm opens — the
         // suspense gap and the mount both paint the same opaque well.
         <Suspense fallback={<div className="terminal-well-screen" />}>
-          <XtermPane raw={raw} pane={pane} search={{ query, seq }} />
+          <XtermPane raw={raw} pane={pane} search={{ query, seq }} onData={onData} />
         </Suspense>
       ) : (
         <pre ref={preRef} className="desk-session-pane">

@@ -22,6 +22,14 @@ export interface CountResponse {
 
 export interface CreateResponse {
   projectId: string;
+  found: FoundLinkResult[];
+}
+
+export interface FoundLinkResult {
+  kind: "meeting" | "note";
+  id: string;
+  state: "linked" | "failed";
+  error: string | null;
 }
 
 export type PreviewSourceState = "checked" | "cant_check" | "not_checked";
@@ -44,6 +52,8 @@ export interface PreviewFoundItem {
   detail: string;
   attendees?: string[];
   selected: boolean;
+  linkState: "pending" | "linked" | "failed";
+  linkError: string | null;
 }
 
 export interface PreviewResponse {
@@ -85,8 +95,25 @@ function decodeCountResponse(raw: Record<string, unknown>): CountResponse {
 }
 
 function decodeCreateResponse(raw: Record<string, unknown>): CreateResponse {
+  const found = Array.isArray(raw.found_links)
+    ? raw.found_links.flatMap((rawItem) => {
+        if (!rawItem || typeof rawItem !== "object") return [];
+        const item = rawItem as Record<string, unknown>;
+        const kind: FoundLinkResult["kind"] | null = item.kind === "note" || item.kind === "meeting" ? item.kind : null;
+        const id = typeof item.id === "string" ? item.id : "";
+        const state: FoundLinkResult["state"] | null = item.state === "linked" || item.state === "failed" ? item.state : null;
+        if (!kind || !id || !state) return [];
+        return [{
+          kind,
+          id,
+          state,
+          error: typeof item.error === "string" && item.error.trim() ? item.error : null,
+        }];
+      })
+    : [];
   return {
     projectId: String(raw.project_id ?? raw.projectId ?? ""),
+    found,
   };
 }
 
@@ -139,6 +166,9 @@ function decodePreviewFound(raw: Record<string, unknown>): PreviewFoundItem {
     detail: String(raw.detail ?? ""),
     attendees: Array.isArray(raw.attendees) ? raw.attendees.map(String) : undefined,
     selected: raw.selected !== false,
+    // Link outcomes arrive only in the canonical found_links response.
+    linkState: "pending",
+    linkError: null,
   };
 }
 
@@ -167,10 +197,11 @@ export async function doorPreview(outcome: string, pasted: string): Promise<Prev
 export async function doorAddSources(
   projectId: string,
   sources: DoorSourcePayload[],
+  found?: { meeting_ids: string[]; note_ids: string[] },
 ): Promise<CreateResponse> {
   const raw = await apiFetch<Record<string, unknown>>(
     "/api/projects/door",
-    { method: "POST", json: { project_id: projectId, sources } },
+    { method: "POST", json: { project_id: projectId, sources, ...(found ? { found } : {}) } },
   );
   return decodeCreateResponse(raw);
 }

@@ -122,6 +122,38 @@ CALENDAR_OPEN_SETTINGS = OperationDescriptor(
                                     "privacy pane on this device (HTTP only, in no palette)."),
 )
 
+CONNECTION_SIGN_IN = OperationDescriptor(
+    name="connection.signin",
+    version=1,
+    description="Start the provider's native browser sign-in in the Accounts terminal pane.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "provider_id": {"enum": ["github", "jira", "confluence"]},
+            "site": {"type": "string"},
+            "email": {"type": ["string", "null"]},
+        },
+        "required": ["provider_id", "site"],
+        "additionalProperties": False,
+    },
+    principal="derived by the transport; owner only",
+    effect="write",
+    result="{status, run_id, target} and the receipt",
+    refusals=_CONTRACT_REFUSALS + (
+        "owner_required", "provider_unsupported", "site_invalid", "email_invalid",
+        "cli_unavailable", "cli_help_failed", "browser_flow_unsupported",
+        "terminal_unavailable", "terminal_target_failed", "spawn_failed",
+    ),
+    completion="the returned terminal target streams the native CLI; connection.recheck runs after its exit",
+    exposure=("http:POST /api/connections/{provider}/signin",),
+    service="connection_signin_service",
+    method="start_sign_in",
+    owner_only=True,
+    blocking_io=True,
+    owner_press=True,
+    admission=Admission("admitted", "The owner's press starts a provider-owned sign-in process in the shared terminal pane."),
+)
+
 #: The Conductor K1's rows (and R7's People access, PHILO-15 04's system open), in export order.
 ONBOARDING_OPERATIONS: tuple[OperationDescriptor, ...] = (AGENT_HOOKS_INSTALL, AGENT_HOOKS_REMOVE, PEOPLE_ACCESS_SET,
-                                                          CALENDAR_OPEN_SETTINGS)
+                                                          CALENDAR_OPEN_SETTINGS, CONNECTION_SIGN_IN)
