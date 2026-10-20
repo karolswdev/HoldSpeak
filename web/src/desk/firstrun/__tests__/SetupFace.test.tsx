@@ -70,7 +70,7 @@ describe("Setup ST3–ST5", () => {
         ? new Promise((resolve) => { read = resolve; })
         : original(path, init));
     render(<SetupFace initial={inventory({ owner_name: "", rows: [{ ...inventory().rows[0], state: "works" }] })} />);
-    const name = screen.getByRole("textbox", { name: "Your name", exact: true });
+    const name = screen.getByRole("textbox", { name: "Your name" });
     expect(name).toBeDisabled();
     await act(async () => { read({ owner: { name: "", aliases: [] }, _revision: "1" }); });
     expect(name).toBeEnabled();

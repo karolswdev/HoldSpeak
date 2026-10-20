@@ -93,7 +93,7 @@ export function useNextOneOnOne(): string | null {
 /** The caption and whether its first read is still out: the caption adds a
  *  line to the drawer, so the Screen marks the People drawer busy until the
  *  read ends (a late caption moved the Conductor drawer 24 px under load). */
-export function useNextOneOnOneRead(): { label: string | null; reading: boolean } {
+export function useNextOneOnOneRead(todayOnly = false): { label: string | null; reading: boolean } {
   const [label, setLabel] = useState<string | null>(null);
   const [reading, setReading] = useState(true);
   // The newest read wins: an older answer that lands late is dropped.
@@ -104,7 +104,9 @@ export function useNextOneOnOneRead(): { label: string | null; reading: boolean 
       .then((people) => {
         if (mine !== generation.current) return;
         setReading(false);
-        if (people.readiness !== "ready" || !people.complete || !people.nextOneOnOne) setLabel(null);
+        const isToday = people.nextOneOnOne &&
+          new Date(people.nextOneOnOne).toDateString() === new Date().toDateString();
+        if (people.readiness !== "ready" || !people.complete || !people.nextOneOnOne || (todayOnly && !isToday)) setLabel(null);
         else setLabel(`1:1 ${formatDockTime(people.nextOneOnOne)}`);
       })
       .catch(() => {
@@ -112,7 +114,7 @@ export function useNextOneOnOneRead(): { label: string | null; reading: boolean 
         setReading(false);
         setLabel(null);
       });
-  }, []);
+  }, [todayOnly]);
   useEffect(read, [read]);
   useOnDeskChanged(read);
   return { label, reading };

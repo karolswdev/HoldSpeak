@@ -1,7 +1,7 @@
 // HS-95-03 — the shell: the dock (chips, focus/restore/close, reset), MRU
 // keyboard cycling, edge-snap math, and the surface dispatcher the chrome
 // routes through instead of navigating.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DeskWindowFrame,
@@ -22,6 +22,8 @@ import {
 } from "../shell";
 import * as deskApi from "../api";
 import { useDesk } from "../store";
+import { verbById } from "../verbRegistry";
+import { keyContext } from "../keymap";
 
 beforeEach(() => {
   localStorage.clear();
@@ -118,7 +120,12 @@ describe("the dock", () => {
     render(<TwoWindows />);
     useDesk.getState().setPanelRect("wa", { x: 5, y: 6, w: 400, h: 300 }, true);
     useDesk.getState().minimizePanel("wb");
-    fireEvent.click(screen.getByRole("button", { name: "Reset layout" }));
+    // S3 removes layout controls from the Dock; the retained verb still
+    // clears both live window state and its persisted placement.
+    expect(screen.queryByRole("button", { name: "Reset layout" })).toBeNull();
+    const reset = verbById("desk.reset-layout")!;
+    expect(reset.ghost(keyContext())).toBeNull();
+    act(() => reset.run(keyContext()));
     const s = useDesk.getState();
     expect(s.panelRects).toEqual({});
     expect(s.panelMin).toEqual([]);
