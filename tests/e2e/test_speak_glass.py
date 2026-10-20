@@ -101,7 +101,13 @@ AGAIN = "Ship the queue for platform in October"
 
 APPLIED_TEXT = "Ship the Q4 platform in October"
 
-def _boot(tmp_path: Path, monkeypatch: Any) -> tuple[Any, str]:
+def _boot(
+    tmp_path: Path,
+    monkeypatch: Any,
+    *,
+    on_transcribe: Any = None,
+    token: str = TOKEN,
+) -> tuple[Any, str]:
     """A DURABLE hub in an isolated HOME.
 
     `glass_infra._boot` builds the bare server: an in-process correction
@@ -138,8 +144,9 @@ def _boot(tmp_path: Path, monkeypatch: Any) -> tuple[Any, str]:
             on_bookmark=lambda *_: None,
             on_stop=lambda: None,
             get_state=lambda: {},
+            on_transcribe=on_transcribe,
         ),
-        auth_token=TOKEN,
+        auth_token=token,
         dictation_journal_repository=database.dictation_journal,
         dictation_corrections_repository=database.dictation_corrections,
     )
@@ -155,9 +162,9 @@ def _enable_corrections() -> None:
     cfg.dictation.pipeline.corrections_enabled = True
     cfg.save(path=config_module.CONFIG_FILE)
 
-def _init_desk(page: Any, url: str) -> None:
-    page.goto(f"{url}/?token={TOKEN}", wait_until="load")
-    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+def _init_desk(page: Any, url: str, *, token: str = TOKEN) -> None:
+    page.goto(f"{url}/?token={token}", wait_until="load")
+    _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=token)
     _normal_chair(page)
 
 def _stage_speak(page: Any) -> None:
@@ -410,12 +417,14 @@ def _run(tmp_path, monkeypatch, width: int, height: int) -> None:
             page.set_viewport_size({"width": width, "height": height})
             _init_desk(page, url)
             _stage_speak(page)
-            # The four wings are always present (design D2(c)).
+            # The five wings are always present (design D2(c), C11).
             # (the strip renders its labels uppercase — canon C's caption step)
             wings = _wing_names(page)
             # Folded, the menu also holds the configuration door, after the faces.
             door = ["CONFIGURE DICTATION"] if _folded(page).count() else []
-            assert wings == ["SPEAK", "JOURNAL", "BLOCKS", "LEARNED"] + door, wings
+            assert wings == [
+                "SPEAK", "JOURNAL", "BLOCKS", "LEARNED", "VOICE COMMANDS"
+            ] + door, wings
             _loop(page, width)
             _assert_clean(page, errors)
             browser.close()

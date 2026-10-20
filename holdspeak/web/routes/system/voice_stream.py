@@ -36,14 +36,21 @@ log = get_logger("web.routes.system")
 def _macros_enabled(config_snapshot: Any) -> bool:
     """True when this configuration has voice macros turned on.
 
-    Off by default, and checking first keeps the streaming final byte-identical
-    (no election, no dispatch) for every desk that never configured a macro.
+    New desks receive the five closed Desk verbs; an explicit disabled setting
+    keeps the streaming final byte-identical (no election, no dispatch).
     """
     macros = getattr(getattr(config_snapshot, "dictation", None), "macros", None)
     return macros is not None and bool(getattr(macros, "enabled", False))
 
 
-def _dispatch_stream_macro(ctx: WebContext, text: str, config_snapshot: Any) -> Any:
+def _dispatch_stream_macro(
+    ctx: WebContext,
+    text: str,
+    config_snapshot: Any,
+    *,
+    principal: Any,
+    before_record: Callable[[], None],
+) -> Any:
     """Fire a configured macro for a streamed dictate-for-delivery utterance.
 
     The same bounded, guarded connector the hotkey path and the remote relay
@@ -53,14 +60,28 @@ def _dispatch_stream_macro(ctx: WebContext, text: str, config_snapshot: Any) -> 
     (a macro failure must never block plain dictation).
     """
     from ....dictation_runner import dispatch_voice_command
+    from ....mcp.tools import dispatch as mcp_dispatch
 
     def _type(typed: str) -> None:
         if ctx.on_remote_dictation is None:
             raise RuntimeError("voice_macro_direct_gesture_required")
         ctx.on_remote_dictation(typed, target="focused")
 
+    def _desk_dispatch(name: str, arguments: dict[str, Any]) -> Any:
+        if name == "meeting.start_capture":
+            # The browser stream owns the browser floor while it transcribes.
+            # Release that ended interval before the same MCP operation starts
+            # Meeting, otherwise the operation refuses its own microphone.
+            before_record()
+        return mcp_dispatch(name, arguments, principal)
+
     try:
-        return dispatch_voice_command(text, config=config_snapshot, type_writer=_type)
+        return dispatch_voice_command(
+            text,
+            config=config_snapshot,
+            type_writer=_type,
+            desk_dispatch=_desk_dispatch,
+        )
     except Exception as exc:  # a macro failure never blocks plain dictation
         log.error(f"Streaming voice-command dispatch failed: {exc}")
         return None
@@ -156,6 +177,7 @@ def build_voice_stream_router(
             )
             await websocket.close()
             return
+        browser_floor_held = True
 
         import numpy as np
 
@@ -170,7 +192,9 @@ def build_voice_stream_router(
                  "reason": exc.reason,
                  "failure_category": "speech_session_refused"}
             )
-            _release_browser_audio_floor(ctx)
+            if browser_floor_held:
+                _release_browser_audio_floor(ctx)
+                browser_floor_held = False
             await websocket.close()
             return
         mic_handle = interval.handle
@@ -294,17 +318,36 @@ def build_voice_stream_router(
                 # delivery that follows carries ``raw: true``, which never
                 # dispatches, so a keyword fires exactly once for one utterance.
                 # A speak-to-fill NEVER dispatches: typing with your voice is not
-                # a command. Macros off (the default) -> this block is inert.
+                # a command. An explicit disabled setting -> this block is inert.
                 fired = None
                 if _macros_enabled(config_snapshot):
+                    def _before_record() -> None:
+                        nonlocal browser_floor_held
+                        if browser_floor_held:
+                            _release_browser_audio_floor(ctx)
+                            browser_floor_held = False
+
                     def _fire() -> Any:
-                        return _dispatch_stream_macro(ctx, final_text, config_snapshot)
+                        return _dispatch_stream_macro(
+                            ctx,
+                            final_text,
+                            config_snapshot,
+                            principal=principal,
+                            before_record=_before_record,
+                        )
 
                     # Inside the SAME cancellation election the hotkey path uses:
                     # a macro is a real connector effect, and a session cancelled
                     # while Whisper was working must not fire one.
-                    elected, fired = interval.session.fence.publish(
-                        "browser stream voice-command dispatch", _fire
+                    # MCP-backed desk verbs can start native capture and may
+                    # block while that controller admits the operation. Keep
+                    # the fenced election and callback together, but run the
+                    # synchronous connector off the event loop so /health and
+                    # the rest of the desk remain responsive.
+                    elected, fired = await asyncio.to_thread(
+                        interval.session.fence.publish,
+                        "browser stream voice-command dispatch",
+                        _fire,
                     )
                     if not elected:
                         await send(
@@ -321,19 +364,20 @@ def build_voice_stream_router(
                 if fired is not None and fired.handled:
                     # The command consumed the utterance: no pipeline pass, no
                     # journal row, and nothing typed as prose.
-                    await send(
-                        {
-                            "type": "final",
-                            "text": "",
-                            "fired": {
-                                "keyword": fired.keyword,
-                                "kind": fired.kind,
-                                "preview": fired.preview,
-                                "ok": fired.ok,
-                                "error": fired.error,
-                            },
-                        }
-                    )
+                    fired_frame: dict[str, Any] = {
+                        "type": "final",
+                        "text": "",
+                        "fired": {
+                            "keyword": fired.keyword,
+                            "kind": fired.kind,
+                            "preview": fired.preview,
+                            "ok": fired.ok,
+                            "error": fired.error,
+                        },
+                    }
+                    if fired.result is not None:
+                        fired_frame["fired"]["result"] = fired.result
+                    await send(fired_frame)
                     return
                 # HS-176 C1 (the SPOKEN half): the sink the pipeline writes its
                 # own three loop facts into. The spoken leg is the one that runs
@@ -404,6 +448,7 @@ def build_voice_stream_router(
             # The socket closing IS the interval ending: the parent is cancelled
             # and closed here, never left holding authority.
             sessions().close(principal, reason="browser_mic_stream_closed")
-            _release_browser_audio_floor(ctx)
+            if browser_floor_held:
+                _release_browser_audio_floor(ctx)
 
     return router

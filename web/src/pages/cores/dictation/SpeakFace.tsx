@@ -52,6 +52,9 @@ import { DICTATION_FAILURES } from "../../../lib/dictationRecovery";
 import type { MicPhase } from "../../../lib/micSession";
 import { readHotkeyCustody, type HotkeyCustody } from "./hotkeyCustody";
 import { useSpeechSetup, type SpeechSetupState } from "../../../desk/firstrun/SpeechSetup";
+import { openSurfaceOr } from "../../../desk/shell";
+import { useDesk } from "../../../desk/store";
+import type { VoiceCommandFired } from "../../../lib/micStreamSession";
 
 /** Whether a hostname is on a local/LAN network (RFC1918, loopback,
  *  link-local, CGNAT/Tailscale, or named local suffixes). Mirrors
@@ -91,6 +94,49 @@ function hostnameOf(url: string): string {
   } catch {
     return "";
   }
+}
+
+/** Apply the server's closed Desk result. A command receipt never invents an
+ * object: New note opens only the note returned by desk.create, and UI-only
+ * verbs reuse the same Desk openers as their menu verbs. */
+function openDeskCommandResult(
+  fired: VoiceCommandFired,
+  announce: (text: string, tone?: "ok" | "warn") => void,
+  setPhase: (phase: "landed" | "refused") => void,
+  setRefusal: (value: string) => void,
+): boolean {
+  if (!fired.ok || fired.kind !== "desk_verb") return false;
+  const value = fired.result ?? {};
+  const intent = value.ui_intent;
+  if (intent === "ask") {
+    useDesk.getState().openAsk();
+    announce("ASK HOLDSPEAK");
+    return true;
+  }
+  if (intent === "open_today") {
+    openSurfaceOr("open-intelligence", "/");
+    announce("TODAY");
+    return true;
+  }
+  if (value.desk_verb === "new_note") {
+    const created = value.created;
+    const note =
+      created && typeof created === "object" && "note" in created
+        ? (created as { note?: unknown }).note
+        : created;
+    const id = useDesk.getState().adoptCreated("note", note);
+    if (id) {
+      useDesk.getState().openPullout(`note:${id}`);
+      announce("NEW NOTE");
+      return true;
+    }
+    setPhase("refused");
+    setRefusal("command_result_missing");
+    announce("NEW NOTE NOT OPENED", "warn");
+    return true;
+  }
+  announce(fired.preview);
+  return true;
 }
 
 /** Format the egress label from a host and its LAN classification. */
@@ -477,6 +523,13 @@ function TransportRow({
       onLevel: deck.setLevel,
       onCommand: (fired) => {
         deck.setLandedMs(null);
+        if (openDeskCommandResult(fired, announce, deck.setPhase, deck.setRefusal)) {
+          if (!fired.ok) {
+            deck.setPhase("refused");
+            deck.setRefusal("command_failed");
+          }
+          return;
+        }
         if (fired.ok) {
           deck.setPhase("landed");
           deck.setRefusal("");

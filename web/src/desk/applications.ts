@@ -101,6 +101,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     dock: { order: 1, launch: "surface" },
     go: { group: "daily", order: 7 },
     shortcut: "⌃1",
+    aliases: [
+      { key: "configure-commands", scope: "commands" },
+      { key: "surface-commands", scope: "commands" },
+    ],
     surface: {
       eyebrow: "Daily cockpit",
       minW: 560,
@@ -416,14 +420,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/commands",
     go: { group: "work", order: 2, label: "Voice commands" },
     group: "tool",
-    surface: {
-      eyebrow: "Voice commands",
-      minW: 460,
-      load: () =>
-        import("../pages/cores/CommandsCore").then((module) => ({
-          default: module.CommandsCore,
-        })),
-    },
   },
   {
     action: "open-people",
