@@ -4474,7 +4474,9 @@
         "POST"
       ],
       "module": "web.routes.onboarding",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/onboarding/agents/use",
