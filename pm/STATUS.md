@@ -4,9 +4,46 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Agent review delivery)
+**Last updated:** 2026-10-19 (native recording glyph delivery)
 
 ## Current phase
+
+C12 shows Recording · mm:ss in the macOS menu bar itself, using the
+meeting's start stamp. Stop in its menu calls the existing runtime Stop.
+The presence page's connection lamp supplies availability; a disconnected
+desk reads Desk not running and disables Stop. An idle update clears the
+recording title and stale Stop state, including after the panel linger.
+
+The visible-title check fails before the fix. All 30 focused presence checks
+pass afterward, including the real Foundation Objective-C action target and
+the parent Stop-event bridge. A real Foundation dictionary regression also
+caught and fixes the disconnect read ignoring WebKit's native value.
+The former focused runtime set also passed.
+Native menu rendering and physical recording remain unobserved. Required
+quick: 427 affected pytest, 108 sweep, 27 canon and 1,116 repo guards pass.
+
+C11 ships five closed desk phrases in Speak. Record, Stop and New note
+use authenticated MCP operations; Ask and Today use the existing Desk openers.
+New note opens the exact stored note returned by the producer. Commands is
+now the Voice commands wing of Speak; a saved Off choice remains off.
+A saved Commands window migrates to that wing. Desk-command tests show an
+explicit Preview and do not run a connector; the guide describes the new
+defaults and the separate custom-action tests.
+Synchronous command dispatch stays off the event loop.
+
+Record releases the ended browser claim before starting Meeting. A real
+recording exposed a missing Stop path: its microphone claim rejected the
+second Talk. The fix admits only the closed Stop command during recording,
+without taking or releasing Meeting's claim. Ordinary dictation, field
+microphones and other commands retain the named refusal; no journal row is
+written. The regression fails before the fix and passes after it.
+
+Focused Python: 33 checks pass, including actual MCP/controller Record and
+spoken Stop, responsiveness and the restricted recording path. Native audio
+is simulated in process; C10 separately verifies child ownership. The real
+authenticated note-write browser proof passes at 1440/393. Native hardware
+and concurrent native/browser microphone acceptance remain unobserved.
+Required quick: 4,092 web, 320 affected pytest, 108 sweep, 27 canon and 1,116 repo guards pass.
 
 AG12 adds Review by to Hand to agent and Start an agent. A builder commit
 starts a reviewer helper in its own read-only worktree. Explicit MUST
@@ -91,9 +128,9 @@ same-ID PCM recovery. Required quick: 160 affected, 110 sweep, 27 canon and
 1,116 repo guards pass. Capture shots pass at 1440/393. Native
 hardware is not exercised; C10 now delivers the child-process boundary.
 
-**Betterment recovery: 90/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 92/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `41f4ebc9f`, frontend `0a0097e98c25a767`, PID 54957 (#1384).
+backend `53783b27f`, frontend `fcc01f42cb0f8823`, PID 71110 (#1385).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.

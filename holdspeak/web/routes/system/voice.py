@@ -355,12 +355,12 @@ def build_voice_router(ctx: WebContext) -> APIRouter:
         except VoiceMacroError as exc:
             return JSONResponse({"ok": False, "error": str(exc)}, status_code=400)
 
-        if action.kind == "type_text":
+        if action.kind in {"type_text", "desk_verb"}:
             return JSONResponse({
                 "ok": True,
                 "tested": False,
                 "preview": action.preview(),
-                "note": "types into the focused app",
+                "note": f"Preview · {action.preview()}" if action.kind == "desk_verb" else "types into the focused app",
             })
 
         from ....plugins.actuators import ActuatorProposal
