@@ -8,14 +8,16 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-The main watcher on 5bf3dc0c8 found four failures in its first shard:
-5,917 passed, 16 skipped and one xfailed. Three stored People replies had
-old date-dependent ordering or shapes. Their complete real producer replies
-are re-recorded. The drafter test now distinguishes inferred memory from a
-confirmed Project decision: a deterministic draft reads no inferred memory
-and retains its linked canonical decision exactly once. No product behavior
-changed. Root passed 24 collected producer checks and 41 People, Today and
-Needs consumers. Required quick: MAIN_WIRE_QUICK_PENDING.
+The main watcher on 5bf3dc0c8 found six failures in its first two Python
+shards: 11,495 passed, 21 skipped and one xfailed. Three stored People
+replies had old date-dependent ordering or shapes; three automation MCP and
+folder replies lacked the current Hand fields. Complete real producer
+replies are re-recorded. The drafter test distinguishes inferred memory
+from a confirmed Project decision: a deterministic draft reads no inferred
+memory and retains its linked canonical decision exactly once. No product
+behavior changed. Root passed 26 collected producer checks and 73 People,
+Today, Needs and automation consumers. The rest of the tape continues;
+there is no full-suite green claim. Required quick: MAIN_WIRE_QUICK_PENDING.
 
 Search uses one ranked stream, the last six successful opens, exact About
 for Cmd+Enter and live object verbs. Protected People support Open, Ask,
