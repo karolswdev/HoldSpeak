@@ -36,6 +36,7 @@ import { burstTimer } from "../../../desk/burstTimer";
 import { onReturnToTask } from "../../../desk/returnToTask";
 import { useWindowTitle } from "../../../desk/surface/title";
 import { useDesk } from "../../../desk/store";
+import { openSurfaceOr } from "../../../desk/shell";
 import { useWindowId } from "../../../desk/components/window/windowIdContext";
 import { SEND_OPEN, windowDoc } from "../../../desk/windowSend";
 import { MEETING_OPEN_EVENT, peekMeetingRequest, takeMeetingRequest, type MeetingOpenRequest } from "../../../desk/objectWindows";
@@ -310,6 +311,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
     ...(projects.some((project) => !project.is_archived) ? [{ type: "item" as const, id: "project", label: "Add to Project", onSelect: () => requestWell("project") }] : []),
     { type: "item", id: "markdown", label: "Export MD", onSelect: () => void exportMeeting("markdown") },
     { type: "item", id: "srt", label: "Export SRT", onSelect: () => void exportMeeting("srt") },
+    { type: "item", id: "settings", label: "Settings", onSelect: () => openSurfaceOr("configure-settings", "/settings", "meetings") },
     { type: "item", id: "park", label: "Park", ghost: parking ? "Busy" : undefined, onSelect: () => void park() },
   ];
   const hasSummary = meeting.has_summary === true || String(readMeetingIntel(meeting)?.summary ?? "").trim() !== "";

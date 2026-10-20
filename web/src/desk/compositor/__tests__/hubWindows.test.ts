@@ -45,7 +45,7 @@ beforeAll(() => {
 });
 const REGISTRY = {
   static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", "drawer:parked": "drawer", lane: "lane", conductor: "conductor",
-    "surface-project-memory": "surface", "surface-calendar-snapshot": "surface", "surface-concierge": "open-concierge" },
+    "surface-project-memory": "surface", "surface-calendar-snapshot": "surface", "surface-concierge": "open-concierge", "surface-engines": "configure-runs-on" },
   families: { "zone:": "zone", "drawer:project:": "drawer", "pullout:": "pullout" },
   retired: { zone: "no face", "surface-concierge": "Settings owns Engines", "open-concierge": "Settings owns Engines" },
   // (lane is static on the hub)
@@ -719,7 +719,7 @@ describe("PHILO-17: retired zone windows", () => {
     expect(useDesk.getState().zoneWindows).toEqual([]);
   });
 
-  it("closes a parked static application by its registry app name", async () => {
+  it("moves the retired Concierge row to the live Engines host once", async () => {
     const { fake, hub } = start([
       row("surface-concierge", { app: "open-concierge", depth: 1, revision: 2 }),
     ]);
@@ -728,6 +728,11 @@ describe("PHILO-17: retired zone windows", () => {
     expect(fake.calls.filter((call) => call.verb === "close" && call.id === "surface-concierge")).toHaveLength(1);
     expect(fake.state.windows.map((window) => window.id)).not.toContain("surface-concierge");
     expect(useDesk.getState().windowsById["surface-concierge"]).toBeUndefined();
+    expect(useDesk.getState().windowsById["surface-engines"]?.applicationKey).toBe("configure-runs-on");
+    useDesk.getState().closeSurfaceWindow("configure-runs-on");
+    hub.onFrame({ kind: "windows", id: "surface-concierge" });
+    await flush(hub);
+    expect(useDesk.getState().windowsById["surface-engines"]).toBeUndefined();
   });
 });
 

@@ -68,8 +68,10 @@ export const DEMOTED_ROUTES: DemotedRoute[] = [
     path: "/workbenches",
     surface: "open-workbenches",
   },
-  { path: "/profiles", surface: "configure-settings", scope: "models" },
-  { path: "/models", surface: "configure-settings", scope: "models" },
+  // Engines owns its own window; the legacy model addresses are deep links
+  // to that host and keep their old paths for callers and bookmarks.
+  { path: "/profiles", surface: "configure-runs-on", scope: "models" },
+  { path: "/models", surface: "configure-runs-on", scope: "models" },
   // HS-100-10 — Studio died; its address lands on Settings (the tools
   // it launched are search-reachable).
   { path: "/studio", surface: "configure-settings" },
