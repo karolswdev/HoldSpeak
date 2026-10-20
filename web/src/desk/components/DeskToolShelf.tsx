@@ -315,6 +315,7 @@ export function DeskToolShelf() {
   const prompt = useNamePrompt((s) => s.prompt);
   const decisionPrompt = prompt?.label === "Decision title";
   const [query, setQuery] = useState("");
+  const [decisionWhy, setDecisionWhy] = useState("");
   // -1 means the palette has not received an arrow press yet. The first
   // runnable object then wins, while contextual Send rows remain reachable
   // by arrows without stealing Enter on an object.
@@ -411,6 +412,7 @@ export function DeskToolShelf() {
       event.preventDefault();
       setPendingEnter(false);
       setQuery("");
+      setDecisionWhy("");
       usePalette.getState().setOpen(false);
       launchRef.current?.focus();
     };
@@ -421,6 +423,7 @@ export function DeskToolShelf() {
   useEffect(() => {
     if (open) searchRef.current?.focus();
     setQuery("");
+    setDecisionWhy("");
     setSel(-1);
     setExpandedId(null);
     setVerbSel(-1);
@@ -503,6 +506,7 @@ export function DeskToolShelf() {
   const close = () => {
     usePalette.getState().setOpen(false);
     setQuery("");
+    setDecisionWhy("");
   };
 
   const ctx: VerbContext = {
@@ -991,7 +995,7 @@ export function DeskToolShelf() {
     if (!prompt || !name) return;
     const { submit } = prompt;
     close(); // closing clears the prompt (chromeState)
-    submit(name);
+    submit(name, decisionWhy);
   };
 
   const runRow = (row: DeckRow) => {
@@ -1106,6 +1110,9 @@ export function DeskToolShelf() {
               onKeyDown={onDeckKeyDown}
             >
               {decisionPrompt ? <h2 className="desk-decision-prompt-title">New decision</h2> : null}
+              {decisionPrompt && prompt?.about ? (
+                <span className="surface-token" data-testid="decision-about-chip">About · {prompt.about.name}</span>
+              ) : null}
               <div className="desk-tool-search-head">
                 <label className="desk-tool-search">
                   <span className={decisionPrompt ? "desk-decision-prompt-label" : "sr-only"}>{prompt ? prompt.label : "Find, open or ask"}</span>
@@ -1123,6 +1130,15 @@ export function DeskToolShelf() {
                     }}
                   />
                 </label>
+                {decisionPrompt ? (
+                  <StringGadget
+                    label="Why"
+                    value={decisionWhy}
+                    placeholder="Why (optional)"
+                    onChange={setDecisionWhy}
+                    inputProps={{ "data-testid": "decision-why" } as Record<string, string>}
+                  />
+                ) : null}
                 <Button dense variant="ghost" className="desk-tool-close"
                   onKeyDown={(event) => {
                     if (event.key === "Enter") event.stopPropagation();

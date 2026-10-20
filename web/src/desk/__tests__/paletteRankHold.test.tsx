@@ -110,7 +110,7 @@ describe("the deck while its ranking reads are out", () => {
     const name = screen.getByTestId("palette-name");
     fireEvent.change(name, { target: { value: "Cutover notes" } });
     fireEvent.keyDown(name, { key: "Enter" });
-    expect(submit).toHaveBeenCalledWith("Cutover notes");
+    expect(submit).toHaveBeenCalledWith("Cutover notes", "");
   });
 
   it("a name prompt's Save submits its typed name during the hold", async () => {
@@ -119,7 +119,7 @@ describe("the deck while its ranking reads are out", () => {
     act(() => useNamePrompt.getState().ask({ label: "Name the note", submit }));
     fireEvent.change(screen.getByTestId("palette-name"), { target: { value: "  Cutover notes  " } });
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(submit).toHaveBeenCalledExactlyOnceWith("Cutover notes");
+    expect(submit).toHaveBeenCalledExactlyOnceWith("Cutover notes", "");
     expect(usePalette.getState().open).toBe(false);
     expect(useNamePrompt.getState().prompt).toBeNull();
   });

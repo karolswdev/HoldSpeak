@@ -227,6 +227,11 @@ class PrimitiveService:
             consequences_markdown=consequences_markdown,
             tags=tags or [],
         )
+        from .decision_record_service import DecisionRecordService
+
+        # The Desk row remains the edit surface, while the record ledger is
+        # the canonical identity consumed by Projects and Decisions.
+        DecisionRecordService(self._db).sync_from_desk(principal, decision.id)
         _launch_made(principal, "decision", decision.id)
         self._changed("decision", decision.id, "create")
         return decision.to_dict()
@@ -238,6 +243,9 @@ class PrimitiveService:
         decision = self._db.desk_decisions.update(decision_id, **fields)
         if decision is None:
             raise NotFound("decision", decision_id)
+        from .decision_record_service import DecisionRecordService
+
+        DecisionRecordService(self._db).sync_from_desk(principal, decision.id)
         self._changed("decision", decision_id, "update")
         return decision.to_dict()
 
@@ -255,6 +263,13 @@ class PrimitiveService:
         decision = self._db.desk_decisions.update(decision_id, status=status)
         if decision is None:
             raise NotFound("decision", decision_id)
+        from .decision_record_service import DecisionRecordService
+
+        # The retained Desk row is the owner's confirmation boundary. Keep
+        # the canonical source status readable after Confirm, while the
+        # record service protects any canonical edits from stale projection
+        # bytes.
+        DecisionRecordService(self._db).sync_from_desk(principal, decision.id)
         self._changed("decision", decision_id, "update")
         return decision.to_dict()
 

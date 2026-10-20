@@ -348,6 +348,47 @@ def test_create_from_desk_mints_idempotent_record(tmp_path):
     assert db.desk_decisions.get("desk-127").to_dict() == source_before
 
 
+def test_migrate_legacy_desk_decisions_copies_once_and_keeps_source(tmp_path):
+    db = Database(tmp_path / "records.db")
+    db.desk_decisions.upsert(
+        decision_id="legacy-proposed",
+        title="A named legacy decision",
+        status="proposed",
+    )
+    service = DecisionRecordService(db)
+
+    first = service.migrate_legacy_desk_decisions(None)
+    second = service.migrate_legacy_desk_decisions(None)
+
+    assert first == {"copied": 1, "existing": 0}
+    assert second == {"copied": 0, "existing": 1}
+    copied = service.records_for_source(None, "desk", "legacy-proposed")
+    assert len(copied) == 1
+    assert copied[0]["decision_text"] == "A named legacy decision"
+    assert db.desk_decisions.get("legacy-proposed") is not None
+
+
+def test_sync_from_desk_reconciles_title_then_about_and_why(tmp_path):
+    db = Database(tmp_path / "records.db")
+    db.desk_decisions.upsert(decision_id="desk-sync", title="Name first")
+    service = DecisionRecordService(db)
+
+    initial = service.sync_from_desk(None, "desk-sync")
+    db.desk_decisions.update(
+        "desk-sync",
+        context_markdown="About this choice.",
+        decision_markdown="Choose the durable path.",
+        consequences_markdown="Why: it leaves one trace.",
+        deciders=["Karol"],
+    )
+    updated = service.sync_from_desk(None, "desk-sync")
+
+    assert initial["decision_text"] == "Name first"
+    assert updated["decision_text"] == "Choose the durable path."
+    assert updated["rationale"] == "About this choice.\n\nWhy: it leaves one trace."
+    assert updated["owner"] == "Karol"
+
+
 def test_records_from_each_origin_have_the_same_shape(tmp_path):
     db = Database(tmp_path / "records.db")
     _accepted_meeting_decision(db)

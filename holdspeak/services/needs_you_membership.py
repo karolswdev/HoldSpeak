@@ -231,6 +231,7 @@ def decision_items(decisions: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
             "source": DECISION_SOURCE,
             "verbHref": None,
             "openRef": ref,
+            "status": str(decision.get("status") or ""),
             "severity": "warning",
         })
     return rows
@@ -1427,6 +1428,7 @@ def _read_decisions(db: Any, principal: Any) -> list[dict[str, Any]]:
             "title": desk.get("title") or desk.get("decision_markdown") or desk.get("id"),
             "projectId": "",
             "since": desk.get("created_at") or "",
+            "status": desk.get("status") or "proposed",
         })
     proposals: dict[str, list[Any]] = {}
 
