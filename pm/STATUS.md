@@ -4,9 +4,34 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (project automation result read state)
+**Last updated:** 2026-10-20 (native agent automations)
 
 ## Current phase
+
+AG14 completes automations that hand work to native agents. Do selects Hand;
+With lists installed native profiles, and Review by uses compatible native
+reviewers. Owner-only binding changes are checked before any write. Agent
+drafts stay drafts; the runner does not claim an agent started when queued.
+
+Scheduled Hand uses the existing durable owner delegation and parent receipt,
+without requiring an unrelated inference assignment. Repeated ticks and
+events do not launch twice. Changing the native profile, reviewer, instruction,
+sources or Put it in fences the old authority and turns the schedule off until
+the owner approves When again. Hand remains prepare-only for Send destinations.
+
+Root independently passed 28 focused cases, including schedule authority,
+the real private-hub queue/Done/Today/readback loop and ordinary Do → With →
+Review browser flows at 1440/393. The native leaf is a private fixture process;
+live Claude/Codex provider work is not claimed. All 32 web consumers, type
+check and build pass. The chosen native agent shows its human name.
+Required quick: 4,078 web and 4,273 Python checks passed (1 skipped); 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.
+The first required run passed all 4,078 web checks, 4,264 other affected
+checks, 110 desk sweep, 27 canon and 1,116 guards. Its eight failures were
+the canonical schema snapshot and seven recorded response shapes. Root
+regenerated the snapshot from a fresh DB and the complete responses from
+the real producer (26 cases pass). The extra schedule fencing is limited to
+native Hand work; ordinary Run instruction edits retain their schedule.
+All 24 focused schedule/schema cases and 32 web consumers pass afterward.
 
 Project automation NEW now follows the latest completed artifact and its read
 state. The artifact carries the exact project-update ID; Open latest fetches

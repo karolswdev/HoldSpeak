@@ -1756,7 +1756,11 @@ CREATE TABLE IF NOT EXISTS workbenches (
     spend_limit_usd REAL,
     -- Betterment A4: the When he chose, as JSON ({"kind": "schedule" | "event"
     -- | "manual", "reaction_id"}); '' for an automation from before A4.
-    when_json TEXT NOT NULL DEFAULT ''
+    when_json TEXT NOT NULL DEFAULT '',
+    -- Betterment AG14: hand each source item to an installed agent.
+    do_kind TEXT NOT NULL DEFAULT 'run',
+    agent_profile TEXT NOT NULL DEFAULT '',
+    review_by TEXT NOT NULL DEFAULT ''
 );
 CREATE TABLE IF NOT EXISTS workbench_items (
     id TEXT PRIMARY KEY,

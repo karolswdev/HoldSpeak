@@ -10,6 +10,9 @@
     "sources": [],
     "output_target": "inbox",
     "spend_limit_usd": null,
+    "do_kind": "run",
+    "agent_profile": "",
+    "review_by": "",
     "recipe_id": "recipe_a9_1",
     "profile_id": "stub-profile",
     "resolver_profile_id": null,
@@ -17,8 +20,8 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-10-18T22:44:35Z",
-    "last_modified": "2026-10-18T22:44:35Z",
+    "created_at": "2026-10-20T06:05:43Z",
+    "last_modified": "2026-10-20T06:05:43Z",
     "deleted": false,
     "items": [
      {
@@ -35,8 +38,8 @@
       "result_egress": null,
       "mint_attempted": false,
       "tokens_consumed": 0,
-      "created_at": "2026-10-18T22:44:35Z",
-      "last_modified": "2026-10-18T22:44:35Z",
+      "created_at": "2026-10-20T06:05:43Z",
+      "last_modified": "2026-10-20T06:05:43Z",
       "claimed_at": null,
       "completed_at": null,
       "parked": false
@@ -55,8 +58,8 @@
       "result_egress": null,
       "mint_attempted": false,
       "tokens_consumed": 0,
-      "created_at": "2026-10-18T22:44:35Z",
-      "last_modified": "2026-10-18T22:44:35Z",
+      "created_at": "2026-10-20T06:05:43Z",
+      "last_modified": "2026-10-20T06:05:43Z",
       "claimed_at": null,
       "completed_at": null,
       "parked": false
@@ -75,8 +78,8 @@
       "result_egress": null,
       "mint_attempted": false,
       "tokens_consumed": 0,
-      "created_at": "2026-10-18T22:44:35Z",
-      "last_modified": "2026-10-18T22:44:35Z",
+      "created_at": "2026-10-20T06:05:43Z",
+      "last_modified": "2026-10-20T06:05:43Z",
       "claimed_at": null,
       "completed_at": null,
       "parked": false

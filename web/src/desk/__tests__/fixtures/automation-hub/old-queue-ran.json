@@ -10,6 +10,9 @@
     "sources": [],
     "output_target": "inbox",
     "spend_limit_usd": null,
+    "do_kind": "run",
+    "agent_profile": "",
+    "review_by": "",
     "recipe_id": "recipe_a9_1",
     "profile_id": "stub-profile",
     "resolver_profile_id": null,
@@ -17,8 +20,8 @@
     "schedule_enabled": false,
     "schedule_revision": 1,
     "item_order": [],
-    "created_at": "2026-10-18T22:44:35Z",
-    "last_modified": "2026-10-18T22:44:35Z",
+    "created_at": "2026-10-20T06:05:43Z",
+    "last_modified": "2026-10-20T06:05:43Z",
     "deleted": false,
     "items": [
      {
@@ -31,17 +34,17 @@
       "grounding": {},
       "context": {},
       "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "result_artifact_id": "artifact_6e914f87b11a",
+      "result_artifact_id": "artifact_00f7d2e14122",
       "result_egress": {
        "boundary": "cloud",
        "model": "stub-profile"
       },
       "mint_attempted": true,
       "tokens_consumed": 40,
-      "created_at": "2026-10-18T22:44:35Z",
-      "last_modified": "2026-10-18T22:44:35.643713+00:00",
-      "claimed_at": "2026-10-18T22:44:35.556385+00:00",
-      "completed_at": "2026-10-18T22:44:35.643713+00:00",
+      "created_at": "2026-10-20T06:05:43Z",
+      "last_modified": "2026-10-20T06:05:43.433197+00:00",
+      "claimed_at": "2026-10-20T06:05:43.332103+00:00",
+      "completed_at": "2026-10-20T06:05:43.433197+00:00",
       "parked": false
      },
      {
@@ -54,17 +57,17 @@
       "grounding": {},
       "context": {},
       "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "result_artifact_id": "artifact_82ce37ad24ad",
+      "result_artifact_id": "artifact_d784ceed2f47",
       "result_egress": {
        "boundary": "cloud",
        "model": "stub-profile"
       },
       "mint_attempted": true,
       "tokens_consumed": 40,
-      "created_at": "2026-10-18T22:44:35Z",
-      "last_modified": "2026-10-18T22:44:35.804176+00:00",
-      "claimed_at": "2026-10-18T22:44:35.723120+00:00",
-      "completed_at": "2026-10-18T22:44:35.804176+00:00",
+      "created_at": "2026-10-20T06:05:43Z",
+      "last_modified": "2026-10-20T06:05:43.610017+00:00",
+      "claimed_at": "2026-10-20T06:05:43.524030+00:00",
+      "completed_at": "2026-10-20T06:05:43.610017+00:00",
       "parked": false
      },
      {
@@ -77,27 +80,27 @@
       "grounding": {},
       "context": {},
       "result": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.",
-      "result_artifact_id": "artifact_79cca34e50a8",
+      "result_artifact_id": "artifact_3f480310cfdf",
       "result_egress": {
        "boundary": "cloud",
        "model": "stub-profile"
       },
       "mint_attempted": true,
       "tokens_consumed": 40,
-      "created_at": "2026-10-18T22:44:35Z",
-      "last_modified": "2026-10-18T22:44:35.980561+00:00",
-      "claimed_at": "2026-10-18T22:44:35.895180+00:00",
-      "completed_at": "2026-10-18T22:44:35.980561+00:00",
+      "created_at": "2026-10-20T06:05:43Z",
+      "last_modified": "2026-10-20T06:05:43.812994+00:00",
+      "claimed_at": "2026-10-20T06:05:43.718932+00:00",
+      "completed_at": "2026-10-20T06:05:43.812994+00:00",
       "parked": false
      }
     ],
     "item_count": 3,
     "pending_count": 0,
     "last_run": {
-     "id": "wbrun_da799ea2455d",
+     "id": "wbrun_3a9b7faaefb5",
      "workbench_id": "workbench_a9_2",
-     "started_at": "2026-10-18T22:44:35.556048+00:00",
-     "completed_at": "2026-10-18T22:44:36.061322+00:00",
+     "started_at": "2026-10-20T06:05:43.331816+00:00",
+     "completed_at": "2026-10-20T06:05:43.899830+00:00",
      "items_attempted": 3,
      "items_completed": 3,
      "items_failed": 0,
