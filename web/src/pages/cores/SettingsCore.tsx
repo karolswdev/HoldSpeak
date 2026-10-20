@@ -2687,6 +2687,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             dense
             className={moduleId === section.id ? "is-active" : undefined}
             aria-current={moduleId === section.id ? "location" : undefined}
+            aria-pressed={moduleId === section.id}
             onClick={() => openSection(section.id)}
             data-testid={`settings-index-${section.id}`}
           >{section.label}</Button>

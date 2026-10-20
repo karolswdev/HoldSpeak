@@ -18,9 +18,13 @@ first-use recovery. Today, Speak and Meetings have their Settings links.
 
 Root restored meaningful writer, grant and credential consumer coverage
 that the original layout candidate had parked. Final focused checks pass:
-110 web, 72 Python and five real-route browser cases. These exercise the
+111 web checks and 72 Python checks, with the earlier five real-route browser cases. These exercise the
 heartbeat write/Saved/readback, Quiet-hours Search and a real hub-owned
 Engines window at 1440/393. The two-size first-use walk also passes through real fixture speech, note custody, engine setup, meeting summary and finding saved work after restart. Old wing-only tests remain parked.
+The integrated Settings/first-use browser rerun passes all 12 cases. Setup keeps
+name entry disabled until its initial read completes, so early typing cannot
+be discarded. The sweep waits only for visible images within its target
+window; offscreen lazy wallpaper does not prevent a face from settling.
 Required quick: ST7_QUICK_PENDING.
 Last observed running desk before this merge: backend 5fe9ee0e7,
 frontend 0a834c90036c69c5, PID 51757; identity/import/database ownership and

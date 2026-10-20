@@ -529,7 +529,15 @@ SETTLED_JS = r"""(id) => {
   if (r.width < 1 || r.height < 1) return false;
   if (w.querySelector('[aria-busy="true"]:not(button)')) return false;
   if (/Loading…/.test(w.innerText || '')) return false;
-  if ([...document.images].some((i) => i.getBoundingClientRect().width > 0 && !(i.complete && i.naturalWidth > 0))) return false;
+  // Long pages contain lazy pictures below their scroll port. Only pictures
+  // on this window's glass must finish before its visible face is measured.
+  if ([...w.querySelectorAll('img')].some((i) => {
+    const b = i.getBoundingClientRect();
+    const drawn = b.width > 0 && b.height > 0
+      && b.right > Math.max(0, r.left) && b.left < Math.min(innerWidth, r.right)
+      && b.bottom > Math.max(0, r.top) && b.top < Math.min(innerHeight, r.bottom);
+    return drawn && !(i.complete && i.naturalWidth > 0);
+  })) return false;
   return !document.getAnimations().some((a) => a.playState === 'running'
     && (a.effect && a.effect.getTiming().iterations !== Infinity));
 }"""
@@ -553,7 +561,13 @@ UNSETTLED_JS = r"""(id) => {
   return {box: [r.width, r.height].map(Math.round),
     busy: [...w.querySelectorAll('[aria-busy="true"]:not(button)')].map((e) => e.className).slice(0, 5),
     loading: /Loading…/.test(w.innerText || ''),
-    images: [...document.images].filter((i) => i.getBoundingClientRect().width > 0 && !(i.complete && i.naturalWidth > 0)).map((i) => i.src).slice(0, 5),
+    images: [...w.querySelectorAll('img')].filter((i) => {
+      const b = i.getBoundingClientRect();
+      return b.width > 0 && b.height > 0
+        && b.right > Math.max(0, r.left) && b.left < Math.min(innerWidth, r.right)
+        && b.bottom > Math.max(0, r.top) && b.top < Math.min(innerHeight, r.bottom)
+        && !(i.complete && i.naturalWidth > 0);
+    }).map((i) => i.src).slice(0, 5),
     animations: document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.getTiming().iterations !== Infinity)
       .map((a) => (a.animationName || a.transitionProperty || 'waapi') + ' on ' + String(a.effect.target && a.effect.target.className).slice(0, 40)).slice(0, 5)};
 }"""

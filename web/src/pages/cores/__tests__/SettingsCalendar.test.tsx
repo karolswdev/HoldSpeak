@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { calendarSourceEgressChips, formatLocalClock, snapshotEgressChip, SettingsCore } from "../SettingsCore";
 import type { SettingsResponse } from "../core-types";
+import hubWire from "../../../desk/__tests__/fixtures/settings-wire/hub.json";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 const settings = vi.hoisted<SettingsResponse>(() => ({
@@ -31,7 +32,7 @@ vi.mock("../../../lib/api", () => ({
 }));
 vi.mock("../../pageSupport", () => ({
   useResource: (url: string) => ({
-    data: url === "/api/settings" ? settings : { control_mode: "yolo", precedence: [] },
+    data: url === "/api/settings" ? settings : url === "/api/settings/hub" ? hubWire : { control_mode: "yolo", precedence: [] },
     setData: vi.fn(), loading: false, error: "", setError: vi.fn(), reload: vi.fn(),
   }),
 }));
