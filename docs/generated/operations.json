@@ -5841,7 +5841,7 @@
       },
       "principal": "derived by the transport (the HTTP auth middleware); owner only",
       "effect": "write",
-      "result": "{agents, tmux, holdspeak, used: {agent, path, mcp, skill, installed_events, created_file}, or {state, ok, results}} for an aggregate install, and the receipt",
+      "result": "{agents, tmux, holdspeak, used: {agent, path, mcp, skill, installed_events, created_file}}, or {agents, tmux, holdspeak, state, ok, results} for an aggregate install, and the receipt",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",

@@ -21,7 +21,10 @@ three Codex bindings, mixed failure, owned removal, foreign preservation and
 refreshed state. Separate scratch-HOME probes exercised the installed native
 Claude/Codex MCP add/remove commands and MCP initialize. Native interactive
 agent acceptance remains unobserved; no owner agent files were changed.
-Required quick: ST6_QUICK_PENDING.
+The frozen d4cf5fac7 check passed 4,080 related web checks and 2,245 affected
+pytest checks; its only remaining failure was the generated operation export.
+That export is now regenerated from the corrected result declaration.
+Required final delta quick: ST6_QUICK_PENDING.
 
 C12 shows Recording · mm:ss in the macOS menu bar itself, using the
 meeting's start stamp. Stop in its menu calls the existing runtime Stop.
