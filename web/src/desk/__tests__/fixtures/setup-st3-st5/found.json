@@ -1,0 +1,40 @@
+{
+  "_": "Recorded GET /api/setup/found from the ST3-ST5 producer-backed browser walk.",
+  "rows": [
+    {
+      "id": "speech",
+      "kind": "speech",
+      "label": "Speech",
+      "detail": "Whisper base · 144 MB",
+      "state": "works",
+      "reason": "",
+      "egress_host": null,
+      "verb": null,
+      "action": null,
+      "payload": {}
+    },
+    {
+      "id": "connection:jira:not-found",
+      "kind": "account",
+      "label": "Jira",
+      "detail": "acli is not installed",
+      "state": "does_not_work",
+      "reason": "Install acli and sign in to use Jira",
+      "egress_host": null,
+      "verb": null,
+      "action": null,
+      "payload": {}
+    }
+  ],
+  "owner_name": "Karol",
+  "people": [],
+  "suggestions": [
+    {
+      "key": "mira-okafor",
+      "name": "Mira Okafor",
+      "relationship_kind": "direct_report",
+      "one_on_one": true
+    }
+  ],
+  "first_run": true
+}

@@ -1,0 +1,12 @@
+{
+  "sections": [
+    {
+      "id": "microphone",
+      "label": "Microphone",
+      "status": "fail",
+      "detail": "No microphone found",
+      "raw": "No input-capable audio device found.",
+      "fix": "Connect/enable a microphone and retry."
+    }
+  ]
+}

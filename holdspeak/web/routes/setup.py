@@ -8,10 +8,14 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
+from ... import operations
 from ...logging_config import get_logger
+from ...operations import OperationRefused
+from ...principals import UNAUTHENTICATED
 from ...services.errors import NotFound, ServiceError, ValidationError
 from ..context import WebContext
 from ..runtime_support import error_500
+from ._room_kernel import kernel_fields, kernel_refusal, refusal_fields, service_refusal
 
 log = get_logger("web.routes.setup")
 
@@ -46,6 +50,24 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
     inference_capabilities = ctx.inference_capability_service
     router = APIRouter()
 
+    def _ops() -> operations.OperationRegistry:
+        return operations.for_context(ctx)
+
+    def _principal(request: Request) -> Any:
+        return getattr(request.state, "principal", UNAUTHENTICATED)
+
+    def _contract_error(exc: OperationRefused) -> JSONResponse:
+        return JSONResponse(
+            {"success": False, "code": exc.code, "error_code": exc.code,
+             "message": exc.detail, **refusal_fields(exc)},
+            status_code=400,
+        )
+
+    def _service_error(exc: ServiceError) -> JSONResponse:
+        if (refused := kernel_refusal(exc)) is not None:
+            return refused
+        return service_refusal(exc)
+
     @router.get("/api/setup/status")
     async def api_setup_status(request: Request) -> Any:
         try:
@@ -54,6 +76,81 @@ def build_setup_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
         except Exception as exc:
             return error_500(exc, log, "Failed to build setup status")
+
+    @router.get("/api/setup/found")
+    async def api_setup_found(request: Request) -> Any:
+        """The shared Setup inventory; reads local files and stored rows only."""
+        try:
+            registry = _ops()
+            return await run_in_threadpool(registry.invoke, _principal(request), "setup.found", {})
+        except OperationRefused as exc:
+            return _contract_error(exc)
+        except ServiceError as exc:
+            return _service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to build Setup inventory")
+
+    @router.post("/api/setup/use")
+    async def api_setup_use(request: Request) -> Any:
+        try:
+            body = await request.json()
+        except Exception:
+            body = None
+        if not isinstance(body, dict) or not isinstance(body.get("id"), str):
+            return JSONResponse({"success": False, "error": "Setup row id is required."}, status_code=400)
+        try:
+            registry = _ops()
+            principal = _principal(request)
+            args = {"id": body["id"], "payload": body.get("payload", {})}
+            result, kernel = await run_in_threadpool(
+                lambda: registry.invoke_receipted(principal, "setup.use", args)
+            )
+            return JSONResponse({"success": True, "result": result, **kernel_fields(kernel)})
+        except OperationRefused as exc:
+            return _contract_error(exc)
+        except ServiceError as exc:
+            return _service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to use Setup row")
+
+    @router.post("/api/setup/people")
+    async def api_setup_people(request: Request) -> Any:
+        try:
+            body = await request.json()
+        except Exception:
+            body = None
+        if not isinstance(body, dict):
+            return JSONResponse({"success": False, "error": "Add names separated by commas."}, status_code=400)
+        try:
+            registry = _ops()
+            principal = _principal(request)
+            args = {"names": body.get("names", body.get("people", ""))}
+            result, kernel = await run_in_threadpool(
+                lambda: registry.invoke_receipted(principal, "setup.people.add", args)
+            )
+            return JSONResponse({"success": True, **result, **kernel_fields(kernel)}, status_code=201)
+        except OperationRefused as exc:
+            return _contract_error(exc)
+        except ServiceError as exc:
+            return _service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to add Setup people")
+
+    @router.post("/api/setup/lan")
+    async def api_setup_lan(request: Request) -> Any:
+        """One explicit Setup-open LAN look; the shared found read never scans."""
+        try:
+            registry = _ops()
+            result, kernel = await run_in_threadpool(
+                lambda: registry.invoke_receipted(_principal(request), "setup.lan.scan", {})
+            )
+            return JSONResponse({**result, **kernel_fields(kernel)})
+        except OperationRefused as exc:
+            return _contract_error(exc)
+        except ServiceError as exc:
+            return _service_error(exc)
+        except Exception as exc:
+            return error_500(exc, log, "Failed to look on the network")
 
     @router.get("/api/setup/hub-default-summary")
     async def api_hub_default_summary() -> Any:

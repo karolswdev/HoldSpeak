@@ -81,6 +81,7 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
                                "project.door.count", "project.watch.update", "project.watch.baseline",
                                "channel.save_email_key", "channel.save_slack_webhook",
                                "agent_hooks.install", "calendar.open_settings",
+                               "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",
                                "project.repository.register",
                                # Betterment capture C5b: Prepare… / Write again (HTTP only).
                                "meeting.result.prepare"}
