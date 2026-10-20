@@ -136,18 +136,9 @@ class ConnectionSigninService:
 
     def _cleanup_spawned_session(self, session: str) -> None:
         """End only the private session minted by this sign-in attempt."""
-        try:
-            self._tmux_runner(
-                ["tmux", "kill-session", "-t", session],
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=3,
-            )
-        except (OSError, subprocess.TimeoutExpired):
-            # The target failure is already the useful refusal.  Cleanup is
-            # best effort and must never turn it into an unrelated exception.
-            pass
+        from .. import coder_factory
+
+        coder_factory.discard_signin_session(session, runner=self._tmux_runner)
 
     def start_sign_in(
         self,

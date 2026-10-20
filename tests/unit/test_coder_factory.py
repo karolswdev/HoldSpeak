@@ -31,6 +31,31 @@ class _Rec:
         return len(self.rows)
 
 
+@pytest.mark.parametrize("session", ["owner-desk", "holdspeak-signin-owned;quit"])
+def test_signin_cleanup_cannot_end_another_session(session) -> None:
+    calls = []
+    audit = _Rec()
+    answer = coder_factory.discard_signin_session(session, runner=lambda *a, **k: calls.append(a), audit=audit.audit)
+    assert answer["status"] == "bad_name"
+    assert calls == []
+    assert audit.rows[0]["outcome"] == "bad_name"
+
+
+def test_failed_signin_cleanup_ends_only_its_private_session_and_revokes_its_credential(monkeypatch) -> None:
+    from holdspeak.principals import agent_credentials
+
+    revoked = []
+    calls = []
+    monkeypatch.setattr(agent_credentials, "revoke", lambda identity, reason: revoked.append((identity, reason)))
+    def run(argv, **_kwargs):
+        calls.append(argv)
+        return SimpleNamespace(returncode=0)
+    answer = coder_factory.discard_signin_session("holdspeak-signin-0123456789", runner=run, audit=_Rec().audit)
+    assert answer["status"] == "discarded"
+    assert calls == [["tmux", "kill-session", "-t", "holdspeak-signin-0123456789"]]
+    assert revoked == [("agent:tmux:holdspeak-signin-0123456789", "signin_target_failed")]
+
+
 def _runner(script):
     """script: (argv) -> (stdout, returncode, stderr)."""
     def run(argv, cwd=None):

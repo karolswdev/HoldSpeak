@@ -323,11 +323,12 @@ def test_update_draft_without_memory_or_engine_is_as_before(rig):
     assert "memory_refs" not in json.loads(draft["source_manifest_json"])
     assert draft["source_manifest_json"] == det["source_manifest_json"]
 
-    # No engine: the deterministic draft reads no memory and records none.
+    # No engine: no inferred memory is read or recorded. The confirmed
+    # decision linked to this Project remains one explicit evidence fact.
     with_memory, _inside = _project_with_decision(rig, items=False)
     plain = _make_service(rig).draft_update(OWNER, with_memory)
     assert "memory_refs" not in json.loads(plain["source_manifest_json"])
-    assert "quorumdb" not in plain["body_md"]
+    assert plain["body_md"].count("We adopt quorumdb for the Atlas ledger.") == 1
 
 
 # ── The Prep brief ───────────────────────────────────────────────────
