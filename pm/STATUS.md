@@ -26,6 +26,13 @@ S4 remains partial: mode recipes in Search and the individual person
 Object-menu adapter finish with S5. The real Keep proof above is a meeting;
 individual People are not ordinary Items primitives. This merge adds no
 completed slice.
+The Agents Dock tile now accepts the existing drag-to-hand path. The actual
+browser drag opens the exact note preview without launching or editing it.
+All 71 focused web cases pass. The current arrival case opens the bell and
+observes the real Needs-you row at both widths; both walks pass. Four reds
+from the pinned main browser tape were old Dock controls, count expectations
+and an exact Today label; their real browser replacements pass with the
+membership, touch-size and cross-window latency assertions retained.
 Required quick: S4_QUICK_PENDING.
 
 P10 offers only watch actions with an existing runtime path. A new
