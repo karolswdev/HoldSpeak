@@ -430,12 +430,32 @@ function DoorPreview({ ctrl }: { ctrl: DoorController }) {
           </div>
           <ul className="door-preview-found" data-testid="door-found">
             {preview.found.map((item) => (
-              <li key={`${item.kind}:${item.id}`} className={item.selected ? "door-found-row" : "door-found-row door-found-removed"}>
+              <li
+                key={`${item.kind}:${item.id}`}
+                className={item.linkState === "linked" || item.selected ? "door-found-row" : "door-found-row door-found-removed"}
+              >
                 <span>
                   <strong>{item.title}</strong>
                   {item.detail ? <small>{item.detail}</small> : null}
                 </span>
-                {item.selected ? (
+                {item.linkState === "linked" ? (
+                  <StateChip state="success" label="ADDED" />
+                ) : item.linkState === "failed" ? (
+                  <span className="door-found-failure">
+                    <StateChip state="failure" label="CAN'T ADD" />
+                    {item.linkError ? <span data-testid={`door-found-error-${item.id}`}>{item.linkError}</span> : null}
+                    <Button
+                      dense
+                      variant="ghost"
+                      loading={ctrl.retryingFoundId === item.id}
+                      disabled={ctrl.retryingFoundId !== null}
+                      onClick={() => ctrl.retryFound(item.id)}
+                      data-testid={`door-found-retry-${item.id}`}
+                    >
+                      Retry
+                    </Button>
+                  </span>
+                ) : item.selected ? (
                   <Button dense variant="ghost" onClick={() => ctrl.removeFound(item.id)} data-testid={`door-found-remove-${item.id}`}>
                     Remove
                   </Button>
@@ -545,7 +565,6 @@ export function DoorCore({ scope }: CoreProps) {
         <span className="door-section-label" data-testid="door-sources-label">
           SOURCES{scopedCount > 0 ? ` ${scopedCount}` : ""}
         </span>
-        <DoorSourceRows ctrl={ctrl} />
         <div className="door-source-paste" data-testid="door-source-paste">
           <StringGadget
             label="Paste source links"
@@ -566,6 +585,7 @@ export function DoorCore({ scope }: CoreProps) {
             Check sources
           </Button>
         </div>
+        <DoorSourceRows ctrl={ctrl} />
         <DoorPreview ctrl={ctrl} />
       </div>
 

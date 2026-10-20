@@ -150,6 +150,20 @@
   font: 600 13px/1.3 Inter, system-ui, sans-serif;
 }
 
+.door-found-failure {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-faint);
+  font: 400 12px/1.35 "JetBrains Mono", monospace;
+}
+
+.door-found-failure > span:not(.surface-state-chip) {
+  overflow-wrap: anywhere;
+}
+
 .door-found-removed {
   color: var(--text-faint);
   text-decoration: line-through;

@@ -758,7 +758,10 @@ describe("DoorCore", () => {
         ],
         people: ["Mira"],
       });
-      mockDoorCreate.mockResolvedValue({ projectId: "proj_preview" });
+      mockDoorCreate.mockResolvedValue({
+        projectId: "proj_preview",
+        found: [{ kind: "meeting", id: "meeting-1", state: "linked", error: null }],
+      });
       render(<DoorCore scope="" />);
 
       fireEvent.change(screen.getByTestId("door-outcome-input"), { target: { value: "Payments migration" } });
@@ -777,6 +780,62 @@ describe("DoorCore", () => {
         expect.any(Array),
         { meeting_ids: ["meeting-1"], note_ids: [] },
       ));
+    });
+
+    it("keeps a failed selected match with the producer error and retries only that match", async () => {
+      mockFetchConnections.mockResolvedValue(connectedTools());
+      mockDoorPreview.mockResolvedValue({
+        sources: [],
+        found: [
+          { kind: "meeting", id: "meeting-1", title: "Payments migration", detail: "2026-10-17", selected: true },
+          { kind: "note", id: "note-1", title: "Payments risks", detail: "Note", selected: true },
+        ],
+        people: [],
+      });
+      mockDoorCreate.mockResolvedValueOnce({
+        projectId: "proj_partial",
+        found: [
+          { kind: "meeting", id: "meeting-1", state: "linked", error: null },
+          { kind: "note", id: "note-1", state: "failed", error: "Notes store is read-only" },
+        ],
+      });
+      mockDoorAddSources.mockResolvedValueOnce({
+        projectId: "proj_partial",
+        found: [{ kind: "note", id: "note-1", state: "linked", error: null }],
+      });
+      render(<DoorCore scope="" />);
+
+      fireEvent.change(screen.getByTestId("door-outcome-input"), { target: { value: "Payments migration" } });
+      fireEvent.change(screen.getByTestId("door-source-paste-input"), { target: { value: "github.com/acme/payments" } });
+      await act(async () => { fireEvent.click(screen.getByTestId("door-source-check")); });
+      await waitFor(() => expect(screen.getByTestId("door-found")).toBeTruthy());
+
+      await act(async () => { fireEvent.click(screen.getByTestId("door-create")); });
+      await waitFor(() => expect(screen.getByTestId("door-found-error-note-1").textContent).toBe("Notes store is read-only"));
+      expect(screen.getByTestId("door-found-retry-note-1")).toBeTruthy();
+      expect(screen.getByTestId("door-found").textContent).toContain("Payments risks");
+      expect(mockOpenSurface).not.toHaveBeenCalled();
+
+      await act(async () => { fireEvent.click(screen.getByTestId("door-found-retry-note-1")); });
+      await waitFor(() => expect(mockOpenSurface).toHaveBeenCalledWith("open-project-memory", "project:proj_partial"));
+      expect(mockDoorAddSources).toHaveBeenCalledWith(
+        "proj_partial",
+        [],
+        { meeting_ids: [], note_ids: ["note-1"] },
+      );
+    });
+
+    it("keeps the paste well before source rows when connection inventory arrives", async () => {
+      mockFetchConnections.mockResolvedValue(connectedTools());
+      render(<DoorCore scope="" />);
+
+      const root = screen.getByTestId("door-root");
+      const paste = await screen.findByTestId("door-source-paste");
+      await screen.findByTestId("door-row-github");
+      const rows = root.querySelector(".door-sources-list");
+      expect(rows).not.toBeNull();
+      expect(paste.compareDocumentPosition(rows!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(root.contains(paste)).toBe(true);
     });
   });
 
