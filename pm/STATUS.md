@@ -20,7 +20,7 @@ Root independently passed 95 collected focused cases, including both real
 saved receipt/history readback and refusal of an agent's direct Send. All ten
 Send web consumers, type check and build pass. The recorded consumer uses
 a complete real producer response. No live external delivery is claimed.
-Required quick: S8_QUICK_PENDING.
+Required quick: 4,079 web and 505 affected Python/browser checks passed; 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.
 
 AG14 completes automations that hand work to native agents. Do selects Hand;
 With lists installed native profiles, and Review by uses compatible native
