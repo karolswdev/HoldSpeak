@@ -312,7 +312,7 @@ def _audio_only_meeting(hub: Hub, monkeypatch: Any, tmp_path: Path, meeting_id: 
 def test_mcp_transcribe_builds_its_transcriber_from_the_frozen_construction(hub: Hub, monkeypatch, tmp_path) -> None:
     """Astra r2 P1: the ACTUAL MCP caller hands Transcribe the factory that
     takes the frozen construction (a dict), not the import's Config factory."""
-    from holdspeak.web.routes import meeting_import as import_route
+    from holdspeak.services import meeting_transcriber
 
     meeting_id = _audio_only_meeting(hub, monkeypatch, tmp_path, "m-mcp-transcribe")
     built: list[dict[str, str]] = []
@@ -325,8 +325,8 @@ def test_mcp_transcribe_builds_its_transcriber_from_the_frozen_construction(hub:
         built.append({"model_name": construct["model_name"], "backend": construct["backend"]})
         return Stub()
 
-    monkeypatch.setattr(import_route, "_frozen_transcriber_factory", frozen_factory)
-    monkeypatch.setattr(import_route, "_transcriber_factory", lambda cfg: pytest.fail("the import factory ran"))
+    monkeypatch.setattr(meeting_transcriber, "frozen_transcriber_factory", frozen_factory)
+    monkeypatch.setattr(meeting_transcriber, "default_transcriber_factory", lambda cfg: pytest.fail("the Config factory ran"))
     is_error, started = hub.mcp("meeting.transcribe", {"meeting_id": meeting_id})
     assert is_error is False, started
     done = _wait_imported(hub, meeting_id, timeout=60.0)

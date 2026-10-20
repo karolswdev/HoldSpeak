@@ -7,7 +7,7 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 
 **Last updated:** 2026-10-19, Five-app Dock verified; running-desk identity is in `pm/STATUS.md`.
 
-**Total: 101 of 117 slices merged**, with Send S7 still partial.
+**Total: 102 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -17,7 +17,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Engines | `engines/` | 8 of 8 |
 | The desk's tools (MCP) | `mcp/` | 7 of 7 |
 | Ask | `asking/` | 13 of 13 |
-| Projects | `projects/` | 9 of 11 |
+| Projects | `projects/` | 10 of 11 |
 | Agents | `agents/` | 15 of 16 |
 | Daily and Needs you | `daily/` | 11 of 11 |
 | Setup and Settings | `setup/` | 10 of 10 |
@@ -84,7 +84,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Q11 | Memory where he looks | Done · #1375 | Pages have their own pass budget and engine fallback; distinct person answers retain working sources. |
 | Q12 | The Memory app | Done · #1375 | Go opens desk answers, Why and links; whole-desk Ask and RAW Recall retained. |
 
-## Projects (`projects/RECIPE.md`): 9 of 11
+## Projects (`projects/RECIPE.md`): 10 of 11
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -98,7 +98,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | P7 | The update is an automation; the steward folds in | Done · #1395 | Manual first; Friday uses the same record. |
 | P8 | The agent writes the update | Done · #1395 | Project-scoped Work tools; owner draft preserved; exact result adopted once. |
 | P9 | One decision record | Open |  |
-| P10 | Watches tell the truth underneath | Open |  |
+| P10 | Watches tell the truth underneath | Done · #1399 | Runnable actions only; observations need no pending effect; MCP uses shared services. |
 
 ## Agents (`agents/RECIPE.md`): 15 of 16
 
