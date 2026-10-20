@@ -113,7 +113,7 @@ def test_jira_connection_failure_is_stored_with_no_secret(tmp_path: Any) -> None
     registry = tmp_path / "acli.yaml"
     registry.write_text(
         'version: 1\ncurrent_profile: "cloud:account"\nprofiles:\n'
-        '  - site: beta.atlassian.net\n    cloud_id: cloud\n'
+        '  - site: alpha.atlassian.net\n    cloud_id: cloud\n'
         '    account_id: account\n    email: user@example.com\n',
         encoding="utf-8",
     )
