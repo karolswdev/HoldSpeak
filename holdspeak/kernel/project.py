@@ -39,6 +39,9 @@ STEWARD_AND_CONNECTORS_ADMITTED: frozenset[str] = frozenset({
 #: The Conductor K1: the owner's one-press agent hook install (config, his press, HTTP only).
 ONBOARDING_ADMITTED: frozenset[str] = frozenset({"agent_hooks.install", "people_access.set",
                                                  "calendar.open_settings"})
+# Setup writes and the approved Setup-open network look use the kernel.
+# The files-only inventory read remains exempt.
+SETUP_ADMITTED: frozenset[str] = frozenset({"setup.use", "setup.people.add", "setup.lan.scan"})
 #: PHILO-15 16 (B38): a Project knows its repository. The owner's register
 #: (the Door's GitHub row, the drawer's Register) and the lazy clone on the
 #: first hand (egress to github.com), each one receipt.
@@ -69,7 +72,7 @@ PROJECT_DELEGATION_OPERATIONS: frozenset[str] = frozenset({
 #: Scopes the atomic terminal writes, the claim and the recovery ONLY; never an authority set.
 PROJECT_KERNEL_OPERATIONS: frozenset[str] = (ROOM_ADMITTED | STEWARD_AND_CONNECTORS_ADMITTED | {STEWARD_EFFECT}
                                              | PROJECT_DELEGATION_OPERATIONS | CHANNEL_ADMITTED
-                                             | ONBOARDING_ADMITTED | REPOSITORY_ADMITTED)
+                                             | ONBOARDING_ADMITTED | SETUP_ADMITTED | REPOSITORY_ADMITTED)
 #: #694 (Codex Astra counsel r2): the Room operations an AGENT can never be
 #: admitted to outside its own steward run -- no grant covers them and they
 #: are not the agent's prepare. ``ProjectCodec.authorize`` refuses a non-owner

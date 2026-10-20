@@ -4,9 +4,26 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Memory first-read and browser repairs verified)
+**Last updated:** 2026-10-19 (Setup found-things delivery)
 
 ## Current phase
+
+Setup ST3–ST5 share one found-things window on first run and later visits.
+Use selects real discovered engine IDs and the composed Everything-else
+assignment; it does not wire speech to a chat model. Calendar, People and
+agent rows report their producer outcome. Unknown success bodies remain
+unconfirmed. The microphone Check opens the actual doctor section in place;
+late microphone admission is cancelled when the window closes. The existing
+Settings guide alias opens Setup. Retired sources and tests are parked.
+
+Focused verification: 66 web checks, two real-route browser cases at 1440/393,
+12 Settings/Setup sweep cases, 16 product-copy checks and TypeScript pass.
+The browser records the actual LAN Use and microphone-doctor response bodies.
+The frozen-source check passed 4,072 related web checks and 5,186 affected
+pytest checks. Its sweep exposed one retired /welcome selector; the current
+route check now requires the visible Setup heading. Required final delta
+quick from frozen source 7052755f3: 108 sweep, 27 canon and 1,116 repo guards pass. No native hardware or owner-provider
+acceptance is inferred from the isolated checks.
 
 The meeting-window regression now selects the failed-summary member when P5
 also offers the same-title meeting as a project source. Both 1440/393 browser
@@ -32,8 +49,11 @@ Needs-you assertions: P5 now adds a muted matching-meeting candidate. Both
 assertions now name that candidate while retaining the six canonical members
 and mutation checks; all six focused cases pass. The tape also found two
 meeting-window walks selecting a same-title project suggestion instead of the
-failed-summary member; that separate browser repair is in progress. The tape
-is still running and does not cover C10. Final required quick: 1,029 affected pytest, 110 sweep, 27 canon and
+failed-summary member; that browser repair is merged in #1383. The tape
+finished red at that older pin and does not cover C10. Its 13 browser failures
+are repaired by #1381/#1383; its web writer census failure is repaired by
+#1381. Exact pinned totals: 16,877 pytest pass/two fail; 320 browser pass/13
+fail; 5,383 web pass/one fail. A newer integrated tape remains required. Final required quick: 1,029 affected pytest, 110 sweep, 27 canon and
 1,116 repo guards pass. Capture is observed at 1440/393 on an isolated hub.
 Two prior bare-desk settle timeouts did not recur in the focused six-case
 check or the final full sweep; failure diagnostics retain actual state and shots. Before this merge, the running desk is backend
@@ -56,9 +76,9 @@ same-ID PCM recovery. Required quick: 160 affected, 110 sweep, 27 canon and
 1,116 repo guards pass. Capture shots pass at 1440/393. Native
 hardware is not exercised; C10 now delivers the child-process boundary.
 
-**Betterment recovery: 86/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 89/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `1554d7043`, frontend `8ebab34a8ee7b2d2`, PID 12686 (#1382).
+backend `4fe5eff7e`, frontend `8ebab34a8ee7b2d2`, PID 38093 (#1383).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
