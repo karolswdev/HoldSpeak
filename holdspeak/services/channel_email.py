@@ -31,7 +31,8 @@ into major providers like sendgrid and so on."
   its word is ACCEPTED BY SENDGRID (accepted for processing, never "delivered");
   FAILED only on a pinned whole-request rejection (a status on the list AND
   SendGrid's own ``errors`` answer); everything else is UNKNOWN. Resend: ``200`` +
-  ``{"id"}`` is ACCEPTED BY RESEND, by the same rules. Text only. Each key has its
+  ``{"id"}`` is ACCEPTED BY RESEND, by the same rules. Each request carries
+  plain text and safe HTML rendered from the stored Markdown. Each key has its
   own keychain slot per provider (:func:`key_slot`).
 
 Tests replace :data:`KEY_STORE` (a memory store: never the real keychain) and
@@ -49,8 +50,11 @@ import urllib.request
 from dataclasses import dataclass, replace
 from email.headerregistry import Address
 from email.utils import formataddr, parseaddr
+from html.parser import HTMLParser
 from typing import Any, Callable, Mapping, Optional, Protocol
 from urllib.parse import urlparse
+
+from markdown_it import MarkdownIt
 
 from ..plugins.gated_connector import (
     ConnectorOperationRefused,
@@ -70,7 +74,7 @@ DATA_CLASS = "email_message"
 
 @dataclass(frozen=True)
 class EmailMessage:
-    """What the owner sends: text only in this phase."""
+    """What the owner sends: the stored Markdown as text and safe HTML."""
 
     from_email: str
     from_name: str
@@ -78,6 +82,50 @@ class EmailMessage:
     cc: tuple[str, ...]
     subject: str
     text: str
+    html: str = ""
+
+
+_EMAIL_MARKDOWN = MarkdownIt("commonmark", {"html": False, "linkify": False})
+
+
+def markdown_html(markdown: str) -> str:
+    """Render stored Markdown as escaped, link-policy-safe HTML."""
+    return _EMAIL_MARKDOWN.render(str(markdown or ""))
+
+
+class _PlainTextFromHtml(HTMLParser):
+    """The text part uses the same Markdown parse, with formatting removed."""
+
+    _BLOCKS = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre"}
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+
+    def _add(self, value: str) -> None:
+        self.parts.append(value)
+
+    def handle_starttag(self, tag: str, _attrs: list[tuple[str, str | None]]) -> None:
+        if tag in self._BLOCKS:
+            self._add("\n")
+        elif tag == "li":
+            self._add("\n- ")
+        elif tag == "br":
+            self._add("\n")
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in self._BLOCKS or tag == "li":
+            self._add("\n")
+
+    def handle_data(self, data: str) -> None:
+        self._add(data)
+
+
+def markdown_text(markdown: str) -> str:
+    """Render stored Markdown as the readable plain-text email part."""
+    parser = _PlainTextFromHtml()
+    parser.feed(markdown_html(markdown))
+    return re.sub(r"\n{3,}", "\n\n", "".join(parser.parts)).strip()
 
 
 @dataclass(frozen=True)
@@ -185,18 +233,26 @@ class SendGridProvider:
         if message.cc:
             personalization["cc"] = [_mailbox(a) for a in message.cc]
         sender = {"email": message.from_email, **({"name": message.from_name} if message.from_name else {})}
+        content = [{"type": "text/plain", "value": message.text}]
+        if message.html:
+            content.append({"type": "text/html", "value": message.html})
         body = {"personalizations": [personalization], "from": sender, "subject": message.subject,
-                "content": [{"type": "text/plain", "value": message.text}]}
+                "content": content}
         return json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
     def preview(self, body: bytes) -> dict[str, Any]:
         data = json.loads(bytes(body).decode("utf-8"))
         first = (data.get("personalizations") or [{}])[0]
-        text = next((str(c.get("value") or "") for c in data.get("content") or []
+        contents = data.get("content") or []
+        text = next((str(c.get("value") or "") for c in contents
                      if c.get("type") == "text/plain"), "")
-        return {"from": _rendered(data.get("from") or {}), "to": [_rendered(b) for b in first.get("to") or []],
+        preview = {"from": _rendered(data.get("from") or {}), "to": [_rendered(b) for b in first.get("to") or []],
                 "cc": [_rendered(b) for b in first.get("cc") or []], "subject": str(data.get("subject") or ""),
                 "text": text}
+        html = next((str(c.get("value") or "") for c in contents if c.get("type") == "text/html"), "")
+        if html:
+            preview["html"] = html
+        return preview
 
     def plan(self, body: bytes) -> GatedOperation:
         return GatedOperation.outbound(self.host, self.port, request=EmailRequest(self.url, bytes(body)),
@@ -294,13 +350,18 @@ class ResendProvider:
         if message.cc:
             body["cc"] = list(message.cc)
         body.update({"subject": message.subject, "text": message.text})
+        if message.html:
+            body["html"] = message.html
         return json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
 
     def preview(self, body: bytes) -> dict[str, Any]:
         data = json.loads(bytes(body).decode("utf-8"))
-        return {"from": str(data.get("from") or ""), "to": [str(a) for a in data.get("to") or []],
+        preview = {"from": str(data.get("from") or ""), "to": [str(a) for a in data.get("to") or []],
                 "cc": [str(a) for a in data.get("cc") or []], "subject": str(data.get("subject") or ""),
                 "text": str(data.get("text") or "")}
+        if data.get("html"):
+            preview["html"] = str(data.get("html"))
+        return preview
 
     def plan(self, body: bytes) -> GatedOperation:
         return GatedOperation.outbound(self.host, self.port, request=EmailRequest(self.url, bytes(body)),
@@ -733,7 +794,7 @@ class EmailChannel:
         body = chosen.serialize(EmailMessage(
             from_email=str(account.get("from_email") or ""), from_name=str(account.get("from_name") or ""),
             to=tuple(target.get("to") or ()), cc=tuple(target.get("cc") or ()), subject=document.title,
-            text=document.body_md))
+            text=markdown_text(document.body_md), html=markdown_html(document.body_md)))
         if len(body) > chosen.limits.max_bytes:
             raise ChannelRefused("payload_too_large:email",
                                  f"The request is {len(body)} bytes; {chosen.name} takes {chosen.limits.max_bytes}",
