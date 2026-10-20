@@ -16,7 +16,7 @@ Only recordings with changed response shapes are replaced; whole unchanged
 captures remain intact. The independent focused rerun passes all 64 Python
 checks (including the phone Capture/Today/Capture roundtrip) and 62 web
 consumers. No provider sign-in or owner database is used.
-Required quick: MAIN_TAPE_QUICK_PENDING.
+Required quick: 79 affected Python/browser, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes; the separate 62 web consumers pass.
 
 The P5/P6 source-link follow-up is closed by an actual producer contract:
 found_links reports linked/failed per meeting or note. New and existing project
