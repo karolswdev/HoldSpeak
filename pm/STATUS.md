@@ -8,6 +8,14 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The main watcher found two first-run producer recordings missing the saved
+Builder tools and Remote settings fields. The existing private-Hub writers
+regenerated all 48 replies in the LAN and denied-calendar scenarios; both
+writers and both normal replays pass. Strict whole-reply checks remain.
+Speech stays unassigned after choosing a LAN chat engine, and only the
+owner's Settings press opens the doubled calendar permission door once.
+No product behavior changes. Required quick: All 5 first-run backend checks, 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green. Both actual recording writers and normal replays also passed.
+
 Needs shows each owner-prepared Send once, with its destination, source and
 frozen preview. Unknown-delivery retry reuses the original command and
 operation; rows without that provenance offer Check. Completed automations
