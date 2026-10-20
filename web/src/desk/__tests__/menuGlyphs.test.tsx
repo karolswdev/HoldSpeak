@@ -203,11 +203,12 @@ describe("casing sweep — Window menu (HS-148-02)", () => {
     }
   });
 
-  it("'Cycle windows' and 'Cycle windows (reverse)' are consistent", () => {
+  it("Next window is shown and the legacy reverse cycle stays out of the menu", () => {
     const windowVerbs = menuVerbs("window");
     const cycle = windowVerbs.find((v) => v.id === "window.cycle");
-    const cycleRev = windowVerbs.find((v) => v.id === "window.cycle-reverse");
-    expect(verbLabel(cycle!, CTX)).toBe("Cycle windows");
+    const cycleRev = VERBS.find((v) => v.id === "window.cycle-reverse");
+    expect(verbLabel(cycle!, CTX)).toBe("Next window");
+    expect(windowVerbs).not.toContain(cycleRev);
     expect(verbLabel(cycleRev!, CTX)).toBe("Cycle windows (reverse)");
   });
 });
@@ -231,7 +232,6 @@ describe("bound-key-set byte-identical proof (HS-148-02)", () => {
     const keys = VERBS.filter((v) => v.key).map((v) => [v.id, v.key]);
     expect(Object.fromEntries(keys)).toEqual({
       "desk.new-note": "⌃N",
-      "go.change-places": "⌘⇧P",
       "desk.new-decision": "⌃⇧N",
       "desk.overview": "⌘⇧E",
       "object.rename": "F2",

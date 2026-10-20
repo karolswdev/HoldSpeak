@@ -4,9 +4,56 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (Search and Floor adapters)
+**Last updated:** 2026-10-20 (main wire follow-through)
 
 ## Current phase
+
+The main watcher’s retained browser adapters now follow the current doors:
+Watch sources through Sources then RAW; meeting and decision icons through
+explicit Desk membership; and a real drag onto the Agents Dock tile. The
+checks retain exact review identity, run counts, nine-point hit testing,
+receipt geometry and duration, one meeting window, and one agent launch.
+All 13 selected cases pass on the real private Hub, including both widths.
+The first two attempts failed in rig setup (Node path and a test-list parser)
+and did not exercise these paths. The late-count Search case now queries
+Projects before measuring, then delays the browser response without
+blocking the test driver. The original top-ten and no-row-move assertions
+pass in the actual private Hub. Required quick: 4,116 related web checks and all 55 Room/window browser cases passed; the earlier 13 focused source/receipt/agent cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.
+
+Wallpaper has one home in Settings Desk. New windows use the shared content
+size and placement rules; remembered heads move only when they collide, and
+later owner drags and resizes retain their exact saved geometry. The Window
+menu supplies Arrange front and Arrange all, preserving sizes and order.
+
+Root passed 117 scoped web checks, type check and build. The actual private
+Hub walk passed at 1440/393: six app heads, remembered collision, exact owner
+resize/reopen, Arrange all with a Project drawer, Needs headline readback and
+Settings. Jupiter label contrast measured 17.12:1. The broader check also caught stale menu/wallpaper assertions, a
+Stage/Zoom free-height mismatch, the Chair's minimum overriding a thumbnail,
+and a late New Project footer shift. These are fixed at the shared frame:
+free content height stays in its existing geometry record, compositor plates
+own their minimum, and the creation form retains its declared footer seat.
+A Hub-inherited window follows that row; collision reseating runs on the
+owner's reopen. All 74 scoped consumers, type check and build pass. The final
+two real-Hub reload/collision walks pass; the prior five other window cases
+also passed. The full required quick: 4,116 related web checks and all 19 window browser cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green. Shell S9 and the unfinished Send slices remain open.
+
+Failed native sign-in setup now cleans up through coder_factory. The
+factory accepts only the just-minted private sign-in session name, revokes
+its temporary agent credential and records the cleanup. A cleanup failure
+preserves the original terminal-setup refusal. The lifecycle census stays
+strict; no new direct tmux writer is admitted.
+
+The watcher on 5bf3dc0c8 found seven Python failures (16,996 passed,
+27 skipped and one xfailed) and two old creation-browser endpoint assertions.
+Complete People and automation MCP/folder replies are re-recorded from real
+producers. The deterministic drafter retains one confirmed linked Project
+decision while recording no inferred memory. Creation still writes nothing
+before a name, then one canonical decision. The People response also carries
+the current saved Builder preference. Root passed 26 earlier producer checks
+and 73 consumers, then 27 factory/sign-in/census/creation/producer checks and
+12 People consumers on the integrated source. Required quick:
+434 affected checks passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.. The remaining full tape is still separate.
 
 Search uses one ranked stream, the last six successful opens, exact About
 for Cmd+Enter and live object verbs. Protected People support Open, Ask,

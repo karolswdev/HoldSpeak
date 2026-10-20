@@ -11,6 +11,8 @@ import type { CoreProps } from "../pages/cores/core-types";
 export interface DeskSurfaceSpec {
   eyebrow: string;
   minW?: number;
+  /** Minimum first-open height for the hosted window. */
+  minH?: number;
   /** Preferred first-open width (PHILO-17 U24); the band still clamps it. */
   defaultW?: number;
   defaultH?: number;
@@ -68,9 +70,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "▧",
     href: "/",
     group: "tool",
-    shortcut: "⌘⇧P",
     // Betterment setup ST1: Wallpaper has one home, Settings ▸ Wallpaper.
-    // The row keeps its id, its Search words and ⌘⇧P; each opens Settings
+    // The row keeps its id and Search words; each opens Settings
     // there (the `change-places` alias on Settings). ChangePlacesCore stays.
     parked: "settings:wallpaper",
     mark: 4,

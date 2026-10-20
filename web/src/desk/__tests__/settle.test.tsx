@@ -32,7 +32,7 @@ describe("Settle in", () => {
     expect(useDesk.getState()).toBe(before);
   });
 
-  it("routes Change places through the existing native surface dispatcher", () => {
+  it("keeps the Wallpaper alias callable and parks its old shortcut", () => {
     const open = vi.fn();
     const off = registerSurface("change-places", open);
     expect(
@@ -43,7 +43,9 @@ describe("Settle in", () => {
           shiftKey: true,
         }),
       )?.id,
-    ).toBe("go.change-places");
+    ).toBeUndefined();
+    expect(open).not.toHaveBeenCalled();
+    verbById("go.change-places")!.run({ selectedRef: null });
     expect(open).toHaveBeenCalledOnce();
     off();
   });

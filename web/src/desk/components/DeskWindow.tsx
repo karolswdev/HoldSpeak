@@ -37,6 +37,7 @@ import {
   iconColumnLeft,
   iconColumnRight,
   clampIntoBand,
+  headsOverlap,
   snapForPointer,
   resizeEdge,
   clampRect,
@@ -101,7 +102,7 @@ function withObject(object: WorkMenuEntry | null, entries: WorkMenuEntry[]): Wor
   return object ? [object, { type: "sep", id: "window-object-sep" }, ...entries] : entries;
 }
 
-export { placeWindow, clampIntoBand, snapForPointer, resizeEdge, exposeLayout };
+export { placeWindow, clampIntoBand, headsOverlap, snapForPointer, resizeEdge, exposeLayout };
 export { SnapGhost, Switcher, Expose, Dock };
 export { toggleExpose };
 export {
@@ -164,6 +165,10 @@ export interface DeskWindowOptions {
 
 let resizeClampUsers = 0;
 let resizeClampTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Geometry the owner deliberately changed in this browser session wins
+ * over a remembered collision when the window opens again. */
+const sessionArranged = new Set<string>();
 
 function reClampOpenWindows() {
   const state = useDesk.getState();
@@ -388,34 +393,40 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     const vw = window.innerWidth || 1280;
     const vh = window.innerHeight || 800;
     const cur = s.panelRects[id];
-    if (!cur && opts.tiled) return;
+    // The Chair uses the same placement engine as every other window. The
+    // `tiled` flag remains a CSS hint for its body, not a placement bypass.
+    const plane = (wid: string) => s.panelDepth[wid] ?? Number.MIN_SAFE_INTEGER;
+    const shown = (wid: string): PanelRect | undefined => {
+      const r = shellEls.get(wid)?.getBoundingClientRect();
+      return r && r.width && r.height
+        ? { x: r.left, y: r.top, w: r.width, h: r.height }
+        : undefined;
+    };
+    const others = [...new Set([...registrySnapshot.map((w) => w.id), ...Object.keys(s.panelDepth)])]
+      .filter((wid) => wid !== id && !s.panelMin.includes(wid))
+      .sort((a, b) => plane(a) - plane(b))
+      .map((wid) => s.panelRects[wid] ?? shown(wid))
+      .filter((r): r is PanelRect => Boolean(r));
     if (cur) {
-      const kept = clampIntoBand(cur, vw, vh, minW, minH);
+      // Hydration follows the Hub's placed row. Collision reseating belongs
+      // to an owner's open, never a second view loading the same windows.
+      const followingHub = hubPlacing(id) || inheritance.isInherited(id);
+      const kept = followingHub ? cur : clampIntoBand(cur, vw, vh, minW, minH);
+      const deliberatelyArranged = sessionArranged.has(id);
+      const hasCoveredHead = !followingHub && others.some((other) => headsOverlap(kept, other));
+      const placed = !deliberatelyArranged && hasCoveredHead
+        ? placeWindow(kept, others, vw, vh, minW, minH, iconColumnRight(), iconColumnLeft())
+        : kept;
       if (
-        kept.x !== cur.x ||
-        kept.y !== cur.y ||
-        kept.w !== cur.w ||
-        kept.h !== cur.h
+        placed.x !== cur.x ||
+        placed.y !== cur.y ||
+        placed.w !== cur.w ||
+        placed.h !== cur.h
       )
-        s.setPanelRect(id, kept, s.panelSaved.includes(id));
+        s.setPanelRect(id, placed, s.panelSaved.includes(id));
     } else {
       // PHILO-14 A1: back to front (the stacking order), so the cascade
       // steps off the window placed last.
-      // PHILO-17 (U28a): every open window counts, also one placed in this
-      // same pass (a reload, the hub opening several windows at once) that
-      // the registry does not list yet; before, they all took the home seat.
-      const plane = (wid: string) => s.panelDepth[wid] ?? Number.MIN_SAFE_INTEGER;
-      // A window with no rect (a Chair window on its CSS seat) counts at the
-      // place it shows: before, a new window could open over its title bar.
-      const shown = (wid: string): PanelRect | undefined => {
-        const r = shellEls.get(wid)?.getBoundingClientRect();
-        return r && r.width && r.height ? { x: r.left, y: r.top, w: r.width, h: r.height } : undefined;
-      };
-      const others = [...new Set([...registrySnapshot.map((w) => w.id), ...Object.keys(s.panelDepth)])]
-        .filter((wid) => wid !== id && !s.panelMin.includes(wid))
-        .sort((a, b) => plane(a) - plane(b))
-        .map((wid) => s.panelRects[wid] ?? shown(wid))
-        .filter((r): r is PanelRect => Boolean(r));
       const seed = measure();
       // Lazy cores may still be a Suspense fallback at measure time; a
       // window's geometry comes from its CSS constraint (max-height),
@@ -446,22 +457,13 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
           rightX + seed.w <= vw - MARGIN ? rightX : Math.max(MARGIN, leftX);
         seed.y = origin.y - 56;
       }
-      // A Chair window's first seat is the designed Phase-13 arrangement
-      // (Needs you left, Brief and The week right; chair.css): it is not
-      // moved by the scan or the icon-column floor. Moving it put Needs you
-      // over The week's title bar and over Capture's verbs.
-      const chairSeat = id.startsWith("chair:");
-      const placed = chairSeat
-        ? clampIntoBand(seed, vw, vh, minW, minH)
-        : placeWindow(seed, others, vw, vh, minW, minH, iconColumnRight(), iconColumnLeft(), others.at(-1));
+      const placed = placeWindow(seed, others, vw, vh, minW, minH, iconColumnRight(), iconColumnLeft(), others.at(-1));
       // PHILO-17 (U28c): the first seat is kept (saved, and sent to the hub
       // with the open), so a reload and every other view show the window
       // where it opened. Not for a content-sized card (its height stays the
-      // material's) and not for a window the hub opened here (a view that
-      // only loads writes nothing to the desk), and not for a Chair window.
-      // A Chair window's seat is CSS (it follows the band and the aftercare
-      // card, C1-4e): never saved until he moves it.
-      s.setPanelRect(id, placed, !opts.fitContent && !chairSeat && !hubPlacing(id));
+      // material's) or for a window the hub opened here (a view that only
+      // loads writes nothing to the desk).
+      s.setPanelRect(id, placed, !opts.fitContent && !hubPlacing(id));
       if (
         origin &&
         el &&
@@ -515,15 +517,24 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     if (!opts.fitContent || arranged || !open) return;
     const el = elRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    if (
+    const reduced = (
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    )
-      return;
+    );
     let last = el.getBoundingClientRect().height;
     let animating = false;
+    let settled = false;
     const ro = new ResizeObserver(() => {
-      if (animating) return;
+      if (animating || presenting() || zoomedRef.current) return;
+      // Keep the free geometry current while CSS owns the content height.
+      // Stage and Zoom can then restore this record without measuring an
+      // animated plate. Owner-arranged rectangles remain authoritative.
+      const state = useDesk.getState();
+      const current = state.panelRects[id];
+      const height = el.offsetHeight;
+      if (!state.panelSaved.includes(id) && current && height > 0 && Math.abs(height - current.h) > 1)
+        state.setPanelRect(id, { ...current, h: height });
+      if (settled || reduced) return;
       // An explicit height (arranged pin, live resize, maximize) is the
       // user's geometry — never animated under them.
       if (el.style.height) {
@@ -545,6 +556,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       );
       anim.onfinish = anim.oncancel = () => {
         animating = false;
+        settled = true;
         last = el.getBoundingClientRect().height;
       };
     });
@@ -578,7 +590,10 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       if (Math.abs(mx) + Math.abs(my) > 3) {
         // Nothing animates under the pointer (the raise lift, an arrange).
         if (!memo?.moving) stillUnderPointer(elRef.current);
-        if (last) userArranged();
+        if (last) {
+          sessionArranged.add(id);
+          userArranged();
+        }
         // A snap region shows its landing tile as a live ghost while
         // dragging (HS-97-05); releasing inside it lands exactly there
         // (HS-95-03); anywhere else parks the dragged rect as before.
@@ -620,7 +635,10 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         clampRect({ ...base, w: base.w + mx, h: base.h + my }, minW, minH),
         last,
       );
-      if (last) userArranged();
+      if (last) {
+        sessionArranged.add(id);
+        userArranged();
+      }
       return { base };
     },
     { pointer: { buttons: 1 } },
@@ -634,7 +652,10 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       const base: PanelRect = memo?.base ?? measure();
       setLiveResize(!last);
       writeRect(resizeEdge(mode, base, mx, my, minW, minH), last);
-      if (last) userArranged();
+      if (last) {
+        sessionArranged.add(id);
+        userArranged();
+      }
       return { base };
     },
     { pointer: { buttons: 1 } },
@@ -689,7 +710,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         // A content-sized card keeps its CSS height (the material
         // decides) until the user arranges it; arranged rects pin.
         ...(opts.fitContent && !arranged && !liveResize && !zoomed
-          ? { maxHeight: cardBandCap }
+          ? { maxHeight: cardBandCap, height: "auto", minHeight: minH }
           : { height: rect.h, maxHeight: "none" }),
       }
     : {};
@@ -1125,6 +1146,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             left: plate.rect.x,
             width: plate.rect.w,
             height: plate.rect.h,
+            // The compositor owns the complete plate rectangle, including
+            // a Chair window whose free CSS seat has a larger minimum.
+            minHeight: 0,
             right: "auto",
             bottom: "auto",
             maxHeight: "none",

@@ -5,7 +5,7 @@
    click is raised, a well is sunken, a fact you read is flat. Narrow layout
    answers to the `surface` container, never to the viewport. */
 
-/* ── DeskIcon: the sprite over its name; no plate at rest ── */
+/* ── DeskIcon: the sprite over its name; the floor label has an ink plate ── */
 .desk-icon {
   position: relative;
   display: inline-flex;
@@ -75,6 +75,12 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* The floor sits over every authored scene. Drawer wells keep their own
+   material; floor labels always carry the Workbench paper plate. */
+.desk-screen .desk-icon-name {
+  background: var(--wb-paper);
+  color: var(--wb-ink);
 }
 /* B30 (Astra r1): a label set by fitName (DeskIcon) carries its own line
    breaks and already fits the clamp; nothing it holds is hidden. */
