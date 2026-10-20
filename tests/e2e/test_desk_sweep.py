@@ -960,7 +960,8 @@ class _Case:
         fail("drawn", page.evaluate(DRAWN_JS, [sel or "[data-testid=desk-screen]", list(COVERS)]))
         if self.wid:
             fail("fit", page.evaluate(FIT_JS, self.wid))
-        faults = _rendered_text_faults(page, scope, on_glass=True)
+        faults = _rendered_text_faults(page, scope, on_glass=True,
+                                       horizontal_scroll=(".needs-chip-row",))
         if not faults["scopes"]:
             fail("readable", f"no visible {scope}: nothing was read")
         fail("readable", ([f"clipped '{c['text']}' in {c['in']}" for c in faults["clipped"]]
@@ -1420,7 +1421,10 @@ def test_every_html_route_loads_clean(desk: dict[str, Any], pw_browser: Any, rou
             if wid and window_app_on_hub(wid):
                 sel = f'[id="{wid}"]'
                 page.locator(sel).wait_for(timeout=T)
-                page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
+                try:
+                    page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
+                except Exception as exc:
+                    raise AssertionError(f"{route} did not settle: {page.evaluate(UNSETTLED_JS, wid)}") from exc
             else:
                 sel = "[data-testid=desk-screen]"
                 page.wait_for_function(SETTLED_JS, arg=None, timeout=T)

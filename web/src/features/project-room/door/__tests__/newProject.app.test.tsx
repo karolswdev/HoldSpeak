@@ -255,7 +255,12 @@ describe("HS-169-02: the Streamlined Door with GitHub and Jira", () => {
     await act(async () => { fireEvent.click(screen.getByTestId("door-create")); });
     await waitFor(() => expect(screen.queryByTestId("door-root")).toBeNull(), { timeout: 5000 });
     expect(doorPosts()).toHaveLength(1);
-    expect(doorPosts()[0][1].json).toEqual(D169.create.request);
+    // The recorded count replies are live; creation now carries that check
+    // state into the saved watches rather than marking unchecked sources passed.
+    expect(doorPosts()[0][1].json).toEqual({
+      ...D169.create.request,
+      sources: D169.create.request.sources.map((source) => ({ ...source, test_state: "passed" })),
+    });
     expect(useDesk.getState().windowsById[DOOR_WINDOW]).toBeUndefined();
     expect(useDesk.getState().windowsById["surface-project-memory"]?.scope).toBe(`project:${D169.pid}`);
   }, 20000);

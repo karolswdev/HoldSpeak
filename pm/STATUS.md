@@ -4,28 +4,54 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (MCP tape repairs; Q11/Q12 deployed)
+**Last updated:** 2026-10-19 (Memory first-read and browser repairs verified)
 
 ## Current phase
 
-**Betterment recovery: 82/117 recipe implementations merged.** Codex owns
+Capture now keeps its designed CSS seat while unarranged. A slow Coming up
+read no longer freezes the window against a temporary placeholder height; reopening
+uses the same default position. An owner move, resize or zoom keeps its saved
+geometry. Four focused browser cases pass, including moved and resized windows.
+Required quick: 4,103 web, 110 sweep, 27 canon and 1,116 repo guards pass.
+The Capture fence also passes at 1440/393.
+
+C9 #1379 moves PCM admission into a bounded queue and writes the buffer/journal on
+one writer thread. Stop seals admission, aborts native streams, flushes accepted
+items, then snapshots. Queue refusal and writer failure survive into the saved
+Meeting and recoverable journal marker; Stop does not claim complete capture.
+Focused callback/durability checks: 32 pass, including the blocked journal and
+same-ID PCM recovery. Required quick: 160 affected, 110 sweep, 27 canon and
+1,116 repo guards pass. Capture shots pass at 1440/393. Native
+hardware is not exercised; C10’s child-process boundary remains in progress.
+
+**Betterment recovery: 85/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `1dfd11fe0`, frontend `9f09358c6ae28b6d`, PID 49677 (#1375).
+backend `b2c642b42`, frontend `2d4a0039bcaa5db4`, PID 51055 (#1380).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
 The original baseline remains at `wt-betterment-tape-20261019`, pinned to
 `bd3acff8f`; its three browser shards exposed six stale controls now covered
 by #1370 and #1371. That run was superseded before browser shard four, with
-all results retained. A fresh full tape runs at low priority in
-`wt-desk-betterment-20261019-notes`, pinned to `ec3dde784`. It is incomplete. Its non-browser shards found four failures: two producer
+all results retained. The full tape completed at low priority in
+`wt-desk-betterment-20261019-notes`, pinned to `ec3dde784`: 16,840 pytest pass,
+four fail, 27 skip and one expected failure; 320 browser pass, 12 fail and one
+skip; 5,369 web pass and one fail. Its non-browser shards found four failures: two producer
 wires are fixed in D10; the curated MCP resource and launched-helper census
 checks are now repaired. The parked New knowledge verb is no longer published.
 The census requires the five helper tools to refuse an unlaunched principal
 with launch_only and HTTP 403; a valid launched principal still dispatches.
 Focused checks: 63 pass. Required quick check: 247 affected pytest, 110 sweep,
 27 canon and 1,116 repo guards pass. This fixes the identified cases; the
-pinned full tape does not cover subsequent main revisions. The populated Projects sweep also found rows
+pinned full tape does not cover subsequent main revisions. The twelve browser
+failures are five retired Rhythm-host expectations, three retired Conductor
+controls, two retired note-editor expectations, one 1px Button census and one
+Capture seat shift. The web failure is the explicit Record-home auto-record
+projection missing from the writer allowlist. All twelve identified browser failures and the Record-home writer allowlist
+are repaired in verified delivery slices. The pinned tape retains its original
+results; a fresh low-priority tape is queued at `b2c642b42` and does not include
+this Memory/browser slice. #1376 is deployed;
+identity, database ownership and four HTTP checks pass. The populated Projects sweep also found rows
 moving as independent status reads finish; its regression fails before the
 atomic first-read repair. After the repair, 4,090 web checks, 110 sweep cases,
 27 canon checks and 1,116 repo guards pass.
@@ -51,12 +77,42 @@ Focused producer/page checks: 82; recall-order checks: two. Final quick check:
 4,098 web, 1,083 affected pytest, 110 sweep, 27 canon and 1,116 repo guards.
 Q11/Q12 #1375 is on the running desk. Its two existing pages render at
 1440/393 without page errors. Both remain stale with ten new sources; a
-fresh live-model page write is not observed. A separate check is tracing
-whether the selected Memory assignment also determines physical dispatch.
+fresh live-model page write is not observed. The routing follow-up now carries
+the selected Memory head through the real page writer and physical runner.
+LAN and cloud doubles prove that the owner-selected fallback determines the
+physical revision and receipt; clearing that head refuses another call. The
+model leaf is doubled; no new owner page was written. Focused routing checks
+pass; the required quick check runs 102 affected pytest and 110 sweep cases.
 
-P5/P6 remains held: pasted Jira/Confluence links discarded the site and could
-select another connected account. Exact site binding and declared preview
-admission are being repaired before this lane ships.
+P5/P6 #1377 preserves provider sites through paste, validation, preview and saved
+watches. Matching uses provider, site and scope; an unknown site or ambiguous
+bare key names the problem without selecting another account. Preview is an
+admitted owner HTTP operation. Found meetings and notes can be added together
+or removed from the selection; the same Door adds sources to an existing
+project. Waiting-on Nudges use the item's exact saved destination and stored
+action text. Preview and preparation do not send; the owner presses Send.
+The Room field keeps the shared Ask window and its project scope.
+Two-size isolated browser proof: five presses, three meetings and two notes;
+the existing-project Add sources path also passes. Focused provider/preview
+checks: 46; destination-bound nudge checks: two; initial related web: 4,138
+pass with one old request assertion, now corrected. Required final quick:
+six web, 96 affected pytest, 110 sweep, 27 canon and 1,116 repo guards pass.
+The added document kind passes the real Send/stale-preparation census; the
+API and exact identity-helper classifications are current. The phone reader
+allows only the recipe's declared, reachable filter choices; unreachable
+text and ordinary horizontal overflow still fail. P5/P6 is deployed; source import, database ownership and four HTTP checks pass.
+Live external provider authentication remains unobserved.
+
+The eleven retired-control and painted-plate browser findings pass across
+Conductor, note, graph-walk and kit checks (30 browser checks). The graph and
+current atlas checks also pass 756 focused cases. The next required sweep
+found the Memory RAW fold moving 421px on a held first read. Its independent
+answer, directory and belief reads now hold the lower controls until their
+first batch settles; Ask stays available. Final required quick: 4,110 web,
+30 affected browser, 110 desk sweep, 27 canon and 1,116 repository guards pass.
+Earlier HTML-route settlement timeouts did not recur in the focused rerun or
+the final sweep. Timeout diagnostics now report actual unsettled elements;
+no timeout or assertion was relaxed. Capture default placement shipped in #1380.
 
 AG13 #1374 packages the HoldSpeak skill and prints it with `holdspeak --skill`.
 Claude launches discover the private copy through `--add-dir`; Codex launches
