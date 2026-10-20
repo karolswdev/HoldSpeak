@@ -233,6 +233,7 @@ class WebRuntime(
         self.desktop_presence: Optional[DesktopPresenceHost] = build_desktop_presence_host(
             url_provider=lambda: self.runtime_url,
             config_enabled=self._presence_config_enabled(),
+            stop_callback=lambda: self._on_stop(),
         )
         self.device_registry = DeviceRegistry()
         self.device_status = DeviceStatusEmitter(label_lookup=self.device_registry)
@@ -403,6 +404,7 @@ class WebRuntime(
                 self.desktop_presence = build_desktop_presence_host(
                     url_provider=lambda: self.runtime_url,
                     config_enabled=True,
+                    stop_callback=lambda: self._on_stop(),
                 )
             else:
                 if self.desktop_presence is not None:
