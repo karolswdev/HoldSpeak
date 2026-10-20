@@ -149,9 +149,9 @@ The hub configuration shell is [`Config`](../holdspeak/config/core.py). Its load
 | `HotkeyConfig.key` | `str` | `'alt_r'` | [holdspeak/config/ui.py:15](../holdspeak/config/ui.py) |
 | `HotkeyConfig.display` | `str` | `'⌥R'` | [holdspeak/config/ui.py:16](../holdspeak/config/ui.py) |
 | `UIConfig.desk_sounds` | `bool` | `True` | [holdspeak/config/ui.py:27](../holdspeak/config/ui.py) |
-| `VoiceMacroAction.kind` | `str` | `None` | [holdspeak/config/ui.py:53](../holdspeak/config/ui.py) |
-| `VoiceMacroAction.payload` | `str` | `''` | [holdspeak/config/ui.py:54](../holdspeak/config/ui.py) |
-| `VoiceMacro.keyword` | `str` | `None` | [holdspeak/config/ui.py:89](../holdspeak/config/ui.py) |
-| `VoiceMacro.action` | `VoiceMacroAction` | `None` | [holdspeak/config/ui.py:90](../holdspeak/config/ui.py) |
-| `MacrosConfig.enabled` | `bool` | `False` | [holdspeak/config/ui.py:119](../holdspeak/config/ui.py) |
-| `MacrosConfig.items` | `list[VoiceMacro]` | `field(default_factory=list)` | [holdspeak/config/ui.py:120](../holdspeak/config/ui.py) |
+| `VoiceMacroAction.kind` | `str` | `None` | [holdspeak/config/ui.py:54](../holdspeak/config/ui.py) |
+| `VoiceMacroAction.payload` | `str` | `''` | [holdspeak/config/ui.py:55](../holdspeak/config/ui.py) |
+| `VoiceMacro.keyword` | `str` | `None` | [holdspeak/config/ui.py:103](../holdspeak/config/ui.py) |
+| `VoiceMacro.action` | `VoiceMacroAction` | `None` | [holdspeak/config/ui.py:104](../holdspeak/config/ui.py) |
+| `MacrosConfig.enabled` | `bool` | `True` | [holdspeak/config/ui.py:137](../holdspeak/config/ui.py) |
+| `MacrosConfig.items` | `list[VoiceMacro] \| None` | `None` | [holdspeak/config/ui.py:138](../holdspeak/config/ui.py) |

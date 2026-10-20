@@ -432,12 +432,19 @@ class TestSettingsPipelineDepthKnobs:
 class TestVoiceMacrosSettingsApi:
     """HS-52-02: the voice command macros section of `/api/settings`."""
 
-    def test_get_includes_macros_off_by_default(
+    def test_get_includes_the_five_desk_verbs_by_default(
         self, test_client: TestClient, settings_path: Path
     ) -> None:
         body = test_client.get("/api/settings").json()
         macros = body["dictation"]["macros"]
-        assert macros == {"enabled": False, "items": []}
+        assert macros["enabled"] is True
+        assert [(row["keyword"], row["action"]) for row in macros["items"]] == [
+            ("start recording", {"kind": "desk_verb", "payload": "record"}),
+            ("stop recording", {"kind": "desk_verb", "payload": "stop"}),
+            ("new note", {"kind": "desk_verb", "payload": "new_note"}),
+            ("ask HoldSpeak", {"kind": "desk_verb", "payload": "ask"}),
+            ("open today", {"kind": "desk_verb", "payload": "open_today"}),
+        ]
 
     def test_put_persists_macros_of_each_kind(
         self, test_client: TestClient, settings_path: Path

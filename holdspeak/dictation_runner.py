@@ -56,16 +56,18 @@ def dispatch_voice_command(
     type_writer: Optional[Callable[[str], None]] = None,
     platform: Optional[str] = None,
     on_activity: Optional[Callable[[str], None]] = None,
+    desk_dispatch: Optional[Callable[[str, dict[str, Any]], Any]] = None,
 ) -> Optional[VoiceCommandResult]:
     """If ``text`` is a configured, enabled voice command, fire it and return the
     outcome (handled); otherwise return ``None`` so the caller dictates as normal.
 
-    This is the dispatch decision at the top of the dictation seam. It is off by
-    default (macros disabled -> ``None``, byte-identical to no feature), matches the
-    whole utterance deterministically (``VoiceMacro.matches`` selects WHICH macro, never
-    composes one), and fires through the bounded connector (HS-52-03), which reuses the
-    guarded execution (permission gate + per-macro manifest). A configured macro is
-    auto-fired: the config is the consent, so there is no per-fire prompt.
+    This is the dispatch decision at the top of the dictation seam. New desks receive
+    five closed Desk verbs; an explicit disabled setting returns ``None`` and keeps
+    the stream byte-identical. It matches the whole utterance deterministically
+    (``VoiceMacro.matches`` selects WHICH macro, never composes one), and fires through
+    the bounded connector (HS-52-03), which reuses the guarded execution (permission
+    gate + per-macro manifest). A configured macro is auto-fired: the config is the
+    consent, so there is no per-fire prompt.
 
     The actuator *persistence* table is meeting-scoped (``actuator_proposals.meeting_id``
     references ``meetings(id)``) and a voice fire has no meeting, so the fire is audited
@@ -100,7 +102,11 @@ def dispatch_voice_command(
     )
     try:
         connector = build_voice_macro_connector(
-            action, runner=runner, type_writer=type_writer, platform=platform
+            action,
+            runner=runner,
+            type_writer=type_writer,
+            platform=platform,
+            desk_dispatch=desk_dispatch,
         )
         result = connector(proposal_view)
         log.info("voice command fired: %r -> %s", macro.keyword, preview)
