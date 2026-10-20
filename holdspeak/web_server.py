@@ -364,7 +364,11 @@ def _start_queued_hands(web_ctx: Any = None) -> None:
         service = getattr(web_ctx, "agent_hand_service", None) or default_agent_hand_service(
             delivery_service=getattr(web_ctx, "delivery_service", None)
         )
-        for answer in start_queued(service, queue=queue):
+        answers = start_queued(service, queue=queue)
+        from .services.automation_runs import sync_agent_hand_launches
+        from .db import get_database
+        sync_agent_hand_launches(get_database(), answers)
+        for answer in answers:
             log.info(f"queued hand {answer.get('queue_id')}: {answer.get('status')}")
     except Exception as exc:
         log.warning(f"queued hands not started: {exc}")
