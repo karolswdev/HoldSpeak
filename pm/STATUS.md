@@ -16,6 +16,18 @@ what the face reports. No assignment or engine is changed on the owner’s
 desk. The worker collected and passed 46 focused checks against real SQLite
 assignment producers. Required quick: ROUTE_PARITY_QUICK_PENDING.
 
+The main watcher’s retained browser adapters now follow the current doors:
+Watch sources through Sources then RAW; meeting and decision icons through
+explicit Desk membership; and a real drag onto the Agents Dock tile. The
+checks retain exact review identity, run counts, nine-point hit testing,
+receipt geometry and duration, one meeting window, and one agent launch.
+All 13 selected cases pass on the real private Hub, including both widths.
+The first two attempts failed in rig setup (Node path and a test-list parser)
+and did not exercise these paths. The late-count Search case now queries
+Projects before measuring, then delays the browser response without
+blocking the test driver. The original top-ten and no-row-move assertions
+pass in the actual private Hub. Required quick: 4,116 related web checks and all 55 Room/window browser cases passed; the earlier 13 focused source/receipt/agent cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.
+
 Wallpaper has one home in Settings Desk. New windows use the shared content
 size and placement rules; remembered heads move only when they collide, and
 later owner drags and resizes retain their exact saved geometry. The Window
