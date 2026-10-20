@@ -41,6 +41,7 @@ export interface SurfaceRow {
   glyph: string;
   eyebrow: string;
   minW?: number;
+  minH?: number;
   /** Preferred first-open width; persisted owner arrangements still win. */
   defaultW?: number;
   /** Preferred first-open height; persisted owner arrangements still win. */
@@ -60,6 +61,7 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS
   glyph: application.glyph,
   eyebrow: application.surface.eyebrow,
   minW: application.surface.minW,
+  minH: application.surface.minH ?? 220,
   defaultW: application.surface.defaultW,
   defaultH: application.surface.defaultH,
   maximized: application.surface.maximized,
@@ -223,8 +225,10 @@ export function SurfaceWindowHost({
       eyebrow={row.eyebrow}
       title={titleOverride ?? scopedName ?? row.title}
       minW={row.minW}
+      minH={row.minH}
       defaultW={row.defaultW}
       defaultH={row.defaultH}
+      fitContent
       wings={wings}
       // PHILO-16: a window scoped to a project belongs to that Room (Gather).
       room={scope?.startsWith("project:") ? scope : undefined}

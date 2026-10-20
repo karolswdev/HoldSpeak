@@ -11,7 +11,15 @@ const CASCADE = DESK_WINDOW.cascade;
 const CASCADE_STEP = 24;
 
 /** The window head strip considered for title-bar occlusion (px). */
-const HEAD = 44;
+export const HEAD = 44;
+
+/** True when two window head strips overlap. Kept pure so the remembered
+ * placement rule and its geometry checks share the same 44 px definition. */
+export function headsOverlap(a: PanelRect, b: PanelRect, head = HEAD): boolean {
+  const x = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+  const y = Math.min(a.y + head, b.y + head) - Math.max(a.y, b.y);
+  return x > 0 && y > 0;
+}
 
 /** Sent on `window` when the Dock's published height (`--desk-dock-h`)
  * arrives or changes: the working band moved, so open windows clamp again. */
