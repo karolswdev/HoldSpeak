@@ -147,7 +147,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | ST3 | Setup is one window of found things | Done · #1384 | One found-things window for first run and later Setup; typed microphone recovery stays in place. |
 | ST4 | Use everything found, and the look on his network | Done · #1384 | Use selects real engine IDs and the Everything-else assignment; speech remains separate. |
 | ST5 | Your people in Setup | Done · #1384 | People use the existing admission producer and report its actual result. |
-| ST6 | Let my agents use HoldSpeak | Done · PR_PENDING | Native user-scope tools, hooks and skill; per-agent readback and owned-binding removal in Setup. |
+| ST6 | Let my agents use HoldSpeak | Done · #1388 | Native user-scope tools, hooks and skill; per-agent readback and owned-binding removal in Setup. |
 | ST7 | Settings is one page | Open |  |
 | ST8 | Sign in without a terminal | Open |  |
 | ST9 | Setup from the terminal and by asking | Open |  |
