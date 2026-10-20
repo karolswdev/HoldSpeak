@@ -210,7 +210,12 @@ class TestDropToHandGlass:
                 # producer AFTER the launch answered; its icon appears with no
                 # other desk action (the hub frames the registration; the
                 # line re-reads the flights).
-                agent = page.locator(".desk-screen [data-object-id='coder:claude:smoke-session']")
+                # Betterment AG8: Agents owns the live rows; individual
+                # session icons no longer appear on the desk floor.
+                page.locator(".desk-screen [data-object-id='drawer:conductor']").dblclick()
+                conductor = page.locator(".conductor-window")
+                conductor.wait_for(timeout=T)
+                agent = conductor.locator("[data-object-id='coder:claude:smoke-session']")
                 assert agent.count() == 0
                 _register("claude", "smoke-session", self.rig.worktree)
                 agent.wait_for(timeout=T)
@@ -338,7 +343,9 @@ class TestSessionOpenGlass:
 
                 conductor.locator("[data-object-id='launch:launch_c4_recon']").get_by_test_id("conductor-open").click()
                 lane = page.locator(".is-lane")
-                lane.get_by_test_id("lane-rail").wait_for()
+                lane.get_by_test_id("lane-head").wait_for()
+                # AG10 omits an empty timeline rather than drawing a lone brief.
+                assert lane.get_by_test_id("lane-rail").count() == 0
                 shot("lane-working", lane)
                 assert not lane.get_by_test_id("lane-track").is_visible()
                 assert "Your press in GitHub" not in lane.inner_text()
@@ -353,7 +360,7 @@ class TestSessionOpenGlass:
                 lane.get_by_test_id("lane-ask").wait_for()
                 shot("lane-asking", lane)
                 assert lane.locator(".ask-well-question").count() == 1
-                assert "The runbook needs a rollback owner" not in lane.get_by_test_id("lane-rail").inner_text()
+                assert lane.get_by_test_id("lane-rail").count() == 0
                 assert not errors, errors
             finally:
                 browser.close()

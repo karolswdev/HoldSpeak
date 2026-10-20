@@ -7952,18 +7952,18 @@
       ],
       "expected": {
         "predicate": {
-          "kind": "window_titled",
-          "value": "Rhythm"
+          "kind": "text_contains",
+          "value": "Quiet from"
         },
-        "observe_at": "#surface-cadence",
-        "words": "The produced sweep receipt opens Rhythm from Activity; Activity stays open for the return."
+        "observe_at": "#surface-settings [data-settings-module=\"rhythm\"]",
+        "words": "The produced receipt opens Settings at Rhythm, where Quiet from is visible; Activity stays open for the return."
       },
       "completion_bound_s": 30,
       "viewports": [
         1440,
         393
       ],
-      "reason": "Finished sweep receipts are read in Activity, reached through Search; the legacy case id remains for evidence continuity.",
+      "reason": "Betterment ST1 gives Rhythm one home in Settings. The legacy case id stays stable; prior sealed observations are unchanged.",
       "trigger": {
         "kind": "ui",
         "action": "click",
@@ -8103,14 +8103,30 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-cadence.is-front button[aria-label=\"Close Rhythm\"]",
+          "selector": "#surface-settings.is-front button[aria-label=\"Close Settings\"]",
           "at_width": 1440,
           "adapter": "ui-pointer"
         },
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-cadence.is-front button[aria-label=\"Back from Rhythm\"]",
+          "selector": "#surface-settings.is-front button[aria-label=\"Back from Settings\"]",
+          "at_width": 393,
+          "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click",
+          "selector": "#surface-settings .desk-gadget-close",
+          "at_width": 393,
+          "adapter": "ui-touch",
+          "why": "Current Settings uses the first Back to leave its Rhythm module. Return to the Settings index before closing the window; ST7 removes this nested module."
+        },
+        {
+          "kind": "ui",
+          "action": "wait_for",
+          "selector": "#surface-settings [data-settings-module=\"rhythm\"]",
+          "state": "detached",
           "at_width": 393,
           "adapter": "ui-pointer"
         }
@@ -8127,7 +8143,7 @@
             },
             {
               "kind": "selector_presence",
-              "selector": "#surface-cadence",
+              "selector": "#surface-settings",
               "present": false
             },
             {
@@ -8151,21 +8167,21 @@
             "path": "/api/desk/windows"
           }
         ],
-        "words": "The same receipt Button owns nine plate hit points in frontmost Activity; Rhythm is gone and the projection/source identity is unchanged. The library plate is 28px; phone halo ownership is not inferred from its bounding box."
+        "words": "After leaving the Rhythm module, native Close or Back closes Settings and returns to the same unchanged Activity receipt, owning all nine hit points."
       },
       "completion_bound_s": 30,
       "viewports": [
         1440,
         393
       ],
-      "reason": "Closing Rhythm returns to the same Finished receipt in Activity without changing its durable source.",
+      "reason": "Betterment ST1 receipt opens Settings at Rhythm; closing that one window returns to the same unchanged source receipt.",
       "trigger": {
         "kind": "ui",
         "action": "click",
-        "selector": "#surface-cadence .desk-gadget-close",
+        "selector": "#surface-settings .desk-gadget-close",
         "adapter": "ui-by-viewport",
         "timeout_s": 15,
-        "why": "Native Close at 1440 or Back at 393 closes the unscoped Rhythm host."
+        "why": "Close Settings at 1440 or Back at 393 returns to the same Activity receipt."
       }
     },
     {
