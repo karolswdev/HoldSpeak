@@ -119,7 +119,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | AG12 | Review by (builder and reviewer) | Done · #1385 | Bounded two-round pair; durable Result and read-only reviewer authority. |
 | AG13 | A HoldSpeak skill | Done · #1374 | Packaged skill, native launch discovery and Connect install; offline Codex discovery observed. |
 | AG14 | Automations that hand work to agents | Open |  |
-| AG15 | Agents he started himself (decision 1) | Done · PR_PENDING | Own native tmux agents show state and accept owner answers/approval; rig discovery stays off. |
+| AG15 | Agents he started himself (decision 1) | Done · #1392 | Own native tmux agents show state and accept owner answers/approval; rig discovery stays off. |
 
 ## Daily and Needs you (`daily/RECIPE.md`): 11 of 11
 
