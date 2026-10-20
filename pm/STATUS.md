@@ -4,9 +4,18 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (one decision record)
+**Last updated:** 2026-10-20 (main wire follow-through)
 
 ## Current phase
+
+The main watcher on 5bf3dc0c8 found four failures in its first shard:
+5,917 passed, 16 skipped and one xfailed. Three stored People replies had
+old date-dependent ordering or shapes. Their complete real producer replies
+are re-recorded. The drafter test now distinguishes inferred memory from a
+confirmed Project decision: a deterministic draft reads no inferred memory
+and retains its linked canonical decision exactly once. No product behavior
+changed. Root passed 24 collected producer checks and 41 People, Today and
+Needs consumers. Required quick: MAIN_WIRE_QUICK_PENDING.
 
 P9 gives each decision one canonical record. New Decision carries About and
 Why through the admitted decision.create path. Project This week, Decisions,
