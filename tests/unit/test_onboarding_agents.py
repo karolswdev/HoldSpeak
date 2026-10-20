@@ -10,6 +10,7 @@ environment.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -210,7 +211,7 @@ def _native_runner(argv, *, cwd, env, **kwargs):
         if action == "add":
             current = current + ("\n" if current and not current.endswith("\n") else "") + block
         else:
-            current = current.replace(block, "")
+            current = re.sub(r"(?ms)^\[mcp_servers\.holdspeak\]\n.*?(?=^\[|\Z)", "", current)
         config.parent.mkdir(parents=True, exist_ok=True)
         config.write_text(current)
     return subprocess.CompletedProcess(argv, 0, stdout="ok", stderr="")

@@ -82,8 +82,9 @@ def test_setup_keeps_the_failed_agent_when_the_next_binding_works(
             assert stopped.value.ok, stopped.value.text()
             assert json.loads(native_config.read_text())["mcpServers"]["holdspeak"] == foreign
             assert "mcp_servers.holdspeak" not in codex_config.read_text()
-            assert not codex_hooks.exists()
+            assert not json.loads(codex_hooks.read_text()).get("hooks")
             assert not codex_skill.exists()
+            expect(face.get_by_text("Codex · uses your desk", exact=True)).to_have_count(0)
             shots = evidence_dir("setup-agent-binding")
             (shots / f"mixed-result-{width}.json").write_text(json.dumps(body, indent=2) + "\n")
             row.scroll_into_view_if_needed()
