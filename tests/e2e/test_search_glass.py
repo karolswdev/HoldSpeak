@@ -210,21 +210,24 @@ def test_search_people_prep_ask_and_keep_remove_on_real_desk(people_face: Any) -
 
     page.reload(wait_until="load")
     _normal_chair(page)
-    screen_person = page.locator(f'[data-object-id="{person}"]')
-    screen_person.wait_for(timeout=T)
     if width < 720:
-        bounds = screen_person.bounding_box()
-        assert bounds
-        x, y = bounds["x"] + bounds["width"] / 2, bounds["y"] + bounds["height"] / 2
-        touch = page.context.new_cdp_session(page)
-        touch.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": x, "y": y, "id": 1}]})
-        page.wait_for_timeout(750)
-        touch.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
-        touch.detach()
+        # Compact desks use Go instead of the desktop Floor. Search exposes
+        # the same person's live Object verbs and retained membership there.
+        page.locator(".desk-tools-launch").first.tap()
+        field = page.get_by_role("combobox", name="Find, open or ask")
+        field.fill("Mira")
+        row.wait_for()
+        page.get_by_role("button", name="Open actions for Mira Okafor", exact=True).tap()
+        actions = page.get_by_role("group", name="Actions for Mira Okafor", exact=True)
+        page.screenshot(path=str(shots / f"person-kept-on-desk-{width}.png"))
+        actions.get_by_role("option", name="Remove from desk Do", exact=True).tap()
     else:
+        screen_person = page.locator(f'[data-object-id="{person}"]')
+        screen_person.wait_for(timeout=T)
+        page.screenshot(path=str(shots / f"person-kept-on-desk-{width}.png"))
         screen_person.click(button="right")
-    menu = page.get_by_role("menu", name="Mira Okafor menu", exact=True)
-    menu.get_by_role("menuitem", name="Remove from desk", exact=True).click()
+        menu = page.get_by_role("menu", name="Mira Okafor menu", exact=True)
+        menu.get_by_role("menuitem", name="Remove from desk", exact=True).click()
     for _ in range(20):
         if person not in _read_membership(page, person_id):
             break
