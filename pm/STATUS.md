@@ -38,7 +38,7 @@ description preserves both discovery examples and the owner-only boundary,
 ends with the required Needs sentence, and fits the original prompt budget.
 The memory comparison names only that description change; all other tool
 and prompt bytes, and every original palette-size limit, remain strict.
-All 61 focused Python checks pass. Required quick: ASK_ARRANGE_QUICK_PENDING.
+All 61 focused Python checks pass. Required quick: Final delta: all 59 affected backend checks, 110 desk-sweep checks, 27 canon guards and 1,116 repository guards passed; build green. All 18 held-call face checks and 61 focused regressions passed; the unchanged window product passed 4,193 related web checks.
 
 The main watcher found two first-run producer recordings missing the saved
 Builder tools and Remote settings fields. The existing private-Hub writers
