@@ -201,6 +201,9 @@ def _real_capture_hub(
 
     monkeypatch.setattr(recorder_module.MeetingRecorder, "_resolve_mic_device", staticmethod(lambda _device: 0))
     monkeypatch.setattr(recorder_module.MeetingRecorder, "_resolve_system_device", staticmethod(lambda _device: None))
+    # This native-adapter double runs in process. A fresh capture child cannot
+    # inherit monkeypatches; C10 tests cover the actual child boundary.
+    monkeypatch.setattr(recorder_module.MeetingRecorder, "capture_process_supported", False)
     monkeypatch.setattr(recorder_module.MeetingRecorder, "_start_mic_stream", delayed_native_start)
 
     runtime = WebRuntime(register_signal_handlers=False)
