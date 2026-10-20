@@ -14,7 +14,7 @@ Installed meeting plugins follow Meeting summaries before their group or
 the global assignment. This changes the frozen runtime route, as well as
 what the face reports. No assignment or engine is changed on the owner’s
 desk. The worker collected and passed 46 focused checks against real SQLite
-assignment producers. Required quick: ROUTE_PARITY_QUICK_PENDING.
+assignment producers. Required quick: 245 affected checks passed; all 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green.
 
 The main watcher’s retained browser adapters now follow the current doors:
 Watch sources through Sources then RAW; meeting and decision icons through
