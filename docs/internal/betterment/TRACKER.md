@@ -150,7 +150,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | ST6 | Let my agents use HoldSpeak | Done · #1388 | Native user-scope tools, hooks and skill; per-agent readback and owned-binding removal in Setup. |
 | ST7 | Settings is one page | Done · #1391 | Eight sections; preserved writers and aliases; Engines opens its own window. |
 | ST8 | Sign in without a terminal | Open |  |
-| ST9 | Setup from the terminal and by asking | Done · PR_PENDING | CLI and MCP share the Setup inventory and Use producer; agents read status, adoption requires the owner. |
+| ST9 | Setup from the terminal and by asking | Done · #1393 | CLI and MCP share the Setup inventory and Use producer; agents read status, adoption requires the owner. |
 
 ## Desk shell (`shell/RECIPE.md`): 3 of 10
 
