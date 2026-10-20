@@ -19,6 +19,7 @@ import {
 import { DICTATION_FAILURES, needsMicrophoneDoctor, type DictationFailure } from "../../lib/dictationRecovery";
 import "./setupFace.css";
 import { useOwnerName } from "./ownerName";
+import { SetupMicrophoneCheck } from "./SetupMicrophoneCheck";
 
 export type SetupRowState = "found" | "pending" | "works" | "does_not_work";
 
@@ -105,7 +106,7 @@ type SetupActionState = "works" | "pending" | "does_not_work" | "found";
 
 const TAKE_FAILURE_TOKENS: Record<DictationFailure, { chip: string; reason: string }> = {
   permission_denied: { chip: "MIC BLOCKED", reason: "ALLOW IN BROWSER" },
-  no_microphone: { chip: "NO MIC", reason: "NO DEVICE FOUND" },
+  no_microphone: { chip: "NO MIC", reason: "BROWSER GAVE NO DEVICE" },
   microphone_unavailable: { chip: "MIC BUSY", reason: "IN USE ELSEWHERE" },
   missing_model: { chip: "NO SPEECH MODEL", reason: "SET UP SPEECH" },
   rejected_token: { chip: "NOT HEARD", reason: "TOKEN REFUSED" },
@@ -157,6 +158,7 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
   const [peopleDraft, setPeopleDraft] = useState("");
   const [peopleBusy, setPeopleBusy] = useState(false);
   const [notice, setNotice] = useState("");
+  const [microphoneRequest, setMicrophoneRequest] = useState(0);
   const owner = useOwnerName();
 
   const handoff = useCallback(async (disposition: "completed" | "dismissed") => {
@@ -403,10 +405,9 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
                 <Button
                   dense
                   variant="secondary"
-                  onClick={() => openSurfaceOr(
-                    needsMicrophoneDoctor(take.failure) ? "configure-setup" : "configure-runs-on",
-                    needsMicrophoneDoctor(take.failure) ? "/" : "/profiles",
-                  )}
+                  onClick={() => needsMicrophoneDoctor(take.failure)
+                    ? setMicrophoneRequest((request) => request + 1)
+                    : openSurfaceOr("configure-runs-on", "/profiles")}
                 >
                   {needsMicrophoneDoctor(take.failure) ? "Check the microphone" : "Engines"}
                 </Button>
@@ -423,6 +424,7 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
           <Button dense variant="primary" loading={take.keeping} disabled={take.keeping} onClick={openDesk}>Open my desk</Button>
         </div>
       ) : null}
+      <SetupMicrophoneCheck requested={microphoneRequest} />
     </section>
   );
 }

@@ -1,5 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { DictationFailure } from "../../../lib/dictationRecovery";
+import { DESK_APPLICATION_ALIASES } from "../../applications";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -7,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   take: {
     state: "idle",
     take: null,
-    failure: null,
+    failure: null as DictationFailure | null,
     level: 0,
     keeping: false,
     message: "",
@@ -30,6 +32,7 @@ vi.mock("../useFirstTake", () => ({ useFirstTake: () => mocks.take }));
 
 import { SetupFace, type SetupInventory } from "../SetupFace";
 import LAN_USE from "../../__tests__/fixtures/setup-st3-st5/lan-use.json";
+import MICROPHONE from "../../__tests__/fixtures/setup-st3-st5/microphone.json";
 
 const inventory = (overrides: Partial<SetupInventory> = {}): SetupInventory => ({
   owner_name: "Astra",
@@ -59,6 +62,9 @@ beforeEach(() => {
 });
 
 describe("Setup ST3–ST5", () => {
+  it("opens the retired readiness alias directly in the one Setup home", () => {
+    expect(DESK_APPLICATION_ALIASES["read-runtime-docs"]).toEqual({ target: "configure-setup", scope: undefined });
+  });
   it("uses a found row and folds it into Works", async () => {
     render(<SetupFace initial={inventory({ rows: [inventory().rows[0]] })} />);
 
@@ -215,15 +221,21 @@ describe("Setup ST3–ST5", () => {
     expect(screen.queryByRole("button", { name: "Listening" })).toBeNull();
   });
 
-  it("shows the named take failure and its Again recovery", () => {
+  it("shows the named take failure and reads the real microphone check in place", async () => {
+    const original = mocks.apiFetch.getMockImplementation()!;
+    mocks.apiFetch.mockImplementation((path, init) => path === "/api/setup/status"
+      ? Promise.resolve(MICROPHONE) : original(path, init));
     mocks.take.state = "failed";
     mocks.take.failure = "no_microphone";
     render(<SetupFace initial={inventory({ rows: [{ id: "speech", kind: "speech", label: "Speech", state: "works" }] })} />);
 
-    expect(screen.getByTestId("setup-take-failure").textContent).toContain("NO DEVICE FOUND");
+    expect(screen.getByTestId("setup-take-failure").textContent).toContain("BROWSER GAVE NO DEVICE");
     expect(screen.getByRole("button", { name: "Check the microphone" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Again" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Open my desk" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Check the microphone" }));
+    expect(await screen.findByText(MICROPHONE.sections[0].detail)).toBeTruthy();
+    expect(mocks.apiFetch).toHaveBeenCalledWith("/api/setup/status");
   });
 });
 

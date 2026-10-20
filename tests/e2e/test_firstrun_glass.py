@@ -38,6 +38,8 @@ def test_setup_face_uses_everything_adds_people_and_leaves_for_the_desk(
     source = Source()
     source.hold.set()
     _real_local_ai(monkeypatch, source)
+    import holdspeak.commands.doctor as doctor
+    monkeypatch.setattr(doctor, "get_default_input_device", lambda: None)
     server, base = _boot(tmp_path, monkeypatch, token="setup-st3-st5")
     try:
         # Seed one real calendar projection. PeopleService.suggestions reads
@@ -120,9 +122,17 @@ def test_setup_face_uses_everything_adds_people_and_leaves_for_the_desk(
             page.evaluate("window.__denyMic = true")
             face.get_by_role("button", name="Say one sentence", exact=True).click()
             failure = face.get_by_test_id("setup-take-failure")
-            expect(failure).to_contain_text("NO DEVICE FOUND", timeout=15_000)
+            expect(failure).to_contain_text("BROWSER GAVE NO DEVICE", timeout=15_000)
             expect(failure.get_by_role("button", name="Check the microphone", exact=True)).to_be_visible()
             expect(failure.get_by_role("button", name="Again", exact=True)).to_be_visible()
+            with page.expect_response(lambda response: response.url.endswith("/api/setup/status")) as checked:
+                failure.get_by_role("button", name="Check the microphone", exact=True).click()
+            assert checked.value.ok, checked.value.text()
+            microphone = next(row for row in checked.value.json()["sections"] if row["id"] == "microphone")
+            assert microphone["status"] == "fail", microphone
+            expect(face.get_by_text(microphone["detail"], exact=True)).to_be_visible()
+            import json
+            (shots / f"setup-microphone-read-{width}.json").write_text(json.dumps({"sections": [microphone]}, indent=2) + "\n")
             page.screenshot(path=str(shots / f"setup-mic-failed-{width}.png"), full_page=width < 720)
             page.evaluate("window.__denyMic = false")
 

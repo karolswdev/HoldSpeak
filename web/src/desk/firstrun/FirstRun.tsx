@@ -9,7 +9,7 @@ export function FirstRun() {
     return <SurfaceState error={setup.error} onRetry={() => void setup.reload()} />;
   }
   if (!setup.inventory) {
-    return <SurfaceState error="Setup could not be read." onRetry={() => void setup.reload()} />;
+    return <SurfaceState error="Setup could not be read. Your settings are unchanged. Try again." onRetry={() => void setup.reload()} />;
   }
   return <SetupFace initial={setup.inventory} />;
 }
