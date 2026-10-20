@@ -19,6 +19,16 @@ The active Guide uses Works, Not ready and Does not work with the existing
 reason text; a row without a fix gets no invented fix verb. Its six recorded
 consumer checks, type check and build pass. Required quick:
 REMOTE_SETTINGS_QUICK_PENDING.
+The fresh watcher pinned to `b8be8b36a` passed its first 5,921 Python
+checks (16 skipped, one xfailed); the remaining full tape is still pending.
+
+Speech route plans now use the same assignment order as Engines: explicit
+capability or speech group, without falling through to the chat default.
+Installed meeting plugins follow Meeting summaries before their group or
+the global assignment. This changes the frozen runtime route, as well as
+what the face reports. No assignment or engine is changed on the owner’s
+desk. The worker collected and passed 46 focused checks against real SQLite
+assignment producers. Required quick: 245 affected checks passed; all 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green.
 
 The main watcher’s retained browser adapters now follow the current doors:
 Watch sources through Sources then RAW; meeting and decision icons through
