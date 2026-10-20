@@ -401,7 +401,7 @@ AGREE = r"""(target) => new Promise((resolve) => {
     const head = read('[data-testid=arrival-display]');
     const bell = read('.desk-bell strong');
     const intel = read('.desk-dock [aria-label^="Today"] .desk-dock-badge');
-    if (head === target && bell === target && intel === null) {
+    if (head === target && bell === target && intel === target) {
       resolve({ ms: Math.round(performance.now() - t0), head, bell, intel });
       return;
     }
@@ -502,11 +502,11 @@ class TestOneNeedsYou:
         with sync_playwright() as pw:
             browser, page, errors = self._page(pw, width)
             try:
-                # ── one number: 6 on the head and the bell; no Dock copy ──
+                # ── one number: 6 on the head, bell and Today Dock tile ──
                 before = self._agree_on(page, 6)
                 record["before"] = before
                 assert before["head_n"] == before["bell"] == 6, before
-                assert before["intel"] is None and before["memory"] is None, before
+                assert before["intel"] == 6 and before["memory"] is None, before
                 said = _numbers_said(before["said"])
                 assert said and all(n == 6 for n in said), before["said"]
 
@@ -541,7 +541,7 @@ class TestOneNeedsYou:
                 assert not nav, f"the page navigated: {nav}"
                 after = page.evaluate(READERS)
                 record["after"] = after
-                assert after["intel"] is None and after["memory"] is None, after
+                assert after["intel"] == 5 and after["memory"] is None, after
                 said = _numbers_said(after["said"])
                 assert said and all(n == 5 for n in said), after["said"]
                 self._shot(page, "a2w-chair-done-5", width)

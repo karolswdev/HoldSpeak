@@ -274,3 +274,52 @@ def test_a_full_question_at_393_wraps_inside_needs_you_and_the_agent_window(tmp_
             browser.close()
     finally:
         server.stop()
+
+
+def test_the_agents_dock_accepts_a_floor_note_without_launching_it(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """S4 keeps the real drag entry when its duplicate Floor target retires."""
+    from playwright.sync_api import sync_playwright
+
+    _ensure_build()
+    token = "s4-dock-hand"
+    server, base = _boot(tmp_path, monkeypatch, token=token)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True)
+            page = browser.new_page(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
+            page.set_default_timeout(20_000)
+            requests: list[Any] = []
+            page.on("request", lambda request: requests.append(request))
+            try:
+                page.goto(f"{base}/?token={token}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=token)
+                _api(page, "PUT", "/api/authority/control-mode", {"control_mode": "safe"}, token=token)
+                created = _api(page, "POST", "/api/notes", {
+                    "title": "Dock handoff note", "body_markdown": "Review these private fixture words.",
+                }, token=token)
+                note_id = created["note"]["id"]
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                source = page.locator(f'[data-testid="desk-screen"] [data-object-id="note:{note_id}"]')
+                target = page.locator('.desk-dock [data-app="conductor"]')
+                source.wait_for()
+                target.wait_for()
+                _settle(page)
+                assert page.locator('[data-testid="desk-screen"] [data-object-id="drawer:conductor"]').count() == 0
+                with page.expect_request(lambda request: request.url.endswith("/api/agent/hand/preview")
+                                         and request.method == "POST") as preview:
+                    source.drag_to(target)
+                assert preview.value.post_data_json["kind"] == "note"
+                assert preview.value.post_data_json["id"] == note_id
+                sheet = page.get_by_test_id("hand-sheet")
+                sheet.wait_for()
+                sheet.get_by_text("Dock handoff note", exact=True).wait_for()
+                assert not [request for request in requests
+                            if request.method == "POST" and request.url.endswith("/api/agent/hand")]
+                saved = _api(page, "GET", f"/api/notes/{note_id}", token=token)
+                assert saved["note"]["body_markdown"] == "Review these private fixture words."
+                page.screenshot(path=str(evidence_dir("s4-floor") / "dock-hand-preview-1440.png"))
+            finally:
+                browser.close()
+    finally:
+        server.stop()
