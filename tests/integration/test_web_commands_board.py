@@ -54,3 +54,17 @@ def test_test_endpoint_rejects_empty_payload(client: TestClient, settings_path: 
     res = client.post("/api/commands/test", json={"kind": "shell", "payload": "  "})
     assert res.status_code == 400
     assert res.json()["ok"] is False
+
+
+@pytest.mark.parametrize("verb", ["record", "stop", "new_note", "ask", "open_today"])
+def test_desk_command_test_is_a_preview_without_a_connector(
+    client: TestClient, settings_path: Path, monkeypatch: pytest.MonkeyPatch, verb: str
+) -> None:
+    def unexpected(*_args, **_kwargs):
+        raise AssertionError("Preview must not run a command connector")
+    monkeypatch.setattr("holdspeak.plugins.voice_macro_connector.build_voice_macro_connector", unexpected)
+    response = client.post("/api/commands/test", json={"kind": "desk_verb", "payload": verb})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True and body["tested"] is False
+    assert body["preview"] and body["note"] == f"Preview · {body['preview']}"
