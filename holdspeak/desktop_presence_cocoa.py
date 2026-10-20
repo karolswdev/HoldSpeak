@@ -293,6 +293,7 @@ class _CocoaPresenceUI:
         self.stop_menu_item.setEnabled_(view.stop_available)
         button = self.status_item.button()
         if button is not None:
+            button.setTitle_(view.label if view.stop_available or not view.desk_available else "")
             button.setToolTip_(view.label)
 
     def show(self, activity: dict[str, Any]) -> None:

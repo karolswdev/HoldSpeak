@@ -154,3 +154,45 @@ def test_parent_native_stop_event_invokes_the_runtime_callback() -> None:
         renderer._event_stop.set()
         worker.join(timeout=1.0)
 
+
+
+class _FakeStatusButton:
+    def __init__(self):
+        self.title = ""
+        self.tooltip = ""
+
+    def setTitle_(self, title):
+        self.title = title
+
+    def setToolTip_(self, tooltip):
+        self.tooltip = tooltip
+
+
+def test_menu_bar_shows_elapsed_recording_and_disconnect_then_clears_idle(monkeypatch):
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+    import holdspeak.desktop_presence as presence
+
+    now = datetime(2026, 10, 19, 12, 5, 8, tzinfo=timezone.utc)
+    monkeypatch.setattr(presence, "utc_now", lambda: now)
+    ui = _bare_ui_for_hide("meeting_live")
+    ui._activity["started_at"] = "2026-10-19T12:00:00+00:00"
+    ui._desk_available = True
+    ui._last_status_signature = None
+    button = _FakeStatusButton()
+    ui.status_item = SimpleNamespace(button=lambda: button)
+    ui.refresh_status()
+    assert button.title == "Recording · 05:08"
+    assert button.tooltip == "Recording · 05:08"
+    assert ui.stop_menu_item.enabled is True
+
+    ui._desk_available = False
+    ui.refresh_status()
+    assert button.title == "Desk not running"
+    assert ui.stop_menu_item.enabled is False
+
+    ui._desk_available = True
+    ui._activity = {"state": "idle"}
+    ui.refresh_status()
+    assert button.title == ""
+    assert ui.stop_menu_item.enabled is False
