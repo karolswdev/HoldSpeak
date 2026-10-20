@@ -165,7 +165,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S6 | Wallpaper has one home | Done · #1407 | One Settings Desk home; readable Jupiter label plates. |
 | S7 | Windows open where he can see them, at the size of their content | Done · #1407 | Content sizes and reachable heads; remembered collision reseating preserves owner resize. |
 | S8 | The Window menu | Done · #1407 | Arrange front/all preserve size and order; exact owner geometry survives reopening. |
-| S9 | Ask can arrange the desk (gated) | Part · PR_PENDING | Real LAN opens and tiles the canonical windows; Wrote/Undo restores them. First strict tile 16.27 s exceeds the 10 s gate. |
+| S9 | Ask can arrange the desk (gated) | Part · #1413 | Real LAN opens and tiles the canonical windows; Wrote/Undo restores them. First strict tile 16.27 s exceeds the 10 s gate. |
 
 ## Send (`send/RECIPE.md`): 7 of 8
 
