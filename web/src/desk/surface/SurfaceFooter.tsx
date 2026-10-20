@@ -78,6 +78,7 @@ export function SurfaceFooter({
   receipt,
   verbs,
   className,
+  dataSend,
   fold = true,
 }: {
   egress?: ReactNode;
@@ -86,6 +87,9 @@ export function SurfaceFooter({
   /** HS-169-02 — a face-scoped hook: the layout is portaled into the
    *  frame's foot slot, so a face cannot reach it by descendant selector. */
   className?: string;
+  /** A portaled species marker. Descendant selectors inside a face cannot
+   *  reach the footer, so the species owns its own action root as well. */
+  dataSend?: "actions";
   /** Betterment Q8 (the note at 393): `false` keeps every verb on the phone,
    *  wrapping to a second row, instead of folding the extras into More. For a
    *  foot of a few short verbs that the owner reaches for every time. */
@@ -141,7 +145,7 @@ export function SurfaceFooter({
   // HS-129-05 — the layout sits inside the frame-owned foot so its narrow
   // container query can reflow the slots without making another footer root.
   const contents = (
-    <div className={className ? `surface-footer-layout ${className}` : "surface-footer-layout"}>
+    <div data-send={dataSend} className={className ? `surface-footer-layout ${className}` : "surface-footer-layout"}>
       <div className="surface-footer-egress">{egress}</div>
       <div className="surface-footer-receipt">{receipt}</div>
       <div className="surface-footer-verbs">{compactVerbs}</div>

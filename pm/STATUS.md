@@ -8,6 +8,25 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Send opens one shared sheet in the result's window. Destinations are chips;
+Add destination saves and selects inline. Its footer keeps Send on screen,
+and Back restores the original result and opening focus. The record's own
+footer is absent while the sheet is open. Saved paths retain their case and
+wrap inside the window. Native receipts and sent-by-hand records share Sent.
+
+Edit makes a Note copy from the frozen preview and selects the same
+destination. The real Note editor stores the changed line, and Send carries
+those exact rendered bytes. The original meeting Summary stays unchanged.
+
+The actual private-Hub case passes at 1440/393: meeting and Note Send,
+inline Add, Back focus, Edit/store/send, exact file bytes, unchanged source,
+and one durable Sent row after reload. All nine pointer points hit at both
+widths; the phone Send owns a 44 px target. Both shots were inspected.
+Earlier 34 focused web checks passed. The old retained form-persistence
+check now uses Summary/Follow-ups while retaining its reload and per-object
+assertions. Required quick: SEND_SHEET_QUICK_PENDING.
+The first real Send recipe remains open for the owner's five presses.
+
 The main watcher’s retained browser adapters now follow the current doors:
 Watch sources through Sources then RAW; meeting and decision icons through
 explicit Desk membership; and a real drag onto the Agents Dock tile. The

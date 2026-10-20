@@ -708,7 +708,10 @@ class TestSendGlass:
               if (!target) return {error: 'missing'};
               const r = target.getBoundingClientRect();
               const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-              const points = [cx - 20, cx, cx + 20].flatMap(x => [cy - 20, cy, cy + 20].map(y => [x, y]));
+              const wide = innerWidth > 420;
+              const xs = wide ? [r.left + 2, cx, r.right - 2] : [cx - 20, cx, cx + 20];
+              const ys = wide ? [r.top + 2, cy, r.bottom - 2] : [cy - 20, cy, cy + 20];
+              const points = xs.flatMap(x => ys.map(y => [x, y]));
               const hits = points.map(([x, y]) => {
                 const hit = document.elementFromPoint(x, y);
                 return Boolean(hit && (hit === target || target.contains(hit)));
@@ -722,12 +725,11 @@ class TestSendGlass:
         assert result.get("error") is None, result
         if require_visible:
             assert result["visible"], result
-        # The painted dense face is 28 px at the wide desk. Its nine-point
-        # 44 px hit proof applies at the narrow device, where Button owns the
-        # transparent halo; retain the wide geometry and hit facts without
-        # treating the compact painted face as a miss.
-        if result["viewport"]["width"] <= 420:
-            assert all(result["hits"]), result
+        # The painted dense face is 28 px at the wide desk, so sample its own
+        # inset rect there. On the narrow device retain the 44 px halo points
+        # that the library Button promises. Both faces must hit at all nine
+        # sampled points.
+        assert all(result["hits"]), result
         return result
 
     @pytest.mark.e2e
@@ -810,21 +812,31 @@ class TestSendGlass:
         sheet = meeting.locator("[data-testid=send-sheet]")
         sheet.wait_for()
         team = meeting.locator("[data-testid=destination-row]:has([data-destination='Team updates'])")
-        if team.locator("[aria-pressed='true']").count() == 0:
-            chip = team.locator(".send-destination-chip")
-            chip.scroll_into_view_if_needed()
-            chip.click()
         opened_team = meeting.locator("[data-testid=send-open][data-destination='Team updates']")
-        # The selected chip is the product's authority. Wait for its own
-        # open row and preview resource; a second click would hide a real
-        # selection/remount defect.
+        # The restored selected chip is the product's authority. Wait for its
+        # own well-read state; a second click would hide a real remount defect.
         try:
             team.locator("[aria-pressed='true']").wait_for(timeout=T)
         except Exception as exc:  # noqa: BLE001 - retain the real seam state
+            hit = page.evaluate(
+                """(sel) => {
+                  const target = document.querySelector(sel);
+                  if (!target) return {missing: true};
+                  const r = target.getBoundingClientRect();
+                  const x = r.left + r.width / 2, y = r.top + r.height / 2;
+                  const top = document.elementFromPoint(x, y);
+                  return {rect: {x: r.x, y: r.y, width: r.width, height: r.height},
+                    point: {x, y}, top: top ? {tag: top.tagName, cls: String(top.className || ""), text: (top.textContent || "").trim().slice(0, 80)} : null,
+                    owns: Boolean(top && (top === target || target.contains(top)))};
+                }""",
+                f"[id='{MEET}'] [data-destination='Team updates']",
+            )
             raise AssertionError({
                 "selected": team.locator("[aria-pressed='true']").count(),
                 "chip": team.locator(".send-destination-chip").get_attribute("aria-pressed"),
                 "chip_box": team.locator(".send-destination-chip").bounding_box(),
+                "hit": hit,
+                "workspace": page.evaluate("() => localStorage.getItem('hs.desk.workspace.v1')"),
                 "rows": meeting.locator("[data-testid=destination-row]").all_inner_texts(),
             }) from exc
         try:
@@ -889,6 +901,29 @@ class TestSendGlass:
 
         # The original meeting source stays frozen and its own bytes remain unchanged.
         assert bytes(self.db.channel_sends.get(meeting_row["id"])["payload"]) == meeting_bytes
+
+        # A fresh desk reads the durable row back into the shared Sent list.  The
+        # row must be the same native send (one receipt), rather than a transient
+        # face-only acknowledgement from the first window.
+        # On the phone the window chrome's Back while the send face is open
+        # returns to the ordinary note editor; the same chrome button then
+        # closes that real note window before the reload read.
+        note_win.locator("[data-testid=send-back]").click()
+        note_win.locator(".desk-gadget-close").click()
+        note_win.wait_for(state="detached", timeout=T)
+        page.reload(wait_until="load")
+        _normal_chair(page)
+        meeting = page.locator(f"[id='{MEET}']")
+        meeting.wait_for(timeout=T)
+        meeting.locator("[data-testid=meeting-send]").click()
+        reloaded_history = meeting.locator("[data-testid=send-history]")
+        reloaded_history.wait_for(timeout=T)
+        reloaded_rows = reloaded_history.locator("[data-testid=history-row]")
+        assert reloaded_rows.count() == 1
+        reloaded_text = reloaded_rows.first.inner_text()
+        assert "Team updates" in reloaded_text and "SAVED" in reloaded_text, reloaded_text
+        assert meeting.locator("[data-testid=send-history] [data-testid=history-word]").count() == 1
+        page.screenshot(path=str(SHOTS / f"S5-history-reloaded-{width}.png"))
         facts = {
             "width": width, "meeting_ref": meeting_ref, "note_ref": note_ref,
             "meeting_preview": preview_text, "meeting_send": {"id": meeting_row["id"], "path": str(meeting_path), "bytes": meeting_bytes.decode()},
@@ -897,6 +932,7 @@ class TestSendGlass:
                               "expected_rendered_bytes": expected_note_bytes.decode()}},
             "geometry": {"meeting": geometry, "note": note_geometry},
             "inline_destination": {"folder": str(inline_folder), "selected": True},
+            "reload_sent": {"rows": reloaded_rows.count(), "text": reloaded_text},
         }
         (SHOTS / f"S5-S6-facts-{width}.json").write_text(json.dumps(facts, indent=2) + "\n")
         page.screenshot(path=str(SHOTS / f"S6-note-sent-{width}.png"))

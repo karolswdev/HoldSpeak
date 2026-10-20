@@ -906,7 +906,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
                           ? <>
                               <PreviewWell preview={activePreview} testid="send-preview"
                                 onEdit={() => void edit(d, activePreview)} editBusy={editingPreview === d.id} />
-                              <SurfaceFooter className="send-sheet-footer" fold={false}
+                              <SurfaceFooter dataSend="actions" className="send-sheet-footer" fold={false}
                                 verbs={
                                   <>
                                     {editFailure ? <span className="send-line" data-testid="send-edit-failed"><StateChip state="failure" label="EDIT NOT SAVED" /><span className="surface-token" data-chip>{editFailure.toUpperCase().replace(/[_:]/g, " ")}</span></span> : null}

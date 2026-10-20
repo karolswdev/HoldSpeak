@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-20, window placement, Arrange and Wallpaper verified. Running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-20, Send sheet and Edit verified. Running-desk identity is in `pm/STATUS.md`.
 
-**Total: 110 of 117 slices merged**, with Send S7 still partial.
+**Total: 112 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -22,7 +22,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Daily and Needs you | `daily/` | 11 of 11 |
 | Setup and Settings | `setup/` | 10 of 10 |
 | Desk shell | `shell/` | 9 of 10 |
-| Send | `send/` | 2 of 8 |
+| Send | `send/` | 4 of 8 |
 | Capture | `capture/` | 12 of 12 |
 
 ## Automations (`workbench/RECIPE.md`): 11 of 11
@@ -175,8 +175,8 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S2 | The first real sends (on his desk, his press) | Open |  |
 | S3 | Ready to send in Needs you (owner decision 1) | Open |  |
 | S4 | What goes out (owner decision 3) | Open |  |
-| S5 | The Send sheet | Open |  |
-| S6 | Edit before Send | Open |  |
+| S5 | The Send sheet | Done · PR_PENDING | One in-place sheet, visible Send footer, inline destination, Back focus and durable Sent at both widths. |
+| S6 | Edit before Send | Done · PR_PENDING | Edit opens a Note copy; stored changes send to the same destination while the source stays unchanged. |
 | S7 | Automations put their result in a destination | Part | A6 #1322: Put it in can prepare a send to a saved destination. Check the rest of S7 against the recipe. |
 | S8 | "Not checked yet" warns (owner decision 2) | Done · #1403 | Published unchecked words stay sendable; warning and receipt survive readback. |
 

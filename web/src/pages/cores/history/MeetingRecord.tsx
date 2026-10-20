@@ -373,28 +373,26 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         <SurfaceWell head="Project"><AddToProject meetingId={meetingId} autoOpen
           onReceipt={(next) => setReceipt(next.tone === "danger" ? { text: next.text, tone: "danger" } : { text: next.text })} /></SurfaceWell>
       </div> : null}
-      <>
-        <SurfaceFooter
-          egress={footerEgress}
-          receipt={
-            parkOutcome ? (
-              <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restore(ids)} data-testid="meeting-park-receipt" />
-            ) : (
-              <span className="surface-footer-receipt-line" data-tone={receipt?.tone} role="status">
-                {receipt ? <span data-testid="meetings-run-receipt">{receipt.text}</span> : null}
-              </span>
-            )
-          }
-          verbs={
-            <span className="surface-footer-verbs-group">
-              {view === "outcomes" && hasSummary && requestedWell !== "send" ? (
-                <Button ref={sendButtonRef} dense variant="primary" data-testid="meeting-send" onClick={() => requestWell("send")}>Send…</Button>
-              ) : null}
-              <RecordMore entries={moreEntries} />
+      {requestedWell !== "send" ? <SurfaceFooter
+        egress={footerEgress}
+        receipt={
+          parkOutcome ? (
+            <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restore(ids)} data-testid="meeting-park-receipt" />
+          ) : (
+            <span className="surface-footer-receipt-line" data-tone={receipt?.tone} role="status">
+              {receipt ? <span data-testid="meetings-run-receipt">{receipt.text}</span> : null}
             </span>
-          }
-        />
-      </>
+          )
+        }
+        verbs={
+          <span className="surface-footer-verbs-group">
+            {view === "outcomes" && hasSummary ? (
+              <Button ref={sendButtonRef} dense variant="primary" data-testid="meeting-send" onClick={() => requestWell("send")}>Send…</Button>
+            ) : null}
+            <RecordMore entries={moreEntries} />
+          </span>
+        }
+      /> : null}
     </>
   );
 }

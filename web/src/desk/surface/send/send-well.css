@@ -220,6 +220,30 @@
   margin-top: 10px;
   background: var(--surface-1);
 }
+
+/* SurfaceFooter portals the send verbs into the host window's foot. Keep the
+   same species boundary on that action root: the receipt path must shrink and
+   wrap inside the foot instead of making its max-content grid column wider
+   than the window. */
+[data-send="actions"].surface-footer-layout {
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "verbs";
+}
+[data-send="actions"] .surface-footer-verbs,
+[data-send="actions"] .send-verbs,
+[data-send="actions"] .send-line {
+  min-width: 0;
+  max-width: 100%;
+}
+[data-send="actions"] .surface-footer-verbs { justify-content: flex-start; }
+[data-send="actions"] .send-line { flex: 1 1 180px; }
+[data-send="actions"] .send-literal.send-wrap {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 [data-send="well"] .send-inline-destination {
   margin: 4px 0 10px;
 }
