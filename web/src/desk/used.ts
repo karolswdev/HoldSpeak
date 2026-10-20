@@ -6,6 +6,31 @@ export interface UsedRow {
   ref: string;
   label: string;
   kind?: string;
+  /** The captured before/after rows of one revision-safe desk window Undo. */
+  window_undo?: WindowUndo;
+}
+
+export interface WindowUndoState {
+  id: string;
+  app?: string;
+  object_ref?: string | null;
+  geometry?: Record<string, string | number> | null;
+  minimized?: boolean;
+  room?: string | null;
+  revision?: number;
+}
+
+export interface WindowUndoEntry {
+  id: string;
+  before: WindowUndoState | null;
+  after: WindowUndoState | null;
+  after_revision?: number;
+}
+
+export interface WindowUndo {
+  group: string;
+  primary?: boolean;
+  windows: WindowUndoEntry[];
 }
 
 export interface AgentUse {
@@ -14,6 +39,8 @@ export interface AgentUse {
   wrote?: Array<UsedRow & { undo?: boolean }>;
   /** A send the agent prepared; he presses Send. */
   prepared?: Array<UsedRow & { send_id?: string; destination?: string }>;
+  /** Plain words for a grouped window action, for example "Opened 2 windows · Tiled". */
+  wrote_summary?: string;
 }
 
 const KIND_NOUNS: Record<string, [string, string]> = {
@@ -64,6 +91,9 @@ export function parseUse(raw: unknown): AgentUse | null {
     ref: String(row.ref),
     label: String(row.label || ""),
     ...(row.kind ? { kind: String(row.kind) } : {}),
+    ...(row.window_undo && typeof row.window_undo === "object"
+      ? { window_undo: row.window_undo as WindowUndo }
+      : {}),
   });
   return {
     looked_at: rows(value.looked_at).map(base),
@@ -73,5 +103,6 @@ export function parseUse(raw: unknown): AgentUse | null {
       send_id: String(row.send_id || ""),
       destination: String(row.destination || ""),
     })),
+    ...(typeof value.wrote_summary === "string" ? { wrote_summary: value.wrote_summary } : {}),
   };
 }
