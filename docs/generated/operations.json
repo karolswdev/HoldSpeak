@@ -6462,7 +6462,7 @@
     {
       "name": "windows.list",
       "version": 1,
-      "description": "List the open windows on the owner's desk, back to front, with the front one marked.",
+      "description": "List the owner's open windows, back to front, with the front one marked. Use registry.static for canonical app window ids and registry.families for object windows; use a returned object's object_ref as its scope.",
       "args_schema": {
         "type": "object",
         "properties": {},
@@ -6501,7 +6501,7 @@
     {
       "name": "windows.open",
       "version": 1,
-      "description": "Open a window on the owner's desk, in front. An open window comes to the front.",
+      "description": "Open a registry window on the owner's desk, in front. Use window_id from registry.static or a registry.families prefix; use pullout:people:<id> with object_ref people:<id>:prep for a person's prep, or surface-meetings with meeting:<id>?view=review for a meeting; pass object_ref to scope it.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -6509,7 +6509,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200,
-            "description": "The window id (for example chair:brief, zone:<id>, surface-people)."
+            "description": "The window id (for example chair:brief, zone:<id>, pullout:people:<id>)."
           },
           "object_ref": {
             "type": [
@@ -6637,7 +6637,7 @@
     {
       "name": "windows.close",
       "version": 1,
-      "description": "Close a window on the owner's desk.",
+      "description": "Close one open window from the owner's desk. Use the id and revision returned by windows.list.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -6645,7 +6645,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200,
-            "description": "The window id (for example chair:brief, zone:<id>, surface-people)."
+            "description": "The window id (for example chair:brief, zone:<id>, pullout:people:<id>)."
           },
           "expected_revision": {
             "type": [
@@ -6692,7 +6692,7 @@
     {
       "name": "windows.raise",
       "version": 1,
-      "description": "Bring a window to the front of the owner's desk.",
+      "description": "Bring one listed window to the front of the owner's desk. Use its id and revision from windows.list.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -6700,7 +6700,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200,
-            "description": "The window id (for example chair:brief, zone:<id>, surface-people)."
+            "description": "The window id (for example chair:brief, zone:<id>, pullout:people:<id>)."
           },
           "expected_revision": {
             "type": [
@@ -6747,7 +6747,7 @@
     {
       "name": "windows.arrange",
       "version": 1,
-      "description": "Set the rects of several windows in one change (a tile, a layout).",
+      "description": "Arrange several listed windows in one atomic change. The x and y zero is the view centre. For two full-height side-by-side windows, use left {x:-1/2, y:-1/2, w:1/2, h:1/1} and right {x:0, y:-1/2, w:1/2, h:1/1}; x:1/2 starts at the far edge and is off-band, and y:0 is the vertical centre. Values are share+px strings such as 50% + 10 or -1/2; pass each window's current revision when available.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -6870,7 +6870,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 200,
-            "description": "The window id (for example chair:brief, zone:<id>, surface-people)."
+            "description": "The window id (for example chair:brief, zone:<id>, pullout:people:<id>)."
           },
           "seated": {
             "type": "boolean"
