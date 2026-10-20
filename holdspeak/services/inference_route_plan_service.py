@@ -25,7 +25,7 @@ from ..inference_capabilities import (
     process_inference_capability_registry,
 )
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
-from .inference_assignment_service import InferenceAssignmentService
+from .inference_assignment_service import InferenceAssignmentService, _follows, _speech
 from .inference_service_route_policy import (
     ServiceRoutePolicyRegistry,
     builtin_service_route_policy_registry,
@@ -416,13 +416,15 @@ class InferenceRoutePlanService:
                 raise ValidationError("subject is invalid", code="inference_route_plan_invalid")
             keys.append((f"subject:{subject_kind}:{_safe_id(subject_id, field='subject_id')}:capability:{capability.id}", "subject"))
         keys.append((f"capability:{capability.id}", "capability"))
-        # Betterment Q4/Q7: a capability with no head of its own follows the
-        # one it answers for (desk chat follows Answers), here as on the face
-        # (``InferenceAssignmentService._FOLLOWS``); before Q7 only the face did.
-        from .inference_assignment_service import _FOLLOWS
-        if capability.id in _FOLLOWS:
-            keys.append((f"capability:{_FOLLOWS[capability.id]}", "capability"))
-        keys.extend(((f"group:{capability.group_id}", "group"), ("global", "global")))
+        # Betterment Q4/Q7 and E5: keep the immutable route freezer's lookup
+        # order identical to the effective face resolver, including plugin
+        # inheritance and speech's refusal of the global chat fallback.
+        followed = _follows(capability)
+        if followed:
+            keys.append((f"capability:{followed}", "capability"))
+        keys.append((f"group:{capability.group_id}", "group"))
+        if not _speech(capability):
+            keys.append(("global", "global"))
         permitted = None if assignment_sources is None else set(assignment_sources)
         if permitted is not None and self._assignments.capability_off(conn, capability.id):
             # PHILO-15 01 ruling: the owner's OFF holds. A service route stops

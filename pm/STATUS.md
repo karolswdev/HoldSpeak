@@ -8,6 +8,14 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Speech route plans now use the same assignment order as Engines: explicit
+capability or speech group, without falling through to the chat default.
+Installed meeting plugins follow Meeting summaries before their group or
+the global assignment. This changes the frozen runtime route, as well as
+what the face reports. No assignment or engine is changed on the owner’s
+desk. The worker collected and passed 46 focused checks against real SQLite
+assignment producers. Required quick: ROUTE_PARITY_QUICK_PENDING.
+
 Failed native sign-in setup now cleans up through coder_factory. The
 factory accepts only the just-minted private sign-in session name, revokes
 its temporary agent credential and records the cleanup. A cleanup failure
