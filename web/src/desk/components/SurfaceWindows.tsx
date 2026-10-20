@@ -228,7 +228,9 @@ export function SurfaceWindowHost({
       minH={row.minH}
       defaultW={row.defaultW}
       defaultH={row.defaultH}
-      fitContent
+      // The creation form keeps its declared footer seat as source choices
+      // arrive. Application readers fit the material on their first open.
+      fitContent={row.key !== "project-setup"}
       wings={wings}
       // PHILO-16: a window scoped to a project belongs to that Room (Gather).
       room={scope?.startsWith("project:") ? scope : undefined}

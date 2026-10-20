@@ -1696,7 +1696,7 @@ class TestWindowsOpenWell:
                 ctx_a, a, errors_a = self._page(browser, 1440, onboard=True)
                 a.locator(".desk-dock button").filter(has_text="Meetings").first.click()
                 a.wait_for_timeout(900)
-                a.locator(".desk-screen [data-object-id='drawer:people']").dblclick()
+                a.locator(".desk-dock [data-app='surface-people']").click()
                 a.wait_for_timeout(900)
                 wins = _w_until(lambda: _w_wins(a), lambda w: {"Meetings", "People"} <= set(w))
                 icons = a.evaluate(W_ICONS_JS)
@@ -1709,9 +1709,12 @@ class TestWindowsOpenWell:
                     for name in ("Meetings", "People"):
                         if icons and wins[name][0] < icons:
                             fails[f"W1 {name} clear of the icon column"] = {"rect": wins[name], "icons_right": icons}
-                    # applications.ts declares the canonical first-open room.
-                    if meetings[2:] != [720, 600]:
-                        fails["W1 Meetings opens at its declared 720 x 600 size"] = meetings
+                    # S7 keeps its declared width and fits the two records
+                    # below the preferred height, without trapping a row.
+                    body = a.locator("#surface-meetings .desk-surface-body")
+                    fits = body.evaluate("el => el.scrollHeight <= el.clientHeight + 1")
+                    if meetings[2] != 720 or not 220 <= meetings[3] < 600 or not fits:
+                        fails["W1 Meetings fits its two records at the declared width"] = {"rect": meetings, "fits": fits}
                 a.screenshot(path=str(W_SHOTS / "1440-two-apps.png"))
 
                 # ── W2: drag a tabbed app by the empty part of its bar ─────
@@ -1742,6 +1745,10 @@ class TestWindowsOpenWell:
                 wins_a = _w_until(lambda: _w_wins(a), lambda w: ROOM in w)
                 if ROOM not in wins_a or "Desk memory" in wins_a:
                     fails["W3 the Room is named by its project"] = sorted(wins_a)
+                # These are now owner-arranged rectangles. A fresh view must
+                # follow them exactly, including a content-sized reader.
+                _c_window_menu(a, "Arrange all")
+                _settle(a)
                 a.wait_for_timeout(1200)  # the writes reach the hub (keepalive)
                 wins_a = _w_wins(a)
                 a.screenshot(path=str(W_SHOTS / "1440-A.png"))
@@ -1983,8 +1990,11 @@ class TestCloseMeansGone:
         page.on("pageerror", lambda e: errors.append(str(e)[:200]))
         page.goto(f"{self.base}/?token={CLOSE_TOKEN}", wait_until="load")
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=CLOSE_TOKEN)
-        _api(page, "POST", "/api/decisions", {"title": CLOSE_DECISION, "status": "proposed",
-                                              "decision_markdown": "Freeze writes on Nov 5."}, token=CLOSE_TOKEN)
+        created = _api(page, "POST", "/api/decisions", {"title": CLOSE_DECISION, "status": "proposed",
+                                                        "decision_markdown": "Freeze writes on Nov 5."}, token=CLOSE_TOKEN)
+        decision_id = created["decision"]["id"]
+        kept = _api(page, "PUT", f"/api/directories/hs-seed-desk/members/decision:{decision_id}", {}, token=CLOSE_TOKEN)
+        assert kept["membership"], kept
         _api(page, "POST", "/api/notes", {"title": NOTE, "body_markdown": "- Ledger cutover risks\n"}, token=CLOSE_TOKEN)
         _api(page, "POST", "/api/brief/generate", {}, token=CLOSE_TOKEN)
         page.reload(wait_until="load")

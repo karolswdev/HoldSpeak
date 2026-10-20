@@ -408,9 +408,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       .map((wid) => s.panelRects[wid] ?? shown(wid))
       .filter((r): r is PanelRect => Boolean(r));
     if (cur) {
-      const kept = clampIntoBand(cur, vw, vh, minW, minH);
+      // Hydration follows the Hub's placed row. Collision reseating belongs
+      // to an owner's open, never a second view loading the same windows.
+      const followingHub = hubPlacing(id) || inheritance.isInherited(id);
+      const kept = followingHub ? cur : clampIntoBand(cur, vw, vh, minW, minH);
       const deliberatelyArranged = sessionArranged.has(id);
-      const hasCoveredHead = others.some((other) => headsOverlap(kept, other));
+      const hasCoveredHead = !followingHub && others.some((other) => headsOverlap(kept, other));
       const placed = !deliberatelyArranged && hasCoveredHead
         ? placeWindow(kept, others, vw, vh, minW, minH, iconColumnRight(), iconColumnLeft())
         : kept;
@@ -514,16 +517,24 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     if (!opts.fitContent || arranged || !open) return;
     const el = elRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
-    if (
+    const reduced = (
       typeof window.matchMedia === "function" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    )
-      return;
+    );
     let last = el.getBoundingClientRect().height;
     let animating = false;
     let settled = false;
     const ro = new ResizeObserver(() => {
-      if (animating || settled) return;
+      if (animating || presenting() || zoomedRef.current) return;
+      // Keep the free geometry current while CSS owns the content height.
+      // Stage and Zoom can then restore this record without measuring an
+      // animated plate. Owner-arranged rectangles remain authoritative.
+      const state = useDesk.getState();
+      const current = state.panelRects[id];
+      const height = el.offsetHeight;
+      if (!state.panelSaved.includes(id) && current && height > 0 && Math.abs(height - current.h) > 1)
+        state.setPanelRect(id, { ...current, h: height });
+      if (settled || reduced) return;
       // An explicit height (arranged pin, live resize, maximize) is the
       // user's geometry — never animated under them.
       if (el.style.height) {
@@ -1135,6 +1146,9 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             left: plate.rect.x,
             width: plate.rect.w,
             height: plate.rect.h,
+            // The compositor owns the complete plate rectangle, including
+            // a Chair window whose free CSS seat has a larger minimum.
+            minHeight: 0,
             right: "auto",
             bottom: "auto",
             maxHeight: "none",
