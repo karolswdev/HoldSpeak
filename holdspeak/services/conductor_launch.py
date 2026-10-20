@@ -464,6 +464,47 @@ def _launch_project(launch_id: str) -> Optional[str]:
     return credential.project_id if credential is not None else None
 
 
+def reviewer_credential(principal: Any) -> Any:
+    """Return the live AG12 reviewer credential, if this is one.
+
+    The role is issued with the launch credential and is recovered from the
+    launch ledger after restart. A palette or Control mode never widens it.
+    """
+    from ..principals import PrincipalKind, agent_credentials
+
+    if getattr(principal, "kind", None) is not PrincipalKind.AGENT:
+        return None
+    credential = agent_credentials.launch_credential(str(getattr(principal, "identity", "") or ""))
+    if credential is None or credential.role != "reviewer" or not credential.read_only:
+        return None
+    return credential
+
+
+def reviewer_tool_allowed(name: str) -> bool:
+    """The existing MCP read classifier is the reviewer allow-list.
+
+    It is deliberately small: a reviewer can inspect the desk and receipts,
+    but cannot call any work, configuration, prepare, send or helper tool.
+    """
+    from ..mcp.tools import is_read_tool
+
+    # ``agent.read`` is an existing WORK tool whose verb predates the shared
+    # classifier; it is still a read of the review process's own record.
+    return str(name) == "agent.read" or bool(is_read_tool(name))
+
+
+def require_reviewer_read_only(name: str, principal: Any) -> None:
+    if reviewer_credential(principal) is None or reviewer_tool_allowed(name):
+        return
+    from .errors import ServiceError
+
+    raise ServiceError(
+        "reviewer_read_only",
+        "reviewer credentials can call read tools only",
+        context={"status": 403, "tool": str(name)},
+    )
+
+
 def gate_call(name: str, arguments: Any, principal: Any) -> Any:
     """The launch rule of one tool call, BEFORE it runs (``tools.dispatch``).
 
@@ -471,6 +512,7 @@ def gate_call(name: str, arguments: Any, principal: Any) -> Any:
     raises ``not_this_launch``. Not a launch: the arguments, untouched."""
     from ..mcp.tools import is_read_tool
 
+    require_reviewer_read_only(name, principal)
     launch = launch_id_of(principal)
     if launch is None:
         return arguments

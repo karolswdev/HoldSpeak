@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, Setup ST3–ST5 verified; running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-19, Agent builder/reviewer pair verified; running-desk identity is in `pm/STATUS.md`.
 
-**Total: 89 of 117 slices merged**, with Send S7 still partial.
+**Total: 90 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -18,7 +18,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | The desk's tools (MCP) | `mcp/` | 7 of 7 |
 | Ask | `asking/` | 13 of 13 |
 | Projects | `projects/` | 7 of 11 |
-| Agents | `agents/` | 13 of 16 |
+| Agents | `agents/` | 14 of 16 |
 | Daily and Needs you | `daily/` | 11 of 11 |
 | Setup and Settings | `setup/` | 6 of 10 |
 | Desk shell | `shell/` | 2 of 10 |
@@ -100,7 +100,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | P9 | One decision record | Open |  |
 | P10 | Watches tell the truth underneath | Open |  |
 
-## Agents (`agents/RECIPE.md`): 13 of 16
+## Agents (`agents/RECIPE.md`): 14 of 16
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -116,7 +116,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | AG9 | Agents in Today and Needs you; Done notifies | Done · #1361 |  |
 | AG10 | The Result of a turn | Done · #1367 | Recovered local fixes supersede #1364; real hub/fake-agent Result and Terminal walked at 1440/393. |
 | AG11 | Agents that work together (MCP) | Done · #1369 | One owned helper, pinned waits, question-only answer, Secure owner Allow, nested rows. |
-| AG12 | Review by (builder and reviewer) | Open |  |
+| AG12 | Review by (builder and reviewer) | Done · #1385 | Bounded two-round pair; durable Result and read-only reviewer authority. |
 | AG13 | A HoldSpeak skill | Done · #1374 | Packaged skill, native launch discovery and Connect install; offline Codex discovery observed. |
 | AG14 | Automations that hand work to agents | Open |  |
 | AG15 | Agents he started himself (decision 1) | Open |  |

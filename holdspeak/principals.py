@@ -108,6 +108,11 @@ class AgentCredential:
     #: Conductor K6: the launch's own Project (None: the desk). The agent may
     #: ADD to it (links, resources); it writes no other Project.
     project_id: Optional[str] = None
+    #: AG12: launch role is immutable credential metadata. Review credentials
+    #: keep the CONDUCTOR palette for reads, but the dispatcher fences every
+    #: non-read call by this role and posture.
+    role: str = "builder"
+    read_only: bool = False
 
 
 # HS-174 max TTL cap (counsel H2: 30 days).
@@ -273,6 +278,7 @@ class AgentCredentialStore:
                 palette = None
                 if row["palette_json"] is not None:
                     palette = frozenset(str(n) for n in json.loads(row["palette_json"]))
+                role, read_only = self._launch_role(str(row["launch_id"] or ""))
                 credential = AgentCredential(
                     token=token_hash,
                     principal=Principal(PrincipalKind.AGENT, identity),
@@ -282,6 +288,8 @@ class AgentCredentialStore:
                     palette_name=row["palette_name"],
                     launch_id=row["launch_id"],
                     project_id=row["project_id"],
+                    role=role,
+                    read_only=read_only,
                 )
                 self._by_hash[token_hash] = credential
                 self._by_identity[identity] = token_hash
@@ -384,6 +392,8 @@ class AgentCredentialStore:
         launch_id: Optional[str] = None,
         scope_items: Iterable[str] = (),
         project_id: Optional[str] = None,
+        role: str = "builder",
+        read_only: bool = False,
     ) -> AgentCredential:
         """Mint a new credential.  Returns the credential with the plaintext
         token; the store keeps only the hash (C4).
@@ -408,6 +418,13 @@ class AgentCredentialStore:
             token_hash = _hash_token(plaintext)
             cred_id = uuid.uuid4().hex[:16]
             now_mono, now_wall = self._clock(), float(self._wall())
+            durable_role, _durable_read_only = self._launch_role(str(launch_id or ""))
+            normalized_role = (
+                "reviewer"
+                if durable_role == "reviewer" or str(role or "").strip().lower() == "reviewer"
+                else "builder"
+            )
+            normalized_read_only = normalized_role == "reviewer"
             credential = AgentCredential(
                 token=token_hash,  # stored form is the hash
                 principal=Principal(PrincipalKind.AGENT, clean),
@@ -418,6 +435,8 @@ class AgentCredentialStore:
                 palette_name=palette_name,
                 launch_id=(str(launch_id).strip() or None) if launch_id else None,
                 project_id=(str(project_id).strip() or None) if project_id and launch_id else None,
+                role=normalized_role,
+                read_only=normalized_read_only,
             )
             scope = (
                 {str(item).strip() for item in scope_items if str(item or "").strip()}
@@ -453,7 +472,33 @@ class AgentCredentialStore:
                 palette_name=credential.palette_name,
                 launch_id=credential.launch_id,
                 project_id=credential.project_id,
+                role=credential.role,
+                read_only=credential.read_only,
             )
+
+    @staticmethod
+    def _launch_role(launch_id: str) -> tuple[str, bool]:
+        """Recover AG12's durable launch posture after a hub restart.
+
+        The launch ledger is written before ``factory.spawn`` issues the
+        credential.  Existing credential rows predate AG12, so their missing
+        columns remain builder credentials; new reviewer rows recover their
+        immutable role from that already durable launch record.
+        """
+        if not launch_id:
+            return "builder", False
+        try:
+            from .delivery.factory_launch import LaunchLedger
+
+            review = (LaunchLedger().get(launch_id) or {}).get("review")
+            if isinstance(review, dict) and str(review.get("role") or "") == "reviewer":
+                # The role itself is the immutable authority. An old or
+                # hand-edited row cannot widen a reviewer credential by
+                # omitting or falsifying the convenience flag.
+                return "reviewer", True
+        except Exception:
+            pass
+        return "builder", False
 
     def derive(self, token: Optional[str]) -> Optional[Principal]:
         """Derive a principal from a bearer token (backward-compat signature)."""
