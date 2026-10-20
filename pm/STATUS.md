@@ -4,9 +4,30 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (native agent access delivery)
+**Last updated:** 2026-10-19 (Desk creation delivery)
 
 ## Current phase
+
+Shell S2 gives Desk seven New kinds in order: Note, Meeting, Decision,
+Project, Person, Automation and Drawer. The phone reads the same registry.
+HoldSpeak holds Settings, Engines, Accounts, Wallpaper, Setup and Keyboard
+shortcuts. Refresh is in Builder. Retired creation/menu verbs retain their
+implementation but leave menus, Search and keys; Ctrl-T now also makes a note.
+The keyboard sheet groups Apps, New, Windows and Desk.
+
+New Drawer uses the existing directory producer and starts its selected name
+in the active desk. Root found that the rename store had no active field,
+then exposed covered and overlapping fields through actual browser presses.
+The shared rename field now occupies the drawer caption seat; open windows
+move to their Dock entries so the owner can see and type the name. Real
+create/type/Enter/readback passes at 1440/393, including a hit test proving
+another object does not cover the field. All 125 focused shell checks pass. The first broad check found nine old New-list/shortcut assertions; the updated 68-check consumer set passes, retaining parked-verb behavior and exact key/menu membership. All six creation browser cases passed in that run.
+Required quick: 4,083 web, six creation browser, 108 desk sweep, 27 canon and 1,116 repository guards pass; build passes.
+Last observed running desk before this merge: backend 5fe9ee0e7,
+frontend 0a834c90036c69c5, PID 51757; identity/import/database ownership and
+/health, /, /conductor, /models passed. Each merge deploys its exact source;
+GET /api/system/identity is the current running identity.
+
 
 ST6 gives the owner one Setup press to install hooks, the native user-scope
 HoldSpeak MCP entry and the packaged skill for Claude Code and Codex.
@@ -178,11 +199,12 @@ moving as independent status reads finish; its regression fails before the
 atomic first-read repair. After the repair, 4,090 web checks, 110 sweep cases,
 27 canon checks and 1,116 repo guards pass.
 
-Accounts follow-up remains open: an isolated `acli` check with no known
-prior active profile switches to the checked account and cannot restore it.
-The reproduction uses a fake CLI; the owner’s auth state was not changed.
-A known-prior profile is restored by ST2; the unknown-prior case still needs
-a truthful read or a no-switch fallback.
+Accounts Check now reads the active acli profile under the existing account
+lock when its registry has no known prior profile. It checks the selected
+account and restores the actual prior account in finally. An unreadable,
+malformed or failed status read refuses Check before any switch. Known-prior
+restoration remains intact. All 132 focused checks pass with a fake CLI;
+the owner's auth state is untouched. Required quick: 326 affected Python, 108 desk sweep, 27 canon and 1,116 repository guards pass; the build passes.
 
 Q11/Q12 make Memory an answer desk and put the two directions of what is owed
 first in a person’s window. Pages have their own pass budget and continue past

@@ -10,10 +10,12 @@ import { useSettleState } from "../../settleState";
  * P11): the hand-maintained list is gone; a verb that gains a key
  * appears here for free. Esc is grammar, not a verb; it stays a
  * fixed convention line. */
-const SHEET_GROUPS: { title: string; scopes: string[] }[] = [
-  { title: "Applications", scopes: ["go"] },
-  { title: "Windows", scopes: ["window", "floor"] },
-  { title: "Desk", scopes: ["system"] },
+const SHEET_GROUPS: { title: string; include: (id: string, scope: string, menu?: string, group?: string) => boolean }[] = [
+  { title: "Apps", include: (_id, scope) => scope === "go" },
+  { title: "New", include: (_id, _scope, menu, group) => menu === "desk" && group === "new" },
+  { title: "Windows", include: (_id, scope, menu) => scope === "window" || menu === "window" },
+  { title: "Desk", include: (_id, scope, menu, group) =>
+    scope !== "go" && !(menu === "desk" && group === "new") && scope !== "window" && menu !== "window" },
 ];
 
 export function ShortcutSheet({ onClose }: { onClose: () => void }) {
@@ -28,15 +30,15 @@ export function ShortcutSheet({ onClose }: { onClose: () => void }) {
   const ctx = { selectedRef: null };
   const rows: [string, [string, string][]][] = SHEET_GROUPS.map((group) => {
     const keys = VERBS.filter(
-      (v) => v.key && group.scopes.includes(v.scope),
+      (v) => v.key && group.include(v.id, v.scope, v.menu, v.group),
     ).map((v): [string, string] => [v.key as string, verbLabel(v, ctx)]);
     // The applications read in Cmd+1..Cmd+4 order, whatever the registry's
     // program-table order is.
-    if (group.scopes.includes("go"))
+    if (group.title === "Apps")
       keys.sort((a, b) => a[0].localeCompare(b[0]));
     return [group.title, keys];
   });
-  rows[1][1].push([
+  rows[2][1].push([
     "Esc",
     settled ? "Back to Desk (keep work open)" : "Close / cancel",
   ]);

@@ -31,7 +31,7 @@ export function ZoneRenameRow({
       onKeyDown={(e) => e.stopPropagation()}
       {...field.rowProps}
     >
-      <input className="desk-zone-rename" aria-label="Zone name" {...field.inputProps} />
+      <input className="desk-zone-rename" aria-label="Drawer name" {...field.inputProps} />
       <MicButton draftScope={`zone-rename:${zoneId}`} onText={(t) => field.setName(t)} />
       {field.error ? (
         <span className="desk-zone-rename-refusal" data-code={field.error.code} title={field.error.detail}>
