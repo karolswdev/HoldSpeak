@@ -134,21 +134,14 @@ class TestDropToHandGlass:
 
     @staticmethod
     def _clear_of_conductor(page: Any) -> None:
-        """Keep the drawer clear of the Conductor drawer (A-3: it stands right of the drawers)."""
-        conductor = page.locator(".desk-screen [data-object-id='drawer:conductor']").bounding_box()
-        drawer = page.locator(".drawer-window").bounding_box()
-        if drawer["x"] > conductor["x"] + conductor["width"] + 20:
-            return
-        head = page.locator(".drawer-window .desk-window-handle").first.bounding_box()
-        page.mouse.move(head["x"] + head["width"] * 0.6, head["y"] + head["height"] / 2)
-        page.mouse.down()
-        dx = conductor["x"] + conductor["width"] + 60 - drawer["x"]
-        page.mouse.move(head["x"] + head["width"] * 0.6 + dx, head["y"] + head["height"] / 2, steps=8)
-        page.mouse.up()
-        page.wait_for_timeout(400)
+        """S4: Agents is the Dock's live drop target, clear of the drawer."""
+        target = page.locator(".desk-dock [data-app='conductor']")
+        target.wait_for(state="visible")
+        assert target.evaluate("""el => {const r=el.getBoundingClientRect();
+            return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}""")
 
     def _drag_onto_conductor(self, page: Any, shot: str | None = None) -> None:
-        self._drag_onto(page, page.locator(".desk-screen [data-object-id='drawer:conductor']"), shot)
+        self._drag_onto(page, page.locator(".desk-dock [data-app='conductor']"), shot)
 
     def _drag_onto(self, page: Any, target: Any, shot: str | None = None) -> None:
         source = page.locator(f".drawer-window [data-object-id='action:{ACTION_ID}']").first
@@ -212,7 +205,7 @@ class TestDropToHandGlass:
                 # line re-reads the flights).
                 # Betterment AG8: Agents owns the live rows; individual
                 # session icons no longer appear on the desk floor.
-                page.locator(".desk-screen [data-object-id='drawer:conductor']").dblclick()
+                page.locator(".desk-dock [data-app='conductor']").click()
                 conductor = page.locator(".conductor-window")
                 conductor.wait_for(timeout=T)
                 agent = conductor.locator("[data-object-id='coder:claude:smoke-session']")

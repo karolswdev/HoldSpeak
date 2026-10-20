@@ -1497,6 +1497,18 @@ class TestRoomFaceGlass:
         _settle(page)
 
     @staticmethod
+    def _sources_raw(page: Any) -> None:
+        """The retained watcher door lives in Sources, then RAW."""
+        sources = page.get_by_test_id("room-fold-sources").locator("details").first
+        if not sources.evaluate("el => el.open"):
+            sources.locator(":scope > summary").click()
+        raw = sources.locator("details.room-sources-raw")
+        if not raw.evaluate("el => el.open"):
+            raw.locator(":scope > summary").click()
+        page.get_by_test_id("steward-verb").wait_for(state="visible")
+        _settle(page)
+
+    @staticmethod
     def _history(page: Any) -> None:
         """PHILO-17 U31: the Room's receipts live under its History wing."""
         page.get_by_role("tab", name="History").first.click()
@@ -1634,7 +1646,9 @@ class TestRoomFaceGlass:
                 page.locator("[data-section=items]").scroll_into_view_if_needed()
                 page.wait_for_timeout(300)
                 facts = self._facts(page)
-                pointer = self._pointer(page, width, ["[data-testid=steward-verb]", "[data-testid=room-refresh]"])
+                self._sources_raw(page)
+                assert page.get_by_test_id("room-refresh").count() == 0
+                pointer = self._pointer(page, width, ["[data-testid=steward-verb]", "[data-testid=room-add-source]"])
                 _rf_record("items-late", width, {"hub_health": room["health"]["assessment"], "hub_reason": room["health"].get("reason"),
                                               "hub_needs_you": [i["title"] for i in room["needsYou"]["items"]],
                                               "first_view": first, "section": facts, "pointer": pointer})
@@ -1933,6 +1947,7 @@ class TestRoomFaceGlass:
             try:
                 pid = self._project(page)
                 self._room(page, pid)
+                self._sources_raw(page)
                 page.locator("[data-testid=steward-verb]").click()
                 page.locator("[data-testid=steward-verb-run]").click()
                 page.wait_for_function(
@@ -1992,6 +2007,7 @@ class TestRoomFaceGlass:
                 _api(page, "POST", f"/api/projects/{pid}/reviews/{rid}/accept", {}, token=RF_TOKEN)
                 before = _api(page, "GET", f"/api/projects/{pid}/delta", token=RF_TOKEN)
                 self._room(page, pid)
+                self._sources_raw(page)
                 page.locator("[data-testid=steward-verb]").click()
                 page.locator("[data-testid=steward-list-item]").first.click()
                 page.locator("[data-testid=steward-open-review]").wait_for(timeout=T)
@@ -2147,6 +2163,7 @@ class TestRoomFaceGlass:
                 page.wait_for_timeout(800)  # the section reads settle (items, people)
                 _settle(page)
                 first = self._facts(page)
+                self._sources_raw(page)
                 verb = page.locator("[data-testid=steward-verb]")
                 verb.evaluate("b => b.scrollIntoView({block: 'nearest'})")
                 page.wait_for_timeout(300)
@@ -2454,8 +2471,6 @@ class TestRowsHoldStill(_Rig):
                     body["coverage"] = []
                     # The late answer: `Payments ledger cutover` has 3 open.
                     body["projectCounts"] = {"p-ledger": 3} if mode["counts"] else {}
-                    if mode["counts"]:
-                        time.sleep(1.5)
                     route.fulfill(json=body)
 
                 # Every read answers no counts until the palette opens (a
@@ -2467,8 +2482,15 @@ class TestRowsHoldStill(_Rig):
                 page.wait_for_timeout(1500)
                 page.add_style_tag(content=STILL)
                 mode["counts"] = True
+                # Delay the browser's promise, so the synchronous route
+                # callback cannot block the finger/probe until after the
+                # count has already arrived.
+                _hold_in_page(page, r"/api/desk/needs-you", 1.5)
                 self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
                 page.locator("#desk-palette-listbox").wait_for()
+                # S5's cold Search shows apps and recent opens. Query the
+                # project candidates before measuring their late count.
+                page.locator("[aria-controls=desk-palette-listbox]").fill("project")
                 page.evaluate(RECORD_JS, [PALETTE_ROWS, 4000, False])
                 rows = page.evaluate(RESULT_JS)
                 page.screenshot(path=str(PHONE_SHOTS / "palette-limit-393.png"))

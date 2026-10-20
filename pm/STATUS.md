@@ -28,9 +28,21 @@ receipt, one owner Send receipt, exact file bytes and a manual negative
 control. Preview width, settled visibility and contrast are measured and
 both screenshots are readable. Required quick: SEND_CONTENT_QUICK_PENDING.
 The first real Send recipe remains open for the owner’s five presses.
-Last observed running desk before this merge: backend `d78edeba4`,
-frontend `a7793ccf84711ab1`, PID 48353. Each merge deploys its exact source;
+Last observed running desk before this merge: backend `b8be8b36a`,
+frontend `a7793ccf84711ab1`, PID 57121. Each merge deploys its exact source;
 `GET /api/system/identity` is the current running-desk authority.
+
+The main watcher’s retained browser adapters now follow the current doors:
+Watch sources through Sources then RAW; meeting and decision icons through
+explicit Desk membership; and a real drag onto the Agents Dock tile. The
+checks retain exact review identity, run counts, nine-point hit testing,
+receipt geometry and duration, one meeting window, and one agent launch.
+All 13 selected cases pass on the real private Hub, including both widths.
+The first two attempts failed in rig setup (Node path and a test-list parser)
+and did not exercise these paths. The late-count Search case now queries
+Projects before measuring, then delays the browser response without
+blocking the test driver. The original top-ten and no-row-move assertions
+pass in the actual private Hub. Required quick: 4,116 related web checks and all 55 Room/window browser cases passed; the earlier 13 focused source/receipt/agent cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.
 
 Wallpaper has one home in Settings Desk. New windows use the shared content
 size and placement rules; remembered heads move only when they collide, and
