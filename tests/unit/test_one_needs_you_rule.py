@@ -47,7 +47,14 @@ def test_the_hub_answer_is_the_oracle_week(tmp_path: Path, monkeypatch: pytest.M
     # What the owner waits on someone else for: listed, marked, not counted.
     assert answer["waitingCount"] == len(seeded["expectedWaitingRefs"]) == 1
     assert [row["ref"] for row in answer["items"] if row.get("waiting")] == seeded["expectedWaitingRefs"]
-    assert answer["mutedCount"] == 1
+    # P5 now offers one transcript-matching meeting in the muted project.
+    # It is visible with the muted milestone and adds no counted member.
+    matches = [row for row in inputs["roomItems"] if row.get("kind") == "meeting_match"]
+    assert len(matches) == 1
+    assert matches[0]["source"] == "meeting"
+    assert matches[0]["projectId"] == seeded["ids"]["mutedProject"]
+    assert matches[0]["muted"] is True
+    assert answer["mutedCount"] == 2
     assert answer["sourceErrors"] == {}
 
     # The pure function over the same inputs the browser twin reads.
