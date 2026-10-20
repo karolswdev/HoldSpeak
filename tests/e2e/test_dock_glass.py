@@ -1,7 +1,7 @@
 """The Dock app, AS RENDERED: current daily doors, seats and touch ownership.
 
 The historical paging test names stay as recovery-queue identities. Their
-current proofs cover all four essential phone doors, exact tap destinations,
+current proofs cover all five essential phone doors, exact tap destinations,
 Capture's return seat and five project seat journeys. No pager is assumed.
 
 Owner, 2026-10-12 (push 2 of the test diet): a browser test only for drag,
@@ -63,6 +63,7 @@ PHONE_DOORS = {
     "capture": ("chair:capture", '[aria-label="Capture"].desk-window-shell', '[data-testid="arrival-capture-bar"]'),
     "meetings": ("surface-meetings", '#surface-meetings', '[data-testid="meetings-headline"]'),
     "people": ("surface-people", '#surface-people', '.desk-surface-body'),
+    "agents": ("conductor", '.conductor-window', '.desk-surface-body'),
 }
 
 
