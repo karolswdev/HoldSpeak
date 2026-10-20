@@ -8701,7 +8701,7 @@
     },
     "/api/decision-records/from-desk": {
       "post": {
-        "description": "Admit one Desk decision, then return its canonical record.\n\nThe admitted ``decision.create`` operation owns the retained source\nrow and its canonical record.  This adapter only supplies the\nproducer's About/Why context and links the already-created record to\nits meeting or Project.",
+        "description": "Admit one Desk decision, then return its canonical record.\n\nThe admitted ``decision.create`` operation owns the retained source\nrow and its canonical record.  This adapter only supplies the\nproducer's About/Why context. The admitted producer also owns the\nrecord's meeting and Project links.",
         "operationId": "create_from_desk_api_decision_records_from_desk_post",
         "requestBody": {
           "content": {

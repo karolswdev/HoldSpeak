@@ -178,7 +178,7 @@ class DecisionRecordService:
         )
         alternatives = self._alternatives_text(decision.alternatives_json)
         owner = ", ".join(decider.strip() for decider in decision.deciders if decider.strip())
-        return self.create(
+        record = self.create(
             principal,
             decision_text=decision_text,
             rationale=rationale or None,
@@ -187,6 +187,14 @@ class DecisionRecordService:
             source_type="desk",
             source_id=decision.id,
         )
+        sources = tuple(dict.fromkeys(
+            (kind, source_ref)
+            for tag in decision.tags
+            for kind, separator, source_ref in [str(tag).partition(":")]
+            if separator and kind in {"meeting", "project"} and source_ref.strip()
+        ))
+        self._add_sources(record["id"], sources)
+        return record
 
     def sync_from_desk(self, principal: Any, desk_decision_id: str) -> dict[str, Any]:
         """Create or reconcile the canonical record for one Desk decision."""

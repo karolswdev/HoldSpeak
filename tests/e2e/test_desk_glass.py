@@ -988,7 +988,7 @@ def test_receipt_verbs_own_their_areas(receipt_hub, width: int) -> None:
         page.locator("[aria-controls=desk-tool-shelf]").wait_for(timeout=15000)
 
         # 1. the chrome receipt (the desk backstop)
-        _fault(page, "POST", "/api/decisions")
+        _fault(page, "POST", "/api/decision-records/from-desk")
         _search(page, "New Decision", "[id='desk-palette-option-desk.new-decision']")
         # PHILO-13-08 (B3): the decision is named before it is created; the
         # refused POST is the named one.

@@ -72,6 +72,7 @@ def test_from_desk_uses_admitted_create_and_returns_one_canonical_record(tmp_pat
         "status": "accepted",
         "project_id": "project-1",
         "project_name": "P9 canonical project",
+        "meeting_id": "meeting-1",
         "why": "Keep every surface on one identity.",
         "source_id": "forged-source-id",
     })
@@ -83,6 +84,9 @@ def test_from_desk_uses_admitted_create_and_returns_one_canonical_record(tmp_pat
     assert "About: P9 canonical project" in body["record"]["rationale"]
     assert "Why: Keep every surface" in body["record"]["rationale"]
     assert body.get("operation_id") and body.get("receipt")
+    assert {(source["source_type"], source["source_ref"]) for source in body["record"]["sources"]} == {
+        ("project", "project-1"), ("meeting", "meeting-1"),
+    }
     assert database.desk_decisions.get(body["decision"]["id"]) is not None
     assert len(database.desk_decisions.list()) == 1
 

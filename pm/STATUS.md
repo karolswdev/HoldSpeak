@@ -15,13 +15,22 @@ rows remain; the idempotent migration copies all of them without replacing
 later canonical edits. Proposed decisions stay out of project evidence until
 Confirm. A decision with no project membership stays out after Confirm too.
 
-Root independently passed 85 focused cases, including actual private-hub
-1440/393 browser flows with strict hit/focus checks, the real Confirm PUT,
-receipt and unchanged canonical-ID readback. All 96 decision/Needs web
-consumers, type check and build pass. The final checks exposed two adapter
+Root independently passed 188 final focused Python/browser checks and 87
+web checks, including actual private-hub 1440/393 browser flows with strict
+hit/focus checks, the real Confirm PUT, receipt hit areas and unchanged
+canonical-ID readback. The preceding focused run passed 85 cases and 96 web
+consumers. Type check and build pass. The final checks exposed two adapter
 seams: Needs must carry proposed status, and its operation must use the raw
 canonical ID while the row retains decision:<id>. Both are covered by the
 actual flow. The combined API census has 810 routes and 675 OpenAPI paths.
+The first required check passed 5,536 other affected cases, 4,076 other
+web checks and all 110 desk-sweep cases. It caught a source-link write after
+the creation receipt, four old callback/verb assertions, an obsolete receipt
+fault URL, the changed Today recording, and two copy/scan checks. Source links
+now come from the frozen tags inside the admitted producer; the adapter only
+reads the resulting record through its existing service helper. The complete
+Today response was re-recorded from its real producer. All final focused
+checks, including residual identity, copy and zero-counter checks, pass.
 Required quick: P9_QUICK_PENDING.
 
 The follow-up audit closes five old entries already delivered by #1267,

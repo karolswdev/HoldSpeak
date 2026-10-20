@@ -57,8 +57,8 @@ def build_decision_records_router(ctx: Any) -> APIRouter:
 
         The admitted ``decision.create`` operation owns the retained source
         row and its canonical record.  This adapter only supplies the
-        producer's About/Why context and links the already-created record to
-        its meeting or Project.
+        producer's About/Why context. The admitted producer also owns the
+        record's meeting and Project links.
         """
         title = str(body.get("decision_text") or body.get("title") or "").strip()
         if not title:
@@ -90,16 +90,11 @@ def build_decision_records_router(ctx: Any) -> APIRouter:
         }
         try:
             decision, kernel = registry.invoke_receipted(principal_value, "decision.create", args)
-            db = get_database()
-            records = DecisionRecordService(db, observer=get_observer())
+            records = service()
             matches = records.records_for_source(principal_value, "desk", str(decision["id"]))
             record = matches[0] if matches else None
             if record is None:
                 raise HTTPException(status_code=500, detail="canonical decision record was not created")
-            if meeting_id:
-                records.add_source(principal_value, record["id"], "meeting", meeting_id)
-            if project_id:
-                records.add_source(principal_value, record["id"], "project", project_id)
             record = records.get(principal_value, record["id"]) or record
             return JSONResponse(
                 {"decision": decision, "record": record, **_kernel_fields(kernel)}, status_code=201,

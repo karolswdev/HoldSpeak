@@ -195,12 +195,13 @@ export function DecisionsView({
         // Older test/hub adapters fall through to their ledger route; the
         // live canonical list has no expanded `sources` array here.
         if (!Array.isArray(records) || records.some((record) => Array.isArray(record.sources) || !record.source_type)) {
-          throw new Error("canonical decision records unavailable");
+          throw new Error("Decisions not read. Saved decisions are unchanged. Retry.");
         }
         const rows = records.map(fromReceipt)
           .filter((row) => !whyOnly || !stateWord(row))
           .filter((row) => !query.trim() || row.text.toLowerCase().includes(query.trim().toLowerCase()));
-        return { rows, total: rows.length };
+        const count = rows.length;
+        return { rows, total: count };
       })
       .catch(() => {
         // Compatibility read for a hub before the canonical list transport.
