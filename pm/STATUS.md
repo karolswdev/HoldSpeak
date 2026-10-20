@@ -4,9 +4,103 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (one-page Settings delivery)
+**Last updated:** 2026-10-19 (project update automation delivery)
 
 ## Current phase
+
+P7/P8 make the project update an ordinary automation, initially manual. Friday
+at 15:00 changes that same record. Room opens its newest result and reads the
+actual engine assignment. A refused Friday change keeps the manual state and
+offers Try again. The old steward controls remain under More.
+
+Update agents use eligible linked project sources. Private one-to-ones, People
+and unlinked meetings stay out of prompts, tool reads and native MCP resources.
+Explicit owner-filed actions remain eligible. An agent writes its own separate
+draft and cannot replace an owner-edited draft. Workbench delivery adopts the
+exact returned result once; applying it adds no duplicate.
+
+Root verified 70 affected Python checks and 561 Room web checks. Four actual
+Workbench runner cases cover plain/tool-written output with and without owner
+edits. Native hub credentials exercise both filtered tool reads and resource
+refusals, with ordinary credentials retaining their existing access. Real hub
+Room geometry passes at 1440/393. Native model output quality is not claimed;
+the engine leaf is recorded. Required quick: Final delta quick passes 4,074 related web checks, 54 affected Python/browser checks including both current Room geometry cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The preceding product run passed 4,110 web and 4,571 other affected Python checks. Empty-state and recorded-wire contracts now include the automation, the display-only engine reader has its exact census classification, and the verb says Open latest. Known fix-forward: Room NEW still follows draft lifecycle and must use the existing automation artifact read state. The pinned 2833d225d main watcher has passed its first shard (6,073 passed, five skipped); the full tape remains incomplete. The prior 41f4ebc9f tape completed red, with its known failures corrected in later focused checks..
+
+Shell S3 gives the desktop Dock Today, Meetings, People, Agents and Speak;
+the phone has Today, Capture, Meetings, People and Agents. Both use the
+application manifest. Phone words stay visible in five whole 76-pixel tiles;
+each owns its hit area. Ctrl/Cmd 1–5 follow the desktop order. Needs you is
+Ctrl-J and Settings is Ctrl-comma, with the typing guard preserved.
+
+Tile facts come from the existing Needs you, meeting, one-to-one, mic and
+agent producers. Zero counts stay hidden. Phone orb and Dock layout controls
+leave the Dock. Root reviewed actual two-size geometry and key-opening
+proof, then verified 31 guard/menu checks and TypeScript. Earlier 116 focused
+Dock/key checks pass. The inherited writer census now excludes parked
+history; Setup's duplicate viewport layout follows its window container.
+No guard is widened. Root also repaired the current walk instructions for
+Setup and Settings while retaining the outcome predicates and sealed pass
+records. Eight of nine checks passed immediately. The remaining phone check
+exposed a real bug: a Settings section anchor still consumed Back as if it
+were a child page. Settings now returns to its caller in one Back press;
+the actual same-receipt, nine-point hit and durable identity check passes.
+The integrated product run passes 4,073 web checks and all nine current walk
+cases. Its remaining web assertion clicked the removed Dock Reset button;
+the retained verb now exercises the same persistence assertions. The exact
+Agents-key census follows Ctrl-4, and the atlas gate fence recognizes current
+and historical entrance words. API census failures exposed unpinned FastAPI
+0.150 in this worker environment, against 0.128 in uv.lock; Root restored the
+locked dependency set instead of publishing a five-route partial census.
+With locked dependencies, all 774 affected Python census/atlas checks and
+27 shell checks pass. Final delta quick also repeats the nine real-hub walk
+cases under the locked backend. The next sweep caught a real 32-pixel shift when the People 1:1 tag arrived.
+Meetings and People now reserve their tag width before the read, and the Dock
+limits the 1:1 fact to its local day. Root held and released the real People
+response: all five target rectangles stayed exact; the browser case passes
+in 6.28s. The 27 Dock/read web checks also pass, including today/tomorrow.
+Required quick: Final delta quick against the verified product source passes 10 actual Dock browser cases, 110 desk sweep cases, 27 canon and 1,116 repository guards; build passes. The preceding product run passed 4,076 related web and 768 other affected Python/browser checks. Last observed desk before this merge: backend aa4ecd9d3, frontend 212132a1074a6815, PID 32823. Each merge deploys its exact source; GET /api/system/identity reports the running identity..
+
+ST9 adds `holdspeak setup`, `holdspeak setup --yes`, MCP `setup.status` and
+`setup.use`. They use the running hub and the shared Setup producers.
+Use all re-reads the inventory, keeps each result, continues after a failure,
+and distinguishes pending work. Agents can read status; adoption requires
+an owner press. Caller-supplied row inventories are ignored.
+
+Root's focused collection and run both cover 123 checks. The CLI-to-MCP
+proof reaches real hub operations and provider adapters, checks three
+account connections, saves a calendar, installs both native agents' tools,
+hooks and skills, and reads all adopted rows back as Works. Only native
+CLI/provider responses and EventKit are simulated; files and records are
+in the rig. A separate scratch-hub probe covers real HTTP discovery and
+agent-read/owner-use authority. Live OAuth and owner account acceptance
+remain unobserved. The first integrated quick found an accidental seeded Thread palette expansion,
+stale operation/exposure counts and an old People settings wire. Setup inventory
+now stays MCP-only in the seeded palettes; their original byte limits and tool
+counts pass unchanged. The actual People producer re-recorded its wire. The
+write-announcement walk now builds valid required oneOf inputs. All 270 checks
+covering those seams pass. Required quick: 3,767 affected Python/browser checks pass (three skipped), plus 108 desk sweep, 27 canon and 1,116 repository guards; build passes.
+
+AG15 shows Claude Code and Codex processes the owner started in tmux in
+Agents you started yourself. Native executable, pane ancestry and session
+facts identify the process; registered HoldSpeak launches stay out.
+Existing screen rules and secret filtering supply state. Owner Answer,
+Allow and Deny re-read the prompt and use the admitted input transport.
+These rows have no Stop, brief or autonomy controls.
+
+Root collected and ran 31 focused checks, including real private-tmux
+browser cases at 1440/393. The fake native process receives the typed answer
+and approval key through real hub routes. Evidence frames show the full
+question and controls. An additional private-tmux producer/transport probe
+returned operation op_8edbe1d3e86d4b0681a811b8f98d0ac5. Installed Claude and
+Codex executable shapes were inspected without starting a model. Native
+interactive-agent acceptance remains unobserved. Shared test and walk rigs
+force discovery off; the isolated positive rig opts in after boot.
+The first required quick passes 4,072 web checks, 1,221 affected Python/browser,
+108 desk sweep and 27 canon checks. Three repository guards found missing API
+exports and the new read-only ps/tmux census classification. Root regenerated
+both API exports from the app and classified that exact local reader; all
+input writes still use admitted process.input. Final delta quick against that
+verified product source: 14 affected Python, 108 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The prior product run also passed 4,072 web and 1,221 affected Python/browser checks.
 
 ST7 makes Settings one page with You, Speak, Meetings, Notices, Accounts,
 Agents, Desk and This Mac. The desktop index sits beside the page; phone
@@ -48,8 +142,8 @@ move to their Dock entries so the owner can see and type the name. Real
 create/type/Enter/readback passes at 1440/393, including a hit test proving
 another object does not cover the field. All 125 focused shell checks pass. The first broad check found nine old New-list/shortcut assertions; the updated 68-check consumer set passes, retaining parked-verb behavior and exact key/menu membership. All six creation browser cases passed in that run.
 Required quick: 4,083 web, six creation browser, 108 desk sweep, 27 canon and 1,116 repository guards pass; build passes.
-Last observed running desk before this merge: backend 8fbd84532,
-frontend 04fc23ff80d5a51b, PID 76172; identity/import/database ownership and
+Last observed running desk before this merge: backend 2d60f6961,
+frontend 24e6d924e7e355e5, PID 96598; identity/import/database ownership and
 /health, /, /conductor, /models passed. Each merge deploys its exact source;
 GET /api/system/identity is the current running identity.
 

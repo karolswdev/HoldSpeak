@@ -32,6 +32,8 @@ meaningful work; egress, authority and config stay at his press):
 from __future__ import annotations
 
 import re
+from contextvars import ContextVar
+from contextlib import contextmanager
 from typing import Any, Mapping, Optional
 
 from ..logging_config import get_logger
@@ -45,6 +47,26 @@ PROPOSAL_OPERATIONS: tuple[str, ...] = ("decision.create",)
 NOT_THIS_LAUNCH = "not_this_launch"
 
 _HOOK_INSTALLED = False
+
+# HTTP engines use the same MCP dispatcher in-process.  Their run credential
+# has no durable launch row, so the runner carries the target project through
+# this short-lived context while the tool call is dispatched.  CLI engines
+# use the durable ``project_id`` on their run credential instead.
+_RUN_PROJECT: ContextVar[str] = ContextVar("project_update_run_project", default="")
+
+
+@contextmanager
+def project_scope(project_id: str):
+    """Bind the project an in-process automation run may update."""
+    token = _RUN_PROJECT.set(str(project_id or "").strip())
+    try:
+        yield
+    finally:
+        _RUN_PROJECT.reset(token)
+
+
+def _run_project() -> str:
+    return _RUN_PROJECT.get()
 
 
 # ── the hub database (never a default database outside a hub) ──────────
@@ -321,6 +343,10 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     "project.resource.add": (PROJECT, "", ""),
     "project.resource.remove": (PROJECT, "", ""),
     "project.open_review": (PROJECT, "", ""),
+    # A project update is the one agent write which changes an existing
+    # owner's draft.  The gate below checks that the draft belongs to the
+    # automation's target project; it is never an arbitrary record edit.
+    "project.update_draft": (PROJECT, "project_update", "update_id"),
     # never: the owner's records and state, or a global run
     # PHILO-17: the owner's own meeting, an owner-only operation.
     "meeting.transcribe": (NEVER, "meeting", "meeting_id"),
@@ -368,7 +394,6 @@ LAUNCH_RULES: dict[str, tuple[str, str, str]] = {
     "project.stop_steward": (NEVER, "", ""),
     "project.steward.trigger": (NEVER, "", ""),
     "project.publish_update": (NEVER, "", ""),
-    "project.update_draft": (NEVER, "", ""),
     "project.setup.start": (NEVER, "", ""),
     "project.setup.resume": (NEVER, "", ""),
     "project.setup.answer": (NEVER, "", ""),
@@ -460,8 +485,19 @@ def _launch_project(launch_id: str) -> Optional[str]:
     from .. import coder_factory
     from ..principals import agent_credentials
 
-    credential = agent_credentials.launch_credential(coder_factory.launch_identity(launch_id))
-    return credential.project_id if credential is not None else None
+    # Scheduled launches use the historical ``agent:launch:`` identity;
+    # one-shot CLI runs use the run-bound ``agent:run:`` identity.  Both
+    # carry the same durable project scope, and the writer gate must resolve
+    # that scope before allowing ``project.update_draft``.
+    identities = (
+        coder_factory.launch_identity(launch_id),
+        f"{RUN_IDENTITY_PREFIX}{launch_id}",
+    )
+    for identity in identities:
+        credential = agent_credentials.launch_credential(identity)
+        if credential is not None:
+            return credential.project_id
+    return None
 
 
 def reviewer_credential(principal: Any) -> Any:
@@ -544,6 +580,25 @@ def gate_call(name: str, arguments: Any, principal: Any) -> Any:
     if rule[0] in (NEVER, COMPOSER):
         refuse(f"{kind}:{args.get(key)}" if kind and key and args.get(key) else name,
                f"{name} is not open to a launch")
+    if name == "project.update_draft":
+        # A run may edit only the draft belonging to the project's automation.
+        # CLI runs carry the project on their durable credential; the in-process
+        # HTTP loop carries it in ``project_scope`` for this dispatch only.
+        target_project = _launch_project(launch) or _run_project()
+        if not target_project:
+            refuse("project_update:(none)", "a run must name its project update target")
+        database = _hub_database()
+        row = None
+        if database is not None:
+            with database._connection() as conn:
+                row = conn.execute(
+                    "SELECT project_id FROM project_updates WHERE id = ?",
+                    (str(args.get("update_id") or "").strip(),),
+                ).fetchone()
+        if row is None or str(row["project_id"] or "") != target_project:
+            refuse(f"project_update:{args.get('update_id') or '(none)'}",
+                   "a run may update only its project's draft")
+        return args
     if rule[0] == OWN:
         require_own(principal, f"{kind}:{_ref_id(args.get(key))}")
     elif rule[0] == ITEM:

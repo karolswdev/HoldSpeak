@@ -795,6 +795,363 @@ def test_write_update_saves_the_records_draft_then_the_engine_improves_it_in_the
         assert (undo["generator"], undo["draft_revision"]) == ("deterministic", 3)
 
 
+@pytest.mark.parametrize("owner_edits", [False, True])
+@pytest.mark.parametrize("tool_writes", [False, True])
+def test_project_write_runs_its_existing_workbench_and_keeps_one_delivered_update(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, owner_edits: bool, tool_writes: bool,
+) -> None:
+    """P7/P8: the Room's manual Write uses the one project automation.
+
+    The local engine leaf replays the repository's existing Workbench fixture
+    response.  The route, assignment resolver, Workbench runner, artifact
+    mint, project delivery, and update job are real; the fixture is only the
+    provider answer and makes no model quality or live-provider claim.
+    """
+    from tests.e2e.glass_infra import assign_engine, engine_profile
+
+    fixture = json.loads(
+        (Path(__file__).resolve().parents[1] / "fixtures" / "automations" / "engine_replies.json").read_text()
+    )["weekly_update"]
+    calls: list[dict[str, Any]] = []
+    import threading
+    entered = threading.Event()
+    released = threading.Event()
+
+    class RecordedFixtureEngine:
+        active_provider = "fixture"
+        active_model = "recorded-workbench-fixture"
+        last_usage: dict[str, int] = {}
+
+        def run_prompt(self, *, system_prompt: str, user_prompt: str, temperature: Any = None,
+                       max_tokens: Any = None, **_kwargs: Any) -> str:
+            calls.append({"system": system_prompt, "user": user_prompt,
+                          "temperature": temperature, "max_tokens": max_tokens})
+            self.last_usage = {"total_tokens": 40}
+            if owner_edits:
+                entered.set()
+                assert released.wait(timeout=10), "owner-edit probe did not release the engine"
+            if tool_writes:
+                from holdspeak.services import run_trace
+                from holdspeak.services.engine_tool_loop import call_tool
+                item_id = run_trace.current_item()
+                assert item_id, "the Workbench did not bind its item trace"
+                reply = json.loads(call_tool(
+                    "fixture-update-run", run_trace.item_trace(item_id),
+                    "project.update_draft", {"update_id": records["id"],
+                        "body_md": fixture, "source_refs": [f"project:{project_id}"]},
+                    1, allow_project_update=True, project_id=project_id,
+                ))
+                assert "error" not in reply, reply
+                written_ids.append(reply["update"]["id"])
+            return fixture
+
+    written_ids: list[str] = []
+    engine = RecordedFixtureEngine()
+    monkeypatch.setattr(
+        "holdspeak.intel.providers.build_meeting_intel_for_profile",
+        lambda **_kwargs: engine,
+    )
+
+    with _hub(tmp_path, monkeypatch, lifespan=True) as hub:
+        # Use the real local profile/deployment and assignment helpers.  The
+        # test leaf is the only provider boundary replaced.
+        engine_profile(automation=True)
+        assign_engine("workbench.item", 11)
+        assign_engine("project.update_draft", 12)
+        from holdspeak.kernel.runtime import _service
+
+        # The profile and assignment stay real.  This is the existing
+        # Workbench fixture seam for a local recorded leaf; WorkbenchService,
+        # WorkbenchRunner, delivery, and the route dispatcher remain live.
+        broker = _service()
+        monkeypatch.setattr(broker.inference_runner, "_engine_factory",
+                            lambda _revision, **_kwargs: engine)
+
+        project_id = hub.ok("POST", "/api/projects", {
+            "name": "Ledger cutover", "command_id": "p7-real-write",
+        })["project"]["id"]
+        from holdspeak.meeting_session import MeetingState, TranscriptSegment
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        linked_meeting = MeetingState(
+            id="m-ledger-sync", started_at=now - timedelta(minutes=30),
+            ended_at=now - timedelta(minutes=10), title="Ledger project sync",
+            segments=[TranscriptSegment(
+                text="The ordinary project sync confirms the ledger cutover is ready.",
+                speaker="Mira", start_time=1.0, end_time=4.0,
+            )], intel_status="completed",
+        )
+        private_one_on_one = MeetingState(
+            id="m-mira-private-1on1", started_at=now - timedelta(minutes=20),
+            ended_at=now - timedelta(minutes=5), title="1:1 with Mira",
+            segments=[TranscriptSegment(
+                text="PRIVATE_ONE_ON_ONE_TEXT: Mira's promotion concern stays private.",
+                speaker="Mira", start_time=1.0, end_time=4.0,
+            )], intel_status="completed",
+        )
+        hub.db.meetings.save_meeting(linked_meeting)
+        hub.db.meetings.save_meeting(private_one_on_one)
+        hub.ok("POST", f"/api/projects/{project_id}/meetings/{linked_meeting.id}")
+        hub.ok("POST", f"/api/projects/{project_id}/meetings/{private_one_on_one.id}")
+        records = hub.ok(
+            "POST", f"/api/projects/{project_id}/updates/draft",
+            {"generator": "deterministic", "command_id": "p7-records"},
+        )["update"]
+        automations = [
+            wb for wb in hub.db.workbenches.list()
+            if wb.output_target == f"project_updates:{project_id}"
+        ]
+        assert len(automations) == 1, automations
+        automation = automations[0]
+        assert automation.id == f"project-update-{project_id}"
+
+        # This is the exact Room API payload: the existing automation ID is
+        # carried into the manual Write engine pass.
+        job = hub.ok(
+            "POST", f"/api/updates/{records['id']}/engine-pass",
+            {"automation_id": automation.id},
+        )["job"]
+        if owner_edits:
+            assert entered.wait(timeout=10), "the real automation did not reach its engine"
+            try:
+                hub.ok("PUT", f"/api/updates/{records['id']}", {"body_md": "My own Friday words."})
+            finally:
+                released.set()
+        done = _poll_job(hub, job["id"], until=("succeeded", "failed"), timeout=45)
+        if owner_edits:
+            refused = hub.client.post(f"/api/update-jobs/{job['id']}/apply", json={})
+            assert refused.status_code == 409 and refused.json()["code"] == "draft_changed", refused.text
+            assert hub.ok("GET", f"/api/updates/{records['id']}")["update"]["body_md"] == "My own Friday words."
+        diagnostic_items = hub.db.workbench_items.list_for_workbench(automation.id)
+        diagnostic_runs = hub.db.workbench_runs.list_for_workbench(automation.id)
+        assert done["state"] == "succeeded", (
+            f"job={done!r}; calls={calls!r}; item={diagnostic_items[0].to_dict() if diagnostic_items else None!r}; "
+            f"run={diagnostic_runs[0].to_dict() if diagnostic_runs else None!r}"
+        )
+        assert len(calls) == 1, calls
+        assert "The ordinary project sync confirms" in calls[0]["user"]
+        assert "PRIVATE_ONE_ON_ONE_TEXT" not in calls[0]["user"]
+        assert private_one_on_one.id not in calls[0]["user"]
+
+        # The Workbench produced exactly one terminal run, one occurrence and
+        # one minted artifact before the project delivery was applied.
+        runs = hub.db.workbench_runs.list_for_workbench(automation.id)
+        assert len(runs) == 1 and runs[0].status == "completed", runs
+        items = hub.db.workbench_items.list_for_workbench(automation.id)
+        assert len(items) == 1 and items[0].status == "done", items
+        assert items[0].result_artifact_id
+        artifact = hub.db.plugins.get_artifact(items[0].result_artifact_id)
+        assert artifact is not None, items[0]
+        assert json.loads(items[0].grounding_json) == {"refs": [f"project:{project_id}"]}
+
+        delivered = hub.db.project_updates.list_updates(project_id)[0]
+        assert delivered["id"] != records["id"]
+        assert delivered["body_md"].rstrip() == fixture
+        assert delivered["generator"].startswith("agent:")
+        if tool_writes:
+            assert written_ids == [delivered["id"]], written_ids
+        manifest = json.loads(delivered["source_manifest_json"])
+        assert manifest["agent_sources"] == [f"project:{project_id}"]
+        assert private_one_on_one.id not in json.dumps(manifest)
+        with hub.db._connection() as conn:
+            result_json = conn.execute(
+                "SELECT result_json FROM project_update_jobs WHERE id=?", (job["id"],)
+            ).fetchone()["result_json"]
+        result = json.loads(result_json)
+        assert result["automation_id"] == automation.id
+        assert result["automation_run_id"] == runs[0].id
+        print("P7P8_REAL_ROUTE_PROOF", json.dumps({
+            "automation_id": automation.id,
+            "run_id": runs[0].id,
+            "artifact_id": items[0].result_artifact_id,
+            "job_id": job["id"],
+            "update_id": delivered["id"],
+            "source_refs": manifest["agent_sources"],
+            "grounding_refs": json.loads(items[0].grounding_json)["refs"],
+        }, sort_keys=True))
+
+        applied = hub.ok("POST", f"/api/update-jobs/{job['id']}/apply", {"force": True} if owner_edits else {})["update"]
+        assert applied["id"] == delivered["id"]
+        assert len(hub.db.project_updates.list_updates(project_id)) == 2
+        assert len([
+            update for update in hub.db.project_updates.list_updates(project_id)
+            if str(update["generator"]).startswith("agent:")
+        ]) == 1
+
+        # Friday changes the same Workbench record's When/With state.  The
+        # newest Open payload is the delivered row, with no second automation.
+        friday = hub.ok("PUT", f"/api/workbenches/{automation.id}", {
+            "schedule": "0 15 * * 5", "schedule_enabled": True,
+        })["workbench"]
+        assert friday["id"] == automation.id
+        assert friday["schedule"] == "0 15 * * 5" and friday["schedule_enabled"] is True
+        room = hub.ok("GET", f"/api/projects/{project_id}/room")
+        assert room["updates"]["automation"]["id"] == automation.id
+        assert room["updates"]["automation"]["schedule"] == "0 15 * * 5"
+        newest = hub.ok("GET", f"/api/projects/{project_id}/updates")["updates"][0]
+        assert newest["id"] == delivered["id"] and newest["body_md"].rstrip() == fixture
+        assert len([
+            wb for wb in hub.db.workbenches.list()
+            if wb.output_target == f"project_updates:{project_id}"
+        ]) == 1
+
+
+def test_project_update_run_credential_scopes_native_mcp_reads_and_draft_write(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A real run credential exposes the update writer and the filtered reads."""
+    from holdspeak.mcp.palettes import CONDUCTOR, resolve_palette
+    from holdspeak.principals import agent_credentials
+    from holdspeak.services.conductor_launch import RUN_IDENTITY_PREFIX
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+
+    with _hub(tmp_path, monkeypatch, lifespan=True) as hub:
+        project_id = hub.ok("POST", "/api/projects", {"name": "Scoped update"})["project"]["id"]
+        other_project = hub.ok("POST", "/api/projects", {"name": "Other project"})["project"]["id"]
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        ordinary = MeetingState(
+            id="m-scoped-ordinary", started_at=now - timedelta(minutes=20),
+            ended_at=now - timedelta(minutes=10), title="Scoped project sync",
+            segments=[TranscriptSegment(
+                text="ORDINARY_PROJECT_TEXT: the cutover is ready.", speaker="Mira",
+                start_time=1.0, end_time=4.0,
+            )], intel_status="completed",
+        )
+        private = MeetingState(
+            id="m-scoped-private", started_at=now - timedelta(minutes=18),
+            ended_at=now - timedelta(minutes=8), title="1:1 with Mira",
+            segments=[TranscriptSegment(
+                text="PRIVATE_ONE_ON_ONE_TEXT: keep this private.", speaker="Mira",
+                start_time=1.0, end_time=4.0,
+            )], intel_status="completed",
+        )
+        hub.db.meetings.save_meeting(ordinary)
+        hub.db.meetings.save_meeting(private)
+        unlinked = MeetingState(
+            id="m-scoped-unlinked", started_at=now - timedelta(minutes=16),
+            ended_at=now - timedelta(minutes=6), title="Private catch-up",
+            segments=[TranscriptSegment(
+                text="UNLINKED_PRIVATE_TEXT: outside this project.", speaker="Noor",
+                start_time=1.0, end_time=4.0,
+            )], intel_status="completed",
+        )
+        hub.db.meetings.save_meeting(unlinked)
+        hub.ok("POST", f"/api/projects/{project_id}/meetings/{ordinary.id}")
+        hub.ok("POST", f"/api/projects/{project_id}/meetings/{private.id}")
+        private_action_id = "a-scoped-private-filed"
+        with hub.db._connection() as conn:
+            conn.execute(
+                """INSERT INTO action_items
+                   (id, meeting_id, task, owner, status, review_state, created_at)
+                   VALUES (?, ?, ?, ?, 'open', 'accepted', ?)""",
+                (private_action_id, private.id, "PRIVATE_1TO1_OWED_ACTION", "Karol", now.isoformat()),
+            )
+        # An owner-filed action is an explicit project source. P2 keeps this
+        # owed item while still withholding the 1:1 meeting itself.
+        hub.db.project_relationships.upsert(
+            project_id=project_id, resource_ref=f"action:{private_action_id}",
+            relationship="source", source="manual",
+        )
+        records = hub.ok(
+            "POST", f"/api/projects/{project_id}/updates/draft", {"generator": "deterministic"},
+        )["update"]
+        assert "PRIVATE_1TO1_OWED_ACTION" in records["body_md"]
+        other_records = hub.ok(
+            "POST", f"/api/projects/{other_project}/updates/draft", {"generator": "deterministic"},
+        )["update"]
+
+        run_id = "scoped-native-mcp-proof"
+        credential = agent_credentials.issue(
+            f"{RUN_IDENTITY_PREFIX}{run_id}",
+            palette=resolve_palette(CONDUCTOR), palette_name=CONDUCTOR,
+            launch_id=run_id, project_id=project_id,
+        )
+
+        def mcp(method: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+            response = hub.client.post(
+                "/api/mcp", headers={"X-HoldSpeak-Token": credential.token},
+                json={"jsonrpc": "2.0", "id": method, "method": method, "params": params or {}},
+            )
+            assert response.status_code == 200, response.text
+            return response.json()
+
+        def tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+            return mcp("tools/call", {"name": name, "arguments": arguments})
+
+        try:
+            listed = mcp("tools/list")
+            names = {row["name"] for row in listed["result"]["tools"]}
+            assert "project.update_draft" in names
+            assert not any(name.startswith("people.") for name in names)
+            resources = mcp("resources/list")["result"]
+            assert resources == {"resources": [], "resourceTemplates": []}
+            raw_private = mcp("resources/read", {"uri": f"holdspeak://meetings/{private.id}"})
+            assert raw_private["error"]["data"]["code"] == "MCP-005"
+            assert "PRIVATE_ONE_ON_ONE_TEXT" not in json.dumps(raw_private)
+
+            meetings = json.loads(tool("meeting.list", {})["result"]["content"][0]["text"])
+            listed_ids = {row["id"] for row in meetings["meetings"]}
+            assert ordinary.id in listed_ids and private.id not in listed_ids
+            assert unlinked.id not in listed_ids
+            assert tool("meeting.get", {"meeting_id": unlinked.id})["result"]["isError"]
+            assert "ORDINARY_PROJECT_TEXT" not in json.dumps(meetings)
+            private_reply = tool("meeting.get", {"meeting_id": private.id})
+            assert private_reply["result"]["isError"]
+            private_error = json.loads(private_reply["result"]["content"][0]["text"])
+            assert "outside project update sources" in private_error["error"]
+            ordinary_reply = tool("meeting.get", {"meeting_id": ordinary.id})
+            assert "ORDINARY_PROJECT_TEXT" in ordinary_reply["result"]["content"][0]["text"]
+            # The HTTP loop has no durable CLI credential, but it must use
+            # the same restricted tools and keep positive project reads.
+            from holdspeak.services.engine_tool_loop import call_tool
+            http_ordinary = call_tool(
+                "scoped-http-proof", "scoped-http-proof", "meeting.get",
+                {"meeting_id": ordinary.id}, 1, allow_project_update=True,
+                project_id=project_id,
+            )
+            assert "ORDINARY_PROJECT_TEXT" in http_ordinary
+            http_unlinked = call_tool(
+                "scoped-http-proof", "scoped-http-proof", "meeting.get",
+                {"meeting_id": unlinked.id}, 3, allow_project_update=True,
+                project_id=project_id,
+            )
+            assert "UNLINKED_PRIVATE_TEXT" not in http_unlinked
+            assert "error" in json.loads(http_unlinked)
+            http_people = call_tool(
+                "scoped-http-proof", "scoped-http-proof", "people.relationship.list",
+                {}, 2, allow_project_update=True, project_id=project_id,
+            )
+            assert "error" in json.loads(http_people), http_people
+
+            saved = tool("project.update_draft", {
+                "update_id": records["id"], "body_md": "Agent scoped words.",
+                "source_refs": [
+                    f"meeting:{ordinary.id}", f"meeting:{private.id}",
+                    f"action_item:{private_action_id}",
+                ],
+            })
+            assert not saved["result"]["isError"], saved
+            saved_update = json.loads(saved["result"]["content"][0]["text"])["update"]
+            assert saved_update["id"] != records["id"]
+            assert hub.db.project_updates.get_update(records["id"])["body_md"] == records["body_md"]
+            assert saved_update["body_md"].rstrip() == "Agent scoped words."
+            manifest = json.loads(saved_update["source_manifest_json"])
+            edited = tool("project.update_draft", {
+                "update_id": saved_update["id"], "body_md": "Agent revised words.",
+            })
+            edited_update = json.loads(edited["result"]["content"][0]["text"])["update"]
+            assert edited_update["id"] == saved_update["id"]
+            assert f"action_item:{private_action_id}" in manifest["agent_sources"]
+            assert f"meeting:{private.id}" not in manifest["agent_sources"]
+            refused = tool("project.update_draft", {
+                "update_id": other_records["id"], "body_md": "Wrong project words.",
+            })
+            assert refused["result"]["isError"]
+            assert "outside the project update scope" in refused["result"]["content"][0]["text"]
+        finally:
+            agent_credentials.revoke(credential.principal.identity, "proof_done")
+
+
 def test_the_engine_never_overwrites_his_words_and_a_failure_keeps_the_records_draft(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, llm: FakeLLM,
 ) -> None:
@@ -2243,3 +2600,36 @@ def test_waiting_on_nudge_matches_saved_targets_and_uses_the_document_send_bound
         files = list(folder.glob("*.md"))
         assert len(files) == 1
         assert "Please review: Review the Jira migration item" in files[0].read_text(encoding="utf-8")
+
+
+def test_project_update_line_records_the_real_manual_and_friday_wire(tmp_path, monkeypatch):
+    """P7's consumer fixture is the actual shared Room/Workbench response."""
+    import os
+    with _hub(tmp_path, monkeypatch) as hub:
+        project_id = hub.ok("POST", "/api/projects", {"name": "Friday update wire"})["project"]["id"]
+        draft = hub.ok("POST", f"/api/projects/{project_id}/updates/draft", {"generator": "deterministic"})["update"]
+        manual = hub.ok("GET", f"/api/projects/{project_id}/room")
+        automation_id = manual["updates"]["automation"]["id"]
+        assert not manual["updates"]["automation"]["schedule_enabled"]
+        refused = hub.client.put(f"/api/workbenches/{automation_id}", json={
+            "schedule": "0 15 * * 5", "schedule_enabled": True,
+        })
+        assert refused.status_code == 400
+        from tests.e2e.glass_infra import ENGINE_PROFILE, engine_profile, assign_engine
+        engine_profile(automation=True)
+        assign_engine("workbench.item", 11)
+        assign_engine("project.update_draft", 12)
+        friday = hub.ok("PUT", f"/api/workbenches/{automation_id}", {
+            "schedule": "0 15 * * 5", "schedule_enabled": True,
+        })
+        scheduled = hub.ok("GET", f"/api/projects/{project_id}/room")
+        assert scheduled["updates"]["automation"]["schedule_enabled"]
+        assert scheduled["updates"]["automation"]["id"] == automation_id
+        assert hub.db.workbenches.get(automation_id).schedule == "0 15 * * 5"
+        assert manual["updates"]["automation"]["engine_label"] == "Engine not set"
+        assert scheduled["updates"]["automation"]["profile_id"] == ENGINE_PROFILE
+        assert scheduled["updates"]["automation"]["engine_label"] != "Engine not set"
+        if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+            path = Path(__file__).resolve().parents[2] / "web/src/features/project-room/__tests__/room-wires/updateAutomationP7.json"
+            path.write_text(json.dumps({"manual": manual, "scheduled": scheduled,
+                "draft": draft, "friday": friday, "refusal": refused.json()}, indent=2) + "\n")

@@ -38,7 +38,7 @@
         "action": "click_role",
         "adapter": "ui-pointer",
         "role": "button",
-        "name": "Continue later"
+        "name": "Open my desk"
       },
       "expected": {
         "predicate": {
@@ -47,7 +47,7 @@
           "value": "chair-desk"
         },
         "observe_at": "[data-testid=chair-desk]",
-        "words": "the gate closes and THE DESK is shown (the Chair screen [data-testid=chair-desk] is present; PHILO-14 A1 (#939): the arrival headline lives in the Needs you window, closed on arrival, so it is no longer the desk's mark); the first-value attempt closes with disposition 'dismissed' (no 4xx on POST /api/setup/first-value/{attempt_id}/finish) [the audit's stated observation location: face: the desk replaces the gate; table: onboarding first-value attempt disposition] [the gate section itself is gone afterwards \u2014 recorded in reads, not used as the predicate's scope, since a vanished scope is a block, not a result]",
+        "words": "Open my desk closes Setup and shows the actual desk. The current Setup onboarding disposition replaces the retired first-value dismissal path.",
         "reads": []
       },
       "completion_bound_s": 20,
@@ -1608,7 +1608,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -1972,7 +1972,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -2429,7 +2429,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -2958,7 +2958,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -3414,7 +3414,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -4240,7 +4240,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -4448,7 +4448,7 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "192.168.77.43 \u00b7 LAN"
+          "value": "192.168.77.43 · LAN"
         },
         "observe_at": "[data-testid=arrival-route]",
         "words": "the planned host is named on the row beside Run summary, before the click [the audit's stated observation location: face: [data-testid=arrival-route]]",
@@ -4917,7 +4917,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -5287,7 +5287,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -5641,7 +5641,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -6010,7 +6010,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -6159,7 +6159,7 @@
       "expected": {
         "predicate": {
           "kind": "text_equals",
-          "value": "FAILED\nLAST ATTEMPT \u00b7 192.168.77.43 \u00b7 LAN\nLAST ERROR \u00b7 PROVIDER FAILED"
+          "value": "FAILED\nLAST ATTEMPT · 192.168.77.43 · LAN\nLAST ERROR · PROVIDER FAILED"
         },
         "observe_at": "[data-testid=arrival-summary-status]",
         "words": "FAILED with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
@@ -6404,7 +6404,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -6654,7 +6654,7 @@
           "adapter": "http-route",
           "capture_path": "meeting_id",
           "form": {
-            "title": "Architecture boundary review \u2014 empty transcript"
+            "title": "Architecture boundary review — empty transcript"
           },
           "wait_for": {
             "method": "GET",
@@ -6971,7 +6971,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -7356,7 +7356,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -7854,7 +7854,7 @@
           "action": "click_role",
           "adapter": "ui-pointer",
           "role": "button",
-          "name": "Continue later",
+          "name": "Open my desk",
           "optional": true
         },
         {
@@ -7898,14 +7898,6 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-deck-row[id='desk-palette-option-go.configure-settings']",
-          "adapter": "ui-pointer",
-          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
-        },
-        {
-          "kind": "ui",
-          "action": "click_role",
-          "role": "button",
-          "name": "Open System",
           "adapter": "ui-pointer",
           "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
         },
@@ -7955,7 +7947,7 @@
           "kind": "text_contains",
           "value": "Quiet from"
         },
-        "observe_at": "#surface-settings [data-settings-module=\"rhythm\"]",
+        "observe_at": "#surface-settings [data-settings-section=\"notices\"]",
         "words": "The produced receipt opens Settings at Rhythm, where Quiet from is visible; Activity stays open for the return."
       },
       "completion_bound_s": 30,
@@ -7970,7 +7962,7 @@
         "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
         "adapter": "ui-pointer",
         "timeout_s": 15,
-        "why": "The exact sweep receipt\u2019s library Open receipt Button opens its registered Rhythm face from Activity."
+        "why": "The exact sweep receipt’s library Open receipt Button opens its registered Rhythm face from Activity."
       }
     },
     {
@@ -7996,7 +7988,7 @@
           "action": "click_role",
           "adapter": "ui-by-viewport",
           "role": "button",
-          "name": "Continue later",
+          "name": "Open my desk",
           "optional": true
         },
         {
@@ -8046,14 +8038,6 @@
         },
         {
           "kind": "ui",
-          "action": "click_role",
-          "role": "button",
-          "name": "Open System",
-          "adapter": "ui-pointer",
-          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
-        },
-        {
-          "kind": "ui",
           "action": "click",
           "selector": "label.gadget-check:has(input[aria-label='Builder tools'])",
           "adapter": "ui-pointer",
@@ -8098,7 +8082,7 @@
           "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
           "adapter": "ui-by-viewport",
           "timeout_s": 15,
-          "why": "The exact sweep receipt\u2019s library Open receipt Button opens its registered Rhythm face from Activity."
+          "why": "The exact sweep receipt’s library Open receipt Button opens its registered Rhythm face from Activity."
         },
         {
           "kind": "ui",
@@ -8111,22 +8095,6 @@
           "kind": "ui",
           "action": "wait_for",
           "selector": "#surface-settings.is-front button[aria-label=\"Back from Settings\"]",
-          "at_width": 393,
-          "adapter": "ui-pointer"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": "#surface-settings .desk-gadget-close",
-          "at_width": 393,
-          "adapter": "ui-touch",
-          "why": "Current Settings uses the first Back to leave its Rhythm module. Return to the Settings index before closing the window; ST7 removes this nested module."
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "selector": "#surface-settings [data-settings-module=\"rhythm\"]",
-          "state": "detached",
           "at_width": 393,
           "adapter": "ui-pointer"
         }
@@ -8434,7 +8402,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -8840,7 +8808,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -9259,7 +9227,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -9688,7 +9656,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -10074,9 +10042,18 @@
           "kind": "ui",
           "action": "click_role",
           "role": "button",
-          "name": "Continue later",
+          "name": "Open my desk",
           "optional": true,
           "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Close Today",
+          "optional": true,
+          "adapter": "ui-pointer",
+          "why": "Open my desk opens Today; close it before the engine setup, then exercise the declared Go > Today trigger."
         },
         {
           "kind": "boundary",
@@ -10647,9 +10624,18 @@
           "kind": "ui",
           "action": "click_role",
           "role": "button",
-          "name": "Continue later",
+          "name": "Open my desk",
           "optional": true,
           "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Close Today",
+          "optional": true,
+          "adapter": "ui-pointer",
+          "why": "Open my desk opens Today; close it before the engine setup, then exercise the declared Go > Today trigger."
         },
         {
           "kind": "boundary",
@@ -13120,7 +13106,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -13510,7 +13496,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -13857,7 +13843,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -14000,7 +13986,7 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "192.168.77.43 \u00b7 LAN"
+          "value": "192.168.77.43 · LAN"
         },
         "observe_at": "[data-testid=arrival-route]",
         "words": "Article III: the host this run WILL use is disclosed on the row BEFORE the click. Its text is recorded so the council can set it against the host that actually ran (case.j6.run_summary.host_named). [the audit's stated observation location: [data-testid=arrival-route]]",
@@ -14229,7 +14215,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -14378,7 +14364,7 @@
       "expected": {
         "predicate": {
           "kind": "text_equals",
-          "value": "RETRYING\nLAST ATTEMPT \u00b7 192.168.77.43 \u00b7 LAN\nLAST ERROR \u00b7 PROVIDER FAILED"
+          "value": "RETRYING\nLAST ATTEMPT · 192.168.77.43 · LAN\nLAST ERROR · PROVIDER FAILED"
         },
         "observe_at": "[data-testid=arrival-summary-status]",
         "words": "RETRYING with the actual LAST ATTEMPT host and the ratified PROVIDER FAILED cause, without queue wrappers or ATTEMPT(S). The queue summary is retained separately.",
@@ -14414,7 +14400,7 @@
           "name": "meeting.import",
           "args": {
             "path": "tests/fixtures/philo5_empty.vtt",
-            "title": "Architecture boundary review \u2014 empty transcript"
+            "title": "Architecture boundary review — empty transcript"
           },
           "adapter": "mcp-http",
           "capture_as": "meeting_id",
@@ -15179,7 +15165,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -15662,7 +15648,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -16062,7 +16048,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -16486,7 +16472,7 @@
           "adapter": "ui-pointer",
           "selector": "[data-testid=runson-receipt]:has-text('PATCHED')",
           "timeout_s": 30,
-          "why": "the foot's receipt: PATCHED \u00b7 Meetings \u2192 <engine>"
+          "why": "the foot's receipt: PATCHED · Meetings → <engine>"
         },
         {
           "kind": "ui",
@@ -17348,7 +17334,7 @@
         {
           "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "const [generating, setGenerating] = useState(false);",
-          "claim": "the Chair's head Generate is disabled and GENERATING\u2026 holds the status slot in flight (PHILO-4-01)"
+          "claim": "the Chair's head Generate is disabled and GENERATING… holds the status slot in flight (PHILO-4-01)"
         }
       ],
       "reachable_by": [
@@ -17384,7 +17370,7 @@
         {
           "path": "web/src/desk/chair/_parked/ArrivalSections.tsx",
           "symbol": "const [generateFailed, setGenerateFailed] = useState<string | null>(null);",
-          "claim": "the Chair names a failed generation BRIEF DID NOT GENERATE \u00b7 <cause> in the status slot, no Retry (PHILO-4-01)"
+          "claim": "the Chair names a failed generation BRIEF DID NOT GENERATE · <cause> in the status slot, no Retry (PHILO-4-01)"
         }
       ],
       "reachable_by": [
@@ -19421,7 +19407,7 @@
         {
           "path": "web/src/desk/thought-workspace/thoughtReceipt.ts",
           "symbol": "filing_status",
-          "claim": "the foot's second line states IN <DRAWER> / IN A DRAWER / NOT IN A DRAWER from filing_status; the first line is KEPT \u00b7 time from the last successful write (PHILO-3-04)"
+          "claim": "the foot's second line states IN <DRAWER> / IN A DRAWER / NOT IN A DRAWER from filing_status; the first line is KEPT · time from the last successful write (PHILO-3-04)"
         }
       ],
       "reachable_by": [

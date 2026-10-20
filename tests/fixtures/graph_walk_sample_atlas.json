@@ -19,7 +19,7 @@
           "kind": "ui",
           "action": "click_role",
           "role": "button",
-          "name": "Continue later",
+          "name": "Open my desk",
           "optional": true,
           "adapter": "ui-pointer",
           "why": "the first-value gate stands in front of the desk on a cold HOME"
@@ -43,7 +43,7 @@
           "kind": "ui",
           "action": "click_role",
           "role": "button",
-          "name": "Continue later",
+          "name": "Open my desk",
           "optional": true,
           "adapter": "ui-pointer"
         },
@@ -81,14 +81,6 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-deck-row[id='desk-palette-option-go.configure-settings']",
-          "adapter": "ui-pointer",
-          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
-        },
-        {
-          "kind": "ui",
-          "action": "click_role",
-          "role": "button",
-          "name": "Open System",
           "adapter": "ui-pointer",
           "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
         },
@@ -139,10 +131,10 @@
         "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
         "adapter": "ui-pointer",
         "timeout_s": 15,
-        "why": "The exact sweep receipt\u2019s library Open receipt Button opens its registered Rhythm face from Activity."
+        "why": "The exact sweep receipt’s library Open receipt Button opens its registered Rhythm face from Activity."
       },
       "expected": {
-        "observe_at": "#surface-settings [data-settings-module=\"rhythm\"]",
+        "observe_at": "#surface-settings [data-settings-section=\"notices\"]",
         "predicate": {
           "kind": "text_contains",
           "value": "Quiet from"

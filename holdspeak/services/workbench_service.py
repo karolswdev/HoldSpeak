@@ -357,6 +357,63 @@ class WorkbenchService:
         made = self.create_workbench(principal, name=name, **fields, **content)
         return self._apply_starts(principal, str(made["id"]), sentence, starts)
 
+    def ensure_project_update(
+        self, principal: Principal, project_id: str, *, audience: str = "manager",
+    ) -> dict[str, Any]:
+        """Create the project's update automation once, when Write is pressed."""
+        from .errors import NotFound
+
+        project = self._db.projects.get_project(project_id)
+        if project is None:
+            raise NotFound("project", project_id)
+        target = f"project_updates:{project_id}"
+        live = next((wb for wb in self._db.workbenches.list()
+                     if str(wb.output_target or "") == target), None)
+        if live is not None:
+            return self._wb_payload(live, principal)
+        project_name = str(getattr(project, "name", "") or project_id)
+        reader = "my team" if str(audience).strip().lower() in {"team", "my team"} else "my manager"
+        instruction = (
+            f"Write the weekly status update for {project_name} for {reader}. "
+            "Read this week's meetings, the project's decisions, what each person owes, "
+            "the open risks, and the project's linked source state. Lead with the state "
+            "and the one thing I need. Leave out 1:1s and People notes. Cite what you used."
+        )
+        made = self.create_workbench(
+            principal,
+            id=f"project-update-{project_id}",
+            name=f"{project_name} update",
+            instruction=instruction,
+            sources=[f"project:{project_id}"],
+            output_target=target,
+            schedule="0 15 * * 5",
+            schedule_enabled=False,
+        )
+        # The workbench route inherits the global workbench.item assignment.
+        # When the project update capability already names an engine, copy its
+        # profile into the subject assignment; this is configuration metadata,
+        # not a second engine choice.
+        profile_id = ""
+        try:
+            with self._db._connection() as conn:
+                entry = conn.execute(
+                    """SELECT e.profile_id FROM inference_assignment_heads h
+                       JOIN inference_assignments e ON e.assignment_id=h.assignment_id
+                         AND e.assignment_revision=h.revision AND e.ordinal=0
+                       WHERE h.assignment_key='capability:project.update_draft' AND h.cleared=0""",
+                ).fetchone()
+            profile_id = str(entry["profile_id"] or "") if entry is not None else ""
+        except Exception:
+            profile_id = ""
+        if profile_id:
+            try:
+                made = self.set_engine(principal, str(made["id"]), profile_id=profile_id)
+            except Exception:
+                # A global assignment is still inherited by the runner; an
+                # unavailable scoped binding must not block the first Write.
+                pass
+        return made
+
     def update_automation(
         self, principal: Principal, workbench_id: str, *, sentence: dict[str, Any], **fields: Any
     ) -> dict[str, Any]:

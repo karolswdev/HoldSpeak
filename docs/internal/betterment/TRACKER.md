@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, One-page Settings verified; running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-19, Project update automation and agent draft verified; running-desk identity is in `pm/STATUS.md`.
 
-**Total: 95 of 117 slices merged**, with Send S7 still partial.
+**Total: 100 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -17,11 +17,11 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Engines | `engines/` | 8 of 8 |
 | The desk's tools (MCP) | `mcp/` | 7 of 7 |
 | Ask | `asking/` | 13 of 13 |
-| Projects | `projects/` | 7 of 11 |
-| Agents | `agents/` | 14 of 16 |
+| Projects | `projects/` | 9 of 11 |
+| Agents | `agents/` | 15 of 16 |
 | Daily and Needs you | `daily/` | 11 of 11 |
-| Setup and Settings | `setup/` | 8 of 10 |
-| Desk shell | `shell/` | 3 of 10 |
+| Setup and Settings | `setup/` | 9 of 10 |
+| Desk shell | `shell/` | 4 of 10 |
 | Send | `send/` | 1 of 8 |
 | Capture | `capture/` | 12 of 12 |
 
@@ -84,7 +84,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Q11 | Memory where he looks | Done · #1375 | Pages have their own pass budget and engine fallback; distinct person answers retain working sources. |
 | Q12 | The Memory app | Done · #1375 | Go opens desk answers, Why and links; whole-desk Ask and RAW Recall retained. |
 
-## Projects (`projects/RECIPE.md`): 7 of 11
+## Projects (`projects/RECIPE.md`): 9 of 11
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -95,12 +95,12 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | P4 | Projects and Decisions in Go; withhold dead verbs | Done · #1349 | State/reason in Projects, truthful Not read, scoped Write update in Search. |
 | P5 | Sources in one go | Done · #1377 | Paste keeps exact site/account; Found adds meetings and notes together; existing-project sources use the same Door. |
 | P6 | Nudge and Ask, in their homes | Done · #1377 | Exact destination and stored action feed Send; shared Ask keeps project scope. |
-| P7 | The update is an automation; the steward folds in | Open |  |
-| P8 | The agent writes the update | Open |  |
+| P7 | The update is an automation; the steward folds in | Done · #1395 | Manual first; Friday uses the same record. |
+| P8 | The agent writes the update | Done · #1395 | Project-scoped Work tools; owner draft preserved; exact result adopted once. |
 | P9 | One decision record | Open |  |
 | P10 | Watches tell the truth underneath | Open |  |
 
-## Agents (`agents/RECIPE.md`): 14 of 16
+## Agents (`agents/RECIPE.md`): 15 of 16
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -119,7 +119,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | AG12 | Review by (builder and reviewer) | Done · #1385 | Bounded two-round pair; durable Result and read-only reviewer authority. |
 | AG13 | A HoldSpeak skill | Done · #1374 | Packaged skill, native launch discovery and Connect install; offline Codex discovery observed. |
 | AG14 | Automations that hand work to agents | Open |  |
-| AG15 | Agents he started himself (decision 1) | Open |  |
+| AG15 | Agents he started himself (decision 1) | Done · #1392 | Own native tmux agents show state and accept owner answers/approval; rig discovery stays off. |
 
 ## Daily and Needs you (`daily/RECIPE.md`): 11 of 11
 
@@ -137,7 +137,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | D9 | Morning prep (after Automations A2–A6 and MCP M1; owner decision 3) | Done · #1342 |  |
 | D10 | MCP parity | Done · #1372 | Declared Today read composes the face producers; Decide and People writes retain owner authority. |
 
-## Setup and Settings (`setup/RECIPE.md`): 8 of 10
+## Setup and Settings (`setup/RECIPE.md`): 9 of 10
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -150,16 +150,16 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | ST6 | Let my agents use HoldSpeak | Done · #1388 | Native user-scope tools, hooks and skill; per-agent readback and owned-binding removal in Setup. |
 | ST7 | Settings is one page | Done · #1391 | Eight sections; preserved writers and aliases; Engines opens its own window. |
 | ST8 | Sign in without a terminal | Open |  |
-| ST9 | Setup from the terminal and by asking | Open |  |
+| ST9 | Setup from the terminal and by asking | Done · #1393 | CLI and MCP share the Setup inventory and Use producer; agents read status, adoption requires the owner. |
 
-## Desk shell (`shell/RECIPE.md`): 3 of 10
+## Desk shell (`shell/RECIPE.md`): 4 of 10
 
 | Slice | What | State | Note |
 |---|---|---|---|
 | S0 | Menus and Search show only what works | Done · #1257 |  |
 | S1 | Go lists every app | Done · #1259 |  |
 | S2 | The New list, the HoldSpeak menu and the keyboard sheet | Done · #1390 | Seven shared New kinds; real Drawer naming at both sizes; setup menu and grouped keys. |
-| S3 | The Dock: five daily apps with their state; the keys follow it | Open |  |
+| S3 | The Dock: five daily apps with their state; the keys follow it | Done · #1394 | Manifest order, visible phone words, producer states and matching keys. |
 | S4 | The floor holds what he keeps | Open |  |
 | S5 | Search is the command line | Open |  |
 | S6 | Wallpaper has one home | Open |  |

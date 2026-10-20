@@ -11,6 +11,7 @@ from typing import Any
 
 from ..db.core import Database
 from ..principals import Principal
+from ..redaction import redact_error
 from .errors import NotFound, ServiceError, ValidationError
 
 
@@ -378,6 +379,11 @@ class SetupService:
         """Run one existing Setup owner action selected by its found row."""
         body = payload or {}
         value = str(id or "")
+        if value == "all":
+            # The aggregate press owns its inventory read.  In particular, do
+            # not let a transport supply row payloads for this path: those
+            # payloads are producer facts and can change between reads.
+            return self.use_all(principal)
         if value == "speech":
             if self._local_ai is None:
                 raise ServiceError("setup_unavailable", "Speech setup is not available.", context={"status": 503})
@@ -392,6 +398,21 @@ class SetupService:
         if value.startswith("calendar:") and self._onboarding is not None:
             result = self._onboarding.calendar_use(principal, {"id": value.split(":", 1)[1], "label": body.get("label", "")})
             return {**result, "state": "ready"}
+        if value == "agents" and self._onboarding is not None:
+            agents = body.get("agents")
+            if not isinstance(agents, list):
+                raise ValidationError("The agent list is missing.")
+            settings_paths: dict[str, str] = {}
+            target = getattr(self._onboarding, "agent_settings_target", None)
+            if callable(target):
+                for agent in agents:
+                    path = target(str(agent or ""))
+                    if path is not None:
+                        settings_paths[str(agent)] = str(path)
+            use = getattr(self._onboarding, "agents_use", None)
+            if not callable(use):
+                raise ServiceError("setup_unavailable", "Agent setup is not available.", context={"status": 503})
+            return use(principal, agents=[str(agent) for agent in agents], settings_paths=settings_paths)
         if value.startswith("agent-engine:") and self._model_library is not None:
             preset = value.split(":", 1)[1]
             self._require_engine_assignment()
@@ -419,6 +440,104 @@ class SetupService:
             })
             return self._use_engine(principal, result)
         raise ValidationError("Setup row cannot be used here.")
+
+    @staticmethod
+    def _action_state(result: Any) -> tuple[str, str]:
+        """Map one producer answer to the same words as SetupFace."""
+        outer = result if isinstance(result, dict) else {}
+        body = outer.get("result") if isinstance(outer.get("result"), dict) else outer
+        entry = body.get("entry") if isinstance(body.get("entry"), dict) else {}
+        connection = next(
+            (item for item in entry.get("connections", [])
+             if isinstance(item, dict)),
+            {},
+        )
+        state = str(
+            body.get("state") or body.get("status") or entry.get("state")
+            or connection.get("state") or ""
+        ).lower()
+        failed_agents = " · ".join(
+            str(item.get("reason") or item.get("error") or "Agent setup failed.").strip()
+            for item in body.get("results", [])
+            if isinstance(item, dict) and item.get("ok") is False
+        )
+        reason = str(
+            failed_agents or body.get("error_detail") or body.get("error") or body.get("message")
+            or body.get("reason") or entry.get("error_detail")
+            or connection.get("error_detail") or ""
+        ).strip()
+        failed = bool(
+            body.get("error_code") or body.get("error") or body.get("error_detail")
+            or body.get("failure") or entry.get("error_detail")
+            or connection.get("error_detail") or body.get("ok") is False
+        )
+        if outer.get("success") is False or body.get("success") is False or failed or state in {
+            "failed", "degraded", "error", "incomplete", "needs_runtime", "owner_action_required",
+        }:
+            return "does_not_work", reason or "The setup action did not work."
+        if state in {"downloading", "pending", "working", "running", "queued", "in_progress", "indexing"}:
+            return "pending", reason or "Still working."
+        if state in {"ready", "connected", "available", "active", "enabled", "installed", "works", "success", "succeeded"} or body.get("ok") is True:
+            return "works", reason
+        return "found", reason or "Not checked. Try again."
+
+    def use_all(self, principal: Principal) -> dict[str, Any]:
+        """Use every actionable row from one fresh, producer-owned inventory.
+
+        This follows SetupFace's ``action && state == found`` rule and keeps
+        every result, including an early failure when a later row succeeds.
+        """
+        inventory = self.found(principal)
+        source_rows = inventory.get("rows") if isinstance(inventory, dict) else []
+        actionable = [
+            row for row in source_rows if isinstance(row, dict)
+            and row.get("action") and row.get("state") == "found"
+        ]
+        results: list[dict[str, Any]] = []
+        for row in actionable:
+            row_id = str(row.get("id") or "")
+            try:
+                result = self.use_row(principal, row_id, dict(row.get("payload") or {}))
+                state, reason = self._action_state(result)
+                results.append({
+                    "id": row_id,
+                    "label": str(row.get("label") or row_id),
+                    "state": state,
+                    "reason": reason,
+                    "result": result,
+                })
+            except ServiceError as exc:
+                results.append({
+                    "id": row_id,
+                    "label": str(row.get("label") or row_id),
+                    "state": "does_not_work",
+                    "reason": exc.detail,
+                    "code": exc.code,
+                })
+            except Exception as exc:  # one row must not hide later outcomes
+                results.append({
+                    "id": row_id,
+                    "label": str(row.get("label") or row_id),
+                    "state": "does_not_work",
+                    "reason": redact_error(exc) or "The setup action did not work.",
+                    "code": "failed",
+                })
+
+        states = [str(item.get("state")) for item in results]
+        if "does_not_work" in states:
+            state = "does_not_work"
+        elif "pending" in states:
+            state = "pending"
+        elif all(item == "works" for item in states):
+            state = "works"
+        else:
+            state = "found"
+        return {
+            "state": state,
+            "success": state == "works",
+            "results": results,
+            "count": len(results),
+        }
 
     def _require_engine_assignment(self) -> None:
         if self._assignments is None:

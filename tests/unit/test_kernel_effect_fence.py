@@ -183,6 +183,14 @@ _CALL_RULES = (
 # independent so harmless edits above a call do not create false drift.
 _EXCLUDED_CALLS: dict[tuple[str, str, str, int], str] = {
     (
+        "holdspeak/agent_context/own_agents.py", "_runner", "run", 1,
+    ): (
+        "Betterment AG15: local ps process ancestry/session reads and tmux "
+        "list-panes, capture-pane -p and display-message -p discover the owner's "
+        "native agent panes. They change nothing; owner gestures use the "
+        "separate admitted process.input transport."
+    ),
+    (
         "holdspeak/agent_context/screen_watch.py",
         "_runner",
         "run",

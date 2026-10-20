@@ -244,6 +244,9 @@ def _boot(
     # (holdspeak/intel/cli_engine.py). A test that needs one turns it on and
     # puts a fake CLI on PATH.
     monkeypatch.setenv("HOLDSPEAK_CLI_ENGINES", "off")
+    # AG15: ordinary glass rigs never enumerate the owner's local tmux panes;
+    # its positive rig opts in only after creating an isolated tmux server.
+    monkeypatch.setenv("HOLDSPEAK_OWN_AGENTS", "off")
     # Betterment Q7: no Ask asks an engine's server whether it takes tools.
     monkeypatch.setenv("HOLDSPEAK_ASK_SERVER_TOOLS", "off")
     # Setup's automatic LAN look is opt-in; this rig has no owner-approved
@@ -756,7 +759,7 @@ SPEECH_CAPABILITY = "speech.transcribe"
 ENGINE_PROFILE = "hs201-meeting-engine"
 
 
-def engine_profile(profile_id: str = ENGINE_PROFILE) -> None:
+def engine_profile(profile_id: str = ENGINE_PROFILE, *, automation: bool = False) -> None:
     """One real local profile that can serve BOTH halves of the path.
 
     The summary capability declares structured output and its own result
@@ -768,15 +771,22 @@ def engine_profile(profile_id: str = ENGINE_PROFILE) -> None:
     from holdspeak.db import get_database
     from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
 
+    claims = [
+        "language",
+        "structured_output",
+        _result_claim(SUMMARY_CAPABILITY),
+        _result_claim(SPEECH_CAPABILITY),
+    ]
+    if automation:
+        # The project Room's Workbench is an admitted automation producer. A
+        # glass run can opt into both result schemas without changing the
+        # meeting-only rigs that use this helper as-is.
+        claims.extend((_result_claim("workbench.item"), _result_claim("project.update_draft")))
+    claims = list(dict.fromkeys(claims))
     _profile(
         get_database(),
         profile_id,
-        claims=(
-            "language",
-            "structured_output",
-            _result_claim(SUMMARY_CAPABILITY),
-            _result_claim(SPEECH_CAPABILITY),
-        ),
+        claims=tuple(claims),
         modalities=("language", "text", "audio"),
     )
 
