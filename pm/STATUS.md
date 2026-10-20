@@ -8,6 +8,15 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The main watcher’s retained browser adapters now follow the current doors:
+Watch sources through Sources then RAW; meeting and decision icons through
+explicit Desk membership; and a real drag onto the Agents Dock tile. The
+checks retain exact review identity, run counts, nine-point hit testing,
+receipt geometry and duration, one meeting window, and one agent launch.
+All 13 selected cases pass on the real private Hub, including both widths.
+The first two attempts failed in rig setup (Node path and a test-list parser)
+and did not exercise these paths. Required quick: OWNER_PATHS_QUICK_PENDING.
+
 Failed native sign-in setup now cleans up through coder_factory. The
 factory accepts only the just-minted private sign-in session name, revokes
 its temporary agent credential and records the cleanup. A cleanup failure
