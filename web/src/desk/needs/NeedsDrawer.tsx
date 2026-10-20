@@ -472,6 +472,10 @@ function NeedVerbsView({ face, primary, onWell, well }: {
         ? () => retryInline(v.documentRef, v.destinationId, s.payload_digest, () => {}, () => void refreshNeedsYou(true))
         : () => sendPrepared(v.documentRef, v.sendId, () => {}, () => void refreshNeedsYou(true),
           v.state === "unknown" ? s.retry_command : undefined);
+      // A settled UNKNOWN can be inspected without being replayable. The
+      // hub withholds retry_command for legacy or foreign rows, so do not draw
+      // a dead Try again verb that cannot name the original operation.
+      const canRetry = v.state !== "unknown" || Boolean(s.retry_command);
       return (
         <>
           <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
@@ -479,11 +483,13 @@ function NeedVerbsView({ face, primary, onWell, well }: {
             <Button dense variant="ghost" disabled={busy} aria-label={named("Check")} data-testid="needs-row-verb" data-verb="check"
               onClick={() => void act("Check", check, face.id)}>Check</Button>
           ) : null}
-          <Button dense variant={lead} loading={busy} disabled={busy} aria-label={named(v.state === "prepared" ? "Send" : "Try again")}
-            data-testid="needs-row-verb" data-verb={v.state === "prepared" ? "send" : "try-again"}
-            onClick={() => void act(v.state === "prepared" ? "Send" : "Try again", run, face.id)}>
-            {v.state === "prepared" ? "Send" : "Try again"}
-          </Button>
+          {canRetry ? (
+            <Button dense variant={lead} loading={busy} disabled={busy} aria-label={named(v.state === "prepared" ? "Send" : "Try again")}
+              data-testid="needs-row-verb" data-verb={v.state === "prepared" ? "send" : "try-again"}
+              onClick={() => void act(v.state === "prepared" ? "Send" : "Try again", run, face.id)}>
+              {v.state === "prepared" ? "Send" : "Try again"}
+            </Button>
+          ) : null}
           {v.state === "prepared" ? (
             <>
               <Button dense variant="ghost" aria-label={named("Look")} aria-expanded={well === "send"}

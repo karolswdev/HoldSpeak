@@ -412,6 +412,28 @@ describe("Needs you with a prepared Send row (Send S3)", () => {
 });
 
 describe("Needs you with a recorded unknown Send (Send S3)", () => {
+  it("keeps Check but withholds Try again when the hub has no replay command", async () => {
+    const answer: any = structuredClone(sendNeedsUnknown.needsYou);
+    delete answer.items[0].send.retry_command;
+    const posts: Array<{ url: string; json: any }> = [];
+    vi.setSystemTime(new Date(String(answer.computedAt)));
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      const path = String(url);
+      if (init?.method === "POST") {
+        posts.push({ url: path, json: init.json });
+        return {};
+      }
+      if (path.startsWith("/api/desk/needs-you")) return answer;
+      if (path === "/api/door") return hubWire("door.empty").wire;
+      throw new Error(`no recorded answer for ${path}`);
+    });
+    render(<NeedsDrawer />);
+    const row = (await screen.findByText("S3 state transitions — update r1 (2026-10-20)")).closest("li.needs-row") as HTMLElement;
+    expect(row.querySelector("[data-verb='check']")).toBeTruthy();
+    expect(row.querySelector("[data-verb='try-again']")).toBeNull();
+    expect(posts).toEqual([]);
+  });
+
   it("reloads a settled UNKNOWN row and replays its recorded operation", async () => {
     const answer: any = structuredClone(sendNeedsUnknown.needsYou);
     const posts: Array<{ url: string; json: any }> = [];

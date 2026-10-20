@@ -511,7 +511,7 @@ def render_document(db: Any, document_ref: str) -> Document:
     return document
 
 
-def frozen_document_json(document: Document) -> str:
+def frozen_document_json(document: Document, *, source_origin: Mapping[str, Any] | None = None) -> str:
     """Serialize the frozen provenance fields and any source-owned warning."""
     import json
 
@@ -527,6 +527,14 @@ def frozen_document_json(document: Document) -> str:
     }
     if document.preview_warning:
         value["preview_warning"] = document.preview_warning
+    if isinstance(source_origin, Mapping) and str(source_origin.get("kind") or "") == "automation":
+        origin = {
+            key: str(source_origin[key]).strip()
+            for key in ("kind", "workbench_id", "workbench_name", "run_id", "item_id", "artifact_id")
+            if str(source_origin.get(key) or "").strip()
+        }
+        if origin.get("workbench_id") and origin.get("workbench_name") and origin.get("artifact_id"):
+            value["automation_origin"] = origin
     return json.dumps(value,
                       sort_keys=True, separators=(",", ":"), ensure_ascii=False)
 

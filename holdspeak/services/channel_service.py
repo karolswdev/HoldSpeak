@@ -92,8 +92,13 @@ def _handle() -> Any:
 class ChannelService:
     """The one service behind every ``channel.*`` operation (HTTP, MCP and the rig reach it)."""
 
-    def __init__(self, db: Any, *, on_changed: Callable[[str, str, str], None] | None = None) -> None:
+    def __init__(self, db: Any, *, on_changed: Callable[[str, str, str], None] | None = None,
+                 automation_origin: Mapping[str, Any] | None = None) -> None:
         self._db, self._on_changed = db, on_changed
+        # Internal automation delivery may carry the source-owned producer
+        # provenance into the existing frozen document_json. Public callers
+        # never provide this value through channel.prepare arguments.
+        self._automation_origin = dict(automation_origin) if isinstance(automation_origin, Mapping) else None
 
     # ── views ──────────────────────────────────────────────────────────
 
@@ -148,14 +153,18 @@ class ChannelService:
             return row
         return None
 
-    def _retry_command(self, row: Mapping[str, Any], principal: Any) -> dict[str, Any] | None:
+    def _retry_command(
+        self, row: Mapping[str, Any], principal: Any, *, presented_state: str | None = None,
+    ) -> dict[str, Any] | None:
         """Return the owner's original send command for a settled UNKNOWN row.
 
         The command id and arguments already belong to the kernel operation and
         frozen send row.  Needs-you may expose that provenance to the owner so a
         reload can replay the operation without inventing a second press.
         """
-        if row.get("state") != "unknown" or getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+        if (
+            row.get("state") != "unknown" and presented_state != "unknown"
+        ) or getattr(principal, "kind", None) is not PrincipalKind.OWNER:
             return None
         operation_id = str(row.get("send_operation_id") or "")
         if not operation_id:
@@ -233,7 +242,7 @@ class ChannelService:
             "dispatch_started_at": row["dispatch_started_at"], "settled_at": row["settled_at"],
             "dispatch_seq": row["dispatch_seq"], "egress": row.get("egress"),
         }
-        retry = self._retry_command(row, principal)
+        retry = self._retry_command(row, principal, presented_state=state)
         if retry is not None:
             view["retry_command"] = retry
         return view
@@ -559,7 +568,7 @@ class ChannelService:
         document = contract.render_document(self._db, document_ref)
         payload = contract.serialize_for(destination, document)
         self._size(destination["channel"], payload)
-        document_json = contract.frozen_document_json(document)
+        document_json = contract.frozen_document_json(document, source_origin=self._automation_origin)
         send_id = _derived_id("chs_", handle.operation_id)
         operation = handle.operation()
 

@@ -1648,12 +1648,30 @@ def _reason(exc: Exception) -> str:
 
 
 def _send_actor_label(send: dict[str, Any]) -> str:
-    """The short human name on a Ready-to-send row."""
+    """The short human name on a Ready-to-send row.
+
+    A completed automation prepares as the owner principal. Its source-owned
+    provenance is frozen in the existing document_json, so an ordinary owner
+    prepared send still reads ``you`` when that marker is absent.
+    """
     prepared_by = send.get("prepared_by")
     prepared = prepared_by if isinstance(prepared_by, dict) else {}
     kind = str(prepared.get("kind") or "").strip().lower()
     identity = str(prepared.get("identity") or kind or "agent").strip()
     if kind == "owner":
+        document_json = send.get("document_json")
+        origin = document_json.get("automation_origin") if isinstance(document_json, dict) else None
+        document_ref = str(send.get("document_ref") or "")
+        artifact_id = document_ref.removeprefix("artifact:").strip()
+        if (
+            document_ref.startswith("artifact:")
+            and isinstance(origin, dict)
+            and str(origin.get("kind") or "") == "automation"
+            and str(origin.get("artifact_id") or "") == artifact_id
+        ):
+            name = str(origin.get("workbench_name") or "").strip()
+            if name:
+                return name
         return "you"
     if "claude" in identity.casefold():
         return "Claude Code"

@@ -76,6 +76,8 @@ import re
 import uuid
 import threading
 import time
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -1089,7 +1091,7 @@ class TestSendNeedsGlass(_Rig):
                 assert len(first) == 1 and first[0]["state"] == "unknown", first
                 first_kernel = self._kernel(first[0]["send_operation_id"])
                 assert first_kernel["state"] == "indeterminate" and first_kernel["receipt_state"] == "indeterminate", first_kernel
-                assert first_kernel["receipt_outcome"] == "unknown" and first_kernel["receipts"] == 1, first_kernel
+                assert first_kernel["receipt_outcome"] == "timeout" and first_kernel["receipts"] == 1, first_kernel
                 assert list(folder.iterdir()) == []
                 page.screenshot(path=str(S3_SHOTS / f"needs-unknown-{width}.png"))
 
@@ -1272,6 +1274,258 @@ class TestSendNeedsGlass(_Rig):
                     "file": {"path": str(sent_path), "bytes": sent_path.read_bytes().decode()},
                 }
                 (S3_SHOTS / f"needs-facts-{width}.json").write_text(json.dumps(facts, indent=2, default=str) + "\n")
+                assert not [error for error in errors if "ResizeObserver" not in error and "Failed to fetch" not in error], errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.chair_windows_open
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_scheduled_automation_prepares_once_then_owner_sends_the_frozen_result(
+        self, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        """S7 T4: a real scheduled result becomes one owner-held Send.
+
+        The Workbench runner, schedule delegation, artifact mint, delivery
+        projection, Needs read, frozen Markdown bridge and owner Send all use
+        this Hub. The engine response is the only provider leaf; the File
+        destination is the local OS boundary. The scheduler never dispatches
+        the file.
+        """
+        from playwright.sync_api import sync_playwright
+        from holdspeak.db import get_database
+        from holdspeak.kernel.runtime import _service
+        from holdspeak.principals import Principal, PrincipalKind
+        from holdspeak.runtime import composition
+        from holdspeak.services.automation_runs import deliver_run
+        from holdspeak.services.workbench_runner import WorkbenchRunner
+
+        source_markdown = "## Friday status\n\nThe scheduled result is frozen.\n"
+        calls = 0
+
+        class RecordingEngine:
+            active_provider = "s3-t4-provider"
+            active_model = "s3-t4-model"
+            last_usage: dict[str, int] = {}
+
+            def run_prompt(self, *, system_prompt: str, user_prompt: str,
+                           temperature: Any = None, max_tokens: Any = None) -> str:
+                nonlocal calls
+                calls += 1
+                self.last_usage = {"total_tokens": 17}
+                return source_markdown
+
+        engine = RecordingEngine()
+        monkeypatch.setattr(
+            "holdspeak.intel.providers.build_meeting_intel_for_profile",
+            lambda **_: engine,
+        )
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                _normal_chair(page)
+                db = get_database()
+                runtime = composition.installed()
+                assert runtime is not None and runtime.broadcast is not None
+                desk_events: list[tuple[str, dict[str, Any]]] = []
+                broadcast = runtime.broadcast
+
+                def capture_desk_event(message_type: str, data: dict[str, Any]) -> None:
+                    desk_events.append((message_type, data))
+                    broadcast(message_type, data)
+
+                monkeypatch.setattr(runtime, "broadcast", capture_desk_event)
+                destination_id, folder = self._dest(page, "S7 scheduled folder")
+                note = _api(page, "POST", "/api/notes", {
+                    "title": "Friday source notes",
+                    "body_markdown": "The team update source is on the desk.",
+                }, token=H1_TOKEN)["note"]
+                profile_id = "s3-t4-recorded-engine"
+                db.profiles.upsert(
+                    profile_id=profile_id, name="S3 T4 recorded engine",
+                    kind="openAICompatible", base_url="http://s3-t4-stub",
+                    model="s3-t4-model",
+                )
+
+                made = _api(page, "POST", "/api/workbenches", {
+                    "name": "Friday team update",
+                }, token=H1_TOKEN)["workbench"]
+                workbench_id = made["id"]
+                _api(page, "PUT", f"/api/workbenches/{workbench_id}", {
+                    "instruction": "Write the Friday team update from the source notes.",
+                    "sources": [f"note:{note['id']}"],
+                    "output_target": f"destination:{destination_id}",
+                }, token=H1_TOKEN)
+                _api(page, "PUT", f"/api/workbenches/{workbench_id}/engine", {
+                    "profile_id": f"legacy-{profile_id}",
+                }, token=H1_TOKEN)
+                when = _api(page, "PUT", f"/api/workbenches/{workbench_id}/when", {
+                    "kind": "schedule", "every": "week", "day": 5, "time": "15:00",
+                }, token=H1_TOKEN)
+                assert when["workbench"]["schedule_enabled"] is True
+
+                scheduler = Principal(PrincipalKind.SCHEDULER, "local-workbench-conductor")
+                due_minute = int(time.time() // 60) + 1
+                runner = WorkbenchRunner(db, _service())
+                def scheduled_once() -> dict[str, Any]:
+                    return asyncio.run(runner.run_scheduled(
+                        scheduler, workbench_id, due_minute=due_minute,
+                    ))
+
+                with ThreadPoolExecutor(max_workers=1) as pool:
+                    run = pool.submit(scheduled_once).result()
+                first_delivery = deliver_run(db, scheduler, run)
+                if calls != 2:
+                    with db._connection() as conn:
+                        item_debug = [dict(row) for row in conn.execute(
+                            "SELECT id, status, result, result_egress_json FROM workbench_items WHERE workbench_id=?",
+                            (workbench_id,),
+                        )]
+                    raise AssertionError(json.dumps({"calls": calls, "run": run, "items": item_debug}, default=str))
+                assert len(first_delivery) == 1 and first_delivery[0]["outcome"] == "prepared", first_delivery
+                assert list(folder.iterdir()) == []
+                prepared_id = str(first_delivery[0]["send_id"])
+                assert any(
+                    message_type == "desk_changed"
+                    and data.get("kind") == "send"
+                    and data.get("id") == prepared_id
+                    and data.get("op") == "prepared"
+                    for message_type, data in desk_events
+                ), desk_events
+
+                # Replaying the completed delivery is durable and idempotent:
+                # it keeps the one prepared row and never prepares a second
+                # Send. (The schedule tick itself is consumed once.)
+                replay_delivery = deliver_run(db, scheduler, run)
+                assert len(replay_delivery) == 1 and replay_delivery[0]["outcome"] == "kept", replay_delivery
+                assert calls == 2
+
+                with db._connection() as conn:
+                    artifact_row = conn.execute(
+                        """SELECT a.id AS artifact_id, a.source_run_id, a.source_item_id,
+                                  i.workbench_id, i.status, i.result
+                             FROM artifacts AS a
+                             JOIN workbench_items AS i ON i.id = a.source_item_id
+                            WHERE a.source_run_id = ?""",
+                        (run["run_id"],),
+                    ).fetchone()
+                assert artifact_row is not None
+                artifact = dict(artifact_row)
+                artifact_id = str(artifact["artifact_id"])
+                document_ref = f"artifact:{artifact_id}"
+                sends_before = self._sends(page, document_ref)
+                assert len(sends_before) == 1
+                prepared = sends_before[0]
+                assert prepared["state"] == "prepared"
+                assert prepared["prepared_by"] == {
+                    "kind": "owner", "identity": "local-automation-conductor",
+                }
+                assert prepared["document_json"]["automation_origin"]["workbench_name"] == "Friday team update"
+                assert prepared["document_json"]["body_md"] == source_markdown
+                assert prepared["preview"]["markdown"] == source_markdown
+                assert prepared["preview"]["text"] == source_markdown
+                prepare_kernel = self._kernel(prepared["prepare_operation_id"])
+                assert prepare_kernel["state"] == "succeeded"
+                assert prepare_kernel["receipt_outcome"] == "succeeded"
+                assert prepare_kernel["receipts"] == 1
+
+                owner_before = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=H1_TOKEN)
+                send_rows = [item for item in owner_before["items"] if item.get("kind") == "send"]
+                assert len(send_rows) == 1, owner_before
+                need = send_rows[0]
+                assert need["sendId"] == prepared["id"]
+                assert need["documentRef"] == document_ref
+                assert need["preparedBy"] == "Friday team update", need
+
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                row = page.locator("[data-testid='needs-row'][data-kind='send']").first
+                row.wait_for(timeout=H1_T)
+                row.scroll_into_view_if_needed()
+                assert "by Friday team update" in row.locator(".needs-row-fact").inner_text()
+                page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-needs-{width}.png"))
+
+                row.locator("[data-verb='look']").click()
+                preview = page.locator("[data-testid='needs-send-preview']")
+                preview.wait_for(timeout=H1_T)
+                shown = " ".join(preview.locator("[data-testid='send-preview-body']").inner_text().split())
+                expected_shown = " ".join(
+                    re.sub(r"^#+\s*", "", line).strip()
+                    for line in source_markdown.splitlines() if line.strip()
+                )
+                assert shown == expected_shown
+                page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-preview-{width}.png"))
+
+                posts: list[dict[str, Any]] = []
+                page.on("request", lambda request: posts.append(request.post_data_json)
+                        if request.method == "POST" and request.url.endswith("/api/channels/send") else None)
+                row.locator("[data-verb='send']").click()
+                page.wait_for_function(
+                    """() => !document.querySelector("[data-testid='needs-row'][data-kind='send']")""",
+                    timeout=H1_T,
+                )
+                assert len(posts) == 1 and posts[0]["send_id"] == prepared["id"], posts
+                assert list(folder.iterdir())
+
+                sends_after = self._sends(page, document_ref)
+                assert len(sends_after) == 1 and sends_after[0]["id"] == prepared["id"]
+                sent = sends_after[0]
+                assert sent["state"] == "sent"
+                sent_path = Path(sent["proof"]["path"])
+                assert sent_path.parent.resolve() == folder.resolve()
+                assert sent_path.read_bytes() == source_markdown.encode()
+                assert sent["preview"]["markdown"] == source_markdown
+                send_kernel = self._face_row_receipt(sent, document_ref)
+                assert send_kernel["receipt_outcome"] == "succeeded"
+
+                # Negative control: the owner can manually prepare the same
+                # automation artifact. It has no internal delivery origin,
+                # so the existing owner label remains "you".
+                manual_destination_id, manual_folder = self._dest(page, "S7 manual folder")
+                manual_answer = _api(page, "POST", "/api/channels/sends", {
+                    "document_ref": document_ref,
+                    "destination_id": manual_destination_id,
+                }, token=H1_TOKEN)
+                manual_send = manual_answer["send"]
+                assert manual_send["prepared_by"]["kind"] == "owner"
+                assert "automation_origin" not in (manual_send.get("document_json") or {})
+                manual_needs = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=H1_TOKEN)
+                manual_rows = [item for item in manual_needs["items"] if item.get("kind") == "send"]
+                assert len(manual_rows) == 1 and manual_rows[0]["preparedBy"] == "you", manual_needs
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                manual_row = page.locator("[data-testid='needs-row'][data-kind='send']").first
+                manual_row.wait_for(timeout=H1_T)
+                assert "by you" in manual_row.locator(".needs-row-fact").inner_text()
+                page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-manual-negative-{width}.png"))
+                _api(page, "POST", f"/api/channels/sends/{manual_send['id']}/discard", {}, token=H1_TOKEN)
+                assert list(manual_folder.iterdir()) == []
+                facts = {
+                    "width": width, "workbench_id": workbench_id,
+                    "run": run,
+                    "first_delivery": first_delivery,
+                    "replay_delivery": replay_delivery,
+                    "artifact": artifact, "document_ref": document_ref,
+                    "owner_before": owner_before, "http_send": posts[0],
+                    "producer_calls": calls, "prepare_receipt": prepare_kernel,
+                    "send": sent, "send_receipt": send_kernel,
+                    "desk_events": [
+                        {"message_type": message_type, "data": data}
+                        for message_type, data in desk_events
+                        if message_type == "desk_changed" and data.get("id") == prepared["id"]
+                    ],
+                    "manual_negative": {
+                        "send": manual_send, "needs": manual_needs,
+                        "folder": str(manual_folder),
+                    },
+                    "file": {"path": str(sent_path), "bytes": sent_path.read_bytes().decode()},
+                }
+                (S3_SHOTS / f"scheduled-t4-facts-{width}.json").write_text(
+                    json.dumps(facts, indent=2, default=str) + "\n",
+                )
+                page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-sent-{width}.png"))
                 assert not [error for error in errors if "ResizeObserver" not in error and "Failed to fetch" not in error], errors
             finally:
                 browser.close()
