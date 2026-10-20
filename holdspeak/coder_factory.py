@@ -46,6 +46,41 @@ def valid_name(name: str) -> bool:
     return bool(NAME_RE.match(str(name or "")))
 
 
+def discard_signin_session(
+    session: str,
+    *,
+    runner: Optional[Callable[..., Any]] = None,
+    audit: Optional[Callable[..., int]] = None,
+) -> dict[str, Any]:
+    """Clean up a just-spawned private sign-in whose terminal setup failed."""
+    status = "bad_name"
+    if re.fullmatch(r"holdspeak-signin-[0-9a-f]{10}", str(session)):
+        from .principals import CredentialPersistError, agent_credentials
+
+        revoked = True
+        try:
+            agent_credentials.revoke(f"agent:tmux:{session}", "signin_target_failed")
+        except CredentialPersistError:
+            revoked = False
+        try:
+            result = (runner or subprocess.run)(
+                ["tmux", "kill-session", "-t", session],
+                capture_output=True, text=True, check=False, timeout=3,
+            )
+            status = "discarded" if result.returncode == 0 and revoked else "error"
+        except (OSError, subprocess.TimeoutExpired):
+            status = "error"
+    answer: dict[str, Any] = {"status": status}
+    try:
+        answer["audit_id"] = (audit or coder_steering._default_audit)(
+            session_key=f"factory:{session}", agent="signin", pane_id=None,
+            text="discard sign-in session", grounding=[], submit=False, outcome=status,
+        )
+    except Exception:
+        answer["audit_id"] = None
+    return answer
+
+
 def spawn(
     name: str,
     *,

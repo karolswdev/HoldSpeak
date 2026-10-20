@@ -88,7 +88,13 @@ const WORLD_EXCLUDE = new Set<PrimitiveKind>(WORLD_ONLY_EXCLUDE);
  * A FILED object still appears (it opens from its zone); this is the
  * lookup surface for pull-outs/editors and the DeskListView. */
 export function allObjects(items: Items): WorldObject[] {
-  return _allPrimitives(items).filter((o) => !WORLD_EXCLUDE.has(o.kind));
+  return _allPrimitives(items).filter((o) => {
+    if (WORLD_EXCLUDE.has(o.kind)) return false;
+    // Ask modes share the recipe DTO with Agents. Preserve their semantic
+    // source kind at the wire boundary and keep them out of Desk objects.
+    if (o.kind === "recipe" && (o.ref as { recipeKind?: string }).recipeKind === "mode") return false;
+    return true;
+  });
 }
 
 /** Resolve a pull-out/source identity without collapsing cross-kind id

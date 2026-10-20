@@ -230,11 +230,16 @@ def _speech_engine() -> None:
     )
 
 
-def _builder_tools_on(page: Any) -> None:
+def _builder_tools_on(page: Any, *, token: str = TOKEN) -> None:
     """Betterment E5 (DECISIONS #8): the drag switchboard these tests drive is
     parked behind Builder tools (Settings > System; web/src/desk/builderTools.ts);
     What runs where is the default face. Turn the switch on for every load."""
-    page.add_init_script("try { localStorage.setItem('hs.desk.builderTools', 'on') } catch (e) {}")
+    # Builder tools are a hub preference; seed it through the same Settings
+    # writer as the real face, then reload so DeskApp hydrates the value.
+    settings = _api(page, "GET", "/api/settings", token=token)
+    settings.setdefault("ui", {})["builder_tools"] = True
+    _api(page, "PUT", "/api/settings", settings, token=token)
+    page.reload(wait_until="load")
 
 
 def _assignment_board(page: Any) -> Any:
@@ -443,9 +448,9 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852})
-            _builder_tools_on(page)
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _builder_tools_on(page)
             _api(page, "POST", "/api/desk/seed", token=TOKEN)
             _normal_chair(page)
             _seed(page, fakes[2].server_address[1])
@@ -653,8 +658,8 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             page = browser.new_page(viewport={"width": 1440, "height": 900})
-            _builder_tools_on(page)
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _builder_tools_on(page)
             _api(page, "POST", "/api/desk/seed", token=TOKEN)
             _normal_chair(page)
             lan, local = _seed(page, fakes[2].server_address[1])
@@ -789,7 +794,7 @@ class TestTheRunsOnFooter(FitRig):
         )
         with sync_playwright() as pw:
             browser, page, errors = self._open(pw, width)
-            _builder_tools_on(page)
+            _builder_tools_on(page, token=FIT_TOKEN)
             try:
                 _normal_chair(page)
                 self._stage(page, "open-concierge")
@@ -858,9 +863,9 @@ def test_runs_on_find_on_lan_found_then_use_it_real_scanner(
         with sync_playwright() as pw:
             browser = pw.chromium.launch()
             page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852})
-            _builder_tools_on(page)
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.goto(f"{url}/?token={TOKEN}", wait_until="load")
+            _builder_tools_on(page)
             _api(page, "POST", "/api/desk/seed", token=TOKEN)
             _normal_chair(page)
             _seed(page, fakes[2].server_address[1])

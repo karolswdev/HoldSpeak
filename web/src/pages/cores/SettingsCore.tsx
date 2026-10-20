@@ -2624,7 +2624,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
           onGrantAct={(act) => { setGrantAct(act); setGrantReceiptOpen(false); }}
           hubSystem={hub.data.system}
           deviceName={str(["mesh", "device_name"], "Device name")}
-          deskModule={<><DeskModule /><BuilderToolsModule /></>}
+          deskModule={<><DeskModule /><BuilderToolsModule
+            checked={Boolean(val(["ui", "builder_tools"]) ?? false)}
+            onChange={(next) => update(["ui", "builder_tools"], next)}
+          /></>}
           rawWell={deviceCount ? (
             <GadgetGroup material="inset" label="Device">
               {walkerRows(device, ["device"])}

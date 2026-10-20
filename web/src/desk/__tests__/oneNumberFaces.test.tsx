@@ -163,6 +163,7 @@ describe("one needs-you number on every face (one seeded desk, real producers)",
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "room" } });
     await screen.findByText("Open A2 oracle room");
     await waitFor(() => {
       const labels = screen.queryAllByRole("option")
@@ -181,6 +182,7 @@ describe("one needs-you number on every face (one seeded desk, real producers)",
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "room" } });
     const label = await screen.findByText(`Open ${room.name}`);
     const row = label.closest("li, [role=option], div");
     await waitFor(() => expect(row?.textContent).toContain(`${hub.projectCounts[room.id]} OPEN`));
@@ -203,6 +205,7 @@ describe("one needs-you number on every face (one seeded desk, real producers)",
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "room" } });
     const label = await screen.findByText(`Open ${room.name}`);
     await waitFor(() =>
       expect(label.closest("li, [role=option], div")?.textContent).toContain(`${hub.projectCounts[room.id]} OPEN`));
@@ -210,6 +213,7 @@ describe("one needs-you number on every face (one seeded desk, real producers)",
     answer = after;
     act(() => usePalette.setState({ open: false }));
     act(() => usePalette.setState({ open: true }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "room" } });
     const again = await screen.findByText(`Open ${room.name}`);
     await waitFor(() =>
       expect(again.closest("li, [role=option], div")?.textContent).not.toMatch(/\d+ OPEN/));

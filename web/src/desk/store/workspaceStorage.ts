@@ -54,6 +54,8 @@ export interface DeskWorkspaceDocumentV1 {
   /** PHILO-13-07 (B2) — a window's place (the person and tab, the Room's
    * update), keyed like a draft. */
   places?: Record<string, string>;
+  /** The shell's one recent-open list (newest first). */
+  recentOpened?: string[];
 }
 
 export interface DeskWorkspaceWindows {
@@ -101,6 +103,16 @@ const compactRefs = (values: unknown, limit = PANEL_ORDER_LIMIT): string[] => {
   );
   const unique = Array.from(new Set(refs));
   return unique.length > limit ? unique.slice(-limit) : unique;
+};
+
+/** Recent opens are newest first, so retention keeps the first six. */
+const compactRecentRefs = (values: unknown, limit = 6): string[] => {
+  if (!Array.isArray(values)) return [];
+  const unique = Array.from(new Set(values.filter(
+    (value): value is string =>
+      typeof value === "string" && value.length > 0 && value.length <= DRAFT_KEY_LIMIT,
+  )));
+  return unique.slice(0, limit);
 };
 
 const parseWindowLists = (value: unknown): DeskWorkspaceWindows => {
@@ -240,6 +252,7 @@ export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
         : {}),
       drafts: parseTextMap(candidate.drafts, true),
       places: parseTextMap(candidate.places),
+      recentOpened: compactRecentRefs(candidate.recentOpened),
     };
   } catch {
     return emptyWorkspace();
@@ -267,6 +280,7 @@ type WorkspaceState = Pick<
   workbenchWindows?: DeskState["workbenchWindows"];
   drafts?: Record<string, string>;
   places?: Record<string, string>;
+  recentOpened?: string[];
 };
 
 /** PHILO-16 (16b) — the hub owns the desk's windows; this document is the
@@ -365,6 +379,7 @@ export function saveDeskWorkspace(state: WorkspaceState): void {
     ...storedSections(),
     drafts: parseTextMap(state.drafts ?? {}, true),
     places: parseTextMap(state.places ?? {}),
+    recentOpened: compactRecentRefs(state.recentOpened),
   };
   try {
     localStorage.setItem(DESK_WORKSPACE_STORAGE_KEY, JSON.stringify(document));
