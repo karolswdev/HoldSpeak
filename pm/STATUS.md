@@ -22,7 +22,7 @@ The browser records the actual LAN Use and microphone-doctor response bodies.
 The frozen-source check passed 4,072 related web checks and 5,186 affected
 pytest checks. Its sweep exposed one retired /welcome selector; the current
 route check now requires the visible Setup heading. Required final delta
-quick from frozen source 7052755f3: SETUP_QUICK_PENDING. No native hardware or owner-provider
+quick from frozen source 7052755f3: 108 sweep, 27 canon and 1,116 repo guards pass. No native hardware or owner-provider
 acceptance is inferred from the isolated checks.
 
 The meeting-window regression now selects the failed-summary member when P5
