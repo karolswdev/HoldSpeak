@@ -26,7 +26,16 @@ records. Eight of nine checks passed immediately. The remaining phone check
 exposed a real bug: a Settings section anchor still consumed Back as if it
 were a child page. Settings now returns to its caller in one Back press;
 the actual same-receipt, nine-point hit and durable identity check passes.
-Required quick: S3_QUICK_PENDING.
+The integrated product run passes 4,073 web checks and all nine current walk
+cases. Its remaining web assertion clicked the removed Dock Reset button;
+the retained verb now exercises the same persistence assertions. The exact
+Agents-key census follows Ctrl-4, and the atlas gate fence recognizes current
+and historical entrance words. API census failures exposed unpinned FastAPI
+0.150 in this worker environment, against 0.128 in uv.lock; Root restored the
+locked dependency set instead of publishing a five-route partial census.
+With locked dependencies, all 774 affected Python census/atlas checks and
+27 shell checks pass. Final delta quick also repeats the nine real-hub walk
+cases under the locked backend. Required quick: S3_QUICK_PENDING.
 
 ST9 adds `holdspeak setup`, `holdspeak setup --yes`, MCP `setup.status` and
 `setup.use`. They use the running hub and the shared Setup producers.
