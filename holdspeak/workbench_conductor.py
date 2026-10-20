@@ -154,6 +154,7 @@ def _cron_is_due(cron_expr: str) -> bool:
 
 def _hydrate_item_grounding(
     db: Any, grounding_json: str, *, query: str = "", exclude_refs: Optional[list[str]] = None,
+    project_update_refs: Optional[list[str]] = None,
 ) -> str:
     """Hydrate an item's grounding refs into text blocks.
 
@@ -176,6 +177,22 @@ def _hydrate_item_grounding(
            for values in sources):
         raise ServiceError("grounding_invalid", "Source list not valid")
     meeting_ids, artifact_ids, refs = sources
+    if project_update_refs is not None and refs:
+        # A project ref is a broad container for ordinary callers.  Project
+        # update automations replace it with the P2-eligible leaf refs before
+        # the shared hydrator reads any source text.
+        expanded: list[str] = []
+        for ref in refs:
+            if str(ref).split(":", 1)[0].casefold() == "project":
+                expanded.extend(project_update_refs)
+            else:
+                expanded.append(ref)
+        refs = list(dict.fromkeys(expanded))
+        if not refs and not meeting_ids and not artifact_ids:
+            # No eligible project material means no optional relevance pass:
+            # the task still travels separately below, while global memory
+            # must never refill a privacy-filtered project container.
+            query = ""
     explicit = bool(meeting_ids or artifact_ids or refs)
 
     if not meeting_ids and not artifact_ids and not refs and not query.strip():
