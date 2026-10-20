@@ -30,7 +30,15 @@ recipe's under-10-second gate is not met. Existing-person lens changes were
 not observed in this fresh-open check.
 
 Focused checks pass: 10 Python and 44 web, plus build. Both widths were
-inspected. Required quick: ASK_ARRANGE_QUICK_PENDING.
+inspected. The first full check passed 4,193 related web tests, 1,620
+backend checks, all 110 sweep, 27 canon and 1,116 guards. Its four failures
+were a stale held-call coverage reply and the longer Send tool description.
+The actual held-call writer now records Send coverage. The shorter prepare
+description preserves both discovery examples and the owner-only boundary,
+ends with the required Needs sentence, and fits the original prompt budget.
+The memory comparison names only that description change; all other tool
+and prompt bytes, and every original palette-size limit, remain strict.
+All 61 focused Python checks pass. Required quick: ASK_ARRANGE_QUICK_PENDING.
 
 The main watcher found two first-run producer recordings missing the saved
 Builder tools and Remote settings fields. The existing private-Hub writers
