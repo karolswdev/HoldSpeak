@@ -104,17 +104,21 @@ function personMenuEntries(ref: string): WorkMenuEntry[] | null {
     { type: "item", id: "person.ask-about", label: `Ask about ${person.name.split(/\s+/, 1)[0]}`, glyph: "✦", onSelect: () => { askAboutRef(personRef); } },
     { type: "item", id: "person.prep", label: "Prep 1:1", glyph: "▸", onSelect: () => openPerson(person.id, "prep") },
   ];
-  const desk = (useDesk.getState().items.directory ?? []).find((directory) =>
-    directory.id === "hs-seed-desk" || directory.name.trim().toLocaleLowerCase() === "desk",
-  );
-  const kept = desk?.memberIds.some((member) => member === personRef || member === person.id);
-  if (desk && kept) {
+  if (deskHasRef(personRef)) {
     entries.push({
       type: "item",
       id: "person.remove-from-desk",
       label: "Remove from desk",
       glyph: "↩",
-      onSelect: () => { void useDesk.getState().removeFromDir(person.id, desk.id, "people"); },
+      onSelect: () => { void useDesk.getState().removeFromDir(person.id, SEED_DESK_DIRECTORY_ID, "people"); },
+    });
+  } else {
+    entries.push({
+      type: "item",
+      id: "person.keep-on-desk",
+      label: "Keep on desk",
+      glyph: "↳",
+      onSelect: () => { void useDesk.getState().fileIntoDir(person.id, SEED_DESK_DIRECTORY_ID, "people"); },
     });
   }
   return entries;

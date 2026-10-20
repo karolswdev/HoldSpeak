@@ -120,7 +120,7 @@ async function deck() {
   render(<MemoryRouter><DeskToolShelf /></MemoryRouter>);
   fireEvent.click(screen.getByRole("button", { name: /Search/ }));
   await settle();
-  return screen.getByRole("combobox", { name: "Search tools and Desk items" });
+  return screen.getByRole("combobox", { name: "Find, open or ask" });
 }
 
 async function type(input: HTMLElement, q: string, wait = 0) {
@@ -142,7 +142,7 @@ describe("the palette's Close", () => {
     expect(document.activeElement).toBe(launcher);
     expect(useDesk.getState().openPullout).not.toHaveBeenCalled();
     fireEvent.click(launcher);
-    expect((screen.getByRole("combobox", { name: "Search tools and Desk items" }) as HTMLInputElement).value).toBe("");
+    expect((screen.getByRole("combobox", { name: "Find, open or ask" }) as HTMLInputElement).value).toBe("");
   });
 
   it("Enter on Close activates Close, runs no selected result, and restores launcher focus", async () => {
@@ -189,7 +189,7 @@ describe("the palette finds the right row and opens it", () => {
     const first = top();
     expect(first?.id).toBe("desk-palette-option-meeting:m-vendor");
     expect(first?.textContent).toContain("Vendor roadmap review");
-    expect(first?.textContent).toContain("MEETING");
+    expect(first?.textContent).toContain("Meeting");
     fireEvent.keyDown(input, { key: "Enter" });
     expect(useDesk.getState().openPullout).toHaveBeenCalledWith("meeting:m-vendor");
   });
@@ -220,7 +220,7 @@ describe("the palette finds the right row and opens it", () => {
     fireEvent.click(meetingRows[0]);
     expect(useDesk.getState().openPullout).toHaveBeenLastCalledWith("meeting:m-vendor");
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
-    input = screen.getByRole("combobox", { name: "Search tools and Desk items" });
+    input = screen.getByRole("combobox", { name: "Find, open or ask" });
     await type(input, "Vendor");
     fireEvent.click(document.getElementById("desk-palette-option-meeting:m-vendor-other")!);
     expect(useDesk.getState().openPullout).toHaveBeenLastCalledWith("meeting:m-vendor-other");
@@ -276,11 +276,13 @@ describe("the palette's PROJECTS rows", () => {
   }));
   const projectRows = () => rows().filter((o) => o.id.startsWith("desk-palette-option-project.open."));
 
-  it("twelve Rooms draw ten rows", async () => {
+  it("a typed room query draws every matching Room", async () => {
     // replaces: tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_cap_1440
     useDesk.setState({ projects: ROOMS as never });
-    await deck();
-    expect(projectRows()).toHaveLength(10);
+    const input = await deck();
+    expect(projectRows()).toHaveLength(0);
+    await type(input, "room");
+    expect(projectRows()).toHaveLength(12);
   });
 
   it("a Room's name filters the PROJECTS rows to that Room", async () => {
@@ -289,21 +291,23 @@ describe("the palette's PROJECTS rows", () => {
       { id: "p-q4", name: "Q4 Platform" }, { id: "p-gov", name: "Governance" }, { id: "p-data", name: "Data Platform" },
     ] as never });
     const input = await deck();
-    expect(projectRows()).toHaveLength(3);
+    expect(projectRows()).toHaveLength(0);
     await type(input, "Governance");
+    expect(projectRows()).toHaveLength(1);
     expect(projectRows().map((o) => o.textContent)).toEqual([expect.stringContaining("Open Governance")]);
     await type(input, "");
-    expect(projectRows()).toHaveLength(3);
+    expect(projectRows()).toHaveLength(0);
   });
 
   it("a press on a Room row opens that Room and closes the palette", async () => {
     // replaces: tests/e2e/test_hs171_command_deck_glass.py::test_command_deck_projects_1440 (the press leg; the 393 twin is the same DOM)
     useDesk.setState({ projects: [{ id: "p-q4", name: "Q4 Platform" }] as never });
-    await deck();
+    const input = await deck();
+    await type(input, "Q4 Platform");
     fireEvent.click(screen.getByRole("option", { name: /Open Q4 Platform/ }));
     expect(openProjectRoom).toHaveBeenCalledWith("p-q4");
     expect(usePalette.getState().open).toBe(false);
-    expect(screen.queryByRole("combobox", { name: "Search tools and Desk items" })).toBeNull();
+    expect(screen.queryByRole("combobox", { name: "Find, open or ask" })).toBeNull();
   });
 });
 
@@ -549,10 +553,10 @@ describe("Betterment AG1: Search \"agent\" finds Agents and Hand to agent, never
       if (row) expect(row, recipe.name).not.toMatch(/AGENT/);
     }
     for (const t of shown) expect(t).not.toMatch(/Conductor|[Cc]oder|CODER/);
-    // A persona typed by name is a MODE row.
+    // Ask modes share the recipe DTO but stay out of Search's Agent/object
+    // results; the semantic source kind is preserved for that filter.
     await type(input, recipes[0].name);
-    const persona = rows().find((o) => (o.textContent ?? "").includes(recipes[0].name));
-    expect(persona?.textContent).toContain("MODE");
+    expect(rows().some((o) => o.id === `desk-palette-option-recipe:${recipes[0].id}`)).toBe(false);
   });
 });
 
@@ -571,7 +575,7 @@ describe("Betterment P4: Search writes the update and lists only verbs that work
     await type(input, "draft update");
     const shown = rows().map((o) => o.textContent ?? "");
     // Every row but the Ask row (Q3: Ask "<what he typed>") that names an update.
-    expect(shown.filter((t) => /update/i.test(t) && !t.endsWith("ASK")))
+    expect(shown.filter((t) => /update/i.test(t) && !t.endsWith("Ask")))
       .toEqual([expect.stringContaining("Write update for Payments migration")]);
     for (const t of shown) expect(t).not.toMatch(/Select a Project|No Room has two windows|Draft update/);
     expect(top()?.id).toBe("desk-palette-option-week.draft-update.p-pay");
@@ -599,9 +603,7 @@ describe("Betterment P4: Search writes the update and lists only verbs that work
     const input = await deck();
     await type(input, "project");
     const ids = rows().map((o) => o.id.replace("desk-palette-option-", ""));
-    const mode = rows().findIndex((o) => (o.textContent ?? "").includes("MODE"));
-    expect(mode).toBeGreaterThan(-1);
     expect(ids.indexOf("project.open.p-pay")).toBeGreaterThan(-1);
-    expect(ids.indexOf("project.open.p-pay")).toBeLessThan(mode);
+    expect(rows().some((o) => (o.textContent ?? "").includes("Mode"))).toBe(false);
   });
 });
