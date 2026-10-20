@@ -182,7 +182,12 @@ def test_save_check_preview_prepare_and_send_use_the_real_slack_producer(
     assert preview.status_code == 200, preview.text
     preview_body = preview.json()
     head, tail = _frame(api, destination)
-    assert preview_body["preview"] == {"text": head + "*Heading*\n\n*bold* and <https://example.test/docs|docs>" + tail}
+    from holdspeak.services.document_sources import render_document
+
+    assert preview_body["preview"] == {
+        "text": head + "*Heading*\n\n*bold* and <https://example.test/docs|docs>" + tail,
+        "markdown": render_document(api.db, f"project_update:{update}").body_md,
+    }
 
     prepared = api.client.post("/api/channels/sends", json={
         "document_ref": f"project_update:{update}", "destination_id": destination,

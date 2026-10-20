@@ -109,7 +109,11 @@ def test_source_markdown_is_frozen_and_read_back_without_source_reread(
     assert prepared_response.status_code == 200, prepared_response.text
     prepared = prepared_response.json()["send"]
     assert prepared["preview"]["markdown"] == rendered.body_md
-    assert prepared["document_json"]["body_md"] == rendered.body_md
+    assert "body_md" not in prepared["document_json"]
+    frozen_json = json.loads(_rows(
+        hub, "SELECT document_json FROM channel_sends WHERE id=?", (prepared["id"],)
+    )[0]["document_json"])
+    assert frozen_json["body_md"] == rendered.body_md
 
     # A prepared read uses its frozen document_json. It must not make a new
     # source read that could produce different edit words after preparation.

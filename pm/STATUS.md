@@ -27,6 +27,17 @@ cases pass at 1440/393, including one completed automation, one prepare
 receipt, one owner Send receipt, exact file bytes and a manual negative
 control. Preview width, settled visibility and contrast are measured and
 both screenshots are readable. Required quick: SEND_CONTENT_QUICK_PENDING.
+The broader check passed 2,365 affected checks and found 13 failures.
+The body was duplicated into public metadata; it now remains in private
+custody and the explicit preview only. The existing privacy fence passes.
+Older isolated Needs fixtures now declare the Send source, whole producer
+records include its coverage, and original-operation replay is classified
+without granting dispatch authority. The focused fix run passed 39 web and
+286 backend/browser checks plus the three actual recording writers. One
+Slack Markdown expectation is corrected to include the generated title;
+its recheck remains pending. The phone inline Send is covered by the host
+footer when the longer summary arrives, so S5's canonical footer sheet
+must deploy before this content change. No hit-area check is relaxed.
 The first real Send recipe remains open for the owner’s five presses.
 Last observed running desk before this merge: backend `b8be8b36a`,
 frontend `a7793ccf84711ab1`, PID 57121. Each merge deploys its exact source;

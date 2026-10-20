@@ -207,6 +207,13 @@ class ChannelService:
             if frozen_document is not None and "body_md" in document_json
             else None
         )
+        # The frozen source words remain in the private row for custody and
+        # reconstruction. Public send views expose the explicit preview
+        # instead, so provenance metadata cannot carry the document body.
+        public_document_json = document_json
+        if isinstance(document_json, dict):
+            public_document_json = dict(document_json)
+            public_document_json.pop("body_md", None)
         # Existing channels report frozen byte size. Slack reports the text
         # characters governed by its 39,000-character refusal.
         size = (contract.payload_size("slack", payload)[0]
@@ -229,7 +236,7 @@ class ChannelService:
             "account": json.loads(row["account_json"] or "{}"),
             "target": contract.shown_target(json.loads(row["target_json"] or "{}")),
             "target_digest": row["target_digest"], "payload_digest": row["payload_digest"],
-            "document_json": document_json,
+            "document_json": public_document_json,
             "size": size, "preview": contract.preview_for(
                 row["channel"], payload, row["account_json"],
                 frozen_document.preview_warning if frozen_document is not None else None,

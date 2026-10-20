@@ -82,6 +82,7 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
     ("holdspeak/services/inference_setup_service.py", "_safe_target"): ("setup readiness selector", "143-12"),
     ("holdspeak/services/meeting_intel_service.py", "_is_scheduled_retry"): ("scheduled-retry lineage projection; no route selection or dispatch", "143-08"),
     ("holdspeak/services/meeting_intel_service.py", "_retry"): ("explicit owner recovery request", "143-08"),
+    ("holdspeak/services/channel_service.py", "_retry_command"): ("projects the original owner channel.send idempotency command from an existing kernel operation for replay; no dispatch or inference selection", "143-08"),
     ("holdspeak/services/profile_key_service.py", "_profile"): ("credential owner lookup", "143-03"),
     ("holdspeak/services/model_profile_service.py", "_profile_id"): ("canonical Profile identity parser", "143-03"),
     ("holdspeak/services/model_profile_service.py", "_profile_payload"): ("canonical Profile payload builder", "143-03"),

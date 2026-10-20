@@ -5432,7 +5432,7 @@
     {
       "name": "channel.prepare",
       "version": 1,
-      "description": "Prepare a send of a stored document using \"send the update to <destination>\" or \"send this artifact to <destination>\". The prepared send freezes its destination and exact preview bytes. Nothing leaves the machine. Only the owner can send or discard it.",
+      "description": "Prepare a send of a stored document using \"send the update to <destination>\" or \"send this artifact to <destination>\". The prepared send freezes its destination and exact preview bytes. Nothing leaves the machine. It waits in the owner's Needs you until he presses Send. Only the owner can send or discard it.",
       "args_schema": {
         "type": "object",
         "properties": {

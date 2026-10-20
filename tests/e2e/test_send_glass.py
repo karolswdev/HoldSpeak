@@ -573,7 +573,16 @@ class TestSendGlass:
                 if (r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth) return 'off screen ' + JSON.stringify(r);
                 const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
                 return hit && (e.contains(hit) || hit.contains(e)) ? 'ok' : 'covered by ' + (hit?.className || hit?.tagName); }""", sel)
-            assert ok == "ok", f"{board}-{self.width} {sel}: {ok}"
+            if ok != "ok":
+                self._shot(f"FAIL-{board}")
+                bounds = self._ev("""sel => [...document.querySelectorAll(sel)].map(e => {
+                    const r = e.getBoundingClientRect();
+                    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+                    return {rect: r.toJSON(), text: e.textContent, owner: hit?.outerHTML.slice(0, 700)};
+                })""", sel)
+            else:
+                bounds = None
+            assert ok == "ok", f"{board}-{self.width} {sel}: {ok}; {bounds}"
 
     def _shot(self, board: str) -> None:
         _settle(self.page)
@@ -1431,7 +1440,12 @@ class TestSendNeedsGlass(_Rig):
                     "kind": "owner", "identity": "local-automation-conductor",
                 }
                 assert prepared["document_json"]["automation_origin"]["workbench_name"] == "Friday team update"
-                assert prepared["document_json"]["body_md"] == source_markdown
+                assert "body_md" not in prepared["document_json"]
+                from holdspeak.db import get_database
+
+                stored = get_database().channel_sends.get(prepared["id"])
+                assert stored is not None
+                assert json.loads(stored["document_json"])["body_md"] == source_markdown
                 assert prepared["preview"]["markdown"] == source_markdown
                 assert prepared["preview"]["text"] == source_markdown
                 prepare_kernel = self._kernel(prepared["prepare_operation_id"])
