@@ -28,6 +28,28 @@ counts pass unchanged. The actual People producer re-recorded its wire. The
 write-announcement walk now builds valid required oneOf inputs. All 270 checks
 covering those seams pass. Required quick: ST9_QUICK_PENDING.
 
+AG15 shows Claude Code and Codex processes the owner started in tmux in
+Agents you started yourself. Native executable, pane ancestry and session
+facts identify the process; registered HoldSpeak launches stay out.
+Existing screen rules and secret filtering supply state. Owner Answer,
+Allow and Deny re-read the prompt and use the admitted input transport.
+These rows have no Stop, brief or autonomy controls.
+
+Root collected and ran 31 focused checks, including real private-tmux
+browser cases at 1440/393. The fake native process receives the typed answer
+and approval key through real hub routes. Evidence frames show the full
+question and controls. An additional private-tmux producer/transport probe
+returned operation op_8edbe1d3e86d4b0681a811b8f98d0ac5. Installed Claude and
+Codex executable shapes were inspected without starting a model. Native
+interactive-agent acceptance remains unobserved. Shared test and walk rigs
+force discovery off; the isolated positive rig opts in after boot.
+The first required quick passes 4,072 web checks, 1,221 affected Python/browser,
+108 desk sweep and 27 canon checks. Three repository guards found missing API
+exports and the new read-only ps/tmux census classification. Root regenerated
+both API exports from the app and classified that exact local reader; all
+input writes still use admitted process.input. Final delta quick against that
+verified product source: 14 affected Python, 108 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The prior product run also passed 4,072 web and 1,221 affected Python/browser checks.
+
 ST7 makes Settings one page with You, Speak, Meetings, Notices, Accounts,
 Agents, Desk and This Mac. The desktop index sits beside the page; phone
 section words wrap. Existing writers, secrets, grants, revisions, retry and

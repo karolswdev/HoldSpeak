@@ -19,6 +19,7 @@ from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
 from ....logging_config import get_logger
+from ....principals import Principal, PrincipalKind
 from ....services.coder_service import CoderService
 from ....services.errors import NotFound, ValidationError
 from ...context import WebContext
@@ -388,6 +389,59 @@ def build_coders_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"sessions": items, "count": len(items), "flights": flights, **extra})
         except Exception as e:
             return error_500("coders sessions", e, log)
+
+    @router.get("/api/coders/own-agents")
+    async def api_coders_own_agents() -> Any:
+        """Read Claude Code and Codex processes the owner started by hand.
+
+        The reader is local and read-only.  It never creates a flight or a
+        WorkAttempt; registered HoldSpeak launches are filtered at the pane
+        boundary inside ``agent_context.own_agents``.
+        """
+        try:
+            from ....agent_context.own_agents import list_own_agents
+
+            agents = await asyncio.to_thread(list_own_agents)
+            return JSONResponse({"agents": agents, "count": len(agents)})
+        except Exception as exc:
+            return error_500("own agents", exc, log)
+
+    @router.post("/api/coders/own-agents/answer")
+    async def api_coders_own_agent_answer(request: Request) -> Any:
+        """Answer one owner-started pane after a fresh prompt read."""
+        from ....agent_context.own_agents import ScreenAnswerRefused, answer_own_agent
+        from ....delivery.direct_gesture_input import ProcessInputRefused
+
+        principal = getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            return JSONResponse({"error": "owner_required", "code": "owner_required"}, status_code=403)
+        try:
+            raw = await request.json()
+        except Exception:
+            raw = None
+        body = raw if isinstance(raw, dict) else {}
+        pane_id = str(body.get("pane_id") or "")
+        since = str(body.get("since") or "")
+        keys = body.get("keys")
+        if not pane_id or not since:
+            return JSONResponse({"error": "pane_id_and_since_required", "code": "pane_id_and_since_required"}, status_code=400)
+        try:
+            result = await asyncio.to_thread(
+                answer_own_agent,
+                pane_id,
+                since=since,
+                keys=[str(item) for item in keys] if isinstance(keys, list) else None,
+                text=str(body.get("text") or "") if keys is None else None,
+            )
+        except ScreenAnswerRefused as exc:
+            return JSONResponse({"error": exc.code, "code": exc.code, "status": exc.code, "detail": exc.detail}, status_code=409)
+        except ProcessInputRefused as exc:
+            return JSONResponse({"error": exc.reason, "code": exc.reason, "status": "transport_error"}, status_code=409)
+        except Exception as exc:
+            log.error(f"own agent answer failed: {exc}")
+            return JSONResponse({"error": "own_agent_answer_failed", "code": "own_agent_answer_failed"}, status_code=500)
+        _coder_frame(ctx, f"own:{pane_id}")
+        return JSONResponse(result)
 
     @router.post("/api/coders/select")
     async def api_companion_select(

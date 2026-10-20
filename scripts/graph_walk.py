@@ -5133,6 +5133,9 @@ def _isolated_hub_env(
         # Betterment E1: no agent CLI on this machine (claude, codex) is read
         # or run as an engine (holdspeak/intel/cli_engine.py).
         "HOLDSPEAK_CLI_ENGINES": "off",
+        # AG15: a graph walk never enumerates the owner's local tmux panes;
+        # the positive own-agent rig opts in only inside its own server.
+        "HOLDSPEAK_OWN_AGENTS": "off",
         # Betterment Q7: no Ask asks an engine's server whether it takes tools.
         "HOLDSPEAK_ASK_SERVER_TOOLS": "off",
         # PHILO-16 rig gaps (G3 closes): git reads no system config (RIG LAW);
