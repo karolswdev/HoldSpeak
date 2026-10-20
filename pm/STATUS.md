@@ -4,9 +4,23 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (one-page Settings delivery)
+**Last updated:** 2026-10-19 (five-app Dock delivery)
 
 ## Current phase
+
+Shell S3 gives the desktop Dock Today, Meetings, People, Agents and Speak;
+the phone has Today, Capture, Meetings, People and Agents. Both use the
+application manifest. Phone words stay visible in five whole 76-pixel tiles;
+each owns its hit area. Ctrl/Cmd 1–5 follow the desktop order. Needs you is
+Ctrl-J and Settings is Ctrl-comma, with the typing guard preserved.
+
+Tile facts come from the existing Needs you, meeting, one-to-one, mic and
+agent producers. Zero counts stay hidden. Phone orb and Dock layout controls
+leave the Dock. Root reviewed actual two-size geometry and key-opening
+proof, then verified 31 guard/menu checks and TypeScript. Earlier 116 focused
+Dock/key checks pass. The inherited writer census now excludes parked
+history; Setup's duplicate viewport layout follows its window container.
+No guard is widened. Required quick: S3_QUICK_PENDING.
 
 ST7 makes Settings one page with You, Speak, Meetings, Notices, Accounts,
 Agents, Desk and This Mac. The desktop index sits beside the page; phone
