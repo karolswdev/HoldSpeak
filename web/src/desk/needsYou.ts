@@ -98,6 +98,7 @@ export interface NeedsYouDecision {
   title?: string | null;
   projectId?: string | null;
   since?: string | null;
+  status?: string | null;
 }
 
 /** R5: a coder session as the hub's rule reads it (`agent_context`
@@ -310,6 +311,7 @@ function decisionItems(decisions: readonly NeedsYouDecision[]): NeedsYouRoomItem
       dueAt: null,
       kind: "decision",
       source: "decision",
+      status: String(decision.status || ""),
       verbHref: null,
       openRef: ref,
       severity: "warning",

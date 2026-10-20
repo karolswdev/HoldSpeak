@@ -1,10 +1,11 @@
 import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Decision pullout content (HS-117-15). */
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
-import { apiRequest } from "../../lib/api";
+import { apiFetch, apiRequest } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import { openSurfaceOr } from "../shell";
+import { openIntelligence } from "../intelligenceNavigation";
 import { qualifiedRef } from "../api";
 import { DeskFilingStrip } from "../components/DeskFilingStrip";
 import { Material } from "../surface/Material";
@@ -41,6 +42,17 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
   const { openPullout } = useDesk.getState();
   if (o.ref.kind !== "decision") return null;
   const ir = o.ref;
+  const [canonicalId, setCanonicalId] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    void apiFetch<Array<{ id?: string }>>(
+      `/api/decision-records/source/desk/${encodeURIComponent(o.id)}`,
+    ).then((records) => {
+      const record = Array.isArray(records) ? records[0] : null;
+      if (live && record?.id) setCanonicalId(String(record.id));
+    }).catch(() => undefined);
+    return () => { live = false; };
+  }, [o.id]);
   const resourceRef = qualifiedRef(o.kind, o.id);
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const decisionContent = [
@@ -239,6 +251,11 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
             <Button variant="ghost" dense onClick={() => openPullout(String(ir.supersededBy))}>
               Next decision{items.decision.find((candidate) => candidate.id === ir.supersededBy)?.title
                 ? ` · ${items.decision.find((candidate) => candidate.id === ir.supersededBy)!.title}` : ""}
+            </Button>
+          ) : null}
+          {canonicalId ? (
+            <Button variant="ghost" dense onClick={() => openIntelligence({ view: "receipts", receiptId: canonicalId })}>
+              Open canonical record
             </Button>
           ) : null}
           {editingDecision ? <FoldGadget title="More" className="attention-decision-support">

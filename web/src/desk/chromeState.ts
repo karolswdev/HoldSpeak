@@ -31,7 +31,9 @@ export const useShortcutSheet = transient();
 export interface NamePrompt {
   /** The well's label and placeholder (`Decision title`). */
   label: string;
-  submit(name: string): void;
+  submit(name: string, why?: string): void;
+  /** P9: New Decision keeps the Project in front of the owner as About. */
+  about?: { id: string; name: string };
 }
 
 interface NamePromptState {

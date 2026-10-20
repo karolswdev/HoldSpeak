@@ -419,6 +419,362 @@ class TestOneDesk:
                 browser.close()
 
 
+# ── Betterment P9: one decision record across Project, Desk and Needs you ──
+P9_TOKEN = "p9-one-decision"
+P9_SHOTS = evidence_dir("p9-one-decision")
+P9_PROJECT_ID = "p-p9-one-decision"
+P9_PROJECT_NAME = "P9 canonical project"
+P9_DECISION_TEXT = "Use one canonical decision record for every surface."
+P9_ABOUT = f"About: {P9_PROJECT_NAME}"
+P9_WHY = "Why: one record keeps Project and Desk reads aligned."
+P9_MEETING_ID = "m-p9-decide"
+P9_MEETING_DECISION = "Keep the meeting decision in the canonical ledger."
+P9_PROPOSED = "Confirm the proposed architecture direction"
+
+
+class TestOneDecisionRecord:
+    """T4: real producers and consumers share one canonical decision record."""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        _ensure_build()
+        server, base = _boot(tmp_path, monkeypatch, token=P9_TOKEN)
+        self.server, self.base = server, base
+        from .meetings_rig import _save_meeting
+        from holdspeak.db import get_database
+
+        self.db = get_database()
+        self.db.projects.create_project(
+            project_id=P9_PROJECT_ID,
+            name=P9_PROJECT_NAME,
+            description="A project for the one decision record proof.",
+            keywords=["p9", "canonical", "decision"],
+        )
+        _save_meeting(P9_MEETING_ID, "P9 decision review", 1, "disabled")
+        self.db.projects.associate_meeting_project(
+            meeting_id=P9_MEETING_ID, project_id=P9_PROJECT_ID, source="manual", confidence=1.0,
+        )
+        try:
+            yield
+        finally:
+            server.stop()
+
+    @staticmethod
+    def _tap(page: Any, loc: Any, phone: bool) -> None:
+        loc = loc.first
+        loc.scroll_into_view_if_needed()
+        if phone:
+            box = loc.bounding_box()
+            assert box, "nothing to tap"
+            page.touchscreen.tap(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        else:
+            loc.click()
+
+    def _page(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
+        phone = width <= 720
+        browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+        ctx = browser.new_context(
+            viewport={"width": width, "height": SIZES[width]},
+            device_scale_factor=1,
+            has_touch=phone,
+            reduced_motion="reduce",
+        )
+        page = ctx.new_page()
+        page.set_default_timeout(45_000)
+        errors: list[str] = []
+        page.on("pageerror", lambda error: errors.append(str(error)[:200]))
+        page.goto(f"{self.base}/?token={P9_TOKEN}", wait_until="load")
+        _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=P9_TOKEN)
+        page.reload(wait_until="load")
+        _normal_chair(page)
+        page.locator("[data-testid=desk-screen]").wait_for(timeout=45_000)
+        return browser, page, errors
+
+    def _open_project(self, page: Any, phone: bool) -> Any:
+        launcher = page.locator("[aria-controls=desk-tool-shelf]").first
+        if not launcher.is_visible():
+            launcher = page.locator("[aria-controls=desk-tool-shelf]").first
+        launcher.click()
+        field = page.locator("[aria-controls=desk-palette-listbox]")
+        field.wait_for(timeout=T)
+        field.fill(P9_PROJECT_NAME)
+        option = page.locator(f"[id='desk-palette-option-project.open.{P9_PROJECT_ID}']")
+        option.wait_for(timeout=T)
+        self._tap(page, option, phone)
+        room = page.locator("#surface-project-memory")
+        room.wait_for(timeout=T)
+        room.get_by_test_id("room-head").wait_for(timeout=T)
+        name = room.locator(".room-head-name-measure")
+        name.wait_for(state="attached", timeout=T)
+        assert name.text_content() == P9_PROJECT_NAME
+        return room
+
+    @staticmethod
+    def _json(page: Any, method: str, path: str, body: dict[str, Any] | None = None) -> Any:
+        result = page.evaluate(
+            """async ([method, path, body, token]) => {
+              const response = await fetch(path, {
+                method,
+                headers: { authorization: `Bearer ${token}`, ...(body ? {"content-type": "application/json"} : {}) },
+                body: body ? JSON.stringify(body) : undefined,
+              });
+              let payload = null;
+              try { payload = await response.json(); } catch (_) {}
+              return { status: response.status, payload };
+            }""",
+            [method, path, body, P9_TOKEN],
+        )
+        assert result["status"] < 300, result
+        return result["payload"]
+
+    def _new_decision(self, page: Any, phone: bool) -> tuple[str, str, Any]:
+        _search(page, "New Decision", "[id='desk-palette-option-desk.new-decision']")
+        prompt = page.get_by_test_id("palette-name")
+        prompt.wait_for(timeout=T)
+        with page.expect_response(
+            lambda response: response.request.method == "POST" and response.url.endswith("/api/decision-records/from-desk")
+        ) as created:
+            prompt.fill(P9_DECISION_TEXT)
+            page.get_by_test_id("decision-about-chip").wait_for(timeout=T)
+            why = page.get_by_test_id("decision-why")
+            why.fill(P9_WHY.removeprefix("Why: "))
+            prompt.press("Enter")
+        body = created.value.json()
+        decision_id = str(body["decision"]["id"])
+        record_id = str(body["record"]["id"])
+        decisions = page.locator(".intelligence-pullout:not(.today)")
+        decisions.wait_for(timeout=T)
+        detail = decisions.locator(".receipt-detail").filter(has_text=P9_DECISION_TEXT)
+        detail.wait_for(timeout=T)
+        assert P9_DECISION_TEXT in detail.inner_text()
+        assert P9_PROJECT_NAME in detail.inner_text()
+        assert P9_WHY.removeprefix("Why: ") in detail.inner_text()
+        return decision_id, record_id, detail
+
+    @staticmethod
+    def _hit_and_focus(loc: Any) -> dict[str, Any]:
+        return loc.evaluate(
+            """(el) => {
+                const describe = (node) => {
+                  if (!(node instanceof HTMLElement)) return null;
+                  const shell = node.closest('.desk-window-shell');
+                  return {
+                    tag: node.tagName,
+                    className: node.className,
+                    testid: node.getAttribute('data-testid'),
+                    text: (node.innerText || node.textContent || '').trim().slice(0, 180),
+                    html: node.outerHTML.slice(0, 500),
+                    window: shell ? {
+                      id: shell.id,
+                      className: shell.className,
+                      plane: shell.getAttribute('data-plane'),
+                      zIndex: getComputedStyle(shell).zIndex,
+                      rect: (() => { const sr = shell.getBoundingClientRect(); return {
+                        left: sr.left, top: sr.top, right: sr.right, bottom: sr.bottom,
+                        width: sr.width, height: sr.height,
+                      }; })(),
+                    } : null,
+                  };
+                };
+                const r = el.getBoundingClientRect();
+                const x = r.left + r.width / 2, y = r.top + r.height / 2;
+                const hit = document.elementFromPoint(x, y);
+                el.focus();
+                return {
+                  rect: {left: r.left, top: r.top, right: r.right, bottom: r.bottom,
+                         width: r.width, height: r.height},
+                  in_view: r.width > 0 && r.height > 0 && r.left >= 0 && r.top >= 0
+                    && r.right <= innerWidth && r.bottom <= innerHeight,
+                  owns_hit: hit === el || el.contains(hit),
+                  focused: document.activeElement === el,
+                  element: describe(el),
+                  hit: describe(hit),
+                  outer: [...document.querySelectorAll('.desk-window-shell')].map(describe),
+                };
+            }"""
+        )
+
+    def _open_room_again(self, page: Any, phone: bool) -> Any:
+        return self._open_project(page, phone)
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(900)
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_new_decision_project_decisions_meeting_and_needs_confirm(
+        self, width: int,
+    ) -> None:
+        from playwright.sync_api import sync_playwright
+
+        phone = width <= 720
+        with sync_playwright() as pw:
+            browser, page, errors = self._page(pw, width)
+            try:
+                # Open the real Project first, then use the Desk New Decision verb.
+                room = self._open_project(page, phone)
+                decision_id, record_id, detail = self._new_decision(page, phone)
+                source_records = self._json(page, "GET", f"/api/decision-records/source/desk/{decision_id}")
+                assert len(source_records) == 1, source_records
+                assert str(source_records[0]["id"]) == record_id
+                assert source_records[0]["decision_text"] == P9_DECISION_TEXT
+                assert P9_ABOUT in str(source_records[0]["rationale"])
+                assert P9_WHY in str(source_records[0]["rationale"])
+                canonical_detail = self._json(page, "GET", f"/api/decision-records/{record_id}")
+                assert any(s.get("source_type") == "project" and s.get("source_ref") == P9_PROJECT_ID
+                           for s in canonical_detail.get("sources", [])), canonical_detail
+
+                # The Project's real This week reads the canonical record and opens it.
+                room = self._open_room_again(page, phone)
+                this_week = room.get_by_test_id("room-this-week")
+                this_week.wait_for(timeout=T)
+                decided = this_week.get_by_test_id("this-week-decided").filter(has_text=P9_DECISION_TEXT)
+                decided.wait_for(timeout=T)
+                geometry = self._hit_and_focus(decided)
+                assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], geometry
+                page.screenshot(path=str(P9_SHOTS / f"project-this-week-{width}.png"))
+                decided.click()
+                detail = page.locator(".receipt-detail").filter(has_text=P9_DECISION_TEXT)
+                detail.wait_for(timeout=T)
+                assert P9_DECISION_TEXT in detail.inner_text()
+                detail_text = detail.inner_text()
+                assert P9_PROJECT_NAME in detail_text
+                assert P9_WHY.removeprefix("Why: ") in detail_text
+                # Leave the record detail before opening another Desk surface.
+                # On a phone the detail is a full sheet and otherwise owns the
+                # Decisions row's hit point.
+                detail_window = page.locator(
+                    ".desk-window-shell.is-front[aria-label=" + json.dumps(P9_DECISION_TEXT) + "]"
+                )
+                detail_window.get_by_role("button", name=re.compile(r"^(Back from|Close) ")).click()
+                detail_window.wait_for(state="detached", timeout=T)
+
+                # The Decisions desk icon (Go ▸ Decisions) opens the same record.
+                page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                go = page.locator(".desk-verbbar-menu")
+                go.get_by_role("menuitem", name="Decisions", exact=True).click()
+                decisions_frame = page.locator("[id='surface-decisions']")
+                page.locator("[id='surface-decisions'].is-front").wait_for(timeout=T)
+                decisions_window = decisions_frame.get_by_test_id("decisions-window")
+                decisions_window.wait_for(timeout=T)
+                row = decisions_window.get_by_test_id("decisions-row").filter(has_text=P9_DECISION_TEXT)
+                row.wait_for(timeout=T)
+                geometry = self._hit_and_focus(row)
+                assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], json.dumps(geometry, sort_keys=True)
+                row.click()
+                desk_detail = decisions_window.locator(".receipt-detail").filter(has_text=P9_DECISION_TEXT)
+                desk_detail.wait_for(timeout=T)
+                assert P9_DECISION_TEXT in desk_detail.inner_text()
+                desk_detail_text = desk_detail.inner_text()
+                assert P9_PROJECT_NAME in desk_detail_text
+                assert P9_WHY.removeprefix("Why: ") in desk_detail_text
+                page.screenshot(path=str(P9_SHOTS / f"decisions-window-{width}.png"))
+                decisions_surface = page.locator("#surface-decisions")
+                decisions_surface.get_by_role("button", name=re.compile(r"^(Back from|Close) ")).click()
+                decisions_surface.wait_for(state="detached", timeout=T)
+
+                # The meeting's Decide well uses the same real desk producer.
+                page.evaluate(
+                    "([key, scope]) => sessionStorage.setItem('hs.desk.staged-surface-open', JSON.stringify({key, scope}))",
+                    ["review-meetings", f"meeting:{P9_MEETING_ID}"],
+                )
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                meeting_window = page.locator("#surface-meetings")
+                # The staged arrival restores the existing Meetings window;
+                # use the real Go door to raise it after persisted windows
+                # rehydrate at either width. Match the visible label so the
+                # desktop keycap does not change the accessible name.
+                page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                page.locator(".desk-verbbar-menu").locator("[role^='menuitem']").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Meetings$"))
+                ).click()
+                meeting_title = meeting_window.get_by_text("P9 decision review", exact=True)
+                meeting_title.wait_for(state="attached", timeout=T)
+                meeting_geometry = self._hit_and_focus(meeting_window)
+                assert meeting_geometry["in_view"] and meeting_geometry["owns_hit"], json.dumps(meeting_geometry, sort_keys=True)
+                meeting_window.get_by_role("button", name="More actions", exact=True).click()
+                page.get_by_role("menuitem", name="Decide", exact=True).click()
+                well = meeting_window.get_by_test_id("decide-naming")
+                well.wait_for(timeout=T)
+                with page.expect_response(
+                    lambda response: response.request.method == "POST" and response.url.endswith("/api/decision-records/from-desk")
+                ) as meeting_created:
+                    title = well.get_by_role("textbox", name="Decision title", exact=True)
+                    title.fill(P9_MEETING_DECISION)
+                    title.press("Enter")
+                meeting_body = meeting_created.value.json()
+                meeting_decision_id = str(meeting_body["decision"]["id"])
+                meeting_record = self._json(page, "GET", f"/api/decision-records/source/desk/{meeting_decision_id}")
+                meeting_detail = self._json(page, "GET", f"/api/decision-records/{meeting_body['record']['id']}")
+                assert len(meeting_record) == 1, meeting_record
+                assert "Meeting: P9 decision review" in str(meeting_record[0]["rationale"])
+                assert meeting_record[0]["decision_text"] == P9_MEETING_DECISION
+                assert str(meeting_record[0]["id"]) == str(meeting_body["record"]["id"])
+                assert any(s.get("source_type") == "meeting" and s.get("source_ref") == P9_MEETING_ID
+                           for s in meeting_detail.get("sources", [])), meeting_detail
+                page.get_by_test_id("decide-receipt").wait_for(timeout=T)
+                assert page.get_by_test_id("decide-receipt").count() == 1
+                page.screenshot(path=str(P9_SHOTS / f"meeting-decide-{width}.png"))
+
+                # A proposed desk decision is offered as Confirm and reads back accepted.
+                proposed = _api(page, "POST", "/api/decisions", {
+                    "title": P9_PROPOSED,
+                    "status": "proposed",
+                    "decision_markdown": P9_PROPOSED,
+                }, token=P9_TOKEN)
+                proposed_id = str(proposed["decision"]["id"])
+                proposed_source = self._json(page, "GET", f"/api/decision-records/source/desk/{proposed_id}")
+                assert len(proposed_source) == 1, proposed_source
+                proposed_record_id = str(proposed_source[0]["id"])
+                assert proposed_source[0]["status"] == "proposed", proposed_source
+                before_room = self._json(page, "GET", f"/api/projects/{P9_PROJECT_ID}/room")
+                before_texts = [str(item.get("text", "")) for item in before_room.get("decisions", {}).get("items", [])]
+                assert P9_PROPOSED not in before_texts, before_room
+                assert self._json(page, "GET", f"/api/decision-records/{proposed_record_id}")["status"] == "proposed"
+                needs_answer = self._json(page, "GET", "/api/desk/needs-you?fresh=1")
+                needs_item = next(
+                    (item for item in needs_answer.get("items", [])
+                     if str(item.get("ref", "")) == f"decision:{proposed_id}"),
+                    None,
+                )
+                assert needs_item is not None, needs_answer
+                assert needs_item.get("status") == "proposed", needs_item
+                # The admitted producer's desk_changed frame refreshes the
+                # live Chair membership; let that real browser read settle.
+                page.wait_for_timeout(700)
+                needs = open_chair_window(page, "Needs you")
+                proposed_row = needs.locator(
+                    "[data-testid='needs-row'][data-object-id="
+                    + json.dumps(f"decision:{proposed_id}") + "]"
+                )
+                proposed_row.wait_for(timeout=T)
+                assert P9_PROPOSED in proposed_row.inner_text()
+                confirm = proposed_row.get_by_role(
+                    "button", name=f"Confirm: {P9_PROPOSED}", exact=True,
+                )
+                geometry = self._hit_and_focus(confirm)
+                assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], geometry
+                with page.expect_response(
+                    lambda response: response.request.method == "PUT"
+                    and f"/api/decisions/{proposed_id}/status" in response.url
+                ):
+                    self._tap(page, confirm, phone)
+                page.wait_for_timeout(500)
+                assert _api(page, "GET", f"/api/decisions/{proposed_id}", token=P9_TOKEN)["decision"]["status"] == "accepted"
+                after_record = self._json(page, "GET", f"/api/decision-records/{proposed_record_id}")
+                assert str(after_record["id"]) == proposed_record_id
+                assert after_record["status"] == "accepted", after_record
+                after_room = self._json(page, "GET", f"/api/projects/{P9_PROJECT_ID}/room")
+                after_texts = [str(item.get("text", "")) for item in after_room.get("decisions", {}).get("items", [])]
+                # This proposal has no Project membership. The Room keeps
+                # excluding it after Confirm; the canonical record/status
+                # above is the durable proof of the same decision identity.
+                assert P9_PROPOSED not in after_texts, after_room
+                page.screenshot(path=str(P9_SHOTS / f"needs-confirm-{width}.png"))
+                assert not [error for error in errors if "ResizeObserver" not in error and "Failed to fetch" not in error], errors
+            finally:
+                browser.close()
+
+
 # ── PHILO-3-01 the write receipt's verbs own their areas ──
 R_REPO = Path(__file__).resolve().parents[2]
 R_SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-01-shots/receipt-hits")
@@ -632,7 +988,7 @@ def test_receipt_verbs_own_their_areas(receipt_hub, width: int) -> None:
         page.locator("[aria-controls=desk-tool-shelf]").wait_for(timeout=15000)
 
         # 1. the chrome receipt (the desk backstop)
-        _fault(page, "POST", "/api/decisions")
+        _fault(page, "POST", "/api/decision-records/from-desk")
         _search(page, "New Decision", "[id='desk-palette-option-desk.new-decision']")
         # PHILO-13-08 (B3): the decision is named before it is created; the
         # refused POST is the named one.

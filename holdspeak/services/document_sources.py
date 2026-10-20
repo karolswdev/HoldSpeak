@@ -440,6 +440,12 @@ class _DecisionRecordSource:
         record = DecisionRecordService(db).get(_source_read_context(), source_id)
         if record is None:
             raise _document_not_found("decision record", source_id)
+        if str(record.get("status") or "").lower() == "proposed":
+            raise ChannelRefused(
+                "decision_not_confirmed",
+                "Decision is proposed; Confirm it before Send",
+                status=409,
+            )
         title = str(record.get("decision_text") or "Decision record")
         lines = [f"# {title}", f"Lifecycle: {record.get('lifecycle') or 'active'}"]
         for heading, field in (("Rationale", "rationale"), ("Owner", "owner"), ("Review date", "review_date")):
