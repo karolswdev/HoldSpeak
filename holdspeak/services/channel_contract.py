@@ -515,7 +515,16 @@ def frozen_document_json(document: Document) -> str:
     """Serialize the frozen provenance fields and any source-owned warning."""
     import json
 
-    value = {"title": document.title, "slug": document.slug, "label": document.label}
+    value = {
+        "title": document.title,
+        "slug": document.slug,
+        "label": document.label,
+        # Keep the exact source Markdown beside the frozen provider bytes. A
+        # prepared send must be editable from what was prepared, even when a
+        # channel preview renders a different representation (for example,
+        # email text or HTML).
+        "body_md": document.body_md,
+    }
     if document.preview_warning:
         value["preview_warning"] = document.preview_warning
     return json.dumps(value,
@@ -533,7 +542,8 @@ def document_from_json(document_ref: str, value: Any) -> Document:
             value = {}
     if not isinstance(value, Mapping):
         value = {}
-    return Document(ref=str(document_ref), title=str(value.get("title") or ""), body_md="",
+    return Document(ref=str(document_ref), title=str(value.get("title") or ""),
+                    body_md=str(value.get("body_md") or ""),
                     slug=str(value.get("slug") or "document"), label=str(value.get("label") or "DOCUMENT"),
                     preview_warning=(str(value.get("preview_warning"))
                                      if value.get("preview_warning") else None))
@@ -989,7 +999,8 @@ def serialize_for(destination: Mapping[str, Any], document: Document) -> bytes:
 
 
 def preview_for(channel_name: str, payload: bytes, account_json: Any = None,
-                preview_warning: Optional[str] = None) -> dict[str, Any]:
+                preview_warning: Optional[str] = None,
+                markdown: Optional[str] = None) -> dict[str, Any]:
     """The readable preview, derived from the frozen bytes (an addressed channel reads its account's provider)."""
     import json
 
@@ -998,6 +1009,11 @@ def preview_for(channel_name: str, payload: bytes, account_json: Any = None,
         preview = chan.preview(payload, json.loads(account_json or "{}"))
     else:
         preview = chan.preview(payload)
+    if markdown is not None:
+        # The channel preview remains derived from the frozen bytes. Markdown
+        # is an optional source view for a later edit, so legacy rows without
+        # frozen source text do not grow a synthetic value here.
+        preview = {**preview, "markdown": markdown}
     if preview_warning:
         preview = {**preview, "warning": preview_warning}
     return preview

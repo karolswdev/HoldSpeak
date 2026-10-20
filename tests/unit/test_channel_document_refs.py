@@ -16,6 +16,7 @@ from typing import Any
 import pytest
 
 from holdspeak.runtime import composition
+from holdspeak.services import channel_contract
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _philo10_send import _boot, destination  # noqa: E402
@@ -77,6 +78,49 @@ def test_generic_document_ref_is_one_wire_for_http_mcp_and_history_filter(
     listed = hub.client.get("/api/channels/sends", params={"document_ref": ref})
     assert listed.status_code == 200, listed.text
     assert [row["id"] for row in listed.json()["sends"]] == [send_id]
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "project_update", "monday_brief", "desk_decision", "meeting_decision",
+        "decision_record", "meeting_summary", "meeting_digest", "meeting_followup",
+    ],
+)
+def test_source_markdown_is_frozen_and_read_back_without_source_reread(
+    hub: Hub, documents: dict[str, str], tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch, kind: str,
+) -> None:
+    """The edit seam keeps the source words beside the frozen provider bytes."""
+    ref = documents[kind]
+    dest = destination(hub, tmp_path / kind)
+    rendered = channel_contract.render_document(hub.db, ref)
+
+    initial = hub.client.post("/api/channels/preview", json={
+        "document_ref": ref, "destination_id": dest,
+    })
+    assert initial.status_code == 200, initial.text
+    initial_body = initial.json()
+    assert initial_body["preview"]["markdown"] == rendered.body_md
+
+    prepared_response = hub.client.post("/api/channels/sends", json={
+        "document_ref": ref, "destination_id": dest,
+    })
+    assert prepared_response.status_code == 200, prepared_response.text
+    prepared = prepared_response.json()["send"]
+    assert prepared["preview"]["markdown"] == rendered.body_md
+    assert prepared["document_json"]["body_md"] == rendered.body_md
+
+    # A prepared read uses its frozen document_json. It must not make a new
+    # source read that could produce different edit words after preparation.
+    def source_reread(*_: Any, **__: Any) -> Any:
+        raise AssertionError("prepared preview reread its document source")
+
+    monkeypatch.setattr(channel_contract, "render_document", source_reread)
+    reloaded = hub.client.get("/api/channels/sends", params={"send_id": prepared["id"]})
+    assert reloaded.status_code == 200, reloaded.text
+    [row] = reloaded.json()["sends"]
+    assert row["preview"]["markdown"] == rendered.body_md
 
 
 @pytest.mark.parametrize("kind", ["project_update", "desk_decision"])
@@ -156,6 +200,7 @@ def test_legacy_prepared_non_file_row_does_not_reread_deleted_source(
     sent = hub.client.post("/api/channels/send", json={"send_id": prepared["id"]})
     assert sent.status_code == 200, sent.text
     assert sent.json()["outcome"] == "sent"
+    assert "markdown" not in sent.json()["send"]["preview"]
     assert any(call[:3] == ("gh", "api", "user") for call in calls)
     assert any(call[:3] == ("gh", "issue", "comment") for call in calls)
 

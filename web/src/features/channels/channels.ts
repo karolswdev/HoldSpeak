@@ -43,7 +43,7 @@ export type Destination = {
 };
 
 /** The readable preview the hub derives from the frozen bytes. */
-export type WirePreview = { text?: string; html?: string; title?: string; warning?: string; [k: string]: unknown };
+export type WirePreview = { text?: string; html?: string; markdown?: string; title?: string; warning?: string; [k: string]: unknown };
 
 export type Send = {
   id: string;

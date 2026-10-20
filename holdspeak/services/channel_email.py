@@ -301,7 +301,7 @@ def sendgrid_errors(raw: bytes) -> tuple[tuple[str, str], ...]:
 
 
 class ResendProvider:
-    """``POST https://api.resend.com/emails`` (text only), the contract read from Resend's API reference
+    """``POST https://api.resend.com/emails`` (plain text and HTML), the contract read from Resend's API reference
     (resend.com/docs/api-reference/emails/send-email and /errors, 2026-09-29).
 
     ``200`` + ``{"id": ...}`` in the JSON body is SENT; its word is ACCEPTED BY RESEND (accepted, never
@@ -317,7 +317,7 @@ class ResendProvider:
     host = "api.resend.com"
     port = 443
     url = "https://api.resend.com/emails"
-    #: Resend takes 50 ``to`` addresses and 40 MB with attachments; HoldSpeak sends text only.
+    #: Resend takes 50 ``to`` addresses and 40 MB with attachments.
     limits = EmailLimits(max_bytes=1_000_000, max_recipients=50)
     #: The face word for SENT: accepted for processing, never "delivered".
     WORD = "ACCEPTED BY RESEND"
