@@ -11,13 +11,56 @@
  * per run for this automation, when that engine can stop at a limit. */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { readableError } from "../../../lib/api";
+import { apiFetch, readableError } from "../../../lib/api";
 import { EgressChip, StringGadget } from "../../surface";
 import { defineEndpoint } from "../../../features/concierge/api";
 import { endpointDraft, endpointProfileId } from "../../../features/concierge/endpointDraft";
 import { connectCliEngine, discoverLan, readDetection, type RunsOnEngine } from "../../../features/runson/api";
 import { buildEngines, enginePlace, hostLabel, usd, type BoardEngine } from "../../../features/runson/model";
 import type { AutomationDetail } from "./model";
+
+export interface NativeAgentOption {
+  profileId: string;
+  agentId: string;
+  label: string;
+  executable: string;
+  installed: boolean;
+  ready: boolean;
+}
+
+interface NativeProfilesWire {
+  profiles?: Array<{ profile_id?: string; label?: string; executable?: string }>;
+}
+
+interface NativeAgentsWire {
+  agents?: Array<{ id?: string; label?: string; installed?: boolean; ready?: boolean }>;
+  tmux?: { installed?: boolean };
+}
+
+/** The existing native profile and onboarding producers, joined by executable. */
+export async function readNativeAgentOptions(): Promise<NativeAgentOption[]> {
+  const [profileWire, agentWire] = await Promise.all([
+    apiFetch<NativeProfilesWire>("/api/delivery/factory/profiles"),
+    apiFetch<NativeAgentsWire>("/api/onboarding/agents"),
+  ]);
+  const agents = Array.isArray(agentWire.agents) ? agentWire.agents : [];
+  const tmuxReady = agentWire.tmux?.installed === true;
+  return (Array.isArray(profileWire.profiles) ? profileWire.profiles : [])
+    .map((profile) => {
+      const executable = String(profile.executable ?? "");
+      const found = agents.find((agent) => String(agent.id ?? "") === executable);
+      if (!found || found.installed !== true) return null;
+      return {
+        profileId: String(profile.profile_id ?? ""),
+        agentId: executable,
+        label: String(profile.label ?? found.label ?? executable),
+        executable,
+        installed: true,
+        ready: found.ready === true && tmuxReady,
+      };
+    })
+    .filter((option): option is NativeAgentOption => Boolean(option?.profileId));
+}
 
 /** Where an engine's prompt goes, for its chip. */
 function placeOf(engine: BoardEngine): { label: string; scope: "local" | "cloud" } {
@@ -46,7 +89,53 @@ function usable(engine: BoardEngine): boolean {
   return Boolean(engine.profileId);
 }
 
-export function WithEditor({
+export function WithEditor(props: {
+  detail: AutomationDetail;
+  onUse: (profileId: string) => Promise<void>;
+  onSpendLimit: (limit: number | null) => Promise<void>;
+  onPending?: (pending: Promise<unknown>) => void;
+  handMode?: boolean;
+}) {
+  if (props.handMode) return <NativeWithEditor detail={props.detail} onUse={props.onUse} />;
+  return <InferenceWithEditor detail={props.detail} onUse={props.onUse}
+    onSpendLimit={props.onSpendLimit} onPending={props.onPending} />;
+}
+
+function NativeWithEditor({
+  detail,
+  onUse,
+}: {
+  detail: AutomationDetail;
+  onUse: (profileId: string) => Promise<void>;
+}) {
+  const [nativeAgents, setNativeAgents] = useState<NativeAgentOption[] | null>(null);
+  const [nativeError, setNativeError] = useState<string | null>(null);
+  const [nativeBusy, setNativeBusy] = useState<string | null>(null);
+  const readNative = useCallback(async () => {
+    try {
+      setNativeAgents(await readNativeAgentOptions());
+      setNativeError(null);
+    } catch (error) {
+      setNativeError(readableError(error));
+    }
+  }, []);
+  useEffect(() => { void readNative(); }, [readNative]);
+  return (
+    <NativeAgentEditor detail={detail} agents={nativeAgents} error={nativeError}
+      busy={nativeBusy} onRetry={() => void readNative()}
+      onUse={async (profileId) => {
+        setNativeBusy(profileId);
+        try {
+          await onUse(profileId);
+          await readNative();
+        } finally {
+          setNativeBusy(null);
+        }
+      }} />
+  );
+}
+
+function InferenceWithEditor({
   detail,
   onUse,
   onSpendLimit,
@@ -190,6 +279,62 @@ export function WithEditor({
         <p className="automation-quiet">No engine found. The Engines app can download one.</p>
       ) : null}
       {refusal ? <p className="automation-refusal" role="alert">{refusal}</p> : null}
+    </div>
+  );
+}
+
+function NativeAgentEditor({
+  detail,
+  agents,
+  error,
+  busy,
+  onRetry,
+  onUse,
+}: {
+  detail: AutomationDetail;
+  agents: NativeAgentOption[] | null;
+  error: string | null;
+  busy: string | null;
+  onRetry: () => void;
+  onUse: (profileId: string) => Promise<void>;
+}) {
+  return (
+    <div className="automation-with-editor" data-testid="automation-native-with-editor">
+      {error ? (
+        <div className="automation-failure">
+          <p className="automation-failure-words">{error}</p>
+          <Button dense variant="ghost" onClick={onRetry}>Try again</Button>
+        </div>
+      ) : null}
+      {agents?.length ? (
+        <section aria-label="Installed native agents">
+          <span className="automation-editor-head">Installed native agents</span>
+          <ul className="automation-engine-list">
+            {agents.map((agent) => {
+              const using = detail.agent_profile === agent.profileId;
+              const place = agent.agentId === "pi"
+                ? { label: "This Mac", scope: "local" as const }
+                : { label: agent.agentId === "claude" ? "Anthropic" : "OpenAI", scope: "cloud" as const };
+              return (
+                <li key={agent.profileId} className="automation-engine" data-testid="automation-native-agent"
+                  data-in-use={using || undefined}>
+                  <span className="automation-engine-name">{agent.label}</span>
+                  <EgressChip label={place.label} scope={place.scope} title={`The hand goes to ${place.label}`} />
+                  {using ? <span className="automation-engine-using">In use</span> : (
+                    <Button dense variant="ghost" loading={busy === agent.profileId}
+                      disabled={Boolean(busy) || !agent.ready}
+                      aria-label={`Use ${agent.label}`} onClick={() => void onUse(agent.profileId)}>
+                      {agent.ready ? "Use" : "Needs attention"}
+                    </Button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : agents ? (
+        <p className="automation-quiet">No installed native agent is ready.</p>
+      ) : null}
     </div>
   );
 }

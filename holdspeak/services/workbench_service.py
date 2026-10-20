@@ -122,6 +122,12 @@ class WorkbenchService:
     def create_workbench(self, principal: Principal, *, name: str, **fields: Any) -> dict[str, Any]:
         if not name.strip():
             raise ValidationError("Automation name is required")
+        if principal.kind is not PrincipalKind.OWNER and ({"agent_profile", "review_by"} & set(fields)):
+            raise ServiceError(
+                "owner_principal_required",
+                "Only the owner can choose the agent or reviewer",
+                context={"status": 403},
+            )
         self._refuse_post_marker_pointer_write(principal, fields)
         self._clean_automation_fields(fields)
         body = {"name": name, **fields}
@@ -166,7 +172,28 @@ class WorkbenchService:
         self._refuse_post_marker_pointer_write(principal, fields)
         self._clean_automation_fields(fields)
         proposed = self._wb_fields(fields, existing)
-        bound_changed = any(proposed[key] != getattr(existing, key) for key in ("schedule", "schedule_enabled", "recipe_id", "profile_id"))
+        if principal.kind is not PrincipalKind.OWNER and ({"agent_profile", "review_by"} & set(fields)):
+            raise ServiceError(
+                "owner_principal_required",
+                "Only the owner can choose the agent or reviewer",
+                context={"status": 403},
+            )
+        # A scheduled hand is approved for its complete sentence and native
+        # binding.  Editing any of those terms fences the old authority and
+        # makes the owner approve it again through When.
+        from .automation_runs import sources_of
+
+        bound_changed = any(
+            proposed[key] != (sources_of(existing) if key == "sources" else getattr(existing, key))
+            for key in (
+                "schedule", "schedule_enabled", "recipe_id", "profile_id",
+                "do_kind", "agent_profile", "review_by", "instruction", "sources", "output_target",
+            )
+        )
+        if bound_changed and existing.schedule_enabled and "schedule_enabled" not in fields:
+            # A changed binding must be visibly reapproved through When.  Keep
+            # the persisted schedule off while its old authority is fenced.
+            proposed["schedule_enabled"] = False
         enabling = not existing.schedule_enabled and proposed["schedule_enabled"]
         if enabling and principal.kind is not PrincipalKind.OWNER:
             raise ServiceError("owner_principal_required", "Only the owner can enable a schedule", context={"status": 403})
@@ -250,8 +277,11 @@ class WorkbenchService:
                 self.update_workbench(principal, workbench_id, schedule=cron, schedule_enabled=False)
                 stop_events()
                 self._db.workbenches.set_when_json(workbench_id, {"kind": "schedule"})
+                message = "The schedule is saved but off: choose an agent under With, then turn it on."
+                if str(getattr(self._require_workbench(workbench_id), "do_kind", "run") or "run") != "hand_to_agent":
+                    message = "The schedule is saved but off: choose an engine under With, then turn it on."
                 raise ValidationError(
-                    "The schedule is saved but off: choose an engine under With, then turn it on.",
+                    message,
                     code="automation_schedule_needs_engine",
                 ) from exc
             stop_events()
@@ -304,11 +334,10 @@ class WorkbenchService:
                     "agent-pi": "pi-default", "legacy-agent-pi": "pi-default",
                 }
                 profile_id = aliases.get(profile_id, profile_id)
-                with self._db._connection() as conn:
-                    conn.execute(
-                        "UPDATE workbenches SET agent_profile=?, last_modified=? WHERE id=? AND deleted=0",
-                        (profile_id, utc_now_iso(), workbench_id),
-                    )
+                # Route all native binding changes through the normal
+                # workbench update seam so a live schedule is fenced and must
+                # be re-approved with the new profile.
+                self.update_workbench(principal, workbench_id, agent_profile=profile_id)
             if "spend_limit_usd" in fields:
                 self._db.workbenches.set_spend_limit(workbench_id, _spend_limit(fields["spend_limit_usd"]))
             self._changed("workbench", workbench_id, "update")
@@ -479,11 +508,10 @@ class WorkbenchService:
             do = str(sentence["do"] or "").strip()
             if do in {"hand_to_agent", "run"}:
                 content["do_kind"] = do
-                if do == "hand_to_agent":
-                    # A hand has no inference prompt by default.  The source
-                    # item is the agent's brief; an explicit instruction may
-                    # still be supplied as a closed field.
-                    content.pop("instruction", None)
+                # A hand's source item is the agent's brief.  Keep an
+                # explicit Do sentence in its own instruction field so the
+                # owner can edit it on the face and scheduled terms can bind
+                # it without turning it into an inference assignment.
         if "with" in sentence:
             content["agent_profile"] = str(sentence["with"]).strip()
         if "review_by" in sentence:
@@ -1209,7 +1237,7 @@ class WorkbenchService:
         payload["when_events"] = [{"id": c["id"], "words": c["words"], "needs": c["needs"],
                                    "subject": c["subject"], "event_pattern": c["event_pattern"]}
                                   for c in event_choices()]
-        if principal.kind is PrincipalKind.OWNER:
+        if principal.kind is PrincipalKind.OWNER and str(getattr(wb, "do_kind", "run") or "run") != "hand_to_agent":
             from .inference_assignment_service import InferenceAssignmentService
 
             effective = InferenceAssignmentService(self._db).resolve_effective(
@@ -1239,6 +1267,27 @@ class WorkbenchService:
             }
             if vendor:
                 payload["assignment_summary"]["vendor"] = vendor
+        elif principal.kind is PrincipalKind.OWNER:
+            profile_id = str(getattr(wb, "agent_profile", "") or "").strip()
+            labels = {
+                "claude-default": ("Claude Code", "claude"),
+                "codex-default": ("Codex CLI", "codex"),
+                "pi-default": ("pi", "pi"),
+            }
+            label, executable = labels.get(profile_id, (profile_id, ""))
+            payload["agent_profile_label"] = label
+            payload["agent_binding"] = {
+                "profile_id": profile_id or None,
+                "label": label or None,
+                "executable": executable or None,
+            }
+            payload["assignment_summary"] = {
+                "status": "assigned" if profile_id else "no_assignment",
+                "source": "native_agent",
+                "chain": [label] if label else [],
+                "profile_id": profile_id or None,
+                "boundary": "same_device" if profile_id else None,
+            }
         return payload
 
     @staticmethod

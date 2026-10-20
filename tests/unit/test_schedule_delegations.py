@@ -23,6 +23,22 @@ def _rig(tmp_path):
     return db, service, wb["id"]
 
 
+def _hand_rig(tmp_path):
+    db = Database(tmp_path / "hand-schedule.db")
+    service = WorkbenchService(db)
+    wb = service.create_workbench(
+        OWNER,
+        name="Hand",
+        do_kind="hand_to_agent",
+        agent_profile="claude-default",
+        review_by="claude",
+        instruction="Complete the action.",
+        output_target="today",
+        schedule="* * * * *",
+    )
+    return db, service, wb["id"]
+
+
 def test_owner_enable_creates_local_exact_terms_delegation(tmp_path):
     db, service, wid=_rig(tmp_path)
     service.update_workbench(OWNER,wid,schedule_enabled=True)
@@ -101,6 +117,147 @@ def test_bound_edit_revokes_and_requires_owner_reenable(tmp_path):
     assert state == "REVOKED"
     service.update_workbench(OWNER,wid,schedule_enabled=False); service.update_workbench(OWNER,wid,schedule_enabled=True)
     assert ScheduleDelegationService(db).live(wid)["id"] != old
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("agent_profile", "codex-default"),
+        ("review_by", "codex"),
+        ("instruction", "Complete the action and report."),
+        ("sources", ["action:one"]),
+        ("output_target", "needs_you"),
+    ],
+)
+def test_hand_binding_edit_fences_live_authority_until_when_reapproval(tmp_path, field, value):
+    db, service, wid = _hand_rig(tmp_path)
+    service.update_workbench(OWNER, wid, schedule_enabled=True)
+    old = ScheduleDelegationService(db).live(wid)["id"]
+
+    service.update_workbench(OWNER, wid, **{field: value})
+
+    edited = db.workbenches.get(wid)
+    assert edited.schedule_enabled is False
+    assert ScheduleDelegationService(db).live(wid) is None
+    with db._connection() as conn:
+        state = conn.execute(
+            "SELECT state FROM kernel_schedule_delegations WHERE id=?", (old,)
+        ).fetchone()["state"]
+    assert state == "REVOKED"
+
+    service.update_workbench(OWNER, wid, schedule_enabled=True)
+    assert ScheduleDelegationService(db).live(wid)["id"] != old
+
+
+class _FakeHandService:
+    def __init__(self) -> None:
+        self.calls = []
+
+    def hand_item(self, principal, **kwargs):
+        self.calls.append((principal, kwargs))
+        return {
+            "status": "launched",
+            "profile": kwargs["profile"],
+            "launch_id": f"launch-{len(self.calls)}",
+        }
+
+
+def _runner_hand_rig(tmp_path):
+    db, service, wid = _hand_rig(tmp_path)
+    item = db.workbench_items.upsert(
+        item_id="hand-item",
+        workbench_id=wid,
+        title="Hand item",
+        body="Complete it.",
+        context={"agent_hand": {"source_ref": "action:one", "status": "pending"}},
+    )
+    return db, service, wid, item
+
+
+def test_scheduled_hand_uses_live_owner_delegation_and_dedupes_tick(tmp_path, monkeypatch):
+    db, service, wid, item = _runner_hand_rig(tmp_path)
+    service.update_workbench(OWNER, wid, schedule_enabled=True)
+    delegation = ScheduleDelegationService(db).live(wid)
+    assert delegation is not None
+    fake = _FakeHandService()
+    monkeypatch.setattr("holdspeak.services.agent_hand_service.default_agent_hand_service", lambda _db: fake)
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.services import automation_runs
+    from holdspeak.services.workbench_runner import WorkbenchRunner
+
+    monkeypatch.setattr(
+        automation_runs,
+        "materialize_hand_items",
+        lambda _db, _wb: [item],
+    )
+    broker = _configure(db)
+    runner = WorkbenchRunner(db, broker)
+    first = asyncio.run(
+        runner.run(
+            SCHEDULER,
+            wid,
+            delegation=delegation,
+            due_minute=2026101901,
+            request_id=f"schedule:{wid}:2026101901",
+        )
+    )
+    assert first["terminal_disposition"] == "succeeded"
+    assert len(fake.calls) == 1
+    assert fake.calls[0][0] == Principal(PrincipalKind.OWNER, "local-automation-conductor")
+    parent = broker.store.operation(first["parent_operation_id"])
+    assert (parent["principal_kind"], parent["delegator_kind"], parent["delegator_identity"]) == (
+        "scheduler", "owner", OWNER.identity,
+    )
+    with pytest.raises(KernelRefused, match="duplicate_tick"):
+        asyncio.run(
+            runner.run(
+                SCHEDULER,
+                wid,
+                delegation=delegation,
+                due_minute=2026101901,
+                request_id=f"schedule:{wid}:2026101901",
+            )
+        )
+    assert len(fake.calls) == 1
+
+
+def test_event_hand_parent_replay_launches_once(tmp_path, monkeypatch):
+    db, _service, wid, item = _runner_hand_rig(tmp_path)
+    fake = _FakeHandService()
+    monkeypatch.setattr("holdspeak.services.agent_hand_service.default_agent_hand_service", lambda _db: fake)
+    from holdspeak.kernel.runtime import _configure
+    from holdspeak.services import automation_runs
+    from holdspeak.services.workbench_runner import WorkbenchRunner
+
+    monkeypatch.setattr(
+        automation_runs,
+        "materialize_hand_items",
+        lambda _db, _wb: [item],
+    )
+    broker = _configure(db)
+    runner = WorkbenchRunner(db, broker)
+    request_id = f"reaction:hand:{wid}:event-1"
+    first = asyncio.run(
+        runner.run(
+            OWNER,
+            wid,
+            request_id=request_id,
+            source_event={"event_id": "event-1", "causation_id": "event-1"},
+            item_ids=[item.id],
+        )
+    )
+    second = asyncio.run(
+        runner.run(
+            OWNER,
+            wid,
+            request_id=request_id,
+            source_event={"event_id": "event-1", "causation_id": "event-1"},
+            item_ids=[item.id],
+        )
+    )
+    assert first["terminal_disposition"] == "succeeded"
+    assert second["replayed"] is True
+    assert len(fake.calls) == 1
 
 
 def test_synced_enabled_schedule_refuses_delegation_missing(tmp_path):

@@ -259,11 +259,21 @@ def _watch_set_members(db: Any, ref: str) -> list[str]:
     connector = "jira" if ref.startswith("jira:") else "gh"
     with db._connection() as conn:
         rows = conn.execute(
-            "SELECT id, query_kind, snapshot_json FROM connector_watches WHERE connector_id=? AND query_kind IN ('issues','pull_requests') AND enabled=1",
-            (connector,),
+            """SELECT id, query_kind, snapshot_json, last_success_at, last_error
+               FROM connector_watches
+               WHERE connector_id IN (?, ?)
+                 AND query_kind IN ('issues','pull_requests')
+                 AND enabled=1""",
+            (connector, "github" if connector == "gh" else connector),
         ).fetchall()
     found: list[str] = []
     for row in rows:
+        # A starter is an action on the producer's current, healthy
+        # observation.  A cached snapshot with no successful refresh (or an
+        # outstanding provider error) is stale and must stay out of New
+        # automation.
+        if not str(row["last_success_at"] or "").strip() or str(row["last_error"] or "").strip():
+            continue
         try:
             snapshot = json.loads(row["snapshot_json"] or "{}")
         except (TypeError, ValueError):
@@ -279,7 +289,7 @@ def _watch_set_members(db: Any, ref: str) -> list[str]:
             labels = entity.get("labels") if isinstance(entity.get("labels"), list) else []
             labels = {str(label.get("name") if isinstance(label, dict) else label).strip().lower() for label in labels}
             reviews = entity.get("review_requests") or entity.get("reviewRequests") or []
-            if ref == "jira:bugs:agent-ok" and ("agent-ok" not in labels or str(entity.get("issue_type") or "").lower() not in {"", "bug"}):
+            if ref == "jira:bugs:agent-ok" and ("agent-ok" not in labels or str(entity.get("issue_type") or "").strip().lower() != "bug"):
                 continue
             if ref == "github:review_requests" and not reviews:
                 continue

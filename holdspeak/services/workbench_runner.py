@@ -271,27 +271,40 @@ class WorkbenchRunner:
 
     def _run_hand(
         self, principal: Principal, wb: Any, *, item_ids: list[str] | None = None,
+        parent: Any = None, scheduler_authorized: bool = False,
     ) -> dict[str, Any]:
         """AG14: hand each eligible source item once through AgentHandService."""
         from . import automation_runs as automation
         from .agent_hand_service import default_agent_hand_service
 
+        if principal.kind is PrincipalKind.SCHEDULER and not scheduler_authorized:
+            raise ServiceError(
+                "schedule_delegation_required",
+                "A scheduled hand needs its live owner delegation",
+                context={"status": 409},
+            )
         run_id = "wbrun_" + uuid.uuid4().hex[:12]
         candidates = automation.materialize_hand_items(self.db, wb)
         if item_ids is not None:
             wanted = {str(value) for value in item_ids if str(value)}
             candidates = [item for item in candidates if item.id in wanted]
         with self.db._connection() as conn:
-            conn.execute(
-                "INSERT INTO workbench_runs(id,workbench_id,started_at,status) VALUES(?,?,?, 'running')",
-                (run_id, wb.id, utc_now_iso()),
-            )
+            if parent is None:
+                conn.execute(
+                    "INSERT INTO workbench_runs(id,workbench_id,started_at,status) VALUES(?,?,?, 'running')",
+                    (run_id, wb.id, utc_now_iso()),
+                )
+            else:
+                conn.execute(
+                    "INSERT INTO workbench_runs(id,workbench_id,started_at,parent_operation_id,parent_receipt_id,child_links_json,status) VALUES(?,?,?,?,'','[]','running')",
+                    (run_id, wb.id, utc_now_iso(), parent.operation_id),
+                )
 
-        # A scheduled hand has the same local owner authority as the existing
-        # scheduler-delivered result path.  AgentHandService still owns the
-        # admission, working-at-once limit, queue and launch ledger.
+        # A scheduler may use the owner identity only after the existing
+        # durable schedule parent admitted this exact hand.  A direct
+        # scheduler call never receives owner elevation.
         hand_principal = principal
-        if principal.kind is PrincipalKind.SCHEDULER:
+        if scheduler_authorized:
             hand_principal = Principal(PrincipalKind.OWNER, "local-automation-conductor")
         hand_service = default_agent_hand_service(self.db)
         started: list[dict[str, Any]] = []
@@ -389,7 +402,7 @@ class WorkbenchRunner:
                    items_failed=?, status='completed' WHERE id=?""",
                 (utc_now_iso(), len(candidates), failed, run_id),
             )
-        return {
+        answer = {
             "run_id": run_id,
             "status": "completed",
             "agents_started": started,
@@ -399,6 +412,94 @@ class WorkbenchRunner:
             "items_completed": 0,
             "items_failed": failed,
         }
+        if parent is not None:
+            receipt = self._close_or_adopt(
+                parent, "failed" if failed and not started and not queued else "succeeded",
+                principal=principal,
+            )
+            if receipt.get("outcome") != "succeeded":
+                return self._adopt_terminal(run_id, parent)
+            self._record_terminal(
+                run_id, parent, receipt, attempted=len(candidates),
+                completed=0, failed=failed,
+            )
+            answer.update({
+                "parent_operation_id": parent.operation_id,
+                "receipt_id": receipt["receipt_id"],
+                "parent_receipt_id": receipt["receipt_id"],
+                "terminal_disposition": receipt.get("outcome"),
+            })
+        return answer
+
+    def _run_event_hand(
+        self, principal: Principal, wb: Any, request_id: str,
+        *, source_event: dict[str, str], item_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Use the existing owner parent admission for an event hand."""
+        snapshot = {
+            "workbench_id": wb.id,
+            "do_kind": "hand_to_agent",
+            "agent_profile": str(getattr(wb, "agent_profile", "") or ""),
+            "review_by": str(getattr(wb, "review_by", "") or ""),
+            "source_event": dict(source_event),
+            "items": list(item_ids or []),
+        }
+        parent = self.broker.parent_run_controller.start(
+            principal,
+            kind="workbench",
+            definition_ref=f"workbench:{wb.id}",
+            definition_revision=str(wb.last_modified),
+            input_snapshot=snapshot,
+            deadline_at=time.time() + 600,
+            child_budget=max(1, len(item_ids or [])),
+            idempotency_key=request_id,
+        )
+        if parent.replayed:
+            return self._replayed_result(parent.operation_id)
+        return self._run_hand(principal, wb, item_ids=item_ids, parent=parent)
+
+    def _run_scheduled_hand(
+        self, principal: Principal, wb: Any, delegation: dict[str, Any],
+        *, request_id: str, due_minute: int, item_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Admit a scheduled native hand through the durable parent path."""
+        from . import automation_runs as automation
+
+        candidates = automation.materialize_hand_items(self.db, wb)
+        if item_ids is not None:
+            wanted = {str(value) for value in item_ids if str(value)}
+            candidates = [item for item in candidates if item.id in wanted]
+        deadline = time.time() + 600 * max(1, len(candidates))
+        snapshot = {
+            "workbench_id": wb.id,
+            "items": [item.id for item in candidates],
+            "item_scope": "explicit" if item_ids is not None else "pending_batch",
+            "do_kind": "hand_to_agent",
+            "agent_profile": str(getattr(wb, "agent_profile", "") or ""),
+            "review_by": str(getattr(wb, "review_by", "") or ""),
+            "request_id": request_id,
+            "due_minute": due_minute,
+            "delegation_id": delegation["id"],
+            "terms_sha256": delegation["terms_sha256"],
+            "delegator_kind": delegation["delegator_kind"],
+            "delegator_identity": delegation["delegator_identity"],
+            "deployment_revision_id": delegation["deployment_revision_id"],
+        }
+        parent = self.broker.parent_run_controller.start_delegated_schedule(
+            principal,
+            definition_ref=f"workbench:{wb.id}",
+            definition_revision=str(wb.last_modified),
+            input_snapshot=snapshot,
+            deadline_at=deadline,
+            child_budget=max(1, len(candidates)),
+            idempotency_key=request_id,
+        )
+        if parent.replayed:
+            return self._replayed_result(parent.operation_id)
+        return self._run_hand(
+            principal, wb, item_ids=item_ids, parent=parent,
+            scheduler_authorized=True,
+        )
 
     async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool=True, request_id: str|None=None, deadline_seconds: float|None=None, delegation: dict[str, Any] | None = None, due_minute: int | None = None, source_event: dict[str, str] | None = None, item_ids: list[str] | None = None) -> dict[str,Any]:
         if principal is None or principal.kind is PrincipalKind.NONE:
@@ -407,6 +508,27 @@ class WorkbenchRunner:
         wb=self.db.workbenches.get(workbench_id)
         if wb is None: raise ServiceError("not_found","Unknown automation",context={"status":404})
         if str(getattr(wb, "do_kind", "run") or "run") == "hand_to_agent":
+            if delegation is not None:
+                return await asyncio.to_thread(
+                    self._run_scheduled_hand, principal, wb, delegation,
+                    request_id=request_id or f"schedule:{workbench_id}:{due_minute}",
+                    due_minute=int(due_minute if due_minute is not None else time.time() // 60),
+                    item_ids=item_ids,
+                )
+            if principal.kind is PrincipalKind.SCHEDULER:
+                raise ServiceError(
+                    "schedule_delegation_required",
+                    "A scheduled hand needs its live owner delegation",
+                    context={"status": 409},
+                )
+            # Events have already been admitted by their durable reaction
+            # projection. Keep the same parent authority for this run so its
+            # receipt is the operation recorded by the reaction.
+            if source_event and request_id:
+                return await asyncio.to_thread(
+                    self._run_event_hand, principal, wb, request_id,
+                    source_event=source_event, item_ids=item_ids,
+                )
             return await asyncio.to_thread(self._run_hand, principal, wb, item_ids=item_ids)
         recipe=self.db.recipes.get(wb.recipe_id) if wb.recipe_id else None
         # Betterment A2: an automation with an instruction needs no agent.

@@ -235,7 +235,10 @@ describe("the sentence on top", () => {
     fireEvent.change(box, { target: { value: "Draft my team update: what shipped and what slipped." } });
     fireEvent.click(screen.getByTestId("automation-do-save"));
     await waitFor(() => expect(hub.calls).toContainEqual({
-      method: "PUT", url: DETAIL, body: { instruction: "Draft my team update: what shipped and what slipped." },
+      method: "PUT", url: DETAIL, body: {
+        do_kind: "run",
+        instruction: "Draft my team update: what shipped and what slipped.",
+      },
     }));
     // A6: Put it in is pressable now (its editor unfolds in place).
     expect(within(line("put")).getByRole("button", { name: /Put it in/ })).toBeInTheDocument();
