@@ -18,7 +18,7 @@ The first two attempts failed in rig setup (Node path and a test-list parser)
 and did not exercise these paths. The late-count Search case now queries
 Projects before measuring, then delays the browser response without
 blocking the test driver. The original top-ten and no-row-move assertions
-pass in the actual private Hub. Required quick: OWNER_PATHS_QUICK_PENDING.
+pass in the actual private Hub. Required quick: 4,116 related web checks and all 55 Room/window browser cases passed; the earlier 13 focused source/receipt/agent cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.
 
 Wallpaper has one home in Settings Desk. New windows use the shared content
 size and placement rules; remembered heads move only when they collide, and
