@@ -14,11 +14,11 @@ legacy effect rows remain readable. Provider manifests, Steward serializers
 and meeting transcriber construction now live in shared services. HTTP and
 MCP use those same contracts, with no MCP imports from web routes.
 
-The worker collected and passed 504 focused cases, then six retained boundary
+The worker passed 504 focused cases, then six retained boundary
 and producer regressions. An actual private database observation creates no
 new effect and preserves the legacy pending row. The AST fence covers all 37
 MCP Python files, including relative and alias import forms. Shared helper
-identities and wires retain parity. Root review: P10_REVIEW_PENDING.
+identities and wires retain parity. Root independently verified 27 focused cases covering the whole import boundary, actual fresh observation and retained legacy row, provider HTTP/MCP parity, Steward policy round-trip, import parity, and remote-owner refusal before file access.
 Required quick: P10_QUICK_PENDING.
 
 Shell S3 gives the desktop Dock Today, Meetings, People, Agents and Speak;
