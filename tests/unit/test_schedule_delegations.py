@@ -49,6 +49,17 @@ def test_owner_enable_creates_local_exact_terms_delegation(tmp_path):
     assert "secret" not in str(row).lower()
 
 
+def test_regular_run_instruction_edit_keeps_the_existing_schedule(tmp_path):
+    db, service, wid = _rig(tmp_path)
+    service.update_workbench(OWNER, wid, schedule_enabled=True)
+    approved = ScheduleDelegationService(db).live(wid)
+
+    service.update_workbench(OWNER, wid, instruction="Write the revised team update.")
+
+    assert db.workbenches.get(wid).schedule_enabled is True
+    assert ScheduleDelegationService(db).live(wid)["id"] == approved["id"]
+
+
 def test_enable_configuration_rolls_back_when_delegation_mint_fails(tmp_path, monkeypatch):
     db, service, _ = _rig(tmp_path)
     original = ScheduleDelegationService.enable_from_owner_in_transaction

@@ -183,14 +183,18 @@ class WorkbenchService:
         # makes the owner approve it again through When.
         from .automation_runs import sources_of
 
+        native_hand = "hand_to_agent" in {
+            str(getattr(existing, "do_kind", "run") or "run"),
+            str(proposed["do_kind"] or "run"),
+        }
+        bound_keys = ("schedule", "schedule_enabled", "recipe_id", "profile_id")
+        if native_hand:
+            bound_keys += ("do_kind", "agent_profile", "review_by", "instruction", "sources", "output_target")
         bound_changed = any(
             proposed[key] != (sources_of(existing) if key == "sources" else getattr(existing, key))
-            for key in (
-                "schedule", "schedule_enabled", "recipe_id", "profile_id",
-                "do_kind", "agent_profile", "review_by", "instruction", "sources", "output_target",
-            )
+            for key in bound_keys
         )
-        if bound_changed and existing.schedule_enabled and "schedule_enabled" not in fields:
+        if native_hand and bound_changed and existing.schedule_enabled and "schedule_enabled" not in fields:
             # A changed binding must be visibly reapproved through When.  Keep
             # the persisted schedule off while its old authority is fenced.
             proposed["schedule_enabled"] = False
