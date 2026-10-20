@@ -2600,3 +2600,36 @@ def test_waiting_on_nudge_matches_saved_targets_and_uses_the_document_send_bound
         files = list(folder.glob("*.md"))
         assert len(files) == 1
         assert "Please review: Review the Jira migration item" in files[0].read_text(encoding="utf-8")
+
+
+def test_project_update_line_records_the_real_manual_and_friday_wire(tmp_path, monkeypatch):
+    """P7's consumer fixture is the actual shared Room/Workbench response."""
+    import os
+    with _hub(tmp_path, monkeypatch) as hub:
+        project_id = hub.ok("POST", "/api/projects", {"name": "Friday update wire"})["project"]["id"]
+        draft = hub.ok("POST", f"/api/projects/{project_id}/updates/draft", {"generator": "deterministic"})["update"]
+        manual = hub.ok("GET", f"/api/projects/{project_id}/room")
+        automation_id = manual["updates"]["automation"]["id"]
+        assert not manual["updates"]["automation"]["schedule_enabled"]
+        refused = hub.client.put(f"/api/workbenches/{automation_id}", json={
+            "schedule": "0 15 * * 5", "schedule_enabled": True,
+        })
+        assert refused.status_code == 400
+        from tests.e2e.glass_infra import ENGINE_PROFILE, engine_profile, assign_engine
+        engine_profile(automation=True)
+        assign_engine("workbench.item", 11)
+        assign_engine("project.update_draft", 12)
+        friday = hub.ok("PUT", f"/api/workbenches/{automation_id}", {
+            "schedule": "0 15 * * 5", "schedule_enabled": True,
+        })
+        scheduled = hub.ok("GET", f"/api/projects/{project_id}/room")
+        assert scheduled["updates"]["automation"]["schedule_enabled"]
+        assert scheduled["updates"]["automation"]["id"] == automation_id
+        assert hub.db.workbenches.get(automation_id).schedule == "0 15 * * 5"
+        assert manual["updates"]["automation"]["engine_label"] == "Engine not set"
+        assert scheduled["updates"]["automation"]["profile_id"] == ENGINE_PROFILE
+        assert scheduled["updates"]["automation"]["engine_label"] != "Engine not set"
+        if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+            path = Path(__file__).resolve().parents[2] / "web/src/features/project-room/__tests__/room-wires/updateAutomationP7.json"
+            path.write_text(json.dumps({"manual": manual, "scheduled": scheduled,
+                "draft": draft, "friday": friday, "refusal": refused.json()}, indent=2) + "\n")

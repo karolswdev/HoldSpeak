@@ -90,6 +90,7 @@ import { NudgeCard } from "./NudgeCard";
 export { NudgeCard };
 import { headFacts, isMine, stateLine, type StateLine } from "./now/model";
 import { enableFridayUpdate, fetchUpdate, fetchUpdates } from "./update/api";
+import { readableError } from "../../lib/api";
 import { Unreadable } from "../../desk/surface/send";
 import { retryRoomLink, useRoomSendLink } from "../../desk/windowSend";
 import { flightForItem, isInFlight, mergeReceipt, useAgentFlights, useAgentFlightsLive } from "../../desk/agentFlights";
@@ -1395,22 +1396,26 @@ function UpdateLine({ room, updateCtrl, onReload }: {
   onReload: () => Promise<void>;
 }) {
   const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState("");
   if (room.updates.state !== "ok" || !room.updates.automation) return null;
   const automation = room.updates.automation;
   const hasNew = room.updates.recent.some((update) => String(update.lifecycle ?? "") === "draft");
   const enableFriday = async () => {
     if (busy) return;
     setBusy(true);
+    setFailure("");
     try {
       await enableFridayUpdate(automation.id);
       await onReload();
+    } catch (reason) {
+      setFailure(readableError(reason));
     } finally {
       setBusy(false);
     }
   };
   const openAutomation = () => useDesk.getState().openWorkbenchWindow(automation.id);
   const when = automation.scheduleEnabled ? "Fridays 15:00" : "Only when pressed";
-  const withEngine = automation.profileId ? "engine" : "engine not set";
+  const withEngine = automation.engineLabel;
   return (
     <SurfaceSection label="Update" data-testid="room-update-line">
       <div className="room-update-line">
@@ -1424,6 +1429,7 @@ function UpdateLine({ room, updateCtrl, onReload }: {
           </Button>
         ) : null}
       </div>
+      {failure ? <SurfaceState error={failure} onRetry={() => void enableFriday()} /> : null}
     </SurfaceSection>
   );
 }
