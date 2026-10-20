@@ -2,9 +2,21 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch, readableError } from "../../lib/api";
 import { openIntelligence } from "../intelligenceNavigation";
+import { openSurfaceOr } from "../shell";
 import { closeFirstRun } from "./reopen";
 import { useFirstTake } from "./useFirstTake";
-import { EgressChip, FoldGadget, StateChip, StringGadget, SurfaceRow, SurfaceRows, SurfaceSection } from "../surface";
+import {
+  EgressChip,
+  FoldGadget,
+  HeardQuote,
+  LedMeter,
+  StateChip,
+  StringGadget,
+  SurfaceRow,
+  SurfaceRows,
+  SurfaceSection,
+} from "../surface";
+import { DICTATION_FAILURES, needsMicrophoneDoctor, type DictationFailure } from "../../lib/dictationRecovery";
 import "./setupFace.css";
 import { useOwnerName } from "./ownerName";
 
@@ -90,6 +102,23 @@ function SetupInventoryRow({ row, busy, onUse }: { row: SetupRow; busy: boolean;
 }
 
 type SetupActionState = "works" | "pending" | "does_not_work" | "found";
+
+const TAKE_FAILURE_TOKENS: Record<DictationFailure, { chip: string; reason: string }> = {
+  permission_denied: { chip: "MIC BLOCKED", reason: "ALLOW IN BROWSER" },
+  no_microphone: { chip: "NO MIC", reason: "NO DEVICE FOUND" },
+  microphone_unavailable: { chip: "MIC BUSY", reason: "IN USE ELSEWHERE" },
+  missing_model: { chip: "NO SPEECH MODEL", reason: "SET UP SPEECH" },
+  rejected_token: { chip: "NOT HEARD", reason: "TOKEN REFUSED" },
+  unreachable_hub: { chip: "NOT HEARD", reason: "HUB OFFLINE" },
+  delivery_conflict: { chip: "NOT HEARD", reason: "TAKE CONFLICT" },
+  transcription_failed: { chip: "NOT HEARD", reason: "SPEECH FAILED" },
+  timeout: { chip: "NOT HEARD", reason: "TIMED OUT" },
+  no_speech: { chip: "NOT HEARD", reason: "NO WORDS" },
+  mic_interval_closed: { chip: "MIC CLOSED", reason: "TAKE ENDED" },
+  provider_failure: { chip: "NOT HEARD", reason: "SPEECH FAILED" },
+  audio_floor_held: { chip: "MIC BUSY", reason: "ANOTHER CAPTURE" },
+  unknown: { chip: "NOT HEARD", reason: "NO REASON GIVEN" },
+};
 
 function actionAnswer(answer: unknown): { state: SetupActionState; reason?: string } {
   const body = answer && typeof answer === "object" ? answer as Record<string, any> : {};
@@ -267,6 +296,8 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
     if (take.state === "heard" && !take.kept) return void take.keep();
     if (take.state === "idle" || take.state === "failed") void take.begin();
   };
+  const takeFailure = take.failure ? TAKE_FAILURE_TOKENS[take.failure] : null;
+  const takeContract = take.failure ? DICTATION_FAILURES[take.failure] : null;
 
   return (
     <section className="setup-face" aria-label="Set up HoldSpeak" data-testid="setup-face">
@@ -330,10 +361,65 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
       </div>
       {ready ? (
         <div className="setup-face-finale">
-          <Button dense variant="secondary" disabled={take.state === "listening" || take.state === "writing"} onClick={sayOneSentence}>
-            {take.state === "heard" && !take.kept ? "Keep as note" : take.state === "listening" ? "Listening" : "Say one sentence"}
-          </Button>
-          {take.take ? <span className="setup-face-take" role="status">{take.take.text}</span> : null}
+          {take.state === "listening" ? (
+            <div className="setup-face-take-state">
+              <StateChip state="active" label="LISTENING" icon="●" />
+              <LedMeter label="MIC" value={take.level} segments={16} />
+              <Button dense variant="secondary" aria-label="Stop listening" onClick={() => void take.stop()}>
+                Stop
+              </Button>
+            </div>
+          ) : take.state === "writing" ? (
+            <div className="setup-face-take-state">
+              <StateChip state="working" label="WRITING" icon="↻" />
+              <LedMeter label="SPEECH" value={0} segments={16} scanning />
+            </div>
+          ) : take.state === "heard" && take.take ? (
+            <HeardQuote
+              text={take.take.text}
+              seconds={take.take.seconds}
+              at={take.take.at}
+              local
+              size={take.kept ? "primary" : "display"}
+              verbs={take.kept ? undefined : (
+                <>
+                  {take.canPlay ? (
+                    <Button dense variant="secondary" aria-pressed={take.playing} onClick={take.play}>
+                      Play
+                    </Button>
+                  ) : null}
+                  <Button dense variant="ghost" disabled={take.keeping} onClick={take.again}>Again</Button>
+                  <Button dense variant="primary" loading={take.keeping} disabled={take.keeping} onClick={() => void take.keep()}>
+                    Keep as note
+                  </Button>
+                </>
+              )}
+            />
+          ) : take.state === "failed" && takeFailure ? (
+            <div className="setup-face-take-failure" role="alert" data-testid="setup-take-failure">
+              <StateChip state="failure" label={takeFailure.chip} />
+              <span className="surface-token" data-tone="danger">{takeFailure.reason}</span>
+              {takeContract?.setup ? (
+                <Button
+                  dense
+                  variant="secondary"
+                  onClick={() => openSurfaceOr(
+                    needsMicrophoneDoctor(take.failure) ? "configure-setup" : "configure-runs-on",
+                    needsMicrophoneDoctor(take.failure) ? "/" : "/profiles",
+                  )}
+                >
+                  {needsMicrophoneDoctor(take.failure) ? "Check the microphone" : "Engines"}
+                </Button>
+              ) : null}
+              {takeContract?.retry ? (
+                <Button dense variant="secondary" disabled={take.keeping} onClick={take.again}>Again</Button>
+              ) : null}
+            </div>
+          ) : (
+            <Button dense variant="secondary" disabled={!take.supported} onClick={sayOneSentence}>
+              Say one sentence
+            </Button>
+          )}
           <Button dense variant="primary" loading={take.keeping} disabled={take.keeping} onClick={openDesk}>Open my desk</Button>
         </div>
       ) : null}
