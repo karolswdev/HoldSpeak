@@ -274,7 +274,11 @@ def test_confluence_recheck_probes_and_stores_its_time(rig) -> None:
     entry = resp.json()
 
     probes = [c for c in acli.calls if c[:2] == ["acli", "confluence"]]
-    assert [c[2:4] for c in probes] == [["auth", "switch"], ["auth", "status"]], acli.calls
+    # Check first reads the active account so a temporary site switch can
+    # restore the actual prior account rather than a cached selection.
+    assert [c[2:4] for c in probes] == [
+        ["auth", "status"], ["auth", "switch"], ["auth", "status"],
+    ], acli.calls
     stored = _stored(hub, cid)["last_checked_at"]
     assert stored is not None
     (conn,) = entry["connections"]

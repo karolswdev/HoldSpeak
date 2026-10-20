@@ -1607,11 +1607,94 @@ def test_project_door_preview_and_create_links_found_material(
             "sources": [GITHUB_SOURCE],
             "found": {"meeting_ids": ["m-door-found"], "note_ids": [note["id"]]},
         })
+        assert created["found_links"] == [
+            {"kind": "meeting", "id": "m-door-found", "state": "linked", "error": None},
+            {"kind": "note", "id": note["id"], "state": "linked", "error": None},
+        ]
         project_id = created["projectId"]
         resources = hub.ok("GET", f"/api/projects/{project_id}/resources")["resources"]
         refs = {item["resource_ref"] for item in resources}
         assert "note:" + note["id"] in refs, refs
         assert any(item["resource_ref"] == "meeting:m-door-found" for item in resources), refs
+
+
+def test_project_door_partial_found_link_reports_error_and_retries_durably(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A one-time leaf failure stays visible; Retry uses the existing Project.
+
+    The hub, route, Door service, Project service and database are real.  The
+    only seam is one note-link leaf failing once, so the meeting proves that a
+    successful link is not retried or duplicated while the note is retried and
+    read back from durable Project resources.
+    """
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services import project_door_service as door_module
+    from holdspeak.services.primitive_service import PrimitiveService
+
+    owner = Principal(PrincipalKind.OWNER, "test")
+    with _hub(tmp_path, monkeypatch, gh_runner=_gh_signed_in) as hub:
+        db = hub.db
+        started = datetime.now().replace(microsecond=0) - timedelta(hours=2)
+        db.meetings.save_meeting(MeetingState(
+            id="m-door-retry",
+            started_at=started,
+            ended_at=started + timedelta(minutes=30),
+            title="Payments migration review",
+            segments=[TranscriptSegment(
+                text="Payments migration is ready for the next cutover.",
+                speaker="Mira Okafor",
+                start_time=1.0,
+                end_time=4.0,
+            )],
+            intel=IntelSnapshot(timestamp=1.0, topics=["payments"], summary="Cutover review."),
+            intel_status="completed",
+        ))
+        note = PrimitiveService(db).create_note(
+            owner, title="Payments migration risks", body_markdown="Review payments cutover risk.",
+        )
+        door = __import__("holdspeak.runtime.composition", fromlist=["current"]).current().project_door_service
+        project_service = door._project_service
+        real_add_resource = project_service.add_resource
+        failed_once = False
+
+        def fail_note_once(principal: Any, project_id: str, resource_ref: str, *args: Any, **kwargs: Any) -> Any:
+            nonlocal failed_once
+            if resource_ref == f"note:{note['id']}" and not failed_once:
+                failed_once = True
+                raise door_module.ServiceError("note_store_unavailable", "Notes store is read-only")
+            return real_add_resource(principal, project_id, resource_ref, *args, **kwargs)
+
+        monkeypatch.setattr(project_service, "add_resource", fail_note_once)
+
+        created = hub.ok("POST", "/api/projects/door", {
+            "outcome": "Payments migration",
+            "found": {"meeting_ids": ["m-door-retry"], "note_ids": [note["id"]]},
+        })
+        project_id = created["projectId"]
+        assert created["found_links"] == [
+            {"kind": "meeting", "id": "m-door-retry", "state": "linked", "error": None},
+            {"kind": "note", "id": note["id"], "state": "failed", "error": "Notes store is read-only"},
+        ]
+        before = hub.ok("GET", f"/api/projects/{project_id}/resources")["resources"]
+        before_refs = [row["resource_ref"] for row in before]
+        assert before_refs.count("meeting:m-door-retry") == 1, before
+        assert f"note:{note['id']}" not in before_refs, before
+
+        retried = hub.ok("POST", "/api/projects/door", {
+            "project_id": project_id,
+            "sources": [],
+            "found": {"meeting_ids": [], "note_ids": [note["id"]]},
+        })
+        assert retried["found_links"] == [
+            {"kind": "note", "id": note["id"], "state": "linked", "error": None},
+        ]
+        after = hub.ok("GET", f"/api/projects/{project_id}/resources")["resources"]
+        after_refs = [row["resource_ref"] for row in after]
+        assert after_refs.count("meeting:m-door-retry") == 1, after
+        assert after_refs.count(f"note:{note['id']}") == 1, after
+        assert failed_once is True
 
 
 def test_project_room_offers_unfiled_meeting_that_mentions_project_name(
