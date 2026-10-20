@@ -23,7 +23,12 @@ returned operation op_8edbe1d3e86d4b0681a811b8f98d0ac5. Installed Claude and
 Codex executable shapes were inspected without starting a model. Native
 interactive-agent acceptance remains unobserved. Shared test and walk rigs
 force discovery off; the isolated positive rig opts in after boot.
-Required quick: AG15_QUICK_PENDING.
+The first required quick passes 4,072 web checks, 1,221 affected Python/browser,
+108 desk sweep and 27 canon checks. Three repository guards found missing API
+exports and the new read-only ps/tmux census classification. Root regenerated
+both API exports from the app and classified that exact local reader; all
+input writes still use admitted process.input. Final delta quick against that
+verified product source: AG15_QUICK_PENDING.
 
 ST7 makes Settings one page with You, Speak, Meetings, Notices, Accounts,
 Agents, Desk and This Mac. The desktop index sits beside the page; phone
