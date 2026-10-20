@@ -755,6 +755,7 @@ def _to_project_updates(
     """Put one automation result in the project's one update ledger."""
     from .project_service import ProjectService
     from .project_update_service import ProjectUpdateService
+    from .run_trace import use_by_item
 
     item_id = str(row.get("item_id") or "")
     refs: list[str] = []

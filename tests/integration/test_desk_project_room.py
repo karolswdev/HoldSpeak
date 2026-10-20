@@ -796,8 +796,9 @@ def test_write_update_saves_the_records_draft_then_the_engine_improves_it_in_the
 
 
 @pytest.mark.parametrize("owner_edits", [False, True])
+@pytest.mark.parametrize("tool_writes", [False, True])
 def test_project_write_runs_its_existing_workbench_and_keeps_one_delivered_update(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, owner_edits: bool,
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, owner_edits: bool, tool_writes: bool,
 ) -> None:
     """P7/P8: the Room's manual Write uses the one project automation.
 
@@ -829,8 +830,22 @@ def test_project_write_runs_its_existing_workbench_and_keeps_one_delivered_updat
             if owner_edits:
                 entered.set()
                 assert released.wait(timeout=10), "owner-edit probe did not release the engine"
+            if tool_writes:
+                from holdspeak.services import run_trace
+                from holdspeak.services.engine_tool_loop import call_tool
+                item_id = run_trace.current_item()
+                assert item_id, "the Workbench did not bind its item trace"
+                reply = json.loads(call_tool(
+                    "fixture-update-run", run_trace.item_trace(item_id),
+                    "project.update_draft", {"update_id": records["id"],
+                        "body_md": fixture, "source_refs": [f"project:{project_id}"]},
+                    1, allow_project_update=True, project_id=project_id,
+                ))
+                assert "error" not in reply, reply
+                written_ids.append(reply["update"]["id"])
             return fixture
 
+    written_ids: list[str] = []
     engine = RecordedFixtureEngine()
     monkeypatch.setattr(
         "holdspeak.intel.providers.build_meeting_intel_for_profile",
@@ -932,7 +947,9 @@ def test_project_write_runs_its_existing_workbench_and_keeps_one_delivered_updat
         delivered = hub.db.project_updates.list_updates(project_id)[0]
         assert delivered["id"] != records["id"]
         assert delivered["body_md"].rstrip() == fixture
-        assert delivered["generator"].startswith("agent:automation:")
+        assert delivered["generator"].startswith("agent:")
+        if tool_writes:
+            assert written_ids == [delivered["id"]], written_ids
         manifest = json.loads(delivered["source_manifest_json"])
         assert manifest["agent_sources"] == [f"project:{project_id}"]
         assert private_one_on_one.id not in json.dumps(manifest)
@@ -958,7 +975,7 @@ def test_project_write_runs_its_existing_workbench_and_keeps_one_delivered_updat
         assert len(hub.db.project_updates.list_updates(project_id)) == 2
         assert len([
             update for update in hub.db.project_updates.list_updates(project_id)
-            if str(update["generator"]).startswith("agent:automation:")
+            if str(update["generator"]).startswith("agent:")
         ]) == 1
 
         # Friday changes the same Workbench record's When/With state.  The
@@ -1114,8 +1131,16 @@ def test_project_update_run_credential_scopes_native_mcp_reads_and_draft_write(
                 ],
             })
             assert not saved["result"]["isError"], saved
-            assert hub.db.project_updates.get_update(records["id"])["body_md"].rstrip() == "Agent scoped words."
-            manifest = json.loads(hub.db.project_updates.get_update(records["id"])["source_manifest_json"])
+            saved_update = json.loads(saved["result"]["content"][0]["text"])["update"]
+            assert saved_update["id"] != records["id"]
+            assert hub.db.project_updates.get_update(records["id"])["body_md"] == records["body_md"]
+            assert saved_update["body_md"].rstrip() == "Agent scoped words."
+            manifest = json.loads(saved_update["source_manifest_json"])
+            edited = tool("project.update_draft", {
+                "update_id": saved_update["id"], "body_md": "Agent revised words.",
+            })
+            edited_update = json.loads(edited["result"]["content"][0]["text"])["update"]
+            assert edited_update["id"] == saved_update["id"]
             assert f"action_item:{private_action_id}" in manifest["agent_sources"]
             assert f"meeting:{private.id}" not in manifest["agent_sources"]
             refused = tool("project.update_draft", {

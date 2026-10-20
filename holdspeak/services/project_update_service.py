@@ -2755,10 +2755,9 @@ class ProjectUpdateService:
         project_id = row["project_id"]
 
         # A tool-capable project update agent writes plain text through this
-        # same producer.  Keep the update id made by Write update, carry the
-        # refs the run looked at, and replace the deterministic generator
-        # metadata.  This path deliberately skips the owner's edit-support
-        # invalidation: the agent's lines are newly grounded below.
+        # same producer. Keep its result in a separate row from the owner's
+        # base, then let later edits reuse that agent-owned row. Carry the
+        # refs the run looked at; the job's Apply fence protects owner edits.
         if principal.kind is PrincipalKind.AGENT:
             text = str(body_md or "").strip()
             if not text:
@@ -2781,30 +2780,39 @@ class ProjectUpdateService:
                     ))
                 except Exception:
                     refs = []
-            claims = [
-                Claim(
-                    span_id=f"s_agent_{ordinal}", text=line.strip(), refs=list(refs),
-                    section="progress", kind=KIND_OBSERVATION,
-                    support=SUPPORT_SOURCE_LINKED if refs else SUPPORT_UNKNOWN,
-                ).to_dict()
-                for ordinal, line in enumerate(text.splitlines()) if line.strip()
-            ]
-            try:
-                manifest = json.loads(row.get("source_manifest_json") or "{}")
-            except (TypeError, ValueError):
-                manifest = {}
-            if not isinstance(manifest, dict):
-                manifest = {}
-            manifest["agent_sources"] = refs
-            self._db.project_updates.update_draft(
-                update_id,
-                body_md=text + ("\n" if not text.endswith("\n") else ""),
-                claims_json=json.dumps(claims, sort_keys=True, separators=(",", ":")),
-                source_manifest_json=json.dumps(manifest, sort_keys=True, separators=(",", ":")),
-                generator=str(generator or f"agent:{principal.identity}"),
-                generator_model=str(engine or "") or None,
-            )
-            result = self._project_axes(self._db.project_updates.get_update(update_id))
+            own_generator = f"agent:{principal.identity}"
+            if str(row.get("generator") or "") != own_generator:
+                # Keep the owner's base row intact while the agent works.
+                # The job's Apply fence chooses this separate result.
+                result = self.write_agent_update(
+                    principal, project_id, body_md=text, source_refs=refs,
+                    generator=own_generator,
+                )
+            else:
+                claims = [
+                    Claim(
+                        span_id=f"s_agent_{ordinal}", text=line.strip(), refs=list(refs),
+                        section="progress", kind=KIND_OBSERVATION,
+                        support=SUPPORT_SOURCE_LINKED if refs else SUPPORT_UNKNOWN,
+                    ).to_dict()
+                    for ordinal, line in enumerate(text.splitlines()) if line.strip()
+                ]
+                try:
+                    manifest = json.loads(row.get("source_manifest_json") or "{}")
+                except (TypeError, ValueError):
+                    manifest = {}
+                if not isinstance(manifest, dict):
+                    manifest = {}
+                manifest["agent_sources"] = refs
+                self._db.project_updates.update_draft(
+                    update_id,
+                    body_md=text + ("\n" if not text.endswith("\n") else ""),
+                    claims_json=json.dumps(claims, sort_keys=True, separators=(",", ":")),
+                    source_manifest_json=json.dumps(manifest, sort_keys=True, separators=(",", ":")),
+                    generator=own_generator,
+                    generator_model=str(engine or "") or None,
+                )
+                result = self._project_axes(self._db.project_updates.get_update(update_id))
             cmd_id = command_id or generate_pcmd_id()
             project_ref = format_ref("project", project_id)
             envelope = CommandResultEnvelope(

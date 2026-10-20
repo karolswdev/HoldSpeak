@@ -315,7 +315,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "project.update_draft",
-        "description": "Save the owner's edit of a draft update (body_md). Refuses published updates.",
+        "description": "Save a draft update (body_md). An automation saves a separate agent draft; use its returned id for later edits. Refuses published updates.",
         "inputSchema": {
             "$id": "holdspeak://mcp/project.update_draft@1",
             "type": "object",
