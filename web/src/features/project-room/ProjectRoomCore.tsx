@@ -89,7 +89,8 @@ import { ThisWeekSection, WaitingOnSection } from "./now/NowSections";
 import { NudgeCard } from "./NudgeCard";
 export { NudgeCard };
 import { headFacts, isMine, stateLine, type StateLine } from "./now/model";
-import { fetchUpdate, fetchUpdates } from "./update/api";
+import { enableFridayUpdate, fetchUpdate, fetchUpdates } from "./update/api";
+import { readableError } from "../../lib/api";
 import { Unreadable } from "../../desk/surface/send";
 import { retryRoomLink, useRoomSendLink } from "../../desk/windowSend";
 import { flightForItem, isInFlight, mergeReceipt, useAgentFlights, useAgentFlightsLive } from "../../desk/agentFlights";
@@ -1201,9 +1202,11 @@ function SourcesSection({
               Add source
             </Button>
           ) : null}
-          <Button dense variant="ghost" loading={stewardCtrl.loading} onClick={() => void stewardCtrl.enterSteward()} data-testid="steward-verb" data-verb="steward">
-            Watch sources
-          </Button>
+          <FoldGadget title="RAW" className="room-sources-raw">
+            <Button dense variant="ghost" loading={stewardCtrl.loading} onClick={() => void stewardCtrl.enterSteward()} data-testid="steward-verb" data-verb="steward">
+              Watch sources
+            </Button>
+          </FoldGadget>
         </>
       }
     >
@@ -1383,6 +1386,50 @@ function SourcesSection({
           })}
         </ul>
       </SurfaceLedger>
+    </SurfaceSection>
+  );
+}
+
+function UpdateLine({ room, updateCtrl, onReload }: {
+  room: RoomSnapshot;
+  updateCtrl: ReturnType<typeof useUpdateController>;
+  onReload: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState("");
+  if (room.updates.state !== "ok" || !room.updates.automation) return null;
+  const automation = room.updates.automation;
+  const hasNew = room.updates.recent.some((update) => String(update.lifecycle ?? "") === "draft");
+  const enableFriday = async () => {
+    if (busy) return;
+    setBusy(true);
+    setFailure("");
+    try {
+      await enableFridayUpdate(automation.id);
+      await onReload();
+    } catch (reason) {
+      setFailure(readableError(reason));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const openAutomation = () => useDesk.getState().openWorkbenchWindow(automation.id);
+  const when = automation.scheduleEnabled ? "Fridays 15:00" : "Only when pressed";
+  const withEngine = automation.engineLabel;
+  return (
+    <SurfaceSection label="Update" data-testid="room-update-line">
+      <div className="room-update-line">
+        <Button dense variant="ghost" onClick={openAutomation} data-testid="room-update-when">{when}</Button>
+        <Button dense variant="ghost" onClick={openAutomation} data-testid="room-update-with">{withEngine}</Button>
+        {hasNew ? <span className="surface-token" data-tone="ok" data-testid="room-update-new">NEW</span> : null}
+        <Button dense variant="ghost" onClick={() => void updateCtrl.openLatest()} data-testid="room-update-open">Open latest</Button>
+        {!automation.scheduleEnabled ? (
+          <Button dense variant="ghost" loading={busy} onClick={() => void enableFriday()} data-testid="room-update-friday">
+            Every Friday at 15:00
+          </Button>
+        ) : null}
+      </div>
+      {failure ? <SurfaceState error={failure} onRetry={() => void enableFriday()} /> : null}
     </SurfaceSection>
   );
 }
@@ -1912,8 +1959,12 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
     ctrl.projectId, reviewData, () => void ctrl.load(),
   );
 
+  const projectUpdateAutomationId = ctrl.room?.updates.state === "ok"
+    ? ctrl.room.updates.automation?.id
+    : undefined;
   const updateCtrl = useUpdateController(
     ctrl.projectId, () => void ctrl.load(),
+    projectUpdateAutomationId,
   );
 
   const stewardCtrl = useStewardController(
@@ -2336,6 +2387,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
                   </RoomFold>
                 </RoomSlot>
               </div>
+              <UpdateLine room={ctrl.room} updateCtrl={updateCtrl} onReload={() => ctrl.load()} />
             </>
           ) : (
             <>
