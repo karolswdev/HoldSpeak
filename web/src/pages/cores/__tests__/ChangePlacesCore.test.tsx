@@ -26,7 +26,7 @@ describe("Change places", () => {
       "data-atmosphere-choice",
       "jupiter-orbit",
     );
-    fireEvent.click(screen.getByRole("radio", { name: /Night Train/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /Night train/ }));
     expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("night-train");
     // PHILO-17: the Floor is parked; the window offers no "View on Floor".
     expect(screen.queryByRole("button", { name: "View on Floor" })).toBeNull();
@@ -34,7 +34,7 @@ describe("Change places", () => {
   it("favorites never switch the room and the filter retains keyboard entry", () => {
     render(<ChangePlacesCore />);
     fireEvent.click(
-      screen.getByRole("button", { name: "Favorite Night Train" }),
+      screen.getByRole("button", { name: "Favorite Night train" }),
     );
     expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBeNull();
     expect(JSON.parse(localStorage.getItem(ATMOSPHERE_FAVORITES_KEY)!)).toEqual(
@@ -52,7 +52,7 @@ describe("Change places", () => {
     localStorage.setItem(ATMOSPHERE_FAVORITES_KEY, '["lantern-garden"]');
     render(<ChangePlacesCore />);
     expect(
-      screen.getByRole("button", { name: "Favorite Lantern Garden" }),
+      screen.getByRole("button", { name: "Favorite Lantern garden" }),
     ).toHaveAttribute("aria-pressed", "true");
     act(() => {
       localStorage.setItem(ATMOSPHERE_FAVORITES_KEY, '["rainy-city"]');
@@ -61,10 +61,10 @@ describe("Change places", () => {
       );
     });
     expect(
-      screen.getByRole("button", { name: "Favorite Rainy City" }),
+      screen.getByRole("button", { name: "Favorite Rainy city" }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(
-      screen.getByRole("button", { name: "Favorite Lantern Garden" }),
+      screen.getByRole("button", { name: "Favorite Lantern garden" }),
     ).toHaveAttribute("aria-pressed", "false");
   });
   it("retains keyboard focus when removing the last filtered favorite", () => {
@@ -72,7 +72,7 @@ describe("Change places", () => {
     render(<ChangePlacesCore />);
     fireEvent.click(screen.getByRole("button", { name: "Favorites" }));
     const favorite = screen.getByRole("button", {
-      name: "Favorite Night Train",
+      name: "Favorite Night train",
     });
     favorite.focus();
     fireEvent.click(favorite);
@@ -113,10 +113,10 @@ describe("Change places", () => {
         throw new Error("Quota exceeded");
       });
     fireEvent.click(
-      screen.getByRole("button", { name: "Favorite Rainy City" }),
+      screen.getByRole("button", { name: "Favorite Rainy city" }),
     );
     expect(
-      screen.getByRole("button", { name: "Favorite Rainy City" }),
+      screen.getByRole("button", { name: "Favorite Rainy city" }),
     ).toHaveAttribute("aria-pressed", "true");
     write.mockRestore();
     act(() => window.dispatchEvent(new StorageEvent("storage")));

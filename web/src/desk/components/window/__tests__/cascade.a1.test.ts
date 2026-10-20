@@ -2,7 +2,28 @@
 // desk is never stacked: it cascades 24/24 off the window placed last and
 // leaves every title bar partly in view.
 import { afterEach, describe, expect, it } from "vitest";
-import { iconColumnRight, placeWindow } from "../windowGeometry";
+import { headsOverlap, iconColumnRight, placeWindow } from "../windowGeometry";
+
+describe("remembered and first-open geometry", () => {
+  it("treats only the 44 px head strip as a remembered collision", () => {
+    const remembered = { x: 420, y: 180, w: 560, h: 420 };
+    expect(headsOverlap(remembered, { x: 640, y: 205, w: 480, h: 320 })).toBe(true);
+    expect(headsOverlap(remembered, { x: 640, y: 225, w: 480, h: 320 })).toBe(false);
+  });
+
+  it("seats a colliding remembered rect away from open title bars and keeps first-open minimums", () => {
+    const remembered = { x: 420, y: 180, w: 560, h: 420 };
+    const open = { x: 640, y: 205, w: 480, h: 320 };
+    const reseated = placeWindow(remembered, [open], 1440, 900, 520, 360);
+
+    expect(reseated).toMatchObject({ w: 560, h: 420 });
+    expect(headsOverlap(reseated, open)).toBe(false);
+
+    const first = placeWindow({ x: 24, y: 72, w: 240, h: 160 }, [], 1440, 900, 520, 360);
+    expect(first.w).toBe(520);
+    expect(first.h).toBe(360);
+  });
+});
 
 describe("placeWindow on a saturated desk", () => {
   it("cascades 24/24 off the last placed window, hiding no title bar whole", () => {

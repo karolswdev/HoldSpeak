@@ -94,8 +94,8 @@ describe("dispatchKey runs registry verbs", () => {
     expect(text(0)).toContain("Meetings");
     expect(text(1)).toContain("New Note");
     expect(text(1)).toContain("New Decision");
-    expect(text(2)).toContain("Close window");
-    expect(text(2)).toContain("Iconify");
+    expect(text(2)).toContain("Close");
+    expect(text(2)).toContain("Minimize");
     expect(text(2)).toContain("Esc");
     expect(text(3)).toContain("Search");
     expect(text(3)).toContain("Keyboard shortcuts");
