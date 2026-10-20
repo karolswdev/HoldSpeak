@@ -78,7 +78,7 @@ describe("the phone menu bar has one door that carries every verb", () => {
   });
 
   // Betterment shell S1 (supersedes PHILO-15 11 B21): Go at 393 is the
-  // manifest's Go groups, then New ▸ Note / Meeting / Project / Person. No ⌘ hint.
+  // manifest's Go groups, then the seven shared New kinds. No ⌘ hint.
   it("carries a new note (owner job 3's door) at Go ▸ New ▸ Note at phone width", () => {
     compact = true;
     render(<DeskMenuBar />);
@@ -86,8 +86,8 @@ describe("the phone menu bar has one door that carries every verb", () => {
     fireEvent.click(screen.getByRole("menuitem", { name: /^New\W*$/ }));
     expect(
       screen.getAllByRole("menuitem").map((el) => el.querySelector(".desk-menu-label")?.textContent)
-        .slice(-4),
-    ).toEqual(["Note", "Meeting", "Project", "Person"]);
+        .slice(-7),
+    ).toEqual(["Note", "Meeting", "Decision", "Project", "Person", "Automation", "Drawer"]);
   });
 
   it("renders the same phoneGo rows on the phone home face", () => {
@@ -102,7 +102,7 @@ describe("the phone menu bar has one door that carries every verb", () => {
     expect(screen.getByRole("menu", { name: "Go menu" })).toHaveClass("desk-menu-list");
     expect(screen.getAllByRole("menuitem").map((row) => row.querySelector(".desk-menu-label")?.textContent)).toEqual([
       "Today", "Needs you", "Capture", "Meetings", "People", "All projects", "Decisions", "Agents", "Ask AI", "Speak",
-      "Automations", "Memory", "Voice commands", "Note", "Meeting", "Project", "Person",
+      "Automations", "Memory", "Voice commands", "Note", "Meeting", "Decision", "Project", "Person", "Automation", "Drawer",
     ]);
   });
 

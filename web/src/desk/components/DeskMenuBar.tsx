@@ -113,7 +113,7 @@ export const PHONE_GO_PLACES: readonly (readonly [string, string])[] = [
   ["desk.open-people", "People"],
   ["go.open-conductor", "Agents"],
 ];
-/** The phone has no Desk menu, so its Go ends with New ▸ (four kinds). */
+/** Historical four-kind phone list; phoneGo now reads the live Desk New registry. */
 export const PHONE_NEW: readonly (readonly [string, string])[] = [
   ["desk.new-note", "Note"],
   ["desk.new-meeting", "Meeting"],
@@ -200,7 +200,8 @@ export function goEntries(inputs: GoInputs): WorkMenuEntry[] {
 /** Go at 393: the same groups as the desktop, then New ▸ (the phone has no
  * Desk menu). No row carries a keycap: a phone has no ⌘ key. */
 export function phoneGo(inputs: GoInputs): WorkMenuEntry[] {
-  const newRows = PHONE_NEW.map(([id, label]) => inputs.row(id, label))
+  const newRows = menuVerbs("desk").filter((verb) => verb.group === "new")
+    .map((verb) => inputs.row(verb.id, verbLabel(verb, { selectedRef: null }).replace(/^New /, "")))
     .filter((e): e is WorkMenuEntry => e !== null);
   return [
     ...goEntries({ ...inputs, phone: true }),

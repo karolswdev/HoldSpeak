@@ -1,11 +1,14 @@
 /** HS-111-07 — the ONE key binder: desk/keymap.ts walks the registry's
  * key fields; nothing else binds document keys. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render } from "@testing-library/react";
+import { createElement } from "react";
 import { dispatchKey, matchKey, parseKey } from "../keymap";
 import { useDesk } from "../store";
 import { VERBS } from "../verbRegistry";
 import { usePalette, useShortcutSheet } from "../chromeState";
 import { openNewThought } from "../newThought";
+import { ShortcutSheet } from "../components/window/ShortcutSheet";
 
 vi.mock("../newThought", () => ({ openNewThought: vi.fn().mockResolvedValue(undefined) }));
 
@@ -78,6 +81,24 @@ describe("dispatchKey runs registry verbs", () => {
     const ran = dispatchKey(kd({ key: "/", metaKey: true }));
     expect(ran?.id).toBe("system.sheet");
     expect(useShortcutSheet.getState().open).toBe(true);
+  });
+
+  it("the shortcut sheet groups current bindings as Apps, New, Windows and Desk", () => {
+    render(createElement(ShortcutSheet, { onClose: () => undefined }));
+    const sections = Array.from(document.querySelectorAll(".desk-shortcut-panel section"));
+    expect(sections.map((section) => section.querySelector("h4")?.textContent)).toEqual([
+      "Apps", "New", "Windows", "Desk",
+    ]);
+    const text = (index: number) => sections[index].textContent ?? "";
+    expect(text(0)).toContain("Speak");
+    expect(text(0)).toContain("Meetings");
+    expect(text(1)).toContain("New Note");
+    expect(text(1)).toContain("New Decision");
+    expect(text(2)).toContain("Close window");
+    expect(text(2)).toContain("Iconify");
+    expect(text(2)).toContain("Esc");
+    expect(text(3)).toContain("Search");
+    expect(text(3)).toContain("Keyboard shortcuts");
   });
 
   it("⌘I opens Ask AI without a selection", () => {
