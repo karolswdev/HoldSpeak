@@ -57,7 +57,7 @@ describe("DeskOS application manifest", () => {
       DESK_APPLICATIONS.filter((application) => application.shortcut).map(
         (application) => application.shortcut,
       ),
-    ).toEqual(["⌘⇧P", "⌃1", "⌃5", "⌃2", "⌃4", "⌃3"]); // PHILO-17 U27 / shell S3
+    ).toEqual(["⌃1", "⌃5", "⌃2", "⌃4", "⌃3"]); // PHILO-17 U27 / shell S3
   });
 
   it("keeps the PHILO-17 first-open size matrix declarative", () => {
@@ -127,12 +127,12 @@ describe("DeskOS application manifest", () => {
     }
   });
 
-  it("Betterment setup ST1: Rhythm and Change places are parked; their keys, Search words and ⌘⇧P open Settings at Rhythm and at Wallpaper", () => {
+  it("Betterment setup ST1: Rhythm and Change places are parked; Search words open Settings at their sections", () => {
     const rhythm = DESK_APPLICATIONS.find((a) => a.action === "configure-cadence");
     const places = DESK_APPLICATIONS.find((a) => a.action === "change-places");
     // The ids stay (a saved desk names them); the windows are parked.
     expect(rhythm).toMatchObject({ windowId: "surface-cadence", label: "Rhythm", parked: "settings:rhythm" });
-    expect(places).toMatchObject({ windowId: "surface-places", label: "Change places", parked: "settings:wallpaper", shortcut: "⌘⇧P" });
+    expect(places).toMatchObject({ windowId: "surface-places", label: "Change places", parked: "settings:wallpaper" });
     expect(DESK_APPLICATION_ALIASES["configure-cadence"]).toEqual({ target: "configure-settings", scope: "rhythm" });
     expect(DESK_APPLICATION_ALIASES["change-places"]).toEqual({ target: "configure-settings", scope: "wallpaper" });
     // Search keeps their words (a grouped application is a Search row).

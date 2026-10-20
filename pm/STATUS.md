@@ -8,6 +8,36 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The main watcher’s retained browser adapters now follow the current doors:
+Watch sources through Sources then RAW; meeting and decision icons through
+explicit Desk membership; and a real drag onto the Agents Dock tile. The
+checks retain exact review identity, run counts, nine-point hit testing,
+receipt geometry and duration, one meeting window, and one agent launch.
+All 13 selected cases pass on the real private Hub, including both widths.
+The first two attempts failed in rig setup (Node path and a test-list parser)
+and did not exercise these paths. The late-count Search case now queries
+Projects before measuring, then delays the browser response without
+blocking the test driver. The original top-ten and no-row-move assertions
+pass in the actual private Hub. Required quick: 4,116 related web checks and all 55 Room/window browser cases passed; the earlier 13 focused source/receipt/agent cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.
+
+Wallpaper has one home in Settings Desk. New windows use the shared content
+size and placement rules; remembered heads move only when they collide, and
+later owner drags and resizes retain their exact saved geometry. The Window
+menu supplies Arrange front and Arrange all, preserving sizes and order.
+
+Root passed 117 scoped web checks, type check and build. The actual private
+Hub walk passed at 1440/393: six app heads, remembered collision, exact owner
+resize/reopen, Arrange all with a Project drawer, Needs headline readback and
+Settings. Jupiter label contrast measured 17.12:1. The broader check also caught stale menu/wallpaper assertions, a
+Stage/Zoom free-height mismatch, the Chair's minimum overriding a thumbnail,
+and a late New Project footer shift. These are fixed at the shared frame:
+free content height stays in its existing geometry record, compositor plates
+own their minimum, and the creation form retains its declared footer seat.
+A Hub-inherited window follows that row; collision reseating runs on the
+owner's reopen. All 74 scoped consumers, type check and build pass. The final
+two real-Hub reload/collision walks pass; the prior five other window cases
+also passed. The full required quick: 4,116 related web checks and all 19 window browser cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green. Shell S9 and the unfinished Send slices remain open.
+
 Failed native sign-in setup now cleans up through coder_factory. The
 factory accepts only the just-minted private sign-in session name, revokes
 its temporary agent credential and records the cleanup. A cleanup failure
