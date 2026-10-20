@@ -23,7 +23,7 @@ before a name, then one canonical decision. The People response also carries
 the current saved Builder preference. Root passed 26 earlier producer checks
 and 73 consumers, then 27 factory/sign-in/census/creation/producer checks and
 12 People consumers on the integrated source. Required quick:
-MAIN_WIRE_QUICK_PENDING. The remaining full tape is still separate.
+434 affected checks passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.. The remaining full tape is still separate.
 
 Search uses one ranked stream, the last six successful opens, exact About
 for Cmd+Enter and live object verbs. Protected People support Open, Ask,
