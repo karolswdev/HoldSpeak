@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { EgressChip } from "../surface/gadgets";
+import { TALK_STOP_EVENT } from "../components/MicButton";
 import {
   audioBase64,
   canonicalWindowRow,
@@ -275,6 +276,14 @@ export function UiFeedbackHost() {
   }, [clearTimer, phase]);
 
   stopAndSaveRef.current = stopAndSave;
+
+  useEffect(() => {
+    const stopAsked = () => {
+      if (audio.current) void stopAndSaveRef.current();
+    };
+    window.addEventListener(TALK_STOP_EVENT, stopAsked);
+    return () => window.removeEventListener(TALK_STOP_EVENT, stopAsked);
+  }, []);
 
   useEffect(() => () => {
     generation.current += 1;

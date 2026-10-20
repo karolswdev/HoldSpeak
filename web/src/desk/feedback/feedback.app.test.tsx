@@ -84,6 +84,7 @@ vi.mock("./capture", async () => {
 });
 
 import { UiFeedbackHost } from "./UiFeedbackHost";
+import { TALK_STOP_EVENT } from "../components/MicButton";
 import {
   hydrateUiFeedback,
   resetUiFeedbackRuntimeForTests,
@@ -210,6 +211,30 @@ describe("local UI feedback", () => {
     expect(mocks.captureWindowPng.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.startFeedbackAudio.mock.invocationCallOrder[0],
     );
+    view.unmount();
+  });
+
+  it("stops and saves the feedback recording through the desk Stop event", async () => {
+    const recording = session();
+    mocks.startFeedbackAudio.mockResolvedValueOnce(recording);
+    mocks.apiFetch.mockImplementation(async (path: string) =>
+      path === "/api/ui-feedback/status" ? statusEnabled : saveSuccess,
+    );
+    const view = deskFace();
+    await startPicker();
+    await selectAction(view.action);
+    act(() => window.dispatchEvent(new Event(TALK_STOP_EVENT)));
+    await screen.findByText("SAVED");
+
+    expect(recording.stop).toHaveBeenCalledTimes(1);
+    expect(mocks.apiFetch).toHaveBeenCalledWith("/api/ui-feedback", expect.objectContaining({
+      method: "POST",
+      json: expect.objectContaining({
+        id: expect.stringMatching(/^[a-f0-9]{32}$/),
+        screenshot_base64: "PNG_BYTES",
+        audio_base64: expect.any(String),
+      }),
+    }));
     view.unmount();
   });
 

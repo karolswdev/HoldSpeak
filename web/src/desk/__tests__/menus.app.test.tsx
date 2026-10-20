@@ -345,7 +345,8 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
     const fromManifest = GO_GROUPS.flatMap(goRows).length;
     // Daily: Today, Needs you, Capture, Projects ▸ and six applications
     // (daily D5 retired Brief and The week into Today; P4 added Decisions).
-    expect(fromManifest).toBe(10 + 4 + 8);
+    // Work declares five rows, including the opt-in feedback verb.
+    expect(fromManifest).toBe(10 + 5 + 8);
   });
 
   // Betterment P4 (projects): Projects and Decisions are one press from Go,

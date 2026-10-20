@@ -160,8 +160,8 @@ def _read_saved_report(
     return report
 
 
-def _save_feedback(page: Any, width: int, *, shot_stem: str, window_id: str, draft: str | None) -> dict[str, Any]:
-    stop = page.locator("[data-ui-feedback]").get_by_role("button", name="Stop and save", exact=True)
+def _save_feedback(page: Any, width: int, *, shot_stem: str, window_id: str, draft: str | None, global_stop: bool = False) -> dict[str, Any]:
+    stop = page.get_by_test_id("desk-mic-lamp-stop") if global_stop else page.locator("[data-ui-feedback]").get_by_role("button", name="Stop and save", exact=True)
     page.screenshot(path=str(SHOTS / f"{shot_stem}-{width}-recording.png"))
     metrics = page.evaluate(_MEASURE, page.evaluate(_FAINT_JS))
     for key in ("small", "contrast"):
@@ -252,7 +252,7 @@ def test_real_feedback_selection_capture_and_second_report(feedback_page: Any) -
     before = target.is_checked()
     _start_feedback(page, width, target, again=True)
     assert target.is_checked() is before, "second selection activated the selected control"
-    second = _save_feedback(page, width, shot_stem="feedback-second", window_id=window_id, draft=draft)
+    second = _save_feedback(page, width, shot_stem="feedback-second", window_id=window_id, draft=draft, global_stop=True)
 
     assert first["id"] != second["id"], (first["id"], second["id"])
     assert first["context"]["owner"]["window_id"] == second["context"]["owner"]["window_id"] == window_id
