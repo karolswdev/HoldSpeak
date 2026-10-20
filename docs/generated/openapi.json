@@ -7209,6 +7209,44 @@
         "summary": "Api Factory Spawn"
       }
     },
+    "/api/coders/own-agents": {
+      "get": {
+        "description": "Read Claude Code and Codex processes the owner started by hand.\n\nThe reader is local and read-only.  It never creates a flight or a\nWorkAttempt; registered HoldSpeak launches are filtered at the pane\nboundary inside ``agent_context.own_agents``.",
+        "operationId": "api_coders_own_agents_api_coders_own_agents_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Coders Own Agents Api Coders Own Agents Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Coders Own Agents"
+      }
+    },
+    "/api/coders/own-agents/answer": {
+      "post": {
+        "description": "Answer one owner-started pane after a fresh prompt read.",
+        "operationId": "api_coders_own_agent_answer_api_coders_own_agents_answer_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Coders Own Agent Answer Api Coders Own Agents Answer Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Coders Own Agent Answer"
+      }
+    },
     "/api/coders/pin": {
       "post": {
         "description": "Pin or unpin a waiting session as the sticky reply target.",

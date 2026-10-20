@@ -820,7 +820,7 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "calendar.open_settings",
         # Betterment ST8: the owner's press starts native provider sign-in (HTTP only).
         "connection.signin",
-        "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",
+        "setup.found", "setup.status", "setup.use", "setup.people.add", "setup.lan.scan",
         # PHILO-15 16: the owner names a Project's repository (HTTP only).
         "project.repository.register",
         # Conductor K2: Hand to agent.

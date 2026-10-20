@@ -825,7 +825,7 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
     mcp_blocking = {n for n in blocking if any(e.startswith("mcp:") for e in by_name[n].exposure)}
     assert mcp_blocking == blocking - {"channel.save_email_key", "channel.save_slack_webhook",
                                         "agent_hooks.install", "agent_hooks.remove", "connection.signin",
-                                        "setup.use", "setup.lan.scan"}
+                                        "setup.lan.scan"}
     assert all(name in TOOL_AUTHORITY for name in mcp_blocking), mcp_blocking - set(TOOL_AUTHORITY)
     key = by_name["channel.save_email_key"]
     assert key.owner_press and key.owner_only and key.held == ("api_key",) and "channel.save_email_key" not in TOOL_AUTHORITY

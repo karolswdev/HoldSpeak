@@ -44,8 +44,9 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
     # Conductor K2's one (agent.hand), then Conductor R7's (people_access.set),
     # then PHILO-16 16b's six (the desk's windows), then PHILO-17's
     # meeting.transcribe, then Betterment Q9's five (Find the tasks).
-    assert len(gw.OP_MCP_PROJECTIONS) == 113
+    assert len(gw.OP_MCP_PROJECTIONS) == 115
     assert set(gw.OP_MCP_PROJECTIONS) == {
+        "setup.status", "setup.use",
         "decision.create", "decision.update", "decision.read", "decision.list",
         "meeting.list", "meeting.read", "meeting.import", "meeting.transcribe", "meeting.summary.run",
         "brief.generate", "brief.latest", "brief.shelf.write", "brief.shelf.read",
@@ -81,7 +82,7 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
                                "project.door.count", "project.watch.update", "project.watch.baseline",
                                "channel.save_email_key", "channel.save_slack_webhook",
                                "agent_hooks.install", "agent_hooks.remove", "calendar.open_settings", "connection.signin",
-                               "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",
+                               "setup.found", "setup.people.add", "setup.lan.scan",
                                "project.repository.register",
                                # Betterment capture C5b: Prepare… / Write again (HTTP only).
                                "meeting.result.prepare"}

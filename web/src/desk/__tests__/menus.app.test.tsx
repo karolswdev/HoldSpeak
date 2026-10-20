@@ -67,7 +67,8 @@ afterEach(() => {
 });
 
 describe.each([[1440, false], [393, true]] as const)("the HoldSpeak menu at %i", (_width, isPhone) => {
-  it("has setup rows only; each row opens its own application", async () => {
+  it("opens each setup application from the HoldSpeak menu", async () => {
+    // replaces: tests/e2e/test_philo17_doors_glass.py::TestDoors::test_one_door_per_application (D2 "the HoldSpeak menu is Refresh + the four setup rows"; D4 "393 the HoldSpeak menu is the setup rows"; D3 the HoldSpeak doors' scopes)
     phone(isPhone);
     const opened: Array<[string, string | undefined]> = [];
     const offs = ["configure-settings", "configure-runs-on", "configure-integrations", "configure-setup"]
@@ -80,11 +81,10 @@ describe.each([[1440, false], [393, true]] as const)("the HoldSpeak menu at %i",
       const menu = screen.queryByRole("menu", { name: "HoldSpeak" }) ?? openMark();
       fireEvent.click(within(menu).getByRole("menuitem", { name: new RegExp(`^${row}`) }));
     }
-    // Betterment shell S1: Engines and Accounts open their Settings wings
-    // (the Settings wing verbs), never the parked surfaces.
+    // ST7: Engines has its own host; Accounts remains a Settings section.
     expect(opened).toEqual([
       ["configure-settings", undefined],
-      ["configure-settings", "models"],
+      ["configure-runs-on", undefined],
       ["configure-settings", "integrations"],
       ["configure-settings", "wallpaper"],
       ["configure-setup", undefined],

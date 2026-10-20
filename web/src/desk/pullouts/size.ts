@@ -23,5 +23,5 @@ export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
   room: { w: 760, h: 480 },
   // Settings is hosted by SurfaceWindows, but stays in this table so the
   // first-open matrix has one source of truth for every desk room.
-  settings: { w: 640, h: 600 },
+  settings: { w: 1040, h: 720 },
 };

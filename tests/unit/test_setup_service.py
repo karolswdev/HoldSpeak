@@ -177,28 +177,48 @@ def test_found_on_empty_mac_keeps_speech_found_and_missing_integrations_truthful
     assert rows["agents:not-found"]["state"] == "does_not_work"
 
 
+def test_use_all_reads_a_fresh_inventory_keeps_failures_and_continues(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    service, defaults, _people = _service(tmp_path, monkeypatch)
+    monkeypatch.setattr(service, "found", lambda _principal: {
+        "rows": [
+            {"id": "unknown", "label": "First", "state": "found", "action": "unknown", "payload": {"ignored": True}},
+            {"id": "engine:small", "label": "Second", "state": "found", "action": "engine", "payload": {}},
+        ],
+    })
 
-def test_setup_rows_are_declared_on_the_shared_http_contract_only() -> None:
+    answer = service.use_row(OWNER, "all", {"rows": [{"id": "caller-controlled"}]})
+
+    assert answer["state"] == "does_not_work"
+    assert [item["id"] for item in answer["results"]] == ["unknown", "engine:small"]
+    assert answer["results"][0]["state"] == "does_not_work"
+    assert answer["results"][1]["state"] == "works"
+    assert defaults.used == ["small"]
+
+
+
+def test_setup_rows_are_declared_on_the_shared_contract() -> None:
     from holdspeak import operations
 
     expected = {
-        "setup.found": ("read", False, False, "found"),
-        "setup.use": ("write", True, True, "use_row"),
-        "setup.people.add": ("write", True, False, "add_people"),
-        "setup.lan.scan": ("read", True, True, "scan_lan"),
+        "setup.found": ("read", False, False, "found", True),
+        "setup.status": ("read", False, False, "found", False),
+        "setup.use": ("write", True, True, "use_row", True),
+        "setup.people.add": ("write", True, False, "add_people", True),
+        "setup.lan.scan": ("read", True, True, "scan_lan", True),
     }
     by_name = {descriptor.name: descriptor for descriptor in operations.DESCRIPTORS}
-    for name, (effect, owner_press, blocking_io, method) in expected.items():
+    for name, (effect, owner_press, blocking_io, method, owner_only) in expected.items():
         descriptor = by_name[name]
         assert descriptor.effect == effect
-        assert descriptor.owner_only is True
+        assert descriptor.owner_only is owner_only
         assert descriptor.owner_press is owner_press
         assert descriptor.blocking_io is blocking_io
         assert descriptor.method == method
-        assert all(not exposure.startswith("mcp:") for exposure in descriptor.exposure)
+    assert "mcp:setup.status" in by_name["setup.status"].exposure
+    assert "mcp:setup.use" in by_name["setup.use"].exposure
 
 
-def test_setup_contract_binds_all_four_calls_to_one_service_instance() -> None:
+def test_setup_contract_binds_all_calls_to_one_service_instance() -> None:
     from holdspeak import operations
 
     class FakeSetup:
@@ -210,6 +230,24 @@ def test_setup_contract_binds_all_four_calls_to_one_service_instance() -> None:
     target = FakeSetup()
     registry = operations.bind_available({"setup_service": target})
     assert {name for name in registry.operations if name.startswith("setup.")} == {
-        "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",
+        "setup.found", "setup.status", "setup.use", "setup.people.add", "setup.lan.scan",
     }
     assert all(registry.target(name) is target for name in registry.operations if name.startswith("setup."))
+
+
+def test_setup_status_is_readable_by_an_agent_but_use_stays_owner_press() -> None:
+    from holdspeak import operations
+    from holdspeak.operations import OperationOwnerRequired
+
+    class FakeSetup:
+        def found(self, principal): return {"rows": [], "principal": principal.kind.value}
+        def use_row(self, principal, id, payload=None): return {"id": id}
+        def add_people(self, principal, names): return {"relationships": []}
+        def scan_lan(self, principal): return {"rows": [], "checkedAt": "now"}
+
+    registry = operations.bind_available({"setup_service": FakeSetup()})
+    agent = Principal(PrincipalKind.AGENT, "agent")
+
+    assert registry.invoke(agent, "setup.status", {})["principal"] == "agent"
+    with pytest.raises(OperationOwnerRequired):
+        registry.invoke(agent, "setup.use", {"id": "all"})

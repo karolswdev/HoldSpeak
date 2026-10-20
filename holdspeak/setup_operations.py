@@ -1,17 +1,20 @@
 """The ST3-ST5 Setup rows on the application-operation contract.
 
-These operations are HTTP-only until ST9.  The descriptors still live on the
-shared contract now so the Setup window and the later CLI/MCP transport cannot
-grow a second write path.
+The Setup window, CLI and MCP all reach these descriptors so they cannot grow
+second inventory or adoption paths.
 """
 from __future__ import annotations
 
 from holdspeak.operations import _CONTRACT_REFUSALS, Admission, OperationDescriptor
 
 
-_PRINCIPAL = "derived by the transport (the HTTP auth middleware); owner only"
+_PRINCIPAL = "derived by the transport; owner only"
 _SETUP_REFUSALS = _CONTRACT_REFUSALS + (
     "owner_required",
+    "setup_unavailable",
+    "people_unavailable",
+)
+_SETUP_STATUS_REFUSALS = _CONTRACT_REFUSALS + (
     "setup_unavailable",
     "people_unavailable",
 )
@@ -35,10 +38,28 @@ SETUP_FOUND = OperationDescriptor(
 )
 
 
+SETUP_STATUS = OperationDescriptor(
+    name="setup.status",
+    version=1,
+    description="Read the local Setup inventory: the same rows HoldSpeak shows in Setup.",
+    args_schema={"type": "object", "properties": {}, "additionalProperties": False},
+    principal="derived by the transport; owner or agent",
+    effect="read",
+    result="{rows, owner_name, people, suggestions, first_run}; rows carry the shared Setup fields id, kind, label, detail, state, reason, egress_host, verb, action and payload",
+    refusals=_SETUP_STATUS_REFUSALS,
+    completion="synchronous; reads the existing local Setup producers",
+    exposure=("mcp:setup.status",),
+    service="setup_service",
+    method="found",
+    owner_only=False,
+    admission=Admission("exempt", "A local Setup read; it changes no state and performs no network scan."),
+)
+
+
 SETUP_USE = OperationDescriptor(
     name="setup.use",
     version=1,
-    description="Use one found Setup row. The row's producer reports Works, Working or a named failure.",
+    description="Use one found Setup row, or all actionable rows in the current Setup order. Each outcome remains visible.",
     args_schema={
         "type": "object",
         "properties": {
@@ -50,10 +71,10 @@ SETUP_USE = OperationDescriptor(
     },
     principal=_PRINCIPAL,
     effect="write",
-    result="the producer's result for the row",
+    result="{state, success, count, results} when id is all; otherwise the selected producer result",
     refusals=_SETUP_REFUSALS + ("NotFound: unknown Setup row",),
     completion="synchronous or producer-pending; the Setup read reports the durable result",
-    exposure=("http:POST /api/setup/use",),
+    exposure=("http:POST /api/setup/use", "mcp:setup.use"),
     service="setup_service",
     method="use_row",
     owner_only=True,
@@ -116,6 +137,7 @@ SETUP_LAN_SCAN = OperationDescriptor(
 
 SETUP_OPERATIONS: tuple[OperationDescriptor, ...] = (
     SETUP_FOUND,
+    SETUP_STATUS,
     SETUP_USE,
     SETUP_PEOPLE_ADD,
     SETUP_LAN_SCAN,
