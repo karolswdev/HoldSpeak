@@ -15,6 +15,7 @@ import { useDesk } from "../../store";
 import { DrawerWindow } from "../../drawer/DrawerWindow";
 import { useDrawers } from "../../drawer/store";
 import { Screen } from "../../screen/Screen";
+import { Dock } from "../../components/window/Dock";
 import { resetScreenMembers } from "../../screen/members";
 import { HandSheet, type HandPreview } from "../../components/HandSheet";
 import { DragLayer, useDropHand, agentOfTarget, handOriginOfRef } from "..";
@@ -153,6 +154,7 @@ async function renderDesk() {
   const view = render(
     <>
       <Screen />
+      <Dock />
       <DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />
       <DragLayer />
     </>,
@@ -162,7 +164,7 @@ async function renderDesk() {
 }
 
 const comms = () => screen.getByRole("button", { name: /^Write the cutover comms, ACTION ITEM/ });
-const conductor = () => screen.getByRole("button", { name: /^Agents, DRAWER/ });
+const conductor = () => screen.getByRole("button", { name: /^Agents(?:,|$)/ });
 const drawer = () => document.querySelector<HTMLElement>(".drawer-window")!;
 
 /** Lift `source`, move the pointer, hover `target` and let go on it. */
@@ -248,11 +250,13 @@ describe("PHILO-14 C3 the drag", () => {
 
   it("a drop on a non-target does nothing: the ghost goes, no read, no line", async () => {
     await renderDesk();
-    dragOnto(comms(), screen.getByRole("button", { name: /^People, DRAWER/ }));
+    const reads = () => world.calls.filter((c) => c.url.startsWith("/api/authority") || c.url.startsWith("/api/agent"));
+    const before = reads().length;
+    dragOnto(comms(), screen.getByRole("button", { name: /^People(?:,|$)/ }));
     expect(document.querySelector(".drag-ghost")).toBeNull();
     expect(comms()).not.toHaveAttribute("data-ghost");
     await act(async () => undefined);
-    expect(world.calls.filter((c) => c.url.startsWith("/api/authority") || c.url.startsWith("/api/agent"))).toEqual([]);
+    expect(reads()).toHaveLength(before);
     expect(screen.queryByTestId("hand-confirm")).toBeNull();
   });
 });
@@ -364,6 +368,7 @@ describe("PHILO-14 C3 Astra r1 on #946", () => {
     render(
       <>
         <Screen />
+        <Dock />
         <DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />
         <HandSheet />
       </>,

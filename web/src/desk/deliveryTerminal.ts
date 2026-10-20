@@ -32,6 +32,8 @@ export interface OpenTarget {
   sessionLabel: string;
   worktreeId: string | null;
   agent: string;
+  /** A pane that is rendered inside its source row instead of as a pullout. */
+  presentation?: "embedded" | "window";
 }
 
 /** The identity two handles are compared by — a change in node OR target OR
@@ -182,7 +184,11 @@ async function submitCommand(
       target_generation: target.targetGeneration,
     },
     operation: { family: "coder_steering", verb },
-    payload,
+    payload: {
+      session_key: target.sessionLabel,
+      agent: target.agent,
+      ...payload,
+    },
   };
   try {
     const res = await apiRequest("/api/delivery/terminal/commands", {

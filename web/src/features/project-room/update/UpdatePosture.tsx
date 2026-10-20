@@ -267,7 +267,7 @@ function RenderedUpdateDocument({
 
       {/* D6: source rows per section (CitationChips grammar, deduplicated) */}
       {sectionOrder.length > 0 ? (
-        <SurfaceSection label="SOURCES">
+        <SurfaceSection label={update.generator.startsWith("agent:") ? "LOOKED AT" : "SOURCES"}>
           <div data-testid="update-sources">
             {sectionOrder.map((section) => (
               <SectionSourceRow

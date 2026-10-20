@@ -44,7 +44,7 @@ describe.each(["codex", "claude"] as const)("a %s agent keeps its face on every 
     // The Agents list is the fleet: the agent shows in the Agents drawer
     // (its count) and on its Dock tile, never as its own desk icon.
     expect(objects.find((x) => x.key === `coder:${agent}:s1`)).toBeUndefined();
-    expect(objects.find((x) => x.key === "drawer:conductor")?.count).toBe(1);
+    expect(objects.find((x) => x.key === "drawer:conductor")).toBeUndefined();
   });
 
   it("a Project drawer's members", () => {

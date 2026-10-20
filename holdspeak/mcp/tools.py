@@ -30,6 +30,7 @@ from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.scheduled_recording_service import ScheduledRecordingService
 from holdspeak.services.workbench_service import WorkbenchService
+from holdspeak.services import meeting_transcriber
 
 PRIMITIVE_KINDS = ("notes", "decisions", "kbs", "directories", "workflows", "chains")
 _KIND_ALIASES = {kind: kind[:-1] if kind.endswith("s") else kind for kind in PRIMITIVE_KINDS}
@@ -241,7 +242,7 @@ _WORKBENCH_FIELDS_SCHEMA: dict[str, Any] = {
         "item_order": {"type": "array", "items": {"type": "string"}},
         "instruction": {"type": "string", "description": "The Do text. With it, each run makes one result; empty keeps the item queue."},
         "sources": {"type": "array", "items": {"type": "string"}, "description": "Refs the run reads, for example note:<id>, meeting:<id>, zone:<id> (a drawer), person:<id>, or a set: meetings:this_week, notes:this_week."},
-        "output_target": {"type": "string", "description": "Where a result goes: inbox (default), needs_you, or destination:<id> (prepared only; the owner presses Send)."},
+        "output_target": {"type": "string", "description": "Where a result goes: inbox (default), needs_you, today, project_updates:<project_id>, or destination:<id> (prepared only; the owner presses Send)."},
     },
     "additionalProperties": False,
 }
@@ -913,8 +914,6 @@ def _meeting_import(registry: operations.OperationRegistry, meetings: Any, princ
 
     from holdspeak.config import Config
     from holdspeak.services.errors import ValidationError
-    from holdspeak.web.routes import meeting_import as import_route
-
     # r2 (Astra's check on built, finding 1): the owner boundary comes FIRST.
     # A non-owner principal (a remote DESK credential, any agent or node) is
     # refused with owner_required before the path is looked at, opened or copied.
@@ -946,7 +945,7 @@ def _meeting_import(registry: operations.OperationRegistry, meetings: Any, princ
         result = registry.invoke(principal, "meeting.import", arguments, held={
             "tmp_path": held_path,
             "config": Config.load(),
-            "transcriber_factory": import_route._transcriber_factory,
+            "transcriber_factory": meeting_transcriber.default_transcriber_factory,
         })
     except Exception:
         held_path.unlink(missing_ok=True)
@@ -1191,11 +1190,9 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         return _meeting_import(ops(), meetings, principal, args)
     if name == "meeting.transcribe":
         from holdspeak.config import Config
-        from holdspeak.web.routes import meeting_import as import_route
-
         return ops().invoke(principal, "meeting.transcribe", {"meeting_id": str(args.get("meeting_id") or "")}, held={
             "config": Config.load(),
-            "transcriber_factory": import_route._frozen_transcriber_factory,
+            "transcriber_factory": meeting_transcriber.frozen_transcriber_factory,
         })
     if name == "meeting.start_capture":
         config = args.get("config")

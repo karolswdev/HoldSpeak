@@ -18,7 +18,10 @@ function walk(dir: string): string[] {
   for (const entry of readdirSync(dir)) {
     const full = path.join(dir, entry);
     const s = statSync(full);
-    if (s.isDirectory()) out.push(...walk(full));
+    if (s.isDirectory()) {
+      // Parked source is retained history, never an active settings writer.
+      if (entry !== "_parked") out.push(...walk(full));
+    }
     else if (/\.(ts|tsx)$/.test(entry) && !/\.test\.tsx?$/.test(entry))
       out.push(full);
   }

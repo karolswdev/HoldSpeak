@@ -202,6 +202,9 @@
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
+  /* The live note can overhang the adjacent Speak tile. It is a fact label,
+     not a door, so it must never steal the tile's 44 px hit area. */
+  pointer-events: none;
 }
 /* ══ PHILO-13-13 C3-W — the AppIcons and their live state (C1-1, C1-8a–c) ══
    An AppIcon is the 24 px sprite over its name (12 px mono ink). States are
@@ -384,6 +387,13 @@
 }
 /* an icon with a tag is wide enough for it; with a tag and a count, the
    tag takes the top left and the count the top right (never one box) */
+/* Reserve the tag's width before its async read completes. A late 1:1 or
+   recording fact must not move the next app under the owner's pointer. */
+@media (min-width: 721px) {
+  .desk-next .desk-dock-app:is([data-app="surface-meetings"], [data-app="surface-people"]) {
+    min-width: 104px;
+  }
+}
 .desk-next .desk-dock-launch:has(.desk-dock-state) {
   min-width: 104px;
 }
@@ -497,16 +507,13 @@
 .desk-next .desk-dock-state-short {
   display: none;
 }
-/* More AppIcons is the phone's gadget only */
+/* The phone projection fits its five manifest doors without a paging gadget. */
 .desk-next .desk-dock-more {
   display: none;
 }
 
-/* ══ 393: the shelf shows the daily seats first (Intelligence, Meetings,
-   People, Speak), each 85 px, ends on a whole icon, and a 48 px More
-   AppIcons gadget at the right edge moves one page. The projects follow
-   behind More. The name goes to the accessible name; the picture and the
-   state stay. ══ */
+/* ══ 393: the shelf shows the five manifest phone doors. Each tile is 76 px
+   wide, keeps its 12 px word, and owns a 44 px strip row. ══ */
 @media (max-width: 720px) {
   :root {
     --desk-snap-bottom: 56px;
@@ -540,15 +547,14 @@
   .desk-next:has(> .desk-receipt-row) .desk-window-shell.is-sheet {
     top: calc(var(--desk-work-top) + var(--desk-receipt-row-h, 0px) + var(--space-2));
   }
-  /* HS-202-02 — the dock is the phone's ONLY persistent door, and the
-     Record orb rides it. It lays out FOR the phone: pinned to both edges,
+  /* HS-202-02 — the dock is the phone's ONLY persistent door. The desktop
+     Record orb leaves this projection. It lays out FOR the phone: pinned to both edges,
      it never runs past the viewport (it ran 410px past its right edge),
      and it keeps the shell layer so a sheet never buries its buttons
      (03-interaction-walk.md finding 1).
      PHILO-13-11 (C1, R2): it no longer wraps. The shelf is ONE 56 px row so
      the window above keeps ≥ 700 px of content; a full shelf scrolls
-     inside itself (the Dock is the one strip allowed to; its More gadget
-     is C3/C7). */
+     inside itself when a minimized window adds a seat. */
   .desk-next .desk-dock {
     left: 0;
     right: 0;
@@ -566,7 +572,7 @@
        icon before it there (STATUS: "a 5 px strip of the next page"). */
     padding: 0 0 env(safe-area-inset-bottom, 0px) 0;
     z-index: var(--desk-z-dock);
-    /* C3-W: the shelf snaps to whole icons; More AppIcons pages it */
+    /* C3-W: the shelf snaps to whole manifest tiles. */
     scroll-snap-type: x mandatory;
     scroll-padding-left: 4px;
     scrollbar-width: none;
@@ -575,7 +581,7 @@
     flex-shrink: 0;
   }
   /* HS-202-02: the Chair keeps its own hands clear of the dock. The
-     phone dock wraps, so it is taller than the 52px the desktop work
+     phone dock keeps its measured height, so the work
      band reserves, and the arrival's capture bar sat UNDER it (caught by
      tests/e2e/test_hs141_chair_geometry.py). The work-band token is a
      shell-wide invariant and is left alone; the Chair pads itself by the
@@ -587,11 +593,10 @@
         max(0px, var(--desk-dock-h, var(--desk-snap-bottom)) - var(--desk-snap-bottom))
     );
   }
-  /* Icon-only at phone width. Every launcher already carries an
-     `aria-label`, so the name stays in the accessibility tree while the
-     printed word folds away and eleven doors fit the screen. */
+  /* Phone labels are part of the door. The accessible name and the printed
+     word use the same manifest label. */
   .desk-next .desk-dock-launch .desk-dock-label {
-    display: none;
+    display: block;
   }
   .desk-next .desk-dock-launch {
     min-width: 44px;
@@ -614,9 +619,7 @@
      its 44px through the halo, and a CHROME Button is a strip row, so the
      strip owns its height. HS-202-02 paid the launchers and the chip
      close; measured on the live 393 desk, these were the rest of the dock:
-     the overview/reset keys at 22px, the Record orb at 40px, and the Room
-     verbs at 36px (plated, but they ride this strip, and real geometry
-     composes with a halo rather than arguing with it).
+     the manifest tiles own the strip's 44px reach.
      Height and hit box only — the printed face, the sprites and the
      1440 dock are untouched (this block is phone-only). */
   .desk-next .desk-dock-reset {
@@ -650,10 +653,10 @@
   .desk-next .desk-dock > .desk-dock-launch,
   .desk-next .desk-dock > .desk-dock-launch:has(.desk-dock-state),
   .desk-next .desk-dock > .desk-dock-launch:has(.desk-dock-state):has(.desk-dock-badge) {
-    width: 85px;
-    min-width: 85px;
-    max-width: 85px;
-    height: 54px;
+    width: 76px;
+    min-width: 76px;
+    max-width: 76px;
+    height: 56px;
     min-height: 44px;
     grid-template-rows: 34px;
     padding: 1px 2px;
@@ -664,9 +667,10 @@
      which would push the tag off the left edge: no snap while offline */
   .desk-next .desk-dock:has(> .desk-dock-offline) { scroll-snap-type: none; }
   .desk-next .desk-dock > [data-app="intelligence:desk"] { order: 1; }
-  .desk-next .desk-dock > [data-app="surface-meetings"] { order: 2; }
-  .desk-next .desk-dock > [data-app="surface-people"] { order: 3; }
-  .desk-next .desk-dock > [data-app="surface-dictation"] { order: 4; }
+  .desk-next .desk-dock > [data-app="chair:capture"] { order: 2; }
+  .desk-next .desk-dock > [data-app="surface-meetings"] { order: 3; }
+  .desk-next .desk-dock > [data-app="surface-people"] { order: 4; }
+  .desk-next .desk-dock > [data-app="conductor"] { order: 5; }
   .desk-next .desk-dock > .desk-dock-project { order: 6; }
   /* the tag rides the icon's foot and reads short; the count keeps the top right */
   .desk-next .desk-dock-launch .desk-dock-state,
@@ -762,3 +766,20 @@
 .desk-next .desk-dock-launch .desk-dock-fleet[data-tone="ask"] { background: var(--lamp-ask); }
 .desk-next .desk-dock-launch .desk-dock-fleet[data-tone="new"] { background: var(--lamp-ok); }
 .desk-next .desk-dock-launch .desk-dock-fleet[data-tone="work"] { background: var(--lamp-info); }
+.desk-next .desk-dock-launch .desk-dock-mic-lamp {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--wb-ink);
+  border-radius: 50%;
+  background: var(--lamp-ok);
+}
+
+/* The Agents AppIcon keeps the existing handoff target after the Floor
+   duplicate retires. The outline follows the shared drag state. */
+.desk-dock-app[data-drop="true"] {
+  outline: 2px dotted currentColor;
+  outline-offset: -3px;
+}

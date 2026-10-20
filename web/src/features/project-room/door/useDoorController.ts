@@ -14,7 +14,7 @@ import {
 import { discoverGitHub, discoverJira, discoverConfluence } from "./api";
 import * as doorApi from "./api";
 import { registerProjectRepository } from "../../../desk/projectRepository";
-import type { CountToken, PreviewResponse } from "./api";
+import type { CountToken, FoundLinkResult, PreviewFoundItem, PreviewResponse } from "./api";
 
 /* ── Default watch toggles per provider ── */
 
@@ -163,6 +163,8 @@ export interface DoorController {
   previewSources: () => void;
   removeFound: (id: string) => void;
   selectAllFound: () => void;
+  retryFound: (id: string) => void;
+  retryingFoundId: string | null;
   sources: SourceRow[];
   creating: boolean;
   error: string;
@@ -203,6 +205,8 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
   const [sourcePaste, setSourcePaste] = useState("");
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
   const [previewing, setPreviewing] = useState(false);
+  const [pendingProjectId, setPendingProjectId] = useState<string | null>(null);
+  const [retryingFoundId, setRetryingFoundId] = useState<string | null>(null);
   const [tools, setTools] = useState<ConnectionTool[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [sources, setSources] = useState<SourceRow[]>([]);
@@ -618,14 +622,66 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
 
   const selectAllFound = useCallback(() => {
     setPreview((prev) => prev
-      ? { ...prev, found: prev.found.map((item) => ({ ...item, selected: true })) }
+      ? { ...prev, found: prev.found.map((item) => item.linkState === "linked" ? item : { ...item, selected: true }) }
       : prev);
   }, []);
+
+  const applyFoundResults = useCallback(
+    (
+      current: PreviewFoundItem[],
+      submitted: PreviewFoundItem[],
+      results: FoundLinkResult[],
+    ): { next: PreviewFoundItem[]; failed: PreviewFoundItem[] } => {
+      const submittedKeys = new Set(submitted.map((item) => `${item.kind}:${item.id}`));
+      const resultByKey = new Map(results.map((result) => [`${result.kind}:${result.id}`, result]));
+      const next = current.map((item) => {
+        const key = `${item.kind}:${item.id}`;
+        if (!submittedKeys.has(key)) return item;
+        if (!results.length) {
+          return {
+            ...item,
+            selected: true,
+            linkState: "failed" as const,
+            linkError: "Link not confirmed",
+          };
+        }
+        const result = resultByKey.get(key);
+        if (result?.state === "linked") {
+          return { ...item, selected: false, linkState: "linked" as const, linkError: null };
+        }
+        return {
+          ...item,
+          selected: true,
+          linkState: "failed" as const,
+          linkError: result?.error || "Link not confirmed",
+        };
+      });
+      return {
+        next,
+        failed: next.filter((item) => submittedKeys.has(`${item.kind}:${item.id}`) && item.selected && item.linkState === "failed"),
+      };
+    },
+    [],
+  );
 
   /* ── Create ── */
 
   const create = useCallback(async () => {
     if (!projectId && !outcome.trim()) return;
+    if (pendingProjectId) {
+      const outstanding = preview?.found.filter((item) => item.selected && item.linkState === "failed") ?? [];
+      if (outstanding.length) {
+        setError("Retry failed matches");
+        return;
+      }
+      if (projectId) {
+        options.onAdded?.();
+        return;
+      }
+      openSurface("open-project-memory", `project:${pendingProjectId}`);
+      useDesk.getState().closeSurfaceWindow("surface-project-setup");
+      return;
+    }
     setCreating(true);
     setError("");
     try {
@@ -655,9 +711,30 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
           test_state: source.state === "checked" ? "passed" : "not_checked",
         });
       }
+      const chosenFound = preview?.found.filter((item) => item.selected) ?? [];
+      const found = chosenFound.length
+        ? {
+            meeting_ids: chosenFound.filter((item) => item.kind === "meeting").map((item) => item.id),
+            note_ids: chosenFound.filter((item) => item.kind === "note").map((item) => item.id),
+          }
+        : undefined;
       if (projectId) {
         // PHILO-17 U10: the rows join this project; the rows clear for the next one.
-        await doorApi.doorAddSources(projectId, payloads);
+        const resp = found
+          ? await doorApi.doorAddSources(projectId, payloads, found)
+          : await doorApi.doorAddSources(projectId, payloads);
+        if (found) {
+          const submitted = preview?.found.filter((item) => item.selected) ?? [];
+          const applied = applyFoundResults(preview?.found ?? [], submitted, resp.found ?? []);
+          safe(() => {
+            setPreview((prev) => prev ? { ...prev, found: applied.next } : prev);
+            setPendingProjectId(projectId);
+          });
+          if (applied.failed.length) {
+            safe(() => setCreating(false));
+            return;
+          }
+        }
         safe(() => {
           setCreating(false);
           setSources((prev) => prev.map((r) => ({
@@ -668,23 +745,29 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
         });
         return;
       }
-      const chosenFound = preview?.found.filter((item) => item.selected) ?? [];
-      const found = chosenFound.length
-        ? {
-            meeting_ids: chosenFound.filter((item) => item.kind === "meeting").map((item) => item.id),
-            note_ids: chosenFound.filter((item) => item.kind === "note").map((item) => item.id),
-          }
-        : undefined;
       const resp = found
         ? await doorApi.doorCreate(outcome.trim(), payloads, found)
         : await doorApi.doorCreate(outcome.trim(), payloads);
       // PHILO-15 16 (B38): the GitHub row's repository is the Project's
       // repository (owner-only, one receipt; the first hand clones it). A
       // register that fails leaves the drawer's Register verb, never a dead
-      // NO REPOSITORY.
+      // NO REPOSITORY. Register before a partial material result leaves the
+      // Door open for Retry; the project already exists at this point.
       const repository = payloads.find((p) => p.provider === "github" && typeof p.scope === "string")?.scope;
       if (resp.projectId && typeof repository === "string" && repository) {
         await registerProjectRepository(resp.projectId, repository).catch(() => null);
+      }
+      if (found) {
+        const submitted = preview?.found.filter((item) => item.selected) ?? [];
+        const applied = applyFoundResults(preview?.found ?? [], submitted, resp.found ?? []);
+        safe(() => {
+          setPreview((prev) => prev ? { ...prev, found: applied.next } : prev);
+          setPendingProjectId(resp.projectId || null);
+        });
+        if (applied.failed.length) {
+          safe(() => setCreating(false));
+          return;
+        }
       }
       safe(() => {
         setCreating(false);
@@ -698,7 +781,46 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
         setError(readableError(err));
       });
     }
-  }, [outcome, sources, projectId, preview]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [outcome, sources, projectId, preview, pendingProjectId, applyFoundResults]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const retryFound = useCallback(async (id: string) => {
+    const target = preview?.found.find((item) => item.id === id && item.selected && item.linkState === "failed");
+    if (!target || !pendingProjectId || retryingFoundId) return;
+    setRetryingFoundId(id);
+    setError("");
+    try {
+      const found = target.kind === "meeting"
+        ? { meeting_ids: [target.id], note_ids: [] }
+        : { meeting_ids: [], note_ids: [target.id] };
+      const response = await doorApi.doorAddSources(pendingProjectId, [], found);
+      const applied = applyFoundResults(preview?.found ?? [], [target], response.found ?? []);
+      safe(() => setPreview((prev) => prev ? { ...prev, found: applied.next } : prev));
+      const stillFailed = applied.next.some((item) => item.selected && item.linkState === "failed");
+      if (!stillFailed) {
+        safe(() => {
+          if (projectId) {
+            options.onAdded?.();
+          } else {
+            openSurface("open-project-memory", `project:${pendingProjectId}`);
+            useDesk.getState().closeSurfaceWindow("surface-project-setup");
+          }
+        });
+      }
+    } catch (err) {
+      safe(() => {
+        setPreview((prev) => prev
+          ? {
+              ...prev,
+              found: prev.found.map((item) => item.id === id
+                ? { ...item, selected: true, linkState: "failed" as const, linkError: readableError(err) }
+                : item),
+            }
+          : prev);
+      });
+    } finally {
+      safe(() => setRetryingFoundId(null));
+    }
+  }, [applyFoundResults, pendingProjectId, preview, projectId, retryingFoundId, safe]);
 
   /* ── Cancel ── */
 
@@ -720,6 +842,8 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
     previewSources: () => void previewSources(),
     removeFound,
     selectAllFound,
+    retryFound: (id: string) => void retryFound(id),
+    retryingFoundId,
     sources,
     loaded,
     creating,

@@ -29,7 +29,7 @@ vi.mock("../../useDeskChangedRefresh", () => ({
   },
 }));
 
-import { useNextOneOnOne } from "../nextOneOnOne";
+import { useNextOneOnOne, useNextOneOnOneRead } from "../nextOneOnOne";
 import { composeScreen, type ScreenInputs } from "../compose";
 import { DeskIcon } from "../../surface";
 import { EMPTY_ITEMS } from "../../api";
@@ -51,6 +51,22 @@ describe("the next 1:1 read (moved from the Dock)", () => {
     const { result } = renderHook(() => useNextOneOnOne());
     await waitFor(() => expect(result.current).toMatch(/^1:1 \d\d:\d\d$/));
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/people/relationships/r1/brief");
+  });
+
+  it.each([0, 1])("the Dock shows a 1:1 only on its local day (offset %i)", async (offset) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 3, 12));
+    try {
+      mocks.apiFetch.mockImplementation(async (path) => path.endsWith("/brief")
+        ? { brief: { next_one_on_one: new Date(2026, 9, 3 + offset, 15).toISOString() } }
+        : mocks.defaultApiFetch(path));
+      const { result } = renderHook(() => useNextOneOnOneRead(true));
+      await waitFor(() => expect(result.current.reading).toBe(false));
+      if (offset === 0) expect(result.current.label).toBe("1:1 15:00");
+      else expect(result.current.label).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("shows nothing when the People read fails", async () => {
@@ -102,7 +118,7 @@ describe("the next 1:1 read (moved from the Dock)", () => {
   });
 });
 
-describe("the People drawer wears it", () => {
+describe("the People caption belongs to the Dock", () => {
   const inputs = (peopleCaption: string | null): ScreenInputs => ({
     items: EMPTY_ITEMS,
     projectCounts: {},
@@ -117,11 +133,11 @@ describe("the People drawer wears it", () => {
     peopleCaption,
   });
 
-  it("puts the caption on the People drawer only, and nothing without a next 1:1", () => {
+  it("does not add a People drawer or caption to the Floor", () => {
     const withIt = composeScreen(inputs("1:1 15:00"));
-    expect(withIt.find((o) => o.key === "drawer:people")?.caption).toBe("1:1 15:00");
-    expect(withIt.filter((o) => o.caption).map((o) => o.key)).toEqual(["drawer:people"]);
-    expect(composeScreen(inputs(null)).find((o) => o.key === "drawer:people")?.caption).toBeUndefined();
+    expect(withIt.find((o) => o.key === "drawer:people")).toBeUndefined();
+    expect(withIt.filter((o) => o.caption)).toEqual([]);
+    expect(composeScreen(inputs(null)).find((o) => o.key === "drawer:people")).toBeUndefined();
   });
 
   it("the icon draws the caption and says it in its name; no caption, no line", () => {

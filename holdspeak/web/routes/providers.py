@@ -30,63 +30,14 @@ from fastapi.responses import JSONResponse
 from ...logging_config import get_logger
 from ...principals import UNAUTHENTICATED
 from ...services.errors import NotFound, ServiceError, ValidationError
+from ...services.provider_manifest_service import (
+    _NATIVE_PROVIDERS,
+    collect_provider_manifests,
+)
 from ..context import WebContext
 from ..runtime_support import error_500
 
 log = get_logger("web.routes.providers")
-
-
-# The native provider families the interview already suggests (INT-010).
-# Shape mirrors GitHubProviderAdapter.manifest() for uniform rendering.
-_NATIVE_PROVIDERS: list[dict[str, Any]] = [
-    {
-        "provider_id": "native",
-        "transport": "local_domain",
-        "capabilities": {
-            "discover": False,
-            "read": True,
-            "subscribe": False,
-            "effect": False,
-        },
-        "families": ["meetings", "decisions", "door"],
-    },
-]
-
-
-def collect_provider_manifests(
-    *,
-    github_adapter: Any = None,
-    jira_adapter: Any = None,
-    confluence_adapter: Any = None,
-    principal: Any = None,
-) -> list[dict[str, Any]]:
-    """Shared helper: build the manifest list for both HTTP and MCP surfaces.
-
-    HS-166-01 / HS-174-07: ONE function builds the provider list; the HTTP
-    route and the MCP ``provider.list`` tool both call this -- never
-    duplicate the enumeration.  Adapters are optional: ``None`` means the
-    provider is not configured (omitted from the list).
-
-    Each provider entry carries a ``readiness`` object computed from
-    persisted rows + ``shutil.which`` only (NEVER runs the CLI).
-    """
-    providers: list[dict[str, Any]] = list(_NATIVE_PROVIDERS)
-    if github_adapter is not None:
-        entry = github_adapter.manifest()
-        if principal is not None and hasattr(github_adapter, "readiness"):
-            entry["readiness"] = github_adapter.readiness(principal)
-        providers.append(entry)
-    if jira_adapter is not None:
-        entry = jira_adapter.manifest()
-        if principal is not None and hasattr(jira_adapter, "readiness"):
-            entry["readiness"] = jira_adapter.readiness(principal)
-        providers.append(entry)
-    if confluence_adapter is not None:
-        entry = confluence_adapter.manifest()
-        if principal is not None and hasattr(confluence_adapter, "readiness"):
-            entry["readiness"] = confluence_adapter.readiness(principal)
-        providers.append(entry)
-    return providers
 
 
 def build_providers_router(ctx: WebContext) -> APIRouter:

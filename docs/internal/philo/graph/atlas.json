@@ -38,7 +38,7 @@
         "action": "click_role",
         "adapter": "ui-pointer",
         "role": "button",
-        "name": "Continue later"
+        "name": "Open my desk"
       },
       "expected": {
         "predicate": {
@@ -47,7 +47,7 @@
           "value": "chair-desk"
         },
         "observe_at": "[data-testid=chair-desk]",
-        "words": "the gate closes and THE DESK is shown (the Chair screen [data-testid=chair-desk] is present; PHILO-14 A1 (#939): the arrival headline lives in the Needs you window, closed on arrival, so it is no longer the desk's mark); the first-value attempt closes with disposition 'dismissed' (no 4xx on POST /api/setup/first-value/{attempt_id}/finish) [the audit's stated observation location: face: the desk replaces the gate; table: onboarding first-value attempt disposition] [the gate section itself is gone afterwards \u2014 recorded in reads, not used as the predicate's scope, since a vanished scope is a block, not a result]",
+        "words": "Open my desk closes Setup and shows the actual desk. The current Setup onboarding disposition replaces the retired first-value dismissal path.",
         "reads": []
       },
       "completion_bound_s": 20,
@@ -470,7 +470,7 @@
       "preconditions": [
         "a fresh isolated HOME and browser profile; the hub started against that HOME",
         "no assignment for speech.transcribe and none for meeting.deferred_analysis: made in setup through POST /api/inference/assignments/clear, then read back by GET /api/inference/assignments (Astra r2 on #939)",
-        "PHILO-14 A1 (#939): the Chair is the screen of objects; the Needs you window opens from its drawer (Enter), as the owner opens it"
+        "PHILO-14 A1 (#939): the Chair is the screen of objects; the Needs you window opens from its attention bell (Enter), as the owner opens it"
       ],
       "setup": [
         {
@@ -484,8 +484,9 @@
           "action": "click_role",
           "adapter": "ui-pointer",
           "role": "button",
-          "name": "Continue later",
-          "optional": true
+          "name": "Open my desk",
+          "optional": true,
+          "why": "Open the current Setup face before testing the post-Setup engine blocker."
         },
         {
           "kind": "api",
@@ -540,23 +541,24 @@
           "kind": "ui",
           "action": "wait_for",
           "adapter": "ui-navigation",
-          "selector": ".desk-screen [data-object-id='drawer:needs']"
+          "selector": "[data-testid=desk-bell]",
+          "why": "S4 removes the duplicate Floor Needs-you icon; the one attention bell opens the same face."
         }
       ],
       "trigger": {
         "kind": "ui",
         "adapter": "ui-keyboard",
         "action": "press",
-        "selector": ".desk-screen [data-object-id='drawer:needs']",
+        "selector": "[data-testid=desk-bell]",
         "key": "Enter"
       },
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "No engine yet"
+          "value": "No engine for speech"
         },
-        "observe_at": "[data-testid=arrival-blocker]",
-        "words": "exactly ONE SETUP row, reading 'No engine yet', with one Button reading 'Choose an engine'; the head counts only what asks (an offer is not counted) [the audit's stated observation location: face: [data-testid=arrival-blocker-row] and [data-testid=arrival-headline]]"
+        "observe_at": "[data-testid=needs-drawer] [data-testid=needs-row]",
+        "words": "Exactly one SETUP row, reading 'No engine for speech', with Choose an engine. Both assignment overrides are absent; the owner opens Needs you from its attention bell."
       },
       "completion_bound_s": 20,
       "viewports": [
@@ -7854,7 +7856,7 @@
           "action": "click_role",
           "adapter": "ui-pointer",
           "role": "button",
-          "name": "Continue later",
+          "name": "Open my desk",
           "optional": true
         },
         {
@@ -7898,14 +7900,6 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-deck-row[id='desk-palette-option-go.configure-settings']",
-          "adapter": "ui-pointer",
-          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
-        },
-        {
-          "kind": "ui",
-          "action": "click_role",
-          "role": "button",
-          "name": "Open System",
           "adapter": "ui-pointer",
           "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
         },
@@ -7955,7 +7949,7 @@
           "kind": "text_contains",
           "value": "Quiet from"
         },
-        "observe_at": "#surface-settings [data-settings-module=\"rhythm\"]",
+        "observe_at": "#surface-settings [data-settings-section=\"notices\"]",
         "words": "The produced receipt opens Settings at Rhythm, where Quiet from is visible; Activity stays open for the return."
       },
       "completion_bound_s": 30,
@@ -7996,7 +7990,7 @@
           "action": "click_role",
           "adapter": "ui-by-viewport",
           "role": "button",
-          "name": "Continue later",
+          "name": "Open my desk",
           "optional": true
         },
         {
@@ -8041,14 +8035,6 @@
           "kind": "ui",
           "action": "click",
           "selector": ".desk-deck-row[id='desk-palette-option-go.configure-settings']",
-          "adapter": "ui-pointer",
-          "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
-        },
-        {
-          "kind": "ui",
-          "action": "click_role",
-          "role": "button",
-          "name": "Open System",
           "adapter": "ui-pointer",
           "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."
         },
@@ -8111,22 +8097,6 @@
           "kind": "ui",
           "action": "wait_for",
           "selector": "#surface-settings.is-front button[aria-label=\"Back from Settings\"]",
-          "at_width": 393,
-          "adapter": "ui-pointer"
-        },
-        {
-          "kind": "ui",
-          "action": "click",
-          "selector": "#surface-settings .desk-gadget-close",
-          "at_width": 393,
-          "adapter": "ui-touch",
-          "why": "Current Settings uses the first Back to leave its Rhythm module. Return to the Settings index before closing the window; ST7 removes this nested module."
-        },
-        {
-          "kind": "ui",
-          "action": "wait_for",
-          "selector": "#surface-settings [data-settings-module=\"rhythm\"]",
-          "state": "detached",
           "at_width": 393,
           "adapter": "ui-pointer"
         }
@@ -10074,9 +10044,18 @@
           "kind": "ui",
           "action": "click_role",
           "role": "button",
-          "name": "Continue later",
+          "name": "Open my desk",
           "optional": true,
           "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Close Today",
+          "optional": true,
+          "adapter": "ui-pointer",
+          "why": "Open my desk opens Today; close it before the engine setup, then exercise the declared Go > Today trigger."
         },
         {
           "kind": "boundary",
@@ -10647,9 +10626,18 @@
           "kind": "ui",
           "action": "click_role",
           "role": "button",
-          "name": "Continue later",
+          "name": "Open my desk",
           "optional": true,
           "adapter": "ui-pointer"
+        },
+        {
+          "kind": "ui",
+          "action": "click_role",
+          "role": "button",
+          "name": "Close Today",
+          "optional": true,
+          "adapter": "ui-pointer",
+          "why": "Open my desk opens Today; close it before the engine setup, then exercise the declared Go > Today trigger."
         },
         {
           "kind": "boundary",

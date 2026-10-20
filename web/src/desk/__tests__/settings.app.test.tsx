@@ -452,7 +452,7 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     const retry = within(await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 })).getByRole("button", { name: "Retry" });
     expect(toggle).toBeChecked();
     expect(retry.closest('[role="alert"]')?.textContent).toContain("Settings connection lost");
-    const footer = document.querySelector(".surface-footer-layout")!;
+    const footer = document.querySelector<HTMLElement>(".surface-footer-layout")!;
     expect(footer.querySelector(".surface-footer-receipt")?.textContent).toContain("Not saved");
     expect(footer.querySelector(".surface-footer-verbs")?.textContent).not.toContain("Settings connection lost");
     refuse = false;

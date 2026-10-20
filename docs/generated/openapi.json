@@ -8461,6 +8461,48 @@
         ]
       }
     },
+    "/api/connections/signin/{run_id}": {
+      "get": {
+        "operationId": "connection_signin_status_api_connections_signin__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Connection Signin Status Api Connections Signin  Run Id  Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Connection Signin Status",
+        "tags": [
+          "connections"
+        ]
+      }
+    },
     "/api/connections/{provider}/recheck": {
       "post": {
         "description": "Recheck one provider and return its refreshed tool entry.",
@@ -8499,6 +8541,49 @@
           }
         },
         "summary": "Recheck Connection",
+        "tags": [
+          "connections"
+        ]
+      }
+    },
+    "/api/connections/{provider}/signin": {
+      "post": {
+        "description": "Start the provider CLI in the existing delivery terminal seam.",
+        "operationId": "start_connection_signin_api_connections__provider__signin_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "title": "Provider",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Start Connection Signin Api Connections  Provider  Signin Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Connection Signin",
         "tags": [
           "connections"
         ]

@@ -1380,6 +1380,12 @@ class MeetingWebServer:
             get_database(),
             collector=ProjectEvidenceCollector(get_database()),
         )
+        # ST8 binds the Accounts sign-in process to the terminal target
+        # registry created with the delivery routes below.  The indirection is
+        # intentional: the service is part of the one operation composition
+        # before the delivery transport is mounted.
+        from .services.connection_signin_service import ConnectionSigninService
+        _signin_targets: dict[str, Any] = {}
         web_ctx = WebContext(
             get_state=self.get_state,
             meeting_service=meeting_service,
@@ -1492,6 +1498,9 @@ class MeetingWebServer:
                 ),
                 config_loader=Config.load,
                 inference_assignment_service=inference_assignment_service,
+            ),
+            connection_signin_service=ConnectionSigninService(
+                target_provider=lambda: _signin_targets.get("targets"),
             ),
             project_setup_service=ProjectSetupService(
                 get_database(),
@@ -1722,6 +1731,7 @@ class MeetingWebServer:
         )
         app.state.node_token_store = _delivery_link.token_store
         _delivery_targets = TerminalTargetRegistry()
+        _signin_targets["targets"] = _delivery_targets
         from .kernel.runtime import _service as _kernel_service
 
         _delivery_cmd = HubCommandService(

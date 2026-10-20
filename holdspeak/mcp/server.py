@@ -375,6 +375,27 @@ def handle_message_for_principal(
     arguments, the same way; ``resource_gate(uri)`` hides and refuses
     resources (Conductor K6; since R7 People resources pass while People access is on).
     """
+    # A project-update CLI run carries its project binding in the durable
+    # credential.  Keep this at the dispatcher so native CLI MCP calls and
+    # the in-hub HTTP loop share the same palette, scope and P2 response cut.
+    from ..services.engine_tool_loop import (
+        _PROJECT_UPDATE_READ_TOOLS,
+        _filter_project_update_response,
+        prepare_project_update_call,
+        project_update_palette,
+        project_update_scope,
+    )
+
+    update_project = project_update_scope(principal)
+    effective_palette = project_update_palette(principal, palette)
+    if update_project and call_gate is not None:
+        base_call_gate = call_gate
+
+        def call_gate_for_update(name: str, arguments: Any) -> bool:
+            return name == "project.update_draft" or base_call_gate(name, arguments)
+
+        call_gate = call_gate_for_update
+
     request_id = request.get("id")
     method = request.get("method")
     params = request.get("params") or {}
@@ -386,7 +407,7 @@ def handle_message_for_principal(
     if method == "notifications/initialized":
         return None
     if method == "initialize":
-        available_tools = tools_for_palette(palette) if palette else TOOLS
+        available_tools = tools_for_palette(effective_palette) if effective_palette else TOOLS
         return _response(request_id, {
             "protocolVersion": MCP_PROTOCOL_VERSION,
             "capabilities": {
@@ -400,9 +421,13 @@ def handle_message_for_principal(
     if method == "tools/list":
         from holdspeak.mcp.families.people import discoverable_tools
 
-        available_tools = tools_for_palette(palette) if palette else TOOLS
+        available_tools = tools_for_palette(effective_palette) if effective_palette else TOOLS
         return _response(request_id, {"tools": discoverable_tools(available_tools)})
     if method == "resources/list":
+        # Update runs read through the source-filtered tools. Raw resources
+        # have no project/P2 filter and would bypass that boundary.
+        if update_project:
+            return _response(request_id, {"resources": [], "resourceTemplates": []})
         listed = list_resources(principal)
         if resource_gate is not None:
             listed = {
@@ -416,6 +441,12 @@ def handle_message_for_principal(
         uri = params.get("uri")
         if not isinstance(uri, str):
             return _error(request_id, -32602, "Invalid params: uri is required")
+        if update_project:
+            return _error(
+                request_id, _MCP_005_CODE,
+                "Project update runs read sources through the project tools",
+                data={"code": "MCP-005", "resource": uri},
+            )
         if resource_gate is not None and not resource_gate(uri):
             return _error(
                 request_id, _MCP_005_CODE, f"Resource {uri!r} is not in the configured palette",
@@ -444,9 +475,22 @@ def handle_message_for_principal(
 
             kernel = refuse_before_invoke(name, arguments, principal, "invalid_arguments") or {}
             return _response(request_id, _tool_result({"error": "Tool arguments must be an object", **kernel}, is_error=True))
+        excluded_refs: set[str] | None = None
+        if update_project and (name in _PROJECT_UPDATE_READ_TOOLS or name == "project.update_draft"):
+            try:
+                arguments, excluded_refs, refusal = prepare_project_update_call(
+                    principal, name, arguments, update_project,
+                )
+            except Exception:
+                return _response(
+                    request_id,
+                    _tool_result({"error": "project update sources are unavailable"}, is_error=True),
+                )
+            if refusal:
+                return _response(request_id, _tool_result({"error": refusal}, is_error=True))
         try:
-            if palette is not None:
-                value = dispatch_for_palette(name, arguments, principal, palette, call_gate=call_gate)
+            if effective_palette is not None:
+                value = dispatch_for_palette(name, arguments, principal, effective_palette, call_gate=call_gate)
             else:
                 value = dispatch(name, arguments, principal)
         except ToolError as exc:
@@ -472,7 +516,10 @@ def handle_message_for_principal(
             return _response(request_id, _tool_result({"error": str(exc), **(getattr(exc, "kernel", None) or {})}, is_error=True))
         except Exception as exc:
             return _response(request_id, _tool_result({"error": str(exc) or type(exc).__name__}, is_error=True))
-        return _response(request_id, _tool_result(value))
+        response = _response(request_id, _tool_result(value))
+        if excluded_refs is not None:
+            response = _filter_project_update_response(response, excluded_refs, name, project_id=update_project, principal=principal)
+        return response
     if method.startswith("notifications/"):
         return None
     return _error(request_id, -32601, f"Method not found: {method}")

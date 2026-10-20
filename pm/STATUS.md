@@ -4,9 +4,144 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (terminal Setup delivery)
+**Last updated:** 2026-10-19 (verified Floor delivery; S4 partial)
 
 ## Current phase
+
+S4 delivers the explicit Floor: fresh desks show Inbox, Work, Personal,
+Reference and Archive. Meetings and people appear only after Keep on desk;
+Remove uses the existing membership operations, and removing a note files it
+in Inbox. Empty packaged Meetings/Decisions drawers and the Desk membership
+record are hidden. Existing records remain intact.
+
+The existing desk position store preserves first-seen rectangles across late
+producer replies. Root corrected a new-column overlap by reserving saved
+positions even while their source reply is pending. The real private-Hub walk
+imports three meetings and creates three people without new Floor icons,
+keeps one meeting, adds a late note, and appends 14 more projects. Every
+existing rectangle stays exact and no pair overlaps. Current 1440/393 shots
+and measured rows are under `.tmp/evidence-shots/s4-root/` in the Floor lane.
+All 19 seed and 63 web checks, type check and build pass.
+S4 remains partial: mode recipes in Search and the individual person
+Object-menu adapter finish with S5. The real Keep proof above is a meeting;
+individual People are not ordinary Items primitives. This merge adds no
+completed slice.
+The Agents Dock tile now accepts the existing drag-to-hand path. The actual
+browser drag opens the exact note preview without launching or editing it.
+All 71 focused web cases pass. The current arrival case opens the bell and
+observes the real Needs-you row at both widths; both walks pass. Four reds
+from the pinned main browser tape were old Dock controls, count expectations
+and an exact Today label; their real browser replacements pass with the
+membership, touch-size and cross-window latency assertions retained.
+Required quick: 4,078 related web, 34 affected Python/browser, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The separate current arrival walk passes at 1440 and 393..
+
+P10 offers only watch actions with an existing runtime path. A new
+project.observe evaluation writes its observation without a pending effect;
+legacy effect rows remain readable. Provider manifests, Steward serializers
+and meeting transcriber construction now live in shared services. HTTP and
+MCP use those same contracts, with no MCP imports from web routes.
+
+The worker passed 504 focused cases, then six retained boundary
+and producer regressions. An actual private database observation creates no
+new effect and preserves the legacy pending row. The AST fence covers all 37
+MCP Python files, including relative and alias import forms. Shared helper
+identities and wires retain parity. Root independently verified 27 focused cases covering the whole import boundary, actual fresh observation and retained legacy row, provider HTTP/MCP parity, Steward policy round-trip, import parity, and remote-owner refusal before file access.
+Required quick: Final delta quick passes 67 affected cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The preceding product quick passed 3,424 other affected cases with two skips; its one failure patched the old HTTP factory seam and is corrected by the final check..
+
+ST8 starts the installed GitHub or Atlassian CLI browser sign-in from the
+Accounts row and seats its native terminal there. Keyboard input uses the
+existing admitted process input path and immutable target identity. On native
+exit, the existing Check re-reads the account before the row can say Works.
+Unsupported browser flows and failed/disappearing terminals give a named
+failure. Target setup failures clean only the newly created sign-in session.
+
+Root reviewed the owner-only operation and target mismatch refusal, then ran
+123 focused checks: 122 passed and the new operation exposed one missing
+producer case. The completed producer contract suite passes all 65 cases.
+Actual private-Hub browser cases at 1440/393 feed Enter through embedded xterm,
+the real command transport and native tmux process, then read back Works and
+the account login. Only provider CLI responses are recorded; owner credentials
+and real OAuth acceptance remain unobserved. The combined API census has
+810 routes and 674 OpenAPI paths. The product check passes 7,051 affected
+Python/browser checks (four skips), 110 desk sweep, 27 canon and 1,116 guards;
+4,094 other web checks pass. One old terminal assertion expected a payload
+without its required session/agent binding; it now checks the full payload
+while retaining immutable target and server-derived authority assertions.
+Final delta quick: 17 terminal web checks, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The preceding product run passed 7,051 affected Python/browser checks and 4,094 other web checks.
+
+The main watcher pinned to 2833d225d found five failures after its first
+6,073-test shard passed. This fix re-records the actual Setup agent/Settings
+producer shapes, aligns Capture's backend window action with its manifest,
+and retains the fresh prior-account status check in the Confluence test.
+Only recordings with changed response shapes are replaced; whole unchanged
+captures remain intact. The independent focused rerun passes all 64 Python
+checks (including the phone Capture/Today/Capture roundtrip) and 62 web
+consumers. No provider sign-in or owner database is used.
+Required quick: 79 affected Python/browser, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes; the separate 62 web consumers pass.
+
+The P5/P6 source-link follow-up is closed by an actual producer contract:
+found_links reports linked/failed per meeting or note. New and existing project
+Add paths use it. A failed selection stays selected with its producer error;
+Retry sends only that item to the already-created project. Missing individual
+results stay failed. No successful source or project is created again.
+
+Root collected and passed 57 affected Python cases, including the real HTTP
+partial-failure and two-size browser Retry, plus 40 Door web cases and build.
+The durable resource readback finds each successful relationship once. The
+owner's database and provider credentials were not used. This closes follow-up
+work and adds no slice. Required quick: 241 affected Python/browser, 110 desk sweep, 27 canon and 1,116 repository guards pass; related web checks and build pass.
+
+P7/P8 make the project update an ordinary automation, initially manual. Friday
+at 15:00 changes that same record. Room opens its newest result and reads the
+actual engine assignment. A refused Friday change keeps the manual state and
+offers Try again. The old steward controls remain under More.
+
+Update agents use eligible linked project sources. Private one-to-ones, People
+and unlinked meetings stay out of prompts, tool reads and native MCP resources.
+Explicit owner-filed actions remain eligible. An agent writes its own separate
+draft and cannot replace an owner-edited draft. Workbench delivery adopts the
+exact returned result once; applying it adds no duplicate.
+
+Root verified 70 affected Python checks and 561 Room web checks. Four actual
+Workbench runner cases cover plain/tool-written output with and without owner
+edits. Native hub credentials exercise both filtered tool reads and resource
+refusals, with ordinary credentials retaining their existing access. Real hub
+Room geometry passes at 1440/393. Native model output quality is not claimed;
+the engine leaf is recorded. Required quick: Final delta quick passes 4,074 related web checks, 54 affected Python/browser checks including both current Room geometry cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The preceding product run passed 4,110 web and 4,571 other affected Python checks. Empty-state and recorded-wire contracts now include the automation, the display-only engine reader has its exact census classification, and the verb says Open latest. Known fix-forward: Room NEW still follows draft lifecycle and must use the existing automation artifact read state. The pinned 2833d225d main watcher has passed its first shard (6,073 passed, five skipped); the full tape remains incomplete. The prior 41f4ebc9f tape completed red, with its known failures corrected in later focused checks..
+
+Shell S3 gives the desktop Dock Today, Meetings, People, Agents and Speak;
+the phone has Today, Capture, Meetings, People and Agents. Both use the
+application manifest. Phone words stay visible in five whole 76-pixel tiles;
+each owns its hit area. Ctrl/Cmd 1–5 follow the desktop order. Needs you is
+Ctrl-J and Settings is Ctrl-comma, with the typing guard preserved.
+
+Tile facts come from the existing Needs you, meeting, one-to-one, mic and
+agent producers. Zero counts stay hidden. Phone orb and Dock layout controls
+leave the Dock. Root reviewed actual two-size geometry and key-opening
+proof, then verified 31 guard/menu checks and TypeScript. Earlier 116 focused
+Dock/key checks pass. The inherited writer census now excludes parked
+history; Setup's duplicate viewport layout follows its window container.
+No guard is widened. Root also repaired the current walk instructions for
+Setup and Settings while retaining the outcome predicates and sealed pass
+records. Eight of nine checks passed immediately. The remaining phone check
+exposed a real bug: a Settings section anchor still consumed Back as if it
+were a child page. Settings now returns to its caller in one Back press;
+the actual same-receipt, nine-point hit and durable identity check passes.
+The integrated product run passes 4,073 web checks and all nine current walk
+cases. Its remaining web assertion clicked the removed Dock Reset button;
+the retained verb now exercises the same persistence assertions. The exact
+Agents-key census follows Ctrl-4, and the atlas gate fence recognizes current
+and historical entrance words. API census failures exposed unpinned FastAPI
+0.150 in this worker environment, against 0.128 in uv.lock; Root restored the
+locked dependency set instead of publishing a five-route partial census.
+With locked dependencies, all 774 affected Python census/atlas checks and
+27 shell checks pass. Final delta quick also repeats the nine real-hub walk
+cases under the locked backend. The next sweep caught a real 32-pixel shift when the People 1:1 tag arrived.
+Meetings and People now reserve their tag width before the read, and the Dock
+limits the 1:1 fact to its local day. Root held and released the real People
+response: all five target rectangles stayed exact; the browser case passes
+in 6.28s. The 27 Dock/read web checks also pass, including today/tomorrow.
+Required quick: Final delta quick against the verified product source passes 10 actual Dock browser cases, 110 desk sweep cases, 27 canon and 1,116 repository guards; build passes. The preceding product run passed 4,076 related web and 768 other affected Python/browser checks. Last observed desk before this merge: backend aa4ecd9d3, frontend 212132a1074a6815, PID 32823. Each merge deploys its exact source; GET /api/system/identity reports the running identity..
 
 ST9 adds `holdspeak setup`, `holdspeak setup --yes`, MCP `setup.status` and
 `setup.use`. They use the running hub and the shared Setup producers.

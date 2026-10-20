@@ -231,8 +231,10 @@ export function SurfaceWindowHost({
       open
       unmountOnMinimize
       onClose={() => useDesk.getState().closeSurfaceWindow(row.key)}
+      // Settings scopes select an anchor on its one page, not a child face.
+      // Phone Back returns to the caller instead of scrolling Settings to top.
       onBack={
-        scope
+        scope && row.key !== "configure-settings"
           ? () => useDesk.getState().openSurfaceWindow(row.key, undefined)
           : undefined
       }

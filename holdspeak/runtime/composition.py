@@ -112,6 +112,7 @@ class RuntimeServices:
     project_evidence_collector: Optional[Any] = None
     watch_service: Optional[Any] = None            # gh watch kwargs
     connections_service: Optional[Any] = None
+    connection_signin_service: Optional[Any] = None
     suggested_source_service: Optional[Any] = None  # PHILO-9-02: project_service=
     channel_service: Optional[Any] = None           # PHILO-10-01: the Send
     onboarding_service: Optional[Any] = None        # the Conductor K1: agent_hooks.install
@@ -491,6 +492,7 @@ def install_from_web_context(
     from holdspeak.services.desk_window_service import DeskWindowService
     from holdspeak.services.note_outcomes_service import NoteOutcomesService
     from holdspeak.services.today_service import TodayService
+    from holdspeak.services.connection_signin_service import ConnectionSigninService
 
     def _intel_notify(topic: str, value: Any) -> None:
         if services.broadcast is not None:
@@ -530,6 +532,11 @@ def install_from_web_context(
         # PHILO-16 16b: the windows.* rows bind to it (the MCP family).
         "desk_window_service": lambda: DeskWindowService(resolved_db),
         "note_outcomes_service": lambda: NoteOutcomesService.composed(resolved_db, services, ctx),
+        # ST8: a partial composition can bind the owner-only operation even
+        # though the live hub supplies the delivery target registry later.
+        "connection_signin_service": lambda: ConnectionSigninService(
+            target_provider=lambda: None,
+        ),
     }
     for name, build in builders.items():
         instance = getattr(services, name, None)
