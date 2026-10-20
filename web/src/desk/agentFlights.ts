@@ -148,6 +148,19 @@ export interface AgentScreen {
   since: string | null;
 }
 
+/** AG15: a native agent process discovered in a pane the owner started. */
+export interface OwnAgent {
+  id: string;
+  paneId: string;
+  session: string;
+  window: string;
+  title: string;
+  project: string;
+  agent: AgentName;
+  process: { pid: number; group: number };
+  screen: AgentScreen | null;
+}
+
 export function fromWireScreen(body: any): AgentScreen | null {
   if (!body || typeof body !== "object") return null;
   const states = ["working", "approve", "asks", "done", "idle", "no_signal"];
@@ -162,6 +175,23 @@ export function fromWireScreen(body: any): AgentScreen | null {
     said: body.said ? String(body.said) : null,
     at: body.at ? String(body.at) : null,
     since: body.since ? String(body.since) : null,
+  };
+}
+
+export function fromWireOwnAgent(body: any): OwnAgent | null {
+  if (!body || typeof body !== "object" || !body.pane_id) return null;
+  const agent = body.agent === "codex" || body.agent === "pi" ? body.agent : "claude";
+  const process = body.process && typeof body.process === "object" ? body.process : {};
+  return {
+    id: String(body.id ?? `own:${body.pane_id}`),
+    paneId: String(body.pane_id),
+    session: String(body.session ?? ""),
+    window: String(body.window ?? ""),
+    title: String(body.title ?? ""),
+    project: String(body.project ?? ""),
+    agent,
+    process: { pid: Number(process.pid ?? 0), group: Number(process.group ?? 0) },
+    screen: fromWireScreen(body.screen),
   };
 }
 

@@ -244,6 +244,9 @@ def _boot(
     # (holdspeak/intel/cli_engine.py). A test that needs one turns it on and
     # puts a fake CLI on PATH.
     monkeypatch.setenv("HOLDSPEAK_CLI_ENGINES", "off")
+    # AG15: ordinary glass rigs never enumerate the owner's local tmux panes;
+    # its positive rig opts in only after creating an isolated tmux server.
+    monkeypatch.setenv("HOLDSPEAK_OWN_AGENTS", "off")
     # Betterment Q7: no Ask asks an engine's server whether it takes tools.
     monkeypatch.setenv("HOLDSPEAK_ASK_SERVER_TOOLS", "off")
     # Setup's automatic LAN look is opt-in; this rig has no owner-approved

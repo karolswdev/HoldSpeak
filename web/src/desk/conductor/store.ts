@@ -14,7 +14,7 @@
  */
 import { create } from "zustand";
 import { ApiError, apiFetch } from "../../lib/api";
-import { fromWireFlight, fromWireSessionRow, useAgentFlights, type AgentFlight } from "../agentFlights";
+import { fromWireFlight, fromWireOwnAgent, fromWireSessionRow, useAgentFlights, type AgentFlight, type OwnAgent } from "../agentFlights";
 import type { LaneReceipt } from "../lane/laneStore";
 import { AGENTS_PATH, AGENTS_USE_PATH, type AgentId, type AgentsDetect } from "../firstrun/agentsStep";
 import type { ConductorMember } from "./members";
@@ -37,6 +37,8 @@ interface ConductorState {
   /** The failed agents read as a token (`HTTP 500`, `HUB OFFLINE`). */
   detectFailure: string;
   flightsState: ReadState;
+  ownAgents: OwnAgent[];
+  ownAgentsState: ReadState;
   launchedAt: Record<string, string>;
   /** `ended_at` per launch id (history and flights). */
   endedAt: Record<string, string>;
@@ -66,6 +68,7 @@ interface ConductorState {
   closeInfo(ref: string): void;
   readDetect(): Promise<void>;
   readFlights(): Promise<void>;
+  readOwnAgents(): Promise<void>;
   installHooks(agent: AgentId): Promise<boolean>;
   setStop(ref: string, receipt: LaneReceipt | null): void;
 }
@@ -80,6 +83,8 @@ export const useConductor = create<ConductorState>((set, get) => ({
   detectState: "idle",
   detectFailure: "",
   flightsState: "idle",
+  ownAgents: [],
+  ownAgentsState: "idle",
   launchedAt: {},
   endedAt: {},
   history: [],
@@ -170,6 +175,16 @@ export const useConductor = create<ConductorState>((set, get) => ({
       set({ flightsState: "failed" });
     }
   },
+  async readOwnAgents() {
+    if (get().ownAgentsState !== "ok") set({ ownAgentsState: "loading" });
+    try {
+      const body = await apiFetch<{ agents?: unknown[] }>("/api/coders/own-agents");
+      if (!body || !Array.isArray(body.agents)) throw new Error("no own agents");
+      set({ ownAgents: body.agents.map(fromWireOwnAgent).filter((agent): agent is OwnAgent => agent !== null), ownAgentsState: "ok" });
+    } catch {
+      set({ ownAgentsState: "failed" });
+    }
+  },
   async installHooks(agent) {
     if (get().installing) return false;
     set({ installing: agent, installFailure: "", installFailedAgent: null });
@@ -201,7 +216,7 @@ export function openConductor(origin?: { x: number; y: number } | null): void {
 export function __resetConductor(): void {
   useConductor.setState({
     open: false, origin: null, infos: [], detect: null, detectState: "idle", detectFailure: "",
-    flightsState: "idle", launchedAt: {}, endedAt: {}, history: [], launches: null, stops: {},
+    flightsState: "idle", ownAgents: [], ownAgentsState: "idle", launchedAt: {}, endedAt: {}, history: [], launches: null, stops: {},
     installing: null, installFailure: "", installFailedAgent: null, installDone: null, focus: null,
   });
 }

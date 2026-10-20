@@ -156,6 +156,7 @@ class ScreenStore:
             if state == "blocked":
                 reading = prompt_reading(screen)
                 row.wait, row.command, row.choices = reading["wait"], reading["command"], reading["choices"]
+                row.said = last_message(screen)
             if state == "idle":
                 row.said = last_message(screen)
             elif old is not None and state != "working":
