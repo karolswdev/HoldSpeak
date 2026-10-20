@@ -24,7 +24,7 @@ own their minimum, and the creation form retains its declared footer seat.
 A Hub-inherited window follows that row; collision reseating runs on the
 owner's reopen. All 74 scoped consumers, type check and build pass. The final
 two real-Hub reload/collision walks pass; the prior five other window cases
-also passed. The full required quick: WINDOWS_QUICK_PENDING. Shell S9 and the unfinished Send slices remain open.
+also passed. The full required quick: 4,116 related web checks and all 19 window browser cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green. Shell S9 and the unfinished Send slices remain open.
 
 Failed native sign-in setup now cleans up through coder_factory. The
 factory accepts only the just-minted private sign-in session name, revokes
