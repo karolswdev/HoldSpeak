@@ -76,6 +76,7 @@ from .glass_infra import (
     _rendered_text_faults,
     _room_opened,
     _settle,
+    clear_hub_windows,
     open_project_drawer,
 )
 from .frame_rig import ROOM, _seed, _stage
@@ -972,6 +973,7 @@ class TestCompositor:
 # ── PHILO-16 16b the hub owns the windows (moved whole: several browser views of ONE hub, a drag, the MCP arrange) ──
 H_TOKEN = "philo16-hub-windows"
 H_SHOTS = evidence_dir("docs/internal/philo/phase-16/b-shots")
+SHELL_SHOTS = evidence_dir("")
 # Betterment daily D5: Brief and The week retired into Today; the three are
 # Capture (dragged), Meetings (seated) and Needs you (in front).
 H_THREE = ("Capture", "Meetings", "Needs you")
@@ -1008,6 +1010,36 @@ H_BAND_JS = r"""() => {
 
 H_CACHE_JS = r"""() => { const d = JSON.parse(localStorage.getItem('hs.desk.workspace.v1') || 'null') || {};
   const p = d.panel || {}; return {min: p.min || [], depth: p.depth || {}, closed: (d.chair || {}).closed || []}; }"""
+
+SHELL_GEOMETRY_JS = r"""() => {
+  const shown = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
+    return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; };
+  return [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(shown).map((s) => {
+    const r = s.getBoundingClientRect();
+    const head = s.querySelector('.desk-pullout-head')?.getBoundingClientRect() || r;
+    const probes = [8, Math.round(head.width / 2), Math.max(8, Math.round(head.width - 8))]
+      .map((x) => document.elementFromPoint(Math.round(head.left + x), Math.round(head.top + Math.min(20, head.height / 2))))
+      .filter(Boolean);
+    const reachable = probes.some((point) => point?.closest('.desk-window-shell') === s);
+    return {name: s.getAttribute('aria-label'), rect: [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)],
+      head: [Math.round(head.left), Math.round(head.top), Math.round(head.width), Math.round(head.height)],
+      plane: s.dataset.plane || null, z: Number(getComputedStyle(s).zIndex) || 0,
+      reachable};
+  });
+}"""
+
+SHELL_LABEL_CONTRAST_JS = r"""() => {
+  const rgb = (value) => { const m = value.match(/rgba?\\(([^)]+)\\)/); if (!m) return null;
+    const p = m[1].split(',').map(Number); return {r: p[0], g: p[1], b: p[2], a: p[3] ?? 1}; };
+  const lum = (c) => { const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+    return .2126 * f(c.r) + .7152 * f(c.g) + .0722 * f(c.b); };
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  return [...document.querySelectorAll('.desk-screen .desk-icon-name')].map((e) => {
+    const cs = getComputedStyle(e); const fg = rgb(cs.color), bg = rgb(cs.backgroundColor);
+    return {name: e.textContent?.trim() || '', ratio: fg && bg ? Math.round(ratio(fg, bg) * 100) / 100 : 0,
+      background: cs.backgroundColor, color: cs.color};
+  });
+}"""
 
 
 def _h_wins(page: Any) -> dict[str, dict[str, Any]]:
@@ -1110,6 +1142,219 @@ class TestHubWindows:
         listed = _api(page, "GET", "/api/desk/windows", token=H_TOKEN)
         return {w["id"]: w for w in listed["windows"]}
 
+    def test_shell_s678_real_hub_geometry_and_faces(self) -> None:
+        """S6/S7/S8: the settled shell survives the real Hub and two widths."""
+        from playwright.sync_api import sync_playwright
+
+        # The manifest door is labelled Ask AI; the hosted window's identity
+        # is the shorter settled title "Ask" (AskPanel owns that title).
+        apps = ("Today", "Meetings", "People", "Agents", "Speak", "Ask")
+        # The registry's ⌘I primary modifier accepts Control on this Linux
+        # Chromium runner; the live key remains ⌘I in the rendered menu.
+        keys = ("Control+1", "Control+2", "Control+3", "Control+4", "Control+5", "Control+KeyI")
+
+        def windows(page: Any) -> dict[str, dict[str, Any]]:
+            return {row["name"]: row for row in page.evaluate(SHELL_GEOMETRY_JS)}
+
+        def head_overlap(left: dict[str, Any], right: dict[str, Any]) -> bool:
+            lx, ly, lw, lh = left["head"]
+            rx, ry, rw, rh = right["head"]
+            return lx < rx + rw and rx < lx + lw and ly < ry + rh and ry < ly + lh
+
+        def open_settings(page: Any) -> None:
+            page.locator(".desk-mark").click()
+            page.get_by_role("menu", name="HoldSpeak").get_by_role("menuitem", name="Settings", exact=True).click()
+            page.locator(".desk-window-shell[aria-label^='Settings']").wait_for(timeout=T)
+
+        def focus_window(page: Any, name: str) -> None:
+            page.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
+            menu = page.get_by_role("menu", name="Window")
+            menu.wait_for()
+            menu.locator("[role='menuitemcheckbox']").filter(has_text=name).first.click()
+            page.wait_for_timeout(350)
+
+        def resize(page: Any, name: str, dx: float, dy: float) -> None:
+            grip = page.locator(f".desk-window-shell[aria-label='{name}'] .desk-window-grip")
+            box = grip.bounding_box()
+            assert box, f"no resize grip for {name}"
+            x, y = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+            page.mouse.move(x, y)
+            page.mouse.down()
+            page.mouse.move(x + dx / 2, y + dy / 2, steps=5)
+            page.mouse.move(x + dx, y + dy, steps=5)
+            page.mouse.up()
+            page.wait_for_timeout(500)
+
+        def reachable(page: Any, rows: dict[str, dict[str, Any]], *, check_icon_column: bool = True) -> list[str]:
+            band = page.evaluate(H_BAND_JS)
+            icon_right = page.evaluate(W_ICONS_JS)
+            bad: list[str] = []
+            for name, row in rows.items():
+                x, y, w, h = row["rect"]
+                hx, hy, hw, hh = row["head"]
+                if x < band["x"] or y < band["y"] or x + w > band["x"] + band["w"] + 2 or y + h > band["y"] + band["h"] + 2:
+                    bad.append(f"{name}: outside work band {row['rect']} / {band}")
+                if (check_icon_column and hx < icon_right - 1) or not row["reachable"] or hw <= 0 or hh <= 0:
+                    bad.append(f"{name}: head unreachable or in icon column {row} / icon-right={icon_right}")
+            return bad
+
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            ctx_a = ctx_c = None
+            a = c = None
+            errors_a: list[str] = []
+            errors_c: list[str] = []
+            try:
+                ctx_a, a, errors_a = self._page(browser, 1440, onboard=True)
+                # The case starts at the real Hub's seeded desk, then crosses
+                # the same clear boundary as the other Hub proof. The next
+                # load has no local second ledger to mask server placement.
+                clear_hub_windows(a, H_TOKEN)
+                a.reload(wait_until="load")
+                _normal_chair(a)
+                _settle(a)
+
+                for key, name in zip(keys, apps):
+                    # Press against the document body. Speak may leave its
+                    # editor focused, but the shell keymap remains global.
+                    a.locator("body").press(key)
+                    a.locator(f".desk-window-shell[aria-label='{name}']").wait_for(timeout=T)
+                    a.wait_for_timeout(350)
+                rows = windows(a)
+                assert set(apps) <= set(rows), {"open": sorted(rows), "wanted": apps}
+                assert rows["Meetings"]["rect"][2] >= 640
+                assert rows["Speak"]["rect"][2] >= 560
+                assert rows["Today"]["rect"][2] > 0 and rows["Ask"]["rect"][3] > 0
+
+                # S8's live menu is read from the rendered rows. Its first
+                # eight rows are the settled plain order, followed by the
+                # separator and open-window list.
+                a.locator(".desk-verbbar-item[data-menu-id='window'] button").click()
+                menu = a.get_by_role("menu", name="Window")
+                menu.wait_for()
+                menu_labels = menu.locator(":scope > [role^='menuitem'] .desk-menu-label").all_text_contents()
+                assert menu_labels[:8] == ["Minimize", "Zoom", "Tile left", "Tile right", "Arrange all", "Overview", "Next window", "Close"], menu_labels
+                assert all(old not in menu_labels for old in ("Iconify", "Cycle windows", "Cascade", "Reset layout")), menu_labels
+                assert all(name in menu_labels for name in apps), {"labels": menu_labels, "apps": apps}
+                a.screenshot(path=str(SHELL_SHOTS / "shell-window-menu-1440.png"))
+                a.keyboard.press("Escape")
+                _h_window_menu(a, "Arrange all")
+                a.wait_for_timeout(1_000)
+                rows = _h_until(lambda: windows(a), lambda value: set(apps) <= set(value))
+                bad = reachable(a, {name: rows[name] for name in apps}, check_icon_column=False)
+                assert not bad, {"bad": bad, "rows": rows}
+                a.screenshot(path=str(SHELL_SHOTS / "shell-windows-1440.png"))
+
+                # Persist a deliberately colliding People rect. A reload
+                # clears the per-session owner set; the head-only placement
+                # rule must then reseat it while retaining its size.
+                people_before = windows(a)["People"]
+                meetings_before = windows(a)["Meetings"]
+                # Move the target away from the top snap zone first. The
+                # second real drag then creates a head collision without a
+                # snap gesture consuming the release.
+                focus_window(a, "Meetings")
+                _h_drag(a, ".desk-window-shell[aria-label='Meetings'] .desk-pullout-title", 300, 250)
+                meetings_collision = windows(a)["Meetings"]
+                focus_window(a, "People")
+                _h_drag(a, ".desk-window-shell[aria-label='People'] .desk-pullout-title",
+                        meetings_collision["rect"][0] + 10 - people_before["rect"][0],
+                        meetings_collision["rect"][1] + 10 - people_before["rect"][1])
+                a.wait_for_timeout(500)
+                collided = windows(a)
+                assert head_overlap(collided["People"], collided["Meetings"]), collided
+                a.locator(".desk-window-shell[aria-label='People'] [aria-label='Close People']").click()
+                a.locator(".desk-window-shell[aria-label='People']").wait_for(state="detached", timeout=T)
+                a.reload(wait_until="load")
+                _normal_chair(a)
+                a.keyboard.press("Control+3")
+                a.locator(".desk-window-shell[aria-label='People']").wait_for(timeout=T)
+                reseated = _h_until(lambda: windows(a), lambda value: "People" in value and "Meetings" in value)
+                assert not head_overlap(reseated["People"], reseated["Meetings"]), reseated
+                assert reseated["People"]["rect"][2:] == collided["People"]["rect"][2:], {"before": collided["People"], "after": reseated["People"]}
+                assert reachable(a, {"People": reseated["People"], "Meetings": reseated["Meetings"]}) == []
+                a.screenshot(path=str(SHELL_SHOTS / "shell-remembered-1440.png"))
+
+                # A resize is an owner decision for this session. Move
+                # Meetings over the resized People head, close and reopen
+                # People, and prove that the deliberate rect remains exact.
+                resize(a, "People", 110, 70)
+                owner_rect = windows(a)["People"]["rect"]
+                current_meetings = windows(a)["Meetings"]["rect"]
+                focus_window(a, "Meetings")
+                _h_drag(a, ".desk-window-shell[aria-label='Meetings'] .desk-pullout-title", 300, 250)
+                current_meetings = windows(a)["Meetings"]["rect"]
+                focus_window(a, "Meetings")
+                _h_drag(a, ".desk-window-shell[aria-label='Meetings'] .desk-pullout-title",
+                        owner_rect[0] + 10 - current_meetings[0], owner_rect[1] - 20 - current_meetings[1])
+                a.wait_for_timeout(400)
+                assert head_overlap(windows(a)["People"], windows(a)["Meetings"])
+                a.locator(".desk-window-shell[aria-label='People'] [aria-label='Close People']").click()
+                a.locator(".desk-window-shell[aria-label='People']").wait_for(state="detached", timeout=T)
+                a.keyboard.press("Control+3")
+                a.locator(".desk-window-shell[aria-label='People']").wait_for(timeout=T)
+                owner_reopened = _h_until(lambda: windows(a), lambda value: "People" in value and "Meetings" in value)
+                assert owner_reopened["People"]["rect"] == owner_rect, {"owner": owner_rect, "reopened": owner_reopened["People"]}
+
+                # Arrange all uses the live order and keeps the owner's sizes.
+                open_project_drawer(a, self.base, "p-ledger", H_TOKEN)
+                _normal_chair(a)
+                a.locator(".drawer-window").first.wait_for(timeout=T)
+                before_arrange = windows(a)
+                before_order = [row["name"] for row in sorted(before_arrange.values(), key=lambda row: row["z"])]
+                _h_window_menu(a, "Arrange all")
+                after_arrange = _h_until(lambda: windows(a), lambda value: all(name in value for name in before_arrange))
+                assert not reachable(a, after_arrange, check_icon_column=False), reachable(a, after_arrange, check_icon_column=False)
+                assert [row["name"] for row in sorted(after_arrange.values(), key=lambda row: row["z"])] == before_order
+                for name, before in before_arrange.items():
+                    assert after_arrange[name]["rect"][2:] == before["rect"][2:], {"name": name, "before": before, "after": after_arrange[name]}
+                a.screenshot(path=str(SHELL_SHOTS / "shell-needs-1440.png"))
+
+                # The Needs window is still clear and its title bar remains
+                # out of the left drawer/icon column after the cascade.
+                _h_open(a, "Needs you")
+                a.wait_for_timeout(300)
+                needs = windows(a)
+                assert "Needs you" in needs, sorted(needs)
+                assert reachable(a, {"Needs you": needs["Needs you"]}) == []
+                assert a.get_by_text("Nothing needs you", exact=True).count() >= 1
+
+                # S6: the one Wallpaper home opens Settings at Desk, then
+                # selects Jupiter. The floor labels are measured in the live
+                # scene so the 4.5:1 claim is not a token-only assertion.
+                open_settings(a)
+                a.get_by_test_id("settings-index-desk").click()
+                a.locator("[data-atmosphere-choice='jupiter-orbit']").wait_for(timeout=T)
+                a.locator("[data-atmosphere-choice='jupiter-orbit']").click()
+                a.locator("[data-atmosphere-choice='jupiter-orbit'][aria-checked='true']").wait_for(timeout=T)
+                assert a.get_by_text("In Jupiter's orbit", exact=True).count() >= 1
+                contrast = a.evaluate(SHELL_LABEL_CONTRAST_JS)
+                assert contrast and min(float(row["ratio"]) for row in contrast) >= 4.5, contrast
+                a.screenshot(path=str(SHELL_SHOTS / "shell-jupiter-1440.png"))
+
+                ctx_c, c, errors_c = self._page(browser, 393)
+                open_settings(c)
+                settings_index = c.get_by_role("navigation", name="Settings sections")
+                index_labels = settings_index.locator(".btn").all_text_contents()
+                assert "Wallpaper" not in index_labels, index_labels
+                c.screenshot(path=str(SHELL_SHOTS / "shell-settings-393.png"))
+                (SHELL_SHOTS / "shell-window-proof.json").write_text(json.dumps({
+                    "apps_1440": {name: rows[name] for name in apps},
+                    "remembered": {"collided": collided["People"], "reseated": reseated["People"]},
+                    "owner_resize": {"owner": owner_rect, "reopened": owner_reopened["People"]},
+                    "arrange_all_order": before_order,
+                    "wallpaper_contrast": contrast,
+                    "settings_index_393": index_labels,
+                }, indent=2) + "\n")
+                assert errors_a == [], errors_a
+                assert errors_c == [], errors_c
+            finally:
+                if ctx_c is not None:
+                    ctx_c.close()
+                if ctx_a is not None:
+                    ctx_a.close()
+                browser.close()
+
     def test_one_desk_two_views(self) -> None:
         """replaces: tests/e2e/test_philo16_hub_windows_glass.py::TestHubWindows::test_one_desk_two_views (moved whole)."""
         from playwright.sync_api import sync_playwright
@@ -1132,7 +1377,7 @@ class TestHubWindows:
                 _h_open(a, "Needs you")
                 _h_open(a, "Meetings")
                 a.wait_for_timeout(300)
-                _h_window_menu(a, "Iconify")
+                _h_window_menu(a, "Minimize")
                 rows = _h_until(lambda: self._rows(a), lambda r: (
                     set(H_IDS.values()) <= set(r) and r["surface-meetings"]["minimized"] and r["chair:capture"]["arranged"]))
                 if not set(H_IDS.values()) <= set(rows):

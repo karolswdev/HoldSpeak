@@ -161,6 +161,7 @@ describe.each([[1440, false], [393, true]] as const)("the chrome over an open hu
 // The real DeskMenuBar over the real registry and the real objectMenu. The
 // desk objects are the store's own shapes (as objectMenu.test.ts seeds them).
 import { DeskMenuBar, objectMenuTitle } from "../components/DeskMenuBar";
+import { menuVerbs } from "../verbRegistry";
 import { EMPTY_ITEMS } from "../api";
 import type { Meeting, Note, Project } from "../../lib/primitives";
 
@@ -238,6 +239,22 @@ describe("S0: the menu bar withholds what cannot run", () => {
     expect(titles()).toContain("Today");
     expect(titles()).not.toContain("Intelligence");
     expect(objectMenuTitle("intelligence")).toBe("Today");
+  });
+});
+
+describe("S8: the Window registry keeps the settled plain order", () => {
+  it("renames and orders the live rows, while retired rows stay parked", () => {
+    expect(menuVerbs("window").map((verb) => verb.id).slice(0, 8)).toEqual([
+      "window.minimize",
+      "window.maximize",
+      "window.snap-left",
+      "window.snap-right",
+      "window.cascade",
+      "desk.overview",
+      "window.cycle",
+      "window.close",
+    ]);
+    expect(menuVerbs("window").map((verb) => verb.id)).not.toContain("window.cycle-reverse");
   });
 });
 
