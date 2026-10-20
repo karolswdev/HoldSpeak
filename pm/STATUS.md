@@ -20,7 +20,13 @@ leave the Dock. Root reviewed actual two-size geometry and key-opening
 proof, then verified 31 guard/menu checks and TypeScript. Earlier 116 focused
 Dock/key checks pass. The inherited writer census now excludes parked
 history; Setup's duplicate viewport layout follows its window container.
-No guard is widened. Required quick: S3_QUICK_PENDING.
+No guard is widened. Root also repaired the current walk instructions for
+Setup and Settings while retaining the outcome predicates and sealed pass
+records. Eight of nine checks passed immediately. The remaining phone check
+exposed a real bug: a Settings section anchor still consumed Back as if it
+were a child page. Settings now returns to its caller in one Back press;
+the actual same-receipt, nine-point hit and durable identity check passes.
+Required quick: S3_QUICK_PENDING.
 
 ST7 makes Settings one page with You, Speak, Meetings, Notices, Accounts,
 Agents, Desk and This Mac. The desktop index sits beside the page; phone
