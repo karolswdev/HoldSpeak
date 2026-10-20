@@ -15,7 +15,10 @@ checks retain exact review identity, run counts, nine-point hit testing,
 receipt geometry and duration, one meeting window, and one agent launch.
 All 13 selected cases pass on the real private Hub, including both widths.
 The first two attempts failed in rig setup (Node path and a test-list parser)
-and did not exercise these paths. Required quick: OWNER_PATHS_QUICK_PENDING.
+and did not exercise these paths. The late-count Search case now queries
+Projects before measuring, then delays the browser response without
+blocking the test driver. The original top-ten and no-row-move assertions
+pass in the actual private Hub. Required quick: OWNER_PATHS_QUICK_PENDING.
 
 Failed native sign-in setup now cleans up through coder_factory. The
 factory accepts only the just-minted private sign-in session name, revokes

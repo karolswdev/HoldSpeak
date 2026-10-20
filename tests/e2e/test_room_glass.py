@@ -2471,8 +2471,6 @@ class TestRowsHoldStill(_Rig):
                     body["coverage"] = []
                     # The late answer: `Payments ledger cutover` has 3 open.
                     body["projectCounts"] = {"p-ledger": 3} if mode["counts"] else {}
-                    if mode["counts"]:
-                        time.sleep(1.5)
                     route.fulfill(json=body)
 
                 # Every read answers no counts until the palette opens (a
@@ -2484,8 +2482,15 @@ class TestRowsHoldStill(_Rig):
                 page.wait_for_timeout(1500)
                 page.add_style_tag(content=STILL)
                 mode["counts"] = True
+                # Delay the browser's promise, so the synchronous route
+                # callback cannot block the finger/probe until after the
+                # count has already arrived.
+                _hold_in_page(page, r"/api/desk/needs-you", 1.5)
                 self._press(page, page.locator("[aria-controls=desk-tool-shelf]").first, width)
                 page.locator("#desk-palette-listbox").wait_for()
+                # S5's cold Search shows apps and recent opens. Query the
+                # project candidates before measuring their late count.
+                page.locator("[aria-controls=desk-palette-listbox]").fill("project")
                 page.evaluate(RECORD_JS, [PALETTE_ROWS, 4000, False])
                 rows = page.evaluate(RESULT_JS)
                 page.screenshot(path=str(PHONE_SHOTS / "palette-limit-393.png"))
