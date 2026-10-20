@@ -197,7 +197,7 @@ def test_uncertain_send_reload_keeps_the_exact_command(tmp_path: Path, monkeypat
             assert rows[0]["state"] == "sent" and operations[0]["state"] == "succeeded", facts
             assert files[0].read_bytes() == bytes(rows[0]["payload"]), facts
             # Back restores the same saved document, rather than an empty editor.
-            page.locator(".thought-send-foot").get_by_role("button", name="Back", exact=True).click()
+            page.locator(".thought-send-well [data-testid=send-back]").click()
             assert draft == page.locator(".thought-note-body .cm-content").inner_text()
             (shots / f"return-{width}.png").write_bytes(page.screenshot())
         finally:
@@ -1029,7 +1029,7 @@ class TestSendGlass:
         assert any(warning in field for field in fields), fields
         preview_text = well.locator("[data-testid=send-preview-body]").inner_text()
         assert "The rollout is complete." in preview_text
-        send = well.locator("[data-testid=send-verb]")
+        send = page.locator(f"[id='{ROOM}'] [data-testid=send-verb]")
         assert send.is_enabled()
         self._shot("S8-unchecked-preview")
         send.click()

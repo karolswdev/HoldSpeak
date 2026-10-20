@@ -28,7 +28,12 @@ and 39 web checks, with three actual recording writers. Public metadata no
 longer duplicates the body; the existing privacy fence passes. The Slack
 Markdown expectation reads the actual renderer, and the canonical footer
 replaces the old inline Send that the longer Summary covered on the phone.
-These source changes now receive one combined check before deployment.
+The combined source passes type check, build, all 67 selected web checks and
+all 47 focused backend/browser checks. Those include six Needs cases, both
+sheet/Edit widths, the longer phone Summary, exact bytes and original-operation
+replay. Retained Back and Room Send selectors now target the shared header
+and footer; their original saved-document and operation assertions remain.
+The final required check follows the remaining recorded web-consumer updates.
 Required quick: SEND_ALL_QUICK_PENDING.
 The first real Send recipe remains open for the owner's five presses.
 
