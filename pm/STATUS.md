@@ -8,6 +8,14 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The main watcher found two first-run producer recordings missing the saved
+Builder tools and Remote settings fields. The existing private-Hub writers
+regenerated all 48 replies in the LAN and denied-calendar scenarios; both
+writers and both normal replays pass. Strict whole-reply checks remain.
+Speech stays unassigned after choosing a LAN chat engine, and only the
+owner's Settings press opens the doubled calendar permission door once.
+No product behavior changes. Required quick: FIRSTRUN_RECORDS_QUICK_PENDING.
+
 Other devices now saves its switch and displayed host/port in the existing
 config through SettingsService. The remote gate, its read route and the
 System fact read that same durable value. There is no process-only writer

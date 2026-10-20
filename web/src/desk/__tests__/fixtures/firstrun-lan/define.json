@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T23:37:03.247497Z",
+  "captured_at": "2026-10-20T10:13:36.707801Z",
   "wire": {
     "provider": {
       "binding_id": "binding-engine-127-0-0-1-8099-stub-qwen",
@@ -17,24 +17,24 @@
       "assignments_after": {
         "heads": [
           {
-            "assignment_id": "ia_ccfe92be115a40a18a2d4b49d7903556",
+            "assignment_id": "ia_aacd355d5fb1490b84c1436040ead731",
             "assignment_key": "capability:speech.transcribe",
             "cleared": false,
             "revision": 1
           }
         ],
-        "sha256": "sha256:e809c11849d41d0ebb2d7c61c0e905354ee6f3dceccb3a4b049ee9ed25b543b9"
+        "sha256": "sha256:cee3e8fa9ad60afbc2023b0d8d9256f92edb3b965169f88e326bc17eab404194"
       },
       "assignments_before": {
         "heads": [
           {
-            "assignment_id": "ia_ccfe92be115a40a18a2d4b49d7903556",
+            "assignment_id": "ia_aacd355d5fb1490b84c1436040ead731",
             "assignment_key": "capability:speech.transcribe",
             "cleared": false,
             "revision": 1
           }
         ],
-        "sha256": "sha256:e809c11849d41d0ebb2d7c61c0e905354ee6f3dceccb3a4b049ee9ed25b543b9"
+        "sha256": "sha256:cee3e8fa9ad60afbc2023b0d8d9256f92edb3b965169f88e326bc17eab404194"
       },
       "assignments_unchanged": true,
       "kind": "model_library_provider",

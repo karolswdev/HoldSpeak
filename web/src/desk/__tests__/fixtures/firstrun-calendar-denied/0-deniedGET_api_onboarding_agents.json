@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-20T04:47:01.756964Z",
+  "captured_at": "2026-10-20T10:13:37.613477Z",
   "wire": {
     "agents": [
       {
