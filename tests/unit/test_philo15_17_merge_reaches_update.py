@@ -392,20 +392,19 @@ ALL_UNCHECKED = json.dumps({"sections": [
 ]})
 
 
-def test_nothing_verified_refuses_the_send(db, monkeypatch) -> None:
-    """Astra r2 ruling (P2): when omission leaves no substantive content,
-    Send refuses NOTHING VERIFIED through the real export path; the stored
-    claims are kept."""
-    from holdspeak.services.channel_contract import ChannelRefused, render_document
+def test_nothing_verified_warns_before_send(db, monkeypatch) -> None:
+    """Astra r2 ruling (P2): an unchecked update keeps its published words,
+    carries the warning through the real export path, and keeps its claims."""
+    from holdspeak.services.channel_contract import render_document
 
     _model_from(monkeypatch, ALL_UNCHECKED)
     _delta, updates = _updates(db)
     draft = updates.draft_update(OWNER, PROJECT, generator="model")
     updates.publish_update(OWNER, draft["id"])
-    with pytest.raises(ChannelRefused) as refused:
-        render_document(db, f"project_update:{draft['id']}")
-    assert refused.value.code == "nothing_verified"
-    assert "NOTHING VERIFIED" in str(refused.value)
+    document = render_document(db, f"project_update:{draft['id']}")
+    assert document.preview_warning == "Not checked yet: no claim in this update was accepted"
+    assert "The rollout is complete." in document.body_md
+    assert "We ship Friday." in document.body_md
     stored = db.project_updates.get_update(draft["id"])["body_md"]
     assert "The rollout is complete." in stored and "We ship Friday." in stored
 
