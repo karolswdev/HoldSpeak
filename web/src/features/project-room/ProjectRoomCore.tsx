@@ -1422,7 +1422,7 @@ function UpdateLine({ room, updateCtrl, onReload }: {
         <Button dense variant="ghost" onClick={openAutomation} data-testid="room-update-when">{when}</Button>
         <Button dense variant="ghost" onClick={openAutomation} data-testid="room-update-with">{withEngine}</Button>
         {hasNew ? <span className="surface-token" data-tone="ok" data-testid="room-update-new">NEW</span> : null}
-        <Button dense variant="ghost" onClick={() => void updateCtrl.openLatest()} data-testid="room-update-open">Open</Button>
+        <Button dense variant="ghost" onClick={() => void updateCtrl.openLatest()} data-testid="room-update-open">Open latest</Button>
         {!automation.scheduleEnabled ? (
           <Button dense variant="ghost" loading={busy} onClick={() => void enableFriday()} data-testid="room-update-friday">
             Every Friday at 15:00
