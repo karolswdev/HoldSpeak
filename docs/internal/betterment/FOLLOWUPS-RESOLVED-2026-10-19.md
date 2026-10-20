@@ -30,3 +30,5 @@ linked or failed for new and existing projects. Failed selections retain the
 producer error and Retry submits only that leaf. Root verified 57 Python checks
 (including actual HTTP and 1440/393 browser Retry), 40 Door web checks and build.
 Durable readback finds each successful relationship once. No slice count added.
+
+Project update read state: the completed automation artifact stores its exact project-update ID. Room NEW follows that artifact, and opening the linked update uses the existing result-open receipt to mark it read. Legacy and foreign IDs open the automation instead of selecting an owner draft. Root verified five real runner/producer cases and both browser widths, 44 web consumers, type check and build. The recorded consumer uses complete real completed/opened/read responses.

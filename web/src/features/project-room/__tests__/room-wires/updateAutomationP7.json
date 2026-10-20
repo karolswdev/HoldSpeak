@@ -1,11 +1,11 @@
 {
   "manual": {
-    "project_id": "proj-30640d25b24d",
+    "project_id": "proj-f43f461954c8",
     "revision": 1,
-    "observed_at": "2026-10-19T21:21:26.609017",
+    "observed_at": "2026-10-19T23:31:13.212274",
     "nextCheckAt": null,
     "project": {
-      "id": "proj-30640d25b24d",
+      "id": "proj-f43f461954c8",
       "name": "Friday update wire",
       "description": "",
       "keywords": [],
@@ -14,8 +14,8 @@
       "detection_threshold": 0.4,
       "is_archived": false,
       "meeting_count": 0,
-      "created_at": "2026-10-19T21:21:26.609017",
-      "updated_at": "2026-10-19T21:21:26.609017",
+      "created_at": "2026-10-19T23:31:13.212274",
+      "updated_at": "2026-10-19T23:31:13.212274",
       "purpose": null,
       "outcome_text": null,
       "owner_ref": null,
@@ -51,17 +51,17 @@
     "changes": {
       "recent": [
         {
-          "id": "pchg_36fdedffa14096f4e748a6e4b5c17432",
-          "project_id": "proj-30640d25b24d",
+          "id": "pchg_fc32a7b9a8f554dfdd7f658583acc600",
+          "project_id": "proj-f43f461954c8",
           "project_revision": 1,
           "change_kind": "project.created",
-          "target_ref": "project:proj-30640d25b24d",
+          "target_ref": "project:proj-f43f461954c8",
           "actor_ref": "principal:owner-session",
-          "command_id": "pcmd_99b683307f1d44389a248a291cfa8826",
+          "command_id": "pcmd_e897cddff8724adab0b9fa55fa3b16ee",
           "before_hash": null,
           "after_hash": "f21181101b2ec3d4c206b0dd132ff701",
           "summary_json": "{\"name\": \"Friday update wire\"}",
-          "created_at": "2026-10-20T03:21:26.609017+00:00"
+          "created_at": "2026-10-20T05:31:13.212274+00:00"
         }
       ],
       "state": "ok"
@@ -81,7 +81,7 @@
       "items": [],
       "count": 0,
       "nextCheckAt": null,
-      "quietUntil": null,
+      "quietUntil": "2026-10-20T14:00:00+00:00",
       "state": "ok"
     },
     "health": {
@@ -171,13 +171,13 @@
       },
       "recent": [
         {
-          "id": "pupd_dadcd328eb80493181c50814d24d0ff4",
-          "project_id": "proj-30640d25b24d",
+          "id": "pupd_7b05f9ef80fd41e8a8710946b22e059a",
+          "project_id": "proj-f43f461954c8",
           "lifecycle": "draft",
           "draft_revision": 1,
           "generator": "deterministic",
-          "created_at": "2026-10-20T03:21:26+00:00",
-          "updated_at": "2026-10-20T03:21:26+00:00",
+          "created_at": "2026-10-20T05:31:13+00:00",
+          "updated_at": "2026-10-20T05:31:13+00:00",
           "published_at": null,
           "review_id": null,
           "deliveries": []
@@ -185,14 +185,15 @@
       ],
       "latest_published": null,
       "automation": {
-        "id": "project-update-proj-30640d25b24d",
+        "id": "project-update-proj-f43f461954c8",
         "name": "Friday update wire update",
         "instruction": "Write the weekly status update for Friday update wire for my manager. Read this week's meetings, the project's decisions, what each person owes, the open risks, and the project's linked source state. Lead with the state and the one thing I need. Leave out 1:1s and People notes. Cite what you used.",
         "schedule": "0 15 * * 5",
         "schedule_enabled": false,
         "when_kind": "manual",
         "profile_id": null,
-        "engine_label": "Engine not set"
+        "engine_label": "Engine not set",
+        "latest_result": null
       },
       "state": "ok"
     },
@@ -205,7 +206,7 @@
     "receipts": {
       "items": [
         {
-          "id": "d6ef2c87-1f71-4981-9030-ba846beb16b7",
+          "id": "c5ad1c1b-26ef-44d0-a7d1-42452dfb5889",
           "op": "create_project",
           "label": "ProjectService.create_project",
           "title": "ProjectService.create_project",
@@ -214,20 +215,20 @@
           "origin": null,
           "caller": null,
           "identity": null,
-          "at": 1792466486.608942,
-          "timestamp": 1792466486.608942
+          "at": 1792474273.21224,
+          "timestamp": 1792474273.21224
         }
       ],
       "state": "ok"
     }
   },
   "scheduled": {
-    "project_id": "proj-30640d25b24d",
+    "project_id": "proj-f43f461954c8",
     "revision": 1,
-    "observed_at": "2026-10-19T21:21:26.609017",
+    "observed_at": "2026-10-19T23:31:13.212274",
     "nextCheckAt": null,
     "project": {
-      "id": "proj-30640d25b24d",
+      "id": "proj-f43f461954c8",
       "name": "Friday update wire",
       "description": "",
       "keywords": [],
@@ -236,8 +237,8 @@
       "detection_threshold": 0.4,
       "is_archived": false,
       "meeting_count": 0,
-      "created_at": "2026-10-19T21:21:26.609017",
-      "updated_at": "2026-10-19T21:21:26.609017",
+      "created_at": "2026-10-19T23:31:13.212274",
+      "updated_at": "2026-10-19T23:31:13.212274",
       "purpose": null,
       "outcome_text": null,
       "owner_ref": null,
@@ -273,17 +274,17 @@
     "changes": {
       "recent": [
         {
-          "id": "pchg_36fdedffa14096f4e748a6e4b5c17432",
-          "project_id": "proj-30640d25b24d",
+          "id": "pchg_fc32a7b9a8f554dfdd7f658583acc600",
+          "project_id": "proj-f43f461954c8",
           "project_revision": 1,
           "change_kind": "project.created",
-          "target_ref": "project:proj-30640d25b24d",
+          "target_ref": "project:proj-f43f461954c8",
           "actor_ref": "principal:owner-session",
-          "command_id": "pcmd_99b683307f1d44389a248a291cfa8826",
+          "command_id": "pcmd_e897cddff8724adab0b9fa55fa3b16ee",
           "before_hash": null,
           "after_hash": "f21181101b2ec3d4c206b0dd132ff701",
           "summary_json": "{\"name\": \"Friday update wire\"}",
-          "created_at": "2026-10-20T03:21:26.609017+00:00"
+          "created_at": "2026-10-20T05:31:13.212274+00:00"
         }
       ],
       "state": "ok"
@@ -303,7 +304,7 @@
       "items": [],
       "count": 0,
       "nextCheckAt": null,
-      "quietUntil": null,
+      "quietUntil": "2026-10-20T14:00:00+00:00",
       "state": "ok"
     },
     "health": {
@@ -393,13 +394,13 @@
       },
       "recent": [
         {
-          "id": "pupd_dadcd328eb80493181c50814d24d0ff4",
-          "project_id": "proj-30640d25b24d",
+          "id": "pupd_7b05f9ef80fd41e8a8710946b22e059a",
+          "project_id": "proj-f43f461954c8",
           "lifecycle": "draft",
           "draft_revision": 1,
           "generator": "deterministic",
-          "created_at": "2026-10-20T03:21:26+00:00",
-          "updated_at": "2026-10-20T03:21:26+00:00",
+          "created_at": "2026-10-20T05:31:13+00:00",
+          "updated_at": "2026-10-20T05:31:13+00:00",
           "published_at": null,
           "review_id": null,
           "deliveries": []
@@ -407,14 +408,15 @@
       ],
       "latest_published": null,
       "automation": {
-        "id": "project-update-proj-30640d25b24d",
+        "id": "project-update-proj-f43f461954c8",
         "name": "Friday update wire update",
         "instruction": "Write the weekly status update for Friday update wire for my manager. Read this week's meetings, the project's decisions, what each person owes, the open risks, and the project's linked source state. Lead with the state and the one thing I need. Leave out 1:1s and People notes. Cite what you used.",
         "schedule": "0 15 * * 5",
         "schedule_enabled": true,
         "when_kind": "manual",
         "profile_id": "hs201-meeting-engine",
-        "engine_label": "Hs201 Meeting Engine"
+        "engine_label": "Hs201 Meeting Engine",
+        "latest_result": null
       },
       "state": "ok"
     },
@@ -427,7 +429,7 @@
     "receipts": {
       "items": [
         {
-          "id": "d6ef2c87-1f71-4981-9030-ba846beb16b7",
+          "id": "c5ad1c1b-26ef-44d0-a7d1-42452dfb5889",
           "op": "create_project",
           "label": "ProjectService.create_project",
           "title": "ProjectService.create_project",
@@ -436,16 +438,16 @@
           "origin": null,
           "caller": null,
           "identity": null,
-          "at": 1792466486.608942,
-          "timestamp": 1792466486.608942
+          "at": 1792474273.21224,
+          "timestamp": 1792474273.21224
         }
       ],
       "state": "ok"
     }
   },
   "draft": {
-    "id": "pupd_dadcd328eb80493181c50814d24d0ff4",
-    "project_id": "proj-30640d25b24d",
+    "id": "pupd_7b05f9ef80fd41e8a8710946b22e059a",
+    "project_id": "proj-f43f461954c8",
     "project_revision": 1,
     "review_id": null,
     "lifecycle": "draft",
@@ -456,8 +458,8 @@
     "generator": "deterministic",
     "generator_host": null,
     "generator_model": null,
-    "created_at": "2026-10-20T03:21:26+00:00",
-    "updated_at": "2026-10-20T03:21:26+00:00",
+    "created_at": "2026-10-20T05:31:13+00:00",
+    "updated_at": "2026-10-20T05:31:13+00:00",
     "published_at": null,
     "fallback_reason": null,
     "fallback_receipt": null,
@@ -466,13 +468,13 @@
   },
   "friday": {
     "workbench": {
-      "id": "project-update-proj-30640d25b24d",
+      "id": "project-update-proj-f43f461954c8",
       "name": "Friday update wire update",
       "instruction": "Write the weekly status update for Friday update wire for my manager. Read this week's meetings, the project's decisions, what each person owes, the open risks, and the project's linked source state. Lead with the state and the one thing I need. Leave out 1:1s and People notes. Cite what you used.",
       "sources": [
-        "project:proj-30640d25b24d"
+        "project:proj-f43f461954c8"
       ],
-      "output_target": "project_updates:proj-30640d25b24d",
+      "output_target": "project_updates:proj-f43f461954c8",
       "spend_limit_usd": null,
       "recipe_id": null,
       "profile_id": null,
@@ -481,8 +483,8 @@
       "schedule_enabled": true,
       "schedule_revision": 2,
       "item_order": [],
-      "created_at": "2026-10-20T03:21:26Z",
-      "last_modified": "2026-10-20T03:21:26Z",
+      "created_at": "2026-10-20T05:31:13Z",
+      "last_modified": "2026-10-20T05:31:13Z",
       "deleted": false,
       "items": [],
       "item_count": 0,
@@ -493,7 +495,7 @@
       "results": [],
       "sources_shown": [
         {
-          "ref": "project:proj-30640d25b24d",
+          "ref": "project:proj-f43f461954c8",
           "kind": "project",
           "label": "",
           "missing": true
@@ -540,5 +542,995 @@
   },
   "refusal": {
     "error": "No model assignment can be frozen."
+  },
+  "completed": {
+    "project_id": "proj-f43f461954c8",
+    "revision": 1,
+    "observed_at": "2026-10-19T23:31:13.212274",
+    "nextCheckAt": null,
+    "project": {
+      "id": "proj-f43f461954c8",
+      "name": "Friday update wire",
+      "description": "",
+      "keywords": [],
+      "team_members": [],
+      "context": {},
+      "detection_threshold": 0.4,
+      "is_archived": false,
+      "meeting_count": 0,
+      "created_at": "2026-10-19T23:31:13.212274",
+      "updated_at": "2026-10-19T23:31:13.212274",
+      "purpose": null,
+      "outcome_text": null,
+      "owner_ref": null,
+      "lifecycle": "active",
+      "posture": null,
+      "posture_reason": null,
+      "start_at": null,
+      "target_at": null,
+      "review_cadence_json": null,
+      "next_review_at": null,
+      "template_key": null,
+      "modules_json": null,
+      "revision": 1,
+      "last_review_id": null,
+      "last_review_at": null
+    },
+    "items": {
+      "focus": [],
+      "totals_by_type": {},
+      "total": 0,
+      "state": "ok"
+    },
+    "meetings": {
+      "count": 0,
+      "latest": null,
+      "state": "ok"
+    },
+    "resources": {
+      "count": 0,
+      "latest": null,
+      "state": "ok"
+    },
+    "changes": {
+      "recent": [
+        {
+          "id": "pchg_fc32a7b9a8f554dfdd7f658583acc600",
+          "project_id": "proj-f43f461954c8",
+          "project_revision": 1,
+          "change_kind": "project.created",
+          "target_ref": "project:proj-f43f461954c8",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_e897cddff8724adab0b9fa55fa3b16ee",
+          "before_hash": null,
+          "after_hash": "f21181101b2ec3d4c206b0dd132ff701",
+          "summary_json": "{\"name\": \"Friday update wire\"}",
+          "created_at": "2026-10-20T05:31:13.212274+00:00"
+        }
+      ],
+      "state": "ok"
+    },
+    "review": {
+      "last_accepted_at": null,
+      "pending_count": 0,
+      "open_review_id": null,
+      "state": "ok"
+    },
+    "needsYou": {
+      "items": [],
+      "count": 0,
+      "state": "ok"
+    },
+    "sources": {
+      "items": [],
+      "count": 0,
+      "nextCheckAt": null,
+      "quietUntil": "2026-10-20T14:00:00+00:00",
+      "state": "ok"
+    },
+    "health": {
+      "assessment": "on_track",
+      "reason": null,
+      "project_state": "on_track",
+      "state_reason": null,
+      "state_ref": null,
+      "inputs": {
+        "overdue": 0,
+        "overdueMilestones": 0,
+        "ciFailing": false,
+        "reviewWaitingDays": null,
+        "targetPassed": false
+      },
+      "signals": {
+        "review_wait": {
+          "present": false,
+          "tone": "green",
+          "median_days": 0.0,
+          "waiting_count": 0,
+          "per_reviewer": []
+        },
+        "issue_aging": {
+          "present": false,
+          "tone": "green",
+          "aged_count": 0,
+          "threshold_days": 14
+        },
+        "ci": {
+          "present": false,
+          "tone": "green",
+          "failures_last_3": 0,
+          "flaky_branch_count": 0,
+          "queue": 0
+        },
+        "release": {
+          "present": false,
+          "tone": "green",
+          "composite": "green",
+          "signals": {
+            "review_wait": "green",
+            "ci": "green",
+            "blockers": "green",
+            "overdue": "green"
+          },
+          "blockers_count": 0,
+          "blockers": []
+        }
+      },
+      "checked_at": null,
+      "merge_queue_depth": 0,
+      "people": [],
+      "state": "ok"
+    },
+    "now": {
+      "next_date": null,
+      "last_update_at": null,
+      "meetings_this_week": 0,
+      "risks": [],
+      "decided": [],
+      "state": "ok"
+    },
+    "sinceRead": {
+      "readAt": null,
+      "groups": [],
+      "state": "ok"
+    },
+    "decisions": {
+      "items": [],
+      "state": "ok"
+    },
+    "commitments": {
+      "items": [],
+      "state": "ok"
+    },
+    "target": {
+      "targetAt": null,
+      "daysLeft": null,
+      "passed": false,
+      "state": "ok"
+    },
+    "updates": {
+      "count": 2,
+      "counts": {
+        "draft": 1,
+        "superseded": 1
+      },
+      "recent": [
+        {
+          "id": "pupd_0a4feacff10844c6a4547936e01872af",
+          "project_id": "proj-f43f461954c8",
+          "lifecycle": "draft",
+          "draft_revision": 2,
+          "generator": "agent:automation:project-update-proj-f43f461954c8",
+          "created_at": "2026-10-20T05:31:13+00:00",
+          "updated_at": "2026-10-20T05:31:13+00:00",
+          "published_at": null,
+          "review_id": null,
+          "deliveries": []
+        },
+        {
+          "id": "pupd_7b05f9ef80fd41e8a8710946b22e059a",
+          "project_id": "proj-f43f461954c8",
+          "lifecycle": "superseded",
+          "draft_revision": 1,
+          "generator": "deterministic",
+          "created_at": "2026-10-20T05:31:13+00:00",
+          "updated_at": "2026-10-20T05:31:13+00:00",
+          "published_at": null,
+          "review_id": null,
+          "deliveries": []
+        }
+      ],
+      "latest_published": null,
+      "automation": {
+        "id": "project-update-proj-f43f461954c8",
+        "name": "Friday update wire update",
+        "instruction": "Write the weekly status update for Friday update wire for my manager. Read this week's meetings, the project's decisions, what each person owes, the open risks, and the project's linked source state. Lead with the state and the one thing I need. Leave out 1:1s and People notes. Cite what you used.",
+        "schedule": "0 15 * * 5",
+        "schedule_enabled": true,
+        "when_kind": "manual",
+        "profile_id": "hs201-meeting-engine",
+        "engine_label": "Hs201 Meeting Engine",
+        "latest_result": {
+          "artifact_id": "artifact_4b056faa30ee",
+          "update_id": "pupd_0a4feacff10844c6a4547936e01872af",
+          "new": true
+        }
+      },
+      "state": "ok"
+    },
+    "steward": {
+      "latest_run": null,
+      "enabled": false,
+      "unattended_enabled": false,
+      "state": "ok"
+    },
+    "receipts": {
+      "items": [
+        {
+          "id": "c5ad1c1b-26ef-44d0-a7d1-42452dfb5889",
+          "op": "create_project",
+          "label": "ProjectService.create_project",
+          "title": "ProjectService.create_project",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1792474273.21224,
+          "timestamp": 1792474273.21224
+        }
+      ],
+      "state": "ok"
+    }
+  },
+  "delivered": {
+    "update": {
+      "id": "pupd_0a4feacff10844c6a4547936e01872af",
+      "project_id": "proj-f43f461954c8",
+      "project_revision": 1,
+      "review_id": null,
+      "lifecycle": "draft",
+      "draft_revision": 2,
+      "body_md": "## Weekly update\n\n- Platform sync: the cutover moves to Thursday.\n- Hiring: two loops are booked for next week.\n",
+      "claims_json": "[{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-f43f461954c8\"],\"section\":\"progress\",\"span_id\":\"s_agent_0\",\"support\":\"source_linked\",\"text\":\"## Weekly update\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-f43f461954c8\"],\"section\":\"progress\",\"span_id\":\"s_agent_2\",\"support\":\"source_linked\",\"text\":\"- Platform sync: the cutover moves to Thursday.\"},{\"acceptance\":\"unreviewed\",\"kind\":\"observation\",\"refs\":[\"project:proj-f43f461954c8\"],\"section\":\"progress\",\"span_id\":\"s_agent_3\",\"support\":\"source_linked\",\"text\":\"- Hiring: two loops are booked for next week.\"}]",
+      "source_manifest_json": "{\"agent_sources\":[\"project:proj-f43f461954c8\"],\"project_revision\":1}",
+      "generator": "agent:automation:project-update-proj-f43f461954c8",
+      "generator_host": null,
+      "generator_model": null,
+      "created_at": "2026-10-20T05:31:13+00:00",
+      "updated_at": "2026-10-20T05:31:13+00:00",
+      "published_at": null,
+      "fallback_reason": null,
+      "fallback_receipt": null,
+      "deliveries": [],
+      "generatorHost": null,
+      "generatorModel": null
+    }
+  },
+  "opened": {
+    "result": {
+      "artifact_id": "artifact_4b056faa30ee",
+      "status": "read"
+    }
+  },
+  "read": {
+    "project_id": "proj-f43f461954c8",
+    "revision": 1,
+    "observed_at": "2026-10-19T23:31:13.212274",
+    "nextCheckAt": null,
+    "project": {
+      "id": "proj-f43f461954c8",
+      "name": "Friday update wire",
+      "description": "",
+      "keywords": [],
+      "team_members": [],
+      "context": {},
+      "detection_threshold": 0.4,
+      "is_archived": false,
+      "meeting_count": 0,
+      "created_at": "2026-10-19T23:31:13.212274",
+      "updated_at": "2026-10-19T23:31:13.212274",
+      "purpose": null,
+      "outcome_text": null,
+      "owner_ref": null,
+      "lifecycle": "active",
+      "posture": null,
+      "posture_reason": null,
+      "start_at": null,
+      "target_at": null,
+      "review_cadence_json": null,
+      "next_review_at": null,
+      "template_key": null,
+      "modules_json": null,
+      "revision": 1,
+      "last_review_id": null,
+      "last_review_at": null
+    },
+    "items": {
+      "focus": [],
+      "totals_by_type": {},
+      "total": 0,
+      "state": "ok"
+    },
+    "meetings": {
+      "count": 0,
+      "latest": null,
+      "state": "ok"
+    },
+    "resources": {
+      "count": 0,
+      "latest": null,
+      "state": "ok"
+    },
+    "changes": {
+      "recent": [
+        {
+          "id": "pchg_fc32a7b9a8f554dfdd7f658583acc600",
+          "project_id": "proj-f43f461954c8",
+          "project_revision": 1,
+          "change_kind": "project.created",
+          "target_ref": "project:proj-f43f461954c8",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_e897cddff8724adab0b9fa55fa3b16ee",
+          "before_hash": null,
+          "after_hash": "f21181101b2ec3d4c206b0dd132ff701",
+          "summary_json": "{\"name\": \"Friday update wire\"}",
+          "created_at": "2026-10-20T05:31:13.212274+00:00"
+        }
+      ],
+      "state": "ok"
+    },
+    "review": {
+      "last_accepted_at": null,
+      "pending_count": 0,
+      "open_review_id": null,
+      "state": "ok"
+    },
+    "needsYou": {
+      "items": [],
+      "count": 0,
+      "state": "ok"
+    },
+    "sources": {
+      "items": [],
+      "count": 0,
+      "nextCheckAt": null,
+      "quietUntil": "2026-10-20T14:00:00+00:00",
+      "state": "ok"
+    },
+    "health": {
+      "assessment": "on_track",
+      "reason": null,
+      "project_state": "on_track",
+      "state_reason": null,
+      "state_ref": null,
+      "inputs": {
+        "overdue": 0,
+        "overdueMilestones": 0,
+        "ciFailing": false,
+        "reviewWaitingDays": null,
+        "targetPassed": false
+      },
+      "signals": {
+        "review_wait": {
+          "present": false,
+          "tone": "green",
+          "median_days": 0.0,
+          "waiting_count": 0,
+          "per_reviewer": []
+        },
+        "issue_aging": {
+          "present": false,
+          "tone": "green",
+          "aged_count": 0,
+          "threshold_days": 14
+        },
+        "ci": {
+          "present": false,
+          "tone": "green",
+          "failures_last_3": 0,
+          "flaky_branch_count": 0,
+          "queue": 0
+        },
+        "release": {
+          "present": false,
+          "tone": "green",
+          "composite": "green",
+          "signals": {
+            "review_wait": "green",
+            "ci": "green",
+            "blockers": "green",
+            "overdue": "green"
+          },
+          "blockers_count": 0,
+          "blockers": []
+        }
+      },
+      "checked_at": null,
+      "merge_queue_depth": 0,
+      "people": [],
+      "state": "ok"
+    },
+    "now": {
+      "next_date": null,
+      "last_update_at": null,
+      "meetings_this_week": 0,
+      "risks": [],
+      "decided": [],
+      "state": "ok"
+    },
+    "sinceRead": {
+      "readAt": null,
+      "groups": [],
+      "state": "ok"
+    },
+    "decisions": {
+      "items": [],
+      "state": "ok"
+    },
+    "commitments": {
+      "items": [],
+      "state": "ok"
+    },
+    "target": {
+      "targetAt": null,
+      "daysLeft": null,
+      "passed": false,
+      "state": "ok"
+    },
+    "updates": {
+      "count": 2,
+      "counts": {
+        "draft": 1,
+        "superseded": 1
+      },
+      "recent": [
+        {
+          "id": "pupd_0a4feacff10844c6a4547936e01872af",
+          "project_id": "proj-f43f461954c8",
+          "lifecycle": "draft",
+          "draft_revision": 2,
+          "generator": "agent:automation:project-update-proj-f43f461954c8",
+          "created_at": "2026-10-20T05:31:13+00:00",
+          "updated_at": "2026-10-20T05:31:13+00:00",
+          "published_at": null,
+          "review_id": null,
+          "deliveries": []
+        },
+        {
+          "id": "pupd_7b05f9ef80fd41e8a8710946b22e059a",
+          "project_id": "proj-f43f461954c8",
+          "lifecycle": "superseded",
+          "draft_revision": 1,
+          "generator": "deterministic",
+          "created_at": "2026-10-20T05:31:13+00:00",
+          "updated_at": "2026-10-20T05:31:13+00:00",
+          "published_at": null,
+          "review_id": null,
+          "deliveries": []
+        }
+      ],
+      "latest_published": null,
+      "automation": {
+        "id": "project-update-proj-f43f461954c8",
+        "name": "Friday update wire update",
+        "instruction": "Write the weekly status update for Friday update wire for my manager. Read this week's meetings, the project's decisions, what each person owes, the open risks, and the project's linked source state. Lead with the state and the one thing I need. Leave out 1:1s and People notes. Cite what you used.",
+        "schedule": "0 15 * * 5",
+        "schedule_enabled": true,
+        "when_kind": "manual",
+        "profile_id": "hs201-meeting-engine",
+        "engine_label": "Hs201 Meeting Engine",
+        "latest_result": {
+          "artifact_id": "artifact_4b056faa30ee",
+          "update_id": "pupd_0a4feacff10844c6a4547936e01872af",
+          "new": false
+        }
+      },
+      "state": "ok"
+    },
+    "steward": {
+      "latest_run": null,
+      "enabled": false,
+      "unattended_enabled": false,
+      "state": "ok"
+    },
+    "receipts": {
+      "items": [
+        {
+          "id": "c5ad1c1b-26ef-44d0-a7d1-42452dfb5889",
+          "op": "create_project",
+          "label": "ProjectService.create_project",
+          "title": "ProjectService.create_project",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1792474273.21224,
+          "timestamp": 1792474273.21224
+        }
+      ],
+      "state": "ok"
+    }
+  },
+  "legacy": {
+    "project_id": "proj-f43f461954c8",
+    "revision": 1,
+    "observed_at": "2026-10-19T23:31:13.212274",
+    "nextCheckAt": null,
+    "project": {
+      "id": "proj-f43f461954c8",
+      "name": "Friday update wire",
+      "description": "",
+      "keywords": [],
+      "team_members": [],
+      "context": {},
+      "detection_threshold": 0.4,
+      "is_archived": false,
+      "meeting_count": 0,
+      "created_at": "2026-10-19T23:31:13.212274",
+      "updated_at": "2026-10-19T23:31:13.212274",
+      "purpose": null,
+      "outcome_text": null,
+      "owner_ref": null,
+      "lifecycle": "active",
+      "posture": null,
+      "posture_reason": null,
+      "start_at": null,
+      "target_at": null,
+      "review_cadence_json": null,
+      "next_review_at": null,
+      "template_key": null,
+      "modules_json": null,
+      "revision": 1,
+      "last_review_id": null,
+      "last_review_at": null
+    },
+    "items": {
+      "focus": [],
+      "totals_by_type": {},
+      "total": 0,
+      "state": "ok"
+    },
+    "meetings": {
+      "count": 0,
+      "latest": null,
+      "state": "ok"
+    },
+    "resources": {
+      "count": 0,
+      "latest": null,
+      "state": "ok"
+    },
+    "changes": {
+      "recent": [
+        {
+          "id": "pchg_fc32a7b9a8f554dfdd7f658583acc600",
+          "project_id": "proj-f43f461954c8",
+          "project_revision": 1,
+          "change_kind": "project.created",
+          "target_ref": "project:proj-f43f461954c8",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_e897cddff8724adab0b9fa55fa3b16ee",
+          "before_hash": null,
+          "after_hash": "f21181101b2ec3d4c206b0dd132ff701",
+          "summary_json": "{\"name\": \"Friday update wire\"}",
+          "created_at": "2026-10-20T05:31:13.212274+00:00"
+        }
+      ],
+      "state": "ok"
+    },
+    "review": {
+      "last_accepted_at": null,
+      "pending_count": 0,
+      "open_review_id": null,
+      "state": "ok"
+    },
+    "needsYou": {
+      "items": [],
+      "count": 0,
+      "state": "ok"
+    },
+    "sources": {
+      "items": [],
+      "count": 0,
+      "nextCheckAt": null,
+      "quietUntil": "2026-10-20T14:00:00+00:00",
+      "state": "ok"
+    },
+    "health": {
+      "assessment": "on_track",
+      "reason": null,
+      "project_state": "on_track",
+      "state_reason": null,
+      "state_ref": null,
+      "inputs": {
+        "overdue": 0,
+        "overdueMilestones": 0,
+        "ciFailing": false,
+        "reviewWaitingDays": null,
+        "targetPassed": false
+      },
+      "signals": {
+        "review_wait": {
+          "present": false,
+          "tone": "green",
+          "median_days": 0.0,
+          "waiting_count": 0,
+          "per_reviewer": []
+        },
+        "issue_aging": {
+          "present": false,
+          "tone": "green",
+          "aged_count": 0,
+          "threshold_days": 14
+        },
+        "ci": {
+          "present": false,
+          "tone": "green",
+          "failures_last_3": 0,
+          "flaky_branch_count": 0,
+          "queue": 0
+        },
+        "release": {
+          "present": false,
+          "tone": "green",
+          "composite": "green",
+          "signals": {
+            "review_wait": "green",
+            "ci": "green",
+            "blockers": "green",
+            "overdue": "green"
+          },
+          "blockers_count": 0,
+          "blockers": []
+        }
+      },
+      "checked_at": null,
+      "merge_queue_depth": 0,
+      "people": [],
+      "state": "ok"
+    },
+    "now": {
+      "next_date": null,
+      "last_update_at": null,
+      "meetings_this_week": 0,
+      "risks": [],
+      "decided": [],
+      "state": "ok"
+    },
+    "sinceRead": {
+      "readAt": null,
+      "groups": [],
+      "state": "ok"
+    },
+    "decisions": {
+      "items": [],
+      "state": "ok"
+    },
+    "commitments": {
+      "items": [],
+      "state": "ok"
+    },
+    "target": {
+      "targetAt": null,
+      "daysLeft": null,
+      "passed": false,
+      "state": "ok"
+    },
+    "updates": {
+      "count": 2,
+      "counts": {
+        "draft": 1,
+        "superseded": 1
+      },
+      "recent": [
+        {
+          "id": "pupd_0a4feacff10844c6a4547936e01872af",
+          "project_id": "proj-f43f461954c8",
+          "lifecycle": "draft",
+          "draft_revision": 2,
+          "generator": "agent:automation:project-update-proj-f43f461954c8",
+          "created_at": "2026-10-20T05:31:13+00:00",
+          "updated_at": "2026-10-20T05:31:13+00:00",
+          "published_at": null,
+          "review_id": null,
+          "deliveries": []
+        },
+        {
+          "id": "pupd_7b05f9ef80fd41e8a8710946b22e059a",
+          "project_id": "proj-f43f461954c8",
+          "lifecycle": "superseded",
+          "draft_revision": 1,
+          "generator": "deterministic",
+          "created_at": "2026-10-20T05:31:13+00:00",
+          "updated_at": "2026-10-20T05:31:13+00:00",
+          "published_at": null,
+          "review_id": null,
+          "deliveries": []
+        }
+      ],
+      "latest_published": null,
+      "automation": {
+        "id": "project-update-proj-f43f461954c8",
+        "name": "Friday update wire update",
+        "instruction": "Write the weekly status update for Friday update wire for my manager. Read this week's meetings, the project's decisions, what each person owes, the open risks, and the project's linked source state. Lead with the state and the one thing I need. Leave out 1:1s and People notes. Cite what you used.",
+        "schedule": "0 15 * * 5",
+        "schedule_enabled": true,
+        "when_kind": "manual",
+        "profile_id": "hs201-meeting-engine",
+        "engine_label": "Hs201 Meeting Engine",
+        "latest_result": {
+          "artifact_id": "artifact_4b056faa30ee",
+          "update_id": null,
+          "new": false
+        }
+      },
+      "state": "ok"
+    },
+    "steward": {
+      "latest_run": null,
+      "enabled": false,
+      "unattended_enabled": false,
+      "state": "ok"
+    },
+    "receipts": {
+      "items": [
+        {
+          "id": "c5ad1c1b-26ef-44d0-a7d1-42452dfb5889",
+          "op": "create_project",
+          "label": "ProjectService.create_project",
+          "title": "ProjectService.create_project",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1792474273.21224,
+          "timestamp": 1792474273.21224
+        }
+      ],
+      "state": "ok"
+    }
+  },
+  "foreign": {
+    "project_id": "proj-f43f461954c8",
+    "revision": 1,
+    "observed_at": "2026-10-19T23:31:13.212274",
+    "nextCheckAt": null,
+    "project": {
+      "id": "proj-f43f461954c8",
+      "name": "Friday update wire",
+      "description": "",
+      "keywords": [],
+      "team_members": [],
+      "context": {},
+      "detection_threshold": 0.4,
+      "is_archived": false,
+      "meeting_count": 0,
+      "created_at": "2026-10-19T23:31:13.212274",
+      "updated_at": "2026-10-19T23:31:13.212274",
+      "purpose": null,
+      "outcome_text": null,
+      "owner_ref": null,
+      "lifecycle": "active",
+      "posture": null,
+      "posture_reason": null,
+      "start_at": null,
+      "target_at": null,
+      "review_cadence_json": null,
+      "next_review_at": null,
+      "template_key": null,
+      "modules_json": null,
+      "revision": 1,
+      "last_review_id": null,
+      "last_review_at": null
+    },
+    "items": {
+      "focus": [],
+      "totals_by_type": {},
+      "total": 0,
+      "state": "ok"
+    },
+    "meetings": {
+      "count": 0,
+      "latest": null,
+      "state": "ok"
+    },
+    "resources": {
+      "count": 0,
+      "latest": null,
+      "state": "ok"
+    },
+    "changes": {
+      "recent": [
+        {
+          "id": "pchg_fc32a7b9a8f554dfdd7f658583acc600",
+          "project_id": "proj-f43f461954c8",
+          "project_revision": 1,
+          "change_kind": "project.created",
+          "target_ref": "project:proj-f43f461954c8",
+          "actor_ref": "principal:owner-session",
+          "command_id": "pcmd_e897cddff8724adab0b9fa55fa3b16ee",
+          "before_hash": null,
+          "after_hash": "f21181101b2ec3d4c206b0dd132ff701",
+          "summary_json": "{\"name\": \"Friday update wire\"}",
+          "created_at": "2026-10-20T05:31:13.212274+00:00"
+        }
+      ],
+      "state": "ok"
+    },
+    "review": {
+      "last_accepted_at": null,
+      "pending_count": 0,
+      "open_review_id": null,
+      "state": "ok"
+    },
+    "needsYou": {
+      "items": [],
+      "count": 0,
+      "state": "ok"
+    },
+    "sources": {
+      "items": [],
+      "count": 0,
+      "nextCheckAt": null,
+      "quietUntil": "2026-10-20T14:00:00+00:00",
+      "state": "ok"
+    },
+    "health": {
+      "assessment": "on_track",
+      "reason": null,
+      "project_state": "on_track",
+      "state_reason": null,
+      "state_ref": null,
+      "inputs": {
+        "overdue": 0,
+        "overdueMilestones": 0,
+        "ciFailing": false,
+        "reviewWaitingDays": null,
+        "targetPassed": false
+      },
+      "signals": {
+        "review_wait": {
+          "present": false,
+          "tone": "green",
+          "median_days": 0.0,
+          "waiting_count": 0,
+          "per_reviewer": []
+        },
+        "issue_aging": {
+          "present": false,
+          "tone": "green",
+          "aged_count": 0,
+          "threshold_days": 14
+        },
+        "ci": {
+          "present": false,
+          "tone": "green",
+          "failures_last_3": 0,
+          "flaky_branch_count": 0,
+          "queue": 0
+        },
+        "release": {
+          "present": false,
+          "tone": "green",
+          "composite": "green",
+          "signals": {
+            "review_wait": "green",
+            "ci": "green",
+            "blockers": "green",
+            "overdue": "green"
+          },
+          "blockers_count": 0,
+          "blockers": []
+        }
+      },
+      "checked_at": null,
+      "merge_queue_depth": 0,
+      "people": [],
+      "state": "ok"
+    },
+    "now": {
+      "next_date": null,
+      "last_update_at": null,
+      "meetings_this_week": 0,
+      "risks": [],
+      "decided": [],
+      "state": "ok"
+    },
+    "sinceRead": {
+      "readAt": null,
+      "groups": [],
+      "state": "ok"
+    },
+    "decisions": {
+      "items": [],
+      "state": "ok"
+    },
+    "commitments": {
+      "items": [],
+      "state": "ok"
+    },
+    "target": {
+      "targetAt": null,
+      "daysLeft": null,
+      "passed": false,
+      "state": "ok"
+    },
+    "updates": {
+      "count": 2,
+      "counts": {
+        "draft": 1,
+        "superseded": 1
+      },
+      "recent": [
+        {
+          "id": "pupd_0a4feacff10844c6a4547936e01872af",
+          "project_id": "proj-f43f461954c8",
+          "lifecycle": "draft",
+          "draft_revision": 2,
+          "generator": "agent:automation:project-update-proj-f43f461954c8",
+          "created_at": "2026-10-20T05:31:13+00:00",
+          "updated_at": "2026-10-20T05:31:13+00:00",
+          "published_at": null,
+          "review_id": null,
+          "deliveries": []
+        },
+        {
+          "id": "pupd_7b05f9ef80fd41e8a8710946b22e059a",
+          "project_id": "proj-f43f461954c8",
+          "lifecycle": "superseded",
+          "draft_revision": 1,
+          "generator": "deterministic",
+          "created_at": "2026-10-20T05:31:13+00:00",
+          "updated_at": "2026-10-20T05:31:13+00:00",
+          "published_at": null,
+          "review_id": null,
+          "deliveries": []
+        }
+      ],
+      "latest_published": null,
+      "automation": {
+        "id": "project-update-proj-f43f461954c8",
+        "name": "Friday update wire update",
+        "instruction": "Write the weekly status update for Friday update wire for my manager. Read this week's meetings, the project's decisions, what each person owes, the open risks, and the project's linked source state. Lead with the state and the one thing I need. Leave out 1:1s and People notes. Cite what you used.",
+        "schedule": "0 15 * * 5",
+        "schedule_enabled": true,
+        "when_kind": "manual",
+        "profile_id": "hs201-meeting-engine",
+        "engine_label": "Hs201 Meeting Engine",
+        "latest_result": {
+          "artifact_id": "artifact_4b056faa30ee",
+          "update_id": null,
+          "new": false
+        }
+      },
+      "state": "ok"
+    },
+    "steward": {
+      "latest_run": null,
+      "enabled": false,
+      "unattended_enabled": false,
+      "state": "ok"
+    },
+    "receipts": {
+      "items": [
+        {
+          "id": "c5ad1c1b-26ef-44d0-a7d1-42452dfb5889",
+          "op": "create_project",
+          "label": "ProjectService.create_project",
+          "title": "ProjectService.create_project",
+          "outcome": "ok",
+          "reason": null,
+          "origin": null,
+          "caller": null,
+          "identity": null,
+          "at": 1792474273.21224,
+          "timestamp": 1792474273.21224
+        }
+      ],
+      "state": "ok"
+    }
   }
 }

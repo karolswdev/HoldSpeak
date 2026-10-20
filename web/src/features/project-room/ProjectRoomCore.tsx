@@ -1399,7 +1399,8 @@ function UpdateLine({ room, updateCtrl, onReload }: {
   const [failure, setFailure] = useState("");
   if (room.updates.state !== "ok" || !room.updates.automation) return null;
   const automation = room.updates.automation;
-  const hasNew = room.updates.recent.some((update) => String(update.lifecycle ?? "") === "draft");
+  const latestResult = automation.latestResult;
+  const hasNew = Boolean(latestResult?.new);
   const enableFriday = async () => {
     if (busy) return;
     setBusy(true);
@@ -1414,6 +1415,15 @@ function UpdateLine({ room, updateCtrl, onReload }: {
     }
   };
   const openAutomation = () => useDesk.getState().openWorkbenchWindow(automation.id);
+  const openResult = () => {
+    if (latestResult?.updateId) {
+      void updateCtrl.openAutomationResult(latestResult);
+      return;
+    }
+    // Legacy artifacts have no project-update link. Open the ordinary
+    // Automation result surface rather than guessing at an owner draft.
+    openAutomation();
+  };
   const when = automation.scheduleEnabled ? "Fridays 15:00" : "Only when pressed";
   const withEngine = automation.engineLabel;
   return (
@@ -1422,7 +1432,9 @@ function UpdateLine({ room, updateCtrl, onReload }: {
         <Button dense variant="ghost" onClick={openAutomation} data-testid="room-update-when">{when}</Button>
         <Button dense variant="ghost" onClick={openAutomation} data-testid="room-update-with">{withEngine}</Button>
         {hasNew ? <span className="surface-token" data-tone="ok" data-testid="room-update-new">NEW</span> : null}
-        <Button dense variant="ghost" onClick={() => void updateCtrl.openLatest()} data-testid="room-update-open">Open latest</Button>
+        <Button dense variant="ghost" onClick={openResult} data-testid="room-update-open">
+          {latestResult?.updateId ? "Open latest" : "Open automation"}
+        </Button>
         {!automation.scheduleEnabled ? (
           <Button dense variant="ghost" loading={busy} onClick={() => void enableFriday()} data-testid="room-update-friday">
             Every Friday at 15:00

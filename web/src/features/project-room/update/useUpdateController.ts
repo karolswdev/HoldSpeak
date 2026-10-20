@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError } from "../../../lib/api";
+import { openAutomationResult as markAutomationResultRead } from "../../../desk/api";
 import { plainFailure } from "../../../desk/surface/plainFailure";
 import { forgetDraft, keepDraft, keepPlace, keptDraft, keptPlace } from "../../../desk/deskMemory";
 import type { ProjectUpdate, UpdateLifecycle } from "./model";
@@ -229,6 +230,32 @@ export function useUpdateController(
       setLoading(false);
     }
   }, [projectId, openUpdate]);
+
+  // Open the exact project update produced by an automation result.  The
+  // artifact is marked read only after that update is fetched and confirmed
+  // to belong to this project; both reads must succeed before the Room is
+  // refreshed.  This keeps an owner-created draft out of the result path.
+  const openAutomationResult = useCallback(async (result: {
+    artifactId: string;
+    updateId: string | null;
+  }) => {
+    if (!projectId || !automationId || !result.artifactId || !result.updateId) return;
+    setLoading(true);
+    setError("");
+    try {
+      const update = await updateApi.fetchUpdate(result.updateId);
+      if (update.projectId !== projectId) {
+        throw new Error("The automation result belongs to another project.");
+      }
+      await markAutomationResultRead(automationId, result.artifactId);
+      openUpdate(update);
+      onRoomRefresh();
+    } catch (reason) {
+      fail("UPDATE DID NOT OPEN", reason);
+    } finally {
+      setLoading(false);
+    }
+  }, [automationId, onRoomRefresh, openUpdate, projectId]);
 
   // ── Back to list from editor ──
   const backToList = useCallback(async () => {
@@ -627,6 +654,7 @@ export function useUpdateController(
     posture,
     enterUpdates,
     openLatest,
+    openAutomationResult,
     exitUpdates,
     stepAside,
     openUpdate,
