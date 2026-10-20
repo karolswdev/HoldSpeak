@@ -313,7 +313,12 @@ describe("the immutable terminal target is never reinterpreted", () => {
     const body = JSON.parse(posts[0].init.body);
     expect(body.target).toEqual({ node_id: "node_a", target_id: "term_a", target_generation: "gen_1" });
     expect(body.operation).toEqual({ family: "coder_steering", verb: "terminal.text" });
-    expect(body.payload).toEqual({ text: "continue", submit: true });
+    expect(body.payload).toEqual({
+      session_key: targetA.sessionLabel,
+      agent: targetA.agent,
+      text: "continue",
+      submit: true,
+    });
     // The client NEVER supplies authority/actor/policy/grant — the hub derives them.
     expect(body.authority).toBeUndefined();
     expect(body.actor).toBeUndefined();

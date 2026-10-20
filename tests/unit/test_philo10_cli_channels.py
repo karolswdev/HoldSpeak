@@ -815,7 +815,7 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
     from holdspeak.mcp.tool_authority import EGRESS, TOOL_AUTHORITY
 
     blocking = {d.name for d in operations.DESCRIPTORS if d.blocking_io}
-    assert blocking == {"channel.send", "channel.save_destination", "nudge.send", "connection.recheck",
+    assert blocking == {"channel.send", "channel.save_destination", "nudge.send", "connection.recheck", "connection.signin",
                         "channel.save_email_key", "channel.save_slack_webhook", "channel.check_destination",
                         "agent.hand", "note.find_tasks", "agent_hooks.install", "agent_hooks.remove",
                         "setup.use", "setup.lan.scan"}
@@ -824,7 +824,7 @@ def test_the_sends_are_egress_owner_presses_and_blocking_io_in_the_one_table() -
     by_name = {d.name: d for d in operations.DESCRIPTORS}
     mcp_blocking = {n for n in blocking if any(e.startswith("mcp:") for e in by_name[n].exposure)}
     assert mcp_blocking == blocking - {"channel.save_email_key", "channel.save_slack_webhook",
-                                        "agent_hooks.install", "agent_hooks.remove",
+                                        "agent_hooks.install", "agent_hooks.remove", "connection.signin",
                                         "setup.lan.scan"}
     assert all(name in TOOL_AUTHORITY for name in mcp_blocking), mcp_blocking - set(TOOL_AUTHORITY)
     key = by_name["channel.save_email_key"]

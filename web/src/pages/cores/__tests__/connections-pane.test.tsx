@@ -1013,7 +1013,12 @@ describe("Accounts that say Works (betterment ST2)", () => {
     expect(within(unfold).getByText("Nothing yet")).toBeInTheDocument();
     expect(within(unfold).queryByText(/acli jira auth login/)).toBeNull();
     fireEvent.click(within(unfold).getByRole("button", { name: "Sign in again" }));
-    expect(within(unfold).getByText(`acli jira auth login --site beta.atlassian.net --email owner@example.com --token`)).toBeInTheDocument();
+    expect(apiFetch).toHaveBeenCalledWith("/api/connections/jira/signin", {
+      method: "POST", json: { site: "beta.atlassian.net", email: "owner@example.com" },
+    });
+    // This fixture has no sign-in result; its unavailable native start falls
+    // back asynchronously. The real successful flow is covered on glass.
+    await waitFor(() => expect(within(unfold).getByText(`acli jira auth login --site beta.atlassian.net --email owner@example.com --token`)).toBeInTheDocument());
     fireEvent.click(within(unfold).getByRole("button", { name: "Remove" }));
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(
       `/api/providers/jira/connections/${encodeURIComponent(BETA)}`, { method: "DELETE" }));

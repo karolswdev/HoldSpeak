@@ -83,6 +83,33 @@ export interface ConnectionsResponse {
   tools: ConnectionTool[];
 }
 
+export interface SigninTarget {
+  target_id: string;
+  target_generation: string;
+  node_id: string;
+  label: string;
+  session_label: string;
+  worktree_id?: string | null;
+  agent: string;
+  presentation?: "embedded" | "window";
+}
+
+export interface SigninStartResponse {
+  status: "started";
+  run_id: string;
+  target: SigninTarget;
+}
+
+export interface SigninStatusResponse {
+  status: "running" | "finished" | "failed";
+  run_id: string;
+  provider_id: string;
+  site: string;
+  target: SigninTarget;
+  exit_code?: number | null;
+  error?: string;
+}
+
 /* ── Decoder (tolerates missing / partial payloads) ── */
 
 const VALID_STATES = new Set<ConnectionState>([
@@ -215,4 +242,19 @@ export async function recheckProvider(providerId: string, connectionRef?: string
   const tool = decodeTool(raw);
   if (!tool) throw new Error("Check returned no account");
   return tool;
+}
+
+export async function startSignin(
+  providerId: string,
+  site: string,
+  email?: string,
+): Promise<SigninStartResponse> {
+  return apiFetch(`/api/connections/${providerId}/signin`, {
+    method: "POST",
+    json: { site, email: email ?? null },
+  });
+}
+
+export async function signinStatus(runId: string): Promise<SigninStatusResponse> {
+  return apiFetch(`/api/connections/signin/${encodeURIComponent(runId)}`);
 }

@@ -6025,6 +6025,69 @@
       }
     },
     {
+      "name": "connection.signin",
+      "version": 1,
+      "description": "Start the provider's native browser sign-in in the Accounts terminal pane.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "provider_id": {
+            "enum": [
+              "github",
+              "jira",
+              "confluence"
+            ]
+          },
+          "site": {
+            "type": "string"
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "provider_id",
+          "site"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport; owner only",
+      "effect": "write",
+      "result": "{status, run_id, target} and the receipt",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required",
+        "provider_unsupported",
+        "site_invalid",
+        "email_invalid",
+        "cli_unavailable",
+        "cli_help_failed",
+        "browser_flow_unsupported",
+        "terminal_unavailable",
+        "terminal_target_failed",
+        "spawn_failed"
+      ],
+      "completion": "the returned terminal target streams the native CLI; connection.recheck runs after its exit",
+      "exposure": [
+        "http:POST /api/connections/{provider}/signin"
+      ],
+      "held": [],
+      "owner_only": true,
+      "blocking_io": true,
+      "owner_press": true,
+      "admission": {
+        "rule": "admitted",
+        "condition": "The owner's press starts a provider-owned sign-in process in the shared terminal pane.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
       "name": "setup.found",
       "version": 1,
       "description": "Read the local Setup inventory: what HoldSpeak found and the one action for each row.",
