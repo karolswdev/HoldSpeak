@@ -4,9 +4,26 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Desk creation delivery)
+**Last updated:** 2026-10-19 (own-agent discovery delivery)
 
 ## Current phase
+
+AG15 shows Claude Code and Codex processes the owner started in tmux in
+Agents you started yourself. Native executable, pane ancestry and session
+facts identify the process; registered HoldSpeak launches stay out.
+Existing screen rules and secret filtering supply state. Owner Answer,
+Allow and Deny re-read the prompt and use the admitted input transport.
+These rows have no Stop, brief or autonomy controls.
+
+Root collected and ran 31 focused checks, including real private-tmux
+browser cases at 1440/393. The fake native process receives the typed answer
+and approval key through real hub routes. Evidence frames show the full
+question and controls. An additional private-tmux producer/transport probe
+returned operation op_8edbe1d3e86d4b0681a811b8f98d0ac5. Installed Claude and
+Codex executable shapes were inspected without starting a model. Native
+interactive-agent acceptance remains unobserved. Shared test and walk rigs
+force discovery off; the isolated positive rig opts in after boot.
+Required quick: AG15_QUICK_PENDING.
 
 Shell S2 gives Desk seven New kinds in order: Note, Meeting, Decision,
 Project, Person, Automation and Drawer. The phone reads the same registry.

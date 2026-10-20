@@ -15,7 +15,7 @@ os.environ.setdefault("HOLDSPEAK_TEST_NO_REAL_CLI", "1")
 os.environ.setdefault("HOLDSPEAK_CLI_ENGINES", "off")
 # AG15: ordinary tests must never enumerate the owner's local tmux panes. The
 # isolated own-agent rig opts in only after it creates its own tmux server.
-os.environ.setdefault("HOLDSPEAK_OWN_AGENTS", "off")
+os.environ["HOLDSPEAK_OWN_AGENTS"] = "off"
 # Betterment Q7: a test hub never asks an HTTP engine's server (the LAN engine
 # of the fixture routes is real) whether it takes tool calls. A test of the
 # Ask tool loop turns it on and replays a recorded answer.
