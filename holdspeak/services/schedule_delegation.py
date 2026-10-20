@@ -14,6 +14,34 @@ def _terms(
     db: Any, wb: Any, *, principal: Principal, delegation_id: str, conn: Any,
 ) -> dict[str, Any]:
     """Freeze owner-approved placement once, rather than re-resolving at fire."""
+    if str(getattr(wb, "do_kind", "run") or "run") == "hand_to_agent":
+        # Hand has a native profile authority of its own.  It must not ask the
+        # inference planner for a route or fail because workbench.item has no
+        # unrelated inference assignment.  The binding, review choice and
+        # complete sentence are terms of this durable approval.
+        profile = str(getattr(wb, "agent_profile", "") or "").strip()
+        if not profile:
+            raise ServiceError("delegation_stale_work", "Choose an agent before turning on the schedule", context={"status": 409})
+        from .automation_runs import sources_of
+
+        native_terms = {
+            "do_kind": "hand_to_agent",
+            "agent_profile": profile,
+            "review_by": str(getattr(wb, "review_by", "") or "").strip(),
+            "instruction": str(getattr(wb, "instruction", "") or "").strip(),
+            "sources": sources_of(wb),
+            "output_target": str(getattr(wb, "output_target", "") or "inbox"),
+        }
+        return {
+            "recipe_id": "",
+            "recipe_revision": "",
+            "workbench_revision": str(wb.last_modified),
+            "schedule_revision": str(wb.schedule_revision),
+            "cadence": str(wb.schedule or ""),
+            "deployment_revision_id": f"native-agent:{profile}",
+            "route_plan_sha256": _hash(native_terms, None),
+            "native_terms": native_terms,
+        }
     recipe = db.recipes.get(wb.recipe_id) if wb.recipe_id else None
     if recipe is None and not str(getattr(wb, "instruction", "") or "").strip():
         # Betterment A2: an automation with an instruction needs no agent.

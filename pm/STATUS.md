@@ -4,9 +4,69 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (verified Floor delivery; S4 partial)
+**Last updated:** 2026-10-20 (unchecked Send warning)
 
 ## Current phase
+
+Send S8 keeps an unchecked published update sendable. Preview says
+"Not checked yet: no claim in this update was accepted" above the words;
+the existing frozen document retains the warning through Prepare, Send and
+readback. A successful delivery records unchecked and the warning in its
+existing proof and history. The owner's press remains required. Mixed
+updates retain their existing omission behavior; source claims are unchanged.
+
+Root independently passed 95 collected focused cases, including both real
+1440/393 browser sends to a private folder, exact preview/file byte equality,
+saved receipt/history readback and refusal of an agent's direct Send. All ten
+Send web consumers, type check and build pass. The recorded consumer uses
+a complete real producer response. No live external delivery is claimed.
+Required quick: 4,079 web and 505 affected Python/browser checks passed; 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.
+
+AG14 completes automations that hand work to native agents. Do selects Hand;
+With lists installed native profiles, and Review by uses compatible native
+reviewers. Owner-only binding changes are checked before any write. Agent
+drafts stay drafts; the runner does not claim an agent started when queued.
+
+Scheduled Hand uses the existing durable owner delegation and parent receipt,
+without requiring an unrelated inference assignment. Repeated ticks and
+events do not launch twice. Changing the native profile, reviewer, instruction,
+sources or Put it in fences the old authority and turns the schedule off until
+the owner approves When again. Hand remains prepare-only for Send destinations.
+
+Root independently passed 28 focused cases, including schedule authority,
+the real private-hub queue/Done/Today/readback loop and ordinary Do → With →
+Review browser flows at 1440/393. The native leaf is a private fixture process;
+live Claude/Codex provider work is not claimed. All 32 web consumers, type
+check and build pass. The chosen native agent shows its human name.
+Required quick: 4,078 web and 4,273 Python checks passed (1 skipped); 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.
+The first required run passed all 4,078 web checks, 4,264 other affected
+checks, 110 desk sweep, 27 canon and 1,116 guards. Its eight failures were
+the canonical schema snapshot and seven recorded response shapes. Root
+regenerated the snapshot from a fresh DB and the complete responses from
+the real producer (26 cases pass). The extra schedule fencing is limited to
+native Hand work; ordinary Run instruction edits retain their schedule.
+All 24 focused schedule/schema cases and 32 web consumers pass afterward.
+
+Project automation NEW now follows the latest completed artifact and its read
+state. The artifact carries the exact project-update ID; Open latest fetches
+that update and uses the existing result-open path. An owner draft alone
+does not show NEW. Legacy or foreign update links open the automation rather
+than guessing at a draft. Failed reads keep NEW.
+
+Root independently verified five actual runner/producer cases and both real
+browser widths (seven passed), plus 44 web consumers, type check and build.
+The browser reads the exact delivered body, clears NEW, preserves the owner
+draft and repeats Open safely. The wire fixture records the full manual,
+completed, opened, read, legacy and foreign responses from the real hub.
+Provider inference is the repository's recorded leaf; live-model quality is
+not claimed. This closes a P7/P8 follow-up and adds no slice.
+Required quick: Final delta quick passes 36 web, two actual current Room browser cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The product run passed 2,154 affected cases (two skipped) and 4,113 other web checks. The separate five actual runner/producer cases and 44 Room consumers also pass..
+The first required run passed 2,154 affected cases (two skipped) and 4,113
+other web checks. It caught a Note reveal assertion that read before its
+scroll/focus effect, and a phone Search sprite still loading outside the
+swept window. The Note check now waits for that effect (36 focused cases
+pass); the sweep waits for visible chrome sprites as well as the face's
+visible images. No focus, visibility, size or contrast assertion was waived.
 
 S4 delivers the explicit Floor: fresh desks show Inbox, Work, Personal,
 Reference and Archive. Meetings and people appear only after Keep on desk;

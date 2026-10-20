@@ -538,6 +538,15 @@ SETTLED_JS = r"""(id) => {
       && b.bottom > Math.max(0, r.top) && b.top < Math.min(innerHeight, r.bottom);
     return drawn && !(i.complete && i.naturalWidth > 0);
   })) return false;
+  // The floor/contrast fences read the persistent chrome too. Its phone
+  // picture controls are not ready until their visible sprites have loaded.
+  if ([...document.querySelectorAll('.desk-menubar img, .desk-dock img')].some((i) => {
+    const b = i.getBoundingClientRect(), style = getComputedStyle(i);
+    const drawn = style.display !== 'none' && style.visibility !== 'hidden'
+      && b.width > 0 && b.height > 0 && b.right > 0 && b.left < innerWidth
+      && b.bottom > 0 && b.top < innerHeight;
+    return drawn && !(i.complete && i.naturalWidth > 0);
+  })) return false;
   return !document.getAnimations().some((a) => a.playState === 'running'
     && (a.effect && a.effect.getTiming().iterations !== Infinity));
 }"""

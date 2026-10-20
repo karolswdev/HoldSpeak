@@ -1559,16 +1559,28 @@ describe("P7: the project update automation line", () => {
   });
 
   it("opens the exact newest stored update from the line", async () => {
+    const { plainUpdateText } = await import("../update/model");
+    const result = P7.completed.updates.automation.latest_result;
+    let read = false;
     wire({
-      [room(pid)]: () => clone(P7.manual),
-      [`GET /api/projects/${pid}/updates`]: () => ({ updates: [clone(P7.draft)] }),
-      [`GET /api/updates/${P7.draft.id}`]: () => ({ update: clone(P7.draft) }),
+      [room(pid)]: () => clone(read ? P7.read : P7.completed),
+      [`GET /api/updates/${result.update_id}`]: () => clone(P7.delivered),
+      [`POST /api/workbenches/${automation.id}/results/${result.artifact_id}/open`]: () => {
+        read = true;
+        return clone(P7.opened);
+      },
     });
     render(<WindowHarness scope={`project:${pid}`} />);
     const line = await screen.findByTestId("room-update-line");
+    expect(within(line).getByTestId("room-update-new")).toHaveTextContent("NEW");
     fireEvent.click(within(line).getByTestId("room-update-open"));
     await screen.findByTestId("update-editor");
-    expect(screen.getByLabelText("Update body")).toHaveValue(P7.draft.body_md);
-    expect(calls.some((call) => call.key === `GET /api/projects/${pid}/updates`)).toBe(true);
+    expect(screen.getByLabelText("Update body")).toHaveValue(plainUpdateText(P7.delivered.update.body_md));
+    await waitFor(() => expect(within(line).queryByText("NEW")).not.toBeInTheDocument());
+    expect(calls).toContainEqual({ key: `GET /api/updates/${result.update_id}` });
+    expect(calls).toContainEqual({
+      key: `POST /api/workbenches/${automation.id}/results/${result.artifact_id}/open`,
+      json: undefined,
+    });
   });
 });

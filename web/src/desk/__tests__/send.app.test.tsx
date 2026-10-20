@@ -194,6 +194,7 @@ describe("a Phase 11 brief send to a saved folder with the built-in present", ()
 import BEFORE from "./fixtures/send-hub/destinations-before-send.json";
 import POSTED from "./fixtures/send-hub/destinations-after-posted.json";
 import NO_ANSWER from "./fixtures/send-hub/sends-no-answer.json";
+import UNCHECKED from "./fixtures/send-hub/unchecked-update.json";
 import { MeetingSendWell } from "../../meetings/MeetingSendWell";
 import { pickFor, resetSendTo } from "../windowSend";
 import { keepPlace } from "../deskMemory";
@@ -255,6 +256,20 @@ describe("betterment send S1: the account chip says only a sign-in failure, and 
     // After a send that worked, the verb stays "Send again".
     const open = await openRow("acme/payments #42");
     expect(within(open).getByTestId("send-verb").textContent).toBe("Send again");
+  });
+});
+
+describe("betterment send S8: an unchecked published update stays sendable", () => {
+  it("replays the producer's warning above the published words", async () => {
+    const rec = UNCHECKED as Recorded;
+    replay(rec);
+    render(<SendWells doc={docOf(rec)} />);
+
+    const preview = await screen.findByTestId("send-preview");
+    expect(preview.textContent).toContain("WarningNot checked yet: no claim in this update was accepted");
+    expect(preview.textContent).toContain("The rollout is complete.");
+    expect(preview.textContent).toContain("No decisions in this window.");
+    expect(preview.textContent).not.toContain("UNVERIFIED");
   });
 });
 

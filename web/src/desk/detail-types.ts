@@ -20,6 +20,10 @@ export interface WorkbenchDetail {
   name: string;
   recipe_id: string | null;
   profile_id: string | null;
+  /** Betterment AG14: an automation can hand each source item to an agent. */
+  do_kind?: "run" | "hand_to_agent" | string;
+  agent_profile?: string;
+  review_by?: string;
   resolver_profile_id: string | null;
   schedule: string | null;
   schedule_enabled: boolean;
