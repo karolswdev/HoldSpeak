@@ -40,7 +40,7 @@ Meetings and People now reserve their tag width before the read, and the Dock
 limits the 1:1 fact to its local day. Root held and released the real People
 response: all five target rectangles stayed exact; the browser case passes
 in 6.28s. The 27 Dock/read web checks also pass, including today/tomorrow.
-Required quick: S3_QUICK_PENDING.
+Required quick: Final delta quick against the verified product source passes 10 actual Dock browser cases, 110 desk sweep cases, 27 canon and 1,116 repository guards; build passes. The preceding product run passed 4,076 related web and 768 other affected Python/browser checks. Last observed desk before this merge: backend aa4ecd9d3, frontend 212132a1074a6815, PID 32823. Each merge deploys its exact source; GET /api/system/identity reports the running identity..
 
 ST9 adds `holdspeak setup`, `holdspeak setup --yes`, MCP `setup.status` and
 `setup.use`. They use the running hub and the shared Setup producers.
