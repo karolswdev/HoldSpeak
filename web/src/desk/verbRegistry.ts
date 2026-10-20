@@ -354,6 +354,9 @@ export const VERBS: Verb[] = [
     label: "Reset layout",
     scope: "floor",
     group: "floor",
+    // Parked by Betterment shell S8. The live menu has one Arrange all row;
+    // keep this id for callers that still know the old verb.
+    palette: false,
     keywords: ["windows", "cascade"],
     ghost: needWindow,
     run: () => useDesk.getState().resetLayout(),
@@ -749,9 +752,10 @@ export const VERBS: Verb[] = [
   // ── Window ──────────────────────────────────────────────────────────
   {
     id: "window.close",
-    label: "Close window",
+    label: "Close",
     menu: "window",
     scope: "window",
+    group: "close",
     key: "⌃W",
     altKeys: ["⌘W"],
     ghost: needWindow,
@@ -759,10 +763,10 @@ export const VERBS: Verb[] = [
   },
   {
     id: "window.minimize",
-    // PHILO-13-12 (C2): the Workbench name of the gadget (design §3).
-    label: "Iconify",
+    label: "Minimize",
     menu: "window",
     scope: "window",
+    group: "window",
     key: "⌃M",
     altKeys: ["⌘M"],
     ghost: needWindow,
@@ -770,9 +774,10 @@ export const VERBS: Verb[] = [
   },
   {
     id: "window.cycle",
-    label: "Cycle windows",
+    label: "Next window",
     menu: "window",
     scope: "window",
+    group: "window",
     // PHILO-16 §5: ⌘` (⌘ is the primary key: ctrl off the Mac, so ⌃` still
     // reaches it there); ⌃` stays bound on the Mac one release.
     key: "⌘`",
@@ -784,7 +789,6 @@ export const VERBS: Verb[] = [
   {
     id: "window.cycle-reverse",
     label: "Cycle windows (reverse)",
-    menu: "window",
     scope: "window",
     // PHILO-16 §5: ⌘⇧` is To back; ⌃⇧` stays the reverse cycle (Astra M5:
     // a ⌃ chord binds before a ⌘ chord, so the ctrl key keeps its verb).
@@ -799,7 +803,7 @@ export const VERBS: Verb[] = [
     label: "Tile left",
     menu: "window",
     scope: "window",
-    group: "layout",
+    group: "window",
     key: "⌘⌥←",
     keywords: ["tile", "snap", "split", "half"],
     ghost: () => needWindow() ?? wideOnly(),
@@ -810,7 +814,7 @@ export const VERBS: Verb[] = [
     label: "Tile right",
     menu: "window",
     scope: "window",
-    group: "layout",
+    group: "window",
     key: "⌘⌥→",
     keywords: ["tile", "snap", "split", "half"],
     ghost: () => needWindow() ?? wideOnly(),
@@ -823,7 +827,7 @@ export const VERBS: Verb[] = [
     label: "Zoom",
     menu: "window",
     scope: "window",
-    group: "layout",
+    group: "window",
     // PHILO-16 §5: ⌘⇧Z. PHILO-17 (U27): ⌃M is Iconify now (⌘M is the
     // browser's), so Zoom's old ⌃M is retired.
     key: "⌘⇧Z",
@@ -839,7 +843,7 @@ export const VERBS: Verb[] = [
     label: "To back",
     menu: "window",
     scope: "window",
-    group: "layout",
+    group: "close",
     // PHILO-16 §5: Send back ⌘⇧`; ⌃B stays bound one release.
     key: "⌘⇧`",
     altKeys: ["⌃B"],
@@ -853,7 +857,7 @@ export const VERBS: Verb[] = [
     label: "Stage",
     menu: "window",
     scope: "window",
-    group: "arrange",
+    group: "close",
     key: "⌘⏎",
     keywords: ["stage", "focus", "shelf"],
     checked: () => modeNow() === "stage",
@@ -869,7 +873,7 @@ export const VERBS: Verb[] = [
     },
     menu: "window",
     scope: "window",
-    group: "arrange",
+    group: "close",
     key: "⌘G",
     keywords: ["gather", "room", "project", "tile"],
     ghost: () => wideOnly() ?? (gatherRoom() ? null : "No Room has two windows"),
@@ -877,10 +881,10 @@ export const VERBS: Verb[] = [
   },
   {
     id: "window.cascade",
-    label: "Cascade",
+    label: "Arrange all",
     menu: "window",
     scope: "window",
-    group: "arrange",
+    group: "window",
     keywords: ["cascade", "arrange", "stack"],
     ghost: () => needWindow() ?? wideOnly(),
     run: () => cascadeAll(),
@@ -890,7 +894,7 @@ export const VERBS: Verb[] = [
     label: "Back",
     menu: "window",
     scope: "window",
-    group: "arrange",
+    group: "close",
     key: "Esc",
     palette: false,
     keywords: ["back", "restore", "escape"],
@@ -906,7 +910,7 @@ export const VERBS: Verb[] = [
     label: "Today",
     menu: "window",
     scope: "window",
-    group: "chair",
+    group: "close",
     submenu: "Desk",
     palette: false,
     keywords: ["today", "window"],
@@ -922,7 +926,7 @@ export const VERBS: Verb[] = [
     label: w.title,
     menu: "window",
     scope: "window",
-    group: "chair",
+    group: "close",
     submenu: "Desk",
     // Go lists every Chair window at both widths (Capture too: the phone's
     // Dock tile runs the same openChairWindow).
@@ -1045,6 +1049,38 @@ export const VERBS: Verb[] = [
 
 export function menuVerbs(menu: MenuId): Verb[] {
   const verbs = VERBS.filter((v) => v.menu === menu);
+  if (menu === "window") {
+    // The face order is part of the Window menu contract. Legacy reverse
+    // cycling remains bound through its id but is parked from the menu.
+    const order = [
+      "window.minimize",
+      "window.maximize",
+      "window.snap-left",
+      "window.snap-right",
+      "window.cascade",
+      "desk.overview",
+      "window.cycle",
+      "window.close",
+      "window.depth",
+      "window.stage",
+      "window.gather",
+      "window.back",
+      "window.today",
+      ...CHAIR_WINDOWS.map((window) => `chair.window.${window.key}`),
+    ];
+    const rank = (id: string) => order.indexOf(id);
+    return verbs
+      .map((verb, index) => ({ verb, index }))
+      .sort((a, b) => {
+        const ar = rank(a.verb.id);
+        const br = rank(b.verb.id);
+        if (ar < 0 && br < 0) return a.index - b.index;
+        if (ar < 0) return 1;
+        if (br < 0) return -1;
+        return ar - br;
+      })
+      .map(({ verb }) => verb);
+  }
   if (menu !== "desk") return verbs;
   // S2 settles the New grammar in the face order the owner reads: Note,
   // Meeting, Decision, Project, Person, Automation, Drawer. Historical

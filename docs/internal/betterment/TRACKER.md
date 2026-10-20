@@ -7,7 +7,7 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 
 **Last updated:** 2026-10-20, Search and the Floor adapters verified. Running-desk identity is in `pm/STATUS.md`.
 
-**Total: 110 of 117 slices merged**, with Send S7 still partial.
+**Total: 113 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -21,7 +21,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Agents | `agents/` | 16 of 16 |
 | Daily and Needs you | `daily/` | 11 of 11 |
 | Setup and Settings | `setup/` | 10 of 10 |
-| Desk shell | `shell/` | 6 of 10 |
+| Desk shell | `shell/` | 9 of 10 |
 | Send | `send/` | 5 of 8 |
 | Capture | `capture/` | 12 of 12 |
 
@@ -152,7 +152,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | ST8 | Sign in without a terminal | Done · #1398 | Native provider sign-in runs in the Accounts row; existing Check confirms the result. |
 | ST9 | Setup from the terminal and by asking | Done · #1393 | CLI and MCP share the Setup inventory and Use producer; agents read status, adoption requires the owner. |
 
-## Desk shell (`shell/RECIPE.md`): 6 of 10
+## Desk shell (`shell/RECIPE.md`): 9 of 10
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -162,9 +162,9 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S3 | The Dock: five daily apps with their state; the keys follow it | Done · #1394 | Manifest order, visible phone words, producer states and matching keys. |
 | S4 | The floor holds what he keeps | Done · #1405 | Floor and meeting Keep #1400; person Keep/Remove and mode Search adapters verified with S5. |
 | S5 | Search is the command line | Done · #1405 | Ranked results, recent opens, exact About, live object verbs and hub-backed Builder tools. |
-| S6 | Wallpaper has one home | Open |  |
-| S7 | Windows open where he can see them, at the size of their content | Open |  |
-| S8 | The Window menu | Open |  |
+| S6 | Wallpaper has one home | Done · #1407 | One Settings Desk home; readable Jupiter label plates. |
+| S7 | Windows open where he can see them, at the size of their content | Done · #1407 | Content sizes and reachable heads; remembered collision reseating preserves owner resize. |
+| S8 | The Window menu | Done · #1407 | Arrange front/all preserve size and order; exact owner geometry survives reopening. |
 | S9 | Ask can arrange the desk (gated) | Open |  |
 
 ## Send (`send/RECIPE.md`): 5 of 8
