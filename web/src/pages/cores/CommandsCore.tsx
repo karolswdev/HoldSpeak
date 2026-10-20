@@ -203,7 +203,7 @@ export function CommandsCore({ hero }: CoreProps) {
   );
   return (
     <>
-      {renderHeroSlot(hero, verbs, countToken(items.length, "COMMAND"))}
+      {renderHeroSlot(hero, verbs)}
       {message ? (
         message.error ? (
           <SurfaceState
