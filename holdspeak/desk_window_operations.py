@@ -85,7 +85,7 @@ WINDOWS_RAISE = _row(
 )
 WINDOWS_ARRANGE = _row(
     "windows.arrange", "arrange_windows",
-    "Arrange several listed windows in one atomic change. rects use x,y,w,h as share+px values such as 50% + 10 or -1/2; pass each window's current revision when available.",
+    "Arrange several listed windows in one atomic change. The x and y zero is the view centre. For two full-height side-by-side windows, use left {x:-1/2, y:-1/2, w:1/2, h:1/1} and right {x:0, y:-1/2, w:1/2, h:1/1}; x:1/2 starts at the far edge and is off-band, and y:0 is the vertical centre. Values are share+px strings such as 50% + 10 or -1/2; pass each window's current revision when available.",
     {"rects": {"type": "object", "additionalProperties": _RECT,
                "description": "Window id to rect (at least one; an empty map is refused by name)."},
      "expected_revisions": {"type": ["object", "null"], "additionalProperties": {"type": "integer"}}},
