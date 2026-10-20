@@ -45,7 +45,8 @@ useDeliveryDossier.subscribe((s, prev) => {
 });
 
 useDeliveryTerminal.subscribe((s, prev) => {
-  if (s.openTarget !== prev.openTarget) rememberWindow("delivery-terminal", s.openTarget);
+  if (s.openTarget !== prev.openTarget && s.openTarget?.presentation !== "embedded")
+    rememberWindow("delivery-terminal", s.openTarget);
 });
 
 useMissionControl.subscribe((s, prev) => {

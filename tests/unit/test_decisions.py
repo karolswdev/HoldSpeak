@@ -818,6 +818,8 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         "people_access.set",
         # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
         "calendar.open_settings",
+        # Betterment ST8: the owner's press starts native provider sign-in (HTTP only).
+        "connection.signin",
         "setup.found", "setup.status", "setup.use", "setup.people.add", "setup.lan.scan",
         # PHILO-15 16: the owner names a Project's repository (HTTP only).
         "project.repository.register",

@@ -170,3 +170,9 @@
   align-items: baseline;
   gap: var(--space-1, 4px) var(--space-3, 12px);
 }
+
+/* ST8: the native sign-in pane stays inside its account row at every width. */
+.connections-signin-terminal {
+  min-width: 0;
+  width: 100%;
+}

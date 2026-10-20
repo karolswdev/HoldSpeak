@@ -13,6 +13,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from ... import operations
 from ...logging_config import get_logger
@@ -82,8 +83,6 @@ def build_connections_router(ctx: WebContext) -> APIRouter:
                      "message": "Connections service not configured"},
                     status_code=503,
                 )
-            from starlette.concurrency import run_in_threadpool
-
             # PHILO-10-02: the probe runs gh/acli -- off the event loop.
             result, kernel = await run_in_threadpool(
                 ops().invoke_receipted, p, "connection.recheck", {"provider_id": provider, "ref": body.get("ref")})
@@ -98,5 +97,66 @@ def build_connections_router(ctx: WebContext) -> APIRouter:
                                 status_code=int(exc.context.get("status") or 409))
         except Exception as exc:
             return error_500(exc, log, "Failed to recheck connection")
+
+    @router.post("/api/connections/{provider}/signin")
+    async def start_connection_signin(provider: str, request: Request) -> Any:
+        """Start the provider CLI in the existing delivery terminal seam."""
+        service = getattr(ctx, "connection_signin_service", None)
+        if service is None:
+            return JSONResponse({"code": "service_unavailable", "message": "Sign in is not available on this hub"}, status_code=503)
+        raw_body = await request.body()
+        try:
+            body = json.loads(raw_body) if raw_body.strip() else {}
+        except (TypeError, ValueError):
+            body = None
+        if not isinstance(body, dict):
+            p = principal(request)
+            kernel = refuse_identifiable(ops(), p, "connection.signin", "invalid_arguments")
+            return JSONResponse(
+                {"code": "invalid_arguments", "message": "the body must be a JSON object", **kernel_fields(kernel)},
+                status_code=400,
+            )
+        principal_value = principal(request)
+        try:
+            result, kernel = await run_in_threadpool(
+                ops().invoke_receipted,
+                principal_value,
+                "connection.signin",
+                {
+                    "provider_id": provider,
+                    "site": body.get("site"),
+                    "email": body.get("email"),
+                },
+            )
+            return JSONResponse({**result, **kernel_fields(kernel)} if isinstance(result, dict) else result, status_code=202)
+        except OperationRefused as exc:
+            status = 403 if exc.code == "owner_required" else 400 if exc.code in {"invalid_arguments", "authority_in_arguments"} else 409
+            return JSONResponse({"code": exc.code, "message": exc.detail, **refusal_fields(exc)}, status_code=status)
+        except Exception as exc:
+            from ...services.connection_signin_service import SignInRefused
+
+            if isinstance(exc, SignInRefused):
+                status = 403 if exc.reason == "owner_required" else 409
+                return JSONResponse(
+                    {"code": exc.reason, "message": str(exc), **refusal_fields(exc)},
+                    status_code=status,
+                )
+            return error_500(exc, log, "Failed to start connection sign-in")
+
+    @router.get("/api/connections/signin/{run_id}")
+    async def connection_signin_status(run_id: str, request: Request) -> Any:
+        service = getattr(ctx, "connection_signin_service", None)
+        if service is None:
+            return JSONResponse({"code": "service_unavailable", "message": "Sign in is not available on this hub"}, status_code=503)
+        try:
+            result = await run_in_threadpool(service.status, principal(request), run_id)
+            return JSONResponse(result)
+        except Exception as exc:
+            from ...services.connection_signin_service import SignInRefused
+
+            if isinstance(exc, SignInRefused):
+                status = 403 if exc.reason == "owner_required" else 404 if exc.reason == "run_unknown" else 409
+                return JSONResponse({"code": exc.reason, "message": str(exc)}, status_code=status)
+            return error_500(exc, log, "Failed to read connection sign-in")
 
     return router
