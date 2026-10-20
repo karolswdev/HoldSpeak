@@ -6018,7 +6018,7 @@
         "properties": {},
         "additionalProperties": false
       },
-      "principal": "derived by the transport (the HTTP auth middleware); owner only",
+      "principal": "derived by the transport; owner only",
       "effect": "read",
       "result": "{rows: [{id, kind, label, detail, state, reason, egress_host, verb, action, payload}], owner_name, people, suggestions, first_run}",
       "refusals": [
@@ -6045,9 +6045,43 @@
       }
     },
     {
+      "name": "setup.status",
+      "version": 1,
+      "description": "Read the local Setup inventory: the same rows HoldSpeak shows in Setup.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport; owner or agent",
+      "effect": "read",
+      "result": "{rows, owner_name, people, suggestions, first_run}; rows carry the shared Setup fields id, kind, label, detail, state, reason, egress_host, verb, action and payload",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "setup_unavailable",
+        "people_unavailable"
+      ],
+      "completion": "synchronous; reads the existing local Setup producers",
+      "exposure": [
+        "mcp:setup.status"
+      ],
+      "held": [],
+      "owner_only": false,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A local Setup read; it changes no state and performs no network scan.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
       "name": "setup.use",
       "version": 1,
-      "description": "Use one found Setup row. The row's producer reports Works, Working or a named failure.",
+      "description": "Use one found Setup row, or all actionable rows in the current Setup order. Each outcome remains visible.",
       "args_schema": {
         "type": "object",
         "properties": {
@@ -6065,9 +6099,9 @@
         ],
         "additionalProperties": false
       },
-      "principal": "derived by the transport (the HTTP auth middleware); owner only",
+      "principal": "derived by the transport; owner only",
       "effect": "write",
-      "result": "the producer's result for the row",
+      "result": "{state, success, count, results} when id is all; otherwise the selected producer result",
       "refusals": [
         "unknown_operation",
         "invalid_arguments",
@@ -6079,7 +6113,8 @@
       ],
       "completion": "synchronous or producer-pending; the Setup read reports the durable result",
       "exposure": [
-        "http:POST /api/setup/use"
+        "http:POST /api/setup/use",
+        "mcp:setup.use"
       ],
       "held": [],
       "owner_only": true,
@@ -6121,7 +6156,7 @@
         ],
         "additionalProperties": false
       },
-      "principal": "derived by the transport (the HTTP auth middleware); owner only",
+      "principal": "derived by the transport; owner only",
       "effect": "write",
       "result": "{relationships: [{id, display_name, relationship_kind}]} and the receipt",
       "refusals": [
@@ -6157,7 +6192,7 @@
         "properties": {},
         "additionalProperties": false
       },
-      "principal": "derived by the transport (the HTTP auth middleware); owner only",
+      "principal": "derived by the transport; owner only",
       "effect": "read",
       "result": "{rows: [{id, name, model, host, base_url}], checkedAt}; disabled=true when scanning is off",
       "refusals": [
