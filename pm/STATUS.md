@@ -22,7 +22,12 @@ Actual private-Hub browser cases at 1440/393 feed Enter through embedded xterm,
 the real command transport and native tmux process, then read back Works and
 the account login. Only provider CLI responses are recorded; owner credentials
 and real OAuth acceptance remain unobserved. The combined API census has
-810 routes and 674 OpenAPI paths. Required quick: ST8_QUICK_PENDING.
+810 routes and 674 OpenAPI paths. The product check passes 7,051 affected
+Python/browser checks (four skips), 110 desk sweep, 27 canon and 1,116 guards;
+4,094 other web checks pass. One old terminal assertion expected a payload
+without its required session/agent binding; it now checks the full payload
+while retaining immutable target and server-derived authority assertions.
+Final delta quick: ST8_QUICK_PENDING.
 
 The main watcher pinned to 2833d225d found five failures after its first
 6,073-test shard passed. This fix re-records the actual Setup agent/Settings
