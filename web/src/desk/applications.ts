@@ -178,8 +178,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     aliases: [
       { key: "configure-integrations", scope: "integration:destinations" },
       { key: "configure-integration" },
-      { key: "configure-runs-on", scope: "models" },
-      { key: "open-concierge", scope: "models" },
       // The retired Guide alias is parked under _parked/setupGuideAlias.ts.
       // Betterment setup ST1: the parked Rhythm window and Change places.
       { key: "configure-cadence", scope: "rhythm" },
@@ -187,9 +185,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     ],
     surface: {
       eyebrow: "Configuration",
-      minW: 560,
-      defaultW: 640,
-      defaultH: 600,
+      minW: 880,
+      defaultW: 1040,
+      defaultH: 720,
       load: () =>
         import("../pages/cores/SettingsCore").then((module) => ({
           default: module.SettingsCore,
@@ -359,20 +357,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     },
   },
   // HS-169-02: the streamlined Door (replaces the setup interview)
-  // HS-170-03: the Concierge — the Models surface (replaces ModelLibraryCore + CapabilityAssignmentsCore)
-  {
-    action: "open-concierge",
-    windowId: "surface-concierge",
-    // PHILO-17: the id remains for old saved rows; the live face is the
-    // Engines wing of Settings and this surface is parked.
-    label: "Engines",
-    description: "What HoldSpeak does, wired to what you have.",
-    glyph: "▣",
-    href: "/models",
-    parked: "settings:models",
-    // Compatibility row only. Settings owns the live Engines host; saved
-    // rows are retired by the hub and new callers use its alias.
-  },
   {
     action: "project-setup",
     windowId: "surface-project-setup",
@@ -509,17 +493,30 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
         })),
     },
   },
-  // HS-170-03: configure-runs-on now opens the Concierge window.
+  // Betterment ST7: Engines is a real Desk window. The old Concierge id is
+  // retained only in the hub's retired registry so saved rows can close; its
+  // action is an alias to this canonical host and legacy `/models` links land
+  // here too.
   {
     action: "configure-runs-on",
-    windowId: "surface-concierge",
+    windowId: "surface-engines",
     label: "Engines",
     description: "What HoldSpeak does, wired to what you have.",
     glyph: "▣",
     href: "/models",
     group: "tool",
     mark: 2,
-    parked: "settings:models",
+    aliases: [{ key: "open-concierge" }],
+    surface: {
+      eyebrow: "Engine assignments",
+      minW: 760,
+      defaultW: 1040,
+      defaultH: 720,
+      load: () =>
+        import("../features/runson/RunsOnCore").then((module) => ({
+          default: module.RunsOnCore,
+        })),
+    },
   },
   {
     action: "configure-integrations",

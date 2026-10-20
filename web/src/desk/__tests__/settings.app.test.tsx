@@ -8,6 +8,8 @@ import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsCore } from "../../pages/cores/SettingsCore";
 import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
+import connectionsWire from "./fixtures/connections-wire/connections-cold.json";
+import destinationsWire from "./fixtures/destinations-wire/list-empty.json";
 import authorityWire from "./fixtures/settings-wire/authority-policy.json";
 import calendarWire from "./fixtures/settings-wire/calendar-sources.json";
 import calendarOneWire from "./fixtures/settings-wire/calendar-sources-one.json";
@@ -55,6 +57,8 @@ function hubDouble() {
     const key = `${method} ${path}`;
     switch (key) {
       case "GET /api/settings": return answer(200, state.settings);
+      case "GET /api/connections": return answer(200, connectionsWire);
+      case "GET /api/channels/destinations": return answer(200, destinationsWire);
       case "PUT /api/settings": {
         // Mirror the producer's required symbol fields instead of accepting
         // the invalid blank row that Add used to send to the live hub.
@@ -120,8 +124,12 @@ function hubDouble() {
 
 let hub: ReturnType<typeof hubDouble>;
 let releaseSetup: () => void;
+let releaseEngines: () => void;
+const openEngines = vi.fn();
 beforeEach(() => {
   useDesk.setState({ windowsById: {} });
+  openEngines.mockClear();
+  releaseEngines = registerSurface("configure-runs-on", openEngines);
   releaseSetup = registerSurface("configure-setup", () => useDesk.getState().openSurfaceWindow("configure-setup"));
   hub = hubDouble();
   vi.stubGlobal("fetch", hub.fetchStub);
@@ -129,6 +137,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   releaseSetup();
+  releaseEngines();
   useDesk.setState({ windowsById: {} });
   vi.unstubAllGlobals();
   vi.useRealTimers();
@@ -156,97 +165,6 @@ async function openHub() {
   return view;
 }
 
-describe("the Settings hub on a cold hub", () => {
-  it("groups direct module choices under Work and Desk with truthful facts and library verbs", async () => {
-    // replaces: tests/e2e/test_hs170_settings_hub_glass.py::test_settings_hub_cold
-    const { container } = await openHub();
-    expect(container.querySelectorAll(".surface-display, .settings-plate, .settings-leads")).toHaveLength(0);
-    const work = screen.getByRole("group", { name: "Work preferences" });
-    const desk = screen.getByRole("group", { name: "Desk preferences" });
-    expect(within(work).getAllByRole("button", { name: /^Open / }).map((button) => button.textContent)).toEqual([
-      "Open Voice", "Open Meetings", "Open Rhythm", "Open Engines", "Open Accounts",
-    ]);
-    expect(within(desk).getAllByRole("button", { name: /^Open / }).map((button) => button.textContent)).toEqual([
-      "Open Sounds & Presence", "Open Wallpaper", "Open People", "Open Agents", "Open System",
-    ]);
-    const rows = Array.from(container.querySelectorAll(".surface-ledger-primary")).map((n) => n.textContent);
-    expect(rows).toEqual(expect.arrayContaining(["Rhythm", "System"]));
-    expect(rows).not.toContain("Models");
-    expect(rows).not.toContain("Assignments");
-    // Engines uses the same row and Open verb as the ordinary modules.
-    const engines = screen.getByTestId("settings-lead-engines");
-    expect(within(engines).getByRole("button", { name: "Open Engines" }).className).toContain("btn--secondary");
-    expect(container.querySelectorAll(".prefs-hub .btn--primary")).toHaveLength(0);
-    const rhythm = ledgerRow("Rhythm")!.textContent ?? "";
-    expect(rhythm).not.toMatch(/\b0 LOOP/);
-    expect(container.querySelectorAll(".prefs-posture-label")).toHaveLength(1);
-    expect(container.querySelectorAll(".prefs-posture .gadget-fact")).toHaveLength(0);
-    expect(rawButtons(container.querySelector(".prefs-hub")!)).toEqual([]);
-    expect(hub.state.unknown).toEqual([]);
-  });
-
-  it("Agents: the hub row names the limit; the module sets how many work at once (Betterment AG5)", async () => {
-    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"], shouldAdvanceTime: true });
-    const { container } = await openHub();
-    const row = ledgerRow("Agents")!;
-    expect(row.textContent).toContain("Up to 6 at once");
-    fireEvent.click(within(row).getByRole("button", { name: "Open Agents" }));
-    expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Agents");
-    const field = screen.getByRole("spinbutton", { name: "Working at once" }) as HTMLInputElement;
-    expect(field.value).toBe("6");
-    fireEvent.click(screen.getByRole("button", { name: "Increase Working at once" }));
-    await act(async () => { await vi.advanceTimersByTimeAsync(2000); });
-    await waitFor(() => {
-      const put = hub.state.calls.filter((c) => c.method === "PUT" && c.path === "/api/settings").at(-1);
-      expect(put?.body?.agents?.working_at_once).toBe(7);
-    });
-    expect(rawButtons(container)).toEqual([]);
-  });
-
-  it("a hub with a connection names the count on the Accounts row", async () => {
-    // replaces: tests/e2e/test_hs170_settings_hub_glass.py::test_settings_hub_rows_update_after_seed
-    hub.state.hub.connections.connected = 1;
-    const { container } = await openHub();
-    await waitFor(() => expect(screen.getByTestId("settings-lead-accounts").textContent).toContain("1 connected"));
-    expect(container.querySelectorAll(".surface-display")).toHaveLength(0);
-  });
-
-  it("Open on Voice opens the Voice module; « Settings comes back; Open on System opens System", async () => {
-    // replaces: tests/e2e/test_hs170_settings_hub_glass.py::test_settings_hub_open_verb_opens_surface
-    const { container } = await openHub();
-    fireEvent.click(within(ledgerRow("Voice")!).getByRole("button", { name: "Open Voice" }));
-    expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Voice");
-    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
-    await screen.findByText("No engine yet");
-    fireEvent.click(within(ledgerRow("System")!).getByRole("button", { name: "Open System" }));
-    expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("System");
-    await screen.findByTestId("system-display");
-  });
-});
-
-describe("every declared settings module has a door", () => {
-  it("Engines and Accounts lead on their plates; every other module is a ledger row; Choose engines opens Engines", async () => {
-    // replaces: web/src/pages/cores/__tests__/assignmentsDoor202.test.tsx (a source scan, parked)
-    const { container } = await openHub();
-    const plated = new Set(["models", "integrations"]);
-    for (const module of PREF_MODULES.filter((m) => !plated.has(m.id)))
-      expect(ledgerRow(module.label), module.id).toBeTruthy();
-    expect(screen.getByTestId("settings-hub-accounts")).toBeTruthy();
-    fireEvent.click(screen.getByTestId("settings-hub-choose"));
-    await waitFor(() => expect(container.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Engines"));
-  });
-
-  it("Engines lets Runs on own the one footer slot", async () => {
-    const { container } = await openHub();
-    fireEvent.click(screen.getByTestId("settings-hub-choose"));
-    await screen.findByTestId("runson-root");
-    expect(container.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
-    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
-    await waitFor(() => expect(container.querySelector(".prefs-hub")).toBeTruthy());
-    expect(screen.queryByRole("button", { name: "Settings" })).toBeNull();
-  });
-});
-
 /** The real frame publication seam: wing presses must reach this core. */
 function SettingsWindow({ scope }: { scope?: string }) {
   const [wings, setWings] = useState<ReactNode>(null);
@@ -257,128 +175,6 @@ function SettingsWindow({ scope }: { scope?: string }) {
     </WingSlotContext.Provider>
   );
 }
-
-describe("Settings navigation uses one selection", () => {
-  const pressWing = (name: string) => fireEvent.click(screen.getByRole("tab", { name }));
-  const expectWing = (name: string) => expect(screen.getByRole("tab", { name })).toHaveAttribute("aria-selected", "true");
-  const expectModule = (name: string) => expect(document.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe(name);
-
-  it("a scoped Engines entry can open Accounts, Settings, both hub doors and Back with matching wings", async () => {
-    const view = render(<SettingsWindow scope="models::writing_dictation" />);
-    await screen.findByTestId("runson-root");
-    expectWing("Engines");
-    expectModule("Engines");
-
-    pressWing("Accounts");
-    expectWing("Accounts");
-    expectModule("Accounts");
-    expect(screen.queryByTestId("runson-root")).toBeNull();
-    pressWing("Settings");
-    expectWing("Settings");
-    await screen.findByTestId("settings-hub-choose");
-    fireEvent.click(screen.getByTestId("settings-hub-accounts"));
-    expectModule("Accounts");
-    expectWing("Accounts");
-    pressWing("Settings");
-    fireEvent.click(screen.getByTestId("settings-hub-choose"));
-    expectModule("Engines");
-    expectWing("Engines");
-    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
-    expectWing("Settings");
-    expect(screen.getByTestId("settings-hub-accounts")).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "Setup" })).toBeNull();
-    expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
-
-    // A subsequent external scope is another entry, even on the same wing.
-    view.rerender(<SettingsWindow scope="meetings" />);
-    await screen.findByRole("checkbox", { name: "Auto export" });
-    expectModule("Meetings");
-    expectWing("Settings");
-    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
-    expect(screen.getByTestId("settings-hub-choose")).toBeInTheDocument();
-    expect(screen.queryByTestId("setup-face")).toBeNull();
-  });
-
-  it.each(["guide", "setup"])("the retired %s scope opens the one Setup window", async (scope) => {
-    render(<SettingsWindow scope={scope} />);
-    await waitFor(() => expect(useDesk.getState().windowsById["surface-setup"]).toBeTruthy());
-    expectWing("Settings");
-    expect(screen.queryByRole("tab", { name: "Setup" })).toBeNull();
-    expect(screen.queryByTestId("setup-face")).toBeNull();
-    expect(screen.getByTestId("settings-hub-choose")).toBeInTheDocument();
-  });
-
-  it("Accounts keeps an edit made before the save delay and has one footer", async () => {
-    hub.state.settings.meeting.auto_export = false;
-    render(<SettingsWindow scope="meetings" />);
-    fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
-    pressWing("Accounts");
-    expectModule("Accounts");
-    await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true), { timeout: 3000 });
-    expectWing("Accounts");
-    expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
-    pressWing("Settings");
-    fireEvent.click(within(ledgerRow("Meetings")!).getByRole("button", { name: "Open Meetings" }));
-    expect(screen.getByRole("checkbox", { name: "Auto export" })).toBeChecked();
-  });
-
-  it("opening the same external scope again leaves Accounts and keeps the pending writer", async () => {
-    hub.state.settings.meeting.auto_export = false;
-    useDesk.getState().openSurfaceWindow("configure-settings", "models");
-    const view = render(<SettingsWindow scope="models" />);
-    await screen.findByTestId("runson-root");
-    pressWing("Accounts");
-    expectModule("Accounts");
-    act(() => useDesk.getState().openSurfaceWindow("configure-settings", "models"));
-    expectModule("Engines");
-    expectWing("Engines");
-
-    act(() => useDesk.getState().openSurfaceWindow("configure-settings", "meetings"));
-    view.rerender(<SettingsWindow scope="meetings" />);
-    fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
-    pressWing("Accounts");
-    expectModule("Accounts");
-    const settingsReadsBeforeEntry = hub.state.calls.filter((call) => call.method === "GET" && call.path === "/api/settings").length;
-    act(() => useDesk.getState().openSurfaceWindow("configure-settings", "meetings"));
-    expectModule("Meetings");
-    expectWing("Settings");
-    expect(screen.getByRole("checkbox", { name: "Auto export" })).toBeChecked();
-    await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true), { timeout: 3000 });
-    expect(hub.state.calls.filter((call) => call.method === "GET" && call.path === "/api/settings")).toHaveLength(settingsReadsBeforeEntry);
-  });
-
-  it("a pending write failure is visible in Accounts; Try again resends the edit and restores its single footer", async () => {
-    hub.state.settings.meeting.auto_export = false;
-    const base = hub.fetchStub;
-    let fail = true;
-    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
-      if (fail && init?.method === "PUT" && new URL(String(input), "http://hub.test").pathname === "/api/settings") {
-        // A real transport failure has no invented successful hub response.
-        throw new TypeError("Settings connection lost");
-      }
-      return base(input, init);
-    }));
-    render(<SettingsWindow scope="meetings" />);
-    fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
-    pressWing("Accounts");
-    expectModule("Accounts");
-    const retry = within(await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 })).getByRole("button", { name: "Retry" });
-    expect(retry.closest('[role="alert"]')?.textContent).toContain("Settings connection lost");
-    expectWing("Accounts");
-    expectModule("Accounts");
-    expect(hub.state.settings.meeting.auto_export).toBe(false);
-    expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
-
-    fail = false;
-    fireEvent.click(retry);
-    await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true));
-    expectModule("Accounts");
-    expect(screen.queryByText(/REFUSED/)).toBeNull();
-    expect(screen.queryByTestId("settings-save-failure")).toBeNull();
-    expect(within(document.querySelector(".surface-footer-layout")!).queryByRole("button", { name: "Retry" })).toBeNull();
-    expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
-  });
-});
 
 describe("Settings › People: his name and the other names for him", () => {
   it("edits the name and adds an alias with Enter; both reach the hub; an alias added just before the page hides still goes", async () => {
@@ -404,7 +200,7 @@ describe("Settings › People: his name and the other names for him", () => {
 });
 
 describe("Settings › Meetings", () => {
-  const meetingsText = () => document.querySelector(".prefs-module")?.textContent ?? "";
+  const meetingsText = () => document.querySelector("[data-settings-section=meetings]")?.textContent ?? "";
   const summaryRow = () => screen.getByTestId("settings-summary-controls").closest(".gadget-row") as HTMLElement;
 
   it("cold: After every meeting, the cycle, Summaries run on NO ENGINE + Engines › and no egress chip; Mic device, Auto export; Summary, never Intelligence", async () => {
@@ -423,7 +219,7 @@ describe("Settings › Meetings", () => {
     expect(screen.getByTestId("settings-engines-link").textContent).toBe("Engines ›");
     for (const word of ["Mic device", "Auto export", "Summary"]) expect(meetingsText()).toContain(word);
     expect(meetingsText()).not.toContain("Intelligence");
-    expect(rawButtons(container.querySelector(".prefs-module")!)).toEqual([]);
+    expect(rawButtons(container.querySelector(".settings-page")!)).toEqual([]);
   });
 
   it("a summary engine on the LAN: its host on the egress chip, no NO MODEL, no Choose model", async () => {
@@ -434,9 +230,9 @@ describe("Settings › Meetings", () => {
     expect(screen.queryByTestId("settings-no-model")).toBeNull();
     expect(summaryRow().textContent).toContain("Qwen 27B");
     fireEvent.click(screen.getByTestId("settings-engines-link"));
-    await waitFor(() => expect(document.querySelector(".prefs-module .gadget-pane-title")?.textContent).toBe("Engines"));
-    expect(meetingsText()).not.toContain("Mic device");
-    expect(rawButtons(container.querySelector(".prefs-module")!)).toEqual([]);
+    await waitFor(() => expect(openEngines).toHaveBeenCalled());
+    expect(meetingsText()).toContain("Mic device");
+    expect(rawButtons(container.querySelector(".settings-page")!)).toEqual([]);
   });
 
   it("Auto-record links to Meetings Record; Meetings has no calendar block (Betterment setup ST1)", async () => {
@@ -449,9 +245,11 @@ describe("Settings › Meetings", () => {
     expect(within(auto).getByTestId("settings-auto-record-link").textContent).toBe("Meetings › Record");
     expect(auto.querySelector("select")).toBeNull();
     // Betterment setup ST1: Calendar's one home is Accounts.
-    expect(document.querySelector(".prefs-calendar-section")).toBeNull();
-    expect(screen.queryByTestId("calendar-source-src-work")).toBeNull();
-    expect(screen.queryByTestId("calendar-connect-row")).toBeNull();
+    const meetings = document.querySelector('[data-settings-section="meetings"]')!;
+    expect(meetings.querySelector(".prefs-calendar-section")).toBeNull();
+    expect(within(meetings as HTMLElement).queryByTestId("calendar-source-src-work")).toBeNull();
+    expect(within(meetings as HTMLElement).queryByTestId("calendar-connect-row")).toBeNull();
+    expect(document.querySelectorAll(".prefs-calendar-section")).toHaveLength(1);
   });
 
   it("Accounts holds the calendar: the source row, Add feed and Import image; no zero counter (Betterment setup ST1)", async () => {
@@ -498,7 +296,7 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
   it("composes Meetings into related columns while keeping all ordinary groups present", async () => {
     const { container } = render(<SettingsCore scope="meetings" />);
     await screen.findByRole("combobox", { name: "Auto-run the summary" });
-    const columns = container.querySelectorAll('.prefs-module[data-settings-module="meetings"] .surface-columns[data-variant="preferences"] > div');
+    const columns = container.querySelectorAll('[data-settings-section="meetings"] .surface-columns[data-variant="preferences"] > div');
     expect(columns).toHaveLength(2);
     expect(columns[0].textContent).toContain("Summary");
     expect(columns[0].textContent).toContain("Recording");
@@ -563,29 +361,30 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     }));
     render(<SettingsCore scope="voice" />);
     await screen.findByRole("combobox", { name: "Language" });
-    fireEvent.click(screen.getByRole("button", { name: "Add symbol" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "Spoken phrase 1" }), { target: { value: "right arrow" } });
-    fireEvent.change(screen.getByRole("combobox", { name: "Language" }), { target: { value: "pl" } });
+    const speak = within(document.querySelector('[data-settings-section="speak"]') as HTMLElement);
+    fireEvent.click(speak.getByRole("button", { name: "Add symbol" }));
+    fireEvent.change(speak.getByRole("textbox", { name: "Spoken phrase 1" }), { target: { value: "right arrow" } });
+    fireEvent.change(speak.getByRole("combobox", { name: "Language" }), { target: { value: "pl" } });
     await waitFor(() => expect(hub.state.settings.model.language).toBe("pl"));
-    expect(screen.getByRole("textbox", { name: "Spoken phrase 1" })).toHaveValue("right arrow");
-    expect(screen.getByRole("textbox", { name: "Symbol 1" })).toHaveValue("");
-    fireEvent.change(screen.getByRole("textbox", { name: "Symbol 1" }), { target: { value: "→" } });
+    expect(speak.getByRole("textbox", { name: "Spoken phrase 1" })).toHaveValue("right arrow");
+    expect(speak.getByRole("textbox", { name: "Symbol 1" })).toHaveValue("");
+    fireEvent.change(speak.getByRole("textbox", { name: "Symbol 1" }), { target: { value: "→" } });
     await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 });
-    fireEvent.change(screen.getByRole("textbox", { name: "Symbol 1" }), { target: { value: "" } });
-    fireEvent.change(screen.getByRole("textbox", { name: "Spoken phrase 1" }), { target: { value: "new arrow" } });
-    fireEvent.click(screen.getByRole("button", { name: "Settings" }));
-    fireEvent.click(within(ledgerRow("Voice")!).getByRole("button", { name: "Open Voice" }));
-    expect(screen.getByRole("textbox", { name: "Spoken phrase 1" })).toHaveValue("new arrow");
-    expect(screen.getByRole("textbox", { name: "Symbol 1" })).toHaveValue("");
+    fireEvent.change(speak.getByRole("textbox", { name: "Symbol 1" }), { target: { value: "" } });
+    fireEvent.change(speak.getByRole("textbox", { name: "Spoken phrase 1" }), { target: { value: "new arrow" } });
+    fireEvent.click(screen.getByTestId("settings-index-accounts"));
+    fireEvent.click(screen.getByTestId("settings-index-speak"));
+    expect(speak.getByRole("textbox", { name: "Spoken phrase 1" })).toHaveValue("new arrow");
+    expect(speak.getByRole("textbox", { name: "Symbol 1" })).toHaveValue("");
     refuseSymbols = false;
     fireEvent.click(within(screen.getByTestId("settings-save-failure")).getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(hub.state.settings.dictation.spoken_symbols).toEqual([{ spoken: "right arrow", symbol: "→", attach: "none" }]));
-    expect(screen.getByRole("textbox", { name: "Spoken phrase 1" })).toHaveValue("new arrow");
-    expect(screen.getByRole("textbox", { name: "Symbol 1" })).toHaveValue("");
-    expect(within(screen.getByRole("region", { name: "Spoken symbols" })).getByText("Draft")).toBeInTheDocument();
-    fireEvent.change(screen.getByRole("textbox", { name: "Symbol 1" }), { target: { value: "⇒" } });
+    expect(speak.getByRole("textbox", { name: "Spoken phrase 1" })).toHaveValue("new arrow");
+    expect(speak.getByRole("textbox", { name: "Symbol 1" })).toHaveValue("");
+    expect(within(speak.getByRole("region", { name: "Spoken symbols" })).getByText("Draft")).toBeInTheDocument();
+    fireEvent.change(speak.getByRole("textbox", { name: "Symbol 1" }), { target: { value: "⇒" } });
     await waitFor(() => expect(hub.state.settings.dictation.spoken_symbols).toEqual([{ spoken: "new arrow", symbol: "⇒", attach: "none" }]));
-    await waitFor(() => expect(within(screen.getByRole("region", { name: "Spoken symbols" })).queryByText("Draft")).toBeNull());
+    await waitFor(() => expect(within(speak.getByRole("region", { name: "Spoken symbols" })).queryByText("Draft")).toBeNull());
   });
 
   it("keeps hold-key capture active through a preference rerender and Escape cancels it", async () => {
@@ -605,14 +404,6 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     fireEvent.keyDown(window, { key: "F8", code: "F8" });
     expect(key).toHaveTextContent("F8");
     await waitFor(() => expect(hub.state.settings.hotkey.key).toBe("f8"));
-  });
-
-  it("shows ordinary modules without an extra disclosure", async () => {
-    render(<SettingsCore />);
-    await screen.findByTestId("settings-hub-choose");
-    expect(ledgerRow("Meetings")).toBeTruthy();
-    expect(ledgerRow("Voice")).toBeTruthy();
-    expect(screen.queryByTestId("settings-more")).toBeNull();
   });
 
   it("renames a native calendar without exposing or changing its identifier, preserving every source", async () => {
@@ -660,7 +451,8 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true));
     const put = hub.state.calls.find((call) => call.method === "PUT" && call.path === "/api/settings")!;
     expect(put.body).toEqual({ _revision: settingsWire._revision, meeting: { auto_export: true } });
-    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("settings-save-failure")).toBeNull());
+    expect(within(footer).queryByRole("button", { name: "Retry" })).toBeNull();
   });
 
   it("an unrelated accepted edit keeps the earlier failure; a later edit of that field wins", async () => {
@@ -721,7 +513,7 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     render(<SettingsWindow scope="meetings" />);
     fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
     await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 });
-    fireEvent.click(screen.getByRole("tab", { name: "Accounts" }));
+    fireEvent.click(screen.getByTestId("settings-index-accounts"));
     const credentials = screen.getByText("Credentials").closest("details")!;
     fireEvent.click(within(credentials).getByText("Credentials"));
     const secret = Array.from(credentials.querySelectorAll(".gadget-secret")).find((row) => row.textContent?.includes("Web pairing token")) as HTMLElement;
@@ -733,8 +525,8 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     await waitFor(() => expect(within(secret).getByRole("button", { name: "Replace" })).not.toBeDisabled());
     expect(screen.getByTestId("settings-save-failure").textContent).toContain("Preference connection lost");
     expect(document.querySelector(".surface-footer-receipt")?.textContent).toContain("Not saved");
-    fireEvent.click(screen.getByRole("tab", { name: "Settings" }));
-    fireEvent.change(await screen.findByRole("combobox", { name: "Control posture" }), { target: { value: "neutral" } });
+    fireEvent.click(screen.getByTestId("settings-index-agents"));
+    fireEvent.change(await screen.findByRole("combobox", { name: "Agents act" }), { target: { value: "neutral" } });
     await waitFor(() => expect(modeSaved).toBe(true));
     expect(screen.getByTestId("settings-save-failure").textContent).toContain("Preference connection lost");
     expect(document.querySelector(".surface-footer-receipt")?.textContent).toContain("Not saved");
@@ -786,12 +578,12 @@ describe("Settings › System › Remote access", () => {
     const { container } = render(<SettingsCore scope="system" />);
     const toggle = (await screen.findByRole("combobox", { name: "Remote transport" })) as HTMLSelectElement;
     expect(toggle.value).toBe("OFF");
-    const text = container.querySelector(".prefs-module")?.textContent ?? "";
+    const text = container.querySelector(".settings-page")?.textContent ?? "";
     expect(text).toContain("Other devices");
     expect(text).not.toContain("Streamable HTTP");
     expect(text).not.toContain("CREDENTIALS");
     expect(screen.queryByRole("button", { name: "Issue credential" })).toBeNull();
-    expect(rawButtons(container.querySelector(".prefs-module")!)).toEqual([]);
+    expect(rawButtons(container.querySelector(".settings-page")!)).toEqual([]);
   });
 
   it("ON, issue: the token shows once with Copy; the row reads NEVER USED; Revoke removes that row only", async () => {
@@ -844,34 +636,6 @@ describe("Settings › System › runtime identity", () => {
   });
 });
 
-// ── fork C2 rows: the hub rows' words, Meetings off, Sounds, the grants ──
-
-describe("Settings hub rows name what the hub says", () => {
-  it("a cold hub: SUMMARY · NO ENGINE and Voice Speech is not set up, never SUMMARY SET ON or LIVE", async () => {
-    // replaces: tests/e2e/test_honest_faces_glass.py::test_settings_names_the_missing_engine
-    // (the hub half: tests/unit/test_settings_hub_engine_set.py, before the selection;
-    // betterment ST0: tests/integration/test_desk_settings.py::test_the_voice_fact_says_what_setup_says_about_speech)
-    expect([hubWire.meetings.engineSet, hubWire.voice.live, hubWire.voice.speechReady]).toEqual([false, true, false]);
-    await openHub();
-    expect(screen.getByText("SUMMARY · NO ENGINE")).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/SUMMARY SET ON/);
-    expect(document.body.textContent).not.toMatch(/SUMMARY (ON|OFF)\b/);
-    const voice = ledgerRow("Voice")!;
-    expect(voice.textContent).toContain("Speech is not set up");
-    expect(voice.textContent).not.toContain("LIVE");
-  });
-
-  it("Rhythm reads EVERY 15 MIN from the hub's rhythm block", async () => {
-    // replaces: tests/e2e/test_hs171_rhythm_glass.py::TestRhythmGlass::test_settings_hub_rhythm_row
-    // (the hub half: tests/unit/test_hs171_heartbeat_wire.py, hub_rhythm)
-    expect(hubWire.rhythm.sweepEveryMinutes).toBe(15);
-    await openHub();
-    const rhythm = ledgerRow("Rhythm")!.textContent ?? "";
-    expect(rhythm).toContain("EVERY 15 MIN");
-    expect(rhythm).not.toContain("NO LOOPS");
-  });
-});
-
 describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () => {
   it("Notify and quiet hours read and write the heartbeat; no cadence.quiet_hours row; Saved in the foot", async () => {
     // The hub half: tests/integration/test_desk_settings.py::test_quiet_hours_set_in_settings_are_what_the_heartbeat_and_cadence_read
@@ -890,7 +654,7 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     // Nothing writes the retired cadence.quiet_hours_* keys.
     expect(hub.state.calls.some((c) => c.path === "/api/settings" && c.method === "PUT")).toBe(false);
     await waitFor(() => expect(document.querySelector(".surface-footer-layout")?.textContent ?? "").toMatch(/Saved/));
-    expect(rawButtons(document.querySelector(".prefs-module")!)).toEqual([]);
+    expect(rawButtons(document.querySelector(".settings-page")!)).toEqual([]);
   });
 
   it("the sweep and the loops are behind Advanced, read only when he opens them", async () => {
@@ -1036,7 +800,7 @@ describe("Settings › System › Remote access grants", () => {
     await waitFor(() => expect(within(row("desk-agent")).getByTestId("grant-chip").textContent).toContain(W.live));
     fireEvent.click(within(row("desk-agent")).getByTestId("credential-revoke"));
     await waitFor(() => expect(screen.queryByText("desk-agent")).toBeNull());
-    expect(document.querySelector(".surface-ledger")).toBeNull();
+    expect(document.querySelector('[data-settings-section="this-mac"] .surface-ledger')).toBeNull();
     await waitFor(() => expect(foot().textContent).toContain("STOPPED"));
     fireEvent.click(foot());
     const well = await screen.findByTestId("grant-receipt");
@@ -1064,7 +828,7 @@ describe("Settings › System › Remote access grants", () => {
     expect(screen.queryByTestId("issue-credential-btn")).toBeNull();
     fireEvent.click(within(orphan).getByTestId("grant-verb"));
     await waitFor(() => expect(screen.queryByText("orphan-agent")).toBeNull());
-    expect(document.querySelector(".surface-ledger")).toBeNull();
+    expect(document.querySelector('[data-settings-section="this-mac"] .surface-ledger')).toBeNull();
     await waitFor(() => expect(foot().textContent).toContain("STOPPED"));
   });
 
@@ -1145,5 +909,30 @@ describe("Settings › System › Remote access grants", () => {
     expect(refused.textContent).toContain("NO GRANT");
     await waitFor(() => expect(within(screen.getByTestId(`project-line-${pay.id}`)).getByTestId("project-grant-chip").textContent).toContain(P.stopped));
     await waitFor(() => expect(foot().textContent).toContain("REFUSED"));
+  });
+});
+
+
+describe("Settings one-page face", () => {
+it("renders the settled section order with no wings or Open index", async () => {
+    const state = hub.state;
+    const { container } = render(<SettingsCore />);
+    await screen.findByTestId("settings-page");
+    const sections = Array.from(container.querySelectorAll("[data-settings-section]"))
+      .map((section) => section.getAttribute("data-settings-section"));
+    expect(sections).toEqual(["you", "speak", "meetings", "notices", "accounts", "agents", "desk", "this-mac"]);
+    expect(screen.getByRole("navigation", { name: "Settings sections" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Open Speak" })).toBeNull();
+    expect(screen.getByText("Quiet from")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-engines-page-link")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-setup-page-link")).toBeInTheDocument();
+    await waitFor(() => expect(state.calls.some((call) => call.method === "GET" && call.path === "/api/calendar/sources")).toBe(true));
+  });
+it("opens a legacy Notices row at Quiet hours and lights the row", async () => {
+    const { container } = render(<SettingsCore scope="rhythm::quiet-hours" />);
+    await screen.findByTestId("settings-page");
+    expect(screen.getByTestId("settings-index-notices")).toHaveClass("is-active");
+    expect(container.querySelector('[data-settings-section="notices"] .gadget-row[data-highlight]')).toBeTruthy();
   });
 });

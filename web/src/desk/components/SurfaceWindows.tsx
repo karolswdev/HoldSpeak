@@ -77,11 +77,12 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS
    the card offers did nothing. Both Setup doors are registered during
    first use, and nothing else is. */
 /* PHILO-17 (Astra r1 on #1085): First words' recovery doors are Setup
-   (the microphone) and Runs on (the speech model's row): both are admitted
+   (the microphone) and Engines (the speech model's row): both are admitted
    here, so neither falls back to a route recovery never consumes (the
-   /models fallback reloaded the page and lost the card). Runs on's hosted
-   surface is `open-concierge`; `configure-runs-on` is its alias. */
-const FIRST_VALUE_RECOVERY_KEYS = new Set(["project-setup", "configure-setup", "configure-settings"]);
+   /models fallback reloaded the page and lost the card). The canonical
+   Engines surface is `configure-runs-on`; `open-concierge` remains its
+   retired compatibility alias. */
+const FIRST_VALUE_RECOVERY_KEYS = new Set(["project-setup", "configure-setup", "configure-settings", "configure-runs-on"]);
 const FIRST_VALUE_RECOVERY_SURFACES = SURFACES.filter((row) =>
   FIRST_VALUE_RECOVERY_KEYS.has(row.key),
 );

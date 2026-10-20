@@ -44,7 +44,7 @@ import { handKindOf, handRefOf, openHand, type HandOrigin } from "../agentHand";
 import { primitiveCan } from "../../lib/primitives";
 import { primeSendTo, sendChoices, useSendToTick } from "../windowSend";
 import { useAllOpenWindows, useFrontWindowId } from "./window/windowRegistry";
-import { PREF_MODULES } from "../../pages/cores/settingsPrefs";
+import { SETTINGS_PALETTE_ROWS } from "../../pages/cores/settingsPrefs";
 import { useLaunchers } from "./DeskWindow";
 import type { CoverageRecord } from "../coverage";
 import { readProjectCounts } from "../needsYou";
@@ -709,16 +709,16 @@ export function DeskToolShelf() {
     }
     // HS-171-07: project rows moved to the PROJECTS section above.
 
-    // ── SETTINGS: preference modules, integrations, runtime targets, models ──
-    for (const module of PREF_MODULES)
+    // ── SETTINGS: the page's section and row labels share one registry ──
+    for (const row of SETTINGS_PALETTE_ROWS)
       push({
-        id: `settings:${module.id}`,
+        id: `settings:${row.id}`,
         section: "SETTINGS",
         glyph: "S",
-        label: module.label,
+        label: row.label,
         kind: "SETTINGS",
-        terms: `${module.id} ${module.keys.join(" ")}`,
-        run: () => openSurface("configure-settings", module.id),
+        terms: `${row.id} ${row.section} ${row.terms ?? ""}`,
+        run: () => openSurface("configure-settings", `${row.section}::${row.focus}`),
       });
     for (const integration of integrations) {
       if (!normalized && !integration.enabled) continue;

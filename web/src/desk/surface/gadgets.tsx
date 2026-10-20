@@ -28,6 +28,7 @@ export function GadgetGroup({
   label,
   material,
   actions,
+  highlight = false,
   children,
 }: {
   label?: string;
@@ -35,11 +36,14 @@ export function GadgetGroup({
   material?: "default" | "inset";
   /** Bounded library Buttons after the content, never a stretched add row. */
   actions?: ReactNode;
+  /** A palette landing can light a group when its control is a composite. */
+  highlight?: boolean;
   children: ReactNode;
 }) {
   const headingId = useId();
   return (
     <section className="gadget-group" data-material={material === "inset" ? material : undefined}
+      data-highlight={highlight || undefined}
       aria-labelledby={label ? headingId : undefined}>
       {label ? <h4 id={headingId} className="gadget-group-label">{label}</h4> : null}
       <div className="gadget-sheet">{children}</div>
@@ -74,7 +78,7 @@ export function GadgetRow({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (highlight) ref.current?.scrollIntoView({ block: "center" });
+    if (highlight && typeof ref.current?.scrollIntoView === "function") ref.current.scrollIntoView({ block: "center" });
   }, [highlight]);
   const GadgetSlot = controlWidth ? "div" : "span";
   return (

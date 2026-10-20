@@ -323,7 +323,7 @@ KNOWN_REDS: dict[tuple[str, int], list[Red]] = {
         Red("readable", r"^overlap '1' x 'People, DRAWER, 1:1 [\d:]+'" r" @\[[^\]]*\] x \[[^\]]*\](?: \[\[.*)?$",
             "the People icon's count badge 1 overlaps its caption", maybe=True),
     ],
-    ("surface-concierge", 1440): [
+    ("surface-engines", 1440): [
         # The ratified order: the jobs paint before the detection, the engines
         # fill in (useRunsOn.ts:222, fenced by runsOn.test.tsx "paints the
         # roster's jobs before the detection lands"). Holding them is a ruling.

@@ -15,7 +15,7 @@ import type {
 } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
-import { humanizeWireValue } from "../../lib/productLanguage";
+import { CONTROL_MODES, controlModeLabel, humanizeWireValue } from "../../lib/productLanguage";
 import { documentBuildId } from "../../lib/buildId";
 import { useFlushOnLeave } from "../../lib/flushOnLeave";
 import { useResource } from "../pageSupport";
@@ -47,11 +47,9 @@ import {
   SurfaceLedgerRow,
   SurfaceWell,
 } from "../../desk/surface";
-import { useWindowTitle } from "../../desk/surface/title";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressFor, hostPlace } from "../../desk/surface/egress";
 import { openSurface, openSurfaceOr } from "../../desk/shell";
-import { useDesk } from "../../desk/store";
 import { announceTaskReturn } from "../../desk/returnToTask";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
@@ -63,7 +61,6 @@ import { TtsSettingsBlock } from "./settingsTts";
 import { WallpaperModule } from "./settingsWallpaper";
 import { RhythmNoticeRows, RhythmSweepFold } from "./settingsRhythm";
 import { OwnerNameGroup, PeopleAccessModule } from "./settingsPeople";
-import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 import { Destinations } from "./connections/Destinations";
 import { RunsOnCore } from "../../features/runson/RunsOnCore";
@@ -78,9 +75,9 @@ import {
   MIR_PROFILE_OPTIONS,
   MODULE_ALIASES,
   PREF_MODULES,
-  PrefsFace,
+  SETTINGS_SECTIONS,
+  type SettingsSectionId,
   PrefStatusBar,
-  SettingSprite,
   WAKE_ACTION_OPTIONS,
   type SettingsHubWire,
 } from "./settingsPrefs";
@@ -249,12 +246,74 @@ function title(key: string) {
 /* ── HS-172: egress helper (shared) ── */
 // intelHostLabel / intelHostScope collapsed into egressFor (desk/surface/egress.ts).
 
+const SECTION_ALIASES: Record<string, SettingsSectionId> = {
+  voice: "speak",
+  hotkey: "speak",
+  transcription: "speak",
+  "voice-typing": "speak",
+  "wake-word": "speak",
+  meetings: "meetings",
+  calendar: "accounts",
+  rhythm: "notices",
+  cadence: "notices",
+  integrations: "accounts",
+  accounts: "accounts",
+  people: "you",
+  owner: "you",
+  agents: "agents",
+  sounds: "desk",
+  appearance: "desk",
+  presence: "desk",
+  wallpaper: "desk",
+  desk: "desk",
+  system: "this-mac",
+  devices: "this-mac",
+  models: "this-mac",
+  assignments: "this-mac",
+  delivery: "this-mac",
+};
+const LEGACY_FOCUS: Record<string, string> = {
+  models: "engines",
+  delivery: "engines",
+  assignments: "engines",
+  integrations: "connections",
+  calendar: "calendar",
+  wallpaper: "wallpaper",
+  people: "owner-name",
+  system: "device-name",
+};
+const SETTINGS_FOCUS_PATHS: Record<string, string> = {
+  "owner-name": "owner.name",
+  "owner-aliases": "owner.aliases",
+  "push-to-talk": "hotkey",
+  language: "model.language",
+  "preview-before-type": "dictation.preview_before_type",
+  "voice-commands": "dictation.macros.enabled",
+  "wake-word": "wake_word.enabled",
+  "spoken-symbols": "dictation.spoken_symbols",
+  "make-summary": "meeting.intelligence_auto",
+  "record-by-itself": "meeting.auto_record",
+  microphone: "meeting.mic_device",
+  export: "meeting.auto_export",
+  "quiet-hours": "heartbeat.quiet_hours",
+  notify: "heartbeat.notify",
+  "daily-brief": "cadence.brief_enabled",
+  "max-nudges": "cadence.max_nudges_per_day",
+  "desk-sounds": "ui.desk_sounds",
+  motion: "motion",
+  presence: "presence.enabled",
+  "device-name": "mesh.device_name",
+  "people-access": "people.access",
+};
+
 const SETTINGS_WINGS = [
   { id: "settings", label: "Settings" },
   { id: "models", label: "Engines" },
   { id: "integrations", label: "Accounts" },
 ];
 
+/** Legacy scope contract retained for callers and old saved desks. The page
+ * converts it to a section with `settingsPageScope` below. */
 export function settingsScope(scope?: string): { module: string | null; focus?: string } {
   const [head, ...tail] = (scope ?? "").split("::");
   if (!head) return { module: null };
@@ -264,8 +323,21 @@ export function settingsScope(scope?: string): { module: string | null; focus?: 
   // The retired Guide deep link lands in the one Setup window. It is not a
   // Settings wing, so new Settings navigation cannot create a second home.
   if (head === "guide" || head === "setup") return { module: "setup", focus: tail.length ? tail.join("::") : undefined };
+  // `desk` is the one old alias whose successor changed section; keep its
+  // face meaning ahead of the retired module table's system fallback.
   const module = MODULE_ALIASES[head] ?? (SETTINGS_WINGS.some((entry) => entry.id === head) || PREF_MODULES.some((entry) => entry.id === head) ? head : null);
   return { module, focus: tail.length ? tail.join("::") : undefined };
+}
+
+function settingsPageScope(scope?: string): { module: string | null; focus?: string } {
+  const [head, ...tail] = (scope ?? "").split("::");
+  if (head.startsWith("integration:")) {
+    return { module: "accounts", focus: [head.slice("integration:".length), ...tail].filter(Boolean).join("::") };
+  }
+  const legacy = head === "desk" ? head : MODULE_ALIASES[head] ?? head;
+  if (head === "guide" || head === "setup") return { module: "setup", focus: tail.length ? tail.join("::") : undefined };
+  const module = SECTION_ALIASES[legacy] ?? (SETTINGS_SECTIONS.some((entry) => entry.id === legacy) ? legacy : null);
+  return { module, focus: tail.length ? tail.join("::") : LEGACY_FOCUS[head] };
 }
 
 /* ── HS-174-02/03: Remote Access — the credential ledger + issue well ── */
@@ -591,11 +663,11 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
           <span>Device read failed · Settings unchanged · Retry</span>
           <Button variant="ghost" dense onClick={() => { setError(""); setNonce((n) => n + 1); }}>Retry</Button>
         </div>
-        {children ? <FoldGadget title="Advanced">{children}</FoldGadget> : null}
+        {children ? <FoldGadget title="More">{children}</FoldGadget> : null}
       </>
     );
   }
-  if (!wire) return <><span className="gadget-fact" role="status">Reading device details…</span>{children ? <FoldGadget title="Advanced">{children}</FoldGadget> : null}</>;
+  if (!wire) return <><span className="gadget-fact" role="status">Reading device details…</span>{children ? <FoldGadget title="More">{children}</FoldGadget> : null}</>;
 
   const id = wire.identity ?? {};
   const served = id.frontend_build ?? "";
@@ -617,7 +689,7 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
           ))}
         </div>
       ) : null}
-      <FoldGadget title="Advanced">
+      <FoldGadget title="More">
         <GadgetGroup material="inset" label="Diagnostics">
           <GadgetRow label="Backend">
             <span className="surface-token" data-chip data-testid="runtime-backend">
@@ -711,12 +783,12 @@ function SystemModule({
         main={<RemoteAccessModule grantAct={grantAct} receiptOpen={receiptOpen} onGrantAct={onGrantAct} />}
         side={deskModule}
       />
+      <GadgetGroup material="inset" label="This Mac">
+        {deviceName}
+      </GadgetGroup>
       {/* PHILO-17 U35: one RAW fold holds the diagnostics (build hashes,
-          schema), the mesh name, and the device rows. */}
+          schema), and the device rows. */}
       <RuntimeIdentityModule>
-        <GadgetGroup material="inset" label="Mesh">
-          {deviceName}
-        </GadgetGroup>
         {rawWell}
       </RuntimeIdentityModule>
     </>
@@ -1289,27 +1361,35 @@ export function SettingsCore(props: CoreProps) {
 }
 
 function SettingsFace({ hero, scope }: CoreProps) {
-  // A scope is a new entry intent. Once open, the hub, wings and Back all
-  // change this same selection, including its optional one-time focus.
-  const [navigation, setNavigation] = useState(() => settingsScope(scope));
-  const entry = useDesk((desk) => desk.windowsById["surface-settings"]);
+  // A scope is a new entry intent. The page stays mounted and the scope only
+  // chooses its section and row anchor.
+  const [navigation, setNavigation] = useState(() => settingsPageScope(scope));
   useEffect(() => {
-    const next = settingsScope(scope);
+    const next = settingsPageScope(scope);
     if (next.module === "setup") {
       openSurfaceOr("configure-setup", "/");
       setNavigation({ module: null });
     } else {
       setNavigation(next);
+      setHighlight(next.focus ?? "");
     }
-  }, [scope, entry]);
+  }, [scope]);
   const moduleId = navigation.module === "settings" ? null : navigation.module;
   const contentRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const body = contentRef.current?.closest<HTMLElement>(".desk-surface-body");
-    if (body) body.scrollTop = 0;
+    if (!body) return;
+    if (moduleId) {
+      const section = contentRef.current?.querySelector<HTMLElement>(`[data-settings-section="${moduleId}"]`);
+      if (section) {
+        requestAnimationFrame(() => section.scrollIntoView({ block: "start" }));
+        return;
+      }
+    }
+    body.scrollTop = 0;
   }, [moduleId]);
   const integrationSubject =
-    moduleId === "integrations"
+    moduleId === "accounts"
       ? navigation.focus
       : null;
   const resource = useResource<SettingsResponse>("/api/settings", {});
@@ -1388,9 +1468,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
       setCalReadError(readableError(error));
     } finally { setCalLoading(false); }
   }, []);
-  // Betterment setup ST1: Meetings reads it for Auto-record; Accounts, the
-  // calendar's one home, for the source rows.
-  useEffect(() => { if (moduleId === "meetings" || moduleId === "integrations") void loadCalSources(); }, [moduleId, loadCalSources]);
+  // Betterment setup ST1: the one page keeps Calendar in Accounts while
+  // Meetings reads the same source facts for Auto-record. Load once when the
+  // face mounts so an owner who opens Settings at the top and scrolls to
+  // either section sees the real source state without pressing the index.
+  useEffect(() => { void loadCalSources(); }, [loadCalSources]);
 
   /* HS-101 round 3 — the configuring archetype saves ON CHANGE
      (Article VII: no ceremony): every edit lands debounced. HS-111-01:
@@ -1672,22 +1754,17 @@ function SettingsFace({ hero, scope }: CoreProps) {
     }
   };
 
-  // HS-139-05: deep-index and filter removed — all tiles stay visible at once.
+  // The section words are the page index.  They scroll the existing face;
+  // they never create a wing or replace the page body.
+  const openSection = (id: string, focus = "") => {
+    setNavigation({ module: id, focus });
+    setHighlight(focus);
+  };
   const openModule = (id: string) => {
-    setNavigation({ module: id });
-    setHighlight("");
+    const section = SECTION_ALIASES[id] ?? id;
+    openSection(section);
   };
-  const backToSettings = () => {
-    setNavigation({ module: null });
-    setHighlight("");
-  };
-  const activeWing = SETTINGS_WINGS.some((wing) => wing.id === moduleId)
-    ? moduleId!
-    : "settings";
-  useWindowWings(
-    <SurfaceWings wings={SETTINGS_WINGS} active={activeWing} onChange={openModule} />,
-    [activeWing],
-  );
+  const backToSettings = () => openSection("this-mac");
 
   /* ── gadget bindings (plain function helpers — never components
         defined in render, which would remount and drop focus) ── */
@@ -1699,7 +1776,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
           : undefined,
       resource.data,
     );
-  const hl = (path: string[]) => highlight === path.join(".");
+  const hl = (path: string[]) => (SETTINGS_FOCUS_PATHS[highlight] ?? highlight) === path.join(".");
   const check = (path: string[], label: string, fact?: string) => (
     <GadgetRow
       key={path.join(".")}
@@ -2048,6 +2125,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   <HotkeyCapture
                     grouped={false}
                     value={(data.hotkey ?? {}) as Record<string, unknown>}
+                    highlight={hl(["hotkey"])}
                     onCommit={(next) =>
                       update(["hotkey"], {
                         ...(data.hotkey as Record<string, unknown>),
@@ -2128,7 +2206,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               }
             />
             {/* HS-139-04/05: all voice RAW wells merged. */}
-            <FoldGadget title="Advanced">
+            <FoldGadget title="More">
               <GadgetGroup material="inset" label="Transcription">
                 {num(
                   ["model", "transcribe_timeout_seconds"],
@@ -2250,26 +2328,26 @@ function SettingsFace({ hero, scope }: CoreProps) {
           <>
             <SurfaceColumns variant="preferences" main={<>
               <GadgetGroup material="inset" label="Summary">
-                <GadgetRow label="Make summary">
+                <GadgetRow label="Make summary" highlight={hl(["meeting", "intelligence_auto"])}>
                   <CycleGadget label="Auto-run the summary" value={autoVal} options={INTELLIGENCE_AUTO_OPTIONS} onChange={(next) => update(["meeting", "intelligence_auto"], next)} />
                 </GadgetRow>
                 {/* Betterment setup ST1: the engine is a fact line; Engines
                     is its one home (`Engines ›` opens it at Meetings). */}
-                <GadgetRow label="Summaries run on" controlWidth="full">
+                <GadgetRow label="Summaries run on" controlWidth="full" highlight={focusHighlight === "engines"}>
                   <span className="prefs-summary-controls" data-testid="settings-summary-controls">
                     {summariesOff ? <StateChip state="idle" label="SUMMARIES OFF" data-testid="settings-summaries-off" />
                       : hasModel ? <>
                         <span className="prefs-value">{String(meetingsHub?.engine || "Assigned engine")}</span>
                         {intelHost && egressFor(intelHost).label ? <EgressChip label={egressFor(intelHost).label} scope={egressFor(intelHost).scope} /> : null}
                       </> : <StateChip state="warning" label="NO ENGINE" data-testid="settings-no-model" />}
-                    <Button variant={!hasModel && !summariesOff ? "secondary" : "ghost"} dense onClick={() => setNavigation({ module: "models", focus: "meetings" })} data-testid="settings-engines-link">
+                    <Button variant={!hasModel && !summariesOff ? "secondary" : "ghost"} dense onClick={() => openSurfaceOr("configure-runs-on", "/models")} data-testid="settings-engines-link">
                       Engines ›
                     </Button>
                   </span>
                 </GadgetRow>
               </GadgetGroup>
               <GadgetGroup material="inset" label="Recording">
-                <GadgetRow label="Microphone">
+                <GadgetRow label="Microphone" highlight={hl(["meeting", "mic_device"])}>
                   <span className="prefs-value">
                     {String(val(["meeting", "mic_device"]) || "System default")}
                   </span>
@@ -2279,7 +2357,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                     {String(val(["meeting", "system_audio_device"]) || "Auto")}
                   </span>
                 </GadgetRow>
-                <div data-testid="settings-auto-record"><GadgetRow label="Auto-record">{autoRecordLink}</GadgetRow></div>
+                <div data-testid="settings-auto-record"><GadgetRow label="Auto-record" highlight={hl(["meeting", "auto_record"])}>{autoRecordLink}</GadgetRow></div>
                 <FoldGadget title="Audio devices">
                   <GadgetRow wide label="Mic device" fact="Custom name" controlWidth="full">
                     <StringGadget
@@ -2301,7 +2379,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               </GadgetGroup>
             </>} side={<>
             <GadgetGroup material="inset" label="Export">
-              <GadgetRow label="Auto export" controlWidth="short">
+              <GadgetRow label="Auto export" controlWidth="short" highlight={hl(["meeting", "auto_export"])}>
                 <CheckGadget
                   variant="state"
                   label="Auto export"
@@ -2329,7 +2407,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             {/* HS-139-04: all operator knobs fold behind one RAW well.
                 PHILO-17 U35: Allow actuators is one of them (it sat on the
                 face), and the fold carries no hand-kept count. */}
-            <FoldGadget title="Advanced">
+            <FoldGadget title="More">
               {lastRunReceipt ? <span className="gadget-fact" data-testid="settings-last-ran">{lastRunReceipt}</span> : null}
               <GadgetGroup material="inset" label="Capture">
                 {check(["meeting", "diarization_enabled"], "Diarization")}
@@ -2419,7 +2497,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   heartbeat policy the notices loop reads; Notify moved here
                   from the parked Rhythm window. */}
               <RhythmNoticeRows
-                highlight={highlight}
+                highlight={focusHighlight}
                 onSaved={() => setWrittenAt(new Date().toTimeString().slice(0, 8))}
                 onWrite={() => setHeartbeatRevision((n) => n + 1)}
               />
@@ -2445,12 +2523,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   max: 23,
                 })}
               </GadgetGroup>
-              <GadgetGroup material="inset" label="Telegram">
-                {check(["cadence_telegram", "enabled"], "Enabled")}
-              </GadgetGroup>
             </>} />
             {/* HS-139-04: operator knobs fold behind RAW. */}
-            <FoldGadget title="Advanced">
+            <FoldGadget title="More">
               <GadgetGroup material="inset">
                 {check(["cadence", "use_llm"], "Use LLM")}
                 {num(["cadence", "tick_interval_seconds"], "Tick interval", {
@@ -2466,8 +2541,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
             </FoldGadget>
           </>
         );
-      /* ── Models: PARKED (HS-170-03) — the Concierge is its own window now.
-         Opening models/assignments redirects to the Concierge surface. ── */
+      /* ── Models: legacy deep-link compatibility. Engines is its own Desk
+         window; this branch remains for callers that still render a module
+         directly. ── */
       case "models":
       case "assignments": {
         return <RunsOnCore scope={navigation.focus} title="Settings" onBack={backToSettings} />;
@@ -2516,6 +2592,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
             <div className="prefs-column">
               {/* PHILO-10-04 (B1): the Destinations group, under Tools. */}
               <Destinations />
+              {/* Betterment ST7: Telegram is an account destination. Keep its
+                  existing cadence_telegram writer; only its Settings home
+                  moves from Notices to Accounts. */}
+              <GadgetGroup material="inset" label="Telegram">
+                {check(["cadence_telegram", "enabled"], "Enabled")}
+              </GadgetGroup>
               {/* PHILO-17 REFIT: keys and tokens are technical; they fold. */}
               <FoldGadget title="Credentials">
                 <GadgetGroup>
@@ -2524,7 +2606,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
               </FoldGadget>
               {/* HS-139-04: operator-wiring secrets fold behind RAW. */}
               {rawSecrets.length ? (
-                <FoldGadget title="Advanced">
+                <FoldGadget title="More">
                   <GadgetGroup>{rawSecrets.map(secretRow)}</GadgetGroup>
                 </FoldGadget>
               ) : null}
@@ -2572,75 +2654,108 @@ function SettingsFace({ hero, scope }: CoreProps) {
     }
   };
 
-  const module = moduleId
-    ? PREF_MODULES.find((entry) => entry.id === moduleId)
-    : null;
-  const insetModule = ["voice", "meetings", "rhythm", "sounds", "people", "system", "agents"].includes(moduleId ?? "");
   const receipt = { saving: saving || Boolean(secretBusy), writtenAt, refusal };
+  const focusHighlight = SETTINGS_FOCUS_PATHS[navigation.focus ?? ""] ?? navigation.focus ?? "";
+  const pageSection = (id: SettingsSectionId, label: string, children: ReactNode) => (
+    <section
+      id={`settings-section-${id}`}
+      data-settings-section={id}
+      className="settings-page-section"
+      aria-labelledby={`settings-section-title-${id}`}
+    >
+      <h2 id={`settings-section-title-${id}`} className="settings-page-section-title">{label}</h2>
+      <div className="settings-page-section-body">{children}</div>
+    </section>
+  );
+  const engineLink = (
+    <GadgetGroup material="inset" label="HoldSpeak">
+      <GadgetRow label="Engines" highlight={focusHighlight === "engines"}>
+        <Button variant="secondary" dense onClick={() => openSurfaceOr("configure-runs-on", "/models")} data-testid="settings-engines-page-link">Engines ›</Button>
+      </GadgetRow>
+      <GadgetRow label="Setup" highlight={focusHighlight === "setup"}>
+        <Button variant="secondary" dense onClick={() => openSurfaceOr("configure-setup", "/")} data-testid="settings-setup-page-link">Setup ›</Button>
+      </GadgetRow>
+    </GadgetGroup>
+  );
+  const settingsPage = (
+    <div className="settings-page" data-testid="settings-page">
+      <nav className="settings-page-index" aria-label="Settings sections">
+        {SETTINGS_SECTIONS.map((section) => (
+          <Button
+            key={section.id}
+            variant="ghost"
+            dense
+            className={moduleId === section.id ? "is-active" : undefined}
+            aria-current={moduleId === section.id ? "location" : undefined}
+            onClick={() => openSection(section.id)}
+            data-testid={`settings-index-${section.id}`}
+          >{section.label}</Button>
+        ))}
+      </nav>
+      <div className="settings-page-sections">
+        {pageSection("you", "You", <OwnerNameGroup highlight={focusHighlight} />)}
+        {pageSection("speak", "Speak", renderModule("voice"))}
+        {pageSection("meetings", "Meetings", renderModule("meetings"))}
+        {pageSection("notices", "Notices", renderModule("rhythm"))}
+        {pageSection("accounts", "Accounts", renderModule("integrations"))}
+        {pageSection("agents", "Agents", <>
+          {renderModule("agents")}
+          <GadgetGroup material="inset" label="Agents act">
+            <GadgetRow label="Agents act" highlight={focusHighlight === "agents-act"}>
+              <CycleGadget
+                label="Agents act"
+                value={String(hub.data.posture || authority.data.control_mode || "neutral")}
+                disabled={authorityBusy || authority.loading || Boolean(authority.error)}
+                options={CONTROL_MODES.map((mode) => ({ value: mode, label: controlModeLabel(mode) }))}
+                onChange={(mode) => void setControlMode(mode)}
+              />
+            </GadgetRow>
+          </GadgetGroup>
+          <PeopleAccessModule highlight={focusHighlight} />
+        </>)}
+        {pageSection("desk", "Desk", <>
+          {renderModule("sounds")}
+          <WallpaperModule showFavorites highlight={focusHighlight} />
+        </>)}
+        {pageSection("this-mac", "This Mac", <>
+          {engineLink}
+          {renderModule("system")}
+        </>)}
+      </div>
+    </div>
+  );
   return (
     <>
       {hero ? hero(null) : null}
-      <div ref={contentRef} className="settings-content" data-settings-view={moduleId || "home"} data-settings-material={insetModule ? "inset" : undefined}>
+      <div ref={contentRef} className="settings-content settings-page-content" data-settings-view={moduleId || "page"}>
       {refusal ? <SurfaceWell><div className="prefs-read-failure" role="alert" data-testid="settings-save-failure"><span>{refusal}</span>{failedChangesRef.current.length ? <Button dense variant="ghost" disabled={saving} onClick={() => void retryFailedChanges()}>Retry</Button> : null}</div></SurfaceWell> : null}
       <SurfaceState
         loading={resource.loading}
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        {module ? (
-          <div className="prefs-module" data-settings-module={module.id} data-settings-material={insetModule ? "inset" : undefined}>
-            {!insetModule ? <h2 className="gadget-pane-title">{module.label}</h2> : (
-              <header className="prefs-module-head">
-                <SettingSprite name={module.sprite} />
-                <h2 className="gadget-pane-title">{module.label}</h2>
-              </header>
-            )}
-            {renderModule(module.id)}
-          </div>
-        ) : (<>
-          <SurfaceState loading={hub.loading} error={hub.error} onRetry={() => void hub.reload()}>
-          <PrefsFace
-            onOpen={openModule}
-            hub={hub.data}
-            posture={String(hub.data.posture || authority.data.control_mode || "neutral")}
-            postureBusy={authorityBusy || authority.loading || Boolean(authority.error)}
-            onPosture={(mode) => void setControlMode(mode)}
-            precedence={
-              Array.isArray(authority.data.precedence)
-                ? (authority.data.precedence as string[])
-                : []
-            }
-          />
-          </SurfaceState>
-          {authority.error ? <div className="prefs-read-failure" role="alert"><span>Control mode read failed · Mode unchanged · Retry</span><Button dense variant="ghost" onClick={() => void authority.reload()}>Retry</Button></div> : null}
-        </>)}
+        <SurfaceState loading={hub.loading} error={hub.error} onRetry={() => void hub.reload()}>
+          {settingsPage}
+        </SurfaceState>
       </SurfaceState>
       </div>
-      {/* HS-168-03: connections module shows its own receipt footer. */}
-      {moduleId === "models" ? null : (
-        <PrefStatusBar
-          onBack={
-            module
-              ? backToSettings
-              : undefined
-          }
-          receipt={receipt}
-          onRetry={failedChangesRef.current.length ? () => void retryFailedChanges() : undefined}
-          idleReceipt={moduleId === "integrations" ? connectionsFoot?.checkedAt ? <Receipt status="ok" label="Checked" timestamp={connectionsFoot.checkedAt} /> : <span className="prefs-receipt">Not checked</span> : undefined}
-          grantReceipt={module?.id === "system" && grantAct ? (
-            <GrantFootReceipt
-              act={grantAct}
-              open={grantReceiptOpen}
-              onToggle={() => setGrantReceiptOpen((open) => !open)}
-            />
-          ) : null}
-          hubWrittenAt={
-            hub.data.writtenAt != null
-              ? new Date(hub.data.writtenAt * 1000).toTimeString().slice(0, 5)
-              : null
-          }
-        />
-      )}
+      <PrefStatusBar
+        receipt={receipt}
+        onRetry={failedChangesRef.current.length ? () => void retryFailedChanges() : undefined}
+        idleReceipt={connectionsFoot?.checkedAt ? <Receipt status="ok" label="Checked" timestamp={connectionsFoot.checkedAt} /> : undefined}
+        grantReceipt={grantAct ? (
+          <GrantFootReceipt
+            act={grantAct}
+            open={grantReceiptOpen}
+            onToggle={() => setGrantReceiptOpen((open) => !open)}
+          />
+        ) : null}
+        hubWrittenAt={
+          hub.data.writtenAt != null
+            ? new Date(hub.data.writtenAt * 1000).toTimeString().slice(0, 5)
+            : null
+        }
+      />
     </>
   );
 }

@@ -55,6 +55,9 @@ STATIC_WINDOWS: dict[str, str] = {
     "surface-components": "design-components",
     "surface-activity": "inspect-activity",
     "surface-project-memory": "open-project-memory",
+    # Betterment ST7: the Engines face is a first-class window. The retired
+    # Concierge id below remains known only so old saved rows can close.
+    "surface-engines": "configure-runs-on",
     "surface-concierge": "open-concierge",
     "surface-project-setup": "project-setup",
     "surface-processes": "inspect-processes",
@@ -116,7 +119,7 @@ WINDOW_FAMILIES: dict[str, str] = {
 #: Retired families: their rows still close, a new window is refused.
 RETIRED_APPS: dict[str, str] = {
     "zone": "no face draws a zone (PHILO-17, one desk)",
-    "open-concierge": "the Engines section is hosted by Settings (PHILO-17)",
+    "open-concierge": "the legacy Concierge id is retired; Engines has a live window",
 }
 
 #: Retired static windows: their saved rows still close, a new window is
@@ -124,7 +127,7 @@ RETIRED_APPS: dict[str, str] = {
 #: the hub both need to retire the old Concierge row without retiring the
 #: canonical Settings window that now hosts Engines.
 RETIRED_WINDOWS: dict[str, str] = {
-    "surface-concierge": "Engines is a section of Settings (PHILO-17)",
+    "surface-concierge": "the legacy Concierge window is retired; Engines has a live window (ST7)",
     "surface-companion": "the old Agents application is unmapped; Agents is the Conductor window (Betterment AG1)",
     # Betterment setup ST1: one home each. A saved row closes and the
     # browser opens Settings at the section in its place (hubWindows.ts).
