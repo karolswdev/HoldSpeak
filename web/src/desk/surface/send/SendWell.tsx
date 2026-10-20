@@ -234,7 +234,7 @@ export function accountChip(
  *  owns scrolling; the payload well never traps the Send action. */
 export function PreviewWell({ preview, testid, verbs }: { preview: Preview; testid: string; verbs: ReactNode }) {
   return (
-    <div className="send-preview" data-testid={testid}>
+    <div className="send-preview" data-send="well" data-testid={testid}>
       <SurfaceSection label="Preview">
         <dl className="send-fields">
           {preview.fields.map((f) => (

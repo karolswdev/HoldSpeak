@@ -1219,6 +1219,14 @@ class TestSendNeedsGlass(_Rig):
                 row.locator("[data-verb='look']").click()
                 preview = page.locator("[data-testid='needs-send-preview']")
                 preview.wait_for(timeout=H1_T)
+                page.wait_for_function("""() => {
+                    const body = document.querySelector('[data-testid="needs-send-preview"] [data-testid="send-preview-body"]');
+                    if (!body || body.getBoundingClientRect().width < 200) return false;
+                    for (let node = body; node; node = node.parentElement) {
+                        if (Number(getComputedStyle(node).opacity) < .99) return false;
+                    }
+                    return true;
+                }""", timeout=H1_T)
                 preview_text = preview.locator("[data-testid='send-preview-body']").inner_text().strip()
                 expected_preview = " ".join(
                     re.sub(r"^#+\s*", "", line).strip()
@@ -1451,11 +1459,39 @@ class TestSendNeedsGlass(_Rig):
                 preview = page.locator("[data-testid='needs-send-preview']")
                 preview.wait_for(timeout=H1_T)
                 shown = " ".join(preview.locator("[data-testid='send-preview-body']").inner_text().split())
+                page.wait_for_function("""() => {
+                    const body = document.querySelector('[data-testid="needs-send-preview"] [data-testid="send-preview-body"]');
+                    if (!body || body.getBoundingClientRect().width < 200) return false;
+                    for (let node = body; node; node = node.parentElement) {
+                        if (Number(getComputedStyle(node).opacity) < .99) return false;
+                    }
+                    return true;
+                }""", timeout=H1_T)
                 expected_shown = " ".join(
                     re.sub(r"^#+\s*", "", line).strip()
                     for line in source_markdown.splitlines() if line.strip()
                 )
                 assert shown == expected_shown
+                contrast = preview.locator("[data-testid='send-preview-body'] p").first.evaluate("""el => {
+                    const rgb = value => (value.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
+                    const luminance = values => values.map(v => {v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;})
+                        .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+                    let node = el, background = 'rgb(255, 255, 255)';
+                    while (node) {
+                        const color = getComputedStyle(node).backgroundColor;
+                        if (color !== 'transparent' && color !== 'rgba(0, 0, 0, 0)') {background = color; break;}
+                        node = node.parentElement;
+                    }
+                    const color = getComputedStyle(el).color;
+                    const a = luminance(rgb(color)), b = luminance(rgb(background));
+                    const bounds = el.getBoundingClientRect();
+                    return {color, background, ratio: (Math.max(a, b) + .05) / (Math.min(a, b) + .05),
+                        width: bounds.width, left: bounds.left, right: bounds.right,
+                        viewport: innerWidth, fontSize: parseFloat(getComputedStyle(el).fontSize)};
+                }""")
+                assert contrast["ratio"] >= 4.5, contrast
+                assert contrast["width"] >= 200 and contrast["fontSize"] >= 12, contrast
+                assert contrast["left"] >= 0 and contrast["right"] <= contrast["viewport"], contrast
                 page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-preview-{width}.png"))
 
                 posts: list[dict[str, Any]] = []
@@ -1508,7 +1544,7 @@ class TestSendNeedsGlass(_Rig):
                     "first_delivery": first_delivery,
                     "replay_delivery": replay_delivery,
                     "artifact": artifact, "document_ref": document_ref,
-                    "owner_before": owner_before, "http_send": posts[0],
+                    "owner_before": owner_before, "http_send": posts[0], "preview_contrast": contrast,
                     "producer_calls": calls, "prepare_receipt": prepare_kernel,
                     "send": sent, "send_receipt": send_kernel,
                     "desk_events": [

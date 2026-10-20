@@ -403,25 +403,24 @@ def _confirmed_decisions_for_meeting(
     must use the durable ``decisions`` lifecycle instead, which is written by
     the existing proposal bridge when a decision is confirmed.
     """
-    try:
-        records = db.decisions.list(meeting_id=meeting_id, lifecycle="accepted")
-    except Exception:
-        return []
+    from .services.decision_record_service import DecisionRecordService
+
+    records = DecisionRecordService(db).confirmed_for_meeting(meeting_id)
     seen: set[str] = set()
     out: list[dict[str, Any]] = []
     for record in records:
-        decision = str(getattr(record, "text", "") or "").strip()
+        decision = str(record.get("decision_text") or "").strip()
         if not decision:
             continue
         key = _norm(decision)
         if key in seen:
             continue
         seen.add(key)
-        source_timestamp = _coerce_timestamp(getattr(record, "source_timestamp", None))
+        source_timestamp = _coerce_timestamp(record.get("source_timestamp"))
         out.append(
             {
                 "decision": decision,
-                "rationale": str(getattr(record, "rationale", "") or "").strip() or None,
+                "rationale": str(record.get("rationale") or "").strip() or None,
                 "source_timestamp": source_timestamp,
                 "provenance": (
                     resolve_provenance_segment(segments, source_timestamp)

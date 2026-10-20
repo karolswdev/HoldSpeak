@@ -5,29 +5,29 @@
   "projects": [],
   "items": [
    {
-    "id": "send:chs_8fe1f79b79bd5d3489488da5",
-    "ref": "send:chs_8fe1f79b79bd5d3489488da5",
+    "id": "send:chs_95390ca6de5616f70b0867cf",
+    "ref": "send:chs_95390ca6de5616f70b0867cf",
     "kind": "send",
     "source": "send",
     "title": "S3 state transitions — update r1 (2026-10-20)",
     "documentLabel": "REV 1",
     "documentTitle": "S3 state transitions — update r1 (2026-10-20)",
-    "documentRef": "project_update:pupd_1916605d7e304d89882a896cb0c09e62",
-    "sendId": "chs_8fe1f79b79bd5d3489488da5",
-    "destinationId": "chd_b3433ca39863bf7a0888801b",
+    "documentRef": "project_update:pupd_5d02f04e5b66450982ed3b8ed18e0305",
+    "sendId": "chs_95390ca6de5616f70b0867cf",
+    "destinationId": "chd_df5d90d8e49abe7202de9405",
     "destinationName": "Team folder",
     "why": "NO ANSWER",
     "severity": "warning",
-    "ageToken": "2026-10-20T07:24:38+00:00",
-    "since": "2026-10-20T07:24:38+00:00",
+    "ageToken": "2026-10-20T08:43:08+00:00",
+    "since": "2026-10-20T08:43:08+00:00",
     "dueAt": null,
     "owner": "you",
     "preparedBy": "you",
     "counted": true,
     "send": {
-     "id": "chs_8fe1f79b79bd5d3489488da5",
-     "document_ref": "project_update:pupd_1916605d7e304d89882a896cb0c09e62",
-     "destination_id": "chd_b3433ca39863bf7a0888801b",
+     "id": "chs_95390ca6de5616f70b0867cf",
+     "document_ref": "project_update:pupd_5d02f04e5b66450982ed3b8ed18e0305",
+     "destination_id": "chd_df5d90d8e49abe7202de9405",
      "destination_name": "Team folder",
      "channel": "file",
      "badge": "local",
@@ -36,41 +36,43 @@
       "folder": "/tmp/rig/state-transitions",
       "display": "~/state-transitions"
      },
-     "target_digest": "aa0116a36d31fdb4299520f3e511c1560c60d819362203bd3b07a279f3588715",
+     "target_digest": "81b17b75665c122be4b90cb9ef4bb420bf6f10ffc06ccbdf20ec58623b13e6a0",
      "payload_digest": "f6abfd5c2e672e9d4e0277930c3766653caa9c210ff02f73bed61b7650d883c6",
      "document_json": {
+      "body_md": "# S3 state transitions · Update · 2026-10-20\n\n## Progress\n\nThe ledger cutover is on track.\n",
       "label": "REV 1",
       "slug": "s3-state-transitions",
       "title": "S3 state transitions — update r1 (2026-10-20)"
      },
      "size": 93,
      "preview": {
-      "text": "# S3 state transitions · Update · 2026-10-20\n\n## Progress\n\nThe ledger cutover is on track.\n"
+      "text": "# S3 state transitions · Update · 2026-10-20\n\n## Progress\n\nThe ledger cutover is on track.\n",
+      "markdown": "# S3 state transitions · Update · 2026-10-20\n\n## Progress\n\nThe ledger cutover is on track.\n"
      },
      "prepared_by": {
       "kind": "owner",
       "identity": "owner-session"
      },
-     "prepare_operation_id": "op_ff6be7bc02424d458d07392055389138",
-     "send_operation_id": "op_e3d1618e4ad940ec9dca08e1e658352c",
+     "prepare_operation_id": "op_b91a5621986e499ea8504d08064e91e4",
+     "send_operation_id": "op_4ee7dd447a72496097750a3b1a45cf51",
      "state": "unknown",
      "reason": "timeout",
      "proof": null,
-     "file_path": "/tmp/rig/state-transitions/2026-10-20-s3-state-transitions-rev-1-8fe1f79b.md",
-     "created_at": "2026-10-20T07:24:38+00:00",
-     "dispatch_started_at": "2026-10-20T07:24:38.454623+00:00",
-     "settled_at": "2026-10-20T07:24:38+00:00",
+     "file_path": "/tmp/rig/state-transitions/2026-10-20-s3-state-transitions-rev-1-95390ca6.md",
+     "created_at": "2026-10-20T08:43:08+00:00",
+     "dispatch_started_at": "2026-10-20T08:43:09.002984+00:00",
+     "settled_at": "2026-10-20T08:43:09+00:00",
      "dispatch_seq": 2,
      "egress": null,
      "retry_command": {
       "command_id": "s3-unknown",
-      "send_id": "chs_8fe1f79b79bd5d3489488da5"
+      "send_id": "chs_95390ca6de5616f70b0867cf"
      }
     },
     "sources": [
      {
       "owner": "you",
-      "id": "send:chs_8fe1f79b79bd5d3489488da5",
+      "id": "send:chs_95390ca6de5616f70b0867cf",
       "source": "send",
       "title": "S3 state transitions — update r1 (2026-10-20)",
       "why": "NO ANSWER",
@@ -90,7 +92,7 @@
    }
   ],
   "next": null,
-  "computedAt": "2026-10-20T01:24:38.473281-06:00",
+  "computedAt": "2026-10-20T02:43:09.022395-06:00",
   "stale": false,
   "sweepId": null,
   "coverage": [
@@ -98,7 +100,7 @@
     "source_id": "project:proj-send-needs-unknown",
     "kind": "project",
     "state": "available",
-    "observed_at": "2026-10-20T01:24:38.353095",
+    "observed_at": "2026-10-20T02:43:08.906593",
     "label": "S3 state transitions",
     "project_id": "proj-send-needs-unknown",
     "reason": null,
@@ -108,7 +110,7 @@
     "source_id": "meeting:proj-send-needs-unknown",
     "kind": "meeting",
     "state": "available",
-    "observed_at": "2026-10-20T01:24:38.353095",
+    "observed_at": "2026-10-20T02:43:08.906593",
     "label": "S3 state transitions",
     "project_id": "proj-send-needs-unknown",
     "reason": null,
@@ -118,7 +120,7 @@
     "source_id": "commitment:proj-send-needs-unknown",
     "kind": "commitment",
     "state": "available",
-    "observed_at": "2026-10-20T01:24:38.353095",
+    "observed_at": "2026-10-20T02:43:08.906593",
     "label": "S3 state transitions",
     "project_id": "proj-send-needs-unknown",
     "reason": null,
@@ -128,7 +130,7 @@
     "source_id": "coders",
     "kind": "coder",
     "state": "available",
-    "observed_at": "2026-10-20T07:24:38.484362+00:00",
+    "observed_at": "2026-10-20T08:43:09.033286+00:00",
     "label": "Agents",
     "project_id": "",
     "reason": null,
@@ -138,7 +140,7 @@
     "source_id": "sends",
     "kind": "send",
     "state": "available",
-    "observed_at": "2026-10-20T07:24:38.481929+00:00",
+    "observed_at": "2026-10-20T08:43:09.030721+00:00",
     "label": "Sends",
     "project_id": "",
     "reason": null,
@@ -161,7 +163,7 @@
   ],
   "members": [
    {
-    "ref": "send:chs_8fe1f79b79bd5d3489488da5",
+    "ref": "send:chs_95390ca6de5616f70b0867cf",
     "kind": "attention"
    }
   ],

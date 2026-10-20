@@ -21,6 +21,16 @@
   min-width: 0;
   gap: var(--space-3);
 }
+
+/* A preview carries the desk's material in every host, including Needs. */
+.desk-next .send-preview {
+  --text: var(--wb-ink);
+  --text-muted: var(--wb-muted);
+  color: var(--wb-ink);
+  flex: 1 1 100%;
+  min-width: 0;
+  width: 100%;
+}
 .send-fold-head {
   display: flex;
   flex-wrap: wrap;

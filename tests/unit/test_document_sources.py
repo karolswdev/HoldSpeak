@@ -246,7 +246,13 @@ def test_meeting_send_sources_use_confirmed_decisions_and_actions_only(db) -> No
         unconfirmed_action, withdrawn_decision, withdrawn_action,
     ))
 
-    assert bridge.confirm_proposal(OWNER, confirmed_decision.id)["state"] == "confirmed"
+    kept = bridge.confirm_proposal(OWNER, confirmed_decision.id)
+    assert kept["state"] == "confirmed"
+    from holdspeak.services.decision_record_service import DecisionRecordService
+
+    DecisionRecordService(db).update_record(OWNER, kept["decision_record_id"], {
+        "decision_text": "Canonical confirmed decision", "rationale": "The edited reason",
+    })
     assert bridge.confirm_proposal(
         OWNER, confirmed_action.id, owner="Avery", due="2026-10-24"
     )["state"] == "confirmed"
@@ -255,7 +261,9 @@ def test_meeting_send_sources_use_confirmed_decisions_and_actions_only(db) -> No
 
     for kind in ("meeting_summary", "meeting_followup"):
         body = render_document(db, f"{kind}:{meeting_id}").body_md
-        assert "Confirmed decision" in body
+        assert body.count("Canonical confirmed decision") == 1
+        assert "The edited reason" in body
+        assert "Confirmed decision" not in body
         assert "Ship the confirmed action" in body
         assert "Avery" in body
         assert "2026-10-24" in body
@@ -264,6 +272,37 @@ def test_meeting_send_sources_use_confirmed_decisions_and_actions_only(db) -> No
             "Withdrawn decision", "Ship the withdrawn action",
         ):
             assert words not in body
+
+
+def test_meeting_send_reads_a_confirmed_desk_decisions_canonical_words(db) -> None:
+    from holdspeak.services.decision_record_service import DecisionRecordService
+    from holdspeak.services.primitive_service import PrimitiveService
+
+    meeting_id = "desk-decision-outbound"
+    db.meetings.save_meeting(MeetingState(
+        id=meeting_id, started_at=datetime(2026, 10, 20, 9), title="Canonical review",
+        intel=IntelSnapshot(timestamp=1.0, summary="Review the rollout."),
+    ))
+    primitives = PrimitiveService(db)
+    decision = primitives.create_decision(
+        OWNER, title="Accepted rollout", status="accepted",
+        decision_markdown="Old rollout words", tags=[f"meeting:{meeting_id}"],
+    )
+    records = DecisionRecordService(db)
+    [record] = records.records_for_source(OWNER, "desk", decision["id"])
+    records.update_record(OWNER, record["id"], {
+        "decision_text": "Use the edited rollout", "rationale": "Keep the exact approved scope",
+    })
+    primitives.create_decision(
+        OWNER, title="Still a proposal", status="proposed",
+        decision_markdown="Do not send this proposal", tags=[f"meeting:{meeting_id}"],
+    )
+    for kind in ("meeting_summary", "meeting_followup"):
+        body = render_document(db, f"{kind}:{meeting_id}").body_md
+        assert body.count("Use the edited rollout") == 1
+        assert "Keep the exact approved scope" in body
+        assert "Old rollout words" not in body
+        assert "Do not send this proposal" not in body
 
 
 @pytest.mark.parametrize("kind", tuple(DOCUMENT_SOURCES))
