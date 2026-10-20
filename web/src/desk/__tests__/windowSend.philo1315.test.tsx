@@ -304,18 +304,17 @@ describe("the push seam and the pick", () => {
     focus.mockRestore();
   });
 
-  it("Summary -> Digest keeps the picked destination and opens the digest's preview", async () => {
+  it("Summary -> Follow-ups keeps the picked destination and opens the follow-up preview", async () => {
     const previews: string[] = [];
     routes["POST /api/channels/preview"] = (init) => { previews.push(String(init.json?.document_ref)); return { payload_digest: "d", preview: { text: "# x" } }; };
     render(<MeetingSendWell meetingId="m7" title="Vendor sync" />);
     await screen.findAllByTestId("destination-row");
     act(() => pickDestination("meeting_summary:m7", "chd_f"));
     await screen.findByTestId("send-open");
-    const select = within(screen.getByTestId("doc-forms")).getByRole("combobox");
-    fireEvent.change(select, { target: { value: "meeting_digest" } });
-    await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe("meeting_digest:m7"));
-    expect(pickedDestination("meeting_digest:m7")).toBe("chd_f");
-    await waitFor(() => expect(previews).toContain("meeting_digest:m7"));
+    fireEvent.click(within(screen.getByTestId("doc-forms")).getByRole("button", { name: "Follow-ups" }));
+    await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe("meeting_followup:m7"));
+    expect(pickedDestination("meeting_followup:m7")).toBe("chd_f");
+    await waitFor(() => expect(previews).toContain("meeting_followup:m7"));
   });
 });
 
@@ -336,8 +335,8 @@ describe("a form change keeps the other form's result (Astra C5 check, condition
     });
     render(<MeetingSendWell meetingId="m8" title="Ledger sync" />);
     await screen.findByTestId("history-form");
-    fireEvent.change(within(screen.getByTestId("doc-forms")).getByRole("combobox"), { target: { value: "meeting_digest" } });
-    await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe("meeting_digest:m8"));
+    fireEvent.click(within(screen.getByTestId("doc-forms")).getByRole("button", { name: "Follow-ups" }));
+    await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe("meeting_followup:m8"));
     const row = screen.getByTestId("history-row");
     expect(within(row).getByTestId("history-form").getAttribute("data-form")).toBe("meeting_summary");
     expect(row.textContent).toContain("SAVED");

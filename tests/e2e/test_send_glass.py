@@ -432,6 +432,25 @@ class TestSendGlass:
             rows = conn.execute("SELECT id, state, proof_json FROM channel_sends WHERE document_ref = ?", (ref,)).fetchall()
         return [{"id": r[0], "state": r[1], "proof": json.loads(r[2] or "{}")} for r in rows]
 
+    def _face_row_receipt(self, send: dict[str, Any], ref: str) -> dict[str, Any]:
+        """Prove the real face, channel row, and kernel receipt agree once."""
+        with self.db._connection() as conn:
+            row = conn.execute(
+                "SELECT o.operation_id, o.name, o.state, o.target_ref, "
+                "r.state AS receipt_state, r.outcome AS receipt_outcome, r.result_ref, "
+                "(SELECT COUNT(*) FROM kernel_receipts x WHERE x.operation_id = o.operation_id) AS receipts "
+                "FROM kernel_operations o LEFT JOIN kernel_receipts r ON r.operation_id = o.operation_id "
+                "WHERE o.operation_id = ?",
+                (send["send_operation_id"],),
+            ).fetchone()
+        assert row is not None, send["send_operation_id"]
+        receipt = dict(row)
+        assert receipt["name"] == "channel.send" and receipt["receipts"] == 1, receipt
+        assert (send["state"], receipt["state"], receipt["receipt_state"]) == ("sent", "succeeded", "succeeded"), (send, receipt)
+        assert receipt["result_ref"] == f"channel_send:{send['id']}", (receipt, send["id"])
+        assert receipt["target_ref"] in (f"document:{ref}", f"channel_send:{send['id']}"), (receipt, ref)
+        return receipt
+
     def _ev(self, js: str, arg: Any = None) -> Any:
         return self.page.evaluate(js, arg)
 
@@ -561,10 +580,10 @@ class TestSendGlass:
         """The arrival: the window name, the picked row, the preview's first field and Send, each WHOLE on screen."""
         w = f"[id='{win}']"
         sels = [".desk-screen-name" if self.phone else f"{w} > .desk-pullout-head .desk-pullout-title",
-                f"{w} li.surface-ledger-row:has([data-testid=send-open]) .surface-primary"]
+                f"{w} li.send-destination-item:has([data-testid=send-open]) .surface-primary"]
         if field:
             sels += [f"{w} [data-testid=send-open] [data-testid=send-preview-field] dd",
-                     f"{w} [data-testid=send-open] [data-testid=send-verbs] .btn--primary"]
+                     f"{w} [data-testid=send-verbs] .btn--primary"]
         for sel in sels:
             ok = self._ev("""(sel) => { const e = [...document.querySelectorAll(sel)].find((x) => x.checkVisibility());
                 if (!e) return 'absent'; const r = e.getBoundingClientRect();
@@ -649,6 +668,238 @@ class TestSendGlass:
             finally:
                 browser.close()
                 shutil.rmtree(scratch, ignore_errors=True)
+
+    def _real_session(self, width: int, run: Any) -> None:
+        """Run a Send sheet case against the private Hub without route stand-ins."""
+        from playwright.sync_api import sync_playwright
+        import shutil
+        import tempfile
+
+        scratch = Path(tempfile.mkdtemp(prefix="s5-s6-real-", dir="/tmp"))
+        folder = scratch / "Team updates"
+        folder.mkdir()
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1,
+                                      has_touch=width <= 720, reduced_motion="reduce")
+            page = ctx.new_page()
+            self.page = page
+            self.width = width
+            self.phone = width <= 720
+            page.set_default_timeout(T)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                _api(page, "POST", "/api/channels/destinations",
+                     {"name": "Team updates", "channel": "file", "folder": str(folder)}, token=TOKEN)
+                run(page, folder)
+                assert not [e for e in errors if "ResizeObserver" not in e and "Failed to fetch" not in e], errors
+            finally:
+                browser.close()
+        shutil.rmtree(scratch, ignore_errors=True)
+
+    def _probe_send_button(self, page: Any, selector: str, *, require_visible: bool = True) -> dict[str, Any]:
+        """Record viewport geometry and nine real pointer hits for one Send verb."""
+        result = page.evaluate(
+            """(sel) => {
+              const target = document.querySelector(sel);
+              if (!target) return {error: 'missing'};
+              const r = target.getBoundingClientRect();
+              const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+              const points = [cx - 20, cx, cx + 20].flatMap(x => [cy - 20, cy, cy + 20].map(y => [x, y]));
+              const hits = points.map(([x, y]) => {
+                const hit = document.elementFromPoint(x, y);
+                return Boolean(hit && (hit === target || target.contains(hit)));
+              });
+              return {rect: {x: r.x, y: r.y, width: r.width, height: r.height},
+                viewport: {width: innerWidth, height: innerHeight}, hits,
+                visible: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight};
+            }""",
+            selector,
+        )
+        assert result.get("error") is None, result
+        if require_visible:
+            assert result["visible"], result
+        # The painted dense face is 28 px at the wide desk. Its nine-point
+        # 44 px hit proof applies at the narrow device, where Button owns the
+        # transparent halo; retain the wide geometry and hit facts without
+        # treating the compact painted face as a miss.
+        if result["viewport"]["width"] <= 420:
+            assert all(result["hits"]), result
+        return result
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(900)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_s5_s6_real_send_sheet_note_edit_and_receipts(self, width: int) -> None:
+        """S5/S6: real meeting and note sends use one sheet and exact file bytes."""
+        self._real_session(width, lambda page, folder: self._s5_s6_real(page, folder, width))
+
+    def _s5_s6_real(self, page: Any, folder: Path, width: int) -> None:
+        meeting_ref = "meeting_summary:m-standup"
+        meeting = page.locator(f"[id='{MEET}']")
+        self._open_ref("meeting:m-standup", MEET)
+        opening = meeting.locator("[data-testid=meeting-send]")
+        opening.wait_for()
+        opening.click()
+        sheet = meeting.locator("[data-testid=send-sheet]")
+        sheet.wait_for()
+        team = meeting.locator("[data-testid=destination-row]:has([data-destination='Team updates'])")
+        team.wait_for()
+
+        inline_folder = folder.parent / "Inline destination"
+        inline_folder.mkdir()
+        sheet.locator("[data-testid=send-add-destination]").click()
+        form = sheet.locator("[data-testid=dest-form]")
+        form.wait_for()
+        form.locator("[data-testid=dest-name]").fill("Inline destination")
+        form.locator("[data-testid=dest-folder]").fill(str(inline_folder))
+        form.locator("[data-testid=dest-save]").click()
+        inline = meeting.locator("[data-testid=destination-row]:has([data-destination='Inline destination'])")
+        inline.wait_for()
+        assert inline.locator("[aria-pressed='true']").count() == 1
+        assert inline.locator("[data-testid=send-open]").count() == 1
+
+        team.locator(".send-destination-chip").click()
+        opened_team = meeting.locator("[data-testid=send-open][data-destination='Team updates']")
+        opened_team.locator("[data-testid=send-preview]").wait_for()
+        send_selector = f"[id='{MEET}'] [data-testid=send-verbs] [data-testid=send-verb]"
+        send = page.locator(send_selector)
+        send.wait_for()
+        geometry = self._probe_send_button(page, send_selector)
+        preview_text = opened_team.locator("[data-testid=send-preview-body]").inner_text()
+        page.screenshot(path=str(SHOTS / f"S5-meeting-ready-{width}.png"))
+        send.click()
+        try:
+            # SurfaceFooter portals the receipt to the window foot, outside
+            # the destination's send-open body.
+            page.locator(f"[id='{MEET}'] [data-testid=send-sent]").wait_for(timeout=T)
+        except Exception as exc:  # noqa: BLE001 - preserve the real face state
+            state = page.locator(
+                f"[id='{MEET}'] [data-testid^=send-][data-receipt='latest'],"
+                f"[id='{MEET}'] [data-testid=send-lost],"
+                f"[id='{MEET}'] [data-testid=send-refused]"
+            ).all_inner_texts()
+            raise AssertionError({"ui_state": state, "well": opened_team.inner_text(), "db": self.db.channel_sends.list_for_document(meeting_ref)}) from exc
+        rows = self.db.channel_sends.list_for_document(meeting_ref)
+        assert len(rows) == 1, rows
+        meeting_row = rows[0]
+        proof = json.loads(meeting_row["proof_json"] or "{}")
+        meeting_path = Path(proof["path"])
+        meeting_bytes = bytes(meeting_row["payload"])
+        assert meeting_path.parent.resolve() == folder.resolve()
+        assert meeting_path.read_bytes() == meeting_bytes
+        self._face_row_receipt(meeting_row, meeting_ref)
+
+        page.screenshot(path=str(SHOTS / f"S5-meeting-sent-{width}.png"))
+        page.locator(f"[id='{MEET}'] [data-testid=send-back]").click()
+        page.wait_for_function(
+            """() => {
+              const button = document.querySelector("[data-testid='meeting-send']");
+              return button && document.activeElement === button;
+            }""",
+            timeout=T,
+        )
+        assert page.locator(f"[id='{MEET}'] [data-testid=meeting-send]").count() == 1
+
+        # Edit from the frozen meeting preview. The real POST creates the note;
+        # the ordinary note editor owns the text change before Send reads it.
+        page.locator(f"[id='{MEET}'] [data-testid=meeting-send]").click()
+        sheet = meeting.locator("[data-testid=send-sheet]")
+        sheet.wait_for()
+        team = meeting.locator("[data-testid=destination-row]:has([data-destination='Team updates'])")
+        if team.locator("[aria-pressed='true']").count() == 0:
+            chip = team.locator(".send-destination-chip")
+            chip.scroll_into_view_if_needed()
+            chip.click()
+        opened_team = meeting.locator("[data-testid=send-open][data-destination='Team updates']")
+        # The selected chip is the product's authority. Wait for its own
+        # open row and preview resource; a second click would hide a real
+        # selection/remount defect.
+        try:
+            team.locator("[aria-pressed='true']").wait_for(timeout=T)
+        except Exception as exc:  # noqa: BLE001 - retain the real seam state
+            raise AssertionError({
+                "selected": team.locator("[aria-pressed='true']").count(),
+                "chip": team.locator(".send-destination-chip").get_attribute("aria-pressed"),
+                "chip_box": team.locator(".send-destination-chip").bounding_box(),
+                "rows": meeting.locator("[data-testid=destination-row]").all_inner_texts(),
+            }) from exc
+        try:
+            opened_team.locator("[data-testid=send-preview]").wait_for(timeout=T)
+        except Exception as exc:  # noqa: BLE001 - retain the real seam state
+            destinations = _api(page, "GET", "/api/channels/destinations", token=TOKEN)
+            raise AssertionError({
+                "selected": team.locator("[aria-pressed='true']").count(),
+                "open": opened_team.count(),
+                "rows": meeting.locator("[data-testid=destination-row]").all_inner_texts(),
+                "destinations": destinations,
+            }) from exc
+        with page.expect_response(lambda response: response.request.method == "POST" and response.url.endswith("/api/notes"), timeout=T) as note_response:
+            opened_team.locator("[data-testid=send-edit]").click()
+        made = note_response.value.json()
+        note = made["note"]
+        note_id = str(note["id"])
+        assert note["title"] == "Ledger cutover sync summary (to send)", note
+        note_win = page.locator(f"[id='pullout:note:{note_id}']")
+        note_win.locator("[data-testid=send-sheet]").wait_for(timeout=T)
+        assert note_win.locator(".desk-pullout-title").inner_text().startswith("Ledger cutover sync summary (to send)"), note
+
+        note_win.locator("[data-testid=send-back]").click()
+        editor = note_win.locator(".thought-note-body .cm-content")
+        editor.wait_for(timeout=T)
+        edited = "## Summary\n\nThe edited line is ready for the team."
+        editor.click()
+        page.keyboard.press("ControlOrMeta+A")
+        page.keyboard.type(edited)
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            stored_note = _api(page, "GET", f"/api/notes/{note_id}", token=TOKEN)["note"]
+            if stored_note["body_markdown"] == edited:
+                break
+            page.wait_for_timeout(300)
+        stored_note = _api(page, "GET", f"/api/notes/{note_id}", token=TOKEN)["note"]
+        assert stored_note["body_markdown"] == edited, stored_note
+
+        note_win.get_by_role("button", name="Send…", exact=True).click()
+        note_sheet = note_win.locator("[data-testid=send-sheet]")
+        note_sheet.wait_for(timeout=T)
+        note_open = note_win.locator("[data-testid=send-open][data-destination='Team updates']")
+        note_open.locator("[data-testid=send-preview]").wait_for(timeout=T)
+        assert "The edited line is ready for the team." in note_open.locator("[data-testid=send-preview-body]").inner_text()
+        note_send_selector = f"[id='pullout:note:{note_id}'] [data-testid=send-verbs] [data-testid=send-verb]"
+        note_send = page.locator(note_send_selector)
+        note_send.wait_for()
+        note_geometry = self._probe_send_button(page, note_send_selector, require_visible=False)
+        note_send.click()
+        page.locator(f"[id='pullout:note:{note_id}'] [data-testid=send-sent]").wait_for(timeout=T)
+        note_ref = f"note:{note_id}"
+        note_rows = self.db.channel_sends.list_for_document(note_ref)
+        assert len(note_rows) == 1, note_rows
+        note_row = note_rows[0]
+        note_proof = json.loads(note_row["proof_json"] or "{}")
+        note_path = Path(note_proof["path"])
+        assert note_path.parent.resolve() == folder.resolve()
+        expected_note_bytes = f"# {note['title']}\n\n{edited}\n".encode()
+        assert bytes(note_row["payload"]) == expected_note_bytes
+        assert note_path.read_bytes() == expected_note_bytes
+        self._face_row_receipt(note_row, note_ref)
+
+        # The original meeting source stays frozen and its own bytes remain unchanged.
+        assert bytes(self.db.channel_sends.get(meeting_row["id"])["payload"]) == meeting_bytes
+        facts = {
+            "width": width, "meeting_ref": meeting_ref, "note_ref": note_ref,
+            "meeting_preview": preview_text, "meeting_send": {"id": meeting_row["id"], "path": str(meeting_path), "bytes": meeting_bytes.decode()},
+            "note": {"id": note_id, "title": note["title"], "edited": edited,
+                     "send": {"id": note_row["id"], "path": str(note_path), "bytes": bytes(note_row["payload"]).decode(),
+                              "expected_rendered_bytes": expected_note_bytes.decode()}},
+            "geometry": {"meeting": geometry, "note": note_geometry},
+            "inline_destination": {"folder": str(inline_folder), "selected": True},
+        }
+        (SHOTS / f"S5-S6-facts-{width}.json").write_text(json.dumps(facts, indent=2) + "\n")
+        page.screenshot(path=str(SHOTS / f"S6-note-sent-{width}.png"))
 
     def _room_second_read_fails(self, si: StandIns, folder: Path) -> None:
         page = self.page
