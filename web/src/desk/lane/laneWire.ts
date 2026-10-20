@@ -8,6 +8,7 @@
 import { wireClock, wireDate } from "../surface/format";
 import { windowName } from "../windowName";
 import type { ObjectTone, Station, TimelineEntry } from "../surface";
+import type { AgentReview } from "../agentFlights";
 
 export type NotRead = { not_read: string };
 
@@ -40,6 +41,8 @@ export interface LaneLaunch {
   tmux_session?: string | null;
   /** The owner stopped the agent (kill route): when, and the audit row. */
   stopped?: { by?: string; at?: string; audit_id?: number | null; scope?: string } | null;
+  /** Betterment AG12: the builder's durable pair result is part of its lane. */
+  review?: AgentReview | null;
 }
 
 export interface LaneQueuedRebrief {

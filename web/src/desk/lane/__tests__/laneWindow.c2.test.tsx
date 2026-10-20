@@ -224,6 +224,32 @@ describe("the station track (C-4's borrow)", () => {
   });
 });
 
+describe("AG12 review pair state", () => {
+  it("keeps a persisted finding as Needs you in the lane and shows its pair Result", async () => {
+    const lane = fixture({
+      launch: {
+        ...fixture().launch,
+        state: "working",
+        review: {
+          requested: "claude", status: "needs_you", role: "builder", builder: "Codex",
+          round: 1, rounds: 1,
+          findingsLeft: [{ level: "MUST", text: "src/login.py: fix the timeout" }],
+          pairResult: {
+            rounds: 1,
+            findings_left: [{ level: "MUST", text: "src/login.py: fix the timeout" }],
+          },
+          reviewerLaunchId: null,
+        },
+      },
+      wait: null,
+    });
+    await openLane(lane);
+    expect(screen.getByTestId("lane-head")).toHaveTextContent("Claude Code needs you");
+    expect(screen.getByTestId("lane-result")).toHaveTextContent("1 round");
+    expect(screen.getByTestId("lane-result")).toHaveTextContent("MUST: src/login.py: fix the timeout");
+  });
+});
+
 describe("the timeline words", () => {
   it("maps events to words: reads collapse with +n, the agent's words are quoted, the brief is not repeated", () => {
     const entries = eventEntries(fixture().events as never);

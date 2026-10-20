@@ -18,7 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
-import { markLaunchSeen, useAgentFlights } from "../agentFlights";
+import { markLaunchSeen, reviewResult, useAgentFlights } from "../agentFlights";
 import { WhyThisState } from "../agents/WhyThisState";
 import { ResultBlock } from "./ResultBlock";
 import { AgentWords, cutAtWord } from "../components/AgentWords";
@@ -287,7 +287,7 @@ function LaneBody({
   return (
     <div className="desk-pullout-body lw-body" data-testid="lane-body" ref={bodyRef} onScroll={onScroll}>
       <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} done={done} />
-      {done && !raw ? <ResultBlock lane={lane} screenSaid={screenSaid} /> : null}
+      {!raw && (done || Boolean(reviewResult(lane.launch.review))) ? <ResultBlock lane={lane} screenSaid={screenSaid} /> : null}
       {unreadParts(lane).map(([part, reason]) => (
         <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
       ))}
@@ -626,6 +626,10 @@ export function approveShowing(lane: LaneWire): boolean {
 export function laneDoing(lane: LaneWire, agent: string, done = false): { word: string; tone: "ok" | "warn" | "info" | "idle" } {
   const name = agent || "The agent";
   if (lane.launch.stopped) return { word: "Stopped by you", tone: "idle" };
+  // AG12: a durable pair finding is the lane's owner-facing state. Keep the
+  // lane headline aligned with the ordinary row while the builder waits for
+  // the owner's correction; the persisted pair Result remains below it.
+  if (lane.launch.review?.status === "needs_you") return { word: `${name} needs you`, tone: "warn" };
   // Betterment AG10: the flight knows the turn is done (also from a screen,
   // with no hook to say it); the head never says "working" then.
   if (done) return { word: `${name} is done`, tone: "ok" };

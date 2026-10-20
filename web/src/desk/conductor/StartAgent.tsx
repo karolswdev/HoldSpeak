@@ -21,6 +21,12 @@ interface ProjectRow {
 }
 
 const AGENTS: readonly AgentId[] = ["claude", "codex", "pi"];
+const REVIEW_BY = [
+  { value: "none", label: "None" },
+  { value: "codex", label: "Codex" },
+  { value: "claude", label: "Claude Code" },
+  { value: "pi", label: "pi" },
+] as const;
 const PROJECT_KEY = "hs.agents.start.project";
 
 function rememberedProject(): string {
@@ -56,6 +62,7 @@ export function StartAgent({ onStarted, onCancel }: {
   const [projects, setProjects] = useState<ProjectRow[] | null>(null);
   const [projectId, setProjectId] = useState("");
   const [agent, setAgent] = useState<AgentId>("claude");
+  const [reviewBy, setReviewBy] = useState("none");
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
 
@@ -101,7 +108,7 @@ export function StartAgent({ onStarted, onCancel }: {
       step = "hand";
       const answer = await apiFetch<{ launch_id?: string; queue_id?: string }>("/api/agent/hand", {
         method: "POST",
-        json: { kind: "note", id: noteId, profile: AGENT_PROFILE[agent], project_id: projectId, queue: true },
+        json: { kind: "note", id: noteId, profile: AGENT_PROFILE[agent], project_id: projectId, queue: true, review_by: reviewBy },
       });
       try {
         localStorage.setItem(PROJECT_KEY, projectId);
@@ -160,6 +167,15 @@ export function StartAgent({ onStarted, onCancel }: {
           value={agent}
           options={AGENTS.map((id) => ({ value: id, label: AGENT_NAME[id] }))}
           onChange={(next) => setAgent(next as AgentId)}
+          disabled={busy}
+        />
+      </GadgetRow>
+      <GadgetRow label="Review by">
+        <CycleGadget
+          label="Review by"
+          value={reviewBy}
+          options={REVIEW_BY.map((choice) => ({ value: choice.value, label: choice.label }))}
+          onChange={setReviewBy}
           disabled={busy}
         />
       </GadgetRow>

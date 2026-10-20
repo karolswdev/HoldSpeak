@@ -28,6 +28,9 @@ _ALLOWED = frozenset(
         # Betterment AG11: a helper launch records the launch that owns it;
         # this is server supplied and remains inside the typed spawn envelope.
         "helper_of",
+        # AG12: the hub-owned immutable reviewer posture travels with the
+        # typed launch request so it is recorded before credential issuance.
+        "review",
     }
 )
 

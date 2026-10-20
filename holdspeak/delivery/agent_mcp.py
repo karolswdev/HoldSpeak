@@ -111,13 +111,15 @@ def pre_approved(mode: Any) -> bool:
     return normalized_mode(mode) != SECURE_MODE
 
 
-def claude_args(config_path: Path, mode: Any, *, allowed: tuple[str, ...] = ()) -> list[str]:
+def claude_args(
+    config_path: Path, mode: Any, *, allowed: tuple[str, ...] = (), read_only: bool = False,
+) -> list[str]:
     """The Claude Code flags: the server, and one ``--allowedTools`` list.
 
     ``allowed`` carries tools the launch already allows (the gated path's
     ``Bash``), so the flag is given once."""
     tools = list(allowed)
-    if pre_approved(mode):
+    if pre_approved(mode) and not read_only:
         tools.append(CLAUDE_ALLOW_RULE)
     args = ["--mcp-config", str(config_path)]
     if tools:
@@ -125,7 +127,7 @@ def claude_args(config_path: Path, mode: Any, *, allowed: tuple[str, ...] = ()) 
     return args
 
 
-def codex_args(hub_url: str, mode: Any) -> list[str]:
+def codex_args(hub_url: str, mode: Any, *, read_only: bool = False) -> list[str]:
     """The Codex flags: a streamable HTTP server with its bearer variable."""
     url = str(hub_url or "").rstrip("/") + "/api/mcp"
     key = f"mcp_servers.{SERVER_NAME}"
@@ -133,7 +135,7 @@ def codex_args(hub_url: str, mode: Any) -> list[str]:
         "-c", f"{key}.url={json.dumps(url)}",
         "-c", f"{key}.bearer_token_env_var={json.dumps(CREDENTIAL_ENV)}",
     ]
-    if pre_approved(mode):
+    if pre_approved(mode) and not read_only:
         args += ["-c", f'{key}.default_tools_approval_mode="approve"']
     return args
 
@@ -143,7 +145,7 @@ def codex_args(hub_url: str, mode: Any) -> list[str]:
 CLAUDE_EDIT_MODE = "acceptEdits"
 
 
-def claude_permission_args(mode: Any, argv: list[str]) -> list[str]:
+def claude_permission_args(mode: Any, argv: list[str], *, read_only: bool = False) -> list[str]:
     """``--permission-mode acceptEdits`` in Normal and YOLO (Conductor R1).
 
     Without it every Edit of a launched Claude asked in the pane, a TO
@@ -156,6 +158,8 @@ def claude_permission_args(mode: Any, argv: list[str]) -> list[str]:
         str(token) == "--permission-mode" or str(token).startswith("--permission-mode=")
         for token in argv
     )
+    if read_only:
+        return [] if named else ["--permission-mode", "plan"]
     if not pre_approved(mode) or named:
         return []
     return ["--permission-mode", CLAUDE_EDIT_MODE]
