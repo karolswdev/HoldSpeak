@@ -158,4 +158,13 @@ def test_private_native_signin_keys_marker_check_and_durable_works(
             browser.close()
     finally:
         server.stop()
+        # The production terminal keeps final output available. This rig owns
+        # a separate socket, so end only its sessions when the proof finishes.
+        import subprocess
+
+        for socket in tmux_tmp.glob("tmux-*/default"):
+            subprocess.run(
+                ["tmux", "-S", str(socket), "kill-server"],
+                capture_output=True, check=False, timeout=5,
+            )
     assert not errors, errors
