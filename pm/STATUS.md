@@ -19,7 +19,7 @@ and producer regressions. An actual private database observation creates no
 new effect and preserves the legacy pending row. The AST fence covers all 37
 MCP Python files, including relative and alias import forms. Shared helper
 identities and wires retain parity. Root independently verified 27 focused cases covering the whole import boundary, actual fresh observation and retained legacy row, provider HTTP/MCP parity, Steward policy round-trip, import parity, and remote-owner refusal before file access.
-Required quick: P10_QUICK_PENDING.
+Required quick: Final delta quick passes 67 affected cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The preceding product quick passed 3,424 other affected cases with two skips; its one failure patched the old HTTP factory seam and is corrected by the final check..
 
 ST8 starts the installed GitHub or Atlassian CLI browser sign-in from the
 Accounts row and seats its native terminal there. Keyboard input uses the
