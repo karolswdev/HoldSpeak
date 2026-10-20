@@ -43,7 +43,7 @@ affected backend/browser checks, all 110 sweep, 27 canon and 1,116 guards.
 Two Send whole-reply recordings still contained the removed public body;
 their actual producer writers now pass and have refreshed all three replies.
 The final delta replays the full Send backend file and recorded face consumer.
-Required quick: SEND_ALL_QUICK_PENDING.
+Required quick: Final delta: all 8 Send backend checks and 10 recorded face checks passed; all 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green. The preceding full product check passed 4,094 related web and 2,383 other affected backend/browser checks.
 The first real Send recipe remains open for the owner's five presses.
 
 Send opens one shared sheet in the result's window. Destinations are chips;
