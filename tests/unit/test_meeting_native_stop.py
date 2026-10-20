@@ -77,7 +77,7 @@ def test_native_cleanup_uses_one_shared_deadline_and_independent_daemons(monkeyp
         assert "mic" in recorder.device_cleanup_error
         assert "system" in recorder.device_cleanup_error
         assert recorder._mic_stream is None and recorder._system_stream is None
-        with pytest.raises(MeetingRecorderError, match="Restart HoldSpeak"):
+        with pytest.raises(MeetingRecorderError, match="Audio device did not close"):
             recorder.start()
     finally:
         release.set()
@@ -181,6 +181,69 @@ def test_accepted_journal_commit_finishes_before_stop_snapshot(tmp_path, monkeyp
     manifest = json.loads(journal.manifest_path.read_text())
     assert manifest["status"] == "finalized"
     assert manifest["durable_bytes"] == {"mic": pcm.nbytes}
+
+
+def test_blocked_journal_writer_does_not_block_callback_and_preserves_same_id_pcm(
+    tmp_path, monkeypatch
+):
+    """The callback only admits PCM; Stop waits for that admitted item to land."""
+    db = Database(tmp_path / "meetings.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    journal = MeetingCaptureJournal("blocked-writer", directory=tmp_path / "captures")
+    writer_entered, release = threading.Event(), threading.Event()
+    aborted = threading.Event()
+
+    def blocked_append(chunk):
+        writer_entered.set()
+        assert release.wait(2)
+        journal.append(chunk.source, chunk.audio)
+
+    recorder = _recorder(monkeypatch, blocked_append)
+    callbacks = []
+    stream = SimpleNamespace(
+        start=lambda: None,
+        abort=aborted.set,
+        close=lambda: None,
+    )
+    recorder._open_stream = lambda _device, callback: (callbacks.append(callback) or stream, 16_000)
+    recorder._start_mic_stream()
+    # Real start() creates the writer before opening the stream.  Do that here
+    # too so this timing fence measures only callback admission, not thread boot.
+    recorder._ensure_writer_started()
+
+    pcm = np.arange(160, dtype=np.float32).reshape(-1, 1)
+    started = time.perf_counter()
+    callbacks[0](pcm, len(pcm), None, False)
+    callback_elapsed = time.perf_counter() - started
+    assert callback_elapsed < 0.005
+    assert writer_entered.wait(1)
+
+    state = MeetingState(
+        id="blocked-writer",
+        started_at=datetime.now(),
+        capture_status="recording",
+    )
+    session = MeetingSession(intel_enabled=False)
+    session._state = state
+    session._recorder = recorder
+    session._capture_journal = journal
+    session._transcribe_chunks = Mock()
+    stopped = []
+    stop_thread = threading.Thread(target=lambda: stopped.append(session.stop()), daemon=True)
+    stop_thread.start()
+    assert not stopped and stop_thread.is_alive()
+
+    release.set()
+    stop_thread.join(2)
+    assert not stop_thread.is_alive()
+    assert aborted.is_set()
+    assert stopped[0].id == "blocked-writer"
+    recovered = db.meetings.recover_capture("blocked-writer")
+    assert recovered is not None and recovered.id == "blocked-writer"
+    assert (journal.directory / "mic.f32le.partial").read_bytes() == pcm[:, 0].astype("<f4").tobytes()
+    manifest = json.loads(journal.manifest_path.read_text())
+    assert manifest["status"] == "finalized"
+    assert manifest["durable_bytes"] == {"mic": pcm[:, 0].nbytes}
 
 
 def test_session_finalizes_and_saves_same_meeting_despite_native_wedge(tmp_path, monkeypatch):
@@ -497,3 +560,39 @@ def test_second_stop_answers_conflict(path):
         assert response.json() == {"success": False, "error": "Meeting is already stopping"}
 
     asyncio.run(exercise())
+
+
+def test_queue_overflow_is_refused_and_saved_as_capture_failure(tmp_path, monkeypatch):
+    db = Database(tmp_path / "meetings.db")
+    monkeypatch.setattr("holdspeak.db.get_database", lambda: db)
+    monkeypatch.setattr(recorder_module, "_CAPTURE_QUEUE_MAX_CHUNKS", 1)
+    journal = MeetingCaptureJournal("overflow", directory=tmp_path / "captures")
+    entered, release = threading.Event(), threading.Event()
+
+    def append(chunk):
+        entered.set()
+        assert release.wait(2)
+        journal.append(chunk.source, chunk.audio)
+
+    recorder = _recorder(monkeypatch, append)
+    pcm = np.ones(160, dtype=np.float32)
+    try:
+        assert recorder._commit_audio_chunk(pcm, 0, "mic")
+        assert entered.wait(1)
+        assert recorder._commit_audio_chunk(pcm, 1, "mic")
+        assert not recorder._commit_audio_chunk(pcm, 2, "mic")
+    finally:
+        release.set()
+    session = MeetingSession(intel_enabled=False)
+    session._state = MeetingState(id="overflow", started_at=datetime.now(), capture_status="recording")
+    session._recorder = recorder
+    session._capture_journal = journal
+    session._transcribe_chunks = Mock()
+    state = session.stop()
+    assert state.capture_status == "recoverable"
+    assert "overflow" in state.capture_failure.lower()
+    stored = db.meetings.get_meeting("overflow")
+    assert stored.capture_failure == state.capture_failure
+    manifest = json.loads(journal.manifest_path.read_text())
+    assert manifest["status"] == "recoverable"
+    assert manifest["durable_bytes"] == {"mic": 2 * pcm.nbytes}
