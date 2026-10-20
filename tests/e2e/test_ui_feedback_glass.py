@@ -20,6 +20,7 @@ import pytest
 from tests._evidence import evidence_dir
 
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows
+from .type_floor_rig import _FAINT_JS, _MEASURE
 
 pytest.importorskip("playwright.sync_api", reason="the UI feedback glass needs Playwright")
 
@@ -35,7 +36,8 @@ def _feedback_menu_item(page: Any, width: int) -> Any:
     """Open the live Desk feedback verb (Go is the phone's Desk door)."""
     menu_id = "go" if width < 720 else "desk"
     page.locator(f".desk-verbbar-item[data-menu-id='{menu_id}'] button").click()
-    item = page.get_by_role("menuitem", name="Give feedback", exact=True)
+    menu = page.locator(".desk-verbbar-menu[role='menu']")
+    item = menu.get_by_role("menuitem", name="Give feedback", exact=True)
     item.wait_for(timeout=T)
     return item
 
@@ -44,13 +46,13 @@ def _start_feedback(page: Any, width: int, target: Any, *, again: bool = False) 
     """Select one rendered control through the actual menu and pointer."""
     target.scroll_into_view_if_needed()
     if again:
-        page.get_by_role("button", name="New feedback", exact=True).click()
+        page.locator("[data-ui-feedback]").get_by_role("button", name="New feedback", exact=True).click()
     else:
         _feedback_menu_item(page, width).click()
     box = target.bounding_box()
     assert box, "the selected rendered control has no hit box"
     page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-    page.get_by_text("RECORDING", exact=True).wait_for(timeout=T)
+    page.locator("[data-ui-feedback]").get_by_text("RECORDING", exact=True).wait_for(timeout=T)
     # Let Chromium's fake track deliver real frames before the hold is ended.
     page.wait_for_timeout(500)
 
@@ -59,8 +61,11 @@ def _strip_control_facts(page: Any, button: Any) -> dict[str, Any]:
     return button.evaluate(
         """el => {
           const r = el.getBoundingClientRect();
-          const xs = [r.left + 1, r.left + r.width / 2, r.right - 1];
-          const ys = [r.top + 1, r.top + r.height / 2, r.bottom - 1];
+          const width = Math.max(44, r.width), height = Math.max(44, r.height);
+          const left = r.left + (r.width - width) / 2;
+          const top = r.top + (r.height - height) / 2;
+          const xs = [left + 2, left + width / 2, left + width - 2];
+          const ys = [top + 2, top + height / 2, top + height - 2];
           const hits = [];
           for (const y of ys) for (const x of xs) {
             const hit = document.elementFromPoint(x, y);
@@ -69,6 +74,8 @@ def _strip_control_facts(page: Any, button: Any) -> dict[str, Any]:
           return {
             rect: {left: r.left, top: r.top, right: r.right, bottom: r.bottom,
                    width: r.width, height: r.height},
+            target: {left, top, width, height, right: left + width, bottom: top + height},
+            inViewport: left >= 0 && top >= 0 && left + width <= innerWidth && top + height <= innerHeight,
             hits,
             overflow: document.documentElement.scrollWidth > innerWidth
               || document.body.scrollWidth > innerWidth,
@@ -79,8 +86,9 @@ def _strip_control_facts(page: Any, button: Any) -> dict[str, Any]:
 
 def _assert_phone_strip(page: Any) -> None:
     for label in ("Stop and save", "Cancel"):
-        facts = _strip_control_facts(page, page.get_by_role("button", name=label, exact=True))
-        assert facts["rect"]["width"] >= 44 and facts["rect"]["height"] >= 44, facts
+        facts = _strip_control_facts(page, page.locator("[data-ui-feedback]").get_by_role("button", name=label, exact=True))
+        assert facts["target"]["width"] >= 44 and facts["target"]["height"] >= 44, facts
+        assert facts["inViewport"], facts
         assert all(facts["hits"]), (label, facts)
         assert not facts["overflow"], facts
 
@@ -96,6 +104,7 @@ def _browser_png_facts(page: Any, path: Path) -> dict[str, int]:
             canvas.height = image.naturalHeight;
             const context = canvas.getContext("2d");
             if (!context) { reject(new Error("canvas unavailable")); return; }
+            context.drawImage(image, 0, 0);
             const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
             const colors = new Set();
             const stride = Math.max(4, Math.floor(pixels.length / 400_000));
@@ -152,8 +161,12 @@ def _read_saved_report(
 
 
 def _save_feedback(page: Any, width: int, *, shot_stem: str, window_id: str, draft: str | None) -> dict[str, Any]:
-    stop = page.get_by_role("button", name="Stop and save", exact=True)
+    stop = page.locator("[data-ui-feedback]").get_by_role("button", name="Stop and save", exact=True)
     page.screenshot(path=str(SHOTS / f"{shot_stem}-{width}-recording.png"))
+    metrics = page.evaluate(_MEASURE, page.evaluate(_FAINT_JS))
+    for key in ("small", "contrast"):
+        faults = [row for row in metrics[key] if "hs-feedback-strip" in row["path"]]
+        assert not faults, (key, faults)
     if width == 393:
         _assert_phone_strip(page)
 
@@ -166,7 +179,7 @@ def _save_feedback(page: Any, width: int, *, shot_stem: str, window_id: str, dra
     assert response.status == 200, response.text()
     payload = response.json()
     assert payload["success"] is True, payload
-    page.get_by_text("SAVED", exact=True).wait_for(timeout=T)
+    page.locator("[data-ui-feedback]").get_by_text("SAVED", exact=True).wait_for(timeout=T)
     page.screenshot(path=str(SHOTS / f"{shot_stem}-{width}-saved.png"))
     window = page.locator(f"[id='{window_id}'][data-layer='window']")
     box = window.bounding_box()
@@ -177,7 +190,7 @@ def _save_feedback(page: Any, width: int, *, shot_stem: str, window_id: str, dra
         window_id=window_id,
         draft=draft,
         window_size=(round(box["width"]), round(box["height"])),
-        shot_stem=shot_stem,
+        shot_stem=f"{shot_stem}-{width}",
     )
 
 

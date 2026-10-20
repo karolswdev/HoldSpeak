@@ -97,6 +97,8 @@ export interface Verb {
   checked?(ctx: VerbContext): boolean;
   /** Offered only at desktop width (Capture: at 393 Speak opens it). */
   wide?: boolean;
+  /** Runtime capability gate: an absent feature has no menu or palette row. */
+  visible?(): boolean;
   /** null = runnable; a string = ghosted WITH that reason. */
   ghost(ctx: VerbContext): string | null;
   run(ctx: VerbContext): void;
@@ -106,6 +108,7 @@ export interface Verb {
  * palette and the menu bar ask this before they list it. PHILO-17: the zone
  * verbs are parked (desk/_parked/floor/floorVerbs.ts); no face shows zones. */
 export function offeredHere(v: Verb): boolean {
+  if (v.visible?.() === false) return false;
   return !(v.wide && typeof window !== "undefined" && window.innerWidth <= 720);
 }
 
@@ -391,6 +394,7 @@ export const VERBS: Verb[] = [
     group: "system",
     glyph: "◈",
     keywords: ["feedback", "report", "audio", "selected element"],
+    visible: () => uiFeedbackGhost() === null,
     ghost: () => uiFeedbackGhost(),
     run: () => requestUiFeedback(),
   },

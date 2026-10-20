@@ -19,6 +19,12 @@ required. The flag is off by default. Usage and the settled design are in
 `docs/internal/ui-feedback/`. This owner development tool adds no betterment
 recipe slice. Required quick: UI_FEEDBACK_QUICK_PENDING.
 
+The required check also exposed an existing launch watcher shutdown race:
+a session ending after close could let the old watcher settle its launch.
+The watcher now checks shutdown again before settlement. An event-controlled
+regression fails on the original main source and passes with the two-line
+guard; an active watcher still settles normally.
+
 Ask can open the canonical person prep and meeting windows, arrange them,
 report the changes in Wrote and restore the previous windows through Undo.
 The person prep is `pullout:people:<id>`; `surface-people` is the roster.

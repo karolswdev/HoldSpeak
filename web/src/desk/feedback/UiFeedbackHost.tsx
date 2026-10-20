@@ -43,7 +43,7 @@ function ownerRoot(target: Element): Element {
 }
 
 function errorText(error: unknown): string {
-  return readableError(error) || (error instanceof Error ? error.message : "Feedback could not be captured.");
+  return readableError(error) || (error instanceof Error ? error.message : "Capture stopped. The window is unchanged. Select an element.");
 }
 
 export function UiFeedbackHost() {
@@ -162,7 +162,7 @@ export function UiFeedbackHost() {
           return;
         }
         if (typeof image !== "string") {
-          setError("The window image could not be captured. Try again.");
+          setError("Window image failed. The window is unchanged. Select an element.");
           setStatus("");
           setPhase("error");
           return;
@@ -205,7 +205,7 @@ export function UiFeedbackHost() {
         setPhase("recording");
         audio.current.onFloorLost(() => {
           if (current !== generation.current) return;
-          setError("The audio floor was taken. Save the audio already captured.");
+          setError("The microphone stopped. Save this recording.");
           setStatus("");
         });
         autoStop.current = setTimeout(() => void stopAndSaveRef.current(), FEEDBACK_MAX_MS);
@@ -259,7 +259,7 @@ export function UiFeedbackHost() {
           screenshot_base64: next.screenshotBase64,
         },
       });
-      if (result.success !== true) throw new Error("Feedback was not saved.");
+      if (result.success !== true) throw new Error("Feedback was not saved on this device. Your recording and window image are kept. Retry Save.");
       if (saveGeneration !== generation.current || payload.current?.id !== next.id) return;
       const saved = { ...next, directory: result.directory, files: result.files };
       payload.current = saved;
@@ -277,6 +277,8 @@ export function UiFeedbackHost() {
   stopAndSaveRef.current = stopAndSave;
 
   useEffect(() => () => {
+    generation.current += 1;
+    gestureCleanup.current?.();
     clearTimer();
     preparationAbort.current?.abort();
     audio.current?.cancel();
@@ -295,13 +297,13 @@ export function UiFeedbackHost() {
     beginPicking();
   };
   return (
-    <aside className="hs-feedback-strip" data-ui-feedback="true" role="status" aria-live="polite">
+    <aside className="desk-next hs-feedback-strip" data-ui-feedback="true" role="status" aria-live="polite">
       <div className="hs-feedback-identity">
         <span className="hs-feedback-caption">{phase === "picking" ? "SELECT" : phase === "preparing" ? "CAPTURING" : phase === "recording" ? "RECORDING" : phase === "saving" ? "SAVING" : phase === "saved" ? "SAVED" : "RETRY"}</span>
         <strong>{phase === "picking" ? status : selectedName}</strong>
         {error ? <span className="hs-feedback-error">{error}</span> : null}
       </div>
-      <EgressChip label="LOCAL" scope="local" title="Saved on this HoldSpeak hub." />
+      <EgressChip label={window.location.hostname} scope={/^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname) ? "local" : "remote"} title="Feedback files stay on this hub." />
       {phase === "picking" || phase === "preparing" ? (
         <Button variant="secondary" onClick={cancelCurrent}>Cancel</Button>
       ) : phase === "recording" && audioReady ? (

@@ -56,6 +56,7 @@ export interface FeedbackContext {
   owner: {
     window_id: string | null;
     name: string;
+    rect: { x: number; y: number; width: number; height: number };
     window_text: string;
     hub_row: unknown | null;
   };
@@ -279,6 +280,7 @@ export function snapshotContext(target: Element, root: Element, hubRow: unknown 
   const result: FeedbackContext = {
     owner: {
       window_id: ownerId,
+      rect: rectOf(root),
       name: safeWindowText(root.getAttribute("aria-label") || root.querySelector(".desk-window-title")?.textContent || "Desk"),
       window_text: safeRenderedText(root),
       hub_row: hubRow,
@@ -329,6 +331,10 @@ function frozenClone(root: Element): { wrapper: HTMLDivElement; clone: HTMLEleme
     if (element instanceof HTMLInputElement && copy instanceof HTMLInputElement) {
       copy.value = element.value;
       copy.checked = element.checked;
+    } else if (element instanceof HTMLCanvasElement && copy instanceof HTMLCanvasElement) {
+      copy.width = element.width;
+      copy.height = element.height;
+      copy.getContext("2d")?.drawImage(element, 0, 0);
     } else if (element instanceof HTMLTextAreaElement && copy instanceof HTMLTextAreaElement) {
       copy.value = element.value;
       copy.textContent = element.value;
@@ -340,6 +346,9 @@ function frozenClone(root: Element): { wrapper: HTMLDivElement; clone: HTMLEleme
     } else if (element instanceof HTMLElement && copy instanceof HTMLElement && element.isContentEditable) {
       copy.innerText = element.innerText;
     }
+  });
+  source.forEach((element, index) => {
+    const copy = copies[index];
     if (element instanceof HTMLElement && copy instanceof HTMLElement) preserveScroll(element, copy);
   });
   const wrapper = document.createElement("div");
@@ -478,7 +487,7 @@ export async function startFeedbackAudio(signal?: AbortSignal): Promise<Feedback
       abortHold(token);
       releaseWhenFree();
     } else {
-      release();
+      releaseWhenFree();
     }
   };
   const stopOwnHold = () => {

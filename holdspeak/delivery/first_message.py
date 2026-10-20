@@ -419,6 +419,8 @@ class FirstMessage:
                     if self._stop.is_set():
                         return  # shutting down: the next service watches it
                     time.sleep(LAUNCH_POLL_SECONDS)
+                if self._stop.is_set():
+                    return  # the session ended while the hub was shutting down
                 self.settle(launch_id)
             finally:
                 with self._lock:

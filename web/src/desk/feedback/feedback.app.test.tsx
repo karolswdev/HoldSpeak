@@ -28,6 +28,7 @@ vi.mock("../../lib/api", () => ({
 
 vi.mock("../store", () => ({
   useDesk: Object.assign(() => undefined, {
+    subscribe: () => () => undefined,
     getState: () => ({
       windowsById: { "window-1": { id: "window-1", title: "Platform" } },
       panelRects: { "window-1": { x: 10, y: 20, width: 500, height: 300 } },
@@ -70,10 +71,10 @@ vi.mock("../../lib/speakToFill", async () => {
   return { ...actual, toWav16kMono: mocks.toWav16kMono };
 });
 
-let actualCapture: typeof import("./capture") | undefined;
+const captureHolder = vi.hoisted(() => ({ current: undefined as typeof import("./capture") | undefined }));
 vi.mock("./capture", async () => {
   const actual = await vi.importActual<typeof import("./capture")>("./capture");
-  actualCapture = actual;
+  captureHolder.current = actual;
   return {
     ...actual,
     captureWindowPng: (...args: unknown[]) => mocks.captureWindowPng(...args),
@@ -88,7 +89,7 @@ import {
   resetUiFeedbackRuntimeForTests,
   uiFeedbackState,
 } from "./runtime";
-import { menuVerbs, verbById } from "../verbRegistry";
+import { menuVerbs, offeredHere, verbById } from "../verbRegistry";
 
 const feedbackContext = { selectedRef: null };
 
@@ -157,6 +158,7 @@ describe("local UI feedback", () => {
     mocks.apiFetch.mockResolvedValueOnce(statusDisabled);
     await hydrateUiFeedback();
     expect(verb.ghost(feedbackContext)).toBe("Feedback is unavailable");
+    expect(offeredHere(verb)).toBe(false);
     expect(menuVerbs("desk").map((entry) => entry.id)).toContain("desk.give-feedback");
 
     resetUiFeedbackRuntimeForTests();
@@ -165,6 +167,7 @@ describe("local UI feedback", () => {
     await startPicker();
     expect(screen.getByText("Select an element")).toBeTruthy();
     expect(verb.ghost(feedbackContext)).toBeNull();
+    expect(offeredHere(verb)).toBe(true);
   });
 
   it("freezes full textarea drafts and excludes a plain-text credential field", () => {
@@ -184,7 +187,7 @@ describe("local UI feedback", () => {
     credential.type = "text";
     credential.value = "secret-before-freeze";
 
-    const context = actualCapture!.snapshotContext(root.querySelector("#target")!, root, null);
+    const context = captureHolder.current!.snapshotContext(root.querySelector("#target")!, root, null);
     const draftField = context.fields.find((field) => field.id === "draft");
     expect(draftField?.value).toHaveLength(1_201);
     expect(context.fields.some((field) => field.id === "credential")).toBe(false);
@@ -278,7 +281,7 @@ describe("local UI feedback", () => {
   });
 
   it("does not release the floor when a successor hold owns it", async () => {
-    const feedback = actualCapture!.startFeedbackAudio();
+    const feedback = captureHolder.current!.startFeedbackAudio();
     const held = await feedback;
     mocks.holdOwnsFloor.mockReturnValue(true);
     held.cancel();

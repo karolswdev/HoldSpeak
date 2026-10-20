@@ -611,6 +611,7 @@ export const GO_EXTRA_ROWS: readonly (GoExtra & { go: { group: GoGroup; order: n
   // Projects window), then each project; it is drawn on an empty desk too.
   { kind: "projects", go: { group: "daily", order: 4 } },
   { kind: "drawers", go: { group: "work", order: 3 } },
+  { kind: "verb", verbId: "desk.give-feedback", go: { group: "work", order: 4 } },
   { kind: "launcher", launcherId: "delivery-board", label: "Delivery board", glyph: "▤", go: { group: "builder", order: 5 } },
   { kind: "launcher", launcherId: "panes", label: "Terminals", glyph: "⧉", go: { group: "builder", order: 6 } },
   { kind: "verb", verbId: "desk.refresh", go: { group: "builder", order: 7 } },
