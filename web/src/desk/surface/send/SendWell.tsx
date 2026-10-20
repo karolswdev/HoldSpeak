@@ -458,6 +458,32 @@ async function press(ref: string, target: string, fresh: () => Held["body"], rel
   }
 }
 
+/** The narrow shared adapter for a prepared row outside the full Send well.
+ * Needs you uses the same held command custody, including a replay after an
+ * unknown answer, and therefore never invents a second press implementation. */
+export function sendPrepared(ref: string, sendId: string, reload: () => void = () => {}, onSettled?: () => void): Promise<void> {
+  return press(ref, sendId, () => ({ send_id: sendId }), reload, onSettled);
+}
+
+/** A failed send is a new owner press against the same frozen document and
+ * destination. Its command is new by design; only an unknown retry replays. */
+export function retryInline(
+  ref: string, destinationId: string, previewDigest: string,
+  reload: () => void = () => {}, onSettled?: () => void,
+): Promise<void> {
+  return press(ref, destinationId, () => ({
+    document_ref: ref, destination_id: destinationId, preview_digest: previewDigest,
+  }), reload, onSettled);
+}
+
+/** Discard is shared so Needs you keeps the Send well's receipt custody. */
+export async function discardPrepared(sendId: string): Promise<Send> {
+  const ended = await wire.discard(sendId);
+  store.known.set(ended.id, ended);
+  bump();
+  return ended;
+}
+
 /** The destination's latest send: the latest to LEAVE, by
  *  `dispatch_started_at` (then the hub's dispatch sequence), never the latest
  *  prepared. A running send is the latest while it runs. */

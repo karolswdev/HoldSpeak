@@ -1182,3 +1182,159 @@ def test_a_re_summary_never_brings_back_a_dropped_promise(hub: Hub) -> None:
         states = [r[0] for r in conn.execute(
             "SELECT state FROM follow_through_proposals WHERE meeting_id='m-resum' AND text LIKE 'Write up%'")]
     assert live == 0 and "proposed" not in states, (live, states)
+
+
+# ── Send S3: one real channel row, one Needs-you member ────────────────
+
+
+def _send_rows(answer: dict[str, Any]) -> list[dict[str, Any]]:
+    return [row for row in answer.get("items", []) if row.get("kind") == "send"]
+
+
+def test_an_agent_prepare_is_owner_needs_membership_and_real_folder_send(
+    hub: Hub, tmp_path: Path,
+) -> None:
+    """S3's producer and owner press share the channel row and its count.
+
+    The agent reaches ``channel.prepare`` through its issued project
+    credential.  The owner then reads the same row, presses Send through the
+    owner route, and the file channel writes the frozen payload to the saved
+    folder.  The pre-send answer is recorded as the whole producer response
+    for the Needs-you app test; it is never typed into a fixture.
+    """
+    from _philo10_send import destination, room
+    from test_philo9_steward_admission import _agent, _tool
+    from tests.unit.test_desk_speak import _record
+
+    _pid, update = room(hub, name="S3 private delivery")
+    folder = tmp_path / "private-team-folder"
+    dest = destination(hub, folder, name="Private team folder")
+    agent = _agent(hub, palette="ALL", identity="claude-code")
+    is_error, prepared = _tool(agent, "channel.prepare", {
+        "document_ref": f"project_update:{update}", "destination_id": dest,
+    })
+    assert is_error is False, prepared
+    send = prepared["send"]
+    assert send["state"] == "prepared"
+    assert send["prepared_by"] == {"kind": "agent", "identity": "claude-code"}
+    assert list(folder.iterdir()) == []
+
+    owner_answer = _needs(hub)
+    rows = _send_rows(owner_answer)
+    assert len(rows) == 1, rows
+    row = rows[0]
+    assert row["id"] == f"send:{send['id']}", row
+    assert (row["documentLabel"], row["documentTitle"], row["destinationName"], row["preparedBy"]) == (
+        "REV 1", send["document_json"]["title"], "Private team folder", "Claude Code",
+    ), row
+    assert owner_answer["count"] == len(owner_answer["members"]) and row["ref"] in {
+        member["ref"] for member in owner_answer["members"]
+    }
+    assert any(c["kind"] == "send" and c["state"] == "available" for c in owner_answer["coverage"])
+
+    # The source fixture is the actual complete owner response, including all
+    # ordinary Needs-you rows and the frozen channel row.
+    recorded_answer = json.loads(json.dumps({"needsYou": owner_answer}).replace(_pid, "proj-send-needs"))
+    _record("needs-send", recorded_answer, Path(hub.db.db_path).parent,
+            "tests/unit/test_desk_needs_you.py::test_an_agent_prepare_is_owner_needs_membership_and_real_folder_send",
+            folder=Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__"
+            / "fixtures" / "send-needs")
+
+    # The same MCP tool is safe for an admitted agent: it has the coverage
+    # source, but no private send row, title, destination, or frozen payload.
+    is_error, agent_answer = _tool(agent, "desk.needs_you", {})
+    assert is_error is False, agent_answer
+    assert not _send_rows(agent_answer), agent_answer
+    assert agent_answer.get("coverage") and not any(
+        "S3 private delivery" in json.dumps(item) for item in agent_answer.get("items", [])
+    )
+
+    sent_response = _ok(hub.client.post("/api/channels/send", json={"send_id": send["id"],
+                                                                      "command_id": "s3-owner-send"}))
+    assert sent_response["outcome"] == "sent", sent_response
+    sent = sent_response["send"]
+    path = Path(sent["proof"]["path"])
+    assert path.parent.resolve() == folder.resolve()
+    assert path.read_bytes() == bytes(hub.db.channel_sends.get(send["id"])["payload"])
+    assert len(list(folder.iterdir())) == 1
+    after = _needs(hub)
+    assert not _send_rows(after), after
+    assert hub.db.channel_sends.get(send["id"])["state"] == "sent"
+    with hub.db._connection() as conn:
+        receipt = conn.execute(
+            "SELECT state, result_ref FROM kernel_receipts WHERE operation_id = "
+            "(SELECT send_operation_id FROM channel_sends WHERE id=?)", (send["id"],)
+        ).fetchone()
+    assert receipt and tuple(receipt) == ("succeeded", f"channel_send:{send['id']}")
+
+
+def test_send_needs_membership_leaves_once_for_discard_failed_and_unknown_replay(
+    hub: Hub, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Every terminal channel state has one durable Needs-you consequence."""
+    from _philo10_send import destination, room
+    from holdspeak.services.channel_contract import FileChannel, Outcome
+    from tests.unit.test_desk_speak import _record
+
+    _pid, update = room(hub, name="S3 state transitions")
+    folder = tmp_path / "state-transitions"
+    dest = destination(hub, folder)
+    ref = f"project_update:{update}"
+
+    # Discard is an owner decision, and its row leaves after one refresh.
+    discarded = _ok(hub.client.post("/api/channels/sends", json={"document_ref": ref,
+                                                                   "destination_id": dest}))
+    discarded_id = discarded["send"]["id"]
+    assert len(_send_rows(_needs(hub))) == 1
+    _ok(hub.client.post(f"/api/channels/sends/{discarded_id}/discard", json={"command_id": "s3-discard"}))
+    assert not _send_rows(_needs(hub))
+    assert hub.db.channel_sends.get(discarded_id)["state"] == "discarded"
+
+    # A provider leaf may answer FAILED.  Routing, persistence and the
+    # aggregate remain the real hub paths.
+    real_dispatch = FileChannel.dispatch
+    monkeypatch.setattr(FileChannel, "dispatch", lambda *_args, **_kwargs: Outcome("failed", "permission_denied"))
+    failed = _ok(hub.client.post("/api/channels/sends", json={"document_ref": ref,
+                                                                "destination_id": dest}))
+    failed_id = failed["send"]["id"]
+    failed_press = _ok(hub.client.post("/api/channels/send", json={"send_id": failed_id,
+                                                                      "command_id": "s3-failed"}))
+    assert failed_press["outcome"] == "failed"
+    failed_rows = _send_rows(_needs(hub))
+    assert len(failed_rows) == 1 and failed_rows[0]["sendId"] == failed_id
+    assert failed_rows[0]["why"] == "NOT SENT"
+
+    # UNKNOWN is a settled no-answer. Replaying the same command id returns
+    # the existing operation and never calls the provider a second time.
+    calls = 0
+
+    def unknown_dispatch(*_args: Any, **_kwargs: Any) -> Outcome:
+        nonlocal calls
+        calls += 1
+        return Outcome("unknown", "timeout")
+
+    monkeypatch.setattr(FileChannel, "dispatch", unknown_dispatch)
+    unknown = _ok(hub.client.post("/api/channels/sends", json={"document_ref": ref,
+                                                                 "destination_id": dest}))
+    unknown_id = unknown["send"]["id"]
+    first = _ok(hub.client.post("/api/channels/send", json={"send_id": unknown_id,
+                                                              "command_id": "s3-unknown"}))
+    second = _ok(hub.client.post("/api/channels/send", json={"send_id": unknown_id,
+                                                               "command_id": "s3-unknown"}))
+    assert first["outcome"] == second["outcome"] == "unknown"
+    assert first["operation_id"] == second["operation_id"]
+    assert calls == 1
+    unknown_rows = _send_rows(_needs(hub))
+    assert len(unknown_rows) == 1 and unknown_rows[0]["sendId"] == unknown_id
+    assert unknown_rows[0]["why"] == "NO ANSWER"
+    assert list(folder.iterdir()) == []
+    unknown_answer = _needs(hub)
+    _record(
+        "needs-send-unknown",
+        json.loads(json.dumps({"needsYou": unknown_answer}).replace(_pid, "proj-send-needs-unknown")),
+        Path(hub.db.db_path).parent,
+        "tests/unit/test_desk_needs_you.py::test_send_needs_membership_leaves_once_for_discard_failed_and_unknown_replay",
+        folder=Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__"
+        / "fixtures" / "send-needs",
+    )
+    monkeypatch.setattr(FileChannel, "dispatch", real_dispatch)

@@ -1038,6 +1038,7 @@ def compute_needs_you(
     coders: Iterable[Any] = (),
     gate_holds: Iterable[dict[str, Any]] = (),
     flights: Iterable[dict[str, Any]] = (),
+    send_items: Iterable[dict[str, Any]] = (),
     self_names: Iterable[str] = SELF_OWNER_NAMES,
     personal_names: Iterable[str] = (),
     known_people: Iterable[str] | None = None,
@@ -1054,6 +1055,10 @@ def compute_needs_you(
     """
     clock = now or local_wall()
     room = [dict(item) for item in room_items]
+    # Send rows are a membership source, but they are not Room rows.  The
+    # caller keeps them out of ``roomItems`` so the cached Room projection
+    # remains small and every fresh compose sees the current channel rows.
+    room.extend(dict(item) for item in send_items)
     covered = {
         str(item["actionItemId"])
         for item in room
@@ -1642,6 +1647,109 @@ def _reason(exc: Exception) -> str:
     return str(exc).split("\n")[0][:200] or type(exc).__name__
 
 
+def _send_actor_label(send: dict[str, Any]) -> str:
+    """The short human name on a Ready-to-send row."""
+    prepared_by = send.get("prepared_by")
+    prepared = prepared_by if isinstance(prepared_by, dict) else {}
+    kind = str(prepared.get("kind") or "").strip().lower()
+    identity = str(prepared.get("identity") or kind or "agent").strip()
+    if kind == "owner":
+        return "you"
+    if "claude" in identity.casefold():
+        return "Claude Code"
+    if "codex" in identity.casefold():
+        return "Codex"
+    # Scheduler and agent identities are durable producer labels. Make the
+    # value readable without exposing a raw operation id on the face.
+    words = " ".join(identity.replace("_", "-").split("-"))
+    return words[:1].upper() + words[1:] if words else "Agent"
+
+
+def _send_attention_rows(db: Any, principal: Any) -> tuple[list[dict[str, Any]], dict[str, Any], str | None]:
+    """Read channel sends into the existing Needs-you membership source.
+
+    The global Needs-you answer is owner-visible. A non-owner principal gets
+    the source coverage record but no document title, destination, or frozen
+    preview. Failed and unknown rows are replaced by a newer attempt for the
+    same document and destination; that is the existing channel history's
+    durable acted-on marker and needs no second attention table.
+    """
+    from holdspeak.principals import PrincipalKind
+    from .channel_service import ChannelService
+
+    observed_at = utc_now_iso()
+    coverage = {
+        "source_id": "sends", "kind": "send", "state": "available",
+        "observed_at": observed_at, "label": "Sends", "project_id": "",
+        "reason": None, "repair": None,
+    }
+    principal_kind = getattr(getattr(principal, "kind", None), "value", getattr(principal, "kind", None))
+    if principal_kind != PrincipalKind.OWNER.value:
+        return [], coverage, None
+    try:
+        service = _hub_service("channel_service", lambda: ChannelService(db))
+        sends = service.sends(principal).get("sends") or []
+    except Exception as exc:
+        reason = _reason(exc)
+        coverage.update({
+            "state": "failed", "observed_at": None, "reason": reason,
+            "repair": {"token": "READ FAILED", "verb": "Retry", "href": "/"},
+        })
+        return [], coverage, reason
+
+    candidates = [row for row in sends if str(row.get("state") or "") in {"prepared", "failed", "unknown"}]
+    rows: list[dict[str, Any]] = []
+    for send in candidates:
+        state = str(send.get("state") or "")
+        if state in {"failed", "unknown"}:
+            def later(other: dict[str, Any]) -> bool:
+                created = str(send.get("created_at") or "")
+                other_created = str(other.get("created_at") or "")
+                if other_created > created:
+                    return True
+                # SQLite's channel timestamps are second-granular. The
+                # dispatch sequence is the durable order for two attempts
+                # created in the same second, so a newer retry still replaces
+                # the older failed/no-answer row in Needs you.
+                if other_created == created:
+                    try:
+                        return int(other.get("dispatch_seq") or 0) > int(send.get("dispatch_seq") or 0)
+                    except (TypeError, ValueError):
+                        return False
+                return False
+
+            newer = any(
+                other is not send
+                and str(other.get("document_ref") or "") == str(send.get("document_ref") or "")
+                and str(other.get("destination_id") or "") == str(send.get("destination_id") or "")
+                and later(other)
+                and str(other.get("state") or "") != "discarded"
+                for other in sends
+            )
+            if newer:
+                continue
+        provenance = send.get("document_json") if isinstance(send.get("document_json"), dict) else {}
+        title = str(provenance.get("title") or send.get("document_ref") or "Document")
+        label = str(provenance.get("label") or "DOCUMENT")
+        destination = str(send.get("destination_name") or "Destination")
+        why = {"prepared": "READY TO SEND", "failed": "NOT SENT", "unknown": "NO ANSWER"}[state]
+        severity = {"prepared": "info", "failed": "danger", "unknown": "warning"}[state]
+        rows.append({
+            "id": f"send:{send.get('id')}", "ref": f"send:{send.get('id')}",
+            "kind": "send", "source": "send", "title": title,
+            "documentLabel": label, "documentTitle": title,
+            "documentRef": send.get("document_ref"), "sendId": send.get("id"),
+            "destinationId": send.get("destination_id"), "destinationName": destination,
+            "why": why, "severity": severity, "ageToken": send.get("created_at"),
+            "since": send.get("created_at"), "dueAt": None, "owner": "you",
+            "preparedBy": _send_actor_label(send), "counted": True,
+            # The frozen send is available to the owner's Desk face. The
+            # non-owner return above prevents it from entering global MCP.
+            "send": send,
+        })
+    return rows, coverage, None
+
+
 def compose(
     db: Any,
     principal: Any,
@@ -1672,6 +1780,10 @@ def compose(
     muted = {str(pid) for pid in muted_project_ids}
     room_complete = bool(aggregate.get("roomComplete", aggregate.get("complete", True)))
     errors: dict[str, str] = {}
+
+    send_items, send_coverage, send_error = _send_attention_rows(db, principal)
+    if send_error:
+        errors["sends"] = send_error
 
     door: dict[str, Any] | None = None
     try:
@@ -1757,6 +1869,7 @@ def compose(
         summary_waits=_a_meeting_waits_for_summary(db),
         gate_holds=gate_holds,
         flights=flights,
+        send_items=send_items,
         self_names=names,
         personal_names=personal,
         known_people=known_people,
@@ -1773,9 +1886,9 @@ def compose(
     # one, so it is replaced, never added twice.
     coverage = [
         row for row in (aggregate.get("coverage") or [])
-        if not (isinstance(row, dict) and row.get("kind") == "coder")
+        if not (isinstance(row, dict) and row.get("kind") in {"coder", "send"})
     ]
-    answer["coverage"] = coverage + [coder_coverage]
+    answer["coverage"] = coverage + [coder_coverage, send_coverage]
     # PHILO-15-09 (B11, the A5 ruling: headline = Dock badge = notch =
     # counted rows): the one number counts every row the desk draws under
     # the head: the members, each source that could not be read, and a

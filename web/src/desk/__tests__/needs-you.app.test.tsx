@@ -338,3 +338,122 @@ describe("Needs you when People could not be read (Betterment D6)", () => {
     expect(screen.queryByTestId("needs-people-read-failed")).toBeNull();
   });
 });
+
+// ── Send S3: the recorded channel row is a Needs-you object ───────────────
+import sendNeeds from "./fixtures/send-needs/needs-send.json";
+import sendNeedsUnknown from "./fixtures/send-needs/needs-send-unknown.json";
+import { resetSendStore } from "../surface/send";
+
+describe("Needs you with a prepared Send row (Send S3)", () => {
+  let current: any;
+  let posts: Array<{ url: string; json: any }>;
+
+  beforeEach(() => {
+    resetSendStore();
+    current = structuredClone(sendNeeds.needsYou);
+    posts = [];
+    vi.setSystemTime(new Date(String(current.computedAt)));
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      const path = String(url);
+      if (init?.method === "POST") {
+        posts.push({ url: path, json: init.json });
+        if (path === "/api/channels/send") {
+          const item = current.items[0];
+          current = { ...current, count: 0, items: [], members: [] };
+          return { send: { ...item.send, state: "sent", settled_at: current.computedAt } };
+        }
+        if (path.startsWith("/api/channels/sends/") && path.endsWith("/discard")) {
+          const item = current.items[0];
+          current = { ...current, count: 0, items: [], members: [] };
+          return { send: { ...item.send, state: "discarded" } };
+        }
+        return {};
+      }
+      if (path.startsWith("/api/desk/needs-you")) return current;
+      if (path === "/api/door") return hubWire("door.empty").wire;
+      if (path.startsWith("/api/channels/sends?send_id=")) return { sends: [current.items[0]?.send].filter(Boolean) };
+      throw new Error(`no recorded answer for ${path}`);
+    });
+  });
+
+  it("shows the frozen document, destination, producer and owner verbs; Send leaves the row", async () => {
+    render(<NeedsDrawer />);
+    const row = await screen.findByText("S3 private delivery — update r1 (2026-10-20)");
+    const li = row.closest("li.needs-row") as HTMLElement;
+    expect(li.textContent).toContain("REV 1 · → · Private team folder · by Claude Code");
+    expect(li.textContent).toMatch(/\d{2}:\d{2}/);
+    expect([...li.querySelectorAll<HTMLElement>("[data-testid='needs-row-verb']")].map((button) => button.dataset.verb))
+      .toEqual(["send", "look"]);
+    expect(li.querySelector("[data-testid='needs-send-discard']")).toBeTruthy();
+
+    fireEvent.click(li.querySelector("[data-verb='look']")!);
+    const preview = await screen.findByTestId("needs-send-preview");
+    expect(preview.textContent).toContain("The ledger cutover is on track.");
+    expect(preview.textContent).toContain("private-team-folder");
+
+    fireEvent.click(li.querySelector("[data-verb='send']")!);
+    await waitFor(() => expect(posts.some((post) => post.url === "/api/channels/send")).toBe(true));
+    await waitFor(() => expect(screen.queryByText("S3 private delivery — update r1 (2026-10-20)")).toBeNull());
+    const sendPost = posts.find((post) => post.url === "/api/channels/send")!;
+    expect(sendPost.json).toEqual(expect.objectContaining({ send_id: expect.any(String), command_id: expect.any(String) }));
+  });
+
+  it("arms Discard once and sends no request until the second press", async () => {
+    render(<NeedsDrawer />);
+    const row = (await screen.findByText("S3 private delivery — update r1 (2026-10-20)")).closest("li.needs-row") as HTMLElement;
+    const discard = row.querySelector("[data-testid='needs-send-discard']") as HTMLElement;
+    fireEvent.click(discard);
+    expect(discard.textContent).toBe("Discard?");
+    expect(posts).toEqual([]);
+    fireEvent.click(discard);
+    await waitFor(() => expect(posts.some((post) => post.url.endsWith("/discard"))).toBe(true));
+    expect(posts.filter((post) => post.url.endsWith("/discard"))).toHaveLength(1);
+  });
+});
+
+describe("Needs you with a recorded unknown Send (Send S3)", () => {
+  it("Check only rereads and a lost Try again reuses the same command id", async () => {
+    resetSendStore();
+    let answer: any = structuredClone(sendNeedsUnknown.needsYou);
+    const posts: Array<{ url: string; json: any }> = [];
+    const reads: string[] = [];
+    let firstSend = true;
+    vi.setSystemTime(new Date(String(answer.computedAt)));
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      const path = String(url);
+      if (init?.method === "POST") {
+        posts.push({ url: path, json: init.json });
+        if (path === "/api/channels/send" && firstSend) {
+          firstSend = false;
+          throw new Error("recording edge lost the answer");
+        }
+        if (path === "/api/channels/send") return { send: answer.items[0].send };
+        return {};
+      }
+      if (path.startsWith("/api/desk/needs-you")) return answer;
+      if (path === "/api/door") return hubWire("door.empty").wire;
+      if (path.startsWith("/api/channels/sends?send_id=")) { reads.push(path); return { sends: [answer.items[0].send] }; }
+      throw new Error(`no recorded answer for ${path}`);
+    });
+    const opened = vi.spyOn(window, "open").mockImplementation(() => null);
+    try {
+      render(<NeedsDrawer />);
+      const row = (await screen.findByText("S3 state transitions — update r1 (2026-10-20)")).closest("li.needs-row") as HTMLElement;
+      const check = row.querySelector("[data-verb='check']") as HTMLElement;
+      fireEvent.click(check);
+      await waitFor(() => expect(reads.some((path) => path.startsWith("/api/channels/sends?send_id="))).toBe(true));
+      expect(posts.some((post) => post.url === "/api/channels/send")).toBe(false);
+      expect(opened).not.toHaveBeenCalled();
+
+      const retry = row.querySelector("[data-verb='try-again']") as HTMLElement;
+      fireEvent.click(retry);
+      await waitFor(() => expect(posts.filter((post) => post.url === "/api/channels/send")).toHaveLength(1));
+      fireEvent.click(row.querySelector("[data-verb='try-again']")!);
+      await waitFor(() => expect(posts.filter((post) => post.url === "/api/channels/send")).toHaveLength(2));
+      const attempts = posts.filter((post) => post.url === "/api/channels/send");
+      expect(attempts[0].json).toEqual(attempts[1].json);
+    } finally {
+      opened.mockRestore();
+    }
+  });
+});

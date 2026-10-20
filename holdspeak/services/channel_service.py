@@ -533,6 +533,7 @@ class ChannelService:
                  handle.operation_id, now_iso()))
 
         handle.terminal("succeeded", "succeeded", f"channel_send:{send_id}", effect=effect)
+        self._changed(send_id, "prepared")
         return self._answer(self._db.channel_sends.get(send_id))
 
     def discard(self, principal: Any, send_id: str, command_id: Optional[str] = None) -> dict[str, Any]:
@@ -551,6 +552,7 @@ class ChannelService:
                 raise ChannelRefused("send_already_settled", f"Send {send_id} is no longer prepared")
 
         handle.terminal("succeeded", "succeeded", f"channel_send:{send_id}", effect=effect)
+        self._changed(send_id, "discarded")
         return self._answer(self._db.channel_sends.get(send_id))
 
     # ── the press ────────────────────────────────────────────────────────
@@ -751,6 +753,15 @@ class ChannelService:
         return self._answer(row)
 
     def _changed(self, send_id: str, state: str) -> None:
+        try:
+            # The send rows are a source in the existing Needs-you aggregate.
+            # Keep the cached Room projection and its browser refresh signal
+            # on the same write boundary as the channel row.
+            from .needs_you_aggregate import mark_needs_you_dirty
+
+            mark_needs_you_dirty(self._db)
+        except Exception:  # pragma: no cover - a projection marker never fails a send
+            pass
         if self._on_changed is None:
             return
         try:

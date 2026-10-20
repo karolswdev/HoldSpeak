@@ -31,10 +31,12 @@ import { PeopleReadFailed } from "../people/PeopleReadFailed";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { AppHead, EgressChip, ScrollHint, StatusStrip, StringGadget, SurfaceFooter, SurfaceSection, SurfaceState } from "../surface";
+import { AppHead, ConfirmVerb, EgressChip, ScrollHint, StatusStrip, StringGadget, SurfaceFooter, SurfaceSection, SurfaceState } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
+import { discardPrepared, PreviewWell, retryInline, sendPrepared } from "../surface/send";
+import { egressOf, farSide, previewOf, type Channel, type Send as ChannelSend } from "../../features/channels/channels";
 import { groupGaps, readCoverage } from "../coverage";
 import {
   armingFace,
@@ -82,7 +84,7 @@ export function faceOpener(face: NeedFace): Opener | null {
   return refOpener(face.openRef);
 }
 
-type Well = "owner" | "date" | "detail" | "project" | "nudge" | "decide" | "whose";
+type Well = "owner" | "date" | "detail" | "project" | "nudge" | "decide" | "whose" | "send";
 
 /** Betterment D3: Drop says what went and offers Undo for 8 s. */
 type Dropped = { name: string; undo(): Promise<unknown>; id: number };
@@ -455,6 +457,43 @@ function NeedVerbsView({ face, primary, onWell, well }: {
         <Button dense variant="secondary" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
           onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>Connect calendar</Button>
       );
+    case "send": {
+      const s = v.send as unknown as ChannelSend;
+      const channel = String(s.channel || "file") as Channel;
+      const account = (s.account || {}) as Record<string, string | boolean>;
+      const target = (s.target || {}) as Record<string, string | number>;
+      const eg = egressOf({ channel, account, synced: false, target });
+      const check = () => {
+        const url = farSide(channel, target, account);
+        if (url) window.open(url, "_blank", "noopener");
+        return apiFetch(`/api/channels/sends?send_id=${encodeURIComponent(v.sendId)}`);
+      };
+      const run = v.state === "failed"
+        ? () => retryInline(v.documentRef, v.destinationId, s.payload_digest, () => {}, () => void refreshNeedsYou(true))
+        : () => sendPrepared(v.documentRef, v.sendId, () => {}, () => void refreshNeedsYou(true));
+      return (
+        <>
+          <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
+          {v.state === "unknown" ? (
+            <Button dense variant="ghost" disabled={busy} aria-label={named("Check")} data-testid="needs-row-verb" data-verb="check"
+              onClick={() => void act("Check", check, face.id)}>Check</Button>
+          ) : null}
+          <Button dense variant={lead} loading={busy} disabled={busy} aria-label={named(v.state === "prepared" ? "Send" : "Try again")}
+            data-testid="needs-row-verb" data-verb={v.state === "prepared" ? "send" : "try-again"}
+            onClick={() => void act(v.state === "prepared" ? "Send" : "Try again", run, face.id)}>
+            {v.state === "prepared" ? "Send" : "Try again"}
+          </Button>
+          {v.state === "prepared" ? (
+            <>
+              <Button dense variant="ghost" aria-label={named("Look")} aria-expanded={well === "send"}
+                data-testid="needs-row-verb" data-verb="look" onClick={() => onWell(well === "send" ? null : "send")}>Look</Button>
+              <ConfirmVerb label="Discard" confirmLabel="Discard?" busy={busy}
+                data-testid="needs-send-discard" onConfirm={() => void act("Discard", () => discardPrepared(v.sendId), face.id)} />
+            </>
+          ) : null}
+        </>
+      );
+    }
     case "open": {
       const open = refOpener(v.ref);
       if (!open) return null;
@@ -466,6 +505,23 @@ function NeedVerbsView({ face, primary, onWell, well }: {
     default:
       return null;
   }
+}
+
+function SendNeedWell({ face, onDone }: { face: NeedFace; onDone(): void }) {
+  const v = face.verbs;
+  if (v.kind !== "send") return null;
+  const s = v.send as unknown as ChannelSend;
+  const channel = String(s.channel || "file") as Channel;
+  const account = (s.account || {}) as Record<string, string | boolean>;
+  const target = (s.target || {}) as Record<string, string | number>;
+  const frozen = previewOf(channel, target, account, s.preview, s.file_path);
+  return (
+    <li className="needs-drawer-well" role="region" aria-label={`Preview: ${face.name}`} data-testid="needs-send-preview">
+      <PreviewWell preview={frozen} testid="needs-send-preview-well" verbs={
+        <Button dense variant="ghost" aria-label="Close preview" onClick={onDone}>Close</Button>
+      } />
+    </li>
+  );
 }
 
 function CommitWell({ face, which, onDone }: { face: NeedFace; which: Well; onDone(): void }) {
@@ -724,6 +780,7 @@ function PlainNeedRow({ face, primary, projects }: { face: NeedFace; primary: bo
           : well === "nudge" ? <NudgeWell face={face} />
             : well === "decide" ? <DecideWell face={face} onDone={() => setWell(null)} />
               : well === "whose" ? <WhoseWell face={face} onDone={() => setWell(null)} />
+                : well === "send" ? <SendNeedWell face={face} onDone={() => setWell(null)} />
               : well === "owner" || well === "date" ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}
     </>
   );
