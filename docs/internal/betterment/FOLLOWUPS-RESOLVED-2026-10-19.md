@@ -23,3 +23,10 @@ Original rows:
 | A6 lane | `tests/unit/test_project_mcp.py:370` writes and deletes a file inside `holdspeak/` while `test_thread_tool_gate.py` walks it in parallel: FileNotFoundError race. | Small fix |
 | Q6 (#1335) | At 393 the About chips sit in stray boxed frames with an odd indent. | Small fix |
 | D5 (#1336) | Eleven atlas cases (no fence runs them) still click the retired Brief window, incl. `route_generate_again.retained_after_reload`, named as a successor (#1338). | Small fix |
+
+
+P5/P6 source-link follow-through: the producer reports each meeting/note as
+linked or failed for new and existing projects. Failed selections retain the
+producer error and Retry submits only that leaf. Root verified 57 Python checks
+(including actual HTTP and 1440/393 browser Retry), 40 Door web checks and build.
+Durable readback finds each successful relationship once. No slice count added.

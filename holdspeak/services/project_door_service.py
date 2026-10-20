@@ -18,6 +18,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 from holdspeak.principals import Principal
+from holdspeak.redaction import redact_error
 from holdspeak.services.errors import ServiceError, ValidationError
 
 DOOR_DEFAULTS: dict[str, list[dict[str, Any]]] = {
@@ -522,7 +523,7 @@ class ProjectDoorService:
     ) -> dict[str, Any]:
         sources = sources or []
         if project_id:
-            return self.add_sources(principal, project_id, sources)
+            return self.add_sources(principal, project_id, sources, found=found)
         if not str(outcome or "").strip():
             raise ValidationError("outcome is required")
         if self._project_service is None:
@@ -561,28 +562,79 @@ class ProjectDoorService:
         )
 
         self._baseline(principal, result.get("activated_watches", []))
-        self._link_found(principal, str(result.get("project_id", "")), found or {})
-        return {"projectId": result.get("project_id", "")}
+        found_links = self._link_found(principal, str(result.get("project_id", "")), found or {})
+        return {"projectId": result.get("project_id", ""), "found_links": found_links}
 
-    def _link_found(self, principal: Principal, project_id: str, found: dict[str, Any]) -> None:
-        if not project_id or self._project_service is None:
+    @staticmethod
+    def _found_rows(found: dict[str, Any] | None) -> list[tuple[str, str]]:
+        rows: list[tuple[str, str]] = []
+        for kind, field in (("meeting", "meeting_ids"), ("note", "note_ids")):
+            values = found.get(field, []) if isinstance(found, dict) else []
+            if not isinstance(values, list):
+                continue
+            for value in values:
+                item_id = str(value or "").strip()
+                if item_id:
+                    rows.append((kind, item_id))
+        return rows
+
+    def _found_link_readback(self, project_id: str, kind: str, item_id: str) -> None:
+        """Confirm the leaf wrote its durable project relationship."""
+        if self._db is None:
             return
-        for meeting_id in found.get("meeting_ids", []) if isinstance(found.get("meeting_ids", []), list) else []:
+        resource_ref = f"{kind}:{item_id}"
+        try:
+            with self._db._connection() as conn:
+                row = conn.execute(
+                    "SELECT 1 FROM project_resources WHERE project_id=? AND resource_ref=? AND deleted=0",
+                    (project_id, resource_ref),
+                ).fetchone()
+        except Exception as exc:
+            raise ServiceError("link_readback_failed", redact_error(str(exc), limit=500)) from exc
+        if row is None:
+            raise ServiceError("link_not_persisted", f"{kind.title()} link was not saved")
+
+    def _link_found(self, principal: Principal, project_id: str, found: dict[str, Any]) -> list[dict[str, Any]]:
+        """Link each selected meeting/note and report every leaf outcome."""
+        results: list[dict[str, Any]] = []
+        rows = self._found_rows(found)
+        if not rows:
+            return results
+        if not project_id or self._project_service is None:
+            return [
+                {"kind": kind, "id": item_id, "state": "failed", "error": "Project link service unavailable"}
+                for kind, item_id in rows
+            ]
+        for kind, item_id in rows:
+            error: str | None = None
             try:
-                self._project_service.associate_meeting(principal, project_id, str(meeting_id))
-            except Exception:
-                continue
-        for note_id in found.get("note_ids", []) if isinstance(found.get("note_ids", []), list) else []:
-            try:
-                self._project_service.add_resource(principal, project_id, f"note:{note_id}", relationship="member")
-            except Exception:
-                continue
+                if kind == "meeting":
+                    linked = self._project_service.associate_meeting(principal, project_id, item_id)
+                else:
+                    linked = self._project_service.add_resource(
+                        principal, project_id, f"note:{item_id}", relationship="member",
+                    )
+                if linked is False:
+                    raise ServiceError("link_failed", f"Could not add {kind} {item_id}")
+                self._found_link_readback(project_id, kind, item_id)
+            except ServiceError as exc:
+                error = redact_error(exc.detail or str(exc), limit=500) or f"Could not add {kind}"
+            except Exception as exc:
+                error = redact_error(str(exc), limit=500) or f"Could not add {kind}"
+            results.append({
+                "kind": kind,
+                "id": item_id,
+                "state": "failed" if error else "linked",
+                "error": error,
+            })
+        return results
 
     def add_sources(
         self,
         principal: Principal,
         project_id: str,
         sources: list[dict[str, Any]],
+        found: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """PHILO-17 U10: the Door's source rows, added to a project that exists.
 
@@ -594,12 +646,19 @@ class ProjectDoorService:
                 "ProjectDoorService requires a composed ProjectService",
             )
         specs = self._specs(sources)
-        if not specs:
+        found_rows = self._found_rows(found)
+        if not specs and not found_rows:
             raise ValidationError("Choose a source to add")
-        result = self._project_service.add_source_watches(principal, project_id, specs)
-        activated = result.get("activated_watches", [])
-        self._baseline(principal, activated)
-        return {"projectId": project_id, "watches": len(activated)}
+        activated: list[Any] = []
+        if specs:
+            result = self._project_service.add_source_watches(principal, project_id, specs)
+            activated = result.get("activated_watches", [])
+            self._baseline(principal, activated)
+        return {
+            "projectId": project_id,
+            "watches": len(activated),
+            "found_links": self._link_found(principal, project_id, found or {}),
+        }
 
     def _specs(self, sources: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Each GitHub or Jira source row compiled to its watch specs."""
