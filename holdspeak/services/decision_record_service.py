@@ -54,6 +54,32 @@ class DecisionRecordService:
         self._db = db
         self._observer = observer or NullObserver()
 
+    def migrate_legacy_desk_decisions(self, principal: Any) -> dict[str, int]:
+        """Copy retained Desk decisions into the record ledger once per source.
+
+        ``desk_decisions`` remains the editable Desk projection for existing
+        callers.  The record is the durable identity used by the Decisions
+        window and Project reads.  Re-running this method is safe because
+        ``create_from_desk`` is keyed by the legacy source identity.
+        """
+        copied = 0
+        existing = 0
+        # The repository list is intentionally capped for web faces. Startup
+        # migration is a data operation and must copy the complete retained
+        # table, including rows beyond that face limit.
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                "SELECT * FROM desk_decisions WHERE deleted = 0 ORDER BY updated_at DESC, id DESC"
+            ).fetchall()
+        for decision in (self._db.desk_decisions._row(row) for row in rows):
+            before = self._record_for_source("desk", decision.id)
+            record = self.create_from_desk(principal, decision.id)
+            if before is None and record is not None:
+                copied += 1
+            else:
+                existing += 1
+        return {"copied": copied, "existing": existing}
+
     def create(
         self,
         principal: Any,
@@ -141,15 +167,18 @@ class DecisionRecordService:
         if existing is not None:
             return existing
 
-        decision_text = decision.decision_markdown.strip()
+        # A New Decision is named before its editor has a body.  Keep that
+        # authored title as the initial record text; a later editor save
+        # reconciles the record to the body through ``sync_from_desk``.
+        decision_text = decision.decision_markdown.strip() or decision.title.strip()
         if not decision_text:
-            raise ValueError("desk decision decision_markdown is required")
+            raise ValueError("desk decision title or decision_markdown is required")
         rationale = self._join_text(
             decision.context_markdown, decision.consequences_markdown
         )
         alternatives = self._alternatives_text(decision.alternatives_json)
         owner = ", ".join(decider.strip() for decider in decision.deciders if decider.strip())
-        return self.create(
+        record = self.create(
             principal,
             decision_text=decision_text,
             rationale=rationale or None,
@@ -158,6 +187,68 @@ class DecisionRecordService:
             source_type="desk",
             source_id=decision.id,
         )
+        sources = tuple(dict.fromkeys(
+            (kind, source_ref)
+            for tag in decision.tags
+            for kind, separator, source_ref in [str(tag).partition(":")]
+            if separator and kind in {"meeting", "project"} and source_ref.strip()
+        ))
+        self._add_sources(record["id"], sources)
+        return record
+
+    def sync_from_desk(self, principal: Any, desk_decision_id: str) -> dict[str, Any]:
+        """Create or reconcile the canonical record for one Desk decision."""
+        decision = self._db.desk_decisions.get(desk_decision_id)
+        if decision is None:
+            raise NotFound("decision", str(desk_decision_id or "").strip())
+        record = self.create_from_desk(principal, desk_decision_id)
+        if record.get("lifecycle") != "active":
+            return record
+        # The legacy row remains for compatibility. Once the canonical record
+        # has an authored revision, reopening the old editor must not replace
+        # canonical words with its stale projection.
+        with self._db._connection() as conn:
+            authored = conn.execute(
+                "SELECT 1 FROM decision_record_revisions WHERE record_id = ? LIMIT 1",
+                (record["id"],),
+            ).fetchone()
+        if authored is not None:
+            return self._decorate(record)
+        fields = {
+            "decision_text": decision.decision_markdown.strip() or decision.title.strip(),
+            "rationale": self._join_text(
+                decision.context_markdown, decision.consequences_markdown
+            ) or None,
+            "alternatives": self._alternatives_text(decision.alternatives_json) or None,
+            "owner": ", ".join(decider.strip() for decider in decision.deciders if decider.strip()) or None,
+        }
+        return self._decorate(self.update_record(
+            principal,
+            record["id"],
+            {field: value for field, value in fields.items() if record.get(field) != value},
+        ))
+
+    def add_source(self, principal: Any, record_id: str, source_type: str, source_ref: str) -> None:
+        """Attach one navigable source to a canonical record idempotently."""
+        del principal
+        kind = self._required("source_type", source_type)
+        reference = self._required("source_ref", source_ref)
+        with self._db._connection() as conn:
+            if conn.execute(
+                "SELECT 1 FROM decision_records WHERE id = ? AND deleted = 0", (record_id,)
+            ).fetchone() is None:
+                raise KeyError(str(record_id or "").strip())
+            if conn.execute(
+                """SELECT 1 FROM decision_record_sources
+                   WHERE record_id = ? AND source_type = ? AND source_ref = ?""",
+                (record_id, kind, reference),
+            ).fetchone() is None:
+                conn.execute(
+                    """INSERT INTO decision_record_sources
+                       (id, record_id, source_type, source_ref, created_at)
+                       VALUES (?, ?, ?, ?, ?)""",
+                    (f"record-source-{uuid4().hex}", record_id, kind, reference, datetime.now(UTC).isoformat()),
+                )
 
     def update_record(
         self, principal: Any, record_id: str, fields: dict[str, Any]
@@ -274,7 +365,7 @@ class DecisionRecordService:
                    ORDER BY r.created_at DESC, r.id DESC""",
                 (self._required("work_type", work_type), self._required("work_ref", work_ref)),
             ).fetchall()
-        return [self._record_dict(row) for row in rows]
+        return [self._decorate(self._record_dict(row)) for row in rows]
 
     def records_for_source(
         self, principal: Any, source_type: str, source_id: str
@@ -289,7 +380,7 @@ class DecisionRecordService:
                    ORDER BY r.created_at DESC, r.id DESC""",
                 (self._required("source_type", source_type), self._required("source_id", source_id)),
             ).fetchall()
-        return [self._record_dict(row) for row in rows]
+        return [self._decorate(self._record_dict(row)) for row in rows]
 
     def supersede(
         self,
@@ -433,10 +524,15 @@ class DecisionRecordService:
                 f"""SELECT r.* FROM decision_records AS r
                    WHERE r.review_date IS NOT NULL AND r.review_date <= ?
                      AND r.lifecycle = 'active' AND r.deleted = 0 AND {_NOT_AN_ACTION}
+                     AND NOT EXISTS (
+                       SELECT 1 FROM desk_decisions AS dd
+                       WHERE r.source_type = 'desk' AND dd.id = r.source_id
+                         AND dd.deleted = 0 AND LOWER(dd.status) = 'proposed'
+                     )
                    ORDER BY review_date, created_at, id""",
                 (date.today().isoformat(),),
             ).fetchall()
-        return [self._record_dict(row) for row in rows]
+        return [self._decorate(self._record_dict(row)) for row in rows]
 
     def get(self, principal: Any, record_id: str) -> dict[str, Any] | None:
         """Get a record by ID with its sources, work links, and revisions."""
@@ -446,7 +542,7 @@ class DecisionRecordService:
             ).fetchone()
             if row is None:
                 return None
-            record = self._record_dict(row)
+            record = self._decorate(self._record_dict(row), conn)
             record["sources"] = [
                 self._source_dict(conn, source)
                 for source in conn.execute(
@@ -502,7 +598,7 @@ class DecisionRecordService:
                    ORDER BY r.created_at DESC, r.id DESC LIMIT ? OFFSET ?""",
                 (bounded_limit, bounded_offset),
             ).fetchall()
-        return [self._record_dict(row) for row in rows]
+        return [self._decorate(self._record_dict(row)) for row in rows]
 
     def search(
         self, principal: Any, query: str, *, limit: int = 50, recent: bool = False
@@ -536,7 +632,7 @@ class DecisionRecordService:
                        LIMIT ?""",
                     (bounded_limit,),
                 ).fetchall()
-            return [self._record_dict(row) for row in rows]
+            return [self._decorate(self._record_dict(row)) for row in rows]
         predicates: list[str] = []
         params: list[str] = []
         for term in terms:
@@ -568,7 +664,7 @@ class DecisionRecordService:
                     LIMIT ?""",
                 [phrase] * 4 + params + [bounded_limit],
             ).fetchall()
-        return [self._record_dict(row) for row in rows]
+        return [self._decorate(self._record_dict(row)) for row in rows]
 
     def _record_for_source(self, source_type: str, source_id: str) -> dict[str, Any] | None:
         with self._db._connection() as conn:
@@ -614,6 +710,25 @@ class DecisionRecordService:
         if not clean:
             raise ValueError(f"{name} is required")
         return clean
+
+    def _decorate(self, record: dict[str, Any], conn: Any | None = None) -> dict[str, Any]:
+        """Expose the retained Desk source status with the canonical row."""
+        if record.get("source_type") != "desk":
+            return record
+        if conn is not None:
+            row = conn.execute(
+                "SELECT status FROM desk_decisions WHERE id = ? AND deleted = 0",
+                (record.get("source_id"),),
+            ).fetchone()
+        else:
+            with self._db._connection() as connection:
+                row = connection.execute(
+                    "SELECT status FROM desk_decisions WHERE id = ? AND deleted = 0",
+                    (record.get("source_id"),),
+                ).fetchone()
+        if row is not None:
+            record["status"] = str(row["status"] or "proposed")
+        return record
 
     @staticmethod
     def _record_dict(row: Any) -> dict[str, Any]:

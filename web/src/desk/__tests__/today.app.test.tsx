@@ -103,7 +103,8 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
     expect(within(next).getByRole("button", { name: "Prep" })).toBeTruthy();
     // Since yesterday: folded to one line of counts, made with no press.
     const since = await screen.findByTestId("today-since");
-    expect(within(since).getByTestId("today-since-counts").textContent).toBe("2 meetings · 2 decisions · 1 promise · 2 more");
+    // The complete Tuesday producer recording excludes Friday's meetings.
+    expect(within(since).getByTestId("today-since-counts").textContent).toBe("2 decisions · 1 promise · 2 more");
     expect(within(since).getByTestId("today-since-toggle")).toHaveAttribute("aria-expanded", "false");
     expect(reads).toContain("/api/brief/latest?ensure=1");
     expect(posts.some((p) => p.url.startsWith("/api/brief/generate"))).toBe(false);

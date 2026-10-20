@@ -185,6 +185,28 @@ async function mount() {
 }
 
 describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
+  it("names a speech setup blocker by its capability", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you")) {
+        return {
+          items: [],
+          blockers: [{ key: "speech", label: "No engine for speech", verb: "Choose an engine" }],
+          failedMeetings: [],
+          coverage: [],
+          complete: true,
+        } as never;
+      }
+      if (path === "/api/door") return { ...DOOR } as never;
+      return {} as never;
+    });
+    render(<NeedsDrawer />);
+    await screen.findByText("1 needs you");
+    expect(face(row("No engine for speech"))).toMatchObject({
+      fact: "Speech",
+      verbs: ["Choose an engine"],
+    });
+  });
+
   it("a Secure helper request has one Allow press with its exact request id", async () => {
     const allow = vi.fn();
     vi.mocked(apiFetch).mockImplementation(async (path: string, init?: unknown) => {

@@ -117,7 +117,7 @@ describe("dispatchKey runs registry verbs", () => {
     expect(
       dispatchKey(kd({ key: "N", metaKey: true, shiftKey: true }))?.id,
     ).toBe("desk.new-decision");
-    expect(useDesk.getState().createPrimitive).toHaveBeenCalledWith("decision");
+    expect(useDesk.getState().createPrimitive).toHaveBeenCalledWith("decision", {});
   });
 
   it("PHILO-17 U27: the menus show ⌃ keys a browser tab receives; the ⌘ keys stay bound", () => {
