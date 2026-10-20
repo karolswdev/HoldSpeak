@@ -29,7 +29,7 @@ vi.mock("../../useDeskChangedRefresh", () => ({
   },
 }));
 
-import { useNextOneOnOne } from "../nextOneOnOne";
+import { useNextOneOnOne, useNextOneOnOneRead } from "../nextOneOnOne";
 import { composeScreen, type ScreenInputs } from "../compose";
 import { DeskIcon } from "../../surface";
 import { EMPTY_ITEMS } from "../../api";
@@ -51,6 +51,22 @@ describe("the next 1:1 read (moved from the Dock)", () => {
     const { result } = renderHook(() => useNextOneOnOne());
     await waitFor(() => expect(result.current).toMatch(/^1:1 \d\d:\d\d$/));
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/people/relationships/r1/brief");
+  });
+
+  it.each([0, 1])("the Dock shows a 1:1 only on its local day (offset %i)", async (offset) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 3, 12));
+    try {
+      mocks.apiFetch.mockImplementation(async (path) => path.endsWith("/brief")
+        ? { brief: { next_one_on_one: new Date(2026, 9, 3 + offset, 15).toISOString() } }
+        : mocks.defaultApiFetch(path));
+      const { result } = renderHook(() => useNextOneOnOneRead(true));
+      await waitFor(() => expect(result.current.reading).toBe(false));
+      if (offset === 0) expect(result.current.label).toBe("1:1 15:00");
+      else expect(result.current.label).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("shows nothing when the People read fails", async () => {

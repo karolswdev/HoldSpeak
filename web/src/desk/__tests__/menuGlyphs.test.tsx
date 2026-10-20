@@ -237,10 +237,12 @@ describe("bound-key-set byte-identical proof (HS-148-02)", () => {
       "object.rename": "F2",
       "object.delete": "Delete",
       "go.ask": "⌘I",
-      "go.dictate": "⌃1",
+      "desk.open-intelligence": "⌃1",
       "go.review-meetings": "⌃2",
-      "go.open-conductor": "⌃3",
-      "go.configure-settings": "⌃4",
+      "desk.open-people": "⌃3",
+      "go.open-conductor": "⌃4",
+      "go.dictate": "⌃5",
+      "go.configure-settings": "⌃,",
       "window.close": "⌃W",
       "window.minimize": "⌃M",
       // PHILO-16 §5: the compositor's keys (the C2 keys ⌃M, ⌃B, ⌃` stay
@@ -255,6 +257,7 @@ describe("bound-key-set byte-identical proof (HS-148-02)", () => {
       "window.back": "Esc",
       "system.search": "⌘K",
       "system.sheet": "⌘/",
+      "chair.window.needs": "⌃J",
     });
   });
 });

@@ -26,6 +26,40 @@ refusals, with ordinary credentials retaining their existing access. Real hub
 Room geometry passes at 1440/393. Native model output quality is not claimed;
 the engine leaf is recorded. Required quick: P7P8_QUICK_PENDING.
 
+Shell S3 gives the desktop Dock Today, Meetings, People, Agents and Speak;
+the phone has Today, Capture, Meetings, People and Agents. Both use the
+application manifest. Phone words stay visible in five whole 76-pixel tiles;
+each owns its hit area. Ctrl/Cmd 1–5 follow the desktop order. Needs you is
+Ctrl-J and Settings is Ctrl-comma, with the typing guard preserved.
+
+Tile facts come from the existing Needs you, meeting, one-to-one, mic and
+agent producers. Zero counts stay hidden. Phone orb and Dock layout controls
+leave the Dock. Root reviewed actual two-size geometry and key-opening
+proof, then verified 31 guard/menu checks and TypeScript. Earlier 116 focused
+Dock/key checks pass. The inherited writer census now excludes parked
+history; Setup's duplicate viewport layout follows its window container.
+No guard is widened. Root also repaired the current walk instructions for
+Setup and Settings while retaining the outcome predicates and sealed pass
+records. Eight of nine checks passed immediately. The remaining phone check
+exposed a real bug: a Settings section anchor still consumed Back as if it
+were a child page. Settings now returns to its caller in one Back press;
+the actual same-receipt, nine-point hit and durable identity check passes.
+The integrated product run passes 4,073 web checks and all nine current walk
+cases. Its remaining web assertion clicked the removed Dock Reset button;
+the retained verb now exercises the same persistence assertions. The exact
+Agents-key census follows Ctrl-4, and the atlas gate fence recognizes current
+and historical entrance words. API census failures exposed unpinned FastAPI
+0.150 in this worker environment, against 0.128 in uv.lock; Root restored the
+locked dependency set instead of publishing a five-route partial census.
+With locked dependencies, all 774 affected Python census/atlas checks and
+27 shell checks pass. Final delta quick also repeats the nine real-hub walk
+cases under the locked backend. The next sweep caught a real 32-pixel shift when the People 1:1 tag arrived.
+Meetings and People now reserve their tag width before the read, and the Dock
+limits the 1:1 fact to its local day. Root held and released the real People
+response: all five target rectangles stayed exact; the browser case passes
+in 6.28s. The 27 Dock/read web checks also pass, including today/tomorrow.
+Required quick: Final delta quick against the verified product source passes 10 actual Dock browser cases, 110 desk sweep cases, 27 canon and 1,116 repository guards; build passes. The preceding product run passed 4,076 related web and 768 other affected Python/browser checks. Last observed desk before this merge: backend aa4ecd9d3, frontend 212132a1074a6815, PID 32823. Each merge deploys its exact source; GET /api/system/identity reports the running identity..
+
 ST9 adds `holdspeak setup`, `holdspeak setup --yes`, MCP `setup.status` and
 `setup.use`. They use the running hub and the shared Setup producers.
 Use all re-reads the inventory, keeps each result, continues after a failure,
