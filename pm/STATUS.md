@@ -21,7 +21,7 @@ preparation, sending and helper creation. Focused checks: 18 agent-flight
 checks and 130 web consumer checks pass. The actual completed producer pair
 renders Done · New and its two-round Result at 1440/393. Native interactive
 agents are not inferred from the fake processes. Required quick:
-AG12_QUICK_PENDING.
+4,076 web, 9,304 affected pytest, 108 sweep, 27 canon and 1,116 repo guards pass.
 
 Setup ST3–ST5 share one found-things window on first run and later visits.
 Use selects real discovered engine IDs and the composed Everything-else
