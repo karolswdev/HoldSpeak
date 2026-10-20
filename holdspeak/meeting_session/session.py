@@ -518,34 +518,13 @@ class MeetingSession(
                 self._unwind_started_bundle("journal-open")
                 raise RuntimeError(self._state.capture_failure) from exc
 
-            # C10 gives the native owner the journal root and Meeting ID.  A
-            # test journal without a directory keeps the in-process seam used
-            # by the existing unit fixtures.
-            journal_directory = getattr(self._capture_journal, "directory", None)
-            recorder_kwargs: dict[str, Any] = {
-                "mic_device": self.mic_device,
-                "system_device": self.system_device,
-                "on_mic_level": self.on_mic_level,
-                "on_system_level": self.on_system_level,
-                "on_audio_chunk": lambda chunk: self._capture_journal.append(
-                    chunk.source, chunk.audio
-                ) if self._capture_journal is not None else None,
-            }
-            if journal_directory is not None and bool(
-                getattr(MeetingRecorder, "capture_process_supported", False)
-            ):
-                recorder_kwargs.update(
-                    {
-                        "capture_directory": journal_directory.parent,
-                        "meeting_id": self._state.id,
-                        # The child owns journal writes.  The parent still
-                        # observes chunks for transcription through the pipe.
-                        "on_audio_chunk": None,
-                    }
-                )
-            self._recorder = MeetingRecorder(
-                **recorder_kwargs,
-            )
+            from .capture import recorder_options
+
+            self._recorder = MeetingRecorder(**recorder_options(
+                self._capture_journal, self._state.id, MeetingRecorder,
+                mic_device=self.mic_device, system_device=self.system_device,
+                on_mic_level=self.on_mic_level, on_system_level=self.on_system_level,
+            ))
 
             # Start recording
             try:

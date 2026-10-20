@@ -130,19 +130,16 @@ class MeetingCaptureJournal:
             self._write_manifest()
 
     def _checkpoint_locked(self) -> None:
-        # C10: the capture child owns the open PCM handles.  The parent keeps
-        # this journal object for the existing session lifecycle, so a parent
-        # checkpoint must refresh the child's durable manifest instead of
-        # overwriting it with an empty byte map.
-        if not self._files:
-            self._reload_manifest_locked()
-            return
-        # HS-93-06 fault plane: a deterministic disk-write failure at the
-        # checkpoint, taking exactly the real error path (self._error set,
-        # capture goes `recoverable`, no durable bytes are falsely claimed).
+        # HS-93-06: a failed checkpoint remains a failed checkpoint when
+        # this object observes the child's manifest rather than open handles.
         from .faults import trip as _fault_trip
 
         _fault_trip("meeting.checkpoint_write", OSError)
+        # C10: the capture child owns the open PCM handles. The parent
+        # refreshes its durable manifest instead of overwriting the byte map.
+        if not self._files:
+            self._reload_manifest_locked()
+            return
         for source, handle in self._files.items():
             handle.flush()
             os.fsync(handle.fileno())
