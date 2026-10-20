@@ -1444,6 +1444,13 @@ def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:
             parts.append(f"{agent['label']} does not trust the HoldSpeak hooks yet (it does not run them)")
         else:
             parts.append(f"{agent['label']} hooks {agent['hooks']}")
+        if agent.get("mcp") != "installed" or not agent.get("mcp_runnable", False):
+            state = agent.get("mcp", "unknown")
+            if state == "installed" and not agent.get("mcp_runnable", False):
+                state = "not runnable"
+            parts.append(f"{agent['label']} desk tools {state}")
+        if agent.get("skill") != "installed":
+            parts.append(f"{agent['label']} skill {agent.get('skill', 'unknown')}")
     detail = "; ".join(parts)
     fixes: list[str] = []
     if any(a["hooks"] == "untrusted" for a in unhooked):
@@ -1455,6 +1462,13 @@ def _check_coding_agents(detected: dict | None = None) -> DoctorCheck:
         names = " and ".join(a["label"] for a in unhooked)
         agent_flag = f" --agent {unhooked[0]['id']}" if len(unhooked) == 1 else ""
         fixes.append(f"Install the hooks for {names}: `holdspeak agent-hook install{agent_flag}`")
+    incomplete = [
+        a for a in installed
+        if a.get("mcp") != "installed" or not a.get("mcp_runnable", False) or a.get("skill") != "installed"
+    ]
+    if incomplete:
+        names = " and ".join(a["label"] for a in incomplete)
+        fixes.append(f"Use HoldSpeak for {names} to add its desk tools and skill")
     if any(a["hooks"] == "broken" for a in installed):
         status = "WARN"
     tmux = detected["tmux"]

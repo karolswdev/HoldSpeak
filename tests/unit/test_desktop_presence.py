@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import pytest
 
 from holdspeak.desktop_presence import (
+    DESK_NOT_RUNNING_LABEL,
     DesktopPresenceHost,
     NullPresenceRenderer,
     build_desktop_presence_host,
     build_presence_window_view,
     desktop_presence_enabled,
     detect_presence_platform,
+    format_elapsed,
 )
 from holdspeak.activity_tracker import RuntimeActivityTracker
 
@@ -85,8 +89,36 @@ def test_host_idle_hides_without_linger() -> None:
     host.handle_activity(tracker.update("recording", source="hotkey"))
     host.handle_activity(tracker.update("idle", source="hotkey"))
 
-    assert renderer.calls == [("show", "recording"), ("hide", "hidden")]
+    assert renderer.calls == [
+        ("show", "recording"),
+        ("update", "idle"),
+        ("hide", "hidden"),
+    ]
     assert host.visible is False
+
+
+def test_host_clears_native_activity_after_linger_before_idle() -> None:
+    renderer = FakeRenderer()
+    timers: list[FakeTimer] = []
+
+    def timer_factory(_delay: float, callback):
+        timer = FakeTimer(callback)
+        timers.append(timer)
+        return timer
+
+    tracker = RuntimeActivityTracker()
+    host = DesktopPresenceHost(renderer, timer_factory=timer_factory)
+
+    host.handle_activity(tracker.update("meeting_live", source="meeting"))
+    timers[0].fire()
+    host.handle_activity(tracker.update("idle", source="runtime"))
+
+    assert renderer.calls == [
+        ("show", "meeting_live"),
+        ("hide", "linger_elapsed"),
+        ("update", "idle"),
+        ("hide", "hidden"),
+    ]
 
 
 def test_host_cancels_linger_on_new_activity() -> None:
@@ -152,6 +184,27 @@ def test_build_host_wraps_a_selected_renderer(monkeypatch: pytest.MonkeyPatch) -
     host = build_desktop_presence_host({"HOLDSPEAK_DESKTOP_PRESENCE": "1"})
     assert isinstance(host, DesktopPresenceHost)
     assert host.renderer is renderer
+
+
+def test_build_host_forwards_stop_callback_to_selected_renderer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    renderer = NullPresenceRenderer()
+    stop_callback = lambda: None
+    seen: dict[str, object] = {}
+
+    def select(_platform, _url, *, stop_callback=None):
+        seen["stop_callback"] = stop_callback
+        return renderer
+
+    monkeypatch.setattr("holdspeak.desktop_presence._select_presence_renderer", select)
+    host = build_desktop_presence_host(
+        {"HOLDSPEAK_DESKTOP_PRESENCE": "1"},
+        stop_callback=stop_callback,
+    )
+
+    assert isinstance(host, DesktopPresenceHost)
+    assert seen["stop_callback"] is stop_callback
 
 
 def test_build_host_falls_back_when_renderer_raises(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -241,6 +294,42 @@ def test_window_view_maps_state_metadata() -> None:
     assert view.label == "Recording"
     assert view.detail == "HoldSpeak is listening."
     assert view.accent == "#ff6b35"
+
+
+def test_meeting_live_view_carries_recording_elapsed_and_stop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    activity = RuntimeActivityTracker().update(
+        "meeting_live", source="meeting", label="Segment captured"
+    )
+    activity["started_at"] = "2026-10-19T12:00:00+00:00"
+    monkeypatch.setattr(
+        "holdspeak.desktop_presence.utc_now",
+        lambda: datetime(2026, 10, 19, 12, 12, 40, tzinfo=timezone.utc),
+    )
+
+    view = build_presence_window_view(activity)
+
+    assert view.label == "Recording · 12:40"
+    assert view.elapsed_seconds == 760
+    assert view.stop_available is True
+    assert view.desk_available is True
+
+
+def test_presence_view_names_an_unavailable_desk() -> None:
+    view = build_presence_window_view(
+        {"state": "meeting_live", "elapsed_seconds": 760, "desk_available": False}
+    )
+
+    assert view.label == DESK_NOT_RUNNING_LABEL
+    assert view.stop_available is False
+    assert view.desk_available is False
+
+
+def test_format_elapsed_is_a_stable_menu_token() -> None:
+    assert format_elapsed(0) == "00:00"
+    assert format_elapsed(760.9) == "12:40"
+    assert format_elapsed(-4) == "00:00"
 
 
 def test_window_view_hides_idle() -> None:

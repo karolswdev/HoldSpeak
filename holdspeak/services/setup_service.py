@@ -282,22 +282,47 @@ class SetupService:
                 ready_agents: list[str] = []
                 pending_agents: list[str] = []
                 installed_agents: list[str] = []
+                bindings: list[dict[str, Any]] = []
                 for agent in agents:
                     if not isinstance(agent, dict) or not agent.get("installed"):
                         continue
-                    label = str(agent.get("label") or agent.get("id") or "")
+                    agent_id = str(agent.get("id") or "")
+                    label = str(agent.get("label") or agent_id)
                     installed_agents.append(label)
+                    # The Setup face must use the producer's readback.  A
+                    # successful press is not enough: each supported agent
+                    # is ready only when hooks, tools and the skill all read
+                    # back as installed.  pi has no native tools/skill
+                    # binding, so its producer facts remain the facts it can
+                    # actually report.
+                    facts: dict[str, str] = {}
+                    for source, name in (("hooks", "hooks"), ("mcp", "tools"), ("skill", "skill")):
+                        value = agent.get(source)
+                        if value is not None:
+                            facts[name] = str(value)
+                    owned = (
+                        facts.get("hooks") in {"installed", "untrusted"}
+                        or facts.get("tools") in {"installed", "outdated"}
+                        or facts.get("skill") in {"installed", "outdated"}
+                    )
+                    bindings.append({
+                        "id": agent_id,
+                        "label": label,
+                        "ready": bool(agent.get("ready")),
+                        "facts": facts,
+                        "can_stop": agent_id in {"claude", "codex"} and owned,
+                    })
                     if agent.get("ready"):
                         ready_agents.append(label)
-                    elif str(agent.get("id") or "") in {"claude", "codex"}:
-                        pending_agents.append(str(agent.get("id")))
+                    elif agent_id in {"claude", "codex"}:
+                        pending_agents.append(agent_id)
                 if ready_agents or pending_agents:
                     names = ", ".join(ready_agents + [next((str(a.get("label") or a.get("id")) for a in agents if isinstance(a, dict) and str(a.get("id")) == p), p) for p in pending_agents])
                     row(
                         "agents", "agents", "Agents", names,
                         state="works" if not pending_agents else "found",
                         action=None if not pending_agents else "agents",
-                        payload={"agents": pending_agents},
+                        payload={"agents": pending_agents, "bindings": bindings},
                     )
                 elif not installed_agents:
                     row(

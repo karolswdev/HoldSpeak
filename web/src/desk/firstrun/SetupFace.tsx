@@ -36,6 +36,14 @@ export interface SetupRow {
   payload?: Record<string, unknown>;
 }
 
+interface SetupAgentBinding {
+  id: string;
+  label: string;
+  ready?: boolean;
+  facts?: Record<string, string>;
+  can_stop?: boolean;
+}
+
 export interface SetupInventory {
   rows: SetupRow[];
   owner_name?: string;
@@ -81,7 +89,74 @@ function stateNode(row: SetupRow) {
   return <StateChip state="idle" label="Found" />;
 }
 
-function SetupInventoryRow({ row, busy, onUse }: { row: SetupRow; busy: boolean; onUse: () => void }) {
+const AGENT_LABELS: Record<string, string> = { claude: "Claude Code", codex: "Codex", pi: "pi" };
+
+function agentFactWord(value: string): string {
+  return {
+    installed: "ready",
+    outdated: "needs update",
+    missing: "missing",
+    foreign: "another setup",
+    unreadable: "cannot read",
+    untrusted: "not trusted",
+  }[value] || "unknown";
+}
+
+function SetupAgentBindings({
+  bindings,
+  busyId,
+  onStop,
+}: {
+  bindings: SetupAgentBinding[];
+  busyId: string | null;
+  onStop: (agent: string) => void;
+}) {
+  if (!bindings.length) return null;
+  return (
+    <div className="setup-agent-bindings" data-testid="setup-agent-bindings">
+      {bindings.map((binding) => {
+        const facts = binding.facts || {};
+        const factWords = ["hooks", "tools", "skill"]
+          .filter((name) => facts[name] !== undefined)
+          .map((name) => facts[name] === "installed" ? name : `${name}: ${agentFactWord(facts[name])}`);
+        return (
+          <div className="setup-agent-binding" key={binding.id}>
+            <span className="setup-agent-binding-copy">
+              <strong>{binding.label}{binding.ready ? " · uses your desk" : ""}</strong>
+              <small>{factWords.join(" · ") || "unknown"}</small>
+            </span>
+            {binding.can_stop ? (
+              <Button
+                dense
+                variant="secondary"
+                loading={busyId === `agent:${binding.id}`}
+                disabled={busyId !== null}
+                onClick={() => onStop(binding.id)}
+              >
+                Stop using my desk
+              </Button>
+            ) : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function SetupInventoryRow({
+  row,
+  busyId,
+  onUse,
+  onStop,
+}: {
+  row: SetupRow;
+  busyId: string | null;
+  onUse: () => void;
+  onStop?: (agent: string) => void;
+}) {
+  const bindings = Array.isArray(row.payload?.bindings)
+    ? row.payload.bindings.filter((item): item is SetupAgentBinding => Boolean(item && typeof item === "object"))
+    : [];
   return (
     <SurfaceRow
       glyph={<span aria-hidden="true">{row.kind === "speech" ? "◖" : row.kind === "calendar" ? "▦" : row.kind === "account" ? "⑂" : row.kind === "agents" ? "◉" : "◆"}</span>}
@@ -94,15 +169,41 @@ function SetupInventoryRow({ row, busy, onUse }: { row: SetupRow; busy: boolean;
         </span>
       }
       verbs={row.action && row.state !== "works" ? (
-        <Button dense variant="secondary" loading={busy} disabled={busy} onClick={onUse}>
+        <Button dense variant="secondary" loading={busyId === row.id} disabled={busyId !== null} onClick={onUse}>
           {row.verb || "Use"}
         </Button>
       ) : undefined}
-    />
+    >
+      {bindings.length && onStop ? <SetupAgentBindings bindings={bindings} busyId={busyId} onStop={onStop} /> : null}
+    </SurfaceRow>
   );
 }
 
 type SetupActionState = "works" | "pending" | "does_not_work" | "found";
+
+function plainAgentFailure(item: Record<string, any>): string {
+  const agent = AGENT_LABELS[String(item.agent || "").toLowerCase()] || "Agent";
+  const code = String(item.code || "");
+  const reason = {
+    mcp_name_taken: "already has another MCP setup. Remove it or try again.",
+    mcp_config_unreadable: "MCP settings cannot be read. Fix the settings and try again.",
+    mcp_executable_missing: "HoldSpeak tools are not available. Install them and try again.",
+    mcp_binding_missing: "tools were not saved. Try again.",
+    skill_name_taken: "already has another skill with this name. Remove it or try again.",
+    agent_settings_unreadable: "hook settings cannot be read. Fix the settings and try again.",
+    agent_not_ready: "is not ready. Try again.",
+    failed: "setup failed. Try again.",
+  }[code] || "setup did not finish. Try again.";
+  return `${agent}: ${reason}`;
+}
+
+function plainAgentError(error: unknown): string {
+  const message = readableError(error).toLowerCase();
+  if (message.includes("mcp") && message.includes("another")) return "Another MCP setup is using this name. Remove it or try again.";
+  if (message.includes("skill") && message.includes("another")) return "Another skill is using this name. Remove it or try again.";
+  if (message.includes("cannot read") || message.includes("unreadable")) return "Agent settings cannot be read. Existing entries kept. Fix them and try again.";
+  return "Agent setup failed. Existing entries kept. Try again.";
+}
 
 const TAKE_FAILURE_TOKENS: Record<DictationFailure, { chip: string; reason: string }> = {
   permission_denied: { chip: "MIC BLOCKED", reason: "ALLOW IN BROWSER" },
@@ -127,8 +228,12 @@ function actionAnswer(answer: unknown): { state: SetupActionState; reason?: stri
   const entry = result.entry && typeof result.entry === "object" ? result.entry as Record<string, any> : {};
   const connection = Array.isArray(entry.connections) ? entry.connections.find((item) => item && typeof item === "object") : null;
   const state = String(result.state || result.status || entry.state || connection?.state || "").toLowerCase();
+  const failedAgents = Array.isArray(result.results)
+    ? result.results.filter((item) => item && item.ok === false)
+      .map((item) => plainAgentFailure(item)).join(" · ")
+    : "";
   const reason = String(
-    result.error_detail || result.error || result.message || result.reason || entry.error_detail || connection?.error_detail || "",
+    failedAgents || result.error_detail || result.error || result.message || result.reason || entry.error_detail || connection?.error_detail || "",
   ).trim();
   const hasError = Boolean(
     result.error_code || result.error || result.error_detail || result.failure ||
@@ -221,6 +326,15 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
     }));
   }, []);
 
+  const readInventory = useCallback(async (): Promise<SetupInventory | null> => {
+    try {
+      const latest = await apiFetch<SetupInventory>("/api/setup/found");
+      return Array.isArray(latest.rows) ? latest : null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const useRow = useCallback(async (row: SetupRow) => {
     if (!row.action) return;
     setBusyId(row.id);
@@ -228,9 +342,9 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
     try {
       let answer: unknown = {};
       if (row.action === "agents") {
-        for (const agent of (row.payload?.agents as string[] | undefined) ?? []) {
-          answer = await apiFetch("/api/onboarding/agents/use", { method: "POST", json: { agent } });
-        }
+        answer = await apiFetch("/api/onboarding/agents/use", {
+          method: "POST", json: { agents: (row.payload?.agents as string[] | undefined) ?? [] },
+        });
       } else {
         answer = await apiFetch("/api/setup/use", {
           method: "POST",
@@ -238,30 +352,70 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
         });
       }
       const outcome = actionAnswer(answer);
-      setInventory((current) => ({
-        ...current,
-        rows: current.rows.map((candidate) => candidate.id === row.id
-          ? {
-            ...candidate,
-            state: outcome.state,
-            reason: outcome.reason || "",
-            action: outcome.state === "works" ? null : candidate.action,
-            verb: outcome.state === "works" ? null : candidate.verb,
-          }
-          : candidate),
-      }));
+      // Read the producer again after every install.  The response says what
+      // the admitted press attempted; the inventory says what each agent now
+      // has.  Preserve a failed aggregate result when the read still sees a
+      // pending agent, so a later success cannot hide the earlier failure.
+      const latest = await readInventory();
+      setInventory((current) => {
+        const merged = latest ? mergeInventory(current, latest) : current;
+        return {
+          ...merged,
+          rows: merged.rows.map((candidate) => candidate.id === row.id
+            ? {
+                ...candidate,
+                state: outcome.state,
+                reason: outcome.reason || "",
+                action: outcome.state === "works" ? null : candidate.action || row.action,
+                verb: outcome.state === "works" ? null : candidate.verb || row.verb,
+              }
+            : candidate),
+        };
+      });
       if (outcome.state === "pending") void refreshPending(row.id);
     } catch (error) {
       setInventory((current) => ({
         ...current,
         rows: current.rows.map((candidate) => candidate.id === row.id
-          ? { ...candidate, state: "does_not_work", reason: readableError(error) }
+          ? {
+              ...candidate,
+              state: "does_not_work",
+              reason: row.action === "agents" ? plainAgentError(error) : readableError(error),
+            }
           : candidate),
       }));
     } finally {
       setBusyId(null);
     }
-  }, [refreshPending]);
+  }, [readInventory, refreshPending]);
+
+  const stopAgent = useCallback(async (agent: string) => {
+    setBusyId(`agent:${agent}`);
+    setNotice("");
+    try {
+      await apiFetch("/api/onboarding/agents/stop", {
+        method: "POST", json: { agent },
+      });
+      const latest = await readInventory();
+      if (latest) setInventory((current) => mergeInventory(current, latest));
+    } catch (error) {
+      setInventory((current) => ({
+        ...current,
+        rows: current.rows.map((candidate) => candidate.id === "agents"
+          ? {
+              ...candidate,
+              state: "does_not_work",
+              reason: `${AGENT_LABELS[agent] || "Agent"} could not stop using your desk. Try again.`,
+              action: candidate.action || "agents",
+              verb: candidate.verb || "Let my agents use HoldSpeak",
+            }
+          : candidate),
+      }));
+      setNotice(plainAgentError(error));
+    } finally {
+      setBusyId(null);
+    }
+  }, [readInventory]);
 
   const useEverything = useCallback(async () => {
     for (const row of actionable) await useRow(row);
@@ -313,7 +467,7 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
       {found.length ? (
         <SurfaceSection label="Found on this Mac" data-testid="setup-found">
           <SurfaceRows>
-            {found.map((row) => <SetupInventoryRow key={row.id} row={row} busy={busyId === row.id} onUse={() => void useRow(row)} />)}
+            {found.map((row) => <SetupInventoryRow key={row.id} row={row} busyId={busyId} onUse={() => void useRow(row)} onStop={stopAgent} />)}
           </SurfaceRows>
         </SurfaceSection>
       ) : null}
@@ -344,12 +498,12 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
       ) : null}
       {notFound.length ? (
         <FoldGadget title="Not found" token={String(notFound.length)}>
-          <SurfaceRows>{notFound.map((row) => <SetupInventoryRow key={row.id} row={row} busy={busyId === row.id} onUse={() => void useRow(row)} />)}</SurfaceRows>
+          <SurfaceRows>{notFound.map((row) => <SetupInventoryRow key={row.id} row={row} busyId={busyId} onUse={() => void useRow(row)} onStop={stopAgent} />)}</SurfaceRows>
         </FoldGadget>
       ) : null}
       {working.length ? (
         <FoldGadget title="Works" token={String(working.length)}>
-          <SurfaceRows>{working.map((row) => <SetupInventoryRow key={row.id} row={row} busy={false} onUse={() => undefined} />)}</SurfaceRows>
+          <SurfaceRows>{working.map((row) => <SetupInventoryRow key={row.id} row={row} busyId={busyId} onUse={() => undefined} onStop={stopAgent} />)}</SurfaceRows>
         </FoldGadget>
       ) : null}
       {notice ? <p className="setup-face-notice" role="status">{notice}</p> : null}

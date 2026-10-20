@@ -217,6 +217,8 @@ def stream(db, monkeypatch):
     # The passthrough lane: the real `dictation_runner` journals the utterance
     # and nothing reaches a model or a LAN endpoint.
     config.dictation.pipeline.enabled = False
+    # This fixture exercises plain dictation with commands explicitly off.
+    config.dictation.macros.enabled = False
     config.meeting.web_auth_token = OWNER_TOKEN
     monkeypatch.setattr(Config, "load", classmethod(lambda _cls: config))
 
