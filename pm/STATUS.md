@@ -28,7 +28,7 @@ The first required quick passes 4,072 web checks, 1,221 affected Python/browser,
 exports and the new read-only ps/tmux census classification. Root regenerated
 both API exports from the app and classified that exact local reader; all
 input writes still use admitted process.input. Final delta quick against that
-verified product source: AG15_QUICK_PENDING.
+verified product source: 14 affected Python, 108 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The prior product run also passed 4,072 web and 1,221 affected Python/browser checks.
 
 ST7 makes Settings one page with You, Speak, Meetings, Notices, Accounts,
 Agents, Desk and This Mac. The desktop index sits beside the page; phone
