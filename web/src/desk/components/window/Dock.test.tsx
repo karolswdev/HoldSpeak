@@ -143,7 +143,7 @@ vi.mock("./launcherRegistry", () => ({ useLaunchers: () => dockLaunchers.list })
 vi.mock("./Expose", () => ({ toggleExpose: vi.fn() }));
 vi.mock("./VerbGlyph", () => ({ VerbGlyph: () => null }));
 vi.mock("./ShortcutSheet", () => ({ ShortcutSheet: () => null }));
-vi.mock("../../applications", () => {
+vi.mock("../../applications", async (original) => {
   const applications = [
     { windowId: "intelligence:desk", action: "open-intelligence", href: "/intelligence", label: "Today", glyph: "I", surface: false, dock: { order: 0, launch: "intelligence", phone: 0 } },
     { windowId: "surface-meetings", action: "open-meetings", href: "/meetings", label: "Meetings", glyph: "M", surface: true, dock: { order: 1, launch: "surface", phone: 2 } },
@@ -159,6 +159,7 @@ vi.mock("../../applications", () => {
     applications[3],
   ];
   return {
+    ...(await original<typeof import("../../applications")>()),
     DOCK_APPLICATIONS: applications,
     PHONE_DOCK_APPLICATIONS: phoneApplications,
   };

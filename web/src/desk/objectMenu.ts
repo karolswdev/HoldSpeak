@@ -9,6 +9,25 @@ import { primitiveCan } from "../lib/primitives";
 import { handKindOf } from "./agentHand";
 import { deleteSeatShown } from "./deleteSeat";
 import { askableKind } from "./askAbout";
+import { normalizeRef, SEED_DESK_DIRECTORY_ID } from "./screen/compose";
+
+const KEEPABLE_KINDS = new Set(["meeting", "person", "people", "decision", "artifact", "repository", "thread"]);
+
+function directoryHasRef(directoryId: string, targetRef: string): boolean {
+  const directory = useDesk.getState().items.directory?.find((row) => row.id === directoryId);
+  if (!directory) return false;
+  const normalized = normalizeRef(targetRef);
+  const bareId = targetRef.includes(":") ? targetRef.slice(targetRef.indexOf(":") + 1) : targetRef;
+  return (directory.memberIds ?? []).some((member) => normalizeRef(member) === normalized || member === bareId);
+}
+
+function deskHasRef(targetRef: string): boolean {
+  return directoryHasRef(SEED_DESK_DIRECTORY_ID, targetRef);
+}
+
+function targetKind(targetRef: string, object: WorldObject | null): string {
+  return object?.kind ?? targetRef.split(":", 1)[0];
+}
 
 /** Object menus only list verbs the selected kind can run. State conditions
  * (for example a missing delete receipt) use the registry's ghost reason;
@@ -27,7 +46,9 @@ function offeredForKind(v: Verb, kind: WorldObject["kind"] | string): boolean {
     case "object.open":
       return true;
     case "object.file":
-      return kind !== "directory";
+      return KEEPABLE_KINDS.has(kind);
+    case "object.unfile":
+      return KEEPABLE_KINDS.has(kind) || kind === "note";
     case "object.draft-update":
       return kind === "project";
     // Betterment Q5: Ask about this, on every object he can ask about.
@@ -71,9 +92,14 @@ export function objectMenuEntries(target: { ref: string }): WorkMenuEntry[] {
   const ctx: VerbContext = { selectedRef: target.ref };
   const verbs = menuVerbs("object");
   const object = objectByRef(useDesk.getState().items, target.ref);
-  const kind = object?.kind ?? target.ref.split(":", 1)[0];
+  const kind = targetKind(target.ref, object);
   const offered = verbs
     .filter((v) => offeredForKind(v, kind))
+    .filter((v) => {
+      if (v.id === "object.file") return !deskHasRef(target.ref);
+      if (v.id === "object.unfile") return kind === "note" || deskHasRef(target.ref);
+      return true;
+    })
     .filter((v) => !v.ghost(ctx));
   const ordinary = offered.filter((v) => v.group !== "danger");
   const danger = offered.filter((v) => v.group === "danger");
