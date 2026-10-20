@@ -4,9 +4,29 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (unchecked Send warning)
+**Last updated:** 2026-10-20 (one decision record)
 
 ## Current phase
+
+P9 gives each decision one canonical record. New Decision carries About and
+Why through the admitted decision.create path. Project This week, Decisions,
+the decision window and Meeting Decide resolve that record. Legacy source
+rows remain; the idempotent migration copies all of them without replacing
+later canonical edits. Proposed decisions stay out of project evidence until
+Confirm. A decision with no project membership stays out after Confirm too.
+
+Root independently passed 85 focused cases, including actual private-hub
+1440/393 browser flows with strict hit/focus checks, the real Confirm PUT,
+receipt and unchanged canonical-ID readback. All 96 decision/Needs web
+consumers, type check and build pass. The final checks exposed two adapter
+seams: Needs must carry proposed status, and its operation must use the raw
+canonical ID while the row retains decision:<id>. Both are covered by the
+actual flow. The combined API census has 810 routes and 675 OpenAPI paths.
+Required quick: P9_QUICK_PENDING.
+
+The follow-up audit closes five old entries already delivered by #1267,
+#1303, #1304 and #1319. The source and retained proof are recorded in the
+resolved ledger; the remaining entries stay open.
 
 Send S8 keeps an unchecked published update sendable. Preview says
 "Not checked yet: no claim in this update was accepted" above the words;
