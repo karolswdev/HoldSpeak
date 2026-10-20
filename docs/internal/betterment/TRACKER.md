@@ -178,7 +178,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S5 | The Send sheet | Open |  |
 | S6 | Edit before Send | Open |  |
 | S7 | Automations put their result in a destination | Part | A6 #1322: Put it in can prepare a send to a saved destination. Check the rest of S7 against the recipe. |
-| S8 | "Not checked yet" warns (owner decision 2) | Done · PR_PENDING | Published unchecked words stay sendable; warning and receipt survive readback. |
+| S8 | "Not checked yet" warns (owner decision 2) | Done · #1403 | Published unchecked words stay sendable; warning and receipt survive readback. |
 
 ## Capture (`capture/RECIPE.md`): 12 of 12
 
