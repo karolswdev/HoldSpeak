@@ -4,9 +4,27 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (native recording glyph delivery)
+**Last updated:** 2026-10-19 (native agent access delivery)
 
 ## Current phase
+
+ST6 gives the owner one Setup press to install hooks, the native user-scope
+HoldSpeak MCP entry and the packaged skill for Claude Code and Codex.
+Each agent shows its actual hooks/tools/skill readback. Stop using my desk
+removes only HoldSpeak-owned bindings and preserves foreign configuration.
+An earlier agent failure remains visible if a later agent succeeds. The row
+refreshes after install and removal; failure words retain a retry.
+
+Current integrated focused proof: 54 Python checks, including both real-route
+browser cases at 1440/393, and 13 web checks pass. The browser verifies the
+three Codex bindings, mixed failure, owned removal, foreign preservation and
+refreshed state. Separate scratch-HOME probes exercised the installed native
+Claude/Codex MCP add/remove commands and MCP initialize. Native interactive
+agent acceptance remains unobserved; no owner agent files were changed.
+The frozen d4cf5fac7 check passed 4,080 related web checks and 2,245 affected
+pytest checks; its only remaining failure was the generated operation export.
+That export is now regenerated from the corrected result declaration.
+Required final delta quick: 64 affected Python, 108 desk sweep, 27 canon and 1,116 repository guards pass; the build passes. The preceding frozen-source run passed 4,080 web and 2,245 affected Python checks; its stale generated export is corrected by this delta.
 
 C12 shows Recording · mm:ss in the macOS menu bar itself, using the
 meeting's start stamp. Stop in its menu calls the existing runtime Stop.
@@ -128,7 +146,7 @@ same-ID PCM recovery. Required quick: 160 affected, 110 sweep, 27 canon and
 1,116 repo guards pass. Capture shots pass at 1440/393. Native
 hardware is not exercised; C10 now delivers the child-process boundary.
 
-**Betterment recovery: 92/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 93/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
 backend `53783b27f`, frontend `fcc01f42cb0f8823`, PID 71110 (#1385).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are

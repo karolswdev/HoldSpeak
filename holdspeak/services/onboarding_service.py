@@ -54,6 +54,7 @@ import ipaddress
 import os
 import re
 import shutil
+import subprocess
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -147,6 +148,7 @@ class OnboardingService:
         calendar_reader: Any = None,
         calendar_refresh: Optional[Callable[[], Any]] = None,
         which: Callable[[str], Optional[str]] = shutil.which,
+        agent_runner: Optional[Callable[..., subprocess.CompletedProcess[str]]] = None,
         clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
     ) -> None:
         self._settings = settings_service
@@ -166,6 +168,7 @@ class OnboardingService:
         self._reader = calendar_reader
         self._refresh = calendar_refresh if calendar_refresh is not None else _refresh_calendar_ingest
         self._which = which
+        self._agent_runner = agent_runner or subprocess.run
         self._clock = clock
 
     # ── calendar ──────────────────────────────────────────────────────
@@ -509,14 +512,88 @@ class OnboardingService:
         config.save()
         return self.people_access(principal)
 
-    def agents_use(self, principal: Principal, agent: str, settings_path: str) -> dict[str, Any]:
-        """The owner's "Use it" (``agent_hooks.install``): install the HoldSpeak hooks for one agent.
+    def agents_use(
+        self,
+        principal: Principal,
+        agent: Optional[str] = None,
+        settings_path: Optional[str] = None,
+        agents: Optional[list[str]] = None,
+        settings_paths: Optional[dict[str, str]] = None,
+    ) -> dict[str, Any]:
+        """The owner's one-agent or aggregate "Use it" operation."""
+        if agents is not None or settings_paths is not None:
+            if agents is None or settings_paths is None:
+                raise ValidationError("The agent settings paths are missing.", code="agent_settings_path_changed")
+            return self.agents_use_all(principal, agents, settings_paths)
+        return self._agents_use_one(principal, str(agent or ""), str(settings_path or ""))
+
+    def agents_use_all(
+        self, principal: Principal, agents: list[str], settings_paths: dict[str, str],
+    ) -> dict[str, Any]:
+        """Install every discovered supported agent and preserve each outcome.
+
+        The Setup face presents Claude and Codex as one row.  A per-agent
+        request loop can let a final success hide an earlier refusal, so the
+        aggregate operation records every attempt and marks the whole result
+        degraded until every requested binding is complete.
+        """
+        from . import project_kernel
+
+        if project_kernel.current() is None:
+            raise RuntimeError("agent_hooks.install runs only as an admitted kernel operation")
+        requested = [str(agent or "").strip().lower() for agent in agents]
+        if not requested or len(set(requested)) != len(requested):
+            raise ValidationError("Use it needs each agent once.", code="agents_invalid")
+        if any(agent not in HOOK_AGENTS for agent in requested):
+            raise ValidationError("Use it needs agents: claude or codex.", code="agent_unknown")
+        if not isinstance(settings_paths, dict):
+            raise ValidationError("The agent settings paths are missing.", code="agent_settings_path_changed")
+
+        results: list[dict[str, Any]] = []
+        for agent in requested:
+            path = str(settings_paths.get(agent) or "")
+            try:
+                one = self._agents_use_one(principal, agent, path)
+            except ServiceError as exc:
+                results.append({"agent": agent, "ok": False, "code": exc.code, "reason": exc.detail})
+            except Exception as exc:  # the aggregate keeps the other agent's truthful result
+                log.exception("Onboarding agent use failed for %s", agent)
+                results.append({"agent": agent, "ok": False, "code": "failed", "reason": str(exc)})
+            else:
+                rows = {str(row.get("id")): row for row in one.get("agents", []) if isinstance(row, dict)}
+                row = rows.get(agent) or {}
+                if row.get("ready") is True:
+                    results.append({"agent": agent, "ok": True, "used": one.get("used")})
+                else:
+                    trust = (one.get("used") or {}).get("trust") or {}
+                    reason = str(trust.get("reason") or "The complete agent binding is not ready.")
+                    results.append({"agent": agent, "ok": False, "code": "agent_not_ready", "reason": reason,
+                                    "used": one.get("used")})
+
+        failures = [result for result in results if not result["ok"]]
+        if not failures:
+            state = "installed"
+        elif len(failures) == len(results):
+            state = "failed"
+        else:
+            state = "degraded"
+        return {
+            **self.agents_detect(principal),
+            "ok": not failures,
+            "success": not failures,
+            "state": state,
+            "results": results,
+        }
+
+    def _agents_use_one(self, principal: Principal, agent: str, settings_path: str) -> dict[str, Any]:
+        """The owner's "Use it" (``agent_hooks.install``) binds one agent.
 
         Runs only as the admitted kernel operation: the receipt names success,
-        the refusal or the failure.  It writes exactly the file the operation
-        bound at admission.
+        the refusal or the failure. It writes exactly the hook file the
+        operation bound at admission, and asks the native CLI to own MCP.
         """
         from ..agent_context.hooks import holdspeak_executable, install_agent_hooks
+        from ..agent_context.native_binding import NativeBindingError, install_binding
         from . import project_kernel
 
         if project_kernel.current() is None:
@@ -532,6 +609,20 @@ class OnboardingService:
         if holdspeak_executable() is None:
             raise ConflictError("HoldSpeak cannot find its own command for the hook.", code="holdspeak_not_found")
         path = Path(settings_path)
+        # Each CLI discovers user skills in its native root. Codex hooks
+        # still follow CODEX_HOME; skills follow HOME/.agents.
+        skill_root = self._home() / ".agents" if agent == "codex" else path.parent
+        from ..agent_skill import SkillOwnershipError, install_skill, skill_state
+
+        # Refuse a custom same-name skill before hooks or native MCP mutate
+        # anything.  A previous packaged skill is ours to upgrade in the
+        # install below; every other byte remains the owner's file.
+        skill_path = skill_root / "skills" / "holdspeak" / "SKILL.md"
+        if skill_state(skill_path) == "foreign":
+            raise ConflictError(
+                f"The {agent.title()} HoldSpeak skill belongs to another setup.",
+                code="skill_name_taken",
+            )
         try:
             result = install_agent_hooks(path, agent_hook_template(agent))
         except ValueError as exc:
@@ -539,19 +630,56 @@ class OnboardingService:
                 f"HoldSpeak cannot read {path}. Fix the JSON and try again.", code="agent_settings_unreadable",
             ) from exc
         log.info("agent hooks installed for %s at %s (%s)", agent, path, ", ".join(result["installed_events"]))
-        from ..agent_skill import install_skill
-
-        # Each CLI discovers user skills in its native root. Codex hooks
-        # still follow CODEX_HOME; skills follow HOME/.agents.
-        skill_root = self._home() / ".agents" if agent == "codex" else path.parent
-        skill = install_skill(skill_root, agent)
+        env = self._env()
+        try:
+            mcp = install_binding(
+                agent, home=self._home(), env=env, which=self._which, runner=self._agent_runner,
+            )
+            skill = install_skill(skill_root, agent)
+        except NativeBindingError as exc:
+            raise ConflictError(exc.detail, code=exc.code) from exc
+        except SkillOwnershipError as exc:
+            raise ConflictError(str(exc), code=exc.code) from exc
         if agent == "codex":
             result = {**result, "trust": trust_codex_hooks(
                 executable=str(self._which("codex")), env=home_scoped_env({**os.environ, **self._env()}),
                 home=self._home(),
                 hooks_json=path,
             )}
-        return {**self.agents_detect(principal), "used": {"agent": agent, "skill": str(skill), **result}}
+        return {
+            **self.agents_detect(principal),
+            "used": {"agent": agent, "skill": str(skill), "mcp": mcp, **result},
+        }
+
+    def agents_stop(self, principal: Principal, agent: str, settings_path: str) -> dict[str, Any]:
+        """The owner's Stop: remove only HoldSpeak-owned agent bindings."""
+        from ..agent_context.hooks import uninstall_agent_hooks
+        from ..agent_context.native_binding import NativeBindingError, remove_binding
+        from ..agent_skill import uninstall_skill
+        from . import project_kernel
+
+        if project_kernel.current() is None:
+            raise RuntimeError("agent_hooks.remove runs only as an admitted kernel operation")
+        agent = str(agent or "").strip().lower()
+        if agent not in HOOK_AGENTS:
+            raise ValidationError("Stop needs an agent: claude or codex.", code="agent_unknown")
+        if settings_path != self.agent_settings_target(agent):
+            raise ConflictError("The agent's settings file changed. Try again.", code="agent_settings_path_changed")
+        path = Path(settings_path)
+        env = self._env()
+        try:
+            mcp = remove_binding(
+                agent, home=self._home(), env=env, which=self._which, runner=self._agent_runner,
+            )
+        except NativeBindingError as exc:
+            raise ConflictError(exc.detail, code=exc.code) from exc
+        hooks = uninstall_agent_hooks(path)
+        skill_root = self._home() / ".agents" if agent == "codex" else path.parent
+        skill_removed = uninstall_skill(skill_root, agent)
+        return {
+            **self.agents_detect(principal),
+            "stopped": {"agent": agent, "mcp": mcp, "hooks": hooks, "skill_removed": skill_removed},
+        }
 
 
 def _require_owner(principal: Any) -> None:
@@ -685,6 +813,13 @@ def _hooks_state(path: Path, events: list[str], which: Callable[[str], Optional[
     return "installed" if len(ours) == len(events) else "partial"
 
 
+def _skill_state(path: Path) -> str:
+    """``installed``, ``outdated``, ``missing`` or ``foreign`` for AG13."""
+    from ..agent_skill import skill_state
+
+    return skill_state(path)
+
+
 def _json_object(path: Path) -> dict[str, Any]:
     import json
 
@@ -760,13 +895,14 @@ def detect_agents(
 
     Shared by ``agents_detect`` and ``holdspeak doctor``.  Runs no process,
     makes no network request, writes nothing, and reads no credential value
-    out.  ``ready`` needs the agent on PATH and every event of our hook
-    installed with a command that can run.
+    out.  ``ready`` needs the agent on PATH, every event of our hook
+    installed with a command that can run, the native MCP binding, and AG13.
     """
     import shlex
     import sys
 
     from ..agent_context.hooks import _agent_hook_command, agent_settings_path, hook_command_runs
+    from ..agent_context.native_binding import binding_state
 
     root = home or Path.home()
     env = dict(os.environ if environ is None else environ)
@@ -788,6 +924,10 @@ def detect_agents(
         if not state_read and signed_in != "yes":
             # The rig read only its own HOME: the owner's Keychain and env are not read.
             signed_in = NOT_READ
+        mcp = binding_state(agent, home=root, env=env, which=which)
+        skill_root = root / ".agents" if agent == "codex" else settings_path.parent
+        skill_path = skill_root / "skills" / "holdspeak" / "SKILL.md"
+        skill = _skill_state(skill_path)
         rows.append({
             "id": agent,
             "label": label,
@@ -795,10 +935,19 @@ def detect_agents(
             "path": executable,
             "hooks": hooks,
             "hooks_path": str(settings_path),
+            "mcp": mcp["state"],
+            "mcp_path": mcp["path"],
+            "mcp_command": mcp["command"],
+            "mcp_runnable": mcp["runnable"],
+            "skill": skill,
+            "skill_path": str(skill_path),
             "signed_in": signed_in,
             "signed_in_from": signed_in_from,
             "version": _version_of(executable),
-            "ready": executable is not None and hooks == "installed",
+            "ready": (
+                executable is not None and hooks == "installed" and
+                mcp["state"] == "installed" and mcp["runnable"] and skill == "installed"
+            ),
             "verb": VERB if executable is not None else None,
         })
     tmux = which("tmux")
