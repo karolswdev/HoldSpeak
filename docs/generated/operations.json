@@ -6053,7 +6053,7 @@
         "properties": {},
         "additionalProperties": false
       },
-      "principal": "derived by the transport; owner only",
+      "principal": "derived by the transport; owner or agent",
       "effect": "read",
       "result": "{rows, owner_name, people, suggestions, first_run}; rows carry the shared Setup fields id, kind, label, detail, state, reason, egress_host, verb, action and payload",
       "refusals": [

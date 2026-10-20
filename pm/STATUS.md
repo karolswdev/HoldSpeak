@@ -4,9 +4,24 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Desk creation delivery)
+**Last updated:** 2026-10-19 (terminal Setup delivery)
 
 ## Current phase
+
+ST9 adds `holdspeak setup`, `holdspeak setup --yes`, MCP `setup.status` and
+`setup.use`. They use the running hub and the shared Setup producers.
+Use all re-reads the inventory, keeps each result, continues after a failure,
+and distinguishes pending work. Agents can read status; adoption requires
+an owner press. Caller-supplied row inventories are ignored.
+
+Root's focused collection and run both cover 123 checks. The CLI-to-MCP
+proof reaches real hub operations and provider adapters, checks three
+account connections, saves a calendar, installs both native agents' tools,
+hooks and skills, and reads all adopted rows back as Works. Only native
+CLI/provider responses and EventKit are simulated; files and records are
+in the rig. A separate scratch-hub probe covers real HTTP discovery and
+agent-read/owner-use authority. Live OAuth and owner account acceptance
+remain unobserved. Required quick: ST9_QUICK_PENDING.
 
 Shell S2 gives Desk seven New kinds in order: Note, Meeting, Decision,
 Project, Person, Automation and Drawer. The phone reads the same registry.
