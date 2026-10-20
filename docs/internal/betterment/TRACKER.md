@@ -95,8 +95,8 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | P4 | Projects and Decisions in Go; withhold dead verbs | Done · #1349 | State/reason in Projects, truthful Not read, scoped Write update in Search. |
 | P5 | Sources in one go | Done · #1377 | Paste keeps exact site/account; Found adds meetings and notes together; existing-project sources use the same Door. |
 | P6 | Nudge and Ask, in their homes | Done · #1377 | Exact destination and stored action feed Send; shared Ask keeps project scope. |
-| P7 | The update is an automation; the steward folds in | Done · PR_PENDING | Manual first; Friday uses the same record. |
-| P8 | The agent writes the update | Done · PR_PENDING | Project-scoped Work tools; owner draft preserved; exact result adopted once. |
+| P7 | The update is an automation; the steward folds in | Done · #1395 | Manual first; Friday uses the same record. |
+| P8 | The agent writes the update | Done · #1395 | Project-scoped Work tools; owner draft preserved; exact result adopted once. |
 | P9 | One decision record | Open |  |
 | P10 | Watches tell the truth underneath | Open |  |
 
