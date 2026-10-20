@@ -46,7 +46,7 @@ Needs-you assertions: P5 now adds a muted matching-meeting candidate. Both
 assertions now name that candidate while retaining the six canonical members
 and mutation checks; all six focused cases pass. The tape also found two
 meeting-window walks selecting a same-title project suggestion instead of the
-failed-summary member; that separate browser repair is in progress. The tape
+failed-summary member; that browser repair is merged in #1383. The tape
 is still running and does not cover C10. Final required quick: 1,029 affected pytest, 110 sweep, 27 canon and
 1,116 repo guards pass. Capture is observed at 1440/393 on an isolated hub.
 Two prior bare-desk settle timeouts did not recur in the focused six-case

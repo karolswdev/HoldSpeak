@@ -144,9 +144,9 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | ST0 | Tell the truth | Done · #1261 | #1261 was "part 1" (speech never wired to a chat server; Voice says if speech works). |
 | ST1 | One home each: Rhythm, Wallpaper, Calendar, the engine line | Done · #1347 | Recovery adds phone stepper value geometry fix; two-size real browser check fails before and passes after. |
 | ST2 | Accounts that say Works, and Check that does not move acli | Done · #1346 | Stub-backed Jira/Confluence restoration, Found/Use and Remove/Undo; restoration failures stay degraded. |
-| ST3 | Setup is one window of found things | Done · PR_PENDING | One found-things window for first run and later Setup; typed microphone recovery stays in place. |
-| ST4 | Use everything found, and the look on his network | Done · PR_PENDING | Use selects real engine IDs and the Everything-else assignment; speech remains separate. |
-| ST5 | Your people in Setup | Done · PR_PENDING | People use the existing admission producer and report its actual result. |
+| ST3 | Setup is one window of found things | Done · #1384 | One found-things window for first run and later Setup; typed microphone recovery stays in place. |
+| ST4 | Use everything found, and the look on his network | Done · #1384 | Use selects real engine IDs and the Everything-else assignment; speech remains separate. |
+| ST5 | Your people in Setup | Done · #1384 | People use the existing admission producer and report its actual result. |
 | ST6 | Let my agents use HoldSpeak | Open |  |
 | ST7 | Settings is one page | Open |  |
 | ST8 | Sign in without a terminal | Open |  |
