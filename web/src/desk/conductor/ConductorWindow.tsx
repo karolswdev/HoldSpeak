@@ -38,6 +38,7 @@ import {
   fleetRank,
   fleetWords,
   headWords,
+  reviewWords,
   type ConductorMember,
   type FleetRank,
 } from "./members";
@@ -45,6 +46,7 @@ import { allowHelper, answerMember, answers, cancelQueuedHand, openMember, resum
 import { StartAgent } from "./StartAgent";
 import { handRefOf, openHand } from "../agentHand";
 import { AgentRow as AgentRowFace, DeskAnswerLine } from "../agents/AgentRow";
+import { ReviewResult } from "./ReviewResult";
 import { openAgentLane } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
 import "../drawer/drawer.css";
@@ -279,6 +281,8 @@ export function memberPill(member: ConductorMember): { word: string; tone: "ok" 
       return { word: "Asks you", tone: "warn", live: true };
     case "held":
       return { word: "Wants to run", tone: "warn", live: true };
+    case "needs_you":
+      return { word: "Needs you", tone: "warn", live: true };
     case "idle":
       return { word: "Idle", tone: "idle" };
     case "pr":
@@ -361,8 +365,10 @@ function CoderRow({
         <span className="cw-row-meta">
           <Pill member={member} />
           {helper ? <span data-testid="conductor-helper-of">{helper}</span> : null}
+          {reviewWords(member.review) ? <span data-testid="conductor-review">{reviewWords(member.review)}</span> : null}
           {meta}
         </span>
+        <ReviewResult review={member.review} />
         {/* Betterment AG3: what the desk answered for him, New until opened. */}
         <DeskAnswerLine answer={member.deskAnswer} />
       </div>

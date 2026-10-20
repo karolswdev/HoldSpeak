@@ -38,7 +38,7 @@ import {
 import { AGENTS_PATH, AGENT_HOST, AGENT_NAME, type AgentId, type AgentsDetect } from "../firstrun/agentsStep";
 import { codeWords } from "../firstrun/AgentsCard";
 import { branchFace } from "../lane/laneWire";
-import { StringGadget } from "../surface/gadgets";
+import { CycleGadget, GadgetRow, StringGadget } from "../surface/gadgets";
 import { useConductor } from "../conductor/store";
 import "./hand-sheet.css";
 
@@ -72,6 +72,8 @@ export interface HandPreview {
   refused: string[];
   /** pi: the hub's engine for coding work the launch runs on (its egress). */
   engine?: { host: string; model: string; boundary: string } | null;
+  /** The explicit bounded review choice on this hand. */
+  review_by?: "none" | "codex" | "claude" | "pi" | string;
 }
 
 /** The egress of a hand-off: the agent's model host. pi's is the hub's
@@ -153,6 +155,12 @@ export function deliveryToken(launch: HandLaunch): { label: string; tone: "ok" |
 }
 
 const AGENTS: AgentId[] = ["claude", "codex", "pi"];
+const REVIEW_BY = [
+  { value: "none", label: "None" },
+  { value: "codex", label: "Codex" },
+  { value: "claude", label: "Claude Code" },
+  { value: "pi", label: "pi" },
+] as const;
 
 /** The Control mode as the owner names it (Settings: Secure, Normal, YOLO). */
 export function modeWord(mode: string | null | undefined): string {
@@ -320,6 +328,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
   const close = useAgentHand((s) => s.close);
   const detect = useDetect();
   const [agent, setAgent] = useState<AgentId>(origin.agent ?? DEFAULT_AGENT);
+  const [reviewBy, setReviewBy] = useState("none");
   // PHILO-15 B36: opened with no agent named, the sheet takes the default
   // (the first KNOWN sign-in) once the agents read answers, unless picked.
   const pickedRef = useRef(Boolean(origin.agent));
@@ -345,7 +354,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     useDesk.getState().restorePanel(HAND_WINDOW_ID);
   }, [origin.kind, origin.id]);
 
-  const request = { kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null };
+  const request = { kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null, review_by: reviewBy };
   const requestKey = JSON.stringify(request);
 
   useEffect(() => {
@@ -397,6 +406,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
         method: "POST",
         json: {
           kind: origin.kind, id: origin.id, profile: AGENT_PROFILE[agent], project_id: origin.projectId || null,
+          review_by: reviewBy,
           // Betterment AG5: "Start when one is free" queues the hand at the limit.
           ...(queue ? { queue: true } : {}),
           // Betterment AG4: his sentence goes into the brief.
@@ -425,7 +435,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
     } finally {
       setLaunching(false);
     }
-  }, [agent, launching, origin.id, origin.kind, origin.projectId, sentence]);
+  }, [agent, launching, origin.id, origin.kind, origin.projectId, reviewBy, sentence]);
 
   // Betterment AG4: the sheet's work is done when the brief reached the agent
   // (or the hand waits in the queue): it closes; Agents shows the agent. A
@@ -488,6 +498,15 @@ function Sheet({ origin }: { origin: HandOrigin }) {
               />
             ))}
           </ChoiceCardGroup>
+          <GadgetRow label="Review by">
+            <CycleGadget
+              label="Review by"
+              value={reviewBy}
+              options={REVIEW_BY.map((choice) => ({ value: choice.value, label: choice.label }))}
+              onChange={setReviewBy}
+              disabled={frozen}
+            />
+          </GadgetRow>
         </SurfaceSection>
         {origin.kind === "issue" ? (
           /* The issue body is read from its tracker when the sheet opens: the

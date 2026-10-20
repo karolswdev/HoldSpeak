@@ -4,9 +4,24 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Setup found-things delivery)
+**Last updated:** 2026-10-19 (Agent review delivery)
 
 ## Current phase
+
+AG12 adds Review by to Hand to agent and Start an agent. A builder commit
+starts a reviewer helper in its own read-only worktree. Explicit MUST
+findings return to the builder, with at most two rounds; the pair retains
+one Result. Unresolved findings or an unreadable reviewer result still need
+the owner. Durable pair state overrides stale terminal-screen state in both
+the fleet and lane.
+
+The real isolated hub with two fake agent processes completed MUST → builder
+fix commit → second review clear. Reviewer credentials refuse writes,
+preparation, sending and helper creation. Focused checks: 18 agent-flight
+checks and 130 web consumer checks pass. The actual completed producer pair
+renders Done · New and its two-round Result at 1440/393. Native interactive
+agents are not inferred from the fake processes. Required quick:
+4,076 web, 9,304 affected pytest, 108 sweep, 27 canon and 1,116 repo guards pass.
 
 Setup ST3–ST5 share one found-things window on first run and later visits.
 Use selects real discovered engine IDs and the composed Everything-else
@@ -76,9 +91,9 @@ same-ID PCM recovery. Required quick: 160 affected, 110 sweep, 27 canon and
 1,116 repo guards pass. Capture shots pass at 1440/393. Native
 hardware is not exercised; C10 now delivers the child-process boundary.
 
-**Betterment recovery: 89/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 90/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `4fe5eff7e`, frontend `8ebab34a8ee7b2d2`, PID 38093 (#1383).
+backend `41f4ebc9f`, frontend `0a0097e98c25a767`, PID 54957 (#1384).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.

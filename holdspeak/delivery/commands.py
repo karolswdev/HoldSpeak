@@ -710,6 +710,8 @@ class NodeCommandProcessor:
                 launch_id=(str(payload.get("launch_id") or "") or None),
                 scope_items=tuple(str(i) for i in (payload.get("scope_items") or []) if i),
                 project_id=(str(payload.get("project_id") or "") or None),
+                role=str(payload.get("role") or "builder"),
+                read_only=bool(payload.get("read_only")),
                 model_key=key_for_slot(str(payload.get("model_key_slot") or "")),
                 **kwargs,
             )

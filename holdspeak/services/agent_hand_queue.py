@@ -67,6 +67,7 @@ class HandQueue:
     def add(
         self, kind: str, item_id: str, *, instruction: Optional[str] = None,
         profile: Optional[str] = None, project_id: Optional[str] = None,
+        review_by: Optional[str] = None,
     ) -> dict[str, Any]:
         """Queue one hand. An item already queued keeps its one entry."""
         with _LOCK:
@@ -81,6 +82,7 @@ class HandQueue:
                 "instruction": instruction,
                 "profile": profile,
                 "project_id": project_id,
+                "review_by": review_by,
                 "queued_at": _now(),
             }
             rows.append(entry)
@@ -146,6 +148,7 @@ def start_queued(
                 principal, str(entry.get("kind") or ""), str(entry.get("id") or ""),
                 instruction=entry.get("instruction"), profile=entry.get("profile"),
                 project_id=entry.get("project_id"),
+                review_by=entry.get("review_by"),
             )
         except Exception as exc:
             code = getattr(exc, "code", None) or type(exc).__name__

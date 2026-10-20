@@ -210,6 +210,24 @@
   font: 500 13px / 1.4 var(--font-sans);
   color: var(--wb-text);
 }
+.desk-next .cw-review-result {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 4px;
+  padding: 7px 8px;
+  border: 1px solid color-mix(in srgb, var(--wb-ink) 35%, transparent);
+  background: var(--alive-paper, #f8f5ee);
+  box-shadow: var(--wb-sunken);
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .cw-review-result-head { display: flex; gap: 8px; align-items: baseline; }
+.desk-next .cw-review-result-head span,
+.desk-next .cw-review-clear { font: 700 12px / 1.3 var(--font-mono); letter-spacing: 0.04em; }
+.desk-next .cw-review-findings { margin: 0; padding-left: 18px; overflow-wrap: anywhere; }
+.desk-next .cw-review-findings strong { font-family: var(--font-mono); }
+.desk-next .cw-review-reason { color: var(--wb-muted); }
 .desk-next .cw-ask-verbs {
   display: flex;
   flex-wrap: wrap;
