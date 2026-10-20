@@ -4,9 +4,83 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (five-app Dock delivery)
+**Last updated:** 2026-10-19 (truthful watches and shared services)
 
 ## Current phase
+
+P10 offers only watch actions with an existing runtime path. A new
+project.observe evaluation writes its observation without a pending effect;
+legacy effect rows remain readable. Provider manifests, Steward serializers
+and meeting transcriber construction now live in shared services. HTTP and
+MCP use those same contracts, with no MCP imports from web routes.
+
+The worker passed 504 focused cases, then six retained boundary
+and producer regressions. An actual private database observation creates no
+new effect and preserves the legacy pending row. The AST fence covers all 37
+MCP Python files, including relative and alias import forms. Shared helper
+identities and wires retain parity. Root independently verified 27 focused cases covering the whole import boundary, actual fresh observation and retained legacy row, provider HTTP/MCP parity, Steward policy round-trip, import parity, and remote-owner refusal before file access.
+Required quick: Final delta quick passes 67 affected cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The preceding product quick passed 3,424 other affected cases with two skips; its one failure patched the old HTTP factory seam and is corrected by the final check..
+
+ST8 starts the installed GitHub or Atlassian CLI browser sign-in from the
+Accounts row and seats its native terminal there. Keyboard input uses the
+existing admitted process input path and immutable target identity. On native
+exit, the existing Check re-reads the account before the row can say Works.
+Unsupported browser flows and failed/disappearing terminals give a named
+failure. Target setup failures clean only the newly created sign-in session.
+
+Root reviewed the owner-only operation and target mismatch refusal, then ran
+123 focused checks: 122 passed and the new operation exposed one missing
+producer case. The completed producer contract suite passes all 65 cases.
+Actual private-Hub browser cases at 1440/393 feed Enter through embedded xterm,
+the real command transport and native tmux process, then read back Works and
+the account login. Only provider CLI responses are recorded; owner credentials
+and real OAuth acceptance remain unobserved. The combined API census has
+810 routes and 674 OpenAPI paths. The product check passes 7,051 affected
+Python/browser checks (four skips), 110 desk sweep, 27 canon and 1,116 guards;
+4,094 other web checks pass. One old terminal assertion expected a payload
+without its required session/agent binding; it now checks the full payload
+while retaining immutable target and server-derived authority assertions.
+Final delta quick: 17 terminal web checks, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The preceding product run passed 7,051 affected Python/browser checks and 4,094 other web checks.
+
+The main watcher pinned to 2833d225d found five failures after its first
+6,073-test shard passed. This fix re-records the actual Setup agent/Settings
+producer shapes, aligns Capture's backend window action with its manifest,
+and retains the fresh prior-account status check in the Confluence test.
+Only recordings with changed response shapes are replaced; whole unchanged
+captures remain intact. The independent focused rerun passes all 64 Python
+checks (including the phone Capture/Today/Capture roundtrip) and 62 web
+consumers. No provider sign-in or owner database is used.
+Required quick: 79 affected Python/browser, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes; the separate 62 web consumers pass.
+
+The P5/P6 source-link follow-up is closed by an actual producer contract:
+found_links reports linked/failed per meeting or note. New and existing project
+Add paths use it. A failed selection stays selected with its producer error;
+Retry sends only that item to the already-created project. Missing individual
+results stay failed. No successful source or project is created again.
+
+Root collected and passed 57 affected Python cases, including the real HTTP
+partial-failure and two-size browser Retry, plus 40 Door web cases and build.
+The durable resource readback finds each successful relationship once. The
+owner's database and provider credentials were not used. This closes follow-up
+work and adds no slice. Required quick: 241 affected Python/browser, 110 desk sweep, 27 canon and 1,116 repository guards pass; related web checks and build pass.
+
+P7/P8 make the project update an ordinary automation, initially manual. Friday
+at 15:00 changes that same record. Room opens its newest result and reads the
+actual engine assignment. A refused Friday change keeps the manual state and
+offers Try again. The old steward controls remain under More.
+
+Update agents use eligible linked project sources. Private one-to-ones, People
+and unlinked meetings stay out of prompts, tool reads and native MCP resources.
+Explicit owner-filed actions remain eligible. An agent writes its own separate
+draft and cannot replace an owner-edited draft. Workbench delivery adopts the
+exact returned result once; applying it adds no duplicate.
+
+Root verified 70 affected Python checks and 561 Room web checks. Four actual
+Workbench runner cases cover plain/tool-written output with and without owner
+edits. Native hub credentials exercise both filtered tool reads and resource
+refusals, with ordinary credentials retaining their existing access. Real hub
+Room geometry passes at 1440/393. Native model output quality is not claimed;
+the engine leaf is recorded. Required quick: Final delta quick passes 4,074 related web checks, 54 affected Python/browser checks including both current Room geometry cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The preceding product run passed 4,110 web and 4,571 other affected Python checks. Empty-state and recorded-wire contracts now include the automation, the display-only engine reader has its exact census classification, and the verb says Open latest. Known fix-forward: Room NEW still follows draft lifecycle and must use the existing automation artifact read state. The pinned 2833d225d main watcher has passed its first shard (6,073 passed, five skipped); the full tape remains incomplete. The prior 41f4ebc9f tape completed red, with its known failures corrected in later focused checks..
 
 Shell S3 gives the desktop Dock Today, Meetings, People, Agents and Speak;
 the phone has Today, Capture, Meetings, People and Agents. Both use the

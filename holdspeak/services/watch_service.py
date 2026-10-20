@@ -1418,6 +1418,14 @@ class WatchService:
                 if not action_kind:
                     continue
 
+                # An observation is the durable result of the evaluation.
+                # It is already written by _evaluate_core, so project.observe
+                # must never create a second pending effect row.  Keep this
+                # narrow skip so legacy rows for the action remain untouched
+                # and readable through the existing repository APIs.
+                if action_kind == "project.observe":
+                    continue
+
                 # Deterministic idempotency key:
                 # sha256(evaluation_id + rule_id + action_kind)[:32]
                 key_material = f"{evaluation_id}:{rule_id}:{action_kind}"

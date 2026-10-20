@@ -1698,7 +1698,27 @@
       ]
     },
     {
+      "path": "/api/connections/signin/{run_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.connections",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/connections/{provider}/recheck",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.connections",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/connections/{provider}/signin",
       "methods": [
         "POST"
       ],

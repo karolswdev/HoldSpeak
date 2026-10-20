@@ -444,13 +444,13 @@ def test_gap_e_http_and_mcp_imports_reach_one_operation_and_equal_meetings(hub: 
 
 
 def test_gap_e_an_mcp_audio_import_transcribes_with_the_shared_transcriber(hub: Hub, monkeypatch, tmp_path) -> None:
-    from holdspeak.web.routes import meeting_import as import_route
+    from holdspeak.services import meeting_transcriber
 
     class StubTranscriber:
         def transcribe(self, audio: Any, **_admission: Any) -> str:
             return "stub words"
 
-    monkeypatch.setattr(import_route, "_transcriber_factory", lambda cfg: StubTranscriber())
+    monkeypatch.setattr(meeting_transcriber, "default_transcriber_factory", lambda cfg: StubTranscriber())
     caller_file = tmp_path / "architect.wav"
     caller_file.write_bytes(FIXTURE_WAV.read_bytes())
     is_error, intake = hub.mcp("meeting.import", {"path": str(caller_file)})

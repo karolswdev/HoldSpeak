@@ -30,6 +30,7 @@ from holdspeak.services.primitive_service import PrimitiveService
 from holdspeak.services.recipe_service import RecipeService
 from holdspeak.services.scheduled_recording_service import ScheduledRecordingService
 from holdspeak.services.workbench_service import WorkbenchService
+from holdspeak.services import meeting_transcriber
 
 PRIMITIVE_KINDS = ("notes", "decisions", "kbs", "directories", "workflows", "chains")
 _KIND_ALIASES = {kind: kind[:-1] if kind.endswith("s") else kind for kind in PRIMITIVE_KINDS}
@@ -917,8 +918,6 @@ def _meeting_import(registry: operations.OperationRegistry, meetings: Any, princ
 
     from holdspeak.config import Config
     from holdspeak.services.errors import ValidationError
-    from holdspeak.web.routes import meeting_import as import_route
-
     # r2 (Astra's check on built, finding 1): the owner boundary comes FIRST.
     # A non-owner principal (a remote DESK credential, any agent or node) is
     # refused with owner_required before the path is looked at, opened or copied.
@@ -950,7 +949,7 @@ def _meeting_import(registry: operations.OperationRegistry, meetings: Any, princ
         result = registry.invoke(principal, "meeting.import", arguments, held={
             "tmp_path": held_path,
             "config": Config.load(),
-            "transcriber_factory": import_route._transcriber_factory,
+            "transcriber_factory": meeting_transcriber.default_transcriber_factory,
         })
     except Exception:
         held_path.unlink(missing_ok=True)
@@ -1195,11 +1194,9 @@ def _dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal)
         return _meeting_import(ops(), meetings, principal, args)
     if name == "meeting.transcribe":
         from holdspeak.config import Config
-        from holdspeak.web.routes import meeting_import as import_route
-
         return ops().invoke(principal, "meeting.transcribe", {"meeting_id": str(args.get("meeting_id") or "")}, held={
             "config": Config.load(),
-            "transcriber_factory": import_route._frozen_transcriber_factory,
+            "transcriber_factory": meeting_transcriber.frozen_transcriber_factory,
         })
     if name == "meeting.start_capture":
         config = args.get("config")

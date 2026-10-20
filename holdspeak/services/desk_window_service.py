@@ -74,7 +74,7 @@ STATIC_WINDOWS: dict[str, str] = {
     "chair:needs": "chair",
     "chair:brief": "chair",
     "chair:week": "chair",
-    "chair:capture": "chair",
+    "chair:capture": "chair-capture",
     # The Parked drawer (drawer/store.ts).
     "drawer:parked": "drawer",
     # The agent lane (lane/laneStore.ts): one window, on one launch at a time;

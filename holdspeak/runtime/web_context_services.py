@@ -17,6 +17,7 @@ SERVICE_NAMES = (
     "project_evidence_collector",
     "watch_service",
     "connections_service",
+    "connection_signin_service",
     "suggested_source_service",
     "channel_service",
     "onboarding_service",

@@ -491,6 +491,7 @@ export type RoomUpdatesData = {
     scheduleEnabled: boolean;
     whenKind: string;
     profileId: string | null;
+    engineLabel: string;
   } | null;
 };
 
@@ -927,6 +928,7 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
           ? String((s.automation as Record<string, unknown>).schedule) : null,
         scheduleEnabled: Boolean((s.automation as Record<string, unknown>).schedule_enabled),
         whenKind: String((s.automation as Record<string, unknown>).when_kind ?? "manual"),
+        engineLabel: String((s.automation as Record<string, unknown>).engine_label ?? "Engine not read"),
         profileId: (s.automation as Record<string, unknown>).profile_id != null
           ? String((s.automation as Record<string, unknown>).profile_id) : null,
       } : null,
