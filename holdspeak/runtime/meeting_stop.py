@@ -35,9 +35,11 @@ def finish_meeting_stop(
 
     final_state = session.stop()
     device_cleanup_error = getattr(session, "device_cleanup_error", None)
-    # Release the floor only after confirmed native cleanup. A timed-out
-    # driver can still own the device even though PCM admission is sealed.
-    if not device_cleanup_error:
+    capture_process_exited = bool(getattr(session, "capture_process_exited", False))
+    # C10: a child timeout is a warning, but once the child has actually
+    # exited it cannot retain the native device. Release the floor only after
+    # that exit; the next Record must be able to acquire it.
+    if not device_cleanup_error or capture_process_exited:
         runtime.voice_session.release(audio_owner)
     final_state_payload = final_state.to_dict()
     meeting_id = str(final_state_payload.get("id") or "")

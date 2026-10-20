@@ -77,7 +77,7 @@ def test_native_cleanup_uses_one_shared_deadline_and_independent_daemons(monkeyp
         assert "mic" in recorder.device_cleanup_error
         assert "system" in recorder.device_cleanup_error
         assert recorder._mic_stream is None and recorder._system_stream is None
-        with pytest.raises(MeetingRecorderError, match="Restart HoldSpeak"):
+        with pytest.raises(MeetingRecorderError, match="Audio device did not close"):
             recorder.start()
     finally:
         release.set()
