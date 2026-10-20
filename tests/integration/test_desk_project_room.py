@@ -948,6 +948,40 @@ def test_project_write_runs_its_existing_workbench_and_keeps_one_delivered_updat
         assert delivered["id"] != records["id"]
         assert delivered["body_md"].rstrip() == fixture
         assert delivered["generator"].startswith("agent:")
+        # Delivery records the exact update on the existing artifact.  The
+        # original Workbench metadata stays present for the ordinary result
+        # reader and for read-state transitions.
+        artifact_metadata = artifact.structured_json
+        assert artifact_metadata["project_update_id"] == delivered["id"]
+        assert artifact_metadata["parent_operation_id"]
+        room = hub.ok("GET", f"/api/projects/{project_id}/room")
+        latest_result = room["updates"]["automation"]["latest_result"]
+        assert latest_result == {
+            "artifact_id": items[0].result_artifact_id,
+            "update_id": delivered["id"],
+            "new": True,
+        }
+        # Opening the mapped result uses the canonical Workbench endpoint,
+        # then the same Room read sees the durable artifact state.
+        opened = hub.ok(
+            "POST", f"/api/workbenches/{automation.id}/results/{items[0].result_artifact_id}/open",
+        )
+        assert opened["result"]["status"] == "read"
+        assert hub.db.plugins.get_artifact(items[0].result_artifact_id).status == "read"
+        assert hub.ok("GET", f"/api/projects/{project_id}/room")["updates"]["automation"]["latest_result"] == {
+            "artifact_id": items[0].result_artifact_id,
+            "update_id": delivered["id"],
+            "new": False,
+        }
+        # The canonical open is idempotent and does not change the update or
+        # the owner's separate draft.
+        again = hub.ok(
+            "POST", f"/api/workbenches/{automation.id}/results/{items[0].result_artifact_id}/open",
+        )
+        assert again["result"]["status"] == "read"
+        assert hub.db.project_updates.get_update(records["id"])["body_md"] == (
+            "My own Friday words." if owner_edits else records["body_md"]
+        )
         if tool_writes:
             assert written_ids == [delivered["id"]], written_ids
         manifest = json.loads(delivered["source_manifest_json"])
@@ -2605,11 +2639,15 @@ def test_waiting_on_nudge_matches_saved_targets_and_uses_the_document_send_bound
 def test_project_update_line_records_the_real_manual_and_friday_wire(tmp_path, monkeypatch):
     """P7's consumer fixture is the actual shared Room/Workbench response."""
     import os
-    with _hub(tmp_path, monkeypatch) as hub:
+    with _hub(tmp_path, monkeypatch, lifespan=True) as hub:
         project_id = hub.ok("POST", "/api/projects", {"name": "Friday update wire"})["project"]["id"]
         draft = hub.ok("POST", f"/api/projects/{project_id}/updates/draft", {"generator": "deterministic"})["update"]
         manual = hub.ok("GET", f"/api/projects/{project_id}/room")
         automation_id = manual["updates"]["automation"]["id"]
+        assert manual["updates"]["automation"]["latest_result"] is None
+        assert not manual["updates"]["recent"] or all(
+            row.get("id") == draft["id"] for row in manual["updates"]["recent"]
+        )
         assert not manual["updates"]["automation"]["schedule_enabled"]
         refused = hub.client.put(f"/api/workbenches/{automation_id}", json={
             "schedule": "0 15 * * 5", "schedule_enabled": True,
@@ -2624,12 +2662,56 @@ def test_project_update_line_records_the_real_manual_and_friday_wire(tmp_path, m
         })
         scheduled = hub.ok("GET", f"/api/projects/{project_id}/room")
         assert scheduled["updates"]["automation"]["schedule_enabled"]
+        assert scheduled["updates"]["automation"]["latest_result"] is None
         assert scheduled["updates"]["automation"]["id"] == automation_id
         assert hub.db.workbenches.get(automation_id).schedule == "0 15 * * 5"
         assert manual["updates"]["automation"]["engine_label"] == "Engine not set"
         assert scheduled["updates"]["automation"]["profile_id"] == ENGINE_PROFILE
         assert scheduled["updates"]["automation"]["engine_label"] != "Engine not set"
+        # Record a completed result through the same real runner as the face.
+        # The only stand-in is the recorded inference leaf.
+        fixture_reply = json.loads((Path(__file__).resolve().parents[1] / "fixtures/automations/engine_replies.json").read_text())["weekly_update"]
+
+        class RecordedEngine:
+            active_provider = "fixture"
+            active_model = "recorded-workbench-fixture"
+            last_usage = {"total_tokens": 40}
+
+            def run_prompt(self, **_kwargs):
+                return fixture_reply
+
+        engine = RecordedEngine()
+        monkeypatch.setattr("holdspeak.intel.providers.build_meeting_intel_for_profile", lambda **_kwargs: engine)
+        from holdspeak.kernel.runtime import _service
+        monkeypatch.setattr(_service().inference_runner, "_engine_factory", lambda _revision, **_kwargs: engine)
+        job = hub.ok("POST", f"/api/updates/{draft['id']}/engine-pass", {"automation_id": automation_id})["job"]
+        done = _poll_job(hub, job["id"], until=("succeeded", "failed"), timeout=45)
+        assert done["state"] == "succeeded", done
+        completed = hub.ok("GET", f"/api/projects/{project_id}/room")
+        result = completed["updates"]["automation"]["latest_result"]
+        assert result and result["new"] and result["update_id"] != draft["id"]
+        delivered = hub.ok("GET", f"/api/updates/{result['update_id']}")
+        opened = hub.ok("POST", f"/api/workbenches/{automation_id}/results/{result['artifact_id']}/open")
+        read = hub.ok("GET", f"/api/projects/{project_id}/room")
+        assert read["updates"]["automation"]["latest_result"]["new"] is False
+        assert hub.db.project_updates.get_update(draft["id"])["body_md"] == draft["body_md"]
+        # Legacy and foreign metadata never cause an older or foreign update
+        # to masquerade as this automation's latest project result.
+        artifact = hub.db.plugins.get_artifact(result["artifact_id"])
+        original_metadata = dict(artifact.structured_json)
+        with hub.db._connection() as conn:
+            legacy_metadata = {key: value for key, value in original_metadata.items() if key != "project_update_id"}
+            conn.execute("UPDATE artifacts SET structured_json=? WHERE id=?", (json.dumps(legacy_metadata), artifact.id))
+        legacy = hub.ok("GET", f"/api/projects/{project_id}/room")
+        assert legacy["updates"]["automation"]["latest_result"]["update_id"] is None
+        other_id = hub.ok("POST", "/api/projects", {"name": "Other private fixture project"})["project"]["id"]
+        other_draft = hub.ok("POST", f"/api/projects/{other_id}/updates/draft", {"generator": "deterministic"})["update"]
+        with hub.db._connection() as conn:
+            conn.execute("UPDATE artifacts SET structured_json=? WHERE id=?", (json.dumps({**original_metadata, "project_update_id": other_draft["id"]}), artifact.id))
+        foreign = hub.ok("GET", f"/api/projects/{project_id}/room")
+        assert foreign["updates"]["automation"]["latest_result"]["update_id"] is None
         if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
             path = Path(__file__).resolve().parents[2] / "web/src/features/project-room/__tests__/room-wires/updateAutomationP7.json"
             path.write_text(json.dumps({"manual": manual, "scheduled": scheduled,
-                "draft": draft, "friday": friday, "refusal": refused.json()}, indent=2) + "\n")
+                "draft": draft, "friday": friday, "refusal": refused.json(),
+                "completed": completed, "delivered": delivered, "opened": opened, "read": read, "legacy": legacy, "foreign": foreign}, indent=2) + "\n")
