@@ -233,11 +233,11 @@ class TestEveryNewVerbOpensItsWindow:
                 self._menu_verb(page, width, "New Decision")
                 page.locator("[data-testid=palette-name]").wait_for(timeout=OPENS_WITHIN_MS)
                 page.wait_for_timeout(800)
-                assert "/api/decisions" not in posts[sent:], ("a decision was made before its name", posts[sent:])
+                assert "/api/decision-records/from-desk" not in posts[sent:], ("a decision was made before its name", posts[sent:])
                 page.locator("[data-testid=palette-name]").fill("Freeze the old ledger")
                 page.keyboard.press("Enter")
                 win = self._new_window(page, before, f"New Decision on the {face} at {width}")
-                assert posts[sent:].count("/api/decisions") == 1, posts[sent:]
+                assert posts[sent:].count("/api/decision-records/from-desk") == 1, posts[sent:]
                 page.screenshot(path=str(SHOTS / f"new-decision-{face}-{width}.png"))
                 page.wait_for_timeout(READ_DELAY_MS + 1500)
                 assert win.count() == 1 and win.is_visible(), "the decision window closed under a desk read"

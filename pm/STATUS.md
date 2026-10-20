@@ -8,16 +8,22 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-The main watcher on 5bf3dc0c8 found six failures in its first two Python
-shards: 11,495 passed, 21 skipped and one xfailed. Three stored People
-replies had old date-dependent ordering or shapes; three automation MCP and
-folder replies lacked the current Hand fields. Complete real producer
-replies are re-recorded. The drafter test distinguishes inferred memory
-from a confirmed Project decision: a deterministic draft reads no inferred
-memory and retains its linked canonical decision exactly once. No product
-behavior changed. Root passed 26 collected producer checks and 73 People,
-Today, Needs and automation consumers. The rest of the tape continues;
-there is no full-suite green claim. Required quick: MAIN_WIRE_QUICK_PENDING.
+Failed native sign-in setup now cleans up through coder_factory. The
+factory accepts only the just-minted private sign-in session name, revokes
+its temporary agent credential and records the cleanup. A cleanup failure
+preserves the original terminal-setup refusal. The lifecycle census stays
+strict; no new direct tmux writer is admitted.
+
+The watcher on 5bf3dc0c8 found seven Python failures (16,996 passed,
+27 skipped and one xfailed) and two old creation-browser endpoint assertions.
+Complete People and automation MCP/folder replies are re-recorded from real
+producers. The deterministic drafter retains one confirmed linked Project
+decision while recording no inferred memory. Creation still writes nothing
+before a name, then one canonical decision. The People response also carries
+the current saved Builder preference. Root passed 26 earlier producer checks
+and 73 consumers, then 27 factory/sign-in/census/creation/producer checks and
+12 People consumers on the integrated source. Required quick:
+MAIN_WIRE_QUICK_PENDING. The remaining full tape is still separate.
 
 Search uses one ranked stream, the last six successful opens, exact About
 for Cmd+Enter and live object verbs. Protected People support Open, Ask,
