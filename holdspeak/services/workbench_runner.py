@@ -27,7 +27,7 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
     on this adapter instance, which the runner keeps for its one child."""
 
     def __init__(self, spend_limit_usd: float | None = None, work_folder: str | None = None, *,
-                 desk_tools: bool = True) -> None:
+                 desk_tools: bool = True, project_id: str = "") -> None:
         self.tokens = 0
         #: Betterment A4: the automation's Spend limit per run; it overrides
         #: the engine's own limit on an agent CLI that enforces one.
@@ -35,6 +35,8 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
         #: Betterment M2 follow-up (orchestrator ruling): the memory call
         #: after an item runs WITHOUT the desk's tools on an agent CLI.
         self.desk_tools = desk_tools
+        #: Project scope for an update automation's run credential.
+        self.project_id = str(project_id or "").strip()
         #: Betterment A10: the folder an agent CLI works in, read only (the
         #: automation's Folder source). An HTTP engine has no folder: ignored.
         self.work_folder = work_folder
@@ -45,7 +47,8 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
                  and getattr(preset, "enforces_spend_limit", False))
         no_tools = not self.desk_tools and getattr(engine, "desk_tools", False)
         folder = bool(self.work_folder) and hasattr(engine, "work_folder")
-        if not limit and not no_tools and not folder:
+        project_scope = bool(self.project_id) and hasattr(engine, "project_id")
+        if not limit and not no_tools and not folder and not project_scope:
             return engine
         # A copy for this one call: the routed engine may be shared.
         import copy
@@ -57,6 +60,8 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
             limited.desk_tools = False
         if folder:
             limited.work_folder = self.work_folder
+        if project_scope:
+            limited.project_id = self.project_id
         return limited
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, str]:
@@ -352,7 +357,8 @@ class WorkbenchRunner:
         base_system=automation.PLAIN_SYSTEM_PROMPT if instructed else (recipe.system_prompt or f"You are {recipe.name}, a helpful assistant.")
         system=inject_skills(self.db,base_system,recipe.id)
         context=_assemble_recipe_context(self.db,recipe); memory=""
-        if memory_enabled:
+        output_target = str(wb.output_target or "")
+        if memory_enabled and not output_target.startswith("project_updates:"):
             from ..workbench_memory import recall_for_prompt
             memory=recall_for_prompt(workbench_id)
         skills=[s.id for s in self.db.skills.list_for_recipe(recipe.id,active_only=True)]
@@ -362,6 +368,69 @@ class WorkbenchRunner:
         def tally() -> dict[str, Any]:
             ran.update(attempted=attempted, completed=complete, failed=failed)
             return ran
+        project_update_refs: list[str] | None = None
+        project_update_material = ""
+        project_update_excluded_refs: list[str] | None = None
+        if output_target.startswith("project_updates:"):
+            project_target = output_target.removeprefix("project_updates:")
+            try:
+                from .project_service import ProjectService
+                from .memory_grounding import MemoryContext, page_excerpts, project_pages
+                from .project_update_service import ProjectUpdateService
+
+                update_service = ProjectUpdateService(
+                    self.db, project_service=ProjectService(self.db),
+                )
+                project_update_refs = update_service.project_update_grounding_refs(
+                    principal, project_target,
+                )
+                # P8's no-tool contract: the engine receives the existing
+                # records draft and the three project standing pages as
+                # material. Pages are read sentence-by-sentence with the same
+                # P2 exclusions, so a stale private source cannot re-enter at
+                # this second context seam.
+                records = update_service.draft_update(
+                    principal, project_target, generator="deterministic", persist=False,
+                )
+                excluded = update_service.project_update_excluded_refs(
+                    principal, project_target,
+                )
+                project_update_excluded_refs = sorted(excluded)
+                excluded_folded = {str(ref).casefold() for ref in excluded}
+
+                def page_sentence_is_safe(sentence: Any) -> bool:
+                    refs = sentence.get("refs") if isinstance(sentence, dict) else []
+                    return not any(
+                        str(ref.get("ref") or "").split("#", 1)[0].casefold()
+                        in excluded_folded
+                        for ref in refs or [] if isinstance(ref, dict)
+                    )
+
+                pages = page_excerpts(
+                    self.db,
+                    project_pages(
+                        project_target,
+                        "what-we-decided",
+                        "what-is-open",
+                        "what-changed-this-week",
+                    ),
+                    exclude_refs=excluded,
+                    sentence_filter=page_sentence_is_safe,
+                )
+                records_body = str(records.get("body_md") or "").strip()
+                page_body = MemoryContext(tuple(pages)).prompt_block("PROJECT PAGES")
+                project_update_material = "\n\n".join(
+                    part for part in (
+                        f"[RECORDS DRAFT]\n{records_body}\n[END RECORDS DRAFT]"
+                        if records_body else "",
+                        page_body,
+                    ) if part
+                )
+            except Exception:
+                # An update run must never fall back to broad project
+                # hydration when its P2 source list cannot be established.
+                project_update_refs = []
+                project_update_material = ""
         try:
             for ordinal,item in enumerate(items,1):
                 if self.broker.parent_run_controller.expire_if_due(parent.context,principal):
@@ -407,6 +476,7 @@ class WorkbenchRunner:
                         self.db, item.grounding_json, query=f"{item.title}\n{item.body}",
                         # The item never recalls itself: its body goes once, as the task.
                         exclude_refs=[f"workbench_item:{item.id}"],
+                        project_update_refs=project_update_refs,
                     )
                 except ServiceError as exc:
                     # A missing attachment fails this item before any provider
@@ -434,13 +504,22 @@ class WorkbenchRunner:
                     emit_item_failed(workbench_id=workbench_id, run_id=run_id, item_id=item.id,
                                      title=item.title, index=ordinal, total=len(items), error=exc.detail)
                     continue
-                parts=[x for x in (context,memory,grounding,f"[TASK]\n{item.title}",item.body) if x]
+                parts=[x for x in (context,memory,grounding,project_update_material,f"[TASK]\n{item.title}",item.body) if x]
                 prompt="\n\n".join(parts)
                 item_operation="workbench_item_"+uuid.uuid4().hex
-                payload={"workbench_id":workbench_id,"workbench_revision":str(wb.last_modified),"item_id":item.id,"item_revision":str(item.last_modified),"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"system_prompt":system,"user_prompt":prompt,"rendered_input_sha256":_sha(prompt),"skills":skills,"context_hash":_sha(context),"attempt_ordinal":ordinal}
+                payload={"workbench_id":workbench_id,"workbench_revision":str(wb.last_modified),"item_id":item.id,"item_revision":str(item.last_modified),"recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"system_prompt":system,"user_prompt":prompt,"rendered_input_sha256":_sha(prompt),"skills":skills,"context_hash":_sha(context),"attempt_ordinal":ordinal,
+                         # Project updates are the one automation that lets a
+                         # tool-capable engine read the project and save its
+                         # plain text through the CONDUCTOR set.
+                         "tool_palette": "CONDUCTOR" if str(wb.output_target or "").startswith("project_updates:") else "ASK",
+                         "output_target": str(wb.output_target or ""),
+                         "project_update_excluded_refs": project_update_excluded_refs}
 
+                output_target = str(wb.output_target or "")
+                project_target = output_target.removeprefix("project_updates:")
                 adapter = _MeteredPromptAdapter(
-                    wb.spend_limit_usd, automation.work_folder_of(wb) if instructed else None)
+                    wb.spend_limit_usd, automation.work_folder_of(wb) if instructed else None,
+                    project_id=project_target if output_target.startswith("project_updates:") else "")
 
                 def publish_item(value: Any, reservation: dict[str, Any], *, item: Any = item, adapter: Any = adapter) -> str:
                     target = self._route_target(route, int(reservation["route_leg_ordinal"]))

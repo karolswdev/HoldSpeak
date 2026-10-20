@@ -917,7 +917,9 @@ def test_every_desk_face_case_crosses_the_gate_first(atlas: dict) -> None:
             problems.append(f"{case['id']}: first setup step is not goto /")
         if not (
             second.get("action") == "click_role"
-            and second.get("name") == "Continue later"
+            # Current Setup uses Open my desk. Historical atlas generations
+            # retain their original first-value entrance.
+            and second.get("name") in {"Continue later", "Open my desk"}
             and second.get("optional") is True
         ):
             problems.append(f"{case['id']}: second setup step is not the optional gate click")

@@ -1918,12 +1918,16 @@ PROJECT_UPDATE_DRAFT = OperationDescriptor(
     name="project.update_draft",
     version=1,
     description="Edit the text of a draft update (body_md). A published update cannot change. update_id comes from "
-                "project.list_updates.",
+                "project.list_updates. An automation saves a separate agent draft; use its returned id for later edits.",
     args_schema={
         "type": "object",
         "properties": {
             "update_id": _UPDATE_ID,
             "body_md": {"description": "The new Markdown text of the draft."},
+            "source_refs": {"type": "array", "items": {"type": "string"},
+                            "description": "Canonical refs the agent read for this update."},
+            "generator": {"type": "string", "description": "Agent generator label for an automation result."},
+            "engine": {"type": "string", "description": "Engine name that produced the plain text."},
             "command_id": _COMMAND_ID,
         },
         "required": ["update_id"],

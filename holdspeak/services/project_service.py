@@ -843,7 +843,7 @@ class ProjectService:
                 "target", lambda: self._read_room_target(target_at)),
             # PHILO-9-01 (F6): the updates and the steward read what exists.
             "updates": self._room_section(
-                "updates", lambda: self._read_room_updates(project_id)),
+                "updates", lambda: self._read_room_updates(principal, project_id)),
             "steward": self._room_section(
                 "steward", lambda: self._read_room_steward(project_id)),
             # HS-174-04: pipeline receipts scoped to this project.
@@ -933,7 +933,7 @@ class ProjectService:
     #: PHILO-9-01 (F6): the Room's update list is bounded like its other sections.
     _ROOM_UPDATES_CAP = 10
 
-    def _read_room_updates(self, project_id: str) -> dict[str, Any]:
+    def _read_room_updates(self, principal: Principal, project_id: str) -> dict[str, Any]:
         """PHILO-9-01 (F6): the Room's updates, newest first, each with its deliveries.
 
         Before this the section was ``absent · not_yet_built`` after an update
@@ -965,11 +965,44 @@ class ProjectService:
             ).fetchone()
         if pub is not None:
             latest_published = attach_deliveries(self._db, [{key: dict(pub).get(key) for key in fields}])[0]
+        automation = None
+        target = f"project_updates:{project_id}"
+        for wb in self._db.workbenches.list():
+            if str(wb.output_target or "") != target:
+                continue
+            try:
+                when = json.loads(wb.when_json or "{}") if wb.when_json else {}
+            except (TypeError, ValueError):
+                when = {}
+            engine_label, engine_profile = "Engine not read", None
+            if principal.kind is PrincipalKind.OWNER:
+                from .inference_assignment_service import InferenceAssignmentService
+                effective = InferenceAssignmentService(self._db).resolve_effective(
+                    principal, capability_id="workbench.item", subject_kind="workbench", subject_id=wb.id,
+                )
+                entries = (effective.get("assignment") or {}).get("entries") or []
+                if effective.get("status") == "assigned" and entries:
+                    engine_label = str(entries[0].get("label") or "Selected engine")
+                    engine_profile = str(entries[0].get("profile_id") or "") or None
+                else:
+                    engine_label = "Engine not set" if effective.get("status") == "no_assignment" else "Check engine"
+            automation = {
+                "id": str(wb.id),
+                "name": str(wb.name or "Project update"),
+                "instruction": str(wb.instruction or ""),
+                "schedule": str(wb.schedule or "") or None,
+                "schedule_enabled": bool(wb.schedule_enabled),
+                "when_kind": str(when.get("kind") or "manual"),
+                "profile_id": engine_profile,
+                "engine_label": engine_label,
+            }
+            break
         return {
             "count": len(rows),
             "counts": counts,
             "recent": recent,
             "latest_published": latest_published,
+            "automation": automation,
         }
 
     def _read_room_steward(self, project_id: str) -> dict[str, Any]:

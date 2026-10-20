@@ -217,6 +217,9 @@ class UpdatesRepository(BaseRepository):
         body_md: Optional[str] = None,
         claims_json: Optional[str] = None,
         source_manifest_json: Optional[str] = None,
+        generator: Optional[str] = None,
+        generator_host: Optional[str] = None,
+        generator_model: Optional[str] = None,
     ) -> None:
         """Update mutable fields on a draft.
 
@@ -229,6 +232,9 @@ class UpdatesRepository(BaseRepository):
                 body_md=body_md,
                 claims_json=claims_json,
                 source_manifest_json=source_manifest_json,
+                generator=generator,
+                generator_host=generator_host,
+                generator_model=generator_model,
             )
 
     def update_draft_in_transaction(
@@ -239,6 +245,9 @@ class UpdatesRepository(BaseRepository):
         body_md: Optional[str] = None,
         claims_json: Optional[str] = None,
         source_manifest_json: Optional[str] = None,
+        generator: Optional[str] = None,
+        generator_host: Optional[str] = None,
+        generator_model: Optional[str] = None,
     ) -> None:
         """Update mutable draft fields on a caller-owned connection.
 
@@ -250,6 +259,9 @@ class UpdatesRepository(BaseRepository):
             body_md=body_md,
             claims_json=claims_json,
             source_manifest_json=source_manifest_json,
+            generator=generator,
+            generator_host=generator_host,
+            generator_model=generator_model,
         )
 
     @staticmethod
@@ -260,6 +272,9 @@ class UpdatesRepository(BaseRepository):
         body_md: Optional[str],
         claims_json: Optional[str],
         source_manifest_json: Optional[str],
+        generator: Optional[str],
+        generator_host: Optional[str],
+        generator_model: Optional[str],
     ) -> None:
         clean_id = str(update_id).strip()
         # Check lifecycle first
@@ -285,6 +300,15 @@ class UpdatesRepository(BaseRepository):
         if source_manifest_json is not None:
             updates.append("source_manifest_json = ?")
             params.append(source_manifest_json)
+        if generator is not None:
+            updates.append("generator = ?")
+            params.append(generator)
+        if generator_host is not None:
+            updates.append("generator_host = ?")
+            params.append(generator_host)
+        if generator_model is not None:
+            updates.append("generator_model = ?")
+            params.append(generator_model)
         if not updates:
             return
         now_iso = datetime.now(timezone.utc).isoformat(timespec="seconds")

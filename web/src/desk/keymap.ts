@@ -57,7 +57,7 @@ export function parseKey(cap: string): KeySpec | null {
  * field it is the field's own key (on a Mac it swaps two letters). */
 const TYPING_GUARDED = new Set([
   // PHILO-17 (U27): ⌃N too (in a Mac field it moves to the next line).
-  "w", "m", "b", "t", "n",
+  "w", "m", "b", "t", "n", "j", ",",
   // PHILO-16: the arrangement keys. In a field ⌘⇧Z is redo, ⌘⏎ sends a
   // composer, ⌘⌥←/→ and ⌘` belong to the field or the system.
   "z", "g", "e", "`", "ArrowLeft", "ArrowRight", "Enter",

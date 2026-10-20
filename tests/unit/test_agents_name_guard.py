@@ -107,7 +107,7 @@ def test_the_desk_names_the_conductor_agents() -> None:
     row = manifest[manifest.index('action: "open-conductor"'):]
     row = row[: row.index("\n  },")]
     assert 'label: "Agents"' in row and 'toolLabel: "Agents"' in row
-    assert 'shortcut: "⌃3"' in row
+    assert 'shortcut: "⌃4"' in row
     # The old Agents application is unmapped (parked, never deleted).
     assert "inspect-personas-and-coders" not in manifest
     assert (ROOT / "web/src/desk/_parked/agents/companionApplication.ts").exists()

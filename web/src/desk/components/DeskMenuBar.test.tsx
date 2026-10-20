@@ -121,7 +121,7 @@ describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
     ]);
     expect(menu.textContent).not.toMatch(/Settings|Runs on|Connections|Setup|Desk memory|List view/);
     // The ⌃ keys stay on their rows (PHILO-17 U27).
-    expect(within(menu).getByRole("menuitem", { name: /Speak/ }).textContent).toContain("⌃1");
+    expect(within(menu).getByRole("menuitem", { name: /Speak/ }).textContent).toContain("⌃5");
 
     fireEvent.click(within(menu).getByRole("menuitem", { name: /^Projects\W*$/ }));
     // Betterment P4: All projects (the Projects window) leads.

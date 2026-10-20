@@ -1166,6 +1166,18 @@
   color: var(--wb-text);
 }
 .room-history-folds { margin-top: 8px; padding: 0 var(--desk-surface-row-pad-x, 14px); }
+.room-update-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 var(--desk-surface-row-pad-x, 14px);
+  color: var(--wb-muted);
+  font: 600 12px / 1.35 var(--font-mono);
+}
+.room-update-line > .btn { margin-left: 0; }
+.room-update-line > .btn[data-testid="room-update-open"] { margin-left: auto; }
+.room-sources-raw { display: inline-flex; align-items: center; }
 /* The rail keeps its three columns at every width (the time, the words,
    the verb), so the time never falls onto the words. */
 .room-history .surface-stream-when { grid-column: 1; grid-row: 1; text-align: right; }
