@@ -400,8 +400,8 @@ def _confirmed_decisions_for_meeting(
 
     The synthesis artifact is useful for the meeting face, but it also carries
     proposals that still need the owner's confirmation.  Channel documents
-    must use the durable ``decisions`` lifecycle instead, which is written by
-    the existing proposal bridge when a decision is confirmed.
+    must use confirmed records and their current canonical words, including
+    decisions the owner accepted on the Desk and linked to this meeting.
     """
     from .services.decision_record_service import DecisionRecordService
 
