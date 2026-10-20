@@ -69,12 +69,12 @@ export function usePeopleAccess() {
 /* PHILO-15 B57 (owed since 2026-10-04): his name and the other names for
  * him, after first run. The needs-you rule reads them as "me", and a
  * one-letter mishearing of the name ("Carol" for "Karol") still counts. */
-export function OwnerNameGroup() {
+export function OwnerNameGroup({ highlight }: { highlight?: string | null } = {}) {
   const owner = useOwnerName();
   if (owner.loading || owner.readError) return <GadgetGroup material="inset" label="You"><SurfaceState loading={owner.loading} error={owner.readError} onRetry={() => void owner.reload()} /></GadgetGroup>;
   return (
     <GadgetGroup material="inset" label="You">
-      <GadgetRow wide label="Your name" controlWidth="full">
+      <GadgetRow wide label="Your name" controlWidth="full" highlight={highlight === "owner.name"}>
         <span className="prefs-text-field" data-testid="settings-owner-name">
           <StringGadget
             label="Your name"
@@ -85,7 +85,7 @@ export function OwnerNameGroup() {
           />
         </span>
       </GadgetRow>
-      <GadgetRow wide label="Also called" controlWidth="full">
+      <GadgetRow wide label="Also called" controlWidth="full" highlight={highlight === "owner.aliases"}>
         <span className="prefs-text-field" data-testid="settings-owner-aliases">
           <OwnerAliasField owner={owner} />
         </span>
@@ -100,7 +100,7 @@ export function OwnerNameGroup() {
   );
 }
 
-export function PeopleAccessModule() {
+export function PeopleAccessModule({ highlight }: { highlight?: string | null } = {}) {
   const { access, setAccess, readError, reload } = usePeopleAccess();
   const [busy, setBusy] = useState(false);
   const [receipt, setReceipt] = useState<AccessReceipt | null>(null);
@@ -145,7 +145,7 @@ export function PeopleAccessModule() {
         </GadgetRow>
       ) : null}
       {access ? (<>
-      <GadgetRow label="Agent access" wide controlWidth="full">
+      <GadgetRow label="Agent access" wide controlWidth="full" highlight={highlight === "people.access"}>
         <span data-testid="people-access">
           <FilterTokens
             label="Agent access"

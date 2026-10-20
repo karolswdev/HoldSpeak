@@ -533,6 +533,13 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
         migratedTo.add("surface-dictation");
         useDesk.getState().openSurfaceWindow("dictate", "commands");
       }
+      // ST7: saved Engines windows follow the new canonical host once.
+      if (r.id === "surface-concierge" && !settingsOpened.has(r.id) && !retiredDone.has(r.id)
+        && (retireTries.get(r.id) ?? 0) < RETIRE_TRIES) {
+        settingsOpened.add(r.id);
+        migratedTo.add("surface-engines");
+        useDesk.getState().openSurfaceWindow("configure-runs-on");
+      }
       const home = SETTINGS_HOMES[r.id];
       if (home && !settingsOpened.has(r.id) && !retiredDone.has(r.id)
         && (retireTries.get(r.id) ?? 0) < RETIRE_TRIES) {

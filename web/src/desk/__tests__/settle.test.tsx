@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dispatchKey, dismissSettle, useKeymap } from "../keymap";
 import { useSettleState } from "../settleState";
+import { verbById } from "../verbRegistry";
 import { useDesk } from "../store";
 import { registerSurface } from "../shell";
 import { RoomActions } from "../components/window/RoomActions";
@@ -14,7 +15,7 @@ beforeEach(() => {
 afterEach(() => useSettleState.setState({ settled: false }));
 
 describe("Settle in", () => {
-  it("uses the registered shortcut without touching window arrangement or capture", () => {
+  it("keeps the parked verb callable without a shortcut or window/capture changes", () => {
     const before = useDesk.getState();
     expect(
       dispatchKey(
@@ -24,7 +25,9 @@ describe("Settle in", () => {
           shiftKey: true,
         }),
       )?.id,
-    ).toBe("desk.settle");
+    ).toBeUndefined();
+    expect(useSettleState.getState().settled).toBe(false);
+    verbById("desk.settle")!.run({ selectedRef: null });
     expect(useSettleState.getState().settled).toBe(true);
     expect(useDesk.getState()).toBe(before);
   });

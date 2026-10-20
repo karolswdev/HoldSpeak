@@ -58,13 +58,13 @@ describe("DeskOS application manifest", () => {
       meeting: { w: 720, h: 600 },
       people: { w: 640, h: 560 },
       room: { w: 760, h: 480 },
-      settings: { w: 640, h: 600 },
+      settings: { w: 1040, h: 720 },
     });
 
     const meetings = DESK_APPLICATIONS.find((application) => application.action === "review-meetings");
     const settings = DESK_APPLICATIONS.find((application) => application.action === "configure-settings");
     expect(meetings?.surface).toMatchObject({ defaultW: 720, defaultH: 600 });
-    expect(settings?.surface).toMatchObject({ defaultW: 640, defaultH: 600 });
+    expect(settings?.surface).toMatchObject({ defaultW: 1040, defaultH: 720, minW: 880 });
   });
 
   it("Betterment AG1: the old Agents application is unmapped; the Conductor's face name is Agents", () => {
@@ -80,11 +80,13 @@ describe("DeskOS application manifest", () => {
 
   it("derives mark-menu application commands", () => {
     // PHILO-17 (doors): the HoldSpeak menu holds the setup applications.
-    // Betterment shell S1: Engines and Accounts open their Settings wings.
+    // Betterment ST7: Engines is its own Desk window; Accounts remains a
+    // Settings section.
     expect(MARK_APPLICATION_COMMANDS).toEqual([
       "go.configure-settings",
-      "settings.models",
+      "go.configure-runs-on",
       "settings.integrations",
+      "settings.wallpaper",
       "go.configure-setup",
     ]);
   });
@@ -109,7 +111,7 @@ describe("DeskOS application manifest", () => {
     // setup row of the HoldSpeak menu, or is opened by its own verb.
     const inGo = new Set(GO_GROUPS.flatMap(goRows).flatMap((r) => (r.kind === "app" ? [r.app.action] : [])));
     // Betterment P4: Projects (the window) is Go ▸ Projects ▸ All projects.
-    const elsewhere = new Set(["configure-settings", "configure-setup", "configure-cadence", "change-places",
+    const elsewhere = new Set(["configure-settings", "configure-runs-on", "configure-setup", "configure-cadence", "change-places",
       "record-live", "project-setup", "open-projects"]);
     for (const application of DESK_APPLICATIONS) {
       if (application.parked) continue;

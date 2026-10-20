@@ -7,7 +7,7 @@
  * picks the first free name: "New zone", then "New zone 2", "New zone 3", …
  * The hub's rule stays; a race with another client still gets its 409. */
 
-export const DEFAULT_ZONE_NAME = "New zone";
+export const DEFAULT_ZONE_NAME = "New drawer";
 
 /** The hub's rule in full. JavaScript has no `casefold`; upper-then-lower
  * folds the cases it adds over `toLowerCase` ("ß" → "ss", "ﬁ" → "fi"). */

@@ -34,6 +34,7 @@ import { useAtmospherePreference } from "../gl/atmospherePreference";
 import { resolveAtmosphere } from "../gl/atmosphereRegistry";
 import { Atmosphere } from "../gl/Atmosphere";
 import { GoHome } from "./GoHome";
+import { ZoneRenameRow } from "../components/ZoneRenameRow";
 import "./screen.css";
 
 /** The A-1 screen measured at 1440 × 900 (a screen that has not laid out yet). */
@@ -56,6 +57,7 @@ function useSize(ref: React.RefObject<HTMLElement | null>) {
 
 export function Screen() {
   const items = useDesk((s) => s.items);
+  const renamingDrawer = useDesk((s) => s.renamingZoneId);
   const needs = useNeedsYou();
   // The agents: the one store the Arrival keeps live (useAgentFlightsLive in ChairHome).
   const sessions = useAgentFlights((s) => s.sessions);
@@ -170,7 +172,7 @@ export function Screen() {
           return (
             <div
               key={o.key}
-              className={`desk-screen-cell${at ? " desk-screen-placed" : ""}`}
+              className={`desk-screen-cell${at ? " desk-screen-placed" : ""}${o.key === `zone:${renamingDrawer}` ? " is-renaming" : ""}`}
               aria-busy={o.key === "drawer:people" && peopleReading ? true : undefined}
               style={at ? { left: at.x, top: at.y } : undefined}
               onContextMenu={(event) => {
@@ -202,6 +204,9 @@ export function Screen() {
                 {...dragProps}
                 {...handTargetProps(o.key)}
               />
+              {o.kind === "directory" && o.key === `zone:${renamingDrawer}` && renamingDrawer ? (
+                <ZoneRenameRow zoneId={renamingDrawer} title={o.name} placement="inrow" />
+              ) : null}
               {o.notRead ? (
                 <span className="desk-screen-notread" data-testid={`desk-screen-notread-${o.key}`}>
                   <span className="desk-screen-fact">NOT READ</span>
