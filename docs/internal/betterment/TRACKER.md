@@ -162,9 +162,9 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S3 | The Dock: five daily apps with their state; the keys follow it | Done · #1394 | Manifest order, visible phone words, producer states and matching keys. |
 | S4 | The floor holds what he keeps | Done · #1405 | Floor and meeting Keep #1400; person Keep/Remove and mode Search adapters verified with S5. |
 | S5 | Search is the command line | Done · #1405 | Ranked results, recent opens, exact About, live object verbs and hub-backed Builder tools. |
-| S6 | Wallpaper has one home | Done · PR_PENDING | One Settings Desk home; readable Jupiter label plates. |
-| S7 | Windows open where he can see them, at the size of their content | Done · PR_PENDING | Content sizes and reachable heads; remembered collision reseating preserves owner resize. |
-| S8 | The Window menu | Done · PR_PENDING | Arrange front/all preserve size and order; exact owner geometry survives reopening. |
+| S6 | Wallpaper has one home | Done · #1407 | One Settings Desk home; readable Jupiter label plates. |
+| S7 | Windows open where he can see them, at the size of their content | Done · #1407 | Content sizes and reachable heads; remembered collision reseating preserves owner resize. |
+| S8 | The Window menu | Done · #1407 | Arrange front/all preserve size and order; exact owner geometry survives reopening. |
 | S9 | Ask can arrange the desk (gated) | Open |  |
 
 ## Send (`send/RECIPE.md`): 2 of 8
