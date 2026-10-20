@@ -58,6 +58,7 @@ from .device import (  # noqa: F401
     DeviceConfig,
     MeshConfig,
     PresenceConfig,
+    RemoteConfig,
     WakeWordConfig,
 )
 

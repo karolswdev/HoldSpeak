@@ -53,6 +53,8 @@ def _hub_app(db: Database, frames: list[tuple[str, Any]], *, remote_enabled: boo
     from fastapi import FastAPI
 
     from holdspeak.principals import AgentCredentialStore, UNAUTHENTICATED, derive_owner
+    from holdspeak.config import Config
+    from holdspeak.services.settings_service import SettingsService
     from holdspeak.web.context import WebContext
     from holdspeak.web.routes.mcp_http import build_mcp_http_router
     from holdspeak.web_auth import extract_request_token
@@ -60,14 +62,17 @@ def _hub_app(db: Database, frames: list[tuple[str, Any]], *, remote_enabled: boo
     ctx = WebContext(
         get_state=lambda: {},
         broadcast=lambda message_type, data: frames.append((message_type, data)),
+        settings_service=SettingsService(db),
     )
+    config = Config.load()
+    config.remote.streamable_http_enabled = remote_enabled
+    config.save()
     composition.install_from_web_context(ctx, db=db, observer=None)
 
     app = FastAPI()
     store = AgentCredentialStore()
     app.state.agent_credentials = store
     app.state.owner_token = owner_token
-    app.state._remote_settings = {"enabled": remote_enabled}
 
     @app.middleware("http")
     async def _auth(request, call_next):  # noqa: ANN001

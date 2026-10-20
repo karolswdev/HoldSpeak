@@ -69,6 +69,7 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, Response
 
+from ...config import Config
 from ...logging_config import get_logger
 from ...principals import (
     AgentCredentialStore,
@@ -93,10 +94,40 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         return getattr(request.app.state, "agent_credentials", AgentCredentialStore())
 
     def _remote_enabled(request: Request) -> bool:
-        store = getattr(request.app.state, "_remote_settings", None)
-        if store is None:
-            return False
+        store = _remote_store()
         return bool(store.get("enabled", False))
+
+    def _remote_store() -> dict[str, Any]:
+        """Read the durable config used by every remote surface."""
+        remote = Config.load().remote
+        return {
+            "enabled": bool(remote.streamable_http_enabled),
+            "bind_host": remote.bind_host,
+            "port": remote.port,
+        }
+
+    def _save_remote_settings(principal: Any, patch: dict[str, Any]) -> dict[str, Any]:
+        """Use the composed settings operation for the durable write."""
+        service = ctx.settings_service
+        if service is None:
+            raise RuntimeError("SettingsService was not supplied at application composition")
+        remote_patch: dict[str, Any] = {}
+        if "enabled" in patch:
+            remote_patch["streamable_http_enabled"] = patch["enabled"]
+        if "bind_host" in patch:
+            remote_patch["bind_host"] = patch["bind_host"]
+        if "port" in patch:
+            remote_patch["port"] = patch["port"]
+        service.update_settings(
+            principal,
+            {"remote": remote_patch},
+        )
+        remote = Config.load().remote
+        return {
+            "enabled": bool(remote.streamable_http_enabled),
+            "bind_host": remote.bind_host,
+            "port": remote.port,
+        }
 
     # ── POST /api/mcp ──────────────────────────────────────────────
     def _blocking_io_tools() -> frozenset[str]:
@@ -365,7 +396,7 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
         if principal.kind is not PrincipalKind.OWNER:
             return JSONResponse({"error": "owner_required"}, status_code=403)
 
-        store = getattr(request.app.state, "_remote_settings", None) or {}
+        store = _remote_store()
         cred_store = _get_credential_store(request)
         now_mono = time.monotonic()
         now_epoch = time.time()
@@ -430,18 +461,15 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": "owner_required"}, status_code=403)
 
         body = await request.json()
-        store = getattr(request.app.state, "_remote_settings", None)
-        if store is None:
-            store = {}
-            request.app.state._remote_settings = store
-
+        patch: dict[str, Any] = {}
         if "enabled" in body:
-            store["enabled"] = bool(body["enabled"])
+            patch["enabled"] = bool(body["enabled"])
         if "bind_host" in body:
-            store["bind_host"] = str(body["bind_host"] or "")
+            patch["bind_host"] = str(body["bind_host"] or "")
         if "port" in body:
-            store["port"] = int(body["port"])
+            patch["port"] = int(body["port"])
 
+        store = _save_remote_settings(principal, patch)
         return JSONResponse({"success": True, **store})
 
     # ── POST /api/settings/remote/credentials ──────────────────────

@@ -373,6 +373,7 @@ class SettingsService:
             MeshConfig,
             OwnerConfig,
             PresenceConfig,
+            RemoteConfig,
             RailsObserverConfig,
             ThoughtsConfig,
             TelegramConfig,
@@ -1043,6 +1044,7 @@ class SettingsService:
             cadence_cfg = CadenceConfig(**merged.get("cadence", {}))
             telegram_cfg = TelegramConfig(**merged.get("cadence_telegram", {}))
             mesh_cfg = MeshConfig(**merged.get("mesh", {}))
+            remote_cfg = RemoteConfig(**(merged.get("remote") or {}))
             # Betterment AG5: the working-at-once limit (clamped 1 to 20).
             agents_cfg = AgentsConfig(**(merged.get("agents") or {}))
         except (TypeError, ValueError) as exc:
@@ -1065,6 +1067,7 @@ class SettingsService:
             cadence=cadence_cfg,
             cadence_telegram=telegram_cfg,
             mesh=mesh_cfg,
+            remote=remote_cfg,
             agents=agents_cfg,
         )
         updated.save()

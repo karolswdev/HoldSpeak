@@ -82,3 +82,10 @@ Runtime route parity: speech refuses the global chat fallback, and installed
 meeting plugins follow the saved summary assignment. The face and frozen
 route now share the existing assignment policy. Private SQLite regressions
 prove source/profile identity; no live provider or owner assignment was changed.
+
+ST0 remaining Setup facts: Other devices uses durable Config.remote through
+SettingsService, and all remote projections read that store. The real private
+Hub restart preserves the switch, host and partial port edit. Active Guide
+rows name Works / Not ready / Does not work, retaining their reasons and
+only existing fix verbs. Seventy-seven backend and six recorded consumer
+checks pass; parked Setup faces are unchanged.
