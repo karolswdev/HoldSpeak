@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, Projects P5/P6 verified; running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-19, Capture C10 verified; running-desk identity is in `pm/STATUS.md`.
 
-**Total: 84 of 117 slices merged**, with Send S7 still partial.
+**Total: 86 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -23,7 +23,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Setup and Settings | `setup/` | 3 of 10 |
 | Desk shell | `shell/` | 2 of 10 |
 | Send | `send/` | 1 of 8 |
-| Capture | `capture/` | 8 of 12 |
+| Capture | `capture/` | 10 of 12 |
 
 ## Automations (`workbench/RECIPE.md`): 11 of 11
 
@@ -180,7 +180,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S7 | Automations put their result in a destination | Part | A6 #1322: Put it in can prepare a send to a saved destination. Check the rest of S7 against the recipe. |
 | S8 | "Not checked yet" warns (owner decision 2) | Open |  |
 
-## Capture (`capture/RECIPE.md`): 8 of 12
+## Capture (`capture/RECIPE.md`): 10 of 12
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -192,7 +192,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | C6 | Since last time | Done · #1344 |  |
 | C7 | One home for recording | Done · #1363 | Record wing, schedule outcomes, Needs you Record now and orb hold. |
 | C8 | Speak and Capture in plain words | Done · #1363 | Plain receipts and captured speech handed to the saved note path. |
-| C9 | A clean audio callback | Open |  |
-| C10 | Meetings record in their own process (decision 1) | Open |  |
+| C9 | A clean audio callback | Done · #1379 | Callback queue, accepted-byte flush and saved capture failures; hardware walk remains separate. |
+| C10 | Meetings record in their own process (decision 1) | Done · #1382 | Child owns native streams and journal; bounded Stop confirms exit before releasing the floor. Hardware acceptance remains open. |
 | C11 | Voice commands run desk verbs (decision 3) | Open |  |
 | C12 | The glyph tells the truth | Open |  |

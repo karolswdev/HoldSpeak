@@ -101,22 +101,20 @@ class TestObjectVerbsOnTheChair:
         return str(self.db.notes.get(NOTE_ID).title)
 
     def _rename_in_editor(self, page: Any, title: str, *, inline: bool = False) -> None:
-        # An already open note owns its editor in that same window. A loose
-        # Screen object's F2 command still opens the standalone editor.
-        editor = page.locator(f"[id='pullout:note:{NOTE_ID}']" if inline else ".desk-editor-window")
+        # Betterment Q8: Rename opens the same sticky at both widths.
+        editor = page.locator(f"[id='pullout:note:{NOTE_ID}']")
         editor.wait_for(timeout=T)
+        editor.get_by_role("button", name="Edit Title", exact=True).click()
         field = editor.get_by_role("textbox", name="Title", exact=True)
-        field.wait_for(timeout=T)
-        with page.expect_response(lambda r: f"/api/notes/{NOTE_ID}" in r.url and r.request.method == "PUT"
+        field.fill(title)
+        with page.expect_response(lambda r: "/api/thoughts/" in r.url and r.url.endswith("/working")
+                                  and r.request.method == "PATCH"
                                   and (r.request.post_data_json or {}).get("title") == title) as kept:
-            field.fill(title)
+            field.press("Enter")
         assert kept.value.ok, kept.value.text()
+        assert editor.get_attribute("aria-label") == title
         editor.get_by_role("button", name="Done", exact=True).click()
-        if inline:
-            field.wait_for(state="detached", timeout=T)
-            assert editor.is_visible() and editor.get_attribute("aria-label") == title
-        else:
-            editor.wait_for(state="detached", timeout=T)
+        editor.wait_for(state="detached", timeout=T)
 
     def _object_rename_disabled(self, page: Any, shot: str | None = None) -> bool:
         """True when the menu bar offers no live Rename for an object.
@@ -170,9 +168,9 @@ class TestObjectVerbsOnTheChair:
                 assert "Avery 1:1 questions" in (icon.get_attribute("aria-label") or ""), icon.get_attribute("aria-label")
                 icon.click()
                 page.keyboard.press("F2")
-                editor = page.locator(".desk-editor-window")
+                editor = page.locator(f"[id='pullout:note:{NOTE_ID}']")
                 editor.wait_for(timeout=T)
-                assert editor.get_by_role("textbox", name="Title", exact=True).input_value() == "Avery 1:1 questions"
+                assert editor.get_by_role("button", name="Edit Title", exact=True).inner_text() == "Avery 1:1 questions"
                 editor.get_by_role("button", name="Done", exact=True).click()
                 editor.wait_for(state="detached", timeout=T)
                 # A right-click opens the Floor's object menu.
@@ -183,20 +181,17 @@ class TestObjectVerbsOnTheChair:
                 assert live.get_attribute("aria-disabled") != "true"
                 page.screenshot(path=str(SHOTS / "objverbs-1440-right-click.png"))
                 page.keyboard.press("Escape")
-                # Desk ▸ New Note: the title starts empty; typing is exactly what was typed.
+                # New Note opens an empty sticky; its body receives the keys.
                 page.locator(".desk-verbbar").get_by_role("button", name="Desk", exact=True).click()
                 page.get_by_role("menuitem", name=re.compile(r"^New Note")).click()
-                editor = page.locator(".desk-editor-window")
+                editor = page.locator(".thought-workspace-window")
                 editor.wait_for(timeout=T)
-                field = editor.get_by_role("textbox", name="Title", exact=True)
+                field = editor.get_by_role("textbox", name="Note body", exact=True)
                 field.wait_for(timeout=T)
-                assert field.input_value() == ""
-                assert field.get_attribute("placeholder") == "New note"
-                # The new note's title well takes the focus (StringGadget autoFocus).
-                field.evaluate("el => new Promise((ok) => { const t = setInterval(() => "
-                               "{ if (document.activeElement === el) { clearInterval(t); ok(true); } }, 20); })")
+                assert field.locator(".cm-placeholder").is_visible()
+                field.click()
                 page.keyboard.type("Ask Avery")
-                assert field.input_value() == "Ask Avery"
+                assert field.inner_text() == "Ask Avery"
                 page.screenshot(path=str(SHOTS / "objverbs-1440-new-note.png"))
                 assert not errors, errors
             finally:
