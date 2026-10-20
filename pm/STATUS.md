@@ -18,7 +18,7 @@ restart. All 77 focused backend checks pass on the locked FastAPI 0.128.0.
 The active Guide uses Works, Not ready and Does not work with the existing
 reason text; a row without a fix gets no invented fix verb. Its six recorded
 consumer checks, type check and build pass. Required quick:
-REMOTE_SETTINGS_QUICK_PENDING.
+Final delta: 75 affected checks, 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green. The unchanged product also passed 4,084 related web consumers in the first broader run.
 The first broader run passed 4,084 related web and 3,121 backend checks,
 110 sweep, 27 canon and 1,116 guards. Three earlier consumer expectations
 are reconciled with plugin inheritance and accepted People references. The
