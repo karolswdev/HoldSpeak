@@ -77,3 +77,10 @@ Original rows:
 | S1 (#1259) | A person is not a desk object, so a person has no Object menu. | Shell S4 or Daily D6 |
 | S1 (#1259) | The Builder tools switch is saved in the browser, not on the hub, so an agent cannot read or set it. | Shell S5 |
 | S0 (#1257) | Search for "automation" still finds nothing. | Shell S5 (Automations A1 adds the alias) |
+
+ST0 remaining Setup facts: Other devices uses durable Config.remote through
+SettingsService, and all remote projections read that store. The real private
+Hub restart preserves the switch, host and partial port edit. Active Guide
+rows name Works / Not ready / Does not work, retaining their reasons and
+only existing fix verbs. Seventy-seven backend and six recorded consumer
+checks pass; parked Setup faces are unchanged.

@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import tempfile
 import time
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import patch
@@ -78,14 +80,24 @@ def _make_app(
     """
     from holdspeak.web.routes.mcp_http import build_mcp_http_router
     from holdspeak.web.context import WebContext
+    from holdspeak.config import Config
+    from holdspeak.db import Database
+    from holdspeak.services.settings_service import SettingsService
 
     app = FastAPI()
-    ctx = WebContext(get_state=lambda: {})
+    config = Config.load()
+    config.remote.streamable_http_enabled = remote_enabled
+    config.save()
+    ctx = WebContext(
+        get_state=lambda: {},
+        settings_service=SettingsService(
+            Database(Path(tempfile.mkdtemp(prefix="holdspeak-reach-")) / "reach.db")
+        ),
+    )
 
     store = agent_store or AgentCredentialStore()
     app.state.agent_credentials = store
     app.state.owner_token = owner_token
-    app.state._remote_settings = {"enabled": remote_enabled}
 
     # Minimal auth middleware that mirrors the real _web_auth_gate.
     from holdspeak.web_auth import extract_request_token

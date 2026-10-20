@@ -8,7 +8,6 @@ PR that fixes it merges. The recovery reconciliation is retained in
 |---|---|---|
 | C2 (#1258) | Memory pages (what we decided, what is open) are not filtered by date, so a re-summary of an old meeting can still read later facts through a page. | Capture C6 |
 | A0 (#1256) | Choosing Manual still pauses event starts and idle work; an existing test asserts it. The When editor replaces this control. | Automations A4 |
-| ST0 (#1261) | ST1 #1347 delivered the one Rhythm quiet-hours store. Remaining ST0: Setup rows in words (the yellow Check chip), Other devices saved (`mcp_http.py:392-404` keeps it in memory only). | Setup ST1 |
 | ST0 (#1261) | The fix is in the Engines summary only. The runtime speech route still falls back to the default last; on a desk without speech's own capability row, a route plan could still reach the chat server. Check it. | Setup ST1 / Engines E5 |
 | E1 (#1273) | `CliEngine.cancel()` exists but nothing in the kernel calls it; an owner cancel waits for the timeout. | Engines E5 / Automations A3 (cancel) |
 | E1 (#1273) | A timed-out CLI is retried once before the fallback (two killed attempts). Consider no retry on timeout for CLI engines. | Engines E5 |

@@ -8,6 +8,18 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Other devices now saves its switch and displayed host/port in the existing
+config through SettingsService. The remote gate, its read route and the
+System fact read that same durable value. There is no process-only writer
+or cache. Owner-only access and credential custody remain unchanged.
+
+The real private Hub preserves enabled, host and a partial port edit across
+restart. All 77 focused backend checks pass on the locked FastAPI 0.128.0.
+The active Guide uses Works, Not ready and Does not work with the existing
+reason text; a row without a fix gets no invented fix verb. Its six recorded
+consumer checks, type check and build pass. Required quick:
+REMOTE_SETTINGS_QUICK_PENDING.
+
 Failed native sign-in setup now cleans up through coder_factory. The
 factory accepts only the just-minted private sign-in session name, revokes
 its temporary agent credential and records the cleanup. A cleanup failure

@@ -289,6 +289,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
 
             # System.
             mesh_on = bool(getattr(config.mesh, "device_name", ""))
+            remote_on = bool(config.remote.streamable_http_enabled)
 
             # Posture.
             posture = config.control_mode
@@ -356,10 +357,7 @@ def build_settings_router(ctx: WebContext) -> APIRouter:
                 "system": {
                     "host": "THIS DEVICE",
                     "mesh": mesh_on,
-                    "remote": bool(
-                        getattr(request.app.state, "_remote_settings", None)
-                        and getattr(request.app.state, "_remote_settings", {}).get("enabled", False)
-                    ),
+                    "remote": remote_on,
                 },
                 "posture": posture,
                 "writtenAt": written_at,

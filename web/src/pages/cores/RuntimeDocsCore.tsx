@@ -47,10 +47,10 @@ const ENGINE_CHECKS = new Set([
 ]);
 
 const PILL: Record<string, { tone: string; word: string }> = {
-  pass: { tone: "ok", word: "Ready" },
+  pass: { tone: "ok", word: "Works" },
   info: { tone: "idle", word: "Note" },
-  warn: { tone: "warn", word: "Check" },
-  fail: { tone: "danger", word: "Not working" },
+  warn: { tone: "warn", word: "Not ready" },
+  fail: { tone: "danger", word: "Does not work" },
   unknown: { tone: "idle", word: "Not known" },
 };
 
