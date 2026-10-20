@@ -4,9 +4,24 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (truthful watches and shared services)
+**Last updated:** 2026-10-19 (project automation result read state)
 
 ## Current phase
+
+Project automation NEW now follows the latest completed artifact and its read
+state. The artifact carries the exact project-update ID; Open latest fetches
+that update and uses the existing result-open path. An owner draft alone
+does not show NEW. Legacy or foreign update links open the automation rather
+than guessing at a draft. Failed reads keep NEW.
+
+Root independently verified five actual runner/producer cases and both real
+browser widths (seven passed), plus 44 web consumers, type check and build.
+The browser reads the exact delivered body, clears NEW, preserves the owner
+draft and repeats Open safely. The wire fixture records the full manual,
+completed, opened, read, legacy and foreign responses from the real hub.
+Provider inference is the repository's recorded leaf; live-model quality is
+not claimed. This closes a P7/P8 follow-up and adds no slice.
+Required quick: READSTATE_QUICK_PENDING.
 
 P10 offers only watch actions with an existing runtime path. A new
 project.observe evaluation writes its observation without a pending effect;
