@@ -47,6 +47,8 @@ import { useFirstRunOpen } from "./firstrun/reopen";
 import { DeskDeleteHost, DeskDeleteSeat } from "./deleteReceipt";
 import { DrawerWindows } from "./drawer";
 import { ConductorWindows } from "./conductor";
+import { UiFeedbackHost } from "./feedback/UiFeedbackHost";
+import { useUiFeedbackState } from "./feedback/runtime";
 import "./desk.css";
 
 // Object-specific heavyweight windows cross an actual user-open boundary
@@ -88,11 +90,15 @@ export default function DeskApp() {
     <>
       <DeskDeleteHost />
       <DeskFaces />
+      <UiFeedbackHost />
     </>
   );
 }
 
 function DeskFaces() {
+  // The runtime gate changes the registry menu after the status read lands.
+  // Subscribe here because DeskChrome owns the registry faces.
+  useUiFeedbackState();
   // Betterment daily D8: the hub knows which window is in front of him.
   useDeskPresence();
   const compact = useCompactViewport();

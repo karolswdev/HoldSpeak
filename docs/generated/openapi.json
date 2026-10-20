@@ -29818,6 +29818,46 @@
         "summary": "Tts Status"
       }
     },
+    "/api/ui-feedback": {
+      "post": {
+        "operationId": "api_ui_feedback_api_ui_feedback_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Ui Feedback Api Ui Feedback Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Ui Feedback"
+      }
+    },
+    "/api/ui-feedback/status": {
+      "get": {
+        "operationId": "api_ui_feedback_status_api_ui_feedback_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "boolean"
+                  },
+                  "title": "Response Api Ui Feedback Status Api Ui Feedback Status Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Ui Feedback Status"
+      }
+    },
     "/api/update-jobs/{job_id}": {
       "get": {
         "operationId": "api_get_engine_pass_api_update_jobs__job_id__get",

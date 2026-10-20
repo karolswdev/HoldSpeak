@@ -7032,6 +7032,26 @@
       ]
     },
     {
+      "path": "/api/ui-feedback",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.ui_feedback",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/ui-feedback/status",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.system.ui_feedback",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/update-jobs/{job_id}",
       "methods": [
         "GET"

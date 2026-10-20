@@ -50,6 +50,7 @@ import {
 import { toggleExpose } from "./components/window/Expose";
 import { modeNow } from "./compositor/live";
 import { normalizeRef, SEED_DESK_DIRECTORY_ID, SEED_INBOX_DIRECTORY_ID } from "./screen/compose";
+import { requestUiFeedback, uiFeedbackGhost } from "./feedback/runtime";
 
 export type MenuId = "desk" | "object" | "go" | "window";
 export type VerbScope = "floor" | "object" | "go" | "window" | "system" | "thread";
@@ -381,6 +382,17 @@ export const VERBS: Verb[] = [
     keywords: ["reload", "sync"],
     ghost: never,
     run: () => void useDesk.getState().refresh(),
+  },
+  {
+    id: "desk.give-feedback",
+    label: "Give feedback",
+    menu: "desk",
+    scope: "floor",
+    group: "system",
+    glyph: "◈",
+    keywords: ["feedback", "report", "audio", "selected element"],
+    ghost: () => uiFeedbackGhost(),
+    run: () => requestUiFeedback(),
   },
   {
     id: "desk.open-intelligence",

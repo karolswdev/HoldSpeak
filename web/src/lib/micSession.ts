@@ -308,10 +308,15 @@ export function micSessionLive(): boolean {
 
 /* ── push-to-talk: the floor's first owner ── */
 
-export async function beginHold(): Promise<HoldToken> {
+export async function beginHold(signal?: AbortSignal): Promise<HoldToken> {
   const token = ++holdToken;
   holdChunks = [];
   holdActive = true;
+  const cancel = () => {
+    if (token === holdToken) abortHold(token);
+  };
+  if (signal?.aborted) cancel();
+  else signal?.addEventListener("abort", cancel, { once: true });
   // the open mic yields mid-word rather than double-capturing.
   vad?.reset();
   try {
@@ -321,11 +326,19 @@ export async function beginHold(): Promise<HoldToken> {
       holdActive = false;
       setPhase(restPhase());
     }
+    signal?.removeEventListener("abort", cancel);
     throw error;
   }
+  signal?.removeEventListener("abort", cancel);
   // Released before the grant landed, or a newer hold took the floor: this
   // hold changes nothing now.
-  if (!holdActive || token !== holdToken) return token;
+  if (!holdActive || token !== holdToken) {
+    // A cancellation can arrive before getUserMedia resolves. The grant may
+    // still have landed after the cancellation, so leave the shared session
+    // suspended instead of leaking an active track.
+    if (!holdActive && session && !openMicOn) idle();
+    return token;
+  }
   setPhase("held");
   return token;
 }
@@ -376,9 +389,10 @@ export function abortHold(token?: HoldToken): void {
   emitLevel(0);
 }
 
-/** True while a hold owns the floor (the open mic is gated off). */
-export function holdOwnsFloor(): boolean {
-  return holdActive;
+/** True while a hold owns the floor (the open mic is gated off). Pass a token
+ * when a late capture must prove that it still owns the hold. */
+export function holdOwnsFloor(token?: HoldToken): boolean {
+  return ownsHold(token);
 }
 
 /* ── the open mic ── */

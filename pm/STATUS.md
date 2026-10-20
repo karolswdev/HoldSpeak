@@ -4,9 +4,20 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (main wire follow-through)
+**Last updated:** 2026-10-20 (local UI feedback)
 
 ## Current phase
+
+The owner can opt into audio feedback with `HOLDSPEAK_UI_FEEDBACK=1`.
+Desk > Give feedback selects an element without running its action. A report
+keeps the selected window's PNG, original WAV, rendered field values and
+window identity together under `~/.local/share/holdspeak/feedback/`.
+Capture freezes before recording, and Retry saves that same bundle. Password
+and credential fields are excluded. Recording uses the existing microphone
+session and audio floor. No engine, transcription or external delivery is
+required. The flag is off by default. Usage and the settled design are in
+`docs/internal/ui-feedback/`. This owner development tool adds no betterment
+recipe slice. Required quick: UI_FEEDBACK_QUICK_PENDING.
 
 Ask can open the canonical person prep and meeting windows, arrange them,
 report the changes in Wrote and restore the previous windows through Undo.
