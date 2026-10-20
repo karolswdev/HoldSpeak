@@ -1029,7 +1029,7 @@ SHELL_GEOMETRY_JS = r"""() => {
 }"""
 
 SHELL_LABEL_CONTRAST_JS = r"""() => {
-  const rgb = (value) => { const m = value.match(/rgba?\\(([^)]+)\\)/); if (!m) return null;
+  const rgb = (value) => { const m = value.match(/rgba?\(([^)]+)\)/); if (!m) return null;
     const p = m[1].split(',').map(Number); return {r: p[0], g: p[1], b: p[2], a: p[3] ?? 1}; };
   const lum = (c) => { const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
     return .2126 * f(c.r) + .7152 * f(c.g) + .0722 * f(c.b); };
@@ -1163,7 +1163,8 @@ class TestHubWindows:
 
         def open_settings(page: Any) -> None:
             page.locator(".desk-mark").click()
-            page.get_by_role("menu", name="HoldSpeak").get_by_role("menuitem", name="Settings", exact=True).click()
+            # The desktop row's accessible name includes its keycap.
+            page.get_by_role("menu", name="HoldSpeak").get_by_role("menuitem", name=re.compile(r"^Settings(?:\s|$)")).click()
             page.locator(".desk-window-shell[aria-label^='Settings']").wait_for(timeout=T)
 
         def focus_window(page: Any, name: str) -> None:
@@ -1239,7 +1240,7 @@ class TestHubWindows:
                 a.screenshot(path=str(SHELL_SHOTS / "shell-window-menu-1440.png"))
                 a.keyboard.press("Escape")
                 _h_window_menu(a, "Arrange all")
-                a.wait_for_timeout(1_000)
+                _settle(a)
                 rows = _h_until(lambda: windows(a), lambda value: set(apps) <= set(value))
                 bad = reachable(a, {name: rows[name] for name in apps}, check_icon_column=False)
                 assert not bad, {"bad": bad, "rows": rows}
@@ -1278,22 +1279,44 @@ class TestHubWindows:
                 # A resize is an owner decision for this session. Move
                 # Meetings over the resized People head, close and reopen
                 # People, and prove that the deliberate rect remains exact.
+                # Arrange through the real Hub first so both windows have
+                # room for the collision; the lower work-band clamp must
+                # not consume the test's drag. This does not mark a local
+                # pointer resize in the new browser session.
+                band = a.evaluate(H_BAND_JS)
+                before_resize = windows(a)["People"]["rect"]
+                _api(a, "POST", "/api/desk/windows/arrange", {"rects": {
+                    "surface-people": {
+                        "x": f"-1/2 + {before_resize[0] - band['x']}",
+                        "y": "-1/2 + 80", "w": before_resize[2], "h": before_resize[3],
+                    },
+                }}, token=H_TOKEN)
+                _h_until(lambda: windows(a), lambda value: value["People"]["rect"][1] == round(band["y"] + 80))
+                focus_window(a, "People")
+                before_resize = windows(a)["People"]["rect"]
                 resize(a, "People", 110, 70)
                 owner_rect = windows(a)["People"]["rect"]
-                current_meetings = windows(a)["Meetings"]["rect"]
-                focus_window(a, "Meetings")
-                _h_drag(a, ".desk-window-shell[aria-label='Meetings'] .desk-pullout-title", 300, 250)
+                assert owner_rect[3] >= before_resize[3] + 20, {"before": before_resize, "resized": owner_rect}
+                owner_hub_row = self._rows(a)["surface-people"]
                 current_meetings = windows(a)["Meetings"]["rect"]
                 focus_window(a, "Meetings")
                 _h_drag(a, ".desk-window-shell[aria-label='Meetings'] .desk-pullout-title",
-                        owner_rect[0] + 10 - current_meetings[0], owner_rect[1] - 20 - current_meetings[1])
+                        owner_rect[0] + 10 - current_meetings[0], owner_rect[1] + 20 - current_meetings[1])
                 a.wait_for_timeout(400)
                 assert head_overlap(windows(a)["People"], windows(a)["Meetings"])
+                focus_window(a, "People")
                 a.locator(".desk-window-shell[aria-label='People'] [aria-label='Close People']").click()
                 a.locator(".desk-window-shell[aria-label='People']").wait_for(state="detached", timeout=T)
                 a.keyboard.press("Control+3")
                 a.locator(".desk-window-shell[aria-label='People']").wait_for(timeout=T)
+                _settle(a)
                 owner_reopened = _h_until(lambda: windows(a), lambda value: "People" in value and "Meetings" in value)
+                (SHELL_SHOTS / "shell-owner-reopen-observation.json").write_text(json.dumps({
+                    "before_resize": before_resize, "owner_rect": owner_rect,
+                    "owner_hub_row": owner_hub_row, "reopened": owner_reopened["People"],
+                    "reopened_hub_row": self._rows(a)["surface-people"],
+                    "saved_rects": a.evaluate("JSON.parse(localStorage.getItem('hs.desk.workspace.v1')).panel.rects"),
+                }, indent=2) + "\n")
                 assert owner_reopened["People"]["rect"] == owner_rect, {"owner": owner_rect, "reopened": owner_reopened["People"]}
 
                 # Arrange all uses the live order and keeps the owner's sizes.
@@ -1303,7 +1326,12 @@ class TestHubWindows:
                 before_arrange = windows(a)
                 before_order = [row["name"] for row in sorted(before_arrange.values(), key=lambda row: row["z"])]
                 _h_window_menu(a, "Arrange all")
+                _settle(a)
                 after_arrange = _h_until(lambda: windows(a), lambda value: all(name in value for name in before_arrange))
+                (SHELL_SHOTS / "shell-arrange-observation.json").write_text(json.dumps({
+                    "before": before_arrange, "after": after_arrange, "order": before_order,
+                    "band": a.evaluate(H_BAND_JS),
+                }, indent=2) + "\n")
                 assert not reachable(a, after_arrange, check_icon_column=False), reachable(a, after_arrange, check_icon_column=False)
                 assert [row["name"] for row in sorted(after_arrange.values(), key=lambda row: row["z"])] == before_order
                 for name, before in before_arrange.items():
@@ -1317,7 +1345,13 @@ class TestHubWindows:
                 needs = windows(a)
                 assert "Needs you" in needs, sorted(needs)
                 assert reachable(a, {"Needs you": needs["Needs you"]}) == []
-                assert a.get_by_text("Nothing needs you", exact=True).count() >= 1
+                needs_answer = _api(a, "GET", "/api/desk/needs-you?fresh=1", token=H_TOKEN)
+                headline = a.locator(".desk-window-shell[aria-label='Needs you'] [data-testid='arrival-display']")
+                headline.wait_for(timeout=T)
+                count = int(needs_answer["count"])
+                expected_heads = [f"{count} {'needs' if count == 1 else 'need'} you"] if count else ["Nothing needs you", "Coverage incomplete"]
+                _h_until(headline.inner_text, lambda value: value in expected_heads)
+                assert headline.inner_text() in expected_heads, {"head": headline.inner_text(), "needs": needs_answer}
 
                 # S6: the one Wallpaper home opens Settings at Desk, then
                 # selects Jupiter. The floor labels are measured in the live
