@@ -49,7 +49,8 @@ def test_blank_create_makes_one_project_and_no_watches(hub) -> None:
     assert made.status_code == 200, made.text
     body = made.json()
     # The exact answer the face decodes (a blank create is exempt: no kernel fields).
-    assert set(body) == {"projectId"}
+    assert set(body) == {"projectId", "found_links"}
+    assert body["found_links"] == []
     project_id = body["projectId"]
     assert project_id
     assert _count(hub, "projects") == 1
