@@ -27,7 +27,7 @@ Python/browser checks (four skips), 110 desk sweep, 27 canon and 1,116 guards;
 4,094 other web checks pass. One old terminal assertion expected a payload
 without its required session/agent binding; it now checks the full payload
 while retaining immutable target and server-derived authority assertions.
-Final delta quick: ST8_QUICK_PENDING.
+Final delta quick: 17 terminal web checks, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The preceding product run passed 7,051 affected Python/browser checks and 4,094 other web checks.
 
 The main watcher pinned to 2833d225d found five failures after its first
 6,073-test shard passed. This fix re-records the actual Setup agent/Settings
