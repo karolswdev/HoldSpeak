@@ -224,6 +224,7 @@ class MeetingSession(
         self._recorder: Optional[MeetingRecorder] = None
         self._capture_journal: Optional[Any] = None
         self.device_cleanup_error: Optional[str] = None
+        self.capture_process_exited = False
         self._lock = threading.Lock()
         self._transcribe_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
@@ -517,14 +518,33 @@ class MeetingSession(
                 self._unwind_started_bundle("journal-open")
                 raise RuntimeError(self._state.capture_failure) from exc
 
-            self._recorder = MeetingRecorder(
-                mic_device=self.mic_device,
-                system_device=self.system_device,
-                on_mic_level=self.on_mic_level,
-                on_system_level=self.on_system_level,
-                on_audio_chunk=lambda chunk: self._capture_journal.append(
+            # C10 gives the native owner the journal root and Meeting ID.  A
+            # test journal without a directory keeps the in-process seam used
+            # by the existing unit fixtures.
+            journal_directory = getattr(self._capture_journal, "directory", None)
+            recorder_kwargs: dict[str, Any] = {
+                "mic_device": self.mic_device,
+                "system_device": self.system_device,
+                "on_mic_level": self.on_mic_level,
+                "on_system_level": self.on_system_level,
+                "on_audio_chunk": lambda chunk: self._capture_journal.append(
                     chunk.source, chunk.audio
                 ) if self._capture_journal is not None else None,
+            }
+            if journal_directory is not None and bool(
+                getattr(MeetingRecorder, "capture_process_supported", False)
+            ):
+                recorder_kwargs.update(
+                    {
+                        "capture_directory": journal_directory.parent,
+                        "meeting_id": self._state.id,
+                        # The child owns journal writes.  The parent still
+                        # observes chunks for transcription through the pipe.
+                        "on_audio_chunk": None,
+                    }
+                )
+            self._recorder = MeetingRecorder(
+                **recorder_kwargs,
             )
 
             # Start recording
@@ -681,13 +701,23 @@ class MeetingSession(
         # Seal capture promptly; native teardown has its own bounded wait. Do
         # not keep accepting audio during the transcription/intelligence joins.
         mic_chunks, system_chunks, device_chunks = [], [], {}
+        capture_failure = None
         if recorder is not None:
             try:
                 mic_chunks, system_chunks = recorder.stop()
                 self.device_cleanup_error = getattr(recorder, "device_cleanup_error", None)
+                self.capture_process_exited = bool(
+                    getattr(recorder, "capture_process_exited", False)
+                )
+                capture_failure = getattr(recorder, "capture_failure", None)
                 device_chunks = recorder.get_pending_device_chunks()
             except Exception as exc:
                 log.error("Error stopping recorder: %s", exc)
+                self.device_cleanup_error = getattr(recorder, "device_cleanup_error", None)
+                self.capture_process_exited = bool(
+                    getattr(recorder, "capture_process_exited", False)
+                )
+                capture_failure = getattr(recorder, "capture_failure", None)
         # Accepted PCM is durable before any slower transcript or intel work.
         journal_error: Optional[Exception] = None
         if self._capture_journal is not None:
@@ -774,8 +804,8 @@ class MeetingSession(
 
             # Mark as ended
             self._state.ended_at = local_wall()
-            self._state.capture_status = "finalized"
-            self._state.capture_failure = None
+            self._state.capture_status = "recoverable" if capture_failure else "finalized"
+            self._state.capture_failure = capture_failure
             self._state.capture_checkpoint_at = local_wall()
             self._state.capture_checkpoint_seconds = self._state.duration
             final_state = self._state
@@ -784,6 +814,11 @@ class MeetingSession(
 
         # Stop is itself a durable checkpoint; the later compatibility JSON and
         # aftercare work may fail without losing or duplicating the Meeting.
+        if capture_failure and self._capture_journal is not None:
+            try:
+                self._capture_journal.mark_recoverable(capture_failure)
+            except Exception as marker_error:
+                log.error("Could not publish capture failure marker: %s", marker_error)
         if journal_error is not None:
             with self._lock:
                 final_state.capture_status = "recoverable"
@@ -809,7 +844,7 @@ class MeetingSession(
                 except Exception as marker_error:
                     log.error("Could not publish capture recovery marker: %s", marker_error)
         else:
-            if journal_error is None and self._capture_journal is not None:
+            if journal_error is None and not capture_failure and self._capture_journal is not None:
                 try:
                     self._capture_journal.finalize()
                 except Exception as exc:

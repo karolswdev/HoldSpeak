@@ -87,6 +87,8 @@ class MeetingCaptureJournal:
                 if self._error is not None:
                     raise OSError(self._error)
                 return
+            if not self._files:
+                self._reload_manifest_locked()
             self._sealed = True
             failure: Optional[Exception] = None
             try:
@@ -121,11 +123,20 @@ class MeetingCaptureJournal:
 
     def mark_recoverable(self, error: str) -> None:
         with self._lock:
+            if not self._files:
+                self._reload_manifest_locked()
             self._error = error
             self._status = "recoverable"
             self._write_manifest()
 
     def _checkpoint_locked(self) -> None:
+        # C10: the capture child owns the open PCM handles.  The parent keeps
+        # this journal object for the existing session lifecycle, so a parent
+        # checkpoint must refresh the child's durable manifest instead of
+        # overwriting it with an empty byte map.
+        if not self._files:
+            self._reload_manifest_locked()
+            return
         # HS-93-06 fault plane: a deterministic disk-write failure at the
         # checkpoint, taking exactly the real error path (self._error set,
         # capture goes `recoverable`, no durable bytes are falsely claimed).
@@ -154,6 +165,24 @@ class MeetingCaptureJournal:
         with open(temp, "rb") as handle:
             os.fsync(handle.fileno())
         temp.replace(self.manifest_path)
+
+    def _reload_manifest_locked(self) -> None:
+        try:
+            manifest = json.loads(self.manifest_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return
+        if manifest.get("meeting_id") != self.meeting_id:
+            return
+        durable = manifest.get("durable_bytes")
+        if isinstance(durable, dict):
+            self._durable = {
+                str(source): int(length)
+                for source, length in durable.items()
+                if isinstance(length, (int, float))
+            }
+        self._status = str(manifest.get("status") or self._status)
+        error = manifest.get("error")
+        self._error = str(error) if error else None
 
     @classmethod
     def recoverable(cls, directory: Optional[Path] = None) -> list[dict[str, Any]]:
