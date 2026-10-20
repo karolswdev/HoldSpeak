@@ -326,7 +326,13 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     if (kind === "decision" && !String(overrides.title ?? "").trim()) {
       useNamePrompt.getState().ask({
         label: "Decision title",
-        submit: (title) => void get().createPrimitive("decision", { ...overrides, title }),
+        about: overrides.project_id ? {
+          id: String(overrides.project_id),
+          name: String(overrides.project_name || "Project"),
+        } : undefined,
+        submit: (title, why) => void get().createPrimitive("decision", {
+          ...overrides, title, ...(why?.trim() ? { why: why.trim() } : {}),
+        }),
       });
       return;
     }
@@ -335,7 +341,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       // placeholder); the placeholder is never kept as its name.
       note: ["/api/notes", "note", { title: "", body_markdown: "" }],
       decision: [
-        "/api/decisions",
+        "/api/decision-records/from-desk",
         "decision",
         {
           // PHILO-15-09 (B12): the owner's own decision is DECIDED; it is
@@ -345,6 +351,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
           decision_markdown: "",
           consequences_markdown: "",
           alternatives: [],
+          decision_text: "",
         },
       ],
       kb: ["/api/kbs", "kb", { name: "New Knowledge" }],
@@ -383,6 +390,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     const faceAtPress = faceChangeCount();
     let createdId: string | null = null;
     let created: unknown = null;
+    let canonicalRecord: Record<string, unknown> | null = null;
     // HS-132-06 — a refused create is named, not swallowed; RETRY re-issues
     // the same create. PHILO-8-01 — RETRY refreshes the store first, so a
     // zone made elsewhere (MCP, another tab) is seen and the free name is
@@ -404,9 +412,36 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
         await reportCreateFailure(kind, res, retry, get);
         return;
       }
-      const data = await res.json().catch(() => ({}));
+      let data = await res.json().catch(() => ({}));
+      // The retained legacy route remains a compatibility fallback for an
+      // older hub. A live P9 hub returns both the source row and `record`.
+      if (kind === "decision" && !data?.decision && url === "/api/decision-records/from-desk") {
+        const compatibility = await apiRequest("/api/decisions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...body, ...overrides }),
+        });
+        if (!compatibility.ok) {
+          release();
+          answered();
+          await reportCreateFailure(kind, compatibility, retry, get);
+          return;
+        }
+        data = await compatibility.json().catch(() => ({}));
+      }
       created = data?.[wireKey] ?? null;
       createdId = data?.[wireKey]?.id || null;
+      canonicalRecord = data?.record && typeof data.record === "object" ? data.record as Record<string, unknown> : null;
+      if (kind === "decision" && canonicalRecord?.id && overrides.project_id) {
+        await apiRequest(
+          `/api/projects/${encodeURIComponent(String(overrides.project_id))}/resources/${encodeURIComponent(`decision_record:${canonicalRecord.id}`)}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ relationship: "member" }),
+          },
+        ).catch(() => undefined);
+      }
       clearWriteFailure();
     } catch (cause) {
       release();
@@ -445,9 +480,12 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
           get().setRenamingZone(id);
         }
       }
-      // PHILO-3-01 — a decision has no inline editor; its face is the
-      // DecisionPullout, which opens in Edit for a new decision.
-      else if (kind === "decision") get().openPullout(id);
+      // P9: a newly authored decision opens the canonical record in the one
+      // Decisions window. The retained Desk source is never the visible home.
+      else if (kind === "decision" && canonicalRecord?.id) {
+        const { openIntelligence } = await import("../intelligenceNavigation");
+        openIntelligence({ view: "receipts", receiptId: String(canonicalRecord.id) });
+      } else if (kind === "decision") get().openPullout(id);
       else get().openEditor(id);
     };
     // The window opens at once, from the create answer. Before, it waited

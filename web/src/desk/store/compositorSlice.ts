@@ -179,6 +179,8 @@ export type CompositorSlice = Pick<
   | "repositoryWindows"
   | "workbenchWindows"
   | "newWorkbenchChooser"
+  | "recentOpened"
+  | "recordRecentOpen"
   | "openPullout"
   | "closePullout"
   | "openZoneWindow"
@@ -236,6 +238,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   // Exempt (B2 story table): the chooser holds no typed text and no record;
   // one pick makes the record, so reopening is the same one gesture.
   newWorkbenchChooser: null,
+  recentOpened: initialWorkspace.recentOpened ?? [],
   drafts: initialWorkspace.drafts ?? {},
   places: initialWorkspace.places ?? {},
 
@@ -282,6 +285,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
         set({ pullouts: [...open, { id: key, origin: origin ?? null }] });
       set({ editingId: null });
       saveDeskWorkspace(get());
+      get().recordRecentOpen(key);
       // PHILO-13-06 (B1): an open asks for the window in front, also when
       // it sits iconified on its Dock chip (393: a Chair window iconifies
       // the desk windows), never a press that leaves it hidden.
@@ -400,6 +404,14 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     set({ newWorkbenchChooser: null });
   },
 
+  recordRecentOpen(ref) {
+    const clean = String(ref || "").trim();
+    if (!clean) return;
+    const next = [clean, ...get().recentOpened.filter((entry) => entry !== clean)].slice(0, 6);
+    set({ recentOpened: next });
+    saveDeskWorkspace(get());
+  },
+
   // ---- static applications (one normalized lifecycle authority) --------
 
   openSurfaceWindow(key, scope) {
@@ -437,6 +449,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
         [application.windowId]: instance,
       },
     });
+    get().recordRecentOpen(`app:${application.action}`);
     // PHILO-13-06 (B1): in front, also from its Dock chip (iconified).
     get().restorePanel(application.windowId);
     if (application.surface.maximized && !get().panelMax.includes(application.windowId))

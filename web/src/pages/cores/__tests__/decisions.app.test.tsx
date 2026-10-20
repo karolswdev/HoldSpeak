@@ -24,7 +24,7 @@ describe("P4: the Decisions window", () => {
     apiFetch.mockImplementation(async () => structuredClone(HONEST_DECISIONS.wire));
     const { container } = render(<DecisionsCore />);
     await screen.findByText("Freeze the old ledger on Nov 5");
-    expect(apiFetch).toHaveBeenCalledWith("/api/decisions?scope=all&limit=100&offset=0");
+    expect(apiFetch).toHaveBeenCalledWith("/api/decision-records?limit=100&offset=0");
     expect(container.querySelectorAll("[data-testid=decisions-row]")).toHaveLength(1);
     expect(screen.getByTestId("decisions-window")).toBeTruthy();
   });

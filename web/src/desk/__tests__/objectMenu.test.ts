@@ -8,6 +8,7 @@ import { EMPTY_ITEMS, fromWireDirectory, qualifiedRef } from "../api";
 import type { Meeting, Note, Project } from "../../lib/primitives";
 import { useDesk } from "../store";
 import type { WorkMenuEntry } from "../components/DeskMenu";
+import { useScreenMembersStore } from "../screen/members";
 
 beforeEach(() => {
   useDesk.setState({
@@ -22,6 +23,7 @@ beforeEach(() => {
     openEditor: vi.fn(),
     openAsk: vi.fn(),
   });
+  useScreenMembersStore.setState({ people: null });
 });
 
 describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
@@ -119,6 +121,33 @@ describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
     const sep = entries.findIndex((e) => e.type === "sep");
     expect(sep).toBe(-1);
     expect(entries.some((e) => e.id === "object.delete")).toBe(false);
+  });
+
+  it("offers Keep and Remove for a live protected person through the Desk membership", () => {
+    useDesk.setState({ items: {
+      ...EMPTY_ITEMS,
+      directory: [{ kind: "directory", id: "hs-seed-desk", name: "Desk", memberIds: [] } as never],
+    } });
+    useScreenMembersStore.setState({
+      people: { state: "ready", persons: [{ id: "p1", name: "Mira" }] },
+    });
+    const file = vi.spyOn(useDesk.getState(), "fileIntoDir").mockResolvedValue();
+    const keep = objectMenuEntries({ ref: "people:p1" }).find((entry) => entry.id === "person.keep-on-desk") as Extract<WorkMenuEntry, { type: "item" }>;
+    expect(keep.label).toBe("Keep on desk");
+    keep.onSelect();
+    expect(file).toHaveBeenCalledWith("p1", "hs-seed-desk", "people");
+    file.mockRestore();
+
+    useDesk.setState({ items: {
+      ...useDesk.getState().items,
+      directory: [{ kind: "directory", id: "hs-seed-desk", name: "Desk", memberIds: ["people:p1"] } as never],
+    } });
+    const removeDir = vi.spyOn(useDesk.getState(), "removeFromDir").mockResolvedValue();
+    const remove = objectMenuEntries({ ref: "people:p1" }).find((entry) => entry.id === "person.remove-from-desk") as Extract<WorkMenuEntry, { type: "item" }>;
+    expect(remove.label).toBe("Remove from desk");
+    remove.onSelect();
+    expect(removeDir).toHaveBeenCalledWith("p1", "hs-seed-desk", "people");
+    removeDir.mockRestore();
   });
 });
 

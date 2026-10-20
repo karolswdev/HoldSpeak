@@ -6,14 +6,8 @@ PR that fixes it merges. The recovery reconciliation is retained in
 
 | Found in | Follow-up | Goes to |
 |---|---|---|
-| S4 delivery | The floor and meeting Keep behavior are verified. Mode recipes still enter Search as Agent rows; individual People need their Object-menu adapter because the world stores only the People singleton. Finish both seams in S5. S4 remains partial. | Shell S5 |
-| Q0 (#1260) | Interview's answer-only pass puts a system message after the user message, which Qwen's template rejects. | Asking Q4, or a small fix |
-| Q0 (#1260) | "Engine not reachable" is shown as "No engine for answers" (`ask_service.py` reason mapping). | Asking Q1 |
 | C2 (#1258) | Memory pages (what we decided, what is open) are not filtered by date, so a re-summary of an old meeting can still read later facts through a page. | Capture C6 |
 | A0 (#1256) | Choosing Manual still pauses event starts and idle work; an existing test asserts it. The When editor replaces this control. | Automations A4 |
-| S1 (#1259) | A person is not a desk object, so a person has no Object menu. | Shell S4 or Daily D6 |
-| S1 (#1259) | The Builder tools switch is saved in the browser, not on the hub, so an agent cannot read or set it. | Shell S5 |
-| S0 (#1257) | Search for "automation" still finds nothing. | Shell S5 (Automations A1 adds the alias) |
 | ST0 (#1261) | ST1 #1347 delivered the one Rhythm quiet-hours store. Remaining ST0: Setup rows in words (the yellow Check chip), Other devices saved (`mcp_http.py:392-404` keeps it in memory only). | Setup ST1 |
 | ST0 (#1261) | The fix is in the Engines summary only. The runtime speech route still falls back to the default last; on a desk without speech's own capability row, a route plan could still reach the chat server. Check it. | Setup ST1 / Engines E5 |
 | E1 (#1273) | `CliEngine.cancel()` exists but nothing in the kernel calls it; an owner cancel waits for the timeout. | Engines E5 / Automations A3 (cancel) |
@@ -32,22 +26,18 @@ PR that fixes it merges. The recovery reconciliation is retained in
 | Process | The quick check runs only related tests; four reds reached main today unseen, and no main watcher was running. Current fast cycle: required quick check before merge; deploy after each merge; the full suite runs after merge at low priority and failures are fixed forward. The recovery tape is running; its current results are in STATUS. | Orchestrator |
 | #1281 | `scripts/gen_docs.sh` stops at `generate_capability_docs.py`: `docs/internal/philo/data/desk.json` capability `tests[13]` names a TypeScript test title that no longer exists, so later generators do not run. | Small fix |
 | A3 (#1293) | At 393 the NEW chip on the newest result is not visible (pushed off the meta line). | Automations A4 |
-| A3 (#1293) | "What it has learned" shows a bare count ("2"); use words ("2 lessons") or nothing. | Automations A4 |
 | E3 (#1294) | Job token budgets still cap the context: background 16,384, text/structured/tool 32,768 (`inference_capabilities.py:1235-1239`), so a 49,152 engine is capped where those apply. Budgets should follow the engine's real context. | Engines E5 |
 | E3 (#1294) | MCP `model_library.define_endpoint` does not accept `context_tokens`; first-run LAN still auto-picks the first model; re-adding an existing engine keeps its first context. | Engines E4 / MCP M4 / Setup ST3 |
 | AG1 (#1292) | The Automations window still says "No agents yet / New Agent" for saved personas; personas are retired as a face concept (DECISIONS #3). | Automations A4 |
 | AG1 (#1292) | Branches named by the hub (`hs/<kind>-<id>`) show "new branch"; a slug from the item title needs a hub change. | Agents AG4 |
 | AG2 (#1295) | At 393, Allow / Deny / Terminal stand with large gaps; the row is taller than needed. | Agents AG8 |
 | AG2 (#1295) | The screen parse for questions is a stop-gap until the herdr-style rules (AG7); never read on a real Claude Code or Codex screen. | Agents AG7 |
-| D3 (#1296) | `list_action_items(include_completed=False)` reads only `pending`, but Confirm (and now keep-on-arrival) writes `open`; the cadence collector (`holdspeak/cadence/collector.py:94`) probably never makes loops for confirmed items. | Small fix |
 | D2 (#1291) | The desk tool palette is at 27,679 of 27,680 bytes; the next MCP description change will break the guard. Trim descriptions or split the palette. | Watch / MCP M3 |
 | D3 (#1296) | Promises from a plugin run that partly completes then fails stay pending (keep runs only on job completion). | Capture C5 |
-| M2 (#1301) | After each item the runner makes a second engine call ("what should future runs remember?"). On a CLI engine it also gets the desk tools and its own bill. RULING (orchestrator): the memory call runs WITHOUT tools; small fix. | Small fix |
 | M2 (#1301) | Undo on "Wrote" shows only while the desk's delete-receipt bar is on screen. | Automations A6 |
 | Q4 (#1302) | With the Thread window parked, interview, thread modes, slash commands and Thread tool holds have no face until Q7 (Ask my whole desk). A persona chat's follow-ups run as plain Asks. Q7 is now urgent. | Asking Q7 |
 | Q4 (#1302) | Two browser files edited but not run (creation_glass New Thread step, desk_glass Thread rename step); the atlas `case.daily.thread.*` cases describe the parked face. | Next full run |
 | Q4 (#1302) | The LAN chip shows twice (on the answer and in the footer); Send… under an answer is not built. | Asking Q5 |
-| D4 (#1303) | The menu bar still has an "Intelligence" menu when Today is front; it should say Today (PLAN §2: Intelligence is retired as a name). | Daily D5 |
 | D4 (#1303) | On a fresh hub "No engine for summaries" counts 1 even with no meeting waiting; it should appear only when a meeting waits for a summary. | Daily D8 / Setup |
 | D4 (#1303) | Browser files with edited selectors not yet run: today_glass, windows_glass, send_glass, chair_windows.py, windows_follow_the_bus (second half). | Next full run |
 | D4 (#1303) | On a fresh hub "No engine for summaries" counts 1 even with no meeting waiting; it should appear only when a meeting waits for a summary. | Daily D8 / Setup |

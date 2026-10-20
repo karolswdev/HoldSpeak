@@ -265,6 +265,9 @@ export interface Persona {
   kbId?: string | null;
   profileId?: string;
   capability?: unknown | null;
+  /** The server recipe discriminator. `mode` recipes belong to Ask's mode
+   * picker and are not Agent results on the Desk. */
+  recipeKind?: string;
 }
 
 export interface Chain {

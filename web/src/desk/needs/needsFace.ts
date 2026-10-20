@@ -37,6 +37,8 @@ export type NeedVerbs =
   /** Betterment D2: a decision from a meeting: Decide opens Accept, Not now
    *  and Drop in place. */
   | { kind: "decide"; proposalId: string; projectId: string; meetingId: string }
+  /** A proposed Desk decision: Confirm promotes its retained source row. */
+  | { kind: "decision-confirm"; decisionId: string }
   /** Betterment D3: a promise with no owner: Whose? offers the meeting's
    *  speakers, one press each (it keeps the promise with that owner). */
   | { kind: "whose"; proposalId: string; speakers: string[] }
@@ -200,7 +202,8 @@ export function passesChips(face: NeedFace, chips: NeedsChips, now: Date = new D
  *  AGENT. A setup blocker and a source row are not objects: no word. */
 export function kindWordOf(face: Pick<NeedFace, "kind" | "verbs" | "source">): string | undefined {
   if (face.source) return undefined;
-  if (face.verbs.kind === "confirm" || face.verbs.kind === "decide" || face.verbs.kind === "whose") return "PROPOSAL";
+  if (face.verbs.kind === "confirm" || face.verbs.kind === "decide"
+    || face.verbs.kind === "decision-confirm" || face.verbs.kind === "whose") return "PROPOSAL";
   switch (face.kind) {
     case "decision": return "DECISION";
     case "action": return "ACTION";
@@ -455,6 +458,13 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
 
   // R4: a decision that waits for the owner's review.
   if (source === "decision" && item.openRef) {
+    if (String(item.status || "").toLowerCase() === "proposed") {
+      return { id, kind: "decision", name: title, fact: factProject, lamp,
+        group: "rest", verbs: {
+          kind: "decision-confirm",
+          decisionId: id.replace(/^decision:/, ""),
+        }, openRef: String(item.openRef) };
+    }
     return { id, kind: "decision", name: title, fact: factProject, lamp, group: "rest",
       verbs: { kind: "review", ref: String(item.openRef), label: "Decide" }, openRef: String(item.openRef) };
   }
@@ -571,7 +581,7 @@ function memberFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
       id: member.ref,
       kind: "conductor",
       name: member.blocker.label,
-      fact: "Meeting summaries",
+      fact: member.blocker.key === "speech" ? "Speech" : "Meeting summaries",
       lamp: { label: "SETUP", tone: "warn" },
       group: "rest",
       verbs: { kind: "setup", key: member.blocker.key, verb: member.blocker.verb },

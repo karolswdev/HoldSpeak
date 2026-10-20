@@ -4,9 +4,71 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (unchecked Send warning)
+**Last updated:** 2026-10-20 (Search and Floor adapters)
 
 ## Current phase
+
+Search uses one ranked stream, the last six successful opens, exact About
+for Cmd+Enter and live object verbs. Protected People support Open, Ask,
+Prep and Keep/Remove through the existing filing operation. Mode recipes
+keep their semantic kind. Builder tools is a hub preference with the saved
+revision, shared browser refresh and existing MCP settings access.
+
+Root passed 65 collected backend/browser cases, including real person
+Keep/Remove and Prep at 1440/393, exact Cmd+Enter About, phone search and
+Builder persistence across two browsers. The 150 focused web consumers,
+type check and build pass. The complete Settings wire group was recorded
+through both actual producer writers. P9's canonical decision prompt and
+front-project context are integrated. The first required check caught old
+Search labels, grouping and cold-start assertions, the Runs-on rig using its
+wrong owner token, a phone Hand hit-area overlap and an action-list left
+rail. The shared styles and test adapters are corrected without changing
+product authority or relaxing the geometry/canon checks. Required quick:
+580 related web checks and 19 affected browser cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green..
+
+The final fix proof passed all 48 selected Search consumers, eight collected
+browser cases (first use, Note editor, Runs-on Undo and strict Search hit
+areas at both widths), 15 canon checks, type check and build.
+
+The older pinned full tape finished red: 16,962 Python and 314 browser
+cases passed, with five Python and four browser failures repaired by
+#1397/#1400. Its web run passed 5,351 and failed two Settings cases; both
+pass in the current focused run. A fresh full run must confirm integration.
+The S4/S1/S0 Search follow-ups and the already-fixed Interview ordering
+entry are reconciled with their retained proof.
+
+P9 gives each decision one canonical record. New Decision carries About and
+Why through the admitted decision.create path. Project This week, Decisions,
+the decision window and Meeting Decide resolve that record. Legacy source
+rows remain; the idempotent migration copies all of them without replacing
+later canonical edits. Proposed decisions stay out of project evidence until
+Confirm. A decision with no project membership stays out after Confirm too.
+
+Root independently passed 188 final focused Python/browser checks and 87
+web checks, including actual private-hub 1440/393 browser flows with strict
+hit/focus checks, the real Confirm PUT, receipt hit areas and unchanged
+canonical-ID readback. The preceding focused run passed 85 cases and 96 web
+consumers. Type check and build pass. The final checks exposed two adapter
+seams: Needs must carry proposed status, and its operation must use the raw
+canonical ID while the row retains decision:<id>. Both are covered by the
+actual flow. The combined API census has 810 routes and 675 OpenAPI paths.
+The first required check passed 5,536 other affected cases, 4,076 other
+web checks and all 110 desk-sweep cases. It caught a source-link write after
+the creation receipt, four old callback/verb assertions, an obsolete receipt
+fault URL, the changed Today recording, and two copy/scan checks. Source links
+now come from the frozen tags inside the admitted producer; the adapter only
+reads the resulting record through its existing service helper. The complete
+Today response was re-recorded from its real producer. All final focused
+checks, including residual identity, copy and zero-counter checks, pass.
+The next check passed 617 affected cases, 4,079 web checks, all 110 sweep,
+27 canon and 1,116 repo guards. Its one stale Today consumer expected the
+Monday weekend lookback; the complete Tuesday recording correctly excludes
+Friday's meetings. The expectation now matches that real recording.
+Required quick: 617 affected Python/browser checks and 4,079 web checks passed in the integrated run; final Tuesday-consumer delta passed all 16 web checks, 110 desk-sweep, 27 canon and 1,116 repo guards; build green..
+
+The follow-up audit closes five old entries already delivered by #1267,
+#1303, #1304 and #1319. The source and retained proof are recorded in the
+resolved ledger; the remaining entries stay open.
 
 Send S8 keeps an unchecked published update sendable. Preview says
 "Not checked yet: no claim in this update was accepted" above the words;

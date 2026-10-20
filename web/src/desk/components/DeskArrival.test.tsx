@@ -13,7 +13,8 @@ describe("Phase 93 Desk arrival", () => {
   beforeEach(() => {
     useDesk.setState({
       items: { ...EMPTY_ITEMS },
-      projects: [],
+      recentOpened: [],
+    projects: [],
       inferenceTargets: [],
       models: [],
       setup: null,
@@ -38,6 +39,7 @@ describe("Phase 93 Desk arrival", () => {
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
     // PHILO-17 (palette-rank): the list draws once its ranking reads resolve.
     await screen.findByRole("listbox", {}, { timeout: 2000 });
+    fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "new" } });
     expect(
       screen.getByRole("option", { name: /^New Note\b/ }),
     ).toBeInTheDocument();
@@ -49,6 +51,7 @@ describe("Phase 93 Desk arrival", () => {
     // button that opens its surface in-world (or falls back to the legacy
     // route until its story lands). Every tool remains reachable.
     // Betterment shell S1: builder tools are listed only when Builder tools is on.
+    fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "" } });
     for (const tool of DESK_TOOLS.filter((t) => !BUILDER_APPLICATION_ACTIONS.has(t.action))) {
       // HS-111-10: the query well's speak-to-fill mic is also a button
       // ("Speak …") — the dispatcher row is the non-mic hit.
@@ -77,7 +80,7 @@ describe("Phase 93 Desk arrival", () => {
     // PHILO-17 (palette-rank): the list draws once its ranking reads resolve.
     await screen.findByRole("listbox", {}, { timeout: 2000 });
     fireEvent.change(
-      screen.getByRole("combobox", { name: "Search tools and Desk items" }),
+      screen.getByRole("combobox", { name: "Find, open or ask" }),
       { target: { value: "release" } },
     );
     fireEvent.click(screen.getByRole("option", { name: /Release checklist/ }));
@@ -160,13 +163,13 @@ describe("Phase 93 Desk arrival", () => {
     // PHILO-17 (palette-rank): the list draws once its ranking reads resolve.
     await screen.findByRole("listbox", {}, { timeout: 2000 });
 
-    // The cold deck keeps SETTINGS intentionally dense; every resource remains
-    // discoverable through its own combobox query.
+    // The cold deck lists apps and recent opens; each resource is found by name.
     expect(
-      screen.getByRole("combobox", { name: "Search tools and Desk items" }),
+      screen.getByRole("combobox", { name: "Find, open or ask" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: /Project Orion/ })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("option", { name: /Project Orion/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "Orion" } });
+    expect(screen.getByRole("option", { name: /^Open Project Orion\b/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("option", { name: /^Open Project Orion\b/ }));
     // PHILO-17 U30: the palette opens a Project's Room (one home), never a drawer.
     expect(openRoom).toHaveBeenCalled();
     expect(openRoom.mock.calls[0][0]).toBe("project:orion");
@@ -177,7 +180,7 @@ describe("Phase 93 Desk arrival", () => {
     // PHILO-17 (palette-rank): the list draws once its ranking reads resolve.
     await screen.findByRole("listbox", {}, { timeout: 2000 });
     const reopenedSearch = screen.getByRole("combobox", {
-      name: "Search tools and Desk items",
+      name: "Find, open or ask",
     });
     fireEvent.change(reopenedSearch, { target: { value: "Slack" } });
     // Betterment Q3: the Ask "…" row also names the text; the object row is the other one.
@@ -237,6 +240,7 @@ describe("Phase 93 Desk arrival", () => {
     // PHILO-17 (palette-rank): the list draws once its ranking reads resolve.
     await screen.findByRole("listbox", {}, { timeout: 2000 });
 
+    fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "Scout" } });
     const action = screen.getByRole("option", {
       name: /Ask Scout about Release checklist/,
     });

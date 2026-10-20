@@ -17,7 +17,7 @@ import { DeskChrome } from "./components/DeskChrome";
 import { RecordOrb } from "./components/RecordOrb";
 import { useChatImport } from "./hooks/useChatImport";
 import { MissionControlConveyor } from "./components/MissionControlConveyor";
-import { useBuilderTools } from "./builderTools";
+import { hydrateBuilderTools, useBuilderTools } from "./builderTools";
 import { SessionPullout, PanePicker } from "./components/SessionPullout";
 import { LaneWindow } from "./lane/LaneWindow";
 import { DeliveryBoard } from "./components/DeliveryBoard";
@@ -158,6 +158,7 @@ function DeskFaces() {
   const firstRunOpen = useFirstRunOpen((s) => s.open);
   const arrivalRequired = serverArrival || firstRunOpen;
   const builder = useBuilderTools((state) => state.on);
+  useEffect(() => { hydrateBuilderTools(); }, []);
   useEffect(() => {
     if (arrivalRequired) useSettleState.getState().setSettled(false);
   }, [arrivalRequired]);
