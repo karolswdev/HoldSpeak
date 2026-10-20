@@ -25,6 +25,12 @@ The integrated Settings/first-use browser rerun passes all 12 cases. Setup keeps
 name entry disabled until its initial read completes, so early typing cannot
 be discarded. The sweep waits only for visible images within its target
 window; offscreen lazy wallpaper does not prevent a face from settling.
+The main sweep also exposed Door's late source rows moving the active Paste
+controls. Paste now precedes those asynchronous rows. The separate P5
+per-item link failure/Retry follow-up remains open until its producer and
+real HTTP consumer proof are complete. All 61 Settings/calendar writer
+checks pass after scoping their queries and advancing the actual debounce
+clock in the retry scenario; no timeouts or assertions were removed.
 Required quick: ST7_QUICK_PENDING.
 
 Shell S2 gives Desk seven New kinds in order: Note, Meeting, Decision,

@@ -89,8 +89,9 @@ describe("Accounts calendar source rows", () => {
 
     // The one text well carries the mic (the voice law).
     fireEvent.click(screen.getByTestId("calendar-add-btn"));
-    expect(screen.getByRole("textbox", WELL_INPUT)).toHaveValue("");
-    expect(screen.getByRole("button", { name: /^Speak Calendar URL/ })).toBeInTheDocument();
+    const well = within(screen.getByTestId("calendar-well"));
+    expect(well.getByRole("textbox", WELL_INPUT)).toHaveValue("");
+    expect(well.getByRole("button", { name: /^Speak Calendar URL/ })).toBeInTheDocument();
   });
 
   it("names the host on the HTTPS source's egress chip and wears NO chip on the file source (absence is the signal)", () => {
@@ -195,15 +196,16 @@ describe("Accounts calendar source rows", () => {
     });
     render(<SettingsCore scope="integrations"/>);
     fireEvent.click(within(screen.getByTestId("calendar-source-src-work")).getByRole("button", { name: "Edit" }));
-    fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://first.example/a.ics" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    const well = () => within(screen.getByTestId("calendar-well"));
+    fireEvent.change(well().getByRole("textbox", WELL_INPUT), { target: { value: "https://first.example/a.ics" } });
+    fireEvent.click(well().getByRole("button", { name: "Save" }));
     await act(async () => { await Promise.resolve(); });
-    expect(screen.getByRole("button", { name: "Save" })).toHaveAttribute("aria-busy", "true");
+    expect(well().getByRole("button", { name: "Save" })).toHaveAttribute("aria-busy", "true");
     if (target === "another source") fireEvent.click(within(screen.getByTestId("calendar-source-src-personal")).getByRole("button", { name: "Edit" }));
-    fireEvent.change(screen.getByRole("textbox", WELL_INPUT), { target: { value: "https://newer.example/b.ics" } });
+    fireEvent.change(well().getByRole("textbox", WELL_INPUT), { target: { value: "https://newer.example/b.ics" } });
     await act(async () => finish({ settings: { ...settings, _revision: "calendar-r2" } }));
-    expect(screen.getByRole("textbox", WELL_INPUT)).toHaveValue("https://newer.example/b.ics");
-    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+    expect(well().getByRole("textbox", WELL_INPUT)).toHaveValue("https://newer.example/b.ics");
+    expect(well().getByRole("button", { name: "Save" })).toBeEnabled();
     expect(apiFetch.mock.calls.filter(([url, init]) => url === "/api/settings" && init?.method === "PUT")).toHaveLength(1);
   });
 
