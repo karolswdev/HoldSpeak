@@ -20,7 +20,7 @@ the parent Stop-event bridge. A real Foundation dictionary regression also
 caught and fixes the disconnect read ignoring WebKit's native value.
 The former focused runtime set also passed.
 Native menu rendering and physical recording remain unobserved. Required
-quick: C12_QUICK_PENDING.
+quick: 427 affected pytest, 108 sweep, 27 canon and 1,116 repo guards pass.
 
 C11 ships five closed desk phrases in Speak. Record, Stop and New note
 use authenticated MCP operations; Ask and Today use the existing Desk openers.
