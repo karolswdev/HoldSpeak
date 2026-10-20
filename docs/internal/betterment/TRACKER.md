@@ -149,7 +149,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | ST5 | Your people in Setup | Done · #1384 | People use the existing admission producer and report its actual result. |
 | ST6 | Let my agents use HoldSpeak | Done · #1388 | Native user-scope tools, hooks and skill; per-agent readback and owned-binding removal in Setup. |
 | ST7 | Settings is one page | Done · #1391 | Eight sections; preserved writers and aliases; Engines opens its own window. |
-| ST8 | Sign in without a terminal | Done · PR_PENDING | Native provider sign-in runs in the Accounts row; existing Check confirms the result. |
+| ST8 | Sign in without a terminal | Done · #1398 | Native provider sign-in runs in the Accounts row; existing Check confirms the result. |
 | ST9 | Setup from the terminal and by asking | Done · #1393 | CLI and MCP share the Setup inventory and Use producer; agents read status, adoption requires the owner. |
 
 ## Desk shell (`shell/RECIPE.md`): 4 of 10
