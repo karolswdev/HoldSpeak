@@ -26,7 +26,7 @@ _VALUE = {"anyOf": [{"type": "number"}, {"type": "string", "maxLength": 64}],
 _RECT = {"type": "object", "properties": {"x": _VALUE, "y": _VALUE, "w": _VALUE, "h": _VALUE},
          "required": ["x", "y", "w", "h"], "additionalProperties": False}
 _ID = {"type": "string", "minLength": 1, "maxLength": 200,
-       "description": "The window id (for example chair:brief, zone:<id>, surface-people)."}
+       "description": "The window id (for example chair:brief, zone:<id>, pullout:people:<id>)."}
 _REV = {"type": ["integer", "null"], "description": "Refuse the write when the window's revision is another one."}
 _REFUSALS = _CONTRACT_REFUSALS + (
     "window_unknown: the desk does not know the window id", "window_id_invalid",
@@ -69,7 +69,7 @@ WINDOWS_LIST = _row(
 )
 WINDOWS_OPEN = _row(
     "windows.open", "open_window",
-    "Open a registry window on the owner's desk, in front. Use window_id from registry.static or a registry.families prefix; use surface-people with object_ref people:<id>:prep for a person's prep, or surface-meetings with meeting:<id>?view=review for a meeting; pass object_ref to scope it.",
+    "Open a registry window on the owner's desk, in front. Use window_id from registry.static or a registry.families prefix; use pullout:people:<id> with object_ref people:<id>:prep for a person's prep, or surface-meetings with meeting:<id>?view=review for a meeting; pass object_ref to scope it.",
     {"window_id": _ID, "object_ref": {"type": ["string", "null"], "maxLength": 400},
      "geometry": {"anyOf": [_RECT, {"type": "null"}]}, "room": {"type": ["string", "null"], "maxLength": 200},
      "expected_revision": _REV},

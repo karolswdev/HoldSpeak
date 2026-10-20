@@ -21,7 +21,7 @@
  * One transport (the hub's HTTP routes and its one bus); no second store. */
 import { ApiError, apiFetch } from "../../lib/api";
 import { DESK_APPLICATIONS, SURFACE_APPLICATIONS, parkedSettingsWing } from "../applications";
-import { meetingOfScope } from "../objectWindows";
+import { meetingOfScope, personWindowRef } from "../objectWindows";
 import { CHAIR_WINDOW_IDS, TODAY_REPLACES, closeChairWindow, openChairWindowFromHub, useChairWindows } from "../chair/chairWindows";
 import { openIntelligence } from "../intelligenceNavigation";
 import { workBand } from "../components/window/windowGeometry";
@@ -252,10 +252,27 @@ export function adapterFor(id: string): Adapter | null {
       },
     };
   }
+  if (id.startsWith("pullout:")) {
+    const value = id.slice("pullout:".length);
+    if (!value || value.startsWith("__")) return null;
+    return {
+      isOpen: () => d().pullouts.some((w) => w.id === value),
+      open: (row) => {
+        // People prep is a pullout window. The object ref carries the lens
+        // requested by the hub; register it before the PersonWindowBody
+        // mounts so its initial lens consumes the request. Keeping this
+        // family on the pullout id makes the rect and DOM identity one key.
+        if (value.startsWith("people:")) {
+          const scope = row?.object_ref?.startsWith("people:") ? row.object_ref : value;
+          personWindowRef(scope);
+        }
+        if (!d().pullouts.some((w) => w.id === value))
+          useDesk.setState({ pullouts: [...d().pullouts, { id: value, origin: null }] });
+      },
+      close: () => d().closePullout(value),
+    };
+  }
   return (
-    listAdapter("pullout:", id, () => d().pullouts, "id",
-      (v) => useDesk.setState({ pullouts: [...d().pullouts, { id: v, origin: null }] }),
-      (v) => d().closePullout(v)) ??
     listAdapter("info:", id, () => d().infoWindows, "ref", (v) => d().openInfoWindow(v), (v) => d().closeInfoWindow(v)) ??
     listAdapter("roadmap:", id, () => d().roadmapWindows, "slug", (v) => d().openRoadmapWindow(v), (v) => d().closeRoadmapWindow(v)) ??
     listAdapter("repository:", id, () => d().repositoryWindows, "id", (v) => d().openRepositoryWindow(v), (v) => d().closeRepositoryWindow(v)) ??

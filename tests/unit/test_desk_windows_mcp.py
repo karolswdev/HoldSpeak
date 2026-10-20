@@ -83,25 +83,25 @@ def test_an_mcp_no_op_write_sends_no_frame(hub: Any) -> None:
 
 
 def test_an_agent_open_is_announced_so_the_owner_sees_it(hub: Any) -> None:
-    mcp_tools.dispatch("desk_window.open", {"window_id": "surface-people"}, LAUNCH)
-    assert [(f["kind"], f["id"], f["op"]) for f in hub] == [("windows", "surface-people", "open")]
+    mcp_tools.dispatch("desk_window.open", {"window_id": "pullout:people:rel-mira"}, LAUNCH)
+    assert [(f["kind"], f["id"], f["op"]) for f in hub] == [("windows", "pullout:people:rel-mira", "open")]
 
 
 def test_the_s9_object_windows_use_the_registry_and_keep_their_scope(hub: Any) -> None:
     """Ask opens the real registry windows with the object's protected scope."""
     people = mcp_tools.dispatch("desk_window.open", {
-        "window_id": "surface-people", "object_ref": "people:rel-mira:prep",
+        "window_id": "pullout:people:rel-mira", "object_ref": "people:rel-mira:prep",
     }, OWNER)
     meeting = mcp_tools.dispatch("desk_window.open", {
         "window_id": "surface-meetings", "object_ref": "meeting:platform-sync?view=review",
     }, OWNER)
 
-    assert people["app"] == "open-people"
+    assert people["app"] == "pullout"
     assert people["object_ref"] == "people:rel-mira:prep"
     assert meeting["app"] == "review-meetings"
     assert meeting["object_ref"] == "meeting:platform-sync?view=review"
     listed = mcp_tools.dispatch("desk_window.list", {}, OWNER)
-    assert listed["registry"]["static"]["surface-people"] == "open-people"
+    assert listed["registry"]["families"]["pullout:"] == "pullout"
     assert listed["registry"]["static"]["surface-meetings"] == "review-meetings"
 
 
@@ -114,7 +114,7 @@ def test_the_whole_window_producer_records_grouped_wrote_and_revision_safe_undo(
     trace = run_trace.ask_trace("s9-window-wire")
 
     calls = [
-        ("desk_window.open", {"window_id": "surface-people", "object_ref": "people:rel-mira:prep"}),
+        ("desk_window.open", {"window_id": "pullout:people:rel-mira", "object_ref": "people:rel-mira:prep"}),
         ("desk_window.open", {"window_id": "surface-meetings", "object_ref": "meeting:platform-sync?view=review"}),
     ]
     for name, arguments in calls:
@@ -123,7 +123,7 @@ def test_the_whole_window_producer_records_grouped_wrote_and_revision_safe_undo(
 
     listed = mcp_tools.dispatch("desk_window.list", {}, OWNER)
     rects = {
-        "surface-people": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"},
+        "pullout:people:rel-mira": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"},
         "surface-meetings": {"x": "0%", "y": "-1/2", "w": "1/2", "h": "100%"},
     }
     revisions = {row["id"]: row["revision"] for row in listed["windows"]}
@@ -144,12 +144,12 @@ def test_the_whole_window_producer_records_grouped_wrote_and_revision_safe_undo(
     used = run_trace.use_by_trace(db, [trace])[trace]
     assert used["wrote_summary"] == "Opened 2 windows · Tiled"
     wrote = {row["ref"]: row for row in used["wrote"]}
-    assert wrote["window:surface-people"]["undo"] is True
+    assert wrote["window:pullout:people:rel-mira"]["undo"] is True
     assert wrote["window:surface-meetings"]["undo"] is False
-    undo = wrote["window:surface-people"]["window_undo"]
+    undo = wrote["window:pullout:people:rel-mira"]["window_undo"]
     by_id = {row["id"]: row for row in undo["windows"]}
-    assert by_id["surface-people"]["before"] is None
-    assert by_id["surface-people"]["after"]["object_ref"] == "people:rel-mira:prep"
+    assert by_id["pullout:people:rel-mira"]["before"] is None
+    assert by_id["pullout:people:rel-mira"]["after"]["object_ref"] == "people:rel-mira:prep"
     assert by_id["surface-meetings"]["after"]["object_ref"] == "meeting:platform-sync?view=review"
 
 
@@ -157,21 +157,21 @@ def test_s9_arrange_cas_keeps_a_later_owner_placement(hub: Any) -> None:
     """A stale Undo arrange cannot overwrite the owner's newer placement."""
     from holdspeak.services.errors import ServiceError
 
-    mcp_tools.dispatch("desk_window.open", {"window_id": "surface-people"}, OWNER)
+    mcp_tools.dispatch("desk_window.open", {"window_id": "pullout:people:rel-mira"}, OWNER)
     initial = mcp_tools.dispatch("desk_window.list", {}, OWNER)["windows"][0]
-    first = {"surface-people": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}}
+    first = {"pullout:people:rel-mira": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}}
     mcp_tools.dispatch("desk_window.arrange", {
-        "rects": first, "expected_revisions": {"surface-people": initial["revision"]},
+        "rects": first, "expected_revisions": {"pullout:people:rel-mira": initial["revision"]},
     }, OWNER)
     moved = mcp_tools.dispatch("desk_window.list", {}, OWNER)["windows"][0]
-    newer = {"surface-people": {"x": "25%", "y": "20%", "w": "50%", "h": "70%"}}
+    newer = {"pullout:people:rel-mira": {"x": "25%", "y": "20%", "w": "50%", "h": "70%"}}
     mcp_tools.dispatch("desk_window.arrange", {
-        "rects": newer, "expected_revisions": {"surface-people": moved["revision"]},
+        "rects": newer, "expected_revisions": {"pullout:people:rel-mira": moved["revision"]},
     }, OWNER)
 
     with pytest.raises(ServiceError) as stale:
         mcp_tools.dispatch("desk_window.arrange", {
-            "rects": first, "expected_revisions": {"surface-people": moved["revision"]},
+            "rects": first, "expected_revisions": {"pullout:people:rel-mira": moved["revision"]},
         }, OWNER)
     assert stale.value.code == "window_stale"
     current = mcp_tools.dispatch("desk_window.list", {}, OWNER)["windows"][0]

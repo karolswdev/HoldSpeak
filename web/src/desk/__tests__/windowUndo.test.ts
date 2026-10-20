@@ -21,9 +21,9 @@ describe("S9 window Wrote Undo", () => {
       group: "ask:s9",
       windows: [
         {
-          id: "surface-people",
+          id: "pullout:people:rel-mira",
           before: null,
-          after: { id: "surface-people", object_ref: "people:rel-mira:prep", revision: 7 },
+          after: { id: "pullout:people:rel-mira", object_ref: "people:rel-mira:prep", revision: 7 },
         },
         {
           id: "surface-meetings",
@@ -35,21 +35,21 @@ describe("S9 window Wrote Undo", () => {
     apiFetch.mockImplementation(async (input: string, init: RequestInit = {}) => {
       if (input === "/api/desk/windows") {
         return { windows: [
-          row("surface-people", 7, { x: "-1/2", y: "-1/2", w: "1/2", h: "100%" }),
+          row("pullout:people:rel-mira", 7, { x: "-1/2", y: "-1/2", w: "1/2", h: "100%" }),
           row("surface-meetings", 8, { x: "0%", y: "-1/2", w: "1/2", h: "100%" }),
         ] };
       }
       expect(init.method).toBe("POST");
       expect((init as RequestInit & { json?: unknown }).json).toMatchObject({
-        expected_revision: input.includes("surface-people") ? 7 : 8,
+        expected_revision: input.includes("pullout%3Apeople%3Arel-mira") ? 7 : 8,
       });
-      return { id: input.includes("surface-people") ? "surface-people" : "surface-meetings", closed: true, revision: 9 };
+      return { id: input.includes("pullout%3Apeople%3Arel-mira") ? "pullout:people:rel-mira" : "surface-meetings", closed: true, revision: 9 };
     });
 
     await restoreWindowUndo(undo);
 
     expect(apiFetch).toHaveBeenCalledTimes(3);
-    expect(apiFetch.mock.calls[1][0]).toContain("surface-people/close");
+    expect(apiFetch.mock.calls[1][0]).toContain("pullout%3Apeople%3Arel-mira/close");
     expect(apiFetch.mock.calls[2][0]).toContain("surface-meetings/close");
   });
 
@@ -57,20 +57,20 @@ describe("S9 window Wrote Undo", () => {
     const undo: WindowUndo = {
       group: "ask:s9",
       windows: [{
-        id: "surface-people",
+        id: "pullout:people:rel-mira",
         before: {
-          id: "surface-people",
+          id: "pullout:people:rel-mira",
           geometry: { x: "10%", y: "10%", w: "40%", h: "80%" },
           revision: 2,
         },
         after: {
-          id: "surface-people",
+          id: "pullout:people:rel-mira",
           geometry: { x: "-1/2", y: "-1/2", w: "1/2", h: "100%" },
           revision: 7,
         },
       }],
     };
-    apiFetch.mockResolvedValue({ windows: [row("surface-people", 9, {
+    apiFetch.mockResolvedValue({ windows: [row("pullout:people:rel-mira", 9, {
       x: "25%", y: "20%", w: "50%", h: "70%",
     })] });
 

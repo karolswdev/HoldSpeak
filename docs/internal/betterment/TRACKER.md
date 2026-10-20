@@ -5,7 +5,7 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-20, window placement, Arrange and Wallpaper verified. Running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-20, Ask arrangement and Undo observed; speed gate remains open. Running-desk identity is in `pm/STATUS.md`.
 
 **Total: 110 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
@@ -165,7 +165,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S6 | Wallpaper has one home | Done · #1407 | One Settings Desk home; readable Jupiter label plates. |
 | S7 | Windows open where he can see them, at the size of their content | Done · #1407 | Content sizes and reachable heads; remembered collision reseating preserves owner resize. |
 | S8 | The Window menu | Done · #1407 | Arrange front/all preserve size and order; exact owner geometry survives reopening. |
-| S9 | Ask can arrange the desk (gated) | Open |  |
+| S9 | Ask can arrange the desk (gated) | Part · PR_PENDING | Real LAN opens and tiles the canonical windows; Wrote/Undo restores them. First strict tile 16.27 s exceeds the 10 s gate. |
 
 ## Send (`send/RECIPE.md`): 2 of 8
 

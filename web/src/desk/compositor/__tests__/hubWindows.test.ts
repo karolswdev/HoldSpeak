@@ -12,6 +12,7 @@ import { useDrawers } from "../../drawer/store";
 import { useLane } from "../../lane/laneStore";
 import { __resetConductor, useConductor } from "../../conductor/store";
 import { useDesk } from "../../store";
+import { peekPersonLens, takePersonLens } from "../../objectWindows";
 import { DESK_WORKSPACE_STORAGE_KEY } from "../../store/workspaceStorage";
 import { record, type Rect } from "../geometry";
 import { orderFromDepth } from "../planes";
@@ -252,6 +253,24 @@ describe("hubWindows", () => {
         "people:rel-1",
       ]);
       expect(fake.calls.some((call) => call.verb === "close")).toBe(false);
+    });
+
+    it("hydrates a model-opened person's prep into the same pullout DOM id", async () => {
+      takePersonLens("rel-mira");
+      const { hub } = start([row("pullout:people:rel-mira", {
+        app: "pullout", object_ref: "people:rel-mira:prep", depth: 2, revision: 3,
+        arranged: true, x: "-1/2", y: "-1/2", w: "1/2", h: "100%",
+      })]);
+      await hub.start();
+      await flush(hub);
+
+      expect(useDesk.getState().pullouts.map((pullout) => pullout.id)).toContain("people:rel-mira");
+      expect(useDesk.getState().panelRects["pullout:people:rel-mira"]).toEqual({
+        x: 10, y: 38, w: 710, h: 772,
+      });
+      expect(useDesk.getState().panelRects["surface-people"]).toBeUndefined();
+      expect(peekPersonLens("rel-mira")).toBe("prep");
+      takePersonLens("rel-mira");
     });
 
     it("waits behind an active application window", async () => {
