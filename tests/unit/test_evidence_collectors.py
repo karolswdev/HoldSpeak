@@ -243,6 +243,24 @@ class TestDecisionsAdapter:
         fact = json.loads(review_obs[0].fact_json)
         assert fact["decision_id"] == "dec-001"
 
+    def test_canonical_record_without_review_date_has_no_review_warning(self, rig):
+        db = rig
+        pid = _seed_project(db)
+        from holdspeak.services.decision_record_service import DecisionRecordService
+
+        record = DecisionRecordService(db).create(
+            None,
+            decision_text="Choose one durable record.",
+            source_type="desk",
+            source_id="desk-p9",
+        )
+        _seed_resource(db, pid, f"decision_record:{record['id']}")
+
+        result = DecisionsAdapter(db).collect(pid, {})
+
+        assert [o.kind for o in result.observations] == ["decision.lifecycle"]
+        assert result.observations[0].subject_ref == f"decision_record:{record['id']}"
+
 
 # ── FollowThroughAdapter tests ───────────────────────────────────────
 

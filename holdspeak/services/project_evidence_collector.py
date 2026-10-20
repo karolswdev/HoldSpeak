@@ -46,7 +46,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, Protocol
 
 from holdspeak.project_contracts import generate_pobs_id
@@ -192,6 +192,104 @@ class DecisionsAdapter:
 
     def collect(self, project_id: str, source: dict[str, Any]) -> AdapterResult:
         now = _now_iso()
+        with self._db._connection() as conn:
+            canonical_count = conn.execute(
+                "SELECT COUNT(*) FROM decision_records WHERE deleted = 0"
+            ).fetchone()[0]
+            canonical_rows = conn.execute(
+                """SELECT DISTINCT r.*
+                   FROM decision_records r
+                   WHERE r.deleted = 0
+                       AND NOT EXISTS (
+                           SELECT 1 FROM desk_decisions dd
+                           WHERE r.source_type = 'desk' AND dd.id = r.source_id
+                             AND dd.deleted = 0 AND LOWER(dd.status) = 'proposed'
+                       )
+                     AND COALESCE(r.kind, 'decision') != 'action'
+                     AND NOT EXISTS (
+                         SELECT 1 FROM follow_through_proposals fp
+                         WHERE fp.decision_record_id = r.id AND fp.kind = 'action'
+                     )
+                     AND (
+                         EXISTS (
+                             SELECT 1
+                             FROM decision_record_sources rs
+                             JOIN meeting_projects mp ON mp.meeting_id = rs.source_ref
+                             WHERE rs.record_id = r.id
+                               AND rs.source_type = 'meeting'
+                               AND mp.project_id = ?
+                         )
+                         OR EXISTS (
+                             SELECT 1 FROM project_resources pr
+                             WHERE pr.project_id = ? AND pr.deleted = 0
+                               AND pr.resource_ref = 'decision_record:' || r.id
+                         )
+                         OR (
+                             r.source_type = 'desk' AND EXISTS (
+                                 SELECT 1 FROM project_resources pr
+                                 WHERE pr.project_id = ? AND pr.deleted = 0
+                                   AND pr.resource_ref IN (
+                                       'desk_decision:' || r.source_id,
+                                       'decision:' || r.source_id
+                                   )
+                             )
+                         )
+                     )
+                   ORDER BY r.created_at DESC, r.id DESC""",
+                (project_id, project_id, project_id),
+            ).fetchall()
+
+        # A canonical row is the source of truth once the record ledger has
+        # been populated.  The legacy branch below remains for old isolated
+        # databases that have not yet produced any records.
+        if canonical_count:
+            observations: list[ObservationRecord] = []
+            for row in canonical_rows:
+                record_id = str(row["id"])
+                lifecycle = str(row["lifecycle"] or "active")
+                # ``decision_record`` is the durable ledger identity, while
+                # ``decision`` remains the registered Desk citizen ref.
+                subject = f"decision_record:{record_id}"
+                fact = {
+                    "decision_id": record_id,
+                    "lifecycle": lifecycle,
+                    "text": str(row["decision_text"] or "")[:200],
+                }
+                fact_str = json.dumps(fact, sort_keys=True, separators=(",", ":"))
+                observations.append(ObservationRecord(
+                    kind="decision.lifecycle",
+                    subject_ref=subject,
+                    source_version=str(row["updated_at"] or row["created_at"] or ""),
+                    observed_at=now,
+                    fact_json=fact_str,
+                    content_hash=_content_hash(fact_str),
+                ))
+                review_date = str(row["review_date"] or "")
+                if (
+                    review_date
+                    and review_date <= date.today().isoformat()
+                    and lifecycle == "active"
+                ):
+                    review_fact = {
+                        "decision_id": record_id,
+                        "text": str(row["decision_text"] or "")[:200],
+                        "review_date": review_date,
+                    }
+                    review_str = json.dumps(review_fact, sort_keys=True, separators=(",", ":"))
+                    observations.append(ObservationRecord(
+                        kind="decision.review_due",
+                        subject_ref=subject,
+                        source_version=str(row["updated_at"] or row["created_at"] or ""),
+                        observed_at=now,
+                        fact_json=review_str,
+                        content_hash=_content_hash(review_str),
+                    ))
+            return AdapterResult(
+                source_version=str(len(canonical_rows)),
+                freshness="ok",
+                observations=observations,
+            )
+
         decisions = self._db.decisions.list(limit=100)
         observations: list[ObservationRecord] = []
         for d in decisions:

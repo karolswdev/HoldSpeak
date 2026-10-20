@@ -165,7 +165,7 @@ describe("Needs you: the head counts what needs him; Waiting lists the rest", ()
     });
   }
 
-  it("6 with A3 not among the rows; Waiting lists A3 waiting on Priya; Review opens the decision", async () => {
+  it("6 with A3 not among the rows; Waiting lists A3 waiting on Priya; Confirm is primary and the row opens the decision", async () => {
     // replaces: tests/e2e/test_needs_you_means_you_glass.py::TestNeedsYouMeansYou::test_the_head_counts_what_needs_him_and_waiting_lists_the_rest
     // (the A4-named -> 5 and decision-accepted -> 4 legs are the hub's: tests/unit/test_desk_needs_you.py)
     installWeek();
@@ -188,7 +188,8 @@ describe("Needs you: the head counts what needs him; Waiting lists the rest", ()
     fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-theirs"));
     await waitFor(() => expect(rowNamed("R1 adopt the release checklist")).toBeTruthy());
     const decision = rowNamed("R1 adopt the release checklist")!;
-    fireEvent.click(within(decision).getByRole("button", { name: "Decide: R1 adopt the release checklist" }));
+    expect(within(decision).getByRole("button", { name: "Confirm: R1 adopt the release checklist" })).toBeEnabled();
+    fireEvent.click(within(decision).getByText("R1 adopt the release checklist"));
     // The real opener (shell.ts openPrimitive) runs against the real desk store:
     // the decision's own window opens, in front.
     await waitFor(() =>
