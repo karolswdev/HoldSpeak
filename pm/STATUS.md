@@ -21,7 +21,7 @@ then exposed covered and overlapping fields through actual browser presses.
 The shared rename field now occupies the drawer caption seat; open windows
 move to their Dock entries so the owner can see and type the name. Real
 create/type/Enter/readback passes at 1440/393, including a hit test proving
-another object does not cover the field. All 57 focused shell checks pass.
+another object does not cover the field. All 125 focused shell checks pass. The first broad check found nine old New-list/shortcut assertions; the updated 68-check consumer set passes, retaining parked-verb behavior and exact key/menu membership. All six creation browser cases passed in that run.
 Required quick: SHELL_S2_QUICK_PENDING.
 Last observed running desk before this merge: backend 5fe9ee0e7,
 frontend 0a834c90036c69c5, PID 51757; identity/import/database ownership and
