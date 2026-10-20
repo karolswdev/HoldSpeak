@@ -20,6 +20,8 @@ export type VoiceCommandFired = {
   preview: string;
   ok: boolean;
   error?: string;
+  /** The server's real Desk result or closed UI intent, when one exists. */
+  result?: Record<string, unknown>;
 };
 
 /* HS-132-05 — a refusal arrives NAMED. The server sends `reason`,

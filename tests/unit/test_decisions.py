@@ -813,7 +813,7 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         # PHILO-10-03: the email key (HTTP only; the key is a held input).
         "channel.save_email_key", "channel.save_slack_webhook",
         # The Conductor K1: the one-press hook install (HTTP only, owner only).
-        "agent_hooks.install",
+        "agent_hooks.install", "agent_hooks.remove",
         # Conductor R7: the owner's People MCP access (config).
         "people_access.set",
         # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).

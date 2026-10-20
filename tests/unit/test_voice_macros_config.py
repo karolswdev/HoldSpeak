@@ -2,8 +2,9 @@
 
 Pins the schema the `/commands` board (HS-52-05) and the dispatcher (HS-52-04) build
 on: a `VoiceMacro` is a keyword + a deterministic action (one of open_url /
-launch_app / shell / type_text + a single payload), off by default, round-tripping
-through `Config` save/load config-version-safe.
+launch_app / shell / type_text / the closed Desk verbs + a single payload), with the
+five Desk verbs on for a new desk and explicit disablement round-tripping through
+`Config` save/load config-version-safe.
 """
 from __future__ import annotations
 
@@ -21,10 +22,16 @@ from holdspeak.config import (
 )
 
 
-def test_off_by_default_and_empty() -> None:
+def test_new_config_has_the_five_closed_desk_verbs() -> None:
     macros = Config().dictation.macros
-    assert macros.enabled is False
-    assert macros.items == []
+    assert macros.enabled is True
+    assert [(m.keyword, m.action.kind, m.action.payload) for m in macros.items] == [
+        ("start recording", "desk_verb", "record"),
+        ("stop recording", "desk_verb", "stop"),
+        ("new note", "desk_verb", "new_note"),
+        ("ask HoldSpeak", "desk_verb", "ask"),
+        ("open today", "desk_verb", "open_today"),
+    ]
 
 
 @pytest.mark.parametrize(
@@ -34,6 +41,7 @@ def test_off_by_default_and_empty() -> None:
         ("launch_app", "Terminal", "launches Terminal"),
         ("shell", "git push origin HEAD", "runs: git push origin HEAD"),
         ("type_text", "## Standup", "types: ## Standup"),
+        ("desk_verb", "new_note", "opens a new note"),
     ],
 )
 def test_action_kinds_and_preview(kind: str, payload: str, preview: str) -> None:
@@ -49,6 +57,11 @@ def test_action_kind_is_normalized() -> None:
 def test_action_rejects_unknown_kind() -> None:
     with pytest.raises(VoiceMacroError, match="unknown voice macro action kind"):
         VoiceMacroAction(kind="rm_rf_everything", payload="x")
+
+
+def test_desk_verb_rejects_an_open_operation_payload() -> None:
+    with pytest.raises(VoiceMacroError, match="unknown Desk voice verb"):
+        VoiceMacroAction(kind="desk_verb", payload="desk.delete")
 
 
 def test_action_rejects_empty_payload() -> None:
@@ -138,3 +151,11 @@ def test_load_is_config_version_safe_with_macros(tmp_path: Path) -> None:
     assert cfg.model.name == "small"  # other section preserved
     assert cfg.dictation.macros.enabled is True
     assert cfg.dictation.macros.items[0].keyword == "docs"
+
+
+def test_persisted_explicit_off_stays_off_without_defaults(tmp_path: Path) -> None:
+    path = tmp_path / "config.json"
+    path.write_text(json.dumps({"dictation": {"macros": {"enabled": False}}}), encoding="utf-8")
+    macros = Config.load(path).dictation.macros
+    assert macros.enabled is False
+    assert macros.items == []

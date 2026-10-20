@@ -14,6 +14,7 @@ import { openSurfaceOr } from "../../desk/shell";
 import { useResource } from "../pageSupport";
 import type {
   CoreProps,
+  DeskVerb,
   Macro,
   SettingsResponse,
   CommandTestResponse,
@@ -31,13 +32,37 @@ const blank = (): Macro => ({
   keyword: "",
   action: { kind: "open_url", payload: "" },
 });
+const DESK_VERB_VALUES: DeskVerb[] = [
+  "record",
+  "stop",
+  "new_note",
+  "ask",
+  "open_today",
+];
+const isDeskVerb = (value: string): value is DeskVerb =>
+  DESK_VERB_VALUES.includes(value as DeskVerb);
 const preview = (macro: Macro) =>
-  (({
-    open_url: "opens",
-    launch_app: "launches",
-    shell: "runs",
-    type_text: "types",
-  })[macro.action.kind] ?? "uses") + ` ${macro.action.payload}`;
+  (macro.action.kind === "desk_verb"
+    ? ({
+        record: "starts a recording",
+        stop: "stops the recording",
+        new_note: "opens a new note",
+        ask: "opens Ask HoldSpeak",
+        open_today: "opens Today",
+      }[macro.action.payload] ?? "uses a Desk verb")
+    : (({
+        open_url: "opens",
+        launch_app: "launches",
+        shell: "runs",
+        type_text: "types",
+      })[macro.action.kind] ?? "uses") + ` ${macro.action.payload}`);
+const DESK_VERBS: Array<{ value: DeskVerb; label: string }> = [
+  { value: "record", label: "Start recording" },
+  { value: "stop", label: "Stop recording" },
+  { value: "new_note", label: "New note" },
+  { value: "ask", label: "Ask HoldSpeak" },
+  { value: "open_today", label: "Open Today" },
+];
 
 type CommandDraft = { session: object; index: number; macro: Macro };
 
@@ -178,7 +203,7 @@ export function CommandsCore({ hero }: CoreProps) {
   );
   return (
     <>
-      {renderHeroSlot(hero, verbs, countToken(items.length, "COMMAND"))}
+      {renderHeroSlot(hero, verbs)}
       {message ? (
         message.error ? (
           <SurfaceState
@@ -224,7 +249,7 @@ export function CommandsCore({ hero }: CoreProps) {
                         loading={busy}
                         onClick={() => void test(macro)}
                       >
-                        Test
+                        {macro.action.kind === "desk_verb" ? "Preview" : "Test"}
                       </Button>
                       <Button
                         dense
@@ -290,13 +315,26 @@ export function CommandsCore({ hero }: CoreProps) {
                     { value: "launch_app", label: "Launch app" },
                     { value: "shell", label: "Shell command" },
                     { value: "type_text", label: "Type text" },
+                    { value: "desk_verb", label: "Desk verb" },
                   ]}
                   onChange={(kind) =>
                     setEditing({
                       ...editing,
                       macro: {
                         ...editing.macro,
-                        action: { ...editing.macro.action, kind },
+                        action: {
+                          ...editing.macro.action,
+                          kind,
+                          // A desk verb has a closed payload enum. Switching
+                          // from an URL/app/text command must leave a valid
+                          // value so the draft can be saved immediately.
+                          payload:
+                            kind === "desk_verb"
+                              ? isDeskVerb(editing.macro.action.payload)
+                                ? editing.macro.action.payload
+                                : "record"
+                              : editing.macro.action.payload,
+                        },
                       },
                     })
                   }
@@ -310,19 +348,36 @@ export function CommandsCore({ hero }: CoreProps) {
                     : undefined
                 }
               >
-                <StringGadget
-                  label="Payload"
-                  value={editing.macro.action.payload}
-                  onChange={(payload) =>
-                    setEditing({
-                      ...editing,
-                      macro: {
-                        ...editing.macro,
-                        action: { ...editing.macro.action, payload },
-                      },
-                    })
-                  }
-                />
+                {editing.macro.action.kind === "desk_verb" ? (
+                  <CycleGadget
+                    label="Desk verb"
+                    value={editing.macro.action.payload}
+                    options={DESK_VERBS}
+                    onChange={(payload) =>
+                      setEditing({
+                        ...editing,
+                        macro: {
+                          ...editing.macro,
+                          action: { ...editing.macro.action, payload },
+                        },
+                      })
+                    }
+                  />
+                ) : (
+                  <StringGadget
+                    label="Payload"
+                    value={editing.macro.action.payload}
+                    onChange={(payload) =>
+                      setEditing({
+                        ...editing,
+                        macro: {
+                          ...editing.macro,
+                          action: { ...editing.macro.action, payload },
+                        },
+                      })
+                    }
+                  />
+                )}
               </GadgetRow>
             </GadgetGroup>
             {editing.macro.action.kind === "shell" ? (
@@ -344,7 +399,7 @@ export function CommandsCore({ hero }: CoreProps) {
                 Save command
               </Button>
               <Button dense disabled={busy} onClick={() => void test(editing.macro)}>
-                Test without saving
+                {editing.macro.action.kind === "desk_verb" ? "Preview" : "Test without saving"}
               </Button>
             </div>
           </SurfaceSection>

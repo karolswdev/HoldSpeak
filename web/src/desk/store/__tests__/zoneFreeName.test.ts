@@ -2,7 +2,7 @@
  *
  * The hub refuses a second live zone whose name matches after strip, collapse
  * whitespace, NFC and casefold (holdspeak/db/primitives.py:60-68). New Zone
- * posted "New zone" every time, so the second press answered 409 (FINDING S1).
+ * posted "New drawer" every time, so the second press answered 409 (FINDING S1).
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -34,29 +34,29 @@ const taken = () =>
   Promise.resolve({
     ok: false,
     status: 409,
-    json: () => Promise.resolve({ error: "zone_name_taken", existing_name: "New zone" }),
+    json: () => Promise.resolve({ error: "zone_name_taken", existing_name: "New drawer" }),
     text: () => Promise.resolve('{"error":"zone_name_taken"}'),
     clone() { return this; },
   } as unknown as Response);
 
 describe("nextFreeZoneName — the hub's rule in full", () => {
-  it("names the first zone 'New zone'", () => {
-    expect(nextFreeZoneName([])).toBe("New zone");
+  it("names the first zone 'New drawer'", () => {
+    expect(nextFreeZoneName([])).toBe("New drawer");
   });
-  it("names the next one 'New zone 2', then 3", () => {
-    expect(nextFreeZoneName([zone("New zone")])).toBe("New zone 2");
-    expect(nextFreeZoneName([zone("New zone"), zone("New zone 2")])).toBe("New zone 3");
+  it("names the next one 'New drawer 2', then 3", () => {
+    expect(nextFreeZoneName([zone("New drawer")])).toBe("New drawer 2");
+    expect(nextFreeZoneName([zone("New drawer"), zone("New drawer 2")])).toBe("New drawer 3");
   });
-  it("counts case and whitespace variants as taken ('  new   ZONE ')", () => {
-    expect(nextFreeZoneName([zone("  new   ZONE ")])).toBe("New zone 2");
-    expect(nextFreeZoneName([zone("New zone"), zone("new\tzone  2")])).toBe("New zone 3");
+  it("counts case and whitespace variants as taken ('  new   DRAWER ')", () => {
+    expect(nextFreeZoneName([zone("  new   DRAWER ")])).toBe("New drawer 2");
+    expect(nextFreeZoneName([zone("New drawer"), zone("new\tdrawer  2")])).toBe("New drawer 3");
   });
   it("counts the hub's own name_normalized", () => {
-    expect(nextFreeZoneName([zone("anything", "new zone")])).toBe("New zone 2");
+    expect(nextFreeZoneName([zone("anything", "new drawer")])).toBe("New drawer 2");
   });
-  it("fills a gap: a zone named 'New zone 2' by the owner is skipped, not renamed", () => {
-    expect(nextFreeZoneName([zone("New zone 2")])).toBe("New zone");
-    expect(nextFreeZoneName([zone("New zone"), zone("New zone 2"), zone("New zone 4")])).toBe("New zone 3");
+  it("fills a gap: a zone named 'New drawer 2' by the owner is skipped, not renamed", () => {
+    expect(nextFreeZoneName([zone("New drawer 2")])).toBe("New drawer");
+    expect(nextFreeZoneName([zone("New drawer"), zone("New drawer 2"), zone("New drawer 4")])).toBe("New drawer 3");
   });
   it("matches normalize_zone_name on NFC and casefold", () => {
     expect(normalizeZoneName("  Café   ZONE ")).toBe("café zone");
@@ -72,14 +72,14 @@ describe("createPrimitive('zone') — the free name, the passed name, the Retry"
     useDesk.setState({
       refresh,
       renamingZoneId: null,
-      items: { ...useDesk.getState().items, directory: [zone("New zone")] as never },
+      items: { ...useDesk.getState().items, directory: [zone("New drawer")] as never },
     });
   });
 
-  it("posts the next free name when a 'New zone' exists", async () => {
+  it("posts the next free name when a 'New drawer' exists", async () => {
     vi.mocked(apiRequest).mockImplementation(() => ok("dir_new"));
     await useDesk.getState().createPrimitive("zone");
-    expect(posted()).toEqual([{ name: "New zone 2" }]);
+    expect(posted()).toEqual([{ name: "New drawer 2" }]);
     expect(useDesk.getState().renamingZoneId).toBe("dir_new");
   });
 
@@ -95,7 +95,7 @@ describe("createPrimitive('zone') — the free name, the passed name, the Retry"
     await useDesk.getState().createPrimitive("zone");
     landFirst();
     await first;
-    expect(posted()).toEqual([{ name: "New zone 2" }, { name: "New zone 3" }]);
+    expect(posted()).toEqual([{ name: "New drawer 2" }, { name: "New drawer 3" }]);
   });
 
   it("a face change while the create lands starts no rename on the new face", async () => {
@@ -113,16 +113,16 @@ describe("createPrimitive('zone') — the free name, the passed name, the Retry"
   it("never replaces a name the caller passed", async () => {
     vi.mocked(apiRequest).mockImplementation(() => ok("dir_x"));
     await useDesk.getState().createPrimitive("zone", { name: "X" });
-    await useDesk.getState().createPrimitive("zone", { name: "New zone" });
-    expect(posted()).toEqual([{ name: "X" }, { name: "New zone" }]);
+    await useDesk.getState().createPrimitive("zone", { name: "New drawer" });
+    expect(posted()).toEqual([{ name: "X" }, { name: "New drawer" }]);
   });
 
   it("after a 409, Retry refreshes the store BEFORE it picks again", async () => {
     // A zone made outside the store (MCP, another tab): the hub holds
-    // "New zone 2", the store does not know it yet.
+    // "New drawer 2", the store does not know it yet.
     vi.mocked(apiRequest).mockImplementationOnce(() => taken());
     await useDesk.getState().createPrimitive("zone");
-    expect(posted()).toEqual([{ name: "New zone 2" }]);
+    expect(posted()).toEqual([{ name: "New drawer 2" }]);
     const failure = currentWriteFailure();
     expect(failure?.verb).toBe("CREATE ZONE");
     expect(failure?.retry).toBeTypeOf("function");
@@ -130,7 +130,7 @@ describe("createPrimitive('zone') — the free name, the passed name, the Retry"
     // Refresh brings the outside zone in; Retry must pick after it.
     refresh.mockImplementation(() => {
       useDesk.setState({
-        items: { ...useDesk.getState().items, directory: [zone("New zone"), zone("New zone 2")] as never },
+        items: { ...useDesk.getState().items, directory: [zone("New drawer"), zone("New drawer 2")] as never },
       });
       return Promise.resolve();
     });
@@ -141,6 +141,6 @@ describe("createPrimitive('zone') — the free name, the passed name, the Retry"
     expect(refresh.mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(apiRequest).mock.invocationCallOrder.at(-1)!,
     );
-    expect(posted()[1]).toEqual({ name: "New zone 3" });
+    expect(posted()[1]).toEqual({ name: "New drawer 3" });
   });
 });

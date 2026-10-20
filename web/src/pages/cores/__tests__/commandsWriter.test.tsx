@@ -102,6 +102,30 @@ describe("CommandsCore is one honest items-writer (HS-130-07)", () => {
     ).toBeVisible();
   });
 
+  it("gives a desk verb a valid default payload when its kind changes", async () => {
+    mocks.apiFetch.mockImplementation((path: string, init?: Init) => {
+      if (path === "/api/settings" && init?.method === "PUT") {
+        return Promise.resolve({ settings: { ...SETTINGS, dictation: { macros: { enabled: true, items: init.json.dictation.macros.items } } } });
+      }
+      return Promise.resolve({ ...SETTINGS, dictation: { macros: { enabled: true, items: [] } } });
+    });
+    render(<CommandsCore />);
+    await screen.findByText("No voice commands");
+    fireEvent.click(screen.getAllByRole("button", { name: "Add command" })[0]);
+    fireEvent.change(screen.getByRole("textbox", { name: "Spoken keyword" }), {
+      target: { value: "start recording" },
+    });
+    fireEvent.change(screen.getByLabelText("Command behavior"), {
+      target: { value: "desk_verb" },
+    });
+    expect(screen.getByLabelText("Desk verb")).toHaveValue("record");
+    fireEvent.click(screen.getByRole("button", { name: "Save command" }));
+    await waitFor(() => expect(screen.queryByLabelText("Desk verb")).toBeNull());
+    expect(callsTo("/api/settings").find((call) => call.method === "PUT")?.json.dictation.macros.items).toEqual([
+      { keyword: "start recording", action: { kind: "desk_verb", payload: "record" } },
+    ]);
+  });
+
   it("deleting a macro PUTs items-only with the revision — never the enabled bit", async () => {
     render(<CommandsCore />);
     await screen.findByText("“docs”");
@@ -264,4 +288,20 @@ describe("CommandsCore is one honest items-writer (HS-130-07)", () => {
     ]);
     expect(callsTo("/api/settings")).toHaveLength(1);
   });
+});
+
+
+it("previews a desk command without offering a local-action Test", async () => {
+  mocks.apiFetch.mockImplementation(async (path: string) => path === "/api/settings"
+    ? { ...SETTINGS, dictation: { macros: { enabled: true, items: [
+      { keyword: "new note", action: { kind: "desk_verb", payload: "new_note" } },
+    ] } } }
+    : { ok: true, tested: false, preview: "opens a new note", note: "Preview · opens a new note" });
+  render(<CommandsCore />);
+  fireEvent.click(await screen.findByRole("button", { name: "Preview", exact: true }));
+  await waitFor(() => expect(callsTo("/api/commands/test")).toEqual([
+    expect.objectContaining({ method: "POST", json: { kind: "desk_verb", payload: "new_note" } }),
+  ]));
+  expect(await screen.findByText("Preview · opens a new note")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Test", exact: true })).toBeNull();
 });

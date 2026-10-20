@@ -70,6 +70,7 @@ from holdspeak.services.jira_provider import (
     _parse_connection_ref,
     connection_ref,
     current_acli_profile,
+    read_active_acli_profile,
     switch_back_acli,
 )
 
@@ -292,6 +293,29 @@ class ConfluenceProviderAdapter:
         with _ACLI_LOCK:
             # Betterment ST2: a Check never moves his terminal's acli account.
             before = current_acli_profile(self._registry_path)
+            if before is None:
+                before, active_error = read_active_acli_profile(
+                    self._run_acli, principal, "confluence"
+                )
+                if before is None:
+                    result = {
+                        "state": STATE_DEGRADED,
+                        "provider_id": PROVIDER_ID,
+                        "connection_ref": canonical_ref,
+                        "account": {"site": site, "email": email},
+                        "error_code": CODE_UNAVAILABLE,
+                        "error_detail": (
+                            "acli active account could not be read; Check was not run: "
+                            f"{active_error or 'unknown reason'}"
+                        ),
+                        "recovery": None,
+                        "capability_manifest": dict(_CAPABILITIES),
+                        "capability_revision": _CAPABILITY_REVISION,
+                        "discovery_state": DISCOVERY_UNKNOWN,
+                        "checked_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                    self._persist_connection(canonical_ref, result)
+                    return result
             try:
                 result = self._probe_under_lock(principal, site, email, canonical_ref)
             finally:

@@ -6,8 +6,10 @@ Tests exercise the adapter through a fake runner (unit).  No real acli calls.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 from typing import Any
+from pathlib import Path
 
 import pytest
 
@@ -55,6 +57,26 @@ _SWITCH_OK = (
 )
 
 
+@pytest.fixture(autouse=True)
+def _known_current_acli_registry(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Seed the known-current state assumed by the recorded runner fixtures."""
+    home = tmp_path / "home"
+    monkeypatch.setenv("HOME", str(home))
+    registry = home / ".config" / "acli" / "confluence_config.yaml"
+    registry.parent.mkdir(parents=True)
+    registry.write_text(
+        "version: 1\n"
+        "current_profile: \"c1:a1\"\n"
+        "profiles:\n"
+        "  - site: alpha.atlassian.net\n"
+        "    cloud_id: c1\n"
+        "    account_id: a1\n"
+        "    email: user@example.com\n"
+        "    auth_type: token\n",
+        encoding="utf-8",
+    )
+
+
 # -- Fake runner -------------------------------------------------------
 
 def _fake_runner(
@@ -77,6 +99,61 @@ def _sequenced_runner(responses: list[tuple[str, str, int]]) -> Any:
             stdout, stderr, rc = "", "", 1
         return subprocess.CompletedProcess(args[0], rc, stdout, stderr)
     return runner
+
+
+_TWO_ACCOUNT_REGISTRY = """\
+version: 1
+current_profile: ""
+profiles:
+  - site: alpha.atlassian.net
+    cloud_id: c1
+    account_id: a1
+    email: owner@example.com
+    auth_type: token
+  - site: beta.atlassian.net
+    cloud_id: c2
+    account_id: a1
+    email: owner@example.com
+    auth_type: token
+"""
+
+
+class _TwoAccountAcli:
+    """A fake acli process with active state separate from its unmarked registry."""
+
+    def __init__(self, registry: Any, *, status_mode: str = "ok") -> None:
+        self.registry = registry
+        self.active_site = "alpha.atlassian.net"
+        self.status_mode = status_mode
+        self.calls: list[list[str]] = []
+
+    def __call__(self, argv: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
+        self.calls.append(list(argv))
+        if argv[2:4] == ["auth", "status"]:
+            if self.status_mode == "failed":
+                return subprocess.CompletedProcess(argv, 1, "", "credential store unavailable")
+            if self.status_mode == "unparseable":
+                return subprocess.CompletedProcess(argv, 0, "✓ Authenticated\n", "")
+            if self.status_mode == "invalid_email":
+                return subprocess.CompletedProcess(argv, 0, "Site: alpha.atlassian.net\nEmail: unavailable\n", "")
+            return subprocess.CompletedProcess(
+                argv,
+                0,
+                "✓ Authenticated\n"
+                f"  Site: {self.active_site}\n"
+                "  Email: owner@example.com\n"
+                "  Authentication Type: token\n",
+                "",
+            )
+        if argv[2:4] == ["auth", "switch"]:
+            site = argv[argv.index("--site") + 1]
+            self.active_site = site
+            profile_key = "c1:a1" if site == "alpha.atlassian.net" else "c2:a1"
+            text = self.registry.read_text(encoding="utf-8")
+            text = re.sub(r'current_profile: "[^"]*"', f'current_profile: "{profile_key}"', text, count=1)
+            self.registry.write_text(text, encoding="utf-8")
+            return subprocess.CompletedProcess(argv, 0, "switched\n", "")
+        raise AssertionError(argv)
 
 
 # =====================================================================
@@ -181,6 +258,50 @@ class TestSwitchAndVerify:
         )
         assert result["state"] == STATE_DEGRADED
         assert result["error_code"] == CODE_SCOPE_DENIED
+
+
+class TestUnknownPriorAccount:
+    def test_unmarked_registry_reads_and_restores_active_account(self, tmp_path: Path) -> None:
+        registry = tmp_path / "confluence_config.yaml"
+        registry.write_text(_TWO_ACCOUNT_REGISTRY, encoding="utf-8")
+        before_bytes = registry.read_bytes()
+        fake = _TwoAccountAcli(registry)
+        adapter = ConfluenceProviderAdapter(runner=fake, registry_path=registry)
+
+        result = adapter.connection_status(
+            OWNER, "beta.atlassian.net|owner@example.com",
+        )
+
+        assert result["state"] == STATE_CONNECTED
+        assert fake.active_site == "alpha.atlassian.net"
+        assert fake.calls == [
+            ["acli", "confluence", "auth", "status"],
+            ["acli", "confluence", "auth", "switch", "--site", "beta.atlassian.net", "--email", "owner@example.com"],
+            ["acli", "confluence", "auth", "status"],
+            ["acli", "confluence", "auth", "switch", "--site", "alpha.atlassian.net", "--email", "owner@example.com"],
+        ]
+        assert registry.read_text(encoding="utf-8").replace('current_profile: "c1:a1"', 'current_profile: ""') == before_bytes.decode()
+
+    @pytest.mark.parametrize("status_mode", ["unparseable", "failed", "invalid_email"])
+    def test_unreadable_prior_status_does_not_switch_or_claim_connected(
+        self, tmp_path: Path, status_mode: str,
+    ) -> None:
+        registry = tmp_path / "confluence_config.yaml"
+        registry.write_text(_TWO_ACCOUNT_REGISTRY, encoding="utf-8")
+        before_bytes = registry.read_bytes()
+        fake = _TwoAccountAcli(registry, status_mode=status_mode)
+        adapter = ConfluenceProviderAdapter(runner=fake, registry_path=registry)
+
+        result = adapter.connection_status(
+            OWNER, "beta.atlassian.net|owner@example.com",
+        )
+
+        assert result["state"] == STATE_DEGRADED
+        assert result["error_code"] == CODE_UNAVAILABLE
+        assert "Check was not run" in result["error_detail"]
+        assert fake.calls == [["acli", "confluence", "auth", "status"]]
+        assert fake.active_site == "alpha.atlassian.net"
+        assert registry.read_bytes() == before_bytes
 
 
 # =====================================================================

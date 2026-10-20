@@ -33,11 +33,9 @@ import { SYSTEM } from "../systemSprites";
 import { MARK_APPLICATION_COMMANDS } from "../applications";
 import { Button } from "../../components/signal/Signal";
 
-/** The mark menu's registry rows: the floor verbs, then the setup
- * applications (PHILO-17 doors: Settings, Runs on, Connections, Setup; the
- * daily applications are on the Dock, the desk drawers and Go). */
-// PHILO-17: List view and Arrange desk are parked with the Floor.
-const MARK_VERBS = ["desk.refresh"];
+/** The mark menu holds setup only. Builder actions, including Refresh from
+ * hub, live under Go ▸ Builder; keyboard help is the final setup row. */
+const MARK_VERBS: string[] = [];
 
 /** HS-100-11 — the attention bell. PHILO-17 (needsyou, walker TAXES): the
  * bell carries the ONE needs-you number and opens Needs you, the list that
@@ -250,8 +248,9 @@ export function DeskChrome({
               };
               const entries: WorkMenuEntry[] = [
                 ...MARK_VERBS.map(row),
-                { type: "sep" as const, id: "mark-sep" },
                 ...MARK_APPLICATION_COMMANDS.map(row),
+                { type: "sep" as const, id: "mark-sep" },
+                row("system.sheet"),
               ].filter((e): e is WorkMenuEntry => e !== null);
               return (
                 <WorkMenu

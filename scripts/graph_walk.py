@@ -940,7 +940,7 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.doo
                           # PHILO-10-03: the email key is a held input, HTTP only (never a tool argument).
                           "channel.save_email_key", "channel.save_slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
-                          "agent_hooks.install",
+                          "agent_hooks.install", "agent_hooks.remove",
                           "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",
                           # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
                           "calendar.open_settings",
