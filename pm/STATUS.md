@@ -14,7 +14,7 @@ walks pass, retaining the single-window assertions across every live door.
 The web check now uses the same eight-worker bound as pytest, under the shared
 lock. All 5,387 web checks pass in 111.97 seconds with eight workers; the prior
 two-worker related run took 268.49 seconds for 4,071 cases. No checks or
-assertions are removed. Required quick: QUICK_PENDING.
+assertions are removed. Required quick: 14 affected pytest, 110 sweep, 27 canon and 1,116 repo guards pass.
 
 
 C10 moves native meeting streams and the capture journal into one child process.
