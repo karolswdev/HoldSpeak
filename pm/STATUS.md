@@ -27,6 +27,33 @@ check now uses Summary/Follow-ups while retaining its reload and per-object
 assertions. Required quick: SEND_SHEET_QUICK_PENDING.
 The first real Send recipe remains open for the owner's five presses.
 
+Other devices now saves its switch and displayed host/port in the existing
+config through SettingsService. The remote gate, its read route and the
+System fact read that same durable value. There is no process-only writer
+or cache. Owner-only access and credential custody remain unchanged.
+
+The real private Hub preserves enabled, host and a partial port edit across
+restart. All 77 focused backend checks pass on the locked FastAPI 0.128.0.
+The active Guide uses Works, Not ready and Does not work with the existing
+reason text; a row without a fix gets no invented fix verb. Its six recorded
+consumer checks, type check and build pass. Required quick:
+Final delta: 75 affected checks, 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green. The unchanged product also passed 4,084 related web consumers in the first broader run.
+The first broader run passed 4,084 related web and 3,121 backend checks,
+110 sweep, 27 canon and 1,116 guards. Three earlier consumer expectations
+are reconciled with plugin inheritance and accepted People references. The
+three focused regressions pass: explicit OFF still excludes a plugin, and
+an explicitly undisclosed host is still refused with its receipt.
+The fresh watcher pinned to `b8be8b36a` passed its first 5,921 Python
+checks (16 skipped, one xfailed); the remaining full tape is still pending.
+
+Speech route plans now use the same assignment order as Engines: explicit
+capability or speech group, without falling through to the chat default.
+Installed meeting plugins follow Meeting summaries before their group or
+the global assignment. This changes the frozen runtime route, as well as
+what the face reports. No assignment or engine is changed on the owner’s
+desk. The worker collected and passed 46 focused checks against real SQLite
+assignment producers. Required quick: 245 affected checks passed; all 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green.
+
 The main watcher’s retained browser adapters now follow the current doors:
 Watch sources through Sources then RAW; meeting and decision icons through
 explicit Desk membership; and a real drag onto the Agents Dock tile. The

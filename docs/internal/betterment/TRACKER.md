@@ -167,7 +167,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S8 | The Window menu | Done · #1407 | Arrange front/all preserve size and order; exact owner geometry survives reopening. |
 | S9 | Ask can arrange the desk (gated) | Open |  |
 
-## Send (`send/RECIPE.md`): 2 of 8
+## Send (`send/RECIPE.md`): 4 of 8
 
 | Slice | What | State | Note |
 |---|---|---|---|
