@@ -237,6 +237,12 @@ class Database:
         self._ensure_schema()
         for table_name, repo_cls in BaseRepository._registry.items():
             setattr(self, table_name, repo_cls(self._conn_factory, self))
+        # Keep legacy Desk decision bytes readable while giving every existing
+        # decision the canonical identity used by Projects and the Decisions
+        # window.  The service's source-keyed copy is additive and idempotent.
+        from ..services.decision_record_service import DecisionRecordService
+
+        DecisionRecordService(self).migrate_legacy_desk_decisions(None)
 
     def _connection(self):
         """Context manager for database connections."""

@@ -38,6 +38,8 @@ _SYNTHESIS_FOOTER = re.compile(
     r"- Source plugin runs: (?P<runs>[^\n]*))\s*\Z"
 )
 
+_LEADING_SUBJECT = re.compile(r"\A\ufeff?[ \t]*Subject:[ \t]*(?P<title>[^\r\n]+)[ \t]*(?:\r?\n|\Z)", re.IGNORECASE)
+
 
 def _without_synthesis_footer(body: str, sources: list[dict[str, Any]]) -> str:
     """Remove only the footer emitted by meeting synthesis for this lineage.
@@ -79,6 +81,22 @@ def _without_synthesis_footer(body: str, sources: list[dict[str, Any]]) -> str:
     if prefix.endswith("\n"):
         prefix = prefix[:-1]
     return prefix
+
+
+def _automation_document_body(artifact: Any, body: str) -> tuple[str, str | None]:
+    """Strip one leading Subject line from an automation result.
+
+    The line is part of the stored Markdown produced by the automation.  It
+    supplies the outbound subject and is not repeated in the message body.
+    Other artifact kinds retain their authored first line exactly.
+    """
+    if str(getattr(artifact, "artifact_type", "") or "").strip().lower() != "workbench_output":
+        return body, None
+    match = _LEADING_SUBJECT.match(body)
+    if match is None:
+        return body, None
+    title = " ".join(match.group("title").split()).strip()
+    return body[match.end():], title or None
 
 
 _MISSING_ARTIFACT = object()
@@ -440,6 +458,12 @@ class _DecisionRecordSource:
         record = DecisionRecordService(db).get(_source_read_context(), source_id)
         if record is None:
             raise _document_not_found("decision record", source_id)
+        if str(record.get("status") or "").lower() == "proposed":
+            raise ChannelRefused(
+                "decision_not_confirmed",
+                "Decision is proposed; Confirm it before Send",
+                status=409,
+            )
         title = str(record.get("decision_text") or "Decision record")
         lines = [f"# {title}", f"Lifecycle: {record.get('lifecycle') or 'active'}"]
         for heading, field in (("Rationale", "rationale"), ("Owner", "owner"), ("Review date", "review_date")):
@@ -471,6 +495,8 @@ class _MeetingSummarySource:
         meeting = db.meetings.get_meeting(source_id)
         if meeting is None:
             raise _document_not_found("meeting", source_id)
+        from ..meeting_aftercare import confirmed_meeting_aftercare
+
         intel = meeting.intel
         summary = str(intel.summary if intel else "").strip()
         if not summary:
@@ -488,6 +514,29 @@ class _MeetingSummarySource:
         topics = [str(topic).strip() for topic in ((intel.topics if intel else []) or []) if str(topic).strip()]
         if topics:
             lines.extend(["", "## Topics", *[f"- {topic}" for topic in topics]])
+        confirmed = confirmed_meeting_aftercare(db, source_id) or {}
+        decisions = confirmed.get("decisions") or []
+        decision_lines = ["## Decided"]
+        for item in decisions:
+            decision = str(item.get("decision") or "").strip()
+            if not decision:
+                continue
+            rationale = str(item.get("rationale") or "").strip()
+            decision_lines.append(f"- {decision}" + (f". Why: {rationale}" if rationale else ""))
+        if len(decision_lines) > 1:
+            lines.extend(["", *decision_lines])
+        by_owner = (confirmed.get("open_items") or {}).get("by_owner") or []
+        owed_lines = ["## Who owes what"]
+        for group in by_owner:
+            owner = str(group.get("owner") or "Unassigned").strip() or "Unassigned"
+            for item in group.get("items") or []:
+                task = str(item.get("task") or "").strip()
+                if not task:
+                    continue
+                due = str(item.get("due") or "").strip()
+                owed_lines.append(f"- {owner}: {task}" + (f" (due {due})" if due else ""))
+        if len(owed_lines) > 1:
+            lines.extend(["", *owed_lines])
         return _make_document(
             ref=f"{self.kind}:{source_id}",
             title=title,
@@ -502,10 +551,16 @@ class _MeetingAftercareSource:
         self.kind = kind
 
     def render(self, db: Any, source_id: str) -> Document:
-        from ..meeting_aftercare import compute_meeting_aftercare
+        from ..meeting_aftercare import compute_meeting_aftercare, confirmed_meeting_aftercare
         from ..slack_export import document_markdown_for
 
-        digest = compute_meeting_aftercare(db, source_id)
+        # Digest is retained for agents and MCP. The face no longer offers it,
+        # while its established broad document projection remains stable.
+        digest = (
+            compute_meeting_aftercare(db, source_id)
+            if self.kind == "meeting_digest"
+            else confirmed_meeting_aftercare(db, source_id)
+        )
         if digest is None:
             raise _document_not_found("meeting", source_id)
         if digest.get("is_empty"):
@@ -574,12 +629,15 @@ class _ArtifactSource:
                 label=kind["label"].upper(),
             )
         title = str(artifact.title or "Artifact").strip() or "Artifact"
+        body, subject = _automation_document_body(artifact, raw_body)
+        if subject:
+            title = subject
         artifact_type = str(artifact.artifact_type or "plugin_output").strip()
         type_label = artifact_type.replace("_", " ").upper() or "PLUGIN OUTPUT"
         return _make_document(
             ref=f"{self.kind}:{source_id}",
             title=title,
-            body_md=_without_synthesis_footer(raw_body, artifact.sources),
+            body_md=_without_synthesis_footer(body, artifact.sources),
             slug=_slug(title, "artifact"),
             label=f"ARTIFACT · {type_label}",
         )

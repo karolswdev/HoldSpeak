@@ -393,6 +393,79 @@ def _open_items(db: "Database", meeting_id: str) -> list[Any]:
     ]
 
 
+def _confirmed_decisions_for_meeting(
+    db: "Database", meeting_id: str, segments: Optional[list[Any]] = None
+) -> list[dict[str, Any]]:
+    """Read the canonical accepted decisions for an outbound document.
+
+    The synthesis artifact is useful for the meeting face, but it also carries
+    proposals that still need the owner's confirmation.  Channel documents
+    must use the durable ``decisions`` lifecycle instead, which is written by
+    the existing proposal bridge when a decision is confirmed.
+    """
+    try:
+        records = db.decisions.list(meeting_id=meeting_id, lifecycle="accepted")
+    except Exception:
+        return []
+    seen: set[str] = set()
+    out: list[dict[str, Any]] = []
+    for record in records:
+        decision = str(getattr(record, "text", "") or "").strip()
+        if not decision:
+            continue
+        key = _norm(decision)
+        if key in seen:
+            continue
+        seen.add(key)
+        source_timestamp = _coerce_timestamp(getattr(record, "source_timestamp", None))
+        out.append(
+            {
+                "decision": decision,
+                "rationale": str(getattr(record, "rationale", "") or "").strip() or None,
+                "source_timestamp": source_timestamp,
+                "provenance": (
+                    resolve_provenance_segment(segments, source_timestamp)
+                    if segments is not None
+                    else None
+                ),
+            }
+        )
+    return out
+
+
+def confirmed_meeting_aftercare(
+    db: "Database", meeting_id: str
+) -> Optional[dict[str, Any]]:
+    """Return the confirmed-only projection used by channel documents.
+
+    This keeps the existing aftercare read (and its review card) unchanged.
+    It is a narrow outbound projection: accepted decisions and accepted open
+    action items only.  Historical diffs are omitted because they can contain
+    proposals from an earlier review state.
+    """
+    digest = compute_meeting_aftercare(db, meeting_id)
+    if digest is None:
+        return None
+    meeting = db.meetings.get_meeting(meeting_id)
+    segments = meeting.segments if meeting is not None else []
+    decisions = _confirmed_decisions_for_meeting(db, meeting_id, segments)
+    accepted_items = [
+        item for item in _open_items(db, meeting_id)
+        if str(getattr(item, "review_state", "") or "").strip().lower() == "accepted"
+    ]
+    return {
+        **digest,
+        "open_items": {
+            "total": len(accepted_items),
+            "by_owner": _group_open_by_owner(accepted_items, segments),
+        },
+        "decisions": decisions,
+        "since_last_meeting": None,
+        "is_empty": not decisions and not accepted_items,
+        "_confirmed_only": True,
+    }
+
+
 def compute_meeting_aftercare(
     db: "Database", meeting_id: str
 ) -> Optional[dict[str, Any]]:
@@ -508,6 +581,46 @@ def build_followup_draft(digest: dict[str, Any]) -> str:
         if len(lines) > 1:
             sections.append("\n".join(lines))
 
+    return "\n\n".join(sections)
+
+
+def build_confirmed_followup_draft(digest: dict[str, Any]) -> str:
+    """Render the outbound follow-up from an accepted-only digest."""
+    title = str(digest.get("meeting_title") or "").strip() or "Meeting"
+    date = str(digest.get("meeting_date") or "")[:10]
+    header = f"# Follow-up: {title}"
+    if date:
+        header += f"\n{date}"
+    sections: list[str] = [header]
+
+    decisions = digest.get("decisions") or []
+    lines = ["## Decided"]
+    for item in decisions:
+        decision = str(item.get("decision") or "").strip()
+        if not decision:
+            continue
+        rationale = str(item.get("rationale") or "").strip()
+        lines.append(f"- {decision}" + (f". Why: {rationale}" if rationale else ""))
+    if len(lines) > 1:
+        sections.append("\n".join(lines))
+
+    by_owner = (digest.get("open_items") or {}).get("by_owner") or []
+    lines = ["## Who owes what"]
+    for group in by_owner:
+        owner = str(group.get("owner") or "Unassigned").strip() or "Unassigned"
+        items = [item for item in group.get("items") or [] if str(item.get("task") or "").strip()]
+        if not items:
+            continue
+        lines.append(f"### {owner}")
+        for item in items:
+            task = str(item.get("task") or "").strip()
+            due = str(item.get("due") or "").strip()
+            lines.append(f"- {task}" + (f" (due {due})" if due else ""))
+    if len(lines) > 1:
+        sections.append("\n".join(lines))
+
+    if len(sections) == 1:
+        sections.append("Nothing was confirmed and nothing is open for this meeting.")
     return "\n\n".join(sections)
 
 

@@ -2574,7 +2574,10 @@ class ProjectService:
                 if at is None or at < since:
                     continue
                 source_ref = str(item.get("source_ref") or "")
-                if source_ref and not source_ref.startswith("meeting:"):
+                if source_ref and not (
+                    source_ref.startswith("meeting:")
+                    or source_ref.startswith("decision_record:")
+                ):
                     source_ref = f"meeting:{source_ref}"
                 decided.append({
                     "id": item.get("id"),
@@ -2805,7 +2808,7 @@ class ProjectService:
         }
 
     def _read_room_decisions(self, project_id: str) -> dict[str, Any]:
-        """DECISIONS: records whose source meeting is linked to this project.
+        """DECISIONS: records linked to this project or its meetings.
 
         HS-172-03: LEFT JOINs confirmed proposals so the face can render
         proposal provenance (source, meeting_title, confirmed_at, was).
@@ -2817,17 +2820,17 @@ class ProjectService:
                 (project_id,),
             ).fetchall()
             meeting_ids = [r["meeting_id"] for r in meeting_rows]
-            if not meeting_ids:
-                return {"items": []}
-
-            # Find decision records sourced from those meetings,
-            # LEFT JOIN confirmed proposals on decision_record_id.
-            placeholders = ",".join("?" * len(meeting_ids))
+            # Find records sourced from this project's meetings, or filed to
+            # the project by either canonical record ref or its retained Desk
+            # source ref.  LEFT JOIN confirmed proposals on decision_record_id
+            # so proposal provenance stays available for meeting decisions.
             decision_rows = conn.execute(
-                f"""SELECT DISTINCT r.id, r.decision_text, r.created_at, r.lifecycle,
+                """SELECT DISTINCT r.id, r.decision_text, r.created_at, r.lifecycle,
                            r.kind AS record_kind,
                            r.source_type AS record_source_type, r.source_id AS record_source_id,
-                           s.source_ref AS record_source_ref,
+                           CASE WHEN r.source_type = 'desk'
+                                THEN 'decision_record:' || r.id
+                                ELSE s.source_ref END AS record_source_ref,
                            p.id AS proposal_id,
                            p.meeting_id AS proposal_meeting_id,
                            p.kind AS proposal_kind,
@@ -2844,7 +2847,8 @@ class ProjectService:
                            ai.status AS action_status,
                            ai.completed_at AS action_completed_at
                     FROM decision_records r
-                    JOIN decision_record_sources s ON s.record_id = r.id
+                    LEFT JOIN decision_record_sources s
+                         ON s.record_id = r.id AND s.source_type = 'meeting'
                     LEFT JOIN follow_through_proposals p
                          ON p.decision_record_id = r.id
                         AND p.state = 'confirmed'
@@ -2852,11 +2856,39 @@ class ProjectService:
                          ON dc.id = p.commitment_id
                     LEFT JOIN action_items ai
                          ON ai.id = dc.action_item_id
-                    WHERE s.source_type = 'meeting'
-                      AND s.source_ref IN ({placeholders})
-                      AND r.deleted = 0
+                    WHERE r.deleted = 0
+                    AND NOT EXISTS (
+                        SELECT 1 FROM desk_decisions dd
+                        WHERE r.source_type = 'desk' AND dd.id = r.source_id
+                          AND dd.deleted = 0 AND LOWER(dd.status) = 'proposed'
+                    )
+                      AND (
+                        EXISTS (
+                            SELECT 1
+                            FROM decision_record_sources rs
+                            JOIN meeting_projects mp ON mp.meeting_id = rs.source_ref
+                            WHERE rs.record_id = r.id
+                              AND rs.source_type = 'meeting'
+                              AND mp.project_id = ?
+                        )
+                        OR EXISTS (
+                            SELECT 1 FROM project_resources pr
+                            WHERE pr.project_id = ? AND pr.deleted = 0
+                              AND pr.resource_ref = 'decision_record:' || r.id
+                        )
+                        OR (
+                            r.source_type = 'desk' AND EXISTS (
+                                SELECT 1 FROM project_resources pr
+                                WHERE pr.project_id = ? AND pr.deleted = 0
+                                  AND pr.resource_ref IN (
+                                      'desk_decision:' || r.source_id,
+                                      'decision:' || r.source_id
+                                  )
+                            )
+                        )
+                      )
                     ORDER BY r.created_at DESC""",
-                meeting_ids,
+                (project_id, project_id, project_id),
             ).fetchall()
 
             # Resolve meeting titles for proposal provenance.

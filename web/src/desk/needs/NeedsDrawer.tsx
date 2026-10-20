@@ -310,6 +310,15 @@ function NeedVerbsView({ face, primary, onWell, well }: {
           data-testid="needs-row-verb" data-verb="decide"
           onClick={() => onWell(well === "decide" ? null : "decide")}>Decide</Button>
       );
+    case "decision-confirm":
+      return (
+        <Button dense variant={lead} disabled={busy} aria-label={named("Confirm")}
+          data-testid="needs-row-verb" data-verb="confirm"
+          onClick={() => void act("Confirm", () => apiFetch(
+            `/api/decisions/${encodeURIComponent(v.decisionId)}/status`,
+            { method: "PUT", json: { status: "accepted" } },
+          ), `decision:${v.decisionId}`)}>Confirm</Button>
+      );
     case "commitment": {
       if (v.next === "mark_done") {
         return (

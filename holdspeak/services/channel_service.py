@@ -188,6 +188,16 @@ class ChannelService:
         destination = self._db.channel_destinations.get(row["destination_id"]) or {}
         payload = bytes(row["payload"] or b"")
         document_json = json.loads(row["document_json"]) if row.get("document_json") else None
+        frozen_document = (
+            contract.document_from_json(row["document_ref"], document_json)
+            if isinstance(document_json, dict)
+            else None
+        )
+        frozen_markdown = (
+            frozen_document.body_md
+            if frozen_document is not None and "body_md" in document_json
+            else None
+        )
         # Existing channels report frozen byte size. Slack reports the text
         # characters governed by its 39,000-character refusal.
         size = (contract.payload_size("slack", payload)[0]
@@ -213,7 +223,8 @@ class ChannelService:
             "document_json": document_json,
             "size": size, "preview": contract.preview_for(
                 row["channel"], payload, row["account_json"],
-                str(document_json.get("preview_warning") or "") if isinstance(document_json, dict) else None,
+                frozen_document.preview_warning if frozen_document is not None else None,
+                frozen_markdown,
             ),
             "prepared_by": {"kind": row["prepared_by_kind"], "identity": row["prepared_by_identity"]},
             "prepare_operation_id": row["prepare_operation_id"], "send_operation_id": row["send_operation_id"],
@@ -292,7 +303,7 @@ class ChannelService:
                 "channel": destination["channel"], "badge": chan.badge(self._synced(destination)),
                 "payload_digest": contract.sha256(payload), "size": size,
                 "preview": contract.preview_for(destination["channel"], payload, destination["account_json"],
-                                                 document.preview_warning)}
+                                                 document.preview_warning, document.body_md)}
 
     def check_destination(self, principal: Any, destination_id: str) -> dict[str, Any]:
         """A folder: a local check (it resolves to the saved folder, it is a folder, it is writable).

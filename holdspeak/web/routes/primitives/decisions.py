@@ -55,13 +55,6 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
     def _principal(request: Request) -> Any:
         return getattr(request.state, "principal", None)
 
-    @router.get("/api/decisions")
-    async def api_list_desk_decisions(request: Request) -> Any:
-        try:
-            return JSONResponse({"decisions": _ops().invoke(_principal(request), "decision.list", {})})
-        except Exception as exc:
-            return error_500(exc, log, "Failed to list decisions")
-
     @router.post("/api/decisions")
     async def api_create_decision(request: Request) -> Any:
         body = await _json_body(request)

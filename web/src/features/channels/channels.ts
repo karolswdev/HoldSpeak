@@ -43,7 +43,7 @@ export type Destination = {
 };
 
 /** The readable preview the hub derives from the frozen bytes. */
-export type WirePreview = { text?: string; title?: string; warning?: string; [k: string]: unknown };
+export type WirePreview = { text?: string; html?: string; markdown?: string; title?: string; warning?: string; [k: string]: unknown };
 
 export type Send = {
   id: string;
@@ -478,8 +478,9 @@ export function farSide(channel: Channel, t: Record<string, string | number>, a:
 const baseName = (p: string) => p.split("/").filter(Boolean).pop() ?? p;
 
 /** The readable preview: the fields from the destination (or the frozen
- *  send), and the body the hub derived from the frozen bytes. Never raw
- *  JSON or XHTML: the hub's preview is text. */
+ *  send), and the body the hub derived from the frozen bytes. Email receives
+ *  the provider's rendered text part; the matching HTML part stays in the
+ *  frozen wire payload. Never raw JSON or provider HTML. */
 export function previewOf(
   channel: Channel,
   target: Record<string, string | number>,

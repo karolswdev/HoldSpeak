@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 810 (plus static mounts). iOS-consumed: 89. Web-consumed: 636.
+Routes: 810 (plus static mounts). iOS-consumed: 89. Web-consumed: 638.
 
 ## device_audio_ws
 
@@ -253,10 +253,11 @@ Routes: 810 (plus static mounts). iOS-consumed: 89. Web-consumed: 636.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/decision-records` | server only |
+| GET | `/api/decision-records` | web |
+| POST | `/api/decision-records/from-desk` | web |
 | GET | `/api/decision-records/review` | web |
 | GET | `/api/decision-records/search` | web |
-| GET | `/api/decision-records/source/{source_type}/{source_id}` | server only |
+| GET | `/api/decision-records/source/{source_type}/{source_id}` | web |
 | GET | `/api/decision-records/work/{work_type}/{work_ref}` | web |
 | GET | `/api/decision-records/{record_id}` | web |
 | POST | `/api/decision-records/{record_id}/carry` | web |
@@ -757,7 +758,6 @@ Routes: 810 (plus static mounts). iOS-consumed: 89. Web-consumed: 636.
 
 | Method | Path | Consumers |
 |---|---|---|
-| GET | `/api/decisions` | web |
 | POST | `/api/decisions` | web |
 | DELETE | `/api/decisions/{decision_id}` | web |
 | GET | `/api/decisions/{decision_id}` | web |

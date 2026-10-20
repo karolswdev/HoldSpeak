@@ -111,9 +111,9 @@ def document_markdown_for(digest: dict[str, Any], what: str) -> str:
     if what == "digest":
         return _digest_markdown(digest)
     if what == "followup":
-        from .meeting_aftercare import build_followup_draft
+        from .meeting_aftercare import build_confirmed_followup_draft, build_followup_draft
 
-        return build_followup_draft(digest)
+        return build_confirmed_followup_draft(digest) if digest.get("_confirmed_only") else build_followup_draft(digest)
     raise ValueError(f"unknown export kind: {what!r} (expected 'digest' or 'followup')")
 
 

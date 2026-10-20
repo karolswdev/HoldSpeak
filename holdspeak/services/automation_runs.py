@@ -168,6 +168,12 @@ def occurrence_title(wb: Any, now: Optional[datetime] = None) -> str:
     return f"{wb.name or 'Automation'}, {when:%a} {when.day} {when:%b %Y}"
 
 
+def automation_result_title(wb: Any, now: Optional[datetime] = None) -> str:
+    """Name one automation result by the automation and the run date."""
+    when = (now or local_now()).astimezone()
+    return f"{wb.name or 'Automation'} · {when.day} {when:%b}"
+
+
 def _event_block(event: dict[str, Any]) -> str:
     """The event's subject, as the run's evidence (its refs are not desk sources)."""
     facts = dict(event.get("facts") or {})

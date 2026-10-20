@@ -9,6 +9,8 @@ import sys
 import pytest
 
 from holdspeak.db import get_database, reset_database
+from holdspeak.meeting_session import IntelSnapshot, MeetingState
+from holdspeak.services.proposal_bridge_service import ProposalBridgeService
 from holdspeak.services.channel_contract import ChannelRefused, render_document as contract_render_document
 from holdspeak.services.document_sources import DOCUMENT_SOURCES, render_document
 
@@ -201,6 +203,69 @@ def test_meeting_sources_never_copy_transcript(db, tmp_path: Path) -> None:
         assert TRANSCRIPT_SENTINEL not in body
 
 
+def test_meeting_send_sources_use_confirmed_decisions_and_actions_only(db) -> None:
+    """Outbound meeting documents read the canonical confirmation projection."""
+    meeting_id = "confirmed-outbound"
+    db.meetings.save_meeting(
+        MeetingState(
+            id=meeting_id,
+            started_at=datetime(2026, 10, 20, 9, 0, 0),
+            title="Confirmed outbound review",
+            intel=IntelSnapshot(timestamp=1.0, summary="The confirmed source words.", action_items=[
+                {"id": "action-confirmed", "task": "Ship the confirmed action", "owner": None,
+                 "due": None, "status": "pending", "review_state": "pending"},
+                {"id": "action-unconfirmed", "task": "Ship the unconfirmed action", "owner": None,
+                 "due": None, "status": "pending", "review_state": "pending"},
+                {"id": "action-withdrawn", "task": "Ship the withdrawn action", "owner": None,
+                 "due": None, "status": "pending", "review_state": "pending"},
+            ]),
+        )
+    )
+    bridge = ProposalBridgeService(db)
+
+    def propose(kind: str, text: str, *, action_item_id: str | None = None):
+        return db.proposals.create_proposal(
+            meeting_id=meeting_id,
+            project_id="confirmed-outbound-project",
+            kind=kind,
+            text=text,
+            owner_hint=None,
+            due_hint=None,
+            source_plugin="decision_capture" if kind == "decision" else "action_owner_enforcer",
+            action_item_id=action_item_id,
+        )
+
+    confirmed_decision = propose("decision", "Confirmed decision")
+    confirmed_action = propose("action", "Ship the confirmed action", action_item_id="action-confirmed")
+    unconfirmed_decision = propose("decision", "Unconfirmed decision")
+    unconfirmed_action = propose("action", "Ship the unconfirmed action", action_item_id="action-unconfirmed")
+    withdrawn_decision = propose("decision", "Withdrawn decision")
+    withdrawn_action = propose("action", "Ship the withdrawn action", action_item_id="action-withdrawn")
+    assert all(proposal is not None for proposal in (
+        confirmed_decision, confirmed_action, unconfirmed_decision,
+        unconfirmed_action, withdrawn_decision, withdrawn_action,
+    ))
+
+    assert bridge.confirm_proposal(OWNER, confirmed_decision.id)["state"] == "confirmed"
+    assert bridge.confirm_proposal(
+        OWNER, confirmed_action.id, owner="Avery", due="2026-10-24"
+    )["state"] == "confirmed"
+    assert bridge.dismiss_proposal(OWNER, withdrawn_decision.id)["state"] == "dismissed"
+    assert bridge.dismiss_proposal(OWNER, withdrawn_action.id)["state"] == "dismissed"
+
+    for kind in ("meeting_summary", "meeting_followup"):
+        body = render_document(db, f"{kind}:{meeting_id}").body_md
+        assert "Confirmed decision" in body
+        assert "Ship the confirmed action" in body
+        assert "Avery" in body
+        assert "2026-10-24" in body
+        for words in (
+            "Unconfirmed decision", "Ship the unconfirmed action",
+            "Withdrawn decision", "Ship the withdrawn action",
+        ):
+            assert words not in body
+
+
 @pytest.mark.parametrize("kind", tuple(DOCUMENT_SOURCES))
 def test_each_source_names_a_missing_record(db, kind: str) -> None:
     with pytest.raises(ChannelRefused) as caught:
@@ -255,7 +320,7 @@ def test_project_update_refuses_unpublished_by_generic_name(db) -> None:
     assert caught.value.code == "not_published"
 
 
-def test_aftercare_document_markdown_is_not_truncated(db) -> None:
+def test_aftercare_digest_markdown_is_not_truncated_and_followup_stays_confirmed_only(db) -> None:
     refs = mint_documents(db, OWNER, now=datetime(2026, 9, 29, 10, 0, 0))
     db.plugins.record_artifact(
         artifact_id="philo11-long-decisions",
@@ -274,9 +339,9 @@ def test_aftercare_document_markdown_is_not_truncated(db) -> None:
     digest = render_document(db, refs["meeting_digest"]).body_md
     followup = render_document(db, refs["meeting_followup"]).body_md
     assert len(digest) > 3800
-    assert len(followup) > 3800
     assert "Long stored decision 399" in digest
-    assert "Long stored decision 399" in followup
+    assert "Long stored decision 399" not in followup
+    assert "Check the frozen bytes" in followup
 
 
 # PHILO-11-05a (Muad'Dib's ruling): the rendered text is what gets SENT to
