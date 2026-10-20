@@ -99,8 +99,10 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "desk.new-decision",
       // Betterment A8: one way to automate; New Workflow is parked.
       "desk.new-workbench",
-      "desk.new-thread",
       "desk.new-project",
+      "desk.new-meeting",
+      "desk.new-person",
+      "desk.new-drawer",
     ]);
     for (const v of verbsFor("floor").filter((x) => x.group === "new"))
       expect(v.ghost(CTX)).toBeNull();
@@ -149,7 +151,6 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "desk.new-note": "⌃N",
       "desk.new-decision": "⌃⇧N",
       "desk.overview": "⌘⇧E",
-      "desk.settle": "⌘⇧F",
       "object.rename": "F2",
       "object.delete": "Delete",
       "go.ask": "⌘I",

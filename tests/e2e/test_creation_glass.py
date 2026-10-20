@@ -164,6 +164,38 @@ class TestEveryNewVerbOpensItsWindow:
         self._press(page, win.locator(f".desk-gadget-close[aria-label^='{prefix}']"), width)
         win.wait_for(state="detached")
 
+    @pytest.mark.parametrize("width", list(SIZES))
+    def test_new_drawer_starts_its_name_on_the_active_desk(self, width: int) -> None:
+        from playwright.sync_api import expect, sync_playwright
+        with sync_playwright() as pw:
+            browser, page, errors, posts = self._page(pw, width)
+            try:
+                with page.expect_response(lambda response: response.url.endswith("/api/directories")
+                                          and response.request.method == "POST") as created:
+                    self._menu_verb(page, width, "New Drawer")
+                assert created.value.ok, created.value.text()
+                directory = created.value.json()["directory"]
+                field = page.get_by_role("textbox", name="Drawer name", exact=True)
+                expect(field).to_be_focused(timeout=5000)
+                page.screenshot(path=str(SHOTS / f"new-drawer-before-name-{width}.png"))
+                hit = field.evaluate("""el => {
+                    const r = el.getBoundingClientRect();
+                    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+                    return {onField: hit === el, rect: r.toJSON(), hit: hit?.outerHTML.slice(0, 350)};
+                }""")
+                assert hit["onField"], hit
+                assert field.evaluate("el => el.selectionStart === 0 && el.selectionEnd === el.value.length")
+                page.keyboard.type("Build notes")
+                field.press("Enter")
+                expect(field).to_have_count(0)
+                rows = _api(page, "GET", "/api/directories", token=TOKEN)["directories"]
+                assert any(row["id"] == directory["id"] and row["name"] == "Build notes" for row in rows), rows
+                assert posts.count("/api/directories") == 1, posts
+                assert errors == [], errors
+                page.screenshot(path=str(SHOTS / f"new-drawer-{width}.png"))
+            finally:
+                browser.close()
+
     @pytest.mark.parametrize("face", ["chair"])
     @pytest.mark.parametrize("width", list(SIZES))
     def test_a_new_verb_opens_its_window_at_once(self, width: int, face: str) -> None:

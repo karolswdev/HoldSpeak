@@ -36,19 +36,19 @@ describe("glyph population (HS-148-02)", () => {
     }
   });
 
-  it("every create verb carries its KIND_GLYPH", () => {
+  it("every create verb carries the shared kind glyph or its native start glyph", () => {
     const creates = VERBS.filter((v) => v.group === "new");
     const kindMap: Record<string, string> = {
       "desk.new-note": "note",
       "desk.new-decision": "decision",
       "desk.new-workbench": "workbench",
-      "desk.new-thread": "thread",
       "desk.new-project": "project",
+      "desk.new-drawer": "zone",
     };
     for (const v of creates) {
-      const kind = kindMap[v.id];
-      expect(kind, `unmapped create verb ${v.id}`).toBeTruthy();
-      expect(v.glyph).toBe(KIND_GLYPH[kind]);
+      const glyph = v.id === "desk.new-meeting" ? "●" : v.id === "desk.new-person" ? "⊕" : KIND_GLYPH[kindMap[v.id]];
+      expect(glyph, `unmapped create verb ${v.id}`).toBeTruthy();
+      expect(v.glyph).toBe(glyph);
     }
   });
 
@@ -231,7 +231,6 @@ describe("bound-key-set byte-identical proof (HS-148-02)", () => {
     const keys = VERBS.filter((v) => v.key).map((v) => [v.id, v.key]);
     expect(Object.fromEntries(keys)).toEqual({
       "desk.new-note": "⌃N",
-      "desk.settle": "⌘⇧F",
       "go.change-places": "⌘⇧P",
       "desk.new-decision": "⌃⇧N",
       "desk.overview": "⌘⇧E",

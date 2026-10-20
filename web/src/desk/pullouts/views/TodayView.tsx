@@ -633,7 +633,10 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         <SinceYesterday brief={brief} failed={failed.brief} now={now} openRequest={sinceRequest} onRetry={retry} />
         <ThisWeek days={week} />
       </div>
-      <SurfaceFooter receipt={summary.receipt ? <span className="surface-footer-receipt-line" role="status">{summary.receipt.text}</span> : <NeedsDroppedReceipt />} />
+      <SurfaceFooter
+        receipt={summary.receipt ? <span className="surface-footer-receipt-line" role="status">{summary.receipt.text}</span> : <NeedsDroppedReceipt />}
+        verbs={<Button dense variant="ghost" onClick={() => openSurfaceOr("configure-settings", "/settings", "notices")}>Settings</Button>}
+      />
     </>
   );
 }

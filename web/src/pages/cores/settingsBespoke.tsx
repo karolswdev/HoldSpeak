@@ -45,6 +45,7 @@ export function HotkeyCapture({
   onCommit,
   onRefuse,
   grouped = true,
+  highlight = false,
 }: {
   value: Record<string, unknown>;
   onCommit: (next: { key: string; display: string }) => void;
@@ -52,6 +53,8 @@ export function HotkeyCapture({
   onRefuse?: (refusal: string) => void;
   /** Compose the existing row into a containing preference sheet. */
   grouped?: boolean;
+  /** Highlight the row when a Settings palette entry lands here. */
+  highlight?: boolean;
 }) {
   const [listening, setListening] = useState(false);
   useEffect(() => {
@@ -78,7 +81,7 @@ export function HotkeyCapture({
   }, [listening, onCommit, onRefuse]);
   const current = String(value.display || value.key || "unset");
   const row = (
-      <GadgetRow label="Push-to-talk key" fact="hold · release types" controlWidth={grouped ? undefined : "short"}>
+      <GadgetRow label="Push-to-talk key" fact="hold · release types" highlight={highlight} controlWidth={grouped ? undefined : "short"}>
         <Button
           variant="chrome"
           className={"gadget-keycap" + (listening ? " is-listening" : "")}

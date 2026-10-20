@@ -191,7 +191,7 @@ describe("Chair app: a Default for AI work asks nothing about summaries", () => 
 
 // ── HS-201-01: the SETUP row's verb opens Runs on at its job ──────────────
 describe("Chair app: the SETUP verb on the cold row", () => {
-  it("Choose an engine on the recorded cold row opens Settings · Engines scoped to the row's key", async () => {
+  it("Choose an engine on the recorded cold row opens Engines scoped to the row's key", async () => {
     // replaces: tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_chair_names_the_blocker (the Button opens Runs on)
     const blockers = RECORDED.cold.gets["/api/desk/needs-you?fresh=1"].blockers as Array<{ key: string; verb: string }>;
     expect(blockers.map((b) => b.key)).toEqual(["summary"]);
@@ -213,8 +213,7 @@ describe("Chair app: the SETUP verb on the cold row", () => {
     expect(verbs[0].getAttribute("data-verb")).toBe("setup");
     expect(verbs[0].textContent).toBe(blockers[0].verb);
     fireEvent.click(verbs[0]);
-    // Engines is the Settings wing. The composed scope keeps the wing name
-    // (`models`) and the job that asked for it (`summary`).
-    await waitFor(() => expect(useDesk.getState().windowsById["surface-settings"]?.scope).toBe("models::summary"));
+    // ST7: Engines receives the job scope directly in its own window.
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-engines"]?.scope).toBe("summary"));
   });
 });
