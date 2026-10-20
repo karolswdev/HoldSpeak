@@ -8,6 +8,38 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The meeting-window regression now selects the failed-summary member when P5
+also offers the same-title meeting as a project source. Both 1440/393 browser
+walks pass, retaining the single-window assertions across every live door.
+The web check now uses the same eight-worker bound as pytest, under the shared
+lock. All 5,387 web checks pass in 111.97 seconds with eight workers; the prior
+two-worker related run took 268.49 seconds for 4,071 cases. No checks or
+assertions are removed. Required quick: 14 affected pytest, 110 sweep, 27 canon and 1,116 repo guards pass.
+
+
+C10 moves native meeting streams and the capture journal into one child process.
+The parent receives durable PCM and levels. Stop gives the child one second,
+then terminates it; only confirmed child exit releases the floor for another
+Record. Missing terminal status remains a capture failure with a recoverable
+journal. The C9 queue and writer failure guarantees remain intact. Focused
+integrated capture checks: 54 pass. Native hardware is not observed.
+A later successful capture for the same calendar event clears its failed-fire
+attention row and retains the failed schedule and receipt; an earlier success
+does not clear a later failure (three focused checks).
+
+The pinned b2c642b42 regression tape has 16,877 non-browser passes and two stale
+Needs-you assertions: P5 now adds a muted matching-meeting candidate. Both
+assertions now name that candidate while retaining the six canonical members
+and mutation checks; all six focused cases pass. The tape also found two
+meeting-window walks selecting a same-title project suggestion instead of the
+failed-summary member; that separate browser repair is in progress. The tape
+is still running and does not cover C10. Final required quick: 1,029 affected pytest, 110 sweep, 27 canon and
+1,116 repo guards pass. Capture is observed at 1440/393 on an isolated hub.
+Two prior bare-desk settle timeouts did not recur in the focused six-case
+check or the final full sweep; failure diagnostics retain actual state and shots. Before this merge, the running desk is backend
+76dc385df, frontend 8ebab34a8ee7b2d2, PID 61369; deployment follows the merge.
+
+
 Capture now keeps its designed CSS seat while unarranged. A slow Coming up
 read no longer freezes the window against a temporary placeholder height; reopening
 uses the same default position. An owner move, resize or zoom keeps its saved
@@ -22,11 +54,11 @@ Meeting and recoverable journal marker; Stop does not claim complete capture.
 Focused callback/durability checks: 32 pass, including the blocked journal and
 same-ID PCM recovery. Required quick: 160 affected, 110 sweep, 27 canon and
 1,116 repo guards pass. Capture shots pass at 1440/393. Native
-hardware is not exercised; C10’s child-process boundary remains in progress.
+hardware is not exercised; C10 now delivers the child-process boundary.
 
-**Betterment recovery: 85/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 86/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `b2c642b42`, frontend `2d4a0039bcaa5db4`, PID 51055 (#1380).
+backend `1554d7043`, frontend `8ebab34a8ee7b2d2`, PID 12686 (#1382).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.

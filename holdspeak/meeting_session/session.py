@@ -224,6 +224,7 @@ class MeetingSession(
         self._recorder: Optional[MeetingRecorder] = None
         self._capture_journal: Optional[Any] = None
         self.device_cleanup_error: Optional[str] = None
+        self.capture_process_exited = False
         self._lock = threading.Lock()
         self._transcribe_thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
@@ -517,15 +518,13 @@ class MeetingSession(
                 self._unwind_started_bundle("journal-open")
                 raise RuntimeError(self._state.capture_failure) from exc
 
-            self._recorder = MeetingRecorder(
-                mic_device=self.mic_device,
-                system_device=self.system_device,
-                on_mic_level=self.on_mic_level,
-                on_system_level=self.on_system_level,
-                on_audio_chunk=lambda chunk: self._capture_journal.append(
-                    chunk.source, chunk.audio
-                ) if self._capture_journal is not None else None,
-            )
+            from .capture import recorder_options
+
+            self._recorder = MeetingRecorder(**recorder_options(
+                self._capture_journal, self._state.id, MeetingRecorder,
+                mic_device=self.mic_device, system_device=self.system_device,
+                on_mic_level=self.on_mic_level, on_system_level=self.on_system_level,
+            ))
 
             # Start recording
             try:
@@ -686,10 +685,18 @@ class MeetingSession(
             try:
                 mic_chunks, system_chunks = recorder.stop()
                 self.device_cleanup_error = getattr(recorder, "device_cleanup_error", None)
+                self.capture_process_exited = bool(
+                    getattr(recorder, "capture_process_exited", False)
+                )
                 capture_failure = getattr(recorder, "capture_failure", None)
                 device_chunks = recorder.get_pending_device_chunks()
             except Exception as exc:
                 log.error("Error stopping recorder: %s", exc)
+                self.device_cleanup_error = getattr(recorder, "device_cleanup_error", None)
+                self.capture_process_exited = bool(
+                    getattr(recorder, "capture_process_exited", False)
+                )
+                capture_failure = getattr(recorder, "capture_failure", None)
         # Accepted PCM is durable before any slower transcript or intel work.
         journal_error: Optional[Exception] = None
         if self._capture_journal is not None:
