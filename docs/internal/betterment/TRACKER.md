@@ -173,11 +173,11 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 |---|---|---|---|
 | S1 | Tell the truth (small repairs, no new face) | Done · #1268 |  |
 | S2 | The first real sends (on his desk, his press) | Open |  |
-| S3 | Ready to send in Needs you (owner decision 1) | Done · PR_PENDING | Owner-only Needs membership, original-operation retry and frozen preview; actual 1440/393 prepare/send/discard proof. |
-| S4 | What goes out (owner decision 3) | Done · PR_PENDING | Summary and Follow-ups use current confirmed words; frozen Markdown and safe email/plain text. |
-| S5 | The Send sheet | Done · PR_PENDING | One in-place sheet, visible Send footer, inline destination, Back focus and durable Sent at both widths. |
-| S6 | Edit before Send | Done · PR_PENDING | Edit opens a Note copy; stored changes send to the same destination while the source stays unchanged. |
-| S7 | Automations put their result in a destination | Done · PR_PENDING | Completed automation prepares once with its name; actual owner Send preserves exact frozen bytes. |
+| S3 | Ready to send in Needs you (owner decision 1) | Done · #1411 | Owner-only Needs membership, original-operation retry and frozen preview; actual 1440/393 prepare/send/discard proof. |
+| S4 | What goes out (owner decision 3) | Done · #1411 | Summary and Follow-ups use current confirmed words; frozen Markdown and safe email/plain text. |
+| S5 | The Send sheet | Done · #1411 | One in-place sheet, visible Send footer, inline destination, Back focus and durable Sent at both widths. |
+| S6 | Edit before Send | Done · #1411 | Edit opens a Note copy; stored changes send to the same destination while the source stays unchanged. |
+| S7 | Automations put their result in a destination | Done · #1411 | Completed automation prepares once with its name; actual owner Send preserves exact frozen bytes. |
 | S8 | "Not checked yet" warns (owner decision 2) | Done · #1403 | Published unchecked words stay sendable; warning and receipt survive readback. |
 
 ## Capture (`capture/RECIPE.md`): 12 of 12
