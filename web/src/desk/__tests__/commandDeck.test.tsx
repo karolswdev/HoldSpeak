@@ -32,7 +32,9 @@ function seed() {
     models: [],
     setup: null,
     selectedIds: [],
-    openPullout: vi.fn(),
+    // Keep the opener double, but retain the canonical recent-open receipt
+    // that a real opener writes at its successful seam.
+    openPullout: vi.fn((id: string) => useDesk.getState().recordRecentOpen(id)),
     openToolInspector: vi.fn(),
     openChat: vi.fn(),
     diveInto: vi.fn(),
@@ -47,7 +49,7 @@ function open() {
   );
   fireEvent.click(screen.getByRole("button", { name: /Search/ }));
   return screen.getByRole("combobox", {
-    name: "Search tools and Desk items",
+    name: "Find, open or ask",
   });
 }
 
@@ -82,10 +84,8 @@ describe("the deck", () => {
     expect(top.className).toContain("is-selected");
     fireEvent.keyDown(deck, { key: "Enter" });
     expect(useDesk.getState().openPullout).toHaveBeenCalledWith("note:n1");
-    // The run lands in recents (localStorage, last 20 ids).
-    expect(
-      JSON.parse(localStorage.getItem("hs.desk.palette-recents") || "[]"),
-    ).toContain("note:n1");
+    // The run lands in the desk store's canonical recent-open list.
+    expect(useDesk.getState().recentOpened).toContain("note:n1");
   });
 
   it("ArrowDown moves the selection index; Enter runs the moved hit", async () => {
@@ -100,15 +100,14 @@ describe("the deck", () => {
     // The current launcher can rank a program before an object. A run is
     // therefore proved by its shared receipt rather than a stale pullout path.
     expect(usePalette.getState().open).toBe(false);
-    expect(JSON.parse(localStorage.getItem("hs.desk.palette-recents") || "[]"))
-      .toContain(moved.replace("desk-palette-option-", ""));
+    expect(useDesk.getState().recentOpened).toContain(moved.replace("desk-palette-option-", ""));
   });
 
-  it("meetings sit in their own MEETINGS band", async () => {
+  it("meetings sit in their own sentence-case Meeting band", async () => {
     const deck = open();
     fireEvent.change(deck, { target: { value: "launch" } });
     await drawn();
-    expect(screen.getByText("MEETINGS")).toBeInTheDocument();
+    expect(screen.getByText("Meeting")).toBeInTheDocument();
     expect(
       screen.getByRole("option", { name: /Meeting: launch/ }),
     ).toBeInTheDocument();
@@ -126,7 +125,7 @@ describe("the deck", () => {
   it("the empty deck lists every program (the launcher truth)", async () => {
     open();
     await drawn();
-    expect(screen.getByText("PROGRAMS")).toBeInTheDocument();
+    expect(screen.getAllByText("App").length).toBeGreaterThan(0);
     expect(
       screen.getByRole("option", { name: /Automations/ }),
     ).toBeInTheDocument();
@@ -148,7 +147,7 @@ describe("the deck", () => {
     fireEvent.change(deck, { target: { value: query } });
     await drawn();
     const options = screen.getAllByRole("option").map((o) => o.textContent ?? "");
-    const program = options.findIndex((t) => /Automations/.test(t) && /PROGRAM/.test(t));
+    const program = options.findIndex((t) => /Automations/.test(t) && /App/.test(t));
     const object = options.findIndex((t) => /Friday update/.test(t));
     expect(program, options.join(" / ")).toBe(0);
     expect(object).toBeGreaterThan(program);

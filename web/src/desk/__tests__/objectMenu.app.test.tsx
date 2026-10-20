@@ -23,6 +23,7 @@ import { DeskMenuBar } from "../components/DeskMenuBar";
 import { AskPanel } from "../components/AskPanel";
 import { announceWindow, retractWindow } from "../components/window/windowRegistry";
 import { clearEngineCache } from "../hooks/useEngine";
+import { useScreenMembersStore } from "../screen/members";
 import THREAD from "../../test/wire/ask.thread.wire.json";
 
 type Item = Extract<WorkMenuEntry, { type: "item" }>;
@@ -53,7 +54,10 @@ beforeEach(() => {
       note: [{ kind: "note", id: "n-mira", title: "1:1 with Mira", bodyMarkdown: "", tags: [], createdAt: "" } as Note],
       meeting: [{ kind: "meeting", id: "m1", title: "Ledger migration review", startedAt: "" } as Meeting],
       project: [{ kind: "project", id: "p1", name: "Ledger migration" } as Project],
-      directory: [{ kind: "directory", id: "d1", name: "Cutover", memberIds: [] } as unknown as Directory],
+      directory: [
+        { kind: "directory", id: "d1", name: "Cutover", memberIds: [] } as unknown as Directory,
+        { kind: "directory", id: "hs-seed-desk", name: "Desk", memberIds: [] } as unknown as Directory,
+      ],
     },
     selectedIds: [],
     askOpen: false,
@@ -64,6 +68,9 @@ beforeEach(() => {
     panelRects: {},
     panelSaved: [],
   } as never);
+  useScreenMembersStore.setState({
+    people: { state: "ready", persons: [{ id: "mira", name: "Mira Kovacs" }] },
+  });
 });
 
 afterEach(() => {
@@ -108,14 +115,14 @@ describe("Betterment Q5: Ask about this, on every object", () => {
     expect(asked).toEqual([]);
   });
 
-  it("with Mira's window in front, the Person menu shows only Ask about Mira; it opens Ask with her chip and asks with her in About", async () => {
+  it("with Mira's window in front, the Person menu carries live open, ask, prep and keep verbs", async () => {
     act(() => announceWindow("pullout:people:mira", "Mira Kovacs", "⊕", () => {}));
     useDesk.setState({ panelOrder: ["pullout:people:mira"] });
     render(<Desk />);
     fireEvent.click(screen.getByRole("button", { name: /^Person$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Person menu" });
     const rows = Array.from(menu.querySelectorAll("[role^=menuitem] .desk-menu-label"), (e) => e.textContent?.trim());
-    expect(rows).toEqual(["Ask about Mira"]);
+    expect(rows).toEqual(["Open", "Ask about Mira", "Prep 1:1", "Keep on desk"]);
     fireEvent.click(within(menu).getByRole("menuitem", { name: /Ask about Mira/ }));
 
     expect(await screen.findByTestId("ask-context")).toHaveTextContent("AboutMira Kovacs");

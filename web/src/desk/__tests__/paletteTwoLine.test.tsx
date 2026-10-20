@@ -60,7 +60,7 @@ async function search(q: string) {
   render(<MemoryRouter><DeskToolShelf /></MemoryRouter>);
   fireEvent.click(screen.getByRole("button", { name: /Search/ }));
   await settle();
-  fireEvent.change(screen.getByRole("combobox", { name: "Search tools and Desk items" }), { target: { value: q } });
+  fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: q } });
   await settle(MEMORY_DEBOUNCE_MS + 60);
 }
 
@@ -187,7 +187,7 @@ describe("⌘K two-line hit", () => {
     expect([...document.querySelectorAll(".desk-deck-band")].map((b) => b.textContent)).not.toContain("MEMORY");
     expect(document.querySelector(".desk-deck-found")).toBeNull();
     // Betterment Q3: with nothing found, Search still offers to ask.
-    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(['✦Ask "rollback"ASK']);
+    expect(screen.getAllByRole("option").map((o) => o.textContent)).toEqual(['✦Ask "rollback"Ask']);
   });
 });
 

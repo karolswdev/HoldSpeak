@@ -1,17 +1,17 @@
 {
   "detail": "The kernel refused delegation.revoke: desk_delegation_required",
   "error": "desk_delegation_required",
-  "operation_id": "op_a1eeaff1d2ef47359be857fe11d9289f",
+  "operation_id": "op_887feb6700a541f3abc98b2c19233092",
   "receipt": {
     "actor_identity": "owner-session",
     "actor_kind": "owner",
     "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-    "created_at": 1791733420.9668,
+    "created_at": 1792478899.4151838,
     "delegator_identity": "",
     "delegator_kind": "",
-    "operation_id": "op_a1eeaff1d2ef47359be857fe11d9289f",
+    "operation_id": "op_887feb6700a541f3abc98b2c19233092",
     "outcome": "desk_delegation_required",
-    "receipt_id": "rcpt_15b1df0888eb41bbbac76388fd7064fc",
+    "receipt_id": "rcpt_b3c66b0f389c4074b733648649a31e57",
     "result_ref": "",
     "state": "refused",
     "target_ref": "agent:desk-agent"

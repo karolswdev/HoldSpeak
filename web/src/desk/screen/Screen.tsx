@@ -119,9 +119,19 @@ export function Screen() {
   // object the desk can resolve. A drawer with no object keeps no menu.
   const openMenu = (key: string, x: number, y: number): boolean => {
     const o = objectByRef(items, key);
-    if (!o) return false;
+    const person = key.startsWith("people:")
+      ? members.persons.find((candidate) => `people:${candidate.id}` === key)
+      : undefined;
+    if (!o && !person) return false;
     setSelected([key]);
-    setMenu({ key, id: o.id, kind: o.kind, title: o.title, x, y });
+    setMenu({
+      key,
+      id: o?.id ?? person!.id,
+      kind: o?.kind ?? "people",
+      title: o?.title ?? person!.name,
+      x,
+      y,
+    });
     return true;
   };
 

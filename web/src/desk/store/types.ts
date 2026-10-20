@@ -355,6 +355,9 @@ export interface DeskState {
   closeWorkbenchWindow(id: string): void;
   /** Open/focus or close a first-class application through the compositor. */
   openSurfaceWindow(key: string, scope?: string): void;
+  /** The last six successful object/application opens, in newest-first order. */
+  recentOpened: string[];
+  recordRecentOpen(ref: string): void;
   closeSurfaceWindow(key: string): void;
   /** Recovery-only arrival clears application windows without touching layout. */
   clearSurfaceWindows(): void;

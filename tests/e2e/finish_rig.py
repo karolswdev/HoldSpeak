@@ -62,10 +62,12 @@ class FinishRig:
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
         if builder_tools:
-            # Betterment shell S1 (#1259): Processes, Refresh from hub and the
-            # other builder tools are in Go and Search only with Settings ▸
-            # System ▸ Builder tools on (web/src/desk/builderTools.ts).
-            page.evaluate("() => localStorage.setItem('hs.desk.builderTools', 'on')")
+            # Betterment shell S1 (#1259): Builder tools is a hub preference;
+            # seed it through the same Settings writer the face uses.
+            settings = _api(page, "GET", "/api/settings", token=TOKEN)
+            ui = settings.setdefault("ui", {})
+            ui["builder_tools"] = True
+            _api(page, "PUT", "/api/settings", settings, token=TOKEN)
         page.reload(wait_until="load")
         # The first /api/setup/status runs every doctor check cold (imports);
         # on a loaded machine that took 36 s. The desk waits for it.
@@ -90,7 +92,7 @@ class FinishRig:
 
     def _palette(self, page: Any, text: str) -> list[tuple[str, str]]:
         page.locator(".desk-tools-launch").first.click()
-        field = page.locator("input[placeholder='Search tools and Desk items']")
+        field = page.locator("input[placeholder='Find, open or ask']")
         field.wait_for()
         field.fill(text)
         page.wait_for_timeout(600)

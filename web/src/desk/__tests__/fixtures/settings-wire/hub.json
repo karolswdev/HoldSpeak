@@ -32,7 +32,7 @@
     "nextSweepAt": null,
     "quiet": {
       "end": 8,
-      "held": false,
+      "held": true,
       "start": 22
     },
     "sweepEveryMinutes": 15
@@ -51,5 +51,5 @@
     "speechReady": false,
     "target": "auto"
   },
-  "writtenAt": 1792341616.3896868
+  "writtenAt": 1792478899.0923452
 }

@@ -62,6 +62,7 @@ describe("Command deck coverage (HS-200-07 / C4)", () => {
       </MemoryRouter>,
     );
     fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "project" } });
 
     await waitFor(() =>
       expect(screen.getByText("Open Q4 Platform")).toBeTruthy());
