@@ -592,7 +592,7 @@ class ProjectDoorService:
         except Exception as exc:
             raise ServiceError("link_readback_failed", redact_error(str(exc), limit=500)) from exc
         if row is None:
-            raise ServiceError("link_not_persisted", f"{kind.title()} link was not persisted")
+            raise ServiceError("link_not_persisted", f"{kind.title()} link was not saved")
 
     def _link_found(self, principal: Principal, project_id: str, found: dict[str, Any]) -> list[dict[str, Any]]:
         """Link each selected meeting/note and report every leaf outcome."""

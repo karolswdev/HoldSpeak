@@ -166,14 +166,9 @@ function decodePreviewFound(raw: Record<string, unknown>): PreviewFoundItem {
     detail: String(raw.detail ?? ""),
     attendees: Array.isArray(raw.attendees) ? raw.attendees.map(String) : undefined,
     selected: raw.selected !== false,
-    linkState: raw.link_state === "linked" || raw.linkState === "linked"
-      ? "linked"
-      : raw.link_state === "failed" || raw.linkState === "failed"
-        ? "failed"
-        : "pending",
-    linkError: typeof (raw.link_error ?? raw.linkError) === "string"
-      ? String(raw.link_error ?? raw.linkError)
-      : null,
+    // Link outcomes arrive only in the canonical found_links response.
+    linkState: "pending",
+    linkError: null,
   };
 }
 

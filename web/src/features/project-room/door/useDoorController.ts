@@ -642,7 +642,7 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
             ...item,
             selected: true,
             linkState: "failed" as const,
-            linkError: "The hub did not report this link",
+            linkError: "Link not confirmed",
           };
         }
         const result = resultByKey.get(key);
@@ -653,7 +653,7 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
           ...item,
           selected: true,
           linkState: "failed" as const,
-          linkError: result?.error || "The producer did not report a successful link",
+          linkError: result?.error || "Link not confirmed",
         };
       });
       return {
@@ -671,7 +671,7 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
     if (pendingProjectId) {
       const outstanding = preview?.found.filter((item) => item.selected && item.linkState === "failed") ?? [];
       if (outstanding.length) {
-        setError("Retry failed matches before finishing this Project");
+        setError("Retry failed matches");
         return;
       }
       if (projectId) {
