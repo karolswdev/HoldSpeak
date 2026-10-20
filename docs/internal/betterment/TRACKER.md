@@ -5,7 +5,7 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, Floor verified; S4 Search seam remains open. Running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-20, Floor verified; S4 Search seam remains open. Running-desk identity is in `pm/STATUS.md`.
 
 **Total: 103 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
@@ -118,7 +118,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | AG11 | Agents that work together (MCP) | Done · #1369 | One owned helper, pinned waits, question-only answer, Secure owner Allow, nested rows. |
 | AG12 | Review by (builder and reviewer) | Done · #1385 | Bounded two-round pair; durable Result and read-only reviewer authority. |
 | AG13 | A HoldSpeak skill | Done · #1374 | Packaged skill, native launch discovery and Connect install; offline Codex discovery observed. |
-| AG14 | Automations that hand work to agents | Done · PR_PENDING | Do Hand; native With; compatible Review; durable schedule/event authority and once-only queue. |
+| AG14 | Automations that hand work to agents | Done · #1402 | Do Hand; native With; compatible Review; durable schedule/event authority and once-only queue. |
 | AG15 | Agents he started himself (decision 1) | Done · #1392 | Own native tmux agents show state and accept owner answers/approval; rig discovery stays off. |
 
 ## Daily and Needs you (`daily/RECIPE.md`): 11 of 11
