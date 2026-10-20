@@ -17,7 +17,7 @@
 directories:
   - id: hs-seed-inbox
     name: Inbox
-    member_ids: [hs-seed-start-here]
+    member_ids: [hs-seed-start-here, hs-seed-prompt-weekly-update]
   - id: hs-seed-personal
     name: Personal
     member_ids: []
@@ -30,6 +30,11 @@ directories:
     name: Decisions
   - id: hs-seed-reference
     name: Reference
+  # The Desk is a membership ledger for explicit Floor choices. The web Desk
+  # never draws this directory as a drawer.
+  - id: hs-seed-desk
+    name: Desk
+    member_ids: []
 
 notes:
   - id: hs-seed-start-here
@@ -42,8 +47,8 @@ notes:
       - [Review what needs you](door:needs) See the actions and decisions that wait for you.
 
       These notes are yours. Edit, move or delete them.
-  # A Thread starter for /prompt (orchestrator ruling 2026-10-11), not a
-  # desk job: the Thread composer's /prompt lists notes tagged `prompt`.
+  # A Thread starter for /prompt (orchestrator ruling 2026-10-11), filed in
+  # Inbox so it does not become an automatic Floor icon.
   - id: hs-seed-prompt-weekly-update
     title: Weekly update
     tags: [prompt]

@@ -6,6 +6,7 @@ PR that fixes it merges. The recovery reconciliation is retained in
 
 | Found in | Follow-up | Goes to |
 |---|---|---|
+| S4 delivery | The floor and meeting Keep behavior are verified. Mode recipes still enter Search as Agent rows; individual People need their Object-menu adapter because the world stores only the People singleton. Finish both seams in S5. S4 remains partial. | Shell S5 |
 | P7/P8 delivery | Room NEW currently follows any draft lifecycle, including an owner-created draft. Read the existing automation artifact NEW/read state and clear it through the existing result-open path. | Project update read state |
 | Q0 (#1260) | Interview's answer-only pass puts a system message after the user message, which Qwen's template rejects. | Asking Q4, or a small fix |
 | Q0 (#1260) | "Engine not reachable" is shown as "No engine for answers" (`ask_service.py` reason mapping). | Asking Q1 |
@@ -75,5 +76,5 @@ PR that fixes it merges. The recovery reconciliation is retained in
 | Q3 (#1332) | The touch fix in Search is unproven: the browser test passes on the old code too. | Watch |
 | Q5 (#1335) | Ask about a person sends her name only (no grounding on her meetings and notes); Ask about this from Meetings has no test; Send… under an answer not tried on a real destination. | Ask Q8+ |
 | AG3 (#1333) | "From your decision" proven only on recorded answers. "Asked 1 min ago" shows ~10 s after an ask. | Small fix |
-| AG4 (#1334) | The desk sweep cannot open the hand sheet (no T3 check); the Where line not tested on a recorded answer; drop on the Agents Dock tile not built. | Agents |
+| AG4 (#1334) | The desk sweep cannot open the hand sheet (no T3 check); the Where line not tested on a recorded answer. Dock drop is delivered with the S4 Floor change. | Agents |
 | D8 (#1337) | Not built: a quiet notice + NEW line in Today when an automation finishes (needs a seen flag on `workbench_runs`). The morning notice cannot open Today (osascript). Fixtures send-hub, palette-enter, chair-brief, needs-you.gate still hold the old "No engine for summaries" row; re-record. | Daily D9 |

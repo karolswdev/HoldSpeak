@@ -33,6 +33,7 @@ ZONES = {
     "hs-seed-meetings": "Meetings",
     "hs-seed-decisions": "Decisions",
     "hs-seed-reference": "Reference",
+    "hs-seed-desk": "Desk",
 }
 
 START_HERE = "hs-seed-start-here"
@@ -57,7 +58,7 @@ MODE_RECIPES = {
     "hs-seed-mode-chase",
     "hs-seed-mode-draft",
     "hs-seed-mode-plan", "hs-seed-mode-project"}
-SEED_COUNTS = {"directories": 6, "notes": 2, "recipes": 4}
+SEED_COUNTS = {"directories": 7, "notes": 2, "recipes": 4}
 
 
 @pytest.fixture
@@ -132,10 +133,12 @@ def test_fresh_db_seeds_exactly_the_manifest(db) -> None:
     assert report.manifest == DEFAULT_SEED
     assert report.applied == SEED_COUNTS
     assert report.profiles_seeded == report.workbenches_seeded == 0
-    assert report.filed == 1
+    assert report.filed == 2
 
     snap = _snapshot(db)
     assert dict((i, n) for i, n, _ in snap["directories"]) == ZONES
+    assert (f"note:{PROMPT_NOTE}", "hs-seed-inbox") in snap["memberships"]
+    assert not any(directory_id == "hs-seed-desk" for _, directory_id in snap["memberships"])
     assert {n.id: n.title for n in db.notes.list()} == {
         START_HERE: "Start here",
         PROMPT_NOTE: "Weekly update",
@@ -264,8 +267,8 @@ def test_seed_route_applies_the_packaged_manifest(client, db) -> None:
     assert body["success"] is True
     assert body["applied"] == SEED_COUNTS
     assert body["profiles_seeded"] == body["workbenches_seeded"] == 0
-    assert body["filed"] == 1
-    assert body["total"] == 12
+    assert body["filed"] == 2
+    assert body["total"] == 13
     assert {d.id for d in db.directories.list()} == set(ZONES)
 
 
@@ -322,7 +325,7 @@ def test_reset_tombstones_clutter_and_reseeds(db) -> None:
         START_HERE, PROMPT_NOTE,
     }
     assert {recipe.id for recipe in db.recipes.list()} == MODE_RECIPES
-    assert report.seed is not None and report.seed.total == 12
+    assert report.seed is not None and report.seed.total == 13
 
 
 def test_reset_force_restores_edited_and_tombstoned_packaged_objects(db) -> None:
@@ -366,10 +369,10 @@ def test_reset_route_names_the_counts(client, db) -> None:
     assert body["tombstoned"]["directories"] == 1
     assert body["tombstoned"]["workbenches"] == 1
     assert body["seeded"] == SEED_COUNTS
-    assert body["seeded_total"] == 12
+    assert body["seeded_total"] == 13
     assert body["profiles_seeded"] == 0
     assert body["profiles_adopted"] == {}
-    assert body["filed"] == 1
+    assert body["filed"] == 2
     assert body["manifest"] == DEFAULT_SEED
 
 

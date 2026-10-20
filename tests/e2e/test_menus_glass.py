@@ -626,9 +626,8 @@ class TestSharedControlsAreSpecies:
                 _library_species(page, ".desk-wings button", subject="the wing strip menu", chrome_only=True)
                 _strip_targets(page, ".desk-wings button", subject="the wing strip menu")
                 reset = page.locator(".desk-dock-reset")
-                assert reset.count() >= 2, (
-                    "the dock drew no overview/reset keys with a window "
-                    "open: those targets were NOT ASSESSED"
+                assert reset.count() == 0, (
+                    "the retired overview/reset keys returned to the Dock"
                 )
                 _strip_targets(page, ".desk-dock button", subject="the dock, with a window open",
                                pager=".desk-dock-more")
@@ -678,9 +677,8 @@ class TestSharedControlsAreSpecies:
                     # the window chip only exist once something is open, so
                     # the arrival pass above cannot see them.
                     reset = page.locator(".desk-dock-reset")
-                    assert reset.count() >= 2, (
-                        "the dock drew no overview/reset keys with a window "
-                        "open: those targets were NOT ASSESSED"
+                    assert reset.count() == 0, (
+                        "the retired overview/reset keys returned to the Dock"
                     )
                     _strip_targets(
                         page, ".desk-dock button",

@@ -1,19 +1,28 @@
 /** PHILO-14 A1 — the screen's objects, composed from the desk's own reads.
  *
  *  Board A-1 (docs/internal/philo/phase-14/canvas/shots/A-1-1440.png): the
- *  drawers (every Project with its count notch and lamp, People, the
- *  Conductor with the automaton badge), the loose objects (what no Project
- *  holds), the live agents, Needs you, Parked. Pure: the tests compose from
- *  a fixture world. */
+ *  drawers, Projects, loose notes and explicit Desk members, with Archive
+ *  parked at the edge. Pure: the tests compose from a fixture world. */
 import type { Items } from "../api";
 import { qualifiedRef } from "../api";
-import { isInFlight, liveAgentSessions, type AgentFlight, type CoderSessionRow } from "../agentFlights";
-import { needYouWords, objectSprite, type ObjectTone } from "../surface";
-import { spriteUrl } from "../sprites";
-import { allObjects, objectByRef } from "../world";
+import { type AgentFlight, type CoderSessionRow } from "../agentFlights";
+import { objectSprite, type ObjectTone } from "../surface";
+import { objectByRef } from "../world";
 import type { ScreenTarget } from "./open";
 
 export type ScreenRole = "drawer" | "needs" | "parked" | "loose" | "agent";
+
+/** The packaged directory that records an owner's explicit Floor choices. */
+export const SEED_DESK_DIRECTORY_ID = "hs-seed-desk";
+/** Notes leave the Floor through the ordinary Inbox drawer. */
+export const SEED_INBOX_DIRECTORY_ID = "hs-seed-inbox";
+
+const SEED_VISIBLE_DIRECTORY_ORDER = new Map([
+  ["hs-seed-inbox", 0],
+  ["hs-seed-work", 1],
+  ["hs-seed-personal", 2],
+  ["hs-seed-reference", 3],
+]);
 
 export interface ScreenObject {
   /** Unique on the screen (stamped as data-object-id). */
@@ -78,10 +87,21 @@ const NOT_READ = { tone: "fail" as const, label: "NOT READ" };
 /** The kinds that lie loose on the screen (the brief's list). Betterment
  * Q4: a thread is a kept Ask; it lives in Ask ▸ Recent, not on the desk
  * (Save as note puts an answer on the desk). */
-const LOOSE_KINDS = new Set(["meeting", "note", "decision", "artifact", "repository"]);
+/** Notes with content are the only records that arrive on an unfiled Floor.
+ * All other Floor records must be kept explicitly in the Desk directory. */
+const LOOSE_KINDS = new Set(["note"]);
+const KEEPABLE_KINDS = new Set(["meeting", "note", "decision", "artifact", "repository", "thread"]);
 
-function hasUserOwnedContent(object: { kind: string; ref: unknown }): boolean {
-  const value = (object.ref ?? {}) as Record<string, unknown>;
+function canonicalMemberRef(stored: string): string {
+  return normalizeRef(stored);
+}
+
+function directoryRefs(directory: Items["directory"][number] | undefined): ReadonlySet<string> {
+  return new Set((directory?.memberIds ?? []).map(canonicalMemberRef));
+}
+
+function hasUserOwnedContent(object: { kind: string; ref?: unknown; title?: string; bodyMarkdown?: string }): boolean {
+  const value = (object.ref ?? object) as Record<string, unknown>;
   if (object.kind === "artifact") {
     // Meeting artifacts stay reachable from their meeting record. They do
     // not become a second loose object on the Floor.
@@ -170,6 +190,28 @@ export function rootDirectories(items: Items): Items["directory"] {
   return directories.filter((directory) => roots.has(directory.id));
 }
 
+/** Directories that have a visible home in the Desk and Go faces. */
+export function visibleRootDirectories(items: Items): Items["directory"] {
+  return rootDirectories(items)
+    .filter((directory) => {
+      if (directory.id === SEED_DESK_DIRECTORY_ID) return false;
+      return !(
+        (directory.id === "hs-seed-meetings" || directory.id === "hs-seed-decisions") &&
+        (directory.memberIds ?? []).length === 0
+      );
+    })
+    .sort((left, right) => {
+      const leftOrder = SEED_VISIBLE_DIRECTORY_ORDER.get(left.id);
+      const rightOrder = SEED_VISIBLE_DIRECTORY_ORDER.get(right.id);
+      if (leftOrder === undefined && rightOrder === undefined) {
+        return String(left.createdAt ?? "").localeCompare(String(right.createdAt ?? "")) || left.id.localeCompare(right.id);
+      }
+      if (leftOrder === undefined) return 1;
+      if (rightOrder === undefined) return -1;
+      return leftOrder - rightOrder;
+    });
+}
+
 function sprites(kind: string, id: string, agent?: string) {
   return {
     sprite: objectSprite(kind, id, "rest", 64, agent),
@@ -210,8 +252,8 @@ export function agentState(row: CoderSessionRow): "ask" | "idle" | "done" | "wor
 export function composeScreen(input: ScreenInputs): ScreenObject[] {
   const out: ScreenObject[] = [];
 
-  // ── drawers: the real folders, Projects, People, the Conductor ──
-  for (const directory of rootDirectories(input.items)) {
+  // ── drawers: the real folders and Projects ──
+  for (const directory of visibleRootDirectories(input.items)) {
     const ref = qualifiedRef("directory", directory.id);
     out.push({
       key: ref,
@@ -239,7 +281,10 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
       target: { type: "ref", ref },
     });
   }
-  for (const project of input.items.project ?? []) {
+  const projects = [...(input.items.project ?? [])].sort((left, right) => (
+    String(left.createdAt ?? "").localeCompare(String(right.createdAt ?? "")) || left.id.localeCompare(right.id)
+  ));
+  for (const project of projects) {
     const n = input.projectCounts[project.id] ?? 0;
     const failed = Boolean(input.notRead?.[project.id]);
     out.push({
@@ -257,51 +302,8 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
       target: { type: "project", id: project.id },
     });
   }
-  out.push({
-    key: "drawer:people",
-    role: "drawer",
-    kind: "person",
-    kindWord: "DRAWER",
-    name: "People",
-    // The People drawer is the ledger; one person (loose, below) is the badge.
-    ...sprites("people", "people"),
-    lamp: input.peopleNotRead ? NOT_READ : undefined,
-    caption: input.peopleCaption || undefined,
-    notRead: input.peopleNotRead ? { retry: { type: "people" } } : undefined,
-    target: { type: "people" },
-  });
-  const live = liveAgentSessions(input.sessions);
-  const launched = input.flights.filter(isInFlight).length;
-  const asking = live.some((row) => agentState(row) === "ask") || input.heldCalls > 0;
-  out.push({
-    key: "drawer:conductor",
-    role: "drawer",
-    kind: "conductor",
-    name: "Agents",
-    ...sprites("conductor", "conductor"),
-    badge: spriteUrl("coder", "conductor-badge"),
-    // A lamp is for what needs him: the ask/held lamp only when an agent
-    // asks or a call is held; while they work, the count notch alone.
-    lamp: asking ? { tone: "ask", count: launched } : undefined,
-    count: asking ? undefined : launched,
-    ariaExtra: [launched > 0 ? `${launched} launched` : "", asking ? "an agent asks" : ""].filter(Boolean).join(", ") || undefined,
-    target: { type: "conductor" },
-  });
-
-  // ── the smart drawer and Parked ──
-  out.push({
-    key: "drawer:needs",
-    role: "needs",
-    kind: "smart",
-    name: "Needs you",
-    ...sprites("smart", "needs-you"),
-    // Needs you has one number in its head. The Desk lamp only says that it
-    // asks; duplicating the number here made the same membership read look
-    // like two separate queues.
-    lamp: input.needsCount > 0 ? { tone: "ask" } : undefined,
-    ariaExtra: input.needsCount > 0 ? needYouWords(input.needsCount) : undefined,
-    target: { type: "needs" },
-  });
+  // The People, Agents and Needs you doors have their own homes in the Dock,
+  // Go and the bell. They are deliberately absent from the Floor.
   out.push({
     key: "drawer:parked",
     role: "parked",
@@ -311,45 +313,96 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
     target: { type: "parked" },
   });
 
-  // ── loose objects: what no Project holds ──
-  // Unknown stays unknown (Astra's P1 on #939): an object whose filing a
-  // failed read would decide is not drawn loose.
+  // ── the Floor: unfiled content notes, then explicit Desk members ──
+  // Unknown stays unknown (Astra's P1 on #939): a failed Project filing read
+  // must not make a note appear loose while the read is still unresolved.
+  const deskDirectory = (input.items.directory ?? []).find((d) => d.id === SEED_DESK_DIRECTORY_ID);
+  const keptRefs = directoryRefs(deskDirectory);
+  const filed = new Set([...input.filed].map(normalizeRef));
+  for (const directory of input.items.directory ?? []) {
+    for (const ref of directoryMemberRefs(input.items, directory.memberIds)) filed.add(ref);
+  }
+
+  const floorCandidates: Array<{ object: ScreenObject; arrivalAt: string; sourceOrder: number }> = [];
   if (input.membersLoaded && !input.unknownAll) {
-    const filed = new Set([...input.filed].map(normalizeRef));
-    for (const directory of input.items.directory ?? []) {
-      for (const ref of directoryMemberRefs(input.items, directory.memberIds)) filed.add(ref);
-    }
-    for (const o of allObjects(input.items)) {
-      if (!LOOSE_KINDS.has(o.kind)) continue;
-      if (!hasUserOwnedContent(o)) continue;
-      if (o.kind === "meeting" && input.unknownMeetings) continue;
+    // Notes are the one automatic Floor species. Keep them in the same
+    // arrival stream as explicit Desk members so a later note does not insert
+    // itself before an icon the owner already kept.
+    for (const o of (input.items.note ?? [])) {
+      if (!LOOSE_KINDS.has(o.kind) || !hasUserOwnedContent(o)) continue;
       const ref = qualifiedRef(o.kind, o.id);
       if (filed.has(normalizeRef(ref))) continue;
       const needs = input.needsRefs.has(ref);
-      out.push({
-        key: ref,
-        role: "loose",
-        kind: o.kind,
-        name: o.title,
-        ...sprites(o.kind, o.id),
-        lamp: needs ? { tone: "warn", label: "NEEDS YOU" } : undefined,
-        target: { type: "ref", ref },
-      });
-    }
-    for (const person of input.persons) {
-      if (!person.name.trim()) continue;
-      const ref = `people:${person.id}`;
-      if (filed.has(ref)) continue;
-      out.push({
-        key: ref,
-        role: "loose",
-        kind: "person",
-        name: person.name,
-        ...sprites("person", person.id),
-        target: { type: "ref", ref },
+      floorCandidates.push({
+        object: {
+          key: ref,
+          role: "loose",
+          kind: o.kind,
+          name: o.title,
+          ...sprites(o.kind, o.id),
+          lamp: needs ? { tone: "warn", label: "NEEDS YOU" } : undefined,
+          target: { type: "ref", ref },
+        },
+        arrivalAt: o.createdAt,
+        sourceOrder: floorCandidates.length,
       });
     }
   }
+
+  // A Desk membership is an explicit owner's choice. Its record timestamp (or
+  // membership edge order when no timestamp exists) joins the same arrival
+  // stream as notes, so a later note never inserts before a kept icon.
+  for (const [memberIndex, stored] of (deskDirectory?.memberIds ?? []).entries()) {
+    const ref = canonicalMemberRef(stored);
+    if (!ref || !keptRefs.has(ref)) continue;
+    if (ref.startsWith("people:")) {
+      const person = input.persons.find((candidate) => `people:${candidate.id}` === ref);
+      if (!person?.name.trim()) continue;
+      floorCandidates.push({
+        object: {
+          key: ref,
+          role: "loose",
+          kind: "person",
+          name: person.name,
+          ...sprites("person", person.id),
+          target: { type: "ref", ref },
+        },
+        arrivalAt: "",
+        sourceOrder: 100_000 + memberIndex,
+      });
+      continue;
+    }
+    const object = objectByRef(input.items, ref);
+    if (!object || !KEEPABLE_KINDS.has(object.kind)) continue;
+    const needs = input.needsRefs.has(ref);
+    const source = object.ref as { startedAt?: unknown; createdAt?: unknown };
+    const arrivalAt = object.kind === "meeting"
+      ? typeof source.startedAt === "string" ? source.startedAt : ""
+      : typeof source.createdAt === "string" ? source.createdAt : "";
+    floorCandidates.push({
+      object: {
+        key: ref,
+        role: "loose",
+        kind: object.kind,
+        name: object.title,
+        ...sprites(object.kind, object.id),
+        lamp: needs ? { tone: "warn", label: "NEEDS YOU" } : undefined,
+        target: { type: "ref", ref },
+      },
+      arrivalAt,
+      sourceOrder: 100_000 + memberIndex,
+    });
+  }
+
+  floorCandidates.sort((left, right) => {
+    if (left.arrivalAt && right.arrivalAt) {
+      return left.arrivalAt.localeCompare(right.arrivalAt) || left.sourceOrder - right.sourceOrder;
+    }
+    if (left.arrivalAt) return -1;
+    if (right.arrivalAt) return 1;
+    return left.sourceOrder - right.sourceOrder;
+  });
+  for (const candidate of floorCandidates) out.push(candidate.object);
 
   // Betterment AG8: the per-agent desk icons left the floor (the Agents
   // drawer, its Dock tile and Needs you carry them); parked in
