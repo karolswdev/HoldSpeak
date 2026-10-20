@@ -105,20 +105,26 @@ describe("dispatchKey runs registry verbs", () => {
     expect(shown("window.minimize")).toBe("⌃M");
     expect(shown("desk.new-note")).toBe("⌃N");
     expect(shown("desk.new-decision")).toBe("⌃⇧N");
-    expect(shown("go.dictate")).toBe("⌃1");
-    expect(shown("go.configure-settings")).toBe("⌃4");
+    expect(shown("desk.open-intelligence")).toBe("⌃1");
+    expect(shown("go.review-meetings")).toBe("⌃2");
+    expect(shown("desk.open-people")).toBe("⌃3");
+    expect(shown("go.open-conductor")).toBe("⌃4");
+    expect(shown("go.dictate")).toBe("⌃5");
+    expect(shown("go.configure-settings")).toBe("⌃,");
     // No menu shows a key Chrome or Safari keeps for the tab.
     const kept = new Set(["⌘W", "⌘N", "⌘⇧N", "⌘M", "⌘1", "⌘2", "⌘3", "⌘4"]);
     expect(VERBS.filter((v) => v.key && kept.has(v.key)).map((v) => v.id)).toEqual([]);
     // The old ⌘ keys stay bound where a browser passes them (never shown).
     expect(VERBS.find((v) => v.id === "window.close")?.altKeys).toEqual(["⌘W"]);
-    expect(VERBS.find((v) => v.id === "go.dictate")?.altKeys).toEqual(["⌘1"]);
+    expect(VERBS.find((v) => v.id === "desk.open-intelligence")?.altKeys).toEqual(["⌘1"]);
     // ⌃N and ⌃⇧N run New Note and New Decision; ⌃M is Iconify, not Zoom.
     expect(dispatchKey(kd({ key: "n", ctrlKey: true }))?.id).toBe("desk.new-note");
     expect(dispatchKey(kd({ key: "N", ctrlKey: true, shiftKey: true }))?.id).toBe("desk.new-decision");
     const iconify = VERBS.find((v) => v.id === "window.minimize")!;
     expect(matchKey(kd({ key: "m", ctrlKey: true }), parseKey(iconify.key!)!)).toBe(true);
     expect(VERBS.find((v) => v.id === "window.maximize")?.altKeys ?? []).not.toContain("⌃M");
+    expect(dispatchKey(kd({ key: "j", ctrlKey: true }))?.id).toBe("chair.window.needs");
+    expect(dispatchKey(kd({ key: ",", ctrlKey: true }))?.id).toBe("go.configure-settings");
     // In a field ⌃N is the field's key (next line), never a new note.
     const field = document.createElement("textarea");
     document.body.append(field);
@@ -126,6 +132,13 @@ describe("dispatchKey runs registry verbs", () => {
     Object.defineProperty(typed, "target", { value: field });
     expect(dispatchKey(typed)).toBeNull();
     field.remove();
+
+    const commaField = document.createElement("input");
+    document.body.append(commaField);
+    const typedComma = new KeyboardEvent("keydown", { key: ",", ctrlKey: true, bubbles: true });
+    Object.defineProperty(typedComma, "target", { value: commaField });
+    expect(dispatchKey(typedComma)).toBeNull();
+    commaField.remove();
   });
 
   it("a ghosted verb refuses quietly (⌘W with no window open)", () => {

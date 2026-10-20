@@ -350,6 +350,8 @@ export const VERBS: Verb[] = [
     scope: "floor",
     group: "view",
     glyph: "◆",
+    key: "⌃1",
+    altKeys: ["⌘1"],
     keywords: ["today", "brief", "since yesterday", "this week", "needs you"],
     app: "Today",
     ghost: never,
@@ -362,6 +364,8 @@ export const VERBS: Verb[] = [
     scope: "floor",
     group: "view",
     glyph: "⊕",
+    key: "⌃3",
+    altKeys: ["⌘3"],
     keywords: ["relationships", "1:1", "one on one", "management"],
     app: "People",
     ghost: never,
@@ -631,10 +635,18 @@ export const VERBS: Verb[] = [
       scope: "go",
       group: tool.group,
       glyph: tool.glyph,
-      key: tool.action === "ask" ? "⌘I" : binding?.key,
+      key: tool.action === "ask"
+        ? "⌘I"
+        : tool.action === "configure-settings"
+          ? "⌃,"
+          : binding?.key,
       // PHILO-17 (U27): ⌃1-⌃4 are shown; ⌘1-⌘4 stay bound where a browser
       // passes them.
-      ...(binding?.key.startsWith("⌃") ? { altKeys: [`⌘${binding.key.slice(1)}`] } : {}),
+      ...(tool.action === "configure-settings"
+        ? { altKeys: ["⌘,"] }
+        : binding?.key?.startsWith("⌃")
+          ? { altKeys: [`⌘${binding.key.slice(1)}`] }
+          : {}),
       keywords: tool.description.toLocaleLowerCase().split(/\W+/).slice(0, 6),
       ghost: never,
       run: () => {
@@ -843,6 +855,7 @@ export const VERBS: Verb[] = [
     // Go lists every Chair window at both widths (Capture too: the phone's
     // Dock tile runs the same openChairWindow).
     palette: false,
+    ...(w.key === "needs" ? { key: "⌃J" } : {}),
     keywords: ["chair", "window"],
     checked: () => isChairWindowOpen(w.id),
     ghost: never,

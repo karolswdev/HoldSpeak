@@ -1,10 +1,12 @@
 // Dock — the application launcher + running window toolbar.
 // Extracted from DeskWindow.tsx (HS-117-04).
-import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openIntelligence } from "../../intelligenceNavigation";
 import { refreshNeedsYou, useNeedsYou } from "../../needsYou";
+import { useNextOneOnOneRead } from "../../screen/nextOneOnOne";
+import { micPhase, subscribeMicPhase } from "../../../lib/micSession";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { DOCK_SPRITES } from "../../systemSprites";
 import { useDesk } from "../../store";
@@ -15,14 +17,12 @@ import { WorkMenu } from "../DeskMenu";
 import { dockChipMenuEntries } from "../../windowMenuAdapter";
 import { useOpenWindows, useShownName, chipEls } from "./windowRegistry";
 import { windowIcons } from "./seatIcons";
-import { toggleExpose } from "./Expose";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
-import { DOCK_APPLICATIONS, applicationForAction } from "../../applications";
-import { useAutomationNews } from "../../automationNews";
+import { DOCK_APPLICATIONS, PHONE_DOCK_APPLICATIONS } from "../../applications";
 import { useAgentsTile } from "../../conductor/fleetTile";
 import { useCompactViewport } from "../../useCompactViewport";
-import { openChairWindow, useChairWindows } from "../../chair/chairWindows";
+import { closeChairWindow, openChairWindow, useChairWindows } from "../../chair/chairWindows";
 import {
   EMPTY_DOCK_LIVE,
   deskChanges,
@@ -71,10 +71,9 @@ async function readUnreadReadyMeetings(): Promise<string[]> {
     .filter(Boolean);
 }
 
-/** HS-100-11 — the dock IS the launcher. PHILO-17 (doors): one primary
- * door per application. Speak, Meetings and Intelligence ride the Dock;
- * People, the Conductor and the projects are drawers on the desk; Settings
- * is in the HoldSpeak menu. Go lists them all. */
+/** HS-100-11 — the dock IS the launcher. Betterment shell S3 gives it one
+ * primary door per daily application; the desktop and phone projections come
+ * from the manifest. Settings is in the HoldSpeak menu. Go lists them all. */
 const DOCK_APP_IDS = new Set<string>(
   DOCK_APPLICATIONS.map((application) => application.windowId),
 );
@@ -126,6 +125,15 @@ function SeatTile({
   );
 }
 const DOCK_FACE_APPLICATIONS = DOCK_APPLICATIONS;
+const PHONE_FACE_APPLICATIONS = PHONE_DOCK_APPLICATIONS;
+
+function useDockMicPhase(): ReturnType<typeof micPhase> {
+  return useSyncExternalStore(subscribeMicPhase, micPhase, micPhase);
+}
+
+function micIsLive(phase: ReturnType<typeof micPhase>): boolean {
+  return phase === "open" || phase === "segmenting" || phase === "held";
+}
 
 /** Read the two Dock-only projections after a live invalidation.  The
  * membership read itself is owned by useNeedsYou; this function only reads
@@ -248,13 +256,12 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   useKeymap();
   const sheetOpen = useShortcutSheet((s) => s.open);
   const chair = useChairWindows();
+  const mic = useDockMicPhase();
+  const people = useNextOneOnOneRead();
   // PHILO-13-03 / C3: every Desk face reads the same membership snapshot.
   // The Dock opts out of the hook's minute poll; RuntimeBus invalidations
   // call the explicit refresh path in useDockLiveReads.
-  const { live, reads, offline, lastSuccessfulAt } = useDockLiveReads();
-  // Betterment A6: the Automations tile stands on the Dock while a result is
-  // NEW, with the NEW count (absent at zero: no tile, no "0").
-  const news = useAutomationNews();
+  const { live, reads, offline, lastSuccessfulAt, needsYouCount } = useDockLiveReads();
   // Betterment AG8: the Agents tile carries the fleet's worst state, a mark
   // for New and the count that needs him (nothing with no live agent).
   const agentsTile = useAgentsTile();
@@ -391,10 +398,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const visibleWindowChips = windows.filter((window) => !DOCK_APP_IDS.has(window.id));
   // PHILO-16 (A1) §5: the seated windows no tile above seats (an application
   // opened as a pullout, a launcher, or a project already has its tile).
-  const automations = !compact && !offline && news.count > 0 ? applicationForAction("open-workbenches") : undefined;
   const tiledIds = new Set<string>([
     ...DOCK_FACE_APPLICATIONS.map((application) => `pullout:${application.windowId}`),
-    ...(automations ? [automations.windowId] : []),
   ]);
   const seatedWithoutTile = NUB_CHIPS
     ? []
@@ -416,11 +421,16 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         // PHILO-16 (A1): an application that opens as a pullout (Intelligence)
         // has the window id `pullout:<windowId>`; its tile is that window's seat.
         const pulloutId = `pullout:${application.windowId}`;
-        const winId = windows.some((w) => w.id === pulloutId) ? pulloutId : application.windowId;
+        const isChair = application.dock.launch === "chair";
+        const winId = isChair
+          ? application.windowId
+          : windows.some((w) => w.id === pulloutId) ? pulloutId : application.windowId;
         const win = windows.find((w) => w.id === winId);
         // Mounted DOM refs are runtime detail; the compositor owns whether a
         // hosted application is open. Intelligence is not yet a hosted surface.
-        const running = application.surface
+        const running = isChair
+          ? !chair.closed[application.windowId]
+          : application.surface
           ? Boolean(windowsById[application.windowId])
           : Boolean(win);
         const minimized = running && panelMin.includes(winId);
@@ -437,10 +447,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               (running && winId === front && !minimized ? " is-front" : "") +
               ""
             }
-            aria-label={`${application.label}${application.windowId === "conductor" && agentsTile.words ? `, ${agentsTile.words}` : ""}${minimized ? ", iconified" : ""}`}
+            aria-label={`${application.label}${application.windowId === "conductor" && agentsTile.words ? `, ${agentsTile.words}` : ""}${application.windowId === "intelligence:desk" && needsYouCount > 0 ? `, ${needsYouCount} needs you` : ""}${application.windowId === "surface-people" && people.label ? `, ${people.label}` : ""}${application.windowId === "surface-dictation" && micIsLive(mic) ? ", mic open" : ""}${minimized ? ", iconified" : ""}`}
             onClick={() => {
               const s = useDesk.getState();
-              if (running && minimized) s.restorePanel(winId);
+              if (isChair) openChairWindow(application.windowId);
+              else if (running && minimized) s.restorePanel(winId);
               else if (running) s.focusPanel(winId);
               else if (application.dock.launch === "intelligence")
                 openIntelligence({ view: "today" });
@@ -460,7 +471,9 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 x: e.clientX,
                 y: e.clientY,
                 minimized,
-                close: win?.close ?? (() => useDesk.getState().closeSurfaceWindow(application.action)),
+                close: win?.close ?? (() => isChair
+                  ? closeChairWindow(application.windowId)
+                  : useDesk.getState().closeSurfaceWindow(application.action)),
               });
             }}
           >
@@ -474,6 +487,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             )}
             <span className="desk-dock-label">{application.label}</span>
             {minimized ? seatLamp : null}
+            {application.windowId === "intelligence:desk" && needsYouCount > 0 ? (
+              <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-today-count" aria-hidden="true">
+                {needsYouCount}
+              </span>
+            ) : null}
             {application.windowId === "conductor" && agentsTile.lamp ? (
               <span className="desk-dock-fleet" data-tone={agentsTile.lamp} data-testid="desk-dock-agents-lamp" aria-hidden="true" />
             ) : null}
@@ -491,76 +509,80 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 {recordingLabel}
               </span>
             ) : null}
+            {application.windowId === "surface-people" && people.label ? (
+              <span className="desk-dock-state" data-testid="desk-dock-people-state" data-tone="ok">
+                {people.label}
+              </span>
+            ) : null}
+            {application.windowId === "surface-dictation" && micIsLive(mic) ? (
+              <span className="desk-dock-mic-lamp" data-testid="desk-dock-speak-lamp" aria-label="Mic open" />
+            ) : null}
           </Button>
         );
         })}
-      {automations ? (() => {
-        const winId = automations.windowId;
-        const running = Boolean(windowsById[winId]);
-        const minimized = running && panelMin.includes(winId);
-        const words = `${news.count} new ${news.count === 1 ? "result" : "results"}`;
-        return (
-          <Button
-            key={winId}
-            ref={seatRef(winId)}
-            variant="chrome"
-            data-app={winId}
-            data-testid="desk-dock-automations"
-            className={
-              "desk-dock-launch desk-dock-app" +
-              (running && !minimized ? " is-run" : "") +
-              (minimized ? " is-seated" : "") +
-              (running && winId === front && !minimized ? " is-front" : "")
-            }
-            aria-label={`${automations.label}, ${words}${minimized ? ", iconified" : ""}`}
-            onClick={() => {
-              const s = useDesk.getState();
-              if (running && minimized) s.restorePanel(winId);
-              else if (running) s.focusPanel(winId);
-              else
-                void import("../../shell").then((m) =>
-                  m.openSurfaceOr(automations.action, automations.href, undefined, { origin: "dock" }),
-                );
-            }}
-          >
-            <span aria-hidden="true">{automations.glyph}</span>
-            <span className="desk-dock-label">{automations.label}</span>
-            {minimized ? seatLamp : null}
-            <span className="desk-dock-badge" data-tone="new" data-testid="desk-dock-automations-new" aria-hidden="true">
-              {news.count}
-            </span>
-          </Button>
-        );
-      })() : null}
       {compact ? (
         <>
-          {/* The phone has four doors: Today, Capture, Meetings and People. */}
-          {[
-            { id: "intelligence:desk", label: "Today", glyph: "◈", click: () => openIntelligence({ view: "today" }), running: windows.some((w) => w.id === "pullout:intelligence:desk"), minimized: panelMin.includes("pullout:intelligence:desk") },
-            { id: "chair:capture", label: "Capture", glyph: "●", click: () => openChairWindow("chair:capture"), running: !chair.closed["chair:capture"], minimized: panelMin.includes("chair:capture") },
-            { id: "surface-meetings", label: "Meetings", glyph: "▣", click: () => void import("../../shell").then((m) => m.openSurfaceOr("review-meetings", "/history", undefined, { origin: "dock" })), running: Boolean(windowsById["surface-meetings"]), minimized: panelMin.includes("surface-meetings") },
-            { id: "surface-people", label: "People", glyph: "♧", click: () => void import("../../shell").then((m) => m.openSurfaceOr("open-people", "/", undefined, { origin: "dock" })), running: Boolean(windowsById["surface-people"]), minimized: panelMin.includes("surface-people") },
-          ].map((tile) => {
-            const winId = tile.id === "intelligence:desk" ? "pullout:intelligence:desk" : tile.id;
+          {PHONE_FACE_APPLICATIONS.map((application) => {
+            const isChair = application.dock.launch === "chair";
+            const pulloutId = `pullout:${application.windowId}`;
+            const winId = isChair
+              ? application.windowId
+              : application.windowId === "intelligence:desk" ? pulloutId : application.windowId;
+            const running = isChair
+              ? !chair.closed[application.windowId]
+              : application.surface
+                ? Boolean(windowsById[application.windowId])
+                : Boolean(windows.some((w) => w.id === winId));
+            const minimized = running && panelMin.includes(winId);
             return (
-            <Button
-              key={tile.id}
-              ref={seatRef(winId)}
-              variant="chrome"
-              data-app={tile.id}
-              className={`desk-dock-launch desk-dock-app${tile.running && !tile.minimized ? " is-run" : ""}${tile.minimized ? " is-seated" : ""}`}
-              aria-label={`${tile.label}${tile.minimized ? ", iconified" : ""}`}
-              onClick={() => {
-                if (tile.id === "chair:capture") tile.click();
-                else if (tile.running && tile.minimized) useDesk.getState().restorePanel(winId);
-                else if (tile.running) useDesk.getState().focusPanel(winId);
-                else tile.click();
-              }}
-            >
-              <span aria-hidden="true">{tile.glyph}</span>
-              <span className="desk-dock-label">{tile.label}</span>
-              {tile.minimized ? seatLamp : null}
-            </Button>
+              <Button
+                key={application.windowId}
+                ref={seatRef(winId)}
+                variant="chrome"
+                data-app={application.windowId}
+                className={`desk-dock-launch desk-dock-app${running && !minimized ? " is-run" : ""}${minimized ? " is-seated" : ""}`}
+                aria-label={`${application.label}${application.windowId === "intelligence:desk" && needsYouCount > 0 ? `, ${needsYouCount} needs you` : ""}${application.windowId === "surface-people" && people.label ? `, ${people.label}` : ""}${application.windowId === "conductor" && agentsTile.words ? `, ${agentsTile.words}` : ""}${minimized ? ", iconified" : ""}`}
+                onClick={() => {
+                  if (isChair) openChairWindow(application.windowId);
+                  else if (running && minimized) useDesk.getState().restorePanel(winId);
+                  else if (running) useDesk.getState().focusPanel(winId);
+                  else if (application.dock.launch === "intelligence") openIntelligence({ view: "today" });
+                  else void import("../../shell").then((m) =>
+                    m.openSurfaceOr(application.action, application.href, undefined, { origin: "dock" }),
+                  );
+                }}
+              >
+                {DOCK_SPRITES[application.windowId] ? (
+                  <img src={DOCK_SPRITES[application.windowId]} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
+                ) : (
+                  <span aria-hidden="true">{application.glyph}</span>
+                )}
+                <span className="desk-dock-label">{application.label}</span>
+                {minimized ? seatLamp : null}
+                {application.windowId === "intelligence:desk" && needsYouCount > 0 ? (
+                  <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-today-count" aria-hidden="true">
+                    {needsYouCount}
+                  </span>
+                ) : null}
+                {application.windowId === "conductor" && agentsTile.lamp ? (
+                  <span className="desk-dock-fleet" data-tone={agentsTile.lamp} data-testid="desk-dock-agents-lamp" aria-hidden="true" />
+                ) : null}
+                {application.windowId === "conductor" && agentsTile.needYou ? (
+                  <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-agents-count" aria-hidden="true">
+                    {agentsTile.needYou}
+                  </span>
+                ) : null}
+                {application.windowId === "surface-meetings" && recordingLabel ? (
+                  <span className="desk-dock-state" data-testid="desk-dock-meetings-state" data-tone="rec">
+                    {recordingLabel}
+                  </span>
+                ) : null}
+                {application.windowId === "surface-people" && people.label ? (
+                  <span className="desk-dock-state" data-testid="desk-dock-people-state" data-tone="ok">
+                    {people.label}
+                  </span>
+                ) : null}
+              </Button>
             );
           })}
         </>
@@ -579,7 +601,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       ))}
       {/* PHILO-17 (owner 2026-10-10, "everything must become one desk"):
           the Chair/Floor toggle is gone; the Screen is the one desk. */}
-      {center}
+      {!compact ? center : null}
       {NUB_CHIPS && visibleWindowChips.length > 0 ? (
         <span className="desk-dock-sep" aria-hidden="true" />
       ) : null}
@@ -633,45 +655,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           </span>
         );
       })}
-      {windows.length > 0 ? (
-        <>
-          <Button
-            variant="chrome"
-            className="desk-dock-reset"
-            aria-label="Overview"
-            title="Overview"
-            onClick={() => toggleExpose(true)}
-          >
-            <VerbGlyph kind="overview" />
-          </Button>
-          <Button
-            variant="chrome"
-            className="desk-dock-reset"
-            aria-label="Reset layout"
-            title="Reset layout"
-            onClick={() => useDesk.getState().resetLayout()}
-          >
-            <VerbGlyph kind="reset" />
-          </Button>
-        </>
-      ) : null}
-      {/* C1 (393): the shelf ends on a whole icon; this gadget moves one
-          page. The stylesheet shows it at phone width only. */}
-      {!compact ? <Button
-        variant="chrome"
-        className="desk-dock-more"
-        aria-label="More AppIcons"
-        data-testid="desk-dock-more"
-        onClick={(e) => {
-          const shelf = (e.currentTarget as HTMLElement).closest(".desk-dock") as HTMLElement | null;
-          if (!shelf) return;
-          const page = shelf.clientWidth - (e.currentTarget as HTMLElement).offsetWidth;
-          const atEnd = shelf.scrollLeft + shelf.clientWidth >= shelf.scrollWidth - 1;
-          shelf.scrollTo({ left: atEnd ? 0 : shelf.scrollLeft + page, behavior: "smooth" });
-        }}
-      >
-        <span aria-hidden="true">▸</span>
-      </Button> : null}
       {!settled && chipMenu ? (
         <WorkMenu
           className="desk-dock-menu"

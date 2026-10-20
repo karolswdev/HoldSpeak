@@ -3,6 +3,7 @@ import {
   DESK_APPLICATION_ALIASES,
   DESK_APPLICATIONS,
   DOCK_APPLICATIONS,
+  PHONE_DOCK_APPLICATIONS,
   GO_GROUPS,
   MARK_APPLICATION_COMMANDS,
   goRows,
@@ -40,7 +41,14 @@ describe("DeskOS application manifest", () => {
     // PHILO-17 (doors): the five primary Dock applications.
     expect(DOCK_APPLICATIONS.map((application) => application.label)).toEqual([
       "Today",
+      "Meetings",
+      "People",
+      "Agents",
       "Speak",
+    ]);
+    expect(PHONE_DOCK_APPLICATIONS.map((application) => application.label)).toEqual([
+      "Today",
+      "Capture",
       "Meetings",
       "People",
       "Agents",
@@ -49,7 +57,7 @@ describe("DeskOS application manifest", () => {
       DESK_APPLICATIONS.filter((application) => application.shortcut).map(
         (application) => application.shortcut,
       ),
-    ).toEqual(["⌘⇧P", "⌃1", "⌃2", "⌃3", "⌃4"]); // PHILO-17 U27
+    ).toEqual(["⌘⇧P", "⌃1", "⌃5", "⌃2", "⌃4", "⌃3"]); // PHILO-17 U27 / shell S3
   });
 
   it("keeps the PHILO-17 first-open size matrix declarative", () => {
@@ -73,9 +81,9 @@ describe("DeskOS application manifest", () => {
     expect(DESK_APPLICATIONS.some((application) => application.action === "inspect-personas-and-coders")).toBe(false);
     expect(DESK_APPLICATIONS.some((application) => application.windowId === "surface-companion")).toBe(false);
     const conductor = DESK_APPLICATIONS.find((application) => application.action === "open-conductor");
-    // The code name stays (action, window id, route, ⌃3); the face says Agents.
-    expect(conductor).toMatchObject({ windowId: "conductor", label: "Agents", toolLabel: "Agents", href: "/conductor", shortcut: "⌃3" });
-    expect(conductor?.dock).toMatchObject({ order: 4, launch: "surface" });
+    // The code name stays (action, window id, route, ⌃4); the face says Agents.
+    expect(conductor).toMatchObject({ windowId: "conductor", label: "Agents", toolLabel: "Agents", href: "/conductor", shortcut: "⌃4" });
+    expect(conductor?.dock).toMatchObject({ order: 3, launch: "surface", phone: 4 });
   });
 
   it("derives mark-menu application commands", () => {
@@ -109,7 +117,7 @@ describe("DeskOS application manifest", () => {
     // setup row of the HoldSpeak menu, or is opened by its own verb.
     const inGo = new Set(GO_GROUPS.flatMap(goRows).flatMap((r) => (r.kind === "app" ? [r.app.action] : [])));
     // Betterment P4: Projects (the window) is Go ▸ Projects ▸ All projects.
-    const elsewhere = new Set(["configure-settings", "configure-setup", "configure-cadence", "change-places",
+    const elsewhere = new Set(["chair-capture", "configure-settings", "configure-setup", "configure-cadence", "change-places",
       "record-live", "project-setup", "open-projects"]);
     for (const application of DESK_APPLICATIONS) {
       if (application.parked) continue;
