@@ -101,7 +101,7 @@ describe("the current Screen's live atmosphere", () => {
     expect(release).toHaveBeenCalledOnce();
   });
 
-  it("allocates no host or renderer for Quiet Desk and releases a live selection when Quiet wins", async () => {
+  it("allocates no host or renderer for Quiet desk and releases a live selection when Quiet wins", async () => {
     const view = render(<><Screen /><WallpaperModule /></>);
     const desk = screen.getByTestId("desk-screen");
     expect(desk).toHaveAttribute("data-place", "quiet-desk");
@@ -110,9 +110,9 @@ describe("the current Screen's live atmosphere", () => {
     expect(load).not.toHaveBeenCalled();
     expect(mountAtmosphereScene).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole("radio", { name: /After-Hours Radio/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /After-hours radio/ }));
     await waitFor(() => expect(mountAtmosphereScene).toHaveBeenCalledOnce());
-    fireEvent.click(screen.getByRole("radio", { name: /Quiet Desk/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /Quiet desk/ }));
     expect(desk.querySelector(".desk-stage, canvas")).toBeNull();
     expect(desk).not.toHaveAttribute("data-place-still");
     expect(release).toHaveBeenCalledOnce();
@@ -142,7 +142,7 @@ describe("the current Screen's live atmosphere", () => {
     render(<><Screen /><WallpaperModule /></>);
     const desk = screen.getByTestId("desk-screen");
     const oldCanvas = desk.querySelector("canvas");
-    fireEvent.click(screen.getByRole("radio", { name: /Night Train/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /Night train/ }));
 
     expect(desk).toHaveAttribute("data-place-still");
     expect(desk.style.getPropertyValue("--desk-place-still")).toContain("night-train.webp");

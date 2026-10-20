@@ -155,7 +155,7 @@ describe("the right button: the window's menu bar with Amiga-key caps", () => {
     const labels = Array.from(menu.querySelectorAll("[role^='menuitem']")).map(
       (el) => el.querySelector(".desk-menu-label")?.textContent?.trim() ?? el.textContent?.trim(),
     );
-    expect(labels.slice(0, 4)).toEqual(["Iconify", "Zoom", "To back", "Close window"]);
+    expect(labels.slice(0, 4)).toEqual(["Minimize", "Zoom", "To back", "Close"]);
     expect(labels.join("|")).toMatch(/Desk.*\|.*Go/);
     const caps = Array.from(menu.querySelectorAll(".desk-menu-keycaps")).map((k) =>
       k.getAttribute("aria-label"),
