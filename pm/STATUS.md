@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (native agent access delivery)
+**Last updated:** 2026-10-19 (Accounts Check profile restoration)
 
 ## Current phase
 
@@ -178,11 +178,12 @@ moving as independent status reads finish; its regression fails before the
 atomic first-read repair. After the repair, 4,090 web checks, 110 sweep cases,
 27 canon checks and 1,116 repo guards pass.
 
-Accounts follow-up remains open: an isolated `acli` check with no known
-prior active profile switches to the checked account and cannot restore it.
-The reproduction uses a fake CLI; the owner’s auth state was not changed.
-A known-prior profile is restored by ST2; the unknown-prior case still needs
-a truthful read or a no-switch fallback.
+Accounts Check now reads the active acli profile under the existing account
+lock when its registry has no known prior profile. It checks the selected
+account and restores the actual prior account in finally. An unreadable,
+malformed or failed status read refuses Check before any switch. Known-prior
+restoration remains intact. All 132 focused checks pass with a fake CLI;
+the owner's auth state is untouched. Required quick: ACLI_QUICK_PENDING.
 
 Q11/Q12 make Memory an answer desk and put the two directions of what is owed
 first in a person’s window. Pages have their own pass budget and continue past
