@@ -30,23 +30,32 @@
  * row, R8). The update fills the `history` slot with its own DELIVERY N and
  * Mark delivered (features/channels/SendWell.tsx).
  */
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { ConfirmVerb, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, SurfaceWell } from "../Surface";
+import { SurfaceFooter } from "../SurfaceFooter";
 import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
 import { StateChip } from "../patterns";
-import { useDesk } from "../../store";
 import { fetchConnections, type ConnectionsResponse, type ConnectionState } from "../../../pages/cores/connections/api";
 import { chipLabel } from "../../../pages/cores/connections/ConnectionsPane";
 import {
   CHANNEL_WORD, DEST_CHANGED, SEND_WORDS, syncEgress, commandId, egressOf, failedWord, farSide, noAnswerWords, previewOf,
-  refusalSize, refusedWord, requestDestinationsFocus, sentWord, stamp, targetName, targetToken, unknownWord, wire, Refusal,
+  refusalSize, refusedWord, sentWord, stamp, targetName, targetToken, unknownWord, wire, Refusal,
   type Channel, type Destination, type Preview, type Send, type WirePreview,
+  type EmailProvider,
 } from "../../../features/channels/channels";
 import "../../../features/channels/channels.css";
 import "./send-well.css"; import { keepPlace, keptPlace } from "../../deskMemory"; // PHILO-13-07 (B2)
 import { clearPendingCommand, keepPendingCommand, pendingCommands, resetPendingCommands, type HeldCommand } from "./pendingCommand";
+import { apiFetch } from "../../../lib/api";
+import { openRef } from "../../openObject";
+import { SEND_OPEN } from "../../windowSend";
+
+// Settings owns the admitted destination form. It is loaded only when the
+// sheet asks for Add destination, which keeps the shared Send species free of
+// a second form implementation and avoids a static Settings import cycle.
+const AdmittedDestinationForm = lazy(() => import("../../../pages/cores/connections/Destinations").then((m) => ({ default: m.DestForm })));
 
 /** The one document a well sends: `ref` is `<kind>:<id>` (the wire's
  *  `document_ref`), `title` its name, `label` the short token a prepared row
@@ -230,12 +239,17 @@ export function accountChip(
 
 /* ── pieces ────────────────────────────────────────────────────────── */
 
-/** The frozen fields and payload, then dispatch and its receipt. The host
- *  owns scrolling; the payload well never traps the Send action. */
-export function PreviewWell({ preview, testid, verbs }: { preview: Preview; testid: string; verbs: ReactNode }) {
+/** The frozen fields and payload. The host owns scrolling; the payload well
+ *  never traps the Send action. `Edit` is the one shared transition into the
+ *  ordinary Note editor. */
+export function PreviewWell({ preview, testid, verbs, onEdit, editBusy }: {
+  preview: Preview; testid: string; verbs?: ReactNode; onEdit?: () => void; editBusy?: boolean;
+}) {
   return (
     <div className="send-preview" data-send="well" data-testid={testid}>
-      <SurfaceSection label="Preview">
+      <SurfaceSection label="Preview" actions={onEdit ? (
+        <Button dense variant="ghost" data-testid="send-edit" loading={editBusy} disabled={editBusy} onClick={onEdit}>Edit</Button>
+      ) : undefined}>
         <dl className="send-fields">
           {preview.fields.map((f) => (
             <div key={f.label} className="send-field" data-testid="send-preview-field">
@@ -250,7 +264,7 @@ export function PreviewWell({ preview, testid, verbs }: { preview: Preview; test
           </div>
         </SurfaceWell>
       </SurfaceSection>
-      {verbs}
+      {verbs ?? null}
     </div>
   );
 }
@@ -564,6 +578,78 @@ function PreviewFailed({ pv, eg, onRetry }: {
  *  no report. */
 export const SendWellReadContext = createContext<((resolved: boolean) => void) | null>(null);
 
+const EMPTY_DESTINATION_DRAFT = {
+  channel: "file" as Channel, name: "", nameTouched: false,
+  folder: "", synced: false, repo: "", kind: "issue" as const, number: "",
+  jiraAccount: "", key: "", confAccount: "", space: "",
+  provider: "resend" as EmailProvider, fromEmail: "", fromName: "", emailRef: "", to: "", cc: "",
+  slackLabel: "", slackRef: "",
+};
+
+/** Settings' admitted form, seated inside the Send sheet. The destination
+ * controller stays in Destinations.tsx; this component only supplies the
+ * same account/key callbacks and returns the saved row to the sheet. */
+function InlineDestinationForm({ onDone, onCancel }: { onDone: (saved?: Destination) => void; onCancel: () => void }) {
+  const [conns, setConns] = useState<ConnectionsResponse | null>(null);
+  const [accountsReadError, setAccountsReadError] = useState(false);
+  const [accountsLoading, setAccountsLoading] = useState(true);
+  const [keys, setKeys] = useState<Record<string, boolean>>({});
+  const reloadAccounts = useCallback(() => {
+    setAccountsLoading(true);
+    void fetchConnections()
+      .then((answer) => { setConns(answer); setAccountsReadError(false); })
+      .catch(() => setAccountsReadError(true))
+      .finally(() => setAccountsLoading(false));
+  }, []);
+  useEffect(() => {
+    reloadAccounts();
+    window.addEventListener("focus", reloadAccounts);
+    return () => window.removeEventListener("focus", reloadAccounts);
+  }, [reloadAccounts]);
+  const onKey = useCallback((ref: string, value: string, provider: EmailProvider) =>
+    wire.saveKey(ref, value, provider).then(() => { setKeys((current) => ({ ...current, [`email:${provider}:${ref}`]: true })); return null; })
+      .catch((error) => error instanceof Refusal ? error.code : "no_answer"), []);
+  const onSlackKey = useCallback((url: string) =>
+    wire.saveSlackWebhook(url).then((answer) => { setKeys((current) => ({ ...current, [answer.key_ref]: true })); return { keyRef: answer.key_ref }; })
+      .catch((error) => ({ code: error instanceof Refusal ? error.code : "no_answer" })), []);
+  const onKeyKnown = useCallback((ref: string, present: boolean) => setKeys((current) => ({ ...current, [ref]: present })), []);
+  return (
+    <Suspense fallback={<div data-testid="dest-form-loading"><SurfaceState loading /></div>}>
+      <AdmittedDestinationForm
+        conns={conns}
+        accountsLoading={accountsLoading}
+        accountsReadError={accountsReadError}
+        onAccountsRetry={reloadAccounts}
+        initial={EMPTY_DESTINATION_DRAFT}
+        keys={keys}
+        onKey={onKey}
+        onSlackKey={onSlackKey}
+        onKeyKnown={onKeyKnown}
+        onDone={onDone}
+        onCancel={onCancel}
+      />
+    </Suspense>
+  );
+}
+
+/** Open the new Note and deliver the existing window Send signal after its
+ * pullout has mounted. The bounded retry is only for the asynchronous
+ * arrival path; the note editor remains the owner of the Send state. */
+function openNoteSend(noteRef: string) {
+  openRef(noteRef);
+  if (typeof window === "undefined") return;
+  const winId = `pullout:${noteRef}`;
+  let tries = 0;
+  const request = () => {
+    const root = document.getElementById(winId);
+    if (root?.querySelector("[data-testid=thought-send]")) return;
+    window.dispatchEvent(new CustomEvent(SEND_OPEN, { detail: { winId } }));
+    tries += 1;
+    if (tries < 30) window.setTimeout(request, 50);
+  };
+  request();
+}
+
 export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
   doc: DocRef; sendsRead: Read<Send[]>; onSettled?: () => void; head?: ReactNode;
   /** Optional source-owned allow-list (for example a Room action's exact saved target). */
@@ -574,18 +660,30 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
   const reportRead = useContext(SendWellReadContext);
   const conns = useConnections();
   const ref = doc.ref;
+  const sends = mergeKnown(ref, sendsRead.data ?? []);
+  const rememberedPick = keptPlace(`send/pick/${ref}`);
   // B2: the kept pick returns, onto a listed destination only. With no kept pick
   // and no destination but the built-in HoldSpeak folder (a fresh desk), the folder is picked.
   const destinations = dests.data === null
     ? null
     : dests.data.filter((d) => !destinationIds || destinationIds.includes(d.id));
-  const onlyBuiltin = destinations?.length === 1 && destinations[0].builtin ? destinations[0].id : null;
+  const orderedDestinations: Destination[] | null = destinations === null ? null : destinations.slice().sort((a, b) => {
+    if (rememberedPick && a.id === rememberedPick) return -1;
+    if (rememberedPick && b.id === rememberedPick) return 1;
+    const at = latestFor(sends, a.id)?.dispatch_started_at ?? "";
+    const bt = latestFor(sends, b.id)?.dispatch_started_at ?? "";
+    return bt.localeCompare(at);
+  });
+  const onlyBuiltin = orderedDestinations?.length === 1 && orderedDestinations[0].builtin ? orderedDestinations[0].id : null;
   const savedPick = store.picked.get(ref);
   const picked = savedPick !== undefined && (savedPick === null || !destinationIds || destinationIds.includes(savedPick))
     ? savedPick
-    : ((k) => (k && destinations?.some((d) => d.id === k) ? k : onlyBuiltin))(keptPlace(`send/pick/${ref}`));
+    : ((k) => (k && orderedDestinations?.some((d) => d.id === k) ? k : onlyBuiltin))(rememberedPick);
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [previewTry, setPreviewTry] = useState(0);
+  const [addingDestination, setAddingDestination] = useState(false);
+  const [editingPreview, setEditingPreview] = useState<string | null>(null);
+  const [editFailure, setEditFailure] = useState<string | null>(null);
   useEffect(() => {
     if (!picked) { setPreview(null); return; }
     let live = true;
@@ -613,7 +711,6 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
   const wellRead = (dests.data !== null || dests.failed) && (sendsRead.data !== null || sendsRead.failed) && previewRead;
   useLayoutEffect(() => { reportRead?.(wellRead); }, [reportRead, wellRead]);
 
-  const sends = mergeKnown(ref, sendsRead.data ?? []);
   useEffect(() => {
     // Prepared rows already name their exact command target. A terminal read
     // resolves that row even if its browser answer was lost; it must not leave
@@ -637,6 +734,31 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
   const waiting = prepared.filter((s) => s.state === "prepared");
   const openPrepared = store.preparedOpen.has(ref) ? store.preparedOpen.get(ref) : waiting[0]?.id ?? null;
   const pendingReads = (destinations === null && !dests.failed) || (sendsRead.data === null && !sendsRead.failed);
+  const edit = useCallback(async (destination: Destination, rendered: Preview) => {
+    if (editingPreview) return;
+    setEditingPreview(destination.id);
+    setEditFailure(null);
+    try {
+      const made = await apiFetch<{ note?: { id?: string; note_id?: string } }>("/api/notes", {
+        method: "POST",
+        json: {
+          title: `${doc.title || "Note"} (to send)`,
+          body_markdown: rendered.source_markdown ?? rendered.body,
+          tags: ["send"],
+        },
+      });
+      const noteId = String(made.note?.id ?? made.note?.note_id ?? "");
+      if (!noteId) throw new Error("note_not_created");
+      const noteRef = `note:${noteId}`;
+      pickDestination(noteRef, destination.id);
+      keepPlace(`send/pick/${noteRef}`, destination.id);
+      openNoteSend(noteRef);
+    } catch (error) {
+      setEditFailure(error instanceof Refusal ? error.code : "note_not_created");
+    } finally {
+      setEditingPreview(null);
+    }
+  }, [doc.title, editingPreview]);
 
   return (
     <div data-send="well" data-testid="send-well" data-doc={ref}
@@ -644,15 +766,18 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
       aria-label={`${SEND_WORDS.send} ${doc.title}`} role="group">
       <SurfaceSection label={SEND_WORDS.section} actions={
         <Button dense variant="ghost" data-testid="send-add-destination"
-          onClick={() => { requestDestinationsFocus(); useDesk.getState().openSurfaceWindow("configure-settings", "integrations"); }}>
+          aria-expanded={addingDestination}
+          onClick={() => setAddingDestination((open) => !open)}>
           {SEND_WORDS.addDestination}
         </Button>
       }>
         {head}
         {pendingReads ? <div data-testid="send-read-loading"><SurfaceState loading /></div> : null}
+        <div className="send-sheet-sections">
         {sendsRead.failed ? (
           <Unreadable what="SENDS" testid="sends-unreadable" onRetry={reload} />
         ) : prepared.length > 0 ? (
+          <SurfaceSection className="send-ready-section" label="Ready to send" data-testid="send-ready-section">
           <SurfaceLedger count="" cols="room">
             <ul className="surface-ledger-rows" data-testid="prepared-list">
               {prepared.map((s) => (
@@ -664,17 +789,35 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
               ))}
             </ul>
           </SurfaceLedger>
+          </SurfaceSection>
         ) : null}
         {dests.failed ? (
           <Unreadable what="DESTINATIONS" testid="destinations-unreadable" onRetry={dests.reload} />
-        ) : destinations === null ? null : destinations.length === 0 ? (
-          <div className="send-line" data-testid="send-none">
-            <span className="surface-token" data-chip>{SEND_WORDS.noDestination}</span>
-          </div>
         ) : (
-          <SurfaceLedger count="" cols="room">
-            <ul className="surface-ledger-rows" data-testid="destination-list">
-              {destinations.map((d) => {
+          <SurfaceSection className="send-to-section" label="To" data-testid="send-to-section">
+            {addingDestination ? (
+              <div className="send-inline-destination" data-testid="send-inline-destination">
+                <InlineDestinationForm
+                  onDone={(saved) => {
+                    setAddingDestination(false);
+                    if (saved) {
+                      pickDestination(ref, saved.id);
+                      keepPlace(`send/pick/${ref}`, saved.id);
+                    }
+                    dests.reload();
+                  }}
+                  onCancel={() => setAddingDestination(false)}
+                />
+              </div>
+            ) : null}
+            {orderedDestinations === null ? null : orderedDestinations.length === 0 ? (
+              <div className="send-line" data-testid="send-none">
+                <span className="surface-token" data-chip>{SEND_WORDS.noDestination}</span>
+              </div>
+            ) : (
+            <SurfaceLedger count="" cols="room">
+            <ul className="surface-ledger-rows send-destination-list" data-testid="destination-list">
+              {orderedDestinations.map((d) => {
                 const k = `${ref}|${d.id}`;
                 const open = picked === d.id;
                 const o = store.outcomes.get(k) ?? { kind: "none" as const };
@@ -738,41 +881,52 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
                   </div>
                 );
                 return (
-                  <SurfaceLedgerRow
-                    key={d.id}
-                    data-testid="destination-row"
-                    wrap
-                    open={open}
-                    lineLabel={`${d.name}, ${CHANNEL_WORD[d.channel] ?? d.channel}`}
-                    onToggle={() => {
-                      if (busy || held) return;           // a held press keeps its pick
-                      store.picked.set(ref, open ? null : d.id); keepPlace(`send/pick/${ref}`, open ? "" : d.id); bump();
-                    }}
-                    lead={<span className="send-pick" aria-hidden="true">{open ? "●" : "○"}</span>}
-                    primary={<span className="surface-primary" data-destination={d.name} title={targetToken(d.channel, d.target)}>{d.name}</span>}
-                    cells={<span className="send-cells">
-                      <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
-                      {!open ? <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</span> : null}
-                      {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
-                      {open ? <LastChip s={last} /> : <ClosedReceipt o={o} last={last} />}
-                      <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
-                    </span>}
-                  >
+                  <li key={d.id} className="send-destination-item" data-testid="destination-row" data-open={open || undefined}>
+                    <Button dense variant={open ? "secondary" : "ghost"} disabled={busy || Boolean(held)}
+                      aria-pressed={open}
+                      className="send-destination-chip"
+                      onClick={() => {
+                        if (busy || held) return;           // a held press keeps its pick
+                        store.picked.set(ref, open ? null : d.id); keepPlace(`send/pick/${ref}`, open ? "" : d.id); bump();
+                      }}>
+                      <span className="send-pick" aria-hidden="true">{open ? "●" : "○"}</span>
+                      <span className="surface-primary" data-destination={d.name} title={targetToken(d.channel, d.target)}>{d.name}</span>
+                      <span className="send-cells">
+                        <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
+                        {!open ? <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</span> : null}
+                        {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
+                        {open ? <LastChip s={last} /> : <ClosedReceipt o={o} last={last} />}
+                        <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
+                      </span>
+                    </Button>
                     {open ? (
                       <div className="send-open" data-testid="send-open" data-destination={d.name}>
                         {!activePreview && !pv && !pendingReads ? <div data-testid="send-preview-loading"><SurfaceState loading /></div> : null}
                         {activePreview
-                          ? <PreviewWell preview={activePreview} testid="send-preview" verbs={verbs} />
+                          ? <>
+                              <PreviewWell preview={activePreview} testid="send-preview"
+                                onEdit={() => void edit(d, activePreview)} editBusy={editingPreview === d.id} />
+                              <SurfaceFooter dataSend="actions" className="send-sheet-footer" fold={false}
+                                verbs={
+                                  <>
+                                    {editFailure ? <span className="send-line" data-testid="send-edit-failed"><StateChip state="failure" label="EDIT NOT SAVED" /><span className="surface-token" data-chip>{editFailure.toUpperCase().replace(/[_:]/g, " ")}</span></span> : null}
+                                    {verbs}
+                                  </>
+                                } />
+                            </>
                           : null}
                         {!activePreview && pv && "failed" in pv ? <PreviewFailed pv={pv} eg={eg} onRetry={() => setPreviewTry((n) => n + 1)} /> : null}
                       </div>
                     ) : null}
-                  </SurfaceLedgerRow>
+                  </li>
                 );
               })}
             </ul>
           </SurfaceLedger>
+            )}
+          </SurfaceSection>
         )}
+        </div>
       </SurfaceSection>
     </div>
   );
@@ -878,9 +1032,8 @@ function PreparedRow({ docRef, label, s, reload, conns, dest, open, onToggle, on
 
 /* ── the history of a new kind: its ENDED SENDS (R8: no manual row) ────── */
 
-/** The head word (faces.md F8, settled by the brains' check): SENDS N, N the
- *  sent rows; no counter at zero. The update keeps its DELIVERY N. */
-export const HISTORY_HEAD = "SENDS";
+/** The shared sheet's one receipt list: SENT, with no counter at zero. */
+export const HISTORY_HEAD = "SENT";
 
 /** `tag` (PHILO-13-15, Astra C5 check condition 2): a host whose document has
  *  forms (the meeting) names each row's form, so a result of another form
@@ -893,7 +1046,7 @@ export function SendHistory({ sends, tag }: { sends: Send[]; tag?: (s: Send) => 
   const ok = rows.filter((r) => r.state === "sent").length;
   return (
     <div data-send="history" data-species="send" data-testid="send-history">
-      <SurfaceSection label={ok > 0 ? `${HISTORY_HEAD} ${ok}` : HISTORY_HEAD}>
+      <SurfaceSection data-testid="sent-section" label={ok > 0 ? `${HISTORY_HEAD} ${ok}` : HISTORY_HEAD}>
         <SurfaceLedger count="" cols="room">
           <ul className="surface-ledger-rows" data-testid="history-list">
             {rows.map((r) => {
@@ -952,21 +1105,28 @@ type SendWellsProps = {
   doc: DocRef; head?: ReactNode; onSettled?: () => void;
   history?: (sends: Send[]) => ReactNode;
   destinationIds?: string[];
+  /** The host's narrow Back state. The shared sheet owns the control and
+   * returns focus to the host's opening Send… control through this callback. */
+  onBack?: () => void;
 };
 
-function ReadSendWells({ doc, head, onSettled, history, destinationIds, sendsRead }: SendWellsProps & { sendsRead: Read<Send[]> }) {
+export function SendSheet({ doc, head, onSettled, history, destinationIds, onBack, sendsRead }: SendWellsProps & { sendsRead: Read<Send[]> }) {
   const sends = mergeKnown(doc.ref, sendsRead.data ?? []);
   return (
-    <>
+    <div data-send="sheet" data-testid="send-sheet" data-doc={doc.ref} className="send-sheet">
+      <header className="send-sheet-header" data-testid="send-sheet-header">
+        {onBack ? <Button dense variant="ghost" data-testid="send-back" onClick={onBack}>‹ Back</Button> : null}
+        <span className="surface-primary">Send</span>
+      </header>
       <SendWell doc={doc} sendsRead={sendsRead} onSettled={onSettled} head={head} destinationIds={destinationIds} />
       {history ? history(sends) : <SendHistory sends={sends} />}
-    </>
+    </div>
   );
 }
 
 export function SendWells(props: SendWellsProps) {
   const sendsRead = useSends(props.doc.ref, props.onSettled);
-  return <ReadSendWells {...props} sendsRead={sendsRead} />;
+  return <SendSheet {...props} sendsRead={sendsRead} />;
 }
 
 /** A compact document host. Sends stay readable while destinations and the
@@ -992,9 +1152,9 @@ export function SendWellsFold(props: SendWellsProps) {
         {running ? <StateChip state="active" label={SEND_WORDS.sending} /> : null}
         {ended && !open ? <StateChip state="idle" label={HISTORY_HEAD} /> : null}
         <Button dense variant="ghost" aria-expanded={open} disabled={held}
-          onClick={() => setOpenedRef(open ? null : doc.ref)}>{open ? "Hide" : SEND_WORDS.send}</Button>
+          onClick={() => setOpenedRef(open ? null : doc.ref)}>{open ? "Hide" : "Send…"}</Button>
       </div>
-      {open ? <ReadSendWells {...props} sendsRead={sendsRead} /> : <>
+      {open ? <SendSheet {...props} onBack={() => setOpenedRef(null)} sendsRead={sendsRead} /> : <>
         {sendsRead.failed ? <Unreadable what="SENDS" testid="sends-unreadable" onRetry={sendsRead.reload} /> : null}
         {refusals.map(([key, outcome]) => <OutcomeLine key={key} o={outcome} />)}
       </>}

@@ -552,6 +552,7 @@ export function MeetingDetail({
   onDeleted,
   onReceipt,
   onRunIntelligence,
+  onSendBack,
   runRefusal,
   onTranscribe,
   saidOnFace,
@@ -577,6 +578,8 @@ export function MeetingDetail({
   /** HS-201-04 — called with the route this RECORD displays, so the
    *  disclosure and the request are the same object. */
   onRunIntelligence?: (route: PlannedRoute | null) => void;
+  /** The shared Send sheet returns to the record's opening Send… control. */
+  onSendBack?: () => void;
   /** HS-201-04 — the hub's 409 on this record's last run gesture. */
   runRefusal?: SummaryRefusal | null;
   /** PHILO-17: bumped by the meeting window when its records may have moved. */
@@ -753,7 +756,7 @@ export function MeetingDetail({
           {sendRequested ? (
             <div id={`meeting-${id}-send`} className="meetings-detail-anchor">
               {summaryIntel?.summary?.trim() ? (
-                <MeetingSendWell meetingId={id} title={meetingTitle}
+                <MeetingSendWell meetingId={id} title={meetingTitle} onBack={onSendBack}
                   startedAt={String((detail ?? meeting)?.started_at ?? "") || null} />
               ) : (
                 <div role="status">Summary unavailable <Button dense variant="ghost" onClick={onDeleted}>Retry</Button></div>

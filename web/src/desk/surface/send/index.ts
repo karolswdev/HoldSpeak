@@ -4,6 +4,7 @@
 // desk store). Sanctioned in contract.md ("SendWell").
 export {
   SendWell,
+  SendSheet,
   SendWells,
   SendWellsFold,
   SendHistory,

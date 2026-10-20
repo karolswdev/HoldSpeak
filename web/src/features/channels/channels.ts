@@ -83,7 +83,15 @@ export type Send = {
 };
 
 export type PreviewField = { label: string; value: string };
-export type Preview = { fields: PreviewField[]; body_kind: "markdown" | "text"; body: string };
+export type Preview = {
+  fields: PreviewField[];
+  body_kind: "markdown" | "text";
+  body: string;
+  /** Source Markdown used by Send's Edit action. The receiver-facing body
+   * remains the rendered `text` value; this preserves the producer bytes for
+   * HTML email and other previews that carry both forms. */
+  source_markdown?: string;
+};
 
 /* ── words ─────────────────────────────────────────────────────────── */
 
@@ -147,7 +155,7 @@ export const SENT_WORD: Record<Channel | "manual", string> = {
   confluence: "BLOG POSTED",
   email: "ACCEPTED BY SENDGRID",
   slack: "POSTED",
-  manual: "DELIVERED",
+  manual: "SENT BY HAND",
 };
 /** Email's word names the provider that accepted it (the proof's provider, else the account's). */
 export const sentWord = (channel: string, proof?: Record<string, unknown> | null,
@@ -490,6 +498,7 @@ export function previewOf(
 ): Preview {
   const a = account, t = target;
   const body = String(wire.text ?? "");
+  const sourceMarkdown = typeof wire.markdown === "string" ? wire.markdown : body;
   const warning = wire.warning ? [{ label: "Warning", value: String(wire.warning) }] : [];
   switch (channel) {
     case "file":
@@ -497,27 +506,27 @@ export function previewOf(
         // B23: the folder by its name, never the raw path (`/private/var/...`).
         fields: [...warning, { label: "Folder", value: targetName("file", t) },
           ...(filePath ? [{ label: "File", value: baseName(filePath) }] : [])],
-        body_kind: "markdown", body,
+        body_kind: "markdown", body, source_markdown: sourceMarkdown,
       };
     case "github":
       return {
         fields: [...warning, { label: "Repository", value: String(t.repo ?? "") },
           { label: t.kind === "pr" ? "Pull request" : "Issue", value: `#${t.number}` },
           { label: "Account", value: `${a.login ?? ""} · ${a.host ?? "github.com"}` }],
-        body_kind: "markdown", body,
+        body_kind: "markdown", body, source_markdown: sourceMarkdown,
       };
     case "jira":
       return {
         fields: [...warning, { label: "Work item", value: String(t.key ?? "") },
           { label: "Account", value: `${a.email ?? ""} · ${a.site ?? ""}` }],
-        body_kind: "text", body,
+        body_kind: "text", body, source_markdown: sourceMarkdown,
       };
     case "confluence":
       return {
         fields: [...warning, { label: "Space", value: String(t.space_id ?? "") },
           { label: "Title", value: String(wire.title ?? "") },
           { label: "Account", value: `${a.email ?? ""} · ${a.site ?? ""}` }],
-        body_kind: "text", body,
+        body_kind: "text", body, source_markdown: sourceMarkdown,
       };
     case "email": {
       // Parsed back from the frozen provider request (story 03): From, To, Cc, Subject, the text.
@@ -530,16 +539,16 @@ export function previewOf(
       const cc = list(wire.cc ?? t.cc);
       if (cc) f.push({ label: "Cc", value: cc });
       if (wire.subject) f.push({ label: "Subject", value: String(wire.subject) });
-      return { fields: f, body_kind: "text", body: String(wire.text ?? body) };
+      return { fields: f, body_kind: "text", body: String(wire.text ?? body), source_markdown: sourceMarkdown };
     }
     case "slack":
       // A webhook has no read call: the fields are the channel label and the one host.
       return {
         fields: [...warning, { label: "Channel", value: String(t.channel_label ?? "") }, { label: "Webhook", value: "hooks.slack.com" }],
-        body_kind: "text", body,
+        body_kind: "text", body, source_markdown: sourceMarkdown,
       };
     default:
-      return { fields: [], body_kind: "text", body };
+      return { fields: [], body_kind: "text", body, source_markdown: sourceMarkdown };
   }
 }
 

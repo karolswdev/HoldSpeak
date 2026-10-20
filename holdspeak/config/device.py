@@ -56,6 +56,30 @@ class MeshConfig:
 
 
 @dataclass
+class RemoteConfig:
+    """The owner's Streamable HTTP reach settings.
+
+    These values describe the remote listener's posture. Credential custody
+    remains in the process-local credential store; this section only carries
+    the listener switch and its displayed address.
+    """
+
+    streamable_http_enabled: bool = False
+    bind_host: str | None = None
+    port: int | None = None
+
+    def __post_init__(self) -> None:
+        self.streamable_http_enabled = bool(self.streamable_http_enabled)
+        if self.bind_host is not None:
+            self.bind_host = str(self.bind_host)
+        if self.port is not None:
+            try:
+                self.port = int(self.port)
+            except (TypeError, ValueError):
+                self.port = None
+
+
+@dataclass
 class WakeWordConfig:
     """The wake word (HS-60): hands-free ARMING of dictation, off by default.
 

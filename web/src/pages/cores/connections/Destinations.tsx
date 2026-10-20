@@ -62,7 +62,7 @@ const CHANNELS: { value: Channel; label: string }[] = [
 /** Story 07: the email providers, from the one table (PHILO-15 04: Resend first, the default). */
 const PROVIDERS = (Object.keys(EMAIL_PROVIDERS) as EmailProvider[]).map((p) => ({ value: p, label: EMAIL_PROVIDERS[p].label }));
 
-type Draft = {
+export type Draft = {
   channel: Channel; name: string; nameTouched: boolean;
   folder: string; synced: boolean;
   repo: string; kind: "issue" | "pr"; number: string;
@@ -72,7 +72,7 @@ type Draft = {
   /** Slack: his channel label, and the key_ref the webhook save returned (empty until he types it). */
   slackLabel: string; slackRef: string;
 };
-const EMPTY: Draft = {
+export const EMPTY: Draft = {
   channel: "file", name: "", nameTouched: false, folder: "", synced: false, repo: "", kind: "issue", number: "",
   jiraAccount: "", key: "", confAccount: "", space: "", provider: DEFAULT_EMAIL_PROVIDER, fromEmail: "", fromName: "", emailRef: "", to: "", cc: "",
   slackLabel: "", slackRef: "",
@@ -116,7 +116,12 @@ export const keyRef = (fromEmail: string, provider: EmailProvider = DEFAULT_EMAI
 const emailKeyIdentity = (provider: string, ref: string) => `email:${provider}:${ref}`;
 const addresses = (text: string) => text.split(/[,\r\n]/).map((a) => a.trim()).filter(Boolean);
 
-function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, initial, replaces, keys, onKey, onSlackKey, onKeyKnown, onDone, onCancel }: {
+/**
+ * The admitted destination form is shared by Settings and the Send sheet.
+ * Keep the wire/account/key checks here so an inline Add destination has the
+ * exact same validation and keychain semantics as Settings.
+ */
+export type DestFormProps = {
   conns: ConnectionsResponse | null; initial: Draft; replaces?: string; keys: Record<string, boolean>;
   accountsLoading: boolean; accountsReadError: boolean; onAccountsRetry: () => void;
   onKey: (ref: string, v: string, provider: EmailProvider) => Promise<string | null>;
@@ -126,7 +131,9 @@ function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, 
   onKeyKnown: (ref: string, present: boolean) => void;
   /** `saved`: the destination the hub saved (its account as the hub found it). */
   onDone: (saved?: Destination) => void; onCancel?: () => void;
-}) {
+};
+
+export function DestForm({ conns, accountsLoading, accountsReadError, onAccountsRetry, initial, replaces, keys, onKey, onSlackKey, onKeyKnown, onDone, onCancel }: DestFormProps) {
   const [keyRefused, setKeyRefused] = useState<string | null>(null);
   const [keyChecking, setKeyChecking] = useState(false);
   const [d, setD] = useState<Draft>(initial);

@@ -24,7 +24,7 @@ from .ui import HotkeyConfig, MacrosConfig, UIConfig
 from .owner import OwnerConfig
 from .people import PeopleConfig
 from .agents import AgentsConfig
-from .device import DeviceConfig, MeshConfig, PresenceConfig, WakeWordConfig
+from .device import DeviceConfig, MeshConfig, PresenceConfig, RemoteConfig, WakeWordConfig
 from .integrations import (
     CadenceConfig,
     CalendarConfig,
@@ -301,6 +301,7 @@ class Config:
     presence: PresenceConfig = field(default_factory=PresenceConfig)
     wake_word: WakeWordConfig = field(default_factory=WakeWordConfig)
     mesh: MeshConfig = field(default_factory=MeshConfig)
+    remote: RemoteConfig = field(default_factory=RemoteConfig)
     cadence: CadenceConfig = field(default_factory=CadenceConfig)
     cadence_telegram: TelegramConfig = field(default_factory=TelegramConfig)
     rails_observer: RailsObserverConfig = field(default_factory=RailsObserverConfig)
@@ -365,6 +366,7 @@ class Config:
                 presence=_coerce(PresenceConfig, data.get("presence", {}) or {}, section="presence"),
                 wake_word=_coerce(WakeWordConfig, data.get("wake_word", {}) or {}, section="wake_word"),
                 mesh=_coerce(MeshConfig, data.get("mesh", {}) or {}, section="mesh"),
+                remote=_coerce(RemoteConfig, data.get("remote", {}) or {}, section="remote"),
                 cadence=_coerce(CadenceConfig, data.get("cadence", {}) or {}, section="cadence"),
                 cadence_telegram=_coerce(
                     TelegramConfig, data.get("cadence_telegram", {}) or {}, section="cadence_telegram"

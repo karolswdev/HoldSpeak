@@ -3,6 +3,7 @@
 // verb; the ready ones and the install commands fold.
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import MICROPHONE from "../../../desk/__tests__/fixtures/setup-st3-st5/microphone.json";
 
 vi.mock("../../../lib/api", async (importOriginal) => {
   const original = await importOriginal<typeof import("../../../lib/api")>();
@@ -43,6 +44,7 @@ describe("the Guide wing", () => {
     render(<RuntimeDocsCore />);
     await waitFor(() => expect(screen.getByTestId("guide-headline").textContent).toBe("Readiness not known"));
     expect(screen.queryByText("Everything is ready")).toBeNull();
+    expect(screen.getByText("Not known")).toBeTruthy();
   });
   it("leads with what needs him, one primary, the command on demand, the ready rows folded", async () => {
     const { container } = render(<RuntimeDocsCore />);
@@ -68,6 +70,26 @@ describe("the Guide wing", () => {
     const fold = screen.getByTestId("guide-check-database").closest("details");
     expect(fold?.open).toBe(false);
     expect(container.textContent).not.toMatch(/Runtime reference/);
+  });
+
+  it("uses the recorded producer state words and keeps the reason in the detail", async () => {
+    vi.mocked(apiFetch).mockResolvedValueOnce(MICROPHONE);
+    render(<RuntimeDocsCore />);
+    const row = await screen.findByTestId("guide-check-microphone");
+    expect(within(row).getByText("Does not work")).toBeTruthy();
+    expect(within(row).getByText("No microphone found")).toBeTruthy();
+  });
+
+  it("does not invent a fix verb for a warning with no producer fix", async () => {
+    const warningWithoutFix = {
+      ...MICROPHONE,
+      sections: MICROPHONE.sections.map((section) => ({ ...section, status: "warn", fix: null })),
+    };
+    vi.mocked(apiFetch).mockResolvedValueOnce(warningWithoutFix);
+    render(<RuntimeDocsCore />);
+    const row = await screen.findByTestId("guide-check-microphone");
+    expect(within(row).getByText("Not ready")).toBeTruthy();
+    expect(row.querySelector(".guide-row-verb")).toBeNull();
   });
 
   it("finds the command in a fix sentence, and none in plain words", () => {
