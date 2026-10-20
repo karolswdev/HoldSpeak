@@ -36,7 +36,9 @@ export interface DeskApplication {
   subjectRef?: string;
   surface?: DeskSurfaceSpec;
   aliases?: readonly DeskApplicationAlias[];
-  dock?: { order: number; launch: "surface" | "intelligence"; phone?: number };
+  dock?: { order: number; launch: "surface" | "intelligence" | "chair"; phone?: number };
+  /** A Chair door that is present on the phone Dock only. */
+  phoneOnly?: boolean;
   /** Parked surfaces keep their manifest and hub id without a live host. */
   parked?: string;
   /** Betterment shell S1: the row in Go, on the desktop and the phone. Go
@@ -90,6 +92,17 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     group: "app",
     dock: { order: 0, launch: "intelligence", phone: 0 },
     go: { group: "daily", order: 0 },
+    shortcut: "⌃1",
+  },
+  {
+    action: "chair-capture",
+    windowId: "chair:capture",
+    label: "Capture",
+    description: "Capture a thought on the phone.",
+    glyph: "●",
+    href: "/",
+    phoneOnly: true,
+    dock: { order: 5, launch: "chair", phone: 1 },
   },
   {
     action: "dictate",
@@ -99,9 +112,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "⌁",
     href: "/dictation",
     group: "app",
-    dock: { order: 1, launch: "surface" },
+    dock: { order: 4, launch: "surface" },
     go: { group: "daily", order: 7 },
-    shortcut: "⌃1",
+    shortcut: "⌃5",
     aliases: [
       { key: "configure-commands", scope: "commands" },
       { key: "surface-commands", scope: "commands" },
@@ -134,7 +147,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "▣",
     href: "/history",
     group: "app",
-    dock: { order: 2, launch: "surface", phone: 2 },
+    dock: { order: 1, launch: "surface", phone: 2 },
     go: { group: "daily", order: 2 },
     shortcut: "⌃2",
     surface: {
@@ -151,7 +164,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   },
   // PHILO-14 C4: the Conductor drawer is where agents live. Betterment AG1
   // (DECISIONS #3): its face name is Agents; the action, window id, route
-  // and ⌃3 keep the code name.
+  // and ⌃4 keep the code name.
   {
     action: "open-conductor",
     windowId: "conductor",
@@ -162,9 +175,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/conductor",
     group: "tool",
     // PHILO-17 (doors): the Agents door is its desk drawer, Dock and Go.
-    dock: { order: 4, launch: "surface" },
+    dock: { order: 3, launch: "surface", phone: 4 },
     go: { group: "daily", order: 5 },
-    shortcut: "⌃3",
+    shortcut: "⌃4",
   },
   // Betterment AG1: the old Agents application (`/companion`, CompanionCore)
   // is unmapped: no manifest row, its address opens Agents. Its row is
@@ -178,13 +191,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/settings",
     group: "app",
     // PHILO-17 (doors): Settings is in the HoldSpeak menu only.
-    shortcut: "⌃4",
     mark: 1,
     aliases: [
       { key: "configure-integrations", scope: "integration:destinations" },
       { key: "configure-integration" },
-      { key: "configure-runs-on", scope: "models" },
-      { key: "open-concierge", scope: "models" },
       // The retired Guide alias is parked under _parked/setupGuideAlias.ts.
       // Betterment setup ST1: the parked Rhythm window and Change places.
       { key: "configure-cadence", scope: "rhythm" },
@@ -192,9 +202,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     ],
     surface: {
       eyebrow: "Configuration",
-      minW: 560,
-      defaultW: 640,
-      defaultH: 600,
+      minW: 880,
+      defaultW: 1040,
+      defaultH: 720,
       load: () =>
         import("../pages/cores/SettingsCore").then((module) => ({
           default: module.SettingsCore,
@@ -364,20 +374,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     },
   },
   // HS-169-02: the streamlined Door (replaces the setup interview)
-  // HS-170-03: the Concierge — the Models surface (replaces ModelLibraryCore + CapabilityAssignmentsCore)
-  {
-    action: "open-concierge",
-    windowId: "surface-concierge",
-    // PHILO-17: the id remains for old saved rows; the live face is the
-    // Engines wing of Settings and this surface is parked.
-    label: "Engines",
-    description: "What HoldSpeak does, wired to what you have.",
-    glyph: "▣",
-    href: "/models",
-    parked: "settings:models",
-    // Compatibility row only. Settings owns the live Engines host; saved
-    // rows are retired by the hub and new callers use its alias.
-  },
   {
     action: "project-setup",
     windowId: "surface-project-setup",
@@ -433,9 +429,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/",
     // Betterment shell S1: a group, so Search lists it.
     group: "app",
-    dock: { order: 3, launch: "surface", phone: 3 },
+    dock: { order: 2, launch: "surface", phone: 3 },
     // PHILO-17 (doors): the People drawer on the desk, and Go.
     go: { group: "daily", order: 3 },
+    shortcut: "⌃3",
     surface: {
       eyebrow: "Follow-through",
       minW: 560,
@@ -507,17 +504,30 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
         })),
     },
   },
-  // HS-170-03: configure-runs-on now opens the Concierge window.
+  // Betterment ST7: Engines is a real Desk window. The old Concierge id is
+  // retained only in the hub's retired registry so saved rows can close; its
+  // action is an alias to this canonical host and legacy `/models` links land
+  // here too.
   {
     action: "configure-runs-on",
-    windowId: "surface-concierge",
+    windowId: "surface-engines",
     label: "Engines",
     description: "What HoldSpeak does, wired to what you have.",
     glyph: "▣",
     href: "/models",
     group: "tool",
     mark: 2,
-    parked: "settings:models",
+    aliases: [{ key: "open-concierge" }],
+    surface: {
+      eyebrow: "Engine assignments",
+      minW: 760,
+      defaultW: 1040,
+      defaultH: 720,
+      load: () =>
+        import("../features/runson/RunsOnCore").then((module) => ({
+          default: module.RunsOnCore,
+        })),
+    },
   },
   {
     action: "configure-integrations",
@@ -546,8 +556,15 @@ export type DockApplication = DeskApplication & {
 
 export const DOCK_APPLICATIONS: readonly DockApplication[] =
   DESK_APPLICATIONS.filter(
-    (application): application is DockApplication => Boolean(application.dock),
+    (application): application is DockApplication => Boolean(application.dock) && !application.phoneOnly,
   ).sort((left, right) => left.dock.order - right.dock.order);
+
+/** The phone Dock is the same manifest projection. Capture is a phone-only
+ * Chair entry; every other tile is an application in the primary Dock. */
+export const PHONE_DOCK_APPLICATIONS: readonly DockApplication[] =
+  DESK_APPLICATIONS.filter(
+    (application): application is DockApplication => application.dock?.phone !== undefined,
+  ).sort((left, right) => (left.dock.phone ?? 0) - (right.dock.phone ?? 0));
 
 /** The registry verb that opens an application: Intelligence and People
  * open through their desk verbs, every other application through `go.*`. */

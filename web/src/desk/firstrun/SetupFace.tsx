@@ -480,7 +480,7 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
               meta={<StateChip state={ownerName ? "success" : "idle"} label={ownerName ? "Works" : "Found"} />}
             >
               <div className="setup-face-owner-input">
-                <StringGadget label="Your name" value={owner.name} onChange={owner.setName} placeholder="Your name" inputProps={{ onBlur: () => void owner.flush() }} />
+                <StringGadget label="Your name" value={owner.name} onChange={owner.setName} placeholder="Your name" disabled={owner.loading} inputProps={{ onBlur: () => void owner.flush() }} />
               </div>
             </SurfaceRow>
             <SurfaceRow

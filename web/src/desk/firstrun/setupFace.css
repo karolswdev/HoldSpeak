@@ -178,65 +178,7 @@
   }
 }
 
-@media (max-width: 600px) {
-  .setup-face {
-    padding: 12px;
-  }
-
-  .setup-face-head {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .setup-face-head .btn {
-    align-self: flex-start;
-  }
-
-  .setup-face-row-meta {
-    justify-content: flex-start;
-  }
-
-  .setup-face .surface-row-line {
-    align-items: flex-start;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .setup-face .surface-row-main {
-    align-items: start;
-    display: grid;
-    flex: none;
-    grid-column: 1 / -1;
-    grid-template-columns: 28px minmax(0, 1fr);
-    min-width: 0;
-    width: auto;
-  }
-
-  .setup-face .surface-row-main > .surface-row-text {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .setup-face .surface-row-main > .surface-row-glyph {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .setup-face .surface-row-main > .surface-row-meta {
-    grid-column: 2;
-    grid-row: 2;
-    justify-self: start;
-    margin-left: 0;
-  }
-
-  .setup-face .surface-row-verbs {
-    grid-column: 2;
-    grid-row: 2;
-    margin-left: auto;
-  }
-
-  .setup-face-finale {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
+/* Padding follows the window's width, including a narrow desktop window. */
+@container (max-width: 600px) {
+  .setup-face { padding: 12px; }
 }

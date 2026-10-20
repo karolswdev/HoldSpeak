@@ -66,6 +66,67 @@ export const PREF_MODULES: PrefModule[] = [
   { id: "agents", label: "Agents", glyph: "system", sprite: "system", keys: ["agents"] },
 ];
 
+/** The one-page Settings sections.  These ids are face anchors, rather than
+ * another navigation layer: every old module scope resolves to one of these
+ * sections and the page remains mounted while the owner moves around it. */
+export const SETTINGS_SECTIONS = [
+  { id: "you", label: "You" },
+  { id: "speak", label: "Speak" },
+  { id: "meetings", label: "Meetings" },
+  { id: "notices", label: "Notices" },
+  { id: "accounts", label: "Accounts" },
+  { id: "agents", label: "Agents" },
+  { id: "desk", label: "Desk" },
+  { id: "this-mac", label: "This Mac" },
+] as const;
+
+export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number]["id"];
+
+/** Palette rows are the same labels the page renders.  The registry uses
+ * this list instead of inventing a second Settings search surface. */
+export type SettingsPaletteRow = {
+  id: string;
+  label: string;
+  section: SettingsSectionId;
+  focus: string;
+  terms?: string;
+};
+
+export const SETTINGS_PALETTE_ROWS: readonly SettingsPaletteRow[] = [
+  { id: "owner-name", label: "Your name", section: "you", focus: "owner-name", terms: "owner you identity" },
+  { id: "owner-aliases", label: "Also called", section: "you", focus: "owner-aliases", terms: "aliases names" },
+  { id: "push-to-talk", label: "Push-to-talk key", section: "speak", focus: "push-to-talk", terms: "hotkey mic speak" },
+  { id: "language", label: "Language", section: "speak", focus: "language", terms: "speech transcription" },
+  { id: "preview-before-type", label: "Preview before type", section: "speak", focus: "preview-before-type", terms: "dictation typing" },
+  { id: "voice-commands", label: "Voice commands", section: "speak", focus: "voice-commands", terms: "macros" },
+  { id: "wake-word", label: "Wake word", section: "speak", focus: "wake-word", terms: "wake" },
+  { id: "spoken-symbols", label: "Spoken symbols", section: "speak", focus: "spoken-symbols", terms: "symbols" },
+  { id: "make-summary", label: "Make summary", section: "meetings", focus: "make-summary", terms: "summary meeting" },
+  { id: "record-by-itself", label: "Auto-record", section: "meetings", focus: "record-by-itself", terms: "record recording" },
+  { id: "microphone", label: "Microphone", section: "meetings", focus: "microphone", terms: "mic audio" },
+  { id: "export", label: "Export", section: "meetings", focus: "export", terms: "meeting export" },
+  { id: "notify", label: "Notify", section: "notices", focus: "notify", terms: "notification" },
+  { id: "quiet-hours", label: "Quiet hours", section: "notices", focus: "quiet-hours", terms: "quiet rhythm cadence" },
+  { id: "daily-brief", label: "Daily brief", section: "notices", focus: "daily-brief", terms: "brief morning" },
+  { id: "max-nudges", label: "Max nudges", section: "notices", focus: "max-nudges", terms: "nudges" },
+  { id: "connections", label: "Connections", section: "accounts", focus: "connections", terms: "account provider" },
+  { id: "calendar", label: "Calendar", section: "accounts", focus: "calendar", terms: "calendar" },
+  { id: "destinations", label: "Destinations", section: "accounts", focus: "destinations", terms: "send" },
+  { id: "secrets", label: "Secrets", section: "accounts", focus: "secrets", terms: "credentials tokens" },
+  { id: "agents", label: "Agents", section: "agents", focus: "agents", terms: "agent readiness" },
+  { id: "agents-act", label: "Agents act", section: "agents", focus: "agents-act", terms: "secure normal yolo posture" },
+  { id: "people-access", label: "People access", section: "agents", focus: "people-access", terms: "people read write" },
+  { id: "wallpaper", label: "Wallpaper", section: "desk", focus: "wallpaper", terms: "places atmosphere" },
+  { id: "desk-sounds", label: "Desk sounds", section: "desk", focus: "desk-sounds", terms: "sounds" },
+  { id: "motion", label: "Motion", section: "desk", focus: "motion", terms: "animation" },
+  { id: "presence", label: "Presence", section: "desk", focus: "presence", terms: "mascot" },
+  { id: "engines", label: "Engines", section: "this-mac", focus: "engines", terms: "models runs on" },
+  { id: "setup", label: "Setup", section: "this-mac", focus: "setup", terms: "found readiness" },
+  { id: "other-devices", label: "Other devices", section: "this-mac", focus: "other-devices", terms: "remote mesh" },
+  { id: "device-name", label: "Name of this Mac", section: "this-mac", focus: "device-name", terms: "device computer" },
+  { id: "reset-desk", label: "Reset the desk", section: "this-mac", focus: "reset-desk", terms: "reset defaults" },
+];
+
 /** Stable id aliases: deep links and scope params from retired modules
  *  still land on their successor tile (no broken palette links). */
 export const MODULE_ALIASES: Record<string, string> = {

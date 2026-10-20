@@ -3,6 +3,7 @@ import {
   DESK_APPLICATION_ALIASES,
   DESK_APPLICATIONS,
   DOCK_APPLICATIONS,
+  PHONE_DOCK_APPLICATIONS,
   GO_GROUPS,
   MARK_APPLICATION_COMMANDS,
   goRows,
@@ -40,7 +41,14 @@ describe("DeskOS application manifest", () => {
     // PHILO-17 (doors): the five primary Dock applications.
     expect(DOCK_APPLICATIONS.map((application) => application.label)).toEqual([
       "Today",
+      "Meetings",
+      "People",
+      "Agents",
       "Speak",
+    ]);
+    expect(PHONE_DOCK_APPLICATIONS.map((application) => application.label)).toEqual([
+      "Today",
+      "Capture",
       "Meetings",
       "People",
       "Agents",
@@ -49,7 +57,7 @@ describe("DeskOS application manifest", () => {
       DESK_APPLICATIONS.filter((application) => application.shortcut).map(
         (application) => application.shortcut,
       ),
-    ).toEqual(["⌘⇧P", "⌃1", "⌃2", "⌃3", "⌃4"]); // PHILO-17 U27
+    ).toEqual(["⌘⇧P", "⌃1", "⌃5", "⌃2", "⌃4", "⌃3"]); // PHILO-17 U27 / shell S3
   });
 
   it("keeps the PHILO-17 first-open size matrix declarative", () => {
@@ -58,13 +66,13 @@ describe("DeskOS application manifest", () => {
       meeting: { w: 720, h: 600 },
       people: { w: 640, h: 560 },
       room: { w: 760, h: 480 },
-      settings: { w: 640, h: 600 },
+      settings: { w: 1040, h: 720 },
     });
 
     const meetings = DESK_APPLICATIONS.find((application) => application.action === "review-meetings");
     const settings = DESK_APPLICATIONS.find((application) => application.action === "configure-settings");
     expect(meetings?.surface).toMatchObject({ defaultW: 720, defaultH: 600 });
-    expect(settings?.surface).toMatchObject({ defaultW: 640, defaultH: 600 });
+    expect(settings?.surface).toMatchObject({ defaultW: 1040, defaultH: 720, minW: 880 });
   });
 
   it("Betterment AG1: the old Agents application is unmapped; the Conductor's face name is Agents", () => {
@@ -73,17 +81,18 @@ describe("DeskOS application manifest", () => {
     expect(DESK_APPLICATIONS.some((application) => application.action === "inspect-personas-and-coders")).toBe(false);
     expect(DESK_APPLICATIONS.some((application) => application.windowId === "surface-companion")).toBe(false);
     const conductor = DESK_APPLICATIONS.find((application) => application.action === "open-conductor");
-    // The code name stays (action, window id, route, ⌃3); the face says Agents.
-    expect(conductor).toMatchObject({ windowId: "conductor", label: "Agents", toolLabel: "Agents", href: "/conductor", shortcut: "⌃3" });
-    expect(conductor?.dock).toMatchObject({ order: 4, launch: "surface" });
+    // The code name stays (action, window id, route, ⌃4); the face says Agents.
+    expect(conductor).toMatchObject({ windowId: "conductor", label: "Agents", toolLabel: "Agents", href: "/conductor", shortcut: "⌃4" });
+    expect(conductor?.dock).toMatchObject({ order: 3, launch: "surface", phone: 4 });
   });
 
   it("derives mark-menu application commands", () => {
     // PHILO-17 (doors): the HoldSpeak menu holds the setup applications.
-    // Betterment shell S1: Engines and Accounts open their Settings wings.
+    // Betterment ST7: Engines is its own Desk window; Accounts remains a
+    // Settings section.
     expect(MARK_APPLICATION_COMMANDS).toEqual([
       "go.configure-settings",
-      "settings.models",
+      "go.configure-runs-on",
       "settings.integrations",
       "settings.wallpaper",
       "go.configure-setup",
@@ -110,7 +119,7 @@ describe("DeskOS application manifest", () => {
     // setup row of the HoldSpeak menu, or is opened by its own verb.
     const inGo = new Set(GO_GROUPS.flatMap(goRows).flatMap((r) => (r.kind === "app" ? [r.app.action] : [])));
     // Betterment P4: Projects (the window) is Go ▸ Projects ▸ All projects.
-    const elsewhere = new Set(["configure-settings", "configure-setup", "configure-cadence", "change-places",
+    const elsewhere = new Set(["chair-capture", "configure-settings", "configure-runs-on", "configure-setup", "configure-cadence", "change-places",
       "record-live", "project-setup", "open-projects"]);
     for (const application of DESK_APPLICATIONS) {
       if (application.parked) continue;

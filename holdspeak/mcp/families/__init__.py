@@ -50,6 +50,7 @@ _FAMILY_MODULE_NAMES: list[str] = [
     "interview",
     "practice_recipe",
     "agent",
+    "setup",
     "desk_windows",
     "note",
 ]

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DictationFailure } from "../../../lib/dictationRecovery";
 import { DESK_APPLICATION_ALIASES } from "../../applications";
@@ -62,6 +62,25 @@ beforeEach(() => {
 });
 
 describe("Setup ST3–ST5", () => {
+  it("waits for the owner read before accepting a name, then keeps the typed name", async () => {
+    let read!: (value: unknown) => void;
+    const original = mocks.apiFetch.getMockImplementation()!;
+    mocks.apiFetch.mockImplementation((path: string, init: { method?: string; json?: unknown } = {}) =>
+      path === "/api/settings" && !init.method
+        ? new Promise((resolve) => { read = resolve; })
+        : original(path, init));
+    render(<SetupFace initial={inventory({ owner_name: "", rows: [{ ...inventory().rows[0], state: "works" }] })} />);
+    const name = screen.getByRole("textbox", { name: "Your name" });
+    expect(name).toBeDisabled();
+    await act(async () => { read({ owner: { name: "", aliases: [] }, _revision: "1" }); });
+    expect(name).toBeEnabled();
+    fireEvent.change(name, { target: { value: "Fence owner" } });
+    fireEvent.blur(name);
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/settings", expect.objectContaining({
+      method: "PUT", json: expect.objectContaining({ owner: { name: "Fence owner", aliases: [] } }),
+    })));
+    expect(screen.getByText("Ready, Fence owner.")).toBeTruthy();
+  });
   it("opens the retired readiness alias directly in the one Setup home", () => {
     expect(DESK_APPLICATION_ALIASES["read-runtime-docs"]).toEqual({ target: "configure-setup", scope: undefined });
   });
