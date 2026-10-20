@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, Capture C10 verified; running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-19, Setup ST3–ST5 verified; running-desk identity is in `pm/STATUS.md`.
 
-**Total: 86 of 117 slices merged**, with Send S7 still partial.
+**Total: 89 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -20,7 +20,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Projects | `projects/` | 7 of 11 |
 | Agents | `agents/` | 13 of 16 |
 | Daily and Needs you | `daily/` | 11 of 11 |
-| Setup and Settings | `setup/` | 3 of 10 |
+| Setup and Settings | `setup/` | 6 of 10 |
 | Desk shell | `shell/` | 2 of 10 |
 | Send | `send/` | 1 of 8 |
 | Capture | `capture/` | 10 of 12 |
@@ -137,16 +137,16 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | D9 | Morning prep (after Automations A2–A6 and MCP M1; owner decision 3) | Done · #1342 |  |
 | D10 | MCP parity | Done · #1372 | Declared Today read composes the face producers; Decide and People writes retain owner authority. |
 
-## Setup and Settings (`setup/RECIPE.md`): 3 of 10
+## Setup and Settings (`setup/RECIPE.md`): 6 of 10
 
 | Slice | What | State | Note |
 |---|---|---|---|
 | ST0 | Tell the truth | Done · #1261 | #1261 was "part 1" (speech never wired to a chat server; Voice says if speech works). |
 | ST1 | One home each: Rhythm, Wallpaper, Calendar, the engine line | Done · #1347 | Recovery adds phone stepper value geometry fix; two-size real browser check fails before and passes after. |
 | ST2 | Accounts that say Works, and Check that does not move acli | Done · #1346 | Stub-backed Jira/Confluence restoration, Found/Use and Remove/Undo; restoration failures stay degraded. |
-| ST3 | Setup is one window of found things | Open |  |
-| ST4 | Use everything found, and the look on his network | Open |  |
-| ST5 | Your people in Setup | Open |  |
+| ST3 | Setup is one window of found things | Done · PR_PENDING | One found-things window for first run and later Setup; typed microphone recovery stays in place. |
+| ST4 | Use everything found, and the look on his network | Done · PR_PENDING | Use selects real engine IDs and the Everything-else assignment; speech remains separate. |
+| ST5 | Your people in Setup | Done · PR_PENDING | People use the existing admission producer and report its actual result. |
 | ST6 | Let my agents use HoldSpeak | Open |  |
 | ST7 | Settings is one page | Open |  |
 | ST8 | Sign in without a terminal | Open |  |
