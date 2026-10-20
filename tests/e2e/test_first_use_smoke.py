@@ -443,7 +443,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                  ("today", "Today", '[id="pullout:intelligence:desk"] [data-testid=today-day]')]
             )
             for key, name, destination in essential:
-                door = dock.get_by_role("button", name=name, exact=True)
+                door = dock.get_by_role("button", name=re.compile(r"^" + re.escape(name) + r"(?:, iconified)?$"))
                 doors[key] = check("dock-" + key, _hit(door),
                                    name + " dock door fits and owns its hit target")
                 if doors[key]:
