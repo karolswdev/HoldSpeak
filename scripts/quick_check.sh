@@ -68,7 +68,7 @@ web="$(printf '%s\n' "$changed" | grep -E '^web/src/.*\.(ts|tsx|css)$' | sed 's#
 web="$(printf '%s\n' "$web" | while read -r f; do [ -n "$f" ] && [ -f "web/$f" ] && echo "$f"; done)"
 if [ -n "$web" ]; then
   echo "== vitest related ($(printf '%s\n' "$web" | wc -l | tr -d ' ') files)"
-  out="$(cd web && HOME="$H" uv run --project .. python ../scripts/test_lock.py -- ./node_modules/.bin/vitest related --run --maxWorkers=2 $web 2>&1)"; rc=$?
+  out="$(cd web && HOME="$H" uv run --project .. python ../scripts/test_lock.py -- ./node_modules/.bin/vitest related --run --maxWorkers=8 $web 2>&1)"; rc=$?
   printf '%s\n' "$out" >"$H/vitest.log"
   printf '%s\n' "$out" | grep -E '^ FAIL|×|Test Files|Tests |Errors ' | sort -u | sed 's/^/   /'
   # The unhandled-error blocks: each starts with "⎯ Unhandled Error ⎯" or

@@ -8,6 +8,15 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The meeting-window regression now selects the failed-summary member when P5
+also offers the same-title meeting as a project source. Both 1440/393 browser
+walks pass, retaining the single-window assertions across every live door.
+The web check now uses the same eight-worker bound as pytest, under the shared
+lock. All 5,387 web checks pass in 111.97 seconds with eight workers; the prior
+two-worker related run took 268.49 seconds for 4,071 cases. No checks or
+assertions are removed. Required quick: QUICK_PENDING.
+
+
 C10 moves native meeting streams and the capture journal into one child process.
 The parent receives durable PCM and levels. Stop gives the child one second,
 then terminates it; only confirmed child exit releases the floor for another
@@ -49,7 +58,7 @@ hardware is not exercised; C10 now delivers the child-process boundary.
 
 **Betterment recovery: 86/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `b2c642b42`, frontend `2d4a0039bcaa5db4`, PID 51055 (#1380).
+backend `1554d7043`, frontend `8ebab34a8ee7b2d2`, PID 12686 (#1382).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.
