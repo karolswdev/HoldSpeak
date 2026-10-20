@@ -312,8 +312,11 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             }
             try:
                 page.goto(base + "/welcome?token=" + TOKEN)
-                words_card = page.get_by_test_id("firstrun-first-words")
-                talk = _loaded(words_card.get_by_role("button", name="◖ Dictate one sentence", exact=True))
+                words_card = page.get_by_test_id("setup-face")
+                name = words_card.get_by_role("textbox", name="Your name", exact=True)
+                name.fill("Fence owner")
+                name.press("Tab")
+                talk = _loaded(words_card.get_by_role("button", name="Say one sentence", exact=True))
                 expect(talk).to_be_enabled(timeout=15_000)
                 talk.scroll_into_view_if_needed()
                 assert _hit(talk, fit=False), "First Words speech door is unreachable"
@@ -325,8 +328,13 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 page.get_by_role("button", name="Stop listening", exact=True).click()
                 expect(words_card.get_by_text(WORDS)).to_be_visible()
                 assert len(received) == 1 and frames
-                words_card.get_by_role("button", name="Keep as note", exact=True).click()
-                expect(words_card.locator(".firstrun-cardstate").get_by_role("status", name="HEARD", exact=True)).to_be_visible()
+                with page.expect_response(lambda response: response.url.endswith("/api/notes")
+                                          and response.request.method == "POST") as kept:
+                    words_card.get_by_role("button", name="Keep as note", exact=True).click()
+                assert kept.value.ok, kept.value.text()
+                note = kept.value.json()["note"]
+                assert db.notes.get(note["id"]).body_markdown == WORDS
+                expect(words_card.get_by_role("button", name="Keep as note", exact=True)).to_have_count(0)
                 expect(words_card.get_by_test_id("heard-quote").get_by_role("status", name="HEARD", exact=True)).to_be_visible()
             finally:
                 whisper_models.speech_readiness = real_readiness
@@ -347,9 +355,8 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             _loaded(choose)
             assert _hit(choose)
             choose.click()
-            # Engines now lives in Settings. With no saved engine its empty
-            # assignment board is hidden; the useful next action is Add engine.
-            models = page.locator("#surface-settings [data-settings-view='models']")
+            # ST7: Engines is its own canonical window.
+            models = page.locator("#surface-engines")
             models.wait_for()
             _loaded(models.get_by_test_id("concierge-add-engine"))
             page.get_by_test_id("concierge-add-engine").click()
