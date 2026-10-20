@@ -1204,6 +1204,23 @@ class HubCommandService:
         from ..principals import Principal, PrincipalKind
 
         prepared = dict(request)
+        # The admitted terminal route carries its target as one object.  The
+        # existing process-input adapter consumes the normalized flat fields;
+        # preserve either form so the route cannot silently turn a valid
+        # terminal target into ``process:`` and refuse every key press.
+        target = prepared.get("target")
+        if isinstance(target, Mapping):
+            for field in ("node_id", "target_id", "target_generation"):
+                nested_value = target.get(field)
+                flat_value = prepared.get(field)
+                if flat_value is not None and nested_value is not None:
+                    if str(flat_value) != str(nested_value):
+                        raise CommandRefused(
+                            "target_mismatch",
+                            f"target.{field} disagrees with the command target",
+                        )
+                elif flat_value is None:
+                    prepared[field] = nested_value
         command_id = str(prepared.get("command_id") or "")
         known = self.repo.get(command_id) if command_id else None
         kernel = self._kernel_service()

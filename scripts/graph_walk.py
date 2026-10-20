@@ -943,7 +943,7 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.doo
                           "agent_hooks.install", "agent_hooks.remove",
                           "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",
                           # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
-                          "calendar.open_settings",
+                          "calendar.open_settings", "connection.signin",
                           # PHILO-15 16: the owner names a Project's repository (HTTP only).
                           "project.repository.register"})
 

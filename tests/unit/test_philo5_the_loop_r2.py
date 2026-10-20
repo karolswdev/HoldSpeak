@@ -225,6 +225,7 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
         "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install", "agent_hooks.remove",
         "people_access.set",  # Conductor R7: only the owner sets People MCP access
         "calendar.open_settings",  # PHILO-15 04: only the owner opens the Calendars privacy pane
+        "connection.signin",  # Betterment ST8: only the owner starts native provider sign-in
         "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",  # Betterment ST3-ST5
         "project.repository.register",  # PHILO-15 16: only the owner names a Project's repository
         "agent.hand",  # Conductor K2: only the owner hands an item to an agent
@@ -734,6 +735,26 @@ def _p_calendar_open_settings(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any
     return hub.root.operations.invoke(OWNER, "calendar.open_settings", {})
 
 
+def _p_connection_signin(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    """Run the admitted producer; only native help, spawn and pane identity replay."""
+    from holdspeak import coder_factory
+
+    service = hub.root.operations.target("connection.signin")
+    monkeypatch.setattr(shutil, "which", lambda _binary: "/private/st8/gh")
+    monkeypatch.setattr(service, "_runner", lambda argv, **_kwargs: subprocess.CompletedProcess(
+        argv, 0, stdout="--web --hostname", stderr=""))
+    monkeypatch.setattr(coder_factory, "spawn", lambda _name, **_kwargs: {
+        "status": "spawned", "pane_id": "%818",
+    })
+    targets = service._target_provider()
+    monkeypatch.setattr(targets, "_resolver", lambda _ref, **_kwargs: {
+        "status": "ok", "pane_id": "%818",
+    })
+    response = hub.client.post("/api/connections/github/signin", json={"site": "github.com"})
+    assert response.status_code == 202, response.text
+    return response.json()
+
+
 def _p_project_repository_register(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     """The real service, kernel path and route; the registrations file is the test's."""
     from holdspeak.services.project_repository import ProjectRepositories
@@ -871,6 +892,7 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "people_access.set": _p_people_access_set,
     # PHILO-15 04: the Calendars privacy pane.
     "calendar.open_settings": _p_calendar_open_settings,
+    "connection.signin": _p_connection_signin,
     # PHILO-15 16: a Project's repository.
     "project.repository.register": _p_project_repository_register,
     # Conductor K2: Hand to agent.
