@@ -212,7 +212,7 @@ export function engineWords(detail: AutomationDetail): string | null {
   if (detail.do_kind === "hand_to_agent") {
     if (!detail.agent_profile) return null;
     const label = detail.agent_profile_label || detail.agent_binding?.label || "";
-    return label ? `${label} (${detail.agent_profile})` : detail.agent_profile;
+    return label || detail.agent_profile;
   }
   const chain = detail.assignment_summary?.chain ?? [];
   return chain.length ? chain[0] : null;

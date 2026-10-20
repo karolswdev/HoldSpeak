@@ -120,7 +120,8 @@ def test_hand_automation_do_with_review_controls_are_real_and_saved(
                 ) as with_saved:
                     native_editor.get_by_role("button", name="Use Claude Code", exact=True).click()
                 assert (with_saved.value.request.post_data_json or {}).get("profile_id") == "claude-default"
-                with_line.get_by_text("Claude Code", exact=True).wait_for(timeout=10_000)
+                with_line.locator(".automation-line-press-value").get_by_text("Claude Code", exact=True).wait_for(timeout=10_000)
+                assert "claude-default" not in with_line.locator(".automation-line-press-value").inner_text()
 
                 page.screenshot(path=str(SHOTS / f"do-with-review-{width}-closed.png"))
                 review_line.get_by_role("button").first.click()
