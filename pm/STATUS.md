@@ -18,7 +18,7 @@ Root collected and passed 57 affected Python cases, including the real HTTP
 partial-failure and two-size browser Retry, plus 40 Door web cases and build.
 The durable resource readback finds each successful relationship once. The
 owner's database and provider credentials were not used. This closes follow-up
-work and adds no slice. Required quick: P5_QUICK_PENDING.
+work and adds no slice. Required quick: 241 affected Python/browser, 110 desk sweep, 27 canon and 1,116 repository guards pass; related web checks and build pass.
 
 P7/P8 make the project update an ordinary automation, initially manual. Friday
 at 15:00 changes that same record. Room opens its newest result and reads the
