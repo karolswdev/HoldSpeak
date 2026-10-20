@@ -374,8 +374,10 @@ describe("NotePullout adoption recovery", () => {
     fireEvent.click(await screen.findByRole("button", { name: /Original kept/ }));
     await waitFor(() => expect(screen.getByText("Exact original")).toBeInTheDocument());
     expect(screen.getByText("Exact original")).toHaveClass("thought-original-raw");
-    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
-    expect(screen.getByRole("region", { name: "Original kept" })).toHaveFocus();
+    await waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest", behavior: "smooth" });
+      expect(screen.getByRole("region", { name: "Original kept" })).toHaveFocus();
+    });
   });
 
   it("does not scroll when Original fails to load", async () => {

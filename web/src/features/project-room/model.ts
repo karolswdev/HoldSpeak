@@ -492,6 +492,11 @@ export type RoomUpdatesData = {
     whenKind: string;
     profileId: string | null;
     engineLabel: string;
+    latestResult: {
+      artifactId: string;
+      updateId: string | null;
+      new: boolean;
+    } | null;
   } | null;
 };
 
@@ -931,6 +936,16 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
         engineLabel: String((s.automation as Record<string, unknown>).engine_label ?? "Engine not read"),
         profileId: (s.automation as Record<string, unknown>).profile_id != null
           ? String((s.automation as Record<string, unknown>).profile_id) : null,
+        latestResult: (() => {
+          const raw = (s.automation as Record<string, unknown>).latest_result;
+          if (!raw || typeof raw !== "object") return null;
+          const result = raw as Record<string, unknown>;
+          const artifactId = String(result.artifact_id ?? "");
+          const updateId = String(result.update_id ?? "");
+          return artifactId
+            ? { artifactId, updateId: updateId || null, new: Boolean(result.new) }
+            : null;
+        })(),
       } : null,
     })),
     steward: decodeSection<Record<string, never>>(raw.steward, () => ({} as Record<string, never>)),

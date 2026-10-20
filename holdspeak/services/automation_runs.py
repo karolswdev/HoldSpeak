@@ -26,7 +26,7 @@ from datetime import datetime
 from typing import Any, Optional
 
 from ..logging_config import get_logger
-from ..timestamps import local_now
+from ..timestamps import local_now, utc_now_iso
 from .errors import ValidationError
 
 log = get_logger("services.automation_runs")
@@ -1089,6 +1089,37 @@ def _deliver_one(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[
     return _to_inbox(db, wb, row)
 
 
+def _remember_project_update(db: Any, artifact_id: Any, update_id: Any, project_id: Any) -> bool:
+    """Link a delivered artifact to its exact, project-validated update."""
+    clean_artifact_id = str(artifact_id or "").strip()
+    clean_update_id = str(update_id or "").strip()
+    clean_project_id = str(project_id or "").strip()
+    if not clean_artifact_id or not clean_update_id or not clean_project_id:
+        return False
+    update = db.project_updates.get_update(clean_update_id)
+    if update is None or str(update.get("project_id") or "") != clean_project_id:
+        return False
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT structured_json FROM artifacts WHERE id = ?",
+            (clean_artifact_id,),
+        ).fetchone()
+        if row is None:
+            return False
+        try:
+            metadata = json.loads(row["structured_json"] or "{}")
+        except (TypeError, ValueError):
+            metadata = {}
+        if not isinstance(metadata, dict):
+            metadata = {}
+        metadata["project_update_id"] = clean_update_id
+        conn.execute(
+            "UPDATE artifacts SET structured_json = ?, updated_at = ? WHERE id = ?",
+            (json.dumps(metadata, sort_keys=True), utc_now_iso(), clean_artifact_id),
+        )
+    return True
+
+
 def _to_project_updates(
     db: Any, principal: Any, wb: Any, row: dict[str, Any], project_id: str,
 ) -> dict[str, Any]:
@@ -1112,6 +1143,7 @@ def _to_project_updates(
             existing_id = ref.split(":", 1)[1].strip()
             existing = db.project_updates.get_update(existing_id)
             if existing is not None and str(existing.get("project_id") or "") == project_id:
+                _remember_project_update(db, row["artifact_id"], existing_id, project_id)
                 return {"artifact_id": row["artifact_id"], "target": str(wb.output_target),
                         "outcome": "written", "update_id": existing_id,
                         "project_id": project_id}
@@ -1128,6 +1160,7 @@ def _to_project_updates(
         principal, project_id, body_md=body, source_refs=refs,
         generator=f"agent:automation:{wb.id}",
     )
+    _remember_project_update(db, row["artifact_id"], update.get("id"), project_id)
     return {"artifact_id": row["artifact_id"], "target": str(wb.output_target),
             "outcome": "written", "update_id": str(update.get("id") or ""),
             "project_id": project_id}
