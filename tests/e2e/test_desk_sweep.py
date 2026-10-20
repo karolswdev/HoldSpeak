@@ -264,7 +264,7 @@ CASES, NOT_ON_HUB_APPS = _cases()
 # The pages that draw no desk screen, and what each must show (routes.tsx
 # PRODUCT_ROUTES: Presence draws its card; Welcome hands off to the Get ready
 # cards, which stand in place of the desk screen):
-STANDALONE_ROUTES = {"/presence": ".presence-card", "/welcome": ".firstrun-card-title"}
+STANDALONE_ROUTES = {"/presence": ".presence-card", "/welcome": ".setup-face h1"}
 # Addresses that land on the bare desk (App.tsx: `/desk` and `*` go to `/`).
 DESK_ROUTES = {"/": None, "/desk": None, "/workbench": None}
 
