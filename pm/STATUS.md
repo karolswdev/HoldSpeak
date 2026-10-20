@@ -38,6 +38,11 @@ The original draft-save, held-send, retry and native/manual receipt assertions
 remain strict. Both real uncertain-send reload cases pass; the Room receipt
 locator follows its Send control into the canonical footer. The required
 check covers these final retained browser selectors.
+The first full combined check passed all 4,094 related web tests, 2,383
+affected backend/browser checks, all 110 sweep, 27 canon and 1,116 guards.
+Two Send whole-reply recordings still contained the removed public body;
+their actual producer writers now pass and have refreshed all three replies.
+The final delta replays the full Send backend file and recorded face consumer.
 Required quick: SEND_ALL_QUICK_PENDING.
 The first real Send recipe remains open for the owner's five presses.
 
