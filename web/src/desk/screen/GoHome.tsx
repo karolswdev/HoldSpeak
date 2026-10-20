@@ -9,7 +9,7 @@ import { VERBS, verbLabel, type VerbContext } from "../verbRegistry";
 import { WorkMenuSep, type WorkMenuEntry } from "../components/DeskMenu";
 import { SurfaceSection } from "../surface/Surface";
 import { qualifiedRef } from "../api";
-import { rootDirectories } from "./compose";
+import { visibleRootDirectories } from "./compose";
 import { openScreenRef } from "./open";
 import { useBuilderTools } from "../builderTools";
 import { useLaunchers } from "../components/window/launcherRegistry";
@@ -45,7 +45,7 @@ export function GoHome() {
       row,
       projects: projects ?? [],
       openProject: openProjectRoom,
-      drawers: rootDirectories(items).map((d) => ({ ref: qualifiedRef("directory", d.id), name: d.name })),
+      drawers: visibleRootDirectories(items).map((d) => ({ ref: qualifiedRef("directory", d.id), name: d.name })),
       openDrawer: openScreenRef,
       launchers,
       builder,

@@ -5,7 +5,7 @@ import { objectMenuEntries, windowObjectEntry } from "../objectMenu";
 import { seatMounted, seatUnmounted } from "../deleteSeat";
 import { OBJECT_DELETE_REQUEST } from "../verbRegistry";
 import { EMPTY_ITEMS, fromWireDirectory, qualifiedRef } from "../api";
-import type { Note, Project } from "../../lib/primitives";
+import type { Meeting, Note, Project } from "../../lib/primitives";
 import { useDesk } from "../store";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 
@@ -76,11 +76,42 @@ describe("objectMenuEntries (registry-derived, parallel list #4 dead)", () => {
       "object.ask-about",
       "object.draft-update",
       "object.rename",
-      "object.file",
       "object.archive",
     ]);
     const archive = entries.find((entry) => entry.id === "object.archive");
     expect(archive?.type === "item" && archive.ghost).toBeNull();
+  });
+
+  it("uses the Desk ledger for Keep and sends Remove to Desk or Inbox", () => {
+    const desk = fromWireDirectory({ id: "hs-seed-desk", name: "Desk", parent_id: null,
+      member_ids: ["meeting:m1"], created_at: "2026-10-16T01:39:56Z" })!;
+    useDesk.setState({ items: {
+      ...EMPTY_ITEMS,
+      note: [{ kind: "note", id: "n1", title: "Release checklist" } as Note],
+      meeting: [
+        { kind: "meeting", id: "m1", title: "Platform sync" } as Meeting,
+        { kind: "meeting", id: "m2", title: "Vendor sync" } as Meeting,
+      ],
+      directory: [desk],
+    } });
+    const file = vi.spyOn(useDesk.getState(), "fileIntoDir").mockResolvedValue();
+    const unfile = vi.spyOn(useDesk.getState(), "removeFromDir").mockResolvedValue();
+    const keepMeeting = objectMenuEntries({ ref: "meeting:m2" }).find((entry) => entry.id === "object.file") as Extract<WorkMenuEntry, { type: "item" }>;
+    expect(keepMeeting.label).toBe("Keep on desk");
+    keepMeeting.onSelect();
+    expect(file).toHaveBeenCalledWith("meeting:m2", "hs-seed-desk");
+    const kept = objectMenuEntries({ ref: "meeting:m1" });
+    const removeMeeting = kept.find((entry) => entry.id === "object.unfile") as Extract<WorkMenuEntry, { type: "item" }>;
+    expect(removeMeeting.label).toBe("Remove from desk");
+    removeMeeting.onSelect();
+    expect(unfile).toHaveBeenCalledWith("meeting:m1", "hs-seed-desk", "meeting");
+
+    const unkept = objectMenuEntries({ ref: "note:n1" });
+    const removeNote = unkept.find((entry) => entry.id === "object.unfile") as Extract<WorkMenuEntry, { type: "item" }>;
+    removeNote.onSelect();
+    expect(file).toHaveBeenCalledWith("note:n1", "hs-seed-inbox", "note");
+    file.mockRestore();
+    unfile.mockRestore();
   });
 
   it("withholds Delete until the object has a mounted delete seat", () => {
@@ -134,8 +165,6 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { DeskMenuBar } from "../components/DeskMenuBar";
 import { withholdGhosts } from "../components/DeskMenu";
 import { objectByRef } from "../world";
-import type { Meeting } from "../../lib/primitives";
-
 vi.mock("../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({ state: "offline", lastFrame: null, subscribe: () => () => undefined }),
   useOptionalRuntimeBus: () => ({ state: "offline", lastFrame: null, subscribe: () => () => undefined }),
