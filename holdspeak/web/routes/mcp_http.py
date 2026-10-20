@@ -238,6 +238,13 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
             )
 
             palette = resolve_palette("CONDUCTOR")
+            # AG12: advertise the same immutable read-only posture enforced
+            # again at dispatch. The second fence matters for callers that
+            # send a tool name without first reading this list.
+            from ...services.conductor_launch import reviewer_credential, reviewer_tool_allowed
+
+            if reviewer_credential(principal) is not None:
+                palette = frozenset(name for name in palette if reviewer_tool_allowed(name))
             call_gate = conductor_call_allowed
             resource_gate = conductor_resource_allowed
 
