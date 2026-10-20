@@ -53,6 +53,7 @@ export type NeedVerbs =
   | { kind: "repair"; verb: string; href: string; projectId: string; watchIds?: string[]; host?: string; provider?: string }
   | { kind: "arming"; scheduleId: string; refused: boolean; failed?: boolean; calendarEventId?: string }
   | { kind: "calendar" }
+  | { kind: "send"; sendId: string; documentRef: string; destinationId: string; state: "prepared" | "failed" | "unknown"; send: Record<string, unknown> }
   | { kind: "none" };
 
 type DoorCardLike = {
@@ -335,6 +336,27 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   const why = String(item.why ?? "").toUpperCase();
   const project = String(item.projectName ?? "");
   const source = String(item.source ?? "");
+
+  // Send S3: the frozen channel row is one Needs-you object. Its verbs are
+  // wired by the drawer to the shared Send well adapters; the face carries
+  // no second preview or delivery state of its own.
+  if (source === "send" && item.sendId && item.documentRef && item.destinationId && item.send) {
+    const state = String((item.send as { state?: string }).state || "prepared") as "prepared" | "failed" | "unknown";
+    const created = item.since ? wireDate(String(item.since)) : null;
+    const createdWord = created ? whenWord(created, ctx.now) : "";
+    return {
+      id, kind: "send", name: String(item.documentTitle || title),
+      fact: [String(item.documentLabel || "DOCUMENT"), "→", String(item.destinationName || "Destination"),
+        item.preparedBy ? `by ${item.preparedBy}` : "", createdWord].filter(Boolean).join(" · "),
+      lamp: state === "prepared" ? { label: "READY TO SEND", tone: "ask" }
+        : state === "failed" ? { label: "NOT SENT", tone: "fail" }
+          : { label: "NO ANSWER", tone: "warn" },
+      group: "rest", direction: "mine",
+      verbs: { kind: "send", sendId: String(item.sendId), documentRef: String(item.documentRef),
+        destinationId: String(item.destinationId), state, send: item.send },
+      openRef: undefined,
+    };
+  }
 
   // AG11: a Secure helper has no session yet. Its owner action remains
   // directly available here instead of opening an unrelated parent question.

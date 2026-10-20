@@ -19,7 +19,7 @@ observed:
   ``coverage`` -- a list of
       ``{source_id, kind, state, observed_at, repair, reason, label,
          project_id}``
-      with ``kind`` in ``project | watch | meeting | commitment | coder``
+      with ``kind`` in ``project | watch | meeting | commitment | coder | send``
       (``coder``: the agent session registry, added by the membership
       rule's R5 read) and
       ``state`` in ``available | stale | failed | forbidden |
@@ -72,7 +72,7 @@ _SEVERITY_ORDER = {"danger": 0, "warning": 1, "info": 2}
 COVERAGE_STATES = ("available", "stale", "failed", "forbidden", "unavailable", "quiet")
 #: The states that count as observed for ``complete`` and for the count.
 OBSERVED_STATES = ("available", "quiet")
-COVERAGE_KINDS = ("project", "watch", "meeting", "commitment", "coder")
+COVERAGE_KINDS = ("project", "watch", "meeting", "commitment", "coder", "send")
 
 #: A live source whose last successful check is older than this is
 #: reported ``stale`` -- observed once, but not recently enough to

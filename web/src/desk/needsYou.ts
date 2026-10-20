@@ -81,6 +81,15 @@ export interface NeedsYouRoomItem extends RankableItem {
   /** Betterment D1: the hub's one count rule counts this row
    *  (`needs_you_membership.counts_in_number`). */
   counted?: boolean;
+  /** Betterment Send S3: a frozen channel row projected into Needs you. */
+  sendId?: string;
+  documentRef?: string;
+  documentLabel?: string;
+  documentTitle?: string;
+  destinationId?: string;
+  destinationName?: string;
+  preparedBy?: string;
+  send?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
@@ -781,7 +790,7 @@ export interface NeedsYouAnswer {
   /** The Room rows alone (the Room input of R1). */
   roomItems?: NeedsYouRoomItem[];
   /** A hub source that could not be read, by name. */
-  sourceErrors?: Partial<Record<"door" | "assignments" | "meetings" | "decisions" | "coders", string>>;
+  sourceErrors?: Partial<Record<"door" | "assignments" | "meetings" | "decisions" | "coders" | "sends", string>>;
   projects?: unknown;
   /** The members by Project (`{projectId: n}`): the one count, split by
    *  Project. The shade's Projects list and the palette's badge read it. */
