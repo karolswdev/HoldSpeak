@@ -966,6 +966,42 @@ class ProjectService:
             ).fetchone()
         if pub is not None:
             latest_published = attach_deliveries(self._db, [{key: dict(pub).get(key) for key in fields}])[0]
+        # The project Room's NEW marker belongs to the automation result that
+        # delivered an update.  Owner-created drafts have no artifact link and
+        # must not make the Room claim that a result is new.
+        from .automation_runs import results_of
+
+        automation_id = next(
+            (
+                str(wb.id)
+                for wb in self._db.workbenches.list()
+                if str(wb.output_target or "") == f"project_updates:{project_id}"
+            ),
+            "",
+        )
+        latest_result = None
+        for result in (results_of(self._db, automation_id) if automation_id else []):
+            if str(result.get("status") or "") != "done":
+                continue
+            artifact_id = str(result.get("artifact_id") or "").strip()
+            if not artifact_id:
+                continue
+            artifact = self._db.plugins.get_artifact(artifact_id)
+            if artifact is None:
+                continue
+            metadata = artifact.structured_json if isinstance(artifact.structured_json, dict) else {}
+            raw_update_id = str(metadata.get("project_update_id") or "").strip()
+            update_id = raw_update_id
+            if update_id:
+                update = self._db.project_updates.get_update(update_id)
+                if update is None or str(update.get("project_id") or "") != project_id:
+                    update_id = ""
+            latest_result = {
+                "artifact_id": artifact_id,
+                "update_id": update_id or None,
+                "new": bool(result.get("new")),
+            }
+            break
         automation = None
         target = f"project_updates:{project_id}"
         for wb in self._db.workbenches.list():
@@ -996,6 +1032,7 @@ class ProjectService:
                 "when_kind": str(when.get("kind") or "manual"),
                 "profile_id": engine_profile,
                 "engine_label": engine_label,
+                "latest_result": latest_result,
             }
             break
         return {

@@ -7,7 +7,6 @@ PR that fixes it merges. The recovery reconciliation is retained in
 | Found in | Follow-up | Goes to |
 |---|---|---|
 | S4 delivery | The floor and meeting Keep behavior are verified. Mode recipes still enter Search as Agent rows; individual People need their Object-menu adapter because the world stores only the People singleton. Finish both seams in S5. S4 remains partial. | Shell S5 |
-| P7/P8 delivery | Room NEW currently follows any draft lifecycle, including an owner-created draft. Read the existing automation artifact NEW/read state and clear it through the existing result-open path. | Project update read state |
 | Q0 (#1260) | Interview's answer-only pass puts a system message after the user message, which Qwen's template rejects. | Asking Q4, or a small fix |
 | Q0 (#1260) | "Engine not reachable" is shown as "No engine for answers" (`ask_service.py` reason mapping). | Asking Q1 |
 | C2 (#1258) | Memory pages (what we decided, what is open) are not filtered by date, so a re-summary of an old meeting can still read later facts through a page. | Capture C6 |
