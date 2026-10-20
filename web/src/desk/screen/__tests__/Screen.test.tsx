@@ -12,7 +12,7 @@ import { useDrawers } from "../../drawer/store";
 import { useDesk } from "../../store";
 import { composeScreen, layoutScreen, screenIsBare, shortItemName, normalizeRef, type ScreenInputs } from "..";
 import { Screen } from "../Screen";
-import { rootDirectories } from "../compose";
+import { rootDirectories, visibleRootDirectories } from "../compose";
 import { resetScreenMembers } from "../members";
 import { DeskIcon } from "../../surface";
 import { verbById } from "../../verbRegistry";
@@ -71,6 +71,11 @@ const ITEMS = {
   ],
   repository: [{ kind: "repository", id: "repo-ledger", name: "payments-ledger" }],
   thread: [{ kind: "thread", id: "t-1", title: "Idea: shard the reconciliation", tokenIn: 0, tokenOut: 0, createdAt: "" }],
+  // S4: these are explicit Desk choices. Unfiled meetings, people and
+  // decisions remain absent from the Floor until the owner keeps them.
+  directory: [{ kind: "directory", id: "hs-seed-desk", name: "Desk", memberIds: [
+    "meeting:m-vendor", "decision:d-otel", "repository:repo-ledger", "people:p-avery",
+  ] }],
 } as unknown as Items;
 
 const RESOURCES: Record<string, string[]> = {
@@ -161,7 +166,7 @@ beforeEach(() => {
   atmosphere.ready = null;
   openMeeting.mockReset();
   useChairWindows.setState({ closed: { "chair:needs": true, "chair:brief": true, "chair:week": true, "chair:capture": true }, phone: "" });
-  useDesk.setState({ items: ITEMS, updatedAt: 1, selectedIds: [], editingId: null });
+  useDesk.setState({ items: ITEMS, updatedAt: 1, selectedIds: [], editingId: null, positions: {} });
   useAgentFlights.setState({ sessions: SESSIONS.map(fromWireSessionRow), flights: [], loaded: true });
   wire();
 });
@@ -203,41 +208,33 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     }
   });
 
-  it("composes the drawers, the loose objects and the agents from the desk", async () => {
+  it("composes drawers, loose notes and explicit Desk members", async () => {
     render(<Screen />);
     await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
-    // the drawers: every Project with its count notch and lamp, People, the Conductor
+    // People, Agents and Needs you have their own homes and do not become
+    // Floor icons.
     const ledger = icon(/^Payments ledger cutover, PROJECT/);
     expect(ledger.getAttribute("aria-label")).toBe("Payments ledger cutover, PROJECT, 2 open here");
     expect(within(ledger).getByText("2", { selector: ".desk-icon-count" })).toBeTruthy();
     expect(ledger.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
     expect(icon(/^Platform observability, PROJECT, 1 open here/)).toBeTruthy();
-    expect(icon(/^People, DRAWER$/).querySelector(".desk-icon-lamp")).toBeNull();
-    const conductor = icon(/^Agents, DRAWER/);
-    expect(conductor.querySelector(".desk-icon-badge")).toBeTruthy();
-    expect(conductor.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
-    // Needs you: one attention lamp; the desk keeps the count in the drawer
-    // face rather than repeating it as an icon notch.
-    const needs = icon(/^Needs you, SMART DRAWER/);
-    expect(needs.querySelector(".desk-icon-count")).toBeNull();
-    expect(needs.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("ask");
+    expect(screen.queryByRole("button", { name: /^People/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Agents/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Needs you/ })).toBeNull();
     expect(icon(/^Archive, DRAWER$/).querySelector(".desk-icon-lamp")).toBeNull();
-    // loose: what no Project holds; the filed meeting, decision and person are not on the screen
+    // Notes arrive when unfiled. Meetings, decisions, repositories and people
+    // arrive only through the explicit Desk membership ledger.
     expect(keys()).toEqual(expect.arrayContaining([
       "meeting:m-vendor", "note:n-2", "decision:d-otel", "repository:repo-ledger", "people:p-avery",
     ]));
-    for (const filed of ["meeting:m-standup", "decision:d-freeze", "people:p-jordan"]) expect(keys()).not.toContain(filed);
-    // a loose object Needs you lists wears a lamp
-    expect(icon(/^Vendor call, MEETING, NEEDS YOU/).querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("warn");
-    // Betterment AG8: no per-agent icon on the floor (the Agents drawer,
-    // its Dock tile and Needs you carry the agents).
+    for (const unkept of ["meeting:m-standup", "decision:d-freeze", "people:p-jordan"]) expect(keys()).not.toContain(unkept);
     expect(screen.queryByRole("button", { name: /^Claude Code: rollback runbook/ })).toBeNull();
     expect(keys().filter((k) => k?.startsWith("coder:"))).toEqual([]);
     // no chips on the screen: only lamps and count notches
     expect(document.querySelector(".desk-screen .state-chip, .desk-screen .surface-token")).toBeNull();
   });
 
-  it("1440: the drawers down the left, Needs you top right, Parked bottom right, the field between", async () => {
+  it("1440: the drawers down the left, Archive bottom right, the field between", async () => {
     render(<Screen />);
     await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
     expect(screen.getByTestId("desk-screen").getAttribute("data-layout")).toBe("free");
@@ -247,9 +244,6 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     };
     expect(at(/^Payments ledger cutover/)).toEqual({ x: 20, y: 12 });
     expect(at(/^Platform observability/)).toEqual({ x: 20, y: 108 });
-    expect(at(/^People/)).toEqual({ x: 20, y: 204 });
-    expect(at(/^Agents/)).toEqual({ x: 20, y: 300 });
-    expect(at(/^Needs you/)).toEqual({ x: 1300, y: 12 });
     expect(at(/^Archive/)).toEqual({ x: 1300, y: 660 });
     expect(at(/^Vendor call/).x).toBe(210);
   });
@@ -287,19 +281,13 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     fireEvent.pointerUp(grid, { pointerId: 1 });
   });
 
-  it("Enter or a double press opens: the Room, Needs you, the Conductor, People, Parked, the object, the agent", async () => {
+  it("Enter or a double press opens Projects, Archive and explicit Desk objects", async () => {
     render(<Screen />);
     await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
     fireEvent.keyDown(icon(/^Payments ledger cutover/), { key: "Enter" });
     // PHILO-17 U30: a Project opens its Room (one home), never a drawer.
     expect(shell.openProjectRoom).toHaveBeenCalledWith("p-ledger");
     expect(useDrawers.getState().drawers).toEqual([]);
-    fireEvent.doubleClick(icon(/^Needs you/));
-    expect(useChairWindows.getState().closed["chair:needs"]).toBe(false);
-    fireEvent.keyDown(icon(/^Agents/), { key: "Enter" });
-    expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-conductor", "/conductor");
-    fireEvent.keyDown(icon(/^People, DRAWER/), { key: "Enter" });
-    expect(shell.openSurfaceOr).toHaveBeenCalledWith("open-people", "/");
     // PHILO-15 04 (gap 14): Parked opens the Parked drawer, not Meetings.
     fireEvent.keyDown(icon(/^Archive/), { key: "Enter" });
     expect(useDrawers.getState().parked).not.toBeNull();
@@ -333,9 +321,11 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     const ledger = icon(/^Payments ledger cutover, PROJECT/);
     expect(ledger.getAttribute("aria-label")).toContain("NOT READ");
     expect(ledger.querySelector(".desk-icon-lamp")?.getAttribute("data-tone")).toBe("fail");
-    // unknown stays unknown: the filed decision (and every loose object) is not drawn loose
+    // Unknown automatic content stays withheld while the project read is
+    // unresolved. Explicit Desk members remain known.
     expect(keys()).not.toContain("decision:d-freeze");
-    expect(keys().some((k) => k?.startsWith("note:") || k?.startsWith("meeting:"))).toBe(false);
+    expect(keys()).not.toContain("note:n-2");
+    expect(keys()).toContain("meeting:m-vendor");
     // Retry rereads exactly the failed read
     resourcesFail = false;
     const before = calls.length;
@@ -365,15 +355,11 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     ]);
   });
 
-  it("Astra's P1: a People read that fails wears NOT READ on People and draws no person", async () => {
-    const base = vi.mocked(apiFetch).getMockImplementation()!;
-    vi.mocked(apiFetch).mockImplementation(async (path: string, ...rest: unknown[]) => {
-      if (String(path) === "/api/people/relationships") throw new Error("503");
-      return (base as (p: string, ...r: unknown[]) => Promise<unknown>)(path, ...rest);
-    });
+  it("a People read never auto-places an unkept person on the Floor", async () => {
     render(<Screen />);
-    await waitFor(() => expect(screen.getByTestId("desk-screen-notread-drawer:people")).toBeTruthy());
-    expect(keys().some((k) => k?.startsWith("people:"))).toBe(false);
+    await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
+    expect(keys()).toContain("people:p-avery");
+    expect(keys()).not.toContain("people:p-jordan");
   });
 
   it("keeps the chosen still until the live backdrop is ready; Quiet Desk has no atmosphere", async () => {
@@ -407,7 +393,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     vi.mocked(apiFetch).mockImplementation(async () => null);
     render(<Screen />);
     await waitFor(() => expect(screen.getByTestId("desk-screen-empty")).toBeTruthy());
-    expect(keys()).toEqual(["drawer:people", "drawer:conductor", "drawer:needs", "drawer:parked"]);
+    expect(keys()).toEqual(["drawer:parked"]);
     // a loose note: the line goes
     act(() => useDesk.setState({ items: { ...EMPTY_ITEMS, note: [{ kind: "note", id: "n1", title: "A note" }] } as never, updatedAt: 2 }));
     await waitFor(() => expect(keys()).toContain("note:n1"));
@@ -416,7 +402,25 @@ describe("PHILO-14 A1 — the screen of objects", () => {
 });
 
 describe("PHILO-14 A1 — the pure parts", () => {
-  it("resolves bare members to one canonical kind without hiding colliding drawers or decisions", () => {
+  it("keeps the Desk ledger and empty Meetings or Decisions drawers off visible faces", () => {
+    const items = {
+      ...EMPTY_ITEMS,
+      directory: [
+        { kind: "directory", id: "hs-seed-inbox", name: "Inbox", memberIds: [] },
+        { kind: "directory", id: "hs-seed-personal", name: "Personal", memberIds: [] },
+        { kind: "directory", id: "hs-seed-work", name: "Work", memberIds: [] },
+        { kind: "directory", id: "hs-seed-meetings", name: "Meetings", memberIds: [] },
+        { kind: "directory", id: "hs-seed-decisions", name: "Decisions", memberIds: [] },
+        { kind: "directory", id: "hs-seed-reference", name: "Reference", memberIds: [] },
+        { kind: "directory", id: "hs-seed-desk", name: "Desk", memberIds: [] },
+      ],
+    } as never;
+    expect(visibleRootDirectories(items).map((directory) => directory.id)).toEqual([
+      "hs-seed-inbox", "hs-seed-work", "hs-seed-personal", "hs-seed-reference",
+    ]);
+  });
+
+  it("resolves bare members while only content notes arrive automatically", () => {
     const directory = [
       { ...folder, memberIds: ["shared", "unknown-person"] },
       { ...childFolder, id: "shared", parentId: null, memberIds: [] },
@@ -426,7 +430,9 @@ describe("PHILO-14 A1 — the pure parts", () => {
     expect(rootDirectories(items).map((row) => row.id)).toEqual([folder.id, "shared"]);
     const objects = composeScreen({ items, projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0, sessions: [], flights: [],
       filed: new Set(), persons: [{ id: "unknown-person", name: "Unresolved person" }], membersLoaded: true });
-    expect(objects.map((row) => row.key)).toEqual(expect.arrayContaining(["zone:shared", "decision:shared", "people:unknown-person"]));
+    expect(objects.map((row) => row.key)).toEqual(expect.arrayContaining(["zone:shared"]));
+    expect(objects.map((row) => row.key)).not.toContain("decision:shared");
+    expect(objects.map((row) => row.key)).not.toContain("people:unknown-person");
     expect(objects.map((row) => row.key)).not.toContain("note:shared");
   });
 
@@ -471,7 +477,6 @@ describe("PHILO-14 A1 — the pure parts", () => {
       filed: new Set(), persons: [{ id: "p-avery", name: "Avery Chen" }], membersLoaded: true,
     };
     const objects = composeScreen(base);
-    expect(objects.map((o) => o.key)).toContain("meeting:n-2");
     for (const ref of ["note:n-2", "decision:d-otel", "meeting:m-vendor", "people:p-avery"])
       expect(objects.map((o) => o.key)).not.toContain(ref);
     expect(objects.find((o) => o.key === qualifiedRef("directory", folder.id))?.target).toEqual({ type: "ref", ref: qualifiedRef("directory", folder.id) });
@@ -487,56 +492,93 @@ describe("PHILO-14 A1 — the pure parts", () => {
     expect(normalizeRef("directory:x")).toBe(qualifiedRef("directory", "x"));
   });
 
-  it("wraps the drawers into a second column and moves the field right", () => {
-    const base: ScreenInputs = {
-      items: { ...EMPTY_ITEMS, project: Array.from({ length: 9 }, (_, i) => ({ kind: "project", id: `p${i}`, name: `P${i}` })) } as never,
+  it("keeps existing rectangles when a project opens a third drawer column", () => {
+    const makeInput = (projectCount: number): ScreenInputs => ({
+      items: {
+        ...EMPTY_ITEMS,
+        project: Array.from({ length: projectCount }, (_, i) => ({ kind: "project", id: `p${i}`, name: `P${i}` })),
+        note: [{ kind: "note", id: "a", title: "A" }],
+      } as never,
       projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0, sessions: [], flights: [],
       filed: new Set(), persons: [{ id: "a", name: "A" }], membersLoaded: true,
-    };
-    const objects = composeScreen(base);
-    const at = layoutScreen(objects, 1440, 796);
-    // the column stops above TALK at the foot (Astra's P3 on #939)
-    expect(at["project:p5"]).toEqual({ x: 20, y: 492 });
-    expect(at["project:p6"]).toEqual({ x: 20, y: 588 });
-    expect(at["project:p7"]).toEqual({ x: 140, y: 12 });
-    expect(at["people:a"]).toEqual({ x: 330, y: 24 });
+    });
+    const beforeObjects = composeScreen(makeInput(14));
+    const before = layoutScreen(beforeObjects, 1440, 796);
+    const saved = Object.fromEntries(beforeObjects.map((object) => [object.key, before[object.key]!])) as Record<string, { x: number; y: number }>;
+    const afterObjects = composeScreen(makeInput(15));
+    const after = layoutScreen(afterObjects, 1440, 796, saved);
+    for (const object of beforeObjects) expect(after[object.key]).toEqual(before[object.key]);
+    expect(after["project:p14"]).toEqual({ x: 260, y: 12 });
+    expect(before["note:a"]).toEqual({ x: 330, y: 24 });
   });
 
-  it("PHILO-17 phonepass: a captioned People drawer takes a taller row (the next drawer's notch never touches it)", () => {
+  it("keeps producer arrival order across unfiled notes and explicit Desk members", () => {
+    const objects = composeScreen({
+      items: {
+        ...EMPTY_ITEMS,
+        note: [
+          { kind: "note", id: "n1", title: "First", createdAt: "2026-10-01T00:00:00Z" },
+          { kind: "note", id: "n2", title: "Second", createdAt: "2026-10-03T00:00:00Z" },
+        ],
+        meeting: [
+          { kind: "meeting", id: "m1", title: "Kept meeting", startedAt: "2026-10-02T00:00:00Z" },
+          { kind: "meeting", id: "m2", title: "Unkept meeting", startedAt: "2026-10-04T00:00:00Z" },
+        ],
+        directory: [{ kind: "directory", id: "hs-seed-desk", name: "Desk", memberIds: ["meeting:m1", "people:p1"] }],
+      } as never,
+      projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0, sessions: [], flights: [],
+      filed: new Set(), persons: [{ id: "p1", name: "Kept person" }], membersLoaded: true,
+    });
+    expect(objects.map((o) => o.key)).toEqual(["drawer:parked", "note:n1", "meeting:m1", "note:n2", "people:p1"]);
+    expect(objects.map((o) => o.key)).not.toContain("meeting:m2");
+  });
+
+  it("appends a late note after a kept old meeting in the stored layout", () => {
     const base: ScreenInputs = {
-      items: { ...EMPTY_ITEMS } as never,
+      items: { ...EMPTY_ITEMS, note: [{ kind: "note", id: "n1", title: "First" }] } as never,
       projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0, sessions: [], flights: [],
       filed: new Set(), persons: [], membersLoaded: true,
     };
-    const plain = layoutScreen(composeScreen(base), 1440, 796);
-    const captioned = layoutScreen(composeScreen({ ...base, peopleCaption: "1:1 15:00" }), 1440, 796);
-    expect(plain["drawer:conductor"].y - plain["drawer:people"].y).toBe(96);
-    // Keep the extra 24 px caption allowance above the next count notch.
-    expect(captioned["drawer:conductor"].y - captioned["drawer:people"].y).toBe(120);
+    const beforeObjects = composeScreen(base);
+    const before = layoutScreen(beforeObjects, 1440, 796);
+    const saved = Object.fromEntries(beforeObjects.map((object) => [object.key, before[object.key]!])) as Record<string, { x: number; y: number }>;
+    const afterObjects = composeScreen({
+      ...base,
+      items: {
+        ...EMPTY_ITEMS,
+        note: [
+          { kind: "note", id: "n1", title: "First" },
+          { kind: "note", id: "n2", title: "Later" },
+        ],
+        meeting: [{ kind: "meeting", id: "old", title: "Old meeting", startedAt: "2026-01-01T00:00:00Z" }],
+        directory: [{ kind: "directory", id: "hs-seed-desk", name: "Desk", memberIds: ["meeting:old"] }],
+      } as never,
+    });
+    const after = layoutScreen(afterObjects, 1440, 796, saved);
+    expect(after["note:n1"]).toEqual(before["note:n1"]);
+    expect(after["meeting:old"]).toEqual({ x: 330, y: 24 });
+    expect(after["note:n2"]).toEqual({ x: 450, y: 24 });
   });
 
-  it("the Conductor wears the count notch alone while its agents only work", () => {
-    const working = fromWireSessionRow(SESSIONS[1]);
+  it("uses producer creation order for non-seed drawers and projects", () => {
     const objects = composeScreen({
-      items: { ...EMPTY_ITEMS } as never, projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0,
-      sessions: [working], flights: [{ ...working.flight!, state: "working" }], filed: new Set(), persons: [],
-      membersLoaded: true,
+      items: {
+        ...EMPTY_ITEMS,
+        directory: [
+          { kind: "directory", id: "drawer-late", name: "Late drawer", memberIds: [], createdAt: "2026-10-03T00:00:00Z" },
+          { kind: "directory", id: "drawer-early", name: "Early drawer", memberIds: [], createdAt: "2026-10-01T00:00:00Z" },
+        ],
+        project: [
+          { kind: "project", id: "project-late", name: "Late project", createdAt: "2026-10-04T00:00:00Z" },
+          { kind: "project", id: "project-early", name: "Early project", createdAt: "2026-10-02T00:00:00Z" },
+        ],
+      } as never,
+      projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0, sessions: [], flights: [],
+      filed: new Set(), persons: [], membersLoaded: true,
     });
-    const conductor = objects.find((o) => o.key === "drawer:conductor")!;
-    expect(conductor.lamp).toBeUndefined();
-    expect(conductor.count).toBe(1);
-    render(<DeskIcon id="drawer:conductor" kind="conductor" name="Conductor" count={1} />);
-    const drawn = screen.getByRole("button", { name: /^Conductor/ });
-    expect(drawn.querySelector(".desk-icon-lamp")).toBeNull();
-    expect(within(drawn).getByText("1", { selector: ".desk-icon-count" })).toBeTruthy();
-  });
-
-  it("a held call lights the Conductor even when no agent asks", () => {
-    const objects = composeScreen({
-      items: { ...EMPTY_ITEMS } as never, projectCounts: {}, needsCount: 1, needsRefs: new Set(), heldCalls: 1,
-      sessions: [], flights: [], filed: new Set(), persons: [], membersLoaded: true,
-    });
-    expect(objects.find((o) => o.key === "drawer:conductor")?.lamp?.tone).toBe("ask");
+    expect(objects.filter((o) => o.role === "drawer").map((o) => o.key)).toEqual([
+      "zone:drawer-early", "zone:drawer-late", "project:project-early", "project:project-late",
+    ]);
   });
 });
 

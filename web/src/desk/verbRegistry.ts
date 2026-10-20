@@ -49,6 +49,7 @@ import {
 } from "./components/window/windowCommands";
 import { toggleExpose } from "./components/window/Expose";
 import { modeNow } from "./compositor/live";
+import { normalizeRef, SEED_DESK_DIRECTORY_ID, SEED_INBOX_DIRECTORY_ID } from "./screen/compose";
 
 export type MenuId = "desk" | "object" | "go" | "window";
 export type VerbScope = "floor" | "object" | "go" | "window" | "system" | "thread";
@@ -130,6 +131,16 @@ const needSelection = (ctx: VerbContext): string | null =>
   selected(ctx) ? null : "Select an object";
 
 const never = () => null;
+
+const KEEPABLE_KINDS = new Set(["meeting", "person", "people", "decision", "artifact", "repository", "thread"]);
+
+function directoryHasRefForRegistry(directoryId: string, targetRef: string): boolean {
+  const directory = useDesk.getState().items.directory?.find((row) => row.id === directoryId);
+  if (!directory) return false;
+  const normalized = normalizeRef(targetRef);
+  const bareId = targetRef.includes(":") ? targetRef.slice(targetRef.indexOf(":") + 1) : targetRef;
+  return (directory.memberIds ?? []).some((member) => normalizeRef(member) === normalized || member === bareId);
+}
 
 /** Preserve the editable payload while letting createPrimitive own IDs, routes,
  * placement, the NEW beat, and the destination editor. */
@@ -559,20 +570,54 @@ export const VERBS: Verb[] = [
   },
   {
     id: "object.file",
-    label: "Move to Zone",
+    label: "Keep on desk",
     menu: "object",
     scope: "object",
     glyph: "↦",
     ghost: (ctx) => {
       const o = selected(ctx);
-      if (!o) return "Select an object";
-      return o.kind === "directory" ? "A zone cannot file itself" : null;
+      const kind = o?.kind ?? ctx.selectedRef?.split(":", 1)[0] ?? "";
+      if (!ctx.selectedRef) return "Select an object";
+      if (!KEEPABLE_KINDS.has(kind)) return "Not keepable on the Desk";
+      const desk = useDesk.getState().items.directory?.find((directory) => directory.id === SEED_DESK_DIRECTORY_ID);
+      if (!desk) return "Desk unavailable";
+      return directoryHasRefForRegistry(SEED_DESK_DIRECTORY_ID, ctx.selectedRef)
+        ? "Already on the Desk"
+        : null;
     },
     run: (ctx) => {
-      const o = selected(ctx);
-      // The pullout's Filing disclosure is the one Zone picker; opening it
-      // preserves a single membership path instead of inventing a second.
-      if (o && o.kind !== "directory") useDesk.getState().openPullout(o.id, ctx.origin);
+      if (ctx.selectedRef) void useDesk.getState().fileIntoDir(ctx.selectedRef, SEED_DESK_DIRECTORY_ID);
+    },
+  },
+  {
+    id: "object.unfile",
+    label: "Remove from desk",
+    menu: "object",
+    scope: "object",
+    glyph: "↤",
+    ghost: (ctx) => {
+      if (!ctx.selectedRef) return "Select an object";
+      const kind = selected(ctx)?.kind ?? ctx.selectedRef.split(":", 1)[0];
+      if (kind === "note") return null;
+      return directoryHasRefForRegistry(SEED_DESK_DIRECTORY_ID, ctx.selectedRef)
+        ? null
+        : "Not on the Desk";
+    },
+    run: (ctx) => {
+      if (!ctx.selectedRef) return;
+      const kind = selected(ctx)?.kind ?? ctx.selectedRef.split(":", 1)[0];
+      // A note's ordinary Floor home is Inbox. This makes Remove a visible,
+      // durable filing operation instead of a disappearing icon.
+      if (kind === "note") {
+        void (async () => {
+          if (directoryHasRefForRegistry(SEED_DESK_DIRECTORY_ID, ctx.selectedRef!)) {
+            await useDesk.getState().removeFromDir(ctx.selectedRef!, SEED_DESK_DIRECTORY_ID, "note");
+          }
+          await useDesk.getState().fileIntoDir(ctx.selectedRef!, SEED_INBOX_DIRECTORY_ID, "note");
+        })();
+      } else {
+        void useDesk.getState().removeFromDir(ctx.selectedRef, SEED_DESK_DIRECTORY_ID, kind);
+      }
     },
   },
   {
