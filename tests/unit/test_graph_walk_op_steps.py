@@ -81,7 +81,7 @@ def test_the_canonical_map_has_all_seventeen_operations_and_no_local_service_tar
     assert gw.OP_HTTP_ONLY == {"decision.status", "project.door.create", "project.door.preview",
                                "project.door.count", "project.watch.update", "project.watch.baseline",
                                "channel.save_email_key", "channel.save_slack_webhook",
-                               "agent_hooks.install", "agent_hooks.remove", "calendar.open_settings",
+                               "agent_hooks.install", "agent_hooks.remove", "calendar.open_settings", "connection.signin",
                                "setup.found", "setup.people.add", "setup.lan.scan",
                                "project.repository.register",
                                # Betterment capture C5b: Prepare… / Write again (HTTP only).

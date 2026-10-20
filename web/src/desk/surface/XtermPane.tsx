@@ -83,6 +83,7 @@ export default function XtermPane({
   raw,
   pane,
   search,
+  onData,
 }: {
   /** The full raw ANSI snapshot; every change is one clear+write
    * repaint (the story's honest first step — no streaming). */
@@ -92,6 +93,8 @@ export default function XtermPane({
    * parks where the pane's cursor sits. Absent: fit to the well. */
   pane?: PaneGeometry | null;
   search?: SearchOrder;
+  /** Optional owner input seam. Omitted for the ordinary read-only panes. */
+  onData?: (data: string) => void;
 }) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<Terminal | null>(null);
@@ -103,7 +106,7 @@ export default function XtermPane({
     const host = hostRef.current;
     if (!host) return;
     const term = new Terminal({
-      disableStdin: true, // a viewer — keystrokes never become pane input
+      disableStdin: !onData,
       allowProposedApi: true, // search decorations
       convertEol: true,
       cursorBlink: false,
@@ -124,6 +127,7 @@ export default function XtermPane({
       const selected = term.getSelection();
       if (selected) void navigator.clipboard?.writeText(selected).catch(() => {});
     });
+    const input = onData ? term.onData(onData) : null;
     termRef.current = term;
     fitRef.current = fit;
     searchRef.current = finder;
@@ -131,11 +135,14 @@ export default function XtermPane({
       searchRef.current = null;
       fitRef.current = null;
       termRef.current = null;
+      input?.dispose();
       term.dispose();
     };
     // The theme is token-derived and stable for the mount.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // The input callback is owned by the caller and changes only when the
+    // embedded pane changes target.
+  }, [onData]);
 
   // Full repaint on poll: clear + snapshot + cursor park in ONE write —
   // xterm coalesces it into a single frame, so there is no flicker.

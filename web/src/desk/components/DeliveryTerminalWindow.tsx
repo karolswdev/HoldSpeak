@@ -176,6 +176,7 @@ export function DeliveryTerminalWindow() {
   }, [target]);
 
   if (!target) return null;
+  if (target.presentation === "embedded") return null;
   const live = status === "live";
   const absent = (
     [

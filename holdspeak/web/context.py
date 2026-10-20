@@ -149,6 +149,9 @@ class WebContext:
     confluence_provider: Optional[Any] = None
     # HS-168-02: ONE readiness shape over existing adapters.
     connections_service: Optional[Any] = None
+    # Betterment ST8: the native provider sign-in process, sharing the Desk's
+    # immutable terminal target and process.input path.
+    connection_signin_service: Optional[Any] = None
     # HS-159-03: the durable setup interview service. Composes
     # ProjectService + WatchService; routes come in P4.
     project_setup_service: Optional[Any] = None

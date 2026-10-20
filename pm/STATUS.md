@@ -4,9 +4,30 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (project update automation delivery)
+**Last updated:** 2026-10-19 (native account sign-in delivery)
 
 ## Current phase
+
+ST8 starts the installed GitHub or Atlassian CLI browser sign-in from the
+Accounts row and seats its native terminal there. Keyboard input uses the
+existing admitted process input path and immutable target identity. On native
+exit, the existing Check re-reads the account before the row can say Works.
+Unsupported browser flows and failed/disappearing terminals give a named
+failure. Target setup failures clean only the newly created sign-in session.
+
+Root reviewed the owner-only operation and target mismatch refusal, then ran
+123 focused checks: 122 passed and the new operation exposed one missing
+producer case. The completed producer contract suite passes all 65 cases.
+Actual private-Hub browser cases at 1440/393 feed Enter through embedded xterm,
+the real command transport and native tmux process, then read back Works and
+the account login. Only provider CLI responses are recorded; owner credentials
+and real OAuth acceptance remain unobserved. The combined API census has
+810 routes and 674 OpenAPI paths. The product check passes 7,051 affected
+Python/browser checks (four skips), 110 desk sweep, 27 canon and 1,116 guards;
+4,094 other web checks pass. One old terminal assertion expected a payload
+without its required session/agent binding; it now checks the full payload
+while retaining immutable target and server-derived authority assertions.
+Final delta quick: 17 terminal web checks, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The preceding product run passed 7,051 affected Python/browser checks and 4,094 other web checks.
 
 The main watcher pinned to 2833d225d found five failures after its first
 6,073-test shard passed. This fix re-records the actual Setup agent/Settings

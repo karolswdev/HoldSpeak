@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, Project update automation and agent draft verified; running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-19, Five-app Dock verified; running-desk identity is in `pm/STATUS.md`.
 
-**Total: 100 of 117 slices merged**, with Send S7 still partial.
+**Total: 101 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -20,7 +20,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Projects | `projects/` | 9 of 11 |
 | Agents | `agents/` | 15 of 16 |
 | Daily and Needs you | `daily/` | 11 of 11 |
-| Setup and Settings | `setup/` | 9 of 10 |
+| Setup and Settings | `setup/` | 10 of 10 |
 | Desk shell | `shell/` | 4 of 10 |
 | Send | `send/` | 1 of 8 |
 | Capture | `capture/` | 12 of 12 |
@@ -137,7 +137,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | D9 | Morning prep (after Automations A2–A6 and MCP M1; owner decision 3) | Done · #1342 |  |
 | D10 | MCP parity | Done · #1372 | Declared Today read composes the face producers; Decide and People writes retain owner authority. |
 
-## Setup and Settings (`setup/RECIPE.md`): 9 of 10
+## Setup and Settings (`setup/RECIPE.md`): 10 of 10
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -149,7 +149,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | ST5 | Your people in Setup | Done · #1384 | People use the existing admission producer and report its actual result. |
 | ST6 | Let my agents use HoldSpeak | Done · #1388 | Native user-scope tools, hooks and skill; per-agent readback and owned-binding removal in Setup. |
 | ST7 | Settings is one page | Done · #1391 | Eight sections; preserved writers and aliases; Engines opens its own window. |
-| ST8 | Sign in without a terminal | Open |  |
+| ST8 | Sign in without a terminal | Done · #1398 | Native provider sign-in runs in the Accounts row; existing Check confirms the result. |
 | ST9 | Setup from the terminal and by asking | Done · #1393 | CLI and MCP share the Setup inventory and Use producer; agents read status, adoption requires the owner. |
 
 ## Desk shell (`shell/RECIPE.md`): 4 of 10

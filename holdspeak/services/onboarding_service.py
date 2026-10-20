@@ -147,7 +147,7 @@ class OnboardingService:
         macos: Any = None,
         calendar_reader: Any = None,
         calendar_refresh: Optional[Callable[[], Any]] = None,
-        which: Callable[[str], Optional[str]] = shutil.which,
+        which: Optional[Callable[[str], Optional[str]]] = None,
         agent_runner: Optional[Callable[..., subprocess.CompletedProcess[str]]] = None,
         clock: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
     ) -> None:
@@ -167,7 +167,10 @@ class OnboardingService:
         self._macos = macos
         self._reader = calendar_reader
         self._refresh = calendar_refresh if calendar_refresh is not None else _refresh_calendar_ingest
-        self._which = which
+        # Resolve the default when the service is composed.  A function
+        # default would capture shutil.which at import time and bypass an
+        # isolated PATH seam used by the onboarding face and its tests.
+        self._which = which if which is not None else shutil.which
         self._agent_runner = agent_runner or subprocess.run
         self._clock = clock
 
