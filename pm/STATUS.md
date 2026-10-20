@@ -183,7 +183,7 @@ lock when its registry has no known prior profile. It checks the selected
 account and restores the actual prior account in finally. An unreadable,
 malformed or failed status read refuses Check before any switch. Known-prior
 restoration remains intact. All 132 focused checks pass with a fake CLI;
-the owner's auth state is untouched. Required quick: ACLI_QUICK_PENDING.
+the owner's auth state is untouched. Required quick: 326 affected Python, 108 desk sweep, 27 canon and 1,116 repository guards pass; the build passes.
 
 Q11/Q12 make Memory an answer desk and put the two directions of what is owed
 first in a person’s window. Pages have their own pass budget and continue past
