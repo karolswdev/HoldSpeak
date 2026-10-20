@@ -277,7 +277,25 @@ def test_a_plugin_whose_route_was_not_shown_is_skipped_with_a_receipt(
         db, {"kind": "capability", "capability_id": "meeting.deferred_analysis"},
         "lan-qwen", summary_rev, "c4-summary",
     )
-    _assign(db, {"kind": "global"}, "other-lan", other_rev, "c4-other-default")
+    # Betterment fallback lets plugins inherit the disclosed summary route.
+    # This H201 negative case must state the undisclosed destination directly
+    # for every installed plugin capability, so the refusal remains about the
+    # route shown to the owner rather than inheritance.
+    from holdspeak.inference_capabilities import process_inference_capability_registry
+
+    plugin_capabilities = [
+        capability_id
+        for capability_id in process_inference_capability_registry().capability_ids
+        if capability_id.startswith("meeting.plugin.")
+    ]
+    for ordinal, capability in enumerate(plugin_capabilities, 1):
+        _assign(
+            db,
+            {"kind": "capability", "capability_id": capability},
+            "other-lan",
+            other_rev,
+            f"c4-undisclosed-{ordinal}",
+        )
 
     replies = _Replies()
     _engine_seam(monkeypatch, replies)

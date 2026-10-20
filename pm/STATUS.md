@@ -18,6 +18,8 @@ owner placement through compare-and-set. No second ledger or arranger is added.
 The deterministic real-Hub check places Mira at (10,28,710,812) and Platform
 sync at (720,28,710,812), with the exact seam and full working height. The
 393 check shows safe in-band sheets (0,44,393,752), without claiming a tile.
+After normal desk load, a canonical HTTP raise presents Mira at the front;
+all nine points of her header are owned and its shot is visible.
 The final real LAN run on qwen3.8-27b reached its first strict tile in
 16.270 s, then Wrote/Undo reported Restored and removed only the new windows.
 Its current observation is run `20261020T100334Z`; older timing files are
@@ -29,6 +31,90 @@ not observed in this fresh-open check.
 
 Focused checks pass: 10 Python and 44 web, plus build. Both widths were
 inspected. Required quick: ASK_ARRANGE_QUICK_PENDING.
+
+Needs shows each owner-prepared Send once, with its destination, source and
+frozen preview. Unknown-delivery retry reuses the original command and
+operation; rows without that provenance offer Check. Completed automations
+prepare once and retain their name through owner Send. Manual preparation
+of that same artifact remains labelled as the owner’s action.
+
+Summary and Follow-ups use confirmed decisions and open confirmed actions.
+Canonical edits and Desk decisions linked to the meeting appear once in the
+outbound words; unconfirmed proposals stay out. Markdown remains frozen,
+and email renders safe HTML with the matching plain text. Existing retained
+rows without Markdown stay readable. No new queue or authority is added.
+
+The integrated Send branch joins the reviewed content, Needs and automation
+changes with the sheet and Edit path. Earlier checks passed 195 integrated
+backend cases, 28 web consumers, six real Needs Send browser cases and the
+two actual sheet/Edit cases. The focused fixes also passed 286 backend/browser
+and 39 web checks, with three actual recording writers. Public metadata no
+longer duplicates the body; the existing privacy fence passes. The Slack
+Markdown expectation reads the actual renderer, and the canonical footer
+replaces the old inline Send that the longer Summary covered on the phone.
+The combined source passes type check, build, all 67 selected web checks and
+all 47 focused backend/browser checks. Those include six Needs cases, both
+sheet/Edit widths, the longer phone Summary, exact bytes and original-operation
+replay. Retained Back and Room Send selectors now target the shared header
+and footer; their original saved-document and operation assertions remain.
+All 169 checks in the five updated retained web-consumer files also pass.
+The original draft-save, held-send, retry and native/manual receipt assertions
+remain strict. Both real uncertain-send reload cases pass; the Room receipt
+locator follows its Send control into the canonical footer. The required
+check covers these final retained browser selectors.
+The first full combined check passed all 4,094 related web tests, 2,383
+affected backend/browser checks, all 110 sweep, 27 canon and 1,116 guards.
+Two Send whole-reply recordings still contained the removed public body;
+their actual producer writers now pass and have refreshed all three replies.
+The final delta replays the full Send backend file and recorded face consumer.
+Required quick: Final delta: all 8 Send backend checks and 10 recorded face checks passed; all 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green. The preceding full product check passed 4,094 related web and 2,383 other affected backend/browser checks.
+The first real Send recipe remains open for the owner's five presses.
+
+Send opens one shared sheet in the result's window. Destinations are chips;
+Add destination saves and selects inline. Its footer keeps Send on screen,
+and Back restores the original result and opening focus. The record's own
+footer is absent while the sheet is open. Saved paths retain their case and
+wrap inside the window. Native receipts and sent-by-hand records share Sent.
+
+Edit makes a Note copy from the frozen preview and selects the same
+destination. The real Note editor stores the changed line, and Send carries
+those exact rendered bytes. The original meeting Summary stays unchanged.
+
+The actual private-Hub case passes at 1440/393: meeting and Note Send,
+inline Add, Back focus, Edit/store/send, exact file bytes, unchanged source,
+and one durable Sent row after reload. All nine pointer points hit at both
+widths; the phone Send owns a 44 px target. Both shots were inspected.
+Earlier 34 focused web checks passed. The old retained form-persistence
+check now uses Summary/Follow-ups while retaining its reload and per-object
+assertions. The combined required check above covers this sheet.
+The first real Send recipe remains open for the owner's five presses.
+
+Other devices now saves its switch and displayed host/port in the existing
+config through SettingsService. The remote gate, its read route and the
+System fact read that same durable value. There is no process-only writer
+or cache. Owner-only access and credential custody remain unchanged.
+
+The real private Hub preserves enabled, host and a partial port edit across
+restart. All 77 focused backend checks pass on the locked FastAPI 0.128.0.
+The active Guide uses Works, Not ready and Does not work with the existing
+reason text; a row without a fix gets no invented fix verb. Its six recorded
+consumer checks, type check and build pass. Required quick:
+Final delta: 75 affected checks, 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green. The unchanged product also passed 4,084 related web consumers in the first broader run.
+The first broader run passed 4,084 related web and 3,121 backend checks,
+110 sweep, 27 canon and 1,116 guards. Three earlier consumer expectations
+are reconciled with plugin inheritance and accepted People references. The
+three focused regressions pass: explicit OFF still excludes a plugin, and
+an explicitly undisclosed host is still refused with its receipt.
+The fresh watcher pinned to `b8be8b36a` passed its first 5,921 Python
+checks (16 skipped, one xfailed); the remaining full tape is still pending.
+
+Speech route plans now use the same assignment order as Engines: explicit
+capability or speech group, without falling through to the chat default.
+Installed meeting plugins follow Meeting summaries before their group or
+the global assignment. This changes the frozen runtime route, as well as
+what the face reports. No assignment or engine is changed on the owner’s
+desk. The worker collected and passed 46 focused checks against real SQLite
+assignment producers. Required quick: 245 affected checks passed; all 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green.
 
 The main watcher’s retained browser adapters now follow the current doors:
 Watch sources through Sources then RAW; meeting and decision icons through

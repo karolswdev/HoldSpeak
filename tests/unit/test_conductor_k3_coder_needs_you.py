@@ -378,6 +378,14 @@ def _stub_other_hub_reads(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(membership, "_read_assignments", lambda db, p: {"task_overrides": []})
     monkeypatch.setattr(membership, "_read_summary_attention", lambda db, p: [])
     monkeypatch.setattr(membership, "_read_decisions", lambda db, p: [])
+    monkeypatch.setattr(
+        membership, "_send_attention_rows",
+        lambda db, p: ([], {
+            "source_id": "sends", "kind": "send", "state": "available",
+            "observed_at": T0.isoformat(), "label": "Sends", "project_id": "",
+            "reason": None, "repair": None,
+        }, None),
+    )
 
 
 def _compose(aggregate: dict[str, Any] | None = None) -> dict[str, Any]:

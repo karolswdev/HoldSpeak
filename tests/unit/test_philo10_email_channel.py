@@ -232,10 +232,17 @@ def test_c1_one_send_is_one_egress_child_whose_wire_bytes_and_digest_are_the_fro
     assert (sent["host"], sent["url"]) == ("api.sendgrid.com", "https://api.sendgrid.com/v3/mail/send")
     assert sent["body"] == frozen and sent["headers"]["Authorization"] == f"Bearer {KEY}"
     request = json.loads(frozen)
-    assert request["content"] == [{"type": "text/plain", "value": sent_text(f"Cutover is green. {SENTINEL}")}]
+    from holdspeak.services.channel_email import markdown_html, markdown_text
+
+    source_markdown = sent_text(f"Cutover is green. {SENTINEL}")
+    expected_text = markdown_text(source_markdown)
+    expected_html = markdown_html(source_markdown)
+    assert request["content"] == [{"type": "text/plain", "value": expected_text},
+                                   {"type": "text/html", "value": expected_html}]
     assert body["send"]["preview"] == {"from": "Karol <karol@example.com>",
                                        "to": ["Priya Raman <priya@example.com>"], "cc": ["lead@example.com"],
-                                       "subject": request["subject"], "text": sent_text(f"Cutover is green. {SENTINEL}")}
+                                       "subject": request["subject"], "text": expected_text,
+                                       "html": expected_html, "markdown": source_markdown}
     # One external.egress CHILD of the send, under the send's authenticated principal.
     send_op = op(hub, body["operation_id"])
     [child] = egress_ops(hub)
@@ -506,7 +513,8 @@ def test_c3_an_email_transport_exception_carrying_the_key_and_body_leaves_neithe
     assert result["send"]["proof"] is None
     places = {"native": json.dumps(full, default=str), "receipt": json.dumps(result["receipt"]),
               "logs": caplog.text,
-              "database": dump(hub, skip=(("channel_sends", "payload"),), only=BODY_FREE)}
+              "database": dump(hub, skip=(("channel_sends", "payload"), ("channel_sends", "document_json")),
+                                 only=BODY_FREE)}
     for where, text in places.items():
         assert KEY_MARK not in text, where
         assert SENTINEL not in text, where
@@ -528,7 +536,7 @@ def test_c4_no_key_and_no_body_in_the_journal_a_receipt_a_log_an_error_or_a_file
     failed = send(hub, press(hub, "inline", update, dest, "c4-b")).json()
     assert (sent["outcome"], failed["outcome"], failed["send"]["reason"]) == ("sent", "failed", "invalid_request")
     assert "[redacted]" in failed["send"]["proof"]["error"]
-    body_free = dump(hub, skip=(("channel_sends", "payload"),), only=BODY_FREE)
+    body_free = dump(hub, skip=(("channel_sends", "payload"), ("channel_sends", "document_json")), only=BODY_FREE)
     errors_and_receipts = json.dumps([[a["receipt"], a["send"]["reason"], a["send"]["proof"]] for a in (sent, failed)])
     for where, text in {"journal, receipts, rows": body_free, "logs": caplog.text,
                         "errors and receipts": errors_and_receipts}.items():
@@ -786,9 +794,12 @@ def test_c6_a_materially_different_provider_plugs_in_with_one_class_and_one_row(
     result = send(hub, press(hub, "send_id", update, dest, "c6")).json()
     assert result["outcome"] == "sent" and result["send"]["proof"] == {"provider": "postmarklike",
                                                                        "message_id": "pm-0a1b"}
-    assert result["send"]["preview"]["text"] == sent_text("Through a second provider.")
+    from holdspeak.services.channel_email import markdown_text
+
+    assert result["send"]["preview"]["text"] == markdown_text(sent_text("Through a second provider."))
     [sent] = wire.requests
-    assert sent["host"] == "api.postmark.test" and json.loads(sent["body"])["TextBody"] == sent_text("Through a second provider.")
+    assert sent["host"] == "api.postmark.test" and json.loads(sent["body"])["TextBody"] == markdown_text(
+        sent_text("Through a second provider."))
     # Its OWN authentication: the token header, and no Bearer Authorization at all.
     assert sent["headers"]["X-postmark-server-token"] == KEY and "Authorization" not in sent["headers"]
     [child] = egress_ops(hub)
@@ -830,17 +841,21 @@ def test_c7_resend_sends_its_exact_request_and_its_id_is_the_acceptance(hub: Hub
     [row] = [r for r in sends(hub) if r["state"] != "prepared"]
     frozen = bytes(row["payload"])
     [sent] = wire.requests
-    # The request, byte for byte: POST https://api.resend.com/emails, Bearer key, a User-Agent, text only.
+    # The request, byte for byte: POST https://api.resend.com/emails, Bearer key, a User-Agent, plain text and HTML.
     assert (sent["host"], sent["url"]) == ("api.resend.com", "https://api.resend.com/emails")
     assert sent["body"] == frozen
-    assert frozen == json.dumps({"from": "Karol <karol@example.com>", "to": ["Priya Raman <priya@example.com>"],
-                                 "cc": ["lead@example.com"], "subject": json.loads(frozen)["subject"],
-                                 "text": sent_text(f"Cutover is green. {SENTINEL}")},
+    from holdspeak.services.channel_email import markdown_html, markdown_text
+
+    source_markdown = sent_text(f"Cutover is green. {SENTINEL}")
+    frozen_value = {"from": "Karol <karol@example.com>", "to": ["Priya Raman <priya@example.com>"],
+                    "cc": ["lead@example.com"], "subject": json.loads(frozen)["subject"],
+                    "text": markdown_text(source_markdown), "html": markdown_html(source_markdown)}
+    assert frozen == json.dumps(frozen_value,
                                 ensure_ascii=False, separators=(",", ":")).encode()
     assert sent["headers"]["Authorization"] == f"Bearer {RESEND_KEY}"
     assert sent["headers"]["User-agent"] == "HoldSpeak"
     assert sent["headers"]["Content-type"] == "application/json"
-    assert "html" not in json.loads(frozen)
+    assert json.loads(frozen)["html"] == markdown_html(source_markdown)
     # The id in Resend's JSON body is the proof; the word names Resend; accepted, never "delivered".
     assert result["outcome"] == "sent"
     assert result["send"]["proof"] == {"provider": "resend", "message_id": RESEND_ID, "word": "ACCEPTED BY RESEND",
@@ -848,7 +863,9 @@ def test_c7_resend_sends_its_exact_request_and_its_id_is_the_acceptance(hub: Hub
     assert result["send"]["preview"] == {"from": "Karol <karol@example.com>",
                                          "to": ["Priya Raman <priya@example.com>"], "cc": ["lead@example.com"],
                                          "subject": json.loads(frozen)["subject"],
-                                         "text": sent_text(f"Cutover is green. {SENTINEL}")}
+                                         "text": markdown_text(source_markdown),
+                                         "html": markdown_html(source_markdown),
+                                         "markdown": source_markdown}
     # One external.egress child to the Resend host, the frozen digest admitted.
     [child] = egress_ops(hub)
     full = native(hub, child["operation_id"])["canonical"]
@@ -940,7 +957,8 @@ def test_c7_resends_error_that_echoes_the_key_and_the_body_leaves_neither(
     assert "[redacted]" in failed["send"]["proof"]["error"]
     places = {"errors and receipts": json.dumps([[a["receipt"], a["send"]["reason"], a["send"]["proof"]]
                                                  for a in (failed, lost)]), "logs": caplog.text,
-              "database": dump(hub, skip=(("channel_sends", "payload"),), only=BODY_FREE)}
+              "database": dump(hub, skip=(("channel_sends", "payload"), ("channel_sends", "document_json")),
+                                 only=BODY_FREE)}
     for where, text in places.items():
         assert RESEND_MARK not in text, where
         assert SENTINEL not in text, where

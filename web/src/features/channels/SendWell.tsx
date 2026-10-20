@@ -32,7 +32,7 @@ export function DeliveryHistory({ ctrl, update, sends }: { ctrl: UpdateControlle
   const sendOf = (sendId: string | null | undefined) => (sendId ? sends.find((s) => s.id === sendId) : undefined);
   return (
     <div data-send="history" data-testid="delivery-section">
-      <SurfaceSection label={ok > 0 ? `${SEND_WORDS.history} ${ok}` : SEND_WORDS.history}>
+      <SurfaceSection label={ok > 0 ? `SENT ${ok}` : "SENT"}>
         <div className="update-deliver-line send-manual" data-testid="deliver-line">
           <span className="update-deliver-to">
             <StringGadget label="To" value={ctrl.deliverTo} onChange={ctrl.setDeliverTo} placeholder="To"
@@ -115,7 +115,7 @@ export function ListChips({ update }: { update: ProjectUpdate }) {
     <>
       {prep > 0 ? <span data-testid="update-prepared-chip"><StateChip state="active" icon="◆" label={`${SEND_WORDS.prepared} ×${prep}`} /></span> : null}
       {unknown > 0 ? <span data-testid="update-unknown-chip"><StateChip state="warning" label={`${SEND_WORDS.unknownChip} ×${unknown}`} /></span> : null}
-      {ok > 0 ? <span data-testid="update-delivered-chip"><StateChip state="success" label={`${SEND_WORDS.history} ×${ok}`} /></span> : null}
+      {ok > 0 ? <span data-testid="update-delivered-chip"><StateChip state="success" label={`SENT ×${ok}`} /></span> : null}
     </>
   );
 }

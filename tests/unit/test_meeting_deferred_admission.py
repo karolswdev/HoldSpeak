@@ -2252,6 +2252,13 @@ def _assign_deferred_queue_routes_partial(
                 "entries": [{"profile_id": "deferred-queue-model", "profile_revision": 1}],
             },
         )
+    # Betterment fallback lets an unassigned plugin inherit the meeting summary
+    # route.  Keep this fixture's missing-plugin case explicit: OFF is the
+    # durable owner choice that blocks inheritance and produces no_assignment.
+    for plugin_id in skip_plugin_ids:
+        assignments.set_capability_off(
+            OWNER, capability_id=f"meeting.plugin.{plugin_id}"
+        )
 
 
 def _queue_rig_partial_assignments(

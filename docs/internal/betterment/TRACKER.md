@@ -7,7 +7,7 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 
 **Last updated:** 2026-10-20, Ask arrangement and Undo observed; speed gate remains open. Running-desk identity is in `pm/STATUS.md`.
 
-**Total: 110 of 117 slices merged**, with Send S7 still partial.
+**Total: 115 of 117 slices merged**.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -22,7 +22,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Daily and Needs you | `daily/` | 11 of 11 |
 | Setup and Settings | `setup/` | 10 of 10 |
 | Desk shell | `shell/` | 9 of 10 |
-| Send | `send/` | 2 of 8 |
+| Send | `send/` | 7 of 8 |
 | Capture | `capture/` | 12 of 12 |
 
 ## Automations (`workbench/RECIPE.md`): 11 of 11
@@ -167,17 +167,17 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S8 | The Window menu | Done · #1407 | Arrange front/all preserve size and order; exact owner geometry survives reopening. |
 | S9 | Ask can arrange the desk (gated) | Part · PR_PENDING | Real LAN opens and tiles the canonical windows; Wrote/Undo restores them. First strict tile 16.27 s exceeds the 10 s gate. |
 
-## Send (`send/RECIPE.md`): 2 of 8
+## Send (`send/RECIPE.md`): 7 of 8
 
 | Slice | What | State | Note |
 |---|---|---|---|
 | S1 | Tell the truth (small repairs, no new face) | Done · #1268 |  |
 | S2 | The first real sends (on his desk, his press) | Open |  |
-| S3 | Ready to send in Needs you (owner decision 1) | Open |  |
-| S4 | What goes out (owner decision 3) | Open |  |
-| S5 | The Send sheet | Open |  |
-| S6 | Edit before Send | Open |  |
-| S7 | Automations put their result in a destination | Part | A6 #1322: Put it in can prepare a send to a saved destination. Check the rest of S7 against the recipe. |
+| S3 | Ready to send in Needs you (owner decision 1) | Done · #1411 | Owner-only Needs membership, original-operation retry and frozen preview; actual 1440/393 prepare/send/discard proof. |
+| S4 | What goes out (owner decision 3) | Done · #1411 | Summary and Follow-ups use current confirmed words; frozen Markdown and safe email/plain text. |
+| S5 | The Send sheet | Done · #1411 | One in-place sheet, visible Send footer, inline destination, Back focus and durable Sent at both widths. |
+| S6 | Edit before Send | Done · #1411 | Edit opens a Note copy; stored changes send to the same destination while the source stays unchanged. |
+| S7 | Automations put their result in a destination | Done · #1411 | Completed automation prepares once with its name; actual owner Send preserves exact frozen bytes. |
 | S8 | "Not checked yet" warns (owner decision 2) | Done · #1403 | Published unchecked words stay sendable; warning and receipt survive readback. |
 
 ## Capture (`capture/RECIPE.md`): 12 of 12

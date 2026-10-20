@@ -39,6 +39,7 @@ from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.db.channels import BUILTIN_FOLDER_ID, is_builtin, now_iso, settle_in_transaction
 from holdspeak.logging_config import get_logger
+from holdspeak.principals import PrincipalKind
 
 from . import channel_contract as contract
 from . import channel_email  # noqa: F401 -- registers the email channel (PHILO-10-03)
@@ -91,8 +92,13 @@ def _handle() -> Any:
 class ChannelService:
     """The one service behind every ``channel.*`` operation (HTTP, MCP and the rig reach it)."""
 
-    def __init__(self, db: Any, *, on_changed: Callable[[str, str, str], None] | None = None) -> None:
+    def __init__(self, db: Any, *, on_changed: Callable[[str, str, str], None] | None = None,
+                 automation_origin: Mapping[str, Any] | None = None) -> None:
         self._db, self._on_changed = db, on_changed
+        # Internal automation delivery may carry the source-owned producer
+        # provenance into the existing frozen document_json. Public callers
+        # never provide this value through channel.prepare arguments.
+        self._automation_origin = dict(automation_origin) if isinstance(automation_origin, Mapping) else None
 
     # ── views ──────────────────────────────────────────────────────────
 
@@ -147,10 +153,67 @@ class ChannelService:
             return row
         return None
 
-    def _send_view(self, row: Mapping[str, Any]) -> dict[str, Any]:
+    def _retry_command(
+        self, row: Mapping[str, Any], principal: Any, *, presented_state: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Return the owner's original send command for a settled UNKNOWN row.
+
+        The command id and arguments already belong to the kernel operation and
+        frozen send row.  Needs-you may expose that provenance to the owner so a
+        reload can replay the operation without inventing a second press.
+        """
+        if (
+            row.get("state") != "unknown" and presented_state != "unknown"
+        ) or getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            return None
+        operation_id = str(row.get("send_operation_id") or "")
+        if not operation_id:
+            return None
+        with self._db._connection() as conn:
+            operation = conn.execute(
+                "SELECT idempotency_key, name, principal_kind FROM kernel_operations WHERE operation_id=?",
+                (operation_id,),
+            ).fetchone()
+        if operation is None or str(operation["name"] or "") != "channel.send":
+            return None
+        if str(operation["principal_kind"] or "") != PrincipalKind.OWNER.value:
+            return None
+        key = str(operation["idempotency_key"] or "")
+        prefix = "channel.send:cmd:"
+        if not key.startswith(prefix) or not key[len(prefix):]:
+            return None
+        command: dict[str, Any] = {"command_id": key[len(prefix):]}
+        if row.get("prepare_operation_id"):
+            command["send_id"] = row["id"]
+        else:
+            command.update({
+                "document_ref": row["document_ref"],
+                "destination_id": row["destination_id"],
+                "preview_digest": row["payload_digest"],
+            })
+        return command
+
+    def _send_view(self, row: Mapping[str, Any], principal: Any = None) -> dict[str, Any]:
         destination = self._db.channel_destinations.get(row["destination_id"]) or {}
         payload = bytes(row["payload"] or b"")
         document_json = json.loads(row["document_json"]) if row.get("document_json") else None
+        frozen_document = (
+            contract.document_from_json(row["document_ref"], document_json)
+            if isinstance(document_json, dict)
+            else None
+        )
+        frozen_markdown = (
+            frozen_document.body_md
+            if frozen_document is not None and "body_md" in document_json
+            else None
+        )
+        # The frozen source words remain in the private row for custody and
+        # reconstruction. Public send views expose the explicit preview
+        # instead, so provenance metadata cannot carry the document body.
+        public_document_json = document_json
+        if isinstance(document_json, dict):
+            public_document_json = dict(document_json)
+            public_document_json.pop("body_md", None)
         # Existing channels report frozen byte size. Slack reports the text
         # characters governed by its 39,000-character refusal.
         size = (contract.payload_size("slack", payload)[0]
@@ -166,17 +229,18 @@ class ChannelService:
                 state, reason, proof = "sent", None, found.record()
             else:
                 state, reason = "unknown", "no_answer_in_time"
-        return {
+        view = {
             "id": row["id"], "document_ref": row["document_ref"], "destination_id": row["destination_id"],
             "destination_name": destination.get("name"), "channel": row["channel"],
             "badge": contract.channel(row["channel"]).badge(self._synced(destination, row)),
             "account": json.loads(row["account_json"] or "{}"),
             "target": contract.shown_target(json.loads(row["target_json"] or "{}")),
             "target_digest": row["target_digest"], "payload_digest": row["payload_digest"],
-            "document_json": document_json,
+            "document_json": public_document_json,
             "size": size, "preview": contract.preview_for(
                 row["channel"], payload, row["account_json"],
-                str(document_json.get("preview_warning") or "") if isinstance(document_json, dict) else None,
+                frozen_document.preview_warning if frozen_document is not None else None,
+                frozen_markdown,
             ),
             "prepared_by": {"kind": row["prepared_by_kind"], "identity": row["prepared_by_identity"]},
             "prepare_operation_id": row["prepare_operation_id"], "send_operation_id": row["send_operation_id"],
@@ -185,6 +249,10 @@ class ChannelService:
             "dispatch_started_at": row["dispatch_started_at"], "settled_at": row["settled_at"],
             "dispatch_seq": row["dispatch_seq"], "egress": row.get("egress"),
         }
+        retry = self._retry_command(row, principal, presented_state=state)
+        if retry is not None:
+            view["retry_command"] = retry
+        return view
 
     @staticmethod
     def _past_answer_limit(row: Mapping[str, Any]) -> bool:
@@ -207,8 +275,8 @@ class ChannelService:
             return bool(send.get("egress"))  # judged at its boundary: any sync provider
         return contract.builtin_egress() is not None
 
-    def _answer(self, row: Mapping[str, Any]) -> dict[str, Any]:
-        view = self._send_view(row)
+    def _answer(self, row: Mapping[str, Any], principal: Any = None) -> dict[str, Any]:
+        view = self._send_view(row, principal)
         return {"send": view, "outcome": view["state"]}
 
     def _destination(self, destination_id: str) -> dict[str, Any]:
@@ -229,12 +297,12 @@ class ChannelService:
             row = self._db.channel_sends.get(send_id)
             if row is None:
                 raise NotFound("send", send_id)
-            return {"sends": [self._send_view(row)]}
+            return {"sends": [self._send_view(row, principal)]}
         if document_ref:
             rows = self._db.channel_sends.list_for_document(document_ref)
         else:
             rows = self._db.channel_sends.list_recent()
-        return {"sends": [self._send_view(r) for r in rows]}
+        return {"sends": [self._send_view(r, principal) for r in rows]}
 
     def preview(self, principal: Any, document_ref: str, destination_id: str) -> dict[str, Any]:
         """What the destination's channel would get: the exact bytes' digest and their readable preview."""
@@ -251,7 +319,7 @@ class ChannelService:
                 "channel": destination["channel"], "badge": chan.badge(self._synced(destination)),
                 "payload_digest": contract.sha256(payload), "size": size,
                 "preview": contract.preview_for(destination["channel"], payload, destination["account_json"],
-                                                 document.preview_warning)}
+                                                 document.preview_warning, document.body_md)}
 
     def check_destination(self, principal: Any, destination_id: str) -> dict[str, Any]:
         """A folder: a local check (it resolves to the saved folder, it is a folder, it is writable).
@@ -500,14 +568,14 @@ class ChannelService:
             row = self._db.channel_sends.by_operation(prepare_operation_id=handle.operation_id)
             if row is None:
                 raise NotFound("send", handle.operation_id)
-            return self._answer(row)
+            return self._answer(row, principal)
         destination = self._destination(destination_id)
         if destination["state"] != "active":
             raise ChannelRefused("destination_parked", f"Destination {destination_id} is parked")
         document = contract.render_document(self._db, document_ref)
         payload = contract.serialize_for(destination, document)
         self._size(destination["channel"], payload)
-        document_json = contract.frozen_document_json(document)
+        document_json = contract.frozen_document_json(document, source_origin=self._automation_origin)
         send_id = _derived_id("chs_", handle.operation_id)
         operation = handle.operation()
 
@@ -522,7 +590,8 @@ class ChannelService:
                  handle.operation_id, now_iso()))
 
         handle.terminal("succeeded", "succeeded", f"channel_send:{send_id}", effect=effect)
-        return self._answer(self._db.channel_sends.get(send_id))
+        self._changed(send_id, "prepared")
+        return self._answer(self._db.channel_sends.get(send_id), principal)
 
     def discard(self, principal: Any, send_id: str, command_id: Optional[str] = None) -> dict[str, Any]:
         """``prepared`` -> ``discarded``, one conditional write; against Send, one wins."""
@@ -531,7 +600,7 @@ class ChannelService:
         if row is None:
             raise NotFound("send", send_id)
         if handle.replay:
-            return self._answer(row)
+            return self._answer(row, principal)
 
         def effect(conn: Any) -> None:
             moved = conn.execute("UPDATE channel_sends SET state='discarded', settled_at=? WHERE id=? AND state='prepared'",
@@ -540,7 +609,8 @@ class ChannelService:
                 raise ChannelRefused("send_already_settled", f"Send {send_id} is no longer prepared")
 
         handle.terminal("succeeded", "succeeded", f"channel_send:{send_id}", effect=effect)
-        return self._answer(self._db.channel_sends.get(send_id))
+        self._changed(send_id, "discarded")
+        return self._answer(self._db.channel_sends.get(send_id), principal)
 
     # ── the press ────────────────────────────────────────────────────────
 
@@ -554,7 +624,7 @@ class ChannelService:
         if handle.replay:
             if mine is None:
                 raise NotFound("send", handle.operation_id)
-            return self._answer(mine)
+            return self._answer(mine, principal)
         if mine is not None:
             # This operation already crossed its boundary: a take-over. NEVER dispatch again.
             if mine["state"] == "dispatching":
@@ -723,7 +793,7 @@ class ChannelService:
         settled = self._db.channel_sends.get(row["id"])
         if settled is not None and str(settled.get("state") or "") in {"sent", "failed", "unknown"}:
             self._changed(str(row["id"]), str(settled["state"]))
-        return self._answer(settled)
+        return self._answer(settled, handle.principal)
 
     def _close_as_row(self, handle: Any, row: Mapping[str, Any]) -> dict[str, Any]:
         """A take-over that finds its row already settled: the kernel state follows the row."""
@@ -737,9 +807,18 @@ class ChannelService:
             except KernelRefused as exc:
                 if exc.reason not in STRICT_CONFLICTS:
                     raise
-        return self._answer(row)
+        return self._answer(row, handle.principal)
 
     def _changed(self, send_id: str, state: str) -> None:
+        try:
+            # The send rows are a source in the existing Needs-you aggregate.
+            # Keep the cached Room projection and its browser refresh signal
+            # on the same write boundary as the channel row.
+            from .needs_you_aggregate import mark_needs_you_dirty
+
+            mark_needs_you_dirty(self._db)
+        except Exception:  # pragma: no cover - a projection marker never fails a send
+            pass
         if self._on_changed is None:
             return
         try:

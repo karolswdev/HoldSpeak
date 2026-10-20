@@ -321,16 +321,16 @@ describe("the one DELIVERY history (A2)", () => {
       outcome: "confirmed", channel: "manual", proof: null, sendId: null },
   ];
 
-  it("head DELIVERY N counts isDelivered rows; words per channel; manual kept", () => {
+  it("head SENT N counts sent rows; words per channel; manual kept", () => {
     render(<DeliveryHistory ctrl={ctrl()} update={update({ deliveries: rows })}
       sends={[send({ id: "chs_2", state: "unknown", reason: "create_enametoolong" })]} />);
     const section = screen.getByTestId("delivery-section");
-    expect(section.querySelector("h3")?.textContent).toBe("DELIVERY 2");
+    expect(section.querySelector("h3")?.textContent).toBe("SENT 2");
     const r = screen.getAllByTestId("delivery-row");
     expect(r[0].textContent).toContain("SAVED");
     expect(r[0].textContent).toContain(`${FOLDER}/a.md`);
     expect(r[1].textContent).toContain("RESULT UNKNOWN · CHECK Long path folder");
-    expect(r[2].textContent).toContain("DELIVERED");
+    expect(r[2].textContent).toContain("SENT BY HAND");
     expect(r[2].textContent).toContain("MANUAL");
     expect(section.textContent).not.toContain("DELIVERED 2");
   });
@@ -340,12 +340,12 @@ describe("the one DELIVERY history (A2)", () => {
     expect(screen.getByTestId("history-unreadable").textContent).toContain("CANNOT READ HISTORY");
   });
 
-  it("list chips: PREPARED ×K, RESULT UNKNOWN ×M, DELIVERY ×N; none at zero", async () => {
+  it("list chips: PREPARED ×K, RESULT UNKNOWN ×M, SENT ×N; none at zero", async () => {
     routes["GET /api/channels/sends"] = () => ({ sends: [send({ state: "prepared", prepare_operation_id: "op" })] });
     const { container } = render(<ListChips update={update({ deliveries: rows })} />);
     expect((await screen.findByTestId("update-prepared-chip")).textContent).toContain("PREPARED ×1");
     expect(screen.getByTestId("update-unknown-chip").textContent).toContain("RESULT UNKNOWN ×1");
-    expect(screen.getByTestId("update-delivered-chip").textContent).toContain("DELIVERY ×2");
+    expect(screen.getByTestId("update-delivered-chip").textContent).toContain("SENT ×2");
     expect(container.textContent).not.toContain("DELIVERED");
   });
 

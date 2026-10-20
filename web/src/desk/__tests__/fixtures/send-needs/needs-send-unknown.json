@@ -1,0 +1,175 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_needs_you.py::test_send_needs_membership_leaves_once_for_discard_failed_and_unknown_replay (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "needsYou": {
+  "count": 1,
+  "projects": [],
+  "items": [
+   {
+    "id": "send:chs_22abc33f70aa97e894eb4acc",
+    "ref": "send:chs_22abc33f70aa97e894eb4acc",
+    "kind": "send",
+    "source": "send",
+    "title": "S3 state transitions — update r1 (2026-10-20)",
+    "documentLabel": "REV 1",
+    "documentTitle": "S3 state transitions — update r1 (2026-10-20)",
+    "documentRef": "project_update:pupd_87c1b766369a4a3797c44045d9f222b3",
+    "sendId": "chs_22abc33f70aa97e894eb4acc",
+    "destinationId": "chd_5f88916bc04458a0f58dae00",
+    "destinationName": "Team folder",
+    "why": "NO ANSWER",
+    "severity": "warning",
+    "ageToken": "2026-10-20T09:17:46+00:00",
+    "since": "2026-10-20T09:17:46+00:00",
+    "dueAt": null,
+    "owner": "you",
+    "preparedBy": "you",
+    "counted": true,
+    "send": {
+     "id": "chs_22abc33f70aa97e894eb4acc",
+     "document_ref": "project_update:pupd_87c1b766369a4a3797c44045d9f222b3",
+     "destination_id": "chd_5f88916bc04458a0f58dae00",
+     "destination_name": "Team folder",
+     "channel": "file",
+     "badge": "local",
+     "account": {},
+     "target": {
+      "folder": "/tmp/rig/state-transitions",
+      "display": "~/state-transitions"
+     },
+     "target_digest": "2eb7bdf87068552bcef5af0d864881b24615255777728c39e82c9200dd21a377",
+     "payload_digest": "f6abfd5c2e672e9d4e0277930c3766653caa9c210ff02f73bed61b7650d883c6",
+     "document_json": {
+      "label": "REV 1",
+      "slug": "s3-state-transitions",
+      "title": "S3 state transitions — update r1 (2026-10-20)"
+     },
+     "size": 93,
+     "preview": {
+      "text": "# S3 state transitions · Update · 2026-10-20\n\n## Progress\n\nThe ledger cutover is on track.\n",
+      "markdown": "# S3 state transitions · Update · 2026-10-20\n\n## Progress\n\nThe ledger cutover is on track.\n"
+     },
+     "prepared_by": {
+      "kind": "owner",
+      "identity": "owner-session"
+     },
+     "prepare_operation_id": "op_fb42fb9fbd7a44068a7f9305a616408c",
+     "send_operation_id": "op_cad4448337834a49a2f5c73b2385a887",
+     "state": "unknown",
+     "reason": "timeout",
+     "proof": null,
+     "file_path": "/tmp/rig/state-transitions/2026-10-20-s3-state-transitions-rev-1-22abc33f.md",
+     "created_at": "2026-10-20T09:17:46+00:00",
+     "dispatch_started_at": "2026-10-20T09:17:46.014073+00:00",
+     "settled_at": "2026-10-20T09:17:46+00:00",
+     "dispatch_seq": 2,
+     "egress": null,
+     "retry_command": {
+      "command_id": "s3-unknown",
+      "send_id": "chs_22abc33f70aa97e894eb4acc"
+     }
+    },
+    "sources": [
+     {
+      "owner": "you",
+      "id": "send:chs_22abc33f70aa97e894eb4acc",
+      "source": "send",
+      "title": "S3 state transitions — update r1 (2026-10-20)",
+      "why": "NO ANSWER",
+      "severity": "warning",
+      "fromLastObservation": false,
+      "observedAt": null,
+      "verbHref": null
+     }
+    ],
+    "dedupCount": 1,
+    "waiting": false,
+    "rankClass": "no_due_date",
+    "rank": 1,
+    "direction": "mine",
+    "muted": false,
+    "person_id": ""
+   }
+  ],
+  "next": null,
+  "computedAt": "2026-10-20T03:17:46.033592-06:00",
+  "stale": false,
+  "sweepId": null,
+  "coverage": [
+   {
+    "source_id": "project:proj-send-needs-unknown",
+    "kind": "project",
+    "state": "available",
+    "observed_at": "2026-10-20T03:17:45.911465",
+    "label": "S3 state transitions",
+    "project_id": "proj-send-needs-unknown",
+    "reason": null,
+    "repair": null
+   },
+   {
+    "source_id": "meeting:proj-send-needs-unknown",
+    "kind": "meeting",
+    "state": "available",
+    "observed_at": "2026-10-20T03:17:45.911465",
+    "label": "S3 state transitions",
+    "project_id": "proj-send-needs-unknown",
+    "reason": null,
+    "repair": null
+   },
+   {
+    "source_id": "commitment:proj-send-needs-unknown",
+    "kind": "commitment",
+    "state": "available",
+    "observed_at": "2026-10-20T03:17:45.911465",
+    "label": "S3 state transitions",
+    "project_id": "proj-send-needs-unknown",
+    "reason": null,
+    "repair": null
+   },
+   {
+    "source_id": "coders",
+    "kind": "coder",
+    "state": "available",
+    "observed_at": "2026-10-20T09:17:46.044932+00:00",
+    "label": "Agents",
+    "project_id": "",
+    "reason": null,
+    "repair": null
+   },
+   {
+    "source_id": "sends",
+    "kind": "send",
+    "state": "available",
+    "observed_at": "2026-10-20T09:17:46.042191+00:00",
+    "label": "Sends",
+    "project_id": "",
+    "reason": null,
+    "repair": null
+   }
+  ],
+  "complete": true,
+  "roomCounts": {
+   "proj-send-needs-unknown": 0
+  },
+  "mutedCount": 0,
+  "roomItems": [],
+  "roomComplete": true,
+  "arming": [],
+  "waitingCount": 0,
+  "ownerNames": [
+   "manager",
+   "me",
+   "you"
+  ],
+  "members": [
+   {
+    "ref": "send:chs_22abc33f70aa97e894eb4acc",
+    "kind": "attention"
+   }
+  ],
+  "blockers": [],
+  "failedMeetings": [],
+  "projectCounts": {},
+  "sourceErrors": {},
+  "peopleStoreState": "unconfigured"
+ }
+}
