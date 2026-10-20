@@ -24,7 +24,7 @@ Workbench runner cases cover plain/tool-written output with and without owner
 edits. Native hub credentials exercise both filtered tool reads and resource
 refusals, with ordinary credentials retaining their existing access. Real hub
 Room geometry passes at 1440/393. Native model output quality is not claimed;
-the engine leaf is recorded. Required quick: P7P8_QUICK_PENDING.
+the engine leaf is recorded. Required quick: Final delta quick passes 4,074 related web checks, 54 affected Python/browser checks including both current Room geometry cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The preceding product run passed 4,110 web and 4,571 other affected Python checks. Empty-state and recorded-wire contracts now include the automation, the display-only engine reader has its exact census classification, and the verb says Open latest. Known fix-forward: Room NEW still follows draft lifecycle and must use the existing automation artifact read state. The pinned 2833d225d main watcher has passed its first shard (6,073 passed, five skipped); the full tape remains incomplete. The prior 41f4ebc9f tape completed red, with its known failures corrected in later focused checks..
 
 Shell S3 gives the desktop Dock Today, Meetings, People, Agents and Speak;
 the phone has Today, Capture, Meetings, People and Agents. Both use the
