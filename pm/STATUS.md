@@ -4,9 +4,21 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (one-page Settings delivery)
+**Last updated:** 2026-10-19 (project source Retry delivery)
 
 ## Current phase
+
+The P5/P6 source-link follow-up is closed by an actual producer contract:
+found_links reports linked/failed per meeting or note. New and existing project
+Add paths use it. A failed selection stays selected with its producer error;
+Retry sends only that item to the already-created project. Missing individual
+results stay failed. No successful source or project is created again.
+
+Root collected and passed 57 affected Python cases, including the real HTTP
+partial-failure and two-size browser Retry, plus 40 Door web cases and build.
+The durable resource readback finds each successful relationship once. The
+owner's database and provider credentials were not used. This closes follow-up
+work and adds no slice. Required quick: P5_QUICK_PENDING.
 
 ST7 makes Settings one page with You, Speak, Meetings, Notices, Accounts,
 Agents, Desk and This Mac. The desktop index sits beside the page; phone
