@@ -17,6 +17,35 @@ and retains its linked canonical decision exactly once. No product behavior
 changed. Root passed 24 collected producer checks and 41 People, Today and
 Needs consumers. Required quick: MAIN_WIRE_QUICK_PENDING.
 
+Search uses one ranked stream, the last six successful opens, exact About
+for Cmd+Enter and live object verbs. Protected People support Open, Ask,
+Prep and Keep/Remove through the existing filing operation. Mode recipes
+keep their semantic kind. Builder tools is a hub preference with the saved
+revision, shared browser refresh and existing MCP settings access.
+
+Root passed 65 collected backend/browser cases, including real person
+Keep/Remove and Prep at 1440/393, exact Cmd+Enter About, phone search and
+Builder persistence across two browsers. The 150 focused web consumers,
+type check and build pass. The complete Settings wire group was recorded
+through both actual producer writers. P9's canonical decision prompt and
+front-project context are integrated. The first required check caught old
+Search labels, grouping and cold-start assertions, the Runs-on rig using its
+wrong owner token, a phone Hand hit-area overlap and an action-list left
+rail. The shared styles and test adapters are corrected without changing
+product authority or relaxing the geometry/canon checks. Required quick:
+580 related web checks and 19 affected browser cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green..
+
+The final fix proof passed all 48 selected Search consumers, eight collected
+browser cases (first use, Note editor, Runs-on Undo and strict Search hit
+areas at both widths), 15 canon checks, type check and build.
+
+The older pinned full tape finished red: 16,962 Python and 314 browser
+cases passed, with five Python and four browser failures repaired by
+#1397/#1400. Its web run passed 5,351 and failed two Settings cases; both
+pass in the current focused run. A fresh full run must confirm integration.
+The S4/S1/S0 Search follow-ups and the already-fixed Interview ordering
+entry are reconciled with their retained proof.
+
 P9 gives each decision one canonical record. New Decision carries About and
 Why through the admitted decision.create path. Project This week, Decisions,
 the decision window and Meeting Decide resolve that record. Legacy source

@@ -96,7 +96,7 @@ async function deck() {
   render(<MemoryRouter><DeskToolShelf /></MemoryRouter>);
   fireEvent.click(screen.getByRole("button", { name: /Search/ }));
   await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
-  return screen.getByRole("combobox", { name: "Search tools and Desk items" });
+  return screen.getByRole("combobox", { name: "Find, open or ask" });
 }
 
 async function type(input: HTMLElement, q: string) {
@@ -112,7 +112,7 @@ describe("PHILO-13-14 the palette knows his week", () => {
     const input = await deck();
     await type(input, "Priya");
     expect(top()).toContain("Priya Shah");
-    expect(top()).toContain("PERSON");
+    expect(top()).toContain("Person");
     fireEvent.keyDown(input, { key: "Enter" });
     expect(opened.surfaces).toContainEqual(["window", "people:rel-priya"]);
     expect(calls).toContainEqual(["GET", "/api/people/relationships"]);
@@ -192,7 +192,7 @@ describe("PHILO-13-14 the palette knows his week", () => {
     const input = await deck();
     await type(input, "People");
     // Betterment shell S1: the People App row, by the app's own name.
-    const app = (o: string) => o.includes("People") && o.includes("PROGRAM") && !o.includes("vocabulary");
+    const app = (o: string) => o.includes("People") && o.includes("App") && !o.includes("vocabulary");
     expect(app(top() ?? "")).toBe(true);
     const rows = options();
     expect(rows.findIndex(app)).toBeLessThan(rows.findIndex((o) => o.includes("People & vocabulary")));

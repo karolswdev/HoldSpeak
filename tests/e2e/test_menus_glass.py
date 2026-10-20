@@ -794,9 +794,9 @@ class TestSharedControlsAreSpecies:
 
             # The product's own door to a saved note: ⌘K, then Enter.
             page.locator(".desk-tools-launch").click()
-            shelf = page.get_by_role("region", name="Tools and Desk search", exact=True)
+            shelf = page.get_by_role("region", name="Search", exact=True)
             field = shelf.get_by_role(
-                "combobox", name="Search tools and Desk items", exact=True
+                "combobox", name="Find, open or ask", exact=True
             )
             field.fill(NOTE_TITLE)
             target = shelf.locator(f'[id="desk-palette-option-note:{note_id}"]')

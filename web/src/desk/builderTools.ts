@@ -1,31 +1,35 @@
 import { create } from "zustand";
+import { apiFetch } from "../lib/api";
 
-/** Betterment shell S1: the Builder tools setting (Settings ▸ System). Off by
- * default. On, Go draws Builder ▸ (Activity, Processes, Context, Components,
- * Calendar snapshot, Delivery board, Terminals, Refresh from hub) and Search
- * lists those rows. A per-browser view choice, like the wallpaper: it is kept
- * in this browser's storage and never written to the hub. */
+/** Retained only so an older browser value can be ignored safely during the
+ * migration. Builder tools are a hub preference, never browser state. */
 export const BUILDER_TOOLS_STORAGE_KEY = "hs.desk.builderTools";
 
-function read(): boolean {
-  try {
-    return globalThis.localStorage?.getItem(BUILDER_TOOLS_STORAGE_KEY) === "on";
-  } catch {
-    return false;
-  }
-}
+type BuilderToolsState = {
+  on: boolean;
+  /** Optimistic cache update after the canonical Settings writer queues a
+   * change. It does not write a second preference store. */
+  setOn(on: boolean): void;
+  /** Read the canonical hub value for this browser. */
+  hydrate(): Promise<void>;
+};
 
-export const useBuilderTools = create<{ on: boolean; setOn(on: boolean): void }>((set) => ({
-  on: read(),
-  setOn: (on) => {
+export const useBuilderTools = create<BuilderToolsState>((set) => ({
+  on: false,
+  setOn: (on) => set({ on }),
+  hydrate: async () => {
     try {
-      if (on) globalThis.localStorage?.setItem(BUILDER_TOOLS_STORAGE_KEY, "on");
-      else globalThis.localStorage?.removeItem(BUILDER_TOOLS_STORAGE_KEY);
+      const data = await apiFetch<{ ui?: { builder_tools?: unknown } }>("/api/settings");
+      if (typeof data?.ui?.builder_tools === "boolean") set({ on: data.ui.builder_tools });
     } catch {
-      // Storage refused (a private window): the switch still holds this session.
+      // The existing Desk remains usable while Settings is unavailable.
     }
-    set({ on });
   },
 }));
 
 export const builderToolsOn = (): boolean => useBuilderTools.getState().on;
+
+/** Start one canonical read without making browser storage authoritative. */
+export function hydrateBuilderTools(): void {
+  void useBuilderTools.getState().hydrate();
+}

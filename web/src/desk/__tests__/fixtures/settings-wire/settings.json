@@ -22,7 +22,7 @@
       "target_name": ""
     }
   },
-  "_revision": "997b3842a65dcdb4",
+  "_revision": "cb0befa24236d461",
   "_runtime_status": {
     "counters": {
       "classify_calls": 0,
@@ -85,8 +85,44 @@
   "device": {},
   "dictation": {
     "macros": {
-      "enabled": false,
-      "items": []
+      "enabled": true,
+      "items": [
+        {
+          "action": {
+            "kind": "desk_verb",
+            "payload": "record"
+          },
+          "keyword": "start recording"
+        },
+        {
+          "action": {
+            "kind": "desk_verb",
+            "payload": "stop"
+          },
+          "keyword": "stop recording"
+        },
+        {
+          "action": {
+            "kind": "desk_verb",
+            "payload": "new_note"
+          },
+          "keyword": "new note"
+        },
+        {
+          "action": {
+            "kind": "desk_verb",
+            "payload": "ask"
+          },
+          "keyword": "ask HoldSpeak"
+        },
+        {
+          "action": {
+            "kind": "desk_verb",
+            "payload": "open_today"
+          },
+          "keyword": "open today"
+        }
+      ]
     },
     "pipeline": {
       "corrections_enabled": true,
@@ -199,6 +235,7 @@
     "inference_target_id": null
   },
   "ui": {
+    "builder_tools": false,
     "desk_sounds": true
   },
   "wake_word": {
