@@ -116,7 +116,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | AG9 | Agents in Today and Needs you; Done notifies | Done · #1361 |  |
 | AG10 | The Result of a turn | Done · #1367 | Recovered local fixes supersede #1364; real hub/fake-agent Result and Terminal walked at 1440/393. |
 | AG11 | Agents that work together (MCP) | Done · #1369 | One owned helper, pinned waits, question-only answer, Secure owner Allow, nested rows. |
-| AG12 | Review by (builder and reviewer) | Done · PR_PENDING | Bounded two-round pair; durable Result and read-only reviewer authority. |
+| AG12 | Review by (builder and reviewer) | Done · #1385 | Bounded two-round pair; durable Result and read-only reviewer authority. |
 | AG13 | A HoldSpeak skill | Done · #1374 | Packaged skill, native launch discovery and Connect install; offline Codex discovery observed. |
 | AG14 | Automations that hand work to agents | Open |  |
 | AG15 | Agents he started himself (decision 1) | Open |  |
