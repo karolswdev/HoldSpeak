@@ -573,6 +573,29 @@ class JiraProviderAdapter:
             # terminal.  Read acli's current profile from its own file before
             # the switch, and switch back to it after the status read.
             before = current_acli_profile(self._registry_path)
+            if before is None:
+                before, active_error = read_active_acli_profile(
+                    self._run_acli, principal, "jira"
+                )
+                if before is None:
+                    result = {
+                        "state": STATE_DEGRADED,
+                        "provider_id": PROVIDER_ID,
+                        "connection_ref": canonical_ref,
+                        "account": {"site": site, "email": email},
+                        "error_code": CODE_UNAVAILABLE,
+                        "error_detail": (
+                            "acli active account could not be read; Check was not run: "
+                            f"{active_error or 'unknown reason'}"
+                        ),
+                        "recovery": None,
+                        "capability_manifest": dict(_CAPABILITIES),
+                        "capability_revision": _CAPABILITY_REVISION,
+                        "discovery_state": DISCOVERY_UNKNOWN,
+                        "checked_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                    self._persist_connection(canonical_ref, result)
+                    return result
             try:
                 result = self._probe_under_lock(principal, site, email, canonical_ref)
             finally:
@@ -1771,6 +1794,48 @@ def current_acli_profile(path: Path) -> dict[str, Any] | None:
     A local file read: no ``acli`` process.
     """
     return next((p for p in read_acli_profiles(path) if p.get("current")), None)
+
+
+def read_active_acli_profile(
+    run: Callable[..., Any],
+    principal: Principal,
+    product: str,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Read the active acli identity when its registry does not name it.
+
+    The registry is a useful fast path, but some acli versions leave
+    ``current_profile`` empty.  ``auth status`` is the only admitted source
+    for the active identity in that case.  A successful status read must name
+    both a valid site and an email; otherwise the caller must not switch to a
+    requested account because it cannot safely restore the account in use.
+    """
+    try:
+        status = run(
+            ["acli", product, "auth", "status"],
+            principal,
+            timeout=10.0,
+        )
+    except Exception as exc:
+        return None, f"acli auth status failed: {redact_source_error(exc)[:500]}"
+
+    combined = (status.stdout or "") + "\n" + (status.stderr or "")
+    if status.returncode != 0:
+        return None, f"acli auth status non-zero: {redact_source_error(combined).strip()[:500]}"
+
+    # The parser already knows the recorded live status shape.  Empty
+    # expectations make it return the parsed identity without inventing a
+    # target account to compare it with.
+    parsed = _parse_acli_auth_status(combined, "", "")
+    raw_site = str(parsed.get("site") or "").strip()
+    raw_email = str(parsed.get("email") or "").strip().lower()
+    if not raw_site or not raw_email:
+        detail = str(parsed.get("detail") or "active account identity is missing")
+        return None, f"acli auth status unreadable: {redact_source_error(detail)[:500]}"
+    try:
+        site = _normalize_site(raw_site)
+    except Exception:
+        return None, "acli auth status unreadable: active account site is invalid"
+    return {"site": site, "email": raw_email}, None
 
 
 def switch_back_acli(
