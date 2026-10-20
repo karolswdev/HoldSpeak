@@ -4,9 +4,26 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (main wire follow-through)
+**Last updated:** 2026-10-20 (local UI feedback)
 
 ## Current phase
+
+The owner can opt into audio feedback with `HOLDSPEAK_UI_FEEDBACK=1`.
+Desk > Give feedback selects an element without running its action. A report
+keeps the selected window's PNG, original WAV, rendered field values and
+window identity together under `~/.local/share/holdspeak/feedback/`.
+Capture freezes before recording, and Retry saves that same bundle. Password
+and credential fields are excluded. Recording uses the existing microphone
+session and audio floor. No engine, transcription or external delivery is
+required. The flag is off by default. Usage and the settled design are in
+`docs/internal/ui-feedback/`. This owner development tool adds no betterment
+recipe slice. Required quick: build/typecheck, 83 related Vitest cases, 2 real feedback browser cases, 110 desk sweep cases, 27 canon and 1,116 repo guards; the preceding unchanged backend check passed 293 affected Python cases.
+
+The required check also exposed an existing launch watcher shutdown race:
+a session ending after close could let the old watcher settle its launch.
+The watcher now checks shutdown again before settlement. An event-controlled
+regression fails on the original main source and passes with the two-line
+guard; an active watcher still settles normally.
 
 Ask can open the canonical person prep and meeting windows, arrange them,
 report the changes in Wrote and restore the previous windows through Undo.

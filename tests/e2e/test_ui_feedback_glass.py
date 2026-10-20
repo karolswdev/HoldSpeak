@@ -1,0 +1,258 @@
+"""The opt-in UI feedback capture on real Desk glass.
+
+This is a T4 check because the feature's contract includes pointer ownership,
+focus-free selection, an actual html-to-image PNG, fake-device microphone
+capture, and the 393 px hit geometry of the feedback strip.  The hub, browser
+menu, window, audio, screenshot and save route are all real; only Chromium's
+microphone device is simulated.
+"""
+from __future__ import annotations
+
+import base64
+import json
+import shutil
+import wave
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+from tests._evidence import evidence_dir
+
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _settle, clear_hub_windows
+from .type_floor_rig import _FAINT_JS, _MEASURE
+
+pytest.importorskip("playwright.sync_api", reason="the UI feedback glass needs Playwright")
+
+pytestmark = [pytest.mark.e2e]
+
+TOKEN = "ui-feedback-glass"
+SIZES = {1440: (1440, 900), 393: (393, 852)}
+SHOTS = evidence_dir("ui-feedback")
+T = 30_000
+
+
+def _feedback_menu_item(page: Any, width: int) -> Any:
+    """Open the live Desk feedback verb (Go is the phone's Desk door)."""
+    menu_id = "go" if width < 720 else "desk"
+    page.locator(f".desk-verbbar-item[data-menu-id='{menu_id}'] button").click()
+    menu = page.locator(".desk-verbbar-menu[role='menu']")
+    item = menu.get_by_role("menuitem", name="Give feedback", exact=True)
+    item.wait_for(timeout=T)
+    return item
+
+
+def _start_feedback(page: Any, width: int, target: Any, *, again: bool = False) -> None:
+    """Select one rendered control through the actual menu and pointer."""
+    target.scroll_into_view_if_needed()
+    if again:
+        page.locator("[data-ui-feedback]").get_by_role("button", name="New feedback", exact=True).click()
+    else:
+        _feedback_menu_item(page, width).click()
+    box = target.bounding_box()
+    assert box, "the selected rendered control has no hit box"
+    page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.locator("[data-ui-feedback]").get_by_text("RECORDING", exact=True).wait_for(timeout=T)
+    # Let Chromium's fake track deliver real frames before the hold is ended.
+    page.wait_for_timeout(500)
+
+
+def _strip_control_facts(page: Any, button: Any) -> dict[str, Any]:
+    return button.evaluate(
+        """el => {
+          const r = el.getBoundingClientRect();
+          const width = Math.max(44, r.width), height = Math.max(44, r.height);
+          const left = r.left + (r.width - width) / 2;
+          const top = r.top + (r.height - height) / 2;
+          const xs = [left + 2, left + width / 2, left + width - 2];
+          const ys = [top + 2, top + height / 2, top + height - 2];
+          const hits = [];
+          for (const y of ys) for (const x of xs) {
+            const hit = document.elementFromPoint(x, y);
+            hits.push(Boolean(hit && (hit === el || el.contains(hit))));
+          }
+          return {
+            rect: {left: r.left, top: r.top, right: r.right, bottom: r.bottom,
+                   width: r.width, height: r.height},
+            target: {left, top, width, height, right: left + width, bottom: top + height},
+            inViewport: left >= 0 && top >= 0 && left + width <= innerWidth && top + height <= innerHeight,
+            hits,
+            overflow: document.documentElement.scrollWidth > innerWidth
+              || document.body.scrollWidth > innerWidth,
+          };
+        }"""
+    )
+
+
+def _assert_phone_strip(page: Any) -> None:
+    for label in ("Stop and save", "Cancel"):
+        facts = _strip_control_facts(page, page.locator("[data-ui-feedback]").get_by_role("button", name=label, exact=True))
+        assert facts["target"]["width"] >= 44 and facts["target"]["height"] >= 44, facts
+        assert facts["inViewport"], facts
+        assert all(facts["hits"]), (label, facts)
+        assert not facts["overflow"], facts
+
+
+def _browser_png_facts(page: Any, path: Path) -> dict[str, int]:
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return page.evaluate(
+        """encoded => new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
+            const context = canvas.getContext("2d");
+            if (!context) { reject(new Error("canvas unavailable")); return; }
+            context.drawImage(image, 0, 0);
+            const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+            const colors = new Set();
+            const stride = Math.max(4, Math.floor(pixels.length / 400_000));
+            for (let offset = 0; offset < pixels.length; offset += stride * 4) {
+              colors.add(`${pixels[offset]},${pixels[offset + 1]},${pixels[offset + 2]}`);
+              if (colors.size > 16) break;
+            }
+            resolve({width: image.naturalWidth, height: image.naturalHeight, colors: colors.size});
+          };
+          image.onerror = () => reject(new Error("PNG could not be decoded"));
+          image.src = `data:image/png;base64,${encoded}`;
+        })""",
+        encoded,
+    )
+
+
+def _read_saved_report(
+    page: Any,
+    directory: str,
+    *,
+    window_id: str,
+    draft: str | None,
+    window_size: tuple[int, int],
+    shot_stem: str,
+) -> dict[str, Any]:
+    root = Path(directory)
+    assert root.is_dir() and ".local/share/holdspeak/feedback" in str(root), root
+    for filename in ("report.json", "audio.wav", "window.png", "README.md"):
+        assert (root / filename).is_file(), (root, filename)
+
+    report = json.loads((root / "report.json").read_text(encoding="utf-8"))
+    context = report["context"]
+    assert context["owner"]["window_id"] == window_id, context["owner"]
+    assert context["selected_element"]["sensitive"] is False, context["selected_element"]
+    if draft is not None:
+        fields = context["fields"]
+        assert any(field.get("label") == "Gallery text" and field.get("value") == draft for field in fields), fields
+
+    with wave.open(str(root / "audio.wav"), "rb") as audio:
+        assert audio.getnchannels() == 1
+        assert audio.getframerate() == 16_000
+        assert audio.getsampwidth() == 2
+        assert audio.getnframes() > 0
+        assert audio.getnframes() / audio.getframerate() >= 0.1
+
+    png = _browser_png_facts(page, root / "window.png")
+    assert png["width"] > 120 and png["height"] > 120, png
+    assert abs(png["width"] - window_size[0]) <= 8, (png, window_size)
+    assert abs(png["height"] - window_size[1]) <= 8, (png, window_size)
+    assert png["colors"] > 4, "the saved window image is blank or flat"
+    shutil.copy2(root / "window.png", SHOTS / f"{shot_stem}-{window_id}-window.png")
+
+    return report
+
+
+def _save_feedback(page: Any, width: int, *, shot_stem: str, window_id: str, draft: str | None, global_stop: bool = False) -> dict[str, Any]:
+    stop = page.get_by_test_id("desk-mic-lamp-stop") if global_stop else page.locator("[data-ui-feedback]").get_by_role("button", name="Stop and save", exact=True)
+    page.screenshot(path=str(SHOTS / f"{shot_stem}-{width}-recording.png"))
+    metrics = page.evaluate(_MEASURE, page.evaluate(_FAINT_JS))
+    for key in ("small", "contrast"):
+        faults = [row for row in metrics[key] if "hs-feedback-strip" in row["path"]]
+        assert not faults, (key, faults)
+    if width == 393:
+        _assert_phone_strip(page)
+
+    with page.expect_response(
+        lambda response: response.url.endswith("/api/ui-feedback")
+        and response.request.method == "POST"
+    ) as saved:
+        stop.click()
+    response = saved.value
+    assert response.status == 200, response.text()
+    payload = response.json()
+    assert payload["success"] is True, payload
+    page.locator("[data-ui-feedback]").get_by_text("SAVED", exact=True).wait_for(timeout=T)
+    page.screenshot(path=str(SHOTS / f"{shot_stem}-{width}-saved.png"))
+    window = page.locator(f"[id='{window_id}'][data-layer='window']")
+    box = window.bounding_box()
+    assert box, "the owning window disappeared before the saved report was read"
+    return _read_saved_report(
+        page,
+        payload["directory"],
+        window_id=window_id,
+        draft=draft,
+        window_size=(round(box["width"]), round(box["height"])),
+        shot_stem=f"{shot_stem}-{width}",
+    )
+
+
+@pytest.fixture(params=[1440, 393], ids=["desktop", "phone"])
+def feedback_page(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest):
+    from playwright.sync_api import sync_playwright
+
+    width = int(request.param)
+    monkeypatch.setenv("HOLDSPEAK_UI_FEEDBACK", "1")
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(
+                headless=True,
+                args=["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
+            )
+            context = browser.new_context(
+                viewport={"width": width, "height": SIZES[width][1]},
+                device_scale_factor=1,
+                has_touch=width < 720,
+                is_mobile=width < 720,
+                reduced_motion="reduce",
+                permissions=["microphone"],
+            )
+            page = context.new_page()
+            page.set_default_timeout(T)
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            assert _api(page, "GET", "/api/ui-feedback/status", token=TOKEN) == {"enabled": True}
+            clear_hub_windows(page, TOKEN)
+            _api(page, "POST", "/api/desk/windows/surface-components/open", {}, token=TOKEN)
+            page.reload(wait_until="load")
+            _normal_chair(page)
+            window = page.locator("[id='surface-components'][data-layer='window']")
+            window.wait_for(timeout=T)
+            _settle(page)
+            yield page, width, window
+            browser.close()
+    finally:
+        server.stop()
+
+
+def test_real_feedback_selection_capture_and_second_report(feedback_page: Any) -> None:
+    page, width, window = feedback_page
+    draft = "unsaved glass feedback draft"
+    text_box = window.get_by_role("textbox", name="Gallery text")
+    text_box.fill(draft)
+    target = window.get_by_role("checkbox", name="Gallery boolean")
+    before = target.is_checked()
+    window_id = str(window.get_attribute("id"))
+
+    _start_feedback(page, width, target)
+    assert target.is_checked() is before, "feedback selection activated the selected control"
+    first = _save_feedback(page, width, shot_stem="feedback", window_id=window_id, draft=draft)
+
+    # A second report starts through the saved strip, without reloading the desk.
+    target = window.get_by_role("checkbox", name="Gallery boolean")
+    before = target.is_checked()
+    _start_feedback(page, width, target, again=True)
+    assert target.is_checked() is before, "second selection activated the selected control"
+    second = _save_feedback(page, width, shot_stem="feedback-second", window_id=window_id, draft=draft, global_stop=True)
+
+    assert first["id"] != second["id"], (first["id"], second["id"])
+    assert first["context"]["owner"]["window_id"] == second["context"]["owner"]["window_id"] == window_id

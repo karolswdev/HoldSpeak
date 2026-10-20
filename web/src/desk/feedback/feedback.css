@@ -1,0 +1,53 @@
+.desk-next.hs-feedback-strip {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 100;
+  display: flex;
+  min-height: 0;
+  margin: 0;
+  color: var(--wb-ink);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  width: min(560px, calc(100vw - 24px));
+  padding: 10px 12px;
+  border: 2px solid var(--wb-ink, #22313b);
+  background: var(--wb-steel);
+  box-shadow: var(--wb-raised, inset 1px 1px #fff, 3px 3px #22313b);
+}
+
+.hs-feedback-identity {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 240px;
+  gap: 3px;
+}
+
+.hs-feedback-caption {
+  color: var(--wb-ink, #22313b);
+  font: 600 12px/1.2 var(--font-mono);
+  letter-spacing: .07em;
+}
+
+.hs-feedback-identity strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hs-feedback-error {
+  color: var(--signal-fail, #8d2f2f);
+  font-size: 12px;
+}
+
+.hs-feedback-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hs-feedback-strip .gadget-chip-egress {
+  color: var(--wb-ink);
+  background: var(--wb-paper);
+}

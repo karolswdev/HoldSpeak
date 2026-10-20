@@ -50,6 +50,7 @@ import {
 import { toggleExpose } from "./components/window/Expose";
 import { modeNow } from "./compositor/live";
 import { normalizeRef, SEED_DESK_DIRECTORY_ID, SEED_INBOX_DIRECTORY_ID } from "./screen/compose";
+import { requestUiFeedback, uiFeedbackGhost } from "./feedback/runtime";
 
 export type MenuId = "desk" | "object" | "go" | "window";
 export type VerbScope = "floor" | "object" | "go" | "window" | "system" | "thread";
@@ -96,6 +97,8 @@ export interface Verb {
   checked?(ctx: VerbContext): boolean;
   /** Offered only at desktop width (Capture: at 393 Speak opens it). */
   wide?: boolean;
+  /** Runtime capability gate: an absent feature has no menu or palette row. */
+  visible?(): boolean;
   /** null = runnable; a string = ghosted WITH that reason. */
   ghost(ctx: VerbContext): string | null;
   run(ctx: VerbContext): void;
@@ -105,6 +108,7 @@ export interface Verb {
  * palette and the menu bar ask this before they list it. PHILO-17: the zone
  * verbs are parked (desk/_parked/floor/floorVerbs.ts); no face shows zones. */
 export function offeredHere(v: Verb): boolean {
+  if (v.visible?.() === false) return false;
   return !(v.wide && typeof window !== "undefined" && window.innerWidth <= 720);
 }
 
@@ -381,6 +385,18 @@ export const VERBS: Verb[] = [
     keywords: ["reload", "sync"],
     ghost: never,
     run: () => void useDesk.getState().refresh(),
+  },
+  {
+    id: "desk.give-feedback",
+    label: "Give feedback",
+    menu: "desk",
+    scope: "floor",
+    group: "system",
+    glyph: "◈",
+    keywords: ["feedback", "report", "audio", "selected element"],
+    visible: () => uiFeedbackGhost() === null,
+    ghost: () => uiFeedbackGhost(),
+    run: () => requestUiFeedback(),
   },
   {
     id: "desk.open-intelligence",
