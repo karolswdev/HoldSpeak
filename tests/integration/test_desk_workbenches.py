@@ -961,9 +961,12 @@ def test_about_reads_sets_drawers_and_people_by_name_and_the_run_reads_them(tmp_
         conn.execute("INSERT INTO meetings (id, title, started_at, created_at) VALUES (?,?,?,?)",
                      ("m-old", "Old planning", "2020-01-06T10:00:00Z", "2020-01-06T10:00:00Z"))
 
-    for bad in (["meetings:last_year"], ["person:"], ["people:rel-mira"]):
+    for bad in (["meetings:last_year"], ["person:"]):
         refused = client.put(f"/api/workbenches/{wb}", json={"sources": bad})
         assert refused.status_code == 400, (bad, refused.text)
+    valid_people_alias = client.put(f"/api/workbenches/{wb}", json={"sources": ["people:rel-mira"]})
+    assert valid_people_alias.status_code == 200, valid_people_alias.text
+    assert valid_people_alias.json()["workbench"]["sources"] == ["people:rel-mira"]
 
     # The face's two presses (About, then the "plat" match): no sources, then
     # Platform sync; Run now's result cites it.

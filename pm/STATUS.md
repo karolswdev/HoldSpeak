@@ -19,6 +19,11 @@ The active Guide uses Works, Not ready and Does not work with the existing
 reason text; a row without a fix gets no invented fix verb. Its six recorded
 consumer checks, type check and build pass. Required quick:
 REMOTE_SETTINGS_QUICK_PENDING.
+The first broader run passed 4,084 related web and 3,121 backend checks,
+110 sweep, 27 canon and 1,116 guards. Three earlier consumer expectations
+are reconciled with plugin inheritance and accepted People references. The
+three focused regressions pass: explicit OFF still excludes a plugin, and
+an explicitly undisclosed host is still refused with its receipt.
 The fresh watcher pinned to `b8be8b36a` passed its first 5,921 Python
 checks (16 skipped, one xfailed); the remaining full tape is still pending.
 
