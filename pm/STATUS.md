@@ -22,8 +22,10 @@ keeps one meeting, adds a late note, and appends 14 more projects. Every
 existing rectangle stays exact and no pair overlaps. Current 1440/393 shots
 and measured rows are under `.tmp/evidence-shots/s4-root/` in the Floor lane.
 All 19 seed and 63 web checks, type check and build pass.
-S4 remains partial: excluding mode recipes from Search belongs to the
-upcoming S5 Search change. This merge adds no completed slice.
+S4 remains partial: mode recipes in Search and the individual person
+Object-menu adapter finish with S5. The real Keep proof above is a meeting;
+individual People are not ordinary Items primitives. This merge adds no
+completed slice.
 Required quick: S4_QUICK_PENDING.
 
 The main watcher pinned to 2833d225d found five failures after its first
