@@ -8,6 +8,17 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Wallpaper has one home in Settings Desk. New windows use the shared content
+size and placement rules; remembered heads move only when they collide, and
+later owner drags and resizes retain their exact saved geometry. The Window
+menu supplies Arrange front and Arrange all, preserving sizes and order.
+
+Root passed 117 scoped web checks, type check and build. The actual private
+Hub walk passed at 1440/393: six app heads, remembered collision, exact owner
+resize/reopen, Arrange all with a Project drawer, Needs headline readback and
+Settings. Jupiter label contrast measured 17.12:1. The full required quick:
+WINDOWS_QUICK_PENDING. Shell S9 and the unfinished Send slices remain open.
+
 Failed native sign-in setup now cleans up through coder_factory. The
 factory accepts only the just-minted private sign-in session name, revokes
 its temporary agent credential and records the cleanup. A cleanup failure
