@@ -46,6 +46,7 @@ import { allowHelper, answerMember, answers, cancelQueuedHand, openMember, resum
 import { StartAgent } from "./StartAgent";
 import { handRefOf, openHand } from "../agentHand";
 import { AgentRow as AgentRowFace, DeskAnswerLine } from "../agents/AgentRow";
+import { ReviewResult } from "./ReviewResult";
 import { openAgentLane } from "../shell";
 import { CONDUCTOR_WINDOW_ID, useConductor } from "./store";
 import "../drawer/drawer.css";
@@ -367,6 +368,7 @@ function CoderRow({
           {reviewWords(member.review) ? <span data-testid="conductor-review">{reviewWords(member.review)}</span> : null}
           {meta}
         </span>
+        <ReviewResult review={member.review} />
         {/* Betterment AG3: what the desk answered for him, New until opened. */}
         <DeskAnswerLine answer={member.deskAnswer} />
       </div>

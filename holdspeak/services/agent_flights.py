@@ -35,6 +35,9 @@ A flight is one launch, newest per item. Its ``state``:
   ``screen``, ``agent_context.screen_watch``): working, waiting (it asks or
   wants to run; ``idle`` when quiet), done, or ``no_signal`` when nothing
   told its state for ten minutes;
+- Betterment AG12: a durable review pair result decides after hook and screen
+  arbitration (``state_source`` ``review``), so a stale pane cannot undo a
+  completed pair or hide a finding that needs the owner;
 - ``ended``: the bound session ended (SessionEnd, sticky);
 - ``expired``: the bound session is past the dead window or gone from the
   registry.
@@ -208,6 +211,7 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         state = _session_state(session, clock)
     if state not in ("merged", "pr_open"):
         state = _resume_state(record, session, clock) or state
+    review = record.get("review")
     responder_turn = _responder_turn(session_key, session) if state in ("waiting", "pr_open") else None
     if state == "waiting" and responder_turn == "done":
         state = "done"   # the responder read the turn end as a completion report
@@ -219,6 +223,35 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
     if state_source == "screen":
         state, screen_end = screen_turn
         turn_id = screen_row.turn_id if state == "done" and screen_row is not None else None
+    # AG12: a durable pair result is the final state authority. The review
+    # loop can finish after the process stops emitting hooks, so a stale pane
+    # must not put a completed pair back in WORKING or QUIET. An explicit
+    # finding is an owner action: keep the shared flight waiting and let the
+    # review payload label it Needs you on every face.
+    review_done = (
+        state not in ("merged", "pr_open")
+        and isinstance(review, Mapping)
+        and str(review.get("status") or "") == "done"
+        and isinstance(review.get("result"), Mapping)
+    )
+    review_needs_you = (
+        state not in ("merged", "pr_open")
+        and isinstance(review, Mapping)
+        and str(review.get("status") or "") == "needs_you"
+    )
+    review_turn_end: Optional[str] = None
+    if review_done:
+        state = "done"
+        state_source = "review"
+        screen_end = None
+        turn_id = _turn_id(session)
+        review_turn_end = "done"
+    elif review_needs_you:
+        state = "waiting"
+        state_source = "review"
+        screen_end = None
+        turn_id = None
+        review_turn_end = "asks"
     desk_answer = _desk_answer(record, session_key, session, clock)
     project_id, project_name = _project_of(db, kind, item_id)
     evidence = follow.get("evidence") or {}
@@ -236,12 +269,12 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         # PHILO-15 B48 (lane 14) and 15: the responder's record of the
         # current wait (done / idle: not the owner's) first, else the turn
         # end the session's last words read as.
-        "turn_end": "done" if state == "done" else screen_end if state_source == "screen" else (
+        "turn_end": review_turn_end or ("done" if state == "done" else screen_end if state_source == "screen" else (
             responder_turn
             or (_turn_end(session, pr_state) if state == "waiting" else None)
-        ) if state in ("waiting", "pr_open") else None,
-        # Betterment AG7: which source decided the state (``hook``,
-        # ``screen``) and the screen's own read (its prompt's command and
+        ) if state in ("waiting", "pr_open") else None),
+        # Betterment AG7/AG12: which source decided the state (``hook``,
+        # ``screen``, ``review``) and the screen's own read (its prompt's command and
         # choices, the rule), for the faces and "Why this state".
         "state_source": state_source,
         "screen": _screen_wire(screen_row, clock),

@@ -611,6 +611,40 @@ describe("the Result of a turn (Betterment AG10)", () => {
     expect(filesWords(3)).toBe("3 files changed");
     expect(filesWords(0)).toBe("");
   });
+
+  it("keeps the AG12 pair result inside the real Result", () => {
+    const LANE = hubWire<LaneWire>("../fixtures/agents-ag10/lane.done");
+    const lane: LaneWire = {
+      ...LANE.wire,
+      launch: {
+        ...LANE.wire.launch,
+        review: {
+          requested: "claude", status: "done", role: "builder", builder: "Codex",
+          round: 2, rounds: 2, findingsLeft: [], reviewerLaunchId: null,
+          pairResult: { rounds: 2, findings_left: [], wording: "round 2, nothing left" },
+        },
+      },
+    };
+    render(<ResultBlock lane={lane} />);
+    expect(screen.getByTestId("agent-review-rounds").textContent).toBe("2 rounds");
+    expect(screen.getByTestId("agent-review-clear").textContent).toBe("MUST: none");
+  });
+
+  it("does not call an active review round clear before its pair result arrives", () => {
+    const LANE = hubWire<LaneWire>("../fixtures/agents-ag10/lane.done");
+    const lane: LaneWire = {
+      ...LANE.wire,
+      launch: {
+        ...LANE.wire.launch,
+        review: {
+          requested: "claude", status: "working", role: "builder", builder: "Codex",
+          round: 1, rounds: 1, findingsLeft: [], reviewerLaunchId: "reviewer-1", pairResult: null,
+        },
+      },
+    };
+    render(<ResultBlock lane={lane} />);
+    expect(screen.queryByTestId("agent-review-clear")).toBeNull();
+  });
 });
 
 describe("the choices a question offers (Betterment AG2)", () => {
@@ -772,7 +806,7 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
     expect(calls).toEqual([
       ["/api/notes", "POST", { title: "Add a rollback test", body_markdown: "Add a rollback test", tags: ["agent"] }],
       [`/api/projects/p-platform/resources/${encodeURIComponent(`note:${noteId}`)}`, "PUT", {}],
-      ["/api/agent/hand", "POST", { kind: "note", id: noteId, profile: "claude-default", project_id: "p-platform", queue: true }],
+      ["/api/agent/hand", "POST", { kind: "note", id: noteId, profile: "claude-default", project_id: "p-platform", queue: true, review_by: "none" }],
     ]);
     // The hub's own refusal, in words, where he pressed.
     await waitFor(() => expect(screen.getByTestId("conductor-start-form").textContent).toMatch(/Not started · (NO REPOSITORY|REPOSITORY NOT REGISTERED)/));

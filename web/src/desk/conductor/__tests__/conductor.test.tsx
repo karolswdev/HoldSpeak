@@ -569,6 +569,34 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     }));
   });
 
+  it("a review NEEDS YOU row shows the pair Result and remaining MUST finding", async () => {
+    const reviewFlight = {
+      ...FLIGHT_RUNBOOK,
+      state: "working",
+      session_key: "claude:review-builder",
+      launch_id: "l-review-builder",
+      review: {
+        requested: "claude", status: "needs_you", role: "builder", builder: "Codex",
+        round: 1, rounds: 1,
+        findings_left: [{ level: "MUST", text: "review_target.txt: apply the requested correction" }],
+        pair_result: {
+          rounds: 1,
+          findings_left: [{ level: "MUST", text: "review_target.txt: apply the requested correction" }],
+        },
+        reviewer_launch_id: null,
+      },
+    };
+    sessionsReply = () => ({
+      sessions: [{ session: { agent: "claude", session_id: "review-builder", state: "working", repo_root: "/h/dev/review", updated_at: ago(1) }, flight: reviewFlight }],
+      flights: [reviewFlight], history: [], launches: { live: 1, cap: 3 },
+    });
+    render(<ConductorWindow />);
+    const row = await screen.findByTestId("conductor-ask-row");
+    expect(within(row).getByText("Needs you")).toBeTruthy();
+    expect(within(row).getByTestId("agent-review-result").textContent).toContain("1 round");
+    expect(within(row).getByTestId("agent-review-findings").textContent).toContain("MUST: review_target.txt: apply the requested correction");
+  });
+
   it("names a refused approval, blocks repeated presses and retries the same call", async () => {
     const base = apiFetch.getMockImplementation()!;
     let release!: () => void;

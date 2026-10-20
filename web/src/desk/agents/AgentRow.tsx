@@ -21,9 +21,10 @@ import { useGate } from "../gate";
 import { gatedHead, type LaneGated, type LaneWait } from "../lane/laneWire";
 import { AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
 import { reviewWords, type ConductorMember } from "../conductor/members";
+import { ReviewResult } from "../conductor/ReviewResult";
 import { useConductor } from "../conductor/store";
 import { questionChoices, type AgentChoice } from "./choices";
-import type { DeskAnswer, DeskAnswerSource } from "../agentFlights";
+import { reviewResult, type DeskAnswer, type DeskAnswerSource } from "../agentFlights";
 // The row is drawn in Agents and in Needs you (Betterment AG9): its style travels with it.
 import "../conductor/conductor.css";
 
@@ -164,6 +165,10 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
 
   const held = member.live === "held" || Boolean(call) || wait?.kind === "TO APPROVE";
   const reviewNeedsYou = member.live === "needs_you";
+  // A durable pair result belongs to the ordinary flight row as well as the
+  // lane.  An active round has no pair result and therefore stays in its
+  // existing review row without a premature MUST verdict.
+  const hasReviewResult = Boolean(reviewResult(member.review));
   const currentWait = String(wait?.wait_id ?? waitId ?? "");
   // Betterment AG7: an agent with no hook asks in its last words on screen.
   const shownQuestion = String(wait?.question || question || (member.screen?.state === "asks" ? member.screen.said : "") || "");
@@ -324,6 +329,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
           ) : shownQuestion ? (
             <AgentWords className="cw-ask-q" text={shownQuestion} data-testid="agent-row-question" />
           ) : null}
+          {hasReviewResult ? <ReviewResult review={member.review} /> : null}
         </div>
       </div>
       {failure ? (
@@ -343,7 +349,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
             Answer it myself
           </Button>
         </div>
-      ) : reviewNeedsYou ? (
+      ) : reviewNeedsYou || hasReviewResult ? (
         <div className="cw-ask-verbs">
           <Button dense variant={lead ? "primary" : "secondary"} onClick={onOpen} data-testid="conductor-open-review">
             Open

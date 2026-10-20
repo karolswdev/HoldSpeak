@@ -6,6 +6,7 @@
 import { FoldGadget } from "../surface/gadgets";
 import { AgentWords } from "../components/AgentWords";
 import { branchFace, isNotRead, type LaneWire } from "./laneWire";
+import { ReviewResult } from "../conductor/ReviewResult";
 
 export interface LaneUseRow {
   ref: string;
@@ -51,6 +52,7 @@ export function ResultBlock({ lane, screenSaid }: {
   return (
     <section className="lw-result" data-testid="lane-result" aria-label="Result">
       <h3 className="lw-result-cap">Result</h3>
+      <ReviewResult review={lane.launch.review} title={false} />
       {said ? <AgentWords className="lw-result-said" text={said} data-testid="lane-result-said" /> : null}
       {facts.length ? <span className="lw-result-facts" data-testid="lane-result-facts">{facts.join(" · ")}</span> : null}
       {folds.filter(([, rows]) => rows.length).map(([word, rows, testId]) => (
