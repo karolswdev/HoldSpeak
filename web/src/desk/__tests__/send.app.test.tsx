@@ -304,13 +304,13 @@ describe("betterment send S1: a failed send says Try again; a send with no answe
 });
 
 describe("betterment send S1: Send to ▸ opens the well with THAT destination, on the form it shows", () => {
-  it("the meeting's well opens on Digest (his last form): Send to ▸ PAY-12 picks PAY-12 there, not the last-used row", async () => {
+  it("the meeting's well opens on Summary (his last form): Send to ▸ PAY-12 picks PAY-12 there, not the last-used row", async () => {
     const rec = NO_ANSWER as Recorded;
     replay({ ...rec, sends: [] });
     resetSendTo();
     const meeting = "m-s1-pick";
-    keepPlace(`meeting/form/${meeting}`, "meeting_digest");
-    keepPlace(`send/pick/meeting_digest:${meeting}`, destId(rec, "acme/payments #4242"));   // the last-used row
+    keepPlace(`meeting/form/${meeting}`, "meeting_summary");
+    keepPlace(`send/pick/meeting_summary:${meeting}`, destId(rec, "acme/payments #4242"));   // the last-used row
     useDesk.setState({ windowsById: {
       "surface-meetings": { id: "surface-meetings", kind: "surface", applicationKey: "meetings", scope: `meeting:${meeting}`, persistence: "workspace" },
     } } as never);
@@ -319,14 +319,14 @@ describe("betterment send S1: Send to ▸ opens the well with THAT destination, 
       // The well is not mounted yet (the recon's case); the meeting read gets no answer.
       pickFor("surface-meetings", destId(rec, "PAY-12 ticket"));
       render(<MeetingSendWell meetingId={meeting} title="Payments platform sync" />);
-      await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe(`meeting_digest:${meeting}`));
+      await waitFor(() => expect(screen.getByTestId("send-well").getAttribute("data-doc")).toBe(`meeting_summary:${meeting}`));
       await waitFor(() => expect(openOf("PAY-12 ticket")).not.toBeNull());
       expect(openOf("acme/payments #4242")).toBeNull();
       expect(document.querySelectorAll("[data-testid=send-open]")).toHaveLength(1);
     } finally {
       front.mockRestore();
       keepPlace(`meeting/form/${meeting}`, "");
-      keepPlace(`send/pick/meeting_digest:${meeting}`, "");
+      keepPlace(`send/pick/meeting_summary:${meeting}`, "");
     }
   });
 });

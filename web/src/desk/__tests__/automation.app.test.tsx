@@ -477,7 +477,7 @@ describe("Looked at, Wrote, Prepared", () => {
     const [send] = result().used.prepared;
     expect(prepared).toHaveTextContent(`${send.label} to ${send.destination}`);
     expect(await within(prepared).findByText("PREPARED ×1")).toBeInTheDocument();
-    expect(within(prepared).getByRole("button", { name: "Send" })).toBeInTheDocument();
+    expect(within(prepared).getByRole("button", { name: "Send…" })).toBeInTheDocument();
     // The run's reported cost is in the head line.
     expect(newest()).toHaveTextContent(`$${result().cost_usd.toFixed(2)}`);
     expect(slot.textContent).not.toMatch(/meeting:|note:|note_|chs_/);

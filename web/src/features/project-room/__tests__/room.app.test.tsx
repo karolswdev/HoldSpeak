@@ -417,7 +417,7 @@ describe("PHILO-10-01: an UNKNOWN send is not counted as a delivery", () => {
   // The hub half (ENAMETOOLONG settles UNKNOWN, no proof) is the T1 successor's.
   // The update row and its sends are the hub's own answers after one sent and
   // one ENAMETOOLONG send (GET /api/projects/{id}/updates, GET /api/channels/sends).
-  it("the list chips count one DELIVERY and one RESULT UNKNOWN; the history row says CHECK and its lead warns", async () => {
+  it("the list chips count one SENT and one RESULT UNKNOWN; the history row says CHECK and its lead warns", async () => {
     const { decodeUpdate } = await import("../update/model");
     const { DeliveryHistory, ListChips } = await import("../../channels/SendWell");
     const update = decodeUpdate(clone(UPDATES_AFTER_SENDS.updates[0]) as Record<string, unknown>);
@@ -433,12 +433,12 @@ describe("PHILO-10-01: an UNKNOWN send is not counted as a delivery", () => {
     const chip = (el: Element) => el.querySelector(".surface-state-chip")!;
     expect(chip(unknown).getAttribute("aria-label")).toBe("RESULT UNKNOWN ×1");
     expect(chip(unknown).getAttribute("data-state")).toBe("warning");
-    expect(chip(screen.getByTestId("update-delivered-chip")).getAttribute("aria-label")).toBe("DELIVERY ×1");
+    expect(chip(screen.getByTestId("update-delivered-chip")).getAttribute("aria-label")).toBe("SENT ×1");
     list.unmount();
 
     render(<DeliveryHistory ctrl={ctrl} update={update} sends={clone(SENDS.sends) as never} />);
     const section = screen.getByTestId("delivery-section");
-    expect(section.querySelector("h3")?.textContent).toBe("DELIVERY 1");
+    expect(section.querySelector("h3")?.textContent).toBe("SENT 1");
     const rows = screen.getAllByTestId("delivery-row");
     expect(rows.map((r) => r.querySelector("[data-outcome]")?.getAttribute("data-outcome"))).toEqual(["sent", "unknown"]);
     expect(rows.map((r) => r.querySelector("[data-outcome] .surface-state-chip")?.getAttribute("data-state")))

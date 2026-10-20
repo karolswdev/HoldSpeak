@@ -352,6 +352,22 @@ def test_a_send_with_no_answer_past_its_limit_reads_unknown_and_its_late_answer_
         monkeypatch.setattr(channel_service, "_now", lambda: started + timedelta(seconds=91))
         [late] = [s for s in _sends(hub, ref) if s["id"] == row["id"]]
         assert (late["state"], late["reason"]) == ("unknown", "no_answer_in_time"), late
+        assert late["retry_command"] == {
+            "command_id": "s1-jira-held", "document_ref": ref,
+            "destination_id": jira["id"], "preview_digest": pv["payload_digest"],
+        }, late
+        # A legacy/foreign UNKNOWN row has no kernel command provenance.  The
+        # owner may inspect it, but Needs you must withhold a no-op Try again.
+        from holdspeak.principals import Principal, PrincipalKind
+        with hub.db._connection() as conn:
+            raw = dict(conn.execute(
+                "SELECT * FROM channel_sends WHERE id=?", (row["id"],)
+            ).fetchone())
+        raw["send_operation_id"] = "foreign-operation-without-receipt"
+        view = channel_service.ChannelService(hub.db)._send_view(
+            raw, Principal(PrincipalKind.OWNER, "owner-session")
+        )
+        assert view["state"] == "unknown" and "retry_command" not in view, view
         # Every read says it (the face after a reload); the stored row stays dispatching.
         [one] = hub.client.get("/api/channels/sends", params={"send_id": row["id"]}).json()["sends"]
         assert (one["state"], one["reason"]) == ("unknown", "no_answer_in_time")

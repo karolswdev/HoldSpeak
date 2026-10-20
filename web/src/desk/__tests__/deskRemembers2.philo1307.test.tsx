@@ -258,17 +258,17 @@ describe("B2 slice two: the remaining drafts return, per object, and clear on sa
   it("the meeting SEND form pick returns per meeting after a reload", async () => {
     let { MeetingSendWell } = await import("../../meetings/MeetingSendWell");
     const first = render(<MeetingSendWell meetingId="m1" title="Ledger sync" />);
-    fireEvent.change(screen.getByLabelText("Document"), { target: { value: "meeting_digest" } });
+    fireEvent.click(screen.getByRole("button", { name: "Follow-ups" }));
     first.unmount();
-    expect(stored().places["meeting/form/m1"]).toBe("meeting_digest");
+    expect(stored().places["meeting/form/m1"]).toBe("meeting_followup");
 
     vi.resetModules();
     ({ MeetingSendWell } = await import("../../meetings/MeetingSendWell"));
     const second = render(<MeetingSendWell meetingId="m1" title="Ledger sync" />);
-    expect(screen.getByLabelText("Document")).toHaveValue("meeting_digest");
+    expect(screen.getByRole("button", { name: "Follow-ups" })).toHaveAttribute("aria-pressed", "true");
     second.unmount();
     const other = render(<MeetingSendWell meetingId="m2" title="Tracing review" />);
-    expect(screen.getByLabelText("Document")).toHaveValue("meeting_summary");
+    expect(screen.getByRole("button", { name: "Summary" })).toHaveAttribute("aria-pressed", "true");
     other.unmount();
   });
 

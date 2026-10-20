@@ -382,6 +382,38 @@ class DecisionRecordService:
             ).fetchall()
         return [self._decorate(self._record_dict(row)) for row in rows]
 
+    def confirmed_for_meeting(self, meeting_id: str) -> list[dict[str, Any]]:
+        """Current confirmed meeting evidence, using canonical edited words.
+
+        Retained accepted rows with no canonical record remain readable. A
+        canonical record that was superseded or disputed never falls back to
+        its old source text.
+        """
+        with self._db._connection() as conn:
+            rows = conn.execute(
+                f"""SELECT DISTINCT r.decision_text, r.rationale, d.source_timestamp
+                    FROM decision_records r
+                    JOIN decision_record_sources s ON s.record_id = r.id
+                        AND s.source_type = 'meeting' AND s.source_ref = ?
+                    LEFT JOIN decisions d ON r.source_type = 'meeting' AND d.id = r.source_id
+                    LEFT JOIN desk_decisions dd ON r.source_type = 'desk' AND dd.id = r.source_id
+                    WHERE r.deleted = 0 AND r.lifecycle IN ('active', 'published')
+                      AND {_NOT_AN_ACTION}
+                      AND ((d.deleted = 0 AND d.lifecycle = 'accepted')
+                        OR (dd.deleted = 0 AND LOWER(dd.status) = 'accepted')
+                        OR EXISTS (SELECT 1 FROM follow_through_proposals fp
+                            WHERE fp.decision_record_id = r.id AND fp.kind = 'decision'
+                              AND fp.state = 'confirmed'))
+                    UNION ALL
+                    SELECT d.text AS decision_text, d.rationale, d.source_timestamp
+                    FROM decisions d
+                    WHERE d.source_meeting_id = ? AND d.deleted = 0 AND d.lifecycle = 'accepted'
+                      AND NOT EXISTS (SELECT 1 FROM decision_records r
+                          WHERE r.source_type = 'meeting' AND r.source_id = d.id)""",
+                (str(meeting_id).strip(), str(meeting_id).strip()),
+            ).fetchall()
+        return self._rows(rows)
+
     def supersede(
         self,
         principal: Any,
