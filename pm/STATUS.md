@@ -21,7 +21,12 @@ hooks and skills, and reads all adopted rows back as Works. Only native
 CLI/provider responses and EventKit are simulated; files and records are
 in the rig. A separate scratch-hub probe covers real HTTP discovery and
 agent-read/owner-use authority. Live OAuth and owner account acceptance
-remain unobserved. Required quick: ST9_QUICK_PENDING.
+remain unobserved. The first integrated quick found an accidental seeded Thread palette expansion,
+stale operation/exposure counts and an old People settings wire. Setup inventory
+now stays MCP-only in the seeded palettes; their original byte limits and tool
+counts pass unchanged. The actual People producer re-recorded its wire. The
+write-announcement walk now builds valid required oneOf inputs. All 270 checks
+covering those seams pass. Required quick: ST9_QUICK_PENDING.
 
 ST7 makes Settings one page with You, Speak, Meetings, Notices, Accounts,
 Agents, Desk and This Mac. The desktop index sits beside the page; phone
