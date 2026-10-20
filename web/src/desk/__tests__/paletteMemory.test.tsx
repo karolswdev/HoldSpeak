@@ -55,6 +55,7 @@ beforeEach(() => {
       note: [{ kind: "note", id: "n-1", title: "Zircon plan", bodyMarkdown: "", tags: [], createdAt: "" } as Note],
       meeting: [{ kind: "meeting", id: "m-local", title: "Zircon review" } as Meeting],
     },
+    recentOpened: [],
     projects: [],
     inferenceTargets: [],
     models: [],
@@ -75,7 +76,7 @@ async function deck() {
   render(<MemoryRouter><DeskToolShelf /></MemoryRouter>);
   fireEvent.click(screen.getByRole("button", { name: /Search/ }));
   await settle();
-  return screen.getByRole("combobox", { name: "Search tools and Desk items" });
+  return screen.getByRole("combobox", { name: "Find, open or ask" });
 }
 
 async function type(input: HTMLElement, q: string, wait = MEMORY_DEBOUNCE_MS + 60) {
@@ -93,11 +94,11 @@ describe("the palette finds a word inside a meeting", () => {
     const input = await deck();
     await type(input, "quokka");
     expect(searches).toEqual(["quokka"]);
-    expect(bands()).toEqual(["MEMORY"]);
+    expect(bands()).toEqual([]);
     const row = screen.getByRole("option", { name: /Cutover sync/ });
     expect(row.textContent).toContain("we keep the quokka ledger until Friday");
     expect(row.textContent).not.toContain("<mark>");
-    expect(row.textContent).toContain("MEETING");
+    expect(row.textContent).toContain("Meeting");
     fireEvent.click(row);
     // The meeting is not in the store: it is held and loaded, then opened
     // inside the one Meetings surface (PHILO-17).
@@ -155,8 +156,7 @@ describe("the palette finds a word inside a meeting", () => {
     ];
     const input = await deck();
     await type(input, "zircon");
-    expect(bands().at(-1)).toBe("MEMORY");
-    expect(bands().filter((b) => b === "MEMORY")).toHaveLength(1);
+    expect(bands()).toEqual([]);
     const all = options();
     expect(all.filter((o) => o.includes("Zircon review"))).toHaveLength(1);
     expect(all.filter((o) => o.includes("Cutover sync"))).toHaveLength(1);
@@ -182,7 +182,7 @@ describe("the palette finds a word inside a meeting", () => {
     await type(input, "quokka");
     expect(searches).toEqual(["quokka"]);
     expect(bands()).not.toContain("MEMORY");
-    expect(options()).toEqual(['✦Ask "quokka"ASK']);
+    expect(options()).toEqual(['✦Ask "quokka"Ask']);
   });
 
   it("a hit that opens nothing is left out; old hits never show under a new query", async () => {
@@ -233,12 +233,12 @@ describe("the palette opens a meeting's decision on the recorded hub", () => {
       expect(opened.surfaces).toEqual([]);
 
       // The same hit again opens it again (a new request number).
-      if (!screen.queryByRole("combobox", { name: "Search tools and Desk items" })) {
+      if (!screen.queryByRole("combobox", { name: "Find, open or ask" })) {
         fireEvent.click(screen.getByRole("button", { name: /Search/ }));
         await settle();
       }
-      await type(screen.getByRole("combobox", { name: "Search tools and Desk items" }), "");
-      await type(screen.getByRole("combobox", { name: "Search tools and Desk items" }), "Freeze the old ledger");
+      await type(screen.getByRole("combobox", { name: "Find, open or ask" }), "");
+      await type(screen.getByRole("combobox", { name: "Find, open or ask" }), "Freeze the old ledger");
       fireEvent.click(document.getElementById(`desk-palette-option-memory:decision:${decisionId}`)!);
       await vi.waitFor(() => expect(navigations).toHaveLength(2));
       expect(navigations[1]).toMatchObject({ view: "receipts", decisionId });

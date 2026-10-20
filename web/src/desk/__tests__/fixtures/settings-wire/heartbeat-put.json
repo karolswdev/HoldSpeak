@@ -9,6 +9,7 @@
   "muted_projects": [],
   "next_sweep_at": null,
   "notify": "edge",
+  "notify_finished": true,
   "prep_notified": [],
   "quiet_hours": {
     "end": 8,

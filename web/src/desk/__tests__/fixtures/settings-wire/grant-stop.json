@@ -1,15 +1,15 @@
 {
-  "operation_id": "op_4e18080c18f543b19bac13937fd59758",
+  "operation_id": "op_65ec92c99d7c4140abab23001d9571e5",
   "receipt": {
     "actor_identity": "owner-session",
     "actor_kind": "owner",
     "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-    "created_at": 1791733420.963089,
+    "created_at": 1792478899.409214,
     "delegator_identity": "",
     "delegator_kind": "",
-    "operation_id": "op_4e18080c18f543b19bac13937fd59758",
+    "operation_id": "op_65ec92c99d7c4140abab23001d9571e5",
     "outcome": "succeeded",
-    "receipt_id": "rcpt_ab62338e028244f8b92005ac3107a678",
+    "receipt_id": "rcpt_d8d41bada30d42d8bd540c76c0a35e75",
     "result_ref": "agent:desk-agent",
     "state": "succeeded",
     "target_ref": "agent:desk-agent"

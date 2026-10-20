@@ -1,16 +1,16 @@
 {
-  "bundle_on_disk": "5bfbddbae2547777",
+  "bundle_on_disk": "3146811199a00244",
   "diagnoses": [],
   "identity": {
-    "backend_revision": "d41efaaeb00d9a6f502805570aead4c8793db914",
+    "backend_revision": "655b37c8941e767212722295d69d357b1e638dc0",
     "backend_revision_source": "git",
     "backend_version": "0.4.0",
-    "config_revision": "1298167d9b2a97f1",
-    "database_id": "ca89818434aff31a",
+    "config_revision": "ecb971489890fa68",
+    "database_id": "7a8f16c575b29358",
     "database_path": "/Users/owner/hub.db",
-    "frontend_build": "5bfbddbae2547777",
-    "pid": 93691,
-    "process_start": "2026-10-11T15:32:10.844394+00:00",
+    "frontend_build": "3146811199a00244",
+    "pid": 32819,
+    "process_start": "2026-10-20T06:48:19.562076+00:00",
     "schema_version_expected": 85,
     "schema_version_loaded": 85
   },

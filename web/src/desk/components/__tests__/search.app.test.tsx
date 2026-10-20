@@ -100,7 +100,7 @@ async function search(text: string) {
   render(<Desk />);
   fireEvent.click(screen.getByRole("button", { name: /Search/ }));
   await settle();
-  const input = screen.getByRole("combobox", { name: "Search tools and Desk items" });
+  const input = screen.getByRole("combobox", { name: "Find, open or ask" });
   fireEvent.change(input, { target: { value: text } });
   await settle(MEMORY_DEBOUNCE_MS + 650);
   return input;
@@ -154,11 +154,11 @@ describe("Betterment Q3: Search asks", () => {
       expect(readsLikeQuestion(text), text).toBe(false);
   });
 
-  it("each kind is one section: OBJECTS and MEETINGS are drawn once each", async () => {
+  it("each kind is one section and uses the sentence-case kind words", async () => {
     await search("freeze");
     const drawn = bands();
     expect(new Set(drawn).size).toBe(drawn.length);
-    expect(drawn).toEqual(expect.arrayContaining(["OBJECTS", "MEETINGS", "MEMORY"]));
+    expect(drawn).toEqual(expect.arrayContaining(["Note", "Meeting", "Ask"]));
     expect(oneBandPerSection([
       { section: "OBJECTS", id: 1 }, { section: "MEETINGS", id: 2 }, { section: "OBJECTS", id: 3 }, { section: "MEMORY", id: 4 }, { section: "MEETINGS", id: 5 },
     ]).map((r) => r.id)).toEqual([1, 3, 2, 5, 4]);
