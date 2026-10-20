@@ -1831,6 +1831,8 @@ def read_active_acli_profile(
     if not raw_site or not raw_email:
         detail = str(parsed.get("detail") or "active account identity is missing")
         return None, f"acli auth status unreadable: {redact_source_error(detail)[:500]}"
+    if not re.fullmatch(r"[^@\s|]+@[^@\s|]+", raw_email):
+        return None, "acli auth status unreadable: active account email is invalid"
     try:
         site = _normalize_site(raw_site)
     except Exception:
