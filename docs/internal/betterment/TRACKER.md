@@ -194,5 +194,5 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | C8 | Speak and Capture in plain words | Done · #1363 | Plain receipts and captured speech handed to the saved note path. |
 | C9 | A clean audio callback | Done · #1379 | Callback queue, accepted-byte flush and saved capture failures; hardware walk remains separate. |
 | C10 | Meetings record in their own process (decision 1) | Done · #1382 | Child owns native streams and journal; bounded Stop confirms exit before releasing the floor. Hardware acceptance remains open. |
-| C11 | Voice commands run desk verbs (decision 3) | Done · PR_PENDING | Closed owner desk verbs; spoken Stop reaches the real recording controller without taking its capture claim. |
+| C11 | Voice commands run desk verbs (decision 3) | Done · #1386 | Closed owner desk verbs; spoken Stop reaches the real recording controller without taking its capture claim. |
 | C12 | The glyph tells the truth | Open |  |
