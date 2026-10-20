@@ -50,7 +50,9 @@ vi.mock("./ThoughtDocumentPane", () => ({
   ThoughtDocumentPane: ({ draft, onEdit, onSelectionChange, lockedReason }: { draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; onSelectionChange?: (selection: { from: number; to: number; text: string }) => void; lockedReason?: string }) => <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>,
 }));
 vi.mock("../documentSendsLazy", () => ({
-  NoteSendWells: ({ id, title, version }: { id: string; title?: string; version?: number }) => <div data-testid="send-well" data-doc={`note:${id}`} data-title={title} data-version={String(version)} />,
+  NoteSendWells: ({ id, title, version, onBack }: { id: string; title?: string; version?: number; onBack?: () => void }) => <div data-testid="send-well" data-doc={`note:${id}`} data-title={title} data-version={String(version)}>
+    {onBack ? <button type="button" data-testid="send-back" onClick={onBack}>‹ Back</button> : null}
+  </div>,
 }));
 vi.mock("../sprites", () => ({ spriteUrl: () => "note.png" }));
 vi.mock("../shell", () => ({ openSurfaceOr: vi.fn() }));
@@ -566,11 +568,11 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     expect(document.querySelector(".thought-note-foot")).toBeNull();
     expect(screen.queryByRole("button", { name: "Done" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send…" })).not.toBeInTheDocument();
-    expect(document.querySelector(".thought-send-foot")).toHaveTextContent("Back");
+    expect(screen.getByTestId("send-back")).toHaveTextContent("Back");
     expect(screen.getByRole("region", { name: "Thought" })).toHaveAttribute("data-frame-min-height", "520");
     expect(well.closest(".thought-send-body")).not.toHaveAttribute("inert");
 
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByTestId("send-back"));
     await waitFor(() => expect(screen.queryByTestId("send-well")).not.toBeInTheDocument());
     expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue(thought.working_note.body_markdown);
     expect(screen.getByRole("region", { name: "Thought" })).toHaveAttribute("data-frame-min-height", "360");
@@ -586,7 +588,7 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     fireEvent.click(await screen.findByRole("button", { name: "Send…" }));
     const well = await screen.findByTestId("send-well");
     expect(well).toHaveAttribute("data-version", "2");
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByTestId("send-back"));
 
     fireEvent.change(screen.getByRole("textbox", { name: "Note body" }), { target: { value: "The revised words" } });
     fireEvent.click(screen.getByRole("button", { name: "Send…" }));
@@ -599,7 +601,7 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     });
     expect(await screen.findByTestId("send-well")).toHaveAttribute("data-version", "3");
     expect(screen.getByTestId("send-well").closest(".thought-send-body")).not.toHaveAttribute("inert");
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByTestId("send-back"));
     expect(screen.getByRole("textbox", { name: "Note body" })).toHaveValue("The revised words");
   });
 
@@ -612,7 +614,7 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
 
     fireEvent.click(await screen.findByRole("button", { name: "Send…" }));
     await screen.findByTestId("send-well");
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByTestId("send-back"));
     fireEvent.change(screen.getByRole("textbox", { name: "Note body" }), { target: { value: "An edit that cannot land" } });
     fireEvent.click(screen.getByRole("button", { name: "Send…" }));
     await screen.findByRole("button", { name: "Retry" });
@@ -670,7 +672,7 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     await screen.findByTestId("send-well");
     expect(screen.queryByRole("textbox", { name: "Your answer" })).not.toBeInTheDocument();
     expect(document.querySelector(".thought-note-ask")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    fireEvent.click(screen.getByTestId("send-back"));
     expect(screen.getByRole("textbox", { name: "Your answer" })).toHaveValue("Tuesday report");
   });
 

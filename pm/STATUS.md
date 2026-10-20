@@ -33,7 +33,11 @@ all 47 focused backend/browser checks. Those include six Needs cases, both
 sheet/Edit widths, the longer phone Summary, exact bytes and original-operation
 replay. Retained Back and Room Send selectors now target the shared header
 and footer; their original saved-document and operation assertions remain.
-The final required check follows the remaining recorded web-consumer updates.
+All 169 checks in the five updated retained web-consumer files also pass.
+The original draft-save, held-send, retry and native/manual receipt assertions
+remain strict. Both real uncertain-send reload cases pass; the Room receipt
+locator follows its Send control into the canonical footer. The required
+check covers these final retained browser selectors.
 Required quick: SEND_ALL_QUICK_PENDING.
 The first real Send recipe remains open for the owner's five presses.
 

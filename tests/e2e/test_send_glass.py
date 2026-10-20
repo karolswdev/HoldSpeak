@@ -1033,7 +1033,7 @@ class TestSendGlass:
         assert send.is_enabled()
         self._shot("S8-unchecked-preview")
         send.click()
-        sent = well.locator("[data-testid=send-sent]")
+        sent = page.locator(f"[id='{ROOM}'] [data-testid=send-sent]")
         sent.wait_for(timeout=T)
         self._wait(600)
         rows = self._db_sends(update_ref)
