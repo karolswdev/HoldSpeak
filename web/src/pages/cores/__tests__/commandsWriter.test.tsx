@@ -298,10 +298,10 @@ it("previews a desk command without offering a local-action Test", async () => {
     ] } } }
     : { ok: true, tested: false, preview: "opens a new note", note: "Preview · opens a new note" });
   render(<CommandsCore />);
-  fireEvent.click(await screen.findByRole("button", { name: "Preview", exact: true }));
+  fireEvent.click(await screen.findByRole("button", { name: "Preview" }));
   await waitFor(() => expect(callsTo("/api/commands/test")).toEqual([
     expect.objectContaining({ method: "POST", json: { kind: "desk_verb", payload: "new_note" } }),
   ]));
   expect(await screen.findByText("Preview · opens a new note")).toBeTruthy();
-  expect(screen.queryByRole("button", { name: "Test", exact: true })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Test" })).toBeNull();
 });
