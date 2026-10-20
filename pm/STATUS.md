@@ -29,7 +29,7 @@ spoken Stop, responsiveness and the restricted recording path. Native audio
 is simulated in process; C10 separately verifies child ownership. The real
 authenticated note-write browser proof passes at 1440/393. Native hardware
 and concurrent native/browser microphone acceptance remain unobserved.
-Required quick: C11_QUICK_PENDING.
+Required quick: 4,092 web, 320 affected pytest, 108 sweep, 27 canon and 1,116 repo guards pass.
 
 AG12 adds Review by to Hand to agent and Start an agent. A builder commit
 starts a reviewer helper in its own read-only worktree. Explicit MUST
