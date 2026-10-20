@@ -38,6 +38,7 @@ import {
   fleetRank,
   fleetWords,
   headWords,
+  ownAgentMember,
   reviewWords,
   type ConductorMember,
   type FleetRank,
@@ -59,8 +60,12 @@ function useConductorReads() {
   useEffect(() => {
     void useConductor.getState().readDetect();
     void useConductor.getState().readFlights();
+    void useConductor.getState().readOwnAgents();
   }, []);
-  const reread = () => void useConductor.getState().readFlights();
+  const reread = () => {
+    void useConductor.getState().readFlights();
+    void useConductor.getState().readOwnAgents();
+  };
   useOnCoderFrame(reread);
   useOnDeskChanged(reread);
   return state;
@@ -440,6 +445,7 @@ export function ConductorWindow() {
       }),
     [reads.detect, reads.launchedAt, reads.history, reads.endedAt, sessions, flights, flightsKnown],
   );
+  const ownMembers = useMemo(() => reads.ownAgents.map(ownAgentMember), [reads.ownAgents]);
   const head = conductorHead(members, flightsKnown ? reads.launches : null);
   const selected = useMemo(() => members.find((m) => m.id === selectedId) ?? null, [members, selectedId]);
   // Betterment AG4: a hand opens Agents on its new agent: that row is
@@ -619,6 +625,36 @@ export function ConductorWindow() {
     </Fragment>
   );
 
+  /** AG15: an owner-started pane has the same answer surface, with no launch
+   *  verbs. Its scope is the discovered pane and process only. */
+  const ownRow = (m: ConductorMember): ReactNode => {
+    if (fleetRank(m) === 0) {
+      return (
+        <AgentRowFace
+          key={m.id}
+          member={m}
+          question=""
+          waitId={null}
+          lead={false}
+          selected={m.id === selectedId}
+          onSelect={() => select(m.id)}
+          onTerminal={() => undefined}
+          onOpenAnswer={() => undefined}
+          onOpen={() => undefined}
+        />
+      );
+    }
+    return (
+      <CoderRow
+        key={m.id}
+        member={m}
+        selected={m.id === selectedId}
+        onSelect={() => select(m.id)}
+        meta={<span>{m.ownAgent?.project || m.ownAgent?.title || "On this Mac"}</span>}
+      />
+    );
+  };
+
   return (
     <DeskWindowFrame
       id={CONDUCTOR_WINDOW_ID}
@@ -698,7 +734,7 @@ export function ConductorWindow() {
           ) : null}
 
           {loading ? <SurfaceState loading /> : null}
-          {!loading && !ordered.length && !stopped.length && !ended.length && !failed.length && !starting ? (
+          {!loading && !ordered.length && !stopped.length && !ended.length && !ownMembers.length && !failed.length && !starting ? (
             <p className="cw-empty" data-testid="conductor-empty">An agent works on one item for you, in its own branch.</p>
           ) : null}
 
@@ -828,6 +864,14 @@ export function ConductorWindow() {
                   />
                 ))}
               </ul>
+            </FoldGadget>
+          ) : null}
+
+          {ownMembers.length ? (
+            <FoldGadget title="Agents you started yourself" token={String(ownMembers.length)} className="cw-own-agents">
+              <div className="cw-well" data-testid="conductor-own-agents">
+                {ownMembers.map(ownRow)}
+              </div>
             </FoldGadget>
           ) : null}
         </div>

@@ -23,6 +23,7 @@ import {
   type AgentReview,
   type AgentScreen,
   type CoderSessionRow,
+  type OwnAgent,
 } from "../agentFlights";
 import { agentName, agentState, shortItemName } from "../screen/compose";
 import { AGENT_NAME, type AgentId, type AgentRow } from "../firstrun/agentsStep";
@@ -74,6 +75,8 @@ export interface ConductorMember extends ObjectListRow {
   /** live: the agent's screen as the hub's rules read it (Betterment AG7):
    *  the command an approval wants to run, the numbered choices. */
   screen?: AgentScreen | null;
+  /** AG15: this row belongs to the owner's own pane; it has no launch or Stop. */
+  ownAgent?: OwnAgent;
 }
 
 export interface ConductorReads {
@@ -169,6 +172,51 @@ function flightState(flight: AgentFlight): LiveState {
   if (flight.state === "waiting") return flight.turnEnd === "idle" ? "idle" : "ask";
   if (flight.state === "pr_open" || flight.state === "merged") return "pr";
   return "work";
+}
+
+function ownLiveState(agent: OwnAgent): LiveState {
+  switch (agent.screen?.state) {
+    case "approve": return "held";
+    case "asks": return "ask";
+    case "done": return "done";
+    case "idle": return "idle";
+    case "no_signal": return "no_signal";
+    default: return "work";
+  }
+}
+
+/** Convert one read-only own-pane record into the existing AgentRow species. */
+export function ownAgentMember(agent: OwnAgent): ConductorMember {
+  const id = agent.id || `own:${agent.paneId}`;
+  const live = ownLiveState(agent);
+  const lamp = liveLamp(live, null);
+  const title = agent.project || agent.title || `${titleOf(agent.agent)} session`;
+  return {
+    id,
+    ref: id,
+    role: "live",
+    live,
+    agent: agent.agent,
+    kind: "coder",
+    kindWord: "AGENT",
+    name: title,
+    ...sprites(agent.agent, id),
+    when: agent.screen?.at ? ageWord(agent.screen.at, new Date()) : undefined,
+    whenSort: agent.screen?.at ? wireDate(agent.screen.at)?.getTime() : undefined,
+    state: lamp,
+    lamp,
+    sessionKey: null,
+    launchId: null,
+    screen: agent.screen,
+    ownAgent: agent,
+    group: liveGroup(live),
+    facts: {
+      where: agent.project || undefined,
+      from: title,
+      owner: `${titleOf(agent.agent)} (agent)`,
+      state: lamp,
+    },
+  };
 }
 
 /** A stale launch's close receipt, in words (`ENDED`, `PR #413 MERGED · ITEM CLOSED`). */

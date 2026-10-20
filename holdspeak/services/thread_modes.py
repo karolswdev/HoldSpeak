@@ -58,6 +58,8 @@ if TYPE_CHECKING:
 # helper tools stay out of the bounded seeded Thread palettes.
 _MCP_ONLY: frozenset[str] = frozenset({
     "people.suggestions", "workbench.results", "coder.explain", "today.get",
+    # Setup inventory is an MCP read; seeded Thread palettes stay bounded.
+    "setup.status",
     "agent.start_helper", "agent.prompt", "agent.wait", "agent.read", "agent.answer",
 })
 

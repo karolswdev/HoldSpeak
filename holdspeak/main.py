@@ -372,6 +372,17 @@ Logs are written to: {LOG_FILE}
         ),
     )
 
+    # Setup terminal surface (ST9): a client of the running hub.
+    setup_parser = subparsers.add_parser(
+        "setup",
+        help="Show Setup rows, or use everything found with --yes",
+    )
+    setup_parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Use every actionable Setup row in the existing Setup order",
+    )
+
     import_parser = subparsers.add_parser(
         "import",
         help="Import an existing audio recording as a meeting",
@@ -559,6 +570,11 @@ Logs are written to: {LOG_FILE}
     # Handle desk doctor subcommand.
     if args.command == "doctor":
         raise SystemExit(run_doctor_command(args))
+
+    if args.command == "setup":
+        from .commands.setup import run_setup_command
+
+        raise SystemExit(run_setup_command(args))
 
     # Handle meeting import
     if args.command == "import":
