@@ -8,6 +8,14 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Speech route plans now use the same assignment order as Engines: explicit
+capability or speech group, without falling through to the chat default.
+Installed meeting plugins follow Meeting summaries before their group or
+the global assignment. This changes the frozen runtime route, as well as
+what the face reports. No assignment or engine is changed on the owner’s
+desk. The worker collected and passed 46 focused checks against real SQLite
+assignment producers. Required quick: 245 affected checks passed; all 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green.
+
 The main watcher’s retained browser adapters now follow the current doors:
 Watch sources through Sources then RAW; meeting and decision icons through
 explicit Desk membership; and a real drag onto the Agents Dock tile. The

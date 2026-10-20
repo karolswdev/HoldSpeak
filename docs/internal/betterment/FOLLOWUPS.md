@@ -9,12 +9,10 @@ PR that fixes it merges. The recovery reconciliation is retained in
 | C2 (#1258) | Memory pages (what we decided, what is open) are not filtered by date, so a re-summary of an old meeting can still read later facts through a page. | Capture C6 |
 | A0 (#1256) | Choosing Manual still pauses event starts and idle work; an existing test asserts it. The When editor replaces this control. | Automations A4 |
 | ST0 (#1261) | ST1 #1347 delivered the one Rhythm quiet-hours store. Remaining ST0: Setup rows in words (the yellow Check chip), Other devices saved (`mcp_http.py:392-404` keeps it in memory only). | Setup ST1 |
-| ST0 (#1261) | The fix is in the Engines summary only. The runtime speech route still falls back to the default last; on a desk without speech's own capability row, a route plan could still reach the chat server. Check it. | Setup ST1 / Engines E5 |
 | E1 (#1273) | `CliEngine.cancel()` exists but nothing in the kernel calls it; an owner cancel waits for the timeout. | Engines E5 / Automations A3 (cancel) |
 | E1 (#1273) | A timed-out CLI is retried once before the fallback (two killed attempts). Consider no retry on timeout for CLI engines. | Engines E5 |
 | E1 (#1273) | Not confirmed on a real install that Codex accepts `-m` before the trailing `-`. | Engines E7 / M1 |
 | C3 (#1271) | An import over MCP with no stated start still gets "now minus duration"; header dates are read on the face only. | Capture C7 |
-| C4 (#1275) | Plugins skip as `no_assignment` when only "Meeting summaries" is assigned (no Meetings group or Default). Plugins should follow the summary's engine. | Engines E5 |
 | C4 (#1275) | Plugin proposals reach review and Needs you again before C5 builds their face. Watch for noise on his desk. | Capture C5, Daily D3 |
 | D1 (#1277) | An owner string the hub cannot tell is him counts as *theirs*. If his own name is not set, his items written as "Karol" drop out of the number. Setup must ask his name (ST5), and Needs you should show a setup row while it is unset. | Setup ST5 |
 | D0 (#1264) | Old action rows on his desk keep their said-words dues; only new writes resolve dates. A one-time resolve on read, or a backfill, is needed. | Daily D2 |
