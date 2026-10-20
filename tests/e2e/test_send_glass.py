@@ -757,6 +757,10 @@ H1_TOKEN = "philo11-05a-doc-send"
 
 H1_SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-05a-proof/shots")
 
+# Send S3: the owner-facing Needs row is a separate face from the Send well,
+# but it uses the same private Hub row, frozen preview and owner press.
+S3_SHOTS = evidence_dir("docs/internal/TONIGHT-THREE-2026-10-20/send-s3")
+
 H1_SIZES = {1440: 900, 393: 852}
 
 WIDTHS = list(H1_SIZES)
@@ -936,19 +940,33 @@ class _Rig:
     def _stamp(page: Any, iso: str) -> str:
         return page.evaluate(STAMP_JS, iso)
 
-    def _agent(self) -> Any:
+    def _agent(self, *, palette: str = "PROJECT", identity: str = AGENT_ID) -> Any:
         from starlette.testclient import TestClient
 
         client = TestClient(self.server.app, client=(REMOTE_HOST, 50000))
         headers = {"Authorization": f"Bearer {H1_TOKEN}"}
         assert client.put("/api/settings/remote", json={"enabled": True}, headers=headers).status_code == 200
-        issued = client.post("/api/settings/remote/credentials", json={"identity": AGENT_ID, "palette": "PROJECT"},
+        issued = client.post("/api/settings/remote/credentials", json={"identity": identity, "palette": palette},
                              headers=headers)
         assert issued.status_code == 200, issued.text
         agent = TestClient(self.server.app, client=(REMOTE_HOST, 50001))
         agent.headers.pop("x-holdspeak-token", None)
         agent.headers.update({"Authorization": f"Bearer {issued.json()['token']}"})
         return agent
+
+    def _prepare_agent(self, document_ref: str, destination_id: str) -> tuple[Any, dict[str, Any]]:
+        """Use the existing admitted agent MCP path; channel.prepare never sends."""
+        from tests.unit.test_philo9_steward_admission import _tool
+
+        agent = self._agent()
+        is_error, answer = _tool(agent, "channel.prepare", {
+            "document_ref": document_ref, "destination_id": destination_id,
+        })
+        assert is_error is False, answer
+        send = answer["send"]
+        assert send["state"] == "prepared"
+        assert send["prepared_by"] == {"kind": "agent", "identity": AGENT_ID}
+        return agent, answer
 
     @staticmethod
     def _pick(page: Any, scope: str, name: str) -> None:
@@ -1006,3 +1024,153 @@ class _Rig:
             page.get_by_test_id("brief-send-toggle").first.click()
         page.wait_for_timeout(900)
         _settle(page)
+
+
+class TestSendNeedsGlass(_Rig):
+    """S3's real browser leg reuses the prepared-send rig above."""
+
+    pass
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.chair_windows_open
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_an_admitted_agent_prepare_becomes_the_owner_needs_send(self, width: int) -> None:
+        """S3: one real prepared row crosses the Needs face and leaves once.
+
+        The source update, destination, admitted agent call, aggregate reads,
+        owner press, file bytes and kernel receipt all use this Hub. The only
+        external boundary is the local FileChannel itself.
+        """
+        from playwright.sync_api import sync_playwright
+        from tests.unit.test_philo9_steward_admission import _tool
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                _normal_chair(page)
+                project = _api(page, "POST", "/api/projects", {"name": "S3 browser private delivery"}, token=H1_TOKEN)
+                project_id = project["project"]["id"]
+                update = _api(page, "POST", f"/api/projects/{project_id}/updates/draft", {}, token=H1_TOKEN)
+                update_id = update["update"]["id"]
+                body = "## Progress\n\nThe browser proof keeps the frozen bytes.\n"
+                _api(page, "PUT", f"/api/updates/{update_id}", {"body_md": body}, token=H1_TOKEN)
+                _api(page, "POST", f"/api/updates/{update_id}/publish", {}, token=H1_TOKEN)
+                document_ref = f"project_update:{update_id}"
+                destination_id, folder = self._dest(page, "S3 private folder")
+                agent, prepared_answer = self._prepare_agent(document_ref, destination_id)
+                prepared = prepared_answer["send"]
+                assert list(folder.iterdir()) == []
+
+                # The owner aggregate and the admitted agent's aggregate read
+                # the same Hub, with private send content withheld from MCP.
+                owner_before = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=H1_TOKEN)
+                send_rows = [item for item in owner_before["items"] if item.get("kind") == "send"]
+                assert len(send_rows) == 1, owner_before
+                need = send_rows[0]
+                assert need["id"] == f"send:{prepared['id']}"
+                assert need["documentRef"] == document_ref
+                assert need["destinationName"] == "S3 private folder"
+                assert need["preparedBy"] == "Remote project agent"
+                assert owner_before["count"] == len(owner_before["members"])
+                assert any(c["kind"] == "send" and c["state"] == "available" for c in owner_before["coverage"])
+                visibility_agent = self._agent(palette="ALL", identity="privacy-agent")
+                agent_error, agent_answer = _tool(visibility_agent, "desk.needs_you", {})
+                assert agent_error is False, agent_answer
+                assert not [item for item in agent_answer.get("items", []) if item.get("kind") == "send"]
+                agent_text = json.dumps(agent_answer)
+                assert all(marker not in agent_text for marker in (
+                    prepared["id"], "S3 private folder", prepared["preview"]["text"],
+                ))
+
+                # The owner reloads the actual face after the producer crossed
+                # the boundary. No route answer is substituted in the browser.
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                row = page.locator("[data-testid='needs-row'][data-kind='send']").first
+                row.wait_for(timeout=H1_T)
+                row.scroll_into_view_if_needed()
+                page.wait_for_function(
+                    """(n) => {
+                        const number = (selector) => {
+                            const element = document.querySelector(selector);
+                            if (n === 0 && !element) return 0;
+                            const match = (element?.textContent || '').match(/\\d+/);
+                            return match ? Number(match[0]) : null;
+                        };
+                        return number('[data-testid=arrival-display]') === n
+                            && number('.desk-bell strong') === n;
+                    }""",
+                    arg=owner_before["count"], timeout=H1_T,
+                )
+                row_name = row.locator(".needs-row-name").inner_text()
+                assert row_name == need["documentTitle"], (row_name, need)
+                row_fact = row.locator(".needs-row-fact").inner_text()
+                assert "REV 1" in row_fact and "S3 private folder" in row_fact
+                assert "by Remote project agent" in row_fact
+                assert row.locator("[data-verb='send']").count() == 1
+                assert row.locator("[data-verb='look']").count() == 1
+                assert row.locator("[data-testid='needs-send-discard']").count() == 1
+                page.screenshot(path=str(S3_SHOTS / f"needs-prepared-{width}.png"))
+
+                row.locator("[data-verb='look']").click()
+                preview = page.locator("[data-testid='needs-send-preview']")
+                preview.wait_for(timeout=H1_T)
+                preview_text = preview.locator("[data-testid='send-preview-body']").inner_text().strip()
+                expected_preview = " ".join(
+                    re.sub(r"^#+\s*", "", line).strip()
+                    for line in prepared["preview"]["text"].splitlines() if line.strip()
+                )
+                assert " ".join(preview_text.split()) == expected_preview
+                display = str(prepared["target"].get("display") or prepared["target"]["folder"])
+                folder_parts = [part for part in display.split("/") if part and part != "~"]
+                folder_token = "/".join(folder_parts[-2:])
+                assert folder_token in preview.inner_text()
+                page.screenshot(path=str(S3_SHOTS / f"needs-preview-{width}.png"))
+
+                posts: list[dict[str, Any]] = []
+                page.on("request", lambda request: posts.append(request.post_data_json)
+                        if request.method == "POST" and request.url.endswith("/api/channels/send") else None)
+                row.locator("[data-verb='send']").click()
+                page.wait_for_function(
+                    """() => !document.querySelector("[data-testid='needs-row'][data-kind='send']")""",
+                    timeout=H1_T,
+                )
+                assert len(posts) == 1 and posts[0]["send_id"] == prepared["id"]
+                assert posts[0].get("command_id")
+                page.screenshot(path=str(S3_SHOTS / f"needs-sent-{width}.png"))
+
+                owner_after = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=H1_TOKEN)
+                assert not [item for item in owner_after["items"] if item.get("kind") == "send"], owner_after
+                assert owner_after["count"] == len(owner_after["members"])
+                page.wait_for_timeout(500)
+                rendered_counts = page.evaluate("""() => ({
+                    head: document.querySelector('[data-testid=arrival-display]')?.textContent || '',
+                    bell: document.querySelector('.desk-bell strong')?.textContent || '',
+                })""")
+                assert owner_after["count"] == 0 or all(
+                    str(owner_after["count"]) in rendered_counts[key] for key in ("head", "bell")
+                ), (owner_after, rendered_counts)
+                after_error, after_agent = _tool(visibility_agent, "desk.needs_you", {})
+                assert after_error is False, after_agent
+                assert not [item for item in after_agent.get("items", []) if item.get("kind") == "send"]
+
+                sends = self._sends(page, document_ref)
+                assert len(sends) == 1 and sends[0]["id"] == prepared["id"]
+                assert sends[0]["state"] == "sent"
+                sent_path = Path(sends[0]["proof"]["path"])
+                assert sent_path.parent.resolve() == folder.resolve()
+                assert sent_path.read_bytes() == prepared["preview"]["text"].encode()
+                assert [item.name for item in folder.iterdir()] == [sent_path.name]
+                receipt = self._face_row_receipt(sends[0], document_ref)
+                assert receipt["receipt_outcome"] == "succeeded"
+                facts = {
+                    "width": width, "document_ref": document_ref,
+                    "owner_before": owner_before, "agent_send_rows": [],
+                    "http_send": posts[0], "send": sends[0], "receipt": receipt,
+                    "file": {"path": str(sent_path), "bytes": sent_path.read_bytes().decode()},
+                }
+                (S3_SHOTS / f"needs-facts-{width}.json").write_text(json.dumps(facts, indent=2, default=str) + "\n")
+                assert not [error for error in errors if "ResizeObserver" not in error and "Failed to fetch" not in error], errors
+            finally:
+                browser.close()

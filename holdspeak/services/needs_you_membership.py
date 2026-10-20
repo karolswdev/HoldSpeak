@@ -1700,11 +1700,27 @@ def _send_attention_rows(db: Any, principal: Any) -> tuple[list[dict[str, Any]],
     for send in candidates:
         state = str(send.get("state") or "")
         if state in {"failed", "unknown"}:
+            def later(other: dict[str, Any]) -> bool:
+                created = str(send.get("created_at") or "")
+                other_created = str(other.get("created_at") or "")
+                if other_created > created:
+                    return True
+                # SQLite's channel timestamps are second-granular. The
+                # dispatch sequence is the durable order for two attempts
+                # created in the same second, so a newer retry still replaces
+                # the older failed/no-answer row in Needs you.
+                if other_created == created:
+                    try:
+                        return int(other.get("dispatch_seq") or 0) > int(send.get("dispatch_seq") or 0)
+                    except (TypeError, ValueError):
+                        return False
+                return False
+
             newer = any(
                 other is not send
                 and str(other.get("document_ref") or "") == str(send.get("document_ref") or "")
                 and str(other.get("destination_id") or "") == str(send.get("destination_id") or "")
-                and str(other.get("created_at") or "") > str(send.get("created_at") or "")
+                and later(other)
                 and str(other.get("state") or "") != "discarded"
                 for other in sends
             )
