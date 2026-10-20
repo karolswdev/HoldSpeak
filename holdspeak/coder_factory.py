@@ -53,6 +53,8 @@ def spawn(
     launch_id: Optional[str] = None,
     scope_items: tuple[str, ...] = (),
     project_id: Optional[str] = None,
+    role: str = "builder",
+    read_only: bool = False,
     model_key: Optional[str] = None,
     runner: Optional[Runner] = None,
     audit: Optional[Callable[..., int]] = None,
@@ -100,6 +102,8 @@ def spawn(
                 launch_id=launch,
                 scope_items=scope_items,  # the launch's origin item
                 project_id=project_id,  # the launch's own Project
+                role=role,
+                read_only=read_only,
             )
         else:
             credential = agent_credentials.issue(identity)

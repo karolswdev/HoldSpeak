@@ -342,16 +342,25 @@ class AgentHandService:
         project_id: Optional[str] = None,
         queue: bool = False,
         helper_of: Optional[str] = None,
+        helper_round: int = 1,
+        start_point: Optional[str] = None,
+        review: Optional[Mapping[str, Any]] = None,
+        review_by: Optional[str] = None,
     ) -> dict[str, Any]:
         """Hand the item. A clone this hand made is named on the answer AND on
         a later refusal (the launch can still fail after it): the face shows
         CLONED either way (Astra r1 on #1000, finding 4)."""
+        if review is None and review_by:
+            from .agent_review import initial_review
+
+            review = initial_review(review_by)
         made: dict[str, Any] = {}
         try:
             answer = self._hand(
                 principal, kind, item_id, made,
                 instruction=instruction, profile=profile, project_id=project_id,
-                queue=queue, helper_of=helper_of,
+                queue=queue, helper_of=helper_of, helper_round=helper_round, review=review, review_by=review_by,
+                start_point=start_point,
             )
         except ServiceError as exc:
             if made.get("clone"):
@@ -373,6 +382,10 @@ class AgentHandService:
         project_id: Optional[str] = None,
         queue: bool = False,
         helper_of: Optional[str] = None,
+        helper_round: int = 1,
+        start_point: Optional[str] = None,
+        review: Optional[Mapping[str, Any]] = None,
+        review_by: Optional[str] = None,
     ) -> dict[str, Any]:
         try:
             kind, item_id = parse_item_ref({"kind": kind, "id": item_id})
@@ -423,9 +436,10 @@ class AgentHandService:
             # Betterment AG11: a helper works in its own worktree, on a branch
             # that starts at its parent's branch.
             parent = launcher._ledger.get(helper_of) or {}
+            round_suffix = f"-{max(1, int(helper_round))}" if int(helper_round) > 1 else ""
             spec = {
-                "mode": "new", "name": f"{spec['name']}-helper", "branch": f"{spec['branch']}-helper",
-                **({"start_point": str(parent.get("branch"))} if parent.get("branch") else {}),
+                "mode": "new", "name": f"{spec['name']}{round_suffix}-helper", "branch": f"{spec['branch']}{round_suffix}-helper",
+                **({"start_point": str(start_point or parent.get("branch"))} if start_point or parent.get("branch") else {}),
             }
         try:
             worktree_path = derive_worktree_path(source.primary_path, spec["name"])
@@ -477,6 +491,7 @@ class AgentHandService:
 
                 entry = HandQueue().add(
                     kind, item_id, instruction=instruction, profile=profile, project_id=project_id,
+                    review_by=review_by,
                 )
                 return {
                     "status": "queued",
@@ -507,6 +522,19 @@ class AgentHandService:
             )
         except AgentBriefRefused as exc:
             raise AgentHandRefused.from_launch(exc) from exc
+        if isinstance(review, Mapping):
+            from ..delivery.factory_launch import agent_of_profile
+
+            review = {
+                **dict(review),
+                "builder": str(review.get("builder") or agent_of_profile(profile_id)),
+                "item": {
+                    "kind": kind,
+                    "id": item_id,
+                    "title": item_title(self._db, kind, item_id),
+                },
+                "acceptance": list(brief.get("acceptance") or []),
+            }
 
         try:
             story_ref = derived_story_ref(project_id or DESK_PROJECT, kind, item_id)
@@ -519,14 +547,32 @@ class AgentHandService:
             "story_ref": story_ref,
             "origin_ref": {"kind": kind, "id": item_id},
             **({"helper_of": helper_of} if helper_of else {}),
+            **({"review": dict(review)} if isinstance(review, Mapping) else {}),
         }
+        if isinstance(review, Mapping) and str(review.get("role") or "") == "reviewer":
+            # The profile's existing option slots enforce read-only process
+            # mode before spawn.  The reviewer palette is carried in the
+            # same review envelope for the factory credential seam.
+            if str(agent.get("executable") or "") == "claude":
+                request["options"] = {"permission_mode": "plan"}
+            elif str(agent.get("executable") or "") == "codex":
+                request["options"] = {"sandbox": "read-only"}
         if agent.get("executable") in ("claude", "codex", "pi"):
             # Conductor R3: Codex is gated like Claude Code (its -c hooks);
             # pi through its extension (pi spike #1020).
             result = self._launch_gated(launcher, request, brief["text"], principal, worktree_path, spec["name"])
         else:
             result = self._launch_ungated(launcher, request, brief["text"], principal)
-        return self._answer(result, spec, source, brief, kind, item_id, project_id, mode)
+        answer = self._answer(result, spec, source, brief, kind, item_id, project_id, mode)
+        if review and answer.get("launch_id"):
+            # Review metadata is hub state. Keep it beside the launch so the
+            # review loop survives a process restart and the flight wire can
+            # show the pair without a second store.
+            try:
+                launcher._ledger.update(str(answer["launch_id"]), review=dict(review))
+            except Exception as exc:
+                log.warning("review metadata not retained (%s)", exc)
+        return answer
 
     # ── PHILO-15 16: the Project's repository ───────────────────────
 
@@ -634,12 +680,13 @@ class AgentHandService:
         profile: Optional[str] = None,
         project_id: Optional[str] = None,
         queue: Optional[bool] = None,
+        review_by: Optional[str] = None,
     ) -> dict[str, Any]:
         """The ``agent.hand`` operation (``agent_operations.AGENT_HAND``)."""
         return self.hand(
             principal, kind, id,
             instruction=instruction, profile=profile, project_id=project_id,
-            queue=bool(queue),
+            queue=bool(queue), review_by=review_by,
         )
 
     # ── Claude Code and Codex: process.spawn, the gate armed for this worktree ──

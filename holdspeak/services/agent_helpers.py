@@ -192,7 +192,10 @@ def last_words(db: Any, launch_id: str, ledger: Any = None) -> Optional[str]:
 
 def start_helper(
     caller: str, *, instruction: str, profile: Optional[str], hand_service: Any,
-    control_mode: Callable[[], str], ledger: Any = None,
+    control_mode: Callable[[], str], ledger: Any = None, helper_round: int = 1,
+    state_reader: Optional[Callable[[str], str]] = None,
+    start_point: Optional[str] = None,
+    review: Optional[Mapping[str, Any]] = None,
 ) -> dict[str, Any]:
     from ..principals import Principal, PrincipalKind
 
@@ -202,8 +205,16 @@ def start_helper(
     parent = ledger.get(caller) or {}
     if not parent:
         raise HelperRefused("launch_unknown", "the calling launch is not in the ledger", 404)
-    if any(str(r.get("helper_of") or "") == caller for r in ledger.list()):
-        raise HelperRefused("helper_exists", "this agent already has its one helper")
+    # AG11 permits one active helper. Finished helpers remain in the ledger so
+    # AG12 can retain each review round and start the next round in a fresh
+    # worktree at the new builder commit.
+    for row in ledger.list():
+        if str(row.get("helper_of") or "") != caller:
+            continue
+        launch_id = str(row.get("launch_id") or "")
+        state = state_reader(launch_id) if state_reader and launch_id else row.get("state")
+        if str(state or "") in {"starting", "launched", "registered", "working", "waiting"}:
+            raise HelperRefused("helper_exists", "this agent already has its one helper")
     if str(control_mode() or "").strip().lower() in ("safe", "secure"):
         # Decision 22 is an owner question, not a permanent refusal.  Keep the
         # request on the parent launch so the owner's one press can continue
@@ -225,6 +236,9 @@ def start_helper(
             "status": "awaiting_owner",
             "instruction": str(instruction).strip(),
             "profile": profile,
+            "helper_round": max(1, int(helper_round)),
+            **({"start_point": str(start_point)} if start_point else {}),
+            **({"review": dict(review)} if isinstance(review, Mapping) else {}),
             "requested_at": datetime.now(timezone.utc).isoformat(),
         }
         updater = getattr(ledger, "update", None)
@@ -237,10 +251,20 @@ def start_helper(
             "owner_action": {"kind": "start_helper", "launch_id": caller, "request_id": request_id},
         }
     origin = parent.get("origin_ref") or {}
+    hand_args = {
+        "instruction": str(instruction).strip(), "profile": profile, "helper_of": caller,
+    }
+    # Preserve AG11's exact helper call shape for its first round; AG12 adds
+    # the round token only when a fresh second worktree is required.
+    if int(helper_round) > 1:
+        hand_args["helper_round"] = int(helper_round)
+    if start_point:
+        hand_args["start_point"] = str(start_point)
+    if isinstance(review, Mapping):
+        hand_args["review"] = dict(review)
     answer = hand_service.hand(
         Principal(PrincipalKind.AGENT, f"agent:launch:{caller}"),
-        str(origin.get("kind") or ""), str(origin.get("id") or ""),
-        instruction=str(instruction).strip(), profile=profile, helper_of=caller,
+        str(origin.get("kind") or ""), str(origin.get("id") or ""), **hand_args,
     )
     return {"launch_id": answer.get("launch_id"), "status": answer.get("status"),
             "helper_of": caller, "worktree": answer.get("worktree")}
@@ -287,6 +311,9 @@ def allow_helper(
         str(origin.get("kind") or ""), str(origin.get("id") or ""),
         instruction=str(pending.get("instruction") or "").strip(),
         profile=pending.get("profile"), helper_of=caller,
+        **({"helper_round": int(pending.get("helper_round") or 1)} if int(pending.get("helper_round") or 1) > 1 else {}),
+        **({"start_point": str(pending.get("start_point"))} if pending.get("start_point") else {}),
+        **({"review": dict(pending.get("review"))} if isinstance(pending.get("review"), Mapping) else {}),
     )
     helper_id = str(answer.get("launch_id") or "")
     settled = dict(pending)
