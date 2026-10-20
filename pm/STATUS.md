@@ -35,7 +35,7 @@ The next check passed 617 affected cases, 4,079 web checks, all 110 sweep,
 27 canon and 1,116 repo guards. Its one stale Today consumer expected the
 Monday weekend lookback; the complete Tuesday recording correctly excludes
 Friday's meetings. The expectation now matches that real recording.
-Required quick: P9_QUICK_PENDING.
+Required quick: 617 affected Python/browser checks and 4,079 web checks passed in the integrated run; final Tuesday-consumer delta passed all 16 web checks, 110 desk-sweep, 27 canon and 1,116 repo guards; build green..
 
 The follow-up audit closes five old entries already delivered by #1267,
 #1303, #1304 and #1319. The source and retained proof are recorded in the
