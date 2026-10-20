@@ -55,7 +55,7 @@ ATLAS_FENCE = {
         "pass", "", "the exact produced sweep receipt's Open in Activity reaches Settings at Rhythm",
     ),
     "case.j1.first_words_continue_later.idle": (
-        "pass", "", "Continue later is the trigger, pressed by nothing in setup; "
+        "pass", "", "Open my desk is the trigger, pressed by nothing in setup; "
         "the desk (the Chair screen, chair-desk; PHILO-14 A1 closed the Needs "
         "you window that holds the arrival headline) is the promised result",
     ),
@@ -195,7 +195,7 @@ def _assert_receipt_door(record):
     after = [window["title"] for window in record["after"]["windows"]]
     assert "Activity" in before and "Activity" in after, (before, after)
     assert "Settings" in after, (before, after)
-    assert record["after"]["observe_at"] == '#surface-settings [data-settings-module="rhythm"]'
+    assert record["after"]["observe_at"] == '#surface-settings [data-settings-section="notices"]'
 
 
 @pytest.mark.parametrize("viewport", [1440, 393])

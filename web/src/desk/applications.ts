@@ -36,7 +36,9 @@ export interface DeskApplication {
   subjectRef?: string;
   surface?: DeskSurfaceSpec;
   aliases?: readonly DeskApplicationAlias[];
-  dock?: { order: number; launch: "surface" | "intelligence"; phone?: number };
+  dock?: { order: number; launch: "surface" | "intelligence" | "chair"; phone?: number };
+  /** A Chair door that is present on the phone Dock only. */
+  phoneOnly?: boolean;
   /** Parked surfaces keep their manifest and hub id without a live host. */
   parked?: string;
   /** Betterment shell S1: the row in Go, on the desktop and the phone. Go
@@ -90,6 +92,17 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     group: "app",
     dock: { order: 0, launch: "intelligence", phone: 0 },
     go: { group: "daily", order: 0 },
+    shortcut: "⌃1",
+  },
+  {
+    action: "chair-capture",
+    windowId: "chair:capture",
+    label: "Capture",
+    description: "Capture a thought on the phone.",
+    glyph: "●",
+    href: "/",
+    phoneOnly: true,
+    dock: { order: 5, launch: "chair", phone: 1 },
   },
   {
     action: "dictate",
@@ -99,9 +112,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "⌁",
     href: "/dictation",
     group: "app",
-    dock: { order: 1, launch: "surface" },
+    dock: { order: 4, launch: "surface" },
     go: { group: "daily", order: 7 },
-    shortcut: "⌃1",
+    shortcut: "⌃5",
     aliases: [
       { key: "configure-commands", scope: "commands" },
       { key: "surface-commands", scope: "commands" },
@@ -134,7 +147,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "▣",
     href: "/history",
     group: "app",
-    dock: { order: 2, launch: "surface", phone: 2 },
+    dock: { order: 1, launch: "surface", phone: 2 },
     go: { group: "daily", order: 2 },
     shortcut: "⌃2",
     surface: {
@@ -151,7 +164,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   },
   // PHILO-14 C4: the Conductor drawer is where agents live. Betterment AG1
   // (DECISIONS #3): its face name is Agents; the action, window id, route
-  // and ⌃3 keep the code name.
+  // and ⌃4 keep the code name.
   {
     action: "open-conductor",
     windowId: "conductor",
@@ -162,9 +175,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/conductor",
     group: "tool",
     // PHILO-17 (doors): the Agents door is its desk drawer, Dock and Go.
-    dock: { order: 4, launch: "surface" },
+    dock: { order: 3, launch: "surface", phone: 4 },
     go: { group: "daily", order: 5 },
-    shortcut: "⌃3",
+    shortcut: "⌃4",
   },
   // Betterment AG1: the old Agents application (`/companion`, CompanionCore)
   // is unmapped: no manifest row, its address opens Agents. Its row is
@@ -178,7 +191,6 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/settings",
     group: "app",
     // PHILO-17 (doors): Settings is in the HoldSpeak menu only.
-    shortcut: "⌃4",
     mark: 1,
     aliases: [
       { key: "configure-integrations", scope: "integration:destinations" },
@@ -417,9 +429,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/",
     // Betterment shell S1: a group, so Search lists it.
     group: "app",
-    dock: { order: 3, launch: "surface", phone: 3 },
+    dock: { order: 2, launch: "surface", phone: 3 },
     // PHILO-17 (doors): the People drawer on the desk, and Go.
     go: { group: "daily", order: 3 },
+    shortcut: "⌃3",
     surface: {
       eyebrow: "Follow-through",
       minW: 560,
@@ -543,8 +556,15 @@ export type DockApplication = DeskApplication & {
 
 export const DOCK_APPLICATIONS: readonly DockApplication[] =
   DESK_APPLICATIONS.filter(
-    (application): application is DockApplication => Boolean(application.dock),
+    (application): application is DockApplication => Boolean(application.dock) && !application.phoneOnly,
   ).sort((left, right) => left.dock.order - right.dock.order);
+
+/** The phone Dock is the same manifest projection. Capture is a phone-only
+ * Chair entry; every other tile is an application in the primary Dock. */
+export const PHONE_DOCK_APPLICATIONS: readonly DockApplication[] =
+  DESK_APPLICATIONS.filter(
+    (application): application is DockApplication => application.dock?.phone !== undefined,
+  ).sort((left, right) => (left.dock.phone ?? 0) - (right.dock.phone ?? 0));
 
 /** The registry verb that opens an application: Intelligence and People
  * open through their desk verbs, every other application through `go.*`. */

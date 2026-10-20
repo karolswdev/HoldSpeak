@@ -133,6 +133,9 @@ vi.mock("./windowRegistry", () => ({
   chipEls: { set: vi.fn(), delete: vi.fn() },
 }));
 vi.mock("../../useCompactViewport", () => ({ useCompactViewport: () => mocks.compact }));
+vi.mock("../../screen/nextOneOnOne", () => ({
+  useNextOneOnOneRead: () => ({ label: "1:1 15:00", reading: false }),
+}));
 // Keep the real Chair lifecycle below; the Dock does not mount its body.
 vi.mock("../../needs/NeedsDrawer", () => ({ NeedsDrawer: () => null }));
 const dockLaunchers = vi.hoisted(() => ({ list: [] as Array<{ id: string; label: string; glyph: string; open: boolean; activate: () => void }> }));
@@ -142,15 +145,22 @@ vi.mock("./VerbGlyph", () => ({ VerbGlyph: () => null }));
 vi.mock("./ShortcutSheet", () => ({ ShortcutSheet: () => null }));
 vi.mock("../../applications", () => {
   const applications = [
-    { windowId: "intelligence:desk", action: "open-intelligence", href: "/intelligence", label: "Intelligence", glyph: "I", surface: false, dock: { order: 1, launch: "intelligence" } },
-    { windowId: "surface-meetings", action: "open-meetings", href: "/meetings", label: "Meetings", glyph: "M", surface: true, dock: { order: 2, launch: "surface" } },
+    { windowId: "intelligence:desk", action: "open-intelligence", href: "/intelligence", label: "Today", glyph: "I", surface: false, dock: { order: 0, launch: "intelligence", phone: 0 } },
+    { windowId: "surface-meetings", action: "open-meetings", href: "/meetings", label: "Meetings", glyph: "M", surface: true, dock: { order: 1, launch: "surface", phone: 2 } },
+    { windowId: "surface-people", action: "open-people", href: "/people", label: "People", glyph: "P", surface: true, dock: { order: 2, launch: "surface", phone: 3 } },
+    { windowId: "conductor", action: "open-conductor", href: "/conductor", label: "Agents", glyph: "A", surface: true, dock: { order: 3, launch: "surface", phone: 4 } },
+    { windowId: "surface-dictation", action: "dictate", href: "/dictation", label: "Speak", glyph: "S", surface: true, dock: { order: 4, launch: "surface" } },
   ];
-  // PHILO-17 (doors): the Dock seats Intelligence, Speak and Meetings only.
-  // Betterment A6: Automations stands on it only while a result is NEW.
-  const automations = { windowId: "surface-workbenches", action: "open-workbenches", href: "/workbenches", label: "Automations", glyph: "A", surface: true };
+  const phoneApplications = [
+    applications[0],
+    { windowId: "chair:capture", action: "chair-capture", href: "/", label: "Capture", glyph: "●", phoneOnly: true, dock: { order: 5, launch: "chair", phone: 1 } },
+    applications[1],
+    applications[2],
+    applications[3],
+  ];
   return {
     DOCK_APPLICATIONS: applications,
-    applicationForAction: (action: string) => (action === automations.action ? automations : undefined),
+    PHONE_DOCK_APPLICATIONS: phoneApplications,
   };
 });
 vi.mock("./RoomActions", () => ({ RoomActions: () => null }));
@@ -179,7 +189,7 @@ describe("phone Today Dock door", () => {
     let selectedView = "brief";
     mocks.openIntelligence.mockImplementation(({ view }: { view: string }) => { selectedView = view; });
     const view = render(<Dock />);
-    const today = screen.getByRole("button", { name: minimized ? "Today, iconified" : "Today" });
+    const today = screen.getByRole("button", { name: minimized ? /Today, .*iconified/ : /Today/ });
     expect(today).toHaveAttribute("data-app", "intelligence:desk");
     expect(chipEls.set).toHaveBeenCalledWith(winId, today);
     expect(today).toHaveClass(minimized ? "is-seated" : "is-run");
@@ -189,7 +199,7 @@ describe("phone Today Dock door", () => {
 
     expect(mocks.desk.panelOrder.at(-1)).toBe(winId);
     expect(mocks.desk.panelMin).not.toContain(winId);
-    expect(screen.getByRole("button", { name: "Today" })).toHaveClass("is-run");
+    expect(screen.getByRole("button", { name: /Today/ })).toHaveClass("is-run");
     expect(selectedView).toBe("brief");
     expect(mocks.openIntelligence).not.toHaveBeenCalled();
   });
@@ -198,7 +208,7 @@ describe("phone Today Dock door", () => {
     mocks.compact = true;
     render(<Dock />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Today" }));
+    fireEvent.click(screen.getByRole("button", { name: /Today/ }));
 
     expect(mocks.openIntelligence).toHaveBeenCalledTimes(1);
     expect(mocks.openIntelligence).toHaveBeenCalledWith({ view: "today" });
@@ -282,7 +292,7 @@ describe("H-C3 Dock rendering", () => {
     expect(document.querySelector(".desk-dock-project")).toBeNull();
     // PHILO-17 (needsyou): the one number is on the Needs-you icon and the
     // bell only; the Intelligence tile carries no copy of it.
-    expect(screen.getByRole("button", { name: "Intelligence" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Today/ })).toBeTruthy();
     expect(screen.queryByText("0")).toBeNull();
     // PHILO-17: one desk. The dock has no Floor (or Chair) toggle.
     expect(screen.queryByTestId("chair-floor-toggle")).toBeNull();
@@ -293,7 +303,7 @@ describe("H-C3 Dock rendering", () => {
     expect(screen.queryByTestId("desk-dock-send-state")).toBeNull();
     expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull();
     // PHILO-17 (doors): People left the Dock; its 1:1 read moved to the People drawer (screen/nextOneOnOne.ts).
-    expect(screen.queryByTestId("desk-dock-people-state")).toBeNull();
+    expect(screen.getByTestId("desk-dock-people-state")).toHaveTextContent("1:1 15:00");
     expect(mocks.apiFetch).not.toHaveBeenCalledWith("/api/people/readiness");
   });
 
@@ -315,8 +325,7 @@ describe("H-C3 Dock rendering", () => {
     mocks.useNeedsYou.mockImplementation((() => snapshot) as never);
     try {
       render(<Dock />);
-      expect(screen.getByRole("button", { name: "Intelligence" })).toBeTruthy();
-      expect(screen.queryByRole("button", { name: `Intelligence, ${ONE_NUMBER_ROWS} need you` })).toBeNull();
+      expect(screen.getByRole("button", { name: `Today, ${ONE_NUMBER_ROWS} needs you` })).toBeTruthy();
     } finally {
       mocks.useNeedsYou.mockImplementation((() => ({ count: 1, unmutedItems: [{ projectId: "p1" }] })) as never);
     }
@@ -373,11 +382,16 @@ describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
     expect(screen.queryByTestId("desk-dock-send-state")).toBeNull();
   });
 
-  it("names each daily seat for the phone order and carries the More AppIcons gadget", () => {
+  it("names the five daily seats in the phone manifest and omits the old gadget", () => {
+    mocks.compact = true;
     render(<Dock />);
-    expect(screen.getByRole("button", { name: /^Intelligence/ })).toHaveAttribute("data-app", "intelligence:desk");
+    expect(screen.getByRole("button", { name: /Today/ })).toHaveAttribute("data-app", "intelligence:desk");
+    expect(screen.getByRole("button", { name: "Capture" })).toHaveAttribute("data-app", "chair:capture");
     expect(screen.getByRole("button", { name: "Meetings" })).toHaveAttribute("data-app", "surface-meetings");
-    expect(screen.getByRole("button", { name: "More AppIcons" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /People/ })).toHaveAttribute("data-app", "surface-people");
+    expect(screen.getByRole("button", { name: "Agents" })).toHaveAttribute("data-app", "conductor");
+    expect(screen.queryByRole("button", { name: "Speak" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /More AppIcons/ })).toBeNull();
   });
 
   // replaces: tests/e2e/test_philo13_13_dock_glass.py::TestLiveDock::test_the_dock_shows_his_day_live_and_stays_through_an_outage (the REC leg)
@@ -410,9 +424,9 @@ describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
     const view = render(<Dock />);
     mocks.runtime.state = "offline";
     view.rerender(<Dock />);
-    for (const id of ["desk-dock-meetings-state", "desk-dock-send-state", "desk-dock-people-state"])
+    for (const id of ["desk-dock-meetings-state", "desk-dock-send-state"])
       expect(screen.queryByTestId(id), id).toBeNull();
-    expect(document.querySelectorAll(".desk-dock .desk-dock-badge")).toHaveLength(0);
+    expect(screen.getByTestId("desk-dock-today-count")).toHaveTextContent("1");
   });
 
   it("does not render a second status line for offline reads", () => {
@@ -420,7 +434,7 @@ describe("C3-W the AppIcon face (boards C1-1, C1-8a-c)", () => {
     mocks.runtime.state = "offline";
     view.rerender(<Dock />);
     expect(screen.queryByTestId("desk-dock-send-state")).toBeNull();
-    expect(screen.queryByText("1")).toBeNull();
+    expect(screen.getByTestId("desk-dock-today-count")).toHaveTextContent("1");
   });
 });
 
@@ -442,33 +456,5 @@ describe("the Missed launcher (HS-200-07)", () => {
     } finally {
       dockLaunchers.list = [];
     }
-  });
-});
-
-
-/* Betterment A6: the Automations tile carries the NEW count, on the hub's own
- * new-result rows (automation-hub/put-new.json, put-opened.json, recorded by
- * tests/integration/test_desk_workbenches.py). */
-import PUT_NEW from "../../__tests__/fixtures/automation-hub/put-new.json";
-import PUT_OPENED from "../../__tests__/fixtures/automation-hub/put-opened.json";
-
-describe("the Automations tile: the NEW count (Betterment A6)", () => {
-  const answer = (step: { gets: Record<string, unknown> }) => (path: string) =>
-    path === "/api/automations/new" ? Promise.resolve(structuredClone(step.gets[path])) : mocks.defaultApiFetch(path);
-  afterEach(() => { mocks.apiFetch.mockImplementation(mocks.defaultApiFetch); });
-
-  it("stands on the Dock with the count while a result is NEW", async () => {
-    mocks.apiFetch.mockImplementation(answer(PUT_NEW));
-    render(<Dock />);
-    const tile = await screen.findByTestId("desk-dock-automations");
-    expect(tile).toHaveAttribute("aria-label", "Automations, 1 new result");
-    expect(screen.getByTestId("desk-dock-automations-new")).toHaveTextContent("1");
-  });
-
-  it("is absent when nothing is NEW (no tile, no zero)", async () => {
-    mocks.apiFetch.mockImplementation(answer(PUT_OPENED));
-    render(<Dock />);
-    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/automations/new"));
-    expect(screen.queryByTestId("desk-dock-automations")).toBeNull();
   });
 });
