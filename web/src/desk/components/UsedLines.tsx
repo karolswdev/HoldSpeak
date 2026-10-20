@@ -20,6 +20,7 @@ import { reportWriteFailure } from "../hooks/useWriteReceipt";
 import { useUndoReceipt } from "../hooks/useUndoReceipt";
 import { useDesk } from "../store";
 import { sendWords, usedWords, type AgentUse, type UsedRow } from "../used";
+import { restoreWindowUndo } from "../windowUndo";
 
 /** The document a prepared send carries, for its send fold. */
 function preparedDoc(row: UsedRow): DocRef {
@@ -48,18 +49,29 @@ const DELETABLE = new Set(["note", "decision"]);
  *  verb never depends on what else is on the glass. */
 function WroteRow({ row, testPrefix }: { row: UsedRow & { undo?: boolean }; testPrefix: string }) {
   const [undone, setUndone] = useState(false);
+  const [windowUndoError, setWindowUndoError] = useState(false);
   const own = useUndoReceipt();
   const isTask = row.ref.startsWith("action_item:");
   const [kind, ...rest] = row.ref.split(":");
   const id = rest.join(":");
-  const canUndo = Boolean(row.undo) && !undone && (isTask || DELETABLE.has(kind));
+  const windowUndo = kind === "window" ? row.window_undo : undefined;
+  const isWindow = Boolean(windowUndo);
+  const canUndo = Boolean(row.undo) && !undone && !windowUndoError && (isTask || DELETABLE.has(kind) || isWindow);
   return (
     <li className="used-lines-row" data-testid={`${testPrefix}-wrote-row`}>
       <Button dense variant="ghost" onClick={() => openRef(row.ref)}>{row.label}</Button>
       {undone && isTask ? <span className="used-lines-undone" role="status">Undone</span> : null}
+      {undone && isWindow ? <span className="used-lines-undone" role="status">Restored</span> : null}
+      {windowUndoError ? <span className="used-lines-undone" role="status">Window changed; kept newer placement</span> : null}
       {canUndo ? (
         <Button dense variant="secondary" data-testid={`${testPrefix}-wrote-undo`}
           onClick={() => {
+            if (isWindow && windowUndo) {
+              void restoreWindowUndo(windowUndo)
+                .then(() => setUndone(true))
+                .catch(() => setWindowUndoError(true));
+              return;
+            }
             if (isTask) {
               setUndone(true);
               void dismissTask(row.ref).catch((cause) => {
@@ -118,7 +130,7 @@ export function UsedLines({
         </FoldGadget>
       ) : null}
       {wrote.length ? (
-        <FoldGadget title="Wrote" token={usedWords(wrote)} className="used-lines-fold">
+        <FoldGadget title="Wrote" token={used.wrote_summary || usedWords(wrote)} className="used-lines-fold">
           <ul className="used-lines-list" data-testid={`${testPrefix}-wrote`}>
             {wrote.map((row) => <WroteRow key={row.ref} row={row} testPrefix={testPrefix} />)}
           </ul>

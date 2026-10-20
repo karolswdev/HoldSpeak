@@ -974,6 +974,14 @@ def dispatch(name: str, arguments: dict[str, Any] | None, principal: Principal) 
     from holdspeak.services import conductor_launch
 
     arguments = conductor_launch.gate_call(name, arguments, principal)
+    # S9: capture the existing hub window rows before a model write so the
+    # existing run trace can describe a revision-safe Undo.  The capture is a
+    # read only context value consumed by run_trace.record_call after this
+    # dispatcher returns.
+    if name.startswith("desk_window.") and name.rsplit(".", 1)[-1] != "list":
+        from holdspeak.services import run_trace
+
+        run_trace.capture_window_before(name, arguments)
     with announce_scope() as announce, watch_writes() as wrote:
         result = _dispatch(name, arguments, principal)
         conductor_launch.after_call(name, arguments, result, principal)

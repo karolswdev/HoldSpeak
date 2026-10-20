@@ -52,6 +52,18 @@ describe("values", () => {
 });
 
 describe("arrangements", () => {
+  it.each(VIEWS)("keeps the canonical center-origin tile coordinates inside the band at %ix%i", (vw, vh) => {
+    const band = bandFor(vw, vh);
+    const left = resolveRect({ x: "-1/2", y: "-1/2", w: "1/2", h: "1/1" }, band);
+    const right = resolveRect({ x: 0, y: "-1/2", w: "1/2", h: "1/1" }, band);
+    expect(left.x).toBe(band.x);
+    expect(right.x).toBe(left.x + left.w);
+    expect(right.x + right.w).toBe(band.x + band.w);
+    expect(inside(left, band)).toBe(true);
+    expect(inside(right, band)).toBe(true);
+    expect(inside(resolveRect({ x: "1/2", y: "0", w: "1/2", h: "1/1" }, band), band)).toBe(false);
+  });
+
   it.each(VIEWS)("tile resolves to the two halves of the band at %ix%i", (vw, vh) => {
     const band = bandFor(vw, vh);
     const m = tile("a", "b", "left");

@@ -8,6 +8,7 @@ dispatcher sends ONE ``desk_changed`` frame.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +44,16 @@ def test_the_family_names_six_tools_in_the_catalogue() -> None:
     assert NAMES <= {t["name"] for t in mcp_tools.TOOLS}
 
 
+def test_arrange_schema_teaches_center_origin_tile_coordinates() -> None:
+    """The model-facing contract must name the compositor's right-half origin."""
+    tool = next(t for t in family.TOOLS if t["name"] == "desk_window.arrange")
+    description = tool["description"]
+    assert "x and y zero is the view centre" in description
+    assert "left {x:-1/2, y:-1/2, w:1/2, h:1/1}" in description
+    assert "right {x:0, y:-1/2, w:1/2, h:1/1}" in description
+    assert "x:1/2 starts at the far edge and is off-band" in description
+
+
 def test_the_tools_open_raise_seat_arrange_close_through_the_dispatcher(hub: Any) -> None:
     for wid in ("chair:brief", "chair:week"):
         mcp_tools.dispatch("desk_window.open", {"window_id": wid}, OWNER)
@@ -72,8 +83,99 @@ def test_an_mcp_no_op_write_sends_no_frame(hub: Any) -> None:
 
 
 def test_an_agent_open_is_announced_so_the_owner_sees_it(hub: Any) -> None:
-    mcp_tools.dispatch("desk_window.open", {"window_id": "surface-people"}, LAUNCH)
-    assert [(f["kind"], f["id"], f["op"]) for f in hub] == [("windows", "surface-people", "open")]
+    mcp_tools.dispatch("desk_window.open", {"window_id": "pullout:people:rel-mira"}, LAUNCH)
+    assert [(f["kind"], f["id"], f["op"]) for f in hub] == [("windows", "pullout:people:rel-mira", "open")]
+
+
+def test_the_s9_object_windows_use_the_registry_and_keep_their_scope(hub: Any) -> None:
+    """Ask opens the real registry windows with the object's protected scope."""
+    people = mcp_tools.dispatch("desk_window.open", {
+        "window_id": "pullout:people:rel-mira", "object_ref": "people:rel-mira:prep",
+    }, OWNER)
+    meeting = mcp_tools.dispatch("desk_window.open", {
+        "window_id": "surface-meetings", "object_ref": "meeting:platform-sync?view=review",
+    }, OWNER)
+
+    assert people["app"] == "pullout"
+    assert people["object_ref"] == "people:rel-mira:prep"
+    assert meeting["app"] == "review-meetings"
+    assert meeting["object_ref"] == "meeting:platform-sync?view=review"
+    listed = mcp_tools.dispatch("desk_window.list", {}, OWNER)
+    assert listed["registry"]["families"]["pullout:"] == "pullout"
+    assert listed["registry"]["static"]["surface-meetings"] == "review-meetings"
+
+
+def test_the_whole_window_producer_records_grouped_wrote_and_revision_safe_undo(hub: Any) -> None:
+    """The real MCP dispatch plus trace projection is the S9 Wrote wire."""
+    from holdspeak.services import run_trace
+    from holdspeak.runtime import composition
+
+    db = composition.current().db
+    trace = run_trace.ask_trace("s9-window-wire")
+
+    calls = [
+        ("desk_window.open", {"window_id": "pullout:people:rel-mira", "object_ref": "people:rel-mira:prep"}),
+        ("desk_window.open", {"window_id": "surface-meetings", "object_ref": "meeting:platform-sync?view=review"}),
+    ]
+    for name, arguments in calls:
+        value = mcp_tools.dispatch(name, arguments, OWNER)
+        run_trace.record_value(trace, name, arguments, value, db=db)
+
+    listed = mcp_tools.dispatch("desk_window.list", {}, OWNER)
+    rects = {
+        "pullout:people:rel-mira": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"},
+        "surface-meetings": {"x": "0%", "y": "-1/2", "w": "1/2", "h": "100%"},
+    }
+    revisions = {row["id"]: row["revision"] for row in listed["windows"]}
+    arrange_args = {"rects": rects, "expected_revisions": revisions}
+    arranged = mcp_tools.dispatch("desk_window.arrange", arrange_args, OWNER)
+    run_trace.record_value(trace, "desk_window.arrange", arrange_args, arranged, db=db)
+
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT tool, ref, detail_json FROM agent_run_calls WHERE run_id=? ORDER BY id",
+            (trace,),
+        ).fetchall()
+    assert [row["tool"] for row in rows] == [
+        "desk_window.open", "desk_window.open", "desk_window.arrange", "desk_window.arrange",
+    ]
+    assert all(json.loads(row["detail_json"])["window_undo"]["windows"] for row in rows)
+
+    used = run_trace.use_by_trace(db, [trace])[trace]
+    assert used["wrote_summary"] == "Opened 2 windows · Tiled"
+    wrote = {row["ref"]: row for row in used["wrote"]}
+    assert wrote["window:pullout:people:rel-mira"]["undo"] is True
+    assert wrote["window:surface-meetings"]["undo"] is False
+    undo = wrote["window:pullout:people:rel-mira"]["window_undo"]
+    by_id = {row["id"]: row for row in undo["windows"]}
+    assert by_id["pullout:people:rel-mira"]["before"] is None
+    assert by_id["pullout:people:rel-mira"]["after"]["object_ref"] == "people:rel-mira:prep"
+    assert by_id["surface-meetings"]["after"]["object_ref"] == "meeting:platform-sync?view=review"
+
+
+def test_s9_arrange_cas_keeps_a_later_owner_placement(hub: Any) -> None:
+    """A stale Undo arrange cannot overwrite the owner's newer placement."""
+    from holdspeak.services.errors import ServiceError
+
+    mcp_tools.dispatch("desk_window.open", {"window_id": "pullout:people:rel-mira"}, OWNER)
+    initial = mcp_tools.dispatch("desk_window.list", {}, OWNER)["windows"][0]
+    first = {"pullout:people:rel-mira": {"x": "-1/2", "y": "-1/2", "w": "1/2", "h": "100%"}}
+    mcp_tools.dispatch("desk_window.arrange", {
+        "rects": first, "expected_revisions": {"pullout:people:rel-mira": initial["revision"]},
+    }, OWNER)
+    moved = mcp_tools.dispatch("desk_window.list", {}, OWNER)["windows"][0]
+    newer = {"pullout:people:rel-mira": {"x": "25%", "y": "20%", "w": "50%", "h": "70%"}}
+    mcp_tools.dispatch("desk_window.arrange", {
+        "rects": newer, "expected_revisions": {"pullout:people:rel-mira": moved["revision"]},
+    }, OWNER)
+
+    with pytest.raises(ServiceError) as stale:
+        mcp_tools.dispatch("desk_window.arrange", {
+            "rects": first, "expected_revisions": {"pullout:people:rel-mira": moved["revision"]},
+        }, OWNER)
+    assert stale.value.code == "window_stale"
+    current = mcp_tools.dispatch("desk_window.list", {}, OWNER)["windows"][0]
+    assert current["x"] == "25%" and current["y"] == "20%"
 
 
 def test_bad_arguments_are_refused_before_any_write(hub: Any) -> None:

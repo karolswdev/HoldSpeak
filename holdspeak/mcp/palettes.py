@@ -172,6 +172,10 @@ _ASK_TOOLS: frozenset[str] = frozenset({
     "people.readiness", "people.relationship.list", "people.relationship.get", "people.one_on_one.brief",
     # projects
     "project.list", "project.get_room", "project.item.list", "project.item.create",
+    # the owner's windows: list the registry, open scoped windows, then arrange
+    # them. Seat is deliberately left to the owner-facing compositor; Ask has
+    # no reason to iconify a window while doing desk work.
+    "desk_window.list", "desk_window.open", "desk_window.arrange", "desk_window.raise", "desk_window.close",
     # Jira
     "provider.jira_search",
     # a send is prepared, never sent: he presses Send

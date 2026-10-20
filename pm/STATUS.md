@@ -8,6 +8,38 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Ask can open the canonical person prep and meeting windows, arrange them,
+report the changes in Wrote and restore the previous windows through Undo.
+The person prep is `pullout:people:<id>`; `surface-people` is the roster.
+Hydration registers the prep lens before mounting that same pullout identity.
+The existing run trace records before/after revisions; Undo preserves newer
+owner placement through compare-and-set. No second ledger or arranger is added.
+
+The deterministic real-Hub check places Mira at (10,28,710,812) and Platform
+sync at (720,28,710,812), with the exact seam and full working height. The
+393 check shows safe in-band sheets (0,44,393,752), without claiming a tile.
+After normal desk load, a canonical HTTP raise presents Mira at the front;
+all nine points of her header are owned and its shot is visible.
+The final real LAN run on qwen3.8-27b reached its first strict tile in
+16.270 s, then Wrote/Undo reported Restored and removed only the new windows.
+Its current observation is run `20261020T100334Z`; older timing files are
+not the evidence for this run. Four successful model turns took 8.778 s
+(discovery), 3.931 s (batched opens), 3.333 s (arrange) and 1.456 s (prose).
+No retries or provider failure explain the delay. S9 remains Part: the
+recipe's under-10-second gate is not met. Existing-person lens changes were
+not observed in this fresh-open check.
+
+Focused checks pass: 10 Python and 44 web, plus build. Both widths were
+inspected. The first full check passed 4,193 related web tests, 1,620
+backend checks, all 110 sweep, 27 canon and 1,116 guards. Its four failures
+were a stale held-call coverage reply and the longer Send tool description.
+The actual held-call writer now records Send coverage. The shorter prepare
+description preserves both discovery examples and the owner-only boundary,
+ends with the required Needs sentence, and fits the original prompt budget.
+The memory comparison names only that description change; all other tool
+and prompt bytes, and every original palette-size limit, remain strict.
+All 61 focused Python checks pass. Required quick: Final delta: all 59 affected backend checks, 110 desk-sweep checks, 27 canon guards and 1,116 repository guards passed; build green. All 18 held-call face checks and 61 focused regressions passed; the unchanged window product passed 4,193 related web checks.
+
 The main watcher found two first-run producer recordings missing the saved
 Builder tools and Remote settings fields. The existing private-Hub writers
 regenerated all 48 replies in the LAN and denied-calendar scenarios; both

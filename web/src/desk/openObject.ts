@@ -191,6 +191,19 @@ export function refOpener(ref: string | null | undefined): Opener | null {
   if (clean.startsWith("gate:")) {
     return clean.length > "gate:".length ? () => openSystemShade() : null;
   }
+  // S9: a Wrote row names the actual hub window that an Ask opened or
+  // arranged.  Restore that window in the shared compositor; the hub frame
+  // has already made its object scope available to this view.
+  if (clean.startsWith("window:")) {
+    const id = clean.slice("window:".length);
+    if (!id) return null;
+    return () => {
+      void import("./store").then(({ useDesk }) => {
+        if (id.startsWith("pullout:")) useDesk.getState().openPullout(id.slice("pullout:".length));
+        else useDesk.getState().restorePanel(id);
+      });
+    };
+  }
   const followThrough = FOLLOW_THROUGH_REF.exec(clean);
   if (followThrough) {
     const id = followThrough[1];

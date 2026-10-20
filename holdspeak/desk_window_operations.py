@@ -26,7 +26,7 @@ _VALUE = {"anyOf": [{"type": "number"}, {"type": "string", "maxLength": 64}],
 _RECT = {"type": "object", "properties": {"x": _VALUE, "y": _VALUE, "w": _VALUE, "h": _VALUE},
          "required": ["x", "y", "w", "h"], "additionalProperties": False}
 _ID = {"type": "string", "minLength": 1, "maxLength": 200,
-       "description": "The window id (for example chair:brief, zone:<id>, surface-people)."}
+       "description": "The window id (for example chair:brief, zone:<id>, pullout:people:<id>)."}
 _REV = {"type": ["integer", "null"], "description": "Refuse the write when the window's revision is another one."}
 _REFUSALS = _CONTRACT_REFUSALS + (
     "window_unknown: the desk does not know the window id", "window_id_invalid",
@@ -62,30 +62,30 @@ def _row(name: str, method: str, description: str, properties: dict, required: l
 
 WINDOWS_LIST = _row(
     "windows.list", "list_windows",
-    "List the open windows on the owner's desk, back to front, with the front one marked.",
+    "List the owner's open windows, back to front, with the front one marked. Use registry.static for canonical app window ids and registry.families for object windows; use a returned object's object_ref as its scope.",
     {}, [], effect="read",
     result=("{windows: [" + _ROW + "], stage_shelf, shelf_revision, revision (the desk's), adopted, "
             "registry: {static, families, not_on_hub}}"),
 )
 WINDOWS_OPEN = _row(
     "windows.open", "open_window",
-    "Open a window on the owner's desk, in front. An open window comes to the front.",
+    "Open a registry window on the owner's desk, in front. Use window_id from registry.static or a registry.families prefix; use pullout:people:<id> with object_ref people:<id>:prep for a person's prep, or surface-meetings with meeting:<id>?view=review for a meeting; pass object_ref to scope it.",
     {"window_id": _ID, "object_ref": {"type": ["string", "null"], "maxLength": 400},
      "geometry": {"anyOf": [_RECT, {"type": "null"}]}, "room": {"type": ["string", "null"], "maxLength": 200},
      "expected_revision": _REV},
     ["window_id"],
 )
 WINDOWS_CLOSE = _row(
-    "windows.close", "close_window", "Close a window on the owner's desk.",
+    "windows.close", "close_window", "Close one open window from the owner's desk. Use the id and revision returned by windows.list.",
     {"window_id": _ID, "expected_revision": _REV}, ["window_id"], result="{id, closed: true, revision}",
 )
 WINDOWS_RAISE = _row(
-    "windows.raise", "raise_window", "Bring a window to the front of the owner's desk.",
+    "windows.raise", "raise_window", "Bring one listed window to the front of the owner's desk. Use its id and revision from windows.list.",
     {"window_id": _ID, "expected_revision": _REV}, ["window_id"],
 )
 WINDOWS_ARRANGE = _row(
     "windows.arrange", "arrange_windows",
-    "Set the rects of several windows in one change (a tile, a layout).",
+    "Arrange several listed windows in one atomic change. The x and y zero is the view centre. For two full-height side-by-side windows, use left {x:-1/2, y:-1/2, w:1/2, h:1/1} and right {x:0, y:-1/2, w:1/2, h:1/1}; x:1/2 starts at the far edge and is off-band, and y:0 is the vertical centre. Values are share+px strings such as 50% + 10 or -1/2; pass each window's current revision when available.",
     {"rects": {"type": "object", "additionalProperties": _RECT,
                "description": "Window id to rect (at least one; an empty map is refused by name)."},
      "expected_revisions": {"type": ["object", "null"], "additionalProperties": {"type": "integer"}}},

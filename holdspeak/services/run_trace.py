@@ -73,6 +73,75 @@ _DESK_ID_FIELDS = {
 #: the runner sets this inside a timed item).
 _ITEM: ContextVar[str] = ContextVar("agent_run_item", default="")
 
+# A window call is recorded after the dispatcher returns, while its useful
+# undo state is the desk immediately before the call.  The MCP dispatcher
+# captures that small read into this context slot; ``record_value`` consumes it
+# when it writes the existing agent_run_calls row.  This keeps window history
+# in the existing trace without a second ledger or a geometry cache.
+_WINDOW_BEFORE: ContextVar[Optional[dict[str, Any]]] = ContextVar("agent_run_window_before", default=None)
+_WINDOW_TOOLS = frozenset({
+    "desk_window.open", "desk_window.close", "desk_window.raise",
+    "desk_window.arrange", "desk_window.seat",
+})
+
+
+def _window_state(row: Mapping[str, Any]) -> dict[str, Any]:
+    geometry = {
+        key: row.get(key)
+        for key in ("x", "y", "w", "h")
+        if row.get(key) is not None
+    }
+    return {
+        "id": str(row.get("id") or ""),
+        "app": str(row.get("app") or ""),
+        "object_ref": row.get("object_ref"),
+        "geometry": geometry or None,
+        "minimized": bool(row.get("minimized")),
+        "room": row.get("room"),
+        "revision": int(row.get("revision") or 0),
+    }
+
+
+def capture_window_before(name: str, arguments: Any, *, db: Any = None) -> None:
+    """Capture the affected window rows before one admitted MCP write.
+
+    This is deliberately a best-effort read.  A refusal or a broken database
+    must still be handled by the normal dispatcher, and trace recording must
+    never make the product call fail.
+    """
+    if name not in _WINDOW_TOOLS:
+        return
+    args = arguments if isinstance(arguments, Mapping) else {}
+    if name.endswith(".arrange"):
+        raw_ids = args.get("rects") if isinstance(args.get("rects"), Mapping) else {}
+        ids = [str(value) for value in raw_ids]
+    else:
+        ids = [str(args.get("window_id") or "")]
+    ids = [value for value in ids if value]
+    try:
+        if db is None:
+            from ..db import get_database
+            from ..runtime.composition import db_or
+
+            db = db_or(get_database)
+        from .desk_window_service import DeskWindowService
+
+        rows = DeskWindowService(db).list().get("windows") or []
+        by_id = {str(row.get("id")): _window_state(row) for row in rows if row.get("id")}
+        _WINDOW_BEFORE.set({
+            "tool": name,
+            "ids": ids,
+            "before": {window_id: by_id.get(window_id) for window_id in ids},
+        })
+    except Exception:
+        _WINDOW_BEFORE.set({"tool": name, "ids": ids, "before": {window_id: None for window_id in ids}})
+
+
+def _take_window_before() -> Optional[dict[str, Any]]:
+    value = _WINDOW_BEFORE.get()
+    _WINDOW_BEFORE.set(None)
+    return value
+
 
 @contextmanager
 def for_item(item_id: str) -> Iterator[None]:
@@ -224,6 +293,87 @@ def _prepared(arguments: Mapping[str, Any], value: Any) -> tuple[str, str, dict[
     )
 
 
+def _window_title(window_id: str, row: Mapping[str, Any] | None = None) -> str:
+    """A short face word for a window row, without exposing a raw id."""
+    item = row or {}
+    scope = str(item.get("object_ref") or "")
+    if scope:
+        scope = scope.split("?", 1)[0]
+        if ":" in scope:
+            scope = scope.split(":", 1)[1]
+        words = " ".join(scope.replace(":", " ").replace("_", " ").replace("-", " ").split())
+        if words:
+            return words.title()
+    app = str(item.get("app") or "")
+    names = {
+        "open-people": "People", "review-meetings": "Meetings", "chair": "Today",
+        "chair-capture": "Capture", "open-conductor": "Agents",
+    }
+    if app in names:
+        return names[app]
+    return "Window" if not window_id else "Window"
+
+
+def _window_result_rows(value: Any) -> dict[str, dict[str, Any]]:
+    if not isinstance(value, Mapping):
+        return {}
+    rows: list[Any] = []
+    if isinstance(value.get("windows"), list):
+        rows.extend(value["windows"])
+    if value.get("id"):
+        rows.append(value)
+    return {
+        str(row.get("id")): _window_state(row)
+        for row in rows
+        if isinstance(row, Mapping) and row.get("id")
+    }
+
+
+def _window_event(
+    name: str, run_id: str, arguments: Mapping[str, Any], value: Any,
+) -> tuple[list[tuple[str, str, dict[str, Any]]], dict[str, Any]]:
+    """Return one trace row per affected window and its event summary."""
+    before = _take_window_before() or {}
+    ids = list(before.get("ids") or [])
+    if not ids:
+        if name.endswith(".arrange") and isinstance(arguments.get("rects"), Mapping):
+            ids = [str(value) for value in arguments["rects"]]
+        elif arguments.get("window_id"):
+            ids = [str(arguments["window_id"])]
+    previous = before.get("before") if isinstance(before.get("before"), Mapping) else {}
+    previous = {str(key): row for key, row in previous.items()}
+    after_rows = _window_result_rows(value)
+    op = name.rsplit(".", 1)[-1]
+    after_revision = int(value.get("revision") or 0) if isinstance(value, Mapping) else 0
+    if op == "close":
+        after_rows = {}
+    event_windows: list[dict[str, Any]] = []
+    rows: list[tuple[str, str, dict[str, Any]]] = []
+    for window_id in ids:
+        old = previous.get(window_id)
+        new = after_rows.get(window_id)
+        event_windows.append({
+            "id": window_id,
+            "before": old,
+            "after": new,
+            "after_revision": after_revision if new is None else int(new.get("revision") or 0),
+        })
+        row = new or old or {"id": window_id}
+        ref = f"window:{window_id}"
+        title = _window_title(window_id, row)
+        rows.append((ref, title, {"op": op}))
+    for index, (ref, title, detail) in enumerate(rows):
+        rows[index] = (ref, title, {
+            **detail,
+            "window_undo": {
+                "group": str(run_id),
+                "operation": op,
+                "windows": event_windows,
+            },
+        })
+    return rows, {"operation": op, "windows": event_windows, "count": len(event_windows)}
+
+
 def record_call(run_id: str, name: str, arguments: Any, response: Any, *, db: Any = None) -> None:
     """Add one row for an answered tool call of the run ``run_id``."""
     if not run_id or not name:
@@ -243,22 +393,34 @@ def record_value(run_id: str, name: str, arguments: Any, value: Any, *, db: Any 
     try:
         effect = _effect(name)
         detail: dict[str, Any] = {}
+        rows: list[tuple[str, str, dict[str, Any]]] = []
+        window_summary: dict[str, Any] | None = None
         if effect == PREPARE:
             ref, title, detail = _prepared(args, value)
+            rows = [(ref, title, detail)] if ref else []
+        elif name in _WINDOW_TOOLS:
+            rows, window_summary = _window_event(name, str(run_id), args, value)
         else:
             ref, title = _object(name, args, value)
             if effect == WRITE:
                 detail = {"op": name.rsplit(".", 1)[-1]}
+            rows = [(ref, title, detail)] if ref else []
         if db is None:
             from ..db import get_database
 
             db = get_database()
         with db._connection() as conn:
-            conn.execute(
-                "INSERT INTO agent_run_calls (run_id, tool, effect, ref, title, detail_json, called_at)"
-                " VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (str(run_id), str(name), effect, ref, title, json.dumps(detail, sort_keys=True), utc_now_iso()),
-            )
+            called_at = utc_now_iso()
+            for ref, title, row_detail in rows:
+                if window_summary is not None:
+                    event = row_detail.get("window_undo")
+                    if isinstance(event, Mapping):
+                        row_detail = {"op": row_detail.get("op") or "", "window_undo": event}
+                conn.execute(
+                    "INSERT INTO agent_run_calls (run_id, tool, effect, ref, title, detail_json, called_at)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (str(run_id), str(name), effect, ref, title, json.dumps(row_detail, sort_keys=True), called_at),
+                )
     except Exception as exc:  # never break the call for its record
         log.warning(f"agent run call not recorded: {exc}")
 
@@ -268,7 +430,7 @@ def _row(ref: str, title: str) -> dict[str, Any]:
 
 
 def _fold(rows: Any, key_of: Any) -> dict[str, dict[str, list[dict[str, Any]]]]:
-    used: dict[str, dict[str, dict[str, dict[str, Any]]]] = {}
+    used: dict[str, dict[str, Any]] = {}
     for row in rows:
         lists = used.setdefault(str(key_of(row)), {"looked_at": {}, "wrote": {}, "prepared": {}})
         try:
@@ -286,6 +448,10 @@ def _fold(rows: Any, key_of: Any) -> dict[str, dict[str, list[dict[str, Any]]]]:
                 entry["undo"] = True
             if op == "delete":
                 entry["undo"] = False
+            event = detail.get("window_undo")
+            if kind == "window" and isinstance(event, Mapping):
+                entries = lists.setdefault("_window_events", [])
+                entries.append((ref, title, dict(event), op))
         else:
             send_id = str(detail.get("send_id") or "")
             entry = lists["prepared"].setdefault(send_id or ref, {
@@ -293,10 +459,56 @@ def _fold(rows: Any, key_of: Any) -> dict[str, dict[str, list[dict[str, Any]]]]:
             })
         if title:
             entry["label"] = title
-    return {
-        key: {name: list(values.values()) for name, values in lists.items()}
-        for key, lists in used.items()
-    }
+    folded: dict[str, dict[str, Any]] = {}
+    for key, lists in used.items():
+        events = lists.pop("_window_events", [])
+        if events:
+            aggregate: dict[str, dict[str, Any]] = {}
+            operations: list[tuple[str, int, int, int]] = []
+            first_ref = ""
+            for ref, title, event, op in events:
+                if not first_ref:
+                    first_ref = ref
+                windows = event.get("windows") if isinstance(event.get("windows"), list) else []
+                opened_now = sum(1 for item in windows if isinstance(item, Mapping) and item.get("before") is None and item.get("after") is not None)
+                closed_now = sum(1 for item in windows if isinstance(item, Mapping) and item.get("before") is not None and item.get("after") is None)
+                operations.append((op, len(windows), opened_now, closed_now))
+                for item in windows:
+                    if not isinstance(item, Mapping) or not item.get("id"):
+                        continue
+                    window_id = str(item["id"])
+                    if window_id not in aggregate:
+                        aggregate[window_id] = {
+                            "id": window_id, "before": item.get("before"),
+                        }
+                    aggregate[window_id]["after"] = item.get("after")
+                    aggregate[window_id]["after_revision"] = item.get("after_revision")
+            undo_windows = list(aggregate.values())
+            undoable = any(op in {"open", "close", "arrange"} for op, *_rest in operations)
+            for ref, entry in lists["wrote"].items():
+                if ref.startswith("window:"):
+                    entry["window_undo"] = {"group": key, "windows": undo_windows, "primary": ref == first_ref}
+                    entry["undo"] = undoable and ref == first_ref
+            opened = sum(created for op, _count, created, _closed in operations if op == "open")
+            closed = sum(removed for op, _count, _created, removed in operations if op == "close")
+            summary: list[str] = []
+            if opened:
+                summary.append(f"Opened {opened} window{'s' if opened != 1 else ''}")
+            if closed:
+                summary.append(f"Closed {closed} window{'s' if closed != 1 else ''}")
+            if any(op == "arrange" for op, _count, _created, _closed in operations):
+                summary.append("Tiled" if any(count > 1 for op, count, _created, _closed in operations if op == "arrange") else "Moved")
+            if summary:
+                lists["wrote_summary"] = " · ".join(summary)
+        output: dict[str, Any] = {
+            name: list(values.values())
+            for name, values in lists.items()
+            if name in {"looked_at", "wrote", "prepared"}
+        }
+        if lists.get("wrote_summary"):
+            output["wrote_summary"] = lists["wrote_summary"]
+        folded[key] = output
+    return folded
 
 
 def use_by_item(db: Any, item_ids: list[str]) -> dict[str, dict[str, list[dict[str, Any]]]]:
