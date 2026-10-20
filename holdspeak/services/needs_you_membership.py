@@ -1698,6 +1698,17 @@ def _send_attention_rows(db: Any, principal: Any) -> tuple[list[dict[str, Any]],
         return [], coverage, reason
 
     candidates = [row for row in sends if str(row.get("state") or "") in {"prepared", "failed", "unknown"}]
+    # ``created_at`` is deliberately second-granular. SQLite's rowid is the
+    # durable insertion order for a prepared retry, which has no dispatch_seq
+    # until the owner presses it.
+    try:
+        with db._connection() as conn:
+            durable_order = {
+                str(row["id"]): int(row["rowid"])
+                for row in conn.execute("SELECT id, rowid FROM channel_sends")
+            }
+    except Exception:
+        durable_order = {}
     rows: list[dict[str, Any]] = []
     for send in candidates:
         state = str(send.get("state") or "")
@@ -1708,10 +1719,13 @@ def _send_attention_rows(db: Any, principal: Any) -> tuple[list[dict[str, Any]],
                 if other_created > created:
                     return True
                 # SQLite's channel timestamps are second-granular. The
-                # dispatch sequence is the durable order for two attempts
-                # created in the same second, so a newer retry still replaces
-                # the older failed/no-answer row in Needs you.
+                # durable row order handles a prepared retry, which has no
+                # dispatch sequence until the owner presses it.
                 if other_created == created:
+                    current_order = durable_order.get(str(send.get("id") or ""))
+                    other_order = durable_order.get(str(other.get("id") or ""))
+                    if current_order is not None and other_order is not None and other_order != current_order:
+                        return other_order > current_order
                     try:
                         return int(other.get("dispatch_seq") or 0) > int(send.get("dispatch_seq") or 0)
                     except (TypeError, ValueError):

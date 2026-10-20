@@ -63,6 +63,7 @@ type Outcome =
   | { kind: "lost"; storageFailed?: boolean }
   | { kind: "settled"; send: Send };
 type Held = HeldCommand;
+export type RetryCommand = NonNullable<Send["retry_command"]>;
 const store = {
   picked: new Map<string, string | null>(),          // ref -> destination id
   preparedOpen: new Map<string, string | null>(),    // ref -> the one open prepared row (absent = the first)
@@ -420,12 +421,13 @@ export function ProofCell({ channel, proof, target, account }: {
 
 /* ── the press ─────────────────────────────────────────────────────── */
 
-async function press(ref: string, target: string, fresh: () => Held["body"], reload: () => void, onSettled?: () => void, preview?: Preview) {
+async function press(ref: string, target: string, fresh: () => Held["body"], reload: () => void, onSettled?: () => void,
+  preview?: Preview, commandKey?: string) {
   const k = `${ref}|${target}`;
   if (store.busy.has(k)) return;                 // a double-click is one press
   let held = store.holds.get(k);
   const uncertain = Boolean(held);
-  if (!held) held = { key: commandId(), body: fresh(), preview };
+  if (!held) held = { key: commandKey ?? commandId(), body: fresh(), preview };
   try { keepPendingCommand(ref, target, held); }
   catch {
     store.outcomes.set(k, uncertain ? { kind: "lost", storageFailed: true }
@@ -461,8 +463,12 @@ async function press(ref: string, target: string, fresh: () => Held["body"], rel
 /** The narrow shared adapter for a prepared row outside the full Send well.
  * Needs you uses the same held command custody, including a replay after an
  * unknown answer, and therefore never invents a second press implementation. */
-export function sendPrepared(ref: string, sendId: string, reload: () => void = () => {}, onSettled?: () => void): Promise<void> {
-  return press(ref, sendId, () => ({ send_id: sendId }), reload, onSettled);
+export function sendPrepared(ref: string, sendId: string, reload: () => void = () => {}, onSettled?: () => void,
+  retry?: RetryCommand): Promise<void> {
+  const body = retry && !retry.send_id && retry.document_ref && retry.destination_id && retry.preview_digest
+    ? () => ({ document_ref: retry.document_ref!, destination_id: retry.destination_id!, preview_digest: retry.preview_digest! })
+    : () => ({ send_id: retry?.send_id ?? sendId });
+  return press(ref, sendId, body, reload, onSettled, undefined, retry?.command_id);
 }
 
 /** A failed send is a new owner press against the same frozen document and

@@ -75,6 +75,7 @@ import json
 import re
 import uuid
 import threading
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -1030,6 +1031,106 @@ class TestSendNeedsGlass(_Rig):
     """S3's real browser leg reuses the prepared-send rig above."""
 
     pass
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.chair_windows_open
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_saved_unknown_needs_retry_replays_the_original_operation(self, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+        """A settled UNKNOWN survives reload and Try again never dispatches twice."""
+        from playwright.sync_api import sync_playwright
+        from holdspeak.services.channel_contract import FileChannel, Outcome
+        from tests.unit.test_philo9_steward_admission import _tool
+
+        calls = 0
+
+        def unknown_dispatch(*_args: Any, **_kwargs: Any) -> Outcome:
+            nonlocal calls
+            calls += 1
+            return Outcome("unknown", "timeout")
+
+        monkeypatch.setattr(FileChannel, "dispatch", unknown_dispatch)
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                _normal_chair(page)
+                project = _api(page, "POST", "/api/projects", {"name": "S3 browser unknown delivery"}, token=H1_TOKEN)
+                project_id = project["project"]["id"]
+                update = _api(page, "POST", f"/api/projects/{project_id}/updates/draft", {}, token=H1_TOKEN)
+                update_id = update["update"]["id"]
+                _api(page, "PUT", f"/api/updates/{update_id}", {
+                    "body_md": "## Progress\n\nThe unknown browser proof keeps one operation.\n",
+                }, token=H1_TOKEN)
+                _api(page, "POST", f"/api/updates/{update_id}/publish", {}, token=H1_TOKEN)
+                document_ref = f"project_update:{update_id}"
+                destination_id, folder = self._dest(page, "S3 unknown folder")
+                _agent, prepared_answer = self._prepare_agent(document_ref, destination_id)
+                prepared = prepared_answer["send"]
+                assert list(folder.iterdir()) == []
+
+                owner_before = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=H1_TOKEN)
+                before_rows = [item for item in owner_before["items"] if item.get("kind") == "send"]
+                assert len(before_rows) == 1 and before_rows[0]["sendId"] == prepared["id"], owner_before
+
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                row = page.locator("[data-testid='needs-row'][data-kind='send']").first
+                row.wait_for(timeout=H1_T)
+                posts: list[dict[str, Any]] = []
+                page.on("request", lambda request: posts.append(request.post_data_json)
+                        if request.method == "POST" and request.url.endswith("/api/channels/send") else None)
+                row.locator("[data-verb='send']").click()
+                page.wait_for_function(
+                    """() => document.querySelector("[data-testid='needs-row'][data-kind='send'] [data-verb='try-again']") !== null""",
+                    timeout=H1_T,
+                )
+                assert calls == 1 and len(posts) == 1, (calls, posts)
+                first = self._sends(page, document_ref)
+                assert len(first) == 1 and first[0]["state"] == "unknown", first
+                first_kernel = self._kernel(first[0]["send_operation_id"])
+                assert first_kernel["state"] == "indeterminate" and first_kernel["receipt_state"] == "indeterminate", first_kernel
+                assert first_kernel["receipt_outcome"] == "unknown" and first_kernel["receipts"] == 1, first_kernel
+                assert list(folder.iterdir()) == []
+                page.screenshot(path=str(S3_SHOTS / f"needs-unknown-{width}.png"))
+
+                # The owner reloads from the saved aggregate. Browser custody
+                # is gone, but the row carries the kernel command provenance.
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                row = page.locator("[data-testid='needs-row'][data-kind='send']").first
+                row.wait_for(timeout=H1_T)
+                row.locator("[data-verb='try-again']").wait_for(timeout=H1_T)
+                page.screenshot(path=str(S3_SHOTS / f"needs-unknown-reloaded-{width}.png"))
+                assert calls == 1, "reload must not press a settled UNKNOWN send"
+                row.locator("[data-verb='try-again']").click()
+                deadline = time.monotonic() + 20
+                while len(posts) < 2 and time.monotonic() < deadline:
+                    page.wait_for_timeout(100)
+                assert len(posts) == 2 and posts[0] == posts[1], posts
+                assert calls == 1, "kernel replay must not dispatch the provider again"
+                after = self._sends(page, document_ref)
+                assert len(after) == 1 and after[0]["id"] == first[0]["id"] and after[0]["state"] == "unknown", after
+                after_kernel = self._kernel(after[0]["send_operation_id"])
+                assert after_kernel["operation_id"] == first_kernel["operation_id"]
+                assert list(folder.iterdir()) == []
+
+                privacy_agent = self._agent(palette="ALL", identity="privacy-agent")
+                agent_error, agent_answer = _tool(privacy_agent, "desk.needs_you", {})
+                assert agent_error is False and not [item for item in agent_answer.get("items", []) if item.get("kind") == "send"]
+                agent_text = json.dumps(agent_answer)
+                assert all(marker not in agent_text for marker in (first[0]["id"], "S3 unknown folder", prepared["preview"]["text"]))
+                facts = {
+                    "width": width, "document_ref": document_ref,
+                    "owner_before": owner_before, "http_send_attempts": posts,
+                    "provider_calls": calls, "send": after[0],
+                    "receipt": after_kernel, "folder": {"path": str(folder), "files": [p.name for p in folder.iterdir()]},
+                    "agent_send_rows": [],
+                }
+                (S3_SHOTS / f"needs-unknown-facts-{width}.json").write_text(json.dumps(facts, indent=2, default=str) + "\n")
+                page.screenshot(path=str(S3_SHOTS / f"needs-unknown-retried-{width}.png"))
+                assert not [error for error in errors if "ResizeObserver" not in error and "Failed to fetch" not in error], errors
+            finally:
+                browser.close()
 
     @pytest.mark.e2e
     @pytest.mark.timeout(600)
