@@ -4,9 +4,29 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (own-agent discovery delivery)
+**Last updated:** 2026-10-19 (terminal Setup delivery)
 
 ## Current phase
+
+ST9 adds `holdspeak setup`, `holdspeak setup --yes`, MCP `setup.status` and
+`setup.use`. They use the running hub and the shared Setup producers.
+Use all re-reads the inventory, keeps each result, continues after a failure,
+and distinguishes pending work. Agents can read status; adoption requires
+an owner press. Caller-supplied row inventories are ignored.
+
+Root's focused collection and run both cover 123 checks. The CLI-to-MCP
+proof reaches real hub operations and provider adapters, checks three
+account connections, saves a calendar, installs both native agents' tools,
+hooks and skills, and reads all adopted rows back as Works. Only native
+CLI/provider responses and EventKit are simulated; files and records are
+in the rig. A separate scratch-hub probe covers real HTTP discovery and
+agent-read/owner-use authority. Live OAuth and owner account acceptance
+remain unobserved. The first integrated quick found an accidental seeded Thread palette expansion,
+stale operation/exposure counts and an old People settings wire. Setup inventory
+now stays MCP-only in the seeded palettes; their original byte limits and tool
+counts pass unchanged. The actual People producer re-recorded its wire. The
+write-announcement walk now builds valid required oneOf inputs. All 270 checks
+covering those seams pass. Required quick: 3,767 affected Python/browser checks pass (three skipped), plus 108 desk sweep, 27 canon and 1,116 repository guards; build passes.
 
 AG15 shows Claude Code and Codex processes the owner started in tmux in
 Agents you started yourself. Native executable, pane ancestry and session

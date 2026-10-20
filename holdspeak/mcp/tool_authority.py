@@ -111,6 +111,8 @@ TOOL_AUTHORITY: dict[str, str] = {
     "ask.keep": WORK,
     "settings.get": WORK,
     "settings.update": CONFIG,  # the system settings (incl. calendar sources)
+    "setup.status": WORK,
+    "setup.use": CONFIG,  # Setup adoption changes the system configuration
     "coder.list": WORK,
     "coder.get": WORK,
     "coder.audit": WORK,
