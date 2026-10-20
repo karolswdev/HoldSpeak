@@ -18,6 +18,14 @@ export async function fetchUpdates(
   return (raw.updates ?? []).map(decodeUpdate);
 }
 
+/** Turn the project's saved Friday start on. */
+export async function enableFridayUpdate(workbenchId: string): Promise<void> {
+  await apiFetch(`/api/workbenches/${encodeURIComponent(workbenchId)}`, {
+    method: "PUT",
+    json: { schedule: "0 15 * * 5", schedule_enabled: true },
+  });
+}
+
 /** GET /api/updates/{id} — one update by id. */
 export async function fetchUpdate(updateId: string): Promise<ProjectUpdate> {
   const raw = await apiFetch<{ update: Record<string, unknown> }>(
@@ -148,10 +156,10 @@ function decodeJob(raw: Record<string, unknown>): EngineJob {
 }
 
 /** POST /api/updates/{id}/engine-pass — the engine improves this draft in the background. */
-export async function startEnginePass(updateId: string): Promise<EngineJob> {
+export async function startEnginePass(updateId: string, automationId?: string): Promise<EngineJob> {
   const raw = await apiFetch<{ job: Record<string, unknown> }>(
     `/api/updates/${encodeURIComponent(updateId)}/engine-pass`,
-    { method: "POST", json: {} },
+    { method: "POST", json: automationId ? { automation_id: automationId } : {} },
   );
   return decodeJob(raw.job);
 }

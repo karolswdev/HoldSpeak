@@ -38,6 +38,8 @@ import P3 from "./room-wires/nowP3.json";
 // Betterment Q1: Ask this project on an engine that does not answer, then Ask
 // again (tests/unit/test_desk_room_ask.py records it from the real routes).
 import Q1 from "./room-wires/roomAskQ1.json";
+// Recorded by the real Room/Workbench integration fence, including refusal.
+import P7 from "./room-wires/updateAutomationP7.json";
 import { runAsk } from "../../../desk/ask";
 import { AskPanel } from "../../../desk/components/AskPanel";
 import ASK_THREAD from "../../../test/wire/ask.thread.wire.json";
@@ -1521,5 +1523,52 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     render(<WindowHarness scope={`project:${pid}`} />);
     fireEvent.click(await screen.findByTestId("this-week-decided"));
     await waitFor(() => expect(calls.map((c) => c.key)).toContain(`GET /api/decision-records/${recordId}`));
+  });
+});
+
+
+describe("P7: the project update automation line", () => {
+  const pid = P7.manual.project_id;
+  const automation = P7.manual.updates.automation!;
+
+  it("keeps manual state after a refused Friday press, then retries the same automation", async () => {
+    let enabled = false;
+    let refused = true;
+    wire({
+      [room(pid)]: () => clone(enabled ? P7.scheduled : P7.manual),
+      [`PUT /api/workbenches/${automation.id}`]: () => {
+        if (refused) throw new ApiError(400, P7.refusal.error, clone(P7.refusal));
+        enabled = true;
+        return clone(P7.friday);
+      },
+    });
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const line = await screen.findByTestId("room-update-line");
+    expect(within(line).getByTestId("room-update-with")).toHaveTextContent(automation.engine_label);
+    fireEvent.click(within(line).getByTestId("room-update-friday"));
+    await within(line).findByText(P7.refusal.error);
+    expect(within(line).getByTestId("room-update-when")).toHaveTextContent("Only when pressed");
+    refused = false;
+    fireEvent.click(within(line).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(within(line).getByTestId("room-update-when")).toHaveTextContent("Fridays 15:00"));
+    expect(within(line).getByTestId("room-update-with")).toHaveTextContent(P7.scheduled.updates.automation!.engine_label);
+    expect(calls.filter((call) => call.key === `PUT /api/workbenches/${automation.id}`)).toEqual([
+      { key: `PUT /api/workbenches/${automation.id}`, json: { schedule: "0 15 * * 5", schedule_enabled: true } },
+      { key: `PUT /api/workbenches/${automation.id}`, json: { schedule: "0 15 * * 5", schedule_enabled: true } },
+    ]);
+  });
+
+  it("opens the exact newest stored update from the line", async () => {
+    wire({
+      [room(pid)]: () => clone(P7.manual),
+      [`GET /api/projects/${pid}/updates`]: () => ({ updates: [clone(P7.draft)] }),
+      [`GET /api/updates/${P7.draft.id}`]: () => ({ update: clone(P7.draft) }),
+    });
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const line = await screen.findByTestId("room-update-line");
+    fireEvent.click(within(line).getByTestId("room-update-open"));
+    await screen.findByTestId("update-editor");
+    expect(screen.getByLabelText("Update body")).toHaveValue(P7.draft.body_md);
+    expect(calls.some((call) => call.key === `GET /api/projects/${pid}/updates`)).toBe(true);
   });
 });

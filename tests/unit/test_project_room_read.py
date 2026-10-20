@@ -269,7 +269,7 @@ class TestAbsentMarkers:
         _db, svc = rig
         proj = _create(svc)
         result = svc.room(OWNER, proj["id"])
-        assert result["updates"] == {"state": "ok", "count": 0, "counts": {}, "recent": [], "latest_published": None}
+        assert result["updates"] == {"state": "ok", "count": 0, "counts": {}, "recent": [], "latest_published": None, "automation": None}
 
     def test_steward_reads_what_exists(self, rig) -> None:
         """PHILO-9-01 (F6): the steward section is live; no run yet is said as such."""

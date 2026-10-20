@@ -53,6 +53,7 @@ const updateDraftKey = (updateId: string) => `room/update-body/${updateId}`;
 export function useUpdateController(
   projectId: string,
   onRoomRefresh: () => void,
+  automationId?: string,
 ) {
   // ── Posture (off = normal Now, list = draft list, editor = single draft) ──
   const [posture, setPosture] = useState<UpdatePosture>("off");
@@ -207,6 +208,28 @@ export function useUpdateController(
     if (projectId) keepPlace(updatePlaceKey(projectId), `editor:${update.id}`);
   }, [projectId]);
 
+  // The Room's Update line is a direct doorway to the newest update. Keep
+  // the list posture for an empty project, but open the newest record when
+  // one exists so the verb does not add a second press.
+  const openLatest = useCallback(async () => {
+    if (!projectId) return;
+    setLoading(true);
+    setError("");
+    try {
+      const list = await updateApi.fetchUpdates(projectId);
+      setUpdates(list);
+      if (list[0]) openUpdate(list[0]);
+      else {
+        setPosture("list");
+        keepPlace(updatePlaceKey(projectId), "list");
+      }
+    } catch (reason) {
+      fail("UPDATES DID NOT LOAD", reason);
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, openUpdate]);
+
   // ── Back to list from editor ──
   const backToList = useCallback(async () => {
     setCurrent(null);
@@ -256,6 +279,9 @@ export function useUpdateController(
         elapsedSeconds: Math.max(0, Math.round((Date.now() - startedAt) / 1000)),
         generator,
       });
+      // P7: the first Write also creates the project's update automation;
+      // refresh the Room so its When/With line appears in the same gesture.
+      onRoomRefresh();
       // Refresh list in background
       updateApi.fetchUpdates(projectId).then(setUpdates).catch(() => {});
       return update;
@@ -276,7 +302,7 @@ export function useUpdateController(
     } finally {
       setDraftBusy(false);
     }
-  }, [current, posture, projectId]);
+  }, [current, onRoomRefresh, posture, projectId]);
 
   // ── Betterment P1: the engine pass (Write update) ──
   // The records draft opens at once; the engine improves it on the hub, off
@@ -325,7 +351,8 @@ export function useUpdateController(
     const startedAt = Date.now();
     let jobId: string;
     try {
-      jobId = (await updateApi.startEnginePass(updateId)).id;
+      const projectAutomationId = automationId || (projectId ? `project-update-${projectId}` : undefined);
+      jobId = (await updateApi.startEnginePass(updateId, projectAutomationId)).id;
     } catch {
       if (token === passToken.current) {
         setEnginePass({ phase: "failure", reason: "did_not_answer", seconds: seconds(startedAt) });
@@ -363,7 +390,7 @@ export function useUpdateController(
       }
     };
     pollTimer.current = window.setTimeout(() => void poll(), ENGINE_POLL_MS);
-  }, [takeEngineDraft]);
+  }, [automationId, projectId, takeEngineDraft]);
 
   /** Write update: the records draft at once, then (with an engine) the pass. */
   const write = useCallback(async (withEngine: boolean) => {
@@ -599,6 +626,7 @@ export function useUpdateController(
     // Posture
     posture,
     enterUpdates,
+    openLatest,
     exitUpdates,
     stepAside,
     openUpdate,
