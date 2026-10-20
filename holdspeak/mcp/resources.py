@@ -63,10 +63,12 @@ _PRIMITIVE_SCHEMA = [
 # Curated subset of web/src/desk/verbRegistry.ts; it does not promise full parity.
 # ``server`` means the external MCP verb dispatcher can invoke it; all other
 # registered Desk verbs remain UI-owned presentation actions.
+# Retired legacy ids stay documented here rather than being published as live
+# MCP resource claims.  ``desk.new-knowledge`` has no active Web registry row.
+_PARKED_VERBS = ("desk.new-knowledge",)
 _VERBS = [
     ("desk.new-note", "New Note", "floor", "⌘N"),
     ("desk.new-decision", "New Decision", "floor", "⌘⇧N"),
-    ("desk.new-knowledge", "New Knowledge", "floor", None),
     ("desk.new-workbench", "New Automation", "floor", None),
     ("desk.overview", "Overview", "floor", "⌃↑"),
     ("desk.reset-layout", "Reset layout", "floor", None),

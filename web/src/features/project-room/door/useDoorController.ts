@@ -14,7 +14,7 @@ import {
 import { discoverGitHub, discoverJira, discoverConfluence } from "./api";
 import * as doorApi from "./api";
 import { registerProjectRepository } from "../../../desk/projectRepository";
-import type { CountToken } from "./api";
+import type { CountToken, PreviewResponse } from "./api";
 
 /* ── Default watch toggles per provider ── */
 
@@ -52,7 +52,7 @@ export interface SourceRow {
   connected: boolean;
   connectionState: string;
   scope: string | null;
-  scopeRaw: string | { connection_ref: string; projects: string[] } | null;
+  scopeRaw: string | { connection_ref: string; projects: string[] } | { connection_ref: string; space_key: string; space_id: string } | null;
   state: SourceRowState;
   toggles: Record<string, boolean>;
   counts: CountToken[];
@@ -96,7 +96,9 @@ function defaultToggles(provider: string): Record<string, boolean> {
 }
 
 function enabledWatchKeys(provider: string, toggles: Record<string, boolean>): string[] {
-  const defs = provider === "github" ? GITHUB_DEFAULTS : JIRA_DEFAULTS;
+  const defs = provider === "github" ? GITHUB_DEFAULTS
+    : provider === "confluence" ? CONFLUENCE_DEFAULTS
+    : JIRA_DEFAULTS;
   return defs.filter((d) => toggles[d.key]).map((d) => d.key);
 }
 
@@ -154,6 +156,13 @@ function buildRows(tools: ConnectionTool[]): SourceRow[] {
 export interface DoorController {
   outcome: string;
   setOutcome: (v: string) => void;
+  sourcePaste: string;
+  setSourcePaste: (v: string) => void;
+  preview: PreviewResponse | null;
+  previewing: boolean;
+  previewSources: () => void;
+  removeFound: (id: string) => void;
+  selectAllFound: () => void;
   sources: SourceRow[];
   creating: boolean;
   error: string;
@@ -191,6 +200,9 @@ export interface DoorOptions {
 export function useDoorController(options: DoorOptions = {}): DoorController {
   const projectId = options.projectId || null;
   const [outcome, setOutcome] = useState("");
+  const [sourcePaste, setSourcePaste] = useState("");
+  const [preview, setPreview] = useState<PreviewResponse | null>(null);
+  const [previewing, setPreviewing] = useState(false);
   const [tools, setTools] = useState<ConnectionTool[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [sources, setSources] = useState<SourceRow[]>([]);
@@ -281,8 +293,14 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
   const jiraConnectionRef = useCallback((): string => {
     const jiraTool = connectionToolsRef.current.find((t) => t.provider_id === "jira");
     if (!jiraTool?.connections?.length) return "";
-    const connected = jiraTool.connections.find((c) => c.state === "connected");
-    return connected?.connection_ref ?? jiraTool.connections[0]?.connection_ref ?? "";
+    const connected = jiraTool.connections.filter((c) => c.state === "connected");
+    return connected.length === 1 ? connected[0].connection_ref : "";
+  }, []);
+
+  const confluenceConnectionRef = useCallback((): string => {
+    const tool = connectionToolsRef.current.find((t) => t.provider_id === "confluence");
+    const connected = tool?.connections?.filter((c) => c.state === "connected") ?? [];
+    return connected.length === 1 ? connected[0].connection_ref : "";
   }, []);
 
   /* ── Count fetch ── */
@@ -290,7 +308,7 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
   const fetchCount = useCallback(
     async (
       provider: string,
-      scopeRaw: string | { connection_ref: string; projects: string[] },
+      scopeRaw: string | { connection_ref: string; projects: string[] } | { connection_ref: string; space_key: string; space_id: string },
       toggles: Record<string, boolean>,
       adjust: SourceRow["adjust"],
     ) => {
@@ -346,11 +364,18 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
       rawValue: string,
     ) => {
       // Build the proper scopeRaw for the provider
-      let scopeRaw: string | { connection_ref: string; projects: string[] };
+      let scopeRaw: string | { connection_ref: string; projects: string[] } | { connection_ref: string; space_key: string; space_id: string };
       if (provider === "jira") {
         scopeRaw = {
           connection_ref: jiraConnectionRef(),
           projects: [value],
+        };
+      } else if (provider === "confluence") {
+        const connectionRef = confluenceConnectionRef();
+        scopeRaw = {
+          connection_ref: connectionRef,
+          space_key: value,
+          space_id: value,
         };
       } else {
         scopeRaw = rawValue;
@@ -367,7 +392,7 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
       const row = sources.find((r) => r.provider === provider);
       void fetchCount(provider, scopeRaw, row?.toggles ?? defaultToggles(provider), row?.adjust ?? { base: "main" });
     },
-    [sources, updateRow, fetchCount, jiraConnectionRef],
+    [sources, updateRow, fetchCount, jiraConnectionRef, confluenceConnectionRef],
   );
 
   /* ── Toggle watch ── */
@@ -436,7 +461,12 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
           );
         } else if (provider === "confluence") {
           /* HS-174-07: Confluence space discovery. */
-          const resp = await discoverConfluence(query || undefined);
+          const connectionRef = confluenceConnectionRef();
+          if (!connectionRef) {
+            safe(() => updateRow(provider, { pickerLoading: false }));
+            return;
+          }
+          const resp = await discoverConfluence(connectionRef, query || undefined);
           const items: PickerItem[] = resp.items.map((item) => ({
             value: item.key,
             label: item.key,
@@ -454,7 +484,7 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
         safe(() => updateRow(provider, { pickerLoading: false }));
       }
     },
-    [sources, updateRow, jiraConnectionRef], // eslint-disable-line react-hooks/exhaustive-deps
+    [sources, updateRow, jiraConnectionRef, confluenceConnectionRef], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const openPicker = useCallback(
@@ -566,6 +596,32 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
     [readConnections], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
+  const previewSources = useCallback(async () => {
+    if (!sourcePaste.trim()) return;
+    setPreviewing(true);
+    setError("");
+    try {
+      const next = await doorApi.doorPreview(outcome.trim(), sourcePaste.trim());
+      safe(() => setPreview(next));
+    } catch (err) {
+      safe(() => setError(readableError(err)));
+    } finally {
+      safe(() => setPreviewing(false));
+    }
+  }, [outcome, sourcePaste, safe]);
+
+  const removeFound = useCallback((id: string) => {
+    setPreview((prev) => prev
+      ? { ...prev, found: prev.found.map((item) => item.id === id ? { ...item, selected: false } : item) }
+      : prev);
+  }, []);
+
+  const selectAllFound = useCallback(() => {
+    setPreview((prev) => prev
+      ? { ...prev, found: prev.found.map((item) => ({ ...item, selected: true })) }
+      : prev);
+  }, []);
+
   /* ── Create ── */
 
   const create = useCallback(async () => {
@@ -580,7 +636,25 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
           scope: r.scopeRaw!,
           watches: enabledWatchKeys(r.provider, r.toggles),
           adjust: r.adjust as Record<string, unknown>,
+          ...(projectId ? {} : { test_state: r.state === "live" ? "passed" : "not_checked" as const }),
         }));
+      for (const source of preview?.sources ?? []) {
+        const canCreate = source.state === "checked"
+          && (source.provider === "github" || Boolean(source.connectionRef));
+        if (!canCreate) continue;
+        const scope = source.provider === "jira"
+          ? { connection_ref: source.connectionRef || "", projects: [source.scope] }
+          : source.provider === "confluence"
+            ? { connection_ref: source.connectionRef || "", space_key: source.scope, space_id: source.spaceId || source.scope }
+            : source.scope;
+        if (payloads.some((row) => row.provider === source.provider && JSON.stringify(row.scope) === JSON.stringify(scope))) continue;
+        payloads.push({
+          provider: source.provider,
+          scope,
+          watches: enabledWatchKeys(source.provider, defaultToggles(source.provider)),
+          test_state: source.state === "checked" ? "passed" : "not_checked",
+        });
+      }
       if (projectId) {
         // PHILO-17 U10: the rows join this project; the rows clear for the next one.
         await doorApi.doorAddSources(projectId, payloads);
@@ -594,7 +668,16 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
         });
         return;
       }
-      const resp = await doorApi.doorCreate(outcome.trim(), payloads);
+      const chosenFound = preview?.found.filter((item) => item.selected) ?? [];
+      const found = chosenFound.length
+        ? {
+            meeting_ids: chosenFound.filter((item) => item.kind === "meeting").map((item) => item.id),
+            note_ids: chosenFound.filter((item) => item.kind === "note").map((item) => item.id),
+          }
+        : undefined;
+      const resp = found
+        ? await doorApi.doorCreate(outcome.trim(), payloads, found)
+        : await doorApi.doorCreate(outcome.trim(), payloads);
       // PHILO-15 16 (B38): the GitHub row's repository is the Project's
       // repository (owner-only, one receipt; the first hand clones it). A
       // register that fails leaves the drawer's Register verb, never a dead
@@ -615,7 +698,7 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
         setError(readableError(err));
       });
     }
-  }, [outcome, sources, projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [outcome, sources, projectId, preview]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Cancel ── */
 
@@ -630,6 +713,13 @@ export function useDoorController(options: DoorOptions = {}): DoorController {
   return {
     outcome,
     setOutcome,
+    sourcePaste,
+    setSourcePaste,
+    preview,
+    previewing,
+    previewSources: () => void previewSources(),
+    removeFound,
+    selectAllFound,
     sources,
     loaded,
     creating,

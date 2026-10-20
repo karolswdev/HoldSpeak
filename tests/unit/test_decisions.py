@@ -790,7 +790,7 @@ def test_the_catalogue_is_explicit_descriptors() -> None:
         # Memory slice 4: the observations read; slice 5: the page read.
         "memory.observations.read", "memory.page.read",
         # PHILO-9-01: the Room on the contract, one row per operation.
-        "project.list", "project.get", "project.get_room", "project.create", "project.door.create",
+        "project.list", "project.get", "project.get_room", "project.create", "project.door.preview", "project.door.create",
         "project.update", "project.archive", "project.restore", "project.link", "project.unlink",
         "project.open_review", "project.get_delta", "project.decide_proposal", "project.accept_review",
         "project.list_updates", "project.draft_update", "project.update_draft", "project.publish_update",

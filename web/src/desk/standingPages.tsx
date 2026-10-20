@@ -33,6 +33,7 @@ const TITLES: Record<string, string> = {
   "risks-and-disputes": "Risks and disputes",
   "what-changed-this-week": "What changed this week",
   "what-i-owe": "What I owe",
+  "what-they-owe-me": "What others owe me",
 };
 
 export function pageTitle(page: Pick<StandingPageWire, "slug" | "question">): string {
@@ -136,6 +137,51 @@ export function useStandingPagesRead(scope: "desk" | "project", projectId?: stri
       }))
       .filter((page) => page.sentences.length),
   };
+}
+
+/* Betterment Q11 (Memory where he looks): a person's two pages, What I owe
+ * her and What she owes me. They are the sentences of the desk's "What do I
+ * owe?" and "What do others owe me?" that name the person (her full name or
+ * her first name, as a word), so her window reads them with no Ask and no
+ * People id is ever written beside a page. */
+function names(displayName: string): string[] {
+  const full = displayName.trim();
+  const first = full.split(/\s+/, 1)[0] ?? "";
+  return [...new Set([full, first].filter((n) => n.length >= 2))];
+}
+
+function mentions(text: string, who: string[]): boolean {
+  return who.some((name) => new RegExp(`(^|[^\\p{L}])${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|[^\\p{L}])`, "iu").test(text));
+}
+
+export function personPages(pages: StandingPageWire[], displayName: string): StandingPageWire[] {
+  const who = names(displayName);
+  const first = who[who.length - 1] ?? displayName;
+  if (!who.length) return [];
+  const pick = (slug: string, question: string): StandingPageWire[] => {
+    const page = pages.find((p) => p.slug === slug);
+    const sentences = (page?.sentences ?? []).filter((s) => mentions(s.text, who));
+    return page && sentences.length ? [{ ...page, slug: `person:${slug}`, question, sentences }] : [];
+  };
+  return [...pick("what-i-owe", `What I owe ${first}`), ...pick("what-they-owe-me", `What ${first} owes me`)];
+}
+
+/** Betterment Q11: the Room leads with What is open, then What we decided. */
+const ROOM_FIRST = ["what-is-open", "what-we-decided"];
+export function roomPageOrder(pages: StandingPageWire[]): StandingPageWire[] {
+  const rank = (slug: string) => {
+    const at = ROOM_FIRST.indexOf(slug);
+    return at < 0 ? ROOM_FIRST.length : at;
+  };
+  return [...pages].sort((a, b) => rank(a.slug) - rank(b.slug));
+}
+
+/** The person's two pages, first in her window (absent with none). */
+export function PersonPages({ displayName, onOpenRef = openRef }: { displayName: string; onOpenRef?: (ref: string) => void }) {
+  const pages = useStandingPages("desk");
+  const mine = personPages(pages, displayName);
+  if (!mine.length) return null;
+  return <div data-testid="person-pages"><StandingPagesSection pages={mine} presentation="questions" onOpenRef={onOpenRef} /></div>;
 }
 
 export function StandingPagesSection({

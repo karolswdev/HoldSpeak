@@ -960,7 +960,8 @@ class _Case:
         fail("drawn", page.evaluate(DRAWN_JS, [sel or "[data-testid=desk-screen]", list(COVERS)]))
         if self.wid:
             fail("fit", page.evaluate(FIT_JS, self.wid))
-        faults = _rendered_text_faults(page, scope, on_glass=True)
+        faults = _rendered_text_faults(page, scope, on_glass=True,
+                                       horizontal_scroll=(".needs-chip-row",))
         if not faults["scopes"]:
             fail("readable", f"no visible {scope}: nothing was read")
         fail("readable", ([f"clipped '{c['text']}' in {c['in']}" for c in faults["clipped"]]
@@ -1065,11 +1066,19 @@ def _baseline(browser: Any, base: str, width: int) -> tuple[set[str], set[str]]:
     are the `desk` case's)."""
     if width not in _BASELINES:
         clear_hub_windows_http(base, TOKEN)
-        ctx, page, _, _ = _page(browser, width, base)
+        ctx, page, errors, _ = _page(browser, width, base)
         try:
             page.goto(f"{base}/?token={TOKEN}", wait_until="load")
             _normal_chair(page)
-            page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
+            try:
+                page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
+            except Exception as exc:
+                shot = evidence_dir("desk-sweep") / f"baseline-unsettled-{width}.png"
+                page.screenshot(path=str(shot))
+                raise AssertionError(
+                    f"bare desk {width} did not settle: {page.evaluate(UNSETTLED_JS, None)}; "
+                    f"errors={errors}; shot={shot}"
+                ) from exc
             _BASELINES[width] = _Case(page, base, "", [], []).measure()
         finally:
             ctx.close()
@@ -1420,7 +1429,10 @@ def test_every_html_route_loads_clean(desk: dict[str, Any], pw_browser: Any, rou
             if wid and window_app_on_hub(wid):
                 sel = f'[id="{wid}"]'
                 page.locator(sel).wait_for(timeout=T)
-                page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
+                try:
+                    page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
+                except Exception as exc:
+                    raise AssertionError(f"{route} did not settle: {page.evaluate(UNSETTLED_JS, wid)}") from exc
             else:
                 sel = "[data-testid=desk-screen]"
                 page.wait_for_function(SETTLED_JS, arg=None, timeout=T)

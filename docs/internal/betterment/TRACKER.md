@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, AG13 verified; running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-19, Capture C10 verified; running-desk identity is in `pm/STATUS.md`.
 
-**Total: 80 of 117 slices merged**, with Send S7 still partial.
+**Total: 86 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -16,14 +16,14 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Automations | `workbench/` | 11 of 11 |
 | Engines | `engines/` | 8 of 8 |
 | The desk's tools (MCP) | `mcp/` | 7 of 7 |
-| Ask | `asking/` | 11 of 13 |
-| Projects | `projects/` | 5 of 11 |
+| Ask | `asking/` | 13 of 13 |
+| Projects | `projects/` | 7 of 11 |
 | Agents | `agents/` | 13 of 16 |
 | Daily and Needs you | `daily/` | 11 of 11 |
 | Setup and Settings | `setup/` | 3 of 10 |
 | Desk shell | `shell/` | 2 of 10 |
 | Send | `send/` | 1 of 8 |
-| Capture | `capture/` | 8 of 12 |
+| Capture | `capture/` | 10 of 12 |
 
 ## Automations (`workbench/RECIPE.md`): 11 of 11
 
@@ -66,7 +66,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | M5 | Tools for HTTP engines that accept tool calls | Done · #1330 |  |
 | M6 | A GitHub pull-request read | Done · #1331 |  |
 
-## Ask (`asking/RECIPE.md`): 11 of 13
+## Ask (`asking/RECIPE.md`): 13 of 13
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -81,10 +81,10 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Q8 | One note | Done · #1351 | Phone footer follow-up delivered with #1368. |
 | Q9 | Find the tasks | Done · #1354 | Privacy fix #1362 merged; operations/MCP/Edit/Dismiss follow-up #1365 merged. |
 | Q10 | Knowledge becomes drawers | Done · #1368 | Existing collections, About chips and filing use named drawers; data and tools retained. |
-| Q11 | Memory where he looks | Open |  |
-| Q12 | The Memory app | Open |  |
+| Q11 | Memory where he looks | Done · #1375 | Pages have their own pass budget and engine fallback; distinct person answers retain working sources. |
+| Q12 | The Memory app | Done · #1375 | Go opens desk answers, Why and links; whole-desk Ask and RAW Recall retained. |
 
-## Projects (`projects/RECIPE.md`): 5 of 11
+## Projects (`projects/RECIPE.md`): 7 of 11
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -93,8 +93,8 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | P2 | Leave 1:1s out of updates | Done · #1276 |  |
 | P3 | The Now wing: where it stands in ten seconds | Done · #1350 | Recovered meeting source chips; populated head facts and Now sections observed on an isolated hub at 1440/393. |
 | P4 | Projects and Decisions in Go; withhold dead verbs | Done · #1349 | State/reason in Projects, truthful Not read, scoped Write update in Search. |
-| P5 | Sources in one go | Open |  |
-| P6 | Nudge and Ask, in their homes | Open |  |
+| P5 | Sources in one go | Done · #1377 | Paste keeps exact site/account; Found adds meetings and notes together; existing-project sources use the same Door. |
+| P6 | Nudge and Ask, in their homes | Done · #1377 | Exact destination and stored action feed Send; shared Ask keeps project scope. |
 | P7 | The update is an automation; the steward folds in | Open |  |
 | P8 | The agent writes the update | Open |  |
 | P9 | One decision record | Open |  |
@@ -117,7 +117,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | AG10 | The Result of a turn | Done · #1367 | Recovered local fixes supersede #1364; real hub/fake-agent Result and Terminal walked at 1440/393. |
 | AG11 | Agents that work together (MCP) | Done · #1369 | One owned helper, pinned waits, question-only answer, Secure owner Allow, nested rows. |
 | AG12 | Review by (builder and reviewer) | Open |  |
-| AG13 | A HoldSpeak skill | Done | Packaged skill, native launch discovery and Connect install; offline Codex discovery observed. |
+| AG13 | A HoldSpeak skill | Done · #1374 | Packaged skill, native launch discovery and Connect install; offline Codex discovery observed. |
 | AG14 | Automations that hand work to agents | Open |  |
 | AG15 | Agents he started himself (decision 1) | Open |  |
 
@@ -180,7 +180,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S7 | Automations put their result in a destination | Part | A6 #1322: Put it in can prepare a send to a saved destination. Check the rest of S7 against the recipe. |
 | S8 | "Not checked yet" warns (owner decision 2) | Open |  |
 
-## Capture (`capture/RECIPE.md`): 8 of 12
+## Capture (`capture/RECIPE.md`): 10 of 12
 
 | Slice | What | State | Note |
 |---|---|---|---|
@@ -192,7 +192,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | C6 | Since last time | Done · #1344 |  |
 | C7 | One home for recording | Done · #1363 | Record wing, schedule outcomes, Needs you Record now and orb hold. |
 | C8 | Speak and Capture in plain words | Done · #1363 | Plain receipts and captured speech handed to the saved note path. |
-| C9 | A clean audio callback | Open |  |
-| C10 | Meetings record in their own process (decision 1) | Open |  |
+| C9 | A clean audio callback | Done · #1379 | Callback queue, accepted-byte flush and saved capture failures; hardware walk remains separate. |
+| C10 | Meetings record in their own process (decision 1) | Done · #1382 | Child owns native streams and journal; bounded Stop confirms exit before releasing the floor. Hardware acceptance remains open. |
 | C11 | Voice commands run desk verbs (decision 3) | Open |  |
 | C12 | The glyph tells the truth | Open |  |

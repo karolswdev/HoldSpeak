@@ -141,3 +141,38 @@ def test_unreachable_text_in_a_scroller_is_reported() -> None:
 
 def test_text_below_the_fold_of_a_scroller_stays_exempt() -> None:
     assert _clipped("#scrolls") == [], "ordinary scrolled rows were reported clipped"
+
+
+def test_declared_horizontal_choices_exempt_only_reachable_text() -> None:
+    """D2's one-row phone filters are scrollable; hidden tails still fail."""
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        try:
+            page = browser.new_page(viewport={"width": 393, "height": 852})
+            page.set_content("""<style>
+              body {margin:0;font:13px sans-serif}
+              .box {width:160px;overflow:auto;white-space:nowrap}
+              .track {width:400px}
+              .later {margin-left:300px}
+              .before {position:relative;left:-220px}
+            </style>
+            <div id="scope"><div class="box choices"><div class="track"><span class="later">Reachable choice</span></div></div>
+            <div class="box choices"><div class="track"><span class="before">Unreachable choice</span></div></div>
+            <div class="box"><div class="track"><span class="later">Ordinary overflow</span></div></div></div>""")
+            before = _rendered_text_faults(page, "#scope", on_glass=True)
+            assert "Reachable choice" in [row["text"] for row in before["clipped"]]
+            after = _rendered_text_faults(page, "#scope", on_glass=True,
+                                          horizontal_scroll=(".choices",))
+            clipped = [row["text"] for row in after["clipped"]]
+            assert "Reachable choice" not in clipped
+            assert "Unreachable choice" in clipped
+            assert "Ordinary overflow" in clipped
+            strip = page.locator(".choices").first
+            strip.evaluate("el => { el.scrollLeft = el.scrollWidth; }")
+            assert strip.evaluate("el => el.scrollLeft > 0")
+            word = strip.get_by_text("Reachable choice", exact=True)
+            assert word.bounding_box()["x"] >= 0
+        finally:
+            browser.close()

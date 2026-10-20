@@ -52,7 +52,7 @@ pytestmark = [pytest.mark.e2e, pytest.mark.timeout(300, method="thread")]
 REAL_ATLAS = REPO / "docs/internal/philo/graph/atlas.json"
 ATLAS_FENCE = {
     "case.j9.shade_receipt_open.rhythm_face": (
-        "pass", "", "the exact produced sweep receipt's Open in Activity reaches Rhythm",
+        "pass", "", "the exact produced sweep receipt's Open in Activity reaches Settings at Rhythm",
     ),
     "case.j1.first_words_continue_later.idle": (
         "pass", "", "Continue later is the trigger, pressed by nothing in setup; "
@@ -165,15 +165,14 @@ def test_the_rig_drives_j9_through_the_real_hub(viewport, tmp_path):
         engine="none",
     )
 
-    # the verdict comes from the predicate, and the predicate is the promised
-    # result: a window titled Rhythm that was NOT open before the trigger.
+    # The receipt must expose the actual Rhythm module in its Settings home,
+    # including its Quiet from control; a window title alone is insufficient.
     assert record["verdict"] == "pass", json.dumps(record["notes"], indent=2)
     assert record["terminal_outcome"]["predicate_satisfied"] is True
     assert record["terminal_outcome"]["within_bound"] is True
-    titles_before = [w["title"] for w in record["before"]["windows"]]
     titles_after = [w["title"] for w in record["after"]["windows"]]
-    assert "Rhythm" not in titles_before
-    assert "Rhythm" in titles_after
+    assert "Settings" in titles_after
+    assert "Quiet from" in record["after"]["text"]
     _assert_receipt_door(record)
 
     # the trigger was the receipt's own Open, driven at its real entry point
@@ -190,12 +189,13 @@ def _assert_receipt_door(record):
     receipt_id = record["variables"]["sweep_projection_id"]
     assert receipt_id.startswith("pipeline:"), receipt_id
     assert record["trigger"]["selector"] == f"[id='activity-receipt-{receipt_id}'] button"
-    # Activity remains open behind the result, so the owner can close Rhythm
+    # Activity remains open behind the result, so the owner can close Settings
     # and return to the exact receipt list he used.
     before = [window["title"] for window in record["before"]["windows"]]
     after = [window["title"] for window in record["after"]["windows"]]
     assert "Activity" in before and "Activity" in after, (before, after)
-    assert "Rhythm" not in before and "Rhythm" in after, (before, after)
+    assert "Settings" in after, (before, after)
+    assert record["after"]["observe_at"] == '#surface-settings [data-settings-module="rhythm"]'
 
 
 @pytest.mark.parametrize("viewport", [1440, 393])
@@ -209,7 +209,7 @@ def test_the_rig_returns_from_rhythm_to_the_same_activity_receipt(viewport, tmp_
     assert record["terminal_outcome"]["within_bound"] is True
     _assert_observation_shape(record, viewport, tmp_path, case_id=RETURN_CASE)
     assert record["trigger"]["done"] is True
-    assert record["trigger"]["selector"] == "#surface-cadence .desk-gadget-close"
+    assert record["trigger"]["selector"] == "#surface-settings .desk-gadget-close"
     assert record["trigger"]["adapter"] == ("ui-touch" if viewport == 393 else "ui-pointer")
 
     receipt_id = record["variables"]["sweep_projection_id"]
@@ -221,9 +221,9 @@ def test_the_rig_returns_from_rhythm_to_the_same_activity_receipt(viewport, tmp_
               f"[id='activity-receipt-{receipt_id}'] button" and step.get("action") == "click"]
     assert len(opened) == 1 and opened[0]["done"] is True
     assert opened[0]["adapter"] == record["trigger"]["adapter"]
-    assert "Rhythm" in [window["title"] for window in record["before"]["windows"]]
+    assert "Settings" in [window["title"] for window in record["before"]["windows"]]
     after = record["after"]
-    assert "Rhythm" not in [window["title"] for window in after["windows"]]
+    assert "Settings" not in [window["title"] for window in after["windows"]]
     assert after["observe_at"] == (
         f"#surface-activity.is-front [id='activity-receipt-{receipt_id}'] button"
     )

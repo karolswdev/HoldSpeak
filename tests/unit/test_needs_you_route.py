@@ -19,6 +19,7 @@ from scripts.philo13_needs_you_fixture import (
     A3_ID,
     A4_ID,
     FAILED_MEETING_ID,
+    M1_TASK,
     _route_client,
     seed_week,
 )
@@ -220,7 +221,14 @@ def test_cached_needs_you_route_rebuilds_after_real_action_item_status_mutation(
             before = before_response.json()
             # One rule, one number: the route counts the six members.
             assert before["count"] == len(seeded["expectedRefs"]) == 6
-            assert len(before["roomItems"]) == 2
+            # P5 also offers transcript-matching meetings. They remain
+            # suggestions from the muted project, while the two canonical
+            # obligations and the desk's six counted members stay unchanged.
+            canonical = [row for row in before["roomItems"] if row.get("kind") != "meeting_match"]
+            assert {row["ref"] for row in canonical} == {A2_TASK, M1_TASK}
+            matches = [row for row in before["roomItems"] if row.get("kind") == "meeting_match"]
+            assert all(row["source"] == "meeting" and row["muted"] is True
+                       and row["projectId"] == seeded["ids"]["mutedProject"] for row in matches)
             assert not any(row["ref"] == A1_TASK and row["source"] == "item" for row in before["items"])
             assert oracle_refs(client, before) == seeded["expectedRefs"]
             assert sorted(m["ref"] for m in before["members"]) == sorted(seeded["expectedRefs"])
