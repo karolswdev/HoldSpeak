@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { ZoneRenameRow } from "../components/ZoneRenameRow";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
 import { KIND_GLYPH } from "../tools";
@@ -97,6 +98,10 @@ export function GoHome() {
 const SECTION_LABEL: Record<string, string> = { "go-work-sep": "Work" };
 
 function GoRow({ entry }: { entry: Extract<WorkMenuEntry, { type: "item" }> }) {
+  const renamingDrawer = useDesk((state) => state.renamingZoneId);
+  if (renamingDrawer && entry.id === `zone:${renamingDrawer}`) {
+    return <ZoneRenameRow zoneId={renamingDrawer} title={typeof entry.label === "string" ? entry.label : "New drawer"} placement="inrow" />;
+  }
   return (
     <Button
       variant="chrome"

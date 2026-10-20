@@ -112,7 +112,16 @@ describe.each([[1440, false], [393, true]] as const)("the HoldSpeak menu at %i",
   it("Desk has the seven settled New kinds in order", () => {
     phone(isPhone);
     render(<DeskMenuBar />);
-    if (isPhone) return;
+    if (isPhone) {
+      fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
+      const go = screen.getByRole("menu", { name: "Go menu" });
+      fireEvent.click(within(go).getByRole("menuitem", { name: /^New\W*$/ }));
+      const menu = screen.getAllByRole("menu").at(-1)!;
+      expect(labels(menu).filter((label) => label !== "New")).toEqual([
+        "Note", "Meeting", "Decision", "Project", "Person", "Automation", "Drawer",
+      ]);
+      return;
+    }
     fireEvent.click(screen.getByRole("button", { name: /^Desk$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Desk menu" });
     expect(labels(menu).filter((label) => label !== "Hide the menus")).toEqual([

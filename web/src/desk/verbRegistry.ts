@@ -305,7 +305,7 @@ export const VERBS: Verb[] = [
     label: () => useSettleState.getState().settled ? "Back to Desk" : "Hide the menus",
     scope: "floor",
     group: "view",
-    key: "⌘⇧F",
+    palette: false,
     glyph: "◌",
     keywords: ["focus", "quiet", "zen", "chrome", "settle"],
     ghost: never,
