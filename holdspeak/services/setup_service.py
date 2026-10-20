@@ -3,6 +3,7 @@ from __future__ import annotations
 from holdspeak.services.observer import NullObserver, PipelineObserver, observe_service
 
 import os
+import hashlib
 import shutil
 import uuid
 from pathlib import Path
@@ -380,9 +381,10 @@ class SetupService:
             if not endpoint or not model:
                 raise ValidationError("The network engine has no model address.")
             self._require_engine_assignment()
+            key = hashlib.sha256(f"{endpoint}\n{model}".encode()).hexdigest()[:20]
             result = self._model_library.define_endpoint(principal, {
-                "request_id": f"setup-lan-{value.split(':', 1)[1]}",
-                "profile_id": f"lan-{value.split(':', 1)[1]}"[:96],
+                "request_id": f"setup-lan-{key}",
+                "profile_id": f"lan-{key}",
                 "expected_profile_revision": 0,
                 "label": model,
                 "model": model,

@@ -63,7 +63,6 @@ import { TtsSettingsBlock } from "./settingsTts";
 import { WallpaperModule } from "./settingsWallpaper";
 import { RhythmNoticeRows, RhythmSweepFold } from "./settingsRhythm";
 import { OwnerNameGroup, PeopleAccessModule } from "./settingsPeople";
-import { SetupCore } from "./SetupCore";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 import { Destinations } from "./connections/Destinations";
@@ -254,7 +253,6 @@ const SETTINGS_WINGS = [
   { id: "settings", label: "Settings" },
   { id: "models", label: "Engines" },
   { id: "integrations", label: "Accounts" },
-  { id: "setup", label: "Setup" },
 ];
 
 export function settingsScope(scope?: string): { module: string | null; focus?: string } {
@@ -265,7 +263,7 @@ export function settingsScope(scope?: string): { module: string | null; focus?: 
   }
   // The retired Guide deep link lands in the one Setup window. It is not a
   // Settings wing, so new Settings navigation cannot create a second home.
-  if (head === "guide") return { module: "setup", focus: tail.length ? tail.join("::") : undefined };
+  if (head === "guide" || head === "setup") return { module: "setup", focus: tail.length ? tail.join("::") : undefined };
   const module = MODULE_ALIASES[head] ?? (SETTINGS_WINGS.some((entry) => entry.id === head) || PREF_MODULES.some((entry) => entry.id === head) ? head : null);
   return { module, focus: tail.length ? tail.join("::") : undefined };
 }
@@ -1296,7 +1294,13 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const [navigation, setNavigation] = useState(() => settingsScope(scope));
   const entry = useDesk((desk) => desk.windowsById["surface-settings"]);
   useEffect(() => {
-    setNavigation(settingsScope(scope));
+    const next = settingsScope(scope);
+    if (next.module === "setup") {
+      openSurfaceOr("configure-setup", "/");
+      setNavigation({ module: null });
+    } else {
+      setNavigation(next);
+    }
   }, [scope, entry]);
   const moduleId = navigation.module === "settings" ? null : navigation.module;
   const contentRef = useRef<HTMLDivElement>(null);
@@ -2583,9 +2587,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        {moduleId === "setup" ? (
-            <SetupCore />
-        ) : module ? (
+        {module ? (
           <div className="prefs-module" data-settings-module={module.id} data-settings-material={insetModule ? "inset" : undefined}>
             {!insetModule ? <h2 className="gadget-pane-title">{module.label}</h2> : (
               <header className="prefs-module-head">
@@ -2618,7 +2620,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       {moduleId === "models" ? null : (
         <PrefStatusBar
           onBack={
-            module || moduleId === "setup"
+            module
               ? backToSettings
               : undefined
           }

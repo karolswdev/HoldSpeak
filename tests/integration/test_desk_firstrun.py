@@ -309,12 +309,22 @@ def test_setup_lan_use_saves_the_real_default_and_never_assigns_speech(
     try:
         before = _ok(base, "GET", "/api/inference/assignments")
         speech_before = next(row for row in before["rows"] if row["id"] == "speech_recognition")
+        from urllib.parse import urlsplit
+        from holdspeak.services.lan_engine_discovery import _row
+
+        endpoint = urlsplit(tools_engine)
+        discovered = _row(endpoint.hostname, endpoint.port, TOOLS_MODEL)
         answer = _ok(base, "POST", "/api/setup/use", {
-            "id": "lan:setup-proof",
-            "payload": {"base_url": tools_engine, "model": TOOLS_MODEL},
+            # Exactly the opaque production discovery id, including its
+            # punctuation, as the Setup consumer passes it back.
+            "id": f"lan:{discovered['id']}",
+            "payload": {"base_url": discovered["baseUrl"], "model": discovered["name"]},
         })
         assert answer["result"]["state"] == "ready", answer
         provider = answer["result"]["library"]["provider"]
+        if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+            path = FIXTURES / "setup-st3-st5" / "lan-use.json"
+            path.write_text(json.dumps(answer, indent=2, sort_keys=True) + "\n")
         after = _ok(base, "GET", "/api/inference/assignments")
         global_row = next(row for row in after["rows"] if row["id"] == "global")
         assert global_row["status"] == "assigned", global_row
