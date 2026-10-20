@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (native agent automations)
+**Last updated:** 2026-10-20 (native agent automations)
 
 ## Current phase
 
@@ -24,7 +24,7 @@ the real private-hub queue/Done/Today/readback loop and ordinary Do → With →
 Review browser flows at 1440/393. The native leaf is a private fixture process;
 live Claude/Codex provider work is not claimed. All 32 web consumers, type
 check and build pass. The chosen native agent shows its human name.
-Required quick: AG14_QUICK_PENDING.
+Required quick: 4,078 web and 4,273 Python checks passed (1 skipped); 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.
 The first required run passed all 4,078 web checks, 4,264 other affected
 checks, 110 desk sweep, 27 canon and 1,116 guards. Its eight failures were
 the canonical schema snapshot and seven recorded response shapes. Root
