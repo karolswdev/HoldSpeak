@@ -460,7 +460,10 @@ function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   if (source === "decision" && item.openRef) {
     if (String(item.status || "").toLowerCase() === "proposed") {
       return { id, kind: "decision", name: title, fact: factProject, lamp,
-        group: "rest", verbs: { kind: "decision-confirm", decisionId: id }, openRef: String(item.openRef) };
+        group: "rest", verbs: {
+          kind: "decision-confirm",
+          decisionId: id.replace(/^decision:/, ""),
+        }, openRef: String(item.openRef) };
     }
     return { id, kind: "decision", name: title, fact: factProject, lamp, group: "rest",
       verbs: { kind: "review", ref: String(item.openRef), label: "Decide" }, openRef: String(item.openRef) };

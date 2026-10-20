@@ -231,6 +231,7 @@ def decision_items(decisions: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
             "source": DECISION_SOURCE,
             "verbHref": None,
             "openRef": ref,
+            "status": str(decision.get("status") or ""),
             "severity": "warning",
         })
     return rows

@@ -226,9 +226,13 @@ export const VERBS: Verb[] = [
     run: () => {
       // A New Decision pressed while a Project window is in front carries
       // that Project as the pre-filled About chip for the canonical producer.
-      const scope = useDesk.getState().windowsById["surface-project-memory"]?.scope;
+      const desk = useDesk.getState();
+      const scope =
+        frontWindowId() === "surface-project-memory"
+          ? desk.windowsById["surface-project-memory"]?.scope
+          : undefined;
       const projectId = scope?.startsWith("project:") ? scope.slice("project:".length) : "";
-      const project = useDesk.getState().projects.find((item) => item.id === projectId);
+      const project = desk.projects.find((item) => item.id === projectId);
       void useDesk.getState().createPrimitive("decision", projectId ? {
         project_id: projectId,
         project_name: project?.name || "Project",

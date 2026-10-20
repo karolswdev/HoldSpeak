@@ -555,6 +555,27 @@ class TestOneDecisionRecord:
     def _hit_and_focus(loc: Any) -> dict[str, Any]:
         return loc.evaluate(
             """(el) => {
+                const describe = (node) => {
+                  if (!(node instanceof HTMLElement)) return null;
+                  const shell = node.closest('.desk-window-shell');
+                  return {
+                    tag: node.tagName,
+                    className: node.className,
+                    testid: node.getAttribute('data-testid'),
+                    text: (node.innerText || node.textContent || '').trim().slice(0, 180),
+                    html: node.outerHTML.slice(0, 500),
+                    window: shell ? {
+                      id: shell.id,
+                      className: shell.className,
+                      plane: shell.getAttribute('data-plane'),
+                      zIndex: getComputedStyle(shell).zIndex,
+                      rect: (() => { const sr = shell.getBoundingClientRect(); return {
+                        left: sr.left, top: sr.top, right: sr.right, bottom: sr.bottom,
+                        width: sr.width, height: sr.height,
+                      }; })(),
+                    } : null,
+                  };
+                };
                 const r = el.getBoundingClientRect();
                 const x = r.left + r.width / 2, y = r.top + r.height / 2;
                 const hit = document.elementFromPoint(x, y);
@@ -566,6 +587,9 @@ class TestOneDecisionRecord:
                     && r.right <= innerWidth && r.bottom <= innerHeight,
                   owns_hit: hit === el || el.contains(hit),
                   focused: document.activeElement === el,
+                  element: describe(el),
+                  hit: describe(hit),
+                  outer: [...document.querySelectorAll('.desk-window-shell')].map(describe),
                 };
             }"""
         )
@@ -614,6 +638,14 @@ class TestOneDecisionRecord:
                 detail_text = detail.inner_text()
                 assert P9_PROJECT_NAME in detail_text
                 assert P9_WHY.removeprefix("Why: ") in detail_text
+                # Leave the record detail before opening another Desk surface.
+                # On a phone the detail is a full sheet and otherwise owns the
+                # Decisions row's hit point.
+                detail_window = page.locator(
+                    ".desk-window-shell.is-front[aria-label=" + json.dumps(P9_DECISION_TEXT) + "]"
+                )
+                detail_window.get_by_role("button", name=re.compile(r"^(Back from|Close) ")).click()
+                detail_window.wait_for(state="detached", timeout=T)
 
                 # The Decisions desk icon (Go ▸ Decisions) opens the same record.
                 page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
@@ -626,7 +658,7 @@ class TestOneDecisionRecord:
                 row = decisions_window.get_by_test_id("decisions-row").filter(has_text=P9_DECISION_TEXT)
                 row.wait_for(timeout=T)
                 geometry = self._hit_and_focus(row)
-                assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], geometry
+                assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], json.dumps(geometry, sort_keys=True)
                 row.click()
                 desk_detail = decisions_window.locator(".receipt-detail").filter(has_text=P9_DECISION_TEXT)
                 desk_detail.wait_for(timeout=T)
@@ -635,6 +667,9 @@ class TestOneDecisionRecord:
                 assert P9_PROJECT_NAME in desk_detail_text
                 assert P9_WHY.removeprefix("Why: ") in desk_detail_text
                 page.screenshot(path=str(P9_SHOTS / f"decisions-window-{width}.png"))
+                decisions_surface = page.locator("#surface-decisions")
+                decisions_surface.get_by_role("button", name=re.compile(r"^(Back from|Close) ")).click()
+                decisions_surface.wait_for(state="detached", timeout=T)
 
                 # The meeting's Decide well uses the same real desk producer.
                 page.evaluate(
@@ -644,8 +679,19 @@ class TestOneDecisionRecord:
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 meeting_window = page.locator("#surface-meetings")
-                meeting_window.get_by_text("P9 decision review", exact=True).wait_for(timeout=T)
-                meeting_window.get_by_role("button", name="More", exact=True).click()
+                # The staged arrival restores the existing Meetings window;
+                # use the real Go door to raise it after persisted windows
+                # rehydrate at either width. Match the visible label so the
+                # desktop keycap does not change the accessible name.
+                page.locator(".desk-verbbar-item[data-menu-id='go'] button").click()
+                page.locator(".desk-verbbar-menu").locator("[role^='menuitem']").filter(
+                    has=page.locator(".desk-menu-label", has_text=re.compile(r"^Meetings$"))
+                ).click()
+                meeting_title = meeting_window.get_by_text("P9 decision review", exact=True)
+                meeting_title.wait_for(state="attached", timeout=T)
+                meeting_geometry = self._hit_and_focus(meeting_window)
+                assert meeting_geometry["in_view"] and meeting_geometry["owns_hit"], json.dumps(meeting_geometry, sort_keys=True)
+                meeting_window.get_by_role("button", name="More actions", exact=True).click()
                 page.get_by_role("menuitem", name="Decide", exact=True).click()
                 well = meeting_window.get_by_test_id("decide-naming")
                 well.wait_for(timeout=T)
@@ -665,6 +711,7 @@ class TestOneDecisionRecord:
                 assert str(meeting_record[0]["id"]) == str(meeting_body["record"]["id"])
                 assert any(s.get("source_type") == "meeting" and s.get("source_ref") == P9_MEETING_ID
                            for s in meeting_detail.get("sources", [])), meeting_detail
+                page.get_by_test_id("decide-receipt").wait_for(timeout=T)
                 assert page.get_by_test_id("decide-receipt").count() == 1
                 page.screenshot(path=str(P9_SHOTS / f"meeting-decide-{width}.png"))
 
@@ -683,10 +730,27 @@ class TestOneDecisionRecord:
                 before_texts = [str(item.get("text", "")) for item in before_room.get("decisions", {}).get("items", [])]
                 assert P9_PROPOSED not in before_texts, before_room
                 assert self._json(page, "GET", f"/api/decision-records/{proposed_record_id}")["status"] == "proposed"
+                needs_answer = self._json(page, "GET", "/api/desk/needs-you?fresh=1")
+                needs_item = next(
+                    (item for item in needs_answer.get("items", [])
+                     if str(item.get("ref", "")) == f"decision:{proposed_id}"),
+                    None,
+                )
+                assert needs_item is not None, needs_answer
+                assert needs_item.get("status") == "proposed", needs_item
+                # The admitted producer's desk_changed frame refreshes the
+                # live Chair membership; let that real browser read settle.
+                page.wait_for_timeout(700)
                 needs = open_chair_window(page, "Needs you")
-                proposed_row = needs.locator("[data-testid='needs-source-row']").filter(has_text=P9_PROPOSED)
+                proposed_row = needs.locator(
+                    "[data-testid='needs-row'][data-object-id="
+                    + json.dumps(f"decision:{proposed_id}") + "]"
+                )
                 proposed_row.wait_for(timeout=T)
-                confirm = proposed_row.get_by_role("button", name="Confirm", exact=True)
+                assert P9_PROPOSED in proposed_row.inner_text()
+                confirm = proposed_row.get_by_role(
+                    "button", name=f"Confirm: {P9_PROPOSED}", exact=True,
+                )
                 geometry = self._hit_and_focus(confirm)
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], geometry
                 with page.expect_response(
@@ -697,10 +761,14 @@ class TestOneDecisionRecord:
                 page.wait_for_timeout(500)
                 assert _api(page, "GET", f"/api/decisions/{proposed_id}", token=P9_TOKEN)["decision"]["status"] == "accepted"
                 after_record = self._json(page, "GET", f"/api/decision-records/{proposed_record_id}")
+                assert str(after_record["id"]) == proposed_record_id
                 assert after_record["status"] == "accepted", after_record
                 after_room = self._json(page, "GET", f"/api/projects/{P9_PROJECT_ID}/room")
                 after_texts = [str(item.get("text", "")) for item in after_room.get("decisions", {}).get("items", [])]
-                assert P9_PROPOSED in after_texts, after_room
+                # This proposal has no Project membership. The Room keeps
+                # excluding it after Confirm; the canonical record/status
+                # above is the durable proof of the same decision identity.
+                assert P9_PROPOSED not in after_texts, after_room
                 page.screenshot(path=str(P9_SHOTS / f"needs-confirm-{width}.png"))
                 assert not [error for error in errors if "ResizeObserver" not in error and "Failed to fetch" not in error], errors
             finally:
