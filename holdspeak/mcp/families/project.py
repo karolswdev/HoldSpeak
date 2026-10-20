@@ -322,6 +322,10 @@ TOOLS: list[dict[str, Any]] = [
             "properties": {
                 "update_id": {"type": "string", "description": "Update identifier."},
                 "body_md": {"type": "string", "description": "New Markdown body."},
+                "source_refs": {"type": "array", "items": {"type": "string"},
+                                "description": "Canonical refs the agent read for this update."},
+                "generator": {"type": "string", "description": "Agent generator label for an automation result."},
+                "engine": {"type": "string", "description": "Engine name that produced the plain text."},
                 "command_id": {"type": "string", "description": "Idempotency key."},
             },
             "required": ["update_id"],

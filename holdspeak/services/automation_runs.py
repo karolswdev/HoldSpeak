@@ -39,6 +39,9 @@ HTTP_ITEM_SECONDS = 60.0
 INBOX_DIRECTORY_ID = "hs-seed-inbox"
 OUTPUT_TARGETS = ("inbox", "needs_you", "today")
 DESTINATION_PREFIX = "destination:"
+# A project update is a first-class automation result.  It stays in the
+# project_updates ledger; it is not copied to an Inbox note.
+PROJECT_UPDATES_PREFIX = "project_updates:"
 #: A plain prompt for an automation that has an instruction and no agent.
 PLAIN_SYSTEM_PROMPT = (
     "You do one job for the owner. Use only the sources you are given. "
@@ -102,6 +105,11 @@ def clean_output_target(db: Any, value: Any) -> str:
         if destination_id and db.channel_destinations.get(destination_id) is not None:
             return DESTINATION_PREFIX + destination_id
         raise ValidationError(f"Unknown destination: {destination_id or '(none)'}")
+    if target.startswith(PROJECT_UPDATES_PREFIX):
+        project_id = target[len(PROJECT_UPDATES_PREFIX):].strip()
+        if project_id and db.projects.get_project(project_id) is not None:
+            return PROJECT_UPDATES_PREFIX + project_id
+        raise ValidationError(f"Unknown project: {project_id or '(none)'}")
     raise ValidationError("output_target must be inbox, needs_you, today or destination:<id>")
 
 
@@ -728,6 +736,9 @@ def _finished_notices(db: Any, rows: list[Any]) -> None:
 def _deliver_one(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[str, Any]:
     target = str(wb.output_target or "inbox")
     artifact_id = str(row["artifact_id"])
+    if target.startswith(PROJECT_UPDATES_PREFIX):
+        return _to_project_updates(db, _delivery_principal(principal), wb, row,
+                                   target[len(PROJECT_UPDATES_PREFIX):])
     if target == "needs_you":
         return _to_needs_you(db, principal, wb, row)
     if target == "today":
@@ -736,6 +747,49 @@ def _deliver_one(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[
     if target.startswith(DESTINATION_PREFIX):
         return _to_destination(db, principal, target[len(DESTINATION_PREFIX):], artifact_id)
     return _to_inbox(db, wb, row)
+
+
+def _to_project_updates(
+    db: Any, principal: Any, wb: Any, row: dict[str, Any], project_id: str,
+) -> dict[str, Any]:
+    """Put one automation result in the project's one update ledger."""
+    from .project_service import ProjectService
+    from .project_update_service import ProjectUpdateService
+
+    item_id = str(row.get("item_id") or "")
+    refs: list[str] = []
+    try:
+        used = use_by_item(db, [item_id]).get(item_id, {})
+        refs = [str(entry.get("ref") or "") for entry in used.get("looked_at", [])]
+        # A tool-capable update already used the application's update
+        # producer. Reuse that row as the automation result; do not create a
+        # second project_updates revision for the same run.
+        for entry in used.get("wrote", []):
+            ref = str(entry.get("ref") or "")
+            if not ref.startswith("project_update:"):
+                continue
+            existing_id = ref.split(":", 1)[1].strip()
+            existing = db.project_updates.get_update(existing_id)
+            if existing is not None and str(existing.get("project_id") or "") == project_id:
+                return {"artifact_id": row["artifact_id"], "target": str(wb.output_target),
+                        "outcome": "written", "update_id": existing_id,
+                        "project_id": project_id}
+    except Exception:
+        refs = []
+    if not refs:
+        refs = sources_of(wb)
+    body = str(row.get("result") or "").strip()
+    if not body:
+        return {"artifact_id": row["artifact_id"], "target": str(wb.output_target),
+                "outcome": "failed", "error": "The update engine returned no text."}
+    service = ProjectUpdateService(db, project_service=ProjectService(db))
+    update = service.write_agent_update(
+        principal, project_id, body_md=body, source_refs=refs,
+        generator=f"agent:automation:{wb.id}",
+    )
+    return {"artifact_id": row["artifact_id"], "target": str(wb.output_target),
+            "outcome": "written", "update_id": str(update.get("id") or ""),
+            "project_id": project_id}
 
 
 def inbox_directory_id(db: Any) -> Optional[str]:

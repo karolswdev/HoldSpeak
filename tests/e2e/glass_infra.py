@@ -753,7 +753,7 @@ SPEECH_CAPABILITY = "speech.transcribe"
 ENGINE_PROFILE = "hs201-meeting-engine"
 
 
-def engine_profile(profile_id: str = ENGINE_PROFILE) -> None:
+def engine_profile(profile_id: str = ENGINE_PROFILE, *, automation: bool = False) -> None:
     """One real local profile that can serve BOTH halves of the path.
 
     The summary capability declares structured output and its own result
@@ -765,15 +765,22 @@ def engine_profile(profile_id: str = ENGINE_PROFILE) -> None:
     from holdspeak.db import get_database
     from tests.unit.test_phase143_inference_assignments import _profile, _result_claim
 
+    claims = [
+        "language",
+        "structured_output",
+        _result_claim(SUMMARY_CAPABILITY),
+        _result_claim(SPEECH_CAPABILITY),
+    ]
+    if automation:
+        # The project Room's Workbench is an admitted automation producer. A
+        # glass run can opt into both result schemas without changing the
+        # meeting-only rigs that use this helper as-is.
+        claims.extend((_result_claim("workbench.item"), _result_claim("project.update_draft")))
+    claims = list(dict.fromkeys(claims))
     _profile(
         get_database(),
         profile_id,
-        claims=(
-            "language",
-            "structured_output",
-            _result_claim(SUMMARY_CAPABILITY),
-            _result_claim(SPEECH_CAPABILITY),
-        ),
+        claims=tuple(claims),
         modalities=("language", "text", "audio"),
     )
 

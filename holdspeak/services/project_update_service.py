@@ -49,6 +49,7 @@ content inside the body.  Sort everything canonically.
 """
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import re as _re
@@ -2237,6 +2238,58 @@ class ProjectUpdateService:
         )
         return self._project_axes(self._db.project_updates.get_update(new_id))
 
+    def write_agent_update(
+        self,
+        principal: Principal,
+        project_id: str,
+        *,
+        body_md: str,
+        source_refs: Iterable[str] = (),
+        generator: str = "agent",
+    ) -> dict[str, Any]:
+        """Persist plain text returned by an update automation.
+
+        The automation runner has already admitted the engine call.  This
+        method only records its text in ``project_updates`` and keeps the
+        exact refs the run looked at in the source manifest.  A tool-capable
+        agent may also save through ``project.update_draft``; the runner's
+        final write is idempotent at the ledger level because an older draft
+        is superseded by the new revision.
+        """
+        text = str(body_md or "").strip()
+        if not text:
+            raise ValidationError("The update engine returned no text.", code="update_empty")
+        room = self._project_service.room(principal, project_id)
+        refs = list(dict.fromkeys(str(ref).strip() for ref in source_refs if str(ref).strip()))
+        claims: list[Claim] = []
+        # Agent text is intentionally plain.  Keep one conservative claim per
+        # non-empty line so the existing claim/read projection can still show
+        # source-linked support without inventing a JSON response contract.
+        for ordinal, line in enumerate(text.splitlines()):
+            sentence = line.strip()
+            if not sentence:
+                continue
+            claims.append(Claim(
+                span_id=f"s_agent_{ordinal}", text=sentence, refs=list(refs),
+                section="progress", kind=KIND_OBSERVATION,
+                support=SUPPORT_SOURCE_LINKED if refs else SUPPORT_UNKNOWN,
+            ))
+        composed = {
+            "body_md": text + ("\n" if not text.endswith("\n") else ""),
+            "claims_json": json.dumps([claim.to_dict() for claim in claims],
+                                       sort_keys=True, separators=(",", ":")),
+            "source_manifest_json": json.dumps({
+                "project_revision": room.get("revision", 0),
+                "agent_sources": refs,
+            }, sort_keys=True, separators=(",", ":")),
+            "generator": str(generator or "agent"),
+            "generator_host": None,
+            "generator_model": None,
+            "project_revision": room.get("revision", 0),
+            "review_id": None,
+        }
+        return self._persist_draft(project_id, composed)
+
     # ── Betterment P1: the engine pass behind Write update ──────────────
     #
     # Write update saves the records draft at once (``draft_update``), then
@@ -2248,6 +2301,7 @@ class ProjectUpdateService:
 
     def start_engine_pass(
         self, principal: Principal, update_id: str, *, background: bool = True,
+        automation_id: str | None = None,
     ) -> dict[str, Any]:
         base = self._db.project_updates.get_update(update_id)
         if base is None:
@@ -2258,6 +2312,14 @@ class ProjectUpdateService:
                 context={"status": 409},
             )
         project_id = str(base["project_id"])
+        if automation_id:
+            automation = self._db.workbenches.get(str(automation_id))
+            expected_target = f"project_updates:{project_id}"
+            if automation is None or str(automation.output_target or "") != expected_target:
+                raise ValidationError(
+                    "The project update automation is missing.",
+                    code="project_update_automation_missing",
+                )
         job_id = "pujob_" + uuid.uuid4().hex[:24]
         with self._db._connection() as conn:
             conn.execute(
@@ -2268,12 +2330,69 @@ class ProjectUpdateService:
             )
         if background:
             threading.Thread(
-                target=self._run_engine_pass, args=(principal, job_id, project_id),
-                name=f"update-engine-pass-{job_id}", daemon=True,
+                target=(self._run_automation_pass if automation_id else self._run_engine_pass),
+                args=((principal, job_id, project_id, str(automation_id))
+                      if automation_id else (principal, job_id, project_id)),
+                name=f"update-{'automation' if automation_id else 'engine'}-pass-{job_id}", daemon=True,
             ).start()
         else:
-            self._run_engine_pass(principal, job_id, project_id)
+            if automation_id:
+                self._run_automation_pass(principal, job_id, project_id, str(automation_id))
+            else:
+                self._run_engine_pass(principal, job_id, project_id)
         return self.get_engine_pass(job_id)
+
+    def _run_automation_pass(
+        self, principal: Principal, job_id: str, project_id: str, automation_id: str,
+    ) -> None:
+        """Run the project's Workbench and retain its delivered update row.
+
+        The P1 job is only the existing face-facing wait state.  The producer
+        is the real Workbench runner, whose delivery writes the one
+        ``project_updates`` row and carries the run's looked-at refs.
+        """
+        state, reason, detail, result = "succeeded", None, None, None
+        try:
+            from .workbench_service import WorkbenchService
+
+            run = asyncio.run(WorkbenchService(self._db).run(
+                principal, automation_id, memory_enabled=False,
+            ))
+            deliveries = run.get("deliveries", []) if isinstance(run, dict) else []
+            written = next(
+                (delivery for delivery in deliveries
+                 if str(delivery.get("project_id") or "") == project_id
+                 and str(delivery.get("outcome") or "") == "written"),
+                None,
+            )
+            update_id = str((written or {}).get("update_id") or "")
+            update = self._db.project_updates.get_update(update_id) if update_id else None
+            if update is None:
+                raise ServiceError(
+                    "project_update_delivery_failed",
+                    "The update automation did not write an update.",
+                    context={"status": 409, "reason": "did_not_answer"},
+                )
+            result = self._project_axes(update)
+            result["automation_run_id"] = str(run.get("run_id") or "")
+            result["automation_id"] = automation_id
+        except ServiceError as exc:
+            state = "failed"
+            reason = str(exc.context.get("reason") or "did_not_answer")
+            detail = exc.context.get("detail") or exc.detail
+        except Exception:
+            _log.warning("project update automation failed", exc_info=True,
+                         extra={"project_id": project_id, "job_id": job_id,
+                                "automation_id": automation_id})
+            state, reason = "failed", "did_not_answer"
+        with self._db._connection() as conn:
+            conn.execute(
+                """UPDATE project_update_jobs
+                   SET state = ?, reason = ?, detail = ?, result_json = ?, finished_at = ?
+                   WHERE id = ? AND state = 'running'""",
+                (state, reason, detail, json.dumps(result) if result else None,
+                 utc_now_iso(), job_id),
+            )
 
     def _run_engine_pass(self, principal: Principal, job_id: str, project_id: str) -> None:
         state, reason, detail, result = "succeeded", None, None, None
@@ -2379,12 +2498,37 @@ class ProjectUpdateService:
             latest["id"] != row["base_update_id"]
             or _body_sha(latest.get("body_md")) != row["base_body_sha"]
         )
-        if changed and not force:
+        result = json.loads(row["result_json"])
+        automation_update_id = str(result.get("id") or "") if result.get("automation_id") else ""
+        if changed and not force and not automation_update_id:
             raise ConflictError(
                 "The draft changed since the engine started.", code="draft_changed",
                 context={"status": 409},
             )
-        saved = self._persist_draft(row["project_id"], json.loads(row["result_json"]))
+        if automation_update_id:
+            automation_update = self._db.project_updates.get_update(automation_update_id)
+            if automation_update is None:
+                raise ConflictError(
+                    "The automation update is no longer available.",
+                    code="draft_changed", context={"status": 409},
+                )
+            # The automation already owns this revision.  An unchanged base
+            # draft or the delivered row is safe to adopt; an owner's edit
+            # still requires the explicit Use it press.
+            base = self._db.project_updates.get_update(row["base_update_id"])
+            owner_edited = (
+                base is None
+                or _body_sha(base.get("body_md")) != row["base_body_sha"]
+            )
+            other_draft = latest["id"] not in {row["base_update_id"], automation_update_id}
+            if (owner_edited or other_draft) and not force:
+                raise ConflictError(
+                    "The draft changed since the engine started.",
+                    code="draft_changed", context={"status": 409},
+                )
+            saved = self._project_axes(automation_update)
+        else:
+            saved = self._persist_draft(row["project_id"], result)
         with self._db._connection() as conn:
             conn.execute(
                 "UPDATE project_update_jobs SET state = 'applied', applied_update_id = ? WHERE id = ?",
@@ -2564,6 +2708,9 @@ class ProjectUpdateService:
         update_id: str,
         *,
         body_md: str | None = None,
+        source_refs: Iterable[str] = (),
+        generator: str | None = None,
+        engine: str | None = None,
         command_id: str | None = None,
     ) -> dict[str, Any]:
         """Save the owner's edit of a draft.
@@ -2579,9 +2726,13 @@ class ProjectUpdateService:
         Raises PublishedUpdateError if the row is published.
         Raises NotFound if the update does not exist.
         """
+        normalized_source_refs = list(source_refs or ())
         req_hash = _request_hash({
             "update_id": update_id,
             "body_md": body_md,
+            "source_refs": normalized_source_refs,
+            "generator": generator,
+            "engine": engine,
         })
         if command_id is not None:
             existing = self._db.projects.get_project_command(command_id)
@@ -2602,6 +2753,68 @@ class ProjectUpdateService:
             raise NotFound("update", update_id)
 
         project_id = row["project_id"]
+
+        # A tool-capable project update agent writes plain text through this
+        # same producer.  Keep the update id made by Write update, carry the
+        # refs the run looked at, and replace the deterministic generator
+        # metadata.  This path deliberately skips the owner's edit-support
+        # invalidation: the agent's lines are newly grounded below.
+        if principal.kind is PrincipalKind.AGENT:
+            text = str(body_md or "").strip()
+            if not text:
+                raise ValidationError("The update engine returned no text.", code="update_empty")
+            refs = list(dict.fromkeys(
+                str(ref).strip() for ref in normalized_source_refs if str(ref).strip()
+            ))
+            if not refs:
+                # A CLI agent may omit the optional manifest argument. Its
+                # preceding MCP reads are already durable under the run id;
+                # use those exact refs before the write is recorded.
+                try:
+                    from . import run_trace
+                    run_id = run_trace.run_id_of(principal.identity)
+                    seen = run_trace.use_by_trace(self._db, [run_id]).get(run_id, {})
+                    refs = list(dict.fromkeys(
+                        str(entry.get("ref") or "").strip()
+                        for entry in seen.get("looked_at", [])
+                        if str(entry.get("ref") or "").strip()
+                    ))
+                except Exception:
+                    refs = []
+            claims = [
+                Claim(
+                    span_id=f"s_agent_{ordinal}", text=line.strip(), refs=list(refs),
+                    section="progress", kind=KIND_OBSERVATION,
+                    support=SUPPORT_SOURCE_LINKED if refs else SUPPORT_UNKNOWN,
+                ).to_dict()
+                for ordinal, line in enumerate(text.splitlines()) if line.strip()
+            ]
+            try:
+                manifest = json.loads(row.get("source_manifest_json") or "{}")
+            except (TypeError, ValueError):
+                manifest = {}
+            if not isinstance(manifest, dict):
+                manifest = {}
+            manifest["agent_sources"] = refs
+            self._db.project_updates.update_draft(
+                update_id,
+                body_md=text + ("\n" if not text.endswith("\n") else ""),
+                claims_json=json.dumps(claims, sort_keys=True, separators=(",", ":")),
+                source_manifest_json=json.dumps(manifest, sort_keys=True, separators=(",", ":")),
+                generator=str(generator or f"agent:{principal.identity}"),
+                generator_model=str(engine or "") or None,
+            )
+            result = self._project_axes(self._db.project_updates.get_update(update_id))
+            cmd_id = command_id or generate_pcmd_id()
+            project_ref = format_ref("project", project_id)
+            envelope = CommandResultEnvelope(
+                result_kind=ResultKind.UPDATED,
+                project_id=project_id,
+                project_revision=result.get("project_revision", 0),
+                changed_refs=(parse_ref(project_ref),),
+            )
+            self._record_command(cmd_id, project_id, "save_update", req_hash, envelope)
+            return result
 
         # C2: a supported sentence that no longer appears in the body
         # loses its support; the record stays with its provenance.
@@ -2779,6 +2992,174 @@ class ProjectUpdateService:
             raise NotFound("delivery", operation_id)
         return {"success": True, "delivery": existing}
 
+    def _project_update_meeting_ids(
+        self, principal: Principal, project_id: str,
+    ) -> tuple[set[str], set[str]]:
+        """Return linked meeting ids split by the existing P2 rule.
+
+        The project ref is a broad container for ordinary grounding callers.
+        An update automation has a narrower contract: it uses the same
+        meeting-kind classifier as the records drafter, before any source
+        text is hydrated. The second set is the eligible ids; keeping this
+        decision here lets the Workbench and tool response paths share P2.
+        """
+        excluded: set[str] = set()
+        eligible: set[str] = set()
+        people_names: list[str] = []
+        if self._people_names is not None:
+            try:
+                people_names = [str(name) for name in self._people_names(principal) if str(name).strip()]
+            except Exception:
+                _log.debug("update grounding: People names not read; title rule only", exc_info=True)
+        if self._people_names is None:
+            # The Workbench delivery path is composed from its database only.
+            # Reuse the same People-name read used by the Room when that
+            # composition does not inject the web server's callback.
+            try:
+                from .needs_you_membership import _read_people_names
+
+                people_names = [str(name) for name in (_read_people_names(principal) or ()) if str(name).strip()]
+            except Exception:
+                people_names = []
+
+        try:
+            offset = 0
+            while True:
+                page = self._project_service.list_meetings(
+                    principal, project_id, limit=500, offset=offset,
+                )
+                if not page:
+                    break
+                for row in page:
+                    meeting_id = str(row.get("id") or "").strip()
+                    if not meeting_id:
+                        continue
+                    title = str(row.get("title") or "")
+                    private = title_says_one_on_one(title)
+                    try:
+                        meeting = self._db.meetings.get_meeting(meeting_id)
+                    except Exception:
+                        meeting = None
+                    if meeting is not None:
+                        title = str(getattr(meeting, "title", None) or title)
+                        private = private or is_one_on_one(
+                            title, meeting_speakers(meeting), people_names,
+                        )
+                    (excluded if private else eligible).add(meeting_id)
+                if len(page) < 500:
+                    break
+                offset += len(page)
+        except Exception:
+            # A missing meeting projection must not turn into broad project
+            # hydration. The caller still has any explicit safe refs.
+            _log.debug("update grounding: linked meetings not read", exc_info=True)
+
+        return excluded, eligible
+
+    def project_update_excluded_refs(
+        self, principal: Principal, project_id: str,
+    ) -> set[str]:
+        """Return canonical refs P2 withholds from an update automation.
+
+        This is deliberately a predicate over the existing project source
+        records. It does not change generic project grounding or unlink a
+        source. A private meeting's descendants are withheld unless the
+        owner explicitly filed that descendant as a project resource; that
+        hand-filed edge is an intentional P2 exception for owed work and
+        owner-added project material.
+        """
+        excluded_meetings, _eligible_meetings = self._project_update_meeting_ids(
+            principal, project_id,
+        )
+        excluded = {f"meeting:{meeting_id}" for meeting_id in excluded_meetings}
+        excluded.update(f"transcript:{meeting_id}" for meeting_id in excluded_meetings)
+        try:
+            project_resources = self._project_service.list_resources(principal, project_id)
+        except Exception:
+            project_resources = []
+        explicit_refs = {
+            str(resource.get("resource_ref") or "").strip().casefold()
+            for resource in project_resources
+            if str(resource.get("resource_ref") or "").strip()
+        }
+        try:
+            for action in self._project_service.list_action_items(principal, project_id):
+                if str(action.get("meeting_id") or "") in excluded_meetings:
+                    action_id = str(action.get("id") or "").strip()
+                    if action_id and not (
+                        f"action:{action_id}".casefold() in explicit_refs
+                        or f"action_item:{action_id}".casefold() in explicit_refs
+                    ):
+                        excluded.update({f"action:{action_id}", f"action_item:{action_id}"})
+            for artifact in self._project_service.list_artifacts(principal, project_id):
+                if str(artifact.get("meeting_id") or "") in excluded_meetings:
+                    artifact_id = str(artifact.get("id") or "").strip()
+                    if artifact_id and f"artifact:{artifact_id}".casefold() not in explicit_refs:
+                        excluded.add(f"artifact:{artifact_id}")
+            for record_id in self._records_from_meetings(excluded_meetings):
+                if not (
+                    f"decision:{record_id}".casefold() in explicit_refs
+                    or f"decision_record:{record_id}".casefold() in explicit_refs
+                    or f"desk_decision:{record_id}".casefold() in explicit_refs
+                ):
+                    excluded.update({f"decision:{record_id}", f"decision_record:{record_id}"})
+        except Exception:
+            _log.debug("update grounding: meeting descendants not read", exc_info=True)
+
+        # People notes live in their own encrypted store. A regular note can
+        # still be linked to a project by hand; only explicit People/1:1
+        # markers are withheld here, preserving ordinary project notes.
+        for resource in project_resources:
+            raw = str(resource.get("resource_ref") or "").strip()
+            kind, _, resource_id = raw.partition(":")
+            kind = kind.casefold()
+            resource_id = resource_id.split("#", 1)[0].strip()
+            if not kind or not resource_id:
+                continue
+            if kind in {
+                "people", "person", "people_note", "grounding_note", "relationship",
+                "one_on_one", "one-on-one",
+            }:
+                excluded.add(f"{kind}:{resource_id}")
+                continue
+            if kind not in {"note", "notes"}:
+                continue
+            note = self._db.notes.get(resource_id)
+            tags = {str(tag).strip().casefold() for tag in (getattr(note, "tags", None) or [])}
+            title = str(getattr(note, "title", "") or "") if note is not None else ""
+            people_note = (
+                title_says_one_on_one(title)
+                or any(
+                    tag in {"people", "people_note", "people-note", "person", "1:1", "one-on-one"}
+                    or tag.startswith(("people:", "person:"))
+                    for tag in tags
+                )
+            )
+            if people_note:
+                excluded.update({f"note:{resource_id}", f"notes:{resource_id}"})
+        return excluded
+
+    def project_update_grounding_refs(
+        self, principal: Principal, project_id: str,
+    ) -> list[str]:
+        """Expand one project ref to P2-eligible refs for an update run."""
+        excluded = {ref.casefold() for ref in self.project_update_excluded_refs(principal, project_id)}
+        _excluded_meetings, eligible_meetings = self._project_update_meeting_ids(
+            principal, project_id,
+        )
+        refs = [f"meeting:{meeting_id}" for meeting_id in eligible_meetings]
+        try:
+            resources = self._project_service.list_resources(principal, project_id)
+        except Exception:
+            resources = []
+        for resource in resources:
+            ref = str(resource.get("resource_ref") or "").strip().split("#", 1)[0]
+            if not ref or ref.casefold().startswith("project:"):
+                continue
+            if ref.casefold() not in excluded:
+                refs.append(ref)
+        return sorted(set(refs))
+
     def _read_week_sources(
         self,
         principal: Principal,
@@ -2800,6 +3181,19 @@ class ProjectUpdateService:
         risks: list[dict[str, str]] = []
         notes_read = 0
         people_names: list[str] = []
+        try:
+            project_resources = self._project_service.list_resources(principal, project_id)
+        except Exception:
+            project_resources = []
+        explicit_refs = {
+            str(resource.get("resource_ref") or "").strip().casefold()
+            for resource in project_resources
+            if str(resource.get("resource_ref") or "").strip()
+        }
+
+        def explicitly_filed(kind: str, item_id: str) -> bool:
+            return f"{kind}:{item_id}".casefold() in explicit_refs
+
         if self._people_names is not None:
             try:
                 people_names = [str(n) for n in self._people_names(principal) if str(n).strip()]
@@ -2894,7 +3288,10 @@ class ProjectUpdateService:
         # Betterment P1: the risks a meeting's artifacts list (risk_heatmap).
         try:
             for artifact in self._db.projects.get_project_artifacts(project_id):
-                if str(artifact.meeting_id or "") in one_on_one_ids:
+                if (
+                    str(artifact.meeting_id or "") in one_on_one_ids
+                    and not explicitly_filed("artifact", str(artifact.id or ""))
+                ):
                     continue
                 for entry in (artifact.structured_json or {}).get("risks") or []:
                     text = entry.get("risk") if isinstance(entry, dict) else entry
@@ -2910,7 +3307,7 @@ class ProjectUpdateService:
         # Betterment P1: notes filed as the project's sources. A line that
         # names a risk (or every line of a note titled as risks) is a risk.
         try:
-            for resource in self._project_service.list_resources(principal, project_id):
+            for resource in project_resources:
                 kind, _, note_id = str(resource.get("resource_ref") or "").partition(":")
                 if kind != "note" or not note_id:
                     continue
@@ -2934,7 +3331,13 @@ class ProjectUpdateService:
                 owner = " ".join(str(action.get("owner") or "").split())
                 action_id = str(action.get("id") or "").strip()
                 status = str(action.get("status") or "pending").strip().lower()
-                if str(action.get("meeting_id") or "") in one_on_one_ids:
+                if (
+                    str(action.get("meeting_id") or "") in one_on_one_ids
+                    and not (
+                        explicitly_filed("action", action_id)
+                        or explicitly_filed("action_item", action_id)
+                    )
+                ):
                     continue
                 if (
                     action_id
@@ -2970,7 +3373,15 @@ class ProjectUpdateService:
         else:
             one_on_one_records = self._records_from_meetings(one_on_one_ids)
             for decision in decisions_section.get("items", []):
-                if str(decision.get("id") or "") in one_on_one_records:
+                decision_id = str(decision.get("id") or "").strip()
+                if (
+                    decision_id in one_on_one_records
+                    and not (
+                        explicitly_filed("decision", decision_id)
+                        or explicitly_filed("decision_record", decision_id)
+                        or explicitly_filed("desk_decision", decision_id)
+                    )
+                ):
                     continue
                 # The Room keeps action-kind confirmed proposals in its
                 # decision projection for continuity.  Their action item is
@@ -2978,7 +3389,6 @@ class ProjectUpdateService:
                 # the source and changes its meaning.
                 if str(decision.get("kind") or "decision").strip() != "decision":
                     continue
-                decision_id = str(decision.get("id") or "").strip()
                 decision_text = " ".join(
                     str(decision.get("text") or "").split()
                 )

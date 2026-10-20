@@ -965,11 +965,31 @@ class ProjectService:
             ).fetchone()
         if pub is not None:
             latest_published = attach_deliveries(self._db, [{key: dict(pub).get(key) for key in fields}])[0]
+        automation = None
+        target = f"project_updates:{project_id}"
+        for wb in self._db.workbenches.list():
+            if str(wb.output_target or "") != target:
+                continue
+            try:
+                when = json.loads(wb.when_json or "{}") if wb.when_json else {}
+            except (TypeError, ValueError):
+                when = {}
+            automation = {
+                "id": str(wb.id),
+                "name": str(wb.name or "Project update"),
+                "instruction": str(wb.instruction or ""),
+                "schedule": str(wb.schedule or "") or None,
+                "schedule_enabled": bool(wb.schedule_enabled),
+                "when_kind": str(when.get("kind") or "manual"),
+                "profile_id": str(wb.profile_id or "") or None,
+            }
+            break
         return {
             "count": len(rows),
             "counts": counts,
             "recent": recent,
             "latest_published": latest_published,
+            "automation": automation,
         }
 
     def _read_room_steward(self, project_id: str) -> dict[str, Any]:

@@ -721,6 +721,9 @@ class CliEngine(MeetingIntel):
         #: Betterment A10: the folder this run works in, read only (an
         #: automation's Folder source); None = an empty temporary folder.
         self.work_folder: Optional[str] = None
+        #: The update automation's project scope, set on the per-call copy by
+        #: WorkbenchRunner.  It is bound to the run credential, not user text.
+        self.project_id: str = ""
 
     @classmethod
     def from_endpoint(cls, endpoint: str, *, model: str = "", profile_id: str = "") -> "CliEngine":
@@ -915,6 +918,7 @@ class CliEngine(MeetingIntel):
                 palette=resolve_palette(CONDUCTOR),
                 palette_name=CONDUCTOR,
                 launch_id=run_id,
+                project_id=self.project_id or None,
             )
         except CredentialPersistError as exc:
             log.warning(f"run credential not stored ({exc}); this run gets no desk tools")

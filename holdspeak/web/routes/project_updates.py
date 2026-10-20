@@ -33,6 +33,7 @@ from ...services.errors import NotFound, ServiceError, ValidationError
 from ..context import WebContext
 from ..runtime_support import error_500
 from ._room_kernel import body_or_refusal, kernel_fields, kernel_refusal, refusal_fields
+from .primitives._shared import _json_body
 
 log = get_logger("web.routes.project_updates")
 
@@ -104,6 +105,14 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
         try:
             generator = str(payload.get("generator") or "deterministic").strip()
             cmd_id = payload.get("command_id")
+            # P7: the first Write creates the durable automation sentence.  A
+            # missing With assignment is allowed; the automation remains
+            # manual until the owner chooses an engine and a Friday start.
+            if getattr(ctx, "workbench_service", None) is not None:
+                ctx.workbench_service.ensure_project_update(
+                    principal(request), project_id,
+                    audience=str(payload.get("audience") or "manager"),
+                )
             # P0 (betterment/projects): a model draft takes a minute or more.
             # It runs off the event loop, so every other window keeps working.
             result = await asyncio.to_thread(
@@ -154,8 +163,10 @@ def build_project_updates_router(ctx: WebContext) -> APIRouter:
     @router.post("/api/updates/{update_id}/engine-pass")
     async def api_start_engine_pass(update_id: str, request: Request) -> Any:
         try:
+            payload = await _json_body(request) or {}
             job = await asyncio.to_thread(
                 ctx.project_update_service.start_engine_pass, principal(request), update_id,
+                automation_id=(str(payload.get("automation_id") or "").strip() or None),
             )
             return JSONResponse({"success": True, "job": job})
         except Exception as exc:

@@ -1924,6 +1924,10 @@ PROJECT_UPDATE_DRAFT = OperationDescriptor(
         "properties": {
             "update_id": _UPDATE_ID,
             "body_md": {"description": "The new Markdown text of the draft."},
+            "source_refs": {"type": "array", "items": {"type": "string"},
+                            "description": "Canonical refs the agent read for this update."},
+            "generator": {"type": "string", "description": "Agent generator label for an automation result."},
+            "engine": {"type": "string", "description": "Engine name that produced the plain text."},
             "command_id": _COMMAND_ID,
         },
         "required": ["update_id"],

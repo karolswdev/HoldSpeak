@@ -478,6 +478,22 @@ export type RoomTargetData = {
   passed: boolean;
 };
 
+export type RoomUpdatesData = {
+  count: number;
+  counts: Record<string, number>;
+  recent: Array<Record<string, unknown>>;
+  latestPublished: Record<string, unknown> | null;
+  automation: {
+    id: string;
+    name: string;
+    instruction: string;
+    schedule: string | null;
+    scheduleEnabled: boolean;
+    whenKind: string;
+    profileId: string | null;
+  } | null;
+};
+
 /** HS-174-04: a pipeline receipt event (tolerant: wire may not exist yet). */
 export type RoomReceiptItem = {
   id: string;
@@ -518,7 +534,7 @@ export type RoomSnapshot = {
   decisions: RoomSection<{ items: RoomDecisionItem[] }>;
   commitments: RoomSection<{ items: RoomCommitmentItem[] }>;
   target: RoomSection<RoomTargetData>;
-  updates: RoomSection<Record<string, never>>;
+  updates: RoomSection<RoomUpdatesData>;
   steward: RoomSection<Record<string, never>>;
   /** HS-174-04: pipeline receipts (tolerant: absent when wire not landed). */
   receipts: RoomSection<RoomReceiptsData>;
@@ -897,7 +913,24 @@ export function decodeRoomSnapshot(raw: Record<string, unknown>): RoomSnapshot {
       daysLeft: s.daysLeft != null ? Number(s.daysLeft) : null,
       passed: Boolean(s.passed),
     })),
-    updates: decodeSection<Record<string, never>>(raw.updates, () => ({} as Record<string, never>)),
+    updates: decodeSection<RoomUpdatesData>(raw.updates, (s) => ({
+      count: Number(s.count ?? 0),
+      counts: s.counts && typeof s.counts === "object" ? s.counts as Record<string, number> : {},
+      recent: Array.isArray(s.recent) ? s.recent as Array<Record<string, unknown>> : [],
+      latestPublished: s.latest_published && typeof s.latest_published === "object"
+        ? s.latest_published as Record<string, unknown> : null,
+      automation: s.automation && typeof s.automation === "object" ? {
+        id: String((s.automation as Record<string, unknown>).id ?? ""),
+        name: String((s.automation as Record<string, unknown>).name ?? "Project update"),
+        instruction: String((s.automation as Record<string, unknown>).instruction ?? ""),
+        schedule: (s.automation as Record<string, unknown>).schedule != null
+          ? String((s.automation as Record<string, unknown>).schedule) : null,
+        scheduleEnabled: Boolean((s.automation as Record<string, unknown>).schedule_enabled),
+        whenKind: String((s.automation as Record<string, unknown>).when_kind ?? "manual"),
+        profileId: (s.automation as Record<string, unknown>).profile_id != null
+          ? String((s.automation as Record<string, unknown>).profile_id) : null,
+      } : null,
+    })),
     steward: decodeSection<Record<string, never>>(raw.steward, () => ({} as Record<string, never>)),
     // HS-174-04: pipeline receipts (tolerant: absent when wire not landed)
     now: decodeSection<RoomNowData>(raw.now, (s) => {

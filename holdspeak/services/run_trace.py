@@ -177,6 +177,20 @@ def _object(name: str, arguments: Mapping[str, Any], value: Any) -> tuple[str, s
     """``(ref, title)`` of the one object a call touched; ``("", "")`` when none."""
     if name.startswith("desk."):
         return _desk_object(arguments, value)
+    # Project update tools return the update inside an envelope, while the
+    # operation's generic changed-for projection quite correctly names the
+    # owning project.  The automation trace needs the object the model
+    # actually edited so the Project Update face can cite it.
+    if name in {"project.draft_update", "project.update_draft", "project.publish_update"}:
+        update_id = str(arguments.get("update_id") or "")
+        title = ""
+        for record in _records(value):
+            own = str(record.get("id") or record.get("update_id") or "")
+            if not update_id and own:
+                update_id = own
+            if own == update_id and not title:
+                title = _title_of(record)
+        return (f"project_update:{update_id}" if update_id else ""), title
     from .. import operations
 
     kind, obj_id, _op = operations.changed_for(name, arguments, value)
