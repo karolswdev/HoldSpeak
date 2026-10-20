@@ -4,9 +4,23 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (native agent automations)
+**Last updated:** 2026-10-20 (unchecked Send warning)
 
 ## Current phase
+
+Send S8 keeps an unchecked published update sendable. Preview says
+"Not checked yet: no claim in this update was accepted" above the words;
+the existing frozen document retains the warning through Prepare, Send and
+readback. A successful delivery records unchecked and the warning in its
+existing proof and history. The owner's press remains required. Mixed
+updates retain their existing omission behavior; source claims are unchanged.
+
+Root independently passed 95 collected focused cases, including both real
+1440/393 browser sends to a private folder, exact preview/file byte equality,
+saved receipt/history readback and refusal of an agent's direct Send. All ten
+Send web consumers, type check and build pass. The recorded consumer uses
+a complete real producer response. No live external delivery is claimed.
+Required quick: 4,079 web and 505 affected Python/browser checks passed; 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.
 
 AG14 completes automations that hand work to native agents. Do selects Hand;
 With lists installed native profiles, and Review by uses compatible native

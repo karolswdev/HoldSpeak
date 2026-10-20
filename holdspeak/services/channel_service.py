@@ -150,6 +150,7 @@ class ChannelService:
     def _send_view(self, row: Mapping[str, Any]) -> dict[str, Any]:
         destination = self._db.channel_destinations.get(row["destination_id"]) or {}
         payload = bytes(row["payload"] or b"")
+        document_json = json.loads(row["document_json"]) if row.get("document_json") else None
         # Existing channels report frozen byte size. Slack reports the text
         # characters governed by its 39,000-character refusal.
         size = (contract.payload_size("slack", payload)[0]
@@ -172,8 +173,11 @@ class ChannelService:
             "account": json.loads(row["account_json"] or "{}"),
             "target": contract.shown_target(json.loads(row["target_json"] or "{}")),
             "target_digest": row["target_digest"], "payload_digest": row["payload_digest"],
-            "document_json": json.loads(row["document_json"]) if row.get("document_json") else None,
-            "size": size, "preview": contract.preview_for(row["channel"], payload, row["account_json"]),
+            "document_json": document_json,
+            "size": size, "preview": contract.preview_for(
+                row["channel"], payload, row["account_json"],
+                str(document_json.get("preview_warning") or "") if isinstance(document_json, dict) else None,
+            ),
             "prepared_by": {"kind": row["prepared_by_kind"], "identity": row["prepared_by_identity"]},
             "prepare_operation_id": row["prepare_operation_id"], "send_operation_id": row["send_operation_id"],
             "state": state, "reason": reason, "proof": proof,
@@ -246,7 +250,8 @@ class ChannelService:
         return {"document_ref": document.ref, "title": document.title, "destination_id": destination["id"],
                 "channel": destination["channel"], "badge": chan.badge(self._synced(destination)),
                 "payload_digest": contract.sha256(payload), "size": size,
-                "preview": contract.preview_for(destination["channel"], payload, destination["account_json"])}
+                "preview": contract.preview_for(destination["channel"], payload, destination["account_json"],
+                                                 document.preview_warning)}
 
     def check_destination(self, principal: Any, destination_id: str) -> dict[str, Any]:
         """A folder: a local check (it resolves to the saved folder, it is a folder, it is writable).
@@ -690,10 +695,23 @@ class ChannelService:
 
         state, receipt_outcome = outcome.kernel_end()
         destination = self._db.channel_destinations.get(row["destination_id"]) or {}
+        proof = outcome.record()
+        document_json = row.get("document_json")
+        if document_json:
+            try:
+                provenance = json.loads(document_json) if isinstance(document_json, str) else document_json
+            except (TypeError, ValueError):
+                provenance = {}
+            if isinstance(provenance, Mapping) and provenance.get("preview_warning"):
+                proof = {
+                    **(dict(proof) if proof else {}),
+                    "unchecked": True,
+                    "warning": str(provenance["preview_warning"]),
+                }
 
         def effect(conn: Any) -> None:
             settled = settle_in_transaction(conn, send_operation_id=handle.operation_id, state=outcome.state,
-                                            reason=outcome.reason, proof=outcome.record(),
+                                            reason=outcome.reason, proof=proof,
                                             delivered_to=str(destination.get("name") or ""))
             if settled is None:
                 raise RuntimeError("the send row is no longer dispatching")

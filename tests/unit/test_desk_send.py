@@ -254,6 +254,25 @@ def _record(name: str, payload: dict, tmp_path: Path) -> None:
     assert _shape(stored) == _shape(scrubbed), f"{path.name}: the stored answers are not the hub's shape"
 
 
+def test_a_published_unchecked_update_wire_carries_the_warning_and_words(
+        hub: Hub, tmp_path: Path) -> None:
+    """Record the real producer answer consumed by the Send app face."""
+    from _philo10_send import room
+
+    body = ("## Progress\n\n- **[UNVERIFIED]** The rollout is complete.\n\n"
+            "## Decisions\n\nNo decisions in this window.\n")
+    _pid, update = room(hub, body=body)
+    ref = f"project_update:{update}"
+    wire = _wire(hub, ref)
+    assert wire["previews"] and all(
+        p["preview"]["warning"] == "Not checked yet: no claim in this update was accepted"
+        and "The rollout is complete." in p["preview"]["text"]
+        and "UNVERIFIED" not in p["preview"]["text"]
+        for p in wire["previews"]
+    ), wire
+    _record("unchecked-update", wire, tmp_path)
+
+
 def test_a_good_send_is_a_good_check_and_clears_the_accounts_warning(
         hub: Hub, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """The Accounts row's own check said Unreachable; then a send POSTED. The
