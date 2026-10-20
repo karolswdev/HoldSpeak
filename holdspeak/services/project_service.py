@@ -50,6 +50,7 @@ from ..refs import format as format_ref, parse as parse_ref
 from .errors import ConflictError, NotFound, ServiceError, ValidationError
 from .project_setup_service import CADENCE_PRESETS
 from .service_event_ledger import ServiceEventLedger
+from .steward_serialization_service import _serialize_run
 
 _log = get_logger("services.project_service")
 
@@ -1011,8 +1012,6 @@ class ProjectService:
         Before this the section was ``absent · not_yet_built`` after a run
         completed.
         """
-        from holdspeak.web.routes.steward import _serialize_run
-
         runs = self._db.steward_runs.list_runs(project_id, limit=1)
         policy = self._db.steward_policies.get_policy_for_project(project_id)
         return {

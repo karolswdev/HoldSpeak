@@ -28,6 +28,19 @@ individual People are not ordinary Items primitives. This merge adds no
 completed slice.
 Required quick: S4_QUICK_PENDING.
 
+P10 offers only watch actions with an existing runtime path. A new
+project.observe evaluation writes its observation without a pending effect;
+legacy effect rows remain readable. Provider manifests, Steward serializers
+and meeting transcriber construction now live in shared services. HTTP and
+MCP use those same contracts, with no MCP imports from web routes.
+
+The worker passed 504 focused cases, then six retained boundary
+and producer regressions. An actual private database observation creates no
+new effect and preserves the legacy pending row. The AST fence covers all 37
+MCP Python files, including relative and alias import forms. Shared helper
+identities and wires retain parity. Root independently verified 27 focused cases covering the whole import boundary, actual fresh observation and retained legacy row, provider HTTP/MCP parity, Steward policy round-trip, import parity, and remote-owner refusal before file access.
+Required quick: Final delta quick passes 67 affected cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The preceding product quick passed 3,424 other affected cases with two skips; its one failure patched the old HTTP factory seam and is corrected by the final check..
+
 ST8 starts the installed GitHub or Atlassian CLI browser sign-in from the
 Accounts row and seats its native terminal there. Keyboard input uses the
 existing admitted process input path and immutable target identity. On native
