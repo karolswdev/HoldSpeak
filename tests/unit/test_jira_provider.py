@@ -8,6 +8,7 @@ Atlassian docs.  Every fixture carries ``recorded_from``.
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import threading
 import time
@@ -110,14 +111,84 @@ def _recording_runner(responses: list[dict[str, Any]]) -> tuple[Any, list[list[s
     return runner, call_log
 
 
+_TWO_ACCOUNT_REGISTRY = """\
+version: 1
+current_profile: ""
+profiles:
+  - site: alpha.atlassian.net
+    cloud_id: c1
+    account_id: a1
+    email: owner@example.com
+    auth_type: token
+  - site: beta.atlassian.net
+    cloud_id: c2
+    account_id: a1
+    email: owner@example.com
+    auth_type: token
+"""
+
+
+class _TwoAccountAcli:
+    """A fake acli process with active state separate from its unmarked registry."""
+
+    def __init__(self, registry: Any, *, status_mode: str = "ok") -> None:
+        self.registry = registry
+        self.active_site = "alpha.atlassian.net"
+        self.status_mode = status_mode
+        self.calls: list[list[str]] = []
+
+    def __call__(self, argv: list[str], **_: Any) -> subprocess.CompletedProcess[str]:
+        self.calls.append(list(argv))
+        if argv[2:4] == ["auth", "status"]:
+            if self.status_mode == "failed":
+                return subprocess.CompletedProcess(argv, 1, "", "credential store unavailable")
+            if self.status_mode == "unparseable":
+                return subprocess.CompletedProcess(argv, 0, "✓ Authenticated\n", "")
+            if self.status_mode == "invalid_email":
+                return subprocess.CompletedProcess(argv, 0, "Site: alpha.atlassian.net\nEmail: unavailable\n", "")
+            return subprocess.CompletedProcess(
+                argv,
+                0,
+                "✓ Authenticated\n"
+                f"  Site: {self.active_site}\n"
+                "  Email: owner@example.com\n"
+                "  Authentication Type: token\n",
+                "",
+            )
+        if argv[2:4] == ["auth", "switch"]:
+            site = argv[argv.index("--site") + 1]
+            self.active_site = site
+            profile_key = "c1:a1" if site == "alpha.atlassian.net" else "c2:a1"
+            text = self.registry.read_text(encoding="utf-8")
+            text = re.sub(r'current_profile: "[^"]*"', f'current_profile: "{profile_key}"', text, count=1)
+            self.registry.write_text(text, encoding="utf-8")
+            return subprocess.CompletedProcess(argv, 0, "switched\n", "")
+        raise AssertionError(argv)
+
+
 def _make_adapter(
     tmp_path: Any,
     *,
     runner: Any = None,
     db_name: str = "test-jira.db",
+    current_site: str = "alpha.atlassian.net",
+    current_email: str = "user@example.com",
 ) -> tuple[JiraProviderAdapter, Database]:
     db = Database(tmp_path / db_name)
-    return JiraProviderAdapter(db=db, runner=runner), db
+    registry = tmp_path / f"{db_name}.acli.yaml"
+    profile_key = "current-cloud:current-account"
+    registry.write_text(
+        "version: 1\n"
+        f"current_profile: \"{profile_key}\"\n"
+        "profiles:\n"
+        f"  - site: {current_site}\n"
+        "    cloud_id: current-cloud\n"
+        "    account_id: current-account\n"
+        f"    email: {current_email}\n"
+        "    auth_type: token\n",
+        encoding="utf-8",
+    )
+    return JiraProviderAdapter(db=db, runner=runner, registry_path=registry), db
 
 
 # ── Manifest ─────────────────────────────────────────────────────────
@@ -285,7 +356,12 @@ class TestSwitchAndVerifyOrder:
             {"stdout": "✓ Switched to account: beta.atlassian.net [admin@corp.com]", "returncode": 0},
             {"stdout": "✓ Authenticated\n  Site: beta.atlassian.net\n  Email: admin@corp.com\n  Authentication Type: oauth\n", "returncode": 0},
         ])
-        adapter, db = _make_adapter(tmp_path, runner=runner)
+        adapter, db = _make_adapter(
+            tmp_path,
+            runner=runner,
+            current_site="beta.atlassian.net",
+            current_email="admin@corp.com",
+        )
         ref = connection_ref("beta.atlassian.net", "admin@corp.com")
         adapter.add_connection(OWNER, "beta", "admin@corp.com")
 
@@ -296,6 +372,52 @@ class TestSwitchAndVerifyOrder:
         email_idx = switch_args.index("--email")
         assert switch_args[site_idx + 1] == "beta.atlassian.net"
         assert switch_args[email_idx + 1] == "admin@corp.com"
+
+
+class TestUnknownPriorAccount:
+    def test_unmarked_registry_reads_and_restores_active_account(self, tmp_path: Any) -> None:
+        registry = tmp_path / "jira_config.yaml"
+        registry.write_text(_TWO_ACCOUNT_REGISTRY, encoding="utf-8")
+        before_bytes = registry.read_bytes()
+        fake = _TwoAccountAcli(registry)
+        adapter = JiraProviderAdapter(runner=fake, registry_path=registry)
+
+        result = adapter.connection_status(
+            OWNER, "beta.atlassian.net|owner@example.com",
+        )
+
+        assert result["state"] == STATE_CONNECTED
+        assert fake.active_site == "alpha.atlassian.net"
+        assert fake.calls == [
+            ["acli", "jira", "auth", "status"],
+            ["acli", "jira", "auth", "switch", "--site", "beta.atlassian.net", "--email", "owner@example.com"],
+            ["acli", "jira", "auth", "status"],
+            ["acli", "jira", "auth", "switch", "--site", "alpha.atlassian.net", "--email", "owner@example.com"],
+        ]
+        # The fake CLI changes only its current-profile marker while probing;
+        # the profile definitions and credentials are never copied or rewritten.
+        assert registry.read_text(encoding="utf-8").replace('current_profile: "c1:a1"', 'current_profile: ""') == before_bytes.decode()
+
+    @pytest.mark.parametrize("status_mode", ["unparseable", "failed", "invalid_email"])
+    def test_unreadable_prior_status_does_not_switch_or_claim_connected(
+        self, tmp_path: Any, status_mode: str,
+    ) -> None:
+        registry = tmp_path / "jira_config.yaml"
+        registry.write_text(_TWO_ACCOUNT_REGISTRY, encoding="utf-8")
+        before_bytes = registry.read_bytes()
+        fake = _TwoAccountAcli(registry, status_mode=status_mode)
+        adapter = JiraProviderAdapter(runner=fake, registry_path=registry)
+
+        result = adapter.connection_status(
+            OWNER, "beta.atlassian.net|owner@example.com",
+        )
+
+        assert result["state"] == STATE_DEGRADED
+        assert result["error_code"] == CODE_UNAVAILABLE
+        assert "Check was not run" in result["error_detail"]
+        assert fake.calls == [["acli", "jira", "auth", "status"]]
+        assert fake.active_site == "alpha.atlassian.net"
+        assert registry.read_bytes() == before_bytes
 
 
 # ── Auth state truth table ───────────────────────────────────────────
@@ -378,7 +500,12 @@ class TestConnectionStatus:
         runner, _ = _recording_runner([
             {"stderr": _ACCOUNT_NOT_FOUND, "returncode": 1},
         ])
-        adapter, db = _make_adapter(tmp_path, runner=runner)
+        adapter, db = _make_adapter(
+            tmp_path,
+            runner=runner,
+            current_site="unknown.atlassian.net",
+            current_email="unknown@example.com",
+        )
         ref = connection_ref("unknown.atlassian.net", "unknown@example.com")
         adapter.add_connection(OWNER, "unknown", "unknown@example.com")
 
@@ -499,8 +626,26 @@ class TestLockSerialization:
         adapter_a, db = _make_adapter(
             tmp_path, runner=_slow_runner(site_a, email_a, delay=0.1),
             db_name="lock-test.db",
+            current_site=site_a,
+            current_email=email_a,
         )
-        adapter_b = JiraProviderAdapter(db=db, runner=_slow_runner(site_b, email_b, delay=0.1))
+        registry_b = tmp_path / "lock-test-beta.acli.yaml"
+        registry_b.write_text(
+            "version: 1\n"
+            "current_profile: \"cloud-beta:account-beta\"\n"
+            "profiles:\n"
+            "  - site: beta.atlassian.net\n"
+            "    cloud_id: cloud-beta\n"
+            "    account_id: account-beta\n"
+            "    email: bob@example.com\n"
+            "    auth_type: token\n",
+            encoding="utf-8",
+        )
+        adapter_b = JiraProviderAdapter(
+            db=db,
+            runner=_slow_runner(site_b, email_b, delay=0.1),
+            registry_path=registry_b,
+        )
 
         adapter_a.add_connection(OWNER, "alpha", "alice@example.com")
         adapter_b.add_connection(OWNER, "beta", "bob@example.com")

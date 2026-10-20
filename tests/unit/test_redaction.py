@@ -110,7 +110,17 @@ def test_jira_connection_failure_is_stored_with_no_secret(tmp_path: Any) -> None
     from holdspeak.services.jira_provider import JiraProviderAdapter
 
     db = Database(tmp_path / "jira-conn.db")
-    adapter = JiraProviderAdapter(db=db, runner=_completed("switch broke\n" + "\n".join(CREDENTIAL_LINES)))
+    registry = tmp_path / "acli.yaml"
+    registry.write_text(
+        'version: 1\ncurrent_profile: "cloud:account"\nprofiles:\n'
+        '  - site: alpha.atlassian.net\n    cloud_id: cloud\n'
+        '    account_id: account\n    email: user@example.com\n',
+        encoding="utf-8",
+    )
+    adapter = JiraProviderAdapter(
+        db=db, registry_path=registry,
+        runner=_completed("switch broke\n" + "\n".join(CREDENTIAL_LINES)),
+    )
     result = adapter.connection_status(OWNER, "alpha.atlassian.net|user@example.com")
     assert _leaks(result) == [], result
     stored = _stored_error_details(db)
