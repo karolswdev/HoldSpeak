@@ -201,8 +201,8 @@ function plainAgentError(error: unknown): string {
   const message = readableError(error).toLowerCase();
   if (message.includes("mcp") && message.includes("another")) return "Another MCP setup is using this name. Remove it or try again.";
   if (message.includes("skill") && message.includes("another")) return "Another skill is using this name. Remove it or try again.";
-  if (message.includes("cannot read") || message.includes("unreadable")) return "Agent settings cannot be read. Fix them and try again.";
-  return "Agent setup failed. Try again.";
+  if (message.includes("cannot read") || message.includes("unreadable")) return "Agent settings cannot be read. Existing entries kept. Fix them and try again.";
+  return "Agent setup failed. Existing entries kept. Try again.";
 }
 
 const TAKE_FAILURE_TOKENS: Record<DictationFailure, { chip: string; reason: string }> = {

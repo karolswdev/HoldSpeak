@@ -34,7 +34,7 @@ AGENT_HOOKS_INSTALL = OperationDescriptor(
     },
     principal="derived by the transport (the HTTP auth middleware); owner only",
     effect="write",
-    result="{agents, tmux, holdspeak, used: {agent, path, mcp, skill, installed_events, created_file}, or {state, ok, results}} for an aggregate install, and the receipt",
+    result="{agents, tmux, holdspeak, used: {agent, path, mcp, skill, installed_events, created_file}}, or {agents, tmux, holdspeak, state, ok, results} for an aggregate install, and the receipt",
     refusals=_CONTRACT_REFUSALS + ("owner_required", "claude_not_installed", "codex_not_installed",
                                    "agent_settings_unreadable", "agent_settings_path_changed",
                                    "holdspeak_not_found", "mcp_name_taken", "mcp_config_unreadable",
