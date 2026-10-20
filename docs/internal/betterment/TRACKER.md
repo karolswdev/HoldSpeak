@@ -7,7 +7,7 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 
 **Last updated:** 2026-10-20, Search and the Floor adapters verified. Running-desk identity is in `pm/STATUS.md`.
 
-**Total: 113 of 117 slices merged**, with Send S7 still partial.
+**Total: 113 of 117 slices merged**.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
