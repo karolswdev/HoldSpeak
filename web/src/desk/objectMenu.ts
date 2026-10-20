@@ -9,6 +9,9 @@ import { primitiveCan } from "../lib/primitives";
 import { handKindOf } from "./agentHand";
 import { deleteSeatShown } from "./deleteSeat";
 import { askableKind } from "./askAbout";
+import { askAboutRef } from "./askAbout";
+import { openPerson } from "./openObject";
+import { useScreenMembersStore } from "./screen/members";
 
 /** Object menus only list verbs the selected kind can run. State conditions
  * (for example a missing delete receipt) use the registry's ghost reason;
@@ -62,12 +65,48 @@ function item(v: Verb, ctx: VerbContext): WorkMenuEntry {
   };
 }
 
+/** People relationships are protected data, so they are intentionally absent
+ * from Items. The Screen member store is the existing privacy/readiness
+ * source; this adapter gives a kept person the same live object verbs as an
+ * ordinary Desk object without creating a second person ledger. */
+function personMenuEntries(ref: string): WorkMenuEntry[] | null {
+  const match = /^people:([^:]+)$/.exec(ref);
+  if (!match) return null;
+  if (match[1] === "people") return [];
+  const person = useScreenMembersStore.getState().people?.persons.find((candidate) => candidate.id === match[1]);
+  // A protected person that the existing People read did not return is not a
+  // generic primitive. Withhold every verb rather than drawing a dead Open.
+  if (!person) return [];
+  const personRef = `people:${person.id}`;
+  const entries: WorkMenuEntry[] = [
+    { type: "item", id: "object.open", label: "Open", glyph: "▷", onSelect: () => openPerson(person.id) },
+    { type: "item", id: "person.ask-about", label: `Ask about ${person.name.split(/\s+/, 1)[0]}`, glyph: "✦", onSelect: () => { askAboutRef(personRef); } },
+    { type: "item", id: "person.prep", label: "Prep 1:1", glyph: "▸", onSelect: () => openPerson(person.id, "prep") },
+  ];
+  const desk = (useDesk.getState().items.directory ?? []).find((directory) =>
+    directory.id === "hs-seed-desk" || directory.name.trim().toLocaleLowerCase() === "desk",
+  );
+  const kept = desk?.memberIds.some((member) => member === personRef || member === person.id);
+  if (desk && kept) {
+    entries.push({
+      type: "item",
+      id: "person.remove-from-desk",
+      label: "Remove from desk",
+      glyph: "↩",
+      onSelect: () => { void useDesk.getState().removeFromDir(person.id, desk.id, "people"); },
+    });
+  }
+  return entries;
+}
+
 /** The object menu: the object.* verbs, the danger group after a separator.
  *
  * Betterment Q5: a row that does not apply is not shown: no greyed row with
  * its excuse. A ref the desk does not hold as an item (a person's window, an
  * older meeting) offers only the verbs that work without one. */
 export function objectMenuEntries(target: { ref: string }): WorkMenuEntry[] {
+  const personEntries = personMenuEntries(target.ref);
+  if (personEntries) return personEntries;
   const ctx: VerbContext = { selectedRef: target.ref };
   const verbs = menuVerbs("object");
   const object = objectByRef(useDesk.getState().items, target.ref);

@@ -14,6 +14,7 @@ import "./chrome-menus.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { openSurface } from "../shell";
+import { askAboutRef } from "../askAbout";
 import { SYSTEM } from "../systemSprites";
 import { holdObject, qualifiedRef } from "../api";
 import { apiFetch } from "../../lib/api";
@@ -40,6 +41,7 @@ import {
   VERBS, offeredHere, verbById, verbLabel, weekVerbs, type VerbContext, type WeekPerson,
 } from "../verbRegistry";
 import { openPerson, refOpener } from "../openObject";
+import { useScreenMembersStore } from "../screen/members";
 import { handKindOf, handRefOf, openHand, type HandOrigin } from "../agentHand";
 import { primitiveCan } from "../../lib/primitives";
 import { primeSendTo, sendChoices, useSendToTick } from "../windowSend";
@@ -50,16 +52,19 @@ import type { CoverageRecord } from "../coverage";
 import { readProjectCounts } from "../needsYou";
 import { useOnDeskChanged } from "../useDeskChangedRefresh";
 import { Button } from "../../components/signal/Signal";
+import type { WorkMenuEntry } from "./DeskMenu";
 import { PaletteHitLine, snippetParts, snippetText, type PaletteHit } from "./paletteHit";
 import { openProjectRoom } from "../shell";
 import { wireDayClock } from "../surface/format";
 import { rankRow } from "../searchRank";
+import { objectMenuEntries } from "../objectMenu";
 
 // Re-exported so existing imports keep one source (the data moved to
 // desk/tools.ts so the registry never imports a component).
 export { DESK_TOOLS, KIND_LABEL };
 
 const SECTIONS = [
+  "RECENT",
   "ASK",
   "PROJECTS",
   "PEOPLE",
@@ -106,28 +111,11 @@ interface DeckRow {
   /** Betterment AG4: a work item (action, note, meeting, decision) the
    *  selected row hands to an agent with its own verb. */
   hand?: HandOrigin;
+  /** Live object/application verbs, unfolded by the row's arrow. */
+  verbEntries?: Extract<WorkMenuEntry, { type: "item" }>[];
+  /** Exact object ref for Cmd+Enter (Ask with About). */
+  objectRef?: string;
   run(): void;
-}
-
-/* ── recents (localStorage, last 20 run ids) ── */
-const RECENTS_KEY = "hs.desk.palette-recents";
-
-function readRecents(): string[] {
-  try {
-    const raw = JSON.parse(localStorage.getItem(RECENTS_KEY) || "[]");
-    return Array.isArray(raw) ? raw.filter((x) => typeof x === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-function recordRecent(id: string): void {
-  const next = [id, ...readRecents().filter((x) => x !== id)].slice(0, 20);
-  try {
-    localStorage.setItem(RECENTS_KEY, JSON.stringify(next));
-  } catch {
-    /* storage full or denied: recents just stay cold */
-  }
 }
 
 // The palette's ranking lives in ../searchRank (Betterment A5: the About
@@ -277,6 +265,7 @@ export const MEMORY_MIN_QUERY = 3;
 export const PALETTE_RANK_CAP_MS = 600;
 export const MEMORY_DEBOUNCE_MS = 250;
 const MEMORY_ROWS = 6;
+const EMPTY_SCREEN_PEOPLE: never[] = [];
 
 interface MemoryHit {
   kind?: string;
@@ -330,6 +319,8 @@ export function DeskToolShelf() {
   // runnable object then wins, while contextual Send rows remain reachable
   // by arrows without stealing Enter on an object.
   const [sel, setSel] = useState(-1);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [verbSel, setVerbSel] = useState(-1);
   const rootRef = useRef<HTMLElement | null>(null);
   const launchRef = useRef<HTMLButtonElement | null>(null);
   const searchRef = useRef<HTMLInputElement | null>(null);
@@ -339,6 +330,7 @@ export function DeskToolShelf() {
   const models = useDesk((state) => state.models);
   const setup = useDesk((state) => state.setup);
   const selectedIds = useDesk((state) => state.selectedIds);
+  const recentOpened = useDesk((state) => state.recentOpened);
   const openPullout = useDesk((state) => state.openPullout);
   const refresh = useDesk((state) => state.refresh);
   const openToolInspector = useDesk((state) => state.openToolInspector);
@@ -350,6 +342,7 @@ export function DeskToolShelf() {
   // People store (a locked or unset store answers nothing: no rows); the
   // front window's document and its destinations from C5's composition.
   const [people, setPeople] = useState<Array<WeekPerson & { aliases: string[]; role: string }>>([]);
+  const screenPeople = useScreenMembersStore((state) => state.people?.persons ?? EMPTY_SCREEN_PEOPLE);
   const frontId = useFrontWindowId();
   const windows = useAllOpenWindows();
   const sendTick = useSendToTick(open);
@@ -429,6 +422,8 @@ export function DeskToolShelf() {
     if (open) searchRef.current?.focus();
     setQuery("");
     setSel(-1);
+    setExpandedId(null);
+    setVerbSel(-1);
   }, [open]);
 
   // PHILO-13-14 (C4): each opening reads the people and primes the front
@@ -467,6 +462,8 @@ export function DeskToolShelf() {
   useEffect(() => {
     setSel(-1);
     setPendingEnter(false);
+    setExpandedId(null);
+    setVerbSel(-1);
   }, [query]);
 
   useEffect(() => {
@@ -485,7 +482,7 @@ export function DeskToolShelf() {
   }, [open]);
 
   const normalized = query.trim().toLocaleLowerCase();
-  const recents = useMemo(() => readRecents(), [open]);
+  const recents = recentOpened;
 
   // Inventory gap 9: one debounced content search per settled query. A short
   // query, a closed shelf or a name prompt reads nothing.
@@ -512,9 +509,56 @@ export function DeskToolShelf() {
     selectedRef: selectedIds.length === 1 ? selectedIds[0] : null,
   };
 
+  const liveEntries = (ref: string): Extract<WorkMenuEntry, { type: "item" }>[] =>
+    objectMenuEntries({ ref }).filter((entry): entry is Extract<WorkMenuEntry, { type: "item" }> => entry.type === "item");
+
   const localRows: DeckRow[] = useMemo(() => {
     const out: DeckRow[] = [];
     const push = (row: DeckRow) => out.push(row);
+
+    // Recent is the desk store's record of successful opens. It is a view of
+    // the same canonical object/app identities, never a browser ledger.
+    if (!normalized) {
+      for (const recent of recents) {
+        if (recent.startsWith("app:")) {
+          const action = recent.slice("app:".length);
+          const tool = DESK_TOOLS.find((candidate) => candidate.action === action);
+          const application = tool && applicationForAction(tool.action);
+          const v = application ? verbById(applicationVerbId(application)) : undefined;
+          if (!tool || !v || (BUILDER_APPLICATION_ACTIONS.has(tool.action) && !builder)) continue;
+          push({
+            id: `recent:${recent}`,
+            section: "RECENT",
+            glyph: tool.glyph,
+            label: tool.label,
+            kind: "App",
+            terms: `${tool.label} ${tool.description} ${(tool.aliases ?? []).join(" ")}`.toLocaleLowerCase(),
+            name: tool.label,
+            verbEntries: [{ type: "item", id: `app.open.${action}`, label: "Open", glyph: "▷", onSelect: () => v.run(ctx) }],
+            run: () => v.run(ctx),
+          });
+          continue;
+        }
+        const object = allObjects(items).find((candidate) => qualifiedRef(candidate.kind, candidate.id) === recent);
+        const person = recent.startsWith("people:") ? people.find((candidate) => recent === `people:${candidate.id}`) : undefined;
+        if (!object && !person) continue;
+        const kind = object ? (KIND_LABEL[object.kind] ?? object.kind.replace(/_/g, " ")) : "Person";
+        const label = object?.title ?? person!.name;
+        push({
+          id: `recent:${recent}`,
+          section: "RECENT",
+          glyph: object ? (KIND_GLYPH[object.kind] ?? "○") : (KIND_GLYPH.people ?? "⊕"),
+          label,
+          kind,
+          kindWord: kind.toLocaleLowerCase(),
+          body: object ? objectBody(object.ref) : [person!.aliases, person!.role].flat().join(" "),
+          meetingMeta: object ? meetingMeta(object.ref) : undefined,
+          objectRef: recent,
+          verbEntries: liveEntries(recent),
+          run: () => object ? openPullout(qualifiedRef(object.kind, object.id)) : openPerson(person!.id),
+        });
+      }
+    }
 
     // ── PROJECTS: one verb per active Room (HS-171-07) ──
     // Sorted by needs-you count desc then name; the limit of 10 is the
@@ -537,9 +581,12 @@ export function DeskToolShelf() {
         section: "PROJECTS",
         glyph: KIND_GLYPH.project ?? "▣",
         label: `Open ${project.name}`,
-        kind: "PROJECT",
+        kind: "Project",
+        kindWord: "project",
         badge,
         terms: `project room ${project.name}`.toLocaleLowerCase(),
+        objectRef: `project:${project.id}`,
+        verbEntries: liveEntries(`project:${project.id}`),
         run: () => openProjectRoom(project.id), // PHILO-17 U30: a Project opens its Room (one home)
       });
     }
@@ -552,8 +599,10 @@ export function DeskToolShelf() {
           section: "PEOPLE",
           glyph: KIND_GLYPH.people ?? "⊕",
           label: person.name,
-          kind: "PERSON",
+          kind: "Person",
           body: [...person.aliases, person.role, person.kind === "direct_report" ? "report" : ""].join(" "),
+          objectRef: `people:${person.id}`,
+          verbEntries: liveEntries(`people:${person.id}`),
           run: () => openPerson(person.id),
         });
     }
@@ -573,7 +622,7 @@ export function DeskToolShelf() {
           section: "VERBS",
           glyph: "▸",
           label: verb.label,
-          kind: "VERB",
+          kind: "Do",
           terms: verb.keywords,
           wrap: true,
           preselect: !verb.id.startsWith("week.send"),
@@ -588,7 +637,7 @@ export function DeskToolShelf() {
         section: "VERBS",
         glyph: "◇",
         label: action.label,
-        kind: "MODE",
+        kind: "Do",
         run: () => openPullout(qualifiedRef(action.kind, action.id)),
       });
     for (const action of contextualIntegrationActions(
@@ -601,7 +650,7 @@ export function DeskToolShelf() {
         section: "VERBS",
         glyph: "↗",
         label: action.label,
-        kind: "SEND",
+        kind: "Do",
         run: () => openToolInspector("integration", action.id),
       });
     for (const action of contextualCoderSessions(items, selectedIds))
@@ -610,7 +659,7 @@ export function DeskToolShelf() {
         section: "VERBS",
         glyph: "◉",
         label: action.label,
-        kind: "AGENT",
+        kind: "Do",
         run: () => openPullout(qualifiedRef("coder", action.id)),
       });
     for (const v of VERBS) {
@@ -633,7 +682,7 @@ export function DeskToolShelf() {
         section: "VERBS",
         glyph: "▸",
         label,
-        kind: "VERB",
+        kind: "Do",
         keycap: v.key,
         ghost,
         terms: (v.keywords ?? []).join(" "),
@@ -658,10 +707,11 @@ export function DeskToolShelf() {
         glyph: tool.glyph,
         // The application's own name (Today, People), not its verb's.
         label: tool.label,
-        kind: "PROGRAM",
+        kind: "App",
         keycap: v.key,
-        terms: tool.description.toLocaleLowerCase(),
+        terms: `${tool.label} ${tool.description} ${(tool.aliases ?? []).join(" ")} ${tool.parked ?? ""}`.toLocaleLowerCase(),
         name: tool.label,
+        verbEntries: [{ type: "item", id: `app.open.${tool.action}`, label: "Open", glyph: "▷", onSelect: () => v.run(ctx) }],
         run: () => v.run(ctx),
       });
     }
@@ -675,7 +725,8 @@ export function DeskToolShelf() {
         section: "PROGRAMS",
         glyph: l.glyph,
         label: l.badge ? `${l.label} · ${l.badge} waiting` : l.label,
-        kind: "DRAWER",
+        kind: "App",
+        verbEntries: [{ type: "item", id: `app.open.${l.id}`, label: "Open", glyph: "▷", onSelect: () => l.activate() }],
         run: () => l.activate(),
       });
     }
@@ -684,19 +735,21 @@ export function DeskToolShelf() {
     if (normalized) {
       // PHILO-17: no face draws zones; the palette lists no ZONE row.
       for (const item of allObjects(items)) {
-        const kind = (KIND_LABEL[item.kind] ?? item.kind).toUpperCase();
+        const kind = KIND_LABEL[item.kind] ?? item.kind.replace(/_/g, " ");
         push({
           id: `${item.kind}:${item.id}`,
           section: item.kind === "meeting" ? "MEETINGS" : "OBJECTS",
           glyph: item.kind === "meeting" ? "▣" : "○",
           label: item.title,
-          kind,
+          kind: kind.charAt(0) + kind.slice(1).toLocaleLowerCase(),
           kindWord: kind.toLocaleLowerCase(),
           // PHILO-13-14 (C4): a word inside a thought (a note's body) or a
           // speaker of a meeting finds it.
           body: objectBody(item.ref),
           meetingMeta: meetingMeta(item.ref),
           wrap: item.kind === "meeting",
+          objectRef: qualifiedRef(item.kind, item.id),
+          verbEntries: liveEntries(qualifiedRef(item.kind, item.id)),
           run: () => openPullout(qualifiedRef(item.kind, item.id)),
           hand: (() => {
             const handKind = handKindOf(item.kind);
@@ -716,7 +769,8 @@ export function DeskToolShelf() {
         section: "SETTINGS",
         glyph: "S",
         label: row.label,
-        kind: "SETTINGS",
+        kind: "Setting",
+        kindWord: "setting",
         terms: `${row.id} ${row.section} ${row.terms ?? ""}`,
         run: () => openSurface("configure-settings", `${row.section}::${row.focus}`),
       });
@@ -730,7 +784,8 @@ export function DeskToolShelf() {
         // A saved Send destination is set up; `enabled` false only says
         // nothing leaves this device (the built-in HoldSpeak folder read
         // NOT CONFIGURED for "send").
-        kind: integration.enabled ? "INTEGRATION" : integration.saved ? "DESTINATION" : "NOT CONFIGURED",
+        kind: "Setting",
+        kindWord: "setting",
         terms:
           `integration ${integration.destination} ${integration.operation}`.toLocaleLowerCase(),
         run: () => openToolInspector("integration", integration.id),
@@ -742,7 +797,8 @@ export function DeskToolShelf() {
         section: "SETTINGS",
         glyph: "▣",
         label: target.name,
-        kind: target.readiness.available ? "ENGINE" : "UNAVAILABLE",
+        kind: "Setting",
+        kindWord: "setting",
         terms:
           `${target.kind} ${target.boundary} ${target.model}`.toLocaleLowerCase(),
         run: () => openToolInspector("target", target.id),
@@ -753,20 +809,23 @@ export function DeskToolShelf() {
         section: "SETTINGS",
         glyph: "◈",
         label: model.name,
-        kind: "MODEL",
+        kind: "Setting",
+        kindWord: "setting",
         terms: "model",
         run: () => void openNewThread({ title: model.name, profile_override: model.name }),
       });
 
     // ── one door per name (HS-202-02) ──
-    const openDoors = oneDoorPerName(out);
+    const openDoors = normalized
+      ? oneDoorPerName(out)
+      : out.filter((row) => row.section === "RECENT" || row.section === "PROGRAMS");
 
     // ── rank, cut, and settle into section bands ──
     const ranked = openDoors
       .map((row, i) => ({
         row,
         i,
-        score: rankRow(row, normalized, recents.includes(row.id), true),
+        score: rankRow(row, normalized, row.section === "RECENT" || recents.includes(row.id), true),
       }))
       .filter((r) => r.score > 0);
     const sectionRank = (s: Section) => SECTIONS.indexOf(s);
@@ -801,29 +860,13 @@ export function DeskToolShelf() {
     recents,
     selectedIds,
     targets,
+    screenPeople,
   ]);
 
-  // Per-section cut: a query keeps the deck dense; the cold deck
-  // shows every PROGRAM (they are the launcher truth) and a short
-  // head of everything else.
+  // The Search deck is one ranked list. The empty deck has only Recent and
+  // the manifest's application doors; typed queries may include every kind.
   const localCapped: DeckRow[] = useMemo(() => {
-    const cap = (s: Section) =>
-      s === "PROJECTS"
-        ? 10
-        : normalized
-          ? s === "OBJECTS"
-            ? 5
-            : 10
-          : s === "PROGRAMS"
-            ? Number.POSITIVE_INFINITY
-            : 6;
-    const byCount = new Map<Section, number>();
-    return localRows.filter((row) => {
-      const n = byCount.get(row.section) ?? 0;
-      if (n >= cap(row.section)) return false;
-      byCount.set(row.section, n + 1);
-      return true;
-    });
+    return localRows;
   }, [localRows, normalized]);
 
   // ── MEMORY: the content hits, after the local matches. Only the hits of
@@ -851,7 +894,8 @@ export function DeskToolShelf() {
         section: "MEMORY",
         glyph: KIND_GLYPH[kind] ?? (kind === "meeting" ? "▣" : "○"),
         label: title,
-        kind: (KIND_LABEL[kind] ?? kind.replace(/_/g, " ")).toUpperCase(),
+        kind: KIND_LABEL[kind] ?? kind.replace(/_/g, " "),
+        kindWord: (KIND_LABEL[kind] ?? kind.replace(/_/g, " ")).toLocaleLowerCase(),
         wrap: true,
         hit: {
           parts: detail && detail !== title ? parts : [],
@@ -889,8 +933,10 @@ export function DeskToolShelf() {
   const rows: DeckRow[] = useMemo(() => {
     const drawn = drawnRef.current;
     const same = ranked && drawn.ids !== null && drawn.open === open && drawn.query === normalized && !prompt;
-    const next = oneBandPerSection(
-      stableDeck(same ? drawn.ids : null, [...localRows, ...memoryRows], [...localCapped, ...memoryRows]),
+    const next = stableDeck(
+      same ? drawn.ids : null,
+      [...localRows, ...memoryRows],
+      [...localCapped, ...memoryRows],
     );
     drawnRef.current = { query: normalized, open, ids: ranked ? next.map((r) => r.id) : null };
     // Betterment Q3: Ask "…" — first when the text reads like a question,
@@ -898,13 +944,13 @@ export function DeskToolShelf() {
     // so the row never moves under his eye. Enter on it opens Ask with the
     // text and runs it.
     const asked = query.trim();
-    if (prompt || asked.length < MEMORY_MIN_QUERY) return next;
+    if (prompt || !asked) return next;
     const askRow: DeckRow = {
       id: "ask.question",
       section: "ASK",
       glyph: "✦",
       label: `Ask "${asked}"`,
-      kind: "ASK",
+      kind: "Ask",
       wrap: true,
       run: () => useDesk.getState().askQuestion(asked),
     };
@@ -933,7 +979,12 @@ export function DeskToolShelf() {
   const defaultIndex = askFirst ? 0 : exactNamed >= 0 ? exactNamed : firstObject >= 0 ? firstObject : firstNotAsk;
   const selectedIndex = sel < 0 ? defaultIndex : Math.min(sel, runnable.length - 1);
   const selected = runnable.length ? runnable[selectedIndex] : null;
-  const activeId = selected ? `desk-palette-option-${selected.id}` : undefined;
+  const selectedVerbs = selected && expandedId === selected.id ? (selected.verbEntries ?? []) : [];
+  const activeId = selected
+    ? verbSel >= 0 && selectedVerbs[verbSel]
+      ? `desk-palette-verb-${selected.id}-${selectedVerbs[verbSel].id}`
+      : `desk-palette-option-${selected.id}`
+    : undefined;
 
   const submitName = () => {
     const name = query.trim();
@@ -945,9 +996,13 @@ export function DeskToolShelf() {
 
   const runRow = (row: DeckRow) => {
     if (row.ghost) return;
-    if (row.section !== "ASK") recordRecent(row.id);
     close();
     row.run();
+  };
+
+  const runVerb = (entry: Extract<WorkMenuEntry, { type: "item" }>) => {
+    close();
+    entry.onSelect();
   };
 
   // The remembered Enter runs on the first ranked drawing.
@@ -959,26 +1014,58 @@ export function DeskToolShelf() {
   }, [pendingEnter, ranked, open, prompt]);
 
   const onDeckKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    if (event.metaKey && event.key === "Enter" && selected?.objectRef) {
+      event.preventDefault();
+      const ref = selected.objectRef;
+      close();
+      askAboutRef(ref);
+    } else if (event.key === "ArrowRight") {
+      if (!selected?.verbEntries?.length) return;
+      event.preventDefault();
+      setExpandedId(selected.id);
+      setVerbSel(-1);
+    } else if (event.key === "ArrowLeft") {
+      if (!expandedId) return;
+      event.preventDefault();
+      setExpandedId(null);
+      setVerbSel(-1);
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       // While the list waits for its ranking, there is nothing to move to.
       if (!ranked || !runnable.length) return;
       setSel((now) => {
         const at = now < 0 ? defaultIndex : Math.min(now, runnable.length - 1);
-        return event.key === "ArrowDown"
+        if (expandedId === selected?.id && selectedVerbs.length) {
+          const verbAt = verbSel < 0 ? -1 : verbSel;
+          if (event.key === "ArrowDown" && verbAt < selectedVerbs.length - 1) {
+            setVerbSel(verbAt + 1);
+            return at;
+          }
+          if (event.key === "ArrowUp" && verbAt > 0) {
+            setVerbSel(verbAt - 1);
+            return at;
+          }
+          setExpandedId(null);
+          setVerbSel(-1);
+        }
+        const next = event.key === "ArrowDown"
           ? Math.min(at + 1, runnable.length - 1)
           : Math.max(at - 1, 0);
+        setVerbSel(-1);
+        return next;
       });
     } else if (event.key === "Enter") {
       // Enter ALWAYS runs the selected hit - the top hit by default.
       event.preventDefault();
       if (prompt) submitName();
       else if (!ranked) setPendingEnter(true);
+      else if (selected && verbSel >= 0 && selectedVerbs[verbSel]) runVerb(selectedVerbs[verbSel]);
       else if (selected) runRow(selected);
     }
   };
 
-  let lastSection: Section | null = null;
+  const seenKinds = new Set<string>();
+  const showBands = rows.length > 8;
 
   return (
     <>
@@ -1015,18 +1102,18 @@ export function DeskToolShelf() {
               id="desk-tool-shelf"
               className={decisionPrompt ? "desk-tool-shelf desk-decision-prompt" : "desk-tool-shelf"}
               role="region"
-              aria-label={decisionPrompt ? "New decision" : "Tools and Desk search"}
+              aria-label={decisionPrompt ? "New decision" : "Search"}
               onKeyDown={onDeckKeyDown}
             >
               {decisionPrompt ? <h2 className="desk-decision-prompt-title">New decision</h2> : null}
               <div className="desk-tool-search-head">
                 <label className="desk-tool-search">
-                  <span className={decisionPrompt ? "desk-decision-prompt-label" : "sr-only"}>{prompt ? prompt.label : "Search tools and Desk items"}</span>
+                  <span className={decisionPrompt ? "desk-decision-prompt-label" : "sr-only"}>{prompt ? prompt.label : "Find, open or ask"}</span>
                   <StringGadget
                     inputRef={searchRef}
-                    label={prompt ? prompt.label : "Search tools and Desk items"}
+                    label={prompt ? prompt.label : "Find, open or ask"}
                     value={query}
-                    placeholder={prompt ? prompt.label : "Search tools and Desk items"}
+                    placeholder={prompt ? prompt.label : "Find, open or ask"}
                     onChange={setQuery}
                     inputProps={prompt ? { "data-testid": "palette-name" } as Record<string, string> : {
                       role: "combobox",
@@ -1058,60 +1145,104 @@ export function DeskToolShelf() {
                   role="listbox"
                 >
                   {rows.map((row) => {
-                    // The Ask row needs no band: its words say what it is.
-                    const band =
-                      row.section !== lastSection && row.section !== "ASK" ? row.section : null;
-                    lastSection = row.section;
+                    const band = showBands && !seenKinds.has(row.kind) ? row.kind : null;
+                    seenKinds.add(row.kind);
                     const isSel = selected?.id === row.id;
+                    const isExpanded = expandedId === row.id && !!row.verbEntries?.length;
+                    const verbs = row.verbEntries ?? [];
                     return (
                       <li key={row.id}>
                         {band ? (
                           <span className="desk-deck-band">{band}</span>
                         ) : null}
-                        <Button
-                          variant="chrome"
-                          id={`desk-palette-option-${row.id}`}
-                          role="option"
-                          aria-selected={isSel}
-                          className={
-                            "desk-deck-row" +
-                            (isSel ? " is-selected" : "") +
-                            (row.ghost ? " is-ghost" : "")
-                          }
-                          aria-disabled={row.ghost ? true : undefined}
-                          data-wrap={row.wrap || undefined}
-                          data-meeting={!!row.meetingMeta || undefined}
-                          aria-current={isSel || undefined}
-                          onClick={() => runRow(row)}
-                          onPointerEnter={(event) => {
-                            // Betterment Q3: only a mouse moves the selection.
-                            // On a phone a tap's pointerenter redrew the row
-                            // under the finger and the tap did not open it.
-                            if (row.ghost || event.pointerType === "touch" || event.pointerType === "pen") return;
-                            const at = runnable.findIndex(
-                              (r) => r.id === row.id,
-                            );
-                            if (at >= 0) setSel(at);
-                          }}
-                        >
-                          <span className="desk-deck-glyph" aria-hidden="true">
-                            {row.glyph}
-                          </span>
-                          <span className="desk-deck-label">
-                            {row.hit || row.meetingMeta ? <span className="desk-deck-title">{row.label}</span> : row.label}
-                            {row.ghost ? (
-                              <small className="quiet"> · {row.ghost}</small>
+                        <div className="desk-deck-row-wrap">
+                          <Button
+                            variant="chrome"
+                            id={`desk-palette-option-${row.id}`}
+                            role="option"
+                            aria-selected={isSel}
+                            className={
+                              "desk-deck-row" +
+                              (isSel ? " is-selected" : "") +
+                              (row.ghost ? " is-ghost" : "")
+                            }
+                            aria-disabled={row.ghost ? true : undefined}
+                            aria-expanded={row.verbEntries?.length ? isExpanded : undefined}
+                            data-wrap={row.wrap || undefined}
+                            data-meeting={!!row.meetingMeta || undefined}
+                            aria-current={isSel || undefined}
+                            onClick={() => runRow(row)}
+                            onPointerEnter={(event) => {
+                              // Betterment Q3: only a mouse moves the selection.
+                              // On a phone a tap's pointerenter redrew the row
+                              // under the finger and the tap did not open it.
+                              if (row.ghost || event.pointerType === "touch" || event.pointerType === "pen") return;
+                              const at = runnable.findIndex(
+                                (r) => r.id === row.id,
+                              );
+                              if (at >= 0) {
+                                setSel(at);
+                                setVerbSel(-1);
+                              }
+                            }}
+                          >
+                            <span className="desk-deck-glyph" aria-hidden="true">
+                              {row.glyph}
+                            </span>
+                            <span className="desk-deck-label">
+                              {row.hit || row.meetingMeta ? <span className="desk-deck-title">{row.label}</span> : row.label}
+                              {row.ghost ? (
+                                <small className="quiet"> · {row.ghost}</small>
+                              ) : null}
+                              {row.hit ? <PaletteHitLine hit={row.hit} /> : null}
+                              {row.meetingMeta ? <span className="desk-deck-meeting-meta">{row.meetingMeta}</span> : null}
+                            </span>
+                            {row.badge ? (
+                              <span className="desk-deck-badge">{row.badge}</span>
                             ) : null}
-                            {row.hit ? <PaletteHitLine hit={row.hit} /> : null}
-                            {row.meetingMeta ? <span className="desk-deck-meeting-meta">{row.meetingMeta}</span> : null}
-                          </span>
-                          {row.badge ? (
-                            <span className="desk-deck-badge">{row.badge}</span>
+                            <span className="desk-deck-kind">{row.kind}</span>
+                            {/* PHILO-15 11 (B21): no ⌘ hint on a phone. */}
+                            {row.keycap && !(typeof window !== "undefined" && window.innerWidth <= 720) ? <kbd>{row.keycap}</kbd> : null}
+                          </Button>
+                          {row.verbEntries?.length ? (
+                            <Button
+                              dense
+                              variant="chrome"
+                              className="desk-deck-arrow"
+                              aria-label={`${isExpanded ? "Close" : "Open"} actions for ${row.label}`}
+                              aria-expanded={isExpanded}
+                              onClick={() => {
+                                setExpandedId(isExpanded ? null : row.id);
+                                setVerbSel(-1);
+                              }}
+                            >
+                              {isExpanded ? "⌄" : "›"}
+                            </Button>
                           ) : null}
-                          <span className="desk-deck-kind">{row.kind}</span>
-                          {/* PHILO-15 11 (B21): no ⌘ hint on a phone. */}
-                          {row.keycap && !(typeof window !== "undefined" && window.innerWidth <= 720) ? <kbd>{row.keycap}</kbd> : null}
-                        </Button>
+                        </div>
+                        {isExpanded ? (
+                          <div className="desk-deck-verbs" role="group" aria-label={`Actions for ${row.label}`}>
+                            {verbs.map((entry, index) => {
+                              const active = isSel && verbSel === index;
+                              return (
+                                <Button
+                                  dense
+                                  variant="chrome"
+                                  key={entry.id}
+                                  id={`desk-palette-verb-${row.id}-${entry.id}`}
+                                  role="option"
+                                  aria-selected={active}
+                                  className={`desk-deck-row desk-deck-verb-row${active ? " is-selected" : ""}`}
+                                  onClick={() => runVerb(entry)}
+                                >
+                                  <span className="desk-deck-glyph" aria-hidden="true">{entry.glyph ?? "▸"}</span>
+                                  <span className="desk-deck-label">{entry.label}</span>
+                                  <span className="desk-deck-kind">Do</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        ) : null}
                         {/* Betterment AG4: the selected work item hands to an agent from here. */}
                         {isSel && row.hand ? (
                           <Button

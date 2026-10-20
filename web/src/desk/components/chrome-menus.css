@@ -427,6 +427,41 @@
   text-align: left;
   cursor: pointer;
 }
+.desk-next .desk-deck-row-wrap {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+.desk-next .desk-deck-row-wrap > .desk-deck-row {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.desk-next .desk-deck-arrow {
+  flex: 0 0 34px;
+  min-width: 34px;
+  min-height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  cursor: pointer;
+}
+.desk-next .desk-deck-arrow:hover,
+.desk-next .desk-deck-arrow:focus-visible {
+  background: var(--wb-sel);
+  color: var(--wb-paper);
+  outline: 0;
+}
+.desk-next .desk-deck-verbs {
+  margin-left: 20px;
+  border-left: 1px solid var(--border);
+}
+.desk-next .desk-deck-verb-row {
+  padding-left: 16px;
+}
 .desk-next .desk-deck-glyph {
   width: var(--size-icon-sm);
   flex: none;
@@ -1133,6 +1168,11 @@
   .desk-next .desk-deck-row,
   .desk-next .desk-deck-row[data-wrap] {
     height: auto;
+    min-height: var(--desk-button-hit-size);
+  }
+  .desk-next .desk-deck-arrow {
+    flex-basis: var(--desk-button-hit-size);
+    min-width: var(--desk-button-hit-size);
     min-height: var(--desk-button-hit-size);
   }
   /* The clock's date is redundant on the narrowest bar; its accessible name

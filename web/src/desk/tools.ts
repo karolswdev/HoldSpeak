@@ -18,6 +18,8 @@ export const DESK_TOOLS = DESK_APPLICATIONS.filter(
   subjectRef: application.subjectRef,
   windowId: application.windowId,
   shortcut: application.shortcut,
+    aliases: application.aliases?.flatMap((alias) => [alias.key, alias.scope ?? ""]) ?? [],
+    parked: application.parked,
   }));
 
 /** HS-148-02: unicode kind glyphs for the seven create nouns —
