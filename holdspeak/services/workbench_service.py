@@ -7,6 +7,7 @@ import json
 import time
 import uuid
 from typing import Any, Callable
+from holdspeak.timestamps import utc_now_iso
 
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
@@ -32,7 +33,7 @@ def _spend_limit(limit: Any) -> float | None:
 #: Betterment M3: the sentence words an agent uses (DESIGN section 4), and
 #: the stored field each content word writes. ``when``, ``with`` and
 #: ``spend_limit`` go through set_when and set_engine (the owner's).
-SENTENCE_WORDS = frozenset({"do", "about", "when", "with", "put_in", "spend_limit"})
+SENTENCE_WORDS = frozenset({"do", "about", "when", "with", "put_in", "spend_limit", "review_by"})
 _SENTENCE_CONTENT = {"do": "instruction", "about": "sources", "put_in": "output_target"}
 
 
@@ -290,10 +291,28 @@ class WorkbenchService:
             raise ServiceError("owner_principal_required", "Only the owner can choose the engine",
                                context={"status": 403})
         _launch_own(principal, f"workbench:{workbench_id}")
-        self._require_workbench(workbench_id)
+        wb = self._require_workbench(workbench_id)
         unknown = set(fields) - {"profile_id", "spend_limit_usd"}
         if unknown:
             raise ValidationError(f"Unknown fields: {', '.join(sorted(unknown))}")
+        if str(getattr(wb, "do_kind", "run") or "run") == "hand_to_agent":
+            profile_id = str(fields.get("profile_id") or "").strip()
+            if profile_id:
+                aliases = {
+                    "agent-claude": "claude-default", "legacy-agent-claude": "claude-default",
+                    "agent-codex": "codex-default", "legacy-agent-codex": "codex-default",
+                    "agent-pi": "pi-default", "legacy-agent-pi": "pi-default",
+                }
+                profile_id = aliases.get(profile_id, profile_id)
+                with self._db._connection() as conn:
+                    conn.execute(
+                        "UPDATE workbenches SET agent_profile=?, last_modified=? WHERE id=? AND deleted=0",
+                        (profile_id, utc_now_iso(), workbench_id),
+                    )
+            if "spend_limit_usd" in fields:
+                self._db.workbenches.set_spend_limit(workbench_id, _spend_limit(fields["spend_limit_usd"]))
+            self._changed("workbench", workbench_id, "update")
+            return self.get_workbench(principal, workbench_id)
         if "spend_limit_usd" in fields:
             self._db.workbenches.set_spend_limit(workbench_id, _spend_limit(fields["spend_limit_usd"]))
         profile_id = str(fields.get("profile_id") or "").strip()
@@ -433,7 +452,18 @@ class WorkbenchService:
         if unknown:
             raise ValidationError(f"Unknown sentence words: {', '.join(sorted(unknown))}")
         if "with" in sentence and not str(sentence["with"] or "").strip():
-            raise ValidationError("with is an engine's profile id, from model_library.get")
+            raise ValidationError("with is an installed agent profile id")
+        if "do" in sentence:
+            do = str(sentence["do"] or "").strip()
+            if do not in {"hand_to_agent", "run"} and not do:
+                raise ValidationError("do must be hand_to_agent or run")
+        if "review_by" in sentence:
+            from .agent_review import normalize_review_by
+
+            try:
+                normalize_review_by(sentence["review_by"])
+            except ServiceError as exc:
+                raise ValidationError(str(exc)) from exc
         if "spend_limit" in sentence:
             _spend_limit(sentence["spend_limit"])
         if "when" not in sentence:
@@ -445,6 +475,21 @@ class WorkbenchService:
     @staticmethod
     def _sentence_content(sentence: dict[str, Any], fields: dict[str, Any]) -> dict[str, Any]:
         content = {stored: sentence[word] for word, stored in _SENTENCE_CONTENT.items() if word in sentence}
+        if "do" in sentence:
+            do = str(sentence["do"] or "").strip()
+            if do in {"hand_to_agent", "run"}:
+                content["do_kind"] = do
+                if do == "hand_to_agent":
+                    # A hand has no inference prompt by default.  The source
+                    # item is the agent's brief; an explicit instruction may
+                    # still be supplied as a closed field.
+                    content.pop("instruction", None)
+        if "with" in sentence:
+            content["agent_profile"] = str(sentence["with"]).strip()
+        if "review_by" in sentence:
+            from .agent_review import normalize_review_by
+
+            content["review_by"] = normalize_review_by(sentence["review_by"])
         both = set(content) & set(fields)
         if both:
             raise ValidationError(f"Give each once, as a sentence word or a field: {', '.join(sorted(both))}")
@@ -454,8 +499,12 @@ class WorkbenchService:
         self, principal: Principal, workbench_id: str, sentence: dict[str, Any], when: dict[str, Any] | None,
     ) -> dict[str, Any]:
         engine: dict[str, Any] = {}
-        if "with" in sentence:
+        wb = self._require_workbench(workbench_id)
+        hand_mode = str(getattr(wb, "do_kind", "run") or "run") == "hand_to_agent"
+        if "with" in sentence and not hand_mode:
             engine["profile_id"] = str(sentence["with"]).strip()
+        elif "with" in sentence:
+            self.update_workbench(principal, workbench_id, agent_profile=str(sentence["with"]).strip())
         if "spend_limit" in sentence:
             engine["spend_limit_usd"] = sentence["spend_limit"]
         if engine:
@@ -707,7 +756,8 @@ class WorkbenchService:
         its result goes where ``output_target`` says (Betterment A2)."""
         self._require_workbench(workbench_id)
         from holdspeak.workbench_conductor import run_workbench
-        if request_id or source_event or item_ids:
+        wb = self._require_workbench(workbench_id)
+        if request_id or source_event or item_ids or str(getattr(wb, "do_kind", "run") or "run") == "hand_to_agent":
             from holdspeak.kernel.runtime import _service
             from holdspeak.services.workbench_runner import WorkbenchRunner
             result = await WorkbenchRunner(self._db, _service()).run(
@@ -827,7 +877,7 @@ class WorkbenchService:
         from .automation_when import cron_for
 
         return [{**starter, "schedule": cron_for(starter["when"]) if starter["when"]["kind"] == "schedule" else None}
-                for starter in list_templates()]
+                for starter in list_templates(self._db)]
 
     def make_from_starter(
         self, principal: Principal, starter: dict[str, Any], *, workbench_id: str = "",
@@ -843,6 +893,9 @@ class WorkbenchService:
         made = self.create_workbench(
             principal, **extra, name=starter["name"], instruction=starter["instruction"],
             sources=list(starter["sources"]), output_target=starter["output_target"],
+            do_kind=str(starter.get("do_kind") or "run"),
+            agent_profile=str(starter.get("agent_profile") or ""),
+            review_by=str(starter.get("review_by") or ""),
             schedule=cron_for(when) if when["kind"] == "schedule" else None, schedule_enabled=False,
         )
         self._db.workbenches.set_when_json(made["id"], {"kind": when["kind"]})
@@ -1124,7 +1177,7 @@ class WorkbenchService:
         from .automation_runs import effective_instruction, results_of, source_names, sources_of
 
         shown, source = effective_instruction(self._db, wb)
-        payload["instruction_shown"] = shown
+        payload["instruction_shown"] = "Hand to an agent" if str(getattr(wb, "do_kind", "run")) == "hand_to_agent" else shown
         payload["instruction_from"] = source
         payload["results"] = results_of(self._db, wb.id)
         # Betterment A3: the About line names each source (never its ref).
@@ -1204,6 +1257,9 @@ class WorkbenchService:
             "instruction": str(pick("instruction", existing.instruction if existing else "") or ""),
             "sources": list(pick("sources", json.loads(existing.sources_json or "[]") if existing else [])),
             "output_target": str(pick("output_target", existing.output_target if existing else "inbox") or "inbox"),
+            "do_kind": str(pick("do_kind", existing.do_kind if existing else "run") or "run"),
+            "agent_profile": str(pick("agent_profile", existing.agent_profile if existing else "") or ""),
+            "review_by": str(pick("review_by", existing.review_by if existing else "") or ""),
         }
 
     def _clean_automation_fields(self, fields: dict[str, Any]) -> None:
@@ -1218,3 +1274,16 @@ class WorkbenchService:
             fields["sources"] = clean_sources(fields["sources"])
         if "output_target" in fields:
             fields["output_target"] = clean_output_target(self._db, fields["output_target"])
+        if "do_kind" in fields:
+            fields["do_kind"] = str(fields["do_kind"] or "run").strip()
+            if fields["do_kind"] not in {"run", "hand_to_agent"}:
+                raise ValidationError("do_kind must be hand_to_agent or run")
+        if "agent_profile" in fields:
+            fields["agent_profile"] = str(fields["agent_profile"] or "").strip()
+        if "review_by" in fields:
+            from .agent_review import normalize_review_by
+
+            try:
+                fields["review_by"] = normalize_review_by(fields["review_by"])
+            except ServiceError as exc:
+                raise ValidationError(str(exc)) from exc

@@ -269,12 +269,145 @@ class WorkbenchRunner:
         links = self._record_terminal(run_id, parent, receipt, ran=ran)
         return {"run_id": run_id, "parent_operation_id": parent.operation_id, "receipt_id": receipt["receipt_id"], "terminal_disposition": receipt.get("outcome"), "children": links}
 
+    def _run_hand(
+        self, principal: Principal, wb: Any, *, item_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """AG14: hand each eligible source item once through AgentHandService."""
+        from . import automation_runs as automation
+        from .agent_hand_service import default_agent_hand_service
+
+        run_id = "wbrun_" + uuid.uuid4().hex[:12]
+        candidates = automation.materialize_hand_items(self.db, wb)
+        if item_ids is not None:
+            wanted = {str(value) for value in item_ids if str(value)}
+            candidates = [item for item in candidates if item.id in wanted]
+        with self.db._connection() as conn:
+            conn.execute(
+                "INSERT INTO workbench_runs(id,workbench_id,started_at,status) VALUES(?,?,?, 'running')",
+                (run_id, wb.id, utc_now_iso()),
+            )
+
+        # A scheduled hand has the same local owner authority as the existing
+        # scheduler-delivered result path.  AgentHandService still owns the
+        # admission, working-at-once limit, queue and launch ledger.
+        hand_principal = principal
+        if principal.kind is PrincipalKind.SCHEDULER:
+            hand_principal = Principal(PrincipalKind.OWNER, "local-automation-conductor")
+        hand_service = default_agent_hand_service(self.db)
+        started: list[dict[str, Any]] = []
+        queued: list[dict[str, Any]] = []
+        skipped: list[dict[str, Any]] = []
+        failed = 0
+        profile = str(getattr(wb, "agent_profile", "") or "").strip() or None
+        review_by = str(getattr(wb, "review_by", "") or "").strip() or None
+        instruction = str(getattr(wb, "instruction", "") or "").strip() or None
+        for item in candidates:
+            context = automation._hand_context(item)
+            hand = context.get("agent_hand") if isinstance(context.get("agent_hand"), dict) else {}
+            prior = str(hand.get("status") or "")
+            if prior in {"starting", "queued", "launched", "done", "failed"} or hand.get("launch_id") or hand.get("queue_id"):
+                skipped.append({"item_id": item.id, "title": item.title, "status": prior or "handed"})
+                continue
+            # The source item is the existing durable idempotency seam. Claim
+            # it under SQLite's write lock before the process launch so two
+            # concurrent Run presses cannot hand the same source twice.
+            context["occurrence"] = True
+            context["agent_hand"] = {**hand, "status": "starting", "run_id": run_id}
+            with self.db._connection() as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                current = conn.execute("SELECT context_json, status FROM workbench_items WHERE id=?", (item.id,)).fetchone()
+                try:
+                    current_context = json.loads(current["context_json"] or "{}") if current else {}
+                except (TypeError, ValueError):
+                    current_context = {}
+                current_hand = current_context.get("agent_hand") if isinstance(current_context, dict) and isinstance(current_context.get("agent_hand"), dict) else {}
+                current_status = str(current_hand.get("status") or "")
+                if current is None or current_status in {"starting", "queued", "launched", "done", "failed"} or current_hand.get("launch_id") or current_hand.get("queue_id"):
+                    skipped.append({"item_id": item.id, "title": item.title, "status": current_status or "handed"})
+                    continue
+                claimed = conn.execute(
+                    "UPDATE workbench_items SET status='claimed', context_json=?, last_modified=? WHERE id=? AND status='pending'",
+                    (json.dumps(context, sort_keys=True), utc_now_iso(), item.id),
+                ).rowcount
+                if claimed != 1:
+                    skipped.append({"item_id": item.id, "title": item.title, "status": "claimed"})
+                    continue
+            source_ref = str(hand.get("source_ref") or "")
+            kind, _, source_id = source_ref.partition(":")
+            if not kind or not source_id:
+                failed += 1
+                skipped.append({"item_id": item.id, "title": item.title, "status": "invalid_source"})
+                continue
+            try:
+                answer = hand_service.hand_item(
+                    hand_principal,
+                    kind=kind,
+                    id=source_id,
+                    instruction=instruction,
+                    profile=profile,
+                    queue=True,
+                    review_by=review_by,
+                )
+                state = str(answer.get("status") or "launched")
+                hand = {
+                    **hand,
+                    "status": state,
+                    "run_id": run_id,
+                    "profile": str(answer.get("profile") or profile or ""),
+                    "review_by": review_by or "none",
+                    **({"launch_id": str(answer["launch_id"])} if answer.get("launch_id") else {}),
+                    **({"queue_id": str(answer["queue_id"])} if answer.get("queue_id") else {}),
+                }
+                context["occurrence"] = True
+                context["agent_hand"] = hand
+                with self.db._connection() as conn:
+                    conn.execute(
+                        "UPDATE workbench_items SET status='pending', context_json=?, last_modified=? WHERE id=? AND status='claimed'",
+                        (json.dumps(context, sort_keys=True), utc_now_iso(), item.id),
+                    )
+                entry = {"item_id": item.id, "title": item.title, "source_ref": source_ref, **answer}
+                if state == "queued":
+                    queued.append(entry)
+                else:
+                    started.append(entry)
+            except Exception as exc:
+                failed += 1
+                context["occurrence"] = True
+                context["agent_hand"] = {
+                    **hand, "status": "failed", "run_id": run_id,
+                    "error": str(getattr(exc, "detail", None) or exc),
+                }
+                with self.db._connection() as conn:
+                    conn.execute(
+                        "UPDATE workbench_items SET status='failed', result=?, context_json=?, completed_at=?, last_modified=? WHERE id=? AND status='claimed'",
+                        (f"Error: {context['agent_hand']['error']}", json.dumps(context, sort_keys=True), utc_now_iso(), utc_now_iso(), item.id),
+                    )
+
+        with self.db._connection() as conn:
+            conn.execute(
+                """UPDATE workbench_runs SET completed_at=?, items_attempted=?, items_completed=0,
+                   items_failed=?, status='completed' WHERE id=?""",
+                (utc_now_iso(), len(candidates), failed, run_id),
+            )
+        return {
+            "run_id": run_id,
+            "status": "completed",
+            "agents_started": started,
+            "agents_queued": queued,
+            "skipped": skipped,
+            "items_attempted": len(candidates),
+            "items_completed": 0,
+            "items_failed": failed,
+        }
+
     async def run(self, principal: Principal, workbench_id: str, *, memory_enabled: bool=True, request_id: str|None=None, deadline_seconds: float|None=None, delegation: dict[str, Any] | None = None, due_minute: int | None = None, source_event: dict[str, str] | None = None, item_ids: list[str] | None = None) -> dict[str,Any]:
         if principal is None or principal.kind is PrincipalKind.NONE:
             from ..kernel.model import KernelRefused
             raise KernelRefused("principal_authentication_required")
         wb=self.db.workbenches.get(workbench_id)
         if wb is None: raise ServiceError("not_found","Unknown automation",context={"status":404})
+        if str(getattr(wb, "do_kind", "run") or "run") == "hand_to_agent":
+            return await asyncio.to_thread(self._run_hand, principal, wb, item_ids=item_ids)
         recipe=self.db.recipes.get(wb.recipe_id) if wb.recipe_id else None
         # Betterment A2: an automation with an instruction needs no agent.
         from . import automation_runs as automation

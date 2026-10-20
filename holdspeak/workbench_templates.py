@@ -13,6 +13,8 @@ retired as starters: Today and cadence do that work. They stay below, hidden
 """
 from __future__ import annotations
 
+from typing import Any
+
 #: Betterment daily D9: the Morning prep starter, and the stable id of the one
 #: automation the hub makes from it (``automation_runs.ensure_morning_prep``).
 MORNING_PREP_STARTER = "morning-prep"
@@ -98,6 +100,50 @@ STARTERS = [
         "sources": ["meetings:this_week", "notes:this_week"],
         "when": {"kind": "schedule", "every": "weekday", "time": "07:30"},
         "output_target": "today",
+        "blanks": {},
+    },
+]
+
+# AG14 starters are offered only when their local Watch or decision source has
+# data now.  A blank hand automation would press a verb with no eligible item.
+AGENT_STARTERS = [
+    {
+        "id": "morning-bug-sweep",
+        "name": "Morning bug sweep",
+        "description": "Hands Jira bugs labelled agent-ok to Claude Code.",
+        "instruction": "Work on this bug. Say Done and give the owner the result.",
+        "sources": ["jira:bugs:agent-ok"],
+        "when": {"kind": "schedule", "every": "weekday", "time": "07:00"},
+        "output_target": "today",
+        "do_kind": "hand_to_agent",
+        "agent_profile": "claude-default",
+        "review_by": "codex",
+        "blanks": {},
+    },
+    {
+        "id": "review-requests",
+        "name": "Review requests",
+        "description": "Hands GitHub review requests to Codex. Findings stay on the agent result.",
+        "instruction": "Read this pull request and write findings in your result. Do not post findings.",
+        "sources": ["github:review_requests"],
+        "when": {"kind": "manual"},
+        "output_target": "today",
+        "do_kind": "hand_to_agent",
+        "agent_profile": "codex-default",
+        "review_by": "none",
+        "blanks": {},
+    },
+    {
+        "id": "friday-runbook",
+        "name": "Friday runbook",
+        "description": "Hands this week's decisions to an agent to update the runbook.",
+        "instruction": "Update the runbook from this decision. Say Done and give the owner the result.",
+        "sources": ["decisions:this_week"],
+        "when": {"kind": "schedule", "every": "week", "day": 5, "time": "16:00"},
+        "output_target": "today",
+        "do_kind": "hand_to_agent",
+        "agent_profile": "claude-default",
+        "review_by": "none",
         "blanks": {},
     },
 ]
@@ -223,13 +269,53 @@ TEMPLATES = [
 ]
 
 
-def list_templates() -> list[dict]:
+def list_templates(db: Any = None) -> list[dict]:
     """What New automation offers: the starters only (the templates are hidden)."""
-    return STARTERS
+    if db is None:
+        return STARTERS
+    from holdspeak.services.automation_runs import expand_sources
+
+    available = []
+    for starter in AGENT_STARTERS:
+        try:
+            refs, _about = expand_sources(db, list(starter["sources"]))
+            if refs:
+                candidate = dict(starter)
+                if starter["id"] == "review-requests":
+                    repository = _review_repository(db)
+                    if repository:
+                        candidate["when"] = {
+                            "kind": "event",
+                            "event_id": "github-review-requested",
+                            "repository": repository,
+                        }
+                available.append(candidate)
+        except Exception:
+            continue
+    return [*STARTERS, *available]
+
+
+def _review_repository(db: Any) -> str:
+    """The configured repository for the review-request starter."""
+    import json
+
+    with db._connection() as conn:
+        rows = conn.execute(
+            "SELECT query_json FROM connector_watches WHERE connector_id='gh' AND query_kind='pull_requests' AND enabled=1 ORDER BY created_at,id",
+        ).fetchall()
+    for row in rows:
+        try:
+            query = json.loads(row["query_json"] or "{}")
+        except (TypeError, ValueError):
+            continue
+        repository = str(query.get("repository") or "").strip()
+        if repository:
+            return repository
+    return ""
 
 
 def get_starter(starter_id: str) -> dict | None:
-    return next((s for s in STARTERS if s["id"] == starter_id), None)
+    return next((s for s in [*STARTERS, *AGENT_STARTERS] if s["id"] == starter_id), None)
 
 
 def get_template(template_id: str) -> dict | None:

@@ -125,6 +125,31 @@ function DoEditor({
   );
 }
 
+function ReviewEditor({
+  value,
+  saving,
+  onChoose,
+}: {
+  value: string;
+  saving: boolean;
+  onChoose: (value: string) => void;
+}) {
+  const choices = [
+    ["none", "None"], ["codex", "Codex"], ["claude", "Claude Code"], ["pi", "pi"],
+  ] as const;
+  return (
+    <div className="automation-editor-verbs" data-testid="automation-review-editor">
+      {choices.map(([key, label]) => (
+        <Button key={key} dense variant={value === key ? "secondary" : "ghost"}
+          loading={saving && value !== key} onClick={() => onChoose(key)}
+          aria-pressed={value === key}>
+          {label}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
 function Lessons({
   entries,
   onForget,
@@ -396,6 +421,16 @@ export function AutomationWindow({
     await load();
   };
 
+  const chooseReview = async (reviewBy: string) => {
+    setSaveError(null);
+    try {
+      await updateWorkbenchField(workbenchId, { review_by: reviewBy });
+    } catch (error) {
+      setSaveError(readableError(error));
+    }
+    await load();
+  };
+
   const saveSpendLimit = async (limit: number | null) => {
     setSaveError(null);
     try {
@@ -485,7 +520,9 @@ export function AutomationWindow({
   // tools is on.
   const builder = useBuilderTools((state) => state.on);
   const name = detail?.name || "Automation";
-  const doText = detail?.instruction_shown ?? "";
+  const doText = detail?.do_kind === "hand_to_agent"
+    ? "Hand to an agent"
+    : detail?.instruction_shown ?? "";
   const doLong = doText.split("\n").length > 3 || doText.length > 180;
   const sources = detail?.sources_shown ?? [];
   const happened = detail ? eventSubjectWords(detail) : null;
@@ -626,8 +663,22 @@ export function AutomationWindow({
                 editor={<WithEditor detail={detail} onUse={chooseEngine}
                   onSpendLimit={saveSpendLimit} onPending={savingEngine} />}
               >
-                {engine ?? "Choose an engine"}
+                {detail.do_kind === "hand_to_agent"
+                  ? engine ?? "Choose an agent"
+                  : engine ?? "Choose an engine"}
               </SentenceLine>
+              {detail.do_kind === "hand_to_agent" ? (
+                <SentenceLine
+                  name="review"
+                  label="Review by"
+                  open={editing === "review"}
+                  onPress={() => toggle("review")}
+                  editor={<ReviewEditor value={detail.review_by || "none"} saving={saving}
+                    onChoose={(value) => void chooseReview(value)} />}
+                >
+                  {detail.review_by && detail.review_by !== "none" ? detail.review_by : "No review"}
+                </SentenceLine>
+              ) : null}
               <SentenceLine
                 name="put"
                 label="Put it in"

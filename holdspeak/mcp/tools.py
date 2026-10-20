@@ -242,6 +242,9 @@ _WORKBENCH_FIELDS_SCHEMA: dict[str, Any] = {
         "instruction": {"type": "string", "description": "The Do text. With it, each run makes one result; empty keeps the item queue."},
         "sources": {"type": "array", "items": {"type": "string"}, "description": "Refs the run reads, for example note:<id>, meeting:<id>, zone:<id> (a drawer), person:<id>, or a set: meetings:this_week, notes:this_week."},
         "output_target": {"type": "string", "description": "Where a result goes: inbox (default), needs_you, today, project_updates:<project_id>, or destination:<id> (prepared only; the owner presses Send)."},
+        "do_kind": {"type": "string", "enum": ["run", "hand_to_agent"]},
+        "agent_profile": {"type": "string", "description": "Installed agent profile for hand_to_agent."},
+        "review_by": {"type": "string", "enum": ["none", "codex", "claude", "pi"]},
     },
     "additionalProperties": False,
 }
@@ -259,7 +262,7 @@ def _workbench_fields(value: Any) -> dict[str, Any]:
 #: (``WorkbenchService.create_automation``). ``when``, ``with`` and
 #: ``spend_limit`` are the owner's: a Thread or a run stops for his press.
 _SENTENCE_PROPERTIES: dict[str, Any] = {
-    "do": {"type": "string", "description": "What each run does (the Do text)."},
+    "do": {"type": "string", "description": "What each run does (the Do text), or hand_to_agent to hand each source item once."},
     "about": {"type": "array", "items": {"type": "string"}, "description": "What it reads: refs as fields.sources."},
     "when": {
         "type": "object",
@@ -274,9 +277,10 @@ _SENTENCE_PROPERTIES: dict[str, Any] = {
         },
         "additionalProperties": False,
     },
-    "with": {"type": "string", "description": "The engine: a profile id from model_library.get."},
+    "with": {"type": "string", "description": "The installed agent profile for hand_to_agent; otherwise the inference profile."},
     "put_in": {"type": "string", "description": "Where results go: inbox, needs_you or destination:<id>."},
     "spend_limit": {"type": ["number", "null"], "description": "Dollars per run; null = the engine's own."},
+    "review_by": {"type": "string", "enum": ["none", "codex", "claude", "pi"], "description": "Optional installed reviewer for each handed agent."},
 }
 
 

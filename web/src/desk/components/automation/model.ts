@@ -51,6 +51,10 @@ export interface AutomationEventChoice {
 }
 
 export interface AutomationDetail extends WorkbenchDetail {
+  /** Betterment AG14: Do kind and installed agent hand configuration. */
+  do_kind?: "run" | "hand_to_agent" | string;
+  agent_profile?: string;
+  review_by?: string;
   assignment_summary?: WorkbenchDetail["assignment_summary"] & {
     /** Betterment A4: the engine in use, and where its prompt goes. */
     profile_id?: string | null;
@@ -199,6 +203,9 @@ export function putWords(target: string | null | undefined, destinationName?: st
 }
 
 export function engineWords(detail: AutomationDetail): string | null {
+  if (detail.do_kind === "hand_to_agent") {
+    return detail.agent_profile || null;
+  }
   const chain = detail.assignment_summary?.chain ?? [];
   return chain.length ? chain[0] : null;
 }
