@@ -4,9 +4,27 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (one-page Settings delivery)
+**Last updated:** 2026-10-19 (project update automation delivery)
 
 ## Current phase
+
+P7/P8 make the project update an ordinary automation, initially manual. Friday
+at 15:00 changes that same record. Room opens its newest result and reads the
+actual engine assignment. A refused Friday change keeps the manual state and
+offers Try again. The old steward controls remain under More.
+
+Update agents use eligible linked project sources. Private one-to-ones, People
+and unlinked meetings stay out of prompts, tool reads and native MCP resources.
+Explicit owner-filed actions remain eligible. An agent writes its own separate
+draft and cannot replace an owner-edited draft. Workbench delivery adopts the
+exact returned result once; applying it adds no duplicate.
+
+Root verified 70 affected Python checks and 561 Room web checks. Four actual
+Workbench runner cases cover plain/tool-written output with and without owner
+edits. Native hub credentials exercise both filtered tool reads and resource
+refusals, with ordinary credentials retaining their existing access. Real hub
+Room geometry passes at 1440/393. Native model output quality is not claimed;
+the engine leaf is recorded. Required quick: P7P8_QUICK_PENDING.
 
 ST7 makes Settings one page with You, Speak, Meetings, Notices, Accounts,
 Agents, Desk and This Mac. The desktop index sits beside the page; phone
