@@ -138,7 +138,7 @@ def _hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[SimpleName
 
 @contextlib.contextmanager
 def _real_capture_hub(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, phrase: str = "start recording"
 ) -> Iterator[SimpleNamespace]:
     """A real WebRuntime capture controller behind the real MCP dispatcher.
 
@@ -189,7 +189,7 @@ def _real_capture_hub(
     def slow_transcribe(_audio: Any, **_kw: Any) -> str:
         phases.append("transcribing")
         time.sleep(SLOW_S)
-        return "start recording"
+        return phrase
 
     # Keep the controller and MCP operation real, but make the native audio
     # start deterministic for a machine without PortAudio devices.
@@ -340,6 +340,63 @@ def test_the_hub_answers_while_a_real_record_macro_starts_capture(
         stop_body = response.json()
         assert stop_body.get("result", {}).get("isError") is False, stop_body
         assert hub.runtime.voice_session.active_owner is None
+
+
+def test_a_spoken_stop_reaches_the_recording_that_already_holds_the_floor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A shipped Stop phrase must work while the real controller records."""
+    with _real_capture_hub(tmp_path, monkeypatch, phrase="stop recording") as hub:
+        def operation(name: str):
+            return hub.client.post("/api/mcp", json={
+                "jsonrpc": "2.0", "id": name, "method": "tools/call",
+                "params": {"name": name, "arguments": {}},
+            })
+
+        started = operation("meeting.start_capture")
+        assert started.status_code == 200 and not started.json()["result"]["isError"], started.text
+        try:
+            with hub.client.websocket_connect(
+                "/ws/dictation/stream", headers={"Authorization": f"Bearer {TOKEN}"}
+            ) as ws:
+                ws.send_text(json.dumps({"type": "start", "pipeline": True}))
+                ws.send_bytes(_pcm())
+                ws.send_text(json.dumps({"type": "end"}))
+                final = ws.receive_json()
+            assert final["type"] == "final", final
+            assert final["fired"]["ok"] is True, final
+            assert final["fired"]["result"]["desk_verb"] == "stop", final
+            assert hub.runtime.voice_session.active_owner is None
+        finally:
+            if hub.runtime.voice_session.active_owner is not None:
+                operation("meeting.stop_capture")
+
+
+@pytest.mark.parametrize("phrase,pipeline", [("ordinary dictation", True), ("start recording", True), ("stop recording", False)])
+def test_the_recording_stop_path_does_not_admit_other_capture_work(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, phrase: str, pipeline: bool
+) -> None:
+    with _real_capture_hub(tmp_path, monkeypatch, phrase=phrase) as hub:
+        def operation(name: str):
+            return hub.client.post("/api/mcp", json={
+                "jsonrpc": "2.0", "id": name, "method": "tools/call",
+                "params": {"name": name, "arguments": {}},
+            })
+        started = operation("meeting.start_capture")
+        assert started.status_code == 200 and not started.json()["result"]["isError"], started.text
+        try:
+            with hub.client.websocket_connect(
+                "/ws/dictation/stream", headers={"Authorization": f"Bearer {TOKEN}"}
+            ) as ws:
+                ws.send_text(json.dumps({"type": "start", "pipeline": pipeline}))
+                ws.send_bytes(_pcm())
+                ws.send_text(json.dumps({"type": "end"}))
+                final = ws.receive_json()
+            assert final["type"] == "error" and final["reason"] == "audio_floor_held", final
+            assert hub.runtime.voice_session.active_owner == "meeting"
+            assert hub.db.dictation_journal.recent() == []
+        finally:
+            operation("meeting.stop_capture")
 
 
 def test_a_browser_gone_mid_talk_keeps_the_words_and_never_stalls_the_hub(

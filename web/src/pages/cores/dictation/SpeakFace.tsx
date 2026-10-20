@@ -106,6 +106,8 @@ function openDeskCommandResult(
   setRefusal: (value: string) => void,
 ): boolean {
   if (!fired.ok || fired.kind !== "desk_verb") return false;
+  setPhase("landed");
+  setRefusal("");
   const value = fired.result ?? {};
   const intent = value.ui_intent;
   if (intent === "ask") {
@@ -523,13 +525,7 @@ function TransportRow({
       onLevel: deck.setLevel,
       onCommand: (fired) => {
         deck.setLandedMs(null);
-        if (openDeskCommandResult(fired, announce, deck.setPhase, deck.setRefusal)) {
-          if (!fired.ok) {
-            deck.setPhase("refused");
-            deck.setRefusal("command_failed");
-          }
-          return;
-        }
+        if (openDeskCommandResult(fired, announce, deck.setPhase, deck.setRefusal)) return;
         if (fired.ok) {
           deck.setPhase("landed");
           deck.setRefusal("");

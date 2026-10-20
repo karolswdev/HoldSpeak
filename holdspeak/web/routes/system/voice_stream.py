@@ -166,7 +166,16 @@ def build_voice_stream_router(
             await websocket.close()
             return
 
-        if not _claim_browser_audio_floor(ctx):
+        browser_floor_held = _claim_browser_audio_floor(ctx)
+        # A recording keeps the physical capture claim. An authenticated Speak
+        # utterance may still request its closed Stop verb; it cannot dictate,
+        # run a local macro, or replace the recording's microphone owner.
+        meeting_stop_only = (
+            not browser_floor_held
+            and getattr(getattr(ctx, "voice_session", None), "active_owner", None) == "meeting"
+            and _macros_enabled(getattr(ctx, "_config", None) or _resolve_config(ctx))
+        )
+        if not browser_floor_held and not meeting_stop_only:
             await websocket.send_json(
                 {
                     "type": "error",
@@ -177,8 +186,6 @@ def build_voice_stream_router(
             )
             await websocket.close()
             return
-        browser_floor_held = True
-
         import numpy as np
 
         # HS-131-09: ONE admitted interval for this socket's whole lifetime. The
@@ -235,7 +242,11 @@ def build_voice_stream_router(
                 # the mic mid-utterance. A floor that was genuinely lost stops
                 # the capture BY NAME rather than letting this socket keep
                 # recording into a microphone somebody else owns.
-                if not _renew_browser_audio_floor(ctx):
+                floor_kept = (
+                    getattr(getattr(ctx, "voice_session", None), "active_owner", None) == "meeting"
+                    if meeting_stop_only else _renew_browser_audio_floor(ctx)
+                )
+                if not floor_kept:
                     await websocket.send_json(
                         {
                             "type": "error",
@@ -264,6 +275,11 @@ def build_voice_stream_router(
                         if not declared:
                             declared = True
                             run_pipeline = bool(payload.get("pipeline", True))
+                            if meeting_stop_only and not run_pipeline:
+                                await send({"type": "error", "error": "Recording holds the microphone.",
+                                            "reason": "audio_floor_held", "failure_category": "audio_floor_held"})
+                                refused = True
+                                break
                         continue
                     if payload.get("type") == "end":
                         break
@@ -308,6 +324,17 @@ def build_voice_stream_router(
                     return
 
                 config_snapshot = getattr(ctx, "_config", None) or _resolve_config(ctx)
+                if meeting_stop_only:
+                    macros = getattr(getattr(config_snapshot, "dictation", None), "macros", None)
+                    matched = next((macro for macro in (getattr(macros, "items", None) or [])
+                                    if macro.matches(final_text)), None)
+                    action = getattr(matched, "action", None)
+                    if (not _macros_enabled(config_snapshot) or not run_pipeline
+                            or getattr(action, "kind", None) != "desk_verb"
+                            or getattr(action, "payload", None) != "stop"):
+                        await send({"type": "error", "error": "Say stop recording to stop the recording.",
+                                    "reason": "audio_floor_held", "failure_category": "audio_floor_held"})
+                        return
 
                 # HS-132-04: a configured, enabled macro keyword FIRES here —
                 # once, on the dictate-for-delivery leg, at the same seam the
