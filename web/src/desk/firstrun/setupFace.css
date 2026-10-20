@@ -24,6 +24,32 @@
   opacity: 1;
 }
 
+.setup-agent-bindings {
+  border-top: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0 28px;
+  padding-top: 8px;
+}
+
+.setup-agent-binding {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.setup-agent-binding-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.setup-agent-binding-copy small {
+  opacity: .8;
+}
+
 .setup-face-head {
   align-items: center;
   display: flex;
@@ -85,6 +111,15 @@
 }
 
 @container (max-width: 500px) {
+  .setup-agent-bindings {
+    margin-left: 0;
+  }
+
+  .setup-agent-binding {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
   .setup-face-head {
     align-items: stretch;
     flex-direction: column;

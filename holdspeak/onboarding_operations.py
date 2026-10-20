@@ -13,32 +13,69 @@ from holdspeak.operations import _CONTRACT_REFUSALS, Admission, OperationDescrip
 AGENT_HOOKS_INSTALL = OperationDescriptor(
     name="agent_hooks.install",
     version=1,
-    description="Install the HoldSpeak hooks for one coding agent (Claude Code or Codex) in the settings file "
-                "that agent reads. Foreign hooks stay. A second install changes nothing.",
+    description="Install HoldSpeak hooks, its native MCP server and AG13 skill for one or every discovered coding agent (Claude Code or Codex). "
+                "Foreign entries stay. A second install changes nothing.",
     args_schema={
         "type": "object",
         "properties": {
             "agent": {"enum": ["claude", "codex"]},
+            "agents": {"type": "array", "items": {"enum": ["claude", "codex"]}, "minItems": 1,
+                       "uniqueItems": True},
             "settings_path": {"type": "string", "description": "Bound by the hub before admission (the agent's "
                                                                 "settings file); never sent by a client."},
+            "settings_paths": {"type": "object", "additionalProperties": {"type": "string"},
+                               "description": "Bound by the hub for an aggregate install; never sent by a client."},
+        },
+        "oneOf": [
+            {"required": ["agent", "settings_path"]},
+            {"required": ["agents", "settings_paths"]},
+        ],
+        "additionalProperties": False,
+    },
+    principal="derived by the transport (the HTTP auth middleware); owner only",
+    effect="write",
+    result="{agents, tmux, holdspeak, used: {agent, path, mcp, skill, installed_events, created_file}}, or {agents, tmux, holdspeak, state, ok, results} for an aggregate install, and the receipt",
+    refusals=_CONTRACT_REFUSALS + ("owner_required", "claude_not_installed", "codex_not_installed",
+                                   "agent_settings_unreadable", "agent_settings_path_changed",
+                                   "holdspeak_not_found", "mcp_name_taken", "mcp_config_unreadable",
+                                   "mcp_install_failed", "mcp_binding_missing", "agents_invalid", "agent_unknown",),
+    completion="synchronous; GET /api/onboarding/agents shows the complete binding(s)",
+    exposure=("http:POST /api/onboarding/agents/use", "http:POST /api/onboarding/agents/use-all"),
+    service="onboarding_service",
+    method="agents_use",
+    owner_only=True,
+    blocking_io=True,
+    owner_press=True,
+    admission=Admission("admitted", "Config: the owner's press writes a coding agent's hooks, native MCP entry and AG13 skill "
+                                    "(HTTP only, in no palette). The agent and hook file are bound at admission."),
+)
+
+AGENT_HOOKS_REMOVE = OperationDescriptor(
+    name="agent_hooks.remove",
+    version=1,
+    description="Stop HoldSpeak use for one coding agent. Remove only HoldSpeak hooks, its native MCP entry and AG13 skill; foreign entries stay.",
+    args_schema={
+        "type": "object",
+        "properties": {
+            "agent": {"enum": ["claude", "codex"]},
+            "settings_path": {"type": "string", "description": "Bound by the hub before admission."},
         },
         "required": ["agent", "settings_path"],
         "additionalProperties": False,
     },
     principal="derived by the transport (the HTTP auth middleware); owner only",
     effect="write",
-    result="{agents, tmux, holdspeak, used: {agent, path, installed_events, created_file}} and the receipt",
-    refusals=_CONTRACT_REFUSALS + ("owner_required", "claude_not_installed", "codex_not_installed",
-                                   "agent_settings_unreadable", "agent_settings_path_changed",
-                                   "holdspeak_not_found"),
-    completion="synchronous; GET /api/onboarding/agents shows hooks installed",
-    exposure=("http:POST /api/onboarding/agents/use",),
+    result="{agents, stopped: {agent, mcp, hooks, skill_removed}} and the receipt",
+    refusals=_CONTRACT_REFUSALS + ("owner_required", "agent_unknown", "agent_settings_path_changed",
+                                   "mcp_config_unreadable", "mcp_remove_failed", "mcp_remove_incomplete"),
+    completion="synchronous; GET /api/onboarding/agents shows the remaining foreign bindings",
+    exposure=("http:POST /api/onboarding/agents/stop",),
     service="onboarding_service",
-    method="agents_use",
+    method="agents_stop",
     owner_only=True,
+    blocking_io=True,
     owner_press=True,
-    admission=Admission("admitted", "Config: the owner's press writes a coding agent's hook settings file "
-                                    "(HTTP only, in no palette). The agent and the file are bound at admission."),
+    admission=Admission("admitted", "Config: the owner's press removes HoldSpeak's agent bindings while preserving foreign entries (HTTP only, in no palette)."),
 )
 
 PEOPLE_ACCESS_SET = OperationDescriptor(
@@ -86,5 +123,5 @@ CALENDAR_OPEN_SETTINGS = OperationDescriptor(
 )
 
 #: The Conductor K1's rows (and R7's People access, PHILO-15 04's system open), in export order.
-ONBOARDING_OPERATIONS: tuple[OperationDescriptor, ...] = (AGENT_HOOKS_INSTALL, PEOPLE_ACCESS_SET,
+ONBOARDING_OPERATIONS: tuple[OperationDescriptor, ...] = (AGENT_HOOKS_INSTALL, AGENT_HOOKS_REMOVE, PEOPLE_ACCESS_SET,
                                                           CALENDAR_OPEN_SETTINGS)

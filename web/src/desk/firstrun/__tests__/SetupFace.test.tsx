@@ -90,6 +90,52 @@ describe("Setup ST3–ST5", () => {
     expect(screen.getByRole("button", { name: "Open my desk" })).toBeTruthy();
   });
 
+  it("shows each agent's binding facts and stops one agent through the admitted route", async () => {
+    const partial = {
+      success: false,
+      result: {
+        state: "degraded",
+        results: [
+          { agent: "claude", ok: false, code: "mcp_name_taken" },
+          { agent: "codex", ok: true },
+        ],
+      },
+    };
+    const afterUse = {
+      rows: [{
+        id: "agents", kind: "agents", label: "Agents", detail: "Claude Code, Codex", state: "found",
+        action: "agents", verb: "Let my agents use HoldSpeak",
+        payload: {
+          agents: ["claude"],
+          bindings: [
+            { id: "claude", label: "Claude Code", ready: false, facts: { hooks: "installed", tools: "foreign", skill: "missing" }, can_stop: true },
+            { id: "codex", label: "Codex", ready: true, facts: { hooks: "installed", tools: "installed", skill: "installed" }, can_stop: true },
+          ],
+        },
+      }],
+    } satisfies SetupInventory;
+    mocks.apiFetch.mockImplementation(async (path: string) => {
+      if (path === "/api/settings") return { owner: { name: "Astra", aliases: [] }, _revision: "1" };
+      if (path === "/api/setup/lan") return { rows: [] };
+      if (path === "/api/onboarding/agents/use") return partial;
+      if (path === "/api/onboarding/agents/stop") return { stopped: { agent: "codex" } };
+      if (path === "/api/setup/found") return afterUse;
+      return {};
+    });
+    render(<SetupFace initial={afterUse} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Let my agents use HoldSpeak" }));
+    await waitFor(() => expect(screen.getByText(/Claude Code: already has another MCP setup/)).toBeTruthy());
+    fireEvent.click(screen.getByText("Not found", { exact: true }));
+    expect(screen.getByText("Codex · uses your desk")).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "Stop using my desk" })).toHaveLength(2);
+
+    fireEvent.click(screen.getByText("Codex · uses your desk").closest(".setup-agent-binding")!.querySelector("button")!);
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/onboarding/agents/stop", expect.objectContaining({
+      method: "POST", json: { agent: "codex" },
+    })));
+  });
+
   it("uses the recorded LAN producer answer as a ready engine", async () => {
     mocks.apiFetch.mockImplementation(async (path: string) => {
       if (path === "/api/settings") return { owner: { name: "Astra", aliases: [] }, _revision: "1" };
