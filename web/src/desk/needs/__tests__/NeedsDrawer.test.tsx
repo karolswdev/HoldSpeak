@@ -200,7 +200,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       return {} as never;
     });
     render(<NeedsDrawer />);
-    await screen.findByText("1 need you");
+    await screen.findByText("1 needs you");
     expect(face(row("No engine for speech"))).toMatchObject({
       fact: "Speech",
       verbs: ["Choose an engine"],
