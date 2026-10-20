@@ -809,6 +809,19 @@ def _p_setup_found(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return response.json()
 
 
+def _p_setup_status(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    return hub.root.operations.invoke(OWNER, "setup.status", {})
+
+
+def _p_setup_use(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    service = hub.root.operations.target("setup.use")
+    # Keep this producer fence local: the aggregate uses the real inventory and
+    # admitted operation, while the speech press cannot download a model in a
+    # result-shape check.
+    monkeypatch.setattr(service._local_ai, "start", lambda *_args, **_kwargs: {"state": "ready", "ok": True})
+    return hub.root.operations.invoke(OWNER, "setup.use", {"id": "all"})
+
+
 def _p_setup_people(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     response = hub.client.post("/api/setup/people", json={"names": "Theo Lindqvist"})
     assert response.status_code == 201, response.text
@@ -890,6 +903,8 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "note.outcome.confirm": _p_note_outcome("confirm"),
     "today.get": _p_today_get,
     "setup.found": _p_setup_found,
+    "setup.status": _p_setup_status,
+    "setup.use": _p_setup_use,
     "setup.people.add": _p_setup_people,
     "setup.lan.scan": _p_setup_lan,
 }

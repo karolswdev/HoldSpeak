@@ -114,6 +114,8 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "settings.get":    ("evidence_read",     False),
     "settings.update": ("effect_proposal",   False),
     "settings.hub":    ("evidence_read",     False),
+    "setup.status":    ("evidence_read",     False),
+    "setup.use":       ("effect_proposal",   False),
     # --- HS-170: the Concierge + the four faces' reads ---
     "concierge.detect":   ("evidence_read",   False),
     "concierge.propose":  ("evidence_read",   False),
