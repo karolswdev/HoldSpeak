@@ -35,7 +35,12 @@ and historical entrance words. API census failures exposed unpinned FastAPI
 locked dependency set instead of publishing a five-route partial census.
 With locked dependencies, all 774 affected Python census/atlas checks and
 27 shell checks pass. Final delta quick also repeats the nine real-hub walk
-cases under the locked backend. Required quick: S3_QUICK_PENDING.
+cases under the locked backend. The next sweep caught a real 32-pixel shift when the People 1:1 tag arrived.
+Meetings and People now reserve their tag width before the read, and the Dock
+limits the 1:1 fact to its local day. Root held and released the real People
+response: all five target rectangles stayed exact; the browser case passes
+in 6.28s. The 27 Dock/read web checks also pass, including today/tomorrow.
+Required quick: S3_QUICK_PENDING.
 
 ST9 adds `holdspeak setup`, `holdspeak setup --yes`, MCP `setup.status` and
 `setup.use`. They use the running hub and the shared Setup producers.

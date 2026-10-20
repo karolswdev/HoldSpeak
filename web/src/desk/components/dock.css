@@ -387,6 +387,13 @@
 }
 /* an icon with a tag is wide enough for it; with a tag and a count, the
    tag takes the top left and the count the top right (never one box) */
+/* Reserve the tag's width before its async read completes. A late 1:1 or
+   recording fact must not move the next app under the owner's pointer. */
+@media (min-width: 721px) {
+  .desk-next .desk-dock-app:is([data-app="surface-meetings"], [data-app="surface-people"]) {
+    min-width: 104px;
+  }
+}
 .desk-next .desk-dock-launch:has(.desk-dock-state) {
   min-width: 104px;
 }

@@ -362,3 +362,60 @@ class TestDockPagesOnWholeIcons(FinishRig):
                 assert not errors, errors
             finally:
                 browser.close()
+
+
+def test_a_late_people_fact_keeps_the_desktop_dock_targets_in_place(tmp_path, monkeypatch):
+    """Hold the real People read; its actual reply must not move a live door."""
+    import json
+    from datetime import datetime
+    from . import open_rig
+    from playwright.sync_api import sync_playwright
+
+    _ensure_build()
+    monkeypatch.setattr(open_rig, "TOKEN", TOKEN)
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        week = open_rig._seed(tmp_path / "home", base)
+        brief = open_rig._http(base, "GET", f"/api/people/relationships/{week['priya']}/brief")["brief"]
+        starts = brief["next_one_on_one"]["starts_at"]
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch()
+            try:
+                page = browser.new_page(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
+                # Keep the actual seeded meeting on the browser's current day,
+                # including a run just before midnight. Timers still advance.
+                page.clock.set_fixed_time(datetime.fromisoformat(starts.replace("Z", "+00:00")))
+                held = []
+                released = False
+
+                def hold_read(route):
+                    if released:
+                        route.continue_()
+                    else:
+                        held.append(route)
+
+                page.route("**/api/people/readiness", hold_read)
+                page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+                page.locator(".desk-dock-app").first.wait_for()
+                assert held, "the real People readiness read was not held"
+                tiles = page.locator(".desk-dock-app")
+                read = "els => els.map(el => { const r=el.getBoundingClientRect(); return {app:el.dataset.app,x:r.x,y:r.y,w:r.width,h:r.height}; })"
+                before = tiles.evaluate_all(read)
+                assert page.get_by_test_id("desk-dock-people-state").count() == 0
+                released = True
+                for route in held:
+                    route.continue_()
+                page.get_by_test_id("desk-dock-people-state").wait_for()
+                after = tiles.evaluate_all(read)
+                assert [row["app"] for row in before] == [row["app"] for row in after]
+                for old, new in zip(before, after):
+                    for field in ("x", "y", "w", "h"):
+                        assert abs(old[field] - new[field]) <= .5, (field, old, new)
+                out = evidence_dir("s3-dock-arrival")
+                out.mkdir(parents=True, exist_ok=True)
+                (out / "late-people-1440.json").write_text(json.dumps({"before": before, "after": after}, indent=2))
+                page.screenshot(path=str(out / "late-people-1440.png"))
+            finally:
+                browser.close()
+    finally:
+        server.stop()

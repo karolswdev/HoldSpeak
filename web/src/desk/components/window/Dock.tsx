@@ -257,7 +257,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const sheetOpen = useShortcutSheet((s) => s.open);
   const chair = useChairWindows();
   const mic = useDockMicPhase();
-  const people = useNextOneOnOneRead();
+  const people = useNextOneOnOneRead(true);
   // PHILO-13-03 / C3: every Desk face reads the same membership snapshot.
   // The Dock opts out of the hook's minute poll; RuntimeBus invalidations
   // call the explicit refresh path in useDockLiveReads.
