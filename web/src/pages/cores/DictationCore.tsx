@@ -12,6 +12,7 @@ import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
 import { Button } from "../../components/signal/Signal";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
+import { openSurfaceOr } from "../../desk/shell";
 import { countToken, FoldGadget } from "../../desk/surface";
 import { useResource } from "../pageSupport";
 import { useBuilderTools } from "../../desk/builderTools";
@@ -196,6 +197,13 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
               onClick={() => void exportJournal()}
             >
               Export
+            </Button>
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => openSurfaceOr("configure-settings", "/settings", "speak")}
+            >
+              Settings
             </Button>
           </>
         }
