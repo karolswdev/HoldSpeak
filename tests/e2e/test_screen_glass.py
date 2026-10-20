@@ -226,6 +226,8 @@ class TestScreenDeleteGlass:
                 created = _api(page, "POST", "/api/decisions",
                                {"title": "Glass withdrawn decision", "status": "accepted"}, token=TOKEN)
                 decision_id = created["decision"]["id"]
+                kept = _api(page, "PUT", f"/api/directories/hs-seed-desk/members/decision:{decision_id}", {}, token=TOKEN)
+                assert kept["membership"], kept
                 page.reload(wait_until="load")
                 _normal_chair(page)
 

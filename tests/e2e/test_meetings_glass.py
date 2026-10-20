@@ -161,6 +161,9 @@ class TestOneMeetingOneWindow:
         self.person = PeopleService(store).create_relationship(
             owner, {"display_name": "Avery Chen", "relationship_kind": "direct_report"})["id"]
         _http(base, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+        # S4: an owner-kept meeting has an explicit Desk membership.
+        kept = _http(base, "PUT", f"/api/directories/hs-seed-desk/members/meeting:{ONE}", {})
+        assert kept["membership"], kept
         try:
             yield
         finally:
