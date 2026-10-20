@@ -240,8 +240,12 @@ describe("account rows keep their status and actions together", () => {
     expect(screen.getByTestId("connections-add-jira")).toBe(form);
     expect(form).toBeVisible();
     expect((within(form).getByRole("textbox", { name: "Email" }) as HTMLInputElement).value).toBe("draft@example.com");
-    // Betterment ST2: plus the Found read (gh and acli files only, no CLI).
-    expect([...reads].sort()).toEqual(["GET /api/connections", "GET /api/onboarding/connections"]);
+    // The Sign in press starts the native flow; this read-only fixture hub
+    // refuses it, while the Add draft remains intact in its original well.
+    expect([...reads].sort()).toEqual([
+      "GET /api/connections", "GET /api/onboarding/connections",
+      "POST /api/connections/jira/signin",
+    ]);
   });
 });
 

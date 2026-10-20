@@ -391,7 +391,7 @@ function GitHubCard({ tool, onRecheck, busy, blocked, lead = false, open, onTogg
     trailing={<span className="connections-tool-actions">{needsFix(state) ? <Button dense variant={lead ? "primary" : "secondary"} aria-expanded={open} onClick={state === "owner_action_required" && !open ? startFromRow : onToggle} data-testid="connections-github-show">{open ? "Close" : fixLabel(state, "gh")}</Button> : null}{check}</span>}>
     {open ? <AccountUnfold testid="connections-github-unfold" usedBy={tool.used_by} hint={hint}
       signInLabel={fixLabel(state, "gh")} commandOpen={needsFix(state)}
-      onSignIn={state === "owner_action_required" ? onSignIn : undefined} signin={signin} onSigninFinished={onSigninFinished}/> : null}
+      onSignIn={state !== "unavailable" ? onSignIn : undefined} signin={signin} onSigninFinished={onSigninFinished}/> : null}
   </SurfaceLedgerRow>;
 }
 
@@ -432,7 +432,7 @@ function AtlassianConnectionRow({ provider, conn, onRecheck, onRemove, busy, blo
       {addWell ? <div hidden={!addOpen}>{addWell}</div> : null}
       {open ? <AccountUnfold testid={`connections-${provider}-unfold-${conn.connection_ref}`} usedBy={conn.used_by} hint={hint} onRemove={onRemove}
         signInLabel={fixLabel(state, "acli")} commandOpen={needsFix(state)}
-        onSignIn={state === "owner_action_required" ? onSignIn : undefined} signin={signin} onSigninFinished={onSigninFinished}/> : null}
+        onSignIn={state !== "unavailable" ? onSignIn : undefined} signin={signin} onSigninFinished={onSigninFinished}/> : null}
     </div>
   </SurfaceLedgerRow>;
 }
@@ -809,7 +809,7 @@ export function ConnectionsPane({
           lead={github.state !== "connected" && github.state !== "signed_in"}
           open={openRow === "github"}
           onToggle={() => toggle("github")}
-          onSignIn={github.state === "owner_action_required" ? () => beginSignin("github", github.egress_host ?? "github.com") : undefined}
+          onSignIn={github.state !== "unavailable" ? () => beginSignin("github", github.egress_host ?? "github.com") : undefined}
           signin={signin?.providerId === "github" ? signin : null}
           onSigninFinished={finishSignin}
         />

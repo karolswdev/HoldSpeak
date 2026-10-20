@@ -150,6 +150,20 @@ def test_private_native_signin_keys_marker_check_and_durable_works(
             assert github["state"] == "connected", github
             assert github["account"]["login"] == "st8-owner", github
 
+            # A checked account's Sign in again uses the same native pane;
+            # it must not fall back to a command the owner has to copy.
+            page.get_by_test_id("connections-github-unfold").get_by_role(
+                "button", name="Sign in again", exact=True,
+            ).click()
+            terminal.wait_for(timeout=15_000)
+            helper = terminal.locator("textarea.xterm-helper-textarea")
+            helper.focus()
+            helper.press("Enter")
+            terminal.wait_for(state="detached", timeout=15_000)
+            page.locator('[data-testid="connections-github"] .surface-state-chip').get_by_text(
+                "Works",
+            ).wait_for(timeout=15_000)
+
             _settle(page)
             shot = SHOTS / f"st8-signin-{width}.png"
             SHOTS.mkdir(parents=True, exist_ok=True)
