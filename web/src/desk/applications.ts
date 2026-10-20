@@ -71,6 +71,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     // The row keeps its id, its Search words and ⌘⇧P; each opens Settings
     // there (the `change-places` alias on Settings). ChangePlacesCore stays.
     parked: "settings:wallpaper",
+    mark: 4,
     surface: {
       eyebrow: "Places to think",
       minW: 600,
@@ -254,7 +255,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     // A tool, not a dock primary. PHILO-17 (doors): its door is the
     // HoldSpeak menu; ⌘K still finds it.
     group: "tool",
-    mark: 4,
+    mark: 5,
     surface: {
       eyebrow: "Readiness",
       minW: 560,
