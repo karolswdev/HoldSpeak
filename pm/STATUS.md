@@ -24,6 +24,16 @@ the account login. Only provider CLI responses are recorded; owner credentials
 and real OAuth acceptance remain unobserved. The combined API census has
 810 routes and 674 OpenAPI paths. Required quick: ST8_QUICK_PENDING.
 
+The main watcher pinned to 2833d225d found five failures after its first
+6,073-test shard passed. This fix re-records the actual Setup agent/Settings
+producer shapes, aligns Capture's backend window action with its manifest,
+and retains the fresh prior-account status check in the Confluence test.
+Only recordings with changed response shapes are replaced; whole unchanged
+captures remain intact. The independent focused rerun passes all 64 Python
+checks (including the phone Capture/Today/Capture roundtrip) and 62 web
+consumers. No provider sign-in or owner database is used.
+Required quick: 79 affected Python/browser, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes; the separate 62 web consumers pass.
+
 The P5/P6 source-link follow-up is closed by an actual producer contract:
 found_links reports linked/failed per meeting or note. New and existing project
 Add paths use it. A failed selection stays selected with its producer error;
