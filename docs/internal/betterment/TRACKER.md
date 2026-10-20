@@ -98,7 +98,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | P7 | The update is an automation; the steward folds in | Done · #1395 | Manual first; Friday uses the same record. |
 | P8 | The agent writes the update | Done · #1395 | Project-scoped Work tools; owner draft preserved; exact result adopted once. |
 | P9 | One decision record | Open |  |
-| P10 | Watches tell the truth underneath | Done · PR_PENDING | Runnable actions only; observations need no pending effect; MCP uses shared services. |
+| P10 | Watches tell the truth underneath | Done · #1399 | Runnable actions only; observations need no pending effect; MCP uses shared services. |
 
 ## Agents (`agents/RECIPE.md`): 15 of 16
 
