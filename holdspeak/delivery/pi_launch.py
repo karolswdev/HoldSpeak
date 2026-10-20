@@ -231,13 +231,22 @@ def remove_pi_dir(launch_id: str, directory: Optional[Path] = None) -> bool:
     return not folder.exists()
 
 
-def launch_args(engine: PiEngine, folder: Path) -> list[str]:
-    """pi's flags: the model, the transcript folder and the extension."""
-    return [
+def launch_args(engine: PiEngine, folder: Path, *, read_only: bool = False) -> list[str]:
+    """pi's flags: the model, transcript folder and extension.
+
+    AG12 reviewer launches use pi's documented built-in allow-list. Plain
+    ``--tools`` names only read/search/list tools, so Bash, Edit and Write are
+    absent even when the hub Control mode is YOLO. MCP calls remain reachable
+    for the server-side reviewer dispatch fence.
+    """
+    args = [
         "--model", f"{PROVIDER}/{engine.model}",
         "--session-dir", str(folder / "sessions"),
         "-e", str(EXTENSION_PATH),
     ]
+    if read_only:
+        args += ["--tools", "read,grep,find,ls"]
+    return args
 
 
 def launch_env(folder: Path, *, mcp_hold: bool = False) -> dict[str, str]:

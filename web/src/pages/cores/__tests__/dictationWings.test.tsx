@@ -1,5 +1,5 @@
 /* HS-176-05 — the Speak window's wings and its footer verb.
-   Four wings, always present: SPEAK · JOURNAL · BLOCKS · LEARNED (design
+   Five wings, always present: SPEAK · JOURNAL · BLOCKS · LEARNED · VOICE COMMANDS (design
    D2(c)); `Review` reviews — it crosses to the Journal wing, where the
    utterances are, instead of opening the Configure door (design D2(b).9).
    The gear stays the way to Configure. */
@@ -98,7 +98,7 @@ function mount() {
 }
 
 describe("the Speak window's wings", () => {
-  it("carries FOUR wings — Speak, Journal, Blocks, Learned", async () => {
+  it("carries five wings including Voice commands", async () => {
     mount();
     await waitFor(() =>
       expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual([
@@ -106,6 +106,7 @@ describe("the Speak window's wings", () => {
         "Journal",
         "Blocks",
         "Learned",
+        "Voice commands",
       ]),
     );
   });

@@ -86,9 +86,10 @@ export type SetupStatus = {
 };
 
 /** CommandsCore */
+export type DeskVerb = "record" | "stop" | "new_note" | "ask" | "open_today";
 export type Macro = {
   keyword: string;
-  action: { kind: string; payload: string };
+  action: { kind: "open_url" | "launch_app" | "shell" | "type_text" | "desk_verb" | string; payload: string };
 };
 
 /** SettingsCore */

@@ -31,18 +31,20 @@ import {
   type Receipt,
   type ReceiptTone,
 } from "./dictation";
-/* HS-176-05 — the fourth wing. Imported from its module rather than the
-   dictation barrel: `index.ts` belongs to story 03's lane in this branch. */
+import { CommandsCore } from "./CommandsCore";
+/* C11 — the fifth wing. Imported from its module rather than the dictation
+   barrel: `index.ts` belongs to story 03's lane in this branch. */
 
-/* HS-176-05 — four wings, always present (settled design D2(c)): SPEAK ·
-   JOURNAL · BLOCKS · LEARNED. `useCoreWings` takes the array, so a fourth
-   wing needs no shape change. The corrections table moved OUT of the
-   Configure door and became `Learned`; the door keeps the digest. */
+/* C11 — five wings, always present: SPEAK · JOURNAL · BLOCKS · LEARNED ·
+   VOICE COMMANDS. `useCoreWings` takes the array, so the new wing needs no
+   shape change. The corrections table moved OUT of the Configure door and
+   became `Learned`; the door keeps the digest. */
 const WINGS = [
   { id: "speak", label: "Speak" },
   { id: "journal", label: "Journal" },
   { id: "blocks", label: "Blocks" },
   { id: "learned", label: "Learned" },
+  { id: "commands", label: "Voice commands" },
 ];
 
 /* HS-100-07 — the one door: everything that is configuration
@@ -125,6 +127,7 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
         journal: <Journal />,
         blocks: <Blocks />,
         learned: <Learned />,
+        commands: <CommandsCore />,
         configure: <Configure />,
       })[active],
     [active],

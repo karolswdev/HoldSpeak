@@ -500,7 +500,7 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
     await waitFor(() => expect(container.querySelector(".speak-journal")).toBeTruthy());
     expect(screen.getByRole("tab", { name: "Journal" }).getAttribute("aria-selected")).toBe("true");
     expect(container.querySelector(".surface-door")).toBeNull();
-    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Speak", "Journal", "Blocks", "Learned"]);
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Speak", "Journal", "Blocks", "Learned", "Voice commands"]);
     // Every read the window made was one the hub answered, but the scan.
     expect([...new Set(misses)]).toEqual(["/api/concierge/detect"]);
   });

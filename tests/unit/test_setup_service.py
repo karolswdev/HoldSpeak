@@ -45,7 +45,10 @@ class _Onboarding:
         return {"sources": 0, "candidates": [{"id": "work", "label": "Work calendar", "in_use": False, "verb": "Use it"}]}
 
     def agents_detect(self, principal):
-        return {"agents": [{"id": "claude", "label": "Claude", "installed": True, "ready": False}]}
+        return {"agents": [{
+            "id": "claude", "label": "Claude", "installed": True, "ready": False,
+            "hooks": "installed", "mcp": "missing", "skill": "missing",
+        }]}
 
     def connections_use(self, principal, payload):
         return {"connected": payload["id"]}
@@ -128,6 +131,13 @@ def test_found_projects_existing_readers_and_keeps_use_as_owner_action(tmp_path:
     assert rows["connection:github"]["verb"] == "Use it"
     assert rows["calendar:work"]["action"] == "calendar"
     assert rows["agents"]["action"] == "agents"
+    assert rows["agents"]["payload"]["bindings"] == [{
+        "id": "claude",
+        "label": "Claude",
+        "ready": False,
+        "facts": {"hooks": "installed", "tools": "missing", "skill": "missing"},
+        "can_stop": True,
+    }]
     assert answer["owner_name"] == ""
     assert answer["people"][0]["display_name"] == "Mira Okafor"
     assert answer["suggestions"][0]["name"] == "Theo Lindqvist"

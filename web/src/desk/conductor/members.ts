@@ -20,6 +20,7 @@ import {
   isInFlight,
   liveAgentSessions,
   type AgentFlight,
+  type AgentReview,
   type AgentScreen,
   type CoderSessionRow,
 } from "../agentFlights";
@@ -34,7 +35,7 @@ import { wireDate } from "../surface/format";
 export const STALE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export type ConductorRole = "ready" | "live" | "stale";
-export type LiveState = "ask" | "held" | "idle" | "pr" | "work" | "done" | "queued" | "no_signal";
+export type LiveState = "ask" | "held" | "needs_you" | "idle" | "pr" | "work" | "done" | "queued" | "no_signal";
 
 export interface ConductorMember extends ObjectListRow {
   role: ConductorRole;
@@ -64,6 +65,8 @@ export interface ConductorMember extends ObjectListRow {
   helperOf?: string | null;
   /** live: the Secure helper request waiting for the owner's one press. */
   helperRequest?: AgentFlight["helperRequest"];
+  /** live: explicit AG12 builder/reviewer pair status. */
+  review?: AgentReview | null;
   /** stale: the item its agent worked on (Hand again). */
   origin?: { kind: string; id: string; title: string; projectId: string | null; agent: string };
   /** live: the desk's own answer (Betterment AG3). */
@@ -89,10 +92,21 @@ export interface ConductorReads {
 
 const AGENT_IDS: readonly AgentId[] = ["claude", "codex", "pi"];
 
+/** The one-line pair fact on a builder or reviewer row. */
+export function reviewWords(review: AgentReview | null | undefined): string | null {
+  if (!review || !review.requested) return null;
+  const reviewer = { codex: "Codex", claude: "Claude Code", pi: "pi" }[review.requested] ?? review.requested;
+  const builder = review.builder || "Builder";
+  const round = review.round || review.rounds || 0;
+  return review.role === "reviewer"
+    ? `${reviewer} reviews · ${builder} builds · round ${round}`
+    : `${builder} builds · ${reviewer} reviews · round ${round}`;
+}
+
 /** The list's group (the Floor list's `group`): askers first in every view. */
 export const GROUP = { ask: 0, work: 1, ready: 2, stale: 3 } as const;
 function liveGroup(state: LiveState): number {
-  return state === "ask" || state === "held" ? GROUP.ask : GROUP.work;
+  return state === "ask" || state === "held" || state === "needs_you" ? GROUP.ask : GROUP.work;
 }
 
 /** `isInFlight` as a plain boolean (its type guard narrows the else to never). */
@@ -116,6 +130,8 @@ function liveLamp(state: LiveState, pr: number | null | undefined): { tone: Obje
       return { tone: "ask", label: "ASKS" };
     case "held":
       return { tone: "ask", label: "HELD" };
+    case "needs_you":
+      return { tone: "ask", label: "NEEDS YOU" };
     case "idle":
       // PHILO-15 B48: the turn ended with no question.
       return { tone: "info", label: "IDLE" };
@@ -144,6 +160,7 @@ function sessionState(row: CoderSessionRow): LiveState {
 }
 
 function flightState(flight: AgentFlight): LiveState {
+  if (flight.review?.status === "needs_you") return "needs_you";
   if (flight.state === "done") return "done";
   if (flight.state === "queued") return "queued";
   if (flight.state === "no_signal") return "no_signal";
@@ -246,7 +263,9 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
     const launchId = flight?.launchId ?? null;
     // PHILO-15 15: a turn end the responder read as DONE / IDLE is not an ask.
     const turned = turnOf(flight);
-    const state: LiveState = flight?.helperRequest?.status === "awaiting_owner"
+    const state: LiveState = flight?.review?.status === "needs_you"
+      ? "needs_you"
+      : flight?.helperRequest?.status === "awaiting_owner"
       ? "held"
       : turned && sessionState(row) === "ask" ? turned : sessionState(row);
     const lamp = liveLamp(state, flight?.pr?.number);
@@ -277,6 +296,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       screen: flight?.screen ?? row.screen ?? null,
       helperOf: flight?.helperOf ?? null,
       helperRequest: flight?.helperRequest ?? null,
+      review: flight?.review ?? null,
       group: liveGroup(state),
       facts: {
         where: flight?.projectName || undefined,
@@ -295,7 +315,9 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
     const ref = flight.launchId ? `launch:${flight.launchId}` : flight.queueId ? `queue:${flight.queueId}` : null;
     if (!inFlight(flight) || !ref) continue;
     if (flight.sessionKey && liveKeys.has(flight.sessionKey)) continue;
-    const state: LiveState = flight.helperRequest?.status === "awaiting_owner" ? "held" : flightState(flight);
+    const state: LiveState = flight.review?.status === "needs_you"
+      ? "needs_you"
+      : flight.helperRequest?.status === "awaiting_owner" ? "held" : flightState(flight);
     const lamp = flight.state === "starting"
       ? { tone: "info" as const, label: "STARTS" }
       : flight.state === "resuming"
@@ -324,6 +346,7 @@ export function conductorMembers(reads: ConductorReads): ConductorMember[] {
       screen: flight.screen ?? null,
       helperOf: flight.helperOf ?? null,
       helperRequest: flight.helperRequest ?? null,
+      review: flight.review ?? null,
       group: liveGroup(state),
       facts: {
         where: flight.projectName || undefined,
@@ -395,7 +418,7 @@ export function conductorHead(
   launches: { live: number; cap: number } | null,
 ): ConductorHead {
   const live = members.filter((m) => m.role === "live");
-  const ask = live.filter((m) => m.live === "ask" || m.live === "held").length;
+  const ask = live.filter((m) => m.live === "ask" || m.live === "held" || m.live === "needs_you").length;
   // Betterment AG0: a finished agent is not at work; AG5: nor a queued hand;
   // AG7: nor one that sends no signal.
   const done = live.filter((m) => m.live === "done" || m.live === "queued" || m.live === "no_signal").length;
@@ -421,7 +444,7 @@ export type FleetRank = 0 | 1 | 2 | 3;
 export const FLEET_WORD: Record<FleetRank, string> = { 0: "Needs you", 1: "New", 2: "Working", 3: "Quiet" };
 
 export function fleetRank(member: ConductorMember): FleetRank {
-  if (member.live === "ask" || member.live === "held") return 0;
+  if (member.live === "ask" || member.live === "held" || member.live === "needs_you") return 0;
   if (member.live === "done") return member.isNew ? 1 : 3;
   if (member.live === "idle" || member.live === "no_signal") return 3;
   return 2;

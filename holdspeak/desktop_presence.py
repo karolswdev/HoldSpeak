@@ -25,10 +25,12 @@ import re
 import sys
 import threading
 from dataclasses import dataclass
+from math import isfinite
 from typing import Any, Callable, Optional, Protocol
 
 from .logging_config import get_logger
 from .activity_tracker import desktop_window_policy, normalize_activity_state
+from .timestamps import parse_stamp, utc_now
 
 log = get_logger("desktop_presence")
 
@@ -56,6 +58,28 @@ _STATE_META: dict[str, dict[str, str]] = {
     "armed": {"tone": "recording", "label": "Armed", "accent": "#f6c356"},
 }
 
+DESK_NOT_RUNNING_LABEL = "Desk not running"
+
+
+def format_elapsed(seconds: object) -> str:
+    """Format a non-negative duration as the menu-bar ``mm:ss`` token."""
+    try:
+        value = float(seconds)
+    except (TypeError, ValueError):
+        value = 0.0
+    if not isfinite(value):
+        value = 0.0
+    whole = max(0, int(value))
+    return f"{whole // 60:02d}:{whole % 60:02d}"
+
+
+def _elapsed_seconds(activity: dict[str, object]) -> float:
+    """Read the meeting's elapsed time from its authoritative start stamp."""
+    started = parse_stamp(activity.get("started_at"))
+    if started is None:
+        return 0.0
+    return max(0.0, (utc_now() - started).total_seconds())
+
 
 @dataclass(frozen=True)
 class PresenceWindowView:
@@ -69,6 +93,9 @@ class PresenceWindowView:
     accent: str
     visible: bool
     mode: str
+    elapsed_seconds: float = 0.0
+    stop_available: bool = False
+    desk_available: bool = True
     width: int = 392
     min_height: int = 112
     max_detail_chars: int = 156
@@ -134,15 +161,38 @@ def build_presence_window_view(activity: dict[str, object]) -> PresenceWindowVie
     )
     detail = _truncate(_redact_sensitive(raw_detail), 156)
     event = _truncate(activity.get("last_event"), 72)
+    desk_available = not (
+        activity.get("desk_available") is False
+        or activity.get("connected") is False
+    )
+    elapsed_seconds = _elapsed_seconds(activity) if state == "meeting_live" else 0.0
+    if not desk_available:
+        label = DESK_NOT_RUNNING_LABEL
+        tone = "error"
+        accent = _STATE_META["error"]["accent"]
+        stop_available = False
+    elif state == "meeting_live":
+        label = f"Recording · {format_elapsed(elapsed_seconds)}"
+        tone = meta["tone"]
+        accent = meta["accent"]
+        stop_available = True
+    else:
+        label = _truncate(activity.get("label") or meta["label"], 42)
+        tone = meta["tone"]
+        accent = meta["accent"]
+        stop_available = False
     return PresenceWindowView(
         state=state,
-        tone=meta["tone"],
-        label=_truncate(activity.get("label") or meta["label"], 42),
+        tone=tone,
+        label=label,
         detail=detail,
         event=event,
-        accent=meta["accent"],
+        accent=accent,
         visible=visible,
         mode=mode,
+        elapsed_seconds=elapsed_seconds,
+        stop_available=stop_available,
+        desk_available=desk_available,
     )
 
 
@@ -219,6 +269,12 @@ class DesktopPresenceHost:
         with self._lock:
             self._cancel_hide_timer_locked()
             if not visible or mode == "hidden":
+                # Deliver the hidden snapshot before hiding so a native
+                # renderer cannot retain a completed meeting after its panel
+                # lingered out of view.  A live meeting that merely reaches
+                # its linger deadline is handled by _hide_after_linger and
+                # keeps its last active snapshot.
+                self.renderer.update(activity)
                 self.renderer.hide(reason=mode)
                 self._visible = False
                 return
@@ -329,6 +385,8 @@ def detect_presence_platform(
 def _select_presence_renderer(
     platform: dict[str, object],
     url_provider: Optional[Callable[[], str]],
+    *,
+    stop_callback: Optional[Callable[[], Any]] = None,
 ) -> Optional[PresenceRenderer]:
     """Pick the best available native renderer for the platform, or None.
 
@@ -342,7 +400,7 @@ def _select_presence_renderer(
         from .desktop_presence_cocoa import CocoaPresenceRenderer, cocoa_presence_available
 
         if cocoa_presence_available():
-            return CocoaPresenceRenderer(url_provider)
+            return CocoaPresenceRenderer(url_provider, stop_callback=stop_callback)
     if platform.get("os") == "linux" and url_provider is not None:
         from .desktop_presence_freedesktop import (
             FreedesktopPresenceRenderer,
@@ -361,6 +419,7 @@ def build_desktop_presence_host(
     *,
     url_provider: Optional[Callable[[], str]] = None,
     config_enabled: bool = False,
+    stop_callback: Optional[Callable[[], Any]] = None,
 ) -> Optional[DesktopPresenceHost]:
     """Build the opt-in desktop host, or None (off / no native renderer).
 
@@ -374,7 +433,14 @@ def build_desktop_presence_host(
         return None
     platform = detect_presence_platform(env)
     try:
-        renderer = _select_presence_renderer(platform, url_provider)
+        if stop_callback is None:
+            # Keep the two-argument seam available to platform-selection tests
+            # and third-party renderers that predate the native Stop menu.
+            renderer = _select_presence_renderer(platform, url_provider)
+        else:
+            renderer = _select_presence_renderer(
+                platform, url_provider, stop_callback=stop_callback
+            )
     except Exception as exc:  # pragma: no cover - presence must never block boot
         log.warning(f"Desktop presence renderer unavailable: {exc}")
         return None
@@ -395,9 +461,11 @@ __all__ = [
     "PANEL_FRAME_PASSIVE",
     "PresenceRenderer",
     "PresenceWindowView",
+    "DESK_NOT_RUNNING_LABEL",
     "build_desktop_presence_host",
     "build_presence_window_view",
     "desktop_presence_enabled",
     "detect_presence_platform",
+    "format_elapsed",
     "presence_panel_frame",
 ]

@@ -526,6 +526,13 @@ export function createHubWindows(options: HubWindowsOptions = {}): HubWindows {
       }
       // Betterment setup ST1: a saved Rhythm or Change places window opens
       // Settings at its section, once per row and view.
+      // C11: a saved Commands window follows its new Speak wing once.
+      if (r.id === "surface-commands" && !settingsOpened.has(r.id) && !retiredDone.has(r.id)
+        && (retireTries.get(r.id) ?? 0) < RETIRE_TRIES) {
+        settingsOpened.add(r.id);
+        migratedTo.add("surface-dictation");
+        useDesk.getState().openSurfaceWindow("dictate", "commands");
+      }
       const home = SETTINGS_HOMES[r.id];
       if (home && !settingsOpened.has(r.id) && !retiredDone.has(r.id)
         && (retireTries.get(r.id) ?? 0) < RETIRE_TRIES) {

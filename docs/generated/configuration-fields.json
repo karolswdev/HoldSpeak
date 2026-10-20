@@ -1129,7 +1129,7 @@
       "type": "str",
       "default_expression": null,
       "path": "holdspeak/config/ui.py",
-      "line": 53
+      "line": 54
     },
     {
       "class": "VoiceMacroAction",
@@ -1137,7 +1137,7 @@
       "type": "str",
       "default_expression": "''",
       "path": "holdspeak/config/ui.py",
-      "line": 54
+      "line": 55
     },
     {
       "class": "VoiceMacro",
@@ -1145,7 +1145,7 @@
       "type": "str",
       "default_expression": null,
       "path": "holdspeak/config/ui.py",
-      "line": 89
+      "line": 103
     },
     {
       "class": "VoiceMacro",
@@ -1153,23 +1153,23 @@
       "type": "VoiceMacroAction",
       "default_expression": null,
       "path": "holdspeak/config/ui.py",
-      "line": 90
+      "line": 104
     },
     {
       "class": "MacrosConfig",
       "field": "enabled",
       "type": "bool",
-      "default_expression": "False",
+      "default_expression": "True",
       "path": "holdspeak/config/ui.py",
-      "line": 119
+      "line": 137
     },
     {
       "class": "MacrosConfig",
       "field": "items",
-      "type": "list[VoiceMacro]",
-      "default_expression": "field(default_factory=list)",
+      "type": "list[VoiceMacro] | None",
+      "default_expression": "None",
       "path": "holdspeak/config/ui.py",
-      "line": 120
+      "line": 138
     }
   ]
 }

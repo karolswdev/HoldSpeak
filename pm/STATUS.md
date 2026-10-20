@@ -4,9 +4,105 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (Memory first-read and browser repairs verified)
+**Last updated:** 2026-10-19 (native agent access delivery)
 
 ## Current phase
+
+ST6 gives the owner one Setup press to install hooks, the native user-scope
+HoldSpeak MCP entry and the packaged skill for Claude Code and Codex.
+Each agent shows its actual hooks/tools/skill readback. Stop using my desk
+removes only HoldSpeak-owned bindings and preserves foreign configuration.
+An earlier agent failure remains visible if a later agent succeeds. The row
+refreshes after install and removal; failure words retain a retry.
+
+Current integrated focused proof: 54 Python checks, including both real-route
+browser cases at 1440/393, and 13 web checks pass. The browser verifies the
+three Codex bindings, mixed failure, owned removal, foreign preservation and
+refreshed state. Separate scratch-HOME probes exercised the installed native
+Claude/Codex MCP add/remove commands and MCP initialize. Native interactive
+agent acceptance remains unobserved; no owner agent files were changed.
+The frozen d4cf5fac7 check passed 4,080 related web checks and 2,245 affected
+pytest checks; its only remaining failure was the generated operation export.
+That export is now regenerated from the corrected result declaration.
+Required final delta quick: 64 affected Python, 108 desk sweep, 27 canon and 1,116 repository guards pass; the build passes. The preceding frozen-source run passed 4,080 web and 2,245 affected Python checks; its stale generated export is corrected by this delta.
+
+C12 shows Recording · mm:ss in the macOS menu bar itself, using the
+meeting's start stamp. Stop in its menu calls the existing runtime Stop.
+The presence page's connection lamp supplies availability; a disconnected
+desk reads Desk not running and disables Stop. An idle update clears the
+recording title and stale Stop state, including after the panel linger.
+
+The visible-title check fails before the fix. All 30 focused presence checks
+pass afterward, including the real Foundation Objective-C action target and
+the parent Stop-event bridge. A real Foundation dictionary regression also
+caught and fixes the disconnect read ignoring WebKit's native value.
+The former focused runtime set also passed.
+Native menu rendering and physical recording remain unobserved. Required
+quick: 427 affected pytest, 108 sweep, 27 canon and 1,116 repo guards pass.
+
+C11 ships five closed desk phrases in Speak. Record, Stop and New note
+use authenticated MCP operations; Ask and Today use the existing Desk openers.
+New note opens the exact stored note returned by the producer. Commands is
+now the Voice commands wing of Speak; a saved Off choice remains off.
+A saved Commands window migrates to that wing. Desk-command tests show an
+explicit Preview and do not run a connector; the guide describes the new
+defaults and the separate custom-action tests.
+Synchronous command dispatch stays off the event loop.
+
+Record releases the ended browser claim before starting Meeting. A real
+recording exposed a missing Stop path: its microphone claim rejected the
+second Talk. The fix admits only the closed Stop command during recording,
+without taking or releasing Meeting's claim. Ordinary dictation, field
+microphones and other commands retain the named refusal; no journal row is
+written. The regression fails before the fix and passes after it.
+
+Focused Python: 33 checks pass, including actual MCP/controller Record and
+spoken Stop, responsiveness and the restricted recording path. Native audio
+is simulated in process; C10 separately verifies child ownership. The real
+authenticated note-write browser proof passes at 1440/393. Native hardware
+and concurrent native/browser microphone acceptance remain unobserved.
+Required quick: 4,092 web, 320 affected pytest, 108 sweep, 27 canon and 1,116 repo guards pass.
+
+AG12 adds Review by to Hand to agent and Start an agent. A builder commit
+starts a reviewer helper in its own read-only worktree. Explicit MUST
+findings return to the builder, with at most two rounds; the pair retains
+one Result. Unresolved findings or an unreadable reviewer result still need
+the owner. Durable pair state overrides stale terminal-screen state in both
+the fleet and lane.
+
+The real isolated hub with two fake agent processes completed MUST → builder
+fix commit → second review clear. Reviewer credentials refuse writes,
+preparation, sending and helper creation. Focused checks: 18 agent-flight
+checks and 130 web consumer checks pass. The actual completed producer pair
+renders Done · New and its two-round Result at 1440/393. Native interactive
+agents are not inferred from the fake processes. Required quick:
+4,076 web, 9,304 affected pytest, 108 sweep, 27 canon and 1,116 repo guards pass.
+
+Setup ST3–ST5 share one found-things window on first run and later visits.
+Use selects real discovered engine IDs and the composed Everything-else
+assignment; it does not wire speech to a chat model. Calendar, People and
+agent rows report their producer outcome. Unknown success bodies remain
+unconfirmed. The microphone Check opens the actual doctor section in place;
+late microphone admission is cancelled when the window closes. The existing
+Settings guide alias opens Setup. Retired sources and tests are parked.
+
+Focused verification: 66 web checks, two real-route browser cases at 1440/393,
+12 Settings/Setup sweep cases, 16 product-copy checks and TypeScript pass.
+The browser records the actual LAN Use and microphone-doctor response bodies.
+The frozen-source check passed 4,072 related web checks and 5,186 affected
+pytest checks. Its sweep exposed one retired /welcome selector; the current
+route check now requires the visible Setup heading. Required final delta
+quick from frozen source 7052755f3: 108 sweep, 27 canon and 1,116 repo guards pass. No native hardware or owner-provider
+acceptance is inferred from the isolated checks.
+
+The meeting-window regression now selects the failed-summary member when P5
+also offers the same-title meeting as a project source. Both 1440/393 browser
+walks pass, retaining the single-window assertions across every live door.
+The web check now uses the same eight-worker bound as pytest, under the shared
+lock. All 5,387 web checks pass in 111.97 seconds with eight workers; the prior
+two-worker related run took 268.49 seconds for 4,071 cases. No checks or
+assertions are removed. Required quick: 14 affected pytest, 110 sweep, 27 canon and 1,116 repo guards pass.
+
 
 C10 moves native meeting streams and the capture journal into one child process.
 The parent receives durable PCM and levels. Stop gives the child one second,
@@ -23,8 +119,11 @@ Needs-you assertions: P5 now adds a muted matching-meeting candidate. Both
 assertions now name that candidate while retaining the six canonical members
 and mutation checks; all six focused cases pass. The tape also found two
 meeting-window walks selecting a same-title project suggestion instead of the
-failed-summary member; that separate browser repair is in progress. The tape
-is still running and does not cover C10. Final required quick: 1,029 affected pytest, 110 sweep, 27 canon and
+failed-summary member; that browser repair is merged in #1383. The tape
+finished red at that older pin and does not cover C10. Its 13 browser failures
+are repaired by #1381/#1383; its web writer census failure is repaired by
+#1381. Exact pinned totals: 16,877 pytest pass/two fail; 320 browser pass/13
+fail; 5,383 web pass/one fail. A newer integrated tape remains required. Final required quick: 1,029 affected pytest, 110 sweep, 27 canon and
 1,116 repo guards pass. Capture is observed at 1440/393 on an isolated hub.
 Two prior bare-desk settle timeouts did not recur in the focused six-case
 check or the final full sweep; failure diagnostics retain actual state and shots. Before this merge, the running desk is backend
@@ -47,9 +146,9 @@ same-ID PCM recovery. Required quick: 160 affected, 110 sweep, 27 canon and
 1,116 repo guards pass. Capture shots pass at 1440/393. Native
 hardware is not exercised; C10 now delivers the child-process boundary.
 
-**Betterment recovery: 86/117 recipe implementations merged.** Codex owns
+**Betterment recovery: 93/117 recipe implementations merged.** Codex owns
 recovery and delivery at the owner's request. The desk is currently on
-backend `b2c642b42`, frontend `2d4a0039bcaa5db4`, PID 51055 (#1380).
+backend `53783b27f`, frontend `fcc01f42cb0f8823`, PID 71110 (#1385).
 Four HTTP checks pass and the actual desk renders at 1440/393. These are
 delivery observations; owner acceptance remains separate. All three baseline non-browser
 regression shards passed: 16,784 checks, 27 skips and one expected failure.

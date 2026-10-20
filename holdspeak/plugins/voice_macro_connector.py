@@ -5,11 +5,12 @@ the ``connector(proposal) -> dict`` the ``ActuatorExecutor`` injects, REUSING th
 Phase-38 gated-connector framework (``build_gated_connector`` + ``WriteConnectorManifest``
 + ``PermissionGate``) rather than reinventing guarded execution.
 
-Three of the four action kinds run a bounded subprocess and route through the gate:
+Three local action kinds run a bounded subprocess and route through the gate:
 
   - ``open_url``    -> ``open <url>`` (macOS) / ``xdg-open <url>`` (Linux)
   - ``launch_app``  -> ``open -a <app>`` (macOS) / ``<app>`` (Linux)
   - ``shell``       -> ``sh -c <command>``
+  - ``desk_verb``   -> one closed Desk operation through an injected dispatcher
 
 The fourth, ``type_text``, is **not** egress (it types a snippet into the focused app),
 so it is a plain local connector that types via an injected writer (the dispatcher passes
@@ -42,6 +43,15 @@ log = get_logger("plugins.voice_macro_connector")
 # allow-list gate checks `proposal.plugin_id` — see HS-52-04).
 VOICE_MACRO_PLUGIN_ID = "voice_macro"
 DEFAULT_TIMEOUT_SECONDS = 30.0
+_DESK_VERB_CALLS = {
+    "record": ("meeting.start_capture", {}),
+    "stop": ("meeting.stop_capture", {}),
+    "new_note": ("desk.create", {"kind": "notes", "data": {}}),
+}
+_DESK_VERB_UI = {
+    "ask": "ask",
+    "open_today": "open_today",
+}
 
 
 def _platform() -> str:
@@ -118,6 +128,7 @@ def build_voice_macro_connector(
     runner: Optional[Any] = None,
     type_writer: Optional[Callable[[str], None]] = None,
     platform: Optional[str] = None,
+    desk_dispatch: Optional[Callable[[str, dict[str, Any]], Any]] = None,
 ) -> Connector:
     """Build the ``connector(proposal) -> dict`` for one macro action.
 
@@ -126,6 +137,31 @@ def build_voice_macro_connector(
     the ``PermissionGate`` to ``subprocess.run``). ``type_text`` requires the dispatcher
     to inject the authenticated owner's gesture-bound writer.
     """
+    if action.kind == "desk_verb":
+        if desk_dispatch is None:
+            raise RuntimeError("voice_macro_desk_dispatch_required")
+        verb = action.payload
+        if verb in _DESK_VERB_UI:
+            intent = _DESK_VERB_UI[verb]
+
+            def _ui_connector(proposal: Any) -> dict[str, Any]:
+                return {"desk_verb": verb, "ui_intent": intent}
+
+            return _ui_connector
+        call = _DESK_VERB_CALLS.get(verb)
+        if call is None:
+            raise RuntimeError(f"unknown Desk voice verb {verb!r}")
+        tool_name, arguments = call
+
+        def _desk_connector(proposal: Any) -> dict[str, Any]:
+            # The dispatcher is supplied by the authenticated stream route. The
+            # macro payload cannot select a tool or add arguments.
+            result = desk_dispatch(tool_name, dict(arguments))
+            key = "created" if verb == "new_note" else "result"
+            return {"desk_verb": verb, key: result}
+
+        return _desk_connector
+
     if action.kind == "type_text":
         if type_writer is None:
             raise RuntimeError("voice_macro_direct_gesture_required")
