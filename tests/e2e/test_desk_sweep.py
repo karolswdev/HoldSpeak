@@ -1421,7 +1421,10 @@ def test_every_html_route_loads_clean(desk: dict[str, Any], pw_browser: Any, rou
             if wid and window_app_on_hub(wid):
                 sel = f'[id="{wid}"]'
                 page.locator(sel).wait_for(timeout=T)
-                page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
+                try:
+                    page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)
+                except Exception as exc:
+                    raise AssertionError(f"{route} did not settle: {page.evaluate(UNSETTLED_JS, wid)}") from exc
             else:
                 sel = "[data-testid=desk-screen]"
                 page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
