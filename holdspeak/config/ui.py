@@ -27,11 +27,13 @@ class UIConfig:
     desk_sounds: bool = True  # HS-135-12: mechanical sound palette, ON by default
 
 
-# HS-52-02: voice command macros. A user maps a spoken keyword to a deterministic
-# action; speaking the keyword fires the action instead of typing. The kinds map to
-# the user's request: open a website, open/launch an app, run a shell command, type a
-# snippet. OFF by default.
-_KNOWN_MACRO_ACTION_KINDS = ("open_url", "launch_app", "shell", "type_text")
+# HS-52-02 / capture C11: a user maps a spoken keyword to a deterministic action;
+# speaking the keyword fires the action instead of typing. New desks ship with five
+# closed Desk verbs. Other configured action kinds remain available.
+_KNOWN_MACRO_ACTION_KINDS = (
+    "open_url", "launch_app", "shell", "type_text", "desk_verb",
+)
+_KNOWN_DESK_VERBS = ("record", "stop", "new_note", "ask", "open_today")
 
 
 class VoiceMacroError(ConfigError):
@@ -44,10 +46,9 @@ class VoiceMacroError(ConfigError):
 class VoiceMacroAction:
     """What a macro does: one deterministic action ``kind`` + its single ``payload``.
 
-    ``kind`` is one of ``open_url`` / ``launch_app`` / ``shell`` / ``type_text``;
-    ``payload`` is that kind's single value (a URL, an app name or path, a shell
-    command, or the snippet text). The transcriber never composes this -- the user
-    configures it, which is the consent the dispatcher acts on.
+    ``kind`` is one of the four local action kinds or ``desk_verb``. A Desk verb's
+    payload is one member of the closed Desk verb enum. The transcriber never
+    composes this -- the user configures it, which is the consent the dispatcher acts on.
     """
 
     kind: str
@@ -64,6 +65,11 @@ class VoiceMacroAction:
         self.payload = str(self.payload or "")
         if not self.payload.strip():
             raise VoiceMacroError(f"voice macro action {kind!r} needs a non-empty payload")
+        if kind == "desk_verb" and self.payload not in _KNOWN_DESK_VERBS:
+            raise VoiceMacroError(
+                f"unknown Desk voice verb {self.payload!r}; "
+                f"known verbs are {list(_KNOWN_DESK_VERBS)}"
+            )
 
     def preview(self) -> str:
         """The one plain-language line of exactly what this fires.
@@ -79,6 +85,14 @@ class VoiceMacroAction:
             return f"runs: {self.payload}"
         if self.kind == "type_text":
             return f"types: {self.payload}"
+        if self.kind == "desk_verb":
+            return {
+                "record": "starts a recording",
+                "stop": "stops the recording",
+                "new_note": "opens a new note",
+                "ask": "opens Ask HoldSpeak",
+                "open_today": "opens Today",
+            }[self.payload]
         return self.payload
 
 
@@ -114,12 +128,18 @@ def _normalize_macro_keyword(text: str) -> str:
 
 @dataclass
 class MacrosConfig:
-    """Voice command macros (HS-52-02). OFF by default, byte-identical when off."""
+    """Voice commands, with the five safe Desk verbs on for a new desk.
 
-    enabled: bool = False
-    items: list[VoiceMacro] = field(default_factory=list)
+    ``items=None`` distinguishes an omitted section from an explicit empty list
+    while keeping a saved ``enabled: false`` setting off.
+    """
+
+    enabled: bool = True
+    items: list[VoiceMacro] | None = None
 
     def __post_init__(self) -> None:
+        if self.items is None:
+            self.items = _default_voice_macros() if bool(self.enabled) else []
         coerced: list[VoiceMacro] = []
         for raw in self.items:
             if isinstance(raw, VoiceMacro):
@@ -132,6 +152,17 @@ class MacrosConfig:
                 raise VoiceMacroError("each voice macro must be an object")
         self.items = coerced
         self.enabled = bool(self.enabled)
+
+
+def _default_voice_macros() -> list[VoiceMacro]:
+    """The five shipped phrases, expressed only as closed Desk verbs."""
+    return [
+        VoiceMacro("start recording", VoiceMacroAction("desk_verb", "record")),
+        VoiceMacro("stop recording", VoiceMacroAction("desk_verb", "stop")),
+        VoiceMacro("new note", VoiceMacroAction("desk_verb", "new_note")),
+        VoiceMacro("ask HoldSpeak", VoiceMacroAction("desk_verb", "ask")),
+        VoiceMacro("open today", VoiceMacroAction("desk_verb", "open_today")),
+    ]
 
 
 # Key mapping from config names to pynput keys

@@ -60,6 +60,44 @@ def test_type_text_command_types_via_injected_writer() -> None:
     assert typed == ["## Standup"]
 
 
+def test_desk_verb_requires_the_trusted_dispatcher() -> None:
+    cfg = _config_with(VoiceMacro("new note", VoiceMacroAction("desk_verb", "new_note")))
+    result = dispatch_voice_command("new note", config=cfg)
+    assert result is not None and result.handled and not result.ok
+    assert "desk_dispatch_required" in result.error
+
+
+def test_desk_verbs_use_only_the_closed_mcp_operation_path() -> None:
+    calls: list[tuple[str, dict]] = []
+
+    def dispatch(name: str, arguments: dict) -> dict:
+        calls.append((name, arguments))
+        return {"id": "note-1", "title": "New note"} if name == "desk.create" else {"id": "meeting-1"}
+
+    for keyword, verb, expected in [
+        ("start recording", "record", "meeting.start_capture"),
+        ("stop recording", "stop", "meeting.stop_capture"),
+        ("new note", "new_note", "desk.create"),
+    ]:
+        calls.clear()
+        cfg = _config_with(VoiceMacro(keyword, VoiceMacroAction("desk_verb", verb)))
+        result = dispatch_voice_command(keyword, config=cfg, desk_dispatch=dispatch)
+        assert result is not None and result.ok
+        assert calls == [(expected, {"kind": "notes", "data": {}} if verb == "new_note" else {})]
+        assert result.result is not None
+
+
+def test_ui_desk_verbs_return_closed_intents_without_engine_call() -> None:
+    calls: list[tuple[str, dict]] = []
+    cfg = _config_with(VoiceMacro("ask HoldSpeak", VoiceMacroAction("desk_verb", "ask")))
+    result = dispatch_voice_command(
+        "ask HoldSpeak", config=cfg, desk_dispatch=lambda name, args: calls.append((name, args))
+    )
+    assert result is not None and result.ok
+    assert result.result == {"desk_verb": "ask", "ui_intent": "ask"}
+    assert calls == []
+
+
 def test_activity_is_emitted_on_match() -> None:
     seen: list[str] = []
     cfg = _config_with(VoiceMacro("terminal", VoiceMacroAction("launch_app", "Terminal")))
