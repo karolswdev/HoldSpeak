@@ -138,7 +138,7 @@ describe("the palette's Close", () => {
     const launcher = screen.getByRole("button", { name: /^Search/ });
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(usePalette.getState().open).toBe(false);
-    expect(screen.queryByRole("region", { name: "Tools and Desk search" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Search" })).toBeNull();
     expect(document.activeElement).toBe(launcher);
     expect(useDesk.getState().openPullout).not.toHaveBeenCalled();
     fireEvent.click(launcher);

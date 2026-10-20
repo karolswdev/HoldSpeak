@@ -457,7 +457,8 @@
 }
 .desk-next .desk-deck-verbs {
   margin-left: 20px;
-  border-left: 1px solid var(--border);
+  background: var(--desk-aerogel-fill);
+  outline: 1px solid var(--desk-aerogel-edge);
 }
 .desk-next .desk-deck-verb-row {
   padding-left: 16px;
@@ -1276,5 +1277,6 @@
 .desk-next .desk-deck-hand {
   display: block;
   width: fit-content;
+  min-height: var(--desk-button-hit-size);
   margin: 2px 8px 4px auto;
 }

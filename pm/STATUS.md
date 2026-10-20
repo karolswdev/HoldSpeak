@@ -19,7 +19,16 @@ Keep/Remove and Prep at 1440/393, exact Cmd+Enter About, phone search and
 Builder persistence across two browsers. The 150 focused web consumers,
 type check and build pass. The complete Settings wire group was recorded
 through both actual producer writers. P9's canonical decision prompt and
-front-project context are integrated. Required quick: S5_QUICK_PENDING.
+front-project context are integrated. The first required check caught old
+Search labels, grouping and cold-start assertions, the Runs-on rig using its
+wrong owner token, a phone Hand hit-area overlap and an action-list left
+rail. The shared styles and test adapters are corrected without changing
+product authority or relaxing the geometry/canon checks. Required quick:
+S5_QUICK_PENDING.
+
+The final fix proof passed all 48 selected Search consumers, eight collected
+browser cases (first use, Note editor, Runs-on Undo and strict Search hit
+areas at both widths), 15 canon checks, type check and build.
 
 The older pinned full tape finished red: 16,962 Python and 314 browser
 cases passed, with five Python and four browser failures repaired by

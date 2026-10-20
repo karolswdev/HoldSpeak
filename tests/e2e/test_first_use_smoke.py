@@ -152,7 +152,7 @@ def _search(page, query, *, keyboard=False):
         page.keyboard.press("Meta+k")
     else:
         door.click()
-    shelf = page.get_by_role("region", name="Tools and Desk search", exact=True)
+    shelf = page.get_by_role("region", name="Search", exact=True)
     _loaded(shelf.get_by_role("option").first)
     field = shelf.get_by_role("combobox", name="Find, open or ask", exact=True)
     field.fill(query)

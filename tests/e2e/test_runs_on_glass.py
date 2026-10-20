@@ -230,15 +230,15 @@ def _speech_engine() -> None:
     )
 
 
-def _builder_tools_on(page: Any) -> None:
+def _builder_tools_on(page: Any, *, token: str = TOKEN) -> None:
     """Betterment E5 (DECISIONS #8): the drag switchboard these tests drive is
     parked behind Builder tools (Settings > System; web/src/desk/builderTools.ts);
     What runs where is the default face. Turn the switch on for every load."""
     # Builder tools are a hub preference; seed it through the same Settings
     # writer as the real face, then reload so DeskApp hydrates the value.
-    settings = _api(page, "GET", "/api/settings", token=TOKEN)
+    settings = _api(page, "GET", "/api/settings", token=token)
     settings.setdefault("ui", {})["builder_tools"] = True
-    _api(page, "PUT", "/api/settings", settings, token=TOKEN)
+    _api(page, "PUT", "/api/settings", settings, token=token)
     page.reload(wait_until="load")
 
 
@@ -794,7 +794,7 @@ class TestTheRunsOnFooter(FitRig):
         )
         with sync_playwright() as pw:
             browser, page, errors = self._open(pw, width)
-            _builder_tools_on(page)
+            _builder_tools_on(page, token=FIT_TOKEN)
             try:
                 _normal_chair(page)
                 self._stage(page, "open-concierge")

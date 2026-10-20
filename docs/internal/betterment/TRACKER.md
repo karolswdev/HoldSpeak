@@ -152,7 +152,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | ST8 | Sign in without a terminal | Done · #1398 | Native provider sign-in runs in the Accounts row; existing Check confirms the result. |
 | ST9 | Setup from the terminal and by asking | Done · #1393 | CLI and MCP share the Setup inventory and Use producer; agents read status, adoption requires the owner. |
 
-## Desk shell (`shell/RECIPE.md`): 4 of 10
+## Desk shell (`shell/RECIPE.md`): 6 of 10
 
 | Slice | What | State | Note |
 |---|---|---|---|
