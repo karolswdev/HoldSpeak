@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import multiprocessing
 import queue
+import threading
 from typing import Any, Callable
 
 from .desktop_presence import (
@@ -29,6 +30,47 @@ from .desktop_presence import (
 from .logging_config import get_logger
 
 log = get_logger("desktop_presence_cocoa")
+
+PRESENCE_STATUS_PROBE_JS = (
+    "(function(){var e=document.querySelector('.presence-activity .gadget-lamp');"
+    "if(!e)return null;return {available:e.getAttribute('data-on') === 'true'};})()"
+)
+
+
+def _build_status_menu(AppKit: Any, events: Any) -> tuple[Any, Any, Any, Any]:
+    """Build the status menu with a real Objective-C Stop action target."""
+    import objc
+    from Foundation import NSObject
+
+    class _CocoaStopTarget(NSObject):
+        def initWithEvents_(self, event_queue: Any):
+            self = objc.super(_CocoaStopTarget, self).init()
+            if self is not None:
+                self._events = event_queue
+            return self
+
+        def stop_(self, _sender: Any) -> None:
+            try:
+                self._events.put(("stop", None))
+            except Exception as exc:  # pragma: no cover - AppKit shutdown race
+                log.debug("Cocoa Stop event failed: %s", exc)
+
+    menu = AppKit.NSMenu.alloc().init()
+    menu.setAutoenablesItems_(False)
+    state_item = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+        "Ready", None, ""
+    )
+    state_item.setEnabled_(False)
+    menu.addItem_(state_item)
+    menu.addItem_(AppKit.NSMenuItem.separatorItem())
+    stop_item = AppKit.NSMenuItem.alloc().initWithTitle_action_keyEquivalent_(
+        "Stop", "stop:", ""
+    )
+    stop_target = _CocoaStopTarget.alloc().initWithEvents_(events)
+    stop_item.setTarget_(stop_target)
+    stop_item.setEnabled_(False)
+    menu.addItem_(stop_item)
+    return menu, state_item, stop_item, stop_target
 
 
 def cocoa_presence_available() -> bool:
@@ -53,7 +95,7 @@ class _CocoaPresenceUI:
     WIDTH = int(PANEL_FRAME_PASSIVE["width"])
     HEIGHT = int(PANEL_FRAME_PASSIVE["height"])
 
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str, events: Any = None) -> None:
         import AppKit
         import WebKit
         from Foundation import NSMakeRect, NSURL, NSURLRequest
@@ -66,6 +108,17 @@ class _CocoaPresenceUI:
         self.status_item = AppKit.NSStatusBar.systemStatusBar().statusItemWithLength_(
             AppKit.NSVariableStatusItemLength
         )
+        self._events = events
+        self._activity: dict[str, Any] = {}
+        self._desk_available = True
+        self._last_status_signature: tuple[str, bool, str] | None = None
+        (
+            self.status_menu,
+            self.status_state_item,
+            self.stop_menu_item,
+            self._stop_target,
+        ) = _build_status_menu(AppKit, events)
+        self.status_item.setMenu_(self.status_menu)
         self._set_glyph("#8b95a7")
 
         # A non-activating, borderless, floating, click-through panel.
@@ -142,6 +195,25 @@ class _CocoaPresenceUI:
         except Exception:  # pragma: no cover - GUI session dependent
             pass
 
+    def poll_status(self) -> None:
+        """Read the existing presence page's connection lamp.
+
+        The native child has no second hub connection. The page's RuntimeBus is
+        the established connection truth, so a false lamp changes only the
+        native status label and disables Stop until the desk reconnects.
+        """
+
+        def _done(result: Any, _error: Any) -> None:
+            if not isinstance(result, dict) or not isinstance(result.get("available"), bool):
+                return
+            self._desk_available = bool(result["available"])
+            self.refresh_status()
+
+        try:
+            self.webview.evaluateJavaScript_completionHandler_(PRESENCE_STATUS_PROBE_JS, _done)
+        except Exception:  # pragma: no cover - GUI session dependent
+            pass
+
     def sync_card_frame(self) -> None:
         """Apply the latest probe answer when it differs from the panel."""
         if self._card_seen != self._card_visible:
@@ -200,22 +272,43 @@ class _CocoaPresenceUI:
         if button is not None:
             button.setImage_(image)
 
-    def show(self, activity: dict[str, Any]) -> None:
+    def _activity_for_view(self) -> dict[str, Any]:
+        activity = dict(self._activity)
+        activity["desk_available"] = self._desk_available
+        return activity
+
+    def refresh_status(self) -> None:
+        """Refresh the glyph title from the current activity and wall clock."""
+        if not self._activity:
+            return
         from .desktop_presence import build_presence_window_view
 
-        view = build_presence_window_view(activity)
+        view = build_presence_window_view(self._activity_for_view())
+        signature = (view.label, view.stop_available, view.accent)
+        if signature == self._last_status_signature:
+            return
+        self._last_status_signature = signature
         self._set_glyph(view.accent)
+        self.status_state_item.setTitle_(view.label)
+        self.stop_menu_item.setEnabled_(view.stop_available)
+        button = self.status_item.button()
+        if button is not None:
+            button.setToolTip_(view.label)
+
+    def show(self, activity: dict[str, Any]) -> None:
+        self._activity = dict(activity)
+        self._desk_available = True
+        self.refresh_status()
         self._position()
         self.panel.orderFrontRegardless()
         self._panel_shown = True
 
     def update(self, activity: dict[str, Any]) -> None:
         # The webview self-updates over the websocket; we only refresh the glyph.
-        from .desktop_presence import build_presence_window_view
+        self._activity = dict(activity)
+        self.refresh_status()
 
-        self._set_glyph(build_presence_window_view(activity).accent)
-
-    def hide(self) -> None:
+    def hide(self, *, reason: str = "") -> None:
         self._panel_shown = False
         # A card awaiting the user outlives the activity linger: keep the
         # panel up until the card resolves (ignoring it is always safe — it
@@ -223,8 +316,14 @@ class _CocoaPresenceUI:
         if self._card_visible:
             return
         self.panel.orderOut_(None)
-        self._set_glyph("#8b95a7")
+        keep_live_status = reason == "linger_elapsed" and self._activity.get("state") == "meeting_live"
+        if not keep_live_status:
+            self._set_glyph("#8b95a7")
+            self.status_state_item.setTitle_("Ready")
+            self.stop_menu_item.setEnabled_(False)
         self._card_seen = False
+        if not keep_live_status:
+            self._last_status_signature = None
 
     def pump(self, seconds: float) -> None:
         from Foundation import NSDate, NSRunLoop
@@ -269,9 +368,9 @@ def _cocoa_notify(payload: dict) -> None:
         log.debug("cocoa child osascript notify failed: %s", exc)
 
 
-def _cocoa_child_main(commands, ready, closed, errors, url: str) -> None:
+def _cocoa_child_main(commands, events, ready, closed, errors, url: str) -> None:
     try:
-        ui = _CocoaPresenceUI(url)
+        ui = _CocoaPresenceUI(url, events)
     except Exception as exc:  # pragma: no cover - GUI session dependent
         errors.put(str(exc))
         ready.set()
@@ -287,7 +386,10 @@ def _cocoa_child_main(commands, ready, closed, errors, url: str) -> None:
         ticks += 1
         if ticks % 8 == 0:
             ui.poll_card()
+            ui.poll_status()
             ui.sync_card_frame()
+        if ticks % 20 == 0:
+            ui.refresh_status()
         try:
             command, payload = commands.get_nowait()
         except queue.Empty:
@@ -299,13 +401,13 @@ def _cocoa_child_main(commands, ready, closed, errors, url: str) -> None:
             elif command == "update" and isinstance(payload, dict):
                 ui.update(payload)
             elif command == "hide":
-                ui.hide()
+                ui.hide(reason=str(payload or ""))
             elif command == "notify" and isinstance(payload, dict):
                 # HS-171-05: post a desktop notification from the AppKit child.
                 # UNUserNotificationCenter is unavailable; use osascript.
                 _cocoa_notify(payload)
             elif command == "close":
-                ui.hide()
+                ui.hide(reason="close")
                 running = False
         except Exception as exc:  # pragma: no cover - GUI session dependent
             log.debug(f"Cocoa presence command {command!r} failed: {exc}")
@@ -325,14 +427,37 @@ class CocoaPresenceRenderer:
     runtime ``__init__`` before the server has a port.
     """
 
-    def __init__(self, url_provider: Callable[[], str], *, start_timeout: float = 5.0) -> None:
+    def __init__(
+        self,
+        url_provider: Callable[[], str],
+        *,
+        stop_callback: Callable[[], Any] | None = None,
+        start_timeout: float = 5.0,
+    ) -> None:
         self._url_provider = url_provider
+        self._stop_callback = stop_callback
         self._start_timeout = start_timeout
         self._commands: Any = None
+        self._events: Any = None
         self._closed: Any = None
         self._process: Any = None
         self._started = False
         self._unavailable = False
+        self._event_stop = threading.Event()
+        self._event_thread: threading.Thread | None = None
+
+    def _consume_events(self) -> None:
+        while not self._event_stop.is_set():
+            try:
+                command, _payload = self._events.get(timeout=0.2)
+            except queue.Empty:
+                continue
+            if command != "stop" or self._stop_callback is None:
+                continue
+            try:
+                self._stop_callback()
+            except Exception as exc:  # pragma: no cover - runtime stop boundary
+                log.warning("Native Stop failed: %s", exc)
 
     def _ensure_started(self) -> bool:
         if self._started:
@@ -346,12 +471,13 @@ class CocoaPresenceRenderer:
 
         ctx = multiprocessing.get_context("spawn")
         self._commands = ctx.Queue()
+        self._events = ctx.Queue()
         ready = ctx.Event()
         self._closed = ctx.Event()
         errors = ctx.Queue()
         self._process = ctx.Process(
             target=_cocoa_child_main,
-            args=(self._commands, ready, self._closed, errors, presence_url),
+            args=(self._commands, self._events, ready, self._closed, errors, presence_url),
             name="HoldSpeakDesktopPresenceCocoa",
             daemon=True,
         )
@@ -371,6 +497,14 @@ class CocoaPresenceRenderer:
             log.warning(f"macOS presence renderer unavailable ({err}); using the web card.")
             return False
         self._started = True
+        if self._stop_callback is not None:
+            self._event_stop.clear()
+            self._event_thread = threading.Thread(
+                target=self._consume_events,
+                name="HoldSpeakDesktopPresenceEvents",
+                daemon=True,
+            )
+            self._event_thread.start()
         return True
 
     def show(self, activity: dict[str, Any]) -> None:
@@ -386,6 +520,7 @@ class CocoaPresenceRenderer:
             self._commands.put(("hide", str(reason)))
 
     def close(self) -> None:
+        self._event_stop.set()
         if self._commands is not None:
             try:
                 self._commands.put(("close", None))
@@ -396,6 +531,9 @@ class CocoaPresenceRenderer:
         if self._process is not None and self._process.is_alive():
             self._process.terminate()
             self._process.join(timeout=1.0)
+        if self._event_thread is not None:
+            self._event_thread.join(timeout=1.0)
+            self._event_thread = None
 
 
 __all__ = ["CocoaPresenceRenderer", "cocoa_presence_available"]
