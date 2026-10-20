@@ -43,6 +43,26 @@
   color: var(--text);
 }
 
+[data-send="sheet"] {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-3);
+  font-family: var(--font-ui);
+  color: var(--text);
+}
+[data-send="sheet"] .send-sheet-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 2px 0 4px;
+  border-bottom: 1px solid var(--border);
+}
+[data-send="sheet"] .send-sheet-header .surface-primary {
+  font-size: 15px;
+  font-weight: 600;
+}
+
 /* The section: a plain block (not a pullout's grid + hairline). */
 .desk-next .desk-pullout-body :is([data-send="well"], [data-send="history"][data-species="send"]) section.surface-section,
 :is([data-send="well"], [data-send="history"][data-species="send"]) section.surface-section {
@@ -125,9 +145,90 @@
 [data-send="well"] .send-preview > .send-verbs { margin: 12px 0 0; }
 [data-send="well"] .surface-section-head { gap: 12px; }
 
+/* S5: the sheet reads as one vertical face. The DOM keeps the prepared
+   ledger's stable test and focus hooks; the visual order puts To before the
+   ready rows. */
+[data-send="well"] .send-sheet-sections {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+[data-send="well"] .send-to-section { order: 1; }
+[data-send="well"] .send-ready-section { order: 2; }
+[data-send="well"] .send-to-section > .surface-section-head,
+[data-send="well"] .send-ready-section > .surface-section-head {
+  min-height: 32px;
+}
+
+/* Destination choices are one chip strip. The open result owns the full
+   sheet width below it, while the strip remains the sole horizontal scroller
+   on a phone. */
+[data-send="well"] ul.send-destination-list {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: visible;
+  padding: 4px 2px 8px;
+  scrollbar-width: thin;
+}
+[data-send="well"] li.send-destination-item {
+  flex: 0 0 auto;
+  min-width: max-content;
+  list-style: none;
+}
+[data-send="well"] li.send-destination-item[data-open] {
+  flex: 1 0 100%;
+  min-width: min(100%, 520px);
+}
+[data-send="well"] .send-destination-chip {
+  min-height: 44px;
+  max-width: min(100%, 520px);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+[data-send="well"] .send-destination-chip .send-cells {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+[data-send="well"] .send-destination-chip .send-pick {
+  flex: 0 0 auto;
+}
+[data-send="well"] .send-destination-chip .surface-primary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-send="well"] .send-destination-item[data-open] > .send-destination-chip {
+  width: 100%;
+  max-width: none;
+}
+[data-send="well"] .send-open {
+  min-width: 0;
+  width: 100%;
+}
+[data-send="well"] .send-sheet-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--desk-z-local);
+  margin-top: 10px;
+  background: var(--surface-1);
+}
+[data-send="well"] .send-inline-destination {
+  margin: 4px 0 10px;
+}
+
 @container surface (max-width: 560px) {
   [data-send="well"] .surface-section-head { min-height: 44px; }
   [data-send="well"] .send-verbs { gap: 16px 12px; padding-block: 6px; }
+  [data-send="well"] ul.send-destination-list { max-width: 100%; }
+  [data-send="well"] .send-destination-chip { max-width: 82vw; }
 }
 
 /* The preview: the document in the UI face (a Markdown body with its own

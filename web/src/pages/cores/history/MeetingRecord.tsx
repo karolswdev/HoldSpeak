@@ -99,7 +99,17 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   // read again on every signal, even when the meeting row did not change.
   const [revision, setRevision] = useState(0);
   const [requestedWell, setRequestedWell] = useState<"send" | "decide" | "project" | null>(null);
+  const sendButtonRef = useRef<HTMLButtonElement>(null);
+  const wasSendOpen = useRef(false);
   const projects = useDesk((state) => state.projects);
+
+  useEffect(() => {
+    const returning = wasSendOpen.current && requestedWell !== "send";
+    wasSendOpen.current = requestedWell === "send";
+    if (!returning) return;
+    const frame = window.requestAnimationFrame(() => sendButtonRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [requestedWell]);
 
   const load = useCallback(async () => {
     try {
@@ -346,6 +356,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
           setRevision((n) => n + 1);
           void load();
         }}
+        onSendBack={() => setRequestedWell(null)}
         revision={revision}
         onReceipt={setReceipt}
         runRefusal={summary.runRefusal?.meetingId === meetingId ? summary.runRefusal.refusal : null}
@@ -376,8 +387,8 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
           }
           verbs={
             <span className="surface-footer-verbs-group">
-              {view === "outcomes" && hasSummary ? (
-                <Button dense variant="primary" data-testid="meeting-send" onClick={() => requestWell("send")}>Send</Button>
+              {view === "outcomes" && hasSummary && requestedWell !== "send" ? (
+                <Button ref={sendButtonRef} dense variant="primary" data-testid="meeting-send" onClick={() => requestWell("send")}>Send…</Button>
               ) : null}
               <RecordMore entries={moreEntries} />
             </span>

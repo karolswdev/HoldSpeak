@@ -13,7 +13,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { FilterTokens } from "../desk/surface";
-import { SendHistory, SendWell, mergeKnown, pickDestination, pickedDestination, useSends } from "../desk/surface/send";
+import { SendHistory, SendSheet, mergeKnown, pickDestination, pickedDestination, useSends } from "../desk/surface/send";
 import { useAnnounceWindowDocument } from "../desk/windowSend";
 import { stamp } from "../features/channels/channels"; import { keepPlace, keptPlace } from "../desk/deskMemory"; // PHILO-13-07 (B2)
 
@@ -31,8 +31,8 @@ const formPick = new Map<string, Form>();
 /** `SEP 29` from an ISO time (the stamp without its clock). */
 const day = (iso?: string | null) => (iso ? stamp(iso).replace(/ \d\d:\d\d$/, "") : "");
 
-export function MeetingSendWell({ meetingId, title, startedAt }: {
-  meetingId: string; title: string; startedAt?: string | null;
+export function MeetingSendWell({ meetingId, title, startedAt, onBack }: {
+  meetingId: string; title: string; startedAt?: string | null; onBack?: () => void;
 }) {
   const kept = formPick.get(meetingId) ?? keptPlace(`meeting/form/${meetingId}`);
   const initial = MEETING_FORMS.some((f) => f.value === kept) ? kept as Form : "meeting_summary";
@@ -94,9 +94,9 @@ export function MeetingSendWell({ meetingId, title, startedAt }: {
   };
   return (
     <div ref={wellRef} data-seat="meeting" data-testid="meeting-send-well">
-      <SendWell key={kind} head={head} sendsRead={reads[kind]}
-        doc={{ ref: `${kind}:${meetingId}`, title: `${title} ${form.label.toLowerCase()}`, label: `${form.word} ${day(startedAt)}`.trim() }} />
-      <SendHistory sends={history} tag={formTag} />
+      <SendSheet key={kind} head={head} sendsRead={reads[kind]} onBack={onBack}
+        doc={{ ref: `${kind}:${meetingId}`, title: `${title} ${form.label.toLowerCase()}`, label: `${form.word} ${day(startedAt)}`.trim() }}
+        history={() => <SendHistory sends={history} tag={formTag} />} />
     </div>
   );
 }
