@@ -12,7 +12,8 @@ import { useAtmosphereFavorites } from "../../desk/gl/atmosphereFavorites";
 export function WallpaperModule({
   showFavorites = false,
   favoritesOnly = false,
-}: { showFavorites?: boolean; favoritesOnly?: boolean } = {}) {
+  highlight,
+}: { showFavorites?: boolean; favoritesOnly?: boolean; highlight?: string | null } = {}) {
   const [selectedId, select] = useAtmospherePreference();
   const { motion, setMotion } = useAtmosphereControls();
   const { favorites, toggle } = useAtmosphereFavorites();
@@ -124,7 +125,7 @@ export function WallpaperModule({
           );
         })}
       </div>
-      <GadgetRow label="Motion">
+      <GadgetRow label="Motion" highlight={highlight === "motion"}>
         <CheckGadget label="Wallpaper motion" checked={motion} onChange={setMotion} variant="state" />
       </GadgetRow>
     </GadgetGroup>

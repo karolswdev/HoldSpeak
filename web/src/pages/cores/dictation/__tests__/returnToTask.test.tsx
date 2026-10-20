@@ -9,7 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SpeakFace } from "../SpeakFace";
 import {
-  DESK_APPLICATION_ALIASES,
+  DESK_APPLICATIONS,
   SURFACE_APPLICATIONS,
 } from "../../../../desk/applications";
 import {
@@ -87,15 +87,13 @@ describe("return to the task after configuring a model (HS-200-04)", () => {
     });
   });
 
-  it("the Models handoff has a hosted surface, so it opens in world", () => {
-    // The Engines alias is a scoped Settings surface, so the task stays in
-    // the hosted window while its setup wing opens.
-    const alias = DESK_APPLICATION_ALIASES["configure-runs-on"];
-    expect(alias).toBeDefined();
-    expect(alias.target).toBe("configure-settings");
-    expect(
-      SURFACE_APPLICATIONS.some((app) => app.action === alias.target),
-    ).toBe(true);
+  it("the Engines handoff has its own hosted surface, so it opens in world", () => {
+    const engines = DESK_APPLICATIONS.find((app) => app.action === "configure-runs-on");
+    expect(engines).toMatchObject({
+      action: "configure-runs-on",
+      windowId: "surface-engines",
+    });
+    expect(SURFACE_APPLICATIONS.some((app) => app.action === "configure-runs-on")).toBe(true);
   });
 
   it("keeps the utterance and re-reads readiness when a model is applied", async () => {
