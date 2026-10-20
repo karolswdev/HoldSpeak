@@ -23,7 +23,7 @@ import hashlib
 import json
 import uuid
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Mapping, Optional
 
 from ..logging_config import get_logger
 from ..timestamps import local_now, utc_now_iso
@@ -166,6 +166,12 @@ def is_occurrence(item: Any) -> bool:
 def occurrence_title(wb: Any, now: Optional[datetime] = None) -> str:
     when = (now or local_now()).astimezone()
     return f"{wb.name or 'Automation'}, {when:%a} {when.day} {when:%b %Y}"
+
+
+def automation_result_title(wb: Any, now: Optional[datetime] = None) -> str:
+    """Name one automation result by the automation and the run date."""
+    when = (now or local_now()).astimezone()
+    return f"{wb.name or 'Automation'} · {when.day} {when:%b}"
 
 
 def _event_block(event: dict[str, Any]) -> str:
@@ -1029,7 +1035,7 @@ def deliver_run(db: Any, principal: Any, run: Any) -> list[dict[str, Any]]:
         return []
     with db._connection() as conn:
         rows = conn.execute(
-            """SELECT a.id AS artifact_id, i.id AS item_id, i.workbench_id, i.title, i.result
+            """SELECT a.id AS artifact_id, a.source_run_id, i.id AS item_id, i.workbench_id, i.title, i.result
                FROM artifacts a JOIN workbench_items i ON i.id = a.source_item_id
                WHERE a.source_run_id = ? AND i.status = 'done'
                  AND json_extract(i.context_json, '$.occurrence') = 1""",
@@ -1085,7 +1091,17 @@ def _deliver_one(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict[
         # Betterment daily D9: Today reads the newest result itself.
         return {"artifact_id": artifact_id, "target": "today", "outcome": "shown"}
     if target.startswith(DESTINATION_PREFIX):
-        return _to_destination(db, principal, target[len(DESTINATION_PREFIX):], artifact_id)
+        return _to_destination(
+            db, principal, target[len(DESTINATION_PREFIX):], artifact_id,
+            automation_origin={
+                "kind": "automation",
+                "workbench_id": str(wb.id),
+                "workbench_name": str(wb.name or ""),
+                "run_id": str(row.get("source_run_id") or ""),
+                "item_id": str(row.get("item_id") or ""),
+                "artifact_id": artifact_id,
+            },
+        )
     return _to_inbox(db, wb, row)
 
 
@@ -1225,7 +1241,10 @@ def _to_needs_you(db: Any, principal: Any, wb: Any, row: dict[str, Any]) -> dict
             "action_item_id": item["id"]}
 
 
-def _to_destination(db: Any, principal: Any, destination_id: str, artifact_id: str) -> dict[str, Any]:
+def _to_destination(
+    db: Any, principal: Any, destination_id: str, artifact_id: str,
+    *, automation_origin: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     document_ref = f"artifact:{artifact_id}"
     with db._connection() as conn:
         seen = conn.execute(
@@ -1240,7 +1259,19 @@ def _to_destination(db: Any, principal: Any, destination_id: str, artifact_id: s
 
     # Prepare only: the bytes are frozen in a ``prepared`` send; nothing leaves
     # until he presses Send.
-    registry = operations.for_runtime(channel_service=lambda: ChannelService(db))
+    # The hub's installed registry owns the normal channel service.  This
+    # internal delivery needs the same operation descriptors and kernel path,
+    # while carrying source-owned automation provenance into this one frozen
+    # prepare effect.  Bind a narrow registry over the trusted service rather
+    # than asking ``for_runtime`` (which deliberately returns the installed
+    # live instance and would drop the origin).
+    from ..runtime.composition import notify_desk_changed
+
+    registry = operations.bind_available({
+        "channel_service": ChannelService(
+            db, on_changed=notify_desk_changed, automation_origin=automation_origin,
+        ),
+    })
     result, _kernel = registry.invoke_receipted(
         principal, "channel.prepare", {"document_ref": document_ref, "destination_id": destination_id},
     )

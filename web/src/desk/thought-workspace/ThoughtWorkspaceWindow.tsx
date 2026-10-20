@@ -579,7 +579,7 @@ function WorkspaceReady({
           </p> : null}
           <div className="thought-send-body" inert={unsaved} aria-hidden={unsaved || undefined}>
             <NoteSendWells id={draftNoteId} title={writer.draft.title || documentThought.working_note.title}
-              version={documentThought.working_revision} />
+              version={documentThought.working_revision} onBack={() => setSending(false)} />
           </div>
         </div>
       </ScrollHint>
@@ -587,7 +587,6 @@ function WorkspaceReady({
         className="thought-send-foot"
         receipt={message || writeLine?.danger ? <span className="surface-footer-receipt-line" role="status" data-wrap="" data-tone="danger">{message || writeLine?.text}</span> : null}
         verbs={<>
-          <Button dense variant="ghost" onClick={() => setSending(false)}>Back</Button>
           {writer.conflicted
             ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
             : writer.failed ? <Button dense onClick={writer.retry}>Retry</Button> : null}

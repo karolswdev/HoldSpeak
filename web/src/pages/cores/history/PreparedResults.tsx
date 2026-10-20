@@ -81,11 +81,20 @@ function ResultVerbs({ meetingId, result, sending, onSend }: {
   meetingId: string; result: PreparedResult; sending: boolean; onSend(): void;
 }) {
   const { copy, state: copyState } = useCopyReceipt();
+  const sendRef = useRef<HTMLButtonElement>(null);
+  const wasSending = useRef(sending);
   const [noting, setNoting] = useState(false);
   const [noteFailed, setNoteFailed] = useState(false);
   const noteId = useRef<string | null>(null);
   const text = draftText(result);
   const title = String(result.title || result.label);
+  useEffect(() => {
+    const returning = wasSending.current && !sending;
+    wasSending.current = sending;
+    if (!returning) return;
+    const frame = window.requestAnimationFrame(() => sendRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [sending]);
   const openAsNote = async () => {
     // One note per Result: a second press opens the same note.
     if (noteId.current) { openRef(`note:${noteId.current}`); return; }
@@ -108,7 +117,7 @@ function ResultVerbs({ meetingId, result, sending, onSend }: {
   return (
     <span className="meeting-prepared-verbs">
       {docOf(result) ? (
-        <Button dense variant="secondary" aria-expanded={sending} onClick={onSend} data-testid="prepared-send">
+        <Button ref={sendRef} dense variant="secondary" aria-expanded={sending} onClick={onSend} data-testid="prepared-send">
           {sending ? "Hide" : "Send…"}
         </Button>
       ) : null}
@@ -245,7 +254,7 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
                   ) : null}
                   {isSending && doc ? (
                     <div className="meeting-prepared-send" data-testid="meeting-prepared-send">
-                      <SendWells doc={doc} />
+                      <SendWells doc={doc} onBack={() => setSending(null)} />
                     </div>
                   ) : null}
                   {failed ? (

@@ -45,10 +45,10 @@ export const decisionRecordDoc = (id: string, text?: string | null): DocRef => (
 });
 
 /** The brief's SEND well and its SENDS history (canvas A; the Chair and Intelligence -> BRIEF). */
-export function BriefSendWells({ brief }: { brief: BriefLike }) {
+export function BriefSendWells({ brief, onBack }: { brief: BriefLike; onBack?: () => void }) {
   // PHILO-13-15 (C5): the exact brief id is the window's document (`latest` never substitutes).
   useAnnounceWindowDocument({ kind: "brief", id: brief.id });
-  return <div data-seat="brief"><SendWells doc={briefDoc(brief)} /></div>;
+  return <div data-seat="brief"><SendWells doc={briefDoc(brief)} onBack={onBack} /></div>;
 }
 
 /** PHILO-13-15 (C5, canvas P5): the artifact window's SEND well on `artifact:<id>`. */
@@ -58,8 +58,8 @@ export const artifactDoc = (id: string, title?: string | null, type?: string | n
   label: `ARTIFACT · ${String(type || "artifact").replace(/[_-]+/g, " ").toUpperCase()}`,
 });
 
-export function ArtifactSendWells({ id, title, type }: { id: string; title?: string | null; type?: string | null }) {
-  return <div data-seat="artifact"><SendWells doc={artifactDoc(id, title, type)} /></div>;
+export function ArtifactSendWells({ id, title, type, onBack }: { id: string; title?: string | null; type?: string | null; onBack?: () => void }) {
+  return <div data-seat="artifact"><SendWells doc={artifactDoc(id, title, type)} onBack={onBack} /></div>;
 }
 
 /** The Chair's BRIEF head verbs with PREPARED ×K first (A4). With a
@@ -92,8 +92,8 @@ export const noteDoc = (id: string, title?: string | null, version?: string | nu
 });
 
 /** The Thought window's well (PHILO-17 U08). */
-export function NoteSendWells({ id, title, version }: { id: string; title?: string | null; version?: string | number }) {
-  return <div data-seat="note"><SendWells doc={noteDoc(id, title, version)} /></div>;
+export function NoteSendWells({ id, title, version, onBack }: { id: string; title?: string | null; version?: string | number; onBack?: () => void }) {
+  return <div data-seat="note"><SendWells doc={noteDoc(id, title, version)} onBack={onBack} /></div>;
 }
 
 /** PREPARED ×K on a Room decision row (B4). Nothing at zero. */

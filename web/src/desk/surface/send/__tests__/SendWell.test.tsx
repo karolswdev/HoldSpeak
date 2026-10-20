@@ -284,11 +284,11 @@ describe("decision document hosts unfold Send only on request", () => {
     expect(screen.queryByTestId("send-well")).toBeNull();
     expect(apiFetch.mock.calls.some(([path]) => path === "/api/channels/destinations")).toBe(false);
     expect(previews).toEqual([]);
-    expect(within(screen.getByTestId("send-fold")).getAllByText("Send")).toHaveLength(1);
-    fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
+    expect(within(screen.getByTestId("send-fold")).getByRole("button", { name: "Send…" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Send…" }));
     expect(await screen.findByTestId("send-preview")).toBeTruthy();
     expect(previews).toHaveLength(1);
-    fireEvent.click(screen.getByRole("button", { name: /^Hide$/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Back$/ }));
     expect(screen.queryByTestId("send-well")).toBeNull();
   });
 
@@ -325,7 +325,7 @@ describe("decision document hosts unfold Send only on request", () => {
     expect(await screen.findByText("PREPARED ×1")).toBeTruthy();
     expect(screen.queryByTestId("send-well")).toBeNull();
     expect(previews).toEqual([]);
-    fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Send…" }));
     expect(await screen.findByTestId("prepared-preview")).toHaveTextContent("Frozen decision words");
     await pick("Team folder");
     await waitFor(() => expect(within(screen.getByTestId("send-preview")).getByTestId("send-preview-body")).toHaveTextContent("Current decision words"));
@@ -345,7 +345,7 @@ describe("decision document hosts unfold Send only on request", () => {
       return { send: send({ document_ref: "desk_decision:decision_fold_held" }) };
     };
     render(<DeskDecisionSendWells id="decision_fold_held" title="Use the shared runners" />);
-    fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Send…" }));
     await pick("Team folder");
     fireEvent.click(await screen.findByTestId("send-verb"));
     await screen.findByTestId("send-retry");
@@ -373,7 +373,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     noManualRow();
   });
 
-  it("keeps Add destination beside SEND with the built-in folder and opens the existing Settings door", async () => {
+  it("keeps Add destination beside SEND with the built-in folder and opens the inline form", async () => {
     routes["GET /api/channels/destinations"] = () => ({ destinations: [folder({ builtin: true })] });
     const openSettings = vi.spyOn(useDesk.getState(), "openSurfaceWindow").mockImplementation(() => {});
     try {
@@ -382,7 +382,8 @@ describe("the SEND well species on a brief (not an update)", () => {
       const add = screen.getByTestId("send-add-destination");
       expect(add.closest(".surface-section-head")?.textContent).toContain("SEND");
       fireEvent.click(add);
-      expect(openSettings).toHaveBeenCalledWith("configure-settings", "integrations");
+      expect(await screen.findByTestId("send-inline-destination")).toBeInTheDocument();
+      expect(openSettings).not.toHaveBeenCalled();
       expect(apiFetch.mock.calls.some(([path]) => path === "/api/channels/send")).toBe(false);
     } finally { openSettings.mockRestore(); }
   });
@@ -465,7 +466,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(sent.textContent).toContain("SAVED");
     expect(within(sent).getByTestId("proof").textContent).toBe(`${FOLDER}/2026-09-29-brief.md`);
     const history = await screen.findByTestId("send-history");
-    expect(history.querySelector("h3")?.textContent).toBe("SENDS 1");
+    expect(history.querySelector("h3")?.textContent).toBe("SENT 1");
     expect(within(history).getByTestId("history-word").textContent).toBe("SAVED");
     noManualRow();
   });
@@ -487,7 +488,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(proof.tagName).not.toBe("BUTTON");
     expect(proof.getAttribute("data-href")).toBeNull();
     const history = screen.getByTestId("send-history");
-    expect(history.querySelector("h3")?.textContent).toBe("SENDS 1");
+    expect(history.querySelector("h3")?.textContent).toBe("SENT 1");
     expect(history.querySelector("[data-href]")).toBeNull();
     expect(screen.getByTestId("send-verb").textContent).toBe("Send again");
   });
@@ -560,7 +561,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(screen.queryByTestId("send-history")).toBeNull();
   });
 
-  it("UNKNOWN: RESULT UNKNOWN on the row and in the history (SENDS, no counter of zero)", async () => {
+  it("UNKNOWN: RESULT UNKNOWN on the row and in the history (SENT, no counter of zero)", async () => {
     routes["GET /api/channels/sends"] = () => ({ sends: [send({ state: "unknown", reason: "no_answer", proof: null })] });
     render(<SendWells doc={BRIEF} />);
     await pick("Team folder");
@@ -568,7 +569,7 @@ describe("the SEND well species on a brief (not an update)", () => {
     expect(unknown.textContent).toContain("RESULT UNKNOWN");
     expect(unknown.textContent).toContain("NO ANSWER");
     const history = screen.getByTestId("send-history");
-    expect(history.querySelector("h3")?.textContent).toBe("SENDS");
+    expect(history.querySelector("h3")?.textContent).toBe("SENT");
     expect(within(history).getByTestId("history-row").textContent).toContain("RESULT UNKNOWN · CHECK Team folder");
   });
 
@@ -809,7 +810,7 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
     ["decision-record", "decision_record:record-85f927aa", <DecisionRecordSendWells key="r" id="record-85f927aa" text="Freeze the old ledger on Nov 3" />],
   ])("the %s face: the preview and the press carry %s, and the receipt is its row", async (seat, ref, face) => {
     const { container } = render(face);
-    if (seat !== "brief") fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
+    if (seat !== "brief") fireEvent.click(screen.getByRole("button", { name: "Send…" }));
     expect(await screen.findByTestId("send-well")).toBeTruthy();
     expect(container.querySelector(`[data-seat=${seat}] [data-testid=send-well]`)?.getAttribute("data-doc")).toBe(ref);
     await pick("Team folder");
@@ -820,7 +821,7 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({ document_ref: ref, destination_id: "chd_f", preview_digest: `dig:${ref}` });
     expect(within(saved).getByTestId("proof").textContent).toBe(`${FOLDER}/${ref.replace(":", "-")}.md`);
-    expect((await screen.findByTestId("send-history")).querySelector("h3")?.textContent).toBe("SENDS 1");
+    expect((await screen.findByTestId("send-history")).querySelector("h3")?.textContent).toBe("SENT 1");
     expect(screen.getByTestId("send-verb").textContent).toBe("Send again");
   });
 
@@ -838,7 +839,7 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
       return { send: row };
     };
     render(<DeskDecisionSendWells id="decision_7f3a" title="Freeze the old ledger" />);
-    fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Send…" }));
     await pick("Team folder");
     await waitFor(() => expect(screen.getByTestId("send-preview-body").textContent).toContain("Nov 5"));
     words = "Freeze the old ledger on Nov 6.";   // PUT /api/decisions/<id> in another place
@@ -873,7 +874,7 @@ describe("PHILO-11-05a: each document face sends its own document_ref", () => {
       return { send: row };
     };
     render(<DecisionRecordSendWells id="record-85f927aa" text="Finance runs one more reconciliation" />);
-    fireEvent.click(screen.getByRole("button", { name: /^Send$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Send…" }));
     const row = await screen.findByTestId("prepared-row");
     expect(within(row).getByTestId("prepared-label").textContent).toBe("D-85F927");
     expect(within(row).getByTestId("prepared-by").textContent).toBe("BY REMOTE-PROJECT-AGENT");

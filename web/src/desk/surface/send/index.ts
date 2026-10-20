@@ -4,11 +4,15 @@
 // desk store). Sanctioned in contract.md ("SendWell").
 export {
   SendWell,
+  SendSheet,
   SendWells,
   SendWellsFold,
   SendHistory,
   PreparedChip,
   PreviewWell,
+  discardPrepared,
+  retryInline,
+  sendPrepared,
   ProofCell,
   ReceiptEgress,
   Unreadable,
@@ -25,5 +29,6 @@ export {
   useDestinations,
   useSends,
   type DocRef,
+  type RetryCommand,
   type Read,
 } from "./SendWell";

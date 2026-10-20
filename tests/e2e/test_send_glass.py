@@ -75,6 +75,9 @@ import json
 import re
 import uuid
 import threading
+import time
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -194,7 +197,7 @@ def test_uncertain_send_reload_keeps_the_exact_command(tmp_path: Path, monkeypat
             assert rows[0]["state"] == "sent" and operations[0]["state"] == "succeeded", facts
             assert files[0].read_bytes() == bytes(rows[0]["payload"]), facts
             # Back restores the same saved document, rather than an empty editor.
-            page.locator(".thought-send-foot").get_by_role("button", name="Back", exact=True).click()
+            page.locator(".thought-send-well [data-testid=send-back]").click()
             assert draft == page.locator(".thought-note-body .cm-content").inner_text()
             (shots / f"return-{width}.png").write_bytes(page.screenshot())
         finally:
@@ -431,6 +434,25 @@ class TestSendGlass:
             rows = conn.execute("SELECT id, state, proof_json FROM channel_sends WHERE document_ref = ?", (ref,)).fetchall()
         return [{"id": r[0], "state": r[1], "proof": json.loads(r[2] or "{}")} for r in rows]
 
+    def _face_row_receipt(self, send: dict[str, Any], ref: str) -> dict[str, Any]:
+        """Prove the real face, channel row, and kernel receipt agree once."""
+        with self.db._connection() as conn:
+            row = conn.execute(
+                "SELECT o.operation_id, o.name, o.state, o.target_ref, "
+                "r.state AS receipt_state, r.outcome AS receipt_outcome, r.result_ref, "
+                "(SELECT COUNT(*) FROM kernel_receipts x WHERE x.operation_id = o.operation_id) AS receipts "
+                "FROM kernel_operations o LEFT JOIN kernel_receipts r ON r.operation_id = o.operation_id "
+                "WHERE o.operation_id = ?",
+                (send["send_operation_id"],),
+            ).fetchone()
+        assert row is not None, send["send_operation_id"]
+        receipt = dict(row)
+        assert receipt["name"] == "channel.send" and receipt["receipts"] == 1, receipt
+        assert (send["state"], receipt["state"], receipt["receipt_state"]) == ("sent", "succeeded", "succeeded"), (send, receipt)
+        assert receipt["result_ref"] == f"channel_send:{send['id']}", (receipt, send["id"])
+        assert receipt["target_ref"] in (f"document:{ref}", f"channel_send:{send['id']}"), (receipt, ref)
+        return receipt
+
     def _ev(self, js: str, arg: Any = None) -> Any:
         return self.page.evaluate(js, arg)
 
@@ -560,17 +582,26 @@ class TestSendGlass:
         """The arrival: the window name, the picked row, the preview's first field and Send, each WHOLE on screen."""
         w = f"[id='{win}']"
         sels = [".desk-screen-name" if self.phone else f"{w} > .desk-pullout-head .desk-pullout-title",
-                f"{w} li.surface-ledger-row:has([data-testid=send-open]) .surface-primary"]
+                f"{w} li.send-destination-item:has([data-testid=send-open]) .surface-primary"]
         if field:
             sels += [f"{w} [data-testid=send-open] [data-testid=send-preview-field] dd",
-                     f"{w} [data-testid=send-open] [data-testid=send-verbs] .btn--primary"]
+                     f"{w} [data-testid=send-verbs] .btn--primary"]
         for sel in sels:
             ok = self._ev("""(sel) => { const e = [...document.querySelectorAll(sel)].find((x) => x.checkVisibility());
                 if (!e) return 'absent'; const r = e.getBoundingClientRect();
                 if (r.top < 0 || r.left < 0 || r.bottom > innerHeight || r.right > innerWidth) return 'off screen ' + JSON.stringify(r);
                 const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
                 return hit && (e.contains(hit) || hit.contains(e)) ? 'ok' : 'covered by ' + (hit?.className || hit?.tagName); }""", sel)
-            assert ok == "ok", f"{board}-{self.width} {sel}: {ok}"
+            if ok != "ok":
+                self._shot(f"FAIL-{board}")
+                bounds = self._ev("""sel => [...document.querySelectorAll(sel)].map(e => {
+                    const r = e.getBoundingClientRect();
+                    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+                    return {rect: r.toJSON(), text: e.textContent, owner: hit?.outerHTML.slice(0, 700)};
+                })""", sel)
+            else:
+                bounds = None
+            assert ok == "ok", f"{board}-{self.width} {sel}: {ok}; {bounds}"
 
     def _shot(self, board: str) -> None:
         _settle(self.page)
@@ -648,6 +679,274 @@ class TestSendGlass:
             finally:
                 browser.close()
                 shutil.rmtree(scratch, ignore_errors=True)
+
+    def _real_session(self, width: int, run: Any) -> None:
+        """Run a Send sheet case against the private Hub without route stand-ins."""
+        from playwright.sync_api import sync_playwright
+        import shutil
+        import tempfile
+
+        scratch = Path(tempfile.mkdtemp(prefix="s5-s6-real-", dir="/tmp"))
+        folder = scratch / "Team updates"
+        folder.mkdir()
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
+            ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1,
+                                      has_touch=width <= 720, reduced_motion="reduce")
+            page = ctx.new_page()
+            self.page = page
+            self.width = width
+            self.phone = width <= 720
+            page.set_default_timeout(T)
+            errors: list[str] = []
+            page.on("pageerror", lambda e: errors.append(str(e)[:200]))
+            try:
+                page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                _api(page, "POST", "/api/channels/destinations",
+                     {"name": "Team updates", "channel": "file", "folder": str(folder)}, token=TOKEN)
+                run(page, folder)
+                assert not [e for e in errors if "ResizeObserver" not in e and "Failed to fetch" not in e], errors
+            finally:
+                browser.close()
+        shutil.rmtree(scratch, ignore_errors=True)
+
+    def _probe_send_button(self, page: Any, selector: str, *, require_visible: bool = True) -> dict[str, Any]:
+        """Record viewport geometry and nine real pointer hits for one Send verb."""
+        result = page.evaluate(
+            """(sel) => {
+              const target = document.querySelector(sel);
+              if (!target) return {error: 'missing'};
+              const r = target.getBoundingClientRect();
+              const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+              const wide = innerWidth > 420;
+              const xs = wide ? [r.left + 2, cx, r.right - 2] : [cx - 20, cx, cx + 20];
+              const ys = wide ? [r.top + 2, cy, r.bottom - 2] : [cy - 20, cy, cy + 20];
+              const points = xs.flatMap(x => ys.map(y => [x, y]));
+              const hits = points.map(([x, y]) => {
+                const hit = document.elementFromPoint(x, y);
+                return Boolean(hit && (hit === target || target.contains(hit)));
+              });
+              return {rect: {x: r.x, y: r.y, width: r.width, height: r.height},
+                viewport: {width: innerWidth, height: innerHeight}, hits,
+                visible: r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight};
+            }""",
+            selector,
+        )
+        assert result.get("error") is None, result
+        if require_visible:
+            assert result["visible"], result
+        # The painted dense face is 28 px at the wide desk, so sample its own
+        # inset rect there. On the narrow device retain the 44 px halo points
+        # that the library Button promises. Both faces must hit at all nine
+        # sampled points.
+        assert all(result["hits"]), result
+        return result
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(900)
+    @pytest.mark.parametrize("width", [1440, 393])
+    def test_s5_s6_real_send_sheet_note_edit_and_receipts(self, width: int) -> None:
+        """S5/S6: real meeting and note sends use one sheet and exact file bytes."""
+        self._real_session(width, lambda page, folder: self._s5_s6_real(page, folder, width))
+
+    def _s5_s6_real(self, page: Any, folder: Path, width: int) -> None:
+        meeting_ref = "meeting_summary:m-standup"
+        meeting = page.locator(f"[id='{MEET}']")
+        self._open_ref("meeting:m-standup", MEET)
+        opening = meeting.locator("[data-testid=meeting-send]")
+        opening.wait_for()
+        opening.click()
+        sheet = meeting.locator("[data-testid=send-sheet]")
+        sheet.wait_for()
+        team = meeting.locator("[data-testid=destination-row]:has([data-destination='Team updates'])")
+        team.wait_for()
+
+        inline_folder = folder.parent / "Inline destination"
+        inline_folder.mkdir()
+        sheet.locator("[data-testid=send-add-destination]").click()
+        form = sheet.locator("[data-testid=dest-form]")
+        form.wait_for()
+        form.locator("[data-testid=dest-name]").fill("Inline destination")
+        form.locator("[data-testid=dest-folder]").fill(str(inline_folder))
+        form.locator("[data-testid=dest-save]").click()
+        inline = meeting.locator("[data-testid=destination-row]:has([data-destination='Inline destination'])")
+        inline.wait_for()
+        assert inline.locator("[aria-pressed='true']").count() == 1
+        assert inline.locator("[data-testid=send-open]").count() == 1
+
+        team.locator(".send-destination-chip").click()
+        opened_team = meeting.locator("[data-testid=send-open][data-destination='Team updates']")
+        opened_team.locator("[data-testid=send-preview]").wait_for()
+        send_selector = f"[id='{MEET}'] [data-testid=send-verbs] [data-testid=send-verb]"
+        send = page.locator(send_selector)
+        send.wait_for()
+        geometry = self._probe_send_button(page, send_selector)
+        preview_text = opened_team.locator("[data-testid=send-preview-body]").inner_text()
+        page.screenshot(path=str(SHOTS / f"S5-meeting-ready-{width}.png"))
+        send.click()
+        try:
+            # SurfaceFooter portals the receipt to the window foot, outside
+            # the destination's send-open body.
+            page.locator(f"[id='{MEET}'] [data-testid=send-sent]").wait_for(timeout=T)
+        except Exception as exc:  # noqa: BLE001 - preserve the real face state
+            state = page.locator(
+                f"[id='{MEET}'] [data-testid^=send-][data-receipt='latest'],"
+                f"[id='{MEET}'] [data-testid=send-lost],"
+                f"[id='{MEET}'] [data-testid=send-refused]"
+            ).all_inner_texts()
+            raise AssertionError({"ui_state": state, "well": opened_team.inner_text(), "db": self.db.channel_sends.list_for_document(meeting_ref)}) from exc
+        rows = self.db.channel_sends.list_for_document(meeting_ref)
+        assert len(rows) == 1, rows
+        meeting_row = rows[0]
+        proof = json.loads(meeting_row["proof_json"] or "{}")
+        meeting_path = Path(proof["path"])
+        meeting_bytes = bytes(meeting_row["payload"])
+        assert meeting_path.parent.resolve() == folder.resolve()
+        assert meeting_path.read_bytes() == meeting_bytes
+        self._face_row_receipt(meeting_row, meeting_ref)
+
+        page.screenshot(path=str(SHOTS / f"S5-meeting-sent-{width}.png"))
+        page.locator(f"[id='{MEET}'] [data-testid=send-back]").click()
+        page.wait_for_function(
+            """() => {
+              const button = document.querySelector("[data-testid='meeting-send']");
+              return button && document.activeElement === button;
+            }""",
+            timeout=T,
+        )
+        assert page.locator(f"[id='{MEET}'] [data-testid=meeting-send]").count() == 1
+
+        # Edit from the frozen meeting preview. The real POST creates the note;
+        # the ordinary note editor owns the text change before Send reads it.
+        page.locator(f"[id='{MEET}'] [data-testid=meeting-send]").click()
+        sheet = meeting.locator("[data-testid=send-sheet]")
+        sheet.wait_for()
+        team = meeting.locator("[data-testid=destination-row]:has([data-destination='Team updates'])")
+        opened_team = meeting.locator("[data-testid=send-open][data-destination='Team updates']")
+        # The restored selected chip is the product's authority. Wait for its
+        # own well-read state; a second click would hide a real remount defect.
+        try:
+            team.locator("[aria-pressed='true']").wait_for(timeout=T)
+        except Exception as exc:  # noqa: BLE001 - retain the real seam state
+            hit = page.evaluate(
+                """(sel) => {
+                  const target = document.querySelector(sel);
+                  if (!target) return {missing: true};
+                  const r = target.getBoundingClientRect();
+                  const x = r.left + r.width / 2, y = r.top + r.height / 2;
+                  const top = document.elementFromPoint(x, y);
+                  return {rect: {x: r.x, y: r.y, width: r.width, height: r.height},
+                    point: {x, y}, top: top ? {tag: top.tagName, cls: String(top.className || ""), text: (top.textContent || "").trim().slice(0, 80)} : null,
+                    owns: Boolean(top && (top === target || target.contains(top)))};
+                }""",
+                f"[id='{MEET}'] [data-destination='Team updates']",
+            )
+            raise AssertionError({
+                "selected": team.locator("[aria-pressed='true']").count(),
+                "chip": team.locator(".send-destination-chip").get_attribute("aria-pressed"),
+                "chip_box": team.locator(".send-destination-chip").bounding_box(),
+                "hit": hit,
+                "workspace": page.evaluate("() => localStorage.getItem('hs.desk.workspace.v1')"),
+                "rows": meeting.locator("[data-testid=destination-row]").all_inner_texts(),
+            }) from exc
+        try:
+            opened_team.locator("[data-testid=send-preview]").wait_for(timeout=T)
+        except Exception as exc:  # noqa: BLE001 - retain the real seam state
+            destinations = _api(page, "GET", "/api/channels/destinations", token=TOKEN)
+            raise AssertionError({
+                "selected": team.locator("[aria-pressed='true']").count(),
+                "open": opened_team.count(),
+                "rows": meeting.locator("[data-testid=destination-row]").all_inner_texts(),
+                "destinations": destinations,
+            }) from exc
+        with page.expect_response(lambda response: response.request.method == "POST" and response.url.endswith("/api/notes"), timeout=T) as note_response:
+            opened_team.locator("[data-testid=send-edit]").click()
+        made = note_response.value.json()
+        note = made["note"]
+        note_id = str(note["id"])
+        assert note["title"] == "Ledger cutover sync summary (to send)", note
+        note_win = page.locator(f"[id='pullout:note:{note_id}']")
+        note_win.locator("[data-testid=send-sheet]").wait_for(timeout=T)
+        assert note_win.locator(".desk-pullout-title").inner_text().startswith("Ledger cutover sync summary (to send)"), note
+
+        note_win.locator("[data-testid=send-back]").click()
+        editor = note_win.locator(".thought-note-body .cm-content")
+        editor.wait_for(timeout=T)
+        edited = "## Summary\n\nThe edited line is ready for the team."
+        editor.click()
+        page.keyboard.press("ControlOrMeta+A")
+        page.keyboard.type(edited)
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            stored_note = _api(page, "GET", f"/api/notes/{note_id}", token=TOKEN)["note"]
+            if stored_note["body_markdown"] == edited:
+                break
+            page.wait_for_timeout(300)
+        stored_note = _api(page, "GET", f"/api/notes/{note_id}", token=TOKEN)["note"]
+        assert stored_note["body_markdown"] == edited, stored_note
+
+        note_win.get_by_role("button", name="Send…", exact=True).click()
+        note_sheet = note_win.locator("[data-testid=send-sheet]")
+        note_sheet.wait_for(timeout=T)
+        note_open = note_win.locator("[data-testid=send-open][data-destination='Team updates']")
+        note_open.locator("[data-testid=send-preview]").wait_for(timeout=T)
+        assert "The edited line is ready for the team." in note_open.locator("[data-testid=send-preview-body]").inner_text()
+        note_send_selector = f"[id='pullout:note:{note_id}'] [data-testid=send-verbs] [data-testid=send-verb]"
+        note_send = page.locator(note_send_selector)
+        note_send.wait_for()
+        note_geometry = self._probe_send_button(page, note_send_selector, require_visible=False)
+        note_send.click()
+        page.locator(f"[id='pullout:note:{note_id}'] [data-testid=send-sent]").wait_for(timeout=T)
+        note_ref = f"note:{note_id}"
+        note_rows = self.db.channel_sends.list_for_document(note_ref)
+        assert len(note_rows) == 1, note_rows
+        note_row = note_rows[0]
+        note_proof = json.loads(note_row["proof_json"] or "{}")
+        note_path = Path(note_proof["path"])
+        assert note_path.parent.resolve() == folder.resolve()
+        expected_note_bytes = f"# {note['title']}\n\n{edited}\n".encode()
+        assert bytes(note_row["payload"]) == expected_note_bytes
+        assert note_path.read_bytes() == expected_note_bytes
+        self._face_row_receipt(note_row, note_ref)
+
+        # The original meeting source stays frozen and its own bytes remain unchanged.
+        assert bytes(self.db.channel_sends.get(meeting_row["id"])["payload"]) == meeting_bytes
+
+        # A fresh desk reads the durable row back into the shared Sent list.  The
+        # row must be the same native send (one receipt), rather than a transient
+        # face-only acknowledgement from the first window.
+        # On the phone the window chrome's Back while the send face is open
+        # returns to the ordinary note editor; the same chrome button then
+        # closes that real note window before the reload read.
+        note_win.locator("[data-testid=send-back]").click()
+        note_win.locator(".desk-gadget-close").click()
+        note_win.wait_for(state="detached", timeout=T)
+        page.reload(wait_until="load")
+        _normal_chair(page)
+        meeting = page.locator(f"[id='{MEET}']")
+        meeting.wait_for(timeout=T)
+        meeting.locator("[data-testid=meeting-send]").click()
+        reloaded_history = meeting.locator("[data-testid=send-history]")
+        reloaded_history.wait_for(timeout=T)
+        reloaded_rows = reloaded_history.locator("[data-testid=history-row]")
+        assert reloaded_rows.count() == 1
+        reloaded_text = reloaded_rows.first.inner_text()
+        assert "Team updates" in reloaded_text and "SAVED" in reloaded_text, reloaded_text
+        assert meeting.locator("[data-testid=send-history] [data-testid=history-word]").count() == 1
+        page.screenshot(path=str(SHOTS / f"S5-history-reloaded-{width}.png"))
+        facts = {
+            "width": width, "meeting_ref": meeting_ref, "note_ref": note_ref,
+            "meeting_preview": preview_text, "meeting_send": {"id": meeting_row["id"], "path": str(meeting_path), "bytes": meeting_bytes.decode()},
+            "note": {"id": note_id, "title": note["title"], "edited": edited,
+                     "send": {"id": note_row["id"], "path": str(note_path), "bytes": bytes(note_row["payload"]).decode(),
+                              "expected_rendered_bytes": expected_note_bytes.decode()}},
+            "geometry": {"meeting": geometry, "note": note_geometry},
+            "inline_destination": {"folder": str(inline_folder), "selected": True},
+            "reload_sent": {"rows": reloaded_rows.count(), "text": reloaded_text},
+        }
+        (SHOTS / f"S5-S6-facts-{width}.json").write_text(json.dumps(facts, indent=2) + "\n")
+        page.screenshot(path=str(SHOTS / f"S6-note-sent-{width}.png"))
 
     def _room_second_read_fails(self, si: StandIns, folder: Path) -> None:
         page = self.page
@@ -730,11 +1029,11 @@ class TestSendGlass:
         assert any(warning in field for field in fields), fields
         preview_text = well.locator("[data-testid=send-preview-body]").inner_text()
         assert "The rollout is complete." in preview_text
-        send = well.locator("[data-testid=send-verb]")
+        send = page.locator(f"[id='{ROOM}'] [data-testid=send-verb]")
         assert send.is_enabled()
         self._shot("S8-unchecked-preview")
         send.click()
-        sent = well.locator("[data-testid=send-sent]")
+        sent = page.locator(f"[id='{ROOM}'] [data-testid=send-sent]")
         sent.wait_for(timeout=T)
         self._wait(600)
         rows = self._db_sends(update_ref)
@@ -756,6 +1055,10 @@ class TestSendGlass:
 H1_TOKEN = "philo11-05a-doc-send"
 
 H1_SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-11-more-documents-on-the-channels/assets/story-05a-proof/shots")
+
+# Send S3: the owner-facing Needs row is a separate face from the Send well,
+# but it uses the same private Hub row, frozen preview and owner press.
+S3_SHOTS = evidence_dir("docs/internal/TONIGHT-THREE-2026-10-20/send-s3")
 
 H1_SIZES = {1440: 900, 393: 852}
 
@@ -936,19 +1239,33 @@ class _Rig:
     def _stamp(page: Any, iso: str) -> str:
         return page.evaluate(STAMP_JS, iso)
 
-    def _agent(self) -> Any:
+    def _agent(self, *, palette: str = "PROJECT", identity: str = AGENT_ID) -> Any:
         from starlette.testclient import TestClient
 
         client = TestClient(self.server.app, client=(REMOTE_HOST, 50000))
         headers = {"Authorization": f"Bearer {H1_TOKEN}"}
         assert client.put("/api/settings/remote", json={"enabled": True}, headers=headers).status_code == 200
-        issued = client.post("/api/settings/remote/credentials", json={"identity": AGENT_ID, "palette": "PROJECT"},
+        issued = client.post("/api/settings/remote/credentials", json={"identity": identity, "palette": palette},
                              headers=headers)
         assert issued.status_code == 200, issued.text
         agent = TestClient(self.server.app, client=(REMOTE_HOST, 50001))
         agent.headers.pop("x-holdspeak-token", None)
         agent.headers.update({"Authorization": f"Bearer {issued.json()['token']}"})
         return agent
+
+    def _prepare_agent(self, document_ref: str, destination_id: str) -> tuple[Any, dict[str, Any]]:
+        """Use the existing admitted agent MCP path; channel.prepare never sends."""
+        from tests.unit.test_philo9_steward_admission import _tool
+
+        agent = self._agent()
+        is_error, answer = _tool(agent, "channel.prepare", {
+            "document_ref": document_ref, "destination_id": destination_id,
+        })
+        assert is_error is False, answer
+        send = answer["send"]
+        assert send["state"] == "prepared"
+        assert send["prepared_by"] == {"kind": "agent", "identity": AGENT_ID}
+        return agent, answer
 
     @staticmethod
     def _pick(page: Any, scope: str, name: str) -> None:
@@ -1006,3 +1323,546 @@ class _Rig:
             page.get_by_test_id("brief-send-toggle").first.click()
         page.wait_for_timeout(900)
         _settle(page)
+
+
+class TestSendNeedsGlass(_Rig):
+    """S3's real browser leg reuses the prepared-send rig above."""
+
+    pass
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.chair_windows_open
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_saved_unknown_needs_retry_replays_the_original_operation(self, monkeypatch: pytest.MonkeyPatch, width: int) -> None:
+        """A settled UNKNOWN survives reload and Try again never dispatches twice."""
+        from playwright.sync_api import sync_playwright
+        from holdspeak.services.channel_contract import FileChannel, Outcome
+        from tests.unit.test_philo9_steward_admission import _tool
+
+        calls = 0
+
+        def unknown_dispatch(*_args: Any, **_kwargs: Any) -> Outcome:
+            nonlocal calls
+            calls += 1
+            return Outcome("unknown", "timeout")
+
+        monkeypatch.setattr(FileChannel, "dispatch", unknown_dispatch)
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                _normal_chair(page)
+                project = _api(page, "POST", "/api/projects", {"name": "S3 browser unknown delivery"}, token=H1_TOKEN)
+                project_id = project["project"]["id"]
+                update = _api(page, "POST", f"/api/projects/{project_id}/updates/draft", {}, token=H1_TOKEN)
+                update_id = update["update"]["id"]
+                _api(page, "PUT", f"/api/updates/{update_id}", {
+                    "body_md": "## Progress\n\nThe unknown browser proof keeps one operation.\n",
+                }, token=H1_TOKEN)
+                _api(page, "POST", f"/api/updates/{update_id}/publish", {}, token=H1_TOKEN)
+                document_ref = f"project_update:{update_id}"
+                destination_id, folder = self._dest(page, "S3 unknown folder")
+                _agent, prepared_answer = self._prepare_agent(document_ref, destination_id)
+                prepared = prepared_answer["send"]
+                assert list(folder.iterdir()) == []
+
+                owner_before = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=H1_TOKEN)
+                before_rows = [item for item in owner_before["items"] if item.get("kind") == "send"]
+                assert len(before_rows) == 1 and before_rows[0]["sendId"] == prepared["id"], owner_before
+
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                row = page.locator("[data-testid='needs-row'][data-kind='send']").first
+                row.wait_for(timeout=H1_T)
+                posts: list[dict[str, Any]] = []
+                page.on("request", lambda request: posts.append(request.post_data_json)
+                        if request.method == "POST" and request.url.endswith("/api/channels/send") else None)
+                row.locator("[data-verb='send']").click()
+                page.wait_for_function(
+                    """() => document.querySelector("[data-testid='needs-row'][data-kind='send'] [data-verb='try-again']") !== null""",
+                    timeout=H1_T,
+                )
+                assert calls == 1 and len(posts) == 1, (calls, posts)
+                first = self._sends(page, document_ref)
+                assert len(first) == 1 and first[0]["state"] == "unknown", first
+                first_kernel = self._kernel(first[0]["send_operation_id"])
+                assert first_kernel["state"] == "indeterminate" and first_kernel["receipt_state"] == "indeterminate", first_kernel
+                assert first_kernel["receipt_outcome"] == "timeout" and first_kernel["receipts"] == 1, first_kernel
+                assert list(folder.iterdir()) == []
+                page.screenshot(path=str(S3_SHOTS / f"needs-unknown-{width}.png"))
+
+                # The owner reloads from the saved aggregate. Browser custody
+                # is gone, but the row carries the kernel command provenance.
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                row = page.locator("[data-testid='needs-row'][data-kind='send']").first
+                row.wait_for(timeout=H1_T)
+                row.locator("[data-verb='try-again']").wait_for(timeout=H1_T)
+                page.screenshot(path=str(S3_SHOTS / f"needs-unknown-reloaded-{width}.png"))
+                assert calls == 1, "reload must not press a settled UNKNOWN send"
+                row.locator("[data-verb='try-again']").click()
+                deadline = time.monotonic() + 20
+                while len(posts) < 2 and time.monotonic() < deadline:
+                    page.wait_for_timeout(100)
+                assert len(posts) == 2 and posts[0] == posts[1], posts
+                assert calls == 1, "kernel replay must not dispatch the provider again"
+                after = self._sends(page, document_ref)
+                assert len(after) == 1 and after[0]["id"] == first[0]["id"] and after[0]["state"] == "unknown", after
+                after_kernel = self._kernel(after[0]["send_operation_id"])
+                assert after_kernel["operation_id"] == first_kernel["operation_id"]
+                assert list(folder.iterdir()) == []
+
+                privacy_agent = self._agent(palette="ALL", identity="privacy-agent")
+                agent_error, agent_answer = _tool(privacy_agent, "desk.needs_you", {})
+                assert agent_error is False and not [item for item in agent_answer.get("items", []) if item.get("kind") == "send"]
+                agent_text = json.dumps(agent_answer)
+                assert all(marker not in agent_text for marker in (first[0]["id"], "S3 unknown folder", prepared["preview"]["text"]))
+                facts = {
+                    "width": width, "document_ref": document_ref,
+                    "owner_before": owner_before, "http_send_attempts": posts,
+                    "provider_calls": calls, "send": after[0],
+                    "receipt": after_kernel, "folder": {"path": str(folder), "files": [p.name for p in folder.iterdir()]},
+                    "agent_send_rows": [],
+                }
+                (S3_SHOTS / f"needs-unknown-facts-{width}.json").write_text(json.dumps(facts, indent=2, default=str) + "\n")
+                page.screenshot(path=str(S3_SHOTS / f"needs-unknown-retried-{width}.png"))
+                assert not [error for error in errors if "ResizeObserver" not in error and "Failed to fetch" not in error], errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.chair_windows_open
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_an_admitted_agent_prepare_becomes_the_owner_needs_send(self, width: int) -> None:
+        """S3: one real prepared row crosses the Needs face and leaves once.
+
+        The source update, destination, admitted agent call, aggregate reads,
+        owner press, file bytes and kernel receipt all use this Hub. The only
+        external boundary is the local FileChannel itself.
+        """
+        from playwright.sync_api import sync_playwright
+        from tests.unit.test_philo9_steward_admission import _tool
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                _normal_chair(page)
+                project = _api(page, "POST", "/api/projects", {"name": "S3 browser private delivery"}, token=H1_TOKEN)
+                project_id = project["project"]["id"]
+                update = _api(page, "POST", f"/api/projects/{project_id}/updates/draft", {}, token=H1_TOKEN)
+                update_id = update["update"]["id"]
+                body = "## Progress\n\nThe browser proof keeps the frozen bytes.\n"
+                _api(page, "PUT", f"/api/updates/{update_id}", {"body_md": body}, token=H1_TOKEN)
+                _api(page, "POST", f"/api/updates/{update_id}/publish", {}, token=H1_TOKEN)
+                document_ref = f"project_update:{update_id}"
+                destination_id, folder = self._dest(page, "S3 private folder")
+                agent, prepared_answer = self._prepare_agent(document_ref, destination_id)
+                prepared = prepared_answer["send"]
+                assert list(folder.iterdir()) == []
+
+                # The owner aggregate and the admitted agent's aggregate read
+                # the same Hub, with private send content withheld from MCP.
+                owner_before = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=H1_TOKEN)
+                send_rows = [item for item in owner_before["items"] if item.get("kind") == "send"]
+                assert len(send_rows) == 1, owner_before
+                need = send_rows[0]
+                assert need["id"] == f"send:{prepared['id']}"
+                assert need["documentRef"] == document_ref
+                assert need["destinationName"] == "S3 private folder"
+                assert need["preparedBy"] == "Remote project agent"
+                assert owner_before["count"] == len(owner_before["members"])
+                assert any(c["kind"] == "send" and c["state"] == "available" for c in owner_before["coverage"])
+                visibility_agent = self._agent(palette="ALL", identity="privacy-agent")
+                agent_error, agent_answer = _tool(visibility_agent, "desk.needs_you", {})
+                assert agent_error is False, agent_answer
+                assert not [item for item in agent_answer.get("items", []) if item.get("kind") == "send"]
+                agent_text = json.dumps(agent_answer)
+                assert all(marker not in agent_text for marker in (
+                    prepared["id"], "S3 private folder", prepared["preview"]["text"],
+                ))
+
+                # The owner reloads the actual face after the producer crossed
+                # the boundary. No route answer is substituted in the browser.
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                row = page.locator("[data-testid='needs-row'][data-kind='send']").first
+                row.wait_for(timeout=H1_T)
+                row.scroll_into_view_if_needed()
+                page.wait_for_function(
+                    """(n) => {
+                        const number = (selector) => {
+                            const element = document.querySelector(selector);
+                            if (n === 0 && !element) return 0;
+                            const match = (element?.textContent || '').match(/\\d+/);
+                            return match ? Number(match[0]) : null;
+                        };
+                        return number('[data-testid=arrival-display]') === n
+                            && number('.desk-bell strong') === n;
+                    }""",
+                    arg=owner_before["count"], timeout=H1_T,
+                )
+                row_name = row.locator(".needs-row-name").inner_text()
+                assert row_name == need["documentTitle"], (row_name, need)
+                row_fact = row.locator(".needs-row-fact").inner_text()
+                assert "REV 1" in row_fact and "S3 private folder" in row_fact
+                assert "by Remote project agent" in row_fact
+                assert row.locator("[data-verb='send']").count() == 1
+                assert row.locator("[data-verb='look']").count() == 1
+                assert row.locator("[data-testid='needs-send-discard']").count() == 1
+                page.screenshot(path=str(S3_SHOTS / f"needs-prepared-{width}.png"))
+
+                row.locator("[data-verb='look']").click()
+                preview = page.locator("[data-testid='needs-send-preview']")
+                preview.wait_for(timeout=H1_T)
+                page.wait_for_function("""() => {
+                    const body = document.querySelector('[data-testid="needs-send-preview"] [data-testid="send-preview-body"]');
+                    if (!body || body.getBoundingClientRect().width < 200) return false;
+                    for (let node = body; node; node = node.parentElement) {
+                        if (Number(getComputedStyle(node).opacity) < .99) return false;
+                    }
+                    return true;
+                }""", timeout=H1_T)
+                preview_text = preview.locator("[data-testid='send-preview-body']").inner_text().strip()
+                expected_preview = " ".join(
+                    re.sub(r"^#+\s*", "", line).strip()
+                    for line in prepared["preview"]["text"].splitlines() if line.strip()
+                )
+                assert " ".join(preview_text.split()) == expected_preview
+                display = str(prepared["target"].get("display") or prepared["target"]["folder"])
+                folder_parts = [part for part in display.split("/") if part and part != "~"]
+                folder_token = "/".join(folder_parts[-2:])
+                assert folder_token in preview.inner_text()
+                page.screenshot(path=str(S3_SHOTS / f"needs-preview-{width}.png"))
+
+                posts: list[dict[str, Any]] = []
+                page.on("request", lambda request: posts.append(request.post_data_json)
+                        if request.method == "POST" and request.url.endswith("/api/channels/send") else None)
+                row.locator("[data-verb='send']").click()
+                page.wait_for_function(
+                    """() => !document.querySelector("[data-testid='needs-row'][data-kind='send']")""",
+                    timeout=H1_T,
+                )
+                assert len(posts) == 1 and posts[0]["send_id"] == prepared["id"]
+                assert posts[0].get("command_id")
+                page.screenshot(path=str(S3_SHOTS / f"needs-sent-{width}.png"))
+
+                owner_after = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=H1_TOKEN)
+                assert not [item for item in owner_after["items"] if item.get("kind") == "send"], owner_after
+                assert owner_after["count"] == len(owner_after["members"])
+                page.wait_for_timeout(500)
+                rendered_counts = page.evaluate("""() => ({
+                    head: document.querySelector('[data-testid=arrival-display]')?.textContent || '',
+                    bell: document.querySelector('.desk-bell strong')?.textContent || '',
+                })""")
+                assert owner_after["count"] == 0 or all(
+                    str(owner_after["count"]) in rendered_counts[key] for key in ("head", "bell")
+                ), (owner_after, rendered_counts)
+                after_error, after_agent = _tool(visibility_agent, "desk.needs_you", {})
+                assert after_error is False, after_agent
+                assert not [item for item in after_agent.get("items", []) if item.get("kind") == "send"]
+
+                sends = self._sends(page, document_ref)
+                assert len(sends) == 1 and sends[0]["id"] == prepared["id"]
+                assert sends[0]["state"] == "sent"
+                sent_path = Path(sends[0]["proof"]["path"])
+                assert sent_path.parent.resolve() == folder.resolve()
+                assert sent_path.read_bytes() == prepared["preview"]["text"].encode()
+                assert [item.name for item in folder.iterdir()] == [sent_path.name]
+                receipt = self._face_row_receipt(sends[0], document_ref)
+                assert receipt["receipt_outcome"] == "succeeded"
+                facts = {
+                    "width": width, "document_ref": document_ref,
+                    "owner_before": owner_before, "agent_send_rows": [],
+                    "http_send": posts[0], "send": sends[0], "receipt": receipt,
+                    "file": {"path": str(sent_path), "bytes": sent_path.read_bytes().decode()},
+                }
+                (S3_SHOTS / f"needs-facts-{width}.json").write_text(json.dumps(facts, indent=2, default=str) + "\n")
+                assert not [error for error in errors if "ResizeObserver" not in error and "Failed to fetch" not in error], errors
+            finally:
+                browser.close()
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(600)
+    @pytest.mark.chair_windows_open
+    @pytest.mark.parametrize("width", WIDTHS)
+    def test_scheduled_automation_prepares_once_then_owner_sends_the_frozen_result(
+        self, monkeypatch: pytest.MonkeyPatch, width: int,
+    ) -> None:
+        """S7 T4: a real scheduled result becomes one owner-held Send.
+
+        The Workbench runner, schedule delegation, artifact mint, delivery
+        projection, Needs read, frozen Markdown bridge and owner Send all use
+        this Hub. The engine response is the only provider leaf; the File
+        destination is the local OS boundary. The scheduler never dispatches
+        the file.
+        """
+        from playwright.sync_api import sync_playwright
+        from holdspeak.db import get_database
+        from holdspeak.kernel.runtime import _service
+        from holdspeak.principals import Principal, PrincipalKind
+        from holdspeak.runtime import composition
+        from holdspeak.services.automation_runs import deliver_run
+        from holdspeak.services.workbench_runner import WorkbenchRunner
+
+        source_markdown = "## Friday status\n\nThe scheduled result is frozen.\n"
+        calls = 0
+
+        class RecordingEngine:
+            active_provider = "s3-t4-provider"
+            active_model = "s3-t4-model"
+            last_usage: dict[str, int] = {}
+
+            def run_prompt(self, *, system_prompt: str, user_prompt: str,
+                           temperature: Any = None, max_tokens: Any = None) -> str:
+                nonlocal calls
+                calls += 1
+                self.last_usage = {"total_tokens": 17}
+                return source_markdown
+
+        engine = RecordingEngine()
+        monkeypatch.setattr(
+            "holdspeak.intel.providers.build_meeting_intel_for_profile",
+            lambda **_: engine,
+        )
+
+        with sync_playwright() as pw:
+            browser, page, errors = self._open(pw, width)
+            try:
+                _normal_chair(page)
+                db = get_database()
+                runtime = composition.installed()
+                assert runtime is not None and runtime.broadcast is not None
+                desk_events: list[tuple[str, dict[str, Any]]] = []
+                broadcast = runtime.broadcast
+
+                def capture_desk_event(message_type: str, data: dict[str, Any]) -> None:
+                    desk_events.append((message_type, data))
+                    broadcast(message_type, data)
+
+                monkeypatch.setattr(runtime, "broadcast", capture_desk_event)
+                destination_id, folder = self._dest(page, "S7 scheduled folder")
+                note = _api(page, "POST", "/api/notes", {
+                    "title": "Friday source notes",
+                    "body_markdown": "The team update source is on the desk.",
+                }, token=H1_TOKEN)["note"]
+                profile_id = "s3-t4-recorded-engine"
+                db.profiles.upsert(
+                    profile_id=profile_id, name="S3 T4 recorded engine",
+                    kind="openAICompatible", base_url="http://s3-t4-stub",
+                    model="s3-t4-model",
+                )
+
+                made = _api(page, "POST", "/api/workbenches", {
+                    "name": "Friday team update",
+                }, token=H1_TOKEN)["workbench"]
+                workbench_id = made["id"]
+                _api(page, "PUT", f"/api/workbenches/{workbench_id}", {
+                    "instruction": "Write the Friday team update from the source notes.",
+                    "sources": [f"note:{note['id']}"],
+                    "output_target": f"destination:{destination_id}",
+                }, token=H1_TOKEN)
+                _api(page, "PUT", f"/api/workbenches/{workbench_id}/engine", {
+                    "profile_id": f"legacy-{profile_id}",
+                }, token=H1_TOKEN)
+                when = _api(page, "PUT", f"/api/workbenches/{workbench_id}/when", {
+                    "kind": "schedule", "every": "week", "day": 5, "time": "15:00",
+                }, token=H1_TOKEN)
+                assert when["workbench"]["schedule_enabled"] is True
+
+                scheduler = Principal(PrincipalKind.SCHEDULER, "local-workbench-conductor")
+                due_minute = int(time.time() // 60) + 1
+                runner = WorkbenchRunner(db, _service())
+                def scheduled_once() -> dict[str, Any]:
+                    return asyncio.run(runner.run_scheduled(
+                        scheduler, workbench_id, due_minute=due_minute,
+                    ))
+
+                with ThreadPoolExecutor(max_workers=1) as pool:
+                    run = pool.submit(scheduled_once).result()
+                first_delivery = deliver_run(db, scheduler, run)
+                if calls != 2:
+                    with db._connection() as conn:
+                        item_debug = [dict(row) for row in conn.execute(
+                            "SELECT id, status, result, result_egress_json FROM workbench_items WHERE workbench_id=?",
+                            (workbench_id,),
+                        )]
+                    raise AssertionError(json.dumps({"calls": calls, "run": run, "items": item_debug}, default=str))
+                assert len(first_delivery) == 1 and first_delivery[0]["outcome"] == "prepared", first_delivery
+                assert list(folder.iterdir()) == []
+                prepared_id = str(first_delivery[0]["send_id"])
+                assert any(
+                    message_type == "desk_changed"
+                    and data.get("kind") == "send"
+                    and data.get("id") == prepared_id
+                    and data.get("op") == "prepared"
+                    for message_type, data in desk_events
+                ), desk_events
+
+                # Replaying the completed delivery is durable and idempotent:
+                # it keeps the one prepared row and never prepares a second
+                # Send. (The schedule tick itself is consumed once.)
+                replay_delivery = deliver_run(db, scheduler, run)
+                assert len(replay_delivery) == 1 and replay_delivery[0]["outcome"] == "kept", replay_delivery
+                assert calls == 2
+
+                with db._connection() as conn:
+                    artifact_row = conn.execute(
+                        """SELECT a.id AS artifact_id, a.source_run_id, a.source_item_id,
+                                  i.workbench_id, i.status, i.result
+                             FROM artifacts AS a
+                             JOIN workbench_items AS i ON i.id = a.source_item_id
+                            WHERE a.source_run_id = ?""",
+                        (run["run_id"],),
+                    ).fetchone()
+                assert artifact_row is not None
+                artifact = dict(artifact_row)
+                artifact_id = str(artifact["artifact_id"])
+                document_ref = f"artifact:{artifact_id}"
+                sends_before = self._sends(page, document_ref)
+                assert len(sends_before) == 1
+                prepared = sends_before[0]
+                assert prepared["state"] == "prepared"
+                assert prepared["prepared_by"] == {
+                    "kind": "owner", "identity": "local-automation-conductor",
+                }
+                assert prepared["document_json"]["automation_origin"]["workbench_name"] == "Friday team update"
+                assert "body_md" not in prepared["document_json"]
+                from holdspeak.db import get_database
+
+                stored = get_database().channel_sends.get(prepared["id"])
+                assert stored is not None
+                assert json.loads(stored["document_json"])["body_md"] == source_markdown
+                assert prepared["preview"]["markdown"] == source_markdown
+                assert prepared["preview"]["text"] == source_markdown
+                prepare_kernel = self._kernel(prepared["prepare_operation_id"])
+                assert prepare_kernel["state"] == "succeeded"
+                assert prepare_kernel["receipt_outcome"] == "succeeded"
+                assert prepare_kernel["receipts"] == 1
+
+                owner_before = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=H1_TOKEN)
+                send_rows = [item for item in owner_before["items"] if item.get("kind") == "send"]
+                assert len(send_rows) == 1, owner_before
+                need = send_rows[0]
+                assert need["sendId"] == prepared["id"]
+                assert need["documentRef"] == document_ref
+                assert need["preparedBy"] == "Friday team update", need
+
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                row = page.locator("[data-testid='needs-row'][data-kind='send']").first
+                row.wait_for(timeout=H1_T)
+                row.scroll_into_view_if_needed()
+                assert "by Friday team update" in row.locator(".needs-row-fact").inner_text()
+                page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-needs-{width}.png"))
+
+                row.locator("[data-verb='look']").click()
+                preview = page.locator("[data-testid='needs-send-preview']")
+                preview.wait_for(timeout=H1_T)
+                shown = " ".join(preview.locator("[data-testid='send-preview-body']").inner_text().split())
+                page.wait_for_function("""() => {
+                    const body = document.querySelector('[data-testid="needs-send-preview"] [data-testid="send-preview-body"]');
+                    if (!body || body.getBoundingClientRect().width < 200) return false;
+                    for (let node = body; node; node = node.parentElement) {
+                        if (Number(getComputedStyle(node).opacity) < .99) return false;
+                    }
+                    return true;
+                }""", timeout=H1_T)
+                expected_shown = " ".join(
+                    re.sub(r"^#+\s*", "", line).strip()
+                    for line in source_markdown.splitlines() if line.strip()
+                )
+                assert shown == expected_shown
+                contrast = preview.locator("[data-testid='send-preview-body'] p").first.evaluate("""el => {
+                    const rgb = value => (value.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
+                    const luminance = values => values.map(v => {v /= 255; return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;})
+                        .reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0);
+                    let node = el, background = 'rgb(255, 255, 255)';
+                    while (node) {
+                        const color = getComputedStyle(node).backgroundColor;
+                        if (color !== 'transparent' && color !== 'rgba(0, 0, 0, 0)') {background = color; break;}
+                        node = node.parentElement;
+                    }
+                    const color = getComputedStyle(el).color;
+                    const a = luminance(rgb(color)), b = luminance(rgb(background));
+                    const bounds = el.getBoundingClientRect();
+                    return {color, background, ratio: (Math.max(a, b) + .05) / (Math.min(a, b) + .05),
+                        width: bounds.width, left: bounds.left, right: bounds.right,
+                        viewport: innerWidth, fontSize: parseFloat(getComputedStyle(el).fontSize)};
+                }""")
+                assert contrast["ratio"] >= 4.5, contrast
+                assert contrast["width"] >= 200 and contrast["fontSize"] >= 12, contrast
+                assert contrast["left"] >= 0 and contrast["right"] <= contrast["viewport"], contrast
+                page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-preview-{width}.png"))
+
+                posts: list[dict[str, Any]] = []
+                page.on("request", lambda request: posts.append(request.post_data_json)
+                        if request.method == "POST" and request.url.endswith("/api/channels/send") else None)
+                row.locator("[data-verb='send']").click()
+                page.wait_for_function(
+                    """() => !document.querySelector("[data-testid='needs-row'][data-kind='send']")""",
+                    timeout=H1_T,
+                )
+                assert len(posts) == 1 and posts[0]["send_id"] == prepared["id"], posts
+                assert list(folder.iterdir())
+
+                sends_after = self._sends(page, document_ref)
+                assert len(sends_after) == 1 and sends_after[0]["id"] == prepared["id"]
+                sent = sends_after[0]
+                assert sent["state"] == "sent"
+                sent_path = Path(sent["proof"]["path"])
+                assert sent_path.parent.resolve() == folder.resolve()
+                assert sent_path.read_bytes() == source_markdown.encode()
+                assert sent["preview"]["markdown"] == source_markdown
+                send_kernel = self._face_row_receipt(sent, document_ref)
+                assert send_kernel["receipt_outcome"] == "succeeded"
+
+                # Negative control: the owner can manually prepare the same
+                # automation artifact. It has no internal delivery origin,
+                # so the existing owner label remains "you".
+                manual_destination_id, manual_folder = self._dest(page, "S7 manual folder")
+                manual_answer = _api(page, "POST", "/api/channels/sends", {
+                    "document_ref": document_ref,
+                    "destination_id": manual_destination_id,
+                }, token=H1_TOKEN)
+                manual_send = manual_answer["send"]
+                assert manual_send["prepared_by"]["kind"] == "owner"
+                assert "automation_origin" not in (manual_send.get("document_json") or {})
+                manual_needs = _api(page, "GET", "/api/desk/needs-you?fresh=1", token=H1_TOKEN)
+                manual_rows = [item for item in manual_needs["items"] if item.get("kind") == "send"]
+                assert len(manual_rows) == 1 and manual_rows[0]["preparedBy"] == "you", manual_needs
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                manual_row = page.locator("[data-testid='needs-row'][data-kind='send']").first
+                manual_row.wait_for(timeout=H1_T)
+                assert "by you" in manual_row.locator(".needs-row-fact").inner_text()
+                page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-manual-negative-{width}.png"))
+                _api(page, "POST", f"/api/channels/sends/{manual_send['id']}/discard", {}, token=H1_TOKEN)
+                assert list(manual_folder.iterdir()) == []
+                facts = {
+                    "width": width, "workbench_id": workbench_id,
+                    "run": run,
+                    "first_delivery": first_delivery,
+                    "replay_delivery": replay_delivery,
+                    "artifact": artifact, "document_ref": document_ref,
+                    "owner_before": owner_before, "http_send": posts[0], "preview_contrast": contrast,
+                    "producer_calls": calls, "prepare_receipt": prepare_kernel,
+                    "send": sent, "send_receipt": send_kernel,
+                    "desk_events": [
+                        {"message_type": message_type, "data": data}
+                        for message_type, data in desk_events
+                        if message_type == "desk_changed" and data.get("id") == prepared["id"]
+                    ],
+                    "manual_negative": {
+                        "send": manual_send, "needs": manual_needs,
+                        "folder": str(manual_folder),
+                    },
+                    "file": {"path": str(sent_path), "bytes": sent_path.read_bytes().decode()},
+                }
+                (S3_SHOTS / f"scheduled-t4-facts-{width}.json").write_text(
+                    json.dumps(facts, indent=2, default=str) + "\n",
+                )
+                page.screenshot(path=str(S3_SHOTS / f"scheduled-t4-sent-{width}.png"))
+                assert not [error for error in errors if "ResizeObserver" not in error and "Failed to fetch" not in error], errors
+            finally:
+                browser.close()

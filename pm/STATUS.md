@@ -16,6 +16,63 @@ Speech stays unassigned after choosing a LAN chat engine, and only the
 owner's Settings press opens the doubled calendar permission door once.
 No product behavior changes. Required quick: FIRSTRUN_RECORDS_QUICK_PENDING.
 
+Needs shows each owner-prepared Send once, with its destination, source and
+frozen preview. Unknown-delivery retry reuses the original command and
+operation; rows without that provenance offer Check. Completed automations
+prepare once and retain their name through owner Send. Manual preparation
+of that same artifact remains labelled as the owner’s action.
+
+Summary and Follow-ups use confirmed decisions and open confirmed actions.
+Canonical edits and Desk decisions linked to the meeting appear once in the
+outbound words; unconfirmed proposals stay out. Markdown remains frozen,
+and email renders safe HTML with the matching plain text. Existing retained
+rows without Markdown stay readable. No new queue or authority is added.
+
+The integrated Send branch joins the reviewed content, Needs and automation
+changes with the sheet and Edit path. Earlier checks passed 195 integrated
+backend cases, 28 web consumers, six real Needs Send browser cases and the
+two actual sheet/Edit cases. The focused fixes also passed 286 backend/browser
+and 39 web checks, with three actual recording writers. Public metadata no
+longer duplicates the body; the existing privacy fence passes. The Slack
+Markdown expectation reads the actual renderer, and the canonical footer
+replaces the old inline Send that the longer Summary covered on the phone.
+The combined source passes type check, build, all 67 selected web checks and
+all 47 focused backend/browser checks. Those include six Needs cases, both
+sheet/Edit widths, the longer phone Summary, exact bytes and original-operation
+replay. Retained Back and Room Send selectors now target the shared header
+and footer; their original saved-document and operation assertions remain.
+All 169 checks in the five updated retained web-consumer files also pass.
+The original draft-save, held-send, retry and native/manual receipt assertions
+remain strict. Both real uncertain-send reload cases pass; the Room receipt
+locator follows its Send control into the canonical footer. The required
+check covers these final retained browser selectors.
+The first full combined check passed all 4,094 related web tests, 2,383
+affected backend/browser checks, all 110 sweep, 27 canon and 1,116 guards.
+Two Send whole-reply recordings still contained the removed public body;
+their actual producer writers now pass and have refreshed all three replies.
+The final delta replays the full Send backend file and recorded face consumer.
+Required quick: Final delta: all 8 Send backend checks and 10 recorded face checks passed; all 110 desk-sweep, 27 canon and 1,116 repository guards passed; build green. The preceding full product check passed 4,094 related web and 2,383 other affected backend/browser checks.
+The first real Send recipe remains open for the owner's five presses.
+
+Send opens one shared sheet in the result's window. Destinations are chips;
+Add destination saves and selects inline. Its footer keeps Send on screen,
+and Back restores the original result and opening focus. The record's own
+footer is absent while the sheet is open. Saved paths retain their case and
+wrap inside the window. Native receipts and sent-by-hand records share Sent.
+
+Edit makes a Note copy from the frozen preview and selects the same
+destination. The real Note editor stores the changed line, and Send carries
+those exact rendered bytes. The original meeting Summary stays unchanged.
+
+The actual private-Hub case passes at 1440/393: meeting and Note Send,
+inline Add, Back focus, Edit/store/send, exact file bytes, unchanged source,
+and one durable Sent row after reload. All nine pointer points hit at both
+widths; the phone Send owns a 44 px target. Both shots were inspected.
+Earlier 34 focused web checks passed. The old retained form-persistence
+check now uses Summary/Follow-ups while retaining its reload and per-object
+assertions. The combined required check above covers this sheet.
+The first real Send recipe remains open for the owner's five presses.
+
 Other devices now saves its switch and displayed host/port in the existing
 config through SettingsService. The remote gate, its read route and the
 System fact read that same durable value. There is no process-only writer
