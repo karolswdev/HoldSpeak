@@ -21,6 +21,10 @@ os.environ.setdefault("HOLDSPEAK_ASK_SERVER_TOOLS", "off")
 # test posts one to the owner's Notification Center; a test of the post turns
 # it on (or injects a notifier).
 os.environ.setdefault("HOLDSPEAK_DESKTOP_NOTIFY", "0")
+# Setup's LAN look is a real owner operation. Test hubs opt in only when they
+# inject a deterministic producer; an isolated HOME alone never authorizes a
+# probe of the host network.
+os.environ["HOLDSPEAK_SETUP_LAN_SCAN"] = "off"
 
 import pytest
 import numpy as np

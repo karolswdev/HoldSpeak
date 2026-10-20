@@ -273,8 +273,13 @@ class TestOneMeetingOneWindow:
             try:
                 # 1. The Needs-you row (the failed summary): Summarize opens the meeting.
                 self._press(page.get_by_test_id("desk-bell"))
-                row = page.locator("[data-testid='needs-row']", has_text="Platform sync").first
+                # P5 may also offer this meeting as a project source. Select
+                # its failed-summary member rather than whichever title is first.
+                row = page.get_by_test_id("needs-row").filter(
+                    has_text="Platform sync", has=page.locator("[data-verb=summarize]"),
+                )
                 row.wait_for(timeout=T)
+                assert row.count() == 1
                 self._press(row.locator("[data-verb=summarize]"))
                 self._one_front(ONE, "needs")
                 win = page.locator("#surface-meetings")

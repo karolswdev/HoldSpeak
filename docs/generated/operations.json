@@ -5922,6 +5922,180 @@
       }
     },
     {
+      "name": "setup.found",
+      "version": 1,
+      "description": "Read the local Setup inventory: what HoldSpeak found and the one action for each row.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the HTTP auth middleware); owner only",
+      "effect": "read",
+      "result": "{rows: [{id, kind, label, detail, state, reason, egress_host, verb, action, payload}], owner_name, people, suggestions, first_run}",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required",
+        "setup_unavailable",
+        "people_unavailable"
+      ],
+      "completion": "synchronous; the same read is used when Setup opens again",
+      "exposure": [
+        "http:GET /api/setup/found"
+      ],
+      "held": [],
+      "owner_only": true,
+      "blocking_io": false,
+      "owner_press": false,
+      "admission": {
+        "rule": "exempt",
+        "condition": "A local Setup read; it changes no state and performs no network scan.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "setup.use",
+      "version": 1,
+      "description": "Use one found Setup row. The row's producer reports Works, Working or a named failure.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the HTTP auth middleware); owner only",
+      "effect": "write",
+      "result": "the producer's result for the row",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required",
+        "setup_unavailable",
+        "people_unavailable",
+        "NotFound: unknown Setup row"
+      ],
+      "completion": "synchronous or producer-pending; the Setup read reports the durable result",
+      "exposure": [
+        "http:POST /api/setup/use"
+      ],
+      "held": [],
+      "owner_only": true,
+      "blocking_io": true,
+      "owner_press": true,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Config: the owner's press uses one found Setup item.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "setup.people.add",
+      "version": 1,
+      "description": "Add comma-separated direct reports in Setup. The People store is initialized on this press when needed.",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "names": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              }
+            ]
+          }
+        },
+        "required": [
+          "names"
+        ],
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the HTTP auth middleware); owner only",
+      "effect": "write",
+      "result": "{relationships: [{id, display_name, relationship_kind}]} and the receipt",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required",
+        "setup_unavailable",
+        "people_unavailable",
+        "ValidationError: Add a name"
+      ],
+      "completion": "synchronous; People lists the new relationships",
+      "exposure": [
+        "http:POST /api/setup/people"
+      ],
+      "held": [],
+      "owner_only": true,
+      "blocking_io": false,
+      "owner_press": true,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Config: the owner's press writes the People store.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
+      "name": "setup.lan.scan",
+      "version": 1,
+      "description": "Look once on the owner's private network for a responding engine. This is a read; it adds no engine.",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "principal": "derived by the transport (the HTTP auth middleware); owner only",
+      "effect": "read",
+      "result": "{rows: [{id, name, model, host, base_url}], checkedAt}; disabled=true when scanning is off",
+      "refusals": [
+        "unknown_operation",
+        "invalid_arguments",
+        "authority_in_arguments",
+        "owner_required",
+        "setup_unavailable",
+        "people_unavailable"
+      ],
+      "completion": "synchronous; the answering servers are returned as Setup found rows",
+      "exposure": [
+        "http:POST /api/setup/lan"
+      ],
+      "held": [],
+      "owner_only": true,
+      "blocking_io": true,
+      "owner_press": true,
+      "admission": {
+        "rule": "admitted",
+        "condition": "Network egress: the approved Setup-open look reaches answering private-network engines.",
+        "arguments": [],
+        "enforced": true
+      }
+    },
+    {
       "name": "project.repository.register",
       "version": 1,
       "description": "Register a GitHub repository (owner/name) for a Project, so Hand to agent can work in it. Nothing is cloned now: the first hand of an item in the Project clones it from github.com into the HoldSpeak clone folder (its own receipt). Only the owner registers.",

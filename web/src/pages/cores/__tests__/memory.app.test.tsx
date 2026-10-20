@@ -143,10 +143,10 @@ describe("Q12 Memory", () => {
         String(url).startsWith(held) ? pending : original(url, init));
       render(<MemoryCore />);
       expect(screen.getByRole("searchbox", { name: "Ask your desk" })).toBeTruthy();
-      expect(screen.queryByRole("button", { name: "RAW", exact: true })).toBeNull();
+      expect(screen.queryByRole("button", { name: /^RAW$/ })).toBeNull();
       release(held === "/api/memory/pages" ? pages : held === "/api/projects"
         ? { projects: [{ id: "p1", name: "Ledger" }] } : beliefs);
-      expect(await screen.findByRole("button", { name: "RAW", exact: true })).toBeTruthy();
+      expect(await screen.findByRole("button", { name: /^RAW$/ })).toBeTruthy();
       expect(screen.getAllByTestId("standing-page")).toHaveLength(2);
       expect(screen.getByRole("button", { name: "Ledger" })).toBeTruthy();
     },
