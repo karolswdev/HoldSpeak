@@ -33,7 +33,7 @@ observes the real Needs-you row at both widths; both walks pass. Four reds
 from the pinned main browser tape were old Dock controls, count expectations
 and an exact Today label; their real browser replacements pass with the
 membership, touch-size and cross-window latency assertions retained.
-Required quick: S4_QUICK_PENDING.
+Required quick: 4,078 related web, 34 affected Python/browser, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The separate current arrival walk passes at 1440 and 393..
 
 P10 offers only watch actions with an existing runtime path. A new
 project.observe evaluation writes its observation without a pending effect;
