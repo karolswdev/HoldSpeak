@@ -132,7 +132,12 @@ def build_project_door_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"code": "validation", "message": "the body must be a JSON object",
                                  **kernel_fields(kernel)}, status_code=400)
         sources = body.get("sources", [])
-        if not sources and (refused := exempt_form_right(p)) is not None:
+        found = body.get("found")
+        has_found = isinstance(found, dict) and any(
+            isinstance(found.get(key), list) and found.get(key)
+            for key in ("meeting_ids", "note_ids")
+        )
+        if not sources and not has_found and (refused := exempt_form_right(p)) is not None:
             return refused
         try:
             outcome = body.get("outcome", "")
@@ -156,7 +161,7 @@ def build_project_door_router(ctx: WebContext) -> APIRouter:
             # PHILO-9-01: the declared project.door.create, beside project.create.
             result, kernel = ops().invoke_receipted(p, "project.door.create", {
                 "outcome": outcome if isinstance(outcome, str) else "", "sources": sources,
-                **({"found": body.get("found")} if isinstance(body.get("found"), dict) else {}),
+                **({"found": found} if isinstance(found, dict) else {}),
                 **({"project_id": project_id} if project_id else {}),
             })
             return JSONResponse({**result, **kernel_fields(kernel)} if isinstance(result, dict) else result)
