@@ -4,9 +4,29 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (native agent access delivery)
+**Last updated:** 2026-10-19 (one-page Settings delivery)
 
 ## Current phase
+
+ST7 makes Settings one page with You, Speak, Meetings, Notices, Accounts,
+Agents, Desk and This Mac. The desktop index sits beside the page; phone
+section words wrap. Existing writers, secrets, grants, revisions, retry and
+Saved feedback remain in place. More folds hold advanced controls; Telegram
+is in Accounts. Old scopes and Search open the corresponding section/row.
+Engines has its own real window, including the old Concierge alias and
+first-use recovery. Today, Speak and Meetings have their Settings links.
+
+Root restored meaningful writer, grant and credential consumer coverage
+that the original layout candidate had parked. Final focused checks pass:
+69 web, 72 Python and three real-route browser cases. These exercise the
+heartbeat write/Saved/readback, Quiet-hours Search and a real hub-owned
+Engines window at 1440/393. Old wing-only tests remain parked.
+Required quick: ST7_QUICK_PENDING.
+Last observed running desk before this merge: backend f7193aaa3,
+frontend 0a834c90036c69c5, PID 34261; identity/import/database ownership and
+/health, /, /conductor, /models passed. Each merge deploys its exact source;
+GET /api/system/identity is the current running identity.
+
 
 ST6 gives the owner one Setup press to install hooks, the native user-scope
 HoldSpeak MCP entry and the packaged skill for Claude Code and Codex.
