@@ -18,6 +18,16 @@ from holdspeak.db import get_database
 from holdspeak.db.updates import PublishedUpdateError
 from holdspeak.principals import Principal
 from holdspeak.services.errors import ConflictError, ServiceError, ValidationError
+from holdspeak.services.provider_manifest_service import (
+    _NATIVE_PROVIDERS,
+    collect_provider_manifests,
+)
+from holdspeak.services.steward_serialization_service import (
+    _serialize_policy,
+    _serialize_run,
+    _serialize_step,
+    _serialize_steps,
+)
 
 # HS-165-03: graduated watch boundary — these states belong to the
 # graduated WatchSpec@1 machinery (project.watch.* tools).  Legacy
@@ -1218,13 +1228,6 @@ def _build_confluence_adapter():
         return None
 
 
-# The native provider families (mirrors providers.py:31-43).
-# One source of truth for the native provider list (counsel S-3):
-from holdspeak.web.routes.providers import _NATIVE_PROVIDERS  # noqa: E402
-# HS-166-01: shared helper for provider list (ONE function, never duplicate).
-from holdspeak.web.routes.providers import collect_provider_manifests  # noqa: E402
-
-
 # ── Helpers ──────────────────────────────────────────────────────────
 
 def _require_id(arguments: dict[str, Any], key: str) -> str:
@@ -1238,26 +1241,6 @@ def _require_id(arguments: dict[str, Any], key: str) -> str:
         )
     return value
 
-
-# ── Steward serialization (mirrors steward.py:370-481) ───────────────
-
-def _serialize_run(run):
-    """Delegate to the steward route's serializer -- ONE source
-    of truth (the resources.py precedent); a copy drifts."""
-    from holdspeak.web.routes.steward import _serialize_run as _r
-    return _r(run)
-
-def _serialize_step(step):
-    """Delegate to the steward route's serializer -- ONE source
-    of truth (the resources.py precedent); a copy drifts."""
-    from holdspeak.web.routes.steward import _serialize_step as _r
-    return _r(step)
-
-def _serialize_policy(policy):
-    """Delegate to the steward route's serializer -- ONE source
-    of truth (the resources.py precedent); a copy drifts."""
-    from holdspeak.web.routes.steward import _serialize_policy as _r
-    return _r(policy)
 
 def dispatch(name: str, arguments: dict[str, Any], principal: Principal) -> Any:
     """Dispatch project tools (MCP-001: thin drivers over service seams)."""

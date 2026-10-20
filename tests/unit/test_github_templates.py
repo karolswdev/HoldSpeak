@@ -236,7 +236,7 @@ class TestTemplateTruthTable:
         assert any(c["field"] == "updated_at" and c["comparison"] == "older_than" for c in clauses)
         actions = spec["rules"][0]["actions"]
         kinds = {a["kind"] for a in actions}
-        assert "door.add_item" in kinds
+        assert kinds == {"project.observe"}
         assert spec["trigger"]["every_minutes"] == 1440  # daily
 
     def test_release_readiness_conditions(self) -> None:
@@ -248,7 +248,7 @@ class TestTemplateTruthTable:
         assert "review_decision" in fields
         actions = spec["rules"][0]["actions"]
         kinds = {a["kind"] for a in actions}
-        assert "project.update.draft" in kinds
+        assert kinds == {"project.observe"}
 
     def test_unknown_template_refused(self) -> None:
         with pytest.raises(ValueError, match="Unknown template"):

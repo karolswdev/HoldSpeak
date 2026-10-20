@@ -31,6 +31,7 @@ from holdspeak.services.inference_capability_service import InferenceCapabilityA
 from holdspeak.inference_capabilities import process_inference_capability_registry
 from holdspeak.services.errors import ServiceError
 from holdspeak.principals import PrincipalKind
+from holdspeak.services.steward_serialization_service import _serialize_run, _serialize_steps
 
 _JSON_MIME = "application/json"
 _TEXT_MIME = "text/markdown"
@@ -621,7 +622,6 @@ def read_resource(uri: str, principal: Principal | None) -> dict[str, list[dict[
                 context={"status": 404},
             )
         steps = db.steward_steps.list_steps(run_id)
-        from holdspeak.web.routes.steward import _serialize_run, _serialize_steps
         return _contents(uri, _JSON_MIME, {
             "run": _serialize_run(run),
             "steps": _serialize_steps(steps),

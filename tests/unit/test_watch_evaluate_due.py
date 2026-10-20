@@ -26,6 +26,7 @@ import pytest
 from holdspeak.db.core import Database
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.reaction_service import ReactionService
+from holdspeak.services.project_service import ProjectService
 from holdspeak.services.watch_service import (
     CIRCUIT_COOLDOWN_SECONDS,
     CIRCUIT_FAILURE_THRESHOLD,
@@ -763,6 +764,55 @@ class TestEffectRecordingInEvaluateDue:
         eff = outcomes[0]["effects"][0]
         assert eff["action_kind"] == "project.steward.run_once"
         assert eff["state"] == "pending"
+
+    def test_project_observe_records_only_observations_and_keeps_legacy_rows(self, tmp_path) -> None:
+        """Observation is the durable effect; old effect rows stay readable."""
+        db = Database(tmp_path / "eff-observe.db")
+        _make_watch(db, "w-observe")
+        project = ProjectService(db).create_project(
+            OWNER, {"name": "Observe project", "description": "d"},
+        )
+        db.automations.update_watch_spec(
+            "w-observe", project_id=project["id"],
+        )
+        _graduate_watch(db, "w-observe", cadence_minutes=60,
+                        next_evaluation_at=_past_iso(5))
+
+        from holdspeak.watch_validation import CONDITION_SCHEMA, ACTION_SCHEMA
+        rule_id = _set_rule_on_watch(
+            db, "w-observe",
+            condition={
+                "schema": CONDITION_SCHEMA,
+                "operator": "any",
+                "clauses": [{"field": "checks", "comparison": "changed"}],
+            },
+            actions=[{"schema": ACTION_SCHEMA, "kind": "project.observe"}],
+        )
+        db.automations.create_evaluation(
+            evaluation_id="legacy-eval", watch_id="w-observe", state="completed",
+        )
+        legacy = db.automations.create_effect(
+            effect_id="legacy-observe-effect", evaluation_id="legacy-eval",
+            rule_id=rule_id, action_kind="project.observe",
+            idempotency_key="legacy-observe-key", state="pending",
+        )
+
+        baseline = [{"number": 1, "state": "open", "title": "PR",
+                     "url": "http://gh/1", "checks": "pending",
+                     "headRefOid": "aaa"}]
+        changed = [{"number": 1, "state": "open", "title": "PR",
+                    "url": "http://gh/1", "checks": "success",
+                    "headRefOid": "aaa"}]
+        fetcher = _counting_fetcher([baseline, changed])
+        svc = _watch_svc(db, fetcher=fetcher)
+        svc.baseline_watch(OWNER, "w-observe")
+
+        outcome = svc.evaluate_due(OWNER)[0]
+
+        assert outcome["observation_ids"]
+        assert "effects" not in outcome
+        assert db.automations.list_effects(outcome["evaluation_id"]) == []
+        assert db.automations.get_effect(legacy["id"]) == legacy
 
     def test_unmatched_rule_no_effect(self, tmp_path) -> None:
         """A rule that does not match produces no effect."""
