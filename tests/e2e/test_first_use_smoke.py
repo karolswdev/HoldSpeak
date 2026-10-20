@@ -422,14 +422,9 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # The hub has its summary engine: no setup row asks for one.
             assert not any(b.get("key") == "summary" for b in
                            _api(page, "GET", "/api/desk/needs-you", token=TOKEN).get("blockers", []))
-            settings = page.locator("#surface-settings")
-            back = settings.get_by_role("button", name="Back from Settings" if width < 720 else "Close Settings", exact=True)
+            back = models.get_by_role("button", name="Back from Engines" if width < 720 else "Close Engines", exact=True)
             back.click()
-            if width < 720:
-                # Back leaves the scoped Models view before leaving Settings.
-                settings.locator(".settings-home").wait_for()
-                back.click()
-            settings.wait_for(state="detached")
+            models.wait_for(state="detached")
             _needs(page)
             print("PASS: engine setup completed visibly without a reload")
             shot("engine-set")
