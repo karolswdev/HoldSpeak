@@ -41,6 +41,7 @@ export const KIND_LABEL: Record<string, string> = {
   artifact: "Artifact",
   chain: "Workflow",
   coder: "Agent",
+  decision: "Decision",
   kb: "Drawer",
   meeting: "Meeting",
   note: "Note",

@@ -1,17 +1,17 @@
 {
-  "grant_id": "deskdeleg_122eda6c615a4bf1b965670191fffddb",
-  "operation_id": "op_3bdb838ac4f44c3d8fdfd88676c9dc48",
+  "grant_id": "deskdeleg_2f626e241ab843a1914e5f27017b9e83",
+  "operation_id": "op_91200b28777c4073b989d67433836505",
   "receipt": {
     "actor_identity": "owner-session",
     "actor_kind": "owner",
     "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-    "created_at": 1791733420.9590452,
+    "created_at": 1792478899.4028668,
     "delegator_identity": "",
     "delegator_kind": "",
-    "operation_id": "op_3bdb838ac4f44c3d8fdfd88676c9dc48",
+    "operation_id": "op_91200b28777c4073b989d67433836505",
     "outcome": "succeeded",
-    "receipt_id": "rcpt_9d7650e3b67e445ea4420e60165b495c",
-    "result_ref": "desk-delegation:deskdeleg_122eda6c615a4bf1b965670191fffddb",
+    "receipt_id": "rcpt_1256e4e25a3c4bd88676b8c32ed26fb9",
+    "result_ref": "desk-delegation:deskdeleg_2f626e241ab843a1914e5f27017b9e83",
     "state": "succeeded",
     "target_ref": "agent:desk-agent"
   },
