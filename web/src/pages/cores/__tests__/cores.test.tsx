@@ -61,7 +61,7 @@ describe("route demotion (HS-95-08): every former page is a deep link", () => {
     expect(table["/commands"].surface).toBe("configure-commands");
     expect(table["/cadence"].surface).toBe("configure-cadence");
     expect(table["/workbenches"].surface).toBe("open-workbenches");
-    expect(table["/profiles"].surface).toBe("configure-settings");
+    expect(table["/profiles"].surface).toBe("configure-runs-on");
     expect(table["/companion"].surface).toBe("open-conductor"); // Betterment AG1: unmapped, opens Agents
     // PHILO-14 C4: the Conductor drawer's address (the old Agents route stays parked above).
     expect(table["/conductor"].surface).toBe("open-conductor");

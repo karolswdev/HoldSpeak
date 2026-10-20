@@ -545,7 +545,6 @@ export function DoorCore({ scope }: CoreProps) {
         <span className="door-section-label" data-testid="door-sources-label">
           SOURCES{scopedCount > 0 ? ` ${scopedCount}` : ""}
         </span>
-        <DoorSourceRows ctrl={ctrl} />
         <div className="door-source-paste" data-testid="door-source-paste">
           <StringGadget
             label="Paste source links"
@@ -566,6 +565,7 @@ export function DoorCore({ scope }: CoreProps) {
             Check sources
           </Button>
         </div>
+        <DoorSourceRows ctrl={ctrl} />
         <DoorPreview ctrl={ctrl} />
       </div>
 
