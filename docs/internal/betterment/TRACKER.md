@@ -5,9 +5,9 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-19, Speak desk commands verified; running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-19, Desk creation verified; running-desk identity is in `pm/STATUS.md`.
 
-**Total: 93 of 117 slices merged**, with Send S7 still partial.
+**Total: 94 of 117 slices merged**, with Send S7 still partial.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -21,7 +21,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Agents | `agents/` | 14 of 16 |
 | Daily and Needs you | `daily/` | 11 of 11 |
 | Setup and Settings | `setup/` | 7 of 10 |
-| Desk shell | `shell/` | 2 of 10 |
+| Desk shell | `shell/` | 3 of 10 |
 | Send | `send/` | 1 of 8 |
 | Capture | `capture/` | 12 of 12 |
 
@@ -152,13 +152,13 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | ST8 | Sign in without a terminal | Open |  |
 | ST9 | Setup from the terminal and by asking | Open |  |
 
-## Desk shell (`shell/RECIPE.md`): 2 of 10
+## Desk shell (`shell/RECIPE.md`): 3 of 10
 
 | Slice | What | State | Note |
 |---|---|---|---|
 | S0 | Menus and Search show only what works | Done · #1257 |  |
 | S1 | Go lists every app | Done · #1259 |  |
-| S2 | The New list, the HoldSpeak menu and the keyboard sheet | Open |  |
+| S2 | The New list, the HoldSpeak menu and the keyboard sheet | Done · PR_PENDING | Seven shared New kinds; real Drawer naming at both sizes; setup menu and grouped keys. |
 | S3 | The Dock: five daily apps with their state; the keys follow it | Open |  |
 | S4 | The floor holds what he keeps | Open |  |
 | S5 | Search is the command line | Open |  |
