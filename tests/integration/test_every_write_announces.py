@@ -374,6 +374,13 @@ def test_an_admitted_write_with_no_http_request_sends_one_frame(hub: Hub, seeded
 
 def _minimal(schema: Any) -> Any:
     """The smallest value that passes *schema* (required fields only)."""
+    for combiner in ("oneOf", "anyOf"):
+        if schema.get(combiner):
+            branch = schema[combiner][0]
+            schema = {**schema, **branch,
+                      "properties": {**schema.get("properties", {}), **branch.get("properties", {})},
+                      "required": list(dict.fromkeys([*schema.get("required", []), *branch.get("required", [])]))}
+            schema.pop(combiner, None)
     kinds = schema.get("type")
     kind = kinds[0] if isinstance(kinds, list) else kinds
     if "enum" in schema:

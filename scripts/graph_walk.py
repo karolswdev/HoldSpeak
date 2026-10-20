@@ -814,6 +814,8 @@ def _op_pending(record: dict[str, Any]) -> bool:
 # each one already exposes.  The adapter is not a second catalogue: all calls
 # still enter the hub at POST /api/mcp and are dispatched by its registry.
 OP_MCP_PROJECTIONS: dict[str, dict[str, Any]] = {
+    "setup.status": {"kind": "tool", "name": "setup.status"},
+    "setup.use": {"kind": "tool", "name": "setup.use"},
     "decision.create": {"kind": "tool", "name": "desk.create"},
     "decision.update": {"kind": "tool", "name": "desk.update"},
     "decision.read": {"kind": "tool", "name": "desk.get"},
@@ -941,7 +943,7 @@ OP_HTTP_ONLY = frozenset({"decision.status", "project.door.create", "project.doo
                           "channel.save_email_key", "channel.save_slack_webhook",
                           # The Conductor K1: the owner's one-press hook install (config, HTTP only).
                           "agent_hooks.install", "agent_hooks.remove",
-                          "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",
+                          "setup.found", "setup.people.add", "setup.lan.scan",
                           # PHILO-15 04: the owner's press opens the Calendars privacy pane (HTTP only).
                           "calendar.open_settings",
                           # PHILO-15 16: the owner names a Project's repository (HTTP only).
@@ -5131,6 +5133,9 @@ def _isolated_hub_env(
         # Betterment E1: no agent CLI on this machine (claude, codex) is read
         # or run as an engine (holdspeak/intel/cli_engine.py).
         "HOLDSPEAK_CLI_ENGINES": "off",
+        # AG15: a graph walk never enumerates the owner's local tmux panes;
+        # the positive own-agent rig opts in only inside its own server.
+        "HOLDSPEAK_OWN_AGENTS": "off",
         # Betterment Q7: no Ask asks an engine's server whether it takes tools.
         "HOLDSPEAK_ASK_SERVER_TOOLS": "off",
         # PHILO-16 rig gaps (G3 closes): git reads no system config (RIG LAW);

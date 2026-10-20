@@ -190,7 +190,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
   const key = member.sessionKey;
   // An agent whose hooks are off: its row answers its screen prompt.
   const screenOnly = !key && Boolean(
-    member.launchId && member.screen?.since && (member.screen.state === "approve" || member.screen.state === "asks"),
+    (member.launchId || member.ownAgent) && member.screen?.since && (member.screen.state === "approve" || member.screen.state === "asks"),
   );
 
   const after = async (word: string) => {
@@ -209,6 +209,18 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
         await apiFetch(`/api/coders/${encodeURIComponent(key)}/${path}`, {
           method: "POST",
           json: { ...body, kind: "answer", wait_id: currentWait },
+        });
+      } else if (member.ownAgent) {
+        const keys = Array.isArray(body.keys)
+          ? (body.keys as Array<string | { literal: string }>).map((k) => (typeof k === "string" ? k : k.literal))
+          : undefined;
+        await apiFetch("/api/coders/own-agents/answer", {
+          method: "POST",
+          json: {
+            pane_id: member.ownAgent.paneId,
+            since: member.screen?.since,
+            ...(keys ? { keys } : { text: body.text }),
+          },
         });
       } else {
         // An agent with no hook: his press goes to its screen prompt, named
@@ -289,6 +301,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
 
   const decided = Boolean(call && call.id === decidedId);
   const canKeys = Boolean(key && currentWait) || screenOnly;
+  const ownPane = Boolean(member.ownAgent);
 
   return (
     <article
@@ -359,9 +372,11 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
         decided ? null : (
           <div className="cw-ask-verbs cw-ask-verbs--wide">
             {call?.args_cut || (!call && !canKeys) ? (
+              ownPane ? null : (
               <Button dense variant={lead ? "primary" : "secondary"} onClick={onTerminal} data-testid="agent-row-terminal">
                 Terminal
               </Button>
+              )
             ) : (
               <>
                 <Button
@@ -377,9 +392,11 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
                 <Button dense variant="secondary" disabled={busy || (!call && !canKeys)} onClick={() => void decide("denied")} data-testid="conductor-deny">
                   Deny
                 </Button>
-                <Button dense variant="ghost" onClick={onTerminal} data-testid="agent-row-terminal">
-                  Terminal
-                </Button>
+                {ownPane ? null : (
+                  <Button dense variant="ghost" onClick={onTerminal} data-testid="agent-row-terminal">
+                    Terminal
+                  </Button>
+                )}
               </>
             )}
           </div>
@@ -428,17 +445,21 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
             >
               Answer
             </Button>
-            <Button dense variant="ghost" onClick={onOpen} data-testid="conductor-open">
-              Open
-            </Button>
+            {ownPane ? null : (
+              <Button dense variant="ghost" onClick={onOpen} data-testid="conductor-open">
+                Open
+              </Button>
+            )}
           </div> : (
             <div className="cw-ask-verbs">
               <Button dense variant={lead ? "primary" : "secondary"} onClick={onOpenAnswer} data-testid="conductor-answer">
                 Answer
               </Button>
-              <Button dense variant="ghost" onClick={onOpen} data-testid="conductor-open">
-                Open
-              </Button>
+              {ownPane ? null : (
+                <Button dense variant="ghost" onClick={onOpen} data-testid="conductor-open">
+                  Open
+                </Button>
+              )}
             </div>
           )}
           {draft ? (

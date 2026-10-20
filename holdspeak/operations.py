@@ -2263,8 +2263,7 @@ from holdspeak.room_operations import STEWARD_CONNECTOR_OPERATIONS  # noqa: E402
 from holdspeak.channel_operations import CHANNEL_OPERATIONS  # noqa: E402
 # The Conductor K1: the one-press agent hook install.
 from holdspeak.onboarding_operations import ONBOARDING_OPERATIONS  # noqa: E402
-# Betterment ST3-ST5: Setup's HTTP operations. They have no MCP exposure until
-# ST9, but the web face already reaches the shared registry now.
+# Betterment ST3-ST5/ST9: Setup's HTTP and MCP operations share one registry.
 from holdspeak.setup_operations import SETUP_OPERATIONS  # noqa: E402
 # Conductor K2: Hand to agent.
 from holdspeak.agent_operations import AGENT_OPERATIONS  # noqa: E402

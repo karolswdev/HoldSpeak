@@ -28,6 +28,48 @@ were a child page. Settings now returns to its caller in one Back press;
 the actual same-receipt, nine-point hit and durable identity check passes.
 Required quick: S3_QUICK_PENDING.
 
+ST9 adds `holdspeak setup`, `holdspeak setup --yes`, MCP `setup.status` and
+`setup.use`. They use the running hub and the shared Setup producers.
+Use all re-reads the inventory, keeps each result, continues after a failure,
+and distinguishes pending work. Agents can read status; adoption requires
+an owner press. Caller-supplied row inventories are ignored.
+
+Root's focused collection and run both cover 123 checks. The CLI-to-MCP
+proof reaches real hub operations and provider adapters, checks three
+account connections, saves a calendar, installs both native agents' tools,
+hooks and skills, and reads all adopted rows back as Works. Only native
+CLI/provider responses and EventKit are simulated; files and records are
+in the rig. A separate scratch-hub probe covers real HTTP discovery and
+agent-read/owner-use authority. Live OAuth and owner account acceptance
+remain unobserved. The first integrated quick found an accidental seeded Thread palette expansion,
+stale operation/exposure counts and an old People settings wire. Setup inventory
+now stays MCP-only in the seeded palettes; their original byte limits and tool
+counts pass unchanged. The actual People producer re-recorded its wire. The
+write-announcement walk now builds valid required oneOf inputs. All 270 checks
+covering those seams pass. Required quick: 3,767 affected Python/browser checks pass (three skipped), plus 108 desk sweep, 27 canon and 1,116 repository guards; build passes.
+
+AG15 shows Claude Code and Codex processes the owner started in tmux in
+Agents you started yourself. Native executable, pane ancestry and session
+facts identify the process; registered HoldSpeak launches stay out.
+Existing screen rules and secret filtering supply state. Owner Answer,
+Allow and Deny re-read the prompt and use the admitted input transport.
+These rows have no Stop, brief or autonomy controls.
+
+Root collected and ran 31 focused checks, including real private-tmux
+browser cases at 1440/393. The fake native process receives the typed answer
+and approval key through real hub routes. Evidence frames show the full
+question and controls. An additional private-tmux producer/transport probe
+returned operation op_8edbe1d3e86d4b0681a811b8f98d0ac5. Installed Claude and
+Codex executable shapes were inspected without starting a model. Native
+interactive-agent acceptance remains unobserved. Shared test and walk rigs
+force discovery off; the isolated positive rig opts in after boot.
+The first required quick passes 4,072 web checks, 1,221 affected Python/browser,
+108 desk sweep and 27 canon checks. Three repository guards found missing API
+exports and the new read-only ps/tmux census classification. Root regenerated
+both API exports from the app and classified that exact local reader; all
+input writes still use admitted process.input. Final delta quick against that
+verified product source: 14 affected Python, 108 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The prior product run also passed 4,072 web and 1,221 affected Python/browser checks.
+
 ST7 makes Settings one page with You, Speak, Meetings, Notices, Accounts,
 Agents, Desk and This Mac. The desktop index sits beside the page; phone
 section words wrap. Existing writers, secrets, grants, revisions, retry and
@@ -68,8 +110,8 @@ move to their Dock entries so the owner can see and type the name. Real
 create/type/Enter/readback passes at 1440/393, including a hit test proving
 another object does not cover the field. All 125 focused shell checks pass. The first broad check found nine old New-list/shortcut assertions; the updated 68-check consumer set passes, retaining parked-verb behavior and exact key/menu membership. All six creation browser cases passed in that run.
 Required quick: 4,083 web, six creation browser, 108 desk sweep, 27 canon and 1,116 repository guards pass; build passes.
-Last observed running desk before this merge: backend 8fbd84532,
-frontend 04fc23ff80d5a51b, PID 76172; identity/import/database ownership and
+Last observed running desk before this merge: backend 2d60f6961,
+frontend 24e6d924e7e355e5, PID 96598; identity/import/database ownership and
 /health, /, /conductor, /models passed. Each merge deploys its exact source;
 GET /api/system/identity is the current running identity.
 
