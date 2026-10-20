@@ -73,5 +73,40 @@ export function layoutScreen(
     .forEach((o, i) => {
       at[o.key] = { x: fieldLeft + COL * (i % cols), y: 24 + FIELD_ROW * Math.floor(i / cols) };
     });
-  return Object.fromEntries(objects.map((object) => [object.key, savedPositions[object.key] ?? at[object.key]]));
+  const placed: Record<string, Placed> = {};
+  const occupied: Array<Placed & { height: number }> = [];
+  const objectHeight = (object: ScreenObject) => DRAWER_ROW
+    + (object.notRead ? NOT_READ_LINE : 0) + (object.caption ? CAPTION_LINE : 0);
+  // Reserve saved rectangles even while their producer's reply is pending.
+  // A project reply must not claim the place of a note that arrives later.
+  for (const [key, saved] of Object.entries(savedPositions)) {
+    const object = objects.find((candidate) => candidate.key === key);
+    placed[key] = saved;
+    occupied.push({ ...saved, height: object ? objectHeight(object) : DRAWER_ROW });
+  }
+  for (const object of ordered) {
+    if (placed[object.key]) continue;
+    const height = objectHeight(object);
+    let position = at[object.key];
+    if (!position) continue;
+    while (occupied.some((other) => (
+      position.x < other.x + 112 && position.x + 112 > other.x
+      && position.y < other.y + other.height && position.y + height > other.y
+    ))) {
+      if (object.role === "drawer") {
+        const nextY = position.y + height;
+        position = nextY + height > columnFoot
+          ? { x: position.x + COL, y: TOP }
+          : { x: position.x, y: nextY };
+      } else {
+        const nextX = position.x + COL;
+        position = nextX + 112 > fieldRight
+          ? { x: fieldLeft, y: position.y + FIELD_ROW }
+          : { x: nextX, y: position.y };
+      }
+    }
+    placed[object.key] = position;
+    occupied.push({ ...position, height });
+  }
+  return placed;
 }

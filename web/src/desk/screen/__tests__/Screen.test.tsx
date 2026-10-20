@@ -508,7 +508,10 @@ describe("PHILO-14 A1 — the pure parts", () => {
     const afterObjects = composeScreen(makeInput(15));
     const after = layoutScreen(afterObjects, 1440, 796, saved);
     for (const object of beforeObjects) expect(after[object.key]).toEqual(before[object.key]);
-    expect(after["project:p14"]).toEqual({ x: 260, y: 12 });
+    const appended = after["project:p14"]!;
+    const note = after["note:a"]!;
+    expect(appended.x + 112 <= note.x || appended.x >= note.x + 112
+      || appended.y + 92 <= note.y || appended.y >= note.y + 92).toBe(true);
     expect(before["note:a"]).toEqual({ x: 330, y: 24 });
   });
 
