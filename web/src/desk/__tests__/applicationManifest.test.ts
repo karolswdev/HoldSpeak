@@ -86,6 +86,7 @@ describe("DeskOS application manifest", () => {
       "go.configure-settings",
       "go.configure-runs-on",
       "settings.integrations",
+      "settings.wallpaper",
       "go.configure-setup",
     ]);
   });

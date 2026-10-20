@@ -26,6 +26,7 @@ import { faceChangeCount, nextFreeZoneName } from "../zoneName";
 import { useNamePrompt } from "../chromeState";
 import type { DeskState, SliceCreator, ZoneRenameError } from "./types";
 import { GHOST_LAYOUT_KEYS } from "./types";
+import { COMPACT_VIEWPORT_QUERY } from "../useCompactViewport";
 
 /** PHILO-8-01 — default zone names posted whose refresh has not landed. */
 const zoneNamesInFlight = new Set<string>();
@@ -348,7 +349,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       ],
       kb: ["/api/kbs", "kb", { name: "New Knowledge" }],
       recipe: ["/api/recipes", "recipe", { name: "New mode", avatar: "" }],
-      zone: ["/api/directories", "directory", { name: "New zone" }],
+      zone: ["/api/directories", "directory", { name: "New drawer" }],
       workbench: ["/api/workbenches", "workbench", { name: "New Automation" }],
       workflow: [
         "/api/workflows",
@@ -421,14 +422,28 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       set({ positions });
       savePositions(positions);
     }
-    const open = (id: string) => {
+    const open = async (id: string) => {
       freshCreates.set(createKey(kind, overrides), id);
       get().markNew(id);
       // "workbench" never reaches here — it returns early to the
       // pre-persistence chooser (HS-130-09).
       if (kind === "zone") {
         // PHILO-8-01 — only on the face where New Zone was pressed.
-        if (faceChangeCount() === faceAtPress) get().setRenamingZone(id);
+        if (faceChangeCount() === faceAtPress) {
+          // Put the new drawer's inline name on screen, keeping the
+          // owner's open work in the Dock rather than typing behind it.
+          const [{ useChairWindows }, { registrySnapshot }] = await Promise.all([
+            import("../chair/chairWindows"),
+            import("../components/window/windowRegistry"),
+          ]);
+          for (const pane of registrySnapshot) {
+            if (!get().panelMin.includes(pane.id)) get().minimizePanel(pane.id);
+          }
+          if (typeof window !== "undefined" && window.matchMedia?.(COMPACT_VIEWPORT_QUERY).matches) {
+            useChairWindows.setState({ phone: "" });
+          }
+          get().setRenamingZone(id);
+        }
       }
       // PHILO-3-01 — a decision has no inline editor; its face is the
       // DecisionPullout, which opens in Edit for a new decision.
@@ -445,7 +460,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       kind !== "zone" &&
       get().adoptCreated(kind, created) !== null;
     if (opened && createdId) {
-      open(createdId);
+      await open(createdId);
       answered();
     }
     try {
@@ -453,7 +468,7 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
     } finally {
       release();
     }
-    if (createdId && !opened) open(createdId);
+    if (createdId && !opened) await open(createdId);
   };
 
   return {

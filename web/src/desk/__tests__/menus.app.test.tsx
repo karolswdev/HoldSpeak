@@ -1,10 +1,9 @@
 // The desk menus app (test diet, 2026-10-11): the HoldSpeak menu, moved off
 // the browser.
 //
-// PHILO-17 (doors): the HoldSpeak menu is "Refresh from hub", then the four
-// setup applications (Settings, Runs on, Connections, Setup), at 1440 and at
-// 393; each row opens its own application with its own scope; "Desk memory"
-// and "List view" are nowhere in the chrome or its menus.
+// S2 (doors): the HoldSpeak menu contains setup only (Settings, Engines,
+// Accounts, Wallpaper, Setup, Keyboard shortcuts), at 1440 and at 393;
+// Refresh belongs to Go ▸ Builder.
 //
 // The real DeskChrome, the real verb registry and the real opener path
 // (`openSurfaceOr` -> the surface a window registers). Go's rows are
@@ -21,7 +20,7 @@ vi.mock("../../runtime/RuntimeBus", () => ({
   useOptionalRuntimeBus: () => ({ state: "offline", subscribe: () => () => undefined }),
 }));
 
-const MARK_ROWS = ["Refresh from hub", "Settings", "Engines", "Accounts", "Setup"];
+const MARK_ROWS = ["Settings", "Engines", "Accounts", "Wallpaper", "Setup", "Keyboard shortcuts"];
 
 function phone(on: boolean) {
   if (!on) return;
@@ -78,7 +77,7 @@ describe.each([[1440, false], [393, true]] as const)("the HoldSpeak menu at %i",
     await act(async () => { await Promise.resolve(); });
 
     expect(labels(openMark())).toEqual(MARK_ROWS);
-    for (const row of ["Settings", "Engines", "Accounts", "Setup"]) {
+    for (const row of ["Settings", "Engines", "Accounts", "Wallpaper", "Setup"]) {
       const menu = screen.queryByRole("menu", { name: "HoldSpeak" }) ?? openMark();
       fireEvent.click(within(menu).getByRole("menuitem", { name: new RegExp(`^${row}`) }));
     }
@@ -87,6 +86,7 @@ describe.each([[1440, false], [393, true]] as const)("the HoldSpeak menu at %i",
       ["configure-settings", undefined],
       ["configure-runs-on", undefined],
       ["configure-settings", "integrations"],
+      ["configure-settings", "wallpaper"],
       ["configure-setup", undefined],
     ]);
     offs.forEach((off) => off());
@@ -107,6 +107,28 @@ describe.each([[1440, false], [393, true]] as const)("the HoldSpeak menu at %i",
     fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
     openMark();
     banned("HoldSpeak menu open");
+  });
+
+  it("Desk has the seven settled New kinds in order", () => {
+    phone(isPhone);
+    render(<DeskMenuBar />);
+    if (isPhone) {
+      fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
+      const go = screen.getByRole("menu", { name: "Go menu" });
+      fireEvent.click(within(go).getByRole("menuitem", { name: /^New\W*$/ }));
+      const menu = screen.getAllByRole("menu").at(-1)!;
+      expect(labels(menu).filter((label) => label !== "New")).toEqual([
+        "Note", "Meeting", "Decision", "Project", "Person", "Automation", "Drawer",
+      ]);
+      return;
+    }
+    fireEvent.click(screen.getByRole("button", { name: /^Desk$/ }), { detail: 0 });
+    const menu = screen.getByRole("menu", { name: "Desk menu" });
+    expect(labels(menu).filter((label) => label !== "Hide the menus")).toEqual([
+      "New Note", "New Meeting", "New Decision", "New Project", "New Person", "New Automation", "New Drawer",
+    ]);
+    expect(labels(menu)).not.toContain("New Thread");
+    expect(labels(menu)).not.toContain("Write a thought");
   });
 });
 
