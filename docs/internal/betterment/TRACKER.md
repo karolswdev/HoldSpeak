@@ -5,7 +5,7 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-20, Search and the Floor adapters verified. Running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-20, Needs Send, outbound content and automation delivery verified. Running-desk identity is in `pm/STATUS.md`.
 
 **Total: 113 of 117 slices merged**.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
