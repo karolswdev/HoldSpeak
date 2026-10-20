@@ -160,8 +160,8 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | S1 | Go lists every app | Done · #1259 |  |
 | S2 | The New list, the HoldSpeak menu and the keyboard sheet | Done · #1390 | Seven shared New kinds; real Drawer naming at both sizes; setup menu and grouped keys. |
 | S3 | The Dock: five daily apps with their state; the keys follow it | Done · #1394 | Manifest order, visible phone words, producer states and matching keys. |
-| S4 | The floor holds what he keeps | Done · PR_PENDING | Floor and meeting Keep #1400; person Keep/Remove and mode Search adapters verified with S5. |
-| S5 | Search is the command line | Done · PR_PENDING | Ranked results, recent opens, exact About, live object verbs and hub-backed Builder tools. |
+| S4 | The floor holds what he keeps | Done · #1405 | Floor and meeting Keep #1400; person Keep/Remove and mode Search adapters verified with S5. |
+| S5 | Search is the command line | Done · #1405 | Ranked results, recent opens, exact About, live object verbs and hub-backed Builder tools. |
 | S6 | Wallpaper has one home | Open |  |
 | S7 | Windows open where he can see them, at the size of their content | Open |  |
 | S8 | The Window menu | Open |  |
