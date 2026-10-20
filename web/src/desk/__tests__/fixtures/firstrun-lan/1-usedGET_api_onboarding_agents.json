@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_firstrun.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T23:37:03.386431Z",
+  "captured_at": "2026-10-20T04:47:01.903170Z",
   "wire": {
     "agents": [
       {
@@ -9,10 +9,16 @@
         "id": "claude",
         "installed": true,
         "label": "Claude Code",
+        "mcp": "missing",
+        "mcp_command": null,
+        "mcp_path": "/tmp/rig/home/.claude.json",
+        "mcp_runnable": false,
         "path": "/Users/me/.local/bin/claude",
         "ready": false,
         "signed_in": "not_read",
         "signed_in_from": null,
+        "skill": "missing",
+        "skill_path": "/tmp/rig/home/.claude/skills/holdspeak/SKILL.md",
         "verb": "Use it",
         "version": "2.1.302"
       },
@@ -22,10 +28,16 @@
         "id": "codex",
         "installed": true,
         "label": "Codex",
+        "mcp": "missing",
+        "mcp_command": null,
+        "mcp_path": "/tmp/rig/home/.codex/config.toml",
+        "mcp_runnable": false,
         "path": "/Users/me/.local/bin/codex",
         "ready": false,
         "signed_in": "not_read",
         "signed_in_from": null,
+        "skill": "missing",
+        "skill_path": "/tmp/rig/home/.agents/skills/holdspeak/SKILL.md",
         "verb": "Use it",
         "version": "0.163.0"
       },

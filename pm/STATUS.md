@@ -8,6 +8,16 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The main watcher pinned to 2833d225d found five failures after its first
+6,073-test shard passed. This fix re-records the actual Setup agent/Settings
+producer shapes, aligns Capture's backend window action with its manifest,
+and retains the fresh prior-account status check in the Confluence test.
+Only recordings with changed response shapes are replaced; whole unchanged
+captures remain intact. The independent focused rerun passes all 64 Python
+checks (including the phone Capture/Today/Capture roundtrip) and 62 web
+consumers. No provider sign-in or owner database is used.
+Required quick: MAIN_TAPE_QUICK_PENDING.
+
 P7/P8 make the project update an ordinary automation, initially manual. Friday
 at 15:00 changes that same record. Room opens its newest result and reads the
 actual engine assignment. A refused Friday change keeps the manual state and
