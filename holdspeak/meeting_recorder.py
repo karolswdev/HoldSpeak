@@ -11,8 +11,10 @@ import sys
 import threading
 import time
 from dataclasses import dataclass, field
+import multiprocessing as mp
+from pathlib import Path
 from queue import Empty, Full, Queue
-from typing import Callable, Optional, TYPE_CHECKING
+from typing import Any, Callable, Optional, TYPE_CHECKING
 
 import numpy as np
 
@@ -43,6 +45,7 @@ log = get_logger("meeting")
 _NATIVE_STOP_TIMEOUT_SECONDS = 1.0
 _CAPTURE_QUEUE_MAX_CHUNKS = 64
 _CAPTURE_QUEUE_POLL_SECONDS = 0.05
+_CAPTURE_PROCESS_STOP_TIMEOUT_SECONDS = 1.0
 
 
 class MeetingRecorderError(HoldSpeakError):
@@ -140,6 +143,10 @@ class MeetingRecorder:
     with timestamps for synchronized processing.
     """
 
+    # MeetingSession uses this capability marker so established recorder
+    # doubles keep the in-process journal callback during recovery tests.
+    capture_process_supported = True
+
     def __init__(
         self,
         *,
@@ -150,6 +157,9 @@ class MeetingRecorder:
         on_mic_level: Optional[Callable[[float], None]] = None,
         on_system_level: Optional[Callable[[float], None]] = None,
         on_audio_chunk: Optional[Callable[[AudioChunk], None]] = None,
+        capture_directory: Optional[Path] = None,
+        meeting_id: Optional[str] = None,
+        process_factory: Optional[Callable[..., Any]] = None,
     ) -> None:
         """Initialize the meeting recorder.
 
@@ -166,6 +176,10 @@ class MeetingRecorder:
         self.on_mic_level = on_mic_level
         self.on_system_level = on_system_level
         self.on_audio_chunk = on_audio_chunk
+        self._capture_directory = capture_directory
+        self._meeting_id = meeting_id
+        self._process_factory = process_factory
+        self._capture_process_mode = capture_directory is not None and bool(meeting_id)
 
         # Resolve devices
         self._mic_device = self._resolve_mic_device(mic_device)
@@ -191,6 +205,12 @@ class MeetingRecorder:
         self._buffer = DualStreamBuffer()
         self._capture_queue: Queue[AudioChunk] = Queue(maxsize=_CAPTURE_QUEUE_MAX_CHUNKS)
         self._writer_thread: Optional[threading.Thread] = None
+        self._capture_process: Any = None
+        self._capture_connection: Any = None
+        self._capture_reader_thread: Optional[threading.Thread] = None
+        self._capture_ready = threading.Event()
+        self._capture_stopped = threading.Event()
+        self._capture_process_exited = False
         # Phase 14: registered AIPI-Lite-class device streams.
         # Each maps device_id → (source, label, last_drain_monotonic).
         # The recorder doesn't capture device audio itself; the
@@ -319,15 +339,21 @@ class MeetingRecorder:
         with self._lock:
             if self._recording:
                 raise MeetingRecorderError("Already recording")
-            if self.device_cleanup_error:
+            if self.device_cleanup_error and not self._capture_process_mode:
                 raise MeetingRecorderError(
-                    "Audio device did not close. Restart HoldSpeak to record."
+                    "Audio device did not close."
                 )
             self._recording = True
             self._start_time = time.time()
             self._buffer.clear()
             self.capture_failure = None
-            if self._writer_thread is None or not self._writer_thread.is_alive():
+            if self._capture_process_mode:
+                # Each Record gets a fresh child.  A previous child timeout
+                # must not turn into a desk-wide restart refusal.
+                self.device_cleanup_error = None
+            if not self._capture_process_mode and (
+                self._writer_thread is None or not self._writer_thread.is_alive()
+            ):
                 self._capture_queue = Queue(maxsize=_CAPTURE_QUEUE_MAX_CHUNKS)
                 self._writer_thread = threading.Thread(
                     target=self._drain_capture_queue,
@@ -337,6 +363,15 @@ class MeetingRecorder:
                 self._writer_thread.start()
 
         log.info("Starting meeting recording")
+
+        if self._capture_process_mode:
+            try:
+                self._start_capture_process()
+            except Exception as exc:
+                with self._lock:
+                    self._recording = False
+                raise MeetingRecorderError(f"Failed to start capture process: {exc}") from exc
+            return
 
         # Start mic stream
         try:
@@ -398,6 +433,9 @@ class MeetingRecorder:
             self._recording = False
 
         log.info("Stopping meeting recording")
+
+        if self._capture_process_mode:
+            return self._stop_capture_process()
 
         # Abort streams so native teardown does not wait for queued buffers.
         self._stop_streams()
@@ -505,6 +543,188 @@ class MeetingRecorder:
                 result[device_id] = [chunk]
                 self._device_last_drain[device_id] = now
         return result
+
+    @property
+    def capture_process_exited(self) -> bool:
+        """Whether the child owning native audio has exited after Stop."""
+        return self._capture_process_exited
+
+    @property
+    def capture_process_pid(self) -> Optional[int]:
+        """PID of the active native capture child, when one is running."""
+        process = self._capture_process
+        pid = getattr(process, "pid", None) if process is not None else None
+        return int(pid) if pid is not None else None
+
+    def _start_capture_process(self) -> None:
+        from .capture_process import run_capture_process
+
+        context = mp.get_context("spawn")
+        parent_connection, child_connection = context.Pipe(duplex=True)
+        config = {
+            "meeting_id": self._meeting_id,
+            "capture_directory": str(self._capture_directory),
+            "sample_rate": self.sample_rate,
+            "mic_device": self._mic_device,
+            "system_device": self._system_device,
+            "chunk_duration": self.chunk_duration,
+        }
+        factory = self._process_factory or context.Process
+        process = factory(
+            target=run_capture_process,
+            args=(child_connection, config),
+            daemon=True,
+        )
+        process.start()
+        if self._process_factory is None:
+            try:
+                child_connection.close()
+            except Exception:
+                pass
+
+        self._capture_connection = parent_connection
+        self._capture_process = process
+        self._capture_ready.clear()
+        self._capture_stopped.clear()
+        self._capture_process_exited = False
+        self._capture_reader_thread = threading.Thread(
+            target=self._read_capture_events,
+            name="meeting-capture-events",
+            daemon=True,
+        )
+        self._capture_reader_thread.start()
+
+        if not self._capture_ready.wait(5.0):
+            error = self.capture_failure or "Capture child did not become ready"
+            self._terminate_capture_process()
+            raise MeetingRecorderError(error)
+
+    def _read_capture_events(self) -> None:
+        connection = self._capture_connection
+        if connection is None:
+            return
+        while True:
+            try:
+                event = connection.recv()
+            except (EOFError, OSError):
+                if not self._capture_stopped.is_set():
+                    self.capture_failure = self.capture_failure or (
+                        "Capture process exited before delivering its terminal status"
+                    )
+                return
+            if not isinstance(event, dict):
+                continue
+            event_type = event.get("type")
+            if event_type == "ready":
+                self._capture_ready.set()
+            elif event_type == "level":
+                callback = self.on_mic_level if event.get("source") == "mic" else self.on_system_level
+                if callback is not None:
+                    try:
+                        callback(float(event.get("level", 0.0)))
+                    except Exception:
+                        pass
+            elif event_type == "chunk":
+                try:
+                    audio = np.frombuffer(event.get("audio", b""), dtype="<f4").copy()
+                    chunk = AudioChunk(
+                        audio=audio,
+                        timestamp=float(event.get("timestamp", 0.0)),
+                        source=str(event.get("source", "mic")),
+                        duration=float(event.get("duration", 0.0)),
+                    )
+                    if chunk.source == "mic":
+                        self._buffer.add_mic_chunk(chunk.audio, chunk.timestamp, chunk.duration)
+                    else:
+                        self._buffer.add_system_chunk(chunk.audio, chunk.timestamp, chunk.duration)
+                    if self.on_audio_chunk is not None:
+                        self.on_audio_chunk(chunk)
+                except Exception as exc:
+                    self.capture_failure = f"Capture child chunk failed: {exc}"
+            elif event_type == "error":
+                self.capture_failure = str(event.get("error") or "Capture child failed")
+            elif event_type == "stopped":
+                self._capture_stopped.set()
+                capture_failure = event.get("capture_failure")
+                if capture_failure:
+                    self.capture_failure = str(capture_failure)
+                error = event.get("error")
+                if error:
+                    self.capture_failure = self.capture_failure or str(error)
+                cleanup_error = event.get("device_cleanup_error")
+                if cleanup_error:
+                    self.device_cleanup_error = str(cleanup_error)
+
+    def _stop_capture_process(self) -> tuple[list[AudioChunk], list[AudioChunk]]:
+        process = self._capture_process
+        connection = self._capture_connection
+        if process is None or connection is None:
+            self._capture_process_exited = True
+            return self._buffer.get_all_chunks()
+
+        try:
+            connection.send({"command": "stop"})
+        except (BrokenPipeError, EOFError, OSError) as exc:
+            self.capture_failure = self.capture_failure or (
+                "Capture process exited before delivering its terminal status; "
+                f"stop command failed: {exc}"
+            )
+
+        deadline = time.monotonic() + _CAPTURE_PROCESS_STOP_TIMEOUT_SECONDS
+        while process.is_alive() and time.monotonic() < deadline:
+            process.join(timeout=min(0.05, max(0.0, deadline - time.monotonic())))
+
+        if process.is_alive():
+            self.device_cleanup_error = (
+                "Capture process did not exit within 1 second; child terminated."
+            )
+            self.capture_failure = self.capture_failure or (
+                "Capture process ended before all accepted audio and its terminal status "
+                "were delivered; recover the journal"
+            )
+            self._terminate_capture_process()
+        else:
+            process.join(timeout=0.0)
+
+        self._capture_process_exited = not process.is_alive()
+        reader = self._capture_reader_thread
+        if reader is not None and reader is not threading.current_thread():
+            reader.join(timeout=0.2)
+        if not self._capture_stopped.is_set():
+            self.capture_failure = self.capture_failure or (
+                "Capture process ended before delivering its terminal status; recover the journal"
+            )
+        try:
+            connection.close()
+        except Exception:
+            pass
+        self._capture_process = None
+        self._capture_connection = None
+        mic_chunks, system_chunks = self._buffer.get_all_chunks()
+        log.info(
+            "Capture child exited: %s mic chunks, %s system chunks",
+            len(mic_chunks),
+            len(system_chunks),
+        )
+        return mic_chunks, system_chunks
+
+    def _terminate_capture_process(self) -> None:
+        process = self._capture_process
+        if process is None:
+            return
+        try:
+            process.terminate()
+            process.join(timeout=0.2)
+        except Exception:
+            pass
+        if process.is_alive():
+            kill = getattr(process, "kill", None)
+            if callable(kill):
+                try:
+                    kill()
+                    process.join(timeout=0.2)
+                except Exception:
+                    pass
 
     def _commit_audio_chunk(self, chunk: np.ndarray, timestamp: float, source: str) -> bool:
         """Admit a copied PCM chunk without doing disk work on the callback."""
@@ -736,7 +956,7 @@ class MeetingRecorder:
             elif result.get("error"):
                 errors.append(result["error"])
         if errors:
-            self.device_cleanup_error = "; ".join(errors) + ". Restart HoldSpeak to use the microphone."
+            self.device_cleanup_error = "; ".join(errors) + "."
             log.warning(self.device_cleanup_error)
         self._stop_system_ffmpeg()
 

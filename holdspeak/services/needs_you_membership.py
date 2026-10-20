@@ -1465,8 +1465,32 @@ def _read_arming(db: Any, now: datetime | None = None) -> list[dict[str, Any]]:
     """
     from .scheduled_recording_service import ScheduledRecordingService
 
-    now_epoch = (now or utc_now()).timestamp()
     service = ScheduledRecordingService(db)
+
+    def successful_record_for_event(
+        calendar_event_id: str, failed_at: datetime | None,
+    ) -> bool:
+        if not calendar_event_id or failed_at is None:
+            return False
+        with db._connection() as conn:
+            meeting_rows = conn.execute(
+                """SELECT started_at FROM meetings
+                   WHERE calendar_event_id = ?
+                     AND capture_status IN ('recording', 'finalized', 'recovered')
+                """,
+                (calendar_event_id,),
+            ).fetchall()
+        # Compare parsed instants because old rows can use SQLite UTC stamps
+        # or local wall-clock ISO values. An earlier successful occurrence
+        # must not clear a later failed occurrence for the same event ID.
+        failed_instant = failed_at.timestamp()
+        return any(
+            (started := parse_stamp(row["started_at"])) is not None
+            and started.timestamp() >= failed_instant
+            for row in meeting_rows
+        )
+
+    now_epoch = (now or utc_now()).timestamp()
     rows = []
     for rec in db.scheduled_recordings.list_all():
         if str(getattr(rec, "state", "")) == "arming":
@@ -1478,6 +1502,13 @@ def _read_arming(db: Any, now: datetime | None = None) -> list[dict[str, Any]]:
             continue
         at = parse_stamp(failed.get("at"))
         if at is None:
+            continue
+        # Record now starts the named calendar meeting. Keep the failed
+        # occurrence and its receipt in scheduled_recordings, but resolve its
+        # live Needs-you row once that meeting has a successful capture state.
+        if successful_record_for_event(
+            str(getattr(rec, "calendar_event_id", "") or ""), at,
+        ):
             continue
         age = now_epoch - at.timestamp()
         if 0 <= age <= max(60, int(getattr(rec, "duration_minutes", 0)) * 60):
