@@ -72,6 +72,14 @@ export type Send = {
   dispatch_seq?: number | null;
   /** The built-in folder: the sync provider ("icloud", "dropbox", ... or "synced") at the send's boundary. */
   egress?: string | null;
+  /** Owner-only provenance for replaying a settled UNKNOWN operation after reload. */
+  retry_command?: {
+    command_id: string;
+    send_id?: string;
+    document_ref?: string;
+    destination_id?: string;
+    preview_digest?: string;
+  };
 };
 
 export type PreviewField = { label: string; value: string };

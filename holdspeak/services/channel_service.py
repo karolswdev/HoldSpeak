@@ -39,6 +39,7 @@ from typing import Any, Callable, Mapping, Optional
 
 from holdspeak.db.channels import BUILTIN_FOLDER_ID, is_builtin, now_iso, settle_in_transaction
 from holdspeak.logging_config import get_logger
+from holdspeak.principals import PrincipalKind
 
 from . import channel_contract as contract
 from . import channel_email  # noqa: F401 -- registers the email channel (PHILO-10-03)
@@ -147,7 +148,43 @@ class ChannelService:
             return row
         return None
 
-    def _send_view(self, row: Mapping[str, Any]) -> dict[str, Any]:
+    def _retry_command(self, row: Mapping[str, Any], principal: Any) -> dict[str, Any] | None:
+        """Return the owner's original send command for a settled UNKNOWN row.
+
+        The command id and arguments already belong to the kernel operation and
+        frozen send row.  Needs-you may expose that provenance to the owner so a
+        reload can replay the operation without inventing a second press.
+        """
+        if row.get("state") != "unknown" or getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            return None
+        operation_id = str(row.get("send_operation_id") or "")
+        if not operation_id:
+            return None
+        with self._db._connection() as conn:
+            operation = conn.execute(
+                "SELECT idempotency_key, name, principal_kind FROM kernel_operations WHERE operation_id=?",
+                (operation_id,),
+            ).fetchone()
+        if operation is None or str(operation["name"] or "") != "channel.send":
+            return None
+        if str(operation["principal_kind"] or "") != PrincipalKind.OWNER.value:
+            return None
+        key = str(operation["idempotency_key"] or "")
+        prefix = "channel.send:cmd:"
+        if not key.startswith(prefix) or not key[len(prefix):]:
+            return None
+        command: dict[str, Any] = {"command_id": key[len(prefix):]}
+        if row.get("prepare_operation_id"):
+            command["send_id"] = row["id"]
+        else:
+            command.update({
+                "document_ref": row["document_ref"],
+                "destination_id": row["destination_id"],
+                "preview_digest": row["payload_digest"],
+            })
+        return command
+
+    def _send_view(self, row: Mapping[str, Any], principal: Any = None) -> dict[str, Any]:
         destination = self._db.channel_destinations.get(row["destination_id"]) or {}
         payload = bytes(row["payload"] or b"")
         document_json = json.loads(row["document_json"]) if row.get("document_json") else None
@@ -166,7 +203,7 @@ class ChannelService:
                 state, reason, proof = "sent", None, found.record()
             else:
                 state, reason = "unknown", "no_answer_in_time"
-        return {
+        view = {
             "id": row["id"], "document_ref": row["document_ref"], "destination_id": row["destination_id"],
             "destination_name": destination.get("name"), "channel": row["channel"],
             "badge": contract.channel(row["channel"]).badge(self._synced(destination, row)),
@@ -185,6 +222,10 @@ class ChannelService:
             "dispatch_started_at": row["dispatch_started_at"], "settled_at": row["settled_at"],
             "dispatch_seq": row["dispatch_seq"], "egress": row.get("egress"),
         }
+        retry = self._retry_command(row, principal)
+        if retry is not None:
+            view["retry_command"] = retry
+        return view
 
     @staticmethod
     def _past_answer_limit(row: Mapping[str, Any]) -> bool:
@@ -207,8 +248,8 @@ class ChannelService:
             return bool(send.get("egress"))  # judged at its boundary: any sync provider
         return contract.builtin_egress() is not None
 
-    def _answer(self, row: Mapping[str, Any]) -> dict[str, Any]:
-        view = self._send_view(row)
+    def _answer(self, row: Mapping[str, Any], principal: Any = None) -> dict[str, Any]:
+        view = self._send_view(row, principal)
         return {"send": view, "outcome": view["state"]}
 
     def _destination(self, destination_id: str) -> dict[str, Any]:
@@ -229,12 +270,12 @@ class ChannelService:
             row = self._db.channel_sends.get(send_id)
             if row is None:
                 raise NotFound("send", send_id)
-            return {"sends": [self._send_view(row)]}
+            return {"sends": [self._send_view(row, principal)]}
         if document_ref:
             rows = self._db.channel_sends.list_for_document(document_ref)
         else:
             rows = self._db.channel_sends.list_recent()
-        return {"sends": [self._send_view(r) for r in rows]}
+        return {"sends": [self._send_view(r, principal) for r in rows]}
 
     def preview(self, principal: Any, document_ref: str, destination_id: str) -> dict[str, Any]:
         """What the destination's channel would get: the exact bytes' digest and their readable preview."""
@@ -500,7 +541,7 @@ class ChannelService:
             row = self._db.channel_sends.by_operation(prepare_operation_id=handle.operation_id)
             if row is None:
                 raise NotFound("send", handle.operation_id)
-            return self._answer(row)
+            return self._answer(row, principal)
         destination = self._destination(destination_id)
         if destination["state"] != "active":
             raise ChannelRefused("destination_parked", f"Destination {destination_id} is parked")
@@ -523,7 +564,7 @@ class ChannelService:
 
         handle.terminal("succeeded", "succeeded", f"channel_send:{send_id}", effect=effect)
         self._changed(send_id, "prepared")
-        return self._answer(self._db.channel_sends.get(send_id))
+        return self._answer(self._db.channel_sends.get(send_id), principal)
 
     def discard(self, principal: Any, send_id: str, command_id: Optional[str] = None) -> dict[str, Any]:
         """``prepared`` -> ``discarded``, one conditional write; against Send, one wins."""
@@ -532,7 +573,7 @@ class ChannelService:
         if row is None:
             raise NotFound("send", send_id)
         if handle.replay:
-            return self._answer(row)
+            return self._answer(row, principal)
 
         def effect(conn: Any) -> None:
             moved = conn.execute("UPDATE channel_sends SET state='discarded', settled_at=? WHERE id=? AND state='prepared'",
@@ -542,7 +583,7 @@ class ChannelService:
 
         handle.terminal("succeeded", "succeeded", f"channel_send:{send_id}", effect=effect)
         self._changed(send_id, "discarded")
-        return self._answer(self._db.channel_sends.get(send_id))
+        return self._answer(self._db.channel_sends.get(send_id), principal)
 
     # ── the press ────────────────────────────────────────────────────────
 
@@ -556,7 +597,7 @@ class ChannelService:
         if handle.replay:
             if mine is None:
                 raise NotFound("send", handle.operation_id)
-            return self._answer(mine)
+            return self._answer(mine, principal)
         if mine is not None:
             # This operation already crossed its boundary: a take-over. NEVER dispatch again.
             if mine["state"] == "dispatching":
@@ -725,7 +766,7 @@ class ChannelService:
         settled = self._db.channel_sends.get(row["id"])
         if settled is not None and str(settled.get("state") or "") in {"sent", "failed", "unknown"}:
             self._changed(str(row["id"]), str(settled["state"]))
-        return self._answer(settled)
+        return self._answer(settled, handle.principal)
 
     def _close_as_row(self, handle: Any, row: Mapping[str, Any]) -> dict[str, Any]:
         """A take-over that finds its row already settled: the kernel state follows the row."""
@@ -739,7 +780,7 @@ class ChannelService:
             except KernelRefused as exc:
                 if exc.reason not in STRICT_CONFLICTS:
                     raise
-        return self._answer(row)
+        return self._answer(row, handle.principal)
 
     def _changed(self, send_id: str, state: str) -> None:
         try:

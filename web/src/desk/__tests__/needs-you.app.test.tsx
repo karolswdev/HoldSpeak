@@ -412,6 +412,36 @@ describe("Needs you with a prepared Send row (Send S3)", () => {
 });
 
 describe("Needs you with a recorded unknown Send (Send S3)", () => {
+  it("reloads a settled UNKNOWN row and replays its recorded operation", async () => {
+    const answer: any = structuredClone(sendNeedsUnknown.needsYou);
+    const posts: Array<{ url: string; json: any }> = [];
+    vi.setSystemTime(new Date(String(answer.computedAt)));
+    api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
+      const path = String(url);
+      if (init?.method === "POST") {
+        posts.push({ url: path, json: init.json });
+        if (path === "/api/channels/send") return { send: answer.items[0].send };
+        return {};
+      }
+      if (path.startsWith("/api/desk/needs-you")) return answer;
+      if (path === "/api/door") return hubWire("door.empty").wire;
+      throw new Error(`no recorded answer for ${path}`);
+    });
+    render(<NeedsDrawer />);
+    const row = (await screen.findByText("S3 state transitions — update r1 (2026-10-20)")).closest("li.needs-row") as HTMLElement;
+    fireEvent.click(row.querySelector("[data-verb='try-again']")!);
+    await waitFor(() => expect(posts.filter((post) => post.url === "/api/channels/send")).toHaveLength(1));
+
+    // The settled answer clears browser custody. A reload starts with the
+    // recorded aggregate row and its owner-only kernel provenance.
+    resetSendStore();
+    fireEvent.click(row.querySelector("[data-verb='try-again']")!);
+    await waitFor(() => expect(posts.filter((post) => post.url === "/api/channels/send")).toHaveLength(2));
+    const attempts = posts.filter((post) => post.url === "/api/channels/send");
+    expect(attempts[0].json).toEqual(answer.items[0].send.retry_command);
+    expect(attempts[1].json).toEqual(answer.items[0].send.retry_command);
+  });
+
   it("Check only rereads and a lost Try again reuses the same command id", async () => {
     resetSendStore();
     let answer: any = structuredClone(sendNeedsUnknown.needsYou);

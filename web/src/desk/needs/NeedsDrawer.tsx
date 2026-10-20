@@ -461,7 +461,8 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       };
       const run = v.state === "failed"
         ? () => retryInline(v.documentRef, v.destinationId, s.payload_digest, () => {}, () => void refreshNeedsYou(true))
-        : () => sendPrepared(v.documentRef, v.sendId, () => {}, () => void refreshNeedsYou(true));
+        : () => sendPrepared(v.documentRef, v.sendId, () => {}, () => void refreshNeedsYou(true),
+          v.state === "unknown" ? s.retry_command : undefined);
       return (
         <>
           <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />

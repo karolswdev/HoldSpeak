@@ -28,5 +28,6 @@ export {
   useDestinations,
   useSends,
   type DocRef,
+  type RetryCommand,
   type Read,
 } from "./SendWell";

@@ -1304,6 +1304,15 @@ def test_send_needs_membership_leaves_once_for_discard_failed_and_unknown_replay
     assert len(failed_rows) == 1 and failed_rows[0]["sendId"] == failed_id
     assert failed_rows[0]["why"] == "NOT SENT"
 
+    # A fresh prepare can share the failed row's second. Its dispatch_seq is
+    # still NULL, so membership must use the durable channel row order.
+    prepared_retry = _ok(hub.client.post("/api/channels/sends", json={"document_ref": ref,
+                                                                         "destination_id": dest}))
+    prepared_retry_id = prepared_retry["send"]["id"]
+    prepared_rows = _send_rows(_needs(hub))
+    assert len(prepared_rows) == 1 and prepared_rows[0]["sendId"] == prepared_retry_id
+    _ok(hub.client.post(f"/api/channels/sends/{prepared_retry_id}/discard", json={"command_id": "s3-discard-retry"}))
+
     # UNKNOWN is a settled no-answer. Replaying the same command id returns
     # the existing operation and never calls the provider a second time.
     calls = 0
@@ -1327,6 +1336,9 @@ def test_send_needs_membership_leaves_once_for_discard_failed_and_unknown_replay
     unknown_rows = _send_rows(_needs(hub))
     assert len(unknown_rows) == 1 and unknown_rows[0]["sendId"] == unknown_id
     assert unknown_rows[0]["why"] == "NO ANSWER"
+    assert unknown_rows[0]["send"]["retry_command"] == {
+        "command_id": "s3-unknown", "send_id": unknown_id,
+    }
     assert list(folder.iterdir()) == []
     unknown_answer = _needs(hub)
     _record(
