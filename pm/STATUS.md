@@ -31,7 +31,7 @@ per-item link failure/Retry follow-up remains open until its producer and
 real HTTP consumer proof are complete. All 61 Settings/calendar writer
 checks pass after scoping their queries and advancing the actual debounce
 clock in the retry scenario; no timeouts or assertions were removed.
-Required quick: ST7_QUICK_PENDING.
+Required quick: 4,072 web, 73 affected Python/browser, 108 desk sweep, 27 canon and 1,116 repository guards pass; build passes.
 
 Shell S2 gives Desk seven New kinds in order: Note, Meeting, Decision,
 Project, Person, Automation and Drawer. The phone reads the same registry.
