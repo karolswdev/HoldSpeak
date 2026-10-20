@@ -19401,6 +19401,28 @@
         ]
       }
     },
+    "/api/onboarding/agents/stop": {
+      "post": {
+        "description": "The owner's Stop removes only the bindings HoldSpeak installed.",
+        "operationId": "onboarding_agents_stop_api_onboarding_agents_stop_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Agents Stop Api Onboarding Agents Stop Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Agents Stop",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
     "/api/onboarding/agents/use": {
       "post": {
         "operationId": "onboarding_agents_use_api_onboarding_agents_use_post",
@@ -19410,6 +19432,27 @@
               "application/json": {
                 "schema": {
                   "title": "Response Onboarding Agents Use Api Onboarding Agents Use Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Agents Use",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/onboarding/agents/use-all": {
+      "post": {
+        "operationId": "onboarding_agents_use_api_onboarding_agents_use_all_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Agents Use Api Onboarding Agents Use All Post"
                 }
               }
             },

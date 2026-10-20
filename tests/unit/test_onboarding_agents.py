@@ -10,6 +10,7 @@ environment.
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -22,6 +23,7 @@ from holdspeak.agent_context.hooks import (
     claude_hook_template,
     install_agent_hooks,
 )
+from holdspeak.agent_context.native_binding import NativeBindingError, binding_state, install_binding
 from holdspeak.commands.doctor import _check_coding_agents
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.runtime import composition
@@ -41,12 +43,27 @@ def _which(*present: str):
     return which
 
 
+def _mcp_stub(home: Path) -> str:
+    """A harmless executable entrypoint for the isolated native CLI double."""
+    path = home / "bin" / "holdspeak-mcp"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.exists():
+        path.write_text("#!/bin/sh\nexit 0\n")
+        path.chmod(0o755)
+    return str(path)
+
+
 def _rows(detected: dict) -> dict[str, dict]:
     return {row["id"]: row for row in detected["agents"]}
 
 
 def _detect(home: Path, *present: str, env: Optional[dict[str, str]] = None, platform: str = "darwin") -> dict:
-    return detect_agents(which=_which(*present), home=home, environ=env or {}, platform=platform)
+    base = _which(*present)
+    mcp = _mcp_stub(home)
+    return detect_agents(
+        which=lambda name: mcp if name == "holdspeak-mcp" else base(name),
+        home=home, environ=env or {}, platform=platform,
+    )
 
 
 # ── detect ───────────────────────────────────────────────────────────────
@@ -80,7 +97,8 @@ def test_detect_reads_our_hook_entries_with_the_installer_marker(tmp_path) -> No
     codex.parent.mkdir()
     codex.write_text(json.dumps({"hooks": {"Stop": [FOREIGN]}}))  # foreign only
     rows = _rows(_detect(tmp_path, "claude", "codex", "tmux"))
-    assert rows["claude"]["hooks"] == "installed" and rows["claude"]["ready"] is True
+    assert rows["claude"]["hooks"] == "installed" and rows["claude"]["mcp"] == "missing"
+    assert rows["claude"]["ready"] is False
     assert rows["codex"]["hooks"] == "missing" and rows["codex"]["ready"] is False
     assert rows["claude"]["verb"] == rows["codex"]["verb"] == "Use it"
 
@@ -169,12 +187,44 @@ def hub(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     composition.install(composition.bare(label="pytest"))
 
 
+def _native_runner(argv, *, cwd, env, **kwargs):
+    """Native CLI double: mutate only the isolated HOME/config files."""
+    agent = Path(argv[0]).name
+    action = argv[2]
+    if agent == "claude":
+        config = Path(env.get("CLAUDE_CONFIG_DIR") or env["HOME"]) / ".claude.json"
+        data = json.loads(config.read_text()) if config.is_file() else {}
+        servers = data.setdefault("mcpServers", {})
+        if action == "add":
+            servers["holdspeak"] = {"type": "stdio", "command": argv[-1], "args": [], "env": {}}
+        else:
+            servers.pop("holdspeak", None)
+        if not servers:
+            data.pop("mcpServers", None)
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text(json.dumps(data))
+    else:
+        config = Path(env.get("CODEX_HOME") or Path(env["HOME"]) / ".codex") / "config.toml"
+        current = config.read_text() if config.is_file() else ""
+        block = f"[mcp_servers.holdspeak]\ncommand = \"{argv[-1]}\"\n"
+        if action == "add":
+            current = current + ("\n" if current and not current.endswith("\n") else "") + block
+        else:
+            current = current.replace(block, "")
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text(current)
+    return subprocess.CompletedProcess(argv, 0, stdout="ok", stderr="")
+
+
 def _seat(hub: Hub, home: Path, *present: str, env: Optional[dict[str, str]] = None) -> Any:
     """The hub's own OnboardingService, the one the operation is bound to, on a temp home and PATH."""
     service = hub.root.operations.target(NAME)
     service._home = lambda: home
-    service._which = _which(*present)
+    base = _which(*present)
+    mcp = _mcp_stub(home)
+    service._which = lambda name: mcp if name == "holdspeak-mcp" else base(name)
     service._environ = env or {}
+    service._agent_runner = _native_runner
     return service
 
 
@@ -197,7 +247,10 @@ def test_use_it_is_admitted_with_a_receipt_and_is_idempotent(hub, tmp_path) -> N
     assert body["used"]["agent"] == "claude" and body["used"]["path"] == str(claude)
     assert body["used"]["skill"] == str(home / ".claude" / "skills" / "holdspeak" / "SKILL.md")
     assert (home / ".claude" / "skills" / "holdspeak" / "SKILL.md").is_file()
-    assert _rows(body)["claude"]["hooks"] == "installed" and _rows(body)["claude"]["ready"] is True
+    assert _rows(body)["claude"]["hooks"] == "installed"
+    assert _rows(body)["claude"]["mcp"] == "installed"
+    assert body["used"]["mcp"]["command"] == _mcp_stub(home)
+    assert _rows(body)["claude"]["skill"] == "installed" and _rows(body)["claude"]["ready"] is True
     assert body["operation_id"] and body["receipt"]["outcome"] == "succeeded"
     written = json.loads(claude.read_text())
     assert written["model"] == "opus" and written["hooks"]["Stop"][0] == FOREIGN  # foreign hooks kept
@@ -207,6 +260,142 @@ def test_use_it_is_admitted_with_a_receipt_and_is_idempotent(hub, tmp_path) -> N
     rows = _receipts(hub)
     assert [(r["state"], r["outcome"]) for r in rows] == [("succeeded", "succeeded")] * 2
     assert rows[0]["operation_id"] == body["operation_id"]
+
+
+def test_readiness_requires_hooks_mcp_and_skill(tmp_path) -> None:
+    home = tmp_path / "home"
+    claude = home / ".claude" / "settings.json"
+    claude.parent.mkdir(parents=True)
+    install_agent_hooks(claude, agent_hook_template("claude"))
+    row = _rows(_detect(home, "claude"))["claude"]
+    assert row["hooks"] == "installed" and row["mcp"] == "missing" and row["skill"] == "missing"
+    assert row["ready"] is False
+
+
+def test_mcp_entrypoint_missing_is_not_ready_and_install_preserves_config(tmp_path) -> None:
+    """A bare native entry must not become Works when its command cannot run."""
+    home = tmp_path / "home"
+    config = home / ".claude.json"
+    config.parent.mkdir(parents=True)
+    config.write_text(json.dumps({"mcpServers": {
+        "holdspeak": {"type": "stdio", "command": "holdspeak-mcp", "args": [], "env": {}},
+    }}))
+    before = config.read_bytes()
+    current = binding_state(
+        "claude", home=home, env={}, which=lambda _name: None,
+        python_executable=str(tmp_path / "missing-python"),
+    )
+    assert current["state"] == "installed" and current["runnable"] is False
+    with pytest.raises(NativeBindingError) as refused:
+        install_binding(
+            "claude", home=home, env={}, which=lambda _name: None,
+            python_executable=str(tmp_path / "missing-python"),
+            runner=lambda *_args, **_kwargs: pytest.fail("native CLI must not run"),
+        )
+    assert refused.value.code == "mcp_executable_missing"
+    assert config.read_bytes() == before
+
+
+def test_foreign_mcp_entry_is_never_overwritten(hub, tmp_path) -> None:
+    home = tmp_path / "home"
+    config = home / ".claude.json"
+    config.parent.mkdir(parents=True)
+    foreign = {"type": "stdio", "command": "some-other-server", "args": [], "env": {"TOKEN": "x"}}
+    config.write_text(json.dumps({"mcpServers": {"holdspeak": foreign, "other": {"command": "other"}}}))
+    _seat(hub, home, "claude")
+    refused = hub.client.post("/api/onboarding/agents/use", json={"agent": "claude"})
+    assert refused.status_code == 409 and refused.json()["code"] == "mcp_name_taken"
+    written = json.loads(config.read_text())
+    assert written["mcpServers"]["holdspeak"] == foreign
+    assert "other" in written["mcpServers"]
+
+
+def test_foreign_skill_is_never_overwritten_or_partially_bound(hub, tmp_path) -> None:
+    home = tmp_path / "home"
+    skill = home / ".claude" / "skills" / "holdspeak" / "SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text("owner's custom skill\n", encoding="utf-8")
+    _seat(hub, home, "claude")
+    refused = hub.client.post("/api/onboarding/agents/use", json={"agent": "claude"})
+    assert refused.status_code == 409 and refused.json()["code"] == "skill_name_taken"
+    assert skill.read_text(encoding="utf-8") == "owner's custom skill\n"
+    assert not (home / ".claude" / "settings.json").exists()
+    assert not (home / ".claude.json").exists()
+
+
+def test_codex_native_empty_args_shape_is_owned_but_args_are_foreign(tmp_path) -> None:
+    home = tmp_path / "home"
+    config = home / ".codex" / "config.toml"
+    config.parent.mkdir(parents=True)
+    command = _mcp_stub(home)
+    which = lambda name: command if name == "holdspeak-mcp" else None
+    config.write_text(f'[mcp_servers.holdspeak]\ncommand = "{command}"\n')
+    current = binding_state("codex", home=home, env={}, which=which)
+    assert current["state"] == "installed" and current["runnable"] is True
+    config.write_text(f'[mcp_servers.holdspeak]\ncommand = "{command}"\nargs = []\n')
+    foreign = binding_state("codex", home=home, env={}, which=which)
+    assert foreign["state"] == "foreign" and foreign["command"] == command
+
+
+def test_foreign_codex_mcp_overrides_are_never_removed_or_overwritten(hub, tmp_path) -> None:
+    home = tmp_path / "home"
+    config = home / ".codex" / "config.toml"
+    config.parent.mkdir(parents=True)
+    original = '[mcp_servers.holdspeak]\ncommand = "holdspeak-mcp"\nargs = ["--private"]\n'
+    config.write_text(original)
+    _seat(hub, home, "codex")
+    refused = hub.client.post("/api/onboarding/agents/use", json={"agent": "codex"})
+    assert refused.status_code == 409 and refused.json()["code"] == "mcp_name_taken"
+    assert config.read_text() == original
+    row = _rows(hub.client.get("/api/onboarding/agents").json())["codex"]
+    assert row["mcp"] == "foreign" and row["ready"] is False
+
+
+def test_stop_removes_our_bindings_and_keeps_foreign_entries(hub, tmp_path) -> None:
+    home = tmp_path / "home"
+    _seat(hub, home, "claude")
+    used = hub.client.post("/api/onboarding/agents/use", json={"agent": "claude"})
+    assert used.status_code == 200, used.text
+    config = home / ".claude.json"
+    data = json.loads(config.read_text())
+    data["mcpServers"]["foreign"] = {"command": "foreign"}
+    config.write_text(json.dumps(data))
+    foreign_skill = home / ".claude" / "skills" / "foreign" / "SKILL.md"
+    foreign_skill.parent.mkdir(parents=True)
+    foreign_skill.write_text("foreign skill")
+    stopped = hub.client.post("/api/onboarding/agents/stop", json={"agent": "claude"})
+    assert stopped.status_code == 200, stopped.text
+    after = json.loads(config.read_text())
+    assert "holdspeak" not in after.get("mcpServers", {}) and "foreign" in after["mcpServers"]
+    assert not (home / ".claude" / "skills" / "holdspeak" / "SKILL.md").exists()
+    assert foreign_skill.read_text() == "foreign skill"
+    row = _rows(stopped.json())["claude"]
+    assert row["hooks"] == "missing" and row["mcp"] == "missing" and row["skill"] == "missing"
+
+
+def test_aggregate_use_keeps_an_earlier_failure_when_a_later_agent_works(hub, tmp_path, monkeypatch) -> None:
+    """The agents row must not become Works from only its last response."""
+    import holdspeak.services.onboarding_service as onboarding_service
+
+    home = tmp_path / "home"
+    config = home / ".claude.json"
+    config.parent.mkdir(parents=True)
+    foreign = {"type": "stdio", "command": "another-mcp", "args": [], "env": {}}
+    config.write_text(json.dumps({"mcpServers": {"holdspeak": foreign}}))
+    monkeypatch.setattr(onboarding_service, "trust_codex_hooks", lambda **_: {"state": "trusted"})
+    monkeypatch.setattr(onboarding_service, "_codex_launch_hooks_stamped", lambda _home: True)
+    _seat(hub, home, "claude", "codex")
+
+    answer = hub.client.post("/api/onboarding/agents/use", json={"agents": ["claude", "codex"]})
+    assert answer.status_code == 200, answer.text
+    body = answer.json()
+    assert body["ok"] is False and body["success"] is False and body["state"] == "degraded"
+    assert [(item["agent"], item["ok"]) for item in body["results"]] == [("claude", False), ("codex", True)]
+    assert body["results"][0]["code"] == "mcp_name_taken"
+    assert body["results"][1]["used"]["agent"] == "codex"
+    rows = _rows(body)
+    assert rows["claude"]["ready"] is False and rows["codex"]["ready"] is True
+    assert json.loads(config.read_text())["mcpServers"]["holdspeak"] == foreign
 
 
 def test_use_it_refuses_an_agent_not_installed_with_a_receipt(hub, tmp_path) -> None:
@@ -323,7 +512,8 @@ def test_the_service_never_writes_off_the_kernel_path(tmp_path) -> None:
 def test_the_agent_routes_are_owner_only() -> None:
     from holdspeak.principals import PrincipalRight, required_right
 
-    for method, path in (("GET", "/api/onboarding/agents"), ("POST", "/api/onboarding/agents/use")):
+    for method, path in (("GET", "/api/onboarding/agents"), ("POST", "/api/onboarding/agents/use"),
+                         ("POST", "/api/onboarding/agents/use-all")):
         assert required_right(method, path) is PrincipalRight.OWNER
 
 
@@ -334,6 +524,10 @@ def test_the_operation_is_owner_only_and_admitted() -> None:
     row = next(d for d in DESCRIPTORS if d.name == NAME)
     assert row.owner_only and row.owner_press and row.admission.rule == "admitted"
     assert NAME in OWNER_ONLY_OPERATIONS
+    stop = next(d for d in DESCRIPTORS if d.name == "agent_hooks.remove")
+    assert stop.owner_only and stop.owner_press and stop.admission.rule == "admitted"
+    assert "agent_hooks.remove" in OWNER_ONLY_OPERATIONS
+    assert "http:POST /api/onboarding/agents/use-all" in row.exposure
 
 
 # ── doctor ───────────────────────────────────────────────────────────────
@@ -341,6 +535,12 @@ def test_the_operation_is_owner_only_and_admitted() -> None:
 
 def _installed(home: Path) -> None:
     install_agent_hooks(home / ".claude" / "settings.json", agent_hook_template("claude"))
+    (home / ".claude.json").write_text(json.dumps({"mcpServers": {
+        "holdspeak": {"type": "stdio", "command": "holdspeak-mcp", "args": [], "env": {}}
+    }}))
+    from holdspeak.agent_skill import install_skill
+
+    install_skill(home / ".claude", "claude")
 
 
 def test_doctor_info_when_no_agent_is_installed(tmp_path) -> None:
@@ -373,9 +573,10 @@ def test_doctor_warns_on_hooks_that_cannot_run(tmp_path) -> None:
     check = _check_coding_agents(_detect(tmp_path, "claude", "tmux"))
     assert check.status == "WARN" and "cannot run" in check.detail
     assert "`holdspeak agent-hook install --agent claude`" in check.fix
-    # The repair works: the installer writes a command that runs, and doctor passes.
+    # The hook repair is truthful, but complete readiness still needs MCP and
+    # the skill; the setup press supplies those two bindings.
     install_agent_hooks(claude, agent_hook_template("claude"))
-    assert _check_coding_agents(_detect(tmp_path, "claude", "tmux")).status == "PASS"
+    assert _check_coding_agents(_detect(tmp_path, "claude", "tmux")).status == "WARN"
 
 
 def test_doctor_warns_when_tmux_is_missing_with_the_platform_hint(tmp_path) -> None:

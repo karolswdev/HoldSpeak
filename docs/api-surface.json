@@ -4469,6 +4469,14 @@
       ]
     },
     {
+      "path": "/api/onboarding/agents/stop",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": []
+    },
+    {
       "path": "/api/onboarding/agents/use",
       "methods": [
         "POST"
@@ -4477,6 +4485,14 @@
       "consumers": [
         "web"
       ]
+    },
+    {
+      "path": "/api/onboarding/agents/use-all",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.onboarding",
+      "consumers": []
     },
     {
       "path": "/api/onboarding/calendar",

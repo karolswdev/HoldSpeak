@@ -37,7 +37,7 @@ STEWARD_AND_CONNECTORS_ADMITTED: frozenset[str] = frozenset({
     "connection.recheck", "project.mark_update_delivered",
 })
 #: The Conductor K1: the owner's one-press agent hook install (config, his press, HTTP only).
-ONBOARDING_ADMITTED: frozenset[str] = frozenset({"agent_hooks.install", "people_access.set",
+ONBOARDING_ADMITTED: frozenset[str] = frozenset({"agent_hooks.install", "agent_hooks.remove", "people_access.set",
                                                  "calendar.open_settings"})
 #: PHILO-15 16 (B38): a Project knows its repository. The owner's register
 #: (the Door's GitHub row, the drawer's Register) and the lazy clone on the
