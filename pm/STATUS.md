@@ -31,6 +31,10 @@ now come from the frozen tags inside the admitted producer; the adapter only
 reads the resulting record through its existing service helper. The complete
 Today response was re-recorded from its real producer. All final focused
 checks, including residual identity, copy and zero-counter checks, pass.
+The next check passed 617 affected cases, 4,079 web checks, all 110 sweep,
+27 canon and 1,116 repo guards. Its one stale Today consumer expected the
+Monday weekend lookback; the complete Tuesday recording correctly excludes
+Friday's meetings. The expectation now matches that real recording.
 Required quick: P9_QUICK_PENDING.
 
 The follow-up audit closes five old entries already delivered by #1267,
