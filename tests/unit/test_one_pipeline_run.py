@@ -320,10 +320,56 @@ def test_a_spoken_keyword_fires_its_macro_once_on_the_delivery_leg(stream):
             "preview": "types: ## Standup",
             "ok": True,
             "error": "",
+            "result": {"action": "type_text", "typed": "## Standup"},
         }
     ]
     assert run.passes == [], "a fired command is not also a dictation"
     assert run.journal.rows == []
+
+
+def test_a_desk_verb_uses_the_authenticated_mcp_dispatcher_and_carries_its_result(
+    stream, monkeypatch
+):
+    """Speak's real stream route runs New note through MCP and carries the
+    server-created note for the browser to open; it never runs an operation
+    selected by the transcript."""
+    from holdspeak.mcp import tools as mcp_tools
+
+    calls: list[tuple[str, dict, Any]] = []
+
+    def dispatch(name: str, arguments: dict, principal: Any) -> dict[str, str]:
+        calls.append((name, arguments, principal))
+        return {"id": "note-voice-1", "title": "New note", "body_markdown": "", "tags": []}
+
+    monkeypatch.setattr(mcp_tools, "dispatch", dispatch)
+    run = stream(
+        {"type": "start", "pipeline": True},
+        macro=("new note", "desk_verb", "new_note"),
+        said="new note",
+    )
+
+    assert calls and calls[0][0:2] == ("desk.create", {"kind": "notes", "data": {}})
+    from holdspeak.principals import PrincipalRight
+    assert calls[0][2].permits(PrincipalRight.OWNER)
+    assert run.socket.fired() == [
+        {
+            "keyword": "new note",
+            "kind": "desk_verb",
+            "preview": "opens a new note",
+            "ok": True,
+            "error": "",
+            "result": {
+                "desk_verb": "new_note",
+                "created": {
+                    "id": "note-voice-1",
+                    "title": "New note",
+                    "body_markdown": "",
+                    "tags": [],
+                },
+            },
+        }
+    ]
+    assert run.passes == []
 
 
 def test_a_field_fill_never_fires_a_macro(stream):

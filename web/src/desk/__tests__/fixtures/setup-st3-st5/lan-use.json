@@ -1,0 +1,202 @@
+{
+  "operation_id": "op_525e09ebce884847b1e2f03e283d975f",
+  "receipt": {
+    "actor_identity": "owner-session",
+    "actor_kind": "owner",
+    "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
+    "created_at": 1792454716.501247,
+    "delegator_identity": "",
+    "delegator_kind": "",
+    "operation_id": "op_525e09ebce884847b1e2f03e283d975f",
+    "outcome": "succeeded",
+    "receipt_id": "rcpt_4f131ec052384682a3bd382623075bc3",
+    "result_ref": "",
+    "state": "succeeded",
+    "target_ref": "desk:setup.use"
+  },
+  "result": {
+    "assignment": {
+      "committed_effect": {
+        "created_at": "2026-10-20T00:05:16.498840Z",
+        "entries": [
+          {
+            "ordinal": 1,
+            "profile_id": "lan-ef47e34f9cba6a6e7c21",
+            "profile_revision": 1,
+            "profile_schema_version": 2
+          }
+        ],
+        "id": "ia_6970e557aa2842a79bf87ed9fe7fc314",
+        "retry_policy_id": null,
+        "revision": 1,
+        "schema": "InferenceAssignment@1",
+        "scope": {
+          "kind": "global"
+        },
+        "sha256": "sha256:521a165575fa92635a572f46a00700574d3f51d6eda77bc7a13977d78da6c678"
+      },
+      "created_at": "2026-10-20T00:05:16.498840Z",
+      "current": {
+        "created_at": "2026-10-20T00:05:16.498840Z",
+        "effective_retry_policy_id": null,
+        "entries": [
+          {
+            "boundary": "local",
+            "label": "stub-qwen",
+            "ordinal": 1,
+            "profile_id": "lan-ef47e34f9cba6a6e7c21",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "readiness": "ready"
+          }
+        ],
+        "id": "ia_6970e557aa2842a79bf87ed9fe7fc314",
+        "issues": [
+          {
+            "capability_id": "agent.plan",
+            "code": "structured_output_unsupported",
+            "profile_id": "lan-ef47e34f9cba6a6e7c21",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "agent.tool_turn",
+            "code": "structured_output_unsupported",
+            "profile_id": "lan-ef47e34f9cba6a6e7c21",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "calendar.snapshot_extract",
+            "code": "vision_unsupported",
+            "profile_id": "lan-ef47e34f9cba6a6e7c21",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "memory.embed",
+            "code": "capability_class_unsupported",
+            "profile_id": "lan-ef47e34f9cba6a6e7c21",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "speech.transcribe",
+            "code": "modality_unsupported",
+            "profile_id": "lan-ef47e34f9cba6a6e7c21",
+            "profile_revision": 1,
+            "severity": "blocking"
+          }
+        ],
+        "retry_policy_id": null,
+        "retry_policy_source": "per_capability_default",
+        "revision": 1,
+        "schema": "InferenceAssignmentProjection@1",
+        "scope": {
+          "kind": "global"
+        },
+        "sha256": "sha256:521a165575fa92635a572f46a00700574d3f51d6eda77bc7a13977d78da6c678"
+      },
+      "effective_retry_policy_id": null,
+      "entries": [
+        {
+          "boundary": "local",
+          "label": "stub-qwen",
+          "ordinal": 1,
+          "profile_id": "lan-ef47e34f9cba6a6e7c21",
+          "profile_revision": 1,
+          "profile_schema_version": 2,
+          "readiness": "ready"
+        }
+      ],
+      "id": "ia_6970e557aa2842a79bf87ed9fe7fc314",
+      "issues": [
+        {
+          "capability_id": "agent.plan",
+          "code": "structured_output_unsupported",
+          "profile_id": "lan-ef47e34f9cba6a6e7c21",
+          "profile_revision": 1,
+          "severity": "blocking"
+        },
+        {
+          "capability_id": "agent.tool_turn",
+          "code": "structured_output_unsupported",
+          "profile_id": "lan-ef47e34f9cba6a6e7c21",
+          "profile_revision": 1,
+          "severity": "blocking"
+        },
+        {
+          "capability_id": "calendar.snapshot_extract",
+          "code": "vision_unsupported",
+          "profile_id": "lan-ef47e34f9cba6a6e7c21",
+          "profile_revision": 1,
+          "severity": "blocking"
+        },
+        {
+          "capability_id": "memory.embed",
+          "code": "capability_class_unsupported",
+          "profile_id": "lan-ef47e34f9cba6a6e7c21",
+          "profile_revision": 1,
+          "severity": "blocking"
+        },
+        {
+          "capability_id": "speech.transcribe",
+          "code": "modality_unsupported",
+          "profile_id": "lan-ef47e34f9cba6a6e7c21",
+          "profile_revision": 1,
+          "severity": "blocking"
+        }
+      ],
+      "retry_policy_id": null,
+      "retry_policy_source": "per_capability_default",
+      "revision": 1,
+      "schema": "InferenceAssignmentProjection@1",
+      "scope": {
+        "kind": "global"
+      },
+      "sha256": "sha256:521a165575fa92635a572f46a00700574d3f51d6eda77bc7a13977d78da6c678"
+    },
+    "library": {
+      "provider": {
+        "binding_id": "binding-lan-ef47e34f9cba6a6e7c21",
+        "binding_revision": 1,
+        "profile_id": "lan-ef47e34f9cba6a6e7c21",
+        "profile_revision": 1,
+        "provider_family": "private_endpoint",
+        "secret": {
+          "present": false,
+          "required": false
+        }
+      },
+      "receipt": {
+        "assignments_after": {
+          "heads": [
+            {
+              "assignment_id": "ia_8598e7a441ce4b42962511d010ce63ee",
+              "assignment_key": "capability:speech.transcribe",
+              "cleared": false,
+              "revision": 1
+            }
+          ],
+          "sha256": "sha256:6c0a848002c7c589b3bba87f1938e216770c741ac610b032e60835bf7a508ac2"
+        },
+        "assignments_before": {
+          "heads": [
+            {
+              "assignment_id": "ia_8598e7a441ce4b42962511d010ce63ee",
+              "assignment_key": "capability:speech.transcribe",
+              "cleared": false,
+              "revision": 1
+            }
+          ],
+          "sha256": "sha256:6c0a848002c7c589b3bba87f1938e216770c741ac610b032e60835bf7a508ac2"
+        },
+        "assignments_unchanged": true,
+        "kind": "model_library_provider",
+        "message": "Added to the Model Library. Assignments are unchanged."
+      }
+    },
+    "state": "ready"
+  },
+  "success": true
+}

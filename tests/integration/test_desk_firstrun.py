@@ -66,6 +66,69 @@ def _ok(base: str, method: str, path: str, body: Any = None) -> Any:
     return payload
 
 
+def test_setup_face_inventory_is_producer_backed_and_network_scan_is_separate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ST3 reads the existing producers; ST4 is a separate explicit press."""
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        found = _ok(base, "GET", "/api/setup/found")
+        assert isinstance(found.get("rows"), list)
+        assert "first_run" in found
+        assert any(row.get("id") == "speech" for row in found["rows"])
+        assert "checkedAt" not in found
+
+        # The LAN route is only the approved network operation.  The test
+        # harness has no LAN engine, so a successful empty answer still proves
+        # that the route is separate from the files-only inventory read.
+        # The default rig fence keeps this route from probing the host. An
+        # injected deterministic LAN producer opts in in the dedicated scan
+        # tests; this integration check proves the Setup read stays separate.
+        checked = _ok(base, "POST", "/api/setup/lan")
+        assert isinstance(checked.get("rows"), list)
+        assert checked.get("checkedAt")
+        assert checked.get("disabled") is True
+    finally:
+        server.stop()
+
+
+def test_setup_lan_scan_uses_an_explicitly_enabled_injected_producer(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """ST4 uses the real route only after the rig opts into its producer."""
+    from holdspeak.services import lan_engine_discovery
+
+    monkeypatch.setattr(
+        lan_engine_discovery,
+        "scan_lan_engines",
+        lambda *, principal: {
+            "engines": [{
+                "id": "rig-qwen",
+                "name": "qwen3.8-27b",
+                "host": "127.0.0.1",
+                "base_url": "http://127.0.0.1:8099",
+            }],
+        },
+    )
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        # glass_infra deliberately turns the scan off while it boots. This
+        # test opts in only after the isolated server is ready.
+        monkeypatch.setenv("HOLDSPEAK_SETUP_LAN_SCAN", "on")
+        answer = _ok(base, "POST", "/api/setup/lan")
+        assert answer["rows"] == [{
+            "id": "rig-qwen",
+            "name": "qwen3.8-27b",
+            "host": "127.0.0.1",
+            "base_url": "http://127.0.0.1:8099",
+        }]
+        assert answer.get("disabled") is None
+        assert answer.get("operation_id"), "LAN egress must be admitted before the scan"
+        assert answer.get("receipt"), "LAN egress must end in a terminal receipt"
+    finally:
+        server.stop()
+
+
 class _Recorder:
     """Stores (or fences) one scenario's answers: ``<stage>|<METHOD> <path>``."""
 
@@ -234,5 +297,41 @@ def test_a_denied_calendar_has_a_way_forward(tmp_path: Path, monkeypatch: pytest
         allowed = rec.reads("1-allowed")["/api/onboarding/calendar"]
         assert allowed["macos"]["state"] == "full_access", allowed
         assert mac.opens == 1, "a read never opens System Settings"
+    finally:
+        server.stop()
+
+
+def test_setup_lan_use_saves_the_real_default_and_never_assigns_speech(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, tools_engine: str,
+) -> None:
+    """The Setup gesture runs the real library and assignment producers."""
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    try:
+        before = _ok(base, "GET", "/api/inference/assignments")
+        speech_before = next(row for row in before["rows"] if row["id"] == "speech_recognition")
+        from urllib.parse import urlsplit
+        from holdspeak.services.lan_engine_discovery import _row
+
+        endpoint = urlsplit(tools_engine)
+        discovered = _row(endpoint.hostname, endpoint.port, TOOLS_MODEL)
+        answer = _ok(base, "POST", "/api/setup/use", {
+            # Exactly the opaque production discovery id, including its
+            # punctuation, as the Setup consumer passes it back.
+            "id": f"lan:{discovered['id']}",
+            "payload": {"base_url": discovered["baseUrl"], "model": discovered["name"]},
+        })
+        assert answer["result"]["state"] == "ready", answer
+        provider = answer["result"]["library"]["provider"]
+        if os.environ.get("HOLDSPEAK_WIRE_WRITE") == "1":
+            path = FIXTURES / "setup-st3-st5" / "lan-use.json"
+            path.write_text(json.dumps(answer, indent=2, sort_keys=True) + "\n")
+        after = _ok(base, "GET", "/api/inference/assignments")
+        global_row = next(row for row in after["rows"] if row["id"] == "global")
+        assert global_row["status"] == "assigned", global_row
+        assert global_row["assignment"]["entries"][0]["profile_id"] == provider["profile_id"], global_row
+        speech_after = next(row for row in after["rows"] if row["id"] == "speech_recognition")
+        assert speech_after == speech_before
+        # A reread must report the saved choice, rather than a transient UI lamp.
+        assert _ok(base, "GET", "/api/inference/assignments")["rows"] == after["rows"]
     finally:
         server.stop()

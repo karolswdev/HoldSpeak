@@ -763,6 +763,71 @@ def test_a_fire_that_raises_writes_a_failed_receipt_and_leaves_arming(tmp_path):
     assert _read_arming(db, datetime.fromtimestamp(clock() + 3601, timezone.utc)) == []
 
 
+def test_successful_manual_record_resolves_needs_you_and_keeps_failed_occurrence(tmp_path):
+    from holdspeak.meeting_session.models import MeetingState
+    from holdspeak.services.needs_you_membership import _read_arming
+
+    clock = FakeClock(1_000_000_000.0)
+    db = make_db(tmp_path)
+    conductor = make_conductor(db, clock, countdown_seconds=0.0)
+    sched = create_schedule(
+        db, one_shot=True, duration_minutes=30, calendar_event_id="ledger-event",
+    )
+    receipt_id = conductor._write_receipt(
+        db, sched.id, "failed", "fire_failed", detail="No microphone",
+    )
+    db.scheduled_recordings.set_state(
+        sched.id, "refused", last_outcome="fire_failed", last_receipt_id=receipt_id,
+        last_fired_at=clock(), enabled=False, armed_at=None, deadline_at=None,
+    )
+
+    before = _read_arming(db, datetime.fromtimestamp(clock(), timezone.utc))
+    failed = next(row for row in before if row["scheduleId"] == sched.id)
+    assert failed["didNotRecord"]["reason"] == "No microphone"
+
+    db.meetings.save_meeting(MeetingState(
+        id="manual-ledger", started_at=datetime.fromtimestamp(clock(), timezone.utc),
+        calendar_event_id="ledger-event", capture_status="recording",
+    ))
+
+    assert _read_arming(db, datetime.fromtimestamp(clock(), timezone.utc)) == []
+    unchanged = db.scheduled_recordings.get(sched.id)
+    assert unchanged.last_outcome == "fire_failed"
+    assert unchanged.last_receipt_id == receipt_id
+    with db._connection() as conn:
+        saved_receipt = conn.execute(
+            "SELECT state, outcome, result_ref FROM kernel_receipts WHERE receipt_id=?",
+            (receipt_id,),
+        ).fetchone()
+    assert tuple(saved_receipt) == ("failed", "fire_failed", "No microphone")
+
+
+def test_prior_successful_record_does_not_resolve_a_later_failed_occurrence(tmp_path):
+    from holdspeak.meeting_session.models import MeetingState
+    from holdspeak.services.needs_you_membership import _read_arming
+
+    clock = FakeClock(1_000_000_000.0)
+    db = make_db(tmp_path)
+    conductor = make_conductor(db, clock, countdown_seconds=0.0)
+    sched = create_schedule(
+        db, one_shot=True, duration_minutes=30, calendar_event_id="ledger-event",
+    )
+    db.meetings.save_meeting(MeetingState(
+        id="prior-ledger", started_at=datetime.fromtimestamp(clock() - 60, timezone.utc),
+        calendar_event_id="ledger-event", capture_status="finalized",
+    ))
+    receipt = conductor._write_receipt(
+        db, sched.id, "failed", "fire_failed", detail="No microphone",
+    )
+    db.scheduled_recordings.set_state(
+        sched.id, "refused", last_outcome="fire_failed", last_receipt_id=receipt,
+        last_fired_at=clock(), enabled=False, armed_at=None, deadline_at=None,
+    )
+
+    rows = _read_arming(db, datetime.fromtimestamp(clock(), timezone.utc))
+    assert any(row["scheduleId"] == sched.id for row in rows)
+
+
 def test_deadline_persisted_before_start(tmp_path):
     """Deadline is persisted BEFORE the recording starts (I7, durable before observable)."""
     clock = FakeClock(1_000_000_000.0)

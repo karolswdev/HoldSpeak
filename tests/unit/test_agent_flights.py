@@ -429,3 +429,64 @@ def test_a_done_turn_is_a_coder_frame_and_never_a_wait(registry):
     assert (transitions, entered) == (["claude:s1"], [])
     _, transitions, entered = _coder_watch_step(snapshot, registry)
     assert (transitions, entered) == ([], [])
+
+
+def test_a_durable_review_result_wins_over_a_stale_working_screen(db, tmp_path, registry, monkeypatch):
+    """AG12: a pane sampled before the final pair result cannot undo Done."""
+    from holdspeak import agent_context
+    from holdspeak.services import agent_flights as flights_module
+
+    hook(registry, "claude", "review", "PreToolUse", tool_name="Read")
+    session = next(s for s in agent_context.list_agent_sessions() if s.session_id == "review")
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    _launch(
+        ledger, "review-done", ("action", "ai_1"),
+        attempt_id=_attempt(db, "claude:review", "action:ai_1"),
+        review={
+            "requested": "claude", "status": "done", "role": "builder",
+            "result": {"rounds": 2, "findings_left": [], "wording": "round 2, nothing left"},
+        },
+    )
+    monkeypatch.setattr(
+        flights_module, "_screen",
+        lambda *_args: (None, "screen", ("working", None)),
+    )
+
+    flight = flights_module._flight(
+        db, ledger.get("review-done"), {"claude:review": session}, datetime.now(timezone.utc),
+    )
+    assert (flight["state"], flight["state_source"], flight["turn_end"]) == ("done", "review", "done")
+    assert flight["review"]["pair_result"]["rounds"] == 2
+
+
+def test_a_review_finding_projects_as_an_owner_wait_after_a_stale_screen(db, tmp_path, registry, monkeypatch):
+    """AG12: a persisted MUST finding is Waiting/Needs you across the fleet wire."""
+    from holdspeak import agent_context
+    from holdspeak.services import agent_flights as flights_module
+
+    hook(registry, "claude", "review", "PreToolUse", tool_name="Read")
+    session = next(s for s in agent_context.list_agent_sessions() if s.session_id == "review")
+    ledger = LaunchLedger(tmp_path / "launches.json")
+    _launch(
+        ledger, "review-needs-you", ("action", "ai_1"),
+        attempt_id=_attempt(db, "claude:review", "action:ai_1"),
+        review={
+            "requested": "claude", "status": "needs_you", "role": "builder",
+            "findings_left": [{"level": "MUST", "text": "review_target.txt: apply the correction"}],
+            "result": {
+                "rounds": 1,
+                "findings_left": [{"level": "MUST", "text": "review_target.txt: apply the correction"}],
+            },
+        },
+    )
+    monkeypatch.setattr(
+        flights_module, "_screen",
+        lambda *_args: (None, "screen", ("working", None)),
+    )
+
+    flight = flights_module._flight(
+        db, ledger.get("review-needs-you"), {"claude:review": session}, datetime.now(timezone.utc),
+    )
+    assert (flight["state"], flight["state_source"], flight["turn_end"]) == ("waiting", "review", "asks")
+    assert flight["review"]["status"] == "needs_you"
+    assert flight["review"]["findings_left"][0]["level"] == "MUST"

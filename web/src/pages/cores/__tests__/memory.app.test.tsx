@@ -97,7 +97,7 @@ describe("Q12 Memory", () => {
     });
     render(<MemoryCore />);
     const home = await screen.findByTestId("memory-home");
-    expect(within(home).getAllByTestId("standing-page").map((page) => page.getAttribute("aria-label"))).toEqual([
+    expect((await within(home).findAllByTestId("standing-page")).map((page) => page.getAttribute("aria-label"))).toEqual([
       "What I owe", "What changed this week",
     ]);
     expect(within(home).queryByText("Recent work")).toBeNull();
@@ -133,6 +133,24 @@ describe("Q12 Memory", () => {
     expect(await screen.findByRole("button", { name: "Ledger" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Mira Kovacs" })).toBeNull();
   });
+
+  it.each(["/api/memory/pages", "/api/projects", "/api/memory/recall"])(
+    "keeps the lower controls out until the first %s read settles", async (held) => {
+      const original = vi.mocked(apiFetch).getMockImplementation()!;
+      let release!: (value: unknown) => void;
+      const pending = new Promise((resolve) => { release = resolve; });
+      vi.mocked(apiFetch).mockImplementation((url, init) =>
+        String(url).startsWith(held) ? pending : original(url, init));
+      render(<MemoryCore />);
+      expect(screen.getByRole("searchbox", { name: "Ask your desk" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: /^RAW$/ })).toBeNull();
+      release(held === "/api/memory/pages" ? pages : held === "/api/projects"
+        ? { projects: [{ id: "p1", name: "Ledger" }] } : beliefs);
+      expect(await screen.findByRole("button", { name: /^RAW$/ })).toBeTruthy();
+      expect(screen.getAllByTestId("standing-page")).toHaveLength(2);
+      expect(screen.getByRole("button", { name: "Ledger" })).toBeTruthy();
+    },
+  );
 
   it("shows one empty message and the background engine picker when no page exists", async () => {
     vi.mocked(apiFetch).mockImplementation(async (url) => {

@@ -826,3 +826,26 @@ describe("Betterment setup ST1: Rhythm and Change places open their Settings sec
     expect(opens).toHaveLength(2);
   });
 });
+
+
+it("moves a saved Commands row to Speak Voice commands once", async () => {
+  const opens: Array<[string, string | undefined]> = [];
+  const real = useDesk.getState().openSurfaceWindow;
+  useDesk.setState({ openSurfaceWindow: ((key: string, scope?: string, ...rest: unknown[]) => {
+    opens.push([key, scope]);
+    return (real as (...args: unknown[]) => unknown)(key, scope, ...rest);
+  }) as typeof real });
+  const { fake, hub } = start([row("surface-commands", { app: "configure-commands", revision: 2 })]);
+  const list = fake.transport.list;
+  fake.transport.list = vi.fn(async () => ({ ...(await list()), registry: {
+    ...REGISTRY, static: { ...REGISTRY.static, "surface-commands": "configure-commands" },
+    retired: { ...REGISTRY.retired, "surface-commands": "Voice commands is a wing of Speak" },
+  } }));
+  await hub.start();
+  await flush(hub);
+  expect(fake.calls.filter((call) => call.verb === "close").map((call) => call.id)).toEqual(["surface-commands"]);
+  expect(opens).toEqual([["dictate", "commands"]]);
+  hub.onFrame({ kind: "windows", id: "surface-dictation" });
+  await flush(hub);
+  expect(opens).toHaveLength(1);
+});

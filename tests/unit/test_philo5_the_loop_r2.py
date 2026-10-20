@@ -28,6 +28,7 @@ from datetime import datetime
 import json
 import os
 import pathlib
+import subprocess
 import shutil
 import tempfile
 from pathlib import Path
@@ -221,9 +222,10 @@ def test_the_contract_refuses_a_non_owner_before_anything_else(tmp_path: Path) -
     assert [d.name for d in operations.DESCRIPTORS if d.owner_only] == [
         "meeting.import",
         "meeting.transcribe",  # PHILO-17: only the owner transcribes a meeting's kept audio
-        "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install",
+        "channel.save_email_key", "channel.save_slack_webhook", "agent_hooks.install", "agent_hooks.remove",
         "people_access.set",  # Conductor R7: only the owner sets People MCP access
         "calendar.open_settings",  # PHILO-15 04: only the owner opens the Calendars privacy pane
+        "setup.found", "setup.use", "setup.people.add", "setup.lan.scan",  # Betterment ST3-ST5
         "project.repository.register",  # PHILO-15 16: only the owner names a Project's repository
         "agent.hand",  # Conductor K2: only the owner hands an item to an agent
     ]
@@ -643,11 +645,43 @@ def _p_channel_sends(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
 def _p_agent_hooks_install(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     """The real installer, on a temp home and a PATH that has claude."""
     service = hub.root.operations.target("agent_hooks.install")
-    service._home = lambda: tmp_path / "agent-home"
-    service._which = lambda name: f"/opt/bin/{name}" if name == "claude" else None
+    agent_home = tmp_path / "agent-home"
+    service._home = lambda: agent_home
+    mcp = agent_home / "bin" / "holdspeak-mcp"
+    mcp.parent.mkdir(parents=True, exist_ok=True)
+    mcp.write_text("#!/bin/sh\nexit 0\n")
+    mcp.chmod(0o755)
+    service._which = lambda name: str(mcp) if name == "holdspeak-mcp" else (f"/opt/bin/{name}" if name == "claude" else None)
     service._environ = {}
+
+    def native_runner(argv: list[str], *, env: dict[str, str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+        # The subprocess boundary is doubled; the native config mutation is
+        # real, so the installer and detect read back the same bytes shape as
+        # Claude Code's user-scope writer.
+        config = Path(env["HOME"]) / ".claude.json"
+        data = json.loads(config.read_text()) if config.is_file() else {}
+        servers = data.setdefault("mcpServers", {})
+        if argv[2] == "add":
+            servers["holdspeak"] = {"type": "stdio", "command": argv[-1], "args": [], "env": {}}
+        else:
+            servers.pop("holdspeak", None)
+            if not servers:
+                data.pop("mcpServers", None)
+        config.parent.mkdir(parents=True, exist_ok=True)
+        config.write_text(json.dumps(data))
+        return subprocess.CompletedProcess(argv, 0, stdout="", stderr="")
+
+    service._agent_runner = native_runner
     target = service.agent_settings_target("claude")
     return hub.root.operations.invoke(OWNER, "agent_hooks.install", {"agent": "claude", "settings_path": target})
+
+
+def _p_agent_hooks_remove(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    """The real Stop producer after the real installer has made its binding."""
+    _p_agent_hooks_install(hub, monkeypatch, tmp_path)
+    service = hub.root.operations.target("agent_hooks.remove")
+    target = service.agent_settings_target("claude")
+    return hub.root.operations.invoke(OWNER, "agent_hooks.remove", {"agent": "claude", "settings_path": target})
 
 
 def _p_people_access_set(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
@@ -769,6 +803,28 @@ def _p_today_get(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
     return result
 
 
+def _p_setup_found(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    response = hub.client.get("/api/setup/found")
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def _p_setup_people(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    response = hub.client.post("/api/setup/people", json={"names": "Theo Lindqvist"})
+    assert response.status_code == 201, response.text
+    return response.json()
+
+
+def _p_setup_lan(hub: Hub, monkeypatch: Any, tmp_path: Path) -> Any:
+    service = hub.root.operations.target("setup.lan.scan")
+    # Replace only network discovery; the admitted registry and receipt run.
+    monkeypatch.setattr(service, "_lan_scanner", lambda **_kwargs: {"engines": []})
+    monkeypatch.setenv("HOLDSPEAK_SETUP_LAN_SCAN", "on")
+    response = hub.client.post("/api/setup/lan", json={})
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
 PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "meeting.list": _p_meeting_list,
     "meeting.import": _p_meeting_import,
@@ -810,6 +866,7 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "channel.save_slack_webhook": _p_channel_save_slack_webhook,
     # The Conductor K1: the one-press hook install.
     "agent_hooks.install": _p_agent_hooks_install,
+    "agent_hooks.remove": _p_agent_hooks_remove,
     # Conductor R7: People MCP access.
     "people_access.set": _p_people_access_set,
     # PHILO-15 04: the Calendars privacy pane.
@@ -832,6 +889,9 @@ PRODUCERS: dict[str, Callable[[Hub, Any, Path], Any]] = {
     "note.outcome.dismiss": _p_note_outcome("dismiss"),
     "note.outcome.confirm": _p_note_outcome("confirm"),
     "today.get": _p_today_get,
+    "setup.found": _p_setup_found,
+    "setup.people.add": _p_setup_people,
+    "setup.lan.scan": _p_setup_lan,
 }
 
 

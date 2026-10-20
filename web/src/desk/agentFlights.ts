@@ -27,6 +27,66 @@ export type FlightState =
   | "no_signal";
 export type AgentName = "claude" | "codex" | "pi";
 
+export interface AgentReview {
+  requested: "codex" | "claude" | "pi" | string;
+  status: string;
+  role: "builder" | "reviewer" | string;
+  builder?: string;
+  round: number;
+  rounds: number;
+  findingsLeft: Array<{ level: string; text: string }>;
+  reviewerLaunchId: string | null;
+  pairResult: AgentReviewPairResult | null;
+}
+
+export interface AgentReviewPairResult {
+  rounds?: number;
+  findings_left?: Array<{ level: string; text: string }>;
+  wording?: string;
+  reason?: string;
+  raw?: string;
+}
+
+export interface AgentReviewResult {
+  rounds: number;
+  findingsLeft: Array<{ level: string; text: string }>;
+  wording?: string;
+  reason?: string;
+  raw?: string;
+}
+
+/** The durable pair result, with the legacy row findings as its fallback. */
+export function reviewResult(review: AgentReview | null | undefined): AgentReviewResult | null {
+  if (!review) return null;
+  // Flights are decoded into camelCase, while the lane endpoint deliberately
+  // exposes its established snake_case wire. Keep this consumer tolerant of
+  // both shapes so the row and the ordinary lane read the same durable fact.
+  const wire = review as AgentReview & {
+    pair_result?: AgentReviewPairResult | null;
+    // A few established reads still expose the durable pair as `result`.
+    // Keep the consumer tolerant while the flights route converges on
+    // `pair_result`; both names refer to the same persisted producer fact.
+    result?: AgentReviewPairResult | null;
+    findings_left?: Array<{ level: string; text: string }>;
+  };
+  const pair = review.pairResult ?? wire.pair_result ?? wire.result ?? null;
+  // A live round without a durable pair result is still in progress. Do not
+  // turn its absent findings into the final `MUST: none` verdict.
+  if (!pair) return null;
+  const findings = Array.isArray(pair.findings_left) ? pair.findings_left : [];
+  const rounds = Number(pair?.rounds ?? review.rounds ?? wire.rounds ?? review.round ?? 0);
+  if (!pair && rounds <= 0 && findings.length === 0) return null;
+  return {
+    rounds: Number.isFinite(rounds) ? Math.max(0, rounds) : 0,
+    findingsLeft: findings.filter((finding) => finding && finding.level).map((finding) => ({
+      level: String(finding.level), text: String(finding.text ?? ""),
+    })),
+    ...(pair?.wording ? { wording: String(pair.wording) } : {}),
+    ...(pair?.reason ? { reason: String(pair.reason) } : {}),
+    ...(pair?.raw ? { raw: String(pair.raw) } : {}),
+  };
+}
+
 export interface AgentFlight {
   originRef: string;
   kind: string;
@@ -64,8 +124,10 @@ export interface AgentFlight {
   helperOf?: string | null;
   /** Betterment AG11: Secure asked the owner for one helper Allow press. */
   helperRequest?: { requestId: string; status: "awaiting_owner"; instruction: string; profile: string | null } | null;
-  /** Betterment AG7: which source decided the state (`hook`, `screen`). */
-  stateSource?: "hook" | "screen" | null;
+  /** Betterment AG12: the explicit builder/reviewer pair. */
+  review?: AgentReview | null;
+  /** Betterment AG7/AG12: which source decided the state (`hook`, `screen`, `review`). */
+  stateSource?: "hook" | "screen" | "review" | null;
   /** Betterment AG7: the agent's screen as the hub's rules read it. */
   screen?: AgentScreen | null;
 }
@@ -191,7 +253,33 @@ export function fromWireFlight(body: any): AgentFlight {
           profile: body.helper_request.profile ? String(body.helper_request.profile) : null,
         }
       : null,
-    stateSource: body?.state_source === "hook" || body?.state_source === "screen" ? body.state_source : null,
+    review: body?.review ? {
+      requested: String(body.review.requested ?? ""),
+      status: String(body.review.status ?? ""),
+      role: String(body.review.role ?? "builder"),
+      builder: body.review.builder ? String(body.review.builder) : undefined,
+      round: Number(body.review.round ?? 0),
+      rounds: Number(body.review.rounds ?? body.review.round ?? 0),
+      findingsLeft: Array.isArray(body.review.findings_left)
+        ? body.review.findings_left.filter((f: any) => f && f.level).map((f: any) => ({ level: String(f.level), text: String(f.text ?? "") }))
+        : [],
+      reviewerLaunchId: body.review.reviewer_launch_id ? String(body.review.reviewer_launch_id) : null,
+      pairResult: body.review.pair_result && typeof body.review.pair_result === "object"
+        ? {
+            ...(body.review.pair_result.rounds != null ? { rounds: Number(body.review.pair_result.rounds) } : {}),
+            ...(Array.isArray(body.review.pair_result.findings_left)
+              ? { findings_left: body.review.pair_result.findings_left
+                .filter((f: any) => f && f.level)
+                .map((f: any) => ({ level: String(f.level), text: String(f.text ?? "") })) }
+              : {}),
+            ...(body.review.pair_result.wording ? { wording: String(body.review.pair_result.wording) } : {}),
+            ...(body.review.pair_result.reason ? { reason: String(body.review.pair_result.reason) } : {}),
+            ...(body.review.pair_result.raw ? { raw: String(body.review.pair_result.raw) } : {}),
+          }
+        : null,
+    } : null,
+    stateSource: body?.state_source === "hook" || body?.state_source === "screen" || body?.state_source === "review"
+      ? body.state_source : null,
     screen: fromWireScreen(body?.screen),
   };
 }

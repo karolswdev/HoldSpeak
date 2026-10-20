@@ -19401,6 +19401,28 @@
         ]
       }
     },
+    "/api/onboarding/agents/stop": {
+      "post": {
+        "description": "The owner's Stop removes only the bindings HoldSpeak installed.",
+        "operationId": "onboarding_agents_stop_api_onboarding_agents_stop_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Agents Stop Api Onboarding Agents Stop Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Agents Stop",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
     "/api/onboarding/agents/use": {
       "post": {
         "operationId": "onboarding_agents_use_api_onboarding_agents_use_post",
@@ -19410,6 +19432,27 @@
               "application/json": {
                 "schema": {
                   "title": "Response Onboarding Agents Use Api Onboarding Agents Use Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Onboarding Agents Use",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/onboarding/agents/use-all": {
+      "post": {
+        "operationId": "onboarding_agents_use_api_onboarding_agents_use_all_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Onboarding Agents Use Api Onboarding Agents Use All Post"
                 }
               }
             },
@@ -27229,6 +27272,25 @@
         "summary": "Api First Value Finish"
       }
     },
+    "/api/setup/found": {
+      "get": {
+        "description": "The shared Setup inventory; reads local files and stored rows only.",
+        "operationId": "api_setup_found_api_setup_found_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Setup Found Api Setup Found Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Setup Found"
+      }
+    },
     "/api/setup/hub-default-summary": {
       "get": {
         "operationId": "api_hub_default_summary_api_setup_hub_default_summary_get",
@@ -27245,6 +27307,25 @@
           }
         },
         "summary": "Api Hub Default Summary"
+      }
+    },
+    "/api/setup/lan": {
+      "post": {
+        "description": "One explicit Setup-open LAN look; the shared found read never scans.",
+        "operationId": "api_setup_lan_api_setup_lan_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Setup Lan Api Setup Lan Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Setup Lan"
       }
     },
     "/api/setup/local-ai": {
@@ -27341,6 +27422,24 @@
         "summary": "Api Onboarding Disposition"
       }
     },
+    "/api/setup/people": {
+      "post": {
+        "operationId": "api_setup_people_api_setup_people_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Setup People Api Setup People Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Setup People"
+      }
+    },
     "/api/setup/runtime-options": {
       "get": {
         "operationId": "api_runtime_options_api_setup_runtime_options_get",
@@ -27393,6 +27492,24 @@
           }
         },
         "summary": "Api Setup Status"
+      }
+    },
+    "/api/setup/use": {
+      "post": {
+        "operationId": "api_setup_use_api_setup_use_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Setup Use Api Setup Use Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Api Setup Use"
       }
     },
     "/api/skills": {

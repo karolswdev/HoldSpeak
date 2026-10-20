@@ -58,6 +58,7 @@ and 393 in the story's assets.
 from __future__ import annotations
 
 import os
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -76,7 +77,9 @@ TOKEN = "p16-kit-verb"
 SHOTS = evidence_dir("p16-kit-verb")
 
 MEASURE = """(win) => [...win.querySelectorAll('.btn')]
-  .filter((b) => b.offsetParent)
+  // Screen-reader-only submit proxies have no painted plate (zero clip).
+  // A merely short or narrow visible Button must still fail the census.
+  .filter((b) => b.offsetParent && getComputedStyle(b).clip !== 'rect(0px, 0px, 0px, 0px)')
   .map((b) => {
     const r = b.getBoundingClientRect();
     const halo = getComputedStyle(b, '::after');
@@ -121,7 +124,7 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
             assert expected <= words, verbs
             if width == 1440:
                 heights = {v["h"] for v in verbs}
-                assert heights == {28.0}, verbs
+                assert heights == {28.0}, json.dumps(verbs, indent=2)
             else:
                 small = [v for v in verbs if max(v["h"], v["halo"]) < 44]
                 assert not small, small

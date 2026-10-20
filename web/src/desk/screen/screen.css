@@ -151,6 +151,22 @@
 .desk-screen-cell.desk-screen-placed {
   position: absolute;
 }
+/* A drawer's name edits in its existing caption seat, within its icon row.
+   Appending the field below the whole icon covers the next drawer. */
+.desk-screen[data-layout="free"] .desk-screen-cell.is-renaming {
+  z-index: 1;
+}
+.desk-screen[data-layout="free"] .desk-screen-cell.is-renaming .desk-icon-name {
+  visibility: hidden;
+}
+.desk-screen[data-layout="free"] .desk-screen-cell.is-renaming > .desk-zone-rename-row {
+  position: absolute;
+  top: 54px;
+  left: 0;
+  width: 224px;
+  min-width: 0;
+  max-width: calc(100vw - 40px);
+}
 .desk-screen-notread {
   display: inline-flex;
   align-items: center;

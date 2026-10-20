@@ -215,13 +215,13 @@ describe("DeskMenuBar at 393", () => {
     expect(menu.querySelectorAll(".desk-menu-keycaps, kbd")).toHaveLength(0);
   });
 
-  it("New is Thought / Meeting / Project / Person, with no ⌘ keycap", () => {
+  it("New has the seven shared kinds, with no ⌘ keycap", () => {
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
     fireEvent.click(within(menu).getByRole("menuitem", { name: /^New\W*$/ }));
     const sub = screen.getByRole("menu");
-    expect(labels(sub)).toEqual(["New", "Note", "Meeting", "Project", "Person"]);
+    expect(labels(sub)).toEqual(["New", "Note", "Meeting", "Decision", "Project", "Person", "Automation", "Drawer"]);
     expect(sub.querySelectorAll(".desk-menu-keycaps, kbd")).toHaveLength(0);
   });
 

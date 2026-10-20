@@ -27,6 +27,7 @@ const DESK_PAGE_ORDER = ["what-i-owe", "what-changed-this-week"] as const;
 function useDeskLinks() {
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [people, setPeople] = useState<PersonRow[]>([]);
+  const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     let live = true;
     void Promise.allSettled([
@@ -40,10 +41,11 @@ function useDeskLinks() {
       if (peopleResult.status === "fulfilled") {
         setPeople(Array.isArray(peopleResult.value?.relationships) ? peopleResult.value.relationships : []);
       }
+      setLoaded(true);
     });
     return () => { live = false; };
   }, []);
-  return { projects, people };
+  return { projects, people, loaded };
 }
 
 function pageBeliefs(page: StandingPageWire, beliefs: BeliefCardData[]): BeliefCardData[] {
@@ -110,15 +112,18 @@ function AskYourDesk() {
 
 function MemoryHome() {
   const { loaded, pages } = useStandingPagesRead("desk");
-  const { projects, people } = useDeskLinks();
+  const { projects, people, loaded: linksLoaded } = useDeskLinks();
   const engine = useEngine("memory.page");
   const [beliefs, setBeliefs] = useState<BeliefCardData[]>([]);
+  const [beliefsLoaded, setBeliefsLoaded] = useState(false);
+  const [shown, setShown] = useState(false);
 
   useEffect(() => {
     let live = true;
     void apiFetch<Record<string, unknown>>("/api/memory/recall?recent=1&filter=all")
       .then((raw) => { if (live) setBeliefs(decodeRecall(raw).beliefs); })
-      .catch(() => { if (live) setBeliefs([]); });
+      .catch(() => { if (live) setBeliefs([]); })
+      .finally(() => { if (live) setBeliefsLoaded(true); });
     return () => { live = false; };
   }, []);
 
@@ -126,12 +131,17 @@ function MemoryHome() {
     .map((slug) => pages.find((page) => page.slug === slug))
     .filter((page): page is StandingPageWire => Boolean(page));
   const hasPages = ordered.length > 0;
+  // First paint keeps every control below the answers in one settled batch.
+  // Ask stays available while independent reads finish or fail.
+  useEffect(() => {
+    if (loaded && linksLoaded && beliefsLoaded && (hasPages || engine.state !== "unread")) setShown(true);
+  }, [loaded, linksLoaded, beliefsLoaded, hasPages, engine.state]);
 
   return (
     <>
       <div className="room-body memory-home" data-testid="memory-home">
         <AskYourDesk />
-        {!loaded ? <p className="room-empty-line">Loading…</p> : null}
+        {!shown ? <p className="room-empty-line">Loading…</p> : (<>
         {loaded && !hasPages ? (
           <SurfaceStateEmpty engine={engine} />
         ) : null}
@@ -165,6 +175,7 @@ function MemoryHome() {
         <Disclosure label="RAW" variant="dense">
           <RecallFace />
         </Disclosure>
+        </>)}
       </div>
       <SurfaceFooter />
     </>

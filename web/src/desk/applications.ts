@@ -71,6 +71,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     // The row keeps its id, its Search words and ⌘⇧P; each opens Settings
     // there (the `change-places` alias on Settings). ChangePlacesCore stays.
     parked: "settings:wallpaper",
+    mark: 4,
     surface: {
       eyebrow: "Places to think",
       minW: 600,
@@ -101,6 +102,10 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     dock: { order: 1, launch: "surface" },
     go: { group: "daily", order: 7 },
     shortcut: "⌃1",
+    aliases: [
+      { key: "configure-commands", scope: "commands" },
+      { key: "surface-commands", scope: "commands" },
+    ],
     surface: {
       eyebrow: "Daily cockpit",
       minW: 560,
@@ -180,7 +185,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       { key: "configure-integration" },
       { key: "configure-runs-on", scope: "models" },
       { key: "open-concierge", scope: "models" },
-      { key: "read-runtime-docs", scope: "guide" },
+      // The retired Guide alias is parked under _parked/setupGuideAlias.ts.
       // Betterment setup ST1: the parked Rhythm window and Change places.
       { key: "configure-cadence", scope: "rhythm" },
       { key: "change-places", scope: "wallpaper" },
@@ -245,6 +250,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
      and a Go/⌘K door with it. */
   {
     action: "configure-setup",
+    aliases: [{ key: "read-runtime-docs" }],
     windowId: "surface-setup",
     label: "Setup",
     description: "What this device is ready for, check by check.",
@@ -253,7 +259,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     // A tool, not a dock primary. PHILO-17 (doors): its door is the
     // HoldSpeak menu; ⌘K still finds it.
     group: "tool",
-    mark: 4,
+    mark: 5,
     surface: {
       eyebrow: "Readiness",
       minW: 560,
@@ -410,20 +416,13 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "configure-commands",
     windowId: "surface-commands",
+    parked: "speak:commands",
     label: "Commands",
     description: "Map spoken phrases to registered actions.",
     glyph: "⌘",
     href: "/commands",
     go: { group: "work", order: 2, label: "Voice commands" },
     group: "tool",
-    surface: {
-      eyebrow: "Voice commands",
-      minW: 460,
-      load: () =>
-        import("../pages/cores/CommandsCore").then((module) => ({
-          default: module.CommandsCore,
-        })),
-    },
   },
   {
     action: "open-people",

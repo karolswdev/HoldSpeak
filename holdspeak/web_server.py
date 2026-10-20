@@ -317,6 +317,23 @@ def _agent_done_step() -> list[str]:
         return []
 
 
+def _agent_review_step() -> list[dict[str, Any]]:
+    """Betterment AG12: advance explicit builder/reviewer pairs.
+
+    The review loop is bounded and idempotent; a watcher tick is the only
+    runtime integration point.  A failure leaves the pair visible for the
+    owner and never stops the coder watcher.
+    """
+    try:
+        from .db import get_database
+        from .services.agent_review import review_tick
+
+        return review_tick(get_database())
+    except Exception as exc:
+        log.debug(f"agent review step failed: {exc}")
+        return []
+
+
 def _screen_watch_step() -> list[str]:
     """Betterment AG7: one read of every live agent's screen
     (``agent_context.screen_watch.tick``); the frame keys whose face changed.
@@ -1610,6 +1627,16 @@ class MeetingWebServer:
             jira_provider=web_ctx.jira_provider,
             confluence_provider=web_ctx.confluence_provider,
         )
+        # Betterment Setup ST3-ST5: the one Setup inventory reads the same
+        # composition-owned producers as first run, Engines and People.
+        web_ctx.setup_service.bind_found_sources(
+            onboarding_service=web_ctx.onboarding_service,
+            local_ai_setup_service=web_ctx.local_ai_setup_service,
+            inference_default_service=web_ctx.inference_default_service,
+            inference_assignment_service=web_ctx.inference_assignment_service,
+            model_library_service=web_ctx.model_library_service,
+            people_service=web_ctx.people_service,
+        )
 
         # HS-200-45 R1/R4: ONE composition root. The desk-primitive services are
         # composed HERE, once, with the ``on_changed`` hook bound to the bus --
@@ -2127,6 +2154,10 @@ class MeetingWebServer:
                 # Betterment AG9: a finished turn notifies quietly (once).
                 if screen_changed or mtime_moved or _DONE_SEEN is None:
                     await asyncio.to_thread(_agent_done_step)
+                # AG12 commit eligibility is independent of hook mtime: the
+                # builder can commit after its Done turn without another hook
+                # event. The loop itself is bounded and idempotent.
+                await asyncio.to_thread(_agent_review_step)
                 for key in screen_changed:
                     await self._ws.broadcast(
                         BroadcastMessage(

@@ -233,19 +233,6 @@ export const VERBS: Verb[] = [
     ghost: never,
     run: () => void useDesk.getState().createPrimitive("workbench"),
   },
-  {
-    id: "desk.new-thread",
-    label: "New Thread",
-    menu: "desk",
-    scope: "floor",
-    group: "new",
-    glyph: KIND_GLYPH.thread,
-    keywords: ["create", "chat", "conversation"],
-    ghost: never,
-    // Betterment Q4: a new thread is a new Ask; the thread is kept when the
-    // first question is answered.
-    run: () => useDesk.getState().openAskThread(null),
-  },
   // HS-159-05: Project creation joins the shared creation grammar (WEB-CR-001)
   {
     id: "desk.new-project",
@@ -258,16 +245,15 @@ export const VERBS: Verb[] = [
     ghost: never,
     run: () => openSurfaceOr("project-setup", "/"),
   },
-  // PHILO-15 11 (B21, owner ruling 2026-10-07): at 393 Go ▸ New is Thought /
-  // Meeting / Project / Person. Meeting and Person have no create verb of
-  // their own, so these two open the window where each one starts (the
-  // Live meeting room; People, whose roster adds a person). No menu bar
-  // face and no ⌘K row: 1440 stays as it is.
+  // PHILO-15 11 (B21, owner ruling 2026-10-07): Meeting and Person open the
+  // window where each one starts (the Live meeting room; People, whose
+  // roster adds a person).
   {
     id: "desk.new-meeting",
     label: "New Meeting",
+    menu: "desk",
     scope: "floor",
-    group: "phone-new",
+    group: "new",
     glyph: "●",
     palette: false,
     ghost: never,
@@ -276,12 +262,40 @@ export const VERBS: Verb[] = [
   {
     id: "desk.new-person",
     label: "New Person",
+    menu: "desk",
     scope: "floor",
-    group: "phone-new",
+    group: "new",
     glyph: "⊕",
     palette: false,
     ghost: never,
     run: () => openSurfaceOr("open-people", "/", undefined),
+  },
+  {
+    id: "desk.new-drawer",
+    label: "New Drawer",
+    menu: "desk",
+    scope: "floor",
+    group: "new",
+    glyph: KIND_GLYPH.zone,
+    keywords: ["create", "drawer", "directory", "folder", "zone"],
+    ghost: never,
+    // A drawer is a directory in the hub. The existing store path chooses a
+    // free name, posts the authenticated directory route, adopts the answer,
+    // and focuses the floor name field after the read lands.
+    run: () => void useDesk.getState().createPrimitive("zone"),
+  },
+  // Betterment Q4: a new thread is a new Ask; the thread is kept when the
+  // first question is answered. The registry verb remains for old callers,
+  // but is parked from every menu face.
+  {
+    id: "desk.new-thread",
+    label: "New Thread",
+    scope: "floor",
+    glyph: KIND_GLYPH.thread,
+    palette: false,
+    keywords: ["create", "chat", "conversation"],
+    ghost: never,
+    run: () => useDesk.getState().openAskThread(null),
   },
   // ── Desk: the floor verbs ───────────────────────────────────────────
   {
@@ -289,10 +303,9 @@ export const VERBS: Verb[] = [
     // HS-201-06 (Constitution tenet 4, ASD-STE100): "Settle in" is an
     // idiom. The verb hides the navigation chrome and shows it again.
     label: () => useSettleState.getState().settled ? "Back to Desk" : "Hide the menus",
-    menu: "desk",
     scope: "floor",
     group: "view",
-    key: "⌘⇧F",
+    palette: false,
     glyph: "◌",
     keywords: ["focus", "quiet", "zen", "chrome", "settle"],
     ghost: never,
@@ -654,7 +667,7 @@ export const VERBS: Verb[] = [
     return wing ? [[wing, application] as const] : [];
   })).entries()].map(([wing, application]): Verb => ({
     id: `settings.${wing}`,
-    label: application.label,
+    label: wing === "wallpaper" ? "Wallpaper" : application.label,
     scope: "system",
     glyph: application.glyph,
     // Search lists the Settings wings as its own SETTINGS rows.
@@ -959,7 +972,32 @@ export const VERBS: Verb[] = [
 ];
 
 export function menuVerbs(menu: MenuId): Verb[] {
-  return VERBS.filter((v) => v.menu === menu);
+  const verbs = VERBS.filter((v) => v.menu === menu);
+  if (menu !== "desk") return verbs;
+  // S2 settles the New grammar in the face order the owner reads: Note,
+  // Meeting, Decision, Project, Person, Automation, Drawer. Historical
+  // registry verbs remain available to old callers but are not menu rows.
+  const order = [
+    "desk.new-note",
+    "desk.new-meeting",
+    "desk.new-decision",
+    "desk.new-project",
+    "desk.new-person",
+    "desk.new-workbench",
+    "desk.new-drawer",
+  ];
+  const rank = (id: string) => order.indexOf(id);
+  return verbs
+    .map((verb, index) => ({ verb, index }))
+    .sort((a, b) => {
+      const ar = rank(a.verb.id);
+      const br = rank(b.verb.id);
+      if (ar < 0 && br < 0) return a.index - b.index;
+      if (ar < 0) return 1;
+      if (br < 0) return -1;
+      return ar - br;
+    })
+    .map(({ verb }) => verb);
 }
 
 export function verbsFor(scope: VerbScope): Verb[] {

@@ -411,6 +411,18 @@ def launch_lane(
     profile = str(record.get("profile_id") or "")
     limit = max(1, min(int(limit), 1000))
 
+    def review() -> Optional[dict[str, Any]]:
+        value = record.get("review")
+        if not isinstance(value, Mapping):
+            return None
+        try:
+            from .agent_review import review_wire
+
+            return review_wire(value)
+        except Exception as exc:
+            log.warning(f"launch lane: review result not read: {exc}")
+            return None
+
     def events() -> list[dict[str, Any]]:
         # The hook spools; the lane read drains the spool first.
         try:
@@ -457,37 +469,48 @@ def launch_lane(
         session_part = _part("session", lambda: _session_view(session))
         work_done = isinstance(pr, Mapping) and pr.get("number") is not None
         wait_part = _part("wait", lambda: _wait(session, answers, work_done=work_done))
+    review_value = review()
+    review_done = (
+        isinstance(review_value, Mapping)
+        and str(review_value.get("status") or "") == "done"
+        and isinstance(review_value.get("pair_result"), Mapping)
+    )
+    launch = {
+        "launch_id": record.get("launch_id"),
+        # AG12: the durable pair is terminal even when the last hook left the
+        # process lifecycle at `working`; expose that shared fact to the lane.
+        "state": "done" if review_done else record.get("state"),
+        "agent": agent_of_profile(profile),
+        "profile_id": profile or None,
+        "origin_ref": origin,
+        "story_ref": record.get("story_ref"),
+        "branch": record.get("branch") or None,
+        "worktree_path": _home_as_tilde(path),
+        "launched_at": record.get("launched_at"),
+        # PHILO-15 B42: when the brief reached the agent (its delivery
+        # receipt), not when the launch began.
+        "brief_sent_at": record.get("brief_sent_at"),
+        # PHILO-15 B46: Re-briefs sent mid-turn wait for turn ends (a
+        # small FIFO, oldest first); every press ends in one receipt
+        # (SENT / SUPERSEDED / EXPIRED) with its approval: who pressed,
+        # when, and the delivery's command id (Astra r2 on #996).
+        "queued_rebriefs": _queued_view(record),
+        "queued_rebrief": (_queued_view(record) or [None])[0],
+        "rebriefs": [dict(r) for r in (record.get("rebriefs") or []) if isinstance(r, Mapping)],
+        "control_mode": record.get("control_mode"),
+        "gate": record.get("gate"),
+        "instruction_state": record.get("instruction_state"),
+        "brief_text": record.get("brief_text"),
+        "stopped": record.get("stopped") or None,
+        "failure": record.get("failure"),
+        "session_key": key or None,
+        "tmux_session": record.get("session"),
+        "attempt_id": record.get("attempt_id"),
+    }
+    if review_value is not None:
+        launch["review"] = review_value
     lane = {
-        "launch": {
-            "launch_id": record.get("launch_id"),
-            "state": record.get("state"),
-            "agent": agent_of_profile(profile),
-            "profile_id": profile or None,
-            "origin_ref": origin,
-            "story_ref": record.get("story_ref"),
-            "branch": record.get("branch") or None,
-            "worktree_path": _home_as_tilde(path),
-            "launched_at": record.get("launched_at"),
-            # PHILO-15 B42: when the brief reached the agent (its delivery
-            # receipt), not when the launch began.
-            "brief_sent_at": record.get("brief_sent_at"),
-            # PHILO-15 B46: Re-briefs sent mid-turn wait for turn ends (a
-            # small FIFO, oldest first); every press ends in one receipt
-            # (SENT / SUPERSEDED / EXPIRED) with its approval: who pressed,
-            # when, and the delivery's command id (Astra r2 on #996).
-            "queued_rebriefs": _queued_view(record),
-            "queued_rebrief": (_queued_view(record) or [None])[0],
-            "rebriefs": [dict(r) for r in (record.get("rebriefs") or []) if isinstance(r, Mapping)],
-            "control_mode": record.get("control_mode"),
-            "gate": record.get("gate"),
-            "instruction_state": record.get("instruction_state"),
-            "brief_text": record.get("brief_text"),
-            "stopped": record.get("stopped") or None,
-            "failure": record.get("failure"),
-            "session_key": key or None,
-            "tmux_session": record.get("session"),
-            "attempt_id": record.get("attempt_id"),
-        },
+        "launch": launch,
         "session": session_part,
         "follow_through": {
             "pr": {

@@ -22,10 +22,21 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from holdspeak import memory_conductor
 from holdspeak.db import Database
-from holdspeak.memory.engine import _assignment_head
-from holdspeak.memory.pages import PAGE_CAPABILITY, PAGE_SET, read, write_pending
+from holdspeak.kernel.runtime import _configure
+from holdspeak.memory.engine import MemoryEngineUnassigned, _assignment_head, assigned_revision
+from holdspeak.memory.pages import (
+    PAGE_CAPABILITY,
+    PAGE_SET,
+    build_payload,
+    read,
+    resolve_page_writer,
+    spec_for,
+    write_pending,
+)
 from holdspeak.principals import Principal, PrincipalKind
 from holdspeak.services.inference_assignment_service import InferenceAssignmentService
 from holdspeak.services.memory_service import MemoryService
@@ -106,6 +117,82 @@ def test_pages_run_on_everything_else_past_a_background_default_holdspeak_made(t
     mark_made_by_holdspeak(lonely, _set(lonely, "bg", {"kind": "group", "group_id": "background"}, "made-lan"))
     with lonely._connection() as conn:
         assert _assignment_head(conn, PAGE_CAPABILITY) is None
+
+
+@pytest.mark.parametrize("background_boundary", ("private_network", "cloud"))
+def test_page_writer_calls_the_selected_everything_else_revision(
+    tmp_path: Path, background_boundary: str,
+) -> None:
+    """The physical writer must follow the head selected by memory policy.
+
+    The generic planner prefers the Background assignment, while memory's
+    policy skips a non-local default HoldSpeak made and selects the owner's
+    global head.  This test crosses the real resolver, writer and runner; only
+    the model leaf is replaced, and its revision argument proves the physical
+    route.
+    """
+    from tests.unit.test_memory_slice5_pages import _PageEngine
+
+    db = Database(tmp_path / "physical-route.db")
+    _profile(db, "background-lan", model="background-model", boundary=background_boundary)
+    _profile(db, "owner-global", model="owner-model", boundary="private_network")
+    background = _set(
+        db,
+        "background",
+        {"kind": "group", "group_id": "background"},
+        "background-lan",
+    )
+    mark_made_by_holdspeak(db, background)
+    global_assignment = _set(db, "global", {"kind": "global"}, "owner-global")
+    broker = _configure(db)
+    leaf = _PageEngine()
+    seen_revisions: list[str] = []
+
+    def factory(revision, **_kwargs):
+        seen_revisions.append(str(revision.id))
+        return leaf
+
+    broker.inference_runner._engine_factory = factory
+    with db._connection() as conn:
+        selected_head = _assignment_head(conn, PAGE_CAPABILITY)
+        owner_revision = conn.execute(
+            "SELECT id FROM deployment_revisions WHERE model=?",
+            ("owner-model",),
+        ).fetchone()[0]
+    selected = assigned_revision(broker, PAGE_CAPABILITY)
+    writer = resolve_page_writer(broker, memory_conductor._principal())
+    assert selected_head == f"{global_assignment['id']}@1"
+    assert selected is not None
+    assert writer is not None
+    for capability in ("memory.extract", "memory.consolidate"):
+        sibling = assigned_revision(broker, capability)
+        assert sibling is not None
+        assert sibling["assignment_id"] == global_assignment["id"]
+        assert sibling["revision_id"] == owner_revision
+
+    writer.write(build_payload(spec_for("desk", "what-i-owe"), [], []))
+
+    assert selected["assignment_id"] == global_assignment["id"]
+    assert selected["revision_id"] == owner_revision
+    assert seen_revisions == [owner_revision]
+    assert seen_revisions == [writer.revision_id]
+    receipt = broker.store.receipt(writer.last_operation_id)
+    assert receipt["outcome"] == "succeeded"
+    operation = broker.store.operation(writer.last_operation_id)
+    assert operation["target_ref"] == f"deployment-revision:{owner_revision}"
+    assert receipt["operation_id"] == writer.last_operation_id
+    assert receipt["result_ref"] == f"memory-page:{global_assignment['id']}"
+
+    InferenceAssignmentService(db).clear_assignment(OWNER, {
+        "command_id": "clear-global-page-route",
+        "expected_revision": 1,
+        "scope": {"kind": "global"},
+        "capability_id": PAGE_CAPABILITY,
+    })
+    assert not writer.live()
+    with pytest.raises(MemoryEngineUnassigned):
+        writer.write(build_payload(spec_for("desk", "what-i-owe"), [], []))
+    assert seen_revisions == [owner_revision]
 
 
 def test_pages_have_their_own_calls_after_extraction_spends_the_shared_budget(monkeypatch) -> None:

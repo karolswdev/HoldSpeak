@@ -124,6 +124,7 @@ RETIRED_APPS: dict[str, str] = {
 #: the hub both need to retire the old Concierge row without retiring the
 #: canonical Settings window that now hosts Engines.
 RETIRED_WINDOWS: dict[str, str] = {
+    "surface-commands": "Voice commands is a wing of Speak (Betterment C11)",
     "surface-concierge": "Engines is a section of Settings (PHILO-17)",
     "surface-companion": "the old Agents application is unmapped; Agents is the Conductor window (Betterment AG1)",
     # Betterment setup ST1: one home each. A saved row closes and the
