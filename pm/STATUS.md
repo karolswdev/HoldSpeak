@@ -4,9 +4,55 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (one decision record)
+**Last updated:** 2026-10-20 (main wire follow-through)
 
 ## Current phase
+
+Failed native sign-in setup now cleans up through coder_factory. The
+factory accepts only the just-minted private sign-in session name, revokes
+its temporary agent credential and records the cleanup. A cleanup failure
+preserves the original terminal-setup refusal. The lifecycle census stays
+strict; no new direct tmux writer is admitted.
+
+The watcher on 5bf3dc0c8 found seven Python failures (16,996 passed,
+27 skipped and one xfailed) and two old creation-browser endpoint assertions.
+Complete People and automation MCP/folder replies are re-recorded from real
+producers. The deterministic drafter retains one confirmed linked Project
+decision while recording no inferred memory. Creation still writes nothing
+before a name, then one canonical decision. The People response also carries
+the current saved Builder preference. Root passed 26 earlier producer checks
+and 73 consumers, then 27 factory/sign-in/census/creation/producer checks and
+12 People consumers on the integrated source. Required quick:
+434 affected checks passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green.. The remaining full tape is still separate.
+
+Search uses one ranked stream, the last six successful opens, exact About
+for Cmd+Enter and live object verbs. Protected People support Open, Ask,
+Prep and Keep/Remove through the existing filing operation. Mode recipes
+keep their semantic kind. Builder tools is a hub preference with the saved
+revision, shared browser refresh and existing MCP settings access.
+
+Root passed 65 collected backend/browser cases, including real person
+Keep/Remove and Prep at 1440/393, exact Cmd+Enter About, phone search and
+Builder persistence across two browsers. The 150 focused web consumers,
+type check and build pass. The complete Settings wire group was recorded
+through both actual producer writers. P9's canonical decision prompt and
+front-project context are integrated. The first required check caught old
+Search labels, grouping and cold-start assertions, the Runs-on rig using its
+wrong owner token, a phone Hand hit-area overlap and an action-list left
+rail. The shared styles and test adapters are corrected without changing
+product authority or relaxing the geometry/canon checks. Required quick:
+580 related web checks and 19 affected browser cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green..
+
+The final fix proof passed all 48 selected Search consumers, eight collected
+browser cases (first use, Note editor, Runs-on Undo and strict Search hit
+areas at both widths), 15 canon checks, type check and build.
+
+The older pinned full tape finished red: 16,962 Python and 314 browser
+cases passed, with five Python and four browser failures repaired by
+#1397/#1400. Its web run passed 5,351 and failed two Settings cases; both
+pass in the current focused run. A fresh full run must confirm integration.
+The S4/S1/S0 Search follow-ups and the already-fixed Interview ordering
+entry are reconciled with their retained proof.
 
 P9 gives each decision one canonical record. New Decision carries About and
 Why through the admitted decision.create path. Project This week, Decisions,

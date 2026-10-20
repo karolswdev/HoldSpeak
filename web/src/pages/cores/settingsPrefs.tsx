@@ -350,11 +350,21 @@ export function SettingGlyph({ name }: { name: string }) {
 /* ── Betterment shell S1: the Builder tools switch (Settings ▸ System).
    Off by default. On, Go shows Builder ▸ and Search lists the builder rows
    (Activity, Processes, Context, Components, Calendar snapshot, Delivery
-   board, Terminals, Refresh from hub). This browser only. ── */
+   board, Terminals, Refresh from hub). Shared by the hub. ── */
 
-export function BuilderToolsModule() {
-  const on = useBuilderTools((state) => state.on);
-  const setOn = useBuilderTools((state) => state.setOn);
+export function BuilderToolsModule({ checked, onChange }: {
+  checked?: boolean;
+  onChange?: (next: boolean) => void;
+} = {}) {
+  const cached = useBuilderTools((state) => state.on);
+  const setCached = useBuilderTools((state) => state.setOn);
+  const on = checked ?? cached;
+  const setOn = (next: boolean) => {
+    // SettingsCore owns the canonical debounced/revisioned write. The cache
+    // only keeps Go/Search responsive until the hub answer arrives.
+    setCached(next);
+    onChange?.(next);
+  };
   return (
     <GadgetGroup label="Builder tools" material="inset">
       <GadgetRow label="Builder tools" fact="GO ▸ BUILDER · SEARCH" controlWidth="short">

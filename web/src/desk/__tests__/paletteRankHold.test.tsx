@@ -63,7 +63,7 @@ function openDeck() {
     </MemoryRouter>,
   );
   fireEvent.click(screen.getByRole("button", { name: /Search/ }));
-  return screen.getByRole("combobox", { name: "Search tools and Desk items" });
+  return screen.getByRole("combobox", { name: "Find, open or ask" });
 }
 
 describe("the deck while its ranking reads are out", () => {

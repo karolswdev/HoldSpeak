@@ -1,21 +1,21 @@
 {
   "agent_identity": "sweep-runner",
-  "grant_id": "projdeleg_43429da642c6412c9ee234124cacd573",
-  "operation_id": "op_e90ffa603a7e46beab114a0bf2cf5f3f",
-  "project_id": "proj-8520e67b0991",
+  "grant_id": "projdeleg_ee89722a24d6465d81c9d9f5bab267cf",
+  "operation_id": "op_3e95eb20de684fcda6092410638b1794",
+  "project_id": "proj-9727ac112020",
   "receipt": {
     "actor_identity": "owner-session",
     "actor_kind": "owner",
     "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-    "created_at": 1791733421.8219981,
+    "created_at": 1792478900.25667,
     "delegator_identity": "",
     "delegator_kind": "",
-    "operation_id": "op_e90ffa603a7e46beab114a0bf2cf5f3f",
+    "operation_id": "op_3e95eb20de684fcda6092410638b1794",
     "outcome": "succeeded",
-    "receipt_id": "rcpt_d43e56175ae848c88a7a426e12d2bf4a",
-    "result_ref": "project-delegation:projdeleg_43429da642c6412c9ee234124cacd573",
+    "receipt_id": "rcpt_8bab36868dbd457b950016f3a726a7fb",
+    "result_ref": "project-delegation:projdeleg_ee89722a24d6465d81c9d9f5bab267cf",
     "state": "succeeded",
-    "target_ref": "project:proj-8520e67b0991"
+    "target_ref": "project:proj-9727ac112020"
   },
   "success": true
 }

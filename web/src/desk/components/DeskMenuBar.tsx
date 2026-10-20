@@ -26,6 +26,7 @@ import {
 import { openProjectRoom } from "../shell";
 import { KIND_GLYPH, KIND_LABEL } from "../tools";
 import { objectMenuEntries, windowObjectRef } from "../objectMenu";
+import { useScreenMembersStore } from "../screen/members";
 import { objectByRef } from "../world";
 import { WorkMenu, withholdGhosts, type WorkMenuEntry } from "./DeskMenu";
 import { useCompactViewport } from "../useCompactViewport";
@@ -91,7 +92,8 @@ export function menuBarObjectTarget(
   const object = objectByRef(items, ref);
   // Betterment Q5: a window's object the desk does not hold as an item (a
   // person, an older meeting) is still the Object menu's target.
-  const kind = object?.kind ?? (fromWindow ? ref.split(":", 1)[0] : null);
+  const personKnown = ref.startsWith("people:") && useScreenMembersStore.getState().people?.persons.some((person) => `people:${person.id}` === ref);
+  const kind = object?.kind ?? (personKnown ? "people" : fromWindow ? ref.split(":", 1)[0] : null);
   if (!kind) return null;
   return { ref, kind, fromWindow: Boolean(fromWindow) };
 }
@@ -265,6 +267,7 @@ export function DeskMenuBar() {
   const builder = useBuilderTools((s) => s.on);
   // PHILO-15 11: the phone Go lists the projects.
   const projects = useDesk((s) => s.items.project);
+  useScreenMembersStore();
   // The Window menu lists the open windows: re-render on a registry change
   // and on a change of the front window.
   useAllOpenWindows();

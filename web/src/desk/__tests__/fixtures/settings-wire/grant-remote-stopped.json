@@ -6,11 +6,11 @@
       "active": true,
       "delegation": {
         "expires_at": null,
-        "grant_id": "deskdeleg_122eda6c615a4bf1b965670191fffddb",
+        "grant_id": "deskdeleg_2f626e241ab843a1914e5f27017b9e83",
         "state": "REVOKED"
       },
-      "expires_at": 1791776620.9496167,
-      "id": "4f24a8cb31314fa5",
+      "expires_at": 1792522099.3890057,
+      "id": "a3dae64bfbae4288",
       "identity": "desk-agent",
       "last_used_at": null,
       "palette": "DESK",

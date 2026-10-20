@@ -56,3 +56,24 @@ Original rows:
 | A3 (#1293) | "What it has learned" shows a bare count ("2"); use words ("2 lessons") or nothing. | Automations A4 |
 | D4 (#1303) | The menu bar still has an "Intelligence" menu when Today is front; it should say Today (PLAN §2: Intelligence is retired as a name). | Daily D5 |
 | Q0 (#1260) | "Engine not reachable" is shown as "No engine for answers" (`ask_service.py` reason mapping). | Asking Q1 |
+
+Search and Floor follow-through: protected People references use the shared
+Object verbs and canonical Desk directory. Keep and Remove persist through
+the admitted filing path. Mode recipes retain their semantic kind in Search;
+automation aliases resolve the app. Builder tools is a hub setting with saved
+revision, agent-readable state and cross-browser refresh. Root verified all
+four real browser cases, 65 focused backend/browser cases, 150 web consumers,
+and complete Settings producer recordings.
+
+The old Interview ordering entry was already fixed in #1302:
+`holdspeak/services/thread_service.py:198` keeps the observation system message
+before the user; `tests/unit/test_desk_ask.py:199` retains the exact role-order
+assertion and strips tool-call markup. This is implementation closure.
+
+Original rows:
+
+| S4 delivery | The floor and meeting Keep behavior are verified. Mode recipes still enter Search as Agent rows; individual People need their Object-menu adapter because the world stores only the People singleton. Finish both seams in S5. S4 remains partial. | Shell S5 |
+| Q0 (#1260) | Interview's answer-only pass puts a system message after the user message, which Qwen's template rejects. | Asking Q4, or a small fix |
+| S1 (#1259) | A person is not a desk object, so a person has no Object menu. | Shell S4 or Daily D6 |
+| S1 (#1259) | The Builder tools switch is saved in the browser, not on the hub, so an agent cannot read or set it. | Shell S5 |
+| S0 (#1257) | Search for "automation" still finds nothing. | Shell S5 (Automations A1 adds the alias) |

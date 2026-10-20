@@ -282,6 +282,7 @@ export const fromWireRecipe = (a: unknown): Persona | null => {
     kbId: wireStringOrNull(a, "kb_id"),
     profileId: wireString(a, "profile_id"),
     capability: wireRaw(a, "capability") ?? null,
+    recipeKind: wireString(a, "kind"),
   };
 };
 

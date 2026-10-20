@@ -1,6 +1,6 @@
 {
  "_source": "The hub's own answers, captured by tests/integration/test_desk_people.py::test_people_from_work_wire (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
- "recordedAt": "2026-10-19T21:34:55.604480-06:00",
+ "recordedAt": "2026-10-20T01:58:29.229426-06:00",
  "before": {
   "/api/people/readiness": {
    "readiness": "unconfigured",
@@ -90,59 +90,59 @@
    "board": {
     "now": [
      {
-      "id": "a96151278717",
-      "text": "Review design doc on settlement retries",
-      "owner": "Me",
-      "due": "2026-10-19",
+      "id": "22208d9d83ce",
+      "text": "Write up alert rule changes",
+      "owner": "Theo",
+      "due": "2026-10-22",
       "status": "open",
       "meeting_id": "m-daily-theo-1on1",
-      "decision_id": "dec-c219b6e01d674f4c",
+      "decision_id": "dec-6a481248159048eb",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
       "provenance": {
        "meeting_id": "m-daily-theo-1on1",
-       "segment_text": "I wrote the design doc on settlement retries. Can you review it?",
+       "segment_text": "I'll write up the alert rule changes by Thursday.",
        "segment_speaker": "Theo",
-       "segment_start": 0.0,
+       "segment_start": 40.0,
        "moment": {
         "meeting_id": "m-daily-theo-1on1",
-        "source_timestamp": 0.0,
-        "segment_id": 6,
-        "segment_index": 0,
-        "segment_start": 0.0,
-        "segment_end": 20.0,
+        "source_timestamp": 40.0,
+        "segment_id": 8,
+        "segment_index": 2,
+        "segment_start": 40.0,
+        "segment_end": 60.0,
         "speaker": "Theo",
-        "text": "I wrote the design doc on settlement retries. Can you review it?"
+        "text": "I'll write up the alert rule changes by Thursday."
        },
        "available": true,
        "thread_id": null,
        "source_ref": null
       },
-      "target_ref": "action_item:a96151278717",
-      "delegated_at": "2026-10-20T03:34:55.400780+00:00",
-      "created_at": "2026-10-20T03:34:55.376225+00:00",
+      "target_ref": "action_item:22208d9d83ce",
+      "delegated_at": "2026-10-20T07:58:28.984945+00:00",
+      "created_at": "2026-10-20T07:58:28.958514+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
        {
         "name": "follow_through.complete",
         "arguments": {
-         "card_id": "a96151278717",
+         "card_id": "22208d9d83ce",
          "verb": "done"
         }
        },
        {
         "name": "follow_through.complete",
         "arguments": {
-         "card_id": "a96151278717",
+         "card_id": "22208d9d83ce",
          "verb": "dismiss"
         }
        },
        {
         "name": "follow_through.complete",
         "arguments": {
-         "card_id": "a96151278717",
+         "card_id": "22208d9d83ce",
          "verb": "snooze"
         },
         "required_arguments": [
@@ -152,7 +152,7 @@
        {
         "name": "follow_through.complete",
         "arguments": {
-         "card_id": "a96151278717",
+         "card_id": "22208d9d83ce",
          "verb": "delegate"
         },
         "required_arguments": [
@@ -163,86 +163,7 @@
         "name": "agent.hand",
         "arguments": {
          "kind": "action",
-         "id": "a96151278717"
-        }
-       }
-      ]
-     },
-     {
-      "id": "691f0d01b037",
-      "text": "Email Dana about the cutover window",
-      "owner": "Me",
-      "due": "2026-10-19",
-      "status": "open",
-      "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-96c09280bc444305",
-      "stale_score": null,
-      "source": "action_item",
-      "lane": "now",
-      "provenance": {
-       "meeting_id": "m-daily-platform-sync",
-       "segment_text": "And I'll email Dana about the cutover window on Monday.",
-       "segment_speaker": "Me",
-       "segment_start": 80.0,
-       "moment": {
-        "meeting_id": "m-daily-platform-sync",
-        "source_timestamp": 80.0,
-        "segment_id": 5,
-        "segment_index": 4,
-        "segment_start": 80.0,
-        "segment_end": 100.0,
-        "speaker": "Me",
-        "text": "And I'll email Dana about the cutover window on Monday."
-       },
-       "available": true,
-       "thread_id": null,
-       "source_ref": null
-      },
-      "target_ref": "action_item:691f0d01b037",
-      "delegated_at": "2026-10-20T03:34:55.386104+00:00",
-      "created_at": "2026-10-20T03:34:55.372288+00:00",
-      "snoozed_until": null,
-      "deferred_until": null,
-      "lawful_verbs": [
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "691f0d01b037",
-         "verb": "done"
-        }
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "691f0d01b037",
-         "verb": "dismiss"
-        }
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "691f0d01b037",
-         "verb": "snooze"
-        },
-        "required_arguments": [
-         "payload.until"
-        ]
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "691f0d01b037",
-         "verb": "delegate"
-        },
-        "required_arguments": [
-         "payload.to"
-        ]
-       },
-       {
-        "name": "agent.hand",
-        "arguments": {
-         "kind": "action",
-         "id": "691f0d01b037"
+         "id": "22208d9d83ce"
         }
        }
       ]
@@ -254,7 +175,7 @@
       "due": "2026-10-20",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-d7b5a028a6c342a2",
+      "decision_id": "dec-abb771ce64c344a6",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
@@ -278,8 +199,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:82c1cea5e925",
-      "delegated_at": "2026-10-20T03:34:55.393413+00:00",
-      "created_at": "2026-10-20T03:34:55.372242+00:00",
+      "delegated_at": "2026-10-20T07:58:28.978296+00:00",
+      "created_at": "2026-10-20T07:58:28.954681+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -335,7 +256,7 @@
       "due": "2026-10-23",
       "status": "open",
       "meeting_id": "m-daily-architecture-review",
-      "decision_id": "dec-4d39d297bb9c4ae2",
+      "decision_id": "dec-eb562a8bc930414e",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -359,8 +280,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:6db59a99968b",
-      "delegated_at": "2026-10-20T03:34:55.404088+00:00",
-      "created_at": "2026-10-20T03:34:55.377717+00:00",
+      "delegated_at": "2026-10-20T07:58:28.991420+00:00",
+      "created_at": "2026-10-20T07:58:28.960150+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -408,92 +329,13 @@
       ]
      },
      {
-      "id": "22208d9d83ce",
-      "text": "Write up alert rule changes",
-      "owner": "Theo",
-      "due": "2026-10-22",
-      "status": "open",
-      "meeting_id": "m-daily-theo-1on1",
-      "decision_id": "dec-ccde7b420d5b4d7e",
-      "stale_score": null,
-      "source": "action_item",
-      "lane": "waiting",
-      "provenance": {
-       "meeting_id": "m-daily-theo-1on1",
-       "segment_text": "I'll write up the alert rule changes by Thursday.",
-       "segment_speaker": "Theo",
-       "segment_start": 40.0,
-       "moment": {
-        "meeting_id": "m-daily-theo-1on1",
-        "source_timestamp": 40.0,
-        "segment_id": 8,
-        "segment_index": 2,
-        "segment_start": 40.0,
-        "segment_end": 60.0,
-        "speaker": "Theo",
-        "text": "I'll write up the alert rule changes by Thursday."
-       },
-       "available": true,
-       "thread_id": null,
-       "source_ref": null
-      },
-      "target_ref": "action_item:22208d9d83ce",
-      "delegated_at": "2026-10-20T03:34:55.398468+00:00",
-      "created_at": "2026-10-20T03:34:55.376229+00:00",
-      "snoozed_until": null,
-      "deferred_until": null,
-      "lawful_verbs": [
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "22208d9d83ce",
-         "verb": "done"
-        }
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "22208d9d83ce",
-         "verb": "dismiss"
-        }
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "22208d9d83ce",
-         "verb": "snooze"
-        },
-        "required_arguments": [
-         "payload.until"
-        ]
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "22208d9d83ce",
-         "verb": "delegate"
-        },
-        "required_arguments": [
-         "payload.to"
-        ]
-       },
-       {
-        "name": "agent.hand",
-        "arguments": {
-         "kind": "action",
-         "id": "22208d9d83ce"
-        }
-       }
-      ]
-     },
-     {
       "id": "6a994ec7e2ca",
       "text": "Profile the reconciliation job",
       "owner": "Theo",
       "due": "2026-10-23",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-267f0e7972ae430c",
+      "decision_id": "dec-8a304b780ea34960",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -517,8 +359,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:6a994ec7e2ca",
-      "delegated_at": "2026-10-20T03:34:55.391448+00:00",
-      "created_at": "2026-10-20T03:34:55.372277+00:00",
+      "delegated_at": "2026-10-20T07:58:28.975537+00:00",
+      "created_at": "2026-10-20T07:58:28.954712+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -569,13 +411,171 @@
     "unassigned": [],
     "overdue": [
      {
+      "id": "a96151278717",
+      "text": "Review design doc on settlement retries",
+      "owner": "Me",
+      "due": "2026-10-19",
+      "status": "open",
+      "meeting_id": "m-daily-theo-1on1",
+      "decision_id": "dec-3d447fa125654fe2",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "overdue",
+      "provenance": {
+       "meeting_id": "m-daily-theo-1on1",
+       "segment_text": "I wrote the design doc on settlement retries. Can you review it?",
+       "segment_speaker": "Theo",
+       "segment_start": 0.0,
+       "moment": {
+        "meeting_id": "m-daily-theo-1on1",
+        "source_timestamp": 0.0,
+        "segment_id": 6,
+        "segment_index": 0,
+        "segment_start": 0.0,
+        "segment_end": 20.0,
+        "speaker": "Theo",
+        "text": "I wrote the design doc on settlement retries. Can you review it?"
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:a96151278717",
+      "delegated_at": "2026-10-20T07:58:28.987222+00:00",
+      "created_at": "2026-10-20T07:58:28.958509+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "a96151278717"
+        }
+       }
+      ]
+     },
+     {
+      "id": "691f0d01b037",
+      "text": "Email Dana about the cutover window",
+      "owner": "Me",
+      "due": "2026-10-19",
+      "status": "open",
+      "meeting_id": "m-daily-platform-sync",
+      "decision_id": "dec-c2be6e6793f94562",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "overdue",
+      "provenance": {
+       "meeting_id": "m-daily-platform-sync",
+       "segment_text": "And I'll email Dana about the cutover window on Monday.",
+       "segment_speaker": "Me",
+       "segment_start": 80.0,
+       "moment": {
+        "meeting_id": "m-daily-platform-sync",
+        "source_timestamp": 80.0,
+        "segment_id": 5,
+        "segment_index": 4,
+        "segment_start": 80.0,
+        "segment_end": 100.0,
+        "speaker": "Me",
+        "text": "And I'll email Dana about the cutover window on Monday."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:691f0d01b037",
+      "delegated_at": "2026-10-20T07:58:28.968640+00:00",
+      "created_at": "2026-10-20T07:58:28.954720+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "691f0d01b037"
+        }
+       }
+      ]
+     },
+     {
       "id": "931d9391783f",
       "text": "Confirm the vendor freeze dates",
       "owner": "Jun",
       "due": "2026-10-16",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-b6504cb30c0b4e92",
+      "decision_id": "dec-226f676bc1ab4ed0",
       "stale_score": null,
       "source": "action_item",
       "lane": "overdue",
@@ -599,8 +599,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:931d9391783f",
-      "delegated_at": "2026-10-20T03:34:55.389143+00:00",
-      "created_at": "2026-10-20T03:34:55.372282+00:00",
+      "delegated_at": "2026-10-20T07:58:28.972905+00:00",
+      "created_at": "2026-10-20T07:58:28.954717+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -652,9 +652,9 @@
    },
    "upcoming": [],
    "counts": {
-    "overdue": 1,
-    "now": 3,
-    "waiting": 3,
+    "overdue": 3,
+    "now": 2,
+    "waiting": 2,
     "active": 0,
     "upcoming_today": 0
    },
@@ -684,7 +684,8 @@
     "local_model_preload_authority": ""
    },
    "ui": {
-    "desk_sounds": true
+    "desk_sounds": true,
+    "builder_tools": false
    },
    "meeting": {
     "mic_device": null,
@@ -855,7 +856,7 @@
    "agents": {
     "working_at_once": 6
    },
-   "_revision": "ee2f6eaa8c9124db",
+   "_revision": "cb0befa24236d461",
    "_calendar_subscription": {
     "kind": "disabled",
     "host": "",
@@ -929,8 +930,8 @@
     "calendar_links": null,
     "owner_aliases": null,
     "state": "active",
-    "created_at": "2026-10-20T03:34:55Z",
-    "updated_at": "2026-10-20T03:34:55Z"
+    "created_at": "2026-10-20T07:58:29Z",
+    "updated_at": "2026-10-20T07:58:29Z"
    }
   },
   "jun": {
@@ -945,8 +946,8 @@
     "calendar_links": null,
     "owner_aliases": null,
     "state": "active",
-    "created_at": "2026-10-20T03:34:55Z",
-    "updated_at": "2026-10-20T03:34:55Z"
+    "created_at": "2026-10-20T07:58:29Z",
+    "updated_at": "2026-10-20T07:58:29Z"
    }
   },
   "mira": {
@@ -961,8 +962,8 @@
     "calendar_links": null,
     "owner_aliases": null,
     "state": "active",
-    "created_at": "2026-10-20T03:34:55Z",
-    "updated_at": "2026-10-20T03:34:55Z"
+    "created_at": "2026-10-20T07:58:29Z",
+    "updated_at": "2026-10-20T07:58:29Z"
    }
   }
  },
@@ -981,59 +982,59 @@
    "board": {
     "now": [
      {
-      "id": "a96151278717",
-      "text": "Review design doc on settlement retries",
-      "owner": "Me",
-      "due": "2026-10-19",
+      "id": "22208d9d83ce",
+      "text": "Write up alert rule changes",
+      "owner": "Theo",
+      "due": "2026-10-22",
       "status": "open",
       "meeting_id": "m-daily-theo-1on1",
-      "decision_id": "dec-c219b6e01d674f4c",
+      "decision_id": "dec-6a481248159048eb",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
       "provenance": {
        "meeting_id": "m-daily-theo-1on1",
-       "segment_text": "I wrote the design doc on settlement retries. Can you review it?",
+       "segment_text": "I'll write up the alert rule changes by Thursday.",
        "segment_speaker": "Theo",
-       "segment_start": 0.0,
+       "segment_start": 40.0,
        "moment": {
         "meeting_id": "m-daily-theo-1on1",
-        "source_timestamp": 0.0,
-        "segment_id": 6,
-        "segment_index": 0,
-        "segment_start": 0.0,
-        "segment_end": 20.0,
+        "source_timestamp": 40.0,
+        "segment_id": 8,
+        "segment_index": 2,
+        "segment_start": 40.0,
+        "segment_end": 60.0,
         "speaker": "Theo",
-        "text": "I wrote the design doc on settlement retries. Can you review it?"
+        "text": "I'll write up the alert rule changes by Thursday."
        },
        "available": true,
        "thread_id": null,
        "source_ref": null
       },
-      "target_ref": "action_item:a96151278717",
-      "delegated_at": "2026-10-20T03:34:55.400780+00:00",
-      "created_at": "2026-10-20T03:34:55.376225+00:00",
+      "target_ref": "action_item:22208d9d83ce",
+      "delegated_at": "2026-10-20T07:58:28.984945+00:00",
+      "created_at": "2026-10-20T07:58:28.958514+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
        {
         "name": "follow_through.complete",
         "arguments": {
-         "card_id": "a96151278717",
+         "card_id": "22208d9d83ce",
          "verb": "done"
         }
        },
        {
         "name": "follow_through.complete",
         "arguments": {
-         "card_id": "a96151278717",
+         "card_id": "22208d9d83ce",
          "verb": "dismiss"
         }
        },
        {
         "name": "follow_through.complete",
         "arguments": {
-         "card_id": "a96151278717",
+         "card_id": "22208d9d83ce",
          "verb": "snooze"
         },
         "required_arguments": [
@@ -1043,7 +1044,7 @@
        {
         "name": "follow_through.complete",
         "arguments": {
-         "card_id": "a96151278717",
+         "card_id": "22208d9d83ce",
          "verb": "delegate"
         },
         "required_arguments": [
@@ -1054,89 +1055,12 @@
         "name": "agent.hand",
         "arguments": {
          "kind": "action",
-         "id": "a96151278717"
+         "id": "22208d9d83ce"
         }
        }
-      ]
-     },
-     {
-      "id": "691f0d01b037",
-      "text": "Email Dana about the cutover window",
-      "owner": "Me",
-      "due": "2026-10-19",
-      "status": "open",
-      "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-96c09280bc444305",
-      "stale_score": null,
-      "source": "action_item",
-      "lane": "now",
-      "provenance": {
-       "meeting_id": "m-daily-platform-sync",
-       "segment_text": "And I'll email Dana about the cutover window on Monday.",
-       "segment_speaker": "Me",
-       "segment_start": 80.0,
-       "moment": {
-        "meeting_id": "m-daily-platform-sync",
-        "source_timestamp": 80.0,
-        "segment_id": 5,
-        "segment_index": 4,
-        "segment_start": 80.0,
-        "segment_end": 100.0,
-        "speaker": "Me",
-        "text": "And I'll email Dana about the cutover window on Monday."
-       },
-       "available": true,
-       "thread_id": null,
-       "source_ref": null
-      },
-      "target_ref": "action_item:691f0d01b037",
-      "delegated_at": "2026-10-20T03:34:55.386104+00:00",
-      "created_at": "2026-10-20T03:34:55.372288+00:00",
-      "snoozed_until": null,
-      "deferred_until": null,
-      "lawful_verbs": [
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "691f0d01b037",
-         "verb": "done"
-        }
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "691f0d01b037",
-         "verb": "dismiss"
-        }
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "691f0d01b037",
-         "verb": "snooze"
-        },
-        "required_arguments": [
-         "payload.until"
-        ]
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "691f0d01b037",
-         "verb": "delegate"
-        },
-        "required_arguments": [
-         "payload.to"
-        ]
-       },
-       {
-        "name": "agent.hand",
-        "arguments": {
-         "kind": "action",
-         "id": "691f0d01b037"
-        }
-       }
-      ]
+      ],
+      "person_label": "Theo",
+      "person_relationship_id": "rel-theo"
      },
      {
       "id": "82c1cea5e925",
@@ -1145,7 +1069,7 @@
       "due": "2026-10-20",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-d7b5a028a6c342a2",
+      "decision_id": "dec-abb771ce64c344a6",
       "stale_score": null,
       "source": "action_item",
       "lane": "now",
@@ -1169,8 +1093,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:82c1cea5e925",
-      "delegated_at": "2026-10-20T03:34:55.393413+00:00",
-      "created_at": "2026-10-20T03:34:55.372242+00:00",
+      "delegated_at": "2026-10-20T07:58:28.978296+00:00",
+      "created_at": "2026-10-20T07:58:28.954681+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1228,7 +1152,7 @@
       "due": "2026-10-23",
       "status": "open",
       "meeting_id": "m-daily-architecture-review",
-      "decision_id": "dec-4d39d297bb9c4ae2",
+      "decision_id": "dec-eb562a8bc930414e",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -1252,8 +1176,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:6db59a99968b",
-      "delegated_at": "2026-10-20T03:34:55.404088+00:00",
-      "created_at": "2026-10-20T03:34:55.377717+00:00",
+      "delegated_at": "2026-10-20T07:58:28.991420+00:00",
+      "created_at": "2026-10-20T07:58:28.960150+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1303,94 +1227,13 @@
       "person_relationship_id": "rel-jun"
      },
      {
-      "id": "22208d9d83ce",
-      "text": "Write up alert rule changes",
-      "owner": "Theo",
-      "due": "2026-10-22",
-      "status": "open",
-      "meeting_id": "m-daily-theo-1on1",
-      "decision_id": "dec-ccde7b420d5b4d7e",
-      "stale_score": null,
-      "source": "action_item",
-      "lane": "waiting",
-      "provenance": {
-       "meeting_id": "m-daily-theo-1on1",
-       "segment_text": "I'll write up the alert rule changes by Thursday.",
-       "segment_speaker": "Theo",
-       "segment_start": 40.0,
-       "moment": {
-        "meeting_id": "m-daily-theo-1on1",
-        "source_timestamp": 40.0,
-        "segment_id": 8,
-        "segment_index": 2,
-        "segment_start": 40.0,
-        "segment_end": 60.0,
-        "speaker": "Theo",
-        "text": "I'll write up the alert rule changes by Thursday."
-       },
-       "available": true,
-       "thread_id": null,
-       "source_ref": null
-      },
-      "target_ref": "action_item:22208d9d83ce",
-      "delegated_at": "2026-10-20T03:34:55.398468+00:00",
-      "created_at": "2026-10-20T03:34:55.376229+00:00",
-      "snoozed_until": null,
-      "deferred_until": null,
-      "lawful_verbs": [
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "22208d9d83ce",
-         "verb": "done"
-        }
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "22208d9d83ce",
-         "verb": "dismiss"
-        }
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "22208d9d83ce",
-         "verb": "snooze"
-        },
-        "required_arguments": [
-         "payload.until"
-        ]
-       },
-       {
-        "name": "follow_through.complete",
-        "arguments": {
-         "card_id": "22208d9d83ce",
-         "verb": "delegate"
-        },
-        "required_arguments": [
-         "payload.to"
-        ]
-       },
-       {
-        "name": "agent.hand",
-        "arguments": {
-         "kind": "action",
-         "id": "22208d9d83ce"
-        }
-       }
-      ],
-      "person_label": "Theo",
-      "person_relationship_id": "rel-theo"
-     },
-     {
       "id": "6a994ec7e2ca",
       "text": "Profile the reconciliation job",
       "owner": "Theo",
       "due": "2026-10-23",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-267f0e7972ae430c",
+      "decision_id": "dec-8a304b780ea34960",
       "stale_score": null,
       "source": "action_item",
       "lane": "waiting",
@@ -1414,8 +1257,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:6a994ec7e2ca",
-      "delegated_at": "2026-10-20T03:34:55.391448+00:00",
-      "created_at": "2026-10-20T03:34:55.372277+00:00",
+      "delegated_at": "2026-10-20T07:58:28.975537+00:00",
+      "created_at": "2026-10-20T07:58:28.954712+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1468,13 +1311,171 @@
     "unassigned": [],
     "overdue": [
      {
+      "id": "a96151278717",
+      "text": "Review design doc on settlement retries",
+      "owner": "Me",
+      "due": "2026-10-19",
+      "status": "open",
+      "meeting_id": "m-daily-theo-1on1",
+      "decision_id": "dec-3d447fa125654fe2",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "overdue",
+      "provenance": {
+       "meeting_id": "m-daily-theo-1on1",
+       "segment_text": "I wrote the design doc on settlement retries. Can you review it?",
+       "segment_speaker": "Theo",
+       "segment_start": 0.0,
+       "moment": {
+        "meeting_id": "m-daily-theo-1on1",
+        "source_timestamp": 0.0,
+        "segment_id": 6,
+        "segment_index": 0,
+        "segment_start": 0.0,
+        "segment_end": 20.0,
+        "speaker": "Theo",
+        "text": "I wrote the design doc on settlement retries. Can you review it?"
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:a96151278717",
+      "delegated_at": "2026-10-20T07:58:28.987222+00:00",
+      "created_at": "2026-10-20T07:58:28.958509+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "a96151278717",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "a96151278717"
+        }
+       }
+      ]
+     },
+     {
+      "id": "691f0d01b037",
+      "text": "Email Dana about the cutover window",
+      "owner": "Me",
+      "due": "2026-10-19",
+      "status": "open",
+      "meeting_id": "m-daily-platform-sync",
+      "decision_id": "dec-c2be6e6793f94562",
+      "stale_score": null,
+      "source": "action_item",
+      "lane": "overdue",
+      "provenance": {
+       "meeting_id": "m-daily-platform-sync",
+       "segment_text": "And I'll email Dana about the cutover window on Monday.",
+       "segment_speaker": "Me",
+       "segment_start": 80.0,
+       "moment": {
+        "meeting_id": "m-daily-platform-sync",
+        "source_timestamp": 80.0,
+        "segment_id": 5,
+        "segment_index": 4,
+        "segment_start": 80.0,
+        "segment_end": 100.0,
+        "speaker": "Me",
+        "text": "And I'll email Dana about the cutover window on Monday."
+       },
+       "available": true,
+       "thread_id": null,
+       "source_ref": null
+      },
+      "target_ref": "action_item:691f0d01b037",
+      "delegated_at": "2026-10-20T07:58:28.968640+00:00",
+      "created_at": "2026-10-20T07:58:28.954720+00:00",
+      "snoozed_until": null,
+      "deferred_until": null,
+      "lawful_verbs": [
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "done"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "dismiss"
+        }
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "snooze"
+        },
+        "required_arguments": [
+         "payload.until"
+        ]
+       },
+       {
+        "name": "follow_through.complete",
+        "arguments": {
+         "card_id": "691f0d01b037",
+         "verb": "delegate"
+        },
+        "required_arguments": [
+         "payload.to"
+        ]
+       },
+       {
+        "name": "agent.hand",
+        "arguments": {
+         "kind": "action",
+         "id": "691f0d01b037"
+        }
+       }
+      ]
+     },
+     {
       "id": "931d9391783f",
       "text": "Confirm the vendor freeze dates",
       "owner": "Jun",
       "due": "2026-10-16",
       "status": "open",
       "meeting_id": "m-daily-platform-sync",
-      "decision_id": "dec-b6504cb30c0b4e92",
+      "decision_id": "dec-226f676bc1ab4ed0",
       "stale_score": null,
       "source": "action_item",
       "lane": "overdue",
@@ -1498,8 +1499,8 @@
        "source_ref": null
       },
       "target_ref": "action_item:931d9391783f",
-      "delegated_at": "2026-10-20T03:34:55.389143+00:00",
-      "created_at": "2026-10-20T03:34:55.372282+00:00",
+      "delegated_at": "2026-10-20T07:58:28.972905+00:00",
+      "created_at": "2026-10-20T07:58:28.954717+00:00",
       "snoozed_until": null,
       "deferred_until": null,
       "lawful_verbs": [
@@ -1553,9 +1554,9 @@
    },
    "upcoming": [],
    "counts": {
-    "overdue": 1,
-    "now": 3,
-    "waiting": 3,
+    "overdue": 3,
+    "now": 2,
+    "waiting": 2,
     "active": 0,
     "upcoming_today": 0
    },
@@ -1585,7 +1586,8 @@
     "local_model_preload_authority": ""
    },
    "ui": {
-    "desk_sounds": true
+    "desk_sounds": true,
+    "builder_tools": false
    },
    "meeting": {
     "mic_device": null,
@@ -1756,7 +1758,7 @@
    "agents": {
     "working_at_once": 6
    },
-   "_revision": "ee2f6eaa8c9124db",
+   "_revision": "cb0befa24236d461",
    "_calendar_subscription": {
     "kind": "disabled",
     "host": "",
@@ -1829,8 +1831,8 @@
      "calendar_links": null,
      "owner_aliases": null,
      "state": "active",
-     "created_at": "2026-10-20T03:34:55Z",
-     "updated_at": "2026-10-20T03:34:55Z",
+     "created_at": "2026-10-20T07:58:29Z",
+     "updated_at": "2026-10-20T07:58:29Z",
      "you_owe_count": 0,
      "owes_you_count": 0
     },
@@ -1845,8 +1847,8 @@
      "calendar_links": null,
      "owner_aliases": null,
      "state": "active",
-     "created_at": "2026-10-20T03:34:55Z",
-     "updated_at": "2026-10-20T03:34:55Z",
+     "created_at": "2026-10-20T07:58:29Z",
+     "updated_at": "2026-10-20T07:58:29Z",
      "you_owe_count": 0,
      "owes_you_count": 0
     },
@@ -1861,8 +1863,8 @@
      "calendar_links": null,
      "owner_aliases": null,
      "state": "active",
-     "created_at": "2026-10-20T03:34:55Z",
-     "updated_at": "2026-10-20T03:34:55Z",
+     "created_at": "2026-10-20T07:58:29Z",
+     "updated_at": "2026-10-20T07:58:29Z",
      "you_owe_count": 0,
      "owes_you_count": 0
     }
@@ -1880,8 +1882,8 @@
     "calendar_links": null,
     "owner_aliases": null,
     "state": "active",
-    "created_at": "2026-10-20T03:34:55Z",
-    "updated_at": "2026-10-20T03:34:55Z",
+    "created_at": "2026-10-20T07:58:29Z",
+    "updated_at": "2026-10-20T07:58:29Z",
     "sessions": [],
     "requests": [],
     "commitments": [],
@@ -1914,7 +1916,7 @@
       "due": "2026-10-20",
       "due_said": "Tuesday",
       "status": "open",
-      "delegated_at": "2026-10-20T03:34:55.393413+00:00",
+      "delegated_at": "2026-10-20T07:58:28.978296+00:00",
       "meeting_id": "m-daily-platform-sync",
       "meeting_title": "Payments platform sync",
       "meeting_started_at": "2026-10-16T00:00:00+00:00",
@@ -1968,7 +1970,7 @@
      ],
      "decisions": [
       {
-       "id": "record-92d8d4bf8f35429a",
+       "id": "record-c856158ed5bb40ba",
        "decision_text": "Freeze ledger writes during the cutover",
        "lifecycle": "active"
       }

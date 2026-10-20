@@ -19,6 +19,9 @@ RESOURCE_KINDS = frozenset({
     "project", "thread", "persona", "workflow", "sequence", "integration",
     "decision_record", "desk_decision", "action", "project_item", "workbench",
     "workbench_item", "cadence",
+    # A kept person's directory edge stores only the protected relationship
+    # reference. Its name and content still come from the People reader.
+    "people",
     # Memory kinds a relevance pass can hand to grounding (2026-10-03).
     "send", "project_update", "prep_brief", "calendar_event",
     "brief_item", "dictation", "steward_run", "ask_answer",

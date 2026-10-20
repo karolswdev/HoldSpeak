@@ -25,6 +25,10 @@ class UIConfig:
     config.json keys are dropped by _coerce on load.
     """
     desk_sounds: bool = True  # HS-135-12: mechanical sound palette, ON by default
+    # Betterment shell S1: the Builder group is an owner preference on the
+    # hub, shared by every Desk browser.  It is deliberately off on a new
+    # desk; the web face may opt in through Settings.
+    builder_tools: bool = False
 
 
 # HS-52-02 / capture C11: a user maps a spoken keyword to a deterministic action;
