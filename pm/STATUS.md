@@ -22,6 +22,12 @@ completed, opened, read, legacy and foreign responses from the real hub.
 Provider inference is the repository's recorded leaf; live-model quality is
 not claimed. This closes a P7/P8 follow-up and adds no slice.
 Required quick: READSTATE_QUICK_PENDING.
+The first required run passed 2,154 affected cases (two skipped) and 4,113
+other web checks. It caught a Note reveal assertion that read before its
+scroll/focus effect, and a phone Search sprite still loading outside the
+swept window. The Note check now waits for that effect (36 focused cases
+pass); the sweep waits for visible chrome sprites as well as the face's
+visible images. No focus, visibility, size or contrast assertion was waived.
 
 S4 delivers the explicit Floor: fresh desks show Inbox, Work, Personal,
 Reference and Archive. Meetings and people appear only after Keep on desk;
