@@ -10,7 +10,7 @@
 // Live meeting's runtime socket (RuntimeBus) is the one other transport,
 // held quiet. The Runs on face is fenced in runs-on.app.test.tsx.
 
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../runtime/RuntimeBus", () => ({
@@ -51,6 +51,18 @@ const SETUP_STATUS = {
   ],
 };
 
+const SETUP_FOUND = {
+  rows: [{
+    id: "speech", kind: "speech", label: "Speech", detail: "Whisper base · 144 MB",
+    state: "found", reason: "", egress_host: "huggingface.co", verb: "Set up speech",
+    action: "speech", payload: {},
+  }],
+  owner_name: "",
+  people: [],
+  suggestions: [],
+  first_run: true,
+};
+
 beforeEach(() => {
   vi.stubGlobal(
     "fetch",
@@ -58,6 +70,9 @@ beforeEach(() => {
       const path = String(input).split("?")[0];
       const [status, body] =
         path === "/api/setup/local-ai" ? [200, LOCAL_AI] : path === "/api/setup/status" ? [200, SETUP_STATUS] : [404, { detail: "Not Found" }];
+      if (path === "/api/setup/found") return new Response(JSON.stringify(SETUP_FOUND), { status: 200, headers: { "content-type": "application/json" } });
+      if (path === "/api/setup/lan") return new Response(JSON.stringify({ rows: [] }), { status: 200, headers: { "content-type": "application/json" } });
+      if (path === "/api/settings") return new Response(JSON.stringify({ owner: { name: "", aliases: [] }, _revision: "1" }), { status: 200, headers: { "content-type": "application/json" } });
       return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
     }),
   );
@@ -95,11 +110,10 @@ describe("every speech face says speech is not set up", () => {
     expect(screen.queryByText("Ready to record", { exact: true })).toBeNull();
   });
 
-  it("Setup: the doctor row says it; the verb stands alone on it", async () => {
+  it("Setup: the producer-backed face says it; the verb stands alone on it", async () => {
     render(<SetupCore />);
-    await screen.findByTestId("setup-speech-setup-verb");
-    expectTheRow("setup-speech-setup", false);
-    expect(screen.queryByTestId("setup-speech-setup-line")).toBeNull();
-    expect(document.body.textContent).toContain("Speech is not set up");
+    const face = await screen.findByTestId("setup-face");
+    expect(within(face).getByRole("button", { name: "Set up speech" })).toBeTruthy();
+    expect(face).toHaveTextContent("huggingface.co");
   });
 });

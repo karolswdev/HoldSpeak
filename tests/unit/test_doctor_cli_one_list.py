@@ -67,6 +67,32 @@ def test_cli_and_setup_status_read_the_same_list(monkeypatch, capsys) -> None:
     assert seen == [False, True]
 
 
+def test_cli_prints_the_shared_setup_rows_before_technical_checks(monkeypatch, capsys) -> None:
+    _one_list(monkeypatch, SENTINEL)
+    _hub(monkeypatch, hub_doctor.DoctorResult("PASS", "hub-health", "ok"))
+    monkeypatch.setattr(
+        local_doctor,
+        "_setup_inventory_for_doctor",
+        lambda: {
+            "rows": [{
+                "id": "speech",
+                "kind": "speech",
+                "label": "Speech",
+                "detail": "Whisper · 144 MB",
+                "state": "found",
+                "egress_host": "https://huggingface.co/models?token=secret-token",
+                "payload": {"token": "secret-token"},
+            }],
+        },
+    )
+
+    assert _cli(monkeypatch) == 0
+    out = capsys.readouterr().out
+    assert out.index("HoldSpeak Setup") < out.index("HoldSpeak Doctor")
+    assert "- Speech: Found · Whisper · 144 MB · huggingface.co" in out
+    assert "secret-token" not in out
+
+
 def test_the_real_list_carries_coding_agents_mic_hotkey_and_connectors() -> None:
     import inspect
 

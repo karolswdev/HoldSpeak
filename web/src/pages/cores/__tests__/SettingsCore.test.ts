@@ -7,8 +7,12 @@ import {
 } from "../SettingsCore";
 
 describe("Settings registered wing deep links", () => {
-  it.each(["settings", "models", "guide"])("keeps the registered %s wing", (wing) => {
+  it.each(["settings", "models", "setup"])("keeps the registered %s wing", (wing) => {
     expect(settingsScope(wing).module).toBe(wing);
+  });
+
+  it("lands the retired Guide deep link in Setup", () => {
+    expect(settingsScope("guide").module).toBe("setup");
   });
 
   it("keeps a wing's requested repair and refuses an unknown wing", () => {
