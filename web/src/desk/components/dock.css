@@ -776,3 +776,10 @@
   border-radius: 50%;
   background: var(--lamp-ok);
 }
+
+/* The Agents AppIcon keeps the existing handoff target after the Floor
+   duplicate retires. The outline follows the shared drag state. */
+.desk-dock-app[data-drop="true"] {
+  outline: 2px dotted currentColor;
+  outline-offset: -3px;
+}

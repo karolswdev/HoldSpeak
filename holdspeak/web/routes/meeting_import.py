@@ -17,16 +17,12 @@ from fastapi.responses import JSONResponse
 from ... import operations
 from ...config import Config
 from ...services.errors import ConflictError, NotFound, ValidationError
+from ...services import meeting_transcriber
 
 
 def _default_transcriber_factory(config: Config):
-    from ...transcribe import Transcriber
-
-    return Transcriber(
-        model_name=config.model.name,
-        backend=getattr(config.model, "backend", None),
-        language=getattr(config.model, "language", "auto"),
-    )
+    """Legacy route alias; construction lives in the shared service leaf."""
+    return meeting_transcriber.default_transcriber_factory(config)
 
 
 # Tests monkeypatch this to inject a fake transcriber.
@@ -34,15 +30,8 @@ _transcriber_factory = _default_transcriber_factory
 
 
 def _default_frozen_transcriber_factory(construct: dict):
-    """PHILO-17 transcribe: build the transcriber from the ADMITTED speech
-    route's model, backend and language (never Config after admission)."""
-    from ...transcribe import Transcriber
-
-    return Transcriber(
-        model_name=construct["model_name"],
-        backend=construct["backend"],
-        language=construct.get("language") or "auto",
-    )
+    """Legacy route alias for the shared frozen speech factory."""
+    return meeting_transcriber.frozen_transcriber_factory(construct)
 
 
 # Tests monkeypatch this to inject a fake transcriber for Transcribe.

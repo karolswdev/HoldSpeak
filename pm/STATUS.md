@@ -4,9 +4,91 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (project update automation delivery)
+**Last updated:** 2026-10-20 (project automation result read state)
 
 ## Current phase
+
+Project automation NEW now follows the latest completed artifact and its read
+state. The artifact carries the exact project-update ID; Open latest fetches
+that update and uses the existing result-open path. An owner draft alone
+does not show NEW. Legacy or foreign update links open the automation rather
+than guessing at a draft. Failed reads keep NEW.
+
+Root independently verified five actual runner/producer cases and both real
+browser widths (seven passed), plus 44 web consumers, type check and build.
+The browser reads the exact delivered body, clears NEW, preserves the owner
+draft and repeats Open safely. The wire fixture records the full manual,
+completed, opened, read, legacy and foreign responses from the real hub.
+Provider inference is the repository's recorded leaf; live-model quality is
+not claimed. This closes a P7/P8 follow-up and adds no slice.
+Required quick: Final delta quick passes 36 web, two actual current Room browser cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The product run passed 2,154 affected cases (two skipped) and 4,113 other web checks. The separate five actual runner/producer cases and 44 Room consumers also pass..
+The first required run passed 2,154 affected cases (two skipped) and 4,113
+other web checks. It caught a Note reveal assertion that read before its
+scroll/focus effect, and a phone Search sprite still loading outside the
+swept window. The Note check now waits for that effect (36 focused cases
+pass); the sweep waits for visible chrome sprites as well as the face's
+visible images. No focus, visibility, size or contrast assertion was waived.
+
+S4 delivers the explicit Floor: fresh desks show Inbox, Work, Personal,
+Reference and Archive. Meetings and people appear only after Keep on desk;
+Remove uses the existing membership operations, and removing a note files it
+in Inbox. Empty packaged Meetings/Decisions drawers and the Desk membership
+record are hidden. Existing records remain intact.
+
+The existing desk position store preserves first-seen rectangles across late
+producer replies. Root corrected a new-column overlap by reserving saved
+positions even while their source reply is pending. The real private-Hub walk
+imports three meetings and creates three people without new Floor icons,
+keeps one meeting, adds a late note, and appends 14 more projects. Every
+existing rectangle stays exact and no pair overlaps. Current 1440/393 shots
+and measured rows are under `.tmp/evidence-shots/s4-root/` in the Floor lane.
+All 19 seed and 63 web checks, type check and build pass.
+S4 remains partial: mode recipes in Search and the individual person
+Object-menu adapter finish with S5. The real Keep proof above is a meeting;
+individual People are not ordinary Items primitives. This merge adds no
+completed slice.
+The Agents Dock tile now accepts the existing drag-to-hand path. The actual
+browser drag opens the exact note preview without launching or editing it.
+All 71 focused web cases pass. The current arrival case opens the bell and
+observes the real Needs-you row at both widths; both walks pass. Four reds
+from the pinned main browser tape were old Dock controls, count expectations
+and an exact Today label; their real browser replacements pass with the
+membership, touch-size and cross-window latency assertions retained.
+Required quick: 4,078 related web, 34 affected Python/browser, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The separate current arrival walk passes at 1440 and 393..
+
+P10 offers only watch actions with an existing runtime path. A new
+project.observe evaluation writes its observation without a pending effect;
+legacy effect rows remain readable. Provider manifests, Steward serializers
+and meeting transcriber construction now live in shared services. HTTP and
+MCP use those same contracts, with no MCP imports from web routes.
+
+The worker passed 504 focused cases, then six retained boundary
+and producer regressions. An actual private database observation creates no
+new effect and preserves the legacy pending row. The AST fence covers all 37
+MCP Python files, including relative and alias import forms. Shared helper
+identities and wires retain parity. Root independently verified 27 focused cases covering the whole import boundary, actual fresh observation and retained legacy row, provider HTTP/MCP parity, Steward policy round-trip, import parity, and remote-owner refusal before file access.
+Required quick: Final delta quick passes 67 affected cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The preceding product quick passed 3,424 other affected cases with two skips; its one failure patched the old HTTP factory seam and is corrected by the final check..
+
+ST8 starts the installed GitHub or Atlassian CLI browser sign-in from the
+Accounts row and seats its native terminal there. Keyboard input uses the
+existing admitted process input path and immutable target identity. On native
+exit, the existing Check re-reads the account before the row can say Works.
+Unsupported browser flows and failed/disappearing terminals give a named
+failure. Target setup failures clean only the newly created sign-in session.
+
+Root reviewed the owner-only operation and target mismatch refusal, then ran
+123 focused checks: 122 passed and the new operation exposed one missing
+producer case. The completed producer contract suite passes all 65 cases.
+Actual private-Hub browser cases at 1440/393 feed Enter through embedded xterm,
+the real command transport and native tmux process, then read back Works and
+the account login. Only provider CLI responses are recorded; owner credentials
+and real OAuth acceptance remain unobserved. The combined API census has
+810 routes and 674 OpenAPI paths. The product check passes 7,051 affected
+Python/browser checks (four skips), 110 desk sweep, 27 canon and 1,116 guards;
+4,094 other web checks pass. One old terminal assertion expected a payload
+without its required session/agent binding; it now checks the full payload
+while retaining immutable target and server-derived authority assertions.
+Final delta quick: 17 terminal web checks, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The preceding product run passed 7,051 affected Python/browser checks and 4,094 other web checks.
 
 The main watcher pinned to 2833d225d found five failures after its first
 6,073-test shard passed. This fix re-records the actual Setup agent/Settings

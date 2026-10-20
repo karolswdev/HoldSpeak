@@ -38,7 +38,7 @@ STEWARD_AND_CONNECTORS_ADMITTED: frozenset[str] = frozenset({
 })
 #: The Conductor K1: the owner's one-press agent hook install (config, his press, HTTP only).
 ONBOARDING_ADMITTED: frozenset[str] = frozenset({"agent_hooks.install", "agent_hooks.remove", "people_access.set",
-                                                 "calendar.open_settings"})
+                                                 "calendar.open_settings", "connection.signin"})
 # Setup writes and the approved Setup-open network look use the kernel.
 # The files-only inventory read remains exempt.
 SETUP_ADMITTED: frozenset[str] = frozenset({"setup.use", "setup.people.add", "setup.lan.scan"})

@@ -133,7 +133,6 @@ GITHUB_TEMPLATES: tuple[GitHubTemplate, ...] = (
             },
             "actions": [
                 {"schema": ACTION_SCHEMA, "kind": "project.observe"},
-                {"schema": ACTION_SCHEMA, "kind": "door.add_item"},
             ],
         }],
         query_defaults={"state": "open", "base": "main"},
@@ -155,7 +154,6 @@ GITHUB_TEMPLATES: tuple[GitHubTemplate, ...] = (
             },
             "actions": [
                 {"schema": ACTION_SCHEMA, "kind": "project.observe"},
-                {"schema": ACTION_SCHEMA, "kind": "project.update.draft"},
             ],
         }],
         query_defaults={"state": "open", "base": "main"},

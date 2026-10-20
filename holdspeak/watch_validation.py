@@ -55,13 +55,7 @@ ACTION_SCHEMA = "WatchAction@1"
 
 ACTION_KINDS: frozenset[str] = frozenset({
     "project.observe",
-    "project.propose",
     "project.steward.run_once",
-    "project.update.draft",
-    "door.add_item",
-    "workbench.add_item",
-    "workbench.run",
-    "cadence.upsert_loop",
 })
 
 # Keys allowed in an action node (kind-specific config may extend

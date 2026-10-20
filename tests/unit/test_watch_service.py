@@ -1463,9 +1463,11 @@ class TestJiraLeg:
         outcome = outcomes[0]
         assert outcome["outcome"] in ("evaluated", "probe_half_open")
         assert outcome["transitions"] > 0
-        # The effect was recorded
-        assert "effects" in outcome
-        assert len(outcome["effects"]) >= 1
+        # The observation is the effect.  project.observe does not create a
+        # second pending watch_effects row.
+        assert "effects" not in outcome
+        assert db.automations.list_effects(outcome["evaluation_id"]) == []
+        assert len(outcome["observation_ids"]) >= 1
 
     def test_jira_unchanged_yields_no_op(self, tmp_path) -> None:
         """Re-evaluate unchanged snapshot -> no new effects (zero-fork proof)."""

@@ -223,6 +223,51 @@ def test_terminal_keys_use_process_input_and_close_one_kernel_receipt(tmp_path):
     assert receipt["result_ref"] == f"command:{response['command_id']}"
 
 
+def test_admitted_target_object_is_normalized_for_process_input(tmp_path):
+    db = Database(tmp_path / "hub.db")
+    sent = []
+    body = keys_command("aaaaaaaa-bbbb-cccc-dddd-eeeeffff0003")
+    body.pop("node_id")
+    body.pop("target_id")
+    body.pop("target_generation")
+    body["target"] = {
+        "node_id": "local",
+        "target_id": "term_1",
+        "target_generation": "gen_1",
+    }
+    service = HubCommandService(
+        repo=db.delivery_receipts,
+        processor=NodeCommandProcessor(
+            node_id="local",
+            targets=Targets(),
+            ledger=NodeReceiptLedger(tmp_path / "node.db"),
+            runner=Tmux(),
+            keys_transport=lambda **kwargs: sent.append(kwargs),
+            audit=lambda **kwargs: 10,
+            wall_now=lambda: T0,
+        ),
+        local_node_id="local",
+        mode_loader=lambda: "yolo",
+        wall_now=lambda: T0,
+    )
+
+    response = service.submit_process_input(body, OWNER, include_result=True)
+
+    assert response["result"]["status"] == "delivered"
+    assert sent == [{"pane": "%1", "keys": [("named", "C-c"), ("literal", "x")]}]
+
+    conflict = keys_command("aaaaaaaa-bbbb-cccc-dddd-eeeeffff0004")
+    conflict["target"] = {
+        "node_id": "local",
+        "target_id": "term_other",
+        "target_generation": "gen_1",
+    }
+    with pytest.raises(CommandRefused) as exc:
+        service.submit_process_input(conflict, OWNER)
+    assert exc.value.reason == "target_mismatch"
+    assert sent == [{"pane": "%1", "keys": [("named", "C-c"), ("literal", "x")]}]
+
+
 def test_policy_deny_is_refused_only_after_kernel_admission(tmp_path):
     db = Database(tmp_path / "hub.db")
     service = HubCommandService(

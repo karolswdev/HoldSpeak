@@ -45,6 +45,7 @@ from holdspeak.principals import Principal, PrincipalKind
 
 from ..logging_config import get_logger
 from .errors import NotFound, ServiceError, ValidationError
+from .steward_serialization_service import _serialize_policy, _serialize_run, _serialize_steps
 
 log = get_logger("steward_contract")
 
@@ -133,8 +134,6 @@ class StewardContract:
         from holdspeak.project_contracts import generate_pstpol_id
         from holdspeak.services import project_kernel
         from holdspeak.services.project_steward_service import EFFECT_KINDS
-        from holdspeak.web.routes.steward import _serialize_policy
-
         fields = {"enabled": enabled, "unattended_enabled": unattended_enabled,
                   "eligible_effect_kinds": eligible_effect_kinds, "max_retries": max_retries,
                   "max_actions_per_run": max_actions_per_run, "cooldown_seconds": cooldown_seconds,
@@ -524,8 +523,6 @@ class StewardContract:
     def read_run(self, principal: Principal, run_id: str) -> dict[str, Any]:
         """The run, its steps, its operation and its terminal receipt (null while it works)."""
         from holdspeak.kernel.runtime import _configure
-        from holdspeak.web.routes.steward import _serialize_run, _serialize_steps
-
         run = self._db.steward_runs.get_run(run_id)
         if run is None:
             raise NotFound("steward_run", run_id)
