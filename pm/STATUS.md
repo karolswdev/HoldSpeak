@@ -26,7 +26,7 @@ stale operation/exposure counts and an old People settings wire. Setup inventory
 now stays MCP-only in the seeded palettes; their original byte limits and tool
 counts pass unchanged. The actual People producer re-recorded its wire. The
 write-announcement walk now builds valid required oneOf inputs. All 270 checks
-covering those seams pass. Required quick: ST9_QUICK_PENDING.
+covering those seams pass. Required quick: 3,767 affected Python/browser checks pass (three skipped), plus 108 desk sweep, 27 canon and 1,116 repository guards; build passes.
 
 AG15 shows Claude Code and Codex processes the owner started in tmux in
 Agents you started yourself. Native executable, pane ancestry and session
