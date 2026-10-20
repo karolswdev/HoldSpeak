@@ -154,7 +154,6 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
       "object.rename": "F2",
       "object.delete": "Delete",
       "go.ask": "⌘I",
-      "go.change-places": "⌘⇧P",
       "desk.open-intelligence": "⌃1",
       "go.review-meetings": "⌃2",
       "desk.open-people": "⌃3",
@@ -189,16 +188,15 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
 });
 
 // Betterment setup ST1: the parked Rhythm and Change places rows open
-// through their keys, which Settings registers as aliases (SurfaceWindows:
-// DESK_APPLICATION_ALIASES) at the section: ⌘⇧P and Search "Change places"
-// land on Settings ▸ Wallpaper, Search "Rhythm" on Settings ▸ Rhythm.
+// through Settings aliases (SurfaceWindows: DESK_APPLICATION_ALIASES) at
+// their sections. Search keeps both historical names; neither owns a key.
 describe("Betterment setup ST1: one home each", () => {
-  it("go.change-places (⌘⇧P) and go.configure-cadence open their key, which Settings hosts", () => {
+  it("parked rows keep their Settings aliases without a retired key", () => {
     const opened: Array<[string, string | undefined]> = [];
     const offs = ["change-places", "configure-cadence"].map((key) =>
       registerSurface(key, (scope) => opened.push([key, scope])));
     try {
-      expect(verbById("go.change-places")?.key).toBe("⌘⇧P");
+      expect(verbById("go.change-places")?.key).toBeUndefined();
       verbById("go.change-places")!.run(CTX);
       verbById("go.configure-cadence")!.run(CTX);
       expect(opened).toEqual([["change-places", undefined], ["configure-cadence", undefined]]);

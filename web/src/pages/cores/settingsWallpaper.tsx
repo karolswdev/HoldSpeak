@@ -9,6 +9,14 @@ import {
 } from "../../desk/surface";
 import { useAtmosphereFavorites } from "../../desk/gl/atmosphereFavorites";
 
+/** Card names are short sentences. Keep the registry's stable names and
+ * present them in the Settings face's sentence case. */
+function sentenceCase(value: string): string {
+  if (!value) return value;
+  const sentence = value[0].toLocaleUpperCase() + value.slice(1).toLocaleLowerCase();
+  return sentence.replace(/\b(jupiter|mars|saturn)\b/gi, (planet) => planet[0].toLocaleUpperCase() + planet.slice(1));
+}
+
 export function WallpaperModule({
   showFavorites = false,
   favoritesOnly = false,
@@ -39,6 +47,7 @@ export function WallpaperModule({
         )}
         {choices.map((atmosphere) => {
           const selected = atmosphere.id === selectedId;
+          const name = sentenceCase(atmosphere.name);
           return (
             <div key={atmosphere.id} className="prefs-wallpaper-choice">
               <Button
@@ -82,7 +91,7 @@ export function WallpaperModule({
                   )}
                 </span>
                 <span className="prefs-wallpaper-copy">
-                  <strong>{atmosphere.name}</strong>
+                  <strong>{name}</strong>
                 </span>
                 <span className="prefs-wallpaper-state">
                   {selected ? "In use" : "Choose"}
@@ -92,7 +101,7 @@ export function WallpaperModule({
                 <Button
                   type="button"
                   className="prefs-wallpaper-favorite"
-                  aria-label={`Favorite ${atmosphere.name}`}
+                  aria-label={`Favorite ${name}`}
                   aria-pressed={favorites.includes(atmosphere.id)}
                   onClick={(event) => {
                     if (favoritesOnly) {

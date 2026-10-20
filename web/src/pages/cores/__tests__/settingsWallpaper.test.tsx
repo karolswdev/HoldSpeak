@@ -15,10 +15,10 @@ describe("Settings wallpaper picker", () => {
     const user = userEvent.setup();
     render(<WallpaperModule />);
 
-    const rainy = screen.getByRole("radio", { name: /Rainy City/ });
-    const garden = screen.getByRole("radio", { name: /Lantern Garden/ });
-    const quiet = screen.getByRole("radio", { name: /Quiet Desk/ });
-    // PHILO-16 (A1) §2: the backdrop (Quiet Desk) is the default; the
+    const rainy = screen.getByRole("radio", { name: /Rainy city/ });
+    const garden = screen.getByRole("radio", { name: /Lantern garden/ });
+    const quiet = screen.getByRole("radio", { name: /Quiet desk/ });
+    // PHILO-16 (A1) §2: the backdrop (Quiet desk) is the default; the
     // scenes stay in the picker.
     expect(quiet).toBeChecked();
     expect(rainy).not.toBeChecked();
@@ -50,7 +50,7 @@ describe("Settings wallpaper picker", () => {
     const view = render(<WallpaperModule />);
     const planet = screen.getByRole("radio", { name: new RegExp(name) });
 
-    expect(screen.getByRole("radio", { name: /Lantern Garden/ })).toBeChecked();
+    expect(screen.getByRole("radio", { name: /Lantern garden/ })).toBeChecked();
     expect(planet).not.toBeChecked();
     expect(planet.querySelector("img")).toHaveAttribute(
       "src",
@@ -75,18 +75,18 @@ describe("Settings wallpaper picker", () => {
     const user = userEvent.setup();
     render(<WallpaperModule />);
     await user.tab();
-    // the one tab stop is the checked default, Quiet Desk (PHILO-16 A1)
-    expect(screen.getByRole("radio", { name: /Quiet Desk/ })).toHaveFocus();
+    // the one tab stop is the checked default, Quiet desk (PHILO-16 A1)
+    expect(screen.getByRole("radio", { name: /Quiet desk/ })).toHaveFocus();
     await user.keyboard("{Home}{ArrowRight}{ArrowRight}");
     expect(
-      screen.getByRole("radio", { name: /After-Hours Radio/ }),
+      screen.getByRole("radio", { name: /After-hours radio/ }),
     ).toHaveFocus();
     expect(
-      screen.getByRole("radio", { name: /After-Hours Radio/ }),
+      screen.getByRole("radio", { name: /After-hours radio/ }),
     ).toBeChecked();
     expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("radio-station");
     await user.keyboard("{End}");
-    expect(screen.getByRole("radio", { name: /Quiet Desk/ })).toHaveFocus();
+    expect(screen.getByRole("radio", { name: /Quiet desk/ })).toHaveFocus();
     await user.keyboard("{ArrowLeft}");
     expect(screen.getByRole("radio", { name: /In Saturn's orbit/ })).toHaveFocus();
     expect(screen.getByRole("radio", { name: /In Saturn's orbit/ })).toBeChecked();
@@ -100,7 +100,7 @@ describe("Settings wallpaper picker", () => {
     expect(screen.getByRole("radio", { name: /In Jupiter's orbit/ })).toBeChecked();
     expect(localStorage.getItem(ATMOSPHERE_STORAGE_KEY)).toBe("jupiter-orbit");
     await user.keyboard("{Home}");
-    expect(screen.getByRole("radio", { name: /Rainy City/ })).toHaveFocus();
+    expect(screen.getByRole("radio", { name: /Rainy city/ })).toHaveFocus();
     expect(screen.queryByRole("checkbox", { name: "Environment sound" })).toBeNull();
     expect(screen.queryByRole("checkbox", { name: "Environment animation" })).toBeNull();
     expect(screen.queryByText("SAVED ON THIS BROWSER · APPLIES LIVE TO THE FLOOR")).toBeNull();
