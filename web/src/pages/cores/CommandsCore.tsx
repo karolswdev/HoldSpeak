@@ -249,7 +249,7 @@ export function CommandsCore({ hero }: CoreProps) {
                         loading={busy}
                         onClick={() => void test(macro)}
                       >
-                        Test
+                        {macro.action.kind === "desk_verb" ? "Preview" : "Test"}
                       </Button>
                       <Button
                         dense
@@ -399,7 +399,7 @@ export function CommandsCore({ hero }: CoreProps) {
                 Save command
               </Button>
               <Button dense disabled={busy} onClick={() => void test(editing.macro)}>
-                Test without saving
+                {editing.macro.action.kind === "desk_verb" ? "Preview" : "Test without saving"}
               </Button>
             </div>
           </SurfaceSection>

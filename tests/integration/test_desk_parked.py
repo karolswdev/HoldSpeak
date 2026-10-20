@@ -96,3 +96,19 @@ def test_the_parked_rhythm_and_places_windows_are_retired_and_a_saved_row_still_
     assert svc.close(window_id)["closed"] is True
     assert svc.list()["windows"] == []
     assert svc.open("surface-settings")["app"] == "configure-settings"
+
+
+def test_saved_commands_window_closes_and_the_speak_home_still_opens(tmp_path: Path) -> None:
+    from holdspeak.db import Database
+    from holdspeak.services.desk_window_service import DeskWindowService
+    from holdspeak.services.errors import ValidationError
+    service = DeskWindowService(Database(tmp_path / "commands.db"), on_changed=lambda *_: None)
+    with pytest.raises(ValidationError) as refused:
+        service.open("surface-commands")
+    assert refused.value.code == "window_retired"
+    assert "Speak" in service.list()["registry"]["retired"]["surface-commands"]
+    with service._db._connection() as conn:
+        conn.execute("INSERT INTO desk_windows (id, app, depth, minimized, revision) VALUES (?, ?, ?, ?, ?)",
+                     ("surface-commands", "configure-commands", 1, 0, 1))
+    assert service.close("surface-commands")["closed"] is True
+    assert service.open("surface-dictation")["app"] == "dictate"

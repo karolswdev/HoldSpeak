@@ -415,6 +415,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
   {
     action: "configure-commands",
     windowId: "surface-commands",
+    parked: "speak:commands",
     label: "Commands",
     description: "Map spoken phrases to registered actions.",
     glyph: "⌘",

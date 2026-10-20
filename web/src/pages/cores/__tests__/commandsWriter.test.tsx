@@ -289,3 +289,19 @@ describe("CommandsCore is one honest items-writer (HS-130-07)", () => {
     expect(callsTo("/api/settings")).toHaveLength(1);
   });
 });
+
+
+it("previews a desk command without offering a local-action Test", async () => {
+  mocks.apiFetch.mockImplementation(async (path: string) => path === "/api/settings"
+    ? { ...SETTINGS, dictation: { macros: { enabled: true, items: [
+      { keyword: "new note", action: { kind: "desk_verb", payload: "new_note" } },
+    ] } } }
+    : { ok: true, tested: false, preview: "opens a new note", note: "Preview · opens a new note" });
+  render(<CommandsCore />);
+  fireEvent.click(await screen.findByRole("button", { name: "Preview", exact: true }));
+  await waitFor(() => expect(callsTo("/api/commands/test")).toEqual([
+    expect.objectContaining({ method: "POST", json: { kind: "desk_verb", payload: "new_note" } }),
+  ]));
+  expect(await screen.findByText("Preview · opens a new note")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Test", exact: true })).toBeNull();
+});

@@ -12,6 +12,9 @@ C11 ships five closed desk phrases in Speak. Record, Stop and New note
 use authenticated MCP operations; Ask and Today use the existing Desk openers.
 New note opens the exact stored note returned by the producer. Commands is
 now the Voice commands wing of Speak; a saved Off choice remains off.
+A saved Commands window migrates to that wing. Desk-command tests show an
+explicit Preview and do not run a connector; the guide describes the new
+defaults and the separate custom-action tests.
 Synchronous command dispatch stays off the event loop.
 
 Record releases the ended browser claim before starting Meeting. A real
