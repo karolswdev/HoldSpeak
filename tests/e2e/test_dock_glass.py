@@ -63,7 +63,7 @@ PHONE_DOORS = {
     "capture": ("chair:capture", '[aria-label="Capture"].desk-window-shell', '[data-testid="arrival-capture-bar"]'),
     "meetings": ("surface-meetings", '#surface-meetings', '[data-testid="meetings-headline"]'),
     "people": ("surface-people", '#surface-people', '.desk-surface-body'),
-    "agents": ("conductor", '.conductor-window', '.desk-surface-body'),
+    "agents": ("conductor", '.conductor-window', '[data-testid="conductor-head"]'),
 }
 
 
