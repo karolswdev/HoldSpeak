@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (project automation result read state)
+**Last updated:** 2026-10-20 (project automation result read state)
 
 ## Current phase
 
@@ -21,7 +21,7 @@ draft and repeats Open safely. The wire fixture records the full manual,
 completed, opened, read, legacy and foreign responses from the real hub.
 Provider inference is the repository's recorded leaf; live-model quality is
 not claimed. This closes a P7/P8 follow-up and adds no slice.
-Required quick: READSTATE_QUICK_PENDING.
+Required quick: Final delta quick passes 36 web, two actual current Room browser cases, 110 desk sweep, 27 canon and 1,116 repository guards; build passes. The product run passed 2,154 affected cases (two skipped) and 4,113 other web checks. The separate five actual runner/producer cases and 44 Room consumers also pass..
 The first required run passed 2,154 affected cases (two skipped) and 4,113
 other web checks. It caught a Note reveal assertion that read before its
 scroll/focus effect, and a phone Search sprite still loading outside the
