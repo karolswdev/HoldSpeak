@@ -18,12 +18,12 @@ first-use recovery. Today, Speak and Meetings have their Settings links.
 
 Root restored meaningful writer, grant and credential consumer coverage
 that the original layout candidate had parked. Final focused checks pass:
-69 web, 72 Python and three real-route browser cases. These exercise the
+110 web, 72 Python and five real-route browser cases. These exercise the
 heartbeat write/Saved/readback, Quiet-hours Search and a real hub-owned
-Engines window at 1440/393. Old wing-only tests remain parked.
+Engines window at 1440/393. The two-size first-use walk also passes through real fixture speech, note custody, engine setup, meeting summary and finding saved work after restart. Old wing-only tests remain parked.
 Required quick: ST7_QUICK_PENDING.
-Last observed running desk before this merge: backend f7193aaa3,
-frontend 0a834c90036c69c5, PID 34261; identity/import/database ownership and
+Last observed running desk before this merge: backend 5fe9ee0e7,
+frontend 0a834c90036c69c5, PID 51757; identity/import/database ownership and
 /health, /, /conductor, /models passed. Each merge deploys its exact source;
 GET /api/system/identity is the current running identity.
 
@@ -198,11 +198,12 @@ moving as independent status reads finish; its regression fails before the
 atomic first-read repair. After the repair, 4,090 web checks, 110 sweep cases,
 27 canon checks and 1,116 repo guards pass.
 
-Accounts follow-up remains open: an isolated `acli` check with no known
-prior active profile switches to the checked account and cannot restore it.
-The reproduction uses a fake CLI; the owner’s auth state was not changed.
-A known-prior profile is restored by ST2; the unknown-prior case still needs
-a truthful read or a no-switch fallback.
+Accounts Check now reads the active acli profile under the existing account
+lock when its registry has no known prior profile. It checks the selected
+account and restores the actual prior account in finally. An unreadable,
+malformed or failed status read refuses Check before any switch. Known-prior
+restoration remains intact. All 132 focused checks pass with a fake CLI;
+the owner's auth state is untouched. Required quick: 326 affected Python, 108 desk sweep, 27 canon and 1,116 repository guards pass; the build passes.
 
 Q11/Q12 make Memory an answer desk and put the two directions of what is owed
 first in a person’s window. Pages have their own pass budget and continue past
