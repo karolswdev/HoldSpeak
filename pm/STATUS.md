@@ -4,9 +4,22 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (five-app Dock delivery)
+**Last updated:** 2026-10-19 (truthful watches and shared services)
 
 ## Current phase
+
+P10 offers only watch actions with an existing runtime path. A new
+project.observe evaluation writes its observation without a pending effect;
+legacy effect rows remain readable. Provider manifests, Steward serializers
+and meeting transcriber construction now live in shared services. HTTP and
+MCP use those same contracts, with no MCP imports from web routes.
+
+The worker collected and passed 504 focused cases, then six retained boundary
+and producer regressions. An actual private database observation creates no
+new effect and preserves the legacy pending row. The AST fence covers all 37
+MCP Python files, including relative and alias import forms. Shared helper
+identities and wires retain parity. Root review: P10_REVIEW_PENDING.
+Required quick: P10_QUICK_PENDING.
 
 Shell S3 gives the desktop Dock Today, Meetings, People, Agents and Speak;
 the phone has Today, Capture, Meetings, People and Agents. Both use the
