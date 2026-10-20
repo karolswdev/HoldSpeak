@@ -6291,9 +6291,29 @@
       ]
     },
     {
+      "path": "/api/setup/found",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/setup/hub-default-summary",
       "methods": [
         "GET"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/setup/lan",
+      "methods": [
+        "POST"
       ],
       "module": "web.routes.setup",
       "consumers": [
@@ -6339,6 +6359,16 @@
       ]
     },
     {
+      "path": "/api/setup/people",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/setup/runtime-options",
       "methods": [
         "GET"
@@ -6366,6 +6396,16 @@
       "module": "web.routes.setup",
       "consumers": [
         "ios",
+        "web"
+      ]
+    },
+    {
+      "path": "/api/setup/use",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.setup",
+      "consumers": [
         "web"
       ]
     },

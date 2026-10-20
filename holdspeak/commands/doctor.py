@@ -12,6 +12,7 @@ import platform
 import re
 import shutil
 import sys
+from urllib.parse import urlsplit
 
 from pathlib import Path
 
@@ -1588,6 +1589,107 @@ def _summarize(checks: list[DoctorCheck]) -> tuple[int, int, int]:
     return passed, warned, failed
 
 
+_SETUP_ROW_WORDS = {
+    "found": "Found",
+    "works": "Works",
+    "does_not_work": "Does not work",
+    "not_found": "Not found",
+    "pending": "Working",
+}
+
+
+def _setup_inventory_for_doctor() -> dict[str, object]:
+    """Read the same Setup inventory as the face, without starting a hub.
+
+    The CLI has no WebContext to borrow, so compose the existing read-only
+    producers here.  Every object below is used only for its detection/status
+    method: this path never invokes a Use action, the LAN scanner, a CLI login,
+    or a download.
+    """
+    from ..db import get_database
+    from ..principals import Principal, PrincipalKind
+    from ..services.inference_default_service import InferenceDefaultService
+    from ..services.local_ai_setup_service import LocalAISetupService
+    from ..services.meaning_search_service import MeaningSearchService
+    from ..services.onboarding_service import OnboardingService
+    from ..services.setup_service import SetupService
+
+    database = get_database()
+    # MeaningSearchService is the real local-AI status producer used by the
+    # hub's LocalAISetupService.  A null broker keeps this read from trying to
+    # construct the running kernel if an existing assignment is present.
+    meaning = MeaningSearchService(
+        database,
+        assignment_service=None,
+        broker_provider=lambda: None,
+    )
+    local_ai = LocalAISetupService(database, meaning_search=meaning)
+    defaults = InferenceDefaultService(
+        database,
+        assignment_service=None,
+        meaning_search=meaning,
+    )
+    service = SetupService(
+        database,
+        local_ai_setup_service=local_ai,
+        inference_default_service=defaults,
+        onboarding_service=OnboardingService(),
+    )
+    principal = Principal(PrincipalKind.OWNER, "doctor")
+    return service.found(principal)
+
+
+def _setup_host(value: object) -> str:
+    """Print an egress host, never a URL with path, query, or credentials."""
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    parsed = urlsplit(text if "://" in text else f"//{text}")
+    return str(parsed.hostname or text.split("/", 1)[0]).strip()
+
+
+def _setup_row_line(row: dict[str, object]) -> str:
+    """Render one Setup row without exposing its action payload."""
+    state = _SETUP_ROW_WORDS.get(str(row.get("state") or ""), "Not found")
+    label = str(row.get("label") or "Setup item").strip()
+    detail = str(row.get("detail") or "").strip()
+    reason = str(row.get("reason") or "").strip()
+    if reason and reason not in detail:
+        detail = f"{detail} · {reason}" if detail else reason
+    host = _setup_host(row.get("egress_host"))
+    parts = [f"{label}: {state}"]
+    if detail:
+        parts.append(detail)
+    if host:
+        parts.append(host)
+    return " · ".join(parts)
+
+
+def _print_setup_inventory() -> None:
+    """Print Setup rows before the technical doctor checks."""
+    print("HoldSpeak Setup")
+    print("===============")
+    try:
+        inventory = _setup_inventory_for_doctor()
+    except Exception:
+        # The technical doctor remains useful when an optional Setup producer
+        # cannot be composed.  Keep the failure plain and free of paths,
+        # tokens, and producer payloads.
+        print("- Setup inventory: Does not work · Could not read Setup")
+        print()
+        return
+    rows = inventory.get("rows") if isinstance(inventory, dict) else None
+    if not isinstance(rows, list):
+        print("- Setup inventory: Does not work · Could not read Setup")
+    elif rows:
+        for row in rows:
+            if isinstance(row, dict):
+                print(f"- {_setup_row_line(row)}")
+    else:
+        print("- Setup inventory: Not found")
+    print()
+
+
 def run_connector_packs_listing() -> int:
     """HS-13-04: focused connector-pack listing (`doctor --connectors`).
 
@@ -1633,6 +1735,7 @@ def run_doctor_command(args) -> int:
     if getattr(args, "connectors", False):
         return run_connector_packs_listing()
 
+    _print_setup_inventory()
     checks = collect_doctor_checks()
 
     print("HoldSpeak Doctor")
