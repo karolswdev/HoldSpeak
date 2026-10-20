@@ -24,7 +24,7 @@ Search labels, grouping and cold-start assertions, the Runs-on rig using its
 wrong owner token, a phone Hand hit-area overlap and an action-list left
 rail. The shared styles and test adapters are corrected without changing
 product authority or relaxing the geometry/canon checks. Required quick:
-S5_QUICK_PENDING.
+580 related web checks and 19 affected browser cases passed; all 110 desk-sweep, 27 canon and 1,116 repo guards passed; build green..
 
 The final fix proof passed all 48 selected Search consumers, eight collected
 browser cases (first use, Note editor, Runs-on Undo and strict Search hit
