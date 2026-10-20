@@ -42,6 +42,7 @@ type Receipt = {
   owner: string | null;
   review_date: string | null;
   lifecycle: string;
+  status?: string | null;
   sources?: ReceiptSource[];
   work?: ReceiptWork[];
   revisions?: ReceiptRevision[];
@@ -52,6 +53,7 @@ type Receipt = {
 };
 
 function receiptStatus(receipt: Receipt): "governing" | "superseded" | "related" {
+  if (String(receipt.status ?? "").toLowerCase() === "proposed") return "related";
   if (receipt.lifecycle === "active") return "governing";
   if (receipt.lifecycle === "superseded") return "superseded";
   return "related";
@@ -69,6 +71,7 @@ type DeskDecision = {
   rationale?: string | null;
   decided_at?: string | null;
   lifecycle?: string | null;
+  status?: string | null;
   meeting_id?: string | null;
   meeting_title?: string | null;
   record_id?: string | null;
@@ -81,6 +84,7 @@ const CURRENT = new Set(["recorded", "accepted", "active", "published"]);
 /** The state word a row shows; empty when the decision stands. Its
  *  lifecycle is its record's when it has one (the ledger answers it). */
 function stateWord(row: DeskDecision): string {
+  if (String(row.status ?? "").toLowerCase() === "proposed") return "PROPOSED";
   const lifecycle = String(row.lifecycle ?? "").toLowerCase();
   if (CURRENT.has(lifecycle) || !lifecycle) return "";
   if (lifecycle === "superseded") return "REPLACED";
@@ -91,7 +95,7 @@ function stateWord(row: DeskDecision): string {
 function fromReceipt(receipt: Receipt & { created_at?: string | null }): DeskDecision {
   return {
     source: "record", id: receipt.id, text: receipt.decision_text, rationale: receipt.rationale,
-    decided_at: receipt.created_at ?? null, lifecycle: receipt.lifecycle, record_id: receipt.id,
+    decided_at: receipt.created_at ?? null, lifecycle: receipt.lifecycle, status: receipt.status, record_id: receipt.id,
   };
 }
 
@@ -171,13 +175,43 @@ export function DecisionsView({
         return { rows, total: count };
       });
     }
-    const params = new URLSearchParams({ scope: "all", limit: String(limit), offset: String(offset) });
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
     if (query.trim()) params.set("q", query.trim());
-    if (whyOnly) params.set("current", "true");
-    return apiFetch<{ decisions?: DeskDecision[]; page?: { total?: number } }>(`/api/decisions?${params}`)
-      .then((body) => {
-        const rows = Array.isArray(body?.decisions) ? body.decisions : [];
-        return { rows, total: Number(body?.page?.total ?? rows.length) };
+    return apiFetch<Receipt[]>(`/api/decision-records?${params}`)
+      .then((records) => {
+        // A pre-record hub (and the focused legacy harness) returns the
+        // lifecycle envelope here. Keep its visible rows immediate.
+        const legacyBody = records as unknown as { decisions?: DeskDecision[]; page?: { total?: number } };
+        if (!Array.isArray(records) && Array.isArray(legacyBody?.decisions)) {
+          const legacy = new URLSearchParams({ scope: "all", limit: String(limit), offset: String(offset) });
+          if (query.trim()) legacy.set("q", query.trim());
+          if (whyOnly) legacy.set("current", "true");
+          const rows = legacyBody.decisions
+            .filter((row) => !whyOnly || !stateWord(row))
+            .filter((row) => !query.trim() || row.text.toLowerCase().includes(query.trim().toLowerCase()));
+          return { rows, total: Number(legacyBody.page?.total ?? rows.length) };
+        }
+        // A detail-shaped compatibility answer is not the list transport.
+        // Older test/hub adapters fall through to their ledger route; the
+        // live canonical list has no expanded `sources` array here.
+        if (!Array.isArray(records) || records.some((record) => Array.isArray(record.sources) || !record.source_type)) {
+          throw new Error("canonical decision records unavailable");
+        }
+        const rows = records.map(fromReceipt)
+          .filter((row) => !whyOnly || !stateWord(row))
+          .filter((row) => !query.trim() || row.text.toLowerCase().includes(query.trim().toLowerCase()));
+        return { rows, total: rows.length };
+      })
+      .catch(() => {
+        // Compatibility read for a hub before the canonical list transport.
+        const legacy = new URLSearchParams({ scope: "all", limit: String(limit), offset: String(offset) });
+        if (query.trim()) legacy.set("q", query.trim());
+        if (whyOnly) legacy.set("current", "true");
+        return apiFetch<{ decisions?: DeskDecision[]; page?: { total?: number } }>(`/api/decisions?${legacy}`)
+          .then((body) => {
+            const rows = Array.isArray(body?.decisions) ? body.decisions : [];
+            return { rows, total: Number(body?.page?.total ?? rows.length) };
+          });
       });
   };
   // A decision made or changed in another window shows in this list. A quiet
@@ -483,6 +517,10 @@ function ReceiptDetail({
     && (source.text || sourceLabel(source))) ?? [];
   const origin = decisionRecordSourceRef(receipt.source_type, receipt.source_id);
   const decisionText = receipt.decision_text;
+  const rationale = String(receipt.rationale || "");
+  const about = rationale.match(/(?:^|\n\n)About:\s*([^\n]*(?:\n(?!Why:)[^\n]*)*)/i)?.[1]?.trim() || "";
+  const why = rationale.match(/(?:^|\n\n)Why:\s*([\s\S]*)/i)?.[1]?.trim() || "";
+  const proposed = String(receipt.status || "").toLowerCase() === "proposed";
   const predecessorId = receipt.predecessor_id;
   const successorId = receipt.successor_id;
   const history = Boolean(predecessorId || successorId || receipt.revisions?.length);
@@ -496,7 +534,9 @@ function ReceiptDetail({
       <GadgetGroup label="Decision" material="inset"><Material>{decisionText}</Material></GadgetGroup>
       {receipt.rationale || receipt.alternatives || receipt.owner || receipt.review_date || origin ? (
         <GadgetGroup label="Decision context" material="inset">
-          {receipt.rationale ? <GadgetRow label="Rationale" controlWidth="full"><Material>{receipt.rationale}</Material></GadgetRow> : null}
+          {about ? <GadgetRow label="About" controlWidth="full"><Material>{about}</Material></GadgetRow> : null}
+          {why ? <GadgetRow label="Why" controlWidth="full"><Material>{why}</Material></GadgetRow> : null}
+          {receipt.rationale && !about && !why ? <GadgetRow label="Rationale" controlWidth="full"><Material>{receipt.rationale}</Material></GadgetRow> : null}
           {receipt.alternatives ? <GadgetRow label="Alternatives" controlWidth="full"><Material>{receipt.alternatives}</Material></GadgetRow> : null}
           {receipt.owner ? <GadgetRow label="Owner" controlWidth="full">{receipt.owner}</GadgetRow> : null}
           {receipt.review_date ? <GadgetRow label="Review">{humanDate(receipt.review_date)}</GadgetRow> : null}
@@ -506,7 +546,7 @@ function ReceiptDetail({
         </GadgetGroup>
       ) : null}
       {/* PHILO-11-05a (canvas B5): the record's SEND well, after its fields. */}
-      <DecisionRecordSendWells id={receipt.id} text={decisionText} />
+      {!proposed ? <DecisionRecordSendWells id={receipt.id} text={decisionText} /> : null}
       {evidence ? <FoldGadget title="Evidence">
         {sources.map((source, index) => <GadgetGroup key={`${source.source_type}-${source.source_ref}-${index}`}
           label={source.speaker || "Source"} material="inset">

@@ -212,7 +212,17 @@ export const VERBS: Verb[] = [
     glyph: KIND_GLYPH.decision,
     keywords: ["create", "adr", "architecture"],
     ghost: never,
-    run: () => void useDesk.getState().createPrimitive("decision"),
+    run: () => {
+      // A New Decision pressed while a Project window is in front carries
+      // that Project as the pre-filled About chip for the canonical producer.
+      const scope = useDesk.getState().windowsById["surface-project-memory"]?.scope;
+      const projectId = scope?.startsWith("project:") ? scope.slice("project:".length) : "";
+      const project = useDesk.getState().projects.find((item) => item.id === projectId);
+      void useDesk.getState().createPrimitive("decision", projectId ? {
+        project_id: projectId,
+        project_name: project?.name || "Project",
+      } : {});
+    },
   },
   // Betterment Q10 (DECISIONS #2, Knowledge becomes drawers): New Knowledge
   // left the New list; each collection shows as a drawer. Parked in
