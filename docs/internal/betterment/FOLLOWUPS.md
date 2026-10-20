@@ -6,6 +6,7 @@ PR that fixes it merges. The recovery reconciliation is retained in
 
 | Found in | Follow-up | Goes to |
 |---|---|---|
+| P7/P8 delivery | Room NEW currently follows any draft lifecycle, including an owner-created draft. Read the existing automation artifact NEW/read state and clear it through the existing result-open path. | Project update read state |
 | P5/P6 #1377 | Add matched material can silently skip a failed meeting/note link; keep the failed selection and show its producer error with Retry before claiming the batch is added. | Projects source follow-through |
 | Q0 (#1260) | Interview's answer-only pass puts a system message after the user message, which Qwen's template rejects. | Asking Q4, or a small fix |
 | Q0 (#1260) | "Engine not reachable" is shown as "No engine for answers" (`ask_service.py` reason mapping). | Asking Q1 |
