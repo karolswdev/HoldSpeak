@@ -1,9 +1,9 @@
 /** PHILO-14 A1 — the A-1 arrangement at 1440 (pure).
  *
- *  Board A-1: the drawers down the left (a second column when they do not
- *  fit), the loose objects flowing in the field beside them, the live agents
- *  and Needs you at the top right, Parked at the bottom right. 393 uses no
- *  positions: one 4-column grid in DOM order (screen.css). */
+ *  The drawers and Projects down the left (a second column when they do not
+ *  fit), the loose objects flowing in the field beside them, and Archive at
+ *  the bottom right. 393 uses no positions: one 4-column grid in DOM order
+ *  (screen.css). */
 import type { ScreenObject } from "./compose";
 
 export interface Placed {
@@ -17,8 +17,6 @@ const FIELD_ROW = 100;
 const EDGE = 20;
 const TOP = 12;
 const FIELD_GAP = 70; // A-1: the field starts 70 px right of the drawer column
-const RIGHT_COL = 140; // Needs you and Parked: 140 px in from the right edge
-const AGENT_COL = 130; // the agents: one column left of Needs you
 const BOTTOM = 136; // Parked: its top this far above the screen's foot
 const TALK_ZONE = 72; // the TALK control at the foot-left (Astra's P3 on #939)
 const NOT_READ_LINE = 30; // a NOT READ drawer's Retry line
@@ -27,13 +25,28 @@ const NOT_READ_LINE = 30; // a NOT READ drawer's Retry line
 // count notch rather than reducing the caption's readable size.
 const CAPTION_LINE = 24;
 
-export function layoutScreen(objects: readonly ScreenObject[], width: number, height: number): Record<string, Placed> {
+export function layoutScreen(
+  objects: readonly ScreenObject[],
+  width: number,
+  height: number,
+  savedPositions: Readonly<Record<string, Placed>> = {},
+): Record<string, Placed> {
+  const savedOrder = new Map(Object.keys(savedPositions).map((key, index) => [key, index]));
+  const ordered = objects
+    .map((object, index) => ({ object, index }))
+    .sort((left, right) => {
+      const leftOrder = savedOrder.get(left.object.key);
+      const rightOrder = savedOrder.get(right.object.key);
+      if (leftOrder !== undefined && rightOrder !== undefined) return leftOrder - rightOrder;
+      if (leftOrder !== undefined) return -1;
+      if (rightOrder !== undefined) return 1;
+      return left.index - right.index;
+    })
+    .map(({ object }) => object);
   const at: Record<string, Placed> = {};
-  const perCol = Math.max(1, Math.floor((height - TOP) / DRAWER_ROW));
-
   // The drawers fill the left column above the TALK control at the foot
   // (TALK_ZONE); a NOT READ drawer is taller (its Retry line).
-  const drawers = objects.filter((o) => o.role === "drawer");
+  const drawers = ordered.filter((o) => o.role === "drawer");
   const columnFoot = Math.max(TOP + DRAWER_ROW, height - TALK_ZONE);
   let col = 0;
   let y = TOP;
@@ -48,27 +61,52 @@ export function layoutScreen(objects: readonly ScreenObject[], width: number, he
   }
   const drawerCols = drawers.length ? col + 1 : 1;
 
-  const right = width - RIGHT_COL;
-  for (const o of objects) {
-    if (o.role === "needs") at[o.key] = { x: right, y: TOP };
-    if (o.role === "parked") at[o.key] = { x: right, y: Math.max(TOP + DRAWER_ROW, height - BOTTOM) };
+  for (const o of ordered) {
+    if (o.role === "parked") at[o.key] = { x: width - EDGE - COL, y: Math.max(TOP + DRAWER_ROW, height - BOTTOM) };
   }
 
-  const agents = objects.filter((o) => o.role === "agent");
-  let agentLeft = right;
-  agents.forEach((o, i) => {
-    const x = right - AGENT_COL * (1 + Math.floor(i / perCol));
-    agentLeft = Math.min(agentLeft, x);
-    at[o.key] = { x, y: TOP + DRAWER_ROW * (i % perCol) };
-  });
-
   const fieldLeft = EDGE + COL * drawerCols + FIELD_GAP;
-  const fieldRight = agentLeft - EDGE;
+  const fieldRight = width - EDGE;
   const cols = Math.max(1, Math.floor((fieldRight - fieldLeft) / COL));
-  objects
+  ordered
     .filter((o) => o.role === "loose")
     .forEach((o, i) => {
       at[o.key] = { x: fieldLeft + COL * (i % cols), y: 24 + FIELD_ROW * Math.floor(i / cols) };
     });
-  return at;
+  const placed: Record<string, Placed> = {};
+  const occupied: Array<Placed & { height: number }> = [];
+  const objectHeight = (object: ScreenObject) => DRAWER_ROW
+    + (object.notRead ? NOT_READ_LINE : 0) + (object.caption ? CAPTION_LINE : 0);
+  // Reserve saved rectangles even while their producer's reply is pending.
+  // A project reply must not claim the place of a note that arrives later.
+  for (const [key, saved] of Object.entries(savedPositions)) {
+    const object = objects.find((candidate) => candidate.key === key);
+    placed[key] = saved;
+    occupied.push({ ...saved, height: object ? objectHeight(object) : DRAWER_ROW });
+  }
+  for (const object of ordered) {
+    if (placed[object.key]) continue;
+    const height = objectHeight(object);
+    let position = at[object.key];
+    if (!position) continue;
+    while (occupied.some((other) => (
+      position.x < other.x + 112 && position.x + 112 > other.x
+      && position.y < other.y + other.height && position.y + height > other.y
+    ))) {
+      if (object.role === "drawer") {
+        const nextY = position.y + height;
+        position = nextY + height > columnFoot
+          ? { x: position.x + COL, y: TOP }
+          : { x: position.x, y: nextY };
+      } else {
+        const nextX = position.x + COL;
+        position = nextX + 112 > fieldRight
+          ? { x: fieldLeft, y: position.y + FIELD_ROW }
+          : { x: nextX, y: position.y };
+      }
+    }
+    placed[object.key] = position;
+    occupied.push({ ...position, height });
+  }
+  return placed;
 }

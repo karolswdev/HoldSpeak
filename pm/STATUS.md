@@ -4,9 +4,36 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-19 (truthful watches and shared services)
+**Last updated:** 2026-10-19 (verified Floor delivery; S4 partial)
 
 ## Current phase
+
+S4 delivers the explicit Floor: fresh desks show Inbox, Work, Personal,
+Reference and Archive. Meetings and people appear only after Keep on desk;
+Remove uses the existing membership operations, and removing a note files it
+in Inbox. Empty packaged Meetings/Decisions drawers and the Desk membership
+record are hidden. Existing records remain intact.
+
+The existing desk position store preserves first-seen rectangles across late
+producer replies. Root corrected a new-column overlap by reserving saved
+positions even while their source reply is pending. The real private-Hub walk
+imports three meetings and creates three people without new Floor icons,
+keeps one meeting, adds a late note, and appends 14 more projects. Every
+existing rectangle stays exact and no pair overlaps. Current 1440/393 shots
+and measured rows are under `.tmp/evidence-shots/s4-root/` in the Floor lane.
+All 19 seed and 63 web checks, type check and build pass.
+S4 remains partial: mode recipes in Search and the individual person
+Object-menu adapter finish with S5. The real Keep proof above is a meeting;
+individual People are not ordinary Items primitives. This merge adds no
+completed slice.
+The Agents Dock tile now accepts the existing drag-to-hand path. The actual
+browser drag opens the exact note preview without launching or editing it.
+All 71 focused web cases pass. The current arrival case opens the bell and
+observes the real Needs-you row at both widths; both walks pass. Four reds
+from the pinned main browser tape were old Dock controls, count expectations
+and an exact Today label; their real browser replacements pass with the
+membership, touch-size and cross-window latency assertions retained.
+Required quick: 4,078 related web, 34 affected Python/browser, 110 desk sweep, 27 canon and 1,116 repository guards pass; build passes. The separate current arrival walk passes at 1440 and 393..
 
 P10 offers only watch actions with an existing runtime path. A new
 project.observe evaluation writes its observation without a pending effect;

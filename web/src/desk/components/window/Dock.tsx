@@ -21,6 +21,8 @@ import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, PHONE_DOCK_APPLICATIONS } from "../../applications";
 import { useAgentsTile } from "../../conductor/fleetTile";
+import { handTargetProps } from "../../hand/drag";
+import { useDropHand } from "../../hand/store";
 import { useCompactViewport } from "../../useCompactViewport";
 import { closeChairWindow, openChairWindow, useChairWindows } from "../../chair/chairWindows";
 import {
@@ -265,6 +267,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   // Betterment AG8: the Agents tile carries the fleet's worst state, a mark
   // for New and the count that needs him (nothing with no live agent).
   const agentsTile = useAgentsTile();
+  const handOver = useDropHand((state) => state.drag?.over);
   // PHILO-17 (needsyou, walker TAXES): the one number is on the Needs-you
   // icon and the bell only; the Intelligence tile carries no copy of it.
   // HS-99-04 — the dock chip menu (one menu vocabulary).
@@ -440,6 +443,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             ref={seatRef(winId)}
             variant="chrome"
             data-app={application.windowId}
+            data-drop={application.windowId === "conductor" && handOver === "drawer:conductor" ? true : undefined}
+            {...(application.windowId === "conductor" ? handTargetProps("drawer:conductor") : {})}
             className={
               "desk-dock-launch desk-dock-app" +
               (running && !minimized ? " is-run" : "") +
@@ -540,6 +545,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 ref={seatRef(winId)}
                 variant="chrome"
                 data-app={application.windowId}
+                data-drop={application.windowId === "conductor" && handOver === "drawer:conductor" ? true : undefined}
+                {...(application.windowId === "conductor" ? handTargetProps("drawer:conductor") : {})}
                 className={`desk-dock-launch desk-dock-app${running && !minimized ? " is-run" : ""}${minimized ? " is-seated" : ""}`}
                 aria-label={`${application.label}${application.windowId === "intelligence:desk" && needsYouCount > 0 ? `, ${needsYouCount} needs you` : ""}${application.windowId === "surface-people" && people.label ? `, ${people.label}` : ""}${application.windowId === "conductor" && agentsTile.words ? `, ${agentsTile.words}` : ""}${minimized ? ", iconified" : ""}`}
                 onClick={() => {

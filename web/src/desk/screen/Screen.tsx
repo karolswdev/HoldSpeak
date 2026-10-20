@@ -37,6 +37,8 @@ import { GoHome } from "./GoHome";
 import { ZoneRenameRow } from "../components/ZoneRenameRow";
 import "./screen.css";
 
+const SCREEN_POSITION_PREFIX = "screen:";
+
 /** The A-1 screen measured at 1440 × 900 (a screen that has not laid out yet). */
 const FALLBACK = { w: 1440, h: 796 };
 
@@ -135,9 +137,47 @@ export function Screen() {
 
   const ref = useRef<HTMLDivElement>(null);
   const size = useSize(ref);
+  const positions = useDesk((s) => s.positions);
+  const savedScreenPositions = useMemo(() => {
+    const saved: Record<string, { x: number; y: number }> = {};
+    for (const [key, position] of Object.entries(positions)) {
+      if (!key.startsWith(SCREEN_POSITION_PREFIX)) continue;
+      saved[key.slice(SCREEN_POSITION_PREFIX.length)] = position;
+    }
+    return saved;
+  }, [positions]);
   const placed = compact
     ? null
-    : layoutScreen(objects, size.w || FALLBACK.w, size.h || FALLBACK.h);
+    : layoutScreen(objects, size.w || FALLBACK.w, size.h || FALLBACK.h, savedScreenPositions);
+
+  // The existing desk position record is also the Screen's stable arrival
+  // record. Object keys are appended in first-seen order; later producer
+  // replies therefore receive the next free place while old rectangles stay
+  // fixed across refreshes and drawer-column changes.
+  useEffect(() => {
+    if (compact) return;
+    const state = useDesk.getState();
+    const current = state.positions;
+    const saved: Record<string, { x: number; y: number }> = {};
+    for (const [key, position] of Object.entries(current)) {
+      if (key.startsWith(SCREEN_POSITION_PREFIX)) saved[key.slice(SCREEN_POSITION_PREFIX.length)] = position;
+    }
+    const nextLayout = layoutScreen(objects, size.w || FALLBACK.w, size.h || FALLBACK.h, saved);
+    const next = { ...current };
+    let changed = false;
+    for (const object of objects) {
+      const key = `${SCREEN_POSITION_PREFIX}${object.key}`;
+      if (next[key]) continue;
+      const position = nextLayout[object.key];
+      if (!position) continue;
+      next[key] = position;
+      changed = true;
+    }
+    if (changed) {
+      useDesk.setState({ positions: next });
+      useDesk.getState().persistPositions();
+    }
+  }, [compact, objects, size.h, size.w]);
 
   const bare = members.loaded && screenIsBare(objects);
   // PHILO-14 C3: drop to hand. A loose work item drags (not at 393: the

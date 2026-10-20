@@ -176,11 +176,11 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     expect(frontWindowId()).toBe("chair:capture");
     expect(screen.queryByTestId("chair-reopen-capture")).toBeNull();
 
-    // PHILO-14 A1: the screen's Needs you drawer opens the Needs you window
+    // The shared Needs you verb opens it after Close; the duplicate Floor
+    // icon has retired into the bell and the Ctrl-J entry.
     fireEvent.click(within(region("Needs you")!).getByRole("button", { name: "Close Needs you" }));
     await waitFor(() => expect(region("Needs you")).toBeNull());
-    const drawer = screen.getByRole("button", { name: /^Needs you, SMART DRAWER/ });
-    fireEvent.keyDown(drawer, { key: "Enter" });
+    act(() => verbById("chair.window.needs")!.run({ selectedRef: null }));
     await waitFor(() => expect(region("Needs you")).toBeTruthy());
   });
 

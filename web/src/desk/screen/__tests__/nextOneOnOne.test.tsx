@@ -118,7 +118,7 @@ describe("the next 1:1 read (moved from the Dock)", () => {
   });
 });
 
-describe("the People drawer wears it", () => {
+describe("the People caption belongs to the Dock", () => {
   const inputs = (peopleCaption: string | null): ScreenInputs => ({
     items: EMPTY_ITEMS,
     projectCounts: {},
@@ -133,11 +133,11 @@ describe("the People drawer wears it", () => {
     peopleCaption,
   });
 
-  it("puts the caption on the People drawer only, and nothing without a next 1:1", () => {
+  it("does not add a People drawer or caption to the Floor", () => {
     const withIt = composeScreen(inputs("1:1 15:00"));
-    expect(withIt.find((o) => o.key === "drawer:people")?.caption).toBe("1:1 15:00");
-    expect(withIt.filter((o) => o.caption).map((o) => o.key)).toEqual(["drawer:people"]);
-    expect(composeScreen(inputs(null)).find((o) => o.key === "drawer:people")?.caption).toBeUndefined();
+    expect(withIt.find((o) => o.key === "drawer:people")).toBeUndefined();
+    expect(withIt.filter((o) => o.caption)).toEqual([]);
+    expect(composeScreen(inputs(null)).find((o) => o.key === "drawer:people")).toBeUndefined();
   });
 
   it("the icon draws the caption and says it in its name; no caption, no line", () => {
