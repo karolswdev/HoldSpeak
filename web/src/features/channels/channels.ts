@@ -43,7 +43,7 @@ export type Destination = {
 };
 
 /** The readable preview the hub derives from the frozen bytes. */
-export type WirePreview = { text?: string; title?: string; [k: string]: unknown };
+export type WirePreview = { text?: string; title?: string; warning?: string; [k: string]: unknown };
 
 export type Send = {
   id: string;
@@ -481,30 +481,31 @@ export function previewOf(
 ): Preview {
   const a = account, t = target;
   const body = String(wire.text ?? "");
+  const warning = wire.warning ? [{ label: "Warning", value: String(wire.warning) }] : [];
   switch (channel) {
     case "file":
       return {
         // B23: the folder by its name, never the raw path (`/private/var/...`).
-        fields: [{ label: "Folder", value: targetName("file", t) },
+        fields: [...warning, { label: "Folder", value: targetName("file", t) },
           ...(filePath ? [{ label: "File", value: baseName(filePath) }] : [])],
         body_kind: "markdown", body,
       };
     case "github":
       return {
-        fields: [{ label: "Repository", value: String(t.repo ?? "") },
+        fields: [...warning, { label: "Repository", value: String(t.repo ?? "") },
           { label: t.kind === "pr" ? "Pull request" : "Issue", value: `#${t.number}` },
           { label: "Account", value: `${a.login ?? ""} · ${a.host ?? "github.com"}` }],
         body_kind: "markdown", body,
       };
     case "jira":
       return {
-        fields: [{ label: "Work item", value: String(t.key ?? "") },
+        fields: [...warning, { label: "Work item", value: String(t.key ?? "") },
           { label: "Account", value: `${a.email ?? ""} · ${a.site ?? ""}` }],
         body_kind: "text", body,
       };
     case "confluence":
       return {
-        fields: [{ label: "Space", value: String(t.space_id ?? "") },
+        fields: [...warning, { label: "Space", value: String(t.space_id ?? "") },
           { label: "Title", value: String(wire.title ?? "") },
           { label: "Account", value: `${a.email ?? ""} · ${a.site ?? ""}` }],
         body_kind: "text", body,
@@ -513,6 +514,7 @@ export function previewOf(
       // Parsed back from the frozen provider request (story 03): From, To, Cc, Subject, the text.
       const list = (v: unknown) => (Array.isArray(v) ? v.map(String).join(", ") : String(v ?? ""));
       const f: PreviewField[] = [
+        ...warning,
         { label: "From", value: String(wire.from ?? `${a.from_name ?? ""} <${a.from_email ?? ""}>`) },
         { label: "To", value: list(wire.to ?? t.to) },
       ];
@@ -524,7 +526,7 @@ export function previewOf(
     case "slack":
       // A webhook has no read call: the fields are the channel label and the one host.
       return {
-        fields: [{ label: "Channel", value: String(t.channel_label ?? "") }, { label: "Webhook", value: "hooks.slack.com" }],
+        fields: [...warning, { label: "Channel", value: String(t.channel_label ?? "") }, { label: "Webhook", value: "hooks.slack.com" }],
         body_kind: "text", body,
       };
     default:

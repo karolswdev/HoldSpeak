@@ -274,7 +274,7 @@ def _published_model_update(hub) -> str:
     return update["id"]
 
 
-def test_an_all_inference_update_is_refused_at_preview_and_prepare(hub, tmp_path, monkeypatch) -> None:
+def test_an_all_inference_update_warns_at_preview_and_prepare(hub, tmp_path, monkeypatch) -> None:
     import sys
 
     sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -285,11 +285,12 @@ def test_an_all_inference_update_is_refused_at_preview_and_prepare(hub, tmp_path
     dest = destination(hub, tmp_path / "sent")
     ref = f"project_update:{update}"
     preview = hub.client.post("/api/channels/preview", json={"document_ref": ref, "destination_id": dest})
-    assert preview.status_code == 400, preview.text
-    assert preview.json()["code"] == "nothing_verified", preview.text
-    sent = hub.client.post("/api/channels/sends", json={"document_ref": ref, "destination_id": dest})
-    assert sent.status_code >= 400 and "nothing_verified" in sent.text, sent.text
-    assert not list((tmp_path / "sent").glob("*.md")), "nothing was written"
+    assert preview.status_code == 200, preview.text
+    assert preview.json()["preview"]["warning"] == "Not checked yet: no claim in this update was accepted"
+    assert "Carol is to add a CODEOWNERS file by Friday." in preview.json()["preview"]["text"]
+    prepared = hub.client.post("/api/channels/sends", json={"document_ref": ref, "destination_id": dest})
+    assert prepared.status_code == 200, prepared.text
+    assert prepared.json()["send"]["preview"] == preview.json()["preview"]
     stored = hub.db.project_updates.get_update(update)["body_md"]
     assert "Carol is to add a CODEOWNERS file by Friday." in stored, "the desk keeps the claims"
 
@@ -411,15 +412,13 @@ def test_a_claim_without_its_bullet_is_still_omitted(hub, tmp_path, monkeypatch)
     assert "1 claim not checked, kept on the desk." in text
 
 
-def test_a_draft_with_no_claims_is_refused(hub, tmp_path, monkeypatch) -> None:
+def test_a_draft_with_no_claims_warns_at_preview(hub, tmp_path, monkeypatch) -> None:
     """Astra r1 P1-1 case 2: zero claims is zero verified claims."""
     _pid, update = _model_draft(hub, "## Progress\n\n- The rollout is complete.\n", [], monkeypatch)
     preview = _preview(hub, update, tmp_path)
-    assert preview.status_code == 400 and preview.json()["code"] == "nothing_verified", preview.text
-    dest = hub.client.get("/api/channels/destinations").json()["destinations"][0]["id"]
-    sent = hub.client.post("/api/channels/sends", json={
-        "document_ref": f"project_update:{update}", "destination_id": dest})
-    assert sent.status_code >= 400 and "nothing_verified" in sent.text, sent.text
+    assert preview.status_code == 200, preview.text
+    assert preview.json()["preview"]["warning"] == "Not checked yet: no claim in this update was accepted"
+    assert "The rollout is complete." in preview.json()["preview"]["text"]
 
 
 def test_the_current_review_wins_over_the_old_flag_and_mark(hub, tmp_path, monkeypatch) -> None:
@@ -605,7 +604,7 @@ def test_a_sentence_made_a_heading_is_not_sent(hub, tmp_path, monkeypatch) -> No
 ], ids=["bold", "numbered", "quote", "unbolded-mark"])
 def test_reformatting_the_models_sentence_is_not_review(hub, tmp_path, monkeypatch, reformat) -> None:
     """Astra r2 probe 2 (her four cases, the real producer): re-styling the
-    model's sentence creates no owner claim; the update stays NOTHING VERIFIED."""
+    model's sentence creates no owner claim; the update warns before Send."""
     from holdspeak.services.project_update_service import UNVERIFIED_MARKER
 
     sentence = "We ship Friday."
@@ -617,7 +616,9 @@ def test_reformatting_the_models_sentence_is_not_review(hub, tmp_path, monkeypat
     claims = json.loads(saved.json()["update"]["claims_json"])
     assert [cl["span_id"] for cl in claims] == ["s_progress_0"], claims
     preview = _preview(hub, update, tmp_path)
-    assert preview.status_code == 400 and preview.json()["code"] == "nothing_verified", preview.text
+    assert preview.status_code == 200, preview.text
+    assert preview.json()["preview"]["warning"] == "Not checked yet: no claim in this update was accepted"
+    assert sentence in preview.json()["preview"]["text"]
 
 
 # ── B64 (Astra r2 P2 ruling): NOTHING TO REPORT ──────────────────────
@@ -644,10 +645,11 @@ def test_nothing_to_report_waits_for_accept_then_sends(hub, tmp_path) -> None:
     assert c.post(f"/api/updates/{update['id']}/publish", json={}).status_code == 200
     preview = c.post("/api/channels/preview", json=ref)
     assert preview.status_code == 200, preview.text
+    assert "warning" not in preview.json()["preview"]
     assert preview.json()["preview"]["text"].endswith("\n\nNothing to report.\n"), preview.json()
 
 
-def test_nothing_to_report_unaccepted_is_refused(hub, tmp_path) -> None:
+def test_nothing_to_report_unaccepted_warns(hub, tmp_path) -> None:
     import sys
 
     sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -660,4 +662,6 @@ def test_nothing_to_report_unaccepted_is_refused(hub, tmp_path) -> None:
     dest = destination(hub, tmp_path / "sent")
     preview = c.post("/api/channels/preview", json={"document_ref": f"project_update:{update}",
                                                      "destination_id": dest})
-    assert preview.status_code == 400 and preview.json()["code"] == "nothing_verified", preview.text
+    assert preview.status_code == 200, preview.text
+    assert preview.json()["preview"]["warning"] == "Not checked yet: no claim in this update was accepted"
+    assert preview.json()["preview"]["text"].endswith("\n\nNothing to report.\n"), preview.json()

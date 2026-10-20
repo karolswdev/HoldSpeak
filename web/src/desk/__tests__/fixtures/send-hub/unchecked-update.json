@@ -1,0 +1,41 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_send.py (TestClient, isolated HOME, the recon's runner scripts). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit it.",
+ "document_ref": "project_update:pupd_d03b8191fe6f4f7db0639e4c39b09444",
+ "destinations": [
+  {
+   "id": "holdspeak-folder",
+   "name": "HoldSpeak folder",
+   "channel": "file",
+   "account": {},
+   "target": {
+    "builtin": "documents",
+    "folder": "/tmp/rig/home/Documents/HoldSpeak/Sent",
+    "display": "~/Documents/HoldSpeak/Sent"
+   },
+   "builtin": true,
+   "target_digest": "fd9961900ca6267811a8b99949df5afca789de5ccd014383651ea3ea9b9d43af",
+   "synced": false,
+   "state": "active",
+   "badge": "local",
+   "created_at": "2026-10-20T05:31:34+00:00",
+   "parked_at": null,
+   "connection": null
+  }
+ ],
+ "sends": [],
+ "previews": [
+  {
+   "document_ref": "project_update:pupd_d03b8191fe6f4f7db0639e4c39b09444",
+   "title": "Payments ledger cutover — update r1 (2026-10-20)",
+   "destination_id": "holdspeak-folder",
+   "channel": "file",
+   "badge": "local",
+   "payload_digest": "1b2aa0a03a1a7edb5019bb3299ca474a2cf50c967190bb24f14c4f9576b280bb",
+   "size": 135,
+   "preview": {
+    "text": "# Payments ledger cutover · Update · 2026-10-20\n\n## Progress\n\n- The rollout is complete.\n\n## Decisions\n\nNo decisions in this window.\n",
+    "warning": "Not checked yet: no claim in this update was accepted"
+   }
+  }
+ ]
+}
