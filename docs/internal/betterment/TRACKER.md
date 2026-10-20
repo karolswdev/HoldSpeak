@@ -97,7 +97,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | P6 | Nudge and Ask, in their homes | Done · #1377 | Exact destination and stored action feed Send; shared Ask keeps project scope. |
 | P7 | The update is an automation; the steward folds in | Done · #1395 | Manual first; Friday uses the same record. |
 | P8 | The agent writes the update | Done · #1395 | Project-scoped Work tools; owner draft preserved; exact result adopted once. |
-| P9 | One decision record | Done · PR_PENDING | Admitted canonical record, About/Why, same-ID Project/Decisions/Meeting/Confirm loop. |
+| P9 | One decision record | Done · #1404 | Admitted canonical record, About/Why, same-ID Project/Decisions/Meeting/Confirm loop. |
 | P10 | Watches tell the truth underneath | Done · #1399 | Runnable actions only; observations need no pending effect; MCP uses shared services. |
 
 ## Agents (`agents/RECIPE.md`): 16 of 16
