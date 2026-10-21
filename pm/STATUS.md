@@ -2020,7 +2020,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
-- **BUILDER_SETTINGS_PR_PENDING — owner feedback, 2026-10-21:** guided Automation
+- **#1419 — owner feedback, 2026-10-21:** guided Automation
   builder, one-category Settings, clear selection and pictograms, and a Done
   action on the saved feedback receipt. Required quick proof is above; exact
   deployed source is reported by the desk identity endpoint.
