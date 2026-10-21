@@ -12,10 +12,12 @@
   --scroll-hint-depth: 12px;
   flex: 1;
   min-height: 0;
+  min-width: 0;
 }
 .desk-ask-reading {
   height: 100%;
   min-height: 0;
+  min-width: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
@@ -238,6 +240,7 @@
   align-content: center;
   gap: 12px;
   min-height: 0;
+  min-width: 0;
   padding: 24px;
   background: var(--alive-paper);
   border: 1px solid var(--border);
@@ -259,8 +262,10 @@
   flex-wrap: wrap;
   gap: 8px;
   max-width: 100%;
+  min-width: 0;
 }
 .desk-ask-prompts .btn {
+  margin-block: 0;
   white-space: normal;
 }
 .desk-ask-edit-question {

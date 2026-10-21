@@ -87,9 +87,9 @@
         {
           "kind": "ui",
           "action": "click",
-          "selector": "[data-testid='settings-index-system']",
+          "selector": "[data-testid='settings-index-this-mac']",
           "adapter": "ui-pointer",
-          "why": "Settings shows one category at a time (#1419); choose System before its Builder tools control."
+          "why": "Settings shows one category at a time (#1419); choose This Mac before its Builder tools control."
         },
         {
           "kind": "ui",

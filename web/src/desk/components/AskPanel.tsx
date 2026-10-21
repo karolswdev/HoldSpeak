@@ -70,7 +70,7 @@ import { busyWords, otherEngineVerb, retryWords } from "../surface/waitWords";
 import { deleteThread, getThread, listThreads, type ThreadWire } from "../threads";
 import { UsedLines } from "./UsedLines";
 import type { AgentUse } from "../used";
-import { SYSTEM } from "../systemSprites";
+import { spriteUrl } from "../sprites";
 
 /** The engine line of an engine that can use the desk's tools (MCP design). */
 export const DESK_TOOLS_WORDS = "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends";
@@ -773,7 +773,7 @@ export function AskPanel() {
       glyph="✦"
       label="Ask"
       className={`desk-pullout desk-ask is-card${hasConversation ? " has-traffic" : ""}`}
-      icon={<img className="desk-ask-glyph" src={SYSTEM.dockIntelligence} alt="" width={14} height={14} draggable={false} />}
+      icon={<span className="desk-ask-glyph" aria-hidden="true">✦</span>}
       title="Ask"
       actions={<Button dense variant="ghost" aria-expanded={recentOpen} onClick={toggleRecent}>Recent</Button>}
       open
@@ -916,7 +916,10 @@ export function AskPanel() {
         </SurfaceTraffic></div></ScrollHint> : (
           <ScrollHint axis="y" scrollRef={readingRef} className="desk-ask-reading-wrap">
             <div ref={readingRef} className="conversation-reading desk-ask-reading desk-ask-empty" role="region" aria-label="Ask conversation" tabIndex={0} data-testid="ask-empty">
-              <img className="desk-ask-empty-sprite" src={SYSTEM.dockIntelligence} alt="" width={64} height={64} draggable={false} />
+              <picture>
+                <source media="(max-width: 520px)" srcSet={spriteUrl("thread", "ask", "rest", undefined, 32)} />
+                <img className="desk-ask-empty-sprite" src={spriteUrl("thread", "ask", "rest", undefined, 64)} alt="" width={64} height={64} draggable={false} />
+              </picture>
               <h1>Ask about your work</h1>
               <div className="desk-ask-prompts">
                 <Button dense variant="ghost" onClick={() => prefillPrompt("What needs my attention?")}>What needs my attention?</Button>

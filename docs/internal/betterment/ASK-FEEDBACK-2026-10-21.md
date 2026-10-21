@@ -26,7 +26,7 @@ The prior main tape f9ec7ccd6 finished: 12 Python and 15 browser failures;
 web and separately timed Firefox capture passed. Against prior 83d790151,
 five new graph-walk failures came from setup trying to press the hidden System
 Builder tools control after Settings changed to one visible category. The
-real and sample J9 cases now click the actual System category first, without
+real and sample J9 cases now click the actual This Mac category first, without
 bypassing UI or relaxing any predicates. Run the existing graph-walk smoke
 file in this required quick. The additional Needs confirmation failure and
 other inherited failures remain open; no whole-suite green is claimed.
@@ -35,3 +35,17 @@ The Setup MCP review request returned `launch_only` (403): only launched
 agents can start a desk helper. This owner-started session uses an independent
 local Luna review under AGENTS as a fallback, not Muad'Dib's check. No launch
 credential or permission boundary is bypassed.
+
+## Rendered verification
+
+The initial focused check passed 39 cases and typecheck. Required quick passed
+136 related web cases, 110 sweep, 27 canon and 1,116 repository guards. It
+caught the root's incorrect J9 category selector (the visible name is This Mac)
+and a new containment check that included four pixels of floating resize
+chrome. The real content and child rectangles are contained. The browser
+regression now checks the actual editable body, every child rectangle and the
+window's viewport bounds; it records the measurements with the shots. No
+product limit or existing assertion is relaxed. The corrected focused browser
+run passed all J9 cases; the final required quick reruns both Firefox sizes.
+The inspected face also corrected the Today clipboard to the registered Thread
+conversation sprites and removed default Button margins from prompt starters.

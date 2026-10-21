@@ -19,7 +19,7 @@ egress remain beside Ask; tools are available in a fold. Original report
 Required quick: ASK_FEEDBACK_QUICK_PENDING. Owner live aesthetic judgment is open.
 The prior f9ec7ccd6 full tape finished with 12 Python and 15 browser failures.
 Five new graph-walk failures came from setup pressing the now-hidden System
-Builder tools toggle. Both J9 setup cases now choose System through the real
+Builder tools toggle. Both J9 setup cases now choose This Mac through the real
 category button first; existing smoke predicates remain strict. The Needs
 confirmation failure and inherited tape failures remain open.
 

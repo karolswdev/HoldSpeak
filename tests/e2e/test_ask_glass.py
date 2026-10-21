@@ -164,10 +164,25 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 editor = window.get_by_role("textbox", name="Ask about your work", exact=True)
                 editor.wait_for()
                 _settle(page)
-                assert editor.bounding_box()["height"] <= 170
-                assert window.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
-                assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
                 page.screenshot(path=str(shots / f"ask-empty-{width}.png"))
+                facts = window.evaluate("""el => {
+                  const rect = el.getBoundingClientRect();
+                  const fields = node => {const r=node.getBoundingClientRect();return {
+                    tag:node.tagName, cls:String(node.className), x:r.x, width:r.width,
+                    scroll:node.scrollWidth, client:node.clientWidth,
+                    margin:getComputedStyle(node).margin, gap:getComputedStyle(node).gap};};
+                  return {window:fields(el), body:fields(el.querySelector('[data-testid="ask-body"]')), overflows:[...el.querySelectorAll('*')].filter(node => {
+                    const r=node.getBoundingClientRect();return r.width && (r.right>rect.right+1 || r.left<rect.left-1);
+                  }).map(fields)};
+                }""")
+                (shots / f"ask-layout-{width}.json").write_text(json.dumps(facts, indent=2))
+                assert editor.bounding_box()["height"] <= 170
+                # The floating resize chrome occupies four pixels of the frame's
+                # border box; test the editable body and every visible child.
+                assert not facts["overflows"], facts
+                assert facts["body"]["scroll"] <= facts["body"]["client"] + 1, facts
+                assert window.evaluate("el => {const r=el.getBoundingClientRect();return r.left>=-1 && r.right<=innerWidth+1;}")
+                assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
                 window.get_by_role("button", name="What needs my attention?", exact=True).click()
                 expect(editor).to_have_value("What needs my attention?")
                 expect(editor).to_be_focused()
@@ -201,7 +216,8 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 assert question in json.dumps(kept)
                 assert "Review the rollback plan" in json.dumps(kept)
                 _settle(page)
-                assert window.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                assert window.get_by_test_id("ask-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                assert window.evaluate("el => {const r=el.getBoundingClientRect();return r.left>=-1 && r.right<=innerWidth+1;}")
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
                 page.screenshot(path=str(shots / f"ask-answer-{width}.png"))
                 assert not errors, errors
