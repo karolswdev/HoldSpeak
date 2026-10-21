@@ -12,6 +12,8 @@ The title bar says Adr Drafter, the content repeats ADR and ADR DRAFTER, a raw p
 
 ## Settled visual direction
 
+A frozen baseline probe captured a scrolled Send preview correctly. A separate screenshot renderer defect was not established. Capture timing remains unchanged; the repaired faces and their saved PNGs are checked together at both widths.
+
 - The document or honest result leads on one paper reading plane. Remove the redundant artifact-kind heading. Preserve original stored document bytes for Copy and Send. Do not manufacture a successful ADR from a no-decisions result.
 - Keep the blue active window bar and steel chrome. Space is deliberate and proportional to content; no stretched empty panels, nested slab headings or repeated Send/SEND/To chrome. Names use the existing sans hierarchy; compact facts use 12 px mono.
 - Shared Send destination choices are full-width readable rows, with the name first and secondary channel/target facts below. Avoid horizontal max-content chips inside a narrow document window. The selected destination, preview and real Send action form one connected sequence. Keep existing Edit, Back, receipts, retries, operation identity and owner-only dispatch.
