@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-The owner's Ask feedback is implemented by ASK_FEEDBACK_PR_PENDING: compact
+The owner's Ask feedback is implemented by #1421: compact
 paper composer, an empty-state Ask pictogram and prompt starters, and a
 reading area for the conversation. Enter moves a sent question into the
 conversation and clears the durable composer immediately. Answer completion,
@@ -2043,7 +2043,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
-- **ASK_FEEDBACK_PR_PENDING — Ask feedback:** clear sent input immediately, retain the next draft, compact paper conversation and composer.
+- **#1421 — Ask feedback:** clear sent input immediately, retain the next draft, compact paper conversation and composer.
 
 - **#1420 — automation save errors:** rejected native-agent and spend-limit saves show a refusal, keep the draft and permit retry. Fixes the post-merge finding on #1419.
 
