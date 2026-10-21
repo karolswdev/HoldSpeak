@@ -1,0 +1,21 @@
+# Firefox Settings capture
+
+Owner report, 2026-10-20: two feedback reports saved successfully; a third attempt on the Settings home in Firefox stalled, showed a generic request error, and Retry was followed by the macOS spinning cursor. Both completed reports have their WAV, PNG, context and configured-engine transcripts. The third report did not reach disk. The running backend responds in about 20 ms and the audio floor is free; the owner's Firefox tab is left intact.
+
+An isolated real-Hub Firefox run on main `cd826d847`, at the owner's 1512×802 viewport and DPR 2, measured 1,303 elements in the loaded Settings window and 1,341 computed style properties on its root. Repeated actual Feedback captures reached Recording in 15,374 and 15,171 ms, with browser heartbeat gaps of 7,350 and 7,242 ms. The original generic request error has not been reproduced on that Firefox build. A second tested Firefox build exposed a separate html-to-image 1.11.13 font-descriptor error (`trim` on undefined); the Vite transform corrects that one accessor with `getPropertyValue("font-family")` while keeping embedded fonts. The initial 37-element loading state captured in 572 ms; it is not evidence for the loaded window.
+
+## Correction
+
+Keep the existing frozen-at-click snapshot, values, redaction, scroll and same configured speech engine. Remove inherited custom-property duplication from each element, assign frozen computed styles in one operation, freeze generated pseudo-element styles once, and let html-to-image copy those inline styles without a second computed-style traversal. SVG styles remain frozen too. Preserve the screenshot's appearance; measure the result rather than dropping screenshots or hiding the Settings content. Cancellation must reach capture work and remove its temporary DOM on every exit, including font/import failure. Retry must not leave an abandoned capture consuming the browser.
+
+Root owns this record, real-browser regression and the done call. The capture worker owns `web/src/desk/feedback/capture.ts`, `UiFeedbackHost.tsx` and their focused app tests. No tracked source changes while validation is queued or active. Tests use a private Hub, isolated HOME, fake browser microphone and the machine lock; no owner's desk writes or native browser actions. Check the loaded Settings window repeatedly in Firefox, responsiveness, cancellation and wrapper cleanup, then the existing Chromium saved PNG and feedback flows at 1440 and 393. Required quick precedes merge; deploy exact merged source, then run the full main suite.
+
+Tuesday: the owner can report Settings without freezing the Desk, and cancel or retry a failed attempt without stacking screenshot work. This serves tenets 1, 3, 5 and 7 through the existing feedback component.
+
+## Observed result
+
+On the same Firefox 1522, 1512×802 viewport, DPR 2 and loaded 1,303-element Settings window, the corrected build reached Recording in 1,375 / 1,149 / 1,157 ms. Maximum heartbeat gaps were 404 / 355 / 347 ms, down from 7,350 / 7,242 ms before the correction. Evidence is in `.tmp/feedback-freeze/capture-baseline/` and `capture-final/`.
+
+The real private-Hub regression on the pinned Firefox 1497 passed at 1440 and 393: three reports per width, six real saves, WAV frames, nonblank PNGs, frozen field values, no remaining capture wrapper, and exact report bytes preserved after the third save was interrupted and retried. Captures took 1,160–1,471 ms; maximum heartbeat gaps were 347–404 ms. The saved window images at both sizes were inspected. Browser evidence is in `.tmp/evidence-shots/ui-feedback-firefox/`. Build, typecheck and 16 focused web tests also passed, including cancellation during pending fonts/rendering and cleanup after failure.
+
+Required quick and runtime delivery are recorded in `pm/STATUS.md`. The owner's unsaved third attempt is not recovered by these checks; the existing Firefox tab was not controlled or restarted. The Agent and New Automation design feedback remains follow-up work.

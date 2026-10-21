@@ -62,9 +62,9 @@ jobs:
           npm ci --no-audit --no-fund
           npm run build
 
-      - name: Install Playwright Chromium
+      - name: Install Playwright Chromium and Firefox
         # No live browser test runs WebKit (the PHILO-8-02 engine case is parked).
-        run: uv run --extra test playwright install chromium
+        run: uv run --extra test playwright install chromium firefox
 
       - name: Pre-warm the mermaid renderer
         # HS-200-03 follow-through. Without this the mermaid guard fell back

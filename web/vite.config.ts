@@ -86,9 +86,25 @@ function buildStamp() {
   };
 }
 
+// html-to-image 1.11.13 reads a CSSFontFaceDeclaration as though it were
+// CSSStyleDeclaration. Firefox requires the descriptor accessor instead.
+// Keep the one-line upstream compatibility fix with the pinned dependency:
+// https://github.com/bubkoo/html-to-image/issues/508
+function feedbackFontDescriptors() {
+  return {
+    name: "holdspeak-feedback-font-descriptors",
+    enforce: "pre" as const,
+    transform(code: string, id: string) {
+      if (!/\/html-to-image\/(?:es|lib)\/embed-webfonts\.js(?:\?|$)/.test(id)) return;
+      return code.replaceAll("rule.style.fontFamily", "rule.style.getPropertyValue('font-family')");
+    },
+  };
+}
+
 export default defineConfig({
   base: "/_built/",
-  plugins: [react(), buildStamp()],
+  plugins: [react(), feedbackFontDescriptors(), buildStamp()],
+  optimizeDeps: { exclude: ["html-to-image"] },
   define: { __HOLDSPEAK_BUILD__: JSON.stringify(BUILD_ID) },
   build: {
     outDir: "../holdspeak/static/_built",

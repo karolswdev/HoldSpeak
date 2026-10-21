@@ -23,6 +23,7 @@ const MAX_FIELDS = 120;
 const MAX_SCROLLS = 80;
 const MAX_CONTEXT_BYTES = 256_000;
 const MAX_VALUE = 32_000;
+let frozenCaptureSequence = 0;
 
 const SENSITIVE_WORD =
   /(?:pass(?:word|code)?|token|secret|credential|api[ _-]?key|authorization|client[ _-]?secret)/i;
@@ -298,36 +299,93 @@ export function snapshotContext(target: Element, root: Element, hubRow: unknown 
   return result;
 }
 
-function frozenClone(root: Element): { wrapper: HTMLDivElement; clone: HTMLElement } {
+function throwIfCaptureAborted(signal?: AbortSignal): void {
+  if (!signal?.aborted) return;
+  const error = new Error("Feedback capture was cancelled.");
+  error.name = "AbortError";
+  throw error;
+}
+
+function captureStep<T>(work: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return work;
+  return new Promise<T>((resolve, reject) => {
+    const aborted = () => {
+      try { throwIfCaptureAborted(signal); } catch (error) { reject(error); }
+    };
+    if (signal.aborted) aborted();
+    else signal.addEventListener("abort", aborted, { once: true });
+    work.then(
+      (value) => { signal.removeEventListener("abort", aborted); resolve(value); },
+      (error) => { signal.removeEventListener("abort", aborted); reject(error); },
+    );
+  });
+}
+
+function computedStyleText(style: CSSStyleDeclaration, properties: string[]): string {
+  let result = "";
+  for (const property of properties) {
+    const value = style.getPropertyValue(property);
+    if (value) result += `${property}: ${value};`;
+  }
+  return result;
+}
+
+function frozenClone(root: Element, signal?: AbortSignal): {
+  wrapper: HTMLDivElement;
+  clone: HTMLElement;
+} {
+  throwIfCaptureAborted(signal);
   const source = [root, ...Array.from(root.querySelectorAll("*"))];
   const clone = root.cloneNode(true) as HTMLElement;
   const copies = [clone, ...Array.from(clone.querySelectorAll("*"))];
-  const copyComputedStyle = (from: Element, to: HTMLElement) => {
-    const style = getComputedStyle(from);
-    for (let index = 0; index < style.length; index += 1) {
-      const property = style.item(index);
-      to.style.setProperty(property, style.getPropertyValue(property), style.getPropertyPriority(property));
+  const rootStyle = getComputedStyle(root);
+  const standardStyleProperties = Array.from(rootStyle).filter((property) => !property.startsWith("--"));
+  const pseudoStyleProperties = standardStyleProperties.includes("content")
+    ? standardStyleProperties
+    : [...standardStyleProperties, "content"];
+  const captureClassPrefix = `hs-feedback-pseudo-${++frozenCaptureSequence}`;
+  const pseudoRules: string[] = [];
+  const copyComputedStyle = (from: Element, to: HTMLElement | SVGElement, includeCustomProperties = false) => {
+    const style = from === root ? rootStyle : getComputedStyle(from);
+    const properties = includeCustomProperties
+      ? Array.from(style)
+      : standardStyleProperties;
+    to.style.cssText = computedStyleText(style, properties);
+  };
+  const freezePseudoStyles = (from: Element, to: Element, nodeIndex: number) => {
+    for (const pseudo of ["::before", "::after"] as const) {
+      throwIfCaptureAborted(signal);
+      const style = getComputedStyle(from, pseudo);
+      const content = style.getPropertyValue("content");
+      if (!content || content === "none") continue;
+      const className = `${captureClassPrefix}-${nodeIndex}-${pseudo.slice(2)}`;
+      to.classList.add(className);
+      pseudoRules.push(`.${className}${pseudo}{${computedStyleText(style, pseudoStyleProperties)}}`);
     }
   };
   const preserveScroll = (from: HTMLElement, to: HTMLElement) => {
+    throwIfCaptureAborted(signal);
     if (!from.scrollTop && !from.scrollLeft) return;
     to.scrollTop = from.scrollTop;
     to.scrollLeft = from.scrollLeft;
     to.style.overflow = "hidden";
     for (const child of Array.from(to.children)) {
+      throwIfCaptureAborted(signal);
       if (!(child instanceof HTMLElement)) continue;
       const transform = child.style.transform;
       child.style.transform = `translate(${-from.scrollLeft}px, ${-from.scrollTop}px)${transform && transform !== "none" ? ` ${transform}` : ""}`;
     }
   };
   source.forEach((element, index) => {
+    throwIfCaptureAborted(signal);
     const copy = copies[index];
     if (!copy) return;
-    if (copy instanceof HTMLElement) copyComputedStyle(element, copy);
     if (element.matches("[data-ui-feedback], [data-ui-feedback] *") || isSensitiveElement(element)) {
       copy.remove();
       return;
     }
+    if (copy instanceof HTMLElement || copy instanceof SVGElement) copyComputedStyle(element, copy, index === 0);
+    freezePseudoStyles(element, copy, index);
     if (element instanceof HTMLInputElement && copy instanceof HTMLInputElement) {
       copy.value = element.value;
       copy.checked = element.checked;
@@ -348,19 +406,24 @@ function frozenClone(root: Element): { wrapper: HTMLDivElement; clone: HTMLEleme
     }
   });
   source.forEach((element, index) => {
+    throwIfCaptureAborted(signal);
     const copy = copies[index];
     if (element instanceof HTMLElement && copy instanceof HTMLElement) preserveScroll(element, copy);
   });
+  if (pseudoRules.length > 0) {
+    const pseudoStyle = document.createElement("style");
+    pseudoStyle.textContent = pseudoRules.join("");
+    clone.appendChild(pseudoStyle);
+  }
   const wrapper = document.createElement("div");
   const rect = root.getBoundingClientRect();
-  const rootStyle = getComputedStyle(root);
   const shell = root.closest(".desk-next");
   if (shell instanceof HTMLElement) {
     wrapper.className = shell.className;
     for (const attribute of Array.from(shell.attributes)) {
       if (attribute.name.startsWith("data-")) wrapper.setAttribute(attribute.name, attribute.value);
     }
-    copyComputedStyle(shell, wrapper);
+    copyComputedStyle(shell, wrapper, true);
   }
   wrapper.style.position = "fixed";
   wrapper.style.left = "-100000px";
@@ -382,22 +445,37 @@ function frozenClone(root: Element): { wrapper: HTMLDivElement; clone: HTMLEleme
   return { wrapper, clone };
 }
 
-export async function captureWindowPng(root: Element): Promise<string> {
-  const frozen = frozenClone(root);
-  const { toPng } = await import("html-to-image");
-  document.body.appendChild(frozen.wrapper);
-  if (document.fonts?.ready) await document.fonts.ready;
+export async function captureWindowPng(root: Element, signal?: AbortSignal): Promise<string> {
+  let frozen: ReturnType<typeof frozenClone> | null = null;
   try {
-    const dataUrl = await toPng(frozen.clone, {
+    throwIfCaptureAborted(signal);
+    frozen = frozenClone(root, signal);
+    throwIfCaptureAborted(signal);
+    const { toPng } = await captureStep(import("html-to-image"), signal);
+    throwIfCaptureAborted(signal);
+    document.body.appendChild(frozen.wrapper);
+    if (document.fonts?.ready) await captureStep(document.fonts.ready, signal);
+    throwIfCaptureAborted(signal);
+    const dataUrl = await captureStep(toPng(frozen.clone, {
       cacheBust: true,
+      fetchRequestInit: signal ? { signal } : undefined,
+      includeStyleProperties: [],
       pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
-      filter: (node) => !(node instanceof Element && (isSensitiveElement(node) || node.closest("[data-ui-feedback]"))),
-    });
+      filter: (node) => {
+        throwIfCaptureAborted(signal);
+        return !(node instanceof Element && (isSensitiveElement(node) || node.closest("[data-ui-feedback]")));
+      },
+    }), signal);
+    throwIfCaptureAborted(signal);
     const prefix = "data:image/png;base64,";
     if (!dataUrl.startsWith(prefix)) throw new Error("PNG capture did not return an image.");
     return dataUrl.slice(prefix.length);
+  } catch (error) {
+    throwIfCaptureAborted(signal);
+    if (error instanceof Error) throw error;
+    throw new Error("Window image failed. Try again.");
   } finally {
-    frozen.wrapper.remove();
+    frozen?.wrapper.remove();
   }
 }
 

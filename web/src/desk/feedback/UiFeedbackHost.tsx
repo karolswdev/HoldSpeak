@@ -171,7 +171,7 @@ export function UiFeedbackHost() {
     setStatus("Capturing");
     void (async () => {
       const hubRowTask = canonicalWindowRow(ownerId);
-      const image = await captureWindowPng(root);
+      const image = await captureWindowPng(root, controller.signal);
       if (current !== generation.current || controller.signal.aborted) {
         return;
       }
