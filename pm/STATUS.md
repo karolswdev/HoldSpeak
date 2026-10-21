@@ -17,7 +17,7 @@ A pinned screenshot-library font accessor is corrected for Firefox. Six real
 Firefox reports saved at 1440/393, including interrupted-save Retry with the
 same bytes, original audio, screenshot and values. The owner's two completed
 reports are intact; the third attempt did not reach disk. Required quick:
-FREEZE_QUICK_PENDING. Diagnosis and measured evidence locations:
+build, 37 related web cases, 22 affected Firefox/Chromium/Send browser cases, 110 desk sweep cases with feedback enabled, 27 canon and 1,116 repository guards passed; saved window images inspected at 1440 and 393. Diagnosis and measured evidence locations:
 `docs/internal/ui-feedback/FIREFOX-CAPTURE.md`. This fixes feedback capture;
 the Agent and New Automation design reports remain open follow-up work.
 
