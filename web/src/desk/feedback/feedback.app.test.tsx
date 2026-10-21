@@ -234,7 +234,7 @@ describe("local UI feedback", () => {
     act(() => requestUiFeedback(clicked));
     await screen.findByRole("button", { name: "Stop and save" });
 
-    expect(mocks.captureWindowPng).toHaveBeenCalledWith(clicked);
+    expect(mocks.captureWindowPng).toHaveBeenCalledWith(clicked, expect.any(AbortSignal));
     expect(mocks.canonicalWindowRow).toHaveBeenCalledWith("window-clicked");
     expect(screen.getByText("Clicked")).toBeTruthy();
     act(() => window.dispatchEvent(new Event(TALK_STOP_EVENT)));
@@ -353,6 +353,28 @@ describe("local UI feedback", () => {
     const late = session();
     await act(async () => { resolveAudio?.(late); });
     await waitFor(() => expect(late.cancel).toHaveBeenCalled());
+    view.unmount();
+  });
+
+  it("aborts a pending window capture and ignores its late result", async () => {
+    let signal: AbortSignal | undefined;
+    let resolveCapture: ((value: string) => void) | undefined;
+    mocks.captureWindowPng.mockImplementation((_root: Element, candidate: AbortSignal) => {
+      signal = candidate;
+      return new Promise<string>((resolve) => { resolveCapture = resolve; });
+    });
+    const view = deskFace();
+    await startPicker();
+    fireEvent.pointerDown(view.action, { pointerId: 1 });
+    await waitFor(() => expect(mocks.captureWindowPng).toHaveBeenCalled());
+    expect(signal?.aborted).toBe(false);
+
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(signal?.aborted).toBe(true);
+    await act(async () => { resolveCapture?.("LATE_PNG"); });
+
+    await waitFor(() => expect(mocks.startFeedbackAudio).not.toHaveBeenCalled());
+    expect(screen.queryByRole("button", { name: "Stop and save" })).toBeNull();
     view.unmount();
   });
 

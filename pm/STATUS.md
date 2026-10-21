@@ -4,9 +4,22 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (local UI feedback)
+**Last updated:** 2026-10-20 (Firefox feedback capture)
 
 ## Current phase
+
+Firefox Settings feedback capture now freezes resolved styles once, preserves
+pseudo-elements and SVGs, and avoids copying inherited theme tokens onto every
+node. The same loaded 1,303-element window went from about 15.2 seconds with
+7.3-second interface stalls to 1.1–1.4 seconds with a maximum 404 ms pause.
+Capture cancellation reaches pending image/font work and removes temporary DOM.
+A pinned screenshot-library font accessor is corrected for Firefox. Six real
+Firefox reports saved at 1440/393, including interrupted-save Retry with the
+same bytes, original audio, screenshot and values. The owner's two completed
+reports are intact; the third attempt did not reach disk. Required quick:
+build, 37 related web cases, 22 affected Firefox/Chromium/Send browser cases, 110 desk sweep cases with feedback enabled, 27 canon and 1,116 repository guards passed; saved window images inspected at 1440 and 393. Diagnosis and measured evidence locations:
+`docs/internal/ui-feedback/FIREFOX-CAPTURE.md`. This fixes feedback capture;
+the Agent and New Automation design reports remain open follow-up work.
 
 The owner’s audio report of the Adr Drafter window starts the beauty and
 delight reference in `docs/internal/beauty-delight/`. Shared Send uses

@@ -29,3 +29,7 @@ Feedback must transcribe through the same configured speech engine and admitted 
 Root owns this plan, the direction canvas, the ledger and done call. Builders own disjoint paths assigned in their briefs. Follow CLAUDE.md fast cycle: isolated worktree, focused tests under the machine lock and isolated HOME, source frozen through queued/active validation, required quick before PR/merge, exact merged source deployed, full tape afterward. No owner machine state in test walks. Before claiming a reference, inspect real 1440 and 393 shots of the owner-reported empty result, a useful document, and shared Send open with real preview/action states. Verify the saved feedback PNG includes those same controls. The owner judges the result live.
 
 Tuesday: open the result, read what happened, choose a destination and inspect the outgoing text without a hunt; one feedback recording yields audio, image, current state and a transcript through the configured engine. This serves tenets 1–7 through the existing components and simple product language.
+
+## Next reported faces — still open
+
+The owner's two later reports target the Agent session and New Automation. Their original audio, images, values, criteria, concrete source seams and existing component/test paths are recorded in [NEXT-FACES.md](NEXT-FACES.md). The Firefox capture repair enables continued feedback; it closes neither design complaint. These two faces are the next beauty-and-delight delivery scope.
