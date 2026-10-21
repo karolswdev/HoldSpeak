@@ -256,3 +256,25 @@ def test_real_feedback_selection_capture_and_second_report(feedback_page: Any) -
 
     assert first["id"] != second["id"], (first["id"], second["id"])
     assert first["context"]["owner"]["window_id"] == second["context"]["owner"]["window_id"] == window_id
+
+
+def test_window_feedback_button_records_its_window_without_picking(feedback_page: Any) -> None:
+    page, width, window = feedback_page
+    draft = "unsaved window button feedback draft"
+    window.get_by_role("textbox", name="Gallery text").fill(draft)
+    window_id = str(window.get_attribute("id"))
+    button = window.get_by_role("button", name="Give feedback on Components", exact=True)
+    button.wait_for(timeout=T)
+    page.screenshot(path=str(SHOTS / f"feedback-button-{width}.png"))
+    if width == 393:
+        facts = _strip_control_facts(page, button)
+        assert facts["rect"]["width"] >= 44 and facts["rect"]["height"] >= 44, facts
+        assert facts["inViewport"] and all(facts["hits"]), facts
+
+    button.click()
+    strip = page.locator("[data-ui-feedback]")
+    strip.get_by_text("RECORDING", exact=True).wait_for(timeout=T)
+    assert strip.get_by_text("Select an element", exact=True).count() == 0
+    page.wait_for_timeout(500)
+    report = _save_feedback(page, width, shot_stem="feedback-direct", window_id=window_id, draft=draft)
+    assert report["context"]["selected_element"]["id"] == window_id

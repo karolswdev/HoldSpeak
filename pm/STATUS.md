@@ -9,7 +9,8 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 ## Current phase
 
 The owner can opt into audio feedback with `HOLDSPEAK_UI_FEEDBACK=1`.
-Desk > Give feedback selects an element without running its action. A report
+Every window has a Feedback title-bar button that captures that window directly.
+Desk > Give feedback also selects an element without running its action. A report
 keeps the selected window's PNG, original WAV, rendered field values and
 window identity together under `~/.local/share/holdspeak/feedback/`.
 Capture freezes before recording, and Retry saves that same bundle. Password
@@ -17,7 +18,13 @@ and credential fields are excluded. Recording uses the existing microphone
 session and audio floor. No engine, transcription or external delivery is
 required. The flag is off by default. Usage and the settled design are in
 `docs/internal/ui-feedback/`. This owner development tool adds no betterment
-recipe slice. Required quick: build/typecheck, 83 related Vitest cases, 2 real feedback browser cases, 110 desk sweep cases, 27 canon and 1,116 repo guards; the preceding unchanged backend check passed 293 affected Python cases.
+recipe slice. Direct window button check: WINDOW_FEEDBACK_QUICK_PENDING.
+Initial capture check: build/typecheck, 83 related Vitest cases, 2 real feedback browser cases, 110 desk sweep cases, 27 canon and 1,116 repo guards; the preceding unchanged backend check passed 293 affected Python cases.
+
+The full main tape pinned to `66beb450a` finished red: 11 Python, 11 browser
+and one web failure (the Settings remote-access case reached its five-second
+limit). No feedback case failed. Broader People, route receipt, retained
+chrome and other tape failures remain open; this is not a whole-suite green.
 
 The required check also exposed an existing launch watcher shutdown race:
 a session ending after close could let the old watcher settle its launch.

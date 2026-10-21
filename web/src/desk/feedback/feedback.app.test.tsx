@@ -87,6 +87,7 @@ import { UiFeedbackHost } from "./UiFeedbackHost";
 import { TALK_STOP_EVENT } from "../components/MicButton";
 import {
   hydrateUiFeedback,
+  requestUiFeedback,
   resetUiFeedbackRuntimeForTests,
   uiFeedbackState,
 } from "./runtime";
@@ -211,6 +212,34 @@ describe("local UI feedback", () => {
     expect(mocks.captureWindowPng.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.startFeedbackAudio.mock.invocationCallOrder[0],
     );
+    view.unmount();
+  });
+
+  it("captures the frame root passed by a direct launcher, including that root's draft", async () => {
+    const view = render(
+      <>
+        <div id="window-front" data-layer="window" aria-label="Front">
+          <textarea aria-label="Front draft" defaultValue="front draft" />
+        </div>
+        <div id="window-clicked" data-layer="window" aria-label="Clicked">
+          <textarea aria-label="Clicked draft" defaultValue="clicked draft" />
+        </div>
+        <UiFeedbackHost />
+      </>,
+    );
+    await waitFor(() => expect(uiFeedbackState().enabled).toBe(true));
+    const clicked = document.getElementById("window-clicked")!;
+    act(() => requestUiFeedback(clicked));
+    await screen.findByRole("button", { name: "Stop and save" });
+
+    expect(mocks.captureWindowPng).toHaveBeenCalledWith(clicked);
+    expect(mocks.canonicalWindowRow).toHaveBeenCalledWith("window-clicked");
+    expect(screen.getByText("Clicked")).toBeTruthy();
+    act(() => window.dispatchEvent(new Event(TALK_STOP_EVENT)));
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/ui-feedback", expect.anything()));
+    const post = mocks.apiFetch.mock.calls.find(([path]) => path === "/api/ui-feedback")?.[1] as { json?: { context?: { owner?: { window_id?: string }; fields?: Array<{ value?: string }> } } };
+    expect(post.json?.context?.owner?.window_id).toBe("window-clicked");
+    expect(post.json?.context?.fields?.some((field) => field.value === "clicked draft")).toBe(true);
     view.unmount();
   });
 

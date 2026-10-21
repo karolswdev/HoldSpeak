@@ -80,6 +80,7 @@ import {
 } from "./window/windowCommands";
 import { Dock } from "./window/Dock";
 import { Button } from "../../components/signal/Signal";
+import { requestUiFeedback, useUiFeedbackState } from "../feedback/runtime";
 // PHILO-16 — the compositor owns planes, z, motion and the arrangements.
 import {
   departInto,
@@ -860,6 +861,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   // replays the entrance (read at render; idempotent under strict mode).
   const inherited = inheritance.isInherited(id);
   const compact = useCompactViewport();
+  const feedback = useUiFeedbackState();
   const reducedMotion = useReducedMotion();
   const zoomRect = useDesk((s) => s.panelZoom?.[id]);
   const win = useDeskWindow(id, {
@@ -1313,6 +1315,17 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         {wings}
         {actions ? <span className="desk-window-actions">{actions}</span> : null}
         <span className="desk-gadgets desk-gadgets-right">
+          {feedback.enabled ? (
+            <Button
+              variant="chrome"
+              className="desk-gadget desk-gadget-feedback"
+              aria-label={`Give feedback on ${name}`}
+              title={`Give feedback on ${name}`}
+              onClick={() => requestUiFeedback(shellRef.current ?? undefined)}
+            >
+              Feedback
+            </Button>
+          ) : null}
           {!compact ? (
             <>
               <Button
