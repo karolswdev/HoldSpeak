@@ -322,6 +322,11 @@
 .desk-next [data-send="actions"] .send-verbs > .btn--primary {
   margin-left: auto;
 }
+/* This action row already reserves space around each target. The generic
+   narrow Button halo margin would add that space a second time. */
+.desk-next [data-send="actions"] .send-verbs > .btn {
+  margin-block: 0;
+}
 .desk-next [data-send="actions"] .send-literal.send-wrap {
   max-width: 100%;
   white-space: normal;
