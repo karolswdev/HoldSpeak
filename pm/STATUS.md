@@ -12,7 +12,7 @@ Post-merge review of #1419 found that a rejected native-agent or spend-limit
 save can escape an async UI callback. The focused fix catches that rejection,
 retains the spend draft and restores a usable retry. The regression drives a
 503 response and then a successful actual writer retry. Required quick:
-SAVE_ERROR_QUICK_PENDING.
+build, 58 related web cases including a refused-save/draft/retry regression, 110 desk sweep cases at 1440/393, 27 canon and 1,116 repository guards passed.
 
 The owner's 2026-10-21 Automation builder and Settings reports are implemented
 in this change. Blank automations open a five-step guided editor using the
