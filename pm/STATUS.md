@@ -15,7 +15,7 @@ Direct, terminal and receipts preserved. New Automation uses shared choice-card
 material, 32px pictograms and compact facts, with Start from scratch first
 and narrow-container reflow. The creation path still saves one automation per
 press. Canvas and scope: `docs/internal/beauty-delight/REPORTED-FACES.md` and
-`reported-faces.html`. Required quick: FACES_QUICK_PENDING. The owner judges
+`reported-faces.html`. Required quick: build, 4112 related web cases, 10 affected browser cases, 110 desk sweep cases with feedback enabled, 27 canon and 1,116 repository guards passed; typecheck, 61 focused web cases and nine focused browser cases also passed; real saved images inspected at 1440 and 393. The owner judges
 the delivered appearance live; this implements these two reports without
 claiming a completed redesign of every Desk face.
 
