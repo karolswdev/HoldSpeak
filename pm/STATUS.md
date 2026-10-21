@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-20 (Firefox feedback capture)
+**Last updated:** 2026-10-21 (Automation builder and Settings feedback)
 
 ## Current phase
 
@@ -15,7 +15,7 @@ time, with pictograms and a paper pane; local category children stay mounted.
 The dropdown uses the existing Workbench choice control with a clear closed
 face. Both reports and their original files remain read-only. Settled canvas
 and scope: `docs/internal/betterment/SETTINGS-BUILDER-FEEDBACK-2026-10-21.md`.
-Required quick: BUILDER_SETTINGS_QUICK_PENDING. The owner judges the appearance
+Required quick: build, 4117 related web cases, 18 affected checks, including 13 real browser cases at 1440/393, 110 desk sweep cases with feedback enabled, 27 canon and 1,116 repository guards passed; typecheck passed; six separately timed Firefox captures passed unchanged 3-second/1-second budgets. The owner judges the appearance
 on the delivered desk; this is not acceptance of the whole OS's design.
 
 The owner's Agent and New Automation feedback is now implemented in the
