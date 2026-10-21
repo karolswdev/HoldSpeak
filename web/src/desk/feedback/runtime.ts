@@ -9,7 +9,7 @@ let state = { enabled: false, loading: true };
 const SERVER_STATE = { enabled: false, loading: true };
 let attempted = false;
 const listeners = new Set<() => void>();
-let launcher: (() => void) | null = null;
+let launcher: ((target?: Element) => void) | null = null;
 
 function notify(): void {
   listeners.forEach((listener) => listener());
@@ -51,15 +51,15 @@ export function uiFeedbackGhost(): string | null {
   return state.enabled ? null : "Feedback is unavailable";
 }
 
-export function bindUiFeedbackLauncher(next: (() => void) | null): () => void {
+export function bindUiFeedbackLauncher(next: ((target?: Element) => void) | null): () => void {
   launcher = next;
   return () => {
     if (launcher === next) launcher = null;
   };
 }
 
-export function requestUiFeedback(): void {
-  launcher?.();
+export function requestUiFeedback(target?: Element): void {
+  launcher?.(target);
 }
 
 export function resetUiFeedbackRuntimeForTests(): void {

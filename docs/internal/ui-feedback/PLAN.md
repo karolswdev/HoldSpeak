@@ -2,6 +2,12 @@
 
 Owner request, 2026-10-20: an environment flag enables spoken feedback about a selected interface element, with the window state and a screenshot attached to every report. This is a new owner development tool, not another betterment recipe slice.
 
+## Window button — owner correction, 2026-10-20
+
+Every `DeskWindowFrame` title bar has a visible **Feedback** library chrome Button when the existing runtime flag is enabled, on desktop and phone. Its accessible name identifies its own window. A single press starts capture for that frame root directly: no menu, element picker or second window selection. The existing host takes the same frozen window PNG, current values and audio and keeps the existing Stop and save/Cancel/Retry flow. The button does not drag, close, zoom or send the window back. The existing menu route still permits element-specific feedback. Flag off hides every entry. One shared frame integration covers all applications, pullouts and Chair windows; do not add per-app buttons.
+
+Tuesday: press Feedback on the broken window, speak, save. This directly serves tenets 3 and 5. Validate two concurrently open windows with distinct unsaved values so the clicked window, rather than the frontmost or last-used window, owns each capture. At 1440 and 393, prove the direct button and real saved PNG/JSON/audio through the existing T4 file; retain the existing menu selection coverage. Root owns this plan, canvas, README and status; worker owns only the shared frame, its scoped CSS, runtime/host and feedback tests.
+
 ## Settled experience
 
 `HOLDSPEAK_UI_FEEDBACK=1` enables **Desk > Give feedback** and its shared command-deck verb. It is absent by default. Choose the verb, then select an element. The selection consumes the press: it must not activate the element, submit a form, or move a window. Escape cancels. The selected element identifies its existing Desk window; Desk chrome can use the Desk root as a fallback.

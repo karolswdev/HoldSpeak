@@ -95,19 +95,8 @@ export function UiFeedbackHost() {
     setStatus("Select an element");
   }, [cancelCurrent, capability.enabled]);
 
-  useEffect(() => bindUiFeedbackLauncher(beginPicking), [beginPicking]);
-
-  useEffect(() => {
-    if (phase !== "picking") return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      event.preventDefault();
-      event.stopPropagation();
-      cancelCurrent();
-    };
-    const onPointer = (event: PointerEvent) => {
-      const target = targetElement(event);
-      if (!target || target.closest("[data-ui-feedback]")) return;
+  const captureTarget = useCallback((target: Element, event?: PointerEvent) => {
+    if (event) {
       event.preventDefault();
       event.stopImmediatePropagation();
       const gesturePointer = event.pointerId;
@@ -136,89 +125,119 @@ export function UiFeedbackHost() {
       document.addEventListener("pointercancel", consumeGesture, true);
       document.addEventListener("click", consumeGesture, true);
       document.addEventListener("change", consumeGesture, true);
-      const current = ++generation.current;
-      const root = ownerRoot(target);
-      const ownerId = root.getAttribute("data-layer") === "window" ? root.id || null : null;
-      let context: FeedbackContext;
+    } else {
+      gestureCleanup.current?.();
+      gestureCleanup.current = null;
+    }
+    const current = ++generation.current;
+    const root = ownerRoot(target);
+    const ownerId = root.getAttribute("data-layer") === "window" ? root.id || null : null;
+    let context: FeedbackContext;
+    try {
+      context = snapshotContext(target, root, null);
+    } catch (cause) {
+      gestureCleanup.current?.();
+      gestureCleanup.current = null;
+      setError(errorText(cause));
+      setStatus("");
+      setPhase("error");
+      return;
+    }
+    const id = newFeedbackId();
+    const capturedAt = new Date().toISOString();
+    const controller = new AbortController();
+    preparationAbort.current = controller;
+    setPhase("preparing");
+    setStatus("Capturing");
+    void (async () => {
+      const hubRowTask = canonicalWindowRow(ownerId);
+      const image = await captureWindowPng(root);
+      if (current !== generation.current || controller.signal.aborted) {
+        return;
+      }
+      if (typeof image !== "string") {
+        setError("Window image failed. The window is unchanged. Select an element.");
+        setStatus("");
+        setPhase("error");
+        return;
+      }
+      const hubRow = await hubRowTask;
+      if (current !== generation.current || controller.signal.aborted) return;
+      context.owner.hub_row = hubRow;
+      const next: PreparedFeedback = {
+        id,
+        capturedAt,
+        context,
+        screenshotBase64: image,
+        audioBase64: null,
+        audioDurationMs: 0,
+      };
+      payload.current = next;
+      setPrepared(next);
+      setAudioReady(false);
+      setStatus("Starting recording");
+      setPhase("preparing");
+      let audioSession: FeedbackAudioSession;
       try {
-        context = snapshotContext(target, root, null);
+        audioSession = await startFeedbackAudio(controller.signal);
       } catch (cause) {
-        cleanupGesture();
-        gestureCleanup.current = null;
+        if (current !== generation.current || controller.signal.aborted) return;
+        preparationAbort.current = null;
         setError(errorText(cause));
         setStatus("");
         setPhase("error");
         return;
       }
-      const id = newFeedbackId();
-      const capturedAt = new Date().toISOString();
-      const controller = new AbortController();
-      preparationAbort.current = controller;
-      setPhase("preparing");
-      setStatus("Capturing");
-      void (async () => {
-        const hubRowTask = canonicalWindowRow(ownerId);
-        const image = await captureWindowPng(root);
-        if (current !== generation.current || controller.signal.aborted) {
-          return;
-        }
-        if (typeof image !== "string") {
-          setError("Window image failed. The window is unchanged. Select an element.");
-          setStatus("");
-          setPhase("error");
-          return;
-        }
-        const hubRow = await hubRowTask;
-        if (current !== generation.current || controller.signal.aborted) return;
-        context.owner.hub_row = hubRow;
-        const next: PreparedFeedback = {
-          id,
-          capturedAt,
-          context,
-          screenshotBase64: image,
-          audioBase64: null,
-          audioDurationMs: 0,
-        };
-        payload.current = next;
-        setPrepared(next);
-        setAudioReady(false);
-        setStatus("Starting recording");
-        setPhase("preparing");
-        let audioSession: FeedbackAudioSession;
-        try {
-          audioSession = await startFeedbackAudio(controller.signal);
-        } catch (cause) {
-          if (current !== generation.current || controller.signal.aborted) return;
-          preparationAbort.current = null;
-          setError(errorText(cause));
-          setStatus("");
-          setPhase("error");
-          return;
-        }
-        if (current !== generation.current || controller.signal.aborted) {
-          audioSession.cancel();
-          return;
-        }
-        preparationAbort.current = null;
-        audio.current = audioSession;
-        setAudioReady(true);
-        setStatus("");
-        setPhase("recording");
-        audio.current.onFloorLost(() => {
-          if (current !== generation.current) return;
-          setError("The microphone stopped. Save this recording.");
-          setStatus("");
-        });
-        autoStop.current = setTimeout(() => void stopAndSaveRef.current(), FEEDBACK_MAX_MS);
-      })().catch((cause) => {
+      if (current !== generation.current || controller.signal.aborted) {
+        audioSession.cancel();
+        return;
+      }
+      preparationAbort.current = null;
+      audio.current = audioSession;
+      setAudioReady(true);
+      setStatus("");
+      setPhase("recording");
+      audio.current.onFloorLost(() => {
         if (current !== generation.current) return;
-        audio.current?.cancel();
-        preparationAbort.current = null;
-        setAudioReady(false);
-        setError(errorText(cause));
+        setError("The microphone stopped. Save this recording.");
         setStatus("");
-        setPhase("error");
       });
+      autoStop.current = setTimeout(() => void stopAndSaveRef.current(), FEEDBACK_MAX_MS);
+    })().catch((cause) => {
+      if (current !== generation.current) return;
+      audio.current?.cancel();
+      preparationAbort.current = null;
+      setAudioReady(false);
+      setError(errorText(cause));
+      setStatus("");
+      setPhase("error");
+    });
+  }, []);
+
+  const beginFeedback = useCallback((target?: Element) => {
+    if (!capability.enabled) return;
+    if (!target) {
+      beginPicking();
+      return;
+    }
+    cancelCurrent();
+    captureTarget(target);
+  }, [beginPicking, cancelCurrent, capability.enabled, captureTarget]);
+
+  useEffect(() => bindUiFeedbackLauncher(beginFeedback), [beginFeedback]);
+
+  useEffect(() => {
+    if (phase !== "picking") return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      event.stopPropagation();
+      cancelCurrent();
+    };
+    const onPointer = (event: PointerEvent) => {
+      const target = targetElement(event);
+      if (!target || target.closest("[data-ui-feedback]")) return;
+      captureTarget(target, event);
     };
     document.addEventListener("keydown", onKey, true);
     document.addEventListener("pointerdown", onPointer, true);
@@ -226,7 +245,7 @@ export function UiFeedbackHost() {
       document.removeEventListener("keydown", onKey, true);
       document.removeEventListener("pointerdown", onPointer, true);
     };
-  }, [cancelCurrent, phase]);
+  }, [cancelCurrent, captureTarget, phase]);
 
   const stopAndSave = useCallback(async () => {
     const current = payload.current;

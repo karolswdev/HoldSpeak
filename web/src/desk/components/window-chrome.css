@@ -558,6 +558,12 @@
      no left rail) */
   box-shadow: inset 1px 0 0 var(--wb-rule), var(--wb-raised-soft);
 }
+.desk-next .desk-pullout-head .desk-gadget-feedback {
+  width: auto;
+  min-width: 44px;
+  padding: 0 8px;
+  font: 600 12px/1 var(--font-mono);
+}
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget {
   background: var(--wb-blue);
 }

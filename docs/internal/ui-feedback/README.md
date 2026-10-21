@@ -8,10 +8,11 @@ HOLDSPEAK_UI_FEEDBACK=1 holdspeak web --no-open
 
 The flag is off by default. It is read by the running server; the web bundle does not need a special build.
 
-1. Open **Desk > Give feedback** (**Go > Give feedback** on a phone).
-2. Select the element you want to talk about. This press does not run the element's action.
-3. Wait for **Recording**, then speak.
-4. Press **Stop and save**. Wait for **Saved** before you move on.
+1. Press **Feedback** in the title bar of the window you want to discuss.
+2. Wait for **Recording**, then speak.
+3. Press **Stop and save**. Wait for **Saved** before you move on.
+
+To point to a specific element, use **Desk > Give feedback** (**Go > Give feedback** on a phone), then select the element. This press does not run the element's action.
 
 The report keeps a PNG of the selected window, its current field values and text, the selected element and its position, the window identity and geometry, and your original WAV audio. Unsaved field values are included. Password and credential fields are excluded. The image and state are captured before recording; Save or Retry does not replace them with a later state.
 
