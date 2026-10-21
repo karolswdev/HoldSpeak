@@ -16,7 +16,7 @@ Stop, Retry and a duplicate Enter retain a newer follow-up draft. Engine and
 egress remain beside Ask; tools are available in a fold. Original report
 `3c7c52ae3ccfdd5ee7e29ddaadaf10e6` remains read-only. Canvas and scope:
 `docs/internal/betterment/ASK-FEEDBACK-2026-10-21.md`.
-Required quick: ASK_FEEDBACK_QUICK_PENDING. Owner live aesthetic judgment is open.
+Required quick: build, 136 related web cases, Ask and J9 real browser checks including Firefox at 1440/393, 110 desk sweep cases, 27 canon and 1,116 repository guards passed; 39 focused Ask cases and typecheck passed. Owner live aesthetic judgment is open.
 The prior f9ec7ccd6 full tape finished with 12 Python and 15 browser failures.
 Five new graph-walk failures came from setup pressing the now-hidden System
 Builder tools toggle. Both J9 setup cases now choose This Mac through the real
