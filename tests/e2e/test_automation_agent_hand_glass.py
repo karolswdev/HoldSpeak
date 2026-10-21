@@ -92,6 +92,16 @@ def test_hand_automation_do_with_review_controls_are_real_and_saved(
                 window.wait_for(timeout=45_000)
                 _settle(page)
 
+                # Scratch now opens the guided builder. Complete its real Do
+                # write and the remaining steps before testing saved-summary
+                # editing and native agent admission below.
+                setup = page.get_by_test_id("automation-setup")
+                setup.get_by_role("textbox", name="What it does", exact=True).fill("Complete the action.")
+                for _ in range(4):
+                    setup.get_by_test_id("automation-setup-next").click()
+                setup.get_by_test_id("automation-setup-done").click()
+                setup.wait_for(state="hidden")
+
                 do_line = page.get_by_test_id("automation-line-do")
                 with_line = page.get_by_test_id("automation-line-with")
                 review_line = page.get_by_test_id("automation-line-review")

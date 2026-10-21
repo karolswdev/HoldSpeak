@@ -436,6 +436,7 @@ export function UiFeedbackHost() {
           {prepared?.directory ? <Button variant="secondary" onClick={copyPath}>Copy path</Button> : null}
           {prepared?.transcriptStatus === "failed" ? <Button variant="secondary" onClick={retry}>Retry transcription</Button> : null}
           <Button variant="primary" onClick={beginPicking}>New feedback</Button>
+          <Button variant="secondary" onClick={cancelCurrent}>Done</Button>
         </span>
       ) : (
         <span className="hs-feedback-verbs">

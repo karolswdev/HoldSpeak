@@ -41,11 +41,26 @@
 }
 
 .automation-line-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font: 600 var(--font-size-xs, 12px) / 1.6 var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--wb-muted);
   padding-top: 6px;
+}
+.automation-line-label-icon {
+  display: inline-flex;
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.automation-line-label-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .automation-line-static,
@@ -328,4 +343,170 @@
   outline: 1px dashed var(--wb-ember-ink);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* ── guided setup ────────────────────────────────────────────────────── */
+
+.automation-edit-setup {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 28px;
+}
+
+.automation-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.automation-setup-rail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  padding: 4px;
+  background: var(--wb-well);
+  border: 1px solid var(--wb-rule-soft);
+  box-shadow: var(--wb-sunken);
+}
+
+.automation-setup-step.btn {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 5px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 4px 6px;
+  text-align: left;
+}
+.automation-setup-step-sprite {
+  grid-row: 1 / span 2;
+  width: 32px;
+  height: 32px;
+}
+.automation-setup-step-sprite img,
+.automation-setup-heading-sprite img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.automation-setup-step-number {
+  font: 600 12px / 1 var(--font-mono);
+  color: var(--wb-muted);
+}
+.automation-setup-step-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 12px / 1.2 var(--font-sans);
+  color: var(--wb-text);
+}
+.automation-setup-step[aria-current="step"] :is(.automation-setup-step-number, .automation-setup-step-label) {
+  color: var(--wb-paper);
+}
+
+.automation-setup-well {
+  min-width: 0;
+  padding: 18px 20px 16px;
+  background: var(--wb-well);
+  border: 1px solid var(--wb-ink);
+  box-shadow: var(--wb-sunken);
+}
+.automation-setup-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.automation-setup-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.automation-setup-heading-sprite {
+  flex: none;
+  width: 32px;
+  height: 32px;
+}
+.automation-setup-kicker,
+.automation-setup-subheading {
+  display: block;
+  font: 600 12px / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--wb-muted);
+}
+.automation-setup-heading h2 {
+  margin: 1px 0 0;
+  font: 700 20px / 1.2 var(--font-sans);
+  color: var(--wb-text);
+}
+.automation-setup-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.automation-setup-subsection {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding-top: 4px;
+  border-top: 1px solid var(--wb-rule-soft);
+}
+.automation-setup-about-event {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.automation-setup-about-event > p {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--wb-paper, var(--wb-well));
+  border-left: 3px solid var(--wb-ember-ink);
+  font: 500 14px / 1.45 var(--font-sans);
+  color: var(--wb-text);
+}
+.automation-setup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--wb-rule-soft);
+}
+.automation-setup-error {
+  margin: 0;
+  color: var(--wb-danger-ink);
+  font: 500 13px / 1.45 var(--font-sans);
+}
+
+@container surface (max-width: 559.9px) {
+  .automation-setup { gap: 10px; }
+  .automation-setup-rail { gap: 2px; padding: 3px; }
+  .automation-setup-step.btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    min-height: 62px;
+    padding: 4px 2px;
+    text-align: center;
+  }
+  .automation-setup-step-sprite { width: 32px; height: 32px; }
+  .automation-setup-step-number { display: none; }
+  .automation-setup-step-label { max-width: 100%; font-size: 12px; }
+  .automation-setup-well { padding: 14px 12px 12px; }
+  .automation-setup-heading { gap: 9px; }
+  .automation-setup-heading h2 { font-size: 18px; }
 }

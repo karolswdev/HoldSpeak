@@ -8,6 +8,16 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The owner's 2026-10-21 Automation builder and Settings reports are implemented
+in this change. Blank automations open a five-step guided editor using the
+existing real settings and engine admission. Settings shows one category at a
+time, with pictograms and a paper pane; local category children stay mounted.
+The dropdown uses the existing Workbench choice control with a clear closed
+face. Both reports and their original files remain read-only. Settled canvas
+and scope: `docs/internal/betterment/SETTINGS-BUILDER-FEEDBACK-2026-10-21.md`.
+Required quick: BUILDER_SETTINGS_QUICK_PENDING. The owner judges the appearance
+on the delivered desk; this is not acceptance of the whole OS's design.
+
 The owner's Agent and New Automation feedback is now implemented in the
 reported faces: the Agent has its real portrait, readable report, visible tool
 activity, real screen-report fallback and Refresh, with existing answer,
@@ -30,7 +40,8 @@ same bytes, original audio, screenshot and values. The owner's two completed
 reports are intact; the third attempt did not reach disk. Required quick:
 build, 37 related web cases, 22 affected Firefox/Chromium/Send browser cases, 110 desk sweep cases with feedback enabled, 27 canon and 1,116 repository guards passed; saved window images inspected at 1440 and 393. Diagnosis and measured evidence locations:
 `docs/internal/ui-feedback/FIREFOX-CAPTURE.md`. This fixes feedback capture;
-the Agent and New Automation design reports remain open follow-up work.
+the Agent and New Automation design reports were addressed in #1418; the new
+2026-10-21 builder and Settings reports are the current follow-up.
 
 The owner’s audio report of the Adr Drafter window starts the beauty and
 delight reference in `docs/internal/beauty-delight/`. Shared Send uses
@@ -1862,6 +1873,12 @@ committing generated docs and line-number test maps; split the tests.
 
 ## Open work
 
+- Pre-change full tape at `83d790151` completed red: 11 Python and 11 browser
+  cases failed; web baseline passed. Source logs remain in
+  `wt-main-tape-agent-automation-delight-20261020/.tmp/delivery/tape/`.
+  The new Settings/builder delivery gets its own pinned tape after merge;
+  required quick and scoped behavior must pass before deployment.
+
 **Daily surfaces #1243:** owner visual acceptance remains open. The saved
 Decision Send row still repeats its label beside the button; this is visible
 polish debt in the new1440/393 Background shots, separate from the verified
@@ -2002,6 +2019,11 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **BUILDER_SETTINGS_PR_PENDING — owner feedback, 2026-10-21:** guided Automation
+  builder, one-category Settings, clear selection and pictograms, and a Done
+  action on the saved feedback receipt. Required quick proof is above; exact
+  deployed source is reported by the desk identity endpoint.
 
 - **#1372 — D10:** Today through the shared operation registry and the actual attention source; merged and deployed at `3b90f077a`.
 - **#1371 — note regressions:** current editor/footer, keyboard focus and exact uncertain-send retry; merged and deployed at `ec3dde784`.

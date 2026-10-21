@@ -53,6 +53,8 @@ import { boundaryEgressLamp } from "../../inferenceEgress";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { WORKBENCH_RUN_FRAME_TYPES } from "../workbench/runLifecycle";
 import { SentenceLine } from "./SentenceLine";
+import { AutomationBuilder } from "./AutomationBuilder";
+import { spriteUrl } from "../../sprites";
 import { WhenEditor } from "./WhenEditor";
 import { readNativeAgentOptions, WithEditor, type NativeAgentOption } from "./WithEditor";
 import { AboutChips, AboutEditor } from "./AboutEditor";
@@ -288,7 +290,14 @@ export function AutomationWindow({
   const [runRefusal, setRunRefusal] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [enginePending, setEnginePending] = useState(false);
+  const [putSaving, setPutSaving] = useState(false);
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [spendSaving, setSpendSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardAutoStarted, setWizardAutoStarted] = useState(false);
+  const [wizardDismissed, setWizardDismissed] = useState(false);
   const [openOlder, setOpenOlder] = useState<string | null>(null);
   const [openTask, setOpenTask] = useState<string | null>(null);
   const [makingOne, setMakingOne] = useState(false);
@@ -365,9 +374,15 @@ export function AutomationWindow({
   // refused) on the engine from before the press.
   const engineSave = useRef<Promise<unknown> | null>(null);
   const savingEngine = (pending: Promise<unknown>) => {
+    setEnginePending(true);
     const settled = pending.catch(() => undefined);
     engineSave.current = settled;
-    void settled.then(() => { if (engineSave.current === settled) engineSave.current = null; });
+    void settled.then(() => {
+      if (engineSave.current === settled) {
+        engineSave.current = null;
+        setEnginePending(false);
+      }
+    });
   };
 
   const runNow = async () => {
@@ -385,15 +400,17 @@ export function AutomationWindow({
     }
   };
 
-  const saveDo = async (kind: "run" | "hand_to_agent", instruction: string) => {
+  const saveDo = async (kind: "run" | "hand_to_agent", instruction: string): Promise<boolean> => {
     setSaving(true);
     setSaveError(null);
     try {
       await updateWorkbenchField(workbenchId, { do_kind: kind, instruction });
       setEditing(null);
       await load();
+      return true;
     } catch (error) {
       setSaveError(readableError(error));
+      return false;
     } finally {
       setSaving(false);
     }
@@ -415,64 +432,97 @@ export function AutomationWindow({
 
   // A4: one When press saves that choice at once; looking never does.
   const [whenSaving, setWhenSaving] = useState<string | null>(null);
-  const chooseWhen = async (choice: AutomationWhenChoice, key: string) => {
+  const chooseWhen = async (choice: AutomationWhenChoice, key: string): Promise<boolean> => {
+    let saved = true;
     setWhenSaving(key);
     setSaveError(null);
     try {
       await setAutomationWhen(workbenchId, choice);
+      await load();
     } catch (error) {
       setSaveError(readableError(error));
+      saved = false;
     } finally {
       setWhenSaving(null);
     }
-    await load();
+    return saved;
   };
 
-  const choosePut = async (target: string) => {
+  const choosePut = async (target: string): Promise<boolean> => {
+    setPutSaving(true);
     setSaveError(null);
-    await updateWorkbenchField(workbenchId, { output_target: target });
-    await load();
+    try {
+      await updateWorkbenchField(workbenchId, { output_target: target });
+      await load();
+      return true;
+    } catch (error) {
+      setSaveError(readableError(error));
+      return false;
+    } finally {
+      setPutSaving(false);
+    }
   };
 
-  const chooseEngine = async (profileId: string) => {
+  const chooseEngine = async (profileId: string): Promise<boolean> => {
+    setEnginePending(true);
     setSaveError(null);
-    await setAutomationEngine(workbenchId, { profile_id: profileId });
-    await load();
+    try {
+      await setAutomationEngine(workbenchId, { profile_id: profileId });
+      await load();
+      return true;
+    } catch (error) {
+      setSaveError(readableError(error));
+      return false;
+    } finally {
+      setEnginePending(false);
+    }
   };
 
-  const chooseReview = async (reviewBy: string) => {
+  const chooseReview = async (reviewBy: string): Promise<boolean> => {
+    setReviewSaving(true);
     setSaveError(null);
     try {
       await updateWorkbenchField(workbenchId, { review_by: reviewBy });
+      await load();
+      return true;
     } catch (error) {
       setSaveError(readableError(error));
+      return false;
+    } finally {
+      setReviewSaving(false);
     }
-    await load();
   };
 
-  const saveSpendLimit = async (limit: number | null) => {
+  const saveSpendLimit = async (limit: number | null): Promise<boolean> => {
+    setSpendSaving(true);
     setSaveError(null);
     try {
       await setAutomationEngine(workbenchId, { spend_limit_usd: limit });
+      await load();
+      return true;
     } catch (error) {
       setSaveError(readableError(error));
+      return false;
+    } finally {
+      setSpendSaving(false);
     }
-    await load();
   };
 
   // A5: About saves each pick at once (a chip added or removed).
   const [aboutSaving, setAboutSaving] = useState(false);
-  const saveSources = async (sources: string[]) => {
+  const saveSources = async (sources: string[]): Promise<boolean> => {
     setAboutSaving(true);
     setSaveError(null);
     try {
       await updateWorkbenchField(workbenchId, { sources });
+      await load();
+      return true;
     } catch (error) {
       setSaveError(readableError(error));
+      return false;
     } finally {
       setAboutSaving(false);
     }
-    await load();
   };
 
   // A5: a desk object dropped on the window (a floor or drawer icon's drag)
@@ -548,6 +598,17 @@ export function AutomationWindow({
   const tasks = detail ? queueTasks(detail) : [];
   /** A10: the vendor of an agent engine (Claude Code, Codex); null otherwise. */
   const vendor = detail?.assignment_summary?.vendor || null;
+  const blankScratch = Boolean(detail
+    && !String(detail.instruction ?? detail.instruction_shown ?? "").trim()
+    && !results.length
+    && !(detail.items ?? []).length);
+  useEffect(() => {
+    if (blankScratch && !wizardDismissed) setWizardAutoStarted(true);
+  }, [blankScratch, wizardDismissed]);
+  const showBuilder = Boolean(detail
+    && (wizardOpen || wizardAutoStarted || (!wizardDismissed && blankScratch)));
+  const setupPending = saving || aboutSaving || putSaving || reviewSaving || spendSaving
+    || enginePending || Boolean(engineSave.current) || Boolean(whenSaving);
 
   return (
     <DeskWindowFrame
@@ -571,7 +632,7 @@ export function AutomationWindow({
             dense
             variant="primary"
             onClick={() => void runNow()}
-            disabled={!detail || Boolean(working)}
+            disabled={!detail || Boolean(working) || showBuilder}
             data-testid="automation-run-now"
           >
             Run now
@@ -596,12 +657,43 @@ export function AutomationWindow({
         onDrop={onDrop}>
         {readError && !detail ? <SurfaceState error={readError} onRetry={() => void load()} /> : null}
         {!detail && !readError ? <SurfaceState loading /> : null}
-        {detail ? (
+        {detail ? showBuilder ? (
+          <AutomationBuilder
+            detail={detail}
+            pending={setupPending}
+            whenSaving={whenSaving}
+            saveError={saveError}
+            onSaveDo={saveDo}
+            onSaveSources={saveSources}
+            onChooseEngine={chooseEngine}
+            onSpendLimit={saveSpendLimit}
+            onChooseWhen={chooseWhen}
+            onChoosePut={choosePut}
+            onChooseReview={chooseReview}
+            onPending={savingEngine}
+            onDone={() => {
+              setWizardOpen(false);
+              setWizardAutoStarted(false);
+              setWizardDismissed(true);
+            }}
+          />
+        ) : (
           <>
+            <div className="automation-edit-setup">
+              <Button dense variant="ghost" onClick={() => {
+                setWizardOpen(true);
+                setWizardAutoStarted(false);
+                setWizardDismissed(false);
+              }}
+                data-testid="automation-edit-setup">
+                Edit setup
+              </Button>
+            </div>
             <div className="automation-sentence" data-testid="automation-sentence">
               <SentenceLine
                 name="when"
                 label="When"
+                icon={<img src={spriteUrl("meeting", "automation-when", "rest", undefined, 32)} alt="" />}
                 open={editing === "when"}
                 onPress={() => toggle("when")}
                 aside={nextWords(detail.next_run_at) ? (
@@ -615,6 +707,7 @@ export function AutomationWindow({
               <SentenceLine
                 name="do"
                 label="Do"
+                icon={<img src={spriteUrl("artifact", "automation-do", "rest", undefined, 32)} alt="" />}
                 blank={!doText}
                 open={editing === "do"}
                 onPress={() => toggle("do")}
@@ -641,6 +734,7 @@ export function AutomationWindow({
                 <SentenceLine
                   name="about"
                   label="About"
+                  icon={<img src={spriteUrl("directory", "automation-about", "rest", undefined, 32)} alt="" />}
                   open={editing === "about"}
                   onPress={() => toggle("about")}
                   editor={<AboutEditor sources={sources} busy={aboutSaving} folders foldersOnly
@@ -650,11 +744,15 @@ export function AutomationWindow({
                   <AboutChips sources={sources.filter((source) => source.kind === "folder")} />
                 </SentenceLine>
               ) : happened ? (
-                <SentenceLine name="about" label="About">{happened}</SentenceLine>
+                <SentenceLine name="about" label="About"
+                  icon={<img src={spriteUrl("directory", "automation-about", "rest", undefined, 32)} alt="" />}>
+                  {happened}
+                </SentenceLine>
               ) : (
                 <SentenceLine
                   name="about"
                   label="About"
+                  icon={<img src={spriteUrl("directory", "automation-about", "rest", undefined, 32)} alt="" />}
                   blank={!sources.length}
                   open={editing === "about"}
                   onPress={() => toggle("about")}
@@ -669,6 +767,7 @@ export function AutomationWindow({
               <SentenceLine
                 name="with"
                 label="With"
+                icon={<img src={spriteUrl("workbench", "automation-with", "rest", undefined, 32)} alt="" />}
                 blank={!engine}
                 open={editing === "with"}
                 onPress={() => toggle("with")}
@@ -680,8 +779,14 @@ export function AutomationWindow({
                     title={`The prompt goes: ${boundaryEgressLamp(detail.assignment_summary.boundary).label}`}
                     scope={["local", "same_device"].includes(detail.assignment_summary.boundary) ? "local" : "cloud"} />
                 ) : undefined}
-                editor={<WithEditor detail={detail} handMode={detail.do_kind === "hand_to_agent"} onUse={chooseEngine}
-                  onSpendLimit={saveSpendLimit} onPending={savingEngine} />}
+                editor={<WithEditor detail={detail} handMode={detail.do_kind === "hand_to_agent"}
+                  onUse={async (profileId) => {
+                    if (!(await chooseEngine(profileId))) throw new Error("Could not save the engine choice. Try again.");
+                  }}
+                  onSpendLimit={async (limit) => {
+                    if (!(await saveSpendLimit(limit))) throw new Error("Could not save the spend limit. Try again.");
+                  }}
+                  onPending={savingEngine} />}
               >
                 {detail.do_kind === "hand_to_agent"
                   ? engine ?? "Choose an agent"
@@ -691,9 +796,10 @@ export function AutomationWindow({
                 <SentenceLine
                   name="review"
                   label="Review by"
+                  icon={<img src={spriteUrl("person", "automation-review", "rest", undefined, 32)} alt="" />}
                   open={editing === "review"}
                   onPress={() => toggle("review")}
-                  editor={<ReviewEditor value={detail.review_by || "none"} saving={saving}
+                  editor={<ReviewEditor value={detail.review_by || "none"} saving={reviewSaving}
                     onChoose={(value) => void chooseReview(value)} />}
                 >
                   {detail.review_by && detail.review_by !== "none"
@@ -704,9 +810,13 @@ export function AutomationWindow({
               <SentenceLine
                 name="put"
                 label="Put it in"
+                icon={<img src={spriteUrl("repository", "automation-put", "rest", undefined, 32)} alt="" />}
                 open={editing === "put"}
                 onPress={() => toggle("put")}
-                editor={<PutEditor target={detail.output_target} onChoose={choosePut} />}
+                editor={<PutEditor target={detail.output_target}
+                  onChoose={async (target) => {
+                    if (!(await choosePut(target))) throw new Error("Could not save the destination. Try again.");
+                  }} />}
               >
                 <PutValue target={detail.output_target} />
               </SentenceLine>

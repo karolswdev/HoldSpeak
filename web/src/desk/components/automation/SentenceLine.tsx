@@ -11,6 +11,7 @@ import { Button } from "../../../components/signal/Signal";
 export function SentenceLine({
   name,
   label,
+  icon,
   children,
   aside,
   open = false,
@@ -21,6 +22,8 @@ export function SentenceLine({
   /** The line's key (`when`, `do`, `about`, `with`, `put`). */
   name: string;
   label: string;
+  /** The Workbench sprite for the sentence line. */
+  icon?: ReactNode;
   /** The value, in words. */
   children: ReactNode;
   /** A fact at the end of the line (a chip). */
@@ -44,7 +47,10 @@ export function SentenceLine({
   return (
     <div className="automation-line" data-line={name} data-open={open || undefined}
       data-testid={`automation-line-${name}`}>
-      <span className="automation-line-label" id={labelId}>{label}</span>
+      <span className="automation-line-label" id={labelId}>
+        {icon ? <span className="automation-line-label-icon" aria-hidden="true">{icon}</span> : null}
+        {label}
+      </span>
       {onPress ? (
         <Button
           variant="chrome"

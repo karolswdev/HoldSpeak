@@ -25,6 +25,12 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Send | `send/` | 7 of 8 |
 | Capture | `capture/` | 12 of 12 |
 
+Owner feedback follow-up (2026-10-21): PR_PENDING implements a guided Automation
+builder and one-category Settings with pictograms and clearer dropdowns. This
+improves the existing A3/A4/A5/A6 and Settings slices; it adds no recipe count.
+Original reports: `46bda55a89ce3feb83e0e79e77b71e9a` and
+`b3a536d4972f39390bd9e5ce7fb88937`. The owner's live design judgment remains open.
+
 ## Automations (`workbench/RECIPE.md`): 11 of 11
 
 | Slice | What | State | Note |

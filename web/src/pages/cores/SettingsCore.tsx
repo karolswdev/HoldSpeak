@@ -49,6 +49,7 @@ import {
 } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressFor, hostPlace } from "../../desk/surface/egress";
+import { spriteUrl } from "../../desk/sprites";
 import { openSurface, openSurfaceOr } from "../../desk/shell";
 import { announceTaskReturn } from "../../desk/returnToTask";
 import { HotkeyCapture } from "./settingsBespoke";
@@ -78,6 +79,7 @@ import {
   SETTINGS_SECTIONS,
   type SettingsSectionId,
   PrefStatusBar,
+  SettingSprite,
   WAKE_ACTION_OPTIONS,
   type SettingsHubWire,
 } from "./settingsPrefs";
@@ -311,6 +313,12 @@ const SETTINGS_WINGS = [
   { id: "models", label: "Engines" },
   { id: "integrations", label: "Accounts" },
 ];
+
+const SETTINGS_WORLD_SPRITES: Partial<Record<SettingsSectionId, { kind: string; id: string; agent?: string }>> = {
+  you: { kind: "person", id: "settings-you" },
+  meetings: { kind: "meeting", id: "settings-meetings" },
+  agents: { kind: "agent", id: "settings-agents", agent: "codex" },
+};
 
 /** Legacy scope contract retained for callers and old saved desks. The page
  * converts it to a section with `settingsPageScope` below. */
@@ -1374,18 +1382,14 @@ function SettingsFace({ hero, scope }: CoreProps) {
       setHighlight(next.focus ?? "");
     }
   }, [scope]);
-  const moduleId = navigation.module === "settings" ? null : navigation.module;
+  // Settings opens on the owner's identity category. A legacy "settings"
+  // scope still lands on the same face; it never restores the old all-page
+  // document.
+  const moduleId = navigation.module === "settings" || !navigation.module ? "you" : navigation.module;
   const contentRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const body = contentRef.current?.closest<HTMLElement>(".desk-surface-body");
     if (!body) return;
-    if (moduleId) {
-      const section = contentRef.current?.querySelector<HTMLElement>(`[data-settings-section="${moduleId}"]`);
-      if (section) {
-        requestAnimationFrame(() => section.scrollIntoView({ block: "start" }));
-        return;
-      }
-    }
     body.scrollTop = 0;
   }, [moduleId]);
   const integrationSubject =
@@ -2648,7 +2652,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       /* ── Agents: how many work at once (Betterment AG5) ── */
       case "agents":
         return (
-          <GadgetGroup material="inset" label="Agents">
+          <GadgetGroup material="inset" label="Working at once">
             {num(["agents", "working_at_once"], "Working at once", { min: 1, max: 20, step: 1 })}
           </GadgetGroup>
         );
@@ -2664,9 +2668,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
       id={`settings-section-${id}`}
       data-settings-section={id}
       className="settings-page-section"
+      hidden={moduleId !== id}
+      aria-hidden={moduleId !== id}
       aria-labelledby={`settings-section-title-${id}`}
     >
-      <h2 id={`settings-section-title-${id}`} className="settings-page-section-title">{label}</h2>
+      <h2 id={`settings-section-title-${id}`} className={`settings-page-section-title${id === "you" || id === "agents" ? " settings-page-section-title-quiet" : ""}`}>{label}</h2>
       <div className="settings-page-section-body">{children}</div>
     </section>
   );
@@ -2686,14 +2692,28 @@ function SettingsFace({ hero, scope }: CoreProps) {
         {SETTINGS_SECTIONS.map((section) => (
           <Button
             key={section.id}
-            variant="ghost"
+            variant={moduleId === section.id ? "primary" : "ghost"}
             dense
             className={moduleId === section.id ? "is-active" : undefined}
             aria-current={moduleId === section.id ? "location" : undefined}
             aria-pressed={moduleId === section.id}
             onClick={() => openSection(section.id)}
             data-testid={`settings-index-${section.id}`}
-          >{section.label}</Button>
+          >
+            <SettingSprite
+              name={section.sprite}
+              src={SETTINGS_WORLD_SPRITES[section.id]
+                ? spriteUrl(
+                    SETTINGS_WORLD_SPRITES[section.id]!.kind,
+                    SETTINGS_WORLD_SPRITES[section.id]!.id,
+                    "rest",
+                    SETTINGS_WORLD_SPRITES[section.id]!.agent,
+                    32,
+                  )
+                : undefined}
+            />
+            <span>{section.label}</span>
+          </Button>
         ))}
       </nav>
       <div className="settings-page-sections">
