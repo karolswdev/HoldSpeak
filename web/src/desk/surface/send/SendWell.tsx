@@ -853,6 +853,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
                         {noAnswerWords(d.channel, d.account, d.target)}
                       </span>
                     ) : null}
+                    <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
                     <Button dense variant="primary" loading={(busy && !noAnswer) || waitingForSend}
                       disabled={!activePreview || waitingForSend || waitingForHistory}
                       data-testid={lost && !noAnswer ? "send-retry" : "send-verb"}
@@ -867,7 +868,6 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
                         : last?.state === "failed" || last?.state === "unknown" ? SEND_WORDS.tryAgain
                           : last ? SEND_WORDS.sendAgain : SEND_WORDS.send}
                     </Button>
-                    <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
                     {last?.state === "unknown" && far ? (
                       <Button dense variant="ghost" data-testid="send-check" data-href={far} onClick={() => openFar(far)}>
                         {`${SEND_WORDS.check} ${targetToken(d.channel, d.target)}`}

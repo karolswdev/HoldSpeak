@@ -173,6 +173,14 @@
   min-height: 32px;
 }
 
+/* Destination rows own the only frame in this list. The library ledger stays
+   transparent so it does not draw a second inset around every destination. */
+[data-send="well"] .send-to-section > .surface-ledger {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
 /* Destination choices are readable vertical rows. The selected row owns its
    preview and action sequence directly below it; nothing becomes a horizontal
    chip strip inside a narrow document window. */
@@ -223,10 +231,35 @@
   min-width: 0;
   overflow-wrap: anywhere;
 }
+[data-send="well"] .send-destination-chip .surface-token[data-chip] {
+  min-height: 18px;
+  padding-inline: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-muted);
+}
+[data-send="well"] .send-destination-item[data-open] > .send-destination-chip {
+  border-color: var(--wb-ink);
+  background: var(--wb-blue);
+  color: var(--wb-ink);
+}
+[data-send="well"] .send-destination-item[data-open] > .send-destination-chip :is(.surface-primary, .surface-token[data-chip], .send-pick) {
+  color: var(--wb-ink);
+}
 [data-send="well"] .send-open {
   min-width: 0;
   width: 100%;
   padding: 0 2px 4px 2px;
+  background: var(--wb-paper);
+  border: 1px solid var(--wb-rule-soft);
+}
+[data-send="well"] .send-open .send-preview .surface-well {
+  background: transparent;
+  box-shadow: none;
+}
+[data-send="well"] .send-open .send-preview .surface-well-body {
+  padding: 12px;
 }
 [data-send="well"] .send-sheet-footer {
   position: sticky;
@@ -241,10 +274,27 @@
    wrap inside the foot instead of making its max-content grid column wider
    than the window. */
 [data-send="actions"].surface-footer-layout {
+  display: flex;
   width: 100%;
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "verbs";
+  min-height: 44px;
+  margin: 0;
+  padding: 8px;
+  align-items: center;
+  gap: 0;
+}
+[data-send="actions"] > .surface-footer-egress:empty,
+[data-send="actions"] > .surface-footer-receipt:empty {
+  display: none;
+}
+[data-send="actions"] > .surface-footer-verbs {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
 }
 [data-send="actions"] .surface-footer-verbs,
 [data-send="actions"] .send-verbs,
@@ -254,6 +304,14 @@
 }
 [data-send="actions"] .surface-footer-verbs { justify-content: flex-start; }
 [data-send="actions"] .send-line { flex: 1 1 180px; }
+[data-send="actions"] .send-verbs {
+  width: 100%;
+  margin: 0;
+  gap: 8px;
+}
+[data-send="actions"] .send-verbs > .btn--primary {
+  margin-left: auto;
+}
 [data-send="actions"] .send-literal.send-wrap {
   max-width: 100%;
   white-space: normal;
@@ -265,7 +323,7 @@
 
 @container surface (max-width: 560px) {
   [data-send="well"] .surface-section-head { min-height: 44px; }
-  [data-send="well"] .send-verbs { gap: 16px 12px; padding-block: 6px; }
+  [data-send="well"] .send-verbs { gap: 8px; margin: 0; padding-block: 0; }
   [data-send="well"] ul.send-destination-list { max-width: 100%; }
   [data-send="well"] .send-destination-chip { width: 100%; }
 }
