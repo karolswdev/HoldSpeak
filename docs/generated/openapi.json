@@ -29858,6 +29858,46 @@
         "summary": "Api Ui Feedback Status"
       }
     },
+    "/api/ui-feedback/{identifier}/transcribe": {
+      "post": {
+        "description": "Transcribe one already-saved recording under the configured speech route.",
+        "operationId": "api_ui_feedback_transcribe_api_ui_feedback__identifier__transcribe_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "identifier",
+            "required": true,
+            "schema": {
+              "title": "Identifier",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Api Ui Feedback Transcribe Api Ui Feedback  Identifier  Transcribe Post"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Api Ui Feedback Transcribe"
+      }
+    },
     "/api/update-jobs/{job_id}": {
       "get": {
         "operationId": "api_get_engine_pass_api_update_jobs__job_id__get",

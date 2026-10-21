@@ -919,9 +919,21 @@ class TestSendGlass:
         # On the phone the window chrome's Back while the send face is open
         # returns to the ordinary note editor; the same chrome button then
         # closes that real note window before the reload read.
+        closing_note_id = note_win.get_attribute("id")
         note_win.locator("[data-testid=send-back]").click()
         note_win.locator(".desk-gadget-close").click()
         note_win.wait_for(state="detached", timeout=T)
+        # Reload only after the same close has reached the canonical hub row.
+        # A detached optimistic frame alone does not prove the close is durable.
+        page.wait_for_function(
+            """async ({id, token}) => {
+                const response = await fetch('/api/desk/windows', {headers: {'X-HoldSpeak-Token': token}});
+                const data = await response.json();
+                return !data.windows.some(window => window.id === id);
+            }""",
+            arg={"id": closing_note_id, "token": TOKEN},
+            timeout=T,
+        )
         page.reload(wait_until="load")
         _normal_chair(page)
         meeting = page.locator(f"[id='{MEET}']")

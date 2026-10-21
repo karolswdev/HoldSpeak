@@ -650,8 +650,8 @@ function openNoteSend(noteRef: string) {
   request();
 }
 
-export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
-  doc: DocRef; sendsRead: Read<Send[]>; onSettled?: () => void; head?: ReactNode;
+export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBack }: {
+  doc: DocRef; sendsRead: Read<Send[]>; onSettled?: () => void; head?: ReactNode; onBack?: () => void;
   /** Optional source-owned allow-list (for example a Room action's exact saved target). */
   destinationIds?: string[];
 }) {
@@ -764,13 +764,16 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
     <div data-send="well" data-testid="send-well" data-doc={ref}
       aria-busy={wellRead ? undefined : "true"}
       aria-label={`${SEND_WORDS.send} ${doc.title}`} role="group">
-      <SurfaceSection label={SEND_WORDS.section} actions={
-        <Button dense variant="ghost" data-testid="send-add-destination"
+      <header className="send-sheet-header" data-testid="send-sheet-header">
+        {onBack ? <Button dense variant="ghost" data-testid="send-back" onClick={onBack}>‹ Back</Button> : null}
+        <span className="surface-primary">Send</span>
+        <Button dense variant="ghost" className="send-add-destination" data-testid="send-add-destination"
           aria-expanded={addingDestination}
           onClick={() => setAddingDestination((open) => !open)}>
           {SEND_WORDS.addDestination}
         </Button>
-      }>
+      </header>
+      <SurfaceSection className="send-destination-section">
         {head}
         {pendingReads ? <div data-testid="send-read-loading"><SurfaceState loading /></div> : null}
         <div className="send-sheet-sections">
@@ -794,7 +797,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
         {dests.failed ? (
           <Unreadable what="DESTINATIONS" testid="destinations-unreadable" onRetry={dests.reload} />
         ) : (
-          <SurfaceSection className="send-to-section" label="To" data-testid="send-to-section">
+          <SurfaceSection className="send-to-section" data-testid="send-to-section">
             {addingDestination ? (
               <div className="send-inline-destination" data-testid="send-inline-destination">
                 <InlineDestinationForm
@@ -850,6 +853,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
                         {noAnswerWords(d.channel, d.account, d.target)}
                       </span>
                     ) : null}
+                    <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
                     <Button dense variant="primary" loading={(busy && !noAnswer) || waitingForSend}
                       disabled={!activePreview || waitingForSend || waitingForHistory}
                       data-testid={lost && !noAnswer ? "send-retry" : "send-verb"}
@@ -864,7 +868,6 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
                         : last?.state === "failed" || last?.state === "unknown" ? SEND_WORDS.tryAgain
                           : last ? SEND_WORDS.sendAgain : SEND_WORDS.send}
                     </Button>
-                    <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
                     {last?.state === "unknown" && far ? (
                       <Button dense variant="ghost" data-testid="send-check" data-href={far} onClick={() => openFar(far)}>
                         {`${SEND_WORDS.check} ${targetToken(d.channel, d.target)}`}
@@ -882,7 +885,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds }: {
                 );
                 return (
                   <li key={d.id} className="send-destination-item" data-testid="destination-row" data-open={open || undefined}>
-                    <Button dense variant={open ? "secondary" : "ghost"} disabled={busy || Boolean(held)}
+                    <Button dense variant="ghost" disabled={busy || Boolean(held)}
                       aria-pressed={open}
                       className="send-destination-chip"
                       onClick={() => {
@@ -1114,11 +1117,7 @@ export function SendSheet({ doc, head, onSettled, history, destinationIds, onBac
   const sends = mergeKnown(doc.ref, sendsRead.data ?? []);
   return (
     <div data-send="sheet" data-testid="send-sheet" data-doc={doc.ref} className="send-sheet">
-      <header className="send-sheet-header" data-testid="send-sheet-header">
-        {onBack ? <Button dense variant="ghost" data-testid="send-back" onClick={onBack}>‹ Back</Button> : null}
-        <span className="surface-primary">Send</span>
-      </header>
-      <SendWell doc={doc} sendsRead={sendsRead} onSettled={onSettled} head={head} destinationIds={destinationIds} />
+      <SendWell doc={doc} sendsRead={sendsRead} onSettled={onSettled} head={head} destinationIds={destinationIds} onBack={onBack} />
       {history ? history(sends) : <SendHistory sends={sends} />}
     </div>
   );

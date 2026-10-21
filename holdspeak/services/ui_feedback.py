@@ -31,6 +31,7 @@ REPORT_FILE = "report.json"
 AUDIO_FILE = "audio.wav"
 WINDOW_FILE = "window.png"
 README_FILE = "README.md"
+TRANSCRIPT_FILE = "transcript.txt"
 FEEDBACK_FILES = (REPORT_FILE, AUDIO_FILE, WINDOW_FILE, README_FILE)
 
 # A normal browser screenshot is small and a short recording is well below
@@ -241,12 +242,27 @@ def _sync_directory(directory: Path) -> None:
 
 
 def _receipt(directory: Path) -> dict[str, Any]:
-    return {
+    receipt: dict[str, Any] = {
         "success": True,
         "id": directory.name,
         "directory": str(directory.absolute()),
         "files": list(FEEDBACK_FILES),
     }
+    try:
+        report = json.loads((directory / REPORT_FILE).read_text(encoding="utf-8"))
+        transcript = report.get("transcript", {})
+        if isinstance(transcript, dict):
+            status = str(transcript.get("status") or "pending")
+            receipt["transcript_status"] = status
+            if status == "complete":
+                receipt["files"] = [*FEEDBACK_FILES, TRANSCRIPT_FILE]
+                receipt["transcript"] = (directory / TRANSCRIPT_FILE).read_text(encoding="utf-8")
+                receipt["egress_boundary"] = str(transcript.get("egress_boundary") or "")
+            elif status == "failed":
+                receipt["transcript_error"] = str(transcript.get("reason") or "transcription_failed")
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        receipt["transcript_status"] = "pending"
+    return receipt
 
 
 def _complete_existing(directory: Path, digest: str) -> dict[str, Any] | None:
@@ -299,6 +315,7 @@ def save_feedback(payload: Mapping[str, Any], *, home: Path | None = None) -> di
             "runtime_identity": _runtime_identity(),
             "saved_at": utc_now_iso(),
             "files": list(FEEDBACK_FILES),
+            "transcript": {"status": "pending", "file": TRANSCRIPT_FILE},
         }
         report_bytes = json.dumps(
             report, ensure_ascii=False, allow_nan=False, sort_keys=True, indent=2
@@ -312,6 +329,7 @@ def save_feedback(payload: Mapping[str, Any], *, home: Path | None = None) -> di
             "- `audio.wav` — the original 16 kHz mono PCM recording.\n"
             "- `window.png` — the captured Desk window.\n"
             "- `README.md` — this file.\n"
+            "- `transcript.txt` — the configured speech engine transcript, when available.\n"
         ).encode("utf-8")
         _durable_write(temporary / README_FILE, readme)
         _sync_directory(temporary)
@@ -332,9 +350,119 @@ def save_feedback(payload: Mapping[str, Any], *, home: Path | None = None) -> di
             shutil.rmtree(temporary, ignore_errors=True)
 
 
+def _feedback_directory(identifier: str, home: Path | None = None) -> Path:
+    if not isinstance(identifier, str) or not _ID_RE.fullmatch(identifier):
+        raise UIFeedbackError("id must be 32 lowercase hexadecimal characters.")
+    directory = feedback_root(home) / identifier
+    if directory.is_symlink() or not directory.is_dir():
+        raise UIFeedbackError("This feedback report was not found.")
+    if any((directory / name).is_symlink() or not (directory / name).is_file() for name in FEEDBACK_FILES):
+        raise UIFeedbackError("This feedback report is incomplete.")
+    return directory
+
+
+def feedback_audio(identifier: str, *, home: Path | None = None) -> bytes:
+    """Read the already-published WAV for a transcript retry."""
+    directory = _feedback_directory(identifier, home)
+    try:
+        return (directory / AUDIO_FILE).read_bytes()
+    except OSError as exc:
+        raise UIFeedbackError("The saved feedback recording could not be read.") from exc
+
+
+def feedback_transcript(identifier: str, *, home: Path | None = None) -> dict[str, Any]:
+    """Return the current transcript state without invoking speech."""
+    return _receipt(_feedback_directory(identifier, home))
+
+
+def _atomic_replace(path: Path, data: bytes) -> None:
+    temporary = Path()
+    try:
+        fd, raw_path = tempfile.mkstemp(prefix=f".{path.name}.", dir=str(path.parent))
+        temporary = Path(raw_path)
+        with os.fdopen(fd, "wb") as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, path)
+        temporary = Path()
+        _sync_directory(path.parent)
+    finally:
+        if temporary != Path() and temporary.exists():
+            temporary.unlink(missing_ok=True)
+
+
+def _set_transcript(
+    identifier: str,
+    *,
+    status: str,
+    text: str = "",
+    egress_boundary: str = "",
+    reason: str = "",
+    home: Path | None = None,
+) -> dict[str, Any]:
+    if status not in {"complete", "failed"}:
+        raise UIFeedbackError("Invalid transcript status.")
+    directory = _feedback_directory(identifier, home)
+    report_path = directory / REPORT_FILE
+    try:
+        report = json.loads(report_path.read_text(encoding="utf-8"))
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise UIFeedbackError("This feedback report has an unreadable report.") from exc
+    transcript = {"status": status, "file": TRANSCRIPT_FILE}
+    if status == "complete":
+        if not isinstance(text, str) or not text.strip():
+            raise UIFeedbackError("A completed transcript must contain text.")
+        if not str(egress_boundary).strip():
+            raise UIFeedbackError("A completed transcript needs an egress boundary.")
+        transcript["egress_boundary"] = str(egress_boundary)
+        report["files"] = [*FEEDBACK_FILES, TRANSCRIPT_FILE]
+        transcript_bytes = text.encode("utf-8")
+    else:
+        transcript["reason"] = str(reason or "transcription_failed")
+        report["files"] = list(FEEDBACK_FILES)
+        transcript_bytes = None
+    report["transcript"] = transcript
+    report_bytes = json.dumps(report, ensure_ascii=False, allow_nan=False, sort_keys=True, indent=2).encode("utf-8") + b"\n"
+    if transcript_bytes is not None:
+        _atomic_replace(directory / TRANSCRIPT_FILE, transcript_bytes)
+    _atomic_replace(report_path, report_bytes)
+    return _receipt(directory)
+
+
+def save_transcript(
+    identifier: str,
+    text: str,
+    egress_boundary: str,
+    *,
+    home: Path | None = None,
+) -> dict[str, Any]:
+    """Attach one admitted speech result to an existing feedback bundle."""
+    current = feedback_transcript(identifier, home=home)
+    if current.get("transcript_status") == "complete":
+        return current
+    return _set_transcript(
+        identifier,
+        status="complete",
+        text=text,
+        egress_boundary=egress_boundary,
+        home=home,
+    )
+
+
+def fail_transcript(identifier: str, reason: str, *, home: Path | None = None) -> dict[str, Any]:
+    """Persist a named speech failure while retaining the original bundle."""
+    current = feedback_transcript(identifier, home=home)
+    if current.get("transcript_status") == "complete":
+        return current
+    return _set_transcript(identifier, status="failed", reason=reason, home=home)
+
+
 __all__ = [
     "FEEDBACK_FILES",
     "README_FILE",
+    "TRANSCRIPT_FILE",
     "AUDIO_FILE",
     "REPORT_FILE",
     "WINDOW_FILE",
@@ -342,5 +470,9 @@ __all__ = [
     "UIFeedbackError",
     "enabled",
     "feedback_root",
+    "feedback_audio",
+    "feedback_transcript",
+    "save_transcript",
+    "fail_transcript",
     "save_feedback",
 ]

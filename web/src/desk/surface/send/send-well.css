@@ -60,7 +60,7 @@
   font-family: var(--font-ui);
   color: var(--text);
 }
-[data-send="sheet"] .send-sheet-header {
+:is([data-send="sheet"], [data-send="well"]) .send-sheet-header {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -68,9 +68,13 @@
   padding: 2px 0 4px;
   border-bottom: 1px solid var(--border);
 }
-[data-send="sheet"] .send-sheet-header .surface-primary {
+:is([data-send="sheet"], [data-send="well"]) .send-sheet-header .surface-primary {
   font-size: 15px;
   font-weight: 600;
+}
+
+[data-send="well"] .send-sheet-header .send-add-destination {
+  margin-left: auto;
 }
 
 /* The section: a plain block (not a pullout's grid + hairline). */
@@ -156,8 +160,7 @@
 [data-send="well"] .surface-section-head { gap: 12px; }
 
 /* S5: the sheet reads as one vertical face. The DOM keeps the prepared
-   ledger's stable test and focus hooks; the visual order puts To before the
-   ready rows. */
+   ledger's stable test and focus hooks. */
 [data-send="well"] .send-sheet-sections {
   display: flex;
   flex-direction: column;
@@ -170,58 +173,96 @@
   min-height: 32px;
 }
 
-/* Destination choices are one chip strip. The open result owns the full
-   sheet width below it, while the strip remains the sole horizontal scroller
-   on a phone. */
+/* Destination rows own the only frame in this list. The library ledger stays
+   transparent so it does not draw a second inset around every destination. */
+[data-send="well"] .send-to-section > .surface-ledger {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Destination choices are readable vertical rows. The selected row owns its
+   preview and action sequence directly below it; nothing becomes a horizontal
+   chip strip inside a narrow document window. */
 [data-send="well"] ul.send-destination-list {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: flex-start;
+  display: grid;
   gap: 8px;
   min-width: 0;
-  overflow-x: auto;
-  overflow-y: visible;
+  width: 100%;
   padding: 4px 2px 8px;
-  scrollbar-width: thin;
 }
 [data-send="well"] li.send-destination-item {
-  flex: 0 0 auto;
-  min-width: max-content;
+  display: block;
+  min-width: 0;
+  width: 100%;
   list-style: none;
 }
-[data-send="well"] li.send-destination-item[data-open] {
-  flex: 1 0 100%;
-  min-width: min(100%, 520px);
-}
 [data-send="well"] .send-destination-chip {
-  min-height: 44px;
-  max-width: min(100%, 520px);
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  white-space: nowrap;
-}
-[data-send="well"] .send-destination-chip .send-cells {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-}
-[data-send="well"] .send-destination-chip .send-pick {
-  flex: 0 0 auto;
-}
-[data-send="well"] .send-destination-chip .surface-primary {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-[data-send="well"] .send-destination-item[data-open] > .send-destination-chip {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  grid-template-areas: "pick name" "pick facts";
+  justify-content: stretch;
+  align-items: start;
   width: 100%;
   max-width: none;
+  min-height: 44px;
+  gap: 3px 8px;
+  padding: 8px 10px;
+  text-align: left;
+  white-space: normal;
+}
+[data-send="well"] .send-destination-chip .send-cells {
+  grid-area: facts;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  min-width: 0;
+  width: 100%;
+}
+[data-send="well"] .send-destination-chip .send-pick {
+  grid-area: pick;
+  align-self: start;
+  padding-top: 1px;
+}
+[data-send="well"] .send-destination-chip .surface-primary {
+  grid-area: name;
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+[data-send="well"] .send-destination-chip .surface-token[data-chip] {
+  min-height: 18px;
+  padding-inline: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-muted);
+}
+.desk-next [data-send="well"] .send-destination-item[data-open] > .send-destination-chip,
+.desk-next [data-send="well"] .send-destination-item[data-open] > .send-destination-chip:hover,
+.desk-next [data-send="well"] .send-destination-item[data-open] > .send-destination-chip:focus-visible,
+.desk-next [data-send="well"] .send-destination-item[data-open] > .send-destination-chip:active {
+  border-color: var(--wb-ink);
+  background: var(--wb-blue);
+  color: var(--wb-ink);
+}
+.desk-next [data-send="well"] .send-destination-item[data-open] > .send-destination-chip :is(.surface-primary, .surface-token[data-chip], .send-pick) {
+  color: var(--wb-ink);
 }
 [data-send="well"] .send-open {
   min-width: 0;
   width: 100%;
+  padding: 0 2px 4px 2px;
+  background: var(--alive-paper, var(--wb-paper));
+  border: 1px solid var(--wb-rule-soft);
+}
+.desk-next [data-send="well"] .send-open .send-preview .surface-well {
+  background: transparent;
+  box-shadow: none;
+}
+.desk-next [data-send="well"] .send-open .send-preview .surface-well-body {
+  padding: 12px;
 }
 [data-send="well"] .send-sheet-footer {
   position: sticky;
@@ -230,26 +271,63 @@
   margin-top: 10px;
   background: var(--surface-1);
 }
+.desk-next .surface-footer:has(> [data-send="actions"].send-sheet-footer) {
+  background: var(--alive-paper, var(--wb-paper));
+  box-shadow: none;
+}
+.desk-next .surface-footer:has(> [data-send="actions"].send-sheet-footer) > [data-send="actions"].send-sheet-footer {
+  background: transparent;
+}
 
 /* SurfaceFooter portals the send verbs into the host window's foot. Keep the
    same species boundary on that action root: the receipt path must shrink and
    wrap inside the foot instead of making its max-content grid column wider
    than the window. */
-[data-send="actions"].surface-footer-layout {
+.desk-next [data-send="actions"].surface-footer-layout {
+  display: flex;
   width: 100%;
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "verbs";
+  min-height: 44px;
+  margin: 0;
+  padding: 8px;
+  align-items: center;
+  gap: 0;
 }
-[data-send="actions"] .surface-footer-verbs,
-[data-send="actions"] .send-verbs,
-[data-send="actions"] .send-line {
+.desk-next [data-send="actions"] > .surface-footer-egress:empty,
+.desk-next [data-send="actions"] > .surface-footer-receipt:empty {
+  display: none;
+}
+.desk-next [data-send="actions"] > .surface-footer-verbs {
+  display: flex;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+}
+.desk-next [data-send="actions"] .surface-footer-verbs,
+.desk-next [data-send="actions"] .send-verbs,
+.desk-next [data-send="actions"] .send-line {
   min-width: 0;
   max-width: 100%;
 }
-[data-send="actions"] .surface-footer-verbs { justify-content: flex-start; }
-[data-send="actions"] .send-line { flex: 1 1 180px; }
-[data-send="actions"] .send-literal.send-wrap {
+.desk-next [data-send="actions"] .surface-footer-verbs { justify-content: flex-start; }
+.desk-next [data-send="actions"] .send-line { flex: 1 1 180px; }
+.desk-next [data-send="actions"] .send-verbs {
+  width: 100%;
+  margin: 0;
+  gap: 8px;
+}
+.desk-next [data-send="actions"] .send-verbs > .btn--primary {
+  margin-left: auto;
+}
+/* This action row already reserves space around each target. The generic
+   narrow Button halo margin would add that space a second time. */
+.desk-next [data-send="actions"] .send-verbs > .btn {
+  margin-block: 0;
+}
+.desk-next [data-send="actions"] .send-literal.send-wrap {
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -260,9 +338,9 @@
 
 @container surface (max-width: 560px) {
   [data-send="well"] .surface-section-head { min-height: 44px; }
-  [data-send="well"] .send-verbs { gap: 16px 12px; padding-block: 6px; }
+  [data-send="well"] .send-verbs { gap: 8px; margin: 0; padding-block: 0; }
   [data-send="well"] ul.send-destination-list { max-width: 100%; }
-  [data-send="well"] .send-destination-chip { max-width: 82vw; }
+  [data-send="well"] .send-destination-chip { width: 100%; }
 }
 
 /* The preview: the document in the UI face (a Markdown body with its own

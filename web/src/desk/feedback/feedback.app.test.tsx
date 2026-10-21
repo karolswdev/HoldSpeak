@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import statusDisabled from "./fixtures/status-disabled.json";
 import statusEnabled from "./fixtures/status-enabled.json";
 import saveSuccess from "./fixtures/save-success.json";
+import transcribeSuccess from "./fixtures/transcribe-success.json";
+import transcribeFailed from "./fixtures/transcribe-failed.json";
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -246,9 +248,13 @@ describe("local UI feedback", () => {
   it("stops and saves the feedback recording through the desk Stop event", async () => {
     const recording = session();
     mocks.startFeedbackAudio.mockResolvedValueOnce(recording);
-    mocks.apiFetch.mockImplementation(async (path: string) =>
-      path === "/api/ui-feedback/status" ? statusEnabled : saveSuccess,
-    );
+    mocks.apiFetch.mockImplementation(async (path: string) => {
+      if (path === "/api/ui-feedback/status") return statusEnabled;
+      if (path.endsWith("/transcribe")) {
+        return transcribeSuccess;
+      }
+      return saveSuccess;
+    });
     const view = deskFace();
     await startPicker();
     await selectAction(view.action);
@@ -278,6 +284,7 @@ describe("local UI feedback", () => {
         if (postAttempt === 1) throw new Error("save failed");
         return saveSuccess;
       }
+      if (path.endsWith("/transcribe")) return transcribeSuccess;
       return {};
     });
     const view = deskFace();
@@ -291,6 +298,40 @@ describe("local UI feedback", () => {
     expect(posts).toHaveLength(2);
     expect(posts[1]).toEqual(posts[0]);
     expect(mocks.captureWindowPng).toHaveBeenCalledTimes(1);
+    view.unmount();
+  });
+
+  it("keeps the saved bundle when ASR fails and retries only the transcript", async () => {
+    const recording = session();
+    let saveCalls = 0;
+    let transcribeCalls = 0;
+    mocks.startFeedbackAudio.mockResolvedValueOnce(recording);
+    mocks.apiFetch.mockImplementation(async (path: string) => {
+      if (path === "/api/ui-feedback/status") return statusEnabled;
+      if (path === "/api/ui-feedback") {
+        saveCalls += 1;
+        return saveSuccess;
+      }
+      if (path.endsWith("/transcribe")) {
+        transcribeCalls += 1;
+        return transcribeCalls === 1
+          ? transcribeFailed
+          : transcribeSuccess;
+      }
+      return {};
+    });
+    const view = deskFace();
+    await startPicker();
+    await selectAction(view.action);
+    fireEvent.click(screen.getByRole("button", { name: "Stop and save" }));
+    await screen.findByRole("button", { name: "Retry transcription" });
+    expect(screen.getByText("Speech is not set up.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Retry transcription" }));
+    await screen.findByText("SAVED");
+    expect(saveCalls).toBe(1);
+    expect(transcribeCalls).toBe(2);
+    expect(recording.stop).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("SPEECH · PRIVATE NETWORK")).toBeTruthy();
     view.unmount();
   });
 

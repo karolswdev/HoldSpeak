@@ -373,14 +373,17 @@ describe("the SEND well species on a brief (not an update)", () => {
     noManualRow();
   });
 
-  it("keeps Add destination beside SEND with the built-in folder and opens the inline form", async () => {
+  it("keeps one Send title with Add destination and opens the inline form", async () => {
     routes["GET /api/channels/destinations"] = () => ({ destinations: [folder({ builtin: true })] });
     const openSettings = vi.spyOn(useDesk.getState(), "openSurfaceWindow").mockImplementation(() => {});
     try {
       render(<SendWells doc={{ ...BRIEF, ref: "note:add-destination" }} />);
       await screen.findByTestId("send-preview");
       const add = screen.getByTestId("send-add-destination");
-      expect(add.closest(".surface-section-head")?.textContent).toContain("SEND");
+      const header = screen.getByTestId("send-sheet-header");
+      expect(header).toHaveTextContent("Send");
+      expect(header).toHaveTextContent("Add destination");
+      expect(add.closest(".surface-section-head")).toBeNull();
       fireEvent.click(add);
       expect(await screen.findByTestId("send-inline-destination")).toBeInTheDocument();
       expect(openSettings).not.toHaveBeenCalled();

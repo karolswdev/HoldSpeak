@@ -30,6 +30,9 @@ TOKEN = "ui-feedback-glass"
 SIZES = {1440: (1440, 900), 393: (393, 852)}
 SHOTS = evidence_dir("ui-feedback")
 T = 30_000
+EMPTY_REFERENCE_ARTIFACT = "art-adr-empty-reference"
+EMPTY_REFERENCE_SOURCE = "window-private-adr-reference"
+USEFUL_REFERENCE_WINDOW = "pullout:artifact:art-cutover-reqs"
 
 
 def _feedback_menu_item(page: Any, width: int) -> Any:
@@ -121,6 +124,61 @@ def _browser_png_facts(page: Any, path: Path) -> dict[str, int]:
     )
 
 
+def _browser_png_region_facts(
+    page: Any,
+    path: Path,
+    regions: dict[str, dict[str, float]],
+    window_size: tuple[int, int],
+) -> dict[str, dict[str, int]]:
+    """Check that named source regions survive in the saved PNG pixels."""
+    encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+    return page.evaluate(
+        """async ({encoded, regions, windowSize}) => {
+          const image = await new Promise((resolve, reject) => {
+            const value = new Image();
+            value.onload = () => resolve(value);
+            value.onerror = () => reject(new Error("PNG could not be decoded"));
+            value.src = `data:image/png;base64,${encoded}`;
+          });
+          const canvas = document.createElement("canvas");
+          canvas.width = image.naturalWidth;
+          canvas.height = image.naturalHeight;
+          const context = canvas.getContext("2d");
+          if (!context) throw new Error("canvas unavailable");
+          context.drawImage(image, 0, 0);
+          const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+          const sx = canvas.width / windowSize[0];
+          const sy = canvas.height / windowSize[1];
+          const at = (x, y) => {
+            const offset = (y * canvas.width + x) * 4;
+            return [pixels[offset], pixels[offset + 1], pixels[offset + 2], pixels[offset + 3]];
+          };
+          const background = at(0, 0);
+          const result = {};
+          for (const [name, region] of Object.entries(regions)) {
+            const left = Math.max(0, Math.floor(region.x * sx));
+            const top = Math.max(0, Math.floor(region.y * sy));
+            const right = Math.min(canvas.width, Math.ceil((region.x + region.width) * sx));
+            const bottom = Math.min(canvas.height, Math.ceil((region.y + region.height) * sy));
+            const colors = new Set();
+            let pixelsSeen = 0;
+            let changed = 0;
+            for (let y = top; y < bottom; y++) for (let x = left; x < right; x++) {
+              const pixel = at(x, y);
+              colors.add(`${pixel[0]},${pixel[1]},${pixel[2]},${pixel[3]}`);
+              pixelsSeen++;
+              if (Math.abs(pixel[0] - background[0])
+                  + Math.abs(pixel[1] - background[1])
+                  + Math.abs(pixel[2] - background[2]) > 18) changed++;
+            }
+            result[name] = {pixels: pixelsSeen, changed, colors: colors.size};
+          }
+          return result;
+        }""",
+        {"encoded": encoded, "regions": regions, "windowSize": list(window_size)},
+    )
+
+
 def _read_saved_report(
     page: Any,
     directory: str,
@@ -129,6 +187,7 @@ def _read_saved_report(
     draft: str | None,
     window_size: tuple[int, int],
     shot_stem: str,
+    png_regions: dict[str, dict[str, float]] | None = None,
 ) -> dict[str, Any]:
     root = Path(directory)
     assert root.is_dir() and ".local/share/holdspeak/feedback" in str(root), root
@@ -155,12 +214,25 @@ def _read_saved_report(
     assert abs(png["width"] - window_size[0]) <= 8, (png, window_size)
     assert abs(png["height"] - window_size[1]) <= 8, (png, window_size)
     assert png["colors"] > 4, "the saved window image is blank or flat"
+    if png_regions:
+        region_facts = _browser_png_region_facts(page, root / "window.png", png_regions, window_size)
+        for name, facts in region_facts.items():
+            assert facts["pixels"] > 20 and facts["changed"] > 20 and facts["colors"] > 2, (name, facts)
     shutil.copy2(root / "window.png", SHOTS / f"{shot_stem}-{window_id}-window.png")
 
     return report
 
 
-def _save_feedback(page: Any, width: int, *, shot_stem: str, window_id: str, draft: str | None, global_stop: bool = False) -> dict[str, Any]:
+def _save_feedback(
+    page: Any,
+    width: int,
+    *,
+    shot_stem: str,
+    window_id: str,
+    draft: str | None,
+    global_stop: bool = False,
+    png_regions: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     stop = page.get_by_test_id("desk-mic-lamp-stop") if global_stop else page.locator("[data-ui-feedback]").get_by_role("button", name="Stop and save", exact=True)
     page.screenshot(path=str(SHOTS / f"{shot_stem}-{width}-recording.png"))
     metrics = page.evaluate(_MEASURE, page.evaluate(_FAINT_JS))
@@ -169,6 +241,20 @@ def _save_feedback(page: Any, width: int, *, shot_stem: str, window_id: str, dra
         assert not faults, (key, faults)
     if width == 393:
         _assert_phone_strip(page)
+
+    window = page.locator(f"[id='{window_id}'][data-layer='window']")
+    root_box = window.bounding_box()
+    assert root_box, "the owning window has no hit box before capture"
+    region_boxes: dict[str, dict[str, float]] = {}
+    for name, locator in (png_regions or {}).items():
+        box = locator.bounding_box()
+        assert box, f"the PNG source region {name!r} has no hit box"
+        region_boxes[name] = {
+            "x": box["x"] - root_box["x"],
+            "y": box["y"] - root_box["y"],
+            "width": box["width"],
+            "height": box["height"],
+        }
 
     with page.expect_response(
         lambda response: response.url.endswith("/api/ui-feedback")
@@ -191,6 +277,7 @@ def _save_feedback(page: Any, width: int, *, shot_stem: str, window_id: str, dra
         draft=draft,
         window_size=(round(box["width"]), round(box["height"])),
         shot_stem=f"{shot_stem}-{width}",
+        png_regions=region_boxes or None,
     )
 
 
@@ -229,6 +316,71 @@ def feedback_page(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request: pyte
             window.wait_for(timeout=T)
             _settle(page)
             yield page, width, window
+            browser.close()
+    finally:
+        server.stop()
+
+
+@pytest.fixture(params=[1440, 393], ids=["desktop", "phone"])
+def artifact_reference_page(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest):
+    """Real artifact paper, Send rows, and feedback capture in one hub."""
+    from holdspeak.db import get_database
+    from playwright.sync_api import sync_playwright
+
+    from .test_send_glass import _seed
+
+    width = int(request.param)
+    monkeypatch.setenv("HOLDSPEAK_UI_FEEDBACK", "1")
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    db = get_database()
+    _seed(db)
+    db.plugins.record_artifact(
+        artifact_id=EMPTY_REFERENCE_ARTIFACT,
+        meeting_id="m-standup",
+        artifact_type="adr",
+        title="ADR Drafter",
+        body_markdown="# ADR Drafter\n\nadr_drafter: no architectural decisions found.\n",
+        status="accepted",
+        plugin_id="adr_drafter",
+        confidence=1.0,
+        sources=[{"source_type": "workbench", "source_ref": EMPTY_REFERENCE_SOURCE}],
+    )
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(
+                headless=True,
+                args=["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"],
+            )
+            context = browser.new_context(
+                viewport={"width": width, "height": SIZES[width][1]},
+                device_scale_factor=1,
+                has_touch=width < 720,
+                is_mobile=width < 720,
+                reduced_motion="reduce",
+                permissions=["microphone"],
+            )
+            page = context.new_page()
+            page.set_default_timeout(T)
+            page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+            _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+            folder = tmp_path / "Team updates"
+            folder.mkdir()
+            made = _api(
+                page,
+                "POST",
+                "/api/channels/destinations",
+                {"name": "Team updates", "channel": "file", "folder": str(folder)},
+                token=TOKEN,
+            )
+            assert made["destination"]["channel"] == "file", made
+            clear_hub_windows(page, TOKEN)
+            page.goto(
+                f"{base}/?token={TOKEN}&open=artifact:{EMPTY_REFERENCE_ARTIFACT}",
+                wait_until="load",
+            )
+            _normal_chair(page)
+            yield page, base, width
             browser.close()
     finally:
         server.stop()
@@ -277,4 +429,79 @@ def test_window_feedback_button_records_its_window_without_picking(feedback_page
     assert strip.get_by_text("Select an element", exact=True).count() == 0
     page.wait_for_timeout(500)
     report = _save_feedback(page, width, shot_stem="feedback-direct", window_id=window_id, draft=draft)
+    assert report["context"]["selected_element"]["id"] == window_id
+
+
+def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
+    """The empty ADR result and useful Send artifact keep their real window identity."""
+    page, base, width = artifact_reference_page
+    empty_id = f"pullout:artifact:{EMPTY_REFERENCE_ARTIFACT}"
+    empty = page.locator(f"[id='{empty_id}'][data-layer='window']")
+    empty.wait_for(timeout=T)
+    _settle(page)
+    assert empty.get_by_text("No architecture decisions found", exact=True).is_visible()
+    assert empty.locator("[data-testid=send-well]").count() == 0
+    empty.locator(".artifact-sources-fold > summary").click()
+    unresolved = empty.locator("[data-testid=artifact-source-unresolved]")
+    unresolved.wait_for(timeout=T)
+    assert EMPTY_REFERENCE_SOURCE in unresolved.inner_text()
+    page.screenshot(path=str(SHOTS / f"artifact-reference-empty-{width}.png"))
+
+    # Reuse the same private hub and browser. The useful artifact is a real
+    # producer row, and its FILE destination is local-only; no send is pressed.
+    clear_hub_windows(page, TOKEN)
+    page.goto(
+        f"{base}/?token={TOKEN}&open=artifact:art-cutover-reqs",
+        wait_until="load",
+    )
+    _normal_chair(page)
+    window_id = USEFUL_REFERENCE_WINDOW
+    window = page.locator(f"[id='{window_id}'][data-layer='window']")
+    window.wait_for(timeout=T)
+    _settle(page)
+    paper = window.locator(".artifact-reading .surface-well")
+    paper.wait_for(timeout=T)
+    assert "Freeze the old ledger on Nov 5." in paper.inner_text()
+
+    send = window.locator("[data-testid=send-well]")
+    send.wait_for(timeout=T)
+    rows = send.locator("[data-testid=destination-row]")
+    assert rows.count() >= 2, "the reference artifact needs the built-in and local FILE destinations"
+    assert rows.nth(1).locator("[data-destination]").first.get_attribute("data-destination") == "Team updates"
+    # The kept destination moves to the head of the list after selection.
+    # Follow its identity through that render, rather than its old position.
+    second = send.locator("[data-testid=destination-row]:has([data-destination='Team updates'])")
+    second.locator(".send-destination-chip").click()
+    preview = second.locator("[data-testid=send-preview]")
+    preview.wait_for(timeout=T)
+    assert second.get_attribute("data-open") == "true"
+    preview.scroll_into_view_if_needed()
+    assert preview.is_visible()
+    assert "Freeze the old ledger on Nov 5." in preview.inner_text()
+    controls = second.locator(".send-destination-chip")
+    assert controls.is_visible()
+    # The selected destination must survive the host Button cascade, and the
+    # preview must use the same reading material as the artifact itself.
+    assert controls.evaluate("el => getComputedStyle(el).backgroundColor") == "rgb(102, 136, 187)"
+    assert second.locator(".send-open").evaluate(
+        "el => getComputedStyle(el).backgroundColor"
+    ) == paper.evaluate("el => getComputedStyle(el).backgroundColor")
+    action_frame = second.locator(".surface-footer:has([data-send=actions])")
+    assert action_frame.bounding_box()["height"] <= 72, "Send must not add a second deep window foot"
+
+    feedback_button = window.get_by_role(
+        "button", name="Give feedback on Cutover requirements", exact=True
+    )
+    feedback_button.wait_for(timeout=T)
+    feedback_button.click()
+    page.locator("[data-ui-feedback]").get_by_text("RECORDING", exact=True).wait_for(timeout=T)
+    page.wait_for_timeout(500)
+    report = _save_feedback(
+        page,
+        width,
+        shot_stem="artifact-reference-send",
+        window_id=window_id,
+        draft=None,
+        png_regions={"send_controls": controls, "send_preview": preview},
+    )
     assert report["context"]["selected_element"]["id"] == window_id

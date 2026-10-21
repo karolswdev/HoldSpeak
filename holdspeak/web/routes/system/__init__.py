@@ -36,7 +36,7 @@ def build_system_router(
     mount_router(router, build_gate_router(ctx))
     mount_router(router, build_kernel_router())
     mount_router(router, build_settings_router(ctx))
-    mount_router(router, build_ui_feedback_router())
+    mount_router(router, build_ui_feedback_router(ctx))
     mount_router(router, build_voice_router(ctx))
     mount_router(router, build_ws_router(ctx))
     return router

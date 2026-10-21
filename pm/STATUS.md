@@ -8,6 +8,23 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The owner’s audio report of the Adr Drafter window starts the beauty and
+delight reference in `docs/internal/beauty-delight/`. Shared Send uses
+readable full-width destination rows with the selected preview directly
+below; the artifact reader presents useful material on paper and moves
+source details into a fold. Known no-decisions ADR results read honestly
+without an outgoing Send area; original Copy/Send document bytes stay intact.
+This first reference improves these shared surfaces; it is not a completed
+redesign of every Desk face.
+
+Feedback saves its original audio, image and context before transcription,
+then uses the same configured, admitted speech engine as Speak. It attaches
+`transcript.txt` to the report. A speech failure keeps Saved, Copy path and
+New feedback available and offers Retry transcription against the same WAV.
+The raw transcript bypasses dictation punctuation, clipboard substitution
+and command processing. Required quick: build, 23 destination web cases, 37 affected speech/browser cases, 110 desk sweep cases with feedback enabled, 27 canon and 1,116 repository guards passed; final reference images inspected at 1440 and 393.
+
+
 The owner can opt into audio feedback with `HOLDSPEAK_UI_FEEDBACK=1`.
 Every window has a Feedback title-bar button that captures that window directly.
 Desk > Give feedback also selects an element without running its action. A report
@@ -15,8 +32,8 @@ keeps the selected window's PNG, original WAV, rendered field values and
 window identity together under `~/.local/share/holdspeak/feedback/`.
 Capture freezes before recording, and Retry saves that same bundle. Password
 and credential fields are excluded. Recording uses the existing microphone
-session and audio floor. No engine, transcription or external delivery is
-required. The flag is off by default. Usage and the settled design are in
+session and audio floor. A speech failure does not prevent saving the original
+report. No external delivery is required. The flag is off by default. Usage and the settled design are in
 `docs/internal/ui-feedback/`. This owner development tool adds no betterment
 recipe slice. Direct window button check: build/typecheck, 4,102 related web cases, four real feedback browser cases at 1440/393, 110 desk sweep cases with feedback enabled, 27 canon and 1,116 repository guards passed.
 Initial capture check: build/typecheck, 83 related Vitest cases, 2 real feedback browser cases, 110 desk sweep cases, 27 canon and 1,116 repo guards; the preceding unchanged backend check passed 293 affected Python cases.

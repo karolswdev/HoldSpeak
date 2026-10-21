@@ -1,6 +1,11 @@
 .artifact-reading {
   --text: var(--wb-text);
   --text-muted: var(--wb-muted);
+  min-width: 0;
+}
+
+.artifact-reading-section {
+  min-width: 0;
 }
 
 .artifact-reading .surface-well {
@@ -10,4 +15,62 @@
 
 .artifact-reading .surface-well-body {
   max-height: none;
+  padding: 24px;
+  overflow: visible;
+}
+
+.artifact-reading .surface-material {
+  max-width: 72ch;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.artifact-reading .surface-state {
+  min-height: 0;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 24px;
+  text-align: left;
+  background: var(--alive-paper, var(--wb-paper));
+  color: var(--wb-text);
+}
+
+.artifact-reading .surface-state .surface-state-glyph:empty {
+  display: none;
+}
+
+.artifact-reading .surface-state > span:not(.surface-state-glyph) {
+  max-width: 28ch;
+  color: var(--wb-text);
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.artifact-reading .surface-state .surface-state-action {
+  align-self: flex-start;
+  margin-top: 16px;
+}
+
+.artifact-sources-fold {
+  margin-top: 2px;
+}
+
+.artifact-sources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 4px 8px 8px;
+  color: var(--text-muted);
+}
+
+.artifact-source-unresolved {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  font: 12px / 1.5 var(--font-mono);
 }

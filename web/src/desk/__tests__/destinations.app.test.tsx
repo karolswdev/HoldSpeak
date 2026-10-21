@@ -52,6 +52,9 @@ function listing(list: { destinations: unknown[] }) {
 }
 
 beforeEach(() => {
+  // jsdom has no native scrollIntoView. Saving a destination schedules it
+  // on the next frame, which can otherwise escape the test assertions.
+  Element.prototype.scrollIntoView = vi.fn();
   calls.length = 0;
   routes = { "GET /api/connections": () => ok(connections) };
   listing(listEmpty);
@@ -296,6 +299,7 @@ describe("the email destination setup", () => {
     expect(calls.find((c) => c.method === "POST")!.body).toMatchObject({
       channel: "email", provider: "sendgrid", key_ref: "sendgrid-karol@acme.io", to: ["lena@acme.io", "tomas@acme.io"],
     });
+    await waitFor(() => expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ block: "start" }));
   });
 
   it("wraps recipient editors and saves comma and newline lists in their entered order", async () => {
