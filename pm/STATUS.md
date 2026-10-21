@@ -2026,6 +2026,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1420 — automation save errors:** rejected native-agent and spend-limit saves show a refusal, keep the draft and permit retry. Fixes the post-merge finding on #1419.
+
 - **#1419 — owner feedback, 2026-10-21:** guided Automation
   builder, one-category Settings, clear selection and pictograms, and a Done
   action on the saved feedback receipt. Required quick proof is above; exact
