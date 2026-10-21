@@ -8,6 +8,12 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Post-merge review of #1419 found that a rejected native-agent or spend-limit
+save can escape an async UI callback. The focused fix catches that rejection,
+retains the spend draft and restores a usable retry. The regression drives a
+503 response and then a successful actual writer retry. Required quick:
+build, 58 related web cases including a refused-save/draft/retry regression, 110 desk sweep cases at 1440/393, 27 canon and 1,116 repository guards passed.
+
 The owner's 2026-10-21 Automation builder and Settings reports are implemented
 in this change. Blank automations open a five-step guided editor using the
 existing real settings and engine admission. Settings shows one category at a
@@ -2019,6 +2025,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1420 — automation save errors:** rejected native-agent and spend-limit saves show a refusal, keep the draft and permit retry. Fixes the post-merge finding on #1419.
 
 - **#1419 — owner feedback, 2026-10-21:** guided Automation
   builder, one-category Settings, clear selection and pictograms, and a Done

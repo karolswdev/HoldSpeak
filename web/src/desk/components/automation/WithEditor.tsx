@@ -125,9 +125,12 @@ function NativeWithEditor({
       busy={nativeBusy} onRetry={() => void readNative()}
       onUse={async (profileId) => {
         setNativeBusy(profileId);
+        setNativeError(null);
         try {
           await onUse(profileId);
           await readNative();
+        } catch (error) {
+          setNativeError(readableError(error));
         } finally {
           setNativeBusy(null);
         }
@@ -353,10 +356,12 @@ function SpendLimit({
   const own = detail.spend_limit_usd ?? null;
   const [draft, setDraft] = useState(own != null ? own.toFixed(2) : "");
   const [invalid, setInvalid] = useState(false);
+  const [refusal, setRefusal] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   if (!engine.spend?.canLimit) return null;
   const engineLimit = engine.spend.limitUsd;
   const save = async (clear = false) => {
+    setRefusal(null);
     const text = clear ? "" : draft.trim().replace(/^\$/, "");
     const limit = text ? Number(text) : null;
     if (limit != null && !(Number.isFinite(limit) && limit > 0 && limit <= 1000)) {
@@ -368,6 +373,8 @@ function SpendLimit({
     try {
       await onSave(limit);
       if (clear) setDraft("");
+    } catch (error) {
+      setRefusal(readableError(error));
     } finally {
       setSaving(false);
     }
@@ -392,6 +399,7 @@ function SpendLimit({
         ) : null}
       </div>
       {invalid ? <p className="automation-refusal" role="alert">Type an amount above $0 and at most $1000.</p> : null}
+      {refusal ? <p className="automation-refusal" role="alert">{refusal}</p> : null}
     </section>
   );
 }
