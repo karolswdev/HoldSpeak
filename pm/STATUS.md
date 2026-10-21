@@ -18,7 +18,7 @@ and credential fields are excluded. Recording uses the existing microphone
 session and audio floor. No engine, transcription or external delivery is
 required. The flag is off by default. Usage and the settled design are in
 `docs/internal/ui-feedback/`. This owner development tool adds no betterment
-recipe slice. Direct window button check: WINDOW_FEEDBACK_QUICK_PENDING.
+recipe slice. Direct window button check: build/typecheck, 4,102 related web cases, four real feedback browser cases at 1440/393, 110 desk sweep cases with feedback enabled, 27 canon and 1,116 repository guards passed.
 Initial capture check: build/typecheck, 83 related Vitest cases, 2 real feedback browser cases, 110 desk sweep cases, 27 canon and 1,116 repo guards; the preceding unchanged backend check passed 293 affected Python cases.
 
 The full main tape pinned to `66beb450a` finished red: 11 Python, 11 browser
