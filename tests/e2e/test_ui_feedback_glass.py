@@ -467,11 +467,14 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
     send.wait_for(timeout=T)
     rows = send.locator("[data-testid=destination-row]")
     assert rows.count() >= 2, "the reference artifact needs the built-in and local FILE destinations"
-    second = rows.nth(1)
+    assert rows.nth(1).locator("[data-destination]").first.get_attribute("data-destination") == "Team updates"
+    # The kept destination moves to the head of the list after selection.
+    # Follow its identity through that render, rather than its old position.
+    second = send.locator("[data-testid=destination-row]:has([data-destination='Team updates'])")
     second.locator(".send-destination-chip").click()
-    assert second.get_attribute("data-open") == "true"
     preview = second.locator("[data-testid=send-preview]")
     preview.wait_for(timeout=T)
+    assert second.get_attribute("data-open") == "true"
     preview.scroll_into_view_if_needed()
     assert preview.is_visible()
     assert "Freeze the old ledger on Nov 5." in preview.inner_text()
