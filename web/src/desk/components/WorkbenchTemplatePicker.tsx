@@ -10,12 +10,14 @@
  * HS-130-09 still holds: one press, one record, no orphan. The HS-116-05
  * template cards are parked (`_parked/WorkbenchTemplatePicker.tsx`). */
 import "./automation/automation-home.css";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ComponentPropsWithoutRef } from "react";
 import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
+import { spriteUrl } from "../sprites";
 import { SurfaceState } from "../surface/Surface";
-import { useRovingRows } from "../surface/roving";
+import { ChoiceCardShell } from "../surface/patterns/ChoiceCardShell";
+import { useRovingGrid } from "../surface/roving";
 import { putWords, scheduleWords } from "./automation/model";
 
 /** One starter (`holdspeak/workbench_templates.py` STARTERS). */
@@ -37,6 +39,34 @@ function starterWhen(starter: AutomationStarter): string {
   return scheduleWords(starter.schedule) ?? "Only when I press Run now";
 }
 
+const STARTER_SPRITES: Record<string, string> = {
+  "friday-team-update": "artifact",
+  "meeting-follow-ups": "action",
+  "one-on-one-prep": "person",
+  "summarize-a-drawer": "directory",
+  "morning-prep": "meeting",
+  "friday-runbook": "repository",
+};
+
+function starterSprite(starter: AutomationStarter): string {
+  return spriteUrl(STARTER_SPRITES[starter.id] ?? "workbench", starter.id, "rest", undefined, 32);
+}
+
+function descriptionId(prefix: string, starter: AutomationStarter): string {
+  return `${prefix}-automation-starter-description-${starter.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+}
+
+/** ChoiceCardShell supplies the shared card material while Button remains the
+ * one interactive element and retains its chrome variant. ChoiceCardShell
+ * owns `disabled` as a visual data attribute, so carry that state through to
+ * the underlying native button here. */
+function StarterButton({
+  ["data-disabled"]: dataDisabled,
+  ...props
+}: ComponentPropsWithoutRef<"button"> & { "data-disabled"?: boolean }) {
+  return <Button {...props} variant="chrome" disabled={Boolean(dataDisabled)} />;
+}
+
 export function WorkbenchTemplatePicker({
   onCreated,
 }: {
@@ -49,8 +79,10 @@ export function WorkbenchTemplatePicker({
   const [selected, setSelected] = useState<string | null>(null);
   const [createError, setCreateError] = useState("");
   const [created, setCreated] = useState<string | null>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
-  useRovingRows(gridRef, { selector: ".automation-starter" });
+  const descriptionPrefix = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const scratchDescriptionId = `${descriptionPrefix}-automation-starter-description-scratch`;
+  const choicesRef = useRef<HTMLDivElement>(null);
+  useRovingGrid(choicesRef, { selector: ".automation-starter" });
 
   const loadStarters = useCallback(() => {
     setError(false);
@@ -98,40 +130,48 @@ export function WorkbenchTemplatePicker({
   if (loading) return <SurfaceState loading />;
 
   return (
-    <div className="automation-starters" data-testid="automation-starters">
+    <div ref={choicesRef} className="automation-starters" data-testid="automation-starters">
       {createError ? <SurfaceState error={createError} /> : null}
-      <div ref={gridRef} className="automation-starter-grid">
+      <ChoiceCardShell
+        as={StarterButton}
+        className="automation-starter automation-starter-scratch"
+        emblem={<img className="automation-starter-sprite" src={spriteUrl("workbench", "scratch", "rest", undefined, 32)} alt="" draggable={false} />}
+        label="Start from scratch"
+        summary={<span className="automation-starter-facts">Blank automation</span>}
+        aria-label="Start from scratch"
+        aria-describedby={scratchDescriptionId}
+        aria-pressed={selected === "scratch"}
+        disabled={busy || Boolean(created)}
+        onClick={() => void create(null)}
+        data-testid="automation-starter-scratch"
+      >
+        <span id={scratchDescriptionId} className="sr-only">
+          Create a blank automation and choose its setup.
+        </span>
+      </ChoiceCardShell>
+      <div className="automation-starter-grid">
         {starters.map((starter) => (
-          <Button
+          <ChoiceCardShell
             key={starter.id}
-            variant="chrome"
+            as={StarterButton}
             className="automation-starter"
+            emblem={<img className="automation-starter-sprite" src={starterSprite(starter)} alt="" draggable={false} />}
+            label={starter.name}
+            summary={<span className="automation-starter-facts">{starterWhen(starter)} · {putWords(starter.output_target)}</span>}
+            title={starter.description}
+            aria-label={starter.name}
+            aria-describedby={descriptionId(descriptionPrefix, starter)}
             aria-pressed={selected === starter.id}
             disabled={busy || Boolean(created)}
             onClick={() => void create(starter)}
             data-testid={`automation-starter-${starter.id}`}
           >
-            <span className="automation-starter-name">{starter.name}</span>
-            <span className="automation-starter-words">{starter.description}</span>
-            <span className="automation-starter-facts">
-              {starterWhen(starter)} · {putWords(starter.output_target)}
-            </span>
             {starter.blanks.about ? (
               <span className="automation-starter-blank">About: {starter.blanks.about}</span>
             ) : null}
-          </Button>
+            <span id={descriptionId(descriptionPrefix, starter)} className="sr-only">{starter.description}</span>
+          </ChoiceCardShell>
         ))}
-        <Button
-          variant="chrome"
-          className="automation-starter automation-starter-scratch"
-          aria-pressed={selected === "scratch"}
-          disabled={busy || Boolean(created)}
-          onClick={() => void create(null)}
-          data-testid="automation-starter-scratch"
-        >
-          <span className="automation-starter-name">Start from scratch</span>
-          <span className="automation-starter-words">Say what it does, when, and with which engine.</span>
-        </Button>
       </div>
     </div>
   );

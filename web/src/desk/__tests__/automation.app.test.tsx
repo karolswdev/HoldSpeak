@@ -664,6 +664,13 @@ describe("A7: home, New automation and starters", () => {
     fireEvent.click(screen.getByTestId("automation-new")); presses += 1;
     const chooser = await screen.findByRole("region", { name: "New Automation" });
     const friday = await within(chooser).findByTestId("automation-starter-friday-team-update");
+    expect(friday).toHaveAccessibleName("Friday team update");
+    const describedBy = friday.getAttribute("aria-describedby");
+    expect(describedBy).toBeTruthy();
+    const matchingDescriptions = [...document.querySelectorAll<HTMLElement>("[id]")]
+      .filter((element) => element.id === describedBy);
+    expect(matchingDescriptions).toHaveLength(1);
+    expect(chooser.contains(matchingDescriptions[0])).toBe(true);
     // The starter reads in words: never cron, never "Agent".
     expect(friday).toHaveTextContent("Every Friday at 15:00 · My Inbox");
     expect(chooser.textContent).not.toMatch(/\* \* \*|0 15|Agent|TODO|Triage|Morning Brief/);

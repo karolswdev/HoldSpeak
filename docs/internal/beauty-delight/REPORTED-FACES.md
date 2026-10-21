@@ -1,0 +1,37 @@
+# Agent and New Automation — build brief
+
+Owner instruction, 2026-10-20: act on the two saved reports, deliver the changed interfaces. Worktree `/Users/karol/dev/tools/wt-agent-automation-delight-20261020`, branch `feat/agent-automation-delight-20261020`, base main `5aef5fbc7`. Original sources and outcome criteria are in NEXT-FACES.md. The existing herdr reference is `docs/internal/betterment/herdr/STUDY.md` (the earlier exact-reference unknown is resolved). This delivery improves the actual reported session and starter chooser, preserving their real operations. It does not implement another terminal multiplexer.
+
+Setup-installed HoldSpeak MCP was reached through its configured stdio command; project.list has no HoldSpeak project to read with project.get. memory.search was read before edits and supplied no additional design brief. The owner reports and repo canon define this task.
+
+## Settled canvas
+
+See `reported-faces.html`, using existing Workbench sprites and material. Build these compositions, then judge actual shots at 1440 and 393. The owner judges the delivered product live (CLAUDE fast cycle). Every verb is the library Button; readable 12px facts, 15px names, 26px primary fact. Window-relative container rules, no modals, new framework, synthetic activity or prose instructions. Tenets 1–7, especially power without needless interfaces and common components.
+
+Agent session: retain the title-bar project identity; inside, a real 64px agent sprite accompanies the AppHead's actual state, with provider/model/time as quiet facts. Use the existing agent-specific spriteUrl rather than a generic image. A paper reading plane holds the latest real report. If the hook report is absent, use a real screen.said report when available; never manufacture words. A compact activity row shows the actual latest tool, with an actual screen command only when present. A pending question and its existing answer well lead the work; keep voice, drafts, grant/admission and receipts unchanged. A missing terminal is a quiet honest fact, not the dominant uppercase result. The full terminal remains the existing whole-body mode with Retry/Back and preserved drafts. Keep Details folded for session/node/folder/classification/destructive controls. Use space deliberately, avoid a blank stretched body; keep existing saved geometry and phone sheets. Add a real quiet Refresh through existing poll/load only if it fits the existing footer; no false controls. Keep Direct and all current transport routes as they are. Busy/asking/report/idle/terminal absence must all be useful and honest.
+
+New Automation: six compact pictogram-led choices in a two-column grid at the default 720px window, one column on a narrow container. Each is the existing library Button, with existing 32px sprite art, 15px name and one compact schedule/destination fact line; show unresolved About as a short ember token. Remove the visible description paragraphs from this chooser; retain their accessible description/title and the unchanged starter payloads. Use existing ChoiceCardShell/ledger material where applicable, with scoped CSS and no nested interactive controls. Stable sprite mapping: friday-team-update -> artifact; meeting-follow-ups -> action; one-on-one-prep -> person; summarize-a-drawer -> directory; morning-prep -> meeting; friday-runbook -> repository; unknown/scratch -> workbench. Verify actual starter IDs, preserve future unknown starters. Start from scratch is a separate compact, prominent entry BEFORE the grid, immediately visible at 720×460 and 393px, in the same roving focus/keyboard model where applicable. Every activation still creates exactly one automation and closes the chooser only after a successful save. No selection-and-confirm extra step. Preserve error/retry/disabled semantics, no automatic schedule activation. Fix the chooser's minimum-width constraint to fit393 without horizontal scrolling. Do not redesign the editor or change endpoints.
+
+## Ownership and source anchors
+
+Anchors are current at the base; line numbers drift, locate declarations.
+
+- Agent builder: `web/src/desk/components/SessionPullout.tsx` (SessionPullout near700/return788), `session-pullout.css` (session body near387) and `components/__tests__/sessionWork.surface.test.tsx`. Other session behavior tests may be edited only to preserve a changed accessible shape; do not weaken assertions. Do not edit Automation or library source.
+- Automation builder: `NewWorkbenchChooser.tsx`, `WorkbenchTemplatePicker.tsx` (render100), `components/automation/automation-home.css`, `web/src/desk/__tests__/automation.app.test.tsx`. Do not edit Agent, backend, library source or root docs/harness.
+- Root: canvas/brief/status, all private-Hub browser verification, integration seams and final evidence/done call. No other files touched without reporting.
+
+## Hold and proof
+
+Workers implement, not redesign. No tests/build/probes/stage/commits: HOLD FOR SHIP. Root will integrate both then freeze all tracked source through queued/active validation. Workers report exact paths and unresolved concerns. No owner DB, native browser or config writes. Never stash/reset/restore/clean/switch/checkout--, never add-A. All eventual verification through scripts/test_lock.py with isolated HOME, Node22, -n8; no metal.
+
+Root focused tests: Automation app; sessionWork.surface, sessionFooter.f2, sessionAnswer.f2, sessionSpeakAnswer.f2, sessionArmVerb.r6. Browser: existing conductor TestSessionOpenGlass at1440/393, automation glass, plus a real chooser creation/fit and saved feedback PNG check at both widths. Build/typecheck; inspect actual faces and screenshots; required quick before merge, exact merged source deployed, full tape afterward. No claim of owner aesthetic approval from green checks.
+
+Tuesday: identify what the agent needs and read its real work; choose an automation by pictogram/name, create it once, and reach scratch without a scroll hunt.
+
+## Focused verification
+
+Build, typecheck and 61 focused web cases passed. Nine private-Hub browser cases passed: both reported faces and their saved Feedback PNG/WAV/context at 1440/393, the existing report/question/terminal Conductor flow, and the Automation creation/About/result flows. The private fixture creates a real current decision through PrimitiveService so Friday runbook appears through the actual catalog rules, reproducing the owner's six-choice window. Each choice has painted art and nine owned hit points; one activation adds one automation. Saved images were inspected at both widths under `.tmp/evidence-shots/ui-feedback/reported-*` and full scenes under `.tmp/evidence-shots/reported-faces/`.
+
+The phone footer preserves Open terminal as its visible lead; Refresh follows existing verbs. The shared picker uses unique description IDs per instance and exact short accessible names. These were verified on the final source, not waived after the first check.
+
+The Setup MCP `agent.start_helper` returned `launch_only` (403), correctly, because this is an owner-started Codex session rather than a credentialed desk launch. A separate Luna local review under AGENTS.md read the source, original reports, final 61-case log, nine-case browser log and actual shots; verdict RATIFY, no findings. No credential or authority was substituted. Root performs the merged PR review and exact-runtime verification. Required quick and deployment are recorded in pm/STATUS.md; the owner judges appearance live.

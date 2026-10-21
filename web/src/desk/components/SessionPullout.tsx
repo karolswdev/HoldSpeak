@@ -29,7 +29,7 @@ import { flipTargetForStory, useMissionControl } from "../missioncontrol";
 import { mmss, useSteering } from "../steering";
 import { useDurableDraft } from "../../lib/durableDraft";
 import { controlModeLabel, humanizeWireValue } from "../../lib/productLanguage";
-import { PaneWell, SurfaceFacts, SurfaceSection } from "../surface/Surface";
+import { PaneWell, SurfaceFacts, SurfaceSection, SurfaceWell } from "../surface/Surface";
 import { AskWell, FoldGadget } from "../surface";
 import { AppHead, StatusStrip } from "../surface/kit";
 import { wireClock } from "../surface/format";
@@ -692,7 +692,7 @@ function SessionAnswerWell({ question, agent, available, listenSignal }: { quest
       listenSignal={listenSignal}
       busy={sending}
       disabled={!available}
-      arm={available ? armed || direct ? <SteeringPolicyFacts /> : <ArmStrip /> : <span className="surface-token">Terminal unavailable</span>}
+      arm={available ? armed || direct ? <SteeringPolicyFacts /> : <ArmStrip /> : <span className="desk-session-terminal-fact">Terminal unavailable</span>}
     />
   </div>;
 }
@@ -768,13 +768,17 @@ export function SessionPullout() {
   const live = paneStatus === "live";
   const available = live && Boolean(paneId);
   const raw = (row?.raw?.session ?? row?.raw ?? {}) as Record<string, unknown>;
-  const agent = agentName(row?.agent || session?.agent || openKey.split(":", 1)[0]);
+  const agentId = row?.agent || session?.agent || openKey.split(":", 1)[0];
+  const agent = agentName(agentId);
   const question = (session?.blocked || session?.awaitingResponse || row?.blocked) ? session?.question || row?.question || "" : "";
   const report = String(raw.last_assistant_text ?? "").trim();
+  const screenReport = String(row?.screen?.said ?? "").trim();
+  const latestReport = report || screenReport;
   // A Back press restores the composer without replaying the Speak request
   // whose mic was unmounted on entry to the terminal. A later request is new.
   const listenSignal = answerOpen && answerSeq !== terminalAnswerSeq.current ? answerSeq : 0;
   const tool = String(raw.last_tool_name ?? "").trim();
+  const screenCommand = String(row?.screen?.command ?? "").trim();
   const updated = String(raw.last_assistant_text_at || raw.updated_at || session?.updatedAt || "");
   const state = session?.stale ? "Stale session" : question ? row?.idle ? "Idle" : "Needs your answer" : humanizeWireValue(row?.state || "working");
   // The all-session projection retains working sessions that the awaiting
@@ -835,18 +839,37 @@ export function SessionPullout() {
             <Button dense variant="ghost" onClick={() => setTerminal(false)}>Back to session</Button>
           </div> : null}
         </div> : <>
-        <AppHead fact={state} data-testid="session-head">
-          <StatusStrip items={[{ text: agent }, updated ? { text: wireClock(updated) } : null, raw.model ? { text: String(raw.model) } : null]} />
-        </AppHead>
+        <div className="desk-session-identity" data-testid="session-agent-identity">
+          <img
+            src={spriteUrl("agent", openKey, "rest", agentId)}
+            alt=""
+            width={64}
+            height={64}
+            className="desk-session-agent-portrait desk-chrome-sprite"
+            data-testid="session-agent-portrait"
+            draggable={false}
+          />
+          <AppHead fact={state} data-testid="session-head">
+            <StatusStrip items={[{ text: agent }, updated ? { text: wireClock(updated) } : null, raw.model ? { text: String(raw.model) } : null]} />
+          </AppHead>
+        </div>
         {question ? <SessionAnswerWell key={openKey} question={question} agent={agent} available={available} listenSignal={listenSignal} /> : null}
-        {report && report !== question ? (
-          <SurfaceSection label="Latest report"><AgentWords text={report} /></SurfaceSection>
-        ) : tool ? (
-          <SurfaceSection label="Latest activity"><span className="surface-token">{tool}</span></SurfaceSection>
-        ) : !question ? <p className="desk-session-state">No report yet</p> : null}
+        {latestReport && latestReport !== question ? (
+          <SurfaceSection label="Latest report" className="desk-session-report" data-testid="session-report">
+            <SurfaceWell><AgentWords text={latestReport} /></SurfaceWell>
+          </SurfaceSection>
+        ) : null}
+        {tool || screenCommand ? (
+          <div className="desk-session-activity" data-testid="session-activity">
+            <span className="desk-session-activity-lamp" aria-hidden="true" />
+            <span className="desk-session-activity-label">Latest activity</span>
+            {tool ? <span className="desk-session-activity-value">{tool}</span> : null}
+            {screenCommand ? <><span className="desk-session-activity-label">Command</span><span className="desk-session-activity-value">{screenCommand}</span></> : null}
+          </div>
+        ) : !latestReport && !question ? <p className="desk-session-state">No report yet</p> : null}
         {!question && (answerOpen || directing) ? (
           <div className="desk-session-answer" data-testid="session-answer-well">
-            {available ? armed || postureAuthorized ? <SteeringPolicyFacts /> : <ArmStrip /> : <span className="surface-token">Terminal unavailable</span>}
+            {available ? armed || postureAuthorized ? <SteeringPolicyFacts /> : <ArmStrip /> : <span className="desk-session-terminal-fact">Terminal unavailable</span>}
             <SteerComposer key={openKey} listenSignal={listenSignal} available={available} options={steerOptions} onOptionsChange={setSteerOptions} />
           </div>
         ) : null}
@@ -879,6 +902,7 @@ export function SessionPullout() {
             setTerminal(!terminal);
           }}>{terminal ? "Back to session" : "Open terminal"}</Button>
           {!question && available ? <Button dense variant="secondary" aria-pressed={directing} onClick={() => { setDirecting(terminal || !directing); setTerminal(false); }}>Direct</Button> : null}
+          <Button dense variant="ghost" data-testid="session-refresh" onClick={() => { void refresh(); void useSteering.getState().poll(); }}>Refresh</Button>
         </>}
       />
     </DeskWindowFrame>

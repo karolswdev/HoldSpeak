@@ -7,8 +7,8 @@
 // persists exactly one Workbench, then this window closes. One gesture →
 // one record, no orphan.
 //
-// Betterment A7: the picker offers the four starters and Start from scratch;
-// the window opens wide enough for the starter cards.
+// Betterment A7: the picker offers the starters and Start from scratch;
+// the window opens wide enough for the compact pictogram cards.
 import { useDesk } from "../store";
 import { DeskWindowFrame } from "./DeskWindow";
 import { WorkbenchTemplatePicker } from "./WorkbenchTemplatePicker";
@@ -23,7 +23,7 @@ export function NewWorkbenchChooser() {
       glyph="W"
       label="New Automation"
       title="New Automation"
-      minW={480}
+      minW={320}
       minH={340}
       defaultW={720}
       defaultH={460}

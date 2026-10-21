@@ -13,10 +13,14 @@ Root is shipping the capture freeze repair first so the owner can continue repor
 
 `web/src/desk/components/SessionPullout.tsx` composes identity, status, AskWell, agent output and Details, but the useful body largely disappears without a report. The captured idle window showed “Terminal unavailable” and only “Latest activity · Bash.” Reuse `AgentAvatar`, `AgentWords`, `agentFlights.ts` and the direct owner-action vocabulary already in `agents/AgentRow.tsx`. Elevate useful output, state and the next actual owner action; keep technical facts in Details. Define an honest useful idle state without inventing agent output. Preserve transport, answer, terminal and operation receipts.
 
-Focused behavior coverage lives in `components/__tests__/sessionWork.surface.test.tsx`, `sessionFooter.f2.test.tsx`, `sessionAnswer.f2.test.tsx`, `sessionSpeakAnswer.f2.test.tsx` and `sessionArmVerb.r6.test.tsx`. The exact Herder reference is not in the saved report and remains to identify.
+Focused behavior coverage lives in `components/__tests__/sessionWork.surface.test.tsx`, `sessionFooter.f2.test.tsx`, `sessionAnswer.f2.test.tsx`, `sessionSpeakAnswer.f2.test.tsx` and `sessionArmVerb.r6.test.tsx`. The repository already holds the reference study at `docs/internal/betterment/herdr/STUDY.md`; it was read for this implementation.
 
 ## New Automation
 
 `web/src/desk/components/NewWorkbenchChooser.tsx` hosts `WorkbenchTemplatePicker.tsx`; `components/automation/automation-home.css` forces six prose cards into two columns with 112px minimum height. The captured 720×460 window has both scrollbars, with Start from scratch below the cards. Present compact pictogram-led choices: name, one useful fact line, and a clear scratch entry. Preserve one-press/one-record creation and unresolved blanks. Reuse library Button and existing `ChoiceCardShell`, `SurfaceLedgerRow`, `DeskIcon`/`IconGrid` material. Settle stable existing artwork per starter on the canvas; the current data has no icon field. Check the chooser's 480px minimum against the 393px sheet.
 
 `web/src/desk/__tests__/automation.app.test.tsx` covers starter names, one-record creation, retries and unresolved blanks. Add only meaningful coverage for changed behavior; inspect actual hierarchy, pictograms, density and hit ownership at both widths. Do not treat the existing count assertion as aesthetic proof.
+
+## Implementation delivery
+
+The owner explicitly directed implementation after the recording-only response. The settled canvas and held build brief are `reported-faces.html` and `REPORTED-FACES.md`. The Agent composition now uses the real provider sprite, latest report and tool activity, screen-read report fallback, existing answer/direct/terminal operations and real Refresh. New Automation now uses shared ChoiceCardShell plus library Button, mapped pictograms, compact facts and a scratch-first layout. Source is entering focused verification; delivery proof is recorded in pm/STATUS.md. Original audio and report files remain authoritative and unchanged. A merged change is not the owner's aesthetic acceptance.
