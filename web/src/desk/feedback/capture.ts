@@ -330,6 +330,22 @@ function computedStyleText(style: CSSStyleDeclaration, properties: string[]): st
   return result;
 }
 
+function clearPositionOffsets(style: CSSStyleDeclaration): void {
+  for (const property of [
+    "inset",
+    "inset-block",
+    "inset-block-start",
+    "inset-block-end",
+    "inset-inline",
+    "inset-inline-start",
+    "inset-inline-end",
+    "top",
+    "right",
+    "bottom",
+    "left",
+  ]) style.removeProperty(property);
+}
+
 function frozenClone(root: Element, signal?: AbortSignal): {
   wrapper: HTMLDivElement;
   clone: HTMLElement;
@@ -425,9 +441,12 @@ function frozenClone(root: Element, signal?: AbortSignal): {
     }
     copyComputedStyle(shell, wrapper, true);
   }
+  clearPositionOffsets(wrapper.style);
   wrapper.style.position = "fixed";
   wrapper.style.left = "-100000px";
   wrapper.style.top = "0";
+  wrapper.style.right = "auto";
+  wrapper.style.bottom = "auto";
   wrapper.style.width = `${Math.max(1, Math.round(rect.width))}px`;
   wrapper.style.height = `${Math.max(1, Math.round(rect.height))}px`;
   wrapper.style.pointerEvents = "none";
@@ -435,9 +454,12 @@ function frozenClone(root: Element, signal?: AbortSignal): {
   wrapper.style.background = getComputedStyle(document.body).backgroundColor;
   clone.style.width = `${Math.max(1, Math.round(rect.width))}px`;
   clone.style.height = `${Math.max(1, Math.round(rect.height))}px`;
+  clearPositionOffsets(clone.style);
   clone.style.position = "relative";
   clone.style.left = "0";
   clone.style.top = "0";
+  clone.style.right = "auto";
+  clone.style.bottom = "auto";
   clone.style.transform = "none";
   clone.style.margin = "0";
   clone.style.boxSizing = rootStyle.boxSizing;

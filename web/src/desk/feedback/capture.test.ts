@@ -17,6 +17,10 @@ beforeEach(() => {
   root.style.setProperty("--capture-test-token", "red");
   root.style.content = "normal";
   root.style.fill = "none";
+  root.style.insetInlineStart = "888px";
+  root.style.insetBlockStart = "64px";
+  root.style.right = "152px";
+  root.style.bottom = "183px";
   root.innerHTML = '<input aria-label="Draft" value="draft"><span style="color: rgb(2, 3, 4)">Report</span><svg><path style="fill: rgb(7, 8, 9)" d="M0 0h4v4z" /></svg>';
   document.body.appendChild(root);
   // jsdom has no pseudo style computation. Supply that browser capability
@@ -50,6 +54,12 @@ describe("frozen window rendering", () => {
       expect(node.querySelector("span").style.getPropertyValue("--capture-test-token")).toBe("");
       expect(node.querySelector("path").style.fill).toBe("rgb(7, 8, 9)");
       expect(node.querySelector("style").textContent).toContain('content: "Snapshot marker"');
+      expect(node.style.insetInlineStart).toBe("");
+      expect(node.style.insetBlockStart).toBe("");
+      expect(node.style.left).toBe("0px");
+      expect(node.style.top).toBe("0px");
+      expect(node.style.right).toBe("auto");
+      expect(node.style.bottom).toBe("auto");
       expect(options.includeStyleProperties).toEqual([]);
       return "data:image/png;base64,PNG_BYTES";
     });

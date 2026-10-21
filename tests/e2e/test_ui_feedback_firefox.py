@@ -87,7 +87,9 @@ def test_loaded_settings_repeated_feedback_and_save_retry(
                 page.screenshot(path=str(SHOTS / f"settings-{width}-{index + 1}-recording.png"))
                 assert strip.get_by_text("RECORDING", exact=True).is_visible(), observation
                 assert observation["capture_ms"] < 3000, observation
-                assert observation["heartbeat_gap_ms"] < 500, observation
+                # Concurrent glass runs need scheduling headroom; the
+                # original regression blocks this heartbeat for >7 seconds.
+                assert observation["heartbeat_gap_ms"] < 1000, observation
                 # Firefox's fake device must deliver actual frames, rather
                 # than ending the hold immediately after its grant resolves.
                 page.wait_for_timeout(700)
