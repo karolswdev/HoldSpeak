@@ -480,6 +480,14 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
     assert "Freeze the old ledger on Nov 5." in preview.inner_text()
     controls = second.locator(".send-destination-chip")
     assert controls.is_visible()
+    # The selected destination must survive the host Button cascade, and the
+    # preview must use the same reading material as the artifact itself.
+    assert controls.evaluate("el => getComputedStyle(el).backgroundColor") == "rgb(102, 136, 187)"
+    assert second.locator(".send-open").evaluate(
+        "el => getComputedStyle(el).backgroundColor"
+    ) == paper.evaluate("el => getComputedStyle(el).backgroundColor")
+    action_frame = second.locator(".surface-footer:has([data-send=actions])")
+    assert action_frame.bounding_box()["height"] <= 72, "Send must not add a second deep window foot"
 
     feedback_button = window.get_by_role(
         "button", name="Give feedback on Cutover requirements", exact=True

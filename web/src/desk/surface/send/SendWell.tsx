@@ -885,7 +885,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
                 );
                 return (
                   <li key={d.id} className="send-destination-item" data-testid="destination-row" data-open={open || undefined}>
-                    <Button dense variant={open ? "secondary" : "ghost"} disabled={busy || Boolean(held)}
+                    <Button dense variant="ghost" disabled={busy || Boolean(held)}
                       aria-pressed={open}
                       className="send-destination-chip"
                       onClick={() => {

@@ -239,26 +239,29 @@
   box-shadow: none;
   color: var(--wb-muted);
 }
-[data-send="well"] .send-destination-item[data-open] > .send-destination-chip {
+.desk-next [data-send="well"] .send-destination-item[data-open] > .send-destination-chip,
+.desk-next [data-send="well"] .send-destination-item[data-open] > .send-destination-chip:hover,
+.desk-next [data-send="well"] .send-destination-item[data-open] > .send-destination-chip:focus-visible,
+.desk-next [data-send="well"] .send-destination-item[data-open] > .send-destination-chip:active {
   border-color: var(--wb-ink);
   background: var(--wb-blue);
   color: var(--wb-ink);
 }
-[data-send="well"] .send-destination-item[data-open] > .send-destination-chip :is(.surface-primary, .surface-token[data-chip], .send-pick) {
+.desk-next [data-send="well"] .send-destination-item[data-open] > .send-destination-chip :is(.surface-primary, .surface-token[data-chip], .send-pick) {
   color: var(--wb-ink);
 }
 [data-send="well"] .send-open {
   min-width: 0;
   width: 100%;
   padding: 0 2px 4px 2px;
-  background: var(--wb-paper);
+  background: var(--alive-paper, var(--wb-paper));
   border: 1px solid var(--wb-rule-soft);
 }
-[data-send="well"] .send-open .send-preview .surface-well {
+.desk-next [data-send="well"] .send-open .send-preview .surface-well {
   background: transparent;
   box-shadow: none;
 }
-[data-send="well"] .send-open .send-preview .surface-well-body {
+.desk-next [data-send="well"] .send-open .send-preview .surface-well-body {
   padding: 12px;
 }
 [data-send="well"] .send-sheet-footer {
@@ -268,12 +271,19 @@
   margin-top: 10px;
   background: var(--surface-1);
 }
+.desk-next .surface-footer:has(> [data-send="actions"].send-sheet-footer) {
+  background: var(--alive-paper, var(--wb-paper));
+  box-shadow: none;
+}
+.desk-next .surface-footer:has(> [data-send="actions"].send-sheet-footer) > [data-send="actions"].send-sheet-footer {
+  background: transparent;
+}
 
 /* SurfaceFooter portals the send verbs into the host window's foot. Keep the
    same species boundary on that action root: the receipt path must shrink and
    wrap inside the foot instead of making its max-content grid column wider
    than the window. */
-[data-send="actions"].surface-footer-layout {
+.desk-next [data-send="actions"].surface-footer-layout {
   display: flex;
   width: 100%;
   min-width: 0;
@@ -283,11 +293,11 @@
   align-items: center;
   gap: 0;
 }
-[data-send="actions"] > .surface-footer-egress:empty,
-[data-send="actions"] > .surface-footer-receipt:empty {
+.desk-next [data-send="actions"] > .surface-footer-egress:empty,
+.desk-next [data-send="actions"] > .surface-footer-receipt:empty {
   display: none;
 }
-[data-send="actions"] > .surface-footer-verbs {
+.desk-next [data-send="actions"] > .surface-footer-verbs {
   display: flex;
   flex: 1 1 auto;
   width: 100%;
@@ -296,23 +306,23 @@
   align-items: center;
   gap: 8px;
 }
-[data-send="actions"] .surface-footer-verbs,
-[data-send="actions"] .send-verbs,
-[data-send="actions"] .send-line {
+.desk-next [data-send="actions"] .surface-footer-verbs,
+.desk-next [data-send="actions"] .send-verbs,
+.desk-next [data-send="actions"] .send-line {
   min-width: 0;
   max-width: 100%;
 }
-[data-send="actions"] .surface-footer-verbs { justify-content: flex-start; }
-[data-send="actions"] .send-line { flex: 1 1 180px; }
-[data-send="actions"] .send-verbs {
+.desk-next [data-send="actions"] .surface-footer-verbs { justify-content: flex-start; }
+.desk-next [data-send="actions"] .send-line { flex: 1 1 180px; }
+.desk-next [data-send="actions"] .send-verbs {
   width: 100%;
   margin: 0;
   gap: 8px;
 }
-[data-send="actions"] .send-verbs > .btn--primary {
+.desk-next [data-send="actions"] .send-verbs > .btn--primary {
   margin-left: auto;
 }
-[data-send="actions"] .send-literal.send-wrap {
+.desk-next [data-send="actions"] .send-literal.send-wrap {
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
