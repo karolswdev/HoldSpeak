@@ -13,10 +13,20 @@ import wave
 import zlib
 from pathlib import Path
 from typing import Any
+from types import SimpleNamespace
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
-from holdspeak.services.ui_feedback import FEEDBACK_FILES, feedback_root
+from holdspeak.services.ui_feedback import (
+    FEEDBACK_FILES,
+    fail_transcript,
+    feedback_root,
+    save_feedback,
+    save_transcript,
+)
+from holdspeak.web.routes.system.ui_feedback import build_ui_feedback_router
 from tests.e2e.glass_infra import _boot
 
 TOKEN = "ui-feedback-test"
@@ -214,3 +224,81 @@ def test_failed_publication_leaves_no_complete_bundle(tmp_path, monkeypatch):
         assert not (feedback_root(tmp_path / "home") / _payload()["id"]).exists()
     finally:
         server.stop()
+
+
+def test_transcript_attachment_preserves_originals_and_is_idempotent(tmp_path):
+    payload = _payload()
+    receipt = save_feedback(payload, home=tmp_path / "home")
+    directory = Path(receipt["directory"])
+    original_context = json.loads((directory / "report.json").read_text(encoding="utf-8"))["context"]
+    complete = save_transcript(
+        payload["id"], "clipboard period", "private_network", home=tmp_path / "home"
+    )
+    assert complete["transcript_status"] == "complete"
+    assert complete["files"] == [*FEEDBACK_FILES, "transcript.txt"]
+    assert complete["egress_boundary"] == "private_network"
+    assert (directory / "transcript.txt").read_text(encoding="utf-8") == "clipboard period"
+    report = json.loads((directory / "report.json").read_text(encoding="utf-8"))
+    assert report["context"] == original_context
+    assert report["transcript"]["status"] == "complete"
+    assert save_transcript(
+        payload["id"], "a different retry", "cloud", home=tmp_path / "home"
+    ) == complete
+
+    failed = fail_transcript(payload["id"], "engine_unavailable", home=tmp_path / "home")
+    assert failed["transcript_status"] == "complete"
+
+
+def test_transcript_failure_keeps_original_bundle(tmp_path):
+    payload = _payload()
+    receipt = save_feedback(payload, home=tmp_path / "home")
+    directory = Path(receipt["directory"])
+    failed = fail_transcript(payload["id"], "engine_unavailable", home=tmp_path / "home")
+    assert failed["transcript_status"] == "failed"
+    assert failed["transcript_error"] == "engine_unavailable"
+    assert set(path.name for path in directory.iterdir()) == set(FEEDBACK_FILES)
+    report = json.loads((directory / "report.json").read_text(encoding="utf-8"))
+    assert report["context"] == payload["context"]
+
+
+def test_transcript_route_uses_admitted_verbatim_engine_and_retries_saved_wav(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOLDSPEAK_UI_FEEDBACK", "1")
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    payload = _payload()
+    save_feedback(payload)
+    calls: list[dict[str, Any]] = []
+
+    class Admitted:
+        text = "clipboard period"
+        provider = SimpleNamespace(egress_boundary="private_network")
+
+        def close(self, outcome: str) -> None:
+            calls.append({"close": outcome})
+
+    def on_transcribe_admitted(audio, **kwargs):
+        from holdspeak.speech_session import SpeechSessionRefused
+        calls.append({"audio": audio, **kwargs})
+        if len([call for call in calls if "audio" in call]) == 1:
+            raise SpeechSessionRefused("binding_not_ready")
+        return Admitted()
+
+    app = FastAPI()
+    app.include_router(build_ui_feedback_router(SimpleNamespace(on_transcribe_admitted=on_transcribe_admitted)))
+    with TestClient(app) as client:
+        failed = client.post(f"/api/ui-feedback/{payload['id']}/transcribe")
+        first = client.post(f"/api/ui-feedback/{payload['id']}/transcribe")
+        second = client.post(f"/api/ui-feedback/{payload['id']}/transcribe")
+    assert failed.status_code == 200
+    assert failed.json()["transcript_status"] == "failed"
+    assert failed.json()["transcript_error"] == "binding_not_ready"
+    for filename, response in (("transcribe-failed.json", failed), ("transcribe-success.json", first)):
+        _record(filename, {**response.json(), "directory": "/isolated/.local/share/holdspeak/feedback/" + payload["id"]})
+    assert first.status_code == 200
+    assert first.json()["transcript_status"] == "complete"
+    assert first.json()["egress_boundary"] == "private_network"
+    assert second.json() == first.json()
+    audio_calls = [call for call in calls if "audio" in call]
+    assert len(audio_calls) == 2
+    assert (audio_calls[0]["audio"] == audio_calls[1]["audio"]).all()
+    assert calls[0]["verbatim"] is True
+    assert calls[-1]["close"] == "succeeded"

@@ -11,7 +11,8 @@ import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { Button } from "../../components/signal/Signal";
 import { ArtifactSendWells } from "../documentSendsLazy";
-import { ActionNotice, StateChip, SurfaceWell } from "../surface";
+import { ActionNotice, FoldGadget, StateChip, SurfaceState, SurfaceWell } from "../surface";
+import { presentArtifact } from "./artifactPresentation";
 import "./artifact-reading.css";
 
 export function ArtifactPullout({ object: o }: PulloutContentProps) {
@@ -22,11 +23,22 @@ export function ArtifactPullout({ object: o }: PulloutContentProps) {
   const resourceRef = qualifiedRef(o.kind, o.id);
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const body = String(ir.bodyMarkdown || "");
-  const lin = lineage(items, ir.sources);
+  const presentation = presentArtifact({
+    title: String(ir.title || o.title || "Artifact"),
+    artifactType: String(ir.artifactType || "artifact"),
+    bodyMarkdown: body,
+    sources: ir.sources,
+    items,
+  });
   const read = ir.sourceRead;
   const hasMaterial = read?.hasMaterial !== false;
+  const hasReadingMaterial = hasMaterial && !presentation.isEmptyResult;
   const reviewState = ir.status === "pending-review" ? { state: "warning" as const, label: "Awaiting review" }
     : ir.status === "rejected" ? { state: "failure" as const, label: "Rejected" } : null;
+  const meeting = ir.meetingId ? lineage(items, [{ source_type: "meeting", source_ref: ir.meetingId }]).from[0] : null;
+  const openMeeting = meeting?.resolved
+    ? () => openPullout(meeting.actionRef ?? qualifiedRef("meeting", String(ir.meetingId)))
+    : undefined;
 
   return (
     <>
@@ -37,27 +49,30 @@ export function ArtifactPullout({ object: o }: PulloutContentProps) {
           {read.state === "failed" ? <span>{humanizeWireValue(read.message)}</span> : null}
         </ActionNotice> : null}
         {reviewState ? <StateChip {...reviewState} /> : null}
-        {hasMaterial ? <section>
-          <h3>{humanizeWireValue(String(ir.artifactType || "artifact"))}</h3>
-          <div className="artifact-reading"><SurfaceWell><Material>{body}</Material></SurfaceWell></div>
+        {hasMaterial ? <section className="artifact-reading-section">
+          <div className="artifact-reading">
+            {presentation.isEmptyResult
+              ? <SurfaceState empty emptyGlyph="" emptyLabel={presentation.emptyLabel} onAction={openMeeting} actionLabel={openMeeting ? "Open meeting" : undefined} />
+              : <SurfaceWell><Material>{presentation.body}</Material></SurfaceWell>}
+          </div>
         </section> : null}
         {/* PHILO-13-15 (C5, canvas P5): the artifact's SEND well. */}
-        {hasMaterial ? <ArtifactSendWells id={o.id} title={String(ir.title || o.title || "Artifact")} type={String(ir.artifactType || "artifact")} /> : null}
-        {lin.any && (
-          <section>
-            <h3>Lineage</h3>
-            <div className="desk-pullout-lineage">
-              {lin.via && (
-                <span className="desk-chip quiet">via {lin.via.label}</span>
-              )}
-              {lin.from.map((f) => (
-                <Button key={f.ref} dense variant="ghost" onClick={() => f.resolved && openPullout(f.ref)}>
-                  {f.label}
+        {hasReadingMaterial ? <ArtifactSendWells id={o.id} title={String(ir.title || o.title || "Artifact")} type={String(ir.artifactType || "artifact")} /> : null}
+        {hasMaterial && presentation.sources.length > 0 ? (
+          <FoldGadget title="Sources" className="artifact-sources-fold">
+            <div className="artifact-sources" data-testid="artifact-sources">
+              {presentation.sources.map((source) => source.resolved ? (
+                <Button key={`${source.type}:${source.ref}`} dense variant="ghost" onClick={() => openPullout(source.actionRef ?? source.ref)}>
+                  {source.via ? `via ${source.label}` : source.label}
                 </Button>
+              ) : (
+                <span key={`${source.type}:${source.ref}`} className="artifact-source-unresolved" data-testid="artifact-source-unresolved">
+                  {source.via ? `via ${source.label}` : source.label}
+                </span>
               ))}
             </div>
-          </section>
-        )}
+          </FoldGadget>
+        ) : null}
         {hasMaterial ? <DeskFilingStrip
           objectRef={resourceRef}
           objectKind={o.kind}

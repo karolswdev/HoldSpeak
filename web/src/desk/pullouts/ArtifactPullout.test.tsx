@@ -48,4 +48,21 @@ describe("Artifact source inspection", () => {
     expect(screen.getByLabelText("Awaiting review")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
   });
+
+  it("shows an exact empty ADR as a finished result and keeps provenance without Send", () => {
+    const emptyAdr: Artifact = {
+      ...artifact,
+      artifactType: "adr",
+      title: "ADR Drafter",
+      bodyMarkdown: "# ADR Drafter\n\nadr_drafter: no architectural decisions found.\n",
+      sources: [{ source_type: "workbench", source_ref: "wb-source" }],
+    };
+    render(<ArtifactPullout object={object(emptyAdr)} onClose={vi.fn()} />);
+    expect(screen.getByText("No architecture decisions found")).toBeInTheDocument();
+    expect(screen.queryByText("adr_drafter: no architectural decisions found.")).toBeNull();
+    expect(screen.queryByTestId("send-wells")).toBeNull();
+    expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
+    expect(screen.getByTestId("artifact-source-unresolved")).toHaveTextContent("wb-source");
+    expect(screen.queryByRole("button", { name: "wb-source" })).toBeNull();
+  });
 });

@@ -7052,6 +7052,16 @@
       ]
     },
     {
+      "path": "/api/ui-feedback/{identifier}/transcribe",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.system.ui_feedback",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/update-jobs/{job_id}",
       "methods": [
         "GET"

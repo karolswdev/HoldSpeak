@@ -121,6 +121,35 @@ def test_the_runtime_verb_runs_the_real_pipeline_pieces() -> None:
     assert rig.transcribe_audio(np.zeros(16000, dtype=np.float32)) == "QUIET WORDS"
 
 
+def test_verbatim_runtime_verb_keeps_raw_words_and_skips_dictation_processing() -> None:
+    """Saved feedback gets the admitted engine text, including command-shaped words."""
+    import threading
+    from types import SimpleNamespace
+
+    from holdspeak.runtime.dictation_capture import DictationCaptureMixin
+    from holdspeak.config import Config
+
+    class Rig:
+        transcription_lock = threading.Lock()
+
+        def __init__(self):
+            self.config = Config()
+            self.text_processor = SimpleNamespace(
+                process=lambda _text: (_ for _ in ()).throw(AssertionError("processor used"))
+            )
+
+        def _ensure_transcriber_loaded(self):
+            return SimpleNamespace(transcribe=lambda _audio, **_kwargs: "clipboard period")
+
+        transcribe_audio = DictationCaptureMixin.transcribe_audio
+        transcribe_audio_admitted = DictationCaptureMixin.transcribe_audio_admitted
+
+    rig = Rig()
+    assert rig.transcribe_audio(
+        np.zeros(16000, dtype=np.float32), verbatim=True
+    ) == "clipboard period"
+
+
 def test_a_fenced_mic_interval_answers_with_the_named_terminal_status() -> None:
     """HS-131-09 (Sol Amendment 3): the client is told to CLOSE its interval.
 

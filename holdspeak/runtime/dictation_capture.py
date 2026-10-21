@@ -346,6 +346,7 @@ class DictationCaptureMixin(
         *,
         principal: Any | None = None,
         mic_handle: str = "",
+        verbatim: bool = False,
     ) -> str:
         """Transcribe browser-captured audio for speak-to-fill (HS-78-01).
 
@@ -358,9 +359,12 @@ class DictationCaptureMixin(
         one-shot parent closes the moment this returns. A caller that will run
         pipeline stages must use :meth:`transcribe_audio_admitted` instead, so
         classify/rewrite become children of the SAME parent.
+
+        ``verbatim=True`` keeps the admitted engine's words untouched for
+        saved feedback; it does not change admission or route selection.
         """
         handle = self.transcribe_audio_admitted(
-            audio, principal=principal, mic_handle=mic_handle
+            audio, principal=principal, mic_handle=mic_handle, verbatim=verbatim
         )
         handle.close("succeeded")
         return handle.text
@@ -371,6 +375,7 @@ class DictationCaptureMixin(
         *,
         principal: Any | None = None,
         mic_handle: str = "",
+        verbatim: bool = False,
     ) -> Any:
         """Transcribe under a live authority and HAND THAT AUTHORITY BACK.
 
@@ -383,7 +388,8 @@ class DictationCaptureMixin(
         The returned handle carries the provider admission and stays OPEN until
         the caller closes it, so the browser pipeline's classify/rewrite calls run
         as trusted children of this same parent instead of as unwrapped runtime
-        work after the parent had already closed.
+        work after the parent had already closed. ``verbatim=True`` skips the
+        dictation punctuation, spoken-symbol, and clipboard pass.
         """
         from ..speech_session import browser_mic_sessions
 
@@ -395,7 +401,7 @@ class DictationCaptureMixin(
                 text = _frozen_session_transcriber(self, interval.session).transcribe(
                     audio, admission=interval.transcription()
                 )
-            processed = "" if not text else self.text_processor.process(text)
+            processed = text if verbatim else ("" if not text else self.text_processor.process(text))
             # The interval owns its parent's lifetime; this utterance never closes it.
             return BrowserTranscription(processed, interval.session.provider(), None)
         session = admit_one_shot_session(
@@ -409,7 +415,7 @@ class DictationCaptureMixin(
         except BaseException:
             session.close("failed")
             raise
-        processed = "" if not text else self.text_processor.process(text)
+        processed = text if verbatim else ("" if not text else self.text_processor.process(text))
         return BrowserTranscription(processed, session.provider(), session)
 
     def _kick_off_transcribe(

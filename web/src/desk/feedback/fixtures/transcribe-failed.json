@@ -1,0 +1,13 @@
+{
+  "directory": "/isolated/.local/share/holdspeak/feedback/0123456789abcdef0123456789abcdef",
+  "files": [
+    "report.json",
+    "audio.wav",
+    "window.png",
+    "README.md"
+  ],
+  "id": "0123456789abcdef0123456789abcdef",
+  "success": true,
+  "transcript_error": "binding_not_ready",
+  "transcript_status": "failed"
+}

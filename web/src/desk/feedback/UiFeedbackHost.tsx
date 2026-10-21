@@ -21,7 +21,8 @@ import {
 } from "./runtime";
 import "./feedback.css";
 
-type Phase = "idle" | "picking" | "preparing" | "recording" | "saving" | "saved" | "error";
+type Phase = "idle" | "picking" | "preparing" | "recording" | "saving" | "transcribing" | "saved" | "error";
+type TranscriptStatus = "pending" | "complete" | "failed";
 
 interface PreparedFeedback {
   id: string;
@@ -32,6 +33,10 @@ interface PreparedFeedback {
   audioDurationMs: number;
   directory?: string;
   files?: string[];
+  transcriptStatus?: TranscriptStatus;
+  transcript?: string;
+  transcriptError?: string;
+  egressBoundary?: string;
 }
 
 function targetElement(event: PointerEvent): Element | null {
@@ -45,6 +50,21 @@ function ownerRoot(target: Element): Element {
 
 function errorText(error: unknown): string {
   return readableError(error) || (error instanceof Error ? error.message : "Capture stopped. The window is unchanged. Select an element.");
+}
+
+function transcriptFailureText(reason: unknown): string {
+  const value = String(reason ?? "").toLowerCase();
+  if (value.includes("no_speech")) return "No speech was found.";
+  if (
+    value.includes("unavailable") ||
+    value.includes("not_ready") ||
+    value.includes("route_member_missing") ||
+    value.includes("not_admitted") ||
+    value.includes("binding_")
+  ) {
+    return "Speech is not set up.";
+  }
+  return "Transcript unavailable.";
 }
 
 export function UiFeedbackHost() {
@@ -247,10 +267,57 @@ export function UiFeedbackHost() {
     };
   }, [cancelCurrent, captureTarget, phase]);
 
+  const transcribeSaved = useCallback(async (saved: PreparedFeedback, runGeneration: number) => {
+    if (runGeneration !== generation.current || payload.current?.id !== saved.id) return;
+    setPhase("transcribing");
+    setError("");
+    try {
+      const result = await apiFetch<{
+        success?: boolean;
+        id?: string;
+        directory?: string;
+        files?: string[];
+        transcript_status?: TranscriptStatus;
+        transcript?: string;
+        transcript_error?: string;
+        egress_boundary?: string;
+        reason?: string;
+      }>(`/api/ui-feedback/${saved.id}/transcribe`, { method: "POST" });
+      if (runGeneration !== generation.current || payload.current?.id !== saved.id) return;
+      const transcriptStatus = result.transcript_status ?? "failed";
+      const next: PreparedFeedback = {
+        ...saved,
+        directory: result.directory ?? saved.directory,
+        files: result.files ?? saved.files,
+        transcriptStatus,
+        transcript: result.transcript,
+        transcriptError: result.transcript_error ?? result.reason,
+        egressBoundary: result.egress_boundary,
+      };
+      payload.current = next;
+      setPrepared(next);
+      setStatus(next.directory ?? next.id);
+      if (transcriptStatus === "complete") {
+        setPhase("saved");
+        return;
+      }
+      setError(transcriptFailureText(next.transcriptError));
+      setPhase("saved");
+    } catch (cause) {
+      if (runGeneration !== generation.current || payload.current?.id !== saved.id) return;
+      const failed = { ...saved, transcriptStatus: "failed" as const, transcriptError: cause instanceof Error ? cause.message : "transcription_failed" };
+      payload.current = failed;
+      setPrepared(failed);
+      setStatus(saved.directory ?? saved.id);
+      setError(transcriptFailureText(failed.transcriptError));
+      setPhase("saved");
+    }
+  }, []);
+
   const stopAndSave = useCallback(async () => {
     const current = payload.current;
     const saveGeneration = generation.current;
-    if (!current || phase === "saving" || phase === "saved") return;
+    if (!current || phase === "saving" || phase === "transcribing" || phase === "saved") return;
     clearTimer();
     let next = current;
     if (!current.audioBase64) {
@@ -269,7 +336,7 @@ export function UiFeedbackHost() {
     setPhase("saving");
     setError("");
     try {
-      const result = await apiFetch<{ success?: boolean; id?: string; directory?: string; files?: string[] }>("/api/ui-feedback", {
+      const result = await apiFetch<{ success?: boolean; id?: string; directory?: string; files?: string[]; transcript_status?: TranscriptStatus; egress_boundary?: string }>("/api/ui-feedback", {
         method: "POST",
         json: {
           id: next.id,
@@ -281,18 +348,25 @@ export function UiFeedbackHost() {
       });
       if (result.success !== true) throw new Error("Feedback was not saved on this device. Your recording and window image are kept. Retry Save.");
       if (saveGeneration !== generation.current || payload.current?.id !== next.id) return;
-      const saved = { ...next, directory: result.directory, files: result.files };
+      const saved = {
+        ...next,
+        directory: result.directory,
+        files: result.files,
+        transcriptStatus: result.transcript_status ?? "pending",
+        egressBoundary: result.egress_boundary,
+      };
       payload.current = saved;
       setPrepared(saved);
       setStatus(result.directory ?? next.id);
-      setPhase("saved");
+      setPhase("transcribing");
+      void transcribeSaved(saved, saveGeneration);
     } catch (cause) {
       if (saveGeneration !== generation.current || payload.current?.id !== next.id) return;
       setError(errorText(cause));
       setStatus("");
       setPhase("error");
     }
-  }, [clearTimer, phase]);
+  }, [clearTimer, phase, transcribeSaved]);
 
   stopAndSaveRef.current = stopAndSave;
 
@@ -318,20 +392,34 @@ export function UiFeedbackHost() {
     if (prepared?.directory) void navigator.clipboard?.writeText(prepared.directory);
   };
   const retry = () => {
+    if (prepared?.audioBase64 && prepared.directory) {
+      void transcribeSaved(prepared, generation.current);
+      return;
+    }
     if (prepared?.audioBase64) {
       void stopAndSave();
       return;
     }
     beginPicking();
   };
+  const boundary = prepared?.egressBoundary ?? "";
+  const boundaryLabel: Record<string, string> = {
+    same_device: "THIS DEVICE",
+    local: "THIS DEVICE",
+    private_network: "PRIVATE NETWORK",
+    mesh: "MESH",
+    cloud: "CLOUD",
+  };
+  const speechLabel = boundary ? `SPEECH · ${boundaryLabel[boundary] ?? boundary.toUpperCase()}` : prepared?.transcriptStatus === "failed" ? "SPEECH · UNAVAILABLE" : "SPEECH · PENDING";
+  const speechScope = boundary === "cloud" ? "cloud" : boundary === "private_network" || boundary === "mesh" ? "remote" : "local";
   return (
     <aside className="desk-next hs-feedback-strip" data-ui-feedback="true" role="status" aria-live="polite">
       <div className="hs-feedback-identity">
-        <span className="hs-feedback-caption">{phase === "picking" ? "SELECT" : phase === "preparing" ? "CAPTURING" : phase === "recording" ? "RECORDING" : phase === "saving" ? "SAVING" : phase === "saved" ? "SAVED" : "RETRY"}</span>
+        <span className="hs-feedback-caption">{phase === "picking" ? "SELECT" : phase === "preparing" ? "CAPTURING" : phase === "recording" ? "RECORDING" : phase === "saving" ? "SAVING" : phase === "transcribing" ? "TRANSCRIBING" : phase === "saved" ? "SAVED" : "RETRY"}</span>
         <strong>{phase === "picking" ? status : selectedName}</strong>
         {error ? <span className="hs-feedback-error">{error}</span> : null}
       </div>
-      <EgressChip label={window.location.hostname} scope={/^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname) ? "local" : "remote"} title="Feedback files stay on this hub." />
+      <EgressChip label={speechLabel} scope={speechScope} title={boundary ? `Speech used the configured ${boundaryLabel[boundary] ?? boundary} route. Original feedback files stay on this hub.` : "Speech route pending. Original feedback files stay on this hub."} />
       {phase === "picking" || phase === "preparing" ? (
         <Button variant="secondary" onClick={cancelCurrent}>Cancel</Button>
       ) : phase === "recording" && audioReady ? (
@@ -341,15 +429,17 @@ export function UiFeedbackHost() {
         </span>
       ) : phase === "recording" ? (
         <Button variant="secondary" onClick={cancelCurrent}>Cancel</Button>
-      ) : phase === "saving" ? (
-        <span className="hs-feedback-caption">Saving</span>
+      ) : phase === "saving" || phase === "transcribing" ? (
+        <span className="hs-feedback-caption">{phase === "saving" ? "Saving" : "Transcribing"}</span>
       ) : phase === "saved" ? (
         <span className="hs-feedback-verbs">
           {prepared?.directory ? <Button variant="secondary" onClick={copyPath}>Copy path</Button> : null}
+          {prepared?.transcriptStatus === "failed" ? <Button variant="secondary" onClick={retry}>Retry transcription</Button> : null}
           <Button variant="primary" onClick={beginPicking}>New feedback</Button>
         </span>
       ) : (
         <span className="hs-feedback-verbs">
+          {prepared?.directory ? <Button variant="secondary" onClick={copyPath}>Copy path</Button> : null}
           <Button variant="primary" onClick={retry}>Retry</Button>
           <Button variant="secondary" onClick={cancelCurrent}>Cancel</Button>
         </span>

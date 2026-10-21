@@ -8,6 +8,23 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The owner’s audio report of the Adr Drafter window starts the beauty and
+delight reference in `docs/internal/beauty-delight/`. Shared Send uses
+readable full-width destination rows with the selected preview directly
+below; the artifact reader presents useful material on paper and moves
+source details into a fold. Known no-decisions ADR results read honestly
+without an outgoing Send area; original Copy/Send document bytes stay intact.
+This first reference improves these shared surfaces; it is not a completed
+redesign of every Desk face.
+
+Feedback saves its original audio, image and context before transcription,
+then uses the same configured, admitted speech engine as Speak. It attaches
+`transcript.txt` to the report. A speech failure keeps Saved, Copy path and
+New feedback available and offers Retry transcription against the same WAV.
+The raw transcript bypasses dictation punctuation, clipboard substitution
+and command processing. Required quick: DELIGHT_QUICK_PENDING.
+
+
 The owner can opt into audio feedback with `HOLDSPEAK_UI_FEEDBACK=1`.
 Every window has a Feedback title-bar button that captures that window directly.
 Desk > Give feedback also selects an element without running its action. A report

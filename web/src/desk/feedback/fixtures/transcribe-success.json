@@ -1,0 +1,15 @@
+{
+  "directory": "/isolated/.local/share/holdspeak/feedback/0123456789abcdef0123456789abcdef",
+  "egress_boundary": "private_network",
+  "files": [
+    "report.json",
+    "audio.wav",
+    "window.png",
+    "README.md",
+    "transcript.txt"
+  ],
+  "id": "0123456789abcdef0123456789abcdef",
+  "success": true,
+  "transcript": "clipboard period",
+  "transcript_status": "complete"
+}

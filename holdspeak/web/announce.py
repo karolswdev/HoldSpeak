@@ -74,6 +74,7 @@ QUIET_ROUTES: dict[tuple[str, str], str] = {
     # only, once a minute); nothing is stored and no window shows it.
     ("POST", "/api/desk/presence"): "noise: the desk's front window, in memory",
     ("POST", "/api/ui-feedback"): "local developer report; no desk object changes",
+    ("POST", "/api/ui-feedback/{identifier}/transcribe"): "local report attachment; no desk object changes",
 }
 
 _KIND = {"people": "person", "all_action_items": "action_item"}
