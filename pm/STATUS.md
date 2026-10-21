@@ -22,7 +22,7 @@ then uses the same configured, admitted speech engine as Speak. It attaches
 `transcript.txt` to the report. A speech failure keeps Saved, Copy path and
 New feedback available and offers Retry transcription against the same WAV.
 The raw transcript bypasses dictation punctuation, clipboard substitution
-and command processing. Required quick: DELIGHT_QUICK_PENDING.
+and command processing. Required quick: build, 23 destination web cases, 37 affected speech/browser cases, 110 desk sweep cases with feedback enabled, 27 canon and 1,116 repository guards passed; final reference images inspected at 1440 and 393.
 
 
 The owner can opt into audio feedback with `HOLDSPEAK_UI_FEEDBACK=1`.
