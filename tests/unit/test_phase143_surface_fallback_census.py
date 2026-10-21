@@ -166,6 +166,7 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     # model only show the engine the hub reports (assignment_summary).
     "web/src/desk/components/automation/WithEditor.tsx": ("inference-route", "143-13"),
     "web/src/desk/components/automation/AutomationWindow.tsx": ("display-transport", "143-13"),
+    "web/src/desk/components/automation/AutomationBuilder.tsx": ("display-transport", "143-13"),
     "web/src/desk/components/automation/model.ts": ("display-transport", "143-13"),
 }
 

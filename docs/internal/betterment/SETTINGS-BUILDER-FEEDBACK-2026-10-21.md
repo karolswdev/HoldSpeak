@@ -61,3 +61,14 @@ session has no launched task item. The local Luna review under AGENTS is an
 independent fallback, not Muad'Dib's check. It found a required-Do rail bypass
 and mismatched category sprites; both were fixed before the required quick.
 The owner judges aesthetic acceptance on the deployed desk.
+
+The first required quick passed 4,117 web cases, 13 affected browser cases and
+110 sweep cases, then caught an accent border, the fixed five-step total's
+unguarded length expression, incomplete save-failure copy and the new guided
+component's missing route census entry. The border now uses a complete rule,
+the fixed count reads five, failure copy names retained open work, the action
+kind reads Make a result, and the builder is classified as display transport
+under the existing 143-13 engine authority. No guard ceiling or assertion was
+relaxed. The independent local review's second verdict identified the same
+border, failure copy and route classification conditions; the final quick
+verifies their corrections.

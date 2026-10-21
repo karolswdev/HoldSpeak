@@ -68,7 +68,7 @@ function SetupHeading({ step, children }: { step: Step; children?: ReactNode }) 
         <StepSprite kind={spec.kind} id={spec.id} />
       </span>
       <span>
-        <span className="automation-setup-kicker">Step {STEPS.indexOf(spec) + 1} of {STEPS.length}</span>
+        <span className="automation-setup-kicker">Step {STEPS.indexOf(spec) + 1} of 5</span>
         <h2>{spec.label}</h2>
         {children}
       </span>
@@ -92,7 +92,7 @@ function DoStep({
       <SetupHeading step="do" />
       <div className="automation-setup-choice-row" aria-label="Do kind">
         <Button dense variant={kind === "run" ? "secondary" : "ghost"} aria-pressed={kind === "run"}
-          onClick={() => onKind("run")}>Run</Button>
+          onClick={() => onKind("run")}>Make a result</Button>
         <Button dense variant={kind === "hand_to_agent" ? "secondary" : "ghost"}
           aria-pressed={kind === "hand_to_agent"} onClick={() => onKind("hand_to_agent")}>
           Hand to an agent
@@ -130,7 +130,7 @@ function ReviewStep({
   ] as ReadonlyArray<readonly [string, string]>;
   const choose = async (key: string) => {
     setError(null);
-    if (!(await onChoose(key))) setError("Could not save the review choice. Try again.");
+    if (!(await onChoose(key))) setError("Review choice not saved. Automation stays open. Choose again.");
   };
   return (
     <section className="automation-setup-subsection" aria-label="Review by">
@@ -260,10 +260,10 @@ export function AutomationBuilder({
             <SetupHeading step="with" />
             <WithEditor detail={detail} handMode={detail.do_kind === "hand_to_agent"}
               onUse={async (profileId) => {
-                if (!(await onChooseEngine(profileId))) throw new Error("Could not save the engine choice. Try again.");
+                if (!(await onChooseEngine(profileId))) throw new Error("Engine choice not saved. Automation stays open. Choose again.");
               }}
               onSpendLimit={async (limit) => {
-                if (!(await onSpendLimit(limit))) throw new Error("Could not save the spend limit. Try again.");
+                if (!(await onSpendLimit(limit))) throw new Error("Spend limit not saved. Automation stays open. Try again.");
               }}
               onPending={onPending} />
             {detail.do_kind === "hand_to_agent" ? (
@@ -283,7 +283,7 @@ export function AutomationBuilder({
             <SetupHeading step="put" />
             <PutEditor target={detail.output_target}
               onChoose={async (target) => {
-                if (!(await onChoosePut(target))) throw new Error("Could not save the destination. Try again.");
+                if (!(await onChoosePut(target))) throw new Error("Destination not saved. Automation stays open. Choose again.");
               }} />
           </div>
         ) : null}

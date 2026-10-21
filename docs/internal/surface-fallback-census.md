@@ -298,6 +298,12 @@ and `web/src/desk/components/automation/model.ts` are `display-transport`:
 they show the engine the hub reports (`assignment_summary`). The browser
 selects nothing itself.
 
+**2026-10-21, guided Automation setup.**
+`web/src/desk/components/automation/AutomationBuilder.tsx` is `display-transport`
+under 143-13. It composes the existing `WithEditor` and forwards the owner's
+selected profile through `AutomationWindow` to the same workbench engine
+operation. It introduces no route authority, fallback, or model selection.
+
 **2026-10-19, Memory selected assignment repair.**
 `holdspeak/memory/engine.py::_resolve_selected_head` resolves the immutable
 assignment head Memory already selected through the planner's existing

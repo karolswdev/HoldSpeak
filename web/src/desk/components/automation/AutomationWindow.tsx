@@ -781,10 +781,10 @@ export function AutomationWindow({
                 ) : undefined}
                 editor={<WithEditor detail={detail} handMode={detail.do_kind === "hand_to_agent"}
                   onUse={async (profileId) => {
-                    if (!(await chooseEngine(profileId))) throw new Error("Could not save the engine choice. Try again.");
+                    if (!(await chooseEngine(profileId))) throw new Error("Engine choice not saved. Automation stays open. Choose again.");
                   }}
                   onSpendLimit={async (limit) => {
-                    if (!(await saveSpendLimit(limit))) throw new Error("Could not save the spend limit. Try again.");
+                    if (!(await saveSpendLimit(limit))) throw new Error("Spend limit not saved. Automation stays open. Try again.");
                   }}
                   onPending={savingEngine} />}
               >
@@ -815,7 +815,7 @@ export function AutomationWindow({
                 onPress={() => toggle("put")}
                 editor={<PutEditor target={detail.output_target}
                   onChoose={async (target) => {
-                    if (!(await choosePut(target))) throw new Error("Could not save the destination. Try again.");
+                    if (!(await choosePut(target))) throw new Error("Destination not saved. Automation stays open. Choose again.");
                   }} />}
               >
                 <PutValue target={detail.output_target} />
