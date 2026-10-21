@@ -40,6 +40,20 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+it("empty Ask offers prompt Buttons that prefill and focus the durable editor", () => {
+  render(<AskPanel />);
+  expect(screen.getByTestId("ask-empty")).toBeInTheDocument();
+
+  const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+  fireEvent.click(screen.getByRole("button", { name: "What needs my attention?" }));
+  expect(prompt).toHaveValue("What needs my attention?");
+  expect(document.activeElement).toBe(prompt);
+
+  fireEvent.click(screen.getByRole("button", { name: "Summarize this week's meetings" }));
+  expect(prompt).toHaveValue("Summarize this week's meetings");
+  expect(document.activeElement).toBe(prompt);
+});
+
 it("late Ask speech appends to the newest durable draft through one mic", () => {
   render(<AskPanel />);
   const prompt = screen.getByRole("textbox", { name: "Ask about your work" });

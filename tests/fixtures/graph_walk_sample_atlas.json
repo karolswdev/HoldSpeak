@@ -87,6 +87,13 @@
         {
           "kind": "ui",
           "action": "click",
+          "selector": "[data-testid='settings-index-this-mac']",
+          "adapter": "ui-pointer",
+          "why": "Settings shows one category at a time (#1419); choose This Mac before its Builder tools control."
+        },
+        {
+          "kind": "ui",
+          "action": "click",
           "selector": "label.gadget-check:has(input[aria-label='Builder tools'])",
           "adapter": "ui-pointer",
           "why": "Betterment shell S1 (#1259): Search lists Activity (a Builder row) only with Settings > System > Builder tools on. Turn it on the way the owner does."

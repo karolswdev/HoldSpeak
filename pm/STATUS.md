@@ -8,6 +8,23 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The owner's Ask feedback is implemented by #1421: compact
+paper composer, an empty-state Ask pictogram and prompt starters, and a
+reading area for the conversation. Enter moves a sent question into the
+conversation and clears the durable composer immediately. Answer completion,
+Stop, Retry and a duplicate Enter retain a newer follow-up draft. Engine and
+egress remain beside Ask; tools are available in a fold. Original report
+`3c7c52ae3ccfdd5ee7e29ddaadaf10e6` remains read-only. Canvas and scope:
+`docs/internal/betterment/ASK-FEEDBACK-2026-10-21.md`.
+Required quick: build, 136 related web cases, Ask and J9 real browser checks including Firefox at 1440/393, 110 desk sweep cases, 27 canon and 1,116 repository guards passed; 39 focused Ask cases and typecheck passed. Owner live aesthetic judgment is open.
+The prior f9ec7ccd6 full tape finished with 12 Python and 15 browser failures.
+Five new graph-walk failures came from setup pressing the now-hidden System
+Builder tools toggle. Both J9 setup cases now choose This Mac through the real
+category button first; existing smoke predicates remain strict. The Needs
+confirmation failure and inherited tape failures remain open.
+
+
+
 Post-merge review of #1419 found that a rejected native-agent or spend-limit
 save can escape an async UI callback. The focused fix catches that rejection,
 retains the spend draft and restores a usable retry. The regression drives a
@@ -2025,6 +2042,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1421 — Ask feedback:** clear sent input immediately, retain the next draft, compact paper conversation and composer.
 
 - **#1420 — automation save errors:** rejected native-agent and spend-limit saves show a refusal, keep the draft and permit retry. Fixes the post-merge finding on #1419.
 
