@@ -512,6 +512,34 @@ describe("A4: With, the engine in place", () => {
       method: "PUT", url: `/api/workbenches/${(withClaude as Step).workbench_id}/engine`, body: { spend_limit_usd: 0.5 },
     }));
   });
+
+  it("a refused spend save keeps the draft, handles the rejection and permits a real retry", async () => {
+    hub.detect = [detectOf("add")];
+    await open(withClaude as Step);
+    fireEvent.click(within(line("with")).getByRole("button"));
+    const spend = await screen.findByTestId("automation-spend");
+    const box = within(spend).getByRole("textbox", { name: "Spend limit per run" });
+    const save = within(spend).getByRole("button", { name: "Save limit" });
+    vi.stubGlobal("fetch", vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+      String(input).endsWith("/engine") && init?.method === "PUT"
+        ? Promise.resolve(json({ error: "Spend limit rejected" }, 503))
+        : hubFetch(input, init)));
+    fireEvent.change(box, { target: { value: "0.75" } });
+    fireEvent.click(save);
+    expect(await within(spend).findByRole("alert")).toHaveTextContent("Spend limit not saved");
+    expect(box).toHaveValue("0.75");
+    expect(save).toBeEnabled();
+
+    vi.stubGlobal("fetch", hubFetch);
+    hub.afterEngine = [withClaude as Step];
+    fireEvent.click(save);
+    await waitFor(() => expect(hub.calls).toContainEqual({
+      method: "PUT", url: `/api/workbenches/${(withClaude as Step).workbench_id}/engine`,
+      body: { spend_limit_usd: 0.75 },
+    }));
+    await waitFor(() => expect(save).toBeEnabled());
+    expect(within(spend).queryByRole("alert")).toBeNull();
+  });
 });
 
 /* MCP M2: what the run's agent used, on tests/integration/test_desk_engines_tools.py's

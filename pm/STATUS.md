@@ -8,6 +8,12 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Post-merge review of #1419 found that a rejected native-agent or spend-limit
+save can escape an async UI callback. The focused fix catches that rejection,
+retains the spend draft and restores a usable retry. The regression drives a
+503 response and then a successful actual writer retry. Required quick:
+SAVE_ERROR_QUICK_PENDING.
+
 The owner's 2026-10-21 Automation builder and Settings reports are implemented
 in this change. Blank automations open a five-step guided editor using the
 existing real settings and engine admission. Settings shows one category at a
