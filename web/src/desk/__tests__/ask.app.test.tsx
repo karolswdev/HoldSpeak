@@ -20,6 +20,7 @@ import NOTE_WIRE from "../../test/wire/notes-create.wire.json";
 import TOOLS from "../../test/wire/ask.tools.wire.json";
 import HOLD from "../../test/wire/ask.hold.wire.json";
 import { verbById } from "../verbRegistry";
+import { durableDraftKey } from "../../lib/durableDraft";
 
 const bus = vi.hoisted(() => ({ handlers: new Map<string, Set<(frame: unknown) => void>>() }));
 vi.mock("../../runtime/RuntimeBus", () => {
@@ -85,6 +86,45 @@ async function askMira() {
 }
 
 describe("Betterment Q2: an Ask on a busy engine says so, and offers another engine", () => {
+  it("duplicate Enter while pending does not submit or clear a new draft", async () => {
+    await askMira();
+    const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+    fireEvent.change(prompt, { target: { value: "A follow-up typed while waiting" } });
+    fireEvent.keyDown(prompt, { key: "Enter" });
+
+    expect(calls.filter((call) => call.method === "POST" && call.url.endsWith("/api/ask"))).toHaveLength(1);
+    expect(prompt).toHaveValue("A follow-up typed while waiting");
+  });
+
+  it("Shift+Enter and IME Enter keep an unsent draft", () => {
+    render(<AskPanel />);
+    const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+    fireEvent.change(prompt, { target: { value: "A multiline draft" } });
+    fireEvent.keyDown(prompt, { key: "Enter", shiftKey: true });
+    fireEvent.keyDown(prompt, { key: "Enter", isComposing: true });
+
+    expect(calls.filter((call) => call.method === "POST" && call.url.endsWith("/api/ask"))).toHaveLength(0);
+    expect(prompt).toHaveValue("A multiline draft");
+  });
+
+  it("acceptance clears the durable editor while completion keeps a newer draft", async () => {
+    await askMira();
+    const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+
+    expect(prompt).toHaveValue("");
+    expect(localStorage.getItem(durableDraftKey("desk-ask"))).toBeNull();
+    expect(screen.getByText("What do I owe Mira this week?")).toBeInTheDocument();
+
+    fireEvent.change(prompt, { target: { value: "Follow up after the answer" } });
+    fireEvent.keyDown(prompt, { key: "Enter", isComposing: true });
+    expect(calls.filter((call) => call.method === "POST" && call.url.endsWith("/api/ask"))).toHaveLength(1);
+
+    await act(async () => { answerAsk?.(); });
+    await screen.findByText(BUSY.answer.output);
+    expect(prompt).toHaveValue("Follow up after the answer");
+    expect(JSON.parse(localStorage.getItem(durableDraftKey("desk-ask"))!).text).toBe("Follow up after the answer");
+  });
+
   it("the recorded busy frame reads 'Waiting for the LAN engine, busy with meeting analysis' and the answer still lands", async () => {
     await askMira();
     // The Ask goes out under the identity the frame names.
@@ -291,6 +331,8 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
 describe("Betterment Q4: Stop while a question runs", () => {
   it("Stop replaces Ask, tells the hub, and leaves the question marked stopped with Ask again", async () => {
     await askMira();
+    const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+    fireEvent.change(prompt, { target: { value: "Keep this while the first answer stops" } });
     expect(screen.queryByRole("button", { name: "Ask" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Stop" }));
     expect(calls.some((c) => c.method === "POST" && c.url === `/api/ask/${BUSY.busy.invocation_id}/cancel`)).toBe(true);
@@ -298,6 +340,37 @@ describe("Betterment Q4: Stop while a question runs", () => {
     expect(line.dataset.state).toBe("failure");
     expect(line).toHaveTextContent("Stopped");
     expect(screen.getByRole("button", { name: "Ask again" })).toBeInTheDocument();
+    expect(prompt).toHaveValue("Keep this while the first answer stops");
+  });
+
+  it("retry operates on the sent question and keeps a newer draft", async () => {
+    let attempts = 0;
+    vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET");
+      calls.push({ url, method, body: init.body ? JSON.parse(String(init.body)) : undefined });
+      if (method === "POST" && url.endsWith("/api/ask")) {
+        attempts += 1;
+        return attempts === 1
+          ? Promise.resolve(reply({ error: "No answer", reason: "did_not_answer" }, 503))
+          : Promise.resolve(reply(BUSY.answer));
+      }
+      return Promise.resolve(reply({}));
+    }));
+
+    render(<AskPanel />);
+    const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
+    fireEvent.change(prompt, { target: { value: "The sent question" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByRole("button", { name: "Try again" });
+
+    fireEvent.change(prompt, { target: { value: "A draft for after retry" } });
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await screen.findByText(BUSY.answer.output);
+    const askCalls = calls.filter((call) => call.method === "POST" && call.url.endsWith("/api/ask"));
+    expect(askCalls).toHaveLength(2);
+    expect(askCalls[1].body?.prompt).toBe("The sent question");
+    expect(prompt).toHaveValue("A draft for after retry");
   });
 });
 

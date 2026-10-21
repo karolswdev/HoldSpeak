@@ -31,6 +31,11 @@ improves the existing A3/A4/A5/A6 and Settings slices; it adds no recipe count.
 Original reports: `46bda55a89ce3feb83e0e79e77b71e9a` and
 `b3a536d4972f39390bd9e5ce7fb88937`. The owner's live design judgment remains open.
 
+Owner Ask feedback follow-up (2026-10-21): PR_PENDING repairs Enter clearing
+and preserves follow-up drafts while replacing the giant empty editor with a
+compact composer and paper conversation. Existing Q slices only, no new count.
+Original report: `3c7c52ae3ccfdd5ee7e29ddaadaf10e6`. Owner live design judgment remains open.
+
 ## Automations (`workbench/RECIPE.md`): 11 of 11
 
 | Slice | What | State | Note |

@@ -70,6 +70,7 @@ import { busyWords, otherEngineVerb, retryWords } from "../surface/waitWords";
 import { deleteThread, getThread, listThreads, type ThreadWire } from "../threads";
 import { UsedLines } from "./UsedLines";
 import type { AgentUse } from "../used";
+import { SYSTEM } from "../systemSprites";
 
 /** The engine line of an engine that can use the desk's tools (MCP design). */
 export const DESK_TOOLS_WORDS = "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends";
@@ -204,6 +205,7 @@ export function AskPanel() {
   const [passageOpen, setPassageOpen] = useState(true);
   const readingRef = useRef<HTMLDivElement | null>(null);
   const aboutRef = useRef<HTMLDivElement | null>(null);
+  const promptRef = useRef<HTMLTextAreaElement | null>(null);
   const mounted = useRef(true);
   const requestId = useRef(0);
   const pendingRequest = useRef<{ id: number; controller: AbortController } | null>(null);
@@ -504,8 +506,6 @@ export function AskPanel() {
       used: r.used,
     }]);
     setSent(null);
-    // The question was asked: the follow-up box starts empty.
-    setPrompt("");
   };
 
   const ask = () => {
@@ -532,7 +532,16 @@ export function AskPanel() {
       context: asked,
       grounding: refs.length ? { meeting_ids: [], artifact_ids: [], expand: "summary", refs } : null,
     };
+    // The snapshot is now the transmission's immutable copy. Clear the
+    // durable editor at acceptance so the sent question is visible in the
+    // reading area while a new follow-up can be written safely.
+    setPrompt("");
     return run(snapshot);
+  };
+
+  const prefillPrompt = (text: string) => {
+    setPrompt(text);
+    promptRef.current?.focus();
   };
 
   // The seeded question runs once, on the render that shows it.
@@ -764,7 +773,7 @@ export function AskPanel() {
       glyph="✦"
       label="Ask"
       className={`desk-pullout desk-ask is-card${hasConversation ? " has-traffic" : ""}`}
-      icon={<span className="desk-ask-glyph" aria-hidden="true">✦</span>}
+      icon={<img className="desk-ask-glyph" src={SYSTEM.dockIntelligence} alt="" width={14} height={14} draggable={false} />}
       title="Ask"
       actions={<Button dense variant="ghost" aria-expanded={recentOpen} onClick={toggleRecent}>Recent</Button>}
       open
@@ -904,7 +913,18 @@ export function AskPanel() {
               />
             </SurfaceTrafficTurn>
           ) : null}
-        </SurfaceTraffic></div></ScrollHint> : null}
+        </SurfaceTraffic></div></ScrollHint> : (
+          <ScrollHint axis="y" scrollRef={readingRef} className="desk-ask-reading-wrap">
+            <div ref={readingRef} className="conversation-reading desk-ask-reading desk-ask-empty" role="region" aria-label="Ask conversation" tabIndex={0} data-testid="ask-empty">
+              <img className="desk-ask-empty-sprite" src={SYSTEM.dockIntelligence} alt="" width={64} height={64} draggable={false} />
+              <h1>Ask about your work</h1>
+              <div className="desk-ask-prompts">
+                <Button dense variant="ghost" onClick={() => prefillPrompt("What needs my attention?")}>What needs my attention?</Button>
+                <Button dense variant="ghost" onClick={() => prefillPrompt("Summarize this week's meetings")}>Summarize this week's meetings</Button>
+              </div>
+            </div>
+          </ScrollHint>
+        )}
 
         <div className="conversation-composer desk-ask-composer">
           {selectedPassage?.text.trim() ? (
@@ -926,10 +946,11 @@ export function AskPanel() {
             <PadGadget
               label="Ask about your work"
               mic={false}
-              rows={hasConversation ? 2 : 6}
+              rows={3}
               value={prompt}
               placeholder={turns.length ? "Ask a follow-up" : "Ask about your work"}
               autoFocus
+              inputRef={promptRef}
               onChange={setPrompt}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -948,8 +969,11 @@ export function AskPanel() {
             <div className="desk-ask-send">
               {!running ? (
                 engine.state === "set" ? (
-                  <div className="surface-engine-line" data-testid="engine-line">
-                    {[engine.model, engine.place, deskTools ? DESK_TOOLS_WORDS : "reads only what is in About"].filter(Boolean).join(" · ")}
+                  <div className="surface-engine-line desk-ask-engine-line" data-testid="engine-line">
+                    <span>{[engine.model, engine.place].filter(Boolean).join(" · ")}</span>
+                    <FoldGadget title="Tools" className="desk-ask-tools">
+                      <span>{deskTools ? DESK_TOOLS_WORDS : "reads only what is in About"}</span>
+                    </FoldGadget>
                   </div>
                 ) : (
                   <EngineLine

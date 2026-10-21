@@ -84,3 +84,131 @@ def test_1440_a_screen_note_dropped_on_ask_becomes_an_about_chip(hub: str) -> No
             assert not errors, errors
         finally:
             browser.close()
+
+
+@pytest.mark.parametrize("width", [1440, 393])
+def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """A real private Hub and gated HTTP model; only inference is simulated.
+
+    No intercepted API answers: model admission, Ask orchestration, kept
+    thread, durable editor and rendered Firefox layout all use product code.
+    """
+    import json
+    import threading
+    from http.server import ThreadingHTTPServer
+
+    from playwright.sync_api import expect, sync_playwright
+    from tests._evidence import evidence_dir
+    from .engine_stub_rig import _StubHandler
+    from .glass_infra import _settle, clear_hub_windows
+
+    answer = "## Platform checkpoint\n\nReview the rollback plan with Mira on Friday."
+    release, started = threading.Event(), threading.Event()
+    requests: list[dict] = []
+
+    class Model(_StubHandler):
+        MODEL = "ask-feedback-fixture"
+
+        def do_POST(self) -> None:  # noqa: N802 - HTTP handler contract
+            request = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)))
+            requests.append(request)
+            started.set()
+            release.wait(30)
+            body = json.dumps({
+                "id": "ask-feedback", "object": "chat.completion", "model": self.MODEL,
+                "choices": [{"index": 0, "finish_reason": "stop",
+                             "message": {"role": "assistant", "content": answer}}],
+                "usage": {"prompt_tokens": 12, "completion_tokens": 9, "total_tokens": 21},
+            }).encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+    model = ThreadingHTTPServer(("127.0.0.1", 0), Model)
+    threading.Thread(target=model.serve_forever, daemon=True).start()
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    shots = evidence_dir("ask-feedback")
+    try:
+        with sync_playwright() as pw:
+            browser = pw.firefox.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852},
+                                    device_scale_factor=1, reduced_motion="reduce")
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            try:
+                page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                provider = _api(page, "POST", "/api/inference/model-library/define-endpoint", {
+                    "draft": {"request_id": "ask-feedback-model", "profile_id": "ask-feedback-model",
+                              "expected_profile_revision": 0, "label": "Ask fixture",
+                              "provider_family": "openai_compatible", "model": Model.MODEL,
+                              "endpoint": f"http://127.0.0.1:{model.server_port}/v1", "requires_key": False},
+                    "secret": None,
+                }, token=TOKEN)["provider"]
+                _api(page, "POST", "/api/inference/assignments/set", {
+                    "command_id": "ask-feedback-assignment", "expected_revision": 0,
+                    "scope": {"kind": "capability", "capability_id": "ask.answer"},
+                    "entries": [{"profile_id": provider["profile_id"], "profile_revision": provider["profile_revision"]}],
+                }, token=TOKEN)
+                clear_hub_windows(page, TOKEN)
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.keyboard.press("Control+KeyI")
+                window = page.locator("[id='ask'][data-layer='window']")
+                editor = window.get_by_role("textbox", name="Ask about your work", exact=True)
+                editor.wait_for()
+                _settle(page)
+                assert editor.bounding_box()["height"] <= 170
+                assert window.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+                page.screenshot(path=str(shots / f"ask-empty-{width}.png"))
+                window.get_by_role("button", name="What needs my attention?", exact=True).click()
+                expect(editor).to_have_value("What needs my attention?")
+                expect(editor).to_be_focused()
+                assert not requests
+                editor.press("Shift+Enter")
+                expect(editor).to_have_value("What needs my attention?\n")
+                assert not requests
+
+                question, draft = "What should I review with Mira?", "And what can wait until Monday?"
+                editor.fill(question)
+                editor.press("Enter")
+                expect(editor).to_have_value("")
+                expect(window.get_by_role("button", name="Stop", exact=True)).to_be_visible()
+                expect(window.get_by_role("region", name="Ask conversation")).to_contain_text(question)
+                assert started.wait(10), "Private model did not receive the real Ask"
+                editor.fill(draft)
+                editor.press("Enter")
+                expect(editor).to_have_value(draft)
+                assert len(requests) == 1
+                page.screenshot(path=str(shots / f"ask-pending-{width}.png"))
+                with page.expect_response(lambda response: response.url.endswith("/api/ask")
+                                          and response.request.method == "POST") as finished:
+                    release.set()
+                result = finished.value.json()
+                assert finished.value.ok and result.get("output") == answer, result
+                expect(window.get_by_role("heading", name="Platform checkpoint", exact=True)).to_be_visible()
+                expect(editor).to_have_value(draft)
+                assert page.evaluate("JSON.parse(localStorage.getItem('hs.draft.v1.desk-ask')).text") == draft
+                assert len(requests) == 1
+                kept = _api(page, "GET", f"/api/threads/{result['thread_id']}", token=TOKEN)
+                assert question in json.dumps(kept)
+                assert "Review the rollback plan" in json.dumps(kept)
+                _settle(page)
+                assert window.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+                page.screenshot(path=str(shots / f"ask-answer-{width}.png"))
+                assert not errors, errors
+            finally:
+                browser.close()
+    finally:
+        release.set()
+        server.stop()
+        model.shutdown()
+        model.server_close()
