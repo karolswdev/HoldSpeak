@@ -17,6 +17,10 @@ SHOTS = evidence_dir("ui-feedback-firefox")
 TOKEN = "feedback-firefox-settings"
 
 
+# Absolute UI timing is measured as a separate locked run. Concurrent
+# Chromium/Firefox startup can exceed these limits through CPU contention;
+# the complete tape still runs this check, with all budgets unchanged.
+@pytest.mark.slow
 @pytest.mark.parametrize("width", [1440, 393])
 def test_loaded_settings_repeated_feedback_and_save_retry(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int
@@ -92,7 +96,7 @@ def test_loaded_settings_repeated_feedback_and_save_retry(
                 assert observation["heartbeat_gap_ms"] < 1000, observation
                 # Firefox's fake device must deliver actual frames, rather
                 # than ending the hold immediately after its grant resolves.
-                page.wait_for_timeout(700)
+                page.wait_for_timeout(1200)
                 rejected: list[str] = []
                 if index == 2:
                     def interrupt_once(route: Any) -> None:

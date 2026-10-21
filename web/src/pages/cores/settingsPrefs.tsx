@@ -70,14 +70,14 @@ export const PREF_MODULES: PrefModule[] = [
  * another navigation layer: every old module scope resolves to one of these
  * sections and the page remains mounted while the owner moves around it. */
 export const SETTINGS_SECTIONS = [
-  { id: "you", label: "You" },
-  { id: "speak", label: "Speak" },
-  { id: "meetings", label: "Meetings" },
-  { id: "notices", label: "Notices" },
-  { id: "accounts", label: "Accounts" },
-  { id: "agents", label: "Agents" },
-  { id: "desk", label: "Desk" },
-  { id: "this-mac", label: "This Mac" },
+  { id: "you", label: "You", sprite: "system" },
+  { id: "speak", label: "Speak", sprite: "voice" },
+  { id: "meetings", label: "Meetings", sprite: "meetings" },
+  { id: "notices", label: "Notices", sprite: "rhythm" },
+  { id: "accounts", label: "Accounts", sprite: "integrations" },
+  { id: "agents", label: "Agents", sprite: "system" },
+  { id: "desk", label: "Desk", sprite: "wallpaper" },
+  { id: "this-mac", label: "This Mac", sprite: "system" },
 ] as const;
 
 export type SettingsSectionId = (typeof SETTINGS_SECTIONS)[number]["id"];
@@ -291,10 +291,10 @@ export const LANGUAGE_OPTIONS = [
 
 const SETTINGS_SPRITE_BASE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/settings/`;
 
-export function SettingSprite({ name }: { name: string }) {
+export function SettingSprite({ name, src }: { name: string; src?: string }) {
   return (
     <img
-      src={`${SETTINGS_SPRITE_BASE}${name}.png`}
+      src={src ?? `${SETTINGS_SPRITE_BASE}${name}.png`}
       alt=""
       aria-hidden="true"
       className="prefs-tile-sprite"

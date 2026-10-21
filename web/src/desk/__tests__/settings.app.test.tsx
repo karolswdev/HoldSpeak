@@ -922,8 +922,8 @@ describe("Settings › System › Remote access grants", () => {
 });
 
 
-describe("Settings one-page face", () => {
-it("renders the settled section order with no wings or Open index", async () => {
+describe("Settings category face", () => {
+it("opens You, shows one category at a time, and navigates as the owner does", async () => {
     const state = hub.state;
     const { container } = render(<SettingsCore />);
     await screen.findByTestId("settings-page");
@@ -931,12 +931,30 @@ it("renders the settled section order with no wings or Open index", async () => 
       .map((section) => section.getAttribute("data-settings-section"));
     expect(sections).toEqual(["you", "speak", "meetings", "notices", "accounts", "agents", "desk", "this-mac"]);
     expect(screen.getByRole("navigation", { name: "Settings sections" })).toBeInTheDocument();
-    expect(screen.queryByRole("tab")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Open Speak" })).toBeNull();
+    expect(screen.getByTestId("settings-index-you")).toHaveClass("is-active");
+    expect(container.querySelector('[data-settings-section="you"]')).not.toHaveAttribute("hidden");
+    expect(container.querySelector('[data-settings-section="speak"]')).toHaveAttribute("hidden");
+    expect(screen.queryByRole("combobox", { name: "Language" })).toBeNull();
+
+    fireEvent.click(screen.getByTestId("settings-index-notices"));
     expect(screen.getByText("Quiet from")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId("settings-index-this-mac"));
     expect(screen.getByTestId("settings-engines-page-link")).toBeInTheDocument();
     expect(screen.getByTestId("settings-setup-page-link")).toBeInTheDocument();
+    expect(container.querySelector('[data-settings-section="notices"]')).toHaveAttribute("hidden");
+    expect(screen.getByTestId("settings-index-this-mac")).toHaveClass("is-active");
     await waitFor(() => expect(state.calls.some((call) => call.method === "GET" && call.path === "/api/calendar/sources")).toBe(true));
+  });
+
+  it("keeps a local select draft mounted while the owner visits another category", async () => {
+    render(<SettingsCore scope="voice" />);
+    const language = await screen.findByRole("combobox", { name: "Language" });
+    fireEvent.change(language, { target: { value: "pl" } });
+    fireEvent.click(screen.getByTestId("settings-index-accounts"));
+    expect(screen.queryByRole("combobox", { name: "Language" })).toBeNull();
+    fireEvent.click(screen.getByTestId("settings-index-speak"));
+    expect(screen.getByRole("combobox", { name: "Language" })).toHaveValue("pl");
   });
 it("opens a legacy Notices row at Quiet hours and lights the row", async () => {
     const { container } = render(<SettingsCore scope="rhythm::quiet-hours" />);

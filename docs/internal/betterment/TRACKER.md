@@ -5,7 +5,7 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-20, Ask arrangement and Undo observed; speed gate remains open. Running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-21, Ask arrangement and Undo observed; speed gate remains open. Running-desk identity is in `pm/STATUS.md`.
 
 **Total: 115 of 117 slices merged**.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
@@ -24,6 +24,12 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Desk shell | `shell/` | 9 of 10 |
 | Send | `send/` | 7 of 8 |
 | Capture | `capture/` | 12 of 12 |
+
+Owner feedback follow-up (2026-10-21): #1419 implements a guided Automation
+builder and one-category Settings with pictograms and clearer dropdowns. This
+improves the existing A3/A4/A5/A6 and Settings slices; it adds no recipe count.
+Original reports: `46bda55a89ce3feb83e0e79e77b71e9a` and
+`b3a536d4972f39390bd9e5ce7fb88937`. The owner's live design judgment remains open.
 
 ## Automations (`workbench/RECIPE.md`): 11 of 11
 

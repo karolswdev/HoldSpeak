@@ -90,6 +90,7 @@ def test_settings_page_order_anchor_and_saved_write(
             # ST7 producer proof: the Settings page button opens the real
             # Engines host, and the hub records its canonical application and
             # surface id. Close it before exercising the Settings write.
+            settings.get_by_test_id("settings-index-this-mac").click()
             engines = settings.get_by_test_id("settings-engines-page-link")
             engines.click()
             engine_window = page.locator("#surface-engines")
@@ -101,6 +102,8 @@ def test_settings_page_order_anchor_and_saved_write(
             _api(page, "POST", "/api/desk/windows/surface-engines/close", {}, token=TOKEN)
             engine_window.wait_for(state="detached", timeout=10_000)
 
+            # Restore the legacy entry after visiting another category.
+            _open_page(page, base, scope="rhythm::quiet-hours")
             notices = page.locator("[data-settings-section='notices']")
             notices.wait_for()
             anchor = notices.locator(".gadget-row[data-highlight]")
@@ -180,7 +183,7 @@ def test_builder_tools_preference_persists_between_two_browsers(
                 else None,
             )
 
-            desktop_settings = _open_page(desktop, base)
+            desktop_settings = _open_page(desktop, base, scope="this-mac")
             switch = desktop.get_by_role("checkbox", name="Builder tools", exact=True)
             assert switch.is_checked() is False
             switch.check()
@@ -191,7 +194,7 @@ def test_builder_tools_preference_persists_between_two_browsers(
             assert saved.get("ui", {}).get("builder_tools") is True, saved
             desktop.screenshot(path=str(shots / "builder-tools-on-1440.png"), full_page=False)
 
-            phone_settings = _open_page(phone, base)
+            phone_settings = _open_page(phone, base, scope="this-mac")
             phone_switch = phone.get_by_role("checkbox", name="Builder tools", exact=True)
             assert phone_switch.is_checked() is True
             phone.locator(".desk-tools-launch").first.tap()
@@ -208,7 +211,7 @@ def test_builder_tools_preference_persists_between_two_browsers(
             assert cleared.get("ui", {}).get("builder_tools") is False, cleared
             desktop.reload(wait_until="load")
             _normal_chair(desktop)
-            _open_page(desktop, base)
+            _open_page(desktop, base, scope="this-mac")
             assert desktop.get_by_role("checkbox", name="Builder tools", exact=True).is_checked() is False
             browser.close()
     finally:
