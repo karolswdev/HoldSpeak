@@ -9,6 +9,23 @@
 .desk-next .desk-session-glyph {
   font-size: 16px;
 }
+.desk-next .desk-session-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+.desk-next .desk-session-agent-portrait {
+  display: block;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+}
+.desk-next .desk-session-identity .kit-apphead {
+  flex: 1 1 auto;
+  min-width: 0;
+}
 /* HS-111-04 — liveness is a steady LampGadget in the head; the pulsing
    dot species is gone. */
 .desk-next .desk-chip.is-stale {
@@ -59,6 +76,50 @@
   color: var(--text-muted);
   font-size: var(--font-size-sm);
   font-family: var(--font-mono);
+}
+.desk-next .desk-session-report > .surface-well {
+  background: var(--alive-paper, var(--wb-paper));
+}
+.desk-next .desk-session-report > .surface-well > .surface-well-body {
+  padding: 14px 16px;
+}
+.desk-next .desk-session-report .agent-words {
+  font-size: var(--desk-surface-body-size, 13px);
+  line-height: 1.5;
+}
+.desk-next .desk-session-activity {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  min-width: 0;
+  padding: 8px 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.desk-next .desk-session-activity-lamp {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--wb-ink);
+  background: var(--lamp-info);
+}
+.desk-next .desk-session-activity-label {
+  color: var(--text-muted);
+  font: 600 var(--font-size-xs) / 1.4 var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.desk-next .desk-session-activity-value {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--wb-text);
+  font: 500 var(--font-size-xs) / 1.4 var(--font-mono);
+}
+.desk-next .desk-session-terminal-fact {
+  color: var(--text-muted);
+  font: 400 var(--font-size-xs) / 1.4 var(--font-mono);
 }
 
 /* ── HS-87-02: the arming grant. HS-111-04 — ARM is a TransportKey:

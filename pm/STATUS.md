@@ -8,6 +8,17 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+The owner's Agent and New Automation feedback is now implemented in the
+reported faces: the Agent has its real portrait, readable report, visible tool
+activity, real screen-report fallback and Refresh, with existing answer,
+Direct, terminal and receipts preserved. New Automation uses shared choice-card
+material, 32px pictograms and compact facts, with Start from scratch first
+and narrow-container reflow. The creation path still saves one automation per
+press. Canvas and scope: `docs/internal/beauty-delight/REPORTED-FACES.md` and
+`reported-faces.html`. Required quick: FACES_QUICK_PENDING. The owner judges
+the delivered appearance live; this implements these two reports without
+claiming a completed redesign of every Desk face.
+
 Firefox Settings feedback capture now freezes resolved styles once, preserves
 pseudo-elements and SVGs, and avoids copying inherited theme tokens onto every
 node. The same loaded 1,303-element window went from about 15.2 seconds with

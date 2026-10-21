@@ -8,13 +8,13 @@ import recording from "./fixtures/session-terminal.recorded.json";
 
 vi.mock("../MicButton", () => ({ MicButton: () => <span data-testid="mic" /> }));
 
-function open(extra: Record<string, unknown> = {}) {
+function open(extra: Record<string, unknown> = {}, rowExtra: Record<string, unknown> = {}) {
   act(() => {
     useAgentFlights.setState({ loaded: true, flights: [], sessions: [fromWireSessionRow({ session: {
       agent: "codex", session_id: "same-id", project_name: "payments-ledger", lifecycle: "working",
       last_assistant_text: "Added the rollback checkpoint. Checking the migration tests.",
       last_tool_name: "Bash", ...extra,
-    } }), fromWireSessionRow({ session: { agent: "claude", session_id: "same-id", project_name: "other-project" } })] });
+    }, ...rowExtra }), fromWireSessionRow({ session: { agent: "claude", session_id: "same-id", project_name: "other-project" } })] });
     useDesk.setState({ items: { ...useDesk.getState().items, coder: [] } });
     useSteering.setState({
       openKey: "codex:same-id", session: fromWireSteeringSession({ agent: "codex", key: "codex:same-id", ...extra }),
@@ -32,9 +32,33 @@ describe("work leads the plain session", () => {
     open();
     expect(document.querySelector(".is-session .desk-window-title")?.textContent).toContain("payments-ledger");
     expect(screen.getByText("Added the rollback checkpoint. Checking the migration tests.")).toBeTruthy();
+    expect(screen.getByTestId("session-report")).toHaveTextContent("Added the rollback checkpoint.");
+    expect(screen.getByTestId("session-activity")).toHaveTextContent("Bash");
+    const portrait = screen.getByTestId("session-agent-portrait");
+    expect(portrait).toHaveAttribute("width", "64");
+    expect(portrait).toHaveAttribute("height", "64");
+    expect(portrait).toHaveAttribute("src", expect.stringContaining("agent-codex.png"));
     expect(document.querySelector(".desk-session-terminal")).toBeNull();
     expect(screen.getByTestId("session-controls").closest("details")?.open).toBe(false);
     expect(document.querySelector(".desk-session-footer")?.textContent).not.toMatch(/CLASSIFY|Keep as note|same-id|ARM/);
+  });
+
+  it("uses the screen report when the hook has no report and keeps its activity visible", () => {
+    open({ last_assistant_text: "" }, { screen: { said: "The screen reports the migration is complete.", command: "git status" } });
+    expect(screen.getByTestId("session-report")).toHaveTextContent("The screen reports the migration is complete.");
+    expect(screen.getByTestId("session-activity")).toHaveTextContent("Bash");
+    expect(screen.getByTestId("session-activity")).toHaveTextContent("git status");
+    expect(screen.queryByText("No report yet")).toBeNull();
+  });
+
+  it("refreshes the session projection and steering state from the existing loaders", () => {
+    open();
+    const load = vi.spyOn(useAgentFlights.getState(), "load").mockResolvedValue(undefined);
+    const poll = useSteering.getState().poll;
+    fireEvent.click(screen.getByTestId("session-refresh"));
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(poll).toHaveBeenCalledTimes(1);
+    load.mockRestore();
   });
 
   it("terminal absence retains the work, names the failure and offers Retry and Back without pane controls", () => {
