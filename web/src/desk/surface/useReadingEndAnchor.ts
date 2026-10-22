@@ -31,20 +31,36 @@ export function useReadingEndAnchor(
     let frame: number | null = null;
     let disposed = false;
     let pendingAnchor = false;
-    let userScrollInput = false;
-    let inputResetTimer: number | null = null;
+    let lastTop: number | null = null;
     let resizeObserver: ResizeObserver | null = null;
 
+    const samplePosition = () => {
+      const top = reading.scrollTop;
+      if (lastTop === null || top === lastTop) return;
+      atEnd = isAtEnd(reading);
+      lastTop = top;
+    };
+
     const schedule = () => {
-      if (disposed || frame !== null) return;
+      if (disposed) return;
+      // Resize can change the geometry without changing scrollTop. Keep the
+      // old end state in that case. A delayed/programmatic scrollTop write is
+      // different: sample it before capturing the pending anchor.
+      samplePosition();
+      if (frame !== null) {
+        pendingAnchor = atEnd;
+        return;
+      }
       pendingAnchor = atEnd;
       const run = () => {
         frame = null;
+        samplePosition();
         const shouldAnchor = pendingAnchor;
         pendingAnchor = false;
         if (!disposed && shouldAnchor && atEnd) {
           scrollToEnd(reading);
           atEnd = true;
+          lastTop = reading.scrollTop;
         }
       };
       frame = typeof window.requestAnimationFrame === "function"
@@ -59,24 +75,8 @@ export function useReadingEndAnchor(
       frame = null;
     };
 
-    const onUserScrollInput = () => {
-      userScrollInput = true;
-      if (inputResetTimer !== null) window.clearTimeout(inputResetTimer);
-      inputResetTimer = window.setTimeout(() => {
-        userScrollInput = false;
-        inputResetTimer = null;
-      }, 0);
-    };
     const onScroll = () => {
-      // A viewport resize can emit a scroll event after the resize callback
-      // has captured the old end state. Keep that anchor for the frame; real
-      // wheel/touch/pointer/keyboard input still cancels it.
-      if (userScrollInput) {
-        pendingAnchor = false;
-        atEnd = isAtEnd(reading);
-      } else if (!pendingAnchor || isAtEnd(reading)) {
-        atEnd = isAtEnd(reading);
-      }
+      samplePosition();
     };
     const observeContent = () => {
       if (!resizeObserver) return;
@@ -86,11 +86,6 @@ export function useReadingEndAnchor(
     };
 
     reading.addEventListener("scroll", onScroll, { passive: true });
-    reading.addEventListener("wheel", onUserScrollInput, { passive: true });
-    reading.addEventListener("touchstart", onUserScrollInput, { passive: true });
-    reading.addEventListener("touchmove", onUserScrollInput, { passive: true });
-    reading.addEventListener("pointerdown", onUserScrollInput, { passive: true });
-    reading.addEventListener("keydown", onUserScrollInput, { passive: true });
     window.addEventListener("resize", schedule);
 
     if (typeof ResizeObserver === "function") {
@@ -110,19 +105,14 @@ export function useReadingEndAnchor(
     // the resize/content observers a correct initial anchor state.
     scrollToEnd(reading);
     atEnd = true;
+    lastTop = reading.scrollTop;
 
     return () => {
       disposed = true;
       cancel();
-      if (inputResetTimer !== null) window.clearTimeout(inputResetTimer);
       mutationObserver?.disconnect();
       resizeObserver?.disconnect();
       reading.removeEventListener("scroll", onScroll);
-      reading.removeEventListener("wheel", onUserScrollInput);
-      reading.removeEventListener("touchstart", onUserScrollInput);
-      reading.removeEventListener("touchmove", onUserScrollInput);
-      reading.removeEventListener("pointerdown", onUserScrollInput);
-      reading.removeEventListener("keydown", onUserScrollInput);
       window.removeEventListener("resize", schedule);
     };
   }, [active, scrollRef]);

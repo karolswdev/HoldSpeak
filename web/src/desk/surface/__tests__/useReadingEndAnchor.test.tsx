@@ -47,6 +47,27 @@ describe("useReadingEndAnchor", () => {
     unmount();
   });
 
+  it("samples a delayed scroll before a second queued resize can repin it", () => {
+    const frames: Array<(time: number) => void> = [];
+    vi.stubGlobal("requestAnimationFrame", (callback: (time: number) => void) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", () => undefined);
+
+    const { element } = sizedReading(600, 200);
+    const ref = { current: element };
+    const { unmount } = renderHook(() => useReadingEndAnchor(ref, true));
+
+    act(() => window.dispatchEvent(new Event("resize")));
+    element.scrollTop = 80;
+    act(() => window.dispatchEvent(new Event("resize")));
+    act(() => frames.shift()?.(0));
+
+    expect(element.scrollTop).toBe(80);
+    unmount();
+  });
+
   it("does not require ResizeObserver", async () => {
     vi.stubGlobal("ResizeObserver", undefined);
     const { element, setHeight } = sizedReading(600, 200);
