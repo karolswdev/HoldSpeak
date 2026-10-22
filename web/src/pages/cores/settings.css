@@ -461,7 +461,8 @@
   min-width:0;
   min-height:0;
   padding:4px 0 0;
-  overflow-x:hidden;
+  overflow-x:clip;
+  overflow-y:visible;
   background:var(--alive-paper, var(--wb-paper));
   border:0;
   box-shadow:none;

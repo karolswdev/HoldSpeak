@@ -174,6 +174,35 @@ small {
     background: transparent;
     pointer-events: auto;
   }
+  /* The shared plated Button has a 1px border. Its rectangular hit face
+     must cover that border at fractional device coordinates; strip-owned
+     chrome controls keep the inset above unless their owner draws a border. */
+  :where(.btn)::after {
+    inset: -1px;
+  }
+  /* These chrome owners draw a 1px border in the menubar or dock. Expand to
+     the border edge only; borderless strip chrome keeps the real box. */
+  :where(
+    .btn--chrome.desk-dock-launch,
+    .desk-menubar .btn--chrome.egress-badge,
+    .desk-menubar .btn--chrome.desk-tools-launch,
+    .desk-menubar .btn--chrome.desk-bell
+  )::after {
+    inset: -1px;
+  }
+  /* Shared bordered gadgets own their rectangular device face here. The
+     pad mic keeps its existing absolute position from the gadget owner. */
+  :where(.gadget-transport-key) {
+    position: relative;
+  }
+  :where(.gadget-transport-key, .gadget-pad .desk-mic)::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 0;
+    background: transparent;
+    pointer-events: auto;
+  }
 
   /* Rails is desk furniture outside a surface container. Reserve the
      device target in each action row; its halo fits inside the plate. */

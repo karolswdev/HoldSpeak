@@ -663,7 +663,6 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head {
     margin: 0;
-    padding-inline: 3px;
     flex-wrap: nowrap;
     overflow: visible;
   }

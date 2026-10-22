@@ -626,11 +626,11 @@
     border-radius: var(--radius-sm);
     background: transparent;
     pointer-events: none;
-    z-index: 0;
+    z-index: var(--desk-z-canvas);
   }
   .desk-next .desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing) > * {
     position: relative;
-    z-index: 1;
+    z-index: var(--desk-z-local);
   }
   .desk-next .desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing):hover:not(:disabled)::before,
   .desk-next .desk-window-shell > .desk-pullout-head .desk-wing.is-on::before {
