@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-Modern shell — MODERN_PR_PENDING: owner's 2026-10-22 direction “Workbench
+Modern shell — #1424: owner's 2026-10-22 direction “Workbench
 meets PopOS.” Shared tokens, frames, menus, controls and dock move to fine
 borders, soft depth, pale chrome and clear sans labels; Ask and Settings use
 the same material. Pixel identity and window/voice/keyboard behavior remain.
