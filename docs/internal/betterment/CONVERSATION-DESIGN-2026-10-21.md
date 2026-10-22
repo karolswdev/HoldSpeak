@@ -42,3 +42,14 @@ Setup MCP review helper returned launch_only (403) for this owner-started
 session. The independent local Luna review is an AGENTS fallback, not
 Muad'Dib's check. No launch credential is bypassed. Owner aesthetic judgment
 remains open; green tests establish behavior and layout bounds only.
+
+The first required product check passed build, 4,125 web cases, three real
+Firefox/drag cases, 110 sweep and 1,116 repository guards. Its sole red was
+the microphone ratchet: it did not yet name DeskComposer's explicit capture
+transfer, so it counted both disabled gadget-default mics as missing voice.
+The existing exact-field MIC_HOST_AUTHORITIES mapping now includes this host
+field, still requiring an actual MicButton in the same function. Both editor
+variants join the existing positive/negative cases: no mic, another component's
+mic, another field and another path must all remain violations. No ceiling or
+scanner coverage is relaxed. Final required quick checks this guard correction
+against the already-verified, byte-unchanged web implementation.

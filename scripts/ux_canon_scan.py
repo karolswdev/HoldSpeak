@@ -235,6 +235,8 @@ MIC_ALLOWLIST: tuple[tuple[str, str, str], ...] = (
 MIC_HOST_AUTHORITIES: tuple[tuple[str, str, str], ...] = (
     ("desk/components/AskPanel.tsx", 'label="Ask about your work"',
      "Ask's host MicButton appends to the latest durable prompt"),
+    ("desk/components/DeskComposer.tsx", 'label={placeholder || actionLabel}',
+     "Both reply editor variants share one explicit scoped MicButton in their ComposerWell capture slot"),
     ("desk/components/ThreadComposer.tsx", 'label="Thread message"',
      "The Thread composer MicButton appends to the latest draft"),
     ("desk/components/ThreadComposer.tsx", 'label={placeholder ?? "Edit message"}',
