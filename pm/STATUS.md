@@ -13,7 +13,7 @@ meets PopOS.” Shared tokens, frames, menus, controls and dock move to fine
 borders, soft depth, pale chrome and clear sans labels; Ask and Settings use
 the same material. Pixel identity and window/voice/keyboard behavior remain.
 Canvas and scope: `docs/internal/betterment/MODERN-SHELL-2026-10-22.md`.
-Required quick: MODERN_QUICK_PENDING. Owner visual judgment remains open.
+Required quick: build, 4130 related web cases, actual Ask/gallery/frame browser checks at 1440/393, 110 desk sweep cases, canon and repository guards passed; 56 focused cases, typecheck and token generation passed; standalone raw-token gate remains inherited red 120→102 with zero branch-new findings and unchanged allowlist. Owner visual judgment remains open.
 
 Latest completed full tape on 448772a89: 12 Python and 10 browser failures;
 web baseline and strict Firefox capture timing passed. These inherited reds
