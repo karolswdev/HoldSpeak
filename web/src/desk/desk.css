@@ -101,6 +101,8 @@
 /* ── the arrival chrome (HS-73-02): floating clusters, no header stack ── */
 .desk-next {
   min-height: 100vh;
+  background: var(--wb-backdrop);
+  color: var(--wb-ink);
   /* HS-150-06 (owner catch): contain the Chair's working-band margins —
      collapsing through this root pushed the document past the viewport,
      so the desk body-scrolled beneath the fixed dock. */
@@ -237,7 +239,11 @@
 /* Over the world the receipt needs a ground: the footer's faint wash
    reads on a window, not on the scene. The AskBar's own ground. */
 .desk-next .desk-world-foot .undo-receipt {
-  background: var(--surface-2);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-drop);
+  color: var(--wb-ink);
 }
 .desk-next .desk-zone-rename-row.is-overlay {
   position: absolute;
@@ -304,9 +310,10 @@
   gap: var(--space-2);
   min-block-size: 140px;
   padding: var(--space-4);
-  color: var(--text);
-  background: var(--surface-2);
+  color: var(--wb-ink);
+  background: var(--wb-field);
   border: 1px solid var(--danger-signal);
+  border-radius: var(--radius-sm);
 }
 
 .desk-application-error p {

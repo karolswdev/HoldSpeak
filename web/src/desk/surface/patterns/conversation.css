@@ -3,13 +3,13 @@
 .conversation-reading {
   min-width: 0;
   min-height: 0;
-  background: transparent;
+  background: var(--alive-paper, var(--wb-paper));
 }
 .conversation-reading .surface-traffic,
 .conversation-reading .surface-traffic > .surface-well {
   flex: none;
   min-width: 0;
-  background: transparent;
+  background: inherit;
   border: 0;
   box-shadow: none;
 }
@@ -25,23 +25,23 @@
 }
 .conversation-reading .surface-traffic-turn {
   grid-template-columns: minmax(0, 1fr);
-  gap: 8px;
+  gap: 6px;
   margin: 0;
-  padding: 18px 0;
+  padding: 16px 0;
 }
 .conversation-reading .surface-traffic-turn + .surface-traffic-turn {
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--wb-rule-soft, var(--border-subtle));
 }
 .conversation-reading .surface-traffic-prefix {
   grid-column: 1;
   max-width: 100%;
   font: 600 12px / 1.5 var(--font-mono);
-  color: var(--text-muted);
+  color: var(--wb-muted, var(--text-muted));
 }
 .conversation-reading .surface-traffic-text {
   grid-column: 1;
-  font: 400 15px / 1.65 var(--font-sans);
-  color: var(--text);
+  font: 400 14px / 1.6 var(--font-sans);
+  color: var(--wb-ink, var(--text));
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -55,7 +55,7 @@
 .conversation-reading .surface-traffic-text p:last-child { margin-bottom: 0; }
 .conversation-reading .surface-material {
   font-family: inherit;
-  font-size: inherit;
+  font-size: 15px;
   line-height: inherit;
 }
 .conversation-reading .surface-traffic-meta {
@@ -63,6 +63,7 @@
   gap: 8px;
   padding-top: 4px;
   font: 400 12px / 1.5 var(--font-mono);
+  color: var(--wb-muted, var(--text-muted));
 }
 @container surface (max-width: 520px) {
   .conversation-reading .surface-traffic-turn {

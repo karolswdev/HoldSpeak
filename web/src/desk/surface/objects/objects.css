@@ -1,9 +1,5 @@
-/* PHILO-14 B1 — the object species (contract.md "The object species").
-   Ported from the ratified A boards (docs/internal/philo/phase-14/canvas/
-   harness/p14.css) onto tokens only. The bevel grammar they wear is in
-   surface.css (.bevel-raised / .bevel-sunken / .bevel-flat): a control you
-   click is raised, a well is sunken, a fact you read is flat. Narrow layout
-   answers to the `surface` container, never to the viewport. */
+/* Desk objects keep their sprite, placement and container responsive behavior
+   while using the shared paper, field and selection materials. */
 
 /* ── DeskIcon: the sprite over its name; the floor label has an ink plate ── */
 .desk-icon {
@@ -76,11 +72,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* The floor sits over every authored scene. Drawer wells keep their own
-   material; floor labels always carry the Workbench paper plate. */
+/* Floor labels remain readable over the slate floor; drawer wells keep their
+   own paper surface. */
 .desk-screen .desk-icon-name {
-  background: var(--wb-paper);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--wb-paper) 68%, transparent);
   color: var(--wb-ink);
+  font: 500 12px / 1.25 var(--font-sans);
 }
 /* B30 (Astra r1): a label set by fitName (DeskIcon) carries its own line
    breaks and already fits the clamp; nothing it holds is hidden. */
@@ -89,10 +87,11 @@
 .desk-icon-caption {
   margin-top: 2px;
   padding: 0 4px;
-  border: 1px solid var(--wb-ink);
-  background: var(--wb-paper);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--wb-paper) 62%, transparent);
   color: var(--wb-ink);
-  font: 700 var(--font-size-xs) / 16px var(--font-mono);
+  font: 500 12px / 1.25 var(--font-sans);
   white-space: nowrap;
 }
 .desk-icon-name[data-fitted] {
@@ -104,9 +103,9 @@
   display: inline-block;
   max-width: 100%;
 }
-/* Selected: the inverted label plate (ink on paper), the _sel sprite. */
+/* Selected labels use the shared pale blue tint. */
 .desk-icon[data-selected="true"] .desk-icon-name {
-  background: var(--wb-paper);
+  background: var(--wb-blue);
   color: var(--wb-ink);
 }
 /* DropTarget on an icon: the dashed paper ring, the label on blue. */
@@ -130,7 +129,7 @@
   width: 12px;
   height: 12px;
   background: var(--lamp-ok);
-  box-shadow: var(--bevel-raised), 0 0 0 1px var(--wb-ink);
+  box-shadow: 0 0 0 1px var(--wb-rule-soft);
 }
 .desk-icon-lamp[data-tone="warn"] { background: var(--lamp-warn); }
 .desk-icon-lamp[data-tone="fail"] { background: var(--lamp-fail); }
@@ -147,7 +146,7 @@
   color: var(--text-on-accent);
   font: 700 var(--font-size-xs) / 18px var(--font-mono);
   text-align: center;
-  box-shadow: var(--bevel-raised), 0 0 0 1px var(--wb-ink);
+  box-shadow: 0 0 0 1px var(--wb-rule-soft);
 }
 
 /* ── IconGrid: the A-1 / A-2 spacing ── */
@@ -180,19 +179,17 @@
   }
 }
 
-/* Phase 16 (the interior kit, §11 "IconGrid"; canvas `.objs .obj`): the
-   objects INSIDE a window sit in a sunken PAPER well: five across at 900 px
-   and wider, auto-fit 120 px columns below; the icon at 40 px over a
-   two-line sans 11 name, ink; the hover tints. The same sprites as the
-   Floor (DeskIcon). The Floor's grid has no well (no `data-well`). */
+/* Objects inside a window use a cool neutral well while preserving the
+   existing responsive grid and sprite sizes. */
 .desk-icon-grid[data-well] {
-  --text: var(--wb-text);
+  --text: var(--wb-ink);
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 10px;
   padding: 12px 8px;
-  background: var(--wb-well);
-  border: 1px solid var(--wb-ink);
-  box-shadow: var(--wb-sunken);
+  background: var(--wb-field);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   justify-items: stretch;
 }
 @container surface (min-width: 900px) {
@@ -218,7 +215,7 @@
   color: var(--wb-text);
 }
 .desk-icon-grid[data-well] .desk-icon:hover {
-  background: color-mix(in srgb, var(--wb-sel) 14%, transparent);
+  background: var(--wb-blue);
 }
 .desk-icon-grid[data-well] .desk-icon-art,
 .desk-icon-grid[data-well] .desk-icon-art > img:first-child {
@@ -240,14 +237,15 @@
   color: var(--wb-paper);
 }
 
-/* ── ObjectList: a real list (A-2L). Header = sort gadgets (raised; the
-   active one sunken); rows = facts (flat); the selection is the row. ── */
+/* ObjectList: a paper list with a neutral header, fine row rules and blue
+   selection. */
 .object-list {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  border: 1px solid var(--wb-ink);
-  background: var(--surface-1);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
 }
 .object-list-head,
 .object-list-row {
@@ -256,8 +254,9 @@
   align-items: center;
 }
 .object-list-head {
-  background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
+  background: var(--wb-field);
+  box-shadow: none;
+  border-bottom: 1px solid var(--wb-rule-soft);
 }
 .object-list-th {
   min-width: 0;
@@ -278,18 +277,19 @@
   text-transform: uppercase;
   text-align: left;
   cursor: pointer;
-  box-shadow: var(--wb-raised), inset -1px 0 0 var(--wb-rule);
+  box-shadow: none;
+  border-right: 1px solid var(--wb-rule-soft);
 }
 .object-list-th[data-col="name"] .object-list-sort {
   padding-left: 52px;
 }
 .object-list-sort:hover {
-  background: var(--wb-steel-2);
+  background: var(--wb-blue);
 }
 .object-list-sort[aria-pressed="true"],
 .object-list-sort:active {
-  background: var(--wb-steel-2);
-  box-shadow: var(--wb-sunken);
+  background: var(--wb-blue);
+  box-shadow: none;
 }
 .object-list-rows {
   display: flex;
@@ -303,11 +303,11 @@
      item shrinks below its content: the 393 fold line ran below the row). */
   flex: none;
   min-height: 44px;
-  border-top: 1px solid var(--border-subtle);
-  color: var(--text);
+  border-top: 1px solid var(--wb-rule-soft);
+  color: var(--wb-ink);
 }
 .object-list-row:hover {
-  background: var(--surface-hover);
+  background: var(--wb-blue);
 }
 .object-list-row[data-selected="true"] {
   background: var(--wb-blue);
@@ -495,7 +495,7 @@
   width: 12px;
   height: 12px;
   background: var(--wb-steel);
-  box-shadow: var(--bevel-raised), 0 0 0 1px var(--wb-ink);
+  box-shadow: 0 0 0 1px var(--wb-rule-soft);
 }
 .lane-square[data-tone="ok"] { background: var(--lamp-ok); }
 .lane-square[data-tone="warn"] { background: var(--lamp-warn); }
@@ -638,9 +638,9 @@
 .lane-station .lane-square {
   margin-top: 3px;
 }
-/* The current station is lit: a paper ring round its square. */
+/* The current station is lit with a fine paper ring. */
 .lane-station .lane-square[data-lit="true"] {
-  box-shadow: var(--bevel-raised), 0 0 0 1px var(--wb-ink), 0 0 0 3px var(--wb-paper);
+  box-shadow: 0 0 0 1px var(--wb-rule-soft), 0 0 0 3px var(--wb-paper);
 }
 .lane-station[data-state="reached"] .lane-word,
 .lane-station[data-state="current"] .lane-word {
@@ -665,9 +665,7 @@
   }
 }
 
-/* ── AskWell: the question well (a raised plate) ── */
-/* Phase 16 (the interior kit): the question plate is raised Steel with
-   ink words; its answer field is the kit's paper well (gadgets.css). */
+/* AskWell keeps the question and answer in one light neutral surface. */
 .ask-well {
   --text: var(--wb-ink);
   --text-muted: var(--wb-ink-dim);
@@ -676,9 +674,10 @@
   flex-direction: column;
   gap: 10px;
   padding: 12px 14px;
-  background: var(--wb-steel);
-  border: 1px solid var(--wb-ink);
-  box-shadow: var(--wb-raised);
+  background: var(--wb-field);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   color: var(--wb-ink);
 }
 .ask-well-caption,
@@ -720,16 +719,15 @@
   color: var(--text);
 }
 
-/* ── PRCard (raised plate) and FilesChanged ── */
-/* Read-only facts: FLAT (the bevel grammar). The verb that opens the PR is
-   the face's own Button. */
+/* PRCard facts stay on the same light neutral surface as the shell. */
 .pr-card {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 10px 12px;
-  border: 1px solid var(--wb-ink);
-  background: var(--surface-1);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field);
   box-shadow: none;
 }
 .pr-card-line {
@@ -795,16 +793,17 @@
   color: var(--ok);
 }
 
-/* ── ConfirmLine: the hand in one line (a sunken well) ── */
+/* ConfirmLine keeps its one line and readable paper material. */
 .confirm-line {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
   padding: 8px 10px;
-  background: var(--surface-2);
-  border: 1px solid var(--wb-ink);
-  box-shadow: var(--bevel-sunken);
+  background: var(--wb-field);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
 }
 .confirm-line-ends {
   display: inline-flex;
@@ -841,13 +840,10 @@
   overflow-wrap: anywhere;
 }
 
-/* ── NeedsRow: the object row of the smart drawer. Phase 16 (the interior
-   kit, §11 "Ledger"): the list is the Ledger's sunken PAPER well and a row
-   is a LedgerRow: the kind plate, the name (sans 15/500) over its fact
-   line, the lamp word (mono 11 upper), the verbs at the right; a soft
-   hairline between rows; the hover tints selection-blue. ── */
+/* Needs rows use the shared paper list with fine separators and selection
+   tint. */
 .needs-list {
-  --text: var(--wb-text);
+  --text: var(--wb-ink);
   --text-muted: var(--wb-muted);
   --text-faint: var(--wb-muted);
   list-style: none;
@@ -855,10 +851,11 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  background: var(--wb-well);
-  border: 1px solid var(--wb-ink);
-  box-shadow: var(--wb-sunken);
-  color: var(--wb-text);
+  background: var(--wb-paper);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  color: var(--wb-ink);
 }
 .needs-row {
   display: grid;

@@ -36,16 +36,9 @@ body {
   min-height: 100%;
 }
 
-/* HS-30-03: body is the Signal canvas — near-black, off-white text.
- * Content surfaces (panels, dialogs, cmd frames) render on top as
- * raised dark surfaces via `--canvas*` / `--surface-*`. Elements that
- * sit directly on the canvas (TopNav, gallery h1, page lead) inherit
- * `--text` (off-white) — correct on the dark canvas.
- *
- * `--on-desktop-muted` is the muted step for copy sitting directly on
- * the canvas; it now points at the standard muted token (both read on
- * the dark canvas, so no light/dark split is needed any more).
- */
+/* Shared light shell: near-white paper, cool pale steel and dark ink.
+ * Desk-specific depth comes from the component tokens; the page foundation
+ * keeps the same readable material outside a window. */
 body {
   margin: 0;
   font-family: var(--font-ui);
@@ -66,7 +59,7 @@ small {
 }
 
 :focus-visible {
-  outline: var(--focus-outline-width) solid var(--accent);
+  outline: var(--focus-outline-width) solid var(--field-focus-border);
   outline-offset: var(--focus-outline-offset);
   border-radius: var(--radius-1);
 }
@@ -76,34 +69,27 @@ small {
   color: var(--selection-ink);
 }
 
-/* ============================================================
- * Signal controls — the shared editor language.
- *
- * Cards and navigation already carry HoldSpeak's visual identity; forms used
- * to fall back to browser chrome. These opt-in primitives give editors the
- * same top-lit depth, deliberate focus, and quiet motion as Signal cards.
- * Existing `.input` / `.select` controls adopt the foundation automatically.
- * ============================================================ */
+/* Shared controls: white fields with a fine border and a quiet focus ring. */
 :where(.input, .select, .hs-control),
-/* HS-111-08: Workbench inputs — sunken etch, mono, 28px, no gradient */
 .desk-next :where(select, textarea), .desk-next :where(input:where(:not([type]), [type="text"], [type="search"], [type="url"], [type="email"], [type="password"], [type="number"], [type="date"], [type="time"])) {
   width: 100%;
-  min-height: 28px;
+  min-height: var(--desk-control-h);
   appearance: none;
-  border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-1);
-  box-shadow: inset 1px 1px 0 var(--etch-dark, rgba(0,0,0,0.3)), inset -1px -1px 0 var(--etch-light, rgba(255,255,255,0.07));
-  color: var(--text);
-  padding: 4px 8px;
-  font: 400 12px / 1.35 var(--font-mono);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-sm);
+  background: var(--field-bg);
+  box-shadow: none;
+  color: var(--wb-text, var(--text));
+  padding: 6px 10px;
+  font: 400 var(--font-size-md) / 1.35 var(--font-sans);
   transition:
-    border-color var(--duration-short) var(--ease-standard);
+    border-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard);
 }
 
 :where(.input, .select, .hs-control)::placeholder,
 .desk-next :where(select, textarea)::placeholder, .desk-next :where(input:where(:not([type]), [type="text"], [type="search"], [type="url"], [type="email"], [type="password"], [type="number"], [type="date"], [type="time"]))::placeholder {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-weight: 400;
 }
 
@@ -112,103 +98,111 @@ small {
   border-color: var(--border-strong);
 }
 
-/* HS-111-08: flat accent border on focus, no glow ring */
 :where(.input, .select, .hs-control):focus,
 .desk-next :where(select, textarea):focus, .desk-next :where(input:where(:not([type]), [type="text"], [type="search"], [type="url"], [type="email"], [type="password"], [type="number"], [type="date"], [type="time"])):focus {
-  outline: none;
-  border-color: var(--accent);
+  border-color: var(--field-focus-border);
+  box-shadow: 0 0 0 3px var(--accent-tint);
 }
 
 :where(.input, .select, .hs-control):disabled,
 .desk-next :where(select, textarea):disabled, .desk-next :where(input:where(:not([type]), [type="text"], [type="search"], [type="url"], [type="email"], [type="password"], [type="number"], [type="date"], [type="time"])):disabled {
-  opacity: 0.55;
   cursor: not-allowed;
-  background: var(--surface-1);
+  background: var(--disabled-bg);
+  border-color: var(--disabled-border);
+  color: var(--disabled-fg);
 }
 
 /* Canonical action grammar. This baseline intentionally lives globally:
  * controls rendered by any route must never degrade to platform-default
  * buttons. Page styles
  * may arrange actions, but should not reinvent their dimensions or states. */
-/* HS-111-08: Workbench buttons — 28px, beveled, mono */
 :where(.btn) {
-  min-height: 28px;
+  min-height: var(--size-btn);
   appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
   padding: var(--space-1) var(--space-3);
-  /* Phase 16 (the interior kit, COMPOSITOR.md §11 "Verb"): the library
-     Button is a raised Steel plate with ink, the Workbench verb, under the
-     one light (top-left). Every plated variant (secondary, ghost, primary,
-     danger) is the same plate at the same height; primary and danger change
-     only the fill. Pressed (`:active`, `aria-pressed`) it sinks. */
-  border: 1px solid var(--wb-ink);
-  border-radius: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
+  box-shadow: none;
   color: var(--wb-ink);
-  font: 500 12px / 1 var(--font-mono);
+  font: 500 13px / 1 var(--font-sans);
   cursor: pointer;
   user-select: none;
   transition:
     background var(--duration-short) var(--ease-standard),
-    border-color var(--duration-short) var(--ease-standard);
+    border-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard);
 }
 
 :where(.btn--sm) {
-  /* Phase 16 (Astra r1 M6): the kit Verb is ONE height. A dense Button is
-     the same 28 px plate as any other (--size-btn); it only packs its
-     padding. */
   min-height: var(--size-btn);
   padding-inline: var(--space-2);
-  /* HS-202-05 (the type-scale ruling, §4): the readable floor. The raw
-     11px here was the last sub-floor size on the library Button. */
-  font-size: var(--font-size-xs);
+  font-size: 13px;
 }
 
-/* HS-202-05 (the type-scale ruling, §3 rule 4): at the narrow desk every
- * library Button owns a 44 x 44 px area. A transparent ::after halo
- * carries the area, so the painted face keeps its 24/28px height; the
- * block margin reserves the halo's room so nothing clips it, and half a
- * --space-2 on each side keeps two halos from meeting on one point. The
- * halo never reaches wider than the painted face, so a neighbour in the
- * same row can never lose its own points; --desk-button-hit-size on
- * min-inline-size carries the horizontal half of the target.
- *
- * Viewport media, not @container: most library Buttons at 393 (the dock,
- * the menu bar, the Chair shell, the first-use pages) sit outside any
- * named `surface` container, so a container query cannot reach them.
- * chair.css:566 records the same limit for the same reason. */
+/* At the narrow desk Buttons own their 44px target directly. The target is
+ * part of the control box, so neighbouring controls never lose hit points. */
 @media (max-width: 420px) {
   :where(.btn) {
-    --btn-painted-h: var(--size-btn);
-
-    position: relative;
+    min-block-size: var(--desk-button-hit-size);
     min-inline-size: var(--desk-button-hit-size);
-    margin-block: calc(
-      (var(--desk-button-hit-size) - var(--btn-painted-h)) / 2 + var(--space-2) / 2
-    );
   }
 
-  :where(.btn--sm) {
-    --btn-painted-h: var(--size-btn);
+  /* Surface species add local Button rules after this shared stylesheet. The
+     extra class keeps the device floor authoritative without a halo or a
+     painted-face exception. */
+  body .btn.btn {
+    min-block-size: var(--desk-button-hit-size);
+    min-inline-size: var(--desk-button-hit-size);
   }
 
-  :where(.btn)::after {
+  /* Keep the painted face rounded while the Button owns a rectangular device
+     target at the narrow desk. The transparent face receives corner taps
+     without extending beyond the control box or adding a visual halo. */
+  :where(.btn, .btn--chrome) {
+    position: relative;
+  }
+  :where(.btn, .btn--chrome)::after {
     content: "";
     position: absolute;
-    top: 50%;
-    /* An absolutely positioned child resolves its insets against the
-       PADDING box, so 0 would leave the Button's own 1px border outside
-       the halo and the four corners of the area would fall to the row
-       behind it. -1px lands the halo exactly on the painted border box,
-       and never wider than it. */
-    right: -1px;
-    left: -1px;
-    height: var(--desk-button-hit-size);
-    transform: translateY(-50%);
+    inset: 0;
+    border-radius: 0;
+    background: transparent;
+    pointer-events: auto;
+  }
+  /* The shared plated Button has a 1px border. Its rectangular hit face
+     must cover that border at fractional device coordinates; strip-owned
+     chrome controls keep the inset above unless their owner draws a border. */
+  :where(.btn)::after {
+    inset: -1px;
+  }
+  /* These chrome owners draw a 1px border in the menubar or dock. Expand to
+     the border edge only; borderless strip chrome keeps the real box. */
+  :where(
+    .btn--chrome.desk-dock-launch,
+    .desk-menubar .btn--chrome.egress-badge,
+    .desk-menubar .btn--chrome.desk-tools-launch,
+    .desk-menubar .btn--chrome.desk-bell,
+    .automation-line-press.btn--chrome
+  )::after {
+    inset: -1px;
+  }
+  /* Shared bordered gadgets own their rectangular device face here. The
+     pad mic keeps its existing absolute position from the gadget owner. */
+  :where(.gadget-transport-key) {
+    position: relative;
+  }
+  :where(.gadget-transport-key, .gadget-pad .desk-mic)::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 0;
+    background: transparent;
+    pointer-events: auto;
   }
 
   /* Rails is desk furniture outside a surface container. Reserve the
@@ -220,81 +214,82 @@ small {
   }
 }
 
-/* HS-202-05 (counsel round, finding 1): the filled Button's plate is
- * --accent-ink, not --accent. On --accent NO light foreground reaches
- * 4.5:1 — --text-on-accent reads 3.79:1 there and pure white only
- * 4.20:1 — so the label could never pass while the plate stayed. The ink
- * step is the same forge-ember ramp one stop down (5.24:1), and --accent
- * keeps every non-text duty: rails, glows, borders, tints. */
-/* Phase 16 (the interior kit, §11 "Verb"): `primary` is the selection
-   (Workbench blue) with paper on it; the ember stays for lamps and asks. */
 :where(.btn--primary, .btn.primary) {
-  border-color: var(--wb-ink);
+  border-color: var(--wb-sel);
   background: var(--wb-sel);
-  color: var(--wb-paper);
-  box-shadow: var(--wb-raised);
+  color: var(--white);
 }
 
-/* Secondary and ghost are the Steel plate itself (§11: "the ghost and
-   dense variants map to the same plate at the same height"). */
-:where(.btn--secondary),
-:where(.btn--ghost) {
-  border-color: var(--wb-ink);
+:where(.btn--secondary) {
+  border-color: var(--border);
   background: var(--wb-steel);
+}
+
+:where(.btn--ghost) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--wb-muted);
 }
 
 /* `danger` is the Workbench red with paper on it (REC, 5.73:1). */
 :where(.btn.danger, .btn--danger) {
-  border-color: var(--wb-ink);
-  background: var(--wb-rec);
-  color: var(--wb-paper);
+  border-color: var(--danger-signal);
+  background: var(--danger-fill);
+  color: var(--white);
 }
 
 :where(.btn):active:not(:disabled) {
-  /* HS-96-03: one pressed grammar — a 1px settle, compositor-only.
-     Phase 16: the plate sinks (the Steel sunken bevel). */
   transform: translateY(1px);
-  box-shadow: var(--wb-sunken);
 }
 
-/* PHILO-14 B2: a Button held down by its state (aria-pressed) also sits
-   sunken, as the grammar's pressed gadget. */
-:where(.btn)[aria-pressed="true"]:not(:disabled) {
-  box-shadow: var(--wb-sunken);
+/* A generic pressed Button uses the quiet dark ink wash and dark ink so its
+   state remains readable on the light shell. */
+:where(.btn)[aria-pressed="true"]:not(:disabled):not(.btn--primary):not(.btn.primary):not(.btn--danger):not(.btn.danger) {
+  background: var(--surface-active);
+  color: var(--wb-ink);
+}
+
+:where(.btn--primary, .btn.primary)[aria-pressed="true"]:not(:disabled) {
+  background: var(--accent-press);
+  color: var(--white);
+}
+
+:where(.btn--danger, .btn.danger)[aria-pressed="true"]:not(:disabled) {
+  background: var(--danger-fill);
+  color: var(--white);
 }
 
 :where(.btn):hover:not(:disabled) {
-  border-color: var(--wb-ink);
+  border-color: var(--border-strong);
   background-color: var(--wb-steel-2);
 }
 
+:where(.btn--ghost):hover:not(:disabled),
+:where(.btn--ghost):focus-visible {
+  border-color: transparent;
+  background: var(--surface-hover);
+  color: var(--wb-ink);
+}
+
 :where(.btn--primary, .btn.primary):hover:not(:disabled) {
-  border-color: var(--wb-ink);
-  background: color-mix(in srgb, var(--wb-sel) 88%, var(--wb-paper));
+  border-color: var(--wb-sel);
+  background: color-mix(in srgb, var(--wb-sel) 86%, var(--white));
 }
 
 :where(.btn.danger, .btn--danger):hover:not(:disabled) {
-  border-color: var(--wb-ink);
-  background: color-mix(in srgb, var(--wb-rec) 88%, var(--wb-paper));
-}
-
-:where(.btn):active:not(:disabled) {
-  transform: translateY(1px);
+  border-color: var(--danger-signal);
+  background: color-mix(in srgb, var(--danger-fill) 86%, var(--white));
 }
 
 :where(.btn):focus-visible {
-  outline: var(--focus-outline-width) solid var(--accent);
+  outline: var(--focus-outline-width) solid var(--field-focus-border);
   outline-offset: var(--focus-outline-offset);
 }
 
-/* Phase 16: a disabled verb is no plate: flat (no bevel) on the opaque
-   slate ground, the word in the muted ink (5.3:1 on --wb-field, on any
-   page behind it). It still reads as the same verb, held. */
 :where(.btn):disabled {
-  border-color: var(--wb-rule-soft);
-  background: var(--wb-field);
-  box-shadow: none;
-  color: var(--wb-muted);
+  border-color: var(--disabled-border);
+  background: var(--disabled-bg);
+  color: var(--disabled-fg);
   cursor: not-allowed;
 }
 
@@ -307,7 +302,7 @@ small {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239BA2B0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.8rem center;
-  background-color: var(--surface-1);
+  background-color: var(--field-bg);
 }
 
 .hs-field {
@@ -330,9 +325,8 @@ small {
   line-height: var(--line-height-relaxed);
 }
 
-/* HS-111-08: the .hs-check Checkbox species retired with the gadget-kit
- * conformance sweep (CheckGadget is the ONE boolean); the shared
- * :where() input dress below still serves the live legacy classes. */
+/* Small boolean controls keep the shared white field, fine border and
+ * Workbench blue checked state. */
 
 :where(.toggle-field, .facet-toggle, .set-adv-toggle) {
   cursor: pointer;
@@ -347,16 +341,16 @@ small {
   .facet-toggle input[type="checkbox"],
   .set-adv-toggle input[type="checkbox"]
 ) {
-  /* HS-111-08: Workbench checkbox — square, etched, no glow */
+  /* The compact glyph stays small; its control material follows the fields. */
   width: 16px;
   height: 16px;
   min-width: 16px;
   appearance: none;
   margin: 0;
   border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-1);
-  box-shadow: inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light);
+  border-radius: var(--radius-sm);
+  background: var(--field-bg);
+  box-shadow: none;
   cursor: pointer;
   transition:
     border-color var(--duration-short) var(--ease-standard),
@@ -401,7 +395,7 @@ small {
   .facet-toggle input[type="checkbox"],
   .set-adv-toggle input[type="checkbox"]
 ):focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--field-focus-border);
   outline-offset: 3px;
 }
 
@@ -515,13 +509,11 @@ pre {
  * SAME badge rides the cockpit cards. Global-scoped on purpose because this
  * state signal is shared across route and HUD compositions.
  *
- * Colors honor the web-wins status palette: local = `--ok` (cobalt-green
- * "stays here"), local+cloud / cloud = `--accent` ("leaves, with a target").
+ * Colors honor the status palette: local = `--ok` (stays here),
+ * local+cloud / cloud = the readable amber ink (leaves, with a target).
  * ============================================================ */
-/* HS-111-07 — re-dressed onto the gadget-chip grammar (ONE species,
- * see .gadget-chip): square 2px, OPAQUE scope-tinted fill, 1px bevel,
- * mono caps. The SaaS pill (radius-pill + translucent color-mix fills)
- * is gone; scope variants change COLOR only. */
+/* Egress badges use the shared status-chip grammar: a quiet paper surface,
+ * fine border and readable status ink. Scope variants change COLOR only. */
 .egress-badge {
   display: inline-flex;
   align-items: center;
@@ -532,19 +524,19 @@ pre {
   font: 600 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: var(--surface-2);
+  background: var(--wb-well);
   white-space: nowrap;
 }
 .egress-badge.is-local {
-  color: var(--ok);
-  border-color: color-mix(in srgb, var(--ok) 35%, var(--border));
+  color: var(--wb-ok-ink);
+  border-color: color-mix(in srgb, var(--wb-ok-ink) 35%, var(--border));
 }
 .egress-badge.is-mixed,
 .egress-badge.is-cloud {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  color: var(--wb-ember-ink);
+  border-color: color-mix(in srgb, var(--warn-signal) 35%, var(--border));
 }
 
 /* HS-70-07: the shared guiding empty-state primitive. Used app-wide so a
@@ -618,7 +610,7 @@ input[type="radio"] {
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="time"]::-webkit-calendar-picker-indicator {
   opacity: 0.55;
-  filter: invert(1);
+  filter: none;
   cursor: pointer;
 }
 input[type="date"]::-webkit-calendar-picker-indicator:hover,
@@ -690,53 +682,8 @@ input[type="file"]::file-selector-button:hover {
   background: transparent;
 }
 
-/* ============================================================
- * Materials spike — fabricated control faces (the Fluent bottom
- * stroke + the glass inner highlight): controls read as MADE objects,
- * not flat HTML fills.
- * ============================================================ */
-/* HS-202-05: `:not(:disabled)` on every selector here. These three rules
- * carry real specificity (`.btn:not(…)` is 0-4-0), so they outranked the
- * canonical `:where(.btn):disabled` family above and a disabled Button
- * kept the enabled fill, the enabled border and the gleam — only the
- * cursor and the gray label were left to state the position. The
- * type-scale ruling lightens `--text-faint`, and `--disabled-fg` IS
- * `--text-faint`, so gray alone had to stop carrying it. The enabled
- * faces are untouched: the guard only steps aside for `:disabled`. */
-/* PHILO-14 B2 (the material pass): the glass inner highlight (a 7 %
- * top line, and a soft drop on the primary) drew the plated Button FLAT:
- * "every verb a flat grey box" (PROPOSAL §2). The fill and the bottom
- * stroke stay; the face wears the raised bevel of the grammar, and it
- * sinks while pressed (`:active`) or held (`aria-pressed`). These rules
- * carry real specificity, so the pressed state is restated here. A filter
- * token is no plate: FilterTokens draws its own light material
- * (filter-tokens.css), so it steps out of this block. */
-/* Phase 16 (§11 "Verb"): these rules carry real specificity, so the
-   Steel plate is restated here; the old wash fill and its bottom stroke
-   are gone (the plate is lit by the one light, top-left). */
-.btn--secondary:not(:disabled):not(.surface-filter-token),
-.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled):not(.surface-filter-token) {
-  background: var(--wb-steel);
-  border: 1px solid var(--wb-ink);
-  box-shadow: var(--wb-raised);
-}
-.btn--secondary:not(:disabled):not(.surface-filter-token):hover,
-.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled):not(.surface-filter-token):hover {
-  background: var(--wb-steel-2);
-}
-.btn--primary:not(:disabled) {
-  box-shadow: var(--wb-raised);
-}
-.btn--secondary:not(:disabled):not(.surface-filter-token):is(:active, [aria-pressed="true"]),
-.btn:not(.btn--primary):not(.btn--ghost):not(.btn--danger):not(:disabled):not(.surface-filter-token):is(:active, [aria-pressed="true"]),
-.btn--primary:not(:disabled):is(:active, [aria-pressed="true"]) {
-  box-shadow: var(--wb-sunken);
-}
-.desk-next :where(select, textarea, input):not([type="checkbox"]):not([type="radio"]),
-:where(.input, .select, .hs-control) {
-  border-bottom-color: var(--shade-1);
-}
-
+/* Shared control material is defined once above. Device-only target sizing
+   remains below for controls that sit outside a named surface container. */
 /* PHILO-9-03 (the ratified copy-and-confirm canvas): a DEVICE target size
  * only, the same exception as the Button halo above -- the non-`.btn`
  * controls the Room's update face touches (the editor rail's chips and mic,

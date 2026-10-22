@@ -948,6 +948,19 @@ draws the dotted path (`.drag-path`, A-3) from where the drag began to the
 ghost's centre. Both are presentation only; the drag logic is lane C3's
 (`desk/hand/`).
 
+## Shared shell material (owner direction, 2026-10-22)
+
+Workbench meets Pop!_OS modernizes presentation across the same components.
+Fine frames, restrained radii, quiet secondary/ghost actions, sans labels,
+white fields and continuous paper replace mandatory heavy Steel bevels.
+Shared tokens in design-tokens.json remain the only color/material source.
+A flat `none` shadow is intentional; an absent material token is a defect.
+The historic bevel classes below remain compatibility vocabulary for pressed
+and selected state, not a mandate to paint every Button or body as a plate.
+Focus outlines, state names, keyboard/voice authority, contrast and 44px narrow
+hit ownership remain mandatory. Surface hosts own layout, not their own theme.
+The settled canvas is docs/internal/betterment/canvases/modern-shell-2026-10-22.html.
+
 ## The bevel grammar (PHILO-14 B1)
 
 **A control that must be clicked LOOKS clickable** (UX-CANON D). Three

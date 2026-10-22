@@ -5,7 +5,7 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-21, Ask arrangement and Undo observed; speed gate remains open. Running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-22, shared shell modernized; owner visual acceptance remains open. Running-desk identity is in `pm/STATUS.md`.
 
 **Total: 115 of 117 slices merged**.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
@@ -45,6 +45,11 @@ Shared design fix-forward (2026-10-21): #1423 preserves reading-end
 anchoring as Tools opens, makes editor material ownership explicit, and adds
 a working local composer specimen to /design/components. The retained PR
 reply consumer is parked; no live PR send or aesthetic acceptance is claimed.
+
+Shared shell modernization (2026-10-22): #1424 implements the owner's
+“Workbench meets PopOS” direction in common shell/control material, with Ask
+and Settings as representative faces. It adds no recipe count and does not
+claim aesthetic acceptance or closure of the remaining full-tape failures.
 
 ## Automations (`workbench/RECIPE.md`): 11 of 11
 

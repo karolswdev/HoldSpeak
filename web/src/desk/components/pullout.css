@@ -1,4 +1,5 @@
-/* ── HS-73-04: the pull-out (the DioPullout port) ── */
+/* Shared pullout window: placement and scroll geometry stay with the desk
+   frame while the surface uses the light paper window material. */
 .desk-next .desk-pullout {
   position: fixed;
   top: 64px;
@@ -8,8 +9,10 @@
   width: min(400px, 88vw);
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border);
-  background: var(--desk-window-fill);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--desk-window-radius);
+  background: var(--wb-paper);
+  box-shadow: var(--desk-window-shadow-rest);
   /* OS chrome is not selectable text; the MATERIAL below re-enables. */
   user-select: none;
 }
@@ -48,6 +51,9 @@
 }
 .desk-next .desk-pullout .desk-pullout-body {
   min-height: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-ink);
 }
 /* HS-141-03 — custody text is byte-preserving in data, and must remain
    newline-visible and reachable in the pullout without horizontal clipping. */
@@ -69,9 +75,9 @@
 .desk-next .desk-pullout-title {
   flex: 1;
   min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -84,7 +90,7 @@
   cursor: pointer;
 }
 .desk-next .desk-pullout-close:hover {
-  color: var(--text);
+  color: var(--wb-ink);
 }
 .desk-next .desk-pullout-close:focus-visible {
   outline: 1px solid var(--accent);
@@ -205,6 +211,7 @@
     opacity: 1;
   }
 }
+
 .desk-next .desk-surface {
   position: fixed;
   top: 60px;
@@ -227,10 +234,7 @@
   min-width: 0;
   text-align: left;
 }
-/* HS-111-08 — the Wings reforge (audit §3.4): the last rounded pill
-   dies. A flat strip of square beveled tab gadgets on the head's own
-   field — mono uppercase, shared hairlines, and the ACTIVE face is
-   SUNKEN (the pressed key), never raised, never shadowed. */
+/* Wings keep their compact tab strip and use the shared blue active tint. */
 .desk-next .desk-wings {
   display: flex;
   align-items: center;
@@ -271,13 +275,13 @@
   margin-left: -1px;
 }
 .desk-next .desk-wing:hover {
-  color: var(--text);
-  background: var(--wash-2);
+  color: var(--wb-ink);
+  background: var(--wb-blue);
 }
 .desk-next .desk-wing.is-on {
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
-  color: var(--text);
+  background: var(--wb-blue);
+  box-shadow: none;
+  color: var(--wb-ink);
 }
 .desk-next .desk-wing-door {
   padding: 4px 9px;
@@ -516,9 +520,10 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   max-height: min(570px, calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom) - 24px));
   overflow: auto;
   padding: 14px 16px 16px;
-  border: 1px solid var(--border-strong, var(--border));
-  background: var(--desk-window-fill);
-  box-shadow: var(--desk-window-etch), 0 14px 38px var(--shadow-ink-1);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--desk-window-radius);
+  background: var(--wb-paper);
+  box-shadow: var(--desk-window-shadow-rest);
   display: block;
 }
 /* The picker composes the same fields, rows and Buttons as the Desk. */
@@ -615,10 +620,9 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   .desk-next .desk-pullout.is-card .thought-completion-primary { flex: 1; width: auto; }
 }
 
-/* ── PHILO-13-11 (C1) — the phone frame (393), a shell exception like the
-   phone sheet (containerQueryLaw allowlist). The sizes grow to 44 px;
-   one window fills the work area between the screen bar (44) and the Dock
-   (56; dock.css): 852 − 44 − 44 − 56 − 4 = 704 px of window content (C7
+/* Phone frame (393): controls grow to 44px and one window fills the work
+   area between the screen bar and the 60px dock:
+   852 − 44 − 44 − 60 − 4 = 700px of window content (C7
    asks ≥ 700). The head is ONE 44 px row: close · the wings (or the title,
    for a window without wings) · the head verbs. The screen bar already
    names the window. A wing strip that does not fit is ONE strip menu
@@ -655,14 +659,12 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   }
   .desk-next .desk-window-shell.is-sheet :is(.desk-pullout-body, .desk-surface-body) .gadget-arrows button + button {
     border-top: 0;
-    /* the seam is the aerogel inset edge, never a left rail (HS-101 rule 6) */
-    box-shadow: inset 1px 0 0 var(--desk-aerogel-edge), inset 1px 1px 0 var(--bevel-light),
-      inset -1px -1px 0 var(--bevel-dark);
+    box-shadow: none;
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head {
     margin: 0;
     flex-wrap: nowrap;
-    overflow: hidden;
+    overflow: visible;
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .desk-gadgets-left {
     order: 0;
@@ -711,6 +713,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     padding: 0;
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-window-actions :is(.btn, .desk-chip, button) {
+    box-sizing: border-box;
     height: 44px;
     min-height: 44px;
     min-width: 44px;

@@ -1,41 +1,41 @@
 {
-  "$description": "HS-96-01 — HoldSpeak's design-token source of truth. Three layers per the vendored design-system skill: primitive (raw values), semantic (purpose names — today's canonical Signal vocabulary, preserved verbatim), component (the Desk OS chrome). scripts/generate-tokens.cjs emits src/styles/tokens.css from this file; edit HERE, never the CSS.",
+  "$description": "HS-96-01 — HoldSpeak's design-token source of truth. Three layers per the vendored design-system skill: primitive (raw values), semantic (purpose names), component (the modern Desk OS chrome). scripts/generate-tokens.cjs emits src/styles/tokens.css from this file; edit HERE, never the CSS.",
   "primitive": {
     "color": {
       "ink": {
         "0": {
-          "value": "#0e0f13",
-          "doc": "the near-black floor (Signal bg)"
+          "value": "#f7f9fc",
+          "doc": "near-white application paper"
         },
         "1": {
-          "value": "#15171d",
-          "doc": "surface step 1"
+          "value": "#eef2f7",
+          "doc": "cool pale steel surface"
         },
         "2": {
-          "value": "#1c1f27",
-          "doc": "surface step 2"
+          "value": "#e5ebf3",
+          "doc": "raised cool steel surface"
         },
         "3": {
-          "value": "#242833",
-          "doc": "surface step 3"
+          "value": "#d9e2ee",
+          "doc": "hover steel surface"
         },
         "4": {
-          "value": "#191b23",
-          "doc": "gradient top of the bg wash"
+          "value": "#f2f5f9",
+          "doc": "light paper wash"
         }
       },
       "paper": {
         "0": {
-          "value": "#f2f3f5",
-          "doc": "primary text (~17:1 AAA on ink.0)"
+          "value": "#253449",
+          "doc": "dark ink on near-white paper"
         },
         "1": {
-          "value": "#9ba2b0",
-          "doc": "muted text (~7.1:1 AAA)"
+          "value": "#53647a",
+          "doc": "quiet ink on light shell"
         },
         "2": {
-          "value": "#8b93a3",
-          "doc": "faint text (HS-202-05 type-scale ruling: raised from #767e8d; \u22654.64:1 on every recorded dark ground)"
+          "value": "#63758b",
+          "doc": "faint text on light paper (at least 4.5:1)"
         }
       },
       "orange": {
@@ -177,12 +177,12 @@
         }
       },
       "wash": {
-        "$doc": "white washes for hairlines and hover fills on dark",
+        "$doc": "ink washes for hairlines and hover fills on light paper",
         "035": {
-          "value": "rgba(255, 255, 255, 0.035)"
+          "value": "rgba(37, 52, 73, 0.035)"
         },
         "05": {
-          "value": "rgba(255, 255, 255, 0.05)"
+          "value": "rgba(37, 52, 73, 0.05)"
         },
         "08": {
           "value": "rgba(255, 255, 255, 0.08)"
@@ -190,8 +190,8 @@
       },
       "blue": {
         "450": {
-          "value": "#5b8def",
-          "doc": "the cool blue accent (delivery/panes surfaces)"
+          "value": "#3b5d93",
+          "doc": "the Workbench blue primary and selection"
         }
       }
     },
@@ -228,11 +228,11 @@
       },
       {
         "name": "--surface-hover",
-        "value": "rgba(255, 255, 255, 0.04)"
+        "value": "rgba(37, 52, 73, 0.06)"
       },
       {
         "name": "--surface-active",
-        "value": "rgba(255, 255, 255, 0.07)"
+        "value": "rgba(37, 52, 73, 0.10)"
       },
       {
         "name": "--text",
@@ -248,43 +248,44 @@
       },
       {
         "name": "--text-on-accent",
-        "value": "{primitive.color.paper.0}"
+        "value": "{primitive.color.ink.0}",
+        "doc": "light text on the deep Workbench blue"
       },
       {
         "name": "--accent",
-        "value": "{primitive.color.orange.500}"
+        "value": "{primitive.color.blue.450}"
       },
       {
         "name": "--accent-hover",
-        "value": "{primitive.color.orange.400}"
+        "value": "color-mix(in srgb, var(--accent) 86%, var(--white))"
       },
       {
         "name": "--accent-press",
-        "value": "{primitive.color.orange.600}"
+        "value": "color-mix(in srgb, var(--accent) 86%, var(--black))"
       },
       {
         "name": "--accent-ink",
-        "value": "{primitive.color.orange.650}",
-        "doc": "HS-202-05: the ember fill under TEXT (filled Button, the Talk key). --accent stays the signal colour for rails, glows and borders; no light foreground reaches 4.5:1 on it."
+        "value": "{primitive.color.blue.450}",
+        "doc": "the blue fill under light Button text"
       },
       {
         "name": "--accent-ink-hover",
-        "value": "{primitive.color.orange.600}",
-        "doc": "HS-202-05: lighter than --accent-ink and still 4.74:1 with --text-on-accent"
+        "value": "color-mix(in srgb, var(--accent-ink) 86%, var(--white))",
+        "doc": "the primary hover fill"
       },
       {
         "name": "--accent-ink-press",
-        "value": "{primitive.color.orange.700}",
-        "doc": "HS-202-05: the settle, darker than --accent-ink; 6.04:1 with --text-on-accent"
+        "value": "color-mix(in srgb, var(--accent-ink) 86%, var(--black))",
+        "doc": "the primary pressed fill"
       },
       {
         "name": "--accent-text",
-        "value": "{primitive.color.orange.400}",
-        "doc": "PHILO-13-11 (C1, R5): ember TEXT on the dark well (5.43:1 on --surface-1); --accent text reads 4.26:1. Filled verbs stay on --accent-ink."
+        "value": "{primitive.color.blue.450}",
+        "doc": "blue text on a light shell"
       },
       {
         "name": "--accent-tint",
-        "value": "rgba(168, 110, 74, 0.12)"
+        "value": "rgba(59, 93, 147, 0.12)"
       },
       {
         "name": "--mark-bg",
@@ -298,15 +299,15 @@
       },
       {
         "name": "--accent-glow",
-        "value": "rgba(168, 110, 74, 0.28)"
+        "value": "rgba(59, 93, 147, 0.20)"
       },
       {
         "name": "--accent-gradient",
-        "value": "linear-gradient( 135deg, #da9868 0%, #a86e4a 50%, #834f32 100% )"
+        "value": "linear-gradient( 135deg, #e6eef9 0%, #3b5d93 100% )"
       },
       {
         "name": "--bg-gradient",
-        "value": "linear-gradient( 180deg, #191b23 0%, #0e0f13 100% )"
+        "value": "linear-gradient( 180deg, #f7f9fc 0%, #eef2f7 100% )"
       },
       {
         "name": "--ok",
@@ -358,37 +359,37 @@
       },
       {
         "name": "--border-subtle",
-        "value": "rgba(255, 255, 255, 0.06)"
+        "value": "#d9e1eb"
       },
       {
         "name": "--border",
-        "value": "#2a2e3e",
-        "doc": "HS-110-01: solid 1px border, not alpha wash"
+        "value": "#bbc7d6",
+        "doc": "fine cool border"
       },
       {
         "name": "--border-strong",
-        "value": "#363b50",
-        "doc": "HS-110-01: focused / front-window border"
+        "value": "#8fa4bd",
+        "doc": "focused / front-window border"
       },
       {
         "name": "--bevel-light",
-        "value": "rgba(255, 255, 255, 0.14)",
-        "doc": "HS-110-01: top-left highlight on raised surfaces (Workbench depth grammar)"
+        "value": "transparent",
+        "doc": "retired hard bevel highlight in the modern shell"
       },
       {
         "name": "--bevel-dark",
-        "value": "rgba(0, 0, 0, 0.40)",
-        "doc": "HS-110-01: bottom-right shadow on raised surfaces"
+        "value": "transparent",
+        "doc": "retired hard bevel shade in the modern shell"
       },
       {
         "name": "--etch-light",
-        "value": "rgba(255, 255, 255, 0.07)",
-        "doc": "HS-110-01: bottom-right highlight on sunken surfaces"
+        "value": "transparent",
+        "doc": "retired hard etch highlight in the modern shell"
       },
       {
         "name": "--etch-dark",
-        "value": "rgba(0, 0, 0, 0.30)",
-        "doc": "HS-110-01: top-left shadow on sunken surfaces"
+        "value": "transparent",
+        "doc": "retired hard etch shade in the modern shell"
       },
       {
         "name": "--font-display",
@@ -523,15 +524,15 @@
       },
       {
         "name": "--field-bg",
-        "value": "var(--surface-2)"
+        "value": "#ffffff"
       },
       {
         "name": "--field-border",
-        "value": "var(--border)"
+        "value": "#bbc7d6"
       },
       {
         "name": "--field-focus-border",
-        "value": "var(--accent)"
+        "value": "#3b5d93"
       },
       {
         "name": "--local",
@@ -548,7 +549,7 @@
       },
       {
         "name": "--font-size-sm",
-        "value": "0.8125rem"
+        "value": "0.875rem"
       },
       {
         "name": "--font-size-md",
@@ -656,8 +657,8 @@
       },
       {
         "name": "--size-btn",
-        "value": "28px",
-        "doc": "HS-135-03 L9: button / menu-item min-height"
+        "value": "32px",
+        "doc": "modern shared Button height; narrow controls keep the 44px floor"
       },
       {
         "name": "--size-icon-sm",
@@ -676,25 +677,25 @@
       },
       {
         "name": "--radius-xs",
-        "value": "2px",
-        "doc": "HS-110-01: Workbench corners — sharp, not Apple-round"
+        "value": "4px",
+        "doc": "small modern shell corner"
       },
       {
         "name": "--radius-sm",
-        "value": "2px"
+        "value": "5px"
       },
       {
         "name": "--radius-md",
-        "value": "2px"
+        "value": "6px"
       },
       {
         "name": "--radius-lg",
-        "value": "2px"
+        "value": "8px"
       },
       {
         "name": "--radius-pill",
-        "value": "2px",
-        "doc": "HS-110-01: pills become rectangles"
+        "value": "999px",
+        "doc": "reserved for status chips"
       },
       {
         "name": "--radius-1",
@@ -849,27 +850,27 @@
       {
         "name": "--wash-1",
         "value": "{primitive.color.wash.035}",
-        "doc": "faintest white wash (hairline fills)"
+        "doc": "faint ink wash (hairline fills)"
       },
       {
         "name": "--wash-2",
         "value": "{primitive.color.wash.05}",
-        "doc": "hover-weight white wash"
+        "doc": "quiet ink hover wash"
       },
       {
         "name": "--bevel-light-strong",
-        "value": "rgba(255, 255, 255, 0.22)",
-        "doc": "Raised voice and chair control highlight; preserves the existing material."
+        "value": "transparent",
+        "doc": "retired hard bevel highlight"
       },
       {
         "name": "--bevel-light-hover",
-        "value": "rgba(255, 255, 255, 0.18)",
-        "doc": "Hovered chrome control highlight."
+        "value": "transparent",
+        "doc": "retired hard bevel hover highlight"
       },
       {
         "name": "--bevel-dark-soft",
-        "value": "rgba(0, 0, 0, 0.20)",
-        "doc": "Soft inner bevel for controls and gadgets."
+        "value": "transparent",
+        "doc": "retired soft bevel shade"
       },
       {
         "name": "--accent-tint-faint",
@@ -1045,38 +1046,38 @@
       },
       {
         "name": "--desk-glass",
-        "value": "var(--surface-2)",
-        "doc": "HS-110-01: opaque surface, no frosted glass"
+        "value": "#e9edf3",
+        "doc": "cool pale shell chrome"
       },
       {
         "name": "--desk-window-fill",
-        "value": "var(--wb-field)",
-        "doc": "PHILO-16 §2 amends HS-110-01: the light returns, the glass stays dead. The window ground is slate (--wb-field), opaque"
+        "value": "var(--wb-paper)",
+        "doc": "near-white window paper"
       },
       {
         "name": "--desk-panel-fill",
-        "value": "var(--bg)",
-        "doc": "HS-110-01: secondary panel fill, opaque"
+        "value": "var(--wb-field)",
+        "doc": "secondary cool slate panel fill"
       },
       {
         "name": "--desk-window-radius",
-        "value": "2px",
-        "doc": "HS-110-01: sharp Workbench corners"
+        "value": "8px",
+        "doc": "modern window radius"
       },
       {
         "name": "--desk-window-shadow",
-        "value": "0 0 0 1px var(--wb-ink), var(--wb-drop), var(--wb-umbra), inset 0 0 0 1px var(--wb-ink)",
-        "doc": "PHILO-16 §2 amends HS-110-01: the light returns, the glass stays dead. The front window: ink keyline, the hard drop, the umbra"
+        "value": "0 14px 34px rgba(22, 40, 62, 0.16), 0 0 0 1px var(--wb-rule-soft)",
+        "doc": "soft depth for the front window"
       },
       {
         "name": "--desk-window-shadow-rest",
-        "value": "0 0 0 1px var(--wb-ink), var(--wb-drop), inset 0 0 0 1px var(--wb-ink)",
-        "doc": "PHILO-16 §2 amends HS-110-01: the light returns, the glass stays dead. A window at rest: ink keyline and the hard drop, no umbra"
+        "value": "0 5px 14px rgba(22, 40, 62, 0.10), 0 0 0 1px var(--wb-rule-soft)",
+        "doc": "reduced depth for a resting window"
       },
       {
         "name": "--desk-window-keyline",
-        "value": "var(--border-strong)",
-        "doc": "HS-110-01: front window wears the strong border, not an accent-mixed ring"
+        "value": "var(--wb-sel)",
+        "doc": "fine blue edge for the front window"
       },
       {
         "name": "--desk-window-blur",
@@ -1085,18 +1086,18 @@
       },
       {
         "name": "--desk-window-bevel",
-        "value": "inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark)",
-        "doc": "HS-110-01: the raised bevel (Workbench depth grammar)"
+        "value": "none",
+        "doc": "modern shell uses fine borders and soft depth"
       },
       {
         "name": "--desk-window-etch",
-        "value": "inset 1px 1px 0 var(--etch-dark), inset -1px -1px 0 var(--etch-light)",
-        "doc": "HS-110-01: the sunken etch (wells, inputs)"
+        "value": "none",
+        "doc": "modern fields use a fine border"
       },
       {
         "name": "--desk-transient-radius",
-        "value": "2px",
-        "doc": "HS-110-01: menus/popovers — sharp corners"
+        "value": "5px",
+        "doc": "modern control radius for transient surfaces"
       },
       {
         "name": "--desk-inlet-radius",
@@ -1136,7 +1137,7 @@
       {
         "name": "--desk-button-hit-size",
         "value": "44px",
-        "doc": "HS-202-05: the area a library Button owns at the narrow desk. A transparent halo carries it (global.css); the painted face keeps --size-btn. --size-touch (40px) is the row glyph and is unchanged."
+        "doc": "the direct narrow-desk Button target; --size-touch (40px) remains the row-glyph floor"
       },
       {
         "name": "--desk-surface-gap",
@@ -1155,8 +1156,8 @@
       },
       {
         "name": "--desk-surface-body-size",
-        "value": "0.8125rem",
-        "doc": "HS-98: surface body copy size (13px; matches --font-size-sm)"
+        "value": "0.875rem",
+        "doc": "shared body copy size (14px)"
       },
       {
         "name": "--desk-surface-detail-size",
@@ -1165,23 +1166,23 @@
       },
       {
         "name": "--desk-window-head-fill",
-        "value": "var(--surface-2)",
-        "doc": "HS-110-01: opaque title bar fill — raised via bevel, not via wash"
+        "value": "var(--wb-blue)",
+        "doc": "pale active title bar fill"
       },
       {
         "name": "--desk-window-head-front",
-        "value": "var(--surface-3)",
-        "doc": "HS-110-01: front window title bar — one step brighter"
+        "value": "var(--wb-blue)",
+        "doc": "pale front title bar fill"
       },
       {
         "name": "--desk-window-rail",
-        "value": "var(--surface-2)",
-        "doc": "HS-110-01: rails/groups — solid, not translucent"
+        "value": "var(--wb-steel)",
+        "doc": "cool pale steel rail"
       },
       {
         "name": "--desk-window-well",
-        "value": "rgba(0, 0, 0, 0.28)",
-        "doc": "wells/inputs: dark inset (unchanged — this already reads as a CRT well)"
+        "value": "var(--wb-well)",
+        "doc": "white field well with a fine border"
       },
       {
         "name": "--desk-terminal-screen",
@@ -1190,18 +1191,18 @@
       },
       {
         "name": "--desk-scrollbar-thumb",
-        "value": "rgba(255, 255, 255, 0.14)",
-        "doc": "HS-99: the pill scrollbar thumb, everywhere"
+        "value": "rgba(83, 100, 122, 0.35)",
+        "doc": "quiet scrollbar thumb"
       },
       {
         "name": "--desk-scrollbar-thumb-hover",
-        "value": "rgba(255, 255, 255, 0.26)",
-        "doc": "HS-99: the thumb under the pointer"
+        "value": "rgba(83, 100, 122, 0.55)",
+        "doc": "quiet scrollbar thumb under the pointer"
       },
       {
         "name": "--desk-control-h",
-        "value": "36px",
-        "doc": "HS-99: control height on the well tone (selects, dense inputs)"
+        "value": "32px",
+        "doc": "shared desktop control height"
       },
       {
         "name": "--ease-quart",
@@ -1225,13 +1226,13 @@
       },
       {
         "name": "--gadget-fill",
-        "value": "var(--surface-2)",
-        "doc": "HS-110-01: gadget rest fill"
+        "value": "var(--wb-steel)",
+        "doc": "cool pale gadget rest fill"
       },
       {
         "name": "--gadget-fill-hover",
-        "value": "var(--surface-3)",
-        "doc": "HS-110-01: gadget hover fill"
+        "value": "var(--wb-steel-2)",
+        "doc": "cool pale gadget hover fill"
       },
       {
         "name": "--shade-1",
@@ -1309,49 +1310,79 @@
         "doc": "HS-110-01: no float shadow — bevel-depth only"
       },
       {
+        "name": "--desk-pill-neutral",
+        "value": "#edf1f6",
+        "doc": "neutral status chip ground"
+      },
+      {
+        "name": "--desk-pill-ok",
+        "value": "#e3f3ea",
+        "doc": "ok status chip ground"
+      },
+      {
+        "name": "--desk-pill-warn",
+        "value": "#fff2cf",
+        "doc": "amber status chip ground"
+      },
+      {
+        "name": "--desk-pill-danger",
+        "value": "#fde6e4",
+        "doc": "danger status chip ground"
+      },
+      {
+        "name": "--desk-pill-info",
+        "value": "#e6eef9",
+        "doc": "info status chip ground"
+      },
+      {
+        "name": "--desk-pill-accent",
+        "value": "#fff0df",
+        "doc": "attention status chip ground"
+      },
+      {
         "name": "--wb-steel",
-        "value": "#9ea4b0",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: pen 0: the frame plate, bars, gadgets"
+        "value": "#e7ecf3",
+        "doc": "cool pale steel for bars and controls"
       },
       {
         "name": "--wb-steel-2",
-        "value": "#b3b8c2",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: the frame plate under the pointer"
+        "value": "#f0f3f8",
+        "doc": "light hover steel"
       },
       {
         "name": "--wb-ink",
-        "value": "#0b0c10",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: pen 1: lines and words on the frame (7.81:1 on steel, 5.40:1 on blue, 17.12:1 on paper)"
+        "value": "#253449",
+        "doc": "dark Workbench ink for lines and words"
       },
       {
         "name": "--wb-paper",
-        "value": "#eef0f3",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: pen 2: the screen title bar, the menus, the state tags"
+        "value": "#fafbfc",
+        "doc": "near-white window paper"
       },
       {
         "name": "--wb-blue",
-        "value": "#6688bb",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: pen 3: the ONE front window, its frame and its title bar (Workbench 2.0 blue)"
+        "value": "#e6eef9",
+        "doc": "pale blue active head and selection tint"
       },
       {
         "name": "--wb-hi",
-        "value": "rgba(255, 255, 255, 0.72)",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: the shine: top and left edges of a plate"
+        "value": "transparent",
+        "doc": "retired hard bevel highlight"
       },
       {
         "name": "--wb-lo",
-        "value": "rgba(0, 0, 0, 0.5)",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: the shade: bottom and right edges of a plate"
+        "value": "transparent",
+        "doc": "retired hard bevel shade"
       },
       {
         "name": "--wb-backdrop",
-        "value": "#3c4454",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: the Chair screen"
+        "value": "#293847",
+        "doc": "quiet slate desktop floor"
       },
       {
         "name": "--wb-dither",
-        "value": "#363e4d",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: the Chair screen pattern, a 4 px checker (WBPattern)"
+        "value": "#293847",
+        "doc": "legacy floor pattern value, unused by the plain modern floor"
       },
       {
         "name": "--wb-rec",
@@ -1360,143 +1391,143 @@
       },
       {
         "name": "--wb-hover",
-        "value": "rgba(255, 255, 255, 0.22)",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: a gadget under the pointer"
+        "value": "rgba(37, 52, 73, 0.06)",
+        "doc": "quiet control hover wash"
       },
       {
         "name": "--wb-press",
-        "value": "rgba(0, 0, 0, 0.12)",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: a pressed gadget"
+        "value": "color-mix(in srgb, var(--wb-blue) 70%, var(--wb-sel))",
+        "doc": "opaque modern pressed gadget fill"
       },
       {
         "name": "--wb-frame",
-        "value": "4px",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: the window border"
+        "value": "1px",
+        "doc": "fine window frame border"
       },
       {
         "name": "--wb-bar-h",
-        "value": "26px",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: the window title bar (393: 44px, window-chrome.css)"
+        "value": "36px",
+        "doc": "desktop window title bar; narrow shell keeps 44px elsewhere"
       },
       {
         "name": "--wb-screen-h",
-        "value": "28px",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: the screen title bar (393: 44px, window-chrome.css)"
+        "value": "36px",
+        "doc": "desktop system bar; narrow shell keeps 44px elsewhere"
       },
       {
         "name": "--wb-gadget-w",
-        "value": "26px",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: one window gadget (393: 44px, window-chrome.css)"
+        "value": "32px",
+        "doc": "desktop title-bar gadget width"
       },
       {
         "name": "--wb-raised",
-        "value": "inset 1px 1px 0 var(--wb-hi), inset -1px -1px 0 var(--wb-lo)",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: a raised plate"
+        "value": "none",
+        "doc": "modern controls use a fine border and soft depth"
       },
       {
         "name": "--wb-sunken",
-        "value": "inset 1px 1px 0 var(--wb-lo), inset -1px -1px 0 var(--wb-hi)",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: a pressed plate, an open wing"
+        "value": "none",
+        "doc": "modern fields use a fine border"
       },
       {
         "name": "--wb-drop",
-        "value": "4px 4px 0 rgba(0, 0, 0, 0.32)",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: window and menu drop: a hard offset, no blur"
+        "value": "0 8px 22px rgba(22, 40, 62, 0.12)",
+        "doc": "soft shell depth"
       },
       {
         "name": "--wb-stipple",
-        "value": "repeating-linear-gradient(180deg, transparent 0 3px, rgba(0, 0, 0, 0.16) 3px 4px)",
-        "doc": "PHILO-13-11 (C1) Workbench Steel: the drag bar: 1 px lines every 4 px"
+        "value": "none",
+        "doc": "modern bars have a quiet solid fill"
       },
       {
         "name": "--wb-stipple-fine",
-        "value": "repeating-linear-gradient(180deg, transparent 0 2px, rgba(11, 12, 16, 0.07) 2px 3px)",
-        "doc": "PHILO-13-11 title bar B (owner pick 2026-10-03): the FRONT drag bar only: 1 px lines every 3 px, 7 % ink"
+        "value": "none",
+        "doc": "modern bars have no title hatching"
       },
       {
         "name": "--wb-ink-dim",
-        "value": "#2a2e36",
-        "doc": "PHILO-13-11 title bar B (owner pick 2026-10-03): an inactive window's title (5.44:1 on steel)"
+        "value": "#4d5e75",
+        "doc": "quiet inactive title ink on light steel"
       },
       {
         "name": "--wb-rule",
-        "value": "rgba(11, 12, 16, 0.45)",
-        "doc": "PHILO-13-11 title bar B (owner pick 2026-10-03): the hairline between gadget cells"
+        "value": "#c5cfdd",
+        "doc": "fine chrome hairline"
       },
       {
         "name": "--wb-raised-soft",
-        "value": "inset 1px 1px 0 rgba(255, 255, 255, 0.36), inset -1px -1px 0 rgba(0, 0, 0, 0.25)",
-        "doc": "PHILO-13-11 title bar B (owner pick 2026-10-03): a gadget cell, the raised bevel at half strength"
+        "value": "none",
+        "doc": "modern controls have no bevel box"
       },
       {
         "name": "--wb-steel-dim",
-        "value": "#7f8591",
-        "doc": "PHILO-16 (A1) the light: a plate in shade, steel at 82 % (the far window's frame and bar)"
+        "value": "#d9e0ea",
+        "doc": "resting window steel"
       },
       {
         "name": "--wb-umbra",
-        "value": "0 18px 40px rgba(0, 0, 0, 0.45)",
-        "doc": "PHILO-16 (A1) the light: the front window's umbra, cast down by the one top-left light"
+        "value": "0 16px 36px rgba(22, 40, 62, 0.16)",
+        "doc": "soft front-window depth"
       },
       {
         "name": "--wb-umbra-near",
-        "value": "0 10px 22px rgba(0, 0, 0, 0.28)",
-        "doc": "PHILO-16 (A1) the light: the near window's umbra, at half"
+        "value": "0 8px 18px rgba(22, 40, 62, 0.10)",
+        "doc": "reduced resting-window depth"
       },
       {
         "name": "--desk-veil-near",
-        "value": "rgba(11, 12, 16, 0.06)",
-        "doc": "PHILO-16 (A1) the depth ladder: the ink wash over a near window's body (never opacity)"
+        "value": "rgba(37, 52, 73, 0.03)",
+        "doc": "quiet near-window wash"
       },
       {
         "name": "--desk-veil-far",
-        "value": "rgba(11, 12, 16, 0.12)",
-        "doc": "PHILO-16 (A1) the depth ladder: the ink wash over a far window's body (never opacity; 12 % per Astra M3, was 14 %)"
+        "value": "rgba(37, 52, 73, 0.07)",
+        "doc": "quiet far-window wash"
       },
       {
         "name": "--wb-field",
-        "value": "#cdd2db",
-        "doc": "PHILO-16 (A1) the interior: the window ground, slate between paper and steel"
+        "value": "#edf1f6",
+        "doc": "cool pale slate window ground"
       },
       {
         "name": "--wb-field-hi",
-        "value": "#d8dce4",
-        "doc": "PHILO-16 (A1) the interior: the ground where the light falls (the top of a window body)"
+        "value": "#f7f9fc",
+        "doc": "light window ground"
       },
       {
         "name": "--wb-well",
-        "value": "#eef0f3",
-        "doc": "PHILO-16 (A1) the interior: a sunken well (ledger, input, icon grid), paper"
+        "value": "#ffffff",
+        "doc": "white input and ledger well"
       },
       {
         "name": "--wb-text",
-        "value": "#0b0c10",
-        "doc": "PHILO-16 (A1) the interior: ink, the words inside a window"
+        "value": "#253449",
+        "doc": "dark ink inside a window"
       },
       {
         "name": "--wb-muted",
-        "value": "#4a5060",
-        "doc": "PHILO-16 (A1) the interior: secondary ink (5.3:1 on --wb-field; the canvas said 7.0, measured 5.31)"
+        "value": "#53647a",
+        "doc": "quiet ink on the light window ground"
       },
       {
         "name": "--wb-rule-soft",
-        "value": "rgba(11, 12, 16, 0.18)",
-        "doc": "PHILO-16 (A1) the interior: a hairline between rows on slate"
+        "value": "#d9e1eb",
+        "doc": "fine hairline between rows"
       },
       {
         "name": "--wb-sel",
-        "value": "#4a6aa0",
-        "doc": "PHILO-16 (A1) the interior: the selection, Workbench blue in shade with paper on it (paper 4.76:1; Astra M3, was #6688bb at 3.17:1)"
+        "value": "#3b5d93",
+        "doc": "deep Workbench blue for primary, focus and front accents"
       },
       {
         "name": "--desk-window-fall",
         "value": "linear-gradient(180deg, var(--wb-field-hi) 0%, var(--wb-field) 100%)",
-        "doc": "PHILO-16 (A1) the interior: the slate ground, lit at the top"
+        "doc": "quiet slate window ground"
       },
       {
         "name": "--desk-floor",
-        "value": "radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 60%) 0 0 / auto, linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.28) 100%) 0 0 / auto, repeating-conic-gradient(var(--wb-dither) 0 25%, transparent 0 50%) 0 0 / 8px 8px, var(--wb-backdrop)",
-        "doc": "PHILO-16 (A1) the floor: the Workbench backdrop (8 px checker of --wb-dither) under the light's vignette (bright top-left, falling to the foot); a `background` shorthand"
+        "value": "radial-gradient(1200px 700px at 8% 0%, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 65%), linear-gradient(180deg, #33495f 0%, var(--wb-backdrop) 100%)",
+        "doc": "plain quiet slate floor with subtle tonal depth; no checker"
       },
       {
         "name": "--desk-ease",
@@ -1540,23 +1571,23 @@
       },
       {
         "name": "--bevel-raised",
-        "value": "inset 1px 1px 0 var(--bevel-light-strong), inset -1px -1px 0 var(--bevel-dark)",
-        "doc": "PHILO-14 B1 (the object species): the bevel grammar: a control you click (a gadget, a sort header, a plate) LOOKS raised"
+        "value": "none",
+        "doc": "modern controls use a fine border and soft depth"
       },
       {
         "name": "--bevel-sunken",
-        "value": "inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light-strong)",
-        "doc": "PHILO-14 B1 (the object species): the bevel grammar: a well you type or drop into, and a pressed gadget, sits sunken"
+        "value": "none",
+        "doc": "modern fields use a fine border"
       },
       {
         "name": "--bevel-raised-soft",
-        "value": "inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark-soft)",
-        "doc": "PHILO-14 B2 (the material pass): the light bevel of a filter token: you press it, but it is no plate and never looks like a wing"
+        "value": "none",
+        "doc": "modern controls have no bevel box"
       },
       {
         "name": "--bevel-sunken-soft",
-        "value": "inset 1px 1px 0 var(--bevel-dark-soft), inset -1px -1px 0 var(--bevel-light)",
-        "doc": "PHILO-14 B2 (the material pass): the active filter token, sunken at the light strength"
+        "value": "none",
+        "doc": "modern fields have no bevel box"
       },
       {
         "name": "--lamp-ok",

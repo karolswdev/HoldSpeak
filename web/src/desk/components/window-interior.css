@@ -20,57 +20,52 @@
 .desk-next .desk-window.desk-window-shell,
 .thought-context-overlay .thought-context-picker,
 .desk-next .desk-tool-shelf {
-  /* ground: slate, wells paper, plates steel */
-  --bg: var(--wb-field);
-  --surface-1: var(--wb-field);
-  --surface-2: var(--wb-well);
-  --surface-3: var(--wb-steel-2);
-  --surface-hover: color-mix(in srgb, var(--wb-ink) 5%, transparent);
-  --surface-active: color-mix(in srgb, var(--wb-ink) 9%, transparent);
-  --canvas: var(--wb-field);
-  --canvas-raised: var(--wb-field);
-  --canvas-elevated: var(--wb-well);
-  --desk-window-well: var(--wb-well);
-  --desk-panel-fill: var(--wb-field);
-  --desk-window-rail: var(--wb-field-hi);
-  --desk-glass: var(--wb-well);
-  --desk-aerogel-fill: var(--wb-well);
+  /* Light paper surfaces share one neutral rail and one blue selection. */
+  --bg: var(--wb-paper);
+  --surface-1: var(--wb-paper);
+  --surface-2: var(--wb-field);
+  --surface-3: var(--wb-blue);
+  --surface-hover: color-mix(in srgb, var(--wb-blue) 28%, transparent);
+  --surface-active: color-mix(in srgb, var(--wb-sel) 18%, transparent);
+  --canvas: var(--wb-paper);
+  --canvas-raised: var(--wb-paper);
+  --canvas-elevated: var(--wb-field);
+  --desk-window-well: var(--wb-field);
+  --desk-panel-fill: var(--wb-paper);
+  --desk-window-rail: var(--wb-field);
+  --desk-glass: var(--wb-paper);
+  --desk-aerogel-fill: var(--wb-paper);
   --desk-aerogel-edge: var(--wb-rule-soft);
-  /* body strips (a foot, a rail) are steel plates (§11 Foot) */
-  --desk-window-head-fill: var(--wb-steel);
-  --desk-window-head-front: var(--wb-steel-2);
-  --gadget-fill: var(--wb-steel);
-  --gadget-fill-hover: var(--wb-steel-2);
+  --desk-window-head-fill: var(--wb-paper);
+  --desk-window-head-front: var(--wb-blue);
+  --gadget-fill: var(--wb-paper);
+  --gadget-fill-hover: var(--wb-blue);
   /* ink */
-  --text: var(--wb-text);
-  --text-muted: var(--wb-muted);
-  --text-faint: var(--wb-muted);
+  --text: var(--wb-ink);
+  --text-muted: color-mix(in srgb, var(--wb-ink) 68%, var(--wb-paper));
+  --text-faint: color-mix(in srgb, var(--wb-ink) 56%, var(--wb-paper));
   --disabled-bg: var(--wb-field);
-  --disabled-fg: var(--wb-muted);
+  --disabled-fg: color-mix(in srgb, var(--wb-ink) 45%, var(--wb-paper));
   --disabled-border: var(--wb-rule-soft);
   /* rules */
   --border: var(--wb-rule-soft);
-  --border-strong: var(--wb-rule);
-  --border-subtle: color-mix(in srgb, var(--wb-ink) 10%, transparent);
+  --border-strong: var(--wb-sel);
+  --border-subtle: var(--wb-rule-soft);
   --line: var(--wb-rule-soft);
-  --line-strong: var(--wb-rule);
-  --field-bg: var(--wb-well);
-  --field-border: var(--wb-rule);
+  --line-strong: var(--wb-sel);
+  --field-bg: var(--wb-paper);
+  --field-border: var(--wb-rule-soft);
   --desk-scrollbar-thumb: color-mix(in srgb, var(--wb-ink) 22%, transparent);
   --desk-scrollbar-thumb-hover: color-mix(in srgb, var(--wb-ink) 38%, transparent);
-  /* the selection: Workbench blue with paper on it */
   --selected-bg: var(--wb-sel);
   --selected-fg: var(--wb-paper);
   --selected-soft: color-mix(in srgb, var(--wb-sel) 18%, transparent);
   --selection-bg: var(--wb-sel);
   --selection-ink: var(--wb-paper);
-  /* the ember and the state words, as ink a face can read on slate;
-     the lamp squares (--lamp-*) keep their bright tones (resolved at :root) */
-  --accent: var(--wb-ember-ink);
-  --accent-text: var(--wb-ember-ink);
-  /* Astra M3: the egress word (mixed, cloud) reads --accent-hover */
-  --accent-hover: var(--wb-ember-ink);
-  --line-emphasis: var(--wb-ember-ink);
+  --accent: var(--wb-sel);
+  --accent-text: var(--wb-sel);
+  --accent-hover: var(--wb-sel);
+  --line-emphasis: var(--wb-sel);
   --field-focus-border: var(--wb-sel);
   --ok: var(--wb-ok-ink);
   --success: var(--wb-ok-ink);
@@ -80,22 +75,20 @@
   --danger: var(--wb-danger-ink);
   --info: var(--wb-info-ink);
   --local: var(--wb-info-ink);
-  color: var(--wb-text);
+  color: var(--wb-ink);
 }
 
-/* the ground is lit: brighter at the top where the light falls (§2).
-   The fall is an image over a solid slate colour, so the window's ground
-   COLOUR is slate too (a gradient alone left background-color transparent:
-   whatever reads the ground, a contrast fence or a host's own rule,
-   found the dark page under the window). */
+/* The shell owns a single paper ground; the floor remains outside it. */
 .desk-next .desk-window.desk-window-shell {
-  background: var(--desk-window-fall) var(--wb-field);
+  background: var(--wb-paper);
 }
-/* PHILO-16 (C), the orchestrator's reds on 456ce3b5c: a window's foot is a
-   steel plate (§11 Foot); the slate ink for secondary words (--wb-muted)
-   reads 4.05:1 on it (the grant receipt's time). On the plate the
-   secondary words take the plate's own dim ink. */
+/* Footer rows use a paper-toned rail with a single hairline. */
 .desk-next .desk-window.desk-window-shell .desk-surface-foot {
   --text-muted: var(--wb-ink-dim);
   --text-faint: var(--wb-ink-dim);
+  border-top: 1px solid var(--wb-rule-soft);
+  border-radius: 0 0 var(--desk-window-radius) var(--desk-window-radius);
+  background: var(--wb-field);
+  box-shadow: none;
+  color: var(--wb-ink);
 }
