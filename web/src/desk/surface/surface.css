@@ -5000,11 +5000,11 @@ button.surface-edit-in-place:hover {
   .desk-next .desk-window-shell .surface-row { transition: none; }
 }
 
-/* ── PHILO-17 ALIVE r2 (coordinator: "still monotone gray") ── */
+/* Shared modern paper aliases: all live surface wells use the cool paper
+   and field tokens owned by the Workbench material. */
 .desk-next {
-  /* A warm paper for the content wells (muted ink reads 7.6:1 on it). */
-  --alive-paper: #f8f5ee;
-  --alive-hover-bg: #ffffff;
+  --alive-paper: var(--wb-paper);
+  --alive-hover-bg: var(--field-bg);
 }
 .desk-next .meetings-stream-rows,
 .desk-next .people-surface .surface-rows,

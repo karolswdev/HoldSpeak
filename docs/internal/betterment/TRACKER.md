@@ -46,6 +46,11 @@ anchoring as Tools opens, makes editor material ownership explicit, and adds
 a working local composer specimen to /design/components. The retained PR
 reply consumer is parked; no live PR send or aesthetic acceptance is claimed.
 
+Shared shell modernization (2026-10-22): PR_PENDING implements the owner's
+“Workbench meets PopOS” direction in common shell/control material, with Ask
+and Settings as representative faces. It adds no recipe count and does not
+claim aesthetic acceptance or closure of the remaining full-tape failures.
+
 ## Automations (`workbench/RECIPE.md`): 11 of 11
 
 | Slice | What | State | Note |

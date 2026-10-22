@@ -117,14 +117,14 @@ function generate(tokens) {
   out.push(" *                           from the HS-30-03 hand-written file).");
   out.push(" *   3. COMPONENT            the Desk OS chrome (HS-95 values, codified).");
   out.push(" *");
-  out.push(" * Dark-only by design (design-language-signal.md, 2026-06-01); the");
-  out.push(" * semantic layer is where a future light theme would attach.");
+  out.push(" * Shared light shell (owner direction, 2026-10-22); native controls");
+  out.push(" * follow the same material as the generated semantic palette.");
   out.push(" */");
   out.push("");
   out.push('@import "open-props/style";');
   out.push("");
   out.push(":root {");
-  out.push("  color-scheme: dark;");
+  out.push("  color-scheme: light;");
   out.push("");
   out.push("  /* ============================================================");
   out.push("   * 1. PRIMITIVE TOKENS (raw values — components never use these)");

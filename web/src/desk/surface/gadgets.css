@@ -1,8 +1,5 @@
-/* ── HS-111-01: the gadget kit (Prefs rethink, audit §3.3) ──
-   Workbench-wide surface primitives. All gadgets are SQUARE (0px
-   radius), 1px border, two-tone bevels: raised = bevel pair, sunken =
-   etch pair. Mono chrome throughout. No glow rings, no gradients, no
-   backdrop-filter. Stories 02-08 consume these. */
+/* Shared surface gadgets: light paper, pale steel, fine borders and quiet
+   Workbench blue. Metadata stays mono; labels and body copy use the UI face. */
 
 /* ── The two-column gadget sheet (audit §3.5) ── */
 .gadget-sheet {
@@ -33,21 +30,21 @@
 .gadget-group-label::after {
   content: "";
   flex: 1;
-  height: 2px;
-  background: linear-gradient(var(--etch-dark) 50%, var(--etch-light) 50%);
+  height: 1px;
+  background: var(--wb-rule-soft);
 }
 .gadget-row {
   display: grid;
   grid-template-columns: minmax(96px, 200px) minmax(0, 1fr);
   align-items: center;
   gap: 2px 10px;
-  min-height: 26px;
-  padding: 2px 6px;
+  min-height: 40px;
+  padding: 6px 8px;
 }
 /* The hover band spans the full pane width. */
 .gadget-row:hover,
 .gadget-row:focus-within {
-  background: var(--desk-window-well);
+  background: var(--surface-hover);
 }
 .gadget-row[data-highlight] {
   background: var(--accent-tint);
@@ -61,10 +58,8 @@
   align-items: flex-start;
   gap: 1px;
   min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text);
+  font: 400 var(--font-size-md) / 1.4 var(--font-sans);
+  color: var(--wb-text);
   overflow-wrap: anywhere;
 }
 .gadget-fact {
@@ -130,8 +125,9 @@
   display: grid;
   place-items: center;
   border: 1px solid var(--border);
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
+  background: var(--wb-well);
+  box-shadow: none;
+  border-radius: var(--radius-xs);
 }
 .gadget-check-well svg {
   width: 12px;
@@ -175,27 +171,23 @@
   align-items: center;
   height: 22px;
   padding: 0 8px;
-  border: 1px solid var(--border, #2a2e3e);
-  border-radius: 2px;
-  font: 600 var(--font-size-xs)/1 "JetBrains Mono", monospace;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: 600 var(--font-size-xs)/1 var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   white-space: nowrap;
   user-select: none;
 }
 .gadget-check-token.is-on .gadget-check-token-face {
-  color: var(--ok, #34d399);
-  border-color: color-mix(in srgb, var(--ok, #34d399) 40%, transparent);
-  box-shadow:
-    inset 1px 1px 0 var(--etch-dark),
-    inset -1px -1px 0 var(--border-subtle);
+  color: var(--wb-ok-ink);
+  border-color: var(--ok);
+  box-shadow: none;
 }
 .gadget-check-token.is-off .gadget-check-token-face {
   color: var(--text-faint);
-  border-color: var(--border, #2a2e3e);
-  box-shadow:
-    inset 1px 1px 0 var(--p-color-wash-08),
-    inset -1px -1px 0 var(--bevel-dark-soft);
+  border-color: var(--border);
+  box-shadow: none;
 }
 .gadget-check-token input:focus-visible + .gadget-check-token-face {
   border-color: var(--accent);
@@ -229,29 +221,26 @@
   width: auto;
   min-width: 0;
   max-width: 100%;
-  min-height: 22px;
+  min-height: var(--desk-control-h);
   padding: 2px 10px 2px 22px;
   border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  background: var(--field-bg);
   background-image: none;
-  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
-  color: var(--text);
-  font: 400 12px / 1.35 var(--font-mono);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  box-shadow: none;
+  color: var(--wb-text);
+  font: 400 13px / 1.35 var(--font-sans);
   cursor: pointer;
 }
 .gadget-cycle select:hover:not(:disabled) {
-  background-color: var(--surface-3);
+  background-color: var(--wb-steel-2);
 }
 .gadget-cycle select:active:not(:disabled) {
-  box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
   transform: translateY(1px);
 }
 .gadget-cycle select:focus-visible {
-  outline: none;
-  border-color: var(--accent);
+  border-color: var(--field-focus-border);
+  box-shadow: 0 0 0 3px var(--accent-tint);
 }
 .gadget-cycle select:disabled {
   opacity: 0.55;
@@ -268,18 +257,17 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 26px;
-  padding: 2px 6px;
+  min-height: 40px;
+  padding: 6px 8px;
   cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text);
+  font: 400 var(--font-size-md) / 1.4 var(--font-sans);
+  color: var(--wb-text);
 }
 .gadget-mx-row:hover {
-  background: var(--desk-window-well);
+  background: var(--surface-hover);
 }
 .gadget-mx-option[data-selected] > .gadget-mx-row {
-  background: var(--desk-window-well);
+  background: var(--accent-tint);
 }
 .gadget-mx-row input {
   position: absolute;
@@ -294,8 +282,9 @@
   display: grid;
   place-items: center;
   border: 1px solid var(--border);
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
+  background: var(--wb-well);
+  box-shadow: none;
+  border-radius: var(--radius-xs);
 }
 .gadget-mx-box::after {
   content: "";
@@ -320,25 +309,23 @@
 
 /* ── StringGadget: sunken well, LEFT-aligned, fills its column; mic
    docked flush-right INSIDE the well ── */
-/* Phase 16 (the interior kit, §11 "AskWell"; canvas `.askwell`): every
-   text well is a SUNKEN PAPER well (1 px ink border, the Steel sunken
-   bevel), ink words in the sans body step; the mic is a raised Steel plate
-   on the well's right edge (the voice law: a mic on every input). */
+/* Text wells use the shared white field and fine border; the mic remains a
+   clear inline control on the right edge. */
 .gadget-string {
   --text: var(--wb-text);
   --text-muted: var(--wb-muted);
   display: flex;
   align-items: stretch;
   width: 100%;
-  min-height: 26px;
-  border: 1px solid var(--wb-ink);
+  min-height: var(--desk-control-h);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-sm);
   background: var(--wb-well);
-  box-shadow: var(--wb-sunken);
+  box-shadow: none;
 }
 .gadget-string:focus-within {
-  border-color: var(--wb-ink);
-  outline: 1px solid var(--wb-sel);
-  outline-offset: 0;
+  border-color: var(--field-focus-border);
+  box-shadow: 0 0 0 3px var(--accent-tint);
 }
 /* PHILO-15 02: StringGadget `caption` — the visible name above the well,
    the caption step (12 px mono uppercase, UX-CANON C). */
@@ -367,8 +354,8 @@
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  padding: 4px 10px;
-  font: 400 13px / 1.35 var(--font-sans);
+  padding: 6px 10px;
+  font: 400 var(--font-size-md) / 1.35 var(--font-sans);
   color: var(--wb-text);
   text-align: left;
 }
@@ -404,12 +391,11 @@
   margin: 0;
   border-radius: 0;
   border: 0;
+  border-left: 1px solid var(--border);
   background: var(--wb-steel);
-  /* The ink hairline on the plate's left edge is an inset shadow, never a
-     border rail (HS-101 canon rule 6), then the soft raised bevel. */
-  box-shadow: inset 1px 0 0 var(--wb-ink), var(--wb-raised-soft);
+  box-shadow: none;
   color: var(--wb-ink);
-  font-size: 10px;
+  font-size: 12px;
   line-height: 0;
   padding: 0;
 }
@@ -444,8 +430,7 @@
   display: flex;
   flex-direction: column;
   width: 14px;
-  /* seam between the well and the arrows — inset, not a rail (HS-101 rule 6) */
-  box-shadow: inset 1px 0 0 var(--border);
+  border-left: 1px solid var(--border);
 }
 .gadget-arrows button {
   flex: 1;
@@ -453,8 +438,8 @@
   padding: 0;
   border: 0;
   border-radius: 0;
-  background: var(--surface-2);
-  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  background: var(--wb-steel);
+  box-shadow: none;
   color: var(--text-muted);
   font-size: 6px;
   line-height: 1;
@@ -465,10 +450,10 @@
 }
 .gadget-arrows button:hover {
   color: var(--text);
-  background: var(--surface-3);
+  background: var(--wb-steel-2);
 }
 .gadget-arrows button:active {
-  box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
+  background: var(--surface-active);
 }
 .gadget-arrows button:focus-visible {
   outline: 1px solid var(--accent);
@@ -503,7 +488,7 @@
     linear-gradient(var(--text-faint), var(--text-faint)) no-repeat 50% 50% / 1px 4px,
     linear-gradient(var(--text-faint), var(--text-faint)) no-repeat 75% 50% / 1px 4px,
     var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
+  box-shadow: none;
 }
 .gadget-prop input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -511,9 +496,9 @@
   height: 16px;
   margin-top: -6px;
   border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-3);
-  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  border-radius: var(--radius-sm);
+  background: var(--wb-steel);
+  box-shadow: none;
 }
 .gadget-prop input[type="range"]::-moz-range-track {
   height: 6px;
@@ -523,15 +508,15 @@
     linear-gradient(var(--text-faint), var(--text-faint)) no-repeat 50% 50% / 1px 4px,
     linear-gradient(var(--text-faint), var(--text-faint)) no-repeat 75% 50% / 1px 4px,
     var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
+  box-shadow: none;
 }
 .gadget-prop input[type="range"]::-moz-range-thumb {
   width: 12px;
   height: 16px;
   border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-3);
-  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  border-radius: var(--radius-sm);
+  background: var(--wb-steel);
+  box-shadow: none;
 }
 .gadget-prop input[type="range"]:focus-visible {
   outline: 1px solid var(--accent);
@@ -551,12 +536,12 @@
    block cursor. No glow, no pulse. ── */
 .gadget-keycap {
   min-width: 64px;
-  height: 24px;
+  height: var(--desk-control-h);
   padding: 0 10px;
   border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
+  border-radius: var(--radius-sm);
+  background: var(--wb-well);
+  box-shadow: none;
   color: var(--text);
   font: 650 12px / 1 var(--font-mono);
   letter-spacing: 0.06em;
@@ -568,7 +553,7 @@
   border-color: var(--accent);
 }
 .gadget-keycap.is-listening {
-  background: var(--accent);
+  background: var(--wb-sel);
   color: var(--text-on-accent);
   box-shadow: none;
   border-color: var(--accent);
@@ -606,7 +591,7 @@
   min-height: 18px;
   padding: 0 2px;
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 0 var(--etch-light);
+  box-shadow: none;
 }
 .gadget-table-head span {
   font-family: var(--font-mono);
@@ -617,33 +602,33 @@
   color: var(--text-muted);
 }
 .gadget-table-row {
-  min-height: 24px;
-  padding: 1px 2px;
+  min-height: 40px;
+  padding: 6px 2px;
 }
 .gadget-table-row:hover {
-  background: var(--desk-window-well);
+  background: var(--surface-hover);
 }
 .gadget-x {
   width: 18px;
   height: 18px;
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-2);
-  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  border-radius: var(--radius-sm);
+  background: var(--wb-steel);
+  box-shadow: none;
   color: var(--text-muted);
   font: 600 var(--font-size-xs) / 1 var(--font-mono);
   cursor: pointer;
 }
 .gadget-x:hover {
-  color: var(--danger);
-  border-color: var(--danger);
+  color: var(--wb-danger-ink);
+  border-color: var(--wb-danger-ink);
 }
 .gadget-table-add {
-  min-height: 24px;
+  min-height: 32px;
   margin-top: 3px;
   border: 1px dashed var(--border);
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
   font: 600 var(--font-size-xs) / 1 var(--font-mono);
@@ -653,7 +638,7 @@
 }
 .gadget-table-add:hover {
   color: var(--text);
-  background: var(--desk-window-well);
+  background: var(--surface-hover);
 }
 
 /* HS-111-02 — a row-verbs slot in the trailing cell (arming ×). */
@@ -694,8 +679,8 @@
   gap: 2px;
   padding: 3px;
   border: 1px solid var(--border);
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
+  background: var(--wb-well);
+  box-shadow: none;
 }
 .gadget-ledmeter-seg {
   width: 5px;
@@ -762,9 +747,9 @@
   flex: none;
   width: 8px;
   height: 8px;
-  border-radius: 0;
+  border-radius: 50%;
   background: var(--wash-2);
-  box-shadow: 0 0 0 1px var(--shade-1);
+  box-shadow: none;
 }
 .gadget-lamp[data-on="true"][data-tone="ok"] .gadget-lamp-dot {
   background: var(--ok);
@@ -796,9 +781,9 @@
   gap: 3px;
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-2);
-  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
+  border-radius: var(--radius-sm);
+  background: var(--wb-steel);
+  box-shadow: none;
   color: var(--text);
   font: 650 var(--font-size-xs) / 1 var(--font-mono);
   letter-spacing: 0.08em;
@@ -811,11 +796,10 @@
   line-height: 1;
 }
 .gadget-transport-key:hover:not(:disabled) {
-  background: var(--surface-3);
+  background: var(--wb-steel-2);
 }
 .gadget-transport-key:focus-visible {
-  outline: none;
-  border-color: var(--accent);
+  border-color: var(--field-focus-border);
 }
 /* The key IS down: inverted video, sunken bevel. */
 .gadget-transport-key[data-active],
@@ -826,7 +810,7 @@
   background: var(--accent-ink);
   color: var(--text-on-accent);
   border-color: var(--accent-ink);
-  box-shadow: inset 1px 1px 0 var(--bevel-dark), inset -1px -1px 0 var(--bevel-light);
+  box-shadow: none;
   /* the key IS down — no pulse, no glow ring, ever */
   animation: none;
 }
@@ -834,8 +818,8 @@
   color: var(--text-muted);
 }
 .desk-next .desk-mic.gadget-transport-key.is-failed {
-  border-color: var(--warn);
-  color: var(--warn);
+  border-color: var(--wb-warn-ink);
+  color: var(--wb-warn-ink);
 }
 .gadget-transport-key:disabled,
 .desk-next .desk-mic.gadget-transport-key.is-unsupported {
@@ -844,8 +828,8 @@
 }
 /* HS-111-04 — the loud key: danger tone; held = inverted danger. */
 .gadget-transport-key[data-tone="danger"] {
-  color: var(--danger-signal);
-  border-color: color-mix(in srgb, var(--danger-signal) 45%, var(--border));
+  color: var(--wb-danger-ink);
+  border-color: color-mix(in srgb, var(--wb-danger-ink) 45%, var(--border));
 }
 .gadget-transport-key[data-tone="danger"][data-active],
 .gadget-transport-key[data-tone="danger"]:active:not(:disabled) {
@@ -876,10 +860,10 @@
   min-height: 18px;
   padding: 0 8px;
   border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
-  color: var(--text-faint);
+  border-radius: var(--radius-sm);
+  background: var(--wb-well);
+  box-shadow: none;
+  color: var(--wb-muted);
   font: 600 12px / 16px var(--font-mono);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -900,18 +884,16 @@
   color: var(--accent);
 }
 .gadget-chip-egress {
-  color: var(--ok);
+  color: var(--wb-ok-ink);
 }
 /* HS-111-07 — scope color variants for the ONE badge species (the
    chrome badge is this chip with a click; color is the only change). */
 .gadget-chip-egress[data-scope="local"] {
-  color: var(--ok);
+  color: var(--wb-ok-ink);
 }
 .gadget-chip-egress[data-scope="mixed"],
 .gadget-chip-egress[data-scope="cloud"] {
-  /* PHILO-9-03: --accent read 4.29:1 on the surface; --accent-hover is the
-     same ember, lighter (5.47:1). */
-  color: var(--accent-hover);
+  color: var(--wb-ember-ink);
 }
 /* HS-174-04 — the REMOTE badge: accent outline (stroke not fill),
    never the warning tone.  A fourth egress token --egress-remote. */
@@ -930,22 +912,20 @@ button.gadget-chip-egress {
   grid-template-columns: minmax(96px, 200px) minmax(0, 1fr) auto;
   align-items: center;
   gap: 2px 10px;
-  min-height: 26px;
-  padding: 2px 6px;
+  min-height: 40px;
+  padding: 6px 8px;
 }
 .gadget-secret:hover,
 .gadget-secret:focus-within {
-  background: var(--desk-window-well);
+  background: var(--surface-hover);
 }
 .gadget-secret-label {
   display: flex;
   align-items: baseline;
   gap: 6px;
   min-width: 0;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text);
+  font: 400 var(--font-size-md) / 1.4 var(--font-sans);
+  color: var(--wb-text);
   overflow-wrap: anywhere;
 }
 .gadget-secret-label small {
@@ -970,12 +950,14 @@ button.gadget-chip-egress {
   position: relative;
   display: flex;
   width: 100%;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  box-shadow: var(--desk-window-etch);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius-sm);
+  background: var(--wb-well);
+  box-shadow: none;
 }
 .gadget-pad:focus-within {
-  border-color: var(--accent);
+  border-color: var(--field-focus-border);
+  box-shadow: 0 0 0 3px var(--accent-tint);
 }
 .gadget-pad textarea {
   flex: 1;
@@ -985,9 +967,9 @@ button.gadget-chip-egress {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  padding: 4px 26px 4px 6px;
-  font: 400 12px / 1.45 var(--font-mono);
-  color: var(--text);
+  padding: 8px 26px 8px 10px;
+  font: 400 var(--font-size-md) / 1.45 var(--font-sans);
+  color: var(--wb-text);
   resize: vertical;
 }
 /* Keep text clear of the docked mic after the Desk's textarea skin. */
@@ -1008,11 +990,11 @@ button.gadget-chip-egress {
   bottom: 2px;
   width: var(--size-icon-md);
   height: var(--size-icon-md);
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: var(--surface-2);
-  box-shadow: inset 1px 1px 0 var(--bevel-light), inset -1px -1px 0 var(--bevel-dark);
-  font-size: 10px;
+  background: var(--wb-steel);
+  box-shadow: none;
+  font-size: 12px;
 }
 .gadget-pad .desk-mic-failure,
 .desk-next .gadget-pad .desk-mic-failure {
@@ -1033,12 +1015,12 @@ button.gadget-chip-egress {
   align-items: center;
   gap: 6px;
   width: fit-content;
-  min-height: 26px;
+  min-height: 32px;
   margin: 2px 0;
   padding: 2px 9px 2px 7px;
   border-radius: var(--radius-sm);
   list-style: none;
-  font-size: var(--desk-surface-detail-size, 12px);
+  font-size: var(--font-size-md);
   font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
@@ -1052,7 +1034,7 @@ button.gadget-chip-egress {
 }
 .gadget-fold > summary::before {
   content: "▸";
-  font-size: 0.6875rem;
+  font-size: var(--font-size-xs);
   color: var(--text-muted);
   transition: transform var(--duration-short) var(--ease-quart);
 }
@@ -1166,10 +1148,10 @@ button.gadget-chip-egress {
   position: relative;
   min-width: 0;
   margin: 8px 0 0;
-  border: 1px solid var(--wb-rule);
-  border-radius: 0;
-  background: var(--wb-well);
-  box-shadow: var(--wb-sunken);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-lg);
+  background: var(--wb-paper);
+  box-shadow: none;
 }
 .gadget-group[data-material="inset"] > .gadget-group-label {
   position: absolute;
@@ -1179,11 +1161,11 @@ button.gadget-chip-egress {
   max-width: calc(100% - 20px);
   margin: 0;
   padding: 0 6px;
-  background: var(--wb-field-hi);
+  background: var(--wb-paper);
   color: var(--wb-text);
   font: 700 12px / 1.4 var(--font-mono);
   letter-spacing: 0.06em;
-  text-shadow: 0 1px 0 var(--wb-hi);
+  text-shadow: none;
 }
 .gadget-group[data-material="inset"] > .gadget-group-label::after { display: none; }
 .gadget-group[data-material="inset"] > .gadget-sheet {
@@ -1204,7 +1186,7 @@ button.gadget-chip-egress {
 .gadget-row[data-control-width]:hover,
 .gadget-row[data-control-width]:focus-within { background: var(--surface-hover); }
 .gadget-group[data-material="inset"] .gadget-row-label,
-.gadget-row[data-control-width] .gadget-row-label { font: 400 13px / 1.4 var(--font-sans); }
+.gadget-row[data-control-width] .gadget-row-label { font: 400 var(--font-size-md) / 1.4 var(--font-sans); }
 .gadget-group[data-material="inset"] .gadget-row-gadget,
 .gadget-row[data-control-width] .gadget-row-gadget { justify-content: flex-start; flex-wrap: wrap; min-width: 0; gap: 8px; }
 :is(.gadget-group[data-material="inset"], .gadget-row[data-control-width]) .gadget-row-gadget > .gadget-cycle,
@@ -1212,11 +1194,11 @@ button.gadget-chip-egress {
   width: var(--gadget-value-width, 190px);
   max-width: 100%;
 }
-:is(.gadget-group[data-material="inset"], .gadget-row[data-control-width]) .gadget-cycle select { width: 100%; min-height: 28px; letter-spacing: 0; }
+:is(.gadget-group[data-material="inset"], .gadget-row[data-control-width]) .gadget-cycle select { width: 100%; min-height: var(--desk-control-h); letter-spacing: 0; }
 :is(.gadget-group[data-material="inset"], .gadget-row[data-control-width]) .gadget-keycap {
   width: 84px;
-  min-height: 28px;
-  height: 28px;
+  min-height: var(--desk-control-h);
+  height: var(--desk-control-h);
   margin: 0;
   font: 650 15px / 1 var(--font-mono);
 }
@@ -1239,11 +1221,11 @@ button.gadget-chip-egress {
 .gadget-group[data-material="inset"] > .gadget-group-actions { padding: 0 18px 10px; }
 .gadget-group-actions > .btn { flex: 0 0 auto; width: auto; max-width: 100%; margin: 0; }
 .gadget-divider {
-  height: 2px;
+  height: 1px;
   margin: 8px 6px;
   border: 0;
   border-top: 1px solid var(--wb-rule-soft);
-  box-shadow: 0 1px 0 var(--wb-hi);
+  box-shadow: none;
 }
 
 /* The checkbox, square and value are one native target. */
@@ -1291,7 +1273,7 @@ button.gadget-chip-egress {
 .gadget-table[data-layout="fields"] .gadget-table-row { min-height: 44px; padding: 8px 0; border-bottom: 1px solid var(--wb-rule-soft); }
 .gadget-table[data-layout="fields"] .gadget-table-row:last-child { border-bottom: 0; }
 .gadget-table[data-layout="fields"] .gadget-table-cell { overflow: visible; white-space: normal; }
-.gadget-table[data-layout="fields"] .gadget-string { width: 100%; max-width: 100%; min-height: 30px; }
+  .gadget-table[data-layout="fields"] .gadget-string { width: 100%; max-width: 100%; min-height: var(--desk-control-h); }
 .gadget-table[data-layout="fields"] .gadget-string input { min-width: 0; font: 400 13px / 1.4 var(--font-sans); }
 .gadget-table[data-layout="fields"] .gadget-cycle { width: 100%; }
 .gadget-table[data-layout="fields"] .gadget-cycle select { width: 100%; padding-right: 6px; }
@@ -1320,7 +1302,7 @@ button.gadget-chip-egress {
   .gadget-table[data-layout="fields"] .gadget-table-row,
   .gadget-table[data-layout="fields"][data-verbs] .gadget-table-row { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 10px 0 12px; }
   .gadget-table[data-layout="fields"] .gadget-table-cell { display: grid; grid-template-columns: minmax(68px, 1fr) minmax(0, 172px); align-items: center; gap: 8px; min-height: 44px; }
-  .gadget-table[data-layout="fields"] .gadget-table-field-label { display: block; font: 400 13px / 1.4 var(--font-sans); }
+  .gadget-table[data-layout="fields"] .gadget-table-field-label { display: block; font: 400 var(--font-size-md) / 1.4 var(--font-sans); }
   .gadget-table[data-layout="fields"] .gadget-string { min-height: 46px; }
   .gadget-table[data-layout="fields"] .gadget-string input { min-height: 44px; }
   .gadget-table[data-layout="fields"] .gadget-string .desk-mic { width: 44px; height: 44px; }

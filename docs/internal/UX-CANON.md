@@ -14,6 +14,16 @@ touching anything a user sees, gathered from the owner's rulings and
 the scars of Phases 100–169. Where a face disagrees with this, the
 face is wrong. Every rule names its ruling.
 
+## Current material direction (owner, 2026-10-22)
+
+“Workbench meets PopOS”: modernize the shared shell, not only Ask. The older
+heavy Steel bevel, square frame and title hatching are historical treatments.
+Fine borders, restrained rounding, soft depth and quieter sans controls now
+express the same native Workbench framework. DESIGN_SYSTEM.md records this
+owner amendment. All functional, readable, focus and pointer ownership floors
+below remain binding. CLAUDE.md's latest fast cycle governs review: build the
+direction on a canvas, then judge aesthetics live on the deployed desk.
+
 ## A. The owner's rulings (verbatim where he ruled)
 
 1. **Every verb is the library Button.** A raw `<button>` in a face is

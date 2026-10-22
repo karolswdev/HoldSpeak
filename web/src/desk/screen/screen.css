@@ -1,7 +1,5 @@
-/* PHILO-14 A1 — the screen (board A-1): the desk well between the screen
-   bar and the Dock. The dithered Workbench backdrop (the canvas's p14.css);
-   no chips, only lamps and count notches. It sits under the window band
-   (z 0): windows are its siblings, never its children. */
+/* Desk screen: the work area between the menu bar and dock. It stays beneath
+   window chrome and preserves the selected place image. */
 .desk-screen {
   position: fixed;
   left: 0;
@@ -9,13 +7,11 @@
   top: var(--wb-screen-h, 28px);
   bottom: var(--desk-dock-h, 76px);
   z-index: 0;
-  /* PHILO-16 (A1) §2: the floor is the Workbench backdrop under the one
-     light (8 px checker, bright top-left, falling to the foot) */
   background: var(--desk-floor);
   overflow: hidden auto;
   overscroll-behavior: contain;
   font-family: var(--font-sans);
-  color: var(--wb-paper);
+  color: var(--wb-ink);
 }
 /* The selected still covers loading and WebGL failure. The live scene owns
    the backdrop only after its first render succeeds. */
@@ -52,7 +48,7 @@
   min-height: 100%;
 }
 .desk-screen .desk-icon {
-  color: var(--wb-paper);
+  color: var(--wb-ink);
 }
 .desk-go-home {
   min-height: 100%;
@@ -73,7 +69,7 @@
 .desk-go-home-group .surface-section-head {
   margin: var(--space-2) var(--space-2) var(--space-1);
 }
-/* The existing desk-menu-list owns paper, ink, bevel and focus material. */
+/* The shared desk menu owns paper, ink and focus material. */
 .desk-next .desk-menu-list .desk-go-home-row {
   min-width: 0;
   width: 100%;
@@ -126,7 +122,7 @@
   margin: 0;
   font: 700 var(--font-size-xs) / 1.4 var(--font-mono);
   letter-spacing: 0.04em;
-  color: var(--wb-paper);
+  color: var(--wb-ink);
   pointer-events: none;
 }
 /* 393: a Chair window fills the work area; the screen leaves the glass
@@ -175,7 +171,7 @@
 .desk-screen-fact {
   font: 700 var(--font-size-xs) / 1.2 var(--font-mono);
   letter-spacing: 0.04em;
-  color: var(--wb-paper);
+  color: var(--wb-ink);
 }
 /* TALK, one press on the Chair (1440): the Capture window's own control. */
 .desk-screen-talk {

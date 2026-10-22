@@ -87,7 +87,11 @@ FRAME_JS = r"""(width) => {""" + FOLDED_WORD_JS + r"""
     small_text: [], low_contrast: []};
 
   // F1 one blue front window; the screen bar names it
-  const BLUE = {r: 102, g: 136, b: 187};
+  // The active-head token evolves with the owner's shared material.
+  // Keep the one-front-window assertion; do not freeze the old Steel RGB.
+  const paint = document.createElement('span');
+  paint.style.backgroundColor = 'var(--wb-blue)'; document.body.appendChild(paint);
+  const BLUE = rgb(getComputedStyle(paint).backgroundColor); paint.remove();
   for (const h of heads) { const c = rgb(getComputedStyle(h).backgroundColor);
     if (c && Math.abs(c.r - BLUE.r) < 3 && Math.abs(c.g - BLUE.g) < 3 && Math.abs(c.b - BLUE.b) < 3)
       out.blue.push(h.parentElement.getAttribute('aria-label')); }

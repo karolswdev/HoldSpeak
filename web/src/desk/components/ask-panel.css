@@ -6,10 +6,11 @@
   gap: 0;
   overflow: hidden;
   padding: 0;
-  background: var(--alive-paper);
+  background: var(--alive-paper, var(--wb-paper));
+  color: var(--wb-ink, var(--text));
 }
 .desk-ask-reading-wrap {
-  --scroll-hint-background: var(--alive-paper);
+  --scroll-hint-background: var(--alive-paper, var(--wb-paper));
   --scroll-hint-depth: 12px;
   flex: 1;
   min-height: 0;
@@ -43,7 +44,7 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   font: 600 15px / 1.65 var(--font-sans);
-  color: var(--wb-sel);
+  color: var(--wb-sel, var(--accent));
 }
 .desk-ask-run-details {
   overflow-wrap: anywhere;
@@ -91,7 +92,8 @@
   gap: 4px 8px;
   min-width: 0;
   overflow: visible;
-  font: 12px var(--font-mono);
+  color: var(--wb-muted, var(--text-muted));
+  font: 400 12px / 1.5 var(--font-mono);
 }
 .desk-ask-sources .btn {
   max-width: 100%;
@@ -123,8 +125,8 @@
 }
 .desk-next .desk-window.desk-ask .desk-ask-passage {
   min-width: 0;
-  background: var(--alive-paper);
-  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--wb-blue, var(--wb-paper)) 7%, var(--alive-paper, var(--wb-paper)));
+  border: 1px solid var(--wb-rule-soft, var(--border));
 }
 .desk-next .desk-window.desk-ask .desk-ask-passage .gadget-fold > summary {
   min-height: 34px;
@@ -140,7 +142,7 @@
   margin: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font: 400 13px / 1.5 var(--font-sans);
+  font: 400 14px / 1.5 var(--font-sans);
 }
 .desk-ask-selection-verbs {
   display: flex;
@@ -154,7 +156,7 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  color: var(--text-muted);
+  color: var(--wb-muted, var(--text-muted));
   font: 400 12px / 1.5 var(--font-mono);
 }
 .desk-ask-engine-line > span:first-child {
@@ -210,7 +212,7 @@
 }
 .desk-ask-empty h1 {
   margin: 0;
-  color: var(--text);
+  color: var(--wb-ink, var(--text));
   font: 650 26px / 1.2 var(--font-display);
   text-align: start;
 }
@@ -235,6 +237,14 @@
   margin-block: 0;
   white-space: normal;
   text-align: start;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+.desk-ask-prompts .btn:hover:not(:disabled) {
+  border-color: var(--wb-rule-soft, var(--border));
+  background: color-mix(in srgb, var(--wb-blue, var(--wb-paper)) 8%, transparent);
+  box-shadow: none;
 }
 .desk-ask-starter img {
   width: 32px;
@@ -246,7 +256,7 @@
 }
 .desk-ask-starter-arrow {
   justify-self: end;
-  color: var(--accent);
+  color: var(--wb-sel, var(--accent));
   font: 600 15px / 1 var(--font-sans);
 }
 .desk-ask-edit-question {
@@ -277,12 +287,13 @@
 
 /* Betterment Q4: one Ask window over a kept thread. */
 .desk-ask-about-label {
-  font: 600 12px / 1.5 var(--font-sans);
+  color: var(--wb-muted, var(--text-muted));
+  font: 600 12px / 1.5 var(--font-mono);
   margin-inline-end: 4px;
 }
 .desk-ask-about-desk {
-  font: 400 13px / 1.5 var(--font-sans);
-  color: var(--text-muted);
+  font: 400 14px / 1.5 var(--font-sans);
+  color: var(--wb-muted, var(--text-muted));
 }
 .desk-ask-turn {
   display: grid;
@@ -291,16 +302,17 @@
 .desk-ask-saved {
   display: block;
   margin-top: 4px;
-  font: 400 12px / 1.5 var(--font-sans);
+  font: 400 12px / 1.5 var(--font-mono);
 }
 .desk-ask-recent {
   flex: none;
   max-height: 240px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  border: 1px solid var(--border);
-  background: var(--alive-paper);
-  padding: 4px;
+  border: 0;
+  border-bottom: 1px solid var(--wb-rule-soft, var(--border));
+  background: var(--alive-paper, var(--wb-paper));
+  padding: 6px 24px 8px;
 }
 .desk-ask-recent-list {
   list-style: none;
@@ -323,12 +335,12 @@
 }
 .desk-ask-recent-age {
   flex: none;
-  font: 400 12px / 1.5 var(--font-sans);
+  font: 400 12px / 1.5 var(--font-mono);
 }
 .desk-ask-recent-note {
   display: block;
   padding: 6px 8px;
-  font: 400 13px / 1.5 var(--font-sans);
+  font: 400 14px / 1.5 var(--font-sans);
 }
 .desk-ask-more {
   display: inline-block;
@@ -348,7 +360,7 @@
   margin-top: 6px;
 }
 .desk-ask-hold-words {
-  font: 500 13px / 1.4 var(--font-sans);
+  font: 500 14px / 1.5 var(--font-sans);
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -358,7 +370,9 @@
   display: inline-flex;
   align-items: center;
   gap: 0;
-  border: 1px solid var(--line);
+  border: 1px solid var(--wb-rule-soft, var(--line));
+  border-radius: var(--radius-sm, 5px);
+  background: color-mix(in srgb, var(--wb-blue, var(--wb-paper)) 5%, var(--alive-paper, var(--wb-paper)));
 }
 /* Betterment Q6 follow-up: at 393 every library Button reserves a block
    margin for its 44 px touch halo (styles/global.css, max-width 420px).
@@ -369,7 +383,7 @@
   margin-block: 0;
 }
 .desk-ask-about-set {
-  font: 400 13px / 1.5 var(--font-sans);
+  font: 400 14px / 1.5 var(--font-sans);
   padding-inline: 8px;
 }
 .desk-next .desk-ask-about-remove,
@@ -390,10 +404,10 @@
   min-height: 44px;
   max-height: 200px;
   padding: 6px 24px;
-  background: var(--wb-steel);
+  background: color-mix(in srgb, var(--wb-blue, var(--wb-paper)) 7%, var(--alive-paper, var(--wb-paper)));
   border: 0;
-  border-bottom: 1px solid var(--wb-ink);
-  box-shadow: inset 0 1px 0 var(--wb-hi);
+  border-bottom: 1px solid var(--wb-rule-soft, var(--border));
+  box-shadow: none;
 }
 .desk-ask-about-band .desk-ask-question-context {
   max-height: 184px;
@@ -403,14 +417,21 @@
 }
 .desk-ask-about-band .desk-ask-about-label,
 .desk-ask-about-band .desk-ask-about-desk {
-  color: var(--wb-ink);
+  color: var(--wb-ink, var(--text));
 }
 .desk-ask-about-band .desk-ask-about-chip {
-  border-color: var(--wb-ink);
+  border-color: var(--wb-rule-soft, var(--border));
 }
 .desk-ask-about-band .btn {
-  color: var(--wb-ink);
+  color: var(--wb-ink, var(--text));
   margin-block: 0;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+.desk-ask-about-band .btn:hover:not(:disabled) {
+  border-color: var(--wb-rule-soft, var(--border));
+  background: color-mix(in srgb, var(--wb-blue, var(--wb-paper)) 8%, transparent);
 }
 
 @container surface (max-width: 560px) {

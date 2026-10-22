@@ -1,4 +1,8 @@
-"""The bevel grammar, read from the computed styles (contract.md "The bevel grammar").
+"""The shared material grammar, read from computed styles.
+
+Owner 2026-10-22: Workbench meets Pop!_OS; flat controls and continuous
+paper supersede mandatory heavy bevels. Token presence, state naming and
+the existing contrast/hit/geometry guards remain binding.
 
 The material reader of PHILO-14 B2, kept as a rig: the desk sweep's
 `material` fence (tests/e2e/test_desk_sweep.py) reads every window with it,
@@ -43,6 +47,9 @@ MATERIAL_JS = r"""(root) => {
     .filter((b) => !b.parentElement || !b.parentElement.closest(BODY));
   return {
     raised, sunken, soft, softSunken, wbRaised, wbSunken,
+    tokenPresence: ['--bevel-raised','--bevel-sunken','--bevel-raised-soft',
+      '--bevel-sunken-soft','--wb-raised','--wb-sunken'].every(name =>
+        getComputedStyle(document.documentElement).getPropertyValue(name).trim()),
     tokens: tokens.map((t) => ({ name: (t.textContent || '').trim().slice(0, 40),
       active: t.hasAttribute('data-filter-active'), shadow: getComputedStyle(t).boxShadow })),
     buttons: btns.map((b) => ({ name: (b.textContent || '').trim().slice(0, 40), shadow: getComputedStyle(b).boxShadow })),
@@ -70,11 +77,12 @@ def _assert_material(page: Any, face: str, root: str | None = None) -> dict[str,
     m = page.evaluate(MATERIAL_JS, root)
     assert m is not None, face
     raised, sunken = m["raised"], m["sunken"]
-    assert "none" not in (raised, sunken, m["soft"], m["softSunken"]), m
+    # Explicit none is a valid modern material; an absent token is not.
+    assert m["tokenPresence"], m
     for b in m["buttons"]:
-        assert b["shadow"].startswith((raised, m["wbRaised"])), (face, b, raised)
+        assert b["shadow"] == "none" or b["shadow"].startswith((raised, m["wbRaised"])), (face, b, raised)
     for t in m["tokens"]:
-        assert t["shadow"].startswith(m["softSunken"] if t["active"] else m["soft"]), (face, t)
+        assert t["shadow"] == "none" or t["shadow"].startswith(m["softSunken"] if t["active"] else m["soft"]), (face, t)
     for c in m["chips"]:
         # PHILO-17 ALIVE (owner 2026-10-11, "way too static … monotone"):
         # a state is a soft tinted PILL with a round lamp dot; no border.
@@ -95,5 +103,5 @@ def _assert_material(page: Any, face: str, root: str | None = None) -> dict[str,
         if f["tone"] in ("warn", "danger", "ok"):
             assert f["lampW"] == "8px", (face, f)
     for shadow in m["bodies"]:
-        assert shadow.startswith(sunken), (face, shadow, sunken)
+        assert shadow == "none" or shadow.startswith(sunken), (face, shadow, sunken)
     return m

@@ -5,9 +5,10 @@
   display: inline-flex;
   align-items: center;
   padding: 6px 10px;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  box-shadow: var(--desk-window-etch);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field);
+  box-shadow: none;
 }
 /* Retain the privacy badge, connection state, mic owner and write failures.
    Only navigational chrome disappears while the owner is settled in. */
@@ -19,11 +20,10 @@
   align-items: center;
   gap: 7px;
   padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: 0;
-  /* HS-111: opaque chip fill */
-  background: var(--surface-2);
-  color: var(--text);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field);
+  color: var(--wb-ink);
   font-weight: 600;
   font-size: var(--font-size-sm);
   cursor: pointer;
@@ -35,22 +35,17 @@
 .desk-next .desk-menu-wrap {
   position: relative;
 }
-/* HS-99-04 — ONE menu vocabulary: every desk popover (room menu, the
-   window-head menu, the dock chip menu) wears this material; the
-   corner nearest its anchor squares off (the borrowed touch). */
-/* HS-111-07: Workbench menus — flat, opaque, instant, inverted bar */
+/* Every desk popover shares one light paper panel and one selection wash. */
 .desk-next .desk-menu-list {
   min-width: 168px;
   display: flex;
   flex-direction: column;
   gap: 0;
-  /* PHILO-13-11 (C1, §4): a menu is paper with ink words, a raised
-     bevel and the hard drop; the row under the pointer is the blue bar */
   padding: 3px;
-  border: 1px solid var(--wb-ink);
-  border-radius: 0;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--desk-window-radius);
   background: var(--wb-paper);
-  box-shadow: var(--wb-raised), var(--wb-drop);
+  box-shadow: var(--wb-drop);
   backdrop-filter: none;
   animation: none;
   color: var(--wb-ink);
@@ -66,22 +61,23 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 0 10px;
+  padding: 0 var(--space-2);
   height: var(--size-btn);
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--wb-ink);
   text-decoration: none;
   text-align: left;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font: 400 13px / 1 var(--font-sans);
   cursor: pointer;
 }
 .desk-next .desk-menu-list a:hover,
 .desk-next .desk-menu-list button:hover,
 .desk-next .desk-menu-list a:focus-visible,
-.desk-next .desk-menu-list button:focus-visible {
+.desk-next .desk-menu-list button:focus-visible,
+.desk-next .desk-menu-list a[aria-selected="true"],
+.desk-next .desk-menu-list button:is([aria-selected="true"], [aria-checked="true"], .is-subopen) {
   background: var(--wb-blue);
   color: var(--wb-ink);
 }
@@ -105,15 +101,14 @@
 .desk-next .desk-work-menu .desk-menu-well {
   font-size: var(--desk-surface-label-size);
 }
-/* HS-148-01: recessed separator — shadow + shine pair (the Amiga 2.0
-   bevel system: dark rule on top, light shine below). */
+/* Menu separators are fine paper rules. */
 .desk-next .desk-menu-sep {
   display: block;
   height: 0;
-  margin: 5px 0;
+  margin: var(--space-1) 0;
   border: 0;
-  border-top: 1px solid var(--wb-steel);
-  border-bottom: 1px solid var(--wb-hi);
+  border-top: 1px solid var(--wb-rule-soft);
+  border-bottom: 0;
 }
 /* HS-148-01: the lane — fixed 16px column for glyphs, check marks,
    and alignment spacers (the lane law: if ANY row in a panel has a
@@ -154,13 +149,12 @@
   min-width: 20px;
   height: 18px;
   padding: 0 4px;
-  /* PHILO-13-11: the Amiga-key column — each key a raised steel cap */
-  border: 1px solid var(--wb-ink);
-  border-radius: 0;
-  background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field);
+  box-shadow: none;
   color: var(--wb-ink);
-  font: 700 12px var(--font-mono);
+  font: 600 12px var(--font-sans);
   line-height: 1;
 }
 /* Legacy single-kbd keycap (DeskMenuItem callers). */
@@ -187,10 +181,6 @@
   flex: none;
   margin-left: auto;
   text-align: right;
-  color: var(--wb-ink);
-}
-.desk-next .desk-menu-list button.is-subopen {
-  background: var(--wb-blue);
   color: var(--wb-ink);
 }
 .desk-next .desk-menu-list button.is-subopen .desk-menu-submark {
@@ -226,13 +216,13 @@
   top: 100%;
   left: 0;
 }
-/* HS-110-03: hub status LED — square, no glow */
+/* Hub status LED. */
 .desk-next .desk-hub-dot {
   width: 8px;
   height: 8px;
-  border-radius: 0;
+  border-radius: 50%;
   background: var(--text-faint);
-  box-shadow: 0 0 0 1px var(--bevel-dark);
+  box-shadow: 0 0 0 1px var(--wb-rule-soft);
 }
 .desk-next .desk-hub-dot.is-live {
   background: var(--ok);
@@ -241,8 +231,7 @@
   background: var(--danger);
 }
 .desk-next .desk-chip {
-  /* Materials round 3.2 — ONE chip geometry: every chip is the same
-     height with the same padding; variants change COLOR only. */
+  /* Chips share the same compact control geometry; variants change color. */
   height: var(--size-chip);
   padding: 0 12px;
   display: inline-flex;
@@ -250,24 +239,23 @@
   gap: 5px;
   line-height: 1;
   white-space: nowrap;
-  border: 1px solid var(--border);
-  border-radius: 0;
-  /* HS-111: opaque chip fill */
-  background: var(--surface-2);
-  color: var(--text);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field);
+  color: var(--wb-ink);
   font-size: var(--font-size-sm);
   cursor: pointer;
   text-decoration: none;
   backdrop-filter: none;
-  box-shadow: var(--desk-window-bevel);
+  box-shadow: none;
   transition:
     border-color var(--duration-short) var(--ease-standard),
     background var(--duration-short) var(--ease-standard),
     transform var(--duration-short) var(--ease-standard);
 }
 .desk-next .desk-chip:hover {
-  border-color: var(--accent);
-  background: var(--accent-tint);
+  border-color: var(--wb-sel);
+  background: var(--wb-blue);
 }
 /* HS-103-07 — a send/ask verb should carry a little weight on press, not
    just the browser's stock click; transform-only, so it costs nothing to
@@ -308,7 +296,7 @@
 .desk-next .desk-start-record {
   width: 9px;
   height: 9px;
-  border-radius: 0;
+  border-radius: 50%;
   background: var(--accent);
   box-shadow: none;
 }
@@ -342,7 +330,7 @@
   color: var(--text-muted);
   font: 600 var(--font-size-xs) var(--font-mono);
 }
-/* HS-111-07: tool shelf — opaque, dense, mono */
+/* Tool shelf uses the same paper panel as menus. */
 .desk-next .desk-tool-shelf {
   position: fixed;
   top: 28px;
@@ -352,11 +340,11 @@
   max-height: calc(100vh - 80px);
   padding: var(--space-2);
   overflow: auto;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: var(--surface-3);
-  color: var(--text);
-  box-shadow: none;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--desk-window-radius);
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  box-shadow: var(--wb-drop);
   backdrop-filter: none;
 }
 .desk-next .desk-tool-shelf h2,
@@ -419,7 +407,7 @@
   height: 26px;
   padding: 0 8px;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text);
   font-family: var(--font-mono);
@@ -442,7 +430,7 @@
   min-height: 26px;
   padding: 0;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
   font-family: var(--font-mono);
@@ -604,12 +592,12 @@
 }
 .desk-next .desk-tool-empty {
   padding: 12px;
-  border-radius: 2px;
-  background: var(--surface-1);
-  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field);
+  color: var(--wb-muted);
   font-size: var(--font-size-sm);
 }
-/* Inspector composes the shared frame, paper sheets and Steel footer. */
+/* Inspector keeps its existing fixed placement and shares the panel material. */
 .desk-next .desk-tool-inspector {
   position: fixed;
   display: flex;
@@ -668,15 +656,7 @@
 }
 
 
-/* ── Materials round 3: the MENU BAR. The floating pill clusters were
-   a website header; an OS has a thin frosted strip — app + menus on
-   the left, status and the clock on the right. Inner classes keep
-   their names (walk + raise-rule canon); the bar flattens them. ── */
-/* ── HS-110-03: the menu bar — a solid, opaque Workbench system bar ── */
-/* PHILO-13-11 (C1) — the SCREEN TITLE BAR (Workbench Steel, §4): paper
-   (pen 2) with an ink rule; menu titles invert on hover; the status
-   controls are raised steel plates; the clock sits in a steel plate at the
-   right edge. 28 px (393: one 44 px row, below). */
+/* The menu bar remains a single thin paper band with a fine lower rule. */
 .desk-next .desk-menubar {
   position: fixed;
   inset: 0 0 auto 0;
@@ -688,8 +668,8 @@
   gap: 8px;
   padding: 0 0 0 8px;
   background: var(--wb-paper);
-  border-bottom: 1px solid var(--wb-ink);
-  box-shadow: inset 0 -1px 0 var(--wb-steel);
+  border-bottom: 1px solid var(--wb-rule-soft);
+  box-shadow: none;
   color: var(--wb-ink);
 }
 .desk-next .desk-menubar .desk-chrome-tl {
@@ -728,9 +708,8 @@
   min-width: 0;
   align-self: stretch;
   margin: 0 8px;
-  padding-left: 13px;
-  /* the hairline on the left edge is an inset shadow (HS-101 rule 6: no left rail) */
-  box-shadow: inset 1px 0 0 var(--wb-ink);
+  padding-left: 0;
+  box-shadow: none;
   overflow: hidden;
 }
 .desk-next .desk-screen-name {
@@ -738,7 +717,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--wb-ink);
-  font: 700 13px var(--font-display);
+  font: 600 14px / 1 var(--font-sans);
 }
 /* PHILO-13-17 (C7, Q2): 393 — the title is the window switcher. The name
    truncates; the ▾ is its own fixed mark and never does. */
@@ -786,23 +765,21 @@
   border: 0;
   background: transparent;
   box-shadow: none;
-  border-radius: 0;
-  min-height: 22px;
-  padding: 2px 9px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
+  border-radius: var(--radius-sm);
+  min-height: var(--size-btn);
+  height: var(--size-btn);
+  padding: 0 var(--space-2);
+  font: 400 13px / 1 var(--font-sans);
   color: var(--wb-ink);
 }
-/* HS-110-03 / PHILO-13-11: Workbench inverted highlight on menu hover —
-   an ink plate with paper words */
+/* Blue is the shared hover and active tint. */
 .desk-next .desk-menubar button:hover,
 .desk-next .desk-menubar button:focus-visible,
 .desk-next .desk-menubar button[aria-expanded="true"],
 .desk-next .desk-menubar .desk-verbbar-title.on,
 .desk-next .desk-menubar .desk-verbbar-title.is-flash {
-  background: var(--wb-ink);
-  color: var(--wb-paper);
+  background: var(--wb-blue);
+  color: var(--wb-ink);
 }
 .desk-next .desk-menubar .desk-mark {
   font-weight: 600;
@@ -813,11 +790,10 @@
   align-self: stretch;
   gap: 8px;
   padding: 0 12px 0 13px;
-  background: var(--wb-steel);
-  /* the hairline on the left edge is an inset shadow (HS-101 rule 6: no left rail) */
-  box-shadow: inset 1px 0 0 var(--wb-ink), var(--wb-raised);
-  font-family: var(--font-mono);
-  font-size: 12px;
+  border-left: 1px solid var(--wb-rule-soft);
+  background: var(--wb-field);
+  box-shadow: none;
+  font: 400 13px / 1 var(--font-sans);
   color: var(--wb-ink);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -860,27 +836,28 @@
 .desk-next .desk-menubar .desk-chip:hover {
   background: var(--wash-2);
 }
-/* PHILO-13-11: the status controls are raised steel plates with ink words */
+/* Status controls keep their hit areas with a cool neutral field. */
 .desk-next .desk-menubar :is(.egress-badge, .desk-tools-launch, .desk-bell) {
-  height: 22px;
-  min-height: 22px;
+  height: var(--size-btn);
+  min-height: var(--size-btn);
   margin: 0 2px;
-  border: 1px solid var(--wb-ink);
-  border-radius: 0;
-  background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field);
+  box-shadow: none;
   color: var(--wb-ink);
 }
 .desk-next .desk-menubar :is(.egress-badge, .desk-tools-launch, .desk-bell):hover {
-  background: var(--wb-steel-2);
+  border-color: var(--wb-sel);
+  background: var(--wb-blue);
   color: var(--wb-ink);
 }
 .desk-next .desk-menubar kbd {
   font-size: 12px;
   padding: 0 4px;
   min-height: 0;
-  border: 1px solid var(--wb-ink);
-  border-radius: 0;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
   background: var(--wb-paper);
   box-shadow: none;
   color: var(--wb-ink);
@@ -888,21 +865,13 @@
 /* the bell's count wears the ember INK plate (5.24:1), as every count on
    the frame does */
 .desk-next .desk-menubar .desk-bell strong {
-  border: 1px solid var(--wb-ink);
-  border-radius: 0;
-  background: var(--accent-ink);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-sel);
   color: var(--text-on-accent);
   font-size: 12px;
 }
 
-
-/* The tool shelf joins the one material (the accent cage retires). */
-.desk-next .desk-tool-shelf {
-  border: 1px solid var(--desk-window-keyline);
-  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
-  background: var(--desk-window-fill);
-  backdrop-filter: none;
-}
 
 /* HS-101 B8 / HS-111-07 — the shortcut sheet: an opaque Workbench
    panel (the Phase-101 glass — blur, transient radius, ease-back pop —
@@ -922,10 +891,10 @@
   gap: 8px 22px;
   width: min(620px, calc(100vw - 32px));
   padding: 18px 22px 20px;
-  border: 1px solid var(--border);
-  border-radius: 2px;
-  background: var(--surface-3);
-  box-shadow: none;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--desk-window-radius);
+  background: var(--wb-paper);
+  box-shadow: var(--wb-drop);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   animation: none;
@@ -952,11 +921,10 @@
   font: 600 var(--font-size-xs) var(--font-mono);
   color: var(--text);
   padding: 2px 7px;
-  border-radius: 2px;
-  background: var(--desk-window-well);
-  box-shadow:
-    inset 0 0 0 1px var(--border-subtle),
-    inset 0 -1.5px 0 var(--shade-1);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field);
+  box-shadow: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .desk-shortcut-panel {
@@ -974,7 +942,7 @@
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
   pointer-events: none;
-  box-shadow: var(--elev-2);
+  box-shadow: var(--wb-drop);
 }
 
 /* HS-105-05 — the verb bar: real pull-down menus from the one registry. */
@@ -1016,8 +984,8 @@
     flex: 0 0 auto;
     align-items: stretch;
     margin-inline: 1px;
-    border-inline: 1px solid var(--border);
-    box-shadow: inset 1px 0 var(--bevel-light), inset -1px 0 var(--shade-1);
+    border-inline: 1px solid var(--wb-rule-soft);
+    box-shadow: none;
   }
   /* HS-202-02 — Desk, Object and Window are NOT RENDERED at phone width
      (DeskMenuBar folds their verbs into Go). Nothing is hidden here any
@@ -1077,8 +1045,8 @@
     flex-wrap: nowrap;
     gap: 0;
     padding-left: 0;
-    border-bottom: 0;
-    box-shadow: inset 0 -1px 0 var(--wb-ink), inset 0 -2px 0 var(--wb-steel);
+    border-bottom: 1px solid var(--wb-rule-soft);
+    box-shadow: none;
     overflow: hidden;
   }
   .desk-next .desk-menubar .desk-chrome {
@@ -1163,6 +1131,10 @@
      a strip menu included, owns the 44 px — not only plain items. */
   .desk-next .desk-work-menu :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]) {
     min-height: var(--desk-button-hit-size);
+  }
+  .desk-next .desk-menu-list :is(a, button) {
+    height: 44px;
+    min-height: 44px;
   }
   /* PHILO-17 (the desk sweep's target fence): a palette row is a choice too;
      at the narrow desk it owns the 44 px, as the work-menu rows do. */

@@ -903,14 +903,14 @@ def _material_faults(page: Any, face: str, root: str | None) -> list[str]:
         return [f"{face}: no scope {root}"]
     raised, sunken = m["raised"], m["sunken"]
     out: list[str] = []
-    if "none" in (raised, sunken, m["soft"], m["softSunken"]):
-        out.append("a bevel token resolves to none")
+    if not m["tokenPresence"]:
+        out.append("a shared material token is absent")
     for b in m["buttons"]:
-        if not b["shadow"].startswith((raised, m["wbRaised"])):
-            out.append(f"Button '{b['name']}' is not raised (box-shadow {b['shadow'][:40]})")
+        if b["shadow"] != "none" and not b["shadow"].startswith((raised, m["wbRaised"])):
+            out.append(f"Button '{b['name']}' uses unregistered material (box-shadow {b['shadow'][:40]})")
     for t in m["tokens"]:
-        if not t["shadow"].startswith(m["softSunken"] if t["active"] else m["soft"]):
-            out.append(f"token '{t['name']}' has the wrong soft bevel")
+        if t["shadow"] != "none" and not t["shadow"].startswith(m["softSunken"] if t["active"] else m["soft"]):
+            out.append(f"token '{t['name']}' uses unregistered selection material")
     for c in m["chips"]:
         # PHILO-17 ALIVE (owner 2026-10-11): a state is a soft tinted pill
         # with a round 8 px lamp dot.
@@ -926,7 +926,7 @@ def _material_faults(page: Any, face: str, root: str | None) -> list[str]:
         if not ok:
             out.append(f"fact '{f['text']}' is not a pill")
     for shadow in m["bodies"]:
-        if not shadow.startswith(sunken):
+        if shadow != "none" and not shadow.startswith(sunken):
             out.append(f"a window body is not the well (box-shadow {shadow[:40]})")
     return out
 

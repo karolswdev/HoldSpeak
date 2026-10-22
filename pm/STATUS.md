@@ -8,6 +8,22 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Modern shell — MODERN_PR_PENDING: owner's 2026-10-22 direction “Workbench
+meets PopOS.” Shared tokens, frames, menus, controls and dock move to fine
+borders, soft depth, pale chrome and clear sans labels; Ask and Settings use
+the same material. Pixel identity and window/voice/keyboard behavior remain.
+Canvas and scope: `docs/internal/betterment/MODERN-SHELL-2026-10-22.md`.
+Required quick: MODERN_QUICK_PENDING. Owner visual judgment remains open.
+
+Latest completed full tape on 448772a89: 12 Python and 10 browser failures;
+web baseline and strict Firefox capture timing passed. These inherited reds
+remain open; this visual pass does not claim a full-suite green.
+
+Open owner feedback: `24575f6781aeca1391e89669ad78f7c8` reports “Meeting
+analysis running” during Ask/agent work. Notification provenance needs a
+separate functional fix; original report/audio/screenshot remain read-only.
+
+
 Conversation fix-forward (#1423): shared end anchoring keeps the
 answer actions in view when Tools changes the reading height; shared composer
 material owns the editor cascade. /design/components now carries a local

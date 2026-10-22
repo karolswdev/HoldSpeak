@@ -7,6 +7,26 @@ framework in the manner of Intuition; 6, Workbench 2.0+ on steroids),
 then Articles VII (the interface serves) and VIII (native-grade craft). Every value in this document is a token name;
 raw values live only in `web/design-tokens.json`.
 
+## Owner direction — Workbench meets Pop!_OS (2026-10-22)
+
+The owner's live review rejected Ask's appearance and asked for a more modern
+shell: “Workbench meets PopOS.” This supersedes older literal Steel/bevel,
+square-corner and hatched-title material prescriptions for the shared shell.
+The Workbench desktop model, pixel identity, library framework and window
+physics remain Tenet 5/6 duties. The direction is recorded in
+`betterment/MODERN-SHELL-2026-10-22.md` and its canvas.
+
+Use fine frames, soft depth, pale cool chrome, near-white paper, clear blue
+selection, restrained corner rounding, sans control/title text and readable
+spacing. Metadata and code keep mono. Quiet ghost actions differ from bordered
+secondary controls; primary is blue with light text. Inputs and menus share
+this material. Desktop/dock/window/interior changes come from common tokens
+and component rules. Contrast, focus, actual 44px narrow ownership, keyboard,
+voice, egress and reduced-motion floors remain mandatory. A material guard
+must assert this current grammar, not an obsolete black bevel or literal RGB.
+The latest fast cycle puts aesthetic judgment on the owner's running desk;
+this direction does not claim aesthetic acceptance.
+
 ## The token architecture (HS-96-01)
 
 One source of truth: `web/design-tokens.json`, three layers per the

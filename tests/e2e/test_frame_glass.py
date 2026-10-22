@@ -214,7 +214,9 @@ TITLEBAR_TITLEBAR_JS = r"""(width) => {
   const shown = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
     return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
   const shells = [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(shown);
-  const out = {width, windows: [], small_text: [], gadgets_not_owned: [], gadgets_not_library: [], gadgets_small: []};
+  const paint = document.createElement('span'); paint.style.backgroundColor='var(--wb-blue)';
+  document.body.appendChild(paint); const activeColor=hex(rgb(getComputedStyle(paint).backgroundColor)); paint.remove();
+  const out = {width, activeColor, windows: [], small_text: [], gadgets_not_owned: [], gadgets_not_library: [], gadgets_small: []};
   for (const s of shells) {
     const head = s.querySelector(':scope > .desk-pullout-head'); if (!head) continue;
     const hcs = getComputedStyle(head); const hr = head.getBoundingClientRect();
@@ -257,8 +259,8 @@ def _titlebar_fails(m: dict[str, Any], width: int) -> dict[str, Any]:
     fails: dict[str, Any] = {}
     front = [w for w in m["windows"] if w["front"]]
     rest = [w for w in m["windows"] if not w["front"]]
-    if len(front) != 1 or not front[0]["striped"]:
-        fails["T1 one front window and its bar is striped"] = front
+    if len(front) != 1 or front[0]["bar_color"] != m["activeColor"] or front[0]["striped"]:
+        fails["T1 one front window with the shared flat active head"] = front
     if any(w["striped"] for w in rest):
         fails["T1 inactive bars are flat"] = [w["name"] for w in rest if w["striped"]]
     low = [w for w in m["windows"] if w.get("contrast") is not None and w["contrast"] < 4.5]
@@ -267,7 +269,7 @@ def _titlebar_fails(m: dict[str, Any], width: int) -> dict[str, Any]:
     if m["gadgets_not_library"] or m["gadgets_not_owned"]:
         fails["T3 gadgets are library Buttons and own their centres"] = {
             "not_library": m["gadgets_not_library"], "not_owned": m["gadgets_not_owned"]}
-    want_h = 44 if width <= 720 else 26
+    want_h = 44 if width <= 720 else 36
     bad_h = [w for w in m["windows"] if abs(w["bar_h"] - want_h) > 0.5]
     if m["small_text"] or bad_h or m["gadgets_small"]:
         fails["T4 12 px floor, bar height, 44 px gadgets at 393"] = {
@@ -428,8 +430,9 @@ GADGETS_SIZES = {1440: 900, 393: 852}
 STACK_JS = r"""() => {
   const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
     return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; };
-  const blue = (h) => { const m = getComputedStyle(h).backgroundColor.match(/\d+/g) || [];
-    return Math.abs(m[0] - 102) < 3 && Math.abs(m[1] - 136) < 3 && Math.abs(m[2] - 187) < 3; };
+  const paint=document.createElement('span'); paint.style.backgroundColor='var(--wb-blue)';
+  document.body.appendChild(paint); const active=getComputedStyle(paint).backgroundColor; paint.remove();
+  const blue = (h) => getComputedStyle(h).backgroundColor === active;
   const wins = [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(visible).map((s) => {
     const h = s.querySelector(':scope > .desk-pullout-head'); const r = s.getBoundingClientRect();
     return {name: s.getAttribute('aria-label'), z: Number(getComputedStyle(s).zIndex) || 0,
@@ -553,7 +556,7 @@ class TestTheGadgets:
         got = [(r["label"].split(" · ")[0], r["keycap"]) for r in menu["rows"]]
         # PHILO-16 §5: Zoom ⌘⇧Z, To back ⌘⇧`. PHILO-17 windows (#1070, U27):
         # the menus show ⌃M and ⌃W (a browser tab keeps the ⌘ keys).
-        want = [("Iconify", "⌃M"), ("Zoom", "⌘⇧Z"), ("To back", "⌘⇧`"), ("Close window", "⌃W"),
+        want = [("Minimize", "⌃M"), ("Zoom", "⌘⇧Z"), ("To back", "⌘⇧`"), ("Close", "⌃W"),
                 ("Desk", None), ("Go", None)]
         if width < 720:
             # PHILO-15 11 (B21): a phone has no ⌘ key, so no row at 393 draws
@@ -834,8 +837,11 @@ class TestTheGadgets:
                 # Prove the one blue front and its whole hit area instead of
                 # requiring every obscured window to leave the DOM.
                 hits = brief.evaluate("""el => { const r = el.getBoundingClientRect();
-                  return [[r.left + 2, r.top + 2], [r.right - 2, r.top + 2],
-                    [r.left + 2, r.bottom - 2], [r.right - 2, r.bottom - 2],
+                  // Probe the painted corners of the owner's rounded shell,
+                  // rather than the transparent pixels outside its curve.
+                  const inset=Math.max(2, parseFloat(getComputedStyle(el).borderTopLeftRadius)||0);
+                  return [[r.left + inset, r.top + inset], [r.right - inset, r.top + inset],
+                    [r.left + inset, r.bottom - inset], [r.right - inset, r.bottom - inset],
                     [r.left + r.width / 2, r.top + r.height / 2]].map(([x, y]) =>
                       document.elementFromPoint(x, y)?.closest('.desk-window-shell')?.getAttribute('aria-label') ?? null);
                 }""")
@@ -967,3 +973,75 @@ class TestTheGadgets:
                 assert not errors, errors
             finally:
                 browser.close()
+
+
+@pytest.mark.e2e
+@pytest.mark.parametrize("width", [1440, 393])
+def test_firefox_modern_shell_keeps_frame_and_control_ownership(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """Actual shared frame on Ask and Settings, including narrow hit ownership."""
+    from playwright.sync_api import expect, sync_playwright
+
+    token = "modern-shell-glass"
+    _ensure_build()
+    monkeypatch.setenv("HOLDSPEAK_UI_FEEDBACK", "1")
+    server, base = _boot(tmp_path, monkeypatch, token=token)
+    shots = evidence_dir("modern-shell")
+    try:
+        with sync_playwright() as pw:
+            browser = pw.firefox.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852},
+                                    reduced_motion="reduce")
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            try:
+                page.goto(f"{base}/?token={token}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=token)
+                page.reload(wait_until="load")
+                _normal_chair(page)
+                page.keyboard.press("Control+KeyI")
+                ask = page.locator("#ask[data-layer=window]")
+                editor = ask.get_by_role("textbox", name="Ask about your work", exact=True)
+                editor.fill("A retained draft in the modern shell")
+                _settle(page)
+                for frame, name in [(ask, "ask")]:
+                    facts = frame.evaluate("""el => {
+                      const s=getComputedStyle(el), h=getComputedStyle(el.querySelector('.desk-pullout-head'));
+                      return {sheet:el.classList.contains('is-sheet'),border:s.borderLeftWidth,radius:s.borderTopLeftRadius,shadow:s.boxShadow,
+                        titleFont:h.fontFamily,headImage:h.backgroundImage,headHeight:el.querySelector('.desk-pullout-head').getBoundingClientRect().height};
+                    }""")
+                    assert facts["border"] == ("0px" if facts["sheet"] else "1px"), facts
+                    assert float(facts["radius"].replace('px','')) >= 6, facts
+                    assert facts["headImage"] == "none", facts
+                    assert facts["headHeight"] >= (44 if width == 393 else 36), facts
+                    assert frame.evaluate("el=>{const r=el.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1}")
+                    controls = frame.locator(".desk-pullout-head button")
+                    for control in controls.all():
+                        if not control.is_visible(): continue
+                        assert control.evaluate("""el => {
+                          const r=el.getBoundingClientRect();
+                          return [.15,.5,.85].every(x=>[.15,.5,.85].every(y=>{
+                            const hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);
+                            return hit===el || el.contains(hit);
+                          }));
+                        }"""), control.get_attribute("aria-label")
+                    page.screenshot(path=str(shots / f"{name}-{width}.png"))
+                    (shots / f"frame-{width}.json").write_text(json.dumps(facts, indent=2))
+                expect(editor).to_have_value("A retained draft in the modern shell")
+                _api(page, "POST", "/api/desk/windows/surface-settings/open", {}, token=token)
+                settings = page.locator("#surface-settings[data-layer=window]")
+                settings.get_by_test_id("settings-index-speak").click()
+                expect(settings.get_by_test_id("settings-index-speak")).to_have_attribute("aria-current", "location")
+                _settle(page)
+                assert settings.evaluate("el=>{const r=el.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1}")
+                assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
+                page.screenshot(path=str(shots / f"settings-{width}.png"))
+                settings.get_by_test_id("settings-index-you").click()
+                expect(settings.get_by_test_id("settings-index-you")).to_have_attribute("aria-current", "location")
+                assert not errors, errors
+            finally:
+                browser.close()
+    finally:
+        server.stop()

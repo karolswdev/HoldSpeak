@@ -10,21 +10,11 @@
 .desk-next .desk-window.is-floating:not(.is-card) {
   max-height: none;
 }
-/* HS-97-04 — depth: one property, one ladder, never per-window recipes.
-   PHILO-13-11 (C1) — Workbench Steel: every DeskWindowFrame host wears a
-   4 px steel frame (pen 0), an ink keyline (pen 1) and a hard 4 px drop.
-   PHILO-16 (A1) §3 — THE DEPTH LADDER. A window is on a plane and is drawn
-   from its plane alone (`data-plane`): front (blue, lit, the umbra), near
-   (steel, the umbra at half, a 6 % veil), far (steel in shade, the drop
-   only, a 14 % veil), seated (in the dock; DeskWindow hides it). The veil
-   is an ink wash over the body (`::after`, below the title bar, pointer
-   events none); never opacity on a window. `.is-front` is an alias of
-   `data-plane="front"` for one release (DeskWindow.tsx sets both from the
-   one front hook, so they never disagree). */
+/* Window depth follows the plane state. The veil stays on the body so title
+   bars and controls keep their hit areas and readable contrast. */
 .desk-next .desk-window.desk-window-shell {
-  border: var(--wb-frame) solid var(--wb-steel);
-  border-top: 0;
-  border-radius: 0;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--desk-window-radius);
   box-shadow: var(--desk-window-shadow-rest);
   transition:
     border-color var(--desk-raise-duration) var(--desk-ease),
@@ -43,24 +33,25 @@
   transition: background var(--desk-raise-duration) var(--desk-ease);
 }
 .desk-next .desk-window.desk-window-shell:is([data-plane="front"], .is-front) {
-  border-color: var(--wb-blue);
+  border-color: var(--wb-sel);
   box-shadow: var(--desk-window-shadow);
 }
 .desk-next .desk-window.desk-window-shell[data-plane="near"] {
-  border-color: var(--wb-steel);
-  box-shadow: 0 0 0 1px var(--wb-ink), var(--wb-drop), var(--wb-umbra-near), inset 0 0 0 1px var(--wb-ink);
+  border-color: color-mix(in srgb, var(--wb-sel) 44%, var(--wb-rule-soft));
+  box-shadow: var(--desk-window-shadow-rest);
 }
 .desk-next .desk-window.desk-window-shell[data-plane="near"]::after {
-  background: var(--desk-veil-near);
+  background: color-mix(in srgb, var(--wb-ink) 4%, transparent);
 }
 .desk-next .desk-window.desk-window-shell[data-plane="far"] {
-  border-color: var(--wb-steel-dim);
+  border-color: var(--wb-rule-soft);
+  box-shadow: none;
 }
 .desk-next .desk-window.desk-window-shell[data-plane="far"]::after {
-  background: var(--desk-veil-far);
+  background: color-mix(in srgb, var(--wb-ink) 8%, transparent);
 }
 .desk-next .desk-window.desk-window-shell:not([data-plane="front"], .is-front):hover {
-  border-color: var(--wb-steel-2);
+  border-color: var(--wb-sel);
 }
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-window.desk-window-shell,
@@ -82,20 +73,20 @@
 .desk-next .desk-window-edge-l {
   top: 0;
   bottom: 0;
-  left: -3px;
+  left: 0;
   width: 6px;
   cursor: ew-resize;
 }
 .desk-next .desk-window-edge-r {
   top: 0;
   bottom: 0;
-  right: -3px;
+  right: 0;
   width: 6px;
   cursor: ew-resize;
 }
 .desk-next .desk-window-edge-b {
   right: 14px;
-  bottom: -3px;
+  bottom: 0;
   left: 14px;
   height: 6px;
   cursor: ns-resize;
@@ -106,8 +97,8 @@
   height: 14px;
 }
 .desk-next .desk-window-corner-bl {
-  bottom: -3px;
-  left: -3px;
+  bottom: 0;
+  left: 0;
   cursor: nesw-resize;
 }
 .desk-next .desk-snap-ghost {
@@ -154,7 +145,7 @@
   left: 50%;
   transform: translateX(-50%);
   padding: 4px 12px;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: var(--desk-glass);
   color: var(--text);
   font-size: var(--font-size-sm);
@@ -178,7 +169,7 @@
 }
 .desk-next .desk-switcher-chip {
   padding: 5px 10px;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
   font-size: var(--font-size-sm);
   white-space: nowrap;
@@ -187,21 +178,22 @@
   background: var(--accent-tint);
   color: var(--text);
 }
-/* PHILO-13-11 (C1) — the sizing gadget (two nested corners) replaces the
-   faint grip: a raised steel plate on the frame, bottom right. */
+/* The resize grip remains on the frame and above the body veil. */
 .desk-next .desk-window-grip {
   position: absolute;
-  right: calc(-1 * var(--wb-frame));
-  bottom: calc(-1 * var(--wb-frame));
+  right: -1px;
+  bottom: -1px;
   z-index: var(--desk-z-local);
   display: grid;
   place-items: center;
   width: 18px;
   height: 16px;
-  border-top: 1px solid var(--wb-ink);
-  background: var(--wb-steel);
-  /* the hairline on the left edge is an inset shadow (HS-101 rule 6: no left rail) */
-  box-shadow: inset 1px 0 0 var(--wb-ink), var(--wb-raised);
+  border: 1px solid var(--wb-rule-soft);
+  border-top: 0;
+  border-right: 0;
+  border-radius: var(--radius-sm) 0 0 0;
+  background: var(--wb-field);
+  box-shadow: none;
   cursor: nwse-resize;
   touch-action: none;
 }
@@ -250,12 +242,12 @@
   flex-direction: column;
   gap: var(--space-3);
 }
-/* PHILO-14 B2 (the material pass): the window body is the WELL where its
-   content is read and typed: it sits sunken in the frame (the bevel
-   grammar's `.bevel-sunken`; the canvas harness, A-1/A-2). One well per
-   window: a body inside a body draws none of its own. */
+/* Window bodies share the paper surface; nested bodies do not add another
+   bevel or hard inset. */
 .desk-next :is(.desk-pullout-body, .desk-surface-body, .chair-window-body):not(:is(.desk-pullout-body, .desk-surface-body, .chair-window-body) *) {
-  box-shadow: var(--bevel-sunken);
+  box-shadow: none;
+  background: transparent;
+  color: var(--wb-ink);
 }
 .desk-next .desk-pullout-body section {
   display: grid;
@@ -298,10 +290,10 @@
 .desk-next .desk-pullout-md {
   margin: 0;
   padding: 10px;
-  border-radius: 2px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field);
+  border: 1px solid var(--wb-rule-soft);
+  color: var(--wb-ink);
   font-size: var(--font-size-sm);
   font-family: inherit;
   white-space: pre-wrap;
@@ -340,7 +332,7 @@
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
   line-height: 1;
@@ -356,8 +348,8 @@
   border-top-right-radius: calc(var(--desk-window-radius) - 1px);
 }
 .desk-next .desk-window-verb.desk-window-close {
-  --verb-hover: var(--danger-fill);
-  --verb-hover-ink: var(--text);
+  --verb-hover: var(--wb-blue);
+  --verb-hover-ink: var(--wb-ink);
 }
 .desk-next .desk-window-verb svg {
   width: 14px;
@@ -385,17 +377,8 @@
    ladder): the head tone sits one step above the body, separation is
    tonal (no border-bottom), and the verb buttons are full-height
    squares flush to the window edge. */
-/* PHILO-13-11 (C1) — the title bar IS the drag bar: steel, an ink rule,
-   the title in 12 px bold mono. Title bar B (the owner's pick, 2026-10-03,
-   assets/titlebar-canvas/; it replaces C1's solid plate and the stipple on
-   every bar): inactive bars are FLAT steel, the title in --wb-ink-dim; only
-   the ONE front bar is blue with fine stripes (--wb-stipple-fine), the
-   title on a cut-out in the bar's own blue. It spans the frame (margin
-   -4 px) and sits ABOVE the resize edges (z-index), so every gadget owns all of its points.
-   R4: this replaces HS-99-02's `.is-front .desk-pullout-head` rule
-   (window-chrome.css:337 before this change): is-front now comes from the
-   ONE hook, so exactly one bar is blue. --desk-window-head-fill and
-   --desk-window-head-front stay as they are: body strips wear them (R5). */
+/* The title bar is a quiet paper head above the body. Its lower hairline
+   separates the content while controls keep their own hit targets. */
 .desk-next .desk-window-shell > .desk-pullout-head {
   position: relative;
   z-index: var(--desk-z-local);
@@ -405,69 +388,59 @@
   height: var(--wb-bar-h);
   min-height: var(--wb-bar-h);
   flex: none;
-  margin: 0 calc(-1 * var(--wb-frame));
+  margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 0;
-  background: var(--wb-steel);
-  /* the ink rule under the bar is drawn as a shadow, so a gadget owns the
-     bar's full height (44 px at 393). PHILO-16 (A1) §2: the plate is under
-     the one light: a shine on its top, and the body's lit edge under it. */
-  box-shadow: inset 0 1px 0 var(--wb-hi), inset 0 -1px 0 var(--wb-ink), 0 1px 0 var(--wb-hi);
+  border-radius: var(--desk-window-radius) var(--desk-window-radius) 0 0;
+  background: var(--wb-paper);
+  box-shadow: inset 0 -1px 0 var(--wb-rule-soft);
   color: var(--wb-ink);
 }
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head {
-  background: var(--wb-stipple-fine), var(--wb-blue);
+  background: var(--wb-blue);
 }
-/* PHILO-16 (A1) §3: a far window's bar is in shade, flat */
+/* A far window's bar uses the cool neutral field. */
 .desk-next .desk-window-shell[data-plane="far"] > .desk-pullout-head {
-  background: var(--wb-steel-dim);
+  background: var(--wb-field);
 }
 .desk-next .desk-window-shell > .desk-pullout-head .desk-pullout-title {
   flex: 0 1 auto;
   align-self: center;
   min-width: 0;
   max-width: 45%;
-  /* 1 px off the bottom: the cut-out leaves the ink rule under the bar whole */
-  margin: 0 6px 1px;
-  padding: 0 6px;
+  margin: 0 8px;
+  padding: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   background: transparent;
   color: var(--wb-ink);
-  /* PHILO-16 (A1) §4.2, §7: the window title is sans 13/600; mono stays
-     for counts, times and hosts */
-  font: 600 13px/calc(var(--wb-bar-h) - 2px) var(--font-sans);
+  font: 600 14px/var(--wb-bar-h) var(--font-sans);
   letter-spacing: 0;
   text-transform: none;
 }
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-pullout-title {
-  background: var(--wb-blue);
+  background: transparent;
 }
-/* every word a host puts in its title bar is ink on the bar (R5) */
+/* Host supplied title text remains readable ink on every plane. */
 .desk-next .desk-window-shell > .desk-pullout-head :is(span, small, strong, em, p, label, .quiet) {
   color: var(--wb-ink);
 }
-/* title bar B: an inactive window's title is dimmed ink (5.44:1 on steel) */
+/* Inactive and far titles use the same dark ink for contrast. */
 .desk-next .desk-window-shell:not([data-plane="front"], .is-front) > .desk-pullout-head .desk-pullout-title {
-  color: var(--wb-ink-dim);
+  color: var(--wb-ink);
 }
-/* PHILO-16 (A1), Astra M2: a far bar is in shade, so its title is full ink
-   (5.27:1 on --wb-steel-dim; ink-dim read 3.67:1). Near keeps ink-dim on
-   steel (5.44:1). */
 .desk-next .desk-window-shell[data-plane="far"] > .desk-pullout-head .desk-pullout-title {
   color: var(--wb-ink);
 }
-/* PHILO-16 (A1) §4.1 — the object's icon left of the title, 14 px: the
-   same sprite as the window's launcher. It rides the title's cut-out. */
+/* The object's pixel icon remains left of the title. */
 .desk-next .desk-window-shell > .desk-pullout-head > .desk-window-icon {
   display: inline-flex;
   flex: none;
   align-self: center;
   align-items: center;
-  margin: 0 -6px 1px 6px;
-  padding: 0 0 0 6px;
+  margin-inline: 8px 0;
+  padding: 0;
 }
 .desk-next .desk-window-shell > .desk-pullout-head > .desk-window-icon :is(img, svg) {
   display: block;
@@ -476,10 +449,9 @@
   image-rendering: pixelated;
 }
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head > .desk-window-icon {
-  background: var(--wb-blue);
+  background: transparent;
 }
-/* PHILO-16 (A1) §4.3 — the lamp at the right end of the title cut-out:
-   the window's IconLamp tone. A window that needs you glows in its bar. */
+/* The lamp keeps its existing tone and status behavior. */
 .desk-next .desk-window-shell > .desk-pullout-head > .desk-window-lamp {
   flex: none;
   align-self: center;
@@ -487,7 +459,7 @@
   height: 8px;
   box-sizing: border-box;
   margin: 0 6px 1px -4px;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
 }
 .desk-next .desk-window-lamp[data-tone="ask"] {
   background: var(--lamp-ask);
@@ -516,9 +488,7 @@
   align-self: center;
   margin-left: 6px;
 }
-/* the gadget set (title bar B): ONE grid of square cells the bar's height,
-   flush to the corners, one hairline between cells, a half-strength bevel;
-   on the front bar the cells are solid blue (the stripes stop at them) */
+/* Header gadgets keep their square hit areas with quiet separators. */
 .desk-next .desk-gadgets {
   display: flex;
   flex: none;
@@ -544,43 +514,41 @@
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
-  box-shadow: var(--wb-raised-soft);
+  box-shadow: none;
   color: var(--wb-ink);
   cursor: pointer;
 }
 .desk-next .desk-gadgets-left .desk-gadget {
-  border-right: 1px solid var(--wb-rule);
+  border-right: 0;
 }
 .desk-next .desk-gadgets-right .desk-gadget {
-  /* the hairline on the cell's left edge is an inset shadow (HS-101 rule 6:
-     no left rail) */
-  box-shadow: inset 1px 0 0 var(--wb-rule), var(--wb-raised-soft);
+  box-shadow: none;
 }
 .desk-next .desk-pullout-head .desk-gadget-feedback {
   width: auto;
   min-width: 44px;
   padding: 0 8px;
-  font: 600 12px/1 var(--font-mono);
+  font: 600 13px/1 var(--font-sans);
 }
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget {
-  background: var(--wb-blue);
+  background: transparent;
 }
 .desk-next .desk-pullout-head .desk-gadget:hover:not(:disabled),
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget:hover:not(:disabled) {
-  background: var(--wb-steel-2);
+  background: var(--wb-blue);
 }
 .desk-next .desk-pullout-head .desk-gadget:active:not(:disabled),
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget:active:not(:disabled),
 .desk-next .desk-pullout-head .desk-gadget[aria-pressed="true"],
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget[aria-pressed="true"] {
   background: var(--wb-press);
-  box-shadow: var(--wb-sunken);
-  transform: none;
+  box-shadow: none;
+  transform: translateY(1px);
 }
 .desk-next .desk-pullout-head .desk-gadget:focus-visible {
-  outline: 2px solid var(--wb-paper);
+  outline: 2px solid var(--wb-sel);
   outline-offset: -3px;
 }
 .desk-next .desk-gadget svg {
@@ -588,8 +556,7 @@
   width: 14px;
   height: 12px;
 }
-/* the wing tabs in a title bar: raised steel; the open one sunken paper
-   (a Workbench cycle gadget) */
+/* Wing tabs share the head material and retain their cycle state. */
 .desk-next .desk-pullout-head .desk-wings {
   align-self: stretch;
   gap: 0;
@@ -599,9 +566,9 @@
   min-height: 0;
   padding: 0 12px;
   border: 0;
-  border-radius: 0;
-  background: var(--wb-steel);
-  box-shadow: inset 1px 0 0 var(--wb-rule), var(--wb-raised-soft);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
   color: var(--wb-ink);
   font: 700 12px var(--font-mono);
 }
@@ -609,16 +576,15 @@
   margin-left: 0;
 }
 .desk-next .desk-pullout-head .desk-wing:hover:not(:disabled) {
-  background: var(--wb-steel-2);
+  background: var(--wb-blue);
   color: var(--wb-ink);
 }
 .desk-next .desk-pullout-head .desk-wing.is-on {
-  background: var(--wb-paper);
-  box-shadow: var(--wb-sunken);
+  background: var(--wb-blue);
+  box-shadow: none;
   color: var(--wb-ink);
 }
-/* whatever a host puts in its actions slot wears the steel plate and the
-   12 px floor; a filled primary keeps its own ember pair */
+/* Actions stay real controls with a compact, paper treatment. */
 .desk-next .desk-pullout-head .desk-window-actions {
   display: inline-flex;
   align-items: center;
@@ -628,15 +594,15 @@
   font-size: 12px;
 }
 .desk-next .desk-pullout-head .desk-window-actions :is(.btn, .desk-chip, button):not(.btn--primary) {
-  border: 1px solid var(--wb-ink);
-  border-radius: 0;
-  background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: none;
   color: var(--wb-ink);
   font-size: 12px;
 }
 .desk-next .desk-pullout-head .desk-window-actions :is(.btn, .desk-chip, button):not(.btn--primary):hover:not(:disabled) {
-  background: var(--wb-steel-2);
+  background: var(--wb-blue);
   color: var(--wb-ink);
 }
 /* HS-168-05 — actions slot: do not shrink, so wings stay in view. */
@@ -721,7 +687,7 @@
   align-self: flex-start;
   margin: 0;
   padding: 3px 10px;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   border: 1px solid
     color-mix(in srgb, var(--accent) 40%, var(--border));
   background: color-mix(in srgb, var(--accent) 12%, transparent);
@@ -775,9 +741,9 @@
 .desk-next :where(.desk-pullout, .desk-surface-window, .desk-trust-window) {
   border-radius: var(--desk-window-radius);
   background: var(--desk-window-fill);
-  border: 1px solid var(--border);
-  box-shadow: var(--desk-window-bevel), var(--desk-glass-edge);
-  backdrop-filter: var(--desk-window-blur);
+  border: 1px solid var(--wb-rule-soft);
+  box-shadow: var(--desk-window-shadow-rest);
+  backdrop-filter: none;
 }
 
 /* ── HS-96-03: the component state contract (docs/internal/DESIGN_SYSTEM.md).
@@ -1064,13 +1030,12 @@
 }
 
 
-/* PHILO-13-11 (C1, §3a) — the folded wing strip in a title bar: ONE steel
-   plate across the row, the current face and ▾ (wings.tsx). */
+/* A folded wing strip fills the available title-bar space and keeps its
+   existing current-face menu behavior. */
 .desk-next .desk-pullout-head .desk-wings.is-folded {
   flex: 1 1 auto;
   min-width: 0;
-  /* the hairline on the left edge is an inset shadow (HS-101 rule 6: no left rail) */
-  box-shadow: inset 1px 0 0 var(--wb-ink);
+  box-shadow: none;
 }
 .desk-next .desk-pullout-head .desk-wings.is-folded .desk-wings-menu {
   width: 100%;
@@ -1082,8 +1047,7 @@
   white-space: nowrap;
 }
 
-/* PHILO-16 (A2) — the compositor (web/src/desk/compositor/).
-   A plate (the Stage shelf, Exposé) is the window's own element at its own
+/* The compositor's stage shelf and Exposé use the window's own element at its own
    size, drawn at scale --plate-k from its top-left corner: it scales, it never
    reflows, and its own title bar is its label (COMPOSITOR.md §7). The
    `scale` property composes with the arrange motion's transform. */
@@ -1110,8 +1074,8 @@
 /* L8: one steel divider on the seam of two touching windows. */
 .desk-next .desk-window-divider {
   position: fixed;
-  background: var(--wb-steel);
-  box-shadow: inset 1px 1px 0 var(--wb-hi), inset -1px -1px 0 var(--wb-lo), 0 0 0 1px var(--wb-ink);
+  background: var(--wb-field);
+  box-shadow: 0 0 0 1px var(--wb-rule-soft);
   touch-action: none;
 }
 .desk-next .desk-window-divider.is-v {
@@ -1121,7 +1085,7 @@
   cursor: ns-resize;
 }
 .desk-next .desk-window-divider:focus-visible {
-  outline: 2px solid var(--wb-blue);
+  outline: 2px solid var(--wb-sel);
   outline-offset: 1px;
 }
 /* L7: a departing snapshot (seat, close) is drawn, never pressed. */

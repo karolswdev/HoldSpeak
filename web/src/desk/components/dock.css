@@ -1,4 +1,4 @@
-/* ── HS-110-03: the dock — a solid, opaque Workbench taskbar strip ── */
+/* Dock actions sit in the persistent shelf and keep their existing targets. */
 .desk-next .desk-room-actions {
   display: inline-flex;
   align-items: center;
@@ -20,7 +20,7 @@
 .desk-next .desk-room-actions > button:hover,
 .desk-next .desk-room-actions > button[aria-pressed="true"] {
   color: var(--text);
-  background: var(--surface-3);
+  background: var(--wb-blue);
 }
 .desk-next .desk-settle-capture {
   font: var(--font-size-xs) var(--font-mono);
@@ -62,11 +62,8 @@
     );
   }
 }
-/* PHILO-13-13 C3-W — the AppIcon shelf, built to the ratified C1 canvas
-   (boards C1-1, C1-8a–c; design/workbench-look.md §6). A steel shelf
-   across the full width, 60 px (393: 56 px). It never leaves the
-   viewport: it scrolls inside itself when it is full, and an icon never
-   shrinks inside a full shelf. */
+/* The AppIcon shelf remains a 60px working band. It scrolls inside itself
+   when full, and an icon never shrinks inside the shelf. */
 .desk-next .desk-dock {
   position: fixed;
   left: 0;
@@ -84,11 +81,9 @@
   overflow-x: auto;
   overflow-y: hidden;
   border-radius: 0;
-  /* PHILO-16 (A1): the dock is a steel plate under the one light: the
-     shine, then the ink line, on its top edge (the canvas `.dock`) */
   background: var(--wb-steel);
-  border: none;
-  box-shadow: inset 0 1px 0 var(--wb-hi), inset 0 2px 0 var(--wb-ink);
+  border-top: 1px solid var(--wb-rule-soft);
+  box-shadow: none;
   scrollbar-width: thin;
 }
 .desk-next .desk-dock > * {
@@ -104,10 +99,10 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  border-radius: 0;
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  box-shadow: var(--desk-window-etch);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field);
+  border: 1px solid var(--wb-rule-soft);
+  box-shadow: var(--wb-drop);
   animation: desk-chip-in var(--duration-short) var(--ease-quart);
 }
 @keyframes desk-chip-in {
@@ -219,14 +214,14 @@
   justify-items: center;
   align-content: center;
   gap: 2px;
-  /* PHILO-16 (A1) §11: a tile is as wide as its word (72 px at least); a
-     label never leaves its tile */
+  /* A tile is as wide as its word (72 px at least); a label never leaves
+     its tile. */
   min-width: 72px;
   height: 52px;
   align-self: center;
   padding: 2px 10px;
   border: 1px solid transparent;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--wb-ink);
   box-shadow: none;
@@ -234,19 +229,19 @@
   cursor: pointer;
 }
 .desk-next .desk-dock-launch:hover {
-  background: var(--wb-steel-2);
-  border-color: var(--wb-ink);
-  box-shadow: var(--wb-raised);
+  background: var(--wb-blue);
+  border-color: var(--wb-sel);
+  box-shadow: none;
   color: var(--wb-ink);
 }
 .desk-next .desk-dock-launch:hover .desk-dock-sprite {
-  filter: brightness(1.15) drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.45));
+  filter: brightness(1.08);
 }
 .desk-next .desk-dock-launch .desk-dock-sprite {
   width: 24px;
   height: 24px;
   align-self: end;
-  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.45));
+  filter: none;
 }
 /* a text glyph (Intelligence ◈) sits low in the picture row, so the state
    tag above it never covers it */
@@ -262,9 +257,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 0 2px;
-  /* PHILO-16 (A1) §7: dock labels are mono, ink on steel. §7 says 11 px;
-     UX-CANON's 12 px floor holds, so the canvas's 500 weight at 12 px */
-  font: 500 12px var(--font-mono);
+  font: 500 12px var(--font-sans);
   color: var(--wb-ink);
   background: transparent;
 }
@@ -272,24 +265,22 @@
   max-width: 96px;
 }
 .desk-next .desk-dock-launch.is-run {
-  background: var(--wb-steel);
-  border-color: var(--wb-ink);
-  box-shadow: var(--wb-sunken);
+  background: var(--wb-blue);
+  border-color: var(--wb-rule-soft);
+  box-shadow: none;
 }
 .desk-next .desk-dock-launch.is-run .desk-dock-label {
-  background: var(--wb-ink);
-  color: var(--wb-paper);
-}
-.desk-next .desk-dock-launch.is-front {
-  background: var(--wb-steel);
-}
-.desk-next .desk-dock-launch.is-front .desk-dock-label {
-  background: var(--wb-blue);
+  background: transparent;
   color: var(--wb-ink);
 }
-/* PHILO-16 (A1) §5: a seated (iconified) window shows on its tile as the
-   seat: a 10 px lamp square at the top right. A press on the tile restores
-   it (Dock.tsx). */
+.desk-next .desk-dock-launch.is-front {
+  background: var(--wb-blue);
+}
+.desk-next .desk-dock-launch.is-front .desk-dock-label {
+  background: transparent;
+  color: var(--wb-ink);
+}
+/* A seated window keeps its 10px status lamp at the top right. */
 .desk-next .desk-dock-seat {
   position: absolute;
   top: 4px;
@@ -297,7 +288,7 @@
   width: 10px;
   height: 10px;
   box-sizing: border-box;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
   /* lit: a seat is a lamp, not an empty box */
   background: var(--wb-paper);
   pointer-events: none;
@@ -343,11 +334,11 @@
   padding: 0 5px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--wb-ink);
-  border-radius: 0;
-  background: var(--accent-ink);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-sel);
   color: var(--text-on-accent);
-  box-shadow: var(--wb-raised);
+  box-shadow: none;
   font: 700 12px var(--font-mono);
 }
 .desk-next .desk-dock-launch .desk-dock-badge:not([data-tone]) {
@@ -365,10 +356,10 @@
   padding: 0 4px;
   /* inline, so the tag's words read as one line ("SEND FAILED") */
   display: inline-block;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
   background: var(--wb-paper);
   color: var(--wb-ink);
-  box-shadow: var(--wb-raised);
+  box-shadow: none;
   font: 700 12px/16px var(--font-mono);
   white-space: nowrap;
 }
@@ -417,10 +408,10 @@
   padding: 0 8px;
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
   background: var(--wb-paper);
   color: var(--wb-ink);
-  box-shadow: var(--wb-raised);
+  box-shadow: none;
   font: 700 12px var(--font-mono);
   white-space: nowrap;
 }
@@ -428,72 +419,72 @@
 .desk-next .desk-dock:has(.desk-dock-offline) .desk-dock-badge {
   display: none;
 }
-/* open windows that are not applications: raised steel tabs (front: blue) */
+/* Open windows that are not applications use the same paper tabs. */
 .desk-next .desk-dock-sep {
   align-self: center;
-  width: 2px;
-  height: 48px;
-  margin: 0 6px;
-  background: var(--wb-ink);
-  box-shadow: 1px 0 0 var(--wb-hi);
+  width: 1px;
+  height: 32px;
+  margin-inline: var(--space-2);
+  background: var(--wb-rule-soft);
+  box-shadow: none;
 }
 .desk-next .desk-dock-chip {
   align-self: center;
   max-width: 200px;
   height: 32px;
-  border: 1px solid var(--wb-ink);
-  background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-field);
+  box-shadow: var(--wb-drop);
 }
 .desk-next .desk-dock-chip.is-front {
   background: var(--wb-blue);
-  border-color: var(--wb-ink);
+  border-color: var(--wb-sel);
 }
 .desk-next .desk-dock-chip.is-min {
   opacity: 1;
-  background: var(--wb-steel);
-  box-shadow: var(--wb-sunken);
+  background: var(--wb-field);
+  box-shadow: none;
 }
 .desk-next .desk-dock-main {
   min-width: 0;
   padding: 0 8px;
   color: var(--wb-ink);
   background: transparent;
-  font: 600 12px var(--font-mono);
+  font: 600 13px var(--font-sans);
 }
 .desk-next .desk-dock-x {
   color: var(--wb-ink);
-  /* the hairline on the left edge is an inset shadow (HS-101 rule 6: no left rail) */
-  box-shadow: inset 1px 0 0 var(--wb-ink);
-  border-radius: 0;
+  box-shadow: none;
+  border-radius: var(--radius-sm);
 }
 .desk-next .desk-dock-reset {
   align-self: center;
   color: var(--wb-ink);
-  border: 1px solid var(--wb-ink);
-  border-radius: 0;
-  background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
 }
 .desk-next .desk-dock-reset:hover {
   color: var(--wb-ink);
-  background: var(--wb-steel-2);
+  background: var(--wb-blue);
 }
 .desk-next .desk-dock .desk-room-actions {
   align-self: center;
 }
 .desk-next .desk-dock .desk-room-actions > button {
   color: var(--wb-ink);
-  border: 1px solid var(--wb-ink);
-  border-radius: 0;
-  background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
-  font: 600 12px var(--font-mono);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
+  font: 600 13px var(--font-sans);
 }
 .desk-next .desk-dock .desk-room-actions > button:hover,
 .desk-next .desk-dock .desk-room-actions > button[aria-pressed="true"] {
   color: var(--wb-ink);
-  background: var(--wb-steel-2);
+  background: var(--wb-blue);
 }
 .desk-next .desk-dock .desk-orb-wrap {
   align-self: center;
@@ -512,11 +503,10 @@
   display: none;
 }
 
-/* ══ 393: the shelf shows the five manifest phone doors. Each tile is 76 px
-   wide, keeps its 12 px word, and owns a 44 px strip row. ══ */
+/* Phone projection keeps one 60px shelf row and 44px control targets. */
 @media (max-width: 720px) {
   :root {
-    --desk-snap-bottom: 56px;
+    --desk-snap-bottom: 60px;
   }
   .desk-next .desk-window-shell.is-sheet {
     position: fixed;
@@ -535,7 +525,7 @@
        push a sheet past a 393px phone — the sheet owns the edge. */
     min-width: 0;
     max-height: none;
-    border-radius: 0;
+    border-radius: var(--desk-window-radius);
     /* HS-129-02 — the sheet is still a window: its body owns scroll so
        the fixed head and foot stay visible above the material. */
     overflow: hidden;
@@ -552,7 +542,7 @@
      it never runs past the viewport (it ran 410px past its right edge),
      and it keeps the shell layer so a sheet never buries its buttons
      (03-interaction-walk.md finding 1).
-     PHILO-13-11 (C1, R2): it no longer wraps. The shelf is ONE 56 px row so
+     PHILO-13-11 (C1, R2): it no longer wraps. The shelf is ONE 60 px row so
      the window above keeps ≥ 700 px of content; a full shelf scrolls
      inside itself when a minimized window adds a seat. */
   .desk-next .desk-dock {
@@ -561,7 +551,7 @@
     bottom: 0;
     transform: none;
     max-width: none;
-    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
     flex-wrap: nowrap;
     justify-content: flex-start;
     overflow-x: auto;
@@ -656,7 +646,7 @@
     width: 76px;
     min-width: 76px;
     max-width: 76px;
-    height: 56px;
+    height: 60px;
     min-height: 44px;
     grid-template-rows: 34px;
     padding: 1px 2px;
@@ -735,17 +725,16 @@
     flex: 0 0 var(--desk-dock-more-w);
     width: var(--desk-dock-more-w);
     min-height: 0;
-    height: 56px;
+    height: 60px;
     align-self: stretch;
     display: grid;
     place-items: center;
     margin: 0 0 0 auto;
     padding: 0;
     border: 0;
-    border-radius: 0;
+    border-radius: var(--radius-sm);
     background: var(--wb-steel);
-    /* the hairline on the left edge is an inset shadow (HS-101 rule 6: no left rail) */
-    box-shadow: inset 1px 0 0 var(--wb-ink), var(--wb-raised), -6px 0 8px -4px rgba(0, 0, 0, 0.35);
+    box-shadow: none;
     color: var(--wb-ink);
     font: 700 18px var(--font-mono);
     z-index: 2;
@@ -759,7 +748,7 @@
   left: 4px;
   width: 8px;
   height: 8px;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
   border-radius: 50%;
   background: var(--wb-paper);
 }
@@ -772,7 +761,7 @@
   bottom: 4px;
   width: 8px;
   height: 8px;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
   border-radius: 50%;
   background: var(--lamp-ok);
 }

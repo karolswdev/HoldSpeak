@@ -1,14 +1,5 @@
-/* Phase 16 — THE INTERIOR KIT (COMPOSITOR.md §11; the canvas block
-   "THE INTERIOR KIT"). The two species the library lacked: AppHead with its
-   StatusStrip, and the FilterBar rail; plus the LedgerRow's kind plate and
-   meta. The rest of the kit restyles the existing species in place
-   (surface.css: Section, Ledger; objects.css: IconGrid well; gadgets.css:
-   the string well; surface-footer.css: the Foot; global.css: the Verb).
-
-   Colour inside a window: ink, muted ink, the lamp tones, the selection
-   blue. Nothing else. The material tokens (`--wb-field`, `--wb-well`,
-   `--wb-text`, `--wb-muted`, `--wb-rule-soft`, `--wb-sel`, the `*-ink`
-   tones) are lane A1's (tokens.css); the kit reads them directly. */
+/* Shared interior kit: light paper, pale steel, dark ink, Workbench blue and
+   the existing status tones. */
 
 /* AppHead: the one big fact + the status strip, on one baseline. */
 .kit-apphead {
@@ -20,8 +11,7 @@
 }
 .kit-apphead > .kit-disp {
   margin: 0;
-  /* PHILO-17 (owner: "comically large fonts"): 19 px, the window headline. */
-  font: 650 19px / 1.2 var(--font-display);
+  font: var(--desk-type-display-weight) var(--desk-type-display-size) / var(--desk-type-display-lh) var(--font-display);
   letter-spacing: var(--letter-spacing-tight);
   color: var(--wb-text);
   min-width: 0;
@@ -98,9 +88,10 @@
   width: 9ch;
   min-width: 9ch;
   padding: 4px 2px;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
   background: var(--wb-steel);
-  box-shadow: var(--wb-raised-soft);
+  box-shadow: none;
   color: var(--wb-ink);
   font: 700 12px / 1 var(--font-mono);
   letter-spacing: 0.02em;
@@ -190,8 +181,8 @@
   top: 9px;
   right: calc(50% + 12px);
   left: calc(-50% + 12px);
-  height: 2px;
-  background: repeating-linear-gradient(90deg, color-mix(in srgb, var(--wb-ink) 45%, transparent) 0 2px, transparent 2px 4px);
+  height: 1px;
+  background: var(--wb-rule-soft);
 }
 .kit-step-n {
   display: inline-grid;
@@ -200,11 +191,12 @@
   height: 20px;
   border: 1px solid var(--wb-ink);
   background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   font: 800 12px / 1 var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: var(--wb-ink);
-  transition: background-color 120ms ease, box-shadow 160ms ease;
+  transition: background-color var(--duration-short) var(--ease-standard);
 }
 .kit-step-word {
   max-width: 100%;
@@ -215,17 +207,17 @@
 .kit-step[data-state="now"] .kit-step-n {
   background: var(--wb-sel);
   color: var(--wb-paper);
-  box-shadow: var(--wb-sunken), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 30%, transparent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
 }
 .kit-step[data-state="now"] .kit-step-word {
   color: var(--wb-text);
   font-weight: 750;
 }
 .kit-step[data-state="done"] .kit-step-n {
-  background: var(--pill-ok);
+  background: var(--desk-pill-ok);
 }
 .kit-step[data-state="failed"] .kit-step-n {
-  background: var(--pill-danger);
+  background: var(--desk-pill-danger);
 }
 .kit-step[data-state="failed"] .kit-step-word {
   color: var(--wb-danger-ink);
@@ -234,22 +226,10 @@
   background-color: var(--wb-steel-2);
 }
 .kit-step[data-state="now"]:hover .kit-step-n {
-  background: color-mix(in srgb, var(--wb-sel) 85%, #ffffff);
+  background: color-mix(in srgb, var(--wb-sel) 85%, var(--white));
 }
 @media (prefers-reduced-motion: reduce) {
   .kit-step-n { transition: none; }
-}
-
-/* PHILO-17: the pill tints, solid (a measured background is a plain
-   colour: no color-mix on a pill). Each tone's ink reads 5.5:1 or more on
-   its tint (computed against --wb-paper #eef0f3). */
-:root {
-  --pill-neutral: #dcdee1;
-  --pill-ok: #cdebe3;
-  --pill-warn: #f1e3bd;
-  --pill-danger: #f0dcde;
-  --pill-info: #d1dcf2;
-  --pill-accent: #eaddd4;
 }
 
 /* ── PHILO-17: THE PILL (one shared species; the lanes' copies retire).
@@ -261,25 +241,25 @@
    reads 5.3:1 or more on any ground (the 4.5:1 floor, UX-CANON). Square
    corners (a Workbench tag): the pill owns every point of its box. */
 .kit-pill {
-  --pill-tint: var(--pill-neutral);
+  --pill-tint: var(--desk-pill-neutral);
   --pill-lamp: var(--wb-steel);
   display: inline-flex;
   align-items: center;
   gap: 5px;
   min-height: 20px;
   padding: 0 8px;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: var(--pill-tint);
   font: 600 12px / 1 var(--font-sans);
   color: var(--wb-muted);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.kit-pill:is([data-tone="ok"], [data-tone="success"]) { --pill-tint: var(--pill-ok); --pill-lamp: var(--lamp-ok); color: var(--wb-ok-ink); }
-.kit-pill[data-tone="warn"] { --pill-tint: var(--pill-warn); --pill-lamp: var(--lamp-warn); color: var(--wb-warn-ink); }
-.kit-pill[data-tone="danger"] { --pill-tint: var(--pill-danger); --pill-lamp: var(--lamp-fail); color: var(--wb-danger-ink); }
-.kit-pill[data-tone="info"] { --pill-tint: var(--pill-info); --pill-lamp: var(--lamp-info); color: var(--wb-info-ink); }
-.kit-pill[data-tone="accent"] { --pill-tint: var(--pill-accent); --pill-lamp: var(--lamp-ask); color: var(--wb-ember-ink); }
+.kit-pill:is([data-tone="ok"], [data-tone="success"]) { --pill-tint: var(--desk-pill-ok); --pill-lamp: var(--lamp-ok); color: var(--wb-ok-ink); }
+.kit-pill[data-tone="warn"] { --pill-tint: var(--desk-pill-warn); --pill-lamp: var(--lamp-warn); color: var(--wb-warn-ink); }
+.kit-pill[data-tone="danger"] { --pill-tint: var(--desk-pill-danger); --pill-lamp: var(--lamp-fail); color: var(--wb-danger-ink); }
+.kit-pill[data-tone="info"] { --pill-tint: var(--desk-pill-info); --pill-lamp: var(--lamp-info); color: var(--wb-info-ink); }
+.kit-pill[data-tone="accent"] { --pill-tint: var(--desk-pill-accent); --pill-lamp: var(--lamp-ask); color: var(--wb-ember-ink); }
 .kit-pill:is([data-dot], [data-live])::before {
   content: "";
   flex: none;
@@ -287,7 +267,7 @@
   height: 7px;
   border-radius: 50%;
   background: var(--pill-lamp);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--wb-ink) 45%, transparent);
+  box-shadow: 0 0 0 1px var(--wb-rule-soft);
 }
 .kit-pill[data-live]::before {
   animation: kit-pill-breathe 1.2s ease-in-out infinite alternate;
