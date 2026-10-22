@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-Conversation fix-forward (FIX_PR_PENDING): shared end anchoring keeps the
+Conversation fix-forward (#1423): shared end anchoring keeps the
 answer actions in view when Tools changes the reading height; shared composer
 material owns the editor cascade. /design/components now carries a local
 interactive composer specimen under the legacy PR host class. The PR reply

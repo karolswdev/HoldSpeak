@@ -41,7 +41,7 @@ material and ComposerWell in the library, with live Ask/saved-thread adoption an
 reply composer. /companion opens Agents; PR reply adoption is not live. This improves existing slices without changing their count;
 owner aesthetic acceptance remains open.
 
-Shared design fix-forward (2026-10-21): PR_PENDING preserves reading-end
+Shared design fix-forward (2026-10-21): #1423 preserves reading-end
 anchoring as Tools opens, makes editor material ownership explicit, and adds
 a working local composer specimen to /design/components. The retained PR
 reply consumer is parked; no live PR send or aesthetic acceptance is claimed.
