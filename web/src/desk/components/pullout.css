@@ -663,8 +663,9 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head {
     margin: 0;
+    padding-inline: 3px;
     flex-wrap: nowrap;
-    overflow: hidden;
+    overflow: visible;
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head > .desk-gadgets-left {
     order: 0;
@@ -713,6 +714,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     padding: 0;
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-window-actions :is(.btn, .desk-chip, button) {
+    box-sizing: border-box;
     height: 44px;
     min-height: 44px;
     min-width: 44px;

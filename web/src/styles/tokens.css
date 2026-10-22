@@ -362,7 +362,7 @@
   --wb-drop: 0 8px 22px rgba(22, 40, 62, 0.12); /* soft shell depth */
   --wb-stipple: none; /* modern bars have a quiet solid fill */
   --wb-stipple-fine: none; /* modern bars have no title hatching */
-  --wb-ink-dim: #63758b; /* quiet inactive title ink */
+  --wb-ink-dim: #4d5e75; /* quiet inactive title ink on light steel */
   --wb-rule: #c5cfdd; /* fine chrome hairline */
   --wb-raised-soft: none; /* modern controls have no bevel box */
   --wb-steel-dim: #d9e0ea; /* resting window steel */

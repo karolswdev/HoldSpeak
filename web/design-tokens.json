@@ -1446,8 +1446,8 @@
       },
       {
         "name": "--wb-ink-dim",
-        "value": "#63758b",
-        "doc": "quiet inactive title ink"
+        "value": "#4d5e75",
+        "doc": "quiet inactive title ink on light steel"
       },
       {
         "name": "--wb-rule",

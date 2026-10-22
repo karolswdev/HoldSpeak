@@ -160,6 +160,21 @@ small {
     min-inline-size: var(--desk-button-hit-size);
   }
 
+  /* Keep the painted face rounded while the Button owns a rectangular device
+     target at the narrow desk. The transparent face receives corner taps
+     without extending beyond the control box or adding a visual halo. */
+  :where(.btn, .btn--chrome) {
+    position: relative;
+  }
+  :where(.btn, .btn--chrome)::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 0;
+    background: transparent;
+    pointer-events: auto;
+  }
+
   /* Rails is desk furniture outside a surface container. Reserve the
      device target in each action row; its halo fits inside the plate. */
   :root .desk-next .desk-mc :is(.desk-mc-story-pick, .desk-mc-evidence-open, .desk-mc-pin, .desk-mc-needs) {

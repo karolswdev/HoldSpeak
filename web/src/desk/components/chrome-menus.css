@@ -661,6 +661,7 @@
   position: fixed;
   inset: 0 0 auto 0;
   height: var(--wb-screen-h);
+  box-sizing: border-box;
   z-index: var(--desk-z-dock-under);
   display: flex;
   align-items: stretch;
@@ -713,11 +714,13 @@
   overflow: hidden;
 }
 .desk-next .desk-screen-name {
+  display: block;
+  align-self: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--wb-ink);
-  font: 600 14px / 1 var(--font-sans);
+  font: 600 14px / 1.2 var(--font-sans);
 }
 /* PHILO-13-17 (C7, Q2): 393 — the title is the window switcher. The name
    truncates; the ▾ is its own fixed mark and never does. */
@@ -790,7 +793,7 @@
   align-self: stretch;
   gap: 8px;
   padding: 0 12px 0 13px;
-  border-left: 1px solid var(--wb-rule-soft);
+  border: 1px solid var(--wb-rule-soft);
   background: var(--wb-field);
   box-shadow: none;
   font: 400 13px / 1 var(--font-sans);
@@ -1065,6 +1068,7 @@
     align-self: stretch;
   }
   .desk-next .desk-menubar :is(button, .egress-badge, .desk-tools-launch, .desk-bell, .desk-verbbar-title) {
+    box-sizing: border-box;
     height: 44px;
     min-height: 44px;
     min-width: 44px;
