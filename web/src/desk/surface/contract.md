@@ -1110,8 +1110,10 @@ bounds and question secret filter. Historic flattened text stays as stored.
 
 ## ComposerWell — shared writing material (2026-10-21)
 
-One presentation species for text plus an explicit action. Ask and the live
-DeskComposer used in PR receipt replies compose it. This extends the existing
+One presentation species for text plus an explicit action. Ask and the
+DeskComposer retained by parked PR receipt replies compose it. The live
+component gallery exposes the same species as an interactive specimen;
+/companion opens Agents, not that parked PR screen. This extends the existing
 PadGadget, StringGadget and Button species; it adds no draft or send authority.
 
 - `children`: host-owned editor and optional retained selection material.
@@ -1132,3 +1134,13 @@ never clears drafts, submits, starts recording, chooses an engine or stores
 state. `patterns/conversation.css` owns shared document reading measure and
 turn typography. Ask's intro/context remain host composition, and a restored
 Thread uses the same Ask face through ThreadToAsk.
+
+The species owns input/textarea font, paper, border, padding and vertical
+resize. Hosts do not restyle those internals. The gallery's Conversation
+composer is local state with a Preview action, not a provider or PR send.
+
+`useReadingEndAnchor(ref, active)` preserves a reading viewport's bottom edge
+across material and viewport changes only while its reader is at the end.
+Reading above the end stays in place. `active` follows conditional reading
+nodes; the hook owns no draft, engine or action state. Ask uses this shared
+pattern so opening Tools keeps the answer verbs in reach.

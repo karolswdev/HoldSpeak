@@ -18,7 +18,7 @@ Conversation: a readable document, not chat bubbles or repeated cards. Captions 
 
 Add ONE library ComposerWell in desk/surface, exported from its barrel and documented in contract.md. It is presentation only: children/editor, context (engine/egress), capture, actions and optional details slots. It owns the paper/etched rule, focus-within treatment, compact action row, 560px reflow and accessible spacing. It does not own draft, submit, keyboard, engine, microphone or persistence state. No callbacks that duplicate host authority. Ask composes its existing single PadGadget inside ComposerWell, keeping its exact className conversation-composer desk-ask-composer literal and labels for the canon guard. Its current immutable sent snapshot/durable draft behavior stays in Ask.
 
-Adopt the same ComposerWell in the existing DeskComposer, used by live PR receipt reply actions. Preserve callback semantics and single/multiline support. Use one MicButton per editor; current DeskComposer accidentally supplies both gadget-default and standalone capture. Disable gadget-default mic when passing the standalone scoped capture. The actual host retains sending authority. Do not widen scope to terminal/agent steering or parked ThreadComposer. Shared conversation.css carries the reading typography/turn rhythm; Ask CSS carries only its context/intro and window geometry. Do not append an escalating collection of local style overrides.
+Adopt the same ComposerWell in the existing DeskComposer, retained for the parked PR receipt reply screen. Preserve callback semantics and single/multiline support. Use one MicButton per editor; current DeskComposer accidentally supplies both gadget-default and standalone capture. Disable gadget-default mic when passing the standalone scoped capture. The actual host retains sending authority. Do not widen scope to terminal/agent steering or parked ThreadComposer. Shared conversation.css carries the reading typography/turn rhythm; Ask CSS carries only its context/intro and window geometry. Do not append an escalating collection of local style overrides.
 
 ## Lane and checks
 
@@ -53,3 +53,20 @@ variants join the existing positive/negative cases: no mic, another component's
 mic, another field and another path must all remain violations. No ceiling or
 scanner coverage is relaxed. Final required quick checks this guard correction
 against the already-verified, byte-unchanged web implementation.
+
+## Post-merge fix-forward design
+
+Review of #1422 found that Tools could shrink a scrolled reading viewport and hide the answer actions. The common reading-end anchor preserves the end across content/viewport resize only while the reader is at the end. A reader above the end keeps their position. This hook owns scroll presentation only.
+
+The shared composer owns inner editor paper, typography, border, padding and resize; legacy PR textarea skin must not compete. Source review corrected adoption provenance: routes.tsx maps /companion to Agents; CompanionCore and its PR replies are parked. There is no live PR reply route to photograph, and this change does not revive it. Earlier claims of live PR adoption were inaccurate.
+
+Before build, extend the existing /design/components gallery with a Conversation composer specimen: the same DeskComposer, multiline local controlled draft, one scoped microphone and a Preview action that changes local specimen output only. Keep the common canvas geometry and tokens, no new panel/chrome. Host it under the legacy desk-pr-compose class to exercise the competing cascade. Render and inspect this actual gallery route at 1440/393, label evidence as a specimen, and retain callback coverage for parked PR consumers. This is the reusable reference; it is not proof of live PR delivery or owner aesthetic acceptance.
+
+Fix-forward focused verification: 55 web cases and typecheck passed. Seven
+real private-Hub browser cases passed, including Firefox 1440/393. Long-answer
+verbs remain completely in the reading viewport with Tools open; a reader at
+scrollTop 80 remains there when Tools changes height. The actual component
+gallery renders the shared editor as transparent, borderless 14px sans under
+the legacy PR host class, with one mic and fully owned 44px capture/action hit
+areas. Root inspected all four new Tools/specimen shots. These are gallery
+specimens, not PR route screenshots. Required quick follows on frozen source.
