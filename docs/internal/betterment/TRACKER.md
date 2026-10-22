@@ -7,6 +7,10 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 
 **Last updated:** 2026-10-22, shared shell modernized; owner visual acceptance remains open. Running-desk identity is in `pm/STATUS.md`.
 
+Pressed-state fix-forward (2026-10-22): PR_PENDING preserves primary/danger
+selection fills during hover and keyboard focus after #1424. Existing slices
+only; no count change.
+
 **Total: 115 of 117 slices merged**.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
