@@ -17,7 +17,7 @@ their callers. One mic per editor. Saved Threads already open in Ask; their
 parked screen is not revived. Contract and settled canvas:
 `docs/internal/betterment/CONVERSATION-DESIGN-2026-10-21.md` and
 `web/src/desk/surface/contract.md`. Required quick:
-CONVERSATION_QUICK_PENDING. Live aesthetic judgment remains open.
+build, 4125 related web cases, real Firefox long-document checks at 1440/393, 110 desk sweep cases, 27 canon and 1,126 repository guards passed after the microphone mapping correction; web code is byte-unchanged from the product check; 50 focused Ask/shared PR composer checks, 71 microphone guard checks and typecheck passed. Live aesthetic judgment remains open.
 
 The prior d1691b773 full main tape completed: 12 Python and 10 browser failures;
 web and strict Firefox capture timing passed. The five J9 category setup
