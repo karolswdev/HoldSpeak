@@ -61,7 +61,7 @@ import { Button } from "../../components/signal/Signal";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { reportWriteFailure } from "../hooks/useWriteReceipt";
 import { useEngine, refreshEngine } from "../hooks/useEngine";
-import { ActionNotice, StateChip, EngineLine, RunLine, reasonVerb, reasonWords } from "../surface";
+import { ActionNotice, StateChip, EngineLine, RunLine, ComposerWell, reasonVerb, reasonWords } from "../surface";
 import { humanTime } from "../surface/format";
 import { openRef } from "../openObject";
 import { openSurfaceOr } from "../shell";
@@ -793,7 +793,7 @@ export function AskPanel() {
           </ActionNotice>
         ) : null}
 
-        <ScrollHint axis="y" scrollRef={aboutRef} className="desk-ask-context-wrap"><div ref={aboutRef} className="desk-ask-question-context">
+        <ScrollHint axis="y" scrollRef={aboutRef} className="desk-ask-context-wrap desk-ask-about-band"><div ref={aboutRef} className="desk-ask-question-context">
           <div className="desk-ask-sources desk-ask-about" data-testid="ask-context">
             <span className="desk-ask-about-label">About</span>
             {about.length ? about.map((source) => (
@@ -916,21 +916,32 @@ export function AskPanel() {
         </SurfaceTraffic></div></ScrollHint> : (
           <ScrollHint axis="y" scrollRef={readingRef} className="desk-ask-reading-wrap">
             <div ref={readingRef} className="conversation-reading desk-ask-reading desk-ask-empty" role="region" aria-label="Ask conversation" tabIndex={0} data-testid="ask-empty">
-              <picture>
-                <source media="(max-width: 520px)" srcSet={spriteUrl("thread", "ask", "rest", undefined, 32)} />
-                <img className="desk-ask-empty-sprite" src={spriteUrl("thread", "ask", "rest", undefined, 64)} alt="" width={64} height={64} draggable={false} />
-              </picture>
-              <h1>Ask about your work</h1>
+              <div className="desk-ask-empty-identity">
+                <picture>
+                  <source media="(max-width: 560px)" srcSet={spriteUrl("thread", "ask", "rest", undefined, 32)} />
+                  <img className="desk-ask-empty-sprite" src={spriteUrl("thread", "ask", "rest", undefined, 64)} alt="" width={64} height={64} draggable={false} />
+                </picture>
+                <h1>Ask about<br className="desk-ask-empty-break" /> your work</h1>
+              </div>
               <div className="desk-ask-prompts">
-                <Button dense variant="ghost" onClick={() => prefillPrompt("What needs my attention?")}>What needs my attention?</Button>
-                <Button dense variant="ghost" onClick={() => prefillPrompt("Summarize this week's meetings")}>Summarize this week's meetings</Button>
+                <Button dense variant="ghost" className="desk-ask-starter" onClick={() => prefillPrompt("What needs my attention?")}>
+                  <img src={spriteUrl("action", "ask-attention", "rest", undefined, 32)} alt="" width={32} height={32} draggable={false} />
+                  <span className="desk-ask-starter-label">What needs my attention?</span>
+                  <span className="desk-ask-starter-arrow" aria-hidden="true">→</span>
+                </Button>
+                <Button dense variant="ghost" className="desk-ask-starter" onClick={() => prefillPrompt("Summarize this week's meetings")}>
+                  <img src={spriteUrl("meeting", "ask-meetings", "rest", undefined, 32)} alt="" width={32} height={32} draggable={false} />
+                  <span className="desk-ask-starter-label">Summarize this week's meetings</span>
+                  <span className="desk-ask-starter-arrow" aria-hidden="true">→</span>
+                </Button>
               </div>
             </div>
           </ScrollHint>
         )}
 
-        <div className="conversation-composer desk-ask-composer">
-          {selectedPassage?.text.trim() ? (
+        <ComposerWell
+          className="conversation-composer desk-ask-composer"
+          details={selectedPassage?.text.trim() ? (
             <div className="desk-ask-passage" data-testid="ask-selected-passage">
               <FoldGadget title="Selected text" open={passageOpen} onToggle={setPassageOpen}>
                 <blockquote>{selectedPassage.text}</blockquote>
@@ -944,7 +955,40 @@ export function AskPanel() {
                 </div>
               </FoldGadget>
             </div>
+          ) : undefined}
+          capture={
+            <MicButton
+              label="Speak your question"
+              draftScope="desk-ask"
+              onText={(text) => setPrompt((current) => current ? `${current} ${text}` : text)}
+            />
+          }
+          context={!running ? (
+            engine.state === "set" ? (
+              <div className="surface-engine-line desk-ask-engine-line" data-testid="engine-line">
+                <span>{[engine.model, engine.place].filter(Boolean).join(" · ")}</span>
+                <FoldGadget title="Tools" className="desk-ask-tools">
+                  <span>{deskTools ? DESK_TOOLS_WORDS : "reads only what is in About"}</span>
+                </FoldGadget>
+              </div>
+            ) : (
+              <EngineLine
+                engine={engine}
+                onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
+                onRetry={() => void refreshEngine("ask.answer")}
+              />
+            )
           ) : null}
+          actions={running ? (
+            <Button variant="primary" onClick={stop}>Stop</Button>
+          ) : (
+            <Button
+              variant="primary"
+              disabled={!prompt.trim()}
+              onClick={() => void ask()}
+            >Ask</Button>
+          )}
+        >
           <div className="desk-ask-input">
             <PadGadget
               label="Ask about your work"
@@ -962,55 +1006,23 @@ export function AskPanel() {
                 }
               }}
             />
-            <MicButton
-              label="Speak your question"
-              draftScope="desk-ask"
-              onText={(text) => setPrompt((current) => current ? `${current} ${text}` : text)}
-            />
           </div>
-          <div className="desk-ask-compose-actions">
-            <div className="desk-ask-send">
-              {!running ? (
-                engine.state === "set" ? (
-                  <div className="surface-engine-line desk-ask-engine-line" data-testid="engine-line">
-                    <span>{[engine.model, engine.place].filter(Boolean).join(" · ")}</span>
-                    <FoldGadget title="Tools" className="desk-ask-tools">
-                      <span>{deskTools ? DESK_TOOLS_WORDS : "reads only what is in About"}</span>
-                    </FoldGadget>
-                  </div>
-                ) : (
-                  <EngineLine
-                    engine={engine}
-                    onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
-                    onRetry={() => void refreshEngine("ask.answer")}
-                  />
-                )
-              ) : null}
-              {running ? (
-                <Button variant="primary" onClick={stop}>Stop</Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  disabled={!prompt.trim()}
-                  onClick={() => void ask()}
-                >Ask</Button>
-              )}
-            </div>
-          </div>
-        </div>
+        </ComposerWell>
       </div>
 
       {/* Betterment Q5 (FOLLOWUPS Q4): the route is said once, as the lamp on
           the answer that left the machine (the Ask window names no host). */}
-      <SurfaceFooter
-        receipt={copyReceipt || (statusLine ? <span className="surface-footer-receipt-line" role="status">{statusLine}</span> : null)}
-        verbs={threadId || turns.length ? <>
-          <FoldGadget title="More" className="desk-ask-more">
-            <Button dense variant="ghost" onClick={forget}>Forget</Button>
-          </FoldGadget>
-          <Button dense variant="ghost" onClick={startNew}>New ask</Button>
-        </> : null}
-      />
+      {(copyReceipt || statusLine || threadId || turns.length) ? (
+        <SurfaceFooter
+          receipt={copyReceipt || (statusLine ? <span className="surface-footer-receipt-line" role="status">{statusLine}</span> : null)}
+          verbs={threadId || turns.length ? <>
+            <FoldGadget title="More" className="desk-ask-more">
+              <Button dense variant="ghost" onClick={forget}>Forget</Button>
+            </FoldGadget>
+            <Button dense variant="ghost" onClick={startNew}>New ask</Button>
+          </> : null}
+        />
+      ) : null}
     </DeskWindowFrame>
   );
 }

@@ -530,13 +530,15 @@ class TestMicAllowlist:
 
 _MIC_HOST_FIELDS = (
     ("desk/components/AskPanel.tsx", "PadGadget", 'label="Ask about your work"'),
+    ("desk/components/DeskComposer.tsx", "PadGadget", 'label={placeholder || actionLabel}'),
+    ("desk/components/DeskComposer.tsx", "StringGadget", 'label={placeholder || actionLabel}'),
     ("desk/components/ThreadComposer.tsx", "PadGadget", 'label="Thread message"'),
     ("desk/components/ThreadComposer.tsx", "PadGadget", 'label={placeholder ?? "Edit message"}'),
 )  # Betterment Q4: the Thread window's Comment field is parked with it.
 
 
 class TestMicHostAuthorities:
-    """Three host fields must prove their explicit mic in their own component."""
+    """Named host fields must prove an explicit mic in their own component."""
 
     @staticmethod
     def _body(species: str, label: str, mic: str = "") -> str:
@@ -590,7 +592,7 @@ class TestMicHostAuthorities:
         assert {(path, label) for path, label, _ in scanner.MIC_HOST_AUTHORITIES} == {
             (path, label) for path, _species, label in _MIC_HOST_FIELDS
         }
-        assert len(scanner.MIC_HOST_AUTHORITIES) == 3  # Betterment Q4: the Thread Comment field is parked
+        assert len(scanner.MIC_HOST_AUTHORITIES) == 4  # DeskComposer owns both reply editor variants
         src = Path(__file__).resolve().parents[2] / "web" / "src"
         for path, label, reason in scanner.MIC_HOST_AUTHORITIES:
             assert label in (src / path).read_text()

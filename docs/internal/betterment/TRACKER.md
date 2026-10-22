@@ -36,6 +36,11 @@ and preserves follow-up drafts while replacing the giant empty editor with a
 compact composer and paper conversation. Existing Q slices only, no new count.
 Original report: `3c7c52ae3ccfdd5ee7e29ddaadaf10e6`. Owner live design judgment remains open.
 
+Shared design follow-up (2026-10-21): #1422 develops the conversation
+material and ComposerWell in the library, with live Ask/saved-thread and PR
+reply adoption. This improves existing slices without changing their count;
+owner aesthetic acceptance remains open.
+
 ## Automations (`workbench/RECIPE.md`): 11 of 11
 
 | Slice | What | State | Note |

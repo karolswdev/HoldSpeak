@@ -1,0 +1,103 @@
+/* Shared conversation editor material. Hosts supply every state and action. */
+.conversation-composer,
+.surface-compose-well {
+  min-width: 0;
+  flex: none;
+  display: grid;
+  gap: 12px;
+  padding: 16px 20px 20px;
+  background: var(--alive-paper);
+  border: 0;
+  border-top: 1px solid var(--wb-ink);
+  box-shadow: none;
+}
+.surface-compose-well .gadget-pad,
+.surface-compose-well .gadget-string {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.surface-compose-well .gadget-pad:focus-within,
+.surface-compose-well .gadget-string:focus-within {
+  border: 0;
+  box-shadow: none;
+}
+.conversation-composer:focus-within,
+.surface-compose-well:focus-within {
+  border-top-color: var(--field-focus-border);
+  box-shadow: inset 0 1px 0 var(--field-focus-border);
+}
+.surface-compose-details {
+  min-width: 0;
+}
+.surface-compose-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content max-content;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.surface-compose-context {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.surface-compose-capture:first-child {
+  grid-column: 2;
+}
+.surface-compose-capture + .surface-compose-verbs {
+  grid-column: 3;
+}
+.surface-compose-verbs:first-child {
+  grid-column: 3;
+}
+.surface-compose-capture,
+.surface-compose-verbs {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+.surface-compose-well .surface-compose-capture .desk-mic {
+  min-width: var(--desk-button-hit-size);
+  min-height: var(--desk-button-hit-size);
+}
+/* Plated controls already own the full touch target. Global button halo
+   margins must not offset capture and action on the same writing row. */
+.surface-compose-well .surface-compose-capture .btn,
+.surface-compose-well .surface-compose-verbs .btn {
+  margin-block: 0;
+}
+.surface-compose-verbs > .btn {
+  flex: none;
+  min-inline-size: 88px;
+  min-block-size: 44px;
+}
+.conversation-composer .gadget-pad,
+.surface-compose-well .gadget-pad {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+.conversation-composer .gadget-pad textarea,
+.surface-compose-well .gadget-pad textarea {
+  font: 400 14px / 1.55 var(--font-sans);
+  max-height: 150px;
+  overflow-y: auto;
+}
+@container surface (max-width: 520px) {
+  .conversation-composer,
+  .surface-compose-well { padding: 12px; }
+  .conversation-composer .gadget-pad textarea,
+  .surface-compose-well .gadget-pad textarea { max-height: 120px; }
+}
+@container surface (max-width: 560px) {
+  .surface-compose-actions {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas: "context context" "capture verbs";
+    align-items: end;
+  }
+  .surface-compose-actions .surface-compose-context { grid-area: context; }
+  .surface-compose-actions .surface-compose-capture { grid-area: capture; }
+  .surface-compose-actions .surface-compose-verbs { grid-area: verbs; }
+}

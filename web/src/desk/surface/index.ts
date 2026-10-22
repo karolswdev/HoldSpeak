@@ -62,6 +62,7 @@ export {
 } from "./gadgets";
 
 export { SurfaceFooter } from "./SurfaceFooter";
+export { ComposerWell, type ComposerWellProps } from "./ComposerWell";
 export {
   SurfaceSwitchboard,
   useSwitchboardLayout,
