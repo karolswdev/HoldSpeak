@@ -186,7 +186,8 @@ small {
     .btn--chrome.desk-dock-launch,
     .desk-menubar .btn--chrome.egress-badge,
     .desk-menubar .btn--chrome.desk-tools-launch,
-    .desk-menubar .btn--chrome.desk-bell
+    .desk-menubar .btn--chrome.desk-bell,
+    .automation-line-press.btn--chrome
   )::after {
     inset: -1px;
   }

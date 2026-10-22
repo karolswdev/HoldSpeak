@@ -2654,15 +2654,13 @@ button.surface-edit-in-place:hover {
   gap: 8px;
   min-width: 0;
   padding: 6px;
-  border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-2);
-  color: var(--text);
+  border: 1px solid var(--wb-rule-soft, var(--border));
+  border-radius: var(--radius-sm, 5px);
+  background: var(--wb-paper, var(--surface-2));
+  color: var(--wb-ink, var(--text));
   text-align: left;
   cursor: pointer;
-  box-shadow:
-    inset 1px 1px 0 var(--bevel-light),
-    inset -1px -1px 0 var(--bevel-dark);
+  box-shadow: none;
 }
 /* PHILO-17 (the desk sweep): the Favorite star sits under its card, not on
    it: two verbs never share one box (it was drawn over the card's Button). */
@@ -2694,12 +2692,8 @@ button.surface-edit-in-place:hover {
   background: var(--surface-3);
 }
 .prefs-wallpaper-card[data-selected] {
-  border-color: var(--accent);
-  box-shadow:
-    inset 1px 1px 0 var(--bevel-light),
-    inset -1px -1px 0 var(--bevel-dark),
-    0 0 0 1px var(--accent-tint),
-    0 3px 12px var(--accent-glow);
+  border-color: var(--wb-sel, var(--accent));
+  box-shadow: none;
 }
 .prefs-wallpaper-preview {
   position: relative;
