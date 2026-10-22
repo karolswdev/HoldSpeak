@@ -3,9 +3,10 @@
 }
 .desk-next .desk-ask-body {
   container: surface / inline-size;
-  gap: 12px;
+  gap: 0;
   overflow: hidden;
-  padding: 14px 16px;
+  padding: 0;
+  background: var(--alive-paper);
 }
 .desk-ask-reading-wrap {
   --scroll-hint-background: var(--alive-paper);
@@ -18,6 +19,7 @@
   height: 100%;
   min-height: 0;
   min-width: 0;
+  padding-inline: 24px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
@@ -40,7 +42,8 @@
 .desk-ask-question-text {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font: 400 13px / 1.6 var(--font-sans);
+  font: 600 15px / 1.65 var(--font-sans);
+  color: var(--wb-sel);
 }
 .desk-ask-run-details {
   overflow-wrap: anywhere;
@@ -52,17 +55,6 @@
   margin-inline-end: var(--space-2);
   opacity: 0.75;
   animation: surface-state-pulse calc(var(--duration-long) * 4) ease-in-out infinite;
-}
-.desk-next .desk-ask .desk-ask-composer {
-  display: flex;
-  flex-direction: column;
-  flex: none;
-  min-height: 0;
-  gap: 12px;
-  padding: 0;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
 }
 .desk-ask-input {
   display: flex;
@@ -77,12 +69,9 @@
   flex: 1;
   height: 100%;
   min-height: 0;
-  background: var(--alive-paper);
-  border: 1px solid var(--field-border);
-}
-.desk-next .desk-ask-input .gadget-pad:focus-within {
-  border-color: var(--field-focus-border);
-  box-shadow: inset 0 0 0 1px var(--field-focus-border);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 .desk-next .desk-ask-input .gadget-pad textarea {
   min-height: 0;
@@ -93,9 +82,6 @@
   font: 400 14px / 1.65 var(--font-sans);
   resize: none;
   overflow-y: auto;
-}
-.desk-ask-input > .desk-mic {
-  flex: none;
 }
 .desk-ask-sources {
   display: flex;
@@ -162,47 +148,10 @@
   justify-content: flex-end;
   gap: 8px;
 }
-.desk-ask-compose-actions {
-  display: flex;
-  flex: none;
-  align-items: flex-end;
-  justify-content: flex-end;
-  gap: 12px;
-  min-width: 0;
-}
-.desk-ask-context-tools {
-  display: grid;
-  min-width: 0;
-  flex: 1;
-}
-.desk-next .desk-ask-context-tools .desk-ground {
-  margin: 0;
-}
-.desk-next .desk-ask-context-tools .gadget-fold > summary {
-  min-height: 34px;
-  padding-block: 6px;
-  font-family: var(--font-sans);
-  letter-spacing: normal;
-  text-transform: none;
-}
-.desk-ask-send {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-width: 0;
-  width: 100%;
-}
-.desk-ask-send .surface-engine-line {
-  flex: 1;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
 .desk-ask-engine-line {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
-  flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
   color: var(--text-muted);
@@ -214,6 +163,11 @@
 }
 .desk-ask-tools {
   flex: none;
+}
+.desk-ask-tools[open] {
+  grid-column: 1 / -1;
+  min-width: 0;
+  max-width: 100%;
 }
 .desk-ask-tools > summary {
   min-height: 34px;
@@ -235,21 +189,30 @@
 }
 .desk-ask-empty {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
   place-content: center;
-  justify-items: center;
+  justify-items: stretch;
   align-content: center;
-  gap: 12px;
+  gap: 24px;
   min-height: 0;
   min-width: 0;
-  padding: 24px;
-  background: var(--alive-paper);
-  border: 1px solid var(--border);
-  text-align: center;
+  max-width: 68ch;
+  margin-inline: auto;
+  padding: 24px 0;
+}
+.desk-ask-empty-identity {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  justify-content: start;
+  gap: 16px;
+  min-width: 0;
 }
 .desk-ask-empty h1 {
   margin: 0;
   color: var(--text);
-  font: 650 24px / 1.2 var(--font-display);
+  font: 650 26px / 1.2 var(--font-display);
+  text-align: start;
 }
 .desk-ask-empty-sprite {
   display: block;
@@ -257,35 +220,56 @@
   height: 64px;
 }
 .desk-ask-prompts {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  gap: 12px;
   max-width: 100%;
   min-width: 0;
 }
 .desk-ask-prompts .btn {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
   margin-block: 0;
   white-space: normal;
+  text-align: start;
+}
+.desk-ask-starter img {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+.desk-ask-starter-label {
+  font: 600 15px / 1.4 var(--font-sans);
+}
+.desk-ask-starter-arrow {
+  justify-self: end;
+  color: var(--accent);
+  font: 600 15px / 1 var(--font-sans);
 }
 .desk-ask-edit-question {
   flex: none;
 }
 @container surface (max-width: 520px) {
-  .desk-next .desk-ask-body { gap: 10px; padding: 12px; }
+  .desk-next .desk-ask-body { gap: 0; padding: 0; }
   .desk-ask-reading-fold { margin-inline: 12px; }
   .desk-ask-reading-fold > summary { min-height: 44px; }
   .desk-ask-context-wrap { max-height: 160px; }
-  .desk-ask-send > .btn { flex: none; }
-  .desk-next .desk-ask-context-tools .gadget-fold > summary { min-height: 44px; }
   .desk-next .desk-ask-input .gadget-pad textarea { padding: 10px; }
   .desk-ask-sources { max-height: none; overflow: visible; }
   .desk-next .desk-window.desk-ask .desk-ask-passage .gadget-fold > summary { min-height: 44px; }
   .desk-ask-empty-sprite { width: 32px; height: 32px; }
   .desk-ask-empty h1 { font-size: 20px; }
-  .desk-ask-prompts { flex-direction: column; align-items: stretch; width: min(100%, 320px); }
+  .desk-ask-prompts { flex-direction: column; align-items: stretch; width: 100%; }
   .desk-ask-prompts .btn { width: 100%; }
-  .desk-ask-tools > summary { min-height: 44px; }
+  .desk-ask-tools[open] {
+  grid-column: 1 / -1;
+  min-width: 0;
+  max-width: 100%;
+}
+.desk-ask-tools > summary { min-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .desk-ask .surface-run-line[data-state="running"]::before { animation: none; }
@@ -399,4 +383,49 @@
   flex: none;
   max-height: 45%;
   overflow: auto;
+}
+
+.desk-ask-about-band {
+  flex: none;
+  min-height: 44px;
+  max-height: 200px;
+  padding: 6px 24px;
+  background: var(--wb-steel);
+  border: 0;
+  border-bottom: 1px solid var(--wb-ink);
+  box-shadow: inset 0 1px 0 var(--wb-hi);
+}
+.desk-ask-about-band .desk-ask-question-context {
+  max-height: 184px;
+}
+.desk-ask-about-band .desk-ask-sources {
+  min-height: 30px;
+}
+.desk-ask-about-band .desk-ask-about-label,
+.desk-ask-about-band .desk-ask-about-desk {
+  color: var(--wb-ink);
+}
+.desk-ask-about-band .desk-ask-about-chip {
+  border-color: var(--wb-ink);
+}
+.desk-ask-about-band .btn {
+  color: var(--wb-ink);
+  margin-block: 0;
+}
+
+@container surface (max-width: 560px) {
+  .desk-ask-empty {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    padding-block: 16px;
+  }
+  .desk-ask-empty-identity {
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .desk-ask-empty-sprite { width: 32px; height: 32px; }
+  .desk-ask-empty h1 { font-size: 24px; }
+  .desk-ask-empty-break { display: none; }
+  .desk-ask-about-band { max-height: 160px; padding-inline: 12px; }
+  .desk-ask-reading { padding-inline: 12px; }
 }

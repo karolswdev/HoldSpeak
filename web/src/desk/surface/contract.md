@@ -1106,3 +1106,29 @@ keeps its last-ask selection, marks and truncation, with inert links.
 
 Capture preserves original line breaks and indentation within the existing
 bounds and question secret filter. Historic flattened text stays as stored.
+
+
+## ComposerWell — shared writing material (2026-10-21)
+
+One presentation species for text plus an explicit action. Ask and the live
+DeskComposer used in PR receipt replies compose it. This extends the existing
+PadGadget, StringGadget and Button species; it adds no draft or send authority.
+
+- `children`: host-owned editor and optional retained selection material.
+- `context?`: the current engine and real egress at the action boundary, or
+  other host facts. Never derives routing or adds a network request.
+- `capture?`: the host-owned MicButton. Disable the editor gadget's default
+  mic when this slot is used; one capture path per editor.
+- `actions?`: library Buttons. The host owns disabled, pending and callbacks.
+- `details?`: optional host-owned in-flow material above the editor, such as selected text.
+- `className?`: host geometry hook; the shared species owns paper, focus,
+  editor/control spacing and narrow reflow.
+
+The surface keeps context beside capture/actions while space permits. At the
+560px surface breakpoint it wraps without overlap; plated targets own 44px.
+Long engine names and failures wrap. The editor stays a real library gadget,
+with the host's labels, refs, keys, value and voice scope unchanged. The well
+never clears drafts, submits, starts recording, chooses an engine or stores
+state. `patterns/conversation.css` owns shared document reading measure and
+turn typography. Ask's intro/context remain host composition, and a restored
+Thread uses the same Ask face through ThreadToAsk.

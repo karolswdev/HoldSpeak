@@ -4,9 +4,26 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-21 (Automation builder and Settings feedback)
+**Last updated:** 2026-10-21 (shared conversation design)
 
 ## Current phase
+
+Shared conversation design: CONVERSATION_PR_PENDING develops Ask into a
+continuous paper reading/writing surface with a strong intro, bounded readable
+turns and an integrated composer. The new presentation-only ComposerWell
+library species also serves DeskComposer in live PR reply actions. Host-owned
+submission, keyboard, voice scopes, engine/egress and durable drafts stay in
+their callers. One mic per editor. Saved Threads already open in Ask; their
+parked screen is not revived. Contract and settled canvas:
+`docs/internal/betterment/CONVERSATION-DESIGN-2026-10-21.md` and
+`web/src/desk/surface/contract.md`. Required quick:
+CONVERSATION_QUICK_PENDING. Live aesthetic judgment remains open.
+
+The prior d1691b773 full main tape completed: 12 Python and 10 browser failures;
+web and strict Firefox capture timing passed. The five J9 category setup
+failures are resolved. Other inherited failures remain open, with no new full
+suite green claimed for the visual work.
+
 
 The owner's Ask feedback is implemented by #1421: compact
 paper composer, an empty-state Ask pictogram and prompt starters, and a
@@ -2042,6 +2059,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **CONVERSATION_PR_PENDING — common conversation design:** shared ComposerWell used in Ask and PR replies, continuous paper and readable turn hierarchy.
 
 - **#1421 — Ask feedback:** clear sent input immediately, retain the next draft, compact paper conversation and composer.
 

@@ -3,9 +3,7 @@
 .conversation-reading {
   min-width: 0;
   min-height: 0;
-  background: var(--alive-paper);
-  border: 1px solid var(--border);
-  box-shadow: var(--desk-window-etch);
+  background: transparent;
 }
 .conversation-reading .surface-traffic,
 .conversation-reading .surface-traffic > .surface-well {
@@ -20,10 +18,15 @@
   gap: 0;
   padding: 0;
 }
+.conversation-reading .surface-traffic > .surface-well {
+  width: min(100%, 68ch);
+  max-width: 68ch;
+  margin-inline: auto;
+}
 .conversation-reading .surface-traffic-turn {
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
-  margin: 0 18px;
+  margin: 0;
   padding: 18px 0;
 }
 .conversation-reading .surface-traffic-turn + .surface-traffic-turn {
@@ -37,10 +40,14 @@
 }
 .conversation-reading .surface-traffic-text {
   grid-column: 1;
-  font: 400 14px / 1.65 var(--font-sans);
+  font: 400 15px / 1.65 var(--font-sans);
   color: var(--text);
   white-space: normal;
   overflow-wrap: anywhere;
+}
+.conversation-reading .surface-material .reading-heading:first-child {
+  margin-top: 0;
+  font: 650 26px / 1.2 var(--font-display);
 }
 .conversation-reading .surface-traffic-text p {
   margin: 0 0 10px;
@@ -57,30 +64,11 @@
   padding-top: 4px;
   font: 400 12px / 1.5 var(--font-mono);
 }
-.conversation-composer {
-  min-width: 0;
-  background: var(--wb-field);
-  border: 1px solid var(--wb-ink);
-  box-shadow: var(--desk-window-etch);
-  padding: 12px;
-}
-.conversation-composer .gadget-pad {
-  display: block;
-  width: 100%;
-  min-width: 0;
-}
-.conversation-composer .gadget-pad textarea {
-  font: 400 14px / 1.55 var(--font-sans);
-  max-height: 150px;
-  overflow-y: auto;
-}
 @container surface (max-width: 520px) {
   .conversation-reading .surface-traffic-turn {
-    margin: 0 12px;
+    margin-inline: 12px;
     padding: 14px 0;
     gap: 7px;
   }
   .conversation-reading .surface-traffic-meta { padding-top: 4px; }
-  .conversation-composer { padding: 10px; }
-  .conversation-composer .gadget-pad textarea { max-height: 120px; }
 }

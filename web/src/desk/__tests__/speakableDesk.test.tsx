@@ -1,5 +1,5 @@
 // HS-129-07 — Article IV.1 census: every audited text well has a mic.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { buildLinearGraph } from "../graph";
 import { DeskComposer } from "../components/DeskComposer";
@@ -129,5 +129,51 @@ describe("HS-129-07 speakable desk", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Speak" })[2]);
     expect(onLineChange).toHaveBeenCalledWith("spoken");
     expect(onPadChange).toHaveBeenCalledWith("spoken");
+  });
+
+  it.each([false, true])("keeps one host-owned mic and action for %s editor", (multiline) => {
+    const onChange = vi.fn();
+    const onAction = vi.fn();
+    const view = render(
+      <DeskComposer
+        multiline={multiline}
+        value="host value"
+        onChange={onChange}
+        actionLabel="Send"
+        onAction={onAction}
+      />,
+    );
+
+    const well = view.container.querySelector(".surface-compose-well");
+    expect(well).not.toBeNull();
+    const scope = within(well as HTMLElement);
+    expect(well?.querySelectorAll("[data-mic]")).toHaveLength(1);
+    expect(scope.getByRole("textbox")).toHaveValue("host value");
+
+    fireEvent.change(scope.getByRole("textbox"), { target: { value: "typed value" } });
+    fireEvent.click(well?.querySelector("[data-mic]") as HTMLElement);
+    expect(onChange).toHaveBeenCalledWith("typed value");
+    expect(onChange).toHaveBeenCalledWith("spoken");
+
+    const action = scope.getByRole("button", { name: "Send" });
+    expect(action).toBeEnabled();
+    fireEvent.click(action);
+    expect(onAction).toHaveBeenCalledTimes(1);
+
+    view.rerender(
+      <DeskComposer
+        multiline={multiline}
+        value="host value"
+        onChange={onChange}
+        actionLabel="Send"
+        onAction={onAction}
+        actionDisabled
+      />,
+    );
+    const pendingAction = within(view.container.querySelector(".surface-compose-well") as HTMLElement)
+      .getByRole("button", { name: "Send" });
+    expect(pendingAction).toBeDisabled();
+    fireEvent.click(pendingAction);
+    expect(onAction).toHaveBeenCalledTimes(1);
   });
 });

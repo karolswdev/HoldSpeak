@@ -104,7 +104,16 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
     from .engine_stub_rig import _StubHandler
     from .glass_infra import _settle, clear_hub_windows
 
-    answer = "## Platform checkpoint\n\nReview the rollback plan with Mira on Friday."
+    answer = (
+        "## Platform checkpoint\n\nReview the rollback plan with Mira on Friday.\n\n"
+        "### Review order\n\n- Confirm the recovery point.\n- Check the data migration.\n"
+        "- Keep the current deployment available.\n\n"
+        "### Rollback command\n\n```sh\ngit status --short\n```\n\n"
+        "### Review notes\n\n" + "\n\n".join(
+            f"Checkpoint {n}: record the observed result, the owner and the next review date."
+            for n in range(1, 9)
+        ) + "\n\n### Next step\n\nKeep the checkpoint until the review is complete."
+    )
     release, started = threading.Event(), threading.Event()
     requests: list[dict] = []
 
@@ -146,7 +155,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
                 provider = _api(page, "POST", "/api/inference/model-library/define-endpoint", {
                     "draft": {"request_id": "ask-feedback-model", "profile_id": "ask-feedback-model",
-                              "expected_profile_revision": 0, "label": "Ask fixture",
+                              "expected_profile_revision": 0, "label": "Architecture review · local engine",
                               "provider_family": "openai_compatible", "model": Model.MODEL,
                               "endpoint": f"http://127.0.0.1:{model.server_port}/v1", "requires_key": False},
                     "secret": None,
@@ -219,7 +228,44 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 assert window.get_by_test_id("ask-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
                 assert window.evaluate("el => {const r=el.getBoundingClientRect();return r.left>=-1 && r.right<=innerWidth+1;}")
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+                reading = window.get_by_role("region", name="Ask conversation")
+                reading.evaluate("el => el.scrollTop = 0")
+                page.wait_for_timeout(100)
                 page.screenshot(path=str(shots / f"ask-answer-{width}.png"))
+                measure = window.locator(".desk-ask-answer .surface-material").evaluate("""el => {
+                  const style=getComputedStyle(el), box=el.getBoundingClientRect();
+                  return {font:parseFloat(style.fontSize), line:parseFloat(style.lineHeight), width:box.width};
+                }""")
+                assert measure["font"] >= 15 and measure["line"] >= 23, measure
+                assert measure["width"] <= 760, measure
+                expect(window.locator(".desk-ask-answer pre code")).to_have_text("git status --short")
+                assert reading.evaluate("el => el.scrollHeight > el.clientHeight"), "Long material must scroll in its reading viewport"
+                # Text selection and scrolling must not hide the composer.
+                expect(editor).to_be_in_viewport()
+                expect(window.get_by_role("button", name="Ask", exact=True)).to_be_in_viewport()
+                if width == 393:
+                    controls = [window.get_by_role("button", name="Ask", exact=True),
+                                window.locator(".surface-compose-well button.desk-mic").first]
+                    boxes = [control.bounding_box() for control in controls]
+                    assert all(boxes) and abs(boxes[0]["y"] - boxes[1]["y"]) <= 1, boxes
+                    for control in controls:
+                        hit = control.evaluate("""el => {
+                          const r=el.getBoundingClientRect(), points=[.1,.5,.9];
+                          return {w:r.width,h:r.height,owned:points.every(x=>points.every(y=> {
+                            const owner=document.elementFromPoint(r.left+r.width*x,r.top+r.height*y);
+                            return owner===el || el.contains(owner);
+                          }))};
+                        }""")
+                        assert hit["w"] >= 44 and hit["h"] >= 44 and hit["owned"], hit
+                reading.evaluate("el => el.scrollTop = el.scrollHeight")
+                page.screenshot(path=str(shots / f"ask-answer-tail-{width}.png"))
+                window.locator(".desk-ask-tools > summary").click()
+                expect(window.locator(".desk-ask-tools")).to_have_attribute("open", "")
+                assert window.get_by_test_id("ask-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+                expect(editor).to_be_in_viewport()
+                expect(window.get_by_role("button", name="Ask", exact=True)).to_be_in_viewport()
+                page.screenshot(path=str(shots / f"ask-tools-{width}.png"))
+                window.locator(".desk-ask-tools > summary").click()
                 assert not errors, errors
             finally:
                 browser.close()

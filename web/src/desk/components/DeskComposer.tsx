@@ -1,6 +1,6 @@
 import "./session-pullout.css";
 import { Button } from "../../components/signal/Signal";
-import { StringGadget, PadGadget } from "../surface";
+import { ComposerWell, StringGadget, PadGadget } from "../surface";
 import { MicButton } from "./MicButton";
 
 interface DeskComposerProps {
@@ -37,27 +37,36 @@ export function DeskComposer({
       label={placeholder || actionLabel}
       value={value}
       rows={rows}
+      mic={false}
       onChange={onChange}
     />
   ) : (
     <StringGadget
       label={placeholder || actionLabel}
       value={value}
+      mic={false}
       onChange={onChange}
     />
   );
+  // Legacy receipt-row hooks belong to the editor slot. Keeping them off the
+  // shared species root lets ComposerWell own the action-row layout.
+  const editor = className ? <div className={className}>{input}</div> : input;
 
   return (
-    <div className={["desk-chat-composer", className].filter(Boolean).join(" ")}>
-      {input}
-      <MicButton draftScope={micDraftScope} onText={onChange} />
-      <Button
-        dense
-        disabled={actionDisabled || actionBusy}
-        onClick={onAction}
-      >
-        {actionBusy ? `${actionLabel}…` : actionLabel}
-      </Button>
-    </div>
+    <ComposerWell
+      capture={<MicButton draftScope={micDraftScope} onText={onChange} />}
+      actions={(
+        <Button
+          dense
+          variant="primary"
+          disabled={actionDisabled || actionBusy}
+          onClick={onAction}
+        >
+          {actionBusy ? `${actionLabel}…` : actionLabel}
+        </Button>
+      )}
+    >
+      {editor}
+    </ComposerWell>
   );
 }
