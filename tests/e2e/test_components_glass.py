@@ -273,3 +273,59 @@ def test_firefox_common_composer_specimen_owns_editor_material(
                 browser.close()
     finally:
         server.stop()
+
+
+@pytest.mark.e2e
+@pytest.mark.parametrize("browser_name", ["chromium", "firefox"])
+@pytest.mark.parametrize("width", [1440, 393])
+def test_pressed_button_fill_survives_hover_and_keyboard_focus(
+    browser_name: str, width: int,
+) -> None:
+    """Exercise the shared CSS state cascade in real engines, without a Hub.
+
+    The fixture uses the library Button's class/ARIA contract. Browser hover
+    and keyboard focus must retain the selected fill for primary and danger.
+    """
+    import re
+    from playwright.sync_api import sync_playwright
+
+    source = Path(__file__).resolve().parents[2] / "web" / "src" / "styles"
+    css = (source / "tokens.css").read_text() + "\n" + re.sub(
+        r'^@import[^\n]*\n', '', (source / "global.css").read_text(), flags=re.MULTILINE,
+    )
+    with sync_playwright() as pw:
+        browser = getattr(pw, browser_name).launch(headless=True)
+        try:
+            page = browser.new_page(viewport={"width": width, "height": 500}, reduced_motion="reduce")
+            page.set_content(
+                "<style>" + css + "</style><main style='padding:60px;display:grid;gap:20px'>"
+                "<button id='primary' class='btn btn--primary' aria-pressed='true'>Selected primary</button>"
+                "<button id='danger' class='btn btn--danger' aria-pressed='true'>Selected danger</button>"
+                "<button id='next' class='btn'>Next control</button>"
+                "</main>"
+            )
+            for variant, token in [("primary", "--accent-press"), ("danger", "--danger-fill")]:
+                button = page.locator('#' + variant)
+                expected = page.evaluate("""token => {
+                  const probe=document.createElement('span');
+                  probe.style.backgroundColor=`var(${token})`; document.body.appendChild(probe);
+                  const value=getComputedStyle(probe).backgroundColor; probe.remove(); return value;
+                }""", token)
+                assert expected != "rgba(0, 0, 0, 0)", (variant, token)
+                button.focus()
+                page.keyboard.press("Tab")
+                page.keyboard.press("Shift+Tab")
+                assert button.evaluate("el=>el.matches(':focus-visible')"), variant
+                assert button.evaluate("el=>getComputedStyle(el).backgroundColor") == expected
+                button.hover()
+                assert button.evaluate("el=>getComputedStyle(el).backgroundColor") == expected, variant
+                assert button.evaluate("el=>getComputedStyle(el).outlineStyle") != "none", variant
+                # The held and unheld hover states must remain distinct.
+                button.evaluate("el=>el.setAttribute('aria-pressed','false')")
+                assert button.evaluate("el=>getComputedStyle(el).backgroundColor") != expected, variant
+                button.evaluate("el=>el.setAttribute('aria-pressed','true')")
+                assert button.evaluate("el=>getComputedStyle(el).backgroundColor") == expected, variant
+            shots = evidence_dir("modern-shell-pressed")
+            page.screenshot(path=str(shots / f"{browser_name}-{width}.png"))
+        finally:
+            browser.close()

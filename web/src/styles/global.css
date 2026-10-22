@@ -249,16 +249,6 @@ small {
   color: var(--wb-ink);
 }
 
-:where(.btn--primary, .btn.primary)[aria-pressed="true"]:not(:disabled) {
-  background: var(--accent-press);
-  color: var(--white);
-}
-
-:where(.btn--danger, .btn.danger)[aria-pressed="true"]:not(:disabled) {
-  background: var(--danger-fill);
-  color: var(--white);
-}
-
 :where(.btn):hover:not(:disabled) {
   border-color: var(--border-strong);
   background-color: var(--wb-steel-2);
@@ -279,6 +269,18 @@ small {
 :where(.btn.danger, .btn--danger):hover:not(:disabled) {
   border-color: var(--danger-signal);
   background: color-mix(in srgb, var(--danger-fill) 86%, var(--white));
+}
+
+/* Variant pressed fills follow every hover fill, so a pressed Button keeps
+   its state while the pointer or keyboard focus is over it. */
+:where(.btn--primary, .btn.primary)[aria-pressed="true"]:not(:disabled) {
+  background: var(--accent-press);
+  color: var(--white);
+}
+
+:where(.btn--danger, .btn.danger)[aria-pressed="true"]:not(:disabled) {
+  background: var(--danger-fill);
+  color: var(--white);
 }
 
 :where(.btn):focus-visible {
