@@ -70,3 +70,15 @@ gallery renders the shared editor as transparent, borderless 14px sans under
 the legacy PR host class, with one mic and fully owned 44px capture/action hit
 areas. Root inspected all four new Tools/specimen shots. These are gallery
 specimens, not PR route screenshots. Required quick follows on frozen source.
+
+The required repeat caught a delayed scroll event race after Tools closed.
+The hook now samples the actual scrollTop before scheduling and before using
+an anchor; unchanged-position resize events retain the old end state. A new
+deterministic regression covers queued resize → direct position80 → resize.
+56 focused cases/typecheck and all seven real browser cases pass with this
+correction. The 4,130-case related web run passed its assertions but reported
+an unrelated Send test's delayed scrollIntoView call, missing from jsdom.
+That case now supplies only its own element's browser-method boundary and
+awaits the saved-row reveal. No product Send code or check ceiling changes.
+Final required quick covers this fixture correction against product commit
+957737c8e; all other web source remains byte-unchanged from the product run.

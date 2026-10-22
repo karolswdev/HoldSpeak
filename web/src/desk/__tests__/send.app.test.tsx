@@ -350,6 +350,10 @@ describe("betterment send S1: a GitHub destination saves from the form", () => {
     });
     render(<Destinations />);
     const form = await screen.findByTestId("dest-form");
+    // jsdom has no scrolling implementation. Supply only this element's
+    // browser boundary and wait for the saved-row reveal before the case ends.
+    const revealSaved = vi.fn();
+    screen.getByTestId("destinations").scrollIntoView = revealSaved;
     fireEvent.change(within(form).getByLabelText("Channel"), { target: { value: "github" } });
     const account = screen.getByTestId("dest-github-account");
     expect(line(account)).not.toMatch(/COULD NOT CHECK|UNREACHABLE|Set up account/);
@@ -361,5 +365,6 @@ describe("betterment send S1: a GitHub destination saves from the form", () => {
     await waitFor(() => expect(saved).toEqual([expect.objectContaining({ channel: "github", repo: "acme/payments", number: 42 })]));
     const open = await screen.findByTestId("dest-open");
     expect(line(open)).toContain("@karol-arch");
+    await waitFor(() => expect(revealSaved).toHaveBeenCalledWith({ block: "start" }));
   });
 });
