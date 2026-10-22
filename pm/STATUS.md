@@ -11,7 +11,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 Pressed-state fix-forward — PRESSED_PR_PENDING: post-merge review of #1424
 found that hover could override primary/danger pressed fills. Shared pressed
 rules now follow hover rules. Real Chromium/Firefox checks cover hover plus
-keyboard focus at 1440/393. Required quick: PRESSED_QUICK_PENDING.
+keyboard focus at 1440/393. Required quick: build, 15 related web cases, 8 component browser cases including all four Chromium/Firefox pressed-hover-focus regressions at 1440/393, 110 desk sweep cases, canon and repository guards passed; all four new cases also fail on the prior stylesheet.
 The material reader's replacement border/radius coverage is a low-priority
 follow-up; existing hit, contrast, clipping and type floors remain strict.
 
