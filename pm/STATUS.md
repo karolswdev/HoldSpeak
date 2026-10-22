@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-Shared conversation design: CONVERSATION_PR_PENDING develops Ask into a
+Shared conversation design: #1422 develops Ask into a
 continuous paper reading/writing surface with a strong intro, bounded readable
 turns and an integrated composer. The new presentation-only ComposerWell
 library species also serves DeskComposer in live PR reply actions. Host-owned
@@ -2060,7 +2060,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
-- **CONVERSATION_PR_PENDING — common conversation design:** shared ComposerWell used in Ask and PR replies, continuous paper and readable turn hierarchy.
+- **#1422 — common conversation design:** shared ComposerWell used in Ask and PR replies, continuous paper and readable turn hierarchy.
 
 - **#1421 — Ask feedback:** clear sent input immediately, retain the next draft, compact paper conversation and composer.
 
