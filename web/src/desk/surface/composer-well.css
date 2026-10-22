@@ -81,9 +81,30 @@
 }
 .conversation-composer .gadget-pad textarea,
 .surface-compose-well .gadget-pad textarea {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  padding: 10px 14px;
   font: 400 14px / 1.55 var(--font-sans);
   max-height: 150px;
   overflow-y: auto;
+  resize: vertical;
+}
+.conversation-composer .gadget-string input,
+.surface-compose-well .gadget-string input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  padding: 10px 14px;
+  font: 400 14px / 1.55 var(--font-sans);
 }
 @container surface (max-width: 520px) {
   .conversation-composer,

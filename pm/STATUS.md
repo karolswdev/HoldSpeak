@@ -8,10 +8,18 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Conversation fix-forward (#1423): shared end anchoring keeps the
+answer actions in view when Tools changes the reading height; shared composer
+material owns the editor cascade. /design/components now carries a local
+interactive composer specimen under the legacy PR host class. The PR reply
+screen is parked; the gallery is a reference, not live PR adoption.
+Required quick: build, 4130 related product web cases and seven actual browser cases passed; a local jsdom Send fixture correction passed 10 cases in the final required quick with byte-unchanged product web code; other required checks: 110 desk sweep cases, 27 canon and 1,126 repository guards passed; 56 focused Ask/shared composer/hook/gallery checks and typecheck passed; Firefox at 1440/393 verifies Tools end anchoring, preserved earlier reading, actual gallery editor material and capture/action hit geometry. Owner aesthetic judgment remains open.
+
+
 Shared conversation design: #1422 develops Ask into a
 continuous paper reading/writing surface with a strong intro, bounded readable
 turns and an integrated composer. The new presentation-only ComposerWell
-library species also serves DeskComposer in live PR reply actions. Host-owned
+library species also serves DeskComposer retained by parked PR reply actions. The /companion route opens Agents; this is not live PR adoption. Host-owned
 submission, keyboard, voice scopes, engine/egress and durable drafts stay in
 their callers. One mic per editor. Saved Threads already open in Ask; their
 parked screen is not revived. Contract and settled canvas:

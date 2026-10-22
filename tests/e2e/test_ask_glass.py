@@ -258,14 +258,23 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                         }""")
                         assert hit["w"] >= 44 and hit["h"] >= 44 and hit["owned"], hit
                 reading.evaluate("el => el.scrollTop = el.scrollHeight")
+                actions = window.locator(".desk-ask-turn .surface-row-verbs").last
+                expect(actions).to_be_in_viewport(ratio=1)
                 page.screenshot(path=str(shots / f"ask-answer-tail-{width}.png"))
                 window.locator(".desk-ask-tools > summary").click()
                 expect(window.locator(".desk-ask-tools")).to_have_attribute("open", "")
+                expect(actions).to_be_in_viewport(ratio=1)
+                assert reading.evaluate("el => el.scrollHeight-el.clientHeight-el.scrollTop <= 2")
                 assert window.get_by_test_id("ask-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
                 expect(editor).to_be_in_viewport()
                 expect(window.get_by_role("button", name="Ask", exact=True)).to_be_in_viewport()
                 page.screenshot(path=str(shots / f"ask-tools-{width}.png"))
                 window.locator(".desk-ask-tools > summary").click()
+                reading.evaluate("el => el.scrollTop = 80")
+                page.wait_for_timeout(100)
+                window.locator(".desk-ask-tools > summary").click()
+                page.wait_for_timeout(100)
+                assert abs(reading.evaluate("el => el.scrollTop") - 80) <= 2, "Tools must not pull a reader away from earlier text"
                 assert not errors, errors
             finally:
                 browser.close()

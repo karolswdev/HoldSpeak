@@ -56,6 +56,8 @@ import {
   type GraphFlow,
 } from "../../desk/surface/graph/TopologySurface";
 import { ObjectSpeciesGallery } from "./ObjectSpeciesGallery";
+import { DeskComposer } from "../../desk/components/DeskComposer";
+import "../../desk/components/delivery.css";
 
 const ALL_CHIP_STATES: ChipState[] = [
   "idle", "active", "working", "success", "warning", "failure", "unreachable",
@@ -90,6 +92,8 @@ export function ComponentsCore({ hero }: CoreProps) {
   const [cycle, setCycle] = useState("auto");
   const [text, setText] = useState("");
   const [pad, setPad] = useState("");
+  const [composerDraft, setComposerDraft] = useState("");
+  const [composerPreview, setComposerPreview] = useState("");
   const [steps, setSteps] = useState(16384);
   const [prop, setProp] = useState(0.6);
   const [wing, setWing] = useState("one");
@@ -184,6 +188,23 @@ export function ComponentsCore({ hero }: CoreProps) {
             <LedMeter label="CTX" value={prop} />
           </GadgetRow>
         </GadgetGroup>
+      </SurfaceSection>
+      <SurfaceSection label="Conversation composer">
+        <div className="desk-pr-compose" data-specimen="true">
+          <DeskComposer
+            className="desk-mic-row"
+            value={composerDraft}
+            onChange={setComposerDraft}
+            placeholder="Write a local preview"
+            multiline
+            rows={3}
+            micDraftScope="gallery-conversation-preview"
+            actionLabel="Preview"
+            actionDisabled={!composerDraft.trim()}
+            onAction={() => setComposerPreview(composerDraft.trim())}
+          />
+          {composerPreview ? <span role="status">Preview kept local: {composerPreview}</span> : null}
+        </div>
       </SurfaceSection>
       <SurfaceSection label="Lamps and chips">
         <div className="surface-actions">

@@ -293,17 +293,6 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
-.desk-next .desk-pr-compose textarea {
-  width: 100%;
-  min-height: 74px;
-  resize: vertical;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--field-bg, var(--wash-1));
-  color: var(--text);
-  padding: 10px;
-  font: 12px/1.45 var(--font-mono, ui-monospace, monospace);
-}
 .desk-next .desk-pr-compose-actions {
   display: flex;
   justify-content: flex-end;

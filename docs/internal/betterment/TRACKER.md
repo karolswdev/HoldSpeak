@@ -37,9 +37,14 @@ compact composer and paper conversation. Existing Q slices only, no new count.
 Original report: `3c7c52ae3ccfdd5ee7e29ddaadaf10e6`. Owner live design judgment remains open.
 
 Shared design follow-up (2026-10-21): #1422 develops the conversation
-material and ComposerWell in the library, with live Ask/saved-thread and PR
-reply adoption. This improves existing slices without changing their count;
+material and ComposerWell in the library, with live Ask/saved-thread adoption and the retained parked PR
+reply composer. /companion opens Agents; PR reply adoption is not live. This improves existing slices without changing their count;
 owner aesthetic acceptance remains open.
+
+Shared design fix-forward (2026-10-21): #1423 preserves reading-end
+anchoring as Tools opens, makes editor material ownership explicit, and adds
+a working local composer specimen to /design/components. The retained PR
+reply consumer is parked; no live PR send or aesthetic acceptance is claimed.
 
 ## Automations (`workbench/RECIPE.md`): 11 of 11
 

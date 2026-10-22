@@ -202,3 +202,74 @@ class TestObjectSpeciesGlass:
             page.screenshot(path=str(SHOTS / f"glass-list-{width}.png"))
             assert not errors, errors
             browser.close()
+
+
+@pytest.mark.e2e
+@pytest.mark.parametrize("width", [1440, 393])
+def test_firefox_common_composer_specimen_owns_editor_material(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int,
+) -> None:
+    """Actual gallery route, private Hub, local specimen; no PR send claim.
+
+    Real Firefox proves the cascade and capture/action geometry under the
+    retained PR host class. Draft/Preview are local gallery state only.
+    """
+    import json
+    from playwright.sync_api import expect, sync_playwright
+
+    _ensure_build()
+    server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
+    shots = evidence_dir("conversation-components")
+    try:
+        with sync_playwright() as pw:
+            browser = pw.firefox.launch(headless=True)
+            page = browser.new_page(viewport={"width": width, "height": 900 if width == 1440 else 852},
+                                    reduced_motion="reduce")
+            page.set_default_timeout(30_000)
+            errors: list[str] = []
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            try:
+                page.goto(f"{base}/?token={TOKEN}", wait_until="load")
+                _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
+                _normal_chair(page)
+                page.goto(f"{base}/design/components?token={TOKEN}", wait_until="load")
+                specimen = page.locator("section.surface-section").filter(
+                    has=page.get_by_role("heading", name="Conversation composer", exact=True))
+                editor = specimen.get_by_role("textbox")
+                editor.wait_for()
+                editor.fill("Review the common editor material.\nKeep the next action in reach.")
+                specimen.scroll_into_view_if_needed()
+                _settle(page)
+                facts = editor.evaluate("""el => {
+                  const s=getComputedStyle(el), r=el.getBoundingClientRect();
+                  return {font:s.fontFamily,size:parseFloat(s.fontSize),background:s.backgroundColor,
+                    border:s.borderTopWidth,padding:s.padding,resize:s.resize,width:r.width};
+                }""")
+                assert facts["size"] >= 14 and "mono" not in facts["font"].lower(), facts
+                assert facts["border"] == "0px", facts
+                assert facts["background"] == "rgba(0, 0, 0, 0)", facts
+                assert facts["resize"] == "vertical", facts
+                assert specimen.locator("button.desk-mic").count() == 1
+                controls = [specimen.locator("button.desk-mic"),
+                            specimen.get_by_role("button", name="Preview", exact=True)]
+                boxes = [control.bounding_box() for control in controls]
+                assert abs(boxes[0]["y"] - boxes[1]["y"]) <= 1, boxes
+                for control in controls:
+                    expect(control).to_be_in_viewport(ratio=1)
+                    assert control.evaluate("""el => {
+                      const r=el.getBoundingClientRect();
+                      return r.width>=44 && r.height>=44 && [.1,.5,.9].every(x=>[.1,.5,.9].every(y=>{
+                        const hit=document.elementFromPoint(r.x+r.width*x,r.y+r.height*y);
+                        return hit===el || el.contains(hit);
+                      }));
+                    }"""), "Common controls must own their complete hit area"
+                assert specimen.evaluate("el=>el.scrollWidth<=el.clientWidth+1")
+                page.screenshot(path=str(shots / f"composer-specimen-{width}.png"))
+                (shots / f"composer-specimen-{width}.json").write_text(json.dumps(facts, indent=2))
+                controls[1].click()
+                expect(specimen).to_contain_text("Review the common editor material.")
+                assert not errors, errors
+            finally:
+                browser.close()
+    finally:
+        server.stop()

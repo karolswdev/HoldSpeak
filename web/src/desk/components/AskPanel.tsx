@@ -61,7 +61,7 @@ import { Button } from "../../components/signal/Signal";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { reportWriteFailure } from "../hooks/useWriteReceipt";
 import { useEngine, refreshEngine } from "../hooks/useEngine";
-import { ActionNotice, StateChip, EngineLine, RunLine, ComposerWell, reasonVerb, reasonWords } from "../surface";
+import { ActionNotice, StateChip, EngineLine, RunLine, ComposerWell, reasonVerb, reasonWords, useReadingEndAnchor } from "../surface";
 import { humanTime } from "../surface/format";
 import { openRef } from "../openObject";
 import { openSurfaceOr } from "../shell";
@@ -327,12 +327,6 @@ export function AskPanel() {
       setAutoRun(askThread.run ? question : null);
     }
   }, [askThread, loadThread, startNew, setPrompt]);
-
-  // The newest answer stays in view.
-  useEffect(() => {
-    const reading = readingRef.current;
-    if (reading && typeof reading.scrollTo === "function") reading.scrollTo({ top: reading.scrollHeight });
-  }, [turns.length, running]);
 
   const [selectedPassage, setSelectedPassage] = useState<AskSelectionHandoff | null>(() => takeAskSelection());
   const context = useMemo(() => {
@@ -735,6 +729,7 @@ export function AskPanel() {
   }, []);
 
   const hasConversation = turns.length > 0 || running || Boolean(failedRun) || threadRead.loading || Boolean(threadRead.error);
+  useReadingEndAnchor(readingRef, hasConversation);
   const lastRoute = route;
   const statusLine = running
     ? ""
