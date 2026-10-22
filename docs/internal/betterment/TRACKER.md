@@ -7,7 +7,7 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 
 **Last updated:** 2026-10-22, shared shell modernized; owner visual acceptance remains open. Running-desk identity is in `pm/STATUS.md`.
 
-Pressed-state fix-forward (2026-10-22): PR_PENDING preserves primary/danger
+Pressed-state fix-forward (2026-10-22): #1425 preserves primary/danger
 selection fills during hover and keyboard focus after #1424. Existing slices
 only; no count change.
 
