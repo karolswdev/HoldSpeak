@@ -208,6 +208,9 @@ export function AskPanel() {
   const promptRef = useRef<HTMLTextAreaElement | null>(null);
   const mounted = useRef(true);
   const requestId = useRef(0);
+  // Saved-thread reads have their own authority. A slow read must not repaint
+  // a newer selection (or a new Ask) after the live Ask request has changed.
+  const threadReadGeneration = useRef(0);
   const pendingRequest = useRef<{ id: number; controller: AbortController } | null>(null);
   // Betterment Q2: the running Ask's identity, so its progress frames
   // (busy, trying again) reach this window and no other.
@@ -247,6 +250,7 @@ export function AskPanel() {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      threadReadGeneration.current += 1;
       requestId.current += 1;
       pendingRequest.current?.controller.abort();
       pendingRequest.current = null;
@@ -264,6 +268,7 @@ export function AskPanel() {
   }, []);
 
   const close = useCallback(() => {
+    threadReadGeneration.current += 1;
     abandonRun();
     latchAskSelection(null);
     clearSelection();
@@ -272,6 +277,7 @@ export function AskPanel() {
 
   /** A new Ask in this window: nothing kept is touched. */
   const startNew = useCallback(() => {
+    threadReadGeneration.current += 1;
     abandonRun();
     setThreadId(null);
     setTurns([]);
@@ -293,17 +299,18 @@ export function AskPanel() {
   /** Open a kept thread in this window (Recent, a thread's ref, a restored desk). */
   const loadThread = useCallback(async (id: string) => {
     startNew();
+    const generation = threadReadGeneration.current;
     setThreadId(id);
     setThreadRead({ loading: true, error: "" });
     try {
       const detail = await getThread(id);
-      if (!mounted.current) return;
+      if (!mounted.current || generation !== threadReadGeneration.current) return;
       const { turns: kept, about } = askTurnsFromThread(detail);
       setTurns(kept);
       setThreadAbout(about);
       setThreadRead({ loading: false, error: "" });
     } catch (error) {
-      if (!mounted.current) return;
+      if (!mounted.current || generation !== threadReadGeneration.current) return;
       setThreadRead({ loading: false, error: readableError(error) });
     }
   }, [startNew]);
