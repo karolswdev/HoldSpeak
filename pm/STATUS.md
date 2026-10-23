@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-Native-experience research within React — NATIVE_RESEARCH_PR_PENDING: the
+Native-experience research within React — #1429: the
 owner chose the current stack and asked for substantial research toward a
 nearly OS-native experience. Research, source audit, compatibility evidence
 and a proposed production-pattern delivery sequence are in
@@ -2168,7 +2168,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
-- **NATIVE_RESEARCH_PR_PENDING — native-experience research:** retained React stack, source audit, primary-source research, three-engine capability probe and proposed production-pattern delivery. No product UI or dependency change.
+- **#1429 — native-experience research:** retained React stack, source audit, primary-source research, three-engine capability probe and proposed production-pattern delivery. No product UI or dependency change.
 
 - **#1428 — shared surface framework and reference:** working local patterns, common interior material/layout, mounted front authority, responsive window heads, and current author documentation. Required quick proof is in Current phase; exact deployed merge/build is checked through `/api/system/identity`.
 
