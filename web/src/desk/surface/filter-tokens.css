@@ -1,104 +1,93 @@
-/* HS-176-03 — FilterTokens: the one-tap filter strip. Phase 16: the
-   tokens are the kit's FilterBar cells (the rules below, "the interior
-   kit"); the active one is the selection blue, sunken. */
-
+/* The shared filter strip: quiet controls at rest, a clear Workbench
+   selection when pressed. The Button component still owns the hit face,
+   focus ring, disabled state and keyboard interaction. */
 .surface-filter-tokens {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0;
+  gap: var(--space-1);
   min-width: 0;
 }
 
-/* Phase 16 (the interior kit, §11 "FilterBar"; canvas `.filters .chip`):
-   the tokens are CycleGadgets on one rail. A resting token is a Steel cell
-   with ink under the LIGHT bevel (`--bevel-raised-soft`, PHILO-14 B2: a
-   token is no plate); the active token is the selection (Workbench blue)
-   with paper on it, in the light sunken bevel (`--bevel-sunken-soft`). Adjacent tokens share their
-   edge, so the strip reads as one control. A wing (SurfaceWings) keeps the
-   full plate with its gadget; a token is a cell of a rail, so the two
-   still never look alike (canon D). */
 .surface-filter-token.btn {
   min-height: var(--size-btn);
-  padding: 4px 10px;
-  border: 1px solid var(--wb-ink);
-  border-radius: 0;
-  background: var(--wb-steel);
-  box-shadow: var(--bevel-raised-soft);
-  color: var(--wb-ink);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: none;
+  color: var(--wb-muted);
+  font: 500 12px / 1.2 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
   white-space: nowrap;
 }
-.surface-filter-token.btn:hover:not(:disabled) {
-  background: var(--wb-steel-2);
-}
 
-/* The strip reads as one control: adjacent tokens share their edge. */
-.surface-filter-token.btn + .surface-filter-token.btn {
-  margin-left: -1px;
-}
-/* PHILO-17 (the desk sweep's target fence): in a narrow window each token
-   owns its whole 44 px area (global.css, the halo), so a token does not
-   lend its edge to the next one. */
-@container surface (max-width: 420px) {
-  .surface-filter-token.btn + .surface-filter-token.btn {
-    margin-left: 0;
-  }
+.surface-filter-token.btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--wb-steel-2);
+  color: var(--wb-text);
 }
 
 .surface-filter-token.btn:active:not(:disabled) {
-  box-shadow: var(--bevel-sunken-soft);
+  box-shadow: none;
 }
 
-/* The active token: the selection blue, paper ink, sunken (never the
-   filled primary verb: a face has one of those, and it is not a filter). */
+/* The active token is the selection surface, separate from a primary verb. */
 .surface-filter-token.btn[data-filter-active] {
-  box-shadow: var(--bevel-sunken-soft);
-  border-color: var(--wb-ink);
+  border-color: var(--wb-sel);
+  background: var(--wb-sel);
+  box-shadow: none;
+  color: var(--wb-paper);
+}
+
+.surface-filter-token.btn[data-filter-active]:hover:not(:disabled) {
+  border-color: var(--wb-sel);
   background: var(--wb-sel);
   color: var(--wb-paper);
 }
-.surface-filter-token.btn[data-filter-active]:hover:not(:disabled) {
-  background: var(--wb-sel);
-}
 
-/* PHILO-13-11 (C1, §3a) — the folded strip (stripMenu.tsx): at the phone
-   width a strip that does not fit its row is ONE menu Button, 44 px tall,
-   showing the current choice and ▾. Its box takes the row's free width, so
-   the strip unfolds again when the row can hold it. */
+/* At the phone width the measured strip becomes one menu Button. */
 .surface-filter-tokens.is-folded {
   display: flex;
   flex: 1 1 auto;
   min-width: 0;
 }
+
 .surface-filter-tokens .surface-strip-menu.btn {
-  min-height: 44px;
-  padding: 0 14px;
-  font: 700 12px var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  min-height: var(--desk-button-hit-size);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: none;
+  color: var(--wb-muted);
+  font: 500 12px / 1.2 var(--font-sans);
+  letter-spacing: normal;
+  text-transform: none;
   white-space: nowrap;
 }
 
-/* PHILO-14 B2 (Astra r1 on #958): a DISABLED strip (the choice is held
-   elsewhere: Settings → People under an environment override) is no
-   control: every token is flat (`.bevel-flat`) on the library's disabled
-   ground, and the held value has no tint. Only its accent border still
-   says which value holds (Conductor R7: the pressed token shows the
-   value). */
+.surface-filter-tokens .surface-strip-menu.btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--wb-steel-2);
+  color: var(--wb-text);
+}
+
+/* A held value remains visible without painting a false selection. */
 .surface-filter-token.btn:disabled,
-.surface-filter-token.btn[data-filter-active]:disabled {
+.surface-filter-token.btn[data-filter-active]:disabled,
+.surface-filter-tokens .surface-strip-menu.btn:disabled {
   box-shadow: none;
   background: var(--disabled-bg);
-  color: var(--wb-muted);
+  color: var(--disabled-fg);
 }
+
 .surface-filter-token.btn[data-filter-active]:disabled {
   border-color: var(--wb-sel);
 }
-.surface-filter-token.btn:disabled:not([data-filter-active]) {
-  border-color: var(--wb-rule-soft);
+
+.surface-filter-token.btn:disabled:not([data-filter-active]),
+.surface-filter-tokens .surface-strip-menu.btn:disabled {
+  border-color: var(--disabled-border);
 }

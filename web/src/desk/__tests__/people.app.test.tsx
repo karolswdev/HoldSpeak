@@ -117,6 +117,54 @@ describe("People: the Prep card (HS-172-05)", () => {
 });
 
 describe("People: a person's own window (PHILO-17 2b)", () => {
+  it("keeps a loading face until the ready person's detail arrives", async () => {
+    let finishRelationship!: (response: Response) => void;
+    const relationship = new Promise<Response>((resolve) => { finishRelationship = resolve; });
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url === "/api/people/readiness") return json({ readiness: "ready", store: "encrypted" });
+      if (url === "/api/people/relationships/r1") return relationship;
+      if (url === "/api/people/relationships/r1/one-on-ones") return json({ one_on_ones: [] });
+      if (url === "/api/people/relationships/r1/brief") return json({ brief: {
+        relationship_id: "r1", display_name: "Ania", open_commitments: [], agenda_items: [],
+        grounding_note_count: 0, linked_meetings: [], unlinked_meeting_count: 0,
+      } });
+      throw new Error(`Unexpected request: ${url}`);
+    }));
+    render(<PersonWindowBody relationshipId="r1" />);
+    expect(screen.getByRole("status")).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByTestId("person-window")).toBeNull();
+    finishRelationship(json({ relationship: { id: "r1", display_name: "Ania", relationship_kind: "direct_report", calendar_links: [] } }));
+    await screen.findByTestId("people-detail-head");
+    expect(screen.getByTestId("person-window").querySelector(':scope > .surface-state[data-kind="loading"]')).toBeNull();
+  });
+
+  it("names a failed detail read and retries into the person", async () => {
+    let fail = true;
+    vi.stubGlobal("fetch", vi.fn(async (input: string) => {
+      const url = String(input);
+      if (url === "/api/people/readiness") return json({ readiness: "ready", store: "encrypted" });
+      if (url === "/api/people/relationships/r1") {
+        return fail
+          ? json({ detail: "people_store_unavailable" }, 503)
+          : json({ relationship: { id: "r1", display_name: "Ania", relationship_kind: "direct_report", calendar_links: [] } });
+      }
+      if (url === "/api/people/relationships/r1/one-on-ones") return json({ one_on_ones: [] });
+      if (url === "/api/people/relationships/r1/brief") return json({ brief: {
+        relationship_id: "r1", display_name: "Ania", open_commitments: [], agenda_items: [],
+        grounding_note_count: 0, linked_meetings: [], unlinked_meeting_count: 0,
+      } });
+      throw new Error(`Unexpected request: ${url}`);
+    }));
+    render(<PersonWindowBody relationshipId="r1" />);
+    const failure = await screen.findByTestId("people-failure");
+    expect(within(failure).getByRole("button", { name: "Try again" })).toBeTruthy();
+    fail = false;
+    fireEvent.click(within(failure).getByRole("button", { name: "Try again" }));
+    await screen.findByTestId("people-detail-head");
+    expect(screen.queryByTestId("people-failure")).toBeNull();
+  });
+
   it("draws THAT person on the RelationshipPane: Prep and three folded tabs, no Back, not the roster", async () => {
     stubHub();
     render(<PersonWindowBody relationshipId="r1" />);

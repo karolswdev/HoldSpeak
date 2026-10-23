@@ -13,6 +13,7 @@
 import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { useDesk } from "../store";
+import { COMPACT_VIEWPORT_QUERY } from "../useCompactViewport";
 import { saveDeskWorkspace } from "../store/workspaceStorage";
 import { workBand } from "../components/window/windowGeometry";
 import { shellEls } from "../components/window/windowRegistry";
@@ -61,7 +62,7 @@ export function compactNow(): boolean {
   return (
     typeof window !== "undefined" &&
     typeof window.matchMedia === "function" &&
-    window.matchMedia("(max-width: 720px)").matches
+    window.matchMedia(COMPACT_VIEWPORT_QUERY).matches
   );
 }
 

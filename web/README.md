@@ -39,7 +39,8 @@ contracts.
 - `src/pages/` contains route compositions; shared or complex behavior belongs
   in typed feature modules and hooks.
 - `src/desk/` remains the Zustand-backed spatial Desk inside the same tree.
-- `styles/tokens.css` is the Signal source of truth. `styles/global.css` owns
+- `design-tokens.json` is the token source of truth; `src/styles/tokens.css`
+  and `src/lib/tokens.gen.ts` are generated. `styles/global.css` owns
   reset/type/shared state, while `styles/react-app.css` and feature CSS own
   composition. There is no CSS-in-JS design-system fork.
 
@@ -91,10 +92,11 @@ surface:
    Add one `DEMOTED_ROUTES` row in `src/routes.tsx` mapping the legacy
    path to the surface key (plus a `subjectKind` when deep links carry a
    scope); the path then lands on the Desk with the window open.
-3. **Register the window**: add one row to `SURFACES` in
-   `src/desk/components/SurfaceWindows.tsx` (shell key, window id, title,
-   glyph, lazy core, `maximized` for canvas-sized surfaces). The chrome
-   menu and the tool shelf dispatch through `desk/shell.ts`; the no-exit
+3. **Register the window**: add the application to
+   `src/desk/applications.ts` with its action, window id, label, glyph,
+   route and lazy `surface` core. `SurfaceWindows.tsx` derives `SURFACES`
+   from that manifest; menu and Dock entries use the same application row.
+   The chrome dispatches through `desk/shell.ts`; the no-exit
    lock (`tests/unit/test_desk_no_exit_guard.py`) forbids desk navigation
    outright.
 4. **Compose the surface kit:** a core builds its interior
@@ -119,8 +121,9 @@ surface:
    hand-roll them; the window material is ONE `:where()` rule — no
    per-window recipes.
 6. **The chrome ladder** (see the chrome ladder chapter in
-   `DESIGN_SYSTEM.md` is the contract): interiors layer by TONE
-   (head/rail/well around the body fill), never by borders. Popovers
+   `DESIGN_SYSTEM.md` is the contract): interiors layer by tone
+   (head/rail/well around the body fill), with shared fine rules and quiet
+   grouping where needed. Popovers
    render through `DeskMenuList`/`DeskMenuItem` (`src/desk/components/
    DeskMenu.tsx`) — never a hand-rolled menu. Bare `select`/`input`/
    `textarea` elements inside the desk shell inherit the Signal
@@ -130,7 +133,58 @@ surface:
 7. **Window grammar** (see the physics floors chapter in
    `DESIGN_SYSTEM.md` is the contract): windows are placed by the OS —
    never hand-position a surface window; its CSS default is only the
-   placement seed. A fixed shelf verb registers through
-   `announceLauncher` in `src/desk/components/DeskWindow.tsx` (the dock
-   is the one shelf; floating pills are forbidden). The eyebrow prop is
+   placement seed. A Dock application uses the `dock` metadata in
+   `src/desk/applications.ts` (the Dock is the one shelf; floating pills
+   are forbidden). The eyebrow prop is
    demoted — window identity is icon + title.
+
+
+## Design author map
+
+Read the [Constitution](../docs/internal/CONSTITUTION.md) and
+[UX Canon](../docs/internal/UX-CANON.md) for owner principles and face rules.
+The [Design System](../docs/internal/DESIGN_SYSTEM.md) owns current material
+and geometry; `design-tokens.json` owns values. Generate its CSS/TS mirrors
+with `npm run tokens`.
+
+Use the public `src/desk/surface/index.ts` barrel and
+[surface contract](src/desk/surface/contract.md) for component APIs.
+Open `/design/components` for executable examples. With **Builder tools**
+on, the menu entry is **Go → Builder → Components**.
+Patterns demonstrate forms, reading, lists, conversation and progress;
+Controls retains the component catalogue. Local specimen state is labelled;
+a reference example is not proof that a production journey uses it.
+The separate root `gallery/` site is a product gallery, not this library.
+
+The window frame and compositor own the operating shell:
+
+| Responsibility | Implementation home |
+| --- | --- |
+| Frame, title, wings, feedback, drag/resize, compact frame | `src/desk/components/DeskWindow.tsx` |
+| Active application inventory and lazy cores | `src/desk/applications.ts` |
+| Core hosting, frame publication, surface scroll custody | `src/desk/components/SurfaceWindows.tsx` |
+| Mounted planes/front authority and motion/arrangement | `src/desk/compositor/live.ts`, `useCompositor.ts` |
+| Remote window synchronization | `src/desk/compositor/hubWindows.ts` |
+| Current geometry and persistence | `src/desk/store/compositorSlice.ts`, `workspaceStorage.ts` |
+| Shared compact viewport rule | `src/desk/useCompactViewport.ts` |
+| Interior components, container reflow, task composition | `src/desk/surface/` and the feature core |
+
+The 720px compact frame policy and 560px interior reflow serve different
+responsibilities. Interior layouts respond to the named `surface` container.
+A canvas, terminal or editor can retain a bounded internal scroller; ordinary
+window content has one primary scroller. Do not move user arrangement or
+workspace authority into a feature to achieve a visual layout.
+
+`computePlanes().front` is the mounted front-window authority. The frame,
+Dock, screen title and keyboard target consume it through their shared
+helpers/hooks; an announced remote row cannot substitute for a mounted
+frame. Reuse `COMPACT_VIEWPORT_QUERY` for the compact policy in JavaScript.
+Do not duplicate the query or infer a second front from an open-row list.
+
+Update docs with the implementation: semantic material changes update the
+Design System; public component changes update the surface contract and
+matching reference example; host/authority changes update this map. Record
+which real consumers adopted a pattern. A local spacing fix needs no canon
+rewrite. Label superseded material as history and keep old owner rulings.
+The active modernization inventory and observations live in
+[the implementation record](../docs/internal/betterment/MODERNIZATION-IMPLEMENTATION-2026-10-22.md).

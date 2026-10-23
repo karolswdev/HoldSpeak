@@ -19,8 +19,9 @@ import { WorkMenu, type WorkMenuEntry } from "../components/DeskMenu";
 
 /** Measures whether the strip in `ref` fits one row. `enabled` false (the
  * desktop width) always reports a fit. `key` re-measures when the choices
- * change. */
-export function useStripFit<T extends HTMLElement>(enabled: boolean, key: string) {
+ * change. `withinParent` measures a chrome strip against the room left by
+ * its siblings (for example, window wings before fixed right gadgets). */
+export function useStripFit<T extends HTMLElement>(enabled: boolean, key: string, withinParent = false) {
   const ref = useRef<T | null>(null);
   const [fits, setFits] = useState(true);
   const natural = useRef(0);
@@ -34,11 +35,49 @@ export function useStripFit<T extends HTMLElement>(enabled: boolean, key: string
     const measure = () => {
       const box = el.clientWidth;
       if (!box) return;
+      const parent = withinParent ? el.parentElement : null;
+      const parentRect = parent?.getBoundingClientRect();
+      // A head strip is allocated before fixed siblings (feedback, iconify,
+      // zoom and depth). Measure that allocation directly so it folds at
+      // desktop widths too, rather than letting controls leave the frame.
+      const allocated = parent
+        ? (() => {
+            const parentStyle = getComputedStyle(parent);
+            const padding =
+              (parseFloat(parentStyle.paddingLeft) || 0) +
+              (parseFloat(parentStyle.paddingRight) || 0);
+            const parentWidth = parent.clientWidth || parentRect?.width || box;
+            const fixed = Array.from(parent.children).reduce((sum, child) => {
+              if (child === el) return sum;
+              const childEl = child as HTMLElement;
+              const style = getComputedStyle(childEl);
+              // These groups use `margin-left: auto` to push to the frame
+              // edge. Their resolved computed margin is the free flex space,
+              // not fixed chrome, so counting it would make the strip appear
+              // unable to unfold after a resize. Keep genuine margins (and
+              // the title's fixed margins) in the capacity calculation.
+              const autoLeft =
+                childEl.classList.contains("desk-gadgets-right") ||
+                (childEl.classList.contains("desk-window-actions") &&
+                  (childEl.previousElementSibling?.classList.contains("desk-pullout-title") ||
+                    parent.classList.contains("is-sheet")));
+              const margin =
+                (autoLeft ? 0 : parseFloat(style.marginLeft) || 0) +
+                (parseFloat(style.marginRight) || 0);
+              // The title has min-width: 0 and yields before the wings. Its
+              // margins remain part of the fixed head chrome, but its current
+              // grown width must not make a strip look permanently too small.
+              const yielding = childEl.classList.contains("desk-pullout-title");
+              return sum + margin + (yielding ? 0 : childEl.getBoundingClientRect().width);
+            }, padding);
+            return Math.max(0, parentWidth - fixed);
+          })()
+        : box;
       if (fits) {
         const kids = Array.from(el.children) as HTMLElement[];
         const top = kids[0]?.offsetTop ?? 0;
         const wrapped = kids.some((k) => k.offsetTop > top + 2);
-        const wide = el.scrollWidth > box + 1;
+        const wide = el.scrollWidth > (withinParent ? allocated : box) + 1;
         if (wrapped || wide) {
           natural.current = Math.max(
             el.scrollWidth,
@@ -46,7 +85,7 @@ export function useStripFit<T extends HTMLElement>(enabled: boolean, key: string
           );
           setFits(false);
         }
-      } else if (box >= natural.current + 1) {
+      } else if ((withinParent ? allocated : box) >= natural.current + 1) {
         setFits(true);
       }
     };
@@ -54,8 +93,9 @@ export function useStripFit<T extends HTMLElement>(enabled: boolean, key: string
     if (typeof ResizeObserver !== "function") return;
     const ro = new ResizeObserver(measure);
     ro.observe(el);
+    if (withinParent && el.parentElement) ro.observe(el.parentElement);
     return () => ro.disconnect();
-  }, [enabled, fits, key]);
+  }, [enabled, fits, key, withinParent]);
   return { ref, fits };
 }
 

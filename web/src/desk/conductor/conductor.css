@@ -69,9 +69,6 @@
   margin: 0;
   padding: 6px;
   list-style: none;
-  background: var(--alive-paper, #f8f5ee);
-  border: 1px solid var(--wb-ink);
-  box-shadow: var(--wb-sunken);
   min-width: 0;
 }
 
@@ -365,3 +362,34 @@
 .desk-next .cw-row[data-helper] { margin-left: 28px; }
 .desk-next .cw-helpers { margin-left: 28px; }
 .desk-next .cw-helpers .cw-row[data-helper] { margin-left: 0; }
+
+/* Complete surface modernization: Agents uses the same quiet grouping as
+   the other shared interiors. The ask plate remains the selected work item;
+   ordinary agent rows use a fine paper edge and keep their own verbs. */
+.desk-next .surface-host-body .cw {
+  gap: var(--surface-host-gap, 16px);
+}
+
+.desk-next .surface-host-body .cw-section + .cw-section {
+  padding-top: var(--surface-group-gap, 12px);
+  border-top: 1px solid var(--wb-rule-soft);
+}
+
+.desk-next .surface-host-body .cw-well {
+  padding: 4px;
+}
+
+.desk-next .surface-host-body .cw-row-title {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+@container cwrow (max-width: 520px) {
+  .desk-next .surface-host-body .cw-section + .cw-section {
+    padding-top: 10px;
+  }
+
+  .desk-next .surface-host-body .cw-row {
+    align-items: flex-start;
+  }
+}

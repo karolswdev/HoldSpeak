@@ -15,6 +15,7 @@
 // document's `chair` section.
 import { create } from "zustand";
 import { useDesk } from "../store";
+import { COMPACT_VIEWPORT_QUERY } from "../useCompactViewport";
 import {
   loadDeskWorkspace,
   saveDeskWorkspaceSection,
@@ -110,7 +111,7 @@ function compactNow(): boolean {
   return (
     typeof window !== "undefined" &&
     typeof window.matchMedia === "function" &&
-    window.matchMedia("(max-width: 720px)").matches
+    window.matchMedia(COMPACT_VIEWPORT_QUERY).matches
   );
 }
 

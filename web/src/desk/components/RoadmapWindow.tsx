@@ -82,7 +82,7 @@ export function RoadmapWindow({ slug, origin }: { slug: string; origin?: { x: nu
       wings={<SurfaceWings wings={WINGS} active={active} onChange={setActive} />}
       className="desk-pullout desk-roadmap-window"
     >
-      <div className="desk-roadmap-body">
+      <div className="desk-roadmap-body surface-host-body" data-surface-host="roadmap">
         {detailHook.loading && !detail ? <SurfaceState loading /> : null}
         {error ? <SurfaceState error={error} onRetry={() => void detailHook.refresh()} /> : null}
         {detail && active === "timeline" ? (
@@ -112,7 +112,7 @@ export function RoadmapWindow({ slug, origin }: { slug: string; origin?: { x: nu
           </div>
         ) : null}
         {detail && active === "health" ? (
-          detail.healthIssues.length ? <ul className="desk-roadmap-health">{detail.healthIssues.map((issue, index) => <li key={`${issue.path}:${index}`} data-severity={issue.severity}><Status value={issue.severity} /><code>{issue.path || "roadmap"}</code><span>{issue.issue}</span></li>)}</ul> : <SurfaceState empty emptyLabel="0 issues" />
+          detail.healthIssues.length ? <ul className="desk-roadmap-health">{detail.healthIssues.map((issue, index) => <li key={`${issue.path}:${index}`} data-severity={issue.severity}><Status value={issue.severity} /><code>{issue.path || "roadmap"}</code><span>{issue.issue}</span></li>)}</ul> : <SurfaceState empty emptyLabel="No health issues" />
         ) : null}
       </div>
       <SurfaceFooter receipt={<span>{issueCount} {issueCount === 1 ? "issue" : "issues"}</span>} verbs={detail?.nextStoryId ? <span className="desk-roadmap-next-chip">WHAT'S NEXT · {detail.nextStoryId}</span> : null} />

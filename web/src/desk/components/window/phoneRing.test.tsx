@@ -12,10 +12,11 @@
  * Red on main: phoneRing.ts, ScreenSwitcher.tsx and groupGoForPhone do not
  * exist there (the import fails), and Go is one flat list.
  */
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useDesk } from "../../store";
-import { closeChairWindow, openChairWindow, useChairWindows } from "../../chair/chairWindows";
+import { CHAIR_WINDOWS, closeChairWindow, openChairWindow, useChairWindows } from "../../chair/chairWindows";
+import { DeskWindowFrame } from "../DeskWindow";
 import { announceWindow, retractWindow } from "./windowRegistry";
 import { phoneRing, phoneCurrent, stepRing, swipeDirection } from "./phoneRing";
 import { ScreenSwitcher } from "./ScreenSwitcher";
@@ -31,11 +32,59 @@ vi.mock("../../../runtime/RuntimeBus", () => ({
 
 let compact = true;
 const opened: string[] = [];
+const deskFrames = new Map<string, ReturnType<typeof render>>();
+
+function PhoneChairWindows() {
+  const closed = useChairWindows((s) => s.closed);
+  const phone = useChairWindows((s) => s.phone);
+  return (
+    <>
+      {CHAIR_WINDOWS.map((spec) => (
+        <DeskWindowFrame
+          key={spec.id}
+          id={spec.id}
+          title={spec.title}
+          label={spec.title}
+          open={!closed[spec.id] && phone === spec.id}
+          entrance={false}
+          keepsPlane={() => !useChairWindows.getState().closed[spec.id]}
+          dockChip="iconified"
+          escapeCloses={false}
+          onClose={() => closeChairWindow(spec.id)}
+          minW={280}
+          minH={spec.key === "capture" ? 88 : 160}
+        >
+          <div data-testid={`phone-chair-body-${spec.key}`} />
+        </DeskWindowFrame>
+      ))}
+    </>
+  );
+}
 
 function openDeskWindow(id: string, label: string) {
-  announceWindow(id, label, "", () => retractWindow(id));
+  deskFrames.set(
+    id,
+    render(
+      <DeskWindowFrame
+        id={id}
+        title={label}
+        label={label}
+        open
+        entrance={false}
+        onClose={() => retractWindow(id)}
+      >
+        {label}
+      </DeskWindowFrame>,
+    ),
+  );
   opened.push(id);
   useDesk.getState().focusPanel(id);
+}
+
+function closeDeskWindow(id: string) {
+  deskFrames.get(id)?.unmount();
+  deskFrames.delete(id);
+  retractWindow(id);
 }
 
 beforeEach(() => {
@@ -51,11 +100,14 @@ beforeEach(() => {
     dispatchEvent: () => false,
   }));
   Object.defineProperty(window, "innerWidth", { configurable: true, value: 393 });
-  useChairWindows.setState({ closed: {}, phone: "chair:needs", captureInRing: false });
-  useDesk.setState({ panelOrder: [], panelMin: [] });
+  useChairWindows.setState({ closed: {}, phone: "chair:needs", captureInRing: false, screenMounted: true, opened: "" });
+  useDesk.setState({ panelOrder: [], panelMin: [], panelDepth: {} });
+  render(<PhoneChairWindows />);
 });
 
 afterEach(() => {
+  cleanup();
+  deskFrames.clear();
   for (const id of opened.splice(0)) retractWindow(id);
   vi.unstubAllGlobals();
   Object.defineProperty(window, "innerWidth", { configurable: true, value: 1440 });
@@ -172,7 +224,7 @@ describe("Astra r1 #751: the ring keeps the opening order", () => {
   it("a window really closed and opened again is the newest", async () => {
     openDeskWindow("surface-meetings", "Meetings");
     openDeskWindow("pullout:intelligence:desk", "Today");
-    retractWindow("surface-meetings");
+    closeDeskWindow("surface-meetings");
     await Promise.resolve();
     openDeskWindow("surface-meetings", "Meetings");
     expect(ids().slice(1)).toEqual(["Today", "Meetings"]);

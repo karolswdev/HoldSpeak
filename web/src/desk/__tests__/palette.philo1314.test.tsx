@@ -38,7 +38,7 @@ import type { Meeting, Note } from "../../lib/primitives";
 import { useDesk } from "../store";
 import { usePalette } from "../chromeState";
 import { DeskToolShelf, rankRow } from "../components/DeskToolShelf";
-import { announceWindow, retractWindow } from "../components/window/windowRegistry";
+import { DeskWindowFrame } from "../components/DeskWindow";
 import { resetSendTo } from "../windowSend";
 import { pickedDestination, resetSendStore } from "../surface/send";
 import { takeRoomUpdatesRequest, takeRoomWriteRequest } from "../openObject";
@@ -145,8 +145,19 @@ describe("PHILO-13-14 the palette knows his week", () => {
   });
 
   it("`send` leads with `Send <front document> to <destination>`; the pick opens the well, nothing is sent", async () => {
-    announceWindow("pullout:decision:d-freeze", "Freeze the old ledger", "○", () => {});
     useDesk.setState({ panelOrder: ["pullout:decision:d-freeze"] });
+    const frame = render(
+      <DeskWindowFrame
+        id="pullout:decision:d-freeze"
+        title="Freeze the old ledger"
+        label="Freeze the old ledger"
+        open
+        entrance={false}
+        onClose={() => {}}
+      >
+        Freeze the old ledger
+      </DeskWindowFrame>,
+    );
     try {
       const input = await deck();
       await type(input, "send");
@@ -157,7 +168,7 @@ describe("PHILO-13-14 the palette knows his week", () => {
       await vi.waitFor(() => expect(pickedDestination("desk_decision:d-freeze")).toBe("chd_f"));
       expect(calls.filter(([m, p]) => m === "POST" && p.startsWith("/api/channels/send"))).toEqual([]);
     } finally {
-      retractWindow("pullout:decision:d-freeze");
+      frame.unmount();
     }
   });
 

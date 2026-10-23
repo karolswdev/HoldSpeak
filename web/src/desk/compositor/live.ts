@@ -88,6 +88,10 @@ export function computePlanes(
   min: readonly string[] = useDesk.getState().panelMin,
 ): LivePlanes {
   if (cache && cache.v === version && cache.depth === depth && cache.min === min) return cache.out;
+  // A frame is live while it is mounted. A new frame can register before
+  // its first depth arrives; it sorts under every stacked window until the
+  // store presents it. The registry and the hub can retain an open row while
+  // a specialised host is not mounted, but that row never enters this map.
   const windows = Array.from(mounted.keys()).map((id) => ({
     id,
     // A window not yet in the stacking sorts under every stacked one.

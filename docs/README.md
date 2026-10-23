@@ -61,7 +61,8 @@ A line marked "(overlaps X)" repeats part of X. Read X first.
 | Build for a portable device | [AIPI-Lite workflow](AIPI_LITE_DEV_WORKFLOW.md) and [Device protocol](DEVICE_PROTOCOL.md) |
 | Find an HTTP route | [API surface](API_SURFACE.md) and [API reference](API_REFERENCE.md) (overlaps [API surface](API_SURFACE.md)) |
 | Find a capability and its evidence | [Capabilities](CAPABILITIES.md) |
-| Follow the face rules for the Web app | [Web UI contract](WEB_UI_UX_SYSTEM_AUDIT.md) (overlaps `docs/internal/UX-CANON.md`) |
+| Build or change a Web surface | [Design author map](../web/README.md#design-author-map), [UX Canon](internal/UX-CANON.md), and [Design System](internal/DESIGN_SYSTEM.md) |
+| Follow shared component APIs | [Surface contract](../web/src/desk/surface/contract.md); executable examples in the desk's Components window |
 | Change the code | [Contributing](../CONTRIBUTING.md) |
 
 ## Operate
@@ -97,4 +98,8 @@ A line marked "(overlaps X)" repeats part of X. Read X first.
 ## Internal records
 
 Files under [internal](internal/) hold canon, plans, and history.
-They can describe planned behavior. They do not describe the product as it is.
+Canon states the current rules. Plans can describe behavior that is not built;
+release records describe their named revision and observed scope. Use the
+[design author map](../web/README.md#design-author-map) for current interface
+ownership and the [modernization record](internal/betterment/MODERNIZATION-IMPLEMENTATION-2026-10-22.md)
+for this implementation's adoption and verification.

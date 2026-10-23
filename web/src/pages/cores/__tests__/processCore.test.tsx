@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   announceLauncher,
@@ -78,7 +78,7 @@ describe("ProcessCore", () => {
     expect(activate).toHaveBeenCalledOnce();
   });
 
-  it("renders every section head at zero — an instrument, never a void", () => {
+  it("shows one truthful empty line, then only the populated group", () => {
     useProcessWindow.setState({
       sections: sections.map((section) => ({ ...section, rows: [] })),
       loading: false,
@@ -89,8 +89,7 @@ describe("ProcessCore", () => {
 
     render(<ProcessCore />);
 
-    // UX-CANON A8: countLabel strips the zero — section heads read
-    // "NEEDS YOU" not "NEEDS YOU 0"; all five still render.
+    expect(screen.getByText("No runs yet")).toBeTruthy();
     for (const head of [
       "NEEDS YOU",
       "RUNNING",
@@ -98,9 +97,18 @@ describe("ProcessCore", () => {
       "UNKNOWN",
       "RECENTLY ENDED",
     ]) {
-      expect(screen.getByText(head)).toBeTruthy();
+      expect(screen.queryByText(head)).toBeNull();
     }
+    expect(screen.getByText("KERNEL")).toBeTruthy();
+    expect(screen.queryByText(/CURSOR/)).toBeNull();
+
+    act(() => useProcessWindow.setState({ sections }));
+    expect(screen.getByText("NEEDS YOU 1")).toBeTruthy();
     expect(screen.getByText(/KERNEL · CURSOR/)).toBeTruthy();
+    expect(screen.queryByText("No runs yet")).toBeNull();
+    for (const head of ["RUNNING", "WAITING", "UNKNOWN", "RECENTLY ENDED"]) {
+      expect(screen.queryByText(head)).toBeNull();
+    }
   });
 });
 

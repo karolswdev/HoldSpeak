@@ -6,7 +6,7 @@
  * and shows only rows that work. The real store, the real menu bar and the
  * real Ask window; the hub's Ask answer is the recorded one
  * (ask.thread.wire.json, tests/unit/test_desk_ask.py). */
-import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../runtime/RuntimeBus", () => {
@@ -21,7 +21,8 @@ import { objectMenuEntries } from "../objectMenu";
 import type { WorkMenuEntry } from "../components/DeskMenu";
 import { DeskMenuBar } from "../components/DeskMenuBar";
 import { AskPanel } from "../components/AskPanel";
-import { announceWindow, retractWindow } from "../components/window/windowRegistry";
+import { DeskWindowFrame } from "../components/DeskWindow";
+import { retractWindow } from "../components/window/windowRegistry";
 import { clearEngineCache } from "../hooks/useEngine";
 import { useScreenMembersStore } from "../screen/members";
 import THREAD from "../../test/wire/ask.thread.wire.json";
@@ -116,9 +117,22 @@ describe("Betterment Q5: Ask about this, on every object", () => {
   });
 
   it("with Mira's window in front, the Person menu carries live open, ask, prep and keep verbs", async () => {
-    act(() => announceWindow("pullout:people:mira", "Mira Kovacs", "⊕", () => {}));
     useDesk.setState({ panelOrder: ["pullout:people:mira"] });
-    render(<Desk />);
+    render(
+      <>
+        <DeskWindowFrame
+          id="pullout:people:mira"
+          title="Mira Kovacs"
+          label="Mira Kovacs"
+          open
+          entrance={false}
+          onClose={() => {}}
+        >
+          Mira Kovacs
+        </DeskWindowFrame>
+        <Desk />
+      </>,
+    );
     fireEvent.click(screen.getByRole("button", { name: /^Person$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Person menu" });
     const rows = Array.from(menu.querySelectorAll("[role^=menuitem] .desk-menu-label"), (e) => e.textContent?.trim());

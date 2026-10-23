@@ -192,22 +192,21 @@ export function ProcessCore(_props: CoreProps) {
           error={store.error}
           onRetry={() => void useProcessWindow.getState().poll()}
         />
+      ) : total === 0 ? (
+        <SurfaceState empty emptyLabel="No runs yet" />
       ) : (
-        /* Every section renders AT ZERO — even before the first page
-           lands, the monitor's frame IS the instrument; silence is
-           never an empty window (audit P2). */
         store.sections.map((section) => (
-          <SurfaceLedger
-            key={section.id}
-            cols="process"
-            count={countLabel(section.label.toUpperCase(), section.rows.length)}
-          >
-            {section.rows.length ? (
+          section.rows.length ? (
+            <SurfaceLedger
+              key={section.id}
+              cols="process"
+              count={countLabel(section.label.toUpperCase(), section.rows.length)}
+            >
               <ul className="surface-ledger-rows">
                 <LedgerRows rows={section.rows} openDecisions={openDecisions} />
               </ul>
-            ) : null}
-          </SurfaceLedger>
+            </SurfaceLedger>
+          ) : null
         ))
       )}
       {/* HS-129-05 — the kernel fact uses the shared receipt slot. */}
@@ -216,7 +215,9 @@ export function ProcessCore(_props: CoreProps) {
           <span className="surface-footer-receipt-line" role="status">
             {store.error
               ? `KERNEL UNREACHABLE · CURSOR ${store.cursor}`
-              : `KERNEL · CURSOR ${store.cursor} · ${countLabel("RUNS", total)}`}
+              : total > 0
+                ? `KERNEL · CURSOR ${store.cursor} · ${countLabel("RUNS", total)}`
+                : "KERNEL"}
           </span>
         }
       />

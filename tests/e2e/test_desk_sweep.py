@@ -983,6 +983,23 @@ class _Case:
         fail("drawn", page.evaluate(DRAWN_JS, [sel or "[data-testid=desk-screen]", list(COVERS)]))
         if self.wid:
             fail("fit", page.evaluate(FIT_JS, self.wid))
+            # A drawn frame is not enough: every visible head verb must
+            # remain inside it, with its label intact (UX Canon A.6).
+            fail("head", page.evaluate("""id => {
+              const frame = document.getElementById(id);
+              const head = frame?.querySelector('.desk-pullout-head');
+              if (!frame || !head) return [];
+              const f = frame.getBoundingClientRect();
+              return [...head.querySelectorAll('button')].flatMap(button => {
+                const r = button.getBoundingClientRect();
+                if (!r.width || !r.height || getComputedStyle(button).visibility === 'hidden') return [];
+                const name = button.getAttribute('aria-label') || button.textContent.trim();
+                const out = r.left < f.left - 1 || r.right > f.right + 1 ||
+                  r.top < f.top - 1 || r.bottom > f.bottom + 1;
+                const clipped = button.scrollWidth > button.clientWidth + 1;
+                return out || clipped ? [`${name}: ${out ? 'outside frame' : 'clipped label'}`] : [];
+              });
+            }""", self.wid))
         faults = _rendered_text_faults(page, scope, on_glass=True,
                                        horizontal_scroll=(".needs-chip-row",))
         if not faults["scopes"]:
@@ -1198,6 +1215,10 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                                        arg=[provider, pick.split("/")[-1]], timeout=T)
             page.get_by_test_id("door-counts-github").wait_for(timeout=T)
             page.mouse.move(2, 2)
+        if case_id == "person":
+            # This pose is the seeded person's content, not the transient
+            # readiness/detail gap or a frame whose lazy body has not loaded.
+            page.locator(f'[id="{wid}"] [data-testid=people-detail-head]').wait_for(timeout=T)
         if palette:
             page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
             page.locator("[aria-controls=desk-tool-shelf]").first.click()
@@ -1332,6 +1353,12 @@ def test_the_fitted_topology_keeps_cards_apart(desk: dict[str, Any], pw_browser:
         page.goto(f"{base}/?token={TOKEN}", wait_until="load")
         _normal_chair(page)
         page.wait_for_function(SETTLED_JS, arg="surface-components", timeout=T)
+        controls = page.get_by_role("button", name="Controls", exact=True)
+        if controls.count():
+            controls.click()
+        else:
+            page.get_by_role("button", name=re.compile(r"^Patterns:")).click()
+            page.locator("[role^='menuitem']").filter(has_text="Controls").first.click()
         page.locator("#surface-components [data-testid=topology-surface]").wait_for(timeout=T)
         seen = page.evaluate(TOPOLOGY_JS)
         assert seen and seen["cards"] == 3 and seen["labels"] == 2, seen

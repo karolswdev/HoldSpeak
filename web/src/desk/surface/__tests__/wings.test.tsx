@@ -64,5 +64,39 @@ describe("the wings strip", () => {
     expect(outcomes.className).not.toContain("is-on");
     expect(record.className).toContain("is-on");
   });
+
+  it("folds into the shared strip menu when its head allocation is too small", () => {
+    const clientWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
+    const scrollWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "scrollWidth");
+    Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+      configurable: true,
+      get: () => 220,
+    });
+    Object.defineProperty(HTMLElement.prototype, "scrollWidth", {
+      configurable: true,
+      get: () => 700,
+    });
+    try {
+      render(
+        <SurfaceWings
+          wings={[
+            { id: "speak", label: "Speak" },
+            { id: "journal", label: "Journal" },
+            { id: "blocks", label: "Blocks" },
+            { id: "learned", label: "Learned" },
+            { id: "commands", label: "Voice commands" },
+          ]}
+          active="speak"
+          onChange={() => {}}
+          door="Configure"
+        />,
+      );
+      expect(screen.getByTestId("surface-strip-menu")).toBeInTheDocument();
+      expect(screen.queryByRole("tablist")).toBeNull();
+    } finally {
+      if (clientWidth) Object.defineProperty(HTMLElement.prototype, "clientWidth", clientWidth);
+      if (scrollWidth) Object.defineProperty(HTMLElement.prototype, "scrollWidth", scrollWidth);
+    }
+  });
 });
 

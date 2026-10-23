@@ -88,6 +88,7 @@ const mocks = vi.hoisted(() => {
     durable,
     people,
     compact: false,
+    front: null as string | null,
     windows: [] as Array<{ id: string; label: string; glyph: string; close: () => void; dock: boolean }>,
     openIntelligence: vi.fn(),
   };
@@ -128,11 +129,15 @@ vi.mock("../DeskMenu", () => ({ WorkMenu: () => null }));
 vi.mock("../../windowMenuAdapter", () => ({ dockChipMenuEntries: () => [] }));
 vi.mock("./windowRegistry", () => ({
   useOpenWindows: () => mocks.windows,
+  useFrontWindowId: () => mocks.front,
   useShownName: (_id: string, label: string) => label,
   registrySnapshot: [],
   chipEls: { set: vi.fn(), delete: vi.fn() },
 }));
-vi.mock("../../useCompactViewport", () => ({ useCompactViewport: () => mocks.compact }));
+vi.mock("../../useCompactViewport", () => ({
+  COMPACT_VIEWPORT_QUERY: "(max-width: 720px)",
+  useCompactViewport: () => mocks.compact,
+}));
 vi.mock("../../screen/nextOneOnOne", () => ({
   useNextOneOnOneRead: () => ({ label: "1:1 15:00", reading: false }),
 }));
@@ -173,8 +178,10 @@ import { chipEls } from "./windowRegistry";
 
 afterEach(() => {
   mocks.compact = false;
+  mocks.front = null;
   mocks.desk.panelMin = [];
   mocks.desk.panelOrder = [];
+  mocks.desk.windowsById = {};
   mocks.windows = [];
   mocks.openIntelligence.mockReset();
   vi.unstubAllGlobals();
@@ -355,6 +362,25 @@ describe("H-C3 Dock rendering", () => {
     // Historical summary rows and aftercare frames are handled by the one
     // attention bell. The Dock must not grow a second READY badge.
     expect(screen.queryByTestId("desk-dock-meetings-state")).toBeNull();
+  });
+
+  it("marks the Dock tile from the compositor front snapshot", () => {
+    mocks.front = "surface-meetings";
+    mocks.desk.windowsById = { "surface-meetings": {} };
+    render(<Dock />);
+
+    expect(screen.getByRole("button", { name: "Meetings" })).toHaveClass("is-front");
+    expect(screen.getByRole("button", { name: "Today, 1 needs you" })).not.toHaveClass("is-front");
+  });
+
+  it("does not mark an open Dock tile when the live front is empty", () => {
+    mocks.front = null;
+    mocks.desk.panelOrder = ["surface-meetings"];
+    mocks.desk.windowsById = { "surface-meetings": {} };
+    mocks.windows = [{ id: "surface-meetings", label: "Meetings", glyph: "M", close: vi.fn(), dock: true }];
+    render(<Dock />);
+
+    expect(screen.getByRole("button", { name: "Meetings" })).not.toHaveClass("is-front");
   });
 });
 

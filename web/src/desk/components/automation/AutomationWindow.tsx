@@ -648,7 +648,7 @@ export function AutomationWindow({
       onClose={() => useDesk.getState().closeWorkbenchWindow(workbenchId)}
       className="desk-pullout automation-window"
     >
-      <div className="desk-surface-body automation-body" data-testid="automation-window"
+      <div className="desk-surface-body surface-host-body automation-body" data-surface-host="automation" data-testid="automation-window"
         data-drop-ready={dropReady || undefined}
         onDragOver={onDragOver}
         onDragLeave={(event) => {

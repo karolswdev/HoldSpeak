@@ -491,7 +491,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     </div>
   );
   const nextPlate = selected || !soonest ? null : (
-    <section className="people-next people-roster-next" aria-label="Next 1:1" data-testid="people-roster-next">
+    <section className="people-next people-roster-next surface-group-well" aria-label="Next 1:1" data-testid="people-roster-next">
       <header className="people-next-bar">
         <span className="people-next-label">NEXT 1:1</span>
         <span className="people-next-when">{[shortWhen(soonest.next.startsAt), untilWords(soonest.next.startsAt, Date.now())].filter(Boolean).join(" · ")}</span>
@@ -548,7 +548,7 @@ function suggestionSource(row: Suggestion): string {
 /** Betterment D6: FROM YOUR MEETINGS: each name with Add and Not a person. */
 function FromYourWork({ suggestions, busyKey, onAdd, onHide }: { suggestions: Suggestion[]; busyKey: string; onAdd(row: Suggestion): void; onHide(row: Suggestion): void }) {
   if (!suggestions.length) return null;
-  return <SurfaceSection label="From your meetings" data-testid="people-suggestions">
+  return <SurfaceSection label="From your meetings" className="surface-group-well" data-testid="people-suggestions">
     <SurfaceRows>{suggestions.map((row) => <div key={row.key} className="people-suggestion" data-testid="people-suggestion">
       <SurfaceRow
         glyph={<Avatar name={row.name} />}
@@ -607,6 +607,7 @@ function Roster({ rowFacts = {}, addOpen = true, onCloseAdd, onPlan, relationshi
   }, [scoped, rowFacts]);
   const scopedOut = projectFilter ? relationships.length - scoped.length : 0;
   return <SurfaceSection
+    className="surface-group-well"
     label={projectFilter ? countToken(ordered.length, "ON THIS PROJECT", "ON THIS PROJECT") ?? "THIS PROJECT" : "Relationships"}
     actions={projectFilter && scopedOut > 0 ? <Button dense variant="ghost" aria-label="Everyone: clear the Project scope" onClick={onClearProjectFilter} data-testid="people-roster-everyone">{countToken(scopedOut, "MORE", "MORE")} · Everyone</Button> : undefined}
   >
@@ -636,6 +637,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
   useEffect(() => { takePersonLens(relationshipId); }, [relationshipId]);
   const [readiness, setReadiness] = useState<Readiness | null>(null);
   const [detail, setDetail] = useState<RelationshipDetail | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [lensRequest, setLensRequest] = useState<{ lens: Lens; seq: number } | null>(null);
   useWindowTitle(detail?.display_name ?? null, [detail?.display_name]);
@@ -650,6 +652,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
     return () => window.removeEventListener(PERSON_OPEN_EVENT, onOpen);
   }, [relationshipId]);
   const read = useCallback(async () => {
+    setLoading(true);
     try {
       const next = await apiFetch<Readiness>("/api/people/readiness");
       setReadiness(next);
@@ -663,6 +666,8 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
     } catch (cause) {
       if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
       setError(plainFailure(detail ? "PEOPLE STORE" : "PERSON DID NOT LOAD", cause));
+    } finally {
+      setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [relationshipId]);
@@ -673,7 +678,7 @@ export function PersonWindowBody({ relationshipId, onClose }: { relationshipId: 
     if (isProtectedFailure(cause) && !isStoreOutage(cause)) { setDetail(null); setReadiness(readinessForError(cause)); }
     setError(plainFailure("NOT DONE", cause));
   };
-  if (!readiness && !error) return <SurfaceState loading />;
+  if (loading && !detail) return <SurfaceState loading />;
   if (readiness && stateOf(readiness) !== "ready") {
     const face = readinessFace(stateOf(readiness));
     return <div className="people-joy-state" data-testid="people-joy-state">
@@ -1087,7 +1092,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead }: { rel
       <Button dense variant="ghost" onClick={() => setAttempt((n) => n + 1)}>Try again</Button>
     </span> : null}
 
-    <section className="people-next" aria-label="Next 1:1" data-testid="people-next-plate">
+    <section className="people-next surface-group-well" aria-label="Next 1:1" data-testid="people-next-plate">
       <header className="people-next-bar" data-testid={nextAt ? "people-next-1on1" : undefined}>
         <span className="people-next-label">NEXT 1:1</span>
         {nextAt ? <span className="people-next-sep" aria-hidden="true"> · </span> : null}
@@ -1116,7 +1121,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead }: { rel
 
         {brief ? <div className="people-raise" data-testid="prep-to-raise">
           <span className="people-cap">TO RAISE<b>{agenda.length || null}</b></span>
-          {agenda.length ? <ol className="people-raise-list">
+          {agenda.length ? <ol className="people-raise-list surface-group-well">
             {agenda.map((item, index) => <li key={item.id} className="people-raise-row" data-testid="prep-agenda">
               <span className="people-raise-n" aria-hidden="true">{index + 1}</span>
               <span className="people-raise-words">{item.body}</span>
@@ -1133,7 +1138,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead }: { rel
     {/* Betterment D7: two columns named with the person's name, both fed
         by the one list: what she owes me (with Nudge) and what I owe her. */}
     <div className="people-owe-grid">
-      <section className="people-plate" data-testid="people-they-owe">
+      <section className="people-plate surface-group-well" data-testid="people-they-owe">
         <h3 className="people-cap">{`${firstName} owes me`}{owedRows.length + actions.length ? <b>{owedRows.length + actions.length}</b> : null}</h3>
         {owedRows.length || actions.length ? <ul className="people-plate-rows" data-testid="prep-owed">
           {owedRows.map((item) => <PlateRow key={item.id} title={item.body}
@@ -1162,7 +1167,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead }: { rel
         <PrepAddWell key={relationship.id} label={`${firstName} owes me`} draft={owedDraft} onChange={setOwedDraft} onAdd={addOwed} busy={busy === "owed"} />
       </section>
 
-      <section className="people-plate" data-testid="people-you-owe">
+      <section className="people-plate surface-group-well" data-testid="people-you-owe">
         <h3 className="people-cap">{`I owe ${firstName}`}{youOweRows.length + myActions.length ? <b>{youOweRows.length + myActions.length}</b> : null}</h3>
         {youOweRows.length || asked.length || myActions.length ? <ul className="people-plate-rows" data-testid="prep-you-owe">
           {asked.map((item) => <PlateRow key={item.id} testId="people-asked" title={item.body}
@@ -1183,7 +1188,7 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead }: { rel
     </div>
 
     {showLast || concernRows.length || excerpts.length ? <div className="people-owe-grid people-more-grid">
-      {showLast && lastId ? <section className="people-plate" data-testid="prep-last">
+      {showLast && lastId ? <section className="people-plate surface-group-well" data-testid="prep-last">
         <h3 className="people-cap">LAST TIME</h3>
         <div className="people-last-head" data-testid="prep-meeting-row">
           <span className="people-plate-text">
@@ -1202,13 +1207,13 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead }: { rel
         {lastLines.length > 4 ? <span className="people-prep-token">+{lastLines.length - 4} MORE IN THE MEETING</span> : null}
       </section> : null}
 
-      {concernRows.length ? <section className="people-plate" data-testid="prep-summary-rows">
+      {concernRows.length ? <section className="people-plate surface-group-well" data-testid="prep-summary-rows">
         <h3 className="people-cap">OPEN WORK</h3>
         <ul className="people-plate-rows people-work-rows">{concernRows}</ul>
         {concern && brief ? <ConcernDetail concern={concern} brief={brief} /> : null}
       </section> : null}
 
-      {excerpts.length ? <section className="people-plate" data-testid="prep-memory">
+      {excerpts.length ? <section className="people-plate surface-group-well" data-testid="prep-memory">
         <h3 className="people-cap">ON THE DESK</h3>
         <ul className="people-plate-rows">
           {excerpts.slice(0, 4).map((e, index) => <PlateRow key={e.ref || `${e.kind}-${index}`} title={e.title || e.text}

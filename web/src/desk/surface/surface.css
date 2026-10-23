@@ -441,9 +441,10 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  border-radius: 0;
-  background: var(--desk-window-well);
-  box-shadow: var(--desk-window-etch);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: none;
 }
 .surface-well-head {
   flex: none;
@@ -2239,8 +2240,9 @@ button.surface-edit-in-place:hover {
   gap: 4px;
   min-height: 110px;
   padding: 16px;
-  border: 1.5px dashed var(--border);
-  border-radius: 0;
+  border: 1px dashed var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
   color: var(--text-muted);
   cursor: pointer;
   text-align: center;
@@ -2864,10 +2866,10 @@ button.surface-edit-in-place:hover {
   flex-direction: column;
   gap: 6px;
   padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 0;
-  background: var(--surface-2);
-  box-shadow: var(--desk-window-etch);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: none;
 }
 .meeting-conflict-slip-head {
   display: flex;
@@ -4852,9 +4854,10 @@ button.surface-edit-in-place:hover {
 .desk-next .meetings-stream-rows {
   gap: 2px;
   padding: 4px;
-  background: var(--wb-well);
-  border: 1px solid var(--wb-ink);
-  box-shadow: var(--wb-sunken);
+  background: var(--wb-paper);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
 }
 .desk-next .meetings-stream-row {
   position: relative;
@@ -5155,9 +5158,10 @@ button.surface-edit-in-place:hover {
   align-items: center;
   gap: 16px;
   padding: 12px 14px;
-  border: 1px solid var(--wb-ink);
-  background: var(--alive-paper, #f8f5ee);
-  box-shadow: var(--wb-sunken);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: none;
 }
 .desk-next .live-rec {
   display: inline-flex;
@@ -5250,9 +5254,10 @@ button.surface-edit-in-place:hover {
   justify-content: center;
   gap: 10px;
   padding: 14px;
-  border: 1px solid var(--wb-ink);
-  background: var(--wb-field-hi);
-  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: none;
 }
 .desk-next .meetings-import-words {
   font: 600 13px / 1.3 var(--font-sans);
@@ -5260,9 +5265,10 @@ button.surface-edit-in-place:hover {
 }
 .desk-next .meetings-import-plates .surface-dropwell {
   margin: 0;
-  border: 1px dashed color-mix(in srgb, var(--wb-ink) 55%, transparent);
-  background: var(--alive-paper, #f8f5ee);
-  box-shadow: var(--wb-sunken);
+  border: 1px dashed var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: none;
   transition: background-color 120ms ease;
 }
 .desk-next .meetings-import-plates .surface-dropwell:hover {
@@ -5313,10 +5319,120 @@ button.surface-edit-in-place:hover {
 }
 .desk-next .meetings-review-coverage {
   padding: 4px 10px;
-  border: 1px solid var(--wb-ink);
-  background: var(--alive-paper, #f8f5ee);
-  box-shadow: var(--wb-sunken);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: none;
 }
 .desk-next .meetings-review-coverage > .surface-caption {
   margin: 6px 0 2px;
+}
+
+/* ── Complete surface modernization: shared host composition ─────────────
+   The host boundary is shared by manifest applications, object windows,
+   Automations and the Agents drawer. These rules provide one quiet rhythm
+   for their interiors while leaving task-specific species in charge of
+   their content and scroll ownership. */
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) {
+  --surface-host-gap: var(--desk-surface-section-gap);
+  --surface-group-gap: var(--space-3);
+  gap: var(--surface-host-gap);
+  min-width: 0;
+}
+
+/* Shared quiet grouping for queues, result cards and agent lists. The
+   species keeps its own layout and padding; this class owns the material. */
+.desk-next .surface-group-well {
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: none;
+}
+
+/* SurfaceLedger is a shared list species rather than a nested window. Its
+   rows retain their interaction grammar while the group uses the same quiet
+   paper edge as the other shared material. */
+.desk-next .surface-ledger {
+  border-color: var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  box-shadow: none;
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) > :where(.surface-section, .gadget-group, .surface-material, .surface-well, .surface-columns, .surface-split) {
+  min-width: 0;
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) > :where(.surface-section, .gadget-group) {
+  gap: var(--surface-group-gap);
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) :where(.surface-section-head, .gadget-group-label) {
+  min-width: 0;
+  margin-block: 0 2px;
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) :where(.surface-section-head, .gadget-group-label) > :is(h3, h4, span:first-child) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) :where(.surface-section-head, .gadget-group-label) > :is(.btn, .gadget-chip, .surface-token, .quiet) {
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+
+/* ReadingDocument owns the shared reading measure. Markdown tables and code
+   keep their own horizontal reading overflow inside that measure. */
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) :where(.surface-reading, .surface-document, .reading-document:not(.surface-material), .automation-reading) {
+  width: min(100%, 68ch);
+  max-width: 68ch;
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) .reading-document.surface-material {
+  width: min(100%, 68ch);
+  max-width: 68ch;
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) :where(.surface-reading, .surface-document, .reading-document:not(.surface-material)) :where(p, li, blockquote) {
+  overflow-wrap: anywhere;
+}
+
+/* A local verb cluster is allowed to wrap at its host edge. Intrinsic
+   controls keep their own width until the surface container requires a
+   stack. */
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) :where(.surface-actions, .surface-verbs-actions, .surface-footer-verbs, .button-row, .automation-editor-verbs) {
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) :where(input, select, textarea) {
+  max-width: 100%;
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) :where(.surface-code, .surface-well-body, .surface-reading, .surface-document) {
+  overflow-wrap: anywhere;
+}
+
+/* Forms keep the label and value readable at desktop widths. At a narrow
+   surface the existing gadget container rule stacks the row as one unit;
+   this keeps the value intrinsic and prevents a control from pushing the
+   label out of the host. */
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) :where(.gadget-row, .surface-fact-row) {
+  min-width: 0;
+}
+
+@container surface (max-width: 559.9px) {
+  .desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) {
+    --surface-host-gap: var(--space-4);
+    --surface-group-gap: var(--space-2);
+  }
+
+  .desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) :where(.surface-columns, .surface-split) {
+    gap: var(--space-4);
+  }
+
+  .desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) :where(.surface-actions, .surface-verbs-actions, .surface-footer-verbs, .button-row) {
+    align-items: stretch;
+  }
 }

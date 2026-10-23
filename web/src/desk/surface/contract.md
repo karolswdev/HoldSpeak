@@ -15,10 +15,12 @@ Every state renders icon + text; never color alone.
 - Radio groups use real input[type=radio] with proper grouping
 
 ## Tokens
-All styling uses design tokens from design-tokens.json. Raw values are forbidden (validate-tokens.cjs enforces).
+All styling uses design tokens from design-tokens.json. Raw color, z-index
+and duration values are forbidden outside the token source and documented
+exceptions (`npm run tokens:gate` enforces this).
 
 ## surface-token[data-chip] (HS-167-05)
-The chip variant of `surface-token` gives it the full chip geometry (border, well bg, etch shadow, 10px mono, 0.06em tracking) used by token rows (steward grant, run receipt refs). Stamp `data-chip` on any `surface-token` that should render as a discrete chip rather than inline text. Tone data-attrs still work.
+The chip variant of `surface-token` gives it the full chip geometry (border, well bg, current material, 12px mono, 0.06em tracking) used by token rows (steward grant, run receipt refs). Stamp `data-chip` on any `surface-token` that should render as a discrete chip rather than inline text. Tone data-attrs still work.
 
 ## Motion
 All transitions use --duration-* tokens and --ease-* curves. prefers-reduced-motion removes animation.
@@ -32,6 +34,46 @@ Patterns respond to the surface container (@container surface). They push layout
 - ActionNotice is a standalone flow element
 - ProgressPlan and ChoiceCardGroup are section-level patterns
 - Disclosure wraps any content as a collapsible section
+
+## Executable reference and shared host composition (2026-10-23)
+
+Open **Components** on the desk (`/design/components`). The core is
+`pages/cores/ComponentsCore.tsx`; complete local examples live in
+`pages/cores/design-reference/DesignReference.tsx`. The earlier control
+catalogue remains in `ControlsGallery.tsx`. These import production species;
+they do not establish that every example's complete composition has already
+been adopted by a production feature.
+
+| Reference | Shared implementation | Real consumers of those species |
+| --- | --- | --- |
+| Forms | GadgetRow, StringGadget, CycleGadget, ActionNotice, Button | Settings, Automation setup, Project editors |
+| Reading | ReadingDocument/Material, source doors, SurfaceWell | Ask results, Automation results, notes and source readers |
+| Lists | SurfaceRows/SurfaceRow, SurfaceSplit, StringGadget | People, Memory and object readers use these list/detail species |
+| Conversation | DeskComposer/ComposerWell, shared reading material | Live Ask uses ComposerWell; the PR DeskComposer host is parked; the reference is a local consumer |
+| Progress | ProgressPlan, Receipt, StateChip | Project Prepare/Steward and frontDoor source consumers; the reference's run is local specimen state |
+
+Keep consumer claims at their actual granularity: a shared control, a pattern
+and a complete journey are different adoption claims. Parked code is not a
+live consumer. Examples offer only the states they implement, with local
+state labelled, no external effects or provider completion claim. A source
+action must reveal the source; save/retry must preserve edits. Long reading
+uses the window's content scroller. Bounded editor, terminal, code/table and
+source-preview scroll regions remain intentional exceptions.
+
+Shared host rules in `surface.css` cover `.desk-surface-body`,
+`.desk-pullout-body`, `.chair-window-body` and explicit `.surface-host-body`
+hosts. They own semantic group spacing, wrapping and the 68-character reading
+measure. `Material` and `ReadingDocument` share it; code/tables retain their
+horizontal overflow species. `.surface-group-well` supplies quiet group
+material to specialised lists/results without taking their layout or state;
+SurfaceLedger receives the same fine-edge material. Do not copy this skin
+into a feature stylesheet. `kit.css` owns common head/filter/figure rhythm.
+
+When a shared component or pattern changes, update its contract and matching
+reference example in the same change. Record actual production adoption in
+the existing implementation/release record. Keep material guidance in
+DESIGN_SYSTEM and ownership guidance in the web author map, rather than
+duplicating them in every feature plan.
 
 ## Native preference sheets (2026-10-14)
 
@@ -155,8 +197,8 @@ recurring element the library lacked.
 Presence rules (they are the species, not the caller's business):
 
 - The active token is `Button` **secondary dense** (Phase 16: the selection
-  blue with paper, sunken; was accent-tinted), the resting ones **ghost
-  dense** (a raised Steel cell); each carries `aria-pressed` and the
+  blue with light text), the resting ones **ghost
+  dense** (quiet controls with a fine outline where required); each carries `aria-pressed` and the
   active one `data-filter-active`. Never **primary**: a face has one filled
   primary and it is the action the face is for, not a filter. No raw
   `<button>` (UX-CANON A.1).
@@ -166,9 +208,9 @@ Presence rules (they are the species, not the caller's business):
   `null` below `SPARSE_THRESHOLD` (`LedgerFilter.tsx:104`, `sparse.ts:4`).
 - **It carries no count.** `matchCount/total` would be a second count on a
   face that says its one count elsewhere (UX-CANON A.7/A.8).
-- Not to be confused with `SurfaceWings`: filters are lightly raised tokens
-  (the soft bevel, no plate), wings keep the full Steel bevel, and the two
-  never look alike (canon D, PHILO-14 B2 #958).
+- Not to be confused with `SurfaceWings`: filters change the current content
+  selection; wings navigate the window. Both use the current shared material,
+  with distinct placement and selected state.
 
 ### The strip menu form (PHILO-13-11, C1 §3a)
 
@@ -186,7 +228,13 @@ obey one rule: nothing clips, nothing scrolls sideways (HS-200-12).
   unfolds when the row is wide enough again. Never a fixed count; a strip
   that fits stays a strip. Where nothing can be measured (jsdom), it stays a
   strip.
-- The desktop strip never folds.
+- A window's wings also fold on a wide desk when their allocated head space
+  cannot hold the choices. A wide viewport can contain a narrow window.
+  `useStripFit` measures that allocation; window titles yield first, and the
+  feedback/close/depth/zoom group retains its full space. The folded menu
+  preserves every wing and the gear door. Ordinary desktop FilterTokens
+  retain their existing rail behavior. Wing labels use the current sans,
+  sentence-case material; uppercase labels in old canvases are historical.
 
 ## CycleGadget / WorkbenchSelect (2026-10-14)
 
@@ -198,7 +246,7 @@ Signal Select, preserving native props, default values, form membership,
 required validation, refs and input/change events.
 
 The native popup is replaced by a library listbox portaled above window
-clipping. Its square beveled frame uses ground, choice rows use paper,
+clipping. Its fine frame and restrained radius use the shared ground; choice rows use paper,
 the active row uses selection blue, the saved choice has a check, and
 unavailable rows are flat with muted ink. Every choice is a chrome Button.
 The portal copies the owner's computed custom properties. Long labels
@@ -961,9 +1009,14 @@ Focus outlines, state names, keyboard/voice authority, contrast and 44px narrow
 hit ownership remain mandatory. Surface hosts own layout, not their own theme.
 The settled canvas is docs/internal/betterment/canvases/modern-shell-2026-10-22.html.
 
-## The bevel grammar (PHILO-14 B1)
+## Historical bevel grammar (PHILO-14 B1)
 
-**A control that must be clicked LOOKS clickable** (UX-CANON D). Three
+This section records the earlier material implementation. Its token/class
+names remain compatible, but its raised/sunken painting prescriptions are
+superseded by **Shared shell material** above. Read current values from the
+token source; do not reintroduce the bevels below.
+
+**Historical principle: a control that must be clicked LOOKS clickable** (UX-CANON D). Three
 classes in `surface.css`, from the tokens `--bevel-raised` /
 `--bevel-sunken` (built on `--bevel-light-strong` / `--bevel-dark`):
 
@@ -1015,6 +1068,12 @@ the row's lamp is its flight's StateChip).
 
 ## The interior kit (Phase 16, COMPOSITOR.md §11)
 
+The APIs below remain useful. Material descriptions such as Steel, raised,
+sunken and paper plate describe the original implementation, not current
+paint. Current fine-border material and geometry in DESIGN_SYSTEM govern.
+Composition follows the task: a reader or form need not add a FilterBar,
+Ledger or AskWell merely to reproduce the historical sequence.
+
 Every internal app (Needs you, a Room, the Conductor, a meeting, People,
 Delivery, Settings) is composed from these, in this order: AppHead (with its
 StatusStrip) → FilterBar → Section → Ledger / IconGrid → AskWell → Foot. The
@@ -1027,8 +1086,9 @@ new material. The material tokens (`--wb-field`, `--wb-well`, `--wb-text`, `--wb
 `window-interior.css` remaps the interior tokens inside every window.
 
 Every readable word is 12 px or more (UX-CANON §C outranks the canvas's
-11 and 10 px captions, strip, meta and plates). Every verb is one 28 px
-plate (dense or not), with the 44 px halo at the narrow desk.
+11 and 10 px captions, strip, meta and plates). Ordinary desktop Buttons use
+`--size-btn` (32px); narrow Buttons own 44px targets. Chrome strips own their
+44px rows rather than adding overlapping halos.
 
 | Species | Where | The rule |
 |---|---|---|
@@ -1060,7 +1120,7 @@ nowhere). It decides nothing: the app answers `accepts` and writes in
 `onPatch`.
 
 - `jobs: SwitchJob[]` — the left column. Each: `name` (sans 14/600),
-  `tasks` (one mono-10-upper token line), `state` (one of the five:
+  `tasks` (one readable 12px mono token line), `state` (one of the five:
   `ready · limited · broken · waiting · off`, drawn as the plug's colour:
   green, amber, red, steel, dim steel), `verb` (Try it), `result` (the
   answer on the job), `isDefault` (the Default for AI work row).

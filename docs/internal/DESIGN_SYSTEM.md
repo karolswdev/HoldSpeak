@@ -50,6 +50,43 @@ must assert this current grammar, not an obsolete black bevel or literal RGB.
 The latest fast cycle puts aesthetic judgment on the owner's running desk;
 this direction does not claim aesthetic acceptance.
 
+## Current composition and reference (2026-10-22)
+
+The owner requires modernization across active surfaces, including the shared
+framework and documentation. The **Components** desk window is the executable
+reference (`/design/components`); it uses production components. Complete
+patterns cover forms, reading, lists, conversation and progress, with a
+separate controls catalogue. Specimen state is local and is labelled as such.
+A specimen does not prove production adoption or owner acceptance.
+
+The frame owns title, wings, feedback, window actions, focus and geometry.
+The interior owns task hierarchy, grouping, readable width and in-flow state.
+Window wings fold through the shared strip menu whenever their allocated
+head space is insufficient, including a narrow window on a wide desk. Titles
+yield first; feedback and window verbs retain their owned targets inside the
+frame. Do not hide or truncate an action to make the head fit.
+Use common surface species before adding another abstraction. One leading
+fact, a clear action, quiet metadata and meaningful groups guide composition;
+editors and readers need not imitate a queue. Use container reflow, not the
+browser viewport, for interior changes. One primary content scroller; a
+bounded editor, terminal or source preview can own a separate scroll well.
+
+Current geometry is defined by tokens: readable text has a 12px floor,
+ordinary desktop Buttons use `--size-btn` (32px), and narrow controls own
+44px targets. Fine borders, restrained radii, paper fields and soft depth
+replace the old raised/sunken paint. Legacy bevel token names remain API
+compatibility; their current values can be `none`. Do not restore historical
+material by following a phase canvas or a legacy class name.
+
+Change material meaning here, component APIs in the
+[surface contract](../../web/src/desk/surface/contract.md), and executable
+examples with their implementation. The [author map](../../web/README.md#design-author-map)
+links the implementation homes. The older phase sections below document
+provenance and stable behavioral floors; where their selectors or visual
+prescriptions conflict with this current section, the current section wins.
+The [implementation record](betterment/MODERNIZATION-IMPLEMENTATION-2026-10-22.md)
+tracks actual adoption and verification.
+
 ## The token architecture (HS-96-01)
 
 One source of truth: `web/design-tokens.json`, three layers per the
@@ -99,7 +136,7 @@ Values are token names; "—" inherits the default row.
 
 | State | Background | Text | Border | Extra |
 |---|---|---|---|---|
-| default | per variant (`--accent` / `--surface-2` / transparent / `--danger-fill`) | `--text-on-accent` or `--text` | `--border` (secondary) | min-height 44px |
+| default | per variant (`--accent` / `--surface-2` / transparent / `--danger-fill`) | `--text-on-accent` or `--text` | `--border` (secondary) | `--size-btn` desktop; 44px narrow target |
 | hover | variant hover (`--accent-hover`, `--surface-hover` wash) | — | — | |
 | focus-visible | — | — | — | global accent outline |
 | active | `--accent-press` (primary); all variants settle `translateY(1px)` | — | — | |
@@ -125,13 +162,13 @@ Values are token names; "—" inherits the default row.
 | focus-visible | global accent outline |
 | active | settle `translateY(1px)` |
 
-**Dock (`.desk-dock-main`, `.desk-dock-x`, `.desk-dock-reset`)**
+**Dock (`.desk-dock-launch`, `.desk-dock-chip`)**
 
 | State | Treatment |
 |---|---|
-| default | chip on the `--desk-glass` bar; front chip wears `--accent-tint`; parked chip dims |
-| hover | `--surface-hover`; the ✕ reveals (width transition, `--duration-short`) |
-| focus-visible | global accent outline; the ✕ also reveals on focus |
+| default | launcher/window chip on the common shelf; front chip follows the compositor; minimized chip is distinct |
+| hover | `--surface-hover`; existing window actions remain keyboard reachable |
+| focus-visible | global accent outline |
 | active | settle `translateY(1px)` |
 
 **The orb (`.desk-orb`)**
@@ -169,16 +206,15 @@ Values are token names; "—" inherits the default row.
 The legacy Switch / Tabs / StatusPill / InlineMessage dialect retired
 with HS-111-08; the gadget kit carries their duties:
 
-- CheckGadget: the ONE boolean — sunken square well `--surface-1` +
-  etch, `--accent` check; a real checkbox input; never color-only (the
+- CheckGadget: the ONE boolean — a fine outlined well with an
+  `--accent` check; a real checkbox input; never color-only (the
   row label or checkline word states the position).
 - CycleGadget: the ONE pick — a real `<select>` under the ↻ face;
-  `--border` well, mono value. Its shared Workbench popup has a square
-  beveled ground frame, paper choice rows, blue active row, current-choice
+  `--border` field and readable value. Its shared Workbench popup has a fine
+  frame, paper choice rows, blue active row, current-choice
   check and flat unavailable rows. Legacy Select uses the same popup.
-- SurfaceWings: the ONE tab strip (window head) — square `--radius-xs`
-  gadgets, mono uppercase, active = SUNKEN (`--desk-window-well` +
-  `--desk-window-etch`); ArrowLeft/Right/Home/End roving; the gear
+- SurfaceWings: the ONE tab strip (window head) — restrained-radius
+  controls with sans labels and a clear selected fill; ArrowLeft/Right/Home/End roving; the gear
   door is a pressed gadget outside the tablist.
 - LampGadget: the ONE status token — square lamp `--ok`/`--warn`/
   `--danger` (`fail`) + its mono word; never color alone.
@@ -220,12 +256,12 @@ legs (`placement`, `arrangement`, `depth`, `frame`, `switcher`,
   `--desk-snap-top` and `--desk-snap-bottom`. A persisted rect is
   clamped into the band on open (`clampIntoBand`) and otherwise
   untouched. The cascade survives only at true saturation.
-- **Remember everything.** `hs.desk.panels` persists `{rects, order,
-  max}`; windows rehydrate at their remembered plane (`presentPanel`);
-  a closed window leaves the order (`retirePanel`) so a reopen
-  presents. Minimize is session-scoped by design and never persisted.
-- **Depth is focus.** Exactly one front window (the last open,
-  non-minimized id in the order) wears `--desk-window-shadow` plus a
+- **Remember the workspace.** The versioned workspace document in
+  `store/workspaceStorage.ts` persists window lifecycle and arrangement.
+  Legacy `hs.desk.panels` is not the current authority. The live store owns
+  the current state; opening or restoring a window raises its mounted frame.
+- **Depth is focus.** Exactly one front window (the highest-ranked mounted,
+  non-minimized frame in the live compositor) wears `--desk-window-shadow` plus a
   1px `--desk-window-keyline` ring; the rest wear
   `--desk-window-shadow-rest`. The dock's front chip mirrors the rule.
 - **Motion tells the story.** Open springs in; close scales/fades out;
@@ -242,9 +278,9 @@ legs (`placement`, `arrangement`, `depth`, `frame`, `switcher`,
   cycles MRU with a transient strip naming every open window and the
   landing target.
 - **One shelf.** The dock, centered on the bottom edge, is the only
-  shelf: launcher verbs (registered through `announceLauncher`), the
-  record orb at its center, a chip per open window, the overview and
-  reset verbs. No floating pills. Window identity in the head is icon
+  shelf: launcher entries from the application manifest, the
+  record control, and a chip per open window. Overview/arrangement commands
+  use the existing desk menus. No floating pills. Window identity in the head is icon
   plus title — the eyebrow is demoted (Article VII.1).
 
 ## The surface idiom (HS-98)
@@ -317,7 +353,7 @@ foundation catches it mechanically.
    Surfaces separate by tone; borders are reserved for the window's
    own outline and hairlines within content.
 2. **The title bar is a bar** (HS-99-02): head on the head tone with
-   NO border-bottom; verb buttons are full-height `aspect-ratio: 1`,
+   a fine separating rule; verb buttons are full-height `aspect-ratio: 1`,
    flush to the window edge; hover fill is a variable the close
    button overrides to the danger ramp; `focus-visible` shares the
    hover rule; corners square off when maximized; right-click on the
@@ -361,15 +397,15 @@ animations, transitions, when operating this desk?").
 
 ### The interior type scale
 
-Window bodies are nearly monosize today (13/12/11px). Real
-applications have display numbers, primary lines, secondary metadata,
-captions. The ratified scale, five steps, all component tokens:
+The original diagnosis was nearly monosize window bodies. The current
+scale gives leading facts, primary lines, body, metadata and captions
+distinct roles. Values come from the component tokens:
 
 | Step | Token(s) | Use |
 |---|---|---|
 | display | `--desk-type-display-size/-weight/-lh` (26px/650/1.15, `--font-display`) | the ONE big fact a face leads with: the day's count, the destination's model, the spoken utterance |
 | primary | `--desk-type-primary-size/-weight/-lh` (15px/600/1.4) | what the material IS: the journal entry's text, the block's name, a destination's name |
-| body | `--desk-surface-body-size` (13px) | continuous copy and dense-row titles (HS-98, unchanged) |
+| body | `--desk-surface-body-size` (14px) | continuous copy and dense-row titles |
 | secondary | `--desk-surface-detail-size` (12px) | metadata: times, sources, counts |
 | caption | `--desk-surface-label-size` (12px) | section labels, eyebrows, keycaps |
 
@@ -412,8 +448,8 @@ states the disabled position.
 
 **4. Hit ownership at 393.** `--desk-button-hit-size` (44px) is the
 area each PLATED library Button owns at the narrow desk. A transparent
-halo carries the area, so the painted face keeps its 24/28 px height
-(`--size-btn`); `--size-touch` (40px) still serves the row glyph and
+halo carries the area; the ordinary desktop painted face is 32px
+(`--size-btn`) and narrow styles can grow the face with its owned area; `--size-touch` (40px) still serves the row glyph and
 does not change. Layout can grow. A clipped area is a defect, and two
 controls must not own the same point. `elementFromPoint` plus a real
 pointer at the center, the edges and the corners is the proof; a

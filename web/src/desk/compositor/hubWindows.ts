@@ -29,6 +29,7 @@ import { CONDUCTOR_WINDOW_ID, useConductor } from "../conductor/store";
 import { useLane } from "../lane/laneStore";
 import { PARKED_WINDOW_ID, drawerWindowId, useDrawers } from "../drawer/store";
 import { markRehydratedMinimized, useDesk, type PanelRect } from "../store";
+import { COMPACT_VIEWPORT_QUERY } from "../useCompactViewport";
 import { bootDeskWorkspace, onWorkspaceSaved, saveDeskWorkspace } from "../store/workspaceStorage";
 import { anticipate, createPresentations, type Change, type Presentations } from "./anticipate";
 import { bandFor, record, resolveRect, type Rect, type Value, type ValueRect } from "./geometry";
@@ -346,7 +347,7 @@ const defaultView = (): Rect => {
 const defaultCompact = () =>
   typeof window !== "undefined" &&
   typeof window.matchMedia === "function" &&
-  window.matchMedia("(max-width: 720px)").matches;
+  window.matchMedia(COMPACT_VIEWPORT_QUERY).matches;
 
 export interface HubWindows {
   /** Read the hub and seed this desk (hub wins; an empty hub adopts this

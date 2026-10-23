@@ -279,3 +279,46 @@
 @media (prefers-reduced-motion: reduce) {
   .kit-pill[data-live]::before { animation: none; }
 }
+
+/* Complete surface modernization: the kit is the common interior material.
+   Heads carry one fact and its quiet state; filters and figures remain
+   readable when the host becomes narrow. */
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) .kit-apphead {
+  gap: 8px 18px;
+  padding-block: 2px 4px;
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) .kit-strip {
+  min-width: 0;
+  row-gap: 6px;
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) .kit-filterbar {
+  min-height: 32px;
+  padding-block: 4px;
+  border-block: 1px solid var(--wb-rule-soft);
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) .kit-filterbar-trailing {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) .kit-figures {
+  row-gap: 6px;
+  padding-block: 2px 0;
+}
+
+@container surface (max-width: 559.9px) {
+  .desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) .kit-apphead {
+    align-items: flex-start;
+  }
+
+  .desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) .kit-filterbar {
+    align-items: flex-start;
+  }
+
+  .desk-next :where(.desk-surface-body, .surface-host-body, .desk-pullout-body, .chair-window-body) .kit-filterbar-trailing {
+    flex: 1 1 100%;
+  }
+}
