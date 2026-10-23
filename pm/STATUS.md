@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-Desktop application-model correction — DESKTOP_MODEL_PR_PENDING: the owner
+Desktop application-model correction — #1430: the owner
 clarified that near-native apps, windows and explorers are the unit of design,
 not pages in small containers. Research now defines application/window/resource
 identity, lifecycle, independent view selection/history, contextual commands,
@@ -30,8 +30,9 @@ nearly OS-native experience. Research, source audit, compatibility evidence
 and a proposed production-pattern delivery sequence are in
 `docs/internal/betterment/native-experience/README.md`.
 No UI-stack replacement, package addition or product-code change is included.
-First implementation checkpoint: a real Settings preference pattern shared
-with Components, then Ask and People. These are proposed work packages, not
+The initial packet proposed a Settings preference checkpoint; the owner's
+application-model clarification above extends it to explorer/resource behavior
+alongside preferences, then Ask and People. These are proposed work packages, not
 adoption or aesthetic acceptance. Required checks: build, 37 focused documentation checks, 110 desk sweep cases, 27 canon and 1,126 repository guards passed; nine changed Markdown files have valid local navigation; isolated Chromium/Firefox/WebKit capability probes passed.
 
 
@@ -2184,7 +2185,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
-- **DESKTOP_MODEL_PR_PENDING — desktop application/use-case audit:** app/window/resource contracts, whole-product behavioral inventory and gaps, explorer-style acceptance workload, and hardened capability verification. No product UI or dependency change.
+- **#1430 — desktop application/use-case audit:** app/window/resource contracts, whole-product behavioral inventory and gaps, explorer-style acceptance workload, and hardened capability verification. No product UI or dependency change.
 
 - **#1429 — native-experience research:** retained React stack, source audit, primary-source research, three-engine capability probe and proposed production-pattern delivery. No product UI or dependency change.
 
