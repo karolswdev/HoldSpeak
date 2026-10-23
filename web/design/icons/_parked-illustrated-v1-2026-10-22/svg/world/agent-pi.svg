@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#dce7f2"/></linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#c7b9ef"/><stop offset="1" stop-color="#9580d7"/></linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
+  </defs>
+  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 24c0-10 6-16 16-16s16 6 16 16v10H16Z" fill="url(#violet)"/>
+    <path d="M21 33h22l4 21H17Z" fill="url(#paper)"/>
+    <path class="detail" d="M27 24h.1M37 24h.1" stroke-width="4"/>
+    <path d="M27 42h10M25 49h14" fill="none"/>
+    <path class="detail" d="M32 10V8" fill="none"/>
+    <circle class="detail" cx="32" cy="10" r="2" fill="url(#teal)"/>
+    <path class="detail" d="M16 28h-5M48 28h5" fill="none"/>
+  </g>
+</svg>

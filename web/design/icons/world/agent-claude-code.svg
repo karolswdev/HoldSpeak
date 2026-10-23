@@ -1,17 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="paper" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#dce7f2"/></linearGradient>
-    <linearGradient id="warm" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#ffe1a5"/><stop offset="1" stop-color="#f2b35b"/></linearGradient>
-    <linearGradient id="blue" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
+    <linearGradient id="warm" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#ffe1a0"/><stop offset="1" stop-color="#ecaa45"/></linearGradient>
+    <linearGradient id="warmSide" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f6bf64"/><stop offset="1" stop-color="#b96f2e"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#8fa5b9"/></linearGradient>
+    <linearGradient id="collar" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#fff1ce"/><stop offset="1" stop-color="#d68739"/></linearGradient>
   </defs>
-  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M18 22c0-5 4-9 9-9h10c5 0 9 4 9 9v10H18Z" fill="url(#warm)"/>
-    <circle cx="13" cy="25" r="5" fill="url(#warm)"/>
-    <circle cx="51" cy="25" r="5" fill="url(#warm)"/>
-    <path d="M18 32h28l3 6v12c0 4-3 7-7 7H22c-4 0-7-3-7-7V38Z" fill="url(#paper)"/>
-    <path class="detail" d="M26 23h.1M38 23h.1" stroke-width="4"/>
-    <path d="M26 43h12M24 49h16" fill="none"/>
-    <path class="detail" d="M32 7v6" fill="none"/>
-    <circle class="detail" cx="32" cy="6" r="2" fill="url(#blue)"/>
+  <g stroke="#263b53" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="32" cy="56" rx="21" ry="2" fill="#263b53" opacity=".16"/>
+    <path d="M11 55v-5l10-8 11-3 12 4 9 8v4Z" fill="url(#warm)" stroke-width="1.5"/>
+    <path d="m43 43 10 8v4H43Z" fill="url(#warmSide)" stroke-width="1.2"/>
+    <path d="m26 38 6 8 8-9 4 18H21Z" fill="url(#collar)" stroke-width="1.3"/>
+    <path d="m18 23 3-10 11-5 12 5 6 11-3 12-12 8-12-5-6-8Z" fill="url(#warm)" stroke-width="1.5"/>
+    <path d="m44 13 6 11-3 12-9 7-2-28Z" fill="url(#warmSide)" stroke-width="1.1"/>
+    <path d="m21 22 15-5 10 5-2 12-10 7-11-5Z" fill="url(#metal)" stroke-width="1.3"/>
+    <path d="m24 25 10-3 8 3-1 7-8 5-9-4Z" fill="#263b53" stroke="#526c87" stroke-width="1.1"/>
+    <path d="m27 28 3-1m7-1 3 1" stroke="#f8fbff" stroke-width="1.6"/>
+    <path d="m28 34 7 1" stroke="#82e5dd" stroke-width="1.4"/>
+    <path class="detail" d="m23 16 7-4m-3 30 5 4m10-36 3 5" fill="none" stroke="#fff0ca" stroke-width="1.3"/>
   </g>
 </svg>
