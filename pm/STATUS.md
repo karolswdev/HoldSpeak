@@ -14,7 +14,7 @@ world objects, the dock/system and Settings; optical32 renders keep small
 icons legible. Existing PNG/state contracts remain; common sampling is
 smooth and desktop dock pictures32px inside the same shelf.
 Scope/canvas: `docs/internal/betterment/ILLUSTRATED-ICONS-2026-10-22.md`.
-Required quick: ICON_QUICK_PENDING. Owner visual judgment stays open.
+Required quick: build, 4128 related web cases, 54 affected browser cases including strict feedback PNG capture and Chromium/Firefox pressed-hover-focus checks, 110 desk sweep cases, 27 canon and 1126 repository guards passed; 15 focused source/asset/container checks, typecheck, 18 focused prior-tape regressions and two deterministic export/check cycles also passed. Owner visual judgment stays open.
 
 The completed main937d7ea5c tape is red: 12 Python, 25 browser and one
 web failure (5,419 web passes). All 12 Python and eight browser failures
