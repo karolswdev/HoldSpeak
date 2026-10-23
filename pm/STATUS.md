@@ -8,6 +8,22 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Desktop application-model correction — DESKTOP_MODEL_PR_PENDING: the owner
+clarified that near-native apps, windows and explorers are the unit of design,
+not pages in small containers. Research now defines application/window/resource
+identity, lifecycle, independent view selection/history, contextual commands,
+editing, view modes and supported cross-window transfer. The explorer-style
+resource workflow is a first acceptance workload alongside Settings; no new
+file-manager product or unsupported filesystem operation is claimed shipped.
+Scope: `docs/internal/betterment/native-experience/APPLICATION-MODEL.md`.
+The owner also requires a whole-product use-case audit; existing job,
+capability, recipe and surface inventories are reconciled with application
+behavior/evidence in `native-experience/USE-CASE-AUDIT.md` and its JSON
+snapshot. Source coverage is distinct from live task verification.
+The capability probe is hardened for missing optional APIs and its reproduction
+command now actually isolates HOME. Required check: build, 40 documentation/harness checks, 110 desk sweep cases, 27 canon and 1,126 repository guards passed; final added audit records pass 40 focused checks and seven Markdown navigation checks; all source-set crosswalks, 145 reference paths and real three-engine probes verified.
+
+
 Native-experience research within React — #1429: the
 owner chose the current stack and asked for substantial research toward a
 nearly OS-native experience. Research, source audit, compatibility evidence
@@ -2167,6 +2183,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **DESKTOP_MODEL_PR_PENDING — desktop application/use-case audit:** app/window/resource contracts, whole-product behavioral inventory and gaps, explorer-style acceptance workload, and hardened capability verification. No product UI or dependency change.
 
 - **#1429 — native-experience research:** retained React stack, source audit, primary-source research, three-engine capability probe and proposed production-pattern delivery. No product UI or dependency change.
 

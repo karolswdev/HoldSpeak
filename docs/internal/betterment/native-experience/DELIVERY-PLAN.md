@@ -5,11 +5,22 @@ settled the stack. These work packages are not implemented by publishing this
 plan. They preserve the current fast cycle, public control API, runtime
 protocols and Workbench meets Pop!_OS direction.
 
+## Application-model correction
+
+The owner's clarification makes desktop applications the architecture unit.
+The [application model](APPLICATION-MODEL.md) is now part of this sequence:
+per-window navigation/history/selection, contextual commands, resource identity,
+view modes, editing and cross-window transfer. An explorer-style workflow is
+an acceptance workload alongside Settings; preferences alone do not prove a
+desktop framework. This changes the first checkpoint below without authorizing
+a new filesystem product or unsupported operations.
+
 ## Investment priority
 
-Prioritize complete, polished production patterns and the interaction
-foundation they need. The first wave concentrates on three daily jobs:
-change a preference, ask with sources, and prepare for a person. Work on the
+Prioritize coherent desktop application behavior and complete, polished views.
+The first wave includes an explorer-style resource workflow alongside daily
+preference, sourced-Ask and person-preparation work. The resource workflow
+proves application contracts that a form alone cannot. Work on the
 framework and a real consumer together. The Components reference renders
 that same pattern using fixture-backed services; it does not copy the face.
 
@@ -18,6 +29,15 @@ WorkbenchSelect, ComposerWell, ReadingDocument, SurfaceSplit, reading-end
 anchoring, durable drafts, the command registry, live compositor and the
 microphone/audio-floor machinery. A new package is justified by an observed
 missing capability, not by a claim that the old stack cannot look good.
+
+## Audit-driven scope
+
+The [use-case audit](USE-CASE-AUDIT.md) and [inventory snapshot](USE-CASE-INVENTORY.json)
+reconcile the declared product corpus. Use their behavior gaps and affected
+families to order implementation. A merged recipe is not evidence of native
+interaction quality. Each delivery brief selects a real job, its relevant
+shared behavior contracts, interruption/recovery cases and existing evidence;
+it does not create a speculative requirement for every button combination.
 
 ## Work packages and proof
 
@@ -28,6 +48,7 @@ anchors belong to [the baseline audit](CURRENT-STATE.md) and may drift.
 
 | Order | Concrete change | Existing homes | Completion evidence |
 | --- | --- | --- | --- |
+| 0 | Define and prove the application/view contract in an existing registered repository or resource browser, with a second window instance. | Existing application manifest, object-window host, `RepoWindow.tsx`, `repository.ts`, ObjectList, command context and Hand | Independent location/history/selection per window; actual file open/read through existing APIs; consistent keyboard/context-menu targets; supported in-place edit and cross-window handoff; stale/read-only/refused outcomes. Use actual provider capabilities, not fake file operations. |
 | 1a | Establish a reproducible local interaction baseline and close the folded-Room test gap. Keep inline tabs and folded menus equally reachable in the helper. | `tests/e2e/test_room_glass.py`, `glass_infra.py`, existing frame/reference browser cases; local profiling recipe | A 393px Room actually opens History through the menu, while desktop tab behavior remains; no assertion removal. Record production-build input/drag traces for the named scenes. Attribute unrelated tape reds separately. |
 | 1b | Define head allocation and focus as one frame contract. Preserve fixed right controls, yielding title, wings, task verbs and a deliberate drag region. | `DeskWindow.tsx`, `window-chrome.css`, `surface/wings.tsx`, `stripMenu.tsx`, existing keymap/compositor | Pointer and keyboard operations, fold/unfold in both directions, focus return, long titles, canceled gestures and multiwindow activation. Retain the existing mounted-front authority and 1440/393/280 head checks. |
 | 2 | Build the first complete production preference pattern with typed edit-state ownership and a fixture adapter. Start with the You category; keep the current field semantics, revisions and save policy. | `SettingsCore.tsx` merge/install/project-pending helpers, `settingsPrefs.tsx`, public surface species, `design-reference` | Same pattern runs in Settings and Components. Dirty/invalid/pending/rejected/retried/saved, external-revision conflict and newer edits during save all preserve work. The real window and reference receive paired visual, keyboard and spoken-input proof. |
@@ -138,6 +159,9 @@ run `tests/e2e/test_metal.py`. Preserve the explicit off state of native
 Presence. On a real desk regression, follow the existing last-working-head
 recovery rule; do not add another delivery framework.
 
-First checkpoint: one production preference job and its shared reference,
-with preserved edits, coherent layout, keyboard/voice behavior, a local timing
-baseline and the owner's live visual feedback. Then proceed to Ask and People.
+First checkpoint: application/view behavior in an explorer-style resource
+workflow, plus the production preference consumer and their shared reference
+models. Prove independent window state, command targets and supported transfer
+as well as preserved edits, coherent layout and keyboard/voice behavior. Add
+a local timing baseline and the owner's live visual feedback, then proceed to
+Ask, People and other application families.

@@ -13,18 +13,23 @@ import json
 import platform
 
 
-FEATURES = """() => ({
-  popover: 'popover' in HTMLElement.prototype,
-  anchorName: CSS.supports('anchor-name: --desk-anchor'),
-  positionAnchor: CSS.supports('position-anchor: --desk-anchor'),
-  viewTransitions: 'startViewTransition' in document,
-  contentVisibility: CSS.supports('content-visibility: auto'),
-  subgrid: CSS.supports('grid-template-columns: subgrid'),
-  containers: CSS.supports('container-type: inline-size'),
-  pointerCapture: 'setPointerCapture' in Element.prototype,
-  eventTiming: PerformanceObserver.supportedEntryTypes.includes('event'),
-  longAnimationFrames: PerformanceObserver.supportedEntryTypes.includes('long-animation-frame')
-})"""
+FEATURES = """() => {
+  const supports = value => typeof globalThis.CSS?.supports === 'function'
+    && globalThis.CSS.supports(value);
+  const entries = globalThis.PerformanceObserver?.supportedEntryTypes ?? [];
+  return {
+    popover: 'popover' in (globalThis.HTMLElement?.prototype ?? {}),
+    anchorName: supports('anchor-name: --desk-anchor'),
+    positionAnchor: supports('position-anchor: --desk-anchor'),
+    viewTransitions: 'startViewTransition' in (globalThis.document ?? {}),
+    contentVisibility: supports('content-visibility: auto'),
+    subgrid: supports('grid-template-columns: subgrid'),
+    containers: supports('container-type: inline-size'),
+    pointerCapture: 'setPointerCapture' in (globalThis.Element?.prototype ?? {}),
+    eventTiming: entries.includes('event'),
+    longAnimationFrames: entries.includes('long-animation-frame')
+  };
+}"""
 
 
 def main() -> int:

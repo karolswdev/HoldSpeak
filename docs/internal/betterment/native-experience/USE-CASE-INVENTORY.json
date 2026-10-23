@@ -1,0 +1,3826 @@
+{
+  "schema_version": "1.0",
+  "snapshot": {
+    "kind": "reconciliation",
+    "captured_at": "2026-10-23",
+    "baseline": {
+      "audit_head": "8a41884a4605f689669797264e2e910956d0c90c",
+      "product_head": "787c55c8096f746b06a4c8d5d42ae48ef5c1fe20",
+      "product_scope": "source inventory only; no product code change"
+    },
+    "authority": "Existing registries, generated capability metadata, USE_CASES.md, CAPABILITIES.md, and TRACKER.md retain authority. This file reconciles them for the near-native application model; it is not a replacement registry.",
+    "acceptance_note": "A tracker Done state means merged implementation, not native-quality acceptance. A declared surface, source path, test path, or prior root run does not prove that the owner completed the job."
+  },
+  "scope": {
+    "question": "What jobs and surfaces are currently declared when HoldSpeak is viewed as a near-native desktop application with windows and resource applications?",
+    "included": [
+      "The current Desk application manifest, including active and parked rows.",
+      "Registered object pullout kinds, with specialized/redirect/fallback distinctions, and specialized window hosts.",
+      "Actual jobs represented by current use-case, capability, inventory, and betterment records.",
+      "The 117 tracker recipe slices, using cluster-qualified references where bare IDs collide.",
+      "Shared application behavior needed by the application model and explicit baseline gaps."
+    ],
+    "excluded": [
+      "A claim that every runtime path was exercised.",
+      "A new explorer, OS file manager, native replacement toolkit, or application process model.",
+      "A claim that repository APIs provide general OS filesystem access.",
+      "Owner-state walks, network calls, fresh browser runs, performance benchmarks, or test execution in this audit.",
+      "Parked code and parked tests as proof of active behavior."
+    ],
+    "limits": [
+      "Source anchors are baseline-specific and may drift after merges.",
+      "The filesystem explorer workload is proposed acceptance work; current RepoWindow behavior is partial.",
+      "Evidence labels separate inspected source, a test file existing, a root-executed bounded check recorded elsewhere, and unknown behavior.",
+      "Native presence is kept disabled after the documented broken-renderer incident; no repair is inferred.",
+      "The 47 families and 34 domain labels are audit groupings, not upstream catalogue counts; source coverage does not establish executed behavioral coverage."
+    ]
+  },
+  "evidence_legend": {
+    "source_inspected": "The named source or record was read during this audit; it proves a declaration or implementation seam only.",
+    "tests_exist": "A concrete test file exists in the source inventory; this audit does not claim it executed or proves the full job.",
+    "root_executed": "A bounded execution explicitly recorded by the repository authority; it is not an owner observation and is not inferred from a filename.",
+    "owner_observed": "An owner desk walk or owner acceptance record. None is asserted by this snapshot unless named.",
+    "unknown": "The record does not establish the behavior, or the audit did not run it. Unknown is not failure and not acceptance."
+  },
+  "source_authorities": [
+    {
+      "id": "application_model",
+      "path": "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:1-176",
+      "role": "proposed desktop application contracts, verified gaps, explorer workload"
+    },
+    {
+      "id": "native_readme",
+      "path": "docs/internal/betterment/native-experience/README.md:1-170",
+      "role": "research scope, baseline and evidence limits"
+    },
+    {
+      "id": "current_state",
+      "path": "docs/internal/betterment/native-experience/CURRENT-STATE.md:1-172",
+      "role": "existing seams, native boundary and current gaps"
+    },
+    {
+      "id": "use_cases",
+      "path": "docs/USE_CASES.md:1-58",
+      "role": "canonical small user-job catalogue"
+    },
+    {
+      "id": "capabilities",
+      "path": "docs/CAPABILITIES.md:1-96",
+      "role": "canonical capability names, status and evidence levels"
+    },
+    {
+      "id": "capabilities_generated",
+      "path": "docs/generated/capabilities.yaml:1-87 records",
+      "role": "generated capability source metadata and evidence levels"
+    },
+    {
+      "id": "manifest",
+      "path": "web/src/desk/applications.ts:58-547",
+      "role": "canonical Desk application/window manifest"
+    },
+    {
+      "id": "pullout_registry",
+      "path": "web/src/desk/pullouts/registry.ts:1-47",
+      "role": "exhaustive object-kind to pullout host registry"
+    },
+    {
+      "id": "verb_registry",
+      "path": "web/src/desk/verbRegistry.ts:1-120",
+      "role": "shared command and context registry"
+    },
+    {
+      "id": "window_framework",
+      "path": "web/src/desk/components/DeskWindow.tsx:1-1121; web/src/desk/components/SurfaceWindows.tsx:1-285; web/src/desk/compositor/useCompositor.ts:1-222",
+      "role": "window lifecycle, compositor and surface host seams"
+    },
+    {
+      "id": "chair_windows",
+      "path": "web/src/desk/chair/chairWindows.ts:1-180",
+      "role": "specialized Chair window family and retired windows"
+    },
+    {
+      "id": "betterment_inventory",
+      "path": "docs/internal/betterment/INVENTORY.md:1-400",
+      "role": "feature/job inventory and known problem map"
+    },
+    {
+      "id": "betterment_tracker",
+      "path": "docs/internal/betterment/TRACKER.md:1-246",
+      "role": "all 117 recipe slices and tracker state"
+    }
+  ],
+  "coverage_summary": {
+    "manifest_rows": {
+      "declared": 25,
+      "represented": 25,
+      "coverage_percent": 100
+    },
+    "manifest_active_rows": {
+      "declared": 21,
+      "represented": 21,
+      "coverage_percent": 100
+    },
+    "manifest_parked_rows": {
+      "declared": 4,
+      "represented": 4,
+      "coverage_percent": 100
+    },
+    "pullout_registry_kinds": {
+      "declared": 20,
+      "represented": 20,
+      "coverage_percent": 100
+    },
+    "capability_records": {
+      "declared": 87,
+      "represented": 87,
+      "coverage_percent": 100
+    },
+    "recipe_slices": {
+      "declared": 117,
+      "represented": 117,
+      "coverage_percent": 100,
+      "reference_key": "cluster:slice_id"
+    },
+    "use_case_families": {
+      "declared": 47,
+      "represented": 47,
+      "coverage_percent": 100,
+      "basis": "Audit groupings, not an upstream declared-family count."
+    },
+    "requested_domains": {
+      "declared": 34,
+      "represented": 34,
+      "coverage_percent": 100
+    }
+  },
+  "requested_domains": [
+    "Capture",
+    "speech",
+    "Meetings",
+    "live",
+    "import",
+    "aftercare",
+    "Ask",
+    "thread",
+    "source",
+    "editor",
+    "People",
+    "Projects",
+    "Decisions",
+    "Agents",
+    "Automation",
+    "Send",
+    "Engines",
+    "Settings",
+    "accounts",
+    "nativepresence",
+    "desktop",
+    "windows",
+    "navigation",
+    "explorerrepo",
+    "objects",
+    "drawers",
+    "terminals",
+    "process",
+    "activity",
+    "memory",
+    "context",
+    "setup",
+    "nativeinput",
+    "feedback"
+  ],
+  "shared_behavior_codes": {
+    "APP_ID": "Stable logical application, window instance and resource identity.",
+    "WIN_LIFE": "Open, restore, raise, minimize, close and reopen without stealing focus.",
+    "FOCUS": "Separate front-window authority, focused control and selected object/resource.",
+    "NAV_HISTORY": "Per-window location, breadcrumb, Back/Forward history and restoration.",
+    "SELECTION": "Per-view focused item, selected set, anchor, range and modifier semantics.",
+    "COMMANDS": "One target-aware command/verb context for menus, keys, context actions and voice.",
+    "VIEW_MODES": "One collection model across list, icon, tree or treegrid views.",
+    "RESOURCE_ADAPTER": "Typed children, metadata, content and supported operations with domain identity.",
+    "PERSISTENCE": "Workspace/view restoration with identity and stale-location validation.",
+    "EDIT_IME": "Native editing, caret/selection, composition, voice insertion, undo and recovery.",
+    "TRANSFER": "Explicit internal reference, browser file drop and OS transfer semantics.",
+    "OP_OUTCOME": "Visible pending, success, refusal, partial, conflict, interruption and indeterminate outcomes.",
+    "ASYNC_STALE": "Loading versus empty, stale response rejection and retained drafts/work.",
+    "SOURCE": "Source identity, citation/context selection and provenance retention.",
+    "EGRESS": "Named destination/host and clear boundary when information leaves the desk.",
+    "FEEDBACK": "An immediate, truthful receipt or error at the operation location.",
+    "SURFACE": "Shared component/surface species and explicit ownership of layout/material.",
+    "NATIVE_BOUNDARY": "Browser/native adapter boundary for host, OS and device capabilities.",
+    "SCROLL": "Bounded scroll ownership, follow/pause and preserved position.",
+    "COVERAGE": "Evidence status is explicit; implementation state is not acceptance."
+  },
+  "manifest_rows": [
+    {
+      "action": "change-places",
+      "windowId": "surface-places",
+      "label": "Change places",
+      "parked": "settings:wallpaper",
+      "active": false
+    },
+    {
+      "action": "open-intelligence",
+      "windowId": "intelligence:desk",
+      "label": "Today",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "chair-capture",
+      "windowId": "chair:capture",
+      "label": "Capture",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "dictate",
+      "windowId": "surface-dictation",
+      "label": "Speak",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "ask",
+      "windowId": "ask:desk",
+      "label": "Ask AI",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "review-meetings",
+      "windowId": "surface-meetings",
+      "label": "Meetings",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "open-conductor",
+      "windowId": "conductor",
+      "label": "Agents",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "configure-settings",
+      "windowId": "surface-settings",
+      "label": "Settings",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "record-live",
+      "windowId": "surface-live",
+      "label": "Live meeting",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "configure-cadence",
+      "windowId": "surface-cadence",
+      "label": "Rhythm",
+      "parked": "settings:rhythm",
+      "active": false
+    },
+    {
+      "action": "configure-setup",
+      "windowId": "surface-setup",
+      "label": "Setup",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "open-constitutional-context",
+      "windowId": "surface-constitutional-context",
+      "label": "Context",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "open-workbenches",
+      "windowId": "surface-workbenches",
+      "label": "Automations",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "design-components",
+      "windowId": "surface-components",
+      "label": "Components",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "inspect-activity",
+      "windowId": "surface-activity",
+      "label": "Activity",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "open-project-memory",
+      "windowId": "surface-project-memory",
+      "label": "Memory",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "project-setup",
+      "windowId": "surface-project-setup",
+      "label": "New Project",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "inspect-processes",
+      "windowId": "surface-processes",
+      "label": "Processes",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "configure-commands",
+      "windowId": "surface-commands",
+      "label": "Commands",
+      "parked": "speak:commands",
+      "active": false
+    },
+    {
+      "action": "open-people",
+      "windowId": "surface-people",
+      "label": "People",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "open-projects",
+      "windowId": "surface-projects",
+      "label": "Projects",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "open-decisions",
+      "windowId": "surface-decisions",
+      "label": "Decisions",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "review-calendar-snapshot",
+      "windowId": "surface-calendar-snapshot",
+      "label": "Calendar snapshot",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "configure-runs-on",
+      "windowId": "surface-engines",
+      "label": "Engines",
+      "parked": null,
+      "active": true
+    },
+    {
+      "action": "configure-integrations",
+      "windowId": "surface-settings",
+      "label": "Accounts",
+      "parked": "settings:integrations",
+      "active": false
+    }
+  ],
+  "object_window_families": [
+    {
+      "kind": "meeting",
+      "host": "MeetingWindow",
+      "mode": "specialized",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:27"
+    },
+    {
+      "kind": "artifact",
+      "host": "ArtifactPullout",
+      "mode": "specialized",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:28"
+    },
+    {
+      "kind": "note",
+      "host": "NotePullout + NoteEditor",
+      "mode": "specialized_editor",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:29; web/src/desk/pullouts/editors/registry.ts:1-40"
+    },
+    {
+      "kind": "kb",
+      "host": "KbPullout + KbEditor",
+      "mode": "specialized_editor",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:30; web/src/desk/pullouts/editors/registry.ts:1-40"
+    },
+    {
+      "kind": "decision",
+      "host": "DecisionPullout",
+      "mode": "specialized",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:31"
+    },
+    {
+      "kind": "recipe",
+      "host": "RecipePullout + RecipeEditor",
+      "mode": "specialized_editor",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:32; web/src/desk/pullouts/editors/registry.ts:1-40"
+    },
+    {
+      "kind": "chain",
+      "host": "ChainPullout",
+      "mode": "specialized",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:33"
+    },
+    {
+      "kind": "workflow",
+      "host": "WorkflowPullout + WorkflowEditor",
+      "mode": "specialized_editor",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:34; web/src/desk/pullouts/editors/registry.ts:1-40"
+    },
+    {
+      "kind": "coder",
+      "host": "CoderPullout",
+      "mode": "specialized",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:35"
+    },
+    {
+      "kind": "directory",
+      "host": "DirectoryPullout",
+      "mode": "specialized",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:36"
+    },
+    {
+      "kind": "thread",
+      "host": "ThreadToAsk",
+      "mode": "specialized_conversation",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:37; web/src/desk/pullouts/ThreadToAsk.tsx:1-20"
+    },
+    {
+      "kind": "intelligence",
+      "host": "IntelligencePullout",
+      "mode": "specialized_collection",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:43"
+    },
+    {
+      "kind": "people",
+      "host": "PeoplePullout",
+      "mode": "specialized_collection",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:44"
+    },
+    {
+      "kind": "project",
+      "host": "FallbackPullout / Project app redirect",
+      "mode": "fallback_or_redirect",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:38; web/src/desk/store/compositorSlice.ts:265-292"
+    },
+    {
+      "kind": "repository",
+      "host": "FallbackPullout / RepoWindow entry",
+      "mode": "fallback_or_redirect",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:39; web/src/desk/components/RepoWindow.tsx:69-236"
+    },
+    {
+      "kind": "roadmap",
+      "host": "FallbackPullout",
+      "mode": "fallback",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:40"
+    },
+    {
+      "kind": "story",
+      "host": "FallbackPullout",
+      "mode": "fallback",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:41"
+    },
+    {
+      "kind": "workbench",
+      "host": "FallbackPullout / Workbench window entry",
+      "mode": "fallback_or_redirect",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:42; web/src/desk/components/WorkbenchWindow.tsx:1-40"
+    },
+    {
+      "kind": "game",
+      "host": "FallbackPullout",
+      "mode": "fallback",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:45"
+    },
+    {
+      "kind": "layout",
+      "host": "FallbackPullout",
+      "mode": "fallback",
+      "registered": true,
+      "source": "web/src/desk/pullouts/registry.ts:46"
+    }
+  ],
+  "specialized_window_families": [
+    {
+      "id": "surface_application_windows",
+      "hosts": [
+        "SurfaceWindows",
+        "DeskWindowFrame"
+      ],
+      "source_paths": [
+        "web/src/desk/components/SurfaceWindows.tsx:92-285",
+        "web/src/desk/components/DeskWindow.tsx:742-1121"
+      ],
+      "status": "active_shared_host",
+      "gap": "Application identity, navigation, selection and operation outcomes are not one complete explorer contract."
+    },
+    {
+      "id": "chair_windows",
+      "hosts": [
+        "chair:needs",
+        "chair:capture"
+      ],
+      "source_paths": [
+        "web/src/desk/chair/chairWindows.ts:1-180"
+      ],
+      "status": "active_specialized_host",
+      "gap": "Retired Brief and week ids are migration history; Chair is not the whole application framework."
+    },
+    {
+      "id": "ask_window",
+      "hosts": [
+        "AskPanel",
+        "ask:desk"
+      ],
+      "source_paths": [
+        "web/src/desk/components/AskPanel.tsx:54-1021",
+        "web/src/desk/applications.ts:134-142"
+      ],
+      "status": "active_specialized_host",
+      "gap": "Conversation state and request recovery need shared application/view ownership."
+    },
+    {
+      "id": "conductor_and_terminal",
+      "hosts": [
+        "ConductorWindow",
+        "LaneWindow",
+        "SessionPullout",
+        "CoderPullout"
+      ],
+      "source_paths": [
+        "web/src/desk/conductor/ConductorWindow.tsx:1-885",
+        "web/src/desk/lane/LaneWindow.tsx:1-700",
+        "web/src/desk/pullouts/CoderPullout.tsx:1-200"
+      ],
+      "status": "active_specialized_host",
+      "gap": "Terminal input, bounded scrollback, stop and recovery need one run-monitor contract."
+    },
+    {
+      "id": "repository_window",
+      "hosts": [
+        "RepoWindow"
+      ],
+      "source_paths": [
+        "web/src/desk/components/RepoWindow.tsx:69-271",
+        "web/src/desk/repository.ts:49-60",
+        "holdspeak/services/project_repository.py:51-68"
+      ],
+      "status": "active_partial",
+      "gap": "Current tree/status/path navigation has no Back/Forward stack or document-opening view."
+    },
+    {
+      "id": "automation_window",
+      "hosts": [
+        "WorkbenchWindow",
+        "AutomationWindow"
+      ],
+      "source_paths": [
+        "web/src/desk/components/WorkbenchWindow.tsx:1-40",
+        "web/src/desk/components/automation/AutomationWindow.tsx:1-60"
+      ],
+      "status": "active_specialized_host",
+      "gap": "A workbench job/run outcome must remain visible and truthful across delayed and failed work."
+    },
+    {
+      "id": "settings_setup_windows",
+      "hosts": [
+        "SettingsCore",
+        "SetupCore",
+        "RunsOnCore"
+      ],
+      "source_paths": [
+        "web/src/pages/cores/SettingsCore.tsx:1-80",
+        "web/src/pages/cores/SetupCore.tsx:1-80",
+        "web/src/features/runson/RunsOnCore.tsx:1-80"
+      ],
+      "status": "active_specialized_host",
+      "gap": "Forms are useful consumers but do not by themselves prove application-model behavior."
+    },
+    {
+      "id": "drawer_and_info_windows",
+      "hosts": [
+        "DrawerWindow",
+        "InfoWindow",
+        "ParkedDrawer"
+      ],
+      "source_paths": [
+        "web/src/desk/drawer/DrawerWindow.tsx:1-375",
+        "web/src/desk/drawer/InfoWindow.tsx:1-176",
+        "web/src/desk/drawer/ParkedDrawer.tsx:1-240"
+      ],
+      "status": "active_specialized_host",
+      "gap": "Collection selection and cross-window identity are still not shared with Explorer semantics."
+    },
+    {
+      "id": "native_presence",
+      "hosts": [
+        "PresencePage",
+        "optional NSPanel/WKWebView"
+      ],
+      "source_paths": [
+        "web/src/pages/PresencePage.tsx:14-35",
+        "holdspeak/desktop_presence_cocoa.py:426-485",
+        "docs/internal/betterment/native-experience/CURRENT-STATE.md:104-118"
+      ],
+      "status": "disabled_broken_renderer",
+      "gap": "Renderer root cause and owner-quality close/focus proof are unknown; do not re-enable from this inventory."
+    }
+  ],
+  "public_use_case_reconciliation": [
+    {
+      "source_row": "Dictate a coding request",
+      "source": "docs/USE_CASES.md:7",
+      "family": "speech_dictation"
+    },
+    {
+      "source_row": "Correct and replay a phrase",
+      "source": "docs/USE_CASES.md:8",
+      "family": "speech_learning"
+    },
+    {
+      "source_row": "Import an existing discussion",
+      "source": "docs/USE_CASES.md:9",
+      "family": "meeting_import"
+    },
+    {
+      "source_row": "Review an architecture meeting",
+      "source": "docs/USE_CASES.md:10",
+      "family": "meeting_intelligence"
+    },
+    {
+      "source_row": "Follow up a commitment",
+      "source": "docs/USE_CASES.md:11",
+      "family": "meeting_aftercare"
+    },
+    {
+      "source_row": "Ask about project work",
+      "source": "docs/USE_CASES.md:12",
+      "family": "ask_whole_desk"
+    },
+    {
+      "source_row": "Keep a useful answer",
+      "source": "docs/USE_CASES.md:13",
+      "family": "keep_answer"
+    },
+    {
+      "source_row": "Continue a specialist conversation",
+      "source": "docs/USE_CASES.md:14",
+      "family": "threads"
+    },
+    {
+      "source_row": "Reply to a coding agent",
+      "source": "docs/USE_CASES.md:15",
+      "family": "agent_result"
+    },
+    {
+      "source_row": "Review a held tool request",
+      "source": "docs/USE_CASES.md:16",
+      "family": "mcp_tools"
+    },
+    {
+      "source_row": "Run a model on another machine",
+      "source": "docs/USE_CASES.md:17",
+      "family": "engines_assignment"
+    },
+    {
+      "source_row": "Use a portable client",
+      "source": "docs/USE_CASES.md:18",
+      "family": "native_presence"
+    },
+    {
+      "source_row": "Repair a broken installation",
+      "source": "docs/USE_CASES.md:19",
+      "family": "setup"
+    }
+  ],
+  "recipe_coverage": [
+    {
+      "cluster": "workbench",
+      "source": "docs/internal/betterment/workbench/RECIPE.md",
+      "slices": [
+        {
+          "ref": "workbench:A0",
+          "assignment": "backend_only",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "workbench:A1",
+          "assignment": "automation_build",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "workbench:A2",
+          "assignment": "automation_build",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "workbench:A3",
+          "assignment": "automation_build",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "workbench:A4",
+          "assignment": "automation_build",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "workbench:A5",
+          "assignment": "source_context",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "workbench:A6",
+          "assignment": "automation_build",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "workbench:A7",
+          "assignment": "automation_build",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "workbench:A8",
+          "assignment": "parked",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "workbench:A9",
+          "assignment": "automation_schedule",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "workbench:A10",
+          "assignment": "agent_hand",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        }
+      ]
+    },
+    {
+      "cluster": "engines",
+      "source": "docs/internal/betterment/engines/RECIPE.md",
+      "slices": [
+        {
+          "ref": "engines:E0",
+          "assignment": "engines_assignment",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "engines:E1",
+          "assignment": "backend_only",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "engines:E2",
+          "assignment": "engines_assignment",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "engines:E3",
+          "assignment": "engines_assignment",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "engines:E4",
+          "assignment": "engines_assignment",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "engines:E5",
+          "assignment": "engines_assignment",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "engines:E6",
+          "assignment": "engines_assignment",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "engines:E7",
+          "assignment": "engines_assignment",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        }
+      ]
+    },
+    {
+      "cluster": "mcp",
+      "source": "docs/internal/betterment/mcp/RECIPE.md",
+      "slices": [
+        {
+          "ref": "mcp:M0",
+          "assignment": "historical",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "mcp:M1",
+          "assignment": "mcp_tools",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "mcp:M2",
+          "assignment": "mcp_tools",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "mcp:M3",
+          "assignment": "automation_schedule",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "mcp:M4",
+          "assignment": "engines_assignment",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "mcp:M5",
+          "assignment": "mcp_tools",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "mcp:M6",
+          "assignment": "mcp_tools",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        }
+      ]
+    },
+    {
+      "cluster": "asking",
+      "source": "docs/internal/betterment/asking/RECIPE.md",
+      "slices": [
+        {
+          "ref": "asking:Q0",
+          "assignment": "threads",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q1",
+          "assignment": "ask_whole_desk",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q2",
+          "assignment": "ask_whole_desk",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q3",
+          "assignment": "memory",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q4",
+          "assignment": "ask_whole_desk",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q5",
+          "assignment": "source_context",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q6",
+          "assignment": "source_context",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q7",
+          "assignment": "ask_whole_desk",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q8",
+          "assignment": "notes_editor",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q9",
+          "assignment": "capture_thought",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q10",
+          "assignment": "knowledge_drawers",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q11",
+          "assignment": "memory",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "asking:Q12",
+          "assignment": "memory",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        }
+      ]
+    },
+    {
+      "cluster": "projects",
+      "source": "docs/internal/betterment/projects/RECIPE.md",
+      "slices": [
+        {
+          "ref": "projects:P0",
+          "assignment": "project_update",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "projects:P1",
+          "assignment": "project_update",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "projects:P2",
+          "assignment": "project_update",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "projects:P3",
+          "assignment": "projects_room",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "projects:P4",
+          "assignment": "projects_room",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "projects:P5",
+          "assignment": "new_project",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "projects:P6",
+          "assignment": "send_prepare",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "projects:P7",
+          "assignment": "automation_schedule",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "projects:P8",
+          "assignment": "agent_hand",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "projects:P9",
+          "assignment": "decisions",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "projects:P10",
+          "assignment": "automation_schedule",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        }
+      ]
+    },
+    {
+      "cluster": "agents",
+      "source": "docs/internal/betterment/agents/RECIPE.md",
+      "slices": [
+        {
+          "ref": "agents:AG0",
+          "assignment": "agents_conductor",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG1",
+          "assignment": "parked",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG2",
+          "assignment": "agent_hand",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG3",
+          "assignment": "agent_result",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG4",
+          "assignment": "agent_hand",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG5",
+          "assignment": "agents_conductor",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG6",
+          "assignment": "agents_conductor",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG7",
+          "assignment": "agents_conductor",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG8",
+          "assignment": "agents_conductor",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG9",
+          "assignment": "agents_conductor",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG10",
+          "assignment": "agent_result",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG11",
+          "assignment": "mcp_tools",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG12",
+          "assignment": "agent_result",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG13",
+          "assignment": "historical",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG14",
+          "assignment": "automation_schedule",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "agents:AG15",
+          "assignment": "agents_conductor",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        }
+      ]
+    },
+    {
+      "cluster": "daily",
+      "source": "docs/internal/betterment/daily/RECIPE.md",
+      "slices": [
+        {
+          "ref": "daily:D0",
+          "assignment": "backend_only",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "daily:D1",
+          "assignment": "today_followthrough",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "daily:D2",
+          "assignment": "today_followthrough",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "daily:D3",
+          "assignment": "meeting_aftercare",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "daily:D4",
+          "assignment": "desktop_workspace",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "daily:D5",
+          "assignment": "parked",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "daily:D6",
+          "assignment": "people_prep",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "daily:D7",
+          "assignment": "people_prep",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "daily:D8",
+          "assignment": "feedback",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "daily:D9",
+          "assignment": "today_followthrough",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "daily:D10",
+          "assignment": "mcp_tools",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        }
+      ]
+    },
+    {
+      "cluster": "setup",
+      "source": "docs/internal/betterment/setup/RECIPE.md",
+      "slices": [
+        {
+          "ref": "setup:ST0",
+          "assignment": "backend_only",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "setup:ST1",
+          "assignment": "settings",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "setup:ST2",
+          "assignment": "accounts",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "setup:ST3",
+          "assignment": "setup",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "setup:ST4",
+          "assignment": "engines_assignment",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "setup:ST5",
+          "assignment": "people_prep",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "setup:ST6",
+          "assignment": "agents_conductor",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "setup:ST7",
+          "assignment": "settings",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "setup:ST8",
+          "assignment": "accounts",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "setup:ST9",
+          "assignment": "setup",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        }
+      ]
+    },
+    {
+      "cluster": "shell",
+      "source": "docs/internal/betterment/shell/RECIPE.md",
+      "slices": [
+        {
+          "ref": "shell:S0",
+          "assignment": "navigation_commands",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "shell:S1",
+          "assignment": "navigation_commands",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "shell:S2",
+          "assignment": "navigation_commands",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "shell:S3",
+          "assignment": "desktop_workspace",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "shell:S4",
+          "assignment": "objects_pullouts",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "shell:S5",
+          "assignment": "navigation_commands",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "shell:S6",
+          "assignment": "settings",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "shell:S7",
+          "assignment": "windows",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "shell:S8",
+          "assignment": "windows",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "shell:S9",
+          "assignment": "desktop_workspace",
+          "tracker_state": "part",
+          "native_acceptance": "not_claimed"
+        }
+      ]
+    },
+    {
+      "cluster": "send",
+      "source": "docs/internal/betterment/send/RECIPE.md",
+      "slices": [
+        {
+          "ref": "send:S1",
+          "assignment": "send_prepare",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "send:S2",
+          "assignment": "send_commit",
+          "tracker_state": "open",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "send:S3",
+          "assignment": "send_prepare",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "send:S4",
+          "assignment": "send_prepare",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "send:S5",
+          "assignment": "send_commit",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "send:S6",
+          "assignment": "notes_editor",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "send:S7",
+          "assignment": "send_commit",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "send:S8",
+          "assignment": "send_commit",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        }
+      ]
+    },
+    {
+      "cluster": "capture",
+      "source": "docs/internal/betterment/capture/RECIPE.md",
+      "slices": [
+        {
+          "ref": "capture:C1",
+          "assignment": "speech_dictation",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "capture:C2",
+          "assignment": "meeting_intelligence",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "capture:C3",
+          "assignment": "meeting_import",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "capture:C4",
+          "assignment": "meeting_intelligence",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "capture:C5",
+          "assignment": "meeting_intelligence",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "capture:C6",
+          "assignment": "meeting_aftercare",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "capture:C7",
+          "assignment": "meeting_record",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "capture:C8",
+          "assignment": "capture_thought",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "capture:C9",
+          "assignment": "meeting_record",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "capture:C10",
+          "assignment": "meeting_record",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "capture:C11",
+          "assignment": "voice_commands",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        },
+        {
+          "ref": "capture:C12",
+          "assignment": "native_presence",
+          "tracker_state": "done",
+          "native_acceptance": "not_claimed"
+        }
+      ]
+    }
+  ],
+  "requested_domain_crosswalk": {
+    "Capture": "capture_thought",
+    "speech": "speech_dictation",
+    "Meetings": "meeting_archive",
+    "live": "meeting_record",
+    "import": "meeting_import",
+    "aftercare": "meeting_aftercare",
+    "Ask": "ask_whole_desk",
+    "thread": "threads",
+    "source": "source_context",
+    "editor": "notes_editor",
+    "People": "people_prep",
+    "Projects": "projects_room",
+    "Decisions": "decisions",
+    "Agents": "agents_conductor",
+    "Automation": "automation_build",
+    "Send": "send_commit",
+    "Engines": "engines_assignment",
+    "Settings": "settings",
+    "accounts": "accounts",
+    "nativepresence": "native_presence",
+    "desktop": "desktop_workspace",
+    "windows": "windows",
+    "navigation": "navigation_commands",
+    "explorerrepo": "explorer_repo",
+    "objects": "objects_pullouts",
+    "drawers": "drawers",
+    "terminals": "terminals_processes",
+    "process": "terminals_processes",
+    "activity": "activity_context",
+    "memory": "memory",
+    "context": "activity_context",
+    "setup": "setup",
+    "nativeinput": "native_input",
+    "feedback": "feedback"
+  },
+  "capability_reconciliation": {
+    "authority": "Generated capability authority: docs/generated/capabilities.yaml. Each ID is mapped below to a job family or an explicit non-UI/backend bucket; this does not claim a matching window exists.",
+    "declared": 87,
+    "mapped": 87,
+    "unmapped": [],
+    "group_classification": {
+      "runtime_authority_storage_backend_only": "backend_only",
+      "speech_capture": "family",
+      "voice_commands": "family",
+      "meeting_capture_import_intelligence_aftercare": "family",
+      "meeting_plugins": "family",
+      "model_engines_backend_or_settings": "backend_only_or_family",
+      "desktop_framework": "family",
+      "projects_people_notes_preferences_followthrough": "family",
+      "engine_discovery": "family",
+      "ask_thread_and_memory": "family",
+      "automation": "family",
+      "agents_and_coder": "family",
+      "accounts_activity_and_external_authority": "family_or_backend_only",
+      "not_ui_companions": "not_ui",
+      "native_presence": "family",
+      "send_channels": "family"
+    },
+    "groups": {
+      "runtime_authority_storage_backend_only": [
+        "runtime.kernel_admit",
+        "runtime.kernel_recover",
+        "runtime.inference_attempt",
+        "authority.principal_routes",
+        "authority.policy_resolution",
+        "storage.sqlite_reconcile",
+        "storage.backup_restore",
+        "operations.doctor",
+        "negative.kernel_content_exclusion",
+        "negative.authority.agent_no_decide",
+        "negative.storage_preserve_unknown_tables"
+      ],
+      "speech_capture": [
+        "voice.capture",
+        "voice.transcribe",
+        "voice.dictation_pipeline",
+        "voice.delivery",
+        "voice.correction_memory",
+        "voice.replay",
+        "voice.learning_digest",
+        "voice.prebrief_selection",
+        "voice.symbol_settings",
+        "voice.language_settings",
+        "voice.wake",
+        "voice.browser_remote_dictation"
+      ],
+      "voice_commands": [
+        "voice.command_dispatch"
+      ],
+      "meeting_capture_import_intelligence_aftercare": [
+        "meeting.capture",
+        "meeting.import",
+        "meeting.intelligence",
+        "meeting.aftercare",
+        "meeting.decision_lifecycle",
+        "meeting.action_lifecycle"
+      ],
+      "meeting_plugins": [
+        "meeting.plugin.requirements_extractor",
+        "meeting.plugin.action_owner_enforcer",
+        "meeting.plugin.mermaid_architecture",
+        "meeting.plugin.adr_drafter",
+        "meeting.plugin.milestone_planner",
+        "meeting.plugin.dependency_mapper",
+        "meeting.plugin.scope_guard",
+        "meeting.plugin.customer_signal_extractor",
+        "meeting.plugin.incident_timeline",
+        "meeting.plugin.risk_heatmap",
+        "meeting.plugin.stakeholder_update_drafter",
+        "meeting.plugin.runbook_delta",
+        "meeting.plugin.decision_announcement_drafter",
+        "meeting.plugin.decision_capture"
+      ],
+      "model_engines_backend_or_settings": [
+        "model.registry",
+        "model.assignment",
+        "model.route_plan",
+        "model.execution",
+        "model.destination_readiness",
+        "model.cancel_receipts",
+        "model.download",
+        "model.inventory"
+      ],
+      "desktop_framework": [
+        "desk.open",
+        "desk.arrange",
+        "desk.inspect",
+        "desk.execute",
+        "desk.drop",
+        "desk.persist",
+        "desk.runtime",
+        "desk.native_host",
+        "desk.dock.live"
+      ],
+      "projects_people_notes_preferences_followthrough": [
+        "project.update.linked_week",
+        "people.prep.read",
+        "desk.note.task",
+        "people.prep.record",
+        "desk.preferences",
+        "desk.follow_through"
+      ],
+      "engine_discovery": [
+        "desk.engines.find_lan"
+      ],
+      "ask_thread_and_memory": [
+        "agents.thread_persistent",
+        "agents.thread_tool_loop",
+        "agents.interview",
+        "agents.mcp_http",
+        "knowledge.grounding",
+        "knowledge.memory_search"
+      ],
+      "automation": [
+        "workflows.linear_run"
+      ],
+      "agents_and_coder": [
+        "coder.observation",
+        "coder.reply_and_draft",
+        "coder.gate"
+      ],
+      "accounts_activity_and_external_authority": [
+        "integration.activity_connectors",
+        "integration.github_readonly",
+        "integration.jira_confluence_calendar",
+        "integration.actuators"
+      ],
+      "not_ui_companions": [
+        "companion.ipad_client",
+        "companion.aipi_audio_control"
+      ],
+      "native_presence": [
+        "companion.qlippy_presence"
+      ],
+      "send_channels": [
+        "channels.document_sources",
+        "channels.slack"
+      ]
+    },
+    "related_families_by_group": {
+      "runtime_authority_storage_backend_only": [],
+      "speech_capture": [
+        "capture_thought",
+        "speech_dictation",
+        "speech_learning",
+        "native_input"
+      ],
+      "voice_commands": [
+        "voice_commands"
+      ],
+      "meeting_capture_import_intelligence_aftercare": [
+        "meeting_record",
+        "meeting_import",
+        "meeting_intelligence",
+        "meeting_aftercare",
+        "meeting_archive",
+        "decisions",
+        "today_followthrough"
+      ],
+      "meeting_plugins": [
+        "meeting_intelligence",
+        "meeting_aftercare"
+      ],
+      "model_engines_backend_or_settings": [
+        "engines_assignment",
+        "settings",
+        "setup"
+      ],
+      "desktop_framework": [
+        "desktop_workspace",
+        "windows",
+        "navigation_commands",
+        "objects_pullouts",
+        "drawers",
+        "explorer_repo",
+        "feedback",
+        "components_reference"
+      ],
+      "projects_people_notes_preferences_followthrough": [
+        "projects_room",
+        "new_project",
+        "project_update",
+        "people_prep",
+        "notes_editor",
+        "knowledge_drawers",
+        "decisions",
+        "settings",
+        "today_followthrough",
+        "calendar_record"
+      ],
+      "engine_discovery": [
+        "engines_assignment",
+        "setup"
+      ],
+      "ask_thread_and_memory": [
+        "ask_whole_desk",
+        "threads",
+        "keep_answer",
+        "source_context",
+        "memory"
+      ],
+      "automation": [
+        "automation_build",
+        "automation_schedule"
+      ],
+      "agents_and_coder": [
+        "agents_conductor",
+        "agent_hand",
+        "agent_result",
+        "terminals_processes"
+      ],
+      "accounts_activity_and_external_authority": [
+        "accounts",
+        "activity_context",
+        "send_prepare",
+        "send_commit",
+        "mcp_tools"
+      ],
+      "not_ui_companions": [],
+      "native_presence": [
+        "native_presence"
+      ],
+      "send_channels": [
+        "send_prepare",
+        "send_commit",
+        "project_update"
+      ]
+    },
+    "mapping_granularity": "Group-level audit associations, not per-command bindings or proof of behavior. Empty lists are explicit backend-only or external-client buckets. External clients can have their own UI; not_ui means no React Desk entry is established here."
+  },
+  "use_case_families": [
+    {
+      "id": "capture_thought",
+      "job": "Get a thought down now and keep the saved note",
+      "status": "active_declared",
+      "surface_ids": [
+        "chair:capture",
+        "surface-dictation"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:7-8",
+        "docs/internal/betterment/INVENTORY.md:120-125",
+        "web/src/desk/pullouts/NotePullout.tsx:1-100"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "docs/USE_CASES.md:7-8",
+          "web/src/desk/pullouts/NotePullout.tsx:1-100"
+        ],
+        "tests_exist": [
+          "web/src/desk/pullouts/NotePullout.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Cold owner capture-to-saved-note timing and physical audio quality"
+        ]
+      },
+      "current_behavior": "New Note and Capture are declared paths; NotePullout and its editor preserve the note record seam.",
+      "gaps": [
+        "Capture, note, and speech insertion do not yet share one complete application task contract."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "WIN_LIFE",
+        "EDIT_IME",
+        "ASYNC_STALE",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "speech_dictation",
+      "job": "Speak and see text land in the focused application",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-dictation",
+        "chair:capture"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:7-8",
+        "docs/CAPABILITIES.md:20-24",
+        "web/src/pages/cores/DictationCore.tsx:1-80",
+        "web/src/lib/micSession.ts:1-220"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/DictationCore.tsx:1-80",
+          "web/src/lib/micSession.ts:1-220"
+        ],
+        "tests_exist": [
+          "tests/unit/test_dictation_pipeline.py",
+          "tests/integration/test_dictation_cold_start_cap.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Hardware microphone walk, complete delivery in a real focused app, and end-to-end transcript quality"
+        ]
+      },
+      "current_behavior": "Voice capture, transcription, pipeline and delivery are separate generated capabilities with one mic session seam.",
+      "gaps": [
+        "Generic dictation appends in NoteEditor instead of a shared selection/caret insertion contract; late-result and target semantics need one adapter."
+      ],
+      "shared_behavior_codes": [
+        "EDIT_IME",
+        "ASYNC_STALE",
+        "OP_OUTCOME",
+        "FEEDBACK",
+        "NATIVE_BOUNDARY"
+      ]
+    },
+    {
+      "id": "speech_learning",
+      "job": "Correct a phrase and replay or learn it later",
+      "status": "active_declared_backend_bounded",
+      "surface_ids": [
+        "surface-dictation"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:8",
+        "docs/CAPABILITIES.md:24-29",
+        "web/src/pages/cores/DictationCore.tsx:1-80"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "docs/CAPABILITIES.md:24-29"
+        ],
+        "tests_exist": [],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "A complete owner correction/replay walk and quality of learned routing"
+        ]
+      },
+      "current_behavior": "Correction memory, replay and learning digest are declared capabilities; the catalogue separates stored correction from a fired correction.",
+      "gaps": [
+        "The desktop application model does not yet state journal identity, replay status and correction outcome as one task view."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "SOURCE",
+        "OP_OUTCOME",
+        "FEEDBACK",
+        "COVERAGE"
+      ]
+    },
+    {
+      "id": "voice_commands",
+      "job": "Say a phrase and run one configured Desk action",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-commands"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:9",
+        "docs/internal/betterment/capture/RECIPE.md:1-360",
+        "web/src/desk/verbRegistry.ts:1-120",
+        "web/src/desk/applications.ts:414-423"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/verbRegistry.ts:1-120",
+          "web/src/desk/applications.ts:414-423"
+        ],
+        "tests_exist": [
+          "web/src/desk/__tests__/verbRegistry.test.ts"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Physical speech recognition and command delivery to every target"
+        ]
+      },
+      "current_behavior": "The verb registry is the shared target source; the Commands manifest row is parked behind the Speak settings wing.",
+      "gaps": [
+        "Voice proposals, menu commands and context commands need the same scoped target/availability outcome in each application."
+      ],
+      "shared_behavior_codes": [
+        "COMMANDS",
+        "FOCUS",
+        "OP_OUTCOME",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "meeting_record",
+      "job": "Record a live meeting and stop cleanly",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-live",
+        "surface-meetings",
+        "chair:capture"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:20-25",
+        "docs/internal/betterment/capture/RECIPE.md:235-246",
+        "web/src/pages/cores/LiveCore.tsx:1-120",
+        "web/src/desk/components/RecordOrb.tsx:1-120"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/LiveCore.tsx:1-120",
+          "web/src/desk/components/RecordOrb.tsx:1-120"
+        ],
+        "tests_exist": [
+          "tests/unit/test_meeting_service.py",
+          "tests/integration/test_meeting_capture_process.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Hardware acceptance, CoreAudio conditions and owner-quality native recording glyph"
+        ]
+      },
+      "current_behavior": "Live meeting has a dedicated host; capture slices describe child process ownership, bounded Stop and callback recovery.",
+      "gaps": [
+        "Recording session identity, focus ownership, interruption recovery and hardware feedback need one live-work application contract."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "WIN_LIFE",
+        "OP_OUTCOME",
+        "ASYNC_STALE",
+        "NATIVE_BOUNDARY",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "meeting_import",
+      "job": "Import a recording or transcript as a normal Meeting",
+      "status": "active_declared",
+      "surface_ids": [
+        "surface-meetings"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:9",
+        "docs/CAPABILITIES.md:26",
+        "docs/internal/betterment/capture/RECIPE.md:235-240",
+        "web/src/pages/cores/HistoryCore.tsx:1-120"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/HistoryCore.tsx:1-120"
+        ],
+        "tests_exist": [
+          "tests/unit/test_meeting_import.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Unsupported format versus failed intelligence in a fresh owner run"
+        ]
+      },
+      "current_behavior": "Meeting import is a named capability and recipe C3; the history host is the declared meeting home.",
+      "gaps": [
+        "Import source identity, file-drop semantics and operation outcomes are not a general desktop transfer contract."
+      ],
+      "shared_behavior_codes": [
+        "RESOURCE_ADAPTER",
+        "TRANSFER",
+        "OP_OUTCOME",
+        "SOURCE",
+        "EGRESS"
+      ]
+    },
+    {
+      "id": "meeting_intelligence",
+      "job": "Run meeting intelligence and read a useful result",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-meetings",
+        "intelligence:desk"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:10",
+        "docs/CAPABILITIES.md:26-27",
+        "docs/internal/betterment/capture/RECIPE.md:238-240",
+        "web/src/desk/pullouts/MeetingWindow.tsx:1-120"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/pullouts/MeetingWindow.tsx:1-120"
+        ],
+        "tests_exist": [
+          "tests/unit/test_meeting_intel_run_receipt.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Model result quality and full queued/running/failed/finished owner task"
+        ]
+      },
+      "current_behavior": "Saved meetings can be handed to an intelligence chain with retained analysis and result publication in the declared model.",
+      "gaps": [
+        "Long-running work, retained background operation and mounted window state are not one shared application contract."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "ASYNC_STALE",
+        "OP_OUTCOME",
+        "SOURCE",
+        "EGRESS",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "meeting_aftercare",
+      "job": "Review meeting outcomes and follow through on actions",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-meetings",
+        "intelligence:desk",
+        "chair:needs"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:10-11",
+        "docs/CAPABILITIES.md:27-28",
+        "docs/MEETING_AFTERCARE.md:1-220",
+        "web/src/desk/pullouts/views/DecisionsView.tsx:1-180"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "docs/MEETING_AFTERCARE.md:1-220",
+          "web/src/desk/pullouts/views/DecisionsView.tsx:1-180"
+        ],
+        "tests_exist": [
+          "web/src/desk/pullouts/views/DecisionsView.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Complete owner review/accept/reject cycle and source-linked follow-through on a fresh desk"
+        ]
+      },
+      "current_behavior": "Aftercare, decisions and actions have declared services and Today/Needs views; tracker C5/C6 and D3 cover recipe intent.",
+      "gaps": [
+        "Cross-window source identity and pending/confirmed action outcomes need explicit application context."
+      ],
+      "shared_behavior_codes": [
+        "SOURCE",
+        "COMMANDS",
+        "OP_OUTCOME",
+        "ASYNC_STALE",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "meeting_archive",
+      "job": "Find the same meeting and result again after restart",
+      "status": "active_declared",
+      "surface_ids": [
+        "surface-meetings",
+        "intelligence:desk"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:31-38",
+        "docs/MEETING_ARCHITECTURE.md:1-120",
+        "web/src/pages/cores/HistoryCore.tsx:1-120"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "docs/USE_CASES.md:31-38",
+          "web/src/pages/cores/HistoryCore.tsx:1-120"
+        ],
+        "tests_exist": [
+          "tests/unit/test_meeting_service.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "A cold restart findability walk and long-list navigation"
+        ]
+      },
+      "current_behavior": "Meetings have an archive window and persisted backend identity in the declared model.",
+      "gaps": [
+        "Large collection view state, stable selection and restoration are not established as one shared collection contract."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "RESOURCE_ADAPTER",
+        "PERSISTENCE",
+        "SELECTION",
+        "SCROLL"
+      ]
+    },
+    {
+      "id": "ask_whole_desk",
+      "job": "Ask a question about work on the Desk and get cited evidence",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "ask:desk",
+        "intelligence:desk"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:12",
+        "docs/CAPABILITIES.md:70-73",
+        "web/src/desk/components/AskPanel.tsx:54-1021",
+        "web/src/desk/applications.ts:134-142"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/components/AskPanel.tsx:54-1021"
+        ],
+        "tests_exist": [
+          "tests/e2e/test_ask_glass.py",
+          "tests/unit/test_desk_ask.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Model latency, refusal reason and owner acceptance of the current face"
+        ]
+      },
+      "current_behavior": "Ask is one manifest application with a composer, answer and source/context path; Q7/Q12 describe whole-desk Ask and Memory.",
+      "gaps": [
+        "Request/session identity, interrupted work and source selection must remain coherent when Ask is opened from other windows."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "SOURCE",
+        "ASYNC_STALE",
+        "OP_OUTCOME",
+        "SCROLL",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "threads",
+      "job": "Continue a saved specialist conversation with turns and tools",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "ask:desk"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:14",
+        "docs/CAPABILITIES.md:74-77",
+        "web/src/desk/pullouts/ThreadToAsk.tsx:1-120",
+        "docs/internal/betterment/asking/RECIPE.md:121-128"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/pullouts/ThreadToAsk.tsx:1-120"
+        ],
+        "tests_exist": [
+          "tests/unit/test_thread_memory_search_live.py",
+          "web/src/desk/pullouts/_parked/__tests__/threadCompaction.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Production tool elicitation and full saved-thread recovery; parked test paths are not active proof"
+        ]
+      },
+      "current_behavior": "Thread is redirected to Ask through ThreadToAsk; persistent thread/tool capabilities are catalogued.",
+      "gaps": [
+        "Conversation, tool result, draft and source panes need stable per-window identity and recovery."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "SOURCE",
+        "ASYNC_STALE",
+        "EDIT_IME",
+        "OP_OUTCOME"
+      ]
+    },
+    {
+      "id": "keep_answer",
+      "job": "Keep a useful answer as an Artifact with its source",
+      "status": "active_declared",
+      "surface_ids": [
+        "ask:desk",
+        "pullout:artifact"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:13",
+        "docs/CAPABILITIES.md:70-75",
+        "web/src/desk/pullouts/ArtifactPullout.tsx:1-100"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/pullouts/ArtifactPullout.tsx:1-100"
+        ],
+        "tests_exist": [
+          "web/src/desk/pullouts/ArtifactPullout.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Full answer-to-artifact owner walk and durable source citation validation"
+        ]
+      },
+      "current_behavior": "ArtifactPullout renders stored artifact/source relationships; Ask can retain a result through the object model.",
+      "gaps": [
+        "Source identity and egress/egress-free result provenance should be explicit across answer and artifact windows."
+      ],
+      "shared_behavior_codes": [
+        "RESOURCE_ADAPTER",
+        "SOURCE",
+        "APP_ID",
+        "PERSISTENCE",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "source_context",
+      "job": "Choose a project, object or source context before an operation",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "ask:desk",
+        "surface-project-setup",
+        "surface-project-memory"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:12-16",
+        "docs/internal/betterment/asking/RECIPE.md:125-133",
+        "web/src/desk/askAbout.ts:1-180",
+        "web/src/desk/components/AskPanel.tsx:443-500"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/askAbout.ts:1-180",
+          "web/src/desk/components/AskPanel.tsx:443-500"
+        ],
+        "tests_exist": [
+          "tests/unit/test_desk_ask.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Cross-window context handoff and context removal after refresh"
+        ]
+      },
+      "current_behavior": "About/context chips and object-origin Ask are declared in Q5/Q6; selected object and front-window refs are separate seams.",
+      "gaps": [
+        "Selection scope is global in some paths; application/view context must not be copied blindly into every window."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "FOCUS",
+        "SELECTION",
+        "SOURCE",
+        "COMMANDS"
+      ]
+    },
+    {
+      "id": "notes_editor",
+      "job": "Write, edit and develop a note without losing text",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "pullout:note",
+        "chair:capture"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:7-8",
+        "docs/internal/betterment/asking/RECIPE.md:129-131",
+        "web/src/desk/pullouts/editors/NoteEditor.tsx:1-200",
+        "web/src/desk/pullouts/editors/ThoughtNoteEditor.tsx:1-160"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/pullouts/editors/NoteEditor.tsx:1-200"
+        ],
+        "tests_exist": [
+          "web/src/desk/pullouts/NotePullout.test.tsx",
+          "web/src/desk/pullouts/editors/ThoughtNoteEditor.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "IME, voice insertion and undo semantics across every editor consumer"
+        ]
+      },
+      "current_behavior": "Note and thought editors have durable draft/write seams and separate object pullout identity.",
+      "gaps": [
+        "The source audit identifies append behavior instead of one shared selection/caret insertion primitive."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "EDIT_IME",
+        "PERSISTENCE",
+        "ASYNC_STALE",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "knowledge_drawers",
+      "job": "Keep reference material in a named drawer and use it as context",
+      "status": "active_declared",
+      "surface_ids": [
+        "pullout:kb",
+        "surface-settings"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:13-16",
+        "docs/internal/betterment/asking/RECIPE.md:129-133",
+        "web/src/desk/pullouts/KbPullout.tsx:1-100",
+        "web/src/desk/drawer/DrawerWindow.tsx:1-375"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/pullouts/KbPullout.tsx:1-100",
+          "web/src/desk/drawer/DrawerWindow.tsx:1-375"
+        ],
+        "tests_exist": [
+          "web/src/desk/pullouts/KbPullout.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Large drawer selection and cross-window drag/attach behavior"
+        ]
+      },
+      "current_behavior": "Knowledge has a pullout/editor and named drawers have a DrawerWindow host; Q10 records the new drawer direction.",
+      "gaps": [
+        "Drawer collection selection remains singular in active consumers; shared range/context semantics are missing."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "RESOURCE_ADAPTER",
+        "SELECTION",
+        "TRANSFER",
+        "PERSISTENCE"
+      ]
+    },
+    {
+      "id": "people_prep",
+      "job": "Prepare for a 1:1 with one report",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-people",
+        "pullout:people",
+        "intelligence:desk"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:1-24",
+        "docs/internal/betterment/INVENTORY.md:76-85",
+        "web/src/pages/cores/PeopleCore.tsx:1-100",
+        "web/src/desk/pullouts/PeoplePullout.tsx:1-100"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/PeopleCore.tsx:1-100",
+          "web/src/desk/pullouts/PeoplePullout.tsx:1-100"
+        ],
+        "tests_exist": [
+          "tests/unit/test_people_brief.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Provider relationship endpoint health and a populated owner desk"
+        ]
+      },
+      "current_behavior": "People has a manifest surface, roster and relationship pullout; prep capabilities are named.",
+      "gaps": [
+        "Person identity, agenda, commitments and meeting launch need stable cross-window resource identity."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "RESOURCE_ADAPTER",
+        "SOURCE",
+        "COMMANDS",
+        "OP_OUTCOME"
+      ]
+    },
+    {
+      "id": "projects_room",
+      "job": "See where a project stands, what changed and what needs me",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-projects",
+        "surface-project-memory"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:12",
+        "docs/internal/betterment/INVENTORY.md:86-105",
+        "web/src/features/project-room/ProjectRoomCore.tsx:1-120",
+        "web/src/pages/cores/ProjectsCore.tsx:1-100"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/features/project-room/ProjectRoomCore.tsx:1-120",
+          "web/src/pages/cores/ProjectsCore.tsx:1-100"
+        ],
+        "tests_exist": [
+          "web/src/features/project-room/__tests__/ProjectRoomCore.test.tsx",
+          "tests/integration/test_desk_project_room.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Owner visual acceptance and phone Room review workflow"
+        ]
+      },
+      "current_behavior": "Projects and project Room have separate declared list/memory and detailed consumers with sources, decisions and actions.",
+      "gaps": [
+        "Room must participate in shared window/view identity, selection, navigation and operation outcomes rather than acting as a page-only template."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "WIN_LIFE",
+        "SOURCE",
+        "SELECTION",
+        "ASYNC_STALE",
+        "SCROLL"
+      ]
+    },
+    {
+      "id": "new_project",
+      "job": "Create a project from a name and selected sources",
+      "status": "active_declared",
+      "surface_ids": [
+        "surface-project-setup"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:12",
+        "web/src/features/project-room/door/DoorCore.tsx:1-620",
+        "web/src/features/project-room/door/useDoorController.ts:1-260"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/features/project-room/door/DoorCore.tsx:1-620"
+        ],
+        "tests_exist": [
+          "web/src/features/project-room/door/__tests__/DoorCore.test.tsx",
+          "web/src/features/project-room/door/__tests__/newProject.app.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Owner cold creation with real external source accounts"
+        ]
+      },
+      "current_behavior": "One-screen New Project door selects found sources and opens project memory by project identity.",
+      "gaps": [
+        "Source provider status, partial selection and operation refusal need shared task outcomes and egress facts."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "SOURCE",
+        "RESOURCE_ADAPTER",
+        "EGRESS",
+        "OP_OUTCOME"
+      ]
+    },
+    {
+      "id": "project_update",
+      "job": "Draft a true project update without freezing the Desk",
+      "status": "active_declared_unknown_result",
+      "surface_ids": [
+        "surface-project-memory",
+        "surface-workbenches",
+        "ask:desk"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:12",
+        "docs/CAPABILITIES.md:75",
+        "docs/internal/betterment/projects/RECIPE.md:139-147",
+        "web/src/features/project-room/update/"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "docs/internal/betterment/projects/RECIPE.md:139-147",
+          "web/src/features/project-room/update/"
+        ],
+        "tests_exist": [
+          "tests/unit/test_project_update_drafter.py",
+          "tests/integration/test_project_update_claim_support.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Inventory records the earlier 91-second/no-output failure and does not establish a later complete owner result"
+        ]
+      },
+      "current_behavior": "Project update is declared as a source-grounded draft and can be related to Automations/Send.",
+      "gaps": [
+        "Retained background operation, draft identity, model refusal and visible outcome need a single task view."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "ASYNC_STALE",
+        "OP_OUTCOME",
+        "SOURCE",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "decisions",
+      "job": "Record, review and supersede an architecture decision",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-decisions",
+        "pullout:decision",
+        "surface-meetings"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:10-16",
+        "docs/CAPABILITIES.md:27-28",
+        "web/src/pages/cores/DecisionsCore.tsx:1-120",
+        "web/src/desk/pullouts/DecisionPullout.tsx:1-120"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/DecisionsCore.tsx:1-120",
+          "web/src/desk/pullouts/DecisionPullout.tsx:1-120"
+        ],
+        "tests_exist": [
+          "web/src/desk/pullouts/views/DecisionsView.test.tsx",
+          "tests/unit/test_decisions.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Owner acceptance of New Decision face and full same-ID decision loop"
+        ]
+      },
+      "current_behavior": "Decisions have list, pullout, lifecycle and meeting links; P9 records canonical same-ID links.",
+      "gaps": [
+        "Decision identity, source provenance, edit conflict and supersede outcome need consistent application context."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "SOURCE",
+        "EDIT_IME",
+        "OP_OUTCOME",
+        "PERSISTENCE"
+      ]
+    },
+    {
+      "id": "agents_conductor",
+      "job": "See agent sessions, state and work that needs an answer",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "conductor",
+        "intelligence:desk",
+        "chair:needs"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:17-20",
+        "docs/internal/betterment/INVENTORY.md:143-175",
+        "web/src/desk/conductor/ConductorWindow.tsx:1-885",
+        "web/src/desk/applications.ts:170-180"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/conductor/ConductorWindow.tsx:1-885"
+        ],
+        "tests_exist": [
+          "web/src/desk/conductor/__tests__/conductor.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Real agent session availability, screen proof and owner acceptance"
+        ]
+      },
+      "current_behavior": "Agents is the canonical manifest host; Conductor lists state, questions and completed work.",
+      "gaps": [
+        "Session identity, terminal/run monitor, focus and answer delivery must share application lifecycle and operation outcomes."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "WIN_LIFE",
+        "FOCUS",
+        "SCROLL",
+        "OP_OUTCOME",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "agent_hand",
+      "job": "Hand selected work to an agent and steer it with permission",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "conductor",
+        "ask:desk",
+        "pullout:coder"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:17-20",
+        "docs/CAPABILITIES.md:76-78",
+        "web/src/desk/components/HandSheet.tsx:1-600",
+        "web/src/desk/hand/drag.ts:1-72"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/components/HandSheet.tsx:1-600",
+          "web/src/desk/hand/drag.ts:1-72"
+        ],
+        "tests_exist": [
+          "web/src/desk/hand/__tests__/hand.test.tsx",
+          "tests/unit/test_agent_hand.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "The HandSheet instruction delivery seam and OS file transfer; source notes that old global file-drop is parked"
+        ]
+      },
+      "current_behavior": "Internal Hand uses semantic object refs and agent hand sheets; object verbs derive from shared registry.",
+      "gaps": [
+        "Explicit source/target transfer intent, refusal, interruption and recovery are not a general desktop file-transfer contract."
+      ],
+      "shared_behavior_codes": [
+        "TRANSFER",
+        "COMMANDS",
+        "OP_OUTCOME",
+        "SOURCE",
+        "FOCUS"
+      ]
+    },
+    {
+      "id": "agent_result",
+      "job": "Read an agent result, review it and answer or approve",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "conductor",
+        "pullout:coder",
+        "intelligence:desk"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:17-20",
+        "docs/CAPABILITIES.md:76-78",
+        "docs/internal/betterment/agents/RECIPE.md:165-170",
+        "web/src/desk/lane/LaneWindow.tsx:1-700"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/lane/LaneWindow.tsx:1-700"
+        ],
+        "tests_exist": [
+          "tests/unit/test_process_input_kernel.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Real agent output quality, review authority and native terminal acceptance"
+        ]
+      },
+      "current_behavior": "Result, reviewer and answer recipes are declared; lane/terminal windows have specialized hosts.",
+      "gaps": [
+        "Run identity, bounded scrollback, input ownership and durable review outcome need one monitor contract."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "SCROLL",
+        "EDIT_IME",
+        "OP_OUTCOME",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "automation_build",
+      "job": "Create one automation with instruction, sources and one result",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-workbenches"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:1-4",
+        "web/src/desk/components/__tests__/workbenchEditing.test.tsx",
+        "web/src/desk/components/WorkbenchWindow.tsx:1-80",
+        "web/src/desk/components/automation/AutomationWindow.tsx:1-80"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/components/WorkbenchWindow.tsx:1-80",
+          "web/src/desk/components/automation/AutomationWindow.tsx:1-80"
+        ],
+        "tests_exist": [
+          "web/src/desk/components/__tests__/workbenchEditing.test.tsx",
+          "web/src/desk/components/__tests__/workbenchOperates.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Actual scheduled run and failed-result recovery on owner data"
+        ]
+      },
+      "current_behavior": "Automations has a manifest surface and recipe slices A1-A7 for naming, instruction, sources, run and outcomes.",
+      "gaps": [
+        "Application identity, run retention, stale state and failure reason need a complete task view."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "RESOURCE_ADAPTER",
+        "ASYNC_STALE",
+        "OP_OUTCOME",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "automation_schedule",
+      "job": "Schedule or trigger repeat work and recover its result",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-workbenches",
+        "surface-cadence"
+      ],
+      "source_paths": [
+        "docs/internal/betterment/workbench/RECIPE.md:84-90",
+        "web/src/desk/applications.ts:232-250",
+        "docs/CAPABILITIES.md:75-79"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/applications.ts:232-250",
+          "docs/internal/betterment/workbench/RECIPE.md:84-90"
+        ],
+        "tests_exist": [
+          "tests/unit/test_workbench_runner_migration.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Schedule firing, EventKit/calendar readiness and native notification quality"
+        ]
+      },
+      "current_behavior": "Workbenches is active; Rhythm is parked to Settings and retained as an alias/window id.",
+      "gaps": [
+        "Retained operation versus mounted window and user-visible failure/receipt are not one shared lifecycle."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "PERSISTENCE",
+        "ASYNC_STALE",
+        "OP_OUTCOME",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "mcp_tools",
+      "job": "Run, inspect and retain a Desk tool operation",
+      "status": "backend_and_surface_declared",
+      "surface_ids": [
+        "surface-workbenches",
+        "surface-engines",
+        "conductor"
+      ],
+      "source_paths": [
+        "docs/internal/betterment/mcp/RECIPE.md:105-115",
+        "docs/CAPABILITIES.md:1-96",
+        "holdspeak/mcp/families/"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "docs/internal/betterment/mcp/RECIPE.md:105-115",
+          "docs/CAPABILITIES.md:1-96"
+        ],
+        "tests_exist": [
+          "tests/unit/test_mcp_ask.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Every tool's UI caller, egress destination and owner task completion"
+        ]
+      },
+      "current_behavior": "MCP has backend families and seven tracker slices; some tool families have no direct face.",
+      "gaps": [
+        "Tool operation identity, target context, egress and receipt need a consistent application-level inspector."
+      ],
+      "shared_behavior_codes": [
+        "COMMANDS",
+        "APP_ID",
+        "OP_OUTCOME",
+        "EGRESS",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "send_prepare",
+      "job": "Prepare exact content and destination before sending",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "chair:needs",
+        "ask:desk",
+        "surface-workbenches"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:11",
+        "docs/CAPABILITIES.md:93-96",
+        "docs/internal/betterment/send/RECIPE.md:218-229",
+        "web/src/features/channels/SendWell.tsx:1-120"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/features/channels/SendWell.tsx:1-120"
+        ],
+        "tests_exist": [
+          "web/src/features/channels/__tests__/closedReceipt.test.tsx",
+          "tests/integration/test_desk_send.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "External destination account readiness and actual send authorization"
+        ]
+      },
+      "current_behavior": "SendWell is shared by several hosts; S3-S8 describe frozen preview, destination and unchecked warning behavior.",
+      "gaps": [
+        "Prepare, edit, send and result-unknown states need one visible operation contract across hosts."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "SOURCE",
+        "EGRESS",
+        "OP_OUTCOME",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "send_commit",
+      "job": "Send a stored document and retain the receipt",
+      "status": "active_declared_open",
+      "surface_ids": [
+        "chair:needs",
+        "surface-settings"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:11",
+        "docs/CAPABILITIES.md:95-96",
+        "docs/internal/betterment/TRACKER.md:218-229",
+        "web/src/features/channels/SendWell.tsx:1-700"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/features/channels/SendWell.tsx:1-700"
+        ],
+        "tests_exist": [
+          "web/src/features/channels/__tests__/closedReceipt.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Tracker S2 is Open; no owner send proof is asserted here"
+        ]
+      },
+      "current_behavior": "The send cluster records S2 open and S3-S8 merged; channel capabilities name document and Slack sends.",
+      "gaps": [
+        "First real send, external outcome and uncertain/retry state remain explicit open work."
+      ],
+      "shared_behavior_codes": [
+        "EGRESS",
+        "OP_OUTCOME",
+        "ASYNC_STALE",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "engines_assignment",
+      "job": "Choose what runs where and verify engine readiness",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-engines",
+        "surface-settings"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:18-22",
+        "docs/CAPABILITIES.md:29-38",
+        "docs/internal/betterment/engines/RECIPE.md:92-103",
+        "web/src/features/runson/RunsOnCore.tsx:1-180"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/features/runson/RunsOnCore.tsx:1-180",
+          "docs/internal/betterment/engines/RECIPE.md:92-103"
+        ],
+        "tests_exist": [
+          "tests/unit/test_inference_assignment_runson.py",
+          "tests/integration/test_desk_engines.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Provider readiness, model quality and live engine execution"
+        ]
+      },
+      "current_behavior": "Engines has a dedicated surface; model registry/assignment/route capabilities are catalogued separately from physical execution.",
+      "gaps": [
+        "Assignment, destination, execution and cancellation need explicit task identity and visible egress/outcome state."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "RESOURCE_ADAPTER",
+        "EGRESS",
+        "OP_OUTCOME",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "accounts",
+      "job": "Connect an account, check it and keep its boundary clear",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-settings"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:19-22",
+        "docs/CAPABILITIES.md:82-90",
+        "docs/internal/betterment/setup/RECIPE.md:188-201",
+        "web/src/pages/cores/SettingsCore.tsx:1-80"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/SettingsCore.tsx:1-80",
+          "docs/internal/betterment/setup/RECIPE.md:188-201"
+        ],
+        "tests_exist": [
+          "web/src/features/channels/__tests__/slackDestination.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Provider sign-in, remote account health and external side effects"
+        ]
+      },
+      "current_behavior": "Accounts is a parked manifest alias into Settings; settings rows expose provider/configuration seams.",
+      "gaps": [
+        "Account identity, permission/egress state and conflict/recovery need an application-level settings contract."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "EGRESS",
+        "OP_OUTCOME",
+        "PERSISTENCE",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "settings",
+      "job": "Edit preferences and keep unsaved work visible",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-settings"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:1-4",
+        "docs/CAPABILITIES.md:79",
+        "docs/internal/betterment/setup/RECIPE.md:193-201",
+        "web/src/pages/cores/SettingsCore.tsx:1-80"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/SettingsCore.tsx:1-80"
+        ],
+        "tests_exist": [
+          "tests/unit/test_settings_atomic_write.py",
+          "web/src/desk/__tests__/settings.app.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "All settings sections on a cold owner desk and conflict handling"
+        ]
+      },
+      "current_behavior": "Settings is one manifest window with aliases for wallpaper, rhythm and integrations; preferences capability is documented.",
+      "gaps": [
+        "A settings form alone does not prove the full application model; focus, command context and conflict outcomes need shared rules."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "WIN_LIFE",
+        "EDIT_IME",
+        "ASYNC_STALE",
+        "OP_OUTCOME"
+      ]
+    },
+    {
+      "id": "setup",
+      "job": "Check device readiness and use what was found",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-setup",
+        "surface-settings"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:34-38",
+        "docs/internal/betterment/setup/RECIPE.md:188-201",
+        "web/src/pages/cores/SetupCore.tsx:1-100"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/SetupCore.tsx:1-100"
+        ],
+        "tests_exist": [
+          "tests/unit/test_setup_status.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Physical device checks and owner adoption of found services"
+        ]
+      },
+      "current_behavior": "Setup is an active readiness surface; ST3-ST9 describe found things, use, accounts and agent bindings.",
+      "gaps": [
+        "Readiness checks, adoption, permissions and operation outcomes need one application state model."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "RESOURCE_ADAPTER",
+        "OP_OUTCOME",
+        "NATIVE_BOUNDARY",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "native_presence",
+      "job": "Show bounded native presence without stealing focus",
+      "status": "disabled_broken_renderer",
+      "surface_ids": [
+        "presence route / optional native host"
+      ],
+      "source_paths": [
+        "docs/internal/betterment/native-experience/CURRENT-STATE.md:104-118",
+        "docs/internal/betterment/native-experience/README.md:78-85",
+        "web/src/pages/PresencePage.tsx:14-35",
+        "holdspeak/desktop_presence_cocoa.py:426-485"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "docs/internal/betterment/native-experience/CURRENT-STATE.md:104-118",
+          "web/src/pages/PresencePage.tsx:14-35"
+        ],
+        "tests_exist": [
+          "tests/unit/test_desktop_presence.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Renderer root cause, fresh close/focus shot and repaired owner acceptance"
+        ]
+      },
+      "current_behavior": "Presence route and optional native host seams exist; current owner operation keeps it disabled after broken rendering.",
+      "gaps": [
+        "No re-enable decision or native-quality proof; do not treat source host code as a working native application."
+      ],
+      "shared_behavior_codes": [
+        "NATIVE_BOUNDARY",
+        "FOCUS",
+        "FEEDBACK",
+        "COVERAGE"
+      ]
+    },
+    {
+      "id": "desktop_workspace",
+      "job": "Open the Desk and find the work surface",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "Desk",
+        "intelligence:desk"
+      ],
+      "source_paths": [
+        "docs/CAPABILITIES.md:43-49",
+        "web/src/desk/DeskApp.tsx:1-120",
+        "web/src/desk/applications.ts:1-58"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/DeskApp.tsx:1-120",
+          "web/src/desk/applications.ts:1-58"
+        ],
+        "tests_exist": [
+          "web/src/desk/DeskApp.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Owner first-use walk and Tuesday findability across a fresh desk"
+        ]
+      },
+      "current_behavior": "Desk is the shared workspace route and application manifest projects into Go, Dock, menu and windows.",
+      "gaps": [
+        "Native application identity is broader than a page shell; complete task views and resource contracts remain to be adopted."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "WIN_LIFE",
+        "FOCUS",
+        "SURFACE"
+      ]
+    },
+    {
+      "id": "windows",
+      "job": "Open, focus, arrange, minimize, restore and close windows",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "DeskWindowFrame",
+        "SurfaceWindows",
+        "window registry"
+      ],
+      "source_paths": [
+        "docs/CAPABILITIES.md:45-49",
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:54-71",
+        "web/src/desk/components/DeskWindow.tsx:742-1121",
+        "web/src/desk/components/window/windowRegistry.ts:1-220"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/components/DeskWindow.tsx:742-1121",
+          "web/src/desk/components/window/windowRegistry.ts:1-220"
+        ],
+        "tests_exist": [
+          "web/src/desk/store/__tests__/windowSingleInstance.test.ts",
+          "tests/unit/test_desk_windows.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Full pointer/keyboard/touch restoration across all specialized hosts"
+        ]
+      },
+      "current_behavior": "Compositor, registry and workspace persistence own window geometry/front authority; window recipes are merged.",
+      "gaps": [
+        "Mounted view, retained background operation and dirty document are not yet one explicit lifecycle across apps."
+      ],
+      "shared_behavior_codes": [
+        "WIN_LIFE",
+        "FOCUS",
+        "PERSISTENCE",
+        "APP_ID",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "navigation_commands",
+      "job": "Navigate by Go, menu, Dock, palette and shared commands",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "Go",
+        "Dock",
+        "⌘K",
+        "verb registry"
+      ],
+      "source_paths": [
+        "docs/CAPABILITIES.md:43-49",
+        "docs/internal/betterment/TRACKER.md:203-216",
+        "web/src/desk/applications.ts:560-690",
+        "web/src/desk/verbRegistry.ts:1-120"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/applications.ts:560-690",
+          "web/src/desk/verbRegistry.ts:1-120"
+        ],
+        "tests_exist": [
+          "web/src/desk/__tests__/verbRegistry.test.ts",
+          "tests/unit/test_desk_windows.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "All aliases, phone paths and target outcomes on owner hardware"
+        ]
+      },
+      "current_behavior": "Manifest and one verb registry feed navigation projections; parked rows route to Settings aliases.",
+      "gaps": [
+        "Target scope, context and availability must remain identical across menu, key, voice and object commands."
+      ],
+      "shared_behavior_codes": [
+        "COMMANDS",
+        "APP_ID",
+        "FOCUS",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "explorer_repo",
+      "job": "Browse a registered repository in multiple windows and open a supported file",
+      "status": "proposed_gap",
+      "surface_ids": [
+        "RepoWindow",
+        "repository object"
+      ],
+      "source_paths": [
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:16-52",
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:90-120",
+        "web/src/desk/components/RepoWindow.tsx:69-271",
+        "web/src/desk/repository.ts:49-60",
+        "holdspeak/services/project_repository.py:51-68"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:16-52",
+          "web/src/desk/components/RepoWindow.tsx:69-271",
+          "web/src/desk/repository.ts:49-60",
+          "holdspeak/services/project_repository.py:51-68"
+        ],
+        "tests_exist": [],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Two-window history, range selection, rename, transfer, stale reads, file open and large-folder behavior; no dedicated RepoWindow test path was found"
+        ]
+      },
+      "current_behavior": "RepoWindow reads registered-root tree/status/branches; file clicks select paths, folder clicks change local path and breadcrumbs exist.",
+      "gaps": [
+        "No Back/Forward stack, document-opening view, shared Shift/range selection, durable resource identity or complete transfer contract. This is a proposed acceptance workload, not shipped explorer behavior."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "NAV_HISTORY",
+        "SELECTION",
+        "RESOURCE_ADAPTER",
+        "VIEW_MODES",
+        "TRANSFER",
+        "EDIT_IME",
+        "ASYNC_STALE",
+        "OP_OUTCOME"
+      ]
+    },
+    {
+      "id": "objects_pullouts",
+      "job": "Open an object, inspect it and run an available object verb",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "pullout:*",
+        "InfoWindow",
+        "Object menu"
+      ],
+      "source_paths": [
+        "docs/CAPABILITIES.md:44-47",
+        "web/src/desk/pullouts/registry.ts:1-47",
+        "web/src/desk/objectMenu.ts:157-180",
+        "web/src/desk/store/compositorSlice.ts:265-292"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/pullouts/registry.ts:1-47",
+          "web/src/desk/objectMenu.ts:157-180"
+        ],
+        "tests_exist": [
+          "web/src/desk/store/__tests__/pulloutIdentity.test.ts",
+          "web/src/desk/components/Pullout.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Every fallback kind's actual open destination and operation behavior"
+        ]
+      },
+      "current_behavior": "The pullout registry is exhaustive; specialized hosts exist for some kinds and FallbackPullout/redirect handles others.",
+      "gaps": [
+        "Object identity, front-window context and selected-set command targeting are not yet one application contract."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "WIN_LIFE",
+        "COMMANDS",
+        "FOCUS",
+        "SOURCE",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "drawers",
+      "job": "Create, browse and use a named collection drawer",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "DrawerWindow",
+        "DirectoryPullout",
+        "Go drawers"
+      ],
+      "source_paths": [
+        "docs/internal/betterment/TRACKER.md:207-212",
+        "web/src/desk/drawer/DrawerWindow.tsx:1-375",
+        "web/src/desk/pullouts/DirectoryPullout.tsx:1-100",
+        "web/src/desk/applications.ts:600-650"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/drawer/DrawerWindow.tsx:1-375",
+          "web/src/desk/pullouts/DirectoryPullout.tsx:1-100"
+        ],
+        "tests_exist": [
+          "web/src/desk/components/__tests__/zoneWindow.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Current active drawer selection and large collection behavior; retired ZoneWindow is not active proof"
+        ]
+      },
+      "current_behavior": "New Drawer and DirectoryPullout are declared; old ZoneWindow is parked/excluded from active proof.",
+      "gaps": [
+        "Per-view selection, range semantics and collection navigation need shared behavior; no filesystem claim follows from a Desk drawer."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "RESOURCE_ADAPTER",
+        "SELECTION",
+        "VIEW_MODES",
+        "PERSISTENCE"
+      ]
+    },
+    {
+      "id": "terminals_processes",
+      "job": "Inspect a running process or terminal and stop it safely",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-processes",
+        "panes launcher",
+        "LaneWindow"
+      ],
+      "source_paths": [
+        "docs/CAPABILITIES.md:43-49",
+        "web/src/pages/cores/ProcessCore.tsx:1-100",
+        "web/src/desk/lane/LaneWindow.tsx:1-700",
+        "web/src/desk/components/DeskToolInspector.tsx:1-435"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/ProcessCore.tsx:1-100",
+          "web/src/desk/lane/LaneWindow.tsx:1-700"
+        ],
+        "tests_exist": [
+          "tests/unit/test_process_input_kernel.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Real process stop/recovery, terminal input ownership and bounded scrollback under load"
+        ]
+      },
+      "current_behavior": "Processes and agent lane/terminal hosts exist; terminal/readback surfaces are specialized.",
+      "gaps": [
+        "Run identity, input ownership, copy/selection, follow/pause and real stop outcome need one run-monitor contract."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "FOCUS",
+        "SCROLL",
+        "EDIT_IME",
+        "OP_OUTCOME",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "activity_context",
+      "job": "Inspect current-device activity and the always-on context",
+      "status": "active_declared",
+      "surface_ids": [
+        "surface-activity",
+        "surface-constitutional-context"
+      ],
+      "source_paths": [
+        "web/src/pages/cores/ActivityCore.tsx:1-100",
+        "web/src/pages/cores/ConstitutionalContextCore.tsx:1-100",
+        "web/src/desk/applications.ts:285-301"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/ActivityCore.tsx:1-100",
+          "web/src/pages/cores/ConstitutionalContextCore.tsx:1-100"
+        ],
+        "tests_exist": [
+          "tests/unit/test_activity_context.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Fresh device activity availability and context refresh behavior"
+        ]
+      },
+      "current_behavior": "Activity and Context are distinct manifest tool windows; context is a builder/owner view.",
+      "gaps": [
+        "Context/resource identity and refresh outcomes are not yet described as shared application task contracts."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "RESOURCE_ADAPTER",
+        "ASYNC_STALE",
+        "SOURCE",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "memory",
+      "job": "Search memory and inspect a sourced result",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-project-memory",
+        "ask:desk"
+      ],
+      "source_paths": [
+        "docs/USE_CASES.md:12-16",
+        "docs/CAPABILITIES.md:73-75",
+        "web/src/pages/cores/MemoryCore.tsx:1-100",
+        "docs/internal/betterment/asking/RECIPE.md:131-133"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/MemoryCore.tsx:1-100"
+        ],
+        "tests_exist": [
+          "tests/integration/test_memory_retrieval.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Meaning-search quality, source owner labels and full memory findability"
+        ]
+      },
+      "current_behavior": "Memory has a manifest window and generated knowledge/memory capabilities; Q11/Q12 describe search and sourced answers.",
+      "gaps": [
+        "Memory result identity, source display and restoration need a durable collection/detail contract."
+      ],
+      "shared_behavior_codes": [
+        "RESOURCE_ADAPTER",
+        "SOURCE",
+        "SELECTION",
+        "PERSISTENCE",
+        "FEEDBACK"
+      ]
+    },
+    {
+      "id": "native_input",
+      "job": "Edit text with keyboard, IME, voice and undo semantics intact",
+      "status": "active_foundation_gap",
+      "surface_ids": [
+        "shared inputs",
+        "NoteEditor",
+        "Ask composer",
+        "Settings"
+      ],
+      "source_paths": [
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:90-120",
+        "docs/internal/betterment/native-experience/CURRENT-STATE.md:92-102",
+        "web/src/desk/surface/gadgets.tsx:262-470",
+        "web/src/desk/components/DeskEditor.tsx:209-340"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/surface/gadgets.tsx:262-470",
+          "web/src/desk/components/DeskEditor.tsx:209-340"
+        ],
+        "tests_exist": [
+          "web/src/desk/surface/gadgets.test.tsx",
+          "web/src/desk/components/DeskEditor.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Cross-consumer IME, voice insertion and undo walk"
+        ]
+      },
+      "current_behavior": "Native inputs, mic gadgets, CodeMirror selection and global IME guards exist in separate seams.",
+      "gaps": [
+        "A shared caret/selection insertion adapter is explicitly identified as missing; do not replace native editing with a parallel framework."
+      ],
+      "shared_behavior_codes": [
+        "EDIT_IME",
+        "FOCUS",
+        "ASYNC_STALE",
+        "FEEDBACK",
+        "NATIVE_BOUNDARY"
+      ]
+    },
+    {
+      "id": "feedback",
+      "job": "Know immediately what an operation did, refused or cannot yet prove",
+      "status": "active_foundation",
+      "surface_ids": [
+        "all operation hosts",
+        "verb registry"
+      ],
+      "source_paths": [
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:122-151",
+        "web/src/desk/feedback/runtime.ts:1-180",
+        "web/src/desk/verbRegistry.ts:1-120",
+        "docs/CAPABILITIES.md:1-96"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:122-151",
+          "web/src/desk/feedback/runtime.ts:1-180"
+        ],
+        "tests_exist": [
+          "web/src/desk/feedback/feedback.app.test.tsx"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Consistent visible feedback across all active apps and external egress outcomes"
+        ]
+      },
+      "current_behavior": "Verb ghosting and runtime feedback seams exist; capability records distinguish evidence and egress.",
+      "gaps": [
+        "Pending, refusal, partial and indeterminate outcomes are not yet one shared application operation surface."
+      ],
+      "shared_behavior_codes": [
+        "COMMANDS",
+        "OP_OUTCOME",
+        "EGRESS",
+        "FEEDBACK",
+        "COVERAGE"
+      ]
+    },
+    {
+      "id": "calendar_record",
+      "job": "Review calendar evidence and schedule a meeting recording",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "surface-calendar-snapshot",
+        "surface-live",
+        "surface-meetings"
+      ],
+      "source_paths": [
+        "docs/internal/betterment/INVENTORY.md:47-53",
+        "docs/internal/betterment/setup/RECIPE.md:192-201",
+        "web/src/pages/cores/CalendarSnapshotReviewCore.tsx:1-100",
+        "web/src/desk/components/ScheduleCreateWindow.tsx:1-131"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/pages/cores/CalendarSnapshotReviewCore.tsx:1-100",
+          "web/src/desk/components/ScheduleCreateWindow.tsx:1-131"
+        ],
+        "tests_exist": [
+          "tests/unit/test_scheduled_recording_cancel.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "EventKit, sign-in, populated snapshot and schedule firing"
+        ]
+      },
+      "current_behavior": "Calendar snapshot and schedule creation have dedicated hosts and services; schedule is a capture/setup concern.",
+      "gaps": [
+        "Calendar event identity, schedule lifecycle and recording outcome need shared persistence and operation feedback."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "RESOURCE_ADAPTER",
+        "PERSISTENCE",
+        "OP_OUTCOME",
+        "NATIVE_BOUNDARY"
+      ]
+    },
+    {
+      "id": "components_reference",
+      "job": "Demonstrate the same application behavior with isolated fixture data",
+      "status": "active_reference_not_acceptance",
+      "surface_ids": [
+        "surface-components"
+      ],
+      "source_paths": [
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:153-176",
+        "docs/internal/betterment/native-experience/DELIVERY-PLAN.md:153-156",
+        "web/src/pages/cores/ComponentsCore.tsx:1-120"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:153-176",
+          "web/src/pages/cores/ComponentsCore.tsx:1-120"
+        ],
+        "tests_exist": [
+          "tests/e2e/test_components_glass.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Reference behavior is not proof of production consumer adoption or owner delight"
+        ]
+      },
+      "current_behavior": "Components is a declared reference surface and the application model asks it to consume the same app/view models with fixture adapters.",
+      "gaps": [
+        "Reference-to-production adoption and explorer task proof are not established."
+      ],
+      "shared_behavior_codes": [
+        "SURFACE",
+        "APP_ID",
+        "COMMANDS",
+        "SELECTION",
+        "EDIT_IME",
+        "COVERAGE"
+      ]
+    },
+    {
+      "id": "today_followthrough",
+      "job": "See what needs attention today and keep commitments moving",
+      "status": "active_declared_partial",
+      "surface_ids": [
+        "intelligence:desk",
+        "chair:needs",
+        "surface-people"
+      ],
+      "source_paths": [
+        "docs/internal/betterment/INVENTORY.md:102-119",
+        "docs/internal/betterment/TRACKER.md:172-186",
+        "web/src/desk/pullouts/IntelligencePullout.tsx:1-80",
+        "web/src/desk/needs/NeedsDrawer.tsx:1-120"
+      ],
+      "evidence": {
+        "source_inspected": [
+          "web/src/desk/pullouts/IntelligencePullout.tsx:1-80",
+          "web/src/desk/needs/NeedsDrawer.tsx:1-120"
+        ],
+        "tests_exist": [
+          "tests/unit/test_needs_you.py",
+          "tests/unit/test_people_brief.py"
+        ],
+        "root_executed": [],
+        "owner_observed": [],
+        "unknown": [
+          "Fresh owner desk population, ambient notification reach and complete follow-through walk"
+        ]
+      },
+      "current_behavior": "Today, Needs you and follow-through are active declared hosts; D1-D10 consolidate counts, rows and notices.",
+      "gaps": [
+        "Multiple entry surfaces still answer the same attention question; one shared task/resource identity and operation outcome is not established."
+      ],
+      "shared_behavior_codes": [
+        "APP_ID",
+        "RESOURCE_ADAPTER",
+        "SELECTION",
+        "SOURCE",
+        "OP_OUTCOME",
+        "FEEDBACK"
+      ]
+    }
+  ],
+  "critical_gaps": [
+    {
+      "id": "G1",
+      "severity": "critical",
+      "title": "Explorer application contract is proposed, not shipped",
+      "families": [
+        "explorer_repo"
+      ],
+      "evidence": [
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:16-52",
+        "web/src/desk/components/RepoWindow.tsx:69-271"
+      ]
+    },
+    {
+      "id": "G2",
+      "severity": "critical",
+      "title": "Selection is not shared across Screen, drawers and collection views",
+      "families": [
+        "explorer_repo",
+        "drawers",
+        "objects_pullouts"
+      ],
+      "evidence": [
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:39-47"
+      ]
+    },
+    {
+      "id": "G3",
+      "severity": "critical",
+      "title": "Per-window navigation history and restoration are missing in RepoWindow",
+      "families": [
+        "explorer_repo",
+        "windows"
+      ],
+      "evidence": [
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:46,58-65"
+      ]
+    },
+    {
+      "id": "G4",
+      "severity": "critical",
+      "title": "Transfer semantics are split between internal Hand, browser files and OS file-manager integration",
+      "families": [
+        "explorer_repo",
+        "agent_hand",
+        "objects_pullouts"
+      ],
+      "evidence": [
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:122-143"
+      ]
+    },
+    {
+      "id": "G5",
+      "severity": "critical",
+      "title": "One caret/selection insertion contract is not shared by mic consumers",
+      "families": [
+        "native_input",
+        "speech_dictation",
+        "notes_editor"
+      ],
+      "evidence": [
+        "docs/internal/betterment/native-experience/CURRENT-STATE.md:92-102"
+      ]
+    },
+    {
+      "id": "G6",
+      "severity": "critical",
+      "title": "Native presence is disabled after a broken renderer; repair and owner proof are unknown",
+      "families": [
+        "native_presence"
+      ],
+      "evidence": [
+        "docs/internal/betterment/native-experience/CURRENT-STATE.md:104-118"
+      ]
+    },
+    {
+      "id": "G7",
+      "severity": "high",
+      "title": "Mounted window, retained operation and dirty document lifecycle is not explicit across apps",
+      "families": [
+        "windows",
+        "meeting_intelligence",
+        "automation_build",
+        "send_commit"
+      ],
+      "evidence": [
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:54-65"
+      ]
+    },
+    {
+      "id": "G8",
+      "severity": "high",
+      "title": "Terminal/run-monitor input, scroll, stop and recovery are not one contract",
+      "families": [
+        "terminals_processes",
+        "agent_result"
+      ],
+      "evidence": [
+        "docs/internal/betterment/native-experience/APPLICATION-MODEL.md:73-88"
+      ]
+    },
+    {
+      "id": "G9",
+      "severity": "high",
+      "title": "Capability and tracker completion do not establish owner observation or native acceptance",
+      "families": [
+        "components_reference",
+        "feedback"
+      ],
+      "evidence": [
+        "docs/internal/betterment/native-experience/README.md:24-31",
+        "docs/internal/betterment/TRACKER.md:32-34"
+      ]
+    },
+    {
+      "id": "G10",
+      "severity": "high",
+      "title": "External provider readiness, egress and operation outcomes remain unknown for accounts, engines and sends",
+      "families": [
+        "accounts",
+        "engines_assignment",
+        "send_commit"
+      ],
+      "evidence": [
+        "docs/CAPABILITIES.md:1-96",
+        "docs/internal/betterment/TRACKER.md:218-229"
+      ]
+    },
+    {
+      "id": "G11",
+      "severity": "high",
+      "title": "Physical speech, recording hardware, WebKit and assistive-technology task proof are not established",
+      "families": [
+        "speech_dictation",
+        "meeting_record",
+        "components_reference"
+      ],
+      "evidence": [
+        "docs/internal/betterment/native-experience/README.md:24-31",
+        "docs/internal/betterment/native-experience/CURRENT-STATE.md:120-172"
+      ]
+    },
+    {
+      "id": "G12",
+      "severity": "high",
+      "title": "Send S2 remains open and project update result is not established by the current records",
+      "families": [
+        "send_commit",
+        "project_update"
+      ],
+      "evidence": [
+        "docs/internal/betterment/TRACKER.md:139-149,218-229"
+      ]
+    }
+  ],
+  "audit_result": {
+    "critical_gap_count": 12,
+    "files_written": [
+      "docs/internal/betterment/native-experience/USE-CASE-INVENTORY.json"
+    ],
+    "product_code_files_written": [],
+    "tests_or_builds_run": [],
+    "network_calls": [],
+    "owner_state_accessed": false,
+    "tuesday_question": "The Desk has many declared windows and jobs, but the owner cannot yet be assumed to complete the explorer/resource workload on a Tuesday; the critical gaps above are the bounded reasons."
+  }
+}

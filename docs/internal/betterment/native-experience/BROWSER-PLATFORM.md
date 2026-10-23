@@ -68,12 +68,31 @@ of an API does not establish every subfeature or correct rendering. Installed
 Safari, the owner's Firefox application, and native WKWebView are not the
 same thing as these isolated automation engines.
 
-Reproduce using the existing lock and an isolated HOME with the real browser
-cache, as for other browser checks in CLAUDE.md:
-`uv run python scripts/test_lock.py -- python scripts/probe_ui_capabilities.py`.
-The script reports missing engines as errors and exits nonzero. A false
-feature flag is a useful result, not a failed application test. It makes no
-hub request, permission prompt, or owner-data change.
+Reproduce on this Mac after the development environment and browser binaries
+are installed. This invocation actually isolates HOME, retains the real browser
+cache, uses the existing lock and removes its scratch home afterward:
+
+```sh
+python3 - <<'PYPROBE'
+import os
+from pathlib import Path
+import subprocess
+import tempfile
+real_home = Path.home()
+with tempfile.TemporaryDirectory(prefix="holdspeak-ui-probe-") as scratch:
+    env = dict(os.environ, HOME=scratch,
+               PLAYWRIGHT_BROWSERS_PATH=str(real_home / "Library/Caches/ms-playwright"),
+               UV_CACHE_DIR=str(real_home / "Library/Caches/uv"),
+               UV_NO_SYNC="1", HOLDSPEAK_SKIP_WEB_BUILD="1")
+    subprocess.run(["uv", "run", "python", "scripts/test_lock.py", "--",
+                    "python", "scripts/probe_ui_capabilities.py"], env=env, check=True)
+PYPROBE
+```
+
+Optional missing APIs report false independently; they must not erase the
+rest of an engine's report. A missing engine or a genuine probe failure is
+still an error with nonzero exit. The probe makes no hub request, permission
+prompt or owner-data change. This is not an application test.
 
 ### Typed adapter boundary
 
@@ -137,7 +156,7 @@ groups instead.
 | --- | --- |
 | Baseline now | Pointer capture with fallback; native focus/selection/IME; container-query layout with CSS fallback; stable scroll ownership; WAAPI/rAF drag loop; reduced-motion branch; local performance trace recipe. |
 | Progressive next | Popover menus; anchor positioning; same-document View Transitions; measured cold-list containment; clipboard/screen-capture adapters with denial states. Each gets Firefox, WebKit and Chromium probes. |
-| Defer until evidence | OS window move/resize, global commands, file-manager DND, native capture and AppKit bridge expansion. These are platform work, not proof that ReactDOM needs replacement. |
+| Native integration boundary | System-wide shortcuts, OS-managed window movement, Finder/file-manager transfer and native capture use the existing native boundary when required. This does not defer application command routing, internal drag/drop, browser file drop or explorer behavior; those are core desktop-framework work. See the application model. |
 
 ## Unknowns and risks
 
