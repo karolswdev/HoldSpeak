@@ -4,16 +4,18 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-23 (adversarial workflow reviews)
+**Last updated:** 2026-10-23 (native-experience repairs)
 
 ## Current phase
 
-Native-experience repair wave — Ask saved-thread selection: the first small
+Native-experience repair wave — #1433, Ask saved-thread selection: the first small
 repair gives saved-thread reads their own generation. An older response or
 failure cannot replace the selected thread, New Ask or a closed window.
 Focused component proof: 46 tests passed, with seven new assertions red on
-the unpatched component. Required quick/deployment results are recorded in
-the repair PR. Settings, Capture and both Stop findings remain open; this
+the unpatched component. Required quick green: build, 143 related Vitest, 110 desktop sweep,
+27 canon and 1,126 repository guards. Three focused glass cases passed;
+Firefox answer captures were inspected at 1440 and 393. Deployment identity
+is checked after merge. Settings, Capture and both Stop findings remain open; this
 does not close the audit or claim owner UX acceptance.
 
 
@@ -2223,6 +2225,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1433 — Ask saved-thread authority:** older reads cannot overwrite a new selection, New Ask or Close. Seven regression assertions red before the repair; 46 focused/143 related component tests, three glass cases, required quick and inspected 1440/393 captures green. Other audit findings remain open.
 
 - **#1432 — review evidence wording:** distinguish the executed publication checks from the additional Settings fixture/control. Local post-merge packet review re-check is RATIFY; product findings remain open.
 - **#1431 — 47 adversarial workflow reviews:** independent whole-job/convergence/user-value reviews, root reconciliation and corrected delivery priorities; 204 proposed acceptance challenges. Product fixes remain open; isolated Settings return conflict reproduced. Required quick green.

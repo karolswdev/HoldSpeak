@@ -64,4 +64,9 @@ against the unpatched component. Deferred reads cover A/B ordering, stale
 failures and loading, New Ask, Close, same-ID reopen, About and follow-up
 thread identity. These are isolated component observations, not provider or
 owner acceptance. The remaining audit findings and appearance judgment stay
-open. The delivery PR records the required quick check and deployment.
+open. [PR1433](https://github.com/karolswdev/HoldSpeak/pull/1433) records delivery.
+The required quick passed: build, 143 related Vitest tests, 110 desktop-sweep
+cases, 27 canon and 1,126 repository guards. All three `test_ask_glass.py`
+cases passed with an isolated hub and recorded inference leaf. Root inspected
+Firefox answer captures at 1440 and 393. This does not execute a real provider
+or establish owner aesthetic acceptance.
