@@ -5,6 +5,14 @@ research). Source/test inventory only: no test runs, Desk walk, owner-state
 inspection, or full workflow atlas. Anchors are baseline-specific and can
 drift.
 
+## Adversarial follow-up
+
+All 47 inventory families now have [individual adversarial reviews](adversarial/README.md).
+Read their [reconciliation](adversarial/SYNTHESIS.md) before using this baseline
+matrix as an implementation brief. They correct active/retained routes, public-job
+associations and over-broad missing-behavior claims. The original matrix remains
+a source snapshot; neither it nor the reviews establishes live task acceptance.
+
 ## Readout and scope
 
 The Desk has a credible shell, not a complete desktop application model. The
