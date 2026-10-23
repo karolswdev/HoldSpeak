@@ -4,6 +4,14 @@ Research and proposed design criteria, 2026-10-23; baseline PR1428. This is
 not a new visual theme, a browser capability claim, or a replacement for the
 Constitution and UX-CANON. The owner's Workbench meets Pop!_OS direction stays.
 
+## Desktop application lens
+
+The framework serves applications, windows and explorers, not pages fitted
+inside frames. The [application model](APPLICATION-MODEL.md) makes per-window
+navigation, selection, contextual commands, resource identity, view modes and
+cross-window operations first-class. The task patterns below live inside that
+model; a polished form alone is not proof of a native-feeling application.
+
 ## Experience thesis
 
 A desktop experience earns trust when the same action has the same result,

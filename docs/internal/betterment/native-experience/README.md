@@ -12,9 +12,10 @@ new canon, or owner aesthetic acceptance.
 ## Result
 
 Retain React/TypeScript/DOM, the current Desk compositor, Zustand, RuntimeBus,
-FastAPI and native adapters. The investment is a stronger application UI
-framework inside that stack: shared interaction behavior, complete task
-patterns, deliberate visual composition, and measured rendering. PR1428
+FastAPI and native adapters. The investment is a desktop application
+framework inside that stack: application/window identity and lifecycle,
+selection, navigation, commands, transfer, editing, complete task views,
+deliberate visual composition and measured rendering. PR1428
 improved shared material and authority; it did not prove this target achieved.
 
 The owner has authorized the stack direction and substantial research.
@@ -22,10 +23,22 @@ Implementation recommendations below remain proposed, not new canon or
 shipped capabilities. No replacement toolkit, package addition, React upgrade,
 platform wrapper, or product-code change is part of this research delivery.
 
+## Owner clarification: applications, not contained pages
+
+The owner clarified that the framework must serve native-feeling apps,
+windows and explorers throughout the Desk. Preferences and conversations are
+important views, but cannot define the whole architecture. The
+[application model](APPLICATION-MODEL.md) now defines the missing common
+contracts and an explorer-style acceptance workload. This extends PR1429's
+first research packet; its Settings-first checkpoint alone was too narrow.
+
 ## Read this packet
 
 | Record | Purpose |
 | --- | --- |
+| [Use-case behavior audit](USE-CASE-AUDIT.md) | Whole-product job/behavior matrix, current evidence, gaps and prioritized cross-application journeys. |
+| [Inventory snapshot](USE-CASE-INVENTORY.json) | Reconciliation of the existing jobs, capability catalogue, recipes, manifest and object/specialized hosts; not a new runtime registry. |
+| [Application model](APPLICATION-MODEL.md) | Desktop application/window/resource identity, lifecycle, selection, navigation, commands and cross-window operations. |
 | [Experience principles](EXPERIENCE-PRINCIPLES.md) | Define the visible and behavioral qualities we mean by nearly OS-native. |
 | [Current state](CURRENT-STATE.md) | Audit existing seams, reuse opportunities, gaps and baseline-specific source anchors. |
 | [Interaction foundation](INTERACTION-FOUNDATION.md) | React roadmap, accessible behavior, asynchronous state and scoped library reuse. |
@@ -41,6 +54,21 @@ browser note and reproducible with `scripts/probe_ui_capabilities.py`. No
 owner-state walk, performance benchmark, assistive-technology run or WebKit
 application-task validation was performed.
 
+## Whole-product use-case audit
+
+The owner asked to audit all use cases. Existing sources describe 13 public
+jobs, 87 catalogue capabilities, 117 cluster-qualified betterment slices,
+and 25 manifest rows (21 active and four parked redirects). The behavioral
+audit reconciles those sources and object/specialized hosts. It records which
+shared application behaviors each family needs and distinguishes source
+implementation, named tests, executed layout floors, and observed task quality.
+
+This is coverage of the current declared product corpus, not a claim that
+every state/gesture/provider combination has been exercised or that future
+unwritten jobs are known. Audit shared behaviors once, map every declared
+family to them, then prioritize real cross-application journeys by user cost
+and reuse. Keep existing capability and recipe records authoritative.
+
 ## The architecture to invest in
 
 ```mermaid
@@ -48,23 +76,28 @@ flowchart TD
   P[Browser DOM and existing native adapters] --> B[Input, focus, selection and lifecycle behavior]
   T[Existing design tokens and material] --> C[Existing public controls and surface species]
   B --> C
-  C --> X[Complete task patterns and typed view-model adapters]
+  C --> V[Application and per-window view models]
+  V --> X[Complete task views and typed resource adapters]
   X --> S[Settings and preference editing]
   X --> A[Ask and sourced conversations]
   X --> L[People and collection-detail work]
+  V --> E[Explorer and resource applications]
   X --> O[Other application and object windows]
   X --> R[Components reference with fixture adapters]
   W[Existing window frame, compositor and command registry] --> S
   W --> A
   W --> L
   W --> O
+  W --> E
+  V --> R
 ```
 
 These are responsibilities in the existing folders, not six new packages,
 a serialized layout language, a second window registry, or a generic
 application engine. Existing primitives remain useful. The missing common
-unit is often a complete task pattern with an explicit division of state,
-layout, focus, scrolling and recovery ownership.
+layer is an application/view contract joining identity, navigation, selection,
+commands and operations. Complete task patterns are shared views within it,
+with explicit state, layout, focus, scrolling and recovery ownership.
 
 For example, `ComposerWell` already owns arrangement while the caller owns
 its draft and request. The next step is to share the conversation composition
@@ -78,7 +111,7 @@ original divergence intact.
 | Decision | Status | Consequence and reconsideration |
 | --- | --- | --- |
 | Keep the existing React stack; no replacement UI experiments | **Owner direction** | Investment improves this implementation. Reconsider only on a new owner instruction. |
-| Complete production patterns are the next framework unit | **Recommendation** | Start with Settings, Ask and People; the reference consumes the same pattern code. Revisit an abstraction if it adds ceremony without a second useful consumer. |
+| Application/view contracts and complete production patterns are the next framework investment | **Recommendation** | Prove explorer/resource behavior alongside preferences, then Ask and People; the reference consumes the same pattern code. Revisit an abstraction if it adds ceremony without a second useful consumer. |
 | Retain proven behavior; reuse a mature headless primitive for a diagnosed gap | **Recommendation** | React Aria is an optional source of behavior behind the existing public control API. No default theme or blanket component migration. |
 | Make layout/material ownership explicit | **Recommendation** | Frame owns head reservation and window physics; pattern owns composition; species owns paint and interaction states. Feature code supplies domain content and actions. |
 | Preserve native DOM editing and the existing mic authority | **Existing canon plus recommendation** | Unify caret/selection insertion where semantics differ; retain audio recovery, composition and undo. No browser speech-service fallback. |
@@ -145,12 +178,14 @@ conformance or screenshot bounds must not be reported as owner delight.
 
 ## First concrete checkpoint
 
-Deliver the first shared production preference pattern in Settings, show that
-same pattern in Components with deterministic state fixtures, and produce
-paired task/visual/keyboard/voice evidence plus a local timing baseline. The
+Prove the application/view contracts in an existing repository or resource
+browser alongside the shared Settings preference consumer. Demonstrate
+independent window history and selection, contextual commands and supported
+cross-window operations, with those same models in Components fixtures.
+Produce paired task/visual/keyboard/voice evidence and a local timing baseline. The
 [delivery plan](DELIVERY-PLAN.md) scopes this into small changes and names the
-proof. Success is an owner completing a useful preference task with preserved
-work and an interface they like; it is not the number of new components.
+proof. Success is an owner completing resource and preference work across windows
+with preserved state, coherent commands and an interface they like; it is not the number of new components.
 
 No Vision Control portfolio was created or transitioned. Its framing and
 adoption method was applied to the existing repository records; the packet
