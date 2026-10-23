@@ -19,7 +19,7 @@ keyboard front authority use the mounted compositor snapshot.
 
 Scope, adoption and observations:
 `docs/internal/betterment/MODERNIZATION-IMPLEMENTATION-2026-10-22.md`.
-Required check: MODERNIZE_QUICK_PENDING.
+Required check: build, 4,162 related web cases, 59 affected browser cases including strict Firefox feedback capture and resize/drag checks, 110 desk sweep cases, 27 canon and 1,126 repository guards passed; typecheck passed.
 Owner aesthetic acceptance remains open. This does not change the betterment
 recipe count or claim every functional/native/provider operation is complete.
 The prior main62358 tape is complete and red: 13 Python and nine browser
