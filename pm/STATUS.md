@@ -8,6 +8,17 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Native-experience research within React — #1429: the
+owner chose the current stack and asked for substantial research toward a
+nearly OS-native experience. Research, source audit, compatibility evidence
+and a proposed production-pattern delivery sequence are in
+`docs/internal/betterment/native-experience/README.md`.
+No UI-stack replacement, package addition or product-code change is included.
+First implementation checkpoint: a real Settings preference pattern shared
+with Components, then Ask and People. These are proposed work packages, not
+adoption or aesthetic acceptance. Required checks: build, 37 focused documentation checks, 110 desk sweep cases, 27 canon and 1,126 repository guards passed; nine changed Markdown files have valid local navigation; isolated Chromium/Firefox/WebKit capability probes passed.
+
+
 Shared surface modernization — #1428: the owner requires the
 in-desk design reference, common layout/material adoption, compositor
 consistency and documentation reconciliation across active surface families.
@@ -22,9 +33,17 @@ Scope, adoption and observations:
 Required check: build, 4,162 related web cases, 59 affected browser cases including strict Firefox feedback capture and resize/drag checks, 110 desk sweep cases, 27 canon and 1,126 repository guards passed; typecheck passed.
 Owner aesthetic acceptance remains open. This does not change the betterment
 recipe count or claim every functional/native/provider operation is complete.
-The prior main62358 tape is complete and red: 13 Python and nine browser
-failures; this change's full tape follows merge and remains separate from the
-required quick check.
+The completed main787c55c8 tape is red: 12 Python and nine browser failures;
+web baseline and strict Firefox timing pass. The previous main62358 tape was
+red: 13 Python and nine browser failures. Root compared failed-test names:
+three newly observed 393px Room checks still require an inline History tab
+that now folds into a menu; their helper and live menu navigation need a
+focused fix-forward. One newly observed scheduled-microphone failure remains
+unattributed. Other run-to-run differences do not prove repairs. These facts
+are separate from the green required quick and the research recommendations.
+Native Presence was closed and its enabled setting saved false at the owner's
+request on 2026-10-23. Its rendering fault remains unverified and it must stay
+off until repaired and explicitly re-enabled.
 
 Richer desktop icons — #1427: the owner rejected #1426's art as
 “toilet bowls” and too basic. All shared object, dock/system and Settings
@@ -2148,6 +2167,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1429 — native-experience research:** retained React stack, source audit, primary-source research, three-engine capability probe and proposed production-pattern delivery. No product UI or dependency change.
 
 - **#1428 — shared surface framework and reference:** working local patterns, common interior material/layout, mounted front authority, responsive window heads, and current author documentation. Required quick proof is in Current phase; exact deployed merge/build is checked through `/api/system/identity`.
 
