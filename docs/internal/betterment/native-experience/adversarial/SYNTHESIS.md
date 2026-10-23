@@ -111,8 +111,9 @@ labels, turn/seen fields, common rename support, automatic summary policy,
 owner no-Keep decisions and parked routes. Current behavior is evidence, not
 a reason to preserve surprising keyboard/menu target differences.
 
-The one review-time execution was the Settings fixture and its control,
-under the test lock with isolated HOME. No owner configuration, calendar,
+Beyond the executed publication checks recorded in the index, the one
+review-specific experiment was the Settings fixture and its control, under
+the test lock with isolated HOME. No owner configuration, calendar,
 microphone, account, provider send, terminal control or native host was used
 by the reviewers. Existing captures are explicitly scoped visual references.
 No live cross-product walk, assistive-technology acceptance, performance
