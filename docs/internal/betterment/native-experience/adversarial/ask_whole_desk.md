@@ -48,3 +48,28 @@ TUESDAY: Yes for one short, already-visible question; no for a slow or interrupt
 5. Ask an engine to prepare a send and deny a held write; verify Prepared/no egress and no Wrote mutation.
 
 UNKNOWN: No tests were executed. No browser captures, model latency/refusal observation, live provider/native behavior, performance, accessibility, or owner acceptance was established. The baseline anchors may drift.
+
+## Astra post-merge review — PR1433
+
+VERDICT: RATIFY
+
+FINDINGS: No blocking finding in this bounded repair.
+`web/src/desk/components/AskPanel.tsx:213` gives saved reads independent
+authority; `:301` captures it after invalidation, and both success and failure
+check it. New Ask, Close and unmount invalidate that authority.
+`web/src/desk/__tests__/ask.app.test.tsx:422` exercises deferred responses,
+retained About and the next question's thread identity. Root checked the
+merged product diff against main `3a44e5e71` and read the executed check tails.
+
+CONDITIONS: None for this repair.
+
+MISSED: Source fidelity, global selection targeting, specialized Ask modes
+and the remaining whole-job findings stay open; this repair does not settle
+them. They require their own real-consumer changes and acceptance.
+
+TUESDAY: Selecting another saved conversation now keeps that conversation
+when an older read answers later.
+
+UNKNOWN: Real-provider behavior, assistive technology and owner appearance
+acceptance were not observed. The full main tape is running after merge.
+This is Astra's scoped post-merge review, not Muad'Dib's check.
