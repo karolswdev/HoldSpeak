@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-Richer desktop icons — RICHER_PR_PENDING: the owner rejected #1426's art as
+Richer desktop icons — #1427: the owner rejected #1426's art as
 “toilet bowls” and too basic. All shared object, dock/system and Settings
 art now uses angled construction, coloured fronts, layered
 paper, metal facets and distinct agent portraits. Names, sizes, real image
