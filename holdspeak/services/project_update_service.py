@@ -2238,6 +2238,159 @@ class ProjectUpdateService:
         )
         return self._project_axes(self._db.project_updates.get_update(new_id))
 
+    def _runtime_project_update_job_id(
+        self, principal: Principal, project_id: str, conn: Any,
+    ) -> str:
+        """Resolve the runner-issued job without accepting caller input.
+
+        HTTP tool calls carry the item in the runner context.  CLI calls are
+        cross-process, so the runner binds the job to the durable run
+        credential before the child starts.  The older ``cli_engine_runs`` /
+        Workbench-item join remains a recovery path for runs recorded before
+        this binding.
+        """
+        if principal.kind is not PrincipalKind.AGENT:
+            return ""
+        try:
+            from .conductor_launch import _run_project_job
+
+            candidate = str(_run_project_job() or "").strip()
+        except Exception:
+            candidate = ""
+        if not candidate:
+            try:
+                from ..principals import agent_credentials
+
+                candidate = str(
+                    agent_credentials.project_update_job(principal.identity) or ""
+                ).strip()
+            except Exception:
+                candidate = ""
+        try:
+            from .run_trace import current_item, run_id_of
+
+            item_id = str(current_item() or "").strip()
+            run_id = str(run_id_of(principal.identity) or "").strip()
+        except Exception:
+            item_id, run_id = "", ""
+        if not item_id and run_id:
+            row = conn.execute(
+                "SELECT item_id FROM cli_engine_runs WHERE run_id=? AND item_id IS NOT NULL ORDER BY id DESC LIMIT 1",
+                (run_id,),
+            ).fetchone()
+            item_id = str(row["item_id"] or "") if row is not None else ""
+        if not candidate and item_id:
+            row = conn.execute(
+                "SELECT context_json FROM workbench_items WHERE id=?",
+                (item_id,),
+            ).fetchone()
+            if row is not None:
+                try:
+                    context = json.loads(row["context_json"] or "{}")
+                except (TypeError, ValueError):
+                    context = {}
+                if isinstance(context, dict):
+                    candidate = str(context.get("project_update_job_id") or "").strip()
+        if candidate:
+            row = conn.execute(
+                "SELECT project_id, state FROM project_update_jobs WHERE id=?",
+                (candidate,),
+            ).fetchone()
+            if row is None or str(row["project_id"] or "") != str(project_id):
+                raise ConflictError(
+                    "The update run is not bound to this project.",
+                    code="project_update_job_scope",
+                    context={"status": 409},
+                )
+        return candidate
+
+    @staticmethod
+    def _job_result_update_id(job: dict[str, Any]) -> str:
+        try:
+            result = json.loads(job.get("result_json") or "{}")
+        except (TypeError, ValueError):
+            result = {}
+        return str(result.get("id") or "").strip() if isinstance(result, dict) else ""
+
+    def _require_project_update_job(
+        self, conn: Any, project_id: str, job_id: str,
+    ) -> dict[str, Any]:
+        row = conn.execute(
+            "SELECT * FROM project_update_jobs WHERE id=? AND project_id=?",
+            (str(job_id), str(project_id)),
+        ).fetchone()
+        if row is None:
+            raise ConflictError(
+                "The update run is not available.",
+                code="project_update_job_required", context={"status": 409},
+            )
+        job = dict(row)
+        if str(job.get("state") or "") != "running":
+            raise ConflictError(
+                "The update run has stopped.",
+                code="project_update_stopped", context={"status": 409},
+            )
+        return job
+
+    def _persist_agent_update_for_job(
+        self, project_id: str, composed: dict[str, Any], job_id: str,
+    ) -> dict[str, Any]:
+        """Persist one producer result behind the job's SQLite fence."""
+        body_md = composed["body_md"]
+        claims_json = composed["claims_json"]
+        manifest_json = composed["source_manifest_json"]
+        with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            job = self._require_project_update_job(conn, project_id, job_id)
+            existing_id = self._job_result_update_id(job)
+            if existing_id:
+                existing = self._db.project_updates.get_update_in_transaction(conn, existing_id)
+                if existing is not None and str(existing.get("project_id") or "") == str(project_id):
+                    return self._project_axes(existing)
+            draft = conn.execute(
+                """SELECT * FROM project_updates
+                   WHERE project_id=? AND lifecycle='draft'
+                   ORDER BY draft_revision DESC, created_at DESC LIMIT 1""",
+                (str(project_id),),
+            ).fetchone()
+            new_id = generate_pupd_id()
+            if draft is not None:
+                new_row = self._db.project_updates.supersede_draft_in_transaction(
+                    conn, str(draft["id"]), new_update_id=new_id,
+                    body_md=body_md, claims_json=claims_json,
+                    source_manifest_json=manifest_json,
+                    generator=composed["generator"],
+                    generator_host=composed.get("generator_host"),
+                    generator_model=composed.get("generator_model"),
+                )
+            else:
+                self._db.project_updates.insert_update_in_transaction(
+                    conn, update_id=new_id, project_id=project_id,
+                    project_revision=int(composed.get("project_revision") or 0),
+                    review_id=composed.get("review_id"), draft_revision=1,
+                    body_md=body_md, claims_json=claims_json,
+                    source_manifest_json=manifest_json,
+                    generator=composed["generator"],
+                    generator_host=composed.get("generator_host"),
+                    generator_model=composed.get("generator_model"),
+                )
+                new_row = self._db.project_updates.get_update_in_transaction(conn, new_id)
+            result = self._project_axes(new_row)
+            # Preserve the runner metadata beside the actual result.  Stop
+            # uses automation_id to find this exact parent; axes alone would
+            # lose that binding after the first producer write.
+            try:
+                metadata = json.loads(job.get("result_json") or "{}")
+            except (TypeError, ValueError):
+                metadata = {}
+            if isinstance(metadata, dict):
+                result = {**metadata, **result}
+            conn.execute(
+                "UPDATE project_update_jobs SET result_json=? WHERE id=? AND state='running'",
+                (json.dumps(result, sort_keys=True), str(job_id)),
+            )
+            return result
+
     def write_agent_update(
         self,
         principal: Principal,
@@ -2246,6 +2399,7 @@ class ProjectUpdateService:
         body_md: str,
         source_refs: Iterable[str] = (),
         generator: str = "agent",
+        job_id: str | None = None,
     ) -> dict[str, Any]:
         """Persist plain text returned by an update automation.
 
@@ -2274,6 +2428,10 @@ class ProjectUpdateService:
                 section="progress", kind=KIND_OBSERVATION,
                 support=SUPPORT_SOURCE_LINKED if refs else SUPPORT_UNKNOWN,
             ))
+        bound_job_id = str(job_id or "").strip()
+        if not bound_job_id:
+            with self._db._connection() as conn:
+                bound_job_id = self._runtime_project_update_job_id(principal, project_id, conn)
         composed = {
             "body_md": text + ("\n" if not text.endswith("\n") else ""),
             "claims_json": json.dumps([claim.to_dict() for claim in claims],
@@ -2281,6 +2439,7 @@ class ProjectUpdateService:
             "source_manifest_json": json.dumps({
                 "project_revision": room.get("revision", 0),
                 "agent_sources": refs,
+                **({"automation_job_id": bound_job_id} if bound_job_id else {}),
             }, sort_keys=True, separators=(",", ":")),
             "generator": str(generator or "agent"),
             "generator_host": None,
@@ -2288,6 +2447,8 @@ class ProjectUpdateService:
             "project_revision": room.get("revision", 0),
             "review_id": None,
         }
+        if bound_job_id:
+            return self._persist_agent_update_for_job(project_id, composed, bound_job_id)
         return self._persist_draft(project_id, composed)
 
     # ── Betterment P1: the engine pass behind Write update ──────────────
@@ -2324,9 +2485,14 @@ class ProjectUpdateService:
         with self._db._connection() as conn:
             conn.execute(
                 """INSERT INTO project_update_jobs
-                   (id, project_id, base_update_id, base_body_sha, state, started_at)
-                   VALUES (?, ?, ?, ?, 'running', ?)""",
-                (job_id, project_id, update_id, _body_sha(base.get("body_md")), utc_now_iso()),
+                   (id, project_id, base_update_id, base_body_sha, state, result_json, started_at)
+                   VALUES (?, ?, ?, ?, 'running', ?, ?)""",
+                (
+                    job_id, project_id, update_id, _body_sha(base.get("body_md")),
+                    json.dumps({"automation_id": str(automation_id or "")}, sort_keys=True)
+                    if automation_id else None,
+                    utc_now_iso(),
+                ),
             )
         if background:
             threading.Thread(
@@ -2356,8 +2522,11 @@ class ProjectUpdateService:
             from .workbench_service import WorkbenchService
 
             run = asyncio.run(WorkbenchService(self._db).run(
-                principal, automation_id, memory_enabled=False,
+                principal, automation_id, memory_enabled=False, request_id=job_id,
             ))
+            if isinstance(run, dict) and run.get("stopped"):
+                state, reason = "stopped", "stopped"
+                return
             deliveries = run.get("deliveries", []) if isinstance(run, dict) else []
             written = next(
                 (delivery for delivery in deliveries
@@ -2456,19 +2625,64 @@ class ProjectUpdateService:
             "started_at": row["started_at"],
             "finished_at": row.get("finished_at"),
             "applied_update_id": row.get("applied_update_id"),
+            "result_update_id": (
+                str(result.get("id") or "") if isinstance(result, dict) and result.get("id") else None
+            ),
             "body_md": (result or {}).get("body_md"),
             "generator_model": (result or {}).get("generator_model"),
             "generator_host": (result or {}).get("generator_host"),
         }
 
     def stop_engine_pass(self, principal: Principal, job_id: str) -> dict[str, Any]:
-        self._job_row(job_id)
+        parent_operation_id = ""
+        automation_id = ""
         with self._db._connection() as conn:
+            conn.execute("BEGIN IMMEDIATE")
+            row = conn.execute(
+                "SELECT * FROM project_update_jobs WHERE id=?", (str(job_id),),
+            ).fetchone()
+            if row is None:
+                raise NotFound("update_job", job_id)
+            try:
+                metadata = json.loads(row["result_json"] or "{}")
+            except (TypeError, ValueError):
+                metadata = {}
+            automation_id = str(metadata.get("automation_id") or "") if isinstance(metadata, dict) else ""
             conn.execute(
                 """UPDATE project_update_jobs SET state = 'stopped', reason = 'stopped',
-                   finished_at = ? WHERE id = ? AND state = 'running'""",
-                (utc_now_iso(), job_id),
+                   finished_at = COALESCE(finished_at, ?) WHERE id = ? AND state = 'running'""",
+                (utc_now_iso(), str(job_id)),
             )
+            if automation_id:
+                parent = conn.execute(
+                    """SELECT p.operation_id FROM kernel_parent_runs p
+                       JOIN kernel_operations o ON o.operation_id=p.operation_id
+                       WHERE o.principal_kind=? AND o.principal_identity=?
+                         AND o.idempotency_key=? AND p.kind='workbench'
+                         AND p.definition_ref=?
+                       ORDER BY p.created_at DESC LIMIT 1""",
+                    (
+                        principal.name, principal.identity, str(job_id),
+                        f"workbench:{automation_id}",
+                    ),
+                ).fetchone()
+                if parent is not None:
+                    parent_operation_id = str(parent["operation_id"])
+        # The job fence commits before the parent signal.  If the runner is
+        # between its parent admission and this lookup, its post-admission
+        # fence performs the same exact cancellation.
+        if parent_operation_id:
+            try:
+                from holdspeak.kernel.runtime import _service
+
+                _service().parent_run_controller.cancel_by_operation_id(
+                    principal, parent_operation_id,
+                )
+            except Exception:
+                _log.info(
+                    "project update parent already terminal or pending",
+                    extra={"job_id": job_id, "parent_operation_id": parent_operation_id},
+                )
         return self.get_engine_pass(job_id)
 
     def apply_engine_pass(
@@ -2759,6 +2973,8 @@ class ProjectUpdateService:
         # base, then let later edits reuse that agent-owned row. Carry the
         # refs the run looked at; the job's Apply fence protects owner edits.
         if principal.kind is PrincipalKind.AGENT:
+            with self._db._connection() as conn:
+                bound_job_id = self._runtime_project_update_job_id(principal, project_id, conn)
             text = str(body_md or "").strip()
             if not text:
                 raise ValidationError("The update engine returned no text.", code="update_empty")
@@ -2786,7 +3002,7 @@ class ProjectUpdateService:
                 # The job's Apply fence chooses this separate result.
                 result = self.write_agent_update(
                     principal, project_id, body_md=text, source_refs=refs,
-                    generator=own_generator,
+                    generator=own_generator, job_id=bound_job_id or None,
                 )
             else:
                 claims = [
@@ -2804,15 +3020,48 @@ class ProjectUpdateService:
                 if not isinstance(manifest, dict):
                     manifest = {}
                 manifest["agent_sources"] = refs
-                self._db.project_updates.update_draft(
-                    update_id,
-                    body_md=text + ("\n" if not text.endswith("\n") else ""),
-                    claims_json=json.dumps(claims, sort_keys=True, separators=(",", ":")),
-                    source_manifest_json=json.dumps(manifest, sort_keys=True, separators=(",", ":")),
-                    generator=own_generator,
-                    generator_model=str(engine or "") or None,
-                )
-                result = self._project_axes(self._db.project_updates.get_update(update_id))
+                if bound_job_id:
+                    with self._db._connection() as conn:
+                        conn.execute("BEGIN IMMEDIATE")
+                        job = self._require_project_update_job(conn, project_id, bound_job_id)
+                        result_id = self._job_result_update_id(job)
+                        if update_id not in {str(job["base_update_id"]), result_id} \
+                                and str(manifest.get("automation_job_id") or "") != bound_job_id:
+                            raise ConflictError(
+                                "The update is outside this run.",
+                                code="project_update_job_scope", context={"status": 409},
+                            )
+                        self._db.project_updates.update_draft_in_transaction(
+                            conn, update_id,
+                            body_md=text + ("\n" if not text.endswith("\n") else ""),
+                            claims_json=json.dumps(claims, sort_keys=True, separators=(",", ":")),
+                            source_manifest_json=json.dumps(manifest, sort_keys=True, separators=(",", ":")),
+                            generator=own_generator,
+                            generator_model=str(engine or "") or None,
+                        )
+                        result = self._project_axes(
+                            self._db.project_updates.get_update_in_transaction(conn, update_id)
+                        )
+                        try:
+                            metadata = json.loads(job.get("result_json") or "{}")
+                        except (TypeError, ValueError):
+                            metadata = {}
+                        if isinstance(metadata, dict):
+                            result = {**metadata, **result}
+                        conn.execute(
+                            "UPDATE project_update_jobs SET result_json=? WHERE id=? AND state='running'",
+                            (json.dumps(result, sort_keys=True), bound_job_id),
+                        )
+                else:
+                    self._db.project_updates.update_draft(
+                        update_id,
+                        body_md=text + ("\n" if not text.endswith("\n") else ""),
+                        claims_json=json.dumps(claims, sort_keys=True, separators=(",", ":")),
+                        source_manifest_json=json.dumps(manifest, sort_keys=True, separators=(",", ":")),
+                        generator=own_generator,
+                        generator_model=str(engine or "") or None,
+                    )
+                    result = self._project_axes(self._db.project_updates.get_update(update_id))
             cmd_id = command_id or generate_pcmd_id()
             project_ref = format_ref("project", project_id)
             envelope = CommandResultEnvelope(

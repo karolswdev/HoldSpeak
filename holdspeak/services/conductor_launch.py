@@ -53,20 +53,31 @@ _HOOK_INSTALLED = False
 # this short-lived context while the tool call is dispatched.  CLI engines
 # use the durable ``project_id`` on their run credential instead.
 _RUN_PROJECT: ContextVar[str] = ContextVar("project_update_run_project", default="")
+_RUN_PROJECT_JOB: ContextVar[str] = ContextVar("project_update_run_job", default="")
 
 
 @contextmanager
-def project_scope(project_id: str):
-    """Bind the project an in-process automation run may update."""
+def project_scope(project_id: str, job_id: str = ""):
+    """Bind the project and runner-issued job for one tool dispatch.
+
+    The job is internal run metadata. It is never read from model-supplied
+    tool arguments.
+    """
     token = _RUN_PROJECT.set(str(project_id or "").strip())
+    job_token = _RUN_PROJECT_JOB.set(str(job_id or "").strip())
     try:
         yield
     finally:
+        _RUN_PROJECT_JOB.reset(job_token)
         _RUN_PROJECT.reset(token)
 
 
 def _run_project() -> str:
     return _RUN_PROJECT.get()
+
+
+def _run_project_job() -> str:
+    return _RUN_PROJECT_JOB.get()
 
 
 # ── the hub database (never a default database outside a hub) ──────────

@@ -724,6 +724,11 @@ class CliEngine(MeetingIntel):
         #: The update automation's project scope, set on the per-call copy by
         #: WorkbenchRunner.  It is bound to the run credential, not user text.
         self.project_id: str = ""
+        #: The runner-owned project-update job bound to this CLI credential.
+        #: It is persisted as an internal launch-scope reference before the
+        #: child process starts, so an MCP callback can resolve it after a
+        #: process boundary.
+        self.project_update_job_id: str = ""
 
     @classmethod
     def from_endpoint(cls, endpoint: str, *, model: str = "", profile_id: str = "") -> "CliEngine":
@@ -919,6 +924,10 @@ class CliEngine(MeetingIntel):
                 palette_name=CONDUCTOR,
                 launch_id=run_id,
                 project_id=self.project_id or None,
+                scope_items=(
+                    (f"project_update_job:{self.project_update_job_id}",)
+                    if self.project_update_job_id else ()
+                ),
             )
         except CredentialPersistError as exc:
             log.warning(f"run credential not stored ({exc}); this run gets no desk tools")

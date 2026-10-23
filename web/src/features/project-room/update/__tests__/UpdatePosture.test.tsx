@@ -754,6 +754,27 @@ describe("Draft update picks its generator from the engine read", () => {
     await draftFromRoom();
     expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("deterministic");
   });
+
+  it("keeps the engine pass waiting when Stop cannot be confirmed", async () => {
+    setupUpdatePosture({ listUpdates: [] });
+    withAssignment(LAN);
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation((url: string, init?: Record<string, unknown>) => {
+      if (url.endsWith("/stop")) return Promise.reject(new Error("hub down"));
+      return base(url, init);
+    });
+    render(<WindowHarness scope="project:p1" />);
+
+    await draftFromRoom();
+    await waitFor(() => {
+      expect(screen.getByTestId("update-engine-pass").getAttribute("data-state")).toBe("running");
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+
+    await waitFor(() => expect(screen.getByText(/STOP NOT CONFIRMED/)).toBeTruthy());
+    expect(screen.getByTestId("update-engine-pass").getAttribute("data-state")).toBe("running");
+    expect(apiFetch.mock.calls.some(([url]) => String(url).endsWith("/stop"))).toBe(true);
+  });
 });
 
 // ── GENERATOR PROVENANCE ──

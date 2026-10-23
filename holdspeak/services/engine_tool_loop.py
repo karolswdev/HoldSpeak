@@ -374,6 +374,7 @@ def call_tool(
     palette: str = "ASK",
     allow_project_update: bool = False,
     project_id: str = "",
+    project_update_job_id: str = "",
     project_update_excluded_refs: list[str] | None = None,
 ) -> str:
     """One tool call through the agent-run MCP gate; recorded under ``trace``."""
@@ -438,7 +439,9 @@ def call_tool(
             run_trace.record_call(trace, name, arguments, response)
             return _tool_answer(response)
     try:
-        with project_scope(target_project):
+        # Job identity comes from the Workbench runner, not the model's
+        # arguments. This binds a tool write to the exact first-Write pass.
+        with project_scope(target_project, project_update_job_id):
             response = handle_message_for_principal(
                 request, principal,
                 palette=selected,
@@ -515,6 +518,7 @@ def run(engine: Any, payload: Mapping[str, Any], cancellation: Any, *, item_id: 
                                                  palette=palette,
                                                  allow_project_update=project_updates_target,
                                                  project_id=str(payload.get("output_target") or "").removeprefix("project_updates:"),
+                                                 project_update_job_id=str(payload.get("project_update_job_id") or ""),
                                                  project_update_excluded_refs=payload.get("project_update_excluded_refs"))})
         messages.append({"role": "assistant", "tool_calls": asked})
         messages.extend(answers)

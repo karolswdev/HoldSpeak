@@ -27,7 +27,7 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
     on this adapter instance, which the runner keeps for its one child."""
 
     def __init__(self, spend_limit_usd: float | None = None, work_folder: str | None = None, *,
-                 desk_tools: bool = True, project_id: str = "") -> None:
+                 desk_tools: bool = True, project_id: str = "", project_update_job_id: str = "") -> None:
         self.tokens = 0
         #: Betterment A4: the automation's Spend limit per run; it overrides
         #: the engine's own limit on an agent CLI that enforces one.
@@ -37,6 +37,9 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
         self.desk_tools = desk_tools
         #: Project scope for an update automation's run credential.
         self.project_id = str(project_id or "").strip()
+        #: Runner-owned job binding for the run credential.  This is never
+        #: taken from model tool arguments.
+        self.project_update_job_id = str(project_update_job_id or "").strip()
         #: Betterment A10: the folder an agent CLI works in, read only (the
         #: automation's Folder source). An HTTP engine has no folder: ignored.
         self.work_folder = work_folder
@@ -48,7 +51,8 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
         no_tools = not self.desk_tools and getattr(engine, "desk_tools", False)
         folder = bool(self.work_folder) and hasattr(engine, "work_folder")
         project_scope = bool(self.project_id) and hasattr(engine, "project_id")
-        if not limit and not no_tools and not folder and not project_scope:
+        project_job = bool(self.project_update_job_id) and hasattr(engine, "project_update_job_id")
+        if not limit and not no_tools and not folder and not project_scope and not project_job:
             return engine
         # A copy for this one call: the routed engine may be shared.
         import copy
@@ -62,6 +66,8 @@ class _MeteredPromptAdapter(CanonicalPromptAdapter):
             limited.work_folder = self.work_folder
         if project_scope:
             limited.project_id = self.project_id
+        if project_job:
+            limited.project_update_job_id = self.project_update_job_id
         return limited
 
     def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, str]:
@@ -117,6 +123,38 @@ class WorkbenchRunner:
             "model": str(entry["profile_id"]).removeprefix("legacy-"),
             "deployment_revision_id": str(entry["deployment_revision_id"]),
         }
+
+    def _project_update_job_state(self, job_id: str, project_id: str) -> str | None:
+        """Read the first-Write fence for runner-owned project updates.
+
+        A normal scheduled project automation has no ``project_update_jobs``
+        row and therefore remains on the existing delivery path.  A manual
+        Write has one row keyed by the Workbench request id.
+        """
+        if not job_id or not project_id:
+            return None
+        with self.db._connection() as conn:
+            row = conn.execute(
+                "SELECT state FROM project_update_jobs WHERE id=? AND project_id=?",
+                (str(job_id), str(project_id)),
+            ).fetchone()
+        return str(row["state"]) if row is not None else None
+
+    def _cancel_stopped_project_parent(
+        self, principal: Principal, parent: Any, job_id: str, project_id: str,
+    ) -> bool:
+        """Post-admission fence: cancel a parent admitted after Stop won."""
+        if self._project_update_job_state(job_id, project_id) != "stopped":
+            return False
+        try:
+            self.broker.parent_run_controller.cancel_by_operation_id(
+                principal, str(parent.operation_id),
+            )
+        except Exception:
+            # The exact parent may already have reached a terminal receipt.
+            # Its child admission/effect fence still sees the elected state.
+            pass
+        return True
 
     def _scheduled_route(self, delegation: dict[str, Any]) -> dict[str, Any]:
         """Read the owner-enabled route by its immutable delegation identity."""
@@ -536,6 +574,17 @@ class WorkbenchRunner:
         instructed=bool(str(wb.instruction or "").strip())
         if recipe is None and not instructed: return {"error":f"The automation {wb.name} has nothing to do yet: write what it should do."}
         recipe=recipe or automation.plain_agent(wb)
+        output_target = str(wb.output_target or "")
+        project_target = output_target.removeprefix("project_updates:") if output_target.startswith("project_updates:") else ""
+        project_update_job_id = ""
+        if project_target and request_id:
+            job_state = self._project_update_job_state(str(request_id), project_target)
+            # Stop-before-admission: do not mint the occurrence, admit a
+            # parent, or reach a provider/effect after the durable Stop fence.
+            if job_state == "stopped":
+                return {"stopped": True, "project_update_job_id": str(request_id)}
+            if job_state == "running":
+                project_update_job_id = str(request_id)
         if request_id and delegation is None:
             with self.db._connection() as conn:
                 existing=conn.execute("SELECT p.operation_id FROM kernel_parent_runs p JOIN kernel_operations o ON o.operation_id=p.operation_id WHERE o.principal_kind=? AND o.principal_identity=? AND o.idempotency_key=? AND p.kind='workbench' AND p.definition_ref=?",(principal.name,principal.identity,request_id,f"workbench:{workbench_id}")).fetchone()
@@ -545,7 +594,13 @@ class WorkbenchRunner:
             # One run = one result: mint the occurrence item and run only it.
             # A scheduled minute or a request id names it, so a replay finds it.
             key=f"schedule:{due_minute}" if delegation is not None else (f"request:{request_id}" if request_id else None)
-            occurrence=automation.mint_occurrence(self.db,wb,item_id=automation.occurrence_id(workbench_id,key) if key else None)
+            occurrence=automation.mint_occurrence(
+                self.db, wb, item_id=automation.occurrence_id(workbench_id,key) if key else None,
+                context=(
+                    {"project_update_job_id": project_update_job_id}
+                    if project_update_job_id else None
+                ),
+            )
             # A finished occurrence is a replay: the parent's idempotency
             # key returns its receipt below; nothing runs twice.
             item_ids=[occurrence.id] if occurrence.status=="pending" else []
@@ -567,6 +622,8 @@ class WorkbenchRunner:
         per_item=deadline_seconds if deadline_seconds is not None else automation.assigned_item_seconds(self.db, workbench_id)
         run_id="wbrun_"+uuid.uuid4().hex[:12]; deadline=time.time()+per_item*max(1,len(items))
         snapshot={"workbench_id":workbench_id,"items":[x.id for x in items],"item_scope":"explicit" if item_ids is not None else "pending_batch","recipe_id":recipe.id,"recipe_revision":str(recipe.last_modified),"memory_enabled":memory_enabled,"request_id":request_id or "","source_event":dict(source_event or {})}
+        if project_update_job_id:
+            snapshot["project_update_job_id"] = project_update_job_id
         if delegation is not None:
             route = self._scheduled_route(delegation)
             if deadline_seconds is None:  # the frozen route names the engine
@@ -590,6 +647,17 @@ class WorkbenchRunner:
             route = self.broker.inference_adoption_service.plans.get_route_plan(
                 ROUTE_PLANNING_AUTHORITY, str(member["route_plan_id"])
             )
+        if project_update_job_id and self._cancel_stopped_project_parent(
+            principal, parent, project_update_job_id, project_target,
+        ):
+            # The parent exists, but Stop won before any child/effect.  Keep
+            # its exact receipt for diagnostics and let the job row own the
+            # stopped outcome.
+            return {
+                "stopped": True,
+                "project_update_job_id": project_update_job_id,
+                "parent_operation_id": str(parent.operation_id),
+            }
         if parent.replayed:
             return self._replayed_result(parent.operation_id)
         # This is coordination metadata only; its receipt links are always retained.
@@ -612,7 +680,6 @@ class WorkbenchRunner:
         base_system=automation.PLAIN_SYSTEM_PROMPT if instructed else (recipe.system_prompt or f"You are {recipe.name}, a helpful assistant.")
         system=inject_skills(self.db,base_system,recipe.id)
         context=_assemble_recipe_context(self.db,recipe); memory=""
-        output_target = str(wb.output_target or "")
         if memory_enabled and not output_target.startswith("project_updates:"):
             from ..workbench_memory import recall_for_prompt
             memory=recall_for_prompt(workbench_id)
@@ -768,13 +835,15 @@ class WorkbenchRunner:
                          # plain text through the CONDUCTOR set.
                          "tool_palette": "CONDUCTOR" if str(wb.output_target or "").startswith("project_updates:") else "ASK",
                          "output_target": str(wb.output_target or ""),
+                         "project_update_job_id": project_update_job_id,
                          "project_update_excluded_refs": project_update_excluded_refs}
 
                 output_target = str(wb.output_target or "")
                 project_target = output_target.removeprefix("project_updates:")
                 adapter = _MeteredPromptAdapter(
                     wb.spend_limit_usd, automation.work_folder_of(wb) if instructed else None,
-                    project_id=project_target if output_target.startswith("project_updates:") else "")
+                    project_id=project_target if output_target.startswith("project_updates:") else "",
+                    project_update_job_id=project_update_job_id)
 
                 def publish_item(value: Any, reservation: dict[str, Any], *, item: Any = item, adapter: Any = adapter) -> str:
                     target = self._route_target(route, int(reservation["route_leg_ordinal"]))

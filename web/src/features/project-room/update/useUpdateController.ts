@@ -432,11 +432,69 @@ export function useUpdateController(
 
   const stopEnginePass = useCallback(async () => {
     if (enginePass.phase !== "running") return;
-    const { jobId } = enginePass;
-    stopPolling();
-    setEnginePass({ phase: "idle" });
-    await updateApi.stopEngineJob(jobId).catch(() => undefined);
-  }, [enginePass]);
+    const { jobId, startedAt } = enginePass;
+    const stopToken = passToken.current;
+    const stopProjectId = projectId;
+    const stopUpdateId = currentId.current;
+    const ownerWasDirty = dirtyNow.current;
+    const stillAuthoritative = () => (
+      passToken.current === stopToken
+      && projectId === stopProjectId
+      && currentId.current === stopUpdateId
+    );
+    try {
+      const stopped = await updateApi.stopEngineJob(jobId);
+      if (!stillAuthoritative()) return;
+      // A response is not a Stop receipt unless the durable job says stopped.
+      // Keep the existing poll and job when the answer is unknown or raced.
+      if (stopped.state !== "stopped") {
+        fail("STOP NOT CONFIRMED", new Error("The update is still running."), () => void stopEnginePass());
+        return;
+      }
+      stopPolling();
+      const resultToken = passToken.current;
+      if (stopped.resultUpdateId) {
+        try {
+          const saved = await updateApi.fetchUpdate(stopped.resultUpdateId);
+          if (
+            passToken.current !== resultToken
+            || projectId !== stopProjectId
+            || currentId.current !== stopUpdateId
+          ) return;
+          // A committed engine row is real history, but it must not replace
+          // owner words typed while the pass ran.  Keep the editor dirty and
+          // refresh the existing update list so the retained row remains
+          // visible by its actual id.  With no owner edit, opening the saved
+          // row is the existing written-result posture.
+          if (!ownerWasDirty) {
+            setCurrent(saved);
+            setEditBody(plainUpdateText(saved.bodyMd));
+            setDirty(false);
+          }
+          if (projectId) {
+            if (!ownerWasDirty) keepPlace(updatePlaceKey(projectId), `editor:${saved.id}`);
+            updateApi.fetchUpdates(projectId).then((list) => {
+              if (passToken.current === resultToken) setUpdates(list);
+            }).catch(() => {});
+          }
+          setEnginePass({
+            phase: "written",
+            seconds: seconds(startedAt),
+            model: saved.generatorModel || stopped.generatorModel || "",
+          });
+          return;
+        } catch (reason) {
+          fail("STOPPED RESULT NOT READ", reason, () => void stopEnginePass());
+        }
+      }
+      setEnginePass({ phase: "idle" });
+    } catch (reason) {
+      if (!stillAuthoritative()) return;
+      // Keep the running job and its poll alive. The existing refusal receipt
+      // gives the owner the same bounded retry path as the other verbs.
+      fail("STOP NOT CONFIRMED", reason, () => void stopEnginePass());
+    }
+  }, [enginePass, projectId]);
 
   const takeBetterDraft = useCallback(async () => {
     if (enginePass.phase !== "ready") return;

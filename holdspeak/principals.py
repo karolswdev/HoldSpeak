@@ -572,6 +572,26 @@ class AgentCredentialStore:
         with self._lock:
             return str(item_id or "").strip() in self._launch_scope.get(str(launch_id), set())
 
+    def project_update_job(self, identity: str) -> Optional[str]:
+        """Return the runner-bound project-update job for a live run credential.
+
+        The binding is carried as an internal launch-scope reference.  It is
+        written with the credential before the CLI process starts and is
+        restored by :meth:`attach`, so an HTTP MCP callback in another
+        process does not have to guess from the latest project job.
+        """
+        with self._lock:
+            token_hash = self._by_identity.get(str(identity or "").strip())
+            credential = self._by_hash.get(token_hash) if token_hash else None
+            if credential is None or not credential.launch_id:
+                return None
+            prefix = "project_update_job:"
+            jobs = sorted(
+                ref[len(prefix):] for ref in self._launch_scope.get(credential.launch_id, set())
+                if ref.startswith(prefix) and ref[len(prefix):]
+            )
+            return jobs[0] if len(jobs) == 1 else None
+
     def _flush_launch_revokes(self) -> None:
         with self._lock:
             pending, self._pending_launch_revokes = self._pending_launch_revokes, []

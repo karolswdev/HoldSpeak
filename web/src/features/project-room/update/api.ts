@@ -137,6 +137,7 @@ export type EngineJob = {
   startedAt: string;
   finishedAt: string | null;
   appliedUpdateId: string | null;
+  resultUpdateId: string | null;
   generatorModel: string | null;
 };
 
@@ -151,6 +152,7 @@ function decodeJob(raw: Record<string, unknown>): EngineJob {
     startedAt: String(raw.started_at ?? ""),
     finishedAt: text(raw.finished_at),
     appliedUpdateId: text(raw.applied_update_id),
+    resultUpdateId: text(raw.result_update_id),
     generatorModel: text(raw.generator_model),
   };
 }

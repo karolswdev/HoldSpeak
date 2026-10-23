@@ -1145,6 +1145,19 @@ def _to_project_updates(
     from .run_trace import use_by_item
 
     item_id = str(row.get("item_id") or "")
+    project_update_job_id = ""
+    if item_id:
+        with db._connection() as conn:
+            item_row = conn.execute(
+                "SELECT context_json FROM workbench_items WHERE id=?", (item_id,),
+            ).fetchone()
+        if item_row is not None:
+            try:
+                context = json.loads(item_row["context_json"] or "{}")
+            except (TypeError, ValueError):
+                context = {}
+            if isinstance(context, dict):
+                project_update_job_id = str(context.get("project_update_job_id") or "").strip()
     refs: list[str] = []
     try:
         used = use_by_item(db, [item_id]).get(item_id, {})
@@ -1159,6 +1172,13 @@ def _to_project_updates(
             existing_id = ref.split(":", 1)[1].strip()
             existing = db.project_updates.get_update(existing_id)
             if existing is not None and str(existing.get("project_id") or "") == project_id:
+                if project_update_job_id:
+                    try:
+                        manifest = json.loads(existing.get("source_manifest_json") or "{}")
+                    except (TypeError, ValueError):
+                        manifest = {}
+                    if not isinstance(manifest, dict) or str(manifest.get("automation_job_id") or "") != project_update_job_id:
+                        continue
                 _remember_project_update(db, row["artifact_id"], existing_id, project_id)
                 return {"artifact_id": row["artifact_id"], "target": str(wb.output_target),
                         "outcome": "written", "update_id": existing_id,
@@ -1175,6 +1195,7 @@ def _to_project_updates(
     update = service.write_agent_update(
         principal, project_id, body_md=body, source_refs=refs,
         generator=f"agent:automation:{wb.id}",
+        job_id=project_update_job_id or None,
     )
     _remember_project_update(db, row["artifact_id"], update.get("id"), project_id)
     return {"artifact_id": row["artifact_id"], "target": str(wb.output_target),
