@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-Adversarial workflow audits — review packet complete: all 47 native-experience
+Adversarial workflow audits — #1431: all 47 native-experience
 family audits have an independent review and root reconciliation in
 `docs/internal/betterment/native-experience/adversarial/README.md`.
 Audit-sufficiency verdicts: 32 conditional, 15 do-not-ratify; 204 proposed
@@ -2215,6 +2215,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1431 — 47 adversarial workflow reviews:** independent whole-job/convergence/user-value reviews, root reconciliation and corrected delivery priorities; 204 proposed acceptance challenges. Product fixes remain open; isolated Settings return conflict reproduced. Required quick green.
 - **#1430 — desktop application/use-case audit:** app/window/resource contracts, whole-product behavioral inventory and gaps, explorer-style acceptance workload, and hardened capability verification. No product UI or dependency change.
 
 - **#1429 — native-experience research:** retained React stack, source audit, primary-source research, three-engine capability probe and proposed production-pattern delivery. No product UI or dependency change.

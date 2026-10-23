@@ -1,7 +1,8 @@
 # Adversarial reviews of all 47 workflow audits
 
 Completed 2026-10-23 against main `55572802181d6a8045f6d27e3c722aaf5694dbbd`
-(PR1430). One fresh independent reviewer per family; root read and reconciled
+(PR1430). Published through [PR1431](https://github.com/karolswdev/HoldSpeak/pull/1431).
+One fresh independent reviewer per family; root read and reconciled
 all 47. The owner asked about whole-job coverage, convergence and pleasing the
 user; each record answers those questions with findings, boundaries, a Tuesday
 judgment, recovery/return and falsifiable acceptance scenarios.
