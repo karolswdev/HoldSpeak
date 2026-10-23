@@ -89,7 +89,8 @@ All 53 changed Markdown documents have valid local navigation; 661 full-path
 start-line citations resolve. Product source and dependency locks are unchanged.
 A fresh local Luna post-merge check confirmed coverage and returned RATIFY
 after one clarification distinguishing publication checks from the additional
-Settings experiment. This is a documentation-delivery review, not Muad'Dib's
+Settings experiment ([clarification PR1432](https://github.com/karolswdev/HoldSpeak/pull/1432)).
+This is a documentation-delivery review, not Muad'Dib's
 check or product acceptance.
 These checks do not establish task quality or aesthetic acceptance. The full
 main tape runs after merge; the preceding baseline `555728021` finished red
