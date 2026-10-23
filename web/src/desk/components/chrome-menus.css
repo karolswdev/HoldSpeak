@@ -131,6 +131,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.4;
 }
 /* HS-148-01: drawn keycap wells — physical-key treatment adapted from
    the shortcut sheet (chrome-menus.css:704-715), flush-right column. */

@@ -101,7 +101,7 @@
   place-items: center;
   flex: none;
 }
-.desk-next .cw-row-sprite > img { width: 24px; height: 24px; image-rendering: pixelated; }
+.desk-next .cw-row-sprite > img { width: 24px; height: 24px; image-rendering: auto; }
 .desk-next .cw-row-text {
   display: flex;
   flex: 1 1 auto;
@@ -192,7 +192,7 @@
   background: color-mix(in srgb, var(--lamp-warn) 30%, var(--wb-paper));
   box-shadow: var(--wb-raised);
 }
-.desk-next .cw-plate-sprite > img { width: 28px; height: 28px; image-rendering: pixelated; }
+.desk-next .cw-plate-sprite > img { width: 28px; height: 28px; image-rendering: auto; }
 .desk-next .cw-ask-text {
   display: flex;
   flex: 1 1 auto;

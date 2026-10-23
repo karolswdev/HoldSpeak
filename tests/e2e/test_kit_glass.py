@@ -8,9 +8,9 @@ is ONE plate height, rendered.
 A real hub on an isolated HOME. The Project's window (the Room window of the
 canvas) holds verbs of every plated form the kit draws: ghost dense (Room,
 History, Steward, Get Info), secondary dense (Open), the FilterBar tokens.
-At 1440 each one's painted height is 28 px (the Steel plate, dense or not).
-At 393 each one owns a 44 px target (its painted face, or the narrow-desk
-halo). Shots to `.tmp/evidence-shots/p16-kit-verb/`.
+At 1440 each one's painted height is 32 px (the modern Button, dense or not).
+At 393 each one owns a 44 px Button face. Shots to
+`.tmp/evidence-shots/p16-kit-verb/`.
 
 Also here (moved whole, push 2 of the test diet, 2026-10-12): two fences on a
 file:// fixture of the token layer and the library Button's CSS, no hub.
@@ -124,10 +124,10 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
             assert expected <= words, verbs
             if width == 1440:
                 heights = {v["h"] for v in verbs}
-                assert heights == {28.0}, json.dumps(verbs, indent=2)
+                assert heights == {32.0}, json.dumps(verbs, indent=2)
             else:
-                small = [v for v in verbs if max(v["h"], v["halo"]) < 44]
-                assert not small, small
+                heights = {v["h"] for v in verbs}
+                assert heights == {44.0}, json.dumps(verbs, indent=2)
                 assert page.evaluate("document.scrollingElement.scrollWidth <= window.innerWidth")
                 # Betterment shell S0 (#1257, UX-CANON A.11): a footer extra
                 # that cannot run (Open, busy here) is withheld, and More is
@@ -148,13 +148,13 @@ DEFAULT_CSS_DIR = REPO / "web/src/styles"
 BUTTON_SHOTS = evidence_dir("button-glass")
 NARROW = {"width": 393, "height": 852}
 
-# The dense row (`.btn--sm`; Phase 16, Astra r1 M6: the kit Verb is ONE
-# height, so dense paints 28px too) and the standard column
-# (`.btn`, 28px painted). Short labels first: those are the Buttons whose
-# painted face is narrower than the area they must own.
+# The dense row (`.btn--sm`) and the standard column (`.btn`) both use the
+# modern Button face. Short labels first: those are the Buttons whose painted
+# face is narrower than the area they must own.
 ROW = ["\u00d7", "\u21bb", "Open", "Record"]
 COLUMN = ["Review meeting", "Run summary", "Import"]
-PAINTED = {"row": 28.0, "col": 28.0}
+DESKTOP_PAINTED = {"row": 32.0, "col": 32.0}
+PHONE_PAINTED = {"row": 44.0, "col": 44.0}
 
 # The nine points, as fractions of the half-width / half-height of the
 # 44px area, inset by one device pixel so a point is never on the seam.
@@ -192,19 +192,21 @@ def _fixture_html() -> str:
   body {{ margin: 0; padding: 16px; }}
   .fixture-row {{ display: flex; gap: var(--space-2); align-items: center; }}
   .fixture-col {{ display: grid; gap: var(--space-2); justify-items: start; }}
-  /* NEGATIVE CONTROL A: a well too short for the area to fit inside, so
-     an ANCESTOR answers the clipped points. */
-  .fixture-clip {{ height: 28px; overflow: hidden; }}
-  /* NEGATIVE CONTROL B: the halo suppressed outright, with nothing but
-     the page behind it, so the BODY answers. Round 2 of Astra's counsel:
-     the live reader filed that as "covered" and reported no miss. */
-  .fixture-bare {{ margin-top: 40px; }}
+  /* NEGATIVE CONTROL A: the inner well is too short for the area to fit
+     inside, while its 44px outer ancestor remains under the probes. The
+     clipped points therefore reach an ANCESTOR, not the page body. */
+  .fixture-clip-outer {{ width: 44px; height: 44px; }}
+  .fixture-clip {{ width: 44px; height: 28px; overflow: hidden; }}
+  /* NEGATIVE CONTROL B: this known-broken target has no pointer path, with
+     nothing but the page behind it, so the BODY answers. The phone Button
+     owns its full box now; keep this failure independent of its face. */
+  .fixture-bare {{ margin-top: 40px; pointer-events: none; }}
   .fixture-bare .btn::after {{ content: none; }}
 </style></head>
 <body>
   <div class="fixture-row">{row}</div>
   <div class="fixture-col">{column}</div>
-  <div class="fixture-clip"><button type="button" class="btn btn--sm" id="clipped">Clipped</button></div>
+  <div class="fixture-clip-outer"><div class="fixture-clip"><button type="button" class="btn btn--sm" id="clipped">Clipped</button></div></div>
   <div class="fixture-bare"><button type="button" class="btn btn--sm" id="bare">No halo</button></div>
   <script>
     window.__fired = [];
@@ -315,14 +317,14 @@ def test_button_owns_44px_at_393(tmp_path: Path) -> None:
 
         geo = {i: page.evaluate(_GEOMETRY, i) for i in ids}
 
-        # ── the painted face never grew in height ────────────────────
+        # ── the painted face follows the phone contract ────────────────────
         for i in ids:
             painted = geo[i]["painted"]["h"]
-            expected = PAINTED[i[:3]]
+            expected = PHONE_PAINTED[i[:3]]
             if abs(painted - expected) >= 0.51:
                 failures.append(
                     f"{i}: the painted height moved to {painted}px, not {expected}px; "
-                    "the ruling keeps the 28px plate and grows only the transparent area"
+                    "the phone Button owns a 44px painted face"
                 )
 
         # ── OWNED: elementFromPoint + a real pointer, nine points ────
@@ -386,7 +388,7 @@ def test_button_owns_44px_at_393(tmp_path: Path) -> None:
 
         lost_kinds: set[str] = set()
         for control, why in (
-            ("clipped", "a Button inside a 28px overflow:hidden well"),
+            ("clipped", "a Button clipped by an inner 28px overflow:hidden well"),
             ("bare", "a Button whose halo is suppressed, with only the page behind it"),
         ):
             seen = controls[control]
@@ -425,12 +427,12 @@ def test_button_owns_44px_at_393(tmp_path: Path) -> None:
 
 @pytest.mark.timeout(180, method="thread")
 def test_button_face_is_untouched_at_1440(tmp_path: Path) -> None:
-    """The wide desk keeps the Button exactly as it was.
+    """The wide desk keeps the modern 32px Button face.
 
-    The 44px area is a narrow-desk rule (`@media (max-width: 420px)`), so
-    at 1440 the painted face, its box and its neighbours must be
-    identical to the pre-ruling Button. This is the other half of the
-    proof: the hit area grew where the ruling says, and nowhere else.
+    The 44px Button is a narrow-desk rule (`@media (max-width: 420px)`), so
+    at 1440 the painted face, its box and its neighbours stay at the modern
+    32px contract. This is the other half of the proof: the phone target
+    changes where the ruling says, and nowhere else.
     """
     page_html = tmp_path / "button-hit-fixture-wide.html"
     page_html.write_text(_fixture_html(), encoding="utf-8")
@@ -450,14 +452,24 @@ def test_button_face_is_untouched_at_1440(tmp_path: Path) -> None:
                      const el = document.getElementById(id);
                      const cs = getComputedStyle(el);
                      const after = getComputedStyle(el, '::after');
+                     const number = (value) => {
+                       const n = parseFloat(value);
+                       return Number.isFinite(n) ? n : null;
+                     };
                      return { h: el.getBoundingClientRect().height,
                               w: el.getBoundingClientRect().width,
                               marginTop: cs.marginTop, marginBottom: cs.marginBottom,
-                              minInline: cs.minInlineSize, halo: after.content };
+                              minInline: cs.minInlineSize,
+                              border: number(cs.borderTopWidth),
+                              after: {
+                                top: number(after.top), right: number(after.right),
+                                bottom: number(after.bottom), left: number(after.left),
+                                pointerEvents: after.pointerEvents,
+                              } };
                    }""",
                 i,
             )
-            expected = PAINTED[i[:3]]
+            expected = DESKTOP_PAINTED[i[:3]]
             if abs(box["h"] - expected) >= 0.51:
                 failures.append(f"{i}: painted height {box['h']}px, not {expected}px at 1440")
             for side in ("marginTop", "marginBottom"):
@@ -470,8 +482,19 @@ def test_button_face_is_untouched_at_1440(tmp_path: Path) -> None:
                     f"{i}: min-inline-size is {box['minInline']} at 1440; "
                     "the 44px width belongs to the narrow desk"
                 )
-            if box["halo"] not in ("none", "normal"):
-                failures.append(f"{i}: the halo pseudo-element exists at 1440 ({box['halo']})")
+            border = box["border"] or 0.0
+            for side in ("top", "right", "bottom", "left"):
+                inset = box["after"][side]
+                if inset is None or abs(inset + border) >= 0.51:
+                    failures.append(
+                        f"{i}: the hit-face ::after {side} inset is {inset}px; "
+                        f"expected the {border}px border edge only"
+                    )
+            if box["after"]["pointerEvents"] != "auto":
+                failures.append(
+                    f"{i}: the hit-face ::after pointer-events is "
+                    f"{box['after']['pointerEvents']!r}, not 'auto'"
+                )
 
         if os.environ.get("HS202_05_EXPORT_SHOTS") == "1":
             BUTTON_SHOTS.mkdir(parents=True, exist_ok=True)
@@ -541,13 +564,13 @@ _READ = """(id) => {
   return {
     disabledAttr: el.disabled,
     color: cs.color, background: cs.backgroundColor, borderColor: cs.borderTopColor,
-    boxShadow: cs.boxShadow, cursor: cs.cursor, opacity: cs.opacity,
+    borderStyle: cs.borderTopStyle, boxShadow: cs.boxShadow, cursor: cs.cursor, opacity: cs.opacity,
     ratio: Math.round(((Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05)) * 100) / 100,
   };
 }"""
 
-# The four channels the ruling keeps. Gray alone is never enough.
-CHANNELS = ("background", "borderColor", "boxShadow", "cursor")
+# Independent material and pointer channels. Gray alone is never enough.
+CHANNELS = ("background", "borderColor", "borderStyle", "boxShadow", "cursor")
 REAL_PAIRS = [("on-btn", "off-btn"), ("on-primary", "off-primary"), ("on-sm", "off-sm")]
 
 
@@ -601,7 +624,7 @@ def test_disabled_button_stays_distinct(tmp_path: Path, width: int) -> None:
           const on = document.getElementById('on-gray');
           const off = document.getElementById('off-gray');
           const cs = getComputedStyle(on);
-          for (const prop of ['background-color','border-color','box-shadow','cursor','opacity'])
+          for (const prop of ['background-color','border-color','border-style','box-shadow','cursor','opacity'])
             off.style.setProperty(prop, cs.getPropertyValue(prop), 'important');
         }""")
         gray_on, gray_off = page.evaluate(_READ, "on-gray"), page.evaluate(_READ, "off-gray")

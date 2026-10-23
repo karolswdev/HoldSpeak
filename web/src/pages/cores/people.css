@@ -389,7 +389,7 @@
 .desk-next .people-next-sprite > img {
   width: 24px;
   height: 24px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .desk-next .people-next-text {
   display: flex;

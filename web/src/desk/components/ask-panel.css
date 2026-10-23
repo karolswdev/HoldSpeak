@@ -185,10 +185,7 @@
   font: 400 12px / 1.5 var(--font-sans);
   overflow-wrap: anywhere;
 }
-.desk-ask-glyph,
-.desk-ask-empty-sprite {
-  image-rendering: pixelated;
-}
+.desk-ask-empty-sprite { image-rendering: auto; }
 .desk-ask-empty {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
@@ -249,7 +246,7 @@
 .desk-ask-starter img {
   width: 32px;
   height: 32px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .desk-ask-starter-label {
   font: 600 15px / 1.4 var(--font-sans);

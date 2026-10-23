@@ -28,7 +28,7 @@
   display: block;
   width: 64px;
   height: 64px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 /* Desktop Screen pictures use the owner's denser desk scale. Drawer wells
    and the phone keep their own artwork and target sizes. */
@@ -53,7 +53,7 @@
   bottom: -2px;
   width: 32px;
   height: 32px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 /* The name: two lines, then an ellipsis. PHILO-15 lane 12 (B30): it
    breaks between words only (DeskIcon puts a <wbr> after `_ - . /`); a
@@ -343,7 +343,7 @@
   flex: none;
   width: 32px;
   height: 32px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .object-list-name-text {
   display: flex;
@@ -438,7 +438,7 @@
   flex: none;
   width: 64px;
   height: 64px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .object-info-id {
   min-width: 0;
@@ -742,7 +742,7 @@
   flex: none;
   width: 32px;
   height: 32px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .pr-card-title {
   min-width: 0;
@@ -814,7 +814,7 @@
 .confirm-line-ends img {
   width: 32px;
   height: 32px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .confirm-line-arrow {
   font: 700 var(--font-size-sm) / 1 var(--font-mono);
@@ -886,7 +886,7 @@
   width: 32px;
   height: 32px;
   padding: 4px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .needs-row-what {
   display: flex;
@@ -968,7 +968,7 @@
   position: fixed;
   width: 64px;
   height: 64px;
-  image-rendering: pixelated;
+  image-rendering: auto;
   pointer-events: none;
   opacity: 0.8;
   z-index: var(--desk-z-popover);

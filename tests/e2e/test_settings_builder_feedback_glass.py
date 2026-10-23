@@ -24,14 +24,45 @@ def _contained(window: Any) -> None:
     }"""), window.bounding_box()
 
 
-def _selection_has_ink(button: Any) -> None:
+def _selection_has_ink(
+    button: Any,
+    *,
+    background_token: str = "--wb-sel",
+    border_token: str | None = None,
+    aria_current: str | None = None,
+    aria_pressed: str | None = None,
+) -> None:
+    border_expression = "null" if border_token is None else repr(border_token)
     facts = button.evaluate("""el => {
       const probe = document.createElement('span');
-      probe.hidden = true; probe.style.color = 'var(--wb-sel)'; el.append(probe);
-      const expected = getComputedStyle(probe).color; probe.remove();
-      return {actual: getComputedStyle(el).backgroundColor, expected};
-    }""")
+      probe.hidden = true;
+      probe.style.color = `var(%s)`;
+      el.append(probe);
+      const expected = getComputedStyle(probe).color;
+      const border = %s;
+      const expectedBorder = border ? (() => {
+        probe.style.color = `var(${border})`;
+        return getComputedStyle(probe).color;
+      })() : null;
+      const cs = getComputedStyle(el);
+      const result = {
+        actual: cs.backgroundColor,
+        expected,
+        actualBorder: cs.borderTopColor,
+        expectedBorder,
+        ariaCurrent: el.getAttribute('aria-current'),
+        ariaPressed: el.getAttribute('aria-pressed'),
+      };
+      probe.remove();
+      return result;
+    }""" % (background_token, border_expression))
     assert facts["actual"] == facts["expected"], facts
+    if border_token is not None:
+        assert facts["actualBorder"] == facts["expectedBorder"], facts
+    if aria_current is not None:
+        assert facts["ariaCurrent"] == aria_current, facts
+    if aria_pressed is not None:
+        assert facts["ariaPressed"] == aria_pressed, facts
 
 
 def _capture(page: Any, window: Any, width: int, stem: str) -> dict[str, Any]:
@@ -94,7 +125,13 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
                 settings.get_by_role("textbox", name="Your name", exact=True).wait_for()
                 assert settings.locator("[data-settings-section]:visible").count() == 1
                 assert settings.locator("[data-settings-section]:visible").get_attribute("data-settings-section") == "you"
-                _selection_has_ink(settings.get_by_test_id("settings-index-you"))
+                _selection_has_ink(
+                    settings.get_by_test_id("settings-index-you"),
+                    background_token="--wb-blue",
+                    border_token="--wb-sel",
+                    aria_current="location",
+                    aria_pressed="true",
+                )
                 for image in settings.locator(".settings-page-index img").all():
                     page.wait_for_function("el => el.complete && el.naturalWidth > 0", arg=image.element_handle())
                 assert settings.locator(".settings-page-index img").count() == 8

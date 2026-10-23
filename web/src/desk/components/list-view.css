@@ -278,7 +278,7 @@
 }
 .desk-sortable-table-sprite {
   display: block;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .desk-sortable-table-open {
   padding: 0;

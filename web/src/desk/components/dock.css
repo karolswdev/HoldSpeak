@@ -202,7 +202,7 @@
   pointer-events: none;
 }
 /* ══ PHILO-13-13 C3-W — the AppIcons and their live state (C1-1, C1-8a–c) ══
-   An AppIcon is the 24 px sprite over its name (12 px mono ink). States are
+   An AppIcon is the 32 px sprite over its name (12 px mono ink). States are
    drawn ON the icon: rest (no plate), running (a sunken plate, the name
    inverted), front (the name on the blue plate), a count (the ember-ink
    notch, top right, never a zero), a state tag (top left), and one
@@ -210,7 +210,7 @@
 .desk-next .desk-dock-launch {
   position: relative;
   display: grid;
-  grid-template-rows: 28px auto;
+  grid-template-rows: 32px 12px;
   justify-items: center;
   align-content: center;
   gap: 2px;
@@ -238,8 +238,8 @@
   filter: brightness(1.08);
 }
 .desk-next .desk-dock-launch .desk-dock-sprite {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   align-self: end;
   filter: none;
 }
@@ -257,7 +257,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   padding: 0 2px;
-  font: 500 12px var(--font-sans);
+  font: 500 12px / 12px var(--font-sans);
   color: var(--wb-ink);
   background: transparent;
 }
@@ -306,19 +306,19 @@
   left: auto;
 }
 /* PHILO-16 (A1) §5: the seat tile of a seated window that has no
-   application tile: its title-bar icon at the tile's 24 px, its name at
+   application tile: its title-bar icon at the tile's 32 px, its name at
    96 px at most (ellipsised inside the tile), the seat lamp */
 .desk-next .desk-dock-seat-icon {
   display: grid;
   place-items: center;
   align-self: end;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
 }
 .desk-next .desk-dock-seat-icon :is(img, svg) {
-  width: 24px;
-  height: 24px;
-  image-rendering: pixelated;
+  width: 32px;
+  height: 32px;
+  image-rendering: auto;
   filter: drop-shadow(1px 1px 0 var(--shadow-ink-4));
 }
 .desk-next .desk-dock-seat-tile .desk-dock-label {

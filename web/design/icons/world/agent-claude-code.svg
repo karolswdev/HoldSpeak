@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#dce7f2"/></linearGradient>
+    <linearGradient id="warm" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#ffe1a5"/><stop offset="1" stop-color="#f2b35b"/></linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
+  </defs>
+  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 22c0-5 4-9 9-9h10c5 0 9 4 9 9v10H18Z" fill="url(#warm)"/>
+    <circle cx="13" cy="25" r="5" fill="url(#warm)"/>
+    <circle cx="51" cy="25" r="5" fill="url(#warm)"/>
+    <path d="M18 32h28l3 6v12c0 4-3 7-7 7H22c-4 0-7-3-7-7V38Z" fill="url(#paper)"/>
+    <path class="detail" d="M26 23h.1M38 23h.1" stroke-width="4"/>
+    <path d="M26 43h12M24 49h16" fill="none"/>
+    <path class="detail" d="M32 7v6" fill="none"/>
+    <circle class="detail" cx="32" cy="6" r="2" fill="url(#blue)"/>
+  </g>
+</svg>

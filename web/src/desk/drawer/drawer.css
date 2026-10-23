@@ -23,7 +23,7 @@
 .drawer-scroll > * {
   flex-shrink: 0;
 }
-.drawer-winicon { width: 20px; height: 20px; image-rendering: pixelated; display: block; }
+.drawer-winicon { width: 20px; height: 20px; image-rendering: auto; display: block; }
 
 /* The head: the Room's intelligence as one line of facts, then the view. */
 .drawer-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }

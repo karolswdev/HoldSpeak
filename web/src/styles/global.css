@@ -144,6 +144,51 @@ small {
   font-size: 13px;
 }
 
+/* Keep the painted face rounded while the Button owns its full rectangular
+ * target at every desk width. The transparent face receives corner taps
+ * without extending beyond the control box or adding a visual halo. */
+:where(.btn, .btn--chrome) {
+  position: relative;
+}
+:where(.btn, .btn--chrome)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+/* The shared plated Button has a 1px border. Its rectangular hit face
+ * must cover that border at fractional device coordinates; strip-owned
+ * chrome controls keep the inset above unless their owner draws a border. */
+:where(.btn)::after {
+  inset: -1px;
+}
+/* These chrome owners draw a 1px border in the menubar or dock. Expand to
+ * the border edge only; borderless strip chrome keeps the real box. */
+:where(
+  .btn--chrome.desk-dock-launch,
+  .desk-menubar .btn--chrome.egress-badge,
+  .desk-menubar .btn--chrome.desk-tools-launch,
+  .desk-menubar .btn--chrome.desk-bell,
+  .automation-line-press.btn--chrome
+)::after {
+  inset: -1px;
+}
+/* Shared bordered gadgets own their rectangular device face here. The
+ * pad mic keeps its existing absolute position from the gadget owner. */
+:where(.gadget-transport-key) {
+  position: relative;
+}
+:where(.gadget-transport-key, .gadget-pad .desk-mic)::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+
 /* At the narrow desk Buttons own their 44px target directly. The target is
  * part of the control box, so neighbouring controls never lose hit points. */
 @media (max-width: 420px) {
@@ -158,51 +203,6 @@ small {
   body .btn.btn {
     min-block-size: var(--desk-button-hit-size);
     min-inline-size: var(--desk-button-hit-size);
-  }
-
-  /* Keep the painted face rounded while the Button owns a rectangular device
-     target at the narrow desk. The transparent face receives corner taps
-     without extending beyond the control box or adding a visual halo. */
-  :where(.btn, .btn--chrome) {
-    position: relative;
-  }
-  :where(.btn, .btn--chrome)::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: 0;
-    background: transparent;
-    pointer-events: auto;
-  }
-  /* The shared plated Button has a 1px border. Its rectangular hit face
-     must cover that border at fractional device coordinates; strip-owned
-     chrome controls keep the inset above unless their owner draws a border. */
-  :where(.btn)::after {
-    inset: -1px;
-  }
-  /* These chrome owners draw a 1px border in the menubar or dock. Expand to
-     the border edge only; borderless strip chrome keeps the real box. */
-  :where(
-    .btn--chrome.desk-dock-launch,
-    .desk-menubar .btn--chrome.egress-badge,
-    .desk-menubar .btn--chrome.desk-tools-launch,
-    .desk-menubar .btn--chrome.desk-bell,
-    .automation-line-press.btn--chrome
-  )::after {
-    inset: -1px;
-  }
-  /* Shared bordered gadgets own their rectangular device face here. The
-     pad mic keeps its existing absolute position from the gadget owner. */
-  :where(.gadget-transport-key) {
-    position: relative;
-  }
-  :where(.gadget-transport-key, .gadget-pad .desk-mic)::after {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: 0;
-    background: transparent;
-    pointer-events: auto;
   }
 
   /* Rails is desk furniture outside a surface container. Reserve the
@@ -242,13 +242,6 @@ small {
   transform: translateY(1px);
 }
 
-/* A generic pressed Button uses the quiet dark ink wash and dark ink so its
-   state remains readable on the light shell. */
-:where(.btn)[aria-pressed="true"]:not(:disabled):not(.btn--primary):not(.btn.primary):not(.btn--danger):not(.btn.danger) {
-  background: var(--surface-active);
-  color: var(--wb-ink);
-}
-
 :where(.btn):hover:not(:disabled) {
   border-color: var(--border-strong);
   background-color: var(--wb-steel-2);
@@ -271,6 +264,13 @@ small {
   background: color-mix(in srgb, var(--danger-fill) 86%, var(--white));
 }
 
+/* A generic pressed Button uses the quiet dark ink wash and dark ink so its
+   state remains readable on the light shell. */
+:where(.btn)[aria-pressed="true"]:not(:disabled):where(:not(.btn--primary):not(.btn.primary):not(.btn--danger):not(.btn.danger)) {
+  background: var(--surface-active);
+  color: var(--wb-ink);
+}
+
 /* Variant pressed fills follow every hover fill, so a pressed Button keeps
    its state while the pointer or keyboard focus is over it. */
 :where(.btn--primary, .btn.primary)[aria-pressed="true"]:not(:disabled) {
@@ -290,6 +290,7 @@ small {
 
 :where(.btn):disabled {
   border-color: var(--disabled-border);
+  border-style: dashed;
   background: var(--disabled-bg);
   color: var(--disabled-fg);
   cursor: not-allowed;

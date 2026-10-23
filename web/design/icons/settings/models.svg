@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#c2b7ed"/><stop offset="1" stop-color="#9580d7"/></linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#ffe1a5"/><stop offset="1" stop-color="#f2b35b"/></linearGradient>
+  </defs>
+  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m32 8 20 11v26L32 56 12 45V19Z" fill="url(#violet)"/>
+    <path d="m32 8 20 11-20 12-20-12ZM32 31v25" fill="url(#blue)"/>
+    <circle cx="22" cy="23" r="4" fill="url(#teal)"/>
+    <circle cx="42" cy="23" r="4" fill="url(#teal)"/>
+    <circle cx="32" cy="42" r="4" fill="url(#amber)"/>
+    <path class="detail" d="M25 25l4 12M39 25l-4 12" fill="none"/>
+  </g>
+</svg>

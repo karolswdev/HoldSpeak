@@ -4,9 +4,32 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-22 (shared modern shell)
+**Last updated:** 2026-10-22 (illustrated icons)
 
 ## Current phase
+
+Illustrated icons — #1426: owner chose crisp illustrated icons for
+the next shared visual pass. SVG originals replace dense pixel art across
+world objects, the dock/system and Settings; optical32 renders keep small
+icons legible. Existing PNG/state contracts remain; common sampling is
+smooth and desktop dock pictures32px inside the same shelf.
+Scope/canvas: `docs/internal/betterment/ILLUSTRATED-ICONS-2026-10-22.md`.
+Required quick: build, 4128 related web cases, 54 affected browser cases including strict feedback PNG capture and Chromium/Firefox pressed-hover-focus checks, 110 desk sweep cases, 27 canon and 1126 repository guards passed; 15 focused source/asset/container checks, typecheck, 18 focused prior-tape regressions and two deterministic export/check cycles also passed. Owner visual judgment stays open.
+
+The completed main937d7ea5c tape is red: 12 Python, 25 browser and one
+web failure (5,419 web passes). All 12 Python and eight browser failures
+match the earlier tape. The new cases expose desktop corner hit ownership,
+disabled contrast, clipped menu labels, a misplaced phone media block and
+visual readers that still expect the superseded 28px/deep-blue material or
+cannot parse CSS4 colours. This delivery fixes those shared rules and updates
+the readers to the settled design while retaining their hit, contrast and
+clipping floors. The strict feedback capture check also found that the generic
+pressed Button rule outranked Send's selected destination. Its specificity is
+reduced and its place after hover retained, so an owner can draw its selected
+state. The Arrange-all fixture waits for the real project title before it
+compares names and order. The original tape result remains in
+`wt-main-tape-modern-shell-pressed-20261022/.tmp/delivery/tape/summary.json`.
+
 
 Pressed-state fix-forward — #1425: post-merge review of #1424
 found that hover could override primary/danger pressed fills. Shared pressed
@@ -23,7 +46,7 @@ the same material. Pixel identity and window/voice/keyboard behavior remain.
 Canvas and scope: `docs/internal/betterment/MODERN-SHELL-2026-10-22.md`.
 Required quick: build, 4130 related web cases, actual Ask/gallery/frame browser checks at 1440/393, 110 desk sweep cases, canon and repository guards passed; 56 focused cases, typecheck and token generation passed; standalone raw-token gate remains inherited red 120→102 with zero branch-new findings and unchanged allowlist. Owner visual judgment remains open.
 
-Latest completed full tape on 448772a89: 12 Python and 10 browser failures;
+Earlier completed full tape on 448772a89: 12 Python and 10 browser failures;
 web baseline and strict Firefox capture timing passed. These inherited reds
 remain open; this visual pass does not claim a full-suite green.
 

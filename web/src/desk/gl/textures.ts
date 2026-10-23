@@ -1,5 +1,6 @@
 /** HS-95-01 — texture factory for the GL world. Sprite PNGs load through
- * pixi Assets (nearest-neighbor, the DOM's image-rendering: pixelated);
+ * pixi Assets with linear sampling, matching the DOM's smooth illustrated
+ * icon rendering;
  * every soft visual the DOM did with CSS gradients/blur (object glow, ground
  * shadow, zone shadow, paper ruling, motes) is generated once into a texture
  * here and reused as sprites — nothing is painted per frame. */
@@ -22,7 +23,7 @@ export function loadSprite(
       url,
       Assets.load<Texture>({ src: url, loadParser: "loadTextures" })
         .then((t) => {
-          t.source.scaleMode = "nearest";
+          t.source.scaleMode = "linear";
           spriteCache.set(url, t);
           onReady?.(t);
           return t;
