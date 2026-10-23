@@ -8,6 +8,22 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Richer desktop icons — #1427: the owner rejected #1426's art as
+“toilet bowls” and too basic. All shared object, dock/system and Settings
+art now uses angled construction, coloured fronts, layered
+paper, metal facets and distinct agent portraits. Names, sizes, real image
+states, layout and behaviour remain. The rejected SVGs and PNGs are parked.
+PNG bytes now participate in the frontend build identity, so an icon-only
+change is distinguishable from the previous loaded build.
+Scope/canvas: `docs/internal/betterment/RICHER-ICONS-2026-10-22.md`.
+Required quick: build, 6 affected checks including actual Ask and Settings at 1440/393 and the real Vite PNG fingerprint regression, 110 desk sweep cases, 27 canon and 1126 repository guards passed; 15 focused source/asset/registry checks and deterministic export passed; all 142 new PNGs have edge clearance and the parked 47 SVGs plus 142 PNGs match preceding main byte-for-byte. Owner aesthetic acceptance stays open.
+
+The completed preceding main9b43917e7 tape has 12 Python and eight browser
+failures, all present on the earlier tape; web baseline and strict Firefox
+timing pass. Seventeen browser failures from main937d7ea5c no longer fail.
+The remaining inherited functional failures stay open. This art correction
+does not claim a whole-suite green or aesthetic acceptance of #1426.
+
 Illustrated icons — #1426: owner chose crisp illustrated icons for
 the next shared visual pass. SVG originals replace dense pixel art across
 world objects, the dock/system and Settings; optical32 renders keep small

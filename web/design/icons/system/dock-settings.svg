@@ -1,13 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="blue" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
-    <linearGradient id="teal" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
-    <linearGradient id="amber" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#ffe1a5"/><stop offset="1" stop-color="#f2b35b"/></linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#a4d2ff"/><stop offset="1" stop-color="#477fe0"/></linearGradient>
+    <linearGradient id="blueFacet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6f9cf0"/><stop offset="1" stop-color="#315b9f"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#91a8bc"/></linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#91e0d0"/><stop offset="1" stop-color="#259c96"/></linearGradient>
   </defs>
-  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M14 16h36M14 32h36M14 48h36" fill="none"/>
-    <rect x="22" y="10" width="9" height="12" rx="3" fill="url(#blue)"/>
-    <rect x="37" y="26" width="9" height="12" rx="3" fill="url(#teal)"/>
-    <rect x="18" y="42" width="9" height="12" rx="3" fill="url(#amber)"/>
+  <ellipse cx="32" cy="56" rx="23" ry="2" fill="#263b53" opacity=".16"/>
+  <g stroke="#263b53" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="m25 8 8-2 4 6 7-1 5 7-3 6 5 5-3 9-7 1-2 8-9 2-5-5-7 2-6-7 3-7-5-5 3-9 8-1Z" fill="url(#blue)"/>
+    <path d="m33 6 4 6 7-1 5 7-3 6 5 5-3 9-7 1-2 8-7 1Z" fill="url(#blueFacet)" stroke="#315b9f" stroke-width="1.2"/>
+    <path d="m25 8 8-2m-16 11 6-1m-3 25 5-1" fill="none" stroke="#d8ecff" stroke-width="1.5"/>
+    <path d="M32 18c7 0 12 5 12 12s-5 13-12 13-12-6-12-13 5-12 12-12Z" fill="url(#metal)" stroke="#526b85" stroke-width="1.5"/>
+    <path d="M32 24c4 0 7 2 7 6s-3 7-7 7-7-3-7-7 3-6 7-6Z" fill="#263b53"/>
+    <path d="M28 25q5-3 9 2" fill="none" stroke="#fff" stroke-width="1.5"/>
+    <path d="m22 47 6-2m8 0 6 2" stroke="#259c96" stroke-width="1.8"/>
+    <path class="detail" d="M32 15v-4m-12 9-3-3m27 3 3-3" stroke="#526b85"/>
   </g>
 </svg>

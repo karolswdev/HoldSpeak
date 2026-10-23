@@ -23,3 +23,6 @@ DOM and GPU consumers. Use smooth sampling for this illustrated family.
 - `_parked-2026-10-07/`: the old mold, parked. Nothing references it.
 - `web/design/icons/_parked-pixel-2026-10-22/`: the previous active PNG family,
   preserved once by the exporter.
+- `web/design/icons/_parked-illustrated-v1-2026-10-22/`: the first illustrated
+  SVG/PNG family, parked after the owner's live review. Current art uses
+  shallow perspective, layered materials and finer seams.

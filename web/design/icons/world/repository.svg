@@ -1,13 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="teal" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
-    <linearGradient id="paper" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#dce7f2"/></linearGradient>
-    <linearGradient id="blue" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
+    <linearGradient id="folder" x1="0" y1="0" x2=".82" y2="1"><stop stop-color="#67cec0"/><stop offset="1" stop-color="#259c96"/></linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2=".82" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#dceaf5"/></linearGradient>
+    <linearGradient id="code" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#9cc6ff"/><stop offset="1" stop-color="#477fe0"/></linearGradient>
   </defs>
-  <g transform="translate(0 -2)" stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M8 20a6 6 0 0 1 6-6h13l6 6h17a6 6 0 0 1 6 6v27a6 6 0 0 1-6 6H14a6 6 0 0 1-6-6Z" fill="url(#teal)"/>
-    <path d="M13 30h38v22H13Z" fill="url(#paper)"/>
-    <path d="m25 37-6 6 6 6M39 37l6 6-6 6M35 35l-6 16" fill="none" stroke="url(#blue)" stroke-width="3"/>
-    <path class="detail" d="M14 31h36" fill="none"/>
+  <g stroke="#263b53" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="32" cy="56" rx="23" ry="1.8" fill="#263b53" opacity=".16" stroke="none"/>
+    <path d="m9 23 3-9 15-3 6 6h17l6 5-4 27-25 8-18-7Z" fill="#237c7d" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m12 20 3-8 14-3 7 7h15l5 5-4 27-25 7-18-7Z" fill="url(#folder)" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m17 18 28-5 5 4-3 21-29 6-5-4Z" fill="#bdd4e3" stroke="#557491" stroke-width="1.1"/>
+    <path d="m20 16 27-5 4 4-3 20-28 6-4-4Z" fill="url(#paper)" stroke="#557491" stroke-width="1.1"/>
+    <path d="m11 31 20 6 25-8-4 21-24 7-18-7Z" fill="url(#folder)" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m31 37 25-8-4 21-24 7Z" fill="#218885" stroke="none"/>
+    <path d="m21 41 5-4 5 4-5 4Zm14 0 5-4 5 4-5 4Zm-7 7 5-7" fill="none" stroke="url(#code)" stroke-width="2.1"/>
+    <path class="detail" d="m16 16 27-5" fill="none" stroke="#b9f0e6" stroke-width="1.2"/>
+    <path class="detail" d="m37 39 11-4" fill="none" stroke="#a5e9df" stroke-width="1.1"/>
   </g>
 </svg>

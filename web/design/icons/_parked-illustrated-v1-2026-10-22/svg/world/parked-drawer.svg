@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="amber" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#ffe1a5"/><stop offset="1" stop-color="#f2b35b"/></linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#dce7f2"/></linearGradient>
+  </defs>
+  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 22h44l-4 33H14Z" fill="url(#amber)"/>
+    <path d="M8 14h48l-2 11H10Z" fill="url(#teal)"/>
+    <path d="M21 31h22" fill="none"/>
+    <path d="M27 39v10M37 39v10" stroke="url(#paper)" stroke-width="4"/>
+    <path class="detail" d="M15 18h34" stroke="#f8fbff" stroke-width="1.5"/>
+  </g>
+</svg>

@@ -1,13 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="blue" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
-    <linearGradient id="teal" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
-    <linearGradient id="violet" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#c7b9ef"/><stop offset="1" stop-color="#9580d7"/></linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2=".82" y2="1"><stop stop-color="#86b7ff"/><stop offset="1" stop-color="#477fe0"/></linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#8ce0d3"/><stop offset="1" stop-color="#259c96"/></linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#c8baf2"/><stop offset="1" stop-color="#8870cb"/></linearGradient>
   </defs>
-  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M9 15a7 7 0 0 1 7-7h22a7 7 0 0 1 7 7v16a7 7 0 0 1-7 7H25l-10 8v-8h-1a7 7 0 0 1-7-7Z" fill="url(#blue)"/>
-    <path d="M20 31a7 7 0 0 1 7-7h20a7 7 0 0 1 7 7v12a7 7 0 0 1-7 7H35l-9 7v-7h-6Z" fill="url(#teal)"/>
-    <path class="detail" d="M21 23h.1M27 23h.1M33 23h.1" stroke="#f8fbff" stroke-width="4"/>
-    <path class="detail" d="M35 37h.1M41 37h.1M47 37h.1" stroke="#f8fbff" stroke-width="4"/>
+  <g stroke="#263b53" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="32" cy="56" rx="22" ry="1.8" fill="#263b53" opacity=".15" stroke="none"/>
+    <path d="m10 15 5-7h25l7 7v17l-6 7H26l-10 8v-8h-2l-6-7Z" fill="url(#violet)" stroke="#263b53" stroke-width="1.3"/>
+    <path d="m8 13 6-7h25l8 7v17l-6 7H24l-10 8v-8h-2l-6-7Z" fill="url(#blue)" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m23 31 6-7h21l7 7v12l-6 7H37l-9 7v-8h-2l-6-6Z" fill="#684fa7" stroke="#263b53" stroke-width="1.3"/>
+    <path d="m21 28 6-7h21l8 7v12l-6 7H35l-10 7v-8h-2l-6-6Z" fill="url(#teal)" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m21 28 6-7h21l8 7-8 3-24 5Z" fill="#72d1c2" stroke="none"/>
+    <path d="m27 36 23-5" fill="none" stroke="#dff8f2" stroke-width="1.3"/>
+    <path class="detail" d="m14 12 26-5" fill="none" stroke="#c8e3ff" stroke-width="1.2"/>
+    <circle cx="30" cy="39" r="1.5" fill="#f8fbff" stroke="none"/>
+    <circle cx="37" cy="37" r="1.5" fill="#f8fbff" stroke="none"/>
+    <circle cx="44" cy="36" r="1.5" fill="#f8fbff" stroke="none"/>
   </g>
 </svg>

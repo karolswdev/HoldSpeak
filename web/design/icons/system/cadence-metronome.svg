@@ -1,15 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="blue" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
-    <linearGradient id="amber" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#ffe1a5"/><stop offset="1" stop-color="#f2b35b"/></linearGradient>
-    <linearGradient id="teal" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ffe0a0"/><stop offset="1" stop-color="#ecaa45"/></linearGradient>
+    <linearGradient id="amberFacet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f6c86f"/><stop offset="1" stop-color="#b8732a"/></linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#a4d2ff"/><stop offset="1" stop-color="#477fe0"/></linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#91e0d0"/><stop offset="1" stop-color="#259c96"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#91a8bc"/></linearGradient>
   </defs>
-  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M16 55 24 13h16l8 42Z" fill="url(#amber)"/>
-    <path d="M20 47h24M24 13h16" fill="none"/>
-    <path d="M32 20v22" fill="none"/>
-    <circle cx="32" cy="29" r="5" fill="url(#teal)"/>
-    <path class="detail" d="M32 29 42 20" fill="none"/>
-    <path d="M12 55h40" fill="none"/>
+  <ellipse cx="32" cy="56" rx="22" ry="2" fill="#263b53" opacity=".16"/>
+  <g stroke="#263b53" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m16 53 8-40h17l8 40Z" fill="url(#amber)"/>
+    <path d="m41 13 8 40H36l-1-40Z" fill="url(#amberFacet)" stroke="#a66b2b" stroke-width="1.2"/>
+    <path d="M24 17h17M22 46h24M20 53h30" fill="none" stroke="#fff0c9" stroke-width="1.5"/>
+    <path d="M32 18v29" stroke="#263b53" stroke-width="2"/>
+    <circle cx="32" cy="29" r="5" fill="url(#teal)" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m32 29 11-10" fill="none" stroke="url(#metal)" stroke-width="2.2"/>
+    <path d="m26 38h4m-5 5h4m9-5h4m-4 5h4" stroke="#b16f2b" stroke-width="1.2"/>
+    <path d="M12 54h40" fill="none" stroke="url(#metal)" stroke-width="2"/>
+    <path class="detail" d="m31 20 2-2m-5 28h8" stroke="#d7f2ff"/>
   </g>
 </svg>

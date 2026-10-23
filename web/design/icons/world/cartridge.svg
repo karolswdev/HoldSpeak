@@ -1,15 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="blue" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
-    <linearGradient id="teal" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
-    <linearGradient id="paper" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#dce7f2"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2=".84" y2="1"><stop stop-color="#7fb3ff"/><stop offset="1" stop-color="#477fe0"/></linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2=".82" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#dceaf5"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#d8f5ef"/><stop offset="1" stop-color="#259c96"/></linearGradient>
   </defs>
-  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M16 9h32a5 5 0 0 1 5 5v35a5 5 0 0 1-5 5H16a5 5 0 0 1-5-5V14a5 5 0 0 1 5-5Z" fill="url(#blue)"/>
-    <path d="M18 17h28v23H18Z" fill="url(#paper)"/>
-    <path d="M23 23h18M23 30h11" fill="none"/>
-    <path d="M18 45h28" fill="none"/>
-    <path d="M21 49v7M28 49v7M36 49v7M43 49v7" fill="url(#teal)"/>
-    <circle class="detail" cx="43" cy="30" r="2.5" fill="url(#teal)" stroke="none"/>
+  <g stroke="#263b53" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="32" cy="56" rx="20" ry="1.8" fill="#263b53" opacity=".16" stroke="none"/>
+    <path d="m15 14 31-6 6 4-4 39-31 7-6-4Z" fill="#315a9d" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m11 11 31-6 7 4-4 39-31 7-6-4Z" fill="url(#body)" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m17 17 26-5 4 3-3 25-26 5-4-3Z" fill="url(#paper)" stroke="#52718d" stroke-width="1.1"/>
+    <path d="m20 20 24-5 1 5-24 5Z" fill="#d8eafb" stroke="none"/>
+    <path d="m22 29 16-3m-15 9 11-2" fill="none" stroke="#5e7891" stroke-width="1.5"/>
+    <path d="m17 42 28-6-1 10-26 5Z" fill="#315a9d" stroke="#263b53" stroke-width="1.1"/>
+    <path d="m20 48 3 8m7-10 2 8m7-10 2 7" fill="none" stroke="url(#metal)" stroke-width="2.2"/>
+    <path class="detail" d="m13 12 28-6" fill="none" stroke="#c8e3ff" stroke-width="1.3"/>
+    <circle class="detail" cx="41" cy="29" r="2.2" fill="#ecaa45" stroke="none"/>
   </g>
 </svg>

@@ -1,15 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="violet" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#c7b9ef"/><stop offset="1" stop-color="#9580d7"/></linearGradient>
-    <linearGradient id="blue" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
-    <linearGradient id="teal" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
-    <linearGradient id="paper" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#dce7f2"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2=".82" y2="1"><stop stop-color="#f5fbff"/><stop offset="1" stop-color="#8da7bb"/></linearGradient>
+    <linearGradient id="core" x1="0" y1="0" x2=".82" y2="1"><stop stop-color="#c4b6f2"/><stop offset="1" stop-color="#8870cb"/></linearGradient>
+    <linearGradient id="pin" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#8ce0d4"/><stop offset="1" stop-color="#259c96"/></linearGradient>
   </defs>
-  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 11h24a5 5 0 0 1 5 5v32a5 5 0 0 1-5 5H20a5 5 0 0 1-5-5V16a5 5 0 0 1 5-5Z" fill="url(#violet)"/>
-    <path d="M24 19h16v26H24Z" fill="url(#paper)"/>
-    <path d="M28 26h8M28 32h8M28 38h5" fill="none"/>
-    <path d="M20 16h-6M20 24h-6M20 32h-6M20 40h-6M20 48h-6M44 16h6M44 24h6M44 32h6M44 40h6M44 48h6" fill="none"/>
-    <path class="detail" d="M32 19v-4M32 45v4" fill="none" stroke="url(#teal)"/>
+  <g stroke="#263b53" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="32" cy="56" rx="20" ry="1.8" fill="#263b53" opacity=".16" stroke="none"/>
+    <path d="m18 14 27-6 6 4-4 36-28 7-6-4Z" fill="#71889d" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m14 12 28-5 7 4-4 36-29 7-6-4Z" fill="url(#metal)" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m20 18 20-4 4 3-3 25-21 5-4-3Z" fill="#557086" stroke="#263b53" stroke-width="1.2"/>
+    <path d="m29 18 12-2 3 3-3 16-13 3-3-3Z" fill="#7359b7" stroke="#3f346a" stroke-width="1.1"/>
+    <path d="m30 17 12-2 3 3-3 16-13 3-3-3Z" fill="url(#core)" stroke="#263b53" stroke-width="1.2"/>
+    <path d="m30 18 7 4-2 11m7-16-7 5" fill="none" stroke="#e7ddff" stroke-width="1.2"/>
+    <path d="m17 18-6 1m6 7-6 1m6 7-6 1m6 7-6 1m6 7-6 1m31-28 6-1m-7 8 6-1m-7 8 6-1m-7 8 6-1" fill="none" stroke="url(#pin)" stroke-width="1.8"/>
+    <path class="detail" d="m17 12 25-5" fill="none" stroke="#fff" stroke-width="1.2"/>
   </g>
 </svg>

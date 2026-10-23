@@ -1,11 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="blue" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
-    <linearGradient id="teal" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#a4d2ff"/><stop offset="1" stop-color="#477fe0"/></linearGradient>
+    <linearGradient id="blueFacet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6f9cf0"/><stop offset="1" stop-color="#315b9f"/></linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#91e0d0"/><stop offset="1" stop-color="#259c96"/></linearGradient>
+    <linearGradient id="tealFacet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#42b8ad"/><stop offset="1" stop-color="#17726f"/></linearGradient>
   </defs>
-  <g fill="none" stroke="#263b53" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M22 18a18 18 0 1 1-9 30" stroke="url(#blue)"/>
-    <path d="M42 46a18 18 0 1 1 9-30" stroke="url(#teal)"/>
-    <path d="m13 48 1-9 8 5M51 16l-1 9-8-5" fill="none"/>
+  <ellipse cx="32" cy="54" rx="23" ry="2" fill="#263b53" opacity=".14"/>
+  <g stroke="#263b53" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M25 13c-10 2-16 9-16 19s7 18 17 19c7 1 12-2 15-6l-5-6c-2 3-5 4-9 3-5-1-8-5-8-10s3-9 8-10l5-1Z" fill="url(#blue)"/>
+    <path d="m25 13 7 8-5 1c-5 1-8 5-8 10 0 4 2 7 5 9l-7 7c-5-3-8-9-8-16 0-10 6-17 16-19Z" fill="url(#blueFacet)" stroke="#315b9f" stroke-width="1.2"/>
+    <path d="M39 51c10-2 16-9 16-19S48 14 38 13c-7-1-12 2-15 6l5 6c2-3 5-4 9-3 5 1 8 5 8 10s-3 9-8 10l-5 1Z" fill="url(#teal)"/>
+    <path d="m39 51-7-8 5-1c5-1 8-5 8-10 0-4-2-7-5-9l7-7c5 3 8 9 8 16 0 10-6 17-16 19Z" fill="url(#tealFacet)" stroke="#17726f" stroke-width="1.2"/>
+    <path d="m9 32 1-8 8 4M55 32l-1 8-8-4" fill="none" stroke="#f8fbff" stroke-width="1.8"/>
+    <path class="detail" d="m21 17 5 2m17 28-5-2" stroke="#dff3ff"/>
   </g>
 </svg>

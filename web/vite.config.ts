@@ -28,7 +28,7 @@ function sourceFiles(dir: string, found: string[] = []): string[] {
     if (entry.name === "node_modules" || entry.name.startsWith(".")) continue;
     const full = join(dir, entry.name);
     if (entry.isDirectory()) sourceFiles(full, found);
-    else if (/\.(tsx?|jsx?|css|json|html|svg)$/.test(entry.name)) found.push(full);
+    else if (/\.(tsx?|jsx?|css|json|html|svg|png)$/.test(entry.name)) found.push(full);
   }
   return found;
 }

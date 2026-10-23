@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="violet" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#c7b9ef"/><stop offset="1" stop-color="#9580d7"/></linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2=".78" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#dce7f2"/></linearGradient>
+  </defs>
+  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 11h24a5 5 0 0 1 5 5v32a5 5 0 0 1-5 5H20a5 5 0 0 1-5-5V16a5 5 0 0 1 5-5Z" fill="url(#violet)"/>
+    <path d="M24 19h16v26H24Z" fill="url(#paper)"/>
+    <path d="M28 26h8M28 32h8M28 38h5" fill="none"/>
+    <path d="M20 16h-6M20 24h-6M20 32h-6M20 40h-6M20 48h-6M44 16h6M44 24h6M44 32h6M44 40h6M44 48h6" fill="none"/>
+    <path class="detail" d="M32 19v-4M32 45v4" fill="none" stroke="url(#teal)"/>
+  </g>
+</svg>

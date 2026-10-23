@@ -1,13 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="paper" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#f8fbff"/></linearGradient>
-    <linearGradient id="blue" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#dce8f5"/></linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#a4d2ff"/><stop offset="1" stop-color="#477fe0"/></linearGradient>
+    <linearGradient id="blueFacet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6f9cf0"/><stop offset="1" stop-color="#315b9f"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#91a8bc"/></linearGradient>
   </defs>
-  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="8" y="13" width="35" height="38" rx="5" fill="url(#paper)"/>
-    <path d="M8 24h35" fill="none"/>
-    <rect x="22" y="20" width="34" height="34" rx="5" fill="url(#blue)"/>
-    <path d="M22 31h34" fill="none"/>
-    <path class="detail" d="M15 19h5M29 26h5" fill="none"/>
+  <ellipse cx="32" cy="56" rx="23" ry="2" fill="#263b53" opacity=".16"/>
+  <g stroke="#263b53" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="m8 18 31-7 7 5-2 32-31 7-7-6Z" fill="url(#paper)"/>
+    <path d="m8 18 31-7 7 5-2 8-35 8Z" fill="#eaf3fb" stroke="#7089a4" stroke-width="1.2"/>
+    <path d="m20 25 34-8 3 31-34 9-4-7Z" fill="#315b9f" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m20 25 30-7 4 3-31 8Z" fill="url(#blue)" stroke="#477fe0" stroke-width="1.2"/>
+    <path d="m20 30 33-8" stroke="#d5e8ff" stroke-width="1.5"/>
+    <path d="m24 33 24-6v18l-24 6Z" fill="url(#blueFacet)"/>
+    <path d="m30 36 10-2m-10 7 13-3" stroke="#c4ddff" stroke-width="1.5"/>
+    <path d="m16 24-5-1m5 10-5-1m5 10-5-1m38-5 4-1" stroke="url(#metal)" stroke-width="1.8"/>
+    <path class="detail" d="m15 17 1-4m7 2 1-4" stroke="#526b85"/>
   </g>
 </svg>

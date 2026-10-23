@@ -11,6 +11,12 @@ Pressed-state fix-forward (2026-10-22): #1425 preserves primary/danger
 selection fills during hover and keyboard focus after #1424. Existing slices
 only; no count change.
 
+Richer icon correction (2026-10-22): #1427 redraws the family after the
+owner rejected #1426 as too basic and toilet-shaped. Angled desktop objects,
+visible materials and distinct portraits replace the repeated basin geometry.
+The first illustrated SVGs and PNGs are parked; owner aesthetic acceptance
+remains open. Scope: RICHER-ICONS-2026-10-22.md.
+
 Shared illustrated icon follow-up (2026-10-22): #1426 replaces the
 pixel-art family with crisp illustrated shared app/object/Settings icons.
 Existing recipe slices only; owner aesthetic acceptance remains open.

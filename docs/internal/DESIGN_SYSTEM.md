@@ -9,6 +9,14 @@ raw values live only in `web/design-tokens.json`.
 
 ## Owner direction — crisp illustrated icons (2026-10-22)
 
+The owner rejected the first implementation as “toilet bowls” and too basic.
+The next material pass uses richer desktop illustrations: shallow perspective,
+coloured enamel, paper edges, metal facets, narrow seams and distinct object
+construction. Folders have visible contents and coloured fronts; agents have
+head-and-shoulder portraits. Avoid repeated white basins and hinged blue lids.
+Small-size recognition still comes first. Settled correction and canvas:
+betterment/RICHER-ICONS-2026-10-22.md. The first illustrated family is parked.
+
 After reviewing the modern shell, the owner asked for better icons and chose
 “Crisp illustrated icons” over minimal line or refined pixel icons. This
 supersedes D1's hard-pixel medium, thick casing and nearest-neighbour sampling

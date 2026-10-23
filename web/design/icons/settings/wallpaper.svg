@@ -1,13 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#a8c9ff"/><stop offset="1" stop-color="#5b8fe8"/></linearGradient>
-    <linearGradient id="teal" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#9de1d4"/><stop offset="1" stop-color="#42ad9e"/></linearGradient>
-    <linearGradient id="amber" x1="0" y1="0" x2="0.8" y2="1"><stop stop-color="#ffe1a5"/><stop offset="1" stop-color="#f2b35b"/></linearGradient>
+    <linearGradient id="frame" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#8198ae"/></linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#b5d9ff"/><stop offset="1" stop-color="#477fe0"/></linearGradient>
+    <linearGradient id="hill" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#8ee0d2"/><stop offset="1" stop-color="#259c96"/></linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#81b9a9"/><stop offset="1" stop-color="#3b776f"/></linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ffe0a0"/><stop offset="1" stop-color="#ecaa45"/></linearGradient>
   </defs>
-  <g stroke="#263b53" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="8" y="10" width="48" height="44" rx="7" fill="url(#sky)"/>
-    <circle cx="43" cy="21" r="7" fill="url(#amber)"/>
-    <path d="m8 45 14-14 9 9 8-8 17 17H8Z" fill="url(#teal)"/>
-    <path class="detail" d="M8 45h48" fill="none"/>
+  <g stroke="#263b53" stroke-linecap="round" stroke-linejoin="round">
+    <ellipse cx="32" cy="56" rx="23" ry="2" fill="#263b53" opacity=".16"/>
+    <path d="m8 12 5-5h39l5 5v39l-5 5H13l-5-5Z" fill="#58718b" stroke-width="1.4"/>
+    <path d="m10 10 42 0 3 4-3 38H12L9 50Z" fill="url(#frame)" stroke-width="1.4"/>
+    <path d="m15 15 34-1 2 32-35 0Z" fill="url(#sky)" stroke-width="1.1"/>
+    <circle cx="42" cy="22" r="6" fill="url(#amber)" stroke-width="1"/>
+    <path d="m15 39 9-11 8 8 8-9 11 11 0 8-35 0Z" fill="url(#hill)" stroke-width="1.1"/>
+    <path d="m15 42 12-7 7 5 8-5 9 7v5H15Z" fill="url(#ground)" stroke-width="1"/>
+    <path class="detail" d="m12 13 3-2h32m-32 37 30 0m-5-29 4 1" fill="none" stroke="#fff" stroke-opacity=".72" stroke-width="1.2"/>
   </g>
 </svg>
