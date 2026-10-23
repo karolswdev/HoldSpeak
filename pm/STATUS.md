@@ -2215,6 +2215,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
+- **#1432 — review evidence wording:** distinguish the executed publication checks from the additional Settings fixture/control. Local post-merge packet review re-check is RATIFY; product findings remain open.
 - **#1431 — 47 adversarial workflow reviews:** independent whole-job/convergence/user-value reviews, root reconciliation and corrected delivery priorities; 204 proposed acceptance challenges. Product fixes remain open; isolated Settings return conflict reproduced. Required quick green.
 - **#1430 — desktop application/use-case audit:** app/window/resource contracts, whole-product behavioral inventory and gaps, explorer-style acceptance workload, and hardened capability verification. No product UI or dependency change.
 

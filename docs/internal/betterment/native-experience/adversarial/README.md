@@ -87,6 +87,11 @@ Publication required quick is green: build, 37 focused documentation checks,
 110 desk-sweep cases at 1440/393, 27 canon checks and 1,126 repository guards.
 All 53 changed Markdown documents have valid local navigation; 661 full-path
 start-line citations resolve. Product source and dependency locks are unchanged.
+A fresh local Luna post-merge check confirmed coverage and returned RATIFY
+after one clarification distinguishing publication checks from the additional
+Settings experiment ([clarification PR1432](https://github.com/karolswdev/HoldSpeak/pull/1432)).
+This is a documentation-delivery review, not Muad'Dib's
+check or product acceptance.
 These checks do not establish task quality or aesthetic acceptance. The full
 main tape runs after merge; the preceding baseline `555728021` finished red
 (11 non-browser Python and nine browser failures; web baseline and strict
