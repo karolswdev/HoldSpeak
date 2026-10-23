@@ -121,7 +121,7 @@
   background: hsl(214 70% 86%);
   box-shadow: var(--wb-raised);
 }
-.desk-next .is-lane .lw-head-sprite > img { width: 28px; height: 28px; image-rendering: pixelated; }
+.desk-next .is-lane .lw-head-sprite > img { width: 28px; height: 28px; image-rendering: auto; }
 .desk-next .is-lane .lw-head-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .desk-next .is-lane .lw-head-title {
   margin: 0;

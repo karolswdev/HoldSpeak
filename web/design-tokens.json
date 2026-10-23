@@ -494,7 +494,7 @@
       },
       {
         "name": "--disabled-fg",
-        "value": "var(--text-faint)"
+        "value": "#5e7086"
       },
       {
         "name": "--disabled-border",

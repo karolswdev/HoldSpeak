@@ -70,7 +70,7 @@
   text-align: left;
 }
 .desk-next .desk-pullout-head img {
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .desk-next .desk-pullout-title {
   flex: 1;
@@ -705,6 +705,40 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     height: 44px;
     min-height: 44px;
     min-width: 44px;
+  }
+  /* On the phone, a head Button keeps its full 44px rectangular hit box while
+     the pseudo-face carries the rounded paint. The head's narrow inset clears
+     the sheet corner clip; the desktop head keeps its original radius. */
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing) {
+    position: relative;
+    box-sizing: border-box;
+    height: 44px;
+    min-height: 44px;
+    min-width: 44px;
+    border-radius: 0;
+    background: transparent;
+    isolation: isolate;
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing)::before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    pointer-events: none;
+    z-index: var(--desk-z-canvas);
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing) > * {
+    position: relative;
+    z-index: var(--desk-z-local);
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing):hover:not(:disabled)::before,
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-wing.is-on::before {
+    background: var(--wb-blue);
+  }
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing):active:not(:disabled)::before,
+  .desk-next .desk-window.desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing)[aria-pressed="true"]::before {
+    background: var(--wb-press);
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head .desk-window-actions {
     align-self: stretch;

@@ -7,6 +7,21 @@ framework in the manner of Intuition; 6, Workbench 2.0+ on steroids),
 then Articles VII (the interface serves) and VIII (native-grade craft). Every value in this document is a token name;
 raw values live only in `web/design-tokens.json`.
 
+## Owner direction — crisp illustrated icons (2026-10-22)
+
+After reviewing the modern shell, the owner asked for better icons and chose
+“Crisp illustrated icons” over minimal line or refined pixel icons. This
+supersedes D1's hard-pixel medium, thick casing and nearest-neighbour sampling
+for the shared app, object and Settings family. Workbench semantics and the
+library framework remain. Use a strong recognisable object silhouette,
+restrained colour, cool paper, rounded slate outlines and subtle depth.
+Small icons remove fine detail and use a stronger optical outline. Labels,
+selection, stale state, microphone state and app identities remain honest.
+SVG originals are shared source; existing 64/32 PNG and real state-image
+contracts remain compatible. DOM/GPU sampling is smooth for this family.
+Scope and before-build canvas: betterment/ILLUSTRATED-ICONS-2026-10-22.md.
+Owner aesthetic acceptance stays live and open.
+
 ## Owner direction — Workbench meets Pop!_OS (2026-10-22)
 
 The owner's live review rejected Ask's appearance and asked for a more modern

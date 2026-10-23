@@ -1204,7 +1204,7 @@ button.surface-edit-in-place:hover {
   width: 52px;
   height: 52px;
   object-fit: contain;
-  image-rendering: pixelated;
+  image-rendering: auto;
   opacity: 0.9;
 }
 
@@ -2592,11 +2592,11 @@ button.surface-edit-in-place:hover {
   align-items: center;
   justify-content: center;
 }
-/* HS-139-07: bright pixel sprites — retina, pixelated rendering. */
+/* HS-139-07: bright illustrated sprites, rendered at their source size. */
 .prefs-tile-sprite {
   width: 32px;
   height: 32px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .prefs-tile-label {
   font-family: var(--font-mono);
@@ -5058,7 +5058,7 @@ button.surface-edit-in-place:hover {
 .kit-apptile > img {
   width: 20px;
   height: 20px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .desk-next .meetings-top {
   flex-wrap: nowrap;

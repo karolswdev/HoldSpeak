@@ -116,7 +116,7 @@
 .desk-next .settings-plate-sprite .prefs-tile-sprite {
   width: 32px;
   height: 32px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .desk-next .settings-plate-text {
   display: flex;
@@ -211,7 +211,7 @@
 .desk-next .settings-row-name .prefs-tile-sprite {
   width: 24px;
   height: 24px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 
 /* ── The Guide: what is ready and what is not, one row each ── */
@@ -336,7 +336,7 @@
 .desk-next .prefs-calendar-section .surface-ledger[data-cols="settings-calendar"] .surface-ledger-line { display:grid; grid-template-columns:32px minmax(0,1fr) max-content; grid-template-rows:auto auto; align-items:center; min-height:62px; padding:8px 12px; gap:3px 10px; }
 .desk-next .settings-home .surface-ledger-lead,
 .desk-next .prefs-calendar-section .surface-ledger-lead { grid-column:1; grid-row:1 / span 2; }
-.desk-next .settings-home .surface-ledger-lead .prefs-tile-sprite { width:24px; height:24px; image-rendering:pixelated; }
+.desk-next .settings-home .surface-ledger-lead .prefs-tile-sprite { width:24px; height:24px; image-rendering:auto; }
 .desk-next .settings-home .surface-ledger[data-cols="settings-directory"] .surface-ledger-primary,
 .desk-next .prefs-calendar-section .surface-ledger[data-cols="settings-calendar"] .surface-ledger-primary { grid-column:2; grid-row:1; font:500 15px/1.3 var(--font-sans); white-space:normal; overflow-wrap:anywhere; }
 .desk-next .settings-home .surface-ledger-meta,
@@ -399,7 +399,7 @@
 .desk-next .settings-content[data-settings-material="inset"] { padding:6px 10px 10px; }
 .desk-next .prefs-module[data-settings-material="inset"] { width:100%; max-width:960px; min-width:0; margin-inline:0; gap:20px; font:14px/1.5 var(--font-sans); }
 .desk-next .prefs-module-head { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; min-width:0; }
-.desk-next .prefs-module-head .prefs-tile-sprite { width:32px; height:32px; image-rendering:pixelated; }
+.desk-next .prefs-module-head .prefs-tile-sprite { width:32px; height:32px; image-rendering:auto; }
 .desk-next .prefs-module-head .gadget-pane-title { margin:0; font:600 15px/1.4 var(--font-sans); text-transform:none; letter-spacing:0; }
 @container surface (max-width:559.9px) {
   .desk-next .prefs-module[data-settings-material="inset"] { gap:18px; }
@@ -449,7 +449,7 @@
   flex:none;
   width:32px;
   height:32px;
-  image-rendering:pixelated;
+  image-rendering:auto;
 }
 .desk-next .settings-page .settings-page-index .btn.is-active {
   color:var(--wb-ink, var(--text));

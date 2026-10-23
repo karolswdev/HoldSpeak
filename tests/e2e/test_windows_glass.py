@@ -1029,14 +1029,49 @@ SHELL_GEOMETRY_JS = r"""() => {
 }"""
 
 SHELL_LABEL_CONTRAST_JS = r"""() => {
-  const rgb = (value) => { const m = value.match(/rgba?\(([^)]+)\)/); if (!m) return null;
-    const p = m[1].split(',').map(Number); return {r: p[0], g: p[1], b: p[2], a: p[3] ?? 1}; };
+  const channel = (value, scale, normalized = false) => {
+    if (value === 'none') return 0;
+    if (value.endsWith('%')) return Number.parseFloat(value) * scale / 100;
+    return Number.parseFloat(value) * (normalized ? scale : 1);
+  };
+  const alpha = (value) => value == null ? 1
+    : value.endsWith('%') ? Number.parseFloat(value) / 100 : Number.parseFloat(value);
+  const rgb = (value) => {
+    const text = String(value).trim();
+    let m = text.match(/^rgba?\(([^)]+)\)$/i);
+    if (m) {
+      const p = m[1].trim().split(/[,\s/]+/).filter(Boolean);
+      if (p.length < 3) return null;
+      return {r: channel(p[0], 255), g: channel(p[1], 255), b: channel(p[2], 255), a: alpha(p[3])};
+    }
+    m = text.match(/^color\(\s*srgb\s+([^\s]+)\s+([^\s]+)\s+([^\s/]+)(?:\s*\/\s*([^\s]+))?\s*\)$/i);
+    if (!m) return null;
+    return {r: channel(m[1], 255, true), g: channel(m[2], 255, true), b: channel(m[3], 255, true), a: alpha(m[4])};
+  };
   const lum = (c) => { const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
     return .2126 * f(c.r) + .7152 * f(c.g) + .0722 * f(c.b); };
+  const over = (top, bottom) => ({
+    r: top.r * top.a + bottom.r * (1 - top.a),
+    g: top.g * top.a + bottom.g * (1 - top.a),
+    b: top.b * top.a + bottom.b * (1 - top.a),
+    a: 1,
+  });
   const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
   return [...document.querySelectorAll('.desk-screen .desk-icon-name')].map((e) => {
-    const cs = getComputedStyle(e); const fg = rgb(cs.color), bg = rgb(cs.backgroundColor);
-    return {name: e.textContent?.trim() || '', ratio: fg && bg ? Math.round(ratio(fg, bg) * 100) / 100 : 0,
+    const cs = getComputedStyle(e);
+    const layers = [];
+    for (let node = e; node; node = node.parentElement) {
+      const color = rgb(getComputedStyle(node).backgroundColor);
+      if (color && color.a > 0) {
+        layers.push(color);
+        if (color.a >= 1) break;
+      }
+    }
+    let bg = {r: 255, g: 255, b: 255, a: 1};
+    for (let i = layers.length - 1; i >= 0; i -= 1) bg = over(layers[i], bg);
+    const parsedFg = rgb(cs.color);
+    const fg = parsedFg ? over(parsedFg, bg) : null;
+    return {name: e.textContent?.trim() || '', ratio: fg ? Math.round(ratio(fg, bg) * 100) / 100 : 0,
       background: cs.backgroundColor, color: cs.color};
   });
 }"""
@@ -1323,6 +1358,10 @@ class TestHubWindows:
                 open_project_drawer(a, self.base, "p-ledger", H_TOKEN)
                 _normal_chair(a)
                 a.locator(".drawer-window").first.wait_for(timeout=T)
+                # The real project title loads after its window shell. Read
+                # order only after that identity settles, so Arrange all is
+                # compared with the same named windows on both sides.
+                a.locator(".desk-window-shell[aria-label='Payments ledger cutover']").wait_for(timeout=T)
                 before_arrange = windows(a)
                 before_order = [row["name"] for row in sorted(before_arrange.values(), key=lambda row: row["z"])]
                 _h_window_menu(a, "Arrange all")

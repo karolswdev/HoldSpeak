@@ -56,7 +56,7 @@
   width: 32px;
   height: 32px;
   flex: none;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 
 .automation-starter.surface-choice-card .surface-choice-card-head {

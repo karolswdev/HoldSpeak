@@ -79,7 +79,7 @@
 .desk-next .ag-ask { align-items: flex-start; padding: 8px; }
 .desk-next .ag-ask > .btn { margin-top: 2px; }
 .desk-next .ag-row-sprite { display: inline-grid; place-items: center; flex: none; }
-.desk-next .ag-row-sprite > img { width: 24px; height: 24px; image-rendering: pixelated; }
+.desk-next .ag-row-sprite > img { width: 24px; height: 24px; image-rendering: auto; }
 .desk-next .ag-row-text {
   display: flex;
   flex: 1 1 auto;

@@ -186,7 +186,7 @@
 .desk-next .today-row-sprite > img {
   width: 20px;
   height: 20px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .desk-next .today-row-text {
   display: flex;
@@ -285,7 +285,7 @@
 .desk-next .today-next-sprite > img {
   width: 24px;
   height: 24px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .desk-next .today-next-text {
   display: flex;

@@ -20,7 +20,7 @@
   flex: 0 0 64px;
   width: 64px;
   height: 64px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .desk-next .desk-session-identity .kit-apphead {
   flex: 1 1 auto;

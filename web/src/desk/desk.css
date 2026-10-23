@@ -85,7 +85,7 @@
 /* ── HS-110 system sprite utilities ── */
 .desk-chrome-sprite,
 .desk-dock-sprite {
-  image-rendering: pixelated;
+  image-rendering: auto;
   vertical-align: middle;
   pointer-events: none;
 }

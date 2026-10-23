@@ -482,7 +482,31 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
     assert controls.is_visible()
     # The selected destination must survive the host Button cascade, and the
     # preview must use the same reading material as the artifact itself.
-    assert controls.evaluate("el => getComputedStyle(el).backgroundColor") == "rgb(102, 136, 187)"
+    page.wait_for_function(
+        """el => {
+            const probe = document.createElement('span');
+            probe.hidden = true;
+            probe.style.color = 'var(--wb-blue)';
+            document.body.append(probe);
+            const expected = getComputedStyle(probe).color;
+            const actual = getComputedStyle(el).backgroundColor;
+            probe.remove();
+            return actual === expected;
+        }""",
+        arg=controls.element_handle(),
+        timeout=T,
+    )
+    facts = controls.evaluate("""el => {
+        const probe = document.createElement('span');
+        probe.hidden = true;
+        probe.style.color = 'var(--wb-blue)';
+        document.body.append(probe);
+        const expected = getComputedStyle(probe).color;
+        const actual = getComputedStyle(el).backgroundColor;
+        probe.remove();
+        return {actual, expected};
+    }""")
+    assert facts["actual"] == facts["expected"], facts
     assert second.locator(".send-open").evaluate(
         "el => getComputedStyle(el).backgroundColor"
     ) == paper.evaluate("el => getComputedStyle(el).backgroundColor")

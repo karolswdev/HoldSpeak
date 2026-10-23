@@ -395,7 +395,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .automation-setup-step-number {
   font: 600 12px / 1 var(--font-mono);

@@ -11,6 +11,10 @@ Pressed-state fix-forward (2026-10-22): #1425 preserves primary/danger
 selection fills during hover and keyboard focus after #1424. Existing slices
 only; no count change.
 
+Shared illustrated icon follow-up (2026-10-22): PR_PENDING replaces the
+pixel-art family with crisp illustrated shared app/object/Settings icons.
+Existing recipe slices only; owner aesthetic acceptance remains open.
+
 **Total: 115 of 117 slices merged**.
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.

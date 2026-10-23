@@ -446,7 +446,7 @@
   display: block;
   width: 14px;
   height: 14px;
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head > .desk-window-icon {
   background: transparent;
@@ -604,42 +604,6 @@
 .desk-next .desk-pullout-head .desk-window-actions :is(.btn, .desk-chip, button):not(.btn--primary):hover:not(:disabled) {
   background: var(--wb-blue);
   color: var(--wb-ink);
-}
-/* On the phone, a head Button keeps its full 44px rectangular hit box while
-   the pseudo-face carries the rounded paint. The head's narrow inset clears
-   the sheet corner clip; the desktop head keeps its original radius. */
-@media (max-width: 720px) {
-  .desk-next .desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing) {
-    position: relative;
-    box-sizing: border-box;
-    height: 44px;
-    min-height: 44px;
-    min-width: 44px;
-    border-radius: 0;
-    background: transparent;
-    isolation: isolate;
-  }
-  .desk-next .desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing)::before {
-    content: "";
-    position: absolute;
-    inset: 2px;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    pointer-events: none;
-    z-index: var(--desk-z-canvas);
-  }
-  .desk-next .desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing) > * {
-    position: relative;
-    z-index: var(--desk-z-local);
-  }
-  .desk-next .desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing):hover:not(:disabled)::before,
-  .desk-next .desk-window-shell > .desk-pullout-head .desk-wing.is-on::before {
-    background: var(--wb-blue);
-  }
-  .desk-next .desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing):active:not(:disabled)::before,
-  .desk-next .desk-window-shell > .desk-pullout-head :is(.desk-gadget, .desk-wing)[aria-pressed="true"]::before {
-    background: var(--wb-press);
-  }
 }
 /* HS-168-05 — actions slot: do not shrink, so wings stay in view. */
 .desk-next .desk-window-actions {
@@ -926,7 +890,7 @@
   background: var(--accent-tint);
 }
 .desk-zone-window .zone-cell img {
-  image-rendering: pixelated;
+  image-rendering: auto;
 }
 .desk-zone-window .zone-cell-label {
   font-size: var(--font-size-xs);
@@ -954,7 +918,7 @@
   white-space: nowrap;
 }
 .desk-zone-window .zone-list-ic img {
-  image-rendering: pixelated;
+  image-rendering: auto;
   vertical-align: middle;
 }
 .desk-zone-window .zone-sort {

@@ -152,7 +152,7 @@
   --danger-strong: var(--danger-fill);
   --info-soft-legacy: var(--info-soft);
   --disabled-bg: var(--surface-1);
-  --disabled-fg: var(--text-faint);
+  --disabled-fg: #5e7086;
   --disabled-border: var(--border);
   --selected-bg: var(--accent-tint);
   --selected-fg: var(--text);
