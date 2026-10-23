@@ -185,6 +185,91 @@ describe("Betterment Q2: an Ask on a busy engine says so, and offers another eng
 const TID = THREAD.first.thread_id;
 const NOTE_REF = "note:n-mira";
 
+type Deferred<T> = {
+  promise: Promise<T>;
+  resolve(value: T): void;
+  reject(reason?: unknown): void;
+};
+
+function deferred<T>(): Deferred<T> {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
+    resolve = done;
+    reject = fail;
+  });
+  return { promise, resolve, reject };
+}
+
+function delayedThreadDetail(id: string, answer: string, aboutTitle: string) {
+  return {
+    id,
+    title: id,
+    messages: [
+      {
+        id: `${id}-question`,
+        thread_id: id,
+        role: "user",
+        parts: [{ kind: "text", text: `Question ${id}`, ordinal: 0 }],
+      },
+      {
+        id: `${id}-answer`,
+        thread_id: id,
+        role: "assistant",
+        parts: [{ kind: "text", text: answer, ordinal: 0 }],
+      },
+    ],
+    refs: [{
+      id: `${id}-ref`,
+      thread_id: id,
+      message_id: `${id}-question`,
+      ref_kind: "note",
+      ref_id: `${id}-note`,
+      frozen_json: { title: aboutTitle },
+      origin: "reference",
+    }],
+  };
+}
+
+function recentThreadRows(ids: string[]) {
+  return {
+    threads: ids.map((id) => ({
+      id,
+      title: `Thread ${id}`,
+      recipe_id: null,
+      profile_override: null,
+      directory_id: null,
+      parent_thread_id: null,
+      status_line: null,
+      call_mode: 0,
+      mode: null,
+      token_in: 0,
+      token_out: 0,
+      created_at: "2026-10-23T00:00:00Z",
+      updated_at: "2026-10-23T00:00:00Z",
+      last_turn_at: "2026-10-23T00:00:00Z",
+    })),
+  };
+}
+
+function delayedThreadFetch(
+  ids: string[],
+  reads: Record<string, Deferred<Response> | Deferred<Response>[]>,
+) {
+  vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+    const url = String(input);
+    const method = String(init.method ?? "GET");
+    calls.push({ url, method, body: init.body ? JSON.parse(String(init.body)) : undefined });
+    if (method === "GET" && url.endsWith("/api/threads")) return Promise.resolve(reply(recentThreadRows(ids)));
+    const match = url.match(/\/api\/threads\/([^/]+)$/);
+    if (method === "GET" && match && reads[match[1]]) {
+      const read = reads[match[1]];
+      return Array.isArray(read) ? read.shift()!.promise : read.promise;
+    }
+    return Promise.resolve(reply({}));
+  }));
+}
+
 function hubWithThread() {
   let asks = 0;
   vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
@@ -204,6 +289,12 @@ function hubWithThread() {
 
 function askBox() {
   return screen.getByRole("textbox", { name: "Ask about your work" });
+}
+
+async function openRecentThread(id: string) {
+  fireEvent.click(screen.getByRole("button", { name: "Recent" }));
+  const row = await screen.findByRole("button", { name: new RegExp(`^Thread ${id}\\b`) });
+  fireEvent.click(row);
 }
 
 async function askText(text: string, answer: string) {
@@ -325,6 +416,118 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     expect(text).not.toContain("192.168.1.43");
     expect(text).not.toContain("GROUNDED");
     expect(text).not.toContain("RECEIPT");
+  });
+});
+
+describe("saved Ask thread reads keep the latest selection authoritative", () => {
+  beforeEach(() => {
+    useDesk.setState({ selectedIds: [], askThread: null });
+  });
+
+  it("keeps B's turns and About when A resolves after B, and follows up on B", async () => {
+    const readA = deferred<Response>();
+    const readB = deferred<Response>();
+    delayedThreadFetch(["A", "B"], { A: readA, B: readB });
+    render(<AskPanel />);
+
+    await openRecentThread("A");
+    await openRecentThread("B");
+    await act(async () => { readB.resolve(reply(delayedThreadDetail("B", "Answer B", "Note B"))); });
+    expect(screen.getByText("Answer B")).toBeInTheDocument();
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("Note B");
+
+    await act(async () => { readA.resolve(reply(delayedThreadDetail("A", "Answer A", "Note A"))); });
+    expect(screen.getByText("Answer B")).toBeInTheDocument();
+    expect(screen.queryByText("Answer A")).toBeNull();
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("Note B");
+
+    fireEvent.change(askBox(), { target: { value: "A B follow-up" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(calls.some((call) => call.method === "POST" && call.url.endsWith("/api/ask"))).toBe(true));
+    const followUp = calls.find((call) => call.method === "POST" && call.url.endsWith("/api/ask"));
+    expect(followUp?.body?.thread_id).toBe("B");
+  });
+
+  it("does not let A's rejection replace B's loading state", async () => {
+    const readA = deferred<Response>();
+    const readB = deferred<Response>();
+    delayedThreadFetch(["A", "B"], { A: readA, B: readB });
+    render(<AskPanel />);
+    await openRecentThread("A");
+    await openRecentThread("B");
+
+    await act(async () => { readA.reject(new Error("A failed")); });
+    expect(screen.getByTestId("run-line")).toHaveTextContent("Opening");
+    expect(screen.queryByText("This ask was not read")).toBeNull();
+
+    await act(async () => { readB.resolve(reply(delayedThreadDetail("B", "Answer B", "Note B"))); });
+    expect(screen.getByText("Answer B")).toBeInTheDocument();
+  });
+
+  it("does not let A's late success replace B's read error", async () => {
+    const readA = deferred<Response>();
+    const readB = deferred<Response>();
+    delayedThreadFetch(["A", "B"], { A: readA, B: readB });
+    render(<AskPanel />);
+    await openRecentThread("A");
+    await openRecentThread("B");
+
+    await act(async () => { readB.reject(new Error("B failed")); });
+    expect(await screen.findByText("This ask was not read")).toBeInTheDocument();
+    await act(async () => { readA.resolve(reply(delayedThreadDetail("A", "Answer A", "Note A"))); });
+    expect(screen.getByText("This ask was not read")).toBeInTheDocument();
+    expect(screen.queryByText("Answer A")).toBeNull();
+  });
+
+  it("does not let A's late rejection replace B's loaded answer", async () => {
+    const readA = deferred<Response>();
+    const readB = deferred<Response>();
+    delayedThreadFetch(["A", "B"], { A: readA, B: readB });
+    render(<AskPanel />);
+    await openRecentThread("A");
+    await openRecentThread("B");
+
+    await act(async () => { readB.resolve(reply(delayedThreadDetail("B", "Answer B", "Note B"))); });
+    await act(async () => { readA.reject(new Error("A failed")); });
+    expect(screen.getByText("Answer B")).toBeInTheDocument();
+    expect(screen.queryByText("This ask was not read")).toBeNull();
+  });
+
+  it("New Thread invalidates a pending saved-thread read", async () => {
+    const readA = deferred<Response>();
+    delayedThreadFetch(["A"], { A: readA });
+    render(<AskPanel />);
+    await openRecentThread("A");
+    verbById("desk.new-thread")!.run({} as never);
+    await act(async () => { readA.resolve(reply(delayedThreadDetail("A", "Answer A", "Note A"))); });
+    expect(screen.queryByText("Answer A")).toBeNull();
+    expect(screen.queryByTestId("ask-turn")).toBeNull();
+  });
+
+  it("closing Ask invalidates a pending saved-thread read", async () => {
+    const readA = deferred<Response>();
+    delayedThreadFetch(["A"], { A: readA });
+    render(<AskPanel />);
+    await openRecentThread("A");
+    fireEvent.click(screen.getByRole("button", { name: "Close Ask" }));
+    await act(async () => { readA.resolve(reply(delayedThreadDetail("A", "Answer A", "Note A"))); });
+    expect(screen.queryByText("Answer A")).toBeNull();
+    expect(screen.queryByTestId("ask-turn")).toBeNull();
+  });
+
+  it("same-id reopen keeps only the latest read", async () => {
+    const first = deferred<Response>();
+    const second = deferred<Response>();
+    delayedThreadFetch(["A"], { A: [first, second] });
+    render(<AskPanel />);
+    await openRecentThread("A");
+    await openRecentThread("A");
+
+    await act(async () => { second.resolve(reply(delayedThreadDetail("A", "Latest A", "Latest note A"))); });
+    await act(async () => { first.resolve(reply(delayedThreadDetail("A", "Old A", "Old note A"))); });
+    expect(screen.getByText("Latest A")).toBeInTheDocument();
+    expect(screen.queryByText("Old A")).toBeNull();
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("Latest note A");
   });
 });
 
