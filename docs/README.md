@@ -97,6 +97,11 @@ A line marked "(overlaps X)" repeats part of X. Read X first.
 
 ## Internal records
 
+The [native-experience research](internal/betterment/native-experience/README.md)
+records the React-stack direction, source audit, browser capabilities and
+proposed production-pattern delivery plan. It distinguishes research from
+shipped behavior and aesthetic acceptance.
+
 Files under [internal](internal/) hold canon, plans, and history.
 Canon states the current rules. Plans can describe behavior that is not built;
 release records describe their named revision and observed scope. Use the

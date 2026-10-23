@@ -7,6 +7,15 @@ framework in the manner of Intuition; 6, Workbench 2.0+ on steroids),
 then Articles VII (the interface serves) and VIII (native-grade craft). Every value in this document is a token name;
 raw values live only in `web/design-tokens.json`.
 
+## Research direction — native experience within React (2026-10-23)
+
+The owner chose to retain React and invest in the stack's common UI/UX
+framework. The [research packet](betterment/native-experience/README.md)
+records the current-state audit, interaction and browser evidence, experience
+criteria and proposed production-pattern sequence. Its recommendations are
+not shipped capabilities or new canon. Existing material, component APIs and
+owner visual judgment remain authoritative until implementation updates them.
+
 ## Owner direction — crisp illustrated icons (2026-10-22)
 
 The owner rejected the first implementation as “toilet bowls” and too basic.
