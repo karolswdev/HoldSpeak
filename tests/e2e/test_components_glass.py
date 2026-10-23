@@ -34,6 +34,7 @@ species inside the face lanes' own windows (A1/A2/A5/C2/C3 own that).
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Any
 
 import pytest
@@ -46,6 +47,16 @@ pytest.importorskip("playwright.sync_api", reason="the Components glass needs Pl
 SHOTS = evidence_dir("p14-b1")
 TOKEN = "components-glass"
 GALLERY = "[data-testid=object-species-gallery]"
+
+
+def _select_controls(page: Any) -> None:
+    page.get_by_test_id("design-reference").wait_for()
+    direct = page.get_by_role("button", name="Controls", exact=True)
+    if direct.count():
+        direct.click()
+        return
+    page.get_by_role("button", name=re.compile(r"^Patterns:")).click()
+    page.locator("[role^='menuitem']").filter(has_text="Controls").first.click()
 
 
 def _ax_columns(page: Any) -> dict[str, Any]:
@@ -134,6 +145,9 @@ class TestObjectSpeciesGlass:
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
             _normal_chair(page)
             page.goto(f"{self.base}/design/components?token={TOKEN}", wait_until="load")
+            # The living reference opens on Forms; the retained object and
+            # composer catalogue is the explicit Controls pattern.
+            _select_controls(page)
             gallery = page.locator(GALLERY)
             try:
                 gallery.wait_for(state="attached", timeout=20_000)
@@ -233,9 +247,10 @@ def test_firefox_common_composer_specimen_owns_editor_material(
                 _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
                 _normal_chair(page)
                 page.goto(f"{base}/design/components?token={TOKEN}", wait_until="load")
-                specimen = page.locator("section.surface-section").filter(
-                    has=page.get_by_role("heading", name="Conversation composer", exact=True))
-                editor = specimen.get_by_role("textbox")
+                _select_controls(page)
+                specimen = page.get_by_test_id("reference-controls").locator("section.surface-section").filter(
+                    has=page.get_by_role("textbox", name="Write a local preview"))
+                editor = specimen.get_by_role("textbox", name="Write a local preview")
                 editor.wait_for()
                 editor.fill("Review the common editor material.\nKeep the next action in reach.")
                 specimen.scroll_into_view_if_needed()

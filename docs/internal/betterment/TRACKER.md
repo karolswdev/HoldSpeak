@@ -5,7 +5,15 @@ file in the same PR as `pm/STATUS.md`, after each batch. "Done" means
 merged to main. "On his desk" is the backend commit in `pm/STATUS.md`.
 Open work that is not a slice is in `FOLLOWUPS.md`.
 
-**Last updated:** 2026-10-22, shared shell modernized; owner visual acceptance remains open. Running-desk identity is in `pm/STATUS.md`.
+**Last updated:** 2026-10-23, shared surface modernization; owner visual acceptance remains open. Running-desk identity is in `pm/STATUS.md`.
+
+
+Shared surface framework and reference (2026-10-23): PR_PENDING
+implements the owner's across-the-board scope: working in-desk patterns,
+shared interior adoption, canonical front-window authority and current author
+documentation. Existing recipe slices only; no count change. Scope and actual
+coverage: `MODERNIZATION-IMPLEMENTATION-2026-10-22.md`. Owner visual judgment
+remains open.
 
 Pressed-state fix-forward (2026-10-22): #1425 preserves primary/danger
 selection fills during hover and keyboard focus after #1424. Existing slices

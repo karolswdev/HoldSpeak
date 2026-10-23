@@ -286,20 +286,36 @@
    string well (sunken paper, the mic on its right edge); this row holds it
    and the model's egress chip beside it. */
 .room-ask-well {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content minmax(0, max-content);
+  grid-template-areas: "input result model";
+  align-items: end;
   gap: 8px;
 }
 .room-ask-well > .gadget-string {
-  flex: 1 1 auto;
+  grid-area: input;
+  width: 100%;
   min-width: 0;
 }
 .room-ask-well .gadget-string input.room-ask-input {
   padding: 8px 10px;
 }
-.room-ask-model-chip {
-  display: inline-flex; align-items: center; gap: 4px; flex: none;
+.room-ask-result {
+  grid-area: result;
+  min-width: 0;
 }
+.room-ask-model-chip {
+  grid-area: model;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+.room-ask-model-chip .surface-token { max-width: 100%; }
+.room-ask-model-chip .btn { flex: none; }
 /* Condition 8: idle/muted tone for the NOT SET egress chip */
 .room-egress-idle.gadget-chip-egress {
   color: var(--text-muted);
@@ -416,17 +432,29 @@
     flex-wrap: wrap;
   }
 
-  /* Condition 3: 393 ask well stacks: input+mic full-width, MODEL chip below */
+  /* Condition 3: 393 ask well stacks: input+mic full-width, then the
+     result choice and model fact share one quiet action row. */
   .room-ask-well {
-    flex-wrap: wrap;
+    grid-template-columns: minmax(0, 1fr) minmax(0, max-content);
+    grid-template-areas: "input input" "result model";
+    align-items: center;
   }
   .room-ask-well > .gadget-string {
-    flex: 1 1 60%;
-    min-width: 0;
+    grid-area: input;
   }
+  .room-ask-result { grid-area: result; }
   .room-ask-model-chip {
-    flex: 0 0 auto;
-    margin-left: auto;
+    grid-area: model;
+    justify-self: end;
+  }
+  .room-ask-well:not(:has(.room-ask-result)) {
+    grid-template-areas: "input input" "model model";
+  }
+  .room-ask-well:not(:has(.room-ask-model-chip)) {
+    grid-template-areas: "input input" "result result";
+  }
+  .room-ask-well:not(:has(.room-ask-result)):not(:has(.room-ask-model-chip)) {
+    grid-template-areas: "input input";
   }
 
   /* HS-172-03: proposal verbs stack under caption at 393 */

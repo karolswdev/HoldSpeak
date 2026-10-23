@@ -89,7 +89,14 @@ Owner aesthetic acceptance stays live and open.
 13. **Beauty pass after every functional pass; the owner sees shots
     before merge** (Workbench 2.0 directive).
 
-## B. The species a face composes from (never hand-rolled)
+## B. Core species a face composes from (never hand-rolled)
+
+This is the core roster, not an exhaustive export list. The
+[surface contract](../../web/src/desk/surface/contract.md) and its public
+barrel define supported APIs. The Components desk window demonstrates
+working patterns and controls; a local specimen does not establish live
+adoption or owner acceptance. Update the matching specimen and contract
+when a shared pattern changes.
 
 Button (primary · ghost · dense) · StateChip (success · warning ·
 failure · idle · unreachable; `●` for health) · EgressChip (the host)
@@ -108,7 +115,7 @@ documented in contract.md, then used — never invented inline.
 ## C. The type steps (the interior canon)
 
 display 26/650 `--font-display` — ONCE per face, the one big fact ·
-primary 15/600 `--font-sans` — the thing's name · body 13 · secondary
+primary 15/600 `--font-sans` — the thing's name · body 14 · secondary
 12 mono — counts, times, hosts · caption 12 mono uppercase 0.06em —
 section labels, chips. A face uses at least three steps; a face that
 collapses to one is a defect (the geometry probe).

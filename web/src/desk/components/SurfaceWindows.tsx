@@ -251,7 +251,11 @@ export function SurfaceWindowHost({
       }
     >
       <FootSlotContext.Provider value={foot}>
-        <div ref={bodyRef} className="desk-surface-body">
+        <div
+          ref={bodyRef}
+          className="desk-surface-body surface-host-body"
+          data-surface-host={row.key}
+        >
           <div data-aftercare-window-slot="top" />
           <TitleSlotContext.Provider value={setTitleOverride}>
             <WingSlotContext.Provider value={setWings}>

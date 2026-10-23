@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 import shutil
 import wave
 from pathlib import Path
@@ -33,6 +34,18 @@ T = 30_000
 EMPTY_REFERENCE_ARTIFACT = "art-adr-empty-reference"
 EMPTY_REFERENCE_SOURCE = "window-private-adr-reference"
 USEFUL_REFERENCE_WINDOW = "pullout:artifact:art-cutover-reqs"
+
+
+def _select_controls(page: Any) -> None:
+    """Choose the retained Controls catalogue through its real selector."""
+    page.get_by_test_id("design-reference").wait_for(timeout=T)
+    direct = page.get_by_role("button", name="Controls", exact=True)
+    if direct.count():
+        direct.click()
+    else:
+        page.get_by_role("button", name=re.compile(r"^Patterns:")).click()
+        page.locator("[role^='menuitem']").filter(has_text="Controls").first.click()
+    page.get_by_test_id("reference-controls").wait_for(timeout=T)
 
 
 def _feedback_menu_item(page: Any, width: int) -> Any:
@@ -314,6 +327,8 @@ def feedback_page(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request: pyte
             _normal_chair(page)
             window = page.locator("[id='surface-components'][data-layer='window']")
             window.wait_for(timeout=T)
+            _settle(page)
+            _select_controls(page)
             _settle(page)
             yield page, width, window
             browser.close()

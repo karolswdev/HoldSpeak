@@ -144,9 +144,12 @@ class TestDockGlass:
         page.goto(f"{self.base}/?token={TOKEN}", wait_until="load")
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
         if builder_tools:
-            # Betterment shell S1 (#1259): Refresh from hub is a builder tool;
-            # Search lists it only with Settings ▸ System ▸ Builder tools on.
-            page.evaluate("() => localStorage.setItem('hs.desk.builderTools', 'on')")
+            # Betterment shell S1 (#1259): Builder tools is a hub preference;
+            # seed it through the same Settings writer the face uses.
+            settings = _api(page, "GET", "/api/settings", token=TOKEN)
+            ui = settings.setdefault("ui", {})
+            ui["builder_tools"] = True
+            _api(page, "PUT", "/api/settings", settings, token=TOKEN)
         page.reload(wait_until="load")
         _normal_chair(page)
         page.locator(DOCK).wait_for()
@@ -206,6 +209,8 @@ class TestDockGlass:
             try:
                 self.server.stop()
                 self.stopped = True
+                refresh_requests: list[str] = []
+                page.on("request", lambda request: refresh_requests.append(request.url))
                 page.get_by_test_id("desk-dock-offline").wait_for(timeout=T)
                 # An actual failed Desk refresh: his "Refresh from hub", from the palette.
                 field = page.locator("[aria-controls=desk-palette-listbox]")
@@ -215,6 +220,7 @@ class TestDockGlass:
                 self._press(page, page.locator("[id='desk-palette-option-desk.refresh']"), width)
                 receipt = page.locator(".write-receipt", has_text="READ MEETINGS FAILED · HUB UNREACHABLE").first
                 receipt.wait_for(timeout=T)
+                assert any("/api/meetings?limit=24" in url for url in refresh_requests), refresh_requests
                 _settle(page)  # the phone window yields to the receipt row in a layout pass; measure after it
                 for name in ("Retry", "OK"):
                     button = receipt.get_by_role("button", name=name, exact=True)

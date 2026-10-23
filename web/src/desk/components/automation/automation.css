@@ -198,9 +198,6 @@
   gap: 10px;
   min-width: 0;
   padding: 12px 16px 14px;
-  background: var(--wb-well);
-  border: 1px solid var(--wb-ink);
-  box-shadow: var(--wb-sunken);
 }
 
 /* The head keeps one height in every state (facts, working, empty), so
@@ -416,9 +413,6 @@
 .automation-setup-well {
   min-width: 0;
   padding: 18px 20px 16px;
-  background: var(--wb-well);
-  border: 1px solid var(--wb-ink);
-  box-shadow: var(--wb-sunken);
 }
 .automation-setup-step-body {
   display: flex;
@@ -489,6 +483,35 @@
   margin: 0;
   color: var(--wb-danger-ink);
   font: 500 13px / 1.45 var(--font-sans);
+}
+
+/* Complete surface modernization: setup and result groups share the host's
+   paper material. The sentence stays the primary working surface, while
+   result cards and the setup editor use quiet outlines instead of competing
+   window-like plates. */
+.desk-next .surface-host-body.automation-body {
+  gap: var(--surface-host-gap, 16px);
+}
+
+.desk-next .surface-host-body .automation-sentence,
+.desk-next .surface-host-body .automation-results,
+.desk-next .surface-host-body .automation-lessons {
+  gap: var(--surface-group-gap, 12px);
+}
+
+.desk-next .surface-host-body .automation-card,
+.desk-next .surface-host-body .automation-setup-well {
+  padding: 12px 14px 14px;
+}
+
+.desk-next .surface-host-body .automation-line + .automation-line {
+  border-top: 1px solid var(--wb-rule-soft);
+  padding-top: 6px;
+}
+
+.desk-next .surface-host-body .automation-card-verbs,
+.desk-next .surface-host-body .automation-editor-verbs {
+  flex-wrap: wrap;
 }
 
 @container surface (max-width: 559.9px) {

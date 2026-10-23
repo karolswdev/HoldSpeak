@@ -127,7 +127,7 @@ function PulloutFrame({
     >
       {hosted ? (
         <FootSlotContext.Provider value={foot}>
-          <div className="desk-surface-body">
+          <div className="desk-surface-body surface-host-body" data-surface-host={o.kind}>
             {/* The aftercare card's seat (as SurfaceWindowHost): a card for
                 this meeting lands in its own window, and at 393 Capture never
                 takes the front from it (ChairDesk, frontWindowAftercareSlot). */}
@@ -166,7 +166,7 @@ function NoteWindowRouter({ o, pulloutId, origin }: { o: WorldObject; pulloutId:
   }, [o.id]);
 
   if (thought) return <ThoughtWorkspaceWindow object={o} pulloutId={pulloutId} thought={thought} origin={origin} onClose={close} />;
-  return <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body thought-workspace-opening" aria-busy={!failed}>{failed ? <><span>The note did not open. It is unchanged. Try again.</span><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening note…</span>}</div>} />;
+  return <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body surface-host-body thought-workspace-opening" data-surface-host={o.kind} aria-busy={!failed}>{failed ? <><span>The note did not open. It is unchanged. Try again.</span><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening note…</span>}</div>} />;
 }
 
 export function Pullout({

@@ -4,9 +4,27 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-22 (illustrated icons)
+**Last updated:** 2026-10-23 (shared surface modernization)
 
 ## Current phase
+
+Shared surface modernization — MODERNIZE_PR_PENDING: the owner requires the
+in-desk design reference, common layout/material adoption, compositor
+consistency and documentation reconciliation across active surface families.
+Components now offers working local form, reading, list, conversation and
+progress patterns, plus the retained controls catalogue. Shared interior
+rules reach manifest surfaces, object windows and specialised hosts; bounded
+editors, terminals and the Chair retain their task layouts. Frame, Dock and
+keyboard front authority use the mounted compositor snapshot.
+
+Scope, adoption and observations:
+`docs/internal/betterment/MODERNIZATION-IMPLEMENTATION-2026-10-22.md`.
+Required check: MODERNIZE_QUICK_PENDING.
+Owner aesthetic acceptance remains open. This does not change the betterment
+recipe count or claim every functional/native/provider operation is complete.
+The prior main62358 tape is complete and red: 13 Python and nine browser
+failures; this change's full tape follows merge and remains separate from the
+required quick check.
 
 Richer desktop icons — #1427: the owner rejected #1426's art as
 “toilet bowls” and too basic. All shared object, dock/system and Settings
@@ -2130,6 +2148,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **MODERNIZE_PR_PENDING — shared surface framework and reference:** working local patterns, common interior material/layout, mounted front authority, responsive window heads, and current author documentation. Required quick proof is in Current phase; exact deployed merge/build is checked through `/api/system/identity`.
 
 - **#1422 — common conversation design:** shared ComposerWell used in Ask and PR replies, continuous paper and readable turn hierarchy.
 

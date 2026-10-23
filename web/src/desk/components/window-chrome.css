@@ -387,6 +387,7 @@
   gap: 0;
   height: var(--wb-bar-h);
   min-height: var(--wb-bar-h);
+  min-width: 0;
   flex: none;
   margin: 0;
   padding: 0;
@@ -404,10 +405,12 @@
   background: var(--wb-field);
 }
 .desk-next .desk-window-shell > .desk-pullout-head .desk-pullout-title {
+  /* The title yields first. Wings either keep their measured strip or fold
+     into the shared menu when the fixed right gadget group needs the room. */
   flex: 0 1 auto;
   align-self: center;
   min-width: 0;
-  max-width: 45%;
+  max-width: none;
   margin: 0 8px;
   padding: 0;
   overflow: hidden;
@@ -495,9 +498,9 @@
   align-self: stretch;
 }
 .desk-next .desk-gadgets-right {
+  flex: 0 0 auto;
   margin-left: auto;
 }
-.desk-next .desk-pullout-head .desk-wings ~ .desk-gadgets-right,
 .desk-next .desk-pullout-head .desk-window-actions ~ .desk-gadgets-right {
   margin-left: 0;
 }
@@ -559,9 +562,13 @@
 /* Wing tabs share the head material and retain their cycle state. */
 .desk-next .desk-pullout-head .desk-wings {
   align-self: stretch;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
   gap: 0;
 }
 .desk-next .desk-pullout-head .desk-wing {
+  flex: 0 0 auto;
   height: 100%;
   min-height: 0;
   padding: 0 12px;
@@ -570,7 +577,9 @@
   background: transparent;
   box-shadow: none;
   color: var(--wb-ink);
-  font: 700 12px var(--font-mono);
+  font: 600 13px/1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
 }
 .desk-next .desk-pullout-head .desk-wing + .desk-wing {
   margin-left: 0;
@@ -1042,9 +1051,19 @@
   justify-content: flex-start;
   padding: 0 14px;
   border-left: 0;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 13px/1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
   white-space: nowrap;
+}
+/* On a desktop head the folded label is a compact fallback, not a second
+   full-width title bar. Keep the window title available after the wings fold;
+   the narrow sheet rule below still gives the menu the remaining row. */
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-wings.is-folded {
+  flex: 0 1 auto;
+}
+.desk-next .desk-window-shell:not(.is-sheet) > .desk-pullout-head .desk-wings.is-folded .desk-wings-menu {
+  width: auto;
 }
 
 /* The compositor's stage shelf and Exposé use the window's own element at its own

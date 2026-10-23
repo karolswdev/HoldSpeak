@@ -538,7 +538,7 @@ export function ConductorWindow() {
   const helperRows = (m: ConductorMember) => {
     const rows = helpersOf(m);
     return rows.length ? (
-      <ul className="cw-well cw-helpers" data-testid="conductor-helpers" aria-label={`Helpers of ${rowTitle(m)}`}>
+      <ul className="cw-well surface-group-well cw-helpers" data-testid="conductor-helpers" aria-label={`Helpers of ${rowTitle(m)}`}>
         {rows.map((h) => fleetRank(h) === 0 ? askRow(h) : fleetRow(h, m))}
       </ul>
     ) : null;
@@ -675,7 +675,7 @@ export function ConductorWindow() {
       lamp={head.ask > 0 ? "ask" : undefined}
       onClose={() => useConductor.getState().closeWindow()}
     >
-      <div ref={bodyRef} className="desk-pullout-body drawer-body" data-testid="conductor-window">
+      <div ref={bodyRef} className="desk-pullout-body drawer-body surface-host-body" data-surface-host="conductor" data-testid="conductor-window">
         <div className="drawer-scroll cw">
           <div className="cw-head">
             <AppHead fact={fleetWords(counts) || headFact(head, members)} className="cw-apphead" data-testid="conductor-head">
@@ -752,7 +752,7 @@ export function ConductorWindow() {
                 </h3>
                 {group.members.filter((m) => fleetRank(m) === 0).map(askRow)}
                 {group.members.some((m) => fleetRank(m) > 0) ? (
-                  <ul className="cw-well">{group.members.filter((m) => fleetRank(m) > 0).map((m) => fleetRow(m))}</ul>
+                  <ul className="cw-well surface-group-well">{group.members.filter((m) => fleetRank(m) > 0).map((m) => fleetRow(m))}</ul>
                 ) : null}
               </section>
             ))
@@ -767,19 +767,19 @@ export function ConductorWindow() {
               {fresh.length ? (
                 <section className="cw-section" data-testid="conductor-new" aria-label="New">
                   <h3 className="cw-cap">NEW</h3>
-                  <ul className="cw-well">{fresh.map((m) => fleetRow(m))}</ul>
+                  <ul className="cw-well surface-group-well">{fresh.map((m) => fleetRow(m))}</ul>
                 </section>
               ) : null}
               {working.length ? (
                 <section className="cw-section" data-testid="conductor-work" aria-label="Working">
                   <h3 className="cw-cap">WORKING</h3>
-                  <ul className="cw-well">{working.map((m) => fleetRow(m))}</ul>
+                  <ul className="cw-well surface-group-well">{working.map((m) => fleetRow(m))}</ul>
                 </section>
               ) : null}
               {quiet.length ? (
                 <section className="cw-section" data-testid="conductor-quiet" aria-label="Quiet">
                   <h3 className="cw-cap">QUIET</h3>
-                  <ul className="cw-well">{quiet.map((m) => fleetRow(m))}</ul>
+                  <ul className="cw-well surface-group-well">{quiet.map((m) => fleetRow(m))}</ul>
                 </section>
               ) : null}
             </>
@@ -788,7 +788,7 @@ export function ConductorWindow() {
           {missing.length ? (
             <section className="cw-section" data-testid="conductor-coders" aria-label="On this Mac">
               <h3 className="cw-cap">ON THIS MAC</h3>
-              <ul className="cw-well">
+              <ul className="cw-well surface-group-well">
                 {missing.map((m) => (
                   <CoderRow
                     key={m.id}
@@ -807,7 +807,7 @@ export function ConductorWindow() {
           {stopped.length ? (
             <section className="cw-section" data-testid="conductor-stopped" aria-label="Stopped by restart">
               <h3 className="cw-cap">STOPPED BY RESTART</h3>
-              <ul className="cw-well">
+              <ul className="cw-well surface-group-well">
                 {stopped.map((m) => (
                   <CoderRow
                     key={m.id}
@@ -840,7 +840,7 @@ export function ConductorWindow() {
 
           {ended.length ? (
             <FoldGadget title="Stopped today" token={String(ended.length)} className="cw-ended">
-              <ul className="cw-well" data-testid="conductor-ended">
+              <ul className="cw-well surface-group-well" data-testid="conductor-ended">
                 {ended.map((m) => (
                   <CoderRow
                     key={m.id}
@@ -869,7 +869,7 @@ export function ConductorWindow() {
 
           {ownMembers.length ? (
             <FoldGadget title="Agents you started yourself" token={String(ownMembers.length)} className="cw-own-agents">
-              <div className="cw-well" data-testid="conductor-own-agents">
+              <div className="cw-well surface-group-well" data-testid="conductor-own-agents">
                 {ownMembers.map(ownRow)}
               </div>
             </FoldGadget>

@@ -512,7 +512,7 @@
 .desk-next .speak-transport {
   gap: 12px;
   padding: 12px;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
   background: var(--alive-paper, #f8f5ee);
   box-shadow: var(--wb-sunken);
 }
@@ -520,14 +520,14 @@
   width: 112px;
   height: 64px;
   gap: 5px;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
   border-radius: 6px;
   background: var(--wb-ember-ink);
   color: var(--wb-paper);
   font: 750 14px / 1 var(--font-sans);
   letter-spacing: 0.02em;
   text-transform: none;
-  box-shadow: var(--wb-raised), 1px 3px 0 color-mix(in srgb, var(--wb-ink) 25%, transparent);
+  box-shadow: none;
   transition: background-color 120ms ease, box-shadow 160ms ease;
 }
 .desk-next .speak-transport > .desk-mic.gadget-transport-key .gadget-transport-glyph {
@@ -535,14 +535,14 @@
 }
 .desk-next .speak-transport > .desk-mic.gadget-transport-key:hover:not(:disabled) {
   background: color-mix(in srgb, var(--wb-ember-ink) 86%, #ffffff);
-  box-shadow: var(--wb-raised), 2px 5px 14px color-mix(in srgb, var(--wb-ember-ink) 45%, transparent);
+  box-shadow: none;
 }
 .desk-next .speak-transport > .desk-mic.gadget-transport-key:active:not(:disabled) {
   box-shadow: var(--wb-sunken);
 }
 .desk-next .speak-transport > .desk-mic.gadget-transport-key.is-listening {
   background: var(--wb-rec);
-  border-color: var(--wb-ink);
+  border-color: var(--wb-rule-soft);
   color: var(--wb-paper);
   animation: speak-breathe 1.4s ease-in-out infinite alternate;
 }
@@ -596,7 +596,7 @@
 @container surface (max-width: 500px) {
   .desk-next .speak-transport {
     padding: 4px 6px;
-    border-top: 1px solid var(--wb-ink);
+    border-top: 1px solid var(--wb-rule-soft);
   }
   .desk-next .speak-transport > .desk-mic.gadget-transport-key {
     width: 88px;
@@ -654,9 +654,10 @@
   display: inline-block;
   min-width: 22px;
   padding: 1px 6px;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-xs);
   background: var(--wb-steel);
-  box-shadow: var(--wb-raised);
+  box-shadow: none;
   font: 800 12px / 1.3 var(--font-mono);
   letter-spacing: 0.02em;
   text-align: center;
@@ -668,13 +669,14 @@
   flex: none;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
   background: var(--wb-paper);
-  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent), 4px 10px 22px color-mix(in srgb, var(--wb-ink) 14%, transparent);
+  box-shadow: none;
   transition: box-shadow 160ms ease;
 }
 .desk-next .speak-plate:hover {
-  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent), 6px 14px 28px color-mix(in srgb, var(--wb-ink) 20%, transparent);
+  box-shadow: none;
 }
 .desk-next .speak-plate-bar {
   display: flex;
@@ -682,15 +684,16 @@
   gap: 10px;
   min-height: 26px;
   padding: 3px 10px;
-  border-bottom: 1px solid var(--wb-ink);
-  background: var(--wb-stipple-fine), var(--wb-blue);
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: var(--wb-blue);
   color: var(--wb-ink);
 }
 .desk-next .speak-plate-label {
   padding: 1px 6px;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-xs);
   background: var(--wb-paper);
-  box-shadow: var(--wb-raised);
+  box-shadow: none;
   font: 800 12px / 1.2 var(--font-mono);
   letter-spacing: 0.08em;
 }
@@ -809,9 +812,10 @@
   margin: 0;
   padding: 8px 8px 8px 0;
   list-style: none;
-  background: var(--alive-paper, #f8f5ee);
-  border: 1px solid var(--wb-ink);
-  box-shadow: var(--wb-sunken);
+  background: var(--wb-paper);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
   min-width: 0;
 }
 .desk-next .speak-checks::before {
@@ -845,7 +849,7 @@
   margin-top: 10px;
   width: 10px;
   height: 10px;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
   background: var(--wb-steel);
   box-shadow: var(--wb-raised);
   transition: background-color 120ms ease, box-shadow 160ms ease;
@@ -982,9 +986,10 @@
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--lamp-warn) 14%, var(--wb-field-hi, var(--wb-paper)));
-  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 14%, transparent);
+  box-shadow: none;
 }
 .desk-next .speak-setup[hidden] {
   display: none;
@@ -994,7 +999,7 @@
   flex: none;
   width: 10px;
   height: 10px;
-  border: 1px solid var(--wb-ink);
+  border: 1px solid var(--wb-rule-soft);
   background: var(--lamp-warn);
   box-shadow: var(--wb-raised);
 }

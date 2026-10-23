@@ -1,5 +1,16 @@
 # Two Brains — Muad'Dib and Astra, equals of orchestration
 
+> **Current workflow — owner ruling 2026-10-12.**
+> [CLAUDE.md, How we work now](../../CLAUDE.md#how-we-work-now-the-fast-cycle-owner-ruling-2026-10-12)
+> supersedes the older process passages below: small worktree changes,
+> required quick check and screenshots before merge, immediate PR merge on
+> green, redeploy main, then full tape and Astra review. Findings are fixed
+> forward. No DW contracts, evidence-file or owner approval gate. The owner
+> judges appearance on the running desk; technical checks do not imply
+> aesthetic acceptance. Historical premerge-review/full-suite instructions
+> below are retained as history and must not reinstate those gates.
+
+
 **Astra is the reviewer, not a builder (owner ruling 2026-10-03: "let
 Astra be the uber-reviewer").** Muad'Dib's workers build everything,
 backend included. Astra owns no lanes and writes no product code; she

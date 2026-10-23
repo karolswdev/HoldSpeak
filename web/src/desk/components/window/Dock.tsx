@@ -15,7 +15,7 @@ import { useShortcutSheet } from "../../chromeState";
 import { useKeymap } from "../../keymap";
 import { WorkMenu } from "../DeskMenu";
 import { dockChipMenuEntries } from "../../windowMenuAdapter";
-import { useOpenWindows, useShownName, chipEls } from "./windowRegistry";
+import { useOpenWindows, useShownName, useFrontWindowId, chipEls } from "./windowRegistry";
 import { windowIcons } from "./seatIcons";
 import { VerbGlyph } from "./VerbGlyph";
 import { ShortcutSheet } from "./ShortcutSheet";
@@ -244,11 +244,11 @@ function useDockLiveReads(): {
  * above the window band, and it is invisible while nothing is open. */
 export function Dock({ center }: { center?: ReactNode } = {}) {
   const panelMin = useDesk((s) => s.panelMin);
-  const panelOrder = useDesk((s) => s.panelOrder);
   const windowsById = useDesk((s) => s.windowsById);
   const recordingState = useDesk((s) => s.recording);
   const recordingStartedAt = useDesk((s) => s.recordingStartedAt);
   const windows = useOpenWindows();
+  const front = useFrontWindowId();
   const compact = useCompactViewport();
   // HS-111-07 — the HS-101 B8 keyboard grammar (Cmd+1-Cmd+4, Cmd+W, Cmd+M, Ctrl+`,
   // Cmd+/) moved into desk/keymap.ts, driven by the registry's key
@@ -336,7 +336,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     if (!el) return;
     const GUTTER = 4;
     const align = () => {
-      const phone = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 720px)").matches;
+      const phone = compact;
       const current = parseFloat(el.style.getPropertyValue("--desk-dock-end-pad")) || 0;
       let pad = 0;
       if (phone) {
@@ -369,18 +369,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
       sizes.disconnect();
       children.disconnect();
     };
-  }, []);
-
-  // The front chip mirrors the shell's is-front rule: the last id in
-  // the order that is open here and not minimized (HS-97-04).
-  let front: string | undefined;
-  for (let i = panelOrder.length - 1; i >= 0; i--) {
-    const oid = panelOrder[i];
-    if (panelMin.includes(oid)) continue;
-    if (!windows.some((w) => w.id === oid)) continue;
-    front = oid;
-    break;
-  }
+  }, [compact]);
   // A launcher whose surface is already a window folds into that chip;
   // it only renders as a launcher while its surface is closed.
   // PHILO-16 (A1): with the chips parked the launcher stays; it is the
@@ -547,7 +536,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 data-app={application.windowId}
                 data-drop={application.windowId === "conductor" && handOver === "drawer:conductor" ? true : undefined}
                 {...(application.windowId === "conductor" ? handTargetProps("drawer:conductor") : {})}
-                className={`desk-dock-launch desk-dock-app${running && !minimized ? " is-run" : ""}${minimized ? " is-seated" : ""}`}
+                className={`desk-dock-launch desk-dock-app${running && !minimized ? " is-run" : ""}${minimized ? " is-seated" : ""}${running && winId === front && !minimized ? " is-front" : ""}`}
                 aria-label={`${application.label}${application.windowId === "intelligence:desk" && needsYouCount > 0 ? `, ${needsYouCount} needs you` : ""}${application.windowId === "surface-people" && people.label ? `, ${people.label}` : ""}${application.windowId === "conductor" && agentsTile.words ? `, ${agentsTile.words}` : ""}${minimized ? ", iconified" : ""}`}
                 onClick={() => {
                   if (isChair) openChairWindow(application.windowId);

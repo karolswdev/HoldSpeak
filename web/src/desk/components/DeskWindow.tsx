@@ -20,7 +20,7 @@ import {
 import { motion, useReducedMotion } from "motion/react";
 import { useDrag } from "@use-gesture/react";
 import { isRehydratedMinimized, useDesk, type PanelRect } from "../store";
-import { useCompactViewport } from "../useCompactViewport";
+import { COMPACT_VIEWPORT_QUERY, useCompactViewport } from "../useCompactViewport";
 import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { headMenuEntries } from "../windowMenuAdapter";
 import { windowObjectEntry } from "../objectMenu";
@@ -202,7 +202,7 @@ function liftAboveDock() {
   if (typeof window === "undefined") return;
   if (
     typeof window.matchMedia === "function" &&
-    window.matchMedia("(max-width: 720px)").matches
+    window.matchMedia(COMPACT_VIEWPORT_QUERY).matches
   )
     return; // sheets own their own form
   const state = useDesk.getState();
@@ -381,7 +381,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     }
     if (
       typeof window.matchMedia === "function" &&
-      window.matchMedia("(max-width: 720px)").matches
+      window.matchMedia(COMPACT_VIEWPORT_QUERY).matches
     )
       // PHILO-13-07 (B2, B0-F2): a sheet leaves the stacking order on close
       // too. Without this, a closed sheet kept its old plane in the persisted

@@ -1,0 +1,166 @@
+/* The reference owns navigation and arrangement only. Surface, gadget,
+   composer and Button material remains in the shared library. */
+.design-reference-shell > .reference-toolbar,
+.design-reference-shell > .reference-panel {
+  min-width: 0;
+}
+
+.reference-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block: var(--space-1) var(--space-2);
+}
+
+.reference-toolbar > .btn {
+  margin-inline-start: auto;
+}
+
+.reference-example h2,
+.reference-list-detail h3 {
+  margin: 0;
+}
+
+.reference-list-detail p {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+}
+
+.reference-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.reference-pattern-selector {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.reference-state-selector {
+  flex: none;
+  gap: var(--space-1);
+}
+
+.reference-selector-label {
+  margin-right: var(--space-1);
+  color: var(--text-muted);
+  font: 600 var(--font-size-xs) / 1 var(--font-mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.reference-panel,
+.reference-example,
+.reference-controls {
+  min-width: 0;
+}
+
+.reference-example {
+  display: grid;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+}
+
+.reference-example-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.reference-example-head > :first-child {
+  min-width: 0;
+}
+
+.reference-example-head > .surface-state-chip,
+.reference-example-head > .surface-provenance-chip {
+  flex: none;
+}
+
+.reference-form-fields {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 760px;
+}
+
+.reference-form-fields .gadget-row {
+  min-width: 0;
+}
+
+.reference-actions {
+  justify-content: flex-start;
+}
+
+.reference-reading-document {
+  max-width: 68ch;
+}
+
+.reference-reading-document + .reference-actions {
+  margin-top: var(--space-1);
+}
+
+.reference-receipt {
+  margin: 0;
+  color: var(--text-muted);
+  font: 600 var(--font-size-xs) / 1.35 var(--font-mono);
+}
+
+.reference-list-detail {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+  padding-block: var(--space-2);
+}
+
+.reference-list-detail .btn {
+  justify-self: start;
+}
+
+.reference-list-back {
+  display: none;
+}
+
+.reference-controls > .surface-section:first-child {
+  margin-top: 0;
+}
+
+@container surface (max-width: 559.9px) {
+  .reference-toolbar,
+  .reference-example-head {
+    gap: var(--space-2);
+  }
+
+  .reference-example-head > .surface-state-chip,
+  .reference-example-head > .surface-provenance-chip {
+    justify-self: start;
+  }
+
+  .reference-pattern-selector .btn,
+  .reference-state-selector .btn {
+    min-height: 44px;
+  }
+
+  .reference-toolbar > .reference-pattern-selector {
+    flex-basis: 100%;
+  }
+
+  .reference-toolbar > .reference-state-selector {
+    flex: 1 1 auto;
+  }
+
+  .reference-actions .btn {
+    max-width: 100%;
+  }
+
+  .reference-list-back {
+    display: inline-flex;
+  }
+
+  .reference-list-clear {
+    display: none;
+  }
+}

@@ -16,7 +16,6 @@ import {
   type ReactNode,
 } from "react";
 import { Button } from "../../components/signal/Signal";
-import { useCompactViewport } from "../useCompactViewport";
 import { StripMenuButton, useStripFit } from "./stripMenu";
 
 export interface WingSpec {
@@ -87,10 +86,10 @@ export function SurfaceWings({
   // fit the head's one 44 px row is ONE strip menu Button (the current face
   // + ▾) whose menu carries every face and, after a separator, the gear
   // door. Measured, never a fixed count; a strip that fits stays a strip.
-  const compact = useCompactViewport();
   const { ref, fits } = useStripFit<HTMLSpanElement>(
-    compact,
+    true,
     wings.map((w) => w.label).join("|") + (door ? `|${door}` : ""),
+    true,
   );
   if (!fits)
     return (

@@ -238,8 +238,9 @@
 .desk-next .desk-wings {
   display: flex;
   align-items: center;
-  flex-shrink: 0;
-  margin-inline: auto;
+  flex: 0 0 auto;
+  min-width: 0;
+  margin-inline: 0;
 }
 /* The tablist wrapper is semantic only; the strip stays one flex row. */
 .desk-next .desk-wings-tabs {
@@ -254,15 +255,14 @@
   margin-left: 4px;
 }
 .desk-next .desk-wing {
+  flex: 0 0 auto;
   border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  background: var(--wash-1);
+  border-radius: var(--radius-sm);
+  background: transparent;
   color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: var(--desk-surface-label-size); /* PHILO-7-02: the 12 px floor (was 10px) */
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 13px/1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
   padding: 4px 12px;
   cursor: pointer;
   transition:

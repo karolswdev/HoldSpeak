@@ -236,7 +236,7 @@ export function AutomationBuilder({
       <StepRail current={step}
         disabled={blocked || Boolean(saveError && step !== "do") || (step === "do" && (doDirty || !draft.trim()))}
         onChoose={chooseStep} />
-      <div className="automation-setup-well">
+      <div className="automation-setup-well surface-group-well">
         {step === "do" ? (
           <DoStep kind={draftKind} draft={draft} onKind={setDraftKind} onDraft={setDraft} />
         ) : null}

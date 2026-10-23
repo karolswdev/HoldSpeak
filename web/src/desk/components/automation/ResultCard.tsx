@@ -128,7 +128,7 @@ export function ResultCard({
   );
   return (
     <article
-      className="automation-card"
+      className="automation-card surface-group-well"
       data-testid="automation-newest"
       data-working={working ? "" : undefined}
       data-status={result?.status}

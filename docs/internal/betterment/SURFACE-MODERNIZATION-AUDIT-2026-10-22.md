@@ -1,5 +1,9 @@
 # Surface modernization and the in-desk reference
 
+Historical audit scope. The owner subsequently required full implementation;
+[the implementation record](MODERNIZATION-IMPLEMENTATION-2026-10-22.md)
+tracks that work and supersedes this document's proposal-only scope.
+
 Source: `62358b67189cf39de78be7395c7730c56231092e` (#1427).
 Audit by Astra, 2026-10-22. Read-only product inspection; no product changes.
 **Design recommendations: UNCHECKED — awaiting Muad'Dib.** This record is

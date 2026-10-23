@@ -79,6 +79,7 @@ export {
 } from "./Switchboard";
 export { wirePath, plugPoint, patchChain } from "./switchboardGeometry";
 export { Material } from "./Material";
+export { ReadingDocument } from "./ReadingDocument";
 export { useRovingRows } from "./roving";
 
 export {

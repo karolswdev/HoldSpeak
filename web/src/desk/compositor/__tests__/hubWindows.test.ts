@@ -12,6 +12,7 @@ import { useDrawers } from "../../drawer/store";
 import { useLane } from "../../lane/laneStore";
 import { __resetConductor, useConductor } from "../../conductor/store";
 import { useDesk } from "../../store";
+import { COMPACT_VIEWPORT_QUERY } from "../../useCompactViewport";
 import { peekPersonLens, takePersonLens } from "../../objectWindows";
 import { DESK_WORKSPACE_STORAGE_KEY } from "../../store/workspaceStorage";
 import { record, type Rect } from "../geometry";
@@ -197,7 +198,7 @@ describe("hubWindows", () => {
   describe("a hub-opened Chair window at 393", () => {
     const phoneWidth = (narrow: boolean) =>
       vi.spyOn(window, "matchMedia").mockImplementation((query: string) => ({
-        matches: narrow && query.includes("max-width: 720px"),
+        matches: narrow && query === COMPACT_VIEWPORT_QUERY,
         media: query, onchange: null,
         addListener: () => {}, removeListener: () => {},
         addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => false,

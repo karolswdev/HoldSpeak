@@ -25,19 +25,24 @@ the capabilities you work on. See [Models](docs/MODELS.md).
 | Change | Read |
 | --- | --- |
 | Product behavior | [Constitution](docs/internal/CONSTITUTION.md) and the feature guide |
-| Web interface | [UX canon](docs/internal/UX-CANON.md) and [frontend architecture](docs/internal/ARCHITECTURE_WEB_FRONTEND.md) |
+| Web interface | [Design author map](web/README.md#design-author-map), [UX canon](docs/internal/UX-CANON.md), and [frontend architecture](docs/internal/ARCHITECTURE_WEB_FRONTEND.md) |
 | Runtime or meeting session | [Backend architecture](docs/internal/ARCHITECTURE_BACKEND_RUNTIME.md) |
 | Documentation | [Writing standard](docs/internal/DOCS_STYLE.md) and [terminology register](docs/internal/DOCS_TERMINOLOGY.md) |
 | API or MCP contract | [API surface](docs/API_SURFACE.md) and [MCP sidecar](docs/MCP_SIDECAR.md) |
 
 ## Work flow
 
-1. Branch from `main`.
-2. Commit with `git commit`. There is no commit gate.
-3. Open a pull request. Put the real test results in the description.
-4. A reviewer gives one final review round when the work is finished. You
-   fix the findings. There is at most one re-check.
-5. Merge. Do not push to `main` directly.
+1. Branch from `main` in an isolated worktree.
+2. Implement a small change and run `scripts/quick_check.sh` under the test
+   lock with an isolated home. Read the relevant desktop and narrow shots.
+3. Commit with explicit paths. Open a pull request with the real results.
+4. Merge on the green required check; do not push to `main` directly.
+5. Redeploy main and update `pm/STATUS.md`. The full tape and Astra's review
+   run after merge. Fix findings forward; security or data-loss findings
+   require the exception defined in CLAUDE.md.
+
+The owner judges appearance live. Owner aesthetic acceptance is distinct
+from the technical merge check; there is no extra owner approval gate.
 
 [CLAUDE.md](CLAUDE.md) holds the full working agreements.
 
@@ -46,29 +51,23 @@ the capabilities you work on. See [Models](docs/MODELS.md).
 Run the tests that cover your change. Always use an isolated home, so the
 tests never touch your real database.
 
-```sh
-HOME_REAL=$HOME; H=$(mktemp -d); HOME=$H PLAYWRIGHT_BROWSERS_PATH=$HOME_REAL/Library/Caches/ms-playwright npm_config_cache=$HOME_REAL/.npm uv run pytest -q -n auto --dist worksteal -m "not slow" tests/unit tests/integration tests/critical tests/web tests/mcp tests/uat; rm -rf $H
-```
-
-This is the FAST run. It has no browser tests. To run one file, put its path
-in place of the directories.
-
-- If you change `web/src/` or `holdspeak/`, run the browser tests that cover
-  the diff: `eval "$(uv run python scripts/glass_for.py --quiet)"`. Run
-  `uv run python scripts/glass_for.py` to see which files it picks.
-- Nightly CI runs the full suite. It excludes `tests/e2e/test_metal.py`,
-  which needs a microphone, a model and desktop hardware.
-- A type check does not validate runtime behavior.
-
-For changes under `web/`, run the full web contract from that directory:
+Before merge, use the required quick check:
 
 ```sh
-npm ci
-npm run check
+scripts/quick_check.sh
 ```
 
-It checks tokens, architecture, types, tests, the production build and the
-bundle limits. Some Python integration tests need the built bundle.
+It runs the build, related web tests, affected Python/browser files, the desk
+sweep and repository guards under the one-run-at-a-time lock and an isolated
+home. For an additional focused run, use `uv run python scripts/test_lock.py
+-- <command>` with an isolated `HOME`, the real Playwright browser cache and
+`-n 8` for pytest. See [CLAUDE.md](CLAUDE.md#test-commands) for the exact
+commands and isolation switches. Never run `tests/e2e/test_metal.py` as an
+agent. Type checking alone does not validate runtime behavior.
+
+The main watcher runs the full tape after merge. A new failure is traced and
+fixed forward. Nightly CI also runs the full suite; wider local suites are
+not another pre-merge gate.
 
 Use the [dogfood protocol](dogfood/PROTOCOL.md) for whole-product or release
 checks. Run lint with `ruff check holdspeak/`.
