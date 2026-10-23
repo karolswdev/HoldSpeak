@@ -8,6 +8,15 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Native-experience repair wave — Ask saved-thread selection: the first small
+repair gives saved-thread reads their own generation. An older response or
+failure cannot replace the selected thread, New Ask or a closed window.
+Focused component proof: 46 tests passed, with seven new assertions red on
+the unpatched component. Required quick/deployment results are recorded in
+the repair PR. Settings, Capture and both Stop findings remain open; this
+does not close the audit or claim owner UX acceptance.
+
+
 Adversarial workflow audits — #1431: all 47 native-experience
 family audits have an independent review and root reconciliation in
 `docs/internal/betterment/native-experience/adversarial/README.md`.

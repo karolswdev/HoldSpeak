@@ -48,3 +48,20 @@ TUESDAY: Yes for one short, already-visible question; no for a slow or interrupt
 5. Ask an engine to prepare a send and deny a held write; verify Prepared/no egress and no Wrote mutation.
 
 UNKNOWN: No tests were executed. No browser captures, model latency/refusal observation, live provider/native behavior, performance, accessibility, or owner acceptance was established. The baseline anchors may drift.
+
+## Repair — saved-thread read authority, 2026-10-23
+
+The first repair adds a separate generation for saved-thread reads in
+`web/src/desk/components/AskPanel.tsx`. Selecting another thread, New Ask,
+Close and unmount invalidate the previous read. Only the current read can
+replace turns, About sources or read status. The live answer request keeps
+its own identity. This uses the existing single Ask window and saved-thread
+model; it adds no new surface or framework.
+
+The focused component run passes 46 tests across `ask.app.test.tsx`,
+`askPanelExperience.test.tsx` and `ask.test.ts`. Seven new assertions fail
+against the unpatched component. Deferred reads cover A/B ordering, stale
+failures and loading, New Ask, Close, same-ID reopen, About and follow-up
+thread identity. These are isolated component observations, not provider or
+owner acceptance. The remaining audit findings and appearance judgment stay
+open. The delivery PR records the required quick check and deployment.
