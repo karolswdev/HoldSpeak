@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-Illustrated icons — ICON_PR_PENDING: owner chose crisp illustrated icons for
+Illustrated icons — #1426: owner chose crisp illustrated icons for
 the next shared visual pass. SVG originals replace dense pixel art across
 world objects, the dock/system and Settings; optical32 renders keep small
 icons legible. Existing PNG/state contracts remain; common sampling is

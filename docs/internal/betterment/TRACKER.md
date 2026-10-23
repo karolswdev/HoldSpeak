@@ -11,7 +11,7 @@ Pressed-state fix-forward (2026-10-22): #1425 preserves primary/danger
 selection fills during hover and keyboard focus after #1424. Existing slices
 only; no count change.
 
-Shared illustrated icon follow-up (2026-10-22): PR_PENDING replaces the
+Shared illustrated icon follow-up (2026-10-22): #1426 replaces the
 pixel-art family with crisp illustrated shared app/object/Settings icons.
 Existing recipe slices only; owner aesthetic acceptance remains open.
 
