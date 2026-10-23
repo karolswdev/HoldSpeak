@@ -8,7 +8,7 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-Shared surface modernization — MODERNIZE_PR_PENDING: the owner requires the
+Shared surface modernization — #1428: the owner requires the
 in-desk design reference, common layout/material adoption, compositor
 consistency and documentation reconciliation across active surface families.
 Components now offers working local form, reading, list, conversation and
@@ -2149,7 +2149,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 
 ## Last merged (newest first)
 
-- **MODERNIZE_PR_PENDING — shared surface framework and reference:** working local patterns, common interior material/layout, mounted front authority, responsive window heads, and current author documentation. Required quick proof is in Current phase; exact deployed merge/build is checked through `/api/system/identity`.
+- **#1428 — shared surface framework and reference:** working local patterns, common interior material/layout, mounted front authority, responsive window heads, and current author documentation. Required quick proof is in Current phase; exact deployed merge/build is checked through `/api/system/identity`.
 
 - **#1422 — common conversation design:** shared ComposerWell used in Ask and PR replies, continuous paper and readable turn hierarchy.
 

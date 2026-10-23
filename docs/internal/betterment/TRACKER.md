@@ -8,7 +8,7 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 **Last updated:** 2026-10-23, shared surface modernization; owner visual acceptance remains open. Running-desk identity is in `pm/STATUS.md`.
 
 
-Shared surface framework and reference (2026-10-23): PR_PENDING
+Shared surface framework and reference (2026-10-23): #1428
 implements the owner's across-the-board scope: working in-desk patterns,
 shared interior adoption, canonical front-window authority and current author
 documentation. Existing recipe slices only; no count change. Scope and actual
