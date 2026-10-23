@@ -3166,7 +3166,7 @@
       "surface_ids": [
         "Go",
         "Dock",
-        "⌘K",
+        "\u2318K",
         "verb registry"
       ],
       "source_paths": [
@@ -3822,5 +3822,73 @@
     "network_calls": [],
     "owner_state_accessed": false,
     "tuesday_question": "The Desk has many declared windows and jobs, but the owner cannot yet be assumed to complete the explorer/resource workload on a Tuesday; the critical gaps above are the bounded reasons."
+  },
+  "adversarial_review": {
+    "date": "2026-10-23",
+    "baseline": "55572802181d6a8045f6d27e3c722aaf5694dbbd",
+    "index": "adversarial/README.md",
+    "synthesis": "adversarial/SYNTHESIS.md",
+    "reviewed_family_ids": [
+      "capture_thought",
+      "speech_dictation",
+      "speech_learning",
+      "voice_commands",
+      "meeting_record",
+      "meeting_import",
+      "meeting_intelligence",
+      "meeting_aftercare",
+      "meeting_archive",
+      "ask_whole_desk",
+      "threads",
+      "keep_answer",
+      "source_context",
+      "notes_editor",
+      "knowledge_drawers",
+      "people_prep",
+      "projects_room",
+      "new_project",
+      "project_update",
+      "decisions",
+      "agents_conductor",
+      "agent_hand",
+      "agent_result",
+      "automation_build",
+      "automation_schedule",
+      "mcp_tools",
+      "send_prepare",
+      "send_commit",
+      "engines_assignment",
+      "accounts",
+      "settings",
+      "setup",
+      "native_presence",
+      "desktop_workspace",
+      "windows",
+      "navigation_commands",
+      "explorer_repo",
+      "objects_pullouts",
+      "drawers",
+      "terminals_processes",
+      "activity_context",
+      "memory",
+      "native_input",
+      "feedback",
+      "calendar_record",
+      "components_reference",
+      "today_followthrough"
+    ],
+    "verdicts": {
+      "DO-NOT-RATIFY": 15,
+      "RATIFY-WITH-CONDITIONS": 32
+    },
+    "acceptance_challenges_proposed": 204,
+    "scope": "Audit sufficiency and source-informed UX review, not 47 executed workflows or product readiness. Original records remain the pinned source snapshot; read corrective reviews before implementation.",
+    "semantic_corrections": [
+      "Portable-client public job is an external-client bucket, not native_presence.",
+      "Held tool-request public job is Coder Gate; see agents_conductor/agent_result, not generic MCP calls.",
+      "Active Ask follows the owner no-Keep/Bin decision: saved threads and Save as note.",
+      "Normal note routes use the Thought workspace; the project drawer is retained for restoration.",
+      "User audio/screenshot reporting and operation outcomes are separate feedback jobs."
+    ]
   }
 }

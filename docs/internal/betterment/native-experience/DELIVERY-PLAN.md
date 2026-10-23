@@ -39,6 +39,19 @@ interaction quality. Each delivery brief selects a real job, its relevant
 shared behavior contracts, interruption/recovery cases and existing evidence;
 it does not create a speculative requirement for every button combination.
 
+## Corrections from the 47 adversarial reviews
+
+The [review reconciliation](adversarial/SYNTHESIS.md#delivery-order) now precedes
+shared extraction: repair the reproduced Settings leave/return conflict and
+high-cost capture/operation branches, then prove the resource workload with
+Components and a real consumer. Preserve existing caret insertion, Today/Needs
+projection, agent results, Send custody and domain-specific outcomes. Review
+identities and active routes before extracting from a retained component.
+
+Use the [individual records](adversarial/README.md) for each affected job. This
+is proposed work, with concrete acceptance challenges; the 47 reviews and 204
+challenges do not close betterment recipes or create another approval queue.
+
 ## Work packages and proof
 
 Each row can require several small PRs; one PR handles one concern, a few

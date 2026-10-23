@@ -36,6 +36,7 @@ first research packet; its Settings-first checkpoint alone was too narrow.
 
 | Record | Purpose |
 | --- | --- |
+| [47 adversarial reviews](adversarial/README.md) | Individual whole-job, convergence and user-value reviews, corrected source assumptions and delivery priorities. |
 | [Use-case behavior audit](USE-CASE-AUDIT.md) | Whole-product job/behavior matrix, current evidence, gaps and prioritized cross-application journeys. |
 | [Inventory snapshot](USE-CASE-INVENTORY.json) | Reconciliation of the existing jobs, capability catalogue, recipes, manifest and object/specialized hosts; not a new runtime registry. |
 | [Application model](APPLICATION-MODEL.md) | Desktop application/window/resource identity, lifecycle, selection, navigation, commands and cross-window operations. |

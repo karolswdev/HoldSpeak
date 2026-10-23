@@ -4,9 +4,30 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-23 (shared surface modernization)
+**Last updated:** 2026-10-23 (adversarial workflow reviews)
 
 ## Current phase
+
+Adversarial workflow audits — review packet complete: all 47 native-experience
+family audits have an independent review and root reconciliation in
+`docs/internal/betterment/native-experience/adversarial/README.md`.
+Audit-sufficiency verdicts: 32 conditional, 15 do-not-ratify; 204 proposed
+acceptance challenges. These are not executed workflows or product readiness.
+The reconciliation corrects active/retained routes and misleading public-job
+associations, preserves the current stack and existing shared behavior, and
+orders small repairs before framework extraction and the explorer/Components
+proof. Required publication quick: build, 37 focused docs checks, 110 desk-sweep
+cases, 27 canon and 1,126 repository guards passed; 53 Markdown navigation
+checks and all 47 record/anchor validations passed. No product repair is
+included in this packet.
+
+Highest-confidence new open finding: Settings pagehide/pageshow followed by a
+later 409 drops the new selected value; root reproduced it in isolated jsdom,
+while the no-leave control retains the draft and Retry. Capture failed-create
+seed loss, late automation delivery after Stop, overlapping Ask thread reads,
+and stopped-versus-saved Meeting truth are source-backed repair priorities.
+See `adversarial/SYNTHESIS.md` for first consumers, retained boundaries and
+owner/capture/AT/performance limits. Presence remains off.
 
 Desktop application-model correction — #1430: the owner
 clarified that near-native apps, windows and explorers are the unit of design,
@@ -2037,6 +2058,15 @@ Now: the fast-lane change (owner ruling 2026-10-03): remove the commit gate; sto
 committing generated docs and line-number test maps; split the tests.
 
 ## Open work
+
+- **Adversarial review follow-through:** the 47 records and shared delivery
+  priorities are in `docs/internal/betterment/native-experience/adversarial/README.md`.
+  Repair Settings leave/return conflict suppression first (isolated component
+  regression failed; no-leave control passed). Capture first-word retention,
+  project-update Stop/late effect, Ask A/B read fencing and Meeting save outcome
+  are source-backed priorities. Then prove the explorer/Components consumer
+  pair and complete the cross-app jobs. These findings are open; no product
+  fix or owner acceptance is claimed by the review packet.
 
 - Pre-change full tape at `83d790151` completed red: 11 Python and 11 browser
   cases failed; web baseline passed. Source logs remain in
