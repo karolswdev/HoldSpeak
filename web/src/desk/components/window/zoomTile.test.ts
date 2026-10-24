@@ -4,6 +4,7 @@
 // (54 px) and the window came back 12 px under its tile place (42 px).
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { useDesk } from "../../store";
+import { loadDeskWorkspace } from "../../store/workspaceStorage";
 import { shellEls } from "./windowRegistry";
 import { zoomWindow } from "./windowCommands";
 
@@ -16,6 +17,7 @@ function shellAt(id: string, rect: { x: number; y: number; w: number; h: number 
 }
 
 beforeEach(() => {
+  localStorage.clear();
   useDesk.setState({ panelRects: {}, panelSaved: [], panelMax: [], panelOrder: [] });
 });
 afterEach(() => {
@@ -47,9 +49,12 @@ describe("zoom keeps a Chair window's tile place", () => {
     shellAt("chair:needs", seat, true);
     zoomWindow("chair:needs");
     expect(useDesk.getState().panelSaved).not.toContain("chair:needs");
+    expect(loadDeskWorkspace().panel.autoRects?.["chair:needs"]).toEqual(seat);
+    expect(loadDeskWorkspace().panel.rects["chair:needs"]).toBeUndefined();
     zoomWindow("chair:needs");
     expect(useDesk.getState().panelRects["chair:needs"]).toEqual(seat);
     expect(useDesk.getState().panelSaved).not.toContain("chair:needs");
+    expect(loadDeskWorkspace().panel.autoRects?.["chair:needs"]).toBeUndefined();
   });
 
   it("keeps an owner-sized content window's fixed rect through zoom", () => {
@@ -57,6 +62,8 @@ describe("zoom keeps a Chair window's tile place", () => {
     useDesk.setState({ panelRects: { "chair:needs": sized }, panelSaved: ["chair:needs"] });
     shellAt("chair:needs", sized, true);
     zoomWindow("chair:needs");
+    expect(loadDeskWorkspace().panel.rects["chair:needs"]).toEqual(sized);
+    expect(loadDeskWorkspace().panel.autoRects?.["chair:needs"]).toBeUndefined();
     zoomWindow("chair:needs");
     expect(useDesk.getState().panelRects["chair:needs"]).toEqual(sized);
     expect(useDesk.getState().panelSaved).toContain("chair:needs");

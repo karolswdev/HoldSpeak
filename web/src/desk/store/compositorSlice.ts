@@ -57,6 +57,7 @@ function stack(depth: Record<string, number>): Pick<DeskState, "panelDepth" | "p
 
 export interface PanelLayout {
   rects: Record<string, PanelRect>;
+  autoRects?: Record<string, PanelRect>;
   order: string[];
   max: string[];
   zoom?: Record<string, PanelRect>;
@@ -70,7 +71,8 @@ export function loadPanelLayout(): PanelLayout {
 
 const initialWorkspace = loadDeskWorkspace();
 const initialPanelLayout = initialWorkspace.panel;
-const initialPanelRects: Record<string, PanelRect> = { ...initialPanelLayout.rects };
+const initialSavedRects: Record<string, PanelRect> = { ...initialPanelLayout.rects };
+const initialAutoRects: Record<string, PanelRect> = { ...initialPanelLayout.autoRects };
 const surfaceByAction = new Map(
   SURFACE_APPLICATIONS.map((application) => [application.action, application]),
 );
@@ -102,10 +104,15 @@ const migratedMeetingRef = [...initialWindowLists.pullouts]
   .find((id) => meetingRefFromPullout(id) !== null);
 const migratedMeetingId = migratedMeetingRef ? meetingRefFromPullout(migratedMeetingRef) : null;
 const migratedMeetingPanelId = migratedMeetingId ? `pullout:${migratedMeetingRef}` : null;
-if (migratedMeetingPanelId && initialPanelRects[migratedMeetingPanelId]) {
-  initialPanelRects["surface-meetings"] ??= initialPanelRects[migratedMeetingPanelId];
-  delete initialPanelRects[migratedMeetingPanelId];
+if (migratedMeetingPanelId) {
+  for (const rects of [initialAutoRects, initialSavedRects]) {
+    if (!rects[migratedMeetingPanelId]) continue;
+    rects["surface-meetings"] ??= rects[migratedMeetingPanelId];
+    delete rects[migratedMeetingPanelId];
+  }
 }
+// A saved owner size wins over an auto-height zoom snapshot at the same id.
+const initialPanelRects: Record<string, PanelRect> = { ...initialAutoRects, ...initialSavedRects };
 const migratePanelId = (id: string): string => id === migratedMeetingPanelId ? "surface-meetings" : id;
 const initialPanelDepth = Object.fromEntries(
   Object.entries(initialPanelLayout.depth ?? {}).map(([id, depth]) => [migratePanelId(id), depth]),
@@ -236,7 +243,7 @@ export type CompositorSlice = Pick<
 
 export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) => ({
   panelRects: initialPanelRects,
-  panelSaved: Object.keys(initialPanelRects),
+  panelSaved: Object.keys(initialSavedRects),
   // PHILO-17: a saved zone window is retired at boot (no face draws a zone).
   ...stack(Object.fromEntries(Object.entries(initialPanelDepth).filter(([id]) => !id.startsWith("zone:")))),
   stageShelf: initialPanelLayout.shelf ?? "left",

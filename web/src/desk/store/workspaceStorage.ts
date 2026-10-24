@@ -22,6 +22,9 @@ export interface DeskWorkspaceDocumentV1 {
   windowsById: Record<string, WindowInstance>;
   panel: {
     rects: Record<string, PanelRect>;
+    /** Normal rects of zoomed, content-sized windows that the owner has not
+     * arranged. These restore Zoom without turning auto height into a pin. */
+    autoRects?: Record<string, PanelRect>;
     order: string[];
     max: string[];
     /** PHILO-13-12 (C2) — zoom's remembered rect per window (optional:
@@ -195,6 +198,10 @@ export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
       Object.entries(panel.rects && typeof panel.rects === "object" ? panel.rects : {})
         .filter(([id, rect]) => isPanelId(id) && isPanelRect(rect)),
     ) as Record<string, PanelRect>;
+    const autoRects = Object.fromEntries(
+      Object.entries(panel.autoRects && typeof panel.autoRects === "object" ? panel.autoRects : {})
+        .filter(([id, rect]) => isPanelId(id) && isPanelRect(rect)),
+    ) as Record<string, PanelRect>;
     const zoom = Object.fromEntries(
       Object.entries(panel.zoom && typeof panel.zoom === "object" ? panel.zoom : {})
         .filter(([id, rect]) => isPanelId(id) && isPanelRect(rect)),
@@ -253,6 +260,7 @@ export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
       windowsById: parseWindows(candidate.windowsById),
       panel: {
         rects,
+        ...(Object.keys(autoRects).length ? { autoRects } : {}),
         order: orderFromDepth(depth),
         max: compactIds(panel.max),
         ...(Object.keys(zoom).length ? { zoom } : {}),
@@ -364,6 +372,13 @@ export function saveDeskWorkspace(state: WorkspaceState): void {
     const rect = state.panelRects[id];
     if (rect && isPanelId(id) && isPanelRect(rect)) rects[id] = rect;
   }
+  const autoRects: Record<string, PanelRect> = {};
+  const saved = new Set(state.panelSaved);
+  for (const id of compactIds(state.panelMax)) {
+    if (saved.has(id)) continue;
+    const rect = state.panelRects[id];
+    if (rect && isPanelRect(rect)) autoRects[id] = rect;
+  }
   const zoom: Record<string, PanelRect> = {};
   for (const [id, rect] of Object.entries(state.panelZoom ?? {})) {
     if (isPanelId(id) && isPanelRect(rect)) zoom[id] = rect;
@@ -378,6 +393,7 @@ export function saveDeskWorkspace(state: WorkspaceState): void {
     windowsById: state.windowsById,
     panel: {
       rects,
+      ...(Object.keys(autoRects).length ? { autoRects } : {}),
       order: compactIds(state.panelOrder),
       max: compactIds(state.panelMax),
       ...(Object.keys(zoom).length ? { zoom } : {}),
