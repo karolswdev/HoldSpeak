@@ -78,3 +78,28 @@
   vertical-align: top;
 }
 .reading-table th { font-weight: var(--desk-type-primary-weight); background: var(--wash-1); }
+.reading-object-links {
+  min-width: 0;
+}
+
+.reading-object-links > summary {
+  min-height: 44px;
+  font-size: max(12px, var(--font-size-md));
+}
+
+.reading-object-links-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  max-height: 60px;
+  overflow-y: auto;
+}
+
+.reading-object-links-list .btn {
+  min-height: 32px;
+  min-width: 32px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: max(12px, var(--desk-surface-label-size));
+}

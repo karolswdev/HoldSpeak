@@ -71,7 +71,8 @@
   flex: 1 1 0;
   min-height: 140px;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-auto-rows: auto;
   gap: 12px;
   padding: clamp(20px, 2.6vw, 34px) clamp(22px, 3.4vw, 44px) 14px;
   background: var(--surface-1);
@@ -187,8 +188,20 @@
 }
 
 .desk-next .thought-note-document > .surface-well {
-  grid-row: 3;
   min-width: 0;
+}
+
+.desk-next .thought-note-document > .reading-object-links {
+  min-width: 0;
+}
+
+.desk-next .thought-workspace-window.is-sheet .reading-object-links-list {
+  max-height: 148px;
+}
+
+.desk-next .thought-workspace-window.is-sheet .reading-object-links-list .btn {
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .desk-next .thought-voice-recovery {

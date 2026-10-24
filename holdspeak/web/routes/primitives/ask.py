@@ -86,9 +86,9 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
             if body.get("thread") is True or body.get("thread_id"):
                 # Betterment Q4: the Ask window keeps every Ask as a thread;
                 # a thread_id continues that thread.
-                result=await service().ask_in_thread(principal(request),str(body.get("prompt") or ""),body.get("grounding"),thread_id=str(body.get("thread_id") or ""),lens=str(body.get("lens") or "Ask"),context=context,invocation_id=invocation_id)
+                result=await service().ask_in_thread(principal(request),str(body.get("prompt") or ""),body.get("grounding"),thread_id=str(body.get("thread_id") or ""),lens=str(body.get("lens") or "Ask"),context=context,invocation_id=invocation_id,source_snapshot=body.get("source_snapshot"))
                 return JSONResponse(result)
-            result=await service().ask(principal(request),str(body.get("prompt") or ""),body.get("grounding"),lens=str(body.get("lens") or "Ask"),context=context,model=body.get("model"),inference_target_id=body.get("inference_target_id"),profile_id=body.get("profile_id"),max_tokens=body.get("max_tokens"),temperature=body.get("temperature"),invocation_id=invocation_id)
+            result=await service().ask(principal(request),str(body.get("prompt") or ""),body.get("grounding"),lens=str(body.get("lens") or "Ask"),context=context,model=body.get("model"),inference_target_id=body.get("inference_target_id"),profile_id=body.get("profile_id"),max_tokens=body.get("max_tokens"),temperature=body.get("temperature"),invocation_id=invocation_id,source_snapshot=body.get("source_snapshot"))
             return JSONResponse(result)
         except ServiceError as exc: return _error(exc)
         except Exception as exc: return error_500(exc,log,"Failed to run ask")

@@ -134,7 +134,10 @@ copy, move, drop, stage or commit support.
 - **Error:** `REPLY REFUSED` leaves composer text and the source chip intact;
   `Retry` names the captured request, not a new global task.
 - **Resumed:** `Save as Note` is the retained action. Returning to Thought shows
-  the original two-line selection. The boards do not use `Keep` or `Bin`.
+  the original two-line selection. A saved Note keeps its editable body and
+  offers a compact `Linked items` fold for supported source and Ask thread
+  links. The owner opens a link with its own Button; editing the Markdown
+  does not navigate. The boards do not use `Keep` or `Bin`.
 
 **B input recovery implementation (2026-10-23):** the active Thought field
 binds its editor/range/generation before transcription. A later draft, IME or
@@ -362,3 +365,13 @@ Save as note carries editable qualified source/thread links. These are bounded
 implementation observations, not approval of all static boards or owner
 visual acceptance. The frontend body capture validates return only; server
 source-version pinning, Project/People jobs and whole J3 remain separate.
+
+**B pinned-source and link-door proposal (2026-10-23):** the selected or
+whole-Note Ask carries the saved Thought working revision and Note body hash
+into the request. A changed source refuses the run while leaving the question
+and return door. Clear quote changes only the prompt; returning still restores
+the captured editor range or caret. After Save as note, the active Thought
+window shows supported Markdown source/thread links in a compact in-flow
+`Linked items` fold. The fold reads the current editable draft and opens a
+link only on a deliberate Button press. The desktop Note row and narrow state
+inset paint this optional state without changing the editor or voice well.

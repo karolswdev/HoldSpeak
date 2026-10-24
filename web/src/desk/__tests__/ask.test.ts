@@ -31,12 +31,13 @@ afterEach(() => vi.unstubAllGlobals());
 describe("Thought source handoff", () => {
   const source = {
     noteRef: "note:n1", text: "🚀 source", body: "A 🚀 source B",
-    range: { from: 2, to: 11 }, windowId: "pullout:note:n1", scrollTop: 42,
+    range: { from: 2, to: 11, text: "🚀 source" }, windowId: "pullout:note:n1", scrollTop: 42,
     source: { id: "n1", kind: "note", title: "Source", ref: "note:n1" },
   };
 
   it("restores only the exact UTF-16 range in the same saved Note body", () => {
-    expect(validAskReturnRange(source, "note:n1", source.body)).toEqual(source.range);
+    expect(validAskReturnRange(source, "note:n1", source.body)).toEqual({ from: 2, to: 11 });
+    expect(validAskReturnRange({ ...source, text: "" }, "note:n1", source.body)).toEqual({ from: 2, to: 11 });
     expect(validAskReturnRange(source, "note:n1", "A 🚀 newer B")).toBeNull();
     expect(validAskReturnRange(source, "note:n2", source.body)).toBeNull();
   });

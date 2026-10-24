@@ -37,6 +37,19 @@ repaired in #1444/#1445 and the stale Forms specimen cases repaired below.
 That pinned full tape is RED; no latest-main full-suite green is claimed. Earlier wire, optional-plugin and doc-probe repairs
 are recorded below. Recipe closeout remains 115/117.
 
+
+Note-version / saved-link continuation: canonical Thought revision/body hash
+now travels with the accepted Ask; changed/gone sources refuse before dispatch,
+and admitted text stays with normal/CLI/LOOP turns without losing original
+Desk Memory. Active saved Notes gain explicit source/thread Buttons in Linked
+items; Clear quote and whole-Note Ask retain origin range/caret. Server and
+frontend advisory fixes received final RATIFY. Required quick green: build,
+4,286 UI tests, 961 affected checks (six known skips), 110 desk sweep, 27 canon,
+1,126 repository guards; changed browser cases cover1440/393 and phone targets.
+This is bounded P04/J1/P10, not full P04/J3 or owner aesthetic acceptance.
+The separate P01 low-window content-growth clamp is in progress; a real-drag
+synthetic-growth probe reproduced a rendered footer below the work area.
+
 Zoom restore — #1444: content-sized windows retain auto height across first
 zoom, restore and reopen; owner-sized windows retain fixed geometry. The bug
 was reproduced on pre-P01 main. Required quick green: build, 4,219 related UI

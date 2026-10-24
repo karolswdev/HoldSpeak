@@ -5,6 +5,7 @@ from holdspeak.services.observer import NullObserver, PipelineObserver, observe_
 import asyncio
 import hashlib
 import json
+import re
 import time
 import uuid
 from collections.abc import Callable, Sequence
@@ -19,7 +20,7 @@ from ..kernel.model import KernelRefused
 from ..kernel.prompt_adapter import CanonicalPromptAdapter
 from ..principals import Principal
 from ..grounding import (
-    GROUNDING_EXPANDS, GROUNDING_MAX_REFS, hydrate_grounding_blocks,
+    GROUNDING_EXPANDS, GROUNDING_MAX_REFS, GroundingBlock, _defended_block, hydrate_grounding_blocks,
     hydrate_grounding_blocks_detailed, meeting_digest, score_claims,
 )
 from .memory_grounding import (
@@ -44,6 +45,47 @@ ASK_PAYLOAD_SCHEMA_VERSION = 1
 #: fixed value, longer than any real Ask id, so both sides fit the same bytes
 #: and the real request is never larger than the one that was fitted.
 THOUGHT_FIT_OPERATION_ID = "ask_" + "0" * 60
+
+
+def _pinned_note(db: Database, snapshot: Any) -> dict[str, str] | None:
+    """Check a Thought's selected working Note before any Ask dispatch."""
+    if snapshot is None:
+        return None
+    if (not isinstance(snapshot, dict)
+            or set(snapshot) != {"ref", "thought_id", "working_revision", "body_sha256"}
+            or not isinstance(snapshot["ref"], str)
+            or not snapshot["ref"].startswith("note:")
+            or not snapshot["ref"][5:]
+            or not isinstance(snapshot["thought_id"], str)
+            or not snapshot["thought_id"].strip()
+            or type(snapshot["working_revision"]) is not int
+            or snapshot["working_revision"] < 1
+            or not isinstance(snapshot["body_sha256"], str)
+            or re.fullmatch(r"[0-9a-f]{64}", snapshot["body_sha256"]) is None):
+        raise ValidationError("Selected source snapshot is invalid", code="source_snapshot_invalid",
+                              context={"reason": "not_sent", "status": 400})
+    note_id = snapshot["ref"][5:]
+    # One SQLite statement captures revision and canonical Note bytes together.
+    # A title/tag writer cannot land between two independent repository reads.
+    with db._connection() as conn:
+        row = conn.execute(
+            "SELECT t.working_note_id, t.working_revision, t.state, "
+            "n.title, n.body_markdown, n.deleted, n.id AS note_id "
+            "FROM refinement_thoughts t LEFT JOIN notes n ON n.id=t.working_note_id "
+            "WHERE t.id=?", (snapshot["thought_id"],),
+        ).fetchone()
+    if row is None or row["working_note_id"] != note_id or row["state"] == "tombstoned":
+        raise ServiceError("source_gone", "Selected Thought is no longer available.",
+                           context={"reason": "source_gone"})
+    if row["note_id"] is None or row["deleted"]:
+        raise ServiceError("source_gone", "Selected Note is no longer available.",
+                           context={"reason": "source_gone"})
+    if (int(row["working_revision"]) != snapshot["working_revision"]
+            or hashlib.sha256(str(row["body_markdown"] or "").encode("utf-8")).hexdigest() != snapshot["body_sha256"]):
+        raise ServiceError("source_changed", "Selected Note changed. Select it again.",
+                           context={"reason": "source_changed"})
+    return {"ref": snapshot["ref"], "id": note_id,
+            "title": str(row["title"] or note_id), "body": str(row["body_markdown"] or "")}
 
 
 class _QuestionOrSynthesisAdapter:
@@ -272,9 +314,13 @@ class AskService:
         return {"refs": refs, "titles": titles, "chars": sum(len(block) for block in blocks),
                 "blocks": [{"ref": ref, "title": title, "chars": len(block)} for ref, title, block in zip(refs, titles, blocks)]}
 
-    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None, history: Sequence[tuple[str, str]] = (), desk_tools: bool = False) -> dict[str, Any]:
+    async def ask(self, principal: Principal, question: str, grounding: Any = None, *, lens: str = "Ask", context: list[dict[str, Any]] | None = None, model: str | None = None, inference_target_id: str | None = None, profile_id: str | None = None, max_tokens: Any = None, temperature: Any = None, invocation_id: str | None = None, before_physical_dispatch: Any = None, before_compatibility_retry: Any = None, frozen_grounding: FrozenGroundingSnapshot | None = None, frozen_admission_claim: dict[str, Any] | None = None, operation_capability: str = "ask.answer", routed_execution_id: str | None = None, memory_exclude_refs: Sequence[str] = (), subject_kind: str | None = None, subject_id: str | None = None, history: Sequence[tuple[str, str]] = (), desk_tools: bool = False, source_snapshot: Any = None, _prepared_note: dict[str, str] | None = None) -> dict[str, Any]:
         prompt = str(question or "").strip()
         if not prompt: raise ValidationError("prompt is required")
+        pinned = _prepared_note if _prepared_note is not None else _pinned_note(self._db, source_snapshot)
+        if pinned is not None and frozen_grounding is not None:
+            raise ValidationError("A selected Note cannot use refinement grounding", code="grounding_invalid")
+        source_exclusions = (*memory_exclude_refs, pinned["ref"]) if pinned is not None else memory_exclude_refs
         # Betterment Q4: a follow-up in the Ask window carries the earlier
         # exchanges of its thread.  They go in front of the question; memory
         # and grounding still read the question alone.
@@ -290,7 +336,7 @@ class AskService:
         if container_refs:
             grounding = dict(grounding) if isinstance(grounding, dict) else {}
             grounding["refs"] = list(dict.fromkeys([*(grounding.get("refs") or []), *container_refs]))
-        material, context_ids, context_titles = self._assemble_material(context or [])
+        material, context_ids, context_titles = self._assemble_material(context or [], pinned_note=pinned)
         frozen_system_instruction = ""
         if frozen_grounding is not None:
             if not isinstance(frozen_grounding, FrozenGroundingSnapshot):
@@ -306,14 +352,15 @@ class AskService:
                 frozen_system_instruction,
             ) = self._frozen_grounding_with_memory(
                 frozen_grounding, prompt,
-                capability_id=operation_capability, exclude_refs=memory_exclude_refs,
+                capability_id=operation_capability, exclude_refs=source_exclusions,
             )
             context_ids += frozen_ids
             context_titles += frozen_titles
         else:
             envelope, grounding_echo = self._grounding(
                 principal, grounding, prompt,
-                capability_id=operation_capability, exclude_refs=memory_exclude_refs,
+                capability_id=operation_capability, exclude_refs=source_exclusions,
+                pinned_note=pinned,
             )
             if grounding_echo:
                 context_ids += grounding_echo.pop("_ids"); context_titles += grounding_echo.pop("_titles")
@@ -327,7 +374,7 @@ class AskService:
         if frozen_grounding is None and not routed_execution_id:
             reflect = reflect_for(
                 operation_capability, self._db, scopes=self._reflect_scopes(grounding),
-                query=prompt, exclude_refs=memory_exclude_refs,
+                query=prompt, exclude_refs=source_exclusions,
             )
         recall_envelope = envelope
 
@@ -583,7 +630,7 @@ class AskService:
 
     # ── Betterment Q4: one Ask window, every Ask kept as a thread ─────
 
-    async def ask_in_thread(self, principal: Principal, question: str, grounding: Any = None, *, thread_id: str = "", lens: str = "Ask", context: list[dict[str, Any]] | None = None, invocation_id: str | None = None) -> dict[str, Any]:
+    async def ask_in_thread(self, principal: Principal, question: str, grounding: Any = None, *, thread_id: str = "", lens: str = "Ask", context: list[dict[str, Any]] | None = None, invocation_id: str | None = None, source_snapshot: Any = None) -> dict[str, Any]:
         """One Ask, kept as a thread (DECISIONS #14: no Keep, no Bin).
 
         The answer is today's Ask (About in the prompt, memory pages first);
@@ -593,6 +640,7 @@ class AskService:
         looked at (``origin='relevance'``), the question keeps its About
         (``origin='reference'``).
         """
+        pinned = _pinned_note(self._db, source_snapshot)
         threads = self._db.threads
         thread_id = str(thread_id or "").strip()
         history: list[tuple[str, str]] = []
@@ -611,14 +659,14 @@ class AskService:
         if mode == ask_desk.LOOP and self._thread_service is not None:
             return await self._ask_in_loop(
                 principal, question, grounding, thread_id=thread_id, context=context or [],
-                invocation_id=invocation_id,
+                invocation_id=invocation_id, pinned_note=pinned,
             )
         desk_tools = mode == ask_desk.CLI
         result = await self.ask(
             principal, question, grounding, lens=lens, context=context,
             invocation_id=invocation_id, history=history,
             memory_exclude_refs=(f"thread:{thread_id}",) if thread_id else (),
-            desk_tools=desk_tools,
+            desk_tools=desk_tools, _prepared_note=pinned,
         )
         text = str(question or "").strip()
         if not thread_id:
@@ -667,7 +715,7 @@ class AskService:
             result["looked_at"] = _with_tool_reads(result["looked_at"], used)
         return result
 
-    async def _ask_in_loop(self, principal: Principal, question: str, grounding: Any, *, thread_id: str, context: list[dict[str, Any]], invocation_id: str) -> dict[str, Any]:
+    async def _ask_in_loop(self, principal: Principal, question: str, grounding: Any, *, thread_id: str, context: list[dict[str, Any]], invocation_id: str, pinned_note: dict[str, str] | None = None) -> dict[str, Any]:
         """Betterment Q7: one Ask through the hub's tool loop (an HTTP engine
         whose server takes tool calls).  The thread's earlier turns are its
         history; About is where the agent starts.  A failed first Ask leaves
@@ -686,7 +734,7 @@ class AskService:
         try:
             turn = await ask_desk.run_loop(
                 service, principal, thread_id=thread_id, question=text, refs=refs,
-                invocation_id=invocation_id, progress=self._progress,
+                invocation_id=invocation_id, progress=self._progress, pinned_note=pinned_note,
             )
         except Exception:
             if new_thread:
@@ -705,6 +753,12 @@ class AskService:
         key = ask_trace(turn["turn_invocation_id"])
         used = use_by_trace(self._db, [key]).get(key) or {}
         scope = turn["egress_scope"]
+        pinned_looked_at = []
+        if pinned_note is not None:
+            pinned_title = _defended_block(GroundingBlock(
+                "note", pinned_note["id"], pinned_note["title"], "", "",
+            )).title
+            pinned_looked_at.append({"ref": pinned_note["ref"], "title": pinned_title})
         return {
             "output": turn["text"],
             "invocation_id": invocation_id,
@@ -712,7 +766,7 @@ class AskService:
             "egress": {"scope": scope} if scope else None,
             "thread_id": thread_id,
             "message_ids": {"question": turn["user_message_id"], "answer": turn["assistant_message_id"]},
-            "looked_at": _with_tool_reads([], used),
+            "looked_at": _with_tool_reads(pinned_looked_at, used),
             "used": used,
             "tools": "desk",
         }
@@ -1172,11 +1226,16 @@ class AskService:
         self._db.plugins.record_artifact(artifact_id=artifact_id, meeting_id="", artifact_type="plugin_output", title=lens, body_markdown=output, structured_json={"lens":lens,"source":prov["source_card_title"],"provenance":prov,"qualified_refs":exact_refs,"relationship_snapshot":axes}, confidence=1.0, status="draft", plugin_id="web.desk", plugin_version="0", sources=canonical)
         return {"artifact_id": artifact_id}
 
-    def _assemble_material(self, context: list[dict[str, Any]]) -> tuple[str, list[str], list[str]]:
+    def _assemble_material(self, context: list[dict[str, Any]], *, pinned_note: dict[str, str] | None = None) -> tuple[str, list[str], list[str]]:
         blocks=[]; ids=[]; titles=[]
         for entry in context:
             if not isinstance(entry, dict) or not (cid := str(entry.get("id") or "").strip()): continue
-            title, text = self._context_material(cid, str(entry.get("kind") or ""), str(entry.get("title") or "")); ids.append(cid); titles.append(title); blocks.append(f"## {title}\n{text}" if text else f"## {title}")
+            if pinned_note is not None and cid == pinned_note["id"] and str(entry.get("kind") or "").lower() == "note":
+                defended = _defended_block(GroundingBlock("note", cid, pinned_note["title"], "", pinned_note["body"]))
+                title, text = defended.title, defended.text
+            else:
+                title, text = self._context_material(cid, str(entry.get("kind") or ""), str(entry.get("title") or ""))
+            ids.append(cid); titles.append(title); blocks.append(f"## {title}\n{text}" if text else f"## {title}")
         return "\n\n".join(blocks)[:_MATERIAL_CAP], ids, titles
 
     def _context_material(self, cid: str, kind: str, title: str) -> tuple[str, str]:
@@ -1281,12 +1340,14 @@ class AskService:
         explicit = any(listed(key) for key in ("meeting_ids", "artifact_ids", "refs")) or bool(grounding.get("rails"))
         return reflect_scopes(listed("refs"), explicit=explicit)
 
-    def _grounding(self, principal: Principal, grounding: Any, prompt: str, *, capability_id: str = "ask.answer", exclude_refs: Sequence[str] = ()) -> tuple[str, dict[str, Any] | None]:
+    def _grounding(self, principal: Principal, grounding: Any, prompt: str, *, capability_id: str = "ask.answer", exclude_refs: Sequence[str] = (), pinned_note: dict[str, str] | None = None) -> tuple[str, dict[str, Any] | None]:
         if grounding is None:
             grounding = {}
         if not isinstance(grounding, dict): raise ValidationError("grounding must be an object")
         vals = lambda key: [str(x).strip() for x in grounding.get(key, []) if str(x).strip()] if isinstance(grounding.get(key), list) else []
         meeting_ids, artifact_ids, refs = vals("meeting_ids"), vals("artifact_ids"), vals("refs")
+        pinned_ref = pinned_note["ref"] if pinned_note is not None else ""
+        hydrate_refs = [ref for ref in refs if ref.split("#", 1)[0] != pinned_ref]
         raw_rails = grounding.get("rails", [])
         if not isinstance(raw_rails, list):
             raw_rails = []
@@ -1302,23 +1363,33 @@ class AskService:
             rails.append(rail)
         expand = str(grounding.get("expand") or "summary").strip() or "summary"
         if expand not in GROUNDING_EXPANDS: raise ValidationError(f"expand {expand!r} is not one of {list(GROUNDING_EXPANDS)}")
-        if len(meeting_ids)+len(artifact_ids)+len(refs)+len(rails) > GROUNDING_MAX_REFS: raise ValidationError(f"grounding is capped at {GROUNDING_MAX_REFS}")
+        if len(meeting_ids)+len(artifact_ids)+len(refs)+len(rails)+(1 if pinned_note is not None and all(ref.split("#", 1)[0] != pinned_ref for ref in refs) else 0) > GROUNDING_MAX_REFS: raise ValidationError(f"grounding is capped at {GROUNDING_MAX_REFS}")
         blocks, ids, titles, hydration = hydrate_grounding_blocks_detailed(
             self._db,
             meeting_ids,
             artifact_ids,
             expand,
-            qualified_refs=refs,
+            qualified_refs=hydrate_refs,
             query=prompt,
-            include_memory=memory_enabled(capability_id),
+            include_memory=memory_enabled(capability_id) and not (
+                pinned_note is not None and (meeting_ids or artifact_ids or refs)
+            ),
             exclude_refs=list(exclude_refs),
         )
+        if pinned_note is not None:
+            defended = _defended_block(GroundingBlock("note", pinned_note["id"], pinned_note["title"], "", pinned_note["body"]))
+            blocks.append(f"[NOTE: {defended.title}]\n[REF: {pinned_ref}]\n{defended.text}" if defended.text else f"[NOTE: {defended.title}]\n[REF: {pinned_ref}]")
+            ids.append(pinned_note["id"])
+            titles.append(defended.title)
         unknown=list(hydration.unknown)
         if rails and self._rails_hydrator:
             rblocks, runknown = self._rails_hydrator(rails, principal); unknown += runknown
             for b in rblocks: blocks.append(f"[{b.kind.replace('rails:', 'RAILS ').upper()}: {b.title} — {b.subtitle}]\n{b.text}" if b.text else f"[{b.kind.replace('rails:', 'RAILS ').upper()}: {b.title} — {b.subtitle}]"); ids.append(b.ref); titles.append(b.title)
         if unknown: raise ValidationError("grounding ids not on this hub", code="grounding_not_found", context={"unknown_ids": unknown})
         echo: dict[str, Any] = {"meeting_ids":meeting_ids,"artifact_ids":artifact_ids,"expand":expand,"titles":titles,"source_refs":hydration.source_refs,"selection":hydration.selection,"matched_count":hydration.matched_count,"overflow_count":hydration.overflow_count,"_ids":ids,"_titles":titles}
+        if pinned_note is not None:
+            echo["source_refs"] = list(dict.fromkeys([*echo["source_refs"], pinned_ref]))
+            echo["matched_count"] += 1
         if refs: echo["refs"] = refs
         if rails: echo["rails"] = rails
         return "\n\n".join(blocks), echo

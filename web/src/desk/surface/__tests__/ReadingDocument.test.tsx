@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 const opened = vi.hoisted(() => vi.fn());
 vi.mock("../../openObject", () => ({ refOpener: (ref: string) => ref === "action:held-17" ? () => opened(ref) : null }));
-import { ReadingDocument } from "../ReadingDocument";
+import { ReadingDocument, ReadingObjectLinks, readingObjectLinks } from "../ReadingDocument";
 import { Material } from "../Material";
 import { AgentWords } from "../../components/AgentWords";
 
@@ -11,6 +11,28 @@ afterEach(() => { cleanup(); opened.mockReset(); });
 const DOCUMENT = "## Plan\n\nRead **the source**.\n\n- First\n  - Second\n    - Third\n\n| Source | State |\n| --- | --- |\n| [Held task](action:held-17) | Waiting |\n\n```python\n  if ready:\n    ship()\n```\n\n[Guide](https://example.com/guide) and [Plan](/repo/docs/plan.md)";
 
 describe("shared reading document", () => {
+  it("offers only real supported Markdown links, once each, and opens only on press", () => {
+    const source = '[Held task](action:held-17) `[Code](action:held-17)` ![Image](action:held-17) [Unknown](kb:k1) [Held again](action:held-17)';
+    expect(readingObjectLinks(source).map((link) => link.ref)).toEqual(["action:held-17"]);
+    const onOpen = vi.fn();
+    const { getByText, getByRole, container } = render(<ReadingObjectLinks source={source} onOpen={onOpen} />);
+    expect(container.querySelector("details")).not.toHaveAttribute("open");
+    expect(onOpen).not.toHaveBeenCalled();
+    fireEvent.click(getByText("Linked items"));
+    fireEvent.click(getByRole("button", { name: "Held task" }));
+    expect(onOpen).toHaveBeenCalledExactlyOnceWith("action:held-17");
+    expect(opened).not.toHaveBeenCalled();
+  });
+  it("renders escaped brackets and emphasis in a saved source title through the shared reader", () => {
+    const onOpen = vi.fn();
+    const { getByText, getByRole } = render(<ReadingObjectLinks
+      source={'[Architecture \\[Q4\\] **review**](action:held-17)'} onOpen={onOpen} />);
+    fireEvent.click(getByText("Linked items"));
+    const link = getByRole("button", { name: "Architecture [Q4] review" });
+    expect(link.querySelector("strong")).toHaveTextContent("review");
+    fireEvent.click(link);
+    expect(onOpen).toHaveBeenCalledExactlyOnceWith("action:held-17");
+  });
   it.each(["material", "agent"])("%s uses semantic document blocks and original code", (host) => {
     const { container } = render(host === "material" ? <Material>{DOCUMENT}</Material> : <AgentWords text={DOCUMENT} />);
     expect(container.querySelector("h2")?.textContent?.trim()).toBe("Plan");

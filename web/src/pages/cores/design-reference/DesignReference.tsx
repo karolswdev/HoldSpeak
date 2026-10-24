@@ -74,6 +74,7 @@ const EDITING_STATES: Array<{ id: EditingPreset; label: string }> = [
   { id: "retained", label: "Retained words" },
   { id: "newer", label: "Newer draft" },
   { id: "read-only", label: "Read only" },
+  { id: "linked", label: "Linked items" },
 ];
 
 const RESOURCE_FILES: RepoFile[] = [

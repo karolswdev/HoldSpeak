@@ -29,4 +29,10 @@ describe("engine and run lines", () => {
     screen.getByRole("button", { name: "Try again" }).click();
     expect(onRetry).toHaveBeenCalledOnce();
   });
+
+  it("names source change without offering a retry of that stale request", () => {
+    render(<RunLine phase="failure" reason="source_changed" model="Qwen" />);
+    expect(screen.getByTestId("run-line")).toHaveTextContent("Source changed. Select it again");
+    expect(screen.queryByRole("button", { name: "Ask again" })).toBeNull();
+  });
 });

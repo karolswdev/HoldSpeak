@@ -412,7 +412,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     useDesk.setState({ selectedIds: ["note:other"] });
     const source = {
       noteRef: "note:n-mira", text: "Mira owns review", body: "Mira owns review",
-      range: { from: 0, to: 16 }, windowId: "pullout:note:n-mira", scrollTop: 24,
+      range: { from: 0, to: 16, text: "Mira owns review" }, windowId: "pullout:note:n-mira", scrollTop: 24,
       source: { id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" },
     };
     latchAskSelection(source);
@@ -441,7 +441,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
   it("reopens a closed Thought window before consuming its captured return", async () => {
     const source = {
       noteRef: "note:n-mira", text: "Mira owns review", body: "Mira owns review",
-      range: { from: 0, to: 16 }, windowId: "pullout:note:n-mira", scrollTop: 24,
+      range: { from: 0, to: 16, text: "Mira owns review" }, windowId: "pullout:note:n-mira", scrollTop: 24,
       source: { id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" },
     };
     useDesk.setState({ pullouts: [], selectedIds: ["note:n-mira"] });
@@ -461,20 +461,48 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
   });
 
   it("clears only the quote while keeping the owned Note source and Back", async () => {
+    const sourceSnapshot = { ref: "note:n-mira", thought_id: "thought-mira", working_revision: 4, body_sha256: "a".repeat(64) };
     latchAskSelection({
       noteRef: "note:n-mira", text: "Mira owns review", body: "Mira owns review",
-      range: { from: 0, to: 16 }, windowId: "pullout:note:n-mira", scrollTop: 24,
+      range: { from: 0, to: 16, text: "Mira owns review" }, windowId: "pullout:note:n-mira", scrollTop: 24,
       source: { id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" },
+      sourceSnapshot,
     });
     render(<AskPanel />);
     fireEvent.click(screen.getByRole("button", { name: "Clear quote" }));
     expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
     expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent("Source");
     expect(screen.getByRole("button", { name: "Back to Thought" }).closest("details")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    expect(takeAskReturn("pullout:note:n-mira", "note:n-mira")?.range).toEqual({ from: 0, to: 16, text: "Mira owns review" });
     await askText("Who owns review?", THREAD.first.output);
     const sent = calls.find((call) => call.url.endsWith("/api/ask"))!;
     expect(sent.body?.context).toEqual([{ id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }]);
     expect(sent.body?.prompt).toBe("Who owns review?");
+    expect(sent.body?.source_snapshot).toEqual(sourceSnapshot);
+  });
+
+  it("names a changed pinned source and never offers a same-snapshot retry", async () => {
+    const sourceSnapshot = { ref: "note:n-mira", thought_id: "thought-mira", working_revision: 4, body_sha256: "a".repeat(64) };
+    latchAskSelection({ noteRef: "note:n-mira", text: "", body: "Current source", range: { from: 6, to: 6, text: "" }, windowId: "pullout:note:n-mira", scrollTop: 24,
+      source: { id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }, sourceSnapshot });
+    vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET");
+      calls.push({ url, method, body: init.body ? JSON.parse(String(init.body)) : undefined });
+      return Promise.resolve(method === "POST" && url.endsWith("/api/ask")
+        ? reply({ error: "Selected Note changed. Select it again.", reason: "source_changed" }, 409)
+        : reply({}));
+    }));
+    render(<AskPanel />);
+    fireEvent.change(askBox(), { target: { value: "What changed?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    expect(await screen.findByText("Source changed. Select it again")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ask again" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Back to Thought" })).toBeInTheDocument();
+    expect(calls.filter((call) => call.url.endsWith("/api/ask"))).toHaveLength(1);
+    expect(calls.find((call) => call.url.endsWith("/api/ask"))?.body?.source_snapshot).toEqual(sourceSnapshot);
   });
 
   it("More ▸ Forget hides the ask with Undo; Undo brings it back and deletes nothing", async () => {

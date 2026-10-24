@@ -6,7 +6,7 @@ import type { ThoughtDraft } from "../../../desk/pullouts/editors/useThoughtNote
 import { StateChip } from "../../../desk/surface";
 import "../../../desk/thought-workspace/thought-workspace.css";
 
-export type EditingPreset = "ordinary" | "retained" | "newer" | "read-only";
+export type EditingPreset = "ordinary" | "retained" | "newer" | "read-only" | "linked";
 
 const NOTE_ID = "components-editing-specimen";
 const SAMPLE_WORDS = "Confirm the boundary before rollout.";
@@ -30,7 +30,8 @@ export function EditingReference({ preset }: { preset: EditingPreset }) {
   const readOnly = preset === "read-only";
   const [draft, setDraft] = useState<ThoughtDraft>(() => ({
     title: "Release review",
-    body: preset === "newer" ? `${BASE_BODY}\nNewer local edit.` : BASE_BODY,
+    body: preset === "newer" ? `${BASE_BODY}\nNewer local edit.` : preset === "linked"
+      ? `${BASE_BODY}\n\nLooked at: [API boundary](note:sample-source)\n\nFrom: [Ask thread](thread:sample-ask)` : BASE_BODY,
     tags: "",
   }));
   const [voiceDraftIO] = useState(() => localVoiceDraftIO(
@@ -38,6 +39,7 @@ export function EditingReference({ preset }: { preset: EditingPreset }) {
   ));
   const delivery = useRef<((text: string) => void) | null>(null);
   const [captured, setCaptured] = useState(false);
+  const [openedLink, setOpenedLink] = useState<string | null>(null);
 
   return <section className="reference-example reference-editing" data-testid="reference-editing" aria-label="Editing pattern">
     <div className="reference-example-head">
@@ -52,11 +54,13 @@ export function EditingReference({ preset }: { preset: EditingPreset }) {
         disabled={readOnly}
         lockedReason={readOnly ? "Read only" : undefined}
         voiceDraftIO={voiceDraftIO}
+        onOpenLink={setOpenedLink}
         mic={false}
         voiceInput={(bindText, disabled) => <Button dense variant="ghost" disabled={disabled}
           onClick={() => { delivery.current = bindText(); setCaptured(true); }}>Capture target</Button>}
       />
     </div>
+    {openedLink ? <div role="status" className="reference-actions">Opened locally: {openedLink}</div> : null}
     {captured ? <div className="reference-actions">
       <Button dense variant="primary" onClick={() => {
         const deliver = delivery.current;

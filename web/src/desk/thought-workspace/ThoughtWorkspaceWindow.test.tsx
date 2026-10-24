@@ -19,6 +19,7 @@ import { ThoughtWorkspaceWindow } from "./ThoughtWorkspaceWindow";
 import { latchAskSelection, takeAskSelection } from "../ask";
 import { requestAskReturn } from "./askReturn";
 import { WindowIdContext } from "../components/window/windowIdContext";
+import { createHash } from "node:crypto";
 
 const restoreSelectionMock = vi.hoisted(() => vi.fn());
 
@@ -68,7 +69,7 @@ vi.mock("./ThoughtDocumentPane", () => ({
         return true;
       },
     };
-    return <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}{returnRange ? <span data-testid="return-range">{returnRange.from}:{returnRange.to}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>;
+    return <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}{returnRange ? <span data-testid="return-range">{returnRange.from}:{returnRange.to}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); body()?.setSelectionRange(from, from + text.length); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>;
   },
 }));
 vi.mock("../documentSendsLazy", () => ({
@@ -276,23 +277,37 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
     // Betterment Q5: Ask about this puts the note in About.
     expect(useDesk.getState().askThread?.about?.map((chip) => chip.ref)).toEqual(["note:note-1"]);
-    expect(takeAskSelection()).toEqual({ noteRef: "note:note-1", text: "Ask about this exact passage", body, range: { from: body.indexOf("Ask about this exact passage"), to: body.length }, windowId: null, scrollTop: 24, source: { id: "note-1", kind: "note", ref: "note:note-1", title: saved.working_note.title || "Note" } });
+    expect(takeAskSelection()).toEqual({ noteRef: "note:note-1", text: "Ask about this exact passage", body, range: { from: body.indexOf("Ask about this exact passage"), to: body.length, text: "Ask about this exact passage" }, windowId: null, scrollTop: 24, source: { id: "note-1", kind: "note", ref: "note:note-1", title: saved.working_note.title || "Note" }, sourceSnapshot: { ref: "note:note-1", thought_id: saved.id, working_revision: saved.working_revision, body_sha256: createHash("sha256").update(body).digest("hex") } });
   });
 
   it("hands Ask the saved Note source when no passage is selected", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
-    fireEvent.click(await screen.findByRole("button", { name: "Ask about this" }));
+    const field = await screen.findByRole<HTMLTextAreaElement>("textbox", { name: "Note body" });
+    field.setSelectionRange(7, 7);
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this" }));
     await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
     expect(takeAskSelection()).toEqual({
       noteRef: `note:${thought.working_note.id}`,
       text: "",
       body: thought.working_note.body_markdown,
-      range: null,
+      range: { from: 7, to: 7, text: "" },
       windowId: null,
       scrollTop: 24,
       source: { id: thought.working_note.id, kind: "note", ref: `note:${thought.working_note.id}`, title: thought.working_note.title || "Note" },
+      sourceSnapshot: { ref: `note:${thought.working_note.id}`, thought_id: thought.id, working_revision: thought.working_revision, body_sha256: createHash("sha256").update(thought.working_note.body_markdown).digest("hex") },
     });
+  });
+
+  it("keeps the source window when the saved body cannot be hashed", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    const digest = vi.spyOn(crypto.subtle, "digest").mockRejectedValueOnce(new Error("hash unavailable"));
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Ask about this" }));
+    await waitFor(() => expect(screen.getByText("hash unavailable")).toBeInTheDocument());
+    expect(useDesk.getState().askOpen).toBe(false);
+    expect(takeAskSelection()).toBeNull();
+    digest.mockRestore();
   });
 
   it("takes a return only in its source window and refuses a changed Note body", async () => {
@@ -304,7 +319,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     const body = thought.working_note.body_markdown;
     const text = body.slice(0, 4);
     const source = {
-      noteRef: "note:note-1", text, body, range: { from: 0, to: 4 },
+      noteRef: "note:note-1", text, body, range: { from: 0, to: 4, text },
       windowId: "pullout:note:note-1", scrollTop: 24, source: { id: "note-1", kind: "note", ref: "note:note-1", title: "Thought" },
     };
     act(() => requestAskReturn({ ...source, windowId: "pullout:note:other" }));
@@ -326,7 +341,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     const body = thought.working_note.body_markdown;
     const source = {
       noteRef: "note:note-1", text: body.slice(0, 4), body,
-      range: { from: 0, to: 4 }, windowId: "pullout:note:note-1", scrollTop: 24,
+      range: { from: 0, to: 4, text: body.slice(0, 4) }, windowId: "pullout:note:note-1", scrollTop: 24,
       source: { id: "note-1", kind: "note", ref: "note:note-1", title: "Thought" },
     };
     requestAskReturn(source);

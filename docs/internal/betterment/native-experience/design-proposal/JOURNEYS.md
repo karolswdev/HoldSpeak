@@ -92,6 +92,16 @@ scroll well; the caret remains the job and verbs stay 44px reachable.
 and selected passage, preserving its writer and source reference. Do not add
 a parallel source picker.
 
+**Note-source continuation, 2026-10-23.** The next bounded implementation
+checks the selected Note's working revision/body hash before inference and
+keeps its admitted text with the turn. Clear quote does not erase return
+location; whole-Note Ask retains a collapsed caret. The saved Note's Linked
+items fold supplies explicit source/thread Buttons in the active editor,
+using shared parser/view and the existing opener. Both 1440/393 real-route
+cases and the required quick pass with fake answer transport and real isolated
+Note/Thread writers. This source loop does not certify native OS Talk delivery,
+learning/macros, all J1 create-refusal recovery or the Project/People whole job.
+
 ## J2 — Record, import a meeting, and close its loops
 
 **Tuesday intent and fixture.** Use synthetic `Meeting Architecture Review
