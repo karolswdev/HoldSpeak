@@ -82,9 +82,33 @@ def build_live_router(ctx: WebContext) -> APIRouter:
             service = _service(ctx)
             stopped = await asyncio.to_thread(service.stop_capture, _principal(request))
             ctx.broadcast("stopped", stopped)
-            result: dict[str, Any] = {"success": True}
-            if isinstance(stopped, dict) and stopped.get("device_cleanup_error"):
-                result["warning"] = stopped["device_cleanup_error"]
+            # A stopped capture is a successful Stop even when persistence is
+            # partial. Keep the runtime's facts together so clients can say
+            # what stopped and what, if anything, was retained.
+            result: dict[str, Any] = dict(stopped) if isinstance(stopped, dict) else {}
+            result["success"] = True
+            if isinstance(stopped, dict):
+                meeting = stopped.get("meeting")
+                save = stopped.get("save")
+                if isinstance(meeting, dict) and isinstance(save, dict):
+                    meeting_id = str(meeting.get("id") or meeting.get("meeting_id") or "")
+                    checkpoint_candidate = (
+                        save.get("database_saved") is False
+                        and save.get("json_saved") is True
+                        and str(meeting.get("capture_status") or "").lower() == "recoverable"
+                    )
+                    if meeting_id and checkpoint_candidate:
+                        try:
+                            retained = service.get_meeting(
+                                _principal(request), meeting_id, include_parked=True
+                            )
+                        except Exception:
+                            retained = None
+                        # Recovery is a door only when the durable row exists;
+                        # a Stop payload alone is not proof of recoverability.
+                        result["capture_recovery_available"] = retained is not None
+            if result.get("device_cleanup_error"):
+                result["warning"] = result["device_cleanup_error"]
             return JSONResponse(result)
         except Exception as exc:
             # HS-132-02: HS-132-01 made the meeting verb refuse by name when no

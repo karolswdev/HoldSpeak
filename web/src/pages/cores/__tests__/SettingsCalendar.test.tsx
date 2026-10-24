@@ -5,6 +5,14 @@ import type { SettingsResponse } from "../core-types";
 import hubWire from "../../../desk/__tests__/fixtures/settings-wire/hub.json";
 
 const apiFetch = vi.hoisted(() => vi.fn());
+const ApiError = vi.hoisted(() => class TestApiError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
+});
 const settings = vi.hoisted<SettingsResponse>(() => ({
   _revision: "calendar-r1",
   calendar: {
@@ -28,6 +36,7 @@ const settings = vi.hoisted<SettingsResponse>(() => ({
 
 vi.mock("../../../lib/api", () => ({
   apiFetch,
+  ApiError,
   readableError: (cause: unknown) => cause instanceof Error ? cause.message : "Request failed",
 }));
 vi.mock("../../pageSupport", () => ({

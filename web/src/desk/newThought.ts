@@ -40,11 +40,13 @@ import { useDesk } from "./store";
 import { reportWriteFailure, clearWriteFailure } from "./hooks/useWriteReceipt";
 import { openNoteThought, thoughtForNote } from "./thoughts";
 import { NEW_THOUGHT_TITLE } from "./thoughtTitle";
-import { sendThoughtKeysTo, startThoughtKeys, stopThoughtKeys } from "./thoughtKeys";
+import { sendThoughtKeysTo, startThoughtKeys, takeThoughtKeys } from "./thoughtKeys";
 import { keepOpenThoughts, thoughtDraftHasWords } from "./thoughtDrafts";
 
 /** The one press in flight: a second press before the window opens joins it. */
 let opening: Promise<void> | null = null;
+
+type ThoughtAttempt = { text: string };
 
 const noWords = (title: string, body: string) =>
   title.trim() === NEW_THOUGHT_TITLE && !body.trim();
@@ -72,10 +74,21 @@ async function emptyThoughtNote(): Promise<string | null> {
   return null;
 }
 
-async function open(): Promise<void> {
+async function open(attempt: ThoughtAttempt): Promise<void> {
   const desk = useDesk.getState();
   // The thought on the glass is kept first; then the next one starts.
-  await keepOpenThoughts();
+  try {
+    await keepOpenThoughts();
+  } catch (cause) {
+    const retryWords = takeThoughtKeys(attempt.text);
+    let restored = false;
+    reportWriteFailure("New Note", cause, () => {
+      if (restored) return;
+      restored = true;
+      void openNewThought(retryWords);
+    });
+    return;
+  }
   let noteId = await emptyThoughtNote();
   if (!noteId) {
     try {
@@ -84,18 +97,23 @@ async function open(): Promise<void> {
         json: { title: NEW_THOUGHT_TITLE, body_markdown: "", tags: [] },
       });
       noteId = String(created.note?.id ?? "");
-      if (noteId) desk.adoptCreated("note", created.note);
+      if (!noteId) throw new Error("New Note create returned no note id");
+      desk.adoptCreated("note", created.note);
       clearWriteFailure();
     } catch (cause) {
       /* HS-202-02 (Astra's counsel finding 4) — a refused create used to
          return in silence: `apiFetch` only throws, so nothing reached the
          desk's failure channel and the owner pressed a verb that did
          nothing, with no line and no retry. */
-      stopThoughtKeys();
-      reportWriteFailure("New Note", cause, () => void openNewThought());
+      const retryWords = takeThoughtKeys(attempt.text);
+      let restored = false;
+      reportWriteFailure("New Note", cause, () => {
+        if (restored) return;
+        restored = true;
+        void openNewThought(retryWords);
+      });
       return;
     }
-    if (!noteId) { stopThoughtKeys(); return; }
     try {
       // Betterment Q8: the hub gives the new note its thought (the window
       // asks again on open, so a refusal here only costs one more read).
@@ -105,7 +123,7 @@ async function open(): Promise<void> {
     }
   }
   desk.openPullout(`note:${noteId}`);
-  sendThoughtKeysTo(noteId);
+  sendThoughtKeysTo(noteId, attempt.text);
   void desk.refresh();
 }
 
@@ -113,7 +131,12 @@ async function open(): Promise<void> {
  *  makes the record on the first character, never on the press; betterment
  *  C8). The note field takes it, then the keys typed after it. */
 export function openNewThought(firstWords = ""): Promise<void> {
-  startThoughtKeys(firstWords);
-  opening ??= open().finally(() => { opening = null; });
+  if (opening) {
+    startThoughtKeys(firstWords);
+    return opening;
+  }
+  const attempt: ThoughtAttempt = { text: firstWords };
+  startThoughtKeys(firstWords, (text) => { attempt.text = text; });
+  opening = open(attempt).finally(() => { opening = null; });
   return opening;
 }

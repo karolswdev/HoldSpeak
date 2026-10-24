@@ -66,6 +66,26 @@ no new runtime registry.
 | Meaningful collections | Meetings and RepoWindow: continuation, stable identities, scoped selection/history where the job needs them, and return after source inspection. | KB/directory membership, project resources and Git operations retain their own authority. |
 | A working design reference | Components plus the first production consumer use the same behavior/composition with isolated fixture data; demonstrate the whole job at 1440 and 393. | Keep the existing shared visual controls. Local specimens alone do not establish production behavior. |
 
+## Repair deliveries
+
+The owner authorized delivery after reviewing this packet.
+[PR1433](https://github.com/karolswdev/HoldSpeak/pull/1433) repairs saved-thread
+read authority in Ask and is running on the desk. The [Ask record](ask_whole_desk.md)
+separates executed checks from remaining findings.
+[PR1434](https://github.com/karolswdev/HoldSpeak/pull/1434) repairs Settings
+leave/return edit retention.
+[PR1436](https://github.com/karolswdev/HoldSpeak/pull/1436) retains Capture
+first words through refused/delayed Note creation.
+[PR1437](https://github.com/karolswdev/HoldSpeak/pull/1437) retains Meeting
+stop/save facts through HTTP and both Stop doors, including the view change.
+The bounded repair closeout is complete. The larger project-update Stop
+candidate is held outside main for an identity/lifetime design refinement,
+following the owner's direction to finish current work and refine strategy
+before further implementation. The proposed refinement is
+[draft PR1435](https://github.com/karolswdev/HoldSpeak/pull/1435), not new
+canon or implementation authority. The delivery order below records the original
+priorities; it does not imply that this repair wave closes all 47 jobs.
+
 ## Delivery order
 
 1. **Fix demonstrated and high-cost branches in small changes.** The

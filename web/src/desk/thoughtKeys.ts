@@ -17,8 +17,15 @@ const KEEP_MS = 10_000;
 
 let kept: string | null = null;
 let wanted: string | null = null;
+let wantedText: string | null = null;
 let timer: number | null = null;
+let remember: ((text: string) => void) | null = null;
 const fields = new Map<string, (text: string) => void>();
+
+function keep(text: string): void {
+  kept = text;
+  remember?.(text);
+}
 
 function editable(target: EventTarget | null): boolean {
   return target instanceof HTMLElement &&
@@ -33,7 +40,7 @@ function onKeyDown(event: KeyboardEvent): void {
   else if (event.key === "Enter") next = `${kept}\n`;
   else if (event.key === "Backspace") next = kept.slice(0, -1);
   else return;
-  kept = next;
+  keep(next);
   event.preventDefault();
   event.stopPropagation();
 }
@@ -56,6 +63,8 @@ function onKeyUp(event: KeyboardEvent): void {
 export function stopThoughtKeys(): void {
   kept = null;
   wanted = null;
+  wantedText = null;
+  remember = null;
   if (timer !== null) window.clearTimeout(timer);
   timer = null;
   window.removeEventListener("keydown", onKeyDown, true);
@@ -63,16 +72,28 @@ export function stopThoughtKeys(): void {
   window.removeEventListener("pointerdown", onPointerDown, true);
 }
 
+/** Take the buffered text at an attempt boundary and stop intercepting keys.
+ * The caller owns the returned text for that attempt's retry only. A caller
+ * may supply its attempt snapshot when the ten-second window or an editable
+ * pointerdown already stopped interception. */
+export function takeThoughtKeys(snapshot = ""): string {
+  const text = kept ?? snapshot;
+  stopThoughtKeys();
+  return text;
+}
+
 /** Keep every typed key from now (the press of `Write a thought`).
  *  `seed`: words already typed before the keeping began (Capture's New note
  *  makes its note on the first character, betterment C8). */
-export function startThoughtKeys(seed = ""): void {
+export function startThoughtKeys(seed = "", onText?: (text: string) => void): void {
   if (kept !== null) {
-    if (seed) kept = seed + kept;
+    if (seed) keep(seed + kept);
     return;
   }
-  kept = seed;
+  remember = onText ?? null;
+  keep(seed);
   wanted = null;
+  wantedText = null;
   window.addEventListener("keydown", onKeyDown, true);
   window.addEventListener("keyup", onKeyUp, true);
   window.addEventListener("pointerdown", onPointerDown, true);
@@ -81,18 +102,20 @@ export function startThoughtKeys(seed = ""): void {
 
 function deliver(noteId: string): boolean {
   const take = fields.get(noteId);
-  if (!take || kept === null) return false;
-  const text = kept;
+  if (!take || (kept === null && wantedText === null)) return false;
+  const text = kept ?? wantedText ?? "";
   stopThoughtKeys();
   take(text);
   return true;
 }
 
 /** The thought's note is known: its field takes the kept keys, now or when
- * the window has loaded. */
-export function sendThoughtKeysTo(noteId: string): void {
-  if (kept === null) return;
+ * the window has loaded. A failed/expired capture may pass its attempt-local
+ * snapshot for this note only; this never starts keyboard interception again. */
+export function sendThoughtKeysTo(noteId: string, snapshot?: string): void {
+  if (kept === null && snapshot === undefined) return;
   wanted = noteId;
+  wantedText = snapshot ?? null;
   deliver(noteId);
 }
 
