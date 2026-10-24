@@ -32,6 +32,8 @@ import { SEND_OPEN, useAnnounceWindowDocument } from "../windowSend";
 import { useWindowId } from "../components/window/windowIdContext";
 import { useCompactViewport } from "../useCompactViewport";
 import { thoughtWriteLine } from "./thoughtReceipt";
+import { openProjectRoomAtResource, openRef } from "../openObject";
+import type { ProjectReturn } from "../store/types";
 import "./thought-workspace.css";
 
 const workspaceRequestIds = new Map<string, string | null>();
@@ -104,6 +106,7 @@ function WorkspaceReady({
   sending,
   setSending,
   onDone,
+  projectReturn,
 }: {
   initialThought: Thought;
   projection: ThoughtWorkspaceProjection;
@@ -114,6 +117,7 @@ function WorkspaceReady({
   setSending: (sending: boolean) => void;
   /** Betterment Q8: Done closes the window (it saves first); nothing else. */
   onDone: () => void;
+  projectReturn?: ProjectReturn | null;
 }) {
   const [documentThought, setDocumentThought] = useState(projection.thought || initialThought);
   const [answer, setAnswer] = useState("");
@@ -497,6 +501,8 @@ function WorkspaceReady({
       // A failed digest must leave this Note here; Ask must never receive an
       // unpinned fallback after a successful writer flush.
       const bodySha256 = await sha256(new TextEncoder().encode(note.body_markdown));
+      const desk = useDesk.getState();
+      const requestNonce = (desk.askThread?.nonce ?? 0) + 1;
       // The floor can trim its icon selection while this Note is still open.
       // Ask owns the saved source and valid quote, independently of that set.
       latchAskSelection({
@@ -508,12 +514,13 @@ function WorkspaceReady({
         scrollTop: sourceScrollTop,
         source: { id: note.id, kind: "note", ref: noteRef, title: note.title || "Note" },
         sourceSnapshot: { ref: noteRef, thought_id: latest.id, working_revision: latest.working_revision, body_sha256: bodySha256 },
+        requestNonce,
+        ...(projectReturn ? { projectReturn: { ...projectReturn } } : {}),
       });
       // Betterment Q5: Ask about this, with the note in About and its
       // selected text quoted in the question.
-      const desk = useDesk.getState();
       const floorSelection = desk.selectedIds;
-      desk.askAbout([{ id: note.id, kind: "note", ref: noteRef, title: note.title || "Note" }]);
+      desk.askAbout([{ id: note.id, kind: "note", ref: noteRef, title: note.title || "Note" }], { handoffNonce: requestNonce });
       desk.setSelected(floorSelection);
       say("Ask opened");
     } catch (cause) { sayFault(cause); }
@@ -564,6 +571,7 @@ function WorkspaceReady({
           ? { from: selection.from, to: selection.to, text: selection.text, body: writer.draft.body }
           : null);
       }}
+      onOpenLink={(ref) => openRef(ref, { projectReturn: projectReturn ?? null })}
     />
 
     {showAskBand ? <section className="thought-note-ask" aria-label="Ask about this note">
@@ -665,6 +673,7 @@ export function ThoughtWorkspaceWindow({
   pulloutId,
   thought,
   origin,
+  projectReturn,
   onClose,
 }: {
   object: WorldObject;
@@ -672,6 +681,7 @@ export function ThoughtWorkspaceWindow({
   pulloutId?: string;
   thought: Thought;
   origin?: { x: number; y: number } | null;
+  projectReturn?: ProjectReturn | null;
   onClose: () => void;
 }) {
   const controller = useThoughtWorkspaceController(thought);
@@ -693,6 +703,10 @@ export function ThoughtWorkspaceWindow({
   // `New thought`; from the draft on the glass when the window holds one.
   const words = useThoughtDraftWords(thought.working_note.id);
   const compact = useCompactViewport();
+  const projectName = useDesk((state) => state.projects.find((project) => project.id === projectReturn?.projectId)?.name);
+  const returnToProject = () => {
+    if (projectReturn) openProjectRoomAtResource(projectReturn.projectId, projectReturn.resourceRef);
+  };
   const name = windowName({
     kind: "thought",
     title: words?.title ?? thought.working_note.title,
@@ -706,6 +720,7 @@ export function ThoughtWorkspaceWindow({
     kindWord="Note"
     icon={<img src={spriteUrl("note", object.id)} alt="" width={24} height={24} />}
     title={name}
+    leading={!compact && projectReturn ? <Button dense variant="ghost" onClick={returnToProject}>Return to {projectName || "Project"}</Button> : undefined}
     className={`desk-pullout thought-workspace-window${sending ? " is-sending" : ""}`}
     minW={520}
     minH={sending ? 520 : 360}
@@ -716,13 +731,13 @@ export function ThoughtWorkspaceWindow({
     open
     beforeClose={() => closeHandler.current()}
     onClose={onClose}
-    onBack={sending ? () => setSending(false) : undefined}
+    onBack={sending ? () => setSending(false) : projectReturn ? returnToProject : undefined}
     // Betterment Q8: Done in the title strip on the phone.
     actions={compact && !sending ? <Button dense variant="primary" className="thought-note-primary" onClick={() => void done()}>Done</Button> : undefined}
   >
     {controller.opening ? <div className="thought-workspace-opening" aria-busy="true"><span>Opening note…</span></div> : controller.error || !controller.projection ? <div className="thought-workspace-opening" role="alert"><span className="surface-token">Could not open. Note unchanged.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Try again</Button></div> : <>
       <div className="thought-workspace-preserved" inert={controller.restartDetected} aria-hidden={controller.restartDetected || undefined}>
-        <WorkspaceReady key={thought.id} initialThought={thought} projection={controller.projection} install={controller.install} reload={controller.reload} registerClose={registerClose} sending={sending} setSending={setSending} onDone={() => void done()} />
+        <WorkspaceReady key={thought.id} initialThought={thought} projection={controller.projection} install={controller.install} reload={controller.reload} registerClose={registerClose} sending={sending} setSending={setSending} onDone={() => void done()} projectReturn={projectReturn} />
       </div>
       {controller.restartDetected ? <div className="thought-workspace-opening thought-workspace-restart" role="alert"><span className="surface-token">Hub restarted. Reload to continue.</span><Button variant="primary" onClick={() => void controller.reload(true)}>Reload note</Button></div> : null}
     </>}

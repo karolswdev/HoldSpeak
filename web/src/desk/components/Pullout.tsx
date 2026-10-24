@@ -20,6 +20,7 @@ import type { RegisterCloseGuard } from "../pullouts/types";
 import { openNoteThought, type Thought } from "../thoughts";
 import { ThoughtWorkspaceWindow } from "../thought-workspace/ThoughtWorkspaceWindow";
 import { FootSlotContext, TitleSlotContext, WingSlotContext } from "../surface";
+import type { ProjectReturn } from "../store/types";
 
 function PulloutFrame({
   o,
@@ -150,7 +151,7 @@ function PulloutFrame({
  *  resumes a finished one, so no note needs a "Develop" press to open, and
  *  no note moves to another drawer. The ordinary note face (NotePullout) and
  *  its form editor are no longer reached from here. */
-function NoteWindowRouter({ o, pulloutId, origin }: { o: WorldObject; pulloutId: string; origin?: { x: number; y: number } | null }) {
+function NoteWindowRouter({ o, pulloutId, origin, projectReturn }: { o: WorldObject; pulloutId: string; origin?: { x: number; y: number } | null; projectReturn?: ProjectReturn | null }) {
   const [thought, setThought] = useState<Thought | null>(null);
   const [failed, setFailed] = useState(false);
   const close = () => useDesk.getState().closePullout(pulloutId);
@@ -165,7 +166,7 @@ function NoteWindowRouter({ o, pulloutId, origin }: { o: WorldObject; pulloutId:
     return () => { live = false; };
   }, [o.id]);
 
-  if (thought) return <ThoughtWorkspaceWindow object={o} pulloutId={pulloutId} thought={thought} origin={origin} onClose={close} />;
+  if (thought) return <ThoughtWorkspaceWindow object={o} pulloutId={pulloutId} thought={thought} origin={origin} projectReturn={projectReturn} onClose={close} />;
   return <PulloutFrame o={o} pulloutId={pulloutId} origin={origin} overrideContent={<div className="desk-pullout-body desk-surface-body surface-host-body thought-workspace-opening" data-surface-host={o.kind} aria-busy={!failed}>{failed ? <><span>The note did not open. It is unchanged. Try again.</span><Button variant="primary" onClick={load}>Try again</Button></> : <span>Opening note…</span>}</div>} />;
 }
 
@@ -173,14 +174,16 @@ export function Pullout({
   o,
   pulloutId,
   origin,
+  projectReturn,
 }: {
   o: WorldObject;
   /** The id the store keeps (`pullouts[].id`); defaults to the bare `o.id`. */
   pulloutId?: string;
   origin?: { x: number; y: number } | null;
+  projectReturn?: ProjectReturn | null;
 }) {
   const storeId = pulloutId ?? o.id;
   return o.kind === "note"
-    ? <NoteWindowRouter o={o} pulloutId={storeId} origin={origin} />
+    ? <NoteWindowRouter o={o} pulloutId={storeId} origin={origin} projectReturn={projectReturn} />
     : <PulloutFrame o={o} pulloutId={storeId} origin={origin} />;
 }

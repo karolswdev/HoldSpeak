@@ -13,7 +13,7 @@ export function validAskReturnRange(source: AskSelectionHandoff, noteRef: string
 }
 
 export function requestAskReturn(source: AskSelectionHandoff): void {
-  pending = { ...source, range: source.range ? { ...source.range } : null };
+  pending = { ...source, range: source.range ? { ...source.range } : null, ...(source.projectReturn ? { projectReturn: { ...source.projectReturn } } : {}) };
   window.dispatchEvent(new CustomEvent(ASK_RETURN_EVENT, { detail: source }));
 }
 

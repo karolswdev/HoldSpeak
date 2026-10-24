@@ -173,7 +173,8 @@ function DeskFaces() {
     // holds the newest meetings only, and a person is not a desk item.
     .map((pullout) => ({ ...pullout, object:
       (pullout.id.startsWith("artifact:") ? objectWindowStandIn(pullout.id) : null)
-      ?? objectByRef(items, pullout.id) ?? objectWindowStandIn(pullout.id) }))
+      ?? objectByRef(items, pullout.sourceRef ?? pullout.id)
+      ?? objectWindowStandIn(pullout.sourceRef ?? pullout.id) }))
     .filter((pullout) => Boolean(pullout.object));
 
   // PHILO-17 ("A meeting opens in one window"): a meeting window saved under
@@ -183,7 +184,7 @@ function DeskFaces() {
   useEffect(() => {
     for (const pullout of pullouts) {
       if (pullout.id.includes(":")) continue;
-      const object = objectByRef(items, pullout.id);
+      const object = objectByRef(items, pullout.sourceRef ?? pullout.id);
       if (object?.kind !== "meeting") continue;
       const desk = useDesk.getState();
       desk.closePullout(pullout.id);
@@ -254,7 +255,7 @@ function DeskFaces() {
       {/* The object windows (pullouts), and the first-value note staged
           before reveal. */}
       {!arrivalRequired && chairOpenCards.map((pullout) => (
-        <Pullout key={pullout.id} o={pullout.object!} pulloutId={pullout.id} origin={pullout.origin} />
+        <Pullout key={pullout.id} o={pullout.object!} pulloutId={pullout.id} origin={pullout.origin} projectReturn={pullout.projectReturn} />
       ))}
       {/* PHILO-17: Get Info windows (object.info). The parked Floor mounted
           them; on the one desk they mount here. */}

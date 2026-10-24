@@ -6,6 +6,7 @@ import { qualifiedRef, type Items } from "./api";
 import { apiRequest } from "../lib/api";
 import { parseUse, type AgentUse } from "./used";
 import { refOpener } from "./openObject";
+import type { ProjectReturn } from "./store/types";
 
 /** One lasso'd card, as the ask reads it. */
 export interface AskContext {
@@ -37,6 +38,10 @@ export interface AskSelectionHandoff {
   /** The Note window has just saved this source. Floor selection is separate. */
   source?: AskContext;
   sourceSnapshot?: AskSourceSnapshot;
+  /** The exact new-Ask request this Note handoff opened. */
+  requestNonce?: number;
+  /** The explicit Project row to return to; never sent as source material. */
+  projectReturn?: ProjectReturn | null;
 }
 
 const ASK_SELECTION_EVENT = "holdspeak:ask-selection";
@@ -45,7 +50,7 @@ let pendingAskSelection: AskSelectionHandoff | null = null;
 /** A transient Note → Ask handoff. The Note remains the canonical context. */
 export function latchAskSelection(selection: AskSelectionHandoff | null): void {
   pendingAskSelection = selection && (selection.text.trim() || selection.source)
-    ? { ...selection, range: selection.range ? { ...selection.range } : null, ...(selection.source ? { source: { ...selection.source } } : {}), ...(selection.sourceSnapshot ? { sourceSnapshot: { ...selection.sourceSnapshot } } : {}) }
+    ? { ...selection, range: selection.range ? { ...selection.range } : null, ...(selection.source ? { source: { ...selection.source } } : {}), ...(selection.sourceSnapshot ? { sourceSnapshot: { ...selection.sourceSnapshot } } : {}), ...(selection.projectReturn ? { projectReturn: { ...selection.projectReturn } } : {}) }
     : null;
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent<AskSelectionHandoff | null>(ASK_SELECTION_EVENT, { detail: pendingAskSelection }));

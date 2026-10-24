@@ -159,3 +159,24 @@ was run for this artifact. The proposal, seven journeys and static canvases
 now define the design; the next step after Muad'Dib's check is the bounded
 package sequence in [DELIVERY-PLAN.md](../DELIVERY-PLAN.md), not another
 definition or canvas phase.
+
+
+## Execution reconciliation — 2026-10-23
+
+The 47 rows above retain the original design trace and adversarial evidence.
+Owner execution authorization supersedes the old check-before-start wording
+in the original proposal close. Execution is active; no whole-family or
+visual acceptance follows from design coverage. Actual package delivery and
+the revised behavior/visual adoption sequence are in
+[DELIVERY-PLAN](../DELIVERY-PLAN.md#execution-tracking); PRs and bounded proof
+are in [EXECUTION](../EXECUTION.md).
+
+Observed partial consumers are registered repositories/resources, Settings
+You, active Thought voice/editing, and Note-sourced Ask/save/linked source and
+Thread return. The first Project filed-Note source job is delivered with five passing
+browser cases and final required quick green; full Project/People J3 remains
+open. The shared
+reference mirrors those real compositions with local IO; it is not another
+production consumer. Meeting, People/Today, Agent/Automation, broader readiness,
+Send and shell/feedback adoption remain incomplete. No row gains a completion
+mark from the old recipe closeout or from a green component test.

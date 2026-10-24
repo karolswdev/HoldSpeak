@@ -10,6 +10,7 @@ import { meetingOfScope, meetingWindowRef } from "../objectWindows";
 import { Button } from "../../components/signal/Signal";
 import { resolveRef } from "../lineage";
 import { useDesk } from "../store";
+import type { DeskNavigation } from "../store/types";
 
 /** The honest "grounded on N" arithmetic: matches minus overflow —
  * the receipt never counts material the hub did not actually read. */
@@ -44,8 +45,10 @@ export function sourceLabel(ref: string): string {
   return `${kind[0]?.toUpperCase() || ""}${kind.slice(1)} · ${rest.join(":")}`;
 }
 
-export function openSourceRef(ref: string) {
+export function openSourceRef(ref: string, navigation?: DeskNavigation) {
   if (!refOpensWindow(ref)) return;
+  const open = (source: string) => navigation === undefined
+    ? openPrimitive(source) : openPrimitive(source, navigation);
   // PHILO-17 (owner answer): a meeting is a scoped detail in the Meetings
   // surface. A view or transcript row rides in the scope request.
   if (ref.startsWith("meeting:")) {
@@ -63,7 +66,7 @@ export function openSourceRef(ref: string) {
       void import("../threads").then((m) =>
         m.useThreadStore.getState().setFocusMessage(messageId),
       );
-      openPrimitive(threadRef);
+      open(threadRef);
       return;
     }
   }
@@ -73,7 +76,7 @@ export function openSourceRef(ref: string) {
     openPrimitive(`decision:${ref.slice("desk_decision:".length)}`);
     return;
   }
-  openPrimitive(ref);
+  open(ref);
 }
 
 /** Cached sources read `Kind · name`; uncached sources keep `Kind · id`.

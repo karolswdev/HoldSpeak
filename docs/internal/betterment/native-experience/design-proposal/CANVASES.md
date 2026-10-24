@@ -138,6 +138,9 @@ copy, move, drop, stage or commit support.
   offers a compact `Linked items` fold for supported source and Ask thread
   links. The owner opens a link with its own Button; editing the Markdown
   does not navigate. The boards do not use `Keep` or `Bin`.
+- **Project source inset:** a filed Note starts in the Project Room `Files`
+  fold. Ask reads that Note version; Project identity is the return location.
+  Back to Project re-reads membership before it selects the original row.
 
 **B input recovery implementation (2026-10-23):** the active Thought field
 binds its editor/range/generation before transcription. A later draft, IME or
@@ -191,6 +194,10 @@ acceptance or completion of all readiness work.
 - **Default:** Project Room owns `project:atlas-review`, the selected item and
   its source refs. `Hand` and `Launch` are visible owner verbs. A queued path
   says `Start when one is free`, not a generic `Start`.
+- **Filed Note:** the active Room shows the actual filed `API boundary` Note
+  in a compact `Files` fold with its own `Open` Button. The narrow state inset
+  shows the same choice and exact Project return. Opening it uses the Note's
+  existing window; the Room does not read a Note into an Ask by itself.
 - **Result:** the focused ResultBlock keeps `launchId`, `sessionKey`, `turnId`,
   worktree/branch, used resources, last words and durable `NEW`/seen state.
   `Answer` is shown for the current wait, with supported `Stop`. Gate
@@ -198,6 +205,9 @@ acceptance or completion of all readiness work.
   not simultaneous controls on this primary result.
 - **Resumed:** close/reopen returns to the originating Project row with the
   same launch identity. The board does not add a universal monitor.
+  A Note return names `NOT FILED HERE` after a successful read if membership
+  moved, `NOTE NOT AVAILABLE` for a deleted filed Note, or a named read failure
+  with Retry. None of these states silently select a different Project row.
 
 ### G · Meeting action → Today / Needs → Nudge / Send
 

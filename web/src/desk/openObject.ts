@@ -12,6 +12,7 @@ import { openIntelligence } from "./intelligenceNavigation";
 import { openAgentLane, openCoderSession, openPrimitive, openProjectRoom } from "./shell";
 import { openSourceRef } from "./surface";
 import { personWindowRef, type PersonLens } from "./objectWindows";
+import type { DeskNavigation } from "./store/types";
 
 export type Opener = () => void;
 
@@ -112,7 +113,7 @@ export function openProjectProposal(projectId: string, proposalId: string): void
  *  the sources are kept). The Room takes the request once (a reload does
  *  not replay it), as with Draft update. */
 export const ROOM_AT_EVENT = "holdspeak:room-at";
-export type RoomPlace = "history" | "steward";
+export type RoomPlace = "history" | "steward" | { kind: "file"; ref: `note:${string}` };
 const roomPlaces = new Map<string, RoomPlace>();
 
 export function openProjectRoomAt(projectId: string, place: RoomPlace): void {
@@ -123,6 +124,12 @@ export function openProjectRoomAt(projectId: string, place: RoomPlace): void {
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent<string>(ROOM_AT_EVENT, { detail: id }));
   }
+}
+
+/** Return to the Project that held an explicitly opened Note. */
+export function openProjectRoomAtResource(projectId: string, resourceRef: `note:${string}`): void {
+  if (!resourceRef.slice("note:".length)) return;
+  openProjectRoomAt(projectId, { kind: "file", ref: resourceRef });
 }
 
 /** The place to open `projectId`'s Room at, once per request. */
@@ -161,7 +168,7 @@ const FOLLOW_THROUGH_REF = /^(?:follow-through|action_item|action):(.+)$/;
 
 /** The opener for a qualified ref, or null when the ref names nothing that
  * opens (a count, a coverage line, a pipeline event). */
-export function refOpener(ref: string | null | undefined): Opener | null {
+export function refOpener(ref: string | null | undefined, navigation?: DeskNavigation): Opener | null {
   const clean = (ref ?? "").trim();
   if (!clean) return null;
   if (clean.startsWith("people:")) {
@@ -199,8 +206,12 @@ export function refOpener(ref: string | null | undefined): Opener | null {
     if (!id) return null;
     return () => {
       void import("./store").then(({ useDesk }) => {
-        if (id.startsWith("pullout:")) useDesk.getState().openPullout(id.slice("pullout:".length));
-        else useDesk.getState().restorePanel(id);
+        const desk = useDesk.getState();
+        if (id.startsWith("pullout:")) {
+          const key = id.slice("pullout:".length);
+          if (desk.pullouts.some((row) => row.id === key)) desk.restorePanel(id);
+          else desk.openPullout(key);
+        } else desk.restorePanel(id);
       });
     };
   }
@@ -216,18 +227,20 @@ export function refOpener(ref: string | null | undefined): Opener | null {
     return id ? () => openSourceRef(`decision:${id}`) : null;
   }
   if (clean.startsWith("decision:")) return () => openDecision(clean);
-  if (WINDOW_REF.test(clean)) return () => openSourceRef(clean);
+  if (WINDOW_REF.test(clean)) return navigation === undefined
+    ? () => openSourceRef(clean) : () => openSourceRef(clean, navigation);
   return null;
 }
 
 /** Open a cited ref (a claim's source, a memory citation): the one open
  * grammar first; a ref it does not name goes to the citation species. Memory
  * ranks the child message that matched; the Desk opens the parent thread. */
-export function openRef(ref: string): void {
+export function openRef(ref: string, navigation?: DeskNavigation): void {
   const clean = ref.startsWith("thread:") ? ref.split("#", 1)[0] : ref.trim();
-  const open = refOpener(clean);
+  const open = navigation === undefined ? refOpener(clean) : refOpener(clean, navigation);
   if (open) open();
-  else openSourceRef(clean);
+  else if (navigation === undefined) openSourceRef(clean);
+  else openSourceRef(clean, navigation);
 }
 
 /** A decision ref names a Desk decision (its own window) or a decision a

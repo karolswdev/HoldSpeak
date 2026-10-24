@@ -82,6 +82,9 @@ import { usePrepareController } from "./prepare/usePrepareController";
 import { PreparePosture, RESULT_OPTIONS } from "./prepare/PreparePosture";
 import * as api from "./api";
 import { RoomPeopleSection, monogram } from "./RoomPeopleSection";
+import { RoomFiledNotesSection, type FiledNoteRequest } from "./RoomFiledNotesSection";
+import { useProjectResourceRefs } from "../../desk/drawer/useDrawerData";
+import { drawerMembers } from "../../desk/drawer/members";
 import { AddSourcesWell } from "./door/DoorCore";
 import "./project-room.css";
 import { RecallFace } from "./recall/RecallFace";
@@ -1898,6 +1901,26 @@ function RoomFold({ title, token, open, testId, children }: {
   );
 }
 
+/** The live Room reads only filed refs here. It does not start the drawer's
+ * People/agent reads or mount the parked drawer to show one Note section. */
+function RoomFiledNotes({ projectId, ctrl, request, onRequestHandled }: {
+  projectId: string;
+  ctrl: ReturnType<typeof useProjectRoomController>;
+  request: FiledNoteRequest;
+  onRequestHandled: (seq: number) => void;
+}) {
+  const data = useProjectResourceRefs(projectId);
+  const items = useDesk((state) => state.items);
+  const members = useMemo(() => drawerMembers({ projectId, projectName: ctrl.projectName,
+    room: null, meetings: [], decisions: [], artifacts: [], people: [],
+    resources: data.resources, flights: [], sessions: [], items,
+  }).filter((member) => member.ref.startsWith("note:")), [projectId, ctrl.projectName, data.resources, items]);
+  return <RoomFiledNotesSection projectId={projectId} resourceRefs={data.resourceRefs}
+    resourcesState={data.resourcesState} refreshResources={data.refreshResources}
+    followCurrentResources={data.followCurrentResources}
+    members={members} request={request} onRequestHandled={onRequestHandled} />;
+}
+
 /* ── main core ── */
 
 /** PHILO-17 (phonepass): one Room section's place. The reads its section
@@ -2032,6 +2055,11 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   // that proposal selected in OPEN HERE. `seq` counts the requests, so the
   // same proposal asked for again is revealed again (A5b, Astra r1).
   const [proposalRequest, setProposalRequest] = useState({ id: "", seq: 0 });
+  const [fileRequest, setFileRequest] = useState<FiledNoteRequest>(null);
+  const fileSeq = useRef(0);
+  const onFileRequestHandled = useCallback((seq: number) => {
+    setFileRequest((current) => current?.seq === seq ? null : current);
+  }, []);
   const selectedProposalId = proposalRequest.id;
   const sendFailure = sendFailed && ctrl.projectId ? (
     <div data-send="well" data-testid="send-well" data-doc={`project:${ctrl.projectId}`} role="group"
@@ -2082,6 +2110,12 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   // write), then History shows its wing, or Steward its posture.
   const revealPlace = useRef<(place: RoomPlace) => void>(() => undefined);
   revealPlace.current = (place: RoomPlace) => {
+    if (typeof place === "object" && place.kind === "file") {
+      leavePostures();
+      if (ctrl.view !== "room") ctrl.setView("room");
+      setFileRequest({ ref: place.ref, seq: ++fileSeq.current });
+      return;
+    }
     if (place === "history") {
       leavePostures();
       if (ctrl.view !== "history") ctrl.setView("history");
@@ -2387,6 +2421,10 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
                   <RoomFold title="Sources" token={sourceCount || undefined} open={addingSources || undefined} testId="room-fold-sources">
                     <SourcesSection room={ctrl.room} onReload={() => ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
                   </RoomFold>
+                </RoomSlot>
+                <RoomSlot id="files" place={place("files")} delay="82ms">
+                  <RoomFiledNotes projectId={ctrl.projectId} ctrl={ctrl} request={fileRequest}
+                    onRequestHandled={onFileRequestHandled} />
                 </RoomSlot>
                 <RoomSlot id="people" place={place("people")} delay="83ms">
                   <RoomFold title="People" testId="room-fold-people">
