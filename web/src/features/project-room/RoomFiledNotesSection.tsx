@@ -43,7 +43,7 @@ async function fetchFiledNote(ref: NoteRef, signal: AbortSignal): Promise<NoteRe
 }
 
 export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState, refreshResources, members,
-  followCurrentResources, request, onRequestHandled, adapter = productionAdapter,
+  followCurrentResources, request, onRequestHandled, presentationReady = true, adapter = productionAdapter,
 }: {
   projectId: string;
   resourceRefs: readonly string[];
@@ -53,6 +53,7 @@ export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState,
   members: readonly DrawerMember[];
   request: FiledNoteRequest;
   onRequestHandled: (seq: number) => void;
+  presentationReady?: boolean;
   adapter?: FiledNoteAdapter;
 }) {
   useRoomRead("files", resourcesState !== "loading");
@@ -145,15 +146,17 @@ export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState,
   }, [request, resolveReturn]);
 
   useLayoutEffect(() => {
-    if (!focusRequest || focusedSeq.current === focusRequest.seq) return;
+    // The Room can mount Files while its first-read body or late slot is
+    // hidden. A browser ignores focus then, so keep this return pending.
+    if (!presentationReady || !focusRequest || focusedSeq.current === focusRequest.seq) return;
     const row = [...(host.current?.querySelectorAll<HTMLElement>("[data-object-id]") ?? [])]
       .find((node) => node.dataset.objectId === focusRequest.ref);
     const button = row?.querySelector<HTMLButtonElement>(".object-list-open");
     if (!button) return;
-    focusedSeq.current = focusRequest.seq;
     row?.scrollIntoView?.({ block: "center" });
     button.focus({ preventScroll: true });
-  }, [focusRequest, noteReads, resourceRefs, expanded]);
+    if (document.activeElement === button) focusedSeq.current = focusRequest.seq;
+  }, [presentationReady, focusRequest, noteReads, resourceRefs, expanded]);
 
   const rows = noteRefs.map((ref) => {
     const read = noteReads[ref];

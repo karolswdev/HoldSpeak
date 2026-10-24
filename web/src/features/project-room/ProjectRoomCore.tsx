@@ -1904,11 +1904,12 @@ function RoomFold({ title, token, open, testId, children }: {
 
 /** The live Room reads only filed refs here. It does not start the drawer's
  * People/agent reads or mount the parked drawer to show one Note section. */
-function RoomFiledNotes({ projectId, ctrl, request, onRequestHandled }: {
+function RoomFiledNotes({ projectId, ctrl, request, onRequestHandled, presentationReady }: {
   projectId: string;
   ctrl: ReturnType<typeof useProjectRoomController>;
   request: FiledNoteRequest;
   onRequestHandled: (seq: number) => void;
+  presentationReady: boolean;
 }) {
   const data = useProjectResourceRefs(projectId);
   const items = useDesk((state) => state.items);
@@ -1919,7 +1920,8 @@ function RoomFiledNotes({ projectId, ctrl, request, onRequestHandled }: {
   return <RoomFiledNotesSection projectId={projectId} resourceRefs={data.resourceRefs}
     resourcesState={data.resourcesState} refreshResources={data.refreshResources}
     followCurrentResources={data.followCurrentResources}
-    members={members} request={request} onRequestHandled={onRequestHandled} />;
+    members={members} request={request} onRequestHandled={onRequestHandled}
+    presentationReady={presentationReady} />;
 }
 
 /* ── main core ── */
@@ -2421,7 +2423,8 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
               <div className="room-folds" data-testid="room-folds">
                 <RoomSlot id="files" place={{ waiting: place("files").waiting }} delay="80ms">
                   <RoomFiledNotes projectId={ctrl.projectId} ctrl={ctrl} request={fileRequest}
-                    onRequestHandled={onFileRequestHandled} />
+                    onRequestHandled={onFileRequestHandled}
+                    presentationReady={shown && !place("files").waiting} />
                 </RoomSlot>
                 <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="82ms">
                   <RoomFold title="Sources" token={sourceCount || undefined}

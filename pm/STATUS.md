@@ -26,10 +26,10 @@ server-side source pinning. Both continued in #1448 below; captured frontend
 text alone was not inference source freezing. [Execution](../docs/internal/betterment/native-experience/EXECUTION.md)
 keeps actual PRs, scoped proof and remaining package/journey acceptance.
 
-Last verified deployment — #1453: backend
-`12366e1e32685bc541a740b3f7640f6ee39681fc`, frontend `dc40153929c4c785`; database ownership true, no identity diagnoses, health/Desk/
+Last verified deployment — #1455: backend
+`b00d95eded8eab88d5bac81d5579934c6f769432`, frontend `3e1c98209c61a463`; database ownership true, no identity diagnoses, health/Desk/
 Conductor/Engines return 200. CLI/MCP match this source; feedback is enabled
-and Presence stays off. Five slices, the zoom policy repair and arranged-growth repair run on this revision.
+and Presence stays off. Six workflow/component slices and the shared zoom/growth/Stop repairs run on this revision. The Room/list visual continuation is still unmerged; its integration finding is recorded below.
 The completed pinned #1443 tape passed all 44 Python batches and its full web
 baseline (5,528 passed). Its 11 browser failures are zoom/Room/Thought checks
 repaired in #1444/#1445 and the stale Forms specimen cases repaired below.
@@ -2750,3 +2750,31 @@ RATIFY after retained-refresh geometry and reference outcome fixes. The first
 combined run passed6/9 and found three arrival/fault-injection rig races;
 those three now pass concurrently without product or assertion changes.
 Final required combined quick is rerunning; owner visual acceptance stays open.
+
+
+Verified deployment #1455: PID31240, frontend3e1c98209c61a463,
+backendb00d95eded8eab88d5bac81d5579934c6f769432, owns_database true,
+diagnoses empty, four routes200. CLI/MCP aligned, feedback defaults on,
+Presence off. Visual slice's final combined integration check remains open.
+
+
+Latest completed #1454 full tape is RED: Hand-again instruction timing,
+Components arrival, Thought393 caret hit ownership and three Room late-read
+geometry cases. Components arrival is corrected in unmerged wave8. The
+Thought hit blocker and44px late Sources/Plan movement remain unresolved;
+Files retained-refresh stability does not close them. The current wave8
+integration also reproduced a real Project focus handoff failure: focus was
+attempted while the loading body was visibility:hidden and marked consumed.
+A narrow presentation-ready correction is in progress. No final integrated
+green or visual acceptance is claimed. Details: native-experience/EXECUTION.md.
+
+
+Room/list visual continuation: final required quick GREEN — build,4,314 UI,
+all9 affected browser cases together,110 sweep,27 canon,1,126 guards;
+whole-tree types exit0. The real hidden-body Project focus failure is fixed
+through existing presentation readiness, with12 focused section checks, both
+full-job widths and3 extra desktop runs passing. Sources fault recovery now
+releases only on the real Retry click; the fixture guard excludes only the
+ambient Desk heartbeat. Ready for merge/deploy. Remaining Thought393 hit
+ownership, delayed Sources/Plan movement and Hand timing findings above stay
+open; this is bounded adoption, with owner visual acceptance still open.

@@ -358,9 +358,57 @@ def test_project_filed_note_ask_save_lineage_and_exact_return(
             # loading a thread clears its old selected passage.
             if width == 393:
                 _phone_targets(page, "#ask .desk-pullout-head")
+            page.evaluate("""() => {
+              const trace=[];
+              const name=e=>e?.closest?.('[data-layer=window], .desk-window')?.id || e?.id || e?.className || e?.tagName || null;
+              window.__projectFocusTrace=trace;
+              const focus=HTMLElement.prototype.focus;
+              window.__projectFocusCalls=[];
+              HTMLElement.prototype.focus=function(...args){
+                if(this.classList?.contains('object-list-open')){
+                  const details=this.closest('details');
+                  const hidden=this.closest('[inert], [aria-hidden="true"], [hidden]');
+                  const style=getComputedStyle(this);
+                  const bounds=this.getBoundingClientRect();
+                  const call={at:performance.now(),connected:this.isConnected,disabled:this.disabled,
+                    detailsOpen:details?.open,hidden:hidden?.outerHTML?.slice(0,250),
+                    display:style.display,visibility:style.visibility,rect:bounds.toJSON(),
+                    before:name(document.activeElement),beforeIsRow:document.activeElement===this,
+                    rowSelected:this.closest('[data-object-id]')?.getAttribute('aria-selected')};
+                  window.__projectFocusCalls.push(call);
+                  const result=focus.apply(this,args);
+                  call.after=name(document.activeElement);
+                  call.afterIsRow=document.activeElement===this;
+                  return result;
+                }
+                return focus.apply(this,args);
+              };
+              document.addEventListener('focusin',e=>trace.push({at:performance.now(),event:'focusin',target:name(e.target),
+                row:e.target?.classList?.contains('object-list-open')||false}),true);
+              document.addEventListener('focusout',e=>trace.push({at:performance.now(),event:'focusout',target:name(e.target),
+                row:e.target?.classList?.contains('object-list-open')||false}),true);
+            }""")
             room = _return_project(page, ask, PROJECT_A_NAME, width)
             expect(room.get_by_test_id("room-files-return")).to_have_text("FILED HERE")
-            _focused_filed_row(room)
+            try:
+                _focused_filed_row(room)
+            except AssertionError:
+                focus = page.evaluate("""async () => {
+                  const snap=()=>{const room=document.querySelector('#surface-project-memory');
+                    const row=room?.querySelector('[data-object-id="note:n-project-source"] .object-list-open');
+                    const active=document.activeElement;
+                    return {at:performance.now(),active:active?.outerHTML?.slice(0,500),
+                      activeWindow:active?.closest?.('[data-layer=window], .desk-window')?.id,
+                      rowFocused:active===row,selected:row?.closest('[data-object-id]')?.getAttribute('aria-selected'),
+                      receipt:room?.querySelector('[data-testid=room-files-return]')?.textContent,
+                      fronts:[...document.querySelectorAll('.desk-window.is-front')].map(e=>e.id)};};
+                  const frames=[snap()];for(let i=0;i<12;i++){
+                    await new Promise(resolve=>requestAnimationFrame(resolve));frames.push(snap());}
+                  return {events:window.__projectFocusTrace,focusCalls:window.__projectFocusCalls,frames};
+                }""")
+                (shots / f"project-return-focus-diagnostic-{width}.json").write_text(json.dumps(focus, indent=2) + "\n")
+                page.screenshot(path=str(shots / f"project-return-focus-diagnostic-{width}.png"))
+                raise
             if width == 393:
                 _phone_targets(page, "#surface-project-memory [data-testid='room-fold-files']")
             page.screenshot(path=str(shots / f"project-return-focused-{width}.png"))
@@ -515,8 +563,11 @@ def test_reference_filed_notes_uses_local_read_and_open_only(
                     "/api/projects/local-project", "/api/notes/review-record",
                     "/api/thoughts/for-note/review-record",
                 ))
+                # The Desk host may post its own ambient heartbeat while this
+                # local specimen is open; that is not a specimen write.
                 mutation = request.method != "GET" and (
-                    "/api/" in request.url or "/v1/chat/completions" in request.url)
+                    "/api/" in request.url or "/v1/chat/completions" in request.url
+                ) and not request.url.split("?", 1)[0].endswith("/api/desk/presence")
                 if fixture_read or mutation:
                     requests.append(f"{request.method} {request.url}")
 

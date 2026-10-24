@@ -85,8 +85,12 @@ shots show working source/return behavior, but do not establish the desired
 Workbench × Pop!_OS quality. Visual adoption is explicit unfinished work in
 P01/P02/P03/P04/P06/P08/P10, not a final cosmetic step after every domain.
 
-1. Finish the current bounded Project integration and the diagnosed zoom/
-   browser repairs; ship only the actual passing slices.
+1. Finish the current bounded Room/list integration, including the observed
+   return-focus attempt while its loading body is hidden. Reconcile the latest
+   full-tape narrow Thought hit-ownership and late Room section movement
+   findings before calling the existing cross-app path stable; the Files
+   retained-refresh proof does not cover delayed Sources/Plan arrival. Ship
+   only the actual passing slices.
 2. Before widening migration to Meetings/Agents, reconcile the already-adopted
    Desk→resource→Note→Ask→Project and Settings views against their paired
    canvases and the living Components reference. Use the existing J1/J3/J5/
@@ -108,7 +112,11 @@ P01/P02/P03/P04/P06/P08/P10, not a final cosmetic step after every domain.
    reconcile adoption against all 47 map rows before calling the framework
    delivered. Preserve the original adversarial findings and unresolved scope.
 
-**First visual slice: Project Room and the shared collection.** Preserve the
+**First visual slice: Project Room and the shared collection — built and
+integrated quick green, pending merge.** The actual Room/reference cases pass
+at1440/393, including stable retained refresh and presentation-ready exact
+return focus. The public list contract and Canvas B/F track this adoption.
+The following scope is implemented; owner visual acceptance remains open. Preserve the
 Project lead and existing Ask entry; put filed work before optional Sources.
 A Project without watched sources must not automatically expand three inactive
 connection cards. Keep Sources compact with an explicit Add source action;

@@ -20,7 +20,7 @@ const ref = "note:api-boundary" as const;
 
 function mount({ resourceRefs = [ref], resourcesState = "ok", request = null, refreshResources = vi.fn(async () => ({ state: "ok", refs: [ref] } as ResourcesRead)),
   followCurrentResources = async (result: ResourcesRead) => result,
-  members = [], onRequestHandled = vi.fn(),
+  members = [], onRequestHandled = vi.fn(), presentationReady = true,
 }: {
   resourceRefs?: string[];
   resourcesState?: ResourcesState;
@@ -29,11 +29,12 @@ function mount({ resourceRefs = [ref], resourcesState = "ok", request = null, re
   followCurrentResources?: (result: ResourcesRead) => Promise<ResourcesRead>;
   members?: DrawerMember[];
   onRequestHandled?: (seq: number) => void;
+  presentationReady?: boolean;
 } = {}) {
   return {
     ...render(<RoomFiledNotesSection projectId={projectId} resourceRefs={resourceRefs}
       resourcesState={resourcesState} refreshResources={refreshResources} followCurrentResources={followCurrentResources} members={members}
-      request={request} onRequestHandled={onRequestHandled} />),
+      request={request} onRequestHandled={onRequestHandled} presentationReady={presentationReady} />),
     refreshResources,
     onRequestHandled,
   };
@@ -112,6 +113,34 @@ describe("active Room filed Note", () => {
     expect(row).toHaveAttribute("aria-selected", "true");
     expect(document.activeElement).toBe(within(row).getByRole("button", { name: /API boundary/i }));
     expect(wire.openRef).not.toHaveBeenCalled();
+  });
+
+  it("keeps the filed return focus pending until the Room presents its Files slot", async () => {
+    wire.apiFetch.mockResolvedValue({ note: { title: "API boundary" } });
+    const request = { ref, seq: 17 };
+    const followCurrentResources = async (result: ResourcesRead) => result;
+    const mounted = mount({ request, followCurrentResources, presentationReady: false });
+    const prior = document.createElement("button");
+    document.body.append(prior);
+    prior.focus();
+    await screen.findByText("FILED HERE");
+    const row = within(screen.getByRole("grid", { name: "Filed notes" })).getByRole("row", { name: /API boundary/i });
+    const button = within(row).getByRole("button", { name: /API boundary/i });
+    const focus = vi.spyOn(button, "focus");
+    expect(row).toHaveAttribute("aria-selected", "true");
+    expect(document.activeElement).toBe(prior);
+    expect(focus).not.toHaveBeenCalled();
+
+    const props = { projectId, resourceRefs: [ref], resourcesState: "ok" as const,
+      refreshResources: mounted.refreshResources, followCurrentResources, members: [],
+      request, onRequestHandled: mounted.onRequestHandled };
+    mounted.rerender(<RoomFiledNotesSection {...props} presentationReady />);
+    expect(document.activeElement).toBe(button);
+    expect(focus).toHaveBeenCalledOnce();
+    mounted.rerender(<RoomFiledNotesSection {...props} presentationReady />);
+    expect(focus).toHaveBeenCalledOnce();
+    expect(mounted.onRequestHandled).toHaveBeenCalledOnce();
+    prior.remove();
   });
 
   it("keeps the return target through two stale membership results and focuses only the current filed row", async () => {

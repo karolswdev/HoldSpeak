@@ -294,7 +294,8 @@ def test_room_files_before_compact_sources_and_real_note_return(
             # The server's Room is real except for one fault-isolated Sources
             # section read. Retry removes that fault and reads the real server
             # response; no synthetic successful watch or provider is supplied.
-            fault = {"active": True, "reads": 0, "real_reads": 0}
+            fault = {"retry_armed": False, "reads": 0, "real_reads": 0}
+            page.add_init_script("window.__roomSourcesFaultActive = true")
 
             def sources_read(route: Any) -> None:
                 response = route.fetch()
@@ -302,7 +303,11 @@ def test_room_files_before_compact_sources_and_real_note_return(
                 assert body["sources"]["state"] == "ok", body["sources"]
                 # Decide at fulfillment, so an older server read that
                 # finishes after Retry cannot inject a late stale refusal.
-                if fault["active"]:
+                # Once the Retry control is shown, decide from the browser's
+                # actual press flag. Ambient reads cannot clear the fault.
+                active = not fault["retry_armed"] or page.evaluate(
+                    "() => window.__roomSourcesFaultActive === true")
+                if active:
                     body["sources"] = {"state": "degraded", "error_code": "sources_read_failed"}
                     fault["reads"] += 1
                     route.fulfill(response=response, json=body)
@@ -323,7 +328,16 @@ def test_room_files_before_compact_sources_and_real_note_return(
             page.screenshot(path=str(shots / f"room-sources-not-read-{width}.png"))
             retry = sources_fold.get_by_role("button", name="Try again")
             _reachable_action(page, "#surface-project-memory [data-testid='room-fold-sources'] .surface-state[data-kind='error'] button", width, probes)
-            fault["active"] = False
+            page.evaluate("""() => {
+              const selector="#surface-project-memory [data-testid='room-fold-sources'] .surface-state[data-kind='error'] button";
+              const release=event=>{
+                if (!event.target?.closest?.(selector)) return;
+                window.__roomSourcesFaultActive=false;
+                document.removeEventListener('click',release,true);
+              };
+              document.addEventListener('click',release,true);
+            }""")
+            fault["retry_armed"] = True
             retry.click()
             expect(sources_fold.get_by_text("SOURCES NOT READ")).to_have_count(0)
             expect(sources_fold.locator("details").first).not_to_have_attribute("open", "")
@@ -382,8 +396,11 @@ def test_components_filed_notes_uses_same_two_column_section_locally(
                     "/api/projects/local-project", "/api/notes/review-record",
                     "/api/thoughts/for-note/review-record",
                 ))
+                # The Desk host may post its own ambient heartbeat while this
+                # local specimen is open; that is not a specimen write.
                 mutation = request.method != "GET" and (
-                    "/api/" in request.url or "/v1/chat/completions" in request.url)
+                    "/api/" in request.url or "/v1/chat/completions" in request.url
+                ) and not request.url.split("?", 1)[0].endswith("/api/desk/presence")
                 if scoped_read or mutation:
                     requests.append(f"{request.method} {request.url}")
 

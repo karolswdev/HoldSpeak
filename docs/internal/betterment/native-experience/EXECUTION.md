@@ -951,3 +951,109 @@ not a fixture resize: y612..840 with a135px body. The local outcome now
 reveals correctly there; usable default sizing when another application is
 open remains a P01 adoption item. Its root cause is not established and this
 slice does not replace compositor sizing policy with a forced minimum.
+
+
+## Deployment receipt for #1454 and #1455 — 2026-10-24
+
+#1454 was verified as backendccec94435a7b7e7677446e7ce67da0eba8c0f637,
+frontend3e1c98209c61a463, PID85784. After the test-only #1455 merge the
+verified backend is `b00d95eded8eab88d5bac81d5579934c6f769432`, frontend
+`3e1c98209c61a463`, PID31240. Both checks report owns_database true, no
+diagnoses, health/Desk/Conductor/Engines200. CLI/MCP source matches and
+feedback defaults on; Presence remains off. The coalesced latest-main tape
+uses the prepared bundle without rebuilding a live runtime checkout.
+
+
+### Second integration run: focus remains a real open finding
+
+The second combined quick was RED: 4,312 UI checks passed and one Thought
+return assertion ran before its passive return subscription consumed the
+queued request. That assertion now awaits the actual returned range, matching
+the existing closed-window case; wrong-window and changed-body checks remain.
+The named case passes independently. The nine-browser run passed eight, but
+Project return at 1440 selected the right row and raised the Project while
+keyboard focus stayed on Ask. Five serial reproductions yielded one failure
+and four passes; twelve frame samples retained the wrong active element.
+This is not classified as harmless test timing or fixed by awaiting/forcing
+focus. Causal investigation is in progress, with passive focus diagnostics
+retained on failure. The visual slice remains unmerged pending the fix and
+required quick. Sweep110, canon27 and repository guards1,126 passed.
+
+
+### Latest completed main tape: #1454 remains RED
+
+Read-only audit of ccec944's completed tape found six failures: one Agent
+Hand-again check, one Components arrival check, one narrow Thought source
+return hit check and three late Room section geometry cases. The Hand test
+waits for registered rather than instruction sent; that timing mismatch is
+not repaired by this slice. Components arrival is covered by the wave8 rig
+correction. Thought393 retained its current caret/text/focus and viewport/
+footer placement, but failed elementFromPoint ownership; blocker identity
+was not captured, so cause remains unknown. Room held-past-cap and delayed
+Sources/Plan cases measured44px movement. Their old automatic source-setup
+expectation also needs reconciliation, but that does not dismiss movement.
+Wave8's retained Files read is a different path. These findings remain open
+in P01/P03/P06; no latest-main full-suite green is claimed. The #1455 tape
+has now started against its prepared runtime without rebuilding it.
+
+
+### Diagnosed Project return-focus correction
+
+The passive focus-call trace showed an enabled, connected, selected row
+inside an open Files fold, but computed visibility:hidden at the exact
+focus call. The Room's existing settling body correctly hides unfinished
+layout; the filed return had incorrectly consumed its sequence before the
+browser accepted focus. The section now receives the existing body/Files
+slot presentation-ready state and keeps that focus pending until shown,
+marking it consumed only after the target is active. This adds no observer,
+polling, forced raise or new focus controller. A twelve-case section run
+passes, including a held presentation return that focuses once when shown.
+The rebuilt whole source/Ask/save/return job passes at1440/393. Final
+combined quick is running after this diagnosed product correction.
+
+
+### Final fixture observer correction
+
+After the presentation-ready fix, both actual return widths and three extra
+serial desktop runs pass. The next combined quick passed4,314 UI checks,
+110 sweep,27 canon and1,126 guards, but the new Components1440 test counted
+only the host's ambient POST /api/desk/presence as forbidden fixture IO. Its
+local receipt, viewport, footer and hit checks had already passed. Both
+bounded fixture observers now exclude exactly that host heartbeat; all other
+API mutations/model calls and synthetic resource GET checks remain. The named
+reference pair passes2/2 in7.57s. This is unrelated to the disabled native
+Presence host. Whole-tree typecheck exits0; required final quick is rerunning.
+
+
+### Fault release must follow the actual recovery command
+
+The next combined run again passed4,314 UI and eight browser cases. The
+Room1440 fault case cleared its injected Sources refusal before attempting
+the real Try again click. A normal automatic Room read could then recover
+and detach that button before Playwright activated it. That is a rig race,
+not evidence that Retry failed. The injection release is being bound to the
+actual button click; the real server read, error disappearance, compact state
+and existing reachability assertions remain required. No product change is
+proposed for this test ordering failure.
+
+
+The corrected real-click fault boundary passes both Room widths (2/2,14.64s;
+`.tmp/visual-room-retry-click-boundary-focused.log`). A delegated capture
+listener survives transient error-control remounts; only the actual Sources
+Retry click releases the refusal. The route still obtains the real server
+response before deciding whether to inject that refusal. Root inspected this
+mechanism and retained the existing hard UI/read/geometry assertions.
+
+
+### Eighth slice: integrated delivery proof
+
+Required final quick is GREEN (`.tmp/quick-native-room-visual-click-boundary.log`):
+build,4,314 UI checks, all nine affected browser cases together (14.72s),
+110 desktop sweep,27 canon and1,126 repository guards. Final whole-tree
+typecheck exits0 (`.tmp/typecheck-room-visual-ready-fix.log`). The diagnosed
+loading-visibility focus seam and real-click fault injection correction are
+included. Root verified the focused evidence and final run; earlier red
+attempts above remain part of the record. The first visual Room/list slice
+is ready to merge; no whole package, full-suite green or owner aesthetic
+acceptance follows from this bounded passing result. Desktop/phone owner
+previews21/22 were opened in Preview and their folder in Finder.
