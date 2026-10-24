@@ -2668,7 +2668,7 @@ tape is not green. Zoom/reload geometry and browser-test corrections remain
 separate delivery; the earlier Send timeout cause is still unverified.
 
 
-Browser test readiness follow-on: Conversation now waits for Patterns before
+Browser test readiness follow-on — #1452: Conversation now waits for Patterns before
 choosing the wide button or narrow picker. Both reference widths and the393
 real Send/Edit/Back/folder-byte scenario pass (3/3). The earlier Send timeout
 has not reproduced and its cause remains unknown; retained pointer/return

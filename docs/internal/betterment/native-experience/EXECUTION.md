@@ -614,6 +614,8 @@ no latest-main full-suite green is claimed.
 
 ## Browser readiness correction and retained Send diagnostics
 
+[PR1452](https://github.com/karolswdev/HoldSpeak/pull/1452).
+
 Branch: test/native-glass-readiness-fix-20261023.
 Worktree: /Users/karol/dev/tools/wt-native-glass-readiness-fix-20261023.
 The previous pinned tape's Components Conversation failure sampled button
