@@ -1,9 +1,10 @@
 # Seven whole jobs for the native-feeling Desk
 
-**DRAFT — UNCHECKED — awaiting Muad'Dib.** 23 October 2026. Design proposal
-only. This authorizes no implementation, build, deploy, provider/native action,
-owner-state write, or owner acceptance. It turns the 47-family source
-audit into seven Tuesday jobs. The [47-review synthesis](../adversarial/SYNTHESIS.md)
+**Design record — UNCHECKED by Muad'Dib.** 23 October 2026. The owner's later
+direction authorizes execution of the [delivery plan](../DELIVERY-PLAN.md),
+superseding the original design-only hold. These seven Tuesday jobs remain
+acceptance definitions, not claims of executed workflows, provider/native
+coverage or owner aesthetic acceptance. The [47-review synthesis](../adversarial/SYNTHESIS.md)
 separates inspection, checks, and owner acceptance.
 
 The [nine paired canvas studies](CANVASES.md) make the main compositions and

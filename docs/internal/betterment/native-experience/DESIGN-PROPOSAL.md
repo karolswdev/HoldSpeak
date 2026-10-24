@@ -1,6 +1,8 @@
 # The proposed HoldSpeak desktop
 
-**Design proposal v1 — DRAFT, UNCHECKED, awaiting Muad'Dib.** 2026-10-23.
+**Design v1 — owner-authorized execution, 2026-10-23.** Still UNCHECKED by
+Muad'Dib; execution authorization does not invent his ratification or owner
+aesthetic acceptance.
 
 HoldSpeak becomes a coherent desktop for an architect's work: capture an
 idea, inspect material, prepare a review, ask a grounded question, make a
@@ -11,8 +13,9 @@ rules. React/TypeScript/DOM and the existing backend/native services remain.
 
 This is the proposed experience and its architecture. It translates the
 research and audited jobs into design choices; the [delivery plan](DELIVERY-PLAN.md)
-is derived from them. None of these proposed changes has been implemented or
-accepted by the owner. The Constitution and UX-CANON remain authoritative.
+is derived from them. [Execution](EXECUTION.md) records merged slices and
+remaining work; a partial implementation does not complete the proposal or
+establish owner aesthetic acceptance. The Constitution and UX-CANON remain authoritative.
 
 ## Read the proposal as one design
 

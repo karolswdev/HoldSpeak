@@ -1,6 +1,9 @@
 # Proposed native-experience workflow map
 
-**DRAFT — UNCHECKED — awaiting Muad'Dib. No action.**
+**Design record — UNCHECKED by Muad'Dib.** Owner-authorized execution began
+2026-10-23; that direction supersedes the original design-only/no-action hold.
+[Delivery plan](../DELIVERY-PLAN.md) and [execution](../EXECUTION.md) record actual
+slices. This preserves the original design trace without claiming ratification.
 Date: 2026-10-23 · source packet: [47 adversarial reviews](../adversarial/README.md), [synthesis](../adversarial/SYNTHESIS.md), and [inventory](../USE-CASE-INVENTORY.json).
 
 This is a design translation of the 47 audited family IDs into a coherent

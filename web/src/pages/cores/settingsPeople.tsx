@@ -12,7 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError, apiFetch } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { FilterTokens, FoldGadget, GadgetGroup, GadgetRow, StateChip, StringGadget, SurfaceState } from "../../desk/surface";
-import { useOwnerName } from "../../desk/firstrun/ownerName";
+import { useOwnerName, type OwnerNameAdapter } from "../../desk/firstrun/ownerName";
 import { OwnerAliasField } from "../../desk/firstrun/OwnerAliasField";
 
 export type PeopleAccess = {
@@ -69,27 +69,43 @@ export function usePeopleAccess() {
 /* PHILO-15 B57 (owed since 2026-10-04): his name and the other names for
  * him, after first run. The needs-you rule reads them as "me", and a
  * one-letter mishearing of the name ("Carol" for "Karol") still counts. */
-export function OwnerNameGroup({ highlight }: { highlight?: string | null } = {}) {
-  const owner = useOwnerName();
+export function OwnerNameFields({ owner, highlight, mic = true }: {
+  owner: ReturnType<typeof useOwnerName>;
+  highlight?: string | null;
+  mic?: boolean;
+}) {
+  const [aliasDraftEdited, setAliasDraftEdited] = useState(false);
   if (owner.loading || owner.readError) return <GadgetGroup material="inset" label="You"><SurfaceState loading={owner.loading} error={owner.readError} onRetry={() => void owner.reload()} /></GadgetGroup>;
+  const nameStatus = owner.fieldStatus("name");
+  // Alias text is a local draft until Enter, comma, or blur commits a chip.
+  // It cannot carry a Saved receipt from the owner writer before that point.
+  const aliasesStatus = aliasDraftEdited ? "Edited" : owner.fieldStatus("aliases");
+  const statusChip = (status: typeof nameStatus) => (
+    <StateChip
+      state={status === "Saved" ? "success" : status === "Saving" ? "working" : status === "Not saved" ? "failure" : "active"}
+      label={status.toUpperCase()}
+    />
+  );
   return (
     <GadgetGroup material="inset" label="You">
-      <GadgetRow wide label="Your name" controlWidth="full" highlight={highlight === "owner.name"}>
+      <GadgetRow wide label="Your name" fact={statusChip(nameStatus)} controlWidth="full" highlight={highlight === "owner.name"}>
         <span className="prefs-text-field" data-testid="settings-owner-name">
           <StringGadget
             label="Your name"
             value={owner.name}
             onChange={owner.setName}
+            mic={mic}
             placeholder="Name"
             inputProps={{ onBlur: () => void owner.flush() }}
           />
         </span>
       </GadgetRow>
-      <GadgetRow wide label="Also called" controlWidth="full" highlight={highlight === "owner.aliases"}>
+      <GadgetRow wide label="Also called" fact={statusChip(aliasesStatus)} controlWidth="full" highlight={highlight === "owner.aliases"}>
         <span className="prefs-text-field" data-testid="settings-owner-aliases">
-          <OwnerAliasField owner={owner} />
+          <OwnerAliasField owner={owner} mic={mic} onDraftChange={setAliasDraftEdited} />
         </span>
       </GadgetRow>
+      <GadgetRow label="Save policy"><span className="prefs-value">Autosave on change</span></GadgetRow>
       {owner.error ? (
         <GadgetRow label="Receipt">
           <StateChip state="failure" label="NOT SAVED" />
@@ -98,6 +114,17 @@ export function OwnerNameGroup({ highlight }: { highlight?: string | null } = {}
       ) : null}
     </GadgetGroup>
   );
+}
+
+/** Settings' real You face. Components shares the fields and writer hook with
+ * its isolated local adapter; this face keeps the production adapter default. */
+export function OwnerNameGroup({ highlight, adapter, mic = true }: {
+  highlight?: string | null;
+  adapter?: OwnerNameAdapter;
+  mic?: boolean;
+} = {}) {
+  const owner = useOwnerName(adapter);
+  return <OwnerNameFields owner={owner} highlight={highlight} mic={mic} />;
 }
 
 export function PeopleAccessModule({ highlight }: { highlight?: string | null } = {}) {

@@ -1,0 +1,9 @@
+.reference-form-fields {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 760px;
+}
+
+.reference-form-fields .gadget-row {
+  min-width: 0;
+}

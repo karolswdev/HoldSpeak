@@ -46,7 +46,7 @@ been adopted by a production feature.
 
 | Reference | Shared implementation | Real consumers of those species |
 | --- | --- | --- |
-| Forms | GadgetRow, StringGadget, CycleGadget, ActionNotice, Button | Settings, Automation setup, Project editors |
+| Forms | OwnerNameFields + useOwnerName, GadgetGroup/GadgetRow, StringGadget, OwnerAliasField, StateChip, Button | Settings You is the production consumer; Components uses the same composition/controller with fixture-only IO |
 | Reading | ReadingDocument/Material, source doors, SurfaceWell | Ask results, Automation results, notes and source readers |
 | Lists | SurfaceRows/SurfaceRow, SurfaceSplit, StringGadget | People, Memory and object readers use these list/detail species |
 | Resources | RepositoryBrowserView + useRepositoryBrowser, DeskSortableTable fold/roving, ScrollHint, read adapter | RepoWindow is the production consumer; Components runs the same view/controller with an isolated fixture adapter |
@@ -67,6 +67,17 @@ list/detail return belong to this pattern. Domain Git operations and resource
 write authority stay with RepoWindow/provider services. The reference is not a
 second production application. Durable view-history restoration and shared
 collection adoption are follow-on work, not claims made by this first consumer.
+
+The preference pattern shares `OwnerNameFields` and `useOwnerName(adapter?)`,
+not a generic form engine. The production adapter keeps the existing settings
+endpoint, revision guard, serialized autosave and leave keepalive policy.
+Fields show Edited immediately, Saving for the captured in-flight value,
+Saved only for an acknowledged current value, and Not saved with retained
+input plus one group Retry. A newer edit cannot inherit an older write's
+Saved receipt. Raw alias text is an edit until committed and must survive
+section leave. The local Forms adapter cannot write configuration or start
+hardware audio; production StringGadget microphone behavior stays unchanged.
+Thought's document writer and Ask's append policy remain separate authorities.
 
 Keep consumer claims at their actual granularity: a shared control, a pattern
 and a complete journey are different adoption claims. Parked code is not a
