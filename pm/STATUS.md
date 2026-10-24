@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-23 (native-experience repairs)
+**Last updated:** 2026-10-24 (native-experience delivery and plan reconciliation)
 
 ## Current phase
 
@@ -2711,7 +2711,7 @@ last verified deployment before the Project delivery, not a claim that a
 future merged revision has already been observed.
 
 
-Project filed-source delivery: required final quick GREEN (build,4,309 related
+Project filed-source delivery — #1453: required final quick GREEN (build,4,309 related
 UI tests,5 affected browser cases,110 sweep,27 canon,1,126 guards), final
 whole-tree TypeScript exit0. It preserves Note-only pinned Ask material,
 saved source/Thread doors and exact transient Project return without filing

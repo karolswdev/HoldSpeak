@@ -641,6 +641,8 @@ with both source jobs and the required quick. No full-suite green is claimed. No
 
 ## Seventh delivery: filed Project Note and exact job return
 
+[PR1453](https://github.com/karolswdev/HoldSpeak/pull/1453).
+
 Branch: feat/native-project-source-wave7-20261023.
 Worktree: /Users/karol/dev/tools/wt-native-project-source-wave7-20261023.
 First P06/J3 whole source job, using P04 admission and active Note/Ask/Thread.

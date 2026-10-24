@@ -47,12 +47,13 @@ Packages are sliced, not all-or-nothing gates: existing P06/P07 services can ser
 
 ## Execution tracking
 
-**Reality reconciliation — 2026-10-23.** The 47 adversarial family reviews,
+**Reality reconciliation — 2026-10-24 (owner check-in: 2026-10-23).** The 47 adversarial family reviews,
 seven journeys, ten-package proposal and paired canvases define the work.
 They do not measure implementation completion. Six workflow/component slices
 have shipped: repository windows/read browser (#1438), Settings You (#1439),
-Thought voice/Editing (#1443), source Ask/return (#1446), and Note-version
-pinning/saved links (#1448), and filed Project Note/source/return (this delivery).
+Thought voice/Editing (#1443), source Ask/return (#1446), Note-version
+pinning/saved links (#1448), and filed Project Note/source/return
+([PR1453](https://github.com/karolswdev/HoldSpeak/pull/1453)).
 Shared frame/zoom/growth and pending Stop repairs
 are separate delivery, not additional completed packages. No full package,
 whole seven-journey set, owner aesthetic acceptance or latest-main full-suite
@@ -71,13 +72,11 @@ green is claimed. Recipe closeout 115/117 measures another repair lane.
 | P09 Send | Modernization migration not started. Existing isolated real folder-byte jobs provide baseline evidence. | Producer/Needs/Delivery adoption, frozen identity/unknown/replay and complete cross-job egress. |
 | P10 shell/reference/feedback | Partial: shared Resources, Forms, Editing and Conversation; local Files specimen delivered with P06. Feedback remains enabled; Presence off. | Cohesive shell/visual adoption, operation outcomes, three consecutive Firefox Settings reports and measured native-feeling behavior. |
 
-The first P06 integration run found 15 opener call-shape regressions across 10 existing
-unit-test files. The shared forwarding correction now passes all 196 tests
-in those ten files plus Ask, preserving ordinary open calls and explicit
-origin clearing. Final integration quick and whole-tree typecheck pass. The combined browser run
-also exposed an old P04 assertion requiring the global card removed by #1451;
-the updated inline-progress/Stop checks and required quick pass in #1452. The earlier 393 Send Back timeout has not reproduced; retained
-failure-state evidence is added without claiming its cause is fixed.
+Final required quick and whole-tree typecheck pass for the first Project
+slice. Integration corrections and bounded evidence are recorded in
+[EXECUTION](EXECUTION.md). Browser contract repairs are #1452. The earlier
+393 Send Back timeout has not reproduced; retained diagnostics do not prove
+its cause is fixed. No latest-main full-suite green is claimed.
 
 ## Delivery adjustment: visible adoption alongside behavior
 
@@ -154,9 +153,9 @@ Progress updates state what completed, what was learned, what remains
 unverified and the next bounded step. A green component check, a merged PR,
 a completed whole job and owner visual acceptance are different milestones.
 
-First execution slice and remaining scope are recorded in [EXECUTION.md](EXECUTION.md).
-It is one repository application change spanning P01/P02 and the first P10
-fixture seam, not completion of those packages or of all 47 families.
+Each bounded delivery and its remaining scope are recorded in
+[EXECUTION.md](EXECUTION.md). A slice can span several packages without
+completing those packages or all 47 families.
 
 ## P01: Window, view and command foundation
 
@@ -319,7 +318,8 @@ canvas state story.
 
 ## P06: Project, person and day
 
-**Delivery:** first filed Project Note/source/return slice is delivered from
+**Delivery:** first filed Project Note/source/return slice is
+[PR1453](https://github.com/karolswdev/HoldSpeak/pull/1453), delivered from
 `wt-native-project-source-wave7-20261023`. Five browser cases pass across
 focused runs at 1440/393, including missing/moved/failed reads and local Files
 reference. Navigation and Room received final Sol advisory RATIFY; these are
