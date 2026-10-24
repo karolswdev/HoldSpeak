@@ -27,14 +27,14 @@ version admission/pinning is a separate slice; captured frontend text alone
 is not inference source freezing. [Execution](../docs/internal/betterment/native-experience/EXECUTION.md)
 keeps actual PRs, scoped proof and remaining package/journey acceptance.
 
-Running Desk: backend `bb426de4e8d11a6cb4e0552275328c18adb64f5f`, frontend
-`9978daee8260a443`; database ownership true, no identity diagnoses, health/Desk/
+Running Desk: backend `ae1a8bbee6472ad1f214be4231a6dae97246501a`, frontend
+`07b335d38c786200`; database ownership true, no identity diagnoses, health/Desk/
 Conductor/Engines return 200. CLI/MCP match this source; feedback is enabled
-and Presence stays off. Zoom restore #1444 and Room/Thought glass repair #1445
-are merged after this runtime. The background pinned #1443 tape passed all
-44 Python batches; browser reds include the now-repaired zoom/Room/Thought
-checks and a stale Forms specimen test being updated separately. No whole
-suite green is claimed. Earlier wire, optional-plugin and doc-probe repairs
+and Presence stays off. Four slices and the zoom repair run on this revision.
+The completed pinned #1443 tape passed all 44 Python batches and its full web
+baseline (5,528 passed). Its 11 browser failures are zoom/Room/Thought checks
+repaired in #1444/#1445 and the stale Forms specimen cases repaired below.
+That pinned full tape is RED; no latest-main full-suite green is claimed. Earlier wire, optional-plugin and doc-probe repairs
 are recorded below. Recipe closeout remains 115/117.
 
 Zoom restore — #1444: content-sized windows retain auto height across first
@@ -47,6 +47,12 @@ selectors now follow current controls. Manual receipt and real folder bytes/
 identity/retry checks remain; clipboard uses a local buffer. No product code
 changes. Required quick green: build, 43 affected browser cases, 110 desk sweep,
 27 canon and 1,126 repository guards.
+
+Design Reference glass — #1447: old Forms assertions now follow the shared Settings
+You writer/fields. Alias, held ACK, refusal/Retry, newer draft and Reset are
+observed without production writes; other pattern checks remain. Required
+quick green: build, both affected width cases, 110 desk sweep, 27 canon and
+1,126 repository guards. No product code changes.
 
 Optional meeting plugin route — #1440: an inherited summary assignment with
 no compatible optional plugin now records exclusion instead of refusing core
