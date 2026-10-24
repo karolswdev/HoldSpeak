@@ -205,5 +205,5 @@ The two old Stop assertions now require #1437's status and stopped Meeting
 identity. Focused write-OFF replay after #1440: eight cases passed; four
 frontend consumer files passed 85 cases. Required quick: build, 123 affected
 cases, 110 desk sweep, 27 canon and 1,126 repository guards passed. No product
-behavior changes are included in this test-contract slice. Its merge pointer
-is recorded at delivery; the full pinned tape still has not closed green.
+behavior changes are included in this test-contract slice. [PR1441](https://github.com/karolswdev/HoldSpeak/pull/1441) delivers this bounded
+repair; the full pinned tape still has not closed green.
