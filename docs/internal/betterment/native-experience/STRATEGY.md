@@ -5,18 +5,19 @@ This is a proposed strategy refinement, not an implementation instruction or
 a claim of owner acceptance. It is governed by the Constitution's Seven
 Tenets, UX-CANON and the current fast cycle.
 
-## The owner's correction
+## Definition before implementation
 
-After the 47 adversarial reviews, Astra interpreted the owner's response as
-an instruction to start the prioritized repairs. The owner clarified:
+The owner's direction is to master the React-based product world: research
+and workflows become a coherent design proposal, then a delivery plan.
+The [proposal](DESIGN-PROPOSAL.md) now defines the application model,
+interaction decisions and visual grammar. Its [47-family map](design-proposal/WORKFLOW-MAP.md),
+[seven whole jobs](design-proposal/JOURNEYS.md) and [paired canvases](design-proposal/CANVASES.md)
+make that definition reviewable. The [derived delivery plan](DELIVERY-PLAN.md)
+connects each family to a bounded package and its real task proof.
 
-> “finish what you're doing but I wanted you to really continue to refine the
-> plan and the strategy before just jumping into modifying things in the code”
-
-Finish the bounded repairs already underway and record their actual results.
-The next work is to settle the experience and architecture below. Publishing
-this document does not authorize its implementation. The [delivery plan](DELIVERY-PLAN.md)
-separates that design work from later implementation packages.
+This is design work. The bounded repairs are [recorded separately](checks/repair-closeout-2026-10-23.md).
+The proposal does not promote the framework to delivered, close the audits,
+or start another code lane.
 
 ## The changed experience
 
@@ -41,9 +42,10 @@ Independent app rewrites would reproduce today's drift. The proposed middle
 course costs more design effort before the first extraction, but makes its
 usefulness falsifiable through a second, different production consumer.
 
-## Decisions to settle before another framework build
+## Strategic choices developed in the design proposal
 
-These are recommendations with explicit counterexamples, not new canon.
+These recommendations are expanded into D1–D10 of the [design proposal](DESIGN-PROPOSAL.md).
+They have explicit counterexamples and remain proposed, not new canon.
 
 | Decision | Proposed choice and reason | Counterexample or revisit condition |
 | --- | --- | --- |
@@ -85,13 +87,15 @@ not things to replace because the audit found an adjacent defect.
 
 ## A falsification sequence, not a march through 47 windows
 
-1. **Complete the design packet.** Resolve the decision table above against
-   active sources. Draw the resource and preferences compositions, plus the active Thought
-   editing counterexample, in the existing material with populated, empty,
-   busy, failed and resumed states.
-   Specify scope, keyboard/focus behavior and retained state beside each
-   composition. The adversarial [strategy review](checks/strategy-adversarial-2026-10-23.md)
-   identifies the current missing decisions. This is the immediate checkpoint.
+1. **Review the actual proposed world.** The [proposal](DESIGN-PROPOSAL.md)
+   chooses identities, ownership, scoped commands, state transitions,
+   selection/navigation, editing, source return and reference behavior. The
+   [canvases](design-proposal/CANVASES.md) show the resource and preferences
+   compositions, active Thought/Ask counterexample, retained Meeting work and
+   Components, followed by delegation/result, follow-through/Send, readiness
+   and terminal/feedback return scenes. The [map](design-proposal/WORKFLOW-MAP.md) traces all 47 families
+   to journeys and packages. This definition is now present, not a future
+   deliverable; provider and owner evidence remain distinct open conditions.
 2. **Prove one resource job after the design is settled.** In RepoWindow,
    open a supported file through the existing provider, navigate and return,
    change the active window, and survive a stale/refused read without losing
@@ -184,13 +188,18 @@ deployment and post-merge review/full tape. Current repairs are a bounded
 closeout. The larger project-update Stop candidate is parked outside main on
 `fix/update-stop-repair-20261023`, commit `54a7436b7`, with explicit unverified
 identity, transaction and editor conditions. It is not a shipped repair.
-The remaining implementation backlog waits for the design refinement.
+The remaining implementation backlog is organized by the proposed design;
+this document does not start it.
 
 When a pattern is delivered, update its actual public contract, Components
 example, production-consumer record and evidence pointer together. Keep the
 baseline audit and dissent as history; append what changed and what remains
 unknown. [The synthesis](adversarial/SYNTHESIS.md) records repair delivery;
-[the delivery plan](DELIVERY-PLAN.md) records proposed sequence and exit proof.
+[the delivery plan](DELIVERY-PLAN.md) derives package order and task proof from
+the proposal. Update the workflow trace and journey when a design changes;
+update the shared contract, real consumer and Components specimen in the same
+implementation change when behavior changes. Do not rewrite historical audit
+verdicts to imply that a proposed or merged fix was observed by the owner.
 Keep source inspection, executed tests, live task observation and owner
 aesthetic acceptance distinct in every status update.
 

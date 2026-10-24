@@ -9,18 +9,22 @@ build a nearly OS-native experience. This packet records research and a
 proposed delivery architecture. Recommendations are not shipped capabilities,
 new canon, or owner aesthetic acceptance.
 
-## Current checkpoint: refine the strategy before further code
+## Current checkpoint: the proposed product world
 
-The owner clarified on 2026-10-23: finish the bounded repairs already underway,
-then continue refining the plan and strategy before further implementation.
-[STRATEGY.md](STRATEGY.md) is the resulting **DRAFT — UNCHECKED, awaiting
-Muad'Dib**. It recommends concrete identity/lifetime, command-scope and state
-ownership choices, a resource → Settings/Thought → sourced-Ask falsification
-sequence, production/Components parity, and whole-job craft evidence.
-The [delivery plan](DELIVERY-PLAN.md) now separates immediate design work from
-later candidate implementation homes. The [advisory strategy review](checks/strategy-adversarial-2026-10-23.md)
-preserves the objections and unresolved evidence. No recommendation in this
-refinement has been acted on. Repair closeout is recorded in the synthesis.
+Start with the **[design proposal](DESIGN-PROPOSAL.md)**: desktop and application
+model, ten concrete interaction/ownership decisions and common visual grammar.
+Then read its **[47-workflow trace](design-proposal/WORKFLOW-MAP.md)**,
+**[seven complete journeys](design-proposal/JOURNEYS.md)** and
+**[nine paired canvas studies](design-proposal/CANVASES.md)**. The
+**[delivery plan](DELIVERY-PLAN.md)** is derived from that definition, with
+shared foundations, unlike production consumers, domain waves and task proof.
+
+This is **DRAFT — UNCHECKED, awaiting Muad'Dib**, as requested before further
+implementation. No proposed product change has been built or enabled by this
+packet. The [strategy](STRATEGY.md) explains the choices; the research and
+47 adversarial reviews remain their evidence, rather than a list of 47 rewrites.
+The [repair closeout](checks/repair-closeout-2026-10-23.md) records the separate
+bounded fixes without treating technical repair as visual acceptance.
 
 ## Result
 
@@ -49,6 +53,11 @@ first research packet; its Settings-first checkpoint alone was too narrow.
 
 | Record | Purpose |
 | --- | --- |
+| [Design proposal](DESIGN-PROPOSAL.md) | Proposed product world and ten decisions covering applications, behavior, ownership, visual composition and living reference. |
+| [47-workflow design map](design-proposal/WORKFLOW-MAP.md) | Every audited family → composition, shared contracts, complete journeys, recovery/return and primary delivery package. |
+| [Seven whole jobs](design-proposal/JOURNEYS.md) | Concrete source-to-result-to-return journeys, interruptions and narrow-window behavior. |
+| [Canvas guide](design-proposal/CANVASES.md) / [artboards](design-proposal/CANVASES.html) | Resource, Thought/Ask, Settings, Meeting, Components, delegation, follow-through/Send, readiness and terminal/feedback compositions with state variants. |
+| [Derived delivery plan](DELIVERY-PLAN.md) | Dependencies, real consumers, bounded packages and proof for implementing the proposal later. |
 | [Bounded repair closeout](checks/repair-closeout-2026-10-23.md) | Actual merged/deployed repairs, Astra post-merge reviews, proof limits and the parked Stop candidate. |
 | [47 adversarial reviews](adversarial/README.md) | Individual whole-job, convergence and user-value reviews, corrected source assumptions and delivery priorities. |
 | [Use-case behavior audit](USE-CASE-AUDIT.md) | Whole-product job/behavior matrix, current evidence, gaps and prioritized cross-application journeys. |
@@ -58,7 +67,6 @@ first research packet; its Settings-first checkpoint alone was too narrow.
 | [Current state](CURRENT-STATE.md) | Audit existing seams, reuse opportunities, gaps and baseline-specific source anchors. |
 | [Interaction foundation](INTERACTION-FOUNDATION.md) | React roadmap, accessible behavior, asynchronous state and scoped library reuse. |
 | [Browser and platform](BROWSER-PLATFORM.md) | Feature-specific compatibility, DOM/native boundaries and local performance proof. |
-| [Delivery plan](DELIVERY-PLAN.md) | Concrete production adoption, measurable targets, dependencies and first work packages. |
 
 Primary sources were checked on 2026-10-23. Vendor specifications and release
 notes establish available mechanisms, not that HoldSpeak already uses them or
@@ -206,7 +214,7 @@ No Vision Control portfolio was created or transitioned. Its framing and
 adoption method was applied to the existing repository records; the packet
 remains research until implementation supplies adoption and outcome evidence.
 
-## Verification of this research delivery
+## Historical verification of the research delivery
 
 Root ran the reproducible capability harness against all three installed
 engines under an isolated HOME and the shared lock, and checked its results
@@ -216,3 +224,11 @@ documentation checks, 110 desk sweep cases, 27 canon and 1,126 repository
 guards passed. Product web/backend source and dependency locks are unchanged.
 These checks validate this delivery's records/tooling and existing layout
 floors; they do not establish the proposed native-quality or timing targets.
+
+## Verification of this proposal revision
+
+This revision adds the design definition, workflow trace, complete journeys,
+static canvases and derived packages. Its checks are recorded in the
+[proposal review](checks/design-proposal-adversarial-2026-10-23.md). Earlier
+research harnesses and repair tapes above are historical evidence, not checks
+executed against these illustrative artboards or proof of their implementation.
