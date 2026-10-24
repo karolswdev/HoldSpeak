@@ -51,8 +51,8 @@ Packages are sliced, not all-or-nothing gates: existing P06/P07 services can ser
 [PR1435](https://github.com/karolswdev/HoldSpeak/pull/1435). Execution is
 active for P01–P10. The first partial P01/P02/P10 repository slice merged in
 [PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438) and runs on the Desk.
-P08's first Settings You slice is re-checked and browser-verified, with the
-final required quick check green. Active Thought/input is being built next.
+P08's first Settings You slice is [PR1439](https://github.com/karolswdev/HoldSpeak/pull/1439),
+re-checked and browser-verified, with the final required quick check green. Active Thought/input is being built next.
 No full package or owner aesthetic acceptance is claimed. The separate
 [repair closeout](checks/repair-closeout-2026-10-23.md) does not complete a
 framework package or establish visual acceptance.
@@ -261,7 +261,7 @@ workflow rows.
 
 ## P08: Readiness and preferences
 
-**Delivery:** Settings You slice is in progress: shared production fields and
+**Delivery:** first Settings You slice is [PR1439](https://github.com/karolswdev/HoldSpeak/pull/1439): shared production fields and
 the existing domain writer now supply immediate Edited, captured Saving,
 authoritative Saved and retained Not saved/Retry. The Components Forms
 specimen uses that same composition/controller with isolated IO. The fix re-check and six browser cases pass; the final required quick is green. Setup/Engines/Accounts and

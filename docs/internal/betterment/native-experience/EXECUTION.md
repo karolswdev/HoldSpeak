@@ -76,7 +76,8 @@ not a substitute for its whole-job acceptance or the owner's visual judgment.
 - Design definition: merged [PR1435](https://github.com/karolswdev/HoldSpeak/pull/1435), 47-family trace validated.
 - Repository slice: [PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438),
   built, reviewed and quick-check green. First partial P01/P02/P10 delivery.
-- P08 Settings slice: built and independently re-checked; same-face reference
+- P08 Settings slice: [PR1439](https://github.com/karolswdev/HoldSpeak/pull/1439),
+  built and independently re-checked; same-face reference
   integrated and six real-browser cases passed. Required final quick green.
   This is not all of P08.
 - Task evidence: seven isolated real-browser repository cases and three route
@@ -124,6 +125,7 @@ queued according to DELIVERY-PLAN, not silently dropped.
 Branch: feat/native-preferences-wave2-20261023.
 Worktree: /Users/karol/dev/tools/wt-native-preferences-wave2-20261023.
 Journey J6, workflow `settings`, first P08 slice and P10 Forms reference.
+[PR1439](https://github.com/karolswdev/HoldSpeak/pull/1439).
 Workers: preferences_writer owns the owner-name hook/alias field and focused
 writer tests; preferences_face owns the exact shared field composition,
 fixture adapter/navigation and focused consumer tests; repository_verifier

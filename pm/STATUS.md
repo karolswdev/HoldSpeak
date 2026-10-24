@@ -20,8 +20,21 @@ Required quick green: build, 4,184 related UI tests, ten affected Python/browser
 cases, 110 desk sweep, 27 canon and 1,126 repository guards. Root inspected
 1440/393 shots; narrow controls pass the nine-point target probe. This is
 partial P01/P02/P10, not package completion or owner visual acceptance.
-P08's owner-preference writer and same-face reference are the next slice in
-`wt-native-preferences-wave2-20261023`; review fixes remain in progress.
+Settings You / Forms — #1439: the same production fields and owner writer
+now power Components through local IO. Edited is immediate, Saving names the
+captured value, Saved requires the current ACK, and Not saved retains input
+with Retry. Stale ACK/revision, raw alias leave and IME fixes received a final
+Sol advisory RATIFY; that is not Muad'Dib's check. Glass inspection also caught
+and removed You's unrelated general Saved footer. Required quick green:
+build, 4,204 related UI tests, six real-browser cases, 110 desk sweep, 27 canon
+and 1,126 repository guards. Root inspected 1440/393 production/reference
+captures; narrow nine-point controls pass. This is partial P08/P10, with
+other writers/readiness and failed full-unmount keepalive recovery still open.
+Active Thought's captured voice/range/undo/recovery slice is now in progress.
+The background full tape on #1438 has inherited wire/Stop assertion drift and
+optional-plugin route reds. Separate bounded fixes are in progress; no full
+suite green is claimed. Runtime after #1438 is recorded in Execution; #1439's
+exact merged runtime is verified during deployment after merge.
 [Execution](../docs/internal/betterment/native-experience/EXECUTION.md) records
 package/journey/workflow, PR, scoped proof and remaining feedback.
 
