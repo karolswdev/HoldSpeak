@@ -41,6 +41,14 @@ tape is queued behind the pinned #1438 run, with no whole-suite green claim.
 [Execution](../docs/internal/betterment/native-experience/EXECUTION.md) records
 package/journey/workflow, PR, scoped proof and remaining feedback.
 
+Optional meeting plugin route — #1440: an inherited summary assignment with
+no compatible optional plugin now records exclusion instead of refusing core
+summary admission before dispatch. Core capability checks remain strict.
+The four original reds and two existing optional/core pins pass; required
+quick green: build, 113 affected cases, 110 desk sweep, 27 canon and 1,126
+repository guards. This is a producer repair, not P05 completion. Wire/Stop
+fixture repairs and the remaining full-tape observations stay separate.
+
 The earlier hold below is retained as history; it no longer pauses execution.
 
 **Owner correction — strategy before further implementation (2026-10-23).**

@@ -185,4 +185,5 @@ Required quick green: build, 113 affected route/database cases, 110 desk
 sweep, 27 canon and 1,126 repository guards. Initial attempts exposed missing
 worktree dependencies (Vite, then pytest-xdist); the verified environment run
 passes without relaxing checks (`.tmp/quick-plugin-route-verified-env.log`).
-Merge pointer is recorded at delivery.
+[PR1440](https://github.com/karolswdev/HoldSpeak/pull/1440) delivers the bounded
+producer repair.
