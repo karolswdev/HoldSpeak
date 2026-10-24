@@ -3,7 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../lib/api";
 import { useDesk } from "../store";
-import { openSurfaceOr } from "../shell";
+import { openProjectRoom, openSurfaceOr } from "../shell";
+import { takeRoomAtRequest } from "../openObject";
 import {
   actOnReview,
   completeThought,
@@ -39,12 +40,12 @@ vi.mock("../components/DeskWindow", async () => {
   const { useState } = await import("react");
   const { FootSlotContext } = await import("../surface/foot");
   return {
-    DeskWindowFrame: ({ children, onClose, beforeClose, onBack, label, minH, className, actions }: { children: React.ReactNode; onClose: () => void; beforeClose?: () => Promise<boolean>; onBack?: () => void; label?: string; minH?: number; className?: string; actions?: React.ReactNode }) => {
+    DeskWindowFrame: ({ children, onClose, beforeClose, onBack, label, minH, className, actions, leading }: { children: React.ReactNode; onClose: () => void; beforeClose?: () => Promise<boolean>; onBack?: () => void; label?: string; minH?: number; className?: string; actions?: React.ReactNode; leading?: React.ReactNode }) => {
       const [foot, setFoot] = useState<HTMLElement | null>(null);
       return <section aria-label="Thought" className={className} data-window-name={label} data-frame-min-height={minH} data-frame-close-guard={Boolean(beforeClose)}>
         <button onClick={() => { void (async () => { if (!beforeClose || await beforeClose()) onClose(); })(); }}>Close window</button>
         {onBack ? <button onClick={onBack}>Frame Back</button> : null}
-        {actions ? <span data-testid="frame-actions">{actions}</span> : null}
+        {leading}{actions ? <span data-testid="frame-actions">{actions}</span> : null}
         <FootSlotContext.Provider value={foot}>{children}</FootSlotContext.Provider>
         <footer ref={setFoot} className="surface-footer" data-testid="frame-foot" />
       </section>;
@@ -78,7 +79,7 @@ vi.mock("../documentSendsLazy", () => ({
   </div>,
 }));
 vi.mock("../sprites", () => ({ spriteUrl: () => "note.png" }));
-vi.mock("../shell", () => ({ openSurfaceOr: vi.fn() }));
+vi.mock("../shell", () => ({ openSurfaceOr: vi.fn(), openProjectRoom: vi.fn() }));
 vi.mock("../hooks/useEngine", () => engineMock);
 vi.mock("../thoughts", async (importOriginal) => {
   const original = await importOriginal<typeof import("../thoughts")>();
@@ -155,7 +156,7 @@ beforeEach(() => {
   vi.mocked(thoughtWorkbench).mockReset();
   sessionStorage.clear();
   latchAskSelection(null);
-  useDesk.setState({ editingId: null, closeEditor: vi.fn(), askOpen: false, selectedIds: [] });
+  useDesk.setState({ editingId: null, closeEditor: vi.fn(), askOpen: false, askThread: null, selectedIds: [], projects: [] });
   engineMock.useEngine.mockReturnValue({ state: "unread", model: "", place: "" });
 });
 afterEach(() => {
@@ -277,7 +278,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
     // Betterment Q5: Ask about this puts the note in About.
     expect(useDesk.getState().askThread?.about?.map((chip) => chip.ref)).toEqual(["note:note-1"]);
-    expect(takeAskSelection()).toEqual({ noteRef: "note:note-1", text: "Ask about this exact passage", body, range: { from: body.indexOf("Ask about this exact passage"), to: body.length, text: "Ask about this exact passage" }, windowId: null, scrollTop: 24, source: { id: "note-1", kind: "note", ref: "note:note-1", title: saved.working_note.title || "Note" }, sourceSnapshot: { ref: "note:note-1", thought_id: saved.id, working_revision: saved.working_revision, body_sha256: createHash("sha256").update(body).digest("hex") } });
+    expect(takeAskSelection()).toEqual({ noteRef: "note:note-1", text: "Ask about this exact passage", body, range: { from: body.indexOf("Ask about this exact passage"), to: body.length, text: "Ask about this exact passage" }, windowId: null, scrollTop: 24, source: { id: "note-1", kind: "note", ref: "note:note-1", title: saved.working_note.title || "Note" }, sourceSnapshot: { ref: "note:note-1", thought_id: saved.id, working_revision: saved.working_revision, body_sha256: createHash("sha256").update(body).digest("hex") }, requestNonce: 1 });
   });
 
   it("hands Ask the saved Note source when no passage is selected", async () => {
@@ -296,6 +297,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
       scrollTop: 24,
       source: { id: thought.working_note.id, kind: "note", ref: `note:${thought.working_note.id}`, title: thought.working_note.title || "Note" },
       sourceSnapshot: { ref: `note:${thought.working_note.id}`, thought_id: thought.id, working_revision: thought.working_revision, body_sha256: createHash("sha256").update(thought.working_note.body_markdown).digest("hex") },
+      requestNonce: 1,
     });
   });
 
@@ -308,6 +310,26 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     expect(useDesk.getState().askOpen).toBe(false);
     expect(takeAskSelection()).toBeNull();
     digest.mockRestore();
+  });
+
+  it("keeps the Project row as navigation while Ask pins only the Note", async () => {
+    const projectReturn = { projectId: "project-a", resourceRef: "note:note-1" as const };
+    useDesk.setState({ projects: [{ id: "project-a", name: "Atlas Review" }] as never });
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    render(<ThoughtWorkspaceWindow object={object} thought={thought} projectReturn={projectReturn} onClose={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Return to Atlas Review" }));
+    expect(openProjectRoom).toHaveBeenCalledWith("project-a");
+    expect(takeRoomAtRequest("project-a")).toEqual({ kind: "file", ref: "note:note-1" });
+    fireEvent.click(screen.getByRole("button", { name: "Ask about this" }));
+    const handoff = await waitFor(() => {
+      const next = takeAskSelection();
+      expect(next).not.toBeNull();
+      return next!;
+    });
+    expect(handoff.projectReturn).toEqual(projectReturn);
+    expect(handoff.sourceSnapshot).toMatchObject({ ref: "note:note-1", thought_id: thought.id });
+    expect(useDesk.getState().askThread?.about?.map((row) => row.ref)).toEqual(["note:note-1"]);
   });
 
   it("takes a return only in its source window and refuses a changed Note body", async () => {

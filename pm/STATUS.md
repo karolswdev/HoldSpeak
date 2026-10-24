@@ -26,8 +26,8 @@ server-side source pinning. Both continued in #1448 below; captured frontend
 text alone was not inference source freezing. [Execution](../docs/internal/betterment/native-experience/EXECUTION.md)
 keeps actual PRs, scoped proof and remaining package/journey acceptance.
 
-Running Desk: backend `a7e3117f6a66e835cc708ee6cc2553c703de4244`, frontend
-`3a92261f318ea320`; database ownership true, no identity diagnoses, health/Desk/
+Running Desk: backend `c7fec7ef3f2fc43bd878df5e02fc38ce68492777`, frontend
+`f2eef8675d5cce2e`; database ownership true, no identity diagnoses, health/Desk/
 Conductor/Engines return 200. CLI/MCP match this source; feedback is enabled
 and Presence stays off. Five slices, the zoom policy repair and arranged-growth repair run on this revision.
 The completed pinned #1443 tape passed all 44 Python batches and its full web
@@ -1560,7 +1560,7 @@ quick GREEN: 120 affected / 109 sweep / 17 canon; 28 doc guards pass.
 Merged `add3c231c`; formal Astra review RATIFY with the subsequent full-run
 findings above fixed forward. Idle local hub delivered from
 `wt-meeting-stop-review-fixes-20261017`, PID25584, port8765; four HTTP checks
-return200. Frontend `2759d0c6c13d4b6b` matches source; backend head is named
+return 200. Frontend `2759d0c6c13d4b6b` matches source; backend head is named
 separately. Actual driver recovery is unverified.
 [Follow-up](../docs/internal/MEETING-STOP-NATIVE-2026-10-16/POSTMERGE-FOLLOWUP.md).
 
@@ -1578,7 +1578,7 @@ the earlier runtime tape. Ordinary quick GREEN: 4,119 related web / 17 Thought
 browser / 109 Desk sweep / 17 canon. Source/build `2759d0c6c13d4b6b` agree.
 Merged main `20f6113b5`, formal Astra review RATIFY; the idle local hub serves
 that exact build from `wt-thought-send-recovery-20261016`, PID20767, port8765.
-Four HTTP checks return200. Full-main follow-through is the active next check.
+Four HTTP checks return 200. Full-main follow-through is the active next check.
 [Continuation and proof](../docs/internal/FLAGSHIP-EXPERIENCE-PLAN-2026-10-16/THOUGHT-SEND.md).
 
 **Night Train fidelity — #1235 (2026-10-16).** Corrects the rejected #1234
@@ -2657,13 +2657,33 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 - #753 — Phase 13 close, Astra's record
 
 
-Pending-run Stop repair — #1451 — received independent Sol advisory RATIFY: run-scoped global
-status cards no longer cover the producer controls. Two real browser cases
-at1440/393 prove nine-point Stop access, accepted-run cancel and late local
-reply suppression while retaining the newer draft; 42 unit tests and final
-typecheck pass. Required quick is green:22 related UI,2 affected browser,
-110 sweep,27 canon and1,126 guards. Merge follows verification. The next P06 slice
-adds actual Project Files and exact job return; focused Room tests62/62 and
-final types pass, but the real whole-job browser checks and final advisory
-remain open. Latest full tape is not green: zoom restore across reload and
-Components/Send browser failures are being diagnosed separately.
+Pending-run Stop repair — #1451 — is merged and running. Independent Sol
+advisory RATIFY, 42 focused unit tests, 1440/393 real cancellation/late-answer
+proof and final types pass. Required quick passed 22 related UI, 2 browser,
+110 sweep, 27 canon and 1,126 guards. The producer Stop is unobstructed; no
+remote physical-abort claim is made. P06 now has final source advisories and
+five passing focused browser cases; final integration checks are rerunning
+after the opener forwarding correction passed 196 focused tests. Latest full
+tape is not green. Zoom/reload geometry and browser-test corrections remain
+separate delivery; the earlier Send timeout cause is still unverified.
+
+
+P06/J3 first whole filed-source job is built in wave7 and received final Sol
+advisory RATIFY for navigation and Room. Five real-browser cases pass across
+focused runs at 1440/393: A/B Note source isolation, Ask version pin, saved
+source/Thread doors, exact original Project row return, current missing/moved/
+read-failure/Retry/supersession states, and local Components Files. Canonical
+closed-source reopen is browser proof on desktop; legacy bare-key is unit
+proof. Required quick/merge remain pending; no full P06 or owner aesthetic
+acceptance is claimed. Job origin is transient navigation, not added material
+or automatic filing. Running #1451 includes unobstructed pending Ask Stop.
+
+
+Owner requested a whole-plan reality check. DELIVERY-PLAN now has explicit
+P01–P10 delivery/remaining scope and a near-term visual adoption pass across
+the already-built cross-app path. Five workflow/component slices have shipped;
+no full package or 47-family/visual acceptance is claimed. P06 integration
+found 15 ordinary opener call-shape regressions across 10 existing test files;
+shared forwarding now passes 196/196 focused tests without changing their
+expectations; final integration checks are rerunning.
+See native-experience/EXECUTION.md for actual source/PR/proof boundaries.

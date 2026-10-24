@@ -162,9 +162,9 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
     // Dock (an iconified or phone-hidden window): restore = show + raise.
     get().restorePanel("ask");
   },
-  openAskThread(threadId) {
+  openAskThread(threadId, navigation) {
     const nonce = (get().askThread?.nonce ?? 0) + 1;
-    set({ askThread: { threadId, nonce } });
+    set({ askThread: { threadId, nonce, navigation: { projectReturn: navigation?.projectReturn ? { ...navigation.projectReturn } : null } } });
     get().openAsk();
   },
   askQuestion(question) {
@@ -180,7 +180,8 @@ export const createDeskSlice: SliceCreator<DeskSlice> = (set, get) => ({
     // About is exactly these objects: the icon selection does not ride along.
     set({
       selectedIds: [],
-      askThread: { threadId: null, nonce, about, question: options?.question, run: options?.run },
+      askThread: { threadId: null, nonce, about, question: options?.question, run: options?.run,
+        ...(options?.handoffNonce === nonce ? { handoffNonce: nonce } : {}) },
     });
     get().openAsk();
   },

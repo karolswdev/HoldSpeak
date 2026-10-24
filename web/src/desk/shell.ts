@@ -6,6 +6,7 @@
  * fallbacks and the guard keeps them out). */
 
 import { meetingWindowRef, objectWindowStandIn } from "./objectWindows";
+import type { DeskNavigation } from "./store/types";
 
 export type SurfaceOpenOptions = { origin?: "dock" | "menu" | "route" };
 
@@ -133,7 +134,7 @@ export function openProjectRoom(projectId: string | null | undefined): void {
 
 /** Open a desk primitive's pull-out. On the desk this opens in place; on
  * a flat route it walks home first (`/?open=<ref>` is the arrival path). */
-export function openPrimitive(ref: string): void {
+export function openPrimitive(ref: string, navigation?: DeskNavigation): void {
   if (ref.startsWith("meeting:") && meetingWindowRef(ref)) {
     openSurfaceOr("review-meetings", "/history", ref);
     return;
@@ -142,7 +143,9 @@ export function openPrimitive(ref: string): void {
     // PHILO-17: a meeting or a person window reads its own object; it opens
     // at once, with no desk refresh first.
     if (!ref.startsWith("artifact:") && objectWindowStandIn(ref)) {
-      void import("./store").then((m) => m.useDesk.getState().openPullout(ref));
+      void import("./store").then((m) => navigation === undefined
+        ? m.useDesk.getState().openPullout(ref)
+        : m.useDesk.getState().openPullout(ref, undefined, navigation));
       return;
     }
     // The arrival path's exact behavior: refresh first so a just-created
@@ -153,7 +156,8 @@ export function openPrimitive(ref: string): void {
         holdObject(ref);
       }
       await m.useDesk.getState().refresh();
-      m.useDesk.getState().openPullout(ref);
+      if (navigation === undefined) m.useDesk.getState().openPullout(ref);
+      else m.useDesk.getState().openPullout(ref, undefined, navigation);
     });
     return;
   }

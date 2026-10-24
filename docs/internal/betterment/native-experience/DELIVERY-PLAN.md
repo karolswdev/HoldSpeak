@@ -47,17 +47,92 @@ Packages are sliced, not all-or-nothing gates: existing P06/P07 services can ser
 
 ## Execution tracking
 
-**Current position:** product definition and owner authorization merged in
-[PR1435](https://github.com/karolswdev/HoldSpeak/pull/1435). Execution is
-active for P01–P10. The first partial P01/P02/P10 repository slice merged in
-[PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438) and runs on the Desk.
-P08's first Settings You slice is [PR1439](https://github.com/karolswdev/HoldSpeak/pull/1439),
-re-checked and browser-verified, with the final required quick check green. Captured Thought voice/Editing ships
-in [PR1443](https://github.com/karolswdev/HoldSpeak/pull/1443). The first P04
-selected-Thought source/Ask/save/return slice is [PR1446](https://github.com/karolswdev/HoldSpeak/pull/1446), browser and quick green.
-No full package or owner aesthetic acceptance is claimed. The separate
-[repair closeout](checks/repair-closeout-2026-10-23.md) does not complete a
-framework package or establish visual acceptance.
+**Reality reconciliation — 2026-10-23.** The 47 adversarial family reviews,
+seven journeys, ten-package proposal and paired canvases define the work.
+They do not measure implementation completion. Five workflow/component slices
+have shipped: repository windows/read browser (#1438), Settings You (#1439),
+Thought voice/Editing (#1443), source Ask/return (#1446), and Note-version
+pinning/saved links (#1448). Shared frame/zoom/growth and pending Stop repairs
+are separate delivery, not additional completed packages. No full package,
+whole seven-journey set, owner aesthetic acceptance or latest-main full-suite
+green is claimed. Recipe closeout 115/117 measures another repair lane.
+
+| Package | Actual delivery | Remaining adoption |
+| --- | --- | --- |
+| P01 windows/commands | Partial: repository identities, zoom policy #1444, arranged-growth #1449. Zoom/reload normal-rect fix is built and under focused verification. | View history/selection/scroll restoration, command origin, narrow chooser, broad focus/close/reload behavior. |
+| P02 resources | Partial: real registered-repository read/inspect and local reference. | Directory/KB second consumer, selection/range and broader provider/collection adoption. |
+| P03 input/voice | Partial: active Thought captured target, recovery, writer/undo and shared Editing. | Ask/Settings/Pad policy adoption, native delivery, learning/macros and complete J1. |
+| P04 conversations | Partial: Note-only version pinning, Ask/save/source/Thread doors and open/closed source return. #1451 removes the global run card that covered Stop. | Broader thread interruption/retrieval, Memory/Activity and complete J3. |
+| P05 meetings | Modernization migration not started; existing meeting features remain. | Record/import/result/history/aftercare/calendar adoption and complete J2. |
+| P06 project/person/day | First Project filed-Note→Ask→saved links→exact Project return built; five real-browser cases pass. Integration checks are still open. | People/privacy/briefs, Today/Needs, updates/decisions, durable job return and complete J3/J4. |
+| P07 agents/automation | Modernization migration not started; existing agent/automation features remain. | Hand/result/terminal/occurrence adoption and complete J4. |
+| P08 preferences | Partial: Settings You truthful save/retry and shared Forms. | Other writers, Setup, Engines, Accounts and complete J6. |
+| P09 Send | Modernization migration not started. Existing isolated real folder-byte jobs provide baseline evidence. | Producer/Needs/Delivery adoption, frozen identity/unknown/replay and complete cross-job egress. |
+| P10 shell/reference/feedback | Partial: shared Resources, Forms, Editing and Conversation; local Files specimen built with P06. Feedback remains enabled; Presence off. | Cohesive shell/visual adoption, operation outcomes, three consecutive Firefox Settings reports and measured native-feeling behavior. |
+
+The P06 integration run found 15 opener call-shape regressions across 10 existing
+unit-test files. The shared forwarding correction now passes all 196 tests
+in those ten files plus Ask, preserving ordinary open calls and explicit
+origin clearing. Required integration quick is rerunning. The combined browser run
+also exposed an old P04 assertion requiring the global card removed by #1451;
+the updated inline-progress/Stop checks pass at 1440/393 and required quick is
+rerunning. The earlier 393 Send Back timeout has not reproduced; retained
+failure-state evidence is added without claiming its cause is fixed.
+
+## Delivery adjustment: visible adoption alongside behavior
+
+Behavior and architectural reuse are ahead of visual coherence. The latest
+shots show working source/return behavior, but do not establish the desired
+Workbench × Pop!_OS quality. Visual adoption is explicit unfinished work in
+P01/P02/P03/P04/P06/P08/P10, not a final cosmetic step after every domain.
+
+1. Finish the current bounded Project integration and the diagnosed zoom/
+   browser repairs; ship only the actual passing slices.
+2. Before widening migration to Meetings/Agents, reconcile the already-adopted
+   Desk→resource→Note→Ask→Project and Settings views against their paired
+   canvases and the living Components reference. Use the existing J1/J3/J5/
+   J6/J7 paths, not a new app, gallery copy or workflow system.
+3. Make the visual pass concrete in those consumers: consistent hierarchy,
+   title and action placement, comfortable type/spacing, useful column density,
+   bounded scroll, icons and restrained motion. The current Project return
+   shot still gives inactive connection cards much of the viewport and shows
+   empty list columns; Files working does not settle that layout. Revise the
+   common composition/provider projection rather than applying local CSS to
+   every window. Keep domain-specific writers and editor/terminal authorities.
+4. Update the production composition, same-component reference state and
+   affected canvas/contract together. Inspect populated, empty, busy and failed
+   states at 1440/393, keyboard/selection/focus/return, and normal motion. Check
+   the cross-app path, not only screenshots of one component. Measure actual
+   responsiveness before naming a budget; the Firefox feedback job remains
+   required. Owner visual judgment stays distinct from test success.
+5. Continue P05/P06/P07/P08/P09 domain waves using those exercised patterns;
+   reconcile adoption against all 47 map rows before calling the framework
+   delivered. Preserve the original adversarial findings and unresolved scope.
+
+**First visual slice: Project Room and the shared collection.** Preserve the
+Project lead and existing Ask entry; put filed work before optional Sources.
+A Project without watched sources must not automatically expand three inactive
+connection cards. Keep Sources compact with an explicit Add source action;
+existing provider/account composition opens on intent or actionable failure.
+Use the current ObjectList with an explicit optional visible-column set so
+this Note-only provider shows Name/Kind rather than empty When/State columns.
+Other consumers retain their declared columns, keyboard selection and Open
+behavior. Mirror the same section in Components and revise Canvas B/F before
+build. Project membership, Note reads, privacy and watch authority do not move.
+
+This scope follows actual captures and source: ProjectRoomCore auto-opens
+source setup when none is accepted, Sources precedes Files, DoorCore gives
+each inactive provider a full row, and ObjectList always emits four columns.
+The next bounded visual slice aligns short/busy/long Note and Ask content with
+their head/foot controls, using existing editor/RunLine/footer compositions;
+Settings You is the hierarchy comparator. Preserve reading/selection/scroll,
+IME/undo, newer drafts, Stop and44px targets; do not solve blank space by
+shrinking every window or replacing specialized surfaces.
+
+Use the existing package sections, EXECUTION.md and pm/STATUS.md for these
+facts. No extra approval stage, status database, review loop or percentage is
+introduced. The next report names what merged, what whole job was observed,
+what the owner has accepted visually, and what still contradicts the vision.
 
 For each later implementation PR, name its package ID, journey and affected
 workflow IDs. Update that package's section here with its actual PR and
@@ -178,9 +253,9 @@ canvas state story with the actual target and recovery semantics.
 browser and required quick green. It owns context separately from floor selection, restores
 an unchanged source range/scroll after open or closed-window return, refuses
 stale range application, and saves editable qualified provenance. Components
-shares the same controlled source view with local IO. Server source-version
-admission/pinning, Project/People source jobs, Memory/Activity retrieval and
-whole J3 remain open. See [execution](EXECUTION.md).
+shares the same controlled source view with local IO. The Note-version continuation below delivers server admission/pinning.
+Project integration is built but not merged; People source jobs, Memory/Activity
+retrieval and whole J3 remain open. See [execution](EXECUTION.md).
 
 The Note-version/Linked items continuation is [PR1448](https://github.com/karolswdev/HoldSpeak/pull/1448), independently rechecked
 and required quick green:
@@ -213,6 +288,9 @@ J3 and B canvas handoff. Name display-only Memory hits and unavailable sources h
 
 ## P05: Meeting lifecycle
 
+**Delivery:** no modernization migration has shipped in this package yet.
+Existing meeting capabilities and baseline repairs are not package adoption.
+
 **Primary families:** `meeting_record`, `meeting_import`, `meeting_intelligence`, `meeting_aftercare`, `meeting_archive`,
 `calendar_record`.
 
@@ -239,6 +317,15 @@ canvas state story.
 
 ## P06: Project, person and day
 
+**Delivery:** first filed Project Note/source/return slice is built in
+`wt-native-project-source-wave7-20261023`. Five browser cases pass across
+focused runs at 1440/393, including missing/moved/failed reads and local Files
+reference. Navigation and Room received final Sol advisory RATIFY; these are
+not Muad'Dib checks. Required integration quick is not green yet. This is
+transient job navigation, not automatic filing or added Project model scope.
+People/brief/Today/Needs and full J3 remain open; source and shots are recorded
+in EXECUTION.md.
+
 **Primary families:** `people_prep`, `projects_room`, `new_project`, `project_update`, `decisions`, `today_followthrough`.
 
 **Source homes:** `PeopleCore.tsx`, `PeoplePullout.tsx`, `ProjectsCore.tsx`, `ProjectRoomCore.tsx`, `DoorCore.tsx`,
@@ -261,6 +348,9 @@ these boundaries are real.
 the relevant workflow rows. Keep the active Room; do not revive the DrawerWindow as a primary host.
 
 ## P07: Delegated and repeated work
+
+**Delivery:** no modernization migration has shipped in this package yet.
+Existing agent/automation/terminal capabilities are not package adoption.
 
 **Primary families:** `agents_conductor`, `agent_hand`, `agent_result`, `automation_build`, `automation_schedule`, `mcp_tools`,
 `terminals_processes`.
@@ -314,6 +404,11 @@ canvas state story.
 
 ## P09: Send
 
+**Delivery:** no modernization migration has shipped in this package yet.
+Existing isolated folder-byte browser jobs are baseline evidence, not external
+delivery authorization or broad producer/receipt adoption. The earlier 393
+Back/editor timeout remains unclassified until failure-state evidence exists.
+
 **Primary families:** `send_prepare`, `send_commit`.
 
 **Source homes:** existing `SendWell`/`NoteSendWells`, channel destination and account adapters, Delivery/Tracker history, kernel
@@ -336,9 +431,12 @@ Edit-to-note distinct from external Send.
 ## P10: Desktop, reference, feedback and native boundary
 
 **Delivery:** the Resources reference merged with its production consumer in
-[PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438). Settings Forms is
-the next shared specimen. Shell/feedback/operation reconciliation and the
-three-consecutive-report Firefox job remain open. Presence stays disabled.
+[PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438). Forms (#1439), Editing (#1443), and Conversation (#1446/#1448) also use
+production compositions with local IO. P06 adds the same Filed Notes section
+as a local Lists example; it is built, not yet merged. #1451 parks duplicate
+run-scoped global status so producer Stop remains reachable. Shell/visual/
+feedback/operation reconciliation and the three-consecutive-report Firefox
+job remain open. Presence stays disabled.
 
 **Primary families:** `native_presence`, `desktop_workspace`, `feedback`, `components_reference`.
 

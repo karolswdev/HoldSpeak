@@ -392,6 +392,22 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     expect(calls.some((c) => c.method === "POST" && c.url.endsWith("/api/threads"))).toBe(false);
   });
 
+  it("carries an explicit Project return through a saved thread's source door, then clears it on ordinary thread Open", async () => {
+    const projectReturn = { projectId: "project-a", resourceRef: "note:n-mira" as const };
+    render(<AskPanel />);
+    act(() => useDesk.getState().openPullout(`thread:${TID}`, undefined, { projectReturn }));
+    await waitFor(() => expect(screen.getAllByTestId("ask-turn")).toHaveLength(2));
+    const sourceDoor = screen.getAllByTestId("ask-looked-at")[0].querySelector("button")!;
+    fireEvent.click(sourceDoor);
+    await waitFor(() => expect(useDesk.getState().pullouts.find((row) => row.id === "note:n-mira")?.projectReturn).toEqual(projectReturn));
+
+    act(() => useDesk.getState().openPullout(`thread:${TID}`));
+    await waitFor(() => expect(useDesk.getState().askThread?.navigation?.projectReturn).toBeNull());
+    await waitFor(() => expect(screen.getAllByTestId("ask-turn")).toHaveLength(2));
+    fireEvent.click(screen.getAllByTestId("ask-looked-at")[0].querySelector("button")!);
+    await waitFor(() => expect(useDesk.getState().pullouts.find((row) => row.id === "note:n-mira")?.projectReturn).toBeNull());
+  });
+
   it("Save as note makes a note titled by the question, with the answer and what it looked at", async () => {
     render(<AskPanel />);
     await askText("What do I owe Mira this week?", THREAD.first.output);
@@ -458,6 +474,119 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     expect(takeAskReturn(source.windowId, source.noteRef)).toEqual(source);
     expect(takeAskReturn(source.windowId, source.noteRef)).toBeNull();
     expect(useDesk.getState().selectedIds).toEqual(["note:n-mira"]);
+  });
+
+  it("keeps Project A through a later Project B open, saved Note, and bare-key source reopen", async () => {
+    const fromA = { projectId: "project-a", resourceRef: "note:n-mira" as const };
+    const fromB = { projectId: "project-b", resourceRef: "note:n-mira" as const };
+    const sourceSnapshot = { ref: "note:n-mira", thought_id: "thought-mira", working_revision: 4, body_sha256: "a".repeat(64) };
+    const source = {
+      noteRef: "note:n-mira", text: "Mira owns review", body: "Mira owns review",
+      range: { from: 0, to: 16, text: "Mira owns review" }, windowId: "pullout:n-mira", scrollTop: 24,
+      source: { id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" },
+      sourceSnapshot, projectReturn: fromA,
+    };
+    // A previously opened bare-key window keeps its key, geometry and body.
+    // The owner can then explicitly open that same Note from another Project.
+    useDesk.getState().openPullout("n-mira", { x: 18, y: 27 }, { projectReturn: fromB });
+    expect(useDesk.getState().pullouts[0].sourceRef).toBe("note:n-mira");
+    latchAskSelection(source);
+    render(<AskPanel />);
+    await askText("Who owns review?", THREAD.first.output);
+    const sent = calls.find((call) => call.method === "POST" && call.url.endsWith("/api/ask"))!;
+    expect(sent.body?.source_snapshot).toEqual(sourceSnapshot);
+    expect(sent.body?.context).toEqual([source.source]);
+    expect(JSON.stringify(sent.body)).not.toContain("project-a");
+
+    fireEvent.click(screen.getByRole("button", { name: "Save as note" }));
+    expect(await screen.findByText("Saved to your desk")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open note" }));
+    const savedRef = `note:${NOTE_WIRE.wire.note.id}`;
+    await waitFor(() => expect(useDesk.getState().pullouts.find((row) => row.id === savedRef)?.projectReturn).toEqual(fromA));
+
+    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    await waitFor(() => expect(useDesk.getState().pullouts.find((row) => row.id === "n-mira")).toMatchObject({
+      origin: { x: 18, y: 27 }, projectReturn: fromA,
+    }));
+    expect(takeAskReturn("pullout:n-mira", source.noteRef)).toMatchObject({
+      range: source.range, sourceSnapshot, projectReturn: fromA,
+    });
+
+    useDesk.getState().closePullout("n-mira");
+    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    await waitFor(() => expect(useDesk.getState().pullouts.find((row) => row.id === source.noteRef)?.projectReturn).toEqual(fromA));
+    expect(takeAskReturn("pullout:n-mira", source.noteRef)).toBeNull();
+    expect(takeAskReturn(`pullout:${source.noteRef}`, source.noteRef)).toMatchObject({
+      range: source.range, sourceSnapshot, projectReturn: fromA,
+    });
+
+    useDesk.getState().openPullout(source.noteRef);
+    expect(useDesk.getState().pullouts.find((row) => row.id === source.noteRef)?.projectReturn).toBeNull();
+  });
+
+  it("returns an unconfirmed bare source window to the canonical Note without changing that window", async () => {
+    const projectReturn = { projectId: "project-a", resourceRef: "note:n-mira" as const };
+    const raw = { id: "n-mira", origin: { x: 18, y: 27 }, projectReturn: null };
+    useDesk.setState({ items: EMPTY_ITEMS, pullouts: [raw] });
+    latchAskSelection({
+      noteRef: "note:n-mira", text: "Mira owns review", body: "Mira owns review",
+      range: { from: 0, to: 16, text: "Mira owns review" }, windowId: "pullout:n-mira", scrollTop: 24,
+      source: { id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }, projectReturn,
+    });
+    render(<AskPanel />);
+    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    await waitFor(() => expect(useDesk.getState().pullouts.find((row) => row.id === "note:n-mira")?.projectReturn).toEqual(projectReturn));
+    expect(useDesk.getState().pullouts.find((row) => row.id === "n-mira")).toBe(raw);
+    expect(takeAskReturn("pullout:n-mira", "note:n-mira")).toBeNull();
+    expect(takeAskReturn("pullout:note:n-mira", "note:n-mira")?.projectReturn).toEqual(projectReturn);
+  });
+
+  it("removes Note inference scope without losing the Project return door", async () => {
+    const projectReturn = { projectId: "project-a", resourceRef: "note:n-mira" as const };
+    useDesk.setState({ projects: [] });
+    latchAskSelection({
+      noteRef: "note:n-mira", text: "", body: "Mira owns review",
+      range: { from: 5, to: 5, text: "" }, windowId: "pullout:note:n-mira", scrollTop: 24,
+      source: { id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" },
+      sourceSnapshot: { ref: "note:n-mira", thought_id: "thought-mira", working_revision: 4, body_sha256: "a".repeat(64) }, requestNonce: 1,
+      projectReturn,
+    });
+    render(<AskPanel />);
+    act(() => useDesk.getState().askAbout([{ id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }], { handoffNonce: 1 }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove 1:1 with Mira" }));
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("My whole desk");
+    expect(screen.getByRole("button", { name: "Return to Project" })).toBeInTheDocument();
+    await askText("What needs attention?", THREAD.first.output);
+    const sent = calls.find((call) => call.method === "POST" && call.url.endsWith("/api/ask"))!;
+    expect(sent.body?.context).toEqual([]);
+    expect(sent.body?.source_snapshot).toBeUndefined();
+    expect(JSON.stringify(sent.body)).not.toContain("project-a");
+  });
+
+  it("keeps a Note handoff only for its exact new Ask, even when an ordinary About names the same Note", async () => {
+    const projectReturn = { projectId: "project-a", resourceRef: "note:n-mira" as const };
+    const sourceSnapshot = { ref: "note:n-mira", thought_id: "thought-mira", working_revision: 4, body_sha256: "a".repeat(64) };
+    const about = [{ id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }];
+    latchAskSelection({
+      noteRef: "note:n-mira", text: "Mira owns review", body: "Mira owns review",
+      range: { from: 0, to: 16, text: "Mira owns review" }, windowId: "pullout:note:n-mira", scrollTop: 24,
+      source: about[0], sourceSnapshot, projectReturn, requestNonce: 1,
+    });
+    render(<AskPanel />);
+    act(() => useDesk.getState().askAbout(about, { handoffNonce: 1 }));
+    expect(screen.getByRole("button", { name: "Back to Thought" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Return to Project" })).toBeInTheDocument();
+
+    // The floor's ordinary Ask about this has the same ref but no handoff.
+    act(() => useDesk.getState().askAbout(about));
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Back to Thought" })).toBeNull());
+    expect(screen.queryByRole("button", { name: "Return to Project" })).toBeNull();
+    await askText("Who owns review?", THREAD.first.output);
+    const sent = calls.find((call) => call.method === "POST" && call.url.endsWith("/api/ask"))!;
+    expect(sent.body?.context).toEqual(about);
+    expect(sent.body?.source_snapshot).toBeUndefined();
+    expect(String(sent.body?.prompt)).not.toContain("Mira owns review");
+    expect(JSON.stringify(sent.body)).not.toContain("project-a");
   });
 
   it("clears only the quote while keeping the owned Note source and Back", async () => {

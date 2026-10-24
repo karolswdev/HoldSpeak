@@ -68,4 +68,37 @@ describe("pullout identity across bare and qualified doors", () => {
     expect(useDesk.getState().pullouts.map((window) => window.id)).toEqual(["note:same-id", "decision:same-id"]);
     expect(useDesk.getState().panelOrder.at(-1)).toBe("pullout:decision:same-id");
   });
+
+  it("reuses a bare Note only after its live open confirmed the Note ref", () => {
+    const note: Note = {
+      kind: "note", id: decision.id, title: "Rollback notes", bodyMarkdown: "Retain this note.",
+      tags: [], createdAt: decision.createdAt,
+    };
+    const fromA = { projectId: "project-a", resourceRef: "note:same-id" as const };
+    useDesk.setState({ items: { ...EMPTY_ITEMS, note: [note] } });
+    useDesk.getState().openPullout("same-id", { x: 18, y: 27 }, { projectReturn: fromA });
+    const opened = useDesk.getState().pullouts[0];
+    expect(opened.sourceRef).toBe("note:same-id");
+    useDesk.setState({ items: EMPTY_ITEMS });
+
+    useDesk.getState().openPullout("note:same-id", undefined, { projectReturn: fromA });
+    expect(useDesk.getState().pullouts).toEqual([opened]);
+    expect(useDesk.getState().pullouts[0]).toBe(opened);
+  });
+
+  it("leaves an unknown bare window and its draft alone when a Note has the same id", () => {
+    const fromA = { projectId: "project-a", resourceRef: "note:same-id" as const };
+    useDesk.getState().openPullout("same-id", { x: 18, y: 27 });
+    const decisionWindow = useDesk.getState().pullouts[0];
+    const drafts = useDesk.getState().drafts;
+    useDesk.setState({ items: EMPTY_ITEMS });
+
+    useDesk.getState().openPullout("note:same-id", undefined, { projectReturn: fromA });
+    expect(useDesk.getState().pullouts.map((row) => row.id)).toEqual(["same-id", "note:same-id"]);
+    expect(useDesk.getState().pullouts[0]).toBe(decisionWindow);
+    expect(useDesk.getState().pullouts[0].sourceRef).toBeUndefined();
+    expect(useDesk.getState().pullouts[0].projectReturn).toBeNull();
+    expect(useDesk.getState().pullouts[1].projectReturn).toEqual(fromA);
+    expect(useDesk.getState().drafts).toBe(drafts);
+  });
 });

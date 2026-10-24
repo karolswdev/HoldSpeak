@@ -284,7 +284,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
 
   // ---- pullouts (hand-written: custom close with optional id) -----------
 
-  openPullout(id, origin) {
+  openPullout(id, origin, navigation) {
     const resolved = resolveKindFromId(id, get);
     if (!resolved) {
       console.warn(`openPullout: unknown id "${id}"`);
@@ -293,7 +293,7 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     // Betterment Q4: Ask and Thread are one window. A thread opens in Ask
     // (the Thread window is parked).
     if (resolved.kind === "thread") {
-      get().openAskThread(resolved.resolvedId);
+      get().openAskThread(resolved.resolvedId, navigation);
       return;
     }
     // PHILO-14 C2: a coder session of a launch opens the agent's lane.
@@ -303,8 +303,19 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
     }
     const openCard = (key: string) => {
       const open = get().pullouts;
-      if (!open.some((p) => p.id === key))
-        set({ pullouts: [...open, { id: key, origin: origin ?? null }] });
+      // Only an open that positively resolved a Note can certify a legacy
+      // bare window key. Workspace restore keeps IDs alone, so this tag is
+      // deliberately live-session evidence rather than a persisted claim.
+      const sourceRef = resolved.kind === "note" ? `note:${resolved.resolvedId}` as const : undefined;
+      const projectReturn = resolved.kind === "note" && navigation?.projectReturn
+        ? { ...navigation.projectReturn } : null;
+      const current = open.find((p) => p.id === key);
+      if (!current)
+        set({ pullouts: [...open, { id: key, origin: origin ?? null, projectReturn, ...(sourceRef ? { sourceRef } : {}) }] });
+      else if (current.sourceRef !== sourceRef ||
+        (current.projectReturn?.projectId ?? null) !== (projectReturn?.projectId ?? null) ||
+        (current.projectReturn?.resourceRef ?? null) !== (projectReturn?.resourceRef ?? null))
+        set({ pullouts: open.map((p) => p.id === key ? { ...p, projectReturn, ...(sourceRef ? { sourceRef } : {}) } : p) });
       set({ editingId: null });
       saveDeskWorkspace(get());
       get().recordRecentOpen(key);
@@ -330,10 +341,18 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
         // Bare and qualified doors can name the same open record. Keep its
         // existing window key so its geometry and retained drafts stay put.
         const existing = get().pullouts.find((pullout) => {
+          if (pullout.sourceRef) return resolved.kind === "note" && pullout.sourceRef === `note:${resolved.resolvedId}`;
+          if (resolved.kind === "note" && pullout.id === resolved.resolvedId) return false;
           const target = resolveKindFromId(pullout.id, get);
           return target?.kind === resolved.kind && target.resolvedId === resolved.resolvedId;
         });
-        openCard(existing?.id ?? id);
+        // An untagged restored bare key has no proved kind. A qualified
+        // Note must not co-opt it; nor may another kind co-opt a tagged Note.
+        const occupiedByOther = !id.includes(":") && get().pullouts.some((pullout) =>
+          pullout.id === id && (resolved.kind === "note"
+            ? pullout.sourceRef !== `note:${resolved.resolvedId}`
+            : !!pullout.sourceRef));
+        openCard(existing?.id ?? (occupiedByOther ? `${resolved.kind}:${resolved.resolvedId}` : id));
         break;
       }
       case "window": {

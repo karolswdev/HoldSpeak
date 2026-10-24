@@ -63,7 +63,7 @@ import { reportWriteFailure } from "../hooks/useWriteReceipt";
 import { useEngine, refreshEngine } from "../hooks/useEngine";
 import { ActionNotice, StateChip, EngineLine, RunLine, ComposerWell, reasonVerb, reasonWords, useReadingEndAnchor } from "../surface";
 import { humanTime } from "../surface/format";
-import { openRef } from "../openObject";
+import { openProjectRoomAtResource, openRef } from "../openObject";
 import { openSurfaceOr } from "../shell";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { busyWords, otherEngineVerb, retryWords } from "../surface/waitWords";
@@ -73,6 +73,8 @@ import type { AgentUse } from "../used";
 import { spriteUrl } from "../sprites";
 import { requestAskReturn } from "../thought-workspace/askReturn";
 import { AskSourceFrame } from "./AskSourceFrame";
+import type { DeskNavigation, ProjectReturn } from "../store/types";
+import { useCompactViewport } from "../useCompactViewport";
 
 /** The engine line of an engine that can use the desk's tools (MCP design). */
 export const DESK_TOOLS_WORDS = "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends";
@@ -210,6 +212,13 @@ export function AskPanel() {
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const [passageOpen, setPassageOpen] = useState(true);
   const [selectedPassage, setSelectedPassage] = useState<AskSelectionHandoff | null>(() => takeAskSelection());
+  const [projectReturn, setProjectReturn] = useState<ProjectReturn | null>(() => selectedPassage?.projectReturn ?? null);
+  const activeProjectReturn = selectedPassage ? selectedPassage.projectReturn ?? null : projectReturn;
+  const compact = useCompactViewport();
+  const projectName = useDesk((state) => state.projects.find((project) => project.id === activeProjectReturn?.projectId)?.name);
+  const returnToProject = () => {
+    if (activeProjectReturn) openProjectRoomAtResource(activeProjectReturn.projectId, activeProjectReturn.resourceRef);
+  };
   const [sourceReturnReceipt, setSourceReturnReceipt] = useState("");
   const readingRef = useRef<HTMLDivElement | null>(null);
   const aboutRef = useRef<HTMLDivElement | null>(null);
@@ -294,6 +303,7 @@ export function AskPanel() {
     if (!keepHandoff) {
       latchAskSelection(null);
       setSelectedPassage(null);
+      setProjectReturn(null);
     }
     setSourceReturnReceipt("");
     setFromNote(null);
@@ -310,8 +320,9 @@ export function AskPanel() {
   }, [abandonRun]);
 
   /** Open a kept thread in this window (Recent, a thread's ref, a restored desk). */
-  const loadThread = useCallback(async (id: string) => {
+  const loadThread = useCallback(async (id: string, navigation?: DeskNavigation) => {
     startNew();
+    setProjectReturn(navigation?.projectReturn ? { ...navigation.projectReturn } : null);
     const generation = threadReadGeneration.current;
     setThreadId(id);
     setThreadRead({ loading: true, error: "" });
@@ -336,8 +347,10 @@ export function AskPanel() {
   useEffect(() => {
     if (!askThread || askThread.nonce === handledNonce.current) return;
     handledNonce.current = askThread.nonce;
-    if (askThread.threadId) void loadThread(askThread.threadId);
-    else startNew(Boolean(askThread.about?.some((entry) => entry.ref === selectedPassage?.noteRef)));
+    if (askThread.threadId) void loadThread(askThread.threadId, askThread.navigation);
+    else startNew(Boolean(askThread.handoffNonce === askThread.nonce &&
+      selectedPassage?.requestNonce === askThread.nonce &&
+      askThread.about?.some((entry) => entry.ref === selectedPassage.noteRef)));
     if (!askThread.threadId && askThread.about?.length) setSeedAbout(askThread.about.map((entry) => ({ ...entry })));
     const notes = !askThread.threadId ? (askThread.about ?? []).filter((entry) => entry.kind === "note") : [];
     if (notes.length === 1) setFromNote({ id: notes[0].id, title: notes[0].title });
@@ -364,6 +377,9 @@ export function AskPanel() {
       // a later mount cannot replay a quote already shown here.
       takeAskSelection();
       setSelectedPassage(next && (next.text.trim() || next.source) ? next : null);
+      // Clearing a quote or About source changes inference scope, not the
+      // explicit Project task the owner left. A new source replaces it.
+      if (next) setProjectReturn(next.projectReturn ? { ...next.projectReturn } : null);
       if (next) setPassageOpen(true);
     };
     window.addEventListener(ASK_SELECTION_EVENT_NAME, onSelection);
@@ -459,22 +475,22 @@ export function AskPanel() {
     if (!selectedPassage) return;
     const sourceWindow = selectedPassage.windowId;
     const desk = useDesk.getState();
-    if (!sourceWindow) {
-      setSourceReturnReceipt("SOURCE WINDOW NOT FOUND");
-      openRef(selectedPassage.noteRef);
-      return;
+    const noteId = selectedPassage.noteRef.slice("note:".length);
+    const live = desk.pullouts.find((entry) =>
+      (entry.id === selectedPassage.noteRef || entry.sourceRef === selectedPassage.noteRef) &&
+      (`pullout:${entry.id}` === sourceWindow || entry.id === selectedPassage.noteRef || entry.id === noteId));
+    // An old bare-key Note can close while Ask remains. The canonical reopen
+    // gets a new window id; the return request must name that actual target.
+    const targetWindow = `pullout:${live?.id ?? selectedPassage.noteRef}`;
+    requestAskReturn({ ...selectedPassage, windowId: targetWindow });
+    if (live) {
+      setSourceReturnReceipt("");
+    } else {
+      setSourceReturnReceipt(sourceWindow ? "SOURCE WINDOW CLOSED" : "SOURCE WINDOW NOT FOUND");
     }
-    if (!desk.pullouts.some((entry) => `pullout:${entry.id}` === sourceWindow)) {
-      // The Note window closed, but the Note may still exist. Hold the
-      // one-shot return until the canonical opener mounts that same window.
-      requestAskReturn(selectedPassage);
-      setSourceReturnReceipt("SOURCE WINDOW CLOSED");
-      openRef(selectedPassage.noteRef);
-      return;
-    }
-    setSourceReturnReceipt("");
-    desk.restorePanel(sourceWindow);
-    requestAskReturn(selectedPassage);
+    // The qualified opener rereads Desk items before raising even a live
+    // Note; a vanished cache entry must not repaint a same-id other object.
+    openRef(selectedPassage.noteRef, { projectReturn: selectedPassage.projectReturn ?? null });
   };
   // Betterment Q6: a desk object dropped on the Ask window joins About.
   const onAboutDragOver = (event: React.DragEvent) => {
@@ -815,6 +831,7 @@ export function AskPanel() {
       defaultW={880}
       defaultH={640}
       onClose={close}
+      onBack={activeProjectReturn ? returnToProject : undefined}
     >
       <div className="desk-pullout-body desk-ask-body" data-testid="ask-body" onDragOver={onAboutDragOver} onDrop={onAboutDrop} onKeyDown={(event) => {
         // The frame owns Escape from this window. An IME uses Escape to
@@ -835,7 +852,7 @@ export function AskPanel() {
               <span className="desk-ask-about-chip" key={source.ref} data-testid="ask-about-chip">
                 {source.ref === THIS_WEEK
                   ? <span className="desk-ask-about-set">{source.title}</span>
-                  : <Button dense variant="ghost" onClick={() => openRef(source.ref)}>{source.title}</Button>}
+                  : <Button dense variant="ghost" onClick={() => openRef(source.ref, { projectReturn: activeProjectReturn })}>{source.title}</Button>}
                 <Button dense variant="ghost" className="desk-ask-about-remove" aria-label={`Remove ${source.title}`} onClick={() => removeAbout(source.ref)}>✕</Button>
               </span>
             )) : <span className="desk-ask-about-desk">My whole desk</span>}
@@ -873,7 +890,7 @@ export function AskPanel() {
                     <Button dense loading={adding === turn.key} onClick={() => void addToNote(turn)}>Add to note</Button>
                   ) : null}
                   {saved[turn.key] ? (
-                    <Button dense variant="ghost" onClick={() => openRef(saved[turn.key])}>Open note</Button>
+                    <Button dense variant="ghost" onClick={() => openRef(saved[turn.key], { projectReturn: activeProjectReturn })}>Open note</Button>
                   ) : (
                     <Button dense loading={saving === turn.key} onClick={() => void saveAsNote(turn)}>Save as note</Button>
                   )}
@@ -886,7 +903,7 @@ export function AskPanel() {
                   <FoldGadget title={`Looked at · ${turn.lookedAt.length === 1 ? turn.lookedAt[0].title : `${turn.lookedAt.length} sources`}`} className="desk-ask-reading-fold">
                     <div className="desk-ask-sources desk-ask-answer-sources" data-testid="ask-looked-at">
                       {turn.lookedAt.map((source) => (
-                        <Button key={source.ref} dense variant="ghost" onClick={() => openRef(source.ref)}>{source.title}</Button>
+                        <Button key={source.ref} dense variant="ghost" onClick={() => openRef(source.ref, { projectReturn: activeProjectReturn })}>{source.title}</Button>
                       ))}
                     </div>
                   </FoldGadget>
@@ -1045,15 +1062,18 @@ export function AskPanel() {
 
       {/* Betterment Q5 (FOLLOWUPS Q4): the route is said once, as the lamp on
           the answer that left the machine (the Ask window names no host). */}
-      {(copyReceipt || statusLine || threadId || turns.length) ? (
+      {(copyReceipt || statusLine || threadId || turns.length || (activeProjectReturn && !compact)) ? (
         <SurfaceFooter
           receipt={copyReceipt || (statusLine ? <span className="surface-footer-receipt-line" role="status">{statusLine}</span> : null)}
-          verbs={threadId || turns.length ? <>
-            <FoldGadget title="More" className="desk-ask-more">
-              <Button dense variant="ghost" onClick={forget}>Forget</Button>
-            </FoldGadget>
-            <Button dense variant="ghost" onClick={() => startNew()}>New ask</Button>
-          </> : null}
+          verbs={<>
+            {activeProjectReturn && !compact ? <Button dense variant="ghost" onClick={returnToProject}>Return to {projectName || "Project"}</Button> : null}
+            {threadId || turns.length ? <>
+              <FoldGadget title="More" className="desk-ask-more">
+                <Button dense variant="ghost" onClick={forget}>Forget</Button>
+              </FoldGadget>
+              <Button dense variant="ghost" onClick={() => startNew()}>New ask</Button>
+            </> : null}
+          </>}
         />
       ) : null}
     </DeskWindowFrame>
