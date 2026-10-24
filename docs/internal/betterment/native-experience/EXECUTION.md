@@ -601,7 +601,7 @@ two affected browser cases,110 desk sweep,27 canon and1,126 guards
 (`.tmp/quick-native-pending-stop.log`). No full package, remote-provider or
 owner aesthetic acceptance is claimed.
 
-Current deployed Desk after #1449/#1450: backend
+Historical deployment receipt after #1449/#1450 (superseded by #1451): backend
 `a7e3117f6a66e835cc708ee6cc2553c703de4244`, frontend `3a92261f318ea320`,
 PID33426; owns_database true, diagnoses empty, health/Desk/Conductor/Engines200.
 CLI/MCP source matches; feedback defaults on in both wrappers, Presence stays
@@ -610,3 +610,39 @@ served runtime. Prior #1448 tape found zoom/unzoom after reload losing the
 original unarranged rectangle, a Components picker readiness race, and a
 393 Send Note-open wait failure. These remain separately diagnosed reds;
 no latest-main full-suite green is claimed.
+
+
+## Browser readiness correction and retained Send diagnostics
+
+Branch: test/native-glass-readiness-fix-20261023.
+Worktree: /Users/karol/dev/tools/wt-native-glass-readiness-fix-20261023.
+The previous pinned tape's Components Conversation failure sampled button
+count before Patterns mounted, then used a generic selector that matched
+eight wide buttons. The test now waits for Patterns and uses the actual wide
+Conversation button or narrow picker. The source Back/busy/quote/IO checks
+remain. Both widths pass.
+
+The393 real Send→Edit Note→Back→edit→folder-send scenario passed twice on
+#1450 without a product change. Its earlier timeout has no failure-state
+capture, so the cause remains unknown; #1449's geometry repair is not claimed
+as its proven cause. Retained Back pointer/viewport and return-state evidence
+now records whether the sheet closed and editor appeared, plus a shot on
+failure. The final named run collected3/passed3 cases. The first required quick
+also caught an older P04 assertion requiring the global status card removed
+by #1451. It now verifies producer inline running progress, reachable Stop
+before corrective scroll, and no global card; both source jobs1440/393 pass.
+No quote, source-version, Back, save/link or return check was removed. Required final quick is green: build,18 affected real-browser cases,
+110 desk sweep,27 canon and1,126 guards
+(`.tmp/quick-native-glass-readiness-final.log`). The first test-only advisory
+was RATIFY; root verified the subsequent stale pending-card contract update
+with both source jobs and the required quick. No full-suite green is claimed. No new external delivery or owner DB was used.
+
+
+## Deployment receipt for #1451 — 2026-10-23
+
+Backend `c7fec7ef3f2fc43bd878df5e02fc38ce68492777`, frontend
+`f2eef8675d5cce2e`, PID42688. Identity reports database ownership and no
+diagnoses; health, Desk, Conductor and Engines return200. CLI/MCP use this
+source and preserve caller cwd; feedback defaults on, Presence stays off.
+This supersedes the #1450 receipt above. pm/STATUS.md names the current Desk;
+these receipts record what was verified at each deployment.
