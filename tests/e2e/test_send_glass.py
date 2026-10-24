@@ -870,9 +870,47 @@ class TestSendGlass:
         note_win.locator("[data-testid=send-sheet]").wait_for(timeout=T)
         assert note_win.locator(".desk-pullout-title").inner_text().startswith("Ledger cutover sync summary (to send)"), note
 
-        note_win.locator("[data-testid=send-back]").click()
+        note_back = note_win.locator("[data-testid=send-back]")
+        back_hit = note_back.evaluate("""button => {
+          const r = button.getBoundingClientRect();
+          const x = r.left + r.width / 2, y = r.top + r.height / 2;
+          const hit = document.elementFromPoint(x, y);
+          return {rect: r.toJSON(), inViewport: r.left >= 0 && r.top >= 0
+            && r.right <= innerWidth && r.bottom <= innerHeight,
+            owns: hit === button || button.contains(hit), hit: hit?.outerHTML.slice(0, 180)};
+        }""")
+        assert back_hit["inViewport"] and back_hit["owns"], back_hit
+        note_back.click()
         editor = note_win.locator(".thought-note-body .cm-content")
-        editor.wait_for(timeout=T)
+        back_evidence = evidence_dir("native-glass-readiness-fix")
+        back_evidence.mkdir(parents=True, exist_ok=True)
+        try:
+            editor.wait_for(timeout=T)
+        except Exception as exc:  # noqa: BLE001 - record the actual return state
+            page.screenshot(path=str(back_evidence / f"send-note-back-{width}.png"))
+            state = note_win.evaluate("""frame => ({
+              frameClass: frame.className,
+              frameText: frame.innerText.slice(0, 700),
+              sheetCount: frame.querySelectorAll('[data-testid="send-sheet"]').length,
+              editorCount: frame.querySelectorAll('.thought-note-body .cm-content').length,
+              openingCount: frame.querySelectorAll('.thought-workspace-opening').length,
+              backCount: frame.querySelectorAll('[data-testid="send-back"]').length,
+              active: document.activeElement?.outerHTML.slice(0, 180),
+              url: location.href,
+            })""")
+            raise AssertionError({"back_hit": back_hit, "after_back": state}) from exc
+        back_state = note_win.evaluate("""frame => ({
+          frameClass: frame.className,
+          sheetCount: frame.querySelectorAll('[data-testid="send-sheet"]').length,
+          editorCount: frame.querySelectorAll('.thought-note-body .cm-content').length,
+          active: document.activeElement?.outerHTML.slice(0, 180),
+          url: location.href,
+        })""")
+        (back_evidence / f"send-note-back-{width}.json").write_text(json.dumps({
+            "back_hit": back_hit, "after_back": back_state,
+        }, indent=2))
+        page.screenshot(path=str(back_evidence / f"send-note-back-{width}.png"))
+        assert back_state["sheetCount"] == 0 and back_state["editorCount"] == 1, back_state
         edited = "## Summary\n\nThe edited line is ready for the team."
         editor.click()
         page.keyboard.press("ControlOrMeta+A")
