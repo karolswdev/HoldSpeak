@@ -73,8 +73,10 @@ The owner authorized delivery after reviewing this packet.
 read authority in Ask and is running on the desk. The [Ask record](ask_whole_desk.md)
 separates executed checks from remaining findings.
 [PR1434](https://github.com/karolswdev/HoldSpeak/pull/1434) repairs Settings
-leave/return edit retention. Capture and Meeting Stop/save repairs are in
-closeout. The larger project-update Stop
+leave/return edit retention.
+[PR1436](https://github.com/karolswdev/HoldSpeak/pull/1436) retains Capture
+first words through refused/delayed Note creation. Meeting Stop/save repair
+remains in closeout. The larger project-update Stop
 candidate is held outside main for an identity/lifetime design refinement,
 following the owner's direction to finish current work and refine strategy
 before further implementation. The delivery order below records the original

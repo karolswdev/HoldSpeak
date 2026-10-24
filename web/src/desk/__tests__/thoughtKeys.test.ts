@@ -3,7 +3,7 @@
  * The glass fence is tests/e2e/test_thought_opens_at_once_glass.py; this
  * holds the rule's edges. */
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { claimThoughtKeys, sendThoughtKeysTo, startThoughtKeys, stopThoughtKeys } from "../thoughtKeys";
+import { claimThoughtKeys, sendThoughtKeysTo, startThoughtKeys, stopThoughtKeys, takeThoughtKeys } from "../thoughtKeys";
 
 const key = (k: string, init: KeyboardEventInit = {}) => {
   const event = new KeyboardEvent("keydown", { key: k, bubbles: true, cancelable: true, ...init });
@@ -71,5 +71,27 @@ describe("the keys of the gap", () => {
     const take = vi.fn();
     claimThoughtKeys("note_5", take);
     expect(take).toHaveBeenCalledWith("S");
+  });
+
+  it("takes the failed attempt's text and releases keyboard authority", () => {
+    startThoughtKeys("seed");
+    key("x");
+
+    expect(takeThoughtKeys()).toBe("seedx");
+    expect(key("y").defaultPrevented).toBe(false);
+    const take = vi.fn();
+    claimThoughtKeys("note_failed", take);
+    sendThoughtKeysTo("note_failed");
+    expect(take).not.toHaveBeenCalled();
+  });
+
+  it("delivers an attempt snapshot to its note without rearming keyboard capture", () => {
+    const take = vi.fn();
+    sendThoughtKeysTo("note_snapshot", "captured");
+
+    expect(key("later").defaultPrevented).toBe(false);
+    claimThoughtKeys("note_snapshot", take);
+
+    expect(take).toHaveBeenCalledWith("captured");
   });
 });

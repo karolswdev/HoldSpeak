@@ -43,3 +43,26 @@ TUESDAY: Not yet—the entry point is clear, but the audit cannot promise that a
 4. While the note is dirty, force offline then a revision conflict. Assert the exact draft remains, Retry/Reload is real, Done does not close before an authoritative save, and reopening after close restores the saved revision with the prior Desk task usable.
 
 UNKNOWN: No test was executed. No live Desk/API/provider/native walk, physical microphone result, performance, IME/assistive-technology behavior, or owner acceptance was observed. Optional captures are external visual references only.
+
+## Repair — failed-create words, 2026-10-23
+
+The repair keeps the text of one New Note attempt outside the keyboard
+interception lifetime. A refused create or pre-create flush releases keyboard
+authority and retains the captured words for the existing Retry. Retry restores
+that attempt once; another refusal retains them again. A create response with
+no Note identity is a visible refusal instead of silent loss.
+
+This extends the existing `thoughtKeys` handoff and `newThought` door. It does
+not add another editor or draft store. The focused cases cover seed plus typing
+while creation is pending, repeated failure, malformed response, timeout and
+pointer handoff. The production route remains ThoughtWorkspaceWindow.
+
+Focused proof: 34 cases across `thoughtDoorAndReceipt.test.tsx`,
+`thoughtKeys.test.ts` and `chair.app.test.tsx` passed. Delayed successful
+creation uses the same snapshot without rearming keyboard capture. These
+component observations do not establish durability across reload or another
+global failure receipt replacing this attempt's Retry. Required quick passed: build, 4,169 related web tests, five real-browser
+key/window cases, 110 desk sweep, 27 canon and 1,126 repository guards.
+Root inspected every-key captures at 1440 and 393. [PR1436](https://github.com/karolswdev/HoldSpeak/pull/1436) records delivery.
+This does not settle the other Capture, editor, voice-targeting or appearance
+findings in this audit.
