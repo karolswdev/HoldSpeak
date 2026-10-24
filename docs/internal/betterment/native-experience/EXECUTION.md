@@ -558,3 +558,17 @@ PID92567; owns_database true, no diagnoses, four health/routes200. CLI/MCP
 match; feedback defaults on in both wrappers and Presence stays off. The next
 pinned latest-main tape coalesces to this runtime after the current batch; it
 uses the prepared bundle and must never rebuild the served runtime in place.
+
+
+## Merged-range fixture type correction
+
+A direct whole-tree typecheck on merged #1448 (`d51d4c174`) found TS2345:
+DeskEditor.test.tsx's handoff fixture lacked the new immutable range.text.
+The running/browser behavior passed, but the earlier author typecheck report
+did not establish the final merged tree's static result. The fixture now names
+the same captured text as its quote/body. No product code changes. Whole-tree
+`npm run typecheck` passes. Required quick: build, nine related editor tests,
+110 desk sweep, 27 canon and 1,126 repository guards pass
+(`wt-native-range-fixture-fix-20261023/.tmp/quick-native-range-fixture.log`).
+Final integration now checks the actual whole-tree type result in addition
+to the behavioral quick checks; typecheck alone remains no task validation.
