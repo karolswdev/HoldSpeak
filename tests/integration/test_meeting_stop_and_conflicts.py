@@ -47,6 +47,71 @@ def test_stop_without_a_live_meeting_refuses_by_name_and_spares_the_runtime():
     runtime_fallback_stop.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    ("save", "save_error", "cleanup"),
+    [
+        ({"database_saved": False, "json_saved": True}, "database write failed", None),
+        ({"database_saved": True, "json_saved": False}, "JSON export failed", "Audio device did not close."),
+    ],
+)
+def test_stop_route_keeps_stopped_identity_and_save_facts(
+    save: dict[str, object], save_error: str, cleanup: str | None,
+):
+    meeting_id = "meeting-same-id"
+
+    def stopped() -> dict[str, object]:
+        return {
+            "status": "stopped",
+            "meeting": {"id": meeting_id},
+            "save": save,
+            "save_error": save_error,
+            "device_cleanup_error": cleanup,
+        }
+
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=lambda *_a, **_k: None,
+            on_stop=stopped,
+            on_meeting_stop=stopped,
+            get_state=lambda: None,
+        ),
+        host="127.0.0.1",
+    )
+    payload = TestClient(server.app).post("/api/meeting/stop").json()
+
+    assert payload["success"] is True
+    assert payload["status"] == "stopped"
+    assert payload["meeting"]["id"] == meeting_id
+    assert payload["save"] == save
+    assert payload["save_error"] == save_error
+    assert payload["device_cleanup_error"] == cleanup
+
+
+def test_stop_route_keeps_confirmed_stop_success_when_save_fails():
+    def stopped() -> dict[str, object]:
+        return {
+            "status": "stopped",
+            "meeting": {"id": "meeting-save-failed"},
+            "save": {"database_saved": False, "json_saved": False},
+            "save_error": "disk full",
+        }
+
+    server = MeetingWebServer(
+        WebRuntimeCallbacks(
+            on_bookmark=lambda *_a, **_k: None,
+            on_stop=stopped,
+            get_state=lambda: None,
+        ),
+        host="127.0.0.1",
+    )
+    response = TestClient(server.app).post("/api/stop")
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+    assert response.json()["status"] == "stopped"
+    assert response.json()["save_error"] == "disk full"
+
+
 class _StubConflicts:
     """The narrow meeting-repository surface `resolve_sync_conflict` reads."""
 

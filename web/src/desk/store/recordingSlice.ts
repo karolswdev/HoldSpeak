@@ -2,6 +2,10 @@
  * started-at timestamp, and the three recording actions. */
 import { apiRequest } from "../../lib/api";
 import { clearWriteFailure, reportWriteFailure } from "../hooks/useWriteReceipt";
+import {
+  meetingStopReceiptLabel,
+  parseMeetingStopOutcome,
+} from "../../meetings/meetingStopOutcome";
 import type { DeskState, RecordingStartContext, SliceCreator } from "./types";
 
 /** Meetings on the desk when a local recording started (NEW-beat diff). */
@@ -134,13 +138,68 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
 
   async stopRecording() {
     if (get().recording !== "recording") return;
+    const liveMeetingId = get().liveMeetingId || "";
     move({ recording: "busy" });
+    let outcome = parseMeetingStopOutcome({}, liveMeetingId);
     try {
       const res = await apiRequest("/api/meeting/stop", { method: "POST" });
+      let body: unknown = {};
+      try {
+        body = await res.json();
+      } catch {
+        // Older hubs returned an empty body. They do not provide save facts.
+      }
+      outcome = parseMeetingStopOutcome(body, liveMeetingId);
       // 409 = nothing is live on the hub: idle is the truth. Any other
       // refusal leaves the meeting recording, with its Retry.
       if (!res.ok && res.status !== 409) throw res;
-      clearWriteFailure();
+      if (res.status === 409) {
+        clearWriteFailure();
+      } else if (outcome.captureStopped === false) {
+        // A resolved Stop response can still say that capture remains live.
+        // Keep Record on and use the existing refusal receipt.
+        throw res;
+      } else if (outcome.captureStopped === true) {
+        const subject = outcome.meetingId || undefined;
+        const detail = outcome.saveError || outcome.deviceCleanupError;
+        let retryRecovery: (() => void) | undefined;
+        const recover = async () => {
+          try {
+            const recovery = await apiRequest(
+              `/api/meetings/${encodeURIComponent(outcome.meetingId)}/capture/recover`,
+              { method: "POST" },
+            );
+            if (!recovery.ok) throw recovery;
+            clearWriteFailure(subject);
+            await get().refresh();
+          } catch (error) {
+            reportWriteFailure(
+              "RECOVER CAPTURE",
+              error,
+              retryRecovery,
+              subject,
+              "RECOVERY FAILED",
+            );
+          }
+        };
+        retryRecovery = outcome.recoveryAvailable ? () => void recover() : undefined;
+        if (outcome.saveStatus === "saved" && !outcome.deviceCleanupError) {
+          clearWriteFailure();
+        } else {
+          const cause = detail ? Object.assign(new Error(detail), { name: "ApiError" }) : new Error();
+          reportWriteFailure(
+            "STOP RECORDING",
+            cause,
+            retryRecovery,
+            subject,
+            meetingStopReceiptLabel(outcome),
+          );
+        }
+      } else {
+        // Legacy success remains quiet, but no missing save fact is promoted
+        // into a claim that the Meeting was saved.
+        clearWriteFailure();
+      }
     } catch (error) {
       move({ recording: "recording" });
       reportWriteFailure(

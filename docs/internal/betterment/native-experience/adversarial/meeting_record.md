@@ -46,3 +46,26 @@ TUESDAY: The idle entry is quick and familiar, but not yet—the owner cannot tr
 5. Open two Meeting windows, edit/stop one, and deliver a late frame. Only the bound meeting changes; the other keeps state and focus.
 
 UNKNOWN: No tests were executed. No live Desk/API/provider/native walk, physical CoreAudio result, WebKit/assistive-technology behavior, performance measure, or owner acceptance was observed; captures are idle visual evidence only.
+
+## Bounded repair — Stop and save facts, 2026-10-23
+
+The Stop HTTP response now retains the runtime's capture, Meeting identity,
+save and cleanup facts. Confirmed stopped capture remains a successful Stop
+even when saving fails; clients must not retry Stop against an already-stopped
+recording or claim that the Meeting was saved. Explicit still-recording
+responses retain recording and the existing refusal. Missing legacy save
+facts remain unknown.
+
+The recording store and LiveCore use the same small outcome parser. A
+DB-saved partial result retains the existing Meeting door and its warning.
+Capture recovery is limited to the existing recoverable-checkpoint case with
+retained JSON and a verified durable row; it does not repair a failed JSON
+export or unrelated aftercare. Other persistence failures retain their actual
+identity and refusal rather than offering a fake recovery success.
+
+Focused proof: 38 component/store/parser cases and nine route/integration
+cases passed under the test lock with isolated HOME. The delivery PR records
+the required quick check and captures. These are fixture observations, not
+physical audio/device, complete persistence-recovery, or owner UX acceptance.
+The broader identity/edit/summary handoff and capture-recovery findings in
+this audit remain open.

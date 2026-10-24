@@ -69,6 +69,12 @@ import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../../desk/firstrun/speechTruth";
+import {
+  meetingStopReceiptLabel,
+  parseMeetingStopOutcome,
+  type MeetingStopOutcome,
+} from "../../meetings/meetingStopOutcome";
+import { reportWriteFailure } from "../../desk/hooks/useWriteReceipt";
 
 type Segment = Record<string, unknown>;
 
@@ -116,6 +122,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   const [previewText, setPreviewText] = useState("");
   const [previewResult, setPreviewResult] = useState<Record<string, unknown> | null>(null);
   const [retainedMeetingId, setRetainedMeetingId] = useState("");
+  const [stopOutcome, setStopOutcome] = useState<MeetingStopOutcome | null>(null);
   const [doorOpen, setDoorOpen] = useState(false);
   // Routed analysis publishes one elected semantic result. The provider token
   // stream retired with the C1 controller boundary; no private partial output
@@ -287,6 +294,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
     await action.run(async () => {
       const value = await apiFetch<Record<string, unknown>>(path, { method: "POST", json });
       if (path.endsWith("start")) {
+        setStopOutcome(null);
         const startedId = String((value.meeting as Record<string, unknown> | undefined)?.id ?? "");
         if (!meetingId && startedId) {
           useDesk.setState((st) => ({
@@ -313,7 +321,19 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       }
       if (path.endsWith("stop")) {
         const stoppedId = meetingId || String(state.id ?? state.meeting_id ?? "");
-        if (stoppedId) setRetainedMeetingId(stoppedId);
+        const outcome = parseMeetingStopOutcome(value, stoppedId);
+        if (outcome.meetingId) setRetainedMeetingId(outcome.meetingId);
+        setStopOutcome(outcome);
+        if (outcome.captureStopped === false) {
+          reportWriteFailure(
+            "STOP RECORDING",
+            new Error("capture remains active"),
+            () => void perform(path, json),
+            outcome.meetingId || undefined,
+            "STILL RECORDING · THE HUB DID NOT STOP IT",
+          );
+          return;
+        }
         setState((current) => ({ ...current, active: false }));
         if (meetingId) {
           useDesk.setState((st) => ({
@@ -323,6 +343,24 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           onStopped?.();
         }
       }
+    });
+  };
+  const recoverCapture = async () => {
+    const current = stopOutcome;
+    if (!current?.recoveryAvailable || !retainedMeetingId) return;
+    await action.run(async () => {
+      await apiFetch(`/api/meetings/${encodeURIComponent(retainedMeetingId)}/capture/recover`, {
+        method: "POST",
+      });
+      // The original Stop facts prove JSON was retained; a successful
+      // recovery response proves the durable Meeting row now exists.
+      setStopOutcome({
+        ...current,
+        databaseSaved: true,
+        saveStatus: "saved",
+        saveError: "",
+        recoveryAvailable: false,
+      });
     });
   };
   const saveMetadata = async () => {
@@ -669,10 +707,15 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           {bookmarkReceipt.text}
         </p>
       ) : null}
-      {retainedMeetingId ? (
-        <p className="surface-receipt-line" data-tone="ok" role="status">
+      {retainedMeetingId && stopOutcome?.saveStatus === "saved" ? (
+        <p
+          className="surface-receipt-line"
+          data-tone={stopOutcome.deviceCleanupError ? "warn" : "ok"}
+          role="status"
+          title={stopOutcome.deviceCleanupError || undefined}
+        >
           <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>{" "}
-          Meeting saved{" "}
+          {meetingStopReceiptLabel(stopOutcome)}{" "}
           <Button
             variant="chrome"
             className="btn-link"
@@ -680,6 +723,33 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           >
             Return to saved Meeting
           </Button>
+        </p>
+      ) : null}
+      {stopOutcome && stopOutcome.captureStopped !== false && stopOutcome.saveStatus !== "saved" ? (
+        <p
+          className="surface-receipt-line"
+          data-tone="warn"
+          role="status"
+          title={[stopOutcome.saveError, stopOutcome.deviceCleanupError]
+            .filter(Boolean)
+            .join(" · ") || undefined}
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M8 2.5v6M8 11.5v1" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg>{" "}
+          {meetingStopReceiptLabel(stopOutcome)}
+          {stopOutcome.databaseSaved === true && retainedMeetingId ? (
+            <Button
+              variant="chrome"
+              className="btn-link"
+              onClick={() => openPrimitive(`meeting:${retainedMeetingId}`)}
+            >
+              Open Meeting
+            </Button>
+          ) : null}
+          {stopOutcome.recoveryAvailable && retainedMeetingId ? (
+            <Button variant="ghost" dense onClick={() => void recoverCapture()}>
+              Retry recovery
+            </Button>
+          ) : null}
         </p>
       ) : null}
       {doorOpen ? (
