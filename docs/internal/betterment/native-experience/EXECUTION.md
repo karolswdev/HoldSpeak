@@ -275,3 +275,19 @@ quick green: build, 4,219 related UI tests, five affected Chair glass cases,
 110 desk sweep, 27 canon and 1,126 repository guards
 (`wt-native-zoom-restore-fix-20261023/.tmp/quick-zoom-restore.log`).
 This is a bounded inherited compositor repair, not completion of P01.
+
+
+## Inherited Room and Thought glass repairs
+
+[PR1445](https://github.com/karolswdev/HoldSpeak/pull/1445) updates stale
+browser expectations to the current product. Room history uses SENT / SENT BY
+HAND / SENT × N; the distinct manual MARK DELIVERED receipt is still checked.
+The narrow History case opens the existing window menu. Thought's desktop
+Send return uses its actual in-well Back control; the phone frame Back stays.
+These two files use an isolated clipboard buffer instead of OS permissions.
+No product behavior changes. The original seven Room failures and two-width
+Thought Send case pass; required quick green: build, all 43 affected Room and
+Thought cases, 110 desk sweep, 27 canon and 1,126 repository guards
+(`wt-native-room-glass-fix-20261023/.tmp/quick-room-thought-glass.log`).
+Folder bytes, dispatch identity, retained retry and receipt checks remain.
+This does not certify a new whole P06/P09 journey or external provider Send.
