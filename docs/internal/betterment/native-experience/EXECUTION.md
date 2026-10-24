@@ -59,7 +59,7 @@ small PRs and updates package/PR/task-evidence/owner-feedback status.
 | --- | --- | --- |
 | P01 | First repository identity/frame slice merged #1438 | Durable view state, shared command origin, unlike consumers and narrow chooser |
 | P02 | First repository read/inspect slice merged #1438 | Second real collection consumer, range/selection/scroll and revalidation |
-| P03 | Active Thought/voice built and fix re-check ratified; browser proof closing | Captured caret/generation, IME/undo, retained voice and source return |
+| P03 | Active Thought/voice first slice built/re-checked; browser and quick green | Captured caret/generation, IME/undo, retained voice and source return |
 | P04 | Planned after Thought | Sourced Ask whole job, save/return, failure and reading continuity |
 | P05 | Planned; bounded Stop repair already #1437 | Complete record/import/intelligence/reopen/aftercare job |
 | P06 | Planned | Whole project/person/day job and retained update identity |
@@ -238,12 +238,21 @@ fixes received one final RATIFY re-check. Focused editor/Mic/Thought tests:
 46 cases passed with TypeScript clean; reference/Components: 11 passed.
 The Canvas B recovery state was drawn before build; all 18 static artboards
 rendered with no clipped windows. Root inspected the revised desktop board.
-Real-browser acceptance and the required quick result are recorded at delivery.
+Six real-browser cases pass on the final bundle at 1440/393. They cover real
+CodeMirror selection/Undo and Note writes, two stale synthetic transcript finals
+through the production MicButton/default draft store, close/reopen, other-note
+isolation and explicit insertion. Clipboard IO is an isolated test buffer.
+Pre-autoscroll recovery actions fit the well/frame/viewport and remain hit-test
+reachable; canonical nine-point probes pass at 393. Root corrected fixture
+flex shrink/overlap and optional-title grid/recovery clipping before these shots.
+Required quick green: build, 4,217 related UI tests, six affected browser cases,
+110 desk sweep, 27 canon and 1,126 repository guards
+(`.tmp/quick-native-input.log`).
 A named fake transcript transport can exercise the production MicButton and
 default note memory; it is not hardware microphone or transcription-quality
 proof. The reference alone is not a second production consumer.
 
-Still open in P03: Settings field generation and retained transcript adoption,
+Still open in P03: per-Note audio Retry scope, Settings field generation and retained transcript adoption,
 Ask/Pad append policy, native OS Talk-release binding, speech journal/learning
 and configured macro end-to-end jobs. This first browser editor slice does not
 certify those paths or the full J1 capture/source-return job. P04's owned

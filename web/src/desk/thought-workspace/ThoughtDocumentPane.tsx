@@ -1,10 +1,13 @@
 import { firstWords, NEW_THOUGHT_TITLE } from "../thoughtTitle";
-import { useEffect, useRef } from "react";
-import { EditInPlace } from "../surface";
+import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
+import { EditInPlace, StateChip, SurfaceWell } from "../surface";
+import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { DeskEditor, type DeskEditorHandle, type DeskEditorSelection } from "../components/DeskEditor";
 import type { ThoughtDraft } from "../pullouts/editors/useThoughtNoteWriter";
 import { claimThoughtKeys } from "../thoughtKeys";
+import { useCopyReceipt } from "../hooks/useCopyReceipt";
+import { bindThoughtVoiceTarget, deskThoughtVoiceDraft, thoughtVoiceKey, type ThoughtVoiceDraftIO } from "./thoughtVoiceDraft";
 
 /* HS-201-12 — bands 1 and 2 of the one clean note (the owner's first-use
    verdict of 2026-09-20).  The title wraps and is edited in place; the note
@@ -20,6 +23,35 @@ export function ownTitle(title: string, body: string): boolean {
   return Boolean(clean) && clean !== NEW_THOUGHT_TITLE && clean !== firstWords(body);
 }
 
+/** The same recovery view serves the live Thought and an isolated Components fixture. */
+export function ThoughtVoiceRecovery({ text, disabled, onInsert }: {
+  text: string;
+  disabled: boolean;
+  onInsert: () => void;
+}) {
+  return <ThoughtVoiceRecoveryContent key={text} text={text} disabled={disabled} onInsert={onInsert} />;
+}
+
+function ThoughtVoiceRecoveryContent({ text, disabled, onInsert }: {
+  text: string;
+  disabled: boolean;
+  onInsert: () => void;
+}) {
+  const { copy, state: copyState } = useCopyReceipt();
+  return <SurfaceWell head="Voice">
+    <div className="thought-voice-recovery" data-testid="thought-voice-recovery">
+      <StateChip state="warning" label="NOT INSERTED" />
+      <div className="thought-voice-text">{text}</div>
+      <div className="thought-voice-actions">
+        <Button dense variant="primary" disabled={disabled} onClick={onInsert}>Insert at caret</Button>
+        <Button dense variant="ghost" onClick={() => void copy(text)}>
+          {copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy"}
+        </Button>
+      </div>
+    </div>
+  </SurfaceWell>;
+}
+
 export function ThoughtDocumentPane({
   noteId,
   draft,
@@ -28,6 +60,9 @@ export function ThoughtDocumentPane({
   lockedReason,
   revealRange,
   onSelectionChange,
+  voiceDraftIO = deskThoughtVoiceDraft,
+  mic = true,
+  voiceInput,
 }: {
   /** The thought's note. With it, the field takes the keys typed between
    *  `Write a thought` and this window (thoughtKeys.ts). */
@@ -40,8 +75,24 @@ export function ThoughtDocumentPane({
   lockedReason?: string;
   revealRange?: { start: number; end: number; focus?: boolean } | null;
   onSelectionChange?: (selection: DeskEditorSelection) => void;
+  /** Fixture seam for the same Thought recovery view, without workspace writes. */
+  voiceDraftIO?: ThoughtVoiceDraftIO;
+  mic?: boolean;
+  /** Alternate input control for the same document composition and binder. */
+  voiceInput?: (bindText: () => (text: string) => void, disabled: boolean) => ReactNode;
 }) {
   const bodyRef = useRef<DeskEditorHandle | null>(null);
+  const activeNoteIdRef = useRef(noteId);
+  activeNoteIdRef.current = noteId;
+  const voiceKey = noteId ? thoughtVoiceKey(noteId) : null;
+  const retained = useSyncExternalStore(
+    voiceDraftIO.subscribe,
+    () => voiceKey ? voiceDraftIO.get(voiceKey) : null,
+    () => null,
+  );
+  const bindText = () => bindThoughtVoiceTarget(
+    noteId, bodyRef.current, () => activeNoteIdRef.current === noteId, voiceDraftIO,
+  );
 
   /* HS-201-12 — the reveal is re-applied when the authoritative body
      lands: the append arrives as a whole-document sync, which maps the
@@ -86,8 +137,16 @@ export function ThoughtDocumentPane({
         onSelectionChange={onSelectionChange}
       />
       <span className="thought-note-field-mic">
-        <MicButton label="Speak the note" onText={(text) => bodyRef.current?.insertAtCursor(text)} />
+        {mic ? <MicButton label="Speak the note" disabled={disabled}
+          onText={(text) => bodyRef.current?.insertAtCursor(text)}
+          bindText={bindText} /> : voiceInput?.(bindText, disabled) ?? null}
       </span>
     </div>
+    {retained && voiceKey ? <ThoughtVoiceRecovery text={retained} disabled={disabled} onInsert={() => {
+      const editor = bodyRef.current;
+      const target = editor?.captureVoiceTarget();
+      if (editor && target && editor.insertAtCapturedTarget(target, retained, { focus: true }))
+        voiceDraftIO.forget(voiceKey);
+    }} /> : null}
   </section>;
 }

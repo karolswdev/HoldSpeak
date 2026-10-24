@@ -140,6 +140,45 @@
 .reference-resource .repo-browser { min-height: 340px; border: 1px solid var(--border); }
 .reference-resource .repo-browser-content { min-height: 280px; }
 
+.reference-editing-document {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 300px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+}
+
+.desk-next .reference-editing-document > .thought-note-document {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 300px;
+}
+
+.desk-next .reference-editing-document .thought-note-field {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: auto;
+  min-height: 165px;
+}
+
+.desk-next .reference-editing-document .thought-note-field > .desk-editor {
+  flex: 0 0 165px;
+  height: 165px;
+  min-height: 165px;
+}
+
+.desk-next .reference-editing-document .thought-note-field-mic {
+  position: static;
+  width: auto;
+  height: auto;
+  align-self: flex-end;
+}
+
 @container surface (max-width: 559.9px) {
   .reference-toolbar,
   .reference-example-head {
@@ -177,4 +216,9 @@
   }
 
   .reference-resource { min-height: 380px; }
+
+  .reference-editing-document,
+  .reference-editing-document > .thought-note-document {
+    min-height: 280px;
+  }
 }

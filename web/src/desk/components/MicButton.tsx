@@ -84,6 +84,8 @@ export function MicButton({
   pipeline,
   onCommand,
   startSignal = 0,
+  bindText,
+  disabled = false,
 }: {
   /* HS-176 C1 — the second argument carries the SPOKEN run's own facts
      (`raw_text`, `corrections_applied`, `journal_id`) when the server sent
@@ -114,6 +116,9 @@ export function MicButton({
      listening (a Speak answer press). It is consumed once; a capture that
      runs is left alone; a click stops it, as always (click-to-toggle). */
   startSignal?: number;
+  /** Bind a field and selection at the start gesture, before mic focus or async work. */
+  bindText?: () => (text: string, facts?: SpokenRunFacts) => void;
+  disabled?: boolean;
 }) {
   const pipelined = pipeline ?? variant === "transport";
   const [state, setState] = useState<MicState>("idle");
@@ -134,6 +139,9 @@ export function MicButton({
      the empty final that follows is a consequence of it, never "no words". */
   const refusedRef = useRef<StreamRefusal | null>(null);
   const startingRef = useRef(false);
+  const boundTextRef = useRef(new Map<number, (text: string, facts?: SpokenRunFacts) => void>());
+  const gestureTextRef = useRef<((text: string, facts?: SpokenRunFacts) => void) | null>(null);
+  const queuedTextRef = useRef<((text: string, facts?: SpokenRunFacts) => void) | null>(null);
   const onStateRef = useRef(onState);
   onStateRef.current = onState;
   const onLevelRef = useRef(onLevel);
@@ -196,6 +204,9 @@ export function MicButton({
       mountedRef.current = false;
       sessionRef.current?.cancel();
       sessionRef.current = null;
+      // A pending retained-audio retry still owns its bound destination.
+      // Its finally block releases the binding after the result arrives.
+      if (!stoppingRef.current && !startingRef.current) boundTextRef.current.clear();
     };
   }, []);
 
@@ -210,13 +221,14 @@ export function MicButton({
   useEffect(() => {
     if (!startSignal || startSignal === handledSignalRef.current) return;
     handledSignalRef.current = startSignal;
-    if (!(speakToFillSupported() || micStreamSupported())) return;
+    if (disabled || !(speakToFillSupported() || micStreamSupported())) return;
     if (sessionRef.current || startingRef.current) return;   // already capturing
     if (stoppingRef.current) {
       queuedStartRef.current = true;   // starts once the transcript settles
+      queuedTextRef.current = bindText?.() ?? null;
       return;
     }
-    void startSession();
+    void startSession(bindText?.());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startSignal]);
 
@@ -247,12 +259,13 @@ export function MicButton({
     );
   }
 
-  const routeTranscript = async (text: string, facts?: SpokenRunFacts) => {
+  const routeTranscript = async (text: string, facts?: SpokenRunFacts, id?: number) => {
+    const deliver = id === undefined ? onText : boundTextRef.current.get(id) ?? onText;
     if (!grammar) {
       // The second argument exists only when the server sent facts, so every
       // caller that never asked for them sees the call it has always seen.
-      if (facts) onText(text, facts);
-      else onText(text);
+      if (facts) deliver(text, facts);
+      else deliver(text);
       return;
     }
     const loadingProposal: VoiceProposal = {
@@ -277,7 +290,7 @@ export function MicButton({
       return;
     }
     setProposal(null);
-    if (grammar.dictationFallback) onText(text);
+    if (grammar.dictationFallback) deliver(text);
   };
 
   const confirmProposal = async () => {
@@ -318,10 +331,13 @@ export function MicButton({
     go("failed");
   };
 
-  const startSession = async () => {
-    if (startingRef.current) return;
+  const startSession = async (boundText?: (text: string, facts?: SpokenRunFacts) => void) => {
+    if (disabled || startingRef.current) return;
     startingRef.current = true;
     const id = ++captureIdRef.current;
+    const capturedText = boundText ?? bindText?.();
+    if (capturedText) boundTextRef.current.set(id, capturedText);
+    let sessionOpened = false;
     setFailure(null);
     setFailureCode(null);
     try {
@@ -330,15 +346,19 @@ export function MicButton({
           pipeline: pipelined,
         });
         if (recovered !== null) {
+          if (recovered && (mountedRef.current || boundTextRef.current.has(id))) {
+            await routeTranscript(recovered, undefined, id);
+          }
+          if (!mountedRef.current) return;
           setAudioRetained(false);
           if (recovered) {
-            await routeTranscript(recovered);
             go("idle");
           } else {
             fail("no_speech", null);
           }
           return;
         }
+        if (!mountedRef.current) return;
       }
 
       firedRef.current = null;
@@ -386,27 +406,33 @@ export function MicButton({
         return;
       }
       sessionRef.current = session;
+      sessionOpened = true;
       go("listening");
     } catch (error) {
       fail(dictationFailure(error), null);
     } finally {
       startingRef.current = false;
+      if (!sessionOpened) boundTextRef.current.delete(id);
     }
   };
 
   const stopSession = async () => {
     const session = sessionRef.current;
     if (!session) return;
+    const id = captureIdRef.current;
     sessionRef.current = null;
     stoppingRef.current = true;
     go("busy");
     try {
-      await settleStop(session, captureIdRef.current);
+      await settleStop(session, id);
     } finally {
+      boundTextRef.current.delete(id);
       stoppingRef.current = false;
       if (queuedStartRef.current && mountedRef.current) {
         queuedStartRef.current = false;
-        void startSession();
+        const queuedText = queuedTextRef.current;
+        queuedTextRef.current = null;
+        void startSession(queuedText ?? undefined);
       }
     }
   };
@@ -418,7 +444,7 @@ export function MicButton({
       const text = await session.stop();
       if (!current()) {
         // A newer capture owns the field's state now; the words still land.
-        if (text && mountedRef.current) await routeTranscript(text);
+        if (text && (mountedRef.current || boundTextRef.current.has(id))) await routeTranscript(text, undefined, id);
         return;
       }
       const fired = firedRef.current;
@@ -437,7 +463,7 @@ export function MicButton({
       if (text) {
         const facts = factsRef.current;
         factsRef.current = null;
-        await routeTranscript(text, facts ?? undefined);
+        await routeTranscript(text, facts ?? undefined, id);
         setAudioRetained(false);
         setFailure(null);
         setFailureCode(null);
@@ -458,12 +484,16 @@ export function MicButton({
   };
 
   const toggle = () => {
+    if (disabled && state !== "listening") return;
     if (state === "listening") {
+      gestureTextRef.current = null;
       sfx("key-up");
       void stopSession();
     } else if (state === "idle" || state === "failed") {
       sfx("key-down");
-      void startSession();
+      const bound = gestureTextRef.current;
+      gestureTextRef.current = null;
+      void startSession(bound ?? undefined);
     }
   };
 
@@ -489,6 +519,14 @@ export function MicButton({
                 : label
         }
         aria-pressed={listening ? true : undefined}
+        disabled={disabled && !listening}
+        onPointerDown={() => {
+          if (!disabled && (state === "idle" || state === "failed")) gestureTextRef.current = bindText?.() ?? null;
+        }}
+        onKeyDown={(event) => {
+          if (!disabled && (event.key === "Enter" || event.key === " ") && (state === "idle" || state === "failed"))
+            gestureTextRef.current = bindText?.() ?? null;
+        }}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -513,7 +551,7 @@ export function MicButton({
           <b className="desk-mic-failure-code">{failureCode ?? FAILURE_LABEL[failure]}</b>
           {audioRetained ? " · AUDIO KEPT" : ""}
           {DICTATION_FAILURES[failure].retry ? (
-            <Button dense variant="ghost" onClick={() => toggle()}>
+            <Button dense variant="ghost" disabled={disabled} onClick={() => toggle()}>
               Retry
             </Button>
           ) : null}

@@ -11,7 +11,7 @@ describe("Signal component gallery", () => {
         <ComponentsCore />
       </MemoryRouter>,
     );
-    for (const pattern of ["Forms", "Reading", "Lists", "Resources", "Conversation", "Progress", "Controls"]) {
+    for (const pattern of ["Forms", "Editing", "Reading", "Lists", "Resources", "Conversation", "Progress", "Controls"]) {
       fireEvent.click(screen.getByRole("button", { name: pattern }));
       const result = await axe.run(container, {
         rules: { "color-contrast": { enabled: false } },
@@ -29,6 +29,30 @@ describe("Signal component gallery", () => {
     fireEvent.click(screen.getByRole("button", { name: "Controls" }));
     expect(screen.getByTestId("reference-controls")).toBeInTheDocument();
     expect(screen.getByTestId("object-species-gallery")).toBeInTheDocument();
+  });
+
+  it("shows the Thought editing states and retains the other production specimens", () => {
+    render(<ComponentsCore />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Editing" }));
+    const editing = screen.getByTestId("reference-editing");
+    expect(within(editing).getByRole("textbox", { name: "Note body" })).toBeInTheDocument();
+    expect(within(editing).getByRole("button", { name: "Capture target" })).toBeEnabled();
+    expect(within(editing).queryByRole("button", { name: "Speak the note" })).not.toBeInTheDocument();
+
+    const preset = screen.getByRole("combobox", { name: "Example state" });
+    fireEvent.change(preset, { target: { value: "retained" } });
+    expect(within(screen.getByTestId("reference-editing")).getByText("NOT INSERTED")).toBeInTheDocument();
+    fireEvent.change(preset, { target: { value: "newer" } });
+    expect(within(screen.getByTestId("reference-editing")).getByText("NOT INSERTED")).toBeInTheDocument();
+    expect(screen.getByTestId("reference-editing")).toHaveTextContent("Newer local edit.");
+    fireEvent.change(preset, { target: { value: "read-only" } });
+    expect(within(screen.getByTestId("reference-editing")).getByRole("button", { name: "Insert at caret" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Forms" }));
+    expect(screen.getByTestId("reference-owner-preferences")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Resources" }));
+    expect(screen.getByTestId("reference-resource")).toBeInTheDocument();
   });
 
   it("proves the Settings You field, list, conversation and progress behavior", async () => {

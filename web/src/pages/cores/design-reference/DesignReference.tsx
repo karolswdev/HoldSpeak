@@ -25,21 +25,24 @@ import {
 } from "../../../desk/surface";
 import type { CoreProps } from "../core-types";
 import { ControlsGallery } from "./ControlsGallery";
+import { EditingReference, type EditingPreset } from "./EditingReference";
 import { OwnerPreferencesReference, type OwnerPreferencesState } from "./OwnerPreferencesReference";
 import "./design-reference.css";
 
-type Pattern = "forms" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
-type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState;
+type Pattern = "forms" | "editing" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
+type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState | EditingPreset;
 
 /*
- * Forms renders the Settings You fields and writer through local IO; Resources
- * renders the repository browser through local reads. Reading, Lists,
+ * Forms renders the Settings You fields and writer through local IO; Editing
+ * renders the active Thought editor and voice recovery through local IO;
+ * Resources renders the repository browser through local reads. Reading, Lists,
  * Conversation, and Progress remain bounded specimens of their library
  * surfaces. Components itself is a fixture, not a second production consumer.
  */
 
 const PATTERNS: Array<{ id: Pattern; label: string }> = [
   { id: "forms", label: "Forms" },
+  { id: "editing", label: "Editing" },
   { id: "reading", label: "Reading" },
   { id: "lists", label: "Lists" },
   { id: "resources", label: "Resources" },
@@ -63,6 +66,13 @@ const FORM_STATES: Array<{ id: OwnerPreferencesState; label: string }> = [
   { id: "refused", label: "Refused" },
   { id: "retried", label: "Retried" },
   { id: "newer", label: "Newer edit" },
+];
+
+const EDITING_STATES: Array<{ id: EditingPreset; label: string }> = [
+  { id: "ordinary", label: "Ordinary" },
+  { id: "retained", label: "Retained words" },
+  { id: "newer", label: "Newer draft" },
+  { id: "read-only", label: "Read only" },
 ];
 
 const RESOURCE_FILES: RepoFile[] = [
@@ -156,6 +166,7 @@ const FAILED_REPLY_PAYLOAD = "The reply is available locally for the captured re
 
 const STATE_OPTIONS: Record<Pattern, Array<{ id: ExampleState; label: string }>> = {
   forms: FORM_STATES,
+  editing: EDITING_STATES,
   reading: [STATES[0], STATES[3], STATES[4]],
   lists: [STATES[0], STATES[3]],
   resources: [STATES[0], STATES[1], STATES[2], STATES[3], { id: "resumed", label: "Resumed" }],
@@ -371,6 +382,7 @@ function ProgressPattern({ state }: { state: ExampleState }) {
 function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleState }) {
   switch (pattern) {
     case "forms": return <OwnerPreferencesReference state={FORM_STATES.some((item) => item.id === state) ? state as OwnerPreferencesState : "saved"} />;
+    case "editing": return <EditingReference key={state} preset={EDITING_STATES.some((item) => item.id === state) ? state as EditingPreset : "ordinary"} />;
     case "reading": return <ReadingPattern state={state} />;
     case "lists": return <ListsPattern state={state} />;
     case "resources": return <ResourcesPattern key={state} state={state} />;
