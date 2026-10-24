@@ -260,3 +260,18 @@ and configured macro end-to-end jobs. This first browser editor slice does not
 certify those paths or the full J1 capture/source-return job. P04's owned
 Thought source/selection return is the next bounded slice and keeps backend
 source-version/lineage limits explicit.
+
+
+## Inherited zoom-height repair
+
+[PR1444](https://github.com/karolswdev/HoldSpeak/pull/1444) repairs the
+pre-existing content-sized window restore bug reproduced on pre-P01 main.
+The first zoom measures a frame without changing its auto-height policy;
+owner-sized frames keep their fixed size. Restoring zoom and closing/reopening
+therefore do not turn a compact Chair into its old minimum-height rectangle.
+Two new focused assertions cover auto and owner-sized policies (five pass).
+The real browser reproduction includes zoom, restore and reopen. Required
+quick green: build, 4,219 related UI tests, five affected Chair glass cases,
+110 desk sweep, 27 canon and 1,126 repository guards
+(`wt-native-zoom-restore-fix-20261023/.tmp/quick-zoom-restore.log`).
+This is a bounded inherited compositor repair, not completion of P01.
