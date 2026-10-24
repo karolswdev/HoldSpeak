@@ -49,6 +49,7 @@ first research packet; its Settings-first checkpoint alone was too narrow.
 
 | Record | Purpose |
 | --- | --- |
+| [Bounded repair closeout](checks/repair-closeout-2026-10-23.md) | Actual merged/deployed repairs, Astra post-merge reviews, proof limits and the parked Stop candidate. |
 | [47 adversarial reviews](adversarial/README.md) | Individual whole-job, convergence and user-value reviews, corrected source assumptions and delivery priorities. |
 | [Use-case behavior audit](USE-CASE-AUDIT.md) | Whole-product job/behavior matrix, current evidence, gaps and prioritized cross-application journeys. |
 | [Inventory snapshot](USE-CASE-INVENTORY.json) | Reconciliation of the existing jobs, capability catalogue, recipes, manifest and object/specialized hosts; not a new runtime registry. |
