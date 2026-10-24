@@ -252,6 +252,13 @@ def test_real_drainer_records_primary_failure_and_fallback_at_distinct_hosts_and
 
     job = db.intel.get_latest_intel_job(meeting.id)
     assert job is not None and job.job_id == receipt_job_id
+    # The summary fixture qualifies only deferred analysis. Optional plugins
+    # inherit its assignment but cannot use that profile, so they are skipped.
+    skipped = (job.frozen_plugin_route or {}).get("plugin_chain_skipped") or []
+    assert any(
+        item["plugin_id"] == "project_detector" and item["reason"] == "no_assignment"
+        for item in skipped
+    )
     with db._connection() as conn:
         receipt_row = conn.execute(
             "SELECT parent_operation_id FROM intel_jobs WHERE job_id=?",

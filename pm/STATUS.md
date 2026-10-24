@@ -33,10 +33,21 @@ other writers/readiness and failed full-unmount keepalive recovery still open.
 Active Thought's captured voice/range/undo/recovery slice is now in progress.
 The background full tape on #1438 has inherited wire/Stop assertion drift and
 optional-plugin route reds. Separate bounded fixes are in progress; no full
-suite green is claimed. Runtime after #1438 is recorded in Execution; #1439's
-exact merged runtime is verified during deployment after merge.
+suite green is claimed. Running Desk after #1439: backend `be47877f62a78971737e45812888910fc63264ab`,
+frontend `3ce85f6770b41fa3`, database ownership true, no identity diagnoses;
+health, Desk, Conductor and Engines routes return 200. CLI/MCP source matches
+that tree; feedback is enabled and Presence stays off. The latest-main full
+tape is queued behind the pinned #1438 run, with no whole-suite green claim.
 [Execution](../docs/internal/betterment/native-experience/EXECUTION.md) records
 package/journey/workflow, PR, scoped proof and remaining feedback.
+
+Optional meeting plugin route — #1440: an inherited summary assignment with
+no compatible optional plugin now records exclusion instead of refusing core
+summary admission before dispatch. Core capability checks remain strict.
+The four original reds and two existing optional/core pins pass; required
+quick green: build, 113 affected cases, 110 desk sweep, 27 canon and 1,126
+repository guards. This is a producer repair, not P05 completion. Wire/Stop
+fixture repairs and the remaining full-tape observations stay separate.
 
 The earlier hold below is retained as history; it no longer pauses execution.
 
