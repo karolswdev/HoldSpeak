@@ -13,10 +13,17 @@ The owner authorizes Astra to orchestrate Sol High workers and deliver the
 complete design plan, superseding the earlier design-only hold and this
 initiative's older reviewer-only/Luna defaults. PR1435 supplies the product
 definition, seven journeys, 47-family trace, nine paired studies and ten
-packages. The first repository/window/reference wave is in progress in
-`wt-native-desktop-wave1-20261023`. No product slice from this wave is marked
-merged or owner-accepted yet. Each slice records package/journey/workflow,
-PR, scoped task evidence and remaining feedback in the existing records.
+packages. The first repository/window/reference slice ships in #1438:
+independent views, path/navigation and read-only inspection with retained
+failure material, plus the same browser in Components with local fixtures.
+Required quick green: build, 4,184 related UI tests, ten affected Python/browser
+cases, 110 desk sweep, 27 canon and 1,126 repository guards. Root inspected
+1440/393 shots; narrow controls pass the nine-point target probe. This is
+partial P01/P02/P10, not package completion or owner visual acceptance.
+P08's owner-preference writer and same-face reference are the next slice in
+`wt-native-preferences-wave2-20261023`; review fixes remain in progress.
+[Execution](../docs/internal/betterment/native-experience/EXECUTION.md) records
+package/journey/workflow, PR, scoped proof and remaining feedback.
 
 The earlier hold below is retained as history; it no longer pauses execution.
 

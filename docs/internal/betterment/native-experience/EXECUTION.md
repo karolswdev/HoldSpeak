@@ -56,7 +56,8 @@ small PRs and updates package/PR/task-evidence/owner-feedback status.
 ## Progress
 
 - Design definition: merged [PR1435](https://github.com/karolswdev/HoldSpeak/pull/1435), 47-family trace validated.
-- Repository slice: built, reviewed and quick-check green; awaiting merge.
+- Repository slice: [PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438),
+  built, reviewed and quick-check green. First partial P01/P02/P10 delivery.
 - P08 Settings slice: built in a separate worktree; independent review and
   production/reference integration in progress. This is not all of P08.
 - Task evidence: seven isolated real-browser repository cases and three route
