@@ -10,7 +10,7 @@ import { latchAskSelection, selectionPrompt, takeAskSelection } from "../ask";
 describe("DeskEditor authoritative append reveal", () => {
   it("latches one Note passage and puts the same quote in the run prompt", () => {
     const source = { noteRef: "note:note-1", text: "Keep this passage", body: "Keep this passage",
-      range: { from: 0, to: 17 }, windowId: "pullout:note:note-1", scrollTop: 16 };
+      range: { from: 0, to: 17, text: "Keep this passage" }, windowId: "pullout:note:note-1", scrollTop: 16 };
     latchAskSelection(source);
 
     const selection = takeAskSelection();
