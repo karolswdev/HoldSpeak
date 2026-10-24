@@ -177,6 +177,26 @@ function listAdapter<K extends string>(
   };
 }
 
+function repositoryAdapter(id: string): Adapter | null {
+  if (!id.startsWith("repository:")) return null;
+  const instanceId = id.slice("repository:".length);
+  if (!instanceId || instanceId.startsWith("__")) return null;
+  const desk = () => useDesk.getState();
+  return {
+    isOpen: () => desk().repositoryWindows.some((w) => w.id === instanceId),
+    open: (row) => {
+      if (instanceId.startsWith("view:")) {
+        if (row?.object_ref) desk().adoptRepositoryWindow(instanceId, row.object_ref);
+      } else desk().openRepositoryWindow(instanceId);
+    },
+    close: () => desk().closeRepositoryWindow(instanceId),
+    object: () => {
+      const view = desk().repositoryWindows.find((w) => w.id === instanceId);
+      return view ? view.resourceId ?? instanceId : null;
+    },
+  };
+}
+
 /** The family that opens and closes window `id` in this browser, or null
  * (a window another surface opens; its stacking still follows the hub). */
 export function adapterFor(id: string): Adapter | null {
@@ -276,7 +296,7 @@ export function adapterFor(id: string): Adapter | null {
   return (
     listAdapter("info:", id, () => d().infoWindows, "ref", (v) => d().openInfoWindow(v), (v) => d().closeInfoWindow(v)) ??
     listAdapter("roadmap:", id, () => d().roadmapWindows, "slug", (v) => d().openRoadmapWindow(v), (v) => d().closeRoadmapWindow(v)) ??
-    listAdapter("repository:", id, () => d().repositoryWindows, "id", (v) => d().openRepositoryWindow(v), (v) => d().closeRepositoryWindow(v)) ??
+    repositoryAdapter(id) ??
     listAdapter("workbench:", id, () => d().workbenchWindows, "id", (v) => d().openWorkbenchWindow(v), (v) => d().closeWorkbenchWindow(v))
   );
 }

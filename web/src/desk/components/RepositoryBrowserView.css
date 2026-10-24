@@ -1,0 +1,28 @@
+.repo-browser { display: flex; flex: 1; min-width: 0; min-height: 0; flex-direction: column; container-type: inline-size; container-name: surface repo-browser; }
+.repo-browser .repo-breadcrumb { flex: none; gap: var(--space-1); }
+.repo-breadcrumb-path { display: inline-flex; min-width: 0; align-items: center; overflow-x: auto; white-space: nowrap; }
+.repo-breadcrumb-path .btn { flex: none; white-space: nowrap; }
+.repo-crumb { display: inline-flex; flex: none; align-items: center; white-space: nowrap; }
+.repo-crumb-separator { flex: none; color: var(--text-muted); font: var(--font-size-xs)/1 var(--font-mono); }
+.repo-browser-loading { padding: var(--space-1) var(--space-2); color: var(--text-muted); font: var(--font-size-xs)/1.4 var(--font-mono); }
+.repo-browser-content { display: flex; flex: 1; min-width: 0; min-height: 0; }
+.repo-browser-collection-hint { display: flex; flex: 1; min-width: 0; min-height: 0; }
+.repo-browser-collection { display: flex; flex: 1; min-width: 0; min-height: 0; flex-direction: column; overflow: auto; }
+.repo-browser-collection .desk-repo-files { flex: none; overflow: visible; }
+.repo-file-name { display: grid; min-width: 0; overflow-wrap: anywhere; }
+.repo-file-fold { display: none; color: var(--text-muted); font: var(--font-size-xs)/1.3 var(--font-mono); }
+.repo-browser-inspection { display: flex; flex: 1; min-width: 0; min-height: 0; flex-direction: column; padding: var(--space-2); border-inline-start: 1px solid var(--border); }
+.repo-browser-inspection .surface-well { display: flex; flex: 1; min-height: 0; flex-direction: column; }
+.repo-browser-inspection .surface-well-body { display: flex; flex: 1; min-height: 0; flex-direction: column; }
+.repo-browser-file-path { overflow-wrap: anywhere; }
+.repo-browser-file-content { max-height: 100%; min-width: 0; margin: 0; padding: var(--space-2); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
+.repo-browser-detail-back { display: none; align-self: flex-start; margin-bottom: var(--space-1); }
+@container repo-browser (max-width: 719.9px) {
+  .repo-browser[data-inspecting="true"] .repo-browser-collection-hint { display: none; }
+  .repo-browser-inspection { border-inline-start: 0; }
+  .repo-browser-detail-back { display: inline-flex; }
+  .repo-browser .repo-breadcrumb { flex-wrap: wrap; }
+  .repo-browser .repo-breadcrumb .gadget-cycle { margin-inline-start: 0; }
+  .repo-file-fold { display: block; }
+  .repo-browser .desk-sortable-table td { white-space: normal; }
+}

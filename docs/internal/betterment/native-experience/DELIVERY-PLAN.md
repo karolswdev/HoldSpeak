@@ -72,6 +72,10 @@ Progress updates state what completed, what was learned, what remains
 unverified and the next bounded step. A green component check, a merged PR,
 a completed whole job and owner visual acceptance are different milestones.
 
+First execution slice and remaining scope are recorded in [EXECUTION.md](EXECUTION.md).
+It is one repository application change spanning P01/P02 and the first P10
+fixture seam, not completion of those packages or of all 47 families.
+
 ## P01: Window, view and command foundation
 
 **Primary families:** `windows`, `navigation_commands`.

@@ -84,3 +84,32 @@ def test_repository_file_routes_refuse_traversal(tmp_path: Path) -> None:
     )
     assert response.status_code == 400
     assert response.json()["error"] == "path traversal refused"
+
+
+def test_repository_tree_distinguishes_missing_file_and_empty_directory(tmp_path: Path) -> None:
+    client, root = _client(tmp_path)
+    repository_id = client.get("/api/repositories").json()["repositories"][0]["id"]
+    tree = f"/api/repositories/{repository_id}/tree"
+
+    # A registered source can change while a view retains its location. The
+    # browser needs this distinction to keep Back/Retry after a lost folder.
+    (root / "empty").mkdir()
+    empty = client.get(f"{tree}?path=empty")
+    assert empty.status_code == 200
+    assert empty.json() == {"files": []}
+
+    missing = client.get(f"{tree}?path=removed")
+    assert missing.status_code == 404
+    assert missing.json() == {"error": "directory not found"}
+
+    file_path = client.get(f"{tree}?path=README.md")
+    assert file_path.status_code == 400
+    assert file_path.json() == {"error": "path is not a directory"}
+
+    root_dot = client.get(f"{tree}?path=.")
+    assert root_dot.status_code == 200
+    assert root_dot.json() == client.get(tree).json()
+
+    traversal = client.get(f"{tree}?path=src%2F..%2FREADME.md")
+    assert traversal.status_code == 400
+    assert traversal.json() == {"error": "path traversal refused"}
