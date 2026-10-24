@@ -161,3 +161,28 @@ checks 200. CLI/MCP source aligned; feedback remains enabled, Presence off.
 Post-merge full tape runs on that pinned revision at low priority. Initial
 reds include stale wire fixtures and route-execution integration cases; they
 are not a green full-suite claim. Fixture repair is isolated from this slice.
+
+## Post-merge main checks
+
+After #1439, the running Desk is backend
+`be47877f62a78971737e45812888910fc63264ab`, frontend `3ce85f6770b41fa3`.
+Deployment confirms database ownership, no diagnoses and 200 for health,
+Desk, Conductor and Engines. CLI/MCP use this source; feedback stays enabled
+and Presence stays off. The latest main tape is queued behind the earlier
+pinned run, coalescing later merged targets rather than running duplicate
+full suites at once. Its target pointer is
+`wt-desk-native-repository-20261023/.tmp/delivery/pending-main-target`.
+
+The earlier main tape exposed an inherited optional-plugin route failure:
+a summary-capable assignment can be incompatible with an optional plugin.
+The plugin helper had skipped missing assignments but raised on incompatible
+ones, refusing the whole core summary before dispatch. The bounded fix uses
+the existing optional-plugin exclusion receipt for either unfreezable case;
+core summary capability/admission remains strict. Four formerly failing
+route/dispatch cases and two existing optional/core pins pass. This repairs
+an existing producer boundary; it does not complete P05 or imply a new face.
+Required quick green: build, 113 affected route/database cases, 110 desk
+sweep, 27 canon and 1,126 repository guards. Initial attempts exposed missing
+worktree dependencies (Vite, then pytest-xdist); the verified environment run
+passes without relaxing checks (`.tmp/quick-plugin-route-verified-env.log`).
+Merge pointer is recorded at delivery.

@@ -525,7 +525,8 @@ def _plugin_route_plan(capability_id: str) -> Mapping[str, Any] | None:
 
     Uses the SAME ``resolve_route_plan_for_feature`` path the binder uses,
     reading persisted assignment heads only (no Config, no live host).
-    Returns None on ``no_assignment``; any other refusal propagates.
+    Returns None when the optional plugin has no freezable assignment;
+    any other refusal propagates.
     """
     from ..kernel.runtime import _service
     from ..meeting_session.deferred_bound import PARENT_KIND, queue_service_principal
@@ -545,7 +546,7 @@ def _plugin_route_plan(capability_id: str) -> Mapping[str, Any] | None:
             deadline_at=time.time() + 300.0,
         )
     except _SvcValidationError as exc:
-        if getattr(exc, "code", None) == "no_assignment":
+        if getattr(exc, "code", None) in {"no_assignment", "no_compatible_assignment"}:
             return None
         raise
 
