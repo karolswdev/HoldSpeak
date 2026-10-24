@@ -645,9 +645,10 @@ Branch: feat/native-project-source-wave7-20261023.
 Worktree: /Users/karol/dev/tools/wt-native-project-source-wave7-20261023.
 First P06/J3 whole source job, using P04 admission and active Note/Ask/Thread.
 
-The active Room currently shows Watch Sources, People and Plan; the parked
-Files implementation is not a live filed-resource door. Add a small Files
-fold using the existing project resource reader/ObjectList and explicit Open.
+Before this delivery the active Room showed Watch Sources, People and Plan;
+the parked Files implementation was not a live filed-resource door. This
+slice adds a Files fold using the existing project reader/ObjectList and an
+explicit Open note action.
 Open is the existing Note/adoption action; passive Room render never adopts.
 The Note is Ask's versioned material. Project id/resource ref describe only
 where the job returns, never an extra model source or a claim that a saved
@@ -668,7 +669,7 @@ only, so this first in-session slice does not promise return after a full reload
 Use the existing openProjectRoomAt keyed one-shot request with a filed-ref
 target, not a parallel opener service. It reopens exact Project A even if the
 single Room now shows B, leaves other postures, unfolds Files and refreshes
-current membership before selecting/focusing/scolling the row. Raw successful
+current membership before selecting/focusing/scrolling the row. Raw successful
 membership is distinct from derived members and Desk cache: absent ref means
 NOT FILED HERE; a filed Note needs its real read before a missing-source claim;
 404/deleted is NOTE NOT AVAILABLE; transport failure is NOTE NOT READ/Retry.
@@ -685,12 +686,12 @@ source_handoff_study owns store/opener/navigation and active Note/Ask wiring;
 repository_verifier owns the Room resource read/Files composition and B/F
 canvas update. Root owns integration, records, independent advisories and serial SHIP.
 The navigation worker supplied the focused real-route whole-job glass.
-Canvas B/F were painted before Room build, preserving18 boards with no bounds
+Canvas B/F were painted before Room build, preserving 18 boards with no bounds
 failures. Both navigation and Room received final Sol advisory RATIFY after
 their first conditions were fixed. These are not Muad'Dib checks.
 
-Navigation focused proof covers94 tests across four files and18 supplemental
-window tests; Room/hook/reference proof covers62 tests. These sets overlap the
+Navigation focused proof covers 94 tests across four files and 18 supplemental
+window tests; Room/hook/reference proof covers 62 tests. These sets overlap the
 later required quick and must not be summed. Whole-tree types pass. All five
 new browser cases pass across focused runs: real Project A/B source job at
 1440/393, authoritative moved/missing/read-failure/Retry/supersession receipts,
@@ -699,22 +700,27 @@ a qualified Note ref inside Thread JSON that stores its ID; the contract check
 now uses ID there while preserving qualified refs on Ask wire and saved Note.
 The phone rig now waits for B Open's visible completion before switching to
 Ask; retained pre-Save evidence establishes Ask remains front through reply.
-No product race was masked. Browser canonical closed-source reopen is1440;
+No product race was masked. Browser canonical closed-source reopen is 1440;
 legacy bare-key/other-kind protection is unit proof, not additional glass.
 Shots/receipts: `.tmp/evidence-shots/native-project-source-wave7/`.
 Canonical nine-point phone probes cover Files, Ask head and saved Links. The
 Components Lists specimen reuses the production Files section with local IO;
 it cannot adopt/read/write real resources. Full P06/J3, reload-persisted job
-return, real model quality and owner visual acceptance remain open. Required
-quick and merge are pending.
+return, real model quality and owner visual acceptance remain open.
+Required final quick green: build,4,309 related UI tests,five affected real
+browser cases,110 desk sweep,27 canon and1,126 repository guards
+(`.tmp/quick-native-project-source-ship.log`). Final whole-tree typecheck
+passes (`.tmp/typecheck-ship.log`). The Open note copy correction passes the
+same final quick; the first full checks and their fixes remain recorded below.
 
 
 ## Owner check-in and plan reconciliation — 2026-10-23
 
-The owner requested an honest whole-plan status and updates where reality was
-missing. DELIVERY-PLAN now distinguishes all ten package states, five shipped
-workflow/component slices, built Project work, integration reds and unstarted
-modernization waves. It removes stale pinning/reference descriptions and
+At the check-in the owner requested honest whole-plan status and missing
+reality. The plan distinguished five shipped slices from built Project work
+and its then-open integration checks. This delivery adds that sixth slice
+with final checks green; all ten package states and unstarted modernization
+waves remain explicit. It removes stale pinning/reference descriptions and
 makes visual coherence an explicit near-term adoption pass across already
 implemented consumers, before broad Meeting/Agent migration. The 47-family
 map retains its design/audit history and points to actual execution.
@@ -722,8 +728,8 @@ map retains its design/audit history and points to actual execution.
 The Project integration quick found 15 trailing-undefined opener call-shape
 failures across 10 files. Production forwarding is corrected at the existing citations/shell/opener
 seams while preserving explicit navigation clearing; no tests were changed.
-The ten failed files plus Ask pass 196/196 focused tests. Required quick and
-final types are rerunning after that source correction. Five
+The ten failed files plus Ask pass 196/196 focused tests. Final required
+quick and whole-tree types pass after that source correction. Five
 focused browser cases and final source advisories remain bounded evidence,
 not whole integration or visual acceptance.
 
@@ -740,7 +746,7 @@ these receipts record what was verified at each deployment.
 
 ## First visual adoption scope from the screenshot assessment
 
-Read-only assessment of actual1440/393 captures identified three causes:
+Read-only assessment of actual 1440/393 captures identified three causes:
 ProjectRoomCore auto-opens absent-source setup and composes it before Files;
 ObjectList emits Name/Kind/When/State even when the provider supplies only
 Name/Kind; short/busy reading states spread content and controls across large
@@ -753,3 +759,14 @@ columns the first visual slice, mirrored in actual Components and Canvas B/F.
 Note/Ask content-and-foot balance follows with Settings as comparator. This
 is source-backed scope, not a new visual implementation or owner acceptance;
 no visual product files were changed for the assessment.
+
+
+## Deployment receipt for #1452 — 2026-10-23
+
+Backend `b18fcc0d93d3f20a681869c00d1d9126ce97cc16`, frontend
+`f2eef8675d5cce2e`, PID62168; owns_database true, diagnoses empty and four
+health/routes200. CLI/MCP match, feedback defaults on, Presence off. The
+prepared bundle is reused without live rebuild by the coalesced full tape.
+The Project integration's remaining copy-guard finding was the generic Open
+action; it now says Open note, with 10 focused section tests and 16 copy tests
+passing. Required integration quick and final types pass on the merged #1452 baseline.

@@ -173,8 +173,9 @@ are in [EXECUTION](../EXECUTION.md).
 
 Observed partial consumers are registered repositories/resources, Settings
 You, active Thought voice/editing, and Note-sourced Ask/save/linked source and
-Thread return. The Project filed-Note whole job is built with five passing
-focused browser cases but still has integration corrections open. The shared
+Thread return. The first Project filed-Note source job is delivered with five passing
+browser cases and final required quick green; full Project/People J3 remains
+open. The shared
 reference mirrors those real compositions with local IO; it is not another
 production consumer. Meeting, People/Today, Agent/Automation, broader readiness,
 Send and shell/feedback adoption remain incomplete. No row gains a completion

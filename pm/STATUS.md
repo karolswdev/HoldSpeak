@@ -26,8 +26,8 @@ server-side source pinning. Both continued in #1448 below; captured frontend
 text alone was not inference source freezing. [Execution](../docs/internal/betterment/native-experience/EXECUTION.md)
 keeps actual PRs, scoped proof and remaining package/journey acceptance.
 
-Running Desk: backend `c7fec7ef3f2fc43bd878df5e02fc38ce68492777`, frontend
-`f2eef8675d5cce2e`; database ownership true, no identity diagnoses, health/Desk/
+Last verified deployment — #1452: backend
+`b18fcc0d93d3f20a681869c00d1d9126ce97cc16`, frontend `f2eef8675d5cce2e`; database ownership true, no identity diagnoses, health/Desk/
 Conductor/Engines return 200. CLI/MCP match this source; feedback is enabled
 and Presence stays off. Five slices, the zoom policy repair and arranged-growth repair run on this revision.
 The completed pinned #1443 tape passed all 44 Python batches and its full web
@@ -2662,7 +2662,7 @@ advisory RATIFY, 42 focused unit tests, 1440/393 real cancellation/late-answer
 proof and final types pass. Required quick passed 22 related UI, 2 browser,
 110 sweep, 27 canon and 1,126 guards. The producer Stop is unobstructed; no
 remote physical-abort claim is made. P06 now has final source advisories and
-five passing focused browser cases; final integration checks are rerunning
+five passing focused browser cases; final integration checks pass
 after the opener forwarding correction passed 196 focused tests. Latest full
 tape is not green. Zoom/reload geometry and browser-test corrections remain
 separate delivery; the earlier Send timeout cause is still unverified.
@@ -2679,8 +2679,8 @@ The combined browser check found a stale P04 expectation for the global card
 parked in #1451. The two source jobs now verify actual inline progress and
 reachable Stop without that card;1440/393 pass. Required final quick passed:18 affected browser cases,110 sweep,27 canon
 and1,126 guards. No full-suite green is claimed.
-Current running Desk is #1451, backendc7fec7ef3f2fc43bd878df5e02fc38ce68492777,
-frontendf2eef8675d5cce2e, PID42688, owns_database true, diagnoses empty,
+Historical deployment receipt for #1451: backendc7fec7ef3f2fc43bd878df5e02fc38ce68492777,
+frontend f2eef8675d5cce2e, PID42688, owns_database true, diagnoses empty,
 four health/routes200. CLI/MCP match and feedback defaults on; Presence off.
 
 P06/J3 first whole filed-source job is built in wave7 and received final Sol
@@ -2689,16 +2689,34 @@ focused runs at 1440/393: A/B Note source isolation, Ask version pin, saved
 source/Thread doors, exact original Project row return, current missing/moved/
 read-failure/Retry/supersession states, and local Components Files. Canonical
 closed-source reopen is browser proof on desktop; legacy bare-key is unit
-proof. Required quick/merge remain pending; no full P06 or owner aesthetic
-acceptance is claimed. Job origin is transient navigation, not added material
+proof. Required final quick and whole-tree types pass; no full P06 or owner
+aesthetic acceptance is claimed. Job origin is transient navigation, not added material
 or automatic filing. Running #1451 includes unobstructed pending Ask Stop.
 
 
 Owner requested a whole-plan reality check. DELIVERY-PLAN now has explicit
 P01–P10 delivery/remaining scope and a near-term visual adoption pass across
-the already-built cross-app path. Five workflow/component slices have shipped;
+the already-built cross-app path. Six workflow/component slices have shipped;
 no full package or 47-family/visual acceptance is claimed. P06 integration
 found 15 ordinary opener call-shape regressions across 10 existing test files;
 shared forwarding now passes 196/196 focused tests without changing their
-expectations; final integration checks are rerunning.
+expectations; final integration quick and types pass.
 See native-experience/EXECUTION.md for actual source/PR/proof boundaries.
+
+
+Verified deployment #1452: PID62168, backend b18fcc0d93d3f20a681869c00d1d9126ce97cc16,
+frontend f2eef8675d5cce2e; owns_database true, diagnoses empty, four routes200.
+CLI/MCP match, feedback defaults on and Presence remains off. This is the
+last verified deployment before the Project delivery, not a claim that a
+future merged revision has already been observed.
+
+
+Project filed-source delivery: required final quick GREEN (build,4,309 related
+UI tests,5 affected browser cases,110 sweep,27 canon,1,126 guards), final
+whole-tree TypeScript exit0. It preserves Note-only pinned Ask material,
+saved source/Thread doors and exact transient Project return without filing
+answers or adding Project context. Six bounded workflow/component slices are
+now delivered; no whole package/47-family/visual acceptance or full-tape green.
+The reconciled plan puts shared Room/list visual hierarchy first, then Note/
+Ask content balance before widening Meeting/Agent migration. Independent final
+NAV, Room and docs advisories are RATIFY; local Sol, not Muad'Dib checks.

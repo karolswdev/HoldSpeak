@@ -49,10 +49,11 @@ Packages are sliced, not all-or-nothing gates: existing P06/P07 services can ser
 
 **Reality reconciliation — 2026-10-23.** The 47 adversarial family reviews,
 seven journeys, ten-package proposal and paired canvases define the work.
-They do not measure implementation completion. Five workflow/component slices
+They do not measure implementation completion. Six workflow/component slices
 have shipped: repository windows/read browser (#1438), Settings You (#1439),
 Thought voice/Editing (#1443), source Ask/return (#1446), and Note-version
-pinning/saved links (#1448). Shared frame/zoom/growth and pending Stop repairs
+pinning/saved links (#1448), and filed Project Note/source/return (this delivery).
+Shared frame/zoom/growth and pending Stop repairs
 are separate delivery, not additional completed packages. No full package,
 whole seven-journey set, owner aesthetic acceptance or latest-main full-suite
 green is claimed. Recipe closeout 115/117 measures another repair lane.
@@ -64,19 +65,18 @@ green is claimed. Recipe closeout 115/117 measures another repair lane.
 | P03 input/voice | Partial: active Thought captured target, recovery, writer/undo and shared Editing. | Ask/Settings/Pad policy adoption, native delivery, learning/macros and complete J1. |
 | P04 conversations | Partial: Note-only version pinning, Ask/save/source/Thread doors and open/closed source return. #1451 removes the global run card that covered Stop. | Broader thread interruption/retrieval, Memory/Activity and complete J3. |
 | P05 meetings | Modernization migration not started; existing meeting features remain. | Record/import/result/history/aftercare/calendar adoption and complete J2. |
-| P06 project/person/day | First Project filed-Note→Ask→saved links→exact Project return built; five real-browser cases pass. Integration checks are still open. | People/privacy/briefs, Today/Needs, updates/decisions, durable job return and complete J3/J4. |
+| P06 project/person/day | Partial: filed-Note→Ask→saved links→exact Project return; five real-browser cases and required quick pass. | People/privacy/briefs, Today/Needs, updates/decisions, durable job return and complete J3/J4. |
 | P07 agents/automation | Modernization migration not started; existing agent/automation features remain. | Hand/result/terminal/occurrence adoption and complete J4. |
 | P08 preferences | Partial: Settings You truthful save/retry and shared Forms. | Other writers, Setup, Engines, Accounts and complete J6. |
 | P09 Send | Modernization migration not started. Existing isolated real folder-byte jobs provide baseline evidence. | Producer/Needs/Delivery adoption, frozen identity/unknown/replay and complete cross-job egress. |
-| P10 shell/reference/feedback | Partial: shared Resources, Forms, Editing and Conversation; local Files specimen built with P06. Feedback remains enabled; Presence off. | Cohesive shell/visual adoption, operation outcomes, three consecutive Firefox Settings reports and measured native-feeling behavior. |
+| P10 shell/reference/feedback | Partial: shared Resources, Forms, Editing and Conversation; local Files specimen delivered with P06. Feedback remains enabled; Presence off. | Cohesive shell/visual adoption, operation outcomes, three consecutive Firefox Settings reports and measured native-feeling behavior. |
 
-The P06 integration run found 15 opener call-shape regressions across 10 existing
+The first P06 integration run found 15 opener call-shape regressions across 10 existing
 unit-test files. The shared forwarding correction now passes all 196 tests
 in those ten files plus Ask, preserving ordinary open calls and explicit
-origin clearing. Required integration quick is rerunning. The combined browser run
+origin clearing. Final integration quick and whole-tree typecheck pass. The combined browser run
 also exposed an old P04 assertion requiring the global card removed by #1451;
-the updated inline-progress/Stop checks pass at 1440/393 and required quick is
-rerunning. The earlier 393 Send Back timeout has not reproduced; retained
+the updated inline-progress/Stop checks and required quick pass in #1452. The earlier 393 Send Back timeout has not reproduced; retained
 failure-state evidence is added without claiming its cause is fixed.
 
 ## Delivery adjustment: visible adoption alongside behavior
@@ -126,8 +126,10 @@ each inactive provider a full row, and ObjectList always emits four columns.
 The next bounded visual slice aligns short/busy/long Note and Ask content with
 their head/foot controls, using existing editor/RunLine/footer compositions;
 Settings You is the hierarchy comparator. Preserve reading/selection/scroll,
-IME/undo, newer drafts, Stop and44px targets; do not solve blank space by
-shrinking every window or replacing specialized surfaces.
+IME/undo, newer drafts, Stop and 44px targets; do not solve blank space by
+shrinking every window or replacing specialized surfaces. Purposeful editor
+and conversation workspace is valid; blank space alone is not a defect.
+Change the balance where a concrete job loses hierarchy or access to controls.
 
 Use the existing package sections, EXECUTION.md and pm/STATUS.md for these
 facts. No extra approval stage, status database, review loop or percentage is
@@ -254,7 +256,7 @@ browser and required quick green. It owns context separately from floor selectio
 an unchanged source range/scroll after open or closed-window return, refuses
 stale range application, and saves editable qualified provenance. Components
 shares the same controlled source view with local IO. The Note-version continuation below delivers server admission/pinning.
-Project integration is built but not merged; People source jobs, Memory/Activity
+The first Project filed-Note source/return job is delivered; People source jobs, Memory/Activity
 retrieval and whole J3 remain open. See [execution](EXECUTION.md).
 
 The Note-version/Linked items continuation is [PR1448](https://github.com/karolswdev/HoldSpeak/pull/1448), independently rechecked
@@ -317,11 +319,11 @@ canvas state story.
 
 ## P06: Project, person and day
 
-**Delivery:** first filed Project Note/source/return slice is built in
+**Delivery:** first filed Project Note/source/return slice is delivered from
 `wt-native-project-source-wave7-20261023`. Five browser cases pass across
 focused runs at 1440/393, including missing/moved/failed reads and local Files
 reference. Navigation and Room received final Sol advisory RATIFY; these are
-not Muad'Dib checks. Required integration quick is not green yet. This is
+not Muad'Dib checks. Required integration quick and whole-tree typecheck pass. This is
 transient job navigation, not automatic filing or added Project model scope.
 People/brief/Today/Needs and full J3 remain open; source and shots are recorded
 in EXECUTION.md.
@@ -433,7 +435,7 @@ Edit-to-note distinct from external Send.
 **Delivery:** the Resources reference merged with its production consumer in
 [PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438). Forms (#1439), Editing (#1443), and Conversation (#1446/#1448) also use
 production compositions with local IO. P06 adds the same Filed Notes section
-as a local Lists example; it is built, not yet merged. #1451 parks duplicate
+as a local Lists example, with no real-resource IO. #1451 parks duplicate
 run-scoped global status so producer Stop remains reachable. Shell/visual/
 feedback/operation reconciliation and the three-consecutive-report Firefox
 job remain open. Presence stays disabled.
