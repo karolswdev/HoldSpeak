@@ -105,4 +105,3 @@ export function LegacyFormsPattern({ state }: { state: ExampleState }) {
     </section>
   );
 }
-
