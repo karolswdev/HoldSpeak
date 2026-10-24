@@ -87,7 +87,7 @@ fixture seam, not completion of those packages or of all 47 families.
 Independent repository view/resource identity, exact close/raise, compatible
 restoration and sibling placement are observed in isolated browser cases.
 The #1444 zoom policy repair preserves content auto height. A further bounded
-shared growth clamp is built/reviewed and quick green: a low owner-arranged
+shared growth clamp is [PR1449](https://github.com/karolswdev/HoldSpeak/pull/1449), reviewed and quick green: a low owner-arranged
 fitContent window lifts into the work band when its material grows, keeping
 saved height and identity. Full history/selection/scroll persistence,
 cross-app command origin and the narrow visible chooser remain open. See [execution](EXECUTION.md).

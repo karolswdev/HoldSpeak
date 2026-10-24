@@ -521,6 +521,8 @@ source-version slice and does not retroactively make the pinned tape green.
 
 ## Sixth delivery: content growth stays inside the work area
 
+[PR1449](https://github.com/karolswdev/HoldSpeak/pull/1449).
+
 Branch: fix/native-content-growth-wave6-20261023.
 Worktree: /Users/karol/dev/tools/wt-native-content-growth-wave6-20261023.
 P01/J7 compositor repair from the arranged-Note reproduction above.

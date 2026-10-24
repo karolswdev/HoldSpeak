@@ -47,7 +47,7 @@ frontend advisory fixes received final RATIFY. Required quick green: build,
 4,286 UI tests, 961 affected checks (six known skips), 110 desk sweep, 27 canon,
 1,126 repository guards; changed browser cases cover1440/393 and phone targets.
 This is bounded P04/J1/P10, not full P04/J3 or owner aesthetic acceptance.
-The separate P01 low-window growth clamp is built/reviewed and required quick
+The separate P01 low-window growth clamp — #1449 — is reviewed and required quick
 green: 4,281 UI, nine affected browser, 110 sweep, 27 canon, 1,126 guards.
 It moves only y to keep actual expanded height in the work area and preserves
 owner sizing/zoom/identity. Synthetic growth, real gestures and normal-motion
