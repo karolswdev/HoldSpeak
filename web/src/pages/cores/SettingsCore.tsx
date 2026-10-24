@@ -1747,7 +1747,10 @@ function SettingsFace({ hero, scope }: CoreProps) {
         revisionRef.current = result.settings._revision;
       }
       authoritativeBaseRef.current = rebased;
-      clearFailedChangesCoveredByLeave(changes);
+      // A newer local write can share the same value/path as this leave
+      // patch.  Its own 409 refusal remains authoritative until Retry; only
+      // the paths this response actually accepted may clear failed drafts.
+      clearFailedChangesCoveredByLeave(acceptedLeaveChanges);
       repaintPending();
       pruneLeaveWrites();
     }).catch((error) => {

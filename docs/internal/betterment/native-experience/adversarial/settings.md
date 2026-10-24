@@ -83,11 +83,11 @@ sides of leave completion, keepalive failure, repeat hide, and late failures
 after a newer write. It preserves immediate partial-patch leave delivery and
 the existing serialized writer. There is no new face, modal or framework.
 
-Focused proof: 39 cases in four files passed; the Accounts calendar refusal
+Focused proof: 66 cases in five files passed; the Accounts calendar refusal
 fixture now includes the actual ApiError export and all 26 cases pass. The
-required quick passed the build, 4,154 related web tests, seven affected
+required quick passed the build, 4,155 related web tests, seven affected
 Python/browser cases, 110 desk sweep, 27 canon and 1,126 repository guards.
 Root inspected Settings captures at 1440 and 393; these are layout evidence,
-not live conflict or aesthetic acceptance. The repair PR records delivery. The
+not live conflict or aesthetic acceptance. [PR1434](https://github.com/karolswdev/HoldSpeak/pull/1434) records delivery. The
 dirty-debounce receipt, remaining section/alias jobs and owner UX acceptance
 remain open; this does not close the Settings audit.

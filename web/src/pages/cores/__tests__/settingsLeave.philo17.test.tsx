@@ -237,6 +237,71 @@ describe("Settings leave send", () => {
     expect(screen.queryByTestId("settings-save-failure")).toBeNull();
   });
 
+  it("keeps a same-value newer draft when its deferred 409 races a leave success", async () => {
+    let authoritative = settingsWithMeeting("same-value-r1", { intelligence_auto: "manual" });
+    let rejectOld!: (reason?: unknown) => void;
+    let rejectNew!: (reason?: unknown) => void;
+    let resolveLeave!: (result: { settings: SettingsResponse }) => void;
+    const oldSave = new Promise<never>((_, reject) => { rejectOld = reject; });
+    const newSave = new Promise<never>((_, reject) => { rejectNew = reject; });
+    const leaveSave = new Promise<{ settings: SettingsResponse }>((resolve) => { resolveLeave = resolve; });
+    let ordinaryPuts = 0;
+    apiFetch.mockImplementation((url: string, init?: { method?: string; keepalive?: boolean; json?: Record<string, unknown> }) => {
+      if (url === "/api/settings" && init?.method === "PUT") {
+        if (init.keepalive) return leaveSave;
+        ordinaryPuts += 1;
+        if (ordinaryPuts === 1) return oldSave;
+        if (ordinaryPuts === 2) return newSave;
+        const patch = (init.json?.meeting ?? {}) as Record<string, unknown>;
+        authoritative = {
+          ...authoritative,
+          _revision: "same-value-r4",
+          meeting: { ...(authoritative.meeting ?? {}), ...patch },
+        };
+        return Promise.resolve({ settings: authoritative });
+      }
+      if (url === "/api/settings") return Promise.resolve(authoritative);
+      return Promise.resolve({});
+    });
+
+    render(<SettingsCore scope="meetings" />);
+    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "every" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(700); });
+    window.dispatchEvent(new Event("pagehide"));
+    // A distinct local write with the same value is still a newer draft.  Its
+    // refusal must survive the older leave response's value-equality cleanup.
+    fireEvent.change(screen.getByRole("combobox", { name: "Auto-run the summary" }), { target: { value: "every" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(700); });
+
+    authoritative = settingsWithMeeting("same-value-r2", { intelligence_auto: "manual" });
+    await act(async () => {
+      rejectOld(new ApiError(409, "Settings changed in another session"));
+      await Promise.resolve();
+      await Promise.resolve();
+      rejectNew(new ApiError(409, "Settings changed in another session"));
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
+    expect(screen.getAllByRole("button", { name: "Retry" }).length).toBeGreaterThan(0);
+
+    resolveLeave({ settings: settingsWithMeeting("same-value-r3", { intelligence_auto: "every" }) });
+    await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+
+    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
+    expect(screen.getAllByRole("button", { name: "Retry" }).length).toBeGreaterThan(0);
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole("button", { name: "Retry" })[0]);
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(puts()[2][1].json._revision).toBe("same-value-r2");
+    expect(screen.getByRole("combobox", { name: "Auto-run the summary" })).toHaveValue("every");
+    expect(screen.queryByTestId("settings-save-failure")).toBeNull();
+  });
+
   it("keeps a newer successful job when the older leave response arrives later", async () => {
     let authoritative = settingsWithMeeting("order-r1", { intelligence_auto: "manual" });
     let resolveLeave!: (result: { settings: SettingsResponse }) => void;

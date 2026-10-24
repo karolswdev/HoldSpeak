@@ -8,11 +8,20 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-Settings leave/return repair: leave supersession is scoped to captured write
+**Owner correction — strategy before further implementation (2026-10-23).**
+Finish the bounded repairs already underway, then refine the plan and
+strategy before starting further product changes. The proposed refinement
+and advisory re-check are in draft #1435; it remains UNCHECKED, awaiting
+Muad'Dib. The 47 audit records are evidence, not an automatic build queue.
+The larger project-update Stop draft is parked at `54a7436b7` outside main;
+its last edits and new tests are unverified.
+
+
+Settings leave/return repair — #1434: leave supersession is scoped to captured write
 identities and confirmed acceptance. Later refused edits remain visible with
 Retry; failed leave-only edits and late responses preserve newer local work.
 The permanent component regression replaces the parked reproduction as repair
-proof: 39 focused cases passed; required quick green with 4,154 related web
+proof: 66 focused cases across five files passed; required quick green with 4,155 related web
 tests, seven affected Python/browser cases, 110 desk sweep, 27 canon and
 1,126 repository guards. Root inspected 1440/393 Settings captures.
 The dirty-debounce receipt and other Settings audit findings remain open.
@@ -2237,6 +2246,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1434 — Settings leave/return retention:** supersession names covered jobs and accepted leave paths; later same-value conflicts retain the draft and Retry uses the authoritative revision. 66 focused cases, 4,155 related web tests, seven affected Python/browser cases and required quick green; 1440/393 captures inspected. Other Settings audit conditions remain open.
 
 - **#1433 — Ask saved-thread authority:** older reads cannot overwrite a new selection, New Ask or Close. Seven regression assertions red before the repair; 46 focused/143 related component tests, three glass cases, required quick and inspected 1440/393 captures green. Other audit findings remain open.
 
