@@ -31,6 +31,13 @@ def _select_pattern(page, label: str) -> None:
 
 @pytest.fixture
 def desk(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    # The registry default is frozen at import time, before _boot sets HOME.
+    import holdspeak.delivery.registry as registry_module
+
+    monkeypatch.setattr(
+        registry_module, "DEFAULT_REGISTRY_PATH",
+        tmp_path / "home" / ".holdspeak" / "delivery_sources.json",
+    )
     monkeypatch.setenv("HOLDSPEAK_UI_FEEDBACK", "1")
     _ensure_build()
     server, base = _boot(tmp_path, monkeypatch, token=TOKEN)
@@ -49,7 +56,6 @@ def test_patterns_are_real_local_compositions(desk: str, width: int, height: int
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": width, "height": height}, reduced_motion="reduce")
-        page.clock.install()
         page.goto(f"{desk}/?token={TOKEN}", wait_until="load")
         _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
         _normal_chair(page)
@@ -59,29 +65,63 @@ def test_patterns_are_real_local_compositions(desk: str, width: int, height: int
         expect(page.locator('[aria-label="LOCAL SPECIMEN"]')).to_be_visible()
         expect(page.get_by_role("button", name="Give feedback on Components", exact=True)).to_be_visible()
 
-        # Forms: the captured save completes while a newer edit remains in
-        # the field, so the specimen demonstrates the real dirty boundary.
-        form = page.get_by_test_id("reference-form")
-        title = form.get_by_role("textbox", name="Project note title")
+        writes: list[str] = []
+        page.on("request", lambda request: writes.append(request.url)
+                if request.method != "GET" and any(path in request.url for path in
+                   ("/api/settings", "/api/notes", "/api/ask")) else None)
+
+        # Forms is the actual Settings You field/controller with local IO.
+        # Exercise a raw alias, held acknowledgement, refusal, retry and a
+        # newer name draft without sending a production settings write.
+        form = page.get_by_test_id("reference-owner-preferences")
+        state = page.get_by_role("combobox", name="Example state")
+        name = form.get_by_test_id("settings-owner-name").get_by_role("textbox")
+        aliases = form.get_by_test_id("settings-owner-aliases").get_by_role("textbox")
+        expect(state).to_have_value("saved")
+        expect(name).to_have_value("Karol")
+        expect(form.get_by_text("Carol", exact=True)).to_be_visible()
+        assert "LOCAL SPECIMEN · SETTINGS WRITER" in form.inner_text()
+        assert form.locator(".desk-mic").count() == 0
         page.screenshot(path=str(SHOTS / f"forms-{width}.png"), full_page=False)
-        title.fill("Release note draft")
-        page.clock.pause_at(page.evaluate("Date.now() / 1000") + 60)
-        form.get_by_role("button", name="Save note").click()
-        title.fill("Newer edit kept")
-        scope = form.get_by_role("combobox", name="Project scope")
-        scope.select_option("Team record")
-        page.clock.run_for(120)
-        expect(title).to_have_value("Newer edit kept")
-        expect(scope).to_have_value("Team record")
-        expect(form.get_by_text("Saved · newer edits remain.")).to_be_visible()
-        page.clock.resume()
-        page.get_by_role("combobox", name="Example state").select_option("failed")
-        expect(form.get_by_text("Save failed.")).to_be_visible()
+
+        aliases.fill("Ari")
+        alias_row = aliases.locator("xpath=ancestor::div[@class='gadget-row'][1]")
+        expect(alias_row.get_by_role("status", name="EDITED")).to_be_visible()
+        aliases.press("Enter")
+        expect(form.get_by_text("Ari", exact=True)).to_be_visible()
+        expect(alias_row.get_by_role("status", name="SAVED")).to_be_visible()
+
+        state.select_option("saving")
+        form.get_by_role("button", name="Complete local write").wait_for()
+        name = form.get_by_test_id("settings-owner-name").get_by_role("textbox")
+        name_row = name.locator("xpath=ancestor::div[@class='gadget-row'][1]")
+        expect(name_row.get_by_role("status", name="SAVING")).to_be_visible()
+        page.screenshot(path=str(SHOTS / f"forms-saving-{width}.png"), full_page=False)
+        form.get_by_role("button", name="Complete local write").click()
+        expect(name_row.get_by_role("status", name="SAVED")).to_be_visible()
+
+        state.select_option("refused")
+        form.get_by_role("button", name="Retry", exact=True).wait_for(timeout=10_000)
+        name = form.get_by_test_id("settings-owner-name").get_by_role("textbox")
+        name_row = name.locator("xpath=ancestor::div[@class='gadget-row'][1]")
+        expect(name).to_have_value("Karol A")
+        expect(name_row.get_by_role("status", name="NOT SAVED")).to_be_visible()
         page.screenshot(path=str(SHOTS / f"forms-failed-{width}.png"), full_page=False)
         form.get_by_role("button", name="Retry").click()
-        expect(form.get_by_text("Saved.")).to_be_visible()
-        expect(title).to_have_value("Newer edit kept")
+        expect(name_row.get_by_role("status", name="SAVED")).to_be_visible()
+        expect(name).to_have_value("Karol A")
         page.screenshot(path=str(SHOTS / f"forms-saved-{width}.png"), full_page=False)
+
+        state.select_option("newer")
+        form.get_by_role("button", name="Complete local write").wait_for()
+        name = form.get_by_test_id("settings-owner-name").get_by_role("textbox")
+        name_row = name.locator("xpath=ancestor::div[@class='gadget-row'][1]")
+        expect(name).to_have_value("Karol B")
+        expect(name_row.get_by_role("status", name="EDITED")).to_be_visible()
+        form.get_by_role("button", name="Complete local write").click()
+        expect(name_row.get_by_role("status", name="SAVED")).to_be_visible()
+        expect(name).to_have_value("Karol B")
+        page.screenshot(path=str(SHOTS / f"forms-newer-{width}.png"), full_page=False)
 
         _select_pattern(page, "Reading")
         reading = page.get_by_test_id("reference-reading")
@@ -155,8 +195,10 @@ def test_patterns_are_real_local_compositions(desk: str, width: int, height: int
         page.screenshot(path=str(SHOTS / f"progress-{width}.png"), full_page=False)
 
         page.get_by_role("button", name="Reset", exact=True).click()
-        expect(page.get_by_test_id("reference-form").get_by_role("textbox", name="Project note title")).to_have_value("Sprint review notes")
-        expect(page.get_by_role("combobox", name="Example state")).to_have_value("ordinary")
+        reset_form = page.get_by_test_id("reference-owner-preferences")
+        expect(reset_form.get_by_test_id("settings-owner-name").get_by_role("textbox")).to_have_value("Karol")
+        expect(reset_form.get_by_text("Carol", exact=True)).to_be_visible()
+        expect(page.get_by_role("combobox", name="Example state")).to_have_value("saved")
 
         # Controls remains a real selector destination for the existing
         # catalogue and its retained composer/object specimens.
@@ -169,4 +211,5 @@ def test_patterns_are_real_local_compositions(desk: str, width: int, height: int
         expect(node).to_be_in_viewport()
         _settle(page)
         page.screenshot(path=str(SHOTS / f"patterns-{width}.png"), full_page=False)
+        assert not writes, writes
         browser.close()

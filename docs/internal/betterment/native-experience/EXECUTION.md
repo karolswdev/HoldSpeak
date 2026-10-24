@@ -393,3 +393,28 @@ Material reader does not supply those doors. A bounded explicit source/thread
 row in the active workspace should reuse the existing Markdown Link parser
 and refOpener policy while leaving CodeMirror caret/selection alone. This is
 proposed follow-on behavior, not an implemented saved-Note navigation claim.
+
+
+## Current runtime and reference glass reconciliation
+
+After #1446, the running Desk is backend
+`ae1a8bbee6472ad1f214be4231a6dae97246501a`, frontend `07b335d38c786200`,
+PID 48066. Deployment confirms database ownership, no diagnoses and health,
+Desk, Conductor and Engines routes 200. CLI/MCP source matches the deployed
+worktree; both entry points preserve the feedback default. Presence stays off.
+
+The completed pinned #1443 full tape passed all 44 Python batches and the full
+web baseline (5,528 passed, zero failed). Its remaining 11 browser failures are
+the inherited Chair zoom (#1444), Room/Thought selectors (#1445), and two stale
+Design Reference Forms cases. The previous Remote access timeout did not recur
+with the capped web-worker run; no product or timeout change was made for it.
+This pinned full tape is RED, not a latest-main green claim.
+
+The Design Reference glass repair follows the actual Settings You fields and
+writer used since #1439: raw alias, held ACK, refusal/Retry, newer draft and
+reset. Reading, Lists, Conversation, Progress and Controls checks remain.
+Production Settings/Note/Ask writes are forbidden by the fixture assertion,
+and the frozen delivery registry default is isolated before hub boot. No
+product code changes. Required quick green: build, both affected 1440/393
+cases, 110 desk sweep, 27 canon and 1,126 repository guards
+(`wt-native-reference-glass-fix-20261023/.tmp/quick-native-reference-glass.log`).
