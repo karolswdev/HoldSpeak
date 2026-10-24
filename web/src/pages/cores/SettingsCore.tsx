@@ -1501,6 +1501,22 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const writerFencedRef = useRef(false);
   const failedChangesRef = useRef<Array<[string[], unknown]>>([]);
   const lastFailureRef = useRef("");
+  type LeaveWrite = {
+    jobIds: number[];
+    changes: Array<[string[], unknown]>;
+    newerChanges: Array<[string[], unknown]>;
+    status: "pending" | "succeeded" | "failed";
+  };
+  // A leave patch can supersede only the jobs it actually covered, and only
+  // after that patch is accepted.  This replaces the old lifetime boolean:
+  // a later job must keep its own conflict/refusal path.
+  const leaveWritesRef = useRef<LeaveWrite[]>([]);
+  const pruneLeaveWrites = () => {
+    const liveJobIds = new Set(pendingJobsRef.current.map((job) => job.id));
+    leaveWritesRef.current = leaveWritesRef.current.filter(
+      (leave) => leave.status === "pending" || leave.jobIds.some((id) => liveJobIds.has(id)),
+    );
+  };
   const repaintPending = () => {
     const visible = projectPendingSettingsChanges(
       authoritativeBaseRef.current,
@@ -1548,6 +1564,46 @@ function SettingsFace({ hero, scope }: CoreProps) {
     pendingJobsRef.current = pendingJobsRef.current.filter(
       (pending) => pending.id !== id,
     );
+    pruneLeaveWrites();
+  };
+  const sameSettingValue = (left: unknown, right: unknown) => {
+    if (Object.is(left, right)) return true;
+    try {
+      return JSON.stringify(left) === JSON.stringify(right);
+    } catch {
+      return false;
+    }
+  };
+  const clearFailedChangesCoveredByLeave = (changes: Array<[string[], unknown]>) => {
+    const finalValues = new Map<string, unknown>();
+    for (const [path, next] of changes) finalValues.set(path.join("."), next);
+    failedChangesRef.current = failedChangesRef.current.filter(([path, next]) => {
+      const key = path.join(".");
+      return !finalValues.has(key) || !sameSettingValue(next, finalValues.get(key));
+    });
+    setRefusal(failedChangesRef.current.length ? lastFailureRef.current : "");
+  };
+  const leaveCoveredJobIds = () => {
+    const covered = new Set<number>();
+    for (const leave of leaveWritesRef.current) {
+      // A terminal failed attempt still owns these job identities for this
+      // leave cycle, so a repeated hide does not duplicate its request.  The
+      // status is checked separately before any 409 can be superseded.
+      for (const id of leave.jobIds) covered.add(id);
+    }
+    return covered;
+  };
+  const newerChangesForLeave = (leave: LeaveWrite) => [
+    ...leave.newerChanges,
+    ...pendingJobsRef.current
+      .filter((job) => !leave.jobIds.includes(job.id))
+      .flatMap((job) => job.changes),
+    ...debouncedChangesRef.current,
+  ];
+  const latestValues = (changes: Array<[string[], unknown]>) => {
+    const values = new Map<string, unknown>();
+    for (const [path, next] of changes) values.set(path.join("."), next);
+    return values;
   };
   const performSave = async (job: SettingsWriteJob) => {
     // HS-200-41 (return-to-task, focus half): the control the owner was on
@@ -1590,10 +1646,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
       if (job.changes.some(([path]) => path[0] === "calendar" || path[0] === "meeting")) void loadCalSources();
       return true;
     } catch (error) {
-      // The leave send moved the revision: this older save's refusal is
-      // expected, and the newer values already went out.
+      // A revisionless leave patch can supersede this save only when this
+      // exact job was in that patch and the keepalive was accepted.  A
+      // pending or failed leave does not make a conflict disappear.
       const supersededByLeave =
-        leaveSentRef.current && error instanceof ApiError && error.status === 409;
+        error instanceof ApiError &&
+        error.status === 409 &&
+        leaveWritesRef.current.some(
+          (leave) => leave.status === "succeeded" && leave.jobIds.includes(job.id),
+        );
       if (!supersededByLeave) {
         failedChangesRef.current.push(...job.changes);
         lastFailureRef.current = readableError(error);
@@ -1601,10 +1662,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
       }
       writerFencedRef.current = true;
       removePendingJob(job.id);
-      try {
-        await readAuthoritativeBase();
-      } catch {
-        // A later queued job must reconcile before it can write.
+      if (!supersededByLeave) {
+        try {
+          await readAuthoritativeBase();
+        } catch {
+          // A later queued job must reconcile before it can write.
+        }
       }
       repaintPending();
       return false;
@@ -1613,6 +1676,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
     }
   };
   const save = (changes: Array<[string[], unknown]>): Promise<boolean> => {
+    for (const leave of leaveWritesRef.current) {
+      if (leave.status === "pending") leave.newerChanges.push(...changes);
+    }
     const job = { id: ++nextJobIdRef.current, changes };
     pendingJobsRef.current.push(job);
     const next = saveQueue.current.then(
@@ -1642,21 +1708,65 @@ function SettingsFace({ hero, scope }: CoreProps) {
   // behind the queue (Astra r2 on #1090). It carries no revision, so it
   // applies; an older full-document save still in flight carries the old
   // revision, and the hub refuses it if it lands later.
-  const leaveSentRef = useRef(false);
   useFlushOnLeave(() => {
     clearTimeout(saveTimer.current);
     const unsent = debouncedChangesRef.current;
-    const queued = pendingJobsRef.current.flatMap((job) => job.changes);
-    if (!unsent.length && pendingJobsRef.current.length < 2) return;
+    const coveredJobIds = leaveCoveredJobIds();
+    const queuedJobs = pendingJobsRef.current.filter((job) => !coveredJobIds.has(job.id));
+    if (!unsent.length && !queuedJobs.length) return;
     debouncedChangesRef.current = [];
-    const patch = mergeSettingsChanges({} as SettingsResponse, [...queued, ...unsent]);
-    leaveSentRef.current = true;
+    const changes = [...queuedJobs.flatMap((job) => job.changes), ...unsent];
+    const patch = mergeSettingsChanges({} as SettingsResponse, changes);
+    const leave: LeaveWrite = {
+      jobIds: queuedJobs.map((job) => job.id),
+      changes,
+      newerChanges: [],
+      status: "pending",
+    };
+    leaveWritesRef.current.push(leave);
     writerFencedRef.current = true;
-    void apiFetch("/api/settings", {
+    void apiFetch<{ settings?: SettingsResponse }>("/api/settings", {
       method: "PUT",
       json: patch,
       keepalive: true,
-    }).catch(() => undefined);
+    }).then((result) => {
+      leave.status = "succeeded";
+      // Keep later local jobs ahead of this older leave patch.  A keepalive
+      // response can arrive after a new ordinary job has already completed;
+      // adopting its whole document would repaint that newer value away.
+      const newerPaths = new Set(
+        newerChangesForLeave(leave).map(([path]) => path.join(".")),
+      );
+      const acceptedLeaveChanges = changes.filter(([path]) => !newerPaths.has(path.join(".")));
+      const rebased = mergeSettingsChanges(
+        authoritativeBaseRef.current,
+        acceptedLeaveChanges,
+      );
+      if (result?.settings?._revision && !newerPaths.size) {
+        rebased._revision = result.settings._revision;
+        revisionRef.current = result.settings._revision;
+      }
+      authoritativeBaseRef.current = rebased;
+      clearFailedChangesCoveredByLeave(changes);
+      repaintPending();
+      pruneLeaveWrites();
+    }).catch((error) => {
+      leave.status = "failed";
+      // The queued jobs retain their own save/error lifecycle.  Only edits
+      // which existed solely in this keepalive need to enter Retry now.
+      const newerValues = latestValues(newerChangesForLeave(leave));
+      const failedUnsent = unsent.filter(([path]) => {
+        const key = path.join(".");
+        return !newerValues.has(key);
+      });
+      if (failedUnsent.length) {
+        failedChangesRef.current.push(...failedUnsent);
+        lastFailureRef.current = readableError(error);
+        setRefusal(lastFailureRef.current);
+        repaintPending();
+      }
+      pruneLeaveWrites();
+    });
   });
   const commitMany = async (changes: Array<[string[], unknown]>) => {
     installSettingsChanges(resource.data, changes, resource.setData);

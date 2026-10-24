@@ -8,6 +8,16 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Settings leave/return repair: leave supersession is scoped to captured write
+identities and confirmed acceptance. Later refused edits remain visible with
+Retry; failed leave-only edits and late responses preserve newer local work.
+The permanent component regression replaces the parked reproduction as repair
+proof: 39 focused cases passed; required quick green with 4,154 related web
+tests, seven affected Python/browser cases, 110 desk sweep, 27 canon and
+1,126 repository guards. Root inspected 1440/393 Settings captures.
+The dirty-debounce receipt and other Settings audit findings remain open.
+
+
 Native-experience repair wave — #1433, Ask saved-thread selection: the first small
 repair gives saved-thread reads their own generation. An older response or
 failure cannot replace the selected thread, New Ask or a closed window.
@@ -32,11 +42,13 @@ cases, 27 canon and 1,126 repository guards passed; 53 Markdown navigation
 checks and all 47 record/anchor validations passed. No product repair is
 included in this packet.
 
-Highest-confidence new open finding: Settings pagehide/pageshow followed by a
-later 409 drops the new selected value; root reproduced it in isolated jsdom,
-while the no-leave control retains the draft and Retry. Capture failed-create
-seed loss, late automation delivery after Stop, overlapping Ask thread reads,
-and stopped-versus-saved Meeting truth are source-backed repair priorities.
+The reproduced Settings return conflict is repaired above; the original
+control retained the draft and Retry while the leave/return case lost it.
+Ask saved-thread read authority shipped in #1433. Capture and Meeting outcome
+repairs are in closeout. The larger automation Stop candidate is parked on
+`fix/update-stop-repair-20261023` at `54a7436b7`, not merged or deployed;
+its final edits and new regressions are unverified. The owner clarified that
+strategy/design refinement precedes further implementation.
 See `adversarial/SYNTHESIS.md` for first consumers, retained boundaries and
 owner/capture/AT/performance limits. Presence remains off.
 
