@@ -3,6 +3,7 @@
 // the one Record verb reduces runtime frames in the store.
 import { beforeEach, describe, expect, it } from "vitest";
 import { DESK_WORKSPACE_STORAGE_KEY, loadPanelLayout, useDesk } from "../store";
+import { loadDeskWorkspace } from "../store/workspaceStorage";
 
 describe("desk windows", () => {
   beforeEach(() => {
@@ -34,6 +35,21 @@ describe("desk windows", () => {
     expect(
       JSON.parse(localStorage.getItem(DESK_WORKSPACE_STORAGE_KEY) || "{}").panel?.rects?.ask,
     ).toEqual(rect);
+  });
+
+  it("accepts only valid auto-height zoom rects from an additive v1 document", () => {
+    const auto = { x: 144, y: 72, w: 720, h: 430 };
+    const saved = { x: 40, y: 80, w: 500, h: 350 };
+    localStorage.setItem(DESK_WORKSPACE_STORAGE_KEY, JSON.stringify({
+      version: 1, windowsById: {}, zoneWindows: [], zoneViewPrefs: {},
+      panel: { rects: { saved }, autoRects: {
+        auto, broken: { x: 1, y: 2, w: -3, h: 4 }, "bad ref": auto,
+      }, order: [], max: ["auto"] },
+    }));
+    const panel = loadDeskWorkspace().panel;
+    expect(panel.autoRects).toEqual({ auto });
+    expect(panel.rects).toEqual({ saved });
+    expect(panel.max).toEqual(["auto"]);
   });
 
   it("resetPanelRect forgets the rect and the saved mark", () => {

@@ -26,8 +26,8 @@ server-side source pinning. Both continued in #1448 below; captured frontend
 text alone was not inference source freezing. [Execution](../docs/internal/betterment/native-experience/EXECUTION.md)
 keeps actual PRs, scoped proof and remaining package/journey acceptance.
 
-Last verified deployment — #1452: backend
-`b18fcc0d93d3f20a681869c00d1d9126ce97cc16`, frontend `f2eef8675d5cce2e`; database ownership true, no identity diagnoses, health/Desk/
+Last verified deployment — #1453: backend
+`12366e1e32685bc541a740b3f7640f6ee39681fc`, frontend `dc40153929c4c785`; database ownership true, no identity diagnoses, health/Desk/
 Conductor/Engines return 200. CLI/MCP match this source; feedback is enabled
 and Presence stays off. Five slices, the zoom policy repair and arranged-growth repair run on this revision.
 The completed pinned #1443 tape passed all 44 Python batches and its full web
@@ -2691,7 +2691,7 @@ read-failure/Retry/supersession states, and local Components Files. Canonical
 closed-source reopen is browser proof on desktop; legacy bare-key is unit
 proof. Required final quick and whole-tree types pass; no full P06 or owner
 aesthetic acceptance is claimed. Job origin is transient navigation, not added material
-or automatic filing. Running #1451 includes unobstructed pending Ask Stop.
+or automatic filing. The #1451 delivery introduced unobstructed pending Ask Stop.
 
 
 Owner requested a whole-plan reality check. DELIVERY-PLAN now has explicit
@@ -2720,3 +2720,18 @@ now delivered; no whole package/47-family/visual acceptance or full-tape green.
 The reconciled plan puts shared Room/list visual hierarchy first, then Note/
 Ask content balance before widening Meeting/Agent migration. Independent final
 NAV, Room and docs advisories are RATIFY; local Sol, not Muad'Dib checks.
+
+
+Zoom/reload normal-rect follow-on — #1454 — is source-reviewed (Sol RATIFY) and has
+focused unit/browser proof. Optional autoRects preserves an unsized normal
+frame through reload while leaving owner sizing and auto height separate.
+Integrated with #1453, required quick and final types pass:4,310 UI,10
+Frame glass,110 sweep,27 canon,1,126 guards. Close/reopen while still zoomed is not newly established by this
+bounded reload case. No new whole-package or full-tape green claim.
+
+
+Verified deployment #1453: PID69936, frontenddc40153929c4c785,
+backend12366e1e32685bc541a740b3f7640f6ee39681fc. Database ownership true,
+diagnoses empty, four routes200; CLI/MCP aligned, feedback on and Presence off.
+First visual Room/list slice is now active in wave8 against the updated plan:
+Canvas B/F painted first, product build in progress; no visual acceptance yet.

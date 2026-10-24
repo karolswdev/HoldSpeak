@@ -61,7 +61,7 @@ green is claimed. Recipe closeout 115/117 measures another repair lane.
 
 | Package | Actual delivery | Remaining adoption |
 | --- | --- | --- |
-| P01 windows/commands | Partial: repository identities, zoom policy #1444, arranged-growth #1449. Zoom/reload normal-rect fix is built and under focused verification. | View history/selection/scroll restoration, command origin, narrow chooser, broad focus/close/reload behavior. |
+| P01 windows/commands | Partial: repository identities, zoom policy #1444, arranged-growth #1449. Zoom/reload normal-rect repair #1454 has exact browser proof, local advisory RATIFY and required quick green; owner sizing stays separate. | View history/selection/scroll restoration, command origin, narrow chooser, broad focus/close/reload behavior. |
 | P02 resources | Partial: real registered-repository read/inspect and local reference. | Directory/KB second consumer, selection/range and broader provider/collection adoption. |
 | P03 input/voice | Partial: active Thought captured target, recovery, writer/undo and shared Editing. | Ask/Settings/Pad policy adoption, native delivery, learning/macros and complete J1. |
 | P04 conversations | Partial: Note-only version pinning, Ask/save/source/Thread doors and open/closed source return. #1451 removes the global run card that covered Stop. | Broader thread interruption/retrieval, Memory/Activity and complete J3. |

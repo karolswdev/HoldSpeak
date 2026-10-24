@@ -603,7 +603,7 @@ owner aesthetic acceptance is claimed.
 
 Historical deployment receipt after #1449/#1450 (superseded by #1451): backend
 `a7e3117f6a66e835cc708ee6cc2553c703de4244`, frontend `3a92261f318ea320`,
-PID33426; owns_database true, diagnoses empty, health/Desk/Conductor/Engines200.
+PID33426; owns_database true, diagnoses empty, health/Desk/Conductor/Engines 200.
 CLI/MCP source matches; feedback defaults on in both wrappers, Presence stays
 off. The coalesced full tape uses the prepared bundle without rebuilding the
 served runtime. Prior #1448 tape found zoom/unzoom after reload losing the
@@ -772,3 +772,48 @@ prepared bundle is reused without live rebuild by the coalesced full tape.
 The Project integration's remaining copy-guard finding was the generic Open
 action; it now says Open note, with 10 focused section tests and 16 copy tests
 passing. Required integration quick and final types pass on the merged #1452 baseline.
+
+
+## Unarranged Zoom/reload normal-rectangle repair
+
+[PR1454](https://github.com/karolswdev/HoldSpeak/pull/1454).
+
+Branch: fix/native-zoom-reload-fix-20261023.
+Worktree: /Users/karol/dev/tools/wt-native-zoom-reload-fix-20261023.
+The prior pinned tape verified a regression after #1444: fitContent Zoom
+kept normal geometry ephemeral to preserve auto height, while the workspace
+codec serialized only owner-arranged rects. After reload the unsized normal
+rectangle was lost: original [144,72,720,430] returned as [10,36,1420,416].
+
+Optional panel.autoRects now retains only zoomed, unsaved normal geometry.
+Hydration overlays saved rects and derives panelSaved only from the saved
+map; owner sizing wins, legacy meeting IDs migrate in both maps, and old
+workspace documents remain valid without a version bump. Unzoom drops the
+stored autoRect without making the frame owner-sized. No window manager,
+new store or reversal of #1444/#1449 policy is introduced.
+
+Pre-fix browser control reproduced the failure. Focused 37 unit tests, named
+reload/owner-sized growth/unarranged Chair cases, final named reload plus 393
+sheet, build and whole-tree types pass. The extended reload case observes
+exact original/back [144,72,720,430] and zoom/reload [10,36,1420,804]. Stored
+CSS height 429.765625 is compared to rounded glass within 1px; final visible
+Back remains exact. Final local Sol advisory RATIFY for this reload contract,
+not Muad'Dib's check. Close/reopen while still zoomed is an existing cleanup
+path and is not newly proven by this case. Browser logs:
+`.tmp/zoom-reload-final-{collect,browser}.log`; geometry JSON in the ignored
+`.tmp/evidence-shots/pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-12-build/`;
+393 shot `.tmp/evidence-shots/native-window-growth/sheet-growth-393.png`.
+After integrating #1453, required quick is green: build,4,310 related UI
+tests,10 affected Frame glass cases,110 desk sweep,27 canon and1,126 guards
+(`.tmp/quick-native-zoom-reload.log`). Final whole-tree typecheck passes.
+This is bounded P01 reload proof, not full window/command adoption.
+
+
+## Deployment receipt for #1453 — 2026-10-24
+
+Backend `12366e1e32685bc541a740b3f7640f6ee39681fc`, frontend
+`dc40153929c4c785`, PID69936; owns_database true, diagnoses empty, health/
+Desk/Conductor/Engines 200. CLI/MCP source aligned, feedback defaults on,
+Presence remains off. Prepared latest-main tape is coalesced without rebuilding
+this served checkout. This is the Project delivery plus reconciled plan, not
+owner visual acceptance or whole-package completion.

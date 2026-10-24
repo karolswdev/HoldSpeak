@@ -789,19 +789,31 @@ class TestTheGadgets:
                 zoom = meetings.get_by_role("button", name="Zoom Meetings")
                 zoom.click()
                 zoomed = _rect(self._stack(page), "Meetings")
+                cached_zoom = page.evaluate(DOC_JS)["panel"]
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 meetings.wait_for()
                 page.wait_for_timeout(800)
                 after_reload = _rect(self._stack(page), "Meetings")
+                cached_reload = page.evaluate(DOC_JS)["panel"]
                 zoom.click()
                 back = _rect(self._stack(page), "Meetings")
+                cached_back = page.evaluate(DOC_JS)["panel"]
                 facts = {"original": original, "zoomed": zoomed, "after_reload": after_reload, "back": back,
+                         "auto_rect_at_zoom": cached_zoom.get("autoRects", {}).get("surface-meetings"),
+                         "auto_rect_after_reload": cached_reload.get("autoRects", {}).get("surface-meetings"),
                          "errors": [e for e in errors if "ResizeObserver" not in e]}
                 (GADGETS_SHOTS / "gadget-facts-zoom-reload-1440.json").write_text(json.dumps(facts, indent=2) + "\n")
                 assert zoomed != original, facts
                 assert after_reload == zoomed, facts
                 assert back == original, facts
+                for cached in (cached_zoom, cached_reload):
+                    assert "surface-meetings" not in cached["rects"], facts
+                    auto = cached.get("autoRects", {}).get("surface-meetings")
+                    assert auto and all(abs(auto[key] - value) <= 1 for key, value in
+                                        zip(("x", "y", "w", "h"), original)), facts
+                assert "surface-meetings" not in cached_back["rects"], facts
+                assert "surface-meetings" not in cached_back.get("autoRects", {}), facts
                 assert not facts["errors"], facts["errors"]
             finally:
                 browser.close()
