@@ -70,7 +70,7 @@ green is claimed. Recipe closeout 115/117 measures another repair lane.
 | P07 agents/automation | Modernization migration not started; existing agent/automation features remain. | Hand/result/terminal/occurrence adoption and complete J4. |
 | P08 preferences | Partial: Settings You truthful save/retry and shared Forms. | Other writers, Setup, Engines, Accounts and complete J6. |
 | P09 Send | Modernization migration not started. Existing isolated real folder-byte jobs provide baseline evidence. | Producer/Needs/Delivery adoption, frozen identity/unknown/replay and complete cross-job egress. |
-| P10 shell/reference/feedback | Partial: shared Resources, Forms, Editing and Conversation; local Files specimen delivered with P06. Feedback remains enabled; Presence off. | Cohesive shell/visual adoption, operation outcomes, combined Firefox ASR-retry/cancel/generation/return proof and measured responsiveness. |
+| P10 shell/reference/feedback | Partial: shared Resources, Forms, Editing and Conversation; local Files specimen delivered with P06; controlled Settings Firefox lifecycle #1455 proven through local speech stand-in. Feedback enabled; Presence off. | Ask report consumer/cross-window adoption, cohesive shell/visual and operation outcomes, configured-owner provider/hardware acceptance and measured native-feeling behavior. |
 
 Final required quick and whole-tree typecheck pass for the first Project
 slice. Integration corrections and bounded evidence are recorded in
@@ -102,8 +102,8 @@ P01/P02/P03/P04/P06/P08/P10, not a final cosmetic step after every domain.
    affected canvas/contract together. Inspect populated, empty, busy and failed
    states at 1440/393, keyboard/selection/focus/return, and normal motion. Check
    the cross-app path, not only screenshots of one component. Measure actual
-   responsiveness before naming a budget; the Firefox feedback job remains
-   required. Owner visual judgment stays distinct from test success.
+   responsiveness before naming a budget; retain the controlled Firefox Settings proof as a regression and extend
+   report adoption to Ask/cross-window use. Owner visual judgment stays distinct from test success.
 5. Continue P05/P06/P07/P08/P09 domain waves using those exercised patterns;
    reconcile adoption against all 47 map rows before calling the framework
    delivered. Preserve the original adversarial findings and unresolved scope.
@@ -440,11 +440,11 @@ Edit-to-note distinct from external Send.
 [PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438). Forms (#1439), Editing (#1443), and Conversation (#1446/#1448) also use
 production compositions with local IO. P06 adds the same Filed Notes section
 as a local Lists example, with no real-resource IO. #1451 parks duplicate
-run-scoped global status so producer Stop remains reachable. An existing real Firefox test covers three loaded Settings report saves
-at1440/393, screenshot/audio/window state, heartbeat and identical-byte third
-save retry. Its SAVED assertion does not establish completed transcription.
-Combined ASR-only retry, capture cancellation, stale-generation fencing and
-usable Settings return remain open, alongside shell/visual/operation adoption. Presence stays disabled.
+run-scoped global status so producer Stop remains reachable. The controlled combined Firefox Settings lifecycle now has real 1440/393
+proof: three saved bundles, capture cancellation, byte-stable ASR-only retry,
+late-generation fencing and usable return. The configured speech seam uses
+an isolated admitted stand-in; this does not prove owner hardware/provider
+quality or latency. Shell/visual/operation adoption remains incomplete. Presence stays disabled.
 
 **Primary families:** `native_presence`, `desktop_workspace`, `feedback`, `components_reference`.
 

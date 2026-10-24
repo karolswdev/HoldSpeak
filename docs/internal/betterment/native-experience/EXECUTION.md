@@ -819,6 +819,46 @@ this served checkout. This is the Project delivery plus reconciled plan, not
 owner visual acceptance or whole-package completion.
 
 
+## Firefox feedback lifecycle proof extension
+
+[PR1455](https://github.com/karolswdev/HoldSpeak/pull/1455).
+
+Branch test/native-feedback-firefox-wave9-20261024; worktree
+/Users/karol/dev/tools/wt-native-feedback-firefox-wave9-20261024. Test-only
+extension; no product/helper code changes. The old Firefox baseline already
+covered3 loaded Settings saves and exact-byte third save transport Retry.
+The new test exercises the real capture/save/transcribe UI/routes with
+Firefox fake-device audio and a deterministic configured admitted speech seam.
+
+Two explicit slow cases at1440/393 pass in29.23s under one locked -n1 run
+(`.tmp/feedback-firefox-lifecycle-advisory-recheck.log`). Measured gUM calls
+remain0 through held-font capture, Cancel and late release; no save, recording
+or wrapper survives that cancelled capture. First real recording requests1
+shared stream; ASR-only Retry stays1→1. Three distinct bundles produce3 save
+POSTs,4 transcription POSTs/admitted calls and3 succeeded admission closes.
+Retry retains saved id/captured time/context/WAV/PNG; an older transcription
+can complete for its saved bundle after newer success without replacing the
+current strip. Done permits Settings edit and section navigation.
+
+Ordinary capture times: desktop1738/1161/1104ms, phone1660/1140/1136ms;
+heartbeat maximums329/343/332ms and317/320/329ms, below unchanged baseline
+budgets. Settings geometry is unchanged on return; DPR2 PNG dimensions match
+captured window bounds, with nonblank PNG and real16k fake-device WAV.
+Metadata-only facts and12 shots live in
+`.tmp/evidence-shots/ui-feedback-firefox-lifecycle/`.
+
+The first independent test advisory found a hardcoded no-recording fact;
+it is replaced with observed getUserMedia counts and assertions. Final Sol
+recheck RATIFY; not Muad'Dib's check. Root verified metadata and representative
+shots. This closes the controlled combined Firefox proof gap, not the unknown
+historical freeze cause, physical mic, owner-provider quality/latency, full
+P10 adoption or whole-suite green. Required quick passes: build,110 desk
+sweep,27 canon and1,126 guards (`.tmp/quick-native-feedback-firefox-lifecycle.log`).
+The two timing-sensitive Firefox cases are marked slow and ran explicitly
+under the lock; quick's not-slow affected selection ran zero, not another
+pair of browser passes. Ask as the second report consumer/cross-window job
+and owner-provider/hardware acceptance remain open.
+
 ## Eighth delivery in progress: Room/list visual adoption
 
 Branch feat/native-room-visual-wave8-20261024; worktree
@@ -832,13 +872,13 @@ Sources reads now appear inside SurfaceSection and auto-disclose their retry;
 the old :has visibility rule could otherwise hide that error.
 
 Focused source proof95/95 in four files and post-ff whole-tree types pass.
-First source advisory found no product regression, conditional on completed
-real1440/393 evidence. Components browser cases pass; Room verification is
-investigating pointer-hit/geometry settling after actual Note return and
-explicit Sources disclosure. No forced raise/click, timeout inflation or
-visual acceptance is claimed. Required quick is not run yet.
+The first source advisory required completed geometry evidence. The browser
+walk found a52px refresh shift and a clipped local reference outcome, both
+fixed below; all four focused cases now pass and final local Sol advisory is
+RATIFY. No forced raise/click, timeout inflation or visual acceptance is
+claimed. Final required quick is rerunning after integration rig corrections.
 
-## P10 feedback proof reconciliation and next verification
+## P10 audit before the proof extension — historical record
 
 Read-only audit found existing tests/e2e/test_ui_feedback_firefox.py covers
 three loaded Settings saves at1440/393 with actual fake-device WAV, nonblank
@@ -852,12 +892,11 @@ cover individual boundaries separately. Firefox revisions1497/1522 are cached.
 This audit did not run tests or establish the historical freeze's root cause.
 
 The production transcribe route reads the saved WAV through configured
-on_transcribe_admitted with principal/verbatim/provider boundary. A new isolated
-Firefox lifecycle test is being drafted in wt-native-feedback-firefox-wave9-20261024
-against that real route and a deterministic configured speech stand-in.
-It will preserve bundle identity through retry and prove cancellation/late
-results/return without claiming owner-provider quality or physical abort.
-No product defect or product change is established by that test draft.
+on_transcribe_admitted with principal/verbatim/provider boundary. The subsequent isolated Firefox lifecycle extension in #1455 proves the
+combined flow against that route and a deterministic configured speech
+stand-in, as recorded above. It preserves bundle identity through retry and
+fences cancellation/late results without proving owner-provider quality or
+physical abort. This audit established no new product defect.
 
 
 ### Native refresh stability found during the visual walk
@@ -869,7 +908,7 @@ Note z-order. The visual slice now presents a truthful combined retained-read
 indicator in the existing action/header row beside disabled Open note. Initial
 no-row reading, genuine failure/Retry and return receipts keep their meaning.
 A focused section regression passes11/11 and types pass. Actual held-response
-no-jump proof at1440/393 is being run; it is not replaced with networkidle,
+no-jump proof passes at1440/393; it is not replaced with networkidle,
 forced raise/click or arbitrary timing waits. The shared design lesson is
 stable targets during a normal background read, without hiding stale state.
 

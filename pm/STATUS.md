@@ -2737,11 +2737,16 @@ First visual Room/list slice is now active in wave8 against the updated plan:
 Canvas B/F painted first, product build in progress; no visual acceptance yet.
 
 
-Visual wave8 is source-stable (95 focused tests and types) with Canvas B/F
-painted before build; actual Room pointer/geometry checks are still being
-diagnosed after return/disclosure, while both local reference widths pass.
-No visual slice acceptance or required-quick green is claimed yet.
-P10 reality correction: baseline Firefox test already covers3 saves at both
-widths and exact-byte save Retry. Remaining combined proof is transcription-
-only retry, delayed capture Cancel, stale result fencing and usable Settings
-return; new isolated lifecycle test draft has no product change yet.
+Firefox feedback lifecycle extension — #1455 — is test-only and source-reviewed:
+final Sol RATIFY, explicit slow Firefox2/2 at1440/393. Measured zero mic/save
+starts through cancelled capture; same-bundle ASR-only Retry, late old result
+fencing and usable Settings return pass through real routes with a local
+admitted stand-in. No owner-provider/hardware or old-freeze-cause claim.
+Required quick passes (build,110 sweep,27 canon,1,126 guards); explicit slow
+Firefox2/2 is separate proof, not quick affected cases. Full P10 stays partial.
+
+Visual wave8 has four focused Chromium cases and final local source advisory
+RATIFY after retained-refresh geometry and reference outcome fixes. The first
+combined run passed6/9 and found three arrival/fault-injection rig races;
+those three now pass concurrently without product or assertion changes.
+Final required combined quick is rerunning; owner visual acceptance stays open.
