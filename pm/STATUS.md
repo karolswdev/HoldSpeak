@@ -2735,3 +2735,13 @@ backend12366e1e32685bc541a740b3f7640f6ee39681fc. Database ownership true,
 diagnoses empty, four routes200; CLI/MCP aligned, feedback on and Presence off.
 First visual Room/list slice is now active in wave8 against the updated plan:
 Canvas B/F painted first, product build in progress; no visual acceptance yet.
+
+
+Visual wave8 is source-stable (95 focused tests and types) with Canvas B/F
+painted before build; actual Room pointer/geometry checks are still being
+diagnosed after return/disclosure, while both local reference widths pass.
+No visual slice acceptance or required-quick green is claimed yet.
+P10 reality correction: baseline Firefox test already covers3 saves at both
+widths and exact-byte save Retry. Remaining combined proof is transcription-
+only retry, delayed capture Cancel, stale result fencing and usable Settings
+return; new isolated lifecycle test draft has no product change yet.

@@ -56,6 +56,9 @@ describe("active Room filed Note", () => {
     expect(wire.apiFetch).not.toHaveBeenCalled();
     fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
     const row = await screen.findByRole("button", { name: /API boundary, Note/i });
+    const grid = screen.getByRole("grid", { name: "Filed notes" });
+    expect(within(grid).getAllByRole("columnheader").map((head) => head.getAttribute("data-col"))).toEqual(["name", "kind"]);
+    expect(within(grid).getAllByRole("row")[1].querySelectorAll('[role="gridcell"]')).toHaveLength(2);
     fireEvent.click(row);
     expect(wire.openRef).not.toHaveBeenCalled();
     expect(screen.getByTestId("room-files-open")).toHaveTextContent("Open note");
@@ -162,6 +165,27 @@ describe("active Room filed Note", () => {
     expect(screen.getByText("RESOURCES NOT READ")).toBeInTheDocument();
     expect(screen.getByText("LAST READ")).toBeInTheDocument();
     expect(screen.getByTestId("room-files-open")).toBeDisabled();
+  });
+
+  it("keeps a retained row in place while the fresh Files read status moves into its action row", async () => {
+    wire.apiFetch.mockResolvedValue({ note: { title: "API boundary" } });
+    const mounted = mount();
+    fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
+    fireEvent.click(await screen.findByRole("button", { name: /API boundary, Note/i }));
+    const selectedRow = within(screen.getByRole("grid", { name: "Filed notes" })).getByRole("row", { name: /API boundary/i });
+    expect(screen.getByTestId("room-files-open")).toBeEnabled();
+
+    mounted.rerender(<RoomFiledNotesSection projectId={projectId} resourceRefs={[ref]} resourcesState="loading"
+      refreshResources={mounted.refreshResources} followCurrentResources={async (result) => result} members={[]}
+      request={null} onRequestHandled={mounted.onRequestHandled} />);
+
+    const section = screen.getByTestId("room-files");
+    expect(within(section.querySelector("header")!).getByRole("status", { name: "READING FILES · LAST READ" })).toBeVisible();
+    expect(section.querySelectorAll(":scope > .surface-state-chip")).toHaveLength(0);
+    expect(within(section).getByRole("row", { name: /API boundary/i })).toBe(selectedRow);
+    expect(selectedRow).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("room-files-open")).toBeDisabled();
+    expect(wire.apiFetch).toHaveBeenCalledTimes(1);
   });
 
   it("offers Retry for an uncached Note read failure before any row is selected", async () => {

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { StateChip } from "../../../desk/surface";
 import { RoomFiledNotesSection, type FiledNoteAdapter, type FiledNoteRequest } from "../../../features/project-room/RoomFiledNotesSection";
 import type { ResourcesRead, ResourcesState } from "../../../desk/drawer/useDrawerData";
@@ -13,7 +13,8 @@ export function FiledNotesReference({ preset }: { preset: FiledNotesPreset }) {
   const [request, setRequest] = useState<FiledNoteRequest>(
     preset === "not-filed" || preset === "unavailable" ? { ref, seq: 1 } : null,
   );
-  const [opened, setOpened] = useState("");
+  const [opened, setOpened] = useState<{ noteRef: string; projectId: string } | null>(null);
+  const outcomeRef = useRef<HTMLParagraphElement | null>(null);
   const refs = useMemo(() => preset === "not-filed" ? [] : [ref], [preset]);
   const refreshResources = useCallback(async (): Promise<ResourcesRead> => {
     setResourcesState("ok");
@@ -22,13 +23,18 @@ export function FiledNotesReference({ preset }: { preset: FiledNotesPreset }) {
   const followCurrentResources = useCallback(async (result: ResourcesRead) => result, []);
   const adapter = useMemo<FiledNoteAdapter>(() => ({
     read: async () => preset === "unavailable" ? { state: "unavailable" } : { state: "ok", title: "Review record" },
-    open: (noteRef, context) => setOpened(`${noteRef} · ${context.projectReturn.projectId}`),
+    open: (noteRef, context) => setOpened({ noteRef, projectId: context.projectReturn.projectId }),
   }), [preset]);
+  useLayoutEffect(() => {
+    if (opened) outcomeRef.current?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [opened]);
   return <section className="reference-example reference-filed-notes" data-testid="reference-filed-notes" aria-label="Filed notes pattern">
     <div className="reference-example-head"><h2>Project room · Files</h2><StateChip state="idle" label="LOCAL SPECIMEN" /></div>
     <RoomFiledNotesSection projectId="local-project" resourceRefs={refs} resourcesState={resourcesState}
       refreshResources={refreshResources} followCurrentResources={followCurrentResources}
       members={[]} request={request} onRequestHandled={() => setRequest(null)} adapter={adapter} />
-    {opened ? <p className="reference-receipt" role="status">OPENED LOCALLY · {opened}</p> : null}
+    {opened ? <p ref={outcomeRef} className="reference-receipt" role="status">
+      OPENED LOCALLY · {opened.noteRef} · {opened.projectId}
+    </p> : null}
   </section>;
 }

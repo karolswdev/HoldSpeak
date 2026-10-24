@@ -1137,14 +1137,15 @@ function SourcesSection({
       setRegistering(false);
     }
   };
-  // PHILO-17 U10: Add source in the Room; open at once when the project has none.
-  const [adding, setAdding] = useState<boolean>(
-    () => room.sources.state === "ok" && !room.sources.items.some((s) => !s.suggested),
-  );
+  // Setup is an explicit Sources → Add source action. A new Project keeps
+  // its filed work in view instead of opening three idle provider rows.
+  const [adding, setAdding] = useState(false);
 
   const showsAdding = adding && room.sources.state === "ok";
   useEffect(() => { onAdding?.(showsAdding); }, [showsAdding, onAdding]);
 
+  if (room.sources.state === "degraded")
+    return <SurfaceSection label="Sources"><SurfaceState error="SOURCES NOT READ" onRetry={() => void onReload()} /></SurfaceSection>;
   if (room.sources.state !== "ok") return null;
   const { items, count } = room.sources;
 
@@ -2414,17 +2415,19 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
                   onPrepare={(purpose) => prepareCtrl.enterPrepare(purpose)}
                 />
               </div>
-              {/* Betterment P3: the Sources line (it unfolds in place), People and the
-                  plan; the other folds left the Now wing (_parked/nowWingFolds.tsx). */}
+              {/* Filed work comes before optional source setup. Sources still
+                  discloses its existing Add source and watch controls. Keep
+                  Files' place even if its read resolves after the Room cap. */}
               <div className="room-folds" data-testid="room-folds">
-                <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="80ms">
-                  <RoomFold title="Sources" token={sourceCount || undefined} open={addingSources || undefined} testId="room-fold-sources">
-                    <SourcesSection room={ctrl.room} onReload={() => ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
-                  </RoomFold>
-                </RoomSlot>
-                <RoomSlot id="files" place={place("files")} delay="82ms">
+                <RoomSlot id="files" place={{ waiting: place("files").waiting }} delay="80ms">
                   <RoomFiledNotes projectId={ctrl.projectId} ctrl={ctrl} request={fileRequest}
                     onRequestHandled={onFileRequestHandled} />
+                </RoomSlot>
+                <RoomSlot id="sources" place={place("sources")} own={{ extras: extrasRead }} delay="82ms">
+                  <RoomFold title="Sources" token={sourceCount || undefined}
+                    open={addingSources || ctrl.room.sources.state === "degraded" || undefined} testId="room-fold-sources">
+                    <SourcesSection room={ctrl.room} onReload={() => ctrl.load()} stewardCtrl={stewardCtrl} ctrl={ctrl} onAdding={setAddingSources} />
+                  </RoomFold>
                 </RoomSlot>
                 <RoomSlot id="people" place={place("people")} delay="83ms">
                   <RoomFold title="People" testId="room-fold-people">

@@ -61,7 +61,7 @@ green is claimed. Recipe closeout 115/117 measures another repair lane.
 
 | Package | Actual delivery | Remaining adoption |
 | --- | --- | --- |
-| P01 windows/commands | Partial: repository identities, zoom policy #1444, arranged-growth #1449. Zoom/reload normal-rect repair #1454 has exact browser proof, local advisory RATIFY and required quick green; owner sizing stays separate. | View history/selection/scroll restoration, command origin, narrow chooser, broad focus/close/reload behavior. |
+| P01 windows/commands | Partial: repository identities, zoom policy #1444, arranged-growth #1449. Zoom/reload normal-rect repair #1454 has exact browser proof, local advisory RATIFY and required quick green; owner sizing stays separate. | View history/selection/scroll restoration, command origin, narrow chooser, usable default frames on a populated Desk, broad focus/close/reload behavior. |
 | P02 resources | Partial: real registered-repository read/inspect and local reference. | Directory/KB second consumer, selection/range and broader provider/collection adoption. |
 | P03 input/voice | Partial: active Thought captured target, recovery, writer/undo and shared Editing. | Ask/Settings/Pad policy adoption, native delivery, learning/macros and complete J1. |
 | P04 conversations | Partial: Note-only version pinning, Ask/save/source/Thread doors and open/closed source return. #1451 removes the global run card that covered Stop. | Broader thread interruption/retrieval, Memory/Activity and complete J3. |
@@ -70,7 +70,7 @@ green is claimed. Recipe closeout 115/117 measures another repair lane.
 | P07 agents/automation | Modernization migration not started; existing agent/automation features remain. | Hand/result/terminal/occurrence adoption and complete J4. |
 | P08 preferences | Partial: Settings You truthful save/retry and shared Forms. | Other writers, Setup, Engines, Accounts and complete J6. |
 | P09 Send | Modernization migration not started. Existing isolated real folder-byte jobs provide baseline evidence. | Producer/Needs/Delivery adoption, frozen identity/unknown/replay and complete cross-job egress. |
-| P10 shell/reference/feedback | Partial: shared Resources, Forms, Editing and Conversation; local Files specimen delivered with P06. Feedback remains enabled; Presence off. | Cohesive shell/visual adoption, operation outcomes, three consecutive Firefox Settings reports and measured native-feeling behavior. |
+| P10 shell/reference/feedback | Partial: shared Resources, Forms, Editing and Conversation; local Files specimen delivered with P06. Feedback remains enabled; Presence off. | Cohesive shell/visual adoption, operation outcomes, combined Firefox ASR-retry/cancel/generation/return proof and measured responsiveness. |
 
 Final required quick and whole-tree typecheck pass for the first Project
 slice. Integration corrections and bounded evidence are recorded in
@@ -116,7 +116,11 @@ existing provider/account composition opens on intent or actionable failure.
 Use the current ObjectList with an explicit optional visible-column set so
 this Note-only provider shows Name/Kind rather than empty When/State columns.
 Other consumers retain their declared columns, keyboard selection and Open
-behavior. Mirror the same section in Components and revise Canvas B/F before
+behavior. Retained-loading state belongs in the existing control row
+so a background read does not push rows and pointer targets down the view.
+Keep last-read qualification and current-read disabling; initial reads and
+genuine failures remain explicit. This uses the existing section/state
+composition rather than a new status controller. Mirror the same section in Components and revise Canvas B/F before
 build. Project membership, Note reads, privacy and watch authority do not move.
 
 This scope follows actual captures and source: ProjectRoomCore auto-opens
@@ -436,9 +440,11 @@ Edit-to-note distinct from external Send.
 [PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438). Forms (#1439), Editing (#1443), and Conversation (#1446/#1448) also use
 production compositions with local IO. P06 adds the same Filed Notes section
 as a local Lists example, with no real-resource IO. #1451 parks duplicate
-run-scoped global status so producer Stop remains reachable. Shell/visual/
-feedback/operation reconciliation and the three-consecutive-report Firefox
-job remain open. Presence stays disabled.
+run-scoped global status so producer Stop remains reachable. An existing real Firefox test covers three loaded Settings report saves
+at1440/393, screenshot/audio/window state, heartbeat and identical-byte third
+save retry. Its SAVED assertion does not establish completed transcription.
+Combined ASR-only retry, capture cancellation, stale-generation fencing and
+usable Settings return remain open, alongside shell/visual/operation adoption. Presence stays disabled.
 
 **Primary families:** `native_presence`, `desktop_workspace`, `feedback`, `components_reference`.
 
@@ -457,7 +463,9 @@ disabled boundary. P01 is required, but P10 begins in Wave 1 and returns for cro
 
 **Acceptance:** J7 restores Desk/window state, raises the intended target, keeps bounded terminal/editor exceptions, captures
 reports with one saved bundle ID, ASR-only retry, cancel fencing and origin return, separately from operation target/egress/receipt
-and unknown/readback/replay. Include three consecutive Firefox Settings reports; capture loaded/empty/busy/failed/resumed fixture
+and unknown/readback/replay. Include three consecutive Firefox Settings reports with transcript status,
+same-bundle ASR-only retry, cancellation/late-generation fencing and usable
+Settings return; capture loaded/empty/busy/failed/resumed fixture
 states as applicable. Validate 1440/393 layout and return. Do not re-enable Presence or claim portable-client coverage.
 
 **Documentation with the change:** update shell/reference adoption, feedback/egress placement, Components consumer links, Presence

@@ -284,6 +284,30 @@ describe("ObjectList", () => {
     await a11y(container);
   });
 
+  it("a Name/Kind projection has matching headers and cells, with the same row keys and sort door", async () => {
+    const onSelect = vi.fn();
+    const onOpen = vi.fn();
+    const onSort = vi.fn();
+    render(<ObjectList label="Filed notes" rows={ROWS} sort={{ key: "name", dir: "asc" }}
+      visibleColumns={["kind"]} onSelect={onSelect} onOpen={onOpen} onSort={onSort} />);
+    const grid = screen.getByRole("grid", { name: "Filed notes" });
+    expect(grid).toHaveAttribute("data-compact-columns", "true");
+    const headers = within(grid).getAllByRole("columnheader");
+    expect(headers.map((head) => head.getAttribute("data-col"))).toEqual(["name", "kind"]);
+    for (const row of within(grid).getAllByRole("row").slice(1))
+      expect(within(row).getAllByRole("gridcell").map((cell) => cell.getAttribute("data-col"))).toEqual(["name", "kind"]);
+    expect(grid.querySelector('[data-object-id="r1"] .object-list-open')).toHaveAttribute("aria-label",
+      expect.stringContaining("CLAUDE CODE ASKS"));
+    await userEvent.click(within(grid).getByRole("button", { name: "Kind" }));
+    expect(onSort).toHaveBeenCalledWith("kind");
+    const open = grid.querySelector('[data-object-id="r2"] .object-list-open') as HTMLButtonElement;
+    open.focus();
+    await userEvent.keyboard(" ");
+    await userEvent.keyboard("{Enter}");
+    expect(onSelect).toHaveBeenCalledWith("r2");
+    expect(onOpen).toHaveBeenCalledExactlyOnceWith("r2");
+  });
+
   it("a header press sorts; a second press flips the direction", async () => {
     render(<ListHost />);
     const grid = screen.getByRole("grid");

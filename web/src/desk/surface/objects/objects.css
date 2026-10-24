@@ -250,7 +250,7 @@
 .object-list-head,
 .object-list-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 128px 104px 160px;
+  grid-template-columns: var(--object-list-columns, minmax(0, 1fr) 128px 104px 160px);
   align-items: center;
 }
 .object-list-head {
@@ -420,6 +420,23 @@
   .object-list-fold {
     display: flex;
   }
+  /* One or two actual columns stay columns on the phone. The four-column
+     default retains its existing visual fold and accessible hidden cells. */
+  .object-list[data-compact-columns="true"] .object-list-head,
+  .object-list[data-compact-columns="true"] .object-list-row {
+    grid-template-columns: var(--object-list-phone-columns);
+  }
+  .object-list[data-compact-columns="true"] .object-list-cell {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0 8px;
+    margin: 0;
+    overflow: hidden;
+    clip-path: none;
+    white-space: nowrap;
+  }
+  .object-list[data-compact-columns="true"] .object-list-fold { display: none; }
 }
 
 /* ── GetInfo: identity, then facts ── */

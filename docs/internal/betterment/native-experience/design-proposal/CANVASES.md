@@ -139,8 +139,12 @@ copy, move, drop, stage or commit support.
   links. The owner opens a link with its own Button; editing the Markdown
   does not navigate. The boards do not use `Keep` or `Bin`.
 - **Project source inset:** a filed Note starts in the Project Room `Files`
-  fold. Ask reads that Note version; Project identity is the return location.
-  Back to Project re-reads membership before it selects the original row.
+  fold, ahead of the compact `Sources` fold. Its list shows `Name` and `Kind`
+  only; `Open note` uses the Note's own window. `Sources` exposes `Add source`
+  on disclosure, with provider choices only after that press. Ask reads the
+  Note version; Back to Project re-reads membership before selecting its row.
+  During a retained Files refresh, `READING FILES · LAST READ` stays beside
+  the disabled `Open note` action; the filed row and Sources fold do not move.
 
 **B input recovery implementation (2026-10-23):** the active Thought field
 binds its editor/range/generation before transcription. A later draft, IME or
@@ -188,16 +192,23 @@ acceptance or completion of all readiness work.
   It is not a production request and makes no network write.
 - **Resumed:** narrow lookup keeps the pattern strip and fixture-state picker
   in the same window, above the footer. `Local fixture` and `PROPOSED` stay visible.
+  In the Filed Notes specimen, an explicit local `Open note` reveals its
+  outcome inside the Components body above the footer, including a repeat
+  Open of the same Note; passive reads do not move the viewport.
 
 ### F · Project → Hand / Launch → Lane Result
 
 - **Default:** Project Room owns `project:atlas-review`, the selected item and
   its source refs. `Hand` and `Launch` are visible owner verbs. A queued path
   says `Start when one is free`, not a generic `Start`.
-- **Filed Note:** the active Room shows the actual filed `API boundary` Note
-  in a compact `Files` fold with its own `Open` Button. The narrow state inset
-  shows the same choice and exact Project return. Opening it uses the Note's
-  existing window; the Room does not read a Note into an Ask by itself.
+- **Filed Note:** the active Room leads with the actual filed `API boundary`
+  Note in `Files`, ahead of compact `Sources`. The list has `Name` and `Kind`
+  columns only and an `Open note` Button. Disclosing `Sources` reveals an
+  explicit `Add source` door; idle provider choices stay folded until pressed.
+  The narrow state inset shows the same choice and exact Project return.
+  Opening the Note uses its existing window; the Room does not read it into
+  an Ask by itself. A retained refresh shows `READING FILES · LAST READ` in
+  the Files action row while `Open note` is disabled, without adding body rows.
 - **Result:** the focused ResultBlock keeps `launchId`, `sessionKey`, `turnId`,
   worktree/branch, used resources, last words and durable `NEW`/seen state.
   `Answer` is shown for the current wait, with supported `Stop`. Gate

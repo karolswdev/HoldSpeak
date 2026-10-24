@@ -1046,7 +1046,7 @@
 .room-fold > .gadget-fold[open] > summary { color: var(--wb-text); }
 .room-fold[data-testid="room-fold-files"] > .gadget-fold > summary { min-height: 32px; }
 @container surface (max-width: 520px) {
-  .room-fold[data-testid="room-fold-files"] > .gadget-fold > summary { min-height: 44px; }
+  .room-fold:is([data-testid="room-fold-files"], [data-testid="room-fold-sources"]) > .gadget-fold > summary { min-height: 44px; }
 }
 .room-fold > .gadget-fold > summary .gadget-fold-token {
   font: 700 12px / 1 var(--font-mono);

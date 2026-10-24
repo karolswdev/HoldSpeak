@@ -516,20 +516,27 @@ describe("PHILO-17 sources: the Room's SOURCES on a bare project", () => {
   // the Go ▸ Projects leg is the desk menu's, not the Room's)
   const pid = BARE_ROOM.project_id;
 
-  it("SOURCES opens Add source; GitHub says NOT SIGNED IN; Connect opens the sign-in well with the command and Copy, no Settings", async () => {
+  it("SOURCES discloses Add source; provider setup appears only after that press, and Cancel restores the compact door", async () => {
     wire({
       [room(pid)]: () => clone(BARE_ROOM),
       [`GET /api/projects/${pid}/repository`]: () => clone(BARE_REPOSITORY),
       "GET /api/connections": () => clone(CONNECTIONS_NOT_SIGNED_IN),
     });
     render(<WindowHarness scope={`project:${pid}`} />);
+    const sources = await screen.findByTestId("room-fold-sources");
+    const details = sources.querySelector("details")!;
+    expect(details.open).toBe(false);
+    expect(screen.queryByTestId("room-add-sources")).toBeNull();
+    fireEvent.click(sources.querySelector("summary")!);
+    expect(within(sources).getByTestId("room-add-source")).toBeVisible();
+    fireEvent.click(within(sources).getByTestId("room-add-source"));
     const well = await screen.findByTestId("room-add-sources");
     const gh = await within(well).findByTestId("door-row-github");
     expect(within(well).getAllByTestId("door-row-jira")).toHaveLength(1);
     const text = (gh.textContent ?? "").toUpperCase();
     expect(text).toContain("NOT SIGNED IN");
     expect(text).not.toContain("UNREACHABLE");
-    expect(screen.queryByTestId("room-add-source")).toBeNull(); // open already: no second Add source
+    expect(screen.queryByTestId("room-add-source")).toBeNull(); // one setup door
     fireEvent.click(within(gh).getByTestId("door-connect-github"));
     const signIn = await within(well).findByTestId("signin-well-github");
     expect(signIn.textContent).toContain("gh auth login");
@@ -537,6 +544,27 @@ describe("PHILO-17 sources: the Room's SOURCES on a bare project", () => {
     expect(openSurface).not.toHaveBeenCalled();
     expect(openSurfaceOr).not.toHaveBeenCalled();
     expect(Object.keys(useDesk.getState().windowsById).filter((id) => id.includes("settings"))).toEqual([]);
+    fireEvent.click(within(well).getByTestId("room-add-sources-cancel"));
+    await waitFor(() => expect(screen.queryByTestId("room-add-sources")).toBeNull());
+    if (!details.open) fireEvent.click(sources.querySelector("summary")!);
+    expect(within(sources).getByTestId("room-add-source")).toBeVisible();
+  });
+
+  it("keeps a failed Sources read visible with its own Retry, then restores the compact Add source door", async () => {
+    let failed = true;
+    wire({ [room(pid)]: () => failed
+      ? roomWith({ sources: { state: "degraded", error_code: "sources_read_failed" } })
+      : clone(BARE_ROOM) });
+    render(<WindowHarness scope={`project:${pid}`} />);
+    const sources = await screen.findByTestId("room-fold-sources");
+    expect(sources.querySelector("details")!.open).toBe(true);
+    await waitFor(() => expect(within(sources).getByText("SOURCES NOT READ")).toBeVisible());
+    expect(screen.queryByTestId("room-add-sources")).toBeNull();
+    failed = false;
+    fireEvent.click(within(sources).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(within(sources).queryByText("SOURCES NOT READ")).toBeNull());
+    if (!sources.querySelector("details")!.open) fireEvent.click(sources.querySelector("summary")!);
+    expect(within(sources).getByTestId("room-add-source")).toBeVisible();
   });
 });
 
@@ -1146,13 +1174,17 @@ describe("PHILO-17 sources: Add a repository in the Room", () => {
       },
     });
     render(<WindowHarness scope={`project:${pid}`} />);
+    const sources = await screen.findByTestId("room-fold-sources");
+    fireEvent.click(sources.querySelector("summary")!);
+    fireEvent.click(within(sources).getByTestId("room-add-source"));
     await pickAndAdd();
     await waitFor(() => expect(screen.queryByTestId("room-add-sources")).toBeNull());
     expect(posts()[0].json).toEqual(add.request);
     expect(calls.find((c) => c.key === "POST /api/projects/door/count")?.json).toEqual(count.request);
     await waitFor(() => expect(screen.getAllByTestId("source-scope").map((e) => e.textContent?.trim())).toContain("acme/app"));
 
-    fireEvent.click(screen.getByTestId("room-add-source"));
+    if (!sources.querySelector("details")!.open) fireEvent.click(sources.querySelector("summary")!);
+    fireEvent.click(within(sources).getByTestId("room-add-source"));
     const well = await pickAndAdd();
     await within(well).findByText("Already watched");
     expect(posts()).toHaveLength(2);
@@ -1530,6 +1562,9 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     const view = render(<WindowHarness scope={`project:${pid}`} />);
     await screen.findByText("FILED HERE");
     const fold = screen.getByTestId("room-fold-files");
+    const sources = screen.getByTestId("room-fold-sources");
+    expect(fold.compareDocumentPosition(sources) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(sources.querySelector("details")!.open).toBe(false);
     expect(fold.querySelector("details")).toHaveAttribute("open");
     expect(within(fold).getByRole("row", { name: /API boundary/i })).toHaveAttribute("aria-selected", "true");
     expect(takeRoomAtRequest(pid)).toBeNull();

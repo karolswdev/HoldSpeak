@@ -11,7 +11,7 @@
  *  Keyboard: one Tab stop; arrows walk the rows (useRovingRows); Space
  *  selects; Enter (or a double press) opens.
  */
-import { useMemo, useRef, type KeyboardEvent } from "react";
+import { useMemo, useRef, type CSSProperties, type KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { LampGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
@@ -82,6 +82,8 @@ export interface ObjectListProps {
   label: string;
   rows: ObjectListRow[];
   sort: ObjectSort;
+  /** Name is always shown. Omitted keeps all four columns for existing callers. */
+  visibleColumns?: readonly ObjectSortKey[];
   /** A press on a header: the caller flips or moves the sort. */
   onSort?(key: ObjectSortKey): void;
   selectedId?: string | null;
@@ -102,6 +104,7 @@ export function ObjectList({
   label,
   rows,
   sort,
+  visibleColumns,
   onSort,
   selectedId,
   selectedIds,
@@ -114,6 +117,11 @@ export function ObjectList({
   const bodyRef = useRef<HTMLDivElement>(null);
   useRovingRows(bodyRef, { selector: ".object-list-open" });
   const sorted = useMemo(() => sortRows(rows, sort), [rows, sort]);
+  const columns = COLUMNS.filter((column) => column.key === "name" || !visibleColumns || visibleColumns.includes(column.key));
+  const compactColumns = columns.length <= 2;
+  const tracks = columns.map((column) => column.key === "name" ? "minmax(0, 1fr)"
+    : column.key === "kind" ? "128px" : column.key === "when" ? "104px" : "160px").join(" ");
+  const phoneTracks = columns.map((column) => column.key === "name" ? "minmax(0, 1fr)" : "84px").join(" ");
 
   // Enter OPENS on keydown (its native click prevented); every other
   // activation — pointer, Space, element.click(), assistive press — is ONE
@@ -127,12 +135,14 @@ export function ObjectList({
   return (
     <div
       className={`object-list${className ? ` ${className}` : ""}`}
+      data-compact-columns={compactColumns || undefined}
+      style={{ "--object-list-columns": tracks, "--object-list-phone-columns": phoneTracks } as CSSProperties}
       role="grid"
       aria-label={label}
       aria-rowcount={rows.length + 1}
     >
       <div className="object-list-head" role="row">
-        {COLUMNS.map((column) => {
+        {columns.map((column) => {
           const active = sort.key === column.key;
           return (
             <div
@@ -192,23 +202,17 @@ export function ObjectList({
                   <span className="object-list-name-text">
                     <span className="object-list-name-word" title={row.name}>{nameBreaks(row.name)}</span>
                     <span className="object-list-fold" aria-hidden="true">
-                      <span className="object-list-fold-token">{kindWord}</span>
-                      {row.when ? <span className="object-list-fold-token">{row.when}</span> : null}
+                      {columns.some((column) => column.key === "kind") ? <span className="object-list-fold-token">{kindWord}</span> : null}
+                      {columns.some((column) => column.key === "when") && row.when ? <span className="object-list-fold-token">{row.when}</span> : null}
                     </span>
                   </span>
                 </Button>
               </div>
-              <div role="gridcell" className="object-list-cell" data-col="kind">
-                {kindWord}
-              </div>
-              <div role="gridcell" className="object-list-cell" data-col="when">
-                {row.when ?? ""}
-              </div>
-              <div role="gridcell" className="object-list-state" data-col="state">
-                {row.state ? (
-                  <LampGadget label={row.state.label} on tone={lampGadgetTone(row.state.tone)} />
-                ) : null}
-              </div>
+              {columns.some((column) => column.key === "kind") ? <div role="gridcell" className="object-list-cell" data-col="kind">{kindWord}</div> : null}
+              {columns.some((column) => column.key === "when") ? <div role="gridcell" className="object-list-cell" data-col="when">{row.when ?? ""}</div> : null}
+              {columns.some((column) => column.key === "state") ? <div role="gridcell" className="object-list-state" data-col="state">
+                {row.state ? <LampGadget label={row.state.label} on tone={lampGadgetTone(row.state.tone)} /> : null}
+              </div> : null}
             </div>
           );
         })}

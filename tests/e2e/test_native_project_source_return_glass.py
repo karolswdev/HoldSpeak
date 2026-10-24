@@ -72,6 +72,21 @@ def _start(page: Any, base: str) -> None:
     _normal_chair(page)
 
 
+def _components_ready(page: Any) -> None:
+    """Enter Components from its actual route, crossing First Sentence if shown."""
+    page.wait_for_function("""() => {
+      const visible = e => !!e && e.getClientRects().length > 0 &&
+        getComputedStyle(e).visibility !== 'hidden';
+      return visible(document.querySelector('.chair.chair-first-value')) ||
+        visible(document.querySelector('#surface-components .reference-pattern-selector'));
+    }""")
+    gate = page.locator(".chair.chair-first-value")
+    if gate.is_visible():
+        gate.get_by_role("button", name=re.compile(r"^(Continue later|Open my desk)$")).click()
+    page.locator("#surface-components").wait_for(state="visible")
+    page.get_by_role("group", name="Patterns").wait_for(state="visible")
+
+
 def _open_project(page: Any, project_id: str, name: str) -> Any:
     page.locator("[aria-controls=desk-tool-shelf]").first.click()
     field = page.locator("[aria-controls=desk-palette-listbox]")
@@ -480,7 +495,7 @@ def test_reference_filed_notes_uses_local_read_and_open_only(
                                     reduced_motion="reduce")
             page.set_default_timeout(20_000)
             page.goto(f"{base}/design/components?token={TOKEN}", wait_until="load")
-            _normal_chair(page)
+            _components_ready(page)
             pattern = page.get_by_role("group", name="Patterns").get_by_role("button", name="Lists", exact=True)
             if pattern.count():
                 pattern.click()
