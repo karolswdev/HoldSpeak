@@ -69,12 +69,16 @@ export function zoomWindow(id: string): void {
   // 12 px under its tile place (42 px). Unzoomed, it goes back to its tile.
   const tileAtHome = Boolean(chairWindowSpec(id)) && !state.panelRects[id];
   if (!tileAtHome && !state.panelMax.includes(id) && !state.panelSaved.includes(id)) {
-    const r = shellEls.get(id)?.getBoundingClientRect();
+    const shell = shellEls.get(id);
+    const r = shell?.getBoundingClientRect();
     const rect =
       r && r.width && r.height
         ? { x: r.left, y: r.top, w: r.width, h: r.height }
         : state.panelRects[id];
-    if (rect) state.setPanelRect(id, rect, true);
+    // Zoom remembers the glass rect, but a content-sized window the owner has
+    // not sized must return to auto height. Persisting this capture marks it
+    // arranged and makes the Chair's old CSS minimum stretch it on unzoom.
+    if (rect) state.setPanelRect(id, rect, shell?.dataset.fitContent !== "true");
   }
   useDesk.getState().toggleMaximizePanel(id);
 }
