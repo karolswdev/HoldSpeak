@@ -11,7 +11,7 @@ describe("Signal component gallery", () => {
         <ComponentsCore />
       </MemoryRouter>,
     );
-    for (const pattern of ["Forms", "Reading", "Lists", "Conversation", "Progress", "Controls"]) {
+    for (const pattern of ["Forms", "Reading", "Lists", "Resources", "Conversation", "Progress", "Controls"]) {
       fireEvent.click(screen.getByRole("button", { name: pattern }));
       const result = await axe.run(container, {
         rules: { "color-contrast": { enabled: false } },
@@ -24,24 +24,22 @@ describe("Signal component gallery", () => {
     render(<ComponentsCore />);
 
     expect(screen.getByTestId("design-reference")).toBeInTheDocument();
-    expect(screen.getByTestId("reference-form")).toBeInTheDocument();
+    expect(screen.getByTestId("reference-owner-preferences")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Controls" }));
     expect(screen.getByTestId("reference-controls")).toBeInTheDocument();
     expect(screen.getByTestId("object-species-gallery")).toBeInTheDocument();
   });
 
-  it("proves local form, list, conversation and progress behavior", async () => {
+  it("proves the Settings You field, list, conversation and progress behavior", async () => {
     render(<ComponentsCore />);
 
-    const form = screen.getByTestId("reference-form");
-    const title = within(form).getByRole("textbox", { name: "Project note title" });
-    const scope = within(form).getByRole("combobox", { name: "Project scope" });
-    fireEvent.change(title, { target: { value: "Newer release note" } });
-    fireEvent.click(within(form).getByRole("button", { name: "Save note" }));
-    fireEvent.change(title, { target: { value: "Edit made while saving" } });
-    fireEvent.change(scope, { target: { value: "Team record" } });
-    await waitFor(() => expect(within(form).getByText("Saved · newer edits remain.")).toBeInTheDocument());
+    const form = screen.getByTestId("reference-owner-preferences");
+    const name = await within(form).findByRole("textbox", { name: "Your name" });
+    fireEvent.change(name, { target: { value: "Karol A" } });
+    expect(within(form).getByText("EDITED")).toBeInTheDocument();
+    fireEvent.blur(name);
+    await waitFor(() => expect(within(form).getAllByText("SAVED")).toHaveLength(2));
 
     fireEvent.click(screen.getByRole("button", { name: "Lists" }));
     const list = screen.getByTestId("reference-list");
@@ -86,20 +84,15 @@ describe("Signal component gallery", () => {
     expect(within(conversation).getAllByText(failedRequest, { exact: true })).toHaveLength(1);
   });
 
-  it("cancels a pending form save when a failed preset is selected", async () => {
+  it("selects the real Settings writer refusal and keeps the draft for Retry", async () => {
     render(<ComponentsCore />);
 
-    const form = screen.getByTestId("reference-form");
-    const title = within(form).getByRole("textbox", { name: "Project note title" });
-    fireEvent.change(title, { target: { value: "Pending local save" } });
-    fireEvent.click(within(form).getByRole("button", { name: "Save note" }));
-    fireEvent.change(title, { target: { value: "Failed preset keeps this" } });
-    fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: "failed" } });
-
-    expect(within(form).getByText("Save failed.")).toBeInTheDocument();
-    await new Promise((resolve) => window.setTimeout(resolve, 160));
-    expect(within(form).getByText("Save failed.")).toBeInTheDocument();
-    expect(title).toHaveValue("Failed preset keeps this");
+    fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: "refused" } });
+    const form = screen.getByTestId("reference-owner-preferences");
+    await waitFor(() => expect(within(form).getAllByText("NOT SAVED")).toHaveLength(2));
+    expect(within(form).getByRole("textbox", { name: "Your name" })).toHaveValue("Karol A");
+    fireEvent.click(within(form).getByRole("button", { name: "Retry" }));
+    await waitFor(() => expect(within(form).getAllByText("SAVED")).toHaveLength(2));
   });
 
   it("keeps the reading source and excerpt actions truthful", () => {
@@ -123,13 +116,13 @@ describe("Signal component gallery", () => {
     expect(within(reading).getByRole("button", { name: "Keep excerpt" })).toBeInTheDocument();
   });
 
-  it("resets the active specimen after local edits", () => {
+  it("resets the active specimen after local edits", async () => {
     render(<ComponentsCore />);
 
-    const form = screen.getByTestId("reference-form");
-    fireEvent.change(within(form).getByRole("textbox", { name: "Project note title" }), { target: { value: "A local draft" } });
+    const form = screen.getByTestId("reference-owner-preferences");
+    fireEvent.change(await within(form).findByRole("textbox", { name: "Your name" }), { target: { value: "A local draft" } });
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
-    expect(within(screen.getByTestId("reference-form")).getByRole("textbox", { name: "Project note title" })).toHaveValue("Sprint review notes");
+    expect(await within(screen.getByTestId("reference-owner-preferences")).findByRole("textbox", { name: "Your name" })).toHaveValue("Karol");
 
     fireEvent.click(screen.getByRole("button", { name: "Reading" }));
     fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: "long" } });
@@ -137,7 +130,7 @@ describe("Signal component gallery", () => {
     expect(screen.getByTestId("reference-kept-excerpt")).toHaveTextContent("The team chose a local review pass for the next release.");
 
     fireEvent.click(screen.getByRole("button", { name: "Reset" }));
-    expect(within(screen.getByTestId("reference-form")).getByRole("textbox", { name: "Project note title" })).toHaveValue("Sprint review notes");
+    expect(await within(screen.getByTestId("reference-owner-preferences")).findByRole("textbox", { name: "Your name" })).toHaveValue("Karol");
     expect(screen.queryByTestId("reference-kept-excerpt")).not.toBeInTheDocument();
   });
 });

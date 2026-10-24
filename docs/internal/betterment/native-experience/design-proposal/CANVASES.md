@@ -146,6 +146,16 @@ copy, move, drop, stage or commit support.
 - **Resumed:** the saved chip remains tied to the field, and changing category
   does not imply a different application or large card page.
 
+**Implementation observation (2026-10-23):** the first Settings You slice
+uses the existing `GadgetGroup`/`GadgetRow` fields and owner writer, with per-field
+Edited → Saving → Saved or Not saved. The compact policy row says Autosave on
+change and one group Retry retains the current draft. A newer edit cannot be
+called Saved by an earlier ACK. Forms in Components now exercises this same
+composition/controller through isolated adapter IO; its presets are saved,
+edited, saving, refused, retried and newer-edit. The earlier generic form mock
+is parked. This is a bounded implementation refinement of C/E, not owner visual
+acceptance or completion of all readiness work.
+
 ### D · Meeting retained work
 
 - **Default:** the record view names one stable meeting id, event timestamps,

@@ -80,14 +80,22 @@
   flex: none;
 }
 
-.reference-form-fields {
-  display: grid;
-  gap: var(--space-3);
-  max-width: 760px;
+.reference-owner-fields {
+  width: 100%;
+  max-width: 640px;
+  min-width: 0;
 }
 
-.reference-form-fields .gadget-row {
-  min-width: 0;
+.reference-accessible-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .reference-actions {

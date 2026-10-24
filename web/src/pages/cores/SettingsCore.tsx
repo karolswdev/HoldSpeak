@@ -2774,7 +2774,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
     }
   };
 
-  const receipt = { saving: saving || Boolean(secretBusy), writtenAt, refusal };
+  // You has its own owner writer and field receipts. A success from the
+  // general preferences writer cannot acknowledge those independent edits.
+  const receipt = { saving: saving || Boolean(secretBusy), writtenAt: moduleId === "you" ? "" : writtenAt, refusal };
   const focusHighlight = SETTINGS_FOCUS_PATHS[navigation.focus ?? ""] ?? navigation.focus ?? "";
   const pageSection = (id: SettingsSectionId, label: string, children: ReactNode) => (
     <section
@@ -2888,7 +2890,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
           />
         ) : null}
         hubWrittenAt={
-          hub.data.writtenAt != null
+          moduleId !== "you" && hub.data.writtenAt != null
             ? new Date(hub.data.writtenAt * 1000).toTimeString().slice(0, 5)
             : null
         }

@@ -7,7 +7,6 @@ import type { RepoFile } from "../../../desk/repository";
 import {
   CycleGadget,
   FilterTokens,
-  GadgetRow,
   StringGadget,
   SurfaceRows,
   SurfaceRow,
@@ -26,17 +25,17 @@ import {
 } from "../../../desk/surface";
 import type { CoreProps } from "../core-types";
 import { ControlsGallery } from "./ControlsGallery";
+import { OwnerPreferencesReference, type OwnerPreferencesState } from "./OwnerPreferencesReference";
 import "./design-reference.css";
 
 type Pattern = "forms" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
-type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed";
+type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState;
 
 /*
- * Shared consumer map: Forms uses GadgetRow/StringGadget/CycleGadget and
- * ActionNotice; Reading uses ReadingDocument/SurfaceWell; Lists uses
- * SurfaceRows/SurfaceSplit; Conversation uses DeskComposer; Progress uses
- * ProgressPlan. These are local pattern specimens, not claims about which
- * other product faces have adopted each composition.
+ * Forms renders the Settings You fields and writer through local IO; Resources
+ * renders the repository browser through local reads. Reading, Lists,
+ * Conversation, and Progress remain bounded specimens of their library
+ * surfaces. Components itself is a fixture, not a second production consumer.
  */
 
 const PATTERNS: Array<{ id: Pattern; label: string }> = [
@@ -55,6 +54,15 @@ const STATES: Array<{ id: ExampleState; label: string }> = [
   { id: "failed", label: "Failed" },
   { id: "empty", label: "Empty" },
   { id: "long", label: "Long" },
+];
+
+const FORM_STATES: Array<{ id: OwnerPreferencesState; label: string }> = [
+  { id: "saved", label: "Saved" },
+  { id: "edited", label: "Edited" },
+  { id: "saving", label: "Saving" },
+  { id: "refused", label: "Refused" },
+  { id: "retried", label: "Retried" },
+  { id: "newer", label: "Newer edit" },
 ];
 
 const RESOURCE_FILES: RepoFile[] = [
@@ -147,7 +155,7 @@ const FAILED_REQUEST_PAYLOAD = "Can we keep the release note local while we revi
 const FAILED_REPLY_PAYLOAD = "The reply is available locally for the captured request.";
 
 const STATE_OPTIONS: Record<Pattern, Array<{ id: ExampleState; label: string }>> = {
-  forms: STATES,
+  forms: FORM_STATES,
   reading: [STATES[0], STATES[3], STATES[4]],
   lists: [STATES[0], STATES[3]],
   resources: [STATES[0], STATES[1], STATES[2], STATES[3], { id: "resumed", label: "Resumed" }],
@@ -182,105 +190,6 @@ function StateSelector({ pattern, state, onChange }: { pattern: Pattern; state: 
         onChange={(value) => onChange(value as ExampleState)}
       />
     </div>
-  );
-}
-
-function FormsPattern({ state }: { state: ExampleState }) {
-  const [title, setTitle] = useState("Sprint review notes");
-  const [scope, setScope] = useState("Project room");
-  const [savedTitle, setSavedTitle] = useState("Sprint review notes");
-  const [savedScope, setSavedScope] = useState("Project room");
-  const [lifecycle, setLifecycle] = useState<"idle" | "saving" | "failed" | "saved" | "invalid">("idle");
-  const saveTimer = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (saveTimer.current !== null) {
-      window.clearTimeout(saveTimer.current);
-      saveTimer.current = null;
-    }
-    if (state === "busy") setLifecycle("saving");
-    if (state === "failed") setLifecycle("failed");
-    if (state === "empty") setTitle("");
-    if (state === "ordinary") {
-      setTitle("Sprint review notes");
-      setLifecycle("idle");
-    }
-    if (state === "long") {
-      setTitle("Sprint review notes for the local release review and owner handoff");
-      setLifecycle("idle");
-    }
-  }, [state]);
-
-  useEffect(() => () => {
-    if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
-  }, []);
-
-  const dirty = title !== savedTitle || scope !== savedScope;
-  const beginSave = () => {
-    if (!title.trim()) {
-      setLifecycle("invalid");
-      return;
-    }
-    setLifecycle("saving");
-    const valueAtStart = { title, scope };
-    if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(() => {
-      setSavedTitle(valueAtStart.title);
-      setSavedScope(valueAtStart.scope);
-      setLifecycle("saved");
-      saveTimer.current = null;
-    }, 120);
-  };
-  const retry = () => {
-    if (!title.trim()) {
-      setLifecycle("invalid");
-      return;
-    }
-    const valueAtStart = { title, scope };
-    setLifecycle("saving");
-    if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(() => {
-      setSavedTitle(valueAtStart.title);
-      setSavedScope(valueAtStart.scope);
-      setLifecycle("saved");
-      saveTimer.current = null;
-    }, 120);
-  };
-  const message = lifecycle === "invalid"
-    ? "Title required."
-    : lifecycle === "failed"
-      ? "Save failed."
-      : lifecycle === "saving"
-        ? "Saving."
-        : lifecycle === "saved"
-          ? dirty ? "Saved · newer edits remain." : "Saved."
-          : dirty ? "Unsaved changes."
-            : "Ready to edit.";
-
-  return (
-    <section className="reference-example" data-testid="reference-form" aria-label="Form pattern">
-      <div className="reference-example-head">
-        <div>
-          <h2>Project note</h2>
-        </div>
-        <StateChip state={lifecycle === "failed" ? "failure" : lifecycle === "saving" ? "working" : lifecycle === "saved" ? "success" : lifecycle === "invalid" ? "warning" : "active"} label={lifecycle === "idle" ? (dirty ? "DIRTY" : "READY") : lifecycle.toUpperCase()} />
-      </div>
-      <div className="reference-form-fields">
-        <GadgetRow label="Title">
-          <StringGadget label="Project note title" value={title} placeholder="PROJECT NOTE TITLE" onChange={(next) => { setTitle(next); if (lifecycle === "saved") setLifecycle("idle"); }} />
-        </GadgetRow>
-        <GadgetRow label="Scope">
-          <CycleGadget label="Project scope" value={scope} options={[{ value: "Project room", label: "Project room" }, { value: "Team record", label: "Team record" }]} onChange={setScope} />
-        </GadgetRow>
-      </div>
-      <ActionNotice tone={lifecycle === "failed" || lifecycle === "invalid" ? "danger" : lifecycle === "saved" ? "ok" : "info"} icon={lifecycle === "saved" ? "✓" : lifecycle === "failed" || lifecycle === "invalid" ? "!" : "·"} action={lifecycle === "failed" ? { label: "Retry", onClick: retry } : undefined}>
-        {message}
-      </ActionNotice>
-      <div className="reference-actions">
-        <Button variant="primary" disabled={lifecycle === "saving"} loading={lifecycle === "saving"} onClick={beginSave}>Save note</Button>
-        {lifecycle === "saved" ? <Button variant="ghost" onClick={() => setLifecycle("idle")}>Continue editing</Button> : null}
-      </div>
-    </section>
   );
 }
 
@@ -461,7 +370,7 @@ function ProgressPattern({ state }: { state: ExampleState }) {
 
 function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleState }) {
   switch (pattern) {
-    case "forms": return <FormsPattern state={state} />;
+    case "forms": return <OwnerPreferencesReference state={FORM_STATES.some((item) => item.id === state) ? state as OwnerPreferencesState : "saved"} />;
     case "reading": return <ReadingPattern state={state} />;
     case "lists": return <ListsPattern state={state} />;
     case "resources": return <ResourcesPattern key={state} state={state} />;
@@ -473,16 +382,16 @@ function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleStat
 
 export function DesignReference({ hero }: CoreProps) {
   const [pattern, setPattern] = useState<Pattern>("forms");
-  const [state, setState] = useState<ExampleState>("ordinary");
+  const [state, setState] = useState<ExampleState>("saved");
   const [resetEpoch, setResetEpoch] = useState(0);
-  const reset = () => { setPattern("forms"); setState("ordinary"); setResetEpoch((epoch) => epoch + 1); };
+  const reset = () => { setPattern("forms"); setState("saved"); setResetEpoch((epoch) => epoch + 1); };
   const activeLabel = PATTERNS.find((item) => item.id === pattern)?.label ?? "Forms";
   return (
     <>
       {hero ? hero(null) : null}
       <SurfaceSection className="design-reference-shell" data-testid="design-reference">
         <div className="reference-toolbar" aria-label="Pattern controls">
-          <PatternSelector pattern={pattern} onChange={(next) => { setPattern(next); if (next !== "controls") setState("ordinary"); }} />
+          <PatternSelector pattern={pattern} onChange={(next) => { setPattern(next); if (next !== "controls") setState(next === "forms" ? "saved" : "ordinary"); }} />
           <StateSelector pattern={pattern} state={state} onChange={setState} />
           <Button dense variant="ghost" onClick={reset}>Reset</Button>
         </div>

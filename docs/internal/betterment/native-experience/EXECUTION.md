@@ -15,7 +15,7 @@ Send custody and disabled Presence. Deliver small concerns, share production
 patterns with Components fixtures, then challenge reuse with Settings,
 Thought and complete cross-app journeys. Do not reopen framework research.
 
-## Current wave: repository applications
+## First delivery: repository applications
 
 Branch: feat/native-desktop-wave1-20261023.
 Worktree: /Users/karol/dev/tools/wt-native-desktop-wave1-20261023.
@@ -53,13 +53,32 @@ Presence enable. Anchors in the source audit may drift: verify actual files.
 Root verifies claims, integrates, runs the required quick check, publishes
 small PRs and updates package/PR/task-evidence/owner-feedback status.
 
+## Package position
+
+| Package | Delivery position | Remaining acceptance |
+| --- | --- | --- |
+| P01 | First repository identity/frame slice merged #1438 | Durable view state, shared command origin, unlike consumers and narrow chooser |
+| P02 | First repository read/inspect slice merged #1438 | Second real collection consumer, range/selection/scroll and revalidation |
+| P03 | Active Thought/voice first slice in progress | Captured caret/generation, IME/undo, retained voice and source return |
+| P04 | Planned after Thought | Sourced Ask whole job, save/return, failure and reading continuity |
+| P05 | Planned; bounded Stop repair already #1437 | Complete record/import/intelligence/reopen/aftercare job |
+| P06 | Planned | Whole project/person/day job and retained update identity |
+| P07 | Planned | Hand/result/automation/terminal retained-job acceptance |
+| P08 | First Settings You slice built/re-checked; six browser cases passed | Other preferences, durable failed-leave recovery, Setup/Engines/Accounts |
+| P09 | Existing Send authority preserved; convergence planned | Producer/Needs return, frozen bytes and unknown/replay whole-job proof |
+| P10 | Resources reference merged #1438; same-face Settings reference built | Broader shell, feedback, native boundary and parity/adoption reconciliation |
+
+No package is marked complete. Each first slice is a useful delivered concern,
+not a substitute for its whole-job acceptance or the owner's visual judgment.
+
 ## Progress
 
 - Design definition: merged [PR1435](https://github.com/karolswdev/HoldSpeak/pull/1435), 47-family trace validated.
 - Repository slice: [PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438),
   built, reviewed and quick-check green. First partial P01/P02/P10 delivery.
-- P08 Settings slice: built in a separate worktree; independent review and
-  production/reference integration in progress. This is not all of P08.
+- P08 Settings slice: built and independently re-checked; same-face reference
+  integrated and six real-browser cases passed. Required final quick green.
+  This is not all of P08.
 - Task evidence: seven isolated real-browser repository cases and three route
   cases pass. Root inspected 1440/393 captures. Local synthetic repositories
   prove this read/navigation path, not external providers or OS-native transfer.
@@ -99,3 +118,44 @@ A missing registered repository root can still fail the global list route;
 that pre-existing producer-unavailable case needs a bounded follow-on. These
 are P01/P02/P10 scope, not completed by a first repository PR. P03–P09 remain
 queued according to DELIVERY-PLAN, not silently dropped.
+
+## Second delivery: Settings You and executable Forms
+
+Branch: feat/native-preferences-wave2-20261023.
+Worktree: /Users/karol/dev/tools/wt-native-preferences-wave2-20261023.
+Journey J6, workflow `settings`, first P08 slice and P10 Forms reference.
+Workers: preferences_writer owns the owner-name hook/alias field and focused
+writer tests; preferences_face owns the exact shared field composition,
+fixture adapter/navigation and focused consumer tests; repository_verifier
+owns the new isolated browser acceptance file. Root owns records/integration.
+
+The shared unit is OwnerNameFields plus the existing useOwnerName controller,
+not a new generic form engine. Production keeps the settings API; the local
+reference supplies only its IO. Edited includes the debounce interval; Saving
+names captured values; Saved needs current authoritative ACK; refusal retains
+input and one group Retry. Raw aliases are edited work, and IME completion
+must not consume a later deliberate Enter. Production mic behavior remains;
+fixture mic is disabled and certifies no hardware path.
+
+Independent Sol review found stale ACK authority, a raw alias lost on leave,
+and an overlong IME Enter guard. Focused fixes received one final RATIFY
+re-check. Root's glass inspection then found an unrelated global Saved footer
+beside the owner field's Not saved. The diagnosed SettingsCore seam now hides
+that unrelated success on You; other categories keep their own receipt.
+The final six-case browser run passes real API saves, aliases/return,
+refusal/Retry, held old/latest ACK and fixture-only Forms IO at both widths;
+393 controls pass the canonical nine-point probe. Root inspected the updated
+refused footer and desktop/narrow production/reference shots. Required quick
+green: build, 4,204 related UI tests, six affected real-browser cases,
+110 desk-sweep cases, 27 canon and 1,126 repository guards
+(`.tmp/quick-native-preferences-final.log`). No Muad'Dib check
+or owner aesthetic acceptance is implied. Failure of keepalive after a full
+unmount still lacks durable local recovery; this existing domain limit remains
+explicit P08 follow-on, not certified by the new saved-state presentation.
+
+Runtime after #1438: backend 8978e93de59086fe2e7f756c86cb153243eb0628,
+frontend 34dc8b5d9af2db08, owns_database true, no diagnoses, four health/route
+checks 200. CLI/MCP source aligned; feedback remains enabled, Presence off.
+Post-merge full tape runs on that pinned revision at low priority. Initial
+reds include stale wire fixtures and route-execution integration cases; they
+are not a green full-suite claim. Fixture repair is isolated from this slice.

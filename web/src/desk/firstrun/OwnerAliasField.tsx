@@ -2,17 +2,47 @@
  * one input. A comma or Enter adds; Backspace on an empty input removes the
  * last chip. One component, two faces: the first-run You card and
  * Settings › People › You (PHILO-15 B57). */
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { StringGadget } from "../surface";
 import type { useOwnerName } from "./ownerName";
 import "./firstrun.css";
 
-export function OwnerAliasField({ owner }: { owner: ReturnType<typeof useOwnerName> }) {
-  const [alias, setAlias] = useState("");
+export function OwnerAliasField({
+  owner,
+  onDraftChange,
+  mic = true,
+}: {
+  owner: ReturnType<typeof useOwnerName>;
+  onDraftChange?: (dirty: boolean) => void;
+  mic?: boolean;
+}) {
+  const alias = owner.aliasDraft;
+  const composing = useRef(false);
+  const endingComposition = useRef(false);
+  const compositionCycle = useRef(0);
+  const awaitingFinalChange = useRef(false);
+  const composedValue = useRef("");
+  const reportedDirty = useRef(false);
+  const reportDirty = (dirty: boolean) => {
+    if (reportedDirty.current === dirty) return;
+    reportedDirty.current = dirty;
+    onDraftChange?.(dirty);
+  };
+  useEffect(() => {
+    const dirty = Boolean(alias.trim());
+    if (reportedDirty.current === dirty) return;
+    reportedDirty.current = dirty;
+    onDraftChange?.(dirty);
+  }, [alias, onDraftChange]);
+  const setDraft = (next: string) => {
+    owner.setAliasDraft(next);
+    reportDirty(Boolean(next.trim()));
+  };
   const commit = () => {
+    if (composing.current) return;
     if (!alias.trim()) return;
-    owner.addAliases(alias);
-    setAlias("");
+    owner.commitAliasDraft();
+    reportDirty(false);
   };
   return (
     <span className="firstrun-alias-row">
@@ -24,21 +54,48 @@ export function OwnerAliasField({ owner }: { owner: ReturnType<typeof useOwnerNa
       <StringGadget
         label="Also called"
         value={alias}
+        mic={mic}
         onChange={(next) => {
+          if (awaitingFinalChange.current && next === composedValue.current) {
+            awaitingFinalChange.current = false;
+            setDraft(next);
+            return;
+          }
+          awaitingFinalChange.current = false;
           // A spoken or pasted list arrives whole: commas split it.
-          if (next.includes(",")) {
+          if (!composing.current && next.includes(",")) {
             owner.addAliases(next);
-            setAlias("");
-          } else setAlias(next);
+            setDraft("");
+          } else setDraft(next);
         }}
         placeholder="Add"
         onKeyDown={(event) => {
+          if (composing.current || endingComposition.current || event.nativeEvent.isComposing || event.keyCode === 229) return;
           if (event.key === "Enter") {
             event.preventDefault();
             commit();
           } else if (event.key === "Backspace" && !alias) owner.removeLastAlias();
         }}
-        inputProps={{ onBlur: commit }}
+        inputProps={{
+          onBlur: commit,
+          onCompositionStart: () => {
+            compositionCycle.current += 1;
+            composing.current = true;
+            endingComposition.current = false;
+            awaitingFinalChange.current = false;
+          },
+          onCompositionEnd: (event) => {
+            composing.current = false;
+            endingComposition.current = true;
+            const cycle = compositionCycle.current;
+            queueMicrotask(() => {
+              if (compositionCycle.current === cycle) endingComposition.current = false;
+            });
+            awaitingFinalChange.current = true;
+            composedValue.current = event.currentTarget.value;
+            setDraft(event.currentTarget.value);
+          },
+        }}
       />
     </span>
   );

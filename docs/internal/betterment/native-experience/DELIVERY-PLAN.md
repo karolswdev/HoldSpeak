@@ -47,10 +47,13 @@ Packages are sliced, not all-or-nothing gates: existing P06/P07 services can ser
 
 ## Execution tracking
 
-**Current position:** product definition is drafted in [PR1435](https://github.com/karolswdev/HoldSpeak/pull/1435).
-Execution is authorized for P01–P10. The first P01/P02/P10 repository wave
-is in progress; none is marked delivered without a merged implementation
-and its scoped evidence. The separate
+**Current position:** product definition and owner authorization merged in
+[PR1435](https://github.com/karolswdev/HoldSpeak/pull/1435). Execution is
+active for P01–P10. The first partial P01/P02/P10 repository slice merged in
+[PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438) and runs on the Desk.
+P08's first Settings You slice is re-checked and browser-verified, with the
+final required quick check green. Active Thought/input is being built next.
+No full package or owner aesthetic acceptance is claimed. The separate
 [repair closeout](checks/repair-closeout-2026-10-23.md) does not complete a
 framework package or establish visual acceptance.
 
@@ -78,6 +81,12 @@ fixture seam, not completion of those packages or of all 47 families.
 
 ## P01: Window, view and command foundation
 
+**Delivery:** partial slice merged in [PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438).
+Independent repository view/resource identity, exact close/raise, compatible
+restoration and sibling placement are observed in isolated browser cases.
+Full history/selection/scroll persistence, cross-app command origin and the
+narrow visible chooser remain open. See [execution](EXECUTION.md).
+
 **Primary families:** `windows`, `navigation_commands`.
 
 **Source homes:** `web/src/desk/components/DeskWindow.tsx`, `web/src/desk/components/window/windowRegistry.ts`,
@@ -100,6 +109,12 @@ close, minimize, reload, missing location and return. A result that survives clo
 relevant canvas/state story together. Do not claim broad adoption from the foundation alone.
 
 ## P02: Resources and collections
+
+**Delivery:** first real repository read/inspect consumer merged in
+[PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438), with stale/refused
+read recovery and a matching local Components specimen. Directory/KB are
+still the second real consumer to prove; range selection, revalidation and
+broader collection adoption remain open. See [execution](EXECUTION.md).
 
 **Primary families:** `explorer_repo`, `objects_pullouts`, `drawers`, `knowledge_drawers`.
 
@@ -246,6 +261,12 @@ workflow rows.
 
 ## P08: Readiness and preferences
 
+**Delivery:** Settings You slice is in progress: shared production fields and
+the existing domain writer now supply immediate Edited, captured Saving,
+authoritative Saved and retained Not saved/Retry. The Components Forms
+specimen uses that same composition/controller with isolated IO. The fix re-check and six browser cases pass; the final required quick is green. Setup/Engines/Accounts and
+other preference writers remain later scope; this does not complete P08.
+
 **Primary families:** `engines_assignment`, `accounts`, `settings`, `setup`.
 
 **Source homes:** `SettingsCore.tsx`, `settingsPrefs.tsx`, connection and destination panes, `RunsOnCore.tsx`, `SetupCore.tsx`,
@@ -287,6 +308,11 @@ press, and no source-wide freshness gate.
 Edit-to-note distinct from external Send.
 
 ## P10: Desktop, reference, feedback and native boundary
+
+**Delivery:** the Resources reference merged with its production consumer in
+[PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438). Settings Forms is
+the next shared specimen. Shell/feedback/operation reconciliation and the
+three-consecutive-report Firefox job remain open. Presence stays disabled.
 
 **Primary families:** `native_presence`, `desktop_workspace`, `feedback`, `components_reference`.
 
