@@ -53,7 +53,7 @@ It moves only y to keep actual expanded height in the work area and preserves
 owner sizing/zoom/identity. Synthetic growth, real gestures and normal-motion
 Stage/Exposé/initial mount are covered; no ASR claim.
 
-Range fixture static correction: the merged #1448 handoff fixture omitted
+Range fixture static correction — #1450: the merged #1448 handoff fixture omitted
 required range.text. A direct typecheck verified TS2345; the fixture is aligned
 without product changes. Whole-tree typecheck and required quick pass (nine
 editor, 110 sweep, 27 canon, 1,126 guards). Earlier author success was not proof

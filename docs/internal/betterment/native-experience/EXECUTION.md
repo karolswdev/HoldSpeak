@@ -562,6 +562,8 @@ uses the prepared bundle and must never rebuild the served runtime in place.
 
 ## Merged-range fixture type correction
 
+[PR1450](https://github.com/karolswdev/HoldSpeak/pull/1450).
+
 A direct whole-tree typecheck on merged #1448 (`d51d4c174`) found TS2345:
 DeskEditor.test.tsx's handoff fixture lacked the new immutable range.text.
 The running/browser behavior passed, but the earlier author typecheck report
