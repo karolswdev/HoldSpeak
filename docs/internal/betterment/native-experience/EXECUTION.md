@@ -578,6 +578,8 @@ to the behavioral quick checks; typecheck alone remains no task validation.
 
 ## Pending Ask Stop obstruction repair
 
+[PR1451](https://github.com/karolswdev/HoldSpeak/pull/1451).
+
 Branch: fix/native-pending-stop-fix-20261023.
 Worktree: /Users/karol/dev/tools/wt-native-pending-stop-fix-20261023.
 A real 393 pending-run probe found the global GenerationTheater card over the

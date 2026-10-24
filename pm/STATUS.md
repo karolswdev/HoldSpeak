@@ -2657,7 +2657,7 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 - #753 — Phase 13 close, Astra's record
 
 
-Pending-run Stop repair received independent Sol advisory RATIFY: run-scoped global
+Pending-run Stop repair — #1451 — received independent Sol advisory RATIFY: run-scoped global
 status cards no longer cover the producer controls. Two real browser cases
 at1440/393 prove nine-point Stop access, accepted-run cancel and late local
 reply suppression while retaining the newer draft; 42 unit tests and final
