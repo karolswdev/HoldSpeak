@@ -120,13 +120,29 @@ fixture must be named before calling it an executed job.
 
 ## Craft and proof travel together
 
-The resource canvas should feel like a useful desktop workspace: clear
-navigation, readable rows, visible selection, contextual commands and quiet
-status. Preferences should group fields without making every setting a card.
-Conversations should privilege the reading material and a stable composer.
-Typography, spacing, icon construction, active/inactive selection, focus,
-pointer targets, scroll ownership and narrow reflow are reviewed as one
-composition. Workbench character must survive the quieter modern material.
+Set task-appropriate initial window sizes, minimum bounds and reading widths
+on the canvases. Respect user-resized geometry; arriving data must not resize
+or refocus the work. A small preference task should not inherit an oversized
+page composition, and a resource workspace should have room for navigation
+and inspection. Decide these proportions from meaningful states, not empty
+screens or one shared default rectangle.
+
+The resource canvas needs readable, scannable rows, visible selection,
+contextual commands and quiet status. Preferences group fields without
+turning every setting into a card. Documents use a deliberate reading measure;
+conversations privilege that material and a stable composer. Use shared
+density and spacing tokens for the input environment, rather than local
+shrinking or padding patches. Keep material hierarchy clear between frame,
+work surface, selection and inspector; nested borders are not hierarchy.
+
+Typography, rich illustrated icon construction, active/inactive selection,
+focus, pressed/busy states, pointer targets, scroll ownership and narrow
+reflow are reviewed together. Loading should preserve useful structure;
+empty and failed states need a clear local next move. Compare the same job
+and states side by side, including transitions, rather than approving an
+isolated icon or idle screenshot. Workbench character must survive the
+quieter modern material, and the owner's repeated visual rejection remains
+open evidence until the relevant experience is accepted.
 
 At 1440 and 393, and at a representative constrained floating-window width,
 use the same meaningful fixture through populated, empty, busy, failed and
