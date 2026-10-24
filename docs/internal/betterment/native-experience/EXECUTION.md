@@ -59,7 +59,7 @@ small PRs and updates package/PR/task-evidence/owner-feedback status.
 | --- | --- | --- |
 | P01 | First repository identity/frame slice merged #1438 | Durable view state, shared command origin, unlike consumers and narrow chooser |
 | P02 | First repository read/inspect slice merged #1438 | Second real collection consumer, range/selection/scroll and revalidation |
-| P03 | Active Thought/voice first slice built/re-checked; browser and quick green | Captured caret/generation, IME/undo, retained voice and source return |
+| P03 | First active Thought/voice slice #1443, browser and quick green | Captured caret/generation, IME/undo, retained voice and source return |
 | P04 | Planned after Thought | Sourced Ask whole job, save/return, failure and reading continuity |
 | P05 | Planned; bounded Stop repair already #1437 | Complete record/import/intelligence/reopen/aftercare job |
 | P06 | Planned | Whole project/person/day job and retained update identity |
@@ -210,6 +210,8 @@ repair; the full pinned tape still has not closed green.
 
 
 ## Third delivery: captured Thought voice and shared Editing
+
+[PR1443](https://github.com/karolswdev/HoldSpeak/pull/1443).
 
 Branch: feat/native-input-wave3-20261023.
 Worktree: /Users/karol/dev/tools/wt-native-input-wave3-20261023.

@@ -67,6 +67,21 @@ build, 47 affected cases, 110 desk sweep, 27 canon and 1,126 repository guards.
 The remaining inherited pinned-tape Chair zoom-height failure is reproduced
 on pre-P01 main and is being fixed separately; no full-suite green claim.
 
+Captured Thought voice / Editing reference — #1443: active CodeMirror binds
+one editor/range/document generation; stale words stay with their Note through
+Desk memory and explicit insertion uses one undo. Components shares the exact
+document/binder/recovery with local IO. Final Sol fix re-check RATIFY; six
+browser cases pass at 1440/393, including named fake transcript transport
+through production MicButton and default retention, two notes, close/reopen,
+real Note saves and one Undo. Copy uses isolated browser test IO; no hardware
+or ASR-quality claim. Root inspected final shots and fixed clipped/overlapping
+recovery controls before acceptance. Required quick green: build, 4,217
+related UI tests, six affected cases, 110 desk sweep, 27 canon and 1,126
+repository guards. This is partial P03/P10; other input policies, per-Note
+audio retry, native Talk and owner visual acceptance remain open. P04's owned
+source/selection return is in progress; the deployed runtime is updated after
+this merge, with its exact identity recorded at the next delivery update.
+
 The earlier hold below is retained as history; it no longer pauses execution.
 
 **Owner correction — strategy before further implementation (2026-10-23).**
