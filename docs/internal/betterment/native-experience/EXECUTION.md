@@ -859,7 +859,7 @@ under the lock; quick's not-slow affected selection ran zero, not another
 pair of browser passes. Ask as the second report consumer/cross-window job
 and owner-provider/hardware acceptance remain open.
 
-## Eighth delivery in progress: Room/list visual adoption
+## Eighth delivery: Room/list visual adoption — [PR1456](https://github.com/karolswdev/HoldSpeak/pull/1456)
 
 Branch feat/native-room-visual-wave8-20261024; worktree
 /Users/karol/dev/tools/wt-native-room-visual-wave8-20261024. Canvas B/F were
@@ -1054,6 +1054,6 @@ typecheck exits0 (`.tmp/typecheck-room-visual-ready-fix.log`). The diagnosed
 loading-visibility focus seam and real-click fault injection correction are
 included. Root verified the focused evidence and final run; earlier red
 attempts above remain part of the record. The first visual Room/list slice
-is ready to merge; no whole package, full-suite green or owner aesthetic
+is delivered in [PR1456](https://github.com/karolswdev/HoldSpeak/pull/1456); no whole package, full-suite green or owner aesthetic
 acceptance follows from this bounded passing result. Desktop/phone owner
 previews21/22 were opened in Preview and their folder in Finder.

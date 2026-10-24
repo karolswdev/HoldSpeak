@@ -2775,6 +2775,6 @@ whole-tree types exit0. The real hidden-body Project focus failure is fixed
 through existing presentation readiness, with12 focused section checks, both
 full-job widths and3 extra desktop runs passing. Sources fault recovery now
 releases only on the real Retry click; the fixture guard excludes only the
-ambient Desk heartbeat. Ready for merge/deploy. Remaining Thought393 hit
+ambient Desk heartbeat. Delivery PR1456. Remaining Thought393 hit
 ownership, delayed Sources/Plan movement and Hand timing findings above stay
 open; this is bounded adoption, with owner visual acceptance still open.

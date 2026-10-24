@@ -112,8 +112,7 @@ P01/P02/P03/P04/P06/P08/P10, not a final cosmetic step after every domain.
    reconcile adoption against all 47 map rows before calling the framework
    delivered. Preserve the original adversarial findings and unresolved scope.
 
-**First visual slice: Project Room and the shared collection — built and
-integrated quick green, pending merge.** The actual Room/reference cases pass
+**First visual slice: Project Room and the shared collection — [PR1456](https://github.com/karolswdev/HoldSpeak/pull/1456).** The actual Room/reference cases pass
 at1440/393, including stable retained refresh and presentation-ready exact
 return focus. The public list contract and Canvas B/F track this adoption.
 The following scope is implemented; owner visual acceptance remains open. Preserve the
