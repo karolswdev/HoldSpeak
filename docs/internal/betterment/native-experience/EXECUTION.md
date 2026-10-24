@@ -410,7 +410,8 @@ Design Reference Forms cases. The previous Remote access timeout did not recur
 with the capped web-worker run; no product or timeout change was made for it.
 This pinned full tape is RED, not a latest-main green claim.
 
-The Design Reference glass repair follows the actual Settings You fields and
+[PR1447](https://github.com/karolswdev/HoldSpeak/pull/1447) repairs the
+Design Reference glass to follow the actual Settings You fields and
 writer used since #1439: raw alias, held ACK, refusal/Retry, newer draft and
 reset. Reading, Lists, Conversation, Progress and Controls checks remain.
 Production Settings/Note/Ask writes are forbidden by the fixture assertion,

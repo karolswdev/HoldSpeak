@@ -48,7 +48,7 @@ identity/retry checks remain; clipboard uses a local buffer. No product code
 changes. Required quick green: build, 43 affected browser cases, 110 desk sweep,
 27 canon and 1,126 repository guards.
 
-Design Reference glass: old Forms assertions now follow the shared Settings
+Design Reference glass — #1447: old Forms assertions now follow the shared Settings
 You writer/fields. Alias, held ACK, refusal/Retry, newer draft and Reset are
 observed without production writes; other pattern checks remain. Required
 quick green: build, both affected width cases, 110 desk sweep, 27 canon and
