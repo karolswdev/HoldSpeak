@@ -471,6 +471,11 @@ items, editor/fold/footer/frame non-overlap, source and Thread Button clicks
 through the active Note router, stale title/body refusal before the fake model,
 and a fresh whole-Note handoff. The final 1440/393 browser cases pass; root inspected the refreshed captures.
 Canvas B was updated before build; the static board remains a proposal artifact.
+The static Chromium acceptance measured all 18 boards at wide and narrow
+viewports: zero frame, footer, Button or inset bounds failures. B desktop,
+narrow and narrow-scrolled captures plus bounds JSON live beside the app
+shots in `.tmp/evidence-shots/native-pinned-note-wave5/`. That is static
+geometry evidence, not production parity or owner acceptance.
 
 Independent server advisory found recursive-container leakage and accidental
 Memory removal. Both received the one final RATIFY recheck. Server focused:
