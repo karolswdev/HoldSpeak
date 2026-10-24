@@ -2737,7 +2737,7 @@ First visual Room/list slice is now active in wave8 against the updated plan:
 Canvas B/F painted first, product build in progress; no visual acceptance yet.
 
 
-Firefox feedback lifecycle extension is test-only and source-reviewed:
+Firefox feedback lifecycle extension — #1455 — is test-only and source-reviewed:
 final Sol RATIFY, explicit slow Firefox2/2 at1440/393. Measured zero mic/save
 starts through cancelled capture; same-bundle ASR-only Retry, late old result
 fencing and usable Settings return pass through real routes with a local

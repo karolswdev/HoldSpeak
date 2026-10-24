@@ -821,6 +821,8 @@ owner visual acceptance or whole-package completion.
 
 ## Firefox feedback lifecycle proof extension
 
+[PR1455](https://github.com/karolswdev/HoldSpeak/pull/1455).
+
 Branch test/native-feedback-firefox-wave9-20261024; worktree
 /Users/karol/dev/tools/wt-native-feedback-firefox-wave9-20261024. Test-only
 extension; no product/helper code changes. The old Firefox baseline already
