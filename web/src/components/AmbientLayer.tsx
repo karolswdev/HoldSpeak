@@ -528,13 +528,18 @@ function GenerationTheater() {
     [status],
   );
   if (!active) return null;
+  const capability = status?.capability && typeof status.capability === "object"
+    ? status.capability as JsonRecord : null;
+  const label = status?.label || (status?.scope === "run"
+    ? capability?.name || "Run"
+    : "Meeting analysis");
   return (
     <div className="ambient-theater" role="status">
       <header className="ambient-notice-head">
         <span className="ambient-source">
           <LampGadget on tone="info" label={humanizeWireValue(String(status?.state ?? status?.status))} />
         </span>
-        <strong>{String(status?.label ?? "Meeting analysis")}</strong>
+        <strong>{String(label)}</strong>
       </header>
       {status?.detail ? <p className="ambient-content">{String(status.detail)}</p> : null}
     </div>

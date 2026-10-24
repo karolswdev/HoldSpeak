@@ -18,6 +18,8 @@ export interface DeskEditorHandle {
   captureVoiceTarget(): DeskEditorVoiceTarget | null;
   insertAtCapturedTarget(target: DeskEditorVoiceTarget, text: string, options?: { focus?: boolean }): boolean;
   getSelection(): DeskEditorSelection;
+  getScrollTop(): number | null;
+  restoreSelection(from: number, to: number, options?: { scrollTop?: number | null; focus?: boolean }): boolean;
   revealRange(from: number, to: number, options?: { focus?: boolean }): boolean;
   clearReveal(): void;
 }
@@ -256,6 +258,20 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
           if (!view) return { from: 0, to: 0, text: "" };
           const { from, to } = view.state.selection.main;
           return { from, to, text: view.state.doc.sliceString(from, to) };
+        },
+        getScrollTop() {
+          return viewRef.current?.scrollDOM.scrollTop ?? null;
+        },
+        restoreSelection(from, to, options) {
+          const view = viewRef.current;
+          if (!view || from < 0 || to < from || to > view.state.doc.length) return false;
+          view.dispatch({
+            selection: { anchor: from, head: to },
+            effects: options?.scrollTop == null ? [EditorView.scrollIntoView(from, { y: "center" })] : [],
+          });
+          if (options?.focus !== false) view.focus();
+          if (options?.scrollTop != null) view.scrollDOM.scrollTop = options.scrollTop;
+          return true;
         },
         revealRange(from, to, options) {
           const view = viewRef.current;

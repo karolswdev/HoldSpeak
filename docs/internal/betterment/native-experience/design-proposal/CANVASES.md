@@ -349,3 +349,16 @@ They identify source checks a later implementation brief must perform:
 This artifact is ready for visual inspection by the root agent. It remains
 **DRAFT — UNCHECKED, awaiting Muad’Dib** until his review; no product code,
 route, manifest or deployment change is implied.
+
+
+## B implementation observation — selected Thought source, 2026-10-23
+
+The first P04 pilot uses the painted source/return relationship in the active
+Thought and Ask windows. Its exact controlled source frame is also the
+Components Conversation specimen. Back stays outside the quote fold during
+pending work. An unchanged body restores range/scroll, including a closed
+source window; SOURCE CHANGED keeps the current editor work and caret visible.
+Save as note carries editable qualified source/thread links. These are bounded
+implementation observations, not approval of all static boards or owner
+visual acceptance. The frontend body capture validates return only; server
+source-version pinning, Project/People jobs and whole J3 remain separate.

@@ -123,33 +123,6 @@
 .desk-next .desk-window.desk-ask.has-traffic .desk-ask-context-wrap {
   max-height: 120px;
 }
-.desk-next .desk-window.desk-ask .desk-ask-passage {
-  min-width: 0;
-  background: color-mix(in srgb, var(--wb-blue, var(--wb-paper)) 7%, var(--alive-paper, var(--wb-paper)));
-  border: 1px solid var(--wb-rule-soft, var(--border));
-}
-.desk-next .desk-window.desk-ask .desk-ask-passage .gadget-fold > summary {
-  min-height: 34px;
-  padding: 6px 10px;
-  font: 600 12px / 1.5 var(--font-sans);
-}
-.desk-next .desk-window.desk-ask .desk-ask-passage .gadget-fold-body {
-  display: grid;
-  gap: 8px;
-  padding: 0 10px 10px;
-}
-.desk-next .desk-window.desk-ask .desk-ask-passage blockquote {
-  margin: 0;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  font: 400 14px / 1.5 var(--font-sans);
-}
-.desk-ask-selection-verbs {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 8px;
-}
 .desk-ask-engine-line {
   display: grid;
   grid-template-columns: minmax(0, 1fr) max-content;
@@ -266,7 +239,6 @@
   .desk-ask-context-wrap { max-height: 160px; }
   .desk-next .desk-ask-input .gadget-pad textarea { padding: 10px; }
   .desk-ask-sources { max-height: none; overflow: visible; }
-  .desk-next .desk-window.desk-ask .desk-ask-passage .gadget-fold > summary { min-height: 44px; }
   .desk-ask-empty-sprite { width: 32px; height: 32px; }
   .desk-ask-empty h1 { font-size: 20px; }
   .desk-ask-prompts { flex-direction: column; align-items: stretch; width: 100%; }

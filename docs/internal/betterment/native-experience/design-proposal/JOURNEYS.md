@@ -149,6 +149,14 @@ through their existing adapters; they do not create duplicate commitments.
 
 ## J3 — Prepare a project review or 1:1
 
+**First execution observation, 2026-10-23.** The selected-Thought slice now
+carries a saved Note/quote into Ask, saves an editable Note with qualified
+source/thread links, and returns to the captured source window/range/scroll
+when its body is unchanged. A closed source window reopens; changed body
+refuses the stale range. Browser acceptance is being completed. This is the
+handoff pilot, not the Project/People whole job. Backend pinning, source-gone
+admission and immutable lineage are not supplied by the frontend capture.
+
 **Tuesday intent and fixture.** On synthetic `Project Atlas Review`, with
 `Meeting Architecture Review` and `Note API boundary` filed, prepare a review
 question and a 1:1 brief for synthetic report `Rina Patel`. Start from Project

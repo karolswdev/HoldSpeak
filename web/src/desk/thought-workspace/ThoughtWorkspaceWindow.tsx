@@ -1,7 +1,7 @@
 import { publishThoughtDraft, seatThoughtDraft, useThoughtDraftWords } from "../thoughtDrafts";
 import { windowName } from "../windowName";
 import { NEW_THOUGHT_TITLE } from "../thoughtTitle";
-import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
 import { ApiError, readableError } from "../../lib/api";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
@@ -21,7 +21,10 @@ import { NoteOutcomesWell, useNoteOutcomes } from "./NoteOutcomesWell";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ThoughtSaveFault, useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
 import { ThoughtDocumentPane } from "./ThoughtDocumentPane";
+import type { DeskEditorHandle } from "../components/DeskEditor";
 import { latchAskSelection } from "../ask";
+import { ASK_RETURN_EVENT, takeAskReturn, validAskReturnRange } from "./askReturn";
+import type { AskSelectionHandoff } from "../ask";
 import { ProjectWell } from "./ProjectWell";
 import { useThoughtWorkspaceController } from "./useThoughtWorkspaceController";
 import { NoteSendWells } from "../documentSendsLazy";
@@ -130,6 +133,25 @@ function WorkspaceReady({
   const winId = useWindowId();
   const compact = useCompactViewport();
   const [revealRange, setRevealRange] = useState<{ start: number; end: number; focus?: boolean } | null>(null);
+  const [returnRange, setReturnRange] = useState<{ from: number; to: number; body: string; scrollTop: number | null; nonce: number } | null>(null);
+  const [changedReturn, setChangedReturn] = useState(0);
+  const bodyEditorRef = useRef<DeskEditorHandle | null>(null);
+  useLayoutEffect(() => {
+    if (!changedReturn) return;
+    // The receipt takes height from the Note. Read the live editor's caret
+    // after that reflow; the Ask's captured range belongs to the old body.
+    const restoreCurrentCaret = () => {
+      const editor = bodyEditorRef.current;
+      if (!editor) return false;
+      const current = editor.getSelection();
+      return editor.restoreSelection(current.from, current.to);
+    };
+    // A closed source can mount its CodeMirror view after the window's first
+    // layout pass. Give that one frame to attach, without polling the body.
+    if (restoreCurrentCaret()) return;
+    const frame = requestAnimationFrame(restoreCurrentCaret);
+    return () => cancelAnimationFrame(frame);
+  }, [changedReturn]);
   /* HS-176-04 — the answer well is a PadGadget (the voice law): the ref
      holds its <label> and the focus reaches the textarea inside it. */
   const answerRef = useRef<HTMLLabelElement | null>(null);
@@ -200,6 +222,27 @@ function WorkspaceReady({
     window.addEventListener(SEND_OPEN, onOpen);
     return () => window.removeEventListener(SEND_OPEN, onOpen);
   });
+
+  useEffect(() => {
+    const applyReturn = (source: AskSelectionHandoff | null) => {
+      if (!source) return;
+      const savedBody = documentThought.working_note.body_markdown;
+      const range = validAskReturnRange(source, `note:${draftNoteId}`, savedBody);
+      if (source.body !== writer.draft.body || (source.range && !range)) {
+        setReturnRange(null);
+        say("SOURCE CHANGED");
+        setChangedReturn((value) => value + 1);
+        return;
+      }
+      say("");
+      setRevealRange(null);
+      if (range) setReturnRange({ ...range, body: source.body, scrollTop: source.scrollTop, nonce: Date.now() });
+    };
+    const onAskReturn = () => applyReturn(takeAskReturn(winId, `note:${draftNoteId}`));
+    window.addEventListener(ASK_RETURN_EVENT, onAskReturn);
+    applyReturn(takeAskReturn(winId, `note:${draftNoteId}`));
+    return () => window.removeEventListener(ASK_RETURN_EVENT, onAskReturn);
+  }, [documentThought.working_note.body_markdown, draftNoteId, winId, writer.draft.body]);
 
   /* Betterment Q8: Ask ▸ Add to note grew this note. A window with no
      unsaved words reads it again; one with unsaved words keeps them, and its
@@ -394,6 +437,7 @@ function WorkspaceReady({
       setSelectedPassage(null);
       setActionPassage(null);
       setRevealRange(null);
+      setReturnRange(null);
       writer.edit({ title: note.title, body: note.body_markdown, tags: note.tags.join(", ") });
     } catch (cause) {
       sayFault(cause);
@@ -441,6 +485,7 @@ function WorkspaceReady({
     setBusy(true); say("");
     try {
       const selected = selectedPassage;
+      const sourceScrollTop = bodyEditorRef.current?.getScrollTop() ?? null;
       const latest = await writer.flush({ fence: true });
       const note = latest.working_note;
       const noteRef = `note:${note.id}`;
@@ -448,12 +493,20 @@ function WorkspaceReady({
       // Ask owns the saved source and valid quote, independently of that set.
       latchAskSelection({
         noteRef,
-        text: selected && selected.text.trim() && selected.body === note.body_markdown ? selected.text : "",
+        text: selected && selected.text.trim() && selected.body === note.body_markdown && note.body_markdown.slice(selected.from, selected.to) === selected.text ? selected.text : "",
+        body: note.body_markdown,
+        range: selected && selected.text.trim() && selected.body === note.body_markdown && note.body_markdown.slice(selected.from, selected.to) === selected.text
+          ? { from: selected.from, to: selected.to } : null,
+        windowId: winId,
+        scrollTop: sourceScrollTop,
         source: { id: note.id, kind: "note", ref: noteRef, title: note.title || "Note" },
       });
       // Betterment Q5: Ask about this, with the note in About and its
       // selected text quoted in the question.
-      useDesk.getState().askAbout([{ id: note.id, kind: "note", ref: noteRef, title: note.title || "Note" }]);
+      const desk = useDesk.getState();
+      const floorSelection = desk.selectedIds;
+      desk.askAbout([{ id: note.id, kind: "note", ref: noteRef, title: note.title || "Note" }]);
+      desk.setSelected(floorSelection);
       say("Ask opened");
     } catch (cause) { sayFault(cause); }
     finally { writer.release(); setBusy(false); }
@@ -484,12 +537,15 @@ function WorkspaceReady({
           ignoreSelectionAfterEdit.current = true;
           setSelectedPassage(null);
           setActionPassage(null);
+          setReturnRange(null);
         }
         writer.edit(patch);
       }}
       disabled={busy || documentThought.state !== "working"}
       lockedReason={completed ? "FINISHED" : undefined}
       revealRange={revealRange}
+      returnRange={returnRange?.body === writer.draft.body ? returnRange : null}
+      editorRef={bodyEditorRef}
       onSelectionChange={(selection) => {
         if (ignoreSelectionAfterEdit.current) {
           ignoreSelectionAfterEdit.current = false;

@@ -8,10 +8,11 @@
  * it, and fetch answers with the recorded answer. */
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AskPanel } from "../components/AskPanel";
+import { AskBar, AskPanel } from "../components/AskPanel";
 import { EMPTY_ITEMS } from "../api";
 import { useDesk } from "../store";
 import { latchAskSelection } from "../ask";
+import { ASK_RETURN_EVENT, takeAskReturn } from "../thought-workspace/askReturn";
 import { clearEngineCache } from "../hooks/useEngine";
 import BUSY from "../../test/wire/ask.busy.wire.json";
 import RETRY from "../../test/wire/ask.retry.wire.json";
@@ -78,6 +79,26 @@ afterEach(() => {
   answerAsk = null;
 });
 
+it("refuses an unsupported repository selection without opening whole Desk Ask or losing selection", () => {
+  useDesk.setState({ selectedIds: ["repository:repo-1"], askOpen: false });
+  render(<AskBar />);
+  fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+  expect(screen.getByRole("status")).toHaveTextContent("SOURCE UNSUPPORTED");
+  expect(useDesk.getState().askOpen).toBe(false);
+  expect(useDesk.getState().selectedIds).toEqual(["repository:repo-1"]);
+});
+
+it("opens AskBar with its exact supported source and leaves floor selection alone", () => {
+  useDesk.setState({
+    items: { ...EMPTY_ITEMS, note: [{ kind: "note", id: "n1", title: "API note", bodyMarkdown: "", tags: [], createdAt: "" }] },
+    selectedIds: ["note:n1"], askOpen: false,
+  });
+  render(<AskBar />);
+  fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+  expect(useDesk.getState().askThread?.about?.map((source) => source.ref)).toEqual(["note:n1"]);
+  expect(useDesk.getState().selectedIds).toEqual(["note:n1"]);
+});
+
 async function askMira() {
   render(<AskPanel />);
   fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What do I owe Mira this week?" } });
@@ -118,6 +139,7 @@ describe("Betterment Q2: an Ask on a busy engine says so, and offers another eng
     fireEvent.change(prompt, { target: { value: "Follow up after the answer" } });
     fireEvent.keyDown(prompt, { key: "Enter", isComposing: true });
     expect(calls.filter((call) => call.method === "POST" && call.url.endsWith("/api/ask"))).toHaveLength(1);
+    expect(calls.find((call) => call.method === "POST" && call.url.endsWith("/api/ask"))?.body?.lens).toBe("Ask");
 
     await act(async () => { answerAsk?.(); });
     await screen.findByText(BUSY.answer.output);
@@ -378,11 +400,81 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     const note = calls.find((c) => c.method === "POST" && c.url.endsWith("/api/notes"))!;
     expect(note.body?.title).toBe("What do I owe Mira this week?");
     expect(String(note.body?.body_markdown)).toContain(THREAD.first.output);
-    expect(String(note.body?.body_markdown)).toContain("Looked at: 1:1 with Mira");
+    expect(String(note.body?.body_markdown)).toContain("Looked at: [1:1 with Mira](note:n-mira)");
+    expect(String(note.body?.body_markdown)).toContain(`From: [Ask thread](thread:${TID})`);
     expect(screen.getByRole("button", { name: "Open note" })).toBeInTheDocument();
     // Keep and Bin are gone.
     expect(screen.queryByRole("button", { name: "Keep" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Bin" })).toBeNull();
+  });
+
+  it("owns a Thought source after the floor selection changes and keeps that selection on close", async () => {
+    useDesk.setState({ selectedIds: ["note:other"] });
+    const source = {
+      noteRef: "note:n-mira", text: "Mira owns review", body: "Mira owns review",
+      range: { from: 0, to: 16 }, windowId: "pullout:note:n-mira", scrollTop: 24,
+      source: { id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" },
+    };
+    latchAskSelection(source);
+    useDesk.setState({ pullouts: [{ id: "note:n-mira", origin: null }] });
+    render(<AskPanel />);
+    useDesk.setState({ selectedIds: [] });
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
+    fireEvent.change(askBox(), { target: { value: "Who owns review?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(calls.some((call) => call.url.endsWith("/api/ask"))).toBe(true));
+    const sent = calls.find((call) => call.url.endsWith("/api/ask"))!;
+    expect(sent.body?.context).toEqual([{ id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }]);
+    expect(sent.body?.prompt).toContain("Mira owns review");
+    expect(screen.getByRole("button", { name: "Back to Thought" }).closest("details")).toBeNull();
+    const returned: unknown[] = [];
+    const onReturn = (event: Event) => returned.push((event as CustomEvent).detail);
+    window.addEventListener(ASK_RETURN_EVENT, onReturn);
+    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    window.removeEventListener(ASK_RETURN_EVENT, onReturn);
+    expect(returned).toEqual([source]);
+    useDesk.setState({ selectedIds: ["note:other"] });
+    fireEvent.click(screen.getByRole("button", { name: "Close Ask" }));
+    expect(useDesk.getState().selectedIds).toEqual(["note:other"]);
+  });
+
+  it("reopens a closed Thought window before consuming its captured return", async () => {
+    const source = {
+      noteRef: "note:n-mira", text: "Mira owns review", body: "Mira owns review",
+      range: { from: 0, to: 16 }, windowId: "pullout:note:n-mira", scrollTop: 24,
+      source: { id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" },
+    };
+    useDesk.setState({ pullouts: [], selectedIds: ["note:n-mira"] });
+    latchAskSelection(source);
+    render(<AskPanel />);
+    const observed: boolean[] = [];
+    const onReturn = () => observed.push(useDesk.getState().pullouts.some((entry) => entry.id === "note:n-mira"));
+    window.addEventListener(ASK_RETURN_EVENT, onReturn);
+    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    window.removeEventListener(ASK_RETURN_EVENT, onReturn);
+    expect(observed).toEqual([false]);
+    expect(screen.getByText("SOURCE WINDOW CLOSED")).toBeInTheDocument();
+    await waitFor(() => expect(useDesk.getState().pullouts.some((entry) => entry.id === "note:n-mira")).toBe(true));
+    expect(takeAskReturn(source.windowId, source.noteRef)).toEqual(source);
+    expect(takeAskReturn(source.windowId, source.noteRef)).toBeNull();
+    expect(useDesk.getState().selectedIds).toEqual(["note:n-mira"]);
+  });
+
+  it("clears only the quote while keeping the owned Note source and Back", async () => {
+    latchAskSelection({
+      noteRef: "note:n-mira", text: "Mira owns review", body: "Mira owns review",
+      range: { from: 0, to: 16 }, windowId: "pullout:note:n-mira", scrollTop: 24,
+      source: { id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" },
+    });
+    render(<AskPanel />);
+    fireEvent.click(screen.getByRole("button", { name: "Clear quote" }));
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
+    expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent("Source");
+    expect(screen.getByRole("button", { name: "Back to Thought" }).closest("details")).toBeNull();
+    await askText("Who owns review?", THREAD.first.output);
+    const sent = calls.find((call) => call.url.endsWith("/api/ask"))!;
+    expect(sent.body?.context).toEqual([{ id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }]);
+    expect(sent.body?.prompt).toBe("Who owns review?");
   });
 
   it("More ▸ Forget hides the ask with Undo; Undo brings it back and deletes nothing", async () => {

@@ -1263,3 +1263,27 @@ across material and viewport changes only while its reader is at the end.
 Reading above the end stays in place. `active` follows conditional reading
 nodes; the hook owns no draft, engine or action state. Ask uses this shared
 pattern so opening Tools keeps the answer verbs in reach.
+
+
+## AskSourceFrame — captured source and return (2026-10-23)
+
+Ask owns the Note handoff and its thread/draft. AskSourceFrame is the controlled
+view for quote, fold state, Clear quote and Back to Thought. Back remains
+outside the fold and reachable at narrow width while a run is pending. The
+view holds no source, window, model or writer authority. Components Conversation
+uses the exact view with local callbacks and a disabled composer mic.
+
+The active Thought writer supplies saved body, qualified Note, selected UTF-16
+range, source window and scroll. Returning validates saved and local draft
+body before applying the captured range. Closed-window return queues for its
+canonical opener; changed body preserves current work and reports SOURCE
+CHANGED. This transient return capture is not server source freezing. Ask's
+context is independent of floor selection; closing, removing About or starting
+a new Ask changes Ask's owned context only.
+
+Save as note keeps editable Markdown provenance. Only refs supported by
+refOpener become Markdown destinations; other refs remain visible text. The
+active Note editor has no link opener yet; saved-link click/return is follow-on
+scope, not certified from these bytes. Thread
+links use the actual returned thread id. Components proves presentation with
+isolated IO, not adoption of a shared conversation controller or live inference.

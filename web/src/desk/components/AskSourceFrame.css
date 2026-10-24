@@ -1,0 +1,31 @@
+.desk-ask-passage {
+  min-width: 0;
+  background: color-mix(in srgb, var(--wb-blue, var(--wb-paper)) 7%, var(--alive-paper, var(--wb-paper)));
+  border: 1px solid var(--wb-rule-soft, var(--border));
+}
+.desk-ask-passage .gadget-fold > summary {
+  min-height: 34px;
+  padding: 6px 10px;
+  font: 600 12px / 1.5 var(--font-sans);
+}
+.desk-ask-passage .gadget-fold-body {
+  display: grid;
+  gap: 8px;
+  padding: 0 10px 10px;
+}
+.desk-ask-passage blockquote {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: 400 14px / 1.5 var(--font-sans);
+}
+.desk-ask-selection-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.desk-ask-passage > .desk-ask-selection-verbs { padding: 0 10px 8px; }
+@container surface (max-width: 520px) {
+  .desk-ask-passage .gadget-fold > summary { min-height: 44px; }
+}

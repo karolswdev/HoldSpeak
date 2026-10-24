@@ -1,12 +1,11 @@
-/** The Ask AI atom's data layer (HSM-16-04, the web parity of HSM-16-09):
- * lasso context → pick a lens → speak/type the instruction → the hub runs it
- * → a card prints → keep it (a real synced Artifact with full lineage) or bin
- * it. The hub assembles the material from the canonical store and answers
- * with the run's HONEST egress — the badge states where THIS run went. */
+/** Ask's data layer. The hub assembles qualified source material from its
+ * canonical store and returns the run's actual egress. The window keeps each
+ * answer in a thread; Save as note writes editable Markdown provenance. */
 import type { Primitive } from "../lib/primitives";
 import { qualifiedRef, type Items } from "./api";
 import { apiRequest } from "../lib/api";
 import { parseUse, type AgentUse } from "./used";
+import { refOpener } from "./openObject";
 
 /** One lasso'd card, as the ask reads it. */
 export interface AskContext {
@@ -19,6 +18,14 @@ export interface AskContext {
 export interface AskSelectionHandoff {
   noteRef: string;
   text: string;
+  /** The writer's saved body at handoff, used only to validate return. */
+  body: string;
+  /** CodeMirror's UTF-16 selection in that saved body. */
+  range: { from: number; to: number } | null;
+  /** The actual window that handed this Note to Ask. */
+  windowId: string | null;
+  /** The source editor's scroll position at handoff. */
+  scrollTop: number | null;
   /** The Note window has just saved this source. Floor selection is separate. */
   source?: AskContext;
 }
@@ -29,7 +36,7 @@ let pendingAskSelection: AskSelectionHandoff | null = null;
 /** A transient Note → Ask handoff. The Note remains the canonical context. */
 export function latchAskSelection(selection: AskSelectionHandoff | null): void {
   pendingAskSelection = selection && (selection.text.trim() || selection.source)
-    ? { ...selection, ...(selection.source ? { source: { ...selection.source } } : {}) }
+    ? { ...selection, range: selection.range ? { ...selection.range } : null, ...(selection.source ? { source: { ...selection.source } } : {}) }
     : null;
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent<AskSelectionHandoff | null>(ASK_SELECTION_EVENT, { detail: pendingAskSelection }));
@@ -198,7 +205,7 @@ export interface GroundingClaim {
   flagged: boolean;
 }
 
-/** Run the ask through the hub. Persists nothing — keep/bin is yours.
+/** Run Ask through the hub; thread mode keeps the answered exchange.
  * `grounding` (HS-83-01) ships REFERENCES — the hub hydrates from its own
  * store and refuses unknown ids by name (a 400 this returns verbatim). */
 export async function runAsk(opts: {
@@ -518,17 +525,35 @@ export function askTurnsFromThread(detail: {
   return { turns, about };
 }
 
-/** Save as note: a note titled by the question, with the answer and the
- * names of what it looked at. Returns the note's ref, or null. */
-export async function saveAnswerAsNote(turn: AskTurn): Promise<string | null> {
-  const looked = turn.lookedAt.length
-    ? `\n\nLooked at: ${turn.lookedAt.map((row) => row.title).join(", ")}`
-    : "";
+function markdownLabel(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/([\[\]])/g, "\\$1").replace(/[\r\n]+/g, " ");
+}
+
+function markdownDestination(value: string): string {
+  // ReadingDocument passes the URL node straight to refOpener; angle-bracket
+  // Markdown URLs include the brackets in that node and become inert there.
+  return encodeURI(value).replace(/[()<>\\]/g, (character) => encodeURIComponent(character));
+}
+
+/** Editable provenance: openable refs link through the Desk's reader; other
+ * qualified refs stay visible as text. This is not immutable lineage. */
+export function answerNoteBody(turn: AskTurn, threadId?: string | null): string {
+  const sources = turn.lookedAt
+    .map((row) => /^[a-z][a-z_]*:\S+$/i.test(row.ref) && refOpener(row.ref)
+      ? `[${markdownLabel(row.title)}](${markdownDestination(row.ref)})`
+      : `${markdownLabel(row.title)} (${markdownLabel(row.ref)})`);
+  const looked = sources.length ? `\n\nLooked at: ${sources.join(", ")}` : "";
+  const origin = threadId ? `\n\nFrom: [Ask thread](${markdownDestination(`thread:${threadId}`)})` : "";
+  return `${turn.answer}${looked}${origin}`;
+}
+
+/** Save an editable Note with the answer's actual qualified source refs. */
+export async function saveAnswerAsNote(turn: AskTurn, threadId?: string | null): Promise<string | null> {
   try {
     const res = await apiRequest("/api/notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: turn.question.slice(0, 120), body_markdown: `${turn.answer}${looked}`, tags: ["ask"] }),
+      body: JSON.stringify({ title: turn.question.slice(0, 120), body_markdown: answerNoteBody(turn, threadId), tags: ["ask"] }),
     });
     if (!res.ok) return null;
     const data = await res.json().catch(() => ({}));

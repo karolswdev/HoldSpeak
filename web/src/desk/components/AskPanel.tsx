@@ -25,7 +25,6 @@ import "../surface/patterns/conversation.css";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
-  ASK_LENSES,
   askContexts,
   askTurnsFromThread,
   decideHeldCall,
@@ -71,6 +70,8 @@ import { deleteThread, getThread, listThreads, type ThreadWire } from "../thread
 import { UsedLines } from "./UsedLines";
 import type { AgentUse } from "../used";
 import { spriteUrl } from "../sprites";
+import { requestAskReturn } from "../thought-workspace/askReturn";
+import { AskSourceFrame } from "./AskSourceFrame";
 
 /** The engine line of an engine that can use the desk's tools (MCP design). */
 export const DESK_TOOLS_WORDS = "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends";
@@ -161,12 +162,15 @@ interface PendingForget {
 
 export function AskPanel() {
   const items = useDesk((s) => s.items);
-  const selectedIds = useDesk((s) => s.selectedIds);
   const askThread = useDesk((s) => s.askThread);
-  const { closeAsk, clearSelection, markNew } = useDesk.getState();
+  const { closeAsk, markNew } = useDesk.getState();
+  const [floorContext, setFloorContext] = useState<AskContext[]>(() => {
+    const desk = useDesk.getState();
+    return askContexts(desk.items, desk.selectedIds);
+  });
 
-  // The desk lens strip is parked; its default still names the run.
-  const lens = ASK_LENSES[0].name;
+  // This window runs Ask; the parked lens catalogue does not name its jobs.
+  const lens = "Ask";
   const {
     value: prompt,
     setDraft: setPrompt,
@@ -203,6 +207,8 @@ export function AskPanel() {
   const [people, setPeople] = useState<Array<{ id: string; name: string }>>([]);
   const { copy, receipt: copyReceipt } = useCopyReceipt();
   const [passageOpen, setPassageOpen] = useState(true);
+  const [selectedPassage, setSelectedPassage] = useState<AskSelectionHandoff | null>(() => takeAskSelection());
+  const [sourceReturnReceipt, setSourceReturnReceipt] = useState("");
   const readingRef = useRef<HTMLDivElement | null>(null);
   const aboutRef = useRef<HTMLDivElement | null>(null);
   const promptRef = useRef<HTMLTextAreaElement | null>(null);
@@ -271,18 +277,23 @@ export function AskPanel() {
     threadReadGeneration.current += 1;
     abandonRun();
     latchAskSelection(null);
-    clearSelection();
     closeAsk();
-  }, [abandonRun, clearSelection, closeAsk]);
+  }, [abandonRun, closeAsk]);
 
   /** A new Ask in this window: nothing kept is touched. */
-  const startNew = useCallback(() => {
+  const startNew = useCallback((keepHandoff = false) => {
     threadReadGeneration.current += 1;
     abandonRun();
     setThreadId(null);
     setTurns([]);
     setThreadAbout([]);
     setSeedAbout([]);
+    setFloorContext([]);
+    if (!keepHandoff) {
+      latchAskSelection(null);
+      setSelectedPassage(null);
+    }
+    setSourceReturnReceipt("");
     setFromNote(null);
     setAdded({});
     setSent(null);
@@ -324,7 +335,7 @@ export function AskPanel() {
     if (!askThread || askThread.nonce === handledNonce.current) return;
     handledNonce.current = askThread.nonce;
     if (askThread.threadId) void loadThread(askThread.threadId);
-    else startNew();
+    else startNew(Boolean(askThread.about?.some((entry) => entry.ref === selectedPassage?.noteRef)));
     if (!askThread.threadId && askThread.about?.length) setSeedAbout(askThread.about.map((entry) => ({ ...entry })));
     const notes = !askThread.threadId ? (askThread.about ?? []).filter((entry) => entry.kind === "note") : [];
     if (notes.length === 1) setFromNote({ id: notes[0].id, title: notes[0].title });
@@ -333,18 +344,17 @@ export function AskPanel() {
       setPrompt(question);
       setAutoRun(askThread.run ? question : null);
     }
-  }, [askThread, loadThread, startNew, setPrompt]);
+  }, [askThread, loadThread, startNew, setPrompt, selectedPassage]);
 
-  const [selectedPassage, setSelectedPassage] = useState<AskSelectionHandoff | null>(() => takeAskSelection());
   const context = useMemo(() => {
-    const picked = askContexts(items, selectedIds);
+    const picked = selectedPassage?.source ? [] : floorContext;
     const selected = [...picked, ...seedAbout.filter((entry) => !picked.some((p) => p.ref === entry.ref))];
     const source = selectedPassage?.source;
     if (!source || source.ref !== selectedPassage.noteRef) return selected;
     // An explicit Note handoff names the saved source, even before a desk
     // collection read or after the floor drops a non-icon selection.
     return [...selected.filter((entry) => entry.ref !== source.ref), { ...source }];
-  }, [items, selectedIds, selectedPassage, seedAbout]);
+  }, [floorContext, selectedPassage, seedAbout]);
   useEffect(() => {
     const onSelection = (event: Event) => {
       const next = (event as CustomEvent<AskSelectionHandoff | null>).detail;
@@ -357,15 +367,6 @@ export function AskPanel() {
     window.addEventListener(ASK_SELECTION_EVENT_NAME, onSelection);
     return () => window.removeEventListener(ASK_SELECTION_EVENT_NAME, onSelection);
   }, []);
-  useEffect(() => {
-    if (selectedPassage?.source) return;
-    const noteItems = items.note || [];
-    const noteKnown = noteItems.length > 0;
-    const noteStillExists = noteItems.some((item) => qualifiedRef("note", item.id) === selectedPassage?.noteRef);
-    if (selectedPassage && (!selectedIds.includes(selectedPassage.noteRef) || (noteKnown && !noteStillExists) || (context.length > 0 && !context.some((entry) => entry.ref === selectedPassage.noteRef)))) {
-      setSelectedPassage(null);
-    }
-  }, [context, items.note, selectedIds, selectedPassage]);
   // Betterment Q6: About finds people by name (a locked or unset People
   // store answers nothing: no people rows).
   useEffect(() => {
@@ -425,7 +426,9 @@ export function AskPanel() {
       // No About: the question is about his whole desk.
       setSeedAbout([]);
       setThreadAbout([]);
-      useDesk.getState().setSelected([]);
+      setFloorContext([]);
+      latchAskSelection(null);
+      setSelectedPassage(null);
       setPicking(false);
       return;
     }
@@ -444,8 +447,32 @@ export function AskPanel() {
   const removeAbout = (ref: string) => {
     setSeedAbout((current) => current.filter((entry) => entry.ref !== ref));
     setThreadAbout((current) => current.filter((entry) => entry.ref !== ref));
+    setFloorContext((current) => current.filter((entry) => entry.ref !== ref));
+    if (selectedPassage?.noteRef === ref) {
+      latchAskSelection(null);
+      setSelectedPassage(null);
+    }
+  };
+  const returnToSource = () => {
+    if (!selectedPassage) return;
+    const sourceWindow = selectedPassage.windowId;
     const desk = useDesk.getState();
-    desk.setSelected(desk.selectedIds.filter((id) => !askContexts(items, [id]).some((entry) => entry.ref === ref)));
+    if (!sourceWindow) {
+      setSourceReturnReceipt("SOURCE WINDOW NOT FOUND");
+      openRef(selectedPassage.noteRef);
+      return;
+    }
+    if (!desk.pullouts.some((entry) => `pullout:${entry.id}` === sourceWindow)) {
+      // The Note window closed, but the Note may still exist. Hold the
+      // one-shot return until the canonical opener mounts that same window.
+      requestAskReturn(selectedPassage);
+      setSourceReturnReceipt("SOURCE WINDOW CLOSED");
+      openRef(selectedPassage.noteRef);
+      return;
+    }
+    setSourceReturnReceipt("");
+    desk.restorePanel(sourceWindow);
+    requestAskReturn(selectedPassage);
   };
   // Betterment Q6: a desk object dropped on the Ask window joins About.
   const onAboutDragOver = (event: React.DragEvent) => {
@@ -598,7 +625,7 @@ export function AskPanel() {
     if (saved[turn.key]) return saved[turn.key];
     if (saving) return null;
     setSaving(turn.key);
-    const ref = await saveAnswerAsNote(turn);
+    const ref = await saveAnswerAsNote(turn, threadId);
     if (!mounted.current) return null;
     setSaving(null);
     if (!ref) {
@@ -744,6 +771,7 @@ export function AskPanel() {
         promptRecovered ? "Draft kept" : "",
         !failedRun && turns.length && finishedElapsedSeconds ? `Answered in ${finishedElapsedSeconds} s` : "",
         lastRoute?.fallback ? "Fallback" : "",
+        sourceReturnReceipt,
       ].filter(Boolean).join(" · ");
 
   const recentPanel = recentOpen ? (
@@ -943,20 +971,18 @@ export function AskPanel() {
 
         <ComposerWell
           className="conversation-composer desk-ask-composer"
-          details={selectedPassage?.text.trim() ? (
-            <div className="desk-ask-passage" data-testid="ask-selected-passage">
-              <FoldGadget title="Selected text" open={passageOpen} onToggle={setPassageOpen}>
-                <blockquote>{selectedPassage.text}</blockquote>
-                <div className="desk-ask-selection-verbs">
-                  <Button dense variant="ghost" onClick={() => openRef(selectedPassage.noteRef)}>Back to note</Button>
-                  <Button dense variant="ghost" onClick={() => {
-                    const source = selectedPassage.source;
-                    latchAskSelection(null);
-                    setSelectedPassage(source ? { noteRef: selectedPassage.noteRef, text: "", source } : null);
-                  }}>Remove</Button>
-                </div>
-              </FoldGadget>
-            </div>
+          details={selectedPassage?.source ? (
+            <AskSourceFrame
+              quote={selectedPassage.text}
+              open={passageOpen}
+              onToggle={setPassageOpen}
+              onClear={() => {
+                const source = selectedPassage.source;
+                latchAskSelection(null);
+                setSelectedPassage(source ? { ...selectedPassage, text: "", range: null, source } : null);
+              }}
+              onBack={returnToSource}
+            />
           ) : undefined}
           capture={
             <MicButton
@@ -970,7 +996,7 @@ export function AskPanel() {
               <div className="surface-engine-line desk-ask-engine-line" data-testid="engine-line">
                 <span>{[engine.model, engine.place].filter(Boolean).join(" · ")}</span>
                 <FoldGadget title="Tools" className="desk-ask-tools">
-                  <span>{deskTools ? DESK_TOOLS_WORDS : "reads only what is in About"}</span>
+                  <span>{deskTools ? DESK_TOOLS_WORDS : "NO DESK TOOLS"}</span>
                 </FoldGadget>
               </div>
             ) : (
@@ -1021,7 +1047,7 @@ export function AskPanel() {
             <FoldGadget title="More" className="desk-ask-more">
               <Button dense variant="ghost" onClick={forget}>Forget</Button>
             </FoldGadget>
-            <Button dense variant="ghost" onClick={startNew}>New ask</Button>
+            <Button dense variant="ghost" onClick={() => startNew()}>New ask</Button>
           </> : null}
         />
       ) : null}
@@ -1033,17 +1059,31 @@ export function AskPanel() {
  * action that gives the selection meaning. */
 export function AskBar() {
   const selectedIds = useDesk((s) => s.selectedIds);
+  const items = useDesk((s) => s.items);
   const askOpen = useDesk((s) => s.askOpen);
-  const { openAsk, clearSelection } = useDesk.getState();
+  const { clearSelection } = useDesk.getState();
+  const [refusal, setRefusal] = useState("");
+  useEffect(() => setRefusal(""), [selectedIds]);
   if (!selectedIds.length || askOpen) return null;
+  const contexts = askContexts(items, selectedIds);
+  const targets = contexts.map((entry) => aboutTarget(entry.ref));
+  const supported = contexts.length === selectedIds.length && targets.every(Boolean);
   return (
     <div className="desk-askbar" onPointerDown={(e) => e.stopPropagation()}>
       <span className="desk-askbar-count">
         {selectedIds.length === 1 ? "1 selected" : `${selectedIds.length} selected`}
       </span>
-      <Button dense onClick={() => openAsk()}>
+      <Button dense onClick={() => {
+        if (!supported) { setRefusal("SOURCE UNSUPPORTED"); return; }
+        setRefusal("");
+        const desk = useDesk.getState();
+        const floorSelection = desk.selectedIds;
+        desk.askAbout(targets as AboutChip[]);
+        desk.setSelected(floorSelection);
+      }}>
         <span aria-hidden="true">✦</span> Ask
       </Button>
+      {refusal ? <span className="surface-token" data-chip data-tone="danger" role="status">{refusal}</span> : null}
       <Button dense variant="ghost" onClick={clearSelection} aria-label="Clear selection">
         <span aria-hidden="true">✕</span>
       </Button>
