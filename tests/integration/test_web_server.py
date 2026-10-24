@@ -965,7 +965,7 @@ class TestApiStopEndpoint:
         """Should call on_stop callback."""
         response = test_client.post("/api/stop")
         assert response.status_code == 200
-        assert response.json() == {"success": True}
+        assert response.json() == {"success": True, "status": "stopped"}
 
         mock_callbacks["on_stop"].assert_called_once()
 
@@ -1648,6 +1648,9 @@ class TestDashboardLifecycleStateTransitions:
         stop_first = client.post("/api/meeting/stop")
         assert stop_first.status_code == 200
         assert stop_first.json()["success"] is True
+        assert stop_first.json()["status"] == "stopped"
+        assert stop_first.json()["meeting"]["id"] == "meeting-1"
+        assert stop_first.json()["meeting"]["meeting_active"] is False
 
         status_after_first_stop = client.get("/api/runtime/status")
         assert status_after_first_stop.status_code == 200
@@ -1691,7 +1694,7 @@ class TestDashboardLifecycleStateTransitions:
         ]
         assert named == [
             ("meeting", "meeting-1", "start"),
-            ("meeting", "", "stop"),  # this test's stop answer names no meeting
+            ("meeting", "meeting-1", "stop"),
             ("meeting", "meeting-2", "start"),
         ]
 

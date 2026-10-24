@@ -19,7 +19,9 @@ sys.path.insert(0, str(_ROOT / "tests" / "unit"))
 sys.path.insert(0, str(_ROOT))
 from test_desk_needs_you import _ok, hub  # noqa: E402,F401  (the fixture)
 
-from tests.fixtures.daily_week import seed  # noqa: E402
+from tests.fixtures.daily_week import (  # noqa: E402
+    WIRE_DAY, normalize_wire_change_stamps, pin_wire_day, seed,
+)
 
 
 def _people() -> Any:
@@ -225,13 +227,14 @@ def test_mcp_reads_the_suggestions(hub: Any) -> None:
 _WIRES = Path(__file__).resolve().parents[2] / "web" / "src" / "desk" / "__tests__" / "fixtures" / "daily-week"
 
 
-def test_people_from_work_wire(hub: Any) -> None:
+def test_people_from_work_wire(hub: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     """The People face's reads on the week with no people, before and after
     the three Add presses (people.app.test.tsx replays them)."""
     from datetime import datetime
 
     from tests.unit.test_desk_speak import _record
 
+    pin_wire_day(hub, monkeypatch)
     _week_without_people(hub)
     reads = ("/api/people/readiness", "/api/people/suggestions", "/api/door", "/api/settings")
     before = {path: _ok(hub.client.get(path)) for path in reads}
@@ -263,6 +266,7 @@ def test_needs_you_says_when_people_could_not_be_read_wire(hub: Any, monkeypatch
     from holdspeak.people.store import EncryptedPeopleStore
     from tests.unit.test_desk_speak import _record
 
+    pin_wire_day(hub, monkeypatch)
     seeded = seed(hub)
     monkeypatch.setattr(EncryptedPeopleStore, "readiness", lambda self: "locked")
     answer = _ok(hub.client.get("/api/desk/needs-you?fresh=1"))
@@ -301,17 +305,19 @@ def test_no_meeting_with_a_person_is_no_last_time(hub: Any) -> None:
     assert _brief(hub, other)["last_time"] is None
 
 
-def test_one_on_one_prep_wire(hub: Any) -> None:
+def test_one_on_one_prep_wire(hub: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     """Today's reads and Mira's prep reads, from ONE boot of the week with her
     1:1 in 90 minutes (today.app.test.tsx presses Prep on the NEXT card;
     people.app.test.tsx draws the prep it opens)."""
-    from datetime import date, datetime
+    from datetime import datetime
 
     from tests.unit.test_desk_brief import _calendar_today, _ensured
     from tests.unit.test_desk_speak import _record
 
-    seeded = seed(hub, monday=date.today(), engine=True)
+    pin_wire_day(hub, monkeypatch, brief=True)
+    seeded = seed(hub, monday=WIRE_DAY, engine=True)
     _calendar_today(hub, seeded["Mira"])
+    normalize_wire_change_stamps(hub, seeded["project"])
     mira = seeded["Mira"]
     gets = {
         "/api/desk/needs-you?fresh=1": _ok(hub.client.get("/api/desk/needs-you?fresh=1")),

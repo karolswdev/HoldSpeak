@@ -187,3 +187,23 @@ worktree dependencies (Vite, then pytest-xdist); the verified environment run
 passes without relaxing checks (`.tmp/quick-plugin-route-verified-env.log`).
 [PR1440](https://github.com/karolswdev/HoldSpeak/pull/1440) delivers the bounded
 producer repair.
+
+
+## Recorded-wire repairs from the main tape
+
+The existing frontend wires now reflect the real producer again: Send preview
+includes its Markdown field; Settings includes remote configuration; Needs-you
+includes the new coverage row. The named People/Today wire tests pin their
+isolated recorded Tuesday through existing read clocks and normalize only
+synthetic seed metadata (one Project, two confirmed decisions, three People
+rows), keeping spoken due dates, Door lanes and Changed/Decisions counts
+stable. The 90-minute calendar NEXT fixture still uses its existing real-now
+seed; this record does not claim a new whole P06 job. Provider JSON comes
+only from the existing recording rigs, never manual edits.
+
+The two old Stop assertions now require #1437's status and stopped Meeting
+identity. Focused write-OFF replay after #1440: eight cases passed; four
+frontend consumer files passed 85 cases. Required quick: build, 123 affected
+cases, 110 desk sweep, 27 canon and 1,126 repository guards passed. No product
+behavior changes are included in this test-contract slice. Its merge pointer
+is recorded at delivery; the full pinned tape still has not closed green.
