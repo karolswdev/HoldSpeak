@@ -536,7 +536,12 @@ def test_stop_route_keeps_loop_responsive_and_broadcasts_warning_on_loop(path):
                 release.set()
             response = await stopping
         assert response.status_code == 200
-        assert response.json() == {"success": True, "warning": "Audio device did not close."}
+        assert response.json() == {
+            "success": True,
+            "status": "stopped",
+            "device_cleanup_error": "Audio device did not close.",
+            "warning": "Audio device did not close.",
+        }
         assert len(broadcasts) == 1 and broadcasts[0][0] == loop_thread
         assert broadcasts[0][1][0] == "stopped"
         assert broadcasts[0][1][1]["device_cleanup_error"] == "Audio device did not close."

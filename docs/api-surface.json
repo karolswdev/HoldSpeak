@@ -3887,7 +3887,9 @@
         "POST"
       ],
       "module": "web.routes.meetings.crud",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/meetings/{meeting_id}/export",

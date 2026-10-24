@@ -63,9 +63,17 @@ retained JSON and a verified durable row; it does not repair a failed JSON
 export or unrelated aftercare. Other persistence failures retain their actual
 identity and refusal rather than offering a fake recovery success.
 
-Focused proof: 38 component/store/parser cases and nine route/integration
-cases passed under the test lock with isolated HOME. The delivery PR records
-the required quick check and captures. These are fixture observations, not
+The actual MeetingWindow transition retains the global receipt after
+LiveCore unmounts; clean Stop clears only its own matching verb/subject.
+The native Stop test retains its loop-responsiveness assertions while
+expecting the additional response facts, and generated API-consumer docs
+now include the existing capture-recovery route's web callers.
+
+Focused proof: 40 component/store/parser cases, two native Stop response
+cases and nine route/integration
+cases passed under the test lock with isolated HOME. Required quick passed the build, 4,187 related web cases, 40 affected
+Python/browser cases, 110 sweep, 27 canon and 1,126 repository guards.
+Root inspected the 393 Live and 1440 stopped-record captures. These are fixture observations, not
 physical audio/device, complete persistence-recovery, or owner UX acceptance.
 The broader identity/edit/summary handoff and capture-recovery findings in
 this audit remain open.

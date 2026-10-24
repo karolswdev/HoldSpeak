@@ -74,7 +74,11 @@ import {
   parseMeetingStopOutcome,
   type MeetingStopOutcome,
 } from "../../meetings/meetingStopOutcome";
-import { reportWriteFailure } from "../../desk/hooks/useWriteReceipt";
+import {
+  clearWriteFailure,
+  currentWriteFailure,
+  reportWriteFailure,
+} from "../../desk/hooks/useWriteReceipt";
 
 type Segment = Record<string, unknown>;
 
@@ -333,6 +337,28 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
             "STILL RECORDING · THE HUB DID NOT STOP IT",
           );
           return;
+        }
+        if (meetingId) {
+          const stopSubject = outcome.meetingId || stoppedId;
+          if (outcome.saveStatus !== "saved" || outcome.deviceCleanupError) {
+            const detail = [outcome.saveError, outcome.deviceCleanupError]
+              .filter(Boolean)
+              .join(" · ") || meetingStopReceiptLabel(outcome);
+            const refusal = Object.assign(new Error(detail), { name: "ApiError" });
+            reportWriteFailure(
+              "STOP RECORDING",
+              refusal,
+              undefined,
+              stopSubject || undefined,
+              meetingStopReceiptLabel(outcome),
+            );
+          } else if (
+            stopSubject &&
+            currentWriteFailure()?.verb === "STOP RECORDING" &&
+            currentWriteFailure()?.subject === stopSubject
+          ) {
+            clearWriteFailure(stopSubject);
+          }
         }
         setState((current) => ({ ...current, active: false }));
         if (meetingId) {

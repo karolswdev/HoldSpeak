@@ -17,6 +17,19 @@ The larger project-update Stop draft is parked at `54a7436b7` outside main;
 its last edits and new tests are unverified.
 
 
+Meeting Stop/save truth: the route retains runtime stop, Meeting, persistence
+and cleanup facts. Recording store and LiveCore share the outcome parser;
+confirmed Stop idles even when saving fails, and explicit still-recording
+responses stay active/refused. DB-saved partial outcomes retain an Open
+Meeting door. Capture recovery is limited to the verified recoverable-row
+case, not failed JSON/aftercare. The global Stop receipt now survives the
+live-to-record window transition; clean Stop clears only its own verb/subject.
+Focused proof: 40 frontend cases, two native Stop response cases and nine
+route/integration cases passed. Required quick green: build, 4,187 related
+web tests, 40 affected Python/browser cases, 110 desk sweep, 27 canon and
+1,126 repository guards. Root inspected narrow Live and desktop stopped-record
+captures; broader recovery, hardware, identity/edit and summary jobs stay open.
+
 Capture first words repair — #1436: New Note keeps the attempt's seed and captured
 keys through failed creation, Retry, timeout and editable-field handoff.
 Successful delayed creation also delivers the snapshot to that Note without
