@@ -57,6 +57,13 @@ not add another editor or draft store. The focused cases cover seed plus typing
 while creation is pending, repeated failure, malformed response, timeout and
 pointer handoff. The production route remains ThoughtWorkspaceWindow.
 
-Delivery verification and the remaining limits are recorded in the repair PR.
+Focused proof: 34 cases across `thoughtDoorAndReceipt.test.tsx`,
+`thoughtKeys.test.ts` and `chair.app.test.tsx` passed. Delayed successful
+creation uses the same snapshot without rearming keyboard capture. These
+component observations do not establish durability across reload or another
+global failure receipt replacing this attempt's Retry. Required quick passed: build, 4,169 related web tests, five real-browser
+key/window cases, 110 desk sweep, 27 canon and 1,126 repository guards.
+Root inspected every-key captures at 1440 and 393. The repair PR records
+delivery.
 This does not settle the other Capture, editor, voice-targeting or appearance
 findings in this audit.

@@ -17,6 +17,15 @@ The larger project-update Stop draft is parked at `54a7436b7` outside main;
 its last edits and new tests are unverified.
 
 
+Capture first words repair: New Note keeps the attempt's seed and captured
+keys through failed creation, Retry, timeout and editable-field handoff.
+Successful delayed creation also delivers the snapshot to that Note without
+rearming keyboard interception. No new editor or draft store. Focused proof:
+34 cases across three files passed. Required quick green: build, 4,169
+related web tests, five real-browser key/window cases, 110 desk sweep,
+27 canon and 1,126 repository guards; 1440/393 key-handoff captures inspected. Restart/global-receipt durability and broader Capture/voice
+workflow conditions remain open.
+
 Settings leave/return repair — #1434: leave supersession is scoped to captured write
 identities and confirmed acceptance. Later refused edits remain visible with
 Retry; failed leave-only edits and late responses preserve newer local work.
