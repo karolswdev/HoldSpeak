@@ -60,7 +60,7 @@ small PRs and updates package/PR/task-evidence/owner-feedback status.
 | P01 | First repository identity/frame slice merged #1438 | Durable view state, shared command origin, unlike consumers and narrow chooser |
 | P02 | First repository read/inspect slice merged #1438 | Second real collection consumer, range/selection/scroll and revalidation |
 | P03 | First captured Thought voice/recovery slice merged #1443 | Other field/Ask/native voice policies, learning/macros and whole J1 source return |
-| P04 | First selected-Thought slice merged #1446; version/Linked items continuation built and quick green | Project/People producer jobs, Room Resume pin DTO, retrieval and whole J3 |
+| P04 | First selected-Thought slice merged #1446; version/Linked items continuation #1448, quick green | Project/People producer jobs, Room Resume pin DTO, retrieval and whole J3 |
 | P05 | Planned; bounded Stop repair already #1437 | Complete record/import/intelligence/reopen/aftercare job |
 | P06 | Planned | Whole project/person/day job and retained update identity |
 | P07 | Planned | Hand/result/automation/terminal retained-job acceptance |
@@ -422,6 +422,8 @@ cases, 110 desk sweep, 27 canon and 1,126 repository guards
 
 
 ## Fifth delivery: admitted Note version and usable saved provenance
+
+[PR1448](https://github.com/karolswdev/HoldSpeak/pull/1448).
 
 Branch: feat/native-pinned-note-wave5-20261023.
 Worktree: /Users/karol/dev/tools/wt-native-pinned-note-wave5-20261023.

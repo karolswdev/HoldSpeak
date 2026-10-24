@@ -38,7 +38,7 @@ That pinned full tape is RED; no latest-main full-suite green is claimed. Earlie
 are recorded below. Recipe closeout remains 115/117.
 
 
-Note-version / saved-link continuation: canonical Thought revision/body hash
+Note-version / saved-link continuation — #1448: canonical Thought revision/body hash
 now travels with the accepted Ask; changed/gone sources refuse before dispatch,
 and admitted text stays with normal/CLI/LOOP turns without losing original
 Desk Memory. Active saved Notes gain explicit source/thread Buttons in Linked
