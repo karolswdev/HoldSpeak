@@ -13,6 +13,18 @@ function editor(): EditorView {
 }
 
 describe("Components editing specimen", () => {
+  it("uses the live pane's link fold with local receipts and no source IO", () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+    render(<EditingReference preset="linked" />);
+    expect(editor().state.doc.toString()).toContain("[API boundary](note:sample-source)");
+    fireEvent.click(screen.getByText("Linked items"));
+    fireEvent.click(screen.getByRole("button", { name: "API boundary" }));
+    expect(screen.getByText("Opened locally: note:sample-source")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ask thread" }));
+    expect(screen.getByText("Opened locally: thread:sample-ask")).toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+  });
   it("uses the live Thought captured selection and restores one insertion with Undo", () => {
     render(<EditingReference preset="ordinary" />);
     const view = editor();

@@ -15,19 +15,28 @@ export interface AskContext {
   ref?: string;
 }
 
+/** The exact still-owned Note version admitted before model dispatch. */
+export interface AskSourceSnapshot {
+  ref: string;
+  thought_id: string;
+  working_revision: number;
+  body_sha256: string;
+}
+
 export interface AskSelectionHandoff {
   noteRef: string;
   text: string;
   /** The writer's saved body at handoff, used only to validate return. */
   body: string;
-  /** CodeMirror's UTF-16 selection in that saved body. */
-  range: { from: number; to: number } | null;
+  /** CodeMirror's UTF-16 origin, independent of the optional prompt quote. */
+  range: { from: number; to: number; text: string } | null;
   /** The actual window that handed this Note to Ask. */
   windowId: string | null;
   /** The source editor's scroll position at handoff. */
   scrollTop: number | null;
   /** The Note window has just saved this source. Floor selection is separate. */
   source?: AskContext;
+  sourceSnapshot?: AskSourceSnapshot;
 }
 
 const ASK_SELECTION_EVENT = "holdspeak:ask-selection";
@@ -36,7 +45,7 @@ let pendingAskSelection: AskSelectionHandoff | null = null;
 /** A transient Note → Ask handoff. The Note remains the canonical context. */
 export function latchAskSelection(selection: AskSelectionHandoff | null): void {
   pendingAskSelection = selection && (selection.text.trim() || selection.source)
-    ? { ...selection, range: selection.range ? { ...selection.range } : null, ...(selection.source ? { source: { ...selection.source } } : {}) }
+    ? { ...selection, range: selection.range ? { ...selection.range } : null, ...(selection.source ? { source: { ...selection.source } } : {}), ...(selection.sourceSnapshot ? { sourceSnapshot: { ...selection.sourceSnapshot } } : {}) }
     : null;
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent<AskSelectionHandoff | null>(ASK_SELECTION_EVENT, { detail: pendingAskSelection }));
@@ -212,6 +221,7 @@ export async function runAsk(opts: {
   prompt: string;
   lens: string;
   context: AskContext[];
+  sourceSnapshot?: AskSourceSnapshot;
   grounding?: {
     meeting_ids: string[];
     artifact_ids: string[];
@@ -269,6 +279,7 @@ export async function runAsk(opts: {
           ref: c.ref || qualifiedRef(c.kind, c.id),
         })),
         ...(opts.grounding ? { grounding: opts.grounding } : {}),
+        ...(opts.sourceSnapshot ? { source_snapshot: opts.sourceSnapshot } : {}),
         ...(opts.model ? { model: opts.model } : {}),
         ...(opts.invocationId ? { invocation_id: opts.invocationId } : {}),
         ...(opts.thread === true ? { thread: true } : opts.thread ? { thread_id: opts.thread } : {}),

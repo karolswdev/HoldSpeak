@@ -1,11 +1,12 @@
 /** Shared Markdown reading species. Lezer owns the grammar; React owns the DOM.
  * HTML stays text and images stay alt text. No content is fetched on render. */
-import { createElement, useRef, type ReactNode } from "react";
+import { createElement, useMemo, useRef, type ReactNode } from "react";
 import { markdownLanguage } from "@codemirror/lang-markdown";
 import type { SyntaxNode } from "@lezer/common";
 import { Button } from "../../components/signal/Signal";
 import { refOpener } from "../openObject";
 import { ScrollHint } from "./Surface";
+import { FoldGadget } from "./gadgets";
 import "./reading-document.css";
 
 export function parseReading(source: string): SyntaxNode {
@@ -37,6 +38,12 @@ export function readingContent(node: SyntaxNode, source: string): string {
   return readingSegments(node, source).map((part) => typeof part === "string" ? part : source.slice(part.from, part.to)).join("").trim();
 }
 
+/** Accessible plain label from the same parsed segments used by contents(). */
+function readingPlainText(node: SyntaxNode, source: string): string {
+  if (node.name === "Escape") return source.slice(node.from + 1, node.to);
+  return readingSegments(node, source).map((part) => typeof part === "string" ? part : readingPlainText(part, source)).join("");
+}
+
 function ReadingOverflow({ children, label }: { children: ReactNode; label: string }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   return <ScrollHint axis="x" scrollRef={scrollRef} className="reading-scroll-hint">
@@ -46,6 +53,43 @@ function ReadingOverflow({ children, label }: { children: ReactNode; label: stri
 
 type NoteDoors = Record<string, () => void>;
 type Context = { source: string; noteDoors: NoteDoors };
+
+/** Only real Markdown links to objects the Desk can open. Code, images and
+ * HTML are words in the editable Note, never implicit navigation. */
+export function readingObjectLinks(source: string): Array<{ ref: string; node: SyntaxNode }> {
+  const links: Array<{ ref: string; node: SyntaxNode }> = [];
+  const seen = new Set<string>();
+  const visit = (node: SyntaxNode) => {
+    if (["Image", "InlineCode", "FencedCode", "CodeBlock", "HTMLBlock", "HTMLTag"].includes(node.name)) return;
+    if (node.name === "Link") {
+      const url = node.getChild("URL");
+      const ref = url ? source.slice(url.from, url.to) : "";
+      if (/^[a-z][a-z_]*:\S+$/i.test(ref) && refOpener(ref) && !seen.has(ref)) {
+        seen.add(ref);
+        links.push({ ref, node });
+      }
+      return;
+    }
+    for (const child of readingChildren(node)) visit(child);
+  };
+  visit(parseReading(source));
+  return links;
+}
+
+/** A deliberate door beside an editable Note; parsing never opens or fetches. */
+export function ReadingObjectLinks({ source, onOpen }: { source: string; onOpen: (ref: string) => void }) {
+  const links = useMemo(() => readingObjectLinks(source), [source]);
+  if (!links.length) return null;
+  return <FoldGadget title="Linked items" className="reading-object-links">
+    <div className="reading-object-links-list">
+      {links.map((link) => <Button key={link.ref} dense variant="secondary"
+        aria-label={readingPlainText(link.node, source).trim() || link.ref}
+        onClick={() => onOpen(link.ref)}>
+        {contents(link.node, { source, noteDoors: {} })}
+      </Button>)}
+    </div>
+  </FoldGadget>;
+}
 
 function plainLines(text: string, key: string): ReactNode {
   return text.split("\n").map((line, i) => <span key={`${key}.${i}`}>{i ? <br /> : null}{line}</span>);

@@ -179,6 +179,13 @@ shares the same controlled source view with local IO. Server source-version
 admission/pinning, Project/People source jobs, Memory/Activity retrieval and
 whole J3 remain open. See [execution](EXECUTION.md).
 
+The Note-version/Linked items continuation is [PR1448](https://github.com/karolswdev/HoldSpeak/pull/1448), independently rechecked
+and required quick green:
+server admission retains exact selected Note bytes without changing original
+Memory scope; active saved Notes have real source/thread doors; Clear quote
+and whole-Note Ask retain origin caret. This closes those #1446 follow-ons,
+not the Project/People job. See the fifth delivery in [execution](EXECUTION.md).
+
 **Primary families:** `ask_whole_desk`, `threads`, `keep_answer`, `source_context`, `memory`, `activity_context`.
 
 **Source homes:** `AskPanel.tsx`, `ComposerWell`, `ReadingDocument`, `useReadingEndAnchor`, `askAbout.ts`, `ThreadToAsk.tsx`,

@@ -484,22 +484,30 @@ function WorkspaceReady({
     if (busy) return;
     setBusy(true); say("");
     try {
-      const selected = selectedPassage;
+      const selected = bodyEditorRef.current?.getSelection() ?? null;
+      const capturedBody = writer.draft.body;
       const sourceScrollTop = bodyEditorRef.current?.getScrollTop() ?? null;
       const latest = await writer.flush({ fence: true });
       const note = latest.working_note;
       const noteRef = `note:${note.id}`;
+      const range = selected && capturedBody === note.body_markdown &&
+        selected.from >= 0 && selected.to >= selected.from && selected.to <= note.body_markdown.length &&
+        note.body_markdown.slice(selected.from, selected.to) === selected.text
+        ? { from: selected.from, to: selected.to, text: selected.text } : null;
+      // A failed digest must leave this Note here; Ask must never receive an
+      // unpinned fallback after a successful writer flush.
+      const bodySha256 = await sha256(new TextEncoder().encode(note.body_markdown));
       // The floor can trim its icon selection while this Note is still open.
       // Ask owns the saved source and valid quote, independently of that set.
       latchAskSelection({
         noteRef,
-        text: selected && selected.text.trim() && selected.body === note.body_markdown && note.body_markdown.slice(selected.from, selected.to) === selected.text ? selected.text : "",
+        text: range?.text.trim() ? range.text : "",
         body: note.body_markdown,
-        range: selected && selected.text.trim() && selected.body === note.body_markdown && note.body_markdown.slice(selected.from, selected.to) === selected.text
-          ? { from: selected.from, to: selected.to } : null,
+        range,
         windowId: winId,
         scrollTop: sourceScrollTop,
         source: { id: note.id, kind: "note", ref: noteRef, title: note.title || "Note" },
+        sourceSnapshot: { ref: noteRef, thought_id: latest.id, working_revision: latest.working_revision, body_sha256: bodySha256 },
       });
       // Betterment Q5: Ask about this, with the note in About and its
       // selected text quoted in the question.

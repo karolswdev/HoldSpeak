@@ -20,7 +20,7 @@ from typing import Any, Callable, Optional
 
 from ..db.core import Database
 from ..db.threads import ThreadRepository
-from ..grounding import GROUNDING_MAX_REFS, _unkept_draft_refs, hydrate_refs_detailed, live_block
+from ..grounding import GROUNDING_MAX_REFS, GroundingBlock, _defended_block, _unkept_draft_refs, hydrate_refs_detailed, live_block
 from ..inference_memory_policy import memory_enabled
 from ..kernel.inference_runner import InvocationRequest, ServiceContract
 from ..kernel.inference_stream import (
@@ -548,6 +548,7 @@ class ThreadService:
         text: str,
         refs: list[str] | None = None,
         parent_id: Any = _UNSET,
+        pinned_note: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         """Persist user message, freeze refs, admit, and start streaming.
 
@@ -601,6 +602,8 @@ class ThreadService:
 
             from .memory_grounding import reflect_scopes
             reflect_on = reflect_scopes(grounding_refs, explicit=bool(grounding_refs))
+            hydrate_grounding_refs = [ref for ref in grounding_refs
+                                      if pinned_note is None or ref.split("#", 1)[0] != pinned_note["ref"]]
 
             # Resolve grounding refs through hydrate_refs_detailed.
             if grounding_refs or text.strip():
@@ -609,10 +612,12 @@ class ThreadService:
                     meeting_ids=[],
                     artifact_ids=[],
                     expand="summary",
-                    qualified_refs=grounding_refs,
+                    qualified_refs=hydrate_grounding_refs,
                     query=text,
-                    include_memory=memory_enabled("chat.turn"),
-                    exclude_refs=[f"thread:{thread_id}"],
+                    include_memory=memory_enabled("chat.turn") and not (
+                        pinned_note is not None and grounding_refs
+                    ),
+                    exclude_refs=[f"thread:{thread_id}", *([pinned_note["ref"]] if pinned_note is not None else [])],
                 )
                 if hydration.unknown:
                     raise ValidationError(
@@ -663,6 +668,17 @@ class ThreadService:
                         }, separators=(",", ":"), sort_keys=True),
                         "sensitive": False,
                         "origin": block_origin,
+                    })
+                if pinned_note is not None:
+                    block = _defended_block(GroundingBlock("note", pinned_note["id"], pinned_note["title"], "", pinned_note["body"]))
+                    frozen_ref_rows.append({
+                        "ref_kind": "note", "ref_id": pinned_note["id"],
+                        "frozen_json": json.dumps({"kind": "note", "title": block.title,
+                                                   "subtitle": "", "text": block.text,
+                                                   "via": "", "ask_pinned": True},
+                                                  separators=(",", ":"), sort_keys=True),
+                        "sensitive": False,
+                        "origin": REF_ORIGIN_REFERENCE,
                     })
 
         # -- Persist user message (HS-153-04: promote draft if present) --
@@ -718,7 +734,18 @@ class ThreadService:
         capability_id = "chat.turn"
 
         # Assemble the payload (assembler law).
-        payload = self._assemble_payload(thread_id, user_msg.id, thread)
+        try:
+            payload = self._assemble_payload(thread_id, user_msg.id, thread)
+        except ServiceError as exc:
+            if pinned_note is None or exc.code != "source_gone":
+                raise
+            # The Note vanished after admission but before a model request.
+            # Park this unsent user turn, keeping the prior conversation path.
+            self._threads.abort_message(user_msg.id)
+            with self._db._connection() as conn:
+                conn.execute("UPDATE thread_messages SET deleted_at=?, updated_at=? WHERE id=?",
+                             (time.time(), time.time(), user_msg.id))
+            raise
 
         # HS-152-03 + HS-153-01: the tool palette rides INSIDE the admitted
         # payload.  Resolved once at admission so a mid-turn PATCH does not
@@ -749,10 +776,25 @@ class ThreadService:
         # Memory slice 6 (MEMORY-DESIGN.md §3.5): the scope's pages, then its
         # observations, before the recall, fitted to the route this turn
         # will be admitted on.  Nothing served: the payload is unchanged.
-        payload, reflect = await asyncio.to_thread(
-            self._with_reflect, payload, thread_id, user_msg.id, thread,
-            text=text, scopes=reflect_on, operation_id=invocation_id,
-        )
+        try:
+            payload, reflect = await asyncio.to_thread(
+                self._with_reflect, payload, thread_id, user_msg.id, thread,
+                text=text, scopes=reflect_on, operation_id=invocation_id,
+                pinned_ref=pinned_note["ref"] if pinned_note is not None else "",
+            )
+            # fit_reflect treats a raising candidate as optional memory. The
+            # selected Note is mandatory, so check it again after that fit.
+            if pinned_note is not None and live_block(self._db, pinned_note["ref"], via="") is None:
+                raise ServiceError("source_gone", "Selected Note is no longer available.",
+                                   context={"reason": "source_gone"})
+        except ServiceError as exc:
+            if pinned_note is None or exc.code != "source_gone":
+                raise
+            self._threads.abort_message(user_msg.id)
+            with self._db._connection() as conn:
+                conn.execute("UPDATE thread_messages SET deleted_at=?, updated_at=? WHERE id=?",
+                             (time.time(), time.time(), user_msg.id))
+            raise
 
         # Admit through the adoption service.
         admitted = await asyncio.to_thread(
@@ -2578,6 +2620,7 @@ class ThreadService:
         text: str,
         scopes: list[tuple[str, str]],
         operation_id: str,
+        pinned_ref: str = "",
     ) -> tuple[dict[str, Any], Any]:
         """``(payload, part)``: ``payload`` with this turn's pages and
         observations (§3.5) and the part that fitted, or ``payload`` itself
@@ -2587,7 +2630,7 @@ class ThreadService:
 
         reflect = reflect_for(
             "chat.turn", self._db, scopes=scopes, query=text,
-            exclude_refs=[f"thread:{thread_id}"],
+            exclude_refs=[f"thread:{thread_id}", *([pinned_ref] if pinned_ref else [])],
         )
         if not reflect:
             return payload, EMPTY_MEMORY
@@ -2740,6 +2783,18 @@ class ThreadService:
         # The replay check reads each source with the exclusions the turn's
         # own recall pass uses: this thread, and drafts he has not kept.
         replay_excluded = {f"thread:{thread_id}"} | _unkept_draft_refs(self._db)
+        # A container saved on this same Ask turn is live-replayed below.
+        # Keep its selected Note out of that second hydration too; the
+        # separate marked row supplies the admitted version. Older turns
+        # have no current marker and keep the ordinary live replay rule.
+        for ref in refs:
+            if ref.message_id != user_msg_id or ref.ref_kind != "note" or not ref.frozen_json:
+                continue
+            try:
+                if json.loads(ref.frozen_json).get("ask_pinned") is True:
+                    replay_excluded.add(f"note:{ref.ref_id}")
+            except (json.JSONDecodeError, TypeError, AttributeError):
+                pass
         for ref in refs:
             if ref.ref_kind == "person" and ref.frozen_json:
                 # Person refs: title-only context line (HS-149 law).
@@ -2754,12 +2809,18 @@ class ThreadService:
                 try:
                     frozen = json.loads(ref.frozen_json)
                     ref_text = frozen.get("text", "")
-                    if ref_text:
+                    current_pin = frozen.get("ask_pinned") is True and ref.message_id == user_msg_id
+                    if current_pin and live_block(self._db, f"note:{ref.ref_id}", via="",
+                                                  exclude_refs=replay_excluded) is None:
+                        raise ServiceError("source_gone", "Selected Note is no longer available.",
+                                           context={"reason": "source_gone"})
+                    if ref_text and not current_pin:
                         frozen = self._live_replay(ref, frozen, replay_excluded)
                         ref_text = frozen.get("text", "") if frozen is not None else ""
-                    if ref_text:
+                    if ref_text or current_pin:
                         ref_context_parts.append(
-                            f"[{frozen.get('kind', 'ref').upper()}: {frozen.get('title', ref.ref_id)}]\n{ref_text}"
+                            f"[{frozen.get('kind', 'ref').upper()}: {frozen.get('title', ref.ref_id)}]"
+                            + (f"\n{ref_text}" if ref_text else "")
                         )
                 except (json.JSONDecodeError, TypeError):
                     pass

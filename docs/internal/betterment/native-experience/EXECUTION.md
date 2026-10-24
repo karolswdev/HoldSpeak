@@ -60,7 +60,7 @@ small PRs and updates package/PR/task-evidence/owner-feedback status.
 | P01 | First repository identity/frame slice merged #1438 | Durable view state, shared command origin, unlike consumers and narrow chooser |
 | P02 | First repository read/inspect slice merged #1438 | Second real collection consumer, range/selection/scroll and revalidation |
 | P03 | First captured Thought voice/recovery slice merged #1443 | Other field/Ask/native voice policies, learning/macros and whole J1 source return |
-| P04 | First selected-Thought Ask/save/return slice #1446, four glass cases and quick green | Backend source version/pinning, Project/People producer jobs, retrieval and whole J3 |
+| P04 | First selected-Thought slice merged #1446; version/Linked items continuation #1448, quick green | Project/People producer jobs, Room Resume pin DTO, retrieval and whole J3 |
 | P05 | Planned; bounded Stop repair already #1437 | Complete record/import/intelligence/reopen/aftercare job |
 | P06 | Planned | Whole project/person/day job and retained update identity |
 | P07 | Planned | Hand/result/automation/terminal retained-job acceptance |
@@ -419,3 +419,101 @@ and the frozen delivery registry default is isolated before hub boot. No
 product code changes. Required quick green: build, both affected 1440/393
 cases, 110 desk sweep, 27 canon and 1,126 repository guards
 (`wt-native-reference-glass-fix-20261023/.tmp/quick-native-reference-glass.log`).
+
+
+## Fifth delivery: admitted Note version and usable saved provenance
+
+[PR1448](https://github.com/karolswdev/HoldSpeak/pull/1448).
+
+Branch: feat/native-pinned-note-wave5-20261023.
+Worktree: /Users/karol/dev/tools/wt-native-pinned-note-wave5-20261023.
+P04/J1 source job, with P03 origin caret and P10 Editing reference seams.
+This closes the specific follow-ons recorded after #1446, not whole P04 or J3.
+
+Thought flushes through its existing writer before capturing canonical Note,
+Thought id, working revision and raw UTF-8 body SHA. Ask copies this optional
+source_snapshot into the accepted request and retains it on retry or engine
+switch. No hash failure falls back to an unpinned request. The server reads
+Thought revision and canonical Note in one joined statement, validates ownership,
+revision/hash and live state, then uses those admitted bytes for that turn.
+Changed/gone sources refuse before dispatch. Source changed has a return door,
+not a blind retry or automatic source rebase.
+
+Normal, CLI and LOOP preserve their original About/Memory decisions. The pin
+excludes only the selected Note from duplicate hydration, nested Project/
+Knowledge/Zone expansion, relevance and reflect context; other sources remain.
+LOOP freezes a defended private current-turn ref in existing frozen_json and
+checks live presence before admission, including optional memory-fit reassembly.
+A vanished source parks the unsent user turn. Older turns keep live replay;
+explicit later tool reads remain separate authority. Refinement snapshots and
+result-first Room Resume are unchanged. The Room saved-task DTO does not yet
+carry this pin; this is not Room whole-job acceptance.
+
+The origin range owns its captured text independently of the prompt quote.
+Clear quote retains selection/scroll; a whole-Note handoff retains a collapsed
+caret. Return validates exact saved/local body and immutable range text.
+Scroll restores to the captured value within the current native scroll bounds;
+receipt reflow can legitimately lower the maximum without changing the caret.
+
+The active Thought pane now has explicit Linked items. It reads real Markdown
+Link nodes through the shared ReadingDocument grammar, skips code/image/HTML
+pseudo-links, deduplicates supported object refs and uses library Buttons.
+It opens nothing on parse and never intercepts ordinary CodeMirror clicks.
+Escaped brackets and emphasis use the same parsed inline renderer and accessible
+plain label. Unsupported refs remain editable text. Components Editing uses
+the exact pane/view with local callback and mic disabled. The surface barrel
+exports this shared view; feature hosts do not import its private implementation.
+
+The optional fold is an in-flow row with a local scroll list. A forced 640px
+minimum was rejected on actual low-position desktop glass; the compact desktop
+list stays within the existing sticky. The final browser file checks 12 linked
+items, editor/fold/footer/frame non-overlap, source and Thread Button clicks
+through the active Note router, stale title/body refusal before the fake model,
+and a fresh whole-Note handoff. The final 1440/393 browser cases pass; root inspected the refreshed captures.
+Canvas B was updated before build; the static board remains a proposal artifact.
+The static Chromium acceptance measured all 18 boards at wide and narrow
+viewports: zero frame, footer, Button or inset bounds failures. B desktop,
+narrow and narrow-scrolled captures plus bounds JSON live beside the app
+shots in `.tmp/evidence-shots/native-pinned-note-wave5/`. That is static
+geometry evidence, not production parity or owner acceptance.
+
+Independent server advisory found recursive-container leakage and accidental
+Memory removal. Both received the one final RATIFY recheck. Server focused:
+28 collected/28 passed; focused grounding/replay/Memory: 107 collected,
+104 passed and three fixture-recording skips. Prior six Ask/thread files:
+92 collected, 89 passed and the same three skips (not an additive total).
+Independent frontend advisory found raw Markdown escapes in link labels;
+the bounded fix received the final RATIFY recheck. Focused frontend: six files,
+103 passed; label check 12 passed; typecheck and named 1440 real-route smoke pass.
+These are Sol advisories, not Muad'Dib checks or owner aesthetic acceptance.
+
+The first required quick exposed an overpacked accessibility test (eight
+complete pattern audits inside one five-second test) and a redundant browser
+click behind the already-front Ask on phone. The audits are now independent
+cases with unchanged checks/timeouts; the browser uses its actual front state.
+No product failure was suppressed. Required final quick green: build, 4,286 related UI tests, 961 affected
+Python/browser checks with six named fixture/live-map skips, 110 desk sweep,
+27 canon and 1,126 repository guards (`.tmp/quick-native-pinned-note.log`).
+All four changed real-browser cases are in that affected total, not additional
+counts. At 393, the linked row passes the canonical nine-point hit probe;
+editor, fold, local list and footer are measured before any corrective scroll.
+Root inspected desktop/narrow source/link/return captures. A fresh pin reaches
+the local fake answer endpoint; a stale pin returns 409 without another call.
+The same job clicks actual source and thread doors, not only saved Markdown. Real model quality, hardware speech,
+immutable structured lineage, complete Project/People source jobs and full
+47-family acceptance remain outside this bounded observed job.
+
+
+## Common compositor follow-on from real placement
+
+The low-position Note test exposed a wider pre-existing growth constraint:
+after a real owner drag, a 360px saved frame at y394 can render 640px tall when
+voice/reads/outcomes CSS opens, leaving its bottom at1034 below the840 work
+edge. The focused synthetic CSS-growth probe is recorded in
+`wt-native-input-wave3-20261023/.tmp/evidence-shots/p01-growth-diag/`.
+It is a geometry reproduction, not hardware/ASR evidence. Main has the same
+CSS/observer path. The bounded P01 follow-on observes arranged fitContent
+intrinsic growth and lifts only y to the work band, preserving saved h,
+resource identity, zoom and unsaved auto-height policy. It is being built in
+`wt-native-content-growth-wave6-20261023`; it is not included in this Note
+source-version slice and does not retroactively make the pinned tape green.

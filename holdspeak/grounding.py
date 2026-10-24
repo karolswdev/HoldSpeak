@@ -335,7 +335,8 @@ def hydrate_refs_detailed(
         members = _drop_promoted(memory, members)
         with memory_defense():  # memory picked these, not the owner
             more, missing = _hydrate_members(
-                db, members, expand, visited, query=query, stats=stats
+                db, members, expand, visited, query=query, stats=stats,
+                exclude_refs=excluded,
             )
         blocks.extend(replace(block, via="memory") for block in more)
         unknown.extend(missing)
@@ -423,7 +424,9 @@ def live_block(
                 if not MemoryRepository._ref_in_project(conn, kind, resource_id, via.split(":", 1)[1]):
                     return None
     with memory_defense():
-        blocks, missing = _hydrate_members(db, [base], "summary", set(), query=query)
+        blocks, missing = _hydrate_members(
+            db, [base], "summary", set(), query=query, exclude_refs=exclude_refs,
+        )
     return None if missing or not blocks else blocks[0]
 
 
@@ -691,6 +694,7 @@ def _hydrate_qualified(
             visited,
             query=query,
             stats=stats,
+            exclude_refs=exclude_refs,
         )
     if kind == "zone":
         zone = db.directories.get(resource_id)
@@ -710,6 +714,7 @@ def _hydrate_qualified(
             visited,
             query=query,
             stats=stats,
+            exclude_refs=exclude_refs,
         )
     if kind == "project":
         project = db.projects.get_project(resource_id)
@@ -759,8 +764,10 @@ def _hydrate_qualified(
         # one anonymous container, so every model-visible block keeps a citable ref.
         if by_relevance:
             with memory_defense():  # memory picked these, not the owner
-                return _hydrate_members(db, members, expand, visited, query=query, stats=stats)
-        return _hydrate_members(db, members, expand, visited, query=query, stats=stats)
+                return _hydrate_members(db, members, expand, visited, query=query,
+                                        stats=stats, exclude_refs=exclude_refs)
+        return _hydrate_members(db, members, expand, visited, query=query,
+                                stats=stats, exclude_refs=exclude_refs)
     return [], [ref]
 
 
@@ -814,17 +821,21 @@ def _hydrate_members(
     *,
     query: Optional[str] = None,
     stats: Optional[dict[str, Any]] = None,
+    exclude_refs: Optional[set[str]] = None,
 ) -> tuple[list[GroundingBlock], list[str]]:
     children: list[GroundingBlock] = []
     unknown: list[str] = []
-    for member in members[:GROUNDING_MAX_REFS]:
+    visible = [member for member in members
+               if str(member).split("#", 1)[0] not in (exclude_refs or ())]
+    for member in visible[:GROUNDING_MAX_REFS]:
         try:
             canonical = qualified_ref(member)
         except ValueError:
             unknown.append(member)
             continue
         blocks, missing = _hydrate_qualified(
-            db, canonical, expand, visited, query=query, stats=stats
+            db, canonical, expand, visited, query=query, stats=stats,
+            exclude_refs=exclude_refs,
         )
         children.extend(blocks)
         unknown.extend(missing)
@@ -844,9 +855,14 @@ def _hydrate_container(
     *,
     query: Optional[str] = None,
     stats: Optional[dict[str, Any]] = None,
+    exclude_refs: Optional[set[str]] = None,
 ) -> tuple[list[GroundingBlock], list[str]]:
+    if exclude_refs:
+        members = [member for member in members
+                   if str(member).split("#", 1)[0] not in exclude_refs]
     children, unknown = _hydrate_members(
-        db, members, expand, visited, query=query, stats=stats
+        db, members, expand, visited, query=query, stats=stats,
+        exclude_refs=exclude_refs,
     )
     text = "\n\n".join(
         f"[{block.kind.upper()}: {block.title}]\n{block.text}" for block in children

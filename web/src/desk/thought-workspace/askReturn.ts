@@ -8,8 +8,8 @@ export function validAskReturnRange(source: AskSelectionHandoff, noteRef: string
   const range = source.range;
   if (source.noteRef !== noteRef || source.body !== body || !range) return null;
   if (range.from < 0 || range.to < range.from || range.to > body.length) return null;
-  if (body.slice(range.from, range.to) !== source.text) return null;
-  return { ...range };
+  if (body.slice(range.from, range.to) !== range.text) return null;
+  return { from: range.from, to: range.to };
 }
 
 export function requestAskReturn(source: AskSelectionHandoff): void {

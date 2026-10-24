@@ -5,19 +5,17 @@ import { describe, expect, it } from "vitest";
 import { ComponentsCore } from "./cores/ComponentsCore";
 
 describe("Signal component gallery", () => {
-  it("has no automatically detectable accessibility violations", async () => {
+  it.each(["Forms", "Editing", "Reading", "Lists", "Resources", "Conversation", "Progress", "Controls"])("%s has no automatically detectable accessibility violations", async (pattern) => {
     const { container } = render(
       <MemoryRouter initialEntries={["/design/components"]}>
         <ComponentsCore />
       </MemoryRouter>,
     );
-    for (const pattern of ["Forms", "Editing", "Reading", "Lists", "Resources", "Conversation", "Progress", "Controls"]) {
-      fireEvent.click(screen.getByRole("button", { name: pattern }));
-      const result = await axe.run(container, {
-        rules: { "color-contrast": { enabled: false } },
-      });
-      expect(result.violations).toEqual([]);
-    }
+    fireEvent.click(screen.getByRole("button", { name: pattern }));
+    const result = await axe.run(container, {
+      rules: { "color-contrast": { enabled: false } },
+    });
+    expect(result.violations).toEqual([]);
   });
 
   it("keeps the pattern selector and the controls catalogue in one window", () => {

@@ -1,9 +1,10 @@
 import { firstWords, NEW_THOUGHT_TITLE } from "../thoughtTitle";
 import { useEffect, useRef, useSyncExternalStore, type ReactNode, type RefObject } from "react";
-import { EditInPlace, StateChip, SurfaceWell } from "../surface";
+import { EditInPlace, ReadingObjectLinks, StateChip, SurfaceWell } from "../surface";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { DeskEditor, type DeskEditorHandle, type DeskEditorSelection } from "../components/DeskEditor";
+import { refOpener } from "../openObject";
 import type { ThoughtDraft } from "../pullouts/editors/useThoughtNoteWriter";
 import { claimThoughtKeys } from "../thoughtKeys";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
@@ -62,6 +63,7 @@ export function ThoughtDocumentPane({
   returnRange,
   editorRef,
   onSelectionChange,
+  onOpenLink,
   voiceDraftIO = deskThoughtVoiceDraft,
   mic = true,
   voiceInput,
@@ -80,6 +82,8 @@ export function ThoughtDocumentPane({
   returnRange?: { from: number; to: number; scrollTop: number | null; nonce: number } | null;
   editorRef?: RefObject<DeskEditorHandle | null>;
   onSelectionChange?: (selection: DeskEditorSelection) => void;
+  /** Components supplies a local receipt; production uses the Desk opener. */
+  onOpenLink?: (ref: string) => void;
   /** Fixture seam for the same Thought recovery view, without workspace writes. */
   voiceDraftIO?: ThoughtVoiceDraftIO;
   mic?: boolean;
@@ -159,5 +163,6 @@ export function ThoughtDocumentPane({
       if (editor && target && editor.insertAtCapturedTarget(target, retained, { focus: true }))
         voiceDraftIO.forget(voiceKey);
     }} /> : null}
+    <ReadingObjectLinks source={draft.body} onOpen={onOpenLink ?? ((ref) => refOpener(ref)?.())} />
   </section>;
 }

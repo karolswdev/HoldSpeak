@@ -39,6 +39,7 @@ import {
   type AskSelectionHandoff,
   type AskContext,
   type AskRunResult,
+  type AskSourceSnapshot,
   type AskTurn,
   type LookedAt,
 } from "../ask";
@@ -142,6 +143,7 @@ interface AskRequestSnapshot {
   lens: string;
   context: AskContext[];
   grounding: Parameters<typeof runAsk>[0]["grounding"];
+  sourceSnapshot?: AskSourceSnapshot;
 }
 
 /** Betterment Q6: About's shortcut for no About at all. */
@@ -508,6 +510,7 @@ export function AskPanel() {
       lens: snapshot.lens,
       context: snapshot.context,
       grounding: snapshot.grounding,
+      sourceSnapshot: snapshot.sourceSnapshot,
       signal: controller.signal,
       invocationId,
       thread: threadId || true,
@@ -538,7 +541,7 @@ export function AskPanel() {
 
   const ask = () => {
     if (!prompt.trim() || pendingRequest.current) return;
-    const selection = selectedPassage?.text.trim() && context.some((entry) => entry.ref === selectedPassage.noteRef)
+    const selection = selectedPassage && context.some((entry) => entry.ref === selectedPassage.noteRef)
       ? { ...selectedPassage }
       : null;
     // Every nested value is built here. Later selections and picker changes
@@ -559,6 +562,8 @@ export function AskPanel() {
       lens,
       context: asked,
       grounding: refs.length ? { meeting_ids: [], artifact_ids: [], expand: "summary", refs } : null,
+      ...(selection?.sourceSnapshot && selection.sourceSnapshot.ref === selection.noteRef
+        ? { sourceSnapshot: { ...selection.sourceSnapshot } } : {}),
     };
     // The snapshot is now the transmission's immutable copy. Clear the
     // durable editor at acceptance so the sent question is visible in the
@@ -939,7 +944,7 @@ export function AskPanel() {
                 place={route ? "" : engine.place}
                 elapsedSeconds={finishedElapsedSeconds}
                 onAction={failedRun.reason === "no_engine" ? () => openSurfaceOr("configure-runs-on", "/settings", "models") : undefined}
-                onRetry={failedRun.reason !== "no_engine" && reasonVerb(failedRun.reason) && sent ? () => void run(sent) : undefined}
+                onRetry={failedRun.reason !== "no_engine" && failedRun.reason !== "source_changed" && failedRun.reason !== "source_gone" && reasonVerb(failedRun.reason) && sent ? () => void run(sent) : undefined}
               />
             </SurfaceTrafficTurn>
           ) : null}
@@ -979,7 +984,7 @@ export function AskPanel() {
               onClear={() => {
                 const source = selectedPassage.source;
                 latchAskSelection(null);
-                setSelectedPassage(source ? { ...selectedPassage, text: "", range: null, source } : null);
+                setSelectedPassage(source ? { ...selectedPassage, text: "", source } : null);
               }}
               onBack={returnToSource}
             />

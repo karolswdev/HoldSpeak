@@ -247,6 +247,7 @@ async def run_loop(
     refs: list[str],
     invocation_id: str,
     progress: Optional[Callable[[dict[str, Any]], None]] = None,
+    pinned_note: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """One Ask turn through the hub's tool loop; waits for its end.
 
@@ -255,7 +256,8 @@ async def run_loop(
     route) and its ids."""
     from .thread_service import ThreadService
 
-    ids = await service.start_turn(principal, thread_id, question, refs=refs or None)
+    ids = await service.start_turn(principal, thread_id, question, refs=refs or None,
+                                   pinned_note=pinned_note)
     message_id = str(ids["assistant_message_id"])
     _LOOP_TURNS[invocation_id] = message_id
     said: list[dict[str, str]] = []

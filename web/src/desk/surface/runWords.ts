@@ -9,6 +9,7 @@ export type RunFailureReason =
   | "stopped"
   | "not_reachable"
   | "source_gone"
+  | "source_changed"
   | "not_sent"
   | "still_running"
   | "";
@@ -31,6 +32,7 @@ export function reasonWords(
     case "stopped": return "Stopped";
     case "not_reachable": return `${model || "Engine"} not reachable`;
     case "source_gone": return "A source was deleted";
+    case "source_changed": return "Source changed. Select it again";
     case "not_sent": return "The question was not sent";
     case "still_running": return "Still working on it";
     default: return "Not answered";
@@ -42,6 +44,7 @@ export function reasonVerb(reason: string | undefined): string {
     case "no_engine": return "Choose an engine";
     case "too_long":
     case "still_running": return "";
+    case "source_changed": return "";
     case "source_gone":
     case "refused":
     case "stopped": return "Ask again";
@@ -51,7 +54,7 @@ export function reasonVerb(reason: string | undefined): string {
 
 const REASONS = new Set<string>([
   "no_engine", "engine_busy", "did_not_answer", "refused", "too_long", "not_usable",
-  "timed_out", "stopped", "not_reachable", "source_gone", "not_sent", "still_running",
+  "timed_out", "stopped", "not_reachable", "source_gone", "source_changed", "not_sent", "still_running",
 ]);
 
 /** True when `code` is one of the hub's face reason tokens (Betterment Q1). */

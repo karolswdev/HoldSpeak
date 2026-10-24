@@ -1287,3 +1287,28 @@ active Note editor has no link opener yet; saved-link click/return is follow-on
 scope, not certified from these bytes. Thread
 links use the actual returned thread id. Components proves presentation with
 isolated IO, not adoption of a shared conversation controller or live inference.
+
+
+## ReadingObjectLinks — explicit doors beside editing (2026-10-23)
+
+Public export from desk/surface. Props: source Markdown and host-owned
+onOpen(ref). Only real Link nodes with supported qualified object destinations
+become Buttons; code, image and HTML pseudo-links are ignored. Destinations are
+deduplicated in source order. Labels reuse parsed inline rendering and accessible
+text, including escapes and emphasis. Parsing has no fetch or opener effect.
+Ordinary editor clicks keep their selection/caret behavior.
+
+ThoughtDocumentPane owns the in-flow Linked items fold beside the editable
+body. Its short list scrolls locally without moving the frame off the work
+area or clipping editor/footer; narrow targets are 44px. The exact pane in
+Components Editing uses local callbacks, not production object opens. Unsupported
+refs stay text in the document. This gives saved source/thread destinations a
+real door in the active Note route, not the retired NotePullout reader.
+
+Thought-to-Ask captures immutable origin range text plus canonical source
+snapshot after flush. Clearing the quote changes prompt material, not the
+origin range or source version. Whole-Note Ask can restore a collapsed caret.
+The server validates that version and keeps admitted text for the turn while
+preserving original About/Memory policy; it does not make Note context exclusive.
+Source changed requires an explicit fresh source handoff, never silent retry
+with a newly read version. Room saved-task Resume pinning remains separate.
