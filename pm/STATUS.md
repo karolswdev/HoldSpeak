@@ -8,6 +8,34 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+**Owner correction — strategy before further implementation (2026-10-23).**
+Finish the bounded repairs already underway, then refine the plan and
+strategy before starting further product changes. The proposed refinement
+and advisory re-check are in draft #1435; it remains UNCHECKED, awaiting
+Muad'Dib. The 47 audit records are evidence, not an automatic build queue.
+The larger project-update Stop draft is parked at `54a7436b7` outside main;
+its last edits and new tests are unverified.
+
+
+Capture first words repair — #1436: New Note keeps the attempt's seed and captured
+keys through failed creation, Retry, timeout and editable-field handoff.
+Successful delayed creation also delivers the snapshot to that Note without
+rearming keyboard interception. No new editor or draft store. Focused proof:
+34 cases across three files passed. Required quick green: build, 4,169
+related web tests, five real-browser key/window cases, 110 desk sweep,
+27 canon and 1,126 repository guards; 1440/393 key-handoff captures inspected. Restart/global-receipt durability and broader Capture/voice
+workflow conditions remain open.
+
+Settings leave/return repair — #1434: leave supersession is scoped to captured write
+identities and confirmed acceptance. Later refused edits remain visible with
+Retry; failed leave-only edits and late responses preserve newer local work.
+The permanent component regression replaces the parked reproduction as repair
+proof: 66 focused cases across five files passed; required quick green with 4,155 related web
+tests, seven affected Python/browser cases, 110 desk sweep, 27 canon and
+1,126 repository guards. Root inspected 1440/393 Settings captures.
+The dirty-debounce receipt and other Settings audit findings remain open.
+
+
 Native-experience repair wave — #1433, Ask saved-thread selection: the first small
 repair gives saved-thread reads their own generation. An older response or
 failure cannot replace the selected thread, New Ask or a closed window.
@@ -32,11 +60,13 @@ cases, 27 canon and 1,126 repository guards passed; 53 Markdown navigation
 checks and all 47 record/anchor validations passed. No product repair is
 included in this packet.
 
-Highest-confidence new open finding: Settings pagehide/pageshow followed by a
-later 409 drops the new selected value; root reproduced it in isolated jsdom,
-while the no-leave control retains the draft and Retry. Capture failed-create
-seed loss, late automation delivery after Stop, overlapping Ask thread reads,
-and stopped-versus-saved Meeting truth are source-backed repair priorities.
+The reproduced Settings return conflict is repaired above; the original
+control retained the draft and Retry while the leave/return case lost it.
+Ask saved-thread read authority shipped in #1433. Capture first-word retention is repaired in #1436; Meeting outcome
+closeout remains. The larger automation Stop candidate is parked on
+`fix/update-stop-repair-20261023` at `54a7436b7`, not merged or deployed;
+its final edits and new regressions are unverified. The owner clarified that
+strategy/design refinement precedes further implementation.
 See `adversarial/SYNTHESIS.md` for first consumers, retained boundaries and
 owner/capture/AT/performance limits. Presence remains off.
 
@@ -2225,6 +2255,10 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1436 — Capture attempt retention:** seed/gap typing survives refused or delayed Note creation, timeout and editable-field handoff, with exact Retry and no renewed interception. 34 focused cases and required quick green: 4,169 related web tests, five browser cases, 110 sweep, 27 canon, 1,126 repo guards; inspected 1440/393 key-handoff captures. Reload/global-receipt durability remains open.
+
+- **#1434 — Settings leave/return retention:** supersession names covered jobs and accepted leave paths; later same-value conflicts retain the draft and Retry uses the authoritative revision. 66 focused cases, 4,155 related web tests, seven affected Python/browser cases and required quick green; 1440/393 captures inspected. Other Settings audit conditions remain open.
 
 - **#1433 — Ask saved-thread authority:** older reads cannot overwrite a new selection, New Ask or Close. Seven regression assertions red before the repair; 46 focused/143 related component tests, three glass cases, required quick and inspected 1440/393 captures green. Other audit findings remain open.
 
