@@ -1,7 +1,10 @@
 # Delivery plan: proposed native-feeling desktop
 
-**DRAFT — UNCHECKED — awaiting Muad'Dib.** 2026-10-23. Design proposal only. This plan authorizes no product code, build, deploy,
-provider/native action, owner-state write or acceptance claim.
+**Execution authorized by the owner — 2026-10-23.** Astra orchestrates Sol High
+agents to deliver the complete plan. This task-specific direction supersedes
+the earlier design-only hold and older reviewer-only/Luna defaults. It does
+not imply owner aesthetic acceptance or a Muad'Dib review that did not occur.
+The existing fast delivery cycle and domain boundaries remain.
 
 This is the concrete implementation sequence derived from the proposed v1 [design proposal](DESIGN-PROPOSAL.md), [seven
 journeys](design-proposal/JOURNEYS.md) and [paired canvas studies](design-proposal/CANVASES.md). It turns D1–D10 into ten bounded
@@ -45,7 +48,9 @@ Packages are sliced, not all-or-nothing gates: existing P06/P07 services can ser
 ## Execution tracking
 
 **Current position:** product definition is drafted in [PR1435](https://github.com/karolswdev/HoldSpeak/pull/1435).
-P01–P10 are proposed; none is marked implemented by this packet. The separate
+Execution is authorized for P01–P10. The first P01/P02/P10 repository wave
+is in progress; none is marked delivered without a merged implementation
+and its scoped evidence. The separate
 [repair closeout](checks/repair-closeout-2026-10-23.md) does not complete a
 framework package or establish visual acceptance.
 
@@ -327,5 +332,5 @@ first needed (editor, terminal, media, provider, calendar, account, Send); repea
 shared behavior, not to add a universal controller.
 
 There are no dates, 47 package gates, new approval ceremony or full-suite claim here. The owner may change order after the first
-real sitting. This plan is the bounded implementation proposal for Muad'Dib's check; it remains **DRAFT — UNCHECKED — awaiting
-Muad'Dib**.
+real sitting. This is the owner-authorized implementation plan. Actual task proof, independent
+review findings and owner visual judgment remain separate delivery facts.

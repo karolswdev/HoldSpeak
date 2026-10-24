@@ -14,8 +14,9 @@ to a [product design](native-experience/DESIGN-PROPOSAL.md),
 [seven whole jobs](native-experience/design-proposal/JOURNEYS.md),
 [nine paired canvas studies](native-experience/design-proposal/CANVASES.md)
 and a [derived delivery plan](native-experience/DELIVERY-PLAN.md).
-**DRAFT — UNCHECKED, awaiting Muad'Dib.** This is design definition before
-further implementation; no recipe count, delivery or owner-acceptance state changes.
+The owner has now authorized Astra / Sol High execution. The first repository/
+window/reference slice is in progress; no recipe count or owner-acceptance
+state is promoted by the design packet.
 
 Shared surface framework and reference (2026-10-23): #1428
 implements the owner's across-the-board scope: working in-desk patterns,

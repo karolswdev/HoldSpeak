@@ -9,7 +9,7 @@ build a nearly OS-native experience. This packet records research and a
 proposed delivery architecture. Recommendations are not shipped capabilities,
 new canon, or owner aesthetic acceptance.
 
-## Current checkpoint: the proposed product world
+## Current checkpoint: owner-authorized execution
 
 Start with the **[design proposal](DESIGN-PROPOSAL.md)**: desktop and application
 model, ten concrete interaction/ownership decisions and common visual grammar.
@@ -19,9 +19,11 @@ Then read its **[47-workflow trace](design-proposal/WORKFLOW-MAP.md)**,
 **[delivery plan](DELIVERY-PLAN.md)** is derived from that definition, with
 shared foundations, unlike production consumers, domain waves and task proof.
 
-This is **DRAFT — UNCHECKED, awaiting Muad'Dib**, as requested before further
-implementation. No proposed product change has been built or enabled by this
-packet. The [strategy](STRATEGY.md) explains the choices; the research and
+The owner has now authorized Astra to orchestrate Sol High agents and
+deliver the complete plan (2026-10-23), superseding the earlier design-only
+hold and task-specific worker/role defaults. The first repository/window/
+reference wave is in progress. The proposal is not owner visual acceptance;
+no implementation package is marked delivered by these documents. The [strategy](STRATEGY.md) explains the choices; the research and
 47 adversarial reviews remain their evidence, rather than a list of 47 rewrites.
 The [repair closeout](checks/repair-closeout-2026-10-23.md) records the separate
 bounded fixes without treating technical repair as visual acceptance.

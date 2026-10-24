@@ -8,6 +8,18 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+**Owner-authorized React desktop execution — Astra / Sol High (2026-10-23).**
+The owner authorizes Astra to orchestrate Sol High workers and deliver the
+complete design plan, superseding the earlier design-only hold and this
+initiative's older reviewer-only/Luna defaults. PR1435 supplies the product
+definition, seven journeys, 47-family trace, nine paired studies and ten
+packages. The first repository/window/reference wave is in progress in
+`wt-native-desktop-wave1-20261023`. No product slice from this wave is marked
+merged or owner-accepted yet. Each slice records package/journey/workflow,
+PR, scoped task evidence and remaining feedback in the existing records.
+
+The earlier hold below is retained as history; it no longer pauses execution.
+
 **Owner correction — strategy before further implementation (2026-10-23).**
 The bounded repair closeout is complete: Ask #1433, Settings #1434,
 Capture #1436 and Meeting outcomes #1437. Refine the plan and strategy

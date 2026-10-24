@@ -1,8 +1,10 @@
 # A coherent desktop application framework
 
-**DRAFT — UNCHECKED, awaiting Muad'Dib.** Astra, 2026-10-23.
-This is a proposed strategy refinement, not an implementation instruction or
-a claim of owner acceptance. It is governed by the Constitution's Seven
+**Owner-authorized execution, 2026-10-23.** Astra orchestrates Sol High workers.
+The owner has superseded the earlier design-only hold for this initiative.
+The historical advisory remains unratified; owner visual acceptance is open.
+This is the strategy for the owner-authorized implementation, not a claim of
+owner aesthetic acceptance. It is governed by the Constitution's Seven
 Tenets, UX-CANON and the current fast cycle.
 
 ## Definition before implementation
@@ -206,5 +208,5 @@ aesthetic acceptance distinct in every status update.
 Method: provisional Vision Control Develop/Review, using the existing
 repository as the durable strategy record. No Vision Control portfolio was
 initialized or updated. Stack direction is authorized; the application
-framework has not been shown enabled or proven. This draft awaits Muad'Dib's
-check, and its recommendations have not been acted on.
+framework has not been shown enabled or proven. The owner has now authorized execution. Independent review findings and
+actual delivery are tracked separately from aesthetic acceptance.
