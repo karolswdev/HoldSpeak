@@ -6,6 +6,7 @@ import {
   history,
   historyKeymap,
   indentWithTab,
+  isolateHistory,
 } from "@codemirror/commands";
 import { markdown, markdownKeymap } from "@codemirror/lang-markdown";
 import { Annotation, Compartment, EditorState, StateEffect, StateField } from "@codemirror/state";
@@ -14,9 +15,19 @@ import { deskEditorTheme, deskMarkdownHighlighting } from "./deskEditorTheme";
 
 export interface DeskEditorHandle {
   insertAtCursor(text: string): void;
+  captureVoiceTarget(): DeskEditorVoiceTarget | null;
+  insertAtCapturedTarget(target: DeskEditorVoiceTarget, text: string, options?: { focus?: boolean }): boolean;
   getSelection(): DeskEditorSelection;
   revealRange(from: number, to: number, options?: { focus?: boolean }): boolean;
   clearReveal(): void;
+}
+
+/** Opaque to consumers: a range in one editor and one document generation. */
+export interface DeskEditorVoiceTarget {
+  readonly view: EditorView;
+  readonly generation: number;
+  readonly from: number;
+  readonly to: number;
 }
 
 export interface DeskEditorSelection {
@@ -193,6 +204,8 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
   ) {
     const host = useRef<HTMLDivElement | null>(null);
     const viewRef = useRef<EditorView | null>(null);
+    const documentGenerationRef = useRef(0);
+    const composingRef = useRef(false);
     const onChangeRef = useRef(onChange);
     const onEscapeRef = useRef(onEscape);
     const onModEnterRef = useRef(onModEnter);
@@ -217,6 +230,26 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
           // (typed or spoken) continue it.
           view.dispatch({ changes: { from, to, insert: text }, selection: { anchor: from + text.length } });
           view.focus();
+        },
+        captureVoiceTarget() {
+          const view = viewRef.current;
+          if (!view || !view.state.facet(EditorView.editable) || view.composing || composingRef.current) return null;
+          const { from, to } = view.state.selection.main;
+          return { view, generation: documentGenerationRef.current, from, to };
+        },
+        insertAtCapturedTarget(target, text, options) {
+          const view = viewRef.current;
+          if (!view || view !== target.view || view.composing || composingRef.current ||
+              !view.state.facet(EditorView.editable) ||
+              target.generation !== documentGenerationRef.current ||
+              target.from < 0 || target.to < target.from || target.to > view.state.doc.length) return false;
+          view.dispatch({
+            changes: { from: target.from, to: target.to, insert: text },
+            selection: { anchor: target.from + text.length },
+            annotations: isolateHistory.of("full"),
+          });
+          if (options?.focus) view.focus();
+          return true;
         },
         getSelection() {
           const view = viewRef.current;
@@ -290,6 +323,14 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
               ...markdownKeymap,
             ]),
             EditorView.domEventHandlers({
+              compositionstart() {
+                composingRef.current = true;
+                return false;
+              },
+              compositionend() {
+                composingRef.current = false;
+                return false;
+              },
               keydown(event) {
                 if (event.key !== "Escape") return false;
                 event.preventDefault();
@@ -298,6 +339,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
               },
             }),
             EditorView.updateListener.of((update) => {
+              if (update.docChanged) documentGenerationRef.current += 1;
               if (update.docChanged && !update.transactions.some((transaction) => transaction.annotation(authoritativeSync)))
                 onChangeRef.current(update.state.doc.toString());
               if (update.docChanged || update.selectionSet) {
@@ -320,6 +362,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
       if (autoFocus) view.focus();
 
       return () => {
+        composingRef.current = false;
         view.destroy();
         viewRef.current = null;
       };

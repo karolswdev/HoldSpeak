@@ -50,6 +50,7 @@ been adopted by a production feature.
 | Reading | ReadingDocument/Material, source doors, SurfaceWell | Ask results, Automation results, notes and source readers |
 | Lists | SurfaceRows/SurfaceRow, SurfaceSplit, StringGadget | People, Memory and object readers use these list/detail species |
 | Resources | RepositoryBrowserView + useRepositoryBrowser, DeskSortableTable fold/roving, ScrollHint, read adapter | RepoWindow is the production consumer; Components runs the same view/controller with an isolated fixture adapter |
+| Editing | ThoughtDocumentPane + DeskEditor captured target, bindThoughtVoiceTarget, ThoughtVoiceRecovery + draft IO | Active Thought is production; Components uses local IO and synthetic text through the same binder |
 | Conversation | DeskComposer/ComposerWell, shared reading material | Live Ask uses ComposerWell; the PR DeskComposer host is parked; the reference is a local consumer |
 | Progress | ProgressPlan, Receipt, StateChip | Project Prepare/Steward and frontDoor source consumers; the reference's run is local specimen state |
 
@@ -78,6 +79,24 @@ Saved receipt. Raw alias text is an edit until committed and must survive
 section leave. The local Forms adapter cannot write configuration or start
 hardware audio; production StringGadget microphone behavior stays unchanged.
 Thought's document writer and Ask's append policy remain separate authorities.
+
+The active document pattern keeps CodeMirror and its native selection/IME/undo.
+`DeskEditorHandle.captureVoiceTarget()` binds the original editor, range and
+document generation; `insertAtCapturedTarget(target, text, { focus? })` rejects
+stale, destroyed, non-editable or composing targets. It makes one isolated undo
+transaction. Targets are view-local objects, never serialized domain identity.
+`MicButton.bindText?` captures a consumer-owned delivery callback at the first
+gesture, before asynchronous work; callbacks own their captured resource even
+if the originating view leaves. A running mic still exposes Stop when new
+capture becomes disabled. Default input policies of other consumers stay theirs.
+
+Thought's `ThoughtVoiceDraftIO` defaults to existing Desk draft persistence;
+Components supplies local memory to the exact composition with `mic=false`
+and a local input control. Stale voice words live under `thought/voice/<noteId>`
+separately from body drafts. NOT INSERTED offers explicit Insert at caret and
+Copy; only a successful insertion clears retention. Clipboard failure never
+claims Copied, and new retained text resets that receipt. This is browser
+editing adoption, not proof of native OS targeting or ASR quality.
 
 Keep consumer claims at their actual granularity: a shared control, a pattern
 and a complete journey are different adoption claims. Parked code is not a

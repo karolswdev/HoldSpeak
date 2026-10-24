@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MicButton } from "./MicButton";
 
@@ -108,6 +108,124 @@ describe("MicButton click-to-toggle (HS-119-01)", () => {
 
     fireEvent.click(mic);
     await waitFor(() => expect(stopFn).toHaveBeenCalled());
+  });
+});
+
+describe("MicButton capture binding", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    support.supported = true;
+    mocks.loadPendingVoice.mockResolvedValue(null);
+    mocks.retryPendingTranscription.mockResolvedValue(null);
+  });
+
+  it("binds on the first pointer gesture and delivers to that callback after rerender and unmount", async () => {
+    let finish!: (text: string) => void;
+    mocks.startStreamSession.mockResolvedValue({
+      stop: () => new Promise<string>((resolve) => { finish = resolve; }), cancel: vi.fn(),
+    });
+    const first = vi.fn();
+    const later = vi.fn();
+    const bindFirst = vi.fn(() => first);
+    const bindLater = vi.fn(() => later);
+    const { rerender, unmount } = render(<MicButton onText={vi.fn()} bindText={bindFirst} />);
+    const mic = screen.getByRole("button", { name: "Speak" });
+    fireEvent.pointerDown(mic);
+    expect(bindFirst).toHaveBeenCalledTimes(1);
+    fireEvent.click(mic);
+    await screen.findByRole("button", { name: "Stop listening" });
+    rerender(<MicButton onText={later} bindText={bindLater} />);
+    fireEvent.click(mic);
+    expect(bindLater).not.toHaveBeenCalled();
+    unmount();
+    await act(async () => { finish("bound words"); });
+    expect(first).toHaveBeenCalledExactlyOnceWith("bound words");
+    expect(later).not.toHaveBeenCalled();
+  });
+
+  it("blocks read-only capture and start signals", () => {
+    const bind = vi.fn();
+    render(<MicButton onText={vi.fn()} bindText={bind} disabled startSignal={1} />);
+    const mic = screen.getByRole("button", { name: "Speak" });
+    expect(mic).toBeDisabled();
+    fireEvent.pointerDown(mic);
+    fireEvent.click(mic);
+    expect(bind).not.toHaveBeenCalled();
+    expect(mocks.startStreamSession).not.toHaveBeenCalled();
+  });
+
+  it("keeps separate callbacks for a queued start signal", async () => {
+    let finishFirst!: (text: string) => void;
+    const first = vi.fn();
+    const second = vi.fn();
+    const bind = vi.fn().mockReturnValueOnce(first).mockReturnValueOnce(second);
+    mocks.startStreamSession
+      .mockResolvedValueOnce({ stop: () => new Promise<string>((resolve) => { finishFirst = resolve; }), cancel: vi.fn() })
+      .mockResolvedValueOnce({ stop: vi.fn().mockResolvedValue("second words"), cancel: vi.fn() });
+    const { rerender } = render(<MicButton onText={vi.fn()} bindText={bind} startSignal={1} />);
+    const mic = await screen.findByRole("button", { name: "Stop listening" });
+    fireEvent.click(mic);
+    rerender(<MicButton onText={vi.fn()} bindText={bind} startSignal={2} />);
+    expect(bind).toHaveBeenCalledTimes(2);
+    await act(async () => { finishFirst("first words"); });
+    await waitFor(() => expect(mocks.startStreamSession).toHaveBeenCalledTimes(2));
+    fireEvent.click(await screen.findByRole("button", { name: "Stop listening" }));
+    await waitFor(() => expect(second).toHaveBeenCalledExactlyOnceWith("second words"));
+    expect(first).toHaveBeenCalledExactlyOnceWith("first words");
+  });
+
+  it("binds retained-audio retry before its transcription resolves", async () => {
+    support.supported = false;
+    mocks.loadPendingVoice.mockResolvedValue(new ArrayBuffer(4));
+    let finish!: (text: string) => void;
+    mocks.retryPendingTranscription.mockReturnValue(new Promise<string>((resolve) => { finish = resolve; }));
+    const first = vi.fn();
+    const later = vi.fn();
+    const bind = vi.fn(() => first);
+    const { rerender } = render(<MicButton draftScope="thought-1" onText={vi.fn()} bindText={bind} />);
+    const retry = await screen.findByRole("button", { name: "Retry retained audio" });
+    fireEvent.pointerDown(retry);
+    fireEvent.click(retry);
+    rerender(<MicButton draftScope="thought-1" onText={later} bindText={() => later} />);
+    await act(async () => { finish("recovered words"); });
+    expect(bind).toHaveBeenCalledTimes(1);
+    expect(first).toHaveBeenCalledExactlyOnceWith("recovered words");
+    expect(later).not.toHaveBeenCalled();
+  });
+
+  it("delivers a pending retained-audio retry to its bound origin after unmount", async () => {
+    support.supported = false;
+    mocks.loadPendingVoice.mockResolvedValue(new ArrayBuffer(4));
+    let finish!: (text: string) => void;
+    mocks.retryPendingTranscription.mockReturnValue(new Promise<string>((resolve) => { finish = resolve; }));
+    const bound = vi.fn();
+    const fallback = vi.fn();
+    const { unmount } = render(<MicButton draftScope="thought-1" onText={fallback}
+      bindText={() => bound} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Retry retained audio" }));
+    await waitFor(() => expect(mocks.retryPendingTranscription).toHaveBeenCalledTimes(1));
+    unmount();
+    await act(async () => { finish("late recovered words"); });
+    expect(bound).toHaveBeenCalledExactlyOnceWith("late recovered words");
+    expect(fallback).not.toHaveBeenCalled();
+    expect(mocks.startStreamSession).not.toHaveBeenCalled();
+  });
+
+  it("keeps Stop enabled if a listening field becomes read-only", async () => {
+    let finish!: (text: string) => void;
+    const stop = vi.fn(() => new Promise<string>((resolve) => { finish = resolve; }));
+    mocks.startStreamSession.mockResolvedValue({ stop, cancel: vi.fn() });
+    const bound = vi.fn();
+    const { rerender } = render(<MicButton onText={vi.fn()} bindText={() => bound} />);
+    fireEvent.click(screen.getByRole("button", { name: "Speak" }));
+    const stopButton = await screen.findByRole("button", { name: "Stop listening" });
+    rerender(<MicButton onText={vi.fn()} bindText={() => bound} disabled />);
+    expect(stopButton).toBeEnabled();
+    fireEvent.click(stopButton);
+    expect(stop).toHaveBeenCalledTimes(1);
+    await act(async () => { finish("late words"); });
+    expect(bound).toHaveBeenCalledExactlyOnceWith("late words");
+    expect(screen.getByRole("button", { name: "Speak" })).toBeDisabled();
   });
 });
 

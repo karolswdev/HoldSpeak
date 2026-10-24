@@ -136,6 +136,13 @@ copy, move, drop, stage or commit support.
 - **Resumed:** `Save as Note` is the retained action. Returning to Thought shows
   the original two-line selection. The boards do not use `Keep` or `Bin`.
 
+**B input recovery implementation (2026-10-23):** the active Thought field
+binds its editor/range/generation before transcription. A later draft, IME or
+read-only target keeps words in the same Note's NOT INSERTED well; Insert at
+caret is an explicit new local insertion with one undo. Copy retains the
+words. Canvas B includes desktop recovery and a narrow source-state inset;
+this static drawing is distinct from the actual browser captures.
+
 ### C · Settings
 
 - **Default:** `Name` and `Also called` are readable fields. The conflict state

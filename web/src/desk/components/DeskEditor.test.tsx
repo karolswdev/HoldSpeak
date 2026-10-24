@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 import { createRef } from "react";
 import { describe, expect, it, vi } from "vitest";
 import type { EditorView } from "@codemirror/view";
+import { undo } from "@codemirror/commands";
 import { utf8OffsetToIndex } from "../thought-workspace/ThoughtWorkspaceWindow";
 import { DeskEditor, type DeskEditorHandle } from "./DeskEditor";
 import { latchAskSelection, selectionPrompt, takeAskSelection } from "../ask";
@@ -76,5 +77,56 @@ describe("DeskEditor authoritative append reveal", () => {
     expect(container.querySelector(".cm-thought-answer-reveal")).toHaveTextContent(appended);
     expect(view!.state.selection.main.anchor).toBe(end);
     expect(document.activeElement).toHaveClass("cm-content");
+  });
+});
+
+describe("DeskEditor captured voice target", () => {
+  it("replaces the captured selection after caret movement, without moving focus, in one undo", () => {
+    const ref = createRef<DeskEditorHandle>();
+    let view: EditorView | null = null;
+    render(<DeskEditor ref={ref} value="one two three" onChange={vi.fn()} showToolbar={false}
+      onViewChange={(next) => { view = next; }} />);
+    act(() => { view!.dispatch({ selection: { anchor: 4, head: 7 } }); });
+    const target = ref.current!.captureVoiceTarget()!;
+    act(() => { view!.dispatch({ selection: { anchor: 13 } }); });
+    const other = document.createElement("input");
+    document.body.append(other);
+    other.focus();
+    act(() => { expect(ref.current!.insertAtCapturedTarget(target, "spoken")).toBe(true); });
+    expect(view!.state.doc.toString()).toBe("one spoken three");
+    expect(document.activeElement).toBe(other);
+    act(() => { expect(undo(view!)).toBe(true); });
+    expect(view!.state.doc.toString()).toBe("one two three");
+    other.remove();
+  });
+
+  it("rejects a changed document, authoritative sync, read-only editor and destroyed view", () => {
+    const ref = createRef<DeskEditorHandle>();
+    let view: EditorView | null = null;
+    const { rerender, unmount } = render(<DeskEditor ref={ref} value="first" onChange={vi.fn()}
+      showToolbar={false} onViewChange={(next) => { view = next; }} />);
+    const target = ref.current!.captureVoiceTarget()!;
+    act(() => { view!.dispatch({ changes: { from: 5, insert: "!" } }); });
+    expect(ref.current!.insertAtCapturedTarget(target, "late")).toBe(false);
+    const second = ref.current!.captureVoiceTarget()!;
+    rerender(<DeskEditor ref={ref} value="server" onChange={vi.fn()} showToolbar={false} />);
+    expect(ref.current!.insertAtCapturedTarget(second, "late")).toBe(false);
+    rerender(<DeskEditor ref={ref} value="server" onChange={vi.fn()} showToolbar={false} editable={false} />);
+    expect(ref.current!.captureVoiceTarget()).toBeNull();
+    unmount();
+    expect(ref.current).toBeNull();
+  });
+
+  it("holds voice insertion while an IME composition is open", () => {
+    const ref = createRef<DeskEditorHandle>();
+    let view: EditorView | null = null;
+    render(<DeskEditor ref={ref} value="draft" onChange={vi.fn()} showToolbar={false}
+      onViewChange={(next) => { view = next; }} />);
+    const target = ref.current!.captureVoiceTarget()!;
+    fireEvent.compositionStart(view!.contentDOM);
+    expect(ref.current!.captureVoiceTarget()).toBeNull();
+    expect(ref.current!.insertAtCapturedTarget(target, "spoken")).toBe(false);
+    fireEvent.compositionEnd(view!.contentDOM);
+    expect(view!.state.doc.toString()).toBe("draft");
   });
 });

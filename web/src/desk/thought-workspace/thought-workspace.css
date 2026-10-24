@@ -30,7 +30,7 @@
   min-height: 520px;
 }
 
-.desk-next .desk-pullout.thought-workspace-window:where(:not(.is-sending):has(.thought-reads-well, .thought-note-ask-open, .note-outcomes)) {
+.desk-next .desk-pullout.thought-workspace-window:where(:not(.is-sending):has(.thought-reads-well, .thought-note-ask-open, .note-outcomes, .thought-voice-recovery)) {
   /* A restored sticky can pin 360px. Open material needs room, within the
      existing cap; larger owner-arranged heights still win. */
   min-height: min(640px, calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom)));
@@ -71,7 +71,7 @@
   flex: 1 1 0;
   min-height: 140px;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 12px;
   padding: clamp(20px, 2.6vw, 34px) clamp(22px, 3.4vw, 44px) 14px;
   background: var(--surface-1);
@@ -80,6 +80,7 @@
 
 .desk-next .thought-note-title,
 .desk-next .thought-note-title.is-editing {
+  grid-row: 1;
   display: block;
   width: 100%;
   margin: 0;
@@ -115,6 +116,7 @@
 }
 
 .desk-next .thought-note-field {
+  grid-row: 2;
   position: relative;
   min-height: 0;
   height: 100%;
@@ -182,6 +184,30 @@
 .desk-next .thought-note-body .cm-thought-answer-reveal {
   background: color-mix(in srgb, var(--ok) 10%, transparent);
   box-shadow: inset 2px 0 0 var(--ok);
+}
+
+.desk-next .thought-note-document > .surface-well {
+  grid-row: 3;
+  min-width: 0;
+}
+
+.desk-next .thought-voice-recovery {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.desk-next .thought-voice-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 7em;
+  overflow-y: auto;
+}
+
+.desk-next .thought-voice-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 /* ── Band 3: one question ── */

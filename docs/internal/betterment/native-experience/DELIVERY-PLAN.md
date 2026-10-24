@@ -140,6 +140,12 @@ canvas. Record which operations are actually supported; do not turn source prese
 
 ## P03: Authoring, input and voice
 
+**Delivery:** first active Thought/CodeMirror voice slice is
+[PR1443](https://github.com/karolswdev/HoldSpeak/pull/1443), fix re-check ratified; six browser cases and the required quick check pass. It shares the production
+editor, captured-target binder and retained-voice recovery with Components
+Editing through local IO. Settings/Ask/Pad policy adoption, native OS delivery,
+learning and macro whole jobs remain open. See [execution](EXECUTION.md).
+
 **Primary families:** `capture_thought`, `speech_dictation`, `speech_learning`, `voice_commands`, `notes_editor`, `native_input`.
 
 **Source homes:** active Thought workspace/writer, `DeskEditor.tsx`, `ThoughtNoteEditor.tsx`, `surface/gadgets.tsx`, `MicButton`,
