@@ -54,7 +54,7 @@ active for P01–P10. The first partial P01/P02/P10 repository slice merged in
 P08's first Settings You slice is [PR1439](https://github.com/karolswdev/HoldSpeak/pull/1439),
 re-checked and browser-verified, with the final required quick check green. Captured Thought voice/Editing ships
 in [PR1443](https://github.com/karolswdev/HoldSpeak/pull/1443). The first P04
-selected-Thought source/Ask/save/return slice is in browser acceptance.
+selected-Thought source/Ask/save/return slice is [PR1446](https://github.com/karolswdev/HoldSpeak/pull/1446), browser and quick green.
 No full package or owner aesthetic acceptance is claimed. The separate
 [repair closeout](checks/repair-closeout-2026-10-23.md) does not complete a
 framework package or establish visual acceptance.
@@ -171,8 +171,8 @@ canvas state story with the actual target and recovery semantics.
 
 ## P04: Sourced conversations and retrieval
 
-**Delivery:** first selected-Thought source/Ask/save/return slice is in final
-browser acceptance. It owns context separately from floor selection, restores
+**Delivery:** first selected-Thought source/Ask/save/return slice is [PR1446](https://github.com/karolswdev/HoldSpeak/pull/1446),
+browser and required quick green. It owns context separately from floor selection, restores
 an unchanged source range/scroll after open or closed-window return, refuses
 stale range application, and saves editable qualified provenance. Components
 shares the same controlled source view with local IO. Server source-version

@@ -60,7 +60,7 @@ small PRs and updates package/PR/task-evidence/owner-feedback status.
 | P01 | First repository identity/frame slice merged #1438 | Durable view state, shared command origin, unlike consumers and narrow chooser |
 | P02 | First repository read/inspect slice merged #1438 | Second real collection consumer, range/selection/scroll and revalidation |
 | P03 | First captured Thought voice/recovery slice merged #1443 | Other field/Ask/native voice policies, learning/macros and whole J1 source return |
-| P04 | First selected-Thought Ask/save/return slice built/re-checked, four glass cases and quick green | Backend source version/pinning, Project/People producer jobs, retrieval and whole J3 |
+| P04 | First selected-Thought Ask/save/return slice #1446, four glass cases and quick green | Backend source version/pinning, Project/People producer jobs, retrieval and whole J3 |
 | P05 | Planned; bounded Stop repair already #1437 | Complete record/import/intelligence/reopen/aftercare job |
 | P06 | Planned | Whole project/person/day job and retained update identity |
 | P07 | Planned | Hand/result/automation/terminal retained-job acceptance |
@@ -294,6 +294,8 @@ This does not certify a new whole P06/P09 journey or external provider Send.
 
 
 ## Fourth delivery: selected Thought → Ask → Note → source return
+
+[PR1446](https://github.com/karolswdev/HoldSpeak/pull/1446).
 
 Branch: feat/native-sourced-ask-wave4-20261023.
 Worktree: /Users/karol/dev/tools/wt-native-sourced-ask-wave4-20261023.

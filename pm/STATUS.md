@@ -16,9 +16,13 @@ running: repository windows/read browser + Resources (#1438), Settings You
 save recovery + Forms (#1439), captured Thought voice + Editing (#1443).
 No package or whole journey is marked complete; owner visual acceptance is open.
 
-The first P04 selected-Thought Ask/save/source-return slice is in final browser
-acceptance. It includes independent Ask context, open/closed source return,
-stale-range refusal and the same source frame in Components. Backend selected
+The first P04 selected-Thought Ask/save/source-return slice is #1446, with
+four real-browser cases at 1440/393 and required quick green: build, 4,269 UI
+tests, 110 desk sweep, 27 canon and 1,126 repository guards. It includes independent Ask context, open/closed source return,
+stale-range refusal and the same source frame in Components. Root inspected
+the final captures; changed-source current caret stays visible and pending
+work names Ask. Saved Markdown provenance is editable; the active Note editor
+does not yet have source/thread link doors. Backend selected
 version admission/pinning is a separate slice; captured frontend text alone
 is not inference source freezing. [Execution](../docs/internal/betterment/native-experience/EXECUTION.md)
 keeps actual PRs, scoped proof and remaining package/journey acceptance.
