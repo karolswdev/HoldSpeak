@@ -482,9 +482,15 @@ CLAIMS: list[Claim] = [
         doc="docs/SECURITY.md",
         anchor="No listener or peer-address check uses it,",
         sentence="The configured bind_host is stored without a listener or peer-address enforcement path.",
-        predicate=lambda: bind_host_references() == {"holdspeak/web/routes/mcp_http.py"},
+        predicate=lambda: bind_host_references() == {
+            "holdspeak/config/device.py",
+            "holdspeak/web/routes/mcp_http.py",
+        },
         state="holds",
-        truth="Only the MCP settings route mentions bind_host; it stores and echoes the value without applying a network fence.",
+        truth=(
+            "RemoteConfig persists bind_host; the MCP settings route reads, writes, "
+            "and echoes it. Neither the listener nor peer guard applies it."
+        ),
         story="PHILO-1-06",
     ),
     # ── owned by HS-200-44 ────────────────────────────────────────────

@@ -59,6 +59,14 @@ Required quick green: build, 123 affected cases, 110 desk sweep, 27 canon and
 full-suite green claim. A later pinned-tape security-doc claim is being
 inspected separately.
 
+Security-doc probe — #1442: the claim remains accurate; its probe's expected
+reference set now includes the persisted RemoteConfig field as well as the
+MCP settings route. No listener/peer behavior or security prose changes.
+The exact claim and all 47 registered claims pass; required quick green:
+build, 47 affected cases, 110 desk sweep, 27 canon and 1,126 repository guards.
+The remaining inherited pinned-tape Chair zoom-height failure is reproduced
+on pre-P01 main and is being fixed separately; no full-suite green claim.
+
 The earlier hold below is retained as history; it no longer pauses execution.
 
 **Owner correction — strategy before further implementation (2026-10-23).**
