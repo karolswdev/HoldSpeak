@@ -27,10 +27,10 @@ version admission/pinning is a separate slice; captured frontend text alone
 is not inference source freezing. [Execution](../docs/internal/betterment/native-experience/EXECUTION.md)
 keeps actual PRs, scoped proof and remaining package/journey acceptance.
 
-Running Desk: backend `ae1a8bbee6472ad1f214be4231a6dae97246501a`, frontend
-`07b335d38c786200`; database ownership true, no identity diagnoses, health/Desk/
+Running Desk: backend `d51d4c174606fa55b056e872e52c2a61c45cc9c8`, frontend
+`da77569ec44d6a5a`; database ownership true, no identity diagnoses, health/Desk/
 Conductor/Engines return 200. CLI/MCP match this source; feedback is enabled
-and Presence stays off. Four slices and the zoom repair run on this revision.
+and Presence stays off. Five slices and the zoom repair run on this revision.
 The completed pinned #1443 tape passed all 44 Python batches and its full web
 baseline (5,528 passed). Its 11 browser failures are zoom/Room/Thought checks
 repaired in #1444/#1445 and the stale Forms specimen cases repaired below.
@@ -47,8 +47,11 @@ frontend advisory fixes received final RATIFY. Required quick green: build,
 4,286 UI tests, 961 affected checks (six known skips), 110 desk sweep, 27 canon,
 1,126 repository guards; changed browser cases cover1440/393 and phone targets.
 This is bounded P04/J1/P10, not full P04/J3 or owner aesthetic acceptance.
-The separate P01 low-window content-growth clamp is in progress; a real-drag
-synthetic-growth probe reproduced a rendered footer below the work area.
+The separate P01 low-window growth clamp is built/reviewed and required quick
+green: 4,281 UI, nine affected browser, 110 sweep, 27 canon, 1,126 guards.
+It moves only y to keep actual expanded height in the work area and preserves
+owner sizing/zoom/identity. Synthetic growth, real gestures and normal-motion
+Stage/Exposé/initial mount are covered; no ASR claim.
 
 Zoom restore — #1444: content-sized windows retain auto height across first
 zoom, restore and reopen; owner-sized windows retain fixed geometry. The bug

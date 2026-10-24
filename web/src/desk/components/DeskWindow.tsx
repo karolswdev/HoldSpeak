@@ -93,7 +93,7 @@ import {
   usePlate,
   userArranged,
 } from "../compositor/useCompositor";
-import { inheritance, modeNow, mountWindow, unmountWindow } from "../compositor/live";
+import { inheritance, modeNow, mountWindow, subscribePresentation, unmountWindow } from "../compositor/live";
 import { hubPlacing } from "../compositor/hubWindows";
 
 // -- Re-exports: zero consumer edits (HS-117-04) --
@@ -324,6 +324,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   // A fit-content card pins its height DURING the first resize drag,
   // before the arrangement persists on pointer-up.
   const [liveResize, setLiveResize] = useState(false);
+  const gesturingRef = useRef(false);
+  const growthCheckRef = useRef<(() => void) | null>(null);
+  const finishGesture = () => {
+    gesturingRef.current = false;
+    requestAnimationFrame(() => growthCheckRef.current?.());
+  };
   const elRef = useRef<HTMLElement | null>(null);
 
   const measure = (): PanelRect => {
@@ -513,12 +519,12 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     return subscribeResizeClamp();
   }, [open]);
 
-  // Round 9 — growth settles with motion: a content-sized card whose
-  // material arrives async (a meeting detail, a relationships fetch)
-  // GROWS smoothly instead of popping. Only while the height is still
-  // CSS-driven (unarranged, not mid-resize: those set style.height).
+  // A content-sized frame can outgrow its saved height when its CSS minimum
+  // changes. Keep the owner's height policy, but lift an arranged frame whose
+  // rendered foot crosses the current work band. Unarranged content keeps
+  // the existing CSS-height tracking and growth motion below.
   useEffect(() => {
-    if (!opts.fitContent || arranged || !open) return;
+    if (!opts.fitContent || !open) return;
     const el = elRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
     const reduced = (
@@ -528,14 +534,39 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     let last = el.getBoundingClientRect().height;
     let animating = false;
     let settled = false;
-    const ro = new ResizeObserver(() => {
-      if (animating || presenting() || zoomedRef.current) return;
+    let active = true;
+    const checkGrowth = () => {
+      if (!active || animating || presenting() || zoomedRef.current) return;
       // Keep the free geometry current while CSS owns the content height.
       // Stage and Zoom can then restore this record without measuring an
       // animated plate. Owner-arranged rectangles remain authoritative.
       const state = useDesk.getState();
       const current = state.panelRects[id];
       const height = el.offsetHeight;
+      if (state.panelSaved.includes(id)) {
+        if (!current || state.panelMax.includes(id) || height <= 0) return;
+        if (
+          gesturingRef.current ||
+          (typeof window.matchMedia === "function" && window.matchMedia(COMPACT_VIEWPORT_QUERY).matches)
+        ) return;
+        const transform = getComputedStyle(el).transform;
+        if (transform && transform !== "none") {
+          // A presentation or entrance transform may end without another
+          // ResizeObserver delivery. Recheck once its owned motion settles.
+          const motions = el.getAnimations({ subtree: false }).filter((motion) => motion.playState === "running");
+          if (motions.length)
+            void Promise.allSettled(motions.map((motion) => motion.finished)).then(() => {
+              if (el.isConnected) requestAnimationFrame(checkGrowth);
+            });
+          return;
+        }
+        const { top, bottom } = workBand();
+        const overflow = current.y + height - (window.innerHeight - bottom);
+        const y = Math.max(top, current.y - overflow);
+        if (overflow > 1 && current.y - y > 1)
+          state.setPanelRect(id, { ...current, y }, true);
+        return;
+      }
       if (!state.panelSaved.includes(id) && current && height > 0 && Math.abs(height - current.h) > 1)
         state.setPanelRect(id, { ...current, h: height });
       if (settled || reduced) return;
@@ -563,9 +594,19 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         settled = true;
         last = el.getBoundingClientRect().height;
       };
-    });
+    };
+    growthCheckRef.current = checkGrowth;
+    const ro = new ResizeObserver(checkGrowth);
     ro.observe(el);
-    return () => ro.disconnect();
+    const offPresentation = subscribePresentation(() => {
+      if (!presenting()) requestAnimationFrame(checkGrowth);
+    });
+    return () => {
+      active = false;
+      ro.disconnect();
+      offPresentation();
+      if (growthCheckRef.current === checkGrowth) growthCheckRef.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opts.fitContent, arranged, open]);
 
@@ -585,6 +626,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
         if (mode === "stage" || mode === "expose") return { skip: true };
       }
       if (memo?.skip) return memo;
+      gesturingRef.current = true;
       // PHILO-17 snapjump: while the title drag holds the pointer, no
       // native drag starts. The first step moves the window out from under
       // the press point; a draggable desk icon under that point started a
@@ -625,6 +667,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       } else if (last) {
         publishGhost(null);
       }
+      if (last) finishGesture();
       return { base, skip: false, moving: Math.abs(mx) + Math.abs(my) > 3 };
     },
     { pointer: { buttons: 1 } },
@@ -632,6 +675,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
 
   const resizeBind = useDrag(
     ({ movement: [mx, my], first, last, memo }) => {
+      gesturingRef.current = true;
       if (first) stillUnderPointer(elRef.current);
       const base: PanelRect = memo?.base ?? measure();
       setLiveResize(!last);
@@ -642,6 +686,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       if (last) {
         sessionArranged.add(id);
         userArranged();
+        finishGesture();
       }
       return { base };
     },
@@ -651,6 +696,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
   // HS-97-05 — the frame resizes from its edges, not one corner.
   const edgeBind = useDrag(
     ({ args, movement: [mx, my], first, last, memo }) => {
+      gesturingRef.current = true;
       if (first) stillUnderPointer(elRef.current);
       const mode = String(args?.[0] ?? "br");
       const base: PanelRect = memo?.base ?? measure();
@@ -659,6 +705,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       if (last) {
         sessionArranged.add(id);
         userArranged();
+        finishGesture();
       }
       return { base };
     },
@@ -726,6 +773,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
     setEl: (el: HTMLElement | null) => {
       elRef.current = el;
     },
+    checkGrowth: () => growthCheckRef.current?.(),
     focus: () => useDesk.getState().focusPanel(id),
     handleProps: {
       ...dragBind(),
@@ -1188,6 +1236,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
   return (
     <motion.div
       id={id}
+      onAnimationComplete={win.checkGrowth}
       ref={(el: HTMLDivElement | null) => {
         win.setEl(el);
         shellRef.current = el;
