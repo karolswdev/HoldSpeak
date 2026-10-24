@@ -188,7 +188,8 @@ bounded state to the current collector when DOM inference is insufficient.
 
 ## Delivery discipline
 
-Use the current CLAUDE fast cycle: scoped worker briefs, quick check and
+When a later design is settled, use the current CLAUDE fast cycle: scoped
+worker briefs, quick check and
 relevant screenshots, immediate PR merge on green, deploy exact main, full
 tape and Astra review afterward, fix findings forward. Face work gets its
 canvas in the existing library material. The owner judges appearance on the
@@ -201,9 +202,10 @@ run `tests/e2e/test_metal.py`. Preserve the explicit off state of native
 Presence. On a real desk regression, follow the existing last-working-head
 recovery rule; do not add another delivery framework.
 
-First checkpoint: application/view behavior in an explorer-style resource
-workflow, plus the production preference consumer and their shared reference
-models. Prove independent window state, command targets and supported transfer
-as well as preserved edits, coherent layout and keyboard/voice behavior. Add
-a local timing baseline and the owner's live visual feedback, then proceed to
-Ask, People and other application families.
+The immediate checkpoint is the strategy decision table and the resource,
+Settings and Thought canvases/ownership stories. After that design is settled,
+the proposed first implementation proves resource application/view behavior
+and production/Components parity. Settings and Thought challenge the boundary
+before the Ask transition job and wider adoption. Actual provider capabilities,
+local measurements and owner feedback determine what is proved; the older
+package table does not start an implementation lane.
