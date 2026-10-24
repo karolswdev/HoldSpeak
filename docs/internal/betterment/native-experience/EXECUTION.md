@@ -517,3 +517,44 @@ intrinsic growth and lifts only y to the work band, preserving saved h,
 resource identity, zoom and unsaved auto-height policy. It is being built in
 `wt-native-content-growth-wave6-20261023`; it is not included in this Note
 source-version slice and does not retroactively make the pinned tape green.
+
+
+## Sixth delivery: content growth stays inside the work area
+
+[PR1449](https://github.com/karolswdev/HoldSpeak/pull/1449).
+
+Branch: fix/native-content-growth-wave6-20261023.
+Worktree: /Users/karol/dev/tools/wt-native-content-growth-wave6-20261023.
+P01/J7 compositor repair from the arranged-Note reproduction above.
+
+The shared fitContent observer now handles an owner-arranged frame whose CSS
+minimum grows. It lifts only y when the rendered foot would cross the current
+work edge; saved h/w/x, sizing policy, zoom record and resource identity remain.
+Unarranged auto-height tracking/animation keeps #1444's policy. Sheet, active
+gesture, zoom, Stage/Exposé and transformed motion are guarded. Gesture release,
+presentation return and motion completion recheck once, with cleanup fencing
+callbacks after unmount. No new store, positioning service or app-specific CSS.
+
+Independent Sol advisory RATIFY on the finished source, with no material
+condition; this is not Muad'Dib's check. Nine focused real-browser cases pass:
+actual owner drag/grip at 360/500, synthetic CSS growth, shrink/reopen, zoom,
+unsaved auto-height, held gestures, Stage/Exposé and initial mount with normal
+motion, plus the 393 sheet. Existing three geometry/window files pass 34 tests;
+typecheck passes. The synthetic recovery marker exercises production frame/CSS
+geometry, not ASR or microphone. Rect proof: y394→200 while rendered height
+360→640 and saved h remains360; rendered bottom is840 (the work edge).
+Root inspected the 1440/393 captures and saved-rect JSON.
+
+Required quick green: build, 4,281 related UI tests, nine affected browser cases,
+110 desk sweep, 27 canon and 1,126 repository guards
+(`.tmp/quick-native-content-growth.log`). Shots/JSON:
+`.tmp/evidence-shots/native-window-growth/`. This repairs one common placement
+failure; durable full view state, command-origin adoption and narrow chooser
+remain P01 scope. No complete 47-family or owner aesthetic acceptance is claimed.
+
+After #1448, the running Desk is backend
+`d51d4c174606fa55b056e872e52c2a61c45cc9c8`, frontend `da77569ec44d6a5a`,
+PID92567; owns_database true, no diagnoses, four health/routes200. CLI/MCP
+match; feedback defaults on in both wrappers and Presence stays off. The next
+pinned latest-main tape coalesces to this runtime after the current batch; it
+uses the prepared bundle and must never rebuild the served runtime in place.
