@@ -8,53 +8,41 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
-Room / Thought glass — #1445: stale Sent history and desktop Send Back
-selectors now follow the current controls. Manual-delivery receipt and real
-folder bytes/identity/retry assertions remain; clipboard stays in a local
-test buffer. No product code changes. Required quick green: build, 43 affected
-browser cases, 110 desk sweep, 27 canon and 1,126 repository guards.
+**Owner-authorized React desktop execution — Astra / Sol High (2026-10-23).**
+The owner authorized execution of P01–P10 against the 47-family map and seven
+journeys, superseding this initiative's earlier design-only and reviewer-only
+holds. The product definition is #1435. Three first slices are merged and
+running: repository windows/read browser + Resources (#1438), Settings You
+save recovery + Forms (#1439), captured Thought voice + Editing (#1443).
+No package or whole journey is marked complete; owner visual acceptance is open.
 
+The first P04 selected-Thought Ask/save/source-return slice is in final browser
+acceptance. It includes independent Ask context, open/closed source return,
+stale-range refusal and the same source frame in Components. Backend selected
+version admission/pinning is a separate slice; captured frontend text alone
+is not inference source freezing. [Execution](../docs/internal/betterment/native-experience/EXECUTION.md)
+keeps actual PRs, scoped proof and remaining package/journey acceptance.
+
+Running Desk: backend `bb426de4e8d11a6cb4e0552275328c18adb64f5f`, frontend
+`9978daee8260a443`; database ownership true, no identity diagnoses, health/Desk/
+Conductor/Engines return 200. CLI/MCP match this source; feedback is enabled
+and Presence stays off. Zoom restore #1444 and Room/Thought glass repair #1445
+are merged after this runtime. The background pinned #1443 tape passed all
+44 Python batches; browser reds include the now-repaired zoom/Room/Thought
+checks and a stale Forms specimen test being updated separately. No whole
+suite green is claimed. Earlier wire, optional-plugin and doc-probe repairs
+are recorded below. Recipe closeout remains 115/117.
 
 Zoom restore — #1444: content-sized windows retain auto height across first
 zoom, restore and reopen; owner-sized windows retain fixed geometry. The bug
-was reproduced on pre-P01 main. Five policy assertions and the real browser
-reproduction pass. Required quick green: build, 4,219 related UI tests, five
-Chair glass cases, 110 desk sweep, 27 canon and 1,126 repository guards.
-This repairs an inherited P01 seam; full package acceptance remains open.
+was reproduced on pre-P01 main. Required quick green: build, 4,219 related UI
+tests, five Chair glass cases, 110 desk sweep, 27 canon, 1,126 repository guards.
 
-
-**Owner-authorized React desktop execution — Astra / Sol High (2026-10-23).**
-The owner authorizes Astra to orchestrate Sol High workers and deliver the
-complete design plan, superseding the earlier design-only hold and this
-initiative's older reviewer-only/Luna defaults. PR1435 supplies the product
-definition, seven journeys, 47-family trace, nine paired studies and ten
-packages. The first repository/window/reference slice ships in #1438:
-independent views, path/navigation and read-only inspection with retained
-failure material, plus the same browser in Components with local fixtures.
-Required quick green: build, 4,184 related UI tests, ten affected Python/browser
-cases, 110 desk sweep, 27 canon and 1,126 repository guards. Root inspected
-1440/393 shots; narrow controls pass the nine-point target probe. This is
-partial P01/P02/P10, not package completion or owner visual acceptance.
-Settings You / Forms — #1439: the same production fields and owner writer
-now power Components through local IO. Edited is immediate, Saving names the
-captured value, Saved requires the current ACK, and Not saved retains input
-with Retry. Stale ACK/revision, raw alias leave and IME fixes received a final
-Sol advisory RATIFY; that is not Muad'Dib's check. Glass inspection also caught
-and removed You's unrelated general Saved footer. Required quick green:
-build, 4,204 related UI tests, six real-browser cases, 110 desk sweep, 27 canon
-and 1,126 repository guards. Root inspected 1440/393 production/reference
-captures; narrow nine-point controls pass. This is partial P08/P10, with
-other writers/readiness and failed full-unmount keepalive recovery still open.
-Active Thought's captured voice/range/undo/recovery slice is now in progress.
-The background full tape on #1438 has inherited wire/Stop assertion drift and
-optional-plugin route reds. Separate bounded fixes are in progress; no full
-suite green is claimed. Running Desk after #1439: backend `be47877f62a78971737e45812888910fc63264ab`,
-frontend `3ce85f6770b41fa3`, database ownership true, no identity diagnoses;
-health, Desk, Conductor and Engines routes return 200. CLI/MCP source matches
-that tree; feedback is enabled and Presence stays off. The latest-main full
-tape is queued behind the pinned #1438 run, with no whole-suite green claim.
-[Execution](../docs/internal/betterment/native-experience/EXECUTION.md) records
-package/journey/workflow, PR, scoped proof and remaining feedback.
+Room / Thought glass — #1445: stale Sent history and desktop Send Back
+selectors now follow current controls. Manual receipt and real folder bytes/
+identity/retry checks remain; clipboard uses a local buffer. No product code
+changes. Required quick green: build, 43 affected browser cases, 110 desk sweep,
+27 canon and 1,126 repository guards.
 
 Optional meeting plugin route — #1440: an inherited summary assignment with
 no compatible optional plugin now records exclusion instead of refusing core

@@ -110,6 +110,16 @@
   margin-top: var(--space-1);
 }
 
+.reference-conversation-source {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.reference-conversation-source > .reference-receipt {
+  justify-self: start;
+}
+
 .reference-receipt {
   margin: 0;
   color: var(--text-muted);

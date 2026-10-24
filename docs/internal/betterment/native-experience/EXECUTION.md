@@ -59,14 +59,14 @@ small PRs and updates package/PR/task-evidence/owner-feedback status.
 | --- | --- | --- |
 | P01 | First repository identity/frame slice merged #1438 | Durable view state, shared command origin, unlike consumers and narrow chooser |
 | P02 | First repository read/inspect slice merged #1438 | Second real collection consumer, range/selection/scroll and revalidation |
-| P03 | First active Thought/voice slice #1443, browser and quick green | Captured caret/generation, IME/undo, retained voice and source return |
-| P04 | Planned after Thought | Sourced Ask whole job, save/return, failure and reading continuity |
+| P03 | First captured Thought voice/recovery slice merged #1443 | Other field/Ask/native voice policies, learning/macros and whole J1 source return |
+| P04 | First selected-Thought Ask/save/return slice built/re-checked, four glass cases and quick green | Backend source version/pinning, Project/People producer jobs, retrieval and whole J3 |
 | P05 | Planned; bounded Stop repair already #1437 | Complete record/import/intelligence/reopen/aftercare job |
 | P06 | Planned | Whole project/person/day job and retained update identity |
 | P07 | Planned | Hand/result/automation/terminal retained-job acceptance |
-| P08 | First Settings You slice built/re-checked; six browser cases passed | Other preferences, durable failed-leave recovery, Setup/Engines/Accounts |
+| P08 | First Settings You slice merged #1439; six browser cases passed | Other preferences, durable failed-leave recovery, Setup/Engines/Accounts |
 | P09 | Existing Send authority preserved; convergence planned | Producer/Needs return, frozen bytes and unknown/replay whole-job proof |
-| P10 | Resources reference merged #1438; same-face Settings reference built | Broader shell, feedback, native boundary and parity/adoption reconciliation |
+| P10 | Same-production Resources, Forms and Editing references merged #1438/#1439/#1443 | Broader shell, feedback, native boundary and parity/adoption reconciliation |
 
 No package is marked complete. Each first slice is a useful delivered concern,
 not a substitute for its whole-job acceptance or the owner's visual judgment.
@@ -291,3 +291,103 @@ Thought cases, 110 desk sweep, 27 canon and 1,126 repository guards
 (`wt-native-room-glass-fix-20261023/.tmp/quick-room-thought-glass.log`).
 Folder bytes, dispatch identity, retained retry and receipt checks remain.
 This does not certify a new whole P06/P09 journey or external provider Send.
+
+
+## Fourth delivery: selected Thought → Ask → Note → source return
+
+Branch: feat/native-sourced-ask-wave4-20261023.
+Worktree: /Users/karol/dev/tools/wt-native-sourced-ask-wave4-20261023.
+First P04 slice, J1/J3 and P10 Conversation reference. Workflow families:
+source_context, ask_whole_desk, threads and keep_answer. This slice is not
+all of any family or all of J3.
+
+The active Thought writer flushes before handing Ask its saved Note, selected
+quote, UTF-16 range, window identity and editor scroll. Ask owns that context
+independently of floor selection. Closing or clearing Ask does not clear floor
+icons. Back reuses the captured window or queues a one-shot return before the
+canonical Note opener recreates a closed source window. The source compares
+saved and local draft body before restoring range/scroll. Changed text gets
+SOURCE CHANGED rather than a stale selection. The source quote can fold while
+Back stays outside the fold. Whole-Note caret return and return range after
+Clear quote remain explicit follow-on scope.
+
+Save as note writes editable Markdown with the answer's actual qualified
+Looked at refs and its returned thread link. Markdown destinations use the shared ReadingDocument/refOpener vocabulary;
+unsupported KB/directory refs remain visible text. The active Note is a
+CodeMirror editor and has no link opener yet: these destination bytes are
+editable provenance, not an observed click/return door from the saved Note.
+This is editable provenance, not immutable structured lineage. Repository Ask
+refuses unsupported material without changing floor selection or widening the
+request to the whole desk. Ask's NO DESK TOOLS caption names only that tool
+policy; it does not claim About excludes all Memory.
+
+AskSourceFrame is the exact controlled view in Ask and Components Conversation.
+The reference owns local quote/fold/return callbacks and keeps its mic disabled;
+it does not invoke model, Thread or Note writers. The Ask conversation
+controller is still local; a reference fixture is not a second production app.
+
+The independent Sol review found closed-window return was not queued and
+unsupported refs were falsely linked. Both bounded fixes received the final
+RATIFY re-check. Root's browser inspection then caught a current-caret clipping
+case after SOURCE CHANGED and a generic ambient status falsely called Meeting
+analysis. The current-caret return now runs after receipt reflow, with one
+bounded frame for a newly mounted editor. Ambient uses the actual run name;
+the active Ask window no longer sends the parked Summarize lens as its name.
+Root inspected the final 1440/393 source/return and pending/changed captures.
+Four real-browser cases pass on the final bundle, using a local fake answer
+endpoint with real Ask/Thread and Save-as-note writes. They cover open and
+closed source return, range/scroll, changed current caret visibility/focus,
+qualified provenance and the local shared Conversation specimen. Narrow Back
+passes the canonical nine-point target check before Playwright autoscroll.
+The new clipboard path is not used; no real provider or microphone is invoked.
+Required final quick green: build, 4,269 related UI tests, four affected glass
+cases, 110 desk sweep, 27 canon and 1,126 repository guards
+(`.tmp/quick-native-sourced-ask.log`). The earlier quick also passed before
+root's screenshot review corrected the parked lens label; only the final run
+certifies that correction. Advisory re-check is not Muad'Dib's check and these
+captures do not establish owner aesthetic acceptance.
+
+Backend source admission still uses the live canonical Note. The captured
+body validates return only; it does not freeze inference. Source-change/gone
+admission, LOOP replay and the existing result-first receipt path need the
+separate server slice. No immutable source-version, configured live-inference,
+Memory/Activity retrieval or whole Project/People job is certified here.
+
+
+## Next whole J3 job: Project origin, selected Note, private Prep
+
+The follow-on source study verified the active Room Ask door
+(`ProjectRoomCore.tsx`, current Ask handler) and existing project-resource
+route (`GET /api/projects/{id}/resources`). Room Sources currently presents
+Watch status, not a selectable list of qualified filed material. Project About
+hydrates current project members, so it must retain its broad live-search
+meaning. A selected filed Thought-backed Note is a different supported job:
+Ask admits that exact Note version, while project id is navigation origin only.
+The next bounded consumer should keep those two identities separate, reuse
+Note admission, and re-open the exact project before restoring its filed row.
+Its explicit Open note action can use the existing openNoteThought adoption
+path for legacy Notes, preserving id/body/filing. Passive Room render must not
+adopt documents or create a new writer. There is no reason to leave ordinary
+legacy Notes indefinitely unavailable.
+The single Room window can change project, so raising it alone is insufficient.
+Moved/missing membership must be shown after re-read, not falsely restored.
+
+People title-only in Ask is intentional custody. Private People Prep reads
+its own brief and has its own agenda writer; it is not a generic source body.
+The People continuation should keep that private job and Project return,
+without adding People body hydration or People data to sent Briefs. No new
+framework, universal snapshot of project membership, or generic retrieval
+explorer is proposed.
+
+The real Project → selected Note → Ask → saved Note → exact Project return,
+and Project → private People Prep → saved agenda → Project jobs remain
+unobserved. Existing room.app, roomPeople200, peoplePrepB4, project-room contract
+and people-brief cases are useful scoped starting points, not whole-job proof.
+The new isolated P04 glass rig supplies fake inference plus real Note/thread
+writers for the source leg. Source and thread links must be clicked in that
+whole-job walk, not certified solely from their Markdown bytes. Pullout.tsx
+routes every ordinary Note to ThoughtWorkspaceWindow, so the old NotePullout
+Material reader does not supply those doors. A bounded explicit source/thread
+row in the active workspace should reuse the existing Markdown Link parser
+and refOpener policy while leaving CodeMirror caret/selection alone. This is
+proposed follow-on behavior, not an implemented saved-Note navigation claim.

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { DeskComposer } from "../../../desk/components/DeskComposer";
+import { AskSourceFrame } from "../../../desk/components/AskSourceFrame";
 import { RepositoryBrowserView } from "../../../desk/components/RepositoryBrowserView";
 import { useRepositoryBrowser, type RepositoryReadAdapter } from "../../../desk/components/RepositoryBrowserController";
 import type { RepoFile } from "../../../desk/repository";
@@ -292,6 +293,9 @@ type ConversationMessage = { role: "user" | "assistant"; text: string; replyTo?:
 
 function ConversationPattern({ state }: { state: ExampleState }) {
   const [draft, setDraft] = useState("");
+  const [sourceQuote, setSourceQuote] = useState("The source stays beside the decision.");
+  const [sourceOpen, setSourceOpen] = useState(true);
+  const [localReturn, setLocalReturn] = useState(false);
   const [messages, setMessages] = useState<ConversationMessage[]>([
     { role: "user", text: "Can we keep the release note local while we review it?" },
     { role: "assistant", text: "Yes. Keep the source beside the decision." },
@@ -355,8 +359,13 @@ function ConversationPattern({ state }: { state: ExampleState }) {
       <div className="reference-example-head"><div><h2>Review thread</h2></div><StateChip state={replyState === "failed" ? "failure" : replyState === "busy" ? "working" : "active"} label={replyState === "failed" ? "REPLY FAILED" : replyState === "busy" ? "SENDING" : "Reply ready"} /></div>
       {empty ? <SurfaceState empty emptyLabel="No messages" emptyGlyph="○" onAction={() => setMessages([{ role: "user", text: "Can we keep the release note local?" }])} actionLabel="Show thread" /> : <SurfaceRows>{messages.map((message, index) => <SurfaceRow key={`${message.role}-${index}`} title={message.role === "user" ? "You" : "Desk reply"} detail={message.text} meta={message.role === "user" ? "you" : "local"} />)}</SurfaceRows>}
       {replyState === "failed" ? <ActionNotice tone="danger" icon="!" action={{ label: "Retry", onClick: retry }}>Reply failed.</ActionNotice> : null}
+      <div className="reference-conversation-source" data-testid="reference-conversation-source">
+        <AskSourceFrame quote={sourceQuote} open={sourceOpen} onToggle={setSourceOpen}
+          onClear={() => setSourceQuote("")} onBack={() => setLocalReturn(true)} />
+        {localReturn ? <span className="reference-receipt" role="status">LOCAL RETURN</span> : null}
+      </div>
       <div className="desk-pr-compose" data-specimen="true">
-        <DeskComposer className="desk-mic-row" value={draft} onChange={setDraft} placeholder="Write a review note" multiline rows={3} micDraftScope="design-reference-conversation" actionLabel={replyState === "failed" || replyState === "busy" ? "Retry" : "Send locally"} actionDisabled={replyState === "busy" || (replyState !== "failed" && !draft.trim())} actionBusy={replyState === "busy"} onAction={replyState === "failed" || replyState === "busy" ? retry : send} />
+        <DeskComposer className="desk-mic-row" value={draft} onChange={setDraft} placeholder="Write a review note" multiline rows={3} mic={false} micDraftScope="design-reference-conversation" actionLabel={replyState === "failed" || replyState === "busy" ? "Retry" : "Send locally"} actionDisabled={replyState === "busy" || (replyState !== "failed" && !draft.trim())} actionBusy={replyState === "busy"} onAction={replyState === "failed" || replyState === "busy" ? retry : send} />
       </div>
     </section>
   );

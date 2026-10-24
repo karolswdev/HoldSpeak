@@ -17,6 +17,10 @@ import {
 } from "../thoughts";
 import { ThoughtWorkspaceWindow } from "./ThoughtWorkspaceWindow";
 import { latchAskSelection, takeAskSelection } from "../ask";
+import { requestAskReturn } from "./askReturn";
+import { WindowIdContext } from "../components/window/windowIdContext";
+
+const restoreSelectionMock = vi.hoisted(() => vi.fn());
 
 /* HS-201-12 — doctrine (a) for the tests this file lost.
  *
@@ -47,7 +51,25 @@ vi.mock("../components/DeskWindow", async () => {
   };
 });
 vi.mock("./ThoughtDocumentPane", () => ({
-  ThoughtDocumentPane: ({ draft, onEdit, onSelectionChange, lockedReason }: { draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; onSelectionChange?: (selection: { from: number; to: number; text: string }) => void; lockedReason?: string }) => <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>,
+  ThoughtDocumentPane: ({ draft, onEdit, onSelectionChange, lockedReason, returnRange, editorRef }: { draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; onSelectionChange?: (selection: { from: number; to: number; text: string }) => void; lockedReason?: string; returnRange?: { from: number; to: number } | null; editorRef?: { current: { getScrollTop: () => number; getSelection: () => { from: number; to: number; text: string }; restoreSelection: (from: number, to: number) => boolean } | null } }) => {
+    const body = () => document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Note body"]');
+    if (editorRef) editorRef.current = {
+      getScrollTop: () => 24,
+      getSelection: () => {
+        const field = body();
+        const from = field?.selectionStart ?? 0;
+        const to = field?.selectionEnd ?? from;
+        return { from, to, text: field?.value.slice(from, to) ?? "" };
+      },
+      restoreSelection: (from, to) => {
+        restoreSelectionMock(from, to);
+        body()?.setSelectionRange(from, to);
+        body()?.focus();
+        return true;
+      },
+    };
+    return <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}{returnRange ? <span data-testid="return-range">{returnRange.from}:{returnRange.to}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>;
+  },
 }));
 vi.mock("../documentSendsLazy", () => ({
   NoteSendWells: ({ id, title, version, onBack }: { id: string; title?: string; version?: number; onBack?: () => void }) => <div data-testid="send-well" data-doc={`note:${id}`} data-title={title} data-version={String(version)}>
@@ -254,7 +276,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
     // Betterment Q5: Ask about this puts the note in About.
     expect(useDesk.getState().askThread?.about?.map((chip) => chip.ref)).toEqual(["note:note-1"]);
-    expect(takeAskSelection()).toEqual({ noteRef: "note:note-1", text: "Ask about this exact passage", source: { id: "note-1", kind: "note", ref: "note:note-1", title: saved.working_note.title || "Note" } });
+    expect(takeAskSelection()).toEqual({ noteRef: "note:note-1", text: "Ask about this exact passage", body, range: { from: body.indexOf("Ask about this exact passage"), to: body.length }, windowId: null, scrollTop: 24, source: { id: "note-1", kind: "note", ref: "note:note-1", title: saved.working_note.title || "Note" } });
   });
 
   it("hands Ask the saved Note source when no passage is selected", async () => {
@@ -265,8 +287,54 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     expect(takeAskSelection()).toEqual({
       noteRef: `note:${thought.working_note.id}`,
       text: "",
+      body: thought.working_note.body_markdown,
+      range: null,
+      windowId: null,
+      scrollTop: 24,
       source: { id: thought.working_note.id, kind: "note", ref: `note:${thought.working_note.id}`, title: thought.working_note.title || "Note" },
     });
+  });
+
+  it("takes a return only in its source window and refuses a changed Note body", async () => {
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    render(<WindowIdContext.Provider value="pullout:note:note-1">
+      <ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />
+    </WindowIdContext.Provider>);
+    await screen.findByRole("textbox", { name: "Note body" });
+    const body = thought.working_note.body_markdown;
+    const text = body.slice(0, 4);
+    const source = {
+      noteRef: "note:note-1", text, body, range: { from: 0, to: 4 },
+      windowId: "pullout:note:note-1", scrollTop: 24, source: { id: "note-1", kind: "note", ref: "note:note-1", title: "Thought" },
+    };
+    act(() => requestAskReturn({ ...source, windowId: "pullout:note:other" }));
+    expect(screen.queryByTestId("return-range")).toBeNull();
+    act(() => requestAskReturn(source));
+    expect(screen.getByTestId("return-range")).toHaveTextContent("0:4");
+    const field = screen.getByRole<HTMLTextAreaElement>("textbox", { name: "Note body" });
+    field.setSelectionRange(body.length, body.length);
+    act(() => requestAskReturn({ ...source, body: `${body} changed` }));
+    expect(screen.queryByTestId("return-range")).toBeNull();
+    expect(screen.getByText("SOURCE CHANGED")).toBeInTheDocument();
+    expect(restoreSelectionMock).toHaveBeenCalledWith(body.length, body.length);
+    expect(field).toHaveFocus();
+    expect(field.selectionStart).toBe(body.length);
+    expect(field.selectionEnd).toBe(body.length);
+  });
+
+  it("consumes a closed window's queued return when the same Thought mounts", async () => {
+    const body = thought.working_note.body_markdown;
+    const source = {
+      noteRef: "note:note-1", text: body.slice(0, 4), body,
+      range: { from: 0, to: 4 }, windowId: "pullout:note:note-1", scrollTop: 24,
+      source: { id: "note-1", kind: "note", ref: "note:note-1", title: "Thought" },
+    };
+    requestAskReturn(source);
+    vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
+    render(<WindowIdContext.Provider value="pullout:note:note-1">
+      <ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />
+    </WindowIdContext.Provider>);
+    expect(await screen.findByTestId("return-range")).toHaveTextContent("0:4");
   });
 
   it("never renders a heading over an empty question", async () => {

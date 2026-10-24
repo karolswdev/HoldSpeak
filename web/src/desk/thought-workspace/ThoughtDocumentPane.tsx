@@ -1,5 +1,5 @@
 import { firstWords, NEW_THOUGHT_TITLE } from "../thoughtTitle";
-import { useEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useRef, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { EditInPlace, StateChip, SurfaceWell } from "../surface";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
@@ -59,6 +59,8 @@ export function ThoughtDocumentPane({
   disabled,
   lockedReason,
   revealRange,
+  returnRange,
+  editorRef,
   onSelectionChange,
   voiceDraftIO = deskThoughtVoiceDraft,
   mic = true,
@@ -74,6 +76,9 @@ export function ThoughtDocumentPane({
    *  dead field without a reason — the EditInPlace contract. */
   lockedReason?: string;
   revealRange?: { start: number; end: number; focus?: boolean } | null;
+  /** A validated Ask return. The original editor owns the CM selection. */
+  returnRange?: { from: number; to: number; scrollTop: number | null; nonce: number } | null;
+  editorRef?: RefObject<DeskEditorHandle | null>;
   onSelectionChange?: (selection: DeskEditorSelection) => void;
   /** Fixture seam for the same Thought recovery view, without workspace writes. */
   voiceDraftIO?: ThoughtVoiceDraftIO;
@@ -81,7 +86,8 @@ export function ThoughtDocumentPane({
   /** Alternate input control for the same document composition and binder. */
   voiceInput?: (bindText: () => (text: string) => void, disabled: boolean) => ReactNode;
 }) {
-  const bodyRef = useRef<DeskEditorHandle | null>(null);
+  const ownBodyRef = useRef<DeskEditorHandle | null>(null);
+  const bodyRef = editorRef ?? ownBodyRef;
   const activeNoteIdRef = useRef(noteId);
   activeNoteIdRef.current = noteId;
   const voiceKey = noteId ? thoughtVoiceKey(noteId) : null;
@@ -102,6 +108,11 @@ export function ThoughtDocumentPane({
     if (!revealRange || !bodyRef.current) return;
     bodyRef.current.revealRange(revealRange.start, revealRange.end, { focus: revealRange.focus });
   }, [revealRange, draft.body]);
+
+  useEffect(() => {
+    if (!returnRange || !bodyRef.current) return;
+    bodyRef.current.restoreSelection(returnRange.from, returnRange.to, { scrollTop: returnRange.scrollTop });
+  }, [returnRange, draft.body]);
 
   useEffect(() => {
     if (!noteId) return;

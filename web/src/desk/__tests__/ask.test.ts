@@ -1,14 +1,17 @@
 // HSM-16-04 — the Ask AI atom's web data layer: the wire payloads match the
 // hub routes and the lineage line keeps the iPad grammar.
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { markdownLanguage } from "@codemirror/lang-markdown";
 import {
   ASK_LENSES,
+  answerNoteBody,
   askContexts,
   askLineageLine,
   keepAsk,
   runAsk,
   stopAskTask,
 } from "../ask";
+import { requestAskReturn, takeAskReturn, validAskReturnRange } from "../thought-workspace/askReturn";
 import type { Items } from "../api";
 
 const items = {
@@ -24,6 +27,41 @@ const items = {
 } as unknown as Items;
 
 afterEach(() => vi.unstubAllGlobals());
+
+describe("Thought source handoff", () => {
+  const source = {
+    noteRef: "note:n1", text: "🚀 source", body: "A 🚀 source B",
+    range: { from: 2, to: 11 }, windowId: "pullout:note:n1", scrollTop: 42,
+    source: { id: "n1", kind: "note", title: "Source", ref: "note:n1" },
+  };
+
+  it("restores only the exact UTF-16 range in the same saved Note body", () => {
+    expect(validAskReturnRange(source, "note:n1", source.body)).toEqual(source.range);
+    expect(validAskReturnRange(source, "note:n1", "A 🚀 newer B")).toBeNull();
+    expect(validAskReturnRange(source, "note:n2", source.body)).toBeNull();
+  });
+
+  it("retains one return for the captured window until that window mounts", () => {
+    requestAskReturn(source);
+    expect(takeAskReturn("pullout:note:other", source.noteRef)).toBeNull();
+    expect(takeAskReturn(source.windowId, source.noteRef)).toEqual(source);
+    expect(takeAskReturn(source.windowId, source.noteRef)).toBeNull();
+  });
+
+  it("puts qualified source and origin refs in editable Markdown", () => {
+    const body = answerNoteBody({ key: "answer-1", question: "Q", answer: "A", lookedAt: [
+      { ref: "note:n1", title: "API [boundary]" },
+      { ref: "kb:k1", title: "Knowledge base" },
+      { ref: "directory:d1", title: "Archive" },
+    ] }, "t1");
+    expect(body).toBe("A\n\nLooked at: [API \\[boundary\\]](note:n1), Knowledge base (kb:k1), Archive (directory:d1)\n\nFrom: [Ask thread](thread:t1)");
+    const urls: string[] = [];
+    markdownLanguage.parser.parse(body).iterate({ enter(node) {
+      if (node.name === "URL") urls.push(body.slice(node.from, node.to));
+    } });
+    expect(urls).toEqual(["note:n1", "thread:t1"]);
+  });
+});
 
 describe("ask contexts", () => {
   it("resolves selected ids to id+kind+title, dropping unknowns", () => {

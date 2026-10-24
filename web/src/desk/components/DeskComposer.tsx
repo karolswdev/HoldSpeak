@@ -16,6 +16,8 @@ interface DeskComposerProps {
   className?: string;
   /** Durable scope for a retained voice capture. */
   micDraftScope?: string;
+  /** A local specimen has no speech capture IO. Live editors default on. */
+  mic?: boolean;
 }
 
 /** A speak-to-fill text well with its primary action. */
@@ -31,6 +33,7 @@ export function DeskComposer({
   actionBusy,
   className,
   micDraftScope,
+  mic = true,
 }: DeskComposerProps) {
   const input = multiline ? (
     <PadGadget
@@ -54,7 +57,7 @@ export function DeskComposer({
 
   return (
     <ComposerWell
-      capture={<MicButton draftScope={micDraftScope} onText={onChange} />}
+      capture={mic ? <MicButton draftScope={micDraftScope} onText={onChange} /> : undefined}
       actions={(
         <Button
           dense

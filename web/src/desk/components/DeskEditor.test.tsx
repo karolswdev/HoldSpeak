@@ -9,14 +9,32 @@ import { latchAskSelection, selectionPrompt, takeAskSelection } from "../ask";
 
 describe("DeskEditor authoritative append reveal", () => {
   it("latches one Note passage and puts the same quote in the run prompt", () => {
-    latchAskSelection({ noteRef: "note-1", text: "Keep this passage" });
+    const source = { noteRef: "note:note-1", text: "Keep this passage", body: "Keep this passage",
+      range: { from: 0, to: 17 }, windowId: "pullout:note:note-1", scrollTop: 16 };
+    latchAskSelection(source);
 
     const selection = takeAskSelection();
-    expect(selection).toEqual({ noteRef: "note-1", text: "Keep this passage" });
+    expect(selection).toEqual(source);
     expect(selectionPrompt("What should I do?", selection)).toBe(
       "What should I do?\n\nSelected text:\n> Keep this passage",
     );
     expect(takeAskSelection()).toBeNull();
+  });
+
+  it("restores a selected UTF-16 range and its captured scroll without editing the Note", () => {
+    const value = "A 🚀 source B";
+    const onChange = vi.fn();
+    const ref = createRef<DeskEditorHandle>();
+    let view: EditorView | null = null;
+    render(<DeskEditor ref={ref} value={value} onChange={onChange} showToolbar={false} onViewChange={(next) => { view = next; }} />);
+    view!.scrollDOM.scrollTop = 36;
+    expect(ref.current?.getScrollTop()).toBe(36);
+    act(() => { expect(ref.current?.restoreSelection(2, 11, { scrollTop: 36 })).toBe(true); });
+    expect(ref.current?.getSelection()).toEqual({ from: 2, to: 11, text: "🚀 source" });
+    expect(ref.current?.getScrollTop()).toBe(36);
+    expect(document.activeElement).toHaveClass("cm-content");
+    expect(onChange).not.toHaveBeenCalled();
+    expect(ref.current?.restoreSelection(2, value.length + 1)).toBe(false);
   });
 
   it("reports the exact selected passage and exposes it through the handle", () => {

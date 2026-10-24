@@ -125,6 +125,18 @@ describe("ambient Workbench notices", () => {
     expect(screen.queryByLabelText("Intelligence queue")).toBeNull();
   });
 
+  it("names an Ask run from its run frame instead of calling it meeting analysis", async () => {
+    mocks.frames.set("intel_status", {
+      state: "running", scope: "run", capability: { kind: "ask", id: "ask", name: "Ask" },
+    });
+    render(<AmbientLayer />);
+    await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/settings"));
+    const theater = screen.getByRole("status");
+    expect(theater).toHaveTextContent("Running");
+    expect(theater).toHaveTextContent("Ask");
+    expect(theater).not.toHaveTextContent("Meeting analysis");
+  });
+
   it("renders complete learning text safely alongside the other notices", async () => {
     mocks.frames.set("dictation_preview", { token: "preview-2", text: "Owner text" });
     mocks.frames.set("runtime_queue", { running: 1 });

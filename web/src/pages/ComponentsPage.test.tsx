@@ -76,6 +76,8 @@ describe("Signal component gallery", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Conversation" }));
     const conversation = screen.getByTestId("reference-conversation");
+    expect(within(conversation).queryByRole("button", { name: /Speak/i })).not.toBeInTheDocument();
+    expect(conversation.querySelector(".desk-mic")).toBeNull();
     fireEvent.change(within(conversation).getByRole("textbox", { name: /Write a review note/ }), { target: { value: "Keep this local" } });
     fireEvent.click(within(conversation).getByRole("button", { name: "Send locally" }));
     expect(within(conversation).getByText("Keep this local")).toBeInTheDocument();
@@ -106,6 +108,28 @@ describe("Signal component gallery", () => {
     await waitFor(() => expect(within(conversation).getByText("The reply is available locally for the captured request.", { exact: true })).toBeInTheDocument());
     expect(draft).toHaveValue("Newer draft while retrying");
     expect(within(conversation).getAllByText(failedRequest, { exact: true })).toHaveLength(1);
+  });
+
+  it("keeps the local Thought return outside a closed source fold and keeps the source after Clear quote", async () => {
+    render(<ComponentsCore />);
+    fireEvent.click(screen.getByRole("button", { name: "Conversation" }));
+
+    const source = screen.getByTestId("reference-conversation-source");
+    const frame = within(source).getByTestId("ask-selected-passage");
+    const fold = frame.querySelector("details");
+    expect(fold).toHaveAttribute("open");
+    fireEvent.click(within(frame).getByText("Selected text"));
+    await waitFor(() => expect(fold).not.toHaveAttribute("open"));
+    fireEvent.click(within(frame).getByRole("button", { name: "Back to Thought" }));
+    expect(within(source).getByRole("status")).toHaveTextContent("LOCAL RETURN");
+
+    fireEvent.click(within(frame).getByText("Selected text"));
+    await waitFor(() => expect(fold).toHaveAttribute("open"));
+    fireEvent.click(within(frame).getByRole("button", { name: "Clear quote" }));
+    expect(within(frame).getByText("Source")).toBeInTheDocument();
+    expect(within(frame).queryByText("The source stays beside the decision.")).not.toBeInTheDocument();
+    expect(within(frame).getByRole("button", { name: "Back to Thought" })).toBeInTheDocument();
+    expect(screen.getByTestId("reference-conversation")).toHaveTextContent("Yes. Keep the source beside the decision.");
   });
 
   it("selects the real Settings writer refusal and keeps the draft for Retry", async () => {
