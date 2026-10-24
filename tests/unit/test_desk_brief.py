@@ -329,19 +329,21 @@ def _calendar_today(hub: Hub, mira: str) -> None:
     assert linked.status_code == 200, linked.text
 
 
-def test_today_on_the_daily_week_reads_the_one_number_the_day_and_since_yesterday(hub: Hub) -> None:
+def test_today_on_the_daily_week_reads_the_one_number_the_day_and_since_yesterday(
+    hub: Hub, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """The recon's week (D1: after the nine keeps, the LAN engine set) and its
     day on the calendar. Today's reads: the one number (4), the next 1:1 with
     Mira (her Prep), and the brief made on the first open. The face's half
     (web/src/desk/__tests__/today.app.test.tsx) renders these answers."""
-    from datetime import date
-
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    from tests.fixtures.daily_week import seed
+    from tests.fixtures.daily_week import WIRE_DAY, normalize_wire_change_stamps, pin_wire_day, seed
     from tests.unit.test_desk_speak import _record
 
-    seeded = seed(hub, monday=date.today(), engine=True)
+    pin_wire_day(hub, monkeypatch, brief=True)
+    seeded = seed(hub, monday=WIRE_DAY, engine=True)
     _calendar_today(hub, seeded["Mira"])
+    normalize_wire_change_stamps(hub, seeded["project"])
     needs = hub.client.get("/api/desk/needs-you?fresh=1").json()
     assert needs["count"] == 4, needs["count"]
     door = hub.client.get("/api/door").json()

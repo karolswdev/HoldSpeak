@@ -49,6 +49,16 @@ quick green: build, 113 affected cases, 110 desk sweep, 27 canon and 1,126
 repository guards. This is a producer repair, not P05 completion. Wire/Stop
 fixture repairs and the remaining full-tape observations stay separate.
 
+Recorded producer wires / Stop assertions — #1441: six recordings are rebuilt
+from their isolated rigs; test clocks keep the original Tuesday lanes,
+spoken due dates, coverage ordering and Changed facts stable. Stop assertions
+now require #1437's stopped status and Meeting identity. Eight focused replay
+cases pass on main with #1440, and four frontend consumers pass 85 cases.
+Required quick green: build, 123 affected cases, 110 desk sweep, 27 canon and
+1,126 repository guards. No product code changed; this is no new P06 job or
+full-suite green claim. A later pinned-tape security-doc claim is being
+inspected separately.
+
 The earlier hold below is retained as history; it no longer pauses execution.
 
 **Owner correction — strategy before further implementation (2026-10-23).**
