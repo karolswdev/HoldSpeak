@@ -8,6 +8,14 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Zoom restore — #1444: content-sized windows retain auto height across first
+zoom, restore and reopen; owner-sized windows retain fixed geometry. The bug
+was reproduced on pre-P01 main. Five policy assertions and the real browser
+reproduction pass. Required quick green: build, 4,219 related UI tests, five
+Chair glass cases, 110 desk sweep, 27 canon and 1,126 repository guards.
+This repairs an inherited P01 seam; full package acceptance remains open.
+
+
 **Owner-authorized React desktop execution — Astra / Sol High (2026-10-23).**
 The owner authorizes Astra to orchestrate Sol High workers and deliver the
 complete design plan, superseding the earlier design-only hold and this

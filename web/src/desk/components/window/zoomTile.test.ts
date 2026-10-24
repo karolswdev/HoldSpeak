@@ -7,8 +7,9 @@ import { useDesk } from "../../store";
 import { shellEls } from "./windowRegistry";
 import { zoomWindow } from "./windowCommands";
 
-function shellAt(id: string, rect: { x: number; y: number; w: number; h: number }) {
+function shellAt(id: string, rect: { x: number; y: number; w: number; h: number }, fitContent = false) {
   const el = document.createElement("div");
+  if (fitContent) el.dataset.fitContent = "true";
   el.getBoundingClientRect = () =>
     ({ left: rect.x, top: rect.y, width: rect.w, height: rect.h, right: rect.x + rect.w, bottom: rect.y + rect.h, x: rect.x, y: rect.y, toJSON: () => ({}) }) as DOMRect;
   shellEls.set(id, el);
@@ -38,6 +39,27 @@ describe("zoom keeps a Chair window's tile place", () => {
     shellAt("chair:capture", moved);
     zoomWindow("chair:capture");
     expect(useDesk.getState().panelRects["chair:capture"]).toEqual(moved);
+  });
+
+  it("keeps an untouched content-sized window auto after zoom and unzoom", () => {
+    const seat = { x: 264, y: 50, w: 698, h: 221 };
+    useDesk.setState({ panelRects: { "chair:needs": seat }, panelSaved: [] });
+    shellAt("chair:needs", seat, true);
+    zoomWindow("chair:needs");
+    expect(useDesk.getState().panelSaved).not.toContain("chair:needs");
+    zoomWindow("chair:needs");
+    expect(useDesk.getState().panelRects["chair:needs"]).toEqual(seat);
+    expect(useDesk.getState().panelSaved).not.toContain("chair:needs");
+  });
+
+  it("keeps an owner-sized content window's fixed rect through zoom", () => {
+    const sized = { x: 300, y: 120, w: 600, h: 400 };
+    useDesk.setState({ panelRects: { "chair:needs": sized }, panelSaved: ["chair:needs"] });
+    shellAt("chair:needs", sized, true);
+    zoomWindow("chair:needs");
+    zoomWindow("chair:needs");
+    expect(useDesk.getState().panelRects["chair:needs"]).toEqual(sized);
+    expect(useDesk.getState().panelSaved).toContain("chair:needs");
   });
 
   it("still keeps the normal rect of any other window on its first zoom (PR #731)", () => {
