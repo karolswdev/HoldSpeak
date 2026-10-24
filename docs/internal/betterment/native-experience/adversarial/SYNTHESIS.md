@@ -75,11 +75,15 @@ separates executed checks from remaining findings.
 [PR1434](https://github.com/karolswdev/HoldSpeak/pull/1434) repairs Settings
 leave/return edit retention.
 [PR1436](https://github.com/karolswdev/HoldSpeak/pull/1436) retains Capture
-first words through refused/delayed Note creation. Meeting Stop/save repair
-remains in closeout. The larger project-update Stop
+first words through refused/delayed Note creation.
+[PR1437](https://github.com/karolswdev/HoldSpeak/pull/1437) retains Meeting
+stop/save facts through HTTP and both Stop doors, including the view change.
+The bounded repair closeout is complete. The larger project-update Stop
 candidate is held outside main for an identity/lifetime design refinement,
 following the owner's direction to finish current work and refine strategy
-before further implementation. The delivery order below records the original
+before further implementation. The proposed refinement is
+[draft PR1435](https://github.com/karolswdev/HoldSpeak/pull/1435), not new
+canon or implementation authority. The delivery order below records the original
 priorities; it does not imply that this repair wave closes all 47 jobs.
 
 ## Delivery order

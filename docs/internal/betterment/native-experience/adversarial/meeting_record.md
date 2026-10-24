@@ -77,3 +77,5 @@ Root inspected the 393 Live and 1440 stopped-record captures. These are fixture 
 physical audio/device, complete persistence-recovery, or owner UX acceptance.
 The broader identity/edit/summary handoff and capture-recovery findings in
 this audit remain open.
+
+[PR1437](https://github.com/karolswdev/HoldSpeak/pull/1437) records this bounded delivery.

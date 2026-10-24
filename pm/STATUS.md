@@ -9,15 +9,16 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 ## Current phase
 
 **Owner correction — strategy before further implementation (2026-10-23).**
-Finish the bounded repairs already underway, then refine the plan and
-strategy before starting further product changes. The proposed refinement
+The bounded repair closeout is complete: Ask #1433, Settings #1434,
+Capture #1436 and Meeting outcomes #1437. Refine the plan and strategy
+before starting further planned product changes. The proposed refinement
 and advisory re-check are in draft #1435; it remains UNCHECKED, awaiting
 Muad'Dib. The 47 audit records are evidence, not an automatic build queue.
 The larger project-update Stop draft is parked at `54a7436b7` outside main;
 its last edits and new tests are unverified.
 
 
-Meeting Stop/save truth: the route retains runtime stop, Meeting, persistence
+Meeting Stop/save truth — #1437: the route retains runtime stop, Meeting, persistence
 and cleanup facts. Recording store and LiveCore share the outcome parser;
 confirmed Stop idles even when saving fails, and explicit still-recording
 responses stay active/refused. DB-saved partial outcomes retain an Open
@@ -75,8 +76,8 @@ included in this packet.
 
 The reproduced Settings return conflict is repaired above; the original
 control retained the draft and Retry while the leave/return case lost it.
-Ask saved-thread read authority shipped in #1433. Capture first-word retention is repaired in #1436; Meeting outcome
-closeout remains. The larger automation Stop candidate is parked on
+Ask saved-thread read authority shipped in #1433. Capture first-word retention is repaired in #1436; Meeting stop/save
+truth is repaired in #1437. The larger automation Stop candidate is parked on
 `fix/update-stop-repair-20261023` at `54a7436b7`, not merged or deployed;
 its final edits and new regressions are unverified. The owner clarified that
 strategy/design refinement precedes further implementation.
@@ -2268,6 +2269,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1437 — Meeting stopped/save truth:** runtime facts survive HTTP and both Stop doors; non-clean outcomes persist when the live window becomes the record. 40 focused web cases, two native response cases, nine integration cases and final quick green: 4,187 related web, 40 affected Python/browser, 110 sweep, 27 canon, 1,126 repo guards. API consumer docs regenerated. Broader recovery/hardware/UX acceptance stays open; strategy-first #1435 is the next work.
 
 - **#1436 — Capture attempt retention:** seed/gap typing survives refused or delayed Note creation, timeout and editable-field handoff, with exact Retry and no renewed interception. 34 focused cases and required quick green: 4,169 related web tests, five browser cases, 110 sweep, 27 canon, 1,126 repo guards; inspected 1440/393 key-handoff captures. Reload/global-receipt durability remains open.
 
