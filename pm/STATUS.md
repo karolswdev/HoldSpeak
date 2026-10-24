@@ -2722,7 +2722,7 @@ Ask content balance before widening Meeting/Agent migration. Independent final
 NAV, Room and docs advisories are RATIFY; local Sol, not Muad'Dib checks.
 
 
-Zoom/reload normal-rect follow-on is source-reviewed (Sol RATIFY) and has
+Zoom/reload normal-rect follow-on — #1454 — is source-reviewed (Sol RATIFY) and has
 focused unit/browser proof. Optional autoRects preserves an unsized normal
 frame through reload while leaving owner sizing and auto height separate.
 Integrated with #1453, required quick and final types pass:4,310 UI,10

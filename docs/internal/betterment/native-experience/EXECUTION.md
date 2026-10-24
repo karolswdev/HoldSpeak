@@ -776,6 +776,8 @@ passing. Required integration quick and final types pass on the merged #1452 bas
 
 ## Unarranged Zoom/reload normal-rectangle repair
 
+[PR1454](https://github.com/karolswdev/HoldSpeak/pull/1454).
+
 Branch: fix/native-zoom-reload-fix-20261023.
 Worktree: /Users/karol/dev/tools/wt-native-zoom-reload-fix-20261023.
 The prior pinned tape verified a regression after #1444: fitContent Zoom
