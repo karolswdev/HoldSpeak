@@ -59,7 +59,7 @@ small PRs and updates package/PR/task-evidence/owner-feedback status.
 | --- | --- | --- |
 | P01 | First repository identity/frame slice merged #1438 | Durable view state, shared command origin, unlike consumers and narrow chooser |
 | P02 | First repository read/inspect slice merged #1438 | Second real collection consumer, range/selection/scroll and revalidation |
-| P03 | Active Thought/voice first slice in progress | Captured caret/generation, IME/undo, retained voice and source return |
+| P03 | Active Thought/voice built and fix re-check ratified; browser proof closing | Captured caret/generation, IME/undo, retained voice and source return |
 | P04 | Planned after Thought | Sourced Ask whole job, save/return, failure and reading continuity |
 | P05 | Planned; bounded Stop repair already #1437 | Complete record/import/intelligence/reopen/aftercare job |
 | P06 | Planned | Whole project/person/day job and retained update identity |
@@ -76,7 +76,7 @@ not a substitute for its whole-job acceptance or the owner's visual judgment.
 - Design definition: merged [PR1435](https://github.com/karolswdev/HoldSpeak/pull/1435), 47-family trace validated.
 - Repository slice: [PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438),
   built, reviewed and quick-check green. First partial P01/P02/P10 delivery.
-- P08 Settings slice: [PR1439](https://github.com/karolswdev/HoldSpeak/pull/1439),
+- P08 Settings slice: merged [PR1439](https://github.com/karolswdev/HoldSpeak/pull/1439),
   built and independently re-checked; same-face reference
   integrated and six real-browser cases passed. Required final quick green.
   This is not all of P08.
@@ -187,3 +187,45 @@ worktree dependencies (Vite, then pytest-xdist); the verified environment run
 passes without relaxing checks (`.tmp/quick-plugin-route-verified-env.log`).
 [PR1440](https://github.com/karolswdev/HoldSpeak/pull/1440) delivers the bounded
 producer repair.
+
+
+## Third delivery: captured Thought voice and shared Editing
+
+Branch: feat/native-input-wave3-20261023.
+Worktree: /Users/karol/dev/tools/wt-native-input-wave3-20261023.
+Journey J1/J7; first P03 slice for active notes_editor/speech_dictation/native_input,
+with a P10 Editing reference. Ordinary notes remain ThoughtWorkspaceWindow.
+
+The production DeskEditor captures one view/range/document generation and
+inserts only while it remains editable, non-composing and unchanged, in one
+isolated undo transaction. Moving the caret alone does not retarget the bound
+range. MicButton binds delivery before asynchronous work and keeps each
+capture's callback, including retained-audio Retry and stopping after unmount.
+Automatic insertion does not move focus to another window. A read-only
+transition blocks new capture while preserving Stop for the running one.
+
+Active Thought retains late/stale words separately from body drafts at
+`thought/voice/<noteId>`, through the existing Desk memory. NOT INSERTED shows
+the text with Insert at caret and Copy. Only confirmed local insertion clears
+the retained copy; failed Copy leaves it. Components Editing uses the exact
+ThoughtDocumentPane/binder/recovery with a window-local ThoughtVoiceDraftIO
+and local synthetic text. It cannot write real workspace drafts or invoke
+hardware audio. No generic forms/editor engine or second Note writer is added.
+
+Independent Sol review found pending audio Retry losing delivery on unmount,
+a disabled running Stop, and unsupported/stale Copy receipts. The bounded
+fixes received one final RATIFY re-check. Focused editor/Mic/Thought tests:
+46 cases passed with TypeScript clean; reference/Components: 11 passed.
+The Canvas B recovery state was drawn before build; all 18 static artboards
+rendered with no clipped windows. Root inspected the revised desktop board.
+Real-browser acceptance and the required quick result are recorded at delivery.
+A named fake transcript transport can exercise the production MicButton and
+default note memory; it is not hardware microphone or transcription-quality
+proof. The reference alone is not a second production consumer.
+
+Still open in P03: Settings field generation and retained transcript adoption,
+Ask/Pad append policy, native OS Talk-release binding, speech journal/learning
+and configured macro end-to-end jobs. This first browser editor slice does not
+certify those paths or the full J1 capture/source-return job. P04's owned
+Thought source/selection return is the next bounded slice and keeps backend
+source-version/lineage limits explicit.
