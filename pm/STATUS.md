@@ -2668,6 +2668,21 @@ tape is not green. Zoom/reload geometry and browser-test corrections remain
 separate delivery; the earlier Send timeout cause is still unverified.
 
 
+Browser test readiness follow-on — #1452: Conversation now waits for Patterns before
+choosing the wide button or narrow picker. Both reference widths and the393
+real Send/Edit/Back/folder-byte scenario pass (3/3). The earlier Send timeout
+has not reproduced and its cause remains unknown; retained pointer/return
+state diagnostics cover recurrence. #1452 merged after the required quick
+passed all 18 affected browser cases,110 sweep,27 canon and1,126 guards.
+
+The combined browser check found a stale P04 expectation for the global card
+parked in #1451. The two source jobs now verify actual inline progress and
+reachable Stop without that card;1440/393 pass. Required final quick passed:18 affected browser cases,110 sweep,27 canon
+and1,126 guards. No full-suite green is claimed.
+Current running Desk is #1451, backendc7fec7ef3f2fc43bd878df5e02fc38ce68492777,
+frontendf2eef8675d5cce2e, PID42688, owns_database true, diagnoses empty,
+four health/routes200. CLI/MCP match and feedback defaults on; Presence off.
+
 P06/J3 first whole filed-source job is built in wave7 and received final Sol
 advisory RATIFY for navigation and Room. Five real-browser cases pass across
 focused runs at 1440/393: A/B Note source isolation, Ask version pin, saved

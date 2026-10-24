@@ -256,9 +256,11 @@ def test_selected_note_ask_save_and_return(
             with page.expect_response(lambda response: response.url.endswith("/api/ask") and response.request.method == "POST") as finished:
                 ask.get_by_role("button", name="Ask", exact=True).click()
                 expect(ask.get_by_role("button", name="Stop", exact=True)).to_be_visible()
+                expect(ask.get_by_test_id("run-line")).to_have_attribute("data-state", "running")
                 assert started.wait(5), "The isolated model did not receive the Ask"
                 _visible_before_scroll(ask, "Back to Thought")
-                expect(page.locator(".ambient-theater strong")).to_have_text("Ask")
+                _visible_before_scroll(ask, "Stop")
+                expect(page.locator(".ambient-theater")).to_have_count(0)
                 if width == 393:
                     _target_check(page, "[id='ask']")
                 page.screenshot(path=str(shots / f"note-source-pending-{width}.png"))
@@ -493,11 +495,16 @@ def test_reference_source_frame_keeps_back_during_busy_and_quote_closed(
                     if request.method != "GET" and any(path in request.url for path in ("/api/ask", "/api/notes", "/api/threads")) else None)
             page.goto(f"{base}/design/components?token={TOKEN}", wait_until="load")
             _normal_chair(page)
-            selector = page.get_by_role("group", name="Patterns").get_by_role("button", name="Conversation", exact=True)
-            if selector.count():
-                selector.click()
+            patterns = page.get_by_role("group", name="Patterns")
+            expect(patterns).to_be_visible()
+            if width == 1440:
+                conversation = patterns.get_by_role("button", name="Conversation", exact=True)
+                expect(conversation).to_be_visible()
+                conversation.click()
             else:
-                page.get_by_role("group", name="Patterns").get_by_role("button").click()
+                picker = patterns.locator(".surface-filter-menu")
+                expect(picker).to_be_visible()
+                picker.click()
                 page.locator("[role^='menuitem']").filter(has_text="Conversation").first.click()
             specimen = page.get_by_test_id("reference-conversation")
             specimen.wait_for()
