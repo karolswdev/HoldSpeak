@@ -4,6 +4,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { __resetSurfaces, openProjectRoom, PROJECT_ROOM_KEY, registerSurface } from "../shell";
 import { DESK_APPLICATIONS } from "../applications";
+import { openProjectRoomAtResource, takeRoomAtRequest } from "../openObject";
 
 describe("PHILO-9-03 F1: the one Room key", () => {
   afterEach(() => __resetSurfaces());
@@ -22,6 +23,16 @@ describe("PHILO-9-03 F1: the one Room key", () => {
       ["project:proj-1", undefined],
       [undefined, undefined],
     ]);
+  });
+
+  it("a filed Note return opens its original Project and carries the exact row once", () => {
+    const opener = vi.fn();
+    registerSurface(PROJECT_ROOM_KEY, opener);
+    openProjectRoomAtResource("proj-a", "note:api-boundary");
+    expect(opener).toHaveBeenCalledWith("project:proj-a", undefined);
+    expect(takeRoomAtRequest("proj-b")).toBeNull();
+    expect(takeRoomAtRequest("proj-a")).toEqual({ kind: "file", ref: "note:api-boundary" });
+    expect(takeRoomAtRequest("proj-a")).toBeNull();
   });
 
 });

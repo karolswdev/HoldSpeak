@@ -15,7 +15,7 @@ const state = vi.hoisted(() => ({
   askOpen: false,
   refresh: vi.fn(),
   openPullout: vi.fn(),
-  pullouts: [] as Array<{ id: string; origin: { x: number; y: number } | null }>,
+  pullouts: [] as Array<{ id: string; origin: { x: number; y: number } | null; sourceRef?: `note:${string}` }>,
   infoWindows: [] as Array<{ ref: string; origin: { x: number; y: number } | null }>,
   renamingZoneId: null as string | null,
   zoneRenameError: null as null | { zoneId: string; name: string; code: string; label: string; detail: string },
@@ -135,6 +135,10 @@ vi.mock("./world", () => ({
   objectByRef: (_items: unknown, id: string) =>
     id === "note:kept-first-sentence"
       ? { id, kind: "note", title: "First dictation", ref: { id, kind: "note" } }
+      : id === "note:collision"
+        ? { id: "collision", kind: "note", title: "Confirmed Note", ref: { id: "collision", kind: "note" } }
+        : id === "collision"
+          ? { id: "collision", kind: "decision", title: "Other decision", ref: { id: "collision", kind: "decision" } }
       : null,
 }));
 vi.mock("./projections", () => ({
@@ -253,6 +257,14 @@ describe("DeskApp arrival state", () => {
     render(<DeskApp />);
 
     expect(screen.getByTestId("ask-panel")).toBeInTheDocument();
+  });
+
+  it("renders a confirmed bare Note by its qualified ref after a colliding kind appears", () => {
+    state.arrivalRequired = false;
+    state.pullouts = [{ id: "collision", origin: null, sourceRef: "note:collision" }];
+    render(<DeskApp />);
+    expect(screen.getByTestId("chair-pullout")).toHaveTextContent("Confirmed Note");
+    expect(screen.getByTestId("chair-pullout")).not.toHaveTextContent("Other decision");
   });
 
   it("holds cold and restored artifact windows before the first bounded refresh", async () => {

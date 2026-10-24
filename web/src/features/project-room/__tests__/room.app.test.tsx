@@ -150,6 +150,7 @@ const calls: Array<{ key: string; json?: Record<string, unknown> }> = [];
 function fallback(path: string): unknown {
   if (path.endsWith("/room/read")) return { read_at: new Date().toISOString() };
   if (path.endsWith("/meetings")) return { meetings: [] };
+  if (path.endsWith("/resources")) return { resources: [] };
   if (path.startsWith("/api/decisions")) return { decisions: [] };
   if (path.includes("/artifacts")) return { artifacts: [] };
   if (path.includes("/since-last-meeting")) return { current_meeting: null, since_last_meeting: null };
@@ -1515,6 +1516,36 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     }
     expect(screen.getByTestId("room-fold-sources")).toBeTruthy();
     expect(screen.getByTestId("wing-slot").textContent).toContain("Now");
+  });
+
+  it("takes an exact filed Note return once, unfolds Files and selects its freshly read row", async () => {
+    const ref = "note:api-boundary" as const;
+    wire({
+      ...table(),
+      [`GET /api/projects/${pid}/resources`]: () => ({ resources: [{ resource_ref: ref }] }),
+      "GET /api/notes/api-boundary": () => ({ note: { id: "api-boundary", title: "API boundary" } }),
+    });
+    const { openProjectRoomAtResource, takeRoomAtRequest } = await import("../../../desk/openObject");
+    openProjectRoomAtResource(pid, ref);
+    const view = render(<WindowHarness scope={`project:${pid}`} />);
+    await screen.findByText("FILED HERE");
+    const fold = screen.getByTestId("room-fold-files");
+    expect(fold.querySelector("details")).toHaveAttribute("open");
+    expect(within(fold).getByRole("row", { name: /API boundary/i })).toHaveAttribute("aria-selected", "true");
+    expect(takeRoomAtRequest(pid)).toBeNull();
+    const reads = calls.filter((call) => call.key === `GET /api/projects/${pid}/resources`).length;
+    view.rerender(<WindowHarness scope={`project:${pid}`} />);
+    await waitFor(() => expect(calls.filter((call) => call.key === `GET /api/projects/${pid}/resources`)).toHaveLength(reads));
+  });
+
+  it("does not take another Project's filed Note return", async () => {
+    const { openProjectRoomAtResource, takeRoomAtRequest } = await import("../../../desk/openObject");
+    openProjectRoomAtResource("another-project", "note:api-boundary");
+    wire(table());
+    render(<WindowHarness scope={`project:${pid}`} />);
+    await screen.findByTestId("room-headline");
+    expect(screen.queryByText("FILED HERE")).toBeNull();
+    expect(takeRoomAtRequest("another-project")).toEqual({ kind: "file", ref: "note:api-boundary" });
   });
 
   it("a Decided line opens its decision (the record's own route)", async () => {

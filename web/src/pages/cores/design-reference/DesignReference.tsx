@@ -28,10 +28,11 @@ import type { CoreProps } from "../core-types";
 import { ControlsGallery } from "./ControlsGallery";
 import { EditingReference, type EditingPreset } from "./EditingReference";
 import { OwnerPreferencesReference, type OwnerPreferencesState } from "./OwnerPreferencesReference";
+import { FiledNotesReference, type FiledNotesPreset } from "./FiledNotesReference";
 import "./design-reference.css";
 
 type Pattern = "forms" | "editing" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
-type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState | EditingPreset;
+type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState | EditingPreset | FiledNotesPreset;
 
 /*
  * Forms renders the Settings You fields and writer through local IO; Editing
@@ -170,7 +171,11 @@ const STATE_OPTIONS: Record<Pattern, Array<{ id: ExampleState; label: string }>>
   forms: FORM_STATES,
   editing: EDITING_STATES,
   reading: [STATES[0], STATES[3], STATES[4]],
-  lists: [STATES[0], STATES[3]],
+  lists: [STATES[0], STATES[3],
+    { id: "filed-notes", label: "Filed notes" },
+    { id: "files-not-read", label: "Files not read" },
+    { id: "not-filed", label: "Not filed" },
+    { id: "unavailable", label: "Note unavailable" }],
   resources: [STATES[0], STATES[1], STATES[2], STATES[3], { id: "resumed", label: "Resumed" }],
   conversation: [STATES[0], STATES[1], STATES[2], STATES[3], STATES[4]],
   progress: [STATES[0], STATES[1], STATES[2]],
@@ -394,7 +399,8 @@ function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleStat
     case "forms": return <OwnerPreferencesReference state={FORM_STATES.some((item) => item.id === state) ? state as OwnerPreferencesState : "saved"} />;
     case "editing": return <EditingReference key={state} preset={EDITING_STATES.some((item) => item.id === state) ? state as EditingPreset : "ordinary"} />;
     case "reading": return <ReadingPattern state={state} />;
-    case "lists": return <ListsPattern state={state} />;
+    case "lists": return ["filed-notes", "files-not-read", "not-filed", "unavailable"].includes(state)
+      ? <FiledNotesReference key={state} preset={state as FiledNotesPreset} /> : <ListsPattern state={state} />;
     case "resources": return <ResourcesPattern key={state} state={state} />;
     case "conversation": return <ConversationPattern state={state} />;
     case "progress": return <ProgressPattern state={state} />;

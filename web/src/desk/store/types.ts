@@ -13,6 +13,17 @@ export interface UnitPos {
   y: number;
 }
 
+/** The filed Note's Project is a return place, not Ask source material. */
+export interface ProjectReturn {
+  projectId: string;
+  resourceRef: `note:${string}`;
+}
+
+/** An explicit open replaces the live window's task navigation. */
+export interface DeskNavigation {
+  projectReturn: ProjectReturn | null;
+}
+
 /** A desk-window rect in viewport px (the panel counterpart of UnitPos).
  * Panels the user has arranged persist under their own key, exactly like
  * hand-arranged objects do; untouched panels keep their CSS default corner. */
@@ -184,7 +195,7 @@ export interface DeskState {
    * each remembering the tap point it opened from (the origin its
    * open/close motion flies to). Order is open order; the panel order
    * decides stacking. */
-  pullouts: { id: string; origin: { x: number; y: number } | null }[];
+  pullouts: { id: string; origin: { x: number; y: number } | null; projectReturn?: ProjectReturn | null; sourceRef?: `note:${string}` }[];
   /** Open zone windows (drawers opened into real desk windows). They coexist
    * like pullouts and persist in the versioned workspace document. */
   zoneWindows: { id: string; origin: { x: number; y: number } | null }[];
@@ -234,6 +245,9 @@ export interface DeskState {
     run?: boolean;
     /** Betterment Q5: what a new Ask is about (Ask about this). */
     about?: Array<{ id: string; kind: string; title: string; ref: string }>;
+    navigation?: DeskNavigation;
+    /** Only the Note handoff that opened this new Ask may retain its passage. */
+    handoffNonce?: number;
   } | null;
   /** HS-83-02 -- the persona whose CONVERSATION is open (null = none). */
   chatPersonaId: string | null;
@@ -342,7 +356,7 @@ export interface DeskState {
    * coexist); reopening an open object focuses its card. `origin` is
    * the client point the open gesture happened at (the card flies out
    * of it and back into it on close). */
-  openPullout(id: string, origin?: { x: number; y: number }): void;
+  openPullout(id: string, origin?: { x: number; y: number }, navigation?: DeskNavigation): void;
   /** Close one card by object id; with no id, the front-most card. */
   closePullout(id?: string): void;
   /** HS-105-03 -- open a drawer as a real desk window (the OPEN grammar;
@@ -418,14 +432,14 @@ export interface DeskState {
   openAsk(): void;
   /** Betterment Q4: open the Ask window on a kept thread, or on a new Ask
    * (`null`). The Thread window is parked; every thread opens here. */
-  openAskThread(threadId: string | null): void;
+  openAskThread(threadId: string | null, navigation?: DeskNavigation): void;
   /** Betterment Q3: open a new Ask on `question` and run it. */
   askQuestion(question: string): void;
   /** Betterment Q5: open a new Ask about these objects (the About chips),
    * with an empty question, or with `question` (and `run` to ask it). */
   askAbout(
     about: Array<{ id: string; kind: string; title: string; ref: string }>,
-    options?: { question?: string; run?: boolean },
+    options?: { question?: string; run?: boolean; handoffNonce?: number },
   ): void;
   openChat(personaId: string): void;
   closeChat(): void;
