@@ -8,6 +8,16 @@ Open work that is not a slice is in `FOLLOWUPS.md`.
 **Last updated:** 2026-10-23, shared surface modernization; owner visual acceptance remains open. Running-desk identity is in `pm/STATUS.md`.
 
 
+React desktop design proposal (2026-10-23): [draft #1435](https://github.com/karolswdev/HoldSpeak/pull/1435)
+connects the [47 workflow reviews](native-experience/adversarial/README.md)
+to a [product design](native-experience/DESIGN-PROPOSAL.md),
+[seven whole jobs](native-experience/design-proposal/JOURNEYS.md),
+[nine paired canvas studies](native-experience/design-proposal/CANVASES.md)
+and a [derived delivery plan](native-experience/DELIVERY-PLAN.md).
+The owner has now authorized Astra / Sol High execution. The first repository/
+window/reference slice is in progress; no recipe count or owner-acceptance
+state is promoted by the design packet.
+
 Shared surface framework and reference (2026-10-23): #1428
 implements the owner's across-the-board scope: working in-desk patterns,
 shared interior adoption, canonical front-window authority and current author
