@@ -347,7 +347,10 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     act(() => requestAskReturn({ ...source, windowId: "pullout:note:other" }));
     expect(screen.queryByTestId("return-range")).toBeNull();
     act(() => requestAskReturn(source));
-    expect(screen.getByTestId("return-range")).toHaveTextContent("0:4");
+    // The mounted editor can precede the return listener's passive effect.
+    // The queued request is still consumed by that effect; await the actual
+    // range, as the closed-window return case below already does.
+    expect(await screen.findByTestId("return-range")).toHaveTextContent("0:4");
     const field = screen.getByRole<HTMLTextAreaElement>("textbox", { name: "Note body" });
     field.setSelectionRange(body.length, body.length);
     act(() => requestAskReturn({ ...source, body: `${body} changed` }));

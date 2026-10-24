@@ -20,7 +20,7 @@ const ref = "note:api-boundary" as const;
 
 function mount({ resourceRefs = [ref], resourcesState = "ok", request = null, refreshResources = vi.fn(async () => ({ state: "ok", refs: [ref] } as ResourcesRead)),
   followCurrentResources = async (result: ResourcesRead) => result,
-  members = [], onRequestHandled = vi.fn(),
+  members = [], onRequestHandled = vi.fn(), presentationReady = true,
 }: {
   resourceRefs?: string[];
   resourcesState?: ResourcesState;
@@ -29,11 +29,12 @@ function mount({ resourceRefs = [ref], resourcesState = "ok", request = null, re
   followCurrentResources?: (result: ResourcesRead) => Promise<ResourcesRead>;
   members?: DrawerMember[];
   onRequestHandled?: (seq: number) => void;
+  presentationReady?: boolean;
 } = {}) {
   return {
     ...render(<RoomFiledNotesSection projectId={projectId} resourceRefs={resourceRefs}
       resourcesState={resourcesState} refreshResources={refreshResources} followCurrentResources={followCurrentResources} members={members}
-      request={request} onRequestHandled={onRequestHandled} />),
+      request={request} onRequestHandled={onRequestHandled} presentationReady={presentationReady} />),
     refreshResources,
     onRequestHandled,
   };
@@ -56,6 +57,9 @@ describe("active Room filed Note", () => {
     expect(wire.apiFetch).not.toHaveBeenCalled();
     fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
     const row = await screen.findByRole("button", { name: /API boundary, Note/i });
+    const grid = screen.getByRole("grid", { name: "Filed notes" });
+    expect(within(grid).getAllByRole("columnheader").map((head) => head.getAttribute("data-col"))).toEqual(["name", "kind"]);
+    expect(within(grid).getAllByRole("row")[1].querySelectorAll('[role="gridcell"]')).toHaveLength(2);
     fireEvent.click(row);
     expect(wire.openRef).not.toHaveBeenCalled();
     expect(screen.getByTestId("room-files-open")).toHaveTextContent("Open note");
@@ -111,6 +115,34 @@ describe("active Room filed Note", () => {
     expect(wire.openRef).not.toHaveBeenCalled();
   });
 
+  it("keeps the filed return focus pending until the Room presents its Files slot", async () => {
+    wire.apiFetch.mockResolvedValue({ note: { title: "API boundary" } });
+    const request = { ref, seq: 17 };
+    const followCurrentResources = async (result: ResourcesRead) => result;
+    const mounted = mount({ request, followCurrentResources, presentationReady: false });
+    const prior = document.createElement("button");
+    document.body.append(prior);
+    prior.focus();
+    await screen.findByText("FILED HERE");
+    const row = within(screen.getByRole("grid", { name: "Filed notes" })).getByRole("row", { name: /API boundary/i });
+    const button = within(row).getByRole("button", { name: /API boundary/i });
+    const focus = vi.spyOn(button, "focus");
+    expect(row).toHaveAttribute("aria-selected", "true");
+    expect(document.activeElement).toBe(prior);
+    expect(focus).not.toHaveBeenCalled();
+
+    const props = { projectId, resourceRefs: [ref], resourcesState: "ok" as const,
+      refreshResources: mounted.refreshResources, followCurrentResources, members: [],
+      request, onRequestHandled: mounted.onRequestHandled };
+    mounted.rerender(<RoomFiledNotesSection {...props} presentationReady />);
+    expect(document.activeElement).toBe(button);
+    expect(focus).toHaveBeenCalledOnce();
+    mounted.rerender(<RoomFiledNotesSection {...props} presentationReady />);
+    expect(focus).toHaveBeenCalledOnce();
+    expect(mounted.onRequestHandled).toHaveBeenCalledOnce();
+    prior.remove();
+  });
+
   it("keeps the return target through two stale membership results and focuses only the current filed row", async () => {
     wire.apiFetch.mockResolvedValue({ note: { title: "Current record" } });
     const followCurrentResources = vi.fn(async (result: ResourcesRead) => {
@@ -162,6 +194,27 @@ describe("active Room filed Note", () => {
     expect(screen.getByText("RESOURCES NOT READ")).toBeInTheDocument();
     expect(screen.getByText("LAST READ")).toBeInTheDocument();
     expect(screen.getByTestId("room-files-open")).toBeDisabled();
+  });
+
+  it("keeps a retained row in place while the fresh Files read status moves into its action row", async () => {
+    wire.apiFetch.mockResolvedValue({ note: { title: "API boundary" } });
+    const mounted = mount();
+    fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
+    fireEvent.click(await screen.findByRole("button", { name: /API boundary, Note/i }));
+    const selectedRow = within(screen.getByRole("grid", { name: "Filed notes" })).getByRole("row", { name: /API boundary/i });
+    expect(screen.getByTestId("room-files-open")).toBeEnabled();
+
+    mounted.rerender(<RoomFiledNotesSection projectId={projectId} resourceRefs={[ref]} resourcesState="loading"
+      refreshResources={mounted.refreshResources} followCurrentResources={async (result) => result} members={[]}
+      request={null} onRequestHandled={mounted.onRequestHandled} />);
+
+    const section = screen.getByTestId("room-files");
+    expect(within(section.querySelector("header")!).getByRole("status", { name: "READING FILES · LAST READ" })).toBeVisible();
+    expect(section.querySelectorAll(":scope > .surface-state-chip")).toHaveLength(0);
+    expect(within(section).getByRole("row", { name: /API boundary/i })).toBe(selectedRow);
+    expect(selectedRow).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("room-files-open")).toBeDisabled();
+    expect(wire.apiFetch).toHaveBeenCalledTimes(1);
   });
 
   it("offers Retry for an uncached Note read failure before any row is selected", async () => {

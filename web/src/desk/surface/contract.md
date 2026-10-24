@@ -915,7 +915,8 @@ A drawer's or the Floor's objects as icons: 112 px columns, 6 px rows,
 ### ObjectList
 
 The drawer's list view (A-2L): a `grid` with Name (sprite + name), Kind,
-When, State (one lamp + word).
+When, State (one lamp + word) by default. Providers can declare only the
+columns their projection supplies.
 
 - `label`, `rows: ObjectListRow[]` (`id, kind, name, kindWord?, when?,
   whenSort?, state?: { label, tone }, sprite?, group?`); `group` (PHILO-14
@@ -924,6 +925,12 @@ When, State (one lamp + word).
   header is a strip of chrome Buttons on the Steel plate (raised; the
   active one sunken, `aria-sort` on its `columnheader`); the species sorts
   by `sort` (When by `whenSort` when given)
+- `visibleColumns?: readonly ObjectSortKey[]`: omitted preserves all four
+  columns; Name is always present, with other requested columns in canonical
+  order. Header and row cells use the same declaration. Filed Notes uses
+  Name/Kind without empty When/State columns; this does not infer provider
+  capabilities or change selection, sorting or Open. One/two-column lists
+  keep their columns at narrow widths instead of duplicating folded metadata.
 - `selectedId?`, `onSelect?(id)`, `onOpen?(id)`: the selection IS the row
   (the blue plate). No `[ ]` / `[x]` mark, ever. The row's one verb is the
   name Button, stretched over the row.
@@ -933,7 +940,8 @@ When, State (one lamp + word).
   accessible name.
 - One Tab stop; arrows walk rows; Space selects; Enter opens.
 - Rows are at least 44 px and never shrink below their content in a short
-  scrolling list (PHILO-14 A2: the 393 fold line ran below the row). In a `surface` of 520 px or less Kind and When
+  scrolling list (PHILO-14 A2: the 393 fold line ran below the row). For the
+  default four-column list, in a `surface` of 520 px or less Kind and When
   fold under the name (`KIND · WHEN`, the FoldLine of DeskListView without
   its marks) and the sort gadgets grow to 44 px. The fold is VISUAL only:
   all four headers stay, the Kind and When cells stay in their columns for

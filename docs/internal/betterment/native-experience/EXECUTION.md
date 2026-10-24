@@ -858,3 +858,202 @@ The two timing-sensitive Firefox cases are marked slow and ran explicitly
 under the lock; quick's not-slow affected selection ran zero, not another
 pair of browser passes. Ask as the second report consumer/cross-window job
 and owner-provider/hardware acceptance remain open.
+
+## Eighth delivery: Room/list visual adoption — [PR1456](https://github.com/karolswdev/HoldSpeak/pull/1456)
+
+Branch feat/native-room-visual-wave8-20261024; worktree
+/Users/karol/dev/tools/wt-native-room-visual-wave8-20261024. Canvas B/F were
+painted first, preserving18 boards and existing Agent/Hand/result context.
+Files precedes optional Sources; empty Project setup requires explicit
+Sources→Add source. Name/Kind are the real filed-Note columns, using the
+same public ObjectList as before and the same production section in Components.
+Other consumers retain default four-column/keyboard/sort behavior. Failed
+Sources reads now appear inside SurfaceSection and auto-disclose their retry;
+the old :has visibility rule could otherwise hide that error.
+
+Focused source proof95/95 in four files and post-ff whole-tree types pass.
+The first source advisory required completed geometry evidence. The browser
+walk found a52px refresh shift and a clipped local reference outcome, both
+fixed below; all four focused cases now pass and final local Sol advisory is
+RATIFY. No forced raise/click, timeout inflation or visual acceptance is
+claimed. Final required quick is rerunning after integration rig corrections.
+
+## P10 audit before the proof extension — historical record
+
+Read-only audit found existing tests/e2e/test_ui_feedback_firefox.py covers
+three loaded Settings saves at1440/393 with actual fake-device WAV, nonblank
+PNG/window/field state, heartbeat/response timing and an interrupted third
+POST retried with identical report bytes. It does not assert transcript
+completion/provider or combined ASR-only retry, delayed capture Cancel,
+old-generation result fencing and actionable Settings after Done. Current
+SAVED is a retained-bundle receipt even when transcription fails; do not
+promote it to successful ASR. UiFeedbackHost unit and backend route tests
+cover individual boundaries separately. Firefox revisions1497/1522 are cached.
+This audit did not run tests or establish the historical freeze's root cause.
+
+The production transcribe route reads the saved WAV through configured
+on_transcribe_admitted with principal/verbatim/provider boundary. The subsequent isolated Firefox lifecycle extension in #1455 proves the
+combined flow against that route and a deterministic configured speech
+stand-in, as recorded above. It preserves bundle identity through retry and
+fences cancellation/late results without proving owner-provider quality or
+physical abort. This audit established no new product defect.
+
+
+### Native refresh stability found during the visual walk
+
+Actual desktop pointer evidence showed Sources moving52px after exact Note
+return: a later resource read inserted READING FILES and LAST READ body rows
+above retained content. Room was sole front; this was layout movement, not
+Note z-order. The visual slice now presents a truthful combined retained-read
+indicator in the existing action/header row beside disabled Open note. Initial
+no-row reading, genuine failure/Retry and return receipts keep their meaning.
+A focused section regression passes11/11 and types pass. Actual held-response
+no-jump proof passes at1440/393; it is not replaced with networkidle,
+forced raise/click or arbitrary timing waits. The shared design lesson is
+stable targets during a normal background read, without hiding stale state.
+
+
+### Completed focused visual proof, final integration pending
+
+Four new actual Chromium cases pass across focused runs: Room1440/3932/2
+and local Components1440/3932/2 after fixes. Real Room/read producer and a
+held real resource response prove retained Files row/Sources offsets are
+identical before/held/after at both widths, with current-read disabling and
+last-read state visible. Seven action nine-point probes each width have zero
+faults; real Note Open/return retains exact selected/focused Project row.
+The degraded Sources state is visible and Try again reads actual recovery.
+
+The reference's first callback proof missed an offscreen outcome in a228px
+low desktop frame. The fixture now reveals each explicit local Open outcome
+inside its existing body, including repeat same-ref Open; passive read and
+window geometry stay untouched. Real viewport/foot/hit assertions now pass
+at both widths, with zero real fixture IO. This is an actual presentation
+fix, not test scrolling. Evidence stays in
+`.tmp/evidence-shots/native-room-visual-wave8/`; required quick additionally
+includes the existing five-case Project source/Ask/save/return regression.
+No whole-package, owner aesthetic or full-suite green is claimed.
+
+
+### Integration rig corrections and remaining default-frame adoption
+
+The first combined9 browser run passed6 and found3 rig failures: Sources
+Retry matched a still-inflight injected degraded response; two Components
+arrivals required a visible intermediate Chair even when the intended app
+was already in Floor. Fault injection now decides its fault at fulfillment
+and actual UI recovery is observed; reference arrival crosses a real visible
+First Sentence gate if needed, otherwise awaits actual Components/Patterns.
+No global helper, product state, timeout budget or behavior assertion changed.
+The three former failures pass together under -n3. Final required combined
+quick is being rerun.
+
+The very short Components frame was ordinary isolated populated-Desk arrival,
+not a fixture resize: y612..840 with a135px body. The local outcome now
+reveals correctly there; usable default sizing when another application is
+open remains a P01 adoption item. Its root cause is not established and this
+slice does not replace compositor sizing policy with a forced minimum.
+
+
+## Deployment receipt for #1454 and #1455 — 2026-10-24
+
+#1454 was verified as backendccec94435a7b7e7677446e7ce67da0eba8c0f637,
+frontend3e1c98209c61a463, PID85784. After the test-only #1455 merge the
+verified backend is `b00d95eded8eab88d5bac81d5579934c6f769432`, frontend
+`3e1c98209c61a463`, PID31240. Both checks report owns_database true, no
+diagnoses, health/Desk/Conductor/Engines200. CLI/MCP source matches and
+feedback defaults on; Presence remains off. The coalesced latest-main tape
+uses the prepared bundle without rebuilding a live runtime checkout.
+
+
+### Second integration run: focus remains a real open finding
+
+The second combined quick was RED: 4,312 UI checks passed and one Thought
+return assertion ran before its passive return subscription consumed the
+queued request. That assertion now awaits the actual returned range, matching
+the existing closed-window case; wrong-window and changed-body checks remain.
+The named case passes independently. The nine-browser run passed eight, but
+Project return at 1440 selected the right row and raised the Project while
+keyboard focus stayed on Ask. Five serial reproductions yielded one failure
+and four passes; twelve frame samples retained the wrong active element.
+This is not classified as harmless test timing or fixed by awaiting/forcing
+focus. Causal investigation is in progress, with passive focus diagnostics
+retained on failure. The visual slice remains unmerged pending the fix and
+required quick. Sweep110, canon27 and repository guards1,126 passed.
+
+
+### Latest completed main tape: #1454 remains RED
+
+Read-only audit of ccec944's completed tape found six failures: one Agent
+Hand-again check, one Components arrival check, one narrow Thought source
+return hit check and three late Room section geometry cases. The Hand test
+waits for registered rather than instruction sent; that timing mismatch is
+not repaired by this slice. Components arrival is covered by the wave8 rig
+correction. Thought393 retained its current caret/text/focus and viewport/
+footer placement, but failed elementFromPoint ownership; blocker identity
+was not captured, so cause remains unknown. Room held-past-cap and delayed
+Sources/Plan cases measured44px movement. Their old automatic source-setup
+expectation also needs reconciliation, but that does not dismiss movement.
+Wave8's retained Files read is a different path. These findings remain open
+in P01/P03/P06; no latest-main full-suite green is claimed. The #1455 tape
+has now started against its prepared runtime without rebuilding it.
+
+
+### Diagnosed Project return-focus correction
+
+The passive focus-call trace showed an enabled, connected, selected row
+inside an open Files fold, but computed visibility:hidden at the exact
+focus call. The Room's existing settling body correctly hides unfinished
+layout; the filed return had incorrectly consumed its sequence before the
+browser accepted focus. The section now receives the existing body/Files
+slot presentation-ready state and keeps that focus pending until shown,
+marking it consumed only after the target is active. This adds no observer,
+polling, forced raise or new focus controller. A twelve-case section run
+passes, including a held presentation return that focuses once when shown.
+The rebuilt whole source/Ask/save/return job passes at1440/393. Final
+combined quick is running after this diagnosed product correction.
+
+
+### Final fixture observer correction
+
+After the presentation-ready fix, both actual return widths and three extra
+serial desktop runs pass. The next combined quick passed4,314 UI checks,
+110 sweep,27 canon and1,126 guards, but the new Components1440 test counted
+only the host's ambient POST /api/desk/presence as forbidden fixture IO. Its
+local receipt, viewport, footer and hit checks had already passed. Both
+bounded fixture observers now exclude exactly that host heartbeat; all other
+API mutations/model calls and synthetic resource GET checks remain. The named
+reference pair passes2/2 in7.57s. This is unrelated to the disabled native
+Presence host. Whole-tree typecheck exits0; required final quick is rerunning.
+
+
+### Fault release must follow the actual recovery command
+
+The next combined run again passed4,314 UI and eight browser cases. The
+Room1440 fault case cleared its injected Sources refusal before attempting
+the real Try again click. A normal automatic Room read could then recover
+and detach that button before Playwright activated it. That is a rig race,
+not evidence that Retry failed. The injection release is being bound to the
+actual button click; the real server read, error disappearance, compact state
+and existing reachability assertions remain required. No product change is
+proposed for this test ordering failure.
+
+
+The corrected real-click fault boundary passes both Room widths (2/2,14.64s;
+`.tmp/visual-room-retry-click-boundary-focused.log`). A delegated capture
+listener survives transient error-control remounts; only the actual Sources
+Retry click releases the refusal. The route still obtains the real server
+response before deciding whether to inject that refusal. Root inspected this
+mechanism and retained the existing hard UI/read/geometry assertions.
+
+
+### Eighth slice: integrated delivery proof
+
+Required final quick is GREEN (`.tmp/quick-native-room-visual-click-boundary.log`):
+build,4,314 UI checks, all nine affected browser cases together (14.72s),
+110 desktop sweep,27 canon and1,126 repository guards. Final whole-tree
+typecheck exits0 (`.tmp/typecheck-room-visual-ready-fix.log`). The diagnosed
+loading-visibility focus seam and real-click fault injection correction are
+included. Root verified the focused evidence and final run; earlier red
+attempts above remain part of the record. The first visual Room/list slice
+is delivered in [PR1456](https://github.com/karolswdev/HoldSpeak/pull/1456); no whole package, full-suite green or owner aesthetic
+acceptance follows from this bounded passing result. Desktop/phone owner
+previews21/22 were opened in Preview and their folder in Finder.

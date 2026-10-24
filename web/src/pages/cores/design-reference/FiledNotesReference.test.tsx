@@ -15,14 +15,26 @@ afterEach(() => { cleanup(); wire.apiFetch.mockReset(); wire.openRef.mockReset()
 
 describe("Components filed Note specimen", () => {
   it("uses the Room Files controller and local read/Open callbacks", async () => {
-    render(<FiledNotesReference preset="filed-notes" />);
-    expect(wire.apiFetch).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-    fireEvent.click(await screen.findByRole("button", { name: /Review record, Note/i }));
-    fireEvent.click(screen.getByTestId("room-files-open"));
-    await waitFor(() => expect(screen.getByText(/OPENED LOCALLY/)).toBeInTheDocument());
-    expect(wire.apiFetch).not.toHaveBeenCalled();
-    expect(wire.openRef).not.toHaveBeenCalled();
+    const originalScroll = Object.getOwnPropertyDescriptor(Element.prototype, "scrollIntoView");
+    const scroll = vi.fn();
+    Object.defineProperty(Element.prototype, "scrollIntoView", { configurable: true, value: scroll });
+    try {
+      render(<FiledNotesReference preset="filed-notes" />);
+      expect(wire.apiFetch).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
+      fireEvent.click(await screen.findByRole("button", { name: /Review record, Note/i }));
+      expect(scroll).not.toHaveBeenCalled(); // a passive Files read leaves the viewport alone
+      fireEvent.click(screen.getByTestId("room-files-open"));
+      await waitFor(() => expect(screen.getByText(/OPENED LOCALLY/)).toBeInTheDocument());
+      expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "nearest", inline: "nearest" });
+      fireEvent.click(screen.getByTestId("room-files-open"));
+      await waitFor(() => expect(scroll).toHaveBeenCalledTimes(2));
+      expect(wire.apiFetch).not.toHaveBeenCalled();
+      expect(wire.openRef).not.toHaveBeenCalled();
+    } finally {
+      if (originalScroll) Object.defineProperty(Element.prototype, "scrollIntoView", originalScroll);
+      else Reflect.deleteProperty(Element.prototype, "scrollIntoView");
+    }
   });
 
   it("keeps refusal, moved membership, and unavailable Note distinct with no real IO", async () => {

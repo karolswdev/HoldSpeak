@@ -61,7 +61,7 @@ green is claimed. Recipe closeout 115/117 measures another repair lane.
 
 | Package | Actual delivery | Remaining adoption |
 | --- | --- | --- |
-| P01 windows/commands | Partial: repository identities, zoom policy #1444, arranged-growth #1449. Zoom/reload normal-rect repair #1454 has exact browser proof, local advisory RATIFY and required quick green; owner sizing stays separate. | View history/selection/scroll restoration, command origin, narrow chooser, broad focus/close/reload behavior. |
+| P01 windows/commands | Partial: repository identities, zoom policy #1444, arranged-growth #1449. Zoom/reload normal-rect repair #1454 has exact browser proof, local advisory RATIFY and required quick green; owner sizing stays separate. | View history/selection/scroll restoration, command origin, narrow chooser, usable default frames on a populated Desk, broad focus/close/reload behavior. |
 | P02 resources | Partial: real registered-repository read/inspect and local reference. | Directory/KB second consumer, selection/range and broader provider/collection adoption. |
 | P03 input/voice | Partial: active Thought captured target, recovery, writer/undo and shared Editing. | Ask/Settings/Pad policy adoption, native delivery, learning/macros and complete J1. |
 | P04 conversations | Partial: Note-only version pinning, Ask/save/source/Thread doors and open/closed source return. #1451 removes the global run card that covered Stop. | Broader thread interruption/retrieval, Memory/Activity and complete J3. |
@@ -85,8 +85,12 @@ shots show working source/return behavior, but do not establish the desired
 Workbench × Pop!_OS quality. Visual adoption is explicit unfinished work in
 P01/P02/P03/P04/P06/P08/P10, not a final cosmetic step after every domain.
 
-1. Finish the current bounded Project integration and the diagnosed zoom/
-   browser repairs; ship only the actual passing slices.
+1. Finish the current bounded Room/list integration, including the observed
+   return-focus attempt while its loading body is hidden. Reconcile the latest
+   full-tape narrow Thought hit-ownership and late Room section movement
+   findings before calling the existing cross-app path stable; the Files
+   retained-refresh proof does not cover delayed Sources/Plan arrival. Ship
+   only the actual passing slices.
 2. Before widening migration to Meetings/Agents, reconcile the already-adopted
    Desk→resource→Note→Ask→Project and Settings views against their paired
    canvases and the living Components reference. Use the existing J1/J3/J5/
@@ -108,7 +112,10 @@ P01/P02/P03/P04/P06/P08/P10, not a final cosmetic step after every domain.
    reconcile adoption against all 47 map rows before calling the framework
    delivered. Preserve the original adversarial findings and unresolved scope.
 
-**First visual slice: Project Room and the shared collection.** Preserve the
+**First visual slice: Project Room and the shared collection — [PR1456](https://github.com/karolswdev/HoldSpeak/pull/1456).** The actual Room/reference cases pass
+at1440/393, including stable retained refresh and presentation-ready exact
+return focus. The public list contract and Canvas B/F track this adoption.
+The following scope is implemented; owner visual acceptance remains open. Preserve the
 Project lead and existing Ask entry; put filed work before optional Sources.
 A Project without watched sources must not automatically expand three inactive
 connection cards. Keep Sources compact with an explicit Add source action;
@@ -116,7 +123,11 @@ existing provider/account composition opens on intent or actionable failure.
 Use the current ObjectList with an explicit optional visible-column set so
 this Note-only provider shows Name/Kind rather than empty When/State columns.
 Other consumers retain their declared columns, keyboard selection and Open
-behavior. Mirror the same section in Components and revise Canvas B/F before
+behavior. Retained-loading state belongs in the existing control row
+so a background read does not push rows and pointer targets down the view.
+Keep last-read qualification and current-read disabling; initial reads and
+genuine failures remain explicit. This uses the existing section/state
+composition rather than a new status controller. Mirror the same section in Components and revise Canvas B/F before
 build. Project membership, Note reads, privacy and watch authority do not move.
 
 This scope follows actual captures and source: ProjectRoomCore auto-opens
@@ -459,7 +470,9 @@ disabled boundary. P01 is required, but P10 begins in Wave 1 and returns for cro
 
 **Acceptance:** J7 restores Desk/window state, raises the intended target, keeps bounded terminal/editor exceptions, captures
 reports with one saved bundle ID, ASR-only retry, cancel fencing and origin return, separately from operation target/egress/receipt
-and unknown/readback/replay. Include three consecutive Firefox Settings reports; capture loaded/empty/busy/failed/resumed fixture
+and unknown/readback/replay. Include three consecutive Firefox Settings reports with transcript status,
+same-bundle ASR-only retry, cancellation/late-generation fencing and usable
+Settings return; capture loaded/empty/busy/failed/resumed fixture
 states as applicable. Validate 1440/393 layout and return. Do not re-enable Presence or claim portable-client coverage.
 
 **Documentation with the change:** update shell/reference adoption, feedback/egress placement, Components consumer links, Presence
