@@ -383,9 +383,9 @@ class TestTheThoughtSends:
         return action
 
     def _back(self, page: Any, win: Any, width: int, *, keyboard: bool = False) -> None:
-        """Use the phone's actual frame Back, or the desktop host's Back."""
+        """Use the phone frame Back or this note's Send sheet Back."""
         back = (win.locator(".desk-gadget-close") if width < 720
-                else win.locator(".thought-send-foot").get_by_role("button", name="Back", exact=True))
+                else win.locator("[data-testid=thought-send] [data-testid=send-back]"))
         if keyboard:
             back.focus()
             page.keyboard.press("Enter")
@@ -436,13 +436,26 @@ class TestTheThoughtSends:
 
     @pytest.mark.parametrize("width", list(SIZES))
     def test_write_a_thought_then_send_it_to_a_folder(self, width: int) -> None:
-        """Clipboard, Back focus, exact saved revision, target geometry and real folder dispatch."""
+        """Back focus, exact saved revision, target geometry and real folder dispatch."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
             browser = pw.chromium.launch(headless=True, args=["--disable-smooth-scrolling"])
             ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1)
-            ctx.grant_permissions(["clipboard-read", "clipboard-write"])
+            # Keep incidental Copy IO inside this context; this case proves
+            # the isolated folder dispatch, not native clipboard custody.
+            clipboard = {"text": ""}
+            ctx.expose_function("__thoughtClipboardWrite", lambda value: clipboard.__setitem__("text", str(value)))
+            ctx.expose_function("__thoughtClipboardRead", lambda: clipboard["text"])
+            ctx.add_init_script("""
+                Object.defineProperty(navigator, 'clipboard', {
+                  configurable: true,
+                  value: {
+                    writeText: async (text) => window.__thoughtClipboardWrite(String(text)),
+                    readText: async () => window.__thoughtClipboardRead(),
+                  },
+                });
+            """)
             page = ctx.new_page()
             page.set_default_timeout(30_000)
             errors: list[str] = []
