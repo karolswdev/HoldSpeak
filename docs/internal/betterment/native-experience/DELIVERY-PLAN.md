@@ -5,6 +5,33 @@ settled the stack. These work packages are not implemented by publishing this
 plan. They preserve the current fast cycle, public control API, runtime
 protocols and Workbench meets Pop!_OS direction.
 
+## Planning checkpoint — owner correction, 2026-10-23
+
+**DRAFT — UNCHECKED, awaiting Muad'Dib.** Finish the bounded repairs already
+underway; refine the strategy before starting further implementation. The
+owner clarified that this work should have continued the plan and strategy,
+not immediately turned the audit findings into code changes.
+
+[The refined strategy](STRATEGY.md) makes the missing choices explicit. Its
+[adversarial review](checks/strategy-adversarial-2026-10-23.md) found three
+material gaps: same-resource instance/lifetime identity, command scope and
+selection authority, and separate read/edit/operation state with real task
+and craft proof. These must be designed in the first packet; another list
+of component extractions would leave those decisions unresolved.
+
+| Sequence | Work to settle | Concrete output and limit |
+| --- | --- | --- |
+| Now: design refinement | Recommend the identity/lifetime, command-scope and state-ownership choices in STRATEGY; declare actual provider/Git operations; choose complete owner jobs. | One coherent decision table, resource/preferences/Thought state canvases, keyboard/focus/return stories and named evidence gaps. This is design work, not a new implementation lane. |
+| First proposed pilot | Two supported resource-browser locations, file inspection, navigation/return, selected command targets and refused/stale reads. | Existing RepoWindow/provider plus the same proven seam in Components. Read/navigation proof does not certify general filesystem operations or the Git mutation job. |
+| Counterexample before broad adoption | Settings dirty/revision/retry and active Thought caret/IME/voice/undo. | Challenge ownership with unlike consumers before generalizing. Share smaller behaviors if a common controller requires unrelated flags. |
+| Complete transition job | Project or 1:1 preparation through source inspection, scoped Ask, retained material, delegation/result and return. | Actual resource/session/operation identities survive the app boundaries. The owner scenario and fixture must be named before execution claims. |
+| Compatible adoption | Collections, preferences, conversations and retained-work surfaces. | Per-consumer adoption and specialized exceptions in existing records; appearance and real task acceptance stay distinct from technical checks. |
+
+The implementation homes below remain useful source maps. Their original
+package numbers are not a build order or permission to start them. Keep the
+existing fast delivery cycle when a later design is settled; this refinement
+adds no 47-stage gate.
+
 ## Application-model correction
 
 The owner's clarification makes desktop applications the architecture unit.
@@ -52,7 +79,7 @@ Use the [individual records](adversarial/README.md) for each affected job. This
 is proposed work, with concrete acceptance challenges; the 47 reviews and 204
 challenges do not close betterment recipes or create another approval queue.
 
-## Work packages and proof
+## Candidate implementation homes and proof
 
 Each row can require several small PRs; one PR handles one concern, a few
 files, and its real consumer. Targets name existing integration homes, not
@@ -106,16 +133,18 @@ before parking obsolete overrides. See the
 No mass class renaming, import cleanup or all-at-once stylesheet rewrite is
 needed to start improving the product.
 
-## Local measurements and proposed targets
+## Local measurement protocol
 
-No performance measurements were collected by this research. The following
-are working targets for the first baseline, not claims about PR1428:
+No performance measurements were collected by this research. Collect a named
+scene baseline before proposing new timing or resource budgets. Earlier
+provisional numbers were not adopted acceptance thresholds. Existing canon
+guards remain; this protocol adds no merge gate or owner budget.
 
-| Property | Proposed target and method |
+| Property | Observation and method |
 | --- | --- |
-| Direct feedback | Aim for visible local acknowledgment within 100ms for an ordinary command; measure input-to-paint in the foreground production build. The existing 500ms usability floor remains the current canon. |
-| Discrete interaction responsiveness | Target INP at or below 200ms for a representative session. Event Timing support varies; record the instrument used and retain browser traces. INP is not a continuous-drag benchmark. |
-| Drag/resize | Aim for frame work that fits the display refresh period: 16.7ms at 60Hz, 8.3ms at 120Hz. Inspect frame intervals, forced layout and main-thread/paint work; rAF timing alone is not proof of displayed smoothness. |
+| Direct feedback | Measure input-to-paint for an ordinary command in the foreground production build, idle and with background work. Record the local acknowledgment separately from completion of the operation. |
+| Discrete interaction responsiveness | Record representative-session latency and its instrument/browser support; retain browser traces. A discrete interaction metric does not establish continuous-drag smoothness. |
+| Drag/resize | Compare frame work with the measured display refresh period. Inspect frame intervals, forced layout and main-thread/paint work; rAF timing alone is not proof of displayed smoothness. |
 | Work preservation | No lost or overwritten draft, selected range, captured request or retained voice on the tested interruption/retry/refresh path. Assert exact values and authoritative outcomes. |
 | Layout and access | Useful at 1440 and 393, plus constrained floating-window widths and head stress poses. No hidden action, clipped label, overlapping hit ownership or dead-end keyboard path. Check text zoom and reduced motion. |
 | Cost | Record load/parse, React renders/commits, layout/paint, DOM count and resource use for 1, 5, 10 and 20 windows. There is no established memory or bundle-size budget yet; derive one from measured scenes. |

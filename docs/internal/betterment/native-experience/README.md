@@ -9,6 +9,19 @@ build a nearly OS-native experience. This packet records research and a
 proposed delivery architecture. Recommendations are not shipped capabilities,
 new canon, or owner aesthetic acceptance.
 
+## Current checkpoint: refine the strategy before further code
+
+The owner clarified on 2026-10-23: finish the bounded repairs already underway,
+then continue refining the plan and strategy before further implementation.
+[STRATEGY.md](STRATEGY.md) is the resulting **DRAFT — UNCHECKED, awaiting
+Muad'Dib**. It recommends concrete identity/lifetime, command-scope and state
+ownership choices, a resource → Settings/Thought → sourced-Ask falsification
+sequence, production/Components parity, and whole-job craft evidence.
+The [delivery plan](DELIVERY-PLAN.md) now separates immediate design work from
+later candidate implementation homes. The [advisory strategy review](checks/strategy-adversarial-2026-10-23.md)
+preserves the objections and unresolved evidence. No recommendation in this
+refinement has been acted on. Repair closeout is recorded in the synthesis.
+
 ## Result
 
 Retain React/TypeScript/DOM, the current Desk compositor, Zustand, RuntimeBus,
