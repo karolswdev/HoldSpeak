@@ -17,7 +17,7 @@ The larger project-update Stop draft is parked at `54a7436b7` outside main;
 its last edits and new tests are unverified.
 
 
-Capture first words repair: New Note keeps the attempt's seed and captured
+Capture first words repair — #1436: New Note keeps the attempt's seed and captured
 keys through failed creation, Retry, timeout and editable-field handoff.
 Successful delayed creation also delivers the snapshot to that Note without
 rearming keyboard interception. No new editor or draft store. Focused proof:
@@ -62,8 +62,8 @@ included in this packet.
 
 The reproduced Settings return conflict is repaired above; the original
 control retained the draft and Retry while the leave/return case lost it.
-Ask saved-thread read authority shipped in #1433. Capture and Meeting outcome
-repairs are in closeout. The larger automation Stop candidate is parked on
+Ask saved-thread read authority shipped in #1433. Capture first-word retention is repaired in #1436; Meeting outcome
+closeout remains. The larger automation Stop candidate is parked on
 `fix/update-stop-repair-20261023` at `54a7436b7`, not merged or deployed;
 its final edits and new regressions are unverified. The owner clarified that
 strategy/design refinement precedes further implementation.
@@ -2255,6 +2255,8 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 | Runs on (16c): a per-object wire on the board (thought/workbench/agent/recipe/project overrides; the parked AssignmentEditor sheet edited them; the contextual atom now only reads them and opens Runs on); FOUND model files and an unrecorded Whisper (add-to-library needs a detected_artifact_id detect does not carry); Try it through the route for jobs other than Thoughts & notes (route_probe accepts only ask.answer); the phone list cannot pin an inherited engine as a job's own; 25 atlas cases still drive the Concierge flow (Add = use for summaries; the window closes) | — | — |
 
 ## Last merged (newest first)
+
+- **#1436 — Capture attempt retention:** seed/gap typing survives refused or delayed Note creation, timeout and editable-field handoff, with exact Retry and no renewed interception. 34 focused cases and required quick green: 4,169 related web tests, five browser cases, 110 sweep, 27 canon, 1,126 repo guards; inspected 1440/393 key-handoff captures. Reload/global-receipt durability remains open.
 
 - **#1434 — Settings leave/return retention:** supersession names covered jobs and accepted leave paths; later same-value conflicts retain the draft and Retry uses the authoritative revision. 66 focused cases, 4,155 related web tests, seven affected Python/browser cases and required quick green; 1440/393 captures inspected. Other Settings audit conditions remain open.
 

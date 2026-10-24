@@ -63,7 +63,6 @@ creation uses the same snapshot without rearming keyboard capture. These
 component observations do not establish durability across reload or another
 global failure receipt replacing this attempt's Retry. Required quick passed: build, 4,169 related web tests, five real-browser
 key/window cases, 110 desk sweep, 27 canon and 1,126 repository guards.
-Root inspected every-key captures at 1440 and 393. The repair PR records
-delivery.
+Root inspected every-key captures at 1440 and 393. [PR1436](https://github.com/karolswdev/HoldSpeak/pull/1436) records delivery.
 This does not settle the other Capture, editor, voice-targeting or appearance
 findings in this audit.
