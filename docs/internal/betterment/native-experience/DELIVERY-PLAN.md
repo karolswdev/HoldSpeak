@@ -70,7 +70,7 @@ green is claimed. Recipe closeout 115/117 measures another repair lane.
 | P07 agents/automation | Modernization migration not started; existing agent/automation features remain. | Hand/result/terminal/occurrence adoption and complete J4. |
 | P08 preferences | Partial: Settings You truthful save/retry and shared Forms. | Other writers, Setup, Engines, Accounts and complete J6. |
 | P09 Send | Modernization migration not started. Existing isolated real folder-byte jobs provide baseline evidence. | Producer/Needs/Delivery adoption, frozen identity/unknown/replay and complete cross-job egress. |
-| P10 shell/reference/feedback | Partial: shared Resources, Forms, Editing and Conversation; local Files specimen delivered with P06. Feedback remains enabled; Presence off. | Cohesive shell/visual adoption, operation outcomes, three consecutive Firefox Settings reports and measured native-feeling behavior. |
+| P10 shell/reference/feedback | Partial: shared Resources, Forms, Editing and Conversation; local Files specimen delivered with P06; controlled Settings Firefox lifecycle proven through local speech stand-in. Feedback enabled; Presence off. | Ask report consumer/cross-window adoption, cohesive shell/visual and operation outcomes, configured-owner provider/hardware acceptance and measured native-feeling behavior. |
 
 Final required quick and whole-tree typecheck pass for the first Project
 slice. Integration corrections and bounded evidence are recorded in
@@ -436,9 +436,11 @@ Edit-to-note distinct from external Send.
 [PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438). Forms (#1439), Editing (#1443), and Conversation (#1446/#1448) also use
 production compositions with local IO. P06 adds the same Filed Notes section
 as a local Lists example, with no real-resource IO. #1451 parks duplicate
-run-scoped global status so producer Stop remains reachable. Shell/visual/
-feedback/operation reconciliation and the three-consecutive-report Firefox
-job remain open. Presence stays disabled.
+run-scoped global status so producer Stop remains reachable. The controlled combined Firefox Settings lifecycle now has real1440/393
+proof: three saved bundles, capture cancellation, byte-stable ASR-only retry,
+late-generation fencing and usable return. The configured speech seam uses
+an isolated admitted stand-in; this does not prove owner hardware/provider
+quality or latency. Shell/visual/operation adoption remains incomplete. Presence stays disabled.
 
 **Primary families:** `native_presence`, `desktop_workspace`, `feedback`, `components_reference`.
 

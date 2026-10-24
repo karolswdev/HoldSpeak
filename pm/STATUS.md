@@ -2735,3 +2735,12 @@ backend12366e1e32685bc541a740b3f7640f6ee39681fc. Database ownership true,
 diagnoses empty, four routes200; CLI/MCP aligned, feedback on and Presence off.
 First visual Room/list slice is now active in wave8 against the updated plan:
 Canvas B/F painted first, product build in progress; no visual acceptance yet.
+
+
+Firefox feedback lifecycle extension is test-only and source-reviewed:
+final Sol RATIFY, explicit slow Firefox2/2 at1440/393. Measured zero mic/save
+starts through cancelled capture; same-bundle ASR-only Retry, late old result
+fencing and usable Settings return pass through real routes with a local
+admitted stand-in. No owner-provider/hardware or old-freeze-cause claim.
+Required quick passes (build,110 sweep,27 canon,1,126 guards); explicit slow
+Firefox2/2 is separate proof, not quick affected cases. Full P10 stays partial.

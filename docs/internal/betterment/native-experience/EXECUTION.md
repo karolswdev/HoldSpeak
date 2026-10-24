@@ -817,3 +817,42 @@ Desk/Conductor/Engines 200. CLI/MCP source aligned, feedback defaults on,
 Presence remains off. Prepared latest-main tape is coalesced without rebuilding
 this served checkout. This is the Project delivery plus reconciled plan, not
 owner visual acceptance or whole-package completion.
+
+
+## Firefox feedback lifecycle proof extension
+
+Branch test/native-feedback-firefox-wave9-20261024; worktree
+/Users/karol/dev/tools/wt-native-feedback-firefox-wave9-20261024. Test-only
+extension; no product/helper code changes. The old Firefox baseline already
+covered3 loaded Settings saves and exact-byte third save transport Retry.
+The new test exercises the real capture/save/transcribe UI/routes with
+Firefox fake-device audio and a deterministic configured admitted speech seam.
+
+Two explicit slow cases at1440/393 pass in29.23s under one locked -n1 run
+(`.tmp/feedback-firefox-lifecycle-advisory-recheck.log`). Measured gUM calls
+remain0 through held-font capture, Cancel and late release; no save, recording
+or wrapper survives that cancelled capture. First real recording requests1
+shared stream; ASR-only Retry stays1→1. Three distinct bundles produce3 save
+POSTs,4 transcription POSTs/admitted calls and3 succeeded admission closes.
+Retry retains saved id/captured time/context/WAV/PNG; an older transcription
+can complete for its saved bundle after newer success without replacing the
+current strip. Done permits Settings edit and section navigation.
+
+Ordinary capture times: desktop1738/1161/1104ms, phone1660/1140/1136ms;
+heartbeat maximums329/343/332ms and317/320/329ms, below unchanged baseline
+budgets. Settings geometry is unchanged on return; DPR2 PNG dimensions match
+captured window bounds, with nonblank PNG and real16k fake-device WAV.
+Metadata-only facts and12 shots live in
+`.tmp/evidence-shots/ui-feedback-firefox-lifecycle/`.
+
+The first independent test advisory found a hardcoded no-recording fact;
+it is replaced with observed getUserMedia counts and assertions. Final Sol
+recheck RATIFY; not Muad'Dib's check. Root verified metadata and representative
+shots. This closes the controlled combined Firefox proof gap, not the unknown
+historical freeze cause, physical mic, owner-provider quality/latency, full
+P10 adoption or whole-suite green. Required quick passes: build,110 desk
+sweep,27 canon and1,126 guards (`.tmp/quick-native-feedback-firefox-lifecycle.log`).
+The two timing-sensitive Firefox cases are marked slow and ran explicitly
+under the lock; quick's not-slow affected selection ran zero, not another
+pair of browser passes. Ask as the second report consumer/cross-window job
+and owner-provider/hardware acceptance remain open.
