@@ -574,3 +574,37 @@ the same captured text as its quote/body. No product code changes. Whole-tree
 (`wt-native-range-fixture-fix-20261023/.tmp/quick-native-range-fixture.log`).
 Final integration now checks the actual whole-tree type result in addition
 to the behavioral quick checks; typecheck alone remains no task validation.
+
+
+## Pending Ask Stop obstruction repair
+
+Branch: fix/native-pending-stop-fix-20261023.
+Worktree: /Users/karol/dev/tools/wt-native-pending-stop-fix-20261023.
+A real 393 pending-run probe found the global GenerationTheater card over the
+producer's Stop: the Button was visible in the DOM but all 25 sampled hit
+points reached the card. The global card is now parked for run-scoped status;
+Ask keeps its own progress and Stop. Unscoped Meeting status remains. No new
+notification layer, positioning policy or cancellation protocol is introduced.
+
+Focused proof: 42 existing ambient/Ask unit tests and two real browser cases
+at1440/393 pass; whole-tree typecheck passes on #1450. Both browser cases
+check the Stop center and canonical nine points before any corrective scroll,
+click the actual Button, observe cancellation of the accepted invocation,
+and retain Stopped, the sent question and a newer draft after the held local
+model endpoint returns late. This proves local cancellation authority, not
+physical abortion of a remote provider's compute. Shots and JSON live under
+`.tmp/evidence-shots/native-pending-stop/`. Independent Sol advisory RATIFY on the finished source and evidence; this
+is not Muad'Dib's check. Required quick green: build,22 related UI tests,
+two affected browser cases,110 desk sweep,27 canon and1,126 guards
+(`.tmp/quick-native-pending-stop.log`). No full package, remote-provider or
+owner aesthetic acceptance is claimed.
+
+Current deployed Desk after #1449/#1450: backend
+`a7e3117f6a66e835cc708ee6cc2553c703de4244`, frontend `3a92261f318ea320`,
+PID33426; owns_database true, diagnoses empty, health/Desk/Conductor/Engines200.
+CLI/MCP source matches; feedback defaults on in both wrappers, Presence stays
+off. The coalesced full tape uses the prepared bundle without rebuilding the
+served runtime. Prior #1448 tape found zoom/unzoom after reload losing the
+original unarranged rectangle, a Components picker readiness race, and a
+393 Send Note-open wait failure. These remain separately diagnosed reds;
+no latest-main full-suite green is claimed.

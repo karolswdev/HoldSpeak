@@ -21,16 +21,15 @@ four real-browser cases at 1440/393 and required quick green: build, 4,269 UI
 tests, 110 desk sweep, 27 canon and 1,126 repository guards. It includes independent Ask context, open/closed source return,
 stale-range refusal and the same source frame in Components. Root inspected
 the final captures; changed-source current caret stays visible and pending
-work names Ask. Saved Markdown provenance is editable; the active Note editor
-does not yet have source/thread link doors. Backend selected
-version admission/pinning is a separate slice; captured frontend text alone
-is not inference source freezing. [Execution](../docs/internal/betterment/native-experience/EXECUTION.md)
+work names Ask. Saved Markdown provenance is editable; at that first slice, active Notes still lacked source/thread doors and
+server-side source pinning. Both continued in #1448 below; captured frontend
+text alone was not inference source freezing. [Execution](../docs/internal/betterment/native-experience/EXECUTION.md)
 keeps actual PRs, scoped proof and remaining package/journey acceptance.
 
-Running Desk: backend `d51d4c174606fa55b056e872e52c2a61c45cc9c8`, frontend
-`da77569ec44d6a5a`; database ownership true, no identity diagnoses, health/Desk/
+Running Desk: backend `a7e3117f6a66e835cc708ee6cc2553c703de4244`, frontend
+`3a92261f318ea320`; database ownership true, no identity diagnoses, health/Desk/
 Conductor/Engines return 200. CLI/MCP match this source; feedback is enabled
-and Presence stays off. Five slices and the zoom repair run on this revision.
+and Presence stays off. Five slices, the zoom policy repair and arranged-growth repair run on this revision.
 The completed pinned #1443 tape passed all 44 Python batches and its full web
 baseline (5,528 passed). Its 11 browser failures are zoom/Room/Thought checks
 repaired in #1444/#1445 and the stale Forms specimen cases repaired below.
@@ -2656,3 +2655,15 @@ Test state on main (2026-10-05, after #864): FAST 13,846 passed with the #861 fi
 - #754 — Phase 13 C4
 - #756 — Phase 13 H-C4 attendees fix
 - #753 — Phase 13 close, Astra's record
+
+
+Pending-run Stop repair received independent Sol advisory RATIFY: run-scoped global
+status cards no longer cover the producer controls. Two real browser cases
+at1440/393 prove nine-point Stop access, accepted-run cancel and late local
+reply suppression while retaining the newer draft; 42 unit tests and final
+typecheck pass. Required quick is green:22 related UI,2 affected browser,
+110 sweep,27 canon and1,126 guards. Merge follows verification. The next P06 slice
+adds actual Project Files and exact job return; focused Room tests62/62 and
+final types pass, but the real whole-job browser checks and final advisory
+remain open. Latest full tape is not green: zoom restore across reload and
+Components/Send browser failures are being diagnosed separately.

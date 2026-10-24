@@ -528,11 +528,10 @@ function GenerationTheater() {
     [status],
   );
   if (!active) return null;
-  const capability = status?.capability && typeof status.capability === "object"
-    ? status.capability as JsonRecord : null;
-  const label = status?.label || (status?.scope === "run"
-    ? capability?.name || "Run"
-    : "Meeting analysis");
+  // Producer faces own run progress and Stop. A global card here can cover
+  // their controls, especially on a phone; keep this card for meeting intel.
+  if (status?.scope === "run") return null;
+  const label = status?.label || "Meeting analysis";
   return (
     <div className="ambient-theater" role="status">
       <header className="ambient-notice-head">

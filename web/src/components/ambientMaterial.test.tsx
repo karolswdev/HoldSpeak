@@ -125,16 +125,13 @@ describe("ambient Workbench notices", () => {
     expect(screen.queryByLabelText("Intelligence queue")).toBeNull();
   });
 
-  it("names an Ask run from its run frame instead of calling it meeting analysis", async () => {
+  it("leaves an Ask run to its producer face without a global card", async () => {
     mocks.frames.set("intel_status", {
       state: "running", scope: "run", capability: { kind: "ask", id: "ask", name: "Ask" },
     });
     render(<AmbientLayer />);
     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalledWith("/api/settings"));
-    const theater = screen.getByRole("status");
-    expect(theater).toHaveTextContent("Running");
-    expect(theater).toHaveTextContent("Ask");
-    expect(theater).not.toHaveTextContent("Meeting analysis");
+    expect(document.querySelector(".ambient-theater")).toBeNull();
   });
 
   it("renders complete learning text safely alongside the other notices", async () => {
@@ -150,6 +147,8 @@ describe("ambient Workbench notices", () => {
       });
     });
     const qlippy = await screen.findByLabelText("Qlippy");
+    expect(container.querySelector(".ambient-theater")).toHaveTextContent("Migration analysis");
+    expect(container.querySelector(".ambient-theater")).toHaveTextContent("Reconciliation checks");
     expect(qlippy.querySelector(".surface-well .ambient-content")?.textContent).toBe(body);
     expect(qlippy.querySelector("script")).toBeNull();
     expect(qlippy.querySelector(".qlippy-face")).toBeNull();
