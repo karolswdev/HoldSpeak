@@ -277,9 +277,9 @@ function DeskFaces() {
         </ApplicationBoundary>
       ))}
       {!arrivalRequired && repositoryWindows.map((repository) => (
-        <ApplicationBoundary key={repository.id} label="Repository">
+        <ApplicationBoundary key={`${repository.id}:${repository.resourceId ?? repository.id}`} label="Repository">
           <Suspense fallback={null}>
-              <RepoWindow repositoryId={repository.id} origin={repository.origin} />
+              <RepoWindow repositoryId={repository.resourceId ?? repository.id} windowId={`repository:${repository.id}`} initialPath={repository.initialPath} origin={repository.origin} />
           </Suspense>
         </ApplicationBoundary>
       ))}

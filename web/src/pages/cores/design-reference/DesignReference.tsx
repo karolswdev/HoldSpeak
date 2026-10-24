@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { DeskComposer } from "../../../desk/components/DeskComposer";
+import { RepositoryBrowserView } from "../../../desk/components/RepositoryBrowserView";
+import { useRepositoryBrowser, type RepositoryReadAdapter } from "../../../desk/components/RepositoryBrowserController";
+import type { RepoFile } from "../../../desk/repository";
 import {
   CycleGadget,
   FilterTokens,
@@ -25,8 +28,8 @@ import type { CoreProps } from "../core-types";
 import { ControlsGallery } from "./ControlsGallery";
 import "./design-reference.css";
 
-type Pattern = "forms" | "reading" | "lists" | "conversation" | "progress" | "controls";
-type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long";
+type Pattern = "forms" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
+type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed";
 
 /*
  * Shared consumer map: Forms uses GadgetRow/StringGadget/CycleGadget and
@@ -40,6 +43,7 @@ const PATTERNS: Array<{ id: Pattern; label: string }> = [
   { id: "forms", label: "Forms" },
   { id: "reading", label: "Reading" },
   { id: "lists", label: "Lists" },
+  { id: "resources", label: "Resources" },
   { id: "conversation", label: "Conversation" },
   { id: "progress", label: "Progress" },
   { id: "controls", label: "Controls" },
@@ -52,6 +56,12 @@ const STATES: Array<{ id: ExampleState; label: string }> = [
   { id: "empty", label: "Empty" },
   { id: "long", label: "Long" },
 ];
+
+const RESOURCE_FILES: RepoFile[] = [
+  { name: "src", path: "src", type: "dir", status: null },
+  { name: "README.md", path: "README.md", type: "file", status: "M" },
+];
+const RESOURCE_SOURCE = "# HoldSpeak\n\nA registered repository.\nRead this file in the current view.\n";
 
 const READING_RESULT = `# Decision record
 
@@ -140,6 +150,7 @@ const STATE_OPTIONS: Record<Pattern, Array<{ id: ExampleState; label: string }>>
   forms: STATES,
   reading: [STATES[0], STATES[3], STATES[4]],
   lists: [STATES[0], STATES[3]],
+  resources: [STATES[0], STATES[1], STATES[2], STATES[3], { id: "resumed", label: "Resumed" }],
   conversation: [STATES[0], STATES[1], STATES[2], STATES[3], STATES[4]],
   progress: [STATES[0], STATES[1], STATES[2]],
   controls: [],
@@ -334,6 +345,29 @@ function ListsPattern({ state }: { state: ExampleState }) {
   );
 }
 
+function ResourcesPattern({ state }: { state: ExampleState }) {
+  const adapter = useMemo<RepositoryReadAdapter>(() => ({
+    tree: async (path) => {
+      if (path === "src" && state === "failed") throw new Error("fixture refusal");
+      if (path === "src" && state === "busy") return new Promise<RepoFile[]>(() => {});
+      return state === "empty" ? [] : path === "src" ? [{ name: "index.ts", path: "src/index.ts", type: "file" }] : RESOURCE_FILES;
+    },
+    file: async (path) => path === "README.md" ? RESOURCE_SOURCE : "export const ready = true;\n",
+  }), [state]);
+  const browser = useRepositoryBrowser(adapter);
+  const presetStarted = useRef(false);
+  useEffect(() => {
+    if (presetStarted.current || browser.busy || state === "empty") return;
+    presetStarted.current = true;
+    if (state === "failed" || state === "busy") browser.navigate("src");
+    if (state === "resumed") browser.inspect("README.md");
+  }, [browser, state]);
+  return <section className="reference-example reference-resource" data-testid="reference-resource" aria-label="Resource pattern">
+    <div className="reference-example-head"><div><h2>Registered repository</h2><p className="reference-receipt">RepoWindow · read and inspect</p></div></div>
+    <RepositoryBrowserView browser={browser} />
+  </section>;
+}
+
 type ConversationMessage = { role: "user" | "assistant"; text: string; replyTo?: string };
 
 function ConversationPattern({ state }: { state: ExampleState }) {
@@ -430,6 +464,7 @@ function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleStat
     case "forms": return <FormsPattern state={state} />;
     case "reading": return <ReadingPattern state={state} />;
     case "lists": return <ListsPattern state={state} />;
+    case "resources": return <ResourcesPattern key={state} state={state} />;
     case "conversation": return <ConversationPattern state={state} />;
     case "progress": return <ProgressPattern state={state} />;
     case "controls": return <section className="reference-controls" data-testid="reference-controls" id="reference-panel-controls"><ControlsGallery hero={() => null} /></section>;

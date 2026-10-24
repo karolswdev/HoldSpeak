@@ -49,8 +49,24 @@ been adopted by a production feature.
 | Forms | GadgetRow, StringGadget, CycleGadget, ActionNotice, Button | Settings, Automation setup, Project editors |
 | Reading | ReadingDocument/Material, source doors, SurfaceWell | Ask results, Automation results, notes and source readers |
 | Lists | SurfaceRows/SurfaceRow, SurfaceSplit, StringGadget | People, Memory and object readers use these list/detail species |
+| Resources | RepositoryBrowserView + useRepositoryBrowser, DeskSortableTable fold/roving, ScrollHint, read adapter | RepoWindow is the production consumer; Components runs the same view/controller with an isolated fixture adapter |
 | Conversation | DeskComposer/ComposerWell, shared reading material | Live Ask uses ComposerWell; the PR DeskComposer host is parked; the reference is a local consumer |
 | Progress | ProgressPlan, Receipt, StateChip | Project Prepare/Steward and frontDoor source consumers; the reference's run is local specimen state |
+
+`DeskWindowFrame.preserveInitialRect?: boolean` keeps an explicitly pre-seated
+saved first rectangle through mount. It suppresses the automatic head-overlap
+reseat, while retaining work-area clamping, focus, hub reconciliation and all
+other frame behavior. Additional repository windows use it after the opener
+chooses a sibling seat; ordinary windows retain the default placement policy.
+
+The resource pattern keeps window identity outside the reader: each RepoWindow
+owns its view-local controller and uses a real tree/file adapter; Components
+supplies fixture reads to that same boundary. Back/Forward, selected inspection,
+stale-response fencing, retained-copy labels, missing/refused reads and narrow
+list/detail return belong to this pattern. Domain Git operations and resource
+write authority stay with RepoWindow/provider services. The reference is not a
+second production application. Durable view-history restoration and shared
+collection adoption are follow-on work, not claims made by this first consumer.
 
 Keep consumer claims at their actual granularity: a shared control, a pattern
 and a complete journey are different adoption claims. Parked code is not a

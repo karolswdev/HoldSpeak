@@ -197,7 +197,14 @@ export interface DeskState {
   /** Delivery Workbench projects open as their own Desk application window. */
   roadmapWindows: { slug: string; origin: { x: number; y: number } | null }[];
   /** Registered git sources open as physical desk drawers. */
-  repositoryWindows: { id: string; origin: { x: number; y: number } | null }[];
+  /** `id` is the window suffix: the repository id for the default view, or
+   * an opaque `view:*` id for an additional view of `resourceId`. */
+  repositoryWindows: {
+    id: string;
+    resourceId?: string;
+    initialPath?: string;
+    origin: { x: number; y: number } | null;
+  }[];
   /** Agent workbenches open as their own desk windows. */
   workbenchWindows: { id: string; origin: { x: number; y: number } | null }[];
   /** The pre-persistence "new workbench" chooser (HS-130-09): open before
@@ -350,6 +357,10 @@ export interface DeskState {
   openRoadmapWindow(slug: string, origin?: { x: number; y: number }): void;
   closeRoadmapWindow(slug: string): void;
   openRepositoryWindow(id: string, origin?: { x: number; y: number }): void;
+  /** Create an independent view of a repository; returns its window suffix. */
+  openNewRepositoryWindow(id: string, origin?: { x: number; y: number }, initialPath?: string, sourceWindowId?: string): string;
+  /** Apply a hub-owned additional view without making a second window id. */
+  adoptRepositoryWindow(instanceId: string, resourceId: string): void;
   closeRepositoryWindow(id: string): void;
   openWorkbenchWindow(id: string, origin?: { x: number; y: number }): void;
   closeWorkbenchWindow(id: string): void;

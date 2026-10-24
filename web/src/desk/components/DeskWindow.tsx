@@ -151,6 +151,9 @@ export interface DeskWindowOptions {
   /** PHILO-17 (briefcover): a mount that no open verb raised first goes
    * behind the desk windows already shown (the Chair's windows at load). */
   presentsBehind?: boolean;
+  /** An opener already chose this window's saved first rect. Keep that seat
+   * on mount instead of running the generic title-overlap placement scan. */
+  preserveInitialRect?: boolean;
   /** Round 9 — the client point this window opened FROM (the tapped
    * desk object). The window seats itself beside it and the open/close
    * motion flies out of and back into it — spatial, not a side dock. */
@@ -413,7 +416,7 @@ function useDeskWindow(id: string, opts: DeskWindowOptions = {}) {
       // to an owner's open, never a second view loading the same windows.
       const followingHub = hubPlacing(id) || inheritance.isInherited(id);
       const kept = followingHub ? cur : clampIntoBand(cur, vw, vh, minW, minH);
-      const deliberatelyArranged = sessionArranged.has(id);
+      const deliberatelyArranged = sessionArranged.has(id) || opts.preserveInitialRect;
       const hasCoveredHead = !followingHub && others.some((other) => headsOverlap(kept, other));
       const placed = !deliberatelyArranged && hasCoveredHead
         ? placeWindow(kept, others, vw, vh, minW, minH, iconColumnRight(), iconColumnLeft())
@@ -776,6 +779,8 @@ export interface DeskWindowFrameProps {
   keepsPlane?: () => boolean;
   /** See DeskWindowOptions.presentsBehind. */
   presentsBehind?: boolean;
+  /** See DeskWindowOptions.preserveInitialRect. */
+  preserveInitialRect?: boolean;
   /** The client point this window opened from: see DeskWindowOptions. */
   origin?: { x: number; y: number } | null;
   /** A tiled window: see DeskWindowOptions.tiled. */
@@ -833,6 +838,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     fitContent,
     keepsPlane,
     presentsBehind,
+    preserveInitialRect,
     origin,
     tiled,
     dockChip: chipMode = "always",
@@ -872,6 +878,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     fitContent,
     keepsPlane,
     presentsBehind,
+    preserveInitialRect,
     origin,
     tiled,
     zoomed: maximized && !compact,

@@ -5,6 +5,7 @@ import { assertNever } from "../assertNever";
 import type { DeskState, PanelRect, SliceCreator } from "./types";
 import { SURFACE_APPLICATIONS } from "../applications";
 import { meetingOfScope, meetingWindowRef, personWindowRef } from "../objectWindows";
+import { clampIntoBand } from "../components/window/windowGeometry";
 import {
   loadDeskWorkspace,
   saveDeskWorkspace,
@@ -27,6 +28,21 @@ import {
 // ---- localStorage persistence -------------------------------------------
 
 const PANEL_ORDER_LIMIT = 100;
+
+/** Seat a new repository view beside its opener. The source rect stays as
+ * arranged; only the new rect is fitted to this screen's working band. */
+function siblingRepositoryRect(source: PanelRect): PanelRect {
+  const vw = typeof window === "undefined" ? 1280 : window.innerWidth || 1280;
+  const vh = typeof window === "undefined" ? 800 : window.innerHeight || 800;
+  const fit = (rect: PanelRect) => clampIntoBand(rect, vw, vh, 0, 0);
+  const base = fit(source);
+  const forward = fit({ ...base, x: base.x + 32, y: base.y + 32 });
+  return {
+    ...forward,
+    x: forward.x === base.x ? fit({ ...base, x: base.x - 32 }).x : forward.x,
+    y: forward.y === base.y ? fit({ ...base, y: base.y - 32 }).y : forward.y,
+  };
+}
 
 /** PHILO-16 (L3) — the depths, at most PANEL_ORDER_LIMIT (the deepest
  * windows leave first), and the order derived from them: the two fields
@@ -123,7 +139,7 @@ const returningIds = new Set<string>([
   ...initialWindowLists.pullouts.filter((id) => !meetingRefFromPullout(id)).map((id) => `pullout:${id}`),
   ...initialWindowLists.info.map((ref) => `info:${ref}`),
   ...initialWindowLists.roadmap.map((slug) => `roadmap:${slug}`),
-  ...initialWindowLists.repository.map((id) => `repository:${id}`),
+  ...initialWindowLists.repository.filter((id) => !id.startsWith("view:") || initialWorkspace.repositoryViews?.[id]).map((id) => `repository:${id}`),
   ...initialWindowLists.workbench.map((id) => `workbench:${id}`),
   // PHILO-17: zone windows are retired; a saved one does not return.
 ]);
@@ -191,6 +207,8 @@ export type CompositorSlice = Pick<
   | "openRoadmapWindow"
   | "closeRoadmapWindow"
   | "openRepositoryWindow"
+  | "openNewRepositoryWindow"
+  | "adoptRepositoryWindow"
   | "closeRepositoryWindow"
   | "openWorkbenchWindow"
   | "closeWorkbenchWindow"
@@ -233,7 +251,11 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   zoneViewPrefs: initialWorkspace.zoneViewPrefs,
   infoWindows: reopened("ref", initialWindowLists.info),
   roadmapWindows: reopened("slug", initialWindowLists.roadmap),
-  repositoryWindows: reopened("id", initialWindowLists.repository),
+  repositoryWindows: initialWindowLists.repository.flatMap((id) => {
+    if (!id.startsWith("view:")) return [{ id, origin: null }];
+    const view = initialWorkspace.repositoryViews?.[id];
+    return view ? [{ id, ...view, origin: null }] : [];
+  }),
   workbenchWindows: reopened("id", initialWindowLists.workbench),
   // Exempt (B2 story table): the chooser holds no typed text and no record;
   // one pick makes the record, so reopening is the same one gesture.
@@ -383,6 +405,35 @@ export const createCompositorSlice: SliceCreator<CompositorSlice> = (set, get) =
   },
   openRepositoryWindow(id, origin) {
     openRepository(id, origin, set, get);
+    saveDeskWorkspace(get());
+  },
+  openNewRepositoryWindow(id, origin, initialPath, sourceWindowId) {
+    let windowId: string;
+    do {
+      windowId = `view:${globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`}`;
+    } while (get().repositoryWindows.some((w) => w.id === windowId));
+    set({ repositoryWindows: [...get().repositoryWindows, {
+      id: windowId, resourceId: id, origin: origin ?? null,
+      ...(initialPath ? { initialPath } : {}),
+    }] });
+    const sourceId = sourceWindowId ?? `repository:${id}`;
+    const rendered = typeof document === "undefined" ? null : document.getElementById(sourceId)?.getBoundingClientRect();
+    const source = get().panelRects[sourceId] ?? (rendered && rendered.width && rendered.height
+      ? { x: rendered.left, y: rendered.top, w: rendered.width, h: rendered.height } : null);
+    if (source) get().setPanelRect(`repository:${windowId}`, siblingRepositoryRect(source), true);
+    get().restorePanel(`repository:${windowId}`);
+    saveDeskWorkspace(get());
+    return windowId;
+  },
+  adoptRepositoryWindow(instanceId, resourceId) {
+    if (!instanceId.startsWith("view:") || !resourceId) return;
+    const current = get().repositoryWindows;
+    const existing = current.find((w) => w.id === instanceId);
+    if (existing?.resourceId === resourceId) return;
+    set({ repositoryWindows: existing
+      ? current.map((w) => w.id === instanceId ? { ...w, resourceId } : w)
+      : [...current, { id: instanceId, resourceId, origin: null }],
+    });
     saveDeskWorkspace(get());
   },
   closeRepositoryWindow(id) {

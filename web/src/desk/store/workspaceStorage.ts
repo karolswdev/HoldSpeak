@@ -56,6 +56,9 @@ export interface DeskWorkspaceDocumentV1 {
   places?: Record<string, string>;
   /** The shell's one recent-open list (newest first). */
   recentOpened?: string[];
+  /** Extra repository view id -> resource. Default views still restore from
+   * the legacy `windows.repository` string list without a mapping. */
+  repositoryViews?: Record<string, { resourceId: string; initialPath?: string }>;
 }
 
 export interface DeskWorkspaceWindows {
@@ -231,6 +234,20 @@ export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
     const shelf = (panel as { shelf?: unknown }).shelf;
 
     const chair = parseChair(candidate.chair);
+    const repositoryIds = new Set(parseWindowLists(candidate.windows).repository);
+    const repositoryViews = Object.fromEntries(Object.entries(
+      candidate.repositoryViews && typeof candidate.repositoryViews === "object"
+        ? candidate.repositoryViews : {},
+    ).filter(([id, view]) =>
+      id.startsWith("view:") && isPanelId(id) && repositoryIds.has(id) &&
+      view && typeof view === "object" &&
+      typeof view.resourceId === "string" && view.resourceId.length > 0 &&
+      view.resourceId.length <= DRAFT_KEY_LIMIT,
+    ).map(([id, view]) => [id, {
+      resourceId: view.resourceId,
+      ...(typeof view.initialPath === "string" && view.initialPath.length <= DRAFT_KEY_LIMIT
+        ? { initialPath: view.initialPath } : {}),
+    }])) as DeskWorkspaceDocumentV1["repositoryViews"];
     return {
       version: DESK_WORKSPACE_VERSION,
       windowsById: parseWindows(candidate.windowsById),
@@ -246,6 +263,7 @@ export function loadDeskWorkspace(): DeskWorkspaceDocumentV1 {
       zoneWindows: compactIds(candidate.zoneWindows),
       zoneViewPrefs,
       windows: parseWindowLists(candidate.windows),
+      ...(repositoryViews && Object.keys(repositoryViews).length ? { repositoryViews } : {}),
       ...(chair ? { chair } : {}),
       ...(candidate.screen === "chair" || candidate.screen === "floor"
         ? { screen: candidate.screen }
@@ -376,6 +394,13 @@ export function saveDeskWorkspace(state: WorkspaceState): void {
       repository: compactRefs((state.repositoryWindows ?? []).map((w) => w.id)),
       workbench: compactRefs((state.workbenchWindows ?? []).map((w) => w.id)),
     },
+    repositoryViews: Object.fromEntries((state.repositoryWindows ?? [])
+      .filter((w) => w.id.startsWith("view:") && isPanelId(w.id) &&
+        typeof w.resourceId === "string" && w.resourceId.length > 0)
+      .map((w) => [w.id, {
+        resourceId: w.resourceId!,
+        ...(w.initialPath ? { initialPath: w.initialPath } : {}),
+      }])),
     ...storedSections(),
     drafts: parseTextMap(state.drafts ?? {}, true),
     places: parseTextMap(state.places ?? {}),

@@ -258,9 +258,15 @@ def build_repositories_router(
                 return resolved
             _, root = resolved
             try:
-                prefix = _safe_path(root, path).relative_to(root).as_posix() if path else ""
+                directory = _safe_path(root, path) if path else root
             except ValueError:
                 return _error(400, "path traversal refused")
+            if not directory.exists():
+                return _error(404, "directory not found")
+            if not directory.is_dir():
+                return _error(400, "path is not a directory")
+            relative = directory.relative_to(root)
+            prefix = "" if relative == Path(".") else relative.as_posix()
             return {"files": _tree(root, prefix)}
         return await asyncio.to_thread(tree)
 

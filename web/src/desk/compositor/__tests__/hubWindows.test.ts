@@ -48,7 +48,7 @@ beforeAll(() => {
 const REGISTRY = {
   static: { "chair:needs": "chair", "chair:brief": "chair", "chair:week": "chair", "chair:capture": "chair", "drawer:parked": "drawer", lane: "lane", conductor: "conductor",
     "surface-project-memory": "surface", "surface-calendar-snapshot": "surface", "surface-concierge": "open-concierge", "surface-engines": "configure-runs-on" },
-  families: { "zone:": "zone", "drawer:project:": "drawer", "pullout:": "pullout" },
+  families: { "zone:": "zone", "drawer:project:": "drawer", "pullout:": "pullout", "repository:": "repository" },
   retired: { zone: "no face", "surface-concierge": "Settings owns Engines", "open-concierge": "Settings owns Engines" },
   // (lane is static on the hub)
 };
@@ -139,7 +139,7 @@ beforeEach(() => {
   localStorage.clear();
   useDesk.setState({
     panelDepth: {}, panelOrder: [], panelMin: [], panelRects: {}, panelSaved: [], panelMax: [],
-    panelZoom: {}, windowsById: {}, zoneWindows: [], pullouts: [],
+    panelZoom: {}, windowsById: {}, zoneWindows: [], pullouts: [], repositoryWindows: [],
   });
   useChairWindows.setState({
     closed: { "chair:needs": true, "chair:capture": true },
@@ -173,6 +173,36 @@ function start(rows: HubWindowRow[], adopted = true, cacheOpen: string[] = [], b
 const CHAIR = ["chair:capture", "drawer:parked", "chair:needs"];
 
 describe("hubWindows", () => {
+  it("keeps two repository views on one resource distinct through hub open and close", async () => {
+    const extra = "view:remote-1";
+    const { fake, hub } = start([
+      row("repository:repo-1", { app: "repository", object_ref: "repo-1", depth: 2 }),
+      row(`repository:${extra}`, { app: "repository", object_ref: "repo-1", depth: 3 }),
+    ]);
+    await hub.start();
+    expect(useDesk.getState().repositoryWindows).toEqual([
+      { id: "repo-1", origin: null },
+      { id: extra, resourceId: "repo-1", origin: null },
+    ]);
+
+    useDesk.getState().closeRepositoryWindow(extra);
+    await flush(hub);
+    expect(fake.calls.some((call) => call.verb === "close" && call.id === `repository:${extra}`)).toBe(true);
+    expect(fake.state.windows.map((w) => w.id)).toContain("repository:repo-1");
+    expect(useDesk.getState().repositoryWindows.map((w) => w.id)).toEqual(["repo-1"]);
+  });
+
+  it("sends the resource as object_ref when opening an additional repository view", async () => {
+    const { fake, hub } = start([]);
+    await hub.start();
+    const extra = useDesk.getState().openNewRepositoryWindow("repo-1");
+    await flush(hub);
+    expect(fake.calls).toContainEqual(expect.objectContaining({
+      verb: "open", id: `repository:${extra}`,
+      body: expect.objectContaining({ object_ref: "repo-1" }),
+    }));
+  });
+
   // PHILO-17 (mainreds3, Astra r1): a hub open is passive. The real Conductor
   // adapter mounts the window and keeps the hub's seat and depth; only a
   // gesture (Go, the drawer, /conductor) fronts it.
