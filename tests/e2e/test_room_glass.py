@@ -62,7 +62,7 @@ from typing import Any
 
 import pytest
 
-from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle
+from .glass_infra import _api, _boot, _ensure_build, _normal_chair, _rendered_text_faults, _settle, pick_wing
 from tests._evidence import evidence_dir
 from datetime import date
 from .room_glass_helpers import open_room_folds
@@ -1474,7 +1474,20 @@ class TestRoomFaceGlass:
     def _open(self, pw: Any, width: int) -> tuple[Any, Any, list[str]]:
         browser = pw.chromium.launch(headless=True)
         ctx = browser.new_context(viewport={"width": width, "height": SIZES[width]}, device_scale_factor=1)
-        ctx.grant_permissions(["clipboard-read", "clipboard-write"], origin=self.base)
+        # Test the Copy transport with a buffer owned by this browser context.
+        # This proves the bytes handed to clipboard IO, not native OS custody.
+        clipboard = {"text": ""}
+        ctx.expose_function("__roomClipboardWrite", lambda value: clipboard.__setitem__("text", str(value)))
+        ctx.expose_function("__roomClipboardRead", lambda: clipboard["text"])
+        ctx.add_init_script("""
+            Object.defineProperty(navigator, 'clipboard', {
+              configurable: true,
+              value: {
+                writeText: async (text) => window.__roomClipboardWrite(String(text)),
+                readText: async () => window.__roomClipboardRead(),
+              },
+            });
+        """)
         page = ctx.new_page()
         page.set_default_timeout(45_000)
         errors: list[str] = []
@@ -1511,7 +1524,7 @@ class TestRoomFaceGlass:
     @staticmethod
     def _history(page: Any) -> None:
         """PHILO-17 U31: the Room's receipts live under its History wing."""
-        page.get_by_role("tab", name="History").first.click()
+        pick_wing(page, "History")
         page.locator("[data-testid=room-history]").wait_for(timeout=T)
         open_room_folds(page)  # PHILO-17 refit: the writes are a fold under History
         page.wait_for_timeout(300)
@@ -1747,7 +1760,7 @@ class TestRoomFaceGlass:
     @pytest.mark.e2e
     @pytest.mark.parametrize("width", WIDTHS)
     def test_copy_then_mark_delivered_twice_reads_back_two_rows(self, width: int) -> None:
-        """replaces: tests/e2e/test_philo9_03_room_face_glass.py::TestRoomFaceGlass::test_copy_then_mark_delivered_twice_reads_back_two_rows (moved whole: Copy is the clipboard)."""
+        """Copy enters this context's memory buffer; the hub owns delivery readback."""
         from playwright.sync_api import sync_playwright
 
         with sync_playwright() as pw:
@@ -1774,7 +1787,7 @@ class TestRoomFaceGlass:
                 after_copy = self._facts(page)
                 _rf_shot(page, "deliver-1-after-copy", width)
                 assert after_copy["deliver_verb"] == "Mark delivered", after_copy
-                assert after_copy["delivery_head"] == "DELIVERY"
+                assert after_copy["delivery_head"] == "SENT"
                 # He leaves and returns (R4-3): Copy's 2 s feedback is gone and
                 # no clipboard state is stored; Mark delivered is still offered.
                 # The Desk remembers (PHILO-13-07 B2): the Room returns on the
@@ -1808,7 +1821,7 @@ class TestRoomFaceGlass:
                 _rf_shot(page, "deliver-4-delivered-once", width)
                 assert len(calls) == 1, calls  # one press, one call
                 assert len(hub1) == 1 and hub1[0]["delivered_to"] == "Priya", hub1
-                assert once["delivery_rows"] == [f"✓ Priya DELIVERED MANUAL {_delivery_time(hub1[0]['delivered_at'])}"], once["delivery_rows"]
+                assert once["delivery_rows"] == [f"✓ Priya SENT BY HAND MANUAL {_delivery_time(hub1[0]['delivered_at'])}"], once["delivery_rows"]
                 assert once["deliver_to"] == {"value": "", "disabled": False}
                 # Priya was the wrong person: "Tomas" too. Both rows stay.
                 page.locator("[data-testid=deliver-to]").fill("Tomas")
@@ -1830,11 +1843,11 @@ class TestRoomFaceGlass:
                 _rf_shot(page, "deliver-5-mistake-kept", width)
                 assert calls[0]["command_id"] != calls[1]["command_id"], calls  # a new press, a new key
                 assert [d["delivered_to"] for d in hub2] == ["Priya", "Tomas"], hub2
-                assert both["delivery_rows"] == [f"✓ {d['delivered_to']} DELIVERED MANUAL {_delivery_time(d['delivered_at'])}" for d in hub2]
-                # PHILO-10-04 (the owner's A2): DELIVERY N, the same count. The SEND
+                assert both["delivery_rows"] == [f"✓ {d['delivered_to']} SENT BY HAND MANUAL {_delivery_time(d['delivered_at'])}" for d in hub2]
+                # PHILO-10-04 (the owner's A2): SENT N, the same count. The SEND
                 # well now sits above (the ratified Send face); the manual history
                 # itself still carries no egress badge.
-                assert both["delivery_head"] == "DELIVERY 2", both["delivery_head"]
+                assert both["delivery_head"] == "SENT 2", both["delivery_head"]
                 assert both["delivery_egress"] == 0 and both["words_send"] and not both["modal"]
                 assert both["small_text_count"] == 0, both["small_text"]
                 assert both["raw_buttons"] == [], both["raw_buttons"]
@@ -1844,7 +1857,7 @@ class TestRoomFaceGlass:
                 self._back(page)
                 listed = self._facts(page)
                 _rf_shot(page, "deliver-6-list-chip", width)
-                assert listed["delivered_chips"] == ["✓ DELIVERY ×2"], listed["delivered_chips"]
+                assert listed["delivered_chips"] == ["✓ SENT ×2"], listed["delivered_chips"]
                 # A draft offers no Mark delivered.
                 page.get_by_test_id("update-verb-draft").click()
                 page.locator("[data-testid=update-editor][data-lifecycle=draft]").wait_for(timeout=T)
@@ -1928,7 +1941,7 @@ class TestRoomFaceGlass:
                 assert retry["command_id"] == lost["command_id"] and retry["delivered_to"] == lost["delivered_to"] == "Lena"
                 assert [d["delivered_to"] for d in hub_a] == ["Lena"], hub_a
                 assert hub_b == [] and not any(c["update_id"] == b for c in calls)
-                assert retried["delivery_rows"] == [f"✓ Lena DELIVERED MANUAL {_delivery_time(hub_a[0]['delivered_at'])}"]
+                assert retried["delivery_rows"] == [f"✓ Lena SENT BY HAND MANUAL {_delivery_time(hub_a[0]['delivered_at'])}"]
                 assert all(not p["not_owned"] for p in pointer), pointer
                 assert not errors, errors
             finally:

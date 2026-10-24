@@ -8,6 +8,13 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+Room / Thought glass — #1445: stale Sent history and desktop Send Back
+selectors now follow the current controls. Manual-delivery receipt and real
+folder bytes/identity/retry assertions remain; clipboard stays in a local
+test buffer. No product code changes. Required quick green: build, 43 affected
+browser cases, 110 desk sweep, 27 canon and 1,126 repository guards.
+
+
 Zoom restore — #1444: content-sized windows retain auto height across first
 zoom, restore and reopen; owner-sized windows retain fixed geometry. The bug
 was reproduced on pre-P01 main. Five policy assertions and the real browser
