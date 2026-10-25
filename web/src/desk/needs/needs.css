@@ -175,3 +175,158 @@
 
 /* Betterment AG9: an agent's ask is the Agents row, in the list. */
 .desk-next .needs-agent-row { list-style: none; margin: 0 0 6px; padding: 0; min-width: 0; }
+
+/* ── Window grammar (2026-10-24): title bar → toolbar → the rows edge to
+   edge → the status bar. The Chair window's body drops its form inset;
+   each row is 30 px (44 px narrow), led by its 20 px object glyph, a
+   blue lift under the pointer. ── */
+.desk-next .chair-window--needs .chair-window-body {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+.needs-drawer {
+  gap: 0;
+  padding: 0;
+}
+.needs-drawer > .kit-toolbar .kit-toolbar-verbs {
+  flex: 1 1 auto;
+}
+.needs-drawer > .kit-toolbar .kit-toolbar-trailing {
+  flex: 0 1 auto;
+}
+.needs-drawer .needs-chips {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+.desk-next .needs-drawer .needs-chip.btn[aria-pressed="true"],
+.desk-next .needs-drawer .needs-chip.btn[data-filter-active] {
+  border-color: color-mix(in srgb, var(--wb-sel) 55%, transparent);
+  background: color-mix(in srgb, var(--wb-sel) 14%, var(--wb-paper));
+  color: var(--wb-ink);
+}
+.needs-drawer .needs-chip-count {
+  color: var(--wb-muted);
+  font-weight: 600;
+}
+.needs-drawer > .surface-disclosure {
+  padding: 0 10px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.needs-drawer-list > .surface-scroll-hint {
+  gap: 0;
+}
+.needs-drawer .needs-list {
+  border: 0;
+  border-radius: 0;
+  background: var(--wb-paper);
+}
+.needs-drawer .needs-arrival.surface-section {
+  gap: 0;
+}
+.needs-drawer .needs-arrival > .surface-section-head {
+  margin: 0;
+  padding: 6px 10px 2px;
+}
+.needs-drawer .needs-row,
+.needs-drawer .needs-row[data-proposal="true"] {
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  column-gap: 10px;
+  min-height: var(--wb-row-dense, 30px);
+  padding: 2px 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard);
+}
+.needs-drawer .needs-row:hover {
+  background: var(--wb-row-hover);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 28%, transparent);
+}
+.needs-drawer .needs-row > img {
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent));
+}
+.needs-drawer .needs-row-what {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  row-gap: 0;
+}
+.needs-drawer .needs-row-name {
+  font: 600 13px / 1.35 var(--font-sans);
+}
+.needs-drawer .needs-row-fact,
+.needs-drawer .needs-row-factline {
+  font: 400 12px / 1.35 var(--font-sans);
+  letter-spacing: 0;
+  color: var(--wb-muted);
+}
+.needs-drawer .needs-row-lamp .gadget-lamp {
+  font: 500 12px / 1.35 var(--font-sans);
+  letter-spacing: 0;
+}
+.needs-drawer .needs-row-verbs {
+  gap: 4px;
+  max-width: none;
+  flex-wrap: nowrap;
+}
+.desk-next .needs-drawer .needs-row-verbs .btn {
+  min-height: 26px;
+  height: 26px;
+  padding-inline: 10px;
+  font-size: 13px;
+}
+.needs-drawer .needs-drawer-well {
+  padding: 4px 10px 8px 42px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .needs-drawer .needs-row { transition: none; }
+}
+@container surface (max-width: 520px) {
+  .needs-drawer .needs-row,
+  .needs-drawer .needs-row[data-proposal="true"] {
+    grid-template-columns: 22px minmax(0, 1fr);
+    min-height: 44px;
+    row-gap: 4px;
+    padding-block: 4px;
+  }
+  .needs-drawer .needs-row-verbs {
+    flex-wrap: wrap;
+  }
+  .desk-next .needs-drawer .needs-row-verbs .btn {
+    height: auto;
+    min-height: 44px;
+  }
+  .needs-drawer .needs-drawer-well {
+    padding-left: 10px;
+  }
+}
+.needs-drawer .needs-calendar-offer {
+  gap: 4px 8px;
+}
+.needs-calendar-word {
+  font: 400 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+  white-space: nowrap;
+}
+/* The Project's own Button and the row's egress chip: quiet sans, one
+   accent per row (the verb). */
+.desk-next .needs-drawer .needs-row .surface-project-button {
+  font: 500 12px / 1.35 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.desk-next .needs-drawer .needs-row-verbs .gadget-chip-egress {
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  font: 500 12px / 18px var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}

@@ -91,10 +91,14 @@ def test_settings_page_order_anchor_and_saved_write(
             # ST7 producer proof: the Settings page button opens the real
             # Engines host, and the hub records its canonical application and
             # surface id. Close it before exercising the Settings write.
-            # Narrow: the pane's Back shows the rail first (window grammar).
-            back = page.locator("#surface-settings [data-testid=settings-back]")
-            if back.is_visible():
-                back.click()
+            # Narrow: a pane opened by a scope returns where it came from (window
+            # grammar): Settings does not hold the window's Back, so it closes the
+            # window. Reopen Settings from the desk and choose This Mac on its rail.
+            if width == 393:
+                assert page.locator("#surface-settings [data-testid=settings-back]").count() == 0
+                page.locator("#surface-settings .desk-gadget-close").click()
+                page.locator("#surface-settings").wait_for(state="detached", timeout=10_000)
+                _api(page, "POST", "/api/desk/windows/surface-settings/open", {}, token=TOKEN)
             settings.get_by_test_id("settings-index-this-mac").click()
             engines = settings.get_by_test_id("settings-engines-page-link")
             engines.click()

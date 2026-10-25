@@ -1,0 +1,280 @@
+/* Window grammar (2026-10-24): the meeting window. Title bar → toolbar →
+   a compact head (glyph + one muted line) → the summary as a reading
+   document → Decisions and Who owes what as 30 px rows (their verbs on
+   hover and focus) → the transcript fold → the status bar. Edge to edge:
+   the rows touch the frame; the reader keeps a comfortable measure. */
+.meeting-record {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 100%;
+  background: var(--wb-paper);
+}
+.meeting-record > .kit-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+/* The run verbs the record's wells portal here are toolbar items. */
+.meeting-run-slot {
+  display: contents;
+}
+.meeting-run-slot .meetings-transcribe {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.meeting-record-back-mark {
+  font: 600 16px / 1 var(--font-sans);
+  color: var(--wb-sel);
+}
+.meeting-record > .surface-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 16px 20px;
+  margin: 0;
+  border: 0;
+  background: transparent;
+}
+
+/* The compact head: the glyph and one muted line. */
+.meeting-record .meeting-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  padding: 0;
+}
+.meeting-head-glyph {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent));
+}
+.meeting-head-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 0;
+  min-width: 0;
+  font: 400 13px / 1.35 var(--font-sans);
+  color: var(--wb-muted);
+}
+.meeting-head-fact {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.meeting-head-line > * + *::before {
+  content: "·";
+  margin-inline: 8px;
+  color: var(--wb-muted);
+}
+.meeting-head-line > .kit-avatars {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* The summary: a document at a reading measure; its heading is the one
+   document heading the window allows. */
+.meeting-summary-reader {
+  max-width: 70ch;
+  margin: 2px 0 0;
+}
+.meeting-summary-reader-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 6px;
+}
+.meeting-summary-heading {
+  margin: 0;
+  font: 600 19px / 1.25 var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--wb-ink);
+}
+.meeting-summary-document {
+  font: 400 15px / 1.6 var(--font-sans);
+  color: var(--wb-ink);
+}
+.meeting-summary-document > :first-child {
+  margin-top: 0;
+}
+.meeting-summary-topics {
+  margin: 8px 0 0;
+  font: 500 12px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+
+/* Section captions: the display face, sentence case, a hairline. */
+.meeting-record .surface-section-head h3 {
+  font: 600 13px / 1.3 var(--font-display);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-ink);
+}
+
+/* Decisions and Who owes what: 30 px rows, edge to edge. */
+.meeting-record .meeting-outcome-section {
+  gap: 4px;
+}
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] {
+  margin-inline: -16px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-rows {
+  border-top: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
+}
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-row > .surface-ledger-line,
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0 12px;
+  min-height: var(--wb-row-dense, 30px);
+  padding: 2px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
+  font: 400 13px / 1.35 var(--font-sans);
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard);
+}
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-line:hover {
+  background: var(--wb-row-hover);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 28%, transparent);
+}
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-primary {
+  grid-column: 1;
+  grid-row: 1;
+  font: 500 13px / 1.35 var(--font-sans);
+  color: var(--wb-ink);
+}
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-meta {
+  grid-column: 2;
+  grid-row: 1;
+  font: 400 12px / 1.35 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-muted);
+  white-space: nowrap;
+}
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-meta[data-tone="ask"] {
+  color: var(--wb-ember-ink);
+}
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-trailing {
+  grid-column: 3;
+  grid-row: 1;
+  flex-wrap: nowrap;
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+.desk-next .meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-trailing .btn {
+  min-height: 24px;
+  height: 24px;
+  padding-inline: 10px;
+  font-size: 13px;
+}
+/* A row's verbs show on hover, on keyboard focus, while the row is open,
+   and always where there is no hover (touch). */
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-line:hover > .surface-ledger-trailing,
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-line:focus-within > .surface-ledger-trailing,
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-row[data-open] .surface-ledger-trailing,
+.meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-trailing:has([aria-expanded="true"]) {
+  opacity: 1;
+}
+@media (hover: none) {
+  .meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-trailing {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-line,
+  .meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-trailing {
+    transition: none;
+  }
+}
+
+/* The transcript: a reading pane behind its fold, speakers in quiet sans. */
+.meeting-record .transcript-list .transcript-speaker {
+  font: 600 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-sel);
+}
+.meeting-record .transcript-list p {
+  max-width: 70ch;
+  font: 400 14px / 1.55 var(--font-sans);
+}
+.meeting-record-project {
+  padding: 0 16px 16px;
+}
+
+@container surface (max-width: 559.9px) {
+  .meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-row > .surface-ledger-line,
+  .meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 44px;
+    padding-block: 6px;
+    gap: 2px 0;
+  }
+  .meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-meta {
+    grid-column: 1;
+    grid-row: 2;
+    white-space: normal;
+  }
+  .meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-trailing {
+    grid-column: 1;
+    grid-row: 3;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    opacity: 1;
+  }
+  .desk-next .meeting-record .surface-ledger[data-cols="meeting-outcomes"] .surface-ledger-trailing .btn {
+    height: auto;
+    min-height: 44px;
+  }
+}
+
+/* The transcript fold: a block, its trigger a quiet sans caption, its pane
+   under it (the dense fold is an inline meta-line species elsewhere). */
+.desk-next .meeting-record .surface-disclosure[data-variant="dense"] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.desk-next .meeting-record .surface-disclosure[data-variant="dense"] .surface-disclosure-trigger {
+  width: fit-content;
+  min-height: 28px;
+  font: 600 13px / 1.3 var(--font-display);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-ink);
+}
+.meeting-record .surface-disclosure-body > .surface-well {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  padding: 4px 0 0;
+}
+
+/* A failed summary's recovery: one quiet row, sans words, its verbs in the
+   toolbar. */
+.meeting-record .meeting-intel-recovery .gadget-group-label {
+  font: 600 13px / 1.3 var(--font-display);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-ink);
+}
+.meeting-record .meeting-intel-recovery :is(.surface-token, .gadget-fact) {
+  font: 400 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-muted);
+}
+.meeting-record .meeting-intel-recovery .surface-token[data-tone="warn"] {
+  font-weight: 600;
+  color: var(--wb-danger-ink);
+}

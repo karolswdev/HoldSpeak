@@ -13,6 +13,7 @@
  */
 import type { ReactNode } from "react";
 import { SurfaceWell } from "../desk/surface/Surface";
+import { ReadingDocument } from "../desk/surface/ReadingDocument";
 import { RunAttempts } from "./RouteDisclosure";
 import type { RunReceipt } from "./summaryRoute";
 
@@ -44,7 +45,12 @@ export function MeetingSummarySlab({
   receipt,
   facts,
   saidOnFace,
+  reader = false,
 }: {
+  /** Window grammar (2026-10-24): the meeting window reads its summary as
+   *  a document (the one place a document heading is allowed), at a
+   *  comfortable measure, edge to edge; other faces keep the well. */
+  reader?: boolean;
   intel: MeetingIntel | null;
   receipt: RunReceipt | null;
   /** PHILO-17 (U16): the engine host a chip already names on this face. */
@@ -54,6 +60,28 @@ export function MeetingSummarySlab({
   const summary = String(intel?.summary ?? "").trim();
   if (!summary) return null;
   const topics = intel?.topics ?? [];
+  if (reader) {
+    return (
+      <section className="meeting-summary-reader" aria-label="Summary" data-testid="meeting-summary">
+        <header className="meeting-summary-reader-head">
+          <h2 className="meeting-summary-heading">Summary</h2>
+          <RunAttempts receipt={receipt} testId="summary-record-attempts" saidOnFace={saidOnFace} />
+        </header>
+        <ReadingDocument className="meeting-summary-document" data-testid="meeting-summary-text">{summary}</ReadingDocument>
+        {topics.length > 0 ? (
+          <p className="meeting-summary-topics" data-testid="meeting-summary-topics">
+            {topics.map((topic, index) => (
+              <span key={topic} className="meeting-summary-topic">
+                {index > 0 ? <span aria-hidden="true"> · </span> : null}
+                {topic.charAt(0).toUpperCase() + topic.slice(1)}
+              </span>
+            ))}
+          </p>
+        ) : null}
+        {facts ?? null}
+      </section>
+    );
+  }
   return (
     <SurfaceWell
       head={

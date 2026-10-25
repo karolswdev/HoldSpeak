@@ -1,4 +1,3 @@
-import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-95-04 — the Activity surface's core: everything the flat page did,
 // minus the flat chrome. Cores are host-agnostic (Constitution, Article I:
 // features do not own surfaces): no page chrome, no router coupling — the
@@ -13,10 +12,11 @@ import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
-  CheckGadget,
   LampGadget,
   StringGadget,
 } from "../../desk/surface/gadgets";
+import { DotWord, Toolbar, ToolGlyph } from "../../desk/surface/kit";
+import { useWindowInterior } from "../../desk/surface/interior";
 import { apiFetch } from "../../lib/api";
 import { asRows, rowId, useResource } from "../pageSupport";
 import type {
@@ -37,6 +37,7 @@ import {
 import { humanTime, presentValue } from "../../desk/surface/format";
 import { useAction, useCoreWings } from "./core-hooks";
 import { CoreResourceGuard, renderHeroSlot } from "./core-layout";
+import "./activity.css";
 import { ActivityFinishedReceipts } from "./ActivityFinishedReceipts";
 
 const WINGS = [
@@ -85,30 +86,46 @@ export function ActivityCore({ hero }: CoreProps) {
   const enabled = Boolean(
     status.data.settings?.enabled,
   );
+  // Window grammar: the toolbar's verbs, icon + label; Watching is a quiet
+  // toggle (pressed while the desk watches); Clear records sits behind its
+  // confirm on the Records face.
+  const recordsFace = !wings.doorOpen && wings.view === "records";
+  useWindowInterior(recordsFace ? "list" : null);
   const verbs = (
     <>
       <Button
         dense
+        variant="secondary"
         loading={action.busy}
         onClick={() => void invoke("/api/activity/refresh")}
       >
+        <ToolGlyph kind="retry" />
         Refresh now
       </Button>
-      <span className="gadget-checkline">
-        <CheckGadget
-          label="Watching"
-          checked={enabled}
-          onChange={(next) =>
-            void invoke("/api/activity/settings", {
-              method: "PUT",
-              json: { enabled: next },
-            })
+      <Button
+        dense
+        variant="secondary"
+        aria-pressed={enabled}
+        data-testid="activity-watching"
+        onClick={() =>
+          void invoke("/api/activity/settings", {
+            method: "PUT",
+            json: { enabled: !enabled },
+          })
+        }
+      >
+        <DotWord tone={enabled ? "ok" : "warn"}>{enabled ? "Watching" : "Paused"}</DotWord>
+      </Button>
+      {recordsFace ? (
+        <ConfirmVerb
+          label="Clear records"
+          confirmLabel="Clear all?"
+          busy={action.busy}
+          onConfirm={() =>
+            void invoke("/api/activity/records", { method: "DELETE" })
           }
         />
-        <span className="gadget-checkline-word">
-          {enabled ? "Watching" : "Paused"}
-        </span>
-      </span>
+      ) : null}
     </>
   );
 
@@ -209,51 +226,42 @@ export function ActivityCore({ hero }: CoreProps) {
     );
   };
 
-  const filter = (
-    <StringGadget
-      label="Filter this view"
-      placeholder="FILTER"
-      value={query}
-      onChange={setQuery}
-    />
+  const search = (
+    <span className="activity-search">
+      <StringGadget
+        label="Search activity"
+        placeholder="Search activity"
+        value={query}
+        onChange={setQuery}
+      />
+    </span>
   );
+  const recordRows = asRows(records.data, ["records", "items"]);
 
   return (
     <>
-      {renderHeroSlot(hero, verbs)}
+      {renderHeroSlot(hero, null)}
+      <Toolbar label="Activity" data-testid="activity-toolbar" trailing={search}>
+        {verbs}
+      </Toolbar>
       {action.message ? <SurfaceState error={action.message} /> : null}
       {wings.doorOpen ? (
         <>
           <SurfaceSection label="Meeting candidates">
-            {filter}
             {list("candidates")}
           </SurfaceSection>
           <SurfaceSection label="Connectors">
             {list("connectors")}
           </SurfaceSection>
         </>
+      ) : wings.view === "records" ? (
+        // One list view: the finished receipts and the watched pages.
+        <ActivityFinishedReceipts query={query} records={recordRows} />
       ) : (
-        <SurfaceSection
-          label={wings.view === "records" ? "Records" : "Project rules"}
-          actions={
-            wings.view === "records" ? (
-              <ConfirmVerb
-                label="Clear records"
-                confirmLabel="Clear all?"
-                busy={action.busy}
-                onConfirm={() =>
-                  void invoke("/api/activity/records", { method: "DELETE" })
-                }
-              />
-            ) : undefined
-          }
-        >
-          {filter}
-          {list(wings.view as Kind)}
+        <SurfaceSection label="Project rules">
+          {list("rules")}
         </SurfaceSection>
       )}
-      {!wings.doorOpen && wings.view === "records" ? <ActivityFinishedReceipts query={query}/> : null}
-      <SurfaceFooter />
     </>
   );
 }

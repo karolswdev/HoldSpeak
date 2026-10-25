@@ -53,8 +53,10 @@ class TestTheMeetingRecord(FitRig):
                 # meeting's own window; it takes the window body's whole width.
                 self._stage(page, "review-meetings", "meeting:p15-12-m")
                 win = page.locator("#surface-meetings")
-                detail = win.locator(".desk-surface-body > .surface-section").first
-                detail.locator(".kit-disp").first.wait_for(timeout=T)
+                # Window grammar (2026-10-24): no headline; the record (toolbar,
+                # compact head, reader, status bar) runs edge to edge.
+                detail = win.locator(".desk-surface-body > .meeting-record").first
+                detail.locator("[data-testid=meeting-head]").first.wait_for(timeout=T)
                 page.wait_for_timeout(800)
                 _settle(page)
 
@@ -296,8 +298,13 @@ class TestOneMeetingOneWindow:
                 self._press(row.locator("[data-verb=summarize]"))
                 self._one_front(ONE, "needs")
                 win = page.locator("#surface-meetings")
+                # Window grammar: Export and More are the toolbar's menus.
                 self._press(win.get_by_role("button", name="More actions", exact=True))
-                for verb in ("Open transcript", "Export MD", "Export SRT", "Park"):
+                for verb in ("Open transcript", "Park"):
+                    assert page.get_by_role("menuitem", name=verb, exact=True).count() == 1, verb
+                page.keyboard.press("Escape")
+                self._press(win.get_by_role("toolbar", name="Meeting").get_by_role("button", name="Export", exact=True))
+                for verb in ("Export MD", "Export SRT"):
                     assert page.get_by_role("menuitem", name=verb, exact=True).count() == 1, verb
                 page.keyboard.press("Escape")
                 assert win.get_by_role("tab", name="Outcomes").count() + win.locator(".desk-wing", has_text="Outcomes").count() >= 1

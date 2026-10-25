@@ -176,6 +176,8 @@ function face(li: HTMLElement) {
     verbs: [...li.querySelectorAll(".needs-row-verbs button")].map((b) => b.textContent),
     egress: li.querySelector(".needs-row-verbs .egress-chip, .needs-row-verbs [class*='egress']")?.textContent ?? "",
     plate: li.querySelector("[data-testid='kit-kind']")?.textContent ?? "",
+    // Window grammar: the row leads with its glyph; its alt names the kind.
+    glyph: li.querySelector(":scope > img")?.getAttribute("alt") ?? "",
   };
 }
 
@@ -234,10 +236,12 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await mount();
     const drawer = screen.getByTestId("needs-drawer");
     expect(screen.getByTestId("arrival-display").textContent).toBe("8 need you");
-    expect(drawer.querySelectorAll("h1, h2").length).toBe(1);
-    // Phase 16: the display step once; the strip and the foot say the
-    // facts as tokens (the canvas window "Needs you").
-    expect(drawer.querySelectorAll(".kit-disp").length).toBe(1);
+    // Window grammar (2026-10-24): no headline; the status bar says the
+    // number once, with its lamp.
+    expect(drawer.querySelectorAll("h1, h2").length).toBe(0);
+    expect(drawer.querySelectorAll(".kit-disp").length).toBe(0);
+    expect(screen.getByTestId("arrival-display").closest(".kit-statusbar")).toBeTruthy();
+    expect(screen.getAllByText("8 need you")).toHaveLength(1);
   });
 
   it("draws every member as its object: icon, name, fact, one lamp, its verbs", async () => {
@@ -249,8 +253,9 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       lamps: ["ASKS · 6 MIN"],
       verbs: ["Open session", "Answer"],
     });
-    // Phase 16: the kind plate is the agent (CC = Claude Code).
-    expect(agent.plate).toBe("CC");
+    // Window grammar: the agent's own glyph leads the row; it names the agent.
+    expect(agent.plate).toBe("");
+    expect(agent.glyph).toBe("Claude Code");
 
     const held = face(row("Codex: reconciliation"));
     expect(held).toMatchObject({
@@ -259,7 +264,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
       lamps: ["HELD CALL"],
       verbs: ["Deny", "Approve"],
     });
-    expect(face(row("Codex: reconciliation")).plate).toBe("CX");
+    expect(face(row("Codex: reconciliation")).glyph).toBe("Codex");
 
     const pr = face(row("#412 Add the ledger freeze flag"));
     expect(pr).toMatchObject({ kind: "pr", lamps: ["PR OPEN"], verbs: ["Open PR"] });
@@ -436,7 +441,8 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await mount();
     await waitFor(() => expect(screen.getByTestId("needs-next").textContent).toBe("NEXT · 14:00 · Ledger cutover sync"));
     const offer = await screen.findByTestId("needs-no-calendar");
-    expect(offer.textContent).toBe("NO CALENDARConnect calendar");
+    expect(offer.textContent).toBe("No calendarConnect calendar");
+    expect(offer.closest("[role='toolbar']")).toBeTruthy();
     expect(screen.queryByTestId("needs-source-row")).toBeNull();
     fireEvent.click(screen.getByTestId("needs-drawer").querySelector("[data-verb='connect-calendar']")!);
     expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "integration:calendar");
@@ -666,14 +672,16 @@ describe("NeedsDrawer one count and kind words (PHILO-15-09)", () => {
     await mount();
     const rows = Array.from(document.querySelectorAll<HTMLElement>("[data-testid='needs-list'] li.needs-row"));
     expect(screen.getByTestId("arrival-display").textContent).toBe(`${rows.length} need you`);
+    // Window grammar: the glyph leads; its alt is the kind word.
     const word = (title: string) =>
-      rows.find((r) => r.textContent?.includes(title))?.querySelector("[data-testid='kit-kind']")?.textContent;
+      rows.find((r) => r.textContent?.includes(title))?.querySelector(":scope > img")?.getAttribute("alt");
     expect(word("Run a second ops interview")).toBe("Decision");
     expect(word("Pick the vendor")).toBe("Action");
     expect(word("Vendor call")).toBe("Meeting");
-    expect(word("Jordan or Avery")).toBe("CC");
+    expect(word("Jordan or Avery")).toBe("Claude Code");
     for (const row of rows) {
-      expect(row.querySelector("[data-testid='kit-kind']")).not.toBeNull();
+      expect(row.querySelector(":scope > img")?.getAttribute("alt")).toBeTruthy();
+      expect(row.querySelector("[data-testid='kit-kind']")).toBeNull();
       expect(row.querySelector("[data-testid='needs-row-kind']")).toBeNull();
     }
   });
@@ -862,14 +870,15 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     useSourceReceipt.setState({ receipt: null });
     render(<NeedsDrawer />);
     await screen.findByText("8 need you");
-    const strip = screen.getByTestId("arrival-headline").querySelector(".kit-strip") as HTMLElement;
+    // Window grammar: the toolbar carries the offer; the status bar the facts.
+    const toolbar = screen.getByRole("toolbar", { name: "Needs you" });
     const coverage = screen.getByRole("button", { name: "Coverage" });
     expect(coverage).toHaveTextContent("1 of 1 available");
     expect(coverage).toHaveAttribute("aria-expanded", "false");
-    expect(strip.textContent).not.toContain("Checked");
-    await waitFor(() => expect(strip.textContent).toContain("NO CALENDAR"));
-    expect(within(strip).getByRole("button", { name: "Connect calendar" })).toBeTruthy();
+    await waitFor(() => expect(toolbar.textContent).toContain("No calendar"));
+    expect(within(toolbar).getByRole("button", { name: "Connect calendar" })).toBeTruthy();
     expect(screen.getByTestId("needs-checked").textContent).toMatch(/^Checked \d{2}:\d{2}$/);
+    expect(screen.getByTestId("needs-checked").closest("[data-testid='arrival-headline']")).toBeTruthy();
   });
 
   it("the chips narrow the ledger; a chip at zero is not drawn (Betterment D2)", async () => {
@@ -897,10 +906,11 @@ describe("NeedsDrawer on the interior kit (Phase 16)", () => {
     expect(screen.getByTestId("needs-list").querySelectorAll(".needs-row-name")).toHaveLength(8);
   });
 
-  it("every row wears its kind plate in plain words", async () => {
+  it("every row leads with its glyph, named in plain words", async () => {
     await mount();
-    const plates = [...document.querySelectorAll("li.needs-row [data-testid='kit-kind']")].map((n) => n.textContent);
-    expect(plates).toEqual(["CC", "CX", "PR", "Action", "Decision", "Action", "Action", "Meeting"]);
+    const words = [...document.querySelectorAll("li.needs-row > img")].map((n) => n.getAttribute("alt"));
+    expect(words).toEqual(["Claude Code", "Codex", "Pull request", "Action", "Decision", "Action", "Action", "Meeting"]);
+    expect(document.querySelectorAll("li.needs-row [data-testid='kit-kind']")).toHaveLength(0);
   });
 });
 

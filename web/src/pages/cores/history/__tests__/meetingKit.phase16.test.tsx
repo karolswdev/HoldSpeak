@@ -4,7 +4,7 @@
 // `Commitments · n`, each a Section over a Ledger of kind-plated rows.
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { MeetingHeader, meetingOutcomeFact, meetingStripItems, peopleCount } from "../MeetingHeader";
+import { MeetingHeader, meetingOutcomeFact, meetingReviewCount, meetingStripItems, meetingSummaryState, peopleCount } from "../MeetingHeader";
 import { MeetingOutcomes, meetingOutcomes } from "../MeetingDetail";
 import { useMeetingData, type FollowThroughProposal } from "../useMeetingData";
 import { MEETING_OPEN_EVENT } from "../../../../desk/objectWindows";
@@ -22,7 +22,9 @@ vi.mock("../../../../runtime/RuntimeBus", () => {
 const text = (node: unknown) => (typeof node === "string" ? node : "");
 
 describe("the meeting on the interior kit", () => {
-  it("the title is the one display fact; the strip says when, length, SUMMARISED and the people", () => {
+  // Window grammar (2026-10-24): the title bar names the meeting; the head
+  // is its glyph and one muted line; the state is the status bar's word.
+  it("no headline: the compact head says when, length and the people; the state is Summary stored", () => {
     const meeting = { id: "m1", title: "Cutover sync", intel_status: "complete", intel: { summary: "We froze the ledger." } };
     const data = {
       detail: meeting,
@@ -31,16 +33,15 @@ describe("the meeting on the interior kit", () => {
       segments: [{ speaker: "Jordan" }, { speaker: "Avery" }, { speaker: "jordan" }, { speaker: "" }],
     };
     const { container } = render(<MeetingHeader meeting={meeting} data={data as never} />);
-    expect(container.querySelectorAll(".kit-disp")).toHaveLength(1);
-    expect(container.querySelector(".kit-disp")?.textContent).toBe("Cutover sync");
-    const strip = container.querySelector(".meetings-detail-facts") as HTMLElement;
-    expect(strip.textContent).toContain("42 MIN");
-    expect(screen.getByTestId("meeting-summary-state").textContent).toBe("SUMMARISED");
-    expect(screen.getByTestId("meeting-summary-state").querySelector(".kit-sq")?.getAttribute("data-tone")).toBe("ok");
-    expect(strip.textContent).toContain("2 PEOPLE");
+    expect(container.querySelectorAll(".kit-disp")).toHaveLength(0);
+    expect(container.textContent).not.toContain("Cutover sync");
+    expect(screen.getByTestId("meeting-head-when").textContent).toBe("Oct 06 · 42 min");
+    expect(screen.getByTestId("meeting-head-people").getAttribute("aria-label")).toBe("With Jordan, Avery");
+    expect(container.querySelector(".meeting-head-glyph")).toBeTruthy();
+    expect(meetingSummaryState(meeting)).toEqual({ text: "Summary stored", lamp: "ok" });
   });
 
-  it("saved Outcomes use one review fact and the compact strip, without a static step ladder", () => {
+  it("saved Outcomes: one review count, the compact head, no static step ladder", () => {
     const meeting = { id: "m-saved", title: "Cutover sync", intel_status: "complete", intel: { summary: "We froze the ledger." } };
     const data = {
       detail: meeting,
@@ -54,8 +55,8 @@ describe("the meeting on the interior kit", () => {
       <MeetingHeader meeting={meeting} data={data as never} compact />,
     );
     expect(meetingOutcomeFact(meeting, data as never)).toBe("1 to review");
+    expect(meetingReviewCount(data as never)).toBe(1);
     expect(container.querySelector(".meetings-detail-facts")).toBeTruthy();
-    expect(container.querySelector(".meetings-detail-head")).toBeNull();
     expect(screen.queryByTestId("meeting-steps")).toBeNull();
   });
 

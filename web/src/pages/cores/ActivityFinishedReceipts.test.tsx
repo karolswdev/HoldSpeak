@@ -14,6 +14,21 @@ vi.mock("../../desk/useDeskChangedRefresh", () => ({ useOnDeskChanged: (reload: 
 import { ActivityFinishedReceipts } from "./ActivityFinishedReceipts";
 
 function wire() { return structuredClone(recorded.wire); }
+// Window grammar: a receipt is a dense list row. Its name is the receipt's
+// words and its subject; a press selects it, and the selection's Open
+// receipt sits in the status bar (Enter or a double press opens).
+const names = () => [...document.querySelectorAll("[data-testid^='activity-receipt-name-']")].map((n) => n.textContent ?? "");
+const sweeps = () => names().filter((name) => name.startsWith("SWEEP 2 ROOMS"));
+async function select(prefix: string) {
+  const row = await waitFor(() => {
+    const found = [...document.querySelectorAll<HTMLElement>("[id^='activity-receipt-']")]
+      .find((li) => li.querySelector("[data-testid^='activity-receipt-name-']")?.textContent?.startsWith(prefix));
+    expect(found).toBeTruthy();
+    return found!;
+  });
+  fireEvent.click(row.querySelector("button")!);
+  return row;
+}
 type Wire = ReturnType<typeof wire>;
 function pending() {
   let resolve!: (value: Wire) => void;
@@ -52,15 +67,19 @@ describe("Activity Finished receipts", () => {
     useProjections.setState({ query: "other face", kind: "attention", selectedId: "other-row" });
     const before = useProjections.getState();
     const view = render(<ActivityFinishedReceipts query=""/>);
-    const open = await screen.findByRole("button", { name: "Open receipt: SWEEP 2 ROOMS" });
-    expect(open.closest(".surface-row-verbs")).toBeNull();
+    const row = await select("SWEEP 2 ROOMS");
+    expect(row.getAttribute("aria-selected")).toBe("true");
+    const open = screen.getByRole("button", { name: "Open receipt: SWEEP 2 ROOMS" });
+    expect(open.closest(".kit-statusbar-verbs")).not.toBeNull();
     expect(view.container.querySelector("[id='activity-receipt-pipeline:ev-shade-0']")).not.toBeNull();
+    // Who: the REMOTE egress chip on the remote row, and only there.
     expect(screen.getByText("REMOTE · 192.168.1.43")).toBeInTheDocument();
+    expect(screen.getByTestId("activity-remote").textContent).toBe("1 remote");
     const url = new URL(mocks.apiFetch.mock.calls[0][0], "http://desk.test");
     expect(Object.fromEntries(url.searchParams)).toEqual({ kind: "receipt", attention_state: "resolved", offset: "0", limit: "50" });
     fireEvent.click(open);
     expect(mocks.openSurface).toHaveBeenCalledWith("configure-cadence", undefined);
-    expect(screen.getByText("SWEEP 2 ROOMS")).toBeInTheDocument();
+    expect(sweeps()).toEqual(["SWEEP 2 ROOMS · Heartbeat"]);
     expect(useProjections.getState()).toBe(before);
     expect(mocks.apiFetch.mock.calls.every((call) => call[1].method === "GET")).toBe(true);
     expect(mocks.openPrimitive).not.toHaveBeenCalled();
@@ -71,8 +90,9 @@ describe("Activity Finished receipts", () => {
     Object.assign(result.projections[0], { origin: "local", caller: "", actual_destination: destination });
     mocks.apiFetch.mockResolvedValue(result);
     const view = render(<ActivityFinishedReceipts query=""/>);
-    await screen.findByText("SWEEP 2 ROOMS");
+    await waitFor(() => expect(sweeps()).toHaveLength(1));
     expect(view.container.querySelector(".gadget-chip-egress")).toBeNull();
+    expect(screen.queryByTestId("activity-remote")).toBeNull();
   });
 
   it("keeps a concrete outgoing destination on its receipt", async () => {
@@ -85,11 +105,11 @@ describe("Activity Finished receipts", () => {
 
   it("retains read rows through failure and Retry repeats only the failed GET", async () => {
     render(<ActivityFinishedReceipts query=""/>);
-    await screen.findByText("SWEEP 2 ROOMS");
+    await waitFor(() => expect(sweeps()).toHaveLength(1));
     mocks.apiFetch.mockRejectedValueOnce(new Error("offline"));
     act(() => mocks.changed?.());
     expect(await screen.findByRole("alert")).toHaveTextContent("Finished read failed · Shown receipts kept · Retry");
-    expect(screen.getByText("SWEEP 2 ROOMS")).toBeInTheDocument();
+    expect(sweeps()).toHaveLength(1);
     expect(screen.getByText("Last read")).toBeInTheDocument();
     mocks.apiFetch.mockResolvedValueOnce(wire());
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
@@ -111,6 +131,7 @@ describe("Activity Finished receipts", () => {
     result.projections[0].detail_url = detail_url;
     mocks.apiFetch.mockResolvedValue(result);
     render(<ActivityFinishedReceipts query=""/>);
+    await select("SWEEP 2 ROOMS");
     expect(await screen.findByText("Receipt view unavailable")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Open receipt/ })).toBeNull();
     expect(mocks.openSurface).not.toHaveBeenCalled();
@@ -120,9 +141,10 @@ describe("Activity Finished receipts", () => {
   it("names an unregistered canonical door and keeps its row", async () => {
     mocks.openSurface.mockReturnValue(false);
     render(<ActivityFinishedReceipts query=""/>);
-    fireEvent.click(await screen.findByRole("button", { name: "Open receipt: SWEEP 2 ROOMS" }));
+    await select("SWEEP 2 ROOMS");
+    fireEvent.click(screen.getByRole("button", { name: "Open receipt: SWEEP 2 ROOMS" }));
     expect(screen.getByText("Receipt view unavailable")).toBeInTheDocument();
-    expect(screen.getByText("SWEEP 2 ROOMS")).toBeInTheDocument();
+    expect(sweeps()).toHaveLength(1);
     expect(mocks.openPrimitive).not.toHaveBeenCalled();
   });
 
@@ -131,12 +153,15 @@ describe("Activity Finished receipts", () => {
     Object.assign(result.projections[0], { source_kind: "meeting", subject_ref: "meeting:m1", detail_url: "/history?meeting=m1", title: "Meeting saved" });
     mocks.apiFetch.mockResolvedValue(result);
     const view = render(<ActivityFinishedReceipts query=""/>);
-    fireEvent.click(await screen.findByRole("button", { name: "Open receipt: Meeting saved" }));
+    const row = await select("Meeting saved");
+    // Enter on the selected row opens it (the list's own open).
+    fireEvent.keyDown(row.querySelector("button")!, { key: "Enter" });
     expect(mocks.openSurface).toHaveBeenCalledWith("review-meetings", "meeting:m1");
     view.unmount();
     result.projections[0].detail_url = "/history?meeting=other";
     mocks.apiFetch.mockResolvedValue(result);
     render(<ActivityFinishedReceipts query=""/>);
+    await select("Meeting saved");
     expect(await screen.findByText("Receipt view unavailable")).toBeInTheDocument();
     expect(mocks.openSurface).toHaveBeenCalledTimes(1);
   });
@@ -148,10 +173,10 @@ describe("Activity Finished receipts", () => {
     mocks.apiFetch.mockRejectedValueOnce(new Error("offline"));
     fireEvent.click(screen.getByRole("button", { name: "Load more" }));
     await screen.findByRole("alert");
-    expect(screen.getAllByText("SWEEP 2 ROOMS")).toHaveLength(50);
+    expect(sweeps()).toHaveLength(50);
     mocks.apiFetch.mockResolvedValueOnce(page(50, 1, false));
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    await waitFor(() => expect(screen.getAllByText("SWEEP 2 ROOMS")).toHaveLength(51));
+    await waitFor(() => expect(sweeps()).toHaveLength(51));
     expect(mocks.apiFetch.mock.calls.slice(1).map((call) => new URL(call[0], "http://desk.test").searchParams.get("offset"))).toEqual(["50", "50"]);
     expect(screen.queryByRole("button", { name: "Load more" })).toBeNull();
   });
@@ -168,7 +193,7 @@ describe("Activity Finished receipts", () => {
     view.rerender(<ActivityFinishedReceipts query="absent"/>);
     await screen.findByText("No matching receipts");
     await act(async () => old.resolve(wire()));
-    expect(screen.queryByText("SWEEP 2 ROOMS")).toBeNull();
+    expect(sweeps()).toHaveLength(0);
     expect(new URL(mocks.apiFetch.mock.calls[1][0], "http://desk.test").searchParams.get("q")).toBe("absent");
   });
 
@@ -182,9 +207,9 @@ describe("Activity Finished receipts", () => {
     expect(screen.getByRole("button", { name: "Load more" })).toBeDisabled();
     mocks.apiFetch.mockResolvedValueOnce(wire());
     act(() => mocks.changed?.());
-    await waitFor(() => expect(screen.getAllByText("SWEEP 2 ROOMS")).toHaveLength(1));
+    await waitFor(() => expect(sweeps()).toHaveLength(1));
     await act(async () => oldPage.resolve(page(50, 1, false)));
-    expect(screen.getAllByText("SWEEP 2 ROOMS")).toHaveLength(1);
+    expect(sweeps()).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Load more" })).toBeNull();
   });
 });

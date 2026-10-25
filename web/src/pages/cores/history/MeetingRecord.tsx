@@ -13,7 +13,6 @@ import { Button } from "../../../components/signal/Signal";
 import { useCompactViewport } from "../../../desk/useCompactViewport";
 import { apiBlob, apiFetch, readableError } from "../../../lib/api";
 import { SurfaceState } from "../../../desk/surface/Surface";
-import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
 import {
   ParkReceipt,
   parkClock,
@@ -26,7 +25,6 @@ import {
 import { parkMeeting, restoreMeeting } from "../../../desk/api";
 import { writeFailureReason } from "../../../desk/hooks/useWriteReceipt";
 import { EgressChip } from "../../../desk/surface/gadgets";
-import { StateChip } from "../../../desk/surface/patterns/StateChip";
 import { egressFor } from "../../../desk/surface/egress";
 import { readPlannedRoute, routeOff, routeReady } from "../../../meetings/summaryRoute";
 import { readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
@@ -35,6 +33,12 @@ import { SPEECH_SETUP_EVENT } from "../../../desk/firstrun/SpeechSetup";
 import { burstTimer } from "../../../desk/burstTimer";
 import { onReturnToTask } from "../../../desk/returnToTask";
 import { useWindowTitle } from "../../../desk/surface/title";
+import { StatusBar, ToolGlyph, Toolbar, type StatusBarItem } from "../../../desk/surface/kit";
+import { useWindowInterior } from "../../../desk/surface/interior";
+import { MeetingRunSlotContext } from "../../../meetings/runSlot";
+import { meetingSummaryState } from "./MeetingHeader";
+import { stateToken } from "./helpers";
+import "./meeting-record.css";
 import { useDesk } from "../../../desk/store";
 import { openSurfaceOr } from "../../../desk/shell";
 import { useWindowId } from "../../../desk/components/window/windowIdContext";
@@ -65,15 +69,24 @@ function revealOnRecord(anchorId: string, focus = false): void {
   if (focus) el.querySelector<HTMLElement>("button:not(:disabled), input, textarea")?.focus({ preventScroll: true });
 }
 
-/** The existing menu species carries the record's secondary actions. */
-function RecordMore({ entries }: { entries: WorkMenuEntry[] }) {
+/** The existing menu species carries the record's secondary actions; in
+ *  the toolbar it opens below its Button. */
+function RecordMenu({ label, ariaLabel, entries, glyph }: {
+  label: string;
+  ariaLabel: string;
+  entries: WorkMenuEntry[];
+  glyph?: "import";
+}) {
   const ref = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   return <>
-    <Button ref={ref} dense variant="ghost" aria-label="More actions" aria-haspopup="menu" aria-expanded={open}
-      onClick={() => setOpen((value) => !value)}>More</Button>
-    {open && ref.current ? <WorkMenu label="More actions" anchor="above"
-      x={ref.current.getBoundingClientRect().left} y={ref.current.getBoundingClientRect().top}
+    <Button ref={ref} dense variant="secondary" aria-label={ariaLabel} aria-haspopup="menu" aria-expanded={open}
+      onClick={() => setOpen((value) => !value)}>
+      {glyph ? <ToolGlyph kind={glyph} /> : null}
+      {label}
+    </Button>
+    {open && ref.current ? <WorkMenu label={ariaLabel} anchor="below"
+      x={ref.current.getBoundingClientRect().left} y={ref.current.getBoundingClientRect().bottom}
       entries={entries} autoFocus onClose={() => setOpen(false)} returnFocus={() => ref.current?.focus()} /> : null}
   </>;
 }
@@ -102,6 +115,11 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   const sendButtonRef = useRef<HTMLButtonElement>(null);
   const wasSendOpen = useRef(false);
   const projects = useDesk((state) => state.projects);
+  // Window grammar: the record runs edge to edge (toolbar, head, reader,
+  // status bar); its run verbs are portaled into the toolbar's run slot.
+  useWindowInterior("editor");
+  const [runSlot, setRunSlot] = useState<HTMLSpanElement | null>(null);
+  const [reviewCount, setReviewCount] = useState(0);
 
   useEffect(() => {
     const returning = wasSendOpen.current && requestedWell !== "send";
@@ -240,22 +258,30 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   useWindowTitle(title || null, [title, wings.view]);
 
   // PHILO-17 (U16, #1083): the window's foot names the summary engine.
-  const footerHost =
-    route && routeReady(route) ? egressFor(route.legs[0].host).label : null;
-  // HS-201-04 (UX-CANON A.9): the foot says where this meeting's summary runs.
+  // Window grammar: the status bar's chip is where the summary RAN (the
+  // run's recorded host) when it ran, else where the next one runs (the
+  // route). The record's summary does not say the same host again.
+  const ranHost = ["RAN", "RUNNING", "QUEUED"].includes(stateToken(meeting ?? {}).label)
+    ? String(meeting?.intel_model_host ?? "").trim() || null
+    : null;
+  const ranEgress = ranHost ? egressFor(ranHost) : null;
+  const footerHost = ranEgress?.label
+    ? ranEgress.label
+    : route && routeReady(route) ? egressFor(route.legs[0].host).label : null;
+  // HS-201-04 (UX-CANON A.9): the status bar says where this meeting's
+  // summary runs (egress where egress happens); a missing route is a lamp and
+  // a word, with Choose engine as the status bar's verb.
   const footerEgress = useMemo(() => {
-    if (!route) return null;
-    if (!routeReady(route)) {
-      return (
-        <StateChip
-          state="warning"
-          label={routeOff(route) ? "Summaries off" : "No engine for summaries"}
-        />
-      );
+    if (ranEgress?.label) {
+      return <EgressChip label={ranEgress.label} scope={ranEgress.scope} title="Where this meeting's summary ran." />;
     }
+    if (!route || !routeReady(route)) return null;
     const lead = egressFor(route.legs[0].host);
     return <EgressChip label={lead.label} scope={lead.scope} title="Where a meeting summary runs." />;
-  }, [route]);
+  }, [route, ranEgress?.label, ranEgress?.scope]);
+  const routeWord = route && !routeReady(route)
+    ? (routeOff(route) ? "Summaries off" : "No engine for summaries")
+    : null;
 
   const exportMeeting = async (format: string) => {
     try {
@@ -326,73 +352,109 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   ];
   const hasSummary = meeting.has_summary === true || String(readMeetingIntel(meeting)?.summary ?? "").trim() !== "";
 
+  const engineMissing = Boolean(routeWord) && !routeOff(route);
+  const summaryState = meetingSummaryState(meeting, routeOff(route));
+  const running = ["RUNNING", "QUEUED"].includes(stateToken(meeting).label);
+  const statusItems: StatusBarItem[] = [
+    { key: "state", lamp: summaryState.lamp, text: summaryState.text, testId: "meeting-summary-state" },
+    reviewCount > 0 ? { key: "review", lamp: "ask" as const, text: `${reviewCount} to review`, testId: "meeting-review-count" } : null,
+    routeWord && !(routeOff(route) && summaryState.text === "Summaries off")
+      ? { key: "route", lamp: "warn" as const, text: routeWord, testId: "meeting-route-state" }
+      : null,
+    parkOutcome
+      ? { key: "receipt", text: <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restore(ids)} data-testid="meeting-park-receipt" /> }
+      : receipt
+        ? { key: "receipt", text: <span className="surface-footer-receipt-line" data-tone={receipt.tone} data-testid="meetings-run-receipt">{receipt.text}</span> }
+        : null,
+  ].filter(Boolean) as StatusBarItem[];
+  const exportEntries: WorkMenuEntry[] = [
+    { type: "item", id: "markdown", label: "Export MD", onSelect: () => void exportMeeting("markdown") },
+    { type: "item", id: "srt", label: "Export SRT", onSelect: () => void exportMeeting("srt") },
+  ];
+  const moreMenu = moreEntries.filter((entry) => !("id" in entry) || !["markdown", "srt"].includes(String(entry.id)));
+
   return (
-    <>
-      {!compact ? (
-        <Button
-          dense
-          variant="ghost"
-          className="meeting-record-back"
-          data-testid="meeting-record-back"
-          onClick={onClose}
-        >
-          Back
-        </Button>
-      ) : null}
-      <MeetingDetail
-        sendRequested={requestedWell === "send"}
-        decideRequested={requestedWell === "decide"}
-        saidOnFace={footerHost}
-        meeting={meeting}
-        onTranscribe={async (id: string) => {
-          // PHILO-17 transcribe: the hub starts it (202); the record reads again.
-          await apiFetch(`/api/meetings/${encodeURIComponent(id)}/transcribe`, { method: "POST" });
-          await load();
-        }}
-        view={view}
-        momentSegmentIndex={segment}
-        onClose={onClose}
-        onDeleted={() => {
-          setRevision((n) => n + 1);
-          void load();
-        }}
-        onSendBack={() => setRequestedWell(null)}
-        revision={revision}
-        onReceipt={setReceipt}
-        runRefusal={summary.runRefusal?.meetingId === meetingId ? summary.runRefusal.refusal : null}
-        onRunIntelligence={
-          // HS-201-04: a FAILED record's Retry is owned by the summary slab;
-          // the record offers a run only when the summary is OFF (and on the
-          // Outcomes face).
-          summaryIsOff(meeting)
-            ? (displayed) => void summary.run(meetingId, displayed)
-            : undefined
-        }
-      />
-      {requestedWell === "project" ? <div id={`meeting-${meetingId}-project`}>
+    <div className="meeting-record" data-testid="meeting-record" data-running={running || undefined}>
+      {/* Window grammar: the toolbar under the title bar. The run verbs the
+          record's wells own (Run summary, Retry, Skip, Transcribe) land in
+          the run slot first; the one primary is the run verb, else Send. */}
+      <Toolbar label="Meeting" data-testid="meeting-toolbar">
+        {!compact ? (
+          <Button
+            dense
+            variant="secondary"
+            className="meeting-record-back"
+            data-testid="meeting-record-back"
+            onClick={onClose}
+          >
+            <span className="meeting-record-back-mark" aria-hidden="true">‹</span>
+            Back
+          </Button>
+        ) : null}
+        <span className="meeting-run-slot" ref={setRunSlot} />
+        {view === "outcomes" && hasSummary ? (
+          <Button ref={sendButtonRef} dense variant="primary" data-testid="meeting-send" onClick={() => requestWell("send")}>
+            <ToolGlyph kind="open" />
+            Send…
+          </Button>
+        ) : null}
+        <RecordMenu label="Export" ariaLabel="Export" glyph="import" entries={exportEntries} />
+        <RecordMenu label="More" ariaLabel="More actions" entries={moreMenu} />
+      </Toolbar>
+      <MeetingRunSlotContext.Provider value={runSlot}>
+        <MeetingDetail
+          sendRequested={requestedWell === "send"}
+          decideRequested={requestedWell === "decide"}
+          saidOnFace={footerHost}
+          meeting={meeting}
+          onTranscribe={async (id: string) => {
+            // PHILO-17 transcribe: the hub starts it (202); the record reads again.
+            await apiFetch(`/api/meetings/${encodeURIComponent(id)}/transcribe`, { method: "POST" });
+            await load();
+          }}
+          view={view}
+          momentSegmentIndex={segment}
+          onClose={onClose}
+          onDeleted={() => {
+            setRevision((n) => n + 1);
+            void load();
+          }}
+          onSendBack={() => setRequestedWell(null)}
+          revision={revision}
+          onReceipt={setReceipt}
+          onReviewCount={setReviewCount}
+          runRefusal={summary.runRefusal?.meetingId === meetingId ? summary.runRefusal.refusal : null}
+          onRunIntelligence={
+            // HS-201-04: a FAILED record's Retry is owned by the summary slab;
+            // the record offers a run only when the summary is OFF (and on the
+            // Outcomes face).
+            summaryIsOff(meeting)
+              ? (displayed) => void summary.run(meetingId, displayed)
+              : undefined
+          }
+        />
+      </MeetingRunSlotContext.Provider>
+      {requestedWell === "project" ? <div id={`meeting-${meetingId}-project`} className="meeting-record-project">
         <SurfaceWell head="Project"><AddToProject meetingId={meetingId} autoOpen
           onReceipt={(next) => setReceipt(next.tone === "danger" ? { text: next.text, tone: "danger" } : { text: next.text })} /></SurfaceWell>
       </div> : null}
-      {requestedWell !== "send" ? <SurfaceFooter
-        egress={footerEgress}
-        receipt={
-          parkOutcome ? (
-            <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restore(ids)} data-testid="meeting-park-receipt" />
-          ) : (
-            <span className="surface-footer-receipt-line" data-tone={receipt?.tone} role="status">
-              {receipt ? <span data-testid="meetings-run-receipt">{receipt.text}</span> : null}
-            </span>
-          )
-        }
-        verbs={
-          <span className="surface-footer-verbs-group">
-            {view === "outcomes" && hasSummary ? (
-              <Button ref={sendButtonRef} dense variant="primary" data-testid="meeting-send" onClick={() => requestWell("send")}>Send…</Button>
-            ) : null}
-            <RecordMore entries={moreEntries} />
-          </span>
-        }
-      /> : null}
-    </>
+      {/* Window grammar: the status bar says the summary's state in warm
+          words with its lamp, the receipt beside it, Choose engine when no
+          engine runs summaries, and the engine's host at the right. */}
+      {requestedWell !== "send" ? (
+        <StatusBar
+          data-testid="meeting-status"
+          items={statusItems}
+          egress={footerEgress}
+          verbs={engineMissing ? (
+            <Button dense variant={hasSummary ? "secondary" : "primary"} data-testid="meeting-choose-engine"
+              onClick={() => openSurfaceOr("open-concierge", "/models", "meetings")}>
+              <ToolGlyph kind="engine" />
+              Choose engine
+            </Button>
+          ) : null}
+        />
+      ) : null}
+    </div>
   );
 }

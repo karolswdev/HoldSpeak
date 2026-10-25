@@ -101,6 +101,17 @@ def test_real_settings_you_edit_alias_and_section_return(
             )
             page.on("pageerror", lambda error: errors.append(str(error)))
             you = _open_settings(page, base)
+            if width == 393:
+                # A pane opened by a scope returns where it came from (window
+                # grammar): the window's Back closes Settings, no settings-back.
+                # Reopen it from the desk and reach You from the rail, so the
+                # section returns below run the rail's Back.
+                assert page.locator("#surface-settings [data-testid=settings-back]").count() == 0
+                page.locator("#surface-settings .desk-gadget-close").click()
+                page.locator("#surface-settings").wait_for(state="detached", timeout=10_000)
+                _api(page, "POST", "/api/desk/windows/surface-settings/open", {}, token=TOKEN)
+                page.get_by_test_id("settings-index-you").click()
+                you.get_by_test_id("settings-owner-name").get_by_role("textbox").wait_for(timeout=15_000)
             name = you.get_by_test_id("settings-owner-name").get_by_role("textbox")
             aliases = you.get_by_test_id("settings-owner-aliases").get_by_role("textbox")
             name.fill("Karol Architect")

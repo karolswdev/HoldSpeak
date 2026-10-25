@@ -13,6 +13,8 @@ import {
   type SummaryRefusal,
 } from "../../../meetings/summaryRoute";
 import type { NeedsRow } from "./helpers";
+import { MeetingRunVerb } from "../../../meetings/runSlot";
+import { ToolGlyph } from "../../../desk/surface/kit";
 
 /** True when the record draws its filled `Run summary`. One rule, two
  *  readers: this table draws the verb, and the Decide well steps down to
@@ -78,10 +80,12 @@ export function NeedsYouTable({
   return (
     <div className="meetings-detail-needs" data-testid="meeting-needs-you">
       <div className="meetings-detail-needs-head">
-        <span className="surface-caption">
-          {/* PHILO-13-03: this meeting's proposals, narrower than "needs you". */}
-          {countLabel("TO REVIEW", needsCount)}
-        </span>
+        {needsRows.length > 0 ? (
+          <span className="surface-caption">
+            {/* PHILO-13-03: this meeting's proposals, narrower than "needs you". */}
+            {countLabel("TO REVIEW", needsCount)}
+          </span>
+        ) : null}
         {showRoute ? (
           <RouteDisclosure route={plannedRoute} testId="detail-route" />
         ) : null}
@@ -90,36 +94,41 @@ export function NeedsYouTable({
           durable={durableRefusal}
           testId="detail-refusal"
         />
-        {showRunIntel ? (
-          <Button
-            dense
-            variant="primary"
-            onClick={onRunIntelligence}
-            data-testid="detail-run-intelligence-btn"
-          >
-            Run summary
-          </Button>
-        ) : null}
-        {showRetry ? (
-          <Button
-            dense
-            variant="ghost"
-            onClick={onRetryIntelligence}
-            data-testid="detail-retry-btn"
-          >
-            Retry
-          </Button>
-        ) : null}
-        {showSkip ? (
-          <Button
-            dense
-            variant="ghost"
-            onClick={onSkipIntelligence}
-            data-testid="detail-skip-btn"
-          >
-            Skip
-          </Button>
-        ) : null}
+        {/* Window grammar: the run verbs sit in the meeting window's toolbar. */}
+        <MeetingRunVerb>
+          {showRunIntel ? (
+            <Button
+              dense
+              variant="primary"
+              onClick={onRunIntelligence}
+              data-testid="detail-run-intelligence-btn"
+            >
+              <ToolGlyph kind="summary" />
+              Run summary
+            </Button>
+          ) : null}
+          {showRetry ? (
+            <Button
+              dense
+              variant="ghost"
+              onClick={onRetryIntelligence}
+              data-testid="detail-retry-btn"
+            >
+              <ToolGlyph kind="retry" />
+              Retry
+            </Button>
+          ) : null}
+          {showSkip ? (
+            <Button
+              dense
+              variant="ghost"
+              onClick={onSkipIntelligence}
+              data-testid="detail-skip-btn"
+            >
+              Skip
+            </Button>
+          ) : null}
+        </MeetingRunVerb>
       </div>
       {needsRows.length > 0 ? (
         <ul className="meetings-detail-outcomes">

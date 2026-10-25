@@ -7967,11 +7967,12 @@
       "reason": "Betterment ST1 gives Rhythm one home in Settings. The legacy case id stays stable; prior sealed observations are unchanged.",
       "trigger": {
         "kind": "ui",
-        "action": "click",
+        "action": "press",
         "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
-        "adapter": "ui-pointer",
+        "key": "Enter",
+        "adapter": "ui-keyboard",
         "timeout_s": 15,
-        "why": "The exact sweep receipt\u2019s library Open receipt Button opens its registered Rhythm face from Activity."
+        "why": "Window grammar (2026-10-24): the exact sweep receipt is a list row; Enter on it opens its registered Rhythm face from Activity (the list view's own open; a press selects, a double press opens)."
       }
     },
     {
@@ -8094,11 +8095,12 @@
         },
         {
           "kind": "ui",
-          "action": "click",
+          "action": "press",
           "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
-          "adapter": "ui-by-viewport",
+          "key": "Enter",
+          "adapter": "ui-keyboard",
           "timeout_s": 15,
-          "why": "The exact sweep receipt\u2019s library Open receipt Button opens its registered Rhythm face from Activity."
+          "why": "Window grammar (2026-10-24): the exact sweep receipt is a list row; Enter on it opens its registered Rhythm face from Activity (the list view's own open; a press selects, a double press opens)."
         },
         {
           "kind": "ui",
@@ -8110,7 +8112,7 @@
         {
           "kind": "ui",
           "action": "wait_for",
-          "selector": "#surface-settings.is-front button[aria-label=\"Back from Settings\"]",
+          "selector": "#surface-settings.is-front button[aria-label^=\"Back from \"]",
           "at_width": 393,
           "adapter": "ui-pointer"
         }

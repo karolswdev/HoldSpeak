@@ -208,9 +208,10 @@ describe("a slow refresh never restores a record the owner left", () => {
         </TitleSlotContext.Provider>
       </>,
     );
-    const bodyFacts = () => [...document.querySelectorAll(".meetings-detail-head .surface-display")].map((e) => e.textContent);
+    // Window grammar: each window's status bar says its summary's state.
+    const bodyFacts = () => screen.queryAllByTestId("meeting-summary-state").map((e) => e.textContent);
     await waitFor(() => expect([titleA.value, titleB.value]).toEqual(["Imported meeting", "The other meeting"]));
-    await waitFor(() => expect(bodyFacts()).toEqual(["SUMMARY OFF", "SUMMARY OFF"]));
+    await waitFor(() => expect(bodyFacts()).toEqual(["Summary not run", "Summary not run"]));
     // A refresh for A starts and stalls.
     stall = true;
     act(() => {
@@ -221,7 +222,7 @@ describe("a slow refresh never restores a record the owner left", () => {
       releaseA?.({ ...detail(), title: "Imported meeting, read again" });
     });
     await waitFor(() => expect([titleA.value, titleB.value]).toEqual(["Imported meeting, read again", "The other meeting"]));
-    expect(bodyFacts()).toEqual(["SUMMARY OFF", "SUMMARY OFF"]);
+    expect(bodyFacts()).toEqual(["Summary not run", "Summary not run"]);
   });
 });
 
@@ -293,9 +294,9 @@ describe("the open record follows the hub", () => {
     vi.mocked(apiFetch).mockImplementation(async (path: string) =>
       (isDetail(String(path)) ? current : {}) as never);
     const { windowTitle } = openRecord();
-    const bodyFact = () => document.querySelector(".meetings-detail-head .surface-display")?.textContent ?? "";
+    const bodyFact = () => screen.queryByTestId("meeting-summary-state")?.textContent ?? "";
     await waitFor(() => expect(windowTitle.value).toBe("Still importing"));
-    expect(bodyFact()).toBe("Still importing");
+    expect(bodyFact()).toBe("Importing");
     current = {
       ...detail(), title: "The transcribed meeting", intel_status: "disabled", transcriptWords: 9, planned_route: READY_ROUTE,
       segments: [{ text: "The quick brown fox.", speaker: "Me", start_time: 0, end_time: 1 }],
@@ -304,7 +305,7 @@ describe("the open record follows the hub", () => {
       window.dispatchEvent(new Event("focus"));
     });
     await waitFor(() => expect(windowTitle.value).toBe("The transcribed meeting"));
-    expect(bodyFact()).toBe("SUMMARY OFF");
+    expect(bodyFact()).toBe("Summary not run");
     await waitFor(() => expect(screen.getByTestId("detail-run-intelligence-btn")).toBeVisible(), { timeout: 4000 });
   });
 });

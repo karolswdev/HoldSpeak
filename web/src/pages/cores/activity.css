@@ -1,0 +1,71 @@
+/* Window grammar (2026-10-24): the Activity window. The toolbar holds the
+   verbs and the search well; the list view runs edge to edge under it; the
+   status bar says the count. */
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.activity-list > .object-list {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.activity-list > .surface-state {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+.activity-list > .surface-action-notice {
+  margin: 8px 10px 0;
+}
+.activity-search {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.activity-search > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* Who: `You`, or the REMOTE egress chip on a remote row only. */
+.activity-who {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  min-width: 0;
+}
+.desk-next .activity-who .gadget-chip-egress {
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  font: 500 12px / 18px var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+.desk-next .object-list-row[data-selected="true"] .activity-who .gadget-chip-egress {
+  border-color: color-mix(in srgb, var(--wb-paper) 70%, transparent);
+  background: transparent;
+  color: var(--wb-paper);
+}
+.activity-list .object-list-cell[data-col="when"] {
+  font-variant-numeric: tabular-nums;
+}
+.activity-unavailable {
+  font: 400 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+  white-space: nowrap;
+}
+/* Narrow: the name and the outcome fill the first line exactly, so Who and
+   When always fall together under the name. */
+@container surface (max-width: 520px) {
+  .activity-list .object-list[data-density="dense"] .object-list-name {
+    flex: 0 0 calc(100% - 128px);
+    min-width: 0;
+  }
+  .activity-list .object-list[data-density="dense"] .object-list-state {
+    flex: 0 0 128px;
+    justify-content: flex-end;
+    box-sizing: border-box;
+  }
+}

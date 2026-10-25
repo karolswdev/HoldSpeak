@@ -1,10 +1,13 @@
-// HS-172 — the detail header. Phase 16 (the interior kit; the canvas window
-// "Cutover sync"): the meeting's title is the window's ONE big fact (the
-// AppHead), and its facts are the StatusStrip on the same baseline:
-// `TUE 14:00 · 42 MIN` · the summary's state (a lamp + its word) · the
-// run's seconds and its egress chip · the transcript's gaps · `4 PEOPLE`.
+// HS-172 — the detail header. Window grammar (2026-10-24): the title bar IS
+// the meeting's name, so the body never repeats it as a headline. The head
+// is compact: the meeting's glyph and ONE muted line (`Oct 24 · 30 min`, a
+// gap a dot and a word, the people as avatars). The summary's state and the
+// engine's egress chip are the window's status bar (meetingSummaryState).
 import type { ReactNode } from "react";
-import { AppHead, StatusStrip, Steps, type Step, type StatusStripItem } from "../../../desk/surface";
+import { AvatarStack, DotWord, Steps, type Step, type StatusStripItem } from "../../../desk/surface";
+import type { ObjectTone } from "../../../desk/surface/objects/kinds";
+import { objectSprite } from "../../../desk/surface/objects/kinds";
+import { listSprite } from "../../../desk/sprites";
 import { ledgerDate, durationToken, stateToken, unclearLampLabel } from "./helpers";
 import { EgressChip } from "../../../desk/surface/gadgets";
 import { egressFor } from "../../../desk/surface/egress";
@@ -110,15 +113,21 @@ export function meetingSteps(
 
 /** The saved review face keeps the window name in its title bar. This is the
  * one useful fact in the body: pending work, or the current summary state. */
+/** What this meeting still asks of him: the legacy needs and the
+ *  proposals still to decide (not deferred). */
+export function meetingReviewCount(data: Pick<MeetingData, "ftProposals" | "needsCount">): number {
+  const legacyPending = Number(data.needsCount ?? 0);
+  return (Number.isFinite(legacyPending) ? Math.max(0, legacyPending) : 0)
+    + (data.ftProposals ?? []).filter(
+      (proposal) => proposal.state === "proposed" && !proposal.deferred_until,
+    ).length;
+}
+
 export function meetingOutcomeFact(
   meeting: Record<string, unknown>,
   data: Pick<MeetingData, "detail" | "ftProposals" | "needsCount">,
 ): string {
-  const legacyPending = Number(data.needsCount ?? 0);
-  const pending = (Number.isFinite(legacyPending) ? Math.max(0, legacyPending) : 0)
-    + (data.ftProposals ?? []).filter(
-      (proposal) => proposal.state === "proposed" && !proposal.deferred_until,
-    ).length;
+  const pending = meetingReviewCount(data);
   if (pending > 0) return `${pending} to review`;
 
   const token = stateToken(data.detail ?? meeting);
@@ -142,32 +151,87 @@ export function meetingPipelineActive(
   );
 }
 
+/** The distinct speakers the transcript names, as they first appear. */
+export function peopleNames(segments: readonly Record<string, unknown>[]): string[] {
+  const seen = new Map<string, string>();
+  for (const row of segments) {
+    const speaker = String(row.speaker ?? "").trim();
+    if (speaker && !seen.has(speaker.toLowerCase())) seen.set(speaker.toLowerCase(), speaker);
+  }
+  return [...seen.values()];
+}
+
+/** `30 MIN` → `30 min`, `OCT 24` → `Oct 24`: the head is quiet sans. */
+function quietWord(token: string): string {
+  return token
+    .replace(/\b([A-Z])([A-Z]+)\b/g, (_, first: string, rest: string) => first + rest.toLowerCase())
+    .replace(/\b(MIN|HR|S)\b/gi, (word) => word.toLowerCase());
+}
+
+/** Window grammar: the summary's state in the status bar, a dot and a word
+ *  in sentence case (`Summary stored`, `Summary failed`). Pure. */
+export function meetingSummaryState(
+  source: Record<string, unknown>,
+  summariesOff = false,
+): { text: string; lamp?: ObjectTone } {
+  const token = stateToken(source);
+  const stored = Boolean(String(readMeetingIntel(source)?.summary ?? "").trim());
+  if (token.label === "RAN" || (stored && !["RUNNING", "QUEUED", "FAILED"].includes(token.label))) {
+    return { text: "Summary stored", lamp: "ok" };
+  }
+  switch (token.label) {
+    case "RUNNING": return { text: "Summary running", lamp: "info" };
+    case "QUEUED": return { text: "Summary queued", lamp: "info" };
+    case "FAILED": return { text: token.axis ? "Summary failed" : "Failed", lamp: "fail" };
+    case "SKIPPED": return { text: "Summary skipped", lamp: "warn" };
+    case "PARTIAL": return { text: "Summary partial", lamp: "warn" };
+    case "OFF": return summariesOff ? { text: "Summaries off" } : { text: "Summary not run" };
+    default: {
+      const word = token.label.charAt(0) + token.label.slice(1).toLowerCase();
+      const lamp: ObjectTone | undefined = token.tone === "danger" ? "fail" : token.tone === "warn" ? "warn" : undefined;
+      return { text: word, lamp };
+    }
+  }
+}
+
 export function MeetingHeader({
   meeting,
   data,
   compact,
-  saidOnFace,
 }: {
   meeting: Record<string, unknown>;
   data: MeetingData;
   /** PHILO-17 (U16): the engine host the window's foot already names. */
   saidOnFace?: string | null;
-  /** HS-200-12: on the review wing the display line belongs to the
-   *  review (`5 to review`) and the meeting's name is in the window title
-   *  bar (the subject, said once); the strip keeps only the facts. */
+  /** A settled record: no step ladder (the pipeline is done). */
   compact?: boolean;
 }) {
-  const title = String(data.detail?.title ?? meeting.title ?? "Meeting");
-  const strip = <StatusStrip className="meetings-detail-facts" items={meetingStripItems(meeting, data, saidOnFace)} />;
-  if (compact) {
-    return strip;
-  }
+  const source = data.detail ?? meeting;
+  const when = [
+    quietWord(ledgerDate(data.startedAt)),
+    data.durationS > 0 ? quietWord(durationToken(data.durationS)) : "",
+  ].filter(Boolean).join(" · ");
+  const unclear = unclearLampLabel(source);
+  const people = peopleNames(data.segments ?? []);
+  const steps = !compact && meetingPipelineActive(meeting, data);
   return (
     <>
-      <AppHead className="meetings-detail-head" fact={title} as="div">
-        {strip}
-      </AppHead>
-      <Steps steps={meetingSteps(meeting, data)} label="Meeting steps" data-testid="meeting-steps" />
+      <div className="meetings-detail-head meeting-head" data-testid="meeting-head">
+        <img className="meeting-head-glyph" src={listSprite(objectSprite("meeting", String(meeting.id ?? "")))} alt="" draggable={false} />
+        <span className="meetings-detail-facts meeting-head-line">
+          {when ? <span className="meeting-head-fact" data-testid="meeting-head-when">{when}</span> : null}
+          {speechWasMissing(source) ? (
+            <DotWord tone="fail" data-testid="meeting-speech-missing">No transcript · Speech not set up</DotWord>
+          ) : null}
+          {unclear ? (
+            <DotWord tone="warn" data-testid="unclear-lamp">
+              {quietWord(unclear.replace(/^WARN · /, "")).toLowerCase()}
+            </DotWord>
+          ) : null}
+          {people.length ? <AvatarStack names={people} data-testid="meeting-head-people" /> : null}
+        </span>
+      </div>
+      {steps ? <Steps steps={meetingSteps(meeting, data)} label="Meeting steps" data-testid="meeting-steps" /> : null}
     </>
   );
 }

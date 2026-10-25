@@ -308,7 +308,8 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   // Window grammar: the list face runs edge to edge (toolbar, list, status
   // bar); Record, Import and the plumbing door keep the form inset.
   const listFace = !scopedMeetingId && !wings.doorOpen && wings.view !== "record";
-  useWindowInterior(listFace ? "list" : null);
+  // A meeting record says its own interior (MeetingRecord: edge to edge).
+  useWindowInterior(scopedMeetingId ? undefined : listFace ? "list" : null);
 
   // SurfaceWindows routes `meeting:<id>` into this real core. Keep the list
   // mounted in the host, but draw the selected record in place so Back can

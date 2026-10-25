@@ -111,9 +111,10 @@ it("a failed leg and a different host stay on the open meeting", async () => {
   const slab = screen.getByTestId("summary-record-attempts").textContent ?? "";
   expect(slab).not.toContain("THIS DEVICE");
   expect(slab).toContain("FAILED");
-  expect(slab).toContain("api.example.com");
-  // The strip names the other host too: it is not the foot's.
-  expect(chips().filter((c) => c === "api.example.com").length).toBeGreaterThanOrEqual(2);
+  // Window grammar: the status bar names the host the summary ran on (not
+  // the route's same-device host), once; the summary does not repeat it.
+  expect(chips().filter((c) => c === "api.example.com")).toHaveLength(1);
+  expect(document.querySelector(".kit-statusbar .gadget-chip-egress")?.textContent).toBe("api.example.com");
 });
 
 it("Outcomes is the one review face and reads its own records", async () => {

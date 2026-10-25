@@ -19,8 +19,7 @@ import { ApiError } from "../../lib/api";
 import { plainFailure, plainReason } from "../surface/plainFailure";
 import { askFailureLabel } from "../components/AskPanel";
 import { PeopleCore } from "../../pages/cores/PeopleCore";
-import { MeetingHeader } from "../../pages/cores/history/MeetingHeader";
-import type { MeetingData } from "../../pages/cores/history/useMeetingData";
+import { meetingSummaryState } from "../../pages/cores/history/MeetingHeader";
 
 const SRC = resolve(__dirname, "../..");
 const read = (rel: string) => readFileSync(resolve(SRC, rel), "utf8");
@@ -99,19 +98,16 @@ describe("plain failure words (A.3, A.10, Tenet 4)", () => {
 });
 
 describe("each face names its fact", () => {
-  it("the meeting record says SUMMARISED above its own summary", () => {
+  // Window grammar (2026-10-24): the state is the meeting window's status bar word.
+  it("the meeting record says Summary stored over its own summary", () => {
     const detail = { id: "m1", title: "Checkout latency review", intel_status: "disabled", intel: { summary: "Latency came from a cold cache." } };
-    const data = { detail, startedAt: "2026-10-01T08:00:00", durationS: 2700 } as unknown as MeetingData;
-    render(<MeetingHeader meeting={detail} data={data} />);
-    expect(document.body.textContent).toMatch(/SUMMARISED/);
-    expect(document.body.textContent).not.toMatch(/SUMMARY OFF/);
+    expect(meetingSummaryState(detail)).toEqual({ text: "Summary stored", lamp: "ok" });
   });
 
-  it("a meeting with no summary still says OFF", () => {
+  it("a meeting with no summary still says it did not run (or that summaries are off)", () => {
     const detail = { id: "m2", title: "Vendor call", intel_status: "disabled", intel: null };
-    const data = { detail, startedAt: "2026-10-01T09:00:00", durationS: 1800 } as unknown as MeetingData;
-    render(<MeetingHeader meeting={detail} data={data} />);
-    expect(document.body.textContent).toMatch(/SUMMARY OFF/);
+    expect(meetingSummaryState(detail).text).toBe("Summary not run");
+    expect(meetingSummaryState(detail, true).text).toBe("Summaries off");
   });
 
   it("Trust: a route that sends nothing is not a lit green dot", async () => {

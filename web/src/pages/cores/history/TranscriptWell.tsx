@@ -66,7 +66,7 @@ export function TranscriptWell({
               >
                 {speaker ? (
                   <span className="transcript-speaker" data-testid="transcript-speaker">
-                    {speaker.toUpperCase()}
+                    {speaker}
                   </span>
                 ) : (
                   <time>{timestamp}</time>
@@ -83,7 +83,7 @@ export function TranscriptWell({
   );
   if (defaultOpen === undefined && open === undefined) return well;
   const words = typeof wordCount === "number" && wordCount > 0
-    ? `${wordCount} WORDS`
+    ? `${wordCount} words`
     : undefined;
   return (
     <Disclosure
