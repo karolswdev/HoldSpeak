@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="teal" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#91e0d0"/><stop offset="1" stop-color="#259c96"/></linearGradient>
+    <linearGradient id="tealFacet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#42b8ad"/><stop offset="1" stop-color="#17726f"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2=".7" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#8da5ba"/></linearGradient>
+    <linearGradient id="metalDark" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c4d3df"/><stop offset="1" stop-color="#526b81"/></linearGradient>
+  </defs>
+  <ellipse cx="33" cy="56" rx="21" ry="2" fill="#263b53" opacity=".16"/>
+  <g stroke="#263b53" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m21 53 11-5 17 4 3 3-22 3Z" fill="url(#metal)"/>
+    <path d="m33 48 4-2 4-13 3 1-4 15-5 2Z" fill="url(#metalDark)"/>
+    <path d="m36 39-10-7 2-3 11 7 7-9 2 2-7 12Z" fill="url(#metal)"/>
+    <circle cx="38" cy="36" r="2.5" fill="#ecaa45"/>
+    <path d="m24 11 13-3 7 5 3 20-17 5-7-5Z" fill="url(#teal)"/>
+    <path d="m37 8 7 5 3 20-7 2Z" fill="url(#tealFacet)" stroke="#1d736e" stroke-width="1.2"/>
+    <path d="m24 11 13-3 7 5-17 5Z" fill="url(#metal)" stroke="#526b81" stroke-width="1.2"/>
+    <path d="m27 15 14-3m-13 8 15-3m-14 8 15-3" stroke="#526b81" stroke-width="1.5"/>
+    <path d="m27 30 4-1" stroke="#d0fff4" stroke-width="1.7"/>
+    <path class="detail" d="m26 45 7 3m9-12 4 1" stroke="#fff" stroke-width="1.5"/>
+  </g>
+</svg>

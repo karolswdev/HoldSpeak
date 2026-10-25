@@ -4,24 +4,26 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-24 (the window grammar: #1457, Settings)
+**Last updated:** 2026-10-24 (the window grammar #1457–#1467; the D icons)
 
 ## Current phase
 
 **The window grammar — 2026-10-24 (owner: "still look like pages inside OS-like
-containers"; then "make it look nice and attractive, not boring").** Design and
-diagnosis: `docs/internal/betterment/native-experience/WINDOW-GRAMMAR-2026-10-24.md`
-(title bar → 36 px toolbar → content edge to edge → 24 px status bar; no page
-headline, no chip soup, no card-in-card; delight: colour, illustrated objects,
-depth, motion). Merged: #1457 Note toolbar/status bar + Room compact head (also
-clears five inherited `test_room_glass` reds; two remain and fail identically on
-33fdbce59: `held-past-cap`, `two_late_sections_land_below_each_other_393`);
-this PR: Settings rail / label-control grid / status bar, `useWindowBack`.
-In flight: lane grammar (kit `Toolbar`, `StatusBar`, dense `ObjectList`, window
-chrome weight, Meetings + Projects, Components "Window" group). Next: Automations,
-Agents, People, Decisions, Activity, Meeting detail on the same species; converge
-the local Settings/Note toolbars and status bars onto the kit species. Owner
-aesthetic acceptance is open; he judges live.
+containers"; "make it look nice and attractive, not boring"; then "that tilt…
+absolute cringe" → icon direction D picked: "Yes, I like D").** Design and
+diagnosis: `docs/internal/betterment/native-experience/WINDOW-GRAMMAR-2026-10-24.md`;
+icons: `docs/internal/betterment/ICONS-D-2026-10-24.md`. Merged the same day:
+#1457 Note/Room, #1458 Settings rail/grid/status bar, #1459 kit Toolbar/StatusBar/
+dense ObjectList + chrome + Meetings/Projects + Components Window group, #1460
+Automations/automation window/Agents, #1461 People/person/Decisions, #1462
+convergence onto the kit species, #1463 three browser reds (Ask return raise,
+Room re-read hold-still), #1464 kit polish (avatar rows, fold join, narrow status
+bar, idle tone, DotWord, Room foot), #1465 Activity/meeting window/Needs you +
+scoped Settings Back, #1466 desk chrome (floor labels, badges, menu bar, Talk,
+dock), #1467 toolbar wrap; this PR: the D icon family (47 sources, 20 px export,
+title chip, zone colours). Not yet on the grammar: Today, Ask, Setup, New
+Project, Engines, Processes, Speak, the Needs-you row caps. Owner aesthetic
+acceptance is live on his desk; nothing is claimed accepted.
 
 **Owner-authorized React desktop execution — Astra / Sol High (2026-10-23).**
 The owner authorized execution of P01–P10 against the 47-family map and seven

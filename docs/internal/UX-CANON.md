@@ -24,6 +24,19 @@ owner amendment. All functional, readable, focus and pointer ownership floors
 below remain binding. CLAUDE.md's latest fast cycle governs review: build the
 direction on a canvas, then judge aesthetics live on the deployed desk.
 
+## Owner direction — Icons D, flat Workbench (2026-10-24)
+
+The owner called the tilted richer family "absolute cringe" and picked D
+from the direction canvas: "Yes, I like D." This supersedes the 2026-10-22
+construction below (shallow perspective, layered facets). Icons are front-on
+flat silhouettes with two or three flat tones for each material, a navy
+outline and a hard Workbench bevel (light top left, shade bottom right). There
+is no gradient, perspective or tilt. A zone folder's front wears the zone's
+colour. Three optical levels: 64, 32 (1 px bevel) and 20 (no bevel, heavier
+outline) for dense rows and title glyphs. Title glyphs sit on a paper chip.
+Rules, pipeline and parked family: betterment/ICONS-D-2026-10-24.md. The
+2026-10-22 text stays as history.
+
 ## Owner direction — crisp illustrated icons (2026-10-22)
 
 The owner rejected the first implementation as “toilet bowls” and too basic.

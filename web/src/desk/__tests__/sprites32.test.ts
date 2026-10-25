@@ -7,7 +7,10 @@ import { dirname, join } from "node:path";
 import {
   SPRITE_BASE,
   VARIANTS,
+  ZONE_HUES,
+  ZONE_SPRITES,
   allSpriteNames,
+  glyphSprite,
   listSprite,
   spriteUrl,
 } from "../sprites";
@@ -60,9 +63,9 @@ describe("objectSprite resolves every kind at both sizes", () => {
     expect(objectSprite("parked", "x", "sel", 32)).toBe(`${SPRITE_BASE}32/parked-drawer_sel.png`);
   });
 
-  it("every VARIANTS kind resolves to a file on disk at 64 and 32", () => {
+  it("every VARIANTS kind resolves to a file on disk at 64, 32 and 20", () => {
     for (const kind of Object.keys(VARIANTS))
-      for (const size of [64, 32] as const)
+      for (const size of [64, 32, 20] as const)
         for (const state of ["rest", "sel", "stale"] as const) {
           const url = spriteUrl(kind, "id", state, undefined, size);
           const file = join(SPRITES_DIR, url.slice(SPRITE_BASE.length));
@@ -75,5 +78,44 @@ describe("objectSprite resolves every kind at both sizes", () => {
       expect(pngSize(join(SPRITES_DIR, "32", `${name}.png`)), name).toEqual([32, 32]);
       expect(pngSize(join(SPRITES_DIR, `${name}.png`)), name).toEqual([64, 64]);
     }
+  });
+});
+
+// Icons D (owner pick 2026-10-24): zone folders wear the zone's colour.
+describe("zone folder colours", () => {
+  it("reads the hue from the zone's identity, never its name", () => {
+    expect(spriteUrl("directory", "hs-seed-inbox")).toBe(`${SPRITE_BASE}zone-drawer.png`);
+    expect(spriteUrl("directory", "hs-seed-work")).toBe(`${SPRITE_BASE}zone-drawer-teal.png`);
+    expect(spriteUrl("directory", "hs-seed-personal", "sel")).toBe(`${SPRITE_BASE}zone-drawer-violet_sel.png`);
+    expect(spriteUrl("directory", "hs-seed-reference", "rest", undefined, 32)).toBe(`${SPRITE_BASE}32/zone-drawer-amber.png`);
+    expect(spriteUrl("directory", "dir_owner_made")).toBe(`${SPRITE_BASE}zone-drawer.png`);
+    expect(spriteUrl("project", "p1")).toBe(`${SPRITE_BASE}project-drawer.png`);
+  });
+
+  it("every hue sprite exists at every size and state", () => {
+    for (const hue of Object.values(ZONE_HUES)) {
+      const name = ZONE_SPRITES[hue];
+      expect(allSpriteNames()).toContain(name);
+      for (const [dir, size] of [["", 64], ["32/", 32], ["20/", 20]] as const)
+        for (const suffix of ["", "_sel", "_stale"])
+          expect(pngSize(join(SPRITES_DIR, `${dir}${name}${suffix}.png`)), `${dir}${name}${suffix}`).toEqual([size, size]);
+    }
+  });
+});
+
+describe("glyphSprite (the 20 px dense-row and title glyph)", () => {
+  it("maps world sprites of any size and state to `20/`", () => {
+    for (const name of allSpriteNames())
+      for (const suffix of ["", "_sel", "_stale"]) {
+        expect(glyphSprite(`${SPRITE_BASE}${name}${suffix}.png`)).toBe(`${SPRITE_BASE}20/${name}${suffix}.png`);
+        expect(glyphSprite(`${SPRITE_BASE}32/${name}${suffix}.png`)).toBe(`${SPRITE_BASE}20/${name}${suffix}.png`);
+      }
+  });
+
+  it("maps system sprites to `system/20/` and leaves other URLs alone", () => {
+    expect(glyphSprite(`${SPRITE_BASE}system/dock-meetings.png`)).toBe(`${SPRITE_BASE}system/20/dock-meetings.png`);
+    expect(pngSize(join(SPRITES_DIR, "system/20/dock-meetings.png"))).toEqual([20, 20]);
+    expect(glyphSprite("/badge.png")).toBe("/badge.png");
+    expect(glyphSprite(`${SPRITE_BASE}not-a-kind.png`)).toBe(`${SPRITE_BASE}not-a-kind.png`);
   });
 });

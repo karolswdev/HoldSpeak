@@ -23,7 +23,7 @@ import { useEffect, useMemo, useRef, type CSSProperties, type KeyboardEvent, typ
 import { Button } from "../../../components/signal/Signal";
 import { LampGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
-import { listSprite } from "../../sprites";
+import { glyphSprite, listSprite } from "../../sprites";
 import { lampGadgetTone, objectKindWord, objectSprite, type ObjectTone } from "./kinds";
 import { nameBreaks } from "./DeskIcon";
 import "./objects.css";
@@ -289,7 +289,7 @@ export function ObjectList({
                     </span>
                   ) : (
                     <img
-                      src={listSprite(row.sprite ?? objectSprite(row.kind, row.id))}
+                      src={(dense ? glyphSprite : listSprite)(row.sprite ?? objectSprite(row.kind, row.id))}
                       alt=""
                       draggable={false}
                     />

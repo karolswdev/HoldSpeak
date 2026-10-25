@@ -1,18 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="blue" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#a4d2ff"/><stop offset="1" stop-color="#477fe0"/></linearGradient>
-    <linearGradient id="metal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#91a8bc"/></linearGradient>
-    <linearGradient id="metalFacet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b8c9d6"/><stop offset="1" stop-color="#526b81"/></linearGradient>
-    <linearGradient id="amber" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ffe0a0"/><stop offset="1" stop-color="#ecaa45"/></linearGradient>
-  </defs>
-  <ellipse cx="32" cy="55" rx="21" ry="2" fill="#263b53" opacity=".16"/>
-  <g stroke="#263b53" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="32" cy="10" r="4" fill="url(#amber)"/>
-    <path d="M29 11q3-6 6 0" fill="none" stroke="#fff0c9"/>
-    <path d="M16 43h33l-5-8V25c0-9-5-14-12-14S20 16 20 25v10Z" fill="url(#metal)"/>
-    <path d="m37 12 7 13v10l5 8H36l-1-24Z" fill="url(#metalFacet)" stroke="#526b81" stroke-width="1.2"/>
-    <path d="M20 27h22m-21 6h23m-27 10h35" fill="none" stroke="#477fe0" stroke-width="1.5"/>
-    <path d="M26 49q6 8 12 0" fill="url(#blue)"/>
-    <path class="detail" d="m24 20 7-3m-5 10 9-3" stroke="#fff" stroke-width="1.5"/>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><style>svg{--ow:1.5px;--u:3.25px;--nu:-3.25px;--lw:1}.ol{stroke-width:var(--ow)}.bv{transform:translate(var(--u),var(--u))}.bvn{transform:translate(var(--nu),var(--nu))}</style><defs><path d="M18 44C18 30 20 15 32 15C44 15 46 30 46 44Z" id="menu-bell-s1"/><clipPath id="menu-bell-c1"><use href="#menu-bell-s1"/></clipPath><clipPath id="menu-bell-m1"><use href="#menu-bell-s1" class="bvn" transform="translate(-3.25 -3.25)"/></clipPath><rect x="11" y="41" width="42" height="7" rx="3.5" id="menu-bell-s2"/><clipPath id="menu-bell-c2"><use href="#menu-bell-s2"/></clipPath><clipPath id="menu-bell-m2"><use href="#menu-bell-s2" class="bvn" transform="translate(-3.25 -3.25)"/></clipPath></defs><g stroke-linejoin="round" stroke-linecap="round"><circle cx="32" cy="10" r="3.5" fill="#ecaa45" stroke="#263b53" class="ol"/><g clip-path="url(#menu-bell-c1)"><use href="#menu-bell-s1" fill="#ffe0a3"/><use href="#menu-bell-s1" fill="#b0731a" class="bv" transform="translate(3.25 3.25)"/><g clip-path="url(#menu-bell-m1)"><use href="#menu-bell-s1" fill="#ecaa45" class="bv" transform="translate(3.25 3.25)"/></g></g><use href="#menu-bell-s1" fill="none" stroke="#263b53" class="ol"/><circle cx="32" cy="51" r="4.5" fill="#263b53" stroke="#263b53" class="ol"/><g clip-path="url(#menu-bell-c2)"><use href="#menu-bell-s2" fill="#ffe0a3"/><use href="#menu-bell-s2" fill="#b0731a" class="bv" transform="translate(3.25 3.25)"/><g clip-path="url(#menu-bell-m2)"><use href="#menu-bell-s2" fill="#ecaa45" class="bv" transform="translate(3.25 3.25)"/></g></g><use href="#menu-bell-s2" fill="none" stroke="#263b53" class="ol"/></g></svg>

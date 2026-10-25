@@ -8,6 +8,13 @@ at its 64-unit size and at an optical 32-unit size.  System and Settings art
 is exported at 32 units, except the existing 64 px Settings wallpaper asset,
 whose dimension is part of the current contract.
 
+Direction D (owner pick 2026-10-24, docs/internal/betterment/ICONS-D-2026-10-24.md)
+adds a third optical level.  ``web/scripts/gen-icons-d.py`` writes each source
+with its 64-unit level as CSS custom properties; ``LEVELS`` below overrides
+them per export size: the 32 pass draws the bevel at one pixel under a heavier
+outline, and the 20 pass (world ``20/`` and ``system/20/``, for dense rows and
+title-bar glyphs) drops the bevel, thickens the outline and lightens the greys.
+
 Run the normal export only after the SVG source set is frozen::
 
     uv run --with pillow python web/scripts/gen-illustrated-icons.py
@@ -30,7 +37,6 @@ import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 
@@ -38,12 +44,29 @@ WEB = Path(__file__).resolve().parents[1]
 REPO = WEB.parent
 SVG_ROOT = WEB / "design" / "icons"
 PNG_ROOT = WEB / "public" / "desk" / "sprites"
-PARK_ROOT = SVG_ROOT / "_parked-pixel-2026-10-22"
+PARK_ROOT = SVG_ROOT / "_parked-richer-2026-10-24" / "png"
 STATE_SCRIPT = WEB / "scripts" / "gen-sprite-states.py"
 
-# The multiplier is intentionally modest.  It helps a 32 px outline survive
-# optical reduction while leaving the source fill/stroke choices intact.
-OPTICAL_STROKE_MULTIPLIER = Decimal("1.15")
+# Direction D optical levels, keyed by export size.  The source sets the 64
+# level (``--ow`` outline 1.5, ``--u`` bevel offset 3.25 = 2.5-unit bevel plus
+# half the outline, ``--lw`` line weight 1).  ``.detail`` is trim that may
+# vanish below 64.
+_GREY, _GREY_LIGHT = "#9fb3c8", "#c9d7e6"
+LEVELS = {
+    64: "",
+    # 32 px: one-pixel bevel (2 units) under a 2.2 outline.
+    32: (
+        "svg{--ow:2.2px!important;--u:3.1px!important;--nu:-3.1px!important}"
+        ".detail{display:none!important}"
+    ),
+    # 20 px: no bevel, a 3-unit outline, heavier lines and lighter greys.
+    20: (
+        "svg{--ow:3px!important;--u:0px!important;--nu:0px!important;--lw:1.35!important}"
+        ".detail{display:none!important}"
+        f'[fill="{_GREY}"]{{fill:{_GREY_LIGHT}!important}}'
+        f'[stroke="{_GREY}"]{{stroke:{_GREY_LIGHT}!important}}'
+    ),
+}
 
 
 @dataclass(frozen=True)
@@ -58,14 +81,13 @@ class Family:
 FAMILIES = (
     Family("world64", SVG_ROOT / "world", 64, PNG_ROOT),
     Family("world32", SVG_ROOT / "world", 32, PNG_ROOT / "32", optical=True),
-    Family("system", SVG_ROOT / "system", 32, PNG_ROOT / "system"),
-    Family("settings", SVG_ROOT / "settings", 32, PNG_ROOT / "settings"),
+    Family("world20", SVG_ROOT / "world", 20, PNG_ROOT / "20", optical=True),
+    Family("system", SVG_ROOT / "system", 32, PNG_ROOT / "system", optical=True),
+    Family("system20", SVG_ROOT / "system", 20, PNG_ROOT / "system" / "20", optical=True),
+    Family("settings", SVG_ROOT / "settings", 32, PNG_ROOT / "settings", optical=True),
 )
 
 _STATES = ("_sel", "_stale")
-_STROKE_WIDTH_ATTR = re.compile(
-    r"\bstroke-width\s*=\s*([\"'])(?P<value>(?:\d+(?:\.\d+)?|\.\d+)(?:px)?)\1"
-)
 _EXTERNAL_REF = re.compile(
     r"(?:href|xlink:href)\s*=\s*([\"'])(?P<value>(?:https?:|//|file:)[^\"']*)\1"
     r"|url\(\s*([\"']?)(?:https?:|//|file:)",
@@ -97,13 +119,13 @@ def validate_source_set() -> list[tuple[Family, Path]]:
     for family in FAMILIES:
         files = source_files(family)
         source_stems = {path.stem for path in files}
-        target_stems = active_base_stems(family.target_dir)
-        if source_stems != target_stems:
-            missing = ", ".join(sorted(target_stems - source_stems)) or "none"
-            extra = ", ".join(sorted(source_stems - target_stems)) or "none"
+        target_stems = active_base_stems(family.target_dir) if family.target_dir.is_dir() else set()
+        # Every shipped PNG keeps its source (a name is never lost). A new
+        # source adds a name; a new size family is created by its first export.
+        if target_stems - source_stems:
+            missing = ", ".join(sorted(target_stems - source_stems))
             raise RuntimeError(
-                f"{family.name} source/asset contract differs; "
-                f"missing sources: {missing}; extra sources: {extra}"
+                f"{family.name} source/asset contract differs; missing sources: {missing}"
             )
         for path in files:
             validate_svg(path)
@@ -152,39 +174,21 @@ def validate_svg(path: Path) -> None:
         raise RuntimeError(f"invalid SVG XML in {path}: {exc}") from exc
 
 
-def number_text(value: Decimal) -> str:
-    rendered = format(value, "f").rstrip("0").rstrip(".")
-    return rendered or "0"
+def optical_svg(source: str, size: int) -> str:
+    """Append the size's optical level (``LEVELS``) to the source.
 
-
-def optical_svg(source: str) -> str:
-    """Add optical-only rules without changing fills or classless strokes.
-
-    The selectors target only explicit ``stroke-width`` presentation
-    attributes.  A classless fill or a stroke inherited from a classless
-    element is therefore not replaced by a blanket ``* { stroke: ... }``
-    rule.  ``.detail`` is the one source-level opt-out the artists use for
-    marks that do not survive the 32 px export.
+    The rules override the source's own CSS custom properties and hide
+    ``.detail``; fills and strokes are not otherwise replaced.  The rules are
+    appended last so they win over the source's own ``<style>``.
     """
 
-    values: set[str] = set()
-    for match in _STROKE_WIDTH_ATTR.finditer(source):
-        raw = match.group("value")
-        values.add(raw)
-
-    rules = [".detail { display: none !important; }"]
-    for raw in sorted(values, key=lambda value: Decimal(value.removesuffix("px"))):
-        try:
-            base = Decimal(raw.removesuffix("px"))
-        except InvalidOperation as exc:
-            raise RuntimeError(f"invalid stroke-width value in SVG: {raw}") from exc
-        scaled = number_text(base * OPTICAL_STROKE_MULTIPLIER)
-        rules.append(f'[stroke-width="{raw}"] {{ stroke-width: {scaled}px; }}')
-    style = "<style>" + " ".join(rules) + "</style>"
-    root = re.search(r"<svg(?:\s[^>]*)?>", source, re.IGNORECASE)
-    if root is None:
-        raise RuntimeError("could not locate SVG root")
-    return source[: root.end()] + style + source[root.end() :]
+    rules = LEVELS.get(size, LEVELS[32])
+    if not rules:
+        return source
+    end = source.lower().rfind("</svg>")
+    if end < 0:
+        raise RuntimeError("could not locate SVG end tag")
+    return source[:end] + "<style>" + rules + "</style>" + source[end:]
 
 
 def html_for_svg(source: str, size: int) -> str:
@@ -232,7 +236,7 @@ def render_jobs(jobs: list[tuple[Family, Path]], output_dir: Path) -> None:
                 page = pages[size]
                 source = source_path.read_text(encoding="utf-8")
                 if family.optical:
-                    source = optical_svg(source)
+                    source = optical_svg(source, size)
                 page.set_content(html_for_svg(source, size))
                 # Force the first paint before collecting the bytes. Chromium
                 # can otherwise capture a just-committed SVG path at a
@@ -264,7 +268,7 @@ def park_active_pngs() -> int:
     """Copy active PNGs once, preserving their relative sprite structure."""
 
     count = 0
-    for folder in (PNG_ROOT, PNG_ROOT / "32", PNG_ROOT / "system", PNG_ROOT / "settings"):
+    for folder in (PNG_ROOT, PNG_ROOT / "32", PNG_ROOT / "20", PNG_ROOT / "system", PNG_ROOT / "system" / "20", PNG_ROOT / "settings"):
         if not folder.is_dir():
             continue
         for source in sorted(folder.glob("*.png")):

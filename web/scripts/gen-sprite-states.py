@@ -17,8 +17,9 @@ produces byte-identical files, so the guard can assert freshness by
 regenerating and comparing. Skips derived files as inputs.
 
 It walks two sets: the 64 px world sprites (the folder root) and the 32 px
-list set (`32/`, PHILO-14 A0c: drawn at 32, not scaled). Both use the same
-rim (1 px outside the alpha edge) and the same lift.
+list set (`32/`, PHILO-14 A0c: drawn at 32, not scaled), and the 20 px
+glyph set (`20/`, Icons D 2026-10-24: dense rows and title bars). All use the
+same rim (1 px outside the alpha edge) and the same lift.
 """
 
 from __future__ import annotations
@@ -68,7 +69,7 @@ def derive(base: Path) -> None:
     stale.save(base.with_name(f"{base.stem}_stale.png"))
 
 
-SETS = (SPRITES, SPRITES / "32")
+SETS = (SPRITES, SPRITES / "32", SPRITES / "20")
 
 
 def main() -> int:

@@ -28,7 +28,10 @@ export const VARIANTS: Record<string, string[]> = {
   person: ["person"],
   project: ["project-drawer"],
   // HS-105-01: a directory is a DRAWER (the Workbench silhouette rule).
-  directory: ["project-drawer"],
+  // Icons D (2026-10-24): a zone is a folder whose front wears the zone's
+  // colour (`ZONE_HUES`, read by `zoneSpriteName`); a Project keeps its
+  // own flagged folder.
+  directory: ["zone-drawer"],
   repository: ["repository"],
   kb: ["artifact"],
   roadmap: ["artifact"],
@@ -69,10 +72,34 @@ export function agentSpriteName(
   return "agent-claude-code";
 }
 
+/** Icons D (owner pick 2026-10-24): the zone folder colours. A front is
+ * blue unless the zone carries another hue. */
+export type ZoneHue = "blue" | "teal" | "violet" | "amber";
+export const ZONE_SPRITES: Record<ZoneHue, string> = {
+  blue: "zone-drawer",
+  teal: "zone-drawer-teal",
+  violet: "zone-drawer-violet",
+  amber: "zone-drawer-amber",
+};
+/** The zone colour data. Directories carry no paint on the hub (a zone's
+ * paint is per-surface layout, `DirectoryRecord`), so the packaged zones
+ * (holdspeak/seeds/fresh-desk.yaml) carry their hue here, keyed by their
+ * stable seed id, never by the name: renaming Work keeps it teal. Every
+ * other zone, and every Project, is blue. */
+export const ZONE_HUES: Readonly<Record<string, ZoneHue>> = {
+  "hs-seed-inbox": "blue",
+  "hs-seed-work": "teal",
+  "hs-seed-personal": "violet",
+  "hs-seed-reference": "amber",
+};
+export function zoneSpriteName(id: string): string {
+  return ZONE_SPRITES[ZONE_HUES[id] ?? "blue"];
+}
+
 /** Every base sprite name `spriteName` can return: the pools plus the
- * helper-selected agent sprites. The state-file guard walks this list. */
+ * helper-selected agent and zone sprites. The state-file guard walks this list. */
 export function allSpriteNames(): string[] {
-  const names = new Set<string>(AGENT_SPRITES);
+  const names = new Set<string>([...AGENT_SPRITES, ...Object.values(ZONE_SPRITES)]);
   for (const pool of Object.values(VARIANTS)) for (const n of pool) names.add(n);
   return [...names].sort();
 }
@@ -87,6 +114,7 @@ export function spriteName(
 ): string {
   if ((kind === "coder" || kind === "agent") && agent)
     return agentSpriteName(agent);
+  if (kind === "directory") return zoneSpriteName(id);
   const pool = VARIANTS[kind] ?? VARIANTS.note;
   return pool[variantIndex(id, pool.length)];
 }
@@ -98,10 +126,12 @@ export type SpriteState = "rest" | "sel" | "stale";
  * drawer; 32 is the list row (ObjectList, Needs you, the confirm line, the
  * badge). The 32 set is drawn at 32, not scaled: it lives in `32/` beside
  * the 64 set, one file per base name and state. */
-export type SpriteSize = 64 | 32;
-export const SPRITE_SIZES: readonly SpriteSize[] = [64, 32];
+export type SpriteSize = 64 | 32 | 20;
+/** Icons D (2026-10-24): 20 is the dense row and the title-bar glyph, drawn
+ * at 20 (no bevel, heavier outline) in `20/`. */
+export const SPRITE_SIZES: readonly SpriteSize[] = [64, 32, 20];
 function sizeDir(size: SpriteSize): string {
-  return size === 32 ? "32/" : "";
+  return size === 64 ? "" : `${size}/`;
 }
 export function spriteUrl(
   kind: string,
@@ -126,6 +156,22 @@ export function listSprite(url: string): string {
   const m = WORLD_FILE.exec(file);
   if (!m || !allSpriteNames().includes(m[1])) return url;
   return `${SPRITE_BASE}32/${file}`;
+}
+
+const SIZED_FILE = /^(?:(?:32|20)\/)?([a-z0-9-]+?)(_sel|_stale)?\.png$/;
+const SYSTEM_FILE = /^system\/(?:20\/)?([a-z0-9-]+)\.png$/;
+/** Icons D (2026-10-24): the 20 px sibling of a sprite URL, for a dense
+ * row or a title-bar glyph. A world sprite (64 or 32, any state) maps to
+ * `20/`, a system sprite to `system/20/`; any other URL comes back
+ * unchanged. */
+export function glyphSprite(url: string): string {
+  if (!url.startsWith(SPRITE_BASE)) return url;
+  const file = url.slice(SPRITE_BASE.length);
+  const sys = SYSTEM_FILE.exec(file);
+  if (sys) return `${SPRITE_BASE}system/20/${sys[1]}.png`;
+  const m = SIZED_FILE.exec(file);
+  if (!m || !allSpriteNames().includes(m[1])) return url;
+  return `${SPRITE_BASE}20/${m[1]}${m[2] ?? ""}.png`;
 }
 
 /** The agent name a world object's ref carries, if any. */

@@ -1,6 +1,10 @@
 # Desk sprites (web)
 
-The world sprites for the desk: one 64x64 icon for each kind. The owner chose
+The world sprites for the desk: one 64x64 icon for each kind. Icons D (flat
+Workbench, owner pick 2026-10-24, docs/internal/betterment/ICONS-D-2026-10-24.md)
+supersedes the 2026-10-22 construction; sources come from
+`web/scripts/gen-icons-d.py`, and `20/` holds the 20 px glyph set (dense rows,
+title bars; `glyphSprite`). The owner chose
 crisp illustrated icons on 2026-10-22, superseding the older D1 hard-pixel
 material. The kind-to-file map is
 `VARIANTS` in `web/src/desk/sprites.ts`. One kind has one silhouette.
@@ -26,3 +30,5 @@ DOM and GPU consumers. Use smooth sampling for this illustrated family.
 - `web/design/icons/_parked-illustrated-v1-2026-10-22/`: the first illustrated
   SVG/PNG family, parked after the owner's live review. Current art uses
   shallow perspective, layered materials and finer seams.
+- `web/design/icons/_parked-richer-2026-10-24/`: the richer (tilted) family,
+  47 SVGs and 142 PNGs, parked when Icons D replaced it.
