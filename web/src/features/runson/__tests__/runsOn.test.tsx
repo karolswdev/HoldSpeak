@@ -272,7 +272,7 @@ describe("Runs on — paint and words", () => {
     const strip = screen.getByTestId("runson-strip").textContent ?? "";
     expect(strip).toContain("6 ready");
     expect(strip).toContain("1 limited");
-    expect(strip).toContain("THIS MAC · M‑SERIES · 36 GB");
+    expect(strip).toContain("This Mac · M‑series · 36 GB");
     // Retired: no picker wells, no Adjust, no Use these, no summaries verb.
     for (const word of ["Use these", "Use this for summaries", "Adjust", "Cancel"]) {
       expect(screen.queryByRole("button", { name: word })).toBeNull();

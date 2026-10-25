@@ -42,14 +42,21 @@ def test_setup_keeps_the_failed_agent_when_the_next_binding_works(
             page.goto(f"{base}/?token=setup-agent-binding", wait_until="load")
             face = page.get_by_test_id("setup-face")
             face.wait_for(timeout=30_000)
-            row = face.locator("li").filter(has_text="Let my agents use HoldSpeak")
+            # Window grammar (2026-10-24): Setup is a dense list of readiness
+            # rows; a press selects the Agents row and its one verb sits in the
+            # status bar; the selected row's bindings read under the list.
+            row = face.get_by_test_id("setup-row").filter(has_text="Agents")
             expect(row).to_have_count(1)
+            row.get_by_role("button").first.click()
+            verb = face.get_by_test_id("setup-row-verb")
+            expect(verb).to_have_text("Let my agents use HoldSpeak")
+            pane = face.get_by_test_id("setup-selection")
             requests = []
             page.on("request", lambda request: requests.append(request.post_data_json)
                     if request.url.endswith("/api/onboarding/agents/use") else None)
             with page.expect_response(lambda response: response.url.endswith("/api/onboarding/agents/use")
                                       and response.request.method == "POST") as response:
-                row.get_by_role("button", name="Let my agents use HoldSpeak", exact=True).click()
+                verb.click()
             body = response.value.json()
             assert requests == [{"agents": ["claude", "codex"]}], requests
             assert body["state"] == "degraded" and body["success"] is False, body
@@ -64,18 +71,17 @@ def test_setup_keeps_the_failed_agent_when_the_next_binding_works(
             assert "mcp_servers.holdspeak" in codex_config.read_text()
             assert codex_hooks.is_file()
             assert codex_skill.is_file()
-            face.get_by_text("Not found", exact=True).click()
-            expect(row).to_contain_text("Does not work")
+            expect(row.get_by_test_id("setup-row-state")).to_have_text("Failed")
             expect(row).to_contain_text("Claude Code:")
-            expect(row).to_contain_text("hooks")
-            expect(row).to_contain_text("tools")
-            expect(row).to_contain_text("skill")
-            expect(row).not_to_contain_text("mcp_name_taken")
-            expect(row).not_to_contain_text(str(home))
-            expect(row).not_to_contain_text("Works")
-            expect(row.get_by_role("button", name="Let my agents use HoldSpeak", exact=True)).to_be_visible()
-            expect(row.get_by_text("Codex · uses your desk", exact=True)).to_be_visible()
-            codex = row.get_by_text("Codex · uses your desk", exact=True).locator("..").locator("..")
+            expect(pane).to_contain_text("hooks")
+            expect(pane).to_contain_text("tools")
+            expect(pane).to_contain_text("skill")
+            expect(face).not_to_contain_text("mcp_name_taken")
+            expect(face).not_to_contain_text(str(home))
+            expect(row).not_to_contain_text("Ready")
+            expect(face.get_by_role("button", name="Let my agents use HoldSpeak", exact=True)).to_be_visible()
+            expect(pane.get_by_text("Codex · uses your desk", exact=True)).to_be_visible()
+            codex = pane.get_by_text("Codex · uses your desk", exact=True).locator("..").locator("..")
             with page.expect_response(lambda response: response.url.endswith("/api/onboarding/agents/stop")
                                       and response.request.method == "POST") as stopped:
                 codex.get_by_role("button", name="Stop using my desk", exact=True).click()

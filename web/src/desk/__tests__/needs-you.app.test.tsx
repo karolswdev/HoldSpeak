@@ -82,7 +82,7 @@ describe("a held call on Needs you (Conductor R1, PHILO-14 A5)", () => {
     await waitFor(() => expect(rowWith("ls /etc")).toBeTruthy());
     const row = rowWith("ls /etc");
     expect(row.querySelector(".needs-row-fact")?.textContent).toBe("OUTSIDE THE WORKTREE\nls /etc");
-    expect(row.querySelector(".needs-row-lamp")?.textContent).toContain("HELD CALL");
+    expect(row.querySelector(".needs-row-lamp")?.textContent).toContain("Held call");
     fireEvent.click(row.querySelector("[data-verb='approve']")!);
     await waitFor(() => expect(decided).toContainEqual(expect.objectContaining({
       url: "/api/gate/proposals/toolu_glass_approve/decide", json: expect.objectContaining({ decision: "approved" }),
@@ -100,7 +100,7 @@ describe("a held call on Needs you (Conductor R1, PHILO-14 A5)", () => {
     expect(reason).toBe("OUTSIDE THE WORKTREE");
     expect(fact.endsWith("… +90 CHARS")).toBe(true);
     expect(LONG_CMD.startsWith(fact.replace(/… \+90 CHARS$/, ""))).toBe(true);
-    expect(row.querySelector(".needs-row-lamp")?.textContent).toContain("CUT · APPROVE IN RAW");
+    expect(row.querySelector(".needs-row-lamp")?.textContent).toContain("Cut · Approve in raw");
     expect(row.querySelector("[data-verb='approve']")).toBeNull();
     expect(row.querySelectorAll("[data-verb='deny']")).toHaveLength(1);
     expect(row.querySelectorAll("[data-verb='open']")).toHaveLength(1);

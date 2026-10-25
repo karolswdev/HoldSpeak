@@ -30,7 +30,7 @@ describe("current producer-backed first-run face", () => {
 
     const face = await screen.findByTestId("setup-face");
     expect(face).toHaveTextContent("Ready, Karol.");
-    expect(face).toHaveTextContent("Does not work");
+    expect(face).toHaveTextContent("Not found");
     expect(screen.getByRole("button", { name: "Say one sentence" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Open my desk" }));
     await waitFor(() => expect(mocks.openPullout).toHaveBeenCalledWith("intelligence:desk"));

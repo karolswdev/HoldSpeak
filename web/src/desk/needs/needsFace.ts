@@ -247,7 +247,7 @@ export function waitAgeWord(
 }
 
 function toneOf(severity: unknown, why: string): ObjectTone {
-  if (why.startsWith("OVERDUE")) return "fail";
+  if (why.toUpperCase().startsWith("OVERDUE")) return "fail";
   const s = String(severity ?? "");
   if (s === "danger" || s === "failure") return "fail";
   if (s === "warning") return "warn";
@@ -336,7 +336,10 @@ function openRefOf(item: NeedsYouRoomItem, card: DoorCardLike): string {
 function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   const id = String(item.id ?? item.ref ?? "");
   const title = String(item.title || "Untitled");
-  const why = String(item.why ?? "").toUpperCase();
+  // The wire's own case (`PROPOSED · Standup`, a meeting's title): the row
+  // says it in sentence case at render (NeedsRow `stateWords`), so a name
+  // keeps its capitals.
+  const why = String(item.why ?? "");
   const project = String(item.projectName ?? "");
   const source = String(item.source ?? "");
 

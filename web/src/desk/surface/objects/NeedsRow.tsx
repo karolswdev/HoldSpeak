@@ -16,7 +16,7 @@ import type { ReactNode } from "react";
 import { LampGadget } from "../gadgets";
 import { AgentWords } from "../../components/AgentWords";
 import { ProjectButton } from "../patterns/ProjectButton";
-import { KindPlate } from "../kit";
+import { DotWord, KindPlate } from "../kit";
 import { listSprite } from "../../sprites";
 import { lampGadgetTone, objectSprite, type ObjectTone } from "./kinds";
 import "./objects.css";
@@ -51,9 +51,44 @@ export interface NeedsRowProps {
   /** Window grammar (2026-10-24): with no plate the row leads with its
    *  glyph; this word names what the glyph shows (its alt and title). */
   glyphLabel?: string;
+  /** Window grammar (2026-10-24): the state is a DotWord (an 8 px dot and
+   *  a sentence-case word) in place of the lamp gadget, the Project's name
+   *  keeps its own case, and in a narrow surface the state and the fact
+   *  fold under the name so the row stays one 44 px line pair. */
+  dotState?: boolean;
 }
 
-export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verbs, sprite, project, kindWord, plate, glyphLabel }: NeedsRowProps) {
+export const KEEP_CAPS = new Set(["PR", "CI", "AI", "ID", "OK", "LAN", "MCP", "API", "CLI", "URL", "PDF", "ADR", "UI"]);
+
+/** A wire state word in sentence case, per ` · ` part: the part's first
+ *  word keeps a capital, every later ALL-CAPS word of three letters or
+ *  more is lower case; mixed-case words (names), acronyms (`PR`, `CI`,
+ *  `LAN`), numbers, times and ids stay as they are (`OVERDUE · 23 DAYS` →
+ *  `Overdue · 23 days`, `PR OPEN` → `PR open`, `PROPOSED · Standup` →
+ *  `Proposed · Standup`). */
+export function stateWords(label: string): string {
+  return label
+    .split(" · ")
+    .map((part) => {
+      let first = true;
+      let afterLink = false;
+      return part.replace(/[^\s]+/g, (word) => {
+        const lead = first;
+        const named = afterLink && !COMMON_AFTER_LINK.has(word);
+        first = false;
+        afterLink = LINK_WORDS.has(word);
+        if (!/^[A-Z][A-Z'’-]+$/.test(word) || KEEP_CAPS.has(word)) return word;
+        // `WAITING ON PRIYA`: the word after a link word is a name; it keeps
+        // its capital (`Waiting on Priya`, `Waiting on your review`).
+        return lead || named ? word.charAt(0) + word.slice(1).toLowerCase() : word.toLowerCase();
+      });
+    })
+    .join(" · ");
+}
+const LINK_WORDS = new Set(["ON", "FOR", "WITH", "BY", "FROM"]);
+const COMMON_AFTER_LINK = new Set(["YOUR", "YOU", "THE", "A", "AN", "IT", "THIS", "THAT", "ME", "HIM", "HER", "THEM", "REVIEW", "TRACK", "HOLD", "TIME"]);
+
+export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verbs, sprite, project, kindWord, plate, glyphLabel, dotState }: NeedsRowProps) {
   const factClass = factCode ? "needs-row-fact is-code" : "needs-row-fact";
   const factNode = !fact ? null : factWords && !factCode ? (
     <AgentWords compact lines={2} className="needs-row-fact needs-row-words" text={fact} />
@@ -61,7 +96,8 @@ export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verb
     <span className={factClass}>{fact}</span>
   );
   return (
-    <li className="needs-row" data-object-id={id} data-kind={kind} data-plate={plate ? "true" : undefined}>
+    <li className="needs-row" data-object-id={id} data-kind={kind} data-plate={plate ? "true" : undefined}
+      data-dot={dotState ? "true" : undefined}>
       {plate ? (
         <KindPlate kind={plate} title={kindWord} />
       ) : (
@@ -79,14 +115,18 @@ export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verb
             ) : null}
             {factNode}
             {project ? (
-              <ProjectButton name={project.name} onOpen={project.onOpen}
+              <ProjectButton name={project.name} onOpen={project.onOpen} plain={dotState}
                 className="needs-row-project" data-testid="needs-row-project" />
             ) : null}
           </span>
         ) : factNode}
       </span>
       <span className="needs-row-lamp">
-        <LampGadget label={lamp.label} on tone={lampGadgetTone(lamp.tone)} />
+        {dotState ? (
+          <DotWord tone={lamp.tone} data-testid="needs-row-state">{stateWords(lamp.label)}</DotWord>
+        ) : (
+          <LampGadget label={lamp.label} on tone={lampGadgetTone(lamp.tone)} />
+        )}
       </span>
       {verbs ? <span className="object-verbs needs-row-verbs">{verbs}</span> : <span />}
     </li>

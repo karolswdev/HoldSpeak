@@ -523,7 +523,8 @@ design D1). A library `Button` (ghost, dense, caption step) inside a
 `Open the Project: <name>`. It is a READ; a write is never named as a way
 back.
 
-- `name: string` — the Project's name, drawn uppercased
+- `name: string` — the Project's name, drawn uppercased; with `plain`
+  (window grammar 2026-10-24) in its own case
 - `onOpen()` — opens the Room
 - `withheld?: boolean` — true when the desk holds exactly ONE Project: the
   species renders nothing (repeating one word on every row says nothing,
@@ -1063,6 +1064,15 @@ the lamp falls under the name and the verbs under the row. Props: `id,
 kind, name, fact?, lamp: { label, tone }, verbs?, sprite?`. NeedsList is
 the named `ul` (`label`, `children`).
 
+`dotState?` (window grammar 2026-10-24, the Needs-you window): the state is
+a DotWord in sentence case (`stateWords`: `OVERDUE · 23 DAYS` → `Overdue ·
+23 days`, `PR OPEN` → `PR open`, `WAITING ON PRIYA` → `Waiting on Priya`;
+mixed-case words and the acronyms in `KEEP_CAPS` stay), the Project is a
+`plain` ProjectButton, and in a surface of 520 px or less the row is one
+44 px line pair: the name over the state and the fact, the verbs at the
+right. The Project's Button is not drawn at that width (its own 44 px
+target does not fit the pair; the item opens its Project).
+
 DropTarget (`lit`, `children`, `className?`) lights any target with the
 dashed paper ring. DragGhost (`kind, id, sprite?, x, y`) is the dragged
 sprite at viewport `x, y`: fixed, `aria-hidden`, no pointer events, the
@@ -1185,7 +1195,11 @@ Every window reads: title bar → toolbar → content → status bar. There is o
 Toolbar and one StatusBar in the product: Settings (`PrefStatus`), the Note
 (`ThoughtDocumentPane`, `ThoughtWorkspaceWindow`), the Room, Meetings,
 Projects and the automation window compose these species, and the
-Components Forms and Editing specimens render through the same path. No headline,
+Components Forms and Editing specimens render through the same path.
+Setup (the readiness list), New Project (the label/control grid; the egress
+chip of each picked source in the status bar), Processes, Engines (toolbar
+and status bar over its engine sheets) and Speak (an editor window; the
+Talk key is the toolbar's one primary) compose them too. No headline,
 no stat tiles, no chip row inside a collection window (AppHead stays for
 readers only). Components ▸ Window shows the composition with fixture rows.
 

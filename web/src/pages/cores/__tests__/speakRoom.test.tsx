@@ -458,8 +458,8 @@ describe("the footer's N TODAY counts today (counsel C4)", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("3 TODAY")).toBeVisible();
-    expect(screen.queryByText("412 TODAY")).toBeNull();
+    expect(await screen.findByText("3 today")).toBeVisible();
+    expect(screen.queryByText("412 today")).toBeNull();
   });
 
   it("says TODAY in the singular for one utterance", async () => {
@@ -473,7 +473,7 @@ describe("the footer's N TODAY counts today (counsel C4)", () => {
       </MemoryRouter>,
     );
 
-    expect(await screen.findByText("1 TODAY")).toBeVisible();
+    expect(await screen.findByText("1 today")).toBeVisible();
   });
 
   it("withholds the token at zero even with a full retained journal (A.8)", async () => {
@@ -492,6 +492,6 @@ describe("the footer's N TODAY counts today (counsel C4)", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Export" })).toBeVisible(),
     );
-    expect(screen.queryByText(/\d+ TODAY/)).toBeNull();
+    expect(screen.queryByText(/\d+ today/i)).toBeNull();
   });
 });

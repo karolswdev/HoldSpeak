@@ -79,32 +79,32 @@ const ITEMS = [
   },
   {
     id: "door:ai-flag", ref: "ai-flag", kind: "action_item", source: "action_item",
-    title: "Add the ledger freeze flag", why: "DUE TODAY", severity: "warning",
+    title: "Add the ledger freeze flag", why: "Due today", severity: "warning",
     projectId: "p1", projectName: "Payments ledger", owner: null,
     _isDoor: true, _isUnassigned: false,
     _doorCard: { id: "ai-flag", target_ref: "action_item:ai-flag" },
   },
   {
     id: "door:ai-worked", ref: "ai-worked", kind: "action_item", source: "action_item",
-    title: "Write the rollback runbook", why: "UNASSIGNED", severity: "warning",
+    title: "Write the rollback runbook", why: "Unassigned", severity: "warning",
     projectId: "p1", projectName: "Payments ledger", owner: null,
     _isDoor: true, _isUnassigned: true,
     _doorCard: { id: "ai-worked", target_ref: "action_item:ai-worked" },
   },
   {
     id: "decision:d-ops", ref: "decision:d-ops", kind: "decision", source: "decision",
-    title: "Run a second ops interview", why: "TO REVIEW", severity: "warning",
+    title: "Run a second ops interview", why: "To review", severity: "warning",
     projectId: "p2", projectName: "Staff hiring loop", openRef: "decision:d-ops",
   },
   {
     id: "commitment:c-sam", ref: "commitment:c-sam", kind: "commitment", source: "commitment",
-    title: "Sam: send the status by Thursday", why: "DUE TODAY", severity: "warning",
+    title: "Sam: send the status by Thursday", why: "Due today", severity: "warning",
     projectId: "p3", projectName: "1:1", owner: "Sam Rivera", actionItemId: "ai-sam",
     nextAction: "mark_done",
   },
   {
     id: "door:ai-orphan", ref: "ai-orphan", kind: "action_item", source: "action_item",
-    title: "Pick the vendor", why: "UNASSIGNED", severity: "warning",
+    title: "Pick the vendor", why: "Unassigned", severity: "warning",
     projectId: "p1", projectName: "Payments ledger", owner: null,
     _isDoor: true, _isUnassigned: true,
     _doorCard: {
@@ -172,7 +172,7 @@ function face(li: HTMLElement) {
   return {
     kind: li.getAttribute("data-kind"),
     fact: li.querySelector(".needs-row-fact")?.textContent ?? "",
-    lamps: [...li.querySelectorAll(".gadget-lamp")].map((n) => n.textContent),
+    lamps: [...li.querySelectorAll("[data-testid=needs-row-state]")].map((n) => n.textContent),
     verbs: [...li.querySelectorAll(".needs-row-verbs button")].map((b) => b.textContent),
     egress: li.querySelector(".needs-row-verbs .egress-chip, .needs-row-verbs [class*='egress']")?.textContent ?? "",
     plate: li.querySelector("[data-testid='kit-kind']")?.textContent ?? "",
@@ -250,7 +250,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(agent).toMatchObject({
       kind: "agent",
       fact: "The runbook needs a rollback owner. Jordan or Avery?",
-      lamps: ["ASKS · 6 MIN"],
+      lamps: ["Asks · 6 min"],
       verbs: ["Open session", "Answer"],
     });
     // Window grammar: the agent's own glyph leads the row; it names the agent.
@@ -261,33 +261,33 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(held).toMatchObject({
       kind: "agent",
       fact: "psql -h staging-ledger -c 'select count(*) from entries'",
-      lamps: ["HELD CALL"],
+      lamps: ["Held call"],
       verbs: ["Deny", "Approve"],
     });
     expect(face(row("Codex: reconciliation")).glyph).toBe("Codex");
 
     const pr = face(row("#412 Add the ledger freeze flag"));
-    expect(pr).toMatchObject({ kind: "pr", lamps: ["PR OPEN"], verbs: ["Open PR"] });
-    expect(row("#412 Add the ledger freeze flag").textContent).toContain("GITHUB.COM");
+    expect(pr).toMatchObject({ kind: "pr", lamps: ["PR open"], verbs: ["Open PR"] });
+    expect(row("#412 Add the ledger freeze flag").textContent).toContain("github.com");
 
     expect(face(row("Run a second ops interview"))).toMatchObject({
-      kind: "decision", fact: "Staff hiring loop", lamps: ["TO REVIEW"], verbs: ["Decide"],
+      kind: "decision", fact: "Staff hiring loop", lamps: ["To review"], verbs: ["Decide"],
     });
     expect(face(row("Sam: send the status by Thursday"))).toMatchObject({
-      kind: "action", fact: "Sam Rivera · 1:1", lamps: ["DUE TODAY"], verbs: ["Done", "More"],
+      kind: "action", fact: "Sam Rivera · 1:1", lamps: ["Due today"], verbs: ["Done", "More"],
     });
     expect(face(row("Vendor call"))).toMatchObject({
-      kind: "meeting", fact: "20 min · summary failed", lamps: ["NO SUMMARY"], verbs: ["Summarize"],
+      kind: "meeting", fact: "20 min · summary failed", lamps: ["No summary"], verbs: ["Summarize"],
     });
     expect(face(row("Pick the vendor"))).toMatchObject({
-      kind: "action", lamps: ["UNASSIGNED"], verbs: ["Name an owner"],
+      kind: "action", lamps: ["Unassigned"], verbs: ["Name an owner"],
     });
   });
 
   it("an item an agent works names the agent and never reads UNASSIGNED", async () => {
     await mount();
     const worked = face(row("Write the rollback runbook"));
-    expect(worked.lamps).toEqual(["WORKING"]);
+    expect(worked.lamps).toEqual(["Working"]);
     expect(worked.fact).toBe("Claude Code · Payments ledger");
     expect(worked.verbs).toEqual(["Open session"]);
     expect(row("Write the rollback runbook").textContent).not.toMatch(/UNASSIGNED|Name an owner/);
@@ -374,7 +374,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(face(item)).toMatchObject({
       kind: "action",
       fact: "The runbook needs a rollback owner. Jordan or Avery?",
-      lamps: ["ASKS · 6 MIN"],
+      lamps: ["Asks · 6 min"],
       verbs: ["Open session", "Answer"],
     });
     expect(document.querySelector(".needs-row[data-object-id='coder:claude:s-run']")).toBeNull();
@@ -398,10 +398,10 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     const rows = document.querySelectorAll<HTMLElement>("[data-testid='needs-row']");
     expect(rows[0].getAttribute("data-object-id")).toBe("arming:sch-1");
     expect(rows[0].getAttribute("data-kind")).toBe("meeting");
-    const first = rows[0].querySelector(".gadget-lamp")?.textContent ?? "";
-    expect(first).toMatch(/^ARMS · 0:0[78]$/);
+    const first = rows[0].querySelector("[data-testid=needs-row-state]")?.textContent ?? "";
+    expect(first).toMatch(/^Arms · 0:0[78]$/);
     expect(face(rows[0]).verbs).toEqual(["Cancel", "Open meetings"]);
-    await waitFor(() => expect(rows[0].querySelector(".gadget-lamp")?.textContent).not.toBe(first), { timeout: 2500 });
+    await waitFor(() => expect(rows[0].querySelector("[data-testid=needs-row-state]")?.textContent).not.toBe(first), { timeout: 2500 });
     fireEvent.click(rows[0].querySelector("[data-verb='cancel']")!);
     expect(cancel).toHaveBeenCalledWith("sch-1");
   });
@@ -500,7 +500,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     await screen.findByText("1 needs you");
     const held = face(row("Codex: reconciliation"));
     expect(held.fact).toBe("psql -h staging-ledger -c 'select… +78 CHARS");
-    expect(held.lamps).toEqual(["CUT · APPROVE IN RAW"]);
+    expect(held.lamps).toEqual(["Cut · Approve in raw"]);
     expect(held.verbs).toEqual(["Deny", "Open raw lane"]);
     expect(screen.queryByRole("button", { name: /^Approve/ })).toBeNull();
     fireEvent.click(within(row("Codex: reconciliation")).getByText("Open raw lane"));
@@ -527,7 +527,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     const held = face(item);
     expect(held.fact).toBe(`OUTSIDE THE WORKTREE · /tmp/hs15_long.md\n${head}… +1666 CHARS`);
     expect(item.querySelector(".needs-row-fact")?.classList.contains("is-code")).toBe(true);
-    expect(held.lamps).toEqual(["CUT · APPROVE IN RAW"]);
+    expect(held.lamps).toEqual(["Cut · Approve in raw"]);
     expect(held.verbs).toEqual(["Deny", "Open raw lane"]);
   });
 
@@ -579,7 +579,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     const members = document.querySelectorAll("[data-testid='needs-row'][data-counted='true']");
     expect(screen.getByTestId("arrival-display").textContent).toBe(`${members.length} need you`);
     expect(members).toHaveLength(7);
-    expect(face(row("Write the rollback runbook")).lamps).toEqual(["ASKS · 6 MIN"]);
+    expect(face(row("Write the rollback runbook")).lamps).toEqual(["Asks · 6 min"]);
     expect(document.querySelector("[data-object-id='coder:claude:s-run']")).toBeNull();
   });
   it("one object, one row, always: a held call and a question on one item lead with the held call, +1 MORE", async () => {
@@ -595,7 +595,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     render(<NeedsDrawer />);
     await screen.findByText("6 need you");
     const item = row("Write the rollback runbook");
-    expect(face(item)).toMatchObject({ lamps: ["HELD CALL"], verbs: ["Deny", "Approve"] });
+    expect(face(item)).toMatchObject({ lamps: ["Held call"], verbs: ["Deny", "Approve"] });
     expect(within(item).getByTestId("needs-more-asks").textContent).toBe("+1 MORE");
     expect(document.querySelectorAll("[data-testid='needs-row'][data-counted='true']")).toHaveLength(6);
     expect(document.querySelectorAll(".needs-row[data-kind='agent']")).toHaveLength(0);
@@ -636,7 +636,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(face(action)).toMatchObject({
       kind: "action",
       fact: "from philo3_architect_meeting",
-      lamps: ["TO CONFIRM"],
+      lamps: ["To confirm"],
       verbs: ["Confirm", "More"],
     });
     // No glyph-only control: every verb carries its word.
@@ -765,12 +765,12 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
         source_id: "watch:w-gh", kind: "watch", state: "quiet", observed_at: yesterday,
         label: "GitHub · karolswdev/holdspeak-dayone-rehearsal-1558", project_id: "p1",
         reason: "quiet until 08:00", watch_ids: ["w-gh"], host: "github.com",
-        repair: { token: "QUIET UNTIL 08:00", verb: "Retry", href: "/projects/p1" },
+        repair: { token: "Quiet until 08:00", verb: "Retry", href: "/projects/p1" },
       },
       {
         source_id: "watch:w-mtg", kind: "watch", state: "stale", observed_at: yesterday,
         label: "Meetings", project_id: "p1", reason: "not checked recently", watch_ids: ["w-mtg"],
-        repair: { token: "STALE", verb: "Retry", href: "/projects/p1" },
+        repair: { token: "Stale", verb: "Retry", href: "/projects/p1" },
       },
     ],
   };
@@ -798,10 +798,10 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
     const sources = screen.getAllByTestId("needs-source-row");
     expect(sources).toHaveLength(2);
     const quiet = sources.find((li) => /GitHub/.test(li.textContent ?? ""))!;
-    expect(face(quiet).lamps).toContain("QUIET UNTIL 08:00");
+    expect(face(quiet).lamps).toContain("Quiet until 08:00");
     expect(quiet.getAttribute("data-counted")).toBe("false");
     const stale = sources.find((li) => /Meetings/.test(li.textContent ?? ""))!;
-    expect(face(stale).lamps).toContain("STALE");
+    expect(face(stale).lamps).toContain("Stale");
     expect(stale.getAttribute("data-counted")).toBe("true");
   });
 
@@ -821,7 +821,7 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
     await screen.findByText("1 needs you");
     const [gh, mtg] = ["GitHub", "Meetings"].map((name) =>
       screen.getAllByTestId("needs-source-row").find((li) => li.textContent?.includes(name))!);
-    expect(face(gh).egress).toBe("GITHUB.COM");
+    expect(face(gh).egress).toBe("github.com");
     expect(face(mtg).egress).toBe("");
   });
 
@@ -964,7 +964,7 @@ describe("NeedsDrawer groups the sources of one cause (PHILO-17)", () => {
     source_id: `watch:w-gh-${n}`, kind: "watch", state: "failed", observed_at: null,
     label: `GitHub · acme/repo-${n}`, project_id: `p${n}`, provider: "github",
     reason: "Not signed in", cause: "Not signed in", watch_ids: [`w-gh-${n}`], host: "github.com",
-    repair: { token: "CANT CHECK", verb: "Reconnect", href: "/settings" },
+    repair: { token: "Cant check", verb: "Reconnect", href: "/settings" },
     ...extra,
   });
   const paused = (n: number, room: string) => ({
@@ -999,7 +999,7 @@ describe("NeedsDrawer groups the sources of one cause (PHILO-17)", () => {
     const group = sources[0];
     expect(group.querySelector(".needs-row-name")?.textContent).toBe("GitHub · 3 sources");
     expect(face(group).fact).toBe("Not signed in");
-    expect(face(group).lamps).toEqual(["CANT CHECK"]);
+    expect(face(group).lamps).toEqual(["Cant check"]);
     // The work leads; the plumbing is last.
     const members = screen.getAllByTestId("needs-row");
     expect(group.compareDocumentPosition(members[members.length - 1]) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();

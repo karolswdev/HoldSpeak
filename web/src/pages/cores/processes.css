@@ -1,0 +1,15 @@
+/* Window grammar (2026-10-24): Processes is a collection window; the dense
+   list fills it and scrolls inside it. */
+.process-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.process-clock {
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-muted);
+}
+.process-target {
+  color: var(--wb-text);
+}

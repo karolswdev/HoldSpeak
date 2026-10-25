@@ -312,11 +312,17 @@ def _run_long_row(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, width: int) -
                 const row = document.querySelector('[data-testid="needs-row"]');
                 const verb = row.querySelector('.needs-row-verbs .btn').getBoundingClientRect();
                 const name = row.querySelector('.needs-row-name').getBoundingClientRect();
-                return {verbTop: verb.top, verbRight: verb.right, nameBottom: name.bottom};
+                const r = row.getBoundingClientRect();
+                return {verbTop: verb.top, verbLeft: verb.left, verbRight: verb.right, nameBottom: name.bottom,
+                        nameRight: name.right, rowHeight: r.height};
             }""")
             assert boxes["verbRight"] <= width + 0.5, boxes
             if width <= 480:
-                assert boxes["verbTop"] >= boxes["nameBottom"] - 1, f"the verb is under the name at 393: {boxes}"
+                # Window grammar (2026-10-24): the narrow row is one 44 px line
+                # pair (the name over its state), the verb at its right; the
+                # long name is cut, never run under the verb.
+                assert boxes["rowHeight"] <= 44.5, f"the row is taller than 44 px at 393: {boxes}"
+                assert boxes["verbLeft"] >= boxes["nameRight"] - 1, f"the name runs under the verb at 393: {boxes}"
             assert len(_primaries(page)) == 1, _primaries(page)
 
             _shot(page, "long-row", width)

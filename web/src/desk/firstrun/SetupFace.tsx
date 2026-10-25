@@ -7,15 +7,17 @@ import { closeFirstRun } from "./reopen";
 import { useFirstTake } from "./useFirstTake";
 import {
   EgressChip,
-  FoldGadget,
   HeardQuote,
   LedMeter,
   StateChip,
   StringGadget,
-  SurfaceRow,
-  SurfaceRows,
-  SurfaceSection,
 } from "../surface";
+import { DotWord, StatusBar, ToolGlyph, Toolbar, type StatusBarItem } from "../surface/kit";
+import { ObjectList, type ObjectListRow, type ObjectListSort, type ObjectListTone } from "../surface/objects/ObjectList";
+import { useWindowInterior } from "../surface/interior";
+import { SYSTEM } from "../systemSprites";
+import { spriteUrl } from "../sprites";
+import { KEEP_CAPS } from "../surface/objects/NeedsRow";
 import { DICTATION_FAILURES, needsMicrophoneDoctor, type DictationFailure } from "../../lib/dictationRecovery";
 import "./setupFace.css";
 import { useOwnerName } from "./ownerName";
@@ -82,12 +84,51 @@ export function useSetupInventory(): {
   return { loading, inventory, error, reload };
 }
 
-function stateNode(row: SetupRow) {
-  if (row.state === "works") return <StateChip state="success" label="Works" icon="●" />;
-  if (row.state === "does_not_work") return <StateChip state="failure" label="Does not work" />;
-  if (row.state === "pending") return <StateChip state="idle" label="Working" />;
-  return <StateChip state="idle" label="Found" />;
+/** Window grammar (2026-10-24): a readiness row's state as a dot and a
+ *  word. A row with nothing to press that does not work was not found on
+ *  this Mac; one whose press did not work failed. */
+function rowState(row: SetupRow): { label: string; tone: ObjectListTone; live?: boolean } {
+  if (row.state === "works") return { label: "Ready", tone: "ok" };
+  if (row.state === "pending") return { label: "Working", tone: "info", live: true };
+  if (row.state === "does_not_work") return row.action ? { label: "Failed", tone: "fail" } : { label: "Not found", tone: "idle" };
+  return { label: "Not set up", tone: "warn" };
 }
+
+/** The order a stranger works in: what to set up, what is working, what
+ *  failed or is absent, then what is ready. */
+const STATE_RANK: Record<SetupRowState, number> = { found: 0, pending: 1, does_not_work: 2, works: 3 };
+
+/** The D glyph of a readiness row (Icons D: the system and world sprites). */
+function rowSprite(row: SetupRow): string {
+  switch (row.kind) {
+    case "speech": return SYSTEM.dockSpeak;
+    case "microphone": return SYSTEM.micGlyph;
+    case "calendar": return SYSTEM.dockMeetings;
+    case "agents": return SYSTEM.dockAgents;
+    case "account": return spriteUrl("repository", row.id);
+    case "people":
+    case "owner": return spriteUrl("person", row.id);
+    default: return spriteUrl("model", row.id);
+  }
+}
+
+/** The row's wire detail and reason in quiet sentence case: an all-caps
+ *  wire word (`YOUR NETWORK`) reads as a word. */
+function whatWords(row: SetupRow): string {
+  // A row that does not work says why (its reason restates the detail:
+  // `No account found` · `No GitHub account was found on this Mac`).
+  const text = row.state === "does_not_work" && row.reason
+    ? row.reason
+    : [row.detail, row.reason].filter(Boolean).join(" · ");
+  return text.replace(/\b[A-Z]{2,}(?:\s+[A-Z]{2,})*\b/g, (caps) =>
+    KEEP_CAPS.has(caps) || !/\s/.test(caps) && caps.length < 3 ? caps : caps.charAt(0) + caps.slice(1).toLowerCase());
+}
+
+const SETUP_COLUMNS = [
+  { key: "name", word: "What", track: "minmax(150px, 0.8fr)" },
+  { key: "what", word: "Detail", track: "minmax(0, 1.4fr)" },
+  { key: "state", word: "State", track: "112px" },
+] as const;
 
 const AGENT_LABELS: Record<string, string> = { claude: "Claude Code", codex: "Codex", pi: "pi" };
 
@@ -140,42 +181,6 @@ function SetupAgentBindings({
         );
       })}
     </div>
-  );
-}
-
-function SetupInventoryRow({
-  row,
-  busyId,
-  onUse,
-  onStop,
-}: {
-  row: SetupRow;
-  busyId: string | null;
-  onUse: () => void;
-  onStop?: (agent: string) => void;
-}) {
-  const bindings = Array.isArray(row.payload?.bindings)
-    ? row.payload.bindings.filter((item): item is SetupAgentBinding => Boolean(item && typeof item === "object"))
-    : [];
-  return (
-    <SurfaceRow
-      glyph={<span aria-hidden="true">{row.kind === "speech" ? "◖" : row.kind === "calendar" ? "▦" : row.kind === "account" ? "⑂" : row.kind === "agents" ? "◉" : "◆"}</span>}
-      title={row.label}
-      detail={row.reason ? `${row.detail || ""}${row.detail ? " · " : ""}${row.reason}` : row.detail || undefined}
-      meta={
-        <span className="setup-face-row-meta">
-          {row.egress_host ? <EgressChip label={row.egress_host} scope={row.egress_host.includes(".") ? "remote" : "local"} /> : null}
-          {stateNode(row)}
-        </span>
-      }
-      verbs={row.action && row.state !== "works" ? (
-        <Button dense variant="secondary" loading={busyId === row.id} disabled={busyId !== null} onClick={onUse}>
-          {row.verb || "Use"}
-        </Button>
-      ) : undefined}
-    >
-      {bindings.length && onStop ? <SetupAgentBindings bindings={bindings} busyId={busyId} onStop={onStop} /> : null}
-    </SurfaceRow>
   );
 }
 
@@ -257,7 +262,9 @@ function mergeInventory(current: SetupInventory, latest: SetupInventory): SetupI
   return { ...current, ...latest, rows: [...latest.rows, ...lanRows] };
 }
 
-export function SetupFace({ initial }: { initial: SetupInventory }) {
+/** `standalone`: the first-run page (no window around it) keeps its page
+ *  heading; in the Setup window the title bar is the name. */
+export function SetupFace({ initial, standalone = false }: { initial: SetupInventory; standalone?: boolean }) {
   const [inventory, setInventory] = useState(initial);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [peopleDraft, setPeopleDraft] = useState("");
@@ -302,8 +309,6 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
 
   const actionable = useMemo(() => inventory.rows.filter((row) => row.action && row.state === "found"), [inventory.rows]);
   const working = inventory.rows.filter((row) => row.state === "works");
-  const found = inventory.rows.filter((row) => row.kind !== "owner" && (row.state === "found" || row.state === "pending"));
-  const notFound = inventory.rows.filter((row) => row.kind !== "owner" && row.state === "does_not_work");
 
   const refreshPending = useCallback(async (rowId: string) => {
     for (let attempt = 0; attempt < 20; attempt += 1) {
@@ -455,68 +460,156 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
   const takeFailure = take.failure ? TAKE_FAILURE_TOKENS[take.failure] : null;
   const takeContract = take.failure ? DICTATION_FAILURES[take.failure] : null;
 
+  // Window grammar (2026-10-24): title bar → Toolbar [Check again] [Use
+  // everything found] [Open my desk] → the dense list of readiness rows
+  // (glyph · What · Detail · State as a dot and a word) → the selected
+  // row's bindings → You and your people as a label/control grid → the
+  // first sentence → StatusBar (`2 of 6 ready`, never a zero) with the
+  // selected row's one verb and its egress at the right. The first row that
+  // is not ready is selected on open: a stranger sees what to do first.
+  // "editor": edge to edge like a list, but the body scrolls (the list, the
+  // bindings and the You grid read as one sheet).
+  useWindowInterior(standalone ? undefined : "editor");
+  const listed = useMemo(
+    () => inventory.rows
+      .filter((row) => row.kind !== "owner")
+      .map((row, index) => ({ row, index }))
+      .sort((a, b) => STATE_RANK[a.row.state] - STATE_RANK[b.row.state] || a.index - b.index)
+      .map(({ row }) => row),
+    [inventory.rows],
+  );
+  const [sort, setSort] = useState<ObjectListSort>({ key: "order", dir: "asc" });
+  const firstToDo = listed.find((row) => row.action && row.state !== "works") ?? listed.find((row) => row.state !== "works") ?? listed[0];
+  const [chosenId, setChosenId] = useState<string | null>(null);
+  const selected = listed.find((row) => row.id === chosenId) ?? firstToDo ?? null;
+  const rows: ObjectListRow[] = listed.map((row, index) => {
+    const state = rowState(row);
+    return {
+      id: row.id,
+      kind: row.kind,
+      name: row.label,
+      sprite: rowSprite(row),
+      state: { ...state, testId: "setup-row-state" },
+      cells: { what: whatWords(row) },
+      sortValues: { order: index, state: STATE_RANK[row.state] },
+    };
+  });
+  const total = listed.length;
+  const readyCount = working.filter((row) => row.kind !== "owner").length;
+  const [checking, setChecking] = useState(false);
+  const checkAgain = async () => {
+    setChecking(true);
+    try {
+      const latest = await readInventory();
+      if (latest) setInventory((current) => mergeInventory(current, latest));
+    } finally {
+      setChecking(false);
+    }
+  };
+  const bindings = selected && Array.isArray(selected.payload?.bindings)
+    ? selected.payload.bindings.filter((item): item is SetupAgentBinding => Boolean(item && typeof item === "object"))
+    : [];
+  const selectedVerb = selected && selected.action && selected.state !== "works" ? (
+    <Button
+      dense
+      variant="secondary"
+      loading={busyId === selected.id}
+      disabled={busyId !== null}
+      onClick={() => void useRow(selected)}
+      data-testid="setup-row-verb"
+    >
+      {selected.verb || "Use"}
+    </Button>
+  ) : null;
+  const items: Array<StatusBarItem | null> = [
+    total ? {
+      key: "count",
+      lamp: readyCount ? "ok" as const : "warn" as const,
+      text: readyCount ? `${readyCount} of ${total} ready` : `${total} to set up`,
+      testId: "setup-count",
+    } : null,
+    ready ? { key: "owner", text: `Ready, ${ownerName}.`, testId: "setup-ready" } : null,
+    notice ? { key: "notice", text: notice } : null,
+    take.message ? { key: "take", lamp: "fail" as const, text: <span role="alert">{take.message}</span> } : null,
+  ];
+
   return (
-    <section className="setup-face" aria-label="Set up HoldSpeak" data-testid="setup-face">
-      <header className="setup-face-head">
-        <div>
+    <section className="setup-face" aria-label="Set up HoldSpeak" data-testid="setup-face" data-standalone={standalone ? "true" : undefined}>
+      {standalone ? (
+        <header className="setup-face-head">
           <h1>Set up HoldSpeak</h1>
-          {ready ? <p className="setup-face-ready">Ready, {ownerName}.</p> : null}
-        </div>
-        {actionable.length ? <Button variant="primary" dense onClick={() => void useEverything()}>Use everything found</Button> : null}
-      </header>
-      {found.length ? (
-        <SurfaceSection label="Found on this Mac" data-testid="setup-found">
-          <SurfaceRows>
-            {found.map((row) => <SetupInventoryRow key={row.id} row={row} busyId={busyId} onUse={() => void useRow(row)} onStop={stopAgent} />)}
-          </SurfaceRows>
-        </SurfaceSection>
+        </header>
       ) : null}
-      {inventory.people?.length || inventory.suggestions?.length || inventory.owner_name !== undefined ? (
-        <SurfaceSection label="You and your people" data-testid="setup-people">
-          <SurfaceRows>
-            <SurfaceRow
-              title="Your name"
-              detail={owner.readError || (ownerName ? ownerName : "Add your name here")}
-              meta={<StateChip state={ownerName ? "success" : "idle"} label={ownerName ? "Works" : "Found"} />}
-            >
-              <div className="setup-face-owner-input">
-                <StringGadget label="Your name" value={owner.name} onChange={owner.setName} placeholder="Your name" disabled={owner.loading} inputProps={{ onBlur: () => void owner.flush() }} />
-              </div>
-            </SurfaceRow>
-            <SurfaceRow
-              title="Your people"
-              detail={(inventory.people || []).map((person) => person.display_name).join(", ") || "Add direct reports separated by commas"}
-              verbs={<Button dense variant="secondary" loading={peopleBusy} disabled={peopleBusy || !peopleDraft.trim()} onClick={() => void addPeople()}>Add</Button>}
-            >
-              <div className="setup-face-people-input">
-                <StringGadget label="Your people" value={peopleDraft} onChange={setPeopleDraft} placeholder="Mira Okafor, Theo Lindqvist" />
-                {inventory.suggestions?.length ? <small>From your calendar: {inventory.suggestions.map((suggestion) => suggestion.name).join(", ")}</small> : null}
-              </div>
-            </SurfaceRow>
-          </SurfaceRows>
-        </SurfaceSection>
-      ) : null}
-      {notFound.length ? (
-        <FoldGadget title="Not found" token={String(notFound.length)}>
-          <SurfaceRows>{notFound.map((row) => <SetupInventoryRow key={row.id} row={row} busyId={busyId} onUse={() => void useRow(row)} onStop={stopAgent} />)}</SurfaceRows>
-        </FoldGadget>
-      ) : null}
-      {working.length ? (
-        <FoldGadget title="Works" token={String(working.length)}>
-          <SurfaceRows>{working.map((row) => <SetupInventoryRow key={row.id} row={row} busyId={busyId} onUse={() => undefined} onStop={stopAgent} />)}</SurfaceRows>
-        </FoldGadget>
-      ) : null}
-      {notice ? <p className="setup-face-notice" role="status">{notice}</p> : null}
-      {take.message ? <p className="setup-face-notice" role="alert">{take.message}</p> : null}
-      <div className="setup-face-foot">
-        {!ready ? (
-          <Button dense variant="primary" loading={take.keeping} disabled={take.keeping} onClick={openDesk}>
-            Open my desk
+      <Toolbar label="Setup" data-testid="setup-toolbar">
+        <Button dense variant="secondary" loading={checking} disabled={checking} onClick={() => void checkAgain()} data-testid="setup-check-again">
+          <ToolGlyph kind="retry" />
+          Check again
+        </Button>
+        {actionable.length ? (
+          <Button dense variant="primary" disabled={busyId !== null} onClick={() => void useEverything()}>
+            <ToolGlyph kind="done" />
+            Use everything found
           </Button>
         ) : null}
-      </div>
+        <Button dense variant={actionable.length ? "secondary" : "primary"} loading={take.keeping} disabled={take.keeping} onClick={openDesk}>
+          <ToolGlyph kind="open" />
+          Open my desk
+        </Button>
+      </Toolbar>
+      {rows.length ? (
+        <div className="setup-face-list" data-testid="setup-found">
+          <ObjectList
+            label="Readiness"
+            density="dense"
+            rows={rows}
+            columns={SETUP_COLUMNS.filter((column) => column.key !== "what" || rows.some((row) => row.cells?.what))}
+            sort={sort}
+            onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
+            selectedId={selected?.id ?? null}
+            onSelect={setChosenId}
+            onOpen={(id) => {
+              const row = listed.find((candidate) => candidate.id === id);
+              if (row && row.action && row.state !== "works") void useRow(row);
+            }}
+            rowProps={(row) => ({ "data-testid": "setup-row", "data-row-id": row.id })}
+          />
+        </div>
+      ) : null}
+      {bindings.length ? (
+        <div className="setup-face-pane" data-testid="setup-selection">
+          <SetupAgentBindings bindings={bindings} busyId={busyId} onStop={stopAgent} />
+        </div>
+      ) : null}
+      {inventory.people?.length || inventory.suggestions?.length || inventory.owner_name !== undefined ? (
+        <section className="setup-face-pane setup-face-you" aria-labelledby="setup-you-title" data-testid="setup-people">
+          <h2 id="setup-you-title" className="setup-face-caption">You and your people</h2>
+          <div className="setup-face-grid">
+            <span className="setup-face-label">Your name</span>
+            <div className="setup-face-control">
+              <StringGadget label="Your name" value={owner.name} onChange={owner.setName} placeholder="Your name" disabled={owner.loading} inputProps={{ onBlur: () => void owner.flush() }} />
+              {owner.readError ? <span className="setup-face-fact" role="alert">{owner.readError}</span> : null}
+            </div>
+            <span className="setup-face-state">
+              <DotWord tone={ownerName ? "ok" : "warn"}>{ownerName ? "Ready" : "Not set up"}</DotWord>
+            </span>
+            <span className="setup-face-label">Your people</span>
+            <div className="setup-face-control">
+              <StringGadget label="Your people" value={peopleDraft} onChange={setPeopleDraft} placeholder="Mira Okafor, Theo Lindqvist" />
+              {inventory.people?.length ? (
+                <span className="setup-face-fact">{inventory.people.map((person) => person.display_name).join(", ")}</span>
+              ) : null}
+              {inventory.suggestions?.length ? (
+                <span className="setup-face-fact">From your calendar: {inventory.suggestions.map((suggestion) => suggestion.name).join(", ")}</span>
+              ) : null}
+            </div>
+            <span className="setup-face-state">
+              <Button dense variant="secondary" loading={peopleBusy} disabled={peopleBusy || !peopleDraft.trim()} onClick={() => void addPeople()}>Add</Button>
+            </span>
+          </div>
+        </section>
+      ) : null}
       {ready ? (
-        <div className="setup-face-finale">
+        <div className="setup-face-pane setup-face-finale">
           {take.state === "listening" ? (
             <div className="setup-face-take-state">
               <StateChip state="active" label="LISTENING" icon="●" />
@@ -575,9 +668,16 @@ export function SetupFace({ initial }: { initial: SetupInventory }) {
               Say one sentence
             </Button>
           )}
-          <Button dense variant="primary" loading={take.keeping} disabled={take.keeping} onClick={openDesk}>Open my desk</Button>
         </div>
       ) : null}
+      <StatusBar
+        data-testid="setup-status"
+        items={items}
+        verbs={selectedVerb}
+        egress={selected && selectedVerb && selected.egress_host
+          ? <EgressChip label={selected.egress_host} scope={selected.egress_host.includes(".") ? "remote" : "local"} />
+          : undefined}
+      />
       <SetupMicrophoneCheck requested={microphoneRequest} />
     </section>
   );

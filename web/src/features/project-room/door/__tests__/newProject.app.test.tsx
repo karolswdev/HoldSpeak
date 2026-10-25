@@ -89,7 +89,7 @@ describe("New Project: the Door", () => {
   it("Create with no sources sends a blank project, opens its Room and closes the Door", async () => {
     await openTheDoor();
 
-    expect(screen.getByTestId("door-receipt").textContent).toBe("NO SOURCES · BLANK PROJECT");
+    expect(screen.getByTestId("door-receipt").textContent).toBe("Blank project");
     fireEvent.change(screen.getByTestId("door-outcome-input"), {
       target: { value: "Blank project for glass test" },
     });
@@ -128,15 +128,15 @@ describe("HS-174-07: the Door's Confluence row", () => {
   // replaces: tests/e2e/test_hs174_door_confluence_glass.py::test_door_confluence_connected_1440
   // replaces: tests/e2e/test_hs174_door_confluence_glass.py::test_door_confluence_connected_393 (a shot and a clean
   //   console at 393: the console fence is here, the drawn/fit/clipped fences are the sweep's surface-project-setup case)
-  it("signed in: the C row offers RECENT BLOGS and PAGES BY ID and names the account; no console error", async () => {
+  it("signed in: the C row offers Recent blogs and Pages by ID and names the account; no console error", async () => {
     const errors = vi.spyOn(console, "error");
     replay(D174.connected);
     await openTheDoor();
     const row = await screen.findByTestId("door-row-confluence");
     const text = row.textContent ?? "";
-    expect(text).toContain("RECENT BLOGS");
-    expect(text).toContain("PAGES BY ID");
-    expect(text).toContain("SIGNED IN AS KAROLSANE@GMAIL.COM");
+    expect(text).toContain("Recent blogs");
+    expect(text).toContain("Pages by ID");
+    expect(text).toContain("Signed in as karolsane@gmail.com");
     expect(errors).not.toHaveBeenCalled();
     expect(misses).toEqual([]);
     errors.mockRestore();
@@ -148,7 +148,7 @@ describe("HS-174-07: the Door's Confluence row", () => {
     replay(D174.not_connected);
     await openTheDoor();
     await waitFor(() => expect(misses.filter((m) => m !== "GET /api/connections")).toEqual([]));
-    expect(screen.getByTestId("door-root").textContent).not.toContain("SIGNED IN AS");
+    expect(screen.getByTestId("door-root").textContent).not.toContain("Signed in as");
     expect(errors).not.toHaveBeenCalled();
     expect(misses).toEqual([]);
     errors.mockRestore();
@@ -234,23 +234,24 @@ describe("HS-169-02: the Streamlined Door with GitHub and Jira", () => {
     fireEvent.click(screen.getByTestId("door-trigger-jira"));
     await screen.findByTestId("door-picker-jira", undefined, { timeout: 5000 });
     fireEvent.click(await screen.findByTestId("door-pick-KAN", undefined, { timeout: 5000 }));
-    // The Jira count lands: the row leaves CHECKING and names the hub's host. The
+    // The Jira count lands: the row leaves Checking and the status bar names the
+    // hub's host (window grammar: egress where egress happens, at Create). The
     // recorded answer is live with an empty plain line (0 overdue, 0 due this
     // week), so the row draws no count line, as the hub says.
     const jiraRow = screen.getByTestId("door-row-jira");
-    await waitFor(() => expect(jiraRow.textContent).toContain(D169.counts.jira.answer.host), { timeout: 5000 });
+    await waitFor(() => expect(screen.getByTestId("door-egress").textContent).toContain(String(D169.counts.jira.answer.host).toLowerCase()), { timeout: 5000 });
     expect(D169.counts.jira.answer.state).toBe("live");
-    expect(jiraRow.textContent).not.toContain("CHECKING");
-    expect(jiraRow.textContent).not.toContain("CAN'T CHECK");
+    expect(jiraRow.textContent).not.toContain("Checking");
+    expect(jiraRow.textContent).not.toContain("Can't check");
     expect(screen.getByTestId("door-trigger-jira").textContent).toContain("KAN");
     if (D169.counts.jira.answer.plain) expect(within(jiraRow).getByTestId("door-counts-jira").textContent).toBe(D169.counts.jira.answer.plain);
     else expect(within(jiraRow).queryByTestId("door-counts-jira")).toBeNull();
 
     // The face sent the recorded count bodies, Jira scoped to the connected account and KAN.
     expect(countPosts()).toEqual([D169.counts.github.request, D169.counts.jira.request]);
-    const receipt = screen.getByTestId("door-receipt").textContent?.toUpperCase() ?? "";
-    expect(receipt).toContain("SOURCE");
-    expect(receipt).toContain("WATCH");
+    const receipt = screen.getByTestId("door-receipt").textContent ?? "";
+    expect(receipt).toContain("2 sources");
+    expect(receipt).toContain("watches");
 
     await act(async () => { fireEvent.click(screen.getByTestId("door-create")); });
     await waitFor(() => expect(screen.queryByTestId("door-root")).toBeNull(), { timeout: 5000 });

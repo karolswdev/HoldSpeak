@@ -108,7 +108,7 @@ def test_setup_face_uses_everything_adds_people_and_leaves_for_the_desk(
             ) as used:
                 page.get_by_role("button", name="Use everything found", exact=True).click()
             assert used.value.ok, used.value.text()
-            expect(face.get_by_text("Works", exact=True).first).to_be_visible(timeout=30_000)
+            expect(face.get_by_test_id("setup-row-state").filter(has_text="Ready").first).to_be_visible(timeout=30_000)
             expect(face).to_contain_text("Ready, Karol.")
             expect(face.get_by_role("button", name="Say one sentence", exact=True)).to_be_visible()
             expect(face.get_by_role("button", name="Open my desk", exact=True)).to_be_visible()
@@ -136,22 +136,22 @@ def test_setup_face_uses_everything_adds_people_and_leaves_for_the_desk(
             page.screenshot(path=str(shots / f"setup-mic-failed-{width}.png"), full_page=width < 720)
             page.evaluate("window.__denyMic = false")
 
-            # The working inventory is a closed fold. Open my desk is the
-            # always-available egress and retains the stored people and setup.
-            works_summary = face.locator("details").filter(has_text="Works").locator("summary")
-            expect(works_summary).to_be_visible()
-            works_summary.click()
-            expect(face).to_contain_text("Speech")
+            # Window grammar (2026-10-24): the working inventory is the dense
+            # list's Ready rows. Open my desk is the always-available egress
+            # (the toolbar) and retains the stored people and setup.
+            ready_speech = face.get_by_test_id("setup-row").filter(has_text="Speech")
+            expect(ready_speech.get_by_test_id("setup-row-state")).to_have_text("Ready")
             face.get_by_role("button", name="Open my desk", exact=True).click()
             expect(page.get_by_test_id("today-day")).to_be_visible(timeout=20_000)
 
             # Setup is also the later menu window. Its working rows remain in
-            # the fold, and the finale's desk verb opens Today.
+            # the list, and the toolbar's desk verb opens Today.
             page.locator(".desk-mark").click()
             _row(page, "Setup").click()
             later = page.get_by_test_id("setup-face")
             later.wait_for(timeout=15_000)
-            expect(later.locator("details").filter(has_text="Works").locator("summary")).to_be_visible()
+            expect(later.get_by_test_id("setup-row").filter(has_text="Speech")
+                   .get_by_test_id("setup-row-state")).to_have_text("Ready")
             later.get_by_role("button", name="Open my desk", exact=True).click()
             expect(page.get_by_test_id("today-day")).to_be_visible(timeout=20_000)
             browser.close()

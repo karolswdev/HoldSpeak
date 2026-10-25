@@ -1143,3 +1143,197 @@
   .desk-next .speak-journal .journal-hover-verb,
   .desk-next .speak-journal .surface-ledger-line::before { transition: none; }
 }
+
+/* ═══ Window grammar (2026-10-24) — Speak is an editor window ════════
+   Title bar → Toolbar [Talk (blue, mic glyph; red while it listens)]
+   [Types into ▾] [Try it here] · the level at the right → the words as the
+   editor body, edge to edge → the result → the checks → the status bar.
+   No headline, no plate inside the window, no mono caps. */
+.desk-next .speak-face {
+  gap: 0;
+  padding: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.desk-next .speak-face .speak-plate {
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--wb-paper);
+}
+.desk-next .speak-face .speak-plate-body {
+  flex: 1 1 auto;
+  gap: 0;
+  padding: 0;
+  min-height: 0;
+}
+
+/* The toolbar's verbs: the Talk key is the one primary verb. */
+.desk-next .speak-face .kit-toolbar .speak-transport {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.desk-next .speak-face .kit-toolbar .speak-transport > .desk-mic.gadget-transport-key {
+  flex-direction: row;
+  width: auto;
+  height: 28px;
+  min-height: 28px;
+  gap: 6px;
+  padding: 0 12px 0 10px;
+  border: 1px solid color-mix(in srgb, var(--wb-ink) 30%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--wb-sel);
+  color: var(--wb-paper);
+  font: 600 13px / 1 var(--font-sans);
+  letter-spacing: 0;
+}
+.desk-next .speak-face .kit-toolbar .speak-transport > .desk-mic.gadget-transport-key .gadget-transport-glyph {
+  font-size: 16px;
+}
+.desk-next .speak-face .kit-toolbar .speak-transport > .desk-mic.gadget-transport-key:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--wb-sel) 86%, var(--wb-ink));
+}
+.desk-next .speak-face .kit-toolbar .speak-transport > .desk-mic.gadget-transport-key.is-listening {
+  background: var(--wb-rec);
+  color: var(--wb-paper);
+}
+.desk-next .speak-face .kit-toolbar .speak-transport > .gadget-transport-key:not(.desk-mic) {
+  width: auto;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  flex-direction: row;
+  gap: 6px;
+  border-radius: var(--radius-sm);
+}
+/* Types into ▾ and Try it here sit on the band as quiet verbs. */
+.desk-next .speak-face .kit-toolbar .speak-lands-in {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.desk-next .speak-face .kit-toolbar .speak-lands-in-caption,
+.desk-next .speak-face .kit-toolbar .speak-lands-in-dot,
+.desk-next .speak-face .kit-toolbar .speak-lands-in-latency {
+  font: 400 12px / 1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-muted);
+}
+.desk-next .speak-face .kit-toolbar .speak-lands-in .speak-transport-spacer {
+  display: none;
+}
+/* The level: a slim meter at the band's right end. */
+.desk-next .speak-face .kit-toolbar-trailing .gadget-ledmeter {
+  width: clamp(96px, 22cqi, 200px);
+}
+.desk-next .speak-face .kit-toolbar-trailing .gadget-ledmeter-track {
+  height: 14px;
+}
+
+/* The setup row (Set up speech · its egress) under the toolbar. */
+.desk-next .speak-face .speak-setup {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+
+/* The words: the editor body, edge to edge. */
+.desk-next .speak-face .speak-well {
+  flex: 1 1 auto;
+  display: flex;
+  min-height: 140px;
+}
+.desk-next .speak-face .speak-well .gadget-pad {
+  flex: 1 1 auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--wb-paper);
+}
+.desk-next .speak-face .speak-well textarea {
+  min-height: 140px;
+  height: 100%;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font: 400 15px / 1.55 var(--font-sans);
+  resize: none;
+}
+.desk-next .speak-face .speak-result {
+  padding: 10px 16px;
+  border-top: 1px solid var(--wb-rule-soft);
+}
+
+/* The checks: quiet rows under the editor, a soft rule above. */
+.desk-next .speak-face .speak-checks {
+  margin: 0;
+  padding: 6px 12px;
+  border: 0;
+  border-top: 1px solid var(--wb-rule-soft);
+  border-radius: 0;
+  background: var(--wb-paper);
+  box-shadow: none;
+}
+.desk-next .speak-face .speak-checks::before {
+  display: none;
+}
+
+/* The status bar's facts: sans, the hold key a small key cap. */
+.desk-next .kit-statusbar .speak-strip {
+  display: inline;
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
+}
+.desk-next .kit-statusbar .speak-phase {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+}
+.desk-next .kit-statusbar .speak-fact {
+  font: inherit;
+  color: inherit;
+}
+.desk-next .kit-statusbar .speak-kbd {
+  padding: 0 5px;
+  font: 600 12px / 1.2 var(--font-sans);
+}
+
+@container surface (max-width: 520px) {
+  /* The old phone stack moved the transport to a sticky foot; in the
+     toolbar Talk stays first, in place. */
+  .desk-next .speak-face .kit-toolbar .speak-transport {
+    order: 0;
+    position: static;
+    padding: 0;
+    border-top: 0;
+    background: none;
+  }
+  .desk-next .speak-face .kit-toolbar .speak-transport > .desk-mic.gadget-transport-key,
+  .desk-next .speak-face .kit-toolbar .speak-transport > .gadget-transport-key:not(.desk-mic) {
+    height: 44px;
+    min-height: 44px;
+  }
+  .desk-next .speak-face .kit-toolbar .speak-lands-in-caption {
+    display: none;
+  }
+  .desk-next .speak-face .speak-well textarea {
+    padding: 12px;
+  }
+}

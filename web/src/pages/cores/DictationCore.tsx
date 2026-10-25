@@ -11,13 +11,14 @@ import type { CoreProps, DictationJournalResponse } from "./core-types";
 import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
 import { Button } from "../../components/signal/Signal";
-import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
+import { StatusBar, countWords, type StatusBarItem } from "../../desk/surface/kit";
 import { openSurfaceOr } from "../../desk/shell";
-import { countToken, FoldGadget } from "../../desk/surface";
+import { FoldGadget } from "../../desk/surface";
 import { useResource } from "../pageSupport";
 import { useBuilderTools } from "../../desk/builderTools";
 import {
   SpeakFace,
+  SpeakStatusContext,
   Journal,
   Learned,
   Blocks,
@@ -72,6 +73,9 @@ function Configure() {
 
 export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
   const wings = useCoreWings(WINGS, "speak", "Configure dictation");
+  // Window grammar (2026-10-24): one status bar for the window; the Speak
+  // face reports its phase, fact and hold key into it.
+  const [speakItems, setSpeakItems] = useState<StatusBarItem[] | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const announce = useCallback((text: string, tone: ReceiptTone = "ok") => {
     setReceipt(text ? { text, tone } : null);
@@ -144,8 +148,13 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
     </span>
   ) : null;
 
-  // Journal count as a token (null at zero per UX-CANON A8)
-  const journalToken = countToken(journalToday, "TODAY", "TODAY");
+  // The journal count in warm words (null at zero per UX-CANON A8).
+  const journalWords = countWords(journalToday, "today", "today");
+  const statusItems: Array<StatusBarItem | null> = [
+    ...(active === "speak" && speakItems ? speakItems : []),
+    receiptSlot ? { key: "receipt", lamp: receipt?.tone === "warn" ? "warn" : undefined, text: receiptSlot }
+      : journalWords ? { key: "journal", text: <span className="surface-footer-readiness">{journalWords}</span> } : null,
+  ];
 
   return (
     <>
@@ -156,7 +165,9 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
         </p>
       ) : null}
       <ReceiptContext.Provider value={announce}>
-        {current}
+        <SpeakStatusContext.Provider value={setSpeakItems}>
+          {current}
+        </SpeakStatusContext.Provider>
       </ReceiptContext.Provider>
       {/* HS-170-04 — the footer: receipt · Review (ghost) · Export (ghost).
           HS-202-02 — the egress slot carried a hardcoded `THIS DEVICE` on a
@@ -165,15 +176,10 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
           Article III is the one beside the verb — the SPEAK wing's engine
           row (dictation/SpeakFace.tsx:753) — so the footer states nothing
           it has not read. */}
-      <SurfaceFooter
+      <StatusBar
         className="speak-footer"
-        receipt={
-          receiptSlot || (journalToken ? (
-            <span className="surface-footer-readiness" role="status">
-              {journalToken}
-            </span>
-          ) : null)
-        }
+        data-testid="speak-footer"
+        items={statusItems}
         verbs={
           <>
             {/* HS-176-05 (design D2(b).9) — `Review` reviews: it crosses to
