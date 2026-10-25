@@ -25,15 +25,14 @@ export const useShortcutSheet = transient();
 
 /** PHILO-13-08 (B3) — the palette asks a name before a create.
  *
- * `New Decision` wrote a `New decision` record at once (grounding F9). Now
- * the create asks its title in the ⌘K well first; Enter with a title runs
- * `submit`, and closing the palette abandons it (nothing is written). */
+ * A create asks its name in the ⌘K well first; Enter with a title runs
+ * `submit`, and closing the palette abandons it (nothing is written).
+ * New Decision asked here until the owner's catch of 2026-10-25; it has its
+ * own window now (pages/cores/NewDecisionCore). */
 export interface NamePrompt {
-  /** The well's label and placeholder (`Decision title`). */
+  /** The well's label and placeholder (`Name the note`). */
   label: string;
-  submit(name: string, why?: string): void;
-  /** P9: New Decision keeps the Project in front of the owner as About. */
-  about?: { id: string; name: string };
+  submit(name: string): void;
 }
 
 interface NamePromptState {

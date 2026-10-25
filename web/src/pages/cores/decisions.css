@@ -31,3 +31,99 @@
   min-width: 0;
 }
 .decisions-search > * { flex: 1 1 auto; min-width: 0; }
+
+/* The owner, 2026-10-25: a decision record read in this window. Window
+   grammar: the toolbar touches the frame, the words sit in a reader inset,
+   the state is the status bar's dot and word. */
+.decision-reader-window {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  background: color-mix(in srgb, var(--wb-paper) 94%, var(--p-color-orange-300));
+}
+.decision-reader {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 20px 24px 24px;
+  color: var(--wb-ink);
+  font: 400 14px / 1.55 var(--font-sans);
+}
+/* A reader's first heading: the one display-size heading of the window. */
+.decision-reader-title {
+  margin: 0;
+  color: var(--wb-ink);
+  font: 600 22px / 1.25 var(--font-display, var(--font-sans));
+  letter-spacing: -0.01em;
+  text-transform: none;
+  overflow-wrap: anywhere;
+}
+.decision-reader-why {
+  max-width: 68ch;
+  color: var(--wb-ink);
+}
+.decision-reader-facts {
+  display: flex;
+  flex-direction: column;
+  margin: 2px 0 0;
+  max-width: 68ch;
+  border-top: 1px solid var(--wb-rule-soft);
+}
+.decision-reader-fact {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.decision-reader-fact dt {
+  color: var(--wb-muted);
+  font: 500 13px / 1.3 var(--font-sans);
+}
+.decision-reader-fact dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--wb-ink);
+  font: 400 13px / 1.4 var(--font-sans);
+  overflow-wrap: anywhere;
+}
+.decision-reader-about {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 30px;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--wb-blue) 70%, var(--wb-paper));
+  font: 500 13px / 1.2 var(--font-sans);
+}
+.decision-reader-about img {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.decision-reader-source {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 0;
+}
+.decision-reader-source-who {
+  color: var(--wb-ink);
+  font: 600 13px / 1.3 var(--font-sans);
+}
+@media (max-width: 520px) {
+  .decision-reader { padding: 16px; }
+  .decision-reader-title { font-size: 20px; }
+  .decision-reader-fact { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}

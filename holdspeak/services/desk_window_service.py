@@ -66,6 +66,8 @@ STATIC_WINDOWS: dict[str, str] = {
     # Betterment P4 (projects): the Projects list and the Decisions window.
     "surface-projects": "open-projects",
     "surface-decisions": "open-decisions",
+    # The owner, 2026-10-25: New Decision opens a window of its own.
+    "surface-new-decision": "new-decision",
     "surface-calendar-snapshot": "review-calendar-snapshot",
     # The Chair's windows (chair/chairWindows.ts). Betterment daily D5:
     # chair:brief and chair:week retired into Today; the ids stay known so a

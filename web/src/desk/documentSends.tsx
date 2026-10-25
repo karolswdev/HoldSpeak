@@ -84,6 +84,12 @@ export function DecisionRecordSendWells({ id, text }: { id: string; text?: strin
   return <div data-seat="decision-record"><SendWellsFold doc={decisionRecordDoc(id, text)} /></div>;
 }
 
+/** The Decisions window's reader: its toolbar's Send… opens this sheet, and
+ *  Back returns to the record (the owner, 2026-10-25). */
+export function DecisionRecordSendSheet({ id, text, onBack }: { id: string; text?: string | null; onBack: () => void }) {
+  return <div data-seat="decision-record"><SendWells doc={decisionRecordDoc(id, text)} onBack={onBack} /></div>;
+}
+
 /** PHILO-17 U08: a note (a Thought's working note) on `note:<id>`. The
  *  version is the note's revision: a saved edit reads the preview again. */
 export const noteDoc = (id: string, title?: string | null, version?: string | number): DocRef => ({

@@ -1,12 +1,13 @@
 /** PHILO-13-08 (B3) — decide where the meeting is.
  *
  * - `New Decision` (⌘K, ⌘⇧N, the floor menu) writes nothing until the
- *   decision has a title; the palette asks it inline; an abandoned try
+ *   decision has a title; its window asks it (the owner, 2026-10-25: the
+ *   New decision window, no longer the palette); an abandoned try
  *   writes nothing (grounding F9: each try left a `New decision` record).
  * - The meeting record's `Decide` asks the title inline and creates ONE
  *   decision carrying the meeting and the meeting's project; the meeting
  *   then lists it, and the row opens its own window.
- * Real store slice, real palette and well; the hub transport is the double. */
+ * Real store slice, real window face and well; the hub transport is the double. */
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -62,7 +63,7 @@ vi.mock("../setup", () => ({ loadSetup: vi.fn(() => Promise.resolve(null)) }));
 
 import { useDesk } from "../store";
 import { useNamePrompt, usePalette } from "../chromeState";
-import { DeskToolShelf } from "../components/DeskToolShelf";
+import { NewDecisionCore } from "../../pages/cores/NewDecisionCore";
 import { MeetingDecideWell } from "../../meetings/MeetingDecideWell";
 import { VERBS } from "../verbRegistry";
 
@@ -73,33 +74,37 @@ beforeEach(() => {
   hub.projects = [{ project_id: "proj-1", project_name: "Checkout" }];
   useNamePrompt.getState().clear();
   usePalette.getState().setOpen(false);
-  useDesk.setState({ pullouts: [], editingId: null, newIds: [] });
+  useDesk.setState({ pullouts: [], editingId: null, newIds: [], windowsById: {}, drafts: {} });
 });
 
 const newDecision = () => VERBS.find((v) => v.id === "desk.new-decision")!;
 
 describe("PHILO-13-08 New Decision writes nothing before it is named", () => {
-  it("the verb asks the title in the palette and posts nothing", async () => {
+  // The owner, 2026-10-25: the title is asked in the New decision window
+  // (pages/cores/NewDecisionCore), not in the palette. The whole press, to
+  // the Decisions window, is pages/cores/__tests__/newDecision.app.test.tsx.
+  const form = () => render(<NewDecisionCore />);
+
+  it("the verb opens the New decision window and posts nothing", async () => {
     await act(async () => { newDecision().run({ selectedRef: null }); });
     expect(hub.posts).toEqual([]);
-    expect(useNamePrompt.getState().prompt?.label).toBe("Decision title");
-    expect(usePalette.getState().open).toBe(true);
+    expect(useDesk.getState().windowsById["surface-new-decision"]?.applicationKey).toBe("new-decision");
+    expect(usePalette.getState().open).toBe(false);
   });
 
-  it("an abandoned try (the palette closes) leaves no record", async () => {
-    render(<DeskToolShelf />);
+  it("an abandoned try (Cancel) leaves no record", async () => {
     await act(async () => { newDecision().run({ selectedRef: null }); });
-    const well = screen.getByRole("textbox", { name: "Decision title" });
-    fireEvent.change(well, { target: { value: "Half a thought" } });
-    await act(async () => { usePalette.getState().setOpen(false); });
-    expect(useNamePrompt.getState().prompt).toBeNull();
+    form();
+    fireEvent.change(screen.getByRole("textbox", { name: "Decision title" }), { target: { value: "Half a thought" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(useDesk.getState().windowsById["surface-new-decision"]).toBeUndefined();
     expect(hub.posts).toEqual([]);
     expect(hub.decisions.filter((d) => d.title === "New decision")).toEqual([]);
   });
 
   it("type + Enter creates one decision with that title and opens it", async () => {
-    render(<DeskToolShelf />);
     await act(async () => { newDecision().run({ selectedRef: null }); });
+    form();
     const well = screen.getByRole("textbox", { name: "Decision title" });
     fireEvent.change(well, { target: { value: "Adopt feature flags" } });
     await act(async () => { fireEvent.keyDown(well, { key: "Enter" }); });
@@ -108,15 +113,13 @@ describe("PHILO-13-08 New Decision writes nothing before it is named", () => {
     // PHILO-15-09 (B12): the owner's own decision is DECIDED, not to review.
     expect(hub.posts[0].status).toBe("accepted");
     await waitFor(() => expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("decision_1"));
-    expect(usePalette.getState().open).toBe(false);
+    expect(useDesk.getState().windowsById["surface-new-decision"]).toBeUndefined();
   });
 
-  it("the named decision well creates only after a title and explicit Create", async () => {
-    render(<DeskToolShelf />);
-    await act(async () => { newDecision().run({ selectedRef: null }); });
-    expect(screen.getByRole("region", { name: "New decision" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "New decision" })).toBeInTheDocument();
-    const create = screen.getByRole("button", { name: "Create" });
+  it("Create stays off until a title, then creates once", async () => {
+    form();
+    expect(screen.getByRole("group", { name: "New decision" })).toBeInTheDocument();
+    const create = screen.getByRole("button", { name: /Create/ });
     expect(create).toBeDisabled();
     fireEvent.change(screen.getByRole("textbox", { name: "Decision title" }), { target: { value: "Use one ledger" } });
     expect(create).not.toBeDisabled();
@@ -127,12 +130,10 @@ describe("PHILO-13-08 New Decision writes nothing before it is named", () => {
   });
 
   it("Enter with no title writes nothing", async () => {
-    render(<DeskToolShelf />);
-    await act(async () => { newDecision().run({ selectedRef: null }); });
+    form();
     const well = screen.getByRole("textbox", { name: "Decision title" });
     await act(async () => { fireEvent.keyDown(well, { key: "Enter" }); });
     expect(hub.posts).toEqual([]);
-    expect(useNamePrompt.getState().prompt).not.toBeNull();
   });
 });
 

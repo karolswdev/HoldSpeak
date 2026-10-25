@@ -6,17 +6,27 @@
  * Window grammar (2026-10-24): Toolbar [New decision] + Current only +
  * search → the dense list view (Decision · When · Where · State) → the
  * status bar (`5 decisions · 1 open`). A press selects a row; Enter or a
- * double press opens the decision in place. */
+ * double press opens the decision in place: the reader (toolbar ‹ Decisions
+ * and Send…, the decision as its heading, the Why as its body, the status
+ * bar `● Decided just now`). */
 import { DecisionsView } from "../../desk/pullouts/views/DecisionsView";
+import { useDesk } from "../../desk/store";
 import type { CoreProps } from "./core-types";
 import "../../desk/pullouts/intelligence.css";
 import "./decisions.css";
 
-export function DecisionsCore(_props: CoreProps) {
+export function DecisionsCore({ scope }: CoreProps) {
+  // The owner, 2026-10-25: a decision just made opens here, selected, in the
+  // reader (`record:<id>`), never in Today's window.
+  const recordId = scope?.startsWith("record:") ? scope.slice("record:".length) : undefined;
   return (
     <div className="decisions-window" data-testid="decisions-window">
       <section className="decisions-window-section" aria-live="polite">
-        <DecisionsView windowed />
+        <DecisionsView
+          windowed
+          receiptId={recordId}
+          onBackToList={() => useDesk.getState().openSurfaceWindow("open-decisions", undefined)}
+        />
       </section>
     </div>
   );

@@ -311,11 +311,10 @@ function meetingMeta(ref: unknown): string | undefined {
 
 export function DeskToolShelf() {
   const open = usePalette((s) => s.open);
-  // PHILO-13-08 (B3): a create that asks its name first (New Decision).
+  // PHILO-13-08 (B3): a create that asks its name first. New Decision has
+  // its own window now (the owner, 2026-10-25; pages/cores/NewDecisionCore).
   const prompt = useNamePrompt((s) => s.prompt);
-  const decisionPrompt = prompt?.label === "Decision title";
   const [query, setQuery] = useState("");
-  const [decisionWhy, setDecisionWhy] = useState("");
   // -1 means the palette has not received an arrow press yet. The first
   // runnable object then wins, while contextual Send rows remain reachable
   // by arrows without stealing Enter on an object.
@@ -412,7 +411,6 @@ export function DeskToolShelf() {
       event.preventDefault();
       setPendingEnter(false);
       setQuery("");
-      setDecisionWhy("");
       usePalette.getState().setOpen(false);
       launchRef.current?.focus();
     };
@@ -423,7 +421,6 @@ export function DeskToolShelf() {
   useEffect(() => {
     if (open) searchRef.current?.focus();
     setQuery("");
-    setDecisionWhy("");
     setSel(-1);
     setExpandedId(null);
     setVerbSel(-1);
@@ -506,7 +503,6 @@ export function DeskToolShelf() {
   const close = () => {
     usePalette.getState().setOpen(false);
     setQuery("");
-    setDecisionWhy("");
   };
 
   const ctx: VerbContext = {
@@ -995,7 +991,7 @@ export function DeskToolShelf() {
     if (!prompt || !name) return;
     const { submit } = prompt;
     close(); // closing clears the prompt (chromeState)
-    submit(name, decisionWhy);
+    submit(name);
   };
 
   const runRow = (row: DeckRow) => {
@@ -1104,18 +1100,14 @@ export function DeskToolShelf() {
             <aside
               ref={rootRef}
               id="desk-tool-shelf"
-              className={decisionPrompt ? "desk-tool-shelf desk-decision-prompt" : "desk-tool-shelf"}
+              className="desk-tool-shelf"
               role="region"
-              aria-label={decisionPrompt ? "New decision" : "Search"}
+              aria-label="Search"
               onKeyDown={onDeckKeyDown}
             >
-              {decisionPrompt ? <h2 className="desk-decision-prompt-title">New decision</h2> : null}
-              {decisionPrompt && prompt?.about ? (
-                <span className="surface-token" data-testid="decision-about-chip">About · {prompt.about.name}</span>
-              ) : null}
               <div className="desk-tool-search-head">
                 <label className="desk-tool-search">
-                  <span className={decisionPrompt ? "desk-decision-prompt-label" : "sr-only"}>{prompt ? prompt.label : "Find, open or ask"}</span>
+                  <span className="sr-only">{prompt ? prompt.label : "Find, open or ask"}</span>
                   <StringGadget
                     inputRef={searchRef}
                     label={prompt ? prompt.label : "Find, open or ask"}
@@ -1130,15 +1122,6 @@ export function DeskToolShelf() {
                     }}
                   />
                 </label>
-                {decisionPrompt ? (
-                  <StringGadget
-                    label="Why"
-                    value={decisionWhy}
-                    placeholder="Why (optional)"
-                    onChange={setDecisionWhy}
-                    inputProps={{ "data-testid": "decision-why" } as Record<string, string>}
-                  />
-                ) : null}
                 <Button dense variant="ghost" className="desk-tool-close"
                   onKeyDown={(event) => {
                     if (event.key === "Enter") event.stopPropagation();
@@ -1151,7 +1134,7 @@ export function DeskToolShelf() {
                 <div className="desk-tool-name">
                   <Button dense variant="primary" data-testid="palette-name-save"
                     disabled={!query.trim()} onClick={submitName}>
-                    {decisionPrompt ? "Create" : "Save"}
+                    Save
                   </Button>
                 </div>
               ) : !ranked ? null : rows.length ? (

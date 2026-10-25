@@ -17,6 +17,9 @@ export interface DeskSurfaceSpec {
   defaultW?: number;
   defaultH?: number;
   maximized?: boolean;
+  /** The world sprite kind the title bar wears (`decision`): the window's
+   *  own object glyph, drawn at 20 px (Icons D). */
+  sprite?: string;
   load: () => Promise<{
     default: ComponentType<CoreProps & { scope?: string }>;
   }>;
@@ -477,12 +480,36 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     go: { group: "daily", order: 4.5 },
     surface: {
       eyebrow: "Decided",
+      sprite: "decision",
       minW: 520,
       defaultW: 680,
       defaultH: 600,
       load: () =>
         import("../pages/cores/DecisionsCore").then((module) => ({
           default: module.DecisionsCore,
+        })),
+    },
+  },
+  // The owner, 2026-10-25: New Decision is a small window of its own, not
+  // a popover in the palette. A decision is named before it is persisted
+  // (PHILO-13-08 B3): closing this window writes nothing. No `group`, no
+  // `go`: New Decision (the verb) opens it; Search and Go do not list it.
+  {
+    action: "new-decision",
+    windowId: "surface-new-decision",
+    label: "New decision",
+    description: "Name a decision, say why, and create it.",
+    glyph: "◈",
+    href: "/",
+    surface: {
+      eyebrow: "Decide",
+      sprite: "decision",
+      minW: 360,
+      defaultW: 520,
+      defaultH: 340,
+      load: () =>
+        import("../pages/cores/NewDecisionCore").then((module) => ({
+          default: module.NewDecisionCore,
         })),
     },
   },
