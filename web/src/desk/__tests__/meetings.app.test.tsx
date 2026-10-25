@@ -167,22 +167,31 @@ function at(fixture: Fixture) {
 
 describe("the Meetings list over the HS-170 seed", () => {
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (the list half, 1440) */
-  it("headline, ONE Run summary on the meeting with words, NO TRANSCRIPT, INTERRUPTED, no REC, no 0 SEG, no raw button", async () => {
+  it("window grammar: toolbar, dense list, status bar; ONE Run summary for the selected meeting with words, No transcript, Interrupted, no REC, no 0 SEG, no raw button", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<Shell><HistoryCore /></Shell>);
-    const headline = await screen.findByTestId("meetings-headline");
-    await waitFor(() => expect(headline.textContent).not.toBe(""));
-    // The rig read `1 ... summary`; the seed's queued meeting wins the headline.
-    expect(headline.textContent).toBe("1 summary queued");
+    const toolbar = await screen.findByRole("toolbar", { name: "Meetings" });
+    // The page grammar is retired: no headline, no week tiles.
+    expect(screen.queryByTestId("meetings-headline")).toBeNull();
+    expect(screen.queryByTestId("meetings-week")).toBeNull();
     await screen.findByTestId("meeting-row-m-off-words");
+    expect(screen.getByRole("grid", { name: "Meetings" })).toHaveAttribute("data-density", "dense");
+    // Nothing selected: no run verb; a press selects (it opens nothing).
+    expect(screen.queryAllByTestId("run-intelligence-btn")).toHaveLength(0);
+    fireEvent.click(within(screen.getByTestId("meeting-row-m-off-words")).getByRole("button"));
+    expect(openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-off-words");
     const run = screen.getAllByTestId("run-intelligence-btn");
     expect(run).toHaveLength(1);
-    expect(within(screen.getByTestId("meeting-row-m-off-words")).getByTestId("run-intelligence-btn")).toBe(run[0]);
+    // The selection's verbs sit at the status bar's right (a selection never
+    // reflows the toolbar above the list).
+    expect(screen.getByTestId("meetings-status")).toContainElement(run[0]);
+    expect(toolbar).not.toContainElement(run[0]);
     // The meeting with no words says so and offers no run.
     const vendor = screen.getByTestId("meeting-row-m-no-transcript");
-    expect(within(vendor).getByTestId("no-transcript-token").textContent).toBe("NO TRANSCRIPT");
-    expect(within(vendor).queryByTestId("run-intelligence-btn")).toBeNull();
+    expect(within(vendor).getByTestId("no-transcript-token").textContent).toBe("No transcript");
+    fireEvent.click(within(vendor).getByRole("button"));
+    expect(screen.queryByTestId("run-intelligence-btn")).toBeNull();
     // The dead capture says INTERRUPTED; no row says REC.
     expect(within(screen.getByTestId("meeting-row-m-dead-rec")).getByTestId("state-token").textContent).toBe("Interrupted");
     expect(stateTokens()).not.toContain("Rec");
@@ -190,7 +199,8 @@ describe("the Meetings list over the HS-170 seed", () => {
     // HS-170-04 restored doors: search with its mic, and the facet row
     // (the seed's one open action draws HAS OPEN ACTIONS).
     expect(document.querySelector(".meetings-search .gadget-string input")).toBeTruthy();
-    expect(screen.getByTestId("meetings-facets").textContent).toContain("HAS OPEN ACTIONS");
+    expect(screen.getByTestId("meetings-facets").textContent).toContain("Open actions");
+    expect(toolbar).toContainElement(screen.getByTestId("meetings-facets"));
     expect(rawButtons()).toEqual([]);
   });
 
@@ -200,12 +210,14 @@ describe("the Meetings list over the HS-170 seed", () => {
     const calls = hub(hs170 as Fixture);
     render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-off-words");
-    const chip = () => within(row).getByTestId("row-route").querySelector(".gadget-chip-egress");
+    fireEvent.click(within(row).getByRole("button"));
+    const status = screen.getByTestId("meetings-status");
+    const chip = () => within(status).getByTestId("row-route").querySelector(".gadget-chip-egress");
     // Same-device work has no egress to disclose. The route remains bound to
     // the run and never leaks its wire enum.
     expect(chip()).toBeNull();
-    expect(row.textContent).not.toContain("same_device");
-    fireEvent.click(within(row).getByTestId("run-intelligence-btn"));
+    expect(status.textContent).not.toContain("same_device");
+    fireEvent.click(within(status).getByTestId("run-intelligence-btn"));
     const listed = (hs170 as Fixture)["/api/meetings?limit=100"] as { meetings: Array<{ id: string; planned_route: { selection_hash: string } }> };
     const hash = listed.meetings.find((m) => m.id === "m-off-words")!.planned_route.selection_hash;
     await waitFor(() =>
@@ -223,12 +235,15 @@ describe("the Meetings list over the HS-170 seed", () => {
   });
 
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (row → the meeting's own window) */
-  it("a row opens the meeting's own window", async () => {
+  it("a press selects a row; a double press opens the meeting's own window", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-saved-outcomes");
-    fireEvent.click(row.querySelector(".meetings-stream-row-body")!);
+    fireEvent.click(within(row).getByRole("button"));
+    expect(row).toHaveAttribute("aria-selected", "true");
+    expect(openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-saved-outcomes");
+    fireEvent.doubleClick(within(row).getByRole("button"));
     // `openSourceRef` hands the shell the meeting scope. The one Meetings
     // surface owns the record and its Back control returns to this list.
     expect(openSurfaceOr).toHaveBeenCalledWith(
@@ -250,7 +265,7 @@ describe("the hosted meeting record returns to its list", () => {
 
     await waitFor(() => {
       expect(screen.queryByTestId("meeting-record-back")).toBeNull();
-      expect(screen.getByTestId("meetings-headline")).toBeTruthy();
+      expect(screen.getByTestId("meetings-toolbar")).toBeTruthy();
     });
     expect(screen.getByTestId("meeting-row-m-saved-outcomes")).toHaveAttribute("data-selected", "true");
   });
@@ -357,7 +372,7 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
     hub(hs170 as Fixture);
     const first = render(<Shell><HistoryCore /></Shell>);
     await screen.findByTestId("meeting-row-m-off-words");
-    const footerChip = () => (document.querySelector(".surface-footer .gadget-chip-egress")?.textContent ?? "").trim();
+    const footerChip = () => (document.querySelector(".kit-statusbar .gadget-chip-egress")?.textContent ?? "").trim();
     await waitFor(() => expect(footerChip()).toBe(""));
     first.unmount();
     // The same rows with the route's lead leg on a LAN host (the shape is the
@@ -385,7 +400,7 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
     await screen.findByTestId("meeting-row-m-off-words");
     const picker = screen.getByTestId("meetings-import-picker") as HTMLInputElement;
     const opened = vi.spyOn(picker, "click").mockImplementation(() => undefined);
-    fireEvent.click(within(document.querySelector(".meetings-head-verbs") as HTMLElement).getByRole("button", { name: "Import" }));
+    fireEvent.click(within(screen.getByRole("toolbar", { name: "Meetings" })).getByRole("button", { name: "Import" }));
     // Capture C3: one press opens the picker; no wing switch, no drop well.
     expect(opened).toHaveBeenCalledTimes(1);
     expect(document.querySelector(".surface-dropwell")).toBeNull();
@@ -506,11 +521,14 @@ describe("an audio-only meeting is transcribed in place (PHILO-17)", () => {
   });
 
   /* replaces: tests/e2e/test_philo17_transcribe_glass.py::test_an_audio_only_meeting_is_transcribed_in_place (step 2, the row at 1440) */
-  it("speech ready: the list row offers Transcribe", async () => {
+  it("speech ready: the selected audio-only row offers Transcribe in the status bar", async () => {
     at(p17tReady as Fixture);
     hub(p17tReady as Fixture);
     render(<Shell><HistoryCore /></Shell>);
+    const token = await screen.findByTestId("no-transcript-token");
+    fireEvent.click(within(token.closest("[role='row']") as HTMLElement).getByRole("button"));
     const verb = await screen.findByTestId("row-transcribe-verb");
+    expect(screen.getByTestId("meetings-status")).toContainElement(verb);
     expect(verb.textContent?.trim()).toBe("Transcribe");
   });
 

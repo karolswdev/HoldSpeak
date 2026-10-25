@@ -286,7 +286,7 @@
   --desk-window-fill: var(--wb-paper); /* near-white window paper */
   --desk-panel-fill: var(--wb-field); /* secondary cool slate panel fill */
   --desk-window-radius: 8px; /* modern window radius */
-  --desk-window-shadow: 0 14px 34px rgba(22, 40, 62, 0.16), 0 0 0 1px var(--wb-rule-soft); /* soft depth for the front window */
+  --desk-window-shadow: 0 22px 48px rgba(22, 40, 62, 0.24), 0 4px 12px rgba(22, 40, 62, 0.12); /* the front window floats: a soft, deep shadow (window grammar 2026-10-24) */
   --desk-window-shadow-rest: 0 5px 14px rgba(22, 40, 62, 0.10), 0 0 0 1px var(--wb-rule-soft); /* reduced depth for a resting window */
   --desk-window-keyline: var(--wb-sel); /* fine blue edge for the front window */
   --desk-window-blur: none; /* HS-110-01: no backdrop-filter — opaque surfaces */
@@ -354,7 +354,13 @@
   --wb-hover: rgba(37, 52, 73, 0.06); /* quiet control hover wash */
   --wb-press: color-mix(in srgb, var(--wb-blue) 70%, var(--wb-sel)); /* opaque modern pressed gadget fill */
   --wb-frame: 1px; /* fine window frame border */
-  --wb-bar-h: 36px; /* desktop window title bar; narrow shell keeps 44px elsewhere */
+  --wb-bar-h: 30px; /* desktop window title bar (window grammar 2026-10-24: 28-32px); narrow shell keeps 44px elsewhere */
+  --wb-bar-front: var(--wb-sel); /* front window title bar: the deep Workbench blue, flat (paper ink on it; the faint shine is an inset highlight) */
+  --wb-toolbar-h: 36px; /* window toolbar band under the title bar */
+  --wb-statusbar-h: 24px; /* window status bar band at the foot */
+  --wb-sel-vivid: #2f67c8; /* vivid Workbench blue for a selected list row (paper ink 5.3:1) */
+  --wb-row-hover: color-mix(in srgb, var(--wb-sel) 8%, var(--wb-paper)); /* a list row lifted under the pointer */
+  --wb-row-dense: 30px; /* dense list view row on the desktop; narrow rows stay 44px */
   --wb-screen-h: 36px; /* desktop system bar; narrow shell keeps 44px elsewhere */
   --wb-gadget-w: 32px; /* desktop title-bar gadget width */
   --wb-raised: none; /* modern controls use a fine border and soft depth */

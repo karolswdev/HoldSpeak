@@ -1,9 +1,15 @@
 // HS-170-04 -- CatalogRail tests: the run-summary verb appears only
-// on OFF rows with a transcript, never on no-transcript rows.
+// on OFF rows with a transcript, never on no-transcript rows. Window grammar
+// (2026-10-24): the verb is the selected row's, in the status bar
+// (MeetingSelectionVerbs); the list view says the state.
 
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CatalogRail } from "../CatalogRail";
+import { CatalogRail, MeetingSelectionVerbs } from "../CatalogRail";
+
+function selection(row: Record<string, unknown>) {
+  return <MeetingSelectionVerbs row={row} primary onRunIntelligence={vi.fn()} runningId={null} />;
+}
 
 function baseProps(rows: Record<string, unknown>[]) {
   return {
@@ -37,8 +43,9 @@ describe("CatalogRail Run summary verb (HS-170-04)", () => {
         },
       },
     ];
-    render(<CatalogRail {...baseProps(rows)} />);
+    render(<><CatalogRail {...baseProps(rows)} />{selection(rows[0])}</>);
     expect(screen.getByText("Run summary")).toBeInTheDocument();
+    expect(screen.getByTestId("state-token").textContent).toBe("Not run");
   });
 
   it("does not show Run summary on no-transcript row", () => {
@@ -53,12 +60,12 @@ describe("CatalogRail Run summary verb (HS-170-04)", () => {
         transcriptWords: null,
       },
     ];
-    render(<CatalogRail {...baseProps(rows)} />);
+    render(<><CatalogRail {...baseProps(rows)} />{selection(rows[0])}</>);
     expect(screen.queryByText("Run summary")).not.toBeInTheDocument();
-    expect(screen.getByText("NO TRANSCRIPT")).toBeInTheDocument();
+    expect(screen.getByText("No transcript")).toBeInTheDocument();
   });
 
-  it("shows Open on SAVED row", () => {
+  it("a summarised row offers no run verb; the toolbar's Open opens it", () => {
     const rows = [
       {
         id: "m-saved",
@@ -70,7 +77,8 @@ describe("CatalogRail Run summary verb (HS-170-04)", () => {
         transcriptWords: 800,
       },
     ];
-    render(<CatalogRail {...baseProps(rows)} />);
-    expect(screen.getByText("Open")).toBeInTheDocument();
+    render(<><CatalogRail {...baseProps(rows)} />{selection(rows[0])}</>);
+    expect(screen.queryByText("Run summary")).not.toBeInTheDocument();
+    expect(screen.getByTestId("state-token").textContent).toBe("Ran");
   });
 });

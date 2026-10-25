@@ -2284,7 +2284,7 @@ class TestCloseMeansGone:
                 page.wait_for_timeout(1500)
                 _settle(page)
                 hit = page.evaluate(HIT_JS, [cx, cy])
-                card.get_by_test_id("meetings-headline").wait_for()
+                card.get_by_test_id("meetings-toolbar").wait_for()
                 page.wait_for_function("() => document.querySelector('#surface-meetings')?.getAttribute('aria-label') === 'Meetings'")
                 left = [o for o in self._open(page) if o["id"] == win_id and o["label"] == title]
                 page.screenshot(path=str(CLOSE_SHOTS / f"meeting-tombstone-after-{width}.png"))

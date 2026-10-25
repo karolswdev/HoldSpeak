@@ -230,3 +230,28 @@
     min-height: 280px;
   }
 }
+
+/* Window grammar specimen: the toolbar, the dense list view and the status
+   bar inside one framed paper window, edge to edge. */
+.reference-window-frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+  max-height: 460px;
+  overflow: hidden;
+  border: 1px solid var(--wb-ink);
+  border-radius: var(--desk-window-radius);
+  background: var(--wb-paper);
+  box-shadow: var(--desk-window-shadow-rest);
+  container: surface / inline-size;
+}
+.reference-window-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.reference-window-content > .surface-state {
+  flex: 1 1 auto;
+  justify-content: center;
+}

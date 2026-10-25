@@ -1,18 +1,25 @@
 /* Betterment P4 (projects): the Projects window. One row per project: its
  * name, where it stands (the Room's own state word and reason), its next
- * date, its newest update. One press on the name opens the project.
+ * date, its newest update.
+ *
+ * Window grammar (2026-10-24): Toolbar [New Project] → the dense list view
+ * (Name · State · Risk · Next · Update) → StatusBar (`4 projects`). A press
+ * selects a row; Enter or a double press opens the project.
  *
  * Each row reads the project's Room (`GET /api/projects/<id>/room`, the
  * read the project window makes), so the state here is the Room's state,
  * never a second rule. A row whose read fails says so; it never claims a
  * state it did not read. */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { useDesk } from "../../desk/store";
 import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
-import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, SurfaceVerbs } from "../../desk/surface/Surface";
+import { SurfaceState } from "../../desk/surface/Surface";
+import { StatusBar, ToolGlyph, Toolbar, countWords } from "../../desk/surface/kit";
+import { useWindowInterior } from "../../desk/surface/interior";
+import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../desk/surface/objects/ObjectList";
 import { wireDate } from "../../desk/surface/format";
 import { decodeRoomSnapshot, healthReasonWords, roomHealthWord, type RoomSnapshot } from "../../features/project-room/model";
 import type { CoreProps } from "./core-types";
@@ -121,81 +128,135 @@ export function ProjectsCore(_props: CoreProps) {
   }, [load]);
   useOnDeskChanged(load);
 
+  const [selected, setSelected] = useState<string | null>(null);
+  const [sort, setSort] = useState<ObjectListSort>({ key: "state", dir: "asc" });
+  useWindowInterior("list");
+
   const newProject = (
     <Button dense variant={projects.length ? "secondary" : "primary"} data-testid="projects-new"
       onClick={() => openSurfaceOr("project-setup", "/")}>
+      <ToolGlyph kind="new" />
       New Project
     </Button>
   );
+  const open = selected && projects.some((p) => p.id === selected) ? selected : null;
+  const toolbar = (
+    <Toolbar label="Projects" data-testid="projects-toolbar">
+      {newProject}
+      {open ? (
+        <Button dense variant="secondary" data-testid="projects-open-selected" onClick={() => openProjectRoom(open)}>
+          <ToolGlyph kind="open" />
+          Open
+        </Button>
+      ) : null}
+    </Toolbar>
+  );
+  const complete = projects.length > 0 && projects.every((project) => reads[project.id] !== undefined);
+  const rows = useMemo<ObjectListRow[]>(() => {
+    if (!complete) return [];
+    return projects.map((p) => {
+      const read = reads[p.id];
+      const room = read && read !== "failed" ? read.room : null;
+      const health = listHealth(room);
+      const reason = health?.reason ? quietReason(health.reason) : null;
+      const next = room ? nextDate(room) : null;
+      const update = read && read !== "failed" ? updateWords(read.update) : null;
+      const notRead = read === "failed" || Boolean(room && !health);
+      const word = health ? (health.word === "BLOCKED" ? "Blocked" : health.word === "AT RISK" ? "At risk" : health.word === "NEW" ? "New" : "On track") : null;
+      return {
+        id: p.id,
+        kind: "project",
+        name: p.name,
+        nameTestId: "projects-open",
+        state: notRead
+          ? { label: "Not read", tone: "warn" as const, testId: "projects-not-read" }
+          : word && health
+            ? { label: word, tone: health.tone === "fail" ? "fail" as const : health.tone === "info" ? "info" as const : "ok" as const, testId: "projects-state" }
+            : undefined,
+        sortValues: {
+          state: RANK[health?.word ?? ""] ?? 3,
+          next: next?.words ?? "",
+          update: update?.words ?? "",
+          risk: reason ?? "",
+        },
+        cells: {
+          risk: reason ? <span className="projects-reason" data-testid="projects-reason">{reason}</span> : "",
+          next: next ? <span data-tone={next.late ? "danger" : undefined} className="projects-next" data-testid="projects-next">{next.words}</span> : "",
+          update: update ? (
+            <span className="projects-update-cell">
+              {update.fresh ? <span className="kit-pill" data-tone="accent" data-dot="" data-testid="projects-new-update">New update</span> : null}
+              <span data-testid="projects-update">{update.words}</span>
+            </span>
+          ) : "",
+        },
+      };
+    });
+  }, [complete, projects, reads]);
+
   if (!projects.length) {
     return (
       <>
-        <SurfaceState empty emptyLabel="No projects" />
-        <SurfaceVerbs>{newProject}</SurfaceVerbs>
+        {toolbar}
+        <SurfaceState empty emptyLabel="No projects" emptyImage={PROJECT_SPRITE} />
       </>
     );
   }
 
   // Rank one complete read. Partial replies otherwise move visible rows as
   // each Room arrives. On refresh, keep the previous complete read in place.
-  if (projects.some((project) => reads[project.id] === undefined)) {
-    return <><SurfaceVerbs>{newProject}</SurfaceVerbs><SurfaceState loading /></>;
+  if (!complete) {
+    return <>{toolbar}<SurfaceState loading /></>;
   }
-
-  const rows = projects
-    .map((p) => {
-      const read = reads[p.id];
-      const room = read && read !== "failed" ? read.room : null;
-      return { p, read, room, health: listHealth(room) };
-    })
-    .sort((a, b) =>
-      (RANK[a.health?.word ?? ""] ?? 3) - (RANK[b.health?.word ?? ""] ?? 3) || a.p.name.localeCompare(b.p.name));
 
   return (
     <>
-      <SurfaceVerbs>{newProject}</SurfaceVerbs>
-      <SurfaceSection>
-        <SurfaceLedger label="Projects">
-          <ul className="surface-ledger-rows" data-testid="projects-list">
-            {rows.map(({ p, read, room, health }) => {
-              const reason = health?.reason ?? null;
-              const next = room ? nextDate(room) : null;
-              const update = read && read !== "failed" ? updateWords(read.update) : null;
-              const tone = health?.tone === "fail" ? "danger" : health?.tone === "info" ? "info" : "ok";
-              return (
-                <SurfaceLedgerRow
-                  key={p.id}
-                  data-testid="projects-row"
-                  kind="PRJ"
-                  kindTitle="PROJECT"
-                  wrap
-                  expands={false}
-                  lineLabel={`Open ${p.name}`}
-                  onToggle={() => openProjectRoom(p.id)}
-                  primary={
-                    <>
-                      <span className="projects-name" data-testid="projects-open">{p.name}</span>
-                      <span className="projects-facts">
-                        {read === "failed" || (room && !health) ? (
-                          <span className="surface-token" data-testid="projects-not-read">Not read</span>
-                        ) : health ? (
-                          <span className="kit-pill" data-tone={tone} data-dot="" data-testid="projects-state">
-                            {health.word === "BLOCKED" ? "Blocked" : health.word === "AT RISK" ? "At risk" : health.word === "NEW" ? "New" : "On track"}
-                          </span>
-                        ) : null}
-                        {reason ? <span className="surface-token projects-reason" data-tone="danger" data-testid="projects-reason">{reason.toUpperCase()}</span> : null}
-                        {next ? <span className="surface-token" data-tone={next.late ? "danger" : undefined} data-testid="projects-next">{next.words}</span> : null}
-                        {update?.fresh ? <span className="kit-pill" data-tone="accent" data-testid="projects-new-update">New update</span> : null}
-                        {update ? <span className="surface-token" data-testid="projects-update">{update.words}</span> : null}
-                      </span>
-                    </>
-                  }
-                />
-              );
-            })}
-          </ul>
-        </SurfaceLedger>
-      </SurfaceSection>
+      {toolbar}
+      <div className="projects-list" data-testid="projects-list">
+        <ObjectList
+          label="Projects"
+          density="dense"
+          rows={rows}
+          columns={PROJECT_COLUMNS.filter((column) => column.key === "name" || column.key === "state"
+            || rows.some((row) => row.cells?.[column.key]))}
+          sort={sort}
+          onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
+          selectedId={open}
+          onSelect={setSelected}
+          onOpen={(id) => openProjectRoom(id)}
+          rowProps={() => ({ "data-testid": "projects-row" })}
+        />
+      </div>
+      <StatusBar
+        data-testid="projects-status"
+        items={[
+          { key: "count", text: countWords(projects.length, "project") },
+          ...(["Blocked", "At risk"] as const).map((word) => ({
+            key: word,
+            lamp: "fail" as const,
+            text: countWords(rows.filter((row) => row.state?.label === word).length, word.toLowerCase(), word.toLowerCase()),
+          })),
+        ]}
+      />
     </>
   );
 }
+
+/** A reason in quiet sentence case: an all-caps wire word (`1 MILESTONE
+ *  LATE`) reads `1 milestone late`; a mixed-case reason stays as written. */
+function quietReason(reason: string): string {
+  if (reason !== reason.toUpperCase()) return reason;
+  const lower = reason.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+const PROJECT_SPRITE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/project-drawer.png`;
+
+// A column no row fills is not drawn (an empty column is a zero in
+// another form, UX-CANON A.8).
+const PROJECT_COLUMNS = [
+  { key: "name", word: "Name", track: "minmax(180px, 1.3fr)" },
+  { key: "state", word: "State", track: "112px" },
+  { key: "risk", word: "Risk", track: "minmax(0, 1fr)" },
+  { key: "next", word: "Next", track: "minmax(0, 0.7fr)" },
+  { key: "update", word: "Update", track: "minmax(0, 0.7fr)" },
+] as const;

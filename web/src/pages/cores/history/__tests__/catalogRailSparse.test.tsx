@@ -27,9 +27,9 @@ function baseProps(rowCount: number) {
 describe("CatalogRail stream (HS-170-04)", () => {
   it("renders meeting rows with titles", () => {
     render(<CatalogRail {...baseProps(3)} />);
-    expect(screen.getByText("Meeting 0")).toBeInTheDocument();
-    expect(screen.getByText("Meeting 1")).toBeInTheDocument();
-    expect(screen.getByText("Meeting 2")).toBeInTheDocument();
+    expect(screen.getByTitle("Meeting 0")).toBeInTheDocument();
+    expect(screen.getByTitle("Meeting 1")).toBeInTheDocument();
+    expect(screen.getByTitle("Meeting 2")).toBeInTheDocument();
   });
 
   /* HS-202-04 (M6) re-points this rig, which pinned the OLD label.
@@ -64,6 +64,6 @@ describe("CatalogRail stream (HS-170-04)", () => {
       onRunIntelligence={vi.fn()}
       runningId={null}
     />);
-    expect(screen.getByText("NO TRANSCRIPT")).toBeInTheDocument();
+    expect(screen.getByText("No transcript")).toBeInTheDocument();
   });
 });

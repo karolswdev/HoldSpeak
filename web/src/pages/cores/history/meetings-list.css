@@ -1,0 +1,59 @@
+/* Window grammar (2026-10-24): the Meetings list face. The toolbar holds
+   the verbs (and the selection's verbs after a hairline), the filter and
+   the search well; the list view runs edge to edge under it. */
+.meetings-drop {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.meetings-drop > .meetings-stream {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.meetings-toolbar-sep {
+  align-self: stretch;
+  width: 1px;
+  margin: 4px 4px;
+  background: var(--wb-rule-soft);
+}
+.meetings-selection {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  min-width: 0;
+}
+.meetings-selection:empty {
+  display: none;
+}
+.meetings-selection-fact {
+  font: 400 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+  white-space: nowrap;
+}
+.meetings-facets {
+  flex: none;
+}
+.meetings-facets,
+.meetings-search {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.meetings-search > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* Empty state: the app's big illustrated icon over one true line. */
+.meetings-drop .surface-state {
+  flex: 1 1 auto;
+  justify-content: center;
+}
+@container surface (max-width: 520px) {
+  .meetings-toolbar-sep {
+    display: none;
+  }
+}

@@ -322,3 +322,308 @@
     flex: 1 1 100%;
   }
 }
+
+/* ── Window grammar (2026-10-24): Toolbar, StatusBar, the body inset ──
+   title bar → toolbar (verbs left · search right) → content → status bar.
+   docs/internal/betterment/native-experience/WINDOW-GRAMMAR-2026-10-24.md */
+
+/* Toolbar: a 36 px band under the title bar, a 1 px soft rule under it. */
+.kit-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  flex: none;
+  gap: 4px 8px;
+  min-width: 0;
+  min-height: var(--wb-toolbar-h);
+  box-sizing: border-box;
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: var(--wb-paper);
+}
+.kit-toolbar-verbs {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+.kit-toolbar-verbs:empty {
+  display: none;
+}
+.kit-toolbar-trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  margin-left: auto;
+}
+/* The verbs are the quiet secondary form: no plate at rest, a fine rule
+   and the hover wash on approach; the ONE primary keeps its blue. */
+.desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger) {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-ink);
+  font-weight: 500;
+}
+.desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):hover:not(:disabled) {
+  border-color: var(--wb-rule-soft);
+  background: var(--wb-hover);
+}
+.desk-next .kit-toolbar .btn {
+  min-height: 28px;
+  height: 28px;
+  padding-inline: 10px;
+  font-size: 13px;
+}
+/* The search well in the toolbar: one field, 30 px, 140-240 px wide; the
+   trailing group yields before the band wraps. */
+.kit-toolbar-trailing {
+  flex: 1 1 auto;
+  justify-content: flex-end;
+}
+.kit-toolbar-trailing .gadget-string {
+  min-width: 0;
+  min-height: 30px;
+  height: 30px;
+  border-radius: 15px;
+  background: var(--wb-field);
+  overflow: hidden;
+}
+.kit-toolbar-trailing .gadget-string input {
+  padding-block: 0;
+  padding-inline: 12px 6px;
+  font-size: 13px;
+}
+.desk-next .kit-toolbar-trailing .gadget-string .desk-mic {
+  width: 30px;
+  min-height: 0;
+  border-inline-start: 0;
+  background: transparent;
+}
+.kit-toolbar-trailing > :has(> .gadget-string),
+.kit-toolbar-trailing > .gadget-string {
+  flex: 0 1 240px;
+  min-width: 140px;
+}
+/* A filter in the toolbar is a quiet toggle in sentence case, never a
+   mono caps chip; on, it wears the selection blue. */
+.kit-toolbar .gadget-check-token-face {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  font: 500 13px / 1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  transition: background-color var(--duration-short) var(--ease-standard), color var(--duration-short) var(--ease-standard);
+}
+.kit-toolbar .gadget-check-token.is-off .gadget-check-token-face {
+  border-color: var(--wb-rule-soft);
+  color: var(--wb-muted);
+}
+.kit-toolbar .gadget-check-token.is-on .gadget-check-token-face {
+  border-color: var(--wb-sel);
+  background: var(--wb-blue);
+  color: var(--wb-sel);
+}
+@container surface (max-width: 520px) {
+  .kit-toolbar {
+    padding: 4px 8px;
+  }
+  .desk-next .kit-toolbar .btn {
+    height: auto;
+  }
+  .kit-toolbar-trailing {
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+  .kit-toolbar-trailing > :has(> .gadget-string),
+  .kit-toolbar-trailing > .gadget-string {
+    flex: 1 1 100%;
+  }
+  /* The mic owns its whole 44 px square: the well grows to 46 px (its
+     1 px border each side) and does not clip its corners. */
+  .kit-toolbar-trailing .gadget-string {
+    height: 46px;
+    min-height: 46px;
+    border-radius: var(--radius-sm);
+    overflow: visible;
+  }
+  .desk-next .kit-toolbar-trailing .gadget-string .desk-mic {
+    width: 44px;
+    min-height: 44px;
+  }
+  .kit-toolbar .gadget-check-token-face {
+    height: 44px;
+    border-radius: 22px;
+  }
+}
+
+/* StatusBar: a 24 px band at the foot, sans 12 muted; items at the left,
+   joined by a middle dot; the egress chip at the right. */
+.kit-statusbar {
+  display: flex;
+  align-items: center;
+  gap: 4px 12px;
+  min-width: 0;
+  min-height: var(--wb-statusbar-h);
+  box-sizing: border-box;
+  padding: 2px 24px 2px 10px;
+  font: 400 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+.kit-statusbar-items {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 0;
+  min-width: 0;
+}
+.kit-statusbar-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  white-space: nowrap;
+}
+/* The middle dot trails each item but the last, so a wrapped bar never
+   starts a line with a dot. */
+.kit-statusbar-item:not(:last-child)::after {
+  content: "·";
+  margin-inline: 3px 8px;
+  color: var(--wb-muted);
+}
+.kit-statusbar-item b {
+  color: var(--wb-text);
+  font-weight: 600;
+}
+.kit-statusbar-verbs {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-left: auto;
+  min-width: 0;
+}
+.kit-statusbar-verbs + .kit-statusbar-egress {
+  margin-left: 0;
+}
+.desk-next .kit-statusbar .kit-statusbar-verbs .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  height: 26px;
+  padding-inline: 10px;
+  font-size: 13px;
+}
+.desk-next .kit-statusbar .kit-statusbar-verbs .btn:not(.btn--primary):not(.btn--danger) {
+  background: var(--wb-paper);
+}
+.kit-statusbar:has(> .kit-statusbar-verbs) {
+  flex-wrap: wrap;
+  padding-block: 3px;
+}
+@container surface (max-width: 520px) {
+  .desk-next .kit-statusbar .kit-statusbar-verbs .btn {
+    height: auto;
+  }
+}
+.kit-statusbar-egress {
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+}
+.desk-next .kit-statusbar .gadget-chip-egress {
+  padding: 0 6px;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  font: 500 12px / 18px var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+/* The frame's foot shrinks to the status bar (no 36 px steel strip). */
+.desk-next .desk-window.desk-window-shell .desk-surface-foot:has(> .kit-statusbar) {
+  min-height: 0;
+  padding: 0;
+  background: var(--wb-field);
+}
+/* An in-place status bar (no frame foot: a reference specimen). */
+.kit-statusbar-foot {
+  flex: none;
+  border-top: 1px solid var(--wb-rule-soft);
+  background: var(--wb-field);
+}
+
+/* The lamp dot: a state is a dot and a word (`● Failed`). */
+.kit-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--wb-steel);
+  box-shadow: 0 0 0 1px var(--wb-rule-soft);
+}
+.kit-dot[data-tone="ok"] { background: var(--lamp-ok); }
+.kit-dot[data-tone="warn"] { background: var(--lamp-warn); }
+.kit-dot[data-tone="fail"] { background: var(--lamp-fail); }
+.kit-dot[data-tone="info"] { background: var(--lamp-info); }
+.kit-dot[data-tone="ask"] { background: var(--lamp-ask); }
+
+/* The body inset: a list view or an editor runs edge to edge (the host sets
+   `data-interior`); the list fills the window and scrolls inside it. */
+.desk-next :is(.desk-surface-body, .desk-pullout-body)[data-interior] {
+  padding: 0;
+  gap: 0;
+  scroll-padding-block: 0;
+}
+.desk-next :is(.desk-surface-body, .desk-pullout-body)[data-interior="list"] {
+  overflow: hidden;
+  /* A list window keeps a window's body even when its list is short or
+     empty (a native window never collapses to its content). */
+  min-height: min(320px, 50vh);
+}
+.desk-next :is(.desk-surface-body, .desk-pullout-body)[data-interior] > :not(.kit-toolbar):not(.kit-statusbar-foot) {
+  min-height: 0;
+}
+
+/* Toolbar verbs are icon + label; the glyph wears the Workbench blue (paper
+   on the one primary), Record keeps its red dot. */
+.kit-toolbar .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    border-color var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard);
+}
+.kit-toolglyph {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--wb-sel);
+}
+.btn--primary .kit-toolglyph {
+  color: inherit;
+}
+.kit-toolglyph-dot {
+  fill: var(--lamp-fail);
+}
+.btn--primary .kit-toolglyph-dot {
+  fill: currentColor;
+}
+.desk-next .kit-toolbar .kit-toolbar-verbs .btn:not(.btn--primary):not(.btn--danger):active:not(:disabled) {
+  background: var(--wb-press);
+  transform: translateY(1px);
+}
+/* The status bar's numbers line up (tabular), and a value is ink. */
+.kit-statusbar {
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kit-toolbar .btn { transition: none; }
+}

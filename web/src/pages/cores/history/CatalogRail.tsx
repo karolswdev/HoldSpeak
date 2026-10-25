@@ -1,12 +1,17 @@
 // HS-170-04 — the meetings stream (the board's list face).
-// Each row: title at primary, date/duration/words/state tokens, verb at right.
-// Token separators: middle dot (U+00B7) between EVERY token, muted.
+// Window grammar (2026-10-24): the stream is a native list view (the dense
+// ObjectList: Name · When · Length · Summary, a state as a dot and a word).
+// A press selects the row; Enter or a double press opens the meeting. The
+// selected row's verbs (Run summary, Retry, Transcribe), its route and its
+// receipts sit at the status bar's right (`MeetingSelectionVerbs`).
 import { speechWasMissing } from "../../../desk/firstrun/speechTruth";
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
   SurfaceState,
 } from "../../../desk/surface/Surface";
+import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../../desk/surface/objects/ObjectList";
+import type { ObjectTone } from "../../../desk/surface/objects/kinds";
 import {
   RefusalToken,
   RouteDisclosure,
@@ -22,31 +27,12 @@ import {
   type PlannedRoute,
   type SummaryRefusal,
 } from "../../../meetings/summaryRoute";
-import { rowId } from "../../pageSupport";
-import { countToken, StateChip } from "../../../desk/surface";
+import { countToken } from "../../../desk/surface";
 import {
-  durationToken, ledgerDate, wordsToken, needsIntelligence, unclearLampLabel,
+  durationToken, ledgerDate, wordsToken, unclearLampLabel,
   meetingRowState, stateToken,
 } from "./helpers";
-import type { ReactNode } from "react";
 import { AudioOnlyVerb } from "./TranscribeVerb";
-import { AvatarStack } from "../../../desk/surface/kit";
-
-/** PHILO-17 ALIVE: the meeting's people, as names (the list row's
- *  `attendees`: strings, or objects with a name or an email). */
-function attendeeNames(row: Record<string, unknown>): string[] {
-  const raw = Array.isArray(row.attendees) ? row.attendees : [];
-  return raw
-    .map((item) => {
-      if (typeof item === "string") return item;
-      if (item && typeof item === "object") {
-        const obj = item as Record<string, unknown>;
-        return String(obj.name ?? obj.display_name ?? obj.email ?? "");
-      }
-      return "";
-    })
-    .filter(Boolean);
-}
 
 /** HS-201-04 — true when this row would draw a verb that STARTS a summary
  *  run: the verb is a run verb AND a route resolves for it. The rail uses
@@ -80,20 +66,6 @@ const PROCESS_LEADS = new Set([
   "FAILED", "IMPORT FAILED", "RUNNING", "QUEUED",
 ]);
 
-/** Render a list of tokens joined by middle dots (U+00B7).
- *  Dots are sibling flex children for equal spacing on both sides. */
-function TokenLine({ parts }: { parts: ReactNode[] }) {
-  const filtered = parts.filter(Boolean);
-  const interleaved: ReactNode[] = [];
-  filtered.forEach((part, i) => {
-    if (i > 0) interleaved.push(
-      <span key={`dot-${i}`} className="meetings-stream-dot" aria-hidden="true">{"·"}</span>
-    );
-    interleaved.push(<span key={`part-${i}`}>{part}</span>);
-  });
-  return <>{interleaved}</>;
-}
-
 /** PHILO-17 ALIVE: a state pill speaks in sentence case (`Summary
  *  stored`, `2 to review`); the rail's labels are written in caps. */
 export function pillWord(label: string): string {
@@ -101,288 +73,193 @@ export function pillWord(label: string): string {
   return lower.charAt(0).toUpperCase() + lower.slice(1);
 }
 
-/** HS-170-04 — the stream row: title at primary, tokens under, verb right. */
-function MeetingStreamRow({
-  row,
-  isSelected,
-  onSelect,
-  onRunIntelligence,
-  runningId,
-  drainerAbsent,
-  refusal,
-  isLead,
-  restored = false,
-  onTranscribe,
-  saidOnFace,
-}: {
-  row: Record<string, unknown>;
-  /** PHILO-17 (U16): the engine host the face's foot already names. */
-  saidOnFace?: string | null;
-  isSelected: boolean;
-  /** PHILO-17 transcribe: start Transcribe on an audio-only meeting. */
-  onTranscribe?: (id: string) => Promise<unknown>;
-  /** PHILO-13-02 — the row Restore just brought back: it comes into view,
-   *  marked (C1-5d). */
-  restored?: boolean;
-  /** HS-201-04 — the one row of the rail that may wear a filled primary. */
-  isLead: boolean;
-  onSelect: () => void;
-  onRunIntelligence: (id: string, route: PlannedRoute | null) => void;
-  runningId: string | null;
-  /** The `runtime_queue` frame says no hub drainer will execute the queue. */
-  drainerAbsent?: boolean;
-  /** HS-201-04 — the hub's 409 on THIS row's last run gesture. */
-  refusal?: SummaryRefusal | null;
-}) {
-  const rowRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (restored) rowRef.current?.scrollIntoView?.({ block: "nearest" });
-  }, [restored]);
+/** The catalog's words in sentence case (`OCT 24` → `Oct 24`, `30 MIN` →
+ *  `30 min`): a list view's cells are quiet sans, never caps. */
+function quiet(token: string): string {
+  return token.replace(/\b([A-Z])([A-Z]+)\b/g, (_, first: string, rest: string) => first + rest.toLowerCase())
+    .replace(/\b(MIN|HR|S|WORDS)\b/gi, (word) => word.toLowerCase());
+}
+
+type MeetingRowView = {
+  label: string;
+  tone: ObjectTone;
+  /** The audio-only meeting with no transcript (no summary to run). */
+  noTranscript: boolean;
+  verb: string | null;
+  plannedRoute: PlannedRoute | null;
+  runReceipt: ReturnType<typeof executedReceipt>;
+  isRunning: boolean;
+  showRoute: boolean;
+};
+
+function toneOf(tone: string | undefined): ObjectTone {
+  switch (tone) {
+    case "danger":
+      return "fail";
+    case "warn":
+      return "warn";
+    case "accent":
+      return "ask";
+    case "success":
+    case "ok":
+      return "ok";
+    default:
+      return "info";
+  }
+}
+
+/** HS-170-04 — what one meeting row says and offers: its summary state
+ *  (word + tone), and the verb its selection puts in the status bar. */
+export function meetingRowView(
+  row: Record<string, unknown>,
+  { runningId, drainerAbsent, refusal }: {
+    runningId: string | null;
+    drainerAbsent?: boolean;
+    refusal?: SummaryRefusal | null;
+  },
+): MeetingRowView {
   const state = meetingRowState(row);
-  const words = wordsToken(row.transcriptWords);
   const noTranscript = row.transcriptWords == null;
   const isRunning = runningId === String(row.id);
   const needsYouCount = Number(row.needs_you_count ?? row.needsYouCount ?? 0);
-
-  // The board: NEEDS YOU N (accent) for meetings with outcomes.
-  // PHILO-13-04 A3-W (Muad'Dib's ruling on Astra's #730 finding 3): the
-  // process state leads, so a failure is never hidden. Order: capture
-  // states, FAILED (with Retry), RUNNING / QUEUED, then NEEDS YOU, then
-  // SUMMARY STORED, then the rest. A proposed outcome used to draw
-  // "1 NEEDS YOU" over a failed, running or queued summary run.
+  // PHILO-13-04 A3-W: the process state leads, so a failure is never
+  // hidden. Order: capture states, FAILED (with Retry), RUNNING / QUEUED,
+  // then TO REVIEW, then SUMMARY STORED, then the rest.
   const token = stateToken(row);
   let displayLabel = state.label;
-  let displayTone = state.tone;
-  // PHILO-15 10 (B14): `OFF` only when summaries ARE off. The row's own
-  // planned route is the hub's queue answer (PHILO-15 01, #967): its
-  // reason is "summaries off" exactly when the owner turned them off.
-  // Otherwise the summary is simply not run yet (Import does not run it).
+  let displayTone: string | undefined = state.tone;
+  // PHILO-15 10 (B14): `OFF` only when summaries ARE off.
   if (displayLabel === "OFF" && !routeOff(readPlannedRoute(row))) {
     displayLabel = "NOT RUN";
   }
   if (needsYouCount > 0 && !PROCESS_LEADS.has(token.label)) {
-    // PHILO-13-03: a meeting's proposed outcomes are narrower than the
-    // Desk's one "needs you" number, so the token says what it counts.
     displayLabel = countToken(needsYouCount, "TO REVIEW", "TO REVIEW") ?? displayLabel;
     displayTone = "accent";
   }
-
-  // If the job is running, override the state. HS-200-42: `isRunning` is
-  // this client's OPTIMISM about a click, not the server's state — so when
-  // the hub has no drainer it is not running and never will be.
+  // HS-200-42: `isRunning` is this client's optimism about a click; with no
+  // drainer the hub will never run it.
   if (isRunning) {
     displayLabel = drainerAbsent ? "NOT DRAINING" : "RUNNING";
     displayTone = drainerAbsent ? "danger" : "warn";
   }
-  // HS-200-42 (counsel N1): a job the hub has nobody to execute is not
-  // "queued" in any useful sense. Same token and tone the Chair uses.
   if (displayLabel === "QUEUED" && drainerAbsent) {
     displayLabel = "NOT DRAINING";
     displayTone = "danger";
   }
-
-  // Build token parts: SEP 04 · 30 MIN · 1,204 WORDS · OFF
-  const dateStr = ledgerDate(row.started_at ?? row.created_at);
-  const dur = durationToken(row.duration_seconds);
-
-  // Assemble all parts for the token line
-  const tokenParts: ReactNode[] = [];
-  if (dateStr) tokenParts.push(
-    <span className="meetings-stream-fact" data-fact="date">{dateStr}</span>
-  );
-  if (dur) tokenParts.push(
-    <span className="meetings-stream-fact">{dur}</span>
-  );
-  if (words) tokenParts.push(
-    <span className="meetings-stream-fact">{words}</span>
-  );
-  // PHILO-15-07 (B01): a transcript with honest gaps never shows a bare
-  // word count.
-  const unclear = unclearLampLabel(row);
-  if (unclear) tokenParts.push(
-    <StateChip state="warning" label={unclear} data-testid="unclear-lamp" />
-  );
-  // The state token or NO TRANSCRIPT
-  if (noTranscript && token.label === "OFF") {
-    tokenParts.push(
-      <span className="meetings-stream-no-transcript" data-testid="no-transcript-token">
-        {speechWasMissing(row) ? "NO TRANSCRIPT · SPEECH NOT SET UP" : "NO TRANSCRIPT"}
-      </span>
-    );
-  } else if (displayLabel) {
-    tokenParts.push(
-      <span
-        className="surface-token"
-        data-chip
-        data-tone={displayTone}
-        data-live={displayLabel === "RUNNING" || displayLabel === "QUEUED" ? "" : undefined}
-        data-testid="state-token"
-      >
-        {pillWord(displayLabel)}
-      </span>
-    );
-  }
-
-  // HS-201-04 — the disclosed route (before the click) and the receipt's
-  // destinations (after the run), both from this row's read model.
   const plannedRoute = refusal?.route ?? readPlannedRoute(row);
-  const runReceipt = executedReceipt(
-    String(row.id ?? ""),
-    refusal?.receipt,
-    readRunReceipt(row),
-  );
-  const canRun = routeReady(plannedRoute);
-
-  // Determine verb
+  const runReceipt = executedReceipt(String(row.id ?? ""), refusal?.receipt, readRunReceipt(row));
   let verb = state.verb;
-  let verbVariant = state.verbVariant;
-  if (isRunning) {
-    verb = null;
-    verbVariant = "ghost";
-  }
-  // UX-CANON A.11: `Run summary` and `Retry` both start a summary
-  // run. With no resolvable route there is nothing to run, so the verb is
-  // withheld and the disclosure says why.
-  if ((verb === "Run summary" || verb === "Retry") && !canRun) {
-    verb = null;
-  }
-  // HS-201-04 (Astra's counsel round 2; one filled primary per window).
-  // Two rules compose:
-  //   - only the LEAD row (the selected one when it can run, else the
-  //     top-most that can) may wear the filled species. Two summary-ready
-  //     meetings used to draw two filled `Run summary` verbs.
-  //   - and when that row's RECORD is open, the record carries the filled
-  //     verb, so the row's own copy steps down too.
-  if (verbVariant === "primary" && (!isLead || isSelected)) {
-    verbVariant = "ghost";
-  }
-  // No transcript row: only ghost Open (no Run summary)
-  if (noTranscript && token.label === "OFF") {
-    verb = "Open";
-    verbVariant = "ghost";
-  }
+  if (isRunning) verb = null;
+  // UX-CANON A.11: with no resolvable route there is nothing to run.
+  if ((verb === "Run summary" || verb === "Retry") && !routeReady(plannedRoute)) verb = null;
+  const audioOnly = noTranscript && token.label === "OFF";
+  if (audioOnly) verb = "Open";
+  const label = audioOnly
+    ? speechWasMissing(row) ? "No transcript · Speech not set up" : "No transcript"
+    : pillWord(displayLabel);
+  return {
+    label,
+    tone: audioOnly ? "warn" : toneOf(displayTone),
+    noTranscript: audioOnly,
+    verb,
+    plannedRoute,
+    runReceipt,
+    isRunning,
+    showRoute: state.verb === "Run summary" || state.verb === "Retry" || isRunning,
+  };
+}
 
-  // Compact line for narrowed mode: "SEP 04 · OFF"
-  const compactParts: string[] = [];
-  if (dateStr) compactParts.push(dateStr);
-  compactParts.push(displayLabel || "");
-
-  return (
-    <div
-      ref={rowRef}
-      className="meetings-stream-row"
-      data-selected={isSelected || undefined}
-      data-restored={restored || undefined}
-      data-testid={`meeting-row-${String(row.id)}`}
+/** The selected meeting's verbs, at the status bar's right: its run verb
+ *  (Run summary / Retry, or Transcribe for an audio-only meeting), the
+ *  route that run will use (egress where egress happens, Article III), the
+ *  hub's refusal and the run's attempts. Open is the list's own Enter. */
+export function MeetingSelectionVerbs({
+  row,
+  primary,
+  onRunIntelligence,
+  runningId,
+  drainerAbsent,
+  refusal,
+  onTranscribe,
+  saidOnFace,
+}: {
+  row: Record<string, unknown>;
+  /** The run verb wears the window's one primary. */
+  primary: boolean;
+  onRunIntelligence: (id: string, route: PlannedRoute | null) => void;
+  runningId: string | null;
+  drainerAbsent?: boolean;
+  refusal?: SummaryRefusal | null;
+  onTranscribe?: (id: string) => Promise<unknown>;
+  saidOnFace?: string | null;
+}) {
+  const view = meetingRowView(row, { runningId, drainerAbsent, refusal });
+  const runs = view.verb === "Run summary" || view.verb === "Retry";
+  const runButton = runs ? (
+    <Button
+      dense
+      variant={primary ? "primary" : "secondary"}
+      onClick={() => onRunIntelligence(String(row.id), view.plannedRoute)}
+      data-testid={view.verb === "Run summary" ? "run-intelligence-btn" : "retry-intelligence-btn"}
     >
-      {/* HS-202-03 — the clickable body IS the library Button (UX-CANON
-          A.1): it was a `div role="button" tabIndex={0}`, the last raw
-          control on the Meetings stream. The chrome variant withholds the
-          plate so `.meetings-stream-row-body` keeps drawing the row, and
-          the explicit Enter/Space handler stays so the keyboard behaviour
-          is the one the 201 rigs recorded. */}
-      <Button
-        variant="chrome"
-        className="meetings-stream-row-body"
-        onClick={onSelect}
-        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(); } }}
-      >
-        <div className="meetings-stream-row-head">
-          <span className="surface-primary meetings-stream-title">
-            {String(row.title ?? "Meeting")}
-          </span>
-          {/* PHILO-17 ALIVE: the people of the meeting, as avatars. */}
-          <AvatarStack names={attendeeNames(row)} data-testid="meeting-row-people" />
-          {/* Compact fact line for narrowed mode */}
-          <span className="meetings-stream-compact-facts">
-            {compactParts.filter(Boolean).join(" · ")}
-          </span>
-        </div>
-        <div className="meetings-stream-tokens">
-          <TokenLine parts={tokenParts} />
-        </div>
-      </Button>
-      <div className="meetings-stream-row-verb" data-quiet-open={verb === "Open" ? "" : undefined}>
-        {/* Article III — after the run: every destination contacted, in
-            order. Before the click (and while it is in flight): the route
-            the run WILL use.
-            HS-201-04: this REPLACES the old in-flight chip, which took the
-            POST response's `host` straight to the glass and printed the
-            wire word `same_device` at a person (caught by the HS-170 S-3
-            rig). One egress chip per row, through the one mapper. */}
-        <RunAttempts receipt={runReceipt} testId="row-attempts" saidOnFace={saidOnFace} />
-        {state.verb === "Run summary" || state.verb === "Retry" || isRunning ? (
-          <RouteDisclosure route={plannedRoute} testId="row-route" />
-        ) : null}
-        <RefusalToken
-          refusal={refusal}
-          durable={readLastRefusal(row)}
-          testId="row-refusal"
-        />
-        {verb ? (() => {
-          const verbButton = (
-          <Button
-            dense
-            variant={verbVariant === "primary" ? "primary" : "ghost"}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              // HS-201-04 (audit defect 2): `Retry` used to fall through to
-              // `onSelect` and issue ZERO requests. Both run verbs dispatch.
-              if (verb === "Run summary" || verb === "Retry") {
-                // The route this row DISCLOSED is the route that travels.
-                onRunIntelligence(String(row.id), plannedRoute);
-              } else {
-                onSelect();
-              }
-            }}
-            data-testid={
-              verb === "Run summary"
-                ? "run-intelligence-btn"
-                : verb === "Retry"
-                  ? "retry-intelligence-btn"
-                  : undefined
-            }
-          >
-            {verb}
-          </Button>
-          );
-          // PHILO-17 transcribe: an audio-only meeting's verb is Transcribe
-          // once speech is set up; else the row keeps its Open.
-          return onTranscribe ? (
-            <AudioOnlyVerb row={row} onTranscribe={onTranscribe} otherwise={verbButton} testId="row-transcribe" />
-          ) : verbButton;
-        })() : null}
-      </div>
-    </div>
+      {view.verb}
+    </Button>
+  ) : null;
+  const unclear = unclearLampLabel(row);
+  const words = wordsToken(row.transcriptWords);
+  return (
+    <span className="meetings-selection" data-testid="meetings-selection">
+      {onTranscribe ? (
+        <AudioOnlyVerb row={row} onTranscribe={onTranscribe} otherwise={runButton} testId="row-transcribe" />
+      ) : runButton}
+      {view.showRoute ? <RouteDisclosure route={view.plannedRoute} testId="row-route" /> : null}
+      <RunAttempts receipt={view.runReceipt} testId="row-attempts" saidOnFace={saidOnFace} />
+      <RefusalToken refusal={refusal} durable={readLastRefusal(row)} testId="row-refusal" />
+      {/* PHILO-15-07 (B01): honest gaps carry a warn lamp beside the words. */}
+      {unclear ? (
+        <span className="meetings-selection-fact" data-testid="unclear-lamp">
+          <span className="kit-dot" data-tone="warn" aria-hidden="true" />
+          {quiet(unclear.replace(/^WARN · /, "")).toLowerCase()}
+        </span>
+      ) : null}
+      {words ? <span className="meetings-selection-fact">{quiet(words)}</span> : null}
+    </span>
   );
 }
+
+const MEETING_COLUMNS = [
+  { key: "when", word: "When", track: "88px" },
+  { key: "length", word: "Length", track: "80px" },
+  { key: "state", word: "Summary", track: "minmax(140px, 0.6fr)" },
+] as const;
 
 export function CatalogRail({
   meetingRows,
   meetings,
   selected,
   setSelected,
-  onRunIntelligence,
+  onOpen,
   runningId,
   drainerAbsent,
   runRefusal,
   narrowed,
-  restoredId = null,
-  onTranscribe,
-  saidOnFace,
+  emptyImage,
 }: {
+  /** The app's illustrated icon for the empty list (one true line under it). */
+  emptyImage?: string;
   meetingRows: Record<string, unknown>[];
-  /** PHILO-17 (U16): the engine host the face's foot already names; a row
-   *  does not say it again. */
-  saidOnFace?: string | null;
-  /** PHILO-17 transcribe: start Transcribe on an audio-only meeting. */
-  onTranscribe?: (id: string) => Promise<unknown>;
-  /** PHILO-13-02 — the meeting Restore just brought back. */
-  restoredId?: string | null;
   meetings: { loading: boolean; error: string; reload(): Promise<unknown> };
+  /** The selected row (the list's own selection; it opens nothing). */
   selected: Record<string, unknown> | null;
   setSelected: (row: Record<string, unknown> | null) => void;
-  onRunIntelligence: (id: string, route: PlannedRoute | null) => void;
+  /** Enter or a double press: open the meeting (default: select it). */
+  onOpen?: (row: Record<string, unknown>) => void;
+  /** Retired with the row verbs (they live in the status bar now:
+   *  MeetingSelectionVerbs); accepted so older callers still compile. */
+  onRunIntelligence?: (id: string, route: PlannedRoute | null) => void;
+  onTranscribe?: (id: string) => Promise<unknown>;
+  saidOnFace?: string | null;
+  restoredId?: string | null;
   runningId: string | null;
   /** The `runtime_queue` frame says no hub drainer will execute the queue. */
   drainerAbsent?: boolean;
@@ -391,51 +268,62 @@ export function CatalogRail({
   /** When true, shown as the narrowed left side in SurfaceSplit. */
   narrowed?: boolean;
 }) {
-  const leadId = leadRunRowId(meetingRows, selected);
+  // The hub's order (newest first) until a header asks for another.
+  const [sort, setSort] = useState<ObjectListSort>({ key: "when", dir: "desc" });
+  const byId = new Map(meetingRows.map((row) => [String(row.id), row]));
+  const rows: ObjectListRow[] = meetingRows.map((row, index) => {
+    const id = String(row.id);
+    const view = meetingRowView(row, {
+      runningId,
+      drainerAbsent,
+      refusal: runRefusal && runRefusal.meetingId === id ? runRefusal.refusal : null,
+    });
+    const at = new Date(String(row.started_at ?? row.created_at ?? "")).getTime();
+    return {
+      id,
+      kind: "meeting",
+      name: String(row.title ?? "Meeting"),
+      when: quiet(ledgerDate(row.started_at ?? row.created_at)),
+      // Equal or missing times keep the hub's order (index breaks ties).
+      whenSort: Number.isFinite(at) ? at * 1000 - index : -index,
+      cells: { length: quiet(durationToken(row.duration_seconds)) },
+      sortValues: { length: Number(row.duration_seconds) || 0 },
+      state: {
+        label: view.label,
+        tone: view.tone,
+        testId: view.noTranscript ? "no-transcript-token" : "state-token",
+      },
+    };
+  });
   return (
     <div className="meetings-stream" data-narrowed={narrowed || undefined}>
       <SurfaceState
         loading={meetings.loading}
         error={meetings.error}
         empty={!meetingRows.length}
-        /* HS-202-04 (M6; UX-CANON A.7 "the name is said once per face",
-           A.3 "an empty state is ONE true line with the next time
-           something happens") — the display headline already says `No
-           meetings yet` (`history/helpers.ts:223`), and the walk caught
-           the cold Meetings face saying it twice on one screen. The
-           headline keeps the state; the rail states the next move. */
+        /* UX-CANON A.3: an empty state is ONE true line with the next move. */
         emptyLabel="Record or import a meeting"
+        emptyImage={emptyImage}
         onRetry={() => void meetings.reload()}
       >
-        <div className="meetings-stream-rows">
-          {meetingRows.map((row, index) => (
-            <MeetingStreamRow
-              key={rowId(row, index)}
-              row={row}
-              isSelected={Boolean(
-                selected && String(selected.id) === String(row.id),
-              )}
-              onSelect={() => {
-                const isOpen = Boolean(
-                  selected && String(selected.id) === String(row.id),
-                );
-                setSelected(isOpen ? null : row);
-              }}
-              onRunIntelligence={onRunIntelligence}
-              isLead={leadId === String(row.id)}
-              restored={restoredId === String(row.id)}
-              onTranscribe={onTranscribe}
-              saidOnFace={saidOnFace}
-              runningId={runningId}
-              drainerAbsent={drainerAbsent}
-              refusal={
-                runRefusal && runRefusal.meetingId === String(row.id)
-                  ? runRefusal.refusal
-                  : null
-              }
-            />
-          ))}
-        </div>
+        <ObjectList
+          label="Meetings"
+          density="dense"
+          rows={rows}
+          columns={MEETING_COLUMNS}
+          sort={sort}
+          onSort={(key: string) => setSort((current) => ({
+            key,
+            dir: current.key === key ? (current.dir === "asc" ? "desc" : "asc") : key === "when" ? "desc" : "asc",
+          }))}
+          selectedId={selected ? String(selected.id) : null}
+          onSelect={(id) => setSelected(byId.get(id) ?? null)}
+          onOpen={(id) => {
+            const row = byId.get(id);
+            if (row) (onOpen ?? setSelected)(row);
+          }}
+          rowProps={(row) => ({ "data-testid": `meeting-row-${row.id}` })}
+        />
       </SurfaceState>
     </div>
   );

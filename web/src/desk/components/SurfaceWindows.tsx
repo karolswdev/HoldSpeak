@@ -27,6 +27,7 @@ import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
 import { FootSlotContext } from "../surface/foot";
 import { TitleSlotContext } from "../surface/title";
+import { InteriorSlotContext, type WindowInterior } from "../surface/interior";
 import { BackSlotContext, type WindowBack } from "../surface/back";
 import { windowName } from "../windowName";
 import { WingSlotContext } from "../surface/wings";
@@ -200,6 +201,9 @@ export function SurfaceWindowHost({
   const [wings, setWings] = useState<ReactNode>(null);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [titleOverride, setTitleOverrideState] = useState<string | null>(null);
+  // Window grammar (2026-10-24): the core says which interior it draws; a
+  // list view or an editor runs edge to edge (`data-interior` on the body).
+  const [interior, setInterior] = useState<WindowInterior | null>(null);
   // Window grammar: a core's own narrow step (Settings' rail → pane) owns
   // the compact Back while it is open.
   const [coreBack, setCoreBack] = useState<WindowBack | null>(null);
@@ -260,8 +264,10 @@ export function SurfaceWindowHost({
           ref={bodyRef}
           className="desk-surface-body surface-host-body"
           data-surface-host={row.key}
+          data-interior={interior ?? undefined}
         >
           <div data-aftercare-window-slot="top" />
+          <InteriorSlotContext.Provider value={setInterior}>
           <BackSlotContext.Provider value={setCoreBack}>
           <TitleSlotContext.Provider value={setTitleOverride}>
             <WingSlotContext.Provider value={setWings}>
@@ -283,6 +289,7 @@ export function SurfaceWindowHost({
             </WingSlotContext.Provider>
           </TitleSlotContext.Provider>
           </BackSlotContext.Provider>
+          </InteriorSlotContext.Provider>
         </div>
         <footer
           ref={setFoot}

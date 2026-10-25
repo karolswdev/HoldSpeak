@@ -724,7 +724,7 @@ class TestSharedControlsAreSpecies:
                      "hs.desk.staged-surface-open", JSON.stringify({key: 'review-meetings'}))""")
             page.reload(wait_until="load")
             _normal_chair(page)
-            page.locator(".meetings-stream-row-body").first.wait_for(timeout=15_000)
+            page.locator("#surface-meetings .object-list-open").first.wait_for(timeout=15_000)
             # ── the Meetings row body: a real Button that draws as a div ─
             # It WAS `<div role="button" tabIndex={0}>` (the last raw control
             # on the Meetings stream, `CatalogRail.tsx:211` in the census).
@@ -734,7 +734,7 @@ class TestSharedControlsAreSpecies:
             # what the div drew.
             plate = page.evaluate(
                 """() => {
-                     const el = document.querySelector('.meetings-stream-row-body');
+                     const el = document.querySelector('#surface-meetings .object-list-open');
                      if (!el) return null;
                      const s = getComputedStyle(el);
                      return {
@@ -756,8 +756,9 @@ class TestSharedControlsAreSpecies:
             assert plate["tag"] == "BUTTON", plate
             assert plate["background"] in ("rgba(0, 0, 0, 0)", "transparent"), plate
             assert plate["borderTopWidth"] == "0px", plate
-            assert plate["paddingTop"] == "0px", plate
-            assert plate["paddingLeft"] == "0px", plate
+            # Window grammar: the dense list row's own inset, not the UA's 1px 6px.
+            assert plate["paddingTop"] == "4px", plate
+            assert plate["paddingLeft"] == "10px", plate
             assert plate["textAlign"] == "left", plate
             assert plate["display"] == "flex", plate
 

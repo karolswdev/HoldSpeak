@@ -1066,8 +1066,8 @@
       },
       {
         "name": "--desk-window-shadow",
-        "value": "0 14px 34px rgba(22, 40, 62, 0.16), 0 0 0 1px var(--wb-rule-soft)",
-        "doc": "soft depth for the front window"
+        "value": "0 22px 48px rgba(22, 40, 62, 0.24), 0 4px 12px rgba(22, 40, 62, 0.12)",
+        "doc": "the front window floats: a soft, deep shadow (window grammar 2026-10-24)"
       },
       {
         "name": "--desk-window-shadow-rest",
@@ -1406,8 +1406,38 @@
       },
       {
         "name": "--wb-bar-h",
+        "value": "30px",
+        "doc": "desktop window title bar (window grammar 2026-10-24: 28-32px); narrow shell keeps 44px elsewhere"
+      },
+      {
+        "name": "--wb-bar-front",
+        "value": "var(--wb-sel)",
+        "doc": "front window title bar: the deep Workbench blue, flat (paper ink on it; the faint shine is an inset highlight)"
+      },
+      {
+        "name": "--wb-toolbar-h",
         "value": "36px",
-        "doc": "desktop window title bar; narrow shell keeps 44px elsewhere"
+        "doc": "window toolbar band under the title bar"
+      },
+      {
+        "name": "--wb-statusbar-h",
+        "value": "24px",
+        "doc": "window status bar band at the foot"
+      },
+      {
+        "name": "--wb-sel-vivid",
+        "value": "#2f67c8",
+        "doc": "vivid Workbench blue for a selected list row (paper ink 5.3:1)"
+      },
+      {
+        "name": "--wb-row-hover",
+        "value": "color-mix(in srgb, var(--wb-sel) 8%, var(--wb-paper))",
+        "doc": "a list row lifted under the pointer"
+      },
+      {
+        "name": "--wb-row-dense",
+        "value": "30px",
+        "doc": "dense list view row on the desktop; narrow rows stay 44px"
       },
       {
         "name": "--wb-screen-h",

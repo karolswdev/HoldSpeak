@@ -63,7 +63,7 @@ describe("P4: the Projects window", () => {
     // At risk first: the Room's own word and reason (a milestone is late).
     expect(within(payments).getByTestId("projects-open").textContent).toBe("Payments migration");
     expect(within(payments).getByTestId("projects-state").textContent).toBe("At risk");
-    expect(within(payments).getByTestId("projects-reason").textContent).toBe("1 MILESTONE LATE");
+    expect(within(payments).getByTestId("projects-reason").textContent).toBe("1 milestone late");
     expect(within(payments).getByTestId("projects-next").textContent).toMatch(/^Target \w{3} \d{1,2} \w{3}$/);
     expect(within(payments).getByTestId("projects-new-update").textContent).toBe("New update");
     expect(within(payments).getByTestId("projects-update").textContent).toMatch(/^Update drafted /);
@@ -100,17 +100,28 @@ describe("P4: the Projects window", () => {
 
     const [blockedRow, atRiskRow] = rows();
     expect(within(blockedRow).getByTestId("projects-state").textContent).toBe("Blocked");
-    expect(within(blockedRow).getByTestId("projects-reason").textContent).toBe("SECURITY HSM CEREMONY UNAVAILABLE");
+    expect(within(blockedRow).getByTestId("projects-reason").textContent).toBe("Security HSM ceremony unavailable");
     expect(within(atRiskRow).getByTestId("projects-state").textContent).toBe("At risk");
-    expect(within(atRiskRow).getByTestId("projects-reason").textContent).toBe("TOKENIZATION WAITS ON THE HSM KEY CEREMONY");
+    expect(within(atRiskRow).getByTestId("projects-reason").textContent).toBe("Tokenization waits on the HSM key ceremony");
   });
 
-  it("one press on a name opens that project", async () => {
+  it("a press selects a project; a double press, Enter or the toolbar's Open opens it", async () => {
     useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
     render(<ProjectsCore />);
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
-    fireEvent.click(screen.getByRole("button", { name: "Open Payments migration" }));
+    // Window grammar: a toolbar, a dense list view, a status bar; no band.
+    expect(screen.getByRole("toolbar", { name: "Projects" })).toContainElement(screen.getByTestId("projects-new"));
+    expect(screen.getByRole("grid", { name: "Projects" })).toHaveAttribute("data-density", "dense");
+    expect(screen.getByTestId("projects-status").textContent).toContain("2 projects");
+    const name = screen.getByRole("button", { name: /^Payments migration/ });
+    fireEvent.click(name);
+    expect(opened.rooms).toEqual([]);
+    expect(rows()[0]).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(screen.getByTestId("projects-open-selected"));
     expect(opened.rooms).toEqual([WIRE.payments]);
+    fireEvent.doubleClick(name);
+    fireEvent.keyDown(name, { key: "Enter" });
+    expect(opened.rooms).toEqual([WIRE.payments, WIRE.payments, WIRE.payments]);
   });
 
   it("a Room that cannot be read says so; it never claims a state", async () => {

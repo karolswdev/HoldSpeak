@@ -10,8 +10,16 @@
  *
  *  Keyboard: one Tab stop; arrows walk the rows (useRovingRows); Space
  *  selects; Enter (or a double press) opens.
+ *
+ *  Window grammar (2026-10-24): `density="dense"` is the native list view
+ *  of a collection window: 30 px rows (44 px in a surface of 520 px or
+ *  less), sans 12/600 sentence-case headers, sans 13 cells, a state as a
+ *  dot and a word, the whole selected row in the selection blue, a hover
+ *  tint, no zebra; the list fills its container and scrolls inside it.
+ *  `columns` lets the provider declare its own columns (and order); a
+ *  column whose key is not a built-in reads `row.cells[key]`.
  */
-import { useMemo, useRef, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { LampGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
@@ -25,6 +33,20 @@ export interface ObjectSort {
   key: ObjectSortKey;
   dir: "asc" | "desc";
 }
+/** A sort over any declared column (the built-ins or a provider's own). */
+export interface ObjectListSort {
+  key: string;
+  dir: "asc" | "desc";
+}
+/** A provider-declared column (window grammar): `key` is a built-in
+ *  (`name`, `kind`, `when`, `state`) or a key of `row.cells`. */
+export interface ObjectListColumn {
+  key: string;
+  /** The header word, sentence case (`Length`, `Summary`). */
+  word: string;
+  /** The grid track (default `minmax(0, 1fr)` for name, `120px` else). */
+  track?: string;
+}
 
 export interface ObjectListRow {
   id: string;
@@ -36,31 +58,43 @@ export interface ObjectListRow {
   /** The sort value for When (e.g. epoch ms); the word sorts when absent. */
   whenSort?: number;
   /** One lamp + its word; omitted = an empty State cell. */
-  state?: { label: string; tone: ObjectTone };
+  state?: { label: string; tone: ObjectTone; testId?: string };
+  /** Provider cells for declared `columns` (keyed by column key). */
+  cells?: Record<string, ReactNode>;
+  /** Sort values for provider cells (a string cell sorts by its text). */
+  sortValues?: Record<string, string | number>;
+  /** A data-testid on the name text. */
+  nameTestId?: string;
   sprite?: string;
   /** PHILO-14 A2: rows sort within their group first (a lower group draws
    *  above): the Floor keeps its zones (folders) above its objects. */
   group?: number;
 }
 
-const COLUMNS: { key: ObjectSortKey; word: string }[] = [
+const COLUMNS: ObjectListColumn[] = [
   { key: "name", word: "Name" },
   { key: "kind", word: "Kind" },
   { key: "when", word: "When" },
   { key: "state", word: "State" },
 ];
 
-function sortRows(rows: ObjectListRow[], sort: ObjectSort): ObjectListRow[] {
+function sortRows(rows: ObjectListRow[], sort: ObjectListSort): ObjectListRow[] {
   const value = (row: ObjectListRow): string | number => {
     switch (sort.key) {
+      case "name":
+        return row.name;
       case "kind":
         return row.kindWord ?? objectKindWord(row.kind);
       case "when":
         return row.whenSort ?? row.when ?? "";
       case "state":
-        return row.state?.label ?? "";
-      default:
-        return row.name;
+        return row.sortValues?.state ?? row.state?.label ?? "";
+      default: {
+        const given = row.sortValues?.[sort.key];
+        if (given != null) return given;
+        const cell = row.cells?.[sort.key];
+        return typeof cell === "string" || typeof cell === "number" ? cell : "";
+      }
     }
   };
   const sign = sort.dir === "asc" ? 1 : -1;
@@ -81,10 +115,17 @@ export interface ObjectListProps {
   /** The list's accessible name (e.g. `Payments ledger cutover`). */
   label: string;
   rows: ObjectListRow[];
-  sort: ObjectSort;
+  sort: ObjectListSort;
   /** Name is always shown. Omitted keeps all four columns for existing callers. */
   visibleColumns?: readonly ObjectSortKey[];
-  /** A press on a header: the caller flips or moves the sort. */
+  /** Window grammar: the provider's own columns, in order (wins over
+   *  `visibleColumns`). Name is always first. */
+  columns?: readonly ObjectListColumn[];
+  /** Window grammar: `dense` is the native list view (30 px rows). */
+  density?: "default" | "dense";
+  /** A press on a header: the caller flips or moves the sort. The key is a
+   *  built-in sort key, or a declared column's key when `columns` is given
+   *  (method form: a caller may take `string`). */
   onSort?(key: ObjectSortKey): void;
   selectedId?: string | null;
   /** PHILO-14 A2: a set selection (the Floor's Ask context). When given it
@@ -105,6 +146,8 @@ export function ObjectList({
   rows,
   sort,
   visibleColumns,
+  columns: declared,
+  density = "default",
   onSort,
   selectedId,
   selectedIds,
@@ -115,13 +158,28 @@ export function ObjectList({
   className,
 }: ObjectListProps) {
   const bodyRef = useRef<HTMLDivElement>(null);
+  // Dense: a touch tap opens (the phone's list view has no double press);
+  // a mouse press selects and a double press or Enter opens.
+  const touchPress = useRef(false);
   useRovingRows(bodyRef, { selector: ".object-list-open" });
   const sorted = useMemo(() => sortRows(rows, sort), [rows, sort]);
-  const columns = COLUMNS.filter((column) => column.key === "name" || !visibleColumns || visibleColumns.includes(column.key));
+  const dense = density === "dense";
+  const columns: ObjectListColumn[] = declared
+    ? [declared.find((column) => column.key === "name") ?? COLUMNS[0], ...declared.filter((column) => column.key !== "name")]
+    : COLUMNS.filter((column) => column.key === "name" || !visibleColumns || visibleColumns.includes(column.key as ObjectSortKey));
   const compactColumns = columns.length <= 2;
-  const tracks = columns.map((column) => column.key === "name" ? "minmax(0, 1fr)"
-    : column.key === "kind" ? "128px" : column.key === "when" ? "104px" : "160px").join(" ");
+  const declaredTrack = (key: string) => declared?.find((column) => column.key === key)?.track;
+  const tracks = columns.map((column) => declaredTrack(column.key) ?? (column.key === "name" ? "minmax(0, 1fr)"
+    : column.key === "kind" ? "128px" : column.key === "when" ? "104px" : declared ? "120px" : "160px")).join(" ");
   const phoneTracks = columns.map((column) => column.key === "name" ? "minmax(0, 1fr)" : "84px").join(" ");
+  const has = (key: string) => columns.some((column) => column.key === key);
+  // Dense: the selected row stays in view (a restored or reopened row).
+  const scrollTo = selectedIds ? null : selectedId;
+  useEffect(() => {
+    if (!dense || !scrollTo) return;
+    const row = bodyRef.current?.querySelector<HTMLElement>(`[data-object-id="${CSS.escape(scrollTo)}"]`);
+    row?.scrollIntoView?.({ block: "nearest" });
+  }, [dense, scrollTo]);
 
   // Enter OPENS on keydown (its native click prevented); every other
   // activation — pointer, Space, element.click(), assistive press — is ONE
@@ -135,6 +193,7 @@ export function ObjectList({
   return (
     <div
       className={`object-list${className ? ` ${className}` : ""}`}
+      data-density={dense ? "dense" : undefined}
       data-compact-columns={compactColumns || undefined}
       style={{ "--object-list-columns": tracks, "--object-list-phone-columns": phoneTracks } as CSSProperties}
       role="grid"
@@ -156,7 +215,7 @@ export function ObjectList({
                 variant="chrome"
                 className="object-list-sort"
                 aria-pressed={active ? "true" : "false"}
-                onClick={() => onSort?.(column.key)}
+                onClick={() => onSort?.(column.key as ObjectSortKey)}
               >
                 {column.word}
                 {active ? (
@@ -173,6 +232,10 @@ export function ObjectList({
         {sorted.map((row) => {
           const selected = selectedIds ? selectedIds.includes(row.id) : row.id === selectedId;
           const kindWord = row.kindWord ?? objectKindWord(row.kind);
+          const cellWords = columns
+            .filter((column) => !["name", "kind", "when", "state"].includes(column.key))
+            .map((column) => row.cells?.[column.key])
+            .filter((cell): cell is string => typeof cell === "string" && cell.length > 0);
           return (
             <div
               key={row.id}
@@ -187,10 +250,17 @@ export function ObjectList({
                 <Button
                   variant="chrome"
                   className="object-list-open"
-                  aria-label={[row.name, kindWord, row.when, row.state?.label, selected ? selectedLabel : undefined]
+                  aria-label={(declared
+                    ? [row.name, has("kind") ? kindWord : undefined, has("when") ? row.when : undefined, ...cellWords, has("state") ? row.state?.label : undefined, selected ? selectedLabel : undefined]
+                    : [row.name, kindWord, row.when, row.state?.label, selected ? selectedLabel : undefined])
                     .filter(Boolean)
                     .join(", ")}
-                  onClick={() => onSelect?.(row.id)}
+                  onPointerDown={dense ? (event) => { touchPress.current = event.pointerType === "touch"; } : undefined}
+                  onClick={() => {
+                    onSelect?.(row.id);
+                    if (dense && touchPress.current && onOpen) onOpen(row.id);
+                    touchPress.current = false;
+                  }}
                   onDoubleClick={onOpen ? () => onOpen(row.id) : undefined}
                   onKeyDown={keyDown(row.id)}
                 >
@@ -200,19 +270,45 @@ export function ObjectList({
                     draggable={false}
                   />
                   <span className="object-list-name-text">
-                    <span className="object-list-name-word" title={row.name}>{nameBreaks(row.name)}</span>
-                    <span className="object-list-fold" aria-hidden="true">
-                      {columns.some((column) => column.key === "kind") ? <span className="object-list-fold-token">{kindWord}</span> : null}
-                      {columns.some((column) => column.key === "when") && row.when ? <span className="object-list-fold-token">{row.when}</span> : null}
-                    </span>
+                    <span className="object-list-name-word" title={row.name} data-testid={row.nameTestId}>{nameBreaks(row.name)}</span>
+                    {dense ? null : (
+                      <span className="object-list-fold" aria-hidden="true">
+                        {has("kind") ? <span className="object-list-fold-token">{kindWord}</span> : null}
+                        {has("when") && row.when ? <span className="object-list-fold-token">{row.when}</span> : null}
+                      </span>
+                    )}
                   </span>
                 </Button>
               </div>
-              {columns.some((column) => column.key === "kind") ? <div role="gridcell" className="object-list-cell" data-col="kind">{kindWord}</div> : null}
-              {columns.some((column) => column.key === "when") ? <div role="gridcell" className="object-list-cell" data-col="when">{row.when ?? ""}</div> : null}
-              {columns.some((column) => column.key === "state") ? <div role="gridcell" className="object-list-state" data-col="state">
-                {row.state ? <LampGadget label={row.state.label} on tone={lampGadgetTone(row.state.tone)} /> : null}
-              </div> : null}
+              {columns.slice(1).map((column) => {
+                switch (column.key) {
+                  case "kind":
+                    return <div key="kind" role="gridcell" className="object-list-cell" data-col="kind">{kindWord}</div>;
+                  case "when":
+                    return <div key="when" role="gridcell" className="object-list-cell" data-col="when">{row.when ?? ""}</div>;
+                  case "state":
+                    return (
+                      <div key="state" role="gridcell" className="object-list-state" data-col="state">
+                        {row.state ? (
+                          dense ? (
+                            <span className="object-list-dot-word" data-tone={row.state.tone} data-testid={row.state.testId}>
+                              <span className="kit-dot" data-tone={row.state.tone} aria-hidden="true" />
+                              {row.state.label}
+                            </span>
+                          ) : (
+                            <LampGadget label={row.state.label} on tone={lampGadgetTone(row.state.tone)} />
+                          )
+                        ) : null}
+                      </div>
+                    );
+                  default:
+                    return (
+                      <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key}>
+                        {row.cells?.[column.key] ?? ""}
+                      </div>
+                    );
+                }
+              })}
             </div>
           );
         })}

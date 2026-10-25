@@ -29,10 +29,11 @@ import { ControlsGallery } from "./ControlsGallery";
 import { EditingReference, type EditingPreset } from "./EditingReference";
 import { OwnerPreferencesReference, type OwnerPreferencesState } from "./OwnerPreferencesReference";
 import { FiledNotesReference, type FiledNotesPreset } from "./FiledNotesReference";
+import { WindowReference, type WindowPreset } from "./WindowReference";
 import "./design-reference.css";
 
-type Pattern = "forms" | "editing" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
-type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState | EditingPreset | FiledNotesPreset;
+type Pattern = "window" | "forms" | "editing" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
+type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState | EditingPreset | FiledNotesPreset | WindowPreset;
 
 /*
  * Forms renders the Settings You fields and writer through local IO; Editing
@@ -43,6 +44,7 @@ type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed
  */
 
 const PATTERNS: Array<{ id: Pattern; label: string }> = [
+  { id: "window", label: "Window" },
   { id: "forms", label: "Forms" },
   { id: "editing", label: "Editing" },
   { id: "reading", label: "Reading" },
@@ -167,7 +169,15 @@ const LIST_ITEMS = [
 const FAILED_REQUEST_PAYLOAD = "Can we keep the release note local while we review it?";
 const FAILED_REPLY_PAYLOAD = "The reply is available locally for the captured request.";
 
+const WINDOW_STATES: Array<{ id: WindowPreset; label: string }> = [
+  { id: "populated", label: "Selected row" },
+  { id: "empty", label: "Empty" },
+  { id: "busy", label: "Busy" },
+  { id: "failed", label: "Failed" },
+];
+
 const STATE_OPTIONS: Record<Pattern, Array<{ id: ExampleState; label: string }>> = {
+  window: WINDOW_STATES,
   forms: FORM_STATES,
   editing: EDITING_STATES,
   reading: [STATES[0], STATES[3], STATES[4]],
@@ -396,6 +406,7 @@ function ProgressPattern({ state }: { state: ExampleState }) {
 
 function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleState }) {
   switch (pattern) {
+    case "window": return <WindowReference key={state} preset={WINDOW_STATES.some((item) => item.id === state) ? state as WindowPreset : "populated"} />;
     case "forms": return <OwnerPreferencesReference state={FORM_STATES.some((item) => item.id === state) ? state as OwnerPreferencesState : "saved"} />;
     case "editing": return <EditingReference key={state} preset={EDITING_STATES.some((item) => item.id === state) ? state as EditingPreset : "ordinary"} />;
     case "reading": return <ReadingPattern state={state} />;
@@ -419,7 +430,7 @@ export function DesignReference({ hero }: CoreProps) {
       {hero ? hero(null) : null}
       <SurfaceSection className="design-reference-shell" data-testid="design-reference">
         <div className="reference-toolbar" aria-label="Pattern controls">
-          <PatternSelector pattern={pattern} onChange={(next) => { setPattern(next); if (next !== "controls") setState(next === "forms" ? "saved" : "ordinary"); }} />
+          <PatternSelector pattern={pattern} onChange={(next) => { setPattern(next); if (next !== "controls") setState(next === "forms" ? "saved" : next === "window" ? "populated" : "ordinary"); }} />
           <StateSelector pattern={pattern} state={state} onChange={setState} />
           <Button dense variant="ghost" onClick={reset}>Reset</Button>
         </div>

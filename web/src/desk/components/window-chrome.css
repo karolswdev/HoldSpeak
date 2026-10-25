@@ -32,12 +32,15 @@
   pointer-events: none;
   transition: background var(--desk-raise-duration) var(--desk-ease);
 }
+/* Window grammar (2026-10-24): the front window sits visibly above the
+   rest: a 1 px ink rule and the soft front shadow. Every other window keeps
+   a soft rule and the resting depth. */
 .desk-next .desk-window.desk-window-shell:is([data-plane="front"], .is-front) {
-  border-color: var(--wb-sel);
+  border-color: var(--wb-ink);
   box-shadow: var(--desk-window-shadow);
 }
 .desk-next .desk-window.desk-window-shell[data-plane="near"] {
-  border-color: color-mix(in srgb, var(--wb-sel) 44%, var(--wb-rule-soft));
+  border-color: var(--wb-rule);
   box-shadow: var(--desk-window-shadow-rest);
 }
 .desk-next .desk-window.desk-window-shell[data-plane="near"]::after {
@@ -51,7 +54,7 @@
   background: color-mix(in srgb, var(--wb-ink) 8%, transparent);
 }
 .desk-next .desk-window.desk-window-shell:not([data-plane="front"], .is-front):hover {
-  border-color: var(--wb-sel);
+  border-color: var(--wb-rule);
 }
 @media (prefers-reduced-motion: reduce) {
   .desk-next .desk-window.desk-window-shell,
@@ -397,12 +400,29 @@
   box-shadow: inset 0 -1px 0 var(--wb-rule-soft);
   color: var(--wb-ink);
 }
+/* Window grammar (2026-10-24): the front title bar carries its own tint
+   (the --wb-blue family, one step deeper) and a firmer lower rule; every
+   other title bar is paper. */
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head {
-  background: var(--wb-blue);
+  --gadget-face: var(--wb-sel);
+  background: var(--wb-bar-front);
+  /* The faint top shine: inset highlights, so the bar stays one flat fill. */
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--wb-paper) 28%, transparent),
+    inset 0 10px 14px -10px color-mix(in srgb, var(--wb-paper) 22%, transparent),
+    inset 0 -1px 0 var(--wb-ink);
+  color: var(--wb-paper);
 }
-/* A far window's bar uses the cool neutral field. */
+/* Paper ink on the deep blue bar: the name, the gadgets, the wings. */
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head :is(.desk-pullout-title, .desk-gadget, .desk-wing:not(.is-on)),
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head :is(.desk-pullout-title, .desk-gadget, .desk-wing:not(.is-on)) :is(span, small, strong, em, label) {
+  color: var(--wb-paper);
+}
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head > .desk-window-lamp {
+  border-color: var(--wb-paper);
+}
 .desk-next .desk-window-shell[data-plane="far"] > .desk-pullout-head {
-  background: var(--wb-field);
+  background: var(--wb-paper);
 }
 .desk-next .desk-window-shell > .desk-pullout-head .desk-pullout-title {
   /* The title yields first. Wings either keep their measured strip or fold
@@ -418,7 +438,7 @@
   white-space: nowrap;
   background: transparent;
   color: var(--wb-ink);
-  font: 600 14px/var(--wb-bar-h) var(--font-sans);
+  font: 600 14px/var(--wb-bar-h) var(--font-display);
   letter-spacing: 0;
   text-transform: none;
 }
@@ -442,13 +462,13 @@
   flex: none;
   align-self: center;
   align-items: center;
-  margin-inline: 8px 0;
+  margin-inline: 4px 0;
   padding: 0;
 }
 .desk-next .desk-window-shell > .desk-pullout-head > .desk-window-icon :is(img, svg) {
   display: block;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   image-rendering: auto;
 }
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head > .desk-window-icon {
@@ -539,8 +559,16 @@
   background: transparent;
 }
 .desk-next .desk-pullout-head .desk-gadget:hover:not(:disabled),
-.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget:hover:not(:disabled) {
-  background: var(--wb-blue);
+.desk-next .desk-window-shell:not([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget:hover:not(:disabled) {
+  background: var(--wb-hover);
+}
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head :is(.desk-gadget, .desk-wing:not(.is-on)):hover:not(:disabled):not(:active) {
+  background: color-mix(in srgb, var(--wb-paper) 18%, transparent);
+}
+/* A held gadget on the blue bar sinks into the pressed fill (ink glyph). */
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget:is(:active:not(:disabled), [aria-pressed="true"]) {
+  background: var(--wb-press);
+  color: var(--wb-ink);
 }
 .desk-next .desk-pullout-head .desk-gadget:active:not(:disabled),
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-gadget:active:not(:disabled),
@@ -556,8 +584,8 @@
 }
 .desk-next .desk-gadget svg {
   display: block;
-  width: 14px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
 }
 /* Wing tabs share the head material and retain their cycle state. */
 .desk-next .desk-pullout-head .desk-wings {
@@ -585,13 +613,27 @@
   margin-left: 0;
 }
 .desk-next .desk-pullout-head .desk-wing:hover:not(:disabled) {
-  background: var(--wb-blue);
+  background: var(--wb-hover);
   color: var(--wb-ink);
 }
 .desk-next .desk-pullout-head .desk-wing.is-on {
   background: var(--wb-blue);
   box-shadow: none;
   color: var(--wb-ink);
+}
+/* On the tinted front bar the chosen wing is a paper tab. */
+.desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head .desk-wing.is-on {
+  background: var(--wb-paper);
+  box-shadow: inset 0 -2px 0 var(--wb-paper);
+  color: var(--wb-sel);
+}
+/* Wings ease between tabs; gadgets answer a press at once (a held gadget
+   draws the pressed fill on the same frame). */
+.desk-next .desk-pullout-head .desk-wing {
+  transition: background-color var(--duration-short) var(--ease-standard), color var(--duration-short) var(--ease-standard);
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .desk-pullout-head .desk-wing { transition: none; }
 }
 /* Actions stay real controls with a compact, paper treatment. */
 .desk-next .desk-pullout-head .desk-window-actions {
@@ -672,6 +714,12 @@
    its edge and corner grip; the footer's inline grip reserve stays in force. */
 .desk-next .desk-window-shell:not(.is-sheet) > .desk-surface-foot {
   padding-block-end: 6px;
+}
+/* Window grammar (2026-10-24): a foot with nothing to say is omitted (no
+   dead 40 px strip). A face that publishes a SurfaceFooter or a StatusBar
+   fills the slot and the foot returns. */
+.desk-next .desk-window.desk-window-shell > .desk-surface-foot:empty {
+  display: none;
 }
 .desk-next .desk-core-verbs {
   display: flex;

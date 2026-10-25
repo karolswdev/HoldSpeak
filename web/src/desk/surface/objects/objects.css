@@ -439,6 +439,192 @@
   .object-list[data-compact-columns="true"] .object-list-fold { display: none; }
 }
 
+/* ── ObjectList density="dense": the native list view (window grammar,
+   2026-10-24). 30 px rows on the desktop, 44 px in a surface of 520 px or
+   less; sans headers in sentence case; sans 13 cells; a state is a dot and
+   a word; the whole selected row is the selection blue; no zebra. The list
+   runs edge to edge and scrolls inside its window. ── */
+.object-list[data-density="dense"] {
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--wb-paper);
+}
+.object-list[data-density="dense"] .object-list-head {
+  flex: none;
+  background: var(--wb-paper);
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.object-list[data-density="dense"] .object-list-sort {
+  min-height: 26px;
+  padding: 0 10px;
+  border-right: 1px solid var(--wb-rule-soft);
+  color: var(--wb-muted);
+  font: 600 12px / 1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.object-list[data-density="dense"] .object-list-th:last-child .object-list-sort {
+  border-right: 0;
+}
+.object-list[data-density="dense"] .object-list-th[data-col="name"] .object-list-sort {
+  padding-left: 40px;
+}
+.object-list[data-density="dense"] .object-list-sort:hover {
+  background: var(--wb-hover);
+}
+.object-list[data-density="dense"] .object-list-sort[aria-pressed="true"] {
+  background: transparent;
+  color: var(--wb-ink);
+}
+.object-list[data-density="dense"] .object-list-sort-mark {
+  font-size: 12px;
+  color: var(--wb-muted);
+}
+.object-list[data-density="dense"] .object-list-rows {
+  flex: 1 1 auto;
+  overscroll-behavior: contain;
+}
+.object-list[data-density="dense"] .object-list-row {
+  min-height: var(--wb-row-dense);
+  border-top: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
+  transition:
+    background-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard),
+    color var(--duration-short) var(--ease-standard);
+}
+/* A row lifts under the pointer: a blue tint and a 1 px ink rule. */
+.object-list[data-density="dense"] .object-list-row:hover {
+  background: var(--wb-row-hover);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 28%, transparent);
+}
+.object-list[data-density="dense"] .object-list-row[data-selected="true"] {
+  background: var(--wb-sel-vivid);
+  box-shadow: none;
+  color: var(--wb-paper);
+}
+@media (prefers-reduced-motion: reduce) {
+  .object-list[data-density="dense"] .object-list-row { transition: none; }
+}
+.object-list[data-density="dense"] .object-list-open {
+  gap: 10px;
+  min-height: var(--wb-row-dense);
+  padding: 4px 10px;
+}
+.object-list[data-density="dense"] .object-list-open:focus-visible {
+  outline: 2px solid var(--wb-sel);
+  outline-offset: -2px;
+}
+.object-list[data-density="dense"] .object-list-row[data-selected="true"] .object-list-open:focus-visible {
+  outline-color: var(--wb-paper);
+}
+/* Every row leads with its 20 px illustrated object glyph. */
+.object-list[data-density="dense"] .object-list-open img {
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent));
+}
+.object-list[data-density="dense"] .object-list-name-word {
+  font: 600 13px / 1.35 var(--font-sans);
+  color: var(--wb-text);
+}
+.object-list[data-density="dense"] .object-list-row[data-selected="true"] .object-list-name-word {
+  color: var(--wb-paper);
+}
+.object-list[data-density="dense"] .object-list-cell {
+  padding: 3px 10px;
+  font: 400 13px / 1.35 var(--font-sans);
+  letter-spacing: 0;
+  color: var(--wb-muted);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.object-list[data-density="dense"] .object-list-state {
+  padding: 0 10px;
+  align-items: center;
+}
+.object-list-dot-word {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font: 400 13px / 1.35 var(--font-sans);
+  color: var(--wb-ink);
+  white-space: nowrap;
+}
+.object-list-dot-word[data-tone="ok"] { color: var(--wb-ok-ink); }
+.object-list-dot-word[data-tone="fail"] { color: var(--wb-danger-ink); }
+.object-list-dot-word[data-tone="warn"] { color: var(--wb-warn-ink); }
+.object-list-dot-word[data-tone="ask"] { color: var(--wb-ember-ink); }
+.object-list-dot-word[data-tone="info"] { color: var(--wb-info-ink); }
+.object-list[data-density="dense"] .object-list-row[data-selected="true"] :is(.object-list-cell, .object-list-dot-word) {
+  color: var(--wb-paper);
+}
+.object-list[data-density="dense"] .object-list-row[data-selected="true"] .kit-dot {
+  box-shadow: 0 0 0 1px var(--wb-paper);
+}
+@container surface (max-width: 520px) {
+  /* Narrow: the header keeps one sort gadget per column (44 px), the row
+     keeps the name and the state on its first line and lets the other
+     cells fall under the name: every cell stays visible and readable. */
+  .object-list[data-density="dense"] .object-list-head {
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+  }
+  .object-list[data-density="dense"] .object-list-th {
+    flex: 1 1 0;
+  }
+  .object-list[data-density="dense"] .object-list-th[data-col="name"] .object-list-sort {
+    padding-left: 10px;
+  }
+  .object-list[data-density="dense"] .object-list-sort {
+    min-height: 44px;
+  }
+  .object-list[data-density="dense"] .object-list-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: 44px;
+    padding-bottom: 4px;
+  }
+  .object-list[data-density="dense"] .object-list-name {
+    flex: 1 1 60%;
+  }
+  .object-list[data-density="dense"] .object-list-open {
+    min-height: 44px;
+  }
+  .object-list[data-density="dense"] .object-list-state {
+    flex: none;
+    min-height: 44px;
+  }
+  .object-list[data-density="dense"] .object-list-cell,
+  .object-list[data-density="dense"][data-compact-columns="true"] .object-list-cell {
+    position: static;
+    order: 3;
+    flex: 0 1 auto;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0 10px 0 40px;
+    clip-path: none;
+    overflow: visible;
+    font-size: 12px;
+  }
+  .object-list[data-density="dense"] .object-list-cell + .object-list-cell {
+    padding-left: 0;
+  }
+  .object-list[data-density="dense"] .object-list-cell + .object-list-cell::before {
+    content: "·";
+    margin-inline: 0 6px;
+  }
+  .object-list[data-density="dense"] .object-list-cell:empty {
+    display: none;
+  }
+}
+
 /* ── GetInfo: identity, then facts ── */
 .object-info {
   display: flex;

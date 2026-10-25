@@ -679,9 +679,9 @@ def _step_meeting_detail(page: Any, out_dir: Path, w: int, token: str,
 
     # Click the first meeting row to open detail
     if meeting_id:
-        row_bodies = page.locator('.meetings-stream-row-body')
+        row_bodies = page.locator('#surface-meetings .object-list-open')
         if row_bodies.count() > 0:
-            row_bodies.first.click()
+            row_bodies.first.dblclick()
             page.wait_for_timeout(2000)
             _settle(page)
 

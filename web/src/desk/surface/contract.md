@@ -1172,6 +1172,21 @@ Every readable word is 12 px or more (UX-CANON §C outranks the canvas's
 | **Foot** | `SurfaceFooter.tsx`, `surface-footer.css` | The Steel foot: an ink line and a shine along its top (inset), ink words; the egress chip a paper plate (ink border; its scope the word's ink tone); the receipt in the middle; the verbs right. Egress exactly where egress happens (A.9). |
 | **Verb** | `components/signal/Signal.tsx` `Button`; its material in `styles/global.css` | A raised Steel plate with a 1 px ink border and ink; `primary` the selection blue with paper; `danger` the Workbench red (`--wb-rec`) with paper; `secondary` and `ghost` the same plate at the same height; pressed (`:active`, `aria-pressed`) it sinks (`--wb-sunken`); disabled is flat and faded. `chrome` is unchanged (the strip owns its ink). The 44 px narrow-desk halo stays. |
 
+## The window grammar (2026-10-24)
+
+`docs/internal/betterment/native-experience/WINDOW-GRAMMAR-2026-10-24.md`.
+Every window reads: title bar → toolbar → content → status bar. No headline,
+no stat tiles, no chip row inside a collection window (AppHead stays for
+readers only). Components ▸ Window shows the composition with fixture rows.
+
+| Species | Where | The rule |
+|---|---|---|
+| **Toolbar** | `kit.tsx` `Toolbar({ label, children, trailing?, className?, data-testid? })` | A 36 px band (`--wb-toolbar-h`) directly under the title bar, a 1 px soft rule under it, `role="toolbar"` named by `label`. Children are verbs: library Buttons, icon + label (`ToolGlyph`), the quiet secondary form at rest; ONE primary at most. `trailing` (a search StringGadget, a filter) sits at the right. A selection never adds to the toolbar (a reflowed band moves the row under the pointer between the two presses of a double press): the selection's verbs go to the StatusBar's `verbs`. Narrow: the band wraps, the search well takes its own line, every Button keeps 44 px. |
+| **ToolGlyph** | `kit.tsx` `ToolGlyph({ kind })` | 16 px verb glyph, 1.5 px pen in the Workbench blue (paper on the primary): `record` (red dot), `import`, `engine`, `new`, `summary`, `retry`, `open`. Decorative; the label names the verb. |
+| **StatusBar** | `kit.tsx` `StatusBar({ items, egress?, verbs?, className?, data-testid? })` | A 24 px band (`--wb-statusbar-h`) at the foot, sans 12 muted, tabular numbers: items `{ key?, text, value?, lamp?, testId? }` joined by a middle dot, `verbs` (the selected object's library Buttons: Open, Retry, Run summary) then the egress chip at the right (A.9); the band grows from the foot, so nothing above it moves. The items carry `role=status`, never the verbs. Warm true words (`5 meetings · 1 failed`); `countWords(n, noun, plural?)` (kit.tsx) says a count and returns null at zero, so the bar drops that item (A.8). Portaled into the frame's foot slot like SurfaceFooter, in place without one. No items and no egress: nothing, and the empty frame foot folds away (`.desk-surface-foot:empty`). |
+| **Body inset** | `interior.tsx` `useWindowInterior("list" \| "editor" \| null)` | The core tells the host which interior it draws; the host sets `data-interior` on the body. `list` and `editor` run edge to edge (inset 0; the list scrolls inside); null keeps the 12–16 px form/reader inset. |
+| **ObjectList dense** | `objects/ObjectList.tsx` `density="dense"`, `columns?` | The list view of a collection window: rows 30 px (`--wb-row-dense`; 44 px in a surface ≤ 520 px), each led by its 20 px illustrated object glyph; headers sans 12/600 muted, sentence case; cells sans 13; the state a dot and a word (`state.testId` for a test hook); hover lifts the row (tint + 1 px ink rule), the selected row is the vivid blue (`--wb-sel-vivid`, paper ink); 120 ms eased; no zebra; fills its container. `columns` declares the provider's own columns in order (`{ key, word, track? }`); a non-built-in key reads `row.cells[key]` (sorted by `row.sortValues[key]` or the text). `nameTestId` puts a test hook on the name. Selection is the press; Enter or a double press opens (a touch tap opens: the phone list has no double press); keyboard as ObjectList. Default density and every current caller are unchanged. |
+
 ## SurfaceSwitchboard (PHILO-16 C, the Runs on board)
 
 ## EngineLine and RunLine (Phase 17)

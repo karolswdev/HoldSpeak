@@ -93,7 +93,7 @@ function hubChanged() {
 }
 
 async function selectAndPark(title: string) {
-  await screen.findAllByText(title);
+  await screen.findAllByTitle(title);
   fireEvent.click(await screen.findByRole("button", { name: "More actions" }));
   fireEvent.click(await screen.findByRole("menuitem", { name: "Park" }));
   const receipt = await screen.findByTestId("meeting-park-receipt");
@@ -123,7 +123,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
   it("the PARKED token is absent at zero; on, it lists the parked rows with Restore", async () => {
     wireHub();
     renderDesk();
-    await screen.findAllByText("Hiring debrief");
+    await screen.findAllByTitle("Hiring debrief");
     expect(screen.queryByText(/^PARKED \d+$/)).toBeNull();
     await selectAndPark("Hiring debrief");
     const token = await screen.findByText("PARKED 1");
@@ -147,7 +147,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     );
     expect(hub.calls.some((c) => c.path === "/api/meetings/m-2/restore" && c.method === "POST")).toBe(true);
     const back = await screen.findByTestId("meeting-row-m-2");
-    await waitFor(() => expect(back.getAttribute("data-restored")).toBe("true"));
+    await waitFor(() => expect(back.getAttribute("aria-selected")).toBe("true"));
     await waitFor(() => expect(screen.queryByText(/^PARKED \d+$/)).toBeNull());
   });
 
@@ -200,7 +200,7 @@ describe("PHILO-13-02 Meetings after a reload", () => {
       expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^RESTORED \d\d:\d\d$/),
     );
     const back = await screen.findByTestId("meeting-row-m-2");
-    await waitFor(() => expect(back.getAttribute("data-restored")).toBe("true"));
+    await waitFor(() => expect(back.getAttribute("aria-selected")).toBe("true"));
     await waitFor(() => expect(screen.queryByText(/^PARKED \d+$/)).toBeNull());
     expect(hub.calls.filter((c) => c.method !== "GET")).toEqual([{ path: "/api/meetings/m-2/restore", method: "POST" }]);
   });
