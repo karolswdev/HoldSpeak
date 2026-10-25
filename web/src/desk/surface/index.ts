@@ -113,6 +113,7 @@ export {
 
 export { FootSlotContext } from "./foot";
 export { TitleSlotContext, useWindowTitle } from "./title";
+export { BackSlotContext, useHasWindowBack, useWindowBack, type WindowBack } from "./back";
 export { SPARSE_THRESHOLD } from "./sparse";
 
 export { FilterTokens, type FilterTokenOption } from "./FilterTokens";

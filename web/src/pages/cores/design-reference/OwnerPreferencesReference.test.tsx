@@ -4,28 +4,35 @@ import { OwnerPreferencesReference } from "./OwnerPreferencesReference";
 
 afterEach(() => vi.restoreAllMocks());
 
-function nameRow() {
-  const row = screen.getByTestId("settings-owner-name").closest(".gadget-row");
-  if (!row) throw new Error("Your name row missing");
-  return within(row as HTMLElement);
-}
-
-function aliasesRow() {
-  const row = screen.getByTestId("settings-owner-aliases").closest(".gadget-row");
-  if (!row) throw new Error("Also called row missing");
-  return within(row as HTMLElement);
-}
+// Window grammar 2026-10-24: no pill per field. Each field keeps its true
+// word as data; the specimen's status bar says the window's state.
+const fieldState = (field: "name" | "aliases") => screen.getByTestId(`settings-owner-${field}`).getAttribute("data-save-state");
+const status = () => screen.getByTestId("settings-status").textContent ?? "";
+const nameBox = () => within(screen.getByTestId("settings-owner-name")).getByRole("textbox", { name: "Your name" });
 
 describe("Settings You local reference", () => {
+  it("renders the rail, the pane and the status bar of the Settings window", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("No fixture network"));
+    const { container } = render(<OwnerPreferencesReference state="saved" />);
+    await screen.findByTestId("settings-owner-name");
+    const rail = container.querySelector(".pref-rail")!;
+    expect(within(rail as HTMLElement).getAllByRole("button")).toHaveLength(8);
+    expect(screen.getByTestId("reference-settings-index-you")).toHaveClass("is-active");
+    expect(container.querySelector(".pref-pane .gadget-row")).not.toBeNull();
+    expect(container.querySelector(".surface-state-chip")?.textContent ?? "").not.toMatch(/SAVED|EDITED|SAVING/);
+    expect(status()).toContain("Local specimen");
+  });
+
   it("keeps an uncommitted alias draft Edited and never calls the settings API", async () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("No fixture network"));
     render(<OwnerPreferencesReference state="saved" />);
 
     const alias = within(await screen.findByTestId("settings-owner-aliases")).getByRole("textbox", { name: "Also called" });
-    expect(aliasesRow().getByText("SAVED")).toBeInTheDocument();
+    expect(fieldState("aliases")).toBe("Saved");
     fireEvent.change(alias, { target: { value: "Karel" } });
-    expect(aliasesRow().getByText("EDITED")).toBeInTheDocument();
-    expect(aliasesRow().queryByText("SAVED")).not.toBeInTheDocument();
+    expect(fieldState("aliases")).toBe("Edited");
+    expect(status()).toContain("Edited");
+    expect(status()).not.toContain("Saved");
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -33,14 +40,18 @@ describe("Settings You local reference", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("No fixture network"));
     render(<OwnerPreferencesReference state="refused" />);
 
-    await waitFor(() => expect(nameRow().getByText("NOT SAVED")).toBeInTheDocument());
-    expect(nameRow().getByRole("textbox", { name: "Your name" })).toHaveValue("Karol A");
-    expect(aliasesRow().getByText("SAVED")).toBeInTheDocument();
+    await waitFor(() => expect(fieldState("name")).toBe("Not saved"));
+    expect(status()).toContain("Not saved");
+    expect(screen.getByTestId("settings-save-failure")).toHaveAttribute("role", "alert");
+    expect(nameBox()).toHaveValue("Karol A");
+    expect(fieldState("aliases")).toBe("Saved");
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => {
-      expect(nameRow().getByRole("textbox", { name: "Your name" })).toHaveValue("Karol A");
-      expect(nameRow().getByText("SAVED")).toBeInTheDocument();
+      expect(nameBox()).toHaveValue("Karol A");
+      expect(fieldState("name")).toBe("Saved");
+      expect(status()).toMatch(/Saved just now/);
     });
+    expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -48,17 +59,19 @@ describe("Settings You local reference", () => {
     render(<OwnerPreferencesReference state="saving" />);
 
     const complete = await screen.findByRole("button", { name: "Complete local write" });
-    expect(nameRow().getByText("SAVING")).toBeInTheDocument();
+    expect(fieldState("name")).toBe("Saving");
+    expect(status()).toContain("Saving…");
     fireEvent.click(complete);
-    await waitFor(() => expect(nameRow().getByText("SAVED")).toBeInTheDocument());
+    await waitFor(() => expect(fieldState("name")).toBe("Saved"));
+    await waitFor(() => expect(status()).toMatch(/Saved just now/));
   });
 
   it("shows Saved after the local refusal is retried and acknowledged", async () => {
     render(<OwnerPreferencesReference state="retried" />);
 
     await waitFor(() => {
-      expect(nameRow().getByRole("textbox", { name: "Your name" })).toHaveValue("Karol A");
-      expect(nameRow().getByText("SAVED")).toBeInTheDocument();
+      expect(nameBox()).toHaveValue("Karol A");
+      expect(fieldState("name")).toBe("Saved");
     });
     expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
   });
@@ -68,11 +81,13 @@ describe("Settings You local reference", () => {
     render(<OwnerPreferencesReference state="newer" />);
 
     const complete = await screen.findByRole("button", { name: "Complete local write" });
-    expect(nameRow().getByRole("textbox", { name: "Your name" })).toHaveValue("Karol B");
-    expect(nameRow().getByText("EDITED")).toBeInTheDocument();
+    expect(nameBox()).toHaveValue("Karol B");
+    expect(fieldState("name")).toBe("Edited");
+    expect(status()).toContain("Edited");
+    expect(status()).not.toContain("Saved");
     fireEvent.click(complete);
-    await waitFor(() => expect(nameRow().getByText("SAVED")).toBeInTheDocument());
-    expect(nameRow().getByRole("textbox", { name: "Your name" })).toHaveValue("Karol B");
+    await waitFor(() => expect(fieldState("name")).toBe("Saved"));
+    expect(nameBox()).toHaveValue("Karol B");
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

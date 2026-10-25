@@ -27,6 +27,7 @@ import { objectByRef } from "../world";
 import { DeskWindowFrame } from "./DeskWindow";
 import { FootSlotContext } from "../surface/foot";
 import { TitleSlotContext } from "../surface/title";
+import { BackSlotContext, type WindowBack } from "../surface/back";
 import { windowName } from "../windowName";
 import { WingSlotContext } from "../surface/wings";
 import type { CoreProps } from "../../pages/cores/core-types";
@@ -199,6 +200,9 @@ export function SurfaceWindowHost({
   const [wings, setWings] = useState<ReactNode>(null);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [titleOverride, setTitleOverrideState] = useState<string | null>(null);
+  // Window grammar: a core's own narrow step (Settings' rail → pane) owns
+  // the compact Back while it is open.
+  const [coreBack, setCoreBack] = useState<WindowBack | null>(null);
   // PHILO-13-17 (C7; Astra r1 #751, condition 1): an iconified window
   // unmounts its core (unmountOnMinimize), and the core's cleanup clears
   // the title it published. The window keeps that title while iconified:
@@ -240,10 +244,11 @@ export function SurfaceWindowHost({
       // Settings scopes select an anchor on its one page, not a child face.
       // Phone Back returns to the caller instead of scrolling Settings to top.
       onBack={
-        scope && row.key !== "configure-settings"
+        coreBack?.onBack ?? (scope && row.key !== "configure-settings"
           ? () => useDesk.getState().openSurfaceWindow(row.key, undefined)
-          : undefined
+          : undefined)
       }
+      backTestId={coreBack?.testId}
       className={
         row.key === "configure-settings"
           ? "desk-surface-window desk-settings-window"
@@ -257,6 +262,7 @@ export function SurfaceWindowHost({
           data-surface-host={row.key}
         >
           <div data-aftercare-window-slot="top" />
+          <BackSlotContext.Provider value={setCoreBack}>
           <TitleSlotContext.Provider value={setTitleOverride}>
             <WingSlotContext.Provider value={setWings}>
               <ApplicationBoundary label={row.title}>
@@ -276,6 +282,7 @@ export function SurfaceWindowHost({
               </ApplicationBoundary>
             </WingSlotContext.Provider>
           </TitleSlotContext.Provider>
+          </BackSlotContext.Provider>
         </div>
         <footer
           ref={setFoot}

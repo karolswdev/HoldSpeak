@@ -203,7 +203,7 @@ describe("Settings › Meetings", () => {
   const meetingsText = () => document.querySelector("[data-settings-section=meetings]")?.textContent ?? "";
   const summaryRow = () => screen.getByTestId("settings-summary-controls").closest(".gadget-row") as HTMLElement;
 
-  it("cold: After every meeting, the cycle, Summaries run on NO ENGINE + Engines › and no egress chip; Mic device, Auto export; Summary, never Intelligence", async () => {
+  it("cold: After every meeting, the cycle, Summaries run on No engine + Engines › and no egress chip; Mic device, Auto export; Summary, never Intelligence", async () => {
     // replaces: tests/e2e/test_hs172_settings_meetings_glass.py::TestSettingsMeetingsAutoRun::test_settings_meetings_nomodel
     const { container } = render(<SettingsCore scope="meetings" />);
     await screen.findByRole("combobox", { name: "Auto-run the summary" });
@@ -215,7 +215,7 @@ describe("Settings › Meetings", () => {
     expect(summaryRow().querySelector(".gadget-chip-egress")).toBeNull();
     // Betterment setup ST1: the engine is a fact line; Engines is its home.
     expect(summaryRow().querySelector(".gadget-row-label")?.textContent).toBe("Summaries run on");
-    expect(screen.getByTestId("settings-no-model").textContent).toContain("NO ENGINE");
+    expect(screen.getByTestId("settings-no-model").textContent).toContain("No engine");
     expect(screen.getByTestId("settings-engines-link").textContent).toBe("Engines ›");
     for (const word of ["Mic device", "Auto export", "Summary"]) expect(meetingsText()).toContain(word);
     expect(meetingsText()).not.toContain("Intelligence");
@@ -689,7 +689,7 @@ describe("Settings › Meetings when the owner turned summaries off", () => {
     Object.assign(hub.state.hub.meetings, { summariesOff: true, engineSet: false });
     render(<SettingsCore scope="meetings" />);
     const off = await screen.findByTestId("settings-summaries-off");
-    expect(off.textContent).toContain("SUMMARIES OFF");
+    expect(off.textContent).toContain("Summaries off");
     expect(screen.queryByTestId("settings-no-model")).toBeNull();
     expect(screen.queryByTestId("settings-choose-model")).toBeNull();
   });

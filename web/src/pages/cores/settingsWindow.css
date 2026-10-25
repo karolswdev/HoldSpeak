@@ -1,0 +1,508 @@
+/* Window grammar 2026-10-24: the native preference window.
+   Rail (32 px rows) | pane (label/control grid) | 24 px status bar.
+   Scoped to .pref-window so the shared gadget sheets keep their default
+   material in every other window. Tokens only. */
+
+.desk-next .pref-window {
+  --pref-rail-w: 180px;
+  /* Warm near-white paper and a warm steel rail: never clinical white. */
+  --pref-paper: color-mix(in srgb, var(--wb-paper) 94%, var(--p-color-orange-300));
+  --pref-rail-ground: color-mix(in srgb, var(--wb-steel) 62%, var(--pref-paper));
+  --pref-plate: linear-gradient(180deg, color-mix(in srgb, var(--wb-sel) 82%, var(--white)) 0%, var(--wb-sel) 100%);
+  --pref-ease: 140ms var(--desk-ease);
+  --pref-label-w: 160px;
+  display: grid;
+  grid-template-columns: var(--pref-rail-w) minmax(0, 1fr);
+  align-items: start;
+  gap: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  padding: 0;
+  /* The rail ground and its rule run the full height of the window. */
+  background:
+    linear-gradient(to right,
+      var(--pref-rail-ground) 0 var(--pref-rail-w),
+      var(--wb-rule-soft) var(--pref-rail-w) calc(var(--pref-rail-w) + 1px),
+      var(--pref-paper) calc(var(--pref-rail-w) + 1px));
+  color: var(--wb-ink);
+  font: 400 13px / 1.4 var(--font-sans);
+  overflow-x: clip;
+}
+/* The window body gives its inset to the rail and pane: edge to edge. */
+.desk-next .desk-surface-body:has(> .settings-page-content > .pref-window) { padding: 0; }
+.desk-next .desk-surface-body > .settings-page-content:has(> .pref-window) { flex: 1 1 auto; display: flex; flex-direction: column; }
+.desk-next .settings-page-content > .pref-window { flex: 1 1 auto; }
+
+/* ── The rail: a plain list, one selected row ── */
+.desk-next .pref-window > .pref-rail {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  min-width: 0;
+  padding: 8px;
+  border: 0;
+}
+.desk-next .pref-window .pref-rail .pref-rail-row.btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  height: 34px;
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  box-shadow: none;
+  transition: background-color var(--pref-ease), box-shadow var(--pref-ease), color var(--pref-ease), transform var(--pref-ease);
+  color: var(--wb-ink);
+  font: 400 13px / 1.2 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  white-space: nowrap;
+}
+.desk-next .pref-window .pref-rail .pref-rail-row.btn:hover:not(:disabled):not(.is-active) {
+  background: color-mix(in srgb, var(--wb-blue) 80%, var(--pref-paper));
+  box-shadow: inset 0 0 0 1px var(--wb-rule), 0 1px 2px color-mix(in srgb, var(--wb-ink) 10%, transparent);
+  transform: translateY(-1px);
+}
+.desk-next .pref-window .pref-rail .pref-rail-row.btn:active:not(:disabled) { transform: translateY(0); }
+/* The selected row is a vivid blue plate with paper ink and a faint shine. */
+.desk-next .pref-window .pref-rail .pref-rail-row.btn.is-active {
+  background: var(--pref-plate);
+  color: var(--wb-paper);
+  font-weight: 600;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--white) 28%, transparent),
+    0 1px 3px color-mix(in srgb, var(--wb-sel) 45%, transparent);
+}
+.desk-next .pref-window .pref-rail .pref-rail-row.btn.is-active .pref-rail-glyph {
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--white) 88%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--white) 50%, transparent);
+}
+/* A rail row is strip chrome with no border: its target is its own box
+   (the strip owes it 44 px at a narrow width), never a halo over its neighbour. */
+.desk-next .pref-window .pref-rail .pref-rail-row.btn::after { inset: 0; }
+.desk-next .pref-window .pref-rail .pref-rail-row.btn:focus-visible {
+  outline: var(--focus-outline-width) solid var(--wb-sel);
+  outline-offset: 1px;
+}
+.desk-next .pref-window .pref-rail .pref-rail-row.btn:disabled {
+  color: var(--wb-muted);
+  background: transparent;
+  opacity: 1;
+}
+.desk-next .pref-window .pref-rail-glyph {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  transition: background-color var(--pref-ease);
+}
+.desk-next .pref-window .pref-rail-glyph .prefs-tile-sprite {
+  width: 22px;
+  height: 22px;
+  image-rendering: auto;
+}
+.desk-next .pref-window .pref-rail-row.btn:disabled .pref-rail-glyph { opacity: 0.55; }
+.desk-next .pref-window .pref-rail-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.desk-next .pref-window .pref-rail-chevron { display: none; }
+
+/* ── The pane: label/control grid, sections by caption + hairline ── */
+.desk-next .pref-window > .pref-pane {
+  min-width: 0;
+  padding: 14px 20px 20px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.desk-next .pref-window .pref-pane-back { display: none; }
+.desk-next .pref-window .settings-page-section { min-width: 0; padding: 0; }
+.desk-next .pref-window .settings-page-section:not([hidden]) + .settings-page-section:not([hidden]) { border: 0; padding: 0; }
+/* The rail says the category; the pane does not repeat it as a headline. */
+.desk-next .pref-window .settings-page-section-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.desk-next .pref-window .settings-page-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  max-width: 720px;
+  margin-inline: auto;
+}
+.desk-next .pref-window .settings-page-section-body .gadget-group,
+.desk-next .pref-window .settings-page-section-body .surface-section,
+.desk-next .pref-window .settings-page-section-body .prefs-calendar-section { width: 100%; max-width: none; }
+.desk-next .pref-window .surface-section-head { display: flex; align-items: baseline; gap: 8px; }
+.desk-next .pref-window .surface-section-head::after { display: none; }
+.desk-next .pref-window .surface-section-head h3 { margin: 0; padding: 0; border: 0; font: inherit; color: inherit; }
+/* Lists inside a section run on the paper: rows and hairlines, no card. */
+.desk-next .pref-window .surface-ledger {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+/* A state is a dot and a word, not a pill. */
+.desk-next .pref-window .settings-page-section-body .surface-state-chip {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font: 600 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+/* Egress stays on the row that leaves the machine, as a quiet host word. */
+.desk-next .pref-window .settings-page-section-body .gadget-chip-egress {
+  padding: 1px 8px;
+  border-radius: var(--radius-sm);
+  font: 500 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+.desk-next .pref-window .settings-page-section-body .surface-columns,
+.desk-next .pref-window .settings-page-section-body .prefs-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.desk-next .pref-window .settings-page-section-body .surface-columns { width: 100%; max-width: none; }
+.desk-next .pref-window .settings-page-section-body .surface-columns > *,
+.desk-next .pref-window .settings-page-section-body .prefs-groups > * { width: 100%; max-width: none; min-width: 0; gap: 18px; }
+.desk-next .pref-window .prefs-column { gap: 18px; }
+
+/* Every sheet in the pane is a section: caption, hairline, rows. */
+.desk-next .pref-window .gadget-group,
+.desk-next .pref-window .gadget-group[data-material="inset"] {
+  --gadget-value-width: 240px;
+  position: static;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.desk-next .pref-window .gadget-group > .gadget-group-label,
+.desk-next .pref-window .gadget-group[data-material="inset"] > .gadget-group-label,
+.desk-next .pref-window .surface-section-head {
+  position: static;
+  transform: none;
+  display: block;
+  max-width: none;
+  margin: 0;
+  padding: 0 0 6px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: transparent;
+  color: var(--wb-ink);
+  font: 600 15px / 1.3 var(--font-display);
+  letter-spacing: -0.005em;
+  text-transform: none;
+  text-shadow: none;
+}
+/* A section after the first breathes before its caption. */
+.desk-next .pref-window .settings-page-section-body > * + * > .gadget-group-label,
+.desk-next .pref-window .gadget-group + .gadget-group > .gadget-group-label { margin-top: 6px; }
+.desk-next .pref-window .gadget-divider { display: none; }
+/* The On word reads as a state, in its own friendly colour. */
+.desk-next .pref-window .gadget-check-state-word { font: 600 12px / 1 var(--font-sans); letter-spacing: 0; }
+.desk-next .pref-window .gadget-group > .gadget-group-label::after { display: none; }
+.desk-next .pref-window .gadget-group > .gadget-sheet,
+.desk-next .pref-window .gadget-group[data-material="inset"] > .gadget-sheet {
+  display: block;
+  padding: 0;
+}
+.desk-next .pref-window .gadget-sheet > .gadget-group { margin: 0; }
+.desk-next .pref-window .gadget-group[data-material="inset"] > .gadget-group-actions,
+.desk-next .pref-window .gadget-group-actions { padding: 8px 0 0; min-height: 0; }
+
+.desk-next .pref-window .gadget-row,
+.desk-next .pref-window .gadget-group[data-material="inset"] .gadget-row,
+.desk-next .pref-window .gadget-row[data-control-width] {
+  grid-template-columns: var(--pref-label-w) minmax(0, 1fr);
+  align-items: center;
+  min-height: 40px;
+  padding: 6px 0;
+  gap: 4px 16px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: transparent;
+  transition: background-color var(--pref-ease);
+}
+.desk-next .pref-window .gadget-sheet > .gadget-row:last-child,
+.desk-next .pref-window .gadget-sheet > :last-child > .gadget-row:last-child { border-bottom: 0; }
+.desk-next .pref-window .gadget-row:hover,
+.desk-next .pref-window .gadget-row:focus-within { background: transparent; }
+.desk-next .pref-window .gadget-row[data-highlight] {
+  background: color-mix(in srgb, var(--wb-blue) 70%, transparent);
+}
+/* A wide row keeps its label column; only its control spans the rest. */
+.desk-next .pref-window .gadget-row:is([data-wide], [data-control-width="full"]) {
+  grid-template-columns: var(--pref-label-w) minmax(0, 1fr);
+}
+.desk-next .pref-window .gadget-row-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: var(--wb-ink);
+  font: 400 13px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.desk-next .pref-window .gadget-row-label .gadget-fact,
+.desk-next .pref-window .gadget-fact {
+  color: var(--wb-muted);
+  font: 400 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.desk-next .pref-window .gadget-row-gadget {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 8px;
+}
+.desk-next .pref-window .prefs-value { font: 400 13px / 1.4 var(--font-sans); color: var(--wb-ink); }
+.desk-next .pref-window .gadget-row-gadget > .gadget-cycle,
+.desk-next .pref-window .gadget-row-gadget > .gadget-string:not(.gadget-stepper) {
+  width: var(--gadget-value-width);
+  max-width: 100%;
+}
+.desk-next .pref-window .gadget-row[data-control-width="full"] .gadget-row-gadget > :is(.gadget-string, .gadget-cycle),
+.desk-next .pref-window .gadget-row[data-control-width="full"] .gadget-row-gadget .prefs-text-field .gadget-string { width: 100%; }
+.desk-next .pref-window .gadget-string input,
+.desk-next .pref-window .gadget-cycle select { font: 400 13px / 1.4 var(--font-sans); }
+
+/* Tokens inside the pane are quiet sans words, not mono caps. */
+.desk-next .pref-window .settings-page-section-body .surface-token[data-chip] {
+  font: 400 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.desk-next .pref-window .firstrun-alias-row .surface-token[data-chip] {
+  padding: 2px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--wb-blue);
+  color: var(--wb-ink);
+  font: 400 13px / 1.4 var(--font-sans);
+}
+/* Folds read as a section's last row, never a card. */
+.desk-next .pref-window .gadget-fold { margin: 0; }
+.desk-next .pref-window .settings-page-section-body > .gadget-fold { border-top: 0; }
+
+/* ── The status bar: 24 px, sans 12 muted ── */
+.desk-next .surface-footer:has(> .pref-status-bar),
+.desk-next .surface-footer:has(.pref-status-bar) {
+  min-height: 24px;
+  padding-block: 0;
+  background: color-mix(in srgb, var(--wb-steel) 62%, color-mix(in srgb, var(--wb-paper) 94%, var(--p-color-orange-300)));
+}
+.desk-next .surface-footer-layout.pref-status-bar {
+  min-height: 24px;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  grid-template-areas: "receipt verbs";
+}
+.desk-next .pref-status-bar .surface-footer-egress { display: none; }
+.desk-next .pref-status-bar .surface-footer-receipt { justify-content: flex-start; }
+.desk-next .pref-status-bar .surface-footer-receipt > .pref-status {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--wb-muted);
+  font: 400 12px / 1.4 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+.desk-next .pref-status > * + *::before {
+  content: "·";
+  padding: 0 8px;
+  color: var(--wb-muted);
+}
+.desk-next .pref-status .pref-status-save,
+.desk-next .pref-status .pref-status-fact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.desk-next .pref-status .pref-status-save { color: var(--wb-ink); }
+.desk-next .pref-status .pref-status-save[data-tone="danger"] { color: var(--wb-danger-ink); font-weight: 600; }
+/* The small lamp: green saved, amber saving, blue edited, red not saved. */
+.desk-next .pref-status-lamp {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok) 22%, transparent);
+  transition: background-color var(--desk-raise-duration) var(--desk-ease);
+}
+.desk-next .pref-status-lamp[data-tone="busy"] { background: var(--p-color-orange-300); box-shadow: 0 0 0 2px color-mix(in srgb, var(--p-color-orange-300) 25%, transparent); }
+.desk-next .pref-status-lamp[data-tone="edited"] { background: var(--wb-sel); box-shadow: 0 0 0 2px color-mix(in srgb, var(--wb-sel) 20%, transparent); }
+.desk-next .pref-status-lamp[data-tone="danger"] { background: var(--wb-danger-ink); box-shadow: 0 0 0 2px color-mix(in srgb, var(--wb-danger-ink) 22%, transparent); }
+.desk-next .pref-status .pref-status-reason {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.desk-next .pref-status-bar .surface-footer-verbs .btn { min-height: 20px; padding-block: 0; }
+
+/* The specimen keeps the window's frame around the same composition. */
+.desk-next .reference-pref-window {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--wb-rule);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  container: surface / inline-size;
+}
+.desk-next .reference-pref-window > .pref-window { flex: 0 0 auto; min-height: 320px; }
+.desk-next .reference-pref-window > .surface-footer { flex: none; border-top: 1px solid var(--wb-rule-soft); }
+
+/* ── Narrow (content width 520 px or less): rail first, then the pane ── */
+@container surface (max-width: 520px) {
+  .desk-next .pref-window {
+    display: block;
+    background: var(--pref-paper);
+  }
+  .desk-next .pref-window > .pref-rail {
+    position: static;
+    padding: 8px 0;
+    gap: 0;
+  }
+  .desk-next .pref-window[data-pane-open] > .pref-rail { display: none; }
+  .desk-next .pref-window:not([data-pane-open]) > .pref-pane { display: none; }
+  .desk-next .pref-window .pref-rail .pref-rail-row.btn {
+    min-height: 44px;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 0;
+    border-bottom: 1px solid var(--wb-rule-soft);
+    font-size: 15px;
+  }
+  /* The rail is a list to open, not a selection, at this width. */
+  .desk-next .pref-window .pref-rail .pref-rail-row.btn.is-active {
+    background: transparent;
+    color: var(--wb-ink);
+    font-weight: 400;
+    box-shadow: none;
+  }
+  .desk-next .pref-window .pref-rail .pref-rail-row.btn.is-active .pref-rail-glyph { background: transparent; box-shadow: none; }
+  .desk-next .pref-window .pref-rail .pref-rail-row.btn:hover:not(:disabled):not(.is-active) { transform: none; box-shadow: none; }
+  .desk-next .pref-window .pref-rail-glyph,
+  .desk-next .pref-window .pref-rail-glyph .prefs-tile-sprite { width: 24px; height: 24px; }
+  .desk-next .pref-window .pref-rail-chevron {
+    display: inline;
+    color: var(--wb-muted);
+    font: 400 17px / 1 var(--font-sans);
+  }
+  .desk-next .pref-window > .pref-pane { padding: 14px 16px 16px; }
+  .desk-next .pref-window > .pref-pane:has(> .pref-pane-back) { padding-top: 0; }
+  .desk-next .pref-window .pref-pane-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    margin: 0 -16px 8px;
+    padding: 0 8px;
+    border-bottom: 1px solid var(--wb-rule-soft);
+  }
+  .desk-next .pref-window .pref-pane-back .btn {
+    min-height: 44px;
+    padding-inline: 8px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--wb-sel);
+    font: 500 15px / 1 var(--font-sans);
+  }
+  .desk-next .pref-window .pref-pane-back-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-right: 52px;
+    text-align: center;
+    color: var(--wb-ink);
+    font: 600 15px / 1.3 var(--font-sans);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .desk-next .pref-window .gadget-row,
+  .desk-next .pref-window .gadget-group[data-material="inset"] .gadget-row,
+  .desk-next .pref-window .gadget-row[data-control-width],
+  .desk-next .pref-window .gadget-row:is([data-wide], [data-control-width="full"]) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 44px;
+    padding: 6px 0;
+    gap: 6px 12px;
+  }
+  .desk-next .pref-window .gadget-row:is([data-wide], [data-control-width="full"]),
+  .desk-next .pref-window .gadget-row:has(.gadget-string:not(.gadget-stepper)),
+  .desk-next .pref-window .gadget-row:has(.gadget-prop) { grid-template-columns: minmax(0, 1fr); }
+  .desk-next .pref-window .gadget-row-gadget > .gadget-cycle { width: min(100%, 200px); }
+  .desk-next .pref-window .gadget-cycle select { min-height: 44px; }
+  .desk-next .pref-status-bar .surface-footer-verbs .btn { min-height: 44px; }
+  .desk-next .surface-footer-layout.pref-status-bar {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas: "receipt verbs";
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .pref-window .pref-rail .pref-rail-row.btn,
+  .desk-next .pref-window .gadget-row,
+  .desk-next .pref-status-lamp { transition: none; }
+  .desk-next .pref-window .pref-rail .pref-rail-row.btn:hover:not(:disabled):not(.is-active) { transform: none; }
+}
+
+/* Wallpaper choices: the picture is the object; its name is a quiet sans word. */
+.desk-next .pref-window .prefs-wallpaper-copy strong {
+  font: 600 13px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.desk-next .pref-window .prefs-wallpaper-state {
+  font: 500 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+/* A stepper shows its whole number. */
+.desk-next .pref-window .gadget-stepper input { flex: 1 0 5ch; min-width: 5ch; width: 5ch; }
+/* A refusal's plain reason sits at the top of the pane, in the column. */
+.desk-next .pref-window .pref-pane-alert { max-width: 720px; margin: 0 auto 14px; }

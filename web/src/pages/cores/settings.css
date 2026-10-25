@@ -406,103 +406,9 @@
   .desk-next .prefs-module-head { gap:8px; }
 }
 
-/* ST7: one Settings page. The index is navigation for this scroll surface;
-   section bodies keep the existing gadget, account, wallpaper and retry
-   components so their writes and receipts remain shared. */
-.desk-next .settings-page-content { padding:0; min-width:0; }
-.desk-next .settings-page {
-  display:grid;
-  grid-template-columns:144px minmax(0,1fr);
-  align-items:start;
-  gap:20px;
-  width:100%;
-  min-width:0;
-  padding:12px 16px 20px;
-  background:var(--alive-paper, var(--wb-paper));
-  color:var(--wb-ink, var(--text));
-  font:14px/1.5 var(--font-sans);
-  overflow-x:hidden;
-}
-.desk-next .settings-page-index {
-  width:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:stretch;
-  gap:4px;
-  min-width:0;
-  padding-block:2px;
-}
-.desk-next .settings-page-index .btn {
-  display:flex;
-  align-items:center;
-  gap:7px;
-  justify-content:flex-start;
-  min-width:0;
-  min-height:44px;
-  padding:5px 7px;
-  border:1px solid transparent;
-  color:var(--wb-muted, var(--text-muted));
-  text-align:left;
-  white-space:normal;
-}
-.desk-next .settings-page-index .prefs-tile-sprite {
-  flex:none;
-  width:32px;
-  height:32px;
-  image-rendering:auto;
-}
-.desk-next .settings-page .settings-page-index .btn.is-active {
-  color:var(--wb-ink, var(--text));
-  background:var(--wb-blue);
-  border-color:var(--wb-sel);
-  box-shadow:none;
-}
-.desk-next .settings-page-sections {
-  min-width:0;
-  min-height:0;
-  padding:4px 0 0;
-  overflow-x:clip;
-  overflow-y:visible;
-  background:var(--alive-paper, var(--wb-paper));
-  border:0;
-  box-shadow:none;
-}
-.desk-next .settings-page-section {
-  min-width:0;
-  scroll-margin-top:12px;
-  padding-top:2px;
-}
-.desk-next .settings-page-section[hidden] { display:none; }
-.desk-next .settings-page-section:not([hidden]) + .settings-page-section:not([hidden]) { border-top:1px solid var(--wb-rule-soft, var(--border)); padding-top:20px; }
-.desk-next .settings-page-section-title {
-  margin:0 0 10px;
-  color:var(--wb-ink, var(--text));
-  font:600 15px/1.35 var(--font-sans);
-  letter-spacing:0;
-  text-transform:none;
-}
-.desk-next .settings-page-section-body { display:flex; flex-direction:column; gap:18px; min-width:0; }
-.desk-next .settings-page-section-body > .surface-columns,
-.desk-next .settings-page-section-body > .gadget-group,
-.desk-next .settings-page-section-body > .prefs-groups,
-.desk-next .settings-page-section-body > .prefs-wallpaper { width:100%; min-width:0; }
-.desk-next .settings-page-section-body .surface-columns { gap:20px; align-items:start; }
-.desk-next .settings-page-section-body .gadget-group { margin:0; }
-.desk-next .settings-page-section-body .gadget-row { min-width:0; }
-.desk-next .settings-page-section-body .gadget-row-label,
-.desk-next .settings-page-section-body .gadget-row-gadget { min-width:0; }
-.desk-next .settings-page-section-body .gadget-row-gadget { flex-wrap:wrap; }
-.desk-next .settings-page-section-body .prefs-groups { gap:20px; }
-.desk-next .settings-page-section-body .prefs-column { gap:18px; }
-.desk-next .settings-page-section-body .prefs-module { width:100%; max-width:none; }
-.desk-next .settings-page-section-body .prefs-calendar-section { width:100%; min-width:0; }
-
-/* The active page title is enough for the category. You and Agents already
-   have identity/access group headings, so keep those paper faces to one
-   visible label. */
-.desk-next .settings-page-section-title-quiet {
-  display:none;
-}
+/* ST7: one Settings page. The rail, pane and status bar grammar
+   (window grammar 2026-10-24) is settingsWindow.css. */
+.desk-next .settings-page-content { padding:0; min-width:0; min-height:100%; }
 
 /* CycleGadget remains the native, keyboard-owned select. Settings gives its
    closed face a clear choice affordance and lets WorkbenchSelect carry the
@@ -545,38 +451,5 @@
 .desk-next .settings-page .gadget-cycle select:disabled { opacity:.55; }
 
 @container surface (max-width:700px) {
-  .desk-next .settings-page {
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    width:100%;
-    box-sizing:border-box;
-    padding:8px 10px 16px;
-  }
-  .desk-next .settings-page-index {
-    display:grid;
-    grid-template-columns:repeat(4, minmax(44px, 1fr));
-    align-self:stretch;
-    gap:4px;
-    padding:0 0 8px;
-    border-bottom:1px solid var(--wb-rule-soft, var(--border));
-  }
-  .desk-next .settings-page-index .btn {
-    flex-direction:column;
-    justify-content:center;
-    gap:1px;
-    min-width:44px;
-    min-height:44px;
-    margin-block:0;
-    padding:2px;
-    text-align:center;
-    font:500 12px/1.2 var(--font-sans);
-  }
-  .desk-next .settings-page-index .prefs-tile-sprite { width:32px; height:32px; }
-  .desk-next .settings-page-sections { padding:4px 0 0; }
-  .desk-next .settings-page-section:not([hidden]) + .settings-page-section:not([hidden]) { padding-top:16px; }
-  .desk-next .settings-page-section-body .surface-columns,
-  .desk-next .settings-page-section-body .prefs-groups { grid-template-columns:minmax(0,1fr); }
-  .desk-next .settings-page-section-body .surface-columns { display:flex; flex-direction:column; }
   .desk-next .settings-page .gadget-cycle select { min-height:44px; }
 }

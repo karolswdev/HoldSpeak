@@ -49,7 +49,6 @@ import {
 } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressFor, hostPlace } from "../../desk/surface/egress";
-import { spriteUrl } from "../../desk/sprites";
 import { openSurface, openSurfaceOr } from "../../desk/shell";
 import { announceTaskReturn } from "../../desk/returnToTask";
 import { HotkeyCapture } from "./settingsBespoke";
@@ -61,7 +60,8 @@ import { TtsSettingsBlock } from "./settingsTts";
 // import { CapabilityAssignmentsCore } from "./CapabilityAssignmentsCore";
 import { WallpaperModule } from "./settingsWallpaper";
 import { RhythmNoticeRows, RhythmSweepFold } from "./settingsRhythm";
-import { OwnerNameGroup, PeopleAccessModule } from "./settingsPeople";
+import { OwnerNameGroup, PeopleAccessModule, ownerSaveState, useOwnerPreferences } from "./settingsPeople";
+import { PrefSection, PrefWindow, clockWord } from "./settingsWindow";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 import { Destinations } from "./connections/Destinations";
 import { RunsOnCore } from "../../features/runson/RunsOnCore";
@@ -79,7 +79,7 @@ import {
   SETTINGS_SECTIONS,
   type SettingsSectionId,
   PrefStatusBar,
-  SettingSprite,
+  SettingsRailGlyph,
   WAKE_ACTION_OPTIONS,
   type SettingsHubWire,
 } from "./settingsPrefs";
@@ -314,11 +314,6 @@ const SETTINGS_WINGS = [
   { id: "integrations", label: "Accounts" },
 ];
 
-const SETTINGS_WORLD_SPRITES: Partial<Record<SettingsSectionId, { kind: string; id: string; agent?: string }>> = {
-  you: { kind: "person", id: "settings-you" },
-  meetings: { kind: "meeting", id: "settings-meetings" },
-  agents: { kind: "agent", id: "settings-agents", agent: "codex" },
-};
 
 /** Legacy scope contract retained for callers and old saved desks. The page
  * converts it to a section with `settingsPageScope` below. */
@@ -1372,6 +1367,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
   // A scope is a new entry intent. The page stays mounted and the scope only
   // chooses its section and row anchor.
   const [navigation, setNavigation] = useState(() => settingsPageScope(scope));
+  // Window grammar: at a narrow content width the rail is the first view.
+  // An entry with a scope (a palette row, a deep link) opens its pane.
+  const [paneOpen, setPaneOpen] = useState(() => Boolean(settingsPageScope(scope).module));
   useEffect(() => {
     const next = settingsPageScope(scope);
     if (next.module === "setup") {
@@ -1380,8 +1378,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
     } else {
       setNavigation(next);
       setHighlight(next.focus ?? "");
+      if (next.module) setPaneOpen(true);
     }
   }, [scope]);
+  // The You writer lives with the window: its state is the status bar's.
+  const ownerPrefs = useOwnerPreferences();
   // Settings opens on the owner's identity category. A legacy "settings"
   // scope still lands on the same face; it never restores the old all-page
   // document.
@@ -1876,6 +1877,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const openSection = (id: string, focus = "") => {
     setNavigation({ module: id, focus });
     setHighlight(focus);
+    setPaneOpen(true);
   };
   const openModule = (id: string) => {
     const section = SECTION_ALIASES[id] ?? id;
@@ -2125,7 +2127,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     // HS-175-03: CALENDAR section replaces the 146 Calendar GadgetGroup.
     // Source rows, the Connect calendar well, Snapshot.
     return (
-              <div className="prefs-calendar-section"><GadgetGroup label="Calendar" material="inset" actions={
+              <div className="prefs-calendar-section"><GadgetGroup label="Calendar feeds" material="inset" actions={
                   <div data-testid="calendar-connect-row" className="prefs-inline-controls">
                     <Button variant="secondary" dense onClick={() => openCalWell("new", "")} data-testid="calendar-add-btn">Add feed</Button>
                     {(() => { const chip = snapshotEgressChip(calSources?.snapshot_egress); return chip ? <EgressChip label={chip.label} scope={chip.scope} title={chip.title} /> : null; })()}
@@ -2257,7 +2259,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   {check(
                     ["dictation", "macros", "enabled"],
                     "Voice commands",
-                    countToken(macroItems.length, "CONFIGURED") ?? undefined,
+                    countToken(macroItems.length, "command", "commands") ?? undefined,
                   )}
                 </GadgetGroup>
                 <GadgetGroup label="Wake word" material="inset">
@@ -2452,11 +2454,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
                     is its one home (`Engines ›` opens it at Meetings). */}
                 <GadgetRow label="Summaries run on" controlWidth="full" highlight={focusHighlight === "engines"}>
                   <span className="prefs-summary-controls" data-testid="settings-summary-controls">
-                    {summariesOff ? <StateChip state="idle" label="SUMMARIES OFF" data-testid="settings-summaries-off" />
+                    {summariesOff ? <StateChip state="idle" label="Summaries off" data-testid="settings-summaries-off" />
                       : hasModel ? <>
                         <span className="prefs-value">{String(meetingsHub?.engine || "Assigned engine")}</span>
                         {intelHost && egressFor(intelHost).label ? <EgressChip label={egressFor(intelHost).label} scope={egressFor(intelHost).scope} /> : null}
-                      </> : <StateChip state="warning" label="NO ENGINE" data-testid="settings-no-model" />}
+                      </> : <StateChip state="warning" label="No engine" data-testid="settings-no-model" />}
                     <Button variant={!hasModel && !summariesOff ? "secondary" : "ghost"} dense onClick={() => openSurfaceOr("configure-runs-on", "/models")} data-testid="settings-engines-link">
                       Engines ›
                     </Button>
@@ -2759,7 +2761,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
             {/* PHILO-15 B57: his name and the other names for him, after
                 first run (the reopened You card shows them without an edit;
                 Astra r1 on #1090: this is the place he looks). */}
-            <SurfaceColumns variant="preferences" main={<OwnerNameGroup />} side={<PeopleAccessModule />} />
+            <SurfaceColumns variant="preferences" main={<OwnerNameGroup prefs={ownerPrefs} />} side={<PeopleAccessModule />} />
           </>
         );
       /* ── Agents: how many work at once (Betterment AG5) ── */
@@ -2779,17 +2781,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const receipt = { saving: saving || Boolean(secretBusy), writtenAt: moduleId === "you" ? "" : writtenAt, refusal };
   const focusHighlight = SETTINGS_FOCUS_PATHS[navigation.focus ?? ""] ?? navigation.focus ?? "";
   const pageSection = (id: SettingsSectionId, label: string, children: ReactNode) => (
-    <section
-      id={`settings-section-${id}`}
-      data-settings-section={id}
-      className="settings-page-section"
-      hidden={moduleId !== id}
-      aria-hidden={moduleId !== id}
-      aria-labelledby={`settings-section-title-${id}`}
-    >
-      <h2 id={`settings-section-title-${id}`} className={`settings-page-section-title${id === "you" || id === "agents" ? " settings-page-section-title-quiet" : ""}`}>{label}</h2>
-      <div className="settings-page-section-body">{children}</div>
-    </section>
+    <PrefSection id={id} label={label} hidden={moduleId !== id} quiet={id === "you" || id === "agents"}>{children}</PrefSection>
   );
   const engineLink = (
     <GadgetGroup material="inset" label="HoldSpeak">
@@ -2801,38 +2793,15 @@ function SettingsFace({ hero, scope }: CoreProps) {
       </GadgetRow>
     </GadgetGroup>
   );
+  const railItems = SETTINGS_SECTIONS.map((section) => ({
+    id: section.id,
+    label: section.label,
+    glyph: <SettingsRailGlyph section={section} />,
+  }));
   const settingsPage = (
-    <div className="settings-page" data-testid="settings-page">
-      <nav className="settings-page-index" aria-label="Settings sections">
-        {SETTINGS_SECTIONS.map((section) => (
-          <Button
-            key={section.id}
-            variant={moduleId === section.id ? "primary" : "ghost"}
-            dense
-            className={moduleId === section.id ? "is-active" : undefined}
-            aria-current={moduleId === section.id ? "location" : undefined}
-            aria-pressed={moduleId === section.id}
-            onClick={() => openSection(section.id)}
-            data-testid={`settings-index-${section.id}`}
-          >
-            <SettingSprite
-              name={section.sprite}
-              src={SETTINGS_WORLD_SPRITES[section.id]
-                ? spriteUrl(
-                    SETTINGS_WORLD_SPRITES[section.id]!.kind,
-                    SETTINGS_WORLD_SPRITES[section.id]!.id,
-                    "rest",
-                    SETTINGS_WORLD_SPRITES[section.id]!.agent,
-                    32,
-                  )
-                : undefined}
-            />
-            <span>{section.label}</span>
-          </Button>
-        ))}
-      </nav>
-      <div className="settings-page-sections">
-        {pageSection("you", "You", <OwnerNameGroup highlight={focusHighlight} />)}
+    <PrefWindow items={railItems} selected={moduleId} onSelect={(id) => openSection(id)} paneOpen={paneOpen} onBack={() => setPaneOpen(false)} frameBack testId="settings-page">
+        {refusal && moduleId !== "you" ? <div className="pref-pane-alert"><SurfaceWell><div className="prefs-read-failure" role="alert" data-testid="settings-save-failure"><span>{refusal}</span>{failedChangesRef.current.length ? <Button dense variant="ghost" disabled={saving} onClick={() => void retryFailedChanges()}>Retry</Button> : null}</div></SurfaceWell></div> : null}
+        {pageSection("you", "You", <OwnerNameGroup prefs={ownerPrefs} highlight={focusHighlight} />)}
         {pageSection("speak", "Speak", renderModule("voice"))}
         {pageSection("meetings", "Meetings", renderModule("meetings"))}
         {pageSection("notices", "Notices", renderModule("rhythm"))}
@@ -2860,14 +2829,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
           {engineLink}
           {renderModule("system")}
         </>)}
-      </div>
-    </div>
+    </PrefWindow>
   );
   return (
     <>
       {hero ? hero(null) : null}
       <div ref={contentRef} className="settings-content settings-page-content" data-settings-view={moduleId || "page"}>
-      {refusal ? <SurfaceWell><div className="prefs-read-failure" role="alert" data-testid="settings-save-failure"><span>{refusal}</span>{failedChangesRef.current.length ? <Button dense variant="ghost" disabled={saving} onClick={() => void retryFailedChanges()}>Retry</Button> : null}</div></SurfaceWell> : null}
       <SurfaceState
         loading={resource.loading}
         error={resource.error}
@@ -2880,8 +2847,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
       </div>
       <PrefStatusBar
         receipt={receipt}
-        onRetry={failedChangesRef.current.length ? () => void retryFailedChanges() : undefined}
-        idleReceipt={connectionsFoot?.checkedAt ? <Receipt status="ok" label="Checked" timestamp={connectionsFoot.checkedAt} /> : undefined}
+        save={moduleId === "you" ? ownerSaveState(ownerPrefs) : undefined}
+        failureTestId={moduleId === "you" ? undefined : null}
+        onRetry={moduleId === "you"
+          ? (ownerPrefs.state === "Not saved" ? () => void ownerPrefs.owner.flush() : undefined)
+          : (failedChangesRef.current.length ? () => void retryFailedChanges() : undefined)}
+        idleReceipt={moduleId === "accounts" && connectionsFoot?.checkedAt ? <span data-testid="settings-checked">Checked {clockWord(connectionsFoot.checkedAt)}</span> : undefined}
         grantReceipt={grantAct ? (
           <GrantFootReceipt
             act={grantAct}

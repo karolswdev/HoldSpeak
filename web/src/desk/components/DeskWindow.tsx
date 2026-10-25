@@ -848,6 +848,8 @@ export interface DeskWindowFrameProps {
   /** On a scoped surface, Back clears the detail scope. At compact width the
    * shared head always says Back; without this callback it closes the pane. */
   onBack?: () => void;
+  /** The test id the compact Back carries while `onBack` is a core's step. */
+  backTestId?: string;
   /** Heavy content may unmount while minimized (default: stays mounted). */
   unmountOnMinimize?: boolean;
   /** Entrance spring (the Phase 93 slide-in). Default true. */
@@ -895,6 +897,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     onClose,
     beforeClose,
     onBack,
+    backTestId,
     unmountOnMinimize,
     entrance = true,
     rootStyle,
@@ -1351,6 +1354,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
             aria-label={compact ? `Back from ${name}` : `Close ${name}`}
             title={compact ? "Back" : `Close ${name}`}
             onClick={compact ? (onBack ?? requestClose) : requestClose}
+            data-testid={compact && onBack && backTestId ? backTestId : undefined}
           >
             {compact ? "‹ Back" : <GadgetGlyph kind="close" />}
           </Button>
