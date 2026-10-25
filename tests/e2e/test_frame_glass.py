@@ -1050,6 +1050,10 @@ def test_firefox_modern_shell_keeps_frame_and_control_ownership(
                 assert settings.evaluate("el=>{const r=el.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1}")
                 assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
                 page.screenshot(path=str(shots / f"settings-{width}.png"))
+                if width == 393:
+                    # The narrow Settings window opens its pane over the rail
+                    # (#1458); the frame's own Back returns to the rail.
+                    settings.get_by_test_id("settings-back").click()
                 settings.get_by_test_id("settings-index-you").click()
                 expect(settings.get_by_test_id("settings-index-you")).to_have_attribute("aria-current", "location")
                 assert not errors, errors
