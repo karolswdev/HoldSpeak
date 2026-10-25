@@ -377,7 +377,8 @@ class TestTheThoughtSends:
 
     def _note_action(self, page: Any, win: Any, width: int, name: str) -> Any:
         # Betterment Q8: the note's verbs never fold into More, at 393 too.
-        foot = win.locator(".thought-note-foot")
+        # Window grammar (2026-10-24): they are the toolbar under the title bar.
+        foot = win.locator(".thought-note-toolbar")
         action = foot.get_by_role("button", name=name, exact=True)
         action.wait_for(timeout=T)
         return action
@@ -394,7 +395,7 @@ class TestTheThoughtSends:
         win.locator(".thought-note-body .cm-content").wait_for(timeout=T)
         assert win.locator("[data-testid=thought-send]").count() == 0
         name = "Send…"
-        door = win.locator(".thought-note-foot").get_by_role("button", name=name, exact=True)
+        door = win.locator(".thought-note-toolbar").get_by_role("button", name=name, exact=True)
         page.wait_for_function("(el) => el.isConnected && el === document.activeElement", arg=door.element_handle(), timeout=T)
         assert door.is_visible()
         assert not page.get_by_role("menu", name="More actions", exact=True).count()
@@ -486,7 +487,7 @@ class TestTheThoughtSends:
                 assert opening_reads, "the initial workbench read was not held"
                 page.keyboard.type(SEND_WORDS)  # the opening key buffer owns these words
 
-                foot = win.locator(".thought-note-foot")
+                foot = win.locator(".thought-note-toolbar")
                 door = foot.get_by_role("button", name="Send…", exact=True)
                 opening = win.evaluate("""win => ({
                     loading: Boolean(win.querySelector('.thought-workspace-opening[aria-busy=true]')),
@@ -610,7 +611,8 @@ class TestTheThoughtSends:
                 note.click()
                 page.keyboard.press("End")
                 page.keyboard.type(" LOST")
-                foot.locator("[data-tone=danger]").first.wait_for(timeout=T)
+                # The refusal is the status bar's (window grammar 2026-10-24).
+                win.locator(".thought-note-foot [data-tone=danger]").first.wait_for(timeout=T)
                 self._tap(page, self._note_action(page, win, width, "Send…"))
                 page.wait_for_timeout(600)
                 after = self._db_sends(note_ref)

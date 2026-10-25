@@ -148,9 +148,10 @@ def test_uncertain_send_reload_keeps_the_exact_command(tmp_path: Path, monkeypat
             def open_send() -> Any:
                 win = page.locator(".thought-workspace-window").first
                 win.locator(".thought-note-body .cm-content").wait_for()
-                # Q8 keeps Send… directly in the note footer at both sizes.
-                # The Send well's own Send/Retry still owns dispatch.
-                win.locator(".thought-note-foot").get_by_role("button", name="Send…", exact=True).click()
+                # Q8 keeps Send… directly on the note at both sizes; the window
+                # grammar (2026-10-24) puts it on the toolbar. The Send well's
+                # own Send/Retry still owns dispatch.
+                win.locator(".thought-note-toolbar").get_by_role("button", name="Send…", exact=True).click()
                 well = win.locator("[data-testid=send-well]")
                 well.locator("[data-testid=send-preview-body]").wait_for()
                 return well

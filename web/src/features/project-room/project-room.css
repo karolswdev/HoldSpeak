@@ -1251,3 +1251,278 @@
   .room-plan-row > .room-row-title { flex: 0 1 auto; }
   .room-plan { gap: 0; padding-block: 8px; }
 }
+
+/* ══ Window grammar + delight (2026-10-24, lane note) ══════════════════
+   The Room is a native project window: a 36 px toolbar under the title bar
+   (Write update the one primary), a compact head (the project's glyph, the
+   state word in its colour with a lamp, the reason in ink, the objective in
+   one muted line), sans sentence-case section captions in the display face
+   with a hairline, and list rows edge to edge that lift on hover. Local
+   species; the kit's Toolbar (lane grammar) shares this geometry. */
+
+.desk-next .desk-surface-body:has(> .room-body) {
+  padding: 0;
+  background: color-mix(in srgb, var(--wb-paper) 90%, var(--desk-pill-accent));
+}
+
+.desk-next .room-body {
+  gap: 14px;
+  padding: 0 16px 16px;
+}
+
+
+.desk-next .room-body > .room-section-rise:first-of-type,
+.desk-next .room-body .room-head {
+  gap: 6px;
+}
+
+.desk-next .room-body .room-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--desk-z-local);
+  min-height: 36px;
+  margin: 0 -16px 6px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: auto;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: linear-gradient(180deg, var(--wb-paper) 0%, var(--wb-steel-2) 100%);
+}
+
+.desk-next .room-body .room-toolbar > .btn {
+  width: auto;
+  min-height: 28px;
+}
+
+.desk-next .room-body .room-toolbar > .btn--primary {
+  order: -1;
+  padding-inline: 14px;
+  font-weight: 650;
+}
+
+.desk-next .room-body .room-head-line {
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.desk-next .room-body .room-head-glyph {
+  flex: none;
+  width: 28px;
+  height: 28px;
+}
+
+.desk-next .room-body .room-head .room-headline {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 500 15px / 1.35 var(--font-ui);
+  letter-spacing: 0;
+  color: var(--wb-ink);
+}
+
+.desk-next .room-body .room-head .room-state-reason {
+  color: var(--wb-ink);
+}
+
+.desk-next .room-body .room-head .room-state-word {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 650;
+  color: var(--wb-ok-ink);
+}
+
+.desk-next .room-body .room-head .room-state-word::before {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--lamp-ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-ok) 22%, transparent);
+}
+
+.desk-next .room-body .room-headline[data-tone="warn"] .room-state-word { color: var(--wb-ember-ink); }
+.desk-next .room-body .room-headline[data-tone="warn"] .room-state-word::before {
+  background: var(--lamp-ask);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-ask) 26%, transparent);
+}
+.desk-next .room-body .room-headline[data-tone="danger"] .room-state-word { color: var(--wb-danger-ink); }
+.desk-next .room-body .room-headline[data-tone="danger"] .room-state-word::before {
+  background: var(--lamp-fail);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-fail) 24%, transparent);
+}
+.desk-next .room-body .room-headline:is([data-tone="muted"], [data-tone="info"]) .room-state-word { color: var(--wb-info-ink); }
+.desk-next .room-body .room-headline:is([data-tone="muted"], [data-tone="info"]) .room-state-word::before {
+  background: var(--lamp-info);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-info) 22%, transparent);
+}
+
+.desk-next .room-body .room-head .room-now-facts {
+  padding-left: 38px;
+  font: 400 12px / 1.4 var(--font-ui);
+  letter-spacing: 0;
+  color: var(--wb-muted);
+}
+
+.desk-next .room-body .room-head .room-head-outcome {
+  padding-left: 38px;
+  font: 400 13px / 1.4 var(--font-ui);
+  color: var(--wb-muted);
+}
+
+/* Section captions: the display face, sentence case, a hairline. */
+.desk-next .room-body .surface-section-head > h3,
+.desk-next .room-body .surface-section-head > :first-child:not(.btn) {
+  margin: 0;
+  font: 600 13px / 1.3 var(--font-display);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-ink);
+}
+
+.desk-next .room-body .room-now-group-title {
+  font: 600 12px / 1.3 var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-muted);
+}
+
+/* List rows, not cards in a well: edge to edge, 30 px, the object's glyph
+   first, one quiet meta, a lift on hover. */
+.desk-next .room-body .surface-ledger[data-cols="room"] {
+  border: 0;
+  border-top: 1px solid var(--wb-rule-soft);
+  background: transparent;
+  box-shadow: none;
+}
+
+.desk-next .room-body .surface-ledger[data-cols="room"] .surface-ledger-line {
+  min-height: 30px;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  font: 400 13px / 1.35 var(--font-ui);
+  transition:
+    background var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard);
+}
+
+.desk-next .room-body .surface-ledger[data-cols="room"] .surface-ledger-line:hover {
+  background: color-mix(in srgb, var(--wb-sel) 9%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-sel) 30%, transparent), 0 1px 0 color-mix(in srgb, var(--wb-sel) 18%, transparent);
+}
+
+.desk-next .room-body .surface-ledger[data-cols="room"] .surface-ledger-lead {
+  flex: 0 0 22px;
+  min-width: 22px;
+}
+
+.desk-next .room-body .room-row-sprite img {
+  width: 20px;
+  height: 20px;
+}
+
+.desk-next .room-body .surface-ledger[data-cols="room"] .surface-ledger-primary {
+  flex: 0 1 auto;
+  font: 500 13px / 1.35 var(--font-ui);
+  color: var(--wb-ink);
+}
+
+.desk-next .room-body .surface-ledger[data-cols="room"] .surface-primary {
+  font: 500 13px / 1.35 var(--font-ui);
+  color: var(--wb-ink);
+}
+
+.desk-next .room-body .surface-ledger[data-cols="room"] .room-why-token,
+.desk-next .room-body .surface-ledger[data-cols="room"] .room-why-token[data-tone] {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  display: inline;
+  font: 400 12px / 1.35 var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-muted) !important;
+}
+
+.desk-next .room-body .room-why-alert {
+  font-weight: 650;
+  color: var(--wb-danger-ink);
+}
+
+/* This week: plain lines; a reference reads as quiet words. */
+.desk-next .room-body .room-now-week {
+  padding: 4px 6px 0;
+  border-top: 1px solid var(--wb-rule-soft);
+}
+
+/* Sources and Plan: a disclosure row with its count, a hairline under it. */
+.desk-next .room-body .room-fold > .gadget-fold > summary {
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 0;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: transparent;
+  box-shadow: none;
+  font: 600 13px / 1.3 var(--font-display);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-ink);
+  transition: background var(--duration-short) var(--ease-standard);
+}
+
+.desk-next .room-body .room-fold > .gadget-fold > summary .gadget-fold-title {
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.desk-next .room-body .room-fold > .gadget-fold > summary:hover {
+  background: color-mix(in srgb, var(--wb-sel) 8%, transparent);
+}
+
+.desk-next .room-body .room-fold > .gadget-fold > summary .gadget-fold-token {
+  margin-left: auto;
+  font: 500 12px / 1 var(--font-ui);
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* No dead strip under the Room: the frame's empty foot is not drawn. */
+.desk-next .desk-surface-window:has(.room-body) > .desk-surface-foot:empty {
+  display: none;
+}
+
+@container surface (max-width: 559.9px) {
+  .desk-next .room-body .room-toolbar {
+    padding-block: 4px;
+  }
+  .desk-next .room-body .room-toolbar > .btn {
+    min-height: var(--desk-button-hit-size);
+  }
+  .desk-next .room-body .room-head .room-now-facts,
+  .desk-next .room-body .room-head .room-head-outcome {
+    padding-left: 0;
+  }
+  .desk-next .room-body .surface-ledger[data-cols="room"] .surface-ledger-line {
+    min-height: 44px;
+  }
+  /* A disclosure row is a chrome strip: the strip owns the 44 px target. */
+  .desk-next .room-body .room-fold > .gadget-fold > summary {
+    min-height: var(--desk-button-hit-size);
+  }
+}
+
+/* A fold's first and last verbs keep their 44 px halos clear of the
+   disclosure rows above and below them. */
+.desk-next .room-body .room-fold > .gadget-fold > .gadget-fold-body {
+  padding: 10px 0 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .room-body .surface-ledger[data-cols="room"] .surface-ledger-line { transition: none; }
+}

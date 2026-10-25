@@ -576,8 +576,9 @@ class TestOneNeedsYou:
                 if room_window.count():
                     text = room_window.first.inner_text()
                     # Betterment P3: the project's own filter of the one Needs
-                    # you list is named NEEDS YOU (DESIGN.md "The words").
-                    record["room"]["needs_you"] = bool(re.search(r"NEEDS YOU", text))
+                    # you list is named Needs you (DESIGN.md "The words"; the
+                    # window grammar of 2026-10-24 sets it in sentence case).
+                    record["room"]["needs_you"] = bool(re.search(r"Needs you", text, re.I))
                 self._shot(page, "a2w-room", width)
 
                 record["page_errors"] = errors

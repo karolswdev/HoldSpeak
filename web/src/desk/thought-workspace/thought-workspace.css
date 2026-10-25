@@ -4,6 +4,9 @@
    Phase 141/153 left this window with the owner's first-use verdict. */
 
 .desk-next .desk-pullout.thought-workspace-window {
+  /* Delight (2026-10-24): warm near-white paper, mixed from the paper and the
+     warm attention ground; the caret and selection in the Workbench blue. */
+  --thought-paper: color-mix(in srgb, var(--wb-paper) 90%, var(--desk-pill-accent));
   /* Thought opens as a 520 x 360 sticky. DeskWindow's fit-content mode
      leaves height to the material; these caps keep growth useful on a desk. */
   width: min(820px, calc(100vw - 48px));
@@ -63,48 +66,168 @@
   text-align: center;
 }
 
-/* ── Bands 1 + 2: the title and the note ── */
+/* ── Window grammar (2026-10-24): toolbar · editor · status bar ──
+   The Note is a native text window: a 36 px toolbar under the title bar
+   (verbs left, the field's voice control right, a 1 px rule under it), the
+   editor filling the rest edge to edge with a reading measure inside it, and
+   a 24 px status bar. Local species; the kit's Toolbar/StatusBar (lane
+   grammar) share this geometry and the orchestrator converges them. */
 
 .desk-next .thought-note-document {
-  /* Band 2 takes the free space and yields it when band 3 opens: a long
+  /* The editor takes the free space and yields it when band 3 opens: a long
      note must never squeeze the question's own pad out of reach. */
   flex: 1 1 0;
   min-height: 140px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   grid-auto-rows: auto;
-  gap: 12px;
-  padding: clamp(20px, 2.6vw, 34px) clamp(22px, 3.4vw, 44px) 14px;
-  background: var(--surface-1);
+  gap: 0;
+  padding: 0;
+  background: var(--thought-paper);
   user-select: text;
+}
+
+.desk-next .thought-note-toolbar {
+  grid-row: 1;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: linear-gradient(180deg, var(--wb-paper) 0%, var(--wb-steel-2) 100%);
+  user-select: none;
+}
+
+.desk-next .thought-note-toolbar-verbs {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
+.desk-next .thought-note-toolbar-verbs > .btn {
+  min-height: 28px;
+  gap: 6px;
+  transition:
+    background var(--duration-short) var(--ease-standard),
+    border-color var(--duration-short) var(--ease-standard),
+    box-shadow var(--duration-short) var(--ease-standard);
+}
+
+/* Quiet toolbar verbs read in ink, not the faint ghost grey, and lift a
+   little under the pointer; a press sinks. */
+.desk-next .thought-note-toolbar-verbs > .btn--ghost {
+  color: var(--wb-ink);
+  font-weight: 500;
+}
+
+.desk-next .thought-note-toolbar-verbs > .btn--ghost:hover:not(:disabled) {
+  border-color: var(--wb-rule);
+  background: var(--wb-paper);
+}
+
+.desk-next .thought-note-toolbar-verbs > .btn--ghost:active:not(:disabled) {
+  background: var(--wb-press);
+}
+
+.desk-next .thought-note-verb-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  image-rendering: auto;
+}
+
+/* Done: the one vivid blue plate. */
+.desk-next .thought-note-toolbar-verbs > .thought-note-primary {
+  padding-inline: 14px;
+  margin-inline-end: 6px;
+  font-weight: 650;
+}
+
+.desk-next .thought-note-toolbar-voice {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* The field's illustrated mic: the sprite itself, no grey square; a soft
+   paper ground under the pointer, the ember ring while it listens. */
+.desk-next .thought-note-toolbar-voice .desk-mic {
+  width: 32px;
+  height: 28px;
+  border-color: transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  transition: background var(--duration-short) var(--ease-standard), border-color var(--duration-short) var(--ease-standard);
+}
+
+.desk-next .thought-note-toolbar-voice .desk-mic img {
+  width: 22px;
+  height: 22px;
+}
+
+.desk-next .thought-note-toolbar-voice .desk-mic:hover:not(:disabled),
+.desk-next .thought-note-toolbar-voice .desk-mic:focus-visible {
+  border-color: var(--wb-rule);
+  background: var(--wb-paper);
+}
+
+.desk-next .thought-note-toolbar-voice .desk-mic:is(.is-listening, .is-busy) {
+  border-color: var(--lamp-ask);
+  background: color-mix(in srgb, var(--lamp-ask) 14%, var(--wb-paper));
+}
+
+.desk-next .thought-note-field {
+  grid-row: 2;
+  position: relative;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .desk-next .thought-note-title,
 .desk-next .thought-note-title.is-editing {
-  grid-row: 1;
+  flex: none;
   display: block;
   width: 100%;
+  max-width: calc(72ch + 2 * var(--thought-gutter, 22px));
   margin: 0;
-  padding: 2px 4px;
+  padding: 14px var(--thought-gutter, 22px) 0;
   border: 0;
-  border-radius: 2px;
+  border-radius: 0;
   text-align: left;
-  color: var(--text);
-  font: 650 clamp(22px, 2.5cqw, 29px)/1.2 var(--font-display);
-  letter-spacing: -0.02em;
+  color: var(--wb-ink);
+  font: 600 17px/1.4 var(--font-ui);
+  letter-spacing: 0;
   /* The title wraps to as many lines as it needs — presented AND while
      it is edited (HS-201-12: the owner's title was cut mid-sentence). */
   white-space: normal;
   overflow-wrap: anywhere;
 }
 
+/* The title is the page's first line, above the editor's own scroller (the
+   Ask return and caret checks read that scroller). It owns opaque paper and
+   a soft rule, so scrolled text ends cleanly under it, never behind it. */
+.desk-next .thought-note-title,
 .desk-next .thought-note-title.is-editing {
-  min-height: 2.4em;
+  max-width: none;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: var(--thought-paper, var(--wb-paper));
+}
+
+.desk-next .thought-note-title.is-editing {
+  min-height: 1.4em;
   resize: none;
   overflow-y: auto;
   field-sizing: content;
   background: var(--wash-1);
-  box-shadow: 0 0 0 1px var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .desk-next .thought-note-title.is-locked {
@@ -116,35 +239,11 @@
   color: var(--text-muted);
 }
 
-.desk-next .thought-note-field {
-  grid-row: 2;
-  position: relative;
-  min-height: 0;
-  height: 100%;
-}
-
 .desk-next .thought-note-field > .desk-editor {
+  flex: 1 1 0;
   min-height: 0;
-  height: 100%;
+  height: auto;
   display: block;
-}
-
-.desk-next .thought-note-field-mic {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  z-index: var(--desk-z-local);
-}
-
-.desk-next .thought-note-field-mic .desk-mic {
-  width: 28px;
-  height: 28px;
-  opacity: 0.7;
-}
-
-.desk-next .thought-note-field-mic .desk-mic:hover,
-.desk-next .thought-note-field-mic .desk-mic:focus-visible {
-  opacity: 1;
 }
 
 .desk-next .thought-note-body {
@@ -160,8 +259,8 @@
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  color: var(--text);
-  font: 400 15px/1.7 var(--font-ui);
+  color: var(--wb-ink);
+  font: 400 15px/1.65 var(--font-ui);
 }
 
 .desk-next .thought-note-body .cm-editor.cm-focused {
@@ -176,10 +275,35 @@
   font-family: var(--font-ui);
 }
 
+/* The reading measure: the text runs left-aligned at the gutter and never
+   wider than 72 characters, however wide the window. */
 .desk-next .thought-note-body .cm-content {
+  box-sizing: border-box;
   min-height: 100%;
-  padding: 2px 0 20px;
-  caret-color: var(--accent-hover);
+  width: 100%;
+  max-width: calc(72ch + 2 * var(--thought-gutter, 22px));
+  padding: 12px var(--thought-gutter, 22px) 20px;
+  caret-color: var(--wb-sel);
+}
+
+.desk-next .thought-note-body .cm-line {
+  padding: 0;
+}
+
+/* The caret in the Workbench blue (CodeMirror draws it; only its colour
+   changes here). */
+.desk-next .thought-note-body .cm-cursor {
+  border-color: var(--wb-sel);
+}
+
+.desk-next .thought-note-body .cm-selectionBackground,
+.desk-next .thought-note-body .cm-focused .cm-selectionBackground {
+  background: color-mix(in srgb, var(--wb-sel) 22%, transparent) !important;
+}
+
+.desk-next .thought-note-body .cm-placeholder {
+  color: var(--wb-muted);
+  font-style: italic;
 }
 
 .desk-next .thought-note-body .cm-thought-answer-reveal {
@@ -187,12 +311,10 @@
   box-shadow: inset 2px 0 0 var(--ok);
 }
 
-.desk-next .thought-note-document > .surface-well {
-  min-width: 0;
-}
-
+.desk-next .thought-note-document > .surface-well,
 .desk-next .thought-note-document > .reading-object-links {
   min-width: 0;
+  margin: 0 var(--thought-gutter, 22px) 10px;
 }
 
 .desk-next .thought-workspace-window.is-sheet .reading-object-links-list {
@@ -229,7 +351,7 @@
   flex: none;
   max-height: 58%;
   overflow-y: auto;
-  padding: 10px clamp(22px, 3.4vw, 44px) 14px;
+  padding: 10px var(--thought-gutter, 22px) 14px;
   border-top: 1px solid var(--border-strong);
   background: var(--surface-2);
 }
@@ -244,9 +366,7 @@
 
 .desk-next .thought-note-ask-label {
   color: var(--text-faint);
-  font: 700 var(--font-size-xs)/1 var(--font-mono);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font: 600 12px/1.3 var(--font-ui);
 }
 
 .desk-next .thought-note-ask-row > .btn {
@@ -267,9 +387,7 @@
 
 .desk-next .thought-note-ask-kicker {
   color: var(--accent-hover);
-  font: 700 var(--font-size-xs)/1 var(--font-mono);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font: 600 12px/1.3 var(--font-ui);
 }
 
 .desk-next .thought-note-ask-text {
@@ -303,7 +421,7 @@
 .desk-next .thought-note-line {
   flex: none;
   margin: 0;
-  padding: 7px clamp(22px, 3.4vw, 44px);
+  padding: 7px var(--thought-gutter, 22px);
   border-top: 1px solid var(--border-subtle);
   background: var(--surface-2);
   color: var(--text-muted);
@@ -320,7 +438,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 16px;
-  padding: 10px clamp(22px, 3.4vw, 44px);
+  padding: 10px var(--thought-gutter, 22px);
   border-top: 1px solid var(--border-subtle);
   background: var(--surface-2);
 }
@@ -348,7 +466,7 @@
   flex: none;
   display: grid;
   gap: 10px;
-  padding: 10px clamp(22px, 3.4vw, 44px);
+  padding: 10px var(--thought-gutter, 22px);
   border-top: 1px solid var(--border-subtle);
   background: var(--surface-2);
 }
@@ -421,76 +539,90 @@
   font-size: 12px;
 }
 
-/* ── Band 4: the foot ── */
+/* ── The status bar (window grammar, 2026-10-24) ──
+   24 px, sans 12 muted: the save state on the left. A failed or conflicted
+   save adds its one recovery verb at the right, and only then does the bar
+   grow to the verb's height. */
 
-/* Astra finding 5, corrected in round 2 — a long context name must not
-   push the verbs off the glass, AND it must stay readable: the READS slot
-   is the only one that gives width, and it WRAPS (two lines at narrow
-   width) instead of ellipsizing.  KEPT keeps its floor, the verbs keep
-   their size, and the foot grows by a line. */
+.desk-next .surface-footer:has(.thought-note-foot) {
+  height: auto;
+  min-height: 24px;
+  padding: 0 24px 0 var(--thought-gutter, 22px);
+  border-top: 1px solid var(--wb-rule-soft);
+  background: var(--thought-paper);
+}
+
 .desk-next .surface-footer-layout.thought-note-foot,
-.desk-next .surface-footer-layout.thought-note-foot:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
-  /* PHILO-17 (Astra r1, B27): the verbs are the library's wrapping group
-     (surface-footer.css); the column is never wider than the verbs and
-     never narrower than the widest one, so they wrap, not overflow. The
-     selector carries the library's `:has` so this grid wins over it.
-     PHILO-3-04 counsel (Astra, condition 1): the receipt column is `auto`,
-     not `max-content` — it takes its full width when there is room and
-     wraps when there is not, so a long cause or drawer name never pushes
-     the verbs off the glass. READS keeps a floor of 10ch. */
-  grid-template-columns: minmax(10ch, 1fr) auto minmax(min-content, max-content);
-  padding: 5px 0;
+.desk-next .surface-footer-layout.thought-note-foot:has(> .surface-footer-verbs > *) {
+  min-height: 24px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "receipt verbs";
+  align-items: center;
+  column-gap: var(--space-2);
+  padding: 0;
 }
 
 .desk-next .thought-note-foot .surface-footer-egress {
+  display: none;
+}
+
+.desk-next .thought-note-foot .surface-footer-receipt {
+  min-height: 0;
+}
+
+.desk-next .thought-note-foot .surface-footer-receipt {
   min-width: 0;
+  padding: 0;
+  justify-content: flex-start;
   align-items: center;
-}
-
-.desk-next .thought-note-foot .surface-footer-receipt {
-  min-width: 4ch;
-  padding-inline: 12px;
-}
-
-.desk-next .thought-note-foot .thought-note-reads {
-  min-width: 0;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  line-height: 1.45;
-}
-
-.desk-next .surface-footer:has(.thought-note-foot) {
-  /* `auto` height: the foot grows by a line when the context name wraps. */
-  height: auto;
-  min-height: 44px;
-  padding: 0 12px;
-}
-
-.desk-next .thought-note-foot .btn {
-  min-height: 30px;
-}
-
-/* PHILO-3-04 — the write receipt keeps its sentence case. */
-.desk-next .thought-note-foot .surface-footer-receipt {
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 2px;
-}
-
-.desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line {
-  text-transform: none;
-}
-
-.desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line[data-line="filing"] {
-  color: var(--text-faint);
 }
 
 .desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line {
   max-width: 100%;
+  color: var(--wb-muted);
+  font: 400 12px/1.5 var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
   white-space: normal;
   overflow-wrap: anywhere;
-  text-align: end;
+  text-align: start;
+}
+
+.desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line[data-tone="danger"] {
+  color: var(--wb-danger-ink);
+}
+
+/* A small lamp before the words: green kept, blue saving, red refused. */
+.desk-next .thought-note-foot .thought-note-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.desk-next .thought-note-foot .thought-note-status::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lamp-ok);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lamp-ok) 22%, transparent);
+}
+
+.desk-next .thought-note-foot .thought-note-status[data-lamp="busy"]::before {
+  background: var(--lamp-info);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lamp-info) 22%, transparent);
+}
+
+.desk-next .thought-note-foot .thought-note-status[data-lamp="danger"]::before {
+  background: var(--lamp-fail);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lamp-fail) 22%, transparent);
+}
+
+.desk-next .thought-note-foot .surface-footer-verbs .btn {
+  min-height: 24px;
+  margin-block: 2px;
 }
 
 /* The shell rule — and the ONLY viewport rule here: it sizes the window
@@ -515,24 +647,12 @@
    the foot stacks so a long context name never pushes KEPT or the verbs
    off the glass, and every verb keeps a touch target. */
 @container surface (max-width: 560px) {
-  .desk-next .surface-footer:has(.thought-note-foot) {
-    height: auto;
-    padding: 4px 12px;
+  .desk-next .thought-note-window {
+    --thought-gutter: 16px;
   }
 
-  .desk-next .surface-footer-layout.thought-note-foot,
-  .desk-next .surface-footer-layout.thought-note-foot:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
-    grid-template-columns: minmax(0, 1fr) minmax(min-content, max-content);
-    grid-template-areas: "egress verbs" "receipt verbs";
-    row-gap: 3px;
-  }
-
-  .desk-next .thought-note-foot .surface-footer-receipt {
-    justify-content: flex-start;
-  }
-
-  .desk-next .thought-note-document {
-    padding: 18px 18px 12px;
+  .desk-next .thought-note-toolbar {
+    padding: 0 var(--space-1);
   }
 
   /* Chrome Buttons do not carry the global `.btn` touch halo. The title is
@@ -544,44 +664,12 @@
     margin-block: 0;
   }
 
-  .desk-next .thought-note-title {
-    font-size: 23px;
-  }
-
-  /* Give the note mic its own grid column. The previous absolute placement
-     sat over CodeMirror's sibling content, so the left side of its target
-     lost hit points at 393 px. */
-  .desk-next .thought-note-field {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--desk-button-hit-size);
-    column-gap: 8px;
-  }
-
-  .desk-next .thought-note-field > .desk-editor {
-    grid-column: 1;
-    min-width: 0;
-  }
-
-  .desk-next .thought-note-field-mic {
-    position: static;
-    grid-column: 2;
-    align-self: end;
-    justify-self: end;
-    width: var(--desk-button-hit-size);
-    height: var(--desk-button-hit-size);
-  }
-
-  .desk-next .thought-note-field-mic .desk-mic {
-    width: var(--desk-button-hit-size);
-    height: var(--desk-button-hit-size);
-  }
-
   .desk-next .thought-note-ask,
   .desk-next .thought-note-line,
   .desk-next .thought-reads-well,
   .desk-next .thought-action-well {
-    padding-left: 18px;
-    padding-right: 18px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .desk-next .thought-action-well-row {
@@ -593,31 +681,43 @@
   .desk-next .thought-note-foot .btn {
     min-height: 40px;
   }
+}
 
-  /* PHILO-3-04 — the receipt takes the whole second row (the SurfaceFooter
-     narrow default) so its two lines never wrap beside the verbs. */
-  .desk-next .surface-footer-layout.thought-note-foot,
-  .desk-next .surface-footer-layout.thought-note-foot:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
-    grid-template-areas: "egress verbs" "receipt receipt";
-  }
+/* The phone sheet: each toolbar verb owns its 44 px target; the verbs wrap
+   to a second row rather than fold away (Betterment Q8). */
+.desk-next .thought-workspace-window.is-sheet .thought-note-toolbar-verbs > .btn {
+  min-height: var(--desk-button-hit-size);
+  min-width: var(--desk-button-hit-size);
+  position: relative;
+  justify-content: center;
+}
 
-  .desk-next .thought-note-foot .surface-footer-receipt {
-    align-items: flex-start;
-    height: auto;
-    padding-inline: 0;
-  }
+/* On the phone the toolbar is one row of illustrated verbs; each word stays
+   the Button's accessible name. */
+.desk-next .thought-workspace-window.is-sheet .thought-note-verb-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
-  .desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line {
-    text-align: start;
-  }
+.desk-next .thought-workspace-window.is-sheet .thought-note-verb-icon {
+  width: 24px;
+  height: 24px;
+}
 
-  /* The full desktop action group can fill a narrow window. Context owns
-     a row before those wrapping verbs; the compact Finish/More layout
-     has no group wrapper and keeps its existing allocation. */
-  .desk-next .surface-footer-layout.thought-note-foot:has(> .surface-footer-verbs > .surface-footer-verbs-group) {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "egress" "verbs" "receipt";
-  }
+.desk-next .thought-workspace-window.is-sheet .thought-note-toolbar-voice,
+.desk-next .thought-workspace-window.is-sheet .thought-note-toolbar-voice .desk-mic {
+  width: var(--desk-button-hit-size);
+  height: var(--desk-button-hit-size);
+}
+
+/* The square owns its whole target: a rounded corner gives a corner point
+   to the toolbar behind it (hit testing follows the radius). */
+.desk-next .thought-workspace-window.is-sheet .thought-note-toolbar-voice .desk-mic {
+  border-radius: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -632,7 +732,7 @@
   flex: none;
   max-height: 46%;
   overflow-y: auto;
-  padding: 8px clamp(22px, 3.4vw, 44px) 12px;
+  padding: 8px var(--thought-gutter, 22px) 12px;
   border-top: 1px solid var(--border-strong);
   background: var(--surface-2);
 }

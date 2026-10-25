@@ -40,6 +40,7 @@ export function EditingReference({ preset }: { preset: EditingPreset }) {
   const delivery = useRef<((text: string) => void) | null>(null);
   const [captured, setCaptured] = useState(false);
   const [openedLink, setOpenedLink] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
 
   return <section className="reference-example reference-editing" data-testid="reference-editing" aria-label="Editing pattern">
     <div className="reference-example-head">
@@ -56,11 +57,13 @@ export function EditingReference({ preset }: { preset: EditingPreset }) {
         voiceDraftIO={voiceDraftIO}
         onOpenLink={setOpenedLink}
         mic={false}
+        verbs={<Button dense variant="primary" disabled={readOnly} onClick={() => setDone(true)}>Done</Button>}
         voiceInput={(bindText, disabled) => <Button dense variant="ghost" disabled={disabled}
           onClick={() => { delivery.current = bindText(); setCaptured(true); }}>Capture target</Button>}
       />
     </div>
     {openedLink ? <div role="status" className="reference-actions">Opened locally: {openedLink}</div> : null}
+    {done ? <div role="status" className="reference-actions">Done locally</div> : null}
     {captured ? <div className="reference-actions">
       <Button dense variant="primary" onClick={() => {
         const deliver = delivery.current;

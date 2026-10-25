@@ -124,10 +124,10 @@ describe("PHILO-3-04 the thought's receipt", () => {
     await openAndEdit();
     // Inside the 450 ms wait: nothing is sent yet, the foot already says so.
     expect(patchCalls()).toHaveLength(0);
-    expect(writeLine()).toHaveTextContent(/^SAVING…$/);
+    expect(writeLine()).toHaveTextContent(/^Saving…$/);
     // The PATCH in flight.
     await waitFor(() => expect(patchCalls()).toHaveLength(1));
-    expect(writeLine()).toHaveTextContent(/^SAVING…$/);
+    expect(writeLine()).toHaveTextContent(/^Saving…$/);
     await act(async () => { answer.resolve({ thought: written(), workbench: projection(written()) }); });
     await waitFor(() => expect(writeLine()).toHaveTextContent(receiptOf(WRITTEN)));
     // The time is the response's last_modified — never the loaded stamp, never the client clock.
@@ -144,7 +144,7 @@ describe("PHILO-3-04 the thought's receipt", () => {
       return { thought: written(), workbench: projection(written()) };
     });
     const body = await openAndEdit();
-    await waitFor(() => expect(writeLine()).toHaveTextContent(/^DID NOT SAVE · THE HUB DID NOT ANSWER$/));
+    await waitFor(() => expect(writeLine()).toHaveTextContent(/^Did not save · the hub did not answer$/));
     expect(writeLine()).toHaveAttribute("data-tone", "danger");
     expect(body).toHaveValue("Drain the queue first");
     expect(screen.queryByText(/Could not save|Try again|Retry save/)).not.toBeInTheDocument();
@@ -158,7 +158,7 @@ describe("PHILO-3-04 the thought's receipt", () => {
   it.each([422, 500])("DID NOT SAVE · THE HUB DID NOT ACCEPT THE CHANGE on HTTP %i", async (status) => {
     wire(async () => { throw new ApiError(status, "refused", { error: "refused" }); });
     await openAndEdit();
-    await waitFor(() => expect(writeLine()).toHaveTextContent(/^DID NOT SAVE · THE HUB DID NOT ACCEPT THE CHANGE$/));
+    await waitFor(() => expect(writeLine()).toHaveTextContent(/^Did not save · the hub did not accept the change$/));
     expect(writeLine()).toHaveAttribute("data-tone", "danger");
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     expect(filingLine()).toBeNull();
@@ -168,7 +168,7 @@ describe("PHILO-3-04 the thought's receipt", () => {
     const elsewhere: Thought = { ...thought, aggregate_revision: 9, working_revision: 7, working_note: { ...thought.working_note, body_markdown: "The hub's version" } };
     wire(async () => { throw new ApiError(409, "conflict", { error: "thought_revision_conflict", context: { current: elsewhere } }); });
     await openAndEdit();
-    await waitFor(() => expect(writeLine()).toHaveTextContent(/^CHANGED ELSEWHERE$/));
+    await waitFor(() => expect(writeLine()).toHaveTextContent(/^Changed elsewhere$/));
     expect(writeLine()).toHaveAttribute("data-tone", "danger");
     expect(screen.getByRole("button", { name: "Reload" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();

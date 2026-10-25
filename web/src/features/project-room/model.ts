@@ -1313,7 +1313,7 @@ export function healthReasonWords(health: Pick<RoomHealthData, "reason" | "input
 export function needsYouWhyWords(item: { source: string; kind?: string; why: string }): string {
   if (item.source === "item" && item.kind === "milestone") {
     const m = /^OVERDUE · (\d+ DAYS?)$/.exec(item.why.trim());
-    if (m) return `MILESTONE · ${m[1]} LATE`;
+    if (m) return `Milestone · ${m[1].toLowerCase()} late`;
   }
   return item.why;
 }

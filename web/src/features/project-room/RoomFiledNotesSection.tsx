@@ -66,6 +66,8 @@ export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState,
   const pendingNotes = useRef(new Map<string, AbortController>());
   const returnGeneration = useRef(0);
   const openGeneration = useRef(0);
+  // The last settled read held no filed Note (see the hidden fold below).
+  const lastReadEmpty = useRef(false);
   const [returnReceipt, setReturnReceipt] = useState("");
   const [returnTarget, setReturnTarget] = useState<NoteRef | null>(null);
   const [focusRequest, setFocusRequest] = useState<{ ref: NoteRef; seq: number } | null>(null);
@@ -168,6 +170,8 @@ export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState,
     return { id: ref, kind: "note", name };
   });
   const retainedLoading = resourcesState === "loading" && rows.length > 0;
+  if (resourcesState === "ok") lastReadEmpty.current = noteRefs.length === 0;
+  else if (resourcesState === "failed") lastReadEmpty.current = false;
   const selectedRead = selectedRef ? noteReads[selectedRef] : undefined;
   const failedNote = noteRefs.find((ref) => noteReads[ref]?.state === "failed");
   const canOpen = resourcesState === "ok" && selectedRef && noteRefs.includes(selectedRef) &&
@@ -201,7 +205,12 @@ export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState,
   };
   const sortBy = (key: ObjectSortKey) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }));
 
-  if (!noteRefs.length && resourcesState === "ok" && !returnReceipt) return null;
+  // Ordinary loading moves no pointer target: a Project whose last read
+  // held no filed Note keeps the fold out of the Room while it reads again,
+  // so Sources and Plan below it never jump by a fold row (the 393 held-read
+  // fences). A first read, a failure or a receipt still draws the fold.
+  if (!noteRefs.length && !returnReceipt &&
+      (resourcesState === "ok" || (resourcesState === "loading" && lastReadEmpty.current))) return null;
   return <div className="room-fold" data-testid="room-fold-files" ref={host}>
     <FoldGadget title="Files" token={resourcesState === "ok" && noteRefs.length ? noteRefs.length : undefined}
       open={expanded || undefined} onToggle={setExpanded}>

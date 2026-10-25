@@ -1651,7 +1651,7 @@ class TestRoomFaceGlass:
                 room = _api(page, "GET", f"/api/projects/{pid}/room", token=RF_TOKEN)
                 first = self._facts(page)
                 _rf_shot(page, "items-late-first-view", width)
-                assert first["items_head"] == "PLAN 5", first["items_head"]
+                assert first["items_head"].upper() == "PLAN 5", first["items_head"]
                 plan = page.get_by_test_id("room-fold-plan").locator("details")
                 if not plan.evaluate("el => el.open"):
                     plan.locator("summary").click()
@@ -1671,7 +1671,7 @@ class TestRoomFaceGlass:
                 # date (TODAY between the past and the future), the undated
                 # after; the most late milestone on the LATE plate; plain pills.
                 rows = facts["item_rows"]
-                assert facts["items_head"] == "PLAN 5", facts["items_head"]
+                assert facts["items_head"].upper() == "PLAN 5", facts["items_head"]
                 assert facts["item_titles"] == ["Parallel run", "Cutover rehearsal", "Vendor shadow run",
                                                 "Ledger go-live", "Old ledger freeze slips"], facts["item_titles"]
                 assert "7 days late" in rows[1] and "Milestone" in rows[1] and "LATE" in rows[1]
@@ -1708,7 +1708,7 @@ class TestRoomFaceGlass:
                 retry = self._pointer(page, width, ["[data-testid=items-retry]"])
                 _rf_record("items-unavailable", width, {**failed, "pointer": retry})
                 _rf_shot(page, "items-unavailable", width)
-                assert failed["items_head"] and failed["items_head"].startswith("PLAN"), failed["items_head"]
+                assert failed["items_head"] and failed["items_head"].upper().startswith("PLAN"), failed["items_head"]
                 assert all(not p["not_owned"] for p in retry), retry
                 page.unroute("**/api/projects/*/items?*")
                 page.locator("[data-testid=items-retry]").click()
@@ -1750,7 +1750,8 @@ class TestRoomFaceGlass:
                 assert [i["why"] for i in room["needsYou"]["items"]] == ["OVERDUE · 7 DAYS"]
                 assert reason == "At risk: Cutover rehearsal is 7 days late", reason
                 assert "OVERDUE" not in reason
-                assert why == ["MILESTONE · 7 DAYS LATE"], why
+                # Window grammar (2026-10-24): quiet sentence-case words, the lateness red.
+                assert why == ["Milestone · 7 days late"], why
                 assert not errors, errors
             finally:
                 browser.close()

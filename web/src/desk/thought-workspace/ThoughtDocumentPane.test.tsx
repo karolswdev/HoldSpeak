@@ -20,9 +20,12 @@ describe("ThoughtDocumentPane — bands 1 and 2", () => {
     expect(screen.queryByRole("button", { name: "Add tag" })).not.toBeInTheDocument();
     expect(screen.queryByText(/^Filed$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^Saved$/)).not.toBeInTheDocument();
-    // The note field carries its OWN mic (the voice law), inside the field.
+    // The note field carries its OWN mic (the voice law). Window grammar
+    // (2026-10-24): it sits at the right end of the note's toolbar, not
+    // floating in the body.
     const mic = screen.getByRole("button", { name: /Speak the note/ });
-    expect(mic.closest(".thought-note-field")).not.toBeNull();
+    expect(mic.closest(".thought-note-toolbar-voice")).not.toBeNull();
+    expect(screen.getByRole("toolbar", { name: "Note actions" })).toContainElement(mic);
   });
 
   it("Betterment Q8: no heading repeats the first line; the title bar names the note", () => {

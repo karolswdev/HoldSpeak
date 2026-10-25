@@ -33,6 +33,7 @@ import {
 } from "../../desk/surface";
 import { RunLine } from "../../desk/surface";
 import { useCompactViewport } from "../../desk/useCompactViewport";
+import { spriteUrl } from "../../desk/sprites";
 import {
   PENDING_PLACE, ROOM_READS_CAP_MS, RoomReadsContext, RoomSlotContext, placeResolved, unresolvedSlots,
   useRoomRead, withRead, type SlotReads,
@@ -299,16 +300,30 @@ export function kindToPhrase(kind: string): string {
  *  opens from it. */
 function RoomHeadline({ line }: { line: StateLine }) {
   const open = line.ref ? refOpener(line.ref) : null;
+  // Window grammar (2026-10-24): the state word leads in its colour with a
+  // lamp; the reason follows in ink. The words stay one line of text.
+  const split = line.text.indexOf(": ");
+  const words = split > 0
+    ? <><span className="room-state-word">{line.text.slice(0, split + 1)}</span>{" "}<span className="room-state-reason">{line.text.slice(split + 2)}</span></>
+    : <span className="room-state-word">{line.text}</span>;
   return (
-    <span className="surface-display room-headline" data-testid="room-headline" data-tone={line.tone}>
+    <span className="room-headline" data-testid="room-headline" data-tone={line.tone}>
       {open ? (
         <Button variant="chrome" className="room-headline-open" data-testid="room-headline-open"
           aria-label={`${line.text}. Open the source`} onClick={open}>
-          {line.text}
+          {words}
         </Button>
-      ) : line.text}
+      ) : words}
     </span>
   );
+}
+
+/** A Needs you row's why, in quiet words; a late milestone's lateness is
+ *  the one red word. */
+function WhyWords({ words, alert }: { words: string; alert: boolean }) {
+  const split = alert ? words.lastIndexOf(" · ") : -1;
+  if (split < 0) return <>{words}</>;
+  return <>{words.slice(0, split + 3)}<span className="room-why-alert">{words.slice(split + 3)}</span></>;
 }
 
 function RoomHead({
@@ -357,12 +372,9 @@ function RoomHead({
       <span ref={nameRef} className="room-head-name-measure" aria-hidden="true">
         {room.project.name}
       </span>
-      <div className="room-head-line">
-        <RoomHeadline line={stateLine(room, Boolean(sourceWord?.stale))} />
-        {room.project.isArchived ? (
-          <span className="kit-pill" data-tone="danger" data-dot="">ARCHIVED</span>
-        ) : null}
-        <span className="room-head-trailing surface-verbs-actions">
+      {/* Window grammar (2026-10-24): the window's verbs are the toolbar
+          under the title bar, Write update the one primary. */}
+      <div className="room-toolbar room-head-trailing surface-verbs-actions" role="toolbar" aria-label="Project actions">
           {pendingCount > 0 ? <Button dense variant={quiet ? "secondary" : "primary"}
             loading={reviewCtrl.loading} onClick={() => void reviewCtrl.enterReview()} data-testid="room-head-review">
             Review {pendingCount}
@@ -378,7 +390,14 @@ function RoomHead({
           >
             Write update
           </Button>
-        </span>
+      </div>
+      <div className="room-head-line">
+        <img className="room-head-glyph desk-chrome-sprite" src={spriteUrl("project", room.project.id, "rest", null, 32)}
+          alt="" width={28} height={28} draggable={false} />
+        <RoomHeadline line={stateLine(room, Boolean(sourceWord?.stale))} />
+        {room.project.isArchived ? (
+          <span className="kit-pill" data-tone="danger" data-dot="">Archived</span>
+        ) : null}
       </div>
       {facts.length || sourceFact ? (
         <p className="room-now-facts" data-testid="room-head-facts">
@@ -429,7 +448,7 @@ function RoomHead({
 function HealthNotRead({ onRetry }: { onRetry: () => void }) {
   return (
     <SurfaceSection
-      label="HEALTH"
+      label="Health"
       actions={<Button dense variant="ghost" onClick={onRetry} data-testid="health-retry">Retry</Button>}
     >
       <span data-testid="health-not-read">
@@ -681,7 +700,7 @@ function NeedsYouSection({
 
   // Absent when empty (no counters of zero); a Review still has its verb.
   if (items.length === 0) {
-    return reviewAction ? <SurfaceSection label="NEEDS YOU" actions={reviewAction} /> : null;
+    return reviewAction ? <SurfaceSection label="Needs you" actions={reviewAction} /> : null;
   }
 
   // Build a lookup from proposalId to the full proposal data
@@ -697,7 +716,7 @@ function NeedsYouSection({
   return (
     // No count: "needs you" with a number is the desk's one number
     // (PHILO-13-03); the project's filter says the rows themselves.
-    <SurfaceSection label="NEEDS YOU" actions={reviewAction} data-testid="room-needs-you">
+    <SurfaceSection label="Needs you" actions={reviewAction} data-testid="room-needs-you">
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows">
           {items.map((item, i) => {
@@ -839,7 +858,7 @@ function NeedsYouSection({
                       data-tone={severityTone(item.severity)}
                       data-testid="needs-you-why"
                     >
-                      {needsYouWhyWords(item)}
+                      <WhyWords words={needsYouWhyWords(item)} alert={item.source === "item" && item.kind === "milestone"} />
                     </span>
                     <FlightChip flight={flight} />
                   </span>

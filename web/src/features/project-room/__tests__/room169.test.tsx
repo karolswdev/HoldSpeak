@@ -293,11 +293,12 @@ describe("HS-169-03: SOURCES section", () => {
 /* ── Room head ── */
 
 describe("HS-169-03: Room head", () => {
-  it("says the state at the display step (Betterment P3: never a count)", async () => {
+  it("says the state as its word, never a count; the window grammar (2026-10-24) retires the display step", async () => {
     render(<WindowHarness scope="project:p1" />);
     const headline = await screen.findByTestId("room-headline");
     expect(headline.textContent).toBe("At risk");
-    expect(headline.classList.contains("surface-display")).toBe(true);
+    expect(headline.classList.contains("surface-display")).toBe(false);
+    expect(headline.querySelector(".room-state-word")).toHaveTextContent("At risk");
     expect(headline.getAttribute("data-tone")).toBe("warn");
   });
 
@@ -368,7 +369,7 @@ describe("HS-169-03: Room head", () => {
 
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-head");
-    expect(screen.getByText("ARCHIVED")).toBeTruthy();
+    expect(screen.getByText("Archived")).toBeTruthy();
   });
 
   it("renders Write update button (Betterment P1)", async () => {
@@ -398,13 +399,14 @@ describe("HS-169-03: POST /room/read timing", () => {
 /* ── exactly one display-step element ── */
 
 describe("HS-169-03: display step", () => {
-  it("has exactly one surface-display element in the Room wing", async () => {
+  it("has no display headline in the Room wing: the title bar names the window (window grammar 2026-10-24)", async () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
 
-    const displays = document.querySelectorAll(".room-body .surface-display");
-    expect(displays.length).toBe(1);
-    expect(displays[0].textContent).toBe("At risk");
+    expect(document.querySelectorAll(".room-body .surface-display")).toHaveLength(0);
+    // The one primary verb sits on the toolbar under the title bar.
+    const toolbar = screen.getByRole("toolbar", { name: "Project actions" });
+    expect(toolbar).toContainElement(screen.getByTestId("updates-verb"));
   });
 });
 
