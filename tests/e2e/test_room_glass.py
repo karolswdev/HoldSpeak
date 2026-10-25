@@ -1154,8 +1154,9 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
             ).first
             _settle(page)
             roster = people_window.inner_text()
-            assert "1 ON THIS PROJECT" in roster and "Marek Kubiak" in roster
-            assert "2 MORE · Everyone" in roster
+            # Window grammar (#1461): the status bar count is sentence case.
+            assert "1 on this project" in roster and "Marek Kubiak" in roster
+            assert "2 more · Everyone" in roster
             assert "Priya Nair" not in roster
             if width <= 480:
                 over = _overflowing(page, width)
@@ -2439,8 +2440,10 @@ class TestRowsHoldStill(_Rig):
             browser, page, errors = self._page(pw, width)
             try:
                 page.add_style_tag(content=STILL)
-                # Add sources' connections read (three provider rows, 368 px).
-                _hold(page, "**/api/connections*", hold)
+                # The Sources slot's own read (its repository). Since #1456
+                # Add source is explicit, so the Room no longer reads
+                # /api/connections on open; holding it held nothing.
+                _hold(page, "**/api/projects/p-ledger/repository", hold)
                 room = self._open_room(page, width, int(hold * 1000) + 3500)
                 _settle(page)
                 tag = "2s5" if hold < 5 else "cap"
@@ -2453,12 +2456,12 @@ class TestRowsHoldStill(_Rig):
                     # and the late section held its place with one line
                     verb = next(r for r in room if r["name"] == "updates-verb")
                     assert verb["at"] < hold * 1000, verb
-                    # the late Sources section stands at the foot, its rows drawn
-                    order = page.locator("#surface-project-memory [data-testid='room-add-sources']").evaluate(
+                    # the late Sources section stands at the foot, its fold drawn
+                    order = page.locator("#surface-project-memory [data-testid='room-fold-sources']").evaluate(
                         "e => getComputedStyle(e.closest('.room-section-rise')).order")
                     assert order == "1", order
-                    assert page.locator("#surface-project-memory [data-testid^='door-row-']").count(), \
-                        "the held read never drew its rows"
+                    assert page.locator("#surface-project-memory [data-testid=room-add-source]").count(), \
+                        "the held read never drew its section"
                 assert not _moved(room), _moved(room)
                 assert not errors, errors
             finally:
@@ -2572,7 +2575,9 @@ class TestLateSectionsHoldStill(_Rig):
                 # The cap is 8 s after the Room's own read (~1 s after these
                 # holds start): PLAN lands at ~10 s, SOURCES at ~11.5 s.
                 # P3 parked Files; both active reads still exercise ordering.
-                _hold_in_page(page, r"/api/connections$", 11.5)
+                # Sources' own read is its repository (#1456: Add source is
+                # explicit; the Room reads no /api/connections on open).
+                _hold_in_page(page, r"/api/projects/p-ledger/repository$", 11.5)
                 _hold_in_page(page, r"/api/projects/p-ledger/items(?:\?|$)", 10.0)
                 # Both late sections stand at the foot, below the fold at 393:
                 # every drawn row counts here, on screen or not.
@@ -2586,7 +2591,7 @@ class TestLateSectionsHoldStill(_Rig):
                 assert 8000 < plan["at"] < sources["at"], (plan, sources)
                 assert plan["last"] < sources["last"], (plan, sources)
                 assert plan["worst"] <= TOLERANCE and sources["worst"] <= TOLERANCE, (plan, sources)
-                assert page.locator("#surface-project-memory [data-testid^='door-row-']").count()
+                assert page.locator("#surface-project-memory [data-testid=room-add-source]").count()
                 assert not _moved(room), _moved(room)
                 assert not errors, errors
             finally:

@@ -483,14 +483,20 @@ export function AskPanel() {
     // gets a new window id; the return request must name that actual target.
     const targetWindow = `pullout:${live?.id ?? selectedPassage.noteRef}`;
     requestAskReturn({ ...selectedPassage, windowId: targetWindow });
+    const navigation = { projectReturn: selectedPassage.projectReturn ?? null };
     if (live) {
+      // The live window already shows this Note: it comes to the front now.
+      // The qualified opener rereads Desk items first and raised it seconds
+      // later: Ask covered the caret, and a later To back was undone.
       setSourceReturnReceipt("");
-    } else {
-      setSourceReturnReceipt(sourceWindow ? "SOURCE WINDOW CLOSED" : "SOURCE WINDOW NOT FOUND");
+      desk.openPullout(selectedPassage.noteRef, undefined, navigation);
+      desk.restorePanel(targetWindow);
+      return;
     }
-    // The qualified opener rereads Desk items before raising even a live
-    // Note; a vanished cache entry must not repaint a same-id other object.
-    openRef(selectedPassage.noteRef, { projectReturn: selectedPassage.projectReturn ?? null });
+    setSourceReturnReceipt(sourceWindow ? "SOURCE WINDOW CLOSED" : "SOURCE WINDOW NOT FOUND");
+    // A closed Note reopens through the qualified opener, which rereads Desk
+    // items first: a vanished cache entry must not repaint a same-id object.
+    openRef(selectedPassage.noteRef, navigation);
   };
   // Betterment Q6: a desk object dropped on the Ask window joins About.
   const onAboutDragOver = (event: React.DragEvent) => {

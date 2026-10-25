@@ -84,7 +84,9 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             clear_hub_windows(page, TOKEN)
             page.goto(f"{base}/conductor?token={TOKEN}", wait_until="load")
             _normal_chair(page)
-            page.locator(".conductor-window [data-object-id='coder:codex:reported-work']").get_by_test_id("conductor-open").click()
+            page.locator(".conductor-window [data-object-id='coder:codex:reported-work'] .object-list-open").click()
+            # Window grammar (#1460): Open is the selected row's verb, in the status bar.
+            page.locator(".conductor-window .cw-footer").get_by_test_id("conductor-open").click()
             agent = page.locator("[id='session'][data-layer='window']")
             agent.get_by_test_id("session-report").wait_for()
             assert REPORT in agent.inner_text()
