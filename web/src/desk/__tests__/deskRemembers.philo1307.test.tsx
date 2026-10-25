@@ -216,8 +216,9 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
   it("People: the person, the tab and the unsent agenda item return after a close and a reload; Add clears it", async () => {
     stubPeople();
     let { PeopleCore } = await import("../../pages/cores/PeopleCore");
-    const first = render(<PeopleCore />);
-    fireEvent.click(await screen.findByText("Priya Nair"));
+    // Window grammar: a roster press selects; the person opens by its scope.
+    const first = render(<PeopleCore scope="people:r1" />);
+    await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Priya Nair"));
     // Betterment D7: the prep stays on the page; the folds sit under it.
     expect(screen.queryByLabelText("Add to the agenda")).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Add to agenda" }));
@@ -248,12 +249,13 @@ describe("B2: unsent drafts return, per object, and clear on save", () => {
   it("People: a draft for one person never shows for another", async () => {
     stubPeople();
     const { PeopleCore } = await import("../../pages/cores/PeopleCore");
-    const view = render(<PeopleCore />);
-    fireEvent.click(await screen.findByText("Priya Nair"));
+    // Window grammar: a roster press selects; each person opens by its scope.
+    const first = render(<PeopleCore scope="people:r1" />);
     fireEvent.click(await screen.findByRole("button", { name: "Add to agenda" }));
     fireEvent.change(await screen.findByLabelText("Add to the agenda"), { target: { value: "For Priya only" } });
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
-    fireEvent.click(await screen.findByText("Sam Lee"));
+    first.unmount();
+    const view = render(<PeopleCore scope="people:r2" />);
     await waitFor(() => expect(screen.getByTestId("prep-display-name").textContent).toBe("Sam Lee"));
     expect(screen.queryByLabelText("Add to the agenda")).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Add to agenda" }));

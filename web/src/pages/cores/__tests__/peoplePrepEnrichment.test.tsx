@@ -159,7 +159,7 @@ describe("People Prep enrichment HS-172-05", () => {
 
     // Footer.
     expect(screen.queryByText("THIS DEVICE")).toBeNull();
-    expect(screen.getByTestId("prep-receipt").textContent).toMatch(/^PREPARED \d{2}:\d{2}$/);
+    expect(screen.getByTestId("prep-receipt").textContent).toMatch(/^Prepared \d{2}:\d{2}$/);
   });
 
   it("absent-at-zero: no PRS row when zero PRs", async () => {
