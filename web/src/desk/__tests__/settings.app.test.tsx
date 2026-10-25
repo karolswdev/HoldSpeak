@@ -30,6 +30,7 @@ import setupStatusWire from "./fixtures/trust-wire/status-virgin.json";
 import enginesWire from "./fixtures/runs-on-truth/no-record/0-open_api_concierge_detect.json";
 import localAiWire from "./fixtures/runs-on-truth/no-record/0-open_api_setup_local-ai.json";
 import { WingSlotContext } from "../surface/wings";
+import { BackSlotContext, type WindowBack } from "../surface/back";
 import { useDesk } from "../store";
 import { registerSurface } from "../shell";
 
@@ -961,5 +962,56 @@ it("opens a legacy Notices row at Quiet hours and lights the row", async () => {
     await screen.findByTestId("settings-page");
     expect(screen.getByTestId("settings-index-notices")).toHaveClass("is-active");
     expect(container.querySelector('[data-settings-section="notices"] .gadget-row[data-highlight]')).toBeTruthy();
+  });
+});
+
+/** The phone frame's one Back, as SurfaceWindows wires it: a core that holds
+ *  the Back gets the press; otherwise the Back closes the window. */
+function PhoneSettingsWindow({ scope, onClose }: { scope?: string; onClose: () => void }) {
+  const [back, setBack] = useState<WindowBack | null>(null);
+  return (
+    <BackSlotContext.Provider value={setBack}>
+      <button className="btn" data-testid={back?.testId ?? "frame-back"} onClick={back?.onBack ?? onClose}>Back</button>
+      <SettingsCore scope={scope} />
+    </BackSlotContext.Provider>
+  );
+}
+
+describe("Settings at phone width: Back returns where the owner came from", () => {
+  const realMatchMedia = window.matchMedia;
+  beforeEach(() => {
+    window.matchMedia = ((query: string) => ({
+      matches: query === "(max-width: 720px)", media: query, onchange: null,
+      addEventListener: () => {}, removeEventListener: () => {},
+      addListener: () => {}, removeListener: () => {}, dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+  });
+  afterEach(() => { window.matchMedia = realMatchMedia; });
+
+  it("a pane opened by a scope (a receipt): the frame's Back closes the window", async () => {
+    const onClose = vi.fn();
+    render(<PhoneSettingsWindow scope="rhythm::quiet-hours" onClose={onClose} />);
+    const page = await screen.findByTestId("settings-page");
+    expect(page).toHaveAttribute("data-pane-open", "true");
+    await screen.findByText("Quiet from");
+    // Settings does not hold the Back: no settings-back, the frame's own Back.
+    expect(screen.queryByTestId("settings-back")).toBeNull();
+    fireEvent.click(screen.getByTestId("frame-back"));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("a pane opened from the rail: the frame's Back returns to the rail, then closes", async () => {
+    const onClose = vi.fn();
+    render(<PhoneSettingsWindow onClose={onClose} />);
+    const page = await screen.findByTestId("settings-page");
+    expect(page).not.toHaveAttribute("data-pane-open");
+    fireEvent.click(screen.getByTestId("settings-index-notices"));
+    expect(page).toHaveAttribute("data-pane-open", "true");
+    fireEvent.click(await screen.findByTestId("settings-back"));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(page).not.toHaveAttribute("data-pane-open");
+    expect(screen.queryByTestId("settings-back")).toBeNull();
+    fireEvent.click(screen.getByTestId("frame-back"));
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

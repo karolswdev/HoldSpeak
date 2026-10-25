@@ -15,7 +15,7 @@ import {
   LampGadget,
   StringGadget,
 } from "../../desk/surface/gadgets";
-import { Toolbar, ToolGlyph } from "../../desk/surface/kit";
+import { DotWord, Toolbar, ToolGlyph } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { apiFetch } from "../../lib/api";
 import { asRows, rowId, useResource } from "../pageSupport";
@@ -114,8 +114,7 @@ export function ActivityCore({ hero }: CoreProps) {
           })
         }
       >
-        <span className="kit-dot" data-tone={enabled ? "ok" : "warn"} aria-hidden="true" />
-        {enabled ? "Watching" : "Paused"}
+        <DotWord tone={enabled ? "ok" : "warn"}>{enabled ? "Watching" : "Paused"}</DotWord>
       </Button>
       {recordsFace ? (
         <ConfirmVerb

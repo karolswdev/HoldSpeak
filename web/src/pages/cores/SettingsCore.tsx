@@ -1370,7 +1370,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
   // Window grammar: at a narrow content width the rail is the first view.
   // An entry with a scope (a palette row, a deep link) opens its pane.
   const [paneOpen, setPaneOpen] = useState(() => Boolean(settingsPageScope(scope).module));
+  // The window's Back returns to where the owner came from. A pane opened by
+  // a scope (a receipt, the palette, a deep link) lets the frame's Back close
+  // the window; only a pane the owner opened from the rail returns to it.
+  const [cameFromRail, setCameFromRail] = useState(false);
   useEffect(() => {
+    setCameFromRail(false);
     const next = settingsPageScope(scope);
     if (next.module === "setup") {
       openSurfaceOr("configure-setup", "/");
@@ -2799,7 +2804,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
     glyph: <SettingsRailGlyph section={section} />,
   }));
   const settingsPage = (
-    <PrefWindow items={railItems} selected={moduleId} onSelect={(id) => openSection(id)} paneOpen={paneOpen} onBack={() => setPaneOpen(false)} frameBack testId="settings-page">
+    <PrefWindow items={railItems} selected={moduleId} onSelect={(id) => { setCameFromRail(true); openSection(id); }} paneOpen={paneOpen} onBack={() => { setCameFromRail(false); setPaneOpen(false); }} frameBack holdFrameBack={cameFromRail} testId="settings-page">
         {refusal && moduleId !== "you" ? <div className="pref-pane-alert"><SurfaceWell><div className="prefs-read-failure" role="alert" data-testid="settings-save-failure"><span>{refusal}</span>{failedChangesRef.current.length ? <Button dense variant="ghost" disabled={saving} onClick={() => void retryFailedChanges()}>Retry</Button> : null}</div></SurfaceWell></div> : null}
         {pageSection("you", "You", <OwnerNameGroup prefs={ownerPrefs} highlight={focusHighlight} />)}
         {pageSection("speak", "Speak", renderModule("voice"))}

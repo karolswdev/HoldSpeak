@@ -4,7 +4,7 @@
 // gap a dot and a word, the people as avatars). The summary's state and the
 // engine's egress chip are the window's status bar (meetingSummaryState).
 import type { ReactNode } from "react";
-import { AvatarStack, Steps, type Step, type StatusStripItem } from "../../../desk/surface";
+import { AvatarStack, DotWord, Steps, type Step, type StatusStripItem } from "../../../desk/surface";
 import type { ObjectTone } from "../../../desk/surface/objects/kinds";
 import { objectSprite } from "../../../desk/surface/objects/kinds";
 import { listSprite } from "../../../desk/sprites";
@@ -221,16 +221,12 @@ export function MeetingHeader({
         <span className="meetings-detail-facts meeting-head-line">
           {when ? <span className="meeting-head-fact" data-testid="meeting-head-when">{when}</span> : null}
           {speechWasMissing(source) ? (
-            <span className="meeting-head-fact" data-testid="meeting-speech-missing">
-              <span className="kit-dot" data-tone="fail" aria-hidden="true" />
-              No transcript · Speech not set up
-            </span>
+            <DotWord tone="fail" data-testid="meeting-speech-missing">No transcript · Speech not set up</DotWord>
           ) : null}
           {unclear ? (
-            <span className="meeting-head-fact" data-testid="unclear-lamp">
-              <span className="kit-dot" data-tone="warn" aria-hidden="true" />
+            <DotWord tone="warn" data-testid="unclear-lamp">
               {quietWord(unclear.replace(/^WARN · /, "")).toLowerCase()}
-            </span>
+            </DotWord>
           ) : null}
           {people.length ? <AvatarStack names={people} data-testid="meeting-head-people" /> : null}
         </span>

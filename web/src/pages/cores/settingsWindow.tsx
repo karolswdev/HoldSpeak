@@ -35,6 +35,7 @@ export function PrefWindow({
   testId,
   railTestIdPrefix = "settings-index-",
   frameBack = false,
+  holdFrameBack = true,
   children,
 }: {
   items: readonly PrefRailItem[];
@@ -49,6 +50,10 @@ export function PrefWindow({
   /** The hosting window's compact title-bar Back returns the pane to the
    *  rail; the pane then draws no Back of its own at a compact viewport. */
   frameBack?: boolean;
+  /** With `frameBack`: false leaves the frame's Back to close the window
+   *  (a pane opened from elsewhere returns there); true holds it to return
+   *  the pane to the rail. */
+  holdFrameBack?: boolean;
   children: ReactNode;
 }) {
   const railRef = useRef<HTMLElement>(null);
@@ -56,8 +61,8 @@ export function PrefWindow({
   const hosted = useHasWindowBack();
   const viaFrame = frameBack && hosted && compact;
   useWindowBack(
-    frameBack && paneOpen ? { onBack, testId: "settings-back" } : null,
-    [frameBack, paneOpen],
+    frameBack && paneOpen && holdFrameBack ? { onBack, testId: "settings-back" } : null,
+    [frameBack, paneOpen, holdFrameBack],
   );
   const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key !== "ArrowDown" && event.key !== "ArrowUp" && event.key !== "Home" && event.key !== "End") return;

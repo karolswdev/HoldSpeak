@@ -136,7 +136,7 @@ def test_the_rig_drives_the_real_atlas(case_id, tmp_path):
         assert answer["path"] == "/api/meetings/import"
         assert record["variables"]["meeting_id"] == answer["body"]["meeting_id"]
     if case_id == "case.j9.shade_receipt_open.rhythm_face":
-        _assert_receipt_door(record)
+        _assert_receipt_door(record, 1440)
     if case_id == "case.j10.route_generate_again.same_day_same_id":
         # the id captured BEFORE the second POST is in that POST's own body
         first = record["variables"]["first_brief_id"]
@@ -171,9 +171,9 @@ def test_the_rig_drives_j9_through_the_real_hub(viewport, tmp_path):
     assert record["terminal_outcome"]["predicate_satisfied"] is True
     assert record["terminal_outcome"]["within_bound"] is True
     titles_after = [w["title"] for w in record["after"]["windows"]]
-    assert "Settings" in titles_after
+    assert _settings_title(viewport) in titles_after
     assert "Quiet from" in record["after"]["text"]
-    _assert_receipt_door(record)
+    _assert_receipt_door(record, viewport)
 
     # the trigger was the receipt row's own open, driven at its real entry point
     assert record["trigger"]["adapter"] == "ui-keyboard"
@@ -185,7 +185,12 @@ def test_the_rig_drives_j9_through_the_real_hub(viewport, tmp_path):
     _assert_observation_shape(record, viewport, tmp_path)
 
 
-def _assert_receipt_door(record):
+def _settings_title(viewport):
+    # #1458: on the phone the Settings window's title names the open pane.
+    return "Notices" if viewport == 393 else "Settings"
+
+
+def _assert_receipt_door(record, viewport):
     receipt_id = record["variables"]["sweep_projection_id"]
     assert receipt_id.startswith("pipeline:"), receipt_id
     # Window grammar (2026-10-24): the receipt is a list row; Enter on it is
@@ -197,7 +202,7 @@ def _assert_receipt_door(record):
     before = [window["title"] for window in record["before"]["windows"]]
     after = [window["title"] for window in record["after"]["windows"]]
     assert "Activity" in before and "Activity" in after, (before, after)
-    assert "Settings" in after, (before, after)
+    assert _settings_title(viewport) in after, (before, after)
     assert record["after"]["observe_at"] == '#surface-settings [data-settings-section="notices"]'
 
 
@@ -223,9 +228,9 @@ def test_the_rig_returns_from_rhythm_to_the_same_activity_receipt(viewport, tmp_
     opened = [step for step in record["setup"] if step.get("selector") ==
               f"[id='activity-receipt-{receipt_id}'] button" and step.get("action") == "press"]
     assert len(opened) == 1 and opened[0]["done"] is True and opened[0]["key"] == "Enter"
-    assert "Settings" in [window["title"] for window in record["before"]["windows"]]
+    assert _settings_title(viewport) in [window["title"] for window in record["before"]["windows"]]
     after = record["after"]
-    assert "Settings" not in [window["title"] for window in after["windows"]]
+    assert _settings_title(viewport) not in [window["title"] for window in after["windows"]]
     assert after["observe_at"] == (
         f"#surface-activity.is-front [id='activity-receipt-{receipt_id}'] button"
     )

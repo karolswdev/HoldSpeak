@@ -62,9 +62,6 @@
   color: var(--wb-muted);
 }
 .meeting-head-fact {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
