@@ -129,6 +129,35 @@ function SeatTile({
 const DOCK_FACE_APPLICATIONS = DOCK_APPLICATIONS;
 const PHONE_FACE_APPLICATIONS = PHONE_DOCK_APPLICATIONS;
 
+/** The next 1:1 is near: it starts within 30 minutes (the People tag's
+ *  lamp). Re-read each minute while there is a start to watch. */
+const ONE_ON_ONE_NEAR_MS = 30 * 60_000;
+function useNearStart(at: string | null): boolean {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!at) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, [at]);
+  if (!at) return false;
+  const until = new Date(at).getTime() - now;
+  return Number.isFinite(until) && until >= 0 && until <= ONE_ON_ONE_NEAR_MS;
+}
+
+/** The People tag shows the time; its `1:1` word stays in the text for a
+ *  reader (and in the tile's name), out of sight. */
+function oneOnOneTag(label: string): ReactNode {
+  const m = /^(1:1)\s+(.*)$/.exec(label);
+  if (!m) return label;
+  return (
+    <>
+      <span className="desk-dock-state-word">{m[1]} </span>
+      {m[2]}
+    </>
+  );
+}
+
 function useDockMicPhase(): ReturnType<typeof micPhase> {
   return useSyncExternalStore(subscribeMicPhase, micPhase, micPhase);
 }
@@ -260,6 +289,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const chair = useChairWindows();
   const mic = useDockMicPhase();
   const people = useNextOneOnOneRead(true);
+  const peopleNear = useNearStart(people.at);
   // PHILO-13-03 / C3: every Desk face reads the same membership snapshot.
   // The Dock opts out of the hook's minute poll; RuntimeBus invalidations
   // call the explicit refresh path in useDockLiveReads.
@@ -504,8 +534,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               </span>
             ) : null}
             {application.windowId === "surface-people" && people.label ? (
-              <span className="desk-dock-state" data-testid="desk-dock-people-state" data-tone="ok">
-                {people.label}
+              <span className="desk-dock-state" data-testid="desk-dock-people-state" data-tone="ok" data-soon={peopleNear ? "" : undefined}>
+                {oneOnOneTag(people.label)}
               </span>
             ) : null}
             {application.windowId === "surface-dictation" && micIsLive(mic) ? (
@@ -574,8 +604,8 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                   </span>
                 ) : null}
                 {application.windowId === "surface-people" && people.label ? (
-                  <span className="desk-dock-state" data-testid="desk-dock-people-state" data-tone="ok">
-                    {people.label}
+                  <span className="desk-dock-state" data-testid="desk-dock-people-state" data-tone="ok" data-soon={peopleNear ? "" : undefined}>
+                    {oneOnOneTag(people.label)}
                   </span>
                 ) : null}
               </Button>

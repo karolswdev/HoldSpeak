@@ -7,7 +7,7 @@
  *
  *  Keyboard: a press or Space SELECTS; Enter or a double press OPENS.
  */
-import { Fragment, useLayoutEffect, useRef, useState, type CSSProperties, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type DragEvent, type KeyboardEvent, type ReactNode } from "react";
 import { fitName } from "./fitName";
 import { Button } from "../../../components/signal/Signal";
 import { listSprite } from "../../sprites";
@@ -20,14 +20,18 @@ export interface IconLampProps {
   count?: number;
 }
 
-/** The one lamp on an icon: a 12 px square LED, raised, at the sprite's top
- *  right, with an optional count notch at its top left. aria-hidden: the
- *  word lives in the icon's accessible name. */
+/** The one lamp on an icon (chrome lane 2026-10-24): a small round lamp at
+ *  the sprite's top left, and the count as a blue badge at its top right
+ *  (the Workbench/macOS badge grammar; never a zero). On the floor only an
+ *  at-risk or needs-you lamp is lit; an `ask` lamp with a count leaves the
+ *  saying to the badge (objects.css). aria-hidden: the word lives in the
+ *  icon's accessible name. */
 export function IconLamp({ tone, count }: IconLampProps) {
+  const counted = Boolean(count && count > 0);
   return (
     <>
-      <span className="desk-icon-lamp" data-tone={tone} aria-hidden="true" />
-      {count && count > 0 ? (
+      <span className="desk-icon-lamp" data-tone={tone} data-counted={counted ? "" : undefined} aria-hidden="true" />
+      {counted ? (
         <span className="desk-icon-count" aria-hidden="true">
           {count}
         </span>
@@ -174,22 +178,31 @@ export function DeskIcon({
 function IconName({ name }: { name: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   const [lines, setLines] = useState<string[] | null>(null);
+  // The face may land after the first layout: measure again once it has.
+  const [fonts, setFonts] = useState(0);
+  useEffect(() => {
+    let live = true;
+    void document.fonts?.ready.then(() => { if (live) setFonts((n) => n + 1); });
+    return () => { live = false; };
+  }, []);
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || typeof getComputedStyle !== "function") return;
     const st = getComputedStyle(el);
     const clamp = parseInt(st.getPropertyValue("-webkit-line-clamp"), 10);
-    const ch = charWidth(st);
-    if (!Number.isFinite(clamp) || !ch) {
+    const measure = textMeasure(st);
+    if (!Number.isFinite(clamp) || !measure) {
       setLines(null);
       return;
     }
     const max = parseFloat(st.maxWidth);
     const room = el.parentElement?.clientWidth || max;
     const box = Math.min(Number.isFinite(max) ? max : room, room || max);
-    const inner = box - parseFloat(st.paddingLeft || "0") - parseFloat(st.paddingRight || "0");
-    setLines(fitName(name, Math.floor((inner - 1) / ch), clamp));
-  }, [name]);
+    const inner = box - parseFloat(st.paddingLeft || "0") - parseFloat(st.paddingRight || "0") - 1;
+    // The floor label is set in the sans: each line is measured in its own
+    // face, so a name keeps every letter that fits (no fixed per-character cap).
+    setLines(fitName(name, Math.floor(inner / measure.average), clamp, (line) => measure.width(line) <= inner));
+  }, [name, fonts]);
   return (
     <span ref={ref} className="desk-icon-name" title={name} data-fitted={lines ? "" : undefined}>
       {lines ? lines.join("\n") : nameBreaks(name)}
@@ -197,25 +210,37 @@ function IconName({ name }: { name: string }) {
   );
 }
 
-const widths = new Map<string, number>();
-/** One character's width in the label's (monospaced) font; 0 when there is
- *  no canvas to measure with (jsdom). */
-function charWidth(st: CSSStyleDeclaration): number {
+interface TextMeasure {
+  /** One average character's width (the heuristic line length). */
+  average: number;
+  width(text: string): number;
+}
+const measures = new Map<string, TextMeasure>();
+let noCanvas = false;
+/** The label font's measure; null when there is no canvas to measure with
+ *  (jsdom), and the CSS break priority sets the label instead. */
+function textMeasure(st: CSSStyleDeclaration): TextMeasure | null {
   const font = `${st.fontWeight} ${st.fontSize} ${st.fontFamily}`;
-  const known = widths.get(font);
-  if (known !== undefined) return known;
-  let w = 0;
+  const cached = measures.get(font);
+  if (cached) return cached;
+  if (noCanvas) return null;
+  let measure: TextMeasure | null = null;
   try {
     const ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) noCanvas = true;
     if (ctx) {
       ctx.font = font;
-      w = ctx.measureText("MMMMMMMMMM").width / 10;
+      const sample = "Payments ledger cutover";
+      const average = ctx.measureText(sample).width / sample.length;
+      if (average > 0) measure = { average, width: (text) => ctx.measureText(text).width };
     }
   } catch {
-    w = 0;
+    noCanvas = true;
+    measure = null;
   }
-  widths.set(font, w);
-  return w;
+  // Keep a measure only once the faces are in (a fallback face measures wrong).
+  if (measure && (!document.fonts || document.fonts.status === "loaded")) measures.set(font, measure);
+  return measure;
 }
 
 /** PHILO-15 lane 12 (B30): the CSS form of the break priority. Each word is

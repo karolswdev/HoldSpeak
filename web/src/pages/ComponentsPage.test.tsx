@@ -16,7 +16,9 @@ describe("Signal component gallery", () => {
       rules: { "color-contrast": { enabled: false } },
     });
     expect(result.violations).toEqual([]);
-  });
+    // axe over the whole Controls gallery takes 3.5 s alone (measured at
+    // HEAD 11e1f4210); under a full related run it ran past the 5 s default.
+  }, 20_000);
 
   it("shows the window grammar: toolbar, dense list, status bar, in four states", () => {
     render(<ComponentsCore />);

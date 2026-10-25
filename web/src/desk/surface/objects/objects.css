@@ -72,13 +72,24 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Floor labels remain readable over the slate floor; drawer wells keep their
-   own paper surface. */
+/* Floor labels (chrome lane 2026-10-24, Workbench meets modern): paper ink
+   straight on the floor with a soft dark halo, no plate. The selected label
+   takes the vivid blue plate (below). Drawer wells keep their paper. */
 .desk-screen .desk-icon-name {
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--wb-paper) 68%, transparent);
-  color: var(--wb-ink);
-  font: 500 12px / 1.25 var(--font-sans);
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--wb-paper);
+  font: 500 12px / 1.3 var(--font-sans);
+  text-shadow: var(--desk-floor-label-halo);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+.desk-screen .desk-icon-art > img:first-child {
+  transition: filter var(--duration-short) var(--ease-standard);
+}
+.desk-screen .desk-icon:hover .desk-icon-art > img:first-child,
+.desk-screen .desk-icon:focus-visible .desk-icon-art > img:first-child {
+  filter: var(--desk-floor-icon-lift);
 }
 /* B30 (Astra r1): a label set by fitName (DeskIcon) carries its own line
    breaks and already fits the clamp; nothing it holds is hidden. */
@@ -103,10 +114,17 @@
   display: inline-block;
   max-width: 100%;
 }
-/* Selected labels use the shared pale blue tint. */
+/* Selected labels use the shared pale blue tint; on the floor, the vivid
+   Workbench plate with paper ink (5.3:1). */
 .desk-icon[data-selected="true"] .desk-icon-name {
   background: var(--wb-blue);
   color: var(--wb-ink);
+}
+.desk-screen .desk-icon[data-selected="true"] .desk-icon-name,
+.desk-screen .desk-icon[data-drop="true"] .desk-icon-name {
+  background: var(--wb-sel-vivid);
+  color: var(--wb-paper);
+  text-shadow: none;
 }
 /* DropTarget on an icon: the dashed paper ring, the label on blue. */
 .desk-icon[data-drop="true"] .desk-icon-art {
@@ -121,32 +139,43 @@
   opacity: 0.45;
 }
 
-/* IconLamp: a 12 px square LED, raised, at the sprite's top right. */
+/* IconLamp: a small round lamp with a paper ring at the sprite's top left. */
 .desk-icon-lamp {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 12px;
-  height: 12px;
+  top: -2px;
+  left: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
   background: var(--lamp-ok);
-  box-shadow: 0 0 0 1px var(--wb-rule-soft);
+  box-shadow: var(--desk-lamp-ring);
 }
 .desk-icon-lamp[data-tone="warn"] { background: var(--lamp-warn); }
 .desk-icon-lamp[data-tone="fail"] { background: var(--lamp-fail); }
 .desk-icon-lamp[data-tone="info"] { background: var(--lamp-info); }
 .desk-icon-lamp[data-tone="ask"] { background: var(--lamp-ask); }
-/* The count notch: the Dock's grammar (ember ink plate); never a zero. */
+/* On the floor only an at-risk or needs-you lamp is lit: no lamp for ok or
+   in progress, and an ask lamp with a count leaves it to the badge. */
+.desk-screen .desk-icon-lamp:is([data-tone="ok"], [data-tone="info"], [data-tone="ask"][data-counted]) {
+  display: none;
+}
+/* The count: the one badge (the Dock and the bell wear it too): a vivid blue
+   rounded badge, paper digits, at the sprite's top right; never a zero. */
 .desk-icon-count {
   position: absolute;
-  top: -6px;
-  left: -8px;
-  min-width: 20px;
+  top: -4px;
+  right: -8px;
+  box-sizing: border-box;
+  min-width: var(--desk-badge-h);
+  height: var(--desk-badge-h);
   padding: 0 4px;
-  background: var(--accent-ink);
-  color: var(--text-on-accent);
-  font: 700 var(--font-size-xs) / 18px var(--font-mono);
+  border-radius: calc(var(--desk-badge-h) / 2);
+  background: var(--desk-chrome-badge-on);
+  color: var(--wb-paper);
+  font: 700 12px / var(--desk-badge-h) var(--font-sans);
+  letter-spacing: 0;
   text-align: center;
-  box-shadow: 0 0 0 1px var(--wb-rule-soft);
+  box-shadow: var(--desk-badge-ring);
 }
 
 /* ── IconGrid: the A-1 / A-2 spacing ── */
@@ -162,8 +191,9 @@
 .desk-icon-marquee {
   position: absolute;
   pointer-events: none;
-  border: 1px dashed var(--wb-paper);
-  background: var(--wash-1);
+  border: 1px solid var(--wb-sel-vivid);
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--wb-sel-vivid) 18%, transparent);
 }
 @container surface (max-width: 520px) {
   .desk-icon-grid {

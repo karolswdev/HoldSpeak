@@ -81,9 +81,11 @@
   overflow-x: auto;
   overflow-y: hidden;
   border-radius: 0;
-  background: var(--wb-steel);
-  border-top: 1px solid var(--wb-rule-soft);
-  box-shadow: none;
+  /* Chrome lane 2026-10-24: a paper plate with a faint top shine, a 1 px
+     soft rule on top and a soft shade on the floor above it. */
+  background: var(--desk-dock-plate);
+  border-top: 0;
+  box-shadow: var(--desk-dock-shine);
   scrollbar-width: thin;
 }
 .desk-next .desk-dock > * {
@@ -210,28 +212,32 @@
 .desk-next .desk-dock-launch {
   position: relative;
   display: grid;
-  grid-template-rows: 32px 12px;
+  grid-template-rows: 32px 16px;
   justify-items: center;
   align-content: center;
-  gap: 2px;
+  gap: 0;
   /* A tile is as wide as its word (72 px at least); a label never leaves
      its tile. */
   min-width: 72px;
   height: 52px;
   align-self: center;
-  padding: 2px 10px;
+  padding: 0 10px 2px;
+  /* transparent: the Button's hit face covers the border edge (global.css) */
   border: 1px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   background: transparent;
   color: var(--wb-ink);
   box-shadow: none;
   white-space: nowrap;
   cursor: pointer;
+  transition: box-shadow var(--duration-short) var(--ease-standard),
+    background-color var(--duration-short) var(--ease-standard);
 }
-.desk-next .desk-dock-launch:hover {
-  background: var(--wb-blue);
-  border-color: var(--wb-sel);
-  box-shadow: none;
+/* hover lifts the tile: a paper plate, a soft shadow and a ring (never a
+   transform: the tile is measured) */
+.desk-next .desk-dock-launch:is(:hover, :focus-visible) {
+  background: var(--wb-paper);
+  box-shadow: var(--desk-dock-tile-lift);
   color: var(--wb-ink);
 }
 .desk-next .desk-dock-launch:hover .desk-dock-sprite {
@@ -256,29 +262,36 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 0 2px;
-  font: 500 12px / 12px var(--font-sans);
+  padding: 0 6px;
+  border-radius: 4px;
+  font: 500 12px / 16px var(--font-sans);
   color: var(--wb-ink);
   background: transparent;
 }
 .desk-next .desk-dock-project .desk-dock-label {
   max-width: 96px;
 }
+/* a running app: a small lamp under its name; the active (front) app: its
+   name on the soft blue plate. No bordered box. */
+/* (drawn as a background: the Button's ::after is its hit face) */
 .desk-next .desk-dock-launch.is-run {
-  background: var(--wb-blue);
-  border-color: var(--wb-rule-soft);
-  box-shadow: none;
+  --desk-dock-run-dot: radial-gradient(circle at 50% calc(100% - 2px), var(--wb-muted) 0 2px, transparent 2.5px);
+  background: var(--desk-dock-run-dot);
+}
+.desk-next .desk-dock-launch.is-run:is(:hover, :focus-visible) {
+  background: var(--desk-dock-run-dot), var(--wb-paper);
 }
 .desk-next .desk-dock-launch.is-run .desk-dock-label {
   background: transparent;
   color: var(--wb-ink);
 }
 .desk-next .desk-dock-launch.is-front {
-  background: var(--wb-blue);
+  --desk-dock-run-dot: radial-gradient(circle at 50% calc(100% - 2px), var(--wb-sel-vivid) 0 2px, transparent 2.5px);
 }
 .desk-next .desk-dock-launch.is-front .desk-dock-label {
-  background: transparent;
+  background: var(--desk-dock-active);
   color: var(--wb-ink);
+  font-weight: 600;
 }
 /* A seated window keeps its 10px status lamp at the top right. */
 .desk-next .desk-dock-seat {
@@ -324,32 +337,37 @@
 .desk-next .desk-dock-seat-tile .desk-dock-label {
   max-width: 96px;
 }
-/* the count: the ember-ink notch at the top right */
+/* the count: the one badge (floor icons and the bell wear it too): vivid
+   blue, paper digits, at the picture's top right */
 .desk-next .desk-dock-launch .desk-dock-badge {
   position: absolute;
-  top: 2px;
+  top: 1px;
   left: calc(50% + 8px);
-  min-width: 22px;
-  height: 20px;
-  padding: 0 5px;
+  box-sizing: border-box;
+  min-width: var(--desk-badge-h);
+  height: var(--desk-badge-h);
+  padding: 0 4px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--wb-rule-soft);
-  border-radius: var(--radius-sm);
-  background: var(--wb-sel);
-  color: var(--text-on-accent);
-  box-shadow: none;
-  font: 700 12px var(--font-mono);
+  border: 0;
+  border-radius: calc(var(--desk-badge-h) / 2);
+  background: var(--desk-chrome-badge-on);
+  color: var(--wb-paper);
+  box-shadow: var(--desk-badge-ring);
+  font: 700 12px / var(--desk-badge-h) var(--font-sans);
+  letter-spacing: 0;
 }
 .desk-next .desk-dock-launch .desk-dock-badge[data-tone="ask"] {
-  background: var(--wb-sel);
+  background: var(--desk-chrome-badge-on);
   color: var(--wb-paper);
 }
 .desk-next .desk-dock-launch .desk-dock-badge:not([data-tone]) {
   background: var(--wb-paper);
   color: var(--wb-ink);
 }
-/* the state tag: REC, READY, SENT, SEND FAILED, UNKNOWN, 1:1 */
+/* the state tag (1:1, REC): a quiet dock badge, a small paper plate with
+   sans ink; a lamp dot leads it when it is near (the 1:1 within 30 min) or
+   live (REC) */
 .desk-next .desk-dock-state {
   position: absolute;
   top: 1px;
@@ -357,36 +375,66 @@
   transform: translateX(-50%);
   height: 18px;
   box-sizing: border-box;
-  padding: 0 4px;
-  /* inline, so the tag's words read as one line ("SEND FAILED") */
-  display: inline-block;
-  border: 1px solid var(--wb-rule-soft);
+  padding: 0 6px;
+  /* inline, so the tag's words read as one line */
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  border-radius: 9px;
   background: var(--wb-paper);
   color: var(--wb-ink);
-  box-shadow: none;
-  font: 700 12px/16px var(--font-mono);
+  box-shadow: 0 0 0 1px var(--wb-rule-soft), var(--wb-umbra-near);
+  font: 500 12px / 16px var(--font-sans);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .desk-next .desk-dock-state[data-tone="ok"] {
-  color: #1d5c2e; /* 7.3:1 on --wb-paper (C1 canvas) */
+  color: var(--wb-ink);
 }
 .desk-next .desk-dock-state[data-tone="warn"] {
-  color: #6b4a00; /* 7.0:1 on --wb-paper (C1 canvas) */
+  color: var(--wb-warn-ink);
 }
 .desk-next .desk-dock-state:is([data-tone="rec"], [data-tone="fail"]) {
   color: var(--wb-rec);
 }
-.desk-next .desk-dock-state[data-tone="rec"]::before {
-  content: "● ";
-  white-space: pre;
+.desk-next .desk-dock-state:is([data-tone="rec"], [data-soon])::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--wb-rec);
+}
+.desk-next .desk-dock-state[data-soon]::before {
+  background: var(--lamp-ok);
+}
+/* the People tag: the time alone at the picture's top right (the badge
+   place); its `1:1` word is read, not drawn */
+.desk-next .desk-dock-state-word {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+@media (min-width: 721px) {
+  .desk-next .desk-dock-launch .desk-dock-state[data-tone="ok"] {
+    left: calc(50% + 6px);
+    transform: none;
+  }
 }
 /* an icon with a tag is wide enough for it; with a tag and a count, the
    tag takes the top left and the count the top right (never one box) */
 /* Reserve the tag's width before its async read completes. A late 1:1 or
    recording fact must not move the next app under the owner's pointer. */
 @media (min-width: 721px) {
-  .desk-next .desk-dock-app:is([data-app="surface-meetings"], [data-app="surface-people"]) {
+  .desk-next .desk-dock-app[data-app="surface-meetings"] {
     min-width: 104px;
+  }
+  .desk-next .desk-dock .desk-dock-app[data-app="surface-people"] {
+    min-width: 128px;
   }
 }
 .desk-next .desk-dock-launch:has(.desk-dock-state) {
@@ -653,11 +701,25 @@
     max-width: 76px;
     height: 50px;
     min-height: 44px;
-    grid-template-rows: 32px 12px;
+    grid-template-rows: 32px 14px;
     padding: 1px 2px;
   }
   .desk-next .desk-dock-launch .desk-dock-label {
-    line-height: 12px;
+    line-height: 14px;
+  }
+  /* the phone tag rides the tile's foot in place of the name, so it says
+     what it is: `1:1 22:29` */
+  .desk-next .desk-dock-state-word {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+  }
+  /* the phone tile has no room under its name: the plate alone marks the
+     front app */
+  .desk-next .desk-dock > .desk-dock-launch.is-run {
+    --desk-dock-run-dot: linear-gradient(transparent, transparent);
   }
   /* disconnected, the one tag still heads the shelf (§6), before the seats */
   .desk-next .desk-dock > .desk-dock-offline { order: 0; }
@@ -706,7 +768,7 @@
     left: 0;
     flex: 0 0 4px;
     align-self: stretch;
-    background: var(--wb-steel);
+    background: var(--desk-dock-plate);
     z-index: 2;
   }
   /* The end spacer: Dock.tsx sets its width so the last page also starts on
@@ -741,7 +803,7 @@
     padding: 0;
     border: 0;
     border-radius: var(--radius-sm);
-    background: var(--wb-steel);
+    background: var(--desk-dock-plate);
     box-shadow: none;
     color: var(--wb-ink);
     font: 700 18px var(--font-mono);
