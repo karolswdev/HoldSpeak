@@ -13,22 +13,27 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
-  AppHead,
   EgressChip,
-  StatusStrip,
-  SurfaceFooter,
+  StatusBar,
   SurfaceState,
+  ToolGlyph,
+  Toolbar,
+  countWords,
   objectSprite,
+  type ObjectListRow,
+  type ObjectListSort,
+  type StatusBarItem,
 } from "../surface";
-import { FoldGadget } from "../surface/gadgets";
+import { FootSlotContext } from "../surface/foot";
+import { ObjectList } from "../surface/objects/ObjectList";
+import type { ObjectTone } from "../surface/objects/kinds";
 import { DeskWindowFrame } from "../components/DeskWindow";
-import { useAgentFlights } from "../agentFlights";
+import { reviewResult, useAgentFlights } from "../agentFlights";
 import { AGENT_HOST, AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId, type AgentRow } from "../firstrun/agentsStep";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useDesk } from "../store";
 import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
 import {
-  FLEET_WORD,
   canRun,
   conductorHead,
   conductorMembers,
@@ -41,7 +46,6 @@ import {
   ownAgentMember,
   reviewWords,
   type ConductorMember,
-  type FleetRank,
 } from "./members";
 import { allowHelper, answerMember, answers, cancelQueuedHand, openMember, resumeAll, stopMember, stops } from "./open";
 import { StartAgent } from "./StartAgent";
@@ -237,9 +241,6 @@ function handAgain(member: ConductorMember): void {
   openHand({ kind, id: o.id, title: o.title, projectId: o.projectId, agent: o.agent as AgentId });
 }
 
-/** Betterment AG8: a project line's lamp, by its worst agent. */
-const RANK_TONE: Record<FleetRank, "warn" | "ok" | "info" | undefined> = { 0: "warn", 1: "ok", 2: "info", 3: undefined };
-
 /** PHILO-17 U32: what Connect does, in one line, where it is offered. */
 export const HOOKS_LINE = "Connect: see the agent's work, hand it work";
 
@@ -423,6 +424,92 @@ function ReadyVerb({ member, lead }: { member: ConductorMember; lead: boolean })
   );
 }
 
+/* Window grammar (2026-10-24): the Agents window reads title bar → Toolbar
+ * [Start an agent] → the asks (each a plate: the question and its answer
+ * in one row, which a list row cannot hold) → the dense list view of every
+ * other agent, grouped Working · On this Mac · Stopped by restart · Stopped
+ * today · Started by you (Name with the agent's portrait, What, State as a
+ * dot and a word, When) → StatusBar (`1 working · 2 on this Mac · 2 stopped
+ * today`, never a zero) with the selected row's verbs at its right. A press
+ * selects a row; Enter or a double press opens it. */
+const ROW_GROUP = { work: 0, mac: 1, restart: 2, ended: 3, own: 4 } as const;
+type RowGroup = keyof typeof ROW_GROUP;
+
+const LIST_COLUMNS = [
+  { key: "name", word: "Name", track: "minmax(132px, 0.7fr)" },
+  { key: "what", word: "What", track: "minmax(0, 1.2fr)" },
+  { key: "project", word: "Project", track: "minmax(0, 0.6fr)" },
+  { key: "status", word: "State", track: "minmax(128px, 0.8fr)" },
+  { key: "when", word: "When", track: "96px" },
+] as const;
+
+const PILL_TONE: Record<string, ObjectTone | undefined> = { ok: "ok", warn: "warn", danger: "fail", info: "info", idle: undefined };
+
+/** A row's state: a dot and a word (the dense list's own state face; an
+ *  idle state wears the plain steel dot). */
+function StateCell({ member }: { member: ConductorMember }) {
+  const pill = memberPill(member);
+  const tone = PILL_TONE[pill.tone];
+  return (
+    <span className="object-list-dot-word" data-tone={tone} data-live={pill.live ? "" : undefined} data-testid="conductor-pill">
+      <span className="kit-dot" data-tone={tone} aria-hidden="true" />
+      {pill.word}
+    </span>
+  );
+}
+
+/** The selected row's own verb: the one that fixes it, opens it, resumes
+ *  it, or cancels its wait. Get Info and Stop follow (MemberVerbs). */
+function RowVerb({
+  member,
+  group,
+  resuming,
+  onResume,
+  cancelling,
+  onCancel,
+}: {
+  member: ConductorMember;
+  group: RowGroup;
+  resuming: string | null;
+  onResume: () => void;
+  cancelling: string | null;
+  onCancel: () => void;
+}) {
+  if (group === "mac") return <ReadyVerb member={member} lead={false} />;
+  if (group === "restart") {
+    return (
+      <Button dense variant="secondary" loading={resuming === member.id} disabled={resuming !== null}
+        onClick={onResume} data-testid="conductor-resume">
+        <ToolGlyph kind="retry" />
+        Resume
+      </Button>
+    );
+  }
+  if (group === "own") return null;
+  if (member.live === "queued") {
+    return (
+      <Button dense variant="secondary" loading={cancelling === member.id} disabled={cancelling !== null}
+        onClick={onCancel} data-testid="conductor-cancel-queued">
+        Cancel
+      </Button>
+    );
+  }
+  return (
+    <>
+      {group === "ended" && HAND_AGAIN.has(String(member.flightState)) && member.origin ? (
+        // Gaps: a new agent continues in the same worktree.
+        <Button dense variant="secondary" onClick={() => handAgain(member)} data-testid="conductor-hand-again">
+          Hand again
+        </Button>
+      ) : null}
+      <Button dense variant="secondary" onClick={() => openMember(member)} data-testid="conductor-open">
+        <ToolGlyph kind="open" />
+        Open
+      </Button>
+    </>
+  );
+}
+
 export function ConductorWindow() {
   const reads = useConductorReads();
   const sessions = useAgentFlights((s) => s.sessions);
@@ -430,6 +517,8 @@ export function ConductorWindow() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // Betterment AG8: Start an agent unfolds in place.
   const [starting, setStarting] = useState(false);
+  const [foot, setFoot] = useState<HTMLElement | null>(null);
+  const [sort, setSort] = useState<ObjectListSort>({ key: "order", dir: "asc" });
 
   const flightsKnown = reads.flightsState === "ok";
   const members = useMemo(
@@ -447,7 +536,8 @@ export function ConductorWindow() {
   );
   const ownMembers = useMemo(() => reads.ownAgents.map(ownAgentMember), [reads.ownAgents]);
   const head = conductorHead(members, flightsKnown ? reads.launches : null);
-  const selected = useMemo(() => members.find((m) => m.id === selectedId) ?? null, [members, selectedId]);
+  const everyone = useMemo(() => [...members, ...ownMembers], [members, ownMembers]);
+  const selected = useMemo(() => everyone.find((m) => m.id === selectedId) ?? null, [everyone, selectedId]);
   // Betterment AG4: a hand opens Agents on its new agent: that row is
   // selected and in view once the read draws it.
   const focus = useConductor((s) => s.focus);
@@ -465,15 +555,14 @@ export function ConductorWindow() {
   }, [selectedId, selected]);
 
   // The flights read decides what stands ABOVE the agents on this Mac
-  // (Needs you, At work) and whether that list folds. Until it answers
-  // (ok or failed), the window says it is reading and draws no rows: the
-  // detect read alone used to draw the ready rows first, and the late
-  // sessions pushed them 220 px down at 393 (the desk sweep's still fence,
-  // under load).
+  // (Needs you, At work). Until it answers (ok or failed), the window says
+  // it is reading and draws no rows: the detect read alone used to draw the
+  // ready rows first, and the late sessions pushed them 220 px down at 393
+  // (the desk sweep's still fence, under load).
   const loading = reads.flightsState === "idle" || reads.flightsState === "loading";
   const failed = [
-    reads.detectState === "failed" ? { part: "AGENTS", token: reads.detectFailure } : null,
-    reads.flightsState === "failed" ? { part: "SESSIONS", token: "" } : null,
+    reads.detectState === "failed" ? { part: "Agents", token: reads.detectFailure } : null,
+    reads.flightsState === "failed" ? { part: "Sessions", token: "" } : null,
   ].filter((f): f is { part: string; token: string } => f !== null);
   const retry = () => {
     if (reads.detectState === "failed") void useConductor.getState().readDetect();
@@ -485,23 +574,18 @@ export function ConductorWindow() {
   const words = headWords(head);
 
   // Betterment AG8: the fleet's order: Needs you (the oldest ask first),
-  // New (the newest first), Working, Quiet; Stopped folds below.
-  // Betterment AG11: a helper that does not need him stands under its
-  // parent (an indented row), not in its own place in the list.
+  // New (the newest first), Working, Quiet. Betterment AG11: a helper
+  // stands right after its parent.
   const parentIds = new Set(members.map((m) => m.launchId).filter(Boolean) as string[]);
   const nested = (m: ConductorMember) => Boolean(m.helperOf && parentIds.has(m.helperOf));
   const helpersOf = (m: ConductorMember) => (m.launchId ? members.filter((h) => h.helperOf === m.launchId && nested(h)) : []);
   const ordered = fleetOrder(members).filter((m) => !nested(m));
-  const groups = fleetGroups(members.filter((m) => !nested(m)));
+  const projects = fleetGroups(members.filter((m) => !nested(m)));
   const counts = fleetCounts(members);
   const asks = ordered.filter((m) => fleetRank(m) === 0);
-  const fresh = ordered.filter((m) => fleetRank(m) === 1);
-  const working = ordered.filter((m) => fleetRank(m) === 2);
-  const quiet = ordered.filter((m) => fleetRank(m) === 3);
   // #1352: no rows until the sessions read answers.
   const ready = loading ? [] : members.filter((m) => m.role === "ready");
-  // Betterment AG6: an agent a restart stopped stands in its own section
-  // with Resume (one press); the rest of today's ended agents fold.
+  // Betterment AG6: an agent a restart stopped has Resume (one press).
   const stopped = members.filter((m) => m.role === "stale" && m.flightState === "stopped_by_restart" && m.launchId);
   const ended = members.filter((m) => m.role === "stale" && !stopped.includes(m));
   const [resuming, setResuming] = useState<string | null>(null);
@@ -521,11 +605,9 @@ export function ConductorWindow() {
     const session = ((raw as Record<string, unknown>).session ?? raw) as Record<string, unknown>;
     return session.wait_id ? String(session.wait_id) : null;
   };
-  // ONE filled primary per window: the first ask's Answer, else the first
-  // agent that lacks hooks, else Start an agent.
-  // While Start an agent is open, its Start is the one primary.
+  // ONE filled primary per window: the first ask's Answer, else Start an
+  // agent. While Start an agent is open, its Start is the one primary.
   const leadAsk = starting ? null : asks[0]?.id ?? null;
-  const leadFix = leadAsk || starting ? null : fixable[0]?.id ?? null;
   const [cancelling, setCancelling] = useState<string | null>(null);
   const cancelQueued = (m: ConductorMember) => {
     setCancelling(m.id);
@@ -534,17 +616,8 @@ export function ConductorWindow() {
   const select = (id: string) => setSelectedId((now) => (now === id ? null : id));
   const [allowingHelper, setAllowingHelper] = useState<string | null>(null);
 
-  /** A parent's helpers, indented under it (Betterment AG11). */
-  const helperRows = (m: ConductorMember) => {
-    const rows = helpersOf(m);
-    return rows.length ? (
-      <ul className="cw-well surface-group-well cw-helpers" data-testid="conductor-helpers" aria-label={`Helpers of ${rowTitle(m)}`}>
-        {rows.map((h) => fleetRank(h) === 0 ? askRow(h) : fleetRow(h, m))}
-      </ul>
-    ) : null;
-  };
-  /** One agent that needs him: the whole job in its row. */
-  const askRow = (m: ConductorMember) => (
+  /** One agent that needs him: the whole job in its plate. */
+  const askRow = (m: ConductorMember): ReactNode => (
     <Fragment key={m.id}>
     {m.helperRequest ? (
       <CoderRow
@@ -583,77 +656,107 @@ export function ConductorWindow() {
       onOpenAnswer={() => answerMember(m)}
       onOpen={() => openMember(m)}
     />}
-    {helperRows(m)}
+    {helperAsks(m)}
     </Fragment>
   );
-  /** One agent that does not need him: New, Working or Quiet, one verb. */
-  const fleetRow = (m: ConductorMember, parent?: ConductorMember): ReactNode => (
-    <Fragment key={m.id}>
-    <CoderRow
+  /** A parent's asking helpers, as plates under its name (AG11). */
+  const helperAsks = (m: ConductorMember): ReactNode => {
+    const rows = helpersOf(m).filter((h) => fleetRank(h) === 0);
+    return rows.length ? (
+      <ul className="cw-well surface-group-well cw-helpers" data-testid="conductor-helpers" aria-label={`Helpers of ${rowTitle(m)}`}>
+        {rows.map(askRow)}
+      </ul>
+    ) : null;
+  };
+  /** AG15: an owner-started pane that asks has the same answer surface,
+   *  with no launch verbs. */
+  const ownAsk = (m: ConductorMember): ReactNode => (
+    <AgentRowFace
+      key={m.id}
       member={m}
-      helper={parent ? `Helper of ${rowTitle(parent)}` : undefined}
+      question=""
+      waitId={null}
+      lead={false}
       selected={m.id === selectedId}
       onSelect={() => select(m.id)}
-      meta={
-        <>
-          <span>{titleOfAgent(m)}</span>
-          {!groups && m.facts.where ? <span>{String(m.facts.where)}</span> : null}
-          {m.when ? <span className="cw-mono">{agoWord(m.when)}</span> : null}
-        </>
-      }
-      verb={
-        m.live === "queued" ? (
-          // Betterment AG8 (AG5 follow-up): a queued hand can be cancelled.
-          <Button
-            dense
-            variant="ghost"
-            loading={cancelling === m.id}
-            disabled={cancelling !== null}
-            onClick={() => cancelQueued(m)}
-            data-testid="conductor-cancel-queued"
-          >
-            Cancel
-          </Button>
-        ) : (
-          <Button dense variant="ghost" onClick={() => openMember(m)} data-testid="conductor-open">
-            Open
-          </Button>
-        )
-      }
+      onTerminal={() => undefined}
+      onOpenAnswer={() => undefined}
+      onOpen={() => undefined}
     />
-    {parent ? null : helperRows(m)}
-    </Fragment>
   );
+  const workingParents = ordered.filter((m) => fleetRank(m) > 0 && helpersOf(m).some((h) => fleetRank(h) === 0));
+  const ownAsks = ownMembers.filter((m) => fleetRank(m) === 0);
 
-  /** AG15: an owner-started pane has the same answer surface, with no launch
-   *  verbs. Its scope is the discovered pane and process only. */
-  const ownRow = (m: ConductorMember): ReactNode => {
-    if (fleetRank(m) === 0) {
-      return (
-        <AgentRowFace
-          key={m.id}
-          member={m}
-          question=""
-          waitId={null}
-          lead={false}
-          selected={m.id === selectedId}
-          onSelect={() => select(m.id)}
-          onTerminal={() => undefined}
-          onOpenAnswer={() => undefined}
-          onOpen={() => undefined}
-        />
-      );
-    }
-    return (
-      <CoderRow
-        key={m.id}
-        member={m}
-        selected={m.id === selectedId}
-        onSelect={() => select(m.id)}
-        meta={<span>{m.ownAgent?.project || m.ownAgent?.title || "On this Mac"}</span>}
-      />
-    );
+  // The list view: every agent that does not ask, in its group.
+  const groupOf = new Map<string, RowGroup>();
+  const listed: Array<{ m: ConductorMember; group: RowGroup; parent?: ConductorMember }> = [];
+  const add = (m: ConductorMember, group: RowGroup, parent?: ConductorMember) => {
+    groupOf.set(m.id, group);
+    listed.push({ m, group, parent });
   };
+  for (const m of ordered) {
+    if (fleetRank(m) > 0) add(m, "work");
+    for (const h of helpersOf(m)) if (fleetRank(h) > 0) add(h, "work", m);
+  }
+  for (const m of missing) add(m, "mac");
+  for (const m of stopped) add(m, "restart");
+  for (const m of ended) add(m, "ended");
+  for (const m of ownMembers) if (fleetRank(m) > 0) add(m, "own");
+  const rows: ObjectListRow[] = listed.map(({ m, group, parent }, index) => {
+    const what = m.role === "ready"
+      ? (m.detect?.version ? String(m.detect.version) : "")
+      : group === "own"
+        ? String(m.ownAgent?.title || m.ownAgent?.project || "On this Mac")
+        : rowTitle(m);
+    const extra = [parent ? `Helper of ${rowTitle(parent)}` : null, reviewWords(m.review)].filter(Boolean).join(" · ");
+    return {
+      id: m.id,
+      kind: "agent",
+      name: m.role === "ready" ? m.name : titleOfAgent(m),
+      sprite: m.sprite,
+      when: m.when ? agoWord(m.when) : undefined,
+      whenSort: m.whenSort,
+      group: ROW_GROUP[group],
+      cells: {
+        // Betterment AG3: what the desk answered for him stays in view on
+        // the row (New until he opens the agent).
+        what: m.deskAnswer?.state === "answered" ? (
+          <span className="cw-what">
+            <span className="cw-what-text">{extra ? `${what} · ${extra}` : what}</span>
+            <DeskAnswerLine answer={m.deskAnswer} />
+          </span>
+        ) : extra ? `${what} · ${extra}` : what,
+        project: projects && m.role === "live" ? String(m.facts.where || "") : "",
+        status: <StateCell member={m} />,
+      },
+      sortValues: { order: index, status: memberPill(m).word },
+    };
+  });
+  const hasRows = rows.length > 0;
+  const nothing = !loading && !asks.length && !hasRows && !ownAsks.length && !failed.length && !starting;
+  const selectedGroup = selected ? groupOf.get(selected.id) ?? null : null;
+
+  // The status bar: what is there, in warm words; never a zero.
+  const queued = members.filter((m) => m.role === "live" && m.live === "queued").length;
+  const fleet = fleetWords(counts);
+  const items: Array<StatusBarItem | null> = [
+    ...failed.map((f) => ({
+      key: `fail-${f.part}`,
+      lamp: "fail" as const,
+      text: `${f.part} not read${f.token ? ` · ${f.token}` : ""}`,
+      testId: "conductor-not-read",
+    })),
+    counts.needYou ? { key: "ask", lamp: "ask" as const, text: `${counts.needYou} ${counts.needYou === 1 ? "needs" : "need"} you` } : null,
+    { key: "new", lamp: "ok" as const, text: countWords(counts.fresh, "new", "new") },
+    { key: "working", lamp: "info" as const, text: countWords(counts.working, "working", "working") },
+    { key: "queued", text: countWords(queued, "waiting", "waiting") },
+    { key: "mac", lamp: fixable.length ? "warn" as const : undefined, text: missing.length ? `${missing.length} on this Mac` : null },
+    { key: "restart", lamp: "warn" as const, text: countWords(stopped.length, "stopped by restart", "stopped by restart") },
+    { key: "ended", text: ended.length ? `${ended.length} stopped today` : null },
+    { key: "own", text: ownMembers.length ? `${ownMembers.length} started by you` : null },
+    !fleet && !loading && !failed.length ? { key: "fact", text: headFact(head, members) } : null,
+    ...words.filter((w) => / OF /.test(w)).map((w) => ({ key: w, text: w.toLowerCase() })),
+  ];
 
   return (
     <DeskWindowFrame
@@ -675,213 +778,127 @@ export function ConductorWindow() {
       lamp={head.ask > 0 ? "ask" : undefined}
       onClose={() => useConductor.getState().closeWindow()}
     >
-      <div ref={bodyRef} className="desk-pullout-body drawer-body surface-host-body" data-surface-host="conductor" data-testid="conductor-window">
-        <div className="drawer-scroll cw">
-          <div className="cw-head">
-            <AppHead fact={fleetWords(counts) || headFact(head, members)} className="cw-apphead" data-testid="conductor-head">
-              <StatusStrip
-                items={[
-                  ...failed.map((f) => ({
-                    key: `fail-${f.part}`,
-                    lamp: "fail" as const,
-                    text: `${f.part} ·`,
-                    value: `NOT READ${f.token ? ` · ${f.token}` : ""}`,
-                    testId: "conductor-not-read",
-                  })),
-                  // Betterment AG8: the fact counts what is there; the strip
-                  // keeps only the limit, when he is at it.
-                  ...words.filter((w) => / OF /.test(w)).map((w) => ({ key: w, text: w })),
-                ]}
-              />
-            </AppHead>
-            {failed.length ? (
-              <Button dense variant="ghost" onClick={retry}>
-                Retry
-              </Button>
-            ) : null}
-            {stopped.length >= 2 ? (
-              <Button
-                dense
-                variant={leadAsk || leadFix ? "secondary" : "primary"}
-                loading={resuming === "all"}
-                disabled={resuming !== null}
-                onClick={() => resume(stopped, "all")}
-                data-testid="conductor-resume-all"
-              >
-                Resume all
-              </Button>
-            ) : null}
+      <FootSlotContext.Provider value={foot}>
+      <div ref={bodyRef} className="desk-pullout-body drawer-body surface-host-body" data-surface-host="conductor"
+        data-testid="conductor-window" data-interior="list">
+        <Toolbar label="Agents" data-testid="conductor-toolbar">
+          <Button
+            dense
+            variant={starting || leadAsk ? "secondary" : "primary"}
+            aria-expanded={starting}
+            onClick={() => setStarting((open) => !open)}
+            data-testid="conductor-start"
+          >
+            <ToolGlyph kind="new" />
+            Start an agent
+          </Button>
+          {stopped.length >= 2 ? (
             <Button
               dense
-              variant={starting || leadAsk || leadFix || stopped.length >= 2 ? "secondary" : "primary"}
-              aria-expanded={starting}
-              onClick={() => setStarting((open) => !open)}
-              data-testid="conductor-start"
+              variant="secondary"
+              loading={resuming === "all"}
+              disabled={resuming !== null}
+              onClick={() => resume(stopped, "all")}
+              data-testid="conductor-resume-all"
             >
-              Start an agent
+              <ToolGlyph kind="retry" />
+              Resume all
             </Button>
-          </div>
-
+          ) : null}
+          {failed.length ? (
+            <Button dense variant="secondary" onClick={retry}>
+              <ToolGlyph kind="retry" />
+              Retry
+            </Button>
+          ) : null}
+        </Toolbar>
+        <div className="drawer-scroll cw cw-scroll">
           {starting ? (
-            <StartAgent
-              onCancel={() => setStarting(false)}
-              onStarted={(row) => {
-                setStarting(false);
-                if (row) useConductor.getState().openWindow(null, row);
-                void useConductor.getState().readFlights();
-              }}
-            />
+            <div className="cw-pane">
+              <StartAgent
+                onCancel={() => setStarting(false)}
+                onStarted={(row) => {
+                  setStarting(false);
+                  if (row) useConductor.getState().openWindow(null, row);
+                  void useConductor.getState().readFlights();
+                }}
+              />
+            </div>
           ) : null}
 
           {loading ? <SurfaceState loading /> : null}
-          {!loading && !ordered.length && !stopped.length && !ended.length && !ownMembers.length && !failed.length && !starting ? (
-            <p className="cw-empty" data-testid="conductor-empty">An agent works on one item for you, in its own branch.</p>
+          {nothing ? (
+            <div className="cw-empty" data-testid="conductor-empty">
+              <SurfaceState empty emptyImage={objectSprite("conductor", "conductor")} emptyLabel="An agent works on one item for you, in its own branch." />
+            </div>
           ) : null}
 
-          {groups ? (
-            groups.map((group) => (
-              <section
-                key={group.project || "-"}
-                className="cw-section cw-project"
-                data-testid="conductor-project"
-                aria-label={group.project || "No project"}
-              >
-                <h3 className="cw-cap cw-project-cap">
-                  <span className="cw-project-name">{group.project || "No project"}</span>
-                  <span className="kit-pill" data-tone={RANK_TONE[group.worst]} data-dot="">{FLEET_WORD[group.worst]}</span>
-                </h3>
-                {group.members.filter((m) => fleetRank(m) === 0).map(askRow)}
-                {group.members.some((m) => fleetRank(m) > 0) ? (
-                  <ul className="cw-well surface-group-well">{group.members.filter((m) => fleetRank(m) > 0).map((m) => fleetRow(m))}</ul>
-                ) : null}
-              </section>
-            ))
-          ) : (
-            <>
-              {asks.length ? (
-                <section className="cw-section" data-testid="conductor-asks" aria-label="Needs you">
-                  <h3 className="cw-cap">NEEDS YOU</h3>
-                  {asks.map(askRow)}
-                </section>
-              ) : null}
-              {fresh.length ? (
-                <section className="cw-section" data-testid="conductor-new" aria-label="New">
-                  <h3 className="cw-cap">NEW</h3>
-                  <ul className="cw-well surface-group-well">{fresh.map((m) => fleetRow(m))}</ul>
-                </section>
-              ) : null}
-              {working.length ? (
-                <section className="cw-section" data-testid="conductor-work" aria-label="Working">
-                  <h3 className="cw-cap">WORKING</h3>
-                  <ul className="cw-well surface-group-well">{working.map((m) => fleetRow(m))}</ul>
-                </section>
-              ) : null}
-              {quiet.length ? (
-                <section className="cw-section" data-testid="conductor-quiet" aria-label="Quiet">
-                  <h3 className="cw-cap">QUIET</h3>
-                  <ul className="cw-well surface-group-well">{quiet.map((m) => fleetRow(m))}</ul>
-                </section>
-              ) : null}
-            </>
-          )}
-
-          {missing.length ? (
-            <section className="cw-section" data-testid="conductor-coders" aria-label="On this Mac">
-              <h3 className="cw-cap">ON THIS MAC</h3>
-              <ul className="cw-well surface-group-well">
-                {missing.map((m) => (
-                  <CoderRow
-                    key={m.id}
-                    member={m}
-                    selected={m.id === selectedId}
-                    onSelect={() => select(m.id)}
-                    meta={m.detect?.version ? <span className="cw-mono">{m.detect.version}</span> : null}
-                    verb={<ReadyVerb member={m} lead={m.id === leadFix} />}
-                  />
-                ))}
-              </ul>
-              <HooksLine member={selected?.role === "ready" ? selected : null} />
+          {asks.length || workingParents.length || ownAsks.length ? (
+            <section className="cw-section cw-pane cw-asks" data-testid="conductor-asks" aria-label="Needs you">
+              {asks.map(askRow)}
+              {workingParents.map((m) => <Fragment key={`helpers-${m.id}`}>{helperAsks(m)}</Fragment>)}
+              {ownAsks.map(ownAsk)}
             </section>
           ) : null}
 
-          {stopped.length ? (
-            <section className="cw-section" data-testid="conductor-stopped" aria-label="Stopped by restart">
-              <h3 className="cw-cap">STOPPED BY RESTART</h3>
-              <ul className="cw-well surface-group-well">
-                {stopped.map((m) => (
-                  <CoderRow
-                    key={m.id}
-                    member={m}
-                    selected={m.id === selectedId}
-                    onSelect={() => select(m.id)}
-                    meta={
-                      <>
-                        <span>{titleOfAgent(m)}</span>
-                        {m.when ? <span className="cw-mono">{agoWord(m.when)}</span> : null}
-                      </>
-                    }
-                    verb={
-                      <Button
-                        dense
-                        variant={stopped.length === 1 && !leadAsk && !leadFix ? "primary" : "secondary"}
-                        loading={resuming === m.id}
-                        disabled={resuming !== null}
-                        onClick={() => resume([m], m.id)}
-                        data-testid="conductor-resume"
-                      >
-                        Resume
-                      </Button>
-                    }
-                  />
-                ))}
-              </ul>
-            </section>
+          {hasRows ? (
+            <div className="cw-list" data-testid="conductor-list">
+              <ObjectList
+                label="Agents"
+                density="dense"
+                rows={rows}
+                columns={LIST_COLUMNS.filter((column) => !["project", "when", "what"].includes(column.key)
+                  || rows.some((row) => column.key === "when" ? row.when : row.cells?.[column.key]))}
+                sort={sort}
+                onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                onOpen={(id) => {
+                  const m = everyone.find((row) => row.id === id);
+                  const group = groupOf.get(id);
+                  if (!m) return;
+                  if (group === "mac") info(m);
+                  else if (group !== "own" && m.live !== "queued") openMember(m);
+                }}
+                rowProps={(row) => ({ "data-testid": "conductor-row", "data-group": groupOf.get(row.id) })}
+              />
+            </div>
           ) : null}
-
-          {ended.length ? (
-            <FoldGadget title="Stopped today" token={String(ended.length)} className="cw-ended">
-              <ul className="cw-well surface-group-well" data-testid="conductor-ended">
-                {ended.map((m) => (
-                  <CoderRow
-                    key={m.id}
-                    member={m}
-                    selected={m.id === selectedId}
-                    onSelect={() => select(m.id)}
-                    meta={m.when ? <span className="cw-mono">{agoWord(m.when)}</span> : null}
-                    verb={
-                      <>
-                        {HAND_AGAIN.has(String(m.flightState)) && m.origin ? (
-                          // Gaps: a new agent continues in the same worktree.
-                          <Button dense variant="secondary" onClick={() => handAgain(m)} data-testid="conductor-hand-again">
-                            Hand again
-                          </Button>
-                        ) : null}
-                        <Button dense variant="ghost" onClick={() => openMember(m)}>
-                          Open
-                        </Button>
-                      </>
-                    }
-                  />
-                ))}
-              </ul>
-            </FoldGadget>
-          ) : null}
-
-          {ownMembers.length ? (
-            <FoldGadget title="Agents you started yourself" token={String(ownMembers.length)} className="cw-own-agents">
-              <div className="cw-well surface-group-well" data-testid="conductor-own-agents">
-                {ownMembers.map(ownRow)}
-              </div>
-            </FoldGadget>
+          {/* AG12: a selected agent's pair result reads under the list. */}
+          {selected && selectedGroup && reviewResult(selected.review) ? (
+            <div className="cw-pane cw-selection" data-testid="conductor-selection">
+              <ReviewResult review={selected.review} />
+            </div>
           ) : null}
         </div>
       </div>
-      <SurfaceFooter
+      <footer ref={setFoot} className="desk-surface-foot surface-footer cw-footer" />
+      <StatusBar
+        data-testid="conductor-head"
         egress={selected?.role === "live" ? <EgressChip label={AGENT_HOST[selected.agent as AgentId] ?? AGENT_HOST.claude} scope="cloud" /> : null}
-        className="cw-footer"
-        receipt={<MemberReceipt member={selected} />}
-        verbs={selected ? <MemberVerbs member={selected} onInfo={() => info(selected)} trim /> : null}
+        items={items}
+        // The receipt (Stop, a hooks install, a stale launch's close) leads
+        // the verbs: an empty receipt leaves no separator behind.
+        verbs={<>
+          <MemberReceipt member={selected} />
+          {selected ? (
+          <>
+            {selectedGroup ? (
+              <RowVerb
+                member={selected}
+                group={selectedGroup}
+                resuming={resuming}
+                onResume={() => resume([selected], selected.id)}
+                cancelling={cancelling}
+                onCancel={() => cancelQueued(selected)}
+              />
+            ) : null}
+            <MemberVerbs member={selected} onInfo={() => info(selected)} trim />
+          </>
+          ) : null}
+        </>}
       />
+      </FootSlotContext.Provider>
     </DeskWindowFrame>
   );
 }

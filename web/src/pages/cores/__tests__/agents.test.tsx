@@ -4,7 +4,7 @@
 // PARKED; agents live in the Conductor drawer, so these locked semantics
 // are proved on the Conductor window: blocked-before-running, the Answer
 // verb, and "Personas" never returns.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ConductorWindow } from "../../../desk/conductor/ConductorWindow";
 import { __resetConductor } from "../../../desk/conductor/store";
@@ -68,7 +68,12 @@ describe("Agents in the Conductor (HS-100-09, re-anchored by PHILO-14 C4)", () =
     render(<ConductorWindow />);
     // PHILO-17 THE REFIT: a row's name is the item (here the project) it works on.
     const blocked = await screen.findByRole("button", { name: "holdspeak" });
-    const running = screen.getByRole("button", { name: "holdspeak-mobile" });
+    // Window grammar: the running agent is a list row; its What is the item.
+    const running = await waitFor(() => {
+      const row = screen.queryAllByTestId("conductor-row").find((r) => r.textContent?.includes("holdspeak-mobile"));
+      if (!row) throw new Error("no running row");
+      return row;
+    });
     // Blocked-first is the pinned ordering contract.
     expect(blocked.compareDocumentPosition(running) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // The blocked agent's verb is Answer, on its plate: it opens the session's answer well.
@@ -77,8 +82,9 @@ describe("Agents in the Conductor (HS-100-09, re-anchored by PHILO-14 C4)", () =
     // The head counts honestly: one at work, one asks. Phase 16 (the
     // interior kit, canvas window "Conductor"): `1 at work` is the AppHead's
     // big fact in sentence case; the ask is a lamp on the StatusStrip.
-    const head = screen.getByTestId("conductor-head").textContent ?? "";
-    // Betterment AG8: the fact counts only what is there.
+    // Window grammar: the status bar counts only what is there.
+    const head = [...screen.getByTestId("conductor-head").querySelectorAll(".kit-statusbar-item")]
+      .map((item) => item.textContent).join(" · ");
     expect(head).toContain("1 needs you · 1 working");
   });
 

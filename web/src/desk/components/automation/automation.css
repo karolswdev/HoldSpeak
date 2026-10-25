@@ -533,3 +533,193 @@
   .automation-setup-heading { gap: 9px; }
   .automation-setup-heading h2 { font-size: 18px; }
 }
+
+/* ── Window grammar (2026-10-24) ─────────────────────────────────────────
+   Title bar → Toolbar [Run now · Edit · Send…] → the compact head (the
+   automation's glyph, the Do sentence in sans 15/500, one line of quiet
+   facts) → Results as a dense list view, edge to edge → the selected
+   result's reading → StatusBar (count · new · next start · engine and
+   where its prompt goes). The body runs edge to edge; the toolbar stays
+   put and the content scrolls under it. */
+
+.desk-next .desk-surface-body.automation-body[data-interior] {
+  overflow: hidden;
+  gap: 0;
+  padding: 0;
+}
+.automation-scroll {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  gap: 0;
+}
+.automation-pane { padding: 0 16px; min-width: 0; }
+.automation-pane:empty { display: none; }
+.automation-scroll > .automation-pane:last-child { padding-bottom: 16px; }
+.automation-scroll > .surface-state,
+.automation-scroll > .automation-refusal { margin: 12px 16px 0; }
+
+/* The head: glyph | Do sentence over the facts line. */
+.automation-head {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 12px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: linear-gradient(180deg, var(--wb-hover) 0%, transparent 100%);
+}
+.automation-head-sprite {
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin-top: 2px;
+  object-fit: contain;
+}
+.automation-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* The lead line: the Do sentence. Its label is for assistive tech only. */
+.automation-line[data-variant] { display: block; }
+.desk-next .surface-host-body .automation-line[data-variant] + .automation-line[data-variant] {
+  border-top: 0;
+  padding-top: 0;
+}
+.automation-line[data-variant="lead"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+}
+.automation-line[data-variant="lead"] > .automation-line-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  padding: 0;
+}
+.automation-line[data-variant="lead"] .automation-line-press.btn--chrome,
+.automation-line[data-variant="lead"] .automation-line-static {
+  margin-left: -6px;
+  padding: 2px 6px;
+}
+.automation-line[data-variant="lead"] .automation-line-value {
+  font: 500 15px / 1.4 var(--font-sans);
+}
+.automation-line[data-variant="lead"] .automation-line-editor { grid-column: 1 / -1; padding: 6px 0 8px; }
+.automation-line[data-variant] .automation-line-chevron { display: none; }
+
+/* The facts line: `When Only when I press Run now · About … · With …`.
+   A fact is not a box of its own: its label, value and editor flow in the
+   line; an open fact's editor drops under the whole line. */
+.automation-head-facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 2px;
+  row-gap: 0;
+  min-width: 0;
+}
+.automation-line[data-variant="fact"] { display: contents; }
+.automation-line[data-variant="fact"] > .automation-line-label {
+  padding: 0;
+  font: 500 12px / 1.4 var(--font-sans);
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--wb-muted);
+}
+.automation-line[data-variant="fact"] + .automation-line[data-variant="fact"] > .automation-line-label::before {
+  content: "·";
+  margin: 0 8px 0 6px;
+  color: var(--wb-muted);
+}
+.automation-line[data-variant="fact"] .automation-line-press.btn--chrome,
+.automation-line[data-variant="fact"] .automation-line-static {
+  width: auto;
+  margin-left: 0;
+  padding: 1px 4px;
+  min-height: 0;
+}
+.automation-line[data-variant="fact"] .automation-line-value {
+  font: 500 13px / 1.4 var(--font-sans);
+  white-space: normal;
+}
+.automation-line[data-variant="fact"] .automation-chips { padding-top: 0; gap: 4px; }
+.automation-line[data-variant="fact"] > .automation-line-aside { margin-left: 4px; }
+.automation-line[data-variant="fact"] > .automation-line-editor {
+  flex: 1 0 100%;
+  order: 10;
+  padding: 8px 0 6px;
+}
+.automation-body[data-drop-ready] .automation-line[data-line="about"] { outline: 0; }
+.automation-body[data-drop-ready] .automation-line[data-line="about"] .automation-line-press {
+  outline: 1px dashed var(--wb-ember-ink);
+  outline-offset: 1px;
+}
+
+/* Results: the list view edge to edge, then the shown result's reading on
+   the window's paper (no card in the window). */
+.desk-next .surface-host-body .automation-results,
+.automation-results { gap: 0; }
+.automation-result-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.automation-results > .automation-pane { padding-top: 10px; }
+.desk-next .automation-body .automation-card.surface-group-well,
+.automation-body .automation-card {
+  gap: 10px;
+  padding: 12px 16px 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.automation-result-list + .automation-card,
+.automation-send + .automation-card { border-top: 1px solid var(--wb-rule-soft); }
+.automation-body .automation-card-when { font: 500 12px / 1.5 var(--font-sans); letter-spacing: 0; }
+.automation-body .automation-tasks,
+.automation-body [data-testid="automation-tasks"] { margin: 0 16px 12px; }
+.automation-send { padding-bottom: 10px; }
+
+@container surface (max-width: 559.9px) {
+  .automation-head { grid-template-columns: 32px minmax(0, 1fr); padding: 10px 12px 8px; column-gap: 10px; }
+  .automation-head-sprite { width: 32px; height: 32px; }
+  .automation-pane { padding: 0 12px; }
+  .automation-head-facts { flex-direction: column; align-items: stretch; }
+  .automation-line[data-variant="fact"] {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 8px;
+  }
+  .automation-line[data-variant="fact"] + .automation-line[data-variant="fact"] > .automation-line-label::before { content: none; }
+  .automation-line[data-variant] .automation-line-press.btn--chrome { min-height: 44px; }
+  .automation-line[data-variant="fact"] > .automation-line-editor { grid-column: 1 / -1; }
+  .automation-body .automation-card { padding: 10px 12px 14px; }
+}
+/* A fact's About chips read as quiet words in the head, not mono caps. */
+.automation-line[data-variant="fact"] .automation-chips .surface-token {
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  font: 500 13px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-text);
+}
+.automation-line[data-variant="fact"] .automation-chips .surface-token + .surface-token::before {
+  content: ",";
+  margin-right: 4px;
+  color: var(--wb-muted);
+}

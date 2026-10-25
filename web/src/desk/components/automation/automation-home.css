@@ -123,11 +123,11 @@
   min-width: 0;
 }
 
-/* A home row: the name, and under it When · With (· Off), never cut. */
-.automation-home-row { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.automation-home-name { font: 500 var(--desk-type-primary-size, 15px) / 1.35 var(--font-sans); }
-.automation-home-facts {
-  font: 500 var(--font-size-xs, 12px) / 1.4 var(--font-mono);
-  color: var(--wb-muted);
-  overflow-wrap: anywhere;
+/* Window grammar (2026-10-24): the home is a list view under its toolbar;
+   it fills the window and scrolls inside it. */
+.automation-home-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }

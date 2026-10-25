@@ -124,11 +124,9 @@ def _open_agents(page: Any) -> Any:
                 has=page.locator(".desk-menu-label", has_text=re.compile(r"^Agents$")),
             ).click()
     conductor.wait_for(timeout=15_000)
-    fold = conductor.locator("details.cw-own-agents")
-    fold.wait_for(timeout=30_000)
-    if fold.get_attribute("open") is None:
-        fold.locator("summary").click()
-    own = conductor.locator("[data-testid='conductor-own-agents']")
+    # Window grammar (2026-10-24): an owner-started agent that asks is a plate
+    # in the asks (the question and its answer in one row), above the list.
+    own = conductor.locator("[data-testid='conductor-asks']")
     own.wait_for(timeout=30_000)
     return own
 

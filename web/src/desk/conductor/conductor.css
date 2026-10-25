@@ -393,3 +393,60 @@
     align-items: flex-start;
   }
 }
+
+/* ── Window grammar (2026-10-24) ─────────────────────────────────────────
+   Toolbar [Start an agent] → the asks (plates; the question and its answer
+   need more than one row) → the dense list view of every other agent, edge
+   to edge → the status bar. The content scrolls under the toolbar; the
+   list carries the `surface` container its narrow rows read. */
+.desk-next .conductor-window .drawer-scroll.cw.cw-scroll {
+  container-name: surface cwrow;
+  container-type: inline-size;
+  padding: 0;
+  gap: 0;
+}
+.desk-next .cw-pane { padding: 12px 14px; }
+.desk-next .cw-scroll > .surface-state { margin: 12px 14px; }
+.desk-next .surface-host-body .cw-scroll > .cw-asks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.desk-next .cw-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+  min-height: 0;
+}
+/* The agent's portrait leads its row at 20 px (the list's object glyph). */
+.desk-next .cw-list .object-list-open img { image-rendering: auto; }
+.desk-next .cw-empty { display: flex; flex-direction: column; flex: 1 1 auto; justify-content: center; }
+.desk-next .cw-what { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.desk-next .cw-what-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desk-next .cw-what .cw-desk-answer { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--wb-muted); }
+.desk-next .cw-scroll > .cw-selection { border-top: 1px solid var(--wb-rule-soft); }
+/* Narrow: the agent's state keeps the first line beside its name, as the
+   list's own state column does; What and When fall under the name. */
+@container surface (max-width: 520px) {
+  .desk-next .cw-list .object-list[data-density="dense"] .object-list-cell[data-col="status"] {
+    order: 1;
+    flex: none;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px 0 0;
+    font-size: 13px;
+  }
+  .desk-next .cw-list .object-list[data-density="dense"] .object-list-cell[data-col="status"]::before { content: none; }
+  .desk-next .cw-list .object-list[data-density="dense"] .object-list-cell[data-col="status"] + .object-list-cell {
+    padding-left: 40px;
+  }
+  .desk-next .cw-list .object-list[data-density="dense"] .object-list-cell[data-col="status"] + .object-list-cell::before { content: none; }
+  .desk-next .cw-list .object-list[data-density="dense"] .object-list-cell[data-col="what"] ~ .object-list-cell[data-col="status"] + .object-list-cell::before {
+    content: "·";
+  }
+  .desk-next .cw-list .object-list[data-density="dense"] .object-list-cell[data-col="what"] ~ .object-list-cell[data-col="status"] + .object-list-cell {
+    padding-left: 0;
+  }
+}

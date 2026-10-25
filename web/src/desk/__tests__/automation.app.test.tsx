@@ -384,17 +384,21 @@ describe("Run now and the results", () => {
     expect(within(newest()).getByRole("heading", { name: "Weekly update" })).toBeInTheDocument();
   });
 
-  it("each older result is one line; a failed one keeps Run again; a line opens in place and reads it", async () => {
+  it("window grammar: the results are a list view; a press shows that result below the list and reads it", async () => {
     await open(populated as Step);
-    const lines = screen.getAllByTestId("automation-older");
-    expect(lines).toHaveLength(2);
-    expect(lines[0]).toHaveTextContent("Failed: The stub refuses: no source is attached");
-    expect(within(lines[0]).getByRole("button", { name: "Run again" })).toBeInTheDocument();
-    expect(lines[1]).toHaveTextContent("Weekly update");
-    expect(within(lines[1]).getByText("NEW")).toBeInTheDocument();
-    fireEvent.click(lines[1]);
-    const opened = await screen.findAllByTestId("automation-reading");
-    expect(opened).toHaveLength(2);
+    const rows = within(screen.getByTestId("automation-result-list")).getAllByTestId("automation-result-row");
+    expect(rows).toHaveLength(3);
+    // The newest is the selected row, and the reader below shows it.
+    expect(rows[0]).toHaveAttribute("aria-selected", "true");
+    expect(rows[1]).toHaveTextContent("Failed: The stub refuses: no source is attached");
+    expect(within(rows[1]).getByTestId("automation-result-state")).toHaveTextContent("Failed");
+    expect(rows[2]).toHaveTextContent("Weekly update");
+    expect(within(rows[2]).getByTestId("automation-result-state")).toHaveTextContent("New");
+    // A failed result keeps Run again where it reads.
+    fireEvent.click(within(rows[1]).getAllByRole("button")[0]);
+    expect(within(newest()).getByRole("button", { name: "Run again" })).toBeInTheDocument();
+    fireEvent.click(within(rows[2]).getAllByRole("button")[0]);
+    await waitFor(() => expect(within(newest()).getByTestId("automation-reading")).toBeInTheDocument());
     const older = artifactOf(populated, 2);
     await waitFor(() => expect(hub.calls).toContainEqual({
       method: "POST", url: `${DETAIL}/results/${older}/open`, body: undefined,
@@ -822,7 +826,7 @@ describe("A7: home, New automation and starters", () => {
     expect(useDesk.getState().workbenchWindows.length).toBe(windows);
   });
 
-  it("home rows show the name, When, With and NEW, and open the automation", async () => {
+  it("window grammar: home rows are a list view (Name, When, Engine, Last result); a press selects, a double press or Open opens", async () => {
     hub.step = homeRows as Step;
     render(<WorkbenchesHomeCore />);
     const [row] = await screen.findAllByTestId("automation-home-row");
@@ -830,9 +834,20 @@ describe("A7: home, New automation and starters", () => {
     expect(row).toHaveTextContent(/Every Friday at 15:00/i);
     expect(row).toHaveTextContent(/Claude Code/i);
     expect(row).toHaveTextContent(/Off/i);
-    expect(row).toHaveTextContent("1 NEW");
+    expect(within(row).getByTestId("automation-home-result").textContent).toMatch(/^New/);
     expect(row.textContent).not.toMatch(/0 NEW|ITEM|PENDING|RECENT RUNS/);
-    fireEvent.click(row);
+    // The status bar says the count and what is new, never a zero.
+    expect(screen.getByTestId("automation-home-count")).toHaveTextContent("1 automation");
+    expect(screen.getByTestId("automation-home-status")).toHaveTextContent("1 new");
+    expect(screen.getByTestId("automation-home-status").textContent).not.toMatch(/\b0\b/);
+    const name = within(row).getAllByRole("button")[0];
+    fireEvent.click(name);
+    expect(row).toHaveAttribute("aria-selected", "true");
+    expect(useDesk.getState().workbenchWindows).toEqual([]);
+    expect(screen.getByTestId("automation-home-run")).toBeInTheDocument();
+    fireEvent.doubleClick(name);
+    expect(useDesk.getState().workbenchWindows.map((w) => w.id)).toEqual([(homeRows as Step).workbench_id]);
+    fireEvent.click(screen.getByTestId("automation-home-open"));
     expect(useDesk.getState().workbenchWindows.map((w) => w.id)).toEqual([(homeRows as Step).workbench_id]);
   });
 
@@ -1027,7 +1042,8 @@ describe("an agent works in a folder (A10)", () => {
     await screen.findByTestId("automation-sentence");
     expect(within(line("about")).getByTestId("automation-about-chips")).toHaveTextContent("Folder ledger");
     expect(line("with")).toHaveTextContent("Claude Code");
-    expect(line("with")).toHaveTextContent("ANTHROPIC");
+    // Window grammar: the egress chip is in the status bar (A.9).
+    expect(screen.getByTestId("automation-status")).toHaveTextContent("Claude Code · Anthropic");
     const reading = within(newest()).getByTestId("automation-reading");
     expect(reading).toHaveTextContent("ledger.py");
     expect(reading).toHaveTextContent("risky_migration.sql");
