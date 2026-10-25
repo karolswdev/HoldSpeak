@@ -738,8 +738,9 @@ export function NeedRow({ face, primary, projects, plates = true }: {
   face: NeedFace;
   primary: boolean;
   projects: boolean;
-  /** Window grammar: the Needs-you window leads each row with its object
-   *  glyph (false); Today keeps the kind plate. */
+  /** Window grammar: false leads each row with its object glyph and a
+   *  DotWord state (the Needs-you window and Today's Needs you); true keeps
+   *  the kind plate and the lamp. */
   plates?: boolean;
 }) {
   const member = useAskMember(face.askOf);
