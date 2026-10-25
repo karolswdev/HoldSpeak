@@ -32,15 +32,32 @@ describe("shared illustrated icon source", () => {
   it("retains PNG size and alpha contracts for every exported base", () => {
     for (const family of ["world", "system", "settings"]) {
       for (const name of names(resolve(SOURCE, family), ".svg")) {
-        const dirs = family === "world" ? ["", "32"] : [family];
+        // Icons D (2026-10-24): world and system also draw a 20 px glyph.
+        const dirs = family === "world" ? ["", "32", "20"]
+          : family === "system" ? ["system", "system/20"] : [family];
         for (const dir of dirs) {
           const file = readFileSync(resolve(PNG, dir, `${name}.png`));
-          const size = family === "world" ? (dir === "32" ? 32 : 64)
+          const size = dir.endsWith("20") ? 20
+            : family === "world" ? (dir === "32" ? 32 : 64)
             : family === "settings" && name === "wallpaper" ? 64 : 32;
           expect([file.readUInt32BE(16), file.readUInt32BE(20)], `${dir}/${name}`)
             .toEqual([size, size]);
           expect(file[25], `${dir}/${name} must retain alpha`).toBe(6);
         }
+      }
+    }
+  });
+});
+
+describe("Icons D construction (owner pick 2026-10-24)", () => {
+  it("draws every source front-on and flat: no gradient, filter, tilt or skew", () => {
+    for (const family of ["world", "system", "settings"]) {
+      for (const name of names(resolve(SOURCE, family), ".svg")) {
+        const svg = readFileSync(resolve(SOURCE, family, `${name}.svg`), "utf8");
+        expect(svg, `${family}/${name}`).not.toMatch(/<(?:linearGradient|radialGradient|filter)\b/i);
+        expect(svg, `${family}/${name}`).not.toMatch(/(?:rotate|skew|matrix)\(/i);
+        // The optical levels ride on these root properties (gen-illustrated-icons.py LEVELS).
+        expect(svg, `${family}/${name}`).toMatch(/--ow:1\.5px;--u:3\.25px;--nu:-3\.25px;--lw:1/);
       }
     }
   });

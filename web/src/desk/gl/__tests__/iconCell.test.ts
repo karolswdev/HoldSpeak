@@ -20,9 +20,10 @@ const SPRITES_DIR = join(
 );
 
 // PHILO-14 A0c: both drawn sizes, the 64 px icon set (root) and the 32 px
-// list set (`32/`), carry every base name in all three states.
+// list set (`32/`), and Icons D's 20 px glyph set (`20/`) carry every base
+// name in all three states.
 function requiredFiles(): string[] {
-  return ["", "32/"].flatMap((dir) =>
+  return ["", "32/", "20/"].flatMap((dir) =>
     allSpriteNames().flatMap((name) =>
       ["", "_sel", "_stale"].map((suffix) => `${dir}${name}${suffix}.png`),
     ),
@@ -77,8 +78,9 @@ describe("the cell contract (HS-105-01)", () => {
   });
 
   it("a directory is a drawer, never paper", () => {
+    // Icons D (2026-10-24): a zone folder; its hue picks the front colour.
     expect((VARIANTS as Record<string, string[]>).directory).toEqual([
-      "project-drawer",
+      "zone-drawer",
     ]);
   });
 

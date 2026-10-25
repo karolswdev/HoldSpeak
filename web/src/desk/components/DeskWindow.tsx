@@ -11,6 +11,8 @@
 // HS-117-04 — decomposed into focused modules under `window/`. This file
 // retains useDeskWindow + DeskWindowFrame + re-exports for API stability.
 import {
+  cloneElement,
+  isValidElement,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -59,6 +61,7 @@ import {
 } from "./window/windowRegistry";
 import { GadgetGlyph } from "./window/GadgetGlyph";
 import { DOCK_SPRITES } from "../systemSprites";
+import { glyphSprite } from "../sprites";
 import { windowIcons } from "./window/seatIcons";
 import {
   type DockLauncher,
@@ -948,6 +951,12 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
     (DOCK_SPRITES[id] ? (
       <img src={DOCK_SPRITES[id]} alt="" width={14} height={14} draggable={false} />
     ) : null);
+  // Icons D (2026-10-24): the title bar reads the 20 px drawing of the same
+  // sprite (no bevel, heavier outline); the Dock seat keeps the host's own.
+  const titleGlyph: ReactNode =
+    isValidElement<{ src?: unknown }>(titleIcon) && titleIcon.type === "img" && typeof titleIcon.props.src === "string"
+      ? cloneElement(titleIcon, { src: glyphSprite(titleIcon.props.src) })
+      : titleIcon;
   useEffect(() => {
     if (titleIcon == null) return;
     windowIcons.set(id, titleIcon);
@@ -1363,7 +1372,7 @@ export function DeskWindowFrame(props: DeskWindowFrameProps) {
         {/* PHILO-16 (A1) §4.1: the object's icon, 14 px, left of the title:
             the host's own icon, else the sprite its Dock launcher wears. */}
         {titleIcon != null ? (
-          <span className="desk-window-icon">{titleIcon}</span>
+          <span className="desk-window-icon">{titleGlyph}</span>
         ) : null}
         {/* HS-97-07 — the eyebrow is demoted: window identity is icon +
             title (Article VII.1); the prop survives for callers/AT. */}

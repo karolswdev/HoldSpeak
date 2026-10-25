@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="top" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ded4ff"/><stop offset="1" stop-color="#8870cb"/></linearGradient>
+    <linearGradient id="left" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#a8d2ff"/><stop offset="1" stop-color="#477fe0"/></linearGradient>
+    <linearGradient id="right" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#8edbd1"/><stop offset="1" stop-color="#259c96"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#839ab1"/></linearGradient>
+  </defs>
+  <g stroke="#263b53" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="32" cy="56" rx="22" ry="2" fill="#263b53" opacity=".16"/>
+    <path d="m32 9 21 12-20 13-21-12Z" fill="url(#top)" stroke-width="1.5"/>
+    <path d="m12 22 21 12v21L12 44Z" fill="url(#left)" stroke-width="1.5"/>
+    <path d="m33 34 20-13v22L33 55Z" fill="url(#right)" stroke-width="1.5"/>
+    <path d="m32 16 10 6-10 6-10-6Z" fill="url(#metal)" stroke-width="1.1"/>
+    <path d="m32 28v10m-10-6 10 6 11-7" fill="none" stroke="#dff2ff" stroke-width="1.2"/>
+    <circle cx="22" cy="22" r="3.2" fill="#ecaa45" stroke-width="1.1"/>
+    <circle cx="42" cy="22" r="3.2" fill="#259c96" stroke-width="1.1"/>
+    <circle cx="32" cy="43" r="3.6" fill="#f8fbff" stroke-width="1.1"/>
+    <path class="detail" d="M22 26v8m20-8v8m-15-2-5 5m10-1 8-5" fill="none" stroke="#e9f3ff" stroke-width="1.2"/>
+  </g>
+</svg>

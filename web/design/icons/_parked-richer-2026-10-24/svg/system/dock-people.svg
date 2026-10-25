@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#a4d2ff"/><stop offset="1" stop-color="#477fe0"/></linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#91e0d0"/><stop offset="1" stop-color="#259c96"/></linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ffe0a0"/><stop offset="1" stop-color="#ecaa45"/></linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#f8fbff"/><stop offset="1" stop-color="#91a8bc"/></linearGradient>
+  </defs>
+  <ellipse cx="32" cy="56" rx="24" ry="2" fill="#263b53" opacity=".16"/>
+  <g stroke="#263b53" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M8 52q1-13 13-17 7-2 12 3l5 14Z" fill="url(#blue)"/>
+    <path d="M36 52q1-12 11-16 8 2 10 16Z" fill="url(#teal)"/>
+    <path d="M18 28q0-9 8-12 10 1 11 10l-4 11-10 4-7-7Z" fill="url(#blue)"/>
+    <path d="m28 16 9 5 0 15-4 1-5-7Z" fill="#315b9f" stroke="#526b85" stroke-width="1.2"/>
+    <path d="m21 25 12-3 4 5-2 8-10 4-5-5Z" fill="url(#metal)" stroke="#526b85" stroke-width="1.2"/>
+    <path d="m25 29 3 1m4-2 3-1" stroke="#259c96" stroke-width="1.7"/>
+    <path d="m42 25q0-7 6-10 7 1 8 8l-3 8-8 3-4-5Z" fill="url(#amber)"/>
+    <path d="m49 15 7 4v12l-5 3-2-8Z" fill="#bf7e2f" stroke="#8f5d29" stroke-width="1.2"/>
+    <path d="m46 23 8-2m-7 7 6-2" stroke="#fff0c9"/>
+    <path d="M13 51q2-8 10-10m25 10q1-7 7-9" fill="none" stroke="#c7e3ff" stroke-width="1.5"/>
+    <path class="detail" d="m17 34-4-2m38-1 4-2" stroke="#526b85"/>
+  </g>
+</svg>

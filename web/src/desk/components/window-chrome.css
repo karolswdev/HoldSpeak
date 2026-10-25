@@ -456,14 +456,24 @@
 .desk-next .desk-window-shell[data-plane="far"] > .desk-pullout-head .desk-pullout-title {
   color: var(--wb-ink);
 }
-/* The object's pixel icon remains left of the title. */
+/* The object's icon remains left of the title. Icons D (2026-10-24,
+   docs/internal/betterment/ICONS-D-2026-10-24.md): the 16 px glyph sits on
+   a light paper chip with a soft rule, on every plane, so a folder or a
+   violet loop reads on the deep-blue front bar as well as on the grey one. */
 .desk-next .desk-window-shell > .desk-pullout-head > .desk-window-icon {
   display: inline-flex;
   flex: none;
   align-self: center;
   align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 22px;
+  height: 22px;
   margin-inline: 4px 0;
   padding: 0;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 6px;
+  background: var(--wb-paper);
 }
 .desk-next .desk-window-shell > .desk-pullout-head > .desk-window-icon :is(img, svg) {
   display: block;
@@ -472,7 +482,7 @@
   image-rendering: auto;
 }
 .desk-next .desk-window-shell:is([data-plane="front"], .is-front) > .desk-pullout-head > .desk-window-icon {
-  background: transparent;
+  background: var(--wb-paper);
 }
 /* The lamp keeps its existing tone and status behavior. */
 .desk-next .desk-window-shell > .desk-pullout-head > .desk-window-lamp {

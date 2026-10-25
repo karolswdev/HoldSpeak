@@ -163,10 +163,10 @@ describe("the Conductor on the C4 seed", () => {
     await findMember("launch:launch_c4_recon");
     await findMember("agent:codex");
     const sprite = (id: string) => member(id)!.querySelector("img")?.getAttribute("src") ?? "";
-    expect(sprite("launch:launch_c4_recon")).toMatch(/\/desk\/sprites\/(32\/)?agent-codex(_sel)?\.png$/);
-    expect(sprite("launch:launch_c4_runbook")).toMatch(/\/desk\/sprites\/(32\/)?agent-claude-code(_sel)?\.png$/);
-    expect(sprite("launch:launch_c4_flag")).toMatch(/\/desk\/sprites\/(32\/)?agent-claude-code(_sel)?\.png$/);
-    expect(sprite("agent:codex")).toMatch(/\/desk\/sprites\/(32\/)?agent-codex(_sel)?\.png$/);
+    expect(sprite("launch:launch_c4_recon")).toMatch(/\/desk\/sprites\/((?:32|20)\/)?agent-codex(_sel)?\.png$/);
+    expect(sprite("launch:launch_c4_runbook")).toMatch(/\/desk\/sprites\/((?:32|20)\/)?agent-claude-code(_sel)?\.png$/);
+    expect(sprite("launch:launch_c4_flag")).toMatch(/\/desk\/sprites\/((?:32|20)\/)?agent-claude-code(_sel)?\.png$/);
+    expect(sprite("agent:codex")).toMatch(/\/desk\/sprites\/((?:32|20)\/)?agent-codex(_sel)?\.png$/);
     expect(screen.queryByRole("group", { name: "Conductor view" })).toBeNull();
   });
 });

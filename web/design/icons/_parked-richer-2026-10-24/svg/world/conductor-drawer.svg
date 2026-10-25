@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="folder" x1="0" y1="0" x2=".84" y2="1"><stop stop-color="#57c5b6"/><stop offset="1" stop-color="#259c96"/></linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2=".82" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#dceaf5"/></linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#ffdc91"/><stop offset="1" stop-color="#ecaa45"/></linearGradient>
+  </defs>
+  <g stroke="#263b53" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="32" cy="56" rx="23" ry="1.8" fill="#263b53" opacity=".15" stroke="none"/>
+    <path d="m9 23 3-9 15-3 6 6h16l6 5-4 27-25 8-17-7Z" fill="#237c7d" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m12 20 3-8 14-3 7 7h14l5 5-4 27-25 7-18-7Z" fill="url(#folder)" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m19 17 28-5 5 4-2 19-28 6-5-4Z" fill="url(#paper)" stroke="#557491" stroke-width="1.1"/>
+    <path d="m11 31 20 6 25-8-4 21-24 7-18-7Z" fill="url(#folder)" stroke="#263b53" stroke-width="1.4"/>
+    <path d="m31 37 25-8-4 21-24 7Z" fill="#218885" stroke="none"/>
+    <path d="m20 37 11 3 12-8m-12 8v13" fill="none" stroke="#eaf8ff" stroke-width="1.5"/>
+    <circle cx="20" cy="37" r="3.4" fill="url(#accent)" stroke="#263b53" stroke-width="1.1"/>
+    <circle cx="31" cy="40" r="3.4" fill="#477fe0" stroke="#263b53" stroke-width="1.1"/>
+    <circle cx="43" cy="32" r="3.4" fill="url(#accent)" stroke="#263b53" stroke-width="1.1"/>
+    <path class="detail" d="m16 16 27-5" fill="none" stroke="#b8f0e5" stroke-width="1.2"/>
+  </g>
+</svg>

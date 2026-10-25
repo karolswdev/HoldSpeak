@@ -879,6 +879,10 @@ Shared vocabulary (`objects/kinds.ts`):
   boards' mapping; a project/repository/drawer is the drawer, an agent the
   automaton). Every species also takes `sprite` (a URL) so lane A0's new
   mold lands without a species change.
+  Sizes (Icons D, 2026-10-24): 64 (the icon), 32 (the list row,
+  `listSprite`) and 20 (the dense row and the window title glyph,
+  `glyphSprite`). A directory wears its zone's colour (`ZONE_HUES` in
+  `sprites.ts`).
 - `ObjectTone`: ok · warn · fail · info · ask. Lamp colours are the
   `--lamp-*` tokens (ask = the ember of the boards). A lamp is never colour
   alone: the word sits beside it or is in the accessible name. Row lamps are
