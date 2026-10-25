@@ -187,7 +187,7 @@ describe("The week: the strip and the THIS WEEK rows", () => {
     hub(door([], week({}, false), false));
     render(<ChairHome />);
     await waitFor(() => expect(wire.paths.some(([p]) => p === "/api/door")).toBe(true));
-    await waitFor(() => expect(screen.getByTestId("needs-no-calendar").textContent).toContain("NO CALENDAR"));
+    await waitFor(() => expect(screen.getByTestId("needs-no-calendar").textContent).toContain("No calendar"));
     expect(screen.queryByTestId("arrival-week-strip")).toBeNull();
     expect(screen.queryByTestId("arrival-this-week")).toBeNull();
   });

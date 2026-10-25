@@ -134,11 +134,12 @@
       ],
       "trigger": {
         "kind": "ui",
-        "action": "click",
+        "action": "press",
         "selector": "[id='activity-receipt-{sweep_projection_id}'] button",
-        "adapter": "ui-pointer",
+        "key": "Enter",
+        "adapter": "ui-keyboard",
         "timeout_s": 15,
-        "why": "The exact sweep receipt’s library Open receipt Button opens its registered Rhythm face from Activity."
+        "why": "Window grammar (2026-10-24): the exact sweep receipt is a list row; Enter on it opens its registered Rhythm face from Activity (the list view's own open; a press selects, a double press opens)."
       },
       "expected": {
         "observe_at": "#surface-settings [data-settings-section=\"notices\"]",

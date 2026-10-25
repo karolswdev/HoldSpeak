@@ -31,7 +31,7 @@ import { PeopleReadFailed } from "../people/PeopleReadFailed";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { AppHead, ConfirmVerb, EgressChip, ScrollHint, StatusStrip, StringGadget, SurfaceFooter, SurfaceSection, SurfaceState } from "../surface";
+import { ConfirmVerb, EgressChip, ScrollHint, StatusBar, StatusStrip, StringGadget, SurfaceSection, SurfaceState, Toolbar, type StatusBarItem } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
@@ -734,7 +734,14 @@ function useAskMember(sessionKey: string | undefined): ConductorMember | null {
   }, [sessionKey, sessions, flights]);
 }
 
-export function NeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean; projects: boolean }) {
+export function NeedRow({ face, primary, projects, plates = true }: {
+  face: NeedFace;
+  primary: boolean;
+  projects: boolean;
+  /** Window grammar: the Needs-you window leads each row with its object
+   *  glyph (false); Today keeps the kind plate. */
+  plates?: boolean;
+}) {
   const member = useAskMember(face.askOf);
   if (member) {
     const question = useAgentFlights.getState().sessions.find((row) => row.key === member.sessionKey)?.question ?? "";
@@ -753,10 +760,10 @@ export function NeedRow({ face, primary, projects }: { face: NeedFace; primary: 
       </li>
     );
   }
-  return <PlainNeedRow face={face} primary={primary} projects={projects} />;
+  return <PlainNeedRow face={face} primary={primary} projects={projects} plates={plates} />;
 }
 
-function PlainNeedRow({ face, primary, projects }: { face: NeedFace; primary: boolean; projects: boolean }) {
+function PlainNeedRow({ face, primary, projects, plates }: { face: NeedFace; primary: boolean; projects: boolean; plates: boolean }) {
   const [well, setWell] = useState<Well | null>(null);
   const project = projects && face.project ? face.project : null;
   return (
@@ -770,7 +777,8 @@ function PlainNeedRow({ face, primary, projects }: { face: NeedFace; primary: bo
         factWords={face.factWords}
         lamp={face.lamp}
         sprite={needsRowSprite(face)}
-        plate={plateOf(face)}
+        plate={plates ? plateOf(face) : undefined}
+        glyphLabel={plates ? undefined : glyphWord(face)}
         // A2b: the Project button is a generic open: the Project's drawer.
         project={project ? { name: project.name, onOpen: () => openProjectRoom(project.id) } : undefined}
         verbs={(
@@ -791,6 +799,18 @@ function PlainNeedRow({ face, primary, projects }: { face: NeedFace; primary: bo
               : well === "owner" || well === "date" ? <CommitWell face={face} which={well} onDone={() => setWell(null)} /> : null}
     </>
   );
+}
+
+/** PHILO-15-09 (B12): every row says what it is. With the glyph leading
+ *  (window grammar) the word is the glyph's name: its alt and its title. */
+const GLYPH_WORDS: Record<string, string> = {
+  CC: "Claude Code", CX: "Codex", PI: "pi", AGT: "Agent", PR: "Pull request",
+  DEC: "Decision", ACT: "Action", MTG: "Meeting", SRC: "Source", REC: "Recording",
+};
+export function glyphWord(face: NeedFace): string | undefined {
+  const plate = plateOf(face);
+  if (!plate) return undefined;
+  return GLYPH_WORDS[plate] ?? plate.charAt(0) + plate.slice(1).toLowerCase();
 }
 
 interface DoorRead {
@@ -893,7 +913,7 @@ function NeedsChipRow({ chips, setChips, counts, people, projects, muted, showMu
     ["mine", "Mine", counts.mine], ["theirs", "They owe me", counts.theirs], ["decide", "To decide", counts.decide],
   ];
   return (
-    <div className="kit-filterbar needs-chips" data-testid="needs-filter">
+    <span className="needs-chips" data-testid="needs-filter">
       <span className="surface-filter-tokens needs-chip-row" role="group" aria-label="Needs you filter">
         {directions.map(([value, label, count]) => (count > 0 || chips.direction === value ? (
           <Chip key={value} label={label} count={count > 0 ? count : null} on={chips.direction === value} testId={`needs-chip-${value}`}
@@ -920,7 +940,7 @@ function NeedsChipRow({ chips, setChips, counts, people, projects, muted, showMu
           x={menu.x} y={menu.y} entries={entries} autoFocus onClose={() => setMenu(null)}
           returnFocus={() => anchors.current[menu.kind]?.focus()} />
       ) : null}
-    </div>
+    </span>
   );
 }
 
@@ -938,10 +958,10 @@ function picksOf(faces: readonly NeedFace[], key: (f: NeedFace) => [string, stri
   return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** The Needs-you window body. Phase 16 (the interior kit; the canvas window
- *  "Needs you"): AppHead (`N need you` + the status strip) → FilterBar →
- *  Section `Actions · n` over the Ledger of kind-plated rows → the Foot
- *  (`Ranked hh:mm`). Every row is drawn (HS-200-15: no cap; B11: the head
+/** The Needs-you window body. Window grammar (2026-10-24): the Toolbar (the
+ *  filter toggles, the calendar offer) → the rows edge to edge, each led by
+ *  its object glyph → the StatusBar (`N need you` with its lamp, the next
+ *  event, `Checked hh:mm`). Every row is drawn (HS-200-15: no cap; B11: the head
  *  number is the rows drawn); the Ledger scrolls inside the window and
  *  ScrollHint says so (UX-CANON §B). */
 /** The drawer is drawn after this long even when a read is still out (the
@@ -1167,33 +1187,40 @@ export function NeedsDrawer() {
   };
 
 
+  // Window grammar (2026-10-24): title bar → toolbar (the filter toggles and
+  // the calendar offer) → the rows edge to edge → the status bar, which says
+  // the one number (`14 need you`) in warm words with a lamp.
+  const offer = noCalendar ? (
+    <span className="needs-calendar-offer" data-testid="needs-no-calendar">
+      <span className="needs-calendar-word">No calendar</span>
+      <Button dense variant="secondary" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
+        onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>Connect calendar</Button>
+    </span>
+  ) : null;
+  const chipRow = faces.length + muted.length > 0 ? (
+    <NeedsChipRow chips={chips} setChips={setChips} counts={counts} people={people} projects={projects}
+      muted={muted.length > 0 ? muted.length : 0} showMuted={showMuted} setShowMuted={setShowMuted} />
+  ) : null;
+  const counted = Number(needs.count ?? 0) > 0;
+  const statusItems: StatusBarItem[] = [
+    { key: "head", lamp: counted ? "ask" : coverage.complete ? "ok" : "warn", text: head, testId: "arrival-display" },
+    next ? { key: "next", text: next, testId: "needs-next" } : null,
+    outcome.receipt ? { key: "receipt", text: outcome.receipt, testId: "needs-receipt" } : null,
+    !outcome.receipt && sourceReceipt
+      ? { key: "source", lamp: sourceReceipt.tone === "fail" ? "fail" as const : "ok" as const, text: sourceReceipt.text, testId: "needs-source-receipt" }
+      : null,
+    !outcome.receipt && !sourceReceipt && checked ? { key: "checked", text: checked, testId: "needs-checked" } : null,
+  ].filter(Boolean) as StatusBarItem[];
+
   return (
     <div className="needs-drawer kit-face" data-testid="needs-drawer"
       data-settling={settling ? "true" : undefined} aria-busy={settling ? true : undefined}>
       {settling ? <div className="needs-drawer-settling"><SurfaceState loading /></div> : null}
-      {/* The Chair's head keeps its testids (the Chair-ready signal of the
-          glass rigs): the drawer's head IS the Chair's display. */}
-      <AppHead fact={head} data-testid="arrival-headline" factTestId="arrival-display">
-        <StatusStrip
-          items={[
-            next ? { key: "next", text: <span data-testid="needs-next">{next}</span> } : null,
-            // The offer is ONE token: its word and its verb (PHILO-15-09 B11:
-            // an offer, never a row).
-            noCalendar
-              ? {
-                key: "no-calendar",
-                verb: (
-                  <span className="needs-calendar-offer" data-testid="needs-no-calendar">
-                    NO CALENDAR
-                    <Button dense variant="ghost" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"
-                      onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>Connect calendar</Button>
-                  </span>
-                ),
-              }
-              : null,
-          ]}
-        />
-      </AppHead>
+      {chipRow || offer ? (
+        <Toolbar label="Needs you" data-testid="needs-toolbar" trailing={offer}>
+          {chipRow}
+        </Toolbar>
+      ) : null}
       {coverage.expected > 0 ? <Disclosure label={`${coverage.available} of ${coverage.expected} available`} ariaLabel="Coverage">
         <StatusStrip items={[{ lamp: coverage.complete ? "ok" : "warn", text: coverage.complete ? "All sources checked" : "Sources need a check" }]} />
         {coverage.gaps.length + coverage.quiet.length > 0 ? <ul className="needs-coverage-details">
@@ -1201,17 +1228,13 @@ export function NeedsDrawer() {
         </ul> : null}
       </Disclosure> : null}
       {needs.peopleUnread ? <PeopleReadFailed testId="needs-people-read-failed" onRetry={() => void refreshNeedsYou()} /> : null}
-      {faces.length + muted.length > 0 ? (
-        <NeedsChipRow chips={chips} setChips={setChips} counts={counts} people={people} projects={projects}
-          muted={muted.length > 0 ? muted.length : 0} showMuted={showMuted} setShowMuted={setShowMuted} />
-      ) : null}
       {/* A press on a row body opens it; each row's verbs carry the keyboard. */}
       <div ref={listRef} onClick={onRowPress} data-testid="needs-list" className="needs-drawer-list">
         <ScrollHint axis="y" scrollRef={listRef}>
           {showMuted && shown.length > 0 ? (
             <SurfaceSection label="Muted" count={shown.length || null} data-testid="needs-muted" className="needs-drawer-muted">
               <NeedsList label="Muted">
-                {shown.map((face) => <NeedRow key={face.id} face={face} primary={false} projects={multipleProjects} />)}
+                {shown.map((face) => <NeedRow key={face.id} face={face} primary={false} projects={multipleProjects} plates={false} />)}
               </NeedsList>
             </SurfaceSection>
           ) : shown.length > 0 ? (
@@ -1221,7 +1244,7 @@ export function NeedsDrawer() {
                   label={`New from ${group.arrival.meetingTitle || "a meeting"}${dayWord(group.arrival.startedAt) ? ` · ${dayWord(group.arrival.startedAt)}` : ""}`}>
                   <NeedsList label={`New from ${group.arrival.meetingTitle || "a meeting"}`}>
                     {group.faces.map((face) => (
-                      <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={multipleProjects} />
+                      <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={multipleProjects} plates={false} />
                     ))}
                   </NeedsList>
                 </SurfaceSection>
@@ -1229,7 +1252,7 @@ export function NeedsDrawer() {
               {rest.length > 0 ? (
                 <NeedsList label="Needs you">
                   {rest.map((face) => (
-                    <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={multipleProjects} />
+                    <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={multipleProjects} plates={false} />
                   ))}
                 </NeedsList>
               ) : null}
@@ -1239,24 +1262,9 @@ export function NeedsDrawer() {
           ) : null}
         </ScrollHint>
       </div>
-      <SurfaceFooter
-        receipt={
-          dropped ? (
-            <NeedsDroppedReceipt />
-          ) : outcome.receipt ? (
-            <span className="surface-footer-receipt-line" role="status" data-testid="needs-receipt">
-              {outcome.receipt}
-            </span>
-          ) : sourceReceipt ? (
-            <span className="surface-footer-receipt-line" role="status" data-testid="needs-source-receipt"
-              data-tone={sourceReceipt.tone === "fail" ? "danger" : undefined}>
-              {sourceReceipt.text}
-            </span>
-          ) : checked ? (
-            <span className="surface-footer-receipt-line" data-testid="needs-checked">{checked}</span>
-          ) : null
-        }
-      />
+      {/* The Chair's head keeps its testids (the Chair-ready signal of the
+          glass rigs): the status bar's first word IS the Chair's display. */}
+      <StatusBar data-testid="arrival-headline" items={statusItems} verbs={dropped ? <NeedsDroppedReceipt /> : null} />
     </div>
   );
 }

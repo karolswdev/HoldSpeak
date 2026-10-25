@@ -259,3 +259,23 @@
   flex: 1 1 auto;
   justify-content: center;
 }
+/* Window grammar ▸ Reader: the summary read in its window, at a reading
+   measure, between the toolbar and the status bar. */
+.reference-window-reader {
+  padding: 12px 16px 16px;
+  overflow-y: auto;
+}
+.reference-reader-facts {
+  font: 400 13px / 1.35 var(--font-sans);
+  color: var(--wb-muted);
+}
+.reference-reader-heading {
+  margin: 10px 0 6px;
+  font: 600 19px / 1.25 var(--font-display);
+  color: var(--wb-ink);
+}
+.reference-reader-document {
+  max-width: 70ch;
+  font: 400 15px / 1.6 var(--font-sans);
+  color: var(--wb-ink);
+}

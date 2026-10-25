@@ -13,11 +13,13 @@ export const InteriorSlotContext = createContext<
 >(null);
 
 /** Tell the hosting window which interior this face draws (`list`,
- *  `editor`), or null for the default inset (forms, readers). */
-export function useWindowInterior(interior: WindowInterior | null) {
+ *  `editor`), or null for the default inset (forms, readers). `undefined`
+ *  says nothing: a host face that hands the window to a child face (the
+ *  Meetings list drawing a meeting record) lets the child say it. */
+export function useWindowInterior(interior: WindowInterior | null | undefined) {
   const setInterior = useContext(InteriorSlotContext);
   useLayoutEffect(() => {
-    if (!setInterior) return;
+    if (!setInterior || interior === undefined) return;
     setInterior(interior);
     return () => setInterior(null);
   }, [setInterior, interior]);

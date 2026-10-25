@@ -6,7 +6,7 @@
 //     when the meeting's own state goes final;
 //  3. a Stop is final: a slow first `/api/state` that answers after recording
 //     went idle never brings the live room back.
-import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { apiFetch } from "../../../../lib/api";
 import { useDesk } from "../../../../desk/store";
@@ -216,8 +216,15 @@ describe("daily work: Send opens on request", () => {
     await screen.findByTestId("meeting-send");
     expect(screen.queryByTestId("meeting-send-well")).toBeNull();
     expect(screen.queryByTestId("meeting-decide-well")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "More actions" }));
+    // Window grammar: Send, Export and More are the toolbar's verbs.
+    const toolbar = screen.getByRole("toolbar", { name: "Meeting" });
+    expect(within(toolbar).getByTestId("meeting-send")).toBeTruthy();
+    fireEvent.click(within(toolbar).getByRole("button", { name: "Export" }));
     expect(screen.getByRole("menuitem", { name: "Export MD" })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: "Export SRT" })).toBeTruthy();
+    fireEvent.click(within(toolbar).getByRole("button", { name: "Export" }));
+    fireEvent.click(within(toolbar).getByRole("button", { name: "More actions" }));
+    expect(screen.queryByRole("menuitem", { name: "Export MD" })).toBeNull();
     fireEvent.click(screen.getByRole("menuitem", { name: "Decide" }));
     expect(await screen.findByPlaceholderText("Decision title")).toBeTruthy();
   });

@@ -2,7 +2,7 @@
 // route (with page chrome) and a desk window (without any); the guard in
 // tests/unit/test_page_cores_guard.py pins host-agnosticism statically,
 // these pin it behaviorally.
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { DeskWindowFrame } from "../../../desk/components/DeskWindow";
 import { useDesk } from "../../../desk/store";
@@ -30,14 +30,16 @@ function inWindow(children: React.ReactNode) {
 }
 
 describe("cores render chrome-free inside a desk window", () => {
-  it("ActivityCore: content without page chrome; verbs in the surface bar", () => {
+  it("ActivityCore: content without page chrome; verbs in the window's toolbar", () => {
     const { container } = inWindow(<ActivityCore />);
     expect(container.querySelector(".page-wrap")).toBeNull();
     expect(container.querySelector(".page-hero")).toBeNull();
     expect(container.querySelector(".workroom-bar")).toBeNull();
-    expect(container.querySelector(".surface-verbs")).toBeTruthy();
-    expect(screen.getByText("Records")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Refresh now" })).toBeTruthy();
+    // Window grammar (2026-10-24): the verbs sit on the toolbar, not a verb bar.
+    expect(container.querySelector(".surface-verbs")).toBeNull();
+    const toolbar = screen.getByRole("toolbar", { name: "Activity" });
+    expect(within(toolbar).getByRole("button", { name: "Refresh now" })).toBeTruthy();
+    expect(within(toolbar).getByRole("button", { name: "Clear records" })).toBeTruthy();
   });
 
   it("CommandsCore: content without page chrome", () => {

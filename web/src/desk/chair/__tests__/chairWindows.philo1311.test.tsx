@@ -146,7 +146,9 @@ describe("PHILO-13-11 slice two — the Chair as windows", () => {
     await waitFor(() => expect(needs.querySelector('[data-object-id^="blocker:"]')).toBeTruthy());
     const body = within(needs).getByTestId("chair-window-body-needs");
     expect(body.firstElementChild?.getAttribute("data-testid")).toBe("needs-drawer");
-    expect(body.firstElementChild?.firstElementChild?.getAttribute("data-testid")).toBe("arrival-headline");
+    // Window grammar (2026-10-24): the toolbar leads; the head is the status bar.
+    expect(body.firstElementChild?.firstElementChild?.getAttribute("data-testid")).toBe("needs-toolbar");
+    expect(body.firstElementChild?.lastElementChild?.querySelector("[data-testid='arrival-headline']")).toBeTruthy();
     const action = needs.querySelector('[data-object-id="item-1"]')!;
     const setup = needs.querySelector('[data-object-id^="blocker:"]')!;
     expect(action.compareDocumentPosition(setup) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

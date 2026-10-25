@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import {
   FootSlotContext,
+  EgressChip,
   ObjectList,
+  ReadingDocument,
   StatusBar,
   StringGadget,
   SurfaceState,
@@ -14,7 +16,7 @@ import {
 } from "../../../desk/surface";
 import { SYSTEM } from "../../../desk/systemSprites";
 
-export type WindowPreset = "populated" | "empty" | "busy" | "failed";
+export type WindowPreset = "populated" | "empty" | "busy" | "failed" | "reader";
 
 /** Fixture rows only: the same Toolbar, dense ObjectList and StatusBar the
  * Meetings and Projects windows compose, fed by a local adapter. No hub
@@ -59,6 +61,54 @@ function PeopleSpecimen() {
   );
 }
 
+/** A meeting summary, read in its window: the one place a document
+ *  heading is allowed. Fixture words only. */
+const READER_SUMMARY = `Dual-write is stable. The team agreed to freeze the old ledger on Nov 5.
+
+- Jordan owns the rollback plan.
+- Mira reviews the cutover checklist by Thursday.
+
+The vendor sync moves to next week.`;
+
+/** Window grammar ▸ Reader: toolbar → a compact head → the summary as a
+ *  ReadingDocument → the status bar with its state and the egress chip of
+ *  the engine that ran it. Local presses only; no hub read, no engine. */
+function ReaderWindow() {
+  const [opened, setOpened] = useState<string | null>(null);
+  return (
+    <section className="reference-example reference-window" data-testid="reference-window" aria-label="Window pattern">
+      <div className="reference-window-frame" data-preset="reader">
+        <Toolbar label="Specimen meeting">
+          <Button dense variant="primary" onClick={() => setOpened("Send")}>
+            <ToolGlyph kind="open" />
+            Send…
+          </Button>
+          <Button dense variant="secondary" onClick={() => setOpened("Export")}>
+            <ToolGlyph kind="import" />
+            Export
+          </Button>
+        </Toolbar>
+        <div className="reference-window-content reference-window-reader" data-testid="reference-window-reader">
+          <div className="reference-reader-head">
+            <span className="reference-reader-facts">Oct 24 · 30 min · 2 people</span>
+          </div>
+          <h2 className="reference-reader-heading">Summary</h2>
+          <ReadingDocument className="reference-reader-document">{READER_SUMMARY}</ReadingDocument>
+        </div>
+        <FootSlotContext.Provider value={null}>
+          <StatusBar
+            items={[
+              { key: "state", lamp: "ok", text: "Summary stored" },
+              opened ? { key: "opened", text: <span data-testid="reference-window-opened">Opened locally · {opened}</span> } : null,
+            ]}
+            egress={<EgressChip label="studio.local · LAN" scope="local" title="Where the specimen summary ran." />}
+          />
+        </FootSlotContext.Provider>
+      </div>
+    </section>
+  );
+}
+
 const COLUMNS = [
   { key: "when", word: "When", track: "88px" },
   { key: "length", word: "Length", track: "80px" },
@@ -66,6 +116,11 @@ const COLUMNS = [
 ] as const;
 
 export function WindowReference({ preset }: { preset: WindowPreset }) {
+  if (preset === "reader") return <ReaderWindow />;
+  return <ListWindow preset={preset} />;
+}
+
+function ListWindow({ preset }: { preset: Exclude<WindowPreset, "reader"> }) {
   const [selected, setSelected] = useState<string | null>(preset === "populated" ? "w-2" : null);
   const [opened, setOpened] = useState<string | null>(null);
   const [query, setQuery] = useState("");

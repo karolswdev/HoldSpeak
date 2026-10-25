@@ -5,7 +5,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import { Button } from "../../../components/signal/Signal";
 import { plainFailure } from "../../../desk/surface/plainFailure";
 import { ActionNotice } from "../../../desk/surface/patterns/ActionNotice";
-import { AppHead, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState } from "../../../desk/surface";
+import { SurfaceSection, SurfaceState } from "../../../desk/surface";
+import { MeetingRunVerb } from "../../../meetings/runSlot";
 import { MeetingConflictRecovery } from "../../../meetings/MeetingConflictRecovery";
 import { MeetingIntelRecovery } from "../../../meetings/MeetingIntelRecovery";
 import {
@@ -29,7 +30,7 @@ import {
   type MeetingData,
   type MeetingDecision,
 } from "./useMeetingData";
-import { MeetingHeader, meetingOutcomeFact, meetingPipelineActive } from "./MeetingHeader";
+import { MeetingHeader, meetingPipelineActive, meetingReviewCount } from "./MeetingHeader";
 import { OutcomeLedger, type OutcomeRow } from "./OutcomeLedger";
 import { CaptureSlab } from "./CaptureSlab";
 import { DraftReady, PreparedResults, resultServing } from "./PreparedResults";
@@ -559,7 +560,10 @@ export function MeetingDetail({
   revision = 0,
   sendRequested = false,
   decideRequested = false,
+  onReviewCount,
 }: {
+  /** Window grammar: the window's status bar says what is left to review. */
+  onReviewCount?: (count: number) => void;
   meeting: Record<string, unknown> | null;
   sendRequested?: boolean;
   decideRequested?: boolean;
@@ -587,6 +591,8 @@ export function MeetingDetail({
 }) {
   const id = String(meeting?.id ?? "");
   const data = useMeetingData(meeting, onReceipt, revision);
+  const reviewCount = meetingReviewCount(data);
+  useEffect(() => { onReviewCount?.(reviewCount); }, [onReviewCount, reviewCount]);
   // PHILO-17 (the desk sweep): the body is drawn once (per meeting) when
   // the record's first reads and its Send well's have ended, or at the cap.
   const [wellRead, setWellRead] = useState<{ id: string; read: boolean } | null>(null);
@@ -659,17 +665,9 @@ export function MeetingDetail({
 
   return (
     <SurfaceSection>
-      {compactSavedOutcome ? (
-        <AppHead
-          className="meetings-detail-head"
-          fact={meetingOutcomeFact(meeting, data)}
-          as="div"
-        >
-          <MeetingHeader meeting={meeting} data={data} compact saidOnFace={saidOnFace} />
-        </AppHead>
-      ) : (
-        <MeetingHeader meeting={meeting} data={data} compact={false} saidOnFace={saidOnFace} />
-      )}
+      {/* Window grammar: no headline (the title bar names the meeting); a
+          compact head, its glyph and one muted line. */}
+      <MeetingHeader meeting={meeting} data={data} compact={compactSavedOutcome} saidOnFace={saidOnFace} />
       {/* PHILO-17 (the desk sweep): the record's body is mounted at once
           (its wells start their reads) but drawn only when its first reads
           end, the Send well's included, or at the cap: a late read never
@@ -681,7 +679,9 @@ export function MeetingDetail({
       {/* PHILO-17 transcribe: an audio-only meeting's one verb, under the
           strip that says "NO TRANSCRIPT · SPEECH NOT SET UP". */}
       {onTranscribe ? (
-        <AudioOnlyVerb row={{ ...meeting, ...(detail ?? {}) }} onTranscribe={onTranscribe} setUpSpeech testId="meeting-transcribe" />
+        <MeetingRunVerb>
+          <AudioOnlyVerb row={{ ...meeting, ...(detail ?? {}) }} onTranscribe={onTranscribe} setUpSpeech testId="meeting-transcribe" />
+        </MeetingRunVerb>
       ) : null}
       <CaptureSlab detail={detail} meeting={meeting} />
       <MeetingConflictRecovery
@@ -711,7 +711,7 @@ export function MeetingDetail({
           {/* PHILO-17 (the Today language): what was said first (the
               summary), then what was decided and who owes what, then the
               follow-up (Send), the transcript last. */}
-          <MeetingSummarySlab intel={summaryIntel} receipt={runReceipt} saidOnFace={saidOnFace} />
+          <MeetingSummarySlab reader intel={summaryIntel} receipt={runReceipt} saidOnFace={saidOnFace} />
           {/* betterment/capture C6: what changed since the last meeting of this kind. */}
           <SinceLastWell since={readSinceLast(data.aftercare)} meetingId={id} />
           <MeetingOutcomes data={data} meeting={meeting} />

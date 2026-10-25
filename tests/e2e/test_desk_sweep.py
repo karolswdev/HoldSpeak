@@ -1237,20 +1237,20 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
         else:
             sweep.fences()
             if case_id == "surface-activity":
-                # The existing remote sweep seed has a short title. Its
-                # status and route must not squeeze that title into ellipsis.
+                # Window grammar (2026-10-24): the remote sweep seed is a dense
+                # list row (What · Who · When · Outcome). Its words and its
+                # subject are whole, never squeezed into an ellipsis, and the
+                # REMOTE chip sits on that row only (Article III).
                 receipt = page.locator('[id="activity-receipt-pipeline:ev-sweep-0"]')
                 receipt.wait_for(timeout=T)
-                title = receipt.locator(".surface-row-text > strong")
-                detail = receipt.locator(".surface-row-text > small")
-                assert title.inner_text() == "SWEEP 2 ROOMS"
-                assert detail.inner_text().endswith("Heartbeat")
-                for text in (title, detail):
-                    extent = text.evaluate("""el => ({text: el.textContent,
-                        width: el.clientWidth, content: el.scrollWidth})""")
-                    assert extent["width"] > 0 and extent["content"] <= extent["width"] + 1, (
-                        f"Activity receipt text is truncated at {width}: {extent}")
-                for badge in (receipt.get_by_text("completed", exact=True),
+                name = receipt.locator("[data-testid^=activity-receipt-name-]")
+                assert name.inner_text().replace("\n", " ").startswith("SWEEP 2 ROOMS")
+                assert name.inner_text().replace("\n", " ").endswith("Heartbeat")
+                extent = name.evaluate("""el => ({text: el.textContent,
+                    width: el.clientWidth, content: el.scrollWidth})""")
+                assert extent["width"] > 0 and extent["content"] <= extent["width"] + 1, (
+                    f"Activity receipt text is truncated at {width}: {extent}")
+                for badge in (receipt.get_by_text("Completed", exact=True),
                               receipt.get_by_text("REMOTE · studio.local", exact=True)):
                     assert badge.is_visible(), f"Activity receipt badge missing at {width}"
                     box = badge.bounding_box()
@@ -1258,6 +1258,8 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                         box["x"] + box["width"] <= width
                         and box["y"] + box["height"] <= SIZES[width]), (
                         f"Activity receipt badge is off glass at {width}: {box}")
+                remote_rows = page.locator('#surface-activity [id^="activity-receipt-"]:has(.gadget-chip-egress)')
+                assert remote_rows.count() >= 1
             if palette:
                 sweep.palette()
             elif wid:

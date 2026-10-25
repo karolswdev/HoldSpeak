@@ -277,8 +277,11 @@ describe("the meeting window over the HS-170 seed", () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-saved-outcomes" onClose={() => undefined} /></Shell>);
-    await waitFor(() => expect(document.querySelector(".meetings-detail-head .surface-display")?.textContent).toBe("3 to review"));
-    expect(document.querySelectorAll(".meetings-detail-head .surface-display")).toHaveLength(1);
+    // Window grammar (2026-10-24): no headline; the status bar says what is
+    // left to review, once, in warm words.
+    await waitFor(() => expect(screen.getByTestId("meeting-review-count").textContent).toBe("3 to review"));
+    expect(document.querySelectorAll(".meetings-detail-head .surface-display")).toHaveLength(0);
+    expect(screen.getByRole("toolbar", { name: "Meeting" })).toBeTruthy();
     expect(screen.queryByTestId("meeting-steps")).toBeNull();
     const head = await screen.findByText("TO REVIEW 3");
     expect(head.closest(".meetings-detail-needs-head")).toBeTruthy();
@@ -315,10 +318,10 @@ describe("the meeting after a run (HS-172 seed)", () => {
     hub(hs172 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
     const decisions = await screen.findByTestId("meeting-decisions");
-    const facts = document.querySelector(".meetings-detail-facts")?.textContent ?? "";
-    expect(facts).toContain("SUMMARISED");
-    expect(facts).toContain("41 S");
-    expect(facts).toContain("192.168.1.43");
+    // Window grammar: the status bar says the summary's state; the summary
+    // names the host its run contacted (egress where egress happened).
+    expect(screen.getByTestId("meeting-summary-state").textContent).toBe("Summary stored");
+    expect(document.body.textContent).toContain("192.168.1.43");
     const commitments = screen.getByTestId("meeting-commitments");
     expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
     expect(commitments.querySelector("h3")?.textContent).toBe("Who owes what · 2");
@@ -342,7 +345,7 @@ describe("the meeting after a run (HS-172 seed)", () => {
     expect(within(row).getByTestId("state-token").textContent).toContain("Queued");
     list.unmount();
     render(<Shell><MeetingRecord meetingId="m-queued" onClose={() => undefined} /></Shell>);
-    await waitFor(() => expect(document.querySelector(".meetings-detail-facts")?.textContent).toContain("QUEUED"));
+    await waitFor(() => expect(screen.getByTestId("meeting-summary-state").textContent).toBe("Summary queued"));
     expect(document.body.textContent).not.toContain("REMAINING");
     expect(await screen.findByTestId("detail-skip-btn")).toBeTruthy();
   });

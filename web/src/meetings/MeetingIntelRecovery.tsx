@@ -10,6 +10,8 @@ import { GadgetGroup, GadgetRow } from "../desk/surface/gadgets";
 import { apiFetch, readableError } from "../lib/api";
 import { countToken } from "../desk/surface/count";
 import { RefusalToken, RouteDisclosure, RunAttempts } from "./RouteDisclosure";
+import { MeetingRunVerb } from "./runSlot";
+import { ToolGlyph } from "../desk/surface/kit";
 import {
   executedReceipt,
   postSummaryRun,
@@ -274,13 +276,17 @@ export function MeetingIntelRecovery({
           >
             {/* UX-CANON A.11: a verb that cannot run is withheld, and the
                 reason stands in its place (RouteDisclosure says it). */}
+            {/* Window grammar: Retry and Skip sit in the meeting window's toolbar. */}
+            <MeetingRunVerb>
             {recovery.actions.retry && canRun ? (
               <Button
                 dense
+                variant="primary"
                 loading={busy === "retry"}
                 disabled={Boolean(busy)}
                 onClick={() => void choose("retry")}
               >
+                <ToolGlyph kind="retry" />
                 Retry
               </Button>
             ) : null}
@@ -295,6 +301,7 @@ export function MeetingIntelRecovery({
                 Skip
               </Button>
             ) : null}
+            </MeetingRunVerb>
           </GadgetRow>
         </GadgetGroup>
       ) : null}

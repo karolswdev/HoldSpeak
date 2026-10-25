@@ -48,9 +48,12 @@ export interface NeedsRowProps {
    *  as a raised Steel plate (`CC`, `DEC`, `ACT`) in place of the sprite.
    *  The kind word moves into the plate's title; the fact line keeps it. */
   plate?: string;
+  /** Window grammar (2026-10-24): with no plate the row leads with its
+   *  glyph; this word names what the glyph shows (its alt and title). */
+  glyphLabel?: string;
 }
 
-export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verbs, sprite, project, kindWord, plate }: NeedsRowProps) {
+export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verbs, sprite, project, kindWord, plate, glyphLabel }: NeedsRowProps) {
   const factClass = factCode ? "needs-row-fact is-code" : "needs-row-fact";
   const factNode = !fact ? null : factWords && !factCode ? (
     <AgentWords compact lines={2} className="needs-row-fact needs-row-words" text={fact} />
@@ -62,7 +65,7 @@ export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verb
       {plate ? (
         <KindPlate kind={plate} title={kindWord} />
       ) : (
-        <img src={listSprite(sprite ?? objectSprite(kind, id))} alt="" draggable={false} />
+        <img src={listSprite(sprite ?? objectSprite(kind, id))} alt={glyphLabel ?? ""} title={glyphLabel} draggable={false} />
       )}
       <span className="needs-row-what">
         <span className="needs-row-name">{name}</span>

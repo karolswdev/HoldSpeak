@@ -175,8 +175,8 @@ def test_the_rig_drives_j9_through_the_real_hub(viewport, tmp_path):
     assert "Quiet from" in record["after"]["text"]
     _assert_receipt_door(record)
 
-    # the trigger was the receipt's own Open, driven at its real entry point
-    assert record["trigger"]["adapter"] == "ui-pointer"
+    # the trigger was the receipt row's own open, driven at its real entry point
+    assert record["trigger"]["adapter"] == "ui-keyboard"
     assert record["trigger"]["done"] is True
     producer = [s for s in record["setup"] if s["kind"] == "api"]
     assert producer and producer[0]["path"] == "/api/settings/heartbeat/run-now"
@@ -188,7 +188,10 @@ def test_the_rig_drives_j9_through_the_real_hub(viewport, tmp_path):
 def _assert_receipt_door(record):
     receipt_id = record["variables"]["sweep_projection_id"]
     assert receipt_id.startswith("pipeline:"), receipt_id
+    # Window grammar (2026-10-24): the receipt is a list row; Enter on it is
+    # the list view's own open (a press selects; a double press opens).
     assert record["trigger"]["selector"] == f"[id='activity-receipt-{receipt_id}'] button"
+    assert record["trigger"]["key"] == "Enter"
     # Activity remains open behind the result, so the owner can close Settings
     # and return to the exact receipt list he used.
     before = [window["title"] for window in record["before"]["windows"]]
@@ -218,9 +221,8 @@ def test_the_rig_returns_from_rhythm_to_the_same_activity_receipt(viewport, tmp_
         "POST", "/api/settings/heartbeat/run-now", 200,
     )
     opened = [step for step in record["setup"] if step.get("selector") ==
-              f"[id='activity-receipt-{receipt_id}'] button" and step.get("action") == "click"]
-    assert len(opened) == 1 and opened[0]["done"] is True
-    assert opened[0]["adapter"] == record["trigger"]["adapter"]
+              f"[id='activity-receipt-{receipt_id}'] button" and step.get("action") == "press"]
+    assert len(opened) == 1 and opened[0]["done"] is True and opened[0]["key"] == "Enter"
     assert "Settings" in [window["title"] for window in record["before"]["windows"]]
     after = record["after"]
     assert "Settings" not in [window["title"] for window in after["windows"]]
@@ -231,7 +233,8 @@ def test_the_rig_returns_from_rhythm_to_the_same_activity_receipt(viewport, tmp_
     assert len(after["hit_test"]["samples"]) == 9 and after["hit_test"]["all_owned"]
     if viewport == 393:
         assert after["hit_test"]["rect"]["w"] >= 44
-    assert after["attrs"]["aria-label"].startswith("Open receipt: SWEEP")
+    # The same receipt row, still the list's row (its name leads its label).
+    assert after["attrs"]["aria-label"].startswith("SWEEP")
 
     sources = []
     activity = []

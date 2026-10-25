@@ -138,7 +138,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     commonWire([ready]);
     render(<MeetingRecord meetingId={ready.detail.id} onClose={() => undefined} />);
     expect(await screen.findByTestId("meeting-summary-text")).toHaveTextContent("The team reviewed the budget.");
-    expect(screen.getByTestId("meeting-summary-topics")).toHaveTextContent("BUDGET");
+    expect(screen.getByTestId("meeting-summary-topics")).toHaveTextContent("Budget");
     expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
     expect(screen.getAllByText("The team reviewed the budget.")).toHaveLength(1);
     expect(screen.getByTestId("summary-record-attempts")).not.toHaveTextContent("THIS DEVICE");
@@ -155,7 +155,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     commonWire([snapshot]);
     render(<MeetingRecord meetingId={snapshot.detail.id} onClose={() => undefined} />);
     if (state === "retry") {
-      expect(await screen.findByTestId("meeting-summary-state")).toHaveTextContent("SUMMARY QUEUED");
+      expect(await screen.findByTestId("meeting-summary-state")).toHaveTextContent("Summary queued");
       expect(await screen.findByTestId("meetings-run-receipt")).toHaveTextContent(/^QUEUED \d/);
       expect(screen.queryByRole("region", { name: "Meeting intelligence recovery" })).toBeNull();
       expect(snapshot.recovery.remaining.detail).toBe("PROVIDER FAILED");
@@ -166,8 +166,10 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     const recovery = screen.getByRole("region", { name: "Meeting intelligence recovery" });
     expect(recovery).toHaveTextContent("KEPT 2 SEGMENTS");
     expect(within(recovery).getByTestId("recovery-attempts")).not.toHaveTextContent("THIS DEVICE");
-    expect(within(recovery).getByRole("button", { name: "Retry" })).toBeEnabled();
-    expect(within(recovery).getByRole("button", { name: "Skip" })).toBeEnabled();
+    // Window grammar: the recovery's verbs sit in the meeting window's toolbar.
+    const toolbar = screen.getByRole("toolbar", { name: "Meeting" });
+    expect(await within(toolbar).findByRole("button", { name: "Retry" })).toBeEnabled();
+    expect(within(toolbar).getByRole("button", { name: "Skip" })).toBeEnabled();
   });
 
   it("the actual Meeting record keeps the user's transcript open while a producer refresh is pending", async () => {
