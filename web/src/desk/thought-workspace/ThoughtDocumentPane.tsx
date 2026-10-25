@@ -1,6 +1,6 @@
 import { firstWords, NEW_THOUGHT_TITLE } from "../thoughtTitle";
 import { useEffect, useRef, useSyncExternalStore, type ReactNode, type RefObject } from "react";
-import { EditInPlace, ReadingObjectLinks, StateChip, SurfaceWell } from "../surface";
+import { EditInPlace, ReadingObjectLinks, StateChip, SurfaceWell, Toolbar } from "../surface";
 import { Button } from "../../components/signal/Signal";
 import { MicButton } from "../components/MicButton";
 import { DeskEditor, type DeskEditorHandle, type DeskEditorSelection } from "../components/DeskEditor";
@@ -134,13 +134,17 @@ export function ThoughtDocumentPane({
 
   return <section className="thought-note-document" aria-label="Note">
     {/* Window grammar (2026-10-24): a native editor window. The verbs are
-        on a toolbar under the title bar; the field's own voice control is
+        on the kit Toolbar under the title bar; the field's own voice control is
         at the toolbar's right end and still writes at the field's captured
         target (#1443). The editor fills the window below it. */}
-    <div className="thought-note-toolbar" role="toolbar" aria-label="Note actions" data-testid="thought-note-toolbar">
-      <span className="thought-note-toolbar-verbs">{verbs}</span>
-      {voice ? <span className="thought-note-field-mic thought-note-toolbar-voice">{voice}</span> : null}
-    </div>
+    <Toolbar
+      label="Note actions"
+      className="thought-note-toolbar"
+      data-testid="thought-note-toolbar"
+      trailing={voice ? <span className="thought-note-field-mic thought-note-toolbar-voice">{voice}</span> : null}
+    >
+      {verbs}
+    </Toolbar>
     <div className="thought-note-field">
       {/* Betterment Q8 (one note): the title shows once, in the title bar. A
           heading that only repeats the note's first line (an untitled note,

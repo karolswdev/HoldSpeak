@@ -79,11 +79,11 @@ function deferred<T>() {
 }
 
 function writeLine(): HTMLElement {
-  const line = document.querySelector<HTMLElement>(".thought-note-foot .surface-footer-receipt-line:not([data-line])");
+  const line = document.querySelector<HTMLElement>(".thought-note-foot .thought-note-status");
   if (!line) throw new Error("no write line in the foot");
   return line;
 }
-const filingLine = () => document.querySelector<HTMLElement>(".thought-note-foot .surface-footer-receipt-line[data-line=\"filing\"]");
+const filingLine = () => document.querySelector<HTMLElement>(".thought-note-foot [data-line=\"filing\"]");
 
 async function openAndEdit(value = "Drain the queue first") {
   render(<ThoughtWorkspaceWindow object={{ id: "note-1", kind: "note", title: "Thought" } as never} thought={thought} onClose={vi.fn()} />);
@@ -112,7 +112,7 @@ describe("PHILO-3-04 the thought's receipt", () => {
     await screen.findByRole("textbox", { name: "Note body" });
     expect(writeLine()).toHaveTextContent(receiptOf(LOADED));
     expect(writeLine().textContent).toMatch(/^Saved /);
-    expect(writeLine()).toHaveAttribute("role", "status");
+    expect(writeLine().closest("[role=status]")).not.toBeNull();
     expect(writeLine()).not.toHaveAttribute("data-tone");
     expect(filingLine()).toBeNull();
     expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();

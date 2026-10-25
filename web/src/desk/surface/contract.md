@@ -46,7 +46,7 @@ been adopted by a production feature.
 
 | Reference | Shared implementation | Real consumers of those species |
 | --- | --- | --- |
-| Forms | PrefWindow/PrefSection/PrefStatus (settingsWindow), OwnerNameFields + useOwnerPreferences(useOwnerName), GadgetGroup/GadgetRow, StringGadget, OwnerAliasField, Button | Settings is the production consumer; Components renders the same rail, pane and status bar with fixture-only IO |
+| Forms | PrefWindow/PrefSection (settingsWindow), PrefStatus → kit StatusBar, OwnerNameFields + useOwnerPreferences(useOwnerName), GadgetGroup/GadgetRow, StringGadget, OwnerAliasField, Button | Settings is the production consumer; Components renders the same rail, pane and kit status bar with fixture-only IO |
 | Reading | ReadingDocument/Material, source doors, SurfaceWell | Ask results, Automation results, notes and source readers |
 | Lists | SurfaceRows/SurfaceRow, SurfaceSplit, StringGadget | People, Memory and object readers use these list/detail species |
 | Resources | RepositoryBrowserView + useRepositoryBrowser, DeskSortableTable fold/roving, ScrollHint, read adapter | RepoWindow is the production consumer; Components runs the same view/controller with an isolated fixture adapter |
@@ -76,7 +76,8 @@ Fields show Edited immediately, Saving for the captured in-flight value,
 Saved only for an acknowledged current value, and Not saved with retained
 input plus one Retry. Window grammar (2026-10-24): no pill per field. Each
 field carries its word as `data-save-state`; the window's status bar
-(`PrefStatus`, 24 px, sans 12 with a lamp) says the worst word of the
+(`PrefStatus`, which composes the kit `StatusBar`: a lamp, the word, Retry
+in the bar's verbs) says the worst word of the
 fields, and "Saved just now / N min ago / 4:22 PM" only after an
 acknowledgement in this window. The general preferences writer says its
 state in the same bar; its plain refusal reason stays in the pane's alert.
@@ -87,9 +88,8 @@ first view and a pane opens with Back (`settings-back`). On a compact
 viewport the window's own title-bar Back is that Back: `useWindowBack`
 (`surface/back.tsx`, a slot like `useWindowTitle`) hands the hosted frame's
 compact Back and its test id to the open pane, and the title bar names the
-pane; a narrow window off the phone, or a specimen, keeps the pane's Back. It is local to
-Settings until the kit `StatusBar` species lands; then `PrefStatus`
-composes it. A newer edit cannot inherit an older write's
+pane; a narrow window off the phone, or a specimen, keeps the pane's Back.
+A newer edit cannot inherit an older write's
 Saved receipt. Raw alias text is an edit until committed and must survive
 section leave. The local Forms adapter cannot write configuration or start
 hardware audio; production StringGadget microphone behavior stays unchanged.
@@ -1175,14 +1175,18 @@ Every readable word is 12 px or more (UX-CANON §C outranks the canvas's
 ## The window grammar (2026-10-24)
 
 `docs/internal/betterment/native-experience/WINDOW-GRAMMAR-2026-10-24.md`.
-Every window reads: title bar → toolbar → content → status bar. No headline,
+Every window reads: title bar → toolbar → content → status bar. There is one
+Toolbar and one StatusBar in the product: Settings (`PrefStatus`), the Note
+(`ThoughtDocumentPane`, `ThoughtWorkspaceWindow`), the Room, Meetings,
+Projects and the automation window compose these species, and the
+Components Forms and Editing specimens render through the same path. No headline,
 no stat tiles, no chip row inside a collection window (AppHead stays for
 readers only). Components ▸ Window shows the composition with fixture rows.
 
 | Species | Where | The rule |
 |---|---|---|
 | **Toolbar** | `kit.tsx` `Toolbar({ label, children, trailing?, className?, data-testid? })` | A 36 px band (`--wb-toolbar-h`) directly under the title bar, a 1 px soft rule under it, `role="toolbar"` named by `label`. Children are verbs: library Buttons, icon + label (`ToolGlyph`), the quiet secondary form at rest; ONE primary at most. `trailing` (a search StringGadget, a filter) sits at the right. A selection never adds to the toolbar (a reflowed band moves the row under the pointer between the two presses of a double press): the selection's verbs go to the StatusBar's `verbs`. Narrow: the band wraps, the search well takes its own line, every Button keeps 44 px. |
-| **ToolGlyph** | `kit.tsx` `ToolGlyph({ kind })` | 16 px verb glyph, 1.5 px pen in the Workbench blue (paper on the primary): `record` (red dot), `import`, `engine`, `new`, `summary`, `retry`, `open`. Decorative; the label names the verb. |
+| **ToolGlyph** | `kit.tsx` `ToolGlyph({ kind })` | 16 px verb glyph, 1.5 px pen in the Workbench blue (paper on the primary): `record` (red dot), `import`, `engine`, `new`, `summary`, `retry`, `open`, `note`, `ask`, `tasks`, `project`, `send`, `done`, `run`, `edit`. Decorative; the label names the verb. |
 | **StatusBar** | `kit.tsx` `StatusBar({ items, egress?, verbs?, className?, data-testid? })` | A 24 px band (`--wb-statusbar-h`) at the foot, sans 12 muted, tabular numbers: items `{ key?, text, value?, lamp?, testId? }` joined by a middle dot, `verbs` (the selected object's library Buttons: Open, Retry, Run summary) then the egress chip at the right (A.9); the band grows from the foot, so nothing above it moves. The items carry `role=status`, never the verbs. Warm true words (`5 meetings · 1 failed`); `countWords(n, noun, plural?)` (kit.tsx) says a count and returns null at zero, so the bar drops that item (A.8). Portaled into the frame's foot slot like SurfaceFooter, in place without one. No items and no egress: nothing, and the empty frame foot folds away (`.desk-surface-foot:empty`). |
 | **Body inset** | `interior.tsx` `useWindowInterior("list" \| "editor" \| null)` | The core tells the host which interior it draws; the host sets `data-interior` on the body. `list` and `editor` run edge to edge (inset 0; the list scrolls inside); null keeps the 12–16 px form/reader inset. |
 | **ObjectList dense** | `objects/ObjectList.tsx` `density="dense"`, `columns?` | The list view of a collection window: rows 30 px (`--wb-row-dense`; 44 px in a surface ≤ 520 px), each led by its 20 px illustrated object glyph; headers sans 12/600 muted, sentence case; cells sans 13; the state a dot and a word (`state.testId` for a test hook); hover lifts the row (tint + 1 px ink rule), the selected row is the vivid blue (`--wb-sel-vivid`, paper ink); 120 ms eased; no zebra; fills its container. `columns` declares the provider's own columns in order (`{ key, word, track? }`); a non-built-in key reads `row.cells[key]` (sorted by `row.sortValues[key]` or the text). `nameTestId` puts a test hook on the name. Selection is the press; Enter or a double press opens (a touch tap opens: the phone list has no double press); keyboard as ObjectList. Default density and every current caller are unchanged. |

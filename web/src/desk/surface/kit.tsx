@@ -188,7 +188,9 @@ export function Toolbar({
  *  Workbench/Finder way). 16 px, a 1.5 px pen in the Workbench blue (paper
  *  on the primary); Record keeps its red dot. Decorative: the label names
  *  the verb. */
-export type ToolGlyphKind = "record" | "import" | "engine" | "new" | "summary" | "retry" | "open";
+export type ToolGlyphKind =
+  | "record" | "import" | "engine" | "new" | "summary" | "retry" | "open"
+  | "note" | "ask" | "tasks" | "project" | "send" | "done" | "run" | "edit";
 
 const TOOL_PATHS: Record<Exclude<ToolGlyphKind, "record">, string> = {
   import: "M8 2.5v7M5 6.5l3 3 3-3M2.75 10.5v2.25h10.5V10.5",
@@ -197,6 +199,14 @@ const TOOL_PATHS: Record<Exclude<ToolGlyphKind, "record">, string> = {
   summary: "M3 4h10M3 7h10M3 10h6M11.5 9.5l.9 1.8 1.8.9-1.8.9-.9 1.8-.9-1.8-1.8-.9 1.8-.9Z",
   retry: "M12.5 8a4.5 4.5 0 1 1-1.4-3.25M11.5 2.5v2.5H9",
   open: "M6.5 3H3v10h10V9.5M9 3h4v4M13 3L7.5 8.5",
+  note: "M4 2.5h5.5L12 5v8.5H4Z M9.5 2.5V5H12 M6 8h4M6 10.5h4",
+  ask: "M2.75 3.25h10.5v7H7.5l-3 2.5v-2.5H2.75Z M5.75 6.25h4.5M5.75 8.25h2.5",
+  tasks: "M2.5 4.25l1.25 1.25L6 3.25 M2.5 10l1.25 1.25L6 9 M8.25 4.5h5.25M8.25 10.25h5.25",
+  project: "M2.5 3.5h3.75l1.5 1.5h5.75v7.5h-11Z M2.5 7h11",
+  send: "M13.5 2.5L2.5 7l4.5 2 2 4.5Z M7 9l6.5-6.5",
+  done: "M3 8.5l3.25 3.25L13 4.75",
+  run: "M5 3.25v9.5l7.75-4.75Z",
+  edit: "M10.5 2.75l2.75 2.75L6 12.75H3.25V10Z M9 4.25l2.75 2.75",
 };
 
 export function ToolGlyph({ kind }: { kind: ToolGlyphKind }) {

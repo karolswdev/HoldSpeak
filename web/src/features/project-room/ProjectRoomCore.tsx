@@ -10,6 +10,8 @@ import {
   countLabel,
   SurfaceFooter,
   SurfaceSection,
+  Toolbar,
+  ToolGlyph,
   SurfaceRows,
   SurfaceRow,
   SurfaceState,
@@ -372,11 +374,12 @@ function RoomHead({
       <span ref={nameRef} className="room-head-name-measure" aria-hidden="true">
         {room.project.name}
       </span>
-      {/* Window grammar (2026-10-24): the window's verbs are the toolbar
-          under the title bar, Write update the one primary. */}
-      <div className="room-toolbar room-head-trailing surface-verbs-actions" role="toolbar" aria-label="Project actions">
+      {/* Window grammar (2026-10-24): the window's verbs are the kit
+          Toolbar under the title bar, Write update the one primary. */}
+      <Toolbar label="Project actions" className="room-toolbar">
           {pendingCount > 0 ? <Button dense variant={quiet ? "secondary" : "primary"}
             loading={reviewCtrl.loading} onClick={() => void reviewCtrl.enterReview()} data-testid="room-head-review">
+            <ToolGlyph kind="tasks" />
             Review {pendingCount}
           </Button> : null}
           <Button
@@ -388,9 +391,10 @@ function RoomHead({
             onClick={() => void updateCtrl.write(updateEngine.state === "set")}
             data-testid="updates-verb"
           >
+            <ToolGlyph kind="edit" />
             Write update
           </Button>
-      </div>
+      </Toolbar>
       <div className="room-head-line">
         <img className="room-head-glyph desk-chrome-sprite" src={spriteUrl("project", room.project.id, "rest", null, 32)}
           alt="" width={28} height={28} draggable={false} />

@@ -357,8 +357,8 @@ describe("Snapshot verb refusal (HS-147-05)", () => {
     const alert = screen.getByTestId("settings-save-failure");
     expect(alert).toHaveAttribute("role", "alert");
     expect(alert.textContent).toContain("unsupported type");
-    expect(document.querySelector(".surface-footer-receipt")?.textContent).toContain("Not saved");
-    expect(document.querySelector(".surface-footer-receipt")?.textContent).not.toContain("unsupported type");
+    expect(document.querySelector(".pref-status-bar .kit-statusbar-items")?.textContent).toContain("Not saved");
+    expect(document.querySelector(".pref-status-bar .kit-statusbar-items")?.textContent).not.toContain("unsupported type");
   });
 });
 

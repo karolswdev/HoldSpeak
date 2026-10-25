@@ -130,7 +130,7 @@ def test_settings_page_order_anchor_and_saved_write(
             assert probe["rect"]["width"] > 0 and probe["rect"]["height"] > 0, probe
             assert probe["hit"], (width, probe)
             increase.click()
-            page.locator(".surface-footer-layout").get_by_text(re.compile(r"^saved\b", re.I)).wait_for(timeout=10_000)
+            page.locator(".pref-status-bar").get_by_text(re.compile(r"^saved\b", re.I)).wait_for(timeout=10_000)
             saved = _api(page, "GET", "/api/settings/heartbeat", token=TOKEN)
             assert saved["quiet_hours"]["start"] == (before + 1) % 24, saved
             page.screenshot(path=str(shots / f"settings-page-{width}.png"), full_page=False)

@@ -701,7 +701,7 @@ export function AutomationWindow({
             disabled={!detail || Boolean(working) || showBuilder}
             data-testid="automation-run-now"
           >
-            <ToolGlyph kind="retry" />
+            <ToolGlyph kind="run" />
             Run now
           </Button>
           <Button dense variant="secondary" disabled={!detail || showBuilder} onClick={() => {
@@ -710,12 +710,14 @@ export function AutomationWindow({
             setWizardDismissed(false);
           }}
             data-testid="automation-edit-setup">
+            <ToolGlyph kind="edit" />
             Edit
           </Button>
           <Button dense variant="secondary" aria-expanded={sendOpen}
             disabled={showBuilder || !shown?.artifact_id || shown.status === "failed"}
             onClick={() => setSendOpen((open) => !open)}
             data-testid="automation-send">
+            <ToolGlyph kind="send" />
             Send…
           </Button>
         </Toolbar>

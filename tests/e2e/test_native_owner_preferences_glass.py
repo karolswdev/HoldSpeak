@@ -50,7 +50,7 @@ def _status(you: Any, field: str) -> str:
 
 
 def _bar(page: Any) -> str:
-    return page.locator("#surface-settings .surface-footer-layout").inner_text()
+    return page.locator("#surface-settings .pref-status-bar").inner_text()
 
 
 def _wait_saved(page: Any, field: str, scope: str = "") -> None:
@@ -109,7 +109,7 @@ def test_real_settings_you_edit_alias_and_section_return(
             assert _api(page, "GET", "/api/settings", token=TOKEN).get("owner", {}).get("name") != "Karol Architect"
             _wait_saved(page, "name")
             assert _api(page, "GET", "/api/settings", token=TOKEN)["owner"]["name"] == "Karol Architect"
-            page.locator("#surface-settings .surface-footer-layout").get_by_text("Saved just now").wait_for(timeout=10_000)
+            page.locator("#surface-settings .pref-status-bar").get_by_text("Saved just now").wait_for(timeout=10_000)
 
             aliases.fill("Ari")
             assert _status(you, "aliases") == "EDITED"
@@ -248,11 +248,11 @@ def test_settings_you_newer_edit_waits_for_old_ack(
                 await asyncio.wait_for(first_started.wait(), timeout=10)
                 row = you.get_by_test_id("settings-owner-name")
                 assert await row.get_attribute("data-save-state") == "Saving"
-                assert "Saving" in await page.locator("#surface-settings .surface-footer-layout").inner_text()
-                assert "SAVED" not in (await page.locator("#surface-settings .surface-footer-layout").inner_text()).upper()
+                assert "Saving" in await page.locator("#surface-settings .pref-status-bar").inner_text()
+                assert "SAVED" not in (await page.locator("#surface-settings .pref-status-bar").inner_text()).upper()
                 await name.fill("Karol Latest")
                 assert await row.get_attribute("data-save-state") == "Edited"
-                assert "SAVED" not in (await page.locator("#surface-settings .surface-footer-layout").inner_text()).upper()
+                assert "SAVED" not in (await page.locator("#surface-settings .pref-status-bar").inner_text()).upper()
                 gate.set()
                 await asyncio.wait_for(latest_started.wait(), timeout=10)
                 assert await name.input_value() == "Karol Latest"
