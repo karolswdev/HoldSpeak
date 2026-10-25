@@ -13,7 +13,7 @@
 //             the listener's state, and every macOS grant that is missing)
 // > Details (Disclosure: the old register strip, folded; behind RAW, C8)
 import { Fragment, createContext, type ReactNode, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type KeyboardEvent } from "react";
-import { StatusBar, Toolbar, type StatusBarItem } from "../../../desk/surface/kit";
+import { StatusBar, ToolGlyph, Toolbar, type StatusBarItem } from "../../../desk/surface/kit";
 import { useWindowInterior } from "../../../desk/surface/interior";
 import { useAnnounce } from "./shared";
 import { useSpeakDeck } from "./useSpeakDeck";
@@ -321,10 +321,37 @@ export function resolveEngine(
  *  (DictationCore) draws with the receipt and the window's verbs. Without
  *  a host the face draws its own status bar. */
 export const SpeakStatusContext = createContext<((items: StatusBarItem[] | null) => void) | null>(null);
+/** The Speak face's egress chip (its clean-up engine's host), for the
+ *  host's status bar. */
+export const SpeakEgressContext = createContext<((chip: ReactNode) => void) | null>(null);
 
 const PHASE_LAMP: Record<string, StatusBarItem["lamp"]> = {
   warn: "warn", live: "fail", info: "info", ok: "ok", danger: "fail",
 };
+
+/** The time since `since` as a tabular m:ss that ticks once a second;
+ *  null while `since` is null. */
+export function useElapsed(since: number | null): string | null {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (since == null) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [since]);
+  if (since == null) return null;
+  const seconds = Math.max(0, Math.floor((now - since) / 1000));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+/** The speech engine in words (`whisper-base-mlx`), from the hub's one
+ *  speech read; null until it is read. */
+export function speechEngineName(speech: Pick<SpeechSetupState, "status">): string | null {
+  const read = speech.status?.speech;
+  if (!read?.model) return null;
+  const backend = String(read.backend ?? "").trim();
+  return ["whisper", read.model, backend && backend !== "auto" ? backend : ""].filter(Boolean).join("-");
+}
 
 export function SpeakFace() {
   const announce = useAnnounce();
@@ -383,15 +410,46 @@ export function SpeakFace() {
   const hotkey = custody.display || hotkeyDisplay(deck.readinessData);
 
   const { talkKey, setupRow } = useSpeakTalk(deck, announce, speech);
-  // The status bar: the phase with its lamp, the one fact, the hold key.
+  // Window grammar (2026-10-24): the status bar says the phase with its
+  // lamp, how long he has talked (a tabular m:ss that ticks), and the
+  // engine that hears him (`Listening · 0:42 · whisper-base-mlx on this
+  // Mac`); at rest `Ready · whisper-base-mlx on this Mac`; with no speech
+  // `Not ready · Talk sets up speech first`. The level meter leads it.
   const phase = phaseOf(deck, toFix);
-  const fact = speech.notSetUp ? "Talk sets up speech first" : toFix ? `${toFix} to fix` : "Ready to talk";
+  const listening = deck.activeState === "listening";
+  const [listenSince, setListenSince] = useState<number | null>(null);
+  useEffect(() => {
+    setListenSince(listening ? Date.now() : null);
+  }, [listening]);
+  const elapsed = useElapsed(listenSince);
+  const speechName = speechEngineName(speech);
+  const fact = speech.notSetUp
+    ? "Talk sets up speech first"
+    : toFix
+      ? `${toFix} to fix`
+      : speechName
+        ? `${speechName} on this Mac`
+        : "Ready to talk";
   const report = useContext(SpeakStatusContext);
+  const meter = <span className="speak-level" data-testid="speak-level"><LedMeter label="Audio level" labelHidden value={deck.level} scanning={deck.micState === "busy"} /></span>;
   const statusItems = useMemo<StatusBarItem[]>(() => [
+    { key: "level", text: meter },
     { key: "phase", lamp: PHASE_LAMP[phase.tone], text: <span className="speak-phase" data-tone={phase.tone} data-testid="speak-phase">{phase.word}{phase.tail}</span> },
+    elapsed ? { key: "elapsed", text: <span className="speak-elapsed" data-testid="speak-elapsed">{elapsed}</span> } : null,
     { key: "fact", text: <span className="speak-fact" data-testid="speak-fact">{fact}</span> },
-    hotkey ? { key: "hotkey", text: <span className="speak-strip">Hold <kbd className="speak-kbd">{hotkey}</kbd> anywhere</span> } : null,
-  ].filter(Boolean) as StatusBarItem[], [phase.tone, phase.word, phase.tail, fact, hotkey]);
+    hotkey && !listening ? { key: "hotkey", text: <span className="speak-strip">Hold <kbd className="speak-kbd">{hotkey}</kbd> anywhere</span> } : null,
+  ].filter(Boolean) as StatusBarItem[],
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [phase.tone, phase.word, phase.tail, fact, hotkey, elapsed, listening, deck.level, deck.micState]);
+  // The clean-up engine's egress, where the words go after he talks.
+  const egress = resolved.name && resolved.egressHost ? <EgressChip label={resolved.egressLabel.toLowerCase().replace(/ · lan$/, " · LAN")} scope={isLanHost(resolved.egressHost) ? "local" : "cloud"} /> : null;
+  const reportEgress = useContext(SpeakEgressContext);
+  useLayoutEffect(() => {
+    if (!reportEgress) return;
+    reportEgress(egress);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportEgress, resolved.name, resolved.egressLabel, resolved.egressHost]);
+  useLayoutEffect(() => (reportEgress ? () => reportEgress(null) : undefined), [reportEgress]);
   useLayoutEffect(() => {
     if (!report) return;
     report(statusItems);
@@ -406,10 +464,10 @@ export function SpeakFace() {
           edge to edge → the result → the checks → the status bar. No
           headline, no plate in the window. */}
       <article className="speak-plate" aria-label="Talk">
-        <Toolbar label="Speak" data-testid="speak-toolbar" trailingStays
-          trailing={<LedMeter label="Audio level" labelHidden value={deck.level} scanning={deck.micState === "busy"} />}>
+        <Toolbar label="Speak" data-testid="speak-toolbar">
           <TransportRow deck={deck} speech={speech} talkKey={talkKey} raw={raw} />
           <TypesIntoRow deck={deck} />
+          <CopyVerb text={deck.utterance} announce={announce} />
         </Toolbar>
         {setupRow ? <div className="speak-setup" data-testid="speak-setup">{setupRow}</div> : null}
         <div className="speak-plate-body">
@@ -459,7 +517,7 @@ export function SpeakFace() {
           <DetailsContent deck={deck} />
         </Disclosure>
       ) : null}
-      {report ? null : <StatusBar data-testid="speak-status" items={statusItems} />}
+      {report ? null : <StatusBar data-testid="speak-status" items={statusItems} egress={egress} />}
     </div>
   );
 }
@@ -578,6 +636,30 @@ function TransportRow({
         />
       ) : null}
     </span>
+  );
+}
+
+/** Copy: the words in the well, to the clipboard (quiet; the receipt says
+ *  it). */
+function CopyVerb({ text, announce }: { text: string; announce: (text: string, tone?: "ok" | "warn") => void }) {
+  return (
+    <Button
+      dense
+      variant="secondary"
+      disabled={!text.trim()}
+      data-testid="speak-copy"
+      onClick={() => {
+        const write = navigator.clipboard?.writeText(text);
+        if (!write) {
+          announce("Not copied", "warn");
+          return;
+        }
+        void write.then(() => announce("Copied"), () => announce("Not copied", "warn"));
+      }}
+    >
+      <ToolGlyph kind="copy" />
+      Copy
+    </Button>
   );
 }
 

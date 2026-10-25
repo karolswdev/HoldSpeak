@@ -8,41 +8,66 @@
 // "Everything else". It replaces the drag switchboard (DECISIONS #8), which
 // is parked behind Builder tools.
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
-import { EgressChip, StateChip, SurfaceWell } from "../../desk/surface";
+import { EgressChip, SurfaceWell } from "../../desk/surface";
+import { DotWord } from "../../desk/surface/kit";
+import { PrefSection } from "../../pages/cores/settingsWindow";
 import type { RowEditor } from "./api";
 import { agentChip, enginePlace, hostLabel, type BoardEngine } from "./model";
 import type { RunsOnController } from "./useRunsOn";
 import { EVERYTHING_ELSE, WHAT_ROWS, type WhatRow } from "./whatRows";
 
-function chipOf(engine: BoardEngine | undefined): ReactNode {
-  if (!engine) return null;
-  if (engine.vendor) return <EgressChip {...agentChip(engine.vendor, engine.vendorScope)} />;
-  const place = enginePlace(engine).place;
-  return <EgressChip label={hostLabel(engine)} scope={place === "cloud" ? "cloud" : "local"} />;
+/** An egress chip's words in sentence case (window grammar: never a caps
+ *  chip): a host in lower case, a vendor with one capital, `LAN` kept. */
+export function chipWords(label: string): string {
+  return label
+    .split(" · ")
+    .map((part) => {
+      const word = part.trim();
+      if (word === "LAN" || word === "THIS DEVICE") return word === "LAN" ? word : "This device";
+      if (/[.:]/.test(word)) return word.toLowerCase();
+      return word ? word[0].toUpperCase() + word.slice(1).toLowerCase() : word;
+    })
+    .join(" · ");
 }
+
+/** The egress chip for one engine, in sentence case. */
+export function engineChip(engine: BoardEngine | undefined): ReactNode {
+  if (!engine) return null;
+  if (engine.vendor) {
+    const chip = agentChip(engine.vendor, engine.vendorScope);
+    return <EgressChip label={chipWords(chip.label)} scope={chip.scope} />;
+  }
+  const place = enginePlace(engine).place;
+  return <EgressChip label={chipWords(hostLabel(engine))} scope={place === "cloud" ? "cloud" : "local"} />;
+}
+const chipOf = engineChip;
+
+export const NOT_ASSIGNED = "Not assigned";
 
 /** The words a row's picker shows: its own engine, or where it follows. */
 function shownName(row: WhatRow, editor: RowEditor | undefined, nameOf: (id: string, label: string) => string): string {
   if (!editor) return "…";
   if (editor.own) return nameOf(editor.own.profileId, editor.own.label);
-  if (row.id === EVERYTHING_ELSE) return "No engine yet";
-  if (!editor.effective) return "No engine";
+  // Owner, 2026-08-31 (lost in Settings > Models): a row with no engine
+  // says "Not assigned", never a blank and never a vaguer word.
+  if (row.id === EVERYTHING_ELSE) return NOT_ASSIGNED;
+  if (!editor.effective) return NOT_ASSIGNED;
   if (editor.effective.inheritedFrom === "global") return "Everything else";
   return nameOf(editor.effective.profileId, editor.effective.label);
 }
 
-export function WhatRunsWhere({ ctrl }: { ctrl: RunsOnController }) {
+/** Window grammar (2026-10-24), the list + inspector shape: the
+ *  assignment editor is a label/control grid under the engine list (one
+ *  row per job: its name, then its chooser). `selected` is the engine
+ *  selected in the list: a row it runs says so in the accent ink. */
+export function WhatRunsWhere({ ctrl, selected }: { ctrl: RunsOnController; selected?: string | null }) {
   const [open, setOpen] = useState<string | null>(null);
   const [more, setMore] = useState(false);
-  const { editors, reload } = ctrl.what;
-  // The rows read when the list is on screen (the roster is in); a write
+  // The host (RunsOnCore) reads the rows once the roster is in; a write
   // reads them again.
-  useEffect(() => {
-    reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { editors } = ctrl.what;
   const engineOf = (profileId: string) => ctrl.engines.find((e) => e.profileId === profileId);
   const nameOf = (profileId: string, label: string) => engineOf(profileId)?.name || label;
 
@@ -59,8 +84,8 @@ export function WhatRunsWhere({ ctrl }: { ctrl: RunsOnController }) {
   const hidden = WHAT_ROWS.length - shown.length;
 
   return (
-    <section className="runson-what" aria-label="What runs where" data-testid="runson-what">
-      <h2 className="runson-what-cap">What runs where</h2>
+    <div className="runson-what" data-testid="runson-what">
+      <PrefSection id="runson-what" label="What runs where">
       <ul className="runson-what-list">
         {shown.map((row) => {
           const raw = editors[row.id];
@@ -75,11 +100,12 @@ export function WhatRunsWhere({ ctrl }: { ctrl: RunsOnController }) {
             || Boolean(answers && answers !== "failed" && answers.effective?.inheritedFrom === "global");
           const canTry = Boolean(row.probe && editor?.effective && followsDefault);
           return (
-            <li key={row.id} className="runson-what-row" data-testid={`runson-what-${row.id}`}>
+            <li key={row.id} className="runson-what-row" data-testid={`runson-what-${row.id}`}
+              data-runs-selected={selected && editor?.effective?.profileId === selected ? "" : undefined}>
               <span className="runson-what-job">{row.name}</span>
               <span className="runson-what-engine">
                 {raw === "failed" ? (
-                  <span className="surface-token" data-tone="danger">NOT READ</span>
+                  <DotWord tone="fail">Not read</DotWord>
                 ) : (
                   <Button
                     dense
@@ -91,8 +117,12 @@ export function WhatRunsWhere({ ctrl }: { ctrl: RunsOnController }) {
                     data-testid={`runson-what-pick-${row.id}`}
                     onClick={() => setOpen(picking ? null : row.id)}
                   >
-                    <span className="runson-what-name">{shownName(row, editor, nameOf)}</span>
-                    <span aria-hidden="true">▾</span>
+                    {editor && shownName(row, editor, nameOf) === NOT_ASSIGNED ? (
+                      <DotWord className="runson-what-name">{NOT_ASSIGNED}</DotWord>
+                    ) : (
+                      <span className="runson-what-name">{shownName(row, editor, nameOf)}</span>
+                    )}
+                    <span className="runson-what-caret" aria-hidden="true">▾</span>
                   </Button>
                 )}
                 {editor?.effective ? chipOf(effective) : null}
@@ -148,12 +178,12 @@ export function WhatRunsWhere({ ctrl }: { ctrl: RunsOnController }) {
                           {nameOf(candidate.profileId, candidate.label)}
                         </Button>
                         {chipOf(engine)}
-                        {candidate.status === "savable_with_repair" ? <StateChip state="warning" label="LIMITED" /> : null}
+                        {candidate.status === "savable_with_repair" ? <DotWord tone="warn">Limited</DotWord> : null}
                       </li>
                     );
                   })}
                   {!editor.candidates.length ? (
-                    <li className="surface-token" data-testid={`runson-what-none-${row.id}`}>NO ENGINE CAN DO THIS JOB</li>
+                    <li data-testid={`runson-what-none-${row.id}`}><DotWord>No engine can do this job</DotWord></li>
                   ) : null}
                 </ul>
               ) : null}
@@ -175,10 +205,11 @@ export function WhatRunsWhere({ ctrl }: { ctrl: RunsOnController }) {
         })}
       </ul>
       {hidden > 0 || more ? (
-        <Button dense variant="ghost" aria-expanded={more} data-testid="runson-what-more" onClick={() => setMore(!more)}>
-          {more ? "Fewer" : `${hidden} more`}
+        <Button dense variant="ghost" className="runson-what-more" aria-expanded={more} data-testid="runson-what-more" onClick={() => setMore(!more)}>
+          {more ? "Fewer jobs" : `${hidden} more jobs`}
         </Button>
       ) : null}
-    </section>
+      </PrefSection>
+    </div>
   );
 }

@@ -1201,20 +1201,33 @@ Toolbar and one StatusBar in the product: Settings (`PrefStatus`), the Note
 Projects and the automation window compose these species, and the
 Components Forms and Editing specimens render through the same path.
 Setup (the readiness list), New Project (the label/control grid; the egress
-chip of each picked source in the status bar), Processes, Engines (toolbar
-and status bar over its engine sheets) and Speak (an editor window; the
-Talk key is the toolbar's one primary) compose them too. No headline,
+chip of each picked source in the status bar), Processes, Engines (list + inspector, below) and Speak (an editor window; the Talk
+key is the toolbar's one primary; the level meter, the phase, a ticking
+`m:ss` and the speech engine in the status bar) compose them too. No headline,
 no stat tiles, no chip row inside a collection window (AppHead stays for
 readers only). Components ▸ Window shows the composition with fixture rows.
 
 | Species | Where | The rule |
 |---|---|---|
 | **Toolbar** | `kit.tsx` `Toolbar({ label, children, trailing?, trailingStays?, className?, data-testid? })` | A 36 px band (`--wb-toolbar-h`) directly under the title bar, a 1 px soft rule under it, `role="toolbar"` named by `label`. Children are verbs: library Buttons, icon + label (`ToolGlyph`), the quiet secondary form at rest; ONE primary at most. `trailing` (a search StringGadget, a filter) sits at the right. A selection never adds to the toolbar (a reflowed band moves the row under the pointer between the two presses of a double press): the selection's verbs go to the StatusBar's `verbs`. The trailing group wraps at any width (a filter such as Current only keeps its whole face, never clipped). Narrow (≤ 520 px): the trailing group takes its own line under the verbs and the search well the full width; every Button keeps 44 px. `trailingStays` (the Note's mic): the trailing control is the band's own, not a search well, and stays at the band's right end at every width (`data-trailing="stays"`). |
-| **ToolGlyph** | `kit.tsx` `ToolGlyph({ kind })` | 16 px verb glyph, 1.5 px pen in the Workbench blue (paper on the primary): `record` (red dot), `import`, `engine`, `new`, `summary`, `retry`, `open`, `note`, `ask`, `tasks`, `project`, `send`, `done`, `run`, `edit`. Decorative; the label names the verb. |
+| **ToolGlyph** | `kit.tsx` `ToolGlyph({ kind })` | 16 px verb glyph, 1.5 px pen in the Workbench blue (paper on the primary): `record` (red dot), `import`, `engine`, `new`, `summary`, `retry`, `open`, `note`, `ask`, `tasks`, `project`, `send`, `done`, `run`, `edit`, `copy` (two sheets: Speak's Copy). Decorative; the label names the verb. |
 | **StatusBar** | `kit.tsx` `StatusBar({ items, egress?, verbs?, className?, data-testid? })` | A 24 px band (`--wb-statusbar-h`) at the foot, sans 12 muted, tabular numbers: items `{ key?, text, value?, lamp?, testId? }` joined by a middle dot, `verbs` (the selected object's library Buttons: Open, Retry, Run summary) then the egress chip at the right (A.9); the band grows from the foot, so nothing above it moves. The items carry `role=status`, never the verbs. Warm true words (`5 meetings · 1 failed`); `countWords(n, noun, plural?)` (kit.tsx) says a count and returns null at zero, so the bar drops that item (A.8). Portaled into the frame's foot slot like SurfaceFooter, in place without one. No items and no egress: nothing, and the empty frame foot folds away (`.desk-surface-foot:empty`). Narrow (≤ 520 px): `--wb-statusbar-h` grows to 44 px and the verbs take their own line under the words, each a 44 px target (kit.css; no face restyles the bar). The Room's foot is a StatusBar too (`room-status`: the merged PR in warm words with the ok lamp, the sources count; Open PR and its egress chip as verbs). |
 | **DotWord** | `kit.tsx` `DotWord({ tone?, children, className?, data-testid? })` | A state fact in the window grammar: an 8 px round `kit-dot` and a sentence-case word, sans 12, no plate, no border (`● No engine for answers`). `tone` is an object tone or `idle` (default, the grey dot). The sweep's material fence reads it (and the dense list's state cell) as a state fact: round 8 px dot, no border, shadow or fill, never mono or uppercase (`material_rig.dot_fact_fault`). |
 | **Body inset** | `interior.tsx` `useWindowInterior("list" \| "editor" \| null)` | The core tells the host which interior it draws; the host sets `data-interior` on the body. `list` and `editor` run edge to edge (inset 0; the list scrolls inside); null keeps the 12–16 px form/reader inset; `undefined` says nothing (a host face that hands its window to a child face, the Meetings list drawing a meeting record, lets the child say it). |
 | **ObjectList dense** | `objects/ObjectList.tsx` `density="dense"`, `columns?` | The list view of a collection window: rows 30 px (`--wb-row-dense`; 44 px in a surface ≤ 520 px), each led by its 20 px illustrated object glyph; headers sans 12/600 muted, sentence case; cells sans 13; the state a dot and a word (`state.testId` for a test hook); hover lifts the row (tint + 1 px ink rule), the selected row is the vivid blue (`--wb-sel-vivid`, paper ink); 120 ms eased; no zebra; fills its container. `columns` declares the provider's own columns in order (`{ key, word, track? }`); a non-built-in key reads `row.cells[key]` (sorted by `row.sortValues[key]` or the text). `nameTestId` puts a test hook on the name. `state.tone` adds `idle` (the grey dot and a muted word: Idle, Not installed, Quiet; the Conductor's rows use it) and `state.live` marks a running state (`data-live`). `avatar: { initials, hue }` leads a person's row with a 24 px initials disc in the person's hue (`initialsOf` / `hueOf`, the kit avatar's eight hues) in place of the sprite (People's roster; `data-avatar` on the row). Narrow (≤ 520 px) fold: the non-state cells start their own line under the name; only filled cells show, the first filled cell leads the line and a middle dot joins two filled cells (`data-fold="lead" \| "next"`), so no line starts with an orphan dot. Selection is the press; Enter or a double press opens (a touch tap opens: the phone list has no double press); keyboard as ObjectList. Default density and every current caller are unchanged. |
+
+**List + inspector (a sanctioned shape of the grammar).** A collection whose
+selected object has settings: the dense `ObjectList` runs edge to edge under
+the toolbar (`useWindowInterior("list")`; the body scrolls), and under it the
+selected object's inspector, a `PrefSection` caption (sans 12/600, sentence
+case, a hairline) over a label/control grid (label sans 13 at 160 px, the
+control at the right, a 1 px soft rule between rows; one column at ≤ 520 px).
+The selected row's verbs and its egress chip go to the StatusBar, never to the
+toolbar. A row with no value says so as a DotWord (`● Not assigned`), never a
+blank. Engines is the exemplar (`RunsOnCore`: Engine · Where · Used for ·
+State, then What runs where; Builder tools keeps the switchboard), and
+Components ▸ Window ▸ List + inspector renders the same classes with fixture
+engines.
 
 ## SurfaceSwitchboard (PHILO-16 C, the Runs on board)
 

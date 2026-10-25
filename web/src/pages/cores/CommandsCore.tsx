@@ -27,6 +27,7 @@ import {
   SurfaceState,
 } from "../../desk/surface/Surface";
 import { renderHeroSlot } from "./core-layout";
+import { DotWord, ToolGlyph, Toolbar } from "../../desk/surface/kit";
 
 const blank = (): Macro => ({
   keyword: "",
@@ -201,9 +202,36 @@ export function CommandsCore({ hero }: CoreProps) {
       </span>
     </>
   );
+  // Window grammar (2026-10-24): hosted in the Speak window (no hero), the
+  // verbs sit on a toolbar and the state is a dot and a word.
+  const toolbar = (
+    <Toolbar
+      label="Voice commands"
+      data-testid="commands-toolbar"
+      trailing={<DotWord tone={enabled ? "ok" : "warn"}>{enabled ? "Commands on" : "Commands off"}</DotWord>}
+    >
+      <Button
+        dense
+        variant="secondary"
+        disabled={busy}
+        onClick={() => setEditing({ session: {}, index: -1, macro: blank() })}
+      >
+        <ToolGlyph kind="new" />
+        Add command
+      </Button>
+      <Button
+        dense
+        variant="secondary"
+        onClick={() => openSurfaceOr("configure-settings", "/settings", "voice-typing")}
+      >
+        <ToolGlyph kind="open" />
+        {enabled ? "Manage in Settings" : "Enable in Settings"}
+      </Button>
+    </Toolbar>
+  );
   return (
     <>
-      {renderHeroSlot(hero, verbs)}
+      {hero === undefined ? toolbar : renderHeroSlot(hero, verbs)}
       {message ? (
         message.error ? (
           <SurfaceState

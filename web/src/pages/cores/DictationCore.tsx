@@ -4,7 +4,7 @@
 // footer carries the receipt + Review/Export; the egress badge lives
 // beside the verb, on the SPEAK wing's engine row (HS-202-02).
 import "../../desk/components/speak.css";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { apiFetch } from "../../lib/api";
 import { download } from "./history";
 import type { CoreProps, DictationJournalResponse } from "./core-types";
@@ -19,6 +19,7 @@ import { useBuilderTools } from "../../desk/builderTools";
 import {
   SpeakFace,
   SpeakStatusContext,
+  SpeakEgressContext,
   Journal,
   Learned,
   Blocks,
@@ -76,6 +77,7 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
   // Window grammar (2026-10-24): one status bar for the window; the Speak
   // face reports its phase, fact and hold key into it.
   const [speakItems, setSpeakItems] = useState<StatusBarItem[] | null>(null);
+  const [speakEgress, setSpeakEgress] = useState<ReactNode>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const announce = useCallback((text: string, tone: ReceiptTone = "ok") => {
     setReceipt(text ? { text, tone } : null);
@@ -166,7 +168,9 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
       ) : null}
       <ReceiptContext.Provider value={announce}>
         <SpeakStatusContext.Provider value={setSpeakItems}>
-          {current}
+          <SpeakEgressContext.Provider value={setSpeakEgress}>
+            {current}
+          </SpeakEgressContext.Provider>
         </SpeakStatusContext.Provider>
       </ReceiptContext.Provider>
       {/* HS-170-04 — the footer: receipt · Review (ghost) · Export (ghost).
@@ -180,6 +184,7 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
         className="speak-footer"
         data-testid="speak-footer"
         items={statusItems}
+        egress={active === "speak" && speakEgress ? speakEgress : undefined}
         verbs={
           <>
             {/* HS-176-05 (design D2(b).9) — `Review` reviews: it crosses to

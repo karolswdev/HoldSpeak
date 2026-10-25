@@ -1232,12 +1232,24 @@
 .desk-next .speak-face .kit-toolbar .speak-lands-in .speak-transport-spacer {
   display: none;
 }
-/* The level: a slim meter at the band's right end. */
-.desk-next .speak-face .kit-toolbar-trailing .gadget-ledmeter {
-  width: clamp(96px, 22cqi, 200px);
+/* The level: a slim meter that leads the status bar (at 393 too: never a
+   line of its own under the toolbar). */
+.desk-next .kit-statusbar .speak-level {
+  display: inline-flex;
+  align-items: center;
 }
-.desk-next .speak-face .kit-toolbar-trailing .gadget-ledmeter-track {
-  height: 14px;
+.desk-next .kit-statusbar .speak-level .gadget-ledmeter {
+  width: 88px;
+  min-width: 0;
+}
+.desk-next .kit-statusbar .speak-level .gadget-ledmeter-track {
+  height: 10px;
+}
+/* How long he has talked: a tabular m:ss that ticks. */
+.desk-next .kit-statusbar .speak-elapsed {
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-ink);
+  font-weight: 600;
 }
 
 /* The setup row (Set up speech · its egress) under the toolbar. */
@@ -1336,4 +1348,12 @@
   .desk-next .speak-face .speak-well textarea {
     padding: 12px;
   }
+}
+
+/* Window grammar: the setup row's egress chip in sentence case (a host is
+   lower case), never a mono caps chip. */
+.desk-next .speak-face .speak-setup .gadget-chip-egress {
+  text-transform: lowercase;
+  letter-spacing: 0;
+  font: 500 12px / 18px var(--font-sans);
 }

@@ -46,6 +46,8 @@ export interface RosterTask {
   group: { id: string; label: string };
   /** The task has its own exact row (not inherited from its group/default). */
   has_override: boolean;
+  /** The task's own engines (its exact row), when it has one. */
+  entries?: RosterEntry[];
 }
 
 export interface Roster {
@@ -93,11 +95,17 @@ export async function readRoster(): Promise<Roster> {
   const tasks = Array.isArray(raw.task_overrides)
     ? (raw.task_overrides as Record<string, unknown>[]).map((task) => {
         const group = (task.group ?? {}) as Record<string, unknown>;
+        const effective = (task.effective ?? {}) as Record<string, unknown>;
+        const assignment = (effective.assignment ?? null) as Record<string, unknown> | null;
+        const own = effective.inherited_from === "capability" && assignment && Array.isArray(assignment.entries)
+          ? (assignment.entries as Record<string, unknown>[]).map(decodeEntry)
+          : undefined;
         return {
           id: String(task.id ?? ""),
           label: String(task.label ?? ""),
           group: { id: String(group.id ?? ""), label: String(group.label ?? "") },
           has_override: task.has_override === true,
+          ...(own?.length ? { entries: own } : {}),
         };
       })
     : [];
