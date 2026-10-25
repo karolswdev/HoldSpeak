@@ -65,16 +65,16 @@
     padding-left: 10px;
   }
   /* 393: every verb is a 44 px touch target. */
-  .needs-drawer .needs-row-verbs .btn {
+  :is(.needs-drawer, .today-needs) .needs-row-verbs .btn {
     --btn-painted-h: var(--desk-button-hit-size);
     min-height: 44px;
   }
 }
-.needs-drawer .needs-row[data-opens="true"] {
+:is(.needs-drawer, .today-needs) .needs-row[data-opens="true"] {
   cursor: pointer;
 }
 /* A name is never cut in the drawer (HS-172: no text clip): it wraps. */
-.needs-drawer .needs-row-name {
+:is(.needs-drawer, .today-needs) .needs-row-name {
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -100,13 +100,13 @@
 }
 
 /* A proposal's Confirm already states the act; the kind plate names it once. */
-.needs-drawer .needs-row[data-proposal="true"] .needs-row-lamp { display:none; }
-.needs-drawer .needs-row[data-proposal="true"] { grid-template-columns:9ch minmax(0, 1fr) auto; }
-.needs-drawer .needs-row-fact:not(.is-code) { white-space:normal; overflow-wrap:anywhere; }
+:is(.needs-drawer, .today-needs) .needs-row[data-proposal="true"] .needs-row-lamp { display:none; }
+:is(.needs-drawer, .today-needs) .needs-row[data-proposal="true"] { grid-template-columns:9ch minmax(0, 1fr) auto; }
+:is(.needs-drawer, .today-needs) .needs-row-fact:not(.is-code) { white-space:normal; overflow-wrap:anywhere; }
 .needs-coverage-details { margin:0; padding-left:20px; font:12px var(--font-mono); }
 
 @container surface (max-width:520px) {
-  .needs-drawer .needs-row[data-proposal="true"] { grid-template-columns:9ch minmax(0, 1fr); }
+  :is(.needs-drawer, .today-needs) .needs-row[data-proposal="true"] { grid-template-columns:9ch minmax(0, 1fr); }
 }
 
 /* The coverage fold owns one 44 px row; extra disclosure margins add no reach. */
@@ -218,7 +218,7 @@
 .needs-drawer-list > .surface-scroll-hint {
   gap: 0;
 }
-.needs-drawer .needs-list {
+:is(.needs-drawer, .today-needs) .needs-list {
   border: 0;
   border-radius: 0;
   background: var(--wb-paper);
@@ -230,8 +230,8 @@
   margin: 0;
   padding: 6px 10px 2px;
 }
-.needs-drawer .needs-row,
-.needs-drawer .needs-row[data-proposal="true"] {
+:is(.needs-drawer, .today-needs) .needs-row,
+:is(.needs-drawer, .today-needs) .needs-row[data-proposal="true"] {
   grid-template-columns: 22px minmax(0, 1fr) auto auto;
   column-gap: 10px;
   min-height: var(--wb-row-dense, 30px);
@@ -241,70 +241,70 @@
     background-color var(--duration-short) var(--ease-standard),
     box-shadow var(--duration-short) var(--ease-standard);
 }
-.needs-drawer .needs-row:hover {
+:is(.needs-drawer, .today-needs) .needs-row:hover {
   background: var(--wb-row-hover);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 28%, transparent);
 }
-.needs-drawer .needs-row > img {
+:is(.needs-drawer, .today-needs) .needs-row > img {
   box-sizing: border-box;
   width: 20px;
   height: 20px;
   padding: 0;
   filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent));
 }
-.needs-drawer .needs-row-what {
+:is(.needs-drawer, .today-needs) .needs-row-what {
   flex-direction: row;
   flex-wrap: wrap;
   align-items: baseline;
   column-gap: 8px;
   row-gap: 0;
 }
-.needs-drawer .needs-row-name {
+:is(.needs-drawer, .today-needs) .needs-row-name {
   font: 600 13px / 1.35 var(--font-sans);
 }
-.needs-drawer .needs-row-fact,
-.needs-drawer .needs-row-factline {
+:is(.needs-drawer, .today-needs) .needs-row-fact,
+:is(.needs-drawer, .today-needs) .needs-row-factline {
   font: 400 12px / 1.35 var(--font-sans);
   letter-spacing: 0;
   color: var(--wb-muted);
 }
-.needs-drawer .needs-row-lamp .gadget-lamp {
+:is(.needs-drawer, .today-needs) .needs-row-lamp .gadget-lamp {
   font: 500 12px / 1.35 var(--font-sans);
   letter-spacing: 0;
 }
-.needs-drawer .needs-row-verbs {
+:is(.needs-drawer, .today-needs) .needs-row-verbs {
   gap: 4px;
   max-width: none;
   flex-wrap: nowrap;
 }
-.desk-next .needs-drawer .needs-row-verbs .btn {
+.desk-next :is(.needs-drawer, .today-needs) .needs-row-verbs .btn {
   min-height: 26px;
   height: 26px;
   padding-inline: 10px;
   font-size: 13px;
 }
-.needs-drawer .needs-drawer-well {
+:is(.needs-drawer, .today-needs) .needs-drawer-well {
   padding: 4px 10px 8px 42px;
 }
 @media (prefers-reduced-motion: reduce) {
-  .needs-drawer .needs-row { transition: none; }
+  :is(.needs-drawer, .today-needs) .needs-row { transition: none; }
 }
 @container surface (max-width: 520px) {
-  .needs-drawer .needs-row,
-  .needs-drawer .needs-row[data-proposal="true"] {
+  :is(.needs-drawer, .today-needs) .needs-row,
+  :is(.needs-drawer, .today-needs) .needs-row[data-proposal="true"] {
     grid-template-columns: 22px minmax(0, 1fr);
     min-height: 44px;
     row-gap: 4px;
     padding-block: 4px;
   }
-  .needs-drawer .needs-row-verbs {
+  :is(.needs-drawer, .today-needs) .needs-row-verbs {
     flex-wrap: wrap;
   }
-  .desk-next .needs-drawer .needs-row-verbs .btn {
+  .desk-next :is(.needs-drawer, .today-needs) .needs-row-verbs .btn {
     height: auto;
     min-height: 44px;
   }
-  .needs-drawer .needs-drawer-well {
+  :is(.needs-drawer, .today-needs) .needs-drawer-well {
     padding-left: 10px;
   }
 }
@@ -318,12 +318,12 @@
 }
 /* The Project's own Button and the row's egress chip: quiet sans, one
    accent per row (the verb). */
-.desk-next .needs-drawer .needs-row .surface-project-button {
+.desk-next :is(.needs-drawer, .today-needs) .needs-row .surface-project-button {
   font: 500 12px / 1.35 var(--font-sans);
   letter-spacing: 0;
   text-transform: none;
 }
-.desk-next .needs-drawer .needs-row-verbs .gadget-chip-egress {
+.desk-next :is(.needs-drawer, .today-needs) .needs-row-verbs .gadget-chip-egress {
   padding: 0 6px;
   border-radius: var(--radius-sm);
   font: 500 12px / 18px var(--font-sans);
@@ -336,33 +336,33 @@
    quiet sans fact. The row lays out its parts on its own grid (the "what"
    wrapper steps aside), so a narrow surface folds the state and the fact
    under the name and the row stays one 44 px line pair beside its verb. */
-.needs-drawer .needs-row[data-dot="true"] {
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] {
   grid-template-columns: 22px minmax(0, max-content) minmax(0, 1fr) auto auto;
   grid-template-areas: "glyph name meta state verbs";
 }
-.needs-drawer .needs-row[data-dot="true"] > img { grid-area: glyph; }
-.needs-drawer .needs-row[data-dot="true"] > .needs-row-what { display: contents; }
-.needs-drawer .needs-row[data-dot="true"] .needs-row-name {
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > img { grid-area: glyph; }
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > .needs-row-what { display: contents; }
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] .needs-row-name {
   grid-area: name;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.needs-drawer .needs-row[data-dot="true"] > .needs-row-what > :not(.needs-row-name) {
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > .needs-row-what > :not(.needs-row-name) {
   grid-area: meta;
   min-width: 0;
 }
-.needs-drawer .needs-row[data-dot="true"] > .needs-row-lamp { grid-area: state; }
-.needs-drawer .needs-row[data-dot="true"] > .needs-row-verbs { grid-area: verbs; }
-.needs-drawer .needs-row[data-dot="true"] .kit-dotword {
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > .needs-row-lamp { grid-area: state; }
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > .needs-row-verbs { grid-area: verbs; }
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] .kit-dotword {
   white-space: nowrap;
 }
-.needs-drawer .needs-row[data-dot="true"] .needs-row-project .surface-project-button {
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] .needs-row-project .surface-project-button {
   color: var(--wb-muted);
 }
 @container surface (max-width: 520px) {
-  .needs-drawer .needs-row[data-dot="true"] {
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] {
     grid-template-columns: 22px auto minmax(0, 1fr) auto;
     grid-template-areas:
       "glyph name name verbs"
@@ -377,44 +377,49 @@
     border-bottom: 0;
     box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
   }
-  .needs-drawer .needs-row[data-dot="true"]:hover {
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"]:hover {
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 28%, transparent);
   }
-  .needs-drawer .needs-row[data-dot="true"] .needs-row-name {
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] .needs-row-name {
     align-self: end;
     line-height: 18px;
   }
-  .needs-drawer .needs-row[data-dot="true"] > .needs-row-lamp,
-  .needs-drawer .needs-row[data-dot="true"] > .needs-row-what > :not(.needs-row-name) {
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > .needs-row-lamp,
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > .needs-row-what > :not(.needs-row-name) {
     align-self: start;
     line-height: 18px;
   }
   /* One line under the name: the fact and the Project cut with an ellipsis
      rather than wrapping the row taller. */
-  .needs-drawer .needs-row[data-dot="true"] > .needs-row-what > :not(.needs-row-name) {
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > .needs-row-what > :not(.needs-row-name) {
     flex-wrap: nowrap;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .needs-drawer .needs-row[data-dot="true"] > .needs-row-what > .needs-row-words {
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > .needs-row-what > .needs-row-words {
     -webkit-line-clamp: 1;
     line-clamp: 1;
   }
-  .needs-drawer .needs-row[data-dot="true"] > .needs-row-verbs {
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > .needs-row-verbs {
     grid-column: auto;
     flex-wrap: nowrap;
     justify-content: flex-end;
     align-self: center;
   }
-  .needs-drawer .needs-row[data-dot="true"] > img {
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > img {
     align-self: center;
   }
   /* The Project's Button needs its own 44 px target, which a 44 px row
      pair cannot hold beside the verb: at this width the row keeps its one
      verb and the item itself opens its Project (as when the desk holds one
      Project, UX-CANON A.7). */
-  .needs-drawer .needs-row[data-dot="true"] .needs-row-project {
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] .needs-row-project {
     display: none;
+  }
+  /* A proposal row draws no state (its verb states the act): the fact
+     takes the state's cell too, so it starts under the name. */
+  :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"][data-proposal="true"] > .needs-row-what > :not(.needs-row-name) {
+    grid-column: 2 / 4;
   }
 }

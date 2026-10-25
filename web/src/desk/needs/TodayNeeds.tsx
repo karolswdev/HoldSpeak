@@ -3,7 +3,9 @@
  *  The same rows as the Needs-you window, from the same read and in the same
  *  rank (`useNeedFaces`), with the same verbs (`NeedRow`): never a second
  *  list. Today shows the first rows only; its toolbar's Needs you opens the
- *  Needs-you window.
+ *  Needs-you window. Window grammar (2026-10-24): the rows are the window's
+ *  dense rows (the glyph, the DotWord state, the plain Project; needs.css
+ *  draws them for `.needs-drawer` and `.today-needs` alike).
  *  What a person owes him shows here only when it is late or due today. */
 import { useRef } from "react";
 import { Button } from "../../components/signal/Signal";
@@ -80,7 +82,7 @@ export function TodayNeeds({ work, count, now, limit, primary, projects, loaded,
         <div ref={listRef} onClick={onRowPress} className="today-needs-list" data-testid="needs-list">
           <NeedsList label="Needs you">
             {rows.map((face) => (
-              <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={projects} />
+              <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={projects} plates={false} />
             ))}
           </NeedsList>
         </div>

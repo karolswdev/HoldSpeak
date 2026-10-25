@@ -1072,6 +1072,10 @@ mixed-case words and the acronyms in `KEEP_CAPS` stay), the Project is a
 44 px line pair: the name over the state and the fact, the verbs at the
 right. The Project's Button is not drawn at that width (its own 44 px
 target does not fit the pair; the item opens its Project).
+Today's Needs you draws the same rows (`NeedRow plates={false}`; needs.css
+styles `.needs-drawer` and `.today-needs` with one rule set): no kind plate,
+no box around the list, a hairline between rows, the egress chip in lower
+case. Today keeps its own name step (sans 15/500, today.css).
 
 DropTarget (`lit`, `children`, `className?`) lights any target with the
 dashed paper ring. DragGhost (`kind, id, sprite?, x, y`) is the dragged

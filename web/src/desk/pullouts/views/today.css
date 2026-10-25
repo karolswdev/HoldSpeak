@@ -322,9 +322,22 @@
   list-style: none;
 }
 
-/* ── Needs you (the Needs-you window's rows) ── */
+/* ── Needs you (the Needs-you window's rows) ──
+   The rows are the window's dense rows (needs.css draws `.today-needs`
+   with `.needs-drawer`): 30 px, the 20 px glyph, the DotWord state, the
+   plain Project, a hairline between rows and no box. Today reads at its
+   own step: the name in sans 15/500. */
 .desk-next .today-needs-list {
   min-width: 0;
+}
+.desk-next .today-needs .needs-row-name {
+  font: 500 15px / 1.3 var(--font-sans);
+}
+/* The Project is a quiet sans fact, as in the window: a window body's
+   ghost plate (surface.css) does not reach it until the pointer does. */
+.desk-next .desk-window-shell .today-needs .needs-row-project .btn--ghost:not(:disabled):not(:hover) {
+  border-color: transparent;
+  background: transparent;
 }
 .desk-next .today-needs-none {
   display: flex;
