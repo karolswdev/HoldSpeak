@@ -93,12 +93,13 @@ describe("Betterment Q8: every note opens in the one note window", () => {
     expect(screen.queryByRole("button", { name: "Develop this thought" })).toBeNull();
     expect(container.querySelector(`[id="pullout:${NOTE_REF}"]`)?.getAttribute("aria-label")).toBe(NOTE.title);
 
-    // The foot: Ask about this, Find the tasks (Q9), Send… and Done
+    // The toolbar: Done, Ask about this, Find the tasks (Q9) and Send…
     // (Project ▾ shows when he has a project). No Finish, Resume, Task, Copy
     // or Add a note.
-    const foot = container.querySelector(".thought-note-foot") as HTMLElement;
-    const verbs = within(foot).getAllByRole("button").map((b) => b.textContent);
-    expect(verbs).toEqual(["Ask about this", "Find the tasks", "Send…", "Done"]);
+    // Window grammar (2026-10-24): the verbs are the toolbar's, Done first.
+    const toolbar = container.querySelector(".thought-note-toolbar-verbs") as HTMLElement;
+    const verbs = within(toolbar).getAllByRole("button").map((b) => b.textContent);
+    expect(verbs).toEqual(["Done", "Ask about this", "Find the tasks", "Send…"]);
     // The open wrote nothing but the open itself.
     expect(calls.filter((c) => c.method !== "GET").map((c) => `${c.method} ${c.url}`)).toEqual(["POST /api/thoughts/open-note"]);
   });
@@ -196,8 +197,8 @@ describe("Betterment Q9: Find the tasks on a note", () => {
   it("one press shows the meeting's rows: the tasks with owners, and the proposed decision", async () => {
     hubWithFind();
     const { container } = await openNote();
-    expect(within(container.querySelector(".thought-note-foot") as HTMLElement).getAllByRole("button").map((b) => b.textContent))
-      .toEqual(["Ask about this", "Find the tasks", "Send…", "Done"]);
+    expect(within(container.querySelector(".thought-note-toolbar-verbs") as HTMLElement).getAllByRole("button").map((b) => b.textContent))
+      .toEqual(["Done", "Ask about this", "Find the tasks", "Send…"]);
     // The rows stay with the note: the window reads them when it opens.
     expect(calls.some((c) => c.method === "GET" && c.url === `/api/notes/${NOTE.note_id}/outcomes`)).toBe(true);
     expect(screen.queryByTestId("note-outcomes")).toBeNull();

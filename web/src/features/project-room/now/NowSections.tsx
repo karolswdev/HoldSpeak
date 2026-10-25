@@ -76,7 +76,7 @@ export function WaitingOnSection({
   const [openNudge, setOpenNudge] = useState<string | null>(null);
   if (!people.length) return null;
   return (
-    <SurfaceSection label="WAITING ON" data-testid="room-waiting-on">
+    <SurfaceSection label="Waiting on" data-testid="room-waiting-on">
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows">
           {people.map((group) => {
@@ -172,7 +172,7 @@ export function ThisWeekSection({
   const [opened, setOpened] = useState<Record<string, boolean>>({});
   if (!groups.length) return null;
   return (
-    <SurfaceSection label="THIS WEEK" data-testid="room-this-week">
+    <SurfaceSection label="This week" data-testid="room-this-week">
       <div className="room-now-week">
         {groups.map((group) => {
           const all = !compact || opened[group.title];

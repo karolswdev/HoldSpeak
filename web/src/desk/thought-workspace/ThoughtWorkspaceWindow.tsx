@@ -31,10 +31,17 @@ import { NoteSendWells } from "../documentSendsLazy";
 import { SEND_OPEN, useAnnounceWindowDocument } from "../windowSend";
 import { useWindowId } from "../components/window/windowIdContext";
 import { useCompactViewport } from "../useCompactViewport";
-import { thoughtWriteLine } from "./thoughtReceipt";
+import { thoughtStatusWords, thoughtWriteLine } from "./thoughtReceipt";
 import { openProjectRoomAtResource, openRef } from "../openObject";
 import type { ProjectReturn } from "../store/types";
+import { SYSTEM } from "../systemSprites";
 import "./thought-workspace.css";
+
+/** Window grammar, delight (2026-10-24): a toolbar verb wears its object's
+ *  illustrated glyph beside its word (Workbench/Finder style). */
+function VerbIcon({ src }: { src: string }) {
+  return <img className="thought-note-verb-icon desk-chrome-sprite" src={src} alt="" width={18} height={18} draggable={false} />;
+}
 
 const workspaceRequestIds = new Map<string, string | null>();
 function stableId(key: string): string {
@@ -165,7 +172,7 @@ function WorkspaceReady({
   const sendScrollRef = useRef<HTMLDivElement | null>(null);
   const focusDoor = (door: RefObject<HTMLButtonElement | null>) => {
     const frameRoot = noteWindowRef.current?.closest(".thought-workspace-window");
-    const target = door.current ?? frameRoot?.querySelector<HTMLButtonElement>(".thought-note-foot button[aria-label='More actions']");
+    const target = door.current ?? frameRoot?.querySelector<HTMLButtonElement>(".thought-note-toolbar button[aria-label='More actions']");
     target?.focus();
   };
   useEffect(() => {
@@ -421,6 +428,16 @@ function WorkspaceReady({
   const showAskBand = !completed && Boolean(open || askRow);
 
   const writeLine = thoughtWriteLine(writer);
+  /* The status bar's relative words ("Saved just now") move on with the
+     clock while the kept time is under an hour old. */
+  const [clock, setClock] = useState(() => Date.now());
+  const keptAge = writer.keptAt ? Date.now() - (Date.parse(writer.keptAt) || 0) : Infinity;
+  useEffect(() => {
+    if (!(keptAge < 3_600_000)) return;
+    const timer = window.setInterval(() => setClock(Date.now()), 20_000);
+    return () => window.clearInterval(timer);
+  }, [keptAge < 3_600_000, writer.keptAt]); // eslint-disable-line react-hooks/exhaustive-deps
+  const statusWords = thoughtStatusWords(writer, Math.max(clock, Date.now()));
   const unsaved = Boolean(writer.pending || writer.saving || writer.failed || writer.conflicted);
   /* Astra finding 4 — `writer.retry` returns during a conflict
      (useThoughtNoteWriter.ts:238), so "Try again" there was a verb that
@@ -572,6 +589,17 @@ function WorkspaceReady({
           : null);
       }}
       onOpenLink={(ref) => openRef(ref, { projectReturn: projectReturn ?? null })}
+      verbs={<>
+        {/* Window grammar (2026-10-24): the verbs are the toolbar under the
+            title bar, Done (the one primary) first. Betterment Q8 (one
+            note): Done, Ask about this, Find the tasks (Q9), Project ▾ and
+            Send…; on the phone Done sits in the title strip. */}
+        {!compact ? <Button dense variant="primary" className="thought-note-primary" disabled={busy} onClick={onDone}>Done</Button> : null}
+        <Button dense variant="ghost" className="thought-note-verb" disabled={busy} onClick={() => void askFromNote()}><VerbIcon src={spriteUrl("thread", "verb", "rest", null, 32)} /><span className="thought-note-verb-label">Ask about this</span></Button>
+        <Button dense variant="ghost" disabled={busy || outcomes.finding || !writer.draft.body.trim()} loading={outcomes.finding} className="thought-note-verb" onClick={() => void findTasks()}>{outcomes.finding ? null : <VerbIcon src={spriteUrl("action", "verb", "rest", null, 32)} />}<span className="thought-note-verb-label">Find the tasks</span></Button>
+        {hasProjects ? <Button dense variant="ghost" disabled={busy} aria-expanded={actionWell === "project"} className="thought-note-verb" onClick={() => void openActionWell("project")}><VerbIcon src={spriteUrl("project", "verb", "rest", null, 32)} /><span className="thought-note-verb-label">Project ▾</span></Button> : null}
+        <Button ref={sendRef} dense variant="ghost" className="thought-note-verb" disabled={busy} onClick={() => void openSend()}><VerbIcon src={SYSTEM.dockDelivery} /><span className="thought-note-verb-label">Send…</span></Button>
+      </>}
     />
 
     {showAskBand ? <section className="thought-note-ask" aria-label="Ask about this note">
@@ -615,30 +643,15 @@ function WorkspaceReady({
       onClose={() => { setActionWell(null); setActionPassage(null); }}
     /> : null}
 
+    {/* Window grammar (2026-10-24): the status bar. It says the save state
+        (sans 12, muted) and holds the one recovery verb a failed save needs. */}
     <SurfaceFooter
       className="thought-note-foot"
-      // Betterment Q8: on the phone the note's verbs wrap to two rows (never
-      // folded into More), and Done sits in the title strip.
       fold={false}
-      receipt={<>
-        {/* PHILO-3-04: the receipt keeps its whole words and wraps; the
-            library's wrap token ([data-wrap], surface-footer.css) lifts the
-            one-line clip a plain foot receipt wears (B27). */}
-        {writeLine ? <span className="surface-footer-receipt-line" role="status" data-wrap="" data-tone={writeLine.danger ? "danger" : undefined}>{writeLine.text}</span> : null}
-      </>}
-      verbs={<span className="surface-footer-verbs-group">
-        {writer.conflicted
-          ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
-          : writer.failed ? <Button dense onClick={writer.retry}>Retry</Button> : null}
-        {/* Betterment Q8 (one note): the foot is Ask about this, Find the
-            tasks (Q9), Project ▾, Send… and Done. Add a note, Copy, Task (a
-            paste of the whole note) and Finish / Resume left the face. */}
-        <Button dense disabled={busy} onClick={() => void askFromNote()}>Ask about this</Button>
-        <Button dense disabled={busy || outcomes.finding || !writer.draft.body.trim()} loading={outcomes.finding} onClick={() => void findTasks()}>Find the tasks</Button>
-        {hasProjects ? <Button dense disabled={busy} aria-expanded={actionWell === "project"} onClick={() => void openActionWell("project")}>Project ▾</Button> : null}
-        <Button ref={sendRef} dense disabled={busy} onClick={() => void openSend()}>Send…</Button>
-        {!compact ? <Button variant="primary" className="thought-note-primary" disabled={busy} onClick={onDone}>Done</Button> : null}
-      </span>}
+      receipt={statusWords ? <span className="surface-footer-receipt-line thought-note-status" role="status" data-wrap="" data-tone={statusWords.tone === "danger" ? "danger" : undefined} data-lamp={statusWords.tone}>{statusWords.text}</span> : null}
+      verbs={writer.conflicted
+        ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
+        : writer.failed ? <Button dense onClick={writer.retry}>Retry</Button> : null}
     />
     </> : <>
       <ScrollHint axis="y" scrollRef={sendScrollRef} className="thought-send-scroll">
@@ -724,7 +737,7 @@ export function ThoughtWorkspaceWindow({
     className={`desk-pullout thought-workspace-window${sending ? " is-sending" : ""}`}
     minW={520}
     minH={sending ? 520 : 360}
-    defaultW={520}
+    defaultW={680}
     defaultH={360}
     fitContent
     origin={origin}

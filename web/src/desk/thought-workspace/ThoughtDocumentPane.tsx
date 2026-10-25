@@ -67,6 +67,7 @@ export function ThoughtDocumentPane({
   voiceDraftIO = deskThoughtVoiceDraft,
   mic = true,
   voiceInput,
+  verbs,
 }: {
   /** The thought's note. With it, the field takes the keys typed between
    *  `Write a thought` and this window (thoughtKeys.ts). */
@@ -89,6 +90,10 @@ export function ThoughtDocumentPane({
   mic?: boolean;
   /** Alternate input control for the same document composition and binder. */
   voiceInput?: (bindText: () => (text: string) => void, disabled: boolean) => ReactNode;
+  /** Window grammar (2026-10-24): the window's verbs. They sit on the
+   *  toolbar under the title bar, left; the field's voice control sits at
+   *  its right end. */
+  verbs?: ReactNode;
 }) {
   const ownBodyRef = useRef<DeskEditorHandle | null>(null);
   const bodyRef = editorRef ?? ownBodyRef;
@@ -123,21 +128,34 @@ export function ThoughtDocumentPane({
     return claimThoughtKeys(noteId, (text) => bodyRef.current?.insertAtCursor(text));
   }, [noteId]);
 
+  const voice = mic ? <MicButton label="Speak the note" disabled={disabled}
+    onText={(text) => bodyRef.current?.insertAtCursor(text)}
+    bindText={bindText} /> : voiceInput?.(bindText, disabled) ?? null;
+
   return <section className="thought-note-document" aria-label="Note">
-    {/* Betterment Q8 (one note): the title shows once, in the title bar. A
-        heading that only repeats the note's first line (an untitled note,
-        named by its first words, thoughtTitle.ts) left the window. A title
-        of his own, which the first line does not say, stays editable here
-        (Object ▸ Rename opens this window). */}
-    {ownTitle(draft.title, draft.body) ? <EditInPlace
-      className="thought-note-title"
-      label="Title"
-      value={draft.title}
-      multiline
-      disabledReason={lockedReason}
-      onCommit={(next) => onEdit({ title: next })}
-    /> : null}
+    {/* Window grammar (2026-10-24): a native editor window. The verbs are
+        on a toolbar under the title bar; the field's own voice control is
+        at the toolbar's right end and still writes at the field's captured
+        target (#1443). The editor fills the window below it. */}
+    <div className="thought-note-toolbar" role="toolbar" aria-label="Note actions" data-testid="thought-note-toolbar">
+      <span className="thought-note-toolbar-verbs">{verbs}</span>
+      {voice ? <span className="thought-note-field-mic thought-note-toolbar-voice">{voice}</span> : null}
+    </div>
     <div className="thought-note-field">
+      {/* Betterment Q8 (one note): the title shows once, in the title bar. A
+          heading that only repeats the note's first line (an untitled note,
+          named by its first words, thoughtTitle.ts) left the window. A title
+          of his own, which the first line does not say, stays editable here
+          as the page's first line at the body step, never a display
+          headline (Object ▸ Rename opens this window). */}
+      {ownTitle(draft.title, draft.body) ? <EditInPlace
+        className="thought-note-title"
+        label="Title"
+        value={draft.title}
+        multiline
+        disabledReason={lockedReason}
+        onCommit={(next) => onEdit({ title: next })}
+      /> : null}
       <DeskEditor
         ref={bodyRef}
         className="thought-note-body"
@@ -151,11 +169,6 @@ export function ThoughtDocumentPane({
         onChange={(body) => onEdit({ body })}
         onSelectionChange={onSelectionChange}
       />
-      <span className="thought-note-field-mic">
-        {mic ? <MicButton label="Speak the note" disabled={disabled}
-          onText={(text) => bodyRef.current?.insertAtCursor(text)}
-          bindText={bindText} /> : voiceInput?.(bindText, disabled) ?? null}
-      </span>
     </div>
     {retained && voiceKey ? <ThoughtVoiceRecovery text={retained} disabled={disabled} onInsert={() => {
       const editor = bodyRef.current;

@@ -53,7 +53,7 @@ vi.mock("../components/DeskWindow", async () => {
   };
 });
 vi.mock("./ThoughtDocumentPane", () => ({
-  ThoughtDocumentPane: ({ draft, onEdit, onSelectionChange, lockedReason, returnRange, editorRef }: { draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; onSelectionChange?: (selection: { from: number; to: number; text: string }) => void; lockedReason?: string; returnRange?: { from: number; to: number } | null; editorRef?: { current: { getScrollTop: () => number; getSelection: () => { from: number; to: number; text: string }; restoreSelection: (from: number, to: number) => boolean } | null } }) => {
+  ThoughtDocumentPane: ({ draft, onEdit, onSelectionChange, lockedReason, returnRange, editorRef, verbs }: { verbs?: React.ReactNode; draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; onSelectionChange?: (selection: { from: number; to: number; text: string }) => void; lockedReason?: string; returnRange?: { from: number; to: number } | null; editorRef?: { current: { getScrollTop: () => number; getSelection: () => { from: number; to: number; text: string }; restoreSelection: (from: number, to: number) => boolean } | null } }) => {
     const body = () => document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Note body"]');
     if (editorRef) editorRef.current = {
       getScrollTop: () => 24,
@@ -70,7 +70,7 @@ vi.mock("./ThoughtDocumentPane", () => ({
         return true;
       },
     };
-    return <section aria-label="Note"><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}{returnRange ? <span data-testid="return-range">{returnRange.from}:{returnRange.to}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); body()?.setSelectionRange(from, from + text.length); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>;
+    return <section aria-label="Note"><div role="toolbar" aria-label="Note actions" className="thought-note-toolbar"><span className="thought-note-toolbar-verbs">{verbs}</span></div><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}{returnRange ? <span data-testid="return-range">{returnRange.from}:{returnRange.to}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); body()?.setSelectionRange(from, from + text.length); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>;
   },
 }));
 vi.mock("../documentSendsLazy", () => ({
@@ -205,7 +205,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     expect(screen.queryByRole("textbox", { name: "Your answer" })).toBeNull();
   });
 
-  it("keeps an idle note plain: the foot is Ask about this, Find the tasks, Send… and Done, and Done is the one primary", async () => {
+  it("keeps an idle note plain: the toolbar is Done, Ask about this, Find the tasks and Send…, and Done is the one primary", async () => {
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={vi.fn()} />);
 
@@ -217,8 +217,11 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
 
     // Betterment Q8: Add a note (the Reads well), Copy, Task, Finish and
     // Resume left the face; no engine line for a note that is not running.
-    const foot = [...document.querySelectorAll(".thought-note-foot button")].map((button) => button.textContent);
-    expect(foot).toEqual(["Ask about this", "Find the tasks", "Send…", "Done"]);
+    // Window grammar (2026-10-24): the verbs are the toolbar under the title
+    // bar; the status bar holds no verb while the note saves.
+    const toolbar = [...document.querySelectorAll(".thought-note-toolbar-verbs button")].map((button) => button.textContent);
+    expect(toolbar).toEqual(["Done", "Ask about this", "Find the tasks", "Send…"]);
+    expect(document.querySelectorAll(".thought-note-foot button")).toHaveLength(0);
     expect(screen.queryByText(/Reads:/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^Attached/)).not.toBeInTheDocument();
 
@@ -467,12 +470,12 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     const body = await screen.findByRole("textbox", { name: "Note body" });
     fireEvent.change(body, { target: { value: "My own edit" } });
     await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalled());
-    await screen.findByText("CHANGED ELSEWHERE");
+    await screen.findByText("Changed elsewhere");
     expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Reload" }));
     await waitFor(() => expect(body).toHaveValue("The version the hub holds"));
-    await waitFor(() => expect(screen.queryByText("CHANGED ELSEWHERE")).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText("Changed elsewhere")).not.toBeInTheDocument());
   });
 
   it("says a save failure once, in the foot, with its own Retry", async () => {
@@ -482,9 +485,9 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
 
     fireEvent.change(await screen.findByRole("textbox", { name: "Note body" }), { target: { value: "An edit that cannot land" } });
     await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalled());
-    const line = await screen.findByText("DID NOT SAVE · THE HUB DID NOT ANSWER");
+    const line = await screen.findByText("Did not save · the hub did not answer");
     expect(line.closest(".surface-footer")).not.toBeNull();
-    expect(screen.getAllByText("DID NOT SAVE · THE HUB DID NOT ANSWER")).toHaveLength(1);
+    expect(screen.getAllByText("Did not save · the hub did not answer")).toHaveLength(1);
     expect(screen.queryByText(/^KEPT/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(saveThoughtWorkingInWorkspace).toHaveBeenCalledTimes(2));
@@ -784,15 +787,15 @@ describe("ThoughtWorkspaceWindow — PHILO-17 U08: the thought is sendable", () 
     expect(screen.getByRole("textbox", { name: "Your answer" })).toHaveValue("Tuesday report");
   });
 
-  it("Betterment Q8: on the phone every verb stays in the foot (no More) and Done sits in the title strip", async () => {
+  it("Betterment Q8: on the phone every verb stays on the toolbar (no More) and Done sits in the title strip", async () => {
     vi.stubGlobal("matchMedia", () => ({ matches: true, media: "(max-width: 720px)", addEventListener: () => {}, removeEventListener: () => {} }));
     vi.mocked(thoughtWorkbench).mockResolvedValue(projection());
     vi.mocked(saveThoughtWorkingInWorkspace).mockImplementation(async (current) => ({ thought: current }));
     const onClose = vi.fn();
     render(<ThoughtWorkspaceWindow object={object} thought={thought} onClose={onClose} />);
 
-    const foot = await screen.findByTestId("frame-foot");
-    await waitFor(() => expect(within(foot).getAllByRole("button").map((b) => b.textContent))
+    const foot = await screen.findByRole("toolbar", { name: "Note actions" });
+    await waitFor(() => expect([...foot.querySelectorAll(".thought-note-toolbar-verbs button")].map((b) => b.textContent))
       .toEqual(["Ask about this", "Find the tasks", "Send…"]));
     expect(screen.queryByRole("button", { name: "More actions" })).toBeNull();
     const done = within(screen.getByTestId("frame-actions")).getByRole("button", { name: "Done" });

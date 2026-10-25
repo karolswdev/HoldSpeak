@@ -183,10 +183,8 @@
 }
 
 .desk-next .reference-editing-document .thought-note-field-mic {
-  position: static;
   width: auto;
   height: auto;
-  align-self: flex-end;
 }
 
 @container surface (max-width: 559.9px) {
