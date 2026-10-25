@@ -196,7 +196,8 @@ export function Toolbar({
  *  the verb. */
 export type ToolGlyphKind =
   | "record" | "import" | "engine" | "new" | "summary" | "retry" | "open"
-  | "note" | "ask" | "tasks" | "project" | "send" | "done" | "run" | "edit";
+  | "note" | "ask" | "tasks" | "project" | "send" | "done" | "run" | "edit"
+  | "copy";
 
 const TOOL_PATHS: Record<Exclude<ToolGlyphKind, "record">, string> = {
   import: "M8 2.5v7M5 6.5l3 3 3-3M2.75 10.5v2.25h10.5V10.5",
@@ -213,6 +214,7 @@ const TOOL_PATHS: Record<Exclude<ToolGlyphKind, "record">, string> = {
   done: "M3 8.5l3.25 3.25L13 4.75",
   run: "M5 3.25v9.5l7.75-4.75Z",
   edit: "M10.5 2.75l2.75 2.75L6 12.75H3.25V10Z M9 4.25l2.75 2.75",
+  copy: "M5.5 5.5h7.25v7.75H5.5Z M3.25 10.5V2.75h7.25",
 };
 
 export function ToolGlyph({ kind }: { kind: ToolGlyphKind }) {

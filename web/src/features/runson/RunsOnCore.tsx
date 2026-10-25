@@ -6,7 +6,7 @@
 // receipt `PATCHED <time> · <job> → <engine>`, the egress chip of the last
 // engine used, Undo). A change applies on the drop; there is no Save.
 
-import { useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   CheckGadget,
   EgressChip,
@@ -23,7 +23,10 @@ import {
   type SwitchWire,
 } from "../../desk/surface";
 import { TitleSlotContext } from "../../desk/surface/title";
-import { StatusBar, ToolGlyph, Toolbar, type StatusBarItem } from "../../desk/surface/kit";
+import { DotWord, StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../../desk/surface/kit";
+import { ObjectList, type ObjectListColumn, type ObjectListRow, type ObjectListSort, type ObjectListTone } from "../../desk/surface/objects/ObjectList";
+import { SurfaceState } from "../../desk/surface/Surface";
+import { spriteUrl } from "../../desk/sprites";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { Button } from "../../components/signal/Signal";
 import type { CoreProps } from "../../pages/cores/core-types";
@@ -55,9 +58,12 @@ import {
 import { stateClass, stateWord } from "./stateWord";
 import { useRunsOn, type AddKind, type RunsOnController } from "./useRunsOn";
 import type { ServicePreset, ServiceTile } from "./api";
-import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
+import { SPEECH_SETUP_EVENT, SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 import { useBuilderTools } from "../../desk/builderTools";
-import { WhatRunsWhere } from "./WhatRunsWhere";
+import { PrefSection } from "../../pages/cores/settingsWindow";
+import { NOT_ASSIGNED, WhatRunsWhere, chipWords, engineChip } from "./WhatRunsWhere";
+import { WHAT_ROWS } from "./whatRows";
+import { formatBytes, sourceHost } from "../../desk/firstrun/localAi";
 // The Meaning search row draws with the Concierge's ledger cells.
 import "../concierge/concierge.css";
 import "./runson.css";
@@ -176,6 +182,62 @@ function AddEngineRow({ ctrl, service }: { ctrl: RunsOnController; service?: Ser
   );
 }
 
+/** A caps token line in sentence case (window grammar: no caps soup); the
+ *  engine's own name keeps its spelling. */
+function sentence(text: string, keep?: string): string {
+  if (!text) return text;
+  let out = text.toLowerCase();
+  out = out[0].toUpperCase() + out.slice(1);
+  if (keep) out = out.replace(new RegExp(keep.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), keep);
+  return out;
+}
+
+/** Window grammar (2026-10-24): the engine list's columns. */
+const ENGINE_COLUMNS: ObjectListColumn[] = [
+  { key: "name", word: "Engine" },
+  { key: "where", word: "Where", track: "112px" },
+  { key: "used", word: "Used for", track: "minmax(0, 1fr)" },
+  { key: "state", word: "State", track: "152px" },
+];
+
+/** Where an engine runs, as a dot and a word: this Mac (ok), the network
+ *  (idle), the internet (ask: the words leave the network). */
+function whereOf(engine: BoardEngine): { word: string; tone: ObjectListTone } {
+  if (engine.vendor) return engine.vendorScope === "private_network" ? { word: "LAN", tone: "idle" } : { word: "Cloud", tone: "ask" };
+  const place = enginePlace(engine).place;
+  if (place === "mac") return { word: "This Mac", tone: "ok" };
+  if (place === "lan") return { word: "LAN", tone: "idle" };
+  return { word: "Cloud", tone: "ask" };
+}
+
+/** An engine's state, in one sentence-case word with its tone. */
+function engineState(
+  engine: BoardEngine,
+  progress: number | undefined,
+  stopped: string | undefined,
+  busy: boolean,
+): { label: string; tone: ObjectListTone; live?: boolean } {
+  if (progress != null) return { label: `Downloading ${Math.round(progress)} %`, tone: "info", live: true };
+  if (stopped) return { label: "Download stopped", tone: "fail" };
+  if (busy) return { label: "Trying", tone: "info", live: true };
+  if (engine.found) return { label: "Found", tone: "info" };
+  if (engine.kind === "preset") return { label: "Not downloaded", tone: "idle" };
+  if (engine.kind === "agent" && engine.installed === false) return { label: "Not installed", tone: "idle" };
+  if (engine.kind === "agent" && engine.signedIn === "no") return { label: "Not signed in", tone: "warn" };
+  if (engine.kind === "cloud" && engine.keySet === false) return { label: "No key", tone: "warn" };
+  const raw = String(engine.state ?? "").trim().toUpperCase().replace(/[\s-]+/g, "_");
+  if (raw === "NOT_SUPPORTED") return { label: "Not supported yet", tone: "fail" };
+  if (raw === "UNREACHABLE") return { label: "Unreachable", tone: "fail" };
+  if (raw === "NOT_SET") return { label: "Not set up", tone: "idle" };
+  if (raw === "UNKNOWN" || !raw) return { label: "Not checked", tone: "idle" };
+  const word = stateWord(engine.state);
+  if (word === "READY") return { label: "Ready", tone: "ok" };
+  if (word === "LIMITED") return { label: "Limited", tone: "warn" };
+  if (word === "OFF") return { label: "Off", tone: "idle" };
+  if (word === "BROKEN") return { label: sentence(raw.replace(/_/g, " ")), tone: "fail" };
+  return { label: raw === "CHECKING" ? "Checking" : sentence(raw.replace(/_/g, " ")), tone: "idle" };
+}
+
 /** More models than this, and the picker has a search field. */
 const PICKER_SEARCH_FROM = 7;
 
@@ -262,17 +324,17 @@ function AgentSpend({ ctrl, engine }: { ctrl: RunsOnController; engine: BoardEng
           ) : null}
           {a.invalid ? (
             <span role="alert" data-testid="runson-agent-spend-invalid">
-              <StateChip state="failure" label="MORE THAN $0, UP TO $1000" />
+              <DotWord tone="fail">More than $0, up to $1000</DotWord>
             </span>
           ) : null}
         </>
       ) : (
-        <span className="surface-token" data-testid={`runson-agent-no-limit-${engine.key}`}>
-          {`NO SPEND LIMIT IN ${label.toUpperCase()}`}
+        <span className="runson-quiet" data-testid={`runson-agent-no-limit-${engine.key}`}>
+          {`No spend limit in ${label}`}
         </span>
       )}
-      <span className="surface-token" data-testid={`runson-agent-cost-${engine.key}`}>
-        {costTokens(spend, label).join(" · ")}
+      <span className="runson-quiet" data-testid={`runson-agent-cost-${engine.key}`}>
+        {sentence(costTokens(spend, label).join(" · "), label)}
       </span>
     </span>
   );
@@ -417,13 +479,17 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   const setTitle = useContext(TitleSlotContext);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const layout = useSwitchboardLayout(rootRef);
+  // Window grammar: the engine selected in the list (the first row until
+  // he presses one) and the list's sort.
+  const [picked, setPicked] = useState<string | null>(null);
+  const [sort, setSort] = useState<ObjectListSort>({ key: "order", dir: "asc" });
 
   useEffect(() => {
     setTitle?.(title ?? "Engines");
   }, [setTitle, title]);
   // Window grammar (2026-10-24): the toolbar and the status bar touch the
   // frame; the engine sheets below keep their own inset.
-  useWindowInterior("editor");
+  useWindowInterior(builder ? "editor" : "list");
 
   const { roster, detection, engines } = ctrl;
   // PHILO-17 speech: with no speech model on this device the Speech job says
@@ -724,6 +790,132 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     />
   ) : null;
 
+  /* ── Window grammar (2026-10-24): the engine list and its inspector ── */
+  const { editors } = ctrl.what;
+  // The What runs where rows read once the roster is in (the list's Used
+  // for column and the inspector read the same editors).
+  // An engine added or removed changes every row's choices: read again.
+  const rosterIn = Boolean(roster);
+  const engineSet = have.map((engine) => engine.profileId).filter(Boolean).sort().join("|");
+  useEffect(() => {
+    if (rosterIn && !builder) ctrl.what.reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rosterIn, builder, engineSet]);
+  const editorsRead = Object.keys(editors).length > 0;
+  const usedFor = (engine: BoardEngine): string[] =>
+    engine.profileId
+      ? WHAT_ROWS.filter((row) => {
+          const editor = editors[row.id];
+          return editor && editor !== "failed" && editor.own?.profileId === engine.profileId;
+        }).map((row) => row.name)
+      : [];
+  const listed: BoardEngine[] = [
+    ...have.filter((engine) => engine.kind !== "preset"),
+    // A local download in flight (or stopped) is an engine on its way.
+    ...have.filter((engine) => engine.kind === "preset" && (ctrl.downloads[engine.key] != null || ctrl.failedDownloads[engine.key])),
+    ...found,
+  ];
+  const engineRows: ObjectListRow[] = listed.map((engine, index) => {
+    const where = whereOf(engine);
+    const used = usedFor(engine);
+    const state = engineState(engine, ctrl.downloads[engine.key], ctrl.failedDownloads[engine.key], ctrl.trying?.engine === engine.key);
+    return {
+      id: engine.key,
+      kind: "model",
+      name: engine.found && engine.agentPreset ? foundAgentName(engine) : engine.name,
+      sprite: engine.kind === "agent" ? spriteUrl("coder", engine.key, "rest", engine.agentPreset ?? null, 20) : spriteUrl("model", engine.key, "rest", null, 20),
+      state: { ...state, testId: `runson-engine-state-${engine.key}` },
+      cells: {
+        where: <DotWord tone={where.tone}>{where.word}</DotWord>,
+        used: engine.found || engine.kind === "preset" ? "" : used.length ? (
+          <span className="runson-used" title={used.join(", ")}>{used.join(", ")}</span>
+        ) : editorsRead ? (
+          <DotWord data-testid={`runson-engine-unassigned-${engine.key}`}>{NOT_ASSIGNED}</DotWord>
+        ) : "",
+      },
+      sortValues: { order: index, where: where.word, used: used.join(", "), state: state.label },
+    };
+  });
+  const selectedEngine = listed.find((engine) => engine.key === picked) ?? listed[0];
+
+  /* The selected engine's verbs, in the status bar (a selection never adds
+     to the toolbar). */
+  const engineVerbs = (engine: BoardEngine | undefined): ReactNode => {
+    if (!engine) return null;
+    if (engine.found) {
+      return engine.agentPreset ? (
+        <Button dense variant="secondary" disabled={ctrl.busy} data-testid={`runson-add-${engine.key}`} onClick={() => void ctrl.useFound(engine.key)}>
+          <ToolGlyph kind="new" />
+          Add
+        </Button>
+      ) : (
+        <Button dense variant="secondary" disabled={ctrl.busy} data-testid={`runson-use-${engine.key}`} onClick={() => void ctrl.useFound(engine.key)}>
+          <ToolGlyph kind="done" />
+          Use it
+        </Button>
+      );
+    }
+    if (engine.kind === "preset") {
+      return ctrl.downloads[engine.key] != null ? null : (
+        <Button dense variant="secondary" data-testid={`runson-download-${engine.key}`} onClick={() => void ctrl.download(engine.key)}>
+          <ToolGlyph kind="import" />
+          Download
+        </Button>
+      );
+    }
+    const repair = repairVerb(engine);
+    if (engine.kind === "agent") {
+      return (
+        <>
+          {repair}
+          <Button
+            dense
+            variant="secondary"
+            aria-expanded={ctrl.agent.open === engine.key}
+            data-testid={`runson-agent-open-${engine.key}`}
+            onClick={() => ctrl.agent.toggle(engine.key)}
+          >
+            <ToolGlyph kind="edit" />
+            Spend
+          </Button>
+        </>
+      );
+    }
+    return repair ?? null;
+  };
+  const selectedEgress = (engine: BoardEngine | undefined): ReactNode => {
+    if (!engine) return null;
+    if (engine.kind === "preset") return <EgressChip label={(engine.downloadHost ?? "huggingface.co").toLowerCase()} scope="cloud" />;
+    if (enginePlace(engine).place === "mac" && !engine.vendor) return null;
+    return engineChip(engine);
+  };
+
+  /* Speech set-up: a status-bar verb with its host (the hub's own size). */
+  const speechRunning = speech.status?.state === "downloading";
+  const speechHost = (speech.ai.host || sourceHost(speech.status) || "").toLowerCase();
+  const speechVerb: ReactNode = speech.notSetUp ? (
+    speechRunning ? (
+      <Button dense variant="secondary" disabled={speech.ai.busy} data-testid="runson-speech-setup-stop" onClick={() => void speech.ai.cancel()}>
+        Stop
+      </Button>
+    ) : speech.canSetUp ? (
+      <>
+        {speechHost ? <EgressChip label={speechHost} scope="cloud" /> : null}
+        <Button
+          dense
+          variant="secondary"
+          loading={speech.ai.busy}
+          disabled={speech.ai.busy}
+          data-testid="runson-speech-setup-verb"
+          onClick={() => void speech.ai.startSpeech().then(() => window.dispatchEvent(new Event(SPEECH_SETUP_EVENT)))}
+        >
+          <ToolGlyph kind="import" />
+          {`Set up speech · ${formatBytes(speech.bytes)}`}
+        </Button>
+      </>
+    ) : null
+  ) : null;
+
   /* ── the AppHead ── */
   const engineCount = have.filter((e) => e.profileId).length;
   const ready = Object.values(words).filter((w) => w === "READY").length;
@@ -746,6 +938,27 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     hw,
     checked ? `Checked ${checked}` : detection ? null : roster ? "Checking" : null,
   ].filter(Boolean).join(" · ");
+  const unreachable = listed.filter((engine) => !engine.found && engineState(engine, undefined, undefined, false).tone === "fail").length;
+  const grammarItems: Array<StatusBarItem | null> = [
+    { key: "fact", lamp: engineCount ? "ok" : "warn", text: <span data-testid="runson-fact">{roster ? (countWords(engineCount, "engine") ?? "No engine yet") : "Engines"}</span> },
+    unreachable ? { key: "unreachable", lamp: "fail", text: `${unreachable} unreachable` } : null,
+    found.length ? { key: "found", lamp: "info", text: <span data-testid="runson-found-engines">{`${found.length} found${foundOnMac ? " on this Mac" : ""}`}</span> } : null,
+    speech.notSetUp ? {
+      key: "speech",
+      lamp: speechRunning ? "info" : "warn",
+      text: <span data-testid="runson-speech-setup-line">{speechRunning ? "Setting up speech" : "Speech is not set up"}</span>,
+    } : null,
+    checked ? { key: "checked", text: <span className="runson-strip" data-testid="runson-strip">{`Checked ${checked}`}</span> } : detection || !roster ? null : { key: "checked", text: "Checking" },
+    ctrl.receipt ? {
+      key: "receipt",
+      lamp: ctrl.receipt.tone === "danger" ? "fail" : undefined,
+      text: (
+        <span className="runson-receipt" data-testid="runson-receipt" data-tone={ctrl.receipt.tone}>
+          {ctrl.receipt.text}
+        </span>
+      ),
+    } : null,
+  ];
   const statusItems: Array<StatusBarItem | null> = [
     { key: "fact", lamp: engineCount ? "ok" : "warn", text: <span data-testid="runson-fact">{roster ? fact : "Engines"}</span> },
     stripText ? {
@@ -809,6 +1022,53 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         </Button>
       </Toolbar>
 
+      {builder ? null : (
+        <div className="runson-body">
+          {engineFoot ? <div className="runson-choice" data-testid="runson-engine-choice">{engineFoot}</div> : null}
+          {engineRows.length ? (
+            <div className="runson-list" data-testid="runson-engines">
+              <ObjectList
+                label="Engines"
+                density="dense"
+                rows={engineRows}
+                columns={ENGINE_COLUMNS}
+                sort={sort}
+                onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
+                selectedId={selectedEngine?.key ?? null}
+                onSelect={setPicked}
+                rowProps={(row) => ({ "data-testid": `runson-engine-${row.id}` })}
+              />
+            </div>
+          ) : roster || ctrl.error ? (
+            <div className="runson-empty" data-testid="runson-engines-empty">
+              {ctrl.error ? (
+                <SurfaceState error="Engines not read" onRetry={ctrl.readAgain} />
+              ) : (
+                <SurfaceState empty emptyImage={spriteUrl("model", "engines", "rest", null, 64)} emptyLabel="No engine yet" />
+              )}
+            </div>
+          ) : null}
+          {selectedEngine?.kind === "agent" && ctrl.agent.open === selectedEngine.key ? (
+            <div className="runson-inspector" data-testid={`runson-inspector-spend-${selectedEngine.key}`}>
+              <PrefSection id="runson-spend" label={`Spend · ${selectedEngine.name}`}>
+                <AgentSpend ctrl={ctrl} engine={selectedEngine} />
+              </PrefSection>
+            </div>
+          ) : null}
+          {roster && !noEngine ? (
+            <div className="runson-inspector">
+              <WhatRunsWhere ctrl={ctrl} selected={selectedEngine?.profileId ?? null} />
+            </div>
+          ) : null}
+          {(localDownloads.length || roster) && !localInKind ? (
+            <FoldGadget title="Download a local model" className="runson-downloads">
+              {localContent}
+            </FoldGadget>
+          ) : null}
+        </div>
+      )}
+
+      {builder ? (
       <div className="runson-sheet">
       {engineFoot ? <div className="runson-choice" data-testid="runson-engine-choice">{engineFoot}</div> : null}
       {foundEngines.length ? (
@@ -817,14 +1077,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         </div>
       ) : null}
       {noEngine && speech.notSetUp ? <SpeechSetup setup={speech} primary={false} testId="runson-speech-setup" /> : null}
-      {roster && !builder ? (
-        <div className="runson-catalog runson-engine-list" data-testid="runson-engines">
-          {/* No wires here (What runs where assigns): plates are not dragged. */}
-          <SurfaceSwitchboard layout="board" jobs={[]} engines={haveEngines.map((e) => ({ ...e, draggable: false }))} wires={[]} captions={{ engines: "Your engines" }} />
-        </div>
-      ) : null}
-      {roster && !noEngine && !builder ? <WhatRunsWhere ctrl={ctrl} /> : null}
-      {roster && builder ? (
+      {roster ? (
         <div className={noEngine ? "runson-catalog" : undefined} data-testid="runson-assignments">
         <SurfaceSwitchboard
           layout={layout}
@@ -851,21 +1104,24 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
       ) : null}
 
       </div>
+      ) : null}
 
       <StatusBar
         className="runson-foot"
         data-testid="runson-status"
-        items={statusItems}
+        items={builder ? statusItems : grammarItems}
         egress={
           ctrl.egress ? (
             <span data-testid="runson-egress">
-              <EgressChip label={ctrl.egress.label} scope={ctrl.egress.scope} />
+              <EgressChip label={builder ? ctrl.egress.label : chipWords(ctrl.egress.label)} scope={ctrl.egress.scope} />
             </span>
-          ) : undefined
+          ) : builder ? undefined : (selectedEgress(selectedEngine) ?? undefined)
         }
         verbs={
-          ctrl.canUndo || onBack ? (
+          ctrl.canUndo || onBack || (!builder && (speechVerb || engineVerbs(selectedEngine))) ? (
             <>
+              {builder ? null : engineVerbs(selectedEngine)}
+              {builder ? null : speechVerb}
               {ctrl.canUndo ? (
                 <Button dense variant="secondary" disabled={ctrl.busy} data-testid="runson-undo" onClick={() => void ctrl.undo()}>
                   Undo

@@ -15,8 +15,13 @@ import {
   type ObjectListSort,
 } from "../../../desk/surface";
 import { SYSTEM } from "../../../desk/systemSprites";
+import { DotWord } from "../../../desk/surface/kit";
+import { spriteUrl } from "../../../desk/sprites";
+import { PrefSection } from "../settingsWindow";
+// The list + inspector shape is the Engines window's own composition.
+import "../../../features/runson/runson.css";
 
-export type WindowPreset = "populated" | "empty" | "busy" | "failed" | "reader";
+export type WindowPreset = "populated" | "empty" | "busy" | "failed" | "reader" | "inspector";
 
 /** Fixture rows only: the same Toolbar, dense ObjectList and StatusBar the
  * Meetings and Projects windows compose, fed by a local adapter. No hub
@@ -117,10 +122,119 @@ const COLUMNS = [
 
 export function WindowReference({ preset }: { preset: WindowPreset }) {
   if (preset === "reader") return <ReaderWindow />;
+  if (preset === "inspector") return <InspectorWindow />;
   return <ListWindow preset={preset} />;
 }
 
-function ListWindow({ preset }: { preset: Exclude<WindowPreset, "reader"> }) {
+/* The list + inspector shape (window grammar, the Engines window): a dense
+ * list, and under it the selected object's label/control grid. Fixture
+ * engines and jobs only; a choice changes this specimen and nothing else. */
+const SPEC_ENGINES = [
+  { id: "e-1", name: "qwen3.8 27B", where: { word: "LAN", tone: "idle" as const }, state: { label: "Ready", tone: "ok" as const }, egress: "studio.local · LAN" },
+  { id: "e-2", name: "Claude Code", where: { word: "Cloud", tone: "ask" as const }, state: { label: "Ready", tone: "ok" as const }, egress: "Anthropic" },
+  { id: "e-3", name: "whisper-base-mlx", where: { word: "This Mac", tone: "ok" as const }, state: { label: "Downloading 43 %", tone: "info" as const }, egress: "" },
+];
+const SPEC_JOBS = ["Everything else", "Meeting summaries", "Answers (Ask)", "Automations"];
+const NOT_SET = "Not assigned";
+
+function InspectorWindow() {
+  const [selected, setSelected] = useState("e-1");
+  const [did, setDid] = useState<string | null>(null);
+  const [sort, setSort] = useState<ObjectListSort>({ key: "order", dir: "asc" });
+  const [runs, setRuns] = useState<Record<string, string>>({ "Everything else": "e-1", "Meeting summaries": "e-1", "Answers (Ask)": "e-2" });
+  const nameOf = (id: string | undefined) => SPEC_ENGINES.find((engine) => engine.id === id)?.name ?? NOT_SET;
+  const rows: ObjectListRow[] = SPEC_ENGINES.map((engine, index) => {
+    const used = SPEC_JOBS.filter((job) => runs[job] === engine.id);
+    return {
+      id: engine.id,
+      kind: "model",
+      name: engine.name,
+      sprite: spriteUrl("model", engine.id, "rest", null, 20),
+      state: engine.state,
+      cells: {
+        where: <DotWord tone={engine.where.tone}>{engine.where.word}</DotWord>,
+        used: used.length ? <span className="runson-used">{used.join(", ")}</span> : <DotWord>{NOT_SET}</DotWord>,
+      },
+      sortValues: { order: index, used: used.join(", ") },
+    };
+  });
+  const pick = SPEC_ENGINES.find((engine) => engine.id === selected) ?? SPEC_ENGINES[0];
+  const cycle = (job: string) => {
+    const order = [undefined, ...SPEC_ENGINES.map((engine) => engine.id)];
+    const next = order[(order.indexOf(runs[job]) + 1) % order.length];
+    setRuns((current) => {
+      const copy = { ...current };
+      if (next) copy[job] = next;
+      else delete copy[job];
+      return copy;
+    });
+  };
+  return (
+    <section className="reference-example reference-window" data-testid="reference-window" aria-label="Window pattern">
+      <div className="reference-window-frame runson-root" data-preset="inspector">
+        <Toolbar label="Specimen engines">
+          <Button dense variant="primary" onClick={() => setDid("Add an engine")}>
+            <ToolGlyph kind="new" />
+            Add an engine
+          </Button>
+          <Button dense variant="secondary" onClick={() => setDid("Check all")}>
+            <ToolGlyph kind="retry" />
+            Check all
+          </Button>
+        </Toolbar>
+        <div className="runson-body">
+          <div className="runson-list">
+            <ObjectList
+              label="Specimen engines"
+              density="dense"
+              rows={rows}
+              columns={[
+                { key: "name", word: "Engine" },
+                { key: "where", word: "Where", track: "112px" },
+                { key: "used", word: "Used for", track: "minmax(0, 1fr)" },
+                { key: "state", word: "State", track: "152px" },
+              ]}
+              sort={sort}
+              onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
+              selectedId={selected}
+              onSelect={setSelected}
+            />
+          </div>
+          <div className="runson-inspector">
+            <PrefSection id="reference-inspector" label="What runs where">
+              <ul className="runson-what-list">
+                {SPEC_JOBS.map((job) => (
+                  <li key={job} className="runson-what-row" data-runs-selected={runs[job] === pick.id ? "" : undefined}>
+                    <span className="runson-what-job">{job}</span>
+                    <span className="runson-what-engine">
+                      <Button dense variant="secondary" className="runson-what-pick" aria-label={`${job}: ${nameOf(runs[job])}`} onClick={() => cycle(job)}>
+                        {runs[job] ? <span className="runson-what-name">{nameOf(runs[job])}</span> : <DotWord className="runson-what-name">{NOT_SET}</DotWord>}
+                        <span className="runson-what-caret" aria-hidden="true">▾</span>
+                      </Button>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </PrefSection>
+          </div>
+        </div>
+        <FootSlotContext.Provider value={null}>
+          <StatusBar
+            items={[
+              { key: "count", lamp: "ok", text: countWords(SPEC_ENGINES.length, "engine") },
+              { key: "checked", text: "Checked 23:11" },
+              did ? { key: "did", text: <span data-testid="reference-window-opened">Pressed locally · {did}</span> } : null,
+            ]}
+            verbs={<Button dense variant="secondary" onClick={() => setDid(`Check ${pick.name}`)}><ToolGlyph kind="retry" />Check</Button>}
+            egress={pick.egress ? <EgressChip label={pick.egress} scope={pick.where.word === "Cloud" ? "cloud" : "local"} /> : undefined}
+          />
+        </FootSlotContext.Provider>
+      </div>
+    </section>
+  );
+}
+
+function ListWindow({ preset }: { preset: Exclude<WindowPreset, "reader" | "inspector"> }) {
   const [selected, setSelected] = useState<string | null>(preset === "populated" ? "w-2" : null);
   const [opened, setOpened] = useState<string | null>(null);
   const [query, setQuery] = useState("");

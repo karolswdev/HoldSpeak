@@ -171,6 +171,7 @@ const WINDOW_STATES: Array<{ id: WindowPreset; label: string }> = [
   { id: "busy", label: "Busy" },
   { id: "failed", label: "Failed" },
   { id: "reader", label: "Reader" },
+  { id: "inspector", label: "List + inspector" },
 ];
 
 const STATE_OPTIONS: Record<Pattern, Array<{ id: ExampleState; label: string }>> = {

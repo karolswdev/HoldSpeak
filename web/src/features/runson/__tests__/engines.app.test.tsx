@@ -59,7 +59,16 @@ function width(px: number) {
   });
 }
 
-const PLATE = "switchboard-engine-agent-claude";
+// Window grammar (2026-10-24): an engine is a row of the dense engine list;
+// the selected row's verbs and egress chip are in the status bar.
+const ROW = "runson-engine-agent-claude";
+const status = () => document.querySelector(".kit-statusbar") as HTMLElement;
+/** Select one engine row (a press on its name). */
+function pick(testId: string) {
+  const row = screen.getByTestId(testId);
+  fireEvent.click(row.querySelector(".object-list-open") as HTMLElement);
+  return row;
+}
 
 beforeEach(() => {
   vi.mocked(apiFetch).mockReset();
@@ -75,25 +84,30 @@ describe("Engines — Found on this Mac (Betterment E2)", () => {
     render(<RunsOnCore />);
 
     const found = await screen.findByTestId("runson-found-engines");
-    expect(within(found).getByTestId("switchboard-found-cap").textContent).toBe("Found on this Mac · 1");
-    const plate = within(found).getByTestId("switchboard-engine-agent:found:claude");
-    expect(within(plate).getByText("Claude Code · signed in")).toBeTruthy();
-    expect(plate.querySelector(".switchboard-emblem")?.textContent).toBe("CLI");
-    expect(within(plate).getByText("ANTHROPIC")).toBeTruthy();
+    expect(found.textContent).toBe("1 found on this Mac");
+    const plate = within(screen.getByTestId("runson-engines")).getByTestId("runson-engine-agent:found:claude");
+    expect(plate.querySelector(".object-list-name-word")?.textContent).toBe("Claude Code · signed in");
+    expect(within(plate).getByTestId("runson-engine-state-agent:found:claude").textContent).toBe("Found");
+    expect(within(plate).getByText("Cloud")).toBeTruthy();
+    // The selected row's egress chip and its verb are in the status bar.
+    pick("runson-engine-agent:found:claude");
+    expect(plate.getAttribute("aria-selected")).toBe("true");
+    expect(within(status()).getByText("Anthropic")).toBeTruthy();
 
     await act(async () => {
-      fireEvent.click(within(plate).getByRole("button", { name: "Add" }));
+      fireEvent.click(within(status()).getByRole("button", { name: "Add" }));
     });
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({ preset: "claude", profile_id: "agent-claude", expected_profile_revision: 0 });
     expect(sent[0]).not.toHaveProperty("spend_limit_usd");
 
     await waitFor(() => expect(screen.queryByTestId("runson-found-engines")).toBeNull());
-    const engine = await within(screen.getByTestId("runson-engines")).findByTestId(PLATE);
-    expect(within(engine).getByText("Claude Code")).toBeTruthy();
-    expect(within(engine).getByTestId("switchboard-lamp-agent-claude").getAttribute("data-lamp")).toBe("ok");
-    expect(within(engine).getByText("ANTHROPIC")).toBeTruthy();
-    expect(engine.textContent).not.toContain("NOT SIGNED IN");
+    const engine = await within(screen.getByTestId("runson-engines")).findByTestId(ROW);
+    pick(ROW);
+    expect(engine.querySelector(".object-list-name-word")?.textContent).toBe("Claude Code");
+    expect(within(engine).getByTestId("runson-engine-state-agent-claude").textContent).toBe("Ready");
+    expect(within(status()).getByText("Anthropic")).toBeTruthy();
+    expect(engine.textContent).not.toContain("Not signed in");
     expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED \d\d:\d\d · Claude Code$/);
   });
 
@@ -114,16 +128,18 @@ describe("Engines — pi on his LAN model (Betterment E7)", () => {
     width(px);
     const sent = hub(piStep("found").gets, { add: piStep("add") });
     render(<RunsOnCore />);
-    const found = await screen.findByTestId("runson-found-engines");
-    const plate = within(found).getByTestId("switchboard-engine-agent:found:pi");
+    await screen.findByTestId("runson-found-engines");
+    const plate = pick("runson-engine-agent:found:pi");
     // pi's own config sends its model to 192.168.1.43: a LAN chip, never a vendor's cloud.
-    expect(within(plate).getByText("192.168.1.43 · LAN")).toBeTruthy();
+    expect(within(plate).getByText("LAN")).toBeTruthy();
+    expect(within(status()).getByText("192.168.1.43 · LAN")).toBeTruthy();
     await act(async () => {
-      fireEvent.click(within(plate).getByRole("button", { name: "Add" }));
+      fireEvent.click(within(status()).getByRole("button", { name: "Add" }));
     });
     expect(sent[0]).toMatchObject({ preset: "pi" });
-    const engine = await within(screen.getByTestId("runson-engines")).findByTestId("switchboard-engine-agent-pi");
-    expect(within(engine).getByText("192.168.1.43 · LAN")).toBeTruthy();
+    await within(screen.getByTestId("runson-engines")).findByTestId("runson-engine-agent-pi");
+    pick("runson-engine-agent-pi");
+    expect(within(status()).getByText("192.168.1.43 · LAN")).toBeTruthy();
   });
 });
 
@@ -132,14 +148,15 @@ describe("Engines — an agent engine's Spend limit per run (Betterment E2)", ()
     width(1440);
     const sent = hub(step("spent").gets, { limit: step("limit") });
     render(<RunsOnCore />);
-    const engine = await screen.findByTestId(PLATE);
-    fireEvent.click(within(engine).getByRole("button", { name: "Spend" }));
+    await screen.findByTestId(ROW);
+    pick(ROW);
+    fireEvent.click(within(status()).getByRole("button", { name: "Spend" }));
 
-    const detail = within(engine).getByTestId("switchboard-detail-agent-claude");
+    const detail = screen.getByTestId("runson-inspector-spend-agent-claude");
     const field = within(detail).getByLabelText("Spend limit per run") as HTMLInputElement;
     expect(field.value).toBe("");
     expect(field.placeholder).toBe("No limit");
-    expect(within(detail).getByTestId("runson-agent-cost-agent-claude").textContent).toBe("TODAY $0.02 · THIS WEEK $0.02");
+    expect(within(detail).getByTestId("runson-agent-cost-agent-claude").textContent).toBe("Today $0.02 · this week $0.02");
     expect(within(detail).queryByRole("button", { name: "No limit" })).toBeNull();
 
     fireEvent.change(field, { target: { value: "0.5" } });
@@ -153,19 +170,22 @@ describe("Engines — an agent engine's Spend limit per run (Betterment E2)", ()
       }),
     ]);
     await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("SPEND LIMIT $0.50 PER RUN · Claude Code"));
-    await waitFor(() => expect(within(screen.getByTestId(PLATE)).getByRole("button", { name: "No limit" })).toBeTruthy());
-    expect((within(screen.getByTestId(PLATE)).getByLabelText("Spend limit per run") as HTMLInputElement).value).toBe("0.50");
+    const inspector = () => screen.getByTestId("runson-inspector-spend-agent-claude");
+    await waitFor(() => expect(within(inspector()).getByRole("button", { name: "No limit" })).toBeTruthy());
+    expect((within(inspector()).getByLabelText("Spend limit per run") as HTMLInputElement).value).toBe("0.50");
   });
 
   it("an amount out of range is refused in words, with no write", async () => {
     width(1440);
     const sent = hub(step("spent").gets);
     render(<RunsOnCore />);
-    const engine = await screen.findByTestId(PLATE);
-    fireEvent.click(within(engine).getByRole("button", { name: "Spend" }));
+    await screen.findByTestId(ROW);
+    pick(ROW);
+    fireEvent.click(within(status()).getByRole("button", { name: "Spend" }));
+    const engine = screen.getByTestId("runson-inspector-spend-agent-claude");
     fireEvent.change(within(engine).getByLabelText("Spend limit per run"), { target: { value: "0" } });
     fireEvent.click(within(engine).getByRole("button", { name: "Save" }));
-    expect(within(engine).getByTestId("runson-agent-spend-invalid").textContent).toContain("MORE THAN $0, UP TO $1000");
+    expect(within(engine).getByTestId("runson-agent-spend-invalid").textContent).toContain("More than $0, up to $1000");
     expect(sent).toEqual([]);
   });
 
@@ -173,21 +193,23 @@ describe("Engines — an agent engine's Spend limit per run (Betterment E2)", ()
     width(1440);
     hub(recorded.codex.gets as Gets);
     render(<RunsOnCore />);
-    const engine = await screen.findByTestId("switchboard-engine-agent-codex");
-    expect(within(engine).getByText("OPENAI")).toBeTruthy();
-    fireEvent.click(within(engine).getByRole("button", { name: "Spend" }));
+    await screen.findByTestId("runson-engine-agent-codex");
+    pick("runson-engine-agent-codex");
+    expect(within(status()).getByText("Openai")).toBeTruthy();
+    fireEvent.click(within(status()).getByRole("button", { name: "Spend" }));
+    const engine = screen.getByTestId("runson-inspector-spend-agent-codex");
     expect(within(engine).queryByLabelText("Spend limit per run")).toBeNull();
-    expect(within(engine).getByTestId("runson-agent-no-limit-agent-codex").textContent).toBe("NO SPEND LIMIT IN CODEX");
-    expect(within(engine).getByTestId("runson-agent-cost-agent-codex").textContent).toBe("CODEX REPORTS NO COST");
+    expect(within(engine).getByTestId("runson-agent-no-limit-agent-codex").textContent).toBe("No spend limit in Codex");
+    expect(within(engine).getByTestId("runson-agent-cost-agent-codex").textContent).toBe("Codex reports no cost");
   });
 
   it("a run that said it has no sign-in shows NOT SIGNED IN on the row", async () => {
     width(1440);
     hub(step("signedOut").gets);
     render(<RunsOnCore />);
-    const engine = await screen.findByTestId(PLATE);
-    await waitFor(() => expect(engine.textContent).toContain("NOT SIGNED IN"));
-    expect(within(engine).getByTestId("switchboard-lamp-agent-claude").getAttribute("data-lamp")).not.toBe("ok");
+    await screen.findByTestId(ROW);
+    await waitFor(() => expect(screen.getByTestId("runson-engine-state-agent-claude").textContent).toBe("Not signed in"));
+    expect(screen.getByTestId("runson-engine-state-agent-claude").getAttribute("data-tone")).not.toBe("ok");
   });
 });
 
@@ -270,8 +292,8 @@ describe("Engines — the model picker (Betterment E3)", () => {
     expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED \d\d:\d\d · gamma-3b · 127\.0\.0\.1:8099$/);
     // Both are in Your engines (Betterment E5: one list at both widths).
     const board = screen.getByTestId("runson-engines");
-    expect(await within(board).findByTestId("switchboard-engine-engine-127-0-0-1-8099-alpha-7b")).toBeTruthy();
-    expect(within(board).getByTestId("switchboard-engine-engine-127-0-0-1-8099-gamma-3b")).toBeTruthy();
+    expect(await within(board).findByTestId("runson-engine-engine-127-0-0-1-8099-alpha-7b")).toBeTruthy();
+    expect(within(board).getByTestId("runson-engine-engine-127-0-0-1-8099-gamma-3b")).toBeTruthy();
   });
 
   it("a long list has a search field that narrows it", async () => {
@@ -304,6 +326,8 @@ const CHOSEN = "qwen/qwen3.5-35b-a3b";
 function orHub() {
   const sent: Array<{ path: string; json: Record<string, unknown> }> = [];
   vi.mocked(apiFetch).mockImplementation(async (path: string, init?: { method?: string; json?: unknown }) => {
+    // The list's Used for column reads the row editors on open; not recorded here.
+    if (path === "/api/inference/assignments/editor") throw new Error("not recorded");
     if (init?.method === "POST") {
       const json = (init.json ?? {}) as Record<string, unknown>;
       sent.push({ path, json });
@@ -489,7 +513,7 @@ describe("Engines — What runs where (Betterment E5)", () => {
     });
     expect(sent[1].json).toMatchObject({ scope: { kind: "capability", capability_id: "ask.answer" }, entries: [{ profile_id: "agent-claude", profile_revision: 1 }] });
     await waitFor(() => expect(within(whatRow("answers")).getByTestId("runson-what-pick-answers").textContent).toContain("Claude Code"));
-    expect(within(whatRow("answers")).getByText("ANTHROPIC")).toBeTruthy();
+    expect(within(whatRow("answers")).getByText("Anthropic")).toBeTruthy();
     expect(screen.getByTestId("runson-undo")).toBeTruthy();
   });
 

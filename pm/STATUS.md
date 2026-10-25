@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-24 (the window grammar #1457–#1467; the D icons)
+**Last updated:** 2026-10-25 (the window grammar #1457–#1471; Engines/Speak)
 
 ## Current phase
 
@@ -20,10 +20,21 @@ convergence onto the kit species, #1463 three browser reds (Ask return raise,
 Room re-read hold-still), #1464 kit polish (avatar rows, fold join, narrow status
 bar, idle tone, DotWord, Room foot), #1465 Activity/meeting window/Needs you +
 scoped Settings Back, #1466 desk chrome (floor labels, badges, menu bar, Talk,
-dock), #1467 toolbar wrap; this PR: the D icon family (47 sources, 20 px export,
-title chip, zone colours). Not yet on the grammar: Today, Ask, Setup, New
-Project, Engines, Processes, Speak, the Needs-you row caps. Owner aesthetic
-acceptance is live on his desk; nothing is claimed accepted.
+dock), #1467 toolbar wrap, #1468 the D icon family (47 sources, 20 px export,
+title chip, zone colours), #1469 Setup/New Project/Processes/Needs-you rows +
+the Engines and Speak bands, #1470 Ask/Today, #1471 Today's Needs-you rows are
+the Needs-you window's rows; this PR: Engines as a list view (glyph, Engine,
+Where, Used for, State) with What-runs-where as a label/control grid and a
+status bar carrying the selected engine's verbs and egress; Speak's status-bar
+readout (Not ready / Ready · engine, ticking time), the level meter in the bar,
+a quiet Copy verb (`copy` glyph); Voice commands toolbar; Components Window ▸
+List + inspector. Every window in the manifest now follows the grammar.
+Open fix-forward: Engines Remove (DELETE refuses bound engines; unbind rules
+first), the Add-an-engine panel and Download fold still wear caps tokens,
+Speak's Clean-up chip and the Journal/Blocks/Learned/Configure wings are not
+dense lists yet (no seeded rows to prove them), Ask's EngineLine "No engine"
+mono caps, Memory/BeliefCard chips. Owner aesthetic acceptance is live on his
+desk; nothing is claimed accepted.
 
 **Owner-authorized React desktop execution — Astra / Sol High (2026-10-23).**
 The owner authorized execution of P01–P10 against the 47-family map and seven

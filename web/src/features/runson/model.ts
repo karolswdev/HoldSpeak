@@ -240,8 +240,14 @@ export function buildEngines(roster: Roster | null, detection: Detection | null)
   const speech = new Set(
     ownEntries(roster?.rows.find((r) => r.id === SPEECH_JOB)).map((e) => e.profile_id),
   );
-  for (const row of roster?.rows ?? []) {
-    for (const entry of row.assignment?.entries ?? []) {
+  // A job's own engine and a task's own engine (an exact row, such as
+  // Answers set in What runs where): a known engine is never hidden.
+  const chains = [
+    ...(roster?.rows ?? []).map((row) => row.assignment?.entries ?? []),
+    ...(roster?.tasks ?? []).map((task) => task.entries ?? []),
+  ];
+  for (const entries of chains) {
+    for (const entry of entries) {
       if (!entry.profile_id || out.has(entry.profile_id)) continue;
       const emblem = emblemFor("", entry.boundary);
       out.set(entry.profile_id, {
