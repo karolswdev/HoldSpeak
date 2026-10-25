@@ -49,9 +49,11 @@ import { MeetingWindow } from "../../desk/pullouts/MeetingWindow";
 import { objectWindowStandIn } from "../../desk/objectWindows";
 
 /** PHILO-17: the list window's faces: the list, and Record (capture C7: the
- *  one home for recording; a chosen file opens the import form). */
+ *  one home for recording; a chosen file opens the import form). Chrome lane
+ *  2026-10-24: the title bar already says "Meetings", so the list wing says
+ *  its own noun, "Records" (as the Activity window does). */
 const LIST_WINGS = [
-  { id: "outcomes", label: "Meetings" },
+  { id: "outcomes", label: "Records" },
   { id: "record", label: "Record" },
 ];
 

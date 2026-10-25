@@ -10,10 +10,17 @@
  *  end ("Payments ledger cutover v2" / "… v3") stay different on the glass.
  *  A word with no join that is longer than a line is never split: it is cut
  *  with `…`. Returns the lines, each at most `perLine` characters. */
-export function fitName(name: string, perLine: number, lines: number): string[] {
+export function fitName(
+  name: string,
+  perLine: number,
+  lines: number,
+  /** The label's real measure (a proportional face): true when the line
+   *  fits. Absent: a line fits at `perLine` characters (monospaced). */
+  fits: (line: string) => boolean = (line) => line.length <= perLine,
+): string[] {
   const text = name.replace(/\s+/g, " ").trim();
   if (!text || perLine < 4 || lines < 1) return [text];
-  const whole = layout(text, perLine);
+  const whole = layout(text, fits);
   if (whole && whole.length <= lines) return whole;
 
   // The end that must stay: the last word, or the end of one long word.
@@ -22,7 +29,7 @@ export function fitName(name: string, perLine: number, lines: number): string[] 
   const capTail = Math.max(2, perLine - 2);
   let tail: string;
   let joiner: string;
-  if (words.length > 1 && last.length <= capTail) {
+  if (words.length > 1 && last.length <= capTail && fits(`… ${last}`)) {
     tail = last;
     joiner = " ";
   } else {
@@ -30,7 +37,7 @@ export function fitName(name: string, perLine: number, lines: number): string[] 
     // join-piece when it fits, else its last characters.
     const pieces = joinPieces(last);
     const lastPiece = pieces[pieces.length - 1];
-    tail = lastPiece.length <= capTail && pieces.length > 1 ? lastPiece : last.slice(-Math.max(2, Math.floor(perLine / 2)));
+    tail = lastPiece.length <= capTail && pieces.length > 1 && fits(`…${lastPiece}`) ? lastPiece : last.slice(-Math.max(2, Math.floor(perLine / 2)));
     joiner = "";
   }
   const headSource = text.slice(0, text.length - tail.length).replace(/\s+$/, "");
@@ -38,11 +45,13 @@ export function fitName(name: string, perLine: number, lines: number): string[] 
     const head = headSource.slice(0, k).replace(/[\s]+$/, "");
     if (!head) continue;
     const candidate = `${head}…${joiner}${tail}`;
-    const set = layout(candidate, perLine);
+    const set = layout(candidate, fits);
     if (set && set.length <= lines) return set;
   }
   // Nothing of the start fits beside the end: the end alone, cut.
-  return [`…${tail}`.slice(0, perLine)];
+  let cut = `…${tail}`.slice(0, perLine);
+  while (cut.length > 2 && !fits(cut)) cut = cut.slice(0, -1);
+  return [cut];
 }
 
 /** A word's pieces: it may break after each `_ - . /` join (the join stays
@@ -53,7 +62,7 @@ function joinPieces(word: string): string[] {
 
 /** Greedy layout with the break priority above; null when a piece with no
  *  join is longer than a line (it would have to split inside letters). */
-function layout(text: string, perLine: number): string[] | null {
+function layout(text: string, fits: (line: string) => boolean): string[] | null {
   const out: string[] = [];
   let line = "";
   const push = () => {
@@ -62,11 +71,11 @@ function layout(text: string, perLine: number): string[] | null {
   };
   for (const word of text.split(" ")) {
     const spaced = line ? `${line} ${word}` : word;
-    if (spaced.length <= perLine) {
+    if (fits(spaced)) {
       line = spaced;
       continue;
     }
-    if (word.length <= perLine) {
+    if (fits(word)) {
       push();
       line = word;
       continue;
@@ -74,8 +83,8 @@ function layout(text: string, perLine: number): string[] | null {
     // A word longer than a line: it starts its own line and breaks at its joins.
     push();
     for (const piece of joinPieces(word)) {
-      if (piece.length > perLine) return null;
-      if ((line + piece).length <= perLine) line += piece;
+      if (!fits(piece)) return null;
+      if (fits(line + piece)) line += piece;
       else {
         push();
         line = piece;

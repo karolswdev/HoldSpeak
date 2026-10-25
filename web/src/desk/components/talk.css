@@ -39,6 +39,54 @@
   gap: 8px;
   max-width: calc(100vw - 40px);
 }
+/* Chrome lane 2026-10-24: the floor Talk is the live push-to-talk (one press
+   listens and files a new Thought; Screen.tsx), not the Speak app. At rest it
+   is the illustrated mic on a round paper plate with a soft shadow; the word
+   is its name and tooltip only. Listening, the plate grows to carry
+   `Listening · Stop` (the verb that ends it). */
+.desk-next .desk-screen-talk {
+  display: inline-flex;
+  align-items: center;
+}
+.desk-next .desk-screen-talk > .desk-mic.gadget-transport-key {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  border: 1px solid var(--wb-rule);
+  border-radius: 50%;
+  background: var(--wb-paper);
+  box-shadow: var(--desk-dock-tile-lift), var(--wb-drop);
+  transition: box-shadow var(--duration-short) var(--ease-standard),
+    background-color var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-screen-talk > .desk-mic.gadget-transport-key:hover:not(:disabled),
+.desk-next .desk-screen-talk > .desk-mic.gadget-transport-key:focus-visible {
+  background: var(--wb-paper);
+  border-color: var(--wb-sel-vivid);
+  box-shadow: 0 0 0 3px var(--desk-dock-active), var(--wb-umbra);
+}
+.desk-next .desk-screen-talk > .desk-mic.gadget-transport-key .gadget-transport-glyph img {
+  width: 28px;
+  height: 28px;
+}
+.desk-next .desk-screen-talk > .desk-mic.gadget-transport-key:not(.is-listening) .gadget-transport-word {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+.desk-next .desk-screen-talk > .desk-mic.gadget-transport-key.is-listening {
+  width: auto;
+  flex-direction: row;
+  gap: 8px;
+  padding: 0 16px 0 12px;
+  border-radius: 24px;
+  font: 600 13px / 1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
 /* Speak at 393: Talk is the sticky foot of the plate; its setup opens just
    above it, where the thumb pressed. */
 @container surface (max-width: 500px) {

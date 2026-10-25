@@ -7,7 +7,8 @@
   top: var(--wb-screen-h, 28px);
   bottom: var(--desk-dock-h, 76px);
   z-index: 0;
-  background: var(--desk-floor);
+  /* The slate under the gradient: a floor label measures its contrast on it. */
+  background: var(--desk-floor), var(--wb-backdrop);
   overflow: hidden auto;
   overscroll-behavior: contain;
   font-family: var(--font-sans);
@@ -120,9 +121,9 @@
   top: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  font: 700 var(--font-size-xs) / 1.4 var(--font-mono);
-  letter-spacing: 0.04em;
-  color: var(--wb-ink);
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--wb-paper);
+  text-shadow: var(--desk-floor-label-halo);
   pointer-events: none;
 }
 /* 393: a Chair window fills the work area; the screen leaves the glass
@@ -176,8 +177,8 @@
 /* TALK, one press on the Chair (1440): the Capture window's own control. */
 .desk-screen-talk {
   position: fixed;
-  left: 20px;
-  bottom: calc(var(--desk-dock-h, 76px) + 14px);
+  left: 16px;
+  bottom: calc(var(--desk-dock-h, 76px) + 12px);
   z-index: 1;
 }
 /* PHILO-17 (Astra r2): the delete receipt's seat is desk-level (DeskApp):
