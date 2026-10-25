@@ -7,12 +7,11 @@
  * Settings and the Components Forms specimen compose these three pieces; the
  * specimen supplies a fixture writer, Settings the production one. At a
  * content width of 520 px or less the rail is the first view and a pane opens
- * with a Back verb. Built locally under Settings: the kit `StatusBar` species
- * (lane grammar) is not on this branch yet; `PrefStatus` composes the shared
- * SurfaceFooter so the two converge on one species later. */
+ * with a Back verb. `PrefStatus` composes the kit `StatusBar`: the one status
+ * bar in the product. */
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
-import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
+import { StatusBar, type StatusBarItem } from "../../desk/surface/kit";
 import { FootSlotContext } from "../../desk/surface/foot";
 import { useHasWindowBack, useWindowBack } from "../../desk/surface/back";
 import { useWindowTitle } from "../../desk/surface/title";
@@ -181,43 +180,42 @@ export function PrefStatus({
   verbs?: ReactNode;
   inline?: boolean;
 }) {
-  const shown = facts.filter(Boolean);
   const now = useMinuteTick(Boolean(save?.at));
-  const words = (
-    <span className="pref-status" data-testid="settings-status">
-      {save ? (
+  const items: Array<StatusBarItem | null> = [
+    save ? {
+      key: "save",
+      lamp: SAVE_LAMP[save.tone],
+      text: (
         <span
           className="pref-status-save prefs-receipt"
           data-tone={save.tone}
-          role={save.tone === "danger" ? "alert" : "status"}
+          role={save.tone === "danger" ? "alert" : undefined}
           title={save.reason || undefined}
           data-testid={save.tone === "danger" && failureTestId ? failureTestId : undefined}
         >
-          <span className="pref-status-lamp" data-tone={save.tone} aria-hidden="true" />
           {save.at ? `${save.text} ${sinceWord(save.at, now)}` : save.text}
           {/* The bar stays short; the plain reason is the tooltip and is read aloud. */}
           {save.reason ? <span className="pref-status-reason"> · {save.reason}</span> : null}
         </span>
-      ) : null}
-      {shown.map((fact, index) => (
-        <span key={index} className="pref-status-fact">{fact}</span>
-      ))}
-      {extra}
-    </span>
-  );
-  const footer = (
-    <SurfaceFooter
+      ),
+    } : null,
+    ...facts.filter(Boolean).map((fact, index) => ({ key: `fact-${index}`, text: fact })),
+    extra ? { key: "extra", text: extra } : null,
+  ];
+  const retry = onRetry ? <Button variant="primary" dense disabled={retryDisabled} onClick={onRetry}>Retry</Button> : null;
+  const bar = (
+    <StatusBar
       className="pref-status-bar"
-      fold={false}
-      receipt={words}
-      verbs={<>
-        {onRetry ? <Button variant="primary" dense disabled={retryDisabled} onClick={onRetry}>Retry</Button> : null}
-        {verbs}
-      </>}
+      data-testid="settings-status"
+      items={items}
+      verbs={retry || verbs ? <>{retry}{verbs}</> : undefined}
     />
   );
-  return inline ? <FootSlotContext.Provider value={null}>{footer}</FootSlotContext.Provider> : footer;
+  return inline ? <FootSlotContext.Provider value={null}>{bar}</FootSlotContext.Provider> : bar;
 }
+
+/** The save state's lamp: green saved, amber saving, blue edited, red not saved. */
+const SAVE_LAMP = { ok: "ok", busy: "warn", edited: "info", danger: "fail" } as const;
 
 /** Re-render once a minute while a relative time is on show. */
 function useMinuteTick(active: boolean): number {

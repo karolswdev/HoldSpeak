@@ -67,11 +67,10 @@
 }
 
 /* ── Window grammar (2026-10-24): toolbar · editor · status bar ──
-   The Note is a native text window: a 36 px toolbar under the title bar
-   (verbs left, the field's voice control right, a 1 px rule under it), the
-   editor filling the rest edge to edge with a reading measure inside it, and
-   a 24 px status bar. Local species; the kit's Toolbar/StatusBar (lane
-   grammar) share this geometry and the orchestrator converges them. */
+   The Note is a native text window: the kit Toolbar under the title bar
+   (verbs left, the field's voice control right), the editor filling the
+   rest edge to edge with a reading measure inside it, and the kit
+   StatusBar. kit.css owns the band, the verbs and the bar. */
 
 .desk-next .thought-note-document {
   /* The editor takes the free space and yields it when band 3 opens: a long
@@ -89,68 +88,18 @@
 
 .desk-next .thought-note-toolbar {
   grid-row: 1;
-  min-height: 36px;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 0 var(--space-2);
-  border-bottom: 1px solid var(--wb-rule-soft);
-  background: linear-gradient(180deg, var(--wb-paper) 0%, var(--wb-steel-2) 100%);
   user-select: none;
 }
 
-.desk-next .thought-note-toolbar-verbs {
-  min-width: 0;
-  flex: 1 1 auto;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 2px;
-}
-
-.desk-next .thought-note-toolbar-verbs > .btn {
-  min-height: 28px;
-  gap: 6px;
-  transition:
-    background var(--duration-short) var(--ease-standard),
-    border-color var(--duration-short) var(--ease-standard),
-    box-shadow var(--duration-short) var(--ease-standard);
-}
-
-/* Quiet toolbar verbs read in ink, not the faint ghost grey, and lift a
-   little under the pointer; a press sinks. */
-.desk-next .thought-note-toolbar-verbs > .btn--ghost {
-  color: var(--wb-ink);
-  font-weight: 500;
-}
-
-.desk-next .thought-note-toolbar-verbs > .btn--ghost:hover:not(:disabled) {
-  border-color: var(--wb-rule);
-  background: var(--wb-paper);
-}
-
-.desk-next .thought-note-toolbar-verbs > .btn--ghost:active:not(:disabled) {
-  background: var(--wb-press);
-}
-
-.desk-next .thought-note-verb-icon {
-  width: 18px;
-  height: 18px;
-  flex: none;
-  image-rendering: auto;
-}
-
-/* Done: the one vivid blue plate. */
-.desk-next .thought-note-toolbar-verbs > .thought-note-primary {
-  padding-inline: 14px;
+/* Done: the one primary, a little room before the quiet verbs. */
+.desk-next .thought-note-toolbar .thought-note-primary {
   margin-inline-end: 6px;
-  font-weight: 650;
 }
 
-.desk-next .thought-note-toolbar-voice {
+/* The voice control is the field's, not a search well: it stays at the
+   band's right end at every width. */
+.desk-next .thought-note-toolbar .kit-toolbar-trailing {
   flex: none;
-  display: inline-flex;
-  align-items: center;
   margin-left: auto;
 }
 
@@ -356,21 +305,9 @@
   background: var(--surface-2);
 }
 
-.desk-next .thought-note-ask-row {
-  min-height: 36px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
 .desk-next .thought-note-ask-label {
   color: var(--text-faint);
   font: 600 12px/1.3 var(--font-ui);
-}
-
-.desk-next .thought-note-ask-row > .btn {
-  margin-left: auto;
 }
 
 .desk-next .thought-note-ask-reason {
@@ -539,90 +476,10 @@
   font-size: 12px;
 }
 
-/* ── The status bar (window grammar, 2026-10-24) ──
-   24 px, sans 12 muted: the save state on the left. A failed or conflicted
-   save adds its one recovery verb at the right, and only then does the bar
-   grow to the verb's height. */
-
-.desk-next .surface-footer:has(.thought-note-foot) {
-  height: auto;
-  min-height: 24px;
-  padding: 0 24px 0 var(--thought-gutter, 22px);
-  border-top: 1px solid var(--wb-rule-soft);
-  background: var(--thought-paper);
-}
-
-.desk-next .surface-footer-layout.thought-note-foot,
-.desk-next .surface-footer-layout.thought-note-foot:has(> .surface-footer-verbs > *) {
-  min-height: 24px;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: "receipt verbs";
-  align-items: center;
-  column-gap: var(--space-2);
-  padding: 0;
-}
-
-.desk-next .thought-note-foot .surface-footer-egress {
-  display: none;
-}
-
-.desk-next .thought-note-foot .surface-footer-receipt {
-  min-height: 0;
-}
-
-.desk-next .thought-note-foot .surface-footer-receipt {
-  min-width: 0;
-  padding: 0;
-  justify-content: flex-start;
-  align-items: center;
-}
-
-.desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line {
-  max-width: 100%;
-  color: var(--wb-muted);
-  font: 400 12px/1.5 var(--font-ui);
-  letter-spacing: 0;
-  text-transform: none;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  text-align: start;
-}
-
-.desk-next .thought-note-foot .surface-footer-receipt > .surface-footer-receipt-line[data-tone="danger"] {
+/* ── The status bar is the kit StatusBar (kit.css): a refused or
+   conflicted save keeps its red word. ── */
+.desk-next .thought-note-foot .thought-note-status[data-tone="danger"] {
   color: var(--wb-danger-ink);
-}
-
-/* A small lamp before the words: green kept, blue saving, red refused. */
-.desk-next .thought-note-foot .thought-note-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-variant-numeric: tabular-nums;
-}
-
-.desk-next .thought-note-foot .thought-note-status::before {
-  content: "";
-  flex: none;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--lamp-ok);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lamp-ok) 22%, transparent);
-}
-
-.desk-next .thought-note-foot .thought-note-status[data-lamp="busy"]::before {
-  background: var(--lamp-info);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lamp-info) 22%, transparent);
-}
-
-.desk-next .thought-note-foot .thought-note-status[data-lamp="danger"]::before {
-  background: var(--lamp-fail);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lamp-fail) 22%, transparent);
-}
-
-.desk-next .thought-note-foot .surface-footer-verbs .btn {
-  min-height: 24px;
-  margin-block: 2px;
 }
 
 /* The shell rule — and the ONLY viewport rule here: it sizes the window
@@ -651,10 +508,6 @@
     --thought-gutter: 16px;
   }
 
-  .desk-next .thought-note-toolbar {
-    padding: 0 var(--space-1);
-  }
-
   /* Chrome Buttons do not carry the global `.btn` touch halo. The title is
      still a library Button, so its painted target owns the complete 44 px
      area at the phone width. */
@@ -676,16 +529,14 @@
     grid-template-columns: 1fr;
   }
 
-  .desk-next .thought-note-ask-row > .btn,
-  .desk-next .thought-note-ask-verbs .btn,
-  .desk-next .thought-note-foot .btn {
+  .desk-next .thought-note-ask-verbs .btn {
     min-height: 40px;
   }
 }
 
 /* The phone sheet: each toolbar verb owns its 44 px target; the verbs wrap
    to a second row rather than fold away (Betterment Q8). */
-.desk-next .thought-workspace-window.is-sheet .thought-note-toolbar-verbs > .btn {
+.desk-next .thought-workspace-window.is-sheet .thought-note-toolbar .kit-toolbar-verbs > .btn {
   min-height: var(--desk-button-hit-size);
   min-width: var(--desk-button-hit-size);
   position: relative;
@@ -703,9 +554,9 @@
   white-space: nowrap;
 }
 
-.desk-next .thought-workspace-window.is-sheet .thought-note-verb-icon {
-  width: 24px;
-  height: 24px;
+.desk-next .thought-workspace-window.is-sheet .thought-note-toolbar .kit-toolglyph {
+  width: 20px;
+  height: 20px;
 }
 
 .desk-next .thought-workspace-window.is-sheet .thought-note-toolbar-voice,

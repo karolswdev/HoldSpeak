@@ -811,7 +811,7 @@ class TestSharedControlsAreSpecies:
             assert note.locator(".desk-editor-toolbar").count() == 0
             # Window grammar (2026-10-24): the note's verbs are its toolbar.
             rows = _library_species(
-                page, ".thought-workspace-window .thought-note-toolbar-verbs button",
+                page, ".thought-workspace-window .thought-note-toolbar .kit-toolbar-verbs button",
                 subject="the note toolbar",
             )
             expected = {"Ask about this", "Find the tasks", "Send…"}
@@ -821,11 +821,11 @@ class TestSharedControlsAreSpecies:
             assert note.get_by_role("button", name="Done", exact=True).count() == 1
             _shot(page, f"note-editor-{tag}.png")
             ring = _tab_into(
-                page, ".thought-workspace-window .thought-note-toolbar-verbs",
+                page, ".thought-workspace-window .thought-note-toolbar .kit-toolbar-verbs",
                 start=".thought-workspace-window .desk-pullout-head button", limit=12,
             )
             assert ring["outlineWidth"] > 0, f"no keyboard focus ring on the toolbar: {ring}"
-            assert page.evaluate("() => Boolean(document.activeElement?.closest('.thought-note-toolbar-verbs'))")
+            assert page.evaluate("() => Boolean(document.activeElement?.closest('.thought-note-toolbar .kit-toolbar-verbs'))")
 
             real_errors = [e for e in errors if "ResizeObserver" not in e]
             assert not real_errors, real_errors

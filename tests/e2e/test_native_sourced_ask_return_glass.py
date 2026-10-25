@@ -72,7 +72,7 @@ def _current_caret_visible(frame: Any) -> None:
     state = frame.evaluate("""root => {
       const content = root.querySelector('.thought-note-body .cm-content');
       const scroller = root.querySelector('.thought-note-body .cm-scroller');
-      const footer = root.querySelector('.surface-footer:has(.thought-note-foot)');
+      const footer = root.querySelector('.kit-statusbar.thought-note-foot');
       const selection = window.getSelection();
       const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
       const caret = range?.getClientRects()[0] || range?.getBoundingClientRect();
@@ -376,7 +376,7 @@ def test_selected_note_ask_save_and_return(
               const last = [...root.querySelectorAll('.reading-object-links-list button')].at(-1).getBoundingClientRect();
               const editor = root.querySelector('.thought-note-body .cm-scroller').getBoundingClientRect();
               const fold = root.querySelector('.reading-object-links').getBoundingClientRect();
-              const footer = root.querySelector('.surface-footer:has(.thought-note-foot)').getBoundingClientRect();
+              const footer = root.querySelector('.kit-statusbar.thought-note-foot').getBoundingClientRect();
               return {frame: box.toJSON(), list: list.toJSON(), last: last.toJSON(),
                 editor: editor.toJSON(), fold: fold.toJSON(), footer: footer.toJSON(), viewport: innerHeight};
             }""")

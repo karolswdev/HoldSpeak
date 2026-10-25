@@ -97,7 +97,7 @@ describe("Betterment Q8: every note opens in the one note window", () => {
     // (Project ▾ shows when he has a project). No Finish, Resume, Task, Copy
     // or Add a note.
     // Window grammar (2026-10-24): the verbs are the toolbar's, Done first.
-    const toolbar = container.querySelector(".thought-note-toolbar-verbs") as HTMLElement;
+    const toolbar = container.querySelector(".thought-note-toolbar .kit-toolbar-verbs") as HTMLElement;
     const verbs = within(toolbar).getAllByRole("button").map((b) => b.textContent);
     expect(verbs).toEqual(["Done", "Ask about this", "Find the tasks", "Send…"]);
     // The open wrote nothing but the open itself.
@@ -106,7 +106,7 @@ describe("Betterment Q8: every note opens in the one note window", () => {
 
   it("Ask about this opens Ask with the note in About", async () => {
     const { container } = render(<MemoryRouter><Pullout o={noteObject} pulloutId={NOTE_REF} /></MemoryRouter>);
-    await waitFor(() => expect(container.querySelector(".thought-note-foot")).not.toBeNull());
+    await waitFor(() => expect(container.querySelector(".thought-note-toolbar")).not.toBeNull());
     fireEvent.click(screen.getByRole("button", { name: "Ask about this" }));
     await waitFor(() => expect(useDesk.getState().askOpen).toBe(true));
     expect(useDesk.getState().askThread?.about).toEqual([{ id: NOTE.note_id, kind: "note", ref: NOTE_REF, title: NOTE.title }]);
@@ -189,7 +189,7 @@ describe("Betterment Q9: Find the tasks on a note", () => {
 
   async function openNote() {
     const view = render(<MemoryRouter><Pullout o={noteObject} pulloutId={NOTE_REF} /></MemoryRouter>);
-    await waitFor(() => expect(view.container.querySelector(".thought-note-foot")).not.toBeNull());
+    await waitFor(() => expect(view.container.querySelector(".thought-note-toolbar")).not.toBeNull());
     await waitFor(() => expect(view.container.textContent).toContain("Theo could own the handbook."));
     return view;
   }
@@ -197,7 +197,7 @@ describe("Betterment Q9: Find the tasks on a note", () => {
   it("one press shows the meeting's rows: the tasks with owners, and the proposed decision", async () => {
     hubWithFind();
     const { container } = await openNote();
-    expect(within(container.querySelector(".thought-note-toolbar-verbs") as HTMLElement).getAllByRole("button").map((b) => b.textContent))
+    expect(within(container.querySelector(".thought-note-toolbar .kit-toolbar-verbs") as HTMLElement).getAllByRole("button").map((b) => b.textContent))
       .toEqual(["Done", "Ask about this", "Find the tasks", "Send…"]);
     // The rows stay with the note: the window reads them when it opens.
     expect(calls.some((c) => c.method === "GET" && c.url === `/api/notes/${NOTE.note_id}/outcomes`)).toBe(true);

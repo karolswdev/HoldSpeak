@@ -1257,8 +1257,8 @@
    (Write update the one primary), a compact head (the project's glyph, the
    state word in its colour with a lamp, the reason in ink, the objective in
    one muted line), sans sentence-case section captions in the display face
-   with a hairline, and list rows edge to edge that lift on hover. Local
-   species; the kit's Toolbar (lane grammar) shares this geometry. */
+   with a hairline, and list rows edge to edge that lift on hover. The
+   toolbar is the kit Toolbar. */
 
 .desk-next .desk-surface-body:has(> .room-body) {
   padding: 0;
@@ -1276,30 +1276,17 @@
   gap: 6px;
 }
 
+/* The kit Toolbar (kit.css) owns the band; the Room only seats it: sticky
+   under the title bar, out to the window's edges, the primary first. */
 .desk-next .room-body .room-toolbar {
   position: sticky;
   top: 0;
   z-index: var(--desk-z-local);
-  min-height: 36px;
   margin: 0 -16px 6px;
-  padding: 0 8px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  width: auto;
-  border-bottom: 1px solid var(--wb-rule-soft);
-  background: linear-gradient(180deg, var(--wb-paper) 0%, var(--wb-steel-2) 100%);
 }
 
-.desk-next .room-body .room-toolbar > .btn {
-  width: auto;
-  min-height: 28px;
-}
-
-.desk-next .room-body .room-toolbar > .btn--primary {
+.desk-next .room-body .room-toolbar .btn--primary {
   order: -1;
-  padding-inline: 14px;
-  font-weight: 650;
 }
 
 .desk-next .room-body .room-head-line {
@@ -1498,10 +1485,7 @@
 }
 
 @container surface (max-width: 559.9px) {
-  .desk-next .room-body .room-toolbar {
-    padding-block: 4px;
-  }
-  .desk-next .room-body .room-toolbar > .btn {
+  .desk-next .room-body .room-toolbar .btn {
     min-height: var(--desk-button-hit-size);
   }
   .desk-next .room-body .room-head .room-now-facts,

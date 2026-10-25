@@ -1,5 +1,5 @@
 /* Window grammar 2026-10-24: the native preference window.
-   Rail (32 px rows) | pane (label/control grid) | 24 px status bar.
+   Rail (32 px rows) | pane (label/control grid); the status bar is kit.
    Scoped to .pref-window so the shared gadget sheets keep their default
    material in every other window. Tokens only. */
 
@@ -312,66 +312,18 @@
 .desk-next .pref-window .gadget-fold { margin: 0; }
 .desk-next .pref-window .settings-page-section-body > .gadget-fold { border-top: 0; }
 
-/* ── The status bar: 24 px, sans 12 muted ── */
-.desk-next .surface-footer:has(> .pref-status-bar),
-.desk-next .surface-footer:has(.pref-status-bar) {
-  min-height: 24px;
-  padding-block: 0;
-  background: color-mix(in srgb, var(--wb-steel) 62%, color-mix(in srgb, var(--wb-paper) 94%, var(--p-color-orange-300)));
-}
-.desk-next .surface-footer-layout.pref-status-bar {
-  min-height: 24px;
-  grid-template-columns: minmax(0, 1fr) max-content;
-  grid-template-areas: "receipt verbs";
-}
-.desk-next .pref-status-bar .surface-footer-egress { display: none; }
-.desk-next .pref-status-bar .surface-footer-receipt { justify-content: flex-start; }
-.desk-next .pref-status-bar .surface-footer-receipt > .pref-status {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--wb-muted);
-  font: 400 12px / 1.4 var(--font-sans);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
-  text-transform: none;
-  white-space: nowrap;
-}
-.desk-next .pref-status > * + *::before {
-  content: "·";
-  padding: 0 8px;
-  color: var(--wb-muted);
-}
-.desk-next .pref-status .pref-status-save,
-.desk-next .pref-status .pref-status-fact {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* ── The status bar is the kit StatusBar (kit.css); the save word keeps
+   its ink, a refusal its red, and the plain reason is read aloud only. ── */
+.desk-next .pref-status-bar .pref-status-save {
+  flex: none;
+  color: var(--wb-ink);
   font: inherit;
   letter-spacing: 0;
+  text-align: start;
   text-transform: none;
 }
-.desk-next .pref-status .pref-status-save { color: var(--wb-ink); }
-.desk-next .pref-status .pref-status-save[data-tone="danger"] { color: var(--wb-danger-ink); font-weight: 600; }
-/* The small lamp: green saved, amber saving, blue edited, red not saved. */
-.desk-next .pref-status-lamp {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--ok);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok) 22%, transparent);
-  transition: background-color var(--desk-raise-duration) var(--desk-ease);
-}
-.desk-next .pref-status-lamp[data-tone="busy"] { background: var(--p-color-orange-300); box-shadow: 0 0 0 2px color-mix(in srgb, var(--p-color-orange-300) 25%, transparent); }
-.desk-next .pref-status-lamp[data-tone="edited"] { background: var(--wb-sel); box-shadow: 0 0 0 2px color-mix(in srgb, var(--wb-sel) 20%, transparent); }
-.desk-next .pref-status-lamp[data-tone="danger"] { background: var(--wb-danger-ink); box-shadow: 0 0 0 2px color-mix(in srgb, var(--wb-danger-ink) 22%, transparent); }
-.desk-next .pref-status .pref-status-reason {
+.desk-next .pref-status-bar .pref-status-save[data-tone="danger"] { color: var(--wb-danger-ink); font-weight: 600; }
+.desk-next .pref-status-bar .pref-status-reason {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -379,8 +331,6 @@
   clip-path: inset(50%);
   white-space: nowrap;
 }
-
-.desk-next .pref-status-bar .surface-footer-verbs .btn { min-height: 20px; padding-block: 0; }
 
 /* The specimen keeps the window's frame around the same composition. */
 .desk-next .reference-pref-window {
@@ -393,7 +343,6 @@
   container: surface / inline-size;
 }
 .desk-next .reference-pref-window > .pref-window { flex: 0 0 auto; min-height: 320px; }
-.desk-next .reference-pref-window > .surface-footer { flex: none; border-top: 1px solid var(--wb-rule-soft); }
 
 /* ── Narrow (content width 520 px or less): rail first, then the pane ── */
 @container surface (max-width: 520px) {
@@ -477,17 +426,11 @@
   .desk-next .pref-window .gadget-row:has(.gadget-prop) { grid-template-columns: minmax(0, 1fr); }
   .desk-next .pref-window .gadget-row-gadget > .gadget-cycle { width: min(100%, 200px); }
   .desk-next .pref-window .gadget-cycle select { min-height: 44px; }
-  .desk-next .pref-status-bar .surface-footer-verbs .btn { min-height: 44px; }
-  .desk-next .surface-footer-layout.pref-status-bar {
-    grid-template-columns: minmax(0, 1fr) max-content;
-    grid-template-areas: "receipt verbs";
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .desk-next .pref-window .pref-rail .pref-rail-row.btn,
-  .desk-next .pref-window .gadget-row,
-  .desk-next .pref-status-lamp { transition: none; }
+  .desk-next .pref-window .gadget-row { transition: none; }
   .desk-next .pref-window .pref-rail .pref-rail-row.btn:hover:not(:disabled):not(.is-active) { transform: none; }
 }
 

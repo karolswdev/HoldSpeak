@@ -452,9 +452,9 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     const retry = within(await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 })).getByRole("button", { name: "Retry" });
     expect(toggle).toBeChecked();
     expect(retry.closest('[role="alert"]')?.textContent).toContain("Settings connection lost");
-    const footer = document.querySelector<HTMLElement>(".surface-footer-layout")!;
-    expect(footer.querySelector(".surface-footer-receipt")?.textContent).toContain("Not saved");
-    expect(footer.querySelector(".surface-footer-verbs")?.textContent).not.toContain("Settings connection lost");
+    const footer = document.querySelector<HTMLElement>(".pref-status-bar")!;
+    expect(footer.querySelector(".kit-statusbar-items")?.textContent).toContain("Not saved");
+    expect(footer.querySelector(".kit-statusbar-verbs")?.textContent).not.toContain("Settings connection lost");
     refuse = false;
     fireEvent.click(retry);
     await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true));
@@ -533,12 +533,12 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     await waitFor(() => expect(secretSaved).toBe(true));
     await waitFor(() => expect(within(secret).getByRole("button", { name: "Replace" })).not.toBeDisabled());
     expect(screen.getByTestId("settings-save-failure").textContent).toContain("Preference connection lost");
-    expect(document.querySelector(".surface-footer-receipt")?.textContent).toContain("Not saved");
+    expect(document.querySelector(".kit-statusbar-items")?.textContent).toContain("Not saved");
     fireEvent.click(screen.getByTestId("settings-index-agents"));
     fireEvent.change(await screen.findByRole("combobox", { name: "Agents act" }), { target: { value: "neutral" } });
     await waitFor(() => expect(modeSaved).toBe(true));
     expect(screen.getByTestId("settings-save-failure").textContent).toContain("Preference connection lost");
-    expect(document.querySelector(".surface-footer-receipt")?.textContent).toContain("Not saved");
+    expect(document.querySelector(".kit-statusbar-items")?.textContent).toContain("Not saved");
     refusePreference = false;
     fireEvent.click(within(screen.getByTestId("settings-save-failure")).getByRole("button", { name: "Retry" }));
     await waitFor(() => expect(hub.state.settings.meeting.auto_export).toBe(true));
@@ -553,7 +553,7 @@ describe("Settings repair: ordinary choices and recoverable writes", () => {
     render(<SettingsCore scope="meetings" />);
     fireEvent.click(await screen.findByRole("checkbox", { name: "Auto export" }));
     await screen.findByTestId("settings-save-failure", {}, { timeout: 3000 });
-    const footer = document.querySelector(".surface-footer-layout") as HTMLElement;
+    const footer = document.querySelector(".pref-status-bar") as HTMLElement;
     expect(within(footer).getByRole("button", { name: "Retry" }).className).toContain("btn--primary");
   });
 
@@ -662,7 +662,7 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     await waitFor(() => expect(hub.state.heartbeat.notify).toBe("off"));
     // Nothing writes the retired cadence.quiet_hours_* keys.
     expect(hub.state.calls.some((c) => c.path === "/api/settings" && c.method === "PUT")).toBe(false);
-    await waitFor(() => expect(document.querySelector(".surface-footer-layout")?.textContent ?? "").toMatch(/Saved/));
+    await waitFor(() => expect(document.querySelector(".pref-status-bar")?.textContent ?? "").toMatch(/Saved/));
     expect(rawButtons(document.querySelector(".settings-page")!)).toEqual([]);
   });
 
@@ -678,7 +678,7 @@ describe("Settings › Rhythm is Rhythm's one home (Betterment setup ST1)", () =
     // The section says Notify once; the embedded face has no headline or foot of its own.
     expect(screen.queryByTestId("rhythm-notify-row")).toBeNull();
     expect(screen.queryByTestId("rhythm-headline")).toBeNull();
-    expect(document.querySelectorAll(".surface-footer-layout")).toHaveLength(1);
+    expect(document.querySelectorAll(".kit-statusbar:not(.pref-status-bar), .surface-footer-layout")).toHaveLength(0);
   });
 });
 
