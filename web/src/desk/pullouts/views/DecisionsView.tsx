@@ -1,5 +1,5 @@
 import { wireDate } from "../../surface/format";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
 import { holdObject, qualifiedRef } from "../../api";
@@ -11,13 +11,17 @@ import { SurfaceLedger, SurfaceLedgerRow, SurfaceState } from "../../surface/Sur
 import { countLabel } from "../../surface/count";
 import { MicButton } from "../../surface";
 import { StringGadget } from "../../surface/gadgets";
-import { DecisionRecordSendWells } from "../../documentSendsLazy";
+import { DecisionRecordSendSheet, DecisionRecordSendWells } from "../../documentSendsLazy";
+import { spriteUrl } from "../../sprites";
+import { openProjectRoom } from "../../shell";
 import { Material } from "../../surface/Material";
 import { FoldGadget, GadgetGroup, GadgetRow } from "../../surface/gadgets";
 import { StateChip } from "../../surface";
 import { CheckGadget } from "../../surface/gadgets";
 import { StatusBar, ToolGlyph, Toolbar, countWords } from "../../surface/kit";
 import { useWindowInterior } from "../../surface/interior";
+import { useHasWindowBack, useWindowBack } from "../../surface/back";
+import { useCompactViewport } from "../../useCompactViewport";
 import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../surface/objects/ObjectList";
 import type { ObjectTone } from "../../surface/objects/kinds";
 import "../attention-records.css";
@@ -55,6 +59,7 @@ type Receipt = {
   successor_id?: string | null;
   source_type?: string;
   source_id?: string;
+  created_at?: string | null;
 };
 
 function receiptStatus(receipt: Receipt): "governing" | "superseded" | "related" {
@@ -144,6 +149,15 @@ const DECISION_COLUMNS = [
   { key: "state", word: "State", track: "124px" },
 ] as const;
 
+/** `just now`, `4 min ago`, `3 h ago`, then the day (`Oct 24`). */
+function sinceWord(at: Date, now: number = Date.now()): string {
+  const minutes = Math.floor((now - at.getTime()) / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 12 * 60) return `${Math.floor(minutes / 60)} h ago`;
+  return `on ${MONTHS[at.getMonth()]} ${at.getDate()}`;
+}
+
 function humanDate(value: string | null | undefined): string {
   if (!value) return "—";
   const date = wireDate(value);
@@ -160,7 +174,11 @@ export function DecisionsView({
   decisionId,
   decisionNonce,
   windowed = false,
+  onBackToList,
 }: {
+  /** The Decisions window: the reader's ‹ Decisions also forgets the
+   *  record the window was opened on (its scope), so a reload shows the list. */
+  onBackToList?: () => void;
   /** Window grammar (the Decisions window): Toolbar [New decision] +
    *  search → the dense list view → the status bar. Today keeps its view. */
   windowed?: boolean;
@@ -191,7 +209,9 @@ export function DecisionsView({
   const [rowSelected, setRowSelected] = useState<string | null>(null);
   const [sort, setSort] = useState<ObjectListSort>({ key: "when", dir: "desc" });
   const detailOpen = Boolean(chosen || selected || detailLoading || requested);
-  useWindowInterior(windowed && !detailOpen ? "list" : null);
+  // The record's reader runs edge to edge under its toolbar (it insets its
+  // own words); a meeting's decision keeps the default inset.
+  useWindowInterior(windowed ? (!detailOpen ? "list" : chosen ? null : "editor") : null);
   useEffect(() => () => { detailReads.current += 1; }, []);
 
   useEffect(() => {
@@ -334,6 +354,8 @@ export function DecisionsView({
     setChosen(null);
     setSelected(null);
     setRequested({ kind: "record", id: receiptId, label });
+    // Back in the list, the record read last is the selected row.
+    setRowSelected(`record-${receiptId}`);
     setDetailLoading(true);
     setDetailError("");
     void apiFetch<Receipt>(`/api/decision-records/${encodeURIComponent(receiptId)}`)
@@ -342,8 +364,13 @@ export function DecisionsView({
       .finally(() => { if (order === detailReads.current) setDetailLoading(false); });
   };
 
+  // The window opened again with no record (Go ▸ Decisions, the phone's
+  // Back): the list, with the record read last still selected.
+  const lastReceiptId = useRef(receiptId);
   useEffect(() => {
     if (receiptId) openReceipt(receiptId);
+    else if (windowed && lastReceiptId.current) showResults();
+    lastReceiptId.current = receiptId;
   }, [receiptId]);
 
   const openRow = (row: DeskDecision) => {
@@ -395,6 +422,24 @@ export function DecisionsView({
         decision={chosen}
         onBack={showResults}
         onOpenMeeting={(meetingId) => openRef(`meeting:${meetingId}`)}
+      />
+    );
+  }
+
+  if ((selected || detailLoading || requested) && windowed) {
+    return (
+      <DecisionReader
+        receipt={selected}
+        loading={detailLoading}
+        error={detailError}
+        onRetry={() => {
+          if (requested?.kind === "record") openReceipt(requested.id, requested.label);
+          else if (requested) readDecision(requested.id);
+        }}
+        onBack={() => { showResults(); if (receiptId) onBackToList?.(); }}
+        onOpenReceipt={openReceipt}
+        onOpenSource={openSource}
+        onOpenWork={(work) => openPullout(qualifiedRef(work.work_type, work.work_ref))}
       />
     );
   }
@@ -596,6 +641,162 @@ function MeetingDecisionDetail({
         </GadgetRow> : null}
       </GadgetGroup>
     </article>
+  );
+}
+
+/** A record's About and Why, as the from-desk producer writes them into its
+ *  rationale (`About: …` then `Why: …`); any other rationale is the Why. */
+function rationaleParts(rationale: string | null | undefined): { about: string; why: string } {
+  const text = String(rationale || "");
+  const about = text.match(/(?:^|\n\n)About:\s*([^\n]*(?:\n(?!Why:)[^\n]*)*)/i)?.[1]?.trim() || "";
+  const why = text.match(/(?:^|\n\n)Why:\s*([\s\S]*)/i)?.[1]?.trim() || "";
+  return { about, why: why || (!about ? text.trim() : "") };
+}
+
+/** Window grammar (the owner, 2026-10-25): a decision record read in the
+ *  Decisions window. Toolbar: ‹ Decisions, Send…. Body: the decision as the
+ *  reader's first heading, the Why as its words, About and the other facts as
+ *  a quiet label/value grid, Evidence and History as folds. Status bar: the
+ *  state as a dot and a word with when (`● Decided just now`). No captions in
+ *  mono capitals, no state chip. */
+function DecisionReader({
+  receipt,
+  loading,
+  error,
+  onRetry,
+  onBack,
+  onOpenReceipt,
+  onOpenSource,
+  onOpenWork,
+}: {
+  receipt: Receipt | null;
+  loading: boolean;
+  error: string;
+  onRetry: () => void;
+  onBack: () => void;
+  onOpenReceipt: (id: string, label?: string) => void;
+  onOpenSource: (source: ReceiptSource) => void;
+  onOpenWork: (work: ReceiptWork) => void;
+}) {
+  const [sending, setSending] = useState(false);
+  useEffect(() => { setSending(false); }, [receipt?.id]);
+  // On the phone the window's title-bar Back is the one Back: it returns to
+  // the list (the toolbar then draws no ‹ Decisions of its own).
+  const backRef = useRef(onBack);
+  backRef.current = onBack;
+  const compact = useCompactViewport();
+  useWindowBack(compact ? { onBack: () => backRef.current(), testId: "decision-reader-back" } : null, [compact]);
+  const viaFrame = useHasWindowBack() && compact;
+  const proposed = String(receipt?.status || "").toLowerCase() === "proposed";
+  const toolbar = (
+    <Toolbar label="Decision" data-testid="decision-reader-toolbar">
+      {viaFrame ? null : (
+        <Button dense variant="secondary" onClick={onBack} data-testid="decision-reader-back">
+          <span aria-hidden="true">‹</span> Decisions
+        </Button>
+      )}
+      {receipt && !proposed ? (
+        <Button dense variant="secondary" aria-expanded={sending} onClick={() => setSending((open) => !open)}
+          data-testid="decision-reader-send">
+          <ToolGlyph kind="send" />Send…
+        </Button>
+      ) : null}
+    </Toolbar>
+  );
+  if (loading || error || !receipt) {
+    return (
+      <div className="decision-reader-window" data-testid="decision-reader">
+        {toolbar}
+        <div className="decision-reader">
+          {loading ? <SurfaceState loading /> : <SurfaceState error={error || "Decision unavailable."} onRetry={onRetry} />}
+        </div>
+      </div>
+    );
+  }
+  const { about, why } = rationaleParts(receipt.rationale);
+  const state = decisionState(fromReceipt(receipt));
+  const decidedAt = receipt.created_at ? wireDate(receipt.created_at) : null;
+  const when = decidedAt && state.word === "Decided" ? ` ${sinceWord(decidedAt)}` : "";
+  const sourceLabel = (source: ReceiptSource): string | null => source.meeting_id || source.source_type === "meeting"
+    ? "Open meeting" : source.source_type === "artifact" ? "Open artifact" : null;
+  const sources = receipt.sources?.filter((source) => source.source_type !== "predecessor" && source.source_type !== "successor"
+    && source.source_type !== "desk" && (source.text || sourceLabel(source))) ?? [];
+  const predecessorId = receipt.predecessor_id;
+  const successorId = receipt.successor_id;
+  const history = Boolean(predecessorId || successorId || receipt.revisions?.length);
+  const evidence = Boolean(sources.length || receipt.work?.length);
+  const facts: Array<[string, ReactNode]> = [];
+  // About: the Project the producer linked opens its Room; a name with no
+  // link is the plain chip.
+  const projectId = receipt.sources?.find((source) => source.source_type === "project")?.source_ref ?? "";
+  const aboutFace = <>
+    <img src={spriteUrl("project", projectId || about, "rest", null, 20)} alt="" width={20} height={20} draggable={false} />
+    {about}
+  </>;
+  if (about) facts.push(["About", projectId ? (
+    <Button dense variant="secondary" className="decision-reader-about" data-testid="decision-reader-about"
+      onClick={() => openProjectRoom(projectId)}>{aboutFace}</Button>
+  ) : (
+    <span className="decision-reader-about" data-testid="decision-reader-about">{aboutFace}</span>
+  )]);
+  if (receipt.alternatives) facts.push(["Alternatives", receipt.alternatives]);
+  if (receipt.owner) facts.push(["Owner", receipt.owner]);
+  if (receipt.review_date) facts.push(["Review", humanDate(receipt.review_date)]);
+  return (
+    <div className="decision-reader-window" data-testid="decision-reader">
+      {toolbar}
+      <article className="decision-reader" aria-labelledby={`decision-reader-title-${receipt.id}`}>
+        {sending ? (
+          <DecisionRecordSendSheet id={receipt.id} text={receipt.decision_text} onBack={() => setSending(false)} />
+        ) : (
+          <>
+            <h2 id={`decision-reader-title-${receipt.id}`} className="decision-reader-title" data-testid="decision-reader-title">
+              {receipt.decision_text}
+            </h2>
+            {why ? <Material className="decision-reader-why">{why}</Material> : null}
+            {facts.length ? (
+              <dl className="decision-reader-facts">
+                {facts.map(([label, value]) => (
+                  <div key={label} className="decision-reader-fact">
+                    <dt>{label}</dt>
+                    <dd>{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+            {evidence ? <FoldGadget title="Evidence">
+              {sources.map((source, index) => <div key={`${source.source_type}-${source.source_ref}-${index}`} className="decision-reader-source">
+                {source.speaker ? <span className="decision-reader-source-who">{source.speaker}</span> : null}
+                {source.text ? <Material>{source.text}</Material> : null}
+                {sourceLabel(source) ? <Button variant="ghost" dense onClick={() => onOpenSource(source)}>{sourceLabel(source)}</Button> : null}
+              </div>)}
+              {receipt.work?.length ? <div className="attention-record-verbs">{receipt.work.map((work) => (
+                <Button key={work.id} variant="ghost" dense onClick={() => onOpenWork(work)}>
+                  Open {workName(work.work_type)} · {work.work_ref}
+                </Button>
+              ))}</div> : null}
+            </FoldGadget> : null}
+            {history ? <FoldGadget title="History">
+              {predecessorId || successorId ? <div className="attention-record-verbs">
+                {predecessorId ? <Button variant="ghost" dense onClick={() => onOpenReceipt(predecessorId, "Previous decision")}>Previous decision</Button> : null}
+                {successorId ? <Button variant="ghost" dense onClick={() => onOpenReceipt(successorId, "Next decision")}>Next decision</Button> : null}
+              </div> : null}
+              {receipt.revisions?.length ? <ol className="attention-record-revisions">
+                {receipt.revisions.map((revision) => <li key={revision.id}>
+                  <time dateTime={revision.created_at}>{humanDate(revision.created_at)}</time>
+                  <span>{revision.field_name.replace(/_/g, " ")}</span>
+                  <span>{revision.old_value || "—"} → {revision.new_value || "—"}</span>
+                </li>)}
+              </ol> : null}
+            </FoldGadget> : null}
+          </>
+        )}
+      </article>
+      <StatusBar
+        data-testid="decision-reader-status"
+        items={[{ key: "state", lamp: state.tone, text: `${state.word}${when}`, testId: "decision-reader-state" }]}
+      />
+    </div>
   );
 }
 

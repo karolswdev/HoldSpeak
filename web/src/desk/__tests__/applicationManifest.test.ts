@@ -120,7 +120,9 @@ describe("DeskOS application manifest", () => {
     const inGo = new Set(GO_GROUPS.flatMap(goRows).flatMap((r) => (r.kind === "app" ? [r.app.action] : [])));
     // Betterment P4: Projects (the window) is Go ▸ Projects ▸ All projects.
     const elsewhere = new Set(["chair-capture", "configure-settings", "configure-runs-on", "configure-setup", "configure-cadence", "change-places",
-      "record-live", "project-setup", "open-projects"]);
+      "record-live", "project-setup", "open-projects",
+      // The owner, 2026-10-25: New Decision (the verb) opens its window.
+      "new-decision"]);
     for (const application of DESK_APPLICATIONS) {
       if (application.parked) continue;
       expect(inGo.has(application.action) || elsewhere.has(application.action), application.action).toBe(true);

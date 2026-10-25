@@ -416,3 +416,26 @@ def test_honest_faces_and_arrival_reads(hub: Any, tmp_path: Path) -> None:
     one = _ok(hub.client.get(unfinished))
     assert [t["title"] for t in one["items"]] == ["Migrate the auth service"], one
     _fence("thoughts-unfinished.one", one, tmp_path, hub)
+
+
+def test_new_decision_reads(hub: Any, tmp_path: Path) -> None:
+    """newDecision.app.test.tsx (the owner, 2026-10-25): New Decision's window
+    creates through the store's own POST (dataSlice createNow: the from-desk
+    producer with the Project in front), then the Decisions window reads the
+    record and its list."""
+    project = _ok(hub.client.post("/api/projects", json={"name": "Payments ledger cutover"}))["project"]
+    created = _ok(hub.client.post("/api/decision-records/from-desk", json={
+        "status": "accepted", "context_markdown": "", "decision_markdown": "",
+        "consequences_markdown": "", "alternatives": [], "decision_text": "",
+        "title": "Keep the ledger on SQLite",
+        "why": "One writer, one file. Postgres waits until we need a second host.",
+        "project_id": project["id"], "project_name": project["name"],
+    }))
+    record = created["record"]
+    assert record["decision_text"] == "Keep the ledger on SQLite", record
+    _fence("decision-records.from-desk", created, tmp_path, hub)
+    read = _ok(hub.client.get(f"/api/decision-records/{record['id']}"))
+    assert "Why: One writer" in str(read.get("rationale")), read
+    _fence("decision-record.new", read, tmp_path, hub)
+    _fence("decision-records.list-new",
+           _ok(hub.client.get("/api/decision-records?limit=100&offset=0")), tmp_path, hub)

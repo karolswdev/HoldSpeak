@@ -18,10 +18,11 @@ import { SYSTEM } from "../../../desk/systemSprites";
 import { DotWord } from "../../../desk/surface/kit";
 import { spriteUrl } from "../../../desk/sprites";
 import { PrefSection } from "../settingsWindow";
+import { NewDecisionForm } from "../NewDecisionCore";
 // The list + inspector shape is the Engines window's own composition.
 import "../../../features/runson/runson.css";
 
-export type WindowPreset = "populated" | "empty" | "busy" | "failed" | "reader" | "inspector";
+export type WindowPreset = "populated" | "empty" | "busy" | "failed" | "reader" | "inspector" | "decision-new" | "decision-filled";
 
 /** Fixture rows only: the same Toolbar, dense ObjectList and StatusBar the
  * Meetings and Projects windows compose, fed by a local adapter. No hub
@@ -120,7 +121,36 @@ const COLUMNS = [
   { key: "state", word: "Summary", track: "minmax(140px, 0.6fr)" },
 ] as const;
 
+/** The New decision window (the owner, 2026-10-25): the decision's picture,
+ *  the label/control grid, and Cancel · Create in the status bar. Empty:
+ *  Create waits for a title. Filled: a title, a Why and the Project in front.
+ *  Local presses only; nothing is written. */
+function NewDecisionWindow({ filled }: { filled: boolean }) {
+  const [title, setTitle] = useState(filled ? "Keep the ledger on SQLite" : "");
+  const [why, setWhy] = useState(filled ? "One writer, one file. Postgres waits until we need a second host." : "");
+  const [pressed, setPressed] = useState<string | null>(null);
+  return (
+    <section className="reference-example reference-window" data-testid="reference-window" aria-label="Window pattern">
+      <div className="reference-window-frame reference-window-new-decision" data-preset={filled ? "decision-filled" : "decision-new"}>
+        <NewDecisionForm
+          title={title}
+          why={why}
+          about={filled ? { id: "specimen-project", name: "Payments ledger cutover" } : null}
+          onTitle={setTitle}
+          onWhy={setWhy}
+          onCreate={() => setPressed("Create")}
+          onCancel={() => setPressed("Cancel")}
+          inline
+        />
+        {pressed ? <span className="reference-window-pressed" data-testid="reference-window-opened">Pressed locally · {pressed}</span> : null}
+      </div>
+    </section>
+  );
+}
+
 export function WindowReference({ preset }: { preset: WindowPreset }) {
+  if (preset === "decision-new") return <NewDecisionWindow filled={false} />;
+  if (preset === "decision-filled") return <NewDecisionWindow filled />;
   if (preset === "reader") return <ReaderWindow />;
   if (preset === "inspector") return <InspectorWindow />;
   return <ListWindow preset={preset} />;
@@ -234,7 +264,7 @@ function InspectorWindow() {
   );
 }
 
-function ListWindow({ preset }: { preset: Exclude<WindowPreset, "reader" | "inspector"> }) {
+function ListWindow({ preset }: { preset: Exclude<WindowPreset, "reader" | "inspector" | "decision-new" | "decision-filled"> }) {
   const [selected, setSelected] = useState<string | null>(preset === "populated" ? "w-2" : null);
   const [opened, setOpened] = useState<string | null>(null);
   const [query, setQuery] = useState("");

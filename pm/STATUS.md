@@ -29,7 +29,15 @@ status bar carrying the selected engine's verbs and egress; Speak's status-bar
 readout (Not ready / Ready · engine, ticking time), the level meter in the bar,
 a quiet Copy verb (`copy` glyph); Voice commands toolbar; Components Window ▸
 List + inspector. Every window in the manifest now follows the grammar.
-Open fix-forward: Engines Remove (DELETE refuses bound engines; unbind rules
+#1473 Room folds duplicate Watch rows (two Jira Watches read the same issues:
+26 rows for 13); this PR: New Decision opens its own window and Create opens
+the record in the Decisions window on the grammar (owner 2026-10-25: "opens up
+a cluster… of a window"). CATCH 2026-10-25: his hub had served main 33fdbce59
+since 2026-10-24 (no watcher alive); redeployed from
+/Users/karol/dev/tools/wt-desk-main-20261025 (see memory reference_owner_hub_redeploy).
+Open fix-forward: the Room's This-week decision click and the Room drawer still
+open the old desk decision window in edit mode; Today ▸ Decisions still the old
+receipt page; Engines Remove (DELETE refuses bound engines; unbind rules
 first), the Add-an-engine panel and Download fold still wear caps tokens,
 Speak's Clean-up chip and the Journal/Blocks/Learned/Configure wings are not
 dense lists yet (no seeded rows to prove them), Ask's EngineLine "No engine"

@@ -30,6 +30,7 @@ import { TitleSlotContext } from "../surface/title";
 import { InteriorSlotContext, type WindowInterior } from "../surface/interior";
 import { BackSlotContext, type WindowBack } from "../surface/back";
 import { windowName } from "../windowName";
+import { spriteUrl } from "../sprites";
 import { WingSlotContext } from "../surface/wings";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { SurfaceState } from "../surface/Surface";
@@ -50,6 +51,8 @@ export interface SurfaceRow {
   defaultH?: number;
   /** Open maximized (full stage) — the canvas-sized surfaces want it. */
   maximized?: boolean;
+  /** The world sprite kind of the title bar's glyph (applications.ts). */
+  sprite?: string;
   parked?: string;
   Core: LazyExoticComponent<ComponentType<CoreProps & { scope?: string }>>;
 }
@@ -67,6 +70,7 @@ const SURFACES: SurfaceRow[] = SURFACE_APPLICATIONS
   defaultW: application.surface.defaultW,
   defaultH: application.surface.defaultH,
   maximized: application.surface.maximized,
+  sprite: application.surface.sprite,
   parked: application.parked,
   Core: lazy(application.surface.load),
   }));
@@ -230,6 +234,9 @@ export function SurfaceWindowHost({
     <DeskWindowFrame
       id={row.id}
       glyph={row.glyph}
+      icon={row.sprite
+        ? <img src={spriteUrl(row.sprite, row.id)} alt="" width={14} height={14} draggable={false} />
+        : undefined}
       eyebrow={row.eyebrow}
       title={titleOverride ?? scopedName ?? row.title}
       minW={row.minW}

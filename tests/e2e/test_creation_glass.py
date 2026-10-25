@@ -231,12 +231,16 @@ class TestEveryNewVerbOpensItsWindow:
                 # New Decision: the name first, no record before it (PHILO-13-08).
                 before, sent = page.evaluate(WINDOW_IDS), len(posts)
                 self._menu_verb(page, width, "New Decision")
-                page.locator("[data-testid=palette-name]").wait_for(timeout=OPENS_WITHIN_MS)
+                # The owner, 2026-10-25: New Decision opens a window of its own;
+                # Create closes it and the record opens in the Decisions window.
+                naming = page.locator("#surface-new-decision")
+                naming.locator("[data-testid=palette-name]").wait_for(timeout=OPENS_WITHIN_MS)
                 page.wait_for_timeout(800)
                 assert "/api/decision-records/from-desk" not in posts[sent:], ("a decision was made before its name", posts[sent:])
-                page.locator("[data-testid=palette-name]").fill("Freeze the old ledger")
+                naming.locator("[data-testid=palette-name]").fill("Freeze the old ledger")
                 page.keyboard.press("Enter")
-                win = self._new_window(page, before, f"New Decision on the {face} at {width}")
+                naming.wait_for(state="detached", timeout=OPENS_WITHIN_MS)
+                win = self._new_window(page, before + ["surface-new-decision"], f"New Decision on the {face} at {width}")
                 assert posts[sent:].count("/api/decision-records/from-desk") == 1, posts[sent:]
                 page.screenshot(path=str(SHOTS / f"new-decision-{face}-{width}.png"))
                 page.wait_for_timeout(READ_DELAY_MS + 1500)
@@ -244,6 +248,11 @@ class TestEveryNewVerbOpensItsWindow:
                 assert "Freeze the old ledger" in win.inner_text() or win.locator(
                     "input, textarea").evaluate_all("(els) => els.some((e) => e.value === 'Freeze the old ledger')")
                 proof.append(f"New Decision: one POST /api/decisions after the name, window {win.get_attribute('id')}")
+                if width < 720:
+                    # The Decisions window's reader: on the phone the title-bar
+                    # Back returns to the list first, then closes the window.
+                    self._press(page, win.get_by_test_id("decision-reader-back"), width)
+                    win.get_by_test_id("decisions-row").first.wait_for(timeout=OPENS_WITHIN_MS * 4)
                 self._close(page, win, width)
 
                 # Betterment Q10: the palette leg pressed New Knowledge, which

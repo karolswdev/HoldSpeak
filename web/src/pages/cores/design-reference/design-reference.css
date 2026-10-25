@@ -245,6 +245,17 @@
   box-shadow: var(--desk-window-shadow-rest);
   container: surface / inline-size;
 }
+/* The New decision specimen: a small form window, as tall as its form. */
+.reference-window-frame.reference-window-new-decision {
+  min-height: 0;
+  max-width: 560px;
+}
+.reference-window-new-decision > .new-decision { flex: 1 1 auto; }
+.reference-window-pressed {
+  padding: 4px 12px 8px;
+  color: var(--wb-muted);
+  font: 400 12px / 1.4 var(--font-sans);
+}
 .reference-window-frame.reference-window-people {
   min-height: 0;
   margin-top: 12px;

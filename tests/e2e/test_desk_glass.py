@@ -529,23 +529,29 @@ class TestOneDecisionRecord:
 
     def _new_decision(self, page: Any, phone: bool) -> tuple[str, str, Any]:
         _search(page, "New Decision", "[id='desk-palette-option-desk.new-decision']")
-        prompt = page.get_by_test_id("palette-name")
+        # The owner, 2026-10-25: New Decision opens a window of its own.
+        new_window = page.locator("#surface-new-decision")
+        new_window.wait_for(timeout=T)
+        prompt = new_window.get_by_test_id("palette-name")
         prompt.wait_for(timeout=T)
         with page.expect_response(
             lambda response: response.request.method == "POST" and response.url.endswith("/api/decision-records/from-desk")
         ) as created:
             prompt.fill(P9_DECISION_TEXT)
-            page.get_by_test_id("decision-about-chip").wait_for(timeout=T)
-            why = page.get_by_test_id("decision-why")
+            new_window.get_by_test_id("decision-about-chip").wait_for(timeout=T)
+            why = new_window.get_by_test_id("decision-why")
             why.fill(P9_WHY.removeprefix("Why: "))
             prompt.press("Enter")
         body = created.value.json()
         decision_id = str(body["decision"]["id"])
         record_id = str(body["record"]["id"])
-        decisions = page.locator(".intelligence-pullout:not(.today)")
+        # The record opens in the Decisions window, in its reader; never Today.
+        new_window.wait_for(state="detached", timeout=T)
+        decisions = page.locator("#surface-decisions")
         decisions.wait_for(timeout=T)
-        detail = decisions.locator(".receipt-detail").filter(has_text=P9_DECISION_TEXT)
+        detail = decisions.get_by_test_id("decision-reader").filter(has_text=P9_DECISION_TEXT)
         detail.wait_for(timeout=T)
+        assert page.locator("[id='intelligence:desk']").count() == 0
         assert P9_DECISION_TEXT in detail.inner_text()
         assert P9_PROJECT_NAME in detail.inner_text()
         assert P9_WHY.removeprefix("Why: ") in detail.inner_text()
@@ -632,18 +638,19 @@ class TestOneDecisionRecord:
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], geometry
                 page.screenshot(path=str(P9_SHOTS / f"project-this-week-{width}.png"))
                 decided.click()
-                detail = page.locator(".receipt-detail").filter(has_text=P9_DECISION_TEXT)
-                detail.wait_for(timeout=T)
-                assert P9_DECISION_TEXT in detail.inner_text()
-                detail_text = detail.inner_text()
-                assert P9_PROJECT_NAME in detail_text
-                assert P9_WHY.removeprefix("Why: ") in detail_text
-                # Leave the record detail before opening another Desk surface.
-                # On a phone the detail is a full sheet and otherwise owns the
-                # Decisions row's hit point.
+                # The Room opens the decision's own window (its source); it
+                # is the front window, named by the decision.
                 detail_window = page.locator(
                     ".desk-window-shell.is-front[aria-label=" + json.dumps(P9_DECISION_TEXT) + "]"
                 )
+                detail_window.wait_for(timeout=T)
+                # (Its About and Why were read in the Decisions reader above; on
+                # main this leg passed on the Today receipts page left open
+                # behind it, which the New decision path no longer opens.)
+                assert P9_DECISION_TEXT in detail_window.inner_text()
+                # Leave the record detail before opening another Desk surface.
+                # On a phone the detail is a full sheet and otherwise owns the
+                # Decisions row's hit point.
                 detail_window.get_by_role("button", name=re.compile(r"^(Back from|Close) ")).click()
                 detail_window.wait_for(state="detached", timeout=T)
 
@@ -663,7 +670,7 @@ class TestOneDecisionRecord:
                 geometry = self._hit_and_focus(opener)
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], json.dumps(geometry, sort_keys=True)
                 opener.dblclick()
-                desk_detail = decisions_window.locator(".receipt-detail").filter(has_text=P9_DECISION_TEXT)
+                desk_detail = decisions_window.get_by_test_id("decision-reader").filter(has_text=P9_DECISION_TEXT)
                 desk_detail.wait_for(timeout=T)
                 assert P9_DECISION_TEXT in desk_detail.inner_text()
                 desk_detail_text = desk_detail.inner_text()
@@ -671,6 +678,10 @@ class TestOneDecisionRecord:
                 assert P9_WHY.removeprefix("Why: ") in desk_detail_text
                 page.screenshot(path=str(P9_SHOTS / f"decisions-window-{width}.png"))
                 decisions_surface = page.locator("#surface-decisions")
+                if phone:
+                    # On the phone the title-bar Back first returns the reader to the list.
+                    decisions_surface.get_by_test_id("decision-reader-back").click()
+                    decisions_surface.get_by_test_id("decisions-row").first.wait_for(timeout=T)
                 decisions_surface.get_by_role("button", name=re.compile(r"^(Back from|Close) ")).click()
                 decisions_surface.wait_for(state="detached", timeout=T)
 
