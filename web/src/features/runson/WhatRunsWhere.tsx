@@ -45,10 +45,13 @@ export function engineChip(engine: BoardEngine | undefined): ReactNode {
 const chipOf = engineChip;
 
 export const NOT_ASSIGNED = "Not assigned";
+/** Before the row's read lands: a quiet word, never a bare ellipsis (the
+ *  sweep reads an ellipsis as clipped text). */
+export const READING = "Reading";
 
 /** The words a row's picker shows: its own engine, or where it follows. */
 function shownName(row: WhatRow, editor: RowEditor | undefined, nameOf: (id: string, label: string) => string): string {
-  if (!editor) return "…";
+  if (!editor) return READING;
   if (editor.own) return nameOf(editor.own.profileId, editor.own.label);
   // Owner, 2026-08-31 (lost in Settings > Models): a row with no engine
   // says "Not assigned", never a blank and never a vaguer word.
@@ -117,7 +120,9 @@ export function WhatRunsWhere({ ctrl, selected }: { ctrl: RunsOnController; sele
                     data-testid={`runson-what-pick-${row.id}`}
                     onClick={() => setOpen(picking ? null : row.id)}
                   >
-                    {editor && shownName(row, editor, nameOf) === NOT_ASSIGNED ? (
+                    {!editor ? (
+                      <DotWord className="runson-what-name">{READING}</DotWord>
+                    ) : shownName(row, editor, nameOf) === NOT_ASSIGNED ? (
                       <DotWord className="runson-what-name">{NOT_ASSIGNED}</DotWord>
                     ) : (
                       <span className="runson-what-name">{shownName(row, editor, nameOf)}</span>
