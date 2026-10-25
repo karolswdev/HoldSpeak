@@ -92,7 +92,7 @@ const SEVENTEEN = Array.from({ length: 17 }, (_, i) => {
 const needsRows = () => [...document.querySelectorAll<HTMLElement>('[data-testid="needs-drawer"] [data-testid="needs-row"]')];
 const sourceRows = () => [...document.querySelectorAll<HTMLElement>('[data-testid="needs-drawer"] [data-testid="needs-source-row"]')];
 const rowNamed = (text: string) => needsRows().find((r) => r.querySelector(".needs-row-name")?.textContent === text)!;
-const lampOf = (r: HTMLElement) => r.querySelector(".gadget-lamp")?.textContent ?? "";
+const lampOf = (r: HTMLElement) => r.querySelector("[data-testid=needs-row-state]")?.textContent ?? "";
 const factOf = (r: HTMLElement) => r.querySelector(".needs-row-fact")?.textContent ?? "";
 
 describe("Arrival attention (HS-200-15)", () => {
@@ -122,10 +122,10 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(gap.compareDocumentPosition(needsRows()[needsRows().length - 1]) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
     const rows = [gap, ...needsRows()];
     expect(rows[1].textContent).toContain("KAN-7 Payments cut-over runbook");
-    expect(lampOf(rows[1])).toBe("OVERDUE · 2 DAYS");
-    expect(lampOf(rows[2])).toBe("DUE TODAY");
+    expect(lampOf(rows[1])).toBe("Overdue · 2 days");
+    expect(lampOf(rows[2])).toBe("Due today");
     for (const r of rows.slice(1)) {
-      expect(r.querySelectorAll(".gadget-lamp")).toHaveLength(1);
+      expect(r.querySelectorAll("[data-testid=needs-row-state]")).toHaveLength(1);
       expect(within(r).getByRole("button", { name: /^Open: / })).toBeTruthy();
       expect(r.textContent).toContain("X");
     }
@@ -176,7 +176,7 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(gap.querySelector(".needs-row-name")?.textContent).toBe("jira KAN");
     // PHILO-15 B74: a time from another day carries its day.
     expect(factOf(gap)).toBe(`Jira rejected the query · observed ${whenWord(wireDate("2026-09-07T08:41:00")!)}`);
-    expect(lampOf(gap)).toBe("CANT CHECK");
+    expect(lampOf(gap)).toBe("Cant check");
     const verb = within(gap).getByRole("button", { name: "Reconnect: jira KAN" });
     expect(verb.className).toContain("btn");
     expect(verb.className).not.toContain("btn--primary");
@@ -199,7 +199,7 @@ describe("Arrival attention (HS-200-15)", () => {
     render(<ChairHome />);
     await waitFor(() => expect(rowNamed("KAN-7 Runbook")).toBeTruthy(), { timeout: 5000 });
     expect(factOf(rowNamed("KAN-7 Runbook"))).toContain(`observed ${whenWord(wireDate("2026-09-07T08:41:00")!)}`);
-    expect(lampOf(rowNamed("KAN-7 Runbook"))).toBe("OVERDUE · 2 DAYS");
+    expect(lampOf(rowNamed("KAN-7 Runbook"))).toBe("Overdue · 2 days");
   });
 
   it("speaks the all-clear once on a complete read, with no chip and no strip", async () => {
@@ -287,7 +287,7 @@ describe("Arrival attention (HS-200-15)", () => {
     render(<ChairHome />);
     await waitFor(() => expect(rowNamed("Pilot OTel in billing")).toBeTruthy());
     const line = rowNamed("Pilot OTel in billing");
-    expect(lampOf(line)).toBe("UNASSIGNED");
+    expect(lampOf(line)).toBe("Unassigned");
     const verb = (line.querySelector('[data-verb="name-owner"]') as HTMLElement);
     expect(verb.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(verb);
@@ -364,11 +364,11 @@ describe("Arrival attention (HS-200-15)", () => {
       await waitFor(() => expect(rowNamed("Draft the onboarding checklist")).toBeTruthy());
       const owned = rowNamed("Draft the onboarding checklist");
       const bare = rowNamed("Book the room");
-      expect(lampOf(owned)).toBe("TO REVIEW");
+      expect(lampOf(owned)).toBe("To review");
       expect(factOf(owned)).toContain("Dana");
-      expect(owned.textContent).not.toContain("UNASSIGNED");
+      expect(owned.textContent).not.toContain("Unassigned");
       expect(owned.querySelector('[data-verb="name-owner"]')).toBeNull();
-      expect(lampOf(bare)).toBe("UNASSIGNED");
+      expect(lampOf(bare)).toBe("Unassigned");
       expect((bare.querySelector('[data-verb="name-owner"]') as HTMLElement).textContent).toBe("Name an owner");
       expect(bare.querySelector('[data-verb="review"]')).toBeNull();
 

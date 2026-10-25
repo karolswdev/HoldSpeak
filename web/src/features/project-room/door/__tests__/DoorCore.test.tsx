@@ -297,20 +297,21 @@ describe("DoorCore", () => {
       expect(input.value).toBe("");
     });
 
-    it("shows 'THIS BECOMES THE PROJECT'S NAME' caption", async () => {
+    it("labels the name field Name in the form grid (window grammar: no mono caption)", async () => {
       render(<DoorCore scope="" />);
       await waitFor(() => {
         expect(screen.getByTestId("door-root")).toBeTruthy();
       });
-      expect(screen.getByText(/THIS BECOMES THE PROJECT/)).toBeTruthy();
+      expect(screen.getByText("Name")).toBeTruthy();
+      expect(screen.queryByText(/THIS BECOMES THE PROJECT/)).toBeNull();
     });
 
-    it("shows SOURCES label", async () => {
+    it("shows the Sources caption", async () => {
       render(<DoorCore scope="" />);
       await waitFor(() => {
         expect(screen.getByTestId("door-sources-label")).toBeTruthy();
       });
-      expect(screen.getByTestId("door-sources-label").textContent).toContain("SOURCES");
+      expect(screen.getByTestId("door-sources-label").textContent).toContain("Sources");
     });
   });
 
@@ -327,7 +328,7 @@ describe("DoorCore", () => {
       expect(screen.getByTestId("door-connect-jira")).toBeTruthy();
     });
 
-    it("shows NOT SIGNED IN chip for github when not signed in", async () => {
+    it("says Not signed in (a dot and a word) for github when not signed in", async () => {
       mockFetchConnections.mockResolvedValue({
         tools: [
           { ...ghTool(false), state: "owner_action_required" },
@@ -336,25 +337,24 @@ describe("DoorCore", () => {
       });
       render(<DoorCore scope="" />);
       await waitFor(() => {
-        expect(screen.getByTestId("state-chip-not-signed-in")).toBeTruthy();
+        expect(within(screen.getByTestId("door-row-github")).getByText("Not signed in")).toBeTruthy();
       });
     });
 
-    it("shows NOT SET UP chip for not-configured providers", async () => {
+    it("says Not set up for not-configured providers", async () => {
       render(<DoorCore scope="" />);
       await waitFor(() => {
-        const chips = screen.getAllByTestId("state-chip-not-set-up");
-        expect(chips.length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText("Not set up").length).toBeGreaterThanOrEqual(1);
       });
     });
 
-    it("shows NO SOURCES · BLANK PROJECT receipt", async () => {
+    it("says Blank project in the status bar when no source is picked", async () => {
       render(<DoorCore scope="" />);
       await waitFor(() => {
         expect(screen.getByTestId("door-receipt")).toBeTruthy();
       });
       expect(screen.getByTestId("door-receipt").textContent).toBe(
-        "NO SOURCES · BLANK PROJECT",
+        "Blank project",
       );
     });
   });
@@ -378,14 +378,14 @@ describe("DoorCore", () => {
         expect(screen.getByTestId("door-trigger-github")).toBeTruthy();
       });
       expect(screen.getByTestId("door-trigger-github").textContent).toContain(
-        "Choose a repository",
+        "Pick a repository",
       );
       expect(screen.getByTestId("door-trigger-jira").textContent).toContain(
-        "Choose a project",
+        "Pick a project",
       );
     });
 
-    it("renders watch toggles for github (OPEN PRS, CI)", async () => {
+    it("renders watch toggles for github (Open PRs, CI)", async () => {
       render(<DoorCore scope="" />);
       await waitFor(() => {
         expect(screen.getByTestId("check-gadget-open-prs")).toBeTruthy();
@@ -393,12 +393,12 @@ describe("DoorCore", () => {
       expect(screen.getByTestId("check-gadget-ci")).toBeTruthy();
     });
 
-    it("renders watch toggles for jira (OVERDUE, DUE 7 DAYS, BLOCKED)", async () => {
+    it("renders watch toggles for jira (Overdue, Due in 7 days, Blocked)", async () => {
       render(<DoorCore scope="" />);
       await waitFor(() => {
         expect(screen.getByTestId("check-gadget-overdue")).toBeTruthy();
       });
-      expect(screen.getByTestId("check-gadget-due-7-days")).toBeTruthy();
+      expect(screen.getByTestId("check-gadget-due-in-7-days")).toBeTruthy();
       expect(screen.getByTestId("check-gadget-blocked")).toBeTruthy();
     });
 
@@ -412,12 +412,12 @@ describe("DoorCore", () => {
       ).toBe("false");
     });
 
-    it("shows EgressChip on connected rows", async () => {
+    it("draws no egress chip until a source is picked (egress where egress happens)", async () => {
       render(<DoorCore scope="" />);
       await waitFor(() => {
-        const chips = screen.getAllByTestId("egress-chip");
-        expect(chips.length).toBeGreaterThanOrEqual(2);
+        expect(screen.getByTestId("door-adjust-github")).toBeTruthy();
       });
+      expect(screen.queryAllByTestId("egress-chip")).toHaveLength(0);
     });
 
     it("shows Adjust button on connected rows", async () => {
@@ -519,7 +519,7 @@ describe("DoorCore", () => {
       );
     });
 
-    it("shows CHECKING chip after scope is picked", async () => {
+    it("says Checking (a dot and a word) after scope is picked", async () => {
       render(<DoorCore scope="" />);
       await waitFor(() => {
         expect(screen.getByTestId("door-trigger-github")).toBeTruthy();
@@ -541,7 +541,7 @@ describe("DoorCore", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId("state-chip-checking")).toBeTruthy();
+        expect(within(screen.getByTestId("door-row-github")).getByText("Checking")).toBeTruthy();
       });
     });
   });
@@ -588,7 +588,7 @@ describe("DoorCore", () => {
       mockDoorCount.mockResolvedValue(cantCheckResponse());
     });
 
-    it("shows CAN'T CHECK chip with reason", async () => {
+    it("says Can't check (a dot and a word) with reason", async () => {
       render(<DoorCore scope="" />);
       await waitFor(() => {
         expect(screen.getByTestId("door-trigger-github")).toBeTruthy();
@@ -610,7 +610,7 @@ describe("DoorCore", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByTestId("state-chip-can't-check")).toBeTruthy();
+        expect(within(screen.getByTestId("door-row-github")).getByText("Can't check")).toBeTruthy();
       });
       expect(screen.getByText("GitHub CLI query failed")).toBeTruthy();
     });
@@ -646,14 +646,14 @@ describe("DoorCore", () => {
   });
 
   describe("blank project receipt", () => {
-    it("shows NO SOURCES · BLANK PROJECT when no scopes are picked", async () => {
+    it("says Blank project when no scopes are picked", async () => {
       mockFetchConnections.mockResolvedValue(connectedTools());
       render(<DoorCore scope="" />);
       await waitFor(() => {
         expect(screen.getByTestId("door-receipt")).toBeTruthy();
       });
       expect(screen.getByTestId("door-receipt").textContent).toBe(
-        "NO SOURCES · BLANK PROJECT",
+        "Blank project",
       );
     });
 
@@ -682,9 +682,11 @@ describe("DoorCore", () => {
 
       await waitFor(() => {
         const receipt = screen.getByTestId("door-receipt").textContent ?? "";
-        expect(receipt).toContain("SOURCE");
-        expect(receipt).toContain("WATCH");
+        expect(receipt).toContain("1 source");
+        expect(receipt).toContain("watches");
       });
+      // Egress where egress happens: the picked source's host in the status bar.
+      expect(screen.getAllByTestId("egress-chip").map((chip) => chip.textContent)).toEqual(["github.com"]);
     });
   });
 
@@ -769,8 +771,8 @@ describe("DoorCore", () => {
       await act(async () => { fireEvent.click(screen.getByTestId("door-source-check")); });
 
       await waitFor(() => expect(screen.getByTestId("door-found")).toBeTruthy());
-      expect(screen.getByText("CHECKED")).toBeTruthy();
-      expect(screen.getByText("NOT CHECKED")).toBeTruthy();
+      expect(screen.getByText("Checked")).toBeTruthy();
+      expect(screen.getByText("Not checked")).toBeTruthy();
       expect(screen.getByTestId("door-people").textContent).toContain("Mira");
       fireEvent.click(screen.getByTestId("door-found-remove-note-1"));
       fireEvent.click(screen.getByTestId("door-create"));
@@ -856,7 +858,7 @@ describe("DoorCore", () => {
   /* ── HS-174-07: Confluence connector ── */
 
   describe("confluence source row", () => {
-    it("shows C emblem and Confluence defaults (RECENT BLOGS on, PAGES BY ID off)", async () => {
+    it("leads the Confluence row with its glyph and offers its defaults (Recent blogs on, Pages by ID off)", async () => {
       mockFetchConnections.mockResolvedValue({
         tools: [
           {
@@ -901,15 +903,13 @@ describe("DoorCore", () => {
         expect(screen.getByTestId("door-row-confluence")).toBeTruthy();
       });
 
-      // The emblem should be "C"
+      // Window grammar: the row leads with its D glyph (a page), not a letter.
       const row = screen.getByTestId("door-row-confluence");
-      expect(row.querySelector(".door-lead")?.textContent).toBe("C");
+      expect(row.querySelector("img.door-row-glyph")?.getAttribute("src")).toContain("/20/artifact.png");
 
-      // Defaults: RECENT BLOGS (on), PAGES BY ID (off)
-      const recentBlogs = row.querySelector('[data-testid="door-row-confluence"] [aria-label="RECENT BLOGS"]')
-        ?? row.textContent;
-      expect(row.textContent).toContain("RECENT BLOGS");
-      expect(row.textContent).toContain("PAGES BY ID");
+      // Defaults: Recent blogs (on), Pages by ID (off)
+      expect(row.textContent).toContain("Recent blogs");
+      expect(row.textContent).toContain("Pages by ID");
     });
 
     it("shows NOT SET UP for a disconnected Confluence row", async () => {
@@ -929,7 +929,7 @@ describe("DoorCore", () => {
       });
 
       const row = screen.getByTestId("door-row-confluence");
-      expect(row.textContent).toContain("NOT SET UP");
+      expect(row.textContent).toContain("Not set up");
       expect(screen.getByTestId("door-connect-confluence")).toBeTruthy();
     });
   });
@@ -967,8 +967,8 @@ describe("DoorCore", () => {
         tools: [{ ...ghTool(false), state: "degraded", error_detail: "connect to 10.0.0.1:401 timed out" }, jiraTool(false)],
       });
       render(<DoorCore scope="" />);
-      await waitFor(() => expect(screen.getAllByTestId("state-chip-not-set-up").length).toBe(2));
-      expect(screen.queryByTestId("state-chip-not-signed-in")).toBeNull();
+      await waitFor(() => expect(screen.getAllByText("Not set up").length).toBe(2));
+      expect(screen.queryByText("Not signed in")).toBeNull();
     });
 
     it("Recheck in the row checks the provider and reads the connections again", async () => {

@@ -93,7 +93,7 @@ describe("Arrival coverage (HS-200-07 / C4)", () => {
     expect(screen.getByTestId("arrival-display").textContent)
       .not.toBe("Nothing needs you");
     const row = gapRows()[0];
-    expect(row.querySelector(".gadget-lamp")?.textContent).toContain("READ FAILED");
+    expect(row.querySelector("[data-testid=needs-row-state]")?.textContent).toContain("Read failed");
     // The owning verb, as the library Button.
     const verb = (row.querySelector('[data-verb="repair"]') as HTMLElement);
     expect(verb.textContent).toBe("Retry");

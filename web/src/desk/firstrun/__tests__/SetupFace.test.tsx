@@ -88,9 +88,10 @@ describe("Setup ST3–ST5", () => {
     render(<SetupFace initial={inventory({ rows: [inventory().rows[0]] })} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Set up speech" }));
-    await waitFor(() => expect(screen.getByText("Works")).toBeTruthy());
+    await waitFor(() => expect(screen.getByTestId("setup-row-state").textContent).toBe("Ready"));
     expect(screen.getByText("Speech")).toBeTruthy();
-    expect(screen.queryByTestId("setup-found")).toBeNull();
+    // Window grammar: a ready row has no verb left in the status bar.
+    expect(screen.queryByTestId("setup-row-verb")).toBeNull();
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/setup/use", expect.objectContaining({
       method: "POST", json: expect.objectContaining({ id: "speech" }),
     }));
@@ -145,7 +146,7 @@ describe("Setup ST3–ST5", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Let my agents use HoldSpeak" }));
     await waitFor(() => expect(screen.getByText(/Claude Code: already has another MCP setup/)).toBeTruthy());
-    fireEvent.click(screen.getByText("Not found", { exact: true }));
+    expect(screen.getByTestId("setup-row-state").textContent).toBe("Failed");
     expect(screen.getByText("Codex · uses your desk")).toBeTruthy();
     expect(screen.getAllByRole("button", { name: "Stop using my desk" })).toHaveLength(2);
 
@@ -177,9 +178,9 @@ describe("Setup ST3–ST5", () => {
     fireEvent.click(screen.getByRole("button", { name: "Use everything found" }));
     await waitFor(() => expect(screen.getByText("Ready, Astra.")).toBeTruthy());
     expect(screen.getByText("stub-qwen")).toBeTruthy();
-    const lanRow = screen.getByText("stub-qwen").closest("li");
+    const lanRow = screen.getByText("stub-qwen").closest("[data-testid=setup-row]");
     expect(lanRow).toBeTruthy();
-    expect(within(lanRow as HTMLElement).getByRole("status", { name: "Works" })).toBeTruthy();
+    expect(within(lanRow as HTMLElement).getByTestId("setup-row-state").textContent).toBe("Ready");
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/setup/use", expect.objectContaining({
       method: "POST", json: expect.objectContaining({ id: "lan:ef47e34f9cba6a6e7c21" }),
     }));
@@ -225,7 +226,7 @@ describe("Setup ST3–ST5", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Set up speech" }));
     await waitFor(() => expect(screen.getByTestId("setup-found").textContent).toContain("Working"));
-    expect(screen.getByTestId("setup-found").textContent).not.toContain("Works");
+    expect(screen.getByTestId("setup-found").textContent).not.toContain("Ready");
   });
 
   it("does not claim Works for an unrecognised successful HTTP answer", async () => {
@@ -238,7 +239,8 @@ describe("Setup ST3–ST5", () => {
     render(<SetupFace initial={inventory({ rows: [inventory().rows[0]] })} />);
     fireEvent.click(screen.getByRole("button", { name: "Set up speech" }));
     await waitFor(() => expect(screen.getByText(/Not checked. Try again./)).toBeTruthy());
-    expect(screen.getByTestId("setup-found").textContent).not.toContain("Works");
+    expect(screen.getByTestId("setup-found").textContent).toContain("Not set up");
+    expect(screen.getByTestId("setup-found").textContent).not.toContain("Ready");
     expect(screen.getByRole("button", { name: "Set up speech" })).toBeTruthy();
   });
 
@@ -255,11 +257,11 @@ describe("Setup ST3–ST5", () => {
     render(<SetupFace initial={inventory({ rows: [inventory().rows[1]] })} />);
 
     fireEvent.click(screen.getByRole("button", { name: "Use it" }));
-    await waitFor(() => expect(screen.getByText(/Not found/)).toBeTruthy());
-    fireEvent.click(screen.getByText(/Not found/));
-    await waitFor(() => expect(screen.getByText("Does not work")).toBeTruthy());
+    // Window grammar: the pressed row failed (a dot and a word) and its
+    // reason reads in the row's Detail; the verb stays to try again.
+    await waitFor(() => expect(screen.getByTestId("setup-row-state").textContent).toBe("Failed"));
     expect(screen.getByText(/Account probe failed/)).toBeTruthy();
-    expect(screen.getByText(/Not found/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Use it" })).toBeTruthy();
   });
 
   it("keeps a LAN answer when a later row update lands", async () => {
@@ -272,7 +274,7 @@ describe("Setup ST3–ST5", () => {
     });
     render(<SetupFace initial={inventory({ rows: [inventory().rows[0]] })} />);
     fireEvent.click(screen.getByRole("button", { name: "Set up speech" }));
-    await waitFor(() => expect(screen.getByText("Works")).toBeTruthy());
+    await waitFor(() => expect(screen.getAllByTestId("setup-row-state")[0].textContent).toBe("Ready"));
     releaseLan?.({ rows: [{ id: "qwen", name: "qwen3.8-27b", host: "192.168.1.43", baseUrl: "http://192.168.1.43:8080" }] });
     await waitFor(() => expect(screen.getByText("qwen3.8-27b")).toBeTruthy());
   });

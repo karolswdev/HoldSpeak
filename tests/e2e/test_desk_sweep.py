@@ -1215,7 +1215,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 page.get_by_test_id(f"door-pick-{pick}").click()
                 # Picked and checked: the row names the pick, and its check is done.
                 page.wait_for_function("""([p, pick]) => { const r = document.querySelector(`[data-testid=door-row-${p}]`);
-                  return r && r.textContent.includes(pick) && !/CHECKING/.test(r.textContent); }""",
+                  return r && r.textContent.includes(pick) && !/Checking/i.test(r.textContent); }""",
                                        arg=[provider, pick.split("/")[-1]], timeout=T)
             page.get_by_test_id("door-counts-github").wait_for(timeout=T)
             page.mouse.move(2, 2)

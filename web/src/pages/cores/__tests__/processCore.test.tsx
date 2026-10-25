@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   announceLauncher,
@@ -45,7 +45,7 @@ afterEach(() => {
 });
 
 describe("ProcessCore", () => {
-  it("renders the ledger facts as wire tokens and links needs-you rows to the system shade", () => {
+  it("draws the runs as a dense list (window grammar) and opens Desk memory for a run that needs him", () => {
     const activate = vi.fn();
     announceLauncher({
       id: "attention",
@@ -64,21 +64,26 @@ describe("ProcessCore", () => {
 
     const { container } = render(<ProcessCore />);
 
-    // HS-111-06: section heads are count tokens; kinds are the wire
-    // tokens themselves; state is a surface-token, never a pill.
-    expect(screen.getByText("NEEDS YOU 1")).toBeTruthy();
-    expect(container.textContent).toMatch(/PROCESS\.SPAWN · agent:build/);
-    expect(
-      screen.getByText(/Owner · Node:studio/),
-    ).toBeTruthy();
+    // Window grammar (2026-10-24): the toolbar, then one dense row per run:
+    // the operation in words, its target, where it runs, a dot and a word.
+    expect(screen.getByRole("toolbar", { name: "Processes" })).toBeTruthy();
+    const rowEl = container.querySelector("[data-testid=process-row]") as HTMLElement;
+    expect(rowEl.textContent).toContain("Process spawn");
+    expect(screen.getByTestId("process-target").textContent).toBe("agent:build");
+    expect(screen.getByText(/Owner · Node:studio/)).toBeTruthy();
+    expect(screen.getByTestId("process-state").textContent).toBe("Needs you");
+    expect(container.textContent).not.toMatch(/PROCESS\.SPAWN/);
     expect(container.querySelector(".signal-status")).toBeNull();
-    const answer = screen.getByRole("link", { name: "ANSWER" });
-    expect(answer).toHaveAttribute("href", "/#attention");
-    fireEvent.click(answer);
+    // The status bar says it in warm words, never a zero.
+    expect(screen.getByTestId("process-status").textContent).toContain("1 needs you");
+    expect(screen.getByTestId("process-status").textContent).not.toMatch(/\b0\b/);
+    // Selecting the run puts its one verb in the status bar.
+    fireEvent.click(within(rowEl).getAllByRole("button")[0]);
+    fireEvent.click(screen.getByTestId("process-answer"));
     expect(activate).toHaveBeenCalledOnce();
   });
 
-  it("shows one truthful empty line, then only the populated group", () => {
+  it("shows one truthful empty line, then the populated list", () => {
     useProcessWindow.setState({
       sections: sections.map((section) => ({ ...section, rows: [] })),
       loading: false,
@@ -90,25 +95,13 @@ describe("ProcessCore", () => {
     render(<ProcessCore />);
 
     expect(screen.getByText("No runs yet")).toBeTruthy();
-    for (const head of [
-      "NEEDS YOU",
-      "RUNNING",
-      "WAITING",
-      "UNKNOWN",
-      "RECENTLY ENDED",
-    ]) {
-      expect(screen.queryByText(head)).toBeNull();
-    }
-    expect(screen.getByText("KERNEL")).toBeTruthy();
+    expect(screen.queryByTestId("process-row")).toBeNull();
+    expect(screen.getByTestId("process-status").textContent).toBe("Watching");
     expect(screen.queryByText(/CURSOR/)).toBeNull();
 
     act(() => useProcessWindow.setState({ sections }));
-    expect(screen.getByText("NEEDS YOU 1")).toBeTruthy();
-    expect(screen.getByText(/KERNEL · CURSOR/)).toBeTruthy();
+    expect(screen.getAllByTestId("process-row")).toHaveLength(1);
     expect(screen.queryByText("No runs yet")).toBeNull();
-    for (const head of ["RUNNING", "WAITING", "UNKNOWN", "RECENTLY ENDED"]) {
-      expect(screen.queryByText(head)).toBeNull();
-    }
   });
 });
 
@@ -147,14 +140,14 @@ describe("ProcessCore names the target, never a raw id and never a blank (Astra,
       loading: false, inflight: false, error: "", started: true,
     });
     const { container } = render(<ProcessCore />);
-    const lines = [...container.querySelectorAll(".surface-ledger-rows > li")].map((li) => li.textContent);
+    const lines = [...container.querySelectorAll("[data-testid=process-row]")].map((li) => li.textContent);
     expect(lines).toHaveLength(2);
     expect(new Set(lines).size).toBe(2);
-    expect(lines.some((l) => /DECISION\.CREATE · Freeze the old ledger on Nov 5/.test(l ?? ""))).toBe(true);
-    expect(lines.some((l) => /DECISION\.CREATE · Adopt OpenTelemetry/.test(l ?? ""))).toBe(true);
+    expect(lines.some((l) => /Decision create.*Freeze the old ledger on Nov 5/.test(l ?? ""))).toBe(true);
+    expect(lines.some((l) => /Decision create.*Adopt OpenTelemetry/.test(l ?? ""))).toBe(true);
     // The name is its own element, so the face can give it room (glass fences its width).
     expect([...container.querySelectorAll("[data-testid=process-target]")].map((e) => e.textContent)).toEqual(
-      [" · Freeze the old ledger on Nov 5", " · Adopt OpenTelemetry"]);
+      ["Freeze the old ledger on Nov 5", "Adopt OpenTelemetry"]);
     expect(container.textContent).not.toMatch(/decision_[0-9a-f]/);
   });
 });

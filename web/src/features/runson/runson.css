@@ -4,10 +4,22 @@
 .runson-root {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  container-type: inline-size;
+}
+/* Window grammar (2026-10-24): the toolbar touches the frame; the engine
+   sheets under it keep the form inset. */
+.runson-sheet {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
   gap: 10px;
   padding: 12px 14px;
   min-width: 0;
-  container-type: inline-size;
+  min-height: 0;
+  overflow: auto;
 }
 
 /* A1's window-interior remap gives this window its ground, ink, rules and
@@ -22,17 +34,10 @@
 /* The AppHead: the one fact with the status strip on its baseline. */
 .runson-apphead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; }
 .runson-fact { margin: 0; }
+/* Window grammar: the strip is a status-bar fact, quiet sans. */
 .runson-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font: 500 var(--font-size-xs, 12px) var(--font-mono, "JetBrains Mono", monospace);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  color: var(--wb-muted);
+  font: inherit;
+  color: inherit;
 }
 .runson-strip li { display: inline-flex; align-items: center; gap: 6px; }
 .runson-sq { width: 9px; height: 9px; border: 1px solid var(--wb-ink); box-sizing: border-box; }
@@ -123,7 +128,6 @@
   letter-spacing: 0;
 }
 .desk-next .runson-strip {
-  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 

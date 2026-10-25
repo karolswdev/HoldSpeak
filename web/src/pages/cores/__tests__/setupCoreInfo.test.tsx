@@ -32,7 +32,7 @@ describe("SetupCore", () => {
     render(<SetupCore />);
     const face = await screen.findByTestId("setup-face");
     expect(face).toHaveTextContent("Ready, Karol.");
-    expect(face).toHaveTextContent("Does not work");
+    expect(face).toHaveTextContent("Not found");
   });
 
   it("does not reopen the retired runtime docs when inventory is unavailable", async () => {

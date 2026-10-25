@@ -1,22 +1,20 @@
 import { wireClock } from "../../desk/surface/format";
-import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-import { Fragment, useEffect, type ReactNode } from "react";
-import { countLabel } from "../../desk/surface";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Button } from "../../components/signal/Signal";
 import { useLaunchers } from "../../desk/components/DeskWindow";
 import { useProcessWindow } from "../../desk/processWindow";
 import type { ProcessRow } from "../../desk/processWindowReducer";
 import { humanizeWireValue } from "../../lib/productLanguage";
+import { StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../../desk/surface/kit";
+import { ObjectList, type ObjectListRow, type ObjectListSort, type ObjectListTone } from "../../desk/surface/objects/ObjectList";
+import { useWindowInterior } from "../../desk/surface/interior";
+import { spriteUrl } from "../../desk/sprites";
 import { kindWord, looksLikeId } from "../../desk/windowName";
 import { objectByRef } from "../../desk/world";
 import { useDesk } from "../../desk/store";
 import type { Items } from "../../desk/api";
-import {
-  SurfaceLedger,
-  SurfaceLedgerRow,
-  SurfaceState,
-  SurfaceVerbs,
-} from "../../desk/surface/Surface";
-import { LampGadget } from "../../desk/surface/gadgets";
+import { SurfaceState } from "../../desk/surface/Surface";
+import "./processes.css";
 import type { CoreProps } from "./core-types";
 
 /** The fixed HH:MM:SS clock cell (mono, tabular). */
@@ -24,17 +22,6 @@ function clockToken(value: string | number | ""): string {
   // The kernel stamps epoch SECONDS; `new Date(seconds)` read them as
   // milliseconds and printed a clock in January 1970.
   return wireClock(value, true);
-}
-
-/** State as the etched token it is — tone, never a colored pill. */
-function stateTone(row: ProcessRow): "warn" | "danger" | "ok" | undefined {
-  const state = row.state.toLowerCase();
-  if (state === "failed" || state === "refused") return "danger";
-  if (row.latestEventType === "operation.awaiting_decision" || state === "waiting")
-    return "warn";
-  if (state === "running" || state === "starting" || state === "claimed")
-    return "ok";
-  return undefined;
 }
 
 /** What a row's target says on the face (STATUS: no raw ids on faces;
@@ -72,121 +59,124 @@ export function breakableKind(kind: string): ReactNode[] {
     .flatMap((part, i) => (i ? [<wbr key={i} />, part] : [part]));
 }
 
-function stateToken(row: ProcessRow): string {
-  if (row.latestEventType === "operation.awaiting_decision") return "NEEDS YOU";
-  return row.state ? row.state.toUpperCase() : "UNKNOWN";
+/** Window grammar (2026-10-24): an operation name in words: the wire
+ *  name (`channel.save_destination`) reads `Channel save destination`. */
+export function kindWords(kind: string): string {
+  const words = kind.replace(/[._]+/g, " ").trim().toLowerCase();
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : "Operation";
 }
 
-function LedgerRows({
-  rows,
-  openDecisions,
-  depth = 0,
-}: {
-  rows: ProcessRow[];
-  openDecisions: () => void;
-  depth?: number;
-}) {
-  const items = useDesk((state) => state.items);
-  return (
-    <>
-      {rows.map((row) => {
-        const isDecision =
-          row.latestEventType === "operation.awaiting_decision";
-        const facts = [
-          row.principal ? humanizeWireValue(String(row.principal)) : "",
-          row.placement ? humanizeWireValue(String(row.placement)) : "",
-        ].filter(Boolean);
-        return (
-          <Fragment key={row.operationId}>
-            <SurfaceLedgerRow
-              time={clockToken(row.timestamp)}
-              /* The row wraps (the species' `wrap`): at 393 the facts fall
-                 under the name, so the target is never squeezed to nothing
-                 (Astra, #869: it measured 3 px and two decisions looked the
-                 same). */
-              wrap
-              primary={
-                <>
-                  {depth > 0 ? "└ " : ""}
-                  {breakableKind(row.kind)}
-                  {shownTarget(row, items) ? (
-                    <span className="process-target" data-testid="process-target">{` · ${shownTarget(row, items)}`}</span>
-                  ) : null}
-                </>
-              }
-              cells={
-                <>
-                  {facts.length ? (
-                    <span className="surface-ledger-cell">
-                      {facts.join(" · ")}
-                    </span>
-                  ) : null}
-                  <span className="surface-ledger-cell">
-                    <span className="surface-token" data-tone={stateTone(row)}>
-                      {stateToken(row)}
-                    </span>
-                  </span>
-                  {isDecision ? (
-                    <span className="surface-ledger-cell">
-                      <a
-                        className="surface-token"
-                        data-tone="warn"
-                        href="/#attention"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          openDecisions();
-                        }}
-                      >
-                        ANSWER
-                      </a>
-                    </span>
-                  ) : null}
-                </>
-              }
-            />
-            {row.children.length ? (
-              <LedgerRows
-                rows={row.children}
-                openDecisions={openDecisions}
-                depth={depth + 1}
-              />
-            ) : null}
-          </Fragment>
-        );
-      })}
-    </>
-  );
+/** A row's state as a dot and a word: running is live and green, a held
+ *  decision asks for him, a failure is red, an ended run is the grey dot. */
+function rowState(row: ProcessRow): { label: string; tone: ObjectListTone; live?: boolean } {
+  if (row.latestEventType === "operation.awaiting_decision") return { label: "Needs you", tone: "ask" };
+  const state = row.state.toLowerCase();
+  if (state === "failed" || state === "refused") return { label: state === "refused" ? "Refused" : "Failed", tone: "fail" };
+  if (state === "running" || state === "starting" || state === "claimed") return { label: "Running", tone: "ok", live: true };
+  if (state === "waiting") return { label: "Waiting", tone: "warn" };
+  if (state === "succeeded" || state === "completed" || state === "done") return { label: "Done", tone: "idle" };
+  return { label: state ? humanizeWireValue(state) : "Unknown", tone: "idle" };
 }
 
+/** The D glyph of an operation, by what it works on. */
+const KIND_SPRITE: Record<string, string> = {
+  process: "agent", agent: "agent", coder: "agent", meeting: "meeting", note: "note", thought: "note",
+  decision: "decision", project: "project", person: "person", people: "person", channel: "artifact",
+  delivery: "artifact", connection: "model", setup: "model", inference: "model", memory: "memory",
+};
+function kindSprite(kind: string): string {
+  const head = kind.split(/[._]/, 1)[0].toLowerCase();
+  return spriteUrl(KIND_SPRITE[head] ?? "thread", kind, "rest", null, 20);
+}
+
+const PROCESS_COLUMNS = [
+  { key: "name", word: "What", track: "minmax(150px, 0.9fr)" },
+  { key: "target", word: "For", track: "minmax(0, 1fr)" },
+  { key: "where", word: "Where", track: "minmax(0, 0.8fr)" },
+  { key: "started", word: "Started", track: "76px" },
+  { key: "state", word: "State", track: "112px" },
+] as const;
+
+/* Window grammar (2026-10-24): Processes reads title bar → Toolbar
+ * [Refresh] → the dense list of every run the kernel holds (glyph · What ·
+ * For · Where · Started · State as a dot and a word; a run that needs him
+ * first) → StatusBar (`2 running · 1 needs you`, never a zero) with the
+ * selected run's verb. Enter or a double press on a run that needs him
+ * opens Desk memory (its answer), as the Answer verb did. The kernel has no
+ * stop route, so the window offers no Stop (a dead verb is a bounce). */
 export function ProcessCore(_props: CoreProps) {
   const store = useProcessWindow();
   const launchers = useLaunchers();
   const decisions = launchers.find((launcher) => launcher.id === "attention");
+  const items = useDesk((state) => state.items);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [sort, setSort] = useState<ObjectListSort>({ key: "order", dir: "asc" });
+  useWindowInterior("list");
 
   useEffect(() => {
     useProcessWindow.getState().start();
     return () => useProcessWindow.getState().stop();
   }, []);
 
-  const total = store.sections.reduce(
-    (count, section) => count + section.rows.length,
-    0,
-  );
+  const flat = useMemo(() => {
+    const out: Array<{ row: ProcessRow; depth: number; group: number }> = [];
+    const walk = (rows: ProcessRow[], depth: number, group: number) => {
+      for (const row of rows) {
+        out.push({ row, depth, group });
+        if (row.children.length) walk(row.children, depth + 1, group);
+      }
+    };
+    store.sections.forEach((section, index) => walk(section.rows, 0, index));
+    return out;
+  }, [store.sections]);
+  const total = flat.length;
+  const byId = new Map(flat.map((entry) => [entry.row.operationId, entry.row]));
   const openDecisions = () => decisions?.activate();
+  const isDecision = (row: ProcessRow | undefined) => row?.latestEventType === "operation.awaiting_decision";
+
+  const rows: ObjectListRow[] = flat.map(({ row, depth, group }, index) => {
+    const target = shownTarget(row, items);
+    const where = [
+      row.principal ? humanizeWireValue(String(row.principal)) : "",
+      row.placement ? humanizeWireValue(String(row.placement)) : "",
+    ].filter(Boolean).join(" · ");
+    return {
+      id: row.operationId,
+      kind: "process",
+      name: `${depth > 0 ? "└ " : ""}${kindWords(row.kind)}`,
+      sprite: kindSprite(row.kind),
+      group,
+      state: { ...rowState(row), testId: "process-state" },
+      cells: {
+        target: target ? <span className="process-target" data-testid="process-target">{target}</span> : "",
+        where,
+        started: <span className="process-clock">{clockToken(row.timestamp)}</span>,
+      },
+      sortValues: { order: index, started: String(row.timestamp), target, where },
+    };
+  });
+
+  const count = (id: string) => store.sections.find((section) => section.id === id)?.rows.length ?? 0;
+  const selected = selectedId ? byId.get(selectedId) : undefined;
+  const items_: Array<StatusBarItem | null> = store.error ? [
+    { key: "error", lamp: "fail", text: "Kernel unreachable" },
+  ] : [
+    { key: "needs", lamp: "ask", text: count("needs-you") ? `${count("needs-you")} ${count("needs-you") === 1 ? "needs" : "need"} you` : null },
+    { key: "running", lamp: "ok", text: countWords(count("running"), "running", "running") },
+    { key: "waiting", lamp: "warn", text: countWords(count("waiting"), "waiting", "waiting") },
+    { key: "ended", text: count("recently-ended") ? `${count("recently-ended")} ended` : null },
+    total ? null : { key: "watching", lamp: "ok", text: "Watching" },
+  ];
+
   return (
     <>
-      <SurfaceVerbs
-        status={
-          store.error ? (
-            "Kernel unavailable"
-          ) : (
-            <>
-              <LampGadget label="WATCHING" on tone="ok" />
-              <span className="surface-token">{countLabel("RUNS", total)}</span>
-            </>
-          )
-        }
-      />
+      <Toolbar label="Processes" data-testid="process-toolbar">
+        <Button dense variant="secondary" loading={store.inflight && !store.loading} onClick={() => void useProcessWindow.getState().poll()}
+          data-testid="process-refresh">
+          <ToolGlyph kind="retry" />
+          Refresh
+        </Button>
+      </Toolbar>
       {store.error ? (
         <SurfaceState
           error={store.error}
@@ -195,31 +185,31 @@ export function ProcessCore(_props: CoreProps) {
       ) : total === 0 ? (
         <SurfaceState empty emptyLabel="No runs yet" />
       ) : (
-        store.sections.map((section) => (
-          section.rows.length ? (
-            <SurfaceLedger
-              key={section.id}
-              cols="process"
-              count={countLabel(section.label.toUpperCase(), section.rows.length)}
-            >
-              <ul className="surface-ledger-rows">
-                <LedgerRows rows={section.rows} openDecisions={openDecisions} />
-              </ul>
-            </SurfaceLedger>
-          ) : null
-        ))
+        <div className="process-list" data-testid="process-list">
+          <ObjectList
+            label="Processes"
+            density="dense"
+            rows={rows}
+            columns={PROCESS_COLUMNS.filter((column) => !["target", "where"].includes(column.key)
+              || rows.some((row) => row.cells?.[column.key]))}
+            sort={sort}
+            onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
+            selectedId={selected ? selectedId : null}
+            onSelect={setSelectedId}
+            onOpen={(id) => { if (isDecision(byId.get(id))) openDecisions(); }}
+            rowProps={(row) => ({ "data-testid": "process-row", "data-operation": row.id })}
+          />
+        </div>
       )}
-      {/* HS-129-05 — the kernel fact uses the shared receipt slot. */}
-      <SurfaceFooter
-        receipt={
-          <span className="surface-footer-receipt-line" role="status">
-            {store.error
-              ? `KERNEL UNREACHABLE · CURSOR ${store.cursor}`
-              : total > 0
-                ? `KERNEL · CURSOR ${store.cursor} · ${countLabel("RUNS", total)}`
-                : "KERNEL"}
-          </span>
-        }
+      <StatusBar
+        data-testid="process-status"
+        items={items_}
+        verbs={isDecision(selected) ? (
+          <Button dense variant="secondary" onClick={openDecisions} data-testid="process-answer">
+            <ToolGlyph kind="open" />
+            Answer
+          </Button>
+        ) : null}
       />
     </>
   );

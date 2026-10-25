@@ -44,7 +44,7 @@ beforeEach(() => {
 
 const needsRows = () => [...document.querySelectorAll<HTMLElement>('[data-testid="needs-drawer"] [data-testid="needs-row"]')];
 const rowNamed = (text: string) => needsRows().find((r) => r.querySelector(".needs-row-name")?.textContent === text);
-const lampOf = (r: HTMLElement) => r.querySelector(".gadget-lamp")?.textContent ?? "";
+const lampOf = (r: HTMLElement) => r.querySelector("[data-testid=needs-row-state]")?.textContent ?? "";
 const head = () => screen.getByTestId("arrival-display").textContent ?? "";
 
 /** The REAL producer's Door/Follow-through card (`DoorService._follow_through_card`,
@@ -87,9 +87,9 @@ describe("Needs you: Name an owner and Review on a meeting's action items", () =
     render(<ChairHome />);
     await waitFor(() => expect(rowNamed(UNOWNED)).toBeTruthy());
     const owned = rowNamed(OWNED)!;
-    expect(lampOf(owned)).toBe("TO REVIEW");
+    expect(lampOf(owned)).toBe("To review");
     expect(owned.querySelector('[data-verb="name-owner"]')).toBeNull();
-    expect(lampOf(rowNamed(UNOWNED)!)).toBe("UNASSIGNED");
+    expect(lampOf(rowNamed(UNOWNED)!)).toBe("Unassigned");
 
     fireEvent.click(rowNamed(UNOWNED)!.querySelector('[data-verb="name-owner"]') as HTMLElement);
     const well = await screen.findByTestId("needs-well");
@@ -98,10 +98,10 @@ describe("Needs you: Name an owner and Review on a meeting's action items", () =
     await waitFor(() => expect(screen.queryByTestId("needs-well")).toBeNull());
 
     // The hub's board is the truth the row settles on.
-    await waitFor(() => expect(lampOf(rowNamed(UNOWNED)!)).toBe("TO REVIEW"));
+    await waitFor(() => expect(lampOf(rowNamed(UNOWNED)!)).toBe("To review"));
     expect(needsRows().filter((r) => r.querySelector(".needs-row-name")?.textContent === UNOWNED)).toHaveLength(1);
     expect(document.querySelector('[data-testid="needs-drawer"] [data-verb="name-owner"]')).toBeNull();
-    expect(rowNamed(UNOWNED)!.textContent).not.toContain("UNASSIGNED");
+    expect(rowNamed(UNOWNED)!.textContent).not.toContain("Unassigned");
   });
 
   it("Review's destination: the Needs-you window (Betterment D4: Follow-through is parked)", async () => {
@@ -176,12 +176,12 @@ describe("Needs you: the head counts what needs him; Waiting lists the rest", ()
     // listed, not counted.
     const counted = needsRows().filter((r) => r.getAttribute("data-counted") === "true").map((r) => r.textContent ?? "");
     expect(counted).toHaveLength(6);
-    expect(counted.some((t) => t.includes("A3 wait for Priya's review") || t.includes("WAITING ON"))).toBe(false);
+    expect(counted.some((t) => t.includes("A3 wait for Priya's review") || /waiting on/i.test(t))).toBe(false);
 
     fireEvent.click(within(screen.getByTestId("needs-filter")).getByTestId("needs-chip-theirs"));
     await waitFor(() => expect(needsRows().every((r) => r.getAttribute("data-direction") === "theirs")).toBe(true));
     const waitingRows = needsRows().map((r) => r.textContent ?? "");
-    expect(waitingRows.some((t) => t.includes("A3 wait for Priya's review") && t.includes("WAITING ON PRIYA"))).toBe(true);
+    expect(waitingRows.some((t) => t.includes("A3 wait for Priya's review") && t.includes("Waiting on Priya"))).toBe(true);
     expect(waitingRows.some((t) => t.includes("A4 assign the owner"))).toBe(false);
     expect(head()).toMatch(/^6 need you/);
 
@@ -236,7 +236,7 @@ describe("Needs you: proposal rows on arrival", () => {
       expect(r.getAttribute("data-opens")).toBe("true");
     }
     expect(rowNamed(decision)!.querySelectorAll('[data-verb="decide"]')).toHaveLength(1);
-    expect(proposalRows().map(lampOf).sort()).toEqual(["TO CONFIRM", "TO DECIDE"]);
+    expect(proposalRows().map(lampOf).sort()).toEqual(["To confirm", "To decide"]);
     const face = document.querySelector('[data-testid="needs-drawer"]')?.textContent ?? "";
     expect(face).not.toContain("LOCAL");
     expect(face).not.toContain("0 NEEDS");
@@ -281,7 +281,7 @@ describe("Needs you: Confirm and Defer on a meeting in no Project", () => {
     render(<ChairHome />);
     await waitFor(() => expect(rowNamed(action)).toBeTruthy(), { timeout: 3000 });
     const counted = () => needsRows().map((r) => r.querySelector(".needs-row-name")?.textContent);
-    expect(lampOf(rowNamed(action)!)).toBe("TO CONFIRM");
+    expect(lampOf(rowNamed(action)!)).toBe("To confirm");
     expect(counted()).toContain(decision);
 
     // Confirm: the hub accepts the action; it now waits on its owner, Priya

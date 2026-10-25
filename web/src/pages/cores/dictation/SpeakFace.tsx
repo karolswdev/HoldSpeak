@@ -12,7 +12,9 @@
 // HOTKEY block (HS-200-05: only when the physical key is not proven up —
 //             the listener's state, and every macOS grant that is missing)
 // > Details (Disclosure: the old register strip, folded; behind RAW, C8)
-import { Fragment, useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { Fragment, createContext, type ReactNode, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { StatusBar, Toolbar, type StatusBarItem } from "../../../desk/surface/kit";
+import { useWindowInterior } from "../../../desk/surface/interior";
 import { useAnnounce } from "./shared";
 import { useSpeakDeck } from "./useSpeakDeck";
 import {
@@ -314,8 +316,19 @@ export function resolveEngine(
   }
 }
 
+/** Window grammar (2026-10-24): Speak's facts (the phase, the one fact,
+ *  the hold key) join the Speak window's one status bar, which its host
+ *  (DictationCore) draws with the receipt and the window's verbs. Without
+ *  a host the face draws its own status bar. */
+export const SpeakStatusContext = createContext<((items: StatusBarItem[] | null) => void) | null>(null);
+
+const PHASE_LAMP: Record<string, StatusBarItem["lamp"]> = {
+  warn: "warn", live: "fail", info: "info", ok: "ok", danger: "fail",
+};
+
 export function SpeakFace() {
   const announce = useAnnounce();
+  useWindowInterior("editor");
   const deck = useSpeakDeck(announce);
 
   // Engine: assignment projection + concierge detect + legacy targets
@@ -369,36 +382,37 @@ export function SpeakFace() {
   const raw = useBuilderTools((state) => state.on);
   const hotkey = custody.display || hotkeyDisplay(deck.readinessData);
 
+  const { talkKey, setupRow } = useSpeakTalk(deck, announce, speech);
+  // The status bar: the phase with its lamp, the one fact, the hold key.
+  const phase = phaseOf(deck, toFix);
+  const fact = speech.notSetUp ? "Talk sets up speech first" : toFix ? `${toFix} to fix` : "Ready to talk";
+  const report = useContext(SpeakStatusContext);
+  const statusItems = useMemo<StatusBarItem[]>(() => [
+    { key: "phase", lamp: PHASE_LAMP[phase.tone], text: <span className="speak-phase" data-tone={phase.tone} data-testid="speak-phase">{phase.word}{phase.tail}</span> },
+    { key: "fact", text: <span className="speak-fact" data-testid="speak-fact">{fact}</span> },
+    hotkey ? { key: "hotkey", text: <span className="speak-strip">Hold <kbd className="speak-kbd">{hotkey}</kbd> anywhere</span> } : null,
+  ].filter(Boolean) as StatusBarItem[], [phase.tone, phase.word, phase.tail, fact, hotkey]);
+  useLayoutEffect(() => {
+    if (!report) return;
+    report(statusItems);
+  }, [report, statusItems]);
+  useLayoutEffect(() => (report ? () => report(null) : undefined), [report]);
+
   return (
     <div className="speak-face">
-      <div className="speak-head">
-        <h2 className="speak-fact" data-testid="speak-fact">
-          {speech.notSetUp
-            ? "Talk sets up speech first"
-            : toFix
-              ? `${toFix} to fix`
-              : "Ready to talk"}
-        </h2>
-        {hotkey ? (
-          <span className="speak-strip">
-            <span>Hold <kbd className="speak-kbd">{hotkey}</kbd> anywhere</span>
-          </span>
-        ) : null}
-      </div>
-
-      {/* THE TALK PLATE: the focus object, with a Workbench title bar. */}
+      {/* Window grammar (2026-10-24): an editor window like the Note.
+          Toolbar [Talk (the one mic authority, click to toggle)] [Types
+          into ▾] [Try it here] · the level → the words as the editor body,
+          edge to edge → the result → the checks → the status bar. No
+          headline, no plate in the window. */}
       <article className="speak-plate" aria-label="Talk">
-        <header className="speak-plate-bar">
-          <span className="speak-plate-label">TALK</span>
-          <PhasePill deck={deck} toFix={toFix} />
-        </header>
+        <Toolbar label="Speak" data-testid="speak-toolbar" trailingStays
+          trailing={<LedMeter label="Audio level" labelHidden value={deck.level} scanning={deck.micState === "busy"} />}>
+          <TransportRow deck={deck} speech={speech} talkKey={talkKey} raw={raw} />
+          <TypesIntoRow deck={deck} />
+        </Toolbar>
+        {setupRow ? <div className="speak-setup" data-testid="speak-setup">{setupRow}</div> : null}
         <div className="speak-plate-body">
-          <TransportRow
-            deck={deck}
-            announce={announce}
-            speech={speech}
-            raw={raw}
-          />
           <div className="speak-well">
             {/* HS-176-05 (ruling R13) — the well carries NO mic. `Talk` above is
                 this face's ONE mic authority (Article IV.3). The census
@@ -419,7 +433,6 @@ export function SpeakFace() {
               }}
             />
           </div>
-          <TypesIntoRow deck={deck} />
           {deck.result ? <ResultRow deck={deck} announce={announce} /> : null}
         </div>
       </article>
@@ -446,6 +459,7 @@ export function SpeakFace() {
           <DetailsContent deck={deck} />
         </Disclosure>
       ) : null}
+      {report ? null : <StatusBar data-testid="speak-status" items={statusItems} />}
     </div>
   );
 }
@@ -473,8 +487,8 @@ const PHASE_WORDS: Record<string, { word: string; tone: string }> = {
   refused: { word: "Not landed", tone: "danger" },
 };
 
-function PhasePill({ deck, toFix }: { deck: ReturnType<typeof useSpeakDeck>; toFix: number }) {
-  // At rest, the pill agrees with the head: not ready while a check is open.
+function phaseOf(deck: ReturnType<typeof useSpeakDeck>, toFix: number): { word: string; tone: string; tail: string } {
+  // At rest, the phase agrees with the fact: not ready while a check is open.
   const phase =
     deck.activeState === "idle" && toFix
       ? { word: "Not ready", tone: "warn" }
@@ -483,31 +497,20 @@ function PhasePill({ deck, toFix }: { deck: ReturnType<typeof useSpeakDeck>; toF
     deck.activeState === "refused" && deck.refusal
       ? ` · ${refusalLabel(deck.refusal).toLowerCase()}`
       : "";
-  return (
-    <span className="speak-phase" data-tone={phase.tone} data-testid="speak-phase" role="status">
-      <span className="speak-phase-lamp" aria-hidden="true" />
-      {phase.word}
-      {tail}
-    </span>
-  );
+  return { ...phase, tail };
 }
 
 /* ── Transport row ── */
 
-function TransportRow({
-  deck,
-  announce,
-  speech,
-  raw = false,
-}: {
-  deck: ReturnType<typeof useSpeakDeck>;
-  announce: (text: string, tone?: "ok" | "warn") => void;
+/** The one Talk rule (desk/components/Talk.tsx), lifted to the face so the
+ *  key sits in the toolbar and its setup row under the toolbar. */
+function useSpeakTalk(
+  deck: ReturnType<typeof useSpeakDeck>,
+  announce: (text: string, tone?: "ok" | "warn") => void,
   /** The face's one speech read, shared with the Talk rule. */
-  speech: SpeechSetupState;
-  /** RAW (Builder tools): the Open mic latch shows. */
-  raw?: boolean;
-}) {
-  const { talkKey, setupRow } = useTalk(
+  speech: SpeechSetupState,
+) {
+  return useTalk(
     {
       draftScope: "dictation-dry-run-voice",
       label: "Talk",
@@ -546,26 +549,35 @@ function TransportRow({
     // Speech setup is Speak's one job while the model is missing: primary.
     { speech, testId: "speak-speech-setup", primary: true, onReady: deck.refreshReadiness },
   );
+}
+
+function TransportRow({
+  deck,
+  speech,
+  talkKey,
+  raw = false,
+}: {
+  deck: ReturnType<typeof useSpeakDeck>;
+  speech: SpeechSetupState;
+  talkKey: ReactNode;
+  /** RAW (Builder tools): the Open mic latch shows. */
+  raw?: boolean;
+}) {
   return (
-    <>
-      <div className="speak-transport" role="group" aria-label="Dictation transport">
-        {talkKey}
-        {raw ? (
-          <TransportKey
-            label="Open mic"
-            word="Open"
-            glyph={"◉"}
-            active={deck.openMic}
-            disabled={speech.notSetUp || !deck.captureSupported}
-            title={speech.notSetUp ? "Set up speech first" : (deck.captureReason ?? undefined)}
-            onClick={() => void deck.toggleOpenMic()}
-          />
-        ) : null}
-        <span className="speak-transport-spacer" />
-        <LedMeter label="Audio level" labelHidden value={deck.level} scanning={deck.micState === "busy"} />
-      </div>
-      {setupRow ? <div className="speak-setup" data-testid="speak-setup">{setupRow}</div> : null}
-    </>
+    <span className="speak-transport" role="group" aria-label="Dictation transport">
+      {talkKey}
+      {raw ? (
+        <TransportKey
+          label="Open mic"
+          word="Open"
+          glyph={"◉"}
+          active={deck.openMic}
+          disabled={speech.notSetUp || !deck.captureSupported}
+          title={speech.notSetUp ? "Set up speech first" : (deck.captureReason ?? undefined)}
+          onClick={() => void deck.toggleOpenMic()}
+        />
+      ) : null}
+    </span>
   );
 }
 
@@ -576,7 +588,7 @@ function TransportRow({
 
 function TypesIntoRow({ deck }: { deck: ReturnType<typeof useSpeakDeck> }) {
   return (
-    <div className="speak-lands-in" data-testid="speak-types-into">
+    <span className="speak-lands-in" data-testid="speak-types-into">
       <span className="speak-lands-in-caption">Types into</span>
       <CycleGadget
         label="Types into"
@@ -587,7 +599,7 @@ function TypesIntoRow({ deck }: { deck: ReturnType<typeof useSpeakDeck> }) {
       {deck.landedMs !== null ? (
         <>
           <span className="speak-lands-in-dot">{"·"}</span>
-          <span className="speak-lands-in-latency">{deck.landedMs} MS</span>
+          <span className="speak-lands-in-latency">{deck.landedMs} ms</span>
         </>
       ) : null}
       <span className="speak-transport-spacer" />
@@ -601,7 +613,7 @@ function TypesIntoRow({ deck }: { deck: ReturnType<typeof useSpeakDeck> }) {
       >
         Try it here
       </Button>
-    </div>
+    </span>
   );
 }
 

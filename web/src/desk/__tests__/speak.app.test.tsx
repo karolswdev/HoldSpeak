@@ -313,7 +313,8 @@ async function land(text: string) {
   return result;
 }
 
-const footerText = () => document.querySelector(".surface-footer-layout")?.textContent ?? "";
+// Window grammar (2026-10-24): the footer is the window's status bar.
+const footerText = () => document.querySelector(".speak-footer")?.textContent ?? "";
 
 describe("the Speak window at rest, over the hub's cold answers", () => {
   it("the placeholder, an ENGINE state chip in a known state, no Details (behind RAW), and a footer of Review and Export with no placement", async () => {

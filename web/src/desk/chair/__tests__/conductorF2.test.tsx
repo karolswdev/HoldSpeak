@@ -121,8 +121,8 @@ describe("Conductor F2 on the Chair", () => {
       return null;
     }));
     render(<ChairHome />);
-    await waitFor(() => expect(needsRow("Write the rollback runbook")?.querySelector(".gadget-lamp")?.textContent)
-      .toBe("WAITING"));
+    await waitFor(() => expect(needsRow("Write the rollback runbook")?.querySelector("[data-testid=needs-row-state]")?.textContent)
+      .toBe("Waiting"));
     const row = needsRow("Write the rollback runbook")!;
     expect(row.querySelector(".needs-row-fact")?.textContent).toBe("Claude Code · Payments ledger cutover");
     fireEvent.click(within(row).getByRole("button", { name: "Open the agent: Write the rollback runbook" }));

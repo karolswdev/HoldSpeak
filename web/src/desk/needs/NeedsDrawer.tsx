@@ -235,7 +235,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
     case "pr":
       return (
         <>
-          <EgressChip label={urlHost(v.url) || "GITHUB.COM"} scope="cloud" />
+          <EgressChip label={(urlHost(v.url) || "github.com").toLowerCase()} scope="cloud" />
           <Button dense variant={lead} aria-label={named(`Open PR #${v.number ?? ""}`)} data-testid="needs-row-verb" data-verb="open-pr"
             onClick={() => window.open(v.url, "_blank", "noopener")}>Open PR</Button>
         </>
@@ -419,7 +419,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
         ) : null}
         {/* Astra r1 P2-6: a Retry that re-checks a remote source names where it goes. */}
         {v.verb === "Retry" && v.watchIds?.length && v.host ? (
-          <EgressChip label={v.host.toUpperCase()} scope="cloud" />
+          <EgressChip label={v.host.toLowerCase()} scope="cloud" />
         ) : null}
         <Button dense variant="secondary" disabled={busy} aria-label={named(v.verb)} data-testid="needs-row-verb" data-verb="repair"
           onClick={() => {
@@ -779,6 +779,7 @@ function PlainNeedRow({ face, primary, projects, plates }: { face: NeedFace; pri
         sprite={needsRowSprite(face)}
         plate={plates ? plateOf(face) : undefined}
         glyphLabel={plates ? undefined : glyphWord(face)}
+        dotState={!plates}
         // A2b: the Project button is a generic open: the Project's drawer.
         project={project ? { name: project.name, onOpen: () => openProjectRoom(project.id) } : undefined}
         verbs={(

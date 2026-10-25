@@ -25,6 +25,9 @@ export interface ProjectButtonProps {
   /** True when the desk holds exactly one Project: draw nothing. */
   withheld?: boolean;
   className?: string;
+  /** Window grammar (2026-10-24): the name in its own case (a quiet sans
+   *  fact), not upper case. */
+  plain?: boolean;
   "data-testid"?: string;
 }
 
@@ -33,6 +36,7 @@ export function ProjectButton({
   onOpen,
   withheld = false,
   className,
+  plain = false,
   "data-testid": dataTestId = "project-button",
 }: ProjectButtonProps) {
   const label = name.trim();
@@ -51,7 +55,7 @@ export function ProjectButton({
         onClick={onOpen}
         data-testid={dataTestId}
       >
-        {label.toUpperCase()}
+        {plain ? label : label.toUpperCase()}
       </Button>
     </span>
   );

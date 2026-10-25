@@ -13,7 +13,6 @@ import {
   FoldGadget,
   StateChip,
   StringGadget,
-  SurfaceFooter,
   SurfaceWell,
   SurfaceSwitchboard,
   useSwitchboardLayout,
@@ -24,6 +23,8 @@ import {
   type SwitchWire,
 } from "../../desk/surface";
 import { TitleSlotContext } from "../../desk/surface/title";
+import { StatusBar, ToolGlyph, Toolbar, type StatusBarItem } from "../../desk/surface/kit";
+import { useWindowInterior } from "../../desk/surface/interior";
 import { Button } from "../../components/signal/Signal";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { endpointHostPort, isLanAddress } from "../concierge/endpointDraft";
@@ -74,8 +75,8 @@ function lampFor(engine: BoardEngine, busy: boolean): SwitchLamp {
 function hardwareToken(det: RunsOnController["detection"]): string | null {
   const cap = det?.hardware?.capability;
   if (!cap) return null;
-  const parts = ["THIS MAC"];
-  if (cap.apple_silicon) parts.push("M‑SERIES");
+  const parts = ["This Mac"];
+  if (cap.apple_silicon) parts.push("M‑series");
   const gb = cap.ram_gb ?? (cap.total_memory_bytes ? Math.round(cap.total_memory_bytes / 1024 ** 3) : null);
   if (gb) parts.push(`${gb} GB`);
   return parts.join(" · ");
@@ -420,6 +421,9 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   useEffect(() => {
     setTitle?.(title ?? "Engines");
   }, [setTitle, title]);
+  // Window grammar (2026-10-24): the toolbar and the status bar touch the
+  // frame; the engine sheets below keep their own inset.
+  useWindowInterior("editor");
 
   const { roster, detection, engines } = ctrl;
   // PHILO-17 speech: with no speech model on this device the Speech job says
@@ -718,24 +722,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
       meshEngines={meshEngines}
       local={localContent}
     />
-  ) : (
-    <span className="runson-engine-actions">
-      <Button
-        dense
-        variant={noEngine ? "primary" : "secondary"}
-        className="runson-find-lan"
-        data-testid="runson-find-lan"
-        onClick={() => void ctrl.findOnLan()}
-        disabled={ctrl.busy || ctrl.lanDiscovery === "CHECKING"}
-        loading={ctrl.lanDiscovery === "CHECKING"}
-      >
-        Find on LAN
-      </Button>
-      <Button dense variant="ghost" className="runson-add-open" data-testid="concierge-add-engine" onClick={() => ctrl.add.openRow()}>
-        Add an engine
-      </Button>
-    </span>
-  );
+  ) : null;
 
   /* ── the AppHead ── */
   const engineCount = have.filter((e) => e.profileId).length;
@@ -750,6 +737,33 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     : null;
   const hw = hardwareToken(detection);
 
+  /* ── the status bar: what he has, in warm words; never a zero ── */
+  const stripText = [
+    ready ? `${ready} ready` : null,
+    limited ? `${limited} limited` : null,
+    broken ? `${broken} broken` : null,
+    waiting ? `${waiting} waiting` : null,
+    hw,
+    checked ? `Checked ${checked}` : detection ? null : roster ? "Checking" : null,
+  ].filter(Boolean).join(" · ");
+  const statusItems: Array<StatusBarItem | null> = [
+    { key: "fact", lamp: engineCount ? "ok" : "warn", text: <span data-testid="runson-fact">{roster ? fact : "Engines"}</span> },
+    stripText ? {
+      key: "strip",
+      lamp: broken ? "fail" : limited ? "warn" : undefined,
+      text: <span className="runson-strip" data-testid="runson-strip">{stripText}</span>,
+    } : null,
+    ctrl.receipt ? {
+      key: "receipt",
+      lamp: ctrl.receipt.tone === "danger" ? "fail" : undefined,
+      text: (
+        <span className="runson-receipt" data-testid="runson-receipt" data-tone={ctrl.receipt.tone}>
+          {ctrl.receipt.text}
+        </span>
+      ),
+    } : null,
+  ];
+
   /* ── the foot ── */
   // Keep the useful roster-first paint, but do not call the face settled
   // while its initial reads can still add the strip, engines or speech row.
@@ -758,21 +772,45 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     || speech.ai.read.kind === "loading";
   return (
     <div className="runson-root" ref={rootRef} data-testid="runson-root" aria-busy={reading || undefined}>
-      <div className="runson-apphead">
-        <h1 className="surface-display runson-fact" data-testid="runson-fact">
-          {roster ? fact : "Engines"}
-        </h1>
-        <ul className="runson-strip" data-testid="runson-strip">
-          {ready ? <li data-tone="ok"><span className="runson-sq" />{`${ready} ready`}</li> : null}
-          {limited ? <li data-tone="warn"><span className="runson-sq" />{`${limited} limited`}</li> : null}
-          {broken ? <li data-tone="danger"><span className="runson-sq" />{`${broken} broken`}</li> : null}
-          {waiting ? <li data-tone="idle"><span className="runson-sq" />{`${waiting} waiting`}</li> : null}
-          {hw ? <li>{hw}</li> : null}
-          {checked ? <li>{`Checked ${checked}`}</li> : detection ? null : roster ? <li>Checking</li> : null}
-        </ul>
-      </div>
+      {/* Window grammar (2026-10-24): title bar → Toolbar [Add an engine]
+          [Find on LAN] [Check all] → the engines and what runs where →
+          StatusBar (`3 engines · 6 ready · 1 limited`, the hardware, the
+          last check; the last change's receipt, Undo and its egress). No
+          headline, no mono strip. */}
+      <Toolbar label="Engines" data-testid="runson-toolbar">
+        {/* One primary: a cold desk leads with discovery (Find on LAN); with
+            an engine, Add an engine leads. */}
+        <Button
+          dense
+          variant={noEngine ? "secondary" : "primary"}
+          className="runson-add-open"
+          aria-expanded={ctrl.add.open}
+          data-testid="concierge-add-engine"
+          onClick={() => (ctrl.add.open ? ctrl.add.close() : ctrl.add.openRow())}
+        >
+          <ToolGlyph kind="new" />
+          Add an engine
+        </Button>
+        <Button
+          dense
+          variant={noEngine ? "primary" : "secondary"}
+          className="runson-find-lan"
+          data-testid="runson-find-lan"
+          onClick={() => void ctrl.findOnLan()}
+          disabled={ctrl.busy || ctrl.lanDiscovery === "CHECKING"}
+          loading={ctrl.lanDiscovery === "CHECKING"}
+        >
+          <ToolGlyph kind="engine" />
+          Find on LAN
+        </Button>
+        <Button dense variant="secondary" data-testid="runson-check-all" disabled={reading} onClick={ctrl.readAgain}>
+          <ToolGlyph kind="retry" />
+          Check all
+        </Button>
+      </Toolbar>
 
-      <div className="runson-choice" data-testid="runson-engine-choice">{engineFoot}</div>
+      <div className="runson-sheet">
+      {engineFoot ? <div className="runson-choice" data-testid="runson-engine-choice">{engineFoot}</div> : null}
       {foundEngines.length ? (
         <div className="runson-catalog" data-testid="runson-found-engines">
           <SurfaceSwitchboard layout="board" jobs={[]} engines={[]} found={foundEngines} wires={[]} captions={{ found: foundOnMac ? "Found on this Mac" : "Found" }} />
@@ -812,8 +850,12 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         </FoldGadget>
       ) : null}
 
-      <SurfaceFooter
+      </div>
+
+      <StatusBar
         className="runson-foot"
+        data-testid="runson-status"
+        items={statusItems}
         egress={
           ctrl.egress ? (
             <span data-testid="runson-egress">
@@ -821,26 +863,21 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
             </span>
           ) : undefined
         }
-        receipt={
-          ctrl.receipt ? (
-            <span className="runson-receipt" data-testid="runson-receipt" data-tone={ctrl.receipt.tone}>
-              {ctrl.receipt.text}
-            </span>
-          ) : undefined
-        }
         verbs={
-          <>
-            {ctrl.canUndo ? (
-              <Button dense variant="secondary" disabled={ctrl.busy} data-testid="runson-undo" onClick={() => void ctrl.undo()}>
-                Undo
-              </Button>
-            ) : null}
-            {onBack ? (
-              <Button dense variant="secondary" className="prefs-back" onClick={onBack}>
-                <span aria-hidden="true">«</span> Settings
-              </Button>
-            ) : null}
-          </>
+          ctrl.canUndo || onBack ? (
+            <>
+              {ctrl.canUndo ? (
+                <Button dense variant="secondary" disabled={ctrl.busy} data-testid="runson-undo" onClick={() => void ctrl.undo()}>
+                  Undo
+                </Button>
+              ) : null}
+              {onBack ? (
+                <Button dense variant="secondary" className="prefs-back" onClick={onBack}>
+                  <span aria-hidden="true">«</span> Settings
+                </Button>
+              ) : null}
+            </>
+          ) : undefined
         }
       />
     </div>

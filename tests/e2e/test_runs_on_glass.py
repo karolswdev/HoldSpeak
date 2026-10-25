@@ -488,8 +488,10 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
             job_labels = {line.strip() for line in jobs_text.splitlines()}
             for gone in ("TASKS", "FOLLOWS DEFAULT", "EVERY JOB WITHOUT ITS OWN WIRE", "DICTATION INTENT"):
                 assert gone not in job_labels, gone
-            # PHILO-17 meetings r2: every window's headline is 19 px.
-            assert float(page.get_by_test_id("runson-fact").evaluate("e => parseFloat(getComputedStyle(e).fontSize)")) >= 19
+            # Window grammar (2026-10-24): no headline inside the window; the
+            # one fact is the status bar's first word (readable, 12 px or more).
+            assert page.get_by_test_id("runson-fact").evaluate("e => !!e.closest('.kit-statusbar')")
+            assert float(page.get_by_test_id("runson-fact").evaluate("e => parseFloat(getComputedStyle(e).fontSize)")) >= 12
             words = page.locator("[data-testid^='switchboard-job-']").evaluate_all(
                 "els => els.map(e => e.getAttribute('data-state'))"
             )
@@ -626,7 +628,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
             clear = page.evaluate("""() => {
               const row = document.querySelector('.runson-meaning > *');
               const win = row && row.closest('.desk-surface-window');
-              const foot = win && win.querySelector('.surface-footer-layout');
+              const foot = win && win.querySelector('.kit-statusbar');
               if (!row || !foot) return 'missing';
               const r = row.getBoundingClientRect(), f = foot.getBoundingClientRect();
               return r.height > 0 && r.bottom <= f.top + 1 ? true : `row ${r.top}-${r.bottom} foot ${f.top}`;
@@ -821,7 +823,7 @@ class TestTheRunsOnFooter(FitRig):
                     if same_row(line):
                         assert line["r"] <= cb["x"] + 0.5, self.facts["B27"]
                 assert text.upper().startswith("PATCHED "), text
-                footer = page.locator(".surface-footer-layout.runson-foot").first
+                footer = page.locator(".kit-statusbar.runson-foot").first
                 self._shot(page, "B27-runson-footer", width, footer)
                 self._shot(page, "B27-runson", width)
                 if width == 393:
