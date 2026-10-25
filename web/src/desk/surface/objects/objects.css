@@ -559,6 +559,36 @@
 .object-list-dot-word[data-tone="warn"] { color: var(--wb-warn-ink); }
 .object-list-dot-word[data-tone="ask"] { color: var(--wb-ember-ink); }
 .object-list-dot-word[data-tone="info"] { color: var(--wb-info-ink); }
+/* Idle: nothing is happening (Idle, Not installed, Quiet): the plain grey
+   dot and a muted word. */
+.object-list-dot-word[data-tone="idle"] { color: var(--wb-muted); }
+/* A person's row leads with a 24 px initials disc in the person's hue (the
+   kit avatar's eight hues), its letters at 12 px. */
+.object-list-avatar {
+  --av-hue: 215;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: hsl(var(--av-hue) 62% 82%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 22%, transparent),
+    0 1px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent);
+  color: var(--wb-ink);
+  font: 700 12px / 1 var(--font-sans);
+  letter-spacing: -0.02em;
+}
+.object-list-avatar[data-hue="1"] { --av-hue: 160; }
+.object-list-avatar[data-hue="2"] { --av-hue: 28; }
+.object-list-avatar[data-hue="3"] { --av-hue: 280; }
+.object-list-avatar[data-hue="4"] { --av-hue: 350; }
+.object-list-avatar[data-hue="5"] { --av-hue: 190; }
+.object-list-avatar[data-hue="6"] { --av-hue: 48; }
+.object-list-avatar[data-hue="7"] { --av-hue: 110; }
+.object-list-row[data-selected="true"] .object-list-avatar {
+  box-shadow: 0 0 0 2px var(--wb-paper);
+}
 .object-list[data-density="dense"] .object-list-row[data-selected="true"] :is(.object-list-cell, .object-list-dot-word) {
   color: var(--wb-paper);
 }
@@ -613,14 +643,26 @@
     overflow: visible;
     font-size: 12px;
   }
-  .object-list[data-density="dense"] .object-list-cell + .object-list-cell {
+  /* The folded cells start their own line under the name (a zero-height
+     break after the name and the state), the first filled cell indented to
+     the name; a middle dot joins two filled cells only. */
+  .object-list[data-density="dense"] .object-list-row::after {
+    content: "";
+    order: 2;
+    flex: 1 0 100%;
+    height: 0;
+  }
+  .object-list[data-density="dense"] .object-list-cell[data-fold="next"] {
     padding-left: 0;
   }
-  .object-list[data-density="dense"] .object-list-cell + .object-list-cell::before {
+  .object-list[data-density="dense"] .object-list-cell[data-fold="next"]::before {
     content: "·";
     margin-inline: 0 6px;
   }
-  .object-list[data-density="dense"] .object-list-cell:empty {
+  .object-list[data-density="dense"] .object-list-row[data-avatar] .object-list-cell[data-fold="lead"] {
+    padding-left: 44px;
+  }
+  .object-list[data-density="dense"] .object-list-cell:not([data-fold]) {
     display: none;
   }
 }

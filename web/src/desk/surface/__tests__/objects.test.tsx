@@ -12,6 +12,7 @@ import {
   AskWell,
   ConfirmLine,
   DeskIcon,
+  DotWord,
   DragGhost,
   DropTarget,
   FilesChanged,
@@ -23,6 +24,7 @@ import {
   PRCard,
   StationTrack,
   TimelineRail,
+  Toolbar,
   objectSprite,
   type ObjectListRow,
   type ObjectSort,
@@ -746,5 +748,58 @@ describe("AskWell egress", () => {
     expect(container.querySelector(".ask-well-draft")).toBeNull();
     const chip = container.querySelector(".ask-well-answer .gadget-chip-egress");
     expect(chip?.textContent).toBe("API.OPENAI.COM");
+  });
+});
+
+describe("ObjectList dense: avatar, idle tone, fold join (window grammar kit polish)", () => {
+  const rows = [
+    { id: "a", kind: "person", name: "Avery Chen", avatar: { initials: "AC", hue: 1 }, cells: { role: "", next: "1:1 Today", owe: "2" }, state: { label: "Quiet", tone: "idle" as const, live: false } },
+    { id: "b", kind: "person", name: "Sam Rivera", cells: { role: "Peer", next: "", owe: "" }, state: { label: "Working", tone: "info" as const, live: true } },
+  ];
+  const columns = [
+    { key: "role", word: "Role" },
+    { key: "next", word: "Next" },
+    { key: "owe", word: "Owe" },
+    { key: "state", word: "State" },
+  ];
+  it("leads an avatar row with the initials disc, not the sprite", () => {
+    render(<ObjectList label="People" density="dense" rows={rows} columns={columns} sort={{ key: "name", dir: "asc" }} />);
+    const avery = document.querySelector("[data-object-id='a']")!;
+    const disc = avery.querySelector(".object-list-avatar")!;
+    expect(disc.textContent).toBe("AC");
+    expect(disc.getAttribute("data-hue")).toBe("1");
+    expect(avery.querySelector(".object-list-open img")).toBeNull();
+    expect(avery.hasAttribute("data-avatar")).toBe(true);
+    expect(document.querySelector("[data-object-id='b'] .object-list-open img")).not.toBeNull();
+  });
+  it("draws idle as the grey dot and word, and marks a live state", () => {
+    render(<ObjectList label="People" density="dense" rows={rows} columns={columns} sort={{ key: "name", dir: "asc" }} />);
+    const idle = document.querySelector("[data-object-id='a'] .object-list-dot-word")!;
+    expect(idle.getAttribute("data-tone")).toBe("idle");
+    expect(idle.querySelector(".kit-dot")?.getAttribute("data-tone")).toBe("idle");
+    expect(idle.hasAttribute("data-live")).toBe(false);
+    expect(document.querySelector("[data-object-id='b'] .object-list-dot-word")?.hasAttribute("data-live")).toBe(true);
+  });
+  it("joins only filled cells: the first filled cell leads the fold, empty ones carry no fold", () => {
+    render(<ObjectList label="People" density="dense" rows={rows} columns={columns} sort={{ key: "name", dir: "asc" }} />);
+    const fold = (id: string) => [...document.querySelectorAll(`[data-object-id='${id}'] .object-list-cell`)]
+      .map((cell) => `${cell.getAttribute("data-col")}:${cell.getAttribute("data-fold") ?? "-"}`);
+    expect(fold("a")).toEqual(["role:-", "next:lead", "owe:next"]);
+    expect(fold("b")).toEqual(["role:lead", "next:-", "owe:-"]);
+  });
+});
+
+describe("Toolbar trailingStays + DotWord (window grammar kit polish)", () => {
+  it("a staying trailing control marks the band; a search well does not", () => {
+    const { rerender } = render(<Toolbar label="Note actions" trailingStays trailing={<span>mic</span>}><Button dense>Done</Button></Toolbar>);
+    expect(screen.getByRole("toolbar", { name: "Note actions" }).getAttribute("data-trailing")).toBe("stays");
+    rerender(<Toolbar label="Note actions" trailing={<span>search</span>}><Button dense>Done</Button></Toolbar>);
+    expect(screen.getByRole("toolbar", { name: "Note actions" }).hasAttribute("data-trailing")).toBe(false);
+  });
+  it("a state fact is a dot and a word; idle by default", () => {
+    render(<><DotWord tone="warn" data-testid="w">No engine for answers</DotWord><DotWord data-testid="i">Quiet</DotWord></>);
+    expect(screen.getByTestId("w").textContent).toBe("No engine for answers");
+    expect(screen.getByTestId("w").querySelector(".kit-dot")?.getAttribute("data-tone")).toBe("warn");
+    expect(screen.getByTestId("i").getAttribute("data-tone")).toBe("idle");
   });
 });

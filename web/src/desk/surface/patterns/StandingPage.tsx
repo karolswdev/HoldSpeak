@@ -8,10 +8,11 @@
  * sentence is simply not drawn: no gap, no counter, no marker.  No verb
  * rewrites a page (no on-demand rewrite exists).
  *
- * RefTokens: the short source tokens (`MTG 10-01 · 14:20`, `DEC 10-01`).
+ * RefTokens: the short source tokens, in sentence-case words (window
+ * grammar 2026-10-24: `Meeting 10-01 · 14:20`, `Decision 10-01`, `Risk`).
  * A ref the Desk opens is a library Button that opens its window; a ref
  * with no window is plain text (A.11).  A ref that contradicts reads
- * `AGAINST · <token>` in the danger ink.
+ * `Against · <token>` in the danger ink.
  */
 import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
@@ -24,6 +25,16 @@ export interface MemoryRefToken {
   token: string;
   opens: boolean;
   against?: boolean;
+}
+
+const REF_WORDS: Record<string, string> = { MTG: "Meeting", DEC: "Decision", ACT: "Action", CMT: "Action" };
+
+/** A wire token in sentence-case words: an all-caps word of three letters
+ *  or more reads as a word (`MTG` → `Meeting`, `RISK` → `Risk`, `THREAD
+ *  10-11` → `Thread 10-11`); dates, times, ids and two-letter forms
+ *  (`PR #4`) stay as they are. */
+export function refWords(token: string): string {
+  return token.replace(/\b[A-Z]{3,}\b/g, (word) => REF_WORDS[word] ?? word.charAt(0) + word.slice(1).toLowerCase());
 }
 
 /** PHILO-17 (owner: "double references"): one chip per distinct source
@@ -56,7 +67,7 @@ export function RefTokens({
   return (
     <span className="memory-ref-tokens" role="group" aria-label={label}>
       {shown.map((r) => {
-        const text = r.against ? `AGAINST · ${r.token}` : r.token;
+        const text = refWords(r.against ? `AGAINST · ${r.token}` : r.token);
         return r.opens ? (
           <Button
             key={`${r.ref}:${r.against ? "against" : "for"}`}

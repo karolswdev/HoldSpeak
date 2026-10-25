@@ -816,47 +816,8 @@
 .people-roster > .people-failure,
 .person-window > .people-failure { padding: 6px 12px; }
 
-/* The initials disc: drawn over the row's sprite slot, in the kit
-   avatar's hue (`hueOf`), 24 px so its letters stay at 12 px. */
-.people-list .object-list-row { position: relative; }
-.people-list .object-list-row[data-initials] .object-list-open img {
-  visibility: hidden;
-  width: 24px;
-  height: 24px;
-}
-.people-list .object-list-row[data-initials]::before {
-  --av-hue: 215;
-  content: attr(data-initials);
-  position: absolute;
-  z-index: 1;
-  left: 8px;
-  top: 15px;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  margin-top: -12px;
-  border-radius: 50%;
-  background: hsl(var(--av-hue) 62% 82%);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 22%, transparent),
-    0 1px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent);
-  color: var(--wb-ink);
-  font: 700 12px / 1 var(--font-sans);
-  letter-spacing: -0.02em;
-  pointer-events: none;
-}
-.people-list .object-list-row[data-hue="1"]::before { --av-hue: 160; }
-.people-list .object-list-row[data-hue="2"]::before { --av-hue: 28; }
-.people-list .object-list-row[data-hue="3"]::before { --av-hue: 280; }
-.people-list .object-list-row[data-hue="4"]::before { --av-hue: 350; }
-.people-list .object-list-row[data-hue="5"]::before { --av-hue: 190; }
-.people-list .object-list-row[data-hue="6"]::before { --av-hue: 48; }
-.people-list .object-list-row[data-hue="7"]::before { --av-hue: 110; }
-.people-list .object-list-row[data-selected="true"]::before {
-  box-shadow: 0 0 0 2px var(--wb-paper);
-}
 /* A suggested name is not a person yet: a dashed disc, the group in ember. */
-.people-list .object-list-row[data-suggested]::before {
+.people-list .object-list-row[data-suggested] .object-list-avatar {
   background: var(--wb-paper);
   box-shadow: none;
   outline: 1px dashed var(--wb-ink-dim);
@@ -878,9 +839,6 @@
 }
 .people-list .object-list-row[data-selected="true"] .object-list-cell[data-col] {
   color: var(--wb-paper);
-}
-@container surface (max-width: 520px) {
-  .people-list .object-list-row[data-initials]::before { top: 22px; }
 }
 .people-lock {
   font: inherit;
@@ -1068,19 +1026,6 @@
   padding: 0;
   gap: 0;
   scroll-padding-block: 0;
-}
-/* Narrow: the status bar's verbs take their own line under the words, so
-   each keeps its whole 44 px target (the bar is portaled into the frame's
-   foot, hence the test id). */
-@container surface (max-width: 520px) {
-  .kit-statusbar:is([data-testid="people-status"], [data-testid="decisions-status"]) > .kit-statusbar-verbs {
-    flex: 1 1 100%;
-    justify-content: flex-end;
-    padding-top: 2px;
-  }
-  .desk-next .kit-statusbar:is([data-testid="people-status"], [data-testid="decisions-status"]) .kit-statusbar-verbs .btn {
-    min-height: 44px;
-  }
 }
 .people-list .object-list-row[data-suggested] .object-list-cell[data-col="role"] { white-space: nowrap; }
 .kit-statusbar .people-prep-receipt {

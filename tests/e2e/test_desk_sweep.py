@@ -103,7 +103,7 @@ from .glass_infra import (  # noqa: E402
     clear_hub_windows_http,
 )
 from .type_floor_rig import _FAINT_JS, _MEASURE, GATED_CONTRAST, HIT_PROBE_JS, OWNERSHIP_JS  # noqa: E402
-from .material_rig import LAMP_WORDS, MATERIAL_JS  # noqa: E402
+from .material_rig import LAMP_WORDS, MATERIAL_JS, dot_fact_fault  # noqa: E402
 from .conductor_rig import _seed as _seed_agents  # noqa: E402
 from .meetings_rig import _save_meeting  # noqa: E402
 from .door_rig import (  # noqa: E402
@@ -925,6 +925,10 @@ def _material_faults(page: Any, face: str, root: str | None) -> list[str]:
               and (f["tone"] not in ("warn", "danger", "ok") or f["lampW"] == "8px"))
         if not ok:
             out.append(f"fact '{f['text']}' is not a pill")
+    for f in m["dotFacts"]:
+        fault = dot_fact_fault(f)
+        if fault:
+            out.append(f"state fact '{f['text']}' {fault}")
     for shadow in m["bodies"]:
         if shadow != "none" and not shadow.startswith(sunken):
             out.append(f"a window body is not the well (box-shadow {shadow[:40]})")

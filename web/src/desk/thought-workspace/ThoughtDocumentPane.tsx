@@ -141,6 +141,7 @@ export function ThoughtDocumentPane({
       label="Note actions"
       className="thought-note-toolbar"
       data-testid="thought-note-toolbar"
+      trailingStays
       trailing={voice ? <span className="thought-note-field-mic thought-note-toolbar-voice">{voice}</span> : null}
     >
       {verbs}

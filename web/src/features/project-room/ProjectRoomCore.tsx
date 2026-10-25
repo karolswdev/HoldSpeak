@@ -8,7 +8,9 @@ import { wireDate } from "../../desk/surface/format";
 import React, { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
 import {
   countLabel,
-  SurfaceFooter,
+  countWords,
+  DotWord,
+  StatusBar,
   SurfaceSection,
   Toolbar,
   ToolGlyph,
@@ -1687,7 +1689,7 @@ export function RoomAskWell({
         {modelLabel.host === "NOT SET" ? (
           <span className="room-ask-model-chip">
             {/* PHILO-17 U31: the plain fact, not MODEL · NOT SET. */}
-            <span className="surface-token" data-chip data-testid="room-ask-no-engine">No engine for answers</span>
+            <DotWord tone="warn" data-testid="room-ask-no-engine">No engine for answers</DotWord>
             <Button
               dense
               variant="ghost"
@@ -2353,25 +2355,30 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   const historyReceipt = (() => {
     if (ctrl.room?.changes.state !== "ok") return "History unavailable";
     const { todayCount: t, weekCount: w } = historyCounts;
-    if (t === 0 && w === 0) return "NOTHING THIS WEEK";
-    if (t === 0) return `NOTHING TODAY · ${w} THIS WEEK`;
-    if (w === 0) return `${t} TODAY · NOTHING THIS WEEK`;
-    return `${t} TODAY · ${w} THIS WEEK`;
+    if (t === 0 && w === 0) return "Nothing this week";
+    if (t === 0) return `Nothing today · ${w} this week`;
+    if (w === 0) return `${t} today · nothing this week`;
+    return `${t} today · ${w} this week`;
   })();
   // Conductor F2 (K6): a commitment an agent's merged PR closed names
   // itself on the receipt line (K4's follow-through: the PR, the close).
   const merged = mergeReceipt(agentFlights, ctrl.projectId);
-  const footerReceipt = ctrl.view !== "history" && merged ? (
-    <span className="surface-footer-receipt-line" data-tone="ok" data-wrap role="status" data-testid="room-merge-receipt">
-      {/* PHILO-15 B51/B52: the PR by its own title and number (the item's
-          title only when the hub has not read the PR's yet). */}
-      {`DONE · ${merged.pr?.title || merged.title} · PR #${merged.pr?.number ?? ""} MERGED · ${formatTimeShort(merged.mergedAt ?? "")}`}
-    </span>
-  ) : ctrl.view === "history" ? (
-    <span className="surface-footer-receipt-line" role="status" data-testid="room-footer-receipt">
-      {historyReceipt}
-    </span>
-  ) : null;
+  // Window grammar (2026-10-24): the foot is the kit StatusBar, in warm
+  // sentence-case words with a lamp; the merged PR's Open PR (and its
+  // egress chip) are the bar's verbs.
+  const footerItems = ctrl.view !== "history" && merged ? [
+    {
+      key: "merged",
+      lamp: "ok" as const,
+      testId: "room-merge-receipt",
+      // PHILO-15 B51/B52: the PR by its own title and number (the item's
+      // title only when the hub has not read the PR's yet).
+      text: `${merged.pr?.title || merged.title} · PR #${merged.pr?.number ?? ""} merged ${formatTimeShort(merged.mergedAt ?? "")}`.trim(),
+    },
+    { key: "sources", text: countWords(sourceCount, "source") },
+  ] : ctrl.view === "history" ? [
+    { key: "history", testId: "room-footer-receipt", text: historyReceipt },
+  ] : null;
   // Betterment P3: the Now wing has no READ · NEXT CHECK receipt and no
   // Refresh (the window refreshes itself on every desk change).
 
@@ -2493,9 +2500,10 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           <Button dense variant="primary" onClick={handleRefresh} data-testid="room-load-retry">Try again</Button>
         </div>
       ) : null}
-      {footerReceipt ? (
-        <SurfaceFooter
-          receipt={footerReceipt}
+      {footerItems ? (
+        <StatusBar
+          data-testid="room-status"
+          items={footerItems}
           verbs={ctrl.view !== "history" && merged ? (
             <FlightVerbs flight={merged} title={merged.pr?.title || merged.title} />
           ) : undefined}

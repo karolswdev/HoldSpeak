@@ -26,6 +26,39 @@ const FIXTURE: ObjectListRow[] = [
   { id: "w-4", kind: "meeting", name: "1:1 Avery", when: "Oct 22", whenSort: 1, cells: { length: "30 min" }, sortValues: { length: 30 }, state: { label: "Summary stored", tone: "ok" } },
 ];
 
+/** An avatar-led list (People's roster): the 24 px initials disc in the
+ * person's hue leads each row; an idle state is the plain grey dot. */
+const PEOPLE: ObjectListRow[] = [
+  { id: "p-1", kind: "person", name: "Avery Chen", avatar: { initials: "AC", hue: 1 }, cells: { role: "Direct report", next: "1:1 Today 16:00" }, state: { label: "Prep ready", tone: "ok" } },
+  { id: "p-2", kind: "person", name: "Priya Nair", avatar: { initials: "PN", hue: 3 }, cells: { role: "Peer", next: "" }, state: { label: "Waiting on you", tone: "ask" } },
+  { id: "p-3", kind: "person", name: "Sam Rivera", avatar: { initials: "SR", hue: 2 }, cells: { role: "", next: "1:1 Fri 10:30" }, state: { label: "Quiet", tone: "idle" } },
+];
+
+const PEOPLE_COLUMNS = [
+  { key: "role", word: "Role", track: "minmax(110px, 0.6fr)" },
+  { key: "next", word: "Next 1:1", track: "minmax(0, 0.8fr)" },
+  { key: "state", word: "State", track: "minmax(120px, 0.6fr)" },
+] as const;
+
+function PeopleSpecimen() {
+  const [selected, setSelected] = useState<string | null>("p-1");
+  const [sort, setSort] = useState<ObjectListSort>({ key: "name", dir: "asc" });
+  return (
+    <div className="reference-window-frame reference-window-people" data-testid="reference-window-people">
+      <ObjectList
+        label="Specimen people"
+        density="dense"
+        rows={PEOPLE}
+        columns={PEOPLE_COLUMNS}
+        sort={sort}
+        onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
+        selectedId={selected}
+        onSelect={setSelected}
+      />
+    </div>
+  );
+}
+
 const COLUMNS = [
   { key: "when", word: "When", track: "88px" },
   { key: "length", word: "Length", track: "80px" },
@@ -105,6 +138,7 @@ export function WindowReference({ preset }: { preset: WindowPreset }) {
           />
         </FootSlotContext.Provider>
       </div>
+      {preset === "populated" ? <PeopleSpecimen /> : null}
     </section>
   );
 }

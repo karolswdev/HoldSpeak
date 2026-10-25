@@ -22,11 +22,11 @@ import {
   objectSprite,
   type ObjectListRow,
   type ObjectListSort,
+  type ObjectListTone,
   type StatusBarItem,
 } from "../surface";
 import { FootSlotContext } from "../surface/foot";
 import { ObjectList } from "../surface/objects/ObjectList";
-import type { ObjectTone } from "../surface/objects/kinds";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { reviewResult, useAgentFlights } from "../agentFlights";
 import { AGENT_HOST, AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId, type AgentRow } from "../firstrun/agentsStep";
@@ -439,23 +439,17 @@ const LIST_COLUMNS = [
   { key: "name", word: "Name", track: "minmax(132px, 0.7fr)" },
   { key: "what", word: "What", track: "minmax(0, 1.2fr)" },
   { key: "project", word: "Project", track: "minmax(0, 0.6fr)" },
-  { key: "status", word: "State", track: "minmax(128px, 0.8fr)" },
+  { key: "state", word: "State", track: "minmax(128px, 0.8fr)" },
   { key: "when", word: "When", track: "96px" },
 ] as const;
 
-const PILL_TONE: Record<string, ObjectTone | undefined> = { ok: "ok", warn: "warn", danger: "fail", info: "info", idle: undefined };
+const PILL_TONE: Record<string, ObjectListTone> = { ok: "ok", warn: "warn", danger: "fail", info: "info", idle: "idle" };
 
-/** A row's state: a dot and a word (the dense list's own state face; an
- *  idle state wears the plain steel dot). */
-function StateCell({ member }: { member: ConductorMember }) {
+/** A row's state for the dense list's own state cell: a dot and a word
+ *  (`idle` is the plain grey dot). */
+function rowState(member: ConductorMember): NonNullable<ObjectListRow["state"]> {
   const pill = memberPill(member);
-  const tone = PILL_TONE[pill.tone];
-  return (
-    <span className="object-list-dot-word" data-tone={tone} data-live={pill.live ? "" : undefined} data-testid="conductor-pill">
-      <span className="kit-dot" data-tone={tone} aria-hidden="true" />
-      {pill.word}
-    </span>
-  );
+  return { label: pill.word, tone: PILL_TONE[pill.tone], live: pill.live, testId: "conductor-pill" };
 }
 
 /** The selected row's own verb: the one that fixes it, opens it, resumes
@@ -727,9 +721,9 @@ export function ConductorWindow() {
           </span>
         ) : extra ? `${what} · ${extra}` : what,
         project: projects && m.role === "live" ? String(m.facts.where || "") : "",
-        status: <StateCell member={m} />,
       },
-      sortValues: { order: index, status: memberPill(m).word },
+      state: rowState(m),
+      sortValues: { order: index, state: memberPill(m).word },
     };
   });
   const hasRows = rows.length > 0;

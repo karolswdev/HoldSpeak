@@ -48,6 +48,9 @@ export interface ObjectListColumn {
   track?: string;
 }
 
+/** A row state's tone: the object tones and `idle` (grey). */
+export type ObjectListTone = ObjectTone | "idle";
+
 export interface ObjectListRow {
   id: string;
   kind: string;
@@ -57,8 +60,13 @@ export interface ObjectListRow {
   when?: string;
   /** The sort value for When (e.g. epoch ms); the word sorts when absent. */
   whenSort?: number;
-  /** One lamp + its word; omitted = an empty State cell. */
-  state?: { label: string; tone: ObjectTone; testId?: string };
+  /** One lamp + its word; omitted = an empty State cell. `idle` is the
+   *  plain grey dot (nothing is happening: Idle, Not installed, Quiet).
+   *  `live` marks a running state (`data-live` on the dot and word). */
+  state?: { label: string; tone: ObjectListTone; testId?: string; live?: boolean };
+  /** A person's row: a 24 px initials disc in the person's hue leads the
+   *  row in place of the sprite (`hue` 0..7, `hueOf` in kit.tsx). */
+  avatar?: { initials: string; hue: number };
   /** Provider cells for declared `columns` (keyed by column key). */
   cells?: Record<string, ReactNode>;
   /** Sort values for provider cells (a string cell sorts by its text). */
@@ -232,6 +240,16 @@ export function ObjectList({
         {sorted.map((row) => {
           const selected = selectedIds ? selectedIds.includes(row.id) : row.id === selectedId;
           const kindWord = row.kindWord ?? objectKindWord(row.kind);
+          // The fold line (≤ 520 px): only filled cells show, and a middle
+          // dot joins two filled cells; the first filled cell leads the
+          // line (no orphan dot when an earlier cell is empty).
+          const foldKeys = columns.slice(1).map((column) => column.key).filter((key) => key !== "state");
+          const filled = (key: string) => {
+            const value = key === "kind" ? kindWord : key === "when" ? row.when : row.cells?.[key];
+            return value != null && value !== "" && value !== false;
+          };
+          const foldLead = foldKeys.find(filled);
+          const fold = (key: string) => filled(key) ? (key === foldLead ? "lead" : "next") : undefined;
           const cellWords = columns
             .filter((column) => !["name", "kind", "when", "state"].includes(column.key))
             .map((column) => row.cells?.[column.key])
@@ -244,6 +262,7 @@ export function ObjectList({
               aria-selected={selected ? "true" : "false"}
               data-selected={selected ? "true" : undefined}
               data-object-id={row.id}
+              data-avatar={row.avatar ? "" : undefined}
               {...(rowProps ? rowProps(row) : {})}
             >
               <div role="gridcell" className="object-list-name" data-col="name">
@@ -264,11 +283,17 @@ export function ObjectList({
                   onDoubleClick={onOpen ? () => onOpen(row.id) : undefined}
                   onKeyDown={keyDown(row.id)}
                 >
-                  <img
-                    src={listSprite(row.sprite ?? objectSprite(row.kind, row.id))}
-                    alt=""
-                    draggable={false}
-                  />
+                  {row.avatar ? (
+                    <span className="object-list-avatar" data-hue={row.avatar.hue} aria-hidden="true">
+                      {row.avatar.initials}
+                    </span>
+                  ) : (
+                    <img
+                      src={listSprite(row.sprite ?? objectSprite(row.kind, row.id))}
+                      alt=""
+                      draggable={false}
+                    />
+                  )}
                   <span className="object-list-name-text">
                     <span className="object-list-name-word" title={row.name} data-testid={row.nameTestId}>{nameBreaks(row.name)}</span>
                     {dense ? null : (
@@ -283,27 +308,27 @@ export function ObjectList({
               {columns.slice(1).map((column) => {
                 switch (column.key) {
                   case "kind":
-                    return <div key="kind" role="gridcell" className="object-list-cell" data-col="kind">{kindWord}</div>;
+                    return <div key="kind" role="gridcell" className="object-list-cell" data-col="kind" data-fold={fold("kind")}>{kindWord}</div>;
                   case "when":
-                    return <div key="when" role="gridcell" className="object-list-cell" data-col="when">{row.when ?? ""}</div>;
+                    return <div key="when" role="gridcell" className="object-list-cell" data-col="when" data-fold={fold("when")}>{row.when ?? ""}</div>;
                   case "state":
                     return (
                       <div key="state" role="gridcell" className="object-list-state" data-col="state">
                         {row.state ? (
                           dense ? (
-                            <span className="object-list-dot-word" data-tone={row.state.tone} data-testid={row.state.testId}>
+                            <span className="object-list-dot-word" data-tone={row.state.tone} data-live={row.state.live ? "" : undefined} data-testid={row.state.testId}>
                               <span className="kit-dot" data-tone={row.state.tone} aria-hidden="true" />
                               {row.state.label}
                             </span>
                           ) : (
-                            <LampGadget label={row.state.label} on tone={lampGadgetTone(row.state.tone)} />
+                            <LampGadget label={row.state.label} on={row.state.tone !== "idle"} tone={row.state.tone === "idle" ? undefined : lampGadgetTone(row.state.tone)} />
                           )
                         ) : null}
                       </div>
                     );
                   default:
                     return (
-                      <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key}>
+                      <div key={column.key} role="gridcell" className="object-list-cell" data-col={column.key} data-fold={fold(column.key)}>
                         {row.cells?.[column.key] ?? ""}
                       </div>
                     );

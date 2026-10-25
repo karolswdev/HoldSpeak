@@ -245,6 +245,10 @@
   box-shadow: var(--desk-window-shadow-rest);
   container: surface / inline-size;
 }
+.reference-window-frame.reference-window-people {
+  min-height: 0;
+  margin-top: 12px;
+}
 .reference-window-content {
   display: flex;
   flex-direction: column;

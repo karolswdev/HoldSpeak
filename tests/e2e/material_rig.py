@@ -42,6 +42,9 @@ MATERIAL_JS = r"""(root) => {
   const tokens = [...scope.querySelectorAll('.surface-filter-token.btn:not(:disabled), .surface-project-button.btn:not(:disabled)')].filter(seen);
   const chips = [...scope.querySelectorAll('.surface-state-chip')].filter(seen);
   const facts = [...scope.querySelectorAll('.surface-token[data-chip]')].filter(seen);
+  // Window grammar (2026-10-24): a state fact may be a dot and a sentence-
+  // case word (DotWord, the dense list's state cell) instead of a pill.
+  const dotFacts = [...scope.querySelectorAll('.kit-dotword, .object-list-dot-word')].filter(seen);
   const BODY = '.desk-pullout-body, .desk-surface-body, .chair-window-body';
   const bodies = [...scope.querySelectorAll(BODY)].filter(seen)
     .filter((b) => !b.parentElement || !b.parentElement.closest(BODY));
@@ -68,6 +71,11 @@ MATERIAL_JS = r"""(root) => {
       return { text: (f.textContent || '').slice(0, 30), tone: f.dataset.tone || null,
                border: s.borderTopColor, shadow: s.boxShadow, bg: s.backgroundColor,
                lampW: b.content === 'none' ? null : b.width, lampShadow: b.boxShadow }; }),
+    dotFacts: dotFacts.map((f) => { const s = getComputedStyle(f); const dot = f.querySelector(':scope > .kit-dot');
+      const d = dot ? getComputedStyle(dot) : null;
+      return { text: (f.textContent || '').trim().slice(0, 30), border: s.borderTopWidth, shadow: s.boxShadow,
+               bg: s.backgroundColor, transform: s.textTransform, family: s.fontFamily,
+               dotW: d ? d.width : null, dotRadius: d ? d.borderTopLeftRadius : null }; }),
     bodies: bodies.map((b) => getComputedStyle(b).boxShadow),
   };
 }"""
@@ -102,6 +110,24 @@ def _assert_material(page: Any, face: str, root: str | None = None) -> dict[str,
         # a round lamp dot.
         if f["tone"] in ("warn", "danger", "ok"):
             assert f["lampW"] == "8px", (face, f)
+    for f in m.get("dotFacts", []):
+        assert not dot_fact_fault(f), (face, f)
     for shadow in m["bodies"]:
         assert shadow == "none" or shadow.startswith(sunken), (face, shadow, sunken)
     return m
+
+
+def dot_fact_fault(f: dict[str, Any]) -> str | None:
+    """The window grammar's state fact: a round 8 px dot and a word in
+    sentence case (never mono, never uppercase), on no plate: no border, no
+    shadow, no fill. None when the fact keeps that form."""
+    if f["border"] != "0px" or f["shadow"] != "none" or f["bg"] != "rgba(0, 0, 0, 0)":
+        return "sits on a plate"
+    if f["dotW"] != "8px" or f["dotRadius"] != "50%":
+        return "has no round 8 px dot"
+    if f["transform"] != "none" or "mono" in (f["family"] or "").lower():
+        return "is not a sentence-case word"
+    text = f["text"] or ""
+    if not text.strip() or (any(c.isalpha() for c in text) and text == text.upper()):
+        return "is not a sentence-case word"
+    return None
