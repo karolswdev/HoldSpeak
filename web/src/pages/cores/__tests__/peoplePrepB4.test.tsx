@@ -95,8 +95,8 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     stub({ linked: true, brief: {} });
     render(<PeopleCore scope="people:r1" />);
     const header = await screen.findByTestId("people-next-1on1");
-    const label = header.textContent!.replace(/^NEXT 1:1\s*·\s*/, "");
-    expect(label).toMatch(/^(TODAY|TOMORROW|[A-Z]{3}) /);
+    const label = header.textContent!.replace(/^Next 1:1\s*·\s*/, "");
+    expect(label).toMatch(/^(Today|Tomorrow|[A-Z][a-z]{2}) /);
     expect(screen.getByTestId("people-next-plate").textContent).toContain("1:1 Priya / Karol");
     expect(document.body.textContent).not.toMatch(ISO);
   });
@@ -190,7 +190,7 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     expect(calls.some((c) => c.method === "POST")).toBe(false);
     fireEvent.click(within(suggestion).getByRole("button", { name: "Link this 1:1" }));
     const header = await screen.findByTestId("people-next-1on1");
-    expect(header.textContent).toMatch(/^NEXT 1:1 · (TODAY|TOMORROW|[A-Z]{3}) /);
+    expect(header.textContent).toMatch(/^Next 1:1 · (Today|Tomorrow|[A-Z][a-z]{2}) /);
     const post = calls.find((c) => c.method === "POST")!;
     expect(post.url).toBe("/api/people/relationships/r1/calendar-links");
     expect(JSON.parse(post.body!)).toEqual({ uid: "uid-priya", source_id: "work", label: "1:1 Priya / Karol" });
@@ -226,8 +226,8 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     stub({ linked: true, brief: { ...FULL, open_meeting_actions: [due] } });
     render(<PeopleCore scope="people:r1:prep" />);
     const owed = await screen.findByTestId("prep-owed");
-    expect(owed.textContent).toContain("BY TUE"); // 2026-10-06 is a Tuesday
-    expect(owed.textContent).not.toContain("BY MON");
+    expect(owed.textContent).toContain("by Tue"); // 2026-10-06 is a Tuesday
+    expect(owed.textContent).not.toContain("by Mon");
   });
 
   it("TODAY / TOMORROW count calendar days, not 24-hour blocks", async () => {
@@ -246,8 +246,8 @@ describe("PHILO-13-09 B4-W: the 1:1 finds its person", () => {
     }))(globalThis.fetch as unknown as (i: string, o?: unknown) => Promise<Response>));
     render(<PeopleCore scope="people:r1" />);
     const header = await screen.findByTestId("people-next-1on1");
-    expect(header.textContent).not.toContain("TOMORROW");
-    expect(header.textContent).not.toContain("TODAY");
-    expect(header.textContent).toMatch(/^NEXT 1:1 · [A-Z]{3} /);
+    expect(header.textContent).not.toContain("Tomorrow");
+    expect(header.textContent).not.toContain("Today");
+    expect(header.textContent).toMatch(/^Next 1:1 · [A-Z][a-z]{2} /);
   });
 });

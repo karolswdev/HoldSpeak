@@ -2,7 +2,7 @@
  * decisions in a window of their own, the view Today ▸ Decisions shows.
  * The hub's answer is the recorded wire of the honest-faces seed
  * (tests/integration/test_face_wire_fences.py); only `apiFetch` is a double. */
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import HONEST_DECISIONS from "../../../test/wire/decisions.honest-faces.wire.json";
 
@@ -23,7 +23,8 @@ describe("P4: the Decisions window", () => {
   it("draws the desk's decisions from the hub's read, by their words", async () => {
     apiFetch.mockImplementation(async () => structuredClone(HONEST_DECISIONS.wire));
     const { container } = render(<DecisionsCore />);
-    await screen.findByText("Freeze the old ledger on Nov 5");
+    // Window grammar: the dense list view; a row's name is its words.
+    await waitFor(() => expect(container.querySelector("[data-testid=decisions-row]")?.textContent).toContain("Freeze the old ledger on Nov 5"));
     expect(apiFetch).toHaveBeenCalledWith("/api/decision-records?limit=100&offset=0");
     expect(container.querySelectorAll("[data-testid=decisions-row]")).toHaveLength(1);
     expect(screen.getByTestId("decisions-window")).toBeTruthy();

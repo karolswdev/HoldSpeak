@@ -1,0 +1,37 @@
+/* Window grammar (2026-10-24): the Decisions window. The list view fills
+   the window under its toolbar; the decision's detail keeps its reader
+   inset. */
+.decisions-window,
+.decisions-window-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+.decisions-window-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 0;
+  padding: 0;
+  font: 400 13px / 1.35 var(--font-sans);
+}
+.decisions-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.decisions-list > .surface-state { flex: 1 1 auto; justify-content: center; }
+.decisions-search {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.decisions-search > * { flex: 1 1 auto; min-width: 0; }
+/* Narrow: the toolbar's trailing group wraps, so the Current only toggle
+   keeps its whole face beside a full-width search well. */
+.decisions-window-view .kit-toolbar-trailing { flex-wrap: wrap; row-gap: 4px; }
+.decisions-window-view .kit-toolbar-trailing > .gadget-check-token { flex: none; }

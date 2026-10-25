@@ -4078,7 +4078,7 @@
         },
         {
           "path": "web/src/pages/cores/PeopleCore.tsx",
-          "symbol": "nextAt ? \"people-next-1on1\"",
+          "symbol": "data-testid=\"people-next-1on1\"",
           "claim": "NEXT 1:1 reads the hub's linked event through one formatter."
         }
       ],

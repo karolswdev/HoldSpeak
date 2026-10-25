@@ -765,3 +765,327 @@
 .people-nudge-text { margin: 0; font: 500 13px / 1.4 var(--font-sans); color: var(--wb-text, var(--text)); }
 /* The two column heads read as the other caps ("MIRA OWES ME"). */
 .people-owe-grid .people-cap { text-transform: uppercase; }
+
+/* ── Window grammar (2026-10-24): People, the roster. Toolbar [Add person]
+   + search → the dense list view (an initials disc in the person's hue
+   leads each row: People's one avatar) → the status bar. Suggested names
+   sit under the people with a dashed disc. ── */
+.people-roster {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.people-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.people-search {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.people-search > * { flex: 1 1 auto; min-width: 0; }
+.desk-next .people-roster > .people-new,
+.people-you-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 0;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: color-mix(in srgb, var(--wb-sel) 6%, var(--wb-paper));
+}
+.people-you-row .gadget-string { flex: 1 1 220px; min-width: 0; }
+.people-roster > .people-new .gadget-string { flex: 1 1 200px; }
+.people-roster .people-duplicate {
+  margin: 0;
+  font: 500 12px / 1.3 var(--font-sans);
+  color: var(--wb-warn-ink);
+}
+.people-empty {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.people-empty .surface-state { flex: 1 1 auto; justify-content: center; }
+.people-roster > .people-failure,
+.person-window > .people-failure { padding: 6px 12px; }
+
+/* The initials disc: drawn over the row's sprite slot, in the kit
+   avatar's hue (`hueOf`), 24 px so its letters stay at 12 px. */
+.people-list .object-list-row { position: relative; }
+.people-list .object-list-row[data-initials] .object-list-open img {
+  visibility: hidden;
+  width: 24px;
+  height: 24px;
+}
+.people-list .object-list-row[data-initials]::before {
+  --av-hue: 215;
+  content: attr(data-initials);
+  position: absolute;
+  z-index: 1;
+  left: 8px;
+  top: 15px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-top: -12px;
+  border-radius: 50%;
+  background: hsl(var(--av-hue) 62% 82%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 22%, transparent),
+    0 1px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent);
+  color: var(--wb-ink);
+  font: 700 12px / 1 var(--font-sans);
+  letter-spacing: -0.02em;
+  pointer-events: none;
+}
+.people-list .object-list-row[data-hue="1"]::before { --av-hue: 160; }
+.people-list .object-list-row[data-hue="2"]::before { --av-hue: 28; }
+.people-list .object-list-row[data-hue="3"]::before { --av-hue: 280; }
+.people-list .object-list-row[data-hue="4"]::before { --av-hue: 350; }
+.people-list .object-list-row[data-hue="5"]::before { --av-hue: 190; }
+.people-list .object-list-row[data-hue="6"]::before { --av-hue: 48; }
+.people-list .object-list-row[data-hue="7"]::before { --av-hue: 110; }
+.people-list .object-list-row[data-selected="true"]::before {
+  box-shadow: 0 0 0 2px var(--wb-paper);
+}
+/* A suggested name is not a person yet: a dashed disc, the group in ember. */
+.people-list .object-list-row[data-suggested]::before {
+  background: var(--wb-paper);
+  box-shadow: none;
+  outline: 1px dashed var(--wb-ink-dim);
+  outline-offset: -1px;
+  color: var(--wb-muted);
+}
+.people-list .object-list-row[data-suggested]:first-of-type,
+.people-list .object-list-row:not([data-suggested]) + .object-list-row[data-suggested] {
+  border-top: 1px solid var(--wb-rule-soft);
+}
+.people-list .object-list-row[data-suggested] .object-list-cell[data-col="role"] {
+  color: var(--wb-ember-ink);
+  font-weight: 500;
+}
+.people-list .object-list-cell[data-col="owe"] {
+  color: var(--wb-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.people-list .object-list-row[data-selected="true"] .object-list-cell[data-col] {
+  color: var(--wb-paper);
+}
+@container surface (max-width: 520px) {
+  .people-list .object-list-row[data-initials]::before { top: 22px; }
+}
+.people-lock {
+  font: inherit;
+  color: inherit;
+}
+
+/* ── Window grammar: the person window. Toolbar (Record meeting, Add
+   note) → a compact head → sections in sentence case under a hairline,
+   rows 30 px edge to edge, no plates → the status bar. ── */
+.desk-next .person-page {
+  gap: 0;
+}
+.desk-next .person-page > .kit-toolbar { margin: 0; }
+.desk-next .people-detail-head {
+  flex-wrap: nowrap;
+  gap: 10px;
+  padding: 12px 16px 10px;
+}
+.desk-next .people-name {
+  font: 600 17px / 1.2 var(--font-display);
+}
+.desk-next .people-who { gap: 2px; }
+.desk-next .people-who-meta {
+  display: block;
+  font: 400 12px / 1.35 var(--font-sans);
+}
+.desk-next .person-page > .standing-pages-section,
+.desk-next .person-page > :is(section, div):not(.kit-toolbar):not(.people-prep):not(.people-folds):not(.people-detail-head) {
+  padding-inline: 16px;
+}
+.desk-next .people-prep {
+  gap: 0;
+}
+.people-section {
+  min-width: 0;
+  padding: 6px 0 4px;
+  border-top: 1px solid var(--wb-rule-soft);
+}
+.people-section-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+  padding: 4px 16px 4px;
+}
+.people-section-cap {
+  margin: 0;
+  font: 600 14px / 1.3 var(--font-display);
+  letter-spacing: 0;
+  color: var(--wb-text);
+}
+.people-section-fact {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-left: auto;
+  font: 400 12px / 1.35 var(--font-sans);
+  color: var(--wb-muted);
+  font-variant-numeric: tabular-nums;
+}
+.people-section-fact .people-plate-title { font: 500 12px / 1.35 var(--font-sans); color: var(--wb-text); }
+.people-section-fact .people-prep-token { font: 500 12px / 1.35 var(--font-sans); letter-spacing: 0; color: var(--wb-muted); }
+.people-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.desk-next .people-section .people-row,
+.desk-next .people-section .people-plate-row,
+.desk-next .people-section .people-work-row,
+.desk-next .people-section .people-raise-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  min-height: 30px;
+  box-sizing: border-box;
+  padding: 3px 16px;
+  border-radius: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 55%, transparent);
+  box-shadow: none;
+  transition: background-color var(--duration-short) var(--ease-standard), box-shadow var(--duration-short) var(--ease-standard);
+}
+.desk-next .people-section .people-rows > li:hover {
+  background: var(--wb-row-hover);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 22%, transparent);
+}
+.desk-next .people-section .people-row:last-child,
+.desk-next .people-section .people-rows > li:last-child { border-bottom: 0; }
+.desk-next .people-section .people-plate-text { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.desk-next .people-section .people-plate-title { font: 500 13px / 1.35 var(--font-sans); }
+.desk-next .people-section .people-plate-meta { font: 400 12px / 1.35 var(--font-sans); }
+.people-row-glyph > img { display: block; width: 20px; height: 20px; }
+.people-row-words { font: 500 13px / 1.35 var(--font-sans); color: var(--wb-text); min-width: 0; overflow-wrap: anywhere; }
+.people-row-meta { font: 400 12px / 1.35 var(--font-sans); color: var(--wb-muted); }
+.desk-next .people-section .people-raise-n {
+  position: static;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--wb-sel) 14%, var(--wb-paper));
+  font: 600 12px / 1 var(--font-sans);
+  color: var(--wb-info-ink);
+}
+.desk-next .people-section .people-raise-row:first-child .people-raise-n {
+  background: var(--wb-sel-vivid);
+  color: var(--wb-paper);
+}
+.desk-next .people-section .people-raise-words { font: 500 13px / 1.35 var(--font-sans); }
+.desk-next .people-section .people-add-line { border-bottom: 0; }
+.desk-next .people-section .people-add-line > .btn { width: auto; }
+.desk-next .people-section .people-add-line > .surface-well { flex: 1 1 auto; margin: 0; }
+.people-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: 500 12px / 1.35 var(--font-sans);
+  color: var(--wb-info-ink);
+  cursor: pointer;
+}
+.people-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.people-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 500 12px / 1.35 var(--font-sans);
+}
+.people-state[data-tone="danger"] { color: var(--wb-danger-ink); }
+.people-state[data-tone="ok"] { color: var(--wb-ok-ink); }
+.people-state[data-tone="info"] { color: var(--wb-info-ink); }
+/* Commitments: two columns under one caption (one column when narrow). */
+/* The hairline between the columns is the 1 px grid gap over the rule colour. */
+.desk-next .people-commitments .people-owe-grid { gap: 1px; background: var(--wb-rule-soft); }
+.desk-next .people-commitments .people-owe { background: var(--wb-paper); }
+.people-owe-cap {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  padding: 4px 16px 2px;
+  font: 600 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+.people-owe-cap > b { color: var(--wb-text); font-variant-numeric: tabular-nums; }
+@container surface (max-width: 559.9px) {
+  .desk-next .people-commitments .people-owe-grid { gap: 1px; }
+}
+.desk-next .people-section .people-commitment-inspector,
+.desk-next .people-section .people-nudge,
+.desk-next .people-section .people-concern { margin: 4px 16px; }
+.desk-next .people-section .people-pill {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font: 600 12px / 1.35 var(--font-sans);
+}
+.desk-next .people-section .people-pill::before { display: none; }
+.desk-next .people-section .people-prep-token { font: 500 12px / 1.35 var(--font-sans); letter-spacing: 0; color: var(--wb-muted); }
+.desk-next .people-folds {
+  padding: 4px 16px 8px;
+  border-top: 1px solid var(--wb-rule-soft);
+}
+.desk-next .people-prep > .people-failure { padding: 6px 16px; }
+.people-failure { font: 500 12px / 1.3 var(--font-sans); letter-spacing: 0; color: var(--wb-danger-ink); }
+@container surface (max-width: 520px) {
+  .desk-next .people-section .people-row,
+  .desk-next .people-section .people-plate-row,
+  .desk-next .people-section .people-work-row,
+  .desk-next .people-section .people-raise-row { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .people-section :is(.people-row, .people-plate-row, .people-work-row, .people-raise-row) { transition: none; }
+}
+/* The person window is a hosted pullout (Pullout.tsx), which has no
+   interior slot: its body runs edge to edge the way `data-interior` does. */
+.desk-next .desk-surface-body[data-surface-host="people"]:has(> .person-window) {
+  padding: 0;
+  gap: 0;
+  scroll-padding-block: 0;
+}
+/* Narrow: the status bar's verbs take their own line under the words, so
+   each keeps its whole 44 px target (the bar is portaled into the frame's
+   foot, hence the test id). */
+@container surface (max-width: 520px) {
+  .kit-statusbar:is([data-testid="people-status"], [data-testid="decisions-status"]) > .kit-statusbar-verbs {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    padding-top: 2px;
+  }
+  .desk-next .kit-statusbar:is([data-testid="people-status"], [data-testid="decisions-status"]) .kit-statusbar-verbs .btn {
+    min-height: 44px;
+  }
+}
+.people-list .object-list-row[data-suggested] .object-list-cell[data-col="role"] { white-space: nowrap; }
+.kit-statusbar .people-prep-receipt {
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
+}

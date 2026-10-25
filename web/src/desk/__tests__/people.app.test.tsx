@@ -335,16 +335,21 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
   it("with no people, FROM YOUR MEETINGS names Theo, Jun and Mira, each with Add and Not a person; no Set up step", async () => {
     replayWeek();
     render(<PeopleCore />);
-    const section = await screen.findByTestId("people-suggestions");
-    const rows = within(section).getAllByTestId("people-suggestion");
+    // Window grammar: the names sit in the list view's second group; the
+    // status bar counts them and carries the selected name's two verbs.
+    expect((await screen.findByTestId("people-suggestions")).textContent).toBe("3 from your meetings");
+    const rows = screen.getAllByTestId("people-suggestion");
     expect(rows.map((row) => row.textContent ?? "")).toEqual([
       expect.stringContaining("Theo"), expect.stringContaining("Jun"), expect.stringContaining("Mira"),
     ]);
-    expect(rows[2].textContent).toContain("named in Payments platform sync · 1 promise");
+    expect(rows[2].textContent).toContain("Named in Payments platform sync · 1 promise");
     for (const row of rows) {
-      expect(within(row).getByRole("button", { name: /^Add / })).toBeTruthy();
-      expect(within(row).getByRole("button", { name: /is not a person$/ })).toBeTruthy();
+      fireEvent.click(within(row).getByRole("button", { name: /^(Theo|Jun|Mira)/ }));
+      const bar = screen.getByTestId("people-status");
+      expect(within(bar).getByRole("button", { name: /^Add / })).toBeTruthy();
+      expect(within(bar).getByRole("button", { name: /is not a person$/ })).toBeTruthy();
       expect(rawButtons(row)).toEqual([]);
+      expect(rawButtons(bar)).toEqual([]);
     }
     expect(screen.queryByText("Set up People")).toBeNull();
     expect(screen.queryByText("Do it")).toBeNull();
@@ -356,6 +361,8 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     const { wire, posts } = replayWeek();
     render(<PeopleCore />);
     for (const name of ["Theo", "Jun", "Mira"]) {
+      const row = (await screen.findAllByTestId("people-suggestion")).find((r) => r.textContent?.includes(name))!;
+      fireEvent.click(within(row).getByRole("button", { name: new RegExp(`^${name}`) }));
       fireEvent.click(await screen.findByRole("button", { name: `Add ${name}` }));
       await waitFor(() => expect(screen.queryByRole("button", { name: `Add ${name}` })).toBeNull());
     }
@@ -372,6 +379,8 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
   it("Not a person takes the name off for good", async () => {
     const { posts } = replayWeek();
     render(<PeopleCore />);
+    const jun = (await screen.findAllByTestId("people-suggestion")).find((r) => r.textContent?.includes("Jun"))!;
+    fireEvent.click(within(jun).getByRole("button", { name: /^Jun/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Jun is not a person" }));
     await waitFor(() => expect(screen.queryByRole("button", { name: "Add Jun" })).toBeNull());
     expect(posts).toEqual([{ url: "/api/people/suggestions/hide", body: { key: "jun" } }]);

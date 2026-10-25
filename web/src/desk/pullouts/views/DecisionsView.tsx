@@ -15,6 +15,11 @@ import { DecisionRecordSendWells } from "../../documentSendsLazy";
 import { Material } from "../../surface/Material";
 import { FoldGadget, GadgetGroup, GadgetRow } from "../../surface/gadgets";
 import { StateChip } from "../../surface";
+import { CheckGadget } from "../../surface/gadgets";
+import { StatusBar, ToolGlyph, Toolbar, countWords } from "../../surface/kit";
+import { useWindowInterior } from "../../surface/interior";
+import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../surface/objects/ObjectList";
+import type { ObjectTone } from "../../surface/objects/kinds";
 import "../attention-records.css";
 
 type ReceiptSource = {
@@ -112,6 +117,33 @@ function openDeskDecision(id: string): void {
   void useDesk.getState().refresh().then(open, open);
 }
 
+/** Window grammar: a decision's state as a dot and a word. Open: proposed,
+ *  not decided yet. Decided: it stands. Superseded: a newer one replaced it. */
+function decisionState(row: DeskDecision): { word: string; tone: ObjectTone; rank: number } {
+  const word = stateWord(row);
+  if (word === "PROPOSED") return { word: "Open", tone: "ask", rank: 0 };
+  if (!word) return { word: "Decided", tone: "ok", rank: 1 };
+  if (word === "REPLACED") return { word: "Superseded", tone: "info", rank: 2 };
+  if (word === "RETIRED") return { word: "Retired", tone: "info", rank: 3 };
+  return { word: word.charAt(0) + word.slice(1).toLowerCase(), tone: "warn", rank: 4 };
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** `Oct 24`: a list view's date in quiet sans. */
+function dayWords(value: string | null | undefined): string {
+  const date = value ? wireDate(value) : null;
+  return date ? `${MONTHS[date.getMonth()]} ${date.getDate()}` : "";
+}
+
+const DECISION_SPRITE = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/decision.png`;
+
+const DECISION_COLUMNS = [
+  { key: "when", word: "When", track: "88px" },
+  { key: "where", word: "Where", track: "minmax(0, 0.7fr)" },
+  { key: "state", word: "State", track: "124px" },
+] as const;
+
 function humanDate(value: string | null | undefined): string {
   if (!value) return "—";
   const date = wireDate(value);
@@ -127,7 +159,11 @@ export function DecisionsView({
   receiptId,
   decisionId,
   decisionNonce,
+  windowed = false,
 }: {
+  /** Window grammar (the Decisions window): Toolbar [New decision] +
+   *  search → the dense list view → the status bar. Today keeps its view. */
+  windowed?: boolean;
   initialQuery?: string;
   /** The `Current only` filter (the navigation's `whyOnly`). */
   initialWhyOnly?: boolean;
@@ -152,6 +188,10 @@ export function DecisionsView({
   const [detailError, setDetailError] = useState("");
   const detailReads = useRef(0);
   const [error, setError] = useState("");
+  const [rowSelected, setRowSelected] = useState<string | null>(null);
+  const [sort, setSort] = useState<ObjectListSort>({ key: "when", dir: "desc" });
+  const detailOpen = Boolean(chosen || selected || detailLoading || requested);
+  useWindowInterior(windowed && !detailOpen ? "list" : null);
   useEffect(() => () => { detailReads.current += 1; }, []);
 
   useEffect(() => {
@@ -375,6 +415,84 @@ export function DecisionsView({
         onOpenSource={openSource}
         onOpenWork={(work) => openPullout(qualifiedRef(work.work_type, work.work_ref))}
       />
+    );
+  }
+
+  if (windowed) {
+    const rowKey = (row: DeskDecision) => `${row.source}-${row.id}`;
+    const byKey = new Map(results.map((row) => [rowKey(row), row]));
+    const listRows: ObjectListRow[] = results.map((row, index) => {
+      const state = decisionState(row);
+      const at = wireDate(row.decided_at ?? "")?.getTime();
+      return {
+        id: rowKey(row),
+        kind: "decision",
+        name: row.text || "New decision",
+        when: dayWords(row.decided_at),
+        whenSort: at !== undefined && Number.isFinite(at) ? at * 1000 - index : -index,
+        cells: { where: row.meeting_title || (row.source === "desk" ? "Desk" : row.meeting_id ? "Meeting" : "") },
+        state: { label: state.word, tone: state.tone, testId: "decisions-state" },
+        sortValues: { state: state.rank },
+      };
+    });
+    const pick = rowSelected && byKey.has(rowSelected) ? rowSelected : null;
+    const open = (key: string) => { const row = byKey.get(key); if (row) openRow(row); };
+    const openCount = results.filter((row) => decisionState(row).word === "Open").length;
+    return (
+      <div className="receipts-view decisions-window-view">
+        <Toolbar label="Decisions" data-testid="decisions-toolbar" trailing={<>
+          <CheckGadget label="Current only" variant="token" checked={whyOnly} onChange={setWhyOnly} />
+          <span className="decisions-search">
+            <StringGadget label="Search decisions" type="search" value={query} onChange={setQuery} placeholder="Search decisions" />
+          </span>
+        </>}>
+          <Button dense variant="primary" onClick={() => void useDesk.getState().createPrimitive("decision", {})} data-testid="decisions-new">
+            <ToolGlyph kind="new" />New decision
+          </Button>
+        </Toolbar>
+        {error ? <SurfaceState error={error} /> : null}
+        <div className="decisions-list">
+          <SurfaceState
+            loading={loading}
+            empty={!loading && !results.length && !error}
+            emptyLabel={query.trim() ? "No decisions match this search" : whyOnly ? "No current decisions" : "No decisions yet"}
+            emptyImage={DECISION_SPRITE}
+          >
+            <ObjectList
+              label="Decisions"
+              density="dense"
+              rows={listRows}
+              columns={DECISION_COLUMNS.filter((column) => column.key !== "where" || listRows.some((row) => row.cells?.where))}
+              sort={sort}
+              onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key ? (current.dir === "asc" ? "desc" : "asc") : key === "when" ? "desc" : "asc" }))}
+              selectedId={pick}
+              onSelect={setRowSelected}
+              onOpen={open}
+              rowProps={() => ({ "data-testid": "decisions-row" })}
+            />
+          </SurfaceState>
+        </div>
+        <StatusBar
+          data-testid="decisions-status"
+          verbs={pick || (!loading && shownCount > 0 && shownCount < total) ? <>
+            {!loading && shownCount > 0 && shownCount < total ? (
+              <Button variant="secondary" dense loading={more} onClick={showMore} data-testid="decisions-more">
+                {shownCount > 0 ? `Show more (${shownCount} of ${total})` : "Show more"}
+              </Button>
+            ) : null}
+            {pick ? (
+              <Button dense variant="secondary" onClick={() => open(pick)} data-testid="decisions-open-selected">
+                <ToolGlyph kind="open" />
+                Open
+              </Button>
+            ) : null}
+          </> : null}
+          items={[
+            { key: "count", text: countWords(total, "decision") },
+            { key: "open", lamp: "ask" as const, text: countWords(openCount, "open", "open") },
+          ]}
+        />
+      </div>
     );
   }
 

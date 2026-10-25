@@ -258,8 +258,9 @@ describe("PeopleCore encrypted local plane", () => {
       "/api/people/relationships/r1": () => json({ detail: "key locked" }, 423),
       "/api/people/relationships/r1/one-on-ones": () => json({ one_on_ones: [] }),
     });
-    render(<PeopleCore />);
-    fireEvent.click(await screen.findByRole("button", { name: /Avery/ }));
+    // Window grammar: a roster press selects; a person read is the scoped
+    // open (`people:<id>`), here or in the person's own window.
+    render(<PeopleCore scope="people:r1" />);
     // Betterment D6: a People read that failed is one line in place.
     expect(await screen.findByTestId("people-read-failed")).toBeTruthy();
     expect(screen.queryByText("Avery")).toBeNull();
@@ -275,8 +276,8 @@ describe("PeopleCore encrypted local plane", () => {
       "/api/projects": () => json({ projects: [{ id: "p1", name: "Platform", description: "Platform work" }] }),
       "/api/door": () => json({ upcoming: [] }),
     });
-    // PHILO-17 ALIVE: the storage facts are a lock token in the roster's
-    // foot; the words ride its title.
+    // Window grammar: the storage facts are Encrypted in the roster's
+    // status bar; the words ride its title.
     const roster = render(<PeopleCore />);
     const lock = await screen.findByTestId("people-lock");
     expect(lock.textContent).toContain("Encrypted");
@@ -284,9 +285,10 @@ describe("PeopleCore encrypted local plane", () => {
     roster.unmount();
     render(<PeopleCore scope="people:r1" />);
     await screen.findByTestId("people-prep-lens");
-    // One foot per window: with a person open, the Prep's foot stands alone.
+    // One status bar per window: with a person open, the Prep's bar stands alone.
     await waitFor(() => expect(screen.queryByTestId("people-lock")).toBeNull());
-    expect(document.querySelectorAll(".surface-footer").length).toBe(1);
+    expect(document.querySelectorAll(".kit-statusbar").length).toBe(1);
+    expect(screen.getByTestId("person-lock").textContent).toBe("Encrypted");
     fireEvent.click(screen.getByRole("button", { name: "Context" }));
     expect(await screen.findByRole("button", { name: /Platform/ })).toBeTruthy();
     expect(screen.getByText("Prefers written context")).toBeTruthy();
@@ -468,7 +470,7 @@ describe("PeopleCore HS-149-03 gesture", () => {
     });
     render(<PeopleCore scope="people:r1" />);
     const header = await screen.findByTestId("people-next-1on1");
-    expect(header.textContent).toContain("NEXT 1:1");
+    expect(header.textContent).toContain("Next 1:1");
   });
 
   it("NEXT 1:1 header absent when no linked series has upcoming events", async () => {
@@ -647,14 +649,14 @@ describe("PeopleCore scoped to a Project (HS-200-14)", () => {
       ] }),
     });
     render(<PeopleCore scope="people:project:p1" />);
-    expect(await screen.findByText("1 ON THIS PROJECT")).toBeTruthy();
+    expect((await screen.findByTestId("people-count")).textContent).toBe("1 on this project");
     expect(screen.getByRole("button", { name: /Marek Kubiak/ })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Priya Sharma/ })).toBeNull();
     const everyone = screen.getByTestId("people-roster-everyone");
-    expect(everyone).toHaveTextContent("2 MORE · Everyone");
+    expect(everyone).toHaveTextContent("2 more · Everyone");
     fireEvent.click(everyone);
     expect(await screen.findByRole("button", { name: /Priya Sharma/ })).toBeTruthy();
-    expect(screen.getByText("Relationships")).toBeTruthy();
+    expect(screen.getByTestId("people-count").textContent).toBe("3 people");
     expect(screen.queryByTestId("people-roster-everyone")).toBeNull();
   });
 
@@ -666,8 +668,8 @@ describe("PeopleCore scoped to a Project (HS-200-14)", () => {
       ] }),
     });
     render(<PeopleCore scope="people:project:p1" />);
-    expect(await screen.findByTestId("people-roster-none-linked")).toHaveTextContent("NO ONE LINKED YET");
-    expect(screen.getByTestId("people-roster-everyone")).toHaveTextContent("1 MORE · Everyone");
+    expect(await screen.findByTestId("people-roster-none-linked")).toHaveTextContent("No one linked yet");
+    expect(screen.getByTestId("people-roster-everyone")).toHaveTextContent("1 more · Everyone");
   });
 
   it("hands focus back to the Room verb when the window closes with a return owed", async () => {
@@ -771,7 +773,8 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
     // PHILO-17 ALIVE: one way to add. Add person opens the add row.
     expect(screen.queryByTestId("people-add-row")).toBeNull();
     fireEvent.click(await screen.findByRole("button", { name: "Add person" }));
-    expect(screen.queryByRole("button", { name: "Add person" })).toBeNull();
+    // Window grammar: Add person stays on the toolbar; the add row opens under it.
+    expect(screen.getByTestId("people-add-row")).toBeTruthy();
     const name = screen.getByLabelText("Add person");
     fireEvent.change(name, { target: { value: "Sam Ortiz" } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
@@ -820,17 +823,24 @@ describe("PeopleCore PHILO-17 the 1:1 runs both ways", () => {
       "/api/door": () => json({ upcoming: [{ id: "e1", source: "calendar_event", title: "1:1 Maya / Karol", starts_at: soon, ends_at: soon, person_relationship_id: "r1", person_label: "Maya Chen" }] }),
     });
     render(<PeopleCore />);
-    const maya = (await screen.findByRole("button", { name: /Maya Chen/ })).closest("li")!;
-    await waitFor(() => expect(within(maya).getByTestId("people-row-next").textContent).toMatch(/^1:1 /));
-    expect(within(maya).getByText("You owe 1")).toBeTruthy();
-    expect(within(maya).getByText("Owes you 1")).toBeTruthy();
-    const sam = screen.getByRole("button", { name: /Sam Ortiz/ }).closest("li")!;
-    await waitFor(() => expect(within(sam).getByTestId("people-row-next").textContent).toBe("No 1:1 planned"));
-    expect(within(sam).getByRole("button", { name: "Plan" })).toBeTruthy();
-    expect(within(sam).queryByText(/You owe/)).toBeNull();
+    // Window grammar: a dense list row (Name · Role · Next 1:1 · You owe).
+    const cell = (row: Element, col: string) => row.querySelector(`[data-col="${col}"]`)?.textContent ?? "";
+    const maya = (await screen.findByRole("button", { name: /Maya Chen/ })).closest("[role=row]")!;
+    await waitFor(() => expect(cell(maya, "next")).toMatch(/^1:1 /));
+    expect(cell(maya, "owe")).toBe("1");
+    expect(cell(maya, "role")).toBe("Direct report");
+    const sam = screen.getByRole("button", { name: /Sam Ortiz/ }).closest("[role=row]")!;
+    await waitFor(() => expect(cell(sam, "next")).toBe("None"));
+    expect(cell(sam, "owe")).toBe("");
+    // Plan is the selected row's verb, in the status bar.
+    expect(screen.queryByRole("button", { name: "Plan" })).toBeNull();
+    fireEvent.click(within(sam as HTMLElement).getByRole("button", { name: /Sam Ortiz/ }));
+    expect(within(screen.getByTestId("people-status")).getByRole("button", { name: "Plan" })).toBeTruthy();
     expect(fetchSpy.mock.calls.some(([url]) => /\/api\/people\/relationships\/r\d$/.test(String(url)))).toBe(false);
-    // The soonest 1:1 this week is the roster's focus plate, with Open prep.
-    expect(within(screen.getByTestId("people-roster-next")).getByRole("button", { name: "Open prep" })).toBeTruthy();
+    // The soonest 1:1 this week is the status bar's warm words; Open prep
+    // joins them only within a day (this one is two days out).
+    expect(screen.getByTestId("people-roster-next").textContent).toMatch(/^1:1 with Maya /);
+    expect(screen.queryByTestId("people-open-prep")).toBeNull();
   });
 });
 

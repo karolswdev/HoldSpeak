@@ -657,9 +657,12 @@ class TestOneDecisionRecord:
                 decisions_window.wait_for(timeout=T)
                 row = decisions_window.get_by_test_id("decisions-row").filter(has_text=P9_DECISION_TEXT)
                 row.wait_for(timeout=T)
-                geometry = self._hit_and_focus(row)
+                # Window grammar: the row is a dense list row; its one press
+                # target selects, a double press opens.
+                opener = row.locator(".object-list-open")
+                geometry = self._hit_and_focus(opener)
                 assert geometry["in_view"] and geometry["owns_hit"] and geometry["focused"], json.dumps(geometry, sort_keys=True)
-                row.click()
+                opener.dblclick()
                 desk_detail = decisions_window.locator(".receipt-detail").filter(has_text=P9_DECISION_TEXT)
                 desk_detail.wait_for(timeout=T)
                 assert P9_DECISION_TEXT in desk_detail.inner_text()
