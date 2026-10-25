@@ -248,6 +248,10 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         # PHILO-17 (concept C): the Today window, the day as a timeline. The
         # hub does not hold it (NOT_ON_HUB), so the dock opens it.
         ("today", "pullout:intelligence:desk", None),
+        # Window grammar (2026-10-24): the Ask window (ask:desk). The hub
+        # does not hold it (NOT_ON_HUB) and the Dock carries no Ask launcher,
+        # so the desk's own shortcut opens it (Ctrl+I, as test_ask_glass).
+        ("ask", "ask", None),
         # The parked Missed shade is replaced by Needs you above. The New
         # Project Door has BOTH sources picked (GitHub
         # karolswdev/HoldSpeak and Jira KAN, their counts in): the hub's gh
@@ -1181,7 +1185,8 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
     clear_hub_windows_http(base, TOKEN)
     palette = case_id == "palette"
     today = case_id in {"today", "brief"}
-    if wid and not palette and not today:
+    ask = case_id == "ask"
+    if wid and not palette and not today and not ask:
         # Opened on the hub before the page loads: the page seeds its windows
         # from the hub's rows (a view that is live follows the same rows by
         # its desk_changed frame; that follow is fenced in the PHILO-16 glass).
@@ -1207,6 +1212,11 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 toggle.click()
                 page.locator(f'[id="{wid}"] [data-testid=today-since-rows]').wait_for(timeout=T)
                 page.wait_for_function(BRIEF_SETTLED_JS, arg=wid, timeout=T)
+            page.mouse.move(2, 2)
+        if ask:
+            page.wait_for_function(SETTLED_JS, arg=None, timeout=T)
+            page.keyboard.press("Control+KeyI")
+            page.locator(f'[id="{wid}"] [data-testid=ask-body]').wait_for(timeout=T)
             page.mouse.move(2, 2)
         if case_id == "door-picked":
             page.wait_for_function(SETTLED_JS, arg=wid, timeout=T)

@@ -279,3 +279,33 @@
   font: 400 15px / 1.6 var(--font-sans);
   color: var(--wb-ink);
 }
+
+/* Components ▸ Conversation: the Ask window's own composition (askFace) in
+   one framed paper window: toolbar, thread, composer, status bar. */
+.desk-next .reference-window-frame.reference-conversation-frame,
+.reference-window-frame.reference-conversation-frame {
+  height: auto;
+  max-height: none;
+}
+.reference-conversation-frame .desk-ask-reading-wrap {
+  flex: none;
+  height: 240px;
+}
+.reference-conversation-frame > .desk-ask-body {
+  container: surface / inline-size;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--alive-paper, var(--wb-paper));
+  color: var(--wb-ink);
+}
+.reference-conversation-frame .reference-conversation-source {
+  display: block;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.reference-conversation-frame .reference-conversation-composer {
+  border-top: 1px solid var(--wb-rule-soft);
+}

@@ -15,15 +15,16 @@ import { openSurfaceOr } from "../../shell";
 import { openSourceRef } from "../../surface/citations";
 import { calendarOpener } from "../../openObject";
 import { useDesk } from "../../store";
-import { useNeedFaces, NeedsDroppedReceipt } from "../../needs/NeedsDrawer";
+import { useNeedFaces, useDropped, NeedsDroppedReceipt } from "../../needs/NeedsDrawer";
 import { TodayNeeds } from "../../needs/TodayNeeds";
 import type { NeedFace } from "../../needs/needsFace";
 import { SinceYesterday, type MondayBrief } from "./BriefView";
 import { PreparedBlock, type PreparedRead } from "./PreparedBlock";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { newsWords, useAutomationNews } from "../../automationNews";
-import { SurfaceFooter } from "../../surface/SurfaceFooter";
-import { Avatar, Steps } from "../../surface/kit";
+import { Avatar, DotWord, StatusBar, Steps, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../../surface/kit";
+import { openChairWindow } from "../../chair/chairWindows";
+import { agentSpriteName } from "../../sprites";
 import { meetingRowState } from "../../../pages/cores/history/helpers";
 import { useSummaryRun } from "../../../pages/cores/history/useSummaryRun";
 import { executedReceipt, readPlannedRoute, readRunReceipt, routeReady } from "../../../meetings/summaryRoute";
@@ -49,7 +50,17 @@ export function agentResultWords(flight: AgentFlight): string {
   return `${AGENT_NAME[flight.agent as AgentId] ?? flight.agent} finished ${flight.title || "its work"}`;
 }
 
-const SPRITES = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/32/`;
+/** Icons D: the 20 px drawings that lead a row of the day. */
+const GLYPHS = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/20/`;
+
+/** A row's leading 20 px glyph: a 1:1 wears the person's disc. */
+function RowGlyph({ sprite, person }: { sprite: string; person?: string }) {
+  return (
+    <span className="today-row-sprite" aria-hidden="true">
+      {person ? <Avatar name={person} /> : <img src={`${GLYPHS}${sprite}.png`} alt="" width={20} height={20} draggable={false} />}
+    </span>
+  );
+}
 
 /** One row of the Door's `upcoming` (a calendar event or an armed recording). */
 export type DayEvent = {
@@ -70,10 +81,9 @@ type WeekDay = { date: string; dow: string; count: number };
 type DoorRead = { upcoming?: DayEvent[]; calendar_configured?: boolean; week?: { days?: WeekDay[]; has_calendar?: boolean } };
 type MeetingRow = Record<string, unknown>;
 
-const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const SHORT_DAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+const SHORT_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 /** Today's rows of Needs you: five at 1440, three at 393 (the design). */
 const NEEDS_TOP = 5;
 const NEEDS_TOP_PHONE = 3;
@@ -142,7 +152,7 @@ function SpineNode({ time, kind, children, testId }: { time: ReactNode; kind: st
 function ReadFailed({ what, onRetry, testId }: { what: string; onRetry: () => void; testId: string }) {
   return (
     <div className="today-failed" data-testid={testId} role="status">
-      <span className="kit-pill" data-tone="danger">{`Could not read ${what}`}</span>
+      <DotWord tone="fail">{`Could not read ${what}`}</DotWord>
       <Button dense variant="ghost" onClick={onRetry}>Retry</Button>
     </div>
   );
@@ -213,7 +223,7 @@ function ThisWeek({ days }: { days: readonly WeekCount[] }) {
                   return <li key={event.id}><span className="today-week-time">{start ? clock(start) : ""}</span>{event.title || event.event_title || "Meeting"}</li>;
                 })}
                 {d.due.map((face) => (
-                  <li key={face.id}><span className="today-week-time">DUE</span>{face.personName && face.direction === "theirs" ? `${face.personName}: ${face.name}` : face.name}</li>
+                  <li key={face.id}><span className="today-week-time">Due</span>{face.personName && face.direction === "theirs" ? `${face.personName}: ${face.name}` : face.name}</li>
                 ))}
               </ul>
             </div>
@@ -246,6 +256,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const [prepared, setPrepared] = useState<PreparedRead | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const rows = useNeedFaces();
+  const dropped = useDropped((st) => st.dropped);
   // Betterment AG9: the agents: a line when one needs him or finished, and a
   // card for each finished turn he has not opened (New).
   useAgentFlightsLive();
@@ -373,12 +384,13 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     return (
       <SpineNode key={id} kind="finish" testId="today-finish" time={at ? (sameDay ? clock(at) : SHORT_DAYS[at.getDay()]) : ""}>
         <div className="today-row">
+          <RowGlyph sprite="meeting" />
           <div className="today-row-text">
             <Button variant="chrome" className="today-row-title" onClick={() => openSourceRef(`meeting:${id}`)}>
               {String(row.title ?? "Meeting")}
             </Button>
             <span className="today-row-meta">
-              <span className="kit-pill" data-tone={failed ? "danger" : "warn"}>{failed ? "Summary failed" : "No summary yet"}</span>
+              <DotWord tone={failed ? "fail" : "warn"}>{failed ? "Summary failed" : "No summary yet"}</DotWord>
             </span>
           </div>
           {/* MUST 2 (Astra r1 on #1110): where the run goes, before the
@@ -412,23 +424,19 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const nextNode = next && nextStart ? (
     <SpineNode kind="next" testId="today-next" time={startOfDay(nextStart) === today ? clock(nextStart) : <>{SHORT_DAYS[nextStart.getDay()]}<br />{clock(nextStart)}</>}>
       <article className="today-next" aria-label={`Next: ${title(next)}`}>
-        <header className="today-next-bar">
-          <span className="today-next-label">NEXT</span>
-          <span className="today-next-in" data-testid="today-countdown">{countdown(nextStart, now)}</span>
-        </header>
         <div className="today-next-body">
-          <span className="today-next-sprite" aria-hidden="true">
-            <img src={`${SPRITES}${sprite(next)}.png`} alt="" draggable={false} />
-          </span>
+          <RowGlyph sprite={sprite(next)} person={next.person_label} />
           <div className="today-next-text">
             <span className="today-next-title">{title(next)}</span>
             <span className="today-row-meta">
-              {next.person_label ? <><Avatar name={next.person_label} /> {next.person_label}</> : null}
-              {next.project_name ? <span className="kit-pill" data-tone="info">{next.project_name}</span> : null}
+              <span className="today-next-label">Next</span>
+              <span className="today-next-in" data-testid="today-countdown">{countdown(nextStart, now)}</span>
+              {next.person_label ? <span>{next.person_label}</span> : null}
+              {next.project_name ? <span>{next.project_name}</span> : null}
               {armed ? (
-                <span className="kit-pill" data-tone="danger" data-live="" data-testid="today-armed">
+                <DotWord tone="fail" className="today-armed" data-testid="today-armed">
                   {armsAt ? `Armed for ${clock(armsAt)}` : "Armed"}
-                </span>
+                </DotWord>
               ) : null}
             </span>
           </div>
@@ -444,7 +452,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
               Record when it starts
             </Button>
           ) : null}
-          {actError?.key === "arm" ? <span className="kit-pill" data-tone="danger" role="status" data-testid="today-arm-failed">{actError.text}</span> : null}
+          {actError?.key === "arm" ? <span role="status" data-testid="today-arm-failed"><DotWord tone="fail">{actError.text}</DotWord></span> : null}
         </div>
       </article>
     </SpineNode>
@@ -456,13 +464,13 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     return (
       <SpineNode key={event.id} kind="later" testId="today-later" time={start ? clock(start) : ""}>
         <div className="today-row">
-          <span className="today-row-sprite" aria-hidden="true"><img src={`${SPRITES}${sprite(event)}.png`} alt="" draggable={false} /></span>
+          <RowGlyph sprite={sprite(event)} person={event.person_label} />
           <div className="today-row-text">
             <span className="today-row-name">{title(event)}</span>
             <span className="today-row-meta">
               {event.person_label ? <span>{event.person_label}</span> : null}
-              {event.project_name ? <span className="kit-pill" data-tone="info">{event.project_name}</span> : null}
-              {event.armed ? <span className="kit-pill" data-tone="danger">Armed</span> : null}
+              {event.project_name ? <span>{event.project_name}</span> : null}
+              {event.armed ? <DotWord tone="fail">Armed</DotWord> : null}
             </span>
           </div>
           {open ? <Button dense variant="ghost" onClick={open}>Prep</Button> : null}
@@ -492,14 +500,15 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const justMadeNode = justMade && (madeReceipt || madeRow) && !finish.some((row) => String(row.id) === justMade.id) ? (
     <SpineNode kind="made" testId="today-just-made" time="">
       <div className="today-row">
+        <RowGlyph sprite="meeting" />
         <div className="today-row-text">
           <Button variant="chrome" className="today-row-title" onClick={() => openSourceRef(`meeting:${justMade.id}`)}>
             {justMade.title}
           </Button>
           <span className="today-row-meta">
-            <span className="kit-pill" data-tone={madeDone ? "ok" : madeFailed ? "danger" : "info"} data-dot="" data-live={!madeDone && !madeFailed ? "" : undefined}>
+            <DotWord tone={madeDone ? "ok" : madeFailed ? "fail" : "info"}>
               {madeDone ? "Summary made" : madeFailed ? "Summary failed" : "Making the summary"}
-            </span>
+            </DotWord>
           </span>
         </div>
         <span className="today-row-route">
@@ -542,6 +551,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
       <SpineNode key={row.workbench_id} kind="result" testId="today-new-result"
         time={at ? (startOfDay(at) === today ? clock(at) : SHORT_DAYS[at.getDay()]) : ""}>
         <div className="today-row">
+          <RowGlyph sprite="cartridge" />
           <div className="today-row-text">
             <Button variant="chrome" className="today-row-title"
               onClick={() => useDesk.getState().openWorkbenchWindow(row.workbench_id)}>
@@ -561,6 +571,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const agentResultNodes = finishedAgents.map((flight) => (
     <SpineNode key={`agent:${flight.launchId}`} kind="result" testId="today-agent-result" time="">
       <div className="today-row">
+        <RowGlyph sprite={agentSpriteName(flight.agent)} />
         <div className="today-row-text">
           <Button variant="chrome" className="today-row-title" onClick={() => openAgentLane(String(flight.launchId))}>
             {agentResultWords(flight)}
@@ -575,67 +586,104 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   ));
 
   const pastToday = finish.length ? (
-    <li className="today-section" aria-hidden="true"><span>TO FINISH</span></li>
+    <li className="today-section" aria-hidden="true"><span>To finish</span></li>
   ) : null;
 
   const ahead = events.length;
   const prepareWith = prepared?.automation ?? null;
+  const decide = rows.work.filter((face) => face.verbs.kind === "decide").length;
+  const nextWords = next && nextStart && !started
+    ? `next ${next.person_relationship_id ? "1:1" : "meeting"} ${countdown(nextStart, now)}`
+    : null;
+  // Window grammar: the status bar says the day in warm words with a lamp,
+  // never a zero; the receipt of the last run beside them.
+  const statusItems: Array<StatusBarItem | null> = [
+    { key: "ahead", lamp: "info", text: countWords(ahead, "meeting ahead", "meetings ahead"), testId: "today-status-ahead" },
+    { key: "finish", lamp: "warn", text: countWords(finish.length, "to finish", "to finish"), testId: "today-status-finish" },
+    { key: "decide", lamp: "ask", text: countWords(decide, "decision to make", "decisions to make"), testId: "today-status-decide" },
+    nextWords ? { key: "next", text: nextWords, testId: "today-status-next" } : null,
+    summary.receipt
+      ? { key: "receipt", text: <span className="surface-footer-receipt-line">{summary.receipt.text}</span> }
+      : dropped ? { key: "dropped", text: <NeedsDroppedReceipt /> } : null,
+  ];
+  const needsCount = rows.needs.count;
   return (
     <>
       {/* Busy until the first load ends: the day's rows land after it and
           move what is drawn (the desk sweep's still fence, under load). */}
       <div className="desk-pullout-body desk-surface-body intelligence-pullout today" aria-busy={loaded ? undefined : true}>
-        <div className="today-head">
-          <h2 className="today-day" data-testid="today-day">{`${DAY_NAMES[now.getDay()]} ${now.getDate()} ${MONTH_NAMES[now.getMonth()]}`}</h2>
-          <span className="today-strip">
-            {ahead ? <span><b>{ahead}</b> {ahead === 1 ? "meeting ahead" : "meetings ahead"}</span> : null}
-            {finish.length ? <span><b>{finish.length}</b> to finish</span> : null}
-            {agentsWords ? (
-              <Button variant="chrome" className="today-agents" data-testid="today-agents"
-                onClick={() => openSurfaceOr("open-conductor", "/conductor")}>
-                {agentsWords}
-              </Button>
-            ) : null}
-          </span>
-          <span className="today-head-sp" />
+        {/* Window grammar: no headline (Today is the title bar). The verbs
+            sit on the toolbar; the date is a quiet fact at its end. */}
+        <Toolbar
+          label="Today"
+          className="today-toolbar"
+          data-testid="today-toolbar"
+          trailingStays
+          trailing={<span className="today-date" data-testid="today-day">{`${SHORT_DAYS[now.getDay()]} ${now.getDate()} ${SHORT_MONTHS[now.getMonth()]}`}</span>}
+        >
+          <Button dense variant={lead === "record" ? "primary" : "secondary"} onClick={recordNow} data-testid="today-record-now">
+            <ToolGlyph kind="record" />
+            Record now
+          </Button>
           {prepareWith ? (
-            <Button dense variant="ghost" loading={busy === "prepare"} data-testid="today-prepare-now"
+            <Button dense variant="secondary" loading={busy === "prepare"} data-testid="today-prepare-now"
               onClick={() => void act("prepare", "Not prepared. Try again", () =>
                 apiFetch(`/api/workbenches/${encodeURIComponent(prepareWith.id)}/run`, { method: "POST", json: {} }))}>
+              {busy === "prepare" ? null : <ToolGlyph kind="run" />}
               Prepare now
             </Button>
           ) : null}
-          {actError?.key === "prepare" ? <span className="kit-pill" data-tone="danger" role="status">{actError.text}</span> : null}
-          <Button dense variant={lead === "record" ? "primary" : "secondary"} onClick={recordNow} data-testid="today-record-now">Record now</Button>
+          <Button dense variant="secondary" data-testid="today-refresh" onClick={retry}>
+            <ToolGlyph kind="retry" />
+            Refresh
+          </Button>
+          <Button dense variant="secondary" className="today-needs-toggle" data-testid="today-needs-all"
+            onClick={() => openChairWindow("chair:needs")}>
+            <ToolGlyph kind="tasks" />
+            Needs you{needsCount > 0 ? <b className="today-needs-count" data-testid="today-needs-count">{needsCount}</b> : null}
+          </Button>
+          {actError?.key === "prepare" ? <span role="status"><DotWord tone="fail">{actError.text}</DotWord></span> : null}
+        </Toolbar>
+        <div className="today-scroll">
+          <PreparedBlock read={prepared} events={door?.upcoming ?? []} />
+          <div className="today-grid">
+            <TodayNeeds work={rows.work} count={rows.needs.count} now={now} limit={phone ? NEEDS_TOP_PHONE : NEEDS_TOP}
+              primary={lead === "needs"} projects={rows.multipleProjects} loaded={needsLoaded} emptyDesk={emptyDesk}
+              failed={rows.needs.room === null && Object.keys(rows.needs.errors).length > 0} calendarLead={lead === "calendar"}
+              next={next && nextStart ? `${title(next)} at ${clock(nextStart)}` : null}
+              peopleUnread={Boolean(rows.needs.peopleUnread)} />
+            <section className="today-day-section" aria-label="The day">
+              <h3 className="today-section-cap">The day</h3>
+              <ol className="today-spine" aria-label="Today">
+                {nowNode}
+                {nextNode}
+                {laterNodes}
+                {doorFailedNode}
+                {emptyNode}
+                {justMadeNode}
+                {agentResultNodes}
+                {newsNodes}
+                {meetingsFailedNode}
+                {pastToday}
+                {finishNodes}
+              </ol>
+            </section>
+          </div>
+          <TodayMemoryPages now={now} />
+          <SinceYesterday brief={brief} failed={failed.brief} now={now} openRequest={sinceRequest} onRetry={retry} />
+          <ThisWeek days={week} />
         </div>
-        <PreparedBlock read={prepared} events={door?.upcoming ?? []} />
-        <div className="today-grid">
-          <TodayNeeds work={rows.work} count={rows.needs.count} now={now} limit={phone ? NEEDS_TOP_PHONE : NEEDS_TOP}
-            primary={lead === "needs"} projects={rows.multipleProjects} loaded={needsLoaded} emptyDesk={emptyDesk}
-            failed={rows.needs.room === null && Object.keys(rows.needs.errors).length > 0} calendarLead={lead === "calendar"}
-            next={next && nextStart ? `${title(next)} at ${clock(nextStart)}` : null}
-            peopleUnread={Boolean(rows.needs.peopleUnread)} />
-          <ol className="today-spine" aria-label="Today">
-            {nowNode}
-            {nextNode}
-            {laterNodes}
-            {doorFailedNode}
-            {emptyNode}
-            {justMadeNode}
-            {agentResultNodes}
-            {newsNodes}
-            {meetingsFailedNode}
-            {pastToday}
-            {finishNodes}
-          </ol>
-        </div>
-        <TodayMemoryPages now={now} />
-        <SinceYesterday brief={brief} failed={failed.brief} now={now} openRequest={sinceRequest} onRetry={retry} />
-        <ThisWeek days={week} />
       </div>
-      <SurfaceFooter
-        receipt={summary.receipt ? <span className="surface-footer-receipt-line" role="status">{summary.receipt.text}</span> : <NeedsDroppedReceipt />}
-        verbs={<Button dense variant="ghost" onClick={() => openSurfaceOr("configure-settings", "/settings", "notices")}>Settings</Button>}
+      <StatusBar
+        className="today-status"
+        data-testid="today-status"
+        items={statusItems}
+        verbs={agentsWords ? (
+          <Button dense variant="secondary" className="today-agents" data-testid="today-agents"
+            onClick={() => openSurfaceOr("open-conductor", "/conductor")}>
+            {agentsWords}
+          </Button>
+        ) : undefined}
       />
     </>
   );

@@ -107,9 +107,13 @@ describe("Signal component gallery", () => {
     const conversation = screen.getByTestId("reference-conversation");
     expect(within(conversation).queryByRole("button", { name: /Speak/i })).not.toBeInTheDocument();
     expect(conversation.querySelector(".desk-mic")).toBeNull();
-    fireEvent.change(within(conversation).getByRole("textbox", { name: /Write a review note/ }), { target: { value: "Keep this local" } });
-    fireEvent.click(within(conversation).getByRole("button", { name: "Send locally" }));
+    // Window grammar: the specimen is the Ask window's own composition.
+    expect(within(conversation).getByRole("toolbar", { name: "Ask" })).toBeInTheDocument();
+    expect(within(conversation).getByTestId("ask-context")).toHaveTextContent("AboutLedger rollback");
+    fireEvent.change(within(conversation).getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Keep this local" } });
+    fireEvent.click(within(conversation).getByRole("button", { name: "Ask" }));
     expect(within(conversation).getByText("Keep this local")).toBeInTheDocument();
+    expect(within(conversation).getAllByTestId("ask-turn")).toHaveLength(2);
 
     fireEvent.click(screen.getByRole("button", { name: "Progress" }));
     const progress = screen.getByTestId("reference-progress");
@@ -123,20 +127,42 @@ describe("Signal component gallery", () => {
     render(<ComponentsCore />);
 
     fireEvent.click(screen.getByRole("button", { name: "Conversation" }));
-    const conversation = screen.getByTestId("reference-conversation");
     fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: "failed" } });
+    const conversation = screen.getByTestId("reference-conversation");
     const failedRequest = "Can we keep the release note local while we review it?";
     expect(within(conversation).getAllByText(failedRequest, { exact: true })).toHaveLength(1);
 
-    const draft = within(conversation).getByRole("textbox", { name: "Write a review note" });
+    const draft = within(conversation).getByRole("textbox", { name: "Ask about your work" });
     fireEvent.change(draft, { target: { value: "Newer draft" } });
-    fireEvent.click(within(conversation).getAllByRole("button", { name: "Retry" })[0]);
-    expect(within(conversation).getByRole("button", { name: "Retry…" })).toBeDisabled();
+    fireEvent.click(within(conversation).getByRole("button", { name: "Try again" }));
+    // Asking: the status bar says it and holds Stop; Ask waits.
+    const status = within(conversation).getByTestId("reference-conversation-status");
+    expect(status).toHaveTextContent("Asking…");
+    expect(within(status).getByRole("button", { name: "Stop" })).toBeInTheDocument();
+    expect(within(conversation).getByRole("button", { name: "Ask" })).toBeDisabled();
     fireEvent.change(draft, { target: { value: "Newer draft while retrying" } });
 
     await waitFor(() => expect(within(conversation).getByText("The reply is available locally for the captured request.", { exact: true })).toBeInTheDocument());
     expect(draft).toHaveValue("Newer draft while retrying");
     expect(within(conversation).getAllByText(failedRequest, { exact: true })).toHaveLength(1);
+  });
+
+  it("draws the five Ask states through the Ask composition", () => {
+    render(<ComponentsCore />);
+    fireEvent.click(screen.getByRole("button", { name: "Conversation" }));
+    const pick = (value: string) => fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value } });
+    pick("empty");
+    expect(within(screen.getByTestId("reference-conversation")).getByRole("button", { name: "What needs my attention?" })).toBeInTheDocument();
+    expect(screen.getByTestId("reference-conversation").querySelector("h1, .reference-example-head")).toBeNull();
+    pick("ordinary");
+    const answered = screen.getByTestId("reference-conversation");
+    expect(within(answered).getByRole("heading", { name: "Ledger freeze" })).toBeInTheDocument();
+    expect(within(answered).getByRole("button", { name: "Save as note" })).toBeInTheDocument();
+    pick("busy");
+    expect(within(screen.getByTestId("reference-conversation-status")).getByRole("button", { name: "Stop" })).toBeInTheDocument();
+    pick("saved");
+    expect(within(screen.getByTestId("reference-conversation")).getByRole("button", { name: "Open note" })).toBeInTheDocument();
+    expect(screen.getByTestId("reference-conversation-status")).toHaveTextContent("Saved as note");
   });
 
   it("keeps the local Thought return outside a closed source fold and keeps the source after Clear quote", async () => {
@@ -150,7 +176,7 @@ describe("Signal component gallery", () => {
     fireEvent.click(within(frame).getByText("Selected text"));
     await waitFor(() => expect(fold).not.toHaveAttribute("open"));
     fireEvent.click(within(frame).getByRole("button", { name: "Back to Thought" }));
-    expect(within(source).getByRole("status")).toHaveTextContent("LOCAL RETURN");
+    expect(screen.getByTestId("reference-conversation-status")).toHaveTextContent("Back to the Note, locally");
 
     fireEvent.click(within(frame).getByText("Selected text"));
     await waitFor(() => expect(fold).toHaveAttribute("open"));
@@ -158,7 +184,7 @@ describe("Signal component gallery", () => {
     expect(within(frame).getByText("Source")).toBeInTheDocument();
     expect(within(frame).queryByText("The source stays beside the decision.")).not.toBeInTheDocument();
     expect(within(frame).getByRole("button", { name: "Back to Thought" })).toBeInTheDocument();
-    expect(screen.getByTestId("reference-conversation")).toHaveTextContent("Yes. Keep the source beside the decision.");
+    expect(screen.getByTestId("reference-conversation")).toHaveTextContent("The team agreed to freeze the ledger on Nov 12");
   });
 
   it("selects the real Settings writer refusal and keeps the draft for Retry", async () => {

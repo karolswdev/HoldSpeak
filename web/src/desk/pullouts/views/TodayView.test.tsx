@@ -247,7 +247,7 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     });
     render(<TodayView />);
     const next = await screen.findByTestId("today-next");
-    expect(next.textContent).toContain("TUE");
+    expect(next.textContent).toContain("Tue");
     expect(within(next).getByTestId("today-countdown").textContent).toBe("in 50 min");
     expect(screen.queryByTestId("today-empty")).toBeNull();
   });

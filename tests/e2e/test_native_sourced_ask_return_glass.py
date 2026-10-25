@@ -516,7 +516,7 @@ def test_reference_source_frame_keeps_back_during_busy_and_quote_closed(
             expect(source.get_by_role("button", name="Back to Thought")).to_be_visible()
             _visible_before_scroll(specimen, "Back to Thought")
             source.get_by_role("button", name="Back to Thought").click()
-            expect(specimen.get_by_text("LOCAL RETURN", exact=True)).to_be_visible()
+            expect(specimen.get_by_text("Back to the Note, locally", exact=True)).to_be_visible()
             if width == 393:
                 _target_check(page, "[data-testid='reference-conversation']")
             page.screenshot(path=str(shots / f"reference-conversation-source-{width}.png"))

@@ -1,4 +1,3 @@
-import { SurfaceFooter } from "../surface/SurfaceFooter";
 // The Ask window (Betterment Q4, "One Ask window"; DECISIONS #14).
 //
 // Ask and Thread are one window. Every Ask is kept as a thread from its first
@@ -53,7 +52,6 @@ import { useDurableDraft } from "../../lib/durableDraft";
 import { qualifiedRef } from "../api";
 import { DeskWindowFrame } from "./DeskWindow";
 import { Material } from "../surface/Material";
-import { ScrollHint, SurfaceTraffic, SurfaceTrafficTurn } from "../surface/Surface";
 import { FoldGadget, PadGadget } from "../surface/gadgets";
 import { TurnLamp, routeFromWire, type TurnRoute } from "../turnRoute";
 import { NoteSendWells } from "../documentSendsLazy";
@@ -61,7 +59,7 @@ import { Button } from "../../components/signal/Signal";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { reportWriteFailure } from "../hooks/useWriteReceipt";
 import { useEngine, refreshEngine } from "../hooks/useEngine";
-import { ActionNotice, StateChip, EngineLine, RunLine, ComposerWell, reasonVerb, reasonWords, useReadingEndAnchor } from "../surface";
+import { ActionNotice, StateChip, EngineLine, RunLine, StatusBar, ComposerWell, ToolGlyph, reasonVerb, reasonWords, useReadingEndAnchor, type StatusBarItem } from "../surface";
 import { humanTime } from "../surface/format";
 import { openProjectRoomAtResource, openRef } from "../openObject";
 import { openSurfaceOr } from "../shell";
@@ -70,9 +68,9 @@ import { busyWords, otherEngineVerb, retryWords } from "../surface/waitWords";
 import { deleteThread, getThread, listThreads, type ThreadWire } from "../threads";
 import { UsedLines } from "./UsedLines";
 import type { AgentUse } from "../used";
-import { spriteUrl } from "../sprites";
 import { requestAskReturn } from "../thought-workspace/askReturn";
 import { AskSourceFrame } from "./AskSourceFrame";
+import { ASK_GLYPH, ASK_SPRITE, AskAbout, AskAnswer, AskFresh, AskQuestion, AskThread, AskToolbar, AskTurnRow, AskVerbs } from "./askFace";
 import type { DeskNavigation, ProjectReturn } from "../store/types";
 import { useCompactViewport } from "../useCompactViewport";
 
@@ -209,19 +207,30 @@ export function AskPanel() {
   // Betterment Q6: the About picker (+) and the people it can find.
   const [picking, setPicking] = useState(false);
   const [people, setPeople] = useState<Array<{ id: string; name: string }>>([]);
-  const { copy, receipt: copyReceipt } = useCopyReceipt();
+  const { copy, state: copyState } = useCopyReceipt();
   const [passageOpen, setPassageOpen] = useState(true);
   const [selectedPassage, setSelectedPassage] = useState<AskSelectionHandoff | null>(() => takeAskSelection());
   const [projectReturn, setProjectReturn] = useState<ProjectReturn | null>(() => selectedPassage?.projectReturn ?? null);
   const activeProjectReturn = selectedPassage ? selectedPassage.projectReturn ?? null : projectReturn;
   const compact = useCompactViewport();
+  // The asker's disc on each question: his name from Settings ▸ You, else "You".
+  const [asker, setAsker] = useState("You");
+  useEffect(() => {
+    let live = true;
+    void apiFetch<{ owner?: { name?: string } }>("/api/settings")
+      .then((body) => {
+        const name = String(body?.owner?.name ?? "").trim();
+        if (live && name) setAsker(name);
+      })
+      .catch(() => undefined);
+    return () => { live = false; };
+  }, []);
   const projectName = useDesk((state) => state.projects.find((project) => project.id === activeProjectReturn?.projectId)?.name);
   const returnToProject = () => {
     if (activeProjectReturn) openProjectRoomAtResource(activeProjectReturn.projectId, activeProjectReturn.resourceRef);
   };
   const [sourceReturnReceipt, setSourceReturnReceipt] = useState("");
   const readingRef = useRef<HTMLDivElement | null>(null);
-  const aboutRef = useRef<HTMLDivElement | null>(null);
   const promptRef = useRef<HTMLTextAreaElement | null>(null);
   const mounted = useRef(true);
   const requestId = useRef(0);
@@ -792,6 +801,7 @@ export function AskPanel() {
   const hasConversation = turns.length > 0 || running || Boolean(failedRun) || threadRead.loading || Boolean(threadRead.error);
   useReadingEndAnchor(readingRef, hasConversation);
   const lastRoute = route;
+  const savedCount = Object.keys(saved).length;
   const statusLine = running
     ? ""
     : [
@@ -815,6 +825,7 @@ export function AskPanel() {
           <li key={row.id}>
             <Button dense variant="ghost" className="desk-ask-recent-row" aria-current={row.id === threadId ? "true" : undefined}
               onClick={() => { setRecentOpen(false); void loadThread(row.id); }}>
+              <img className="desk-ask-recent-glyph" src={ASK_GLYPH} alt="" width={20} height={20} draggable={false} />
               <span className="desk-ask-recent-title">{row.title?.trim() || "An ask with no question"}</span>
               <span className="desk-ask-recent-age">{humanTime(row.last_turn_at || row.updated_at)}</span>
             </Button>
@@ -824,15 +835,38 @@ export function AskPanel() {
     </div>
   ) : null;
 
+  // Window grammar: the status bar says the engine where the answer runs,
+  // Asking… with Stop while a turn runs, the receipts in warm words, and the
+  // route of the last answer as its egress lamp (said once, A.9).
+  const engineWords = engine.state === "set" ? [engine.model, engine.place].filter(Boolean).join(" · ") : "";
+  const statusItems: StatusBarItem[] = [
+    running ? { key: "asking", lamp: "info", text: "Asking…", testId: "ask-status-asking" } : null,
+    !running && !failedRun && engineWords ? { key: "engine", lamp: "ok", text: engineWords, testId: "ask-status-engine" } : null,
+    statusLine ? { key: "receipt", text: statusLine, testId: "ask-status-receipt" } : null,
+    savedCount && !running ? { key: "saved", lamp: "ok", text: savedCount === 1 ? "Saved as note" : `${savedCount} answers saved as notes`, testId: "ask-status-saved" } : null,
+    copyState === "copied" ? { key: "copy", lamp: "ok", text: "Copied", testId: "ask-status-copied" } : null,
+    copyState === "failed" ? { key: "copy", lamp: "fail", text: "Not copied", testId: "ask-status-copied" } : null,
+  ].filter(Boolean) as StatusBarItem[];
+
+  const aboutLine = (
+    <AskAbout
+      rows={about}
+      picking={picking}
+      onTogglePick={() => setPicking((open) => !open)}
+      onOpen={(row) => (row.ref === THIS_WEEK ? undefined : () => openRef(row.ref, { projectReturn: activeProjectReturn }))}
+      onRemove={(row) => removeAbout(row.ref)}
+    />
+  );
+
   return (
     <DeskWindowFrame
       id="ask"
       glyph="✦"
       label="Ask"
       className={`desk-pullout desk-ask is-card${hasConversation ? " has-traffic" : ""}`}
-      icon={<span className="desk-ask-glyph" aria-hidden="true">✦</span>}
+      icon={<img src={ASK_SPRITE} alt="" width={24} height={24} draggable={false} />}
       title="Ask"
-      actions={<Button dense variant="ghost" aria-expanded={recentOpen} onClick={toggleRecent}>Recent</Button>}
+      leading={activeProjectReturn && !compact ? <Button dense variant="ghost" onClick={returnToProject}>Return to {projectName || "Project"}</Button> : undefined}
       open
       defaultW={880}
       defaultH={640}
@@ -844,157 +878,128 @@ export function AskPanel() {
         // finish composition, so that event must not close the writer.
         if (event.key === "Escape" && event.nativeEvent.isComposing) event.stopPropagation();
       }}>
+        <AskToolbar
+          onNew={() => startNew()}
+          recentOpen={recentOpen}
+          onRecent={toggleRecent}
+          onForget={threadId || turns.length ? forget : undefined}
+          about={aboutLine}
+        />
         {recentPanel}
+        {/* Betterment Q6: the one About picker, under the toolbar (the
+            matches stay in view on a phone). */}
+        {picking ? (
+          <div className="desk-ask-about-picker">
+            <AboutPicker candidates={candidates} picked={about.map((row) => row.ref)} onPick={pickAbout} />
+          </div>
+        ) : null}
         {forgotten ? (
           <ActionNotice tone="info" action={{ label: "Undo", onClick: undoForget }}>
             Forgotten: {forgotten.title}
           </ActionNotice>
         ) : null}
 
-        <ScrollHint axis="y" scrollRef={aboutRef} className="desk-ask-context-wrap desk-ask-about-band"><div ref={aboutRef} className="desk-ask-question-context">
-          <div className="desk-ask-sources desk-ask-about" data-testid="ask-context">
-            <span className="desk-ask-about-label">About</span>
-            {about.length ? about.map((source) => (
-              <span className="desk-ask-about-chip" key={source.ref} data-testid="ask-about-chip">
-                {source.ref === THIS_WEEK
-                  ? <span className="desk-ask-about-set">{source.title}</span>
-                  : <Button dense variant="ghost" onClick={() => openRef(source.ref, { projectReturn: activeProjectReturn })}>{source.title}</Button>}
-                <Button dense variant="ghost" className="desk-ask-about-remove" aria-label={`Remove ${source.title}`} onClick={() => removeAbout(source.ref)}>✕</Button>
-              </span>
-            )) : <span className="desk-ask-about-desk">My whole desk</span>}
-            <Button dense variant="ghost" className="desk-ask-about-add" aria-label="Add to About" aria-expanded={picking} onClick={() => setPicking((open) => !open)}>+</Button>
-          </div>
-        </div></ScrollHint>
-        {/* Betterment Q6: the one About picker, below the About line (never
-            inside its short scroll: the matches stay in view on a phone). */}
-        {picking ? (
-          <div className="desk-ask-about-picker">
-            <AboutPicker candidates={candidates} picked={about.map((row) => row.ref)} onPick={pickAbout} />
-          </div>
-        ) : null}
-
-        {hasConversation ? <ScrollHint axis="y" scrollRef={readingRef} className="desk-ask-reading-wrap"><div ref={readingRef} className="conversation-reading desk-ask-reading" role="region" aria-label="Ask conversation" tabIndex={0}><SurfaceTraffic showEmpty={false}>
-          {threadRead.loading ? <SurfaceTrafficTurn prefix="Ask"><RunLine phase="running" verb="Opening" /></SurfaceTrafficTurn> : null}
-          {threadRead.error ? (
-            <ActionNotice role="alert" tone="warn" action={threadId ? { label: "Try again", onClick: () => void loadThread(threadId) } : undefined}>
-              <StateChip state="unreachable" label="This ask was not read" />
-            </ActionNotice>
-          ) : null}
-          {turns.map((turn, index) => (
-            <div className="desk-ask-turn" key={turn.key} data-testid="ask-turn">
-              <SurfaceTrafficTurn prefix="You">
-                <div className="desk-ask-question-text">{turn.question}</div>
-              </SurfaceTrafficTurn>
-              <SurfaceTrafficTurn
-                prefix="Answer"
-                meta={index === turns.length - 1 && lastRoute ? <TurnLamp lamp={lastRoute.lamp} /> : null}
-                verbs={<>
-                  {threadId && !tasks[turn.key] && !(turn.used?.wrote ?? []).some((row) => row.ref.startsWith("action_item:")) ? (
-                    <Button dense loading={makingTask === turn.key} onClick={() => void makeTask(turn)}>Make it a task</Button>
+        {hasConversation ? (
+          <AskThread readingRef={readingRef}>
+            {threadRead.loading ? <AskTurnRow testId={null}><AskAnswer><RunLine phase="running" verb="Opening" /></AskAnswer></AskTurnRow> : null}
+            {threadRead.error ? (
+              <li className="desk-ask-turn">
+                <ActionNotice role="alert" tone="warn" action={threadId ? { label: "Try again", onClick: () => void loadThread(threadId) } : undefined}>
+                  <StateChip state="unreachable" label="This ask was not read" />
+                </ActionNotice>
+              </li>
+            ) : null}
+            {turns.map((turn) => (
+              <AskTurnRow key={turn.key}>
+                <AskQuestion asker={asker}>{turn.question}</AskQuestion>
+                <AskAnswer>
+                  <div className="desk-ask-answer"><Material>{turn.answer}</Material></div>
+                  {turn.lookedAt.length ? (
+                    <FoldGadget title={`Looked at · ${turn.lookedAt.length === 1 ? turn.lookedAt[0].title : `${turn.lookedAt.length} sources`}`} className="desk-ask-reading-fold">
+                      <div className="desk-ask-sources desk-ask-answer-sources" data-testid="ask-looked-at">
+                        {turn.lookedAt.map((source) => (
+                          <Button key={source.ref} dense variant="ghost" onClick={() => openRef(source.ref, { projectReturn: activeProjectReturn })}>{source.title}</Button>
+                        ))}
+                      </div>
+                    </FoldGadget>
                   ) : null}
-                  {fromNote && !added[turn.key] ? (
-                    <Button dense loading={adding === turn.key} onClick={() => void addToNote(turn)}>Add to note</Button>
+                  <UsedLines used={usedWithTasks(turn.used, tasks[turn.key])} testPrefix="ask" lookedAt={false} />
+                  <AskVerbs>
+                    {saved[turn.key] ? (
+                      <Button dense variant="ghost" onClick={() => openRef(saved[turn.key], { projectReturn: activeProjectReturn })}><ToolGlyph kind="open" />Open note</Button>
+                    ) : (
+                      <Button dense variant="ghost" loading={saving === turn.key} onClick={() => void saveAsNote(turn)}>{saving === turn.key ? null : <ToolGlyph kind="note" />}Save as note</Button>
+                    )}
+                    <Button dense variant="ghost" onClick={() => void copy(turn.answer)}>Copy</Button>
+                    <Button dense variant="ghost" aria-expanded={sending === turn.key} onClick={() => void sendAnswer(turn)}><ToolGlyph kind="send" />Send…</Button>
+                    {threadId && !tasks[turn.key] && !(turn.used?.wrote ?? []).some((row) => row.ref.startsWith("action_item:")) ? (
+                      <Button dense variant="ghost" loading={makingTask === turn.key} onClick={() => void makeTask(turn)}>{makingTask === turn.key ? null : <ToolGlyph kind="tasks" />}Make it a task</Button>
+                    ) : null}
+                    {fromNote && !added[turn.key] ? (
+                      <Button dense variant="ghost" loading={adding === turn.key} onClick={() => void addToNote(turn)}>{adding === turn.key ? null : <ToolGlyph kind="note" />}Add to note</Button>
+                    ) : null}
+                  </AskVerbs>
+                  {saved[turn.key] ? <span className="desk-ask-saved" role="status">Saved to your desk</span> : null}
+                  {fromNote && added[turn.key] ? (
+                    <span className="desk-ask-saved desk-ask-added" role="status" data-testid="ask-added">
+                      Added to {fromNote.title || "the note"}
+                      <Button dense variant="ghost" loading={adding === turn.key} onClick={() => void undoAdd(turn)}>Undo</Button>
+                    </span>
                   ) : null}
-                  {saved[turn.key] ? (
-                    <Button dense variant="ghost" onClick={() => openRef(saved[turn.key], { projectReturn: activeProjectReturn })}>Open note</Button>
-                  ) : (
-                    <Button dense loading={saving === turn.key} onClick={() => void saveAsNote(turn)}>Save as note</Button>
-                  )}
-                  <Button dense variant="ghost" onClick={() => void copy(turn.answer)}>Copy</Button>
-                  <Button dense variant="ghost" aria-expanded={sending === turn.key} onClick={() => void sendAnswer(turn)}>Send…</Button>
-                </>}
-              >
-                <div className="desk-ask-answer"><Material>{turn.answer}</Material></div>
-                {turn.lookedAt.length ? (
-                  <FoldGadget title={`Looked at · ${turn.lookedAt.length === 1 ? turn.lookedAt[0].title : `${turn.lookedAt.length} sources`}`} className="desk-ask-reading-fold">
-                    <div className="desk-ask-sources desk-ask-answer-sources" data-testid="ask-looked-at">
-                      {turn.lookedAt.map((source) => (
-                        <Button key={source.ref} dense variant="ghost" onClick={() => openRef(source.ref, { projectReturn: activeProjectReturn })}>{source.title}</Button>
-                      ))}
+                  {sending === turn.key && saved[turn.key] ? (
+                    <div className="desk-ask-send-well" data-testid="ask-send">
+                      <NoteSendWells id={saved[turn.key].slice("note:".length)} title={turn.question} />
                     </div>
-                  </FoldGadget>
+                  ) : null}
+                </AskAnswer>
+              </AskTurnRow>
+            ))}
+            {sent && (running || failedRun) ? (
+              <AskTurnRow testId={null}>
+                <AskQuestion asker={asker}>{sent.question}</AskQuestion>
+                {running ? (
+                  <AskAnswer>
+                    <RunLine
+                      phase="running"
+                      verb={progressWords(progress)}
+                      model={progress?.state === "busy" ? "" : engine.model}
+                      place={progress?.state === "busy" ? "" : engine.place}
+                      startedAt={runStartedAt}
+                    />
+                    {held.calls.map((call) => (
+                      <div className="desk-ask-hold" data-testid="ask-hold" key={call.call_id} role="group" aria-label={call.words}>
+                        <span className="desk-ask-hold-words">{call.words}?</span>
+                        <Button dense variant="primary" loading={deciding === call.call_id} onClick={() => void decide(call, "approve")}>Allow once</Button>
+                        <Button dense variant="ghost" disabled={deciding === call.call_id} onClick={() => void decide(call, "deny")}>Deny</Button>
+                      </div>
+                    ))}
+                    {progress?.state === "busy" && progress.alternatives[0] ? (
+                      <Button dense variant="ghost" data-testid="ask-elsewhere" onClick={() => void askElsewhere(progress.alternatives[0])}>
+                        {otherEngineVerb(progress.alternatives[0].label, progress.alternatives[0].boundary)}
+                      </Button>
+                    ) : null}
+                  </AskAnswer>
                 ) : null}
-                <UsedLines used={usedWithTasks(turn.used, tasks[turn.key])} testPrefix="ask" lookedAt={false} />
-                {saved[turn.key] ? <span className="desk-ask-saved" role="status">Saved to your desk</span> : null}
-                {fromNote && added[turn.key] ? (
-                  <span className="desk-ask-saved desk-ask-added" role="status" data-testid="ask-added">
-                    Added to {fromNote.title || "the note"}
-                    <Button dense variant="ghost" loading={adding === turn.key} onClick={() => void undoAdd(turn)}>Undo</Button>
-                  </span>
+                {failedRun ? (
+                  <AskAnswer failed>
+                    <RunLine
+                      phase="failure"
+                      reason={failedRun.reason}
+                      model={engine.model}
+                      place={route ? "" : engine.place}
+                      elapsedSeconds={finishedElapsedSeconds}
+                      onAction={failedRun.reason === "no_engine" ? () => openSurfaceOr("configure-runs-on", "/settings", "models") : undefined}
+                      onRetry={failedRun.reason !== "no_engine" && failedRun.reason !== "source_changed" && failedRun.reason !== "source_gone" && reasonVerb(failedRun.reason) && sent ? () => void run(sent) : undefined}
+                    />
+                  </AskAnswer>
                 ) : null}
-                {sending === turn.key && saved[turn.key] ? (
-                  <div className="desk-ask-send-well" data-testid="ask-send">
-                    <NoteSendWells id={saved[turn.key].slice("note:".length)} title={turn.question} />
-                  </div>
-                ) : null}
-              </SurfaceTrafficTurn>
-            </div>
-          ))}
-          {sent && (running || failedRun) ? (
-            <SurfaceTrafficTurn prefix="You">
-              <div className="desk-ask-question-text">{sent.question}</div>
-            </SurfaceTrafficTurn>
-          ) : null}
-          {running ? (
-            <SurfaceTrafficTurn prefix="Answer">
-              <RunLine
-                phase="running"
-                verb={progressWords(progress)}
-                model={progress?.state === "busy" ? "" : engine.model}
-                place={progress?.state === "busy" ? "" : engine.place}
-                startedAt={runStartedAt}
-              />
-              {held.calls.map((call) => (
-                <div className="desk-ask-hold" data-testid="ask-hold" key={call.call_id} role="group" aria-label={call.words}>
-                  <span className="desk-ask-hold-words">{call.words}?</span>
-                  <Button dense variant="primary" loading={deciding === call.call_id} onClick={() => void decide(call, "approve")}>Allow once</Button>
-                  <Button dense variant="ghost" disabled={deciding === call.call_id} onClick={() => void decide(call, "deny")}>Deny</Button>
-                </div>
-              ))}
-              {progress?.state === "busy" && progress.alternatives[0] ? (
-                <Button dense variant="ghost" data-testid="ask-elsewhere" onClick={() => void askElsewhere(progress.alternatives[0])}>
-                  {otherEngineVerb(progress.alternatives[0].label, progress.alternatives[0].boundary)}
-                </Button>
-              ) : null}
-            </SurfaceTrafficTurn>
-          ) : null}
-          {failedRun ? (
-            <SurfaceTrafficTurn prefix="Answer" error meta={<TurnLamp lamp={route?.lamp ?? null} />}>
-              <RunLine
-                phase="failure"
-                reason={failedRun.reason}
-                model={engine.model}
-                place={route ? "" : engine.place}
-                elapsedSeconds={finishedElapsedSeconds}
-                onAction={failedRun.reason === "no_engine" ? () => openSurfaceOr("configure-runs-on", "/settings", "models") : undefined}
-                onRetry={failedRun.reason !== "no_engine" && failedRun.reason !== "source_changed" && failedRun.reason !== "source_gone" && reasonVerb(failedRun.reason) && sent ? () => void run(sent) : undefined}
-              />
-            </SurfaceTrafficTurn>
-          ) : null}
-        </SurfaceTraffic></div></ScrollHint> : (
-          <ScrollHint axis="y" scrollRef={readingRef} className="desk-ask-reading-wrap">
-            <div ref={readingRef} className="conversation-reading desk-ask-reading desk-ask-empty" role="region" aria-label="Ask conversation" tabIndex={0} data-testid="ask-empty">
-              <div className="desk-ask-empty-identity">
-                <picture>
-                  <source media="(max-width: 560px)" srcSet={spriteUrl("thread", "ask", "rest", undefined, 32)} />
-                  <img className="desk-ask-empty-sprite" src={spriteUrl("thread", "ask", "rest", undefined, 64)} alt="" width={64} height={64} draggable={false} />
-                </picture>
-                <h1>Ask about<br className="desk-ask-empty-break" /> your work</h1>
-              </div>
-              <div className="desk-ask-prompts">
-                <Button dense variant="ghost" className="desk-ask-starter" onClick={() => prefillPrompt("What needs my attention?")}>
-                  <img src={spriteUrl("action", "ask-attention", "rest", undefined, 32)} alt="" width={32} height={32} draggable={false} />
-                  <span className="desk-ask-starter-label">What needs my attention?</span>
-                  <span className="desk-ask-starter-arrow" aria-hidden="true">→</span>
-                </Button>
-                <Button dense variant="ghost" className="desk-ask-starter" onClick={() => prefillPrompt("Summarize this week's meetings")}>
-                  <img src={spriteUrl("meeting", "ask-meetings", "rest", undefined, 32)} alt="" width={32} height={32} draggable={false} />
-                  <span className="desk-ask-starter-label">Summarize this week's meetings</span>
-                  <span className="desk-ask-starter-arrow" aria-hidden="true">→</span>
-                </Button>
-              </div>
-            </div>
-          </ScrollHint>
+              </AskTurnRow>
+            ) : null}
+          </AskThread>
+        ) : (
+          <AskThread readingRef={readingRef} empty testId="ask-empty">
+            <AskFresh onPrompt={prefillPrompt} />
+          </AskThread>
         )}
 
         <ComposerWell
@@ -1019,31 +1024,26 @@ export function AskPanel() {
               onText={(text) => setPrompt((current) => current ? `${current} ${text}` : text)}
             />
           }
-          context={!running ? (
-            engine.state === "set" ? (
-              <div className="surface-engine-line desk-ask-engine-line" data-testid="engine-line">
-                <span>{[engine.model, engine.place].filter(Boolean).join(" · ")}</span>
-                <FoldGadget title="Tools" className="desk-ask-tools">
-                  <span>{deskTools ? DESK_TOOLS_WORDS : "NO DESK TOOLS"}</span>
-                </FoldGadget>
-              </div>
-            ) : (
-              <EngineLine
-                engine={engine}
-                onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
-                onRetry={() => void refreshEngine("ask.answer")}
-              />
-            )
+          context={engine.state === "set" ? (
+            <div className="surface-engine-line desk-ask-engine-line" data-testid="engine-line">
+              <FoldGadget title="Tools" className="desk-ask-tools">
+                <span>{deskTools ? DESK_TOOLS_WORDS : "No desk tools"}</span>
+              </FoldGadget>
+            </div>
+          ) : !running ? (
+            <EngineLine
+              engine={engine}
+              onChoose={() => openSurfaceOr("configure-runs-on", "/settings", "models")}
+              onRetry={() => void refreshEngine("ask.answer")}
+            />
           ) : null}
-          actions={running ? (
-            <Button variant="primary" onClick={stop}>Stop</Button>
-          ) : (
+          actions={
             <Button
               variant="primary"
-              disabled={!prompt.trim()}
+              disabled={running || !prompt.trim()}
               onClick={() => void ask()}
             >Ask</Button>
-          )}
+          }
         >
           <div className="desk-ask-input">
             <PadGadget
@@ -1064,24 +1064,17 @@ export function AskPanel() {
             />
           </div>
         </ComposerWell>
+        {/* Inside the body (the surface container), so the bar takes its
+            narrow form at a phone width: Stop keeps its 44 px target. */}
+        <StatusBar
+          className="desk-ask-status"
+          data-testid="ask-status"
+          items={statusItems}
+          verbs={running ? <Button dense variant="secondary" onClick={stop}>Stop</Button> : undefined}
+          egress={!running && lastRoute ? <TurnLamp lamp={lastRoute.lamp} /> : undefined}
+        />
       </div>
 
-      {/* Betterment Q5 (FOLLOWUPS Q4): the route is said once, as the lamp on
-          the answer that left the machine (the Ask window names no host). */}
-      {(copyReceipt || statusLine || threadId || turns.length || (activeProjectReturn && !compact)) ? (
-        <SurfaceFooter
-          receipt={copyReceipt || (statusLine ? <span className="surface-footer-receipt-line" role="status">{statusLine}</span> : null)}
-          verbs={<>
-            {activeProjectReturn && !compact ? <Button dense variant="ghost" onClick={returnToProject}>Return to {projectName || "Project"}</Button> : null}
-            {threadId || turns.length ? <>
-              <FoldGadget title="More" className="desk-ask-more">
-                <Button dense variant="ghost" onClick={forget}>Forget</Button>
-              </FoldGadget>
-              <Button dense variant="ghost" onClick={() => startNew()}>New ask</Button>
-            </> : null}
-          </>}
-        />
-      ) : null}
     </DeskWindowFrame>
   );
 }

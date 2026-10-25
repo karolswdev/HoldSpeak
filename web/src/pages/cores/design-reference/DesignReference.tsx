@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { DeskComposer } from "../../../desk/components/DeskComposer";
-import { AskSourceFrame } from "../../../desk/components/AskSourceFrame";
 import { RepositoryBrowserView } from "../../../desk/components/RepositoryBrowserView";
 import { useRepositoryBrowser, type RepositoryReadAdapter } from "../../../desk/components/RepositoryBrowserController";
 import type { RepoFile } from "../../../desk/repository";
@@ -16,7 +14,6 @@ import {
   SurfaceState,
   SurfaceWell,
   SurfaceFooter,
-  ActionNotice,
   ProgressPlan,
   ProvenanceChip,
   Receipt,
@@ -30,10 +27,11 @@ import { EditingReference, type EditingPreset } from "./EditingReference";
 import { OwnerPreferencesReference, type OwnerPreferencesState } from "./OwnerPreferencesReference";
 import { FiledNotesReference, type FiledNotesPreset } from "./FiledNotesReference";
 import { WindowReference, type WindowPreset } from "./WindowReference";
+import { ConversationReference, CONVERSATION_STATES, type ConversationPreset } from "./ConversationReference";
 import "./design-reference.css";
 
 type Pattern = "window" | "forms" | "editing" | "reading" | "lists" | "resources" | "conversation" | "progress" | "controls";
-type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState | EditingPreset | FiledNotesPreset | WindowPreset;
+type ExampleState = "ordinary" | "busy" | "failed" | "empty" | "long" | "resumed" | OwnerPreferencesState | EditingPreset | FiledNotesPreset | WindowPreset | ConversationPreset;
 
 /*
  * Forms renders the Settings You fields and writer through local IO; Editing
@@ -166,8 +164,6 @@ const LIST_ITEMS = [
   { id: "runtime-plan", title: "Runtime plan", detail: "Local routing · updated Monday", kind: "Plan" },
 ];
 
-const FAILED_REQUEST_PAYLOAD = "Can we keep the release note local while we review it?";
-const FAILED_REPLY_PAYLOAD = "The reply is available locally for the captured request.";
 
 const WINDOW_STATES: Array<{ id: WindowPreset; label: string }> = [
   { id: "populated", label: "Selected row" },
@@ -188,7 +184,7 @@ const STATE_OPTIONS: Record<Pattern, Array<{ id: ExampleState; label: string }>>
     { id: "not-filed", label: "Not filed" },
     { id: "unavailable", label: "Note unavailable" }],
   resources: [STATES[0], STATES[1], STATES[2], STATES[3], { id: "resumed", label: "Resumed" }],
-  conversation: [STATES[0], STATES[1], STATES[2], STATES[3], STATES[4]],
+  conversation: CONVERSATION_STATES,
   progress: [STATES[0], STATES[1], STATES[2]],
   controls: [],
 };
@@ -306,88 +302,6 @@ function ResourcesPattern({ state }: { state: ExampleState }) {
   </section>;
 }
 
-type ConversationMessage = { role: "user" | "assistant"; text: string; replyTo?: string };
-
-function ConversationPattern({ state }: { state: ExampleState }) {
-  const [draft, setDraft] = useState("");
-  const [sourceQuote, setSourceQuote] = useState("The source stays beside the decision.");
-  const [sourceOpen, setSourceOpen] = useState(true);
-  const [localReturn, setLocalReturn] = useState(false);
-  const [messages, setMessages] = useState<ConversationMessage[]>([
-    { role: "user", text: "Can we keep the release note local while we review it?" },
-    { role: "assistant", text: "Yes. Keep the source beside the decision." },
-  ]);
-  const [replyState, setReplyState] = useState<"ready" | "busy" | "failed">("ready");
-  const failedRequest = useRef<string | null>(null);
-  const retryTimer = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (retryTimer.current !== null) {
-      window.clearTimeout(retryTimer.current);
-      retryTimer.current = null;
-    }
-    if (state === "failed") {
-      failedRequest.current = FAILED_REQUEST_PAYLOAD;
-      setReplyState("failed");
-      setMessages([{ role: "user", text: FAILED_REQUEST_PAYLOAD }]);
-    } else {
-      failedRequest.current = null;
-      if (state === "busy") setReplyState("busy");
-      else {
-        setReplyState("ready");
-        if (state === "empty") setMessages([]);
-        if (state === "ordinary") setMessages([
-          { role: "user", text: "Can we keep the release note local while we review it?" },
-          { role: "assistant", text: "Yes. Keep the source beside the decision." },
-        ]);
-        if (state === "long") setMessages([
-          { role: "user", text: "Keep the review local." },
-          { role: "assistant", text: "The source stays beside the result." },
-          { role: "user", text: "Show the next action at the end." },
-          { role: "assistant", text: "The action remains in the composer." },
-        ]);
-      }
-    }
-  }, [state]);
-
-  useEffect(() => () => {
-    if (retryTimer.current !== null) window.clearTimeout(retryTimer.current);
-  }, []);
-
-  const send = () => {
-    const value = draft.trim();
-    if (!value || replyState === "busy") return;
-    setMessages((items) => [...items, { role: "user", text: value }, { role: "assistant", text: "Yes. The source stays beside the result." }]);
-    setDraft("");
-  };
-  const retry = () => {
-    const request = failedRequest.current;
-    if (!request || replyState === "busy" || retryTimer.current !== null) return;
-    setReplyState("busy");
-    retryTimer.current = window.setTimeout(() => {
-      setMessages((items) => [...items, { role: "assistant", text: FAILED_REPLY_PAYLOAD, replyTo: request }]);
-      setReplyState("ready");
-      retryTimer.current = null;
-    }, 120);
-  };
-  const empty = state === "empty" && messages.length === 0;
-  return (
-    <section className="reference-example" data-testid="reference-conversation" aria-label="Conversation pattern">
-      <div className="reference-example-head"><div><h2>Review thread</h2></div><StateChip state={replyState === "failed" ? "failure" : replyState === "busy" ? "working" : "active"} label={replyState === "failed" ? "REPLY FAILED" : replyState === "busy" ? "SENDING" : "Reply ready"} /></div>
-      {empty ? <SurfaceState empty emptyLabel="No messages" emptyGlyph="○" onAction={() => setMessages([{ role: "user", text: "Can we keep the release note local?" }])} actionLabel="Show thread" /> : <SurfaceRows>{messages.map((message, index) => <SurfaceRow key={`${message.role}-${index}`} title={message.role === "user" ? "You" : "Desk reply"} detail={message.text} meta={message.role === "user" ? "you" : "local"} />)}</SurfaceRows>}
-      {replyState === "failed" ? <ActionNotice tone="danger" icon="!" action={{ label: "Retry", onClick: retry }}>Reply failed.</ActionNotice> : null}
-      <div className="reference-conversation-source" data-testid="reference-conversation-source">
-        <AskSourceFrame quote={sourceQuote} open={sourceOpen} onToggle={setSourceOpen}
-          onClear={() => setSourceQuote("")} onBack={() => setLocalReturn(true)} />
-        {localReturn ? <span className="reference-receipt" role="status">LOCAL RETURN</span> : null}
-      </div>
-      <div className="desk-pr-compose" data-specimen="true">
-        <DeskComposer className="desk-mic-row" value={draft} onChange={setDraft} placeholder="Write a review note" multiline rows={3} mic={false} micDraftScope="design-reference-conversation" actionLabel={replyState === "failed" || replyState === "busy" ? "Retry" : "Send locally"} actionDisabled={replyState === "busy" || (replyState !== "failed" && !draft.trim())} actionBusy={replyState === "busy"} onAction={replyState === "failed" || replyState === "busy" ? retry : send} />
-      </div>
-    </section>
-  );
-}
-
 function ProgressPattern({ state }: { state: ExampleState }) {
   const [run, setRun] = useState<"running" | "success" | "failed">(state === "failed" ? "failed" : state === "ordinary" ? "success" : "running");
   useEffect(() => { if (state === "failed") setRun("failed"); else if (state === "ordinary") setRun("success"); else if (state === "busy") setRun("running"); }, [state]);
@@ -414,7 +328,7 @@ function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleStat
     case "lists": return ["filed-notes", "files-not-read", "not-filed", "unavailable"].includes(state)
       ? <FiledNotesReference key={state} preset={state as FiledNotesPreset} /> : <ListsPattern state={state} />;
     case "resources": return <ResourcesPattern key={state} state={state} />;
-    case "conversation": return <ConversationPattern state={state} />;
+    case "conversation": return <ConversationReference key={state} preset={CONVERSATION_STATES.some((item) => item.id === state) ? state as ConversationPreset : "ordinary"} />;
     case "progress": return <ProgressPattern state={state} />;
     case "controls": return <section className="reference-controls" data-testid="reference-controls" id="reference-panel-controls"><ControlsGallery hero={() => null} /></section>;
   }
