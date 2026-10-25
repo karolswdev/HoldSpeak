@@ -45,8 +45,28 @@ def _open_settings(page: Any, base: str) -> Any:
 
 
 def _status(you: Any, field: str) -> str:
-    row = you.get_by_test_id(f"settings-owner-{field}").locator("xpath=ancestor::div[@class='gadget-row'][1]")
-    return (row.locator(".surface-state-chip").get_attribute("aria-label") or "").upper()
+    # Window grammar 2026-10-24: no pill per field; the field keeps its word.
+    return (you.get_by_test_id(f"settings-owner-{field}").get_attribute("data-save-state") or "").upper()
+
+
+def _bar(page: Any) -> str:
+    return page.locator("#surface-settings .surface-footer-layout").inner_text()
+
+
+def _wait_saved(page: Any, field: str, scope: str = "") -> None:
+    page.wait_for_function(
+        "([scope, field]) => document.querySelector(`${scope} [data-testid=settings-owner-${field}]`)"
+        "?.getAttribute('data-save-state') === 'Saved'",
+        arg=[scope, field], timeout=10_000,
+    )
+
+
+def _section(page: Any, section: str) -> None:
+    """Choose a category; at a narrow width the pane's Back shows the rail first."""
+    back = page.locator("#surface-settings [data-testid=settings-back]")
+    if back.is_visible():
+        back.click()
+    page.get_by_test_id(f"settings-index-{section}").click()
 
 
 def _target_check(page: Any, selector: str) -> None:
@@ -54,8 +74,9 @@ def _target_check(page: Any, selector: str) -> None:
 
 
 def _no_global_saved_for_you(page: Any) -> None:
-    footer = page.locator("#surface-settings .surface-footer-layout")
-    assert "SAVED" not in footer.inner_text().upper(), footer.inner_text()
+    """While a You field is unsaved, the bar never says Saved for it."""
+    # Case matters: "Not saved" is the honest refusal, "Saved …" the receipt.
+    assert "Saved" not in _bar(page), _bar(page)
 
 
 @pytest.mark.timeout(240)
@@ -86,51 +107,38 @@ def test_real_settings_you_edit_alias_and_section_return(
             assert _status(you, "name") == "EDITED"
             _no_global_saved_for_you(page)
             assert _api(page, "GET", "/api/settings", token=TOKEN).get("owner", {}).get("name") != "Karol Architect"
-            page.wait_for_function(
-                "() => document.querySelector('[data-testid=settings-owner-name]')?.closest('.gadget-row')?.textContent?.includes('SAVED')",
-                timeout=10_000,
-            )
+            _wait_saved(page, "name")
             assert _api(page, "GET", "/api/settings", token=TOKEN)["owner"]["name"] == "Karol Architect"
-            _no_global_saved_for_you(page)
+            page.locator("#surface-settings .surface-footer-layout").get_by_text("Saved just now").wait_for(timeout=10_000)
 
             aliases.fill("Ari")
             assert _status(you, "aliases") == "EDITED"
             assert "Ari" not in _api(page, "GET", "/api/settings", token=TOKEN)["owner"]["aliases"]
             aliases.press("Enter")
             you.get_by_test_id("settings-owner-aliases").get_by_text("Ari", exact=True).wait_for()
-            page.wait_for_function(
-                "() => document.querySelector('[data-testid=settings-owner-aliases]')?.closest('.gadget-row')?.textContent?.includes('SAVED')",
-                timeout=10_000,
-            )
+            _wait_saved(page, "aliases")
             assert "Ari" in _api(page, "GET", "/api/settings", token=TOKEN)["owner"]["aliases"]
 
             # Leaving the section while raw alias text is in the field must
             # commit it through the same writer, then show it on return.
             aliases.fill("Architect Alias")
             assert _status(you, "aliases") == "EDITED"
-            page.get_by_test_id("settings-index-speak").click()
-            page.get_by_test_id("settings-index-you").click()
+            _section(page, "speak")
+            _section(page, "you")
             you.get_by_test_id("settings-owner-aliases").get_by_text("Architect Alias", exact=True).wait_for()
-            page.wait_for_function(
-                "() => document.querySelector('[data-testid=settings-owner-aliases]')?.closest('.gadget-row')?.textContent?.includes('SAVED')",
-                timeout=10_000,
-            )
+            _wait_saved(page, "aliases")
             assert "Architect Alias" in _api(page, "GET", "/api/settings", token=TOKEN)["owner"]["aliases"]
 
             name.fill("Karol Return")
             assert _status(you, "name") == "EDITED"
             _no_global_saved_for_you(page)
-            page.get_by_test_id("settings-index-speak").click()
-            assert "SAVED" in page.locator("#surface-settings .surface-footer-layout").inner_text().upper()
-            page.get_by_test_id("settings-index-you").click()
+            _section(page, "speak")
+            assert "SAVED" in _bar(page).upper()
+            _section(page, "you")
             name = you.get_by_test_id("settings-owner-name").get_by_role("textbox")
             assert name.input_value() == "Karol Return"
-            page.wait_for_function(
-                "() => document.querySelector('[data-testid=settings-owner-name]')?.closest('.gadget-row')?.textContent?.includes('SAVED')",
-                timeout=10_000,
-            )
+            _wait_saved(page, "name")
             assert _api(page, "GET", "/api/settings", token=TOKEN)["owner"]["name"] == "Karol Return"
-            _no_global_saved_for_you(page)
             if width == 393:
                 _target_check(page, "#surface-settings [data-settings-section='you']")
             page.screenshot(path=str(shots / f"settings-you-{width}.png"), full_page=False)
@@ -179,10 +187,7 @@ def test_settings_you_refusal_retains_name_then_retry_saves(
             assert _api(page, "GET", "/api/settings", token=TOKEN).get("owner", {}).get("name") != "Karol Retained"
             page.screenshot(path=str(shots / "settings-you-refused-1440.png"), full_page=False)
             page.get_by_role("button", name="Retry", exact=True).click()
-            page.wait_for_function(
-                "() => document.querySelector('[data-testid=settings-owner-name]')?.closest('.gadget-row')?.textContent?.includes('SAVED')",
-                timeout=10_000,
-            )
+            _wait_saved(page, "name")
             assert len(attempts) >= 3, attempts
             assert _api(page, "GET", "/api/settings", token=TOKEN)["owner"]["name"] == "Karol Retained"
             browser.close()
@@ -241,22 +246,23 @@ def test_settings_you_newer_edit_waits_for_old_ack(
                 await page.route("**/api/settings", hold_first)
                 await name.fill("Karol First")
                 await asyncio.wait_for(first_started.wait(), timeout=10)
-                row = name.locator("xpath=ancestor::div[@class='gadget-row'][1]")
-                assert "SAVING" in (await row.inner_text()).upper()
+                row = you.get_by_test_id("settings-owner-name")
+                assert await row.get_attribute("data-save-state") == "Saving"
+                assert "Saving" in await page.locator("#surface-settings .surface-footer-layout").inner_text()
                 assert "SAVED" not in (await page.locator("#surface-settings .surface-footer-layout").inner_text()).upper()
                 await name.fill("Karol Latest")
-                assert "EDITED" in (await row.inner_text()).upper()
+                assert await row.get_attribute("data-save-state") == "Edited"
                 assert "SAVED" not in (await page.locator("#surface-settings .surface-footer-layout").inner_text()).upper()
                 gate.set()
                 await asyncio.wait_for(latest_started.wait(), timeout=10)
                 assert await name.input_value() == "Karol Latest"
-                assert await row.locator(".surface-state-chip").get_attribute("aria-label") == "SAVING"
+                assert await row.get_attribute("data-save-state") == "Saving"
                 interim = await page.evaluate("""async token => (await (await fetch('/api/settings',
                   {headers:{authorization:`Bearer ${token}`}})).json())""", TOKEN)
                 assert interim["owner"]["name"] == "Karol First", (interim["owner"], writes)
                 latest_gate.set()
                 await page.wait_for_function(
-                    "() => document.querySelector('[data-testid=settings-owner-name]')?.closest('.gadget-row')?.textContent?.includes('SAVED')",
+                    "() => document.querySelector('[data-testid=settings-owner-name]')?.getAttribute('data-save-state') === 'Saved'",
                     timeout=15_000,
                 )
                 assert await name.input_value() == "Karol Latest"
@@ -302,7 +308,7 @@ def test_components_settings_you_uses_local_writer_only(
             reference.wait_for(timeout=15_000)
             state = page.get_by_role("combobox", name="Example state")
             assert state.input_value() == "saved"
-            assert "LOCAL SPECIMEN · SETTINGS WRITER" in reference.inner_text()
+            assert "Local specimen" in reference.get_by_test_id("settings-status").inner_text()
             writes: list[str] = []
             page.on("request", lambda request: writes.append(request.post_data or "")
                     if request.method == "PUT" and request.url.endswith("/api/settings") else None)
@@ -314,26 +320,17 @@ def test_components_settings_you_uses_local_writer_only(
             reference.get_by_role("button", name="Complete local write").wait_for()
             assert _status(reference, "name") == "SAVING"
             reference.get_by_role("button", name="Complete local write").click()
-            page.wait_for_function(
-                "() => document.querySelector('[data-testid=reference-owner-preferences] [data-testid=settings-owner-name]')?.closest('.gadget-row')?.textContent?.includes('SAVED')",
-                timeout=10_000,
-            )
+            _wait_saved(page, "name", "[data-testid=reference-owner-preferences]")
             state.select_option("refused")
             reference.get_by_role("button", name="Retry", exact=True).wait_for(timeout=10_000)
             assert _status(reference, "name") == "NOT SAVED"
             assert reference.get_by_test_id("settings-owner-name").get_by_role("textbox").input_value() == "Karol A"
             page.screenshot(path=str(shots / f"components-settings-refused-{width}.png"), full_page=False)
             reference.get_by_role("button", name="Retry", exact=True).click()
-            page.wait_for_function(
-                "() => document.querySelector('[data-testid=reference-owner-preferences] [data-testid=settings-owner-name]')?.closest('.gadget-row')?.textContent?.includes('SAVED')",
-                timeout=10_000,
-            )
+            _wait_saved(page, "name", "[data-testid=reference-owner-preferences]")
             assert reference.get_by_test_id("settings-owner-name").get_by_role("textbox").input_value() == "Karol A"
             state.select_option("retried")
-            page.wait_for_function(
-                "() => document.querySelector('[data-testid=reference-owner-preferences] [data-testid=settings-owner-name]')?.closest('.gadget-row')?.textContent?.includes('SAVED')",
-                timeout=10_000,
-            )
+            _wait_saved(page, "name", "[data-testid=reference-owner-preferences]")
             assert not writes, writes
             if width == 393:
                 _target_check(page, "[data-testid='reference-owner-preferences']")

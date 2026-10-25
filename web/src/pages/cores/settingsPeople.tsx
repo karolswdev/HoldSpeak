@@ -8,12 +8,13 @@
  * admitted owner-only kernel operation); the tokens AGENTS · <mode> and SOURCE · <where>; the
  * operation's receipt after a press. No prose (UX-CANON).
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, apiFetch } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { FilterTokens, FoldGadget, GadgetGroup, GadgetRow, StateChip, StringGadget, SurfaceState } from "../../desk/surface";
-import { useOwnerName, type OwnerNameAdapter } from "../../desk/firstrun/ownerName";
+import { useOwnerName, type OwnerFieldStatus, type OwnerNameAdapter } from "../../desk/firstrun/ownerName";
 import { OwnerAliasField } from "../../desk/firstrun/OwnerAliasField";
+import type { PrefSaveState } from "./settingsWindow";
 
 export type PeopleAccess = {
   mode: string;
@@ -66,30 +67,67 @@ export function usePeopleAccess() {
   return { access, setAccess, readError, reload };
 }
 
+/** One field's save word, or the window's: the worst of its fields. */
+export type OwnerSaveState = OwnerFieldStatus;
+
+const SAVE_ORDER: OwnerSaveState[] = ["Not saved", "Saving", "Edited", "Saved"];
+
+/** Window grammar 2026-10-24: the You fields carry no per-field pill. Each
+ * field keeps its truthful word (Edited, Saving, Saved, Not saved) as data;
+ * the window's status bar says the worst of them, and Saved with the clock
+ * of the acknowledgement that made every field Saved. The writer is
+ * unchanged: `useOwnerName(adapter)` owns ACK, refusal, newer draft. */
+export function useOwnerPreferences(adapter?: OwnerNameAdapter) {
+  const owner = useOwnerName(adapter);
+  // Alias text is a local draft until Enter, comma, or blur commits a chip.
+  // It cannot carry a Saved receipt from the owner writer before that point.
+  const [aliasDraftEdited, setAliasDraftEdited] = useState(false);
+  const fields: Record<"name" | "aliases", OwnerSaveState> = {
+    name: owner.fieldStatus("name"),
+    aliases: aliasDraftEdited ? "Edited" : owner.fieldStatus("aliases"),
+  };
+  const ready = !owner.loading && !owner.readError;
+  const state: OwnerSaveState | null = ready
+    ? SAVE_ORDER.find((word) => fields.name === word || fields.aliases === word) ?? "Saved"
+    : null;
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const previous = useRef<OwnerSaveState | null>(null);
+  useEffect(() => {
+    // Only a change that ends in Saved earns a clock; the first read does not.
+    if (state === "Saved" && previous.current && previous.current !== "Saved") setSavedAt(new Date());
+    previous.current = state;
+  }, [state]);
+  return { owner, fields, state, savedAt, aliasDraftEdited, setAliasDraftEdited };
+}
+
+export type OwnerPreferences = ReturnType<typeof useOwnerPreferences>;
+
+/** The You writer's word for the window's status bar. Saved without a clock
+ * (nothing written in this window yet) says nothing. */
+export function ownerSaveState(prefs: OwnerPreferences): PrefSaveState | null {
+  switch (prefs.state) {
+    case "Not saved": return { tone: "danger", text: "Not saved", reason: prefs.owner.error || undefined };
+    case "Saving": return { tone: "busy", text: "Saving…" };
+    case "Edited": return { tone: "edited", text: "Edited" };
+    case "Saved": return prefs.savedAt ? { tone: "ok", text: "Saved", at: prefs.savedAt } : null;
+    default: return null;
+  }
+}
+
 /* PHILO-15 B57 (owed since 2026-10-04): his name and the other names for
  * him, after first run. The needs-you rule reads them as "me", and a
  * one-letter mishearing of the name ("Carol" for "Karol") still counts. */
-export function OwnerNameFields({ owner, highlight, mic = true }: {
-  owner: ReturnType<typeof useOwnerName>;
+export function OwnerNameFields({ prefs, highlight, mic = true }: {
+  prefs: OwnerPreferences;
   highlight?: string | null;
   mic?: boolean;
 }) {
-  const [aliasDraftEdited, setAliasDraftEdited] = useState(false);
-  if (owner.loading || owner.readError) return <GadgetGroup material="inset" label="You"><SurfaceState loading={owner.loading} error={owner.readError} onRetry={() => void owner.reload()} /></GadgetGroup>;
-  const nameStatus = owner.fieldStatus("name");
-  // Alias text is a local draft until Enter, comma, or blur commits a chip.
-  // It cannot carry a Saved receipt from the owner writer before that point.
-  const aliasesStatus = aliasDraftEdited ? "Edited" : owner.fieldStatus("aliases");
-  const statusChip = (status: typeof nameStatus) => (
-    <StateChip
-      state={status === "Saved" ? "success" : status === "Saving" ? "working" : status === "Not saved" ? "failure" : "active"}
-      label={status.toUpperCase()}
-    />
-  );
+  const { owner, fields, setAliasDraftEdited } = prefs;
+  if (owner.loading || owner.readError) return <GadgetGroup material="inset" label="Name"><SurfaceState loading={owner.loading} error={owner.readError} onRetry={() => void owner.reload()} /></GadgetGroup>;
   return (
-    <GadgetGroup material="inset" label="You">
-      <GadgetRow wide label="Your name" fact={statusChip(nameStatus)} controlWidth="full" highlight={highlight === "owner.name"}>
-        <span className="prefs-text-field" data-testid="settings-owner-name">
+    <GadgetGroup material="inset" label="Name">
+      <GadgetRow label="Your name" controlWidth="full" highlight={highlight === "owner.name"}>
+        <span className="prefs-text-field" data-testid="settings-owner-name" data-save-state={fields.name}>
           <StringGadget
             label="Your name"
             value={owner.name}
@@ -100,31 +138,23 @@ export function OwnerNameFields({ owner, highlight, mic = true }: {
           />
         </span>
       </GadgetRow>
-      <GadgetRow wide label="Also called" fact={statusChip(aliasesStatus)} controlWidth="full" highlight={highlight === "owner.aliases"}>
-        <span className="prefs-text-field" data-testid="settings-owner-aliases">
+      <GadgetRow label="Also called" controlWidth="full" highlight={highlight === "owner.aliases"}>
+        <span className="prefs-text-field" data-testid="settings-owner-aliases" data-save-state={fields.aliases}>
           <OwnerAliasField owner={owner} mic={mic} onDraftChange={setAliasDraftEdited} />
         </span>
       </GadgetRow>
-      <GadgetRow label="Save policy"><span className="prefs-value">Autosave on change</span></GadgetRow>
-      {owner.error ? (
-        <GadgetRow label="Receipt">
-          <StateChip state="failure" label="NOT SAVED" />
-          <Button dense variant="secondary" onClick={() => void owner.flush()}>Retry</Button>
-        </GadgetRow>
-      ) : null}
     </GadgetGroup>
   );
 }
 
 /** Settings' real You face. Components shares the fields and writer hook with
  * its isolated local adapter; this face keeps the production adapter default. */
-export function OwnerNameGroup({ highlight, adapter, mic = true }: {
+export function OwnerNameGroup({ highlight, prefs, mic = true }: {
   highlight?: string | null;
-  adapter?: OwnerNameAdapter;
+  prefs: OwnerPreferences;
   mic?: boolean;
-} = {}) {
-  const owner = useOwnerName(adapter);
-  return <OwnerNameFields owner={owner} highlight={highlight} mic={mic} />;
+}) {
+  return <OwnerNameFields prefs={prefs} highlight={highlight} mic={mic} />;
 }
 
 export function PeopleAccessModule({ highlight }: { highlight?: string | null } = {}) {

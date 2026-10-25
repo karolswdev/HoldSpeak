@@ -122,16 +122,39 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
                 page.reload(wait_until="load")
                 _normal_chair(page)
                 settings = page.locator("[id='surface-settings'][data-layer='window']")
+
+                def section(name: str) -> None:
+                    # Window grammar: at a narrow width the rail is the first
+                    # view and the pane's Back returns to it.
+                    back = settings.get_by_test_id("settings-back")
+                    if back.is_visible():
+                        back.click()
+                    settings.get_by_test_id(f"settings-index-{name}").click()
+
+                if width == 393:
+                    settings.get_by_test_id("settings-index-you").wait_for()
+                    assert not settings.get_by_role("textbox", name="Your name", exact=True).is_visible()
+                    page.screenshot(path=str(SHOTS / f"settings-rail-{width}.png"))
+                    section("you")
+                    # One Back: the window's title-bar Back returns the pane to the rail.
+                    back = settings.get_by_test_id("settings-back")
+                    assert back.count() == 1 and "desk-gadget-close" in (back.get_attribute("class") or "")
                 settings.get_by_role("textbox", name="Your name", exact=True).wait_for()
                 assert settings.locator("[data-settings-section]:visible").count() == 1
                 assert settings.locator("[data-settings-section]:visible").get_attribute("data-settings-section") == "you"
-                _selection_has_ink(
-                    settings.get_by_test_id("settings-index-you"),
-                    background_token="--wb-blue",
-                    border_token="--wb-sel",
-                    aria_current="location",
-                    aria_pressed="true",
-                )
+                you_row = settings.get_by_test_id("settings-index-you")
+                assert you_row.get_attribute("aria-current") == "location"
+                assert you_row.get_attribute("aria-pressed") == "true"
+                if width == 1440:
+                    # The selected rail row is the vivid blue plate with paper ink.
+                    plate = you_row.evaluate("""el => {
+                      const probe = document.createElement('span');
+                      probe.hidden = true; probe.style.color = 'var(--wb-paper)'; el.append(probe);
+                      const paper = getComputedStyle(probe).color; probe.remove();
+                      const cs = getComputedStyle(el);
+                      return {ink: cs.color, paper, image: cs.backgroundImage};
+                    }""")
+                    assert plate["ink"] == plate["paper"] and "gradient" in plate["image"], plate
                 for image in settings.locator(".settings-page-index img").all():
                     page.wait_for_function("el => el.complete && el.naturalWidth > 0", arg=image.element_handle())
                 assert settings.locator(".settings-page-index img").count() == 8
@@ -139,10 +162,10 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
                 # be present when the owner returns to You.
                 alias = settings.get_by_test_id("settings-owner-aliases").get_by_role("textbox")
                 alias.fill("Architect draft")
-                settings.get_by_test_id("settings-index-speak").click()
+                section("speak")
                 assert not settings.get_by_role("textbox", name="Your name", exact=True).is_visible()
                 assert settings.locator("[data-settings-section]:visible").count() == 1
-                settings.get_by_test_id("settings-index-you").click()
+                section("you")
                 settings.get_by_test_id("settings-owner-aliases").get_by_text("Architect draft", exact=True).wait_for()
                 _settle(page)
                 _contained(settings)
@@ -150,7 +173,7 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
                 report = _capture(page, settings, width, "settings-categories")
                 assert report["context"]["owner"]["window_id"] == "surface-settings"
 
-                settings.get_by_test_id("settings-index-speak").click()
+                section("speak")
                 language = settings.get_by_role("combobox", name="Language", exact=True)
                 language.click()
                 popup = page.get_by_role("listbox", name="Language", exact=True)

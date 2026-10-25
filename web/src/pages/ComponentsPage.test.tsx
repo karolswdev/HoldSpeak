@@ -58,10 +58,13 @@ describe("Signal component gallery", () => {
 
     const form = screen.getByTestId("reference-owner-preferences");
     const name = await within(form).findByRole("textbox", { name: "Your name" });
+    // Window grammar: the field keeps its word as data; the bar says it.
     fireEvent.change(name, { target: { value: "Karol A" } });
-    expect(within(form).getByText("EDITED")).toBeInTheDocument();
+    expect(within(form).getByTestId("settings-owner-name")).toHaveAttribute("data-save-state", "Edited");
+    expect(within(form).getByTestId("settings-status")).toHaveTextContent("Edited");
     fireEvent.blur(name);
-    await waitFor(() => expect(within(form).getAllByText("SAVED")).toHaveLength(2));
+    await waitFor(() => expect(within(form).getByTestId("settings-status")).toHaveTextContent("Saved just now"));
+    expect(within(form).getByTestId("settings-owner-aliases")).toHaveAttribute("data-save-state", "Saved");
 
     fireEvent.click(screen.getByRole("button", { name: "Lists" }));
     const list = screen.getByTestId("reference-list");
@@ -135,10 +138,12 @@ describe("Signal component gallery", () => {
 
     fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: "refused" } });
     const form = screen.getByTestId("reference-owner-preferences");
-    await waitFor(() => expect(within(form).getAllByText("NOT SAVED")).toHaveLength(2));
+    await waitFor(() => expect(within(form).getByTestId("settings-owner-name")).toHaveAttribute("data-save-state", "Not saved"));
+    expect(within(form).getByTestId("settings-save-failure")).toHaveTextContent("Not saved");
     expect(within(form).getByRole("textbox", { name: "Your name" })).toHaveValue("Karol A");
     fireEvent.click(within(form).getByRole("button", { name: "Retry" }));
-    await waitFor(() => expect(within(form).getAllByText("SAVED")).toHaveLength(2));
+    await waitFor(() => expect(within(form).getByTestId("settings-status")).toHaveTextContent("Saved just now"));
+    expect(within(form).getByTestId("settings-owner-name")).toHaveAttribute("data-save-state", "Saved");
   });
 
   it("keeps the reading source and excerpt actions truthful", () => {

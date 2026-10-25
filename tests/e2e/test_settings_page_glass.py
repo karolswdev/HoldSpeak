@@ -59,7 +59,8 @@ def _assert_page_shape(page: Any, width: int) -> None:
     assert geometry["width"] > 0, (width, geometry)
     assert not geometry["documentOverflow"], (width, geometry)
     assert not geometry["bodyOverflow"], (width, geometry)
-    assert settings.get_by_role("navigation", name="Settings sections").count() == 1
+    # One rail. At a narrow width it is hidden while a pane is open (Back shows it).
+    assert settings.locator("nav[aria-label='Settings sections']").count() == 1
     assert page.get_by_role("tab").count() == 0
     assert page.get_by_role("button", name="Open Speak").count() == 0
 
@@ -90,6 +91,10 @@ def test_settings_page_order_anchor_and_saved_write(
             # ST7 producer proof: the Settings page button opens the real
             # Engines host, and the hub records its canonical application and
             # surface id. Close it before exercising the Settings write.
+            # Narrow: the pane's Back shows the rail first (window grammar).
+            back = page.locator("#surface-settings [data-testid=settings-back]")
+            if back.is_visible():
+                back.click()
             settings.get_by_test_id("settings-index-this-mac").click()
             engines = settings.get_by_test_id("settings-engines-page-link")
             engines.click()

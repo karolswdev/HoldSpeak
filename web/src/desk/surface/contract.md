@@ -46,7 +46,7 @@ been adopted by a production feature.
 
 | Reference | Shared implementation | Real consumers of those species |
 | --- | --- | --- |
-| Forms | OwnerNameFields + useOwnerName, GadgetGroup/GadgetRow, StringGadget, OwnerAliasField, StateChip, Button | Settings You is the production consumer; Components uses the same composition/controller with fixture-only IO |
+| Forms | PrefWindow/PrefSection/PrefStatus (settingsWindow), OwnerNameFields + useOwnerPreferences(useOwnerName), GadgetGroup/GadgetRow, StringGadget, OwnerAliasField, Button | Settings is the production consumer; Components renders the same rail, pane and status bar with fixture-only IO |
 | Reading | ReadingDocument/Material, source doors, SurfaceWell | Ask results, Automation results, notes and source readers |
 | Lists | SurfaceRows/SurfaceRow, SurfaceSplit, StringGadget | People, Memory and object readers use these list/detail species |
 | Resources | RepositoryBrowserView + useRepositoryBrowser, DeskSortableTable fold/roving, ScrollHint, read adapter | RepoWindow is the production consumer; Components runs the same view/controller with an isolated fixture adapter |
@@ -74,7 +74,22 @@ not a generic form engine. The production adapter keeps the existing settings
 endpoint, revision guard, serialized autosave and leave keepalive policy.
 Fields show Edited immediately, Saving for the captured in-flight value,
 Saved only for an acknowledged current value, and Not saved with retained
-input plus one group Retry. A newer edit cannot inherit an older write's
+input plus one Retry. Window grammar (2026-10-24): no pill per field. Each
+field carries its word as `data-save-state`; the window's status bar
+(`PrefStatus`, 24 px, sans 12 with a lamp) says the worst word of the
+fields, and "Saved just now / N min ago / 4:22 PM" only after an
+acknowledgement in this window. The general preferences writer says its
+state in the same bar; its plain refusal reason stays in the pane's alert.
+`PrefWindow` is the rail (rows with illustrated glyphs, the selected row a
+blue plate, Up/Down/Home/End) and the pane (label/control grid, captions in
+the display face); at a content width of 520 px or less the rail is the
+first view and a pane opens with Back (`settings-back`). On a compact
+viewport the window's own title-bar Back is that Back: `useWindowBack`
+(`surface/back.tsx`, a slot like `useWindowTitle`) hands the hosted frame's
+compact Back and its test id to the open pane, and the title bar names the
+pane; a narrow window off the phone, or a specimen, keeps the pane's Back. It is local to
+Settings until the kit `StatusBar` species lands; then `PrefStatus`
+composes it. A newer edit cannot inherit an older write's
 Saved receipt. Raw alias text is an edit until committed and must survive
 section leave. The local Forms adapter cannot write configuration or start
 hardware audio; production StringGadget microphone behavior stays unchanged.

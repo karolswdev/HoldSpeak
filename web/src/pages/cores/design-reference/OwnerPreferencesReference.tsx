@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../../../lib/api";
-import { useOwnerName, type OwnerNameAdapter, type OwnerSetting } from "../../../desk/firstrun/ownerName";
+import { type OwnerNameAdapter, type OwnerSetting } from "../../../desk/firstrun/ownerName";
 import { StateChip } from "../../../desk/surface";
 import { Button } from "../../../components/signal/Signal";
-import { OwnerNameFields } from "../settingsPeople";
+import { OwnerNameFields, ownerSaveState, useOwnerPreferences } from "../settingsPeople";
+import { SETTINGS_SECTIONS, SettingsRailGlyph } from "../settingsPrefs";
+import { PrefSection, PrefStatus, PrefWindow } from "../settingsWindow";
 
 export type OwnerPreferencesState = "saved" | "edited" | "saving" | "refused" | "retried" | "newer";
 
@@ -52,8 +54,10 @@ function createFixtureAdapter(state: OwnerPreferencesState, onPending: (pending:
 function OwnerPreferencesSpecimen({ state }: { state: OwnerPreferencesState }) {
   const [pending, setPending] = useState(false);
   const [fixture] = useState(() => createFixtureAdapter(state, setPending));
-  const owner = useOwnerName(fixture.adapter);
+  const prefs = useOwnerPreferences(fixture.adapter);
+  const { owner } = prefs;
   const started = useRef(false);
+  const [paneOpen, setPaneOpen] = useState(true);
 
   useEffect(() => {
     if (owner.loading || owner.readError || started.current) return;
@@ -69,22 +73,46 @@ function OwnerPreferencesSpecimen({ state }: { state: OwnerPreferencesState }) {
     if (state === "newer") owner.setName("Karol B");
   }, [owner, started, state]);
 
+  // The same rail as Settings; only You has a local writer here.
+  const rail = SETTINGS_SECTIONS.map((section) => ({
+    id: section.id,
+    label: section.label,
+    glyph: <SettingsRailGlyph section={section} />,
+    disabled: section.id !== "you",
+  }));
   return (
     <section className="reference-example" data-testid="reference-owner-preferences" aria-label="Settings You pattern">
       <div className="reference-example-head">
         <h2>Settings · You</h2>
         <StateChip state="idle" label="PROPOSED" />
       </div>
-      <div className="reference-owner-fields">
-        <h3 className="reference-accessible-heading">You fields</h3>
-        <OwnerNameFields owner={owner} mic={false} />
-      </div>
       {pending ? (
         <div className="reference-actions">
           <Button variant="secondary" onClick={fixture.complete}>Complete local write</Button>
         </div>
       ) : null}
-      <span className="reference-receipt">LOCAL SPECIMEN · SETTINGS WRITER</span>
+      <div className="reference-pref-window">
+        <PrefWindow
+          items={rail}
+          selected="you"
+          onSelect={() => setPaneOpen(true)}
+          paneOpen={paneOpen}
+          onBack={() => setPaneOpen(false)}
+          label="Settings sections (specimen)"
+          railTestIdPrefix="reference-settings-index-"
+        >
+          <PrefSection id="you" label="You" quiet>
+            <h3 className="reference-accessible-heading">You fields</h3>
+            <OwnerNameFields prefs={prefs} mic={false} />
+          </PrefSection>
+        </PrefWindow>
+        <PrefStatus
+          inline
+          save={ownerSaveState(prefs)}
+          facts={["Local specimen"]}
+          onRetry={prefs.state === "Not saved" ? () => void owner.flush() : undefined}
+        />
+      </div>
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import { wireClock } from "../../desk/surface/format";
 import { PeopleHubCells } from "./settingsPeople";
-import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
+import { spriteUrl } from "../../desk/sprites";
+import { PrefStatus, stampDate, type PrefSaveState } from "./settingsWindow";
 // HS-111-01 — the Prefs program's face (audit §3.1-§3.4): a drawer of
 // pref modules, authored — never wire-derived. The module registry is a
 // CODE CONSTANT: a new wire key never mints a pane again (unmapped keys
@@ -302,6 +303,19 @@ export function SettingSprite({ name, src }: { name: string; src?: string }) {
       height={32}
     />
   );
+}
+
+/* The rail's illustrated glyphs: the world sprites where a category is an
+   object of the desk (you, meetings, agents), the settings mold elsewhere. */
+const SETTINGS_WORLD_SPRITES: Partial<Record<SettingsSectionId, { kind: string; id: string; agent?: string }>> = {
+  you: { kind: "person", id: "settings-you" },
+  meetings: { kind: "meeting", id: "settings-meetings" },
+  agents: { kind: "agent", id: "settings-agents", agent: "codex" },
+};
+
+export function SettingsRailGlyph({ section }: { section: (typeof SETTINGS_SECTIONS)[number] }) {
+  const world = SETTINGS_WORLD_SPRITES[section.id];
+  return <SettingSprite name={section.sprite} src={world ? spriteUrl(world.kind, world.id, "rest", world.agent, 32) : undefined} />;
 }
 
 /* ── legacy SVG glyph (kept for non-tile uses: posture shield etc.) ── */
@@ -679,13 +693,23 @@ export function OtherDevicesChip({ on }: { on: boolean }) {
     : <span className="surface-token" data-chip>Other devices: off</span>;
 }
 
-/* ── the footer status bar: « Settings | receipt | DEFAULTS (§3.6) ── */
+/* ── the status bar (window grammar 2026-10-24): save state · facts ── */
 
 export type PrefReceipt = {
   saving: boolean;
   writtenAt: string;
   refusal: string;
 };
+
+/** The general preferences writer's state, as the status bar says it. */
+export function prefSaveState(receipt: PrefReceipt, hubWrittenAt?: string | null): PrefSaveState | null {
+  // The plain reason is in the pane's alert; the bar stays short.
+  if (receipt.refusal) return { tone: "danger", text: "Not saved" };
+  if (receipt.saving) return { tone: "busy", text: "Saving…" };
+  const at = stampDate(receipt.writtenAt) ?? stampDate(hubWrittenAt);
+  if (at) return { tone: "ok", text: "Saved", at };
+  return null;
+}
 
 export function PrefStatusBar({
   onBack,
@@ -694,54 +718,39 @@ export function PrefStatusBar({
   hubWrittenAt,
   idleReceipt,
   onRetry,
+  save,
+  facts,
+  failureTestId,
 }: {
-  /** Absent on the drawer face — the egress badge sits there instead. */
+  /** Absent on the Settings window; a hosted module may name its way back. */
   onBack?: () => void;
   receipt: PrefReceipt;
-  /** PHILO-7-02: the last grant act's receipt Button, in the footer's CENTRE
-   *  slot (away from the resize grip). */
+  /** PHILO-7-02: the last grant act's receipt Button, after the facts. */
   grantReceipt?: ReactNode;
-  /** HS-170-04: writtenAt from the hub wire (epoch seconds), shown on
-   *  the drawer face as WRITTEN HH:MM; module-level receipt overrides. */
+  /** HS-170-04: writtenAt from the hub wire (HH:MM), said as Saved <clock>. */
   hubWrittenAt?: string | null;
+  /** A fact said when nothing is being saved (Checked 16:22). */
   idleReceipt?: ReactNode;
   onRetry?: () => void;
+  /** A writer with its own receipts (Settings You) says its own state. */
+  save?: PrefSaveState | null;
+  facts?: ReactNode[];
+  failureTestId?: string | null;
 }) {
-  let center: ReactNode;
-  if (receipt.refusal)
-    center = (
-      <span className="prefs-receipt" data-tone="danger" role="alert">
-        <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style={{ flexShrink: 0 }}><path d="M8 2 1.5 13.5h13Z" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" /><line x1="8" y1="6.5" x2="8" y2="9.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" /><circle cx="8" cy="11.5" r="0.7" fill="currentColor" /></svg>{" "}
-        Not saved
-      </span>
-    );
-  else if (receipt.saving)
-    center = (
-      <span className="prefs-receipt" role="status">
-        Saving…
-      </span>
-    );
-  else if (receipt.writtenAt)
-    center = (
-      <span className="prefs-receipt" role="status">
-        Saved {receipt.writtenAt}
-      </span>
-    );
-  else if (!onBack && hubWrittenAt)
-    center = (
-      <span className="prefs-receipt" role="status">
-        Saved {hubWrittenAt}
-      </span>
-    );
-  else center = idleReceipt ?? null;
+  const state = save !== undefined ? save : prefSaveState(receipt, onBack ? null : hubWrittenAt);
   return (
-    <SurfaceFooter receipt={receipt.refusal || receipt.saving ? center : grantReceipt ?? center} verbs={<>
-      {onRetry ? <Button variant="primary" dense disabled={receipt.saving} onClick={onRetry}>Retry</Button> : null}
-      {onBack ? (
+    <PrefStatus
+      save={state}
+      facts={[...(facts ?? []), idleReceipt ?? null]}
+      extra={grantReceipt}
+      onRetry={onRetry}
+      retryDisabled={receipt.saving}
+      failureTestId={failureTestId}
+      verbs={onBack ? (
         <Button variant="secondary" dense onClick={onBack}>
           <span aria-hidden="true">«</span> Settings
         </Button>
       ) : null}
-    </>} />
+    />
   );
 }
