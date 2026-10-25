@@ -7,7 +7,7 @@
 // snake_case `intel_status`, `has_summary`, `transcriptWords`.
 import { render, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CatalogRail } from "../CatalogRail";
+import { CatalogRail, MeetingSelectionVerbs } from "../CatalogRail";
 import { meetingRowState, meetingsHeadline, stateToken } from "../helpers";
 
 function row(id: string, intel_status: unknown, has_summary: boolean, needs_you_count = 0) {
@@ -78,11 +78,12 @@ describe("PHILO-13-04 A3-W — the rail names a stored summary", () => {
     expect(stateToken(row("c", "error", false)).label).toBe("FAILED");
   });
 
-  it("offers Open, not Run summary, on a stored summary", () => {
-    rail([row("stored", "disabled", true)]);
-    const el = document.querySelector('[data-testid="meeting-row-stored"]') as HTMLElement;
-    expect(within(el).queryByTestId("run-intelligence-btn")).toBeNull();
-    expect(within(el).getByRole("button", { name: "Open" })).toBeTruthy();
+  it("offers no Run summary on a stored summary (the toolbar's Open opens it)", () => {
+    const stored = row("stored", "disabled", true);
+    rail([stored]);
+    render(<MeetingSelectionVerbs row={stored} primary onRunIntelligence={vi.fn()} runningId={null} />);
+    expect(document.querySelector('[data-testid="run-intelligence-btn"]')).toBeNull();
+    expect(meetingRowState(stored).verb).toBe("Open");
   });
 
   it("does not count a stored summary as one that needs a summary", () => {

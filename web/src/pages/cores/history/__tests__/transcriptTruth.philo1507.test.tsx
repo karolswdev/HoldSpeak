@@ -3,7 +3,7 @@
 // summary run to its final state (`RAN · hh:mm`), never `QUEUED` after it ran.
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { CatalogRail } from "../CatalogRail";
+import { CatalogRail, MeetingSelectionVerbs } from "../CatalogRail";
 import { finishedRunReceipt, unclearLampLabel } from "../helpers";
 
 function props(unclearSpans: number) {
@@ -28,13 +28,16 @@ function props(unclearSpans: number) {
 
 describe("PHILO-15-07 the transcript never lies", () => {
   it("lamps WARN with the count beside the words when a span is unclear", () => {
-    render(<CatalogRail {...props(1)} />);
-    expect(screen.getByText("98 WORDS")).toBeInTheDocument();
-    expect(screen.getByTestId("unclear-lamp")).toHaveTextContent("WARN · 1 UNCLEAR SPAN");
+    // Window grammar: the selected meeting's facts sit beside its verbs.
+    const p = props(1);
+    render(<><CatalogRail {...p} /><MeetingSelectionVerbs row={p.meetingRows[0]} primary onRunIntelligence={vi.fn()} runningId={null} /></>);
+    expect(screen.getByText("98 words")).toBeInTheDocument();
+    expect(screen.getByTestId("unclear-lamp")).toHaveTextContent("1 unclear span");
   });
 
   it("draws no lamp (no counter of zero) on a clean transcript", () => {
-    render(<CatalogRail {...props(0)} />);
+    const p = props(0);
+    render(<><CatalogRail {...p} /><MeetingSelectionVerbs row={p.meetingRows[0]} primary onRunIntelligence={vi.fn()} runningId={null} /></>);
     expect(screen.queryByTestId("unclear-lamp")).toBeNull();
   });
 

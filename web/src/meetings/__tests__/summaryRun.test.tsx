@@ -25,7 +25,7 @@ import {
   readPlannedRoute,
   readRunReceipt,
 } from "../summaryRoute";
-import { CatalogRail } from "../../pages/cores/history/CatalogRail";
+import { MeetingSelectionVerbs } from "../../pages/cores/history/CatalogRail";
 import { NeedsYouTable } from "../../pages/cores/history/NeedsYouTable";
 
 vi.mock("../../lib/api", async (original) => ({
@@ -329,13 +329,13 @@ describe("HS-201-04 the record's Retry", () => {
 
 describe("HS-201-04 the ledger's Retry", () => {
   beforeEach(() => forgetExecutedReceipts());
+  // Window grammar: the selected row's verbs live in the Meetings status bar
+  // (MeetingSelectionVerbs); the rail itself is the list view.
   function rail(row: Record<string, unknown>, onRun = vi.fn()) {
     render(
-      <CatalogRail
-        meetingRows={[row]}
-        meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
-        selected={null}
-        setSelected={vi.fn()}
+      <MeetingSelectionVerbs
+        row={row}
+        primary
         onRunIntelligence={onRun}
         runningId={null}
       />,

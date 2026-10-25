@@ -15,9 +15,11 @@
  *  `SurfaceFooter`, Verb is the library `Button` (contract.md, "The interior
  *  kit").
  */
-import type { CSSProperties, ReactNode } from "react";
+import { useContext, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { ObjectTone } from "./objects/kinds";
 import { FilterTokens, type FilterTokenOption } from "./FilterTokens";
+import { FootSlotContext } from "./foot";
 // kit.css is imported by surface.css (the kit restyles live beside it).
 
 /** One token of a StatusStrip: a lamp square and a word, a word alone, a
@@ -145,6 +147,156 @@ export function FilterBar({
       {trailing ? <span className="kit-filterbar-trailing">{trailing}</span> : null}
     </div>
   );
+}
+
+/** Window grammar (2026-10-24) — the toolbar: a 36 px band directly under
+ *  the title bar, a 1 px soft rule under it. Verbs (library Buttons; the
+ *  quiet secondary form, ONE primary at most) sit at the left; the
+ *  `trailing` slot (a search StringGadget, a filter) sits at the right. No
+ *  headline, no count, no stat tiles. At a narrow width the band wraps and
+ *  every Button keeps its 44 px target. */
+export function Toolbar({
+  label,
+  children,
+  trailing,
+  className,
+  "data-testid": testId,
+}: {
+  /** The toolbar's accessible name (`Meetings`). */
+  label: string;
+  /** The verbs: library Buttons. */
+  children?: ReactNode;
+  /** The right slot: a search well or a filter. */
+  trailing?: ReactNode;
+  className?: string;
+  "data-testid"?: string;
+}) {
+  return (
+    <div
+      role="toolbar"
+      aria-label={label}
+      className={className ? `kit-toolbar ${className}` : "kit-toolbar"}
+      data-testid={testId}
+    >
+      <span className="kit-toolbar-verbs">{children}</span>
+      {trailing ? <span className="kit-toolbar-trailing">{trailing}</span> : null}
+    </div>
+  );
+}
+
+/** The toolbar verb glyphs (window grammar: a verb is icon + label, the
+ *  Workbench/Finder way). 16 px, a 1.5 px pen in the Workbench blue (paper
+ *  on the primary); Record keeps its red dot. Decorative: the label names
+ *  the verb. */
+export type ToolGlyphKind = "record" | "import" | "engine" | "new" | "summary" | "retry" | "open";
+
+const TOOL_PATHS: Record<Exclude<ToolGlyphKind, "record">, string> = {
+  import: "M8 2.5v7M5 6.5l3 3 3-3M2.75 10.5v2.25h10.5V10.5",
+  engine: "M5 4.5h6v7H5Z M6.5 2.5v2M9.5 2.5v2M6.5 11.5v2M9.5 11.5v2M3 6.5h2M3 9.5h2M11 6.5h2M11 9.5h2",
+  new: "M8 3.5v9M3.5 8h9",
+  summary: "M3 4h10M3 7h10M3 10h6M11.5 9.5l.9 1.8 1.8.9-1.8.9-.9 1.8-.9-1.8-1.8-.9 1.8-.9Z",
+  retry: "M12.5 8a4.5 4.5 0 1 1-1.4-3.25M11.5 2.5v2.5H9",
+  open: "M6.5 3H3v10h10V9.5M9 3h4v4M13 3L7.5 8.5",
+};
+
+export function ToolGlyph({ kind }: { kind: ToolGlyphKind }) {
+  return (
+    <svg
+      className="kit-toolglyph"
+      data-kind={kind}
+      width={16}
+      height={16}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {kind === "record" ? (
+        <>
+          <circle cx="8" cy="8" r="5.75" />
+          <circle cx="8" cy="8" r="3" className="kit-toolglyph-dot" stroke="none" />
+        </>
+      ) : (
+        <path d={TOOL_PATHS[kind]} />
+      )}
+    </svg>
+  );
+}
+
+/** A status-bar count in warm words: `5 meetings`, `1 meeting`; null at
+ *  zero (UX-CANON A.8), so the StatusBar drops the item. `plural` defaults
+ *  to the noun with an `s`. */
+export function countWords(count: number, noun: string, plural = `${noun}s`): string | null {
+  if (!Number.isFinite(count) || count <= 0) return null;
+  return `${count} ${count === 1 ? noun : plural}`;
+}
+
+/** One item of a StatusBar: a word, a word with a bold value, a lamp dot
+ *  before the word. Never prose; a count of zero is not an item (the caller
+ *  drops it, UX-CANON A.8). */
+export type StatusBarItem = {
+  key?: string;
+  /** The word (`5 meetings`, `No engine for summaries`), or a receipt node. */
+  text?: ReactNode;
+  /** A value drawn in ink after the word. */
+  value?: ReactNode;
+  /** A round lamp dot before the word, in its tone. */
+  lamp?: ObjectTone;
+  testId?: string;
+};
+
+/** Window grammar (2026-10-24) — the status bar: a 24 px band at the
+ *  window's foot, sans 12 muted: items separated by a middle dot at the
+ *  left, the egress chip at the right (egress where egress happens). Inside
+ *  a hosted window it is portaled into the frame's foot slot (as
+ *  SurfaceFooter is); elsewhere it renders in place. With no item and no
+ *  egress it draws nothing, and the empty foot folds away. */
+export function StatusBar({
+  items,
+  egress,
+  verbs,
+  className,
+  "data-testid": testId,
+}: {
+  items: ReadonlyArray<StatusBarItem | null | false | undefined>;
+  egress?: ReactNode;
+  /** The selection's verbs (library Buttons) at the right, before the
+   *  egress chip: the bar grows from the foot, so nothing above moves. */
+  verbs?: ReactNode;
+  className?: string;
+  "data-testid"?: string;
+}) {
+  const target = useContext(FootSlotContext);
+  const shown = items.filter((item): item is StatusBarItem => Boolean(item) && (item as StatusBarItem).text != null);
+  if (!shown.length && !egress && !verbs) return null;
+  const bar = (
+    <div
+      className={className ? `kit-statusbar ${className}` : "kit-statusbar"}
+      data-testid={testId}
+    >
+      <span className="kit-statusbar-items" role="status">
+        {shown.map((item, index) => (
+          <span key={item.key ?? index} className="kit-statusbar-item" data-testid={item.testId}>
+            {item.lamp ? <span className="kit-dot" data-tone={item.lamp} aria-hidden="true" /> : null}
+            {item.text}
+            {item.value != null ? (
+              <>
+                {item.text != null ? " " : null}
+                <b>{item.value}</b>
+              </>
+            ) : null}
+          </span>
+        ))}
+      </span>
+      {verbs ? <span className="kit-statusbar-verbs">{verbs}</span> : null}
+      {egress ? <span className="kit-statusbar-egress">{egress}</span> : null}
+    </div>
+  );
+  return target ? createPortal(bar, target) : <footer className="kit-statusbar-foot">{bar}</footer>;
 }
 
 const KIND_WORDS: Record<string, string> = {

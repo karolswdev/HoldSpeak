@@ -77,20 +77,20 @@ describe("HS-201-11 the open-actions filter is drawn only when it can find one",
   it("draws no filter over a meeting with zero actions", async () => {
     wire([]);
     render(<HistoryCore />);
-    await screen.findByTestId("meetings-headline");
+    await screen.findByTestId("meetings-toolbar");
     await waitFor(() =>
       expect(mockedApiFetch).toHaveBeenCalledWith("/api/all-action-items"),
     );
     await waitFor(() => expect(screen.queryByTestId("meetings-facets")).toBeNull());
-    expect(screen.queryByText("HAS OPEN ACTIONS")).toBeNull();
+    expect(screen.queryByText("Open actions")).toBeNull();
   });
 
   it("draws the filter once an open action exists", async () => {
     wire([OPEN_ACTION]);
     render(<HistoryCore />);
-    await screen.findByTestId("meetings-headline");
+    await screen.findByTestId("meetings-toolbar");
     await waitFor(() => expect(screen.getByTestId("meetings-facets")).toBeTruthy());
-    expect(screen.getByText("HAS OPEN ACTIONS")).toBeTruthy();
+    expect(screen.getByText("Open actions")).toBeTruthy();
   });
 
   it("mounts the real meeting record for a canonical scope and returns to the selected row", async () => {

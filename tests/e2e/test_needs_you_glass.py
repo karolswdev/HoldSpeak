@@ -549,12 +549,13 @@ class TestOneNeedsYou:
                 # ── Meetings counts summaries, never "needs you" ──
                 self._staged_open(page, "review-meetings")
                 page.locator(".desk-surface-window").first.wait_for(timeout=15_000)
-                page.locator(".meetings-headline, [data-testid='meetings-headline'], .surface-display").first.wait_for(timeout=15_000)
+                page.locator("[data-testid='meetings-toolbar'], .surface-display").first.wait_for(timeout=15_000)
                 _settle(page)
                 meetings = page.evaluate(READERS)
                 record["meetings"] = {"said": meetings["said"]}
                 window_text = page.locator(".desk-surface-window").first.inner_text()
-                record["meetings"]["headline"] = page.locator(".desk-surface-window .surface-display").first.inner_text()
+                # Window grammar: no headline; the status bar says the count.
+                record["meetings"]["status"] = page.locator(".desk-surface-window [data-testid=meetings-status]").first.inner_text()
                 assert not re.search(r"needs? you", window_text, re.IGNORECASE), window_text[:400]
                 assert all(n == 5 for n in _numbers_said(meetings["said"])), meetings["said"]
                 self._shot(page, "a2w-meetings", width)

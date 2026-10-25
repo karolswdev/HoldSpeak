@@ -11,7 +11,7 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { forgetExecutedReceipts } from "../../../../meetings/summaryRoute";
-import { CatalogRail } from "../CatalogRail";
+import { CatalogRail, MeetingSelectionVerbs } from "../CatalogRail";
 
 const ROUTE = {
   status: "ready",
@@ -46,57 +46,47 @@ function rail(selected: Record<string, unknown> | null = null) {
       meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
       selected={selected}
       setSelected={vi.fn()}
-      onRunIntelligence={vi.fn()}
       runningId={null}
     />,
   );
   return document.querySelectorAll<HTMLElement>(".meetings-stream .btn--primary");
 }
 
-describe("HS-201-04 one filled primary in the meetings rail", () => {
+// Window grammar (2026-10-24): the rail is a list view and carries no verb;
+// the selected row's run verb sits at the status bar's right; the
+// window's ONE primary is decided (HistoryCore: Choose engine, else the
+// selection's run verb, else Record meeting).
+describe("HS-201-04 one filled primary, window grammar", () => {
   beforeEach(() => forgetExecutedReceipts());
 
-  it("gives the filled verb to the TOP-MOST summary-ready row only", () => {
-    const primaries = rail();
-    expect([...primaries].map((b) => b.textContent)).toEqual(["Run summary"]);
-    // Both rows still offer the verb — the second one just is not filled.
-    expect(screen.getAllByText("Run summary")).toHaveLength(2);
-  });
-
-  it("moves the filled verb to the SELECTED row when it can run", () => {
+  it("the list view itself draws no verb, filled or not", () => {
     const primaries = rail(ROWS[1]);
-    // The selected row's record is open, and the record carries the filled
-    // verb — so the rail itself holds none.
     expect(primaries).toHaveLength(0);
+    expect(screen.queryAllByText("Run summary")).toHaveLength(0);
+    expect(screen.getAllByRole("row").length).toBe(ROWS.length + 1);
   });
 
-  it("keeps the lead on the first runnable row when the selection cannot run", () => {
-    const primaries = rail(ROWS[2]);
-    expect([...primaries].map((b) => b.textContent)).toEqual(["Run summary"]);
+  it("the selection's run verb wears the primary only when the window gives it", () => {
+    const { unmount } = render(<MeetingSelectionVerbs row={ROWS[0]} primary onRunIntelligence={vi.fn()} runningId={null} />);
+    expect(screen.getByTestId("run-intelligence-btn")).toHaveClass("btn--primary");
+    unmount();
+    render(<MeetingSelectionVerbs row={ROWS[1]} primary={false} onRunIntelligence={vi.fn()} runningId={null} />);
+    expect(screen.getByTestId("run-intelligence-btn")).not.toHaveClass("btn--primary");
   });
 
-  it("draws no filled verb when no row can run", () => {
-    const stalled = ROWS.map((row) => ({
-      ...row,
-      planned_route: {
-        status: "unavailable",
-        reason_code: "no assignment",
-        selection_hash: null,
-        legs: [],
-      },
-    }));
-    render(
-      <CatalogRail
-        meetingRows={stalled}
-        meetings={{ loading: false, error: "", reload: vi.fn(async () => ({})) }}
-        selected={null}
-        setSelected={vi.fn()}
-        onRunIntelligence={vi.fn()}
-        runningId={null}
-      />,
-    );
-    expect(
-      document.querySelectorAll(".meetings-stream .btn--primary"),
-    ).toHaveLength(0);
+  it("a meeting that already ran offers no run verb", () => {
+    render(<MeetingSelectionVerbs row={ROWS[2]} primary onRunIntelligence={vi.fn()} runningId={null} />);
+    expect(screen.queryByTestId("run-intelligence-btn")).toBeNull();
+    expect(document.querySelectorAll(".btn--primary")).toHaveLength(0);
+  });
+
+  it("draws no run verb when no route resolves", () => {
+    const stalled = {
+      ...ROWS[0],
+      planned_route: { status: "unavailable", reason_code: "no assignment", selection_hash: null, legs: [] },
+    };
+    render(<MeetingSelectionVerbs row={stalled} primary onRunIntelligence={vi.fn()} runningId={null} />);
+    expect(screen.queryByTestId("run-intelligence-btn")).toBeNull();
+    expect(document.querySelectorAll(".btn--primary")).toHaveLength(0);
   });
 });

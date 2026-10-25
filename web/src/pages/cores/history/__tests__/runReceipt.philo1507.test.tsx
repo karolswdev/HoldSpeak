@@ -62,11 +62,17 @@ function hub(states: Record<string, string>, reads: { terminalA: boolean }) {
   });
 }
 
+/** Window grammar: select the row; its Run summary sits in the status bar. */
+async function runFromToolbar(id: string) {
+  fireEvent.click(within(await screen.findByTestId(`meeting-row-${id}`)).getByRole("button"));
+  fireEvent.click(await screen.findByTestId("run-intelligence-btn"));
+}
+
 it("renders the footer receipt QUEUED → RAN for the run it names", async () => {
   const states: Record<string, string> = { a: "disabled" };
   hub(states, { terminalA: false });
   render(<HistoryCore />);
-  fireEvent.click(within(await screen.findByTestId("meeting-row-a")).getByRole("button", { name: /Run summary/i }));
+  await runFromToolbar("a");
   await screen.findByText(/^QUEUED \d/);
   states.a = "ready";
   await screen.findByText(/^RAN · \d/, undefined, { timeout: 6000 });
@@ -78,9 +84,9 @@ it("a completion of meeting A cannot finish the receipt for queued meeting B", a
   const reads = { terminalA: false };
   hub(states, reads);
   render(<HistoryCore />);
-  fireEvent.click(within(await screen.findByTestId("meeting-row-a")).getByRole("button", { name: /Run summary/i }));
+  await runFromToolbar("a");
   await screen.findByText(/^QUEUED \d/);
-  fireEvent.click(within(await screen.findByTestId("meeting-row-b")).getByRole("button", { name: /Run summary/i }));
+  await runFromToolbar("b");
   await waitFor(() => expect(states.b).toBe("queued"));
   states.a = "ready";
   await waitFor(() => expect(reads.terminalA).toBe(true), { timeout: 5000 });
@@ -221,7 +227,9 @@ it("a reload during a run recovers its timed receipt from the real producer rows
     return {} as never;
   });
   const first = render(<HistoryCore />);
-  fireEvent.click(within(await screen.findByTestId(`meeting-row-${id}`)).getByRole("button", { name: /Run summary/i }));
+  // Window grammar: select the row; its Run summary sits in the status bar.
+  fireEvent.click(within(await screen.findByTestId(`meeting-row-${id}`)).getByRole("button"));
+  fireEvent.click(await screen.findByTestId("run-intelligence-btn"));
   await screen.findByText(/^QUEUED \d/);
   first.unmount();
   deskQueryClient.clear();
@@ -230,7 +238,7 @@ it("a reload during a run recovers its timed receipt from the real producer rows
   // The remount adopts the active run from the durable row, beside the count.
   const queued = await screen.findByTestId("meetings-run-receipt");
   expect(queued.textContent).toMatch(/^QUEUED \d/);
-  expect(queued.closest("[role=status]")?.textContent).toMatch(/^1 RECORD · QUEUED/);
+  expect(queued.closest("[role=status]")?.textContent).toMatch(/^1 meeting.*QUEUED/);
   phase = "success";
   await act(async () => {
     window.dispatchEvent(new Event("focus"));
@@ -260,13 +268,13 @@ it("a reload after today's run shows the record count first and the RAN receipt 
   const receipt = await screen.findByTestId("meetings-run-receipt");
   expect(receipt.textContent).toMatch(/^RAN · \d/);
   const line = receipt.closest("[role=status]");
-  expect(line?.textContent).toMatch(/^1 RECORD · RAN · \d/);
+  expect(line?.textContent).toMatch(/^1 meeting.*RAN · \d/);
 });
 
 it("a reload with only an old run shows the record count alone", async () => {
   const id = mountWithOnly(successRowAt("2020-01-01T09:00:00"));
   await screen.findByTestId(`meeting-row-${id}`);
-  await screen.findByText("1 RECORD");
+  await screen.findByText("1 meeting");
   expect(screen.queryByTestId("meetings-run-receipt")).toBeNull();
   expect(screen.queryByText(/^RAN · /)).toBeNull();
 });

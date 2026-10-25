@@ -113,12 +113,13 @@ export {
 
 export { FootSlotContext } from "./foot";
 export { TitleSlotContext, useWindowTitle } from "./title";
+export { InteriorSlotContext, useWindowInterior, type WindowInterior } from "./interior";
 export { BackSlotContext, useHasWindowBack, useWindowBack, type WindowBack } from "./back";
 export { SPARSE_THRESHOLD } from "./sparse";
 
 export { FilterTokens, type FilterTokenOption } from "./FilterTokens";
 // Phase 16: the interior kit (COMPOSITOR.md §11; contract.md "The interior kit").
-export { AppHead, StatusStrip, FilterBar, KindPlate, Avatar, AvatarStack, AppTile, FigureStrip, Steps, initialsOf, hueOf, type StatusStripItem, type Figure, type Step } from "./kit";
+export { AppHead, StatusStrip, FilterBar, Toolbar, StatusBar, ToolGlyph, countWords, KindPlate, Avatar, AvatarStack, AppTile, FigureStrip, Steps, initialsOf, hueOf, type StatusStripItem, type StatusBarItem, type ToolGlyphKind, type Figure, type Step } from "./kit";
 
 export {
   LedgerFilterBar,

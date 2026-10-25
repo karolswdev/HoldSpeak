@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { ComponentsCore } from "./cores/ComponentsCore";
 
 describe("Signal component gallery", () => {
-  it.each(["Forms", "Editing", "Reading", "Lists", "Resources", "Conversation", "Progress", "Controls"])("%s has no automatically detectable accessibility violations", async (pattern) => {
+  it.each(["Window", "Forms", "Editing", "Reading", "Lists", "Resources", "Conversation", "Progress", "Controls"])("%s has no automatically detectable accessibility violations", async (pattern) => {
     const { container } = render(
       <MemoryRouter initialEntries={["/design/components"]}>
         <ComponentsCore />
@@ -16,6 +16,29 @@ describe("Signal component gallery", () => {
       rules: { "color-contrast": { enabled: false } },
     });
     expect(result.violations).toEqual([]);
+  });
+
+  it("shows the window grammar: toolbar, dense list, status bar, in four states", () => {
+    render(<ComponentsCore />);
+    fireEvent.click(screen.getByRole("button", { name: "Window" }));
+    const window = screen.getByTestId("reference-window");
+    expect(within(window).getByRole("toolbar", { name: "Specimen meetings" })).toBeInTheDocument();
+    const grid = within(window).getByRole("grid", { name: "Specimen meetings" });
+    expect(grid).toHaveAttribute("data-density", "dense");
+    const selected = grid.querySelector("[aria-selected='true']");
+    expect(selected?.textContent).toContain("Vendor sync");
+    expect(within(window).getByRole("button", { name: /Retry/ })).toHaveClass("btn--primary");
+    expect([...within(window).getByRole("status").querySelectorAll(".kit-statusbar-item")].map((item) => item.textContent))
+      .toEqual(["4 meetings", "2 to review", "1 failed"]);
+    fireEvent.doubleClick(within(grid).getByRole("button", { name: /Ledger cutover sync/ }));
+    expect(screen.getByTestId("reference-window-opened").textContent).toBe("Opened locally · Ledger cutover sync");
+
+    for (const [preset, expectation] of [["empty", "Record or import a meeting"], ["busy", ""], ["failed", "Meetings not read"]] as const) {
+      fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: preset } });
+      const frame = screen.getByTestId("reference-window");
+      expect(within(frame).queryByRole("grid")).toBeNull();
+      if (expectation) expect(frame.textContent).toContain(expectation);
+    }
   });
 
   it("keeps the pattern selector and the controls catalogue in one window", () => {

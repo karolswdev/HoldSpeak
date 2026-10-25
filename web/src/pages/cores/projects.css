@@ -24,3 +24,27 @@
   overflow-wrap: anywhere;
   line-height: 18px;
 }
+
+/* Window grammar (2026-10-24): the Projects list view fills the window
+   under its toolbar; risk and dates are quiet sans, one accent per row. */
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.object-list[data-density="dense"] .projects-reason {
+  line-height: 1.35;
+}
+.object-list[data-density="dense"] .projects-next[data-tone="danger"] {
+  color: var(--wb-danger-ink);
+}
+.object-list[data-density="dense"] .object-list-row[data-selected="true"] :is(.projects-reason, .projects-next) {
+  color: var(--wb-paper);
+}
+.projects-update-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}

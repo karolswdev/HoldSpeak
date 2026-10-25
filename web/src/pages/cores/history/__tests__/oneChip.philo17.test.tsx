@@ -6,7 +6,7 @@
 //
 // PHILO-17 meetingwin: the open meeting is its own window (MeetingRecord);
 // its foot is the window foot. The list and the window are fenced apart.
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { WingSlotContext } from "../../../../desk/surface/wings";
@@ -85,10 +85,12 @@ function chips(): string[] {
 it("list and open meeting: same-device work has no egress chip or loopback address", async () => {
   hub(meeting([{ leg_ordinal: 1, host: "127.0.0.1", outcome: "succeeded", operation_id: "op_1" }], "127.0.0.1"));
   render(<Shell />);
-  await screen.findByTestId("meeting-row-a");
+  const row = await screen.findByTestId("meeting-row-a");
+  // Window grammar: the selected row's route and attempts sit in the status bar.
+  fireEvent.click(within(row).getByRole("button"));
   await waitFor(() => expect(chips()).toHaveLength(0));
   expect(chips().join(" ")).not.toContain("127.0.0.1");
-  expect(screen.queryByTestId("row-attempts")?.querySelector(".gadget-chip-egress")).toBeNull();
+  expect(screen.queryByTestId("row-attempts")?.querySelector(".gadget-chip-egress") ?? null).toBeNull();
   cleanup();
 
   // The meeting's own window: its strip and summary slab do not say it again.

@@ -214,7 +214,7 @@ TITLEBAR_TITLEBAR_JS = r"""(width) => {
   const shown = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
     return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
   const shells = [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(shown);
-  const paint = document.createElement('span'); paint.style.backgroundColor='var(--wb-blue)';
+  const paint = document.createElement('span'); paint.style.backgroundColor='var(--wb-bar-front)';
   document.body.appendChild(paint); const activeColor=hex(rgb(getComputedStyle(paint).backgroundColor)); paint.remove();
   const out = {width, activeColor, windows: [], small_text: [], gadgets_not_owned: [], gadgets_not_library: [], gadgets_small: []};
   for (const s of shells) {
@@ -269,7 +269,7 @@ def _titlebar_fails(m: dict[str, Any], width: int) -> dict[str, Any]:
     if m["gadgets_not_library"] or m["gadgets_not_owned"]:
         fails["T3 gadgets are library Buttons and own their centres"] = {
             "not_library": m["gadgets_not_library"], "not_owned": m["gadgets_not_owned"]}
-    want_h = 44 if width <= 720 else 36
+    want_h = 44 if width <= 720 else 30  # window grammar 2026-10-24: a 28-32 px desktop bar
     bad_h = [w for w in m["windows"] if abs(w["bar_h"] - want_h) > 0.5]
     if m["small_text"] or bad_h or m["gadgets_small"]:
         fails["T4 12 px floor, bar height, 44 px gadgets at 393"] = {
@@ -430,7 +430,7 @@ GADGETS_SIZES = {1440: 900, 393: 852}
 STACK_JS = r"""() => {
   const visible = (e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e);
     return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden'; };
-  const paint=document.createElement('span'); paint.style.backgroundColor='var(--wb-blue)';
+  const paint=document.createElement('span'); paint.style.backgroundColor='var(--wb-bar-front)';
   document.body.appendChild(paint); const active=getComputedStyle(paint).backgroundColor; paint.remove();
   const blue = (h) => getComputedStyle(h).backgroundColor === active;
   const wins = [...document.querySelectorAll('.desk-window-shell:not([data-departing])')].filter(visible).map((s) => {
@@ -1027,7 +1027,7 @@ def test_firefox_modern_shell_keeps_frame_and_control_ownership(
                     assert facts["border"] == ("0px" if facts["sheet"] else "1px"), facts
                     assert float(facts["radius"].replace('px','')) >= 6, facts
                     assert facts["headImage"] == "none", facts
-                    assert facts["headHeight"] >= (44 if width == 393 else 36), facts
+                    assert facts["headHeight"] >= (44 if width == 393 else 30), facts
                     assert frame.evaluate("el=>{const r=el.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1}")
                     controls = frame.locator(".desk-pullout-head button")
                     for control in controls.all():
@@ -1050,6 +1050,10 @@ def test_firefox_modern_shell_keeps_frame_and_control_ownership(
                 assert settings.evaluate("el=>{const r=el.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1}")
                 assert page.evaluate("document.documentElement.scrollWidth<=innerWidth")
                 page.screenshot(path=str(shots / f"settings-{width}.png"))
+                if width == 393:
+                    # The narrow Settings window opens its pane over the rail
+                    # (#1458); the frame's own Back returns to the rail.
+                    settings.get_by_test_id("settings-back").click()
                 settings.get_by_test_id("settings-index-you").click()
                 expect(settings.get_by_test_id("settings-index-you")).to_have_attribute("aria-current", "location")
                 assert not errors, errors

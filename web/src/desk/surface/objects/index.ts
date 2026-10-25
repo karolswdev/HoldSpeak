@@ -15,6 +15,8 @@ export {
   type ObjectListRow,
   type ObjectSort,
   type ObjectSortKey,
+  type ObjectListSort,
+  type ObjectListColumn,
 } from "./ObjectList";
 export { GetInfo, type GetInfoProps, type GetInfoFacts } from "./GetInfo";
 export {

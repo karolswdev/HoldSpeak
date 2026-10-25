@@ -193,6 +193,16 @@ class TestOneMeetingOneWindow:
         page.locator("[data-testid=desk-screen]").wait_for(state="attached", timeout=T)
         page.wait_for_timeout(1200)
 
+    def _open_row(self, loc: Any) -> None:
+        """Window grammar: a list row opens on a touch tap, or a double press."""
+        if self.phone:
+            self._press(loc)
+            return
+        loc = loc.first
+        loc.scroll_into_view_if_needed()
+        loc.dblclick()
+        self.page.wait_for_timeout(600)
+
     def _press(self, loc: Any) -> None:
         loc = loc.first
         loc.scroll_into_view_if_needed()
@@ -302,7 +312,7 @@ class TestOneMeetingOneWindow:
                     self._press(win.get_by_role("button", name="Back from Meetings", exact=True))
                     self._press(page.get_by_role("button", name="Go", exact=True))
                     self._press(page.locator(".desk-menu-list").get_by_role("menuitem", name="Meetings", exact=True))
-                    self._press(win.locator(f"[data-testid='meeting-row-{ONE}'] .meetings-stream-row-body"))
+                    self._open_row(win.locator(f"[data-testid='meeting-row-{ONE}'] .object-list-open"))
                 else:
                     self._open_icon(f"meeting:{ONE}")
                 self._one_front(ONE, "icon")
@@ -315,9 +325,9 @@ class TestOneMeetingOneWindow:
 
                 # 4. The Meetings list row (the Meetings window is the list).
                 self._home(staged="review-meetings")
-                page.locator("#surface-meetings [data-testid='meetings-headline']").wait_for(timeout=T)
+                page.locator("#surface-meetings [data-testid='meetings-toolbar']").wait_for(timeout=T)
                 self._shot("meetings-list")
-                self._press(page.locator(f"#surface-meetings [data-testid='meeting-row-{ONE}'] .meetings-stream-row-body"))
+                self._open_row(page.locator(f"#surface-meetings [data-testid='meeting-row-{ONE}'] .object-list-open"))
                 self._one_front(ONE, "list")
 
                 # 5. (Betterment P3) The Room's FILES fold left the Now wing

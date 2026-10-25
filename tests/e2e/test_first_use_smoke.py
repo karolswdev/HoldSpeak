@@ -118,7 +118,7 @@ def _meetings(page, *, recovery=False):
         door = page.locator(".desk-dock").get_by_role("button", name="Meetings", exact=True)
         assert _hit(door), "Meetings door became unreachable after the dock check"
         door.click()
-    _loaded(page.locator(".meetings-head-verbs"))
+    _loaded(page.locator("[data-testid=meetings-toolbar]"))
 
 
 def _fixture_engine(monkeypatch, db):
@@ -435,11 +435,11 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             essential = (
                 [("today", "Today", '[id="pullout:intelligence:desk"] [data-testid=today-day]'),
                  ("capture", "Capture", '[aria-label="Capture"] [data-testid=arrival-capture-bar]'),
-                 ("meetings", "Meetings", ".meetings-head-verbs"),
+                 ("meetings", "Meetings", "[data-testid=meetings-toolbar]"),
                  ("people", "People", "#surface-people .desk-surface-body")]
                 if width <= 720 else
                 [("speak", "Speak", ".speak-face"),
-                 ("meetings", "Meetings", ".meetings-head-verbs"),
+                 ("meetings", "Meetings", "[data-testid=meetings-toolbar]"),
                  ("today", "Today", '[id="pullout:intelligence:desk"] [data-testid=today-day]')]
             )
             for key, name, destination in essential:
@@ -618,7 +618,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             # Capture C3 (#1271): Import opens the file picker at once; the
             # chosen file opens the import form.
             with page.expect_file_chooser() as chooser:
-                page.locator(".meetings-head-verbs").get_by_role("button", name="Import", exact=True).click()
+                page.get_by_role("toolbar", name="Meetings").get_by_role("button", name="Import", exact=True).click()
             chooser.value.set_files(str(WAV))
             page.get_by_role("textbox", name="Title", exact=True).fill(MEETING_TITLE)
             with page.expect_response(lambda response: "/api/meetings/import" in response.url
@@ -633,7 +633,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             permit_import.set()
             assert import_done.wait(10), "Fixture import did not complete"
             assert db.meetings.get_meeting(meeting_id).segments, "Import saved no transcript"
-            row.locator(".meetings-stream-row-body").click()
+            row.locator(".object-list-open").dblclick()
             _loaded(page.locator(".meetings-detail-head"))
             page.get_by_text(WORDS, exact=True).wait_for()
             detail = _api(page, "GET", "/api/meetings/" + meeting_id, token=TOKEN)
@@ -653,7 +653,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 print("RECOVERY: reopen the imported meeting after the recorded import refresh failure.")
                 _desk(page, base)
                 _meetings(page, recovery=not meetings_ok)
-                page.get_by_test_id("meeting-row-" + meeting_id).locator(".meetings-stream-row-body").click()
+                page.get_by_test_id("meeting-row-" + meeting_id).locator(".object-list-open").dblclick()
             route = _loaded(page.get_by_test_id("detail-route"))
             expect(route.locator(".gadget-chip-egress")).to_have_text(f"{host} · LAN")
             run = page.get_by_test_id("detail-run-intelligence-btn")
@@ -710,7 +710,7 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 print("RECOVERY: reopen the persisted meeting after the recorded refresh failure.")
                 _desk(page, base)
                 _meetings(page, recovery=not meetings_ok)
-                page.get_by_test_id("meeting-row-" + meeting_id).locator(".meetings-stream-row-body").click()
+                page.get_by_test_id("meeting-row-" + meeting_id).locator(".object-list-open").dblclick()
             expect(page.get_by_test_id("meeting-summary-text")).to_have_text(engine.result.summary)
             _wait_record_host(page, _chip_label(host), scope=".desk-surface-window:has([data-testid=meeting-summary-text])")
             print("PASS: the persisted summary and run receipt agree with the planned host")

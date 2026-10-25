@@ -73,15 +73,17 @@ describe("the imported row draws that length and today's date", () => {
 
   it("shows `3 S`, not `1 MIN`, for the rehearsal's file", () => {
     draw(new Date().toISOString());
-    expect(screen.getByText("3 S")).toBeInTheDocument();
-    expect(screen.queryByText("1 MIN")).toBeNull();
+    // Window grammar: list cells are quiet sans (`3 s`), never caps.
+    expect(screen.getByText("3 s")).toBeInTheDocument();
+    expect(screen.queryByText(/1 min/i)).toBeNull();
   });
 
   it("is dated the import moment, which the hub stamps as now", () => {
     const now = new Date();
     draw(now.toISOString());
-    expect(screen.getByText(ledgerDate(now.toISOString()))).toBeInTheDocument();
+    const word = ledgerDate(now.toISOString());
+    expect(screen.getByText(word.charAt(0) + word.slice(1, 3).toLowerCase() + word.slice(3))).toBeInTheDocument();
     // The rehearsal's row said JUN 03 for a file imported on 2026-09-20.
-    expect(screen.queryByText("JUN 03")).toBeNull();
+    expect(screen.queryByText(/jun 03/i)).toBeNull();
   });
 });
