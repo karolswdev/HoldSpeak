@@ -1179,6 +1179,29 @@ class ProjectService:
         # First line of the error, no stack
         return error.split("\n")[0][:200]
 
+    @staticmethod
+    def _fold_watch_duplicates(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """One entity, one row, whatever the number of Watches that read it."""
+        folded: list[dict[str, Any]] = []
+        first_by_key: dict[tuple[str, str], dict[str, Any]] = {}
+        for row in rows:
+            entity_id = str(row.get("entity_id") or "").strip()
+            if not entity_id:
+                folded.append(row)
+                continue
+            key = (str(row.get("source") or ""), entity_id)
+            kept = first_by_key.get(key)
+            if kept is None:
+                first_by_key[key] = row
+                folded.append(row)
+                continue
+            watch_id = str(row.get("watchId") or "")
+            if watch_id and watch_id != kept.get("watchId"):
+                others = kept.setdefault("watchIds", [str(kept.get("watchId") or "")])
+                if watch_id not in others:
+                    others.append(watch_id)
+        return folded
+
     def _read_room_needs_you(self, project_id: str) -> dict[str, Any]:
         """NEEDS YOU: items derived from Watch snapshots + Delta review."""
         watches = self._db.automations.list_project_watches(project_id)
@@ -1324,6 +1347,12 @@ class ProjectService:
             # can cite the source by id, never by provider kind (counsel P2 vi).
             for row in needs[rows_before:]:
                 row.setdefault("watchId", watch_id)
+        # Owner, 2026-10-25 ("why is the list of open issues so long"): two
+        # Watches on one project (Jira due risk + Jira delivery flow) read the
+        # same issues, and the Room showed every issue twice. One entity is
+        # ONE row: the first Watch's row stays and names the others in
+        # ``watchIds``; the count is the number of things, not of reads.
+        needs = self._fold_watch_duplicates(needs)
         # Delta proposals pending
         if self._delta_service is not None:
             try:
