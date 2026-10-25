@@ -56,7 +56,12 @@ export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState,
   presentationReady?: boolean;
   adapter?: FiledNoteAdapter;
 }) {
-  useRoomRead("files", resourcesState !== "loading");
+  // The Room gates on the FIRST read only. A re-read (every desk change)
+  // must not make Files late again: at the cap it drew a Loading line that
+  // vanished a moment later and moved Sources up by 40 px (393 held read).
+  const firstSettled = useRef(false);
+  if (resourcesState !== "loading") firstSettled.current = true;
+  useRoomRead("files", firstSettled.current);
   const [expanded, setExpanded] = useState(false);
   const [selectedRef, setSelectedRef] = useState<NoteRef | null>(null);
   const [sort, setSort] = useState<ObjectSort>({ key: "name", dir: "asc" });
