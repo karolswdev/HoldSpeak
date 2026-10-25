@@ -231,7 +231,7 @@ describe("Memory on the Desk: standing pages where the work lives", () => {
     const changed = within(groups[2]).getAllByTestId("this-week-line");
     expect(changed).toHaveLength(4);
     const cutover = changed.find((l) => l.textContent?.includes("Cutover date is 10-17"))!;
-    expect(within(cutover).getByTestId("memory-ref").textContent).toBe("NOTE 10-11");
+    expect(within(cutover).getByTestId("memory-ref").textContent).toBe("Note 10-11");
     expect(section.textContent).not.toContain("Harbor");
     expect(section.textContent).not.toMatch(/Rewrite/i);
   });

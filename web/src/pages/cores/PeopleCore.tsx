@@ -498,6 +498,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       id: relationship.id,
       kind: "person",
       name: relationship.display_name,
+      avatar: { initials: initialsOf(relationship.display_name), hue: hueOf(relationship.display_name) },
       nameTestId: "people-row-name",
       cells: {
         role: relationshipLabel(relationship.relationship_kind),
@@ -512,6 +513,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     id: `suggestion:${row.key}`,
     kind: "person",
     name: row.name,
+    avatar: { initials: initialsOf(row.name), hue: hueOf(row.name) },
     group: 1,
     cells: { role: "From your meetings", next: sentence(suggestionSource(row)), owe: "" },
     sortValues: { next: index, owe: index, role: String(index).padStart(4, "0") },
@@ -589,8 +591,6 @@ export function PeopleCore({ hero, scope }: CoreProps) {
           onOpen={(id) => { if (byPerson.has(id)) openPerson(id); else setRowSelected(id); }}
           rowProps={(row) => ({
             "data-testid": row.group ? "people-suggestion" : "people-row",
-            "data-initials": initialsOf(row.name),
-            "data-hue": hueOf(row.name),
             "data-suggested": row.group ? "" : undefined,
           })}
         />

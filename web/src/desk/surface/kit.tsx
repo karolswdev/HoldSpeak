@@ -159,6 +159,7 @@ export function Toolbar({
   label,
   children,
   trailing,
+  trailingStays = false,
   className,
   "data-testid": testId,
 }: {
@@ -168,6 +169,10 @@ export function Toolbar({
   children?: ReactNode;
   /** The right slot: a search well or a filter. */
   trailing?: ReactNode;
+  /** The trailing control is the band's own (the Note's mic), not a search
+   *  well: it stays at the band's right end at every width instead of
+   *  taking its own line at a narrow width. */
+  trailingStays?: boolean;
   className?: string;
   "data-testid"?: string;
 }) {
@@ -176,6 +181,7 @@ export function Toolbar({
       role="toolbar"
       aria-label={label}
       className={className ? `kit-toolbar ${className}` : "kit-toolbar"}
+      data-trailing={trailingStays ? "stays" : undefined}
       data-testid={testId}
     >
       <span className="kit-toolbar-verbs">{children}</span>
@@ -307,6 +313,28 @@ export function StatusBar({
     </div>
   );
   return target ? createPortal(bar, target) : <footer className="kit-statusbar-foot">{bar}</footer>;
+}
+
+/** Window grammar: a state fact as a dot and a sentence-case word
+ *  (`● No engine for answers`), sans 12, no plate. `idle` (default) is the
+ *  plain grey dot. The word names the state; the dot is never colour alone. */
+export function DotWord({
+  tone,
+  children,
+  className,
+  "data-testid": testId,
+}: {
+  tone?: ObjectTone | "idle";
+  children: ReactNode;
+  className?: string;
+  "data-testid"?: string;
+}) {
+  return (
+    <span className={className ? `kit-dotword ${className}` : "kit-dotword"} data-tone={tone ?? "idle"} data-testid={testId}>
+      <span className="kit-dot" data-tone={tone ?? "idle"} aria-hidden="true" />
+      {children}
+    </span>
+  );
 }
 
 const KIND_WORDS: Record<string, string> = {

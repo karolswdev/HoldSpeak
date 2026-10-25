@@ -96,13 +96,6 @@
   margin-inline-end: 6px;
 }
 
-/* The voice control is the field's, not a search well: it stays at the
-   band's right end at every width. */
-.desk-next .thought-note-toolbar .kit-toolbar-trailing {
-  flex: none;
-  margin-left: auto;
-}
-
 /* The field's illustrated mic: the sprite itself, no grey square; a soft
    paper ground under the pointer, the ember ring while it listens. */
 .desk-next .thought-note-toolbar-voice .desk-mic {

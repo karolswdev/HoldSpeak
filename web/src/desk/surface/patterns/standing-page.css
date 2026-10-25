@@ -116,8 +116,9 @@
   border: 1px solid var(--wb-rule-soft);
   border-radius: 2px;
   background: color-mix(in srgb, var(--wb-ink) 5%, transparent);
-  font: 500 12px / 1.2 var(--font-mono);
+  font: 500 12px / 1.2 var(--font-sans);
   letter-spacing: 0;
+  text-transform: none;
   color: var(--wb-muted);
 }
 .desk-next .memory-ref-tokens button.memory-ref-token.desk-chip:hover {

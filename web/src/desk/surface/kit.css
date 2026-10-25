@@ -381,7 +381,13 @@
    trailing group yields before the band wraps. */
 .kit-toolbar-trailing {
   flex: 1 1 auto;
+  flex-wrap: wrap;
+  row-gap: 4px;
   justify-content: flex-end;
+}
+/* A filter keeps its whole face (it never shrinks under the search well). */
+.kit-toolbar-trailing > .gadget-check-token {
+  flex: none;
 }
 .kit-toolbar-trailing .gadget-string {
   min-width: 0;
@@ -434,6 +440,8 @@
   .desk-next .kit-toolbar .btn {
     height: auto;
   }
+  /* The trailing group takes its own line under the verbs (and wraps, as
+     above): the search well takes the whole width. */
   .kit-toolbar-trailing {
     flex: 1 1 100%;
     margin-left: 0;
@@ -458,6 +466,13 @@
     height: 44px;
     border-radius: 22px;
   }
+}
+
+/* `trailingStays`: the trailing control (the Note's mic) is the band's
+   own, not a search well: it stays at the band's right end at every width. */
+.kit-toolbar[data-trailing="stays"] > .kit-toolbar-trailing {
+  flex: none;
+  margin-left: auto;
 }
 
 /* StatusBar: a 24 px band at the foot, sans 12 muted; items at the left,
@@ -525,9 +540,20 @@
   flex-wrap: wrap;
   padding-block: 3px;
 }
+/* Narrow: the bar grows to 44 px and the verbs take their own line under
+   the words, each keeping its whole 44 px target. */
 @container surface (max-width: 520px) {
+  .kit-statusbar {
+    --wb-statusbar-h: 44px;
+  }
+  .kit-statusbar > .kit-statusbar-verbs {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+    padding-top: 2px;
+  }
   .desk-next .kit-statusbar .kit-statusbar-verbs .btn {
     height: auto;
+    min-height: 44px;
   }
 }
 .kit-statusbar-egress {
@@ -572,6 +598,26 @@
 .kit-dot[data-tone="fail"] { background: var(--lamp-fail); }
 .kit-dot[data-tone="info"] { background: var(--lamp-info); }
 .kit-dot[data-tone="ask"] { background: var(--lamp-ask); }
+/* Idle: nothing is happening; a quiet grey, legible on paper. */
+.kit-dot[data-tone="idle"] { background: color-mix(in srgb, var(--wb-muted) 55%, var(--wb-paper)); }
+
+/* DotWord: a state fact is a dot and a sentence-case word (`● No engine
+   for answers`), sans 12, no plate, no border. */
+.kit-dotword {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font: 500 12px / 1.35 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-muted);
+}
+.kit-dotword[data-tone="ok"] { color: var(--wb-ok-ink); }
+.kit-dotword[data-tone="warn"] { color: var(--wb-warn-ink); }
+.kit-dotword[data-tone="fail"] { color: var(--wb-danger-ink); }
+.kit-dotword[data-tone="info"] { color: var(--wb-info-ink); }
+.kit-dotword[data-tone="ask"] { color: var(--wb-ember-ink); }
 
 /* The body inset: a list view or an editor runs edge to edge (the host sets
    `data-interior`); the list fills the window and scrolls inside it. */

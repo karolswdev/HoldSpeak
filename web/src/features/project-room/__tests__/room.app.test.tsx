@@ -1540,7 +1540,7 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     expect(within(week).getByTestId("this-week-decided").textContent).toBe("Keep the old ledger read-only for 30 days");
     const runbook = within(week).getAllByTestId("this-week-line")
       .find((l) => l.textContent?.includes("Rollback runbook is still a draft"))!;
-    expect(within(runbook).getByTestId("memory-ref").textContent).toBe("NOTE");
+    expect(within(runbook).getByTestId("memory-ref").textContent).toBe("Note");
     expect(week.textContent).not.toContain("burnout");
     for (const gone of ["room-fold-decisions", "room-fold-since", "room-fold-files",
       "room-fold-briefs", "room-fold-pages", "room-refresh", "room-footer-receipt", "room-health"]) {

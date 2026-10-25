@@ -68,7 +68,7 @@ describe("BeliefCard", () => {
     expect(screen.getByText("3 SOURCES")).toBeTruthy();
     expect(screen.getByText("SEEN 10-01")).toBeTruthy();
     const refs = within(screen.getByTestId("recall-belief-evidence")).getAllByTestId("memory-ref");
-    expect(refs.map((r) => r.textContent)).toEqual(["MTG 10-01 · 14:20", "DEC 10-01", "NOTE 09-30"]);
+    expect(refs.map((r) => r.textContent)).toEqual(["Meeting 10-01 · 14:20", "Decision 10-01", "Note 09-30"]);
     for (const r of refs) expect(r.tagName).toBe("BUTTON");
     fireEvent.click(refs[1]);
     expect(opened).toEqual(["decision:d-1"]);
@@ -85,7 +85,7 @@ describe("BeliefCard", () => {
     render(<BeliefCard belief={DISPUTED} onOpenRef={(r) => opened.push(r)} />);
     expect(screen.getByTestId("recall-belief-state").textContent).toBe("DISPUTED");
     expect(screen.getByTestId("recall-belief-state").getAttribute("data-tone")).toBe("danger");
-    const against = screen.getByRole("button", { name: "Open the source: AGAINST · MTG 09-29 · 10:05" });
+    const against = screen.getByRole("button", { name: "Open the source: Against · Meeting 09-29 · 10:05" });
     expect(against.getAttribute("data-tone")).toBe("danger");
     fireEvent.click(against);
     expect(opened).toEqual(["meeting:m-0929"]);

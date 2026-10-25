@@ -54,10 +54,10 @@ describe("StandingPage", () => {
     const items = screen.getAllByTestId("standing-sentence");
     expect(items.map((li) => li.tagName)).toEqual(["LI", "LI"]);
     expect(items[0].closest("ol")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Open the source: MTG 10-01 · 14:25" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open the source: Meeting 10-01 · 14:25" }));
     expect(opened).toEqual(["meeting:m-1"]);
     // No verb rewrites a page: the only buttons are the refs.
-    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["DEC 10-01", "MTG 10-01 · 14:25"]);
+    expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["Decision 10-01", "Meeting 10-01 · 14:25"]);
   });
 
   it("stale: the warn border and STALE · 3 NEW SOURCES", () => {
@@ -113,7 +113,7 @@ describe("StandingPagesSection", () => {
     // the BUILT clock and the ref tokens.
     const drawn = (section.textContent ?? "")
       .replace("Standing pages · 1", "").replace("qwen3.8-27b", "").replace(/BUILT \d\d:\d\d/, "")
-      .replace(/DEC 10-01|MTG 10-01 · 14:25|read-only for 14 days|17 October/g, "");
+      .replace(/Decision 10-01|Meeting 10-01 · 14:25|read-only for 14 days|17 October/g, "");
     expect(drawn).not.toMatch(/\d/);
     expect(section.querySelectorAll("li")).toHaveLength(2);
   });
@@ -176,7 +176,7 @@ describe("PHILO-17 RefTokens: one chip per source", () => {
   const ref = (n: number, against = false) => ({ ref: `thread:t${n}`, token: `THREAD 10-1${n}`, opens: false, against });
   it("draws a repeated source once", () => {
     render(<RefTokens refs={[ref(1), ref(1), ref(1), ref(2)]} onOpen={() => {}} />);
-    expect(screen.getAllByTestId("memory-ref-plain").map((c) => c.textContent)).toEqual(["THREAD 10-11", "THREAD 10-12"]);
+    expect(screen.getAllByTestId("memory-ref-plain").map((c) => c.textContent)).toEqual(["Thread 10-11", "Thread 10-12"]);
   });
   it("past three: the first two and +N, which opens the rest", () => {
     render(<RefTokens refs={[ref(1), ref(2), ref(3), ref(4), ref(4)]} onOpen={() => {}} />);

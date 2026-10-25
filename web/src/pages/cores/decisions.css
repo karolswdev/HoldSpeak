@@ -31,7 +31,3 @@
   min-width: 0;
 }
 .decisions-search > * { flex: 1 1 auto; min-width: 0; }
-/* Narrow: the toolbar's trailing group wraps, so the Current only toggle
-   keeps its whole face beside a full-width search well. */
-.decisions-window-view .kit-toolbar-trailing { flex-wrap: wrap; row-gap: 4px; }
-.decisions-window-view .kit-toolbar-trailing > .gadget-check-token { flex: none; }

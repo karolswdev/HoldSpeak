@@ -314,7 +314,7 @@
   min-width: 0;
   max-width: 100%;
 }
-.room-ask-model-chip .surface-token { max-width: 100%; }
+.room-ask-model-chip .kit-dotword { max-width: 100%; margin-inline-end: 4px; }
 .room-ask-model-chip .btn { flex: none; }
 /* Condition 8: idle/muted tone for the NOT SET egress chip */
 .room-egress-idle.gadget-chip-egress {

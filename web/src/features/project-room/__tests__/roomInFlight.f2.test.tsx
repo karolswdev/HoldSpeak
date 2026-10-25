@@ -315,7 +315,7 @@ describe("Conductor F2 K6: the merge receipt", () => {
     const receipt = await screen.findByTestId("room-merge-receipt");
     const d = new Date(MERGED_AT);
     const hhmm = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-    expect(receipt.textContent).toBe(`DONE · Write the rollback runbook · PR #413 MERGED · ${hhmm}`);
+    expect(receipt.textContent).toBe(`Write the rollback runbook · PR #413 merged ${hhmm}`);
     expect(screen.queryByText("Write the rollback runbook", { selector: ".surface-primary" })).toBeNull();
   });
 
@@ -326,7 +326,7 @@ describe("Conductor F2 K6: the merge receipt", () => {
       { state: "ok", count: 2, items: OPEN_HERE.items.slice(1) });
     render(<WindowHarness scope="project:p1" />);
     const receipt = await screen.findByTestId("room-merge-receipt");
-    expect(receipt.textContent).toMatch(/^DONE · Add CONTRIBUTING\.md with the three pull request rules · PR #1 MERGED · /);
+    expect(receipt.textContent).toMatch(/^Add CONTRIBUTING\.md with the three pull request rules · PR #1 merged /);
     expect(receipt.textContent).not.toContain("Write the rollback runbook");
     const open = screen.getByTestId("flight-open-pr");
     expect(open.getAttribute("aria-label")).toBe("Open PR #1: Add CONTRIBUTING.md with the three pull request rules");
@@ -367,7 +367,7 @@ describe("Conductor F2 K6 on a mounted Room (Astra finding 5)", () => {
     needsYou = { state: "ok", count: 2, items: OPEN_HERE.items.slice(1) };
     act(() => { for (const h of bus.handlers.get("desk_changed") ?? []) h({ type: "desk_changed", data: {} }); });
     const receipt = await screen.findByTestId("room-merge-receipt");
-    expect(receipt.textContent).toContain("DONE · Write the rollback runbook · PR #413 MERGED");
+    expect(receipt.textContent).toContain("Write the rollback runbook · PR #413 merged");
     await waitFor(() => expect(screen.queryByText("Write the rollback runbook", { selector: ".surface-primary" })).toBeNull());
   });
 });

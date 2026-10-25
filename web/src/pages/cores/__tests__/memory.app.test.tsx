@@ -105,7 +105,7 @@ describe("Q12 Memory", () => {
     fireEvent.click(within(home).getAllByRole("button", { name: "Why" })[0]);
     expect(within(home).getByTestId("memory-belief").textContent).toContain("Mira owns the cutover review.");
     expect(within(home).getByTestId("memory-belief").textContent).not.toContain("Theo owns the on-call handbook.");
-    expect(within(home).getAllByRole("button", { name: "Open the source: 1:1 WITH MIRA" }).length).toBeGreaterThan(0);
+    expect(within(home).getAllByRole("button", { name: "Open the source: 1:1 With Mira" }).length).toBeGreaterThan(0);
 
     fireEvent.click(within(home).getByRole("button", { name: "Ledger" }));
     fireEvent.click(within(home).getByRole("button", { name: "Mira Kovacs" }));
