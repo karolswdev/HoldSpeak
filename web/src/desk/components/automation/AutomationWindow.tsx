@@ -1,11 +1,14 @@
 /** Betterment A3 — the automation window (docs/internal/betterment/workbench/
  * DESIGN.md §4, RECIPE.md A3).
  *
- * One window: the sentence on top (When, Do, About, With, Put it in), the
- * results below it, newest first. The newest result is open and rendered;
- * each older one is one line that opens in place. Run now and the On/Off
- * switch sit in the title strip. What it has learned is a fold, closed by
- * default, with Forget on each lesson.
+ * One window. Window grammar (2026-10-24): Toolbar [Run now · Edit ·
+ * Send…] → the compact head (the Do sentence, then one line of quiet facts:
+ * When, About, With, Put it in) → Results as a dense list view (When,
+ * Engine, State), the selected one (the newest until he picks another)
+ * rendered below it → StatusBar (count, new, next start, and the engine
+ * with where its prompt goes). The On/Off switch sits in the title strip.
+ * What it has learned is a fold, closed by default, with Forget on each
+ * lesson.
  *
  * Do edits in place (a text box with the mic). A4: When and With edit in
  * place too (WhenEditor, WithEditor). A5: About edits in place (the one
@@ -44,24 +47,31 @@ import {
   PadGadget,
   SurfaceLedger,
   SurfaceLedgerRow,
-  SurfaceSection,
   SurfaceState,
-  StateChip,
   EgressChip,
+  StatusBar,
+  ToolGlyph,
+  Toolbar,
+  countWords,
+  type ObjectListRow,
+  type ObjectListSort,
 } from "../../surface";
+import { FootSlotContext } from "../../surface/foot";
+import { ObjectList } from "../../surface/objects/ObjectList";
+import { objectSprite } from "../../surface/objects/kinds";
+import { ArtifactSendWells } from "../../documentSends";
 import { boundaryEgressLamp } from "../../inferenceEgress";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { WORKBENCH_RUN_FRAME_TYPES } from "../workbench/runLifecycle";
 import { SentenceLine } from "./SentenceLine";
 import { AutomationBuilder } from "./AutomationBuilder";
-import { spriteUrl } from "../../sprites";
 import { WhenEditor } from "./WhenEditor";
 import { readNativeAgentOptions, WithEditor, type NativeAgentOption } from "./WithEditor";
 import { AboutChips, AboutEditor } from "./AboutEditor";
 import { PutEditor, PutValue } from "./PutEditor";
 import { useDropHand } from "../../hand";
 import { useBuilderTools } from "../../builderTools";
-import { ResultBody, ResultCard, ResultHead } from "./ResultCard";
+import { ResultBody, ResultCard } from "./ResultCard";
 import {
   canMakeOne,
   engineWords,
@@ -75,7 +85,7 @@ import {
   queueTasks,
   resultDay,
   resultLine,
-  secondsWords,
+  resultWhen,
   taskStateWords,
   whenWords,
   type AutomationDetail,
@@ -91,6 +101,34 @@ const ABOUT_DROP_KINDS: ReadonlySet<string> = new Set([
 ]);
 
 export const AUTOMATION_WINDOW_SIZE = { w: 920, h: 680 } as const;
+
+/** Where the prompt goes, in words for the status bar's egress chip. */
+export function boundaryWords(boundary: string | null | undefined): string | null {
+  switch (boundary) {
+    case "same_device":
+    case "local":
+      return "this Mac";
+    case "private_network":
+      return "private network";
+    case "paired_device":
+      return "paired device";
+    case "private_mesh":
+    case "mesh":
+      return "private mesh";
+    case "external_service":
+    case "cloud":
+      return "cloud";
+    default:
+      return null;
+  }
+}
+
+const RESULT_COLUMNS = [
+  { key: "name", word: "Result", track: "minmax(160px, 1.4fr)" },
+  { key: "when", word: "When", track: "minmax(0, 0.7fr)" },
+  { key: "engine", word: "Engine", track: "minmax(0, 0.6fr)" },
+  { key: "state", word: "State", track: "104px" },
+] as const;
 
 function DoEditor({
   kind,
@@ -197,45 +235,6 @@ function Lessons({
   );
 }
 
-function OlderResult({
-  result,
-  isNew,
-  open,
-  onToggle,
-  onRunAgain,
-  running,
-}: {
-  result: AutomationResult;
-  isNew: boolean;
-  open: boolean;
-  onToggle: () => void;
-  onRunAgain: () => void;
-  running: boolean;
-}) {
-  const failed = result.status === "failed";
-  return (
-    <SurfaceLedgerRow
-      time={resultDay(result.completed_at)}
-      primary={failed ? `Failed: ${failureWords(result.error)}` : resultLine(result)}
-      meta={failed ? undefined : [secondsWords(result.seconds), result.model].filter(Boolean).join(" · ")}
-      metaTone={failed ? "fail" : undefined}
-      cells={isNew ? <StateChip state="active" label="NEW" /> : undefined}
-      trailing={failed ? (
-        <Button dense variant="ghost" onClick={onRunAgain} disabled={running}>Run again</Button>
-      ) : undefined}
-      open={open}
-      onToggle={onToggle}
-      lineLabel={failed ? undefined : `${resultDay(result.completed_at)}: ${resultLine(result)}`}
-      data-testid="automation-older"
-    >
-      <div className="automation-older-open">
-        <header className="automation-card-head"><ResultHead result={result} isNew={false} /></header>
-        <ResultBody result={result} onRunAgain={onRunAgain} runAgainDisabled={running} />
-      </div>
-    </SurfaceLedgerRow>
-  );
-}
-
 /** Betterment A9: one typed task of an old queue automation. A done or a
  *  failed task opens in place to its answer or its reason. */
 function QueueTask({
@@ -298,7 +297,12 @@ export function AutomationWindow({
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardAutoStarted, setWizardAutoStarted] = useState(false);
   const [wizardDismissed, setWizardDismissed] = useState(false);
-  const [openOlder, setOpenOlder] = useState<string | null>(null);
+  // Window grammar: the Results list's selection is the result the reader
+  // shows (the newest until he picks another).
+  const [shownId, setShownId] = useState<string | null>(null);
+  const [resultSort, setResultSort] = useState<ObjectListSort>({ key: "when", dir: "desc" });
+  const [sendOpen, setSendOpen] = useState(false);
+  const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [openTask, setOpenTask] = useState<string | null>(null);
   const [makingOne, setMakingOne] = useState(false);
   // A long Do (an old agent's prompt) is clamped to 3 lines on a phone.
@@ -344,7 +348,7 @@ export function AutomationWindow({
   // the working line says so in the newest card's head.
   const results = (detail?.results ?? []).filter((r) => r.status === "done" || r.status === "failed");
   const newest = results[0] ?? null;
-  const older = results.slice(1);
+  const shown = results.find((r) => r.item_id === shownId) ?? newest;
 
   // The hub's own fact: a claimed occurrence is a run in progress (a
   // schedule or an event started it, or another view pressed Run now).
@@ -575,11 +579,15 @@ export function AutomationWindow({
     await load();
   };
 
-  const openOlderResult = (result: AutomationResult) => {
-    const opening = openOlder !== result.item_id;
-    setOpenOlder(opening ? result.item_id : null);
-    if (opening && result.new && result.artifact_id) {
+  // A press on a Results row shows that result below the list; showing a
+  // NEW result reads it on the hub (it keeps NEW while this window is open).
+  const showResult = (id: string) => {
+    const result = results.find((r) => r.item_id === id);
+    setShownId(id);
+    setSendOpen(false);
+    if (result?.new && result.artifact_id) {
       const artifactId = result.artifact_id;
+      setShownNew((seen) => (seen.has(artifactId) ? seen : new Set(seen).add(artifactId)));
       void openAutomationResult(workbenchId, artifactId).then(load).catch(() => undefined);
     }
   };
@@ -610,6 +618,40 @@ export function AutomationWindow({
   const setupPending = saving || aboutSaving || putSaving || reviewSaving || spendSaving
     || enginePending || Boolean(engineSave.current) || Boolean(whenSaving);
 
+  const resultRows: ObjectListRow[] = results.map((result) => {
+    const failed = result.status === "failed";
+    const at = result.completed_at ? new Date(result.completed_at).getTime() : 0;
+    const fresh = isNew(result);
+    return {
+      id: result.item_id,
+      kind: "artifact",
+      name: failed ? `Failed: ${failureWords(result.error)}` : resultLine(result),
+      when: resultWhen(result.completed_at),
+      whenSort: Number.isFinite(at) ? at : 0,
+      cells: { engine: result.model || "" },
+      state: failed
+        ? { label: "Failed", tone: "fail", testId: "automation-result-state" }
+        : fresh
+          ? { label: "New", tone: "ask", testId: "automation-result-state" }
+          : { label: "Done", tone: "ok", testId: "automation-result-state" },
+    };
+  });
+
+  // The facts under the Do sentence, and the status bar's egress chip: the
+  // engine and where its prompt goes (A.9: egress where egress happens).
+  const boundary = detail?.assignment_summary?.boundary ?? null;
+  const egressWhere = vendor ?? boundaryWords(boundary);
+  const egress = engine && egressWhere ? (
+    <EgressChip
+      label={`${engine} · ${egressWhere}`}
+      title={vendor ? `The prompt goes to ${vendor}` : `The prompt goes: ${boundaryEgressLamp(boundary).label}`}
+      scope={vendor ? "cloud" : ["local", "same_device"].includes(String(boundary)) ? "local" : "cloud"}
+    />
+  ) : null;
+  const freshCount = results.filter(isNew).length;
+  const failedCount = results.filter((r) => r.status === "failed").length;
+  const next = detail ? nextWords(detail.next_run_at) : null;
+
   return (
     <DeskWindowFrame
       id={`workbench:${workbenchId}`}
@@ -628,15 +670,6 @@ export function AutomationWindow({
           {detail && onRaw && (isOldQueue(detail) || builder) ? (
             <Button dense variant="ghost" onClick={onRaw} data-testid="automation-raw">RAW</Button>
           ) : null}
-          <Button
-            dense
-            variant="primary"
-            onClick={() => void runNow()}
-            disabled={!detail || Boolean(working) || showBuilder}
-            data-testid="automation-run-now"
-          >
-            Run now
-          </Button>
         </span>
       }
       minW={480}
@@ -648,16 +681,49 @@ export function AutomationWindow({
       onClose={() => useDesk.getState().closeWorkbenchWindow(workbenchId)}
       className="desk-pullout automation-window"
     >
+      <FootSlotContext.Provider value={foot}>
       <div className="desk-surface-body surface-host-body automation-body" data-surface-host="automation" data-testid="automation-window"
+        data-interior="editor"
         data-drop-ready={dropReady || undefined}
         onDragOver={onDragOver}
         onDragLeave={(event) => {
           if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDropReady(false);
         }}
         onDrop={onDrop}>
+        {/* Window grammar: the toolbar under the title bar. Run now is the
+            one primary; Edit opens the guided setup; Send… sends the result
+            the reader shows. */}
+        <Toolbar label={name} data-testid="automation-toolbar">
+          <Button
+            dense
+            variant="primary"
+            onClick={() => void runNow()}
+            disabled={!detail || Boolean(working) || showBuilder}
+            data-testid="automation-run-now"
+          >
+            <ToolGlyph kind="retry" />
+            Run now
+          </Button>
+          <Button dense variant="secondary" disabled={!detail || showBuilder} onClick={() => {
+            setWizardOpen(true);
+            setWizardAutoStarted(false);
+            setWizardDismissed(false);
+          }}
+            data-testid="automation-edit-setup">
+            Edit
+          </Button>
+          <Button dense variant="secondary" aria-expanded={sendOpen}
+            disabled={showBuilder || !shown?.artifact_id || shown.status === "failed"}
+            onClick={() => setSendOpen((open) => !open)}
+            data-testid="automation-send">
+            Send…
+          </Button>
+        </Toolbar>
+        <div className="automation-scroll">
         {readError && !detail ? <SurfaceState error={readError} onRetry={() => void load()} /> : null}
         {!detail && !readError ? <SurfaceState loading /> : null}
         {detail ? showBuilder ? (
+          <div className="automation-pane">
           <AutomationBuilder
             detail={detail}
             pending={setupPending}
@@ -677,37 +743,18 @@ export function AutomationWindow({
               setWizardDismissed(true);
             }}
           />
+          </div>
         ) : (
           <>
-            <div className="automation-edit-setup">
-              <Button dense variant="ghost" onClick={() => {
-                setWizardOpen(true);
-                setWizardAutoStarted(false);
-                setWizardDismissed(false);
-              }}
-                data-testid="automation-edit-setup">
-                Edit setup
-              </Button>
-            </div>
-            <div className="automation-sentence" data-testid="automation-sentence">
-              <SentenceLine
-                name="when"
-                label="When"
-                icon={<img src={spriteUrl("meeting", "automation-when", "rest", undefined, 32)} alt="" />}
-                open={editing === "when"}
-                onPress={() => toggle("when")}
-                aside={nextWords(detail.next_run_at) ? (
-                  <span className="automation-next" data-testid="automation-next">{nextWords(detail.next_run_at)}</span>
-                ) : undefined}
-                editor={<WhenEditor detail={detail} saving={whenSaving}
-                  onChoose={(choice, key) => void chooseWhen(choice, key)} />}
-              >
-                {whenWords(detail)}
-              </SentenceLine>
+            {/* The compact head: the automation's glyph, the Do sentence,
+                and one line of quiet facts. Each fact still edits in place. */}
+            <header className="automation-head" data-testid="automation-sentence">
+              <img className="automation-head-sprite" src={objectSprite("workbench", workbenchId, "rest", 64)} alt="" draggable={false} />
+              <div className="automation-head-text">
               <SentenceLine
                 name="do"
                 label="Do"
-                icon={<img src={spriteUrl("artifact", "automation-do", "rest", undefined, 32)} alt="" />}
+                variant="lead"
                 blank={!doText}
                 open={editing === "do"}
                 onPress={() => toggle("do")}
@@ -728,13 +775,25 @@ export function AutomationWindow({
                   {doText || "What should it do?"}
                 </span>
               </SentenceLine>
+              <div className="automation-head-facts">
+              <SentenceLine
+                name="when"
+                label="When"
+                variant="fact"
+                open={editing === "when"}
+                onPress={() => toggle("when")}
+                editor={<WhenEditor detail={detail} saving={whenSaving}
+                  onChoose={(choice, key) => void chooseWhen(choice, key)} />}
+              >
+                {whenWords(detail)}
+              </SentenceLine>
               {happened && vendor ? (
                 // A10: an event start reads the thing that happened; with an
                 // agent engine, a folder can still be added for it to read.
                 <SentenceLine
                   name="about"
                   label="About"
-                  icon={<img src={spriteUrl("directory", "automation-about", "rest", undefined, 32)} alt="" />}
+                  variant="fact"
                   open={editing === "about"}
                   onPress={() => toggle("about")}
                   editor={<AboutEditor sources={sources} busy={aboutSaving} folders foldersOnly
@@ -744,15 +803,14 @@ export function AutomationWindow({
                   <AboutChips sources={sources.filter((source) => source.kind === "folder")} />
                 </SentenceLine>
               ) : happened ? (
-                <SentenceLine name="about" label="About"
-                  icon={<img src={spriteUrl("directory", "automation-about", "rest", undefined, 32)} alt="" />}>
+                <SentenceLine name="about" label="About" variant="fact">
                   {happened}
                 </SentenceLine>
               ) : (
                 <SentenceLine
                   name="about"
                   label="About"
-                  icon={<img src={spriteUrl("directory", "automation-about", "rest", undefined, 32)} alt="" />}
+                  variant="fact"
                   blank={!sources.length}
                   open={editing === "about"}
                   onPress={() => toggle("about")}
@@ -767,18 +825,10 @@ export function AutomationWindow({
               <SentenceLine
                 name="with"
                 label="With"
-                icon={<img src={spriteUrl("workbench", "automation-with", "rest", undefined, 32)} alt="" />}
+                variant="fact"
                 blank={!engine}
                 open={editing === "with"}
                 onPress={() => toggle("with")}
-                aside={engine && vendor ? (
-                  // A10: an agent engine's prompt goes to its vendor: the chip says which.
-                  <EgressChip label={vendor.toUpperCase()} title={`The prompt goes to ${vendor}`} scope="cloud" />
-                ) : engine && detail.assignment_summary?.boundary ? (
-                  <EgressChip label={boundaryEgressLamp(detail.assignment_summary.boundary).label}
-                    title={`The prompt goes: ${boundaryEgressLamp(detail.assignment_summary.boundary).label}`}
-                    scope={["local", "same_device"].includes(detail.assignment_summary.boundary) ? "local" : "cloud"} />
-                ) : undefined}
                 editor={<WithEditor detail={detail} handMode={detail.do_kind === "hand_to_agent"}
                   onUse={async (profileId) => {
                     if (!(await chooseEngine(profileId))) throw new Error("Engine choice not saved. Automation stays open. Choose again.");
@@ -796,7 +846,7 @@ export function AutomationWindow({
                 <SentenceLine
                   name="review"
                   label="Review by"
-                  icon={<img src={spriteUrl("person", "automation-review", "rest", undefined, 32)} alt="" />}
+                  variant="fact"
                   open={editing === "review"}
                   onPress={() => toggle("review")}
                   editor={<ReviewEditor value={detail.review_by || "none"} saving={reviewSaving}
@@ -810,7 +860,7 @@ export function AutomationWindow({
               <SentenceLine
                 name="put"
                 label="Put it in"
-                icon={<img src={spriteUrl("repository", "automation-put", "rest", undefined, 32)} alt="" />}
+                variant="fact"
                 open={editing === "put"}
                 onPress={() => toggle("put")}
                 editor={<PutEditor target={detail.output_target}
@@ -820,14 +870,16 @@ export function AutomationWindow({
               >
                 <PutValue target={detail.output_target} />
               </SentenceLine>
-            </div>
+              </div>
+              </div>
+            </header>
             {saveError ? (
               <p className="automation-refusal" role="alert">{saveError}</p>
             ) : null}
 
-            <SurfaceSection label="Results" className="automation-results" data-testid="automation-results">
+            <section className="automation-results" aria-label="Results" data-testid="automation-results">
               {runRefusal ? (
-                <div className="automation-failure" data-testid="automation-refusal">
+                <div className="automation-failure automation-pane" data-testid="automation-refusal">
                   <p className="automation-failure-words">{failureWords(runRefusal)}</p>
                   <Button dense variant="secondary" onClick={() => void runNow()} disabled={Boolean(working)}>
                     Run again
@@ -835,37 +887,50 @@ export function AutomationWindow({
                 </div>
               ) : null}
               {detail && canMakeOne(detail) ? (
-                <div className="automation-make-one">
+                <div className="automation-make-one automation-pane">
                   <Button dense variant="secondary" loading={makingOne} onClick={() => void makeOne()}
                     data-testid="automation-make-one">
                     Make this one automation
                   </Button>
                 </div>
               ) : null}
+              {/* Window grammar: the results as a list view (When, Engine,
+                  State); the selected one reads below it. */}
+              {resultRows.length ? (
+                <div className="automation-result-list" data-testid="automation-result-list">
+                  <ObjectList
+                    label="Results"
+                    density="dense"
+                    rows={resultRows}
+                    columns={RESULT_COLUMNS.filter((column) => column.key !== "engine" || resultRows.some((row) => row.cells?.engine))}
+                    sort={resultSort}
+                    onSort={(key: string) => setResultSort((current) => ({
+                      key,
+                      dir: current.key === key ? (current.dir === "asc" ? "desc" : "asc") : key === "when" ? "desc" : "asc",
+                    }))}
+                    selectedId={shown?.item_id ?? null}
+                    onSelect={showResult}
+                    onOpen={showResult}
+                    rowProps={() => ({ "data-testid": "automation-result-row" })}
+                  />
+                </div>
+              ) : null}
+              {sendOpen && shown?.artifact_id ? (
+                <div className="automation-pane automation-send" data-testid="automation-send-sheet">
+                  <ArtifactSendWells id={shown.artifact_id} title={shown.title} type="automation result"
+                    onBack={() => setSendOpen(false)} />
+                </div>
+              ) : null}
               {/* A9: an old queue automation with no run result yet shows its
                   tasks, not an empty card. */}
-              {newest || working || !tasks.length ? (
+              {shown || working || !tasks.length ? (
                 <ResultCard
-                  result={newest}
-                  isNew={newest ? isNew(newest) : false}
+                  result={shown}
+                  isNew={shown ? isNew(shown) : false}
                   working={working}
                   onRunAgain={() => void runNow()}
+                  send={false}
                 />
-              ) : null}
-              {older.length ? (
-                <SurfaceLedger label="Older results" data-testid="automation-older-list">
-                  {older.map((result) => (
-                    <OlderResult
-                      key={result.item_id}
-                      result={result}
-                      isNew={isNew(result)}
-                      open={openOlder === result.item_id}
-                      onToggle={() => openOlderResult(result)}
-                      onRunAgain={() => void runNow()}
-                      running={Boolean(working)}
-                    />
-                  ))}
-                </SurfaceLedger>
               ) : null}
               {tasks.length ? (
                 <SurfaceLedger label="Tasks" data-testid="automation-tasks">
@@ -881,12 +946,29 @@ export function AutomationWindow({
                   ))}
                 </SurfaceLedger>
               ) : null}
-            </SurfaceSection>
+            </section>
 
-            <Lessons entries={lessons} onForget={(index, entry) => void forget(index, entry)} />
+            <div className="automation-pane">
+              <Lessons entries={lessons} onForget={(index, entry) => void forget(index, entry)} />
+            </div>
           </>
         ) : null}
+        </div>
+        {/* Window grammar: the count and the state in warm words (no zero),
+            the next start, and the engine with where its prompt goes. */}
+        <StatusBar
+          data-testid="automation-status"
+          egress={showBuilder ? null : egress}
+          items={[
+            { key: "count", text: countWords(results.length, "result") },
+            { key: "new", lamp: "ask", text: countWords(freshCount, "new", "new") },
+            { key: "failed", lamp: "fail", text: countWords(failedCount, "failed", "failed") },
+            next ? { key: "next", lamp: "ok", text: <span data-testid="automation-next">{next}</span> } : null,
+          ]}
+        />
       </div>
+      <footer ref={setFoot} className="desk-surface-foot surface-footer" />
+      </FootSlotContext.Provider>
     </DeskWindowFrame>
   );
 }

@@ -338,6 +338,17 @@ const conductorMember = (id: string) => document.querySelector<HTMLElement>(`[da
 function pillOf(id: string): string {
   return conductorMember(id)?.querySelector("[data-testid='conductor-pill']")?.textContent ?? "";
 }
+/** Window grammar (2026-10-24): an agent row of the dense list, once drawn. */
+const findMember = (id: string) => waitFor(() => {
+  const el = conductorMember(id);
+  if (!el) throw new Error(`no row ${id}`);
+  return el;
+});
+/** A press on a list row's name selects it (its verbs go to the status bar). */
+const selectRow = (id: string) => fireEvent.click(conductorMember(id)!.querySelector(".object-list-open")!);
+/** The status bar's words, as it draws them. */
+const statusWords = () => [...screen.getByTestId("conductor-head").querySelectorAll(".kit-statusbar-item")]
+  .map((item) => item.textContent).filter(Boolean).join(" · ");
 
 describe("the Agents list tells the truth about state (Betterment AG0)", () => {
   beforeEach(() => {
@@ -350,25 +361,26 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
   it("a finished turn with no PR reads Done · New; an agent a restart took reads Stopped by restart and never asks", async () => {
     serve({ "/api/coders/sessions": AG0.wire, "/api/onboarding/agents": DETECT.wire });
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Draft test scaffolding for flags" });
+    await findMember("launch:launch_ag0_done");
     expect(pillOf("launch:launch_ag0_done")).toBe("Done · New");
-    // Nothing asks: no NEEDS YOU plate, no ASK in the head, and Done is not "at work".
+    // Nothing asks: no NEEDS YOU plate, no ask in the status bar, and Done is not at work.
     expect(screen.queryByTestId("conductor-asks")).toBeNull();
-    const head = screen.getByTestId("conductor-head");
-    expect(head.textContent).not.toContain("ASK");
-    expect(head.querySelector(".kit-disp")?.textContent).not.toMatch(/at work/);
-    // The ghost stands under STOPPED BY RESTART, in words, with Resume (AG6).
-    const stopped = screen.getByTestId("conductor-stopped");
-    expect(within(stopped).getByRole("button", { name: "Write the on-call note" })).toBeTruthy();
+    expect(statusWords()).not.toMatch(/need/i);
+    expect(statusWords()).not.toMatch(/working|at work/);
+    // The ghost stands in the Stopped by restart group, in words, with Resume (AG6).
+    const ghost = conductorMember("launch:launch_ag0_ghost")!;
+    expect(ghost.getAttribute("data-group")).toBe("restart");
+    expect(ghost.textContent).toContain("Write the on-call note");
     expect(pillOf("launch:launch_ag0_ghost")).toBe("Stopped by restart");
-    expect(within(stopped).getByRole("button", { name: "Resume" })).toBeTruthy();
+    selectRow("launch:launch_ag0_ghost");
+    expect(screen.getByRole("button", { name: "Resume" })).toBeTruthy();
     expect(document.body.textContent).not.toContain("Working");
   });
 
   it("after the seen mark the same agent reads Quiet", async () => {
     serve({ "/api/coders/sessions": AG0_SEEN.wire, "/api/onboarding/agents": DETECT.wire });
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Draft test scaffolding for flags" });
+    await findMember("launch:launch_ag0_done");
     expect(pillOf("launch:launch_ag0_done")).toBe("Quiet");
   });
 
@@ -752,23 +764,25 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
     });
   });
 
-  it("groups by project, the worst first; inside, Needs you, New, Working, Quiet; the head counts only what is there", async () => {
+  it("window grammar: the asks are plates first; the rest list New, Working, the queue, Quiet, each with its Project; the status bar counts only what is there", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Write the on-call note" });
-    expect(screen.getByTestId("conductor-head").querySelector(".kit-disp")?.textContent)
-      .toBe("2 need you · 1 new · 1 working");
-    expect(screen.getByTestId("conductor-head").textContent).not.toMatch(/\b0\b/);
-    const groups = screen.getAllByTestId("conductor-project");
-    expect(groups.map((g) => g.getAttribute("aria-label"))).toEqual(["Ledger", "Platform"]);
-    expect(groups.map((g) => g.querySelector(".kit-pill")?.textContent)).toEqual(["Needs you", "Needs you"]);
-    // The hand that waits for a free agent stands after the working one.
-    expect(order(groups[0])).toEqual(["launch:launch_ag8_held", "launch:launch_ag8_work", expect.stringMatching(/^queue:/)]);
-    expect(order(groups[1])).toEqual(["launch:launch_ag8_ask", "launch:launch_ag8_new", "launch:launch_ag8_quiet"]);
-    const pills = within(groups[1]).getAllByTestId("conductor-pill").map((el) => el.textContent);
-    expect(pills).toEqual(["Done · New", "Quiet"]);
+    await findMember("launch:launch_ag8_work");
+    expect(statusWords()).toMatch(/^2 need you · 1 new · 1 working/);
+    expect(statusWords()).not.toMatch(/\b0\b/);
+    // The asks: the oldest first, each a plate with its answer.
+    expect(order(screen.getByTestId("conductor-asks"))).toEqual(["launch:launch_ag8_ask", "launch:launch_ag8_held"]);
+    // The list: New, Working, the hand that waits for a free agent, Quiet.
+    const working = [...document.querySelectorAll<HTMLElement>("[data-group='work']")];
+    expect(working.map((el) => el.dataset.objectId))
+      .toEqual(["launch:launch_ag8_new", "launch:launch_ag8_work", expect.stringMatching(/^queue:/), "launch:launch_ag8_quiet"]);
+    expect(working.map((el) => el.querySelector("[data-col='project']")?.textContent))
+      .toEqual(["Platform", "Ledger", "Ledger", "Platform"]);
+    expect(pillOf("launch:launch_ag8_new")).toBe("Done · New");
+    expect(pillOf("launch:launch_ag8_quiet")).toBe("Quiet");
     // The rig's agents lack their hooks: "On this Mac" shows (it shows only
     // when something is missing), each with Connect.
-    expect(within(screen.getByTestId("conductor-coders")).getAllByTestId("conductor-pill").map((el) => el.textContent))
+    expect([...document.querySelectorAll("[data-group='mac'] [data-testid='conductor-pill']")].map((el) => el.textContent))
       .toEqual(["Not connected", "Not connected"]);   // Claude Code, Codex (pi: hooks not checked)
   });
 
@@ -824,6 +838,12 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
     });
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Write the on-call note" });
+    const queued = (await waitFor(() => {
+      const el = document.querySelector<HTMLElement>("[data-object-id^='queue:']");
+      if (!el) throw new Error("no queued row");
+      return el;
+    })).dataset.objectId!;
+    selectRow(queued);
     const cancel = screen.getByTestId("conductor-cancel-queued");
     await act(async () => {
       fireEvent.click(cancel);
@@ -871,15 +891,19 @@ describe("working at once, and a queue (Betterment AG5)", () => {
     const queued = AG5.wire.flights.find((f) => f.state === "queued")!;
     serve({ "/api/coders/sessions": AG5.wire, "/api/onboarding/agents": DETECT.wire });
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Rotate the staging keys" });
     const id = `queue:${String(queued.queue_id)}`;
+    await findMember(id);
     expect(pillOf(id)).toBe("Waits for a free agent");
     expect(within(conductorMember(id)!).queryByTestId("conductor-open")).toBeNull();
     expect(pillOf("launch:launch_ag0_done")).toBe("Done · New");
-    // The head: the done agent and the queued hand are not at work.
-    expect(screen.getByTestId("conductor-head").querySelector(".kit-disp")?.textContent).not.toMatch(/at work/);
-    // Selecting the queued row offers no Stop (nothing runs yet).
-    fireEvent.click(within(conductorMember(id)!).getByRole("button", { name: "Rotate the staging keys" }));
+    // The status bar: the done agent and the queued hand are not at work.
+    expect(statusWords()).not.toMatch(/working|at work/);
+    expect(statusWords()).toContain("1 waiting");
+    // Selecting the queued row offers Cancel, no Open and no Stop (nothing runs yet).
+    selectRow(id);
+    const foot = document.querySelector(".cw-footer") as HTMLElement;
+    expect(within(foot).getByTestId("conductor-cancel-queued")).toBeTruthy();
+    expect(within(foot).queryByTestId("conductor-open")).toBeNull();
     expect(screen.queryByTestId("conductor-stop")).toBeNull();
   });
 
@@ -911,12 +935,18 @@ describe("Resume after a restart (Betterment AG6)", () => {
   it("each agent a restart stopped has Resume; two or more give Resume all in the head", async () => {
     serve({ "/api/coders/sessions": AG6.wire, "/api/onboarding/agents": DETECT.wire });
     render(<ConductorWindow />);
-    const stopped = await screen.findByTestId("conductor-stopped");
-    expect(within(stopped).getAllByRole("button", { name: "Resume" })).toHaveLength(2);
+    await findMember("launch:launch_ag0_ghost");
+    expect([...document.querySelectorAll<HTMLElement>("[data-group='restart']")].map((el) => el.dataset.objectId).sort())
+      .toEqual(["launch:launch_ag0_done", "launch:launch_ag0_ghost"]);
     expect(pillOf("launch:launch_ag0_done")).toBe("Stopped by restart");
     expect(pillOf("launch:launch_ag0_ghost")).toBe("Stopped by restart");
+    for (const id of ["launch:launch_ag0_done", "launch:launch_ag0_ghost"]) {
+      selectRow(id);
+      expect(screen.getByRole("button", { name: "Resume" })).toBeTruthy();
+    }
     expect(screen.getByTestId("conductor-resume-all").textContent).toBe("Resume all");
-    expect(screen.queryByTestId("conductor-ended")).toBeNull();
+    expect(document.querySelector("[data-group='ended']")).toBeNull();
+    expect(statusWords()).toContain("2 stopped by restart");
   });
 
   it("one press posts the resume; the hub's refusal reads NOT RESUMED with its reason", async () => {
@@ -927,8 +957,9 @@ describe("Resume after a restart (Betterment AG6)", () => {
       return served(url, init);
     });
     render(<ConductorWindow />);
-    const row = (await screen.findByTestId("conductor-stopped")).querySelector<HTMLElement>("[data-object-id='launch:launch_ag0_ghost']")!;
-    fireEvent.click(within(row).getByRole("button", { name: "Resume" }));
+    await findMember("launch:launch_ag0_ghost");
+    selectRow("launch:launch_ag0_ghost");
+    fireEvent.click(screen.getByRole("button", { name: "Resume" }));
     const receipt = await screen.findByTestId("conductor-stop-receipt");
     expect(receipt.textContent).toBe(`NOT RESUMED · ${String(AG6_REFUSED.wire.code).replace(/_/g, " ")}`);
     const posts = api.fetch.mock.calls.filter(([u, i]) => String(u).endsWith("/resume") && (i as { method?: string })?.method === "POST");
@@ -997,7 +1028,7 @@ describe("the desk's own answers are visible (Betterment AG3)", () => {
   it("after the desk answered: what it said and the decision it used, New until opened", async () => {
     serveAg3("coders-sessions.answered");
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the on-call note" });
+    await findMember("launch:launch_ag0_ghost");
     const line = within(ghost()).getByTestId("agent-row-desk-answer");
     expect(line.textContent).toBe(`${DECISION}New`);
     expect(line.textContent).not.toMatch(/Yes,/);
@@ -1007,7 +1038,7 @@ describe("the desk's own answers are visible (Betterment AG3)", () => {
   it("after the seen mark the answer stays, without New", async () => {
     serveAg3("coders-sessions.seen");
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the on-call note" });
+    await findMember("launch:launch_ag0_ghost");
     const line = within(ghost()).getByTestId("agent-row-desk-answer");
     expect(line.textContent).toBe(DECISION);
   });

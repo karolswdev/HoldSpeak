@@ -58,6 +58,15 @@ afterEach(() => {
 });
 
 const member = (id: string) => document.querySelector<HTMLElement>(`[data-object-id='${id}']`);
+/** Window grammar (2026-10-24): the status bar's words, as it draws them. */
+const statusWords = () => [...screen.getByTestId("conductor-head").querySelectorAll(".kit-statusbar-item")]
+  .map((item) => item.textContent).filter(Boolean).join(" · ");
+/** A list row by its object id, once the read draws it. */
+const findMember = (id: string) => vi.waitFor(() => {
+  const el = member(id);
+  if (!el) throw new Error(`no row ${id}`);
+  return el;
+});
 
 describe("the Conductor on the C4 seed", () => {
   /** replaces: tests/e2e/test_philo14_c4_conductor_glass.py::test_the_conductor_drawer_at_1440_and_393
@@ -67,11 +76,13 @@ describe("the Conductor on the C4 seed", () => {
   it("lists the ready agents and the three launches with their lamps, asking first; the head says 2 at work, 1 ASK", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Write the rollback runbook" });
-    for (const name of ["Write the rollback runbook", "Shard the reconciliation job", "Add the ledger freeze flag"]) {
-      expect(screen.getByRole("button", { name }), name).toBeTruthy();
+    // Window grammar: the ask is a plate; the agents at work are list rows
+    // whose What is the item.
+    for (const [id, item] of [["launch:launch_c4_recon", "Shard the reconciliation job"], ["launch:launch_c4_flag", "Add the ledger freeze flag"]]) {
+      expect((await findMember(id)).textContent, id).toContain(item);
     }
     // The ready agents: whatever the hub's own detect read served.
-    await screen.findByRole("button", { name: "Codex" });
+    await findMember("agent:codex");
     expect(document.querySelectorAll("[data-object-id='agent:claude']")).toHaveLength(1);
     expect(document.querySelectorAll("[data-object-id='agent:codex']")).toHaveLength(1);
     const lamps: Record<string, string> = {
@@ -85,8 +96,8 @@ describe("the Conductor on the C4 seed", () => {
       expect(el!.textContent ?? "").toContain(lamp);
     }
     const head = screen.getByTestId("conductor-head");
-    // Betterment AG8: the fact counts only what is there.
-    expect(head.querySelector(".kit-disp")?.textContent).toBe("1 needs you · 2 working");
+    // Betterment AG8: the status bar counts only what is there.
+    expect(statusWords()).toMatch(/^1 needs you · 2 working/);
     // The cap is the hub's count (no tmux session runs): no `N OF M`.
     expect(head.textContent).not.toContain(" OF ");
     expect(head.textContent).not.toContain("NOT READ");
@@ -138,7 +149,9 @@ describe("the Conductor on the C4 seed", () => {
     expect(screen.queryByRole("button", { name: "Get Info" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByRole("button", { name: "Get Info" })).toBeTruthy();
-    fireEvent.click(within(member("launch:launch_c4_recon")!).getByRole("button", { name: "Open" }));
+    // Window grammar: Open is the selected row's verb, at the status bar's right.
+    fireEvent.click(member("launch:launch_c4_recon")!.querySelector(".object-list-open")!);
+    fireEvent.click(within(document.querySelector(".cw-footer") as HTMLElement).getByTestId("conductor-open"));
     expect(shell.lanes.at(-1)?.[0]).toBe("launch_c4_recon");
   });
 
@@ -147,12 +160,13 @@ describe("the Conductor on the C4 seed", () => {
    *  sprite of ITS agent. */
   it("every row wears the sprite of ITS agent", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Shard the reconciliation job" });
+    await findMember("launch:launch_c4_recon");
+    await findMember("agent:codex");
     const sprite = (id: string) => member(id)!.querySelector("img")?.getAttribute("src") ?? "";
-    expect(sprite("launch:launch_c4_recon")).toMatch(/\/desk\/sprites\/agent-codex(_sel)?\.png$/);
-    expect(sprite("launch:launch_c4_runbook")).toMatch(/\/desk\/sprites\/agent-claude-code(_sel)?\.png$/);
-    expect(sprite("launch:launch_c4_flag")).toMatch(/\/desk\/sprites\/agent-claude-code(_sel)?\.png$/);
-    expect(sprite("agent:codex")).toMatch(/\/desk\/sprites\/agent-codex(_sel)?\.png$/);
+    expect(sprite("launch:launch_c4_recon")).toMatch(/\/desk\/sprites\/(32\/)?agent-codex(_sel)?\.png$/);
+    expect(sprite("launch:launch_c4_runbook")).toMatch(/\/desk\/sprites\/(32\/)?agent-claude-code(_sel)?\.png$/);
+    expect(sprite("launch:launch_c4_flag")).toMatch(/\/desk\/sprites\/(32\/)?agent-claude-code(_sel)?\.png$/);
+    expect(sprite("agent:codex")).toMatch(/\/desk\/sprites\/(32\/)?agent-codex(_sel)?\.png$/);
     expect(screen.queryByRole("group", { name: "Conductor view" })).toBeNull();
   });
 });

@@ -150,11 +150,26 @@ function fixtureMembers() {
   });
 }
 
-/** A row's name (a press selects it). PHILO-17 THE REFIT: the Conductor
- *  lists its coders as rows; the name is the item the coder works on. */
-const icon = (name: RegExp | string) => screen.getByRole("button", { name });
-const rowOf = (name: string) => screen.getByRole("button", { name }).closest("[data-object-id]") as HTMLElement;
-const pillOf = (name: string) => within(rowOf(name)).getByTestId("conductor-pill").textContent;
+/** Window grammar (2026-10-24): an ask is a plate (its title is a button
+ *  named by the item); every other agent is a row of the dense list, found
+ *  by the words in its row (its What is the item the agent works on). A
+ *  press on a row's name selects it. */
+const rowOf = (words: string) => {
+  const plate = screen.queryByRole("button", { name: words });
+  if (plate) return plate.closest("[data-object-id]") as HTMLElement;
+  const row = screen.queryAllByTestId("conductor-row").find((r) => r.textContent?.includes(words));
+  if (!row) throw new Error(`no row reads "${words}"`);
+  return row;
+};
+const findRow = (words: string) => waitFor(() => rowOf(words));
+const icon = (words: string) => {
+  const row = rowOf(words);
+  return (row.querySelector(".object-list-open") ?? screen.getByRole("button", { name: words })) as HTMLElement;
+};
+const pillOf = (words: string) => within(rowOf(words)).getByTestId("conductor-pill").textContent;
+/** The status bar's words, joined as it draws them. */
+const statusWords = () => [...screen.getByTestId("conductor-head").querySelectorAll(".kit-statusbar-item")]
+  .map((item) => item.textContent).filter(Boolean).join(" · ");
 /* Betterment AG8: "On this Mac" shows only when something is missing (no
  * fold to open). */
 
@@ -228,23 +243,24 @@ describe("PHILO-14 C4 the Conductor members", () => {
 });
 
 describe("PHILO-14 C4 the Conductor window", () => {
-  it("lists every live member as a row with a plain pill; the head says 1 needs you · 3 working · 3 OF 3", async () => {
+  it("lists every live member as a row with a plain pill; the status bar says 1 needs you · 3 working · 3 of 3", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Write the rollback runbook" });
+    await findRow("Shard the reconciliation job");
     expect(pillOf("Shard the reconciliation job")).toBe("Working");
     expect(pillOf("scratch")).toBe("Working");
     expect(pillOf("Add the ledger freeze flag")).toBe("PR #412 open");
     expect(pillOf("Write the cutover checklist")).toBe("PR #413 merged · item closed · session stopped");
     // Betterment AG8: Claude Code can run and Codex is not wanted here:
     // nothing is missing, so no "On this Mac".
-    expect(screen.queryByTestId("conductor-coders")).toBeNull();
-    const head = screen.getByTestId("conductor-head").textContent ?? "";
-    // Betterment AG8: the fact counts only what is there; the strip keeps
-    // the limit when he is at it.
-    expect(screen.getByTestId("conductor-head").querySelector(".kit-disp")?.textContent).toBe("1 needs you · 3 working");
-    expect(head).not.toContain("1 ASK");
-    expect(head).toContain("3 OF 3");
-    expect(head).not.toMatch(/\b0 /);
+    expect(document.querySelector("[data-group='mac']")).toBeNull();
+    // Window grammar: no headline in the window; the status bar counts only
+    // what is there, and keeps the limit when he is at it.
+    expect(document.querySelector(".conductor-window .kit-disp")).toBeNull();
+    expect(statusWords()).toMatch(/^1 needs you · 3 working · /);
+    expect(statusWords()).toContain("3 of 3");
+    expect(statusWords()).not.toContain("1 ASK");
+    expect(statusWords()).not.toMatch(/\b0 /);
     expect(document.body.textContent).not.toMatch(/personas?/i);
   });
 
@@ -280,19 +296,21 @@ describe("PHILO-14 C4 the Conductor window", () => {
     });
 
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Build the parent result" });
+    await findRow("Build the parent result");
     const helperRow = document.querySelector("[data-object-id='launch:l-helper']") as HTMLElement;
     expect(helperRow).toBeTruthy();
     expect(helperRow.closest("[data-testid='conductor-helpers']")).toBeTruthy();
     expect(within(helperRow).getByRole("button", { name: "Answer" })).toBeTruthy();
   });
 
-  it("Open on a live agent opens its lane; a plain session its window; a ready agent's Get Info is in the foot", async () => {
+  it("Open (the selected row's verb, in the status bar) on a live agent opens its lane; a plain session its window; Get Info is in the foot", async () => {
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Shard the reconciliation job" });
-    fireEvent.click(within(rowOf("Shard the reconciliation job")).getByRole("button", { name: "Open" }));
+    await findRow("Shard the reconciliation job");
+    fireEvent.click(icon("Shard the reconciliation job"));
+    fireEvent.click(within(document.querySelector(".cw-footer") as HTMLElement).getByTestId("conductor-open"));
     expect(shell.lanes).toEqual([["l-recon"]]);
-    fireEvent.click(within(rowOf("scratch")).getByRole("button", { name: "Open" }));
+    // A double press opens the row too.
+    fireEvent.doubleClick(icon("scratch"));
     expect(shell.sessions).toEqual([["claude:solo"]]);
     fireEvent.click(icon("Shard the reconciliation job"));
     fireEvent.click(screen.getByRole("button", { name: "Get Info" }));
@@ -315,6 +333,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(within(foot).getByRole("button", { name: "Back" })).toBeTruthy();
     fireEvent.click(icon("Shard the reconciliation job"));
     expect(within(foot).queryByRole("button", { name: "Answer" })).toBeNull();
+    expect(within(foot).getByTestId("conductor-open")).toBeTruthy();
     expect(screen.getByTestId("conductor-stop")).toBeTruthy();
     // A stale launch shows its receipt and opens its lane; no Stop.
     fireEvent.click(icon("Write the cutover checklist"));
@@ -401,12 +420,19 @@ describe("PHILO-14 C4 the Conductor window", () => {
     render(<ConductorWindow />);
     // Betterment AG8: "On this Mac" lists only what is missing: Claude Code
     // is not connected; Codex (not installed) is not his agent here.
-    await screen.findByRole("button", { name: "Claude Code" });
-    expect(screen.queryByRole("button", { name: "Codex" })).toBeNull();
-    expect(pillOf("Claude Code")).toBe("Not connected");
+    const claude = await waitFor(() => {
+      const row = document.querySelector("[data-object-id='agent:claude']");
+      if (!row) throw new Error("no Claude Code row yet");
+      return row as HTMLElement;
+    });
+    expect(document.querySelector("[data-object-id='agent:codex']")).toBeNull();
+    expect(claude.getAttribute("data-group")).toBe("mac");
+    expect(within(claude).getByTestId("conductor-pill").textContent).toBe("Not connected");
+    // Its fix is the selected row's verb, at the status bar's right.
+    fireEvent.click(claude.querySelector(".object-list-open")!);
     detectReply = () => DETECT;
     await act(async () => {
-      fireEvent.click(within(rowOf("Claude Code")).getByRole("button", { name: "Connect Claude Code" }));
+      fireEvent.click(screen.getByRole("button", { name: "Connect Claude Code" }));
     });
     expect(apiFetch).toHaveBeenCalledWith("/api/onboarding/agents/use", { method: "POST", json: { agent: "claude" } });
     await waitFor(() => expect(screen.queryByRole("button", { name: "Connect Claude Code" })).toBeNull());
@@ -424,12 +450,16 @@ describe("PHILO-14 C4 the Conductor window", () => {
     // No coder asks: the first fix is the window's one primary.
     sessionsReply = () => ({ sessions: [], flights: [], history: [], launches: { live: 0, cap: 3 } });
     render(<ConductorWindow />);
-    // Nothing selected: one verb per agent (it was hidden until a selection).
-    const claude = await screen.findByRole("button", { name: "Connect Claude Code" });
-    expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
-    // Astra r1 (#1084): one primary per face; the next Install hooks is secondary.
-    expect(claude.className).toContain("btn--primary");
+    // Window grammar: each agent without hooks is a row; its Connect is the
+    // selected row's verb (secondary: Start an agent is the one primary).
+    const row = (id: string) => document.querySelector(`[data-object-id='${id}']`) as HTMLElement;
+    await waitFor(() => expect(row("agent:claude")).toBeTruthy());
+    expect(row("agent:codex")).toBeTruthy();
+    expect(document.querySelectorAll(".conductor-window .btn--primary")).toHaveLength(1);
+    fireEvent.click(row("agent:codex").querySelector(".object-list-open")!);
     expect(screen.getByRole("button", { name: "Connect Codex" }).className).toContain("btn--secondary");
+    fireEvent.click(row("agent:claude").querySelector(".object-list-open")!);
+    const claude = screen.getByRole("button", { name: "Connect Claude Code" });
     detectReply = () => ({ ...both, agents: [{ ...both.agents[0], hooks: "installed" }, both.agents[1]] });
     await act(async () => {
       fireEvent.click(claude);
@@ -438,6 +468,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     const done = await screen.findByTestId("conductor-install-done");
     expect(done.textContent).toMatch(/^CONNECTED · CLAUDE CODE · \d\d:\d\d$/);
     await waitFor(() => expect(screen.queryByRole("button", { name: "Connect Claude Code" })).toBeNull());
+    fireEvent.click(row("agent:codex").querySelector(".object-list-open")!);
     expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
   });
 
@@ -463,18 +494,21 @@ describe("PHILO-14 C4 the Conductor window", () => {
     const head = await screen.findByTestId("conductor-head");
     await waitFor(() => expect(head.textContent).toContain("2 ready"));
     expect(head.textContent).not.toMatch(/harness/i);
-    // Nothing selected, Codex lacks hooks: Connect with its one line.
-    expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
-    expect(screen.getByTestId("conductor-hooks-line").textContent).toBe(HOOKS_LINE);
+    // Codex lacks hooks: its row, and Connect as the selected row's verb.
+    // Window grammar: no prose chip in the window (the Get Info keeps it).
+    expect(screen.queryByTestId("conductor-hooks-line")).toBeNull();
+    expect(document.body.textContent).not.toContain(HOOKS_LINE);
     // Betterment AG8: "On this Mac" lists only what is missing: Codex.
-    expect(screen.queryByRole("button", { name: "Claude Code" })).toBeNull();
+    expect(document.querySelector("[data-object-id='agent:claude']")).toBeNull();
+    fireEvent.click(document.querySelector("[data-object-id='agent:codex'] .object-list-open")!);
+    expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
   });
 
   it("a failed sessions read is NOT READ with Retry, never an empty drawer", async () => {
     sessionsReply = () => new Error("hub down");
     render(<ConductorWindow />);
-    const notRead = await screen.findByText(/SESSIONS ·/);
-    expect(notRead.textContent).toContain("NOT READ");
+    const notRead = await screen.findByText(/^Sessions not read/);
+    expect(notRead.textContent).toBe("Sessions not read");
     expect(screen.queryByText("No agent found")).toBeNull();
     expect(screen.queryByText(/No sessions/i)).toBeNull();
     // No live agent is claimed gone.
@@ -491,7 +525,7 @@ describe("PHILO-14 C4 the Conductor window", () => {
     flights: [{ ...FLIGHT_RUNBOOK, state: "working" }, ...SESSIONS.flights.slice(1)] };
     sessionsReply = () => working;
     render(<ConductorWindow />);
-    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    await findRow("Write the rollback runbook");
     expect(pillOf("Write the rollback runbook")).toBe("Working");
     sessionsReply = () => SESSIONS;
     act(() => {
@@ -537,7 +571,8 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(rows[0].textContent).toContain(QUESTION.slice(0, 20));
     // No wait id in this read: Answer opens the agent's ask well (Betterment AG2 fallback).
     expect(within(rows[0]).getAllByRole("button").map((b) => b.textContent)).toEqual(["Write the rollback runbook", "Answer", "Open"]);
-    expect(document.querySelectorAll(".kit-disp")).toHaveLength(1);
+    // Window grammar: no headline inside the window.
+    expect(document.querySelectorAll(".conductor-window .kit-disp")).toHaveLength(0);
   });
 
   it("Answer on the plate opens the ask well in one press", async () => {
@@ -696,11 +731,14 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", raw: true }]]);
   });
 
-  it("On this Mac shows only when something is missing; stopped launches fold", async () => {
+  it("On this Mac shows only when something is missing; stopped launches are the list's last group", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Write the rollback runbook" });
-    expect(screen.queryByTestId("conductor-coders")).toBeNull();
-    expect(screen.getByText("Stopped today")).toBeTruthy();
+    await findRow("Write the cutover checklist");
+    expect(document.querySelector("[data-group='mac']")).toBeNull();
+    expect([...document.querySelectorAll("[data-group='ended']")].map((r) => r.getAttribute("data-object-id")))
+      .toEqual(["launch:l-old", "launch:l-done"]);
+    expect(statusWords()).toContain("2 stopped today");
   });
 });
 

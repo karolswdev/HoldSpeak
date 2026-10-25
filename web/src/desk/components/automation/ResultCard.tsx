@@ -62,10 +62,13 @@ export function ResultBody({
   result,
   onRunAgain,
   runAgainDisabled,
+  send = true,
 }: {
   result: AutomationResult;
   onRunAgain: () => void;
   runAgainDisabled?: boolean;
+  /** Window grammar: false when the window's toolbar carries Send…. */
+  send?: boolean;
 }) {
   const { copy, state: copyState } = useCopyReceipt();
   if (result.status === "failed") {
@@ -98,7 +101,7 @@ export function ResultBody({
             {copyState === "copied" ? "Copied" : copyState === "failed" ? "Copy failed" : "Copy"}
           </Button>
         ) : null}
-        {result.artifact_id ? (
+        {send && result.artifact_id ? (
           <SendWellsFold doc={artifactDoc(result.artifact_id, result.title, "automation result")} />
         ) : null}
       </div>
@@ -112,12 +115,15 @@ export function ResultCard({
   isNew,
   working,
   onRunAgain,
+  send = true,
 }: {
   result: AutomationResult | null;
   isNew: boolean;
   /** A run in progress: when it began and on which engine. */
   working: { startedAt: number; engine: string } | null;
   onRunAgain: () => void;
+  /** Window grammar: false when the window's toolbar carries Send…. */
+  send?: boolean;
 }) {
   const head = working ? (
     <RunLine phase="running" verb="Working…" model={working.engine} startedAt={working.startedAt} />
@@ -137,7 +143,7 @@ export function ResultCard({
       <header className="automation-card-head">{head}</header>
       {result ? (
         <div className="automation-card-body">
-          <ResultBody result={result} onRunAgain={onRunAgain} runAgainDisabled={Boolean(working)} />
+          <ResultBody result={result} onRunAgain={onRunAgain} runAgainDisabled={Boolean(working)} send={send} />
         </div>
       ) : null}
     </article>
