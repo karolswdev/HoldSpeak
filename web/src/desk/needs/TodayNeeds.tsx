@@ -2,11 +2,11 @@
  *
  *  The same rows as the Needs-you window, from the same read and in the same
  *  rank (`useNeedFaces`), with the same verbs (`NeedRow`): never a second
- *  list. Today shows the first rows only; `All` opens the Needs-you window.
+ *  list. Today shows the first rows only; its toolbar's Needs you opens the
+ *  Needs-you window.
  *  What a person owes him shows here only when it is late or due today. */
 import { useRef } from "react";
 import { Button } from "../../components/signal/Signal";
-import { openChairWindow } from "../chair/chairWindows";
 import { openSurfaceOr } from "../shell";
 import { refreshNeedsYou } from "../needsYou";
 import { NeedsList } from "../surface/objects";
@@ -71,14 +71,10 @@ export function TodayNeeds({ work, count, now, limit, primary, projects, loaded,
   const firstId = primary ? rows.find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null : null;
   return (
     <section className="today-needs" aria-label="Needs you" data-testid="today-needs">
-      <header className="today-needs-head">
-        <h3 className="today-plate-cap">
-          NEEDS YOU{count > 0 ? <> · <b data-testid="today-needs-count">{count}</b></> : null}
-        </h3>
-        <span className="today-head-sp" />
-        <Button dense variant="ghost" aria-label="All: open Needs you" data-testid="today-needs-all"
-          onClick={() => openChairWindow("chair:needs")}>All</Button>
-      </header>
+      {/* Window grammar: a sentence-case section caption on a hairline. The
+          count and the door to the whole list are Today's toolbar verb
+          (Needs you N), so this head says no number. */}
+      <h3 className="today-section-cap">Needs you</h3>
       {peopleUnread ? <PeopleReadFailed testId="today-people-read-failed" onRetry={() => void refreshNeedsYou(true)} /> : null}
       {rows.length > 0 ? (
         <div ref={listRef} onClick={onRowPress} className="today-needs-list" data-testid="needs-list">

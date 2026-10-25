@@ -110,8 +110,10 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
     expect(posts.some((p) => p.url.startsWith("/api/brief/generate"))).toBe(false);
     // This week: a count per day, folded.
     expect(screen.getByTestId("today-week-counts").textContent).toMatch(/^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d+/);
-    // No wings, no Generate, no Refresh, no second list of what waits.
-    for (const gone of ["Generate", "Refresh", "Acknowledge", "Follow-through", "Brief"]) {
+    // No wings, no Generate, no second list of what waits. (Window grammar
+    // 2026-10-24: Refresh is back as a quiet toolbar verb; it re-reads the
+    // calendar, which sends no desk change.)
+    for (const gone of ["Generate", "Acknowledge", "Follow-through", "Brief"]) {
       expect(screen.queryByRole("button", { name: gone })).toBeNull();
     }
     expect(screen.queryByTestId("today-decide")).toBeNull();

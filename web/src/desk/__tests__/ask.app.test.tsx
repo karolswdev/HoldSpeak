@@ -6,7 +6,7 @@
  * (web/src/test/wire/ask.busy.wire.json; HOLDSPEAK_WIRE_WRITE=1 rewrites it).
  * Here the frame is delivered through the runtime bus, as the hub broadcasts
  * it, and fetch answers with the recorded answer. */
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AskBar, AskPanel } from "../components/AskPanel";
 import { EMPTY_ITEMS } from "../api";
@@ -634,10 +634,10 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     expect(calls.find((call) => call.url.endsWith("/api/ask"))?.body?.source_snapshot).toEqual(sourceSnapshot);
   });
 
-  it("More ▸ Forget hides the ask with Undo; Undo brings it back and deletes nothing", async () => {
+  it("Forget hides the ask with Undo; Undo brings it back and deletes nothing", async () => {
     render(<AskPanel />);
     await askText("What do I owe Mira this week?", THREAD.first.output);
-    fireEvent.click(screen.getByText("More"));
+    // Window grammar: Forget is a toolbar verb (Undo keeps it safe).
     fireEvent.click(screen.getByRole("button", { name: "Forget" }));
     expect(screen.getByText("Forgotten: What do I owe Mira this week?")).toBeInTheDocument();
     expect(screen.queryAllByTestId("ask-turn")).toHaveLength(0);
@@ -650,7 +650,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
   it("a Forget still deletes the thread when the window closes before Undo", async () => {
     const view = render(<AskPanel />);
     await askText("What do I owe Mira this week?", THREAD.first.output);
-    fireEvent.click(screen.getByText("More"));
+    // Window grammar: Forget is a toolbar verb (Undo keeps it safe).
     fireEvent.click(screen.getByRole("button", { name: "Forget" }));
     view.unmount();
     expect(calls.some((c) => c.method === "DELETE" && c.url.endsWith(`/api/threads/${TID}`))).toBe(true);
@@ -781,12 +781,14 @@ describe("saved Ask thread reads keep the latest selection authoritative", () =>
 });
 
 describe("Betterment Q4: Stop while a question runs", () => {
-  it("Stop replaces Ask, tells the hub, and leaves the question marked stopped with Ask again", async () => {
+  it("Stop in the status bar tells the hub, and leaves the question marked stopped with Ask again", async () => {
     await askMira();
     const prompt = screen.getByRole("textbox", { name: "Ask about your work" });
     fireEvent.change(prompt, { target: { value: "Keep this while the first answer stops" } });
-    expect(screen.queryByRole("button", { name: "Ask" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Stop" }));
+    // Window grammar: Stop is the status bar's verb while a turn runs; Ask waits.
+    expect(screen.getByRole("button", { name: "Ask" })).toBeDisabled();
+    expect(screen.getByTestId("ask-status")).toHaveTextContent("Asking…");
+    fireEvent.click(within(screen.getByTestId("ask-status")).getByRole("button", { name: "Stop" }));
     expect(calls.some((c) => c.method === "POST" && c.url === `/api/ask/${BUSY.busy.invocation_id}/cancel`)).toBe(true);
     const line = await screen.findByTestId("run-line");
     expect(line.dataset.state).toBe("failure");

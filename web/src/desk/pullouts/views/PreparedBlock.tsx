@@ -146,7 +146,7 @@ export function PreparedBlock({ read, events }: { read: PreparedRead | null; eve
   return (
     <section className="today-prepared" data-testid="today-prepared" aria-label="Prepared">
       <header className="today-prepared-bar">
-        <span className="today-prepared-label">PREPARED</span>
+        <span className="today-prepared-label">Prepared</span>
         <span className="today-prepared-by" data-testid="today-prepared-by">
           {[time, prepared.engine].filter(Boolean).join(" · ")}
         </span>
