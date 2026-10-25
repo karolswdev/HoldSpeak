@@ -380,8 +380,8 @@
 /* The search well in the toolbar: one field, 30 px, 140-240 px wide; the
    trailing group yields before the band wraps. */
 .kit-toolbar-trailing {
-  flex: 1 1 auto;
-  flex-wrap: wrap;
+  flex: 0 1 auto;
+  flex-wrap: nowrap;
   row-gap: 4px;
   justify-content: flex-end;
 }
@@ -412,6 +412,7 @@
 .kit-toolbar-trailing > .gadget-string {
   flex: 0 1 240px;
   min-width: 140px;
+  max-width: 100%;
 }
 /* A filter in the toolbar is a quiet toggle in sentence case, never a
    mono caps chip; on, it wears the selection blue. */
@@ -444,6 +445,7 @@
      above): the search well takes the whole width. */
   .kit-toolbar-trailing {
     flex: 1 1 100%;
+    flex-wrap: wrap;
     margin-left: 0;
   }
   .kit-toolbar-trailing > :has(> .gadget-string),
