@@ -71,7 +71,7 @@ import type {
   RoomHealthPerson,
   NudgeLocal,
 } from "./model";
-import { lifecycleLabel, formatDays, needsYouWhyWords } from "./model";
+import { lifecycleLabel, formatDays, needsYouWhyWords, whyFaceWords } from "./model";
 import { StringGadget, CycleGadget, FoldGadget } from "../../desk/surface/gadgets";
 import { receiptFace, receiptLabel, refusalWord } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
@@ -803,13 +803,13 @@ function NeedsYouSection({
                         className="surface-token room-why-token"
                         data-testid="bottleneck-why"
                       >
-                        {whyText}
+                        {whyFaceWords(whyText)}
                       </span>
                     }
                     trailing={
                       <span className="room-bottleneck-verbs">
                         {cooldown ? (
-                          <span className="surface-token room-nudge-cooldown" data-testid="nudge-cooldown">{cooldown}</span>
+                          <span className="surface-token room-nudge-cooldown" data-testid="nudge-cooldown">{whyFaceWords(cooldown)}</span>
                         ) : hasNudgeStep ? (
                           <Button dense variant="ghost" onClick={() => setOpenNudge(isNudgeOpen ? null : relId)} data-testid="nudge-verb">
                             Nudge
@@ -848,7 +848,7 @@ function NeedsYouSection({
                 key={`${item.source}-${item.title}-${i}`}
                 data-testid="needs-you-row"
                 lead={<RowSprite source={item.source} kind={item.kind} />}
-                primary={<span className="surface-primary">{item.title}</span>}
+                primary={<span className="surface-primary" title={item.title}>{item.title}</span>}
                 wrap
                 cells={
                   <span className="room-why-cells">
@@ -858,7 +858,7 @@ function NeedsYouSection({
                       data-tone={severityTone(item.severity)}
                       data-testid="needs-you-why"
                     >
-                      <WhyWords words={needsYouWhyWords(item)} alert={item.source === "item" && item.kind === "milestone"} />
+                      <WhyWords words={whyFaceWords(needsYouWhyWords(item))} alert={(item.source === "item" && item.kind === "milestone") || severityTone(item.severity) === "danger"} />
                     </span>
                     <FlightChip flight={flight} />
                   </span>

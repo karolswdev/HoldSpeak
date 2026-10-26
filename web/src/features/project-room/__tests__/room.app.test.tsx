@@ -405,7 +405,7 @@ describe("HS-173-04: Nudge unfolds the card; Send leaves a SENT receipt", () => 
     expect(receipt.textContent).toContain("#612");
     expect(text).not.toContain("GITHUB.COM");
     expect(text).not.toContain("UNDO");
-    expect(screen.getByTestId("nudge-cooldown").textContent).toBe("NUDGED JUST NOW");
+    expect(screen.getByTestId("nudge-cooldown").textContent).toBe("Nudged just now");
     expect(calls.find((c) => c.key === "POST /api/nudges/step1/send")?.json).toEqual({ text: STEP.comment_text });
     expect(rawButtons(screen.getByTestId("room-body"))).toEqual([]);
   });

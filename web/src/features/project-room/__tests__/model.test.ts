@@ -11,6 +11,7 @@ import {
   decodeProject,
   decodeRoomSnapshot,
   lifecycleLabel,
+  whyFaceWords,
 } from "../model";
 import type { RoomSnapshot } from "../model";
 
@@ -489,5 +490,22 @@ describe("Room item change identity", () => {
     const row = decodeChangeRow({ id: "change-older", change_kind: "project.updated", summary_json: "{}" });
     expect(row.itemId).toBeNull();
     expect(row.itemType).toBeNull();
+  });
+});
+
+/* The window grammar (2026-10-25): the face says the hub's caps why in
+ * sentence case; the hub's words themselves are not changed. */
+describe("whyFaceWords", () => {
+  it("says the hub's caps in sentence case, with days and PRs as words", () => {
+    expect(whyFaceWords("OVERDUE · 48 DAYS")).toBe("Overdue · 48 days");
+    expect(whyFaceWords("OVERDUE · 1 DAYS")).toBe("Overdue · 1 day");
+    expect(whyFaceWords("WAITING ON YOUR REVIEW · 3 D")).toBe("Waiting on your review · 3 days");
+    expect(whyFaceWords("REVIEW BOTTLENECK · 4 D MEDIAN · 2 PRS WAITING")).toBe("Review bottleneck · 4 days median · 2 PRs waiting");
+    expect(whyFaceWords("NUDGED JUST NOW")).toBe("Nudged just now");
+  });
+  it("keeps a name's capital and a segment the hub already wrote in his words", () => {
+    expect(whyFaceWords("WAITING ON PRIYA")).toBe("Waiting on Priya");
+    expect(whyFaceWords("PROPOSED · Standup")).toBe("Proposed · Standup");
+    expect(whyFaceWords("Milestone · 7 days late")).toBe("Milestone · 7 days late");
   });
 });
