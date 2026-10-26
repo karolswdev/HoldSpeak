@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-25 (the window grammar #1457–#1477; dock rhythm, decisions reader)
+**Last updated:** 2026-10-25 (the window grammar #1457–#1479; egress labels ruling)
 
 ## Current phase
 
@@ -36,7 +36,14 @@ a cluster… of a window"); #1476 the dock: one 84 px tile width (owner: "random
 inconsistencies between those icons"), the live tag in the word's row, lamps on
 the icon; #1477 every decision record opens in the Decisions window reader
 (Room This-week click, Room drawer, Prepare citation, WHY with one record) and
-Today ▸ Decisions opens the Decisions window instead of swapping Today's content. CATCH 2026-10-25: his hub had served main 33fdbce59
+Today ▸ Decisions opens the Decisions window instead of swapping Today's content. #1479 the Needs-you dense row: the name gives, the meta keeps its
+width (a Jira row's Project wrapped one letter per line, 350 px tall); the
+Open link row's host chip removed. OWNER RULING 2026-10-25 evening: the
+ever-present egress labels (LAN, 192.168.1.36, the Jira host chip) "feel like
+an ancient relic now" → no host / address / scope chip on rows, toolbars or
+status bars of working windows; egress disclosed at the choice or the act
+(Settings ▸ Engines, Send preview, Setup). Lane running: ../wt-ng-egress
+(inventory doc EGRESS-LABELS-2026-10-25.md, UX-CANON amendment, sweep check). CATCH 2026-10-25: his hub had served main 33fdbce59
 since 2026-10-24 (no watcher alive); redeployed from
 /Users/karol/dev/tools/wt-desk-main-20261025 (see memory reference_owner_hub_redeploy).
 Open fix-forward: a meeting decision with no record yet and WHY with several
