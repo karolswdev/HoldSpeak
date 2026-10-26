@@ -24,7 +24,7 @@ vi.mock("../components/MicButton", () => ({ MicButton: () => <span data-testid="
 
 import { CompanionCore } from "../../pages/cores/CompanionCore";
 import { WingSlotContext } from "../surface/wings";
-import { LaneWindow, __resetDraftEgress } from "../lane/LaneWindow";
+import { LaneWindow } from "../lane/LaneWindow";
 import { __resetLane, useLane } from "../lane/laneStore";
 import { branchFace } from "../lane/laneWire";
 import { questionChoices } from "../agents/choices";
@@ -65,7 +65,6 @@ beforeEach(() => {
   api.request.mockImplementation(async () => ({ ok: true, status: 200, json: async () => ({}) }) as unknown as Response);
   localStorage.clear();
   __resetLane();
-  __resetDraftEgress();
   useAgentFlights.setState({ flights: [], sessions: [], loaded: true });
 });
 afterEach(() => {

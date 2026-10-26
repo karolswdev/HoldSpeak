@@ -17,7 +17,7 @@ import { openSurfaceOr } from "../shell";
 import { allObjects } from "../world";
 import { qualifiedRef } from "../api";
 import {
-  EgressChip, FoldGadget, GadgetGroup, GadgetRow, Material,
+  FoldGadget, GadgetGroup, GadgetRow, Material,
   StateChip, SurfaceFooter, SurfaceSection, SurfaceState, SurfaceWell,
   type ChipState,
 } from "../surface";
@@ -259,6 +259,8 @@ export function DeskToolInspector() {
   const route = integration?.id === "github" ? egressFor("github.com")
     : /^[a-z][a-z0-9+.-]*:\/\//i.test(destination) ? egressFor(bareHost(destination))
       : { label: destination, scope: "remote" as const };
+  // Owner ruling 2026-10-25 (UX-CANON A.9): the route is named at the verb, in its hover title.
+  const routeTitle = integration?.enabled && route.label ? `Goes to ${route.label}` : undefined;
   const sourceText = boundSource
     ? allObjects(items).find((object) => qualifiedRef(object.kind, object.id) === boundSource.ref)?.ref
     : null;
@@ -411,7 +413,6 @@ export function DeskToolInspector() {
       </div>
       <div className="desk-surface-foot">
         <SurfaceFooter
-          egress={integration?.enabled ? <EgressChip label={route.label} scope={route.scope} /> : undefined}
           receipt={outcome ? <StateChip state={outcome.state} label={outcome.label} /> : undefined}
           verbs={<>
             {project ? <Button dense variant="primary" onClick={() => openSurfaceOr("dictate", "/dictation", `project:${project.id}`)}>Open Project context</Button> : null}
@@ -420,9 +421,9 @@ export function DeskToolInspector() {
               <Button dense variant="ghost" onClick={() => openSurfaceOr("configure-runs-on", "/profiles")}>Engines</Button>
             </> : null}
             {integration ? <>
-              {!proposal && integrationAction ? <Button dense variant="primary" loading={busy} onClick={() => void propose()}>{integrationAction.label}</Button> : null}
+              {!proposal && integrationAction ? <Button dense variant="primary" loading={busy} title={routeTitle} onClick={() => void propose()}>{integrationAction.label}</Button> : null}
               {proposal?.status === "proposed" && !refused ? <>
-                <Button dense variant="primary" loading={busy} onClick={() => void decide("approved")}>{proposal.commitment?.approve || `Approve ${integration.operation}`}</Button>
+                <Button dense variant="primary" loading={busy} title={routeTitle} onClick={() => void decide("approved")}>{proposal.commitment?.approve || `Approve ${integration.operation}`}</Button>
                 <Button dense variant="ghost" disabled={busy} onClick={() => void decide("rejected")}>Reject proposed action</Button>
               </> : null}
               {proposal?.status === "failed" ? <Button dense variant="primary" loading={busy} onClick={() => void decide("approved")}>Retry {proposal.commitment?.approve || integration.operation}</Button> : null}

@@ -42,8 +42,15 @@ Fences: `tests/unit/test_egress_labels_canon.py` (source) and the desk sweep's
 | Automations | `automation/ResultCard.tsx` | `CLOUD` / `LAN` chip | the model by name |
 | Voice | `desk/voice/ProposalStrip.tsx` | scope chip after the act | none |
 | Components | `design-reference/WindowReference.tsx` reader, `ConversationReference.tsx` | `studio.local · LAN`, `LAN` lamp, `Private network` | none (the reference follows the rule) |
+| Workbench | `desk/components/WorkbenchWindow.tsx` item result | `⌂ LOCAL` / `LAN` / `CLOUD` chip | none |
+| Workbench | `desk/components/workbench/WorkbenchRunsWing.tsx` run rows, run facts | `· LAN ·` in the row, `egress` fact | the model by name |
+| Workbench | `desk/components/WorkbenchAutomations.tsx` automation head | `GITHUB` / `JIRA` egress badge | the source by name, quiet (`GitHub`, `Jira`) |
+| Delivery | `desk/components/DeliveryBoard.tsx` toolbar | `Hub` chip | none |
+| Delivery | `desk/components/DeliveryDossierWindow.tsx` asset rows | `↗ Download` drawn as an egress chip | a quiet `Download ↗` cell |
+| Rhythm | `pages/cores/CadenceCore.tsx` runs-on facts, status bar | `REMOTE · <host>` chip; empty footer chip | none; the Where it runs picker (kept) |
+| Tool inspector | `desk/components/DeskToolInspector.tsx` status bar | route host chip | the propose and approve verbs' hover title `Goes to <host>` |
 
-Count: 26 working-window site groups removed (the rows above), in 34 web source files (tests excluded). 12 kept groups below.
+Count: 26 working-window site groups removed in #1481 (34 web source files, tests excluded), and 7 more in the left-overs slice (7 files). 12 kept groups below.
 
 ## Kept (the choice or the act)
 
@@ -64,9 +71,10 @@ Count: 26 working-window site groups removed (the rows above), in 34 web source 
 
 ## Left for a later slice
 
-- `desk/needs/NeedsDrawer.tsx` link row: the orchestrator's pending PR removes it.
-- Windows outside the ruling's list still wear chips: Workbench (`WorkbenchWindow.tsx`,
-  `workbench/WorkbenchRunsWing.tsx`), Delivery (`DeliveryBoard.tsx`,
-  `DeliveryDossierWindow.tsx`), Rhythm (`CadenceCore.tsx`), the tool inspector
-  (`DeskToolInspector.tsx`). Agents' status bar says `N on this Mac` (the coders
-  installed here, not egress).
+- Agents' status bar says `N on this Mac` (the coders installed here, not egress).
+- The dead code #1481 kept for tests is gone: `useDraftEgress` (parked at
+  `desk/lane/_parked/useDraftEgress.tsx`, its test at `desk/lane/__tests__/_parked/`),
+  `isLanHost` (parked with its test at `pages/cores/dictation/__tests__/_parked/`), and the
+  `saidOnFace` pass-through (removed; no caller set it).
+- Not in the ruling's list and still wearing an egress badge: `desk/components/PrReceiptsSection.tsx`
+  (`GitHub` badge in the head and on a proposal).

@@ -127,7 +127,6 @@ WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/desk/components/AskPanel.tsx": ("inference-route", "143-07"),
     "web/src/desk/components/DeliveryBoard.tsx": ("unrelated", "143-01"),
     "web/src/desk/components/Pullout.tsx": ("display-transport", "143-11"),
-    "web/src/desk/lane/LaneWindow.tsx": ("display-transport", "143-11"),
     "web/src/desk/deliveryFactory.ts": ("unrelated", "143-01"),
     "web/src/desk/detail-types.ts": ("display-transport", "143-11"),
     "web/src/desk/infoContract.ts": ("display-transport", "143-10"),
@@ -210,6 +209,9 @@ def _web_routing_surfaces() -> set[str]:
     found: set[str] = set()
     for path in sorted(WEB.rglob("*")):
         if path.suffix not in {".ts", ".tsx"} or ".test." in path.name or "/__tests__/" in path.as_posix():
+            continue
+        # A parked tree is neither compiled nor collected (web/tsconfig.json).
+        if "/_parked/" in path.as_posix():
             continue
         source = path.read_text(encoding="utf-8")
         if (

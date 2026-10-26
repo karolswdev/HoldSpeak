@@ -95,8 +95,6 @@ export function RunAttempts({
 }: {
   receipt: RunReceipt | null | undefined;
   testId?: string;
-  /** Kept for callers; a succeeded attempt is never said now. */
-  saidOnFace?: string | null;
 }) {
   if (!receipt || receipt.attempts.length === 0) return null;
   const failed = receipt.attempts.filter((attempt) => attempt.outcome !== "succeeded");

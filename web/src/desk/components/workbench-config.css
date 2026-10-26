@@ -224,6 +224,7 @@
   text-align: left;
 }
 .desk-next .wb-automation-head:hover { background: var(--accent-tint); }
+.desk-next .wb-automation-source { color: var(--text-muted); font-size: 12px; }
 .desk-next .wb-automation-title {
   flex: 1;
   overflow: hidden;

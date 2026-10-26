@@ -1,5 +1,4 @@
 import type { WorkbenchRun } from "../../detail-types";
-import { boundaryEgressLamp } from "../../inferenceEgress";
 import { humanTime } from "../../surface/format";
 import { GadgetGroup } from "../../surface/gadgets";
 import {
@@ -51,7 +50,6 @@ export function WorkbenchRunsWing({
           />
         ) : null}
         {runs.map((run) => {
-          const runLamp = boundaryEgressLamp(run.egress_boundary);
           const totalTok = run.total_tokens;
           const completedAt = run.completed_at;
           const statusChip =
@@ -70,8 +68,6 @@ export function WorkbenchRunsWing({
                 <>
                   {run.items_completed}/{run.items_attempted} done
                   {run.items_failed ? ` · ${run.items_failed} failed` : ""}
-                  {" · "}
-                  {runLamp.label}
                   {run.model ? ` · ${run.model}` : ""}
                 </>
               }
@@ -85,7 +81,6 @@ export function WorkbenchRunsWing({
             >
               <div className="wb-run-detail">
                 <dl className="surface-facts">
-                  <div><dt>egress</dt><dd>{runLamp.label}</dd></div>
                   <div><dt>model</dt><dd>{run.model || "—"}</dd></div>
                   <div><dt>tokens</dt><dd>{totalTok.toLocaleString()}</dd></div>
                   {completedAt ? (

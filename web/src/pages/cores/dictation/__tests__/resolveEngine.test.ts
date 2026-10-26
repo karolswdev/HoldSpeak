@@ -5,7 +5,7 @@
 //   (b) base_url host match via targets when profileId fails
 //   (c) last-resort classification from profile base_url host
 import { describe, expect, it } from "vitest";
-import { resolveEngine, findEngine, isLanHost, type TargetProfile } from "../SpeakFace";
+import { resolveEngine, findEngine, type TargetProfile } from "../SpeakFace";
 import type { Engine } from "../../../../features/concierge/api";
 import type { AssignmentEditorProjection } from "../../assignmentExperience";
 
@@ -82,33 +82,6 @@ const LEGACY_TARGET: TargetProfile = {
   model: "default",
   engine: "llama.cpp",
 };
-
-/* ── isLanHost ── */
-
-describe("isLanHost", () => {
-  it("classifies RFC1918 addresses as LAN", () => {
-    expect(isLanHost("192.168.1.43")).toBe(true);
-    expect(isLanHost("10.0.0.5")).toBe(true);
-    expect(isLanHost("172.16.0.1")).toBe(true);
-    expect(isLanHost("172.31.255.255")).toBe(true);
-  });
-  it("classifies loopback as LAN", () => {
-    expect(isLanHost("127.0.0.1")).toBe(true);
-    expect(isLanHost("localhost")).toBe(true);
-  });
-  it("classifies CGNAT/Tailscale as LAN", () => {
-    expect(isLanHost("100.64.0.1")).toBe(true);
-    expect(isLanHost("100.127.255.255")).toBe(true);
-  });
-  it("classifies named local suffixes as LAN", () => {
-    expect(isLanHost("mydevice.local")).toBe(true);
-    expect(isLanHost("node.ts.net")).toBe(true);
-  });
-  it("classifies public IPs as non-LAN", () => {
-    expect(isLanHost("8.8.8.8")).toBe(false);
-    expect(isLanHost("api.openai.com")).toBe(false);
-  });
-});
 
 /* ── resolveEngine ── */
 

@@ -18,7 +18,7 @@ vi.mock("../../components/MicButton", () => ({
   ),
 }));
 
-import { LaneWindow, __resetDraftEgress } from "../LaneWindow";
+import { LaneWindow } from "../LaneWindow";
 import { __resetLane, useLane } from "../laneStore";
 import { laneEntries, laneStations, eventEntries, type LaneWire } from "../laneWire";
 import { SessionPullout } from "../../components/SessionPullout";
@@ -141,7 +141,6 @@ beforeEach(() => {
   localStorage.clear();
   __resetLane();
   useGate.setState({ held: [], loaded: false, error: null });
-  __resetDraftEgress();
   useAgentFlights.setState({ flights: [], sessions: [], loaded: true });
 });
 afterEach(() => {

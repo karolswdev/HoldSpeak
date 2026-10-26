@@ -42,7 +42,6 @@ import {
 import { usePrimitiveDetail } from "../hooks/usePrimitiveDetail";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useWriteReceipt, type WriteAttempt } from "../hooks/useWriteReceipt";
-import { boundaryEgressLamp } from "../inferenceEgress";
 import { ApiError, apiRequest } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import {
@@ -104,7 +103,6 @@ import { onReturnToTask, rememberTaskFocus } from "../returnToTask";
 import {
   CheckGadget,
   CycleGadget,
-  EgressChip,
   FoldGadget,
   GadgetGroup,
   GadgetRow,
@@ -597,9 +595,6 @@ function WorkbenchItemCard({
   useEffect(() => {
     if (restored) cardRef.current?.scrollIntoView?.({ block: "nearest" });
   }, [restored]);
-  const egressLamp = item.result_egress?.boundary
-    ? boundaryEgressLamp(item.result_egress.boundary)
-    : null;
   const hasResult = !!(item.result && (item.status === "done" || item.status === "failed"));
   const failureReason =
     item.status === "failed" ? item.error_reason || item.error : null;
@@ -777,7 +772,7 @@ function WorkbenchItemCard({
             </div>
           ) : null}
 
-          {/* result + egress */}
+          {/* result */}
           {hasResult ? (
             <div className="wb-card-result">
               <GadgetGroup
@@ -794,22 +789,12 @@ function WorkbenchItemCard({
                   ) : null}
                 </>}
               >
-              <div className="wb-card-result-head">
-                {hasMintedArtifact ? <StateChip state="warning" label="Review needed" /> : null}
-                {mintFailed ? <StateChip state="failure" label="Mint failed" /> : null}
-                {egressLamp ? (
-                  <EgressChip
-                    label={`⌂ ${egressLamp.label}`}
-                    scope={
-                      egressLamp.tone === "ok"
-                        ? "local"
-                        : egressLamp.tone === "fail"
-                          ? "cloud"
-                          : "mixed"
-                    }
-                  />
-                ) : null}
-              </div>
+              {hasMintedArtifact || mintFailed ? (
+                <div className="wb-card-result-head">
+                  {hasMintedArtifact ? <StateChip state="warning" label="Review needed" /> : null}
+                  {mintFailed ? <StateChip state="failure" label="Mint failed" /> : null}
+                </div>
+              ) : null}
               {failureReason ? (
                 <div className="wb-card-error-reason" role="alert">
                   <span>ERROR</span>

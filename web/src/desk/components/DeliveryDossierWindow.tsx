@@ -12,7 +12,7 @@ import { windowName } from "../windowName";
 import { firstWords } from "../thoughtTitle";
 import { useEffect } from "react";
 import { Button } from "../../components/signal/Signal";
-import { EgressChip, FoldGadget } from "../surface/gadgets";
+import { FoldGadget } from "../surface/gadgets";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import {
   assetHref,
@@ -184,11 +184,9 @@ export function DeliveryDossierWindow() {
                           <span className="surface-ledger-cell">
                             {`${m.bytes} B`}
                           </span>
-                          <EgressChip
-                            label="↗ Download"
-                            title="Opens this captured asset in a new tab."
-                            scope="local"
-                          />
+                          <span className="surface-ledger-cell" title="Opens this captured asset in a new tab.">
+                            Download ↗
+                          </span>
                         </a>
                       </li>
                     ))}
