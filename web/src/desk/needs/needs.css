@@ -337,8 +337,25 @@
    wrapper steps aside), so a narrow surface folds the state and the fact
    under the name and the row stays one 44 px line pair beside its verb. */
 :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] {
-  grid-template-columns: 22px minmax(0, max-content) minmax(0, 1fr) auto auto;
+  /* Owner 2026-10-25 (Today, a Jira row with a long name, an Overdue state,
+     the host chip and Open link): the meta column got no width and the
+     Project's name wrapped one letter per line, 350 px tall. The NAME is
+     the track that gives (it cuts with an ellipsis); the meta keeps its
+     own width, on one line, and cuts only past 320 px. */
+  grid-template-columns: 22px minmax(0, 1fr) minmax(0, max-content) auto auto;
   grid-template-areas: "glyph name meta state verbs";
+}
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > .needs-row-what > .needs-row-factline {
+  flex-wrap: nowrap;
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] .needs-row-project,
+:is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] .needs-row-project .surface-project-button {
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > img { grid-area: glyph; }
 :is(.needs-drawer, .today-needs) .needs-row[data-dot="true"] > .needs-row-what { display: contents; }

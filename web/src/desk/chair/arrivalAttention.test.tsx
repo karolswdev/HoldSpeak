@@ -126,8 +126,10 @@ describe("Arrival attention (HS-200-15)", () => {
     expect(lampOf(rows[2])).toBe("Due today");
     for (const r of rows.slice(1)) {
       expect(r.querySelectorAll("[data-testid=needs-row-state]")).toHaveLength(1);
-      expect(within(r).getByRole("button", { name: /^Open: / })).toBeTruthy();
-      expect(r.textContent).toContain("X");
+      // Owner 2026-10-25: no host chip on the row; the host rides the verb's title.
+      const open = within(r).getByRole("button", { name: /^Open: / });
+      expect(open.getAttribute("title")).toBe("x");
+      expect(r.textContent).not.toContain("X");
     }
     // One filled primary per face: the top member's verb.
     expect(within(rows[1]).getByRole("button", { name: /^Open: / }).className).toContain("btn--primary");
