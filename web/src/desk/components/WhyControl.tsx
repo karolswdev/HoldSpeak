@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { countToken } from "../surface";
-import { openIntelligence } from "../intelligenceNavigation";
+import { openDecisionRecords } from "../openObject";
 
 type ReceiptLink = { id: string; lifecycle?: string };
 
@@ -37,10 +37,9 @@ export function WhyControl({ workType, workRef }: { workType: string; workRef: s
       aria-label={`${whyLabel} governing decision receipt${(receiptIds?.length ?? 0) === 1 ? "" : "s"}`}
       onClick={(event) => {
         event.stopPropagation();
-        // One governing record: its reader in the Decisions window.
-        const only = receiptIds?.length === 1 ? receiptIds[0] : undefined;
-        if (only) openIntelligence({ view: "receipts", receiptId: only });
-        else openIntelligence({ view: "receipts", receiptWorkRef: `${workType}:${workRef}`, whyOnly: true });
+        // One governing record: its reader in the Decisions window. Several:
+        // that window lists only them, the first in the reader.
+        openDecisionRecords(receiptIds ?? []);
       }}
     >
       {whyLabel}

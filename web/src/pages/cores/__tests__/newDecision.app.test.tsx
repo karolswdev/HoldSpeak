@@ -15,6 +15,11 @@ import CREATED from "../../../test/wire/decision-records.from-desk.wire.json";
 import RECORD from "../../../test/wire/decision-record.new.wire.json";
 import LIST from "../../../test/wire/decision-records.list-new.wire.json";
 import MEETING_DECISION from "../../../test/wire/decision.honest-faces.wire.json";
+import NO_RECORD from "../../../test/wire/decision.no-record.wire.json";
+import NO_RECORD_ROW from "../../../test/wire/decisions.no-record.wire.json";
+import WORK_TWO from "../../../test/wire/decision-records.work-two.wire.json";
+import GOVERNING_A from "../../../test/wire/decision-record.governing-a.wire.json";
+import GOVERNING_B from "../../../test/wire/decision-record.governing-b.wire.json";
 
 const hub = vi.hoisted(() => ({
   posts: [] as Array<{ url: string; body: Record<string, unknown> }>,
@@ -47,6 +52,15 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       if (url === `/api/decisions/${MEETING_DECISION.wire.decision.id}`) return Promise.resolve(structuredClone(MEETING_DECISION.wire));
       if (url === `/api/decision-records/source/meeting/${MEETING_DECISION.wire.decision.id}`) return Promise.resolve([structuredClone(RECORD.wire)]);
       if (url === "/api/decision-records/work/item/w-1") return Promise.resolve([structuredClone(RECORD.wire)]);
+      // A meeting's decision with no record yet (its read, no records made
+      // from it, its one ledger row) and the two records that govern w-2
+      // (tests/integration/test_face_wire_fences.py::test_decisions_window_scope_reads).
+      if (url === `/api/decisions/${NO_RECORD.wire.decision.id}`) return Promise.resolve(structuredClone(NO_RECORD.wire));
+      if (url === `/api/decision-records/source/meeting/${NO_RECORD.wire.decision.id}`) return Promise.resolve([]);
+      if (url.startsWith("/api/decisions?") && url.includes(`decision_id=${NO_RECORD.wire.decision.id}`)) return Promise.resolve(structuredClone(NO_RECORD_ROW.wire));
+      if (url === "/api/decision-records/work/item/w-2") return Promise.resolve(structuredClone(WORK_TWO.wire));
+      if (url === `/api/decision-records/${GOVERNING_A.wire.id}`) return Promise.resolve(structuredClone(GOVERNING_A.wire));
+      if (url === `/api/decision-records/${GOVERNING_B.wire.id}`) return Promise.resolve(structuredClone(GOVERNING_B.wire));
       return Promise.resolve({});
     }),
   };
@@ -266,4 +280,60 @@ describe("every decision door opens the Decisions window", () => {
     expect(await screen.findByTestId("decision-reader")).toBeTruthy();
     expect(todayOpen()).toBe(false);
   });
+
+  it("a meeting's decision with no record yet opens in the Decisions window reader, from its meeting", async () => {
+    const id = NO_RECORD.wire.decision.id;
+    render(<SurfaceWindows />);
+    act(() => openRef(`decision:${id}`));
+    await waitFor(() => expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`decision:${id}`));
+    const reader = await screen.findByTestId("decision-reader");
+    expect(reader.getAttribute("data-from")).toBe("meeting");
+    expect(await within(reader).findByRole("heading", { name: "Freeze the old ledger on Nov 5" })).toBeTruthy();
+    expect(reader.textContent).toContain("Dual-write is stable.");
+    expect(reader.textContent).toContain("Ledger cutover sync");
+    expect(within(reader).getByTestId("decision-reader-meeting").textContent).toContain("Open meeting");
+    expect(screen.getByTestId("decision-reader-state").textContent).toMatch(/^Decided/);
+    expect(screen.getByTestId("decision-reader-status").textContent).toContain("From a meeting");
+    // No Send (no record to send yet), no mono-capital captions.
+    expect(within(reader).queryByTestId("decision-reader-send")).toBeNull();
+    expect(reader.textContent).not.toMatch(/DECISION|Decision context|Results/);
+    expect(todayOpen()).toBe(false);
+    // ‹ Decisions: the list; the window forgets the decision it opened on.
+    fireEvent.click(within(reader).getByTestId("decision-reader-back"));
+    expect(await screen.findByTestId("decisions-row")).toBeTruthy();
+    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope ?? null).toBeNull();
+  });
+
+  it("WHY with several governing records lists only those, the first in the reader", async () => {
+    const [first, second] = WORK_TWO.wire;
+    render(<><SurfaceWindows /><WhyControl workType="item" workRef="w-2" /></>);
+    fireEvent.click(await screen.findByRole("button", { name: /governing decision receipts/ }));
+    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`records:${first.id},${second.id}`);
+    const reader = await screen.findByTestId("decision-reader");
+    expect(await within(reader).findByRole("heading", { name: first.decision_text })).toBeTruthy();
+    expect(todayOpen()).toBe(false);
+    // ‹ Decisions: only the two governing records, the one read selected.
+    fireEvent.click(within(reader).getByTestId("decision-reader-back"));
+    await waitFor(() => expect(screen.getAllByTestId("decisions-row")).toHaveLength(2));
+    const rows = screen.getAllByTestId("decisions-row");
+    expect(rows.map((row) => row.textContent).join(" ")).toContain(second.decision_text);
+    expect(rows.find((row) => row.textContent?.includes(first.decision_text))?.getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByTestId("decisions-status").textContent).toContain("2 decisions");
+    // All decisions: the whole list again.
+    fireEvent.click(screen.getByTestId("decisions-all"));
+    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope ?? null).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId("decisions-all")).toBeNull());
+  });
+
+  it("Review decisions opens the Decisions window with Current only on", async () => {
+    render(<SurfaceWindows />);
+    const review = VERBS.find((verb) => verb.id === "desk.intelligence-review-decisions")!;
+    await act(async () => { review.run({ selectedRef: null }); });
+    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe("current");
+    await screen.findByTestId("decisions-window");
+    expect(screen.getByRole("checkbox", { name: "Current only" })).toBeChecked();
+    expect(await screen.findByTestId("decisions-row")).toBeTruthy();
+    expect(todayOpen()).toBe(false);
+  });
 });
+

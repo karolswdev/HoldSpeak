@@ -1,9 +1,9 @@
 import { useDesk } from "./store";
 
 /** Betterment daily D4: Today is one page. `brief` is Today with Since
- *  yesterday open; `receipts` opens the Decisions window (2026-10-25; only a
- *  meeting decision with no record, or one work item's receipts, still show
- *  the Decisions page in Today's window);
+ *  yesterday open; `receipts` opens the Decisions window (2026-10-25; only an ask by
+ *  `decisionId` or `receiptWorkRef` still shows the Decisions page in Today's
+ *  window; no door of the desk asks that way now);
  *  `follow-through` (parked) opens the Needs-you window, where its rows and
  *  verbs live. */
 export type IntelligenceView = "today" | "brief" | "follow-through" | "receipts";
@@ -43,13 +43,14 @@ export function openIntelligence(navigation: IntelligenceNavigation): void {
   }
   // The owner, 2026-10-25: Decisions is its own window, never a page that
   // takes Today's place. A Decisions door opens that window (the record in
-  // its reader when one is named). Two asks still use the Decisions page in
-  // Today: a meeting decision with no record yet (`decisionId`) and the
-  // receipts that govern one piece of work (`receiptWorkRef`), because the
-  // window reads neither.
+  // its reader when one is named). A meeting decision with no record and
+  // WHY's governing records open that window too (openObject). An ask by
+  // `decisionId` or `receiptWorkRef` keeps the Decisions page in Today.
   if (navigation.view === "receipts" && !navigation.decisionId && !navigation.receiptWorkRef) {
     const record = (navigation.receiptId ?? "").trim();
-    useDesk.getState().openSurfaceWindow("open-decisions", record ? `record:${record}` : undefined);
+    // Review decisions asks for the standing ones: the list with Current only on.
+    const scope = record ? `record:${record}` : navigation.whyOnly ? "current" : undefined;
+    useDesk.getState().openSurfaceWindow("open-decisions", scope);
     return;
   }
   if (navigation.view === "brief") {

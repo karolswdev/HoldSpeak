@@ -439,3 +439,60 @@ def test_new_decision_reads(hub: Any, tmp_path: Path) -> None:
     _fence("decision-record.new", read, tmp_path, hub)
     _fence("decision-records.list-new",
            _ok(hub.client.get("/api/decision-records?limit=100&offset=0")), tmp_path, hub)
+
+
+def test_decisions_window_scope_reads(hub: Any, tmp_path: Path) -> None:
+    """newDecision.app.test.tsx (the owner, 2026-10-25): the two doors that
+    still opened the Decisions page in Today. (a) A meeting's decision with no
+    record yet: its read, the empty records-from-it answer, and the one-row
+    ledger read the Decisions window makes by its id. (b) WHY with two
+    governing records: the records for that work item, and each record."""
+    from datetime import datetime, timedelta
+
+    from holdspeak.db.decisions import backfill_decisions
+    from holdspeak.meeting_session import MeetingState, TranscriptSegment
+    from holdspeak.principals import Principal, PrincipalKind
+    from holdspeak.services.decision_record_service import DecisionRecordService
+
+    db = hub.db
+    start = (datetime.now() - timedelta(hours=2)).replace(microsecond=0)
+    db.meetings.save_meeting(MeetingState(
+        id="m-sync", started_at=start, ended_at=start + timedelta(minutes=30), title="Ledger cutover sync",
+        segments=[TranscriptSegment(text="We freeze the old ledger.", speaker="Me", start_time=1.0, end_time=3.0)]))
+    db.plugins.record_artifact(
+        artifact_id="m-sync-decisions", meeting_id="m-sync", artifact_type="decisions",
+        title="Meeting decisions", plugin_id="scope-reads",
+        structured_json={"decisions": [{"decision": "Freeze the old ledger on Nov 5",
+                                        "rationale": "Dual-write is stable."}]},
+    )
+    with db._connection() as conn:
+        backfill_decisions(conn)
+    lifecycle = db.decisions.list(meeting_id="m-sync")[0]
+    one = _ok(hub.client.get(f"/api/decisions/{lifecycle.id}"))
+    assert one["decision"]["source_meeting_id"] == "m-sync", one
+    _fence("decision.no-record", one, tmp_path, hub)
+    none = _ok(hub.client.get(f"/api/decision-records/source/meeting/{lifecycle.id}"))
+    assert none == [], none
+    row = _ok(hub.client.get(f"/api/decisions?scope=all&decision_id={lifecycle.id}&limit=1"))
+    assert [r["text"] for r in row["decisions"]] == ["Freeze the old ledger on Nov 5"], row
+    assert not row["decisions"][0].get("record_id"), row
+    _fence("decisions.no-record", row, tmp_path, hub)
+
+    owner = Principal(PrincipalKind.OWNER, "karol")
+    service = DecisionRecordService(db)
+    ids = []
+    for title, why in (("Keep the ledger on SQLite", "One writer, one file."),
+                       ("Ship the cutover on Nov 5", "Dual-write is stable.")):
+        created = _ok(hub.client.post("/api/decision-records/from-desk", json={
+            "status": "accepted", "context_markdown": "", "decision_markdown": "",
+            "consequences_markdown": "", "alternatives": [], "decision_text": "",
+            "title": title, "why": why,
+        }))
+        ids.append(created["record"]["id"])
+        service.link_work(owner, created["record"]["id"], "item", "w-2")
+    governing = _ok(hub.client.get("/api/decision-records/work/item/w-2"))
+    assert sorted(r["id"] for r in governing) == sorted(ids), governing
+    assert all(r["lifecycle"] == "active" for r in governing), governing
+    _fence("decision-records.work-two", governing, tmp_path, hub)
+    for name, record_id in zip(("decision-record.governing-a", "decision-record.governing-b"), ids):
+        _fence(name, _ok(hub.client.get(f"/api/decision-records/{record_id}")), tmp_path, hub)
