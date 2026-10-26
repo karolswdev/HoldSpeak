@@ -1357,3 +1357,429 @@
   letter-spacing: 0;
   font: 500 12px / 18px var(--font-sans);
 }
+
+/* ── Lane speak (2026-10-25): the foot on the window grammar ──
+   ONE status bar: a small level meter · the phase (dot + word) · the fact ·
+   clean-up (a setting: a word, the engine by name, a dot + word), then at
+   the right the one verb (Choose engine, only when needed) and the quiet
+   hold-key hint. One line at 1440; no strip, no plate, no mono caps. */
+.desk-next .speak-footer.kit-statusbar {
+  flex-wrap: nowrap;
+}
+.desk-next .speak-footer .kit-statusbar-items {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+/* Each fact keeps its whole word (and its trailing dot); only the long
+   fact (`Talk sets up speech first`) yields, with an ellipsis. */
+.desk-next .speak-footer .kit-statusbar-item {
+  flex: none;
+}
+.desk-next .speak-footer .kit-statusbar-item:has(> .speak-fact) {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.desk-next .kit-statusbar .speak-fact {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .speak-footer .kit-statusbar-verbs {
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+.desk-next .kit-statusbar .speak-level .gadget-ledmeter {
+  width: auto;
+}
+.desk-next .kit-statusbar .speak-level .gadget-ledmeter-track {
+  display: inline-flex;
+  gap: 2px;
+  height: 10px;
+}
+.desk-next .kit-statusbar .speak-level .gadget-ledmeter-seg {
+  width: 4px;
+  height: 10px;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--wb-muted) 28%, var(--wb-paper));
+}
+.desk-next .kit-statusbar .speak-level .gadget-ledmeter-seg[data-lit] {
+  background: var(--lamp-ok);
+}
+.desk-next .kit-statusbar .speak-level .gadget-ledmeter-seg[data-lit][data-hot] {
+  background: var(--lamp-warn);
+}
+/* Clean-up: a quiet fact, never a row of its own. */
+.desk-next .kit-statusbar .speak-engine {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+.desk-next .kit-statusbar .speak-engine-caption,
+.desk-next .kit-statusbar .speak-engine-checking {
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
+}
+.desk-next .kit-statusbar .speak-engine-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 500 12px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .kit-statusbar .speak-engine-name[data-muted] {
+  color: inherit;
+}
+/* The state chip reads as a dot and a word inside the bar. */
+.desk-next .kit-statusbar .speak-engine .surface-state-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font: 500 12px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
+}
+.desk-next .kit-statusbar .speak-engine .surface-state-chip-icon {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  font-size: 0;
+  color: transparent;
+  background: color-mix(in srgb, var(--wb-muted) 55%, var(--wb-paper));
+}
+.desk-next .kit-statusbar .speak-engine .surface-state-chip[data-state="success"] .surface-state-chip-icon { background: var(--lamp-ok); }
+.desk-next .kit-statusbar .speak-engine .surface-state-chip[data-state="success"] { color: var(--wb-ok-ink); }
+.desk-next .kit-statusbar .speak-engine .surface-state-chip[data-state="warning"] .surface-state-chip-icon { background: var(--lamp-warn); }
+.desk-next .kit-statusbar .speak-engine .surface-state-chip[data-state="warning"] { color: var(--wb-warn-ink); }
+/* The hold key: a quiet hint at the bar's right end. */
+.desk-next .kit-statusbar .speak-hold-hint {
+  white-space: nowrap;
+  color: var(--wb-muted);
+}
+.desk-next .speak-footer .kit-statusbar-verbs .btn {
+  height: 20px;
+  min-height: 20px;
+  padding-inline: 8px;
+  font-size: 12px;
+}
+/* The toolbar's window verbs (Review, Export) at its right end. */
+.desk-next .speak-face .kit-toolbar .kit-toolbar-trailing {
+  flex: none;
+  gap: 2px;
+}
+.desk-next .speak-face .kit-toolbar .kit-toolbar-trailing .btn:not(.btn--primary) {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-ink);
+  font-weight: 500;
+}
+.desk-next .speak-face .kit-toolbar .kit-toolbar-trailing .btn:not(.btn--primary):hover:not(:disabled) {
+  border-color: var(--wb-rule-soft);
+  background: var(--wb-hover);
+}
+/* The Configure door hands over to Settings in one quiet verb. */
+.desk-next .speak-door-settings {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px 0;
+}
+@container surface (max-width: 520px) {
+  .desk-next .speak-footer.kit-statusbar {
+    flex-wrap: wrap;
+  }
+  .desk-next .speak-footer .kit-statusbar-items {
+    flex-wrap: wrap;
+  }
+  .desk-next .speak-footer .kit-statusbar-verbs .btn {
+    height: auto;
+    min-height: 44px;
+  }
+  .desk-next .speak-face .kit-toolbar .kit-toolbar-trailing {
+    flex: 0 1 auto;
+    margin-left: auto;
+  }
+}
+
+/* ── Lane speak (2026-10-25): the four wings are list windows ──
+   Journal, Blocks, Learned and Commands run edge to edge under the title
+   bar (the host sets data-interior="list"): no well, no card, 30-32 px
+   rows, the name sans 13, the facts quiet sans 12 in sentence case (no
+   chip plates, no mono caps), a state as a dot and a word, and an empty
+   state that is one line. The list scrolls inside the window. */
+.desk-next :is(.speak-journal, .speak-learned, .speak-blocks, .commands-board) {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+}
+.desk-next :is(.speak-journal, .speak-learned, .speak-blocks) > .surface-ledger,
+.desk-next .commands-board > .surface-rows {
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--wb-paper);
+}
+/* The rows: 30 px, sans, the name leads, the facts quiet after it. */
+.desk-next :is(.speak-journal, .speak-learned, .speak-blocks) .surface-ledger-line {
+  min-height: 30px;
+  padding: 4px 12px;
+  gap: 0 12px;
+  font: 400 12px / 1.3 var(--font-sans);
+}
+.desk-next :is(.speak-journal, .speak-learned, .speak-blocks) .surface-ledger-primary {
+  font: 500 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next :is(.speak-journal, .speak-learned, .speak-blocks) .surface-ledger-cell,
+.desk-next :is(.speak-journal, .speak-learned) .surface-token {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font: 400 12px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-muted);
+}
+.desk-next :is(.speak-journal, .speak-learned) .surface-ledger-time {
+  font: 400 12px / 1.3 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-muted);
+}
+/* A state word keeps its colour, with a dot (Applied: ok green). */
+.desk-next :is(.speak-journal, .speak-learned) .surface-token[data-tone="ok"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--wb-ok-ink);
+  font-weight: 500;
+}
+.desk-next :is(.speak-journal, .speak-learned) .surface-token[data-tone="ok"]::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--lamp-ok);
+}
+/* Journal: the transcript takes the room; the facts yield and ellipsize. */
+.desk-next .speak-journal .surface-ledger-line {
+  display: flex;
+}
+.desk-next .speak-journal .surface-ledger-time {
+  flex: 0 0 40px;
+}
+.desk-next .speak-journal .surface-ledger-primary {
+  flex: 1 1 40%;
+  min-width: 96px;
+}
+.desk-next .speak-journal .journal-cells {
+  flex: none;
+  min-width: 0;
+  gap: 12px;
+}
+.desk-next .speak-journal .journal-landed,
+.desk-next .speak-journal .journal-landed:not(:empty) {
+  display: inline-block;
+  min-width: 0;
+  max-width: 24ch;
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  font: 400 12px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  color: var(--wb-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The Journal's Search verb leads its band (no verb floating at the
+   right of an empty band). */
+.desk-next .speak-journal .surface-ledger-controls {
+  justify-content: flex-start;
+}
+.desk-next .speak-journal .journal-find {
+  margin-right: auto;
+}
+.desk-next .speak-journal .journal-ms {
+  min-width: 5ch;
+}
+.desk-next .speak-journal .journal-mark {
+  min-width: 56px;
+}
+/* The day band: a caption, sans 12/600, sentence case, a hairline. */
+.desk-next :is(.speak-journal) .surface-stream-day-label {
+  padding: 8px 12px 4px;
+  font: 600 12px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-text);
+}
+/* The Journal's head (Search, then the field and the source filters) is
+   the wing's toolbar band. */
+.desk-next .speak-journal .surface-ledger-head {
+  display: flex;
+  align-items: center;
+  min-height: var(--wb-toolbar-h, 36px);
+  padding: 3px 8px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: var(--wb-paper);
+}
+.desk-next .speak-journal .surface-ledger-controls {
+  flex: 1 1 auto;
+}
+.desk-next .speak-journal .surface-filter-token {
+  letter-spacing: 0;
+  text-transform: none;
+  font: 500 12px / 1 var(--font-sans);
+}
+/* No dotted timeline rail beside the rows. */
+.desk-next .speak-journal .surface-ledger-line::before,
+.desk-next .speak-journal .surface-stream-entries::before {
+  display: none;
+}
+/* Learned: the kind is a quiet word in the lead slot, not a boxed tag. */
+.desk-next .speak-learned .learned-kind {
+  min-width: 40px;
+}
+.desk-next .speak-learned .learned-value {
+  font: 500 13px / 1.3 var(--font-sans);
+  color: var(--wb-ok-ink);
+}
+.desk-next .speak-learned .learned-arrow {
+  color: var(--wb-muted);
+}
+/* Blocks: name · what he says · how it injects; the open row edits. */
+.desk-next .speak-blocks .surface-ledger-line {
+  display: flex;
+}
+.desk-next .speak-blocks .surface-ledger-primary {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.desk-next .speak-blocks .blocks-cells {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--wb-muted);
+  font: 400 12px / 1.3 var(--font-sans);
+}
+.desk-next .speak-blocks .blocks-says {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .speak-blocks .blocks-mode {
+  margin-left: auto;
+  white-space: nowrap;
+}
+.desk-next .speak-blocks .blocks-open,
+.desk-next .speak-blocks .blocks-draft {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px 12px;
+}
+.desk-next .speak-blocks .blocks-draft {
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+/* Commands: one 30 px line per command, the keyword then what it does. */
+.desk-next .commands-board .surface-row-line,
+.desk-next .commands-board :is(.surface-row-main, .surface-row-open) {
+  min-height: 0;
+  padding-block: 0;
+}
+.desk-next .commands-board .surface-row {
+  min-height: 30px;
+  padding: 4px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.desk-next .commands-board .surface-row-text {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+.desk-next .commands-board .surface-row-text > strong {
+  flex: none;
+  font: 500 13px / 1.3 var(--font-sans);
+  color: var(--wb-text);
+}
+.desk-next .commands-board .surface-row-text > small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 400 12px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+}
+/* An empty wing is one quiet line, not a page. */
+.desk-next :is(.speak-journal, .speak-learned, .speak-blocks, .commands-board) .surface-state[data-kind="empty"] {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  font: 400 13px / 1.3 var(--font-sans);
+  color: var(--wb-muted);
+  text-align: left;
+}
+.desk-next :is(.speak-journal, .speak-learned, .speak-blocks, .commands-board) .surface-state[data-kind="empty"] .surface-state-glyph {
+  display: none;
+}
+@container surface (max-width: 520px) {
+  .desk-next :is(.speak-journal, .speak-learned, .speak-blocks) .surface-ledger-line,
+  .desk-next .commands-board .surface-row {
+    min-height: 44px;
+  }
+  .desk-next .speak-journal .surface-ledger-primary {
+    flex: 1 1 0;
+  }
+  .desk-next .speak-journal .journal-cells {
+    margin-left: 52px;
+  }
+  .desk-next .speak-journal .journal-landed {
+    max-width: none;
+  }
+}
+/* The command row's verbs keep the 30 px line (44 px at 393, above). */
+.desk-next .commands-board .surface-row-verbs .btn {
+  min-height: 24px;
+  height: 24px;
+}
+@container surface (max-width: 520px) {
+  .desk-next .commands-board .surface-row-verbs .btn {
+    min-height: 44px;
+    height: auto;
+  }
+}

@@ -28,6 +28,7 @@ import {
 } from "../../desk/surface/Surface";
 import { renderHeroSlot } from "./core-layout";
 import { DotWord, ToolGlyph, Toolbar } from "../../desk/surface/kit";
+import { useWindowInterior } from "../../desk/surface/interior";
 
 const blank = (): Macro => ({
   keyword: "",
@@ -74,6 +75,8 @@ const sameMacro = (left: Macro, right: Macro) =>
   left.action.payload === right.action.payload;
 
 export function CommandsCore({ hero }: CoreProps) {
+  // Hosted in the Speak window (no hero) the board runs edge to edge.
+  useWindowInterior(hero === undefined ? "list" : undefined);
   const resource = useResource<SettingsResponse>("/api/settings", {});
   const macros = resource.data.dictation?.macros ?? {};
   const items = (Array.isArray(macros.items) ? macros.items : []) as Macro[];
@@ -249,17 +252,12 @@ export function CommandsCore({ hero }: CoreProps) {
         error={resource.error}
         onRetry={() => void resource.reload()}
       >
-        <SurfaceSection label="Command board">
+        {/* Lane speak (2026-10-25): the board is a dense list under the
+            toolbar, edge to edge, no caption band; empty, it is one line
+            (Add command is the toolbar's verb). */}
+        <SurfaceSection className="commands-board">
           {!items.length && !editing ? (
-            <>
-              <SurfaceState
-                empty
-                emptyLabel="No voice commands"
-                emptyGlyph="○"
-                actionLabel="Add command"
-                onAction={() => setEditing({ session: {}, index: -1, macro: blank() })}
-              />
-            </>
+            <SurfaceState empty emptyLabel="No voice commands" />
           ) : (
             <SurfaceRows>
               {items.map((macro, index) => (
@@ -433,7 +431,9 @@ export function CommandsCore({ hero }: CoreProps) {
           </SurfaceSection>
         ) : null}
       </SurfaceState>
-      <SurfaceFooter />
+      {/* Hosted in the Speak window, the host's status bar is the foot: an
+          empty second foot is a dead band (window grammar). */}
+      {hero === undefined ? null : <SurfaceFooter />}
     </>
   );
 }

@@ -5,7 +5,7 @@
 // working window (owner ruling 2026-10-25): Settings ▸ Engines says where
 // the clean-up engine runs.
 import "../../desk/components/speak.css";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { apiFetch } from "../../lib/api";
 import { download } from "./history";
 import type { CoreProps, DictationJournalResponse } from "./core-types";
@@ -20,6 +20,8 @@ import { useBuilderTools } from "../../desk/builderTools";
 import {
   SpeakFace,
   SpeakStatusContext,
+  SpeakVerbsContext,
+  type SpeakStatusReport,
   Journal,
   Learned,
   Blocks,
@@ -46,7 +48,7 @@ const WINGS = [
   { id: "journal", label: "Journal" },
   { id: "blocks", label: "Blocks" },
   { id: "learned", label: "Learned" },
-  { id: "commands", label: "Voice commands" },
+  { id: "commands", label: "Commands" },
 ];
 
 /* HS-100-07 — the one door: everything that is configuration
@@ -58,6 +60,13 @@ function Configure() {
   const raw = useBuilderTools((state) => state.on);
   return (
     <div className="surface-door">
+      {/* Lane speak (2026-10-25): Settings left the status bar for the
+          gear; the door hands over to Settings ▸ Speak. */}
+      <div className="speak-door-settings">
+        <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "speak")}>
+          Open Settings
+        </Button>
+      </div>
       <Readiness />
       {raw ? (
         <FoldGadget title="More diagnostics">
@@ -73,10 +82,20 @@ function Configure() {
 }
 
 export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
-  const wings = useCoreWings(WINGS, "speak", "Configure dictation");
+  // Lane speak (2026-10-25): a window opened on a wing (`Voice commands`
+  // in Go opens this window scoped `commands`) lands on that wing; it is
+  // not an "About commands" subject.
+  const wingScope = scope && WINGS.some((wing) => wing.id === scope) ? scope : null;
+  const wings = useCoreWings(WINGS, wingScope ?? "speak", "Configure dictation");
+  const { setView, setDoorOpen } = wings;
+  useEffect(() => {
+    if (!wingScope) return;
+    setDoorOpen(false);
+    setView(wingScope);
+  }, [wingScope, setView, setDoorOpen]);
   // Window grammar (2026-10-24): one status bar for the window; the Speak
-  // face reports its phase, fact and hold key into it.
-  const [speakItems, setSpeakItems] = useState<StatusBarItem[] | null>(null);
+  // face reports its phase, fact, clean-up and hold key into it.
+  const [speakReport, setSpeakReport] = useState<SpeakStatusReport | null>(null);
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const announce = useCallback((text: string, tone: ReceiptTone = "ok") => {
     setReceipt(text ? { text, tone } : null);
@@ -152,63 +171,61 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
   // The journal count in warm words (null at zero per UX-CANON A8).
   const journalWords = countWords(journalToday, "today", "today");
   const statusItems: Array<StatusBarItem | null> = [
-    ...(active === "speak" && speakItems ? speakItems : []),
+    ...(active === "speak" && speakReport ? speakReport.items : []),
     receiptSlot ? { key: "receipt", lamp: receipt?.tone === "warn" ? "warn" : undefined, text: receiptSlot }
-      : journalWords ? { key: "journal", text: <span className="surface-footer-readiness">{journalWords}</span> } : null,
+      : journalWords ? { key: "journal", text: <span className="speak-today">{journalWords}</span> } : null,
   ];
+
+  /* HS-176-05 (design D2(b).9) — `Review` reviews: it crosses to the
+     Journal wing, where the utterances are. It opened the Configure DOOR
+     until now, which is the gear's job and still is. The verb is kept, not
+     retired (a working verb is never dropped). Lane speak (2026-10-25): on
+     the Speak wing both verbs sit at the toolbar's right end; on the other
+     wings they stay on the status bar. */
+  const windowVerbs: ReactNode = (
+    <>
+      <Button
+        dense
+        variant="ghost"
+        onClick={() => {
+          wings.setDoorOpen(false);
+          wings.setView("journal");
+        }}
+      >
+        Review
+      </Button>
+      <Button dense variant="ghost" onClick={() => void exportJournal()}>
+        Export
+      </Button>
+    </>
+  );
+  const onSpeak = active === "speak";
 
   return (
     <>
       {renderHeroSlot(hero, null)}
-      {scope ? (
+      {scope && !wingScope ? (
         <p className="desk-scope-chip">
           <span aria-hidden="true">⌁</span> About {scopeLabel || scope}
         </p>
       ) : null}
       <ReceiptContext.Provider value={announce}>
-        <SpeakStatusContext.Provider value={setSpeakItems}>
-          {current}
+        <SpeakStatusContext.Provider value={setSpeakReport}>
+          <SpeakVerbsContext.Provider value={windowVerbs}>
+            {current}
+          </SpeakVerbsContext.Provider>
         </SpeakStatusContext.Provider>
       </ReceiptContext.Provider>
-      {/* HS-170-04 — the footer: receipt · Review (ghost) · Export (ghost).
-          No egress slot (owner ruling 2026-10-25). */}
+      {/* HS-170-04 — the footer: the window's ONE status bar. On the Speak
+          wing: the level, the phase, the fact, clean-up · the one verb and
+          the hold key at the right. On the other wings: the receipt or the
+          day's count · Review, Export. No egress slot (owner ruling
+          2026-10-25). */}
       <StatusBar
         className="speak-footer"
         data-testid="speak-footer"
         items={statusItems}
-        verbs={
-          <>
-            {/* HS-176-05 (design D2(b).9) — `Review` reviews: it crosses to
-                the Journal wing, where the utterances are. It opened the
-                Configure DOOR until now, which is the gear's job and still
-                is. The verb is kept, not retired (a working verb is never
-                dropped). */}
-            <Button
-              dense
-              variant="ghost"
-              onClick={() => {
-                wings.setDoorOpen(false);
-                wings.setView("journal");
-              }}
-            >
-              Review
-            </Button>
-            <Button
-              dense
-              variant="ghost"
-              onClick={() => void exportJournal()}
-            >
-              Export
-            </Button>
-            <Button
-              dense
-              variant="ghost"
-              onClick={() => openSurfaceOr("configure-settings", "/settings", "speak")}
-            >
-              Settings
-            </Button>
-          </>
-        }
+        verbs={onSpeak ? (speakReport?.trailing ?? null) : windowVerbs}
       />
     </>
   );

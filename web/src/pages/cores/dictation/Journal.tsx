@@ -65,6 +65,7 @@ import {
   SurfaceStreamDay,
 } from "../../../desk/surface/Surface";
 import { StringGadget } from "../../../desk/surface/gadgets";
+import { useWindowInterior } from "../../../desk/surface/interior";
 
 type Row = Record<string, unknown>;
 
@@ -74,18 +75,18 @@ export const JOURNAL_PAGE = 50;
 /** The four sources the recorder writes (`plugins/dictation/journal.py`),
  *  as the tokens above the stream. ALL is the empty wire value. */
 const SOURCE_FILTERS = [
-  { value: "", label: "ALL" },
-  { value: "dictation", label: "DICTATION" },
-  { value: "browser", label: "BROWSER" },
-  { value: "hotkey", label: "HOTKEY" },
+  { value: "", label: "All" },
+  { value: "dictation", label: "Dictation" },
+  { value: "browser", label: "Browser" },
+  { value: "hotkey", label: "Hotkey" },
 ];
 
 /** A human source badge — never the wire's `dry_run` (canon E.4). */
 const SOURCE_BADGES: Record<string, string> = {
-  dictation: "DICTATION",
-  dry_run: "DRY RUN",
-  browser: "BROWSER",
-  hotkey: "HOTKEY",
+  dictation: "Dictation",
+  dry_run: "Dry run",
+  browser: "Browser",
+  hotkey: "Hotkey",
 };
 
 export function journalUrl(source: string, before?: number): string {
@@ -95,10 +96,15 @@ export function journalUrl(source: string, before?: number): string {
   return `/api/dictation/journal?${params.toString()}`;
 }
 
+/** Window grammar: metadata in sentence case (`Claude code`), never caps. */
+function sentence(words: string): string {
+  return words ? words[0].toUpperCase() + words.slice(1) : words;
+}
+
 export function sourceBadge(value: unknown): string {
   const raw = String(value ?? "");
   if (!raw) return "";
-  return SOURCE_BADGES[raw] ?? deSnake(raw).toUpperCase();
+  return SOURCE_BADGES[raw] ?? sentence(deSnake(raw));
 }
 
 /** `LANDED IN <label>` — the target profile's LABEL, never its id. The map
@@ -106,26 +112,24 @@ export function sourceBadge(value: unknown): string {
  *  not got still reads as words, never `claude_code`. */
 export function landedLabel(row: Row, labels: Record<string, string>): string {
   const target = presentValue(row.target_profile);
-  if (target) return (labels[target] ?? deSnake(target)).toUpperCase();
-  if (String(row.source ?? "") === "dry_run") return "DRY RUN";
+  if (target) return labels[target] ?? sentence(deSnake(target));
+  if (String(row.source ?? "") === "dry_run") return "Dry run";
   return "";
 }
 
-/** TODAY / YESTERDAY / the date — the board's day bands. */
+/** Today / Yesterday / the date — the board's day bands, sentence case. */
 export function journalDayLabel(date: Date | null, now?: Date): string {
-  if (!date) return "UNDATED";
+  if (!date) return "Undated";
   const today = now ?? new Date();
-  if (isSameStreamDay(date, today)) return "TODAY";
+  if (isSameStreamDay(date, today)) return "Today";
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-  if (isSameStreamDay(date, yesterday)) return "YESTERDAY";
-  return date
-    .toLocaleDateString(undefined, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-    })
-    .toUpperCase();
+  if (isSameStreamDay(date, yesterday)) return "Yesterday";
+  return date.toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 /** The live frame's rule, IDENTICAL to the list's rule: the wire filters
@@ -205,7 +209,7 @@ function JournalRow({
       cells={
         <span className="journal-cells" data-searching={needle ? "true" : undefined}>
           <span className="surface-ledger-cell journal-landed">
-            {landed ? `LANDED IN ${landed}` : ""}
+            {landed ? `Landed in ${landed}` : ""}
           </span>
           {badge ? (
             <span className="surface-token journal-badge" data-chip>
@@ -213,18 +217,18 @@ function JournalRow({
             </span>
           ) : null}
           <span className="surface-ledger-cell journal-ms">
-            {took > 0 ? `${Math.round(took)} MS` : ""}
+            {took > 0 ? `${Math.round(took)} ms` : ""}
           </span>
           {/* ONE slot, held open when the row carries neither token. */}
           <span className="journal-mark">
             {applied ? (
               <span className="surface-token" data-chip data-tone="ok">
-                APPLIED
+                Applied
               </span>
             ) : null}
             {taught ? (
               <span className="surface-token" data-chip>
-                TAUGHT
+                Taught
               </span>
             ) : null}
             {/* The search's mark shares the SAME fixed slot, which widens for
@@ -234,7 +238,7 @@ function JournalRow({
                 hit lives in `final_text` alone — the row's visible text is
                 the raw transcript, which then lacks the needle (C15). */}
             {matchedFinalOnly(row, needle) ? (
-              <span className="surface-token">IN FINAL</span>
+              <span className="surface-token">In final</span>
             ) : null}
           </span>
         </span>
@@ -314,6 +318,8 @@ function JournalRow({
 }
 
 export function Journal() {
+  // Window grammar: the Journal is a list window, edge to edge.
+  useWindowInterior("list");
   const { subscribe } = useRuntimeBus();
   const [source, setSource] = useState("");
   const [query, setQuery] = useState("");

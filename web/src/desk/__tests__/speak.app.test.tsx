@@ -154,19 +154,19 @@ describe("Speak Journal: the stream board", () => {
     expect(band?.textContent?.trim().toUpperCase()).toBe("TODAY");
 
     const body = container.textContent || "";
-    expect(body).toContain("LANDED IN CLAUDE CODE");
-    expect(body).toContain("LANDED IN EDITOR");
+    expect(body).toContain("Landed in Claude Code");
+    expect(body).toContain("Landed in Editor");
     expect(body).not.toContain("claude_code");
     expect(body).not.toContain("dry_run");
-    expect(body).toContain("38 MS");
-    expect(body).not.toContain(" ms");
+    expect(body).toContain("38 ms");
+    expect(body).not.toContain(" MS");
 
     const badges = Array.from(container.querySelectorAll(".journal-badge")).map((n) => n.textContent?.trim());
-    expect([...badges].sort()).toEqual(["BROWSER", "DICTATION", "DICTATION", "DRY RUN", "HOTKEY"]);
+    expect([...badges].sort()).toEqual(["Browser", "Dictation", "Dictation", "Dry run", "Hotkey"]);
 
     expect(container.querySelectorAll(".journal-mark")).toHaveLength(5);
-    expect(Array.from(container.querySelectorAll(".journal-mark")).filter((m) => m.textContent?.includes("APPLIED"))).toHaveLength(1);
-    expect(Array.from(container.querySelectorAll(".journal-mark")).filter((m) => m.textContent?.includes("TAUGHT"))).toHaveLength(1);
+    expect(Array.from(container.querySelectorAll(".journal-mark")).filter((m) => m.textContent?.includes("Applied"))).toHaveLength(1);
+    expect(Array.from(container.querySelectorAll(".journal-mark")).filter((m) => m.textContent?.includes("Taught"))).toHaveLength(1);
     expect(body).not.toContain("SIMILAR");
     expect(body).not.toContain("LEARNED");
 
@@ -175,8 +175,8 @@ describe("Speak Journal: the stream board", () => {
 
     openFind();
     const tokens = Array.from(container.querySelectorAll(".surface-filter-token")).map((t) => t.textContent?.trim());
-    expect(tokens).toEqual(["ALL", "DICTATION", "BROWSER", "HOTKEY"]);
-    expect(token(container, "ALL")).toHaveAttribute("aria-pressed", "true");
+    expect(tokens).toEqual(["All", "Dictation", "Browser", "Hotkey"]);
+    expect(token(container, "All")).toHaveAttribute("aria-pressed", "true");
     expect(screen.getAllByRole("button", { name: "Clear" })).toHaveLength(1);
 
     const raw = Array.from(container.querySelectorAll("button")).filter(
@@ -199,15 +199,15 @@ describe("Speak Journal: the filtered board", () => {
     await screen.findByText("Cut the Q4 scope to the payments path");
 
     openFind();
-    fireEvent.click(token(container, "DICTATION"));
+    fireEvent.click(token(container, "Dictation"));
     await waitFor(() => expect(container.querySelectorAll(".surface-ledger-row")).toHaveLength(2));
     expect(mocks.apiFetch.mock.calls.map((c) => String(c[0]))).toContain("/api/dictation/journal?limit=50&source=dictation");
 
-    expect(token(container, "DICTATION")).toHaveAttribute("aria-pressed", "true");
-    expect(token(container, "DICTATION")).toHaveAttribute("data-filter-active");
-    expect(token(container, "ALL")).toHaveAttribute("aria-pressed", "false");
+    expect(token(container, "Dictation")).toHaveAttribute("aria-pressed", "true");
+    expect(token(container, "Dictation")).toHaveAttribute("data-filter-active");
+    expect(token(container, "All")).toHaveAttribute("aria-pressed", "false");
     const badges = Array.from(container.querySelectorAll(".journal-badge")).map((n) => n.textContent?.trim());
-    expect(badges).toEqual(["DICTATION", "DICTATION"]);
+    expect(badges).toEqual(["Dictation", "Dictation"]);
     expect(container.querySelectorAll(".surface-filter-token")).toHaveLength(4);
     expect(container.querySelector(".surface-ledger-head")?.textContent ?? "").not.toContain("/");
   });
@@ -317,7 +317,7 @@ async function land(text: string) {
 const footerText = () => document.querySelector(".speak-footer")?.textContent ?? "";
 
 describe("the Speak window at rest, over the hub's cold answers", () => {
-  it("the placeholder, an ENGINE state chip in a known state, no Details (behind RAW), and a footer of Review and Export with no placement", async () => {
+  it("the placeholder, an ENGINE state chip in a known state, no Details (behind RAW), and Review and Export in the toolbar, clean-up in the status bar, no placement", async () => {
     // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_idle_1440
     // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_details_folded
     // replaces: tests/e2e/test_hs170_speak_glass.py::test_speak_footer_this_device
@@ -338,8 +338,13 @@ describe("the Speak window at rest, over the hub's cold answers", () => {
     expect(container.querySelector(".surface-disclosure-trigger")).toBeNull();
     expect(container.querySelector(".surface-disclosure-body")).toBeNull();
 
-    await waitFor(() => expect(footerText()).toContain("Review"));
-    expect(footerText()).toContain("Export");
+    // Lane speak (2026-10-25): on the Speak wing Review and Export sit at
+    // the toolbar's right end; the status bar says the state, one line.
+    const toolbar = () => document.querySelector("[data-testid=speak-toolbar]")?.textContent ?? "";
+    await waitFor(() => expect(toolbar()).toContain("Review"));
+    expect(toolbar()).toContain("Export");
+    await waitFor(() => expect(footerText()).toContain("Clean-up"));
+    expect(footerText()).not.toContain("Review");
     expect(footerText()).not.toContain("THIS DEVICE");
     // Nothing was pressed: the cold reads were all the hub's own.
     expect(pressed).toBe(0);
@@ -454,20 +459,20 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
     await waitFor(() => expect(container.querySelectorAll(".speak-journal .surface-ledger-row").length).toBe(3));
     const rows = Array.from(container.querySelectorAll(".speak-journal .surface-ledger-row"));
     expect(rows[0].textContent).toContain(AGAIN);
-    expect(rows[0].querySelector(".journal-mark")?.textContent).toContain("APPLIED");
+    expect(rows[0].querySelector(".journal-mark")?.textContent).toContain("Applied");
     expect(rows[2].textContent).toContain(HEARD);
-    expect(rows[2].querySelector(".journal-mark")?.textContent).toContain("TAUGHT");
+    expect(rows[2].querySelector(".journal-mark")?.textContent).toContain("Taught");
 
     // ── 8. the Learned wing: the one rule the desk now knows ──
     await userEvent.click(screen.getByRole("tab", { name: "Learned" }));
     await waitFor(() => expect(container.querySelectorAll(".speak-learned .surface-ledger-row").length).toBe(1));
     const wing = container.querySelector(".speak-learned") as HTMLElement;
     const row = wing.querySelector(".surface-ledger-row") as HTMLElement;
-    expect(row.querySelector(".learned-kind")?.textContent?.trim()).toBe("TEXT");
+    expect(row.querySelector(".learned-kind")?.textContent?.trim()).toBe("Text");
     expect(row.querySelector(".surface-ledger-primary")?.textContent?.trim()).toBe("queue for");
     expect(row.querySelector(".learned-value")?.textContent?.trim()).toBe("Q4");
     expect(row.querySelector(".learned-cells")?.textContent).toContain("→");
-    expect(row.querySelector(".learned-applied")?.textContent?.trim()).toBe("1 APPLIED");
+    expect(row.querySelector(".learned-applied")?.textContent?.trim()).toBe("1 applied");
     const body = wing.textContent ?? "";
     for (const wire of ["claude_code", "dry_run", "snake", "similar", "SIMILAR", "LEARNED"]) expect(body).not.toContain(wire);
     expect(Array.from(wing.querySelectorAll(".surface-ledger-count")).map((c) => c.textContent?.trim()).filter(Boolean)).toEqual([]);
@@ -486,8 +491,8 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
     await waitFor(() => expect(container.querySelector('.speak-learned .surface-state[data-kind="empty"]')).toBeTruthy());
     const quiet = container.querySelector(".speak-learned") as HTMLElement;
     expect(quiet.querySelectorAll(".surface-ledger-row")).toHaveLength(0);
-    expect(quiet.textContent).toContain("NOTHING LEARNED");
-    expect(quiet.textContent).not.toContain("APPLIED");
+    expect(quiet.textContent).toContain("Nothing learned");
+    expect(quiet.textContent).not.toMatch(/applied/i);
     expect(quiet.textContent).not.toContain("0");
     expect(quiet.textContent).not.toContain(".");
     expect(presses.map((p) => p.call.replace(/\d+/g, "N"))).toEqual([
@@ -501,7 +506,7 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
     await waitFor(() => expect(container.querySelector(".speak-journal")).toBeTruthy());
     expect(screen.getByRole("tab", { name: "Journal" }).getAttribute("aria-selected")).toBe("true");
     expect(container.querySelector(".surface-door")).toBeNull();
-    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Speak", "Journal", "Blocks", "Learned", "Voice commands"]);
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Speak", "Journal", "Blocks", "Learned", "Commands"]);
     // Every read the window made was one the hub answered, but the scan.
     expect([...new Set(misses)]).toEqual(["/api/concierge/detect"]);
   });

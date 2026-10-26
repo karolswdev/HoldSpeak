@@ -64,11 +64,14 @@ export function useStripFit<T extends HTMLElement>(enabled: boolean, key: string
               const margin =
                 (autoLeft ? 0 : parseFloat(style.marginLeft) || 0) +
                 (parseFloat(style.marginRight) || 0);
-              // The title has min-width: 0 and yields before the wings. Its
-              // margins remain part of the fixed head chrome, but its current
-              // grown width must not make a strip look permanently too small.
-              const yielding = childEl.classList.contains("desk-pullout-title");
-              return sum + margin + (yielding ? 0 : childEl.getBoundingClientRect().width);
+              // The title keeps its whole name (lane speak, 2026-10-25: five
+              // wings squeezed "Speak" to "S…"). It counts at its natural
+              // width (scrollWidth: the text, not the box it shrank to), so
+              // the wings fold into the menu before the name is cut. A title
+              // the head hides (display: none at 393) measures 0.
+              const title = childEl.classList.contains("desk-pullout-title");
+              const width = title ? childEl.scrollWidth : childEl.getBoundingClientRect().width;
+              return sum + margin + width;
             }, padding);
             return Math.max(0, parentWidth - fixed);
           })()
