@@ -379,20 +379,29 @@ function GitHubCard({ tool, onRecheck, busy, blocked, lead = false, open, onTogg
   const state = tool.state;
   const hint = tool.state === "unavailable" ? (tool.recovery_hint ?? "brew install gh") : "gh auth login";
   const host = tool.egress_host ?? "github.com";
-  const check = <span className="connections-check-action"><EgressChip label={host.toUpperCase()} scope="cloud"/><Button dense variant={lead && !needsFix(state) ? "primary" : "secondary"} onClick={onRecheck} loading={busy} disabled={blocked && !busy}>Check</Button></span>;
+  // The host is named next to the account; the verb's hover title says
+  // where the check goes (UX-CANON A.9 as amended 2026-10-25).
+  const check = <span className="connections-check-action"><Button dense variant={lead && !needsFix(state) ? "primary" : "secondary"} title={`Checks ${host}`} onClick={onRecheck} loading={busy} disabled={blocked && !busy}>Check</Button></span>;
   const startFromRow = () => {
     onToggle();
     if (onSignIn) void onSignIn();
   };
   return <SurfaceLedgerRow data-testid="connections-github" wrap open={open} onToggle={onToggle} lineLabel="GitHub"
-    lead={<span className="connections-tool-emblem">GH</span>}
-    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">GitHub</strong>{tool.account?.login ? <span className="connections-tool-summary">{tool.account.login}</span> : null}<span className="connections-tool-summary">{host}</span></span>}
+    lead={<ServiceGlyph provider="github"/>}
+    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">GitHub</strong>{tool.account?.login ? <span className="connections-tool-summary">{tool.account.login}</span> : null}<span className="connections-tool-summary connections-site">{host}</span></span>}
     cells={<span className="surface-ledger-cells connections-tool-chips" title={state === "degraded" ? tool.error_detail : undefined}><StateChip wrap state={chipState(state)} label={stateWords(state, "github", tool)}/></span>}
     trailing={<span className="connections-tool-actions">{needsFix(state) ? <Button dense variant={lead ? "primary" : "secondary"} aria-expanded={open} onClick={state === "owner_action_required" && !open ? startFromRow : onToggle} data-testid="connections-github-show">{open ? "Close" : fixLabel(state, "gh")}</Button> : null}{check}</span>}>
     {open ? <AccountUnfold testid="connections-github-unfold" usedBy={tool.used_by} hint={hint}
       signInLabel={fixLabel(state, "gh")} commandOpen={needsFix(state)}
       onSignIn={state !== "unavailable" ? onSignIn : undefined} signin={signin} onSigninFinished={onSigninFinished}/> : null}
   </SurfaceLedgerRow>;
+}
+
+/** A service's glyph: a small coloured tile with its initial (sans), in
+ *  place of a mono monogram. Decorative: the row names the service. */
+function ServiceGlyph({ provider }: { provider: string }) {
+  const name = PROVIDER_NAME[provider as keyof typeof PROVIDER_NAME] ?? provider;
+  return <span className="connections-tool-emblem" data-provider={provider} aria-hidden="true">{String(name)[0]?.toUpperCase()}</span>;
 }
 
 function HostChip({ site }: { site: string }) {
@@ -414,7 +423,7 @@ function AtlassianConnectionRow({ provider, conn, onRecheck, onRemove, busy, blo
   const name = provider === "jira" ? "Jira" : "Confluence";
   const hint = state === "unavailable" ? "brew tap atlassian/homebrew-acli && brew install acli"
     : conn.recovery_hint ?? `acli ${provider} auth login --site ${conn.account.site} --email ${conn.account.email} --token`;
-  const check = <span className="connections-check-action"><HostChip site={conn.account.site}/><Button dense variant="secondary" onClick={onRecheck} loading={busy} disabled={blocked && !busy}>Check</Button></span>;
+  const check = <span className="connections-check-action"><Button dense variant="secondary" title={`Checks ${conn.account.site}`} onClick={onRecheck} loading={busy} disabled={blocked && !busy}>Check</Button></span>;
   const startFromRow = () => {
     onToggle();
     if (onSignIn) void onSignIn();
@@ -424,7 +433,7 @@ function AtlassianConnectionRow({ provider, conn, onRecheck, onRemove, busy, blo
     // The last row keeps the Add form mounted (its draft and refusal survive a
     // sign-in detour), so it claims no aria-expanded of its own.
     open={open || addOpen || Boolean(addWell)} expands={!addWell}
-    lead={<span className="connections-tool-emblem">{name[0]}</span>}
+    lead={<ServiceGlyph provider={provider}/>}
     primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{name}</strong><AccountEmail email={conn.account.email}/><span className="connections-tool-summary connections-site">{conn.account.site}</span></span>}
     cells={<span className="surface-ledger-cells connections-tool-chips"><StateChip wrap state={chipState(state)} label={stateWords(state, provider, conn)}/></span>}
     trailing={<span className="connections-tool-actions">{needsFix(state) ? <Button dense variant="secondary" aria-expanded={open} onClick={state === "owner_action_required" && !open ? startFromRow : onToggle}>{open ? "Close" : fixLabel(state, "acli")}</Button> : null}{check}{addAction}</span>}>
@@ -521,7 +530,7 @@ function AtlassianCards({ tool, onRecheck, onAddAccount, onRemove, busyRef, onSi
   const addButton = <Button dense variant="ghost" aria-expanded={well === "add"} onClick={() => setWell(value => value === "add" ? null : "add")} data-testid={`connections-add-open-${provider}`}>{well === "add" ? "Cancel" : connections.length ? `Add ${name} account` : "Add account"}</Button>;
   const form = <SurfaceWell><div className="connections-well-head"><strong>Add {name} account</strong></div><AddAccountFields compact provider={provider} onAdd={onAddAccount} busy={busyRef !== null} onCancel={() => setWell(null)} draft={draft} onDraftChange={setDraft}/></SurfaceWell>;
   if (!connections.length) return <SurfaceLedgerRow data-testid={`connections-${provider}`} wrap expands={false} open
-    lead={<span className="connections-tool-emblem">{name[0]}</span>}
+    lead={<ServiceGlyph provider={provider}/>}
     primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{name}</strong></span>}
     cells={<span className="surface-ledger-cells connections-tool-chips"><StateChip wrap state={chipState(tool.state)} label={stateWords(tool.state, provider, tool)}/></span>}
     trailing={addButton}><div className="connections-account-wells" hidden={well !== "add"}>{form}</div></SurfaceLedgerRow>;
@@ -558,7 +567,7 @@ function CalendarCard({
   const summary = isConnected && sources ? `${sources} sources` : undefined;
 
   return <SurfaceLedgerRow data-testid="connections-calendar" wrap expands={false}
-    lead={<CalendarEmblem/>}
+    lead={<span className="connections-tool-emblem" data-provider="calendar" aria-hidden="true"><CalendarEmblem/></span>}
     primary={<span className="connections-tool-identity"><strong className="connections-tool-label">Calendar</strong>{summary ? <span className="connections-tool-summary">{summary}</span> : null}</span>}
     cells={<span className="surface-ledger-cells connections-tool-chips"><StateChip wrap state={state} label={label}/></span>}
     // Betterment setup ST1: the sources are under this row now (no
@@ -845,7 +854,7 @@ export function ConnectionsPane({
         {foundRows.map((row) => {
           const st = found.states[row.id];
           return <SurfaceLedgerRow key={row.id} data-testid={`connections-found-${row.id}`} wrap expands={false}
-            lead={<span className="connections-tool-emblem">{PROVIDER_NAME[row.provider][0]}</span>}
+            lead={<ServiceGlyph provider={row.provider}/>}
             primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{PROVIDER_NAME[row.provider]}</strong><AccountEmail email={row.account}/><span className="connections-tool-summary connections-site">{row.site}</span></span>}
             cells={st?.kind === "refused" ? <span className="surface-ledger-cells connections-tool-chips"><StateChip wrap state="failure" label={`Does not work: ${st.reason}`}/></span> : undefined}
             trailing={<span className="connections-check-action"><HostChip site={row.egress_host}/><Button dense variant="secondary" loading={st?.kind === "busy"} onClick={() => void useFound(row)}>Use</Button></span>}/>;

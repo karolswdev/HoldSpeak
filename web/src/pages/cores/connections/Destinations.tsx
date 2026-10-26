@@ -78,6 +78,12 @@ export const EMPTY: Draft = {
   slackLabel: "", slackRef: "",
 };
 
+/** A destination's channel in sentence case on its row (the Send faces keep
+ *  their own CHANNEL_WORD). */
+const CHANNEL_NAME: Record<string, string> = {
+  file: "File", github: "GitHub", jira: "Jira", confluence: "Confluence", email: "Email", slack: "Slack",
+};
+
 function fromDestination(d: Destination): Draft {
   const t = d.target, a = d.account;
   return {
@@ -529,7 +535,12 @@ export function Destinations() {
   );
   return (
     <div className="connections-destinations" data-send="destinations" data-testid="destinations" ref={groupRef}>
-      <GadgetGroup label={active.length ? `Destinations ${active.length}` : "Destinations"}>
+      <GadgetGroup label={active.length ? `Destinations ${active.length}` : "Destinations"} actions={active.length === 0 || adding ? undefined : (
+        // Window grammar: the group's verb sits on its caption line.
+        <div className="send-verbs" data-testid="dest-add-line">
+          <Button dense variant="secondary" data-testid="dest-add" onClick={() => { setOpen(null); setAdding(true); }}>Add destination</Button>
+        </div>
+      )}>
         {active.length ? (
           <SurfaceLedger count="" cols="account-destinations">
             <ul className="surface-ledger-rows" data-testid="dest-list">
@@ -545,7 +556,7 @@ export function Destinations() {
                     onToggle={() => { setEditing(null); setOpen(open === d.id ? null : d.id); }}
                     lead={<span className="send-pick" aria-hidden="true">{open === d.id ? "▾" : "▸"}</span>}
                     primary={<span className="connections-tool-identity"><strong className="connections-tool-label" data-destination={d.name}>{d.name}</strong><span className="connections-tool-summary send-target">{targetToken(d.channel, d.target)}</span></span>}
-                    cells={<span className="surface-ledger-cells connections-tool-chips"><span className="connections-tool-summary">{CHANNEL_WORD[d.channel] ?? d.channel}</span>{acc ? <StateChip state={acc.state} label={acc.label}/> : null}</span>}
+                    cells={<span className="surface-ledger-cells connections-tool-chips"><span className="connections-tool-summary">{CHANNEL_NAME[d.channel] ?? d.channel}</span>{acc ? <StateChip state={acc.state} label={acc.label}/> : null}</span>}
                     trailing={<Button dense variant="secondary" onClick={() => { setEditing(null); setOpen(open === d.id ? null : d.id); }}>{open === d.id ? "Close" : "Details"}</Button>}>
                     {open === d.id ? (
                       editing === d.id ? (
@@ -605,11 +616,7 @@ export function Destinations() {
             </ul>
           </SurfaceLedger>
         ) : null}
-        {active.length === 0 || adding ? form : (
-          <div className="send-verbs" data-testid="dest-add-line">
-            <Button dense variant="ghost" data-testid="dest-add" onClick={() => { setOpen(null); setAdding(true); }}>Add destination</Button>
-          </div>
-        )}
+        {active.length === 0 || adding ? form : null}
         {parked.length ? (
           <div data-testid="dest-parked">
             <FoldGadget title="PARKED" token={String(parked.length)}>
