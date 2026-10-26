@@ -14,6 +14,7 @@
 import { useEffect, useRef } from "react";
 import { Button } from "../../components/signal/Signal";
 import { EgressChip, StateChip } from "../surface";
+import { DotWord } from "../surface/kit";
 import { formatBytes, groupsOf, planSteps, sourceHost, speechReady, useLocalAi } from "./localAi";
 import "./speechSetup.css";
 
@@ -82,6 +83,7 @@ export function SpeechSetup({
   testId = "speech-setup",
   bare = false,
   primary = true,
+  toolbar = false,
 }: {
   setup: SpeechSetupState;
   /** Called once when speech turns ready after this row was drawn. */
@@ -93,6 +95,12 @@ export function SpeechSetup({
    *  the face's one job. Live meeting (Start meeting), Runs on (Add) and
    *  Setup (Test runtime) keep their own primary; there it is secondary. */
   primary?: boolean;
+  /** Window grammar (2026-10-24; UX-CANON A.9 as amended 2026-10-25): the
+   *  row is a toolbar item. The verb only, the quiet secondary form; the
+   *  download host goes to the verb's hover title (no host chip); a state is
+   *  a dot and a word (no mono caps chip). The host face says "Speech not
+   *  set up" in its status bar. */
+  toolbar?: boolean;
 }) {
   const { ai, status, notSetUp, canSetUp, bytes } = setup;
   const wasMissing = useRef(false);
@@ -114,6 +122,38 @@ export function SpeechSetup({
   const failed = status.state === "failed";
   const step = running ? planSteps(status, ai.rate, ["whisper"]).find((s) => s.id === "whisper") : undefined;
   const host = ai.host || sourceHost(status);
+  if (toolbar) {
+    return (
+      <span className="speech-setup" data-variant="toolbar" role="status" data-testid={testId} data-speech-state={status.speech?.state ?? "unknown"}>
+        {failed ? <DotWord tone="fail">Can't download</DotWord> : null}
+        {!canSetUp && !running ? (
+          <DotWord tone="warn">
+            {status.speech?.state === "backend_unavailable" ? "Speech library missing" : "Speech model not in Setup"}
+          </DotWord>
+        ) : null}
+        {running ? (
+          <>
+            <DotWord tone="info" data-testid={`${testId}-progress`}>{step?.rate ?? "Setting up speech"}</DotWord>
+            <Button dense variant="secondary" disabled={ai.busy} onClick={() => void ai.cancel()}>
+              Stop
+            </Button>
+          </>
+        ) : canSetUp ? (
+          <Button
+            dense
+            variant="secondary"
+            loading={ai.busy}
+            disabled={ai.busy}
+            title={host ? `Downloads from ${host.toLowerCase()}` : undefined}
+            onClick={() => void ai.startSpeech().then(announceSpeechSetup)}
+            data-testid={`${testId}-verb`}
+          >
+            {`Set up speech · ${formatBytes(bytes)}`}
+          </Button>
+        ) : null}
+      </span>
+    );
+  }
   return (
     <div className="speech-setup" role="status" data-testid={testId} data-speech-state={status.speech?.state ?? "unknown"}>
       {bare ? null : (

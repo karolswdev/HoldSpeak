@@ -1,4 +1,3 @@
-import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 // HS-95-06 — the live meeting's core: record, watch the transcript
 // arrive, keep the result — hosted anywhere (see ActivityCore's rules).
 // HS-98-04 — re-crafted native: the transcript is the primary pane, the
@@ -49,7 +48,6 @@ import {
   SurfaceWell,
 } from "../../desk/surface/Surface";
 import { useAction } from "./core-hooks";
-import { renderHeroSlot } from "./core-layout";
 import {
   CycleGadget,
   EgressChip,
@@ -62,7 +60,8 @@ import {
 } from "../../desk/surface/gadgets";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
-import { Steps } from "../../desk/surface/kit";
+import { DotWord, StatusBar, Steps, ToolGlyph, Toolbar, type StatusBarItem } from "../../desk/surface/kit";
+import { useWindowInterior } from "../../desk/surface/interior";
 import { countToken } from "../../desk/surface/count";
 import { intelEgressBadge } from "./liveEgress";
 import { burstTimer } from "../../desk/burstTimer";
@@ -438,6 +437,9 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
     [segments],
   );
 
+  /* Window grammar (2026-10-24): title bar → toolbar → the four steps and
+     the transcript → status bar. "editor": edge to edge, the body scrolls. */
+  useWindowInterior("editor");
   const verbs = (
     <Button
       variant={active ? "danger" : "primary"}
@@ -447,6 +449,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
         void perform(active ? "/api/meeting/stop" : "/api/meeting/start")
       }
     >
+      {active ? null : <ToolGlyph kind="record" />}
       {active ? "Stop meeting" : "Start meeting"}
     </Button>
   );
@@ -465,7 +468,9 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
      the hub (`runtime/RuntimeBus.tsx:14` — connecting/connected/
      reconnecting/offline), the footer receipt is the CAPTURE. The axis is
      named, per the copy contract's `unqualified-state` rule. */
-  const factsLine = `Link · ${connection || "unknown"}`;
+  const link: string = connection || "unknown";
+  const linkTone =
+    link === "connected" ? ("ok" as const) : link === "offline" ? ("fail" as const) : link === "unknown" ? undefined : ("warn" as const);
 
   /** HS-202-04 — the queue summary with its zero counts dropped. A
    *  non-count value (a timestamp, a state word) is kept as it is; only a
@@ -709,17 +714,39 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
     </>
   );
 
+  /* The status bar: the capture state, audio only, speech, and the link to
+     the hub, each a dot and a word (UX-CANON A.9 as amended 2026-10-25: no
+     egress chip here; the configure face keeps it, where the choice is made).
+     HS-202-04 (F21, M6): the clock stands once, here; the stream head owns
+     the segment count. The link and the capture are different facts. */
+  const meetingTitle = presentValue(state.title);
+  const statusItems: StatusBarItem[] = [
+    active && meetingTitle ? { key: "title", text: meetingTitle } : null,
+    active
+      ? { key: "capture", lamp: "fail" as const, text: "Recording", value: duration, testId: "live-capture-state" }
+      : { key: "capture", lamp: audioOnly ? ("warn" as const) : ("ok" as const), text: "Ready", testId: "live-capture-state" },
+    audioOnly ? { key: "audio", text: "audio only" } : null,
+    !active && speech.notSetUp ? { key: "speech", text: "Speech not set up" } : null,
+    { key: "link", lamp: linkTone, text: `Link ${link}`, testId: "live-link-state" },
+  ].filter(Boolean) as StatusBarItem[];
+
   return (
     <>
-      {renderHeroSlot(
-        hero,
-        verbs,
-        presentValue(state.title) ||
-          (active
-            ? audioOnly ? "Recording audio only" : "Recording"
-            : audioOnly ? "Ready to record audio only" : "Ready to record"),
+      {hero ? (
+        hero(verbs)
+      ) : (
+        <Toolbar label="Live meeting" data-testid="live-toolbar">
+          {verbs}
+          {active ? (
+            <Button dense variant="secondary" onClick={() => setMetaOpen((open) => !open)}>
+              <ToolGlyph kind="edit" />
+              Edit details
+            </Button>
+          ) : null}
+          <SpeechSetup setup={speech} primary={false} toolbar testId="live-speech-setup" />
+        </Toolbar>
       )}
-      <SpeechSetup setup={speech} primary={false} testId="live-speech-setup" />
+      <div className="live-room" data-testid="live-room">
       {action.message ? <SurfaceState error={action.message} /> : null}
       {captureAlert ? (
         <SurfaceState
@@ -786,7 +813,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
               steps, and a REC lamp that is dark at rest and breathes red
               while it records (colour only; nothing moves). */}
           <div className="live-deck" data-active={active || undefined} data-testid="live-deck">
-            <span className="live-rec" aria-hidden="true"><span className="live-rec-lamp" />REC</span>
+            {active ? <DotWord tone="fail" className="live-rec-word" data-testid="live-rec">Rec</DotWord> : null}
             <Steps
               label="Meeting steps"
               data-testid="live-steps"
@@ -798,18 +825,8 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
               ]}
             />
           </div>
-          <SurfaceFacts value={factsLine} />
           {intelFace}
-          <SurfaceSection
-            label="Transcript"
-            actions={
-              active ? (
-                <Button dense onClick={() => setMetaOpen((open) => !open)}>
-                  Edit details
-                </Button>
-              ) : undefined
-            }
-          >
+          <SurfaceSection label="Transcript" className="live-transcript">
             {metaOpen ? (
               <GadgetGroup label="Meeting details">
                 <GadgetRow label="TITLE">
@@ -893,33 +910,17 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
                 </ul>
               </SurfaceStream>
             ) : (
-              <SurfaceState
-                empty
-                emptyLabel={
-                  active
-                    ? audioOnly ? NO_TRANSCRIPT_SPEECH : "Listening for speech"
-                    : "Start a meeting to begin"
-                }
-                emptyGlyph="●"
-              />
+              <p className="live-empty" role="status" data-testid="live-transcript-empty">
+                {active
+                  ? audioOnly ? NO_TRANSCRIPT_SPEECH : "Listening for speech"
+                  : "Start a meeting to begin"}
+              </p>
             )}
           </SurfaceSection>
         </>
       )}
-      {/* HS-129-05 — the readiness fact rides the shared receipt slot.
-          HS-202-04 (F21, M6) — the receipt carries the clock and nothing
-          else: the segment count belongs to the stream head that counts
-          them, and `SEG` was an abbreviation no face ever defined (the
-          recovery slab spelled it out in HS-201-06). */}
-      {/* No egress chip in the status bar (owner ruling 2026-10-25); the
-          configure face keeps it, where the choice is made. */}
-      <SurfaceFooter
-        receipt={
-          <span className="surface-footer-receipt-line" role="status">
-            {active ? `REC ${duration}` : "READY"}
-          </span>
-        }
-      />
+      </div>
+      <StatusBar items={statusItems} data-testid="live-statusbar" />
     </>
   );
 }
