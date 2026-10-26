@@ -396,7 +396,7 @@ describe("Honest faces: a meeting's unowned action is an OPEN HERE row with its 
       render(<WindowHarness scope="project:p1" />);
       const rows = await screen.findAllByTestId("needs-you-row", {}, DRAWN);
       expect(rows).toHaveLength(3);
-      for (const row of rows) expect(row.textContent).toContain("OWNER · UNKNOWN");
+      for (const row of rows) expect(row.textContent).toContain("Owner · unknown");
       expect(screen.queryByTestId("needs-you-empty")).toBeNull();
       // Betterment P3: the head says the state, never a count.
       expect(screen.getByTestId("room-headline").textContent).not.toMatch(/open here/);

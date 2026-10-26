@@ -1510,3 +1510,33 @@
 @media (prefers-reduced-motion: reduce) {
   .desk-next .room-body .surface-ledger[data-cols="room"] .surface-ledger-line { transition: none; }
 }
+
+/* ══ The window grammar (2026-10-24; owner 2026-10-25: "this window is a
+   joke… looks this white"). The Now wing's rows are a LIST VIEW: one line
+   each at a desk width (32 px), the name ellipsized with its full title on
+   hover, the why in quiet sans sentence case, the verbs hugging the right.
+   Appended last so it wins over the rules above by order. ══ */
+@container surface (min-width: 560px) {
+  .desk-next .room-body .surface-ledger[data-cols="room"] .surface-ledger-line {
+    flex-wrap: nowrap;
+    min-height: 32px;
+    gap: 0 10px;
+  }
+  .desk-next .room-body .surface-ledger[data-cols="room"] .surface-ledger-row[data-wrap] .surface-ledger-primary {
+    flex: 1 1 0;
+    min-width: 8ch;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .desk-next .room-body .surface-ledger[data-cols="room"] .room-why-cells,
+  .desk-next .room-body .surface-ledger[data-cols="room"] .room-why-token {
+    white-space: nowrap;
+  }
+  .desk-next .room-body .surface-ledger[data-cols="room"] .surface-ledger-trailing {
+    display: inline-flex;
+    gap: 4px;
+    flex: none;
+    margin-left: auto;
+  }
+}

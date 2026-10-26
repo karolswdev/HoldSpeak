@@ -216,7 +216,7 @@ describe("HS-169-03: NEEDS YOU section", () => {
 
     const whyTokens = screen.getAllByTestId("needs-you-why");
     expect(whyTokens.length).toBe(3);
-    expect(whyTokens[0].textContent).toContain("WAITING ON YOUR REVIEW");
+    expect(whyTokens[0].textContent).toContain("Waiting on your review");
   });
 
   it("shows empty state when nothing needs you", async () => {

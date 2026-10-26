@@ -1318,6 +1318,34 @@ export function needsYouWhyWords(item: { source: string; kind?: string; why: str
   return item.why;
 }
 
+/* ── The window grammar (2026-10-24; owner 2026-10-25 on the Room: "looks
+ * this white… looks like shit"): a row's state is quiet sans in sentence
+ * case, never mono caps. The hub's words stay as they are over MCP and in
+ * the hub's answers; the face says them. ── */
+
+const CAPS_SEGMENT = /^[^a-z]*$/;
+const KEPT_WORDS: Record<string, string> = { pr: "PR", prs: "PRs", ci: "CI" };
+
+/** `OVERDUE · 48 DAYS` → `Overdue · 48 days`; `WAITING ON PRIYA` →
+ *  `Waiting on Priya`; `REVIEW BOTTLENECK · 4 D MEDIAN · 2 PRS WAITING` →
+ *  `Review bottleneck · 4 days median · 2 PRs waiting`; `OVERDUE · 1 DAYS`
+ *  → `Overdue · 1 day`. A segment that already has a lowercase letter (a
+ *  meeting title: `PROPOSED · Standup`) passes through untouched. */
+export function whyFaceWords(why: string): string {
+  const segments = why.trim().split(/\s*·\s*/).filter(Boolean);
+  const said = segments.map((segment, index) => {
+    if (!CAPS_SEGMENT.test(segment)) return segment;
+    let words = segment.toLowerCase();
+    words = words.replace(/\b(\d+(?:\.\d+)?) ?(d|days?)\b/g, (_m, n: string) =>
+      `${n} ${Number(n) === 1 ? "day" : "days"}`);
+    words = words.replace(/\b(pr|prs|ci)\b/g, (m) => KEPT_WORDS[m] ?? m);
+    words = words.replace(/^waiting on (?!you\b|your\b)(.+)$/, (_m, who: string) =>
+      `waiting on ${who.replace(/(^|\s)(\p{L})/gu, (_s, space: string, c: string) => space + c.toUpperCase())}`);
+    return index === 0 ? words.charAt(0).toUpperCase() + words.slice(1) : words;
+  });
+  return said.join(" · ");
+}
+
 /* ── PHILO-15 lane 12 (B25): the health word ── */
 
 /** True when the Room has nothing to judge: no sources, no items, no

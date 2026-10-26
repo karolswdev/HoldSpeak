@@ -3,9 +3,13 @@
    column on the phone in the design's order. Our material only: the
    Workbench ink, the mono facts, the library Button. */
 
+/* The window grammar (2026-10-24; owner 2026-10-25: the Room "looks this
+   white"): one column, the rows edge to edge. Two columns only in a wide
+   window AND with a week to show beside them; an empty column is not drawn
+   (half a window of white paper was the complaint). */
 .room-now-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px 16px;
   align-items: start;
 }
@@ -15,8 +19,11 @@
   gap: 12px;
   min-width: 0;
 }
-@container surface (max-width: 639.9px) {
-  .room-now-grid { grid-template-columns: minmax(0, 1fr); }
+.room-now-grid > .room-now-col:not(:has(.surface-section, .room-late-line)) {
+  display: none;
+}
+@container surface (min-width: 1100px) {
+  .room-now-grid:has(.room-now-week) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
 /* The head's line under the state: the next date, the last update, the
