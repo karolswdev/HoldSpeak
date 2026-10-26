@@ -145,7 +145,8 @@ describe("Slack in the Destination form", () => {
     rows = [slackRow("chd_slack")];
     render(<Destinations />);
     const row = await screen.findByTestId("dest-row");
-    expect(row.textContent).toContain("SLACK");
+    // The channel word on the row is sentence case (window grammar).
+    expect(row.querySelector(".surface-ledger-cells")?.textContent).toContain("Slack");
     expect(row.textContent).toContain("#leads");
     expect(within(row).getByText("Slack #leads")).toBeVisible();
     expect(within(row).queryByText("HOOKS.SLACK.COM")).toBeNull();

@@ -306,7 +306,6 @@ describe("ConnectionsPane", () => {
       renderPane();
       const conn = await screen.findByTestId("connections-jira-conn-alpha-user");
       expect(within(conn).getByText("Jira")).toBeInTheDocument();
-      expect(within(conn).getByText("ALPHA.ATLASSIAN.NET")).toBeInTheDocument();
       expect(within(conn).getByText("user@example.com")).toBeInTheDocument();
       expect(within(conn).getByText("alpha.atlassian.net")).toBeInTheDocument();
       const chips = within(conn).getAllByText("Works");
@@ -314,17 +313,17 @@ describe("ConnectionsPane", () => {
     });
   });
 
-  describe("Jira host chip (PHILO-4-01 r4)", () => {
-    it("names the provider and keeps the full host at the check action", async () => {
+  describe("Jira host (PHILO-4-01 r4; window grammar 2026-10-25)", () => {
+    it("names the provider and the full host as quiet text next to the account, not a chip", async () => {
       renderPane();
       const conn = await screen.findByTestId("connections-jira-conn-alpha-user");
-      const chip = within(conn).getByText("ALPHA.ATLASSIAN.NET");
-      expect(chip.classList.contains("gadget-chip")).toBe(true);
-      expect(chip.classList.contains("gadget-chip-truncate")).toBe(false);
-      // Never the inherited "route not set" default on a known destination.
-      expect(chip.getAttribute("title")).toBe("alpha.atlassian.net");
+      const host = within(conn).getByText("alpha.atlassian.net");
+      expect(host.classList.contains("connections-site")).toBe(true);
+      expect(conn.querySelector(".gadget-chip-egress")).toBeNull();
+      // The verb's hover title says where the check goes.
+      expect(within(conn).getByRole("button", { name: "Check" }).getAttribute("title")).toBe("Checks alpha.atlassian.net");
       expect(conn.querySelector(".connections-tool-label")?.textContent).toBe("Jira");
-      expect(within(conn).getAllByText("ALPHA.ATLASSIAN.NET")).toHaveLength(1);
+      expect(conn.querySelector('.connections-tool-emblem[data-provider="jira"]')?.textContent).toBe("J");
     });
   });
 
@@ -710,8 +709,9 @@ describe("Accounts recovery", () => {
     rows.forEach((row, index) => {
       expect(within(row).getByText(tool.connections![index].account.site)).toBeVisible();
       expect(within(row).getByText("same@example.com")).toBeVisible();
-      // The egress chip sits on Check, where the check goes out (once per row).
-      expect(row.querySelectorAll(".gadget-chip-egress")).toHaveLength(1);
+      // The host is quiet text on the row; Check's hover title names it.
+      expect(row.querySelectorAll(".gadget-chip-egress")).toHaveLength(0);
+      expect(within(row).getByRole("button", { name: "Check" }).getAttribute("title")).toBe(`Checks ${tool.connections![index].account.site}`);
     });
   });
 
@@ -736,7 +736,7 @@ describe("Accounts recovery", () => {
     expect(within(row).queryByText("gh auth login")).toBeNull();
     fireEvent.click(within(row).getByRole("button", { name: "Sign in" }));
     expect(within(row).getByText("gh auth login")).toBeInTheDocument();
-    expect(within(row).getAllByText("GITHUB.COM")).toHaveLength(1);
+    expect(within(row).getAllByText("github.com")).toHaveLength(1);
   });
 
   it.each([{ state: "not_determined", can_request: true, verb: "Allow calendar access" }, { state: "denied", can_request: false, verb: "Open System Settings" }])("Settings calendar $state access remains available with an existing feed", async ({ state, can_request, verb }) => {

@@ -71,7 +71,7 @@ beforeEach(() => {
     if (String(url).startsWith("/api/memory/pages")) return pages;
     if (String(url).startsWith("/api/memory/recall")) return beliefs;
     if (url === "/api/projects") return { projects: [{ id: "p1", name: "Ledger" }] };
-    if (url === "/api/people/relationships") return { relationships: [{ id: "r1", display_name: "Mira Kovacs" }] };
+    if (url === "/api/people/relationships?counts=1") return { relationships: [{ id: "r1", display_name: "Mira Kovacs" }] };
     if (url === "/api/inference/assignments") return {};
     return {};
   });
@@ -107,10 +107,16 @@ describe("Q12 Memory", () => {
     expect(within(home).getByTestId("memory-belief").textContent).not.toContain("Theo owns the on-call handbook.");
     expect(within(home).getAllByRole("button", { name: "Open the source: 1:1 With Mira" }).length).toBeGreaterThan(0);
 
+    // The links are list views: a press selects (Open in the status bar), a
+    // double press opens.
     fireEvent.click(within(home).getByRole("button", { name: "Ledger" }));
-    fireEvent.click(within(home).getByRole("button", { name: "Mira Kovacs" }));
+    fireEvent.click(screen.getByTestId("memory-open-selected"));
     expect(vi.mocked(openProjectRoom)).toHaveBeenCalledWith("p1");
+    fireEvent.doubleClick(within(home).getByRole("button", { name: "Mira Kovacs" }));
     expect(vi.mocked(openPerson)).toHaveBeenCalledWith("r1");
+    expect(screen.getByTestId("memory-written").textContent).toMatch(/^Written /);
+    expect(screen.getByTestId("memory-status").textContent).toContain("1 project");
+    expect(screen.getByTestId("memory-status").textContent).toContain("1 person");
 
     fireEvent.change(within(home).getByRole("searchbox", { name: "Ask your desk" }), { target: { value: "what changed?" } });
     fireEvent.click(within(home).getByRole("button", { name: "Ask" }));
@@ -125,7 +131,7 @@ describe("Q12 Memory", () => {
       if (String(url).startsWith("/api/memory/pages")) return pages;
       if (String(url).startsWith("/api/memory/recall")) return { beliefs: [] };
       if (url === "/api/projects") return { projects: [{ id: "p1", name: "Ledger" }] };
-      if (url === "/api/people/relationships") throw new Error("people unavailable");
+      if (url === "/api/people/relationships?counts=1") throw new Error("people unavailable");
       if (url === "/api/inference/assignments") return {};
       return {};
     });
@@ -143,14 +149,34 @@ describe("Q12 Memory", () => {
         String(url).startsWith(held) ? pending : original(url, init));
       render(<MemoryCore />);
       expect(screen.getByRole("searchbox", { name: "Ask your desk" })).toBeTruthy();
-      expect(screen.queryByRole("button", { name: /^RAW$/ })).toBeNull();
+      expect(screen.queryByTestId("memory-projects")).toBeNull();
+      expect(screen.queryByTestId("memory-status")).toBeNull();
       release(held === "/api/memory/pages" ? pages : held === "/api/projects"
         ? { projects: [{ id: "p1", name: "Ledger" }] } : beliefs);
-      expect(await screen.findByRole("button", { name: /^RAW$/ })).toBeTruthy();
+      expect(await screen.findByTestId("memory-projects")).toBeTruthy();
       expect(screen.getAllByTestId("standing-page")).toHaveLength(2);
       expect(screen.getByRole("button", { name: "Ledger" })).toBeTruthy();
     },
   );
+
+  it("names a project's open count and meetings, and a person's role and what you owe, as quiet meta", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (url) => {
+      if (String(url).startsWith("/api/memory/pages")) return { pages: [] };
+      if (String(url).startsWith("/api/memory/recall")) return { beliefs: [] };
+      if (url === "/api/projects") return { projects: [{ id: "p1", name: "Ledger", meeting_count: 3 }] };
+      if (url === "/api/people/relationships?counts=1") {
+        return { relationships: [{ id: "r1", display_name: "Mira Kovacs", relationship_kind: "direct_report", you_owe_count: 2 }] };
+      }
+      if (url === "/api/inference/assignments") return {};
+      return {};
+    });
+    render(<MemoryCore />);
+    const projects = await screen.findByTestId("memory-projects");
+    expect(within(projects).getByRole("button", { name: "Ledger, 3 meetings" })).toBeTruthy();
+    const people = screen.getByTestId("memory-people");
+    expect(within(people).getByRole("button", { name: "Mira Kovacs, Direct report · You owe 2" })).toBeTruthy();
+    expect(within(people).getByText("MK")).toBeTruthy();
+  });
 
   it("shows one empty message and the background engine picker when no page exists", async () => {
     vi.mocked(apiFetch).mockImplementation(async (url) => {
@@ -161,9 +187,11 @@ describe("Q12 Memory", () => {
     });
     render(<MemoryCore />);
     const empty = await screen.findByTestId("memory-empty");
-    expect(empty.textContent).toContain("Not written yet.");
-    expect(screen.getAllByText("Not written yet.")).toHaveLength(1);
-    fireEvent.click(within(empty).getByRole("button", { name: "Choose engine" }));
+    expect(empty.textContent).toBe("Not written yet");
+    expect(screen.getAllByText("Not written yet")).toHaveLength(1);
+    // No RAW fold on this face (debug hides behind RAW on the desk floor).
+    expect(screen.queryByRole("button", { name: /^RAW$/ })).toBeNull();
+    fireEvent.click(within(screen.getByTestId("memory-toolbar")).getByRole("button", { name: "Choose engine" }));
     await waitFor(() => expect(vi.mocked(openSurfaceOr)).toHaveBeenCalledWith("open-concierge", "/models", "background"));
   });
 });
