@@ -104,10 +104,19 @@ describe("every speech face says speech is not set up", () => {
 
   it("Live meeting: the exact audio-only state, never the old Ready to record", async () => {
     render(<LiveCore />);
-    await screen.findByTestId("live-speech-setup-verb");
-    expectTheRow("live-speech-setup");
-    expect(screen.getAllByText("Ready to record audio only", { exact: true })).toHaveLength(1);
+    const verb = await screen.findByTestId("live-speech-setup-verb");
+    expect(verb.textContent?.trim()).toMatch(VERB);
+    expect(verb.className.split(" ")).toContain("btn");
+    // Window grammar + UX-CANON A.9 (2026-10-25): the verb is a toolbar
+    // item; the host is its hover title, never a chip on the row.
+    expect(verb.closest('[role="toolbar"]')).not.toBeNull();
+    expect(verb.getAttribute("title")).toContain("huggingface.co");
+    expect(screen.getByTestId("live-speech-setup").textContent?.toUpperCase()).not.toContain("HUGGINGFACE.CO");
+    // The state is the status bar's words: Ready · audio only · Speech not set up.
+    const bar = screen.getByTestId("live-statusbar");
+    expect(bar).toHaveTextContent(/Ready.*audio only.*Speech not set up/);
     expect(screen.queryByText("Ready to record", { exact: true })).toBeNull();
+    expect(screen.queryByText("Ready to record audio only", { exact: true })).toBeNull();
   });
 
   it("Setup: the producer-backed face says it; the verb stands alone on it", async () => {

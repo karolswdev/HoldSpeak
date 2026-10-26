@@ -257,11 +257,12 @@ describe("Live's row and its receipt hold different facts (M6)", () => {
 
   it("never says the same state word twice", async () => {
     await mount();
-    const row = document.querySelector(".surface-fact-line")?.textContent ?? "";
-    const receipt =
-      document.querySelector(".surface-footer-receipt-line")?.textContent ?? "";
-    expect(row).toBe("Link · connected");
-    expect(receipt).toBe("READY");
+    // Window grammar (2026-10-24): both facts are status-bar words, a dot
+    // and a word each; the link is not the capture.
+    const row = screen.getByTestId("live-link-state").textContent ?? "";
+    const receipt = screen.getByTestId("live-capture-state").textContent ?? "";
+    expect(row).toBe("Link connected");
+    expect(receipt).toBe("Ready");
     expect(row.toUpperCase()).not.toContain(receipt.toUpperCase());
   });
 });
