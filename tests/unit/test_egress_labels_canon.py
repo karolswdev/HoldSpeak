@@ -32,6 +32,7 @@ WEB = Path(__file__).resolve().parents[2] / "web" / "src"
 WORKING_FACES = (
     "desk/pullouts/views/TodayView.tsx",
     "desk/needs/TodayNeeds.tsx",
+    "desk/needs/NeedsDrawer.tsx",
     "desk/components/AskPanel.tsx",
     "desk/surface/EngineLine.tsx",
     "desk/surface/RunLine.tsx",
