@@ -237,7 +237,19 @@ export function resolveEngine(
  *  the hold key) join the Speak window's one status bar, which its host
  *  (DictationCore) draws with the receipt and the window's verbs. Without
  *  a host the face draws its own status bar. */
-export const SpeakStatusContext = createContext<((items: StatusBarItem[] | null) => void) | null>(null);
+export type SpeakStatusReport = {
+  /** The facts at the bar's left: the level, the phase, the fact, clean-up. */
+  items: StatusBarItem[];
+  /** The bar's right end: the one verb (Choose engine, only when clean-up
+   *  needs one) and the quiet hold-key hint. */
+  trailing: ReactNode;
+};
+export const SpeakStatusContext = createContext<((report: SpeakStatusReport | null) => void) | null>(null);
+
+/** Lane speak (2026-10-25): the window's own verbs (Review, Export) that
+ *  the host (DictationCore) hands to the Speak face, so they sit at the
+ *  right end of the ONE toolbar instead of on the status bar's edge. */
+export const SpeakVerbsContext = createContext<ReactNode>(null);
 
 const PHASE_LAMP: Record<string, StatusBarItem["lamp"]> = {
   warn: "warn", live: "fail", info: "info", ok: "ok", danger: "fail",
@@ -346,20 +358,47 @@ export function SpeakFace() {
         ? speechName
         : "Ready to talk";
   const report = useContext(SpeakStatusContext);
-  const meter = <span className="speak-level" data-testid="speak-level"><LedMeter label="Audio level" labelHidden value={deck.level} scanning={deck.micState === "busy"} /></span>;
+  const meter = <span className="speak-level" data-testid="speak-level"><LedMeter label="Audio level" labelHidden segments={8} value={deck.level} scanning={deck.micState === "busy"} /></span>;
+  // Clean-up is a setting, not a strip: its state is one status bar fact
+  // and, only when it needs one, the bar's one verb.
+  const engine = engineView(resolved.name, resolved.engineState, resolved.keySet, detectStatus);
+  const openConcierge = useCallback(() => {
+    // HS-200-41: remember the verb he left, so the Concierge's Apply can
+    // put focus back here instead of on nothing (design D2(a)).
+    rememberTaskFocus();
+    import("../../../desk/shell").then(({ openSurface }) =>
+      // PHILO-16 (C): Runs on opens on the job this face runs.
+      openSurface("open-concierge", "writing_dictation"),
+    );
+  }, []);
   const statusItems = useMemo<StatusBarItem[]>(() => [
     { key: "level", text: meter },
     { key: "phase", lamp: PHASE_LAMP[phase.tone], text: <span className="speak-phase" data-tone={phase.tone} data-testid="speak-phase">{phase.word}{phase.tail}</span> },
     elapsed ? { key: "elapsed", text: <span className="speak-elapsed" data-testid="speak-elapsed">{elapsed}</span> } : null,
     { key: "fact", text: <span className="speak-fact" data-testid="speak-fact">{fact}</span> },
-    hotkey && !listening ? { key: "hotkey", text: <span className="speak-strip">Hold <kbd className="speak-kbd">{hotkey}</kbd> anywhere</span> } : null,
+    { key: "engine", text: <EngineFact engine={resolved.name} view={engine} /> },
   ].filter(Boolean) as StatusBarItem[],
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  [phase.tone, phase.word, phase.tail, fact, hotkey, elapsed, listening, deck.level, deck.micState]);
+  [phase.tone, phase.word, phase.tail, fact, elapsed, deck.level, deck.micState, resolved.name, engine.dataState, engine.chipLabel, engine.chipState]);
+  const trailing = useMemo<ReactNode>(() => (
+    <>
+      {engine.choose ? (
+        <Button variant="ghost" dense onClick={openConcierge} title="Clean-up engine">
+          {engine.choose}
+        </Button>
+      ) : null}
+      {/* The hold key is a hint once Talk can hear him; before speech is
+          set up the bar says that instead (one line at 1440). */}
+      {hotkey && !listening && !speech.notSetUp ? (
+        <span className="speak-strip speak-hold-hint" data-testid="speak-hold-hint">Hold <kbd className="speak-kbd">{hotkey}</kbd> anywhere</span>
+      ) : null}
+    </>
+  ), [engine.choose, openConcierge, hotkey, listening, speech.notSetUp]);
   useLayoutEffect(() => {
     if (!report) return;
-    report(statusItems);
-  }, [report, statusItems]);
+    report({ items: statusItems, trailing });
+  }, [report, statusItems, trailing]);
+  const windowVerbs = useContext(SpeakVerbsContext);
   useLayoutEffect(() => (report ? () => report(null) : undefined), [report]);
 
   return (
@@ -370,7 +409,7 @@ export function SpeakFace() {
           edge to edge → the result → the checks → the status bar. No
           headline, no plate in the window. */}
       <article className="speak-plate" aria-label="Talk">
-        <Toolbar label="Speak" data-testid="speak-toolbar">
+        <Toolbar label="Speak" data-testid="speak-toolbar" trailing={windowVerbs}>
           <TransportRow deck={deck} speech={speech} talkKey={talkKey} raw={raw} />
           <TypesIntoRow deck={deck} />
           <CopyVerb text={deck.utterance} announce={announce} />
@@ -401,20 +440,17 @@ export function SpeakFace() {
         </div>
       </article>
 
-      {/* THE CHECKS: engine and hotkey on one rail. The hotkey draws only
-          when the key is known to be stopped. */}
-      <ol className="speak-checks" aria-label="Checks">
-        <li className="speak-check" data-tone={engineReady ? "ok" : enginePending || !resolved.name ? "idle" : "warn"}>
-          <span className="speak-check-bead" aria-hidden="true" />
-          <EngineRow engine={resolved.name} engineState={resolved.engineState} keySet={resolved.keySet} detectStatus={detectStatus} readiness={deck} />
-        </li>
-        {custody.show ? (
+      {/* THE CHECKS: only the hotkey, and only when the key is known to be
+          stopped (it carries the fix: the grants and Re-check). Clean-up is
+          a status bar fact (lane speak, 2026-10-25), not a strip. */}
+      {custody.show ? (
+        <ol className="speak-checks" aria-label="Checks">
           <li className="speak-check" data-tone={custody.kind === "failure" ? "danger" : "warn"}>
             <span className="speak-check-bead" aria-hidden="true" />
             <HotkeyRow custody={custody} onRecheck={deck.refreshReadiness} />
           </li>
-        ) : null}
-      </ol>
+        </ol>
+      ) : null}
 
       {/* Betterment C8: the pipeline, the budget and the states are
           diagnostics: behind RAW (Settings ▸ System ▸ Builder tools). */}
@@ -423,7 +459,7 @@ export function SpeakFace() {
           <DetailsContent deck={deck} />
         </Disclosure>
       ) : null}
-      {report ? null : <StatusBar data-testid="speak-status" items={statusItems} />}
+      {report ? null : <StatusBar data-testid="speak-status" items={statusItems} verbs={trailing} />}
     </div>
   );
 }
@@ -787,129 +823,54 @@ function ResultRow({
   );
 }
 
-/* ── ENGINE row ── */
+/* ── ENGINE fact (clean-up) ──
+   Lane speak (2026-10-25): clean-up is a setting. Its state is ONE status
+   bar fact (`Clean-up` · the engine by name · a dot and a word), and the
+   bar's one verb (`Choose engine`, `Choose`) only when it needs one. */
 
-function EngineRow({
-  engine,
-  engineState,
-  keySet,
-  detectStatus,
-  readiness,
-}: {
-  engine: string | null;
-  engineState: string | null;
-  keySet: boolean | null;
-  detectStatus: "pending" | "ok" | "failed";
-  readiness: ReturnType<typeof useSpeakDeck>;
-}) {
-  const openConcierge = () => {
-    // HS-200-41: remember the verb he left, so the Concierge's Apply can
-    // put focus back here instead of on nothing (design D2(a)).
-    rememberTaskFocus();
-    import("../../../desk/shell").then(({ openSurface }) =>
-      // PHILO-16 (C): Runs on opens on the job this face runs.
-      openSurface("open-concierge", "writing_dictation"),
-    );
-  };
+type EngineView = {
+  dataState: "not-set" | "pending" | "unknown" | "ready" | "waiting";
+  chipState: "success" | "warning" | "idle" | null;
+  chipLabel: string;
+  /** The verb's word, or null when the fact needs no verb. */
+  choose: string | null;
+};
 
+function engineView(
+  engine: string | null,
+  engineState: string | null,
+  keySet: boolean | null,
+  detectStatus: "pending" | "ok" | "failed",
+): EngineView {
   // No engine assigned at all. Betterment C8: not a fault for Speak — the
-  // words land as said. `Clean-up: off · Choose engine`.
-  if (!engine) {
-    return (
-      <div className="speak-engine" data-engine-state="not-set">
-        <span className="speak-engine-caption">Clean-up</span>
-        <span className="speak-engine-dot">{"·"}</span>
-        <StateChip state="idle" label="Off" />
-        <span className="speak-transport-spacer" />
-        <Button variant="ghost" dense onClick={openConcierge}>
-          Choose engine
-        </Button>
-      </div>
-    );
-  }
+  // words land as said. `Clean-up off · Choose engine`.
+  if (!engine) return { dataState: "not-set", chipState: "idle", chipLabel: "Off", choose: "Choose engine" };
+  // Pending: detect hasn't resolved yet — the name, muted, and `Checking`.
+  if (detectStatus === "pending") return { dataState: "pending", chipState: null, chipLabel: "Checking", choose: null };
+  // Failed: detect errored. State is unknown — never claim READY.
+  if (detectStatus === "failed" && !engineState) return { dataState: "unknown", chipState: "warning", chipLabel: "Unknown", choose: "Choose" };
+  if (engineState === "NOT_SET")
+    return { dataState: "not-set", chipState: "warning", chipLabel: plain(keySet === false ? "KEY NOT SET" : "NOT SET"), choose: "Choose" };
+  if (engineState === "UNREACHABLE") return { dataState: "unknown", chipState: "warning", chipLabel: "Unreachable", choose: "Choose" };
+  if (engineState === "READY") return { dataState: "ready", chipState: "success", chipLabel: "Ready", choose: null };
+  if (engineState === "WAITING" || engineState === "CHECKING")
+    return { dataState: "waiting", chipState: "warning", chipLabel: plain(engineState), choose: "Choose" };
+  if (engineState) return { dataState: "unknown", chipState: "warning", chipLabel: plain(engineState), choose: "Choose" };
+  // detectStatus === "ok" but no engine matched — fallback
+  return { dataState: "unknown", chipState: "warning", chipLabel: "Unknown", choose: "Choose" };
+}
 
-  // Pending: detect hasn't resolved yet.  Show the assignment name
-  // muted with CHECKING... — no state chip, no host claim beyond the
-  // assignment boundary's base_url LAN rule (already in egress).
-  if (detectStatus === "pending") {
-    return (
-      <div className="speak-engine" data-engine-state="pending">
-        <span className="speak-engine-caption">Clean-up runs on</span>
-        <span className="speak-engine-dot">{"·"}</span>
-        <span className="speak-engine-name" data-muted="">{engine}</span>
-        <span className="speak-transport-spacer" />
-        <span className="speak-engine-checking">Checking</span>
-      </div>
-    );
-  }
-
-  // Failed: detect errored.  State is unknown — never claim READY.
-  if (detectStatus === "failed" && !engineState) {
-    return (
-      <div className="speak-engine" data-engine-state="unknown">
-        <span className="speak-engine-caption">Clean-up runs on</span>
-        <span className="speak-engine-dot">{"·"}</span>
-        <span className="speak-engine-name">{engine}</span>
-        <span className="speak-transport-spacer" />
-        <StateChip state="warning" label="Unknown" />
-        <Button variant="ghost" dense onClick={openConcierge}>
-          Choose
-        </Button>
-      </div>
-    );
-  }
-
-  // Detect resolved — derive the state chip from the engine's state.
-  let dataState: string;
-  let chipState: "success" | "warning";
-  let chipLabel: string;
-  let showChoose = false;
-
-  if (engineState === "NOT_SET") {
-    dataState = "not-set";
-    chipState = "warning";
-    chipLabel = keySet === false ? "KEY NOT SET" : "NOT SET";
-    showChoose = true;
-  } else if (engineState === "UNREACHABLE") {
-    dataState = "unknown";
-    chipState = "warning";
-    chipLabel = "UNREACHABLE";
-    showChoose = true;
-  } else if (engineState === "READY") {
-    dataState = "ready";
-    chipState = "success";
-    chipLabel = "READY";
-  } else if (engineState === "WAITING" || engineState === "CHECKING") {
-    dataState = "waiting";
-    chipState = "warning";
-    chipLabel = engineState;
-    showChoose = true;
-  } else if (engineState) {
-    dataState = "unknown";
-    chipState = "warning";
-    chipLabel = engineState.replace(/_/g, " ");
-    showChoose = true;
-  } else {
-    // detectStatus === "ok" but no engine matched — fallback
-    dataState = "unknown";
-    chipState = "warning";
-    chipLabel = "UNKNOWN";
-    showChoose = true;
-  }
-
+function EngineFact({ engine, view }: { engine: string | null; view: EngineView }) {
   return (
-    <div className="speak-engine" data-engine-state={dataState}>
-      <span className="speak-engine-caption">Clean-up runs on</span>
-      <span className="speak-engine-dot">{"·"}</span>
-      <span className="speak-engine-name">{engine}</span>
-      <span className="speak-transport-spacer" />
-      <StateChip state={chipState} label={plain(chipLabel)} />
-      {showChoose ? (
-        <Button variant="ghost" dense onClick={openConcierge}>
-          Choose
-        </Button>
-      ) : null}
-    </div>
+    <span className="speak-engine" data-engine-state={view.dataState}>
+      <span className="speak-engine-caption">Clean-up</span>
+      {engine ? <span className="speak-engine-name" data-muted={view.dataState === "pending" || undefined}>{engine}</span> : null}
+      {view.chipState ? (
+        <StateChip state={view.chipState} label={view.chipLabel} />
+      ) : (
+        <span className="speak-engine-checking">{view.chipLabel}</span>
+      )}
+    </span>
   );
 }
 

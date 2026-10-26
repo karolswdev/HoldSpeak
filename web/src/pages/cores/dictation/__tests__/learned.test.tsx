@@ -105,13 +105,13 @@ describe("the Learned wing's rows", () => {
 
     // the lead slot is the emblem (canon B), never a free-text column
     expect(
-      within(text).getByText("TEXT", { selector: ".learned-kind" }),
+      within(text).getByText("Text", { selector: ".learned-kind" }),
     ).toBeTruthy();
     expect(
-      within(intent).getByText("INTENT", { selector: ".learned-kind" }),
+      within(intent).getByText("Intent", { selector: ".learned-kind" }),
     ).toBeTruthy();
     expect(
-      within(target).getByText("TARGET", { selector: ".learned-kind" }),
+      within(target).getByText("Target", { selector: ".learned-kind" }),
     ).toBeTruthy();
 
     // the primary is the key; the cells carry `-> value`
@@ -135,10 +135,10 @@ describe("the Learned wing's rows", () => {
     render(<Learned />);
     await waitFor(() => expect(rows()).toHaveLength(3));
     const [text, intent, target] = rows();
-    expect(within(text).getByText("1 APPLIED")).toBeTruthy();
-    expect(within(intent).getByText("3 APPLIED")).toBeTruthy();
+    expect(within(text).getByText("1 applied")).toBeTruthy();
+    expect(within(intent).getByText("3 applied")).toBeTruthy();
     // the never-fired rule says nothing — no `0 APPLIED`
-    expect(within(target).queryByText(/APPLIED/)).toBeNull();
+    expect(within(target).queryByText(/applied/i)).toBeNull();
     // ...but the slot is still there, so its neighbours never move
     expect(target.querySelector(".learned-applied")).toBeTruthy();
   });
@@ -185,7 +185,7 @@ describe("Forget", () => {
     expect(screen.queryByRole("button", { name: "×" })).toBeNull();
     await waitFor(() => expect(deleted).toEqual(["/api/dictation/corrections/3"]));
     // the wing re-read and now stands quiet
-    await waitFor(() => expect(screen.getByText("NOTHING LEARNED")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Nothing learned")).toBeTruthy());
   });
 });
 
@@ -193,7 +193,7 @@ describe("the quiet wing", () => {
   it("says ONE token and no zero: NOTHING LEARNED", async () => {
     items = [];
     render(<Learned />);
-    await waitFor(() => expect(screen.getByText("NOTHING LEARNED")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Nothing learned")).toBeTruthy());
     expect(rows()).toHaveLength(0);
     const body = document.querySelector(".speak-learned")!.textContent ?? "";
     expect(body).not.toContain("0 ");
@@ -205,7 +205,7 @@ describe("the live refresh", () => {
   it("re-reads on a `learning_event` frame", async () => {
     items = [];
     render(<Learned />);
-    await waitFor(() => expect(screen.getByText("NOTHING LEARNED")).toBeTruthy());
+    await waitFor(() => expect(screen.getByText("Nothing learned")).toBeTruthy());
 
     items = [{ id: 9, kind: "text", key: "queue for", value: "Q4", applied: 0 }];
     const listener = mocks.listeners.get("learning_event");
@@ -219,10 +219,10 @@ describe("the live refresh", () => {
 
 describe("the pure helpers", () => {
   it("kindEmblem renders human tokens, never snake_case", () => {
-    expect(kindEmblem("text")).toBe("TEXT");
-    expect(kindEmblem("intent")).toBe("INTENT");
-    expect(kindEmblem("target")).toBe("TARGET");
-    expect(kindEmblem("some_new_kind")).toBe("SOME NEW KIND");
+    expect(kindEmblem("text")).toBe("Text");
+    expect(kindEmblem("intent")).toBe("Intent");
+    expect(kindEmblem("target")).toBe("Target");
+    expect(kindEmblem("some_new_kind")).toBe("Some new kind");
     expect(kindEmblem(undefined)).toBe("");
   });
 
@@ -243,7 +243,7 @@ describe("the pure helpers", () => {
   });
 
   it("appliedToken is absent at zero", () => {
-    expect(appliedToken({ applied: 4 })).toBe("4 APPLIED");
+    expect(appliedToken({ applied: 4 })).toBe("4 applied");
     expect(appliedToken({ applied: 0 })).toBe("");
     expect(appliedToken({})).toBe("");
   });

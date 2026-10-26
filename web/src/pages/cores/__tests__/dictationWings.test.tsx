@@ -98,7 +98,7 @@ function mount() {
 }
 
 describe("the Speak window's wings", () => {
-  it("carries five wings including Voice commands", async () => {
+  it("carries five wings including Commands", async () => {
     mount();
     await waitFor(() =>
       expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual([
@@ -106,7 +106,7 @@ describe("the Speak window's wings", () => {
         "Journal",
         "Blocks",
         "Learned",
-        "Voice commands",
+        "Commands",
       ]),
     );
   });
@@ -118,7 +118,7 @@ describe("the Speak window's wings", () => {
       expect(document.querySelector(".speak-learned")).toBeTruthy(),
     );
     expect(await screen.findByText("queue for")).toBeTruthy();
-    expect(screen.getByText("1 APPLIED")).toBeTruthy();
+    expect(screen.getByText("1 applied")).toBeTruthy();
   });
 });
 

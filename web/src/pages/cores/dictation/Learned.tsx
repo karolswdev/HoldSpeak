@@ -29,6 +29,7 @@ import { asRows, rowId, useResource } from "../../pageSupport";
 import { useRuntimeBus } from "../../../runtime/RuntimeBus";
 import type { DictationCorrectionsResponse } from "../core-types";
 import { deSnake, presentValue } from "../../../desk/surface/format";
+import { useWindowInterior } from "../../../desk/surface/interior";
 import {
   ConfirmVerb,
   SurfaceLedger,
@@ -43,15 +44,16 @@ type Row = Record<string, unknown>;
  *  the lead-slot emblem. A kind the store grows later still reads as words,
  *  never as a raw snake_case wire value (canon E.4). */
 const KIND_EMBLEMS: Record<string, string> = {
-  text: "TEXT",
-  intent: "INTENT",
-  target: "TARGET",
+  text: "Text",
+  intent: "Intent",
+  target: "Target",
 };
 
 export function kindEmblem(value: unknown): string {
   const raw = String(value ?? "").trim();
   if (!raw) return "";
-  return KIND_EMBLEMS[raw] ?? deSnake(raw).toUpperCase();
+  const words = deSnake(raw);
+  return KIND_EMBLEMS[raw] ?? (words ? words[0].toUpperCase() + words.slice(1) : words);
 }
 
 /** The value column: the LABEL the owner reads, never the id on the wire
@@ -76,7 +78,7 @@ export function valueLabel(
 /** `N APPLIED`, absent at zero (UX-CANON A.8 — no counters of zero). */
 export function appliedToken(row: Row): string {
   const count = Number(row.applied ?? 0);
-  return Number.isFinite(count) && count > 0 ? `${count} APPLIED` : "";
+  return Number.isFinite(count) && count > 0 ? `${count} applied` : "";
 }
 
 /** readiness → `{id: label}` for the target profiles (ruling R12). A failed
@@ -122,6 +124,8 @@ function blockLabels(data: Record<string, unknown> | undefined): Record<string, 
 }
 
 export function Learned() {
+  // Window grammar: the Learned wing is a list window, edge to edge.
+  useWindowInterior("list");
   const { subscribe } = useRuntimeBus();
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,7 +185,7 @@ export function Learned() {
           loading={loading}
           error={error}
           empty={!rows.length}
-          emptyLabel="NOTHING LEARNED"
+          emptyLabel="Nothing learned"
           emptyGlyph="▤"
           onRetry={() => void load()}
         >

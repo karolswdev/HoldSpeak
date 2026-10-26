@@ -110,21 +110,21 @@ describe("the Journal row grammar", () => {
     const { container } = render(<Journal />);
 
     await screen.findByText("Ship the Q4 platform in October");
-    expect(screen.getByText("LANDED IN CLAUDE CODE")).toBeInTheDocument();
-    expect(screen.getByText("LANDED IN TERMINAL SHELL")).toBeInTheDocument();
-    expect(screen.getByText("38 MS")).toBeInTheDocument();
-    expect(screen.getByText("47 MS")).toBeInTheDocument();
+    expect(screen.getByText("Landed in Claude Code")).toBeInTheDocument();
+    expect(screen.getByText("Landed in Terminal shell")).toBeInTheDocument();
+    expect(screen.getByText("38 ms")).toBeInTheDocument();
+    expect(screen.getByText("47 ms")).toBeInTheDocument();
     // Human source badges — never the wire's `dry_run`/snake_case. Scoped to
     // the trailing slot: the filter strip carries the same words.
     const badges = Array.from(
       container.querySelectorAll(".journal-badge"),
     ).map((n) => n.textContent);
-    expect(badges).toEqual(["DICTATION", "HOTKEY"]);
+    expect(badges).toEqual(["Dictation", "Hotkey"]);
 
     // APPLIED carries NO count and appears only on the row that stored ids.
-    const applied = screen.getAllByText("APPLIED");
+    const applied = screen.getAllByText("Applied");
     expect(applied).toHaveLength(1);
-    expect(applied[0].textContent).toBe("APPLIED");
+    expect(applied[0].textContent).toBe("Applied");
     expect(applied[0]).toHaveAttribute("data-tone", "ok");
 
     // The APPLIED/TAUGHT slot is present on EVERY row, so an empty one never
@@ -149,9 +149,9 @@ describe("the Journal row grammar", () => {
     render(<Journal />);
 
     await screen.findByText("Ship the queue for platform");
-    const taught = screen.getAllByText("TAUGHT");
+    const taught = screen.getAllByText("Taught");
     expect(taught).toHaveLength(1);
-    expect(taught[0].textContent).toBe("TAUGHT");
+    expect(taught[0].textContent).toBe("Taught");
     expect(screen.queryByText(/SIMILAR/)).toBeNull();
   });
 
@@ -197,12 +197,12 @@ describe("the Journal's filter tokens", () => {
     expect(journalUrls()[0]).toBe("/api/dictation/journal?limit=50");
 
     openFind();
-    fireEvent.click(screen.getByRole("button", { name: "BROWSER" }));
+    fireEvent.click(screen.getByRole("button", { name: "Browser" }));
     await waitFor(() =>
       expect(journalUrls()).toContain("/api/dictation/journal?limit=50&source=browser"),
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "ALL" }));
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
     await waitFor(() =>
       expect(journalUrls().filter((u) => u === "/api/dictation/journal?limit=50")).toHaveLength(2),
     );
@@ -213,7 +213,7 @@ describe("the Journal's filter tokens", () => {
     wire(() => ({ count: 0, items: [] }));
     const { unmount } = render(<Journal />);
     await screen.findByText("Nothing said yet");
-    expect(screen.queryByRole("button", { name: "ALL" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "All" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
     unmount();
     wire(() => ({ count: 1, items: [row({ id: 9 })] }));
@@ -221,7 +221,7 @@ describe("the Journal's filter tokens", () => {
     await screen.findByText("Ship the Q4 platform in October");
     expect(screen.queryByLabelText("Search the journal")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Search" }));
-    for (const label of ["ALL", "DICTATION", "BROWSER", "HOTKEY"])
+    for (const label of ["All", "Dictation", "Browser", "Hotkey"])
       expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
     expect(screen.getByLabelText("Search the journal")).toBeInTheDocument();
   });
@@ -310,7 +310,7 @@ describe("the Journal's live frame obeys the wing's own claims", () => {
     await screen.findByText("browser only");
 
     openFind();
-    fireEvent.click(screen.getByRole("button", { name: "BROWSER" }));
+    fireEvent.click(screen.getByRole("button", { name: "Browser" }));
     await waitFor(() =>
       expect(journalUrls()).toContain("/api/dictation/journal?limit=50&source=browser"),
     );
@@ -330,7 +330,7 @@ describe("the Journal's live frame obeys the wing's own claims", () => {
     expect(screen.queryByText("spoken on the hotkey")).toBeNull();
 
     // ALL takes every source, so the same frame lands.
-    fireEvent.click(screen.getByRole("button", { name: "ALL" }));
+    fireEvent.click(screen.getByRole("button", { name: "All" }));
     await waitFor(() =>
       expect(journalUrls().filter((u) => u === "/api/dictation/journal?limit=50")).toHaveLength(2),
     );
@@ -425,7 +425,7 @@ describe("the Journal's live frame obeys the wing's own claims", () => {
     const { container } = render(<Journal />);
     await screen.findByText("postgress migration");
     // No search, no mark — and the shared slot keeps its idle width.
-    expect(screen.queryByText("IN FINAL")).toBeNull();
+    expect(screen.queryByText("In final")).toBeNull();
     expect(
       container.querySelectorAll('.journal-cells[data-searching="true"]'),
     ).toHaveLength(0);
@@ -439,7 +439,7 @@ describe("the Journal's live frame obeys the wing's own claims", () => {
     expect(
       container.querySelectorAll('.journal-cells[data-searching="true"]'),
     ).toHaveLength(2);
-    const marks = screen.getAllByText("IN FINAL");
+    const marks = screen.getAllByText("In final");
     expect(marks).toHaveLength(1);
     expect(marks[0].closest(".surface-ledger-line")?.textContent).toContain(
       "postgress migration",
@@ -504,12 +504,12 @@ describe("the Journal's pure grammar", () => {
 
   it("renders labels, never raw ids", () => {
     const labels = { claude_code: "Claude Code" };
-    expect(landedLabel({ target_profile: "claude_code" }, labels)).toBe("CLAUDE CODE");
-    expect(landedLabel({ target_profile: "terminal_shell" }, {})).toBe("TERMINAL SHELL");
-    expect(landedLabel({ source: "dry_run" }, labels)).toBe("DRY RUN");
+    expect(landedLabel({ target_profile: "claude_code" }, labels)).toBe("Claude Code");
+    expect(landedLabel({ target_profile: "terminal_shell" }, {})).toBe("Terminal shell");
+    expect(landedLabel({ source: "dry_run" }, labels)).toBe("Dry run");
     expect(landedLabel({}, labels)).toBe("");
-    expect(sourceBadge("dry_run")).toBe("DRY RUN");
-    expect(sourceBadge("dictation")).toBe("DICTATION");
+    expect(sourceBadge("dry_run")).toBe("Dry run");
+    expect(sourceBadge("dictation")).toBe("Dictation");
     expect(sourceBadge("")).toBe("");
   });
 
@@ -532,11 +532,11 @@ describe("the Journal's pure grammar", () => {
     expect(matchedFinalOnly({ transcript: "plain" }, "plain")).toBe(false);
   });
 
-  it("bands the days TODAY / YESTERDAY / the date", () => {
+  it("bands the days Today / Yesterday / the date, in sentence case", () => {
     const now = new Date("2026-09-06T12:00:00");
-    expect(journalDayLabel(new Date("2026-09-06T09:00:00"), now)).toBe("TODAY");
-    expect(journalDayLabel(new Date("2026-09-05T17:00:00"), now)).toBe("YESTERDAY");
-    expect(journalDayLabel(new Date("2026-09-01T17:00:00"), now)).not.toMatch(/TODAY|YESTERDAY/);
-    expect(journalDayLabel(null)).toBe("UNDATED");
+    expect(journalDayLabel(new Date("2026-09-06T09:00:00"), now)).toBe("Today");
+    expect(journalDayLabel(new Date("2026-09-05T17:00:00"), now)).toBe("Yesterday");
+    expect(journalDayLabel(new Date("2026-09-01T17:00:00"), now)).not.toMatch(/today|yesterday/i);
+    expect(journalDayLabel(null)).toBe("Undated");
   });
 });

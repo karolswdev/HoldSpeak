@@ -261,13 +261,13 @@ def _assert_learned_board(page: Any) -> None:
     row = rows.first
 
     # the lead slot is the kind emblem, on the ledger's 52px column
-    assert row.locator(".learned-kind").inner_text().strip() == "TEXT"
+    assert row.locator(".learned-kind").inner_text().strip() == "Text"
     # the primary is the key; the value is beside it behind the arrow
     assert row.locator(".surface-ledger-primary").inner_text().strip() == "queue for"
     assert row.locator(".learned-value").inner_text().strip() == "Q4"
     assert "→" in row.locator(".learned-cells").inner_text()
     # a REAL firing count — the teaching utterance is not one of them
-    assert row.locator(".learned-applied").inner_text().strip() == "1 APPLIED"
+    assert row.locator(".learned-applied").inner_text().strip() == "1 applied"
 
     body = wing.inner_text()
     # no wire words on the face (canon E.4)
@@ -327,8 +327,8 @@ def _assert_learned_quiet(page: Any) -> None:
     wing = page.locator(".speak-learned")
     assert wing.locator(".surface-ledger-row").count() == 0
     body = wing.inner_text()
-    assert "NOTHING LEARNED" in body, body
-    assert "APPLIED" not in body, body
+    assert "Nothing learned" in body, body
+    assert "applied" not in body.lower(), body
     assert "0" not in body, body
     # no prose: the empty state is one token, never a sentence (A.3)
     assert "." not in body, body
@@ -368,8 +368,8 @@ def _loop(page: Any, width: int) -> None:
     _settle(page)
     assert rows.count() == 2, rows.count()
     # newest first: the second utterance wears APPLIED, the first TAUGHT
-    assert "APPLIED" in rows.nth(0).locator(".journal-mark").inner_text()
-    assert "TAUGHT" in rows.nth(1).locator(".journal-mark").inner_text()
+    assert "Applied" in rows.nth(0).locator(".journal-mark").inner_text()
+    assert "Taught" in rows.nth(1).locator(".journal-mark").inner_text()
 
     # ── 4. the Learned wing: the rule the desk now knows ───────────
     _wing(page, "Learned")
@@ -423,7 +423,7 @@ def _run(tmp_path, monkeypatch, width: int, height: int) -> None:
             # Folded, the menu also holds the configuration door, after the faces.
             door = ["CONFIGURE DICTATION"] if _folded(page).count() else []
             assert wings == [
-                "SPEAK", "JOURNAL", "BLOCKS", "LEARNED", "VOICE COMMANDS"
+                "SPEAK", "JOURNAL", "BLOCKS", "LEARNED", "COMMANDS"
             ] + door, wings
             _loop(page, width)
             _assert_clean(page, errors)

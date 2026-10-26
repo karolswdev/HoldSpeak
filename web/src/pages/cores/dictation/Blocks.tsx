@@ -2,7 +2,9 @@
  * the tile's face, the name and spoken matches ride the spine,
  * create is a ghost tile in the shelf. Edits land on the material.
  * HS-111-02 — cosmetic refit: mono tile names, CycleGadget scope,
- * mics on every draft input, refusals in the footer bar. */
+ * mics on every draft input, refusals in the footer bar.
+ * Lane speak (2026-10-25): the library became a dense list window (the
+ * window grammar): toolbar, one 30 px row per block, an in-place open. */
 import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
@@ -11,19 +13,26 @@ import type { DictationBlocksResponse } from "../core-types";
 import {
   ConfirmVerb,
   EditInPlace,
-  SurfaceLibrary,
-  SurfaceLibraryGhost,
-  SurfaceLibraryTile,
+  SurfaceLedger,
+  SurfaceLedgerRow,
   SurfaceSection,
   SurfaceState,
 } from "../../../desk/surface/Surface";
-import { countToken } from "../../../desk/surface";
+import { ToolGlyph, Toolbar } from "../../../desk/surface/kit";
+import { useWindowInterior } from "../../../desk/surface/interior";
 import {
   CycleGadget,
   PadGadget,
   StringGadget,
 } from "../../../desk/surface/gadgets";
 import { useAnnounce } from "./shared";
+
+/** How a block injects, in plain words (the wire's `inject.mode`). */
+const MODE_WORDS: Record<string, string> = {
+  replace: "Replaces",
+  append: "Adds after",
+  prepend: "Adds before",
+};
 
 function blockSlug(name: string): string {
   return name
@@ -95,12 +104,18 @@ export function Blocks() {
       announce(readableError(error), "warn");
     }
   };
+  // Lane speak (2026-10-25): the wing is a list window — a toolbar (New
+  // block · the scope at the right), then one dense row per block (name ·
+  // what he says · how it injects), edge to edge. A row opens in place to
+  // edit the name and the template; Delete is the row's verb.
+  useWindowInterior("list");
+  const [openId, setOpenId] = useState("");
   return (
     <SurfaceSection className="speak-blocks">
-      <SurfaceLibrary
-        count={rows.length || undefined}
-        countLabel={countToken(rows.length, "BLOCK") ?? undefined}
-        controls={
+      <Toolbar
+        label="Blocks"
+        data-testid="blocks-toolbar"
+        trailing={
           <CycleGadget
             label="Block scope"
             value={scope}
@@ -112,115 +127,116 @@ export function Blocks() {
           />
         }
       >
+        <Button dense variant="secondary" disabled={drafting} onClick={() => setDrafting(true)}>
+          <ToolGlyph kind="new" />
+          New block
+        </Button>
+      </Toolbar>
+      {drafting ? (
+        <div className="blocks-draft" role="group" aria-label="New block">
+          <StringGadget
+            label="Block name"
+            placeholder="Name"
+            value={draft.name}
+            onChange={(name) => setDraft({ ...draft, name })}
+          />
+          <StringGadget
+            label="Spoken matches, comma separated"
+            placeholder="Say: standup notes, stand up"
+            value={draft.examples}
+            onChange={(examples) => setDraft({ ...draft, examples })}
+          />
+          <div className="desk-mic-row">
+            <PadGadget
+              label="Injection text"
+              placeholder="What this block injects"
+              rows={3}
+              value={draft.injection}
+              onChange={(next) => setDraft({ ...draft, injection: next })}
+            />
+          </div>
+          <div className="surface-actions">
+            <Button
+              dense
+              variant="primary"
+              disabled={!draft.name.trim()}
+              onClick={() => void create()}
+            >
+              Create
+            </Button>
+            <Button dense variant="ghost" onClick={() => setDrafting(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : null}
+      <SurfaceLedger cols="blocks">
         <SurfaceState
           loading={resource.loading}
           error={resource.error}
+          empty={!rows.length && !drafting}
+          emptyLabel="No blocks yet"
           onRetry={() => void resource.reload()}
         >
-          {rows.map((row, index) => {
-            const match =
-              row.match && typeof row.match === "object"
-                ? (row.match as Record<string, unknown>)
-                : {};
-            const examples = Array.isArray(match.examples)
-              ? match.examples
-              : [];
-            const inject =
-              row.inject && typeof row.inject === "object"
-                ? (row.inject as Record<string, unknown>)
-                : {};
-            const mode = String(inject.mode ?? "replace");
-            return (
-              <SurfaceLibraryTile
-                key={rowId(row, index)}
-                face={
-                  <EditInPlace
-                    value={String(inject.template ?? "")}
-                    label={`${String(row.description ?? "Block")} template`}
-                    multiline
-                    onCommit={(next) =>
-                      void save(row, { inject: { ...inject, template: next } })
-                    }
-                  />
-                }
-                name={
-                  <EditInPlace
-                    value={String(row.description ?? row.id ?? "Block")}
-                    label={`${String(row.description ?? "Block")} name`}
-                    onCommit={(next) => void save(row, { description: next })}
-                  />
-                }
-                lamp={<span className="surface-mode">{mode}</span>}
-                says={
-                  examples.length
-                    ? examples.slice(0, 3).map((say, sayIndex) => (
-                        <span className="surface-say" key={sayIndex}>
-                          {String(say)}
-                        </span>
-                      ))
-                    : null
-                }
-                verbs={
-                  <ConfirmVerb
-                    label="Delete"
-                    confirmLabel="Delete?"
-                    onConfirm={() => void remove(row)}
-                  />
-                }
-              />
-            );
-          })}
-          {drafting ? (
-            <li className="surface-tile surface-tile-drafting">
-              <div className="surface-tile-face">
-                <div className="desk-mic-row">
-                  <PadGadget
-                    label="Injection text"
-                    placeholder="What this block injects"
-                    rows={4}
-                    value={draft.injection}
-                    onChange={(next) =>
-                      setDraft({ ...draft, injection: next })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="surface-tile-spine">
-                <StringGadget
-                  label="Block name"
-                  placeholder="Name"
-                  value={draft.name}
-                  onChange={(name) => setDraft({ ...draft, name })}
-                />
-                <StringGadget
-                  label="Spoken matches, comma separated"
-                  placeholder="Say: standup notes, stand up"
-                  value={draft.examples}
-                  onChange={(examples) => setDraft({ ...draft, examples })}
-                />
-                <div className="surface-actions">
-                  <Button
-                    dense
-                    variant="primary"
-                    disabled={!draft.name.trim()}
-                    onClick={() => void create()}
-                  >
-                    Create
-                  </Button>
-                  <Button dense variant="ghost" onClick={() => setDrafting(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </li>
-          ) : (
-            <SurfaceLibraryGhost
-              label="New block"
-              onCreate={() => setDrafting(true)}
-            />
-          )}
+          <ul className="surface-ledger-rows">
+            {rows.map((row, index) => {
+              const id = String(row.id ?? rowId(row, index));
+              const match =
+                row.match && typeof row.match === "object"
+                  ? (row.match as Record<string, unknown>)
+                  : {};
+              const examples = Array.isArray(match.examples)
+                ? match.examples.map(String)
+                : [];
+              const inject =
+                row.inject && typeof row.inject === "object"
+                  ? (row.inject as Record<string, unknown>)
+                  : {};
+              const mode = String(inject.mode ?? "replace");
+              const name = String(row.description ?? row.id ?? "Block");
+              return (
+                <SurfaceLedgerRow
+                  key={id}
+                  primary={name}
+                  open={openId === id}
+                  onToggle={() => setOpenId(openId === id ? "" : id)}
+                  cells={
+                    <span className="blocks-cells">
+                      {examples.length ? (
+                        <span className="blocks-says">Say “{examples.slice(0, 3).join("”, “")}”</span>
+                      ) : null}
+                      <span className="blocks-mode">{MODE_WORDS[mode] ?? mode}</span>
+                    </span>
+                  }
+                  trailing={
+                    <ConfirmVerb
+                      label="Delete"
+                      confirmLabel="Delete?"
+                      onConfirm={() => void remove(row)}
+                    />
+                  }
+                >
+                  <div className="blocks-open">
+                    <EditInPlace
+                      value={name}
+                      label={`${name} name`}
+                      onCommit={(next) => void save(row, { description: next })}
+                    />
+                    <EditInPlace
+                      value={String(inject.template ?? "")}
+                      label={`${name} template`}
+                      multiline
+                      onCommit={(next) =>
+                        void save(row, { inject: { ...inject, template: next } })
+                      }
+                    />
+                  </div>
+                </SurfaceLedgerRow>
+              );
+            })}
+          </ul>
         </SurfaceState>
-      </SurfaceLibrary>
+      </SurfaceLedger>
     </SurfaceSection>
   );
 }
