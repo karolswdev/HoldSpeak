@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-25 (the window grammar #1457–#1471; Engines/Speak)
+**Last updated:** 2026-10-25 (the window grammar #1457–#1477; dock rhythm, decisions reader)
 
 ## Current phase
 
@@ -30,14 +30,19 @@ readout (Not ready / Ready · engine, ticking time), the level meter in the bar,
 a quiet Copy verb (`copy` glyph); Voice commands toolbar; Components Window ▸
 List + inspector. Every window in the manifest now follows the grammar.
 #1473 Room folds duplicate Watch rows (two Jira Watches read the same issues:
-26 rows for 13); this PR: New Decision opens its own window and Create opens
+26 rows for 13); #1474 New Decision opens its own window and Create opens
 the record in the Decisions window on the grammar (owner 2026-10-25: "opens up
-a cluster… of a window"). CATCH 2026-10-25: his hub had served main 33fdbce59
+a cluster… of a window"); #1476 the dock: one 84 px tile width (owner: "random
+inconsistencies between those icons"), the live tag in the word's row, lamps on
+the icon; #1477 every decision record opens in the Decisions window reader
+(Room This-week click, Room drawer, Prepare citation, WHY with one record) and
+Today ▸ Decisions opens the Decisions window instead of swapping Today's content. CATCH 2026-10-25: his hub had served main 33fdbce59
 since 2026-10-24 (no watcher alive); redeployed from
 /Users/karol/dev/tools/wt-desk-main-20261025 (see memory reference_owner_hub_redeploy).
-Open fix-forward: the Room's This-week decision click and the Room drawer still
-open the old desk decision window in edit mode; Today ▸ Decisions still the old
-receipt page; Engines Remove (DELETE refuses bound engines; unbind rules
+Open fix-forward: a meeting decision with no record yet and WHY with several
+governing records still open the Decisions page inside Today; "Review
+decisions" lost its Current-only preset; Today's rows still wear mono-caps
+tokens (AGENT LAUNCHED, MEETING RECORDED); Engines Remove (DELETE refuses bound engines; unbind rules
 first), the Add-an-engine panel and Download fold still wear caps tokens,
 Speak's Clean-up chip and the Journal/Blocks/Learned/Configure wings are not
 dense lists yet (no seeded rows to prove them), Ask's EngineLine "No engine"
