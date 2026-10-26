@@ -19,12 +19,21 @@ export function DecisionsCore({ scope }: CoreProps) {
   // The owner, 2026-10-25: a decision just made opens here, selected, in the
   // reader (`record:<id>`), never in Today's window.
   const recordId = scope?.startsWith("record:") ? scope.slice("record:".length) : undefined;
+  // A meeting's decision with no record yet (`decision:<id>`): its reader,
+  // from the meeting. The records that govern one piece of work (WHY with
+  // several, `records:<id>,<id>`): the list of only those, the first in the
+  // reader. Review decisions (`current`): the list with Current only on.
+  const decisionId = scope?.startsWith("decision:") ? scope.slice("decision:".length) : undefined;
+  const recordIds = scope?.startsWith("records:") ? scope.slice("records:".length) : undefined;
   return (
     <div className="decisions-window" data-testid="decisions-window">
       <section className="decisions-window-section" aria-live="polite">
         <DecisionsView
           windowed
           receiptId={recordId}
+          decisionId={decisionId}
+          recordIds={recordIds}
+          initialWhyOnly={scope === "current"}
           onBackToList={() => useDesk.getState().openSurfaceWindow("open-decisions", undefined)}
         />
       </section>

@@ -150,8 +150,9 @@ interface Adapter {
 }
 
 /** A scope the hub holds as a window's object: a reference (`project:p-1`,
- * `meeting:m-1?view=review`), never a payload. The hub takes 400 chars. */
-export const isScopeRef = (scope: string): boolean => /^[\w.:?=&/-]{1,400}$/.test(scope);
+ * `meeting:m-1?view=review`, `records:r-1,r-2`), never a payload. The hub
+ * takes 400 chars. */
+export const isScopeRef = (scope: string): boolean => /^[\w.:?=&/,-]{1,400}$/.test(scope);
 
 /** The lane's window id (lane/LaneWindow.tsx; kept here so this module does
  * not import the window's component). */

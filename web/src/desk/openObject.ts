@@ -249,7 +249,8 @@ export function openRef(ref: string, navigation?: DeskNavigation): void {
  * that one opens itself (its words, its date, its meeting), not the meeting
  * that hid it. One read tells which. The owner, 2026-10-25: a meeting
  * decision that has a record opens that record in the Decisions window
- * reader; one with no record yet keeps the Decisions page in Today. */
+ * reader; one with no record yet opens there too, in its reader from the
+ * meeting (`decision:<id>`). */
 function openDecision(ref: string): void {
   const id = ref.slice("decision:".length);
   void apiFetch<{ decision?: { source_meeting_id?: string | null } }>(`/api/decisions/${encodeURIComponent(id)}`)
@@ -261,7 +262,7 @@ function openDecision(ref: string): void {
       ).catch(() => []);
       const record = (Array.isArray(records) ? records : []).find((row) => String(row?.id ?? "").trim());
       if (record) openDecisionRecord(String(record.id));
-      else openIntelligence({ view: "receipts", decisionId: id });
+      else useDesk.getState().openSurfaceWindow("open-decisions", `decision:${id}`);
     })
     .catch(() => openSourceRef(ref));
 }
@@ -286,6 +287,15 @@ export function openDecisionRecord(recordId: string): void {
   const id = recordId.trim();
   if (!id) return;
   useDesk.getState().openSurfaceWindow("open-decisions", `record:${id}`);
+}
+
+/** The records that govern one piece of work (WHY with several): the
+ *  Decisions window lists only those, the first in the reader. One record
+ *  opens its reader alone. */
+export function openDecisionRecords(recordIds: string[]): void {
+  const ids = recordIds.map((id) => id.trim()).filter(Boolean);
+  if (ids.length === 1) openDecisionRecord(ids[0]);
+  else if (ids.length) useDesk.getState().openSurfaceWindow("open-decisions", `records:${ids.join(",")}`);
 }
 
 /** A calendar row: its person at Prep when the event is linked to one, else

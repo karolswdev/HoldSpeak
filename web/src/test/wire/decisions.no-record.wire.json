@@ -1,0 +1,26 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-26T05:05:03.203004Z",
+  "wire": {
+    "decisions": [
+      {
+        "decided_at": "2026-10-26T03:05:03+00:00",
+        "id": "dec-eee0dbcac4e95493623b",
+        "lifecycle": "recorded",
+        "meeting_id": "m-sync",
+        "meeting_title": "Ledger cutover sync",
+        "rationale": "Dual-write is stable.",
+        "record_id": null,
+        "source": "meeting",
+        "source_artifact_id": "m-sync-decisions",
+        "text": "Freeze the old ledger on Nov 5"
+      }
+    ],
+    "page": {
+      "count": 1,
+      "limit": 1,
+      "offset": 0,
+      "total": 1
+    }
+  }
+}

@@ -174,8 +174,12 @@ export function DecisionsView({
   decisionId,
   decisionNonce,
   windowed = false,
+  recordIds,
   onBackToList,
 }: {
+  /** The Decisions window: only these records (`records:<id>,<id>`, the
+   *  records that govern one piece of work), the first opened in the reader. */
+  recordIds?: string;
   /** The Decisions window: the reader's ‹ Decisions also forgets the
    *  record the window was opened on (its scope), so a reload shows the list. */
   onBackToList?: () => void;
@@ -211,7 +215,8 @@ export function DecisionsView({
   const detailOpen = Boolean(chosen || selected || detailLoading || requested);
   // The record's reader runs edge to edge under its toolbar (it insets its
   // own words); a meeting's decision keeps the default inset.
-  useWindowInterior(windowed ? (!detailOpen ? "list" : chosen ? null : "editor") : null);
+  useWindowInterior(windowed ? (!detailOpen ? "list" : "editor") : null);
+  const onlyRecords = (recordIds ?? "").split(",").map((id) => id.trim()).filter(Boolean);
   useEffect(() => () => { detailReads.current += 1; }, []);
 
   useEffect(() => {
@@ -222,6 +227,17 @@ export function DecisionsView({
   // A work ref lists the records linked to that work; else the desk's
   // decisions, one page at a time, searched and filtered by the hub.
   const read = (offset: number, limit = PAGE): Promise<{ rows: DeskDecision[]; total: number }> => {
+    if (onlyRecords.length) {
+      // Only the records asked for, each read by its id; one that is gone is left out.
+      return Promise.all(onlyRecords.map((id) => apiFetch<Receipt>(`/api/decision-records/${encodeURIComponent(id)}`)
+        .then((receipt) => (receipt?.id ? fromReceipt(receipt) : null), () => null)))
+        .then((found) => {
+          const rows = found.filter((row): row is DeskDecision => Boolean(row))
+            .filter((row) => !whyOnly || !stateWord(row))
+            .filter((row) => !query.trim() || row.text.toLowerCase().includes(query.trim().toLowerCase()));
+          return { rows: offset ? [] : rows, total: rows.length };
+        });
+    }
     const [workType, ...workRefParts] = workRef?.split(":") ?? [];
     const linkedWorkRef = workRefParts.join(":");
     if (workType && linkedWorkRef) {
@@ -327,7 +343,7 @@ export function DecisionsView({
       active = false;
       window.clearTimeout(timer);
     };
-  }, [query, workRef, whyOnly]);
+  }, [query, workRef, whyOnly, recordIds]);
 
   const showMore = () => {
     const lands = beginRead();
@@ -372,6 +388,10 @@ export function DecisionsView({
     else if (windowed && lastReceiptId.current) showResults();
     lastReceiptId.current = receiptId;
   }, [receiptId]);
+  // WHY with several governing records: the reader opens on the first.
+  useEffect(() => {
+    if (onlyRecords[0]) openReceipt(onlyRecords[0]);
+  }, [recordIds]);
 
   const openRow = (row: DeskDecision) => {
     if (row.record_id) openReceipt(row.record_id);
@@ -416,6 +436,16 @@ export function DecisionsView({
   // A page of rows, never zero where the Show more verb is drawn.
   const shownCount = results.length;
 
+  if (chosen && windowed) {
+    return (
+      <MeetingDecisionReader
+        decision={chosen}
+        onBack={() => { showResults(); if (decisionId) onBackToList?.(); }}
+        onOpenMeeting={(meetingId) => openRef(`meeting:${meetingId}`)}
+      />
+    );
+  }
+
   if (chosen) {
     return (
       <MeetingDecisionDetail
@@ -436,7 +466,7 @@ export function DecisionsView({
           if (requested?.kind === "record") openReceipt(requested.id, requested.label);
           else if (requested) readDecision(requested.id);
         }}
-        onBack={() => { showResults(); if (receiptId) onBackToList?.(); }}
+        onBack={() => { showResults(); if (receiptId || decisionId) onBackToList?.(); }}
         onOpenReceipt={openReceipt}
         onOpenSource={openSource}
         onOpenWork={(work) => openPullout(qualifiedRef(work.work_type, work.work_ref))}
@@ -494,6 +524,11 @@ export function DecisionsView({
           <Button dense variant="primary" onClick={() => void useDesk.getState().createPrimitive("decision", {})} data-testid="decisions-new">
             <ToolGlyph kind="new" />New decision
           </Button>
+          {onlyRecords.length ? (
+            <Button dense variant="secondary" onClick={() => onBackToList?.()} data-testid="decisions-all">
+              All decisions
+            </Button>
+          ) : null}
         </Toolbar>
         {error ? <SurfaceState error={error} /> : null}
         <div className="decisions-list">
@@ -641,6 +676,67 @@ function MeetingDecisionDetail({
         </GadgetRow> : null}
       </GadgetGroup>
     </article>
+  );
+}
+
+/** Window grammar: a decision a meeting recorded that has no record yet,
+ *  read in the Decisions window. Toolbar: ‹ Decisions, Open meeting. Body:
+ *  the decision as the heading, its why as the words, the meeting as a fact.
+ *  Status bar: the state as a dot and a word, and where it came from. */
+function MeetingDecisionReader({
+  decision,
+  onBack,
+  onOpenMeeting,
+}: {
+  decision: DeskDecision;
+  onBack: () => void;
+  onOpenMeeting: (meetingId: string) => void;
+}) {
+  const backRef = useRef(onBack);
+  backRef.current = onBack;
+  const compact = useCompactViewport();
+  useWindowBack(compact ? { onBack: () => backRef.current(), testId: "decision-reader-back" } : null, [compact]);
+  const viaFrame = useHasWindowBack() && compact;
+  const meetingId = (decision.meeting_id ?? "").trim();
+  const state = decisionState(decision);
+  const decidedAt = decision.decided_at ? wireDate(decision.decided_at) : null;
+  const when = decidedAt && state.word === "Decided" ? ` ${sinceWord(decidedAt)}` : "";
+  return (
+    <div className="decision-reader-window" data-testid="decision-reader" data-from="meeting">
+      <Toolbar label="Decision" data-testid="decision-reader-toolbar">
+        {viaFrame ? null : (
+          <Button dense variant="secondary" onClick={onBack} data-testid="decision-reader-back">
+            <span aria-hidden="true">‹</span> Decisions
+          </Button>
+        )}
+        {meetingId ? (
+          <Button dense variant="secondary" onClick={() => onOpenMeeting(meetingId)} data-testid="decision-reader-meeting">
+            <ToolGlyph kind="open" />Open meeting
+          </Button>
+        ) : null}
+      </Toolbar>
+      <article className="decision-reader" aria-labelledby={`decision-reader-title-${decision.id}`}>
+        <h2 id={`decision-reader-title-${decision.id}`} className="decision-reader-title" data-testid="decision-reader-title">
+          {decision.text}
+        </h2>
+        {decision.rationale ? <Material className="decision-reader-why">{decision.rationale}</Material> : null}
+        {decision.meeting_title ? (
+          <dl className="decision-reader-facts">
+            <div className="decision-reader-fact">
+              <dt>Meeting</dt>
+              <dd>{decision.meeting_title}</dd>
+            </div>
+          </dl>
+        ) : null}
+      </article>
+      <StatusBar
+        data-testid="decision-reader-status"
+        items={[
+          { key: "state", lamp: state.tone, text: `${state.word}${when}`, testId: "decision-reader-state" },
+          { key: "from", text: "From a meeting" },
+        ]}
+      />
+    </div>
   );
 }
 

@@ -201,11 +201,11 @@ describe("the palette finds a word inside a meeting", () => {
 });
 
 // PHILO-17 (the honest faces): ⌘K → a DECISION hit opens the decision itself
-// in Intelligence → Decisions, not its meeting, and holds nothing for the
-// Floor. The hub's own answers for the honest-faces seed: the search and the
+// in the Decisions window (2026-10-25; was a page in Today), not its meeting,
+// and holds nothing for the Floor. The hub's own answers for the honest-faces seed: the search and the
 // decision read the opener makes (tests/integration/test_face_wire_fences.py).
 describe("the palette opens a meeting's decision on the recorded hub", () => {
-  it("pressing the decision hit opens Intelligence on that decision; pressing it again opens it again", async () => {
+  it("pressing the decision hit opens the Decisions window on that decision; pressing it again opens it again", async () => {
     // replaces: tests/e2e/test_honest_faces_glass.py::test_a_decision_search_hit_opens_the_decision_and_adds_no_floor_icon
     const decisionId = HONEST_DECISION.wire.decision.id;
     const reads: string[] = [];
@@ -215,18 +215,18 @@ describe("the palette opens a meeting's decision on the recorded hub", () => {
       if (path === `/api/decisions/${decisionId}`) return Promise.resolve(structuredClone(HONEST_DECISION.wire));
       return Promise.resolve({});
     });
-    const navigations: Array<Record<string, unknown>> = [];
-    const listen = (e: Event) => navigations.push((e as CustomEvent).detail);
-    window.addEventListener("holdspeak:intelligence-navigate", listen);
-    try {
+    const openSurfaceWindow = vi.fn();
+    useDesk.setState({ openSurfaceWindow } as never);
+    {
       const input = await deck();
       await type(input, "Freeze the old ledger");
       const hit = document.getElementById(`desk-palette-option-memory:decision:${decisionId}`);
       expect(hit?.textContent).toContain("Freeze the old ledger on Nov 5");
       fireEvent.click(hit!);
-      await vi.waitFor(() => expect(navigations).toHaveLength(1));
-      expect(navigations[0]).toMatchObject({ view: "receipts", decisionId });
-      expect(useDesk.getState().openPullout).toHaveBeenCalledWith("intelligence:desk");
+      await vi.waitFor(() => expect(openSurfaceWindow).toHaveBeenCalledTimes(1));
+      // No record made from it in this answer: the decision's own reader.
+      expect(openSurfaceWindow).toHaveBeenCalledWith("open-decisions", `decision:${decisionId}`);
+      expect(useDesk.getState().openPullout).not.toHaveBeenCalledWith("intelligence:desk");
       // Not the meeting, and nothing held for the Floor (no refresh, no object window).
       expect(useDesk.getState().openPullout).not.toHaveBeenCalledWith("meeting:m-standup");
       expect(useDesk.getState().refresh).not.toHaveBeenCalled();
@@ -240,11 +240,8 @@ describe("the palette opens a meeting's decision on the recorded hub", () => {
       await type(screen.getByRole("combobox", { name: "Find, open or ask" }), "");
       await type(screen.getByRole("combobox", { name: "Find, open or ask" }), "Freeze the old ledger");
       fireEvent.click(document.getElementById(`desk-palette-option-memory:decision:${decisionId}`)!);
-      await vi.waitFor(() => expect(navigations).toHaveLength(2));
-      expect(navigations[1]).toMatchObject({ view: "receipts", decisionId });
-      expect(navigations[1].nonce).not.toBe(navigations[0].nonce);
-    } finally {
-      window.removeEventListener("holdspeak:intelligence-navigate", listen);
+      await vi.waitFor(() => expect(openSurfaceWindow).toHaveBeenCalledTimes(2));
+      expect(openSurfaceWindow).toHaveBeenLastCalledWith("open-decisions", `decision:${decisionId}`);
     }
   });
 });
