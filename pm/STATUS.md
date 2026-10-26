@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-25 (the window grammar #1457–#1481; egress labels retired)
+**Last updated:** 2026-10-25 (the window grammar #1457–#1483; egress labels retired; the Room's Now wing)
 
 ## Current phase
 
@@ -51,7 +51,13 @@ inventory docs/internal/betterment/native-experience/EGRESS-LABELS-2026-10-25.md
 guard tests/unit/test_egress_labels_canon.py + a sweep `labels` fence. Left: the
 menu-bar trust badge (⌂ This device / → Your network) unchanged; Workbench,
 Delivery board/dossier, Rhythm and the tool inspector still wear chips; dead
-code kept for its tests (useDraftEgress, saidOnFace, isLanHost). CATCH 2026-10-25: his hub had served main 33fdbce59
+code kept for its tests (useDraftEgress, saidOnFace, isLanHost). OWNER FEEDBACK
+2026-10-25 22:23 (bundle ee299edf, the Room at 935 × 509 with 13 overdue Jira rows):
+"this window is a joke… looks this white… looks like shit" → MERGED #1483: the Now
+wing is one column (an empty second column is not drawn; two columns only ≥ 1100 px
+with a week to show), the Needs-you rows a list view (one line, 32 px, name
+ellipsized with its title on hover, verbs right), `whyFaceWords` says the hub's
+caps why in sentence case (Overdue · 48 days; the hub's words unchanged). CATCH 2026-10-25: his hub had served main 33fdbce59
 since 2026-10-24 (no watcher alive); redeployed from
 /Users/karol/dev/tools/wt-desk-main-20261025 (see memory reference_owner_hub_redeploy).
 Open fix-forward: a meeting decision with no record yet and WHY with several
