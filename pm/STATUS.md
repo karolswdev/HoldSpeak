@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-25 (the window grammar #1457–#1483; egress labels retired; the Room's Now wing)
+**Last updated:** 2026-10-26 (the window grammar #1457–#1492; the window audit of 2026-10-25 and its seven lanes)
 
 ## Current phase
 
@@ -57,7 +57,26 @@ code kept for its tests (useDraftEgress, saidOnFace, isLanHost). OWNER FEEDBACK
 wing is one column (an empty second column is not drawn; two columns only ≥ 1100 px
 with a week to show), the Needs-you rows a list view (one line, 32 px, name
 ellipsized with its title on hover, verbs right), `whyFaceWords` says the hub's
-caps why in sentence case (Overdue · 48 days; the hub's words unchanged). CATCH 2026-10-25: his hub had served main 33fdbce59
+caps why in sentence case (Overdue · 48 days; the hub's words unchanged). OWNER 2026-10-25
+23:00: "YOU'RE BEING so fucking reactive… what about some proactivity" → THE WINDOW AUDIT
+(docs/internal/betterment/native-experience/WINDOW-AUDIT-2026-10-25.md, #1485): all 35 sweep
+windows shot on a seeded desk at 1440 and judged; seven lanes MERGED the same night and
+redeployed one by one: #1486 ⌘K palette + Capture, #1487 Live meeting, #1488 decision
+doors (meeting decision without a record, WHY with several records, Review decisions
+Current only), #1489 egress left-overs (Workbench, Delivery, Rhythm, tool inspector; dead
+code parked), #1490 Speak (title keeps its width via stripMenu, one toolbar, one status bar,
+dense wings, Commands wing), #1491 Memory window + Settings ▸ Accounts, #1492 seven small
+defects (Processes columns, Check sources, Person band, Prepare… caption, Today Since rows
+dot + word, Needs-you status bar, Room facts/Sources fold sentence case, Calendar snapshot +
+Context). Left from the audit: the Room's Sources fold still floats Register / Add source /
+Raw in a band above its rows and its rows are two lines; Speak's Journal name column does
+not flex and its times are mono; PrReceiptsSection still wears a GitHub egress badge; the
+"Hold ⌥R anywhere" hint shows only once speech is set up; the Room's failure lines and
+people tokens are still caps; ObjectList has no per-row verb slot (Speak wings keep their
+own rows). FLAKY under parallel vitest, pass alone every time (fix forward: make them
+deterministic): settings.app.test.tsx (Remote access, runtime identity),
+settingsLeave.philo17.test.tsx, routeInFooter.test.tsx, ThoughtWorkspaceWindow.test.tsx.
+CATCH 2026-10-25: his hub had served main 33fdbce59
 since 2026-10-24 (no watcher alive); redeployed from
 /Users/karol/dev/tools/wt-desk-main-20261025 (see memory reference_owner_hub_redeploy).
 Open fix-forward: a meeting decision with no record yet and WHY with several
