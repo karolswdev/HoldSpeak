@@ -125,7 +125,7 @@
   /* Capture C7: the next two Coming-up rows sit under the capture verbs;
      Capture grows to hold them (Needs you gives up the same height). */
   .desk-next .chair-desk:has(.chair-window--capture [data-testid="arrival-coming-up"]) :is(.chair-window, .chair-window-closed) {
-    --chair-capture-h: 240px;
+    --chair-capture-h: 180px;
   }
   .desk-next .chair-desk:has(.chair-window--capture [data-aftercare-slot]:not(:empty)) :is(.chair-window, .chair-window-closed) {
     --chair-capture-h: 300px;
@@ -871,11 +871,18 @@
   }
 }
 
-/* ── Betterment capture C8: three large verbs (Talk, New note, Record) ── */
+/* ── Betterment capture C8 on the window grammar (2026-10-25): the three
+   verbs (Talk, New note, Record) are Capture's toolbar — a 36 px band edge
+   to edge under the title bar, 28 px Buttons, Talk the one primary. ── */
+.desk-next .arrival-capture-bar > .arrival-capture-toolbar {
+  flex: 1 0 100%;
+  margin: -8px -12px 0;
+  width: calc(100% + 24px);
+  max-width: none;
+}
 .desk-next .arrival-capture-bar .arrival-capture-big {
-  flex: 1 1 0;
+  flex: none;
   min-width: 0;
-  min-height: 56px;
   justify-content: center;
 }
 .desk-next .arrival-capture-bar .arrival-capture-talk.arrival-capture-big {
@@ -885,13 +892,14 @@
 .desk-next .arrival-capture-bar .arrival-capture-talk.arrival-capture-big > .desk-mic.gadget-transport-key {
   flex: 1 1 auto;
   width: auto;
-  height: auto;
-  min-height: 56px;
+  height: 28px;
+  min-height: 28px;
   flex-direction: row;
-  gap: 8px;
+  gap: 6px;
   padding: 0 12px;
-  font: 700 13px / 1 var(--font-sans);
-  letter-spacing: 0.02em;
+  border-radius: var(--radius-sm);
+  font: 600 13px / 1 var(--font-sans);
+  letter-spacing: 0;
   text-transform: none;
 }
 .desk-next .arrival-capture-bar .btn.arrival-capture-big {
@@ -919,12 +927,56 @@
   min-height: 72px;
   resize: none;
 }
-@media (max-width: 480px) {
-  /* Phone first: the three verbs stack, full width. */
-  .desk-next .arrival-capture-bar .arrival-capture-big {
-    flex: 1 0 100%;
+@media (max-width: 720px) {
+  /* Phone: the three verbs share the band, each a 44 px target. */
+  .desk-next .arrival-capture-toolbar .kit-toolbar-verbs {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
   }
+  .desk-next .arrival-capture-bar .arrival-capture-big {
+    flex: 1 1 0;
+  }
+  .desk-next .arrival-capture-bar .arrival-capture-talk.arrival-capture-big > .desk-mic.gadget-transport-key {
+    height: 44px;
+    min-height: 44px;
+  }
+}
+/* Coming up in Capture: 32 px rows — the time in quiet sans figures, the
+   title in ink, Record when it starts a quiet verb at the right. */
+.desk-next .chair-window--capture .coming-up {
+  gap: 2px;
+}
+.desk-next .chair-window--capture .coming-up .surface-row-line {
+  align-items: center;
+  min-height: 32px;
+  padding-block: 0;
+}
+.desk-next .chair-window--capture .coming-up .surface-row-glyph {
+  align-self: center;
+  min-width: 9ch;
+  padding-top: 0;
+}
+/* The verb keeps the row at the phone width too (it wraps only when the
+   title is long). */
+.desk-next .chair-window--capture .coming-up .surface-row-main {
+  flex: 1 1 8rem;
+}
+.desk-next .chair-window--capture .coming-up .surface-row-verbs .btn--secondary {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-ink);
+  font-weight: 500;
+}
+.desk-next .chair-window--capture .coming-up .surface-row-verbs .btn--secondary:hover:not(:disabled) {
+  border-color: var(--wb-rule-soft);
+  background: var(--wb-hover);
 }
 .desk-next .arrival-capture-place .speech-setup-verbs {
   margin-left: 0;
+}
+/* A long Coming-up title wraps in Capture; it is never cut. */
+.desk-next .chair-window--capture .coming-up .surface-row-text strong {
+  white-space: normal;
+  overflow-wrap: anywhere;
 }

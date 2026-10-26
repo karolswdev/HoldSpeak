@@ -15,6 +15,7 @@ import { openNewThought } from "../newThought";
 import { Button } from "../../components/signal/Signal";
 import { useTalk } from "../components/Talk";
 import { PadGadget } from "../surface/gadgets";
+import { Toolbar } from "../surface/kit";
 import { useCompactViewport } from "../useCompactViewport";
 import { workBand } from "../components/window/windowGeometry";
 import type { PanelRect } from "../store/types";
@@ -167,25 +168,29 @@ function CaptureBar() {
 
   return (
     <footer className="arrival-capture-bar" data-testid="arrival-capture-bar">
-      <span className="arrival-capture-talk arrival-capture-big">{talkKey}</span>
-      <Button
-        variant="secondary"
-        className="arrival-capture-big"
-        aria-expanded={noting}
-        onClick={() => setNoting((open) => !open)}
-        data-testid="arrival-develop-thought"
-      >
-        {/* Betterment Q8 (one note): one kind, one name. */}
-        New note
-      </Button>
-      <Button
-        variant="secondary"
-        className="arrival-capture-big"
-        onClick={() => void useDesk.getState().startRecording()}
-        data-testid="arrival-record-meeting"
-      >
-        Record
-      </Button>
+      {/* Window grammar (2026-10-25): the three verbs are the window's
+          toolbar — Talk the one primary, New note and Record quiet. */}
+      <Toolbar label="Capture" className="arrival-capture-toolbar">
+        <span className="arrival-capture-talk arrival-capture-big">{talkKey}</span>
+        <Button
+          variant="secondary"
+          className="arrival-capture-big"
+          aria-expanded={noting}
+          onClick={() => setNoting((open) => !open)}
+          data-testid="arrival-develop-thought"
+        >
+          {/* Betterment Q8 (one note): one kind, one name. */}
+          New note
+        </Button>
+        <Button
+          variant="secondary"
+          className="arrival-capture-big"
+          onClick={() => void useDesk.getState().startRecording()}
+          data-testid="arrival-record-meeting"
+        >
+          Record
+        </Button>
+      </Toolbar>
       {setupRow ? <div className="arrival-capture-place">{setupRow}</div> : null}
       {noting ? <FirstCharacterNote onDone={() => setNoting(false)} /> : null}
     </footer>

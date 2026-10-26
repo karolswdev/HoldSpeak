@@ -158,7 +158,7 @@ describe("Betterment Q3: Search asks", () => {
     await search("freeze");
     const drawn = bands();
     expect(new Set(drawn).size).toBe(drawn.length);
-    expect(drawn).toEqual(expect.arrayContaining(["Note", "Meeting", "Ask"]));
+    expect(drawn).toEqual(expect.arrayContaining(["Notes", "Meetings", "Ask"]));
     expect(oneBandPerSection([
       { section: "OBJECTS", id: 1 }, { section: "MEETINGS", id: 2 }, { section: "OBJECTS", id: 3 }, { section: "MEMORY", id: 4 }, { section: "MEETINGS", id: 5 },
     ]).map((r) => r.id)).toEqual([1, 3, 2, 5, 4]);
