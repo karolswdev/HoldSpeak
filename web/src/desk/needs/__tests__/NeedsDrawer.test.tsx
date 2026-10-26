@@ -441,7 +441,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     at.setHours(14, 0, 0, 0);
     DOOR = { upcoming: [{ title: "Ledger cutover sync", starts_at: at.toISOString(), source: "calendar_event" }], calendar_configured: false };
     await mount();
-    await waitFor(() => expect(screen.getByTestId("needs-next").textContent).toBe("NEXT · 14:00 · Ledger cutover sync"));
+    await waitFor(() => expect(screen.getByTestId("needs-next").textContent).toBe("Next 14:00 · Ledger cutover sync"));
     const offer = await screen.findByTestId("needs-no-calendar");
     expect(offer.textContent).toBe("No calendarConnect calendar");
     expect(offer.closest("[role='toolbar']")).toBeTruthy();

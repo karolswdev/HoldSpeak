@@ -245,8 +245,8 @@ describe("HS-169-03: SOURCES section", () => {
     expect(screen.getByText("karolswdev/HoldSpeak")).toBeTruthy();
     expect(screen.getByText("KAN")).toBeTruthy();
     // Check token text (tokens after the first carry a · separator)
-    expect(screen.getByText("12 OPEN PRS")).toBeTruthy();
-    const ciRedElements = screen.getAllByText((_, el) => el?.tagName === "SPAN" && el.className.includes("surface-token") && (el.textContent?.includes("CI RED") ?? false));
+    expect(screen.getByText("12 open PRs")).toBeTruthy();
+    const ciRedElements = screen.getAllByText((_, el) => el?.tagName === "SPAN" && el.className.includes("room-source-tok") && (el.textContent?.includes("CI red") ?? false));
     expect(ciRedElements.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -280,7 +280,7 @@ describe("HS-169-03: SOURCES section", () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
     expect(screen.getByText("SUGGESTED-1")).toBeTruthy();
-    expect(screen.getByText("SUGGESTED")).toBeTruthy();
+    expect(screen.getByText("Suggested")).toBeTruthy();
   });
 });
 

@@ -977,7 +977,9 @@
 .people-state[data-tone="info"] { color: var(--wb-info-ink); }
 /* Commitments: two columns under one caption (one column when narrow). */
 /* The hairline between the columns is the 1 px grid gap over the rule colour. */
-.desk-next .people-commitments .people-owe-grid { gap: 1px; background: var(--wb-rule-soft); }
+/* 2026-10-25 audit: both columns stretch to the taller one; with `start`
+   the rule colour showed as a grey band under the shorter column. */
+.desk-next .people-commitments .people-owe-grid { gap: 1px; align-items: stretch; background: var(--wb-rule-soft); }
 .desk-next .people-commitments .people-owe { background: var(--wb-paper); }
 .people-owe-cap {
   display: flex;

@@ -852,13 +852,17 @@ export const CALENDAR_FACE: NeedFace = {
   source: true,
 };
 
-/** The quiet footer line: `NEXT · 14:00 · Ledger cutover sync`. */
+/** The quiet status-bar line in sentence case (2026-10-25 audit):
+ *  `Next 14:00 · Ledger cutover sync`; a 1:1 names its kind first:
+ *  `Next 1:1 23:44 · Priya / Karol`. */
 export function nextWord(next: { label?: string | null; at?: string | null } | null | undefined): string | null {
   if (!next || !next.label) return null;
   const at = next.at ? wireDate(next.at) : null;
   const time = at ? `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}` : "";
   // The Room is named on the week's own row, not on this quiet line.
-  return ["NEXT", time, next.label].filter(Boolean).join(" · ");
+  const oneOnOne = /^1:1\s+(.+)$/.exec(next.label.trim());
+  const lead = ["Next", oneOnOne ? "1:1" : "", time].filter(Boolean).join(" ");
+  return `${lead} · ${oneOnOne ? oneOnOne[1] : next.label}`;
 }
 
 /** The head: `N need you`, `Nothing needs you`, or an unknown said as one. */

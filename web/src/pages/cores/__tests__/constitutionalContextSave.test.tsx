@@ -43,13 +43,13 @@ describe("Context save failure", () => {
     const pad = await screen.findByRole("textbox", {
       name: "Constitutional context",
     });
-    expect(screen.queryByText("rev 0")).toBeNull();
-    expect(screen.queryByText("~0 tokens")).toBeNull();
-    expect(screen.queryByText("0/32,768 chars")).toBeNull();
+    expect(screen.queryByText("Revision 0")).toBeNull();
+    expect(screen.queryByText("About 0 tokens")).toBeNull();
+    expect(screen.queryByText("0 of 32,768 characters")).toBeNull();
     fireEvent.change(pad, { target: { value: "I lead three engineers." } });
-    expect(screen.getByText("~6 tokens")).toBeTruthy();
-    expect(screen.getByText("23/32,768 chars")).toBeTruthy();
-    expect(screen.getByText("unsaved")).toBeTruthy();
+    expect(screen.getByText("About 6 tokens")).toBeTruthy();
+    expect(screen.getByText("23 of 32,768 characters")).toBeTruthy();
+    expect(screen.getByText("Not saved yet")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(screen.getByText("Not saved")).toBeTruthy());
     expect(container.textContent).not.toContain("_conn");
@@ -60,9 +60,9 @@ describe("Context save failure", () => {
 
     // Clearing the draft keeps its real unsaved state without empty meters.
     fireEvent.change(pad, { target: { value: "" } });
-    expect(screen.queryByText(/^~\d+ tokens$/)).toBeNull();
-    expect(screen.queryByText(/chars$/)).toBeNull();
-    expect(screen.getByText("unsaved")).toBeTruthy();
+    expect(screen.queryByText(/^About \d+ tokens$/)).toBeNull();
+    expect(screen.queryByText(/characters$/)).toBeNull();
+    expect(screen.getByText("Not saved yet")).toBeTruthy();
     expect(screen.queryByText("Not saved")).toBeNull();
   });
 });
@@ -78,9 +78,9 @@ describe("Context status", () => {
     render(<ConstitutionalContextCore />);
     const pad = await screen.findByRole("textbox", { name: "Constitutional context" });
     expect(pad).toHaveValue("");
-    expect(screen.queryByText(/^rev /)).toBeNull();
+    expect(screen.queryByText(/^Revision /)).toBeNull();
     expect(screen.queryByText(/tokens$/)).toBeNull();
-    expect(screen.queryByText(/chars$/)).toBeNull();
+    expect(screen.queryByText(/characters$/)).toBeNull();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 
@@ -88,22 +88,22 @@ describe("Context status", () => {
     const fetch = contextReplies(current, [], { ...current, content: "", revision: 5 });
     render(<ConstitutionalContextCore />);
     const pad = await screen.findByRole("textbox", { name: "Constitutional context" });
-    expect(screen.getByText("rev 4")).toBeTruthy();
-    expect(screen.getByText("~4 tokens")).toBeTruthy();
-    expect(screen.getByText("16/32,768 chars")).toBeTruthy();
+    expect(screen.getByText("Revision 4")).toBeTruthy();
+    expect(screen.getByText("About 4 tokens")).toBeTruthy();
+    expect(screen.getByText("16 of 32,768 characters")).toBeTruthy();
 
     fireEvent.change(pad, { target: { value: "" } });
-    expect(screen.getByText("rev 4")).toBeTruthy();
+    expect(screen.getByText("Revision 4")).toBeTruthy();
     expect(screen.queryByText(/tokens$/)).toBeNull();
-    expect(screen.queryByText(/chars$/)).toBeNull();
-    expect(screen.getByText("unsaved")).toBeTruthy();
+    expect(screen.queryByText(/characters$/)).toBeNull();
+    expect(screen.getByText("Not saved yet")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    await screen.findByText("saved");
-    expect(screen.getByText("rev 5")).toBeTruthy();
-    expect(screen.queryByText("unsaved")).toBeNull();
+    await screen.findByText(/^Saved \d\d:\d\d$/);
+    expect(screen.getByText("Revision 5")).toBeTruthy();
+    expect(screen.queryByText("Not saved yet")).toBeNull();
     expect(screen.queryByText(/tokens$/)).toBeNull();
-    expect(screen.queryByText(/chars$/)).toBeNull();
+    expect(screen.queryByText(/characters$/)).toBeNull();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     const put = fetch.mock.calls.find(([, init]) => init?.method === "PUT");
     expect(JSON.parse(String(put?.[1]?.body))).toEqual({ content: "" });
@@ -120,24 +120,24 @@ describe("Context status", () => {
 
     fireEvent.change(history, { target: { value: "3" } });
     expect(pad).toHaveValue("Prior role");
-    expect(screen.getByText("viewing rev 3")).toBeTruthy();
-    expect(screen.getByText("~3 tokens")).toBeTruthy();
-    expect(screen.getByText("10/32,768 chars")).toBeTruthy();
+    expect(screen.getByText("Viewing revision 3")).toBeTruthy();
+    expect(screen.getByText("About 3 tokens")).toBeTruthy();
+    expect(screen.getByText("10 of 32,768 characters")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Restore" })).not.toBeDisabled();
 
     fireEvent.change(history, { target: { value: "2" } });
     expect(pad).toHaveValue("");
-    expect(screen.getByText("viewing rev 2")).toBeTruthy();
-    expect(screen.getByText("unsaved")).toBeTruthy();
-    expect(screen.getByText("rev 4")).toBeTruthy();
+    expect(screen.getByText("Viewing revision 2")).toBeTruthy();
+    expect(screen.getByText("Not saved yet")).toBeTruthy();
+    expect(screen.getByText("Revision 4")).toBeTruthy();
     expect(screen.queryByText(/tokens$/)).toBeNull();
-    expect(screen.queryByText(/chars$/)).toBeNull();
+    expect(screen.queryByText(/characters$/)).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     await waitFor(() => expect(pad).toHaveValue("Senior architect"));
     expect(history).toHaveValue("current");
-    expect(screen.queryByText(/^viewing rev/)).toBeNull();
-    expect(screen.queryByText("unsaved")).toBeNull();
+    expect(screen.queryByText(/^Viewing revision/)).toBeNull();
+    expect(screen.queryByText("Not saved yet")).toBeNull();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
   });
 });

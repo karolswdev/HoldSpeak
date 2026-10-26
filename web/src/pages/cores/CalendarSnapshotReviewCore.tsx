@@ -4,7 +4,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
 import { CycleGadget, StringGadget } from "../../desk/surface/gadgets";
-import { countLabel, StateChip } from "../../desk/surface";
+import { DotWord } from "../../desk/surface/kit";
 import { humanizeWireValue } from "../../lib/productLanguage";
 import { useWindowTitle } from "../../desk/surface/title";
 import { windowName } from "../../desk/windowName";
@@ -44,7 +44,7 @@ type Phase =
   | { step: "done"; count?: number; sourceLabel?: string };
 
 /** UX-CANON A10 (honest states, plain reasons): a refusal reads
- * `CAN'T READ · <plain reason>`, never the hub's code
+ * `Can't read` and the plain reason, never the hub's code
  * (`no_vision_model_assigned`) or a sentence (B0-L1, Tenet 4). */
 const REASONS: Record<string, string> = {
   no_vision_model_assigned: "No vision model",
@@ -196,13 +196,14 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
             className="surface-state-quiet"
             data-testid="calendar-snapshot-refusal"
           >
-            <StateChip state="failure" label={`CAN'T ${phase.verb}`} />{" "}
-            <span className="surface-token" data-chip="">
+            {/* 2026-10-25 audit: a dot and a word in sentence case, the
+                reason quiet beside it; no empty foot under it. */}
+            <DotWord tone="fail">{phase.verb === "READ" ? "Can't read" : "Can't save"}</DotWord>{" "}
+            <span className="calendar-snapshot-reason">
               {refusalReason(phase.message)}
             </span>
           </p>
         </SurfaceSection>
-        <SurfaceFooter />
       </div>
     );
   }
@@ -216,20 +217,19 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
             role="status"
             data-testid="calendar-snapshot-receipt"
           >
-            <StateChip state="success" label="SAVED" />
+            <DotWord tone="ok">Saved</DotWord>
             {phase.count != null && phase.count > 0 ? (
-              <span className="surface-token" data-chip="">
-                {countLabel("EVENTS", phase.count)}
+              <span className="calendar-snapshot-reason">
+                {`${phase.count} ${phase.count === 1 ? "event" : "events"}`}
               </span>
             ) : null}
             {phase.sourceLabel ? (
-              <span className="surface-token" data-chip="">
+              <span className="calendar-snapshot-reason">
                 {phase.sourceLabel}
               </span>
             ) : null}
           </div>
         </SurfaceSection>
-        <SurfaceFooter />
       </div>
     );
   }
@@ -282,7 +282,7 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
           ) : null}
         </SurfaceSection>
 
-        <SurfaceSection label={countLabel("EVENTS", phase.events.length)}>
+        <SurfaceSection label="Events" count={phase.events.length || undefined}>
           <div className="calendar-snapshot-events">
             <SurfaceLedger label="Events">
               <ul className="surface-ledger-rows">
@@ -370,7 +370,7 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
       <SurfaceFooter
         receipt={
           phase.saving ? (
-            <StateChip state="idle" label="Saving" />
+            <DotWord tone="idle">Saving</DotWord>
           ) : phase.saveError ? (
             <span
               className="surface-footer-receipt-line"
@@ -379,8 +379,8 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
               role="alert"
               data-testid="calendar-snapshot-save-refusal"
             >
-              <StateChip state="failure" label="CAN'T SAVE" />{" "}
-              <span className="surface-token" data-chip="" data-wrap="">
+              <DotWord tone="fail">Can't save</DotWord>{" "}
+              <span className="calendar-snapshot-reason">
                 {refusalReason(phase.saveError)}
               </span>
             </span>
@@ -395,7 +395,7 @@ export function CalendarSnapshotReviewCore({ scope }: CoreProps) {
               disabled={!anchorValid || phase.events.length === 0}
               onClick={handleConfirm}
             >
-              {phase.saveError ? "Retry" : "CONFIRM"}
+              {phase.saveError ? "Retry" : "Confirm"}
             </Button>
           </>
         }

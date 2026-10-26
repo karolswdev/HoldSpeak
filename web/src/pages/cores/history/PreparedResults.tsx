@@ -207,9 +207,11 @@ export function PreparedResults({ meetingId, results, canPrepare = [], selection
   ) : null;
   return (
     <div ref={section}>
+      {/* 2026-10-25 audit: Prepare… sits at the right of the caption (its
+          actions slot), not alone in a blank band above the rows. */}
       <SurfaceSection label="Prepared" count={results.length || null} data-testid="meeting-prepared"
-        className="meeting-outcome-section">
-        <SurfaceLedger label="Prepared" cols="meeting-outcomes" controls={controls}>
+        className="meeting-outcome-section meeting-prepared-section" actions={controls}>
+        <SurfaceLedger label="Prepared" cols="meeting-outcomes">
           {refusal ? <p className="meeting-prepared-failed" role="alert">{refusal}</p> : null}
           <ul className="surface-ledger-rows">
             {results.map((result) => {

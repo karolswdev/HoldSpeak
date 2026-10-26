@@ -119,6 +119,11 @@
 .meeting-record .meeting-outcome-section {
   gap: 4px;
 }
+/* Prepared: the Prepare… verb sits at the right end of the caption, after
+   the hairline (2026-10-25 audit). */
+.meeting-prepared-section > .surface-section-head > .btn {
+  order: 1;
+}
 .meeting-record .surface-ledger[data-cols="meeting-outcomes"] {
   margin-inline: -16px;
   border: 0;

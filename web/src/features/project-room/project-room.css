@@ -134,8 +134,12 @@
   flex-wrap: wrap;
   min-width: 0;
 }
+/* 2026-10-25 audit: a source's counts read sans 12 muted, sentence case. */
 .room-source-tok {
   flex: none;
+  font: 400 12px / 1.35 var(--font-sans);
+  color: var(--wb-muted);
+  white-space: nowrap;
 }
 /* LINE 2: starts at the scope's left edge.
    The surface-ledger-open default has padding-left: 68px (for the 52px time column).
@@ -151,19 +155,19 @@
   align-items: center;
   gap: 6px;
   font-size: var(--desk-surface-detail-size);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   color: var(--text-faint);
   padding: 2px 0 0;
   margin-left: 0;
 }
 .room-source-reason {
   font-size: var(--desk-surface-detail-size);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   color: var(--text-muted);
 }
 .room-source-checked {
   font-size: var(--desk-surface-detail-size);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   color: var(--text-faint);
 }
 
@@ -1210,6 +1214,12 @@
 .room-update-line > .btn { margin-left: 0; }
 .room-update-line > .btn[data-testid="room-update-open"] { margin-left: auto; }
 .room-sources-raw { display: inline-flex; align-items: center; }
+/* 2026-10-25 audit: the Raw fold reads sans in sentence case, not mono caps. */
+.room-folds .room-sources-raw .gadget-fold-title {
+  font: 600 12px / 1.2 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
 /* The rail keeps its three columns at every width (the time, the words,
    the verb), so the time never falls onto the words. */
 .room-history .surface-stream-when { grid-column: 1; grid-row: 1; text-align: right; }

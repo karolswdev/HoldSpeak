@@ -2,7 +2,6 @@
 .constitutional-context-core {
   display: flex;
   flex-direction: column;
-  gap: var(--desk-surface-section-gap);
 }
 
 .constitutional-context-status,
@@ -22,6 +21,7 @@
 .constitutional-context-editor-section {
   flex: 1;
   min-height: 0;
+  padding: 12px 16px 16px;
 }
 
 .constitutional-context-editor-section .gadget-pad,

@@ -49,3 +49,8 @@
     grid-column: 1 / -1;
   }
 }
+/* 2026-10-25 audit: the reason beside a state dot reads quiet sans 12. */
+.calendar-snapshot-reason {
+  font: 400 12px / 1.35 var(--font-sans);
+  color: var(--wb-muted);
+}
