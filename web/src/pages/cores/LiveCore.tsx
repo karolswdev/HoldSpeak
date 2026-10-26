@@ -911,8 +911,9 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           else: the segment count belongs to the stream head that counts
           them, and `SEG` was an abbreviation no face ever defined (the
           recovery slab spelled it out in HS-201-06). */}
+      {/* No egress chip in the status bar (owner ruling 2026-10-25); the
+          configure face keeps it, where the choice is made. */}
       <SurfaceFooter
-        egress={intelEgressChip}
         receipt={
           <span className="surface-footer-receipt-line" role="status">
             {active ? `REC ${duration}` : "READY"}

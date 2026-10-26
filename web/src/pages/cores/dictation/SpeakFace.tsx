@@ -7,8 +7,8 @@
 // Utterance well (PadGadget, placeholder "Talk, or type here")
 // TYPES INTO row (Types into: the app in front ▾ · Try it here)  [C8 words]
 // RESULT row (landed text + OK/Wrong ghosts; Wrong unfolds teach row)
-// ENGINE row (DICTATION · model name · THIS DEVICE chip · READY chip;
-//             or NOT SET + Choose when no engine)
+// ENGINE row (Clean-up runs on · model name · READY chip; no host chip,
+//             owner ruling 2026-10-25; or NOT SET + Choose when no engine)
 // HOTKEY block (HS-200-05: only when the physical key is not proven up —
 //             the listener's state, and every macOS grant that is missing)
 // > Details (Disclosure: the old register strip, folded; behind RAW, C8)
@@ -34,7 +34,6 @@ import {
   LampGadget,
   CycleGadget,
   PadGadget,
-  EgressChip,
 } from "../../../desk/surface/gadgets";
 import { StateChip } from "../../../desk/surface/patterns";
 import { Disclosure } from "../../../desk/surface/patterns";
@@ -143,15 +142,6 @@ function openDeskCommandResult(
   return true;
 }
 
-/** Format the egress label from a host and its LAN classification. */
-function egressFromHost(host: string): { egressLabel: string; egressHost: string } {
-  if (!host || host === "localhost" || host === "127.0.0.1" || host === "::1")
-    return { egressLabel: "THIS DEVICE", egressHost: "" };
-  if (isLanHost(host))
-    return { egressLabel: `${host} · LAN`, egressHost: host };
-  return { egressLabel: "CLOUD", egressHost: host };
-}
-
 /** A lightweight profile record from /api/inference-targets. */
 export interface TargetProfile {
   id: string;
@@ -173,9 +163,9 @@ export interface TargetProfile {
  *      and classify the host with the LAN rule
  */
 export type ResolvedEngine = {
+  /** The engine by name. No host and no place word on Speak (owner ruling
+   *  2026-10-25): Settings ▸ Engines says where it runs. */
   name: string | null;
-  egressLabel: string;
-  egressHost: string;
   /** The detect engine's state (READY, NOT_SET, etc.) when available. */
   engineState: string | null;
   keySet: boolean | null;
@@ -228,29 +218,10 @@ export function findEngine(
 
 /** Build the result from a matched detect engine. */
 function fromDetectEngine(engine: Engine, fallbackLabel: string): ResolvedEngine {
-  const name = engine.name || fallbackLabel;
-  const state = engine.state ?? null;
-  const keySet = engine.keySet ?? null;
-  switch (engine.kind) {
-    case "lan":
-      return { name, egressLabel: `${engine.host} · LAN`, egressHost: engine.host, engineState: state, keySet };
-    case "cloud":
-    case "agent":
-      // Article III: the host is named on the egress chip (an agent CLI's
-      // prompt goes to its vendor, never THIS DEVICE).
-      return {
-        name,
-        egressLabel: engine.host ? `${engine.host.toUpperCase()}` : "CLOUD",
-        egressHost: engine.host,
-        engineState: state,
-        keySet,
-      };
-    default:
-      return { name, egressLabel: "THIS DEVICE", egressHost: "", engineState: state, keySet };
-  }
+  return { name: engine.name || fallbackLabel, engineState: engine.state ?? null, keySet: engine.keySet ?? null };
 }
 
-const NO_ENGINE: ResolvedEngine = { name: null, egressLabel: "THIS DEVICE", egressHost: "", engineState: null, keySet: null };
+const NO_ENGINE: ResolvedEngine = { name: null, engineState: null, keySet: null };
 
 export function resolveEngine(
   assignment: AssignmentEditorProjection | null,
@@ -280,40 +251,18 @@ export function resolveEngine(
     if (byHost) return fromDetectEngine(byHost, label);
   }
 
-  // (c) No detect match — name and classify from what we have
+  // (c) No detect match — name it from what we have. Never an address: a
+  // migrated label with no model id is the plain "Assigned engine".
   const isMigrationLabel = label.startsWith("Migrated");
-
   let name: string;
   if (!isMigrationLabel) {
     name = label;
   } else if (targetProfile?.model && targetProfile.model !== "default") {
     name = targetProfile.model;
-  } else if (baseUrl) {
-    try {
-      const u = new URL(baseUrl);
-      name = u.port ? `${u.hostname}:${u.port}` : u.hostname;
-    } catch {
-      name = label;
-    }
   } else {
-    name = label;
+    name = "Assigned engine";
   }
-
-  if (profileHost) {
-    const egress = egressFromHost(profileHost);
-    return { name, ...egress, engineState: null, keySet: null };
-  }
-
-  switch (entries[0].boundary) {
-    case "private_network":
-      return { name, egressLabel: "LAN", egressHost: "", engineState: null, keySet: null };
-    case "mesh":
-      return { name, egressLabel: "PAIRED", egressHost: "", engineState: null, keySet: null };
-    case "cloud":
-      return { name, egressLabel: "CLOUD", egressHost: "", engineState: null, keySet: null };
-    default:
-      return { name, egressLabel: "THIS DEVICE", egressHost: "", engineState: null, keySet: null };
-  }
+  return { name, engineState: null, keySet: null };
 }
 
 /** Window grammar (2026-10-24): Speak's facts (the phase, the one fact,
@@ -321,9 +270,6 @@ export function resolveEngine(
  *  (DictationCore) draws with the receipt and the window's verbs. Without
  *  a host the face draws its own status bar. */
 export const SpeakStatusContext = createContext<((items: StatusBarItem[] | null) => void) | null>(null);
-/** The Speak face's egress chip (its clean-up engine's host), for the
- *  host's status bar. */
-export const SpeakEgressContext = createContext<((chip: ReactNode) => void) | null>(null);
 
 const PHASE_LAMP: Record<string, StatusBarItem["lamp"]> = {
   warn: "warn", live: "fail", info: "info", ok: "ok", danger: "fail",
@@ -412,8 +358,9 @@ export function SpeakFace() {
   const { talkKey, setupRow } = useSpeakTalk(deck, announce, speech);
   // Window grammar (2026-10-24): the status bar says the phase with its
   // lamp, how long he has talked (a tabular m:ss that ticks), and the
-  // engine that hears him (`Listening · 0:42 · whisper-base-mlx on this
-  // Mac`); at rest `Ready · whisper-base-mlx on this Mac`; with no speech
+  // engine that hears him, by name (`Listening · 0:42 · whisper-base-mlx`;
+  // no place word: owner ruling 2026-10-25); at rest
+  // `Ready · whisper-base-mlx`; with no speech
   // `Not ready · Talk sets up speech first`. The level meter leads it.
   const phase = phaseOf(deck, toFix);
   const listening = deck.activeState === "listening";
@@ -428,7 +375,7 @@ export function SpeakFace() {
     : toFix
       ? `${toFix} to fix`
       : speechName
-        ? `${speechName} on this Mac`
+        ? speechName
         : "Ready to talk";
   const report = useContext(SpeakStatusContext);
   const meter = <span className="speak-level" data-testid="speak-level"><LedMeter label="Audio level" labelHidden value={deck.level} scanning={deck.micState === "busy"} /></span>;
@@ -441,15 +388,6 @@ export function SpeakFace() {
   ].filter(Boolean) as StatusBarItem[],
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [phase.tone, phase.word, phase.tail, fact, hotkey, elapsed, listening, deck.level, deck.micState]);
-  // The clean-up engine's egress, where the words go after he talks.
-  const egress = resolved.name && resolved.egressHost ? <EgressChip label={resolved.egressLabel.toLowerCase().replace(/ · lan$/, " · LAN")} scope={isLanHost(resolved.egressHost) ? "local" : "cloud"} /> : null;
-  const reportEgress = useContext(SpeakEgressContext);
-  useLayoutEffect(() => {
-    if (!reportEgress) return;
-    reportEgress(egress);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reportEgress, resolved.name, resolved.egressLabel, resolved.egressHost]);
-  useLayoutEffect(() => (reportEgress ? () => reportEgress(null) : undefined), [reportEgress]);
   useLayoutEffect(() => {
     if (!report) return;
     report(statusItems);
@@ -500,7 +438,7 @@ export function SpeakFace() {
       <ol className="speak-checks" aria-label="Checks">
         <li className="speak-check" data-tone={engineReady ? "ok" : enginePending || !resolved.name ? "idle" : "warn"}>
           <span className="speak-check-bead" aria-hidden="true" />
-          <EngineRow engine={resolved.name} egress={resolved.egressLabel} engineState={resolved.engineState} keySet={resolved.keySet} detectStatus={detectStatus} readiness={deck} />
+          <EngineRow engine={resolved.name} engineState={resolved.engineState} keySet={resolved.keySet} detectStatus={detectStatus} readiness={deck} />
         </li>
         {custody.show ? (
           <li className="speak-check" data-tone={custody.kind === "failure" ? "danger" : "warn"}>
@@ -517,7 +455,7 @@ export function SpeakFace() {
           <DetailsContent deck={deck} />
         </Disclosure>
       ) : null}
-      {report ? null : <StatusBar data-testid="speak-status" items={statusItems} egress={egress} />}
+      {report ? null : <StatusBar data-testid="speak-status" items={statusItems} />}
     </div>
   );
 }
@@ -885,14 +823,12 @@ function ResultRow({
 
 function EngineRow({
   engine,
-  egress,
   engineState,
   keySet,
   detectStatus,
   readiness,
 }: {
   engine: string | null;
-  egress: string;
   engineState: string | null;
   keySet: boolean | null;
   detectStatus: "pending" | "ok" | "failed";
@@ -933,9 +869,6 @@ function EngineRow({
         <span className="speak-engine-caption">Clean-up runs on</span>
         <span className="speak-engine-dot">{"·"}</span>
         <span className="speak-engine-name" data-muted="">{engine}</span>
-        {egress !== "THIS DEVICE" && egress !== "CLOUD" && egress !== "LAN" ? (
-          <EgressChip label={egress} />
-        ) : null}
         <span className="speak-transport-spacer" />
         <span className="speak-engine-checking">Checking</span>
       </div>
@@ -949,7 +882,6 @@ function EngineRow({
         <span className="speak-engine-caption">Clean-up runs on</span>
         <span className="speak-engine-dot">{"·"}</span>
         <span className="speak-engine-name">{engine}</span>
-        {egress ? <EgressChip label={egress} /> : null}
         <span className="speak-transport-spacer" />
         <StateChip state="warning" label="Unknown" />
         <Button variant="ghost" dense onClick={openConcierge}>
@@ -1002,7 +934,6 @@ function EngineRow({
       <span className="speak-engine-caption">Clean-up runs on</span>
       <span className="speak-engine-dot">{"·"}</span>
       <span className="speak-engine-name">{engine}</span>
-      <EgressChip label={egress} />
       <span className="speak-transport-spacer" />
       <StateChip state={chipState} label={plain(chipLabel)} />
       {showChoose ? (

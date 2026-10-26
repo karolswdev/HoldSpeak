@@ -97,11 +97,11 @@ it("list and open meeting: same-device work has no egress chip or loopback addre
   render(<Shell open />);
   await screen.findByTestId("meeting-summary-text");
   expect(chips()).toHaveLength(0);
-  expect(screen.queryByTestId("summary-record-attempts")?.querySelector(".gadget-chip-egress")).toBeNull();
+  expect(screen.queryByTestId("summary-record-attempts")).toBeNull();
   expect(chips().join(" ")).not.toContain("127.0.0.1");
 });
 
-it("a failed leg and a different host stay on the open meeting", async () => {
+it("a failed leg stays on the open meeting as its outcome; no host chip anywhere (owner ruling 2026-10-25)", async () => {
   hub(meeting([
     { leg_ordinal: 1, host: "127.0.0.1", outcome: "failed", operation_id: "op_1" },
     { leg_ordinal: 2, host: "api.example.com", outcome: "succeeded", operation_id: "op_2" },
@@ -111,10 +111,9 @@ it("a failed leg and a different host stay on the open meeting", async () => {
   const slab = screen.getByTestId("summary-record-attempts").textContent ?? "";
   expect(slab).not.toContain("THIS DEVICE");
   expect(slab).toContain("FAILED");
-  // Window grammar: the status bar names the host the summary ran on (not
-  // the route's same-device host), once; the summary does not repeat it.
-  expect(chips().filter((c) => c === "api.example.com")).toHaveLength(1);
-  expect(document.querySelector(".kit-statusbar .gadget-chip-egress")?.textContent).toBe("api.example.com");
+  expect(slab).not.toContain("api.example.com");
+  expect(chips()).toHaveLength(0);
+  expect(document.body.textContent).not.toContain("api.example.com");
 });
 
 it("Outcomes is the one review face and reads its own records", async () => {

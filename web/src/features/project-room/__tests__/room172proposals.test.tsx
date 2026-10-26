@@ -293,16 +293,13 @@ describe("HS-172-03: Proposals in NEEDS YOU", () => {
     expect(captions[0].textContent).toContain("from Standup");
   });
 
-  it("shows EgressChip with LAN for private network host", async () => {
+  it("a proposal row wears no host chip, even for a private network host (owner ruling 2026-10-25)", async () => {
     render(<WindowHarness scope="project:p1" />);
     await waitFor(() => expect(screen.queryAllByTestId("proposal-row")).toHaveLength(2));
-
-    // EgressChip should show "192.168.1.43 · LAN"
-    const chips = document.querySelectorAll(".gadget-chip-egress");
-    const lanChips = Array.from(chips).filter((el) =>
-      el.textContent?.includes("192.168.1.43") && el.textContent?.includes("LAN"),
-    );
-    expect(lanChips.length).toBeGreaterThanOrEqual(1);
+    for (const row of screen.getAllByTestId("proposal-row")) {
+      expect(row.querySelector(".gadget-chip-egress")).toBeNull();
+      expect(row.textContent).not.toMatch(/192\.168|\bLAN\b/);
+    }
   });
 
   it("never shows LOCAL in egress text", async () => {

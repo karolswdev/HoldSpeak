@@ -359,10 +359,11 @@ describe("Run now and the results", () => {
     expect(within(reading).getByRole("heading", { name: "Weekly update" })).toBeInTheDocument();
     expect(within(reading).getAllByRole("listitem")).toHaveLength(2);
     expect(reading.textContent).not.toMatch(/##|\*\*/);
-    // NEW, the model, where the prompt went, and its verbs.
+    // NEW, the model by name (no scope word: owner ruling 2026-10-25), and
+    // its verbs.
     expect(within(newest()).getByTestId("automation-new")).toHaveTextContent("NEW");
     expect(newest()).toHaveTextContent("stub-model-7b");
-    expect(newest()).toHaveTextContent("CLOUD");
+    expect(newest()).not.toHaveTextContent("CLOUD");
     expect(within(newest()).getByTestId("automation-open-note")).toBeInTheDocument();
     expect(within(newest()).getByTestId("automation-copy")).toBeInTheDocument();
     // Showing it reads it on the hub; NEW stays while the window is open.
@@ -1042,8 +1043,10 @@ describe("an agent works in a folder (A10)", () => {
     await screen.findByTestId("automation-sentence");
     expect(within(line("about")).getByTestId("automation-about-chips")).toHaveTextContent("Folder ledger");
     expect(line("with")).toHaveTextContent("Claude Code");
-    // Window grammar: the egress chip is in the status bar (A.9).
-    expect(screen.getByTestId("automation-status")).toHaveTextContent("Claude Code · Anthropic");
+    // Owner ruling 2026-10-25: no egress chip in the status bar; With names
+    // the engine.
+    expect(screen.getByTestId("automation-status")).not.toHaveTextContent("Anthropic");
+    expect(screen.getByTestId("automation-status").querySelector(".gadget-chip-egress")).toBeNull();
     const reading = within(newest()).getByTestId("automation-reading");
     expect(reading).toHaveTextContent("ledger.py");
     expect(reading).toHaveTextContent("risky_migration.sql");

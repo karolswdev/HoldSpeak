@@ -26,7 +26,6 @@ import {
   SurfaceLedgerRow,
   SurfaceSection,
   SurfaceState,
-  EgressChip,
   StateChip,
   Material,
   Disclosure,
@@ -36,7 +35,6 @@ import {
   countLabel,
 } from "../../../desk/surface";
 import { CycleGadget, PadGadget } from "../../../desk/surface/gadgets";
-import { egressFor } from "../../../desk/surface/egress";
 import { openSurfaceOr } from "../../../desk/shell";
 import { openDecisionRecord } from "../../../desk/openObject";
 import { raiseWindowOf, rememberTaskFocus } from "../../../desk/returnToTask";
@@ -103,21 +101,15 @@ function CoverageChip({ manifest }: { manifest: BriefManifest | null }) {
 }
 
 function RouteChip({ ctrl }: { ctrl: PrepareController }) {
+  // Owner ruling 2026-10-25: the engine by name; no host, no place word.
   const route = ctrl.refusal?.route ?? ctrl.route;
   if (!route) return null;
-  const egress = egressFor(route.host);
   const ready = route.state === "ready";
-  const detail = [route.model, route.host].filter(Boolean).join(" · ");
   return (
     <span className="prepare-route" data-testid="prepare-route" data-state={route.state}>
       <StateChip state={ready ? "success" : "failure"} label={route.token} icon={"●"} />
-      {ready ? (
-        <>
-          {route.model ? <Token testId="prepare-route-model">{route.model.toUpperCase()}</Token> : null}
-          <EgressChip label={egress.label || route.host} scope={egress.scope} title={route.host} />
-        </>
-      ) : detail ? (
-        <Token testId="prepare-route-detail">{detail.toUpperCase()}</Token>
+      {route.model ? (
+        <Token testId={ready ? "prepare-route-model" : "prepare-route-detail"}>{route.model.toUpperCase()}</Token>
       ) : null}
     </span>
   );
@@ -622,11 +614,6 @@ export function PreparePosture({
     : posture === "running" ? "Preparing"
     : "Prepare a brief";
   const prepared = brief ? clockToken("PREPARED", brief.createdAt) : null;
-  const generatorEgress = brief
-    ? brief.generator.startsWith("model:")
-      ? egressFor(brief.generatorHost || "")
-      : { label: "THIS DEVICE", scope: "local" as const }
-    : null;
   const elapsed = brief ? elapsedToken(brief.elapsedMs) : null;
   const receipt = brief
     ? [brief.generator.startsWith("model:") ? (brief.generatorModel || "MODEL").toUpperCase() : "DETERMINISTIC", elapsed]
@@ -635,7 +622,6 @@ export function PreparePosture({
     : "";
   // P0: the refusal tells what happened to the request, from the receipt.
   const refusalTruth = ctrl.refusal ? refusalReceipt(ctrl.refusal.route) : null;
-  const refusalEgress = refusalTruth?.sent ? egressFor(refusalTruth.host) : null;
 
   return (
     <div className="prepare-posture" data-testid="prepare-posture" data-posture={posture}>
@@ -688,7 +674,6 @@ export function PreparePosture({
               { id: "draft", label: "Draft the brief", status: "running" },
               { id: "bind", label: "Bind the manifest", status: "queued" },
             ]}
-            egress={ctrl.route ? <EgressChip label={egressFor(ctrl.route.host).label || ctrl.route.host} scope={egressFor(ctrl.route.host).scope} /> : undefined}
             action={{ label: "Stop", onClick: ctrl.stop }}
           />
         </div>
@@ -707,21 +692,6 @@ export function PreparePosture({
 
       <SurfaceFooter
         className="prepare-footer"
-        egress={
-          posture === "brief" && generatorEgress ? (
-            <span data-testid="prepare-footer-egress">
-              <EgressChip label={generatorEgress.label} scope={generatorEgress.scope} />
-            </span>
-          ) : posture === "refused" ? (
-            <span data-testid="prepare-footer-egress">
-              {refusalEgress ? (
-                <EgressChip label={refusalEgress.label || refusalTruth!.host} scope={refusalEgress.scope} />
-              ) : (
-                <EgressChip label="THIS DEVICE" scope="local" />
-              )}
-            </span>
-          ) : undefined
-        }
         receipt={
           <span className="surface-footer-receipt-line" role="status" data-testid="prepare-footer-receipt">
             {posture === "brief" ? receipt : posture === "refused" ? (refusalTruth?.line ?? "NOTHING SENT") : ctrl.kept.length ? countLabel("KEPT", ctrl.kept.length) : "NOTHING KEPT YET"}

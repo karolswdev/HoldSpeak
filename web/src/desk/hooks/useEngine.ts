@@ -6,8 +6,9 @@ export type EngineState = "set" | "none" | "unread" | "failed";
 
 export type EngineFact = {
   state: EngineState;
+  /** The engine's own name. No place word and no address on a working
+   *  window (owner ruling 2026-10-25); Settings ▸ Engines says where it runs. */
   model: string;
-  place: string;
 };
 
 type SummaryStore = {
@@ -26,25 +27,16 @@ const summary: SummaryStore = {
   pending: null,
 };
 
-function placeFor(boundary: unknown): string {
-  const value = String(boundary || "").toLowerCase();
-  if (value === "same_device" || value === "local") return "This Mac";
-  if (value === "private_network" || value === "lan") return "LAN";
-  if (value === "private_mesh" || value === "mesh" || value === "paired") return "MESH";
-  if (value === "external_service" || value === "cloud") return "CLOUD";
-  return "";
-}
-
 function factFromSummary(capabilityId: string): EngineFact {
-  if (summary.state === "unread") return { state: "unread", model: "", place: "" };
-  if (summary.state === "failed") return { state: "failed", model: "", place: "" };
+  if (summary.state === "unread") return { state: "unread", model: "" };
+  if (summary.state === "failed") return { state: "failed", model: "" };
   const row = (summary.body?.task_overrides || []).find(
     (candidate: any) => String(candidate?.id || "") === capabilityId,
   );
   const effective = row?.effective;
   const status = String(effective?.status || "no_assignment");
   if (status === "no_assignment" || !effective?.assignment) {
-    return { state: "none", model: "", place: "" };
+    return { state: "none", model: "" };
   }
   const entry = effective.assignment.entries?.[0] || {};
   return {
@@ -52,7 +44,6 @@ function factFromSummary(capabilityId: string): EngineFact {
     state: status === "assigned" ? "set" : "none",
     // A profile id is an implementation key and is not useful on the Desk.
     model: String(entry.label || "Selected engine"),
-    place: placeFor(entry.boundary),
   };
 }
 

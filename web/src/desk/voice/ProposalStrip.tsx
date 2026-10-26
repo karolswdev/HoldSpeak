@@ -25,10 +25,6 @@ const INTENT_LABELS: Record<string, string> = {
   attention: "Show attention",
 };
 
-function egressScope(scope: string): "local" | "mixed" | "cloud" {
-  return scope === "cloud" || scope === "mixed" ? scope : "local";
-}
-
 /** An in-world arm/fire receipt. Enter is explicit consent; Escape disarms. */
 export function VoiceProposalStrip({
   proposal,
@@ -82,7 +78,7 @@ export function VoiceProposalStrip({
           <Button dense variant="ghost" onClick={onCancel}>Cancel</Button>
         </>
       )}
-      {receipt ? <EgressChip label={receipt.scope} scope={egressScope(receipt.scope)} /> : null}
+      {/* No scope word after the act (owner ruling 2026-10-25). */}
     </div>
   );
 }

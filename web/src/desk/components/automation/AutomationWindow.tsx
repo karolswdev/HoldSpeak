@@ -48,7 +48,6 @@ import {
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceState,
-  EgressChip,
   StatusBar,
   ToolGlyph,
   Toolbar,
@@ -60,7 +59,6 @@ import { FootSlotContext } from "../../surface/foot";
 import { ObjectList } from "../../surface/objects/ObjectList";
 import { objectSprite } from "../../surface/objects/kinds";
 import { ArtifactSendWells } from "../../documentSends";
-import { boundaryEgressLamp } from "../../inferenceEgress";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
 import { WORKBENCH_RUN_FRAME_TYPES } from "../workbench/runLifecycle";
 import { SentenceLine } from "./SentenceLine";
@@ -101,27 +99,6 @@ const ABOUT_DROP_KINDS: ReadonlySet<string> = new Set([
 ]);
 
 export const AUTOMATION_WINDOW_SIZE = { w: 920, h: 680 } as const;
-
-/** Where the prompt goes, in words for the status bar's egress chip. */
-export function boundaryWords(boundary: string | null | undefined): string | null {
-  switch (boundary) {
-    case "same_device":
-    case "local":
-      return "this Mac";
-    case "private_network":
-      return "private network";
-    case "paired_device":
-      return "paired device";
-    case "private_mesh":
-    case "mesh":
-      return "private mesh";
-    case "external_service":
-    case "cloud":
-      return "cloud";
-    default:
-      return null;
-  }
-}
 
 const RESULT_COLUMNS = [
   { key: "name", word: "Result", track: "minmax(160px, 1.4fr)" },
@@ -637,17 +614,6 @@ export function AutomationWindow({
     };
   });
 
-  // The facts under the Do sentence, and the status bar's egress chip: the
-  // engine and where its prompt goes (A.9: egress where egress happens).
-  const boundary = detail?.assignment_summary?.boundary ?? null;
-  const egressWhere = vendor ?? boundaryWords(boundary);
-  const egress = engine && egressWhere ? (
-    <EgressChip
-      label={`${engine} · ${egressWhere}`}
-      title={vendor ? `The prompt goes to ${vendor}` : `The prompt goes: ${boundaryEgressLamp(boundary).label}`}
-      scope={vendor ? "cloud" : ["local", "same_device"].includes(String(boundary)) ? "local" : "cloud"}
-    />
-  ) : null;
   const freshCount = results.filter(isNew).length;
   const failedCount = results.filter((r) => r.status === "failed").length;
   const next = detail ? nextWords(detail.next_run_at) : null;
@@ -956,11 +922,11 @@ export function AutomationWindow({
           </>
         ) : null}
         </div>
-        {/* Window grammar: the count and the state in warm words (no zero),
-            the next start, and the engine with where its prompt goes. */}
+        {/* Window grammar: the count and the state in warm words (no zero)
+            and the next start. No egress chip (owner ruling 2026-10-25): the
+            With slot names the engine; With's chooser says where it runs. */}
         <StatusBar
           data-testid="automation-status"
-          egress={showBuilder ? null : egress}
           items={[
             { key: "count", text: countWords(results.length, "result") },
             { key: "new", lamp: "ask", text: countWords(freshCount, "new", "new") },

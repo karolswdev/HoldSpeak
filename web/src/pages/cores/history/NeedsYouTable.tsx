@@ -5,7 +5,7 @@
 // HS-172: QUEUED/FAILED verbs (Skip, Retry) in the header verb slot.
 import { Button } from "../../../components/signal/Signal";
 import { countLabel } from "../../../desk/surface";
-import { RefusalToken, RouteDisclosure } from "../../../meetings/RouteDisclosure";
+import { RefusalToken, RouteDisclosure, routeTitle } from "../../../meetings/RouteDisclosure";
 import {
   routeReady,
   type PlannedRoute,
@@ -100,6 +100,7 @@ export function NeedsYouTable({
             <Button
               dense
               variant="primary"
+              title={routeTitle(plannedRoute)}
               onClick={onRunIntelligence}
               data-testid="detail-run-intelligence-btn"
             >
@@ -111,6 +112,7 @@ export function NeedsYouTable({
             <Button
               dense
               variant="ghost"
+              title={routeTitle(plannedRoute)}
               onClick={onRetryIntelligence}
               data-testid="detail-retry-btn"
             >

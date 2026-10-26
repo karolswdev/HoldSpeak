@@ -230,11 +230,14 @@ describe("PHILO-14 A2 the drawer", () => {
     expect(opened.refs).toEqual(["meeting:m-standup", "people:rel-j"]);
   });
 
-  it("a pull request opens its page, and says where at the verb", async () => {
+  it("a pull request opens its page, and names where in the verb's hover title", async () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     await renderDrawer();
     fireEvent.click(screen.getByRole("button", { name: /^#412 Add the freeze flag/ }), { detail: 1 });
-    expect(document.querySelector(".surface-footer-egress")).toHaveTextContent("GITHUB.COM");
+    // Owner ruling 2026-10-25: no host chip in the status bar; Open names
+    // the address in its hover title.
+    expect(document.querySelector(".gadget-chip-egress")).toBeNull();
+    expect(screen.getByRole("button", { name: "Open" }).getAttribute("title")).toBe("https://github.com/acme/ledger/pull/412");
     fireEvent.doubleClick(screen.getByRole("button", { name: /^#412 Add the freeze flag/ }));
     expect(open).toHaveBeenCalledWith("https://github.com/acme/ledger/pull/412", "_blank", "noopener");
   });

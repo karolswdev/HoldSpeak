@@ -325,7 +325,7 @@ describe("HS-173-02: inline claims with chips per sentence", () => {
 // ── HS-173-02: footer model + host for model drafts ──
 
 describe("HS-173-02: footer model name + host chip for model drafts", () => {
-  it("shows model name token and EgressChip with host for model drafts", async () => {
+  it("shows the model name token and no host chip for model drafts (owner ruling 2026-10-25)", async () => {
     setupUpdatePosture();
     render(<WindowHarness scope="project:p1" />);
     await openEditor();
@@ -334,14 +334,12 @@ describe("HS-173-02: footer model name + host chip for model drafts", () => {
     const modelToken = screen.getByTestId("update-footer-model");
     expect(modelToken.textContent).toBe("QWEN3 32B Q6");
 
-    // EgressChip with LAN label
+    // No host chip, no LAN word.
     const footer = screen.getByTestId("update-posture");
-    const egressChips = footer.querySelectorAll(".gadget-chip-egress");
-    const hostChip = Array.from(egressChips).find(
+    const hostChip = Array.from(footer.querySelectorAll(".gadget-chip-egress")).find(
       (el) => el.textContent?.includes("192.168.1.43"),
     );
-    expect(hostChip).toBeTruthy();
-    expect(hostChip!.textContent).toContain("LAN");
+    expect(hostChip).toBeUndefined();
   });
 
   it("no model token or host chip for deterministic drafts", async () => {

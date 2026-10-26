@@ -68,11 +68,13 @@ describe("HS-201-04 a deep-linked meeting sends the route it showed", () => {
     // PHILO-17: a deep link opens the meeting's own window.
     render(<MeetingRecord meetingId="m-deep" onClose={() => undefined} />);
 
-    // The record shows the detail's own route beside its verb.
-    const chip = await screen.findByTestId("detail-route");
-    expect(chip.textContent).toContain("192.168.1.43 · LAN");
+    // The record names the detail's own route in its verb's hover title
+    // (owner ruling 2026-10-25: no route chip beside the verb).
+    const verb = await screen.findByTestId("detail-run-intelligence-btn");
+    expect(verb.getAttribute("title")).toContain("192.168.1.43 · LAN");
+    expect(screen.queryByTestId("detail-route")).toBeNull();
 
-    fireEvent.click(await screen.findByTestId("detail-run-intelligence-btn"));
+    fireEvent.click(verb);
 
     await waitFor(() =>
       expect(mockedApiFetch).toHaveBeenCalledWith(

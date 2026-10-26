@@ -54,25 +54,12 @@ export function builtToken(builtAt: string, now: Date = new Date()): string {
   return `BUILT ${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-const BOUNDARY: Record<string, string> = {
-  local: "THIS DEVICE",
-  same_device: "THIS DEVICE",
-  private_network: "LAN",
-  lan: "LAN",
-  mesh: "MESH",
-  cloud: "CLOUD",
-};
-
-/** `Written by qwen3.8-27b · LAN`: which engine wrote the pages, and where.
+/** `Written by qwen3.8-27b`: which engine wrote the pages, by name (no
+ *  place word: owner ruling 2026-10-25).
  *  PHILO-17: no credit without an engine name (the word "PAGES" stood in
  *  for a missing name). */
 export function modelToken(pages: StandingPageWire[]): string | null {
-  const seen = [...new Set(pages.map((p) => {
-    const model = (p.model || "").trim();
-    if (!model) return "";
-    const where = BOUNDARY[(p.boundary || "").toLowerCase()] ?? (p.boundary || "").toUpperCase();
-    return [model, where].filter(Boolean).join(" · ");
-  }).filter(Boolean))];
+  const seen = [...new Set(pages.map((p) => (p.model || "").trim()).filter(Boolean))];
   return seen.length ? `Written by ${seen.join(" / ")}` : null;
 }
 

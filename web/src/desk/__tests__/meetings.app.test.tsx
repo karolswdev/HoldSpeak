@@ -212,7 +212,8 @@ describe("the Meetings list over the HS-170 seed", () => {
     const row = await screen.findByTestId("meeting-row-m-off-words");
     fireEvent.click(within(row).getByRole("button"));
     const status = screen.getByTestId("meetings-status");
-    const chip = () => within(status).getByTestId("row-route").querySelector(".gadget-chip-egress");
+    // Owner ruling 2026-10-25: no route chip beside the verb at all.
+    const chip = () => status.querySelector(".gadget-chip-egress");
     // Same-device work has no egress to disclose. The route remains bound to
     // the run and never leaks its wire enum.
     expect(chip()).toBeNull();
@@ -318,10 +319,11 @@ describe("the meeting after a run (HS-172 seed)", () => {
     hub(hs172 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-ran" onClose={() => undefined} /></Shell>);
     const decisions = await screen.findByTestId("meeting-decisions");
-    // Window grammar: the status bar says the summary's state; the summary
-    // names the host its run contacted (egress where egress happened).
+    // Window grammar: the status bar says the summary's state. No host on the
+    // record (owner ruling 2026-10-25).
     expect(screen.getByTestId("meeting-summary-state").textContent).toBe("Summary stored");
-    expect(document.body.textContent).toContain("192.168.1.43");
+    expect(document.body.textContent).not.toContain("192.168.1.43");
+    expect(document.querySelector(".gadget-chip-egress")).toBeNull();
     const commitments = screen.getByTestId("meeting-commitments");
     expect(decisions.querySelector("h3")?.textContent).toBe("Decisions · 1");
     expect(commitments.querySelector("h3")?.textContent).toBe("Who owes what · 2");
@@ -353,12 +355,13 @@ describe("the meeting after a run (HS-172 seed)", () => {
 
 describe("the summary face (HS-201-04 seed shapes)", () => {
   /* replaces: tests/e2e/test_hs201_summary_face_glass.py::test_the_summary_is_asked_for_disclosed_and_found_again (station 1-2 on the record) */
-  it("the record discloses the host before the click and the click sends the disclosed hash", async () => {
+  it("the record draws no route chip and the click sends the hash the route carried", async () => {
     at(hs170 as Fixture);
     const calls = hub(hs170 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-off-words" onClose={() => undefined} /></Shell>);
-    const route = await screen.findByTestId("detail-route");
-    expect(route.textContent).not.toContain("THIS DEVICE");
+    await screen.findByTestId("detail-run-intelligence-btn");
+    expect(screen.queryByTestId("detail-route")).toBeNull();
+    expect(document.body.textContent).not.toContain("THIS DEVICE");
     const detail = (hs170 as Fixture)["/api/meetings/m-off-words?include_parked=true"] as { planned_route: { selection_hash: string } };
     fireEvent.click(screen.getByTestId("detail-run-intelligence-btn"));
     await waitFor(() =>
@@ -370,7 +373,7 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
   });
 
   /* replaces: tests/e2e/test_hs201_summary_face_glass.py::test_the_summary_is_asked_for_disclosed_and_found_again (station 6: the footer chip is not a constant) */
-  it("the Meetings footer chip names the route's host, not a constant", async () => {
+  it("the Meetings status bar names no host, even for a LAN route (owner ruling 2026-10-25)", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     const first = render(<Shell><HistoryCore /></Shell>);
@@ -379,7 +382,7 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
     await waitFor(() => expect(footerChip()).toBe(""));
     first.unmount();
     // The same rows with the route's lead leg on a LAN host (the shape is the
-    // captured one; only the host value differs): the chip follows it.
+    // captured one; only the host value differs): still no chip.
     const listed = (hs170 as Fixture)["/api/meetings?limit=100"] as { meetings: Array<Record<string, unknown>> };
     const lan = {
       ...listed,
@@ -391,8 +394,13 @@ describe("the summary face (HS-201-04 seed shapes)", () => {
     hub(hs170 as Fixture, { "/api/meetings?limit=100": lan });
     render(<Shell><HistoryCore /></Shell>);
     await screen.findByTestId("meeting-row-m-off-words");
-    await waitFor(() => expect(footerChip()).toContain("192.168.1.43"));
-    expect(footerChip()).toContain("192.168.1.43");
+    const row = await screen.findByTestId("meeting-row-m-off-words");
+    fireEvent.click(within(row).getByRole("button"));
+    expect(document.querySelector(".kit-statusbar .gadget-chip-egress")).toBeNull();
+    expect(screen.getByTestId("meetings-status").textContent).not.toContain("192.168.1.43");
+    // The press that leaves the device names the host in its hover title.
+    expect(within(screen.getByTestId("meetings-status")).getByTestId("run-intelligence-btn").getAttribute("title"))
+      .toContain("192.168.1.43");
   });
 
   /* replaces: tests/e2e/test_hs201_summary_face_glass.py::test_import_transcribes_then_queues_the_disclosed_summary (station 1: the Import door) */

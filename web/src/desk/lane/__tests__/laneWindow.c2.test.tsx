@@ -362,13 +362,16 @@ describe("the agent's window", () => {
     expect(pr.textContent).toContain("NONE YET");
     expect(pr.textContent).toContain("hs/write-the-rollback-runbook → main");
     expect(screen.getByTestId("lane-files").textContent).toContain("ledger/freeze.py");
-    expect(screen.getByText("GITHUB.COM")).toBeTruthy();
+    // Owner ruling 2026-10-25: no host chip in the footer.
+    expect(screen.queryByText("GITHUB.COM")).toBeNull();
     expect(screen.getByTestId("lane-branch").textContent).toBe("hs/write-the-rollback-runbook");
     expect(screen.getByTestId("lane-rebrief")).toBeTruthy();
     expect(screen.getByTestId("lane-stop")).toBeTruthy();
     expect(screen.getByTestId("lane-open-pr")).toBeTruthy();
-    // The draft's host is the drafting model's.
-    await waitFor(() => expect(within(screen.getByTestId("lane-ask").querySelector(".ask-well-draft") as HTMLElement).getByText("API.ANTHROPIC.COM")).toBeTruthy());
+    // Owner ruling 2026-10-25: the draft row names no host.
+    const draft = screen.getByTestId("lane-ask").querySelector(".ask-well-draft") as HTMLElement;
+    expect(within(draft).queryByText("API.ANTHROPIC.COM")).toBeNull();
+    expect(draft.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
   it("the Brief verb unfolds the brief in a well", async () => {

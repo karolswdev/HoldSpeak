@@ -11,12 +11,11 @@ import { DeskWindowFrame } from "../components/DeskWindow";
 import { renameDeskObject } from "../components/InfoWindow";
 import { renameLock } from "../infoContract";
 import { useDesk } from "../store";
-import { EditInPlace, EgressChip, GetInfo, SurfaceFooter, objectSprite } from "../surface";
+import { EditInPlace, GetInfo, SurfaceFooter, objectSprite } from "../surface";
 import { plainFailure } from "../surface/plainFailure";
 import { windowName } from "../windowName";
 import { objectByRef } from "../world";
 import { memberOpens, openMember } from "./open";
-import { urlHost } from "./members";
 import { infoWindowId, useDrawers, type OpenInfo } from "./store";
 import type { GetInfoFacts } from "../surface";
 import { registerProjectRepository, registrable, repositoryWords, useProjectRepository } from "../projectRepository";
@@ -150,7 +149,6 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
         </div>
       </div>
       <SurfaceFooter
-        egress={member.url ? <EgressChip label={urlHost(member.url)} scope="cloud" /> : null}
         receipt={failure ? <span className="drawer-receipt" data-tone="fail" role="status">{failure}</span> : null}
         verbs={
           <>
@@ -166,7 +164,7 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
               </Button>
             ) : null}
             {memberOpens(member) ? (
-              <Button dense variant="primary" onClick={() => openMember(member)}>
+              <Button dense variant="primary" onClick={() => openMember(member)} title={member.url || undefined}>
                 Open
               </Button>
             ) : null}

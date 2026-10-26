@@ -272,8 +272,10 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
     expect(within(rows[1]).getByTestId("flight-chip").textContent).toContain("CODEX · WORKING");
     expect(within(rows[2]).getByTestId("flight-chip").textContent).toContain("PR #412 · OPEN");
     expect(within(rows[0]).getByRole("button", { name: "Open session: Write the rollback runbook" })).toBeTruthy();
-    // Egress where egress happens: the host chip beside Open PR.
-    expect(within(rows[2]).getByText("GITHUB.COM")).toBeTruthy();
+    // Owner ruling 2026-10-25: no host chip; Open PR names the link.
+    expect(within(rows[2]).queryByText("GITHUB.COM")).toBeNull();
+    expect(within(rows[2]).getByRole("button", { name: "Open PR #412: Add the ledger freeze flag" }).getAttribute("title"))
+      .toBe("https://github.com/acme/ledger/pull/412");
     const open = vi.spyOn(window, "open").mockImplementation(() => null);
     fireEvent.click(within(rows[2]).getByRole("button", { name: "Open PR #412: Add the ledger freeze flag" }));
     expect(open).toHaveBeenCalledWith("https://github.com/acme/ledger/pull/412", "_blank", "noopener");
@@ -319,7 +321,7 @@ describe("Conductor F2 K6: the merge receipt", () => {
     expect(screen.queryByText("Write the rollback runbook", { selector: ".surface-primary" })).toBeNull();
   });
 
-  it("PHILO-15 B50/B51: names the PR by its own title, with Open PR and its egress", async () => {
+  it("PHILO-15 B50/B51: names the PR by its own title, with Open PR (its link in the title)", async () => {
     wire([flight({ state: "merged", close: "closed", merged_at: MERGED_AT,
       pr: { number: 1, url: "https://github.com/acme/ledger/pull/1", state: "merged",
         title: "Add CONTRIBUTING.md with the three pull request rules" } })],
@@ -330,7 +332,8 @@ describe("Conductor F2 K6: the merge receipt", () => {
     expect(receipt.textContent).not.toContain("Write the rollback runbook");
     const open = screen.getByTestId("flight-open-pr");
     expect(open.getAttribute("aria-label")).toBe("Open PR #1: Add CONTRIBUTING.md with the three pull request rules");
-    expect(open.parentElement!.textContent).toContain("GITHUB.COM");
+    expect(open.parentElement!.textContent).not.toContain("GITHUB.COM");
+    expect(open.getAttribute("title")).toMatch(/^https:\/\/github\.com\//);
   });
 
   it("another Project's merge, or a merge not closed, writes no receipt", async () => {

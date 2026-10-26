@@ -11,11 +11,10 @@
  * agent touched nothing. */
 import { Button } from "../../../components/signal/Signal";
 import { AgentWords } from "../AgentWords";
-import { EgressChip, RunLine, StateChip } from "../../surface";
+import { RunLine, StateChip } from "../../surface";
 import { SendWellsFold } from "../../surface/send";
 import { artifactDoc } from "../../documentSends";
 import { UsedLines } from "../UsedLines";
-import { boundaryEgressLamp } from "../../inferenceEgress";
 import { openRef } from "../../openObject";
 import { useCopyReceipt } from "../../hooks/useCopyReceipt";
 import {
@@ -26,19 +25,6 @@ import {
   withoutIds,
   type AutomationResult,
 } from "./model";
-
-function egressScope(boundary: string): "local" | "remote" | "cloud" | undefined {
-  if (!boundary) return undefined;
-  if (boundary === "same_device" || boundary === "local") return "local";
-  if (boundary === "cloud" || boundary === "external_service") return "cloud";
-  return "remote";
-}
-
-function Egress({ boundary }: { boundary: string }) {
-  if (!boundary) return null;
-  const lamp = boundaryEgressLamp(boundary);
-  return <EgressChip label={lamp.label} scope={egressScope(boundary)} title={`The prompt went: ${lamp.label}`} />;
-}
 
 export function ResultHead({ result, isNew }: { result: AutomationResult; isNew: boolean }) {
   const facts = [
@@ -53,7 +39,6 @@ export function ResultHead({ result, isNew }: { result: AutomationResult; isNew:
       {isNew ? <StateChip state="active" label="NEW" data-testid="automation-new" /> : null}
       <span className="automation-card-when">{facts.join(" · ")}</span>
       {result.status === "failed" ? <StateChip state="failure" label="FAILED" /> : null}
-      <Egress boundary={result.boundary} />
     </span>
   );
 }

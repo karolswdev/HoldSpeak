@@ -132,12 +132,12 @@ describe("B69: one state per source on the Room", () => {
 });
 
 
-describe("B72: a model draft names its model and host", () => {
-  it("never the assignment id", () => {
+describe("B72: a model draft names its model (owner ruling 2026-10-25: no host)", () => {
+  it("never the assignment id, never the host", () => {
     expect(generatorChipBoundary({
       generator: "model:ia_0488064ec64348ab8679b509e8952a60",
       generatorModel: "qwen3.8-27b", generatorHost: "192.168.1.43:8080",
-    })).toBe("QWEN3.8-27B · 192.168.1.43:8080 · LAN");
+    })).toBe("QWEN3.8-27B");
     expect(generatorChipBoundary({ generator: "model:ia_1", generatorModel: null, generatorHost: null })).toBeUndefined();
     expect(generatorChipBoundary({ generator: "deterministic" })).toBeUndefined();
   });

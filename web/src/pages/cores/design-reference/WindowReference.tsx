@@ -77,8 +77,9 @@ const READER_SUMMARY = `Dual-write is stable. The team agreed to freeze the old 
 The vendor sync moves to next week.`;
 
 /** Window grammar ▸ Reader: toolbar → a compact head → the summary as a
- *  ReadingDocument → the status bar with its state and the egress chip of
- *  the engine that ran it. Local presses only; no hub read, no engine. */
+ *  ReadingDocument → the status bar with its state. No egress chip on a
+ *  working window (owner ruling 2026-10-25); the Engines specimen below is
+ *  where the address shows. Local presses only; no hub read, no engine. */
 function ReaderWindow() {
   const [opened, setOpened] = useState<string | null>(null);
   return (
@@ -107,7 +108,6 @@ function ReaderWindow() {
               { key: "state", lamp: "ok", text: "Summary stored" },
               opened ? { key: "opened", text: <span data-testid="reference-window-opened">Opened locally · {opened}</span> } : null,
             ]}
-            egress={<EgressChip label="studio.local · LAN" scope="local" title="Where the specimen summary ran." />}
           />
         </FootSlotContext.Provider>
       </div>

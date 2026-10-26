@@ -11,7 +11,7 @@ export function EngineLine({
   onRetry?: () => void;
 }) {
   if (engine.state === "set") {
-    return <div className="surface-engine-line" data-testid="engine-line">{engine.model}{engine.place ? ` · ${engine.place}` : ""}</div>;
+    return <div className="surface-engine-line" data-testid="engine-line">{engine.model}</div>;
   }
   if (engine.state === "failed") {
     return (

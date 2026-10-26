@@ -168,8 +168,10 @@ describe("the agent's lane on the hub's lane answer", () => {
     const files = screen.getByTestId("lane-files").textContent ?? "";
     expect(files).toContain("docs/ledger-rollback.md");
     expect(files).toContain("freeze.py");
-    expect(screen.getAllByText("GITHUB.COM").length).toBeGreaterThan(0);
-    expect(screen.getByTestId("lane-open-pr")).toBeTruthy();
+    // Owner ruling 2026-10-25: no host chip; Open PR names the address in
+    // its hover title.
+    expect(screen.queryByText("GITHUB.COM")).toBeNull();
+    expect(screen.getByTestId("lane-open-pr").getAttribute("title")).toMatch(/^https:\/\/github\.com\//);
     expect(screen.queryByTestId("lane-stop")).toBeNull(); // this recorded hub answer has no pane
   });
 
@@ -303,14 +305,15 @@ function fixtureWire<T = unknown>(name: string): { captured_at: string; wire: T 
   return hubWire<T>(`../fixtures/agents-default/${name}`);
 }
 
-describe("the lane's draft chip names the Default for AI work (PHILO-15 05)", () => {
+describe("the lane's draft row (PHILO-15 05; owner ruling 2026-10-25)", () => {
   /** replaces: tests/e2e/test_philo15_05_strong_defaults_glass.py::test_the_lane_draft_chip_names_the_default */
-  it("Cadence drafts inherit the global default: the chip names its model, never NOT SET", async () => {
+  it("the drafted answer shows with Use draft and no host chip, never NOT SET", async () => {
     const lane = fixtureWire("lane");
     const assignments = fixtureWire("inference-assignments");
     await openLane(lane.wire, { "/api/inference/assignments": assignments.wire });
     const draft = screen.getByTestId("lane-ask").querySelector(".ask-well-draft")!;
-    await waitFor(() => expect(draft.textContent?.toUpperCase()).toContain("QWEN3 8 27B"));
+    expect(draft.textContent).toContain("Use draft");
+    expect(draft.querySelector(".gadget-chip-egress")).toBeNull();
     expect(draft.textContent).not.toContain("NOT SET");
   });
 

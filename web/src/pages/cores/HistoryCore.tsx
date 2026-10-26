@@ -20,13 +20,12 @@ import {
   type ParkedRow,
 } from "../../desk/surface";
 import { fetchParkedMeetings, restoreMeeting } from "../../desk/api";
-import { EgressChip, StringGadget, CheckGadget } from "../../desk/surface/gadgets";
+import { StringGadget, CheckGadget } from "../../desk/surface/gadgets";
 import {
   readPlannedRoute,
   routeOff,
   routeReady,
 } from "../../meetings/summaryRoute";
-import { egressFor } from "../../desk/surface/egress";
 import { useCoreWings } from "./core-hooks";
 import { useRuntimeBus, useRuntimeFrame } from "../../runtime/RuntimeBus";
 import { burstTimer } from "../../desk/burstTimer";
@@ -279,25 +278,11 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     () => readPlannedRoute(meetingRows.find((row) => readPlannedRoute(row))),
     [meetingRows],
   );
-  // PHILO-17 (U16): the foot names the summary engine; the rows do not say
-  // the same host again (one chip per face).
-  const footerHost = faceRoute && routeReady(faceRoute) ? egressFor(faceRoute.legs[0].host).label : null;
   // PHILO-13-04 (A3): a missing route is the AVAILABLE fact, not a place
   // data goes: the status bar says it with a lamp, never as an egress chip.
   const routeWord = faceRoute && !routeReady(faceRoute)
     ? (routeOff(faceRoute) ? "Summaries off" : "No engine for summaries")
     : null;
-  const footerEgress = useMemo(() => {
-    if (!faceRoute || !routeReady(faceRoute)) return null;
-    const lead = egressFor(faceRoute.legs[0].host);
-    return (
-      <EgressChip
-        label={lead.label}
-        scope={lead.scope}
-        title="Where a meeting summary runs."
-      />
-    );
-  }, [faceRoute]);
 
   // PHILO-13-02 (C1-5d): the row Restore brought back is the selected row
   // (the list keeps it in view).
@@ -422,7 +407,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       <MeetingSelectionVerbs
         row={selectedRow}
         primary={!engineMissing && selectionRuns}
-        saidOnFace={footerHost}
         onTranscribe={transcribeMeeting}
         onRunIntelligence={(id, route) => void summary.run(id, route)}
         runningId={runningId}
@@ -586,7 +570,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
           host at the right (egress where egress happens). */}
       <StatusBar
         data-testid="meetings-status"
-        egress={footerEgress}
         verbs={listFace ? selectionVerbs : null}
         items={statusItems}
       />

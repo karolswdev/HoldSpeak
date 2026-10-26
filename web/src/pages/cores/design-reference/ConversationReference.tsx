@@ -14,7 +14,6 @@ import {
   type AskAboutRow,
 } from "../../../desk/components/askFace";
 import { FootSlotContext, Material, RunLine, StatusBar, ToolGlyph, type StatusBarItem } from "../../../desk/surface";
-import { TurnLamp } from "../../../desk/turnRoute";
 import "../../../desk/components/ask-panel.css";
 import "../../../desk/surface/patterns/conversation.css";
 
@@ -149,7 +148,7 @@ export function ConversationReference({ preset }: { preset: ConversationPreset }
                   <AskQuestion asker="Karol A">{pending ?? failed}</AskQuestion>
                   <AskAnswer failed={Boolean(failed)}>
                     {pending
-                      ? <RunLine phase="running" verb="Working" model="qwen3.8-27b" place="Private network" />
+                      ? <RunLine phase="running" verb="Working" model="qwen3.8-27b" />
                       : <RunLine phase="failure" reason="did_not_answer" onRetry={retry} />}
                   </AskAnswer>
                 </AskTurnRow>
@@ -174,7 +173,6 @@ export function ConversationReference({ preset }: { preset: ConversationPreset }
             data-testid="reference-conversation-status"
             items={items}
             verbs={pending ? <Button dense variant="secondary" onClick={stop}>Stop</Button> : undefined}
-            egress={!pending && turns.length ? <TurnLamp lamp={{ label: "LAN", tone: "ok" }} /> : undefined}
           />
         </FootSlotContext.Provider>
       </div>

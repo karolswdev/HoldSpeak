@@ -18,7 +18,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiFetch } from "../../lib/api";
 import { MeetingIntelRecovery } from "../MeetingIntelRecovery";
 import { MeetingSummarySlab, readMeetingIntel } from "../MeetingSummarySlab";
-import { RouteDisclosure, RunAttempts } from "../RouteDisclosure";
+import { RouteDisclosure, RunAttempts, routeTitle } from "../RouteDisclosure";
 import { EgressChip } from "../../desk/surface/gadgets";
 import {
   forgetExecutedReceipts,
@@ -129,47 +129,28 @@ function drift(): ApiError {
 }
 
 describe("HS-201-04 the disclosure beside the verb", () => {
-  it("shows legs[0].host and names every further leg a fallback", () => {
-    render(<RouteDisclosure route={readPlannedRoute({ planned_route: READY_ROUTE })} />);
-    const chips = screen.getByTestId("summary-route").textContent ?? "";
-    expect(chips).toContain("192.168.1.43 · LAN");
-    expect(chips).toContain("+ FALLBACK api.example.com");
-    // Article III: the lead host is the FIRST thing said.
-    expect(chips.indexOf("192.168.1.43")).toBeLessThan(chips.indexOf("FALLBACK"));
+  // Owner ruling 2026-10-25: no host chip beside the verb. The verb's hover
+  // title names the lead host first, then every fallback, in full.
+  it("draws no host chip for a ready route; the title names legs[0].host, then each fallback", () => {
+    const route = readPlannedRoute({ planned_route: READY_ROUTE });
+    const { container } = render(<RouteDisclosure route={route} />);
+    expect(screen.queryByTestId("summary-route")).toBeNull();
+    expect(container.querySelector(".gadget-chip-egress")).toBeNull();
+    const title = routeTitle(route) ?? "";
+    expect(title).toContain("192.168.1.43 · LAN");
+    expect(title).toContain("fallback api.example.com");
+    expect(title.indexOf("192.168.1.43")).toBeLessThan(title.indexOf("fallback"));
   });
 
-  it("keeps the FULL fallback text: a route chip never truncates (PHILO-4-01 r4)", () => {
-    // The disclosure is the only place the destination shows, so its chips
-    // carry no truncate modifier and the whole host is in the text.
+  it("keeps the FULL fallback host in the title (PHILO-4-01 r4)", () => {
     const route = {
       ...READY_ROUTE,
       legs: [READY_ROUTE.legs[0], { ...READY_ROUTE.legs[1], host: "api.anthropic.com" }],
     };
-    render(<RouteDisclosure route={readPlannedRoute({ planned_route: route })} />);
-    const chips = [...screen.getByTestId("summary-route").querySelectorAll(".gadget-chip")];
-    const fallback = chips.find((chip) => chip.textContent?.includes("FALLBACK"));
-    expect(fallback?.textContent).toBe("+ FALLBACK api.anthropic.com");
-    for (const chip of chips) {
-      expect(chip.classList.contains("gadget-chip-truncate")).toBe(false);
-    }
-  });
-
-  it("gives each route chip its full destination as its title (PHILO-4-01 r5)", () => {
-    // A known destination never inherits the unset sentence; the tooltip
-    // is the chip's own full text.
-    const route = {
-      ...READY_ROUTE,
-      legs: [READY_ROUTE.legs[0], { ...READY_ROUTE.legs[1], host: "api.anthropic.com" }],
-    };
-    render(<RouteDisclosure route={readPlannedRoute({ planned_route: route })} />);
-    const chips = [...screen.getByTestId("summary-route").querySelectorAll(".gadget-chip")];
-    const fallback = chips.find((chip) => chip.textContent?.includes("FALLBACK"));
-    expect(fallback?.getAttribute("title")).toBe(fallback?.textContent);
-    expect(fallback?.getAttribute("title")).toBe("+ FALLBACK api.anthropic.com");
-    for (const chip of chips) {
-      expect(chip.getAttribute("title")).toBe(chip.textContent);
-      expect(chip.getAttribute("title")).not.toBe("The route for this face is not set.");
-    }
+    expect(routeTitle(readPlannedRoute({ planned_route: route }))).toBe(
+      "Summary runs on 192.168.1.43 · LAN, fallback api.anthropic.com",
+    );
+    expect(routeTitle(readPlannedRoute({ planned_route: UNAVAILABLE_ROUTE }))).toBeUndefined();
   });
 
   it("omits passive same-device egress and keeps a known destination", () => {
@@ -194,42 +175,22 @@ describe("HS-201-04 the disclosure beside the verb", () => {
     expect(screen.queryByText(/local/i)).toBeNull();
   });
 
-  it("lists the destinations contacted, in order, with failed attempts", () => {
+  it("shows only a failed attempt, as its outcome, with the host in its title", () => {
     render(<RunAttempts receipt={readRunReceipt({ run_receipt: SUCCEEDED_RECEIPT })} />);
-    const text = screen.getByTestId("summary-attempts").textContent ?? "";
-    expect(text.indexOf("192.168.1.43")).toBeLessThan(text.indexOf("api.example.com"));
-    expect(text).toContain("FAILED");
+    const attempts = screen.getByTestId("summary-attempts");
+    expect(attempts.textContent).toBe("FAILED");
+    expect(attempts.querySelector("[title]")?.getAttribute("title")).toBe("192.168.1.43 · LAN");
+    expect(attempts.textContent).not.toContain("api.example.com");
+    expect(attempts.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
-  it("does not repeat a same-device host that has no visible foot badge (PHILO-17 U16)", () => {
-    const loopback = {
+  it("says nothing after a run whose attempts all succeeded (owner ruling 2026-10-25)", () => {
+    const ok = {
       ...SUCCEEDED_RECEIPT,
-      attempts: [{ leg_ordinal: 1, host: "127.0.0.1", outcome: "succeeded", operation_id: "op_1" }],
+      attempts: [{ leg_ordinal: 1, host: "api.example.com", outcome: "succeeded", operation_id: "op_1" }],
     };
-    const { rerender } = render(<RunAttempts receipt={readRunReceipt({ run_receipt: loopback })} saidOnFace="THIS DEVICE" />);
-    expect(screen.getByTestId("summary-attempts").textContent).toBe("");
-    // Passive same-device transport is also withheld when no foot is present.
-    rerender(<RunAttempts receipt={readRunReceipt({ run_receipt: loopback })} />);
-    expect(screen.getByTestId("summary-attempts").textContent).toBe("");
-    rerender(<RunAttempts receipt={readRunReceipt({ run_receipt: SUCCEEDED_RECEIPT })} saidOnFace="api.example.com" />);
-    const text = screen.getByTestId("summary-attempts").textContent ?? "";
-    expect(text).toContain("192.168.1.43");
-    expect(text).toContain("FAILED");
-    expect(text).not.toContain("api.example.com");
-    // A host the transport does not pin as loopback is not THIS DEVICE, so a
-    // THIS DEVICE foot never hides it (Astra r1 M1).
-    const offBox = {
-      ...SUCCEEDED_RECEIPT,
-      attempts: [{ leg_ordinal: 1, host: "dev.localhost", outcome: "succeeded", operation_id: "op_1" }],
-    };
-    rerender(<RunAttempts receipt={readRunReceipt({ run_receipt: offBox })} saidOnFace="THIS DEVICE" />);
-    expect(screen.getByTestId("summary-attempts").textContent).toContain("dev.localhost");
-    // Raw spellings the backend does not pin (Astra r2 M3) stay visible too.
-    for (const host of ["127.0.0.1.", "127.00.0.1"]) {
-      const odd = { ...SUCCEEDED_RECEIPT, attempts: [{ leg_ordinal: 1, host, outcome: "succeeded", operation_id: "op_1" }] };
-      rerender(<RunAttempts receipt={readRunReceipt({ run_receipt: odd })} saidOnFace="THIS DEVICE" />);
-      expect(screen.getByTestId("summary-attempts").textContent).toContain(host);
-    }
+    render(<RunAttempts receipt={readRunReceipt({ run_receipt: ok })} />);
+    expect(screen.queryByTestId("summary-attempts")).toBeNull();
   });
 });
 
@@ -258,11 +219,11 @@ describe("HS-201-04 the record's Retry", () => {
   it("discloses the route before the click and the attempts after the run", async () => {
     mockedApiFetch.mockResolvedValue(recovery());
     render(<MeetingIntelRecovery meetingId="meeting-1" />);
-    await screen.findByRole("button", { name: "Retry" });
-    expect(screen.getByTestId("recovery-route").textContent).toContain("192.168.1.43");
-    expect(screen.getByTestId("recovery-attempts").textContent).toContain(
-      "api.example.com",
-    );
+    const retry = await screen.findByRole("button", { name: "Retry" });
+    // Owner ruling 2026-10-25: the route rides the verb's hover title.
+    expect(screen.queryByTestId("recovery-route")).toBeNull();
+    expect(retry.getAttribute("title")).toContain("192.168.1.43");
+    expect(screen.getByTestId("recovery-attempts").textContent).toBe("FAILED");
   });
 
   it("shows a 409 as a refusal and keeps the EXECUTED receipt", async () => {
@@ -285,11 +246,9 @@ describe("HS-201-04 the record's Retry", () => {
       "The summary route changed. Check it, then try again.",
     );
     // The receipt of the earlier executed run is NOT erased by the refusal.
-    expect(screen.getByTestId("recovery-attempts").textContent).toContain(
-      "api.example.com",
-    );
+    expect(screen.getByTestId("recovery-attempts").textContent).toBe("FAILED");
     // …and the refusal carries the FRESH route the hub disclosed with it.
-    expect(screen.getByTestId("recovery-route").textContent).toContain(
+    expect(screen.getByRole("button", { name: "Retry" }).getAttribute("title")).toContain(
       "192.168.1.43",
     );
     // A refusal is not an error surface (UX-CANON: honest states).
@@ -309,9 +268,7 @@ describe("HS-201-04 the record's Retry", () => {
     // No 409 in hand: the token says the state and invents no cause.
     expect(refusal.textContent).toBe("REFUSED");
     expect(refusal.getAttribute("title")).toContain("before any model was contacted");
-    expect(screen.getByTestId("recovery-attempts").textContent).toContain(
-      "api.example.com",
-    );
+    expect(screen.getByTestId("recovery-attempts").textContent).toBe("FAILED");
   });
 
   it("withholds Retry and says why when no route resolves", async () => {
@@ -367,9 +324,10 @@ describe("HS-201-04 the ledger's Retry", () => {
     );
   });
 
-  it("discloses the route beside the verb before the click", () => {
+  it("names the route in the verb's hover title before the click", () => {
     rail(FAILED_ROW);
-    expect(screen.getByTestId("row-route").textContent).toContain("192.168.1.43");
+    expect(screen.queryByTestId("row-route")).toBeNull();
+    expect(screen.getByTestId("retry-intelligence-btn").getAttribute("title")).toContain("192.168.1.43");
   });
 
   it("withholds the verb when no route resolves", () => {
@@ -382,9 +340,7 @@ describe("HS-201-04 the ledger's Retry", () => {
 
   it("shows the destinations contacted after the run", () => {
     rail({ ...FAILED_ROW, run_receipt: SUCCEEDED_RECEIPT });
-    expect(screen.getByTestId("row-attempts").textContent).toContain(
-      "api.example.com",
-    );
+    expect(screen.getByTestId("row-attempts").textContent).toBe("FAILED");
   });
 });
 
@@ -401,8 +357,8 @@ describe("HS-201-04 the record's NEEDS YOU verbs", () => {
         onRunIntelligence={vi.fn()}
       />,
     );
-    expect(screen.getByTestId("detail-run-intelligence-btn")).toBeTruthy();
-    expect(screen.getByTestId("detail-route").textContent).toContain("192.168.1.43");
+    expect(screen.getByTestId("detail-run-intelligence-btn").getAttribute("title")).toContain("192.168.1.43");
+    expect(screen.queryByTestId("detail-route")).toBeNull();
 
     rerender(
       <NeedsYouTable
@@ -434,10 +390,8 @@ describe("HS-201-04 the summary on the record", () => {
     expect(screen.getByTestId("meeting-summary-topics").textContent).toContain(
       "BUDGET",
     );
-    // The destinations contacted ride the well's head.
-    expect(screen.getByTestId("summary-record-attempts").textContent).toContain(
-      "api.example.com",
-    );
+    // A failed attempt rides the well's head; the host is in its title.
+    expect(screen.getByTestId("summary-record-attempts").textContent).toBe("FAILED");
   });
 
   it("draws nothing at all when no summary was produced", () => {

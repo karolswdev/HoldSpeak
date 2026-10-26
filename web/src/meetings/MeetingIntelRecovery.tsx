@@ -9,7 +9,7 @@ import { SurfaceState } from "../desk/surface/Surface";
 import { GadgetGroup, GadgetRow } from "../desk/surface/gadgets";
 import { apiFetch, readableError } from "../lib/api";
 import { countToken } from "../desk/surface/count";
-import { RefusalToken, RouteDisclosure, RunAttempts } from "./RouteDisclosure";
+import { RefusalToken, RouteDisclosure, RunAttempts, routeTitle } from "./RouteDisclosure";
 import { MeetingRunVerb } from "./runSlot";
 import { ToolGlyph } from "../desk/surface/kit";
 import {
@@ -284,6 +284,7 @@ export function MeetingIntelRecovery({
                 variant="primary"
                 loading={busy === "retry"}
                 disabled={Boolean(busy)}
+                title={localPublication ? undefined : routeTitle(route)}
                 onClick={() => void choose("retry")}
               >
                 <ToolGlyph kind="retry" />

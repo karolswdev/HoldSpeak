@@ -113,12 +113,15 @@ describe("FlightChip and FlightVerbs (K4a, K4b)", () => {
     expect(screen.queryByText("GITHUB.COM")).toBeNull();
   });
 
-  it("PR open: the GITHUB.COM egress chip and Open PR", () => {
+  it("PR open: Open PR names the address in its hover title; no host chip (owner ruling 2026-10-25)", () => {
     const flight = fromWireFlight(wire({ state: "pr_open", session_key: null, pr: { number: 412, url: "https://github.com/a/b/pull/412", state: "open" } }));
     const open = vi.spyOn(window, "open").mockImplementation(() => null);
     render(<FlightVerbs flight={flight} title="Add the flag" />);
-    expect(screen.getByText("GITHUB.COM")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Open PR #412: Add the flag" }));
+    expect(screen.queryByText("GITHUB.COM")).toBeNull();
+    expect(document.querySelector(".gadget-chip-egress")).toBeNull();
+    const verb = screen.getByRole("button", { name: "Open PR #412: Add the flag" });
+    expect(verb.getAttribute("title")).toBe("https://github.com/a/b/pull/412");
+    fireEvent.click(verb);
     expect(open).toHaveBeenCalledWith("https://github.com/a/b/pull/412", "_blank", "noopener");
   });
 

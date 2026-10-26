@@ -24,7 +24,6 @@ import {
   SurfaceStreamEntry,
   SurfaceWell,
   ConfirmVerb,
-  EgressChip,
   StateChip,
   humanTime,
   streamDayLabel,
@@ -74,7 +73,7 @@ import type {
 } from "./model";
 import { lifecycleLabel, formatDays, needsYouWhyWords } from "./model";
 import { StringGadget, CycleGadget, FoldGadget } from "../../desk/surface/gadgets";
-import { egressFor, egressForEvent, receiptFace, receiptLabel, refusalWord } from "../../desk/surface/egress";
+import { receiptFace, receiptLabel, refusalWord } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
 import { ReviewPosture } from "./review/ReviewPosture";
@@ -422,7 +421,6 @@ function RoomHead({
             verb="Working"
             pastVerb="Drafted"
             model={draftRun.generator === "model" ? updateEngine.model : ""}
-            place={draftRun.generator === "model" ? updateEngine.place : ""}
             startedAt={draftRun.startedAt}
             elapsedSeconds={draftRun.elapsedSeconds}
             reason={draftRun.reason}
@@ -503,9 +501,8 @@ function ProposalRow({
   const proposalId = item.proposalId || "";
   const kind = item.proposalKind || "action";
   const prefix = kind === "decision" ? "Decide:" : "Confirm:";
-  const host = item.host || proposal?.modelHost || "";
-
-  // Caption: BY FRI · from Standup 09-05 · MAREK + EgressChip
+  // Caption: BY FRI · from Standup 09-05 · MAREK (no host chip: owner
+  // ruling 2026-10-25)
   const dueHint = proposal?.dueHint || item.dueHint;
   const meetingTitle = item.meetingTitle || "";
   const meetingStartedAt = item.meetingStartedAt || "";
@@ -621,9 +618,6 @@ function ProposalRow({
           ) : null}
           {speaker ? (
             <span className="room-proposal-caption room-proposal-speaker">{speaker.toUpperCase()}</span>
-          ) : null}
-          {host ? (
-            <EgressChip label={egressFor(host).label} scope={egressFor(host).scope} />
           ) : null}
           {failure ? <span className="surface-token" role="alert">{failure}</span> : null}
         </>
@@ -1339,7 +1333,7 @@ function SourcesSection({
             }
 
             /* LINE 1: emblem . scope (primary) . [gap] . tokens left-aligned . [spacer] . verbs
-               LINE 2: checked + host, starting at the scope's left edge.
+               LINE 2: checked (no host: owner ruling 2026-10-25), starting at the scope's left edge.
                The tokens sit INSIDE the primary slot so they follow the scope
                inline, not right-aligned as cells.
                HS-175-04: meeting rows use the same grammar — one grammar for
@@ -1406,7 +1400,6 @@ function SourcesSection({
                       {src.checkedAt ? (
                         <span className="room-source-checked">checked {humanTime(src.checkedAt)}</span>
                       ) : null}
-                      {src.host ? <EgressChip label={src.host} scope="cloud" title={src.host} /> : null}
                     </>
                   )}
                 </div>
@@ -1487,7 +1480,6 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
       <SurfaceLedger count="" cols="room">
         <ul className="surface-ledger-rows">
           {items.map((item) => {
-            const egress = egressForEvent({ origin: item.origin, caller: item.caller });
             const label = receiptLabel({ op: item.op, title: item.title, outcome: item.outcome });
             // PHILO-9-03 (Codex Astra r1 finding 1): the row says what
             // happened -- a refused write is ✗ REFUSED + the plain reason,
@@ -1513,9 +1505,6 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
                     {face.word && item.reason ? (
                       <span className="surface-token" data-chip data-testid="receipt-reason">{refusalWord(item.reason)}</span>
                     ) : null}
-                    {egress.label ? (
-                      <span data-testid="receipt-egress"><EgressChip label={egress.label} scope={egress.scope} /></span>
-                    ) : null}
                     {item.timestamp ? (
                       <span className="surface-token" data-muted>{humanTime(item.timestamp)}</span>
                     ) : null}
@@ -1534,16 +1523,12 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
 
 /* ── Ask well ── */
 
-/** Resolve the model host label for the ask well's egress chip.
- *  Article III: the chip names the HOST at the point of decision.
- *  1. Reads the assignment to find the profile_id.
- *  2. Looks up the InferenceTarget with that profile_id in the desk store
- *     to find the endpoint URL (the host the Settings face shows).
- *  3. Falls back to the boundary label (LOCAL/CLOUD) only when no host exists.
- *  4. NOT SET when unassigned. */
-function useModelLabel(projectId: string): { host: string; scope: "local" | "cloud" | undefined } {
+/** The name of the engine that answers this project's questions, or
+ *  NOT SET when unassigned. Owner ruling 2026-10-25: the engine is named by
+ *  name only; no host and no place word on the Room. Settings ▸ Engines
+ *  and the Ask window name where it runs. */
+function useModelLabel(projectId: string): { host: string } {
   const [host, setHost] = useState("NOT SET");
-  const [scope, setScope] = useState<"local" | "cloud" | undefined>(undefined);
   const deskTargets = useDesk((s) => s.inferenceTargets);
   // HS-200-41 — the defect on this very seam. The hook used to re-read only
   // on `[projectId, targets]`, and `inferenceTargets` moves only when the
@@ -1575,43 +1560,15 @@ function useModelLabel(projectId: string): { host: string; scope: "local" | "clo
       const eff = editor.effective;
       if (eff.status === "assigned" && eff.assignment?.entries?.length) {
         const entry = eff.assignment.entries[0];
-        // Look up the InferenceTarget by profile_id for the real host.
         const target = targets.find((t) => t.profile_id === entry.profile_id);
-        // Extract hostname from the endpoint URL, or use node, or fall back to boundary.
-        let resolvedHost = "";
-        if (target?.endpoint) {
-          try {
-            resolvedHost = new URL(target.endpoint).host;
-          } catch {
-            resolvedHost = target.endpoint;
-          }
-        } else if (target?.node) {
-          resolvedHost = target.node;
-        }
-        // Determine scope from the target's boundary or kind.
-        const boundary = target?.boundary || entry.boundary || "";
-        const isLocal = boundary === "same_device" || boundary === "private_network";
-        setHost(resolvedHost || boundaryToLabel(boundary) || entry.label || "Assigned");
-        setScope(isLocal ? "local" : "cloud");
+        setHost(entry.label || target?.name || "Assigned engine");
       } else {
         setHost("NOT SET");
-        setScope(undefined);
       }
     }).catch(() => { /* non-fatal */ });
     return () => { cancelled = true; };
   }, [projectId, targets, reread]);
-  return { host, scope };
-}
-
-function boundaryToLabel(boundary: string): string {
-  switch (boundary) {
-    case "same_device": return "LOCAL";
-    case "private_network": return "LAN";
-    case "paired_device": return "PAIRED";
-    case "private_mesh": return "MESH";
-    case "external_service": return "CLOUD";
-    default: return "";
-  }
+  return { host };
 }
 
 /** The Room's ask (Betterment Q5): the field opens the one Ask window with
@@ -1685,7 +1642,7 @@ export function RoomAskWell({
             />
           </span>
         ) : null}
-        {/* Condition 8: NOT SET = idle/muted tone (no scope), assigned = scope from assignment */}
+        {/* NOT SET = the plain fact and Choose; assigned = the engine's name. */}
         {modelLabel.host === "NOT SET" ? (
           <span className="room-ask-model-chip">
             {/* PHILO-17 U31: the plain fact, not MODEL · NOT SET. */}
@@ -1705,11 +1662,7 @@ export function RoomAskWell({
             </Button>
           </span>
         ) : (
-          <EgressChip
-            label={`MODEL · ${modelLabel.host}`}
-            scope={modelLabel.scope}
-            title={`Model: ${modelLabel.host}`}
-          />
+          <span className="room-ask-model-chip room-ask-engine" data-testid="room-ask-engine">{modelLabel.host}</span>
         )}
         {/* Condition 1: no raw <button>; visually-hidden submit for a11y */}
         <Button dense variant="ghost" className="room-ask-submit-hidden" aria-label="Submit" onClick={() => void ask.ask()} tabIndex={-1}>

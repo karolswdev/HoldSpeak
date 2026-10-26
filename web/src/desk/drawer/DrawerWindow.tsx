@@ -15,7 +15,6 @@ import { Button } from "../../components/signal/Signal";
 import {
   AppHead,
   DeskIcon,
-  EgressChip,
   FilterBar,
   ParkReceipt,
   restoreFailedOutcome,
@@ -46,7 +45,6 @@ import { windowName } from "../windowName";
 import { memberOpens, openMember } from "./open";
 import { drawerWindowId, useDrawers, type OpenDrawer } from "./store";
 import { useDrawerData, type DrawerRead } from "./useDrawerData";
-import { urlHost } from "./members";
 import {
   HandConfirmSlot,
   beginHand,
@@ -341,7 +339,6 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
         </div>
       </div>
       <SurfaceFooter
-        egress={selected?.url ? <EgressChip label={urlHost(selected.url)} scope="cloud" /> : null}
         receipt={
           receipt ? (
             <ParkReceipt outcome={receipt} onRestore={(ids) => void restore(ids)} data-testid="drawer-park-receipt" />
@@ -366,7 +363,10 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
                 Hand to agent
               </Button>
             ) : null}
-            <Button dense variant="secondary" disabled={!selected || !memberOpens(selected)} onClick={() => open(selected)}>
+            {/* No host chip in the status bar (owner ruling 2026-10-25): a
+                link names its address in the verb's hover title. */}
+            <Button dense variant="secondary" disabled={!selected || !memberOpens(selected)} onClick={() => open(selected)}
+              title={selected?.url || undefined}>
               Open
             </Button>
           </>

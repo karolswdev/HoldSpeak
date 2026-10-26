@@ -32,7 +32,6 @@ import { useDesk } from "../store";
 import {
   AskWell,
   ActionNotice,
-  EgressChip,
   FilesChanged,
   FoldGadget,
   PaneWell,
@@ -461,7 +460,6 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
   const scope = `steer:${key || "unattached"}`;
   const { value, setDraft } = useDurableDraft(scope);
   const draft = wait.draft?.text?.trim() || undefined;
-  const draftEgress = useDraftEgress(Boolean(draft));
   const inputRef = useRef<HTMLInputElement | null>(null);
   const answer = async (text: string) => {
     if (await useLane.getState().send(text, { waitId: wait.wait_id ?? null })) setDraft("");
@@ -484,7 +482,6 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
         setDraft(text);
         inputRef.current?.focus();
       }}
-      draftEgress={draft ? draftEgress : undefined}
       busy={sending}
       disabled={!key || Boolean(lane.control && !isNotRead(lane.control) && lane.control.pane === false)}
       listenSignal={answerSeq}
@@ -895,7 +892,6 @@ function LaneFooter({ lane }: { lane: LaneWire }) {
   return (
     <SurfaceFooter
       className="lw-footer"
-      egress={prUrl ? <EgressChip label="GITHUB.COM" scope="cloud" /> : undefined}
       receipt={<LaneReceipts lane={lane} />}
       verbs={
         <>
@@ -915,6 +911,7 @@ function LaneFooter({ lane }: { lane: LaneWire }) {
               dense
               variant="secondary"
               data-testid="lane-open-pr"
+              title={prUrl}
               onClick={() => window.open(prUrl, "_blank", "noopener,noreferrer")}
             >
               Open PR
@@ -974,7 +971,9 @@ function readDraftEntry(capability: string): Promise<AssignmentEntry | null> {
   });
 }
 
-/** The EgressChip of the model that drafts answers: its endpoint's host
+/** Owner ruling 2026-10-25: the lane draws no draft host chip; this hook
+ * stays for its tests and a later caller that names the engine by name.
+ * The label of the model that drafts answers: its endpoint's host
  * (`API.ANTHROPIC.COM`, `192.168.1.43 · LAN`, `THIS DEVICE`), else the
  * model's name; `NOT SET` when no model is assigned to drafts and no Default
  * for AI work exists (drafts inherit the default, PHILO-15 05). Read on every
