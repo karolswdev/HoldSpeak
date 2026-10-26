@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CREATED from "../../../test/wire/decision-records.from-desk.wire.json";
 import RECORD from "../../../test/wire/decision-record.new.wire.json";
 import LIST from "../../../test/wire/decision-records.list-new.wire.json";
+import MEETING_DECISION from "../../../test/wire/decision.honest-faces.wire.json";
 
 const hub = vi.hoisted(() => ({
   posts: [] as Array<{ url: string; body: Record<string, unknown> }>,
@@ -41,6 +42,11 @@ vi.mock("../../../lib/api", async (importOriginal) => {
       if (url === `/api/decision-records/${RECORD.wire.id}`) return Promise.resolve(structuredClone(RECORD.wire));
       if (url.startsWith("/api/decision-records?")) return Promise.resolve(structuredClone(LIST.wire));
       if (url.startsWith("/api/channels/sends")) return Promise.resolve({ sends: [] });
+      // A meeting's decision (recorded) and the records made from it / the
+      // records that govern one work item: the recorded record, as a list.
+      if (url === `/api/decisions/${MEETING_DECISION.wire.decision.id}`) return Promise.resolve(structuredClone(MEETING_DECISION.wire));
+      if (url === `/api/decision-records/source/meeting/${MEETING_DECISION.wire.decision.id}`) return Promise.resolve([structuredClone(RECORD.wire)]);
+      if (url === "/api/decision-records/work/item/w-1") return Promise.resolve([structuredClone(RECORD.wire)]);
       return Promise.resolve({});
     }),
   };
@@ -56,6 +62,10 @@ import { SurfaceWindows } from "../../../desk/components/SurfaceWindows";
 import { useDesk } from "../../../desk/store";
 import { VERBS } from "../../../desk/verbRegistry";
 import { usePalette } from "../../../desk/chromeState";
+import { openMember } from "../../../desk/drawer/open";
+import { openIntelligence } from "../../../desk/intelligenceNavigation";
+import { openRef } from "../../../desk/openObject";
+import { WhyControl } from "../../../desk/components/WhyControl";
 
 const PROJECT = { id: "proj-57969b0497a9", name: "Payments ledger cutover" };
 const NEW_WINDOW = "surface-new-decision";
@@ -179,5 +189,81 @@ describe("New Decision opens a window of its own", () => {
     expect(row.getAttribute("aria-selected")).toBe("true");
     // The window forgets the record it opened on: a reload shows the list.
     expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope ?? null).toBeNull();
+  });
+});
+
+// The owner, 2026-10-25: the reader in the Decisions window is the ONE face
+// of a decision record. Every door to a record, and Today's Decisions door,
+// opens that window; none opens the old desk decision window or a Decisions
+// page inside Today.
+describe("every decision door opens the Decisions window", () => {
+  const todayOpen = () =>
+    Boolean(useDesk.getState().windowsById["intelligence:desk"]) || useDesk.getState().pullouts.some((pullout) => pullout.id === "intelligence:desk");
+
+  it("a drawer's decision record opens in the Decisions window reader, with no source read first", async () => {
+    render(<SurfaceWindows />);
+    act(() => openMember({ id: `decision_record:${RECORD.wire.id}`, ref: `decision_record:${RECORD.wire.id}`, kind: "decision", name: "X", facts: {} } as never));
+    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`record:${RECORD.wire.id}`);
+    const reader = await screen.findByTestId("decision-reader");
+    expect(await within(reader).findByRole("heading", { name: "Keep the ledger on SQLite" })).toBeTruthy();
+    expect(within(reader).getByRole("button", { name: /Send…/ })).toBeTruthy();
+    expect(within(reader).getByTestId("decision-reader-back")).toBeTruthy();
+    expect(screen.getByTestId("decision-reader-state").textContent).toBe("Decided just now");
+    // Not the old desk decision window, not Today; no read of the source decision.
+    expect(hub.gets.some((url) => url.startsWith("/api/decisions/"))).toBe(false);
+    expect(Object.keys(useDesk.getState().windowsById)).toEqual([DECISIONS_WINDOW]);
+    expect(todayOpen()).toBe(false);
+  });
+
+  it("an open Decisions window comes to the front on the record asked for", async () => {
+    render(<SurfaceWindows />);
+    act(() => useDesk.getState().openSurfaceWindow("open-decisions"));
+    expect(await screen.findByTestId("decisions-window")).toBeTruthy();
+    act(() => openMember({ id: `decision_record:${RECORD.wire.id}`, ref: `decision_record:${RECORD.wire.id}`, kind: "decision", name: "X", facts: {} } as never));
+    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`record:${RECORD.wire.id}`);
+    expect(await screen.findByTestId("decision-reader")).toBeTruthy();
+    expect(screen.getAllByTestId("decisions-window")).toHaveLength(1);
+  });
+
+  it("Today's Decisions door opens the Decisions window list, never a page in Today", async () => {
+    const asked: unknown[] = [];
+    const listen = (event: Event) => asked.push((event as CustomEvent).detail);
+    window.addEventListener("holdspeak:intelligence-navigate", listen);
+    try {
+      render(<SurfaceWindows />);
+      act(() => openIntelligence({ view: "receipts" }));
+      expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope ?? null).toBeNull();
+      const row = await screen.findByTestId("decisions-row");
+      expect(row.textContent).toContain("Keep the ledger on SQLite");
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(asked).toEqual([]);
+      expect(todayOpen()).toBe(false);
+    } finally {
+      window.removeEventListener("holdspeak:intelligence-navigate", listen);
+    }
+  });
+
+  it("a meeting's decision that has a record opens that record in the reader", async () => {
+    render(<SurfaceWindows />);
+    act(() => openRef(`decision:${MEETING_DECISION.wire.decision.id}`));
+    await waitFor(() => expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`record:${RECORD.wire.id}`));
+    expect(await screen.findByTestId("decision-reader")).toBeTruthy();
+    expect(todayOpen()).toBe(false);
+  });
+
+  it("WHY with one governing record opens that record in the reader", async () => {
+    render(<><SurfaceWindows /><WhyControl workType="item" workRef="w-1" /></>);
+    fireEvent.click(await screen.findByRole("button", { name: /governing decision receipt/ }));
+    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`record:${RECORD.wire.id}`);
+    expect(await screen.findByTestId("decision-reader")).toBeTruthy();
+    expect(todayOpen()).toBe(false);
+  });
+
+  it("a door that names the record (Open canonical record) opens it in the reader", async () => {
+    render(<SurfaceWindows />);
+    act(() => openIntelligence({ view: "receipts", receiptId: RECORD.wire.id }));
+    expect(useDesk.getState().windowsById[DECISIONS_WINDOW]?.scope).toBe(`record:${RECORD.wire.id}`);
+    expect(await screen.findByTestId("decision-reader")).toBeTruthy();
+    expect(todayOpen()).toBe(false);
   });
 });

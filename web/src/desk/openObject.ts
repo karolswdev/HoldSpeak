@@ -12,6 +12,7 @@ import { openIntelligence } from "./intelligenceNavigation";
 import { openAgentLane, openCoderSession, openPrimitive, openProjectRoom } from "./shell";
 import { openSourceRef } from "./surface";
 import { personWindowRef, type PersonLens } from "./objectWindows";
+import { useDesk } from "./store";
 import type { DeskNavigation } from "./store/types";
 
 export type Opener = () => void;
@@ -245,23 +246,30 @@ export function openRef(ref: string, navigation?: DeskNavigation): void {
 
 /** A decision ref names a Desk decision (its own window) or a decision a
  * meeting recorded (`decisions` lifecycle rows, no Desk window). PHILO-17:
- * that one opens itself, in Intelligence → Decisions (its words, its date,
- * its meeting), not the meeting that hid it. One read tells which. */
+ * that one opens itself (its words, its date, its meeting), not the meeting
+ * that hid it. One read tells which. The owner, 2026-10-25: a meeting
+ * decision that has a record opens that record in the Decisions window
+ * reader; one with no record yet keeps the Decisions page in Today. */
 function openDecision(ref: string): void {
   const id = ref.slice("decision:".length);
   void apiFetch<{ decision?: { source_meeting_id?: string | null } }>(`/api/decisions/${encodeURIComponent(id)}`)
-    .then((body) => {
+    .then(async (body) => {
       const meeting = (body?.decision?.source_meeting_id ?? "").trim();
-      if (meeting) openIntelligence({ view: "receipts", decisionId: id });
-      else openSourceRef(ref);
+      if (!meeting) return openSourceRef(ref);
+      const records = await apiFetch<{ id?: string }[]>(
+        `/api/decision-records/source/meeting/${encodeURIComponent(id)}`,
+      ).catch(() => []);
+      const record = (Array.isArray(records) ? records : []).find((row) => String(row?.id ?? "").trim());
+      if (record) openDecisionRecord(String(record.id));
+      else openIntelligence({ view: "receipts", decisionId: id });
     })
     .catch(() => openSourceRef(ref));
 }
 
-/** PHILO-14 A2b (Astra r1 on #945) — a decision record (`decision_record:
- *  <record id>`, `record-<hex>`) is not a `decisions` row: it opens the
- *  decision it was made from (its source), read from the record's own route.
- *  Not in `refOpener`: memory leaves record refs out (memoryRefsOpen). */
+/** PHILO-14 A2b (Astra r1 on #945) — the ref of the decision a record
+ *  (`decision_record:<record id>`, `record-<hex>`) was made from (its
+ *  source): the drawer's member ref and the reader's "From" link. The record
+ *  itself opens in the Decisions window (`openDecisionRecord`). */
 export function decisionRecordSourceRef(sourceType: unknown, sourceId: unknown): string | null {
   const id = String(sourceId ?? "").trim();
   if (!id) return null;
@@ -270,19 +278,14 @@ export function decisionRecordSourceRef(sourceType: unknown, sourceId: unknown):
   return null;
 }
 
+/** The owner, 2026-10-25: a decision record has ONE face, the reader in the
+ *  Decisions window (`record:<id>`; #1474). The reader reads its own record,
+ *  so the press opens the window at once, with no read first. An open
+ *  Decisions window comes to the front and shows this record. */
 export function openDecisionRecord(recordId: string): void {
   const id = recordId.trim();
   if (!id) return;
-  void apiFetch<{ source_type?: string; source_id?: string; sources?: { source_type?: string; source_ref?: string }[] }>(
-    `/api/decision-records/${encodeURIComponent(id)}`,
-  )
-    .then((record) => {
-      const ref = decisionRecordSourceRef(record?.source_type, record?.source_id);
-      if (ref) return openRef(ref);
-      const meeting = (record?.sources ?? []).find((s) => s.source_type === "meeting" && s.source_ref);
-      if (meeting) openSourceRef(`meeting:${String(meeting.source_ref).replace(/^meeting:/, "")}`);
-    })
-    .catch(() => undefined);
+  useDesk.getState().openSurfaceWindow("open-decisions", `record:${id}`);
 }
 
 /** A calendar row: its person at Prep when the event is linked to one, else

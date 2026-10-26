@@ -1583,12 +1583,18 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     expect(takeRoomAtRequest("another-project")).toEqual({ kind: "file", ref: "note:api-boundary" });
   });
 
-  it("a Decided line opens its decision (the record's own route)", async () => {
+  it("a Decided line opens its record in the Decisions window reader (the owner, 2026-10-25)", async () => {
     const recordId = (P3.room as { now: { decided: { id: string }[] } }).now.decided[0].id;
-    wire({ ...table(), [`GET /api/decision-records/${recordId}`]: () => ({ source_type: "meeting", source_id: "d1" }) });
+    wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
-    fireEvent.click(await screen.findByTestId("this-week-decided"));
-    await waitFor(() => expect(calls.map((c) => c.key)).toContain(`GET /api/decision-records/${recordId}`));
+    const decided = await screen.findByTestId("this-week-decided");
+    const before = calls.length;
+    fireEvent.click(decided);
+    expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe(`record:${recordId}`);
+    // The reader reads the record itself: the press reads nothing, and no
+    // old desk decision window opens.
+    expect(calls.slice(before).map((c) => c.key).filter((key) => key.includes("/api/decision"))).toEqual([]);
+    expect(Object.keys(useDesk.getState().windowsById).filter((id) => id.startsWith("desk_decision"))).toEqual([]);
   });
 });
 

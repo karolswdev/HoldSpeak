@@ -287,16 +287,15 @@ describe("PHILO-14 A2 the drawer", () => {
     expect(refs().filter((r) => r.startsWith("decision"))).toEqual(["decision:dec-1"]);
   });
 
-  it("A2b: a decision record the Room did not list opens through its own route", async () => {
+  it("A2b: a decision record opens in the Decisions window reader (the owner, 2026-10-25)", () => {
     const member: DrawerMember = { id: "decision_record:record-9", ref: "decision_record:record-9", kind: "decision", name: "X", facts: {} } as never;
     expect(memberOpens(member)).toBe(true);
-    apiFetch.mockImplementation((url: string) =>
-      Promise.resolve(url === "/api/decision-records/record-9" ? { id: "record-9", source_type: "meeting", source_id: "dec-1" } : route(url)));
+    apiFetch.mockImplementation((url: string) => Promise.resolve(route(url)));
     openMember(member);
-    // The record's source is the `decisions` row: its opener reads that row
-    // (never `/api/decisions/record-9`).
-    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/decisions/dec-1"));
-    expect(apiFetch.mock.calls.some(([u]) => String(u) === "/api/decisions/record-9")).toBe(false);
+    // The reader reads its own record: no read in the press, no source window.
+    expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe("record:record-9");
+    expect(apiFetch.mock.calls.some(([u]) => String(u).startsWith("/api/decision"))).toBe(false);
+    expect(opened.refs).toEqual([]);
   });
 
   it("a Room commitment opens its action item's card; a decision-kind one stays a decision", () => {
@@ -606,20 +605,11 @@ function PrepareHarness() {
   );
 }
 
-describe("PHILO-14 A2b Prepare's DEC citation opens its record through the record's route", () => {
-  it("Open source on a DEC claim reads /api/decision-records/<id>, then its source decision; never /api/decisions/record-", async () => {
+describe("PHILO-14 A2b Prepare's DEC citation opens its record in the Decisions window", () => {
+  it("Open source on a DEC claim opens the Decisions window on the record; never /api/decisions/record-", async () => {
     apiFetch.mockImplementation((url: string) => {
       if (url === `/api/briefs/${KEPT_BRIEF.id}`) return Promise.resolve({ brief: KEPT_BRIEF });
       if (url.startsWith("/api/projects/p-ledger/briefs")) return Promise.resolve(url.includes("/briefs?") ? { briefs: [KEPT_BRIEF] } : {});
-      // DecisionRecordService.get: the record with its source (keys trimmed, not invented).
-      if (url === `/api/decision-records/${RECORD_ID}`) {
-        return Promise.resolve({ id: RECORD_ID, kind: "decision", lifecycle: "active", decision_text: "Freeze the old ledger on Nov 5",
-          source_type: "meeting", source_id: SOURCE_DECISION, sources: [] });
-      }
-      // DecisionLifecycleService.get_decision: {decision, lineage}; the decision names its meeting.
-      if (url === `/api/decisions/${SOURCE_DECISION}`) {
-        return Promise.resolve({ decision: { id: SOURCE_DECISION, text: "Freeze the old ledger on Nov 5", source_meeting_id: "m-sync" }, lineage: [] });
-      }
       return Promise.resolve(route(url));
     });
     render(<PrepareHarness />);
@@ -627,10 +617,10 @@ describe("PHILO-14 A2b Prepare's DEC citation opens its record through the recor
     const ref = await screen.findByTestId("prepare-claim-ref");
     expect(ref.textContent).toMatch(/^DEC/);
     fireEvent.click(screen.getByTestId("prepare-claim-open"));
-    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(`/api/decision-records/${RECORD_ID}`));
-    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith(`/api/decisions/${SOURCE_DECISION}`));
+    await waitFor(() => expect(useDesk.getState().windowsById["surface-decisions"]?.scope).toBe(`record:${RECORD_ID}`));
     const asked = apiFetch.mock.calls.map(([u]) => String(u));
-    expect(asked.some((u) => u.startsWith("/api/decisions/record-"))).toBe(false);
+    expect(asked.some((u) => u.startsWith("/api/decisions/"))).toBe(false);
+    expect(asked).not.toContain(`/api/decisions/${SOURCE_DECISION}`);
     expect(opened.refs).not.toContain(`decision_record:${RECORD_ID}`);
   });
 });

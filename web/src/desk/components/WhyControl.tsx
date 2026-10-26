@@ -37,7 +37,10 @@ export function WhyControl({ workType, workRef }: { workType: string; workRef: s
       aria-label={`${whyLabel} governing decision receipt${(receiptIds?.length ?? 0) === 1 ? "" : "s"}`}
       onClick={(event) => {
         event.stopPropagation();
-        openIntelligence({ view: "receipts", receiptWorkRef: `${workType}:${workRef}`, whyOnly: true });
+        // One governing record: its reader in the Decisions window.
+        const only = receiptIds?.length === 1 ? receiptIds[0] : undefined;
+        if (only) openIntelligence({ view: "receipts", receiptId: only });
+        else openIntelligence({ view: "receipts", receiptWorkRef: `${workType}:${workRef}`, whyOnly: true });
       }}
     >
       {whyLabel}

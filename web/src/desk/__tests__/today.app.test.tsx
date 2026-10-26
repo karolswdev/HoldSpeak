@@ -152,6 +152,26 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
     expect(within(rows).getByTestId("today-since-decisions")).toHaveTextContent("Decisions");
   });
 
+  it("the Decisions door opens the Decisions window, not a page in Today (the owner, 2026-10-25)", async () => {
+    replay();
+    const { useDesk } = await import("../store");
+    useDesk.setState({ windowsById: {} });
+    const asked: unknown[] = [];
+    const listen = (event: Event) => asked.push((event as CustomEvent).detail);
+    window.addEventListener("holdspeak:intelligence-navigate", listen);
+    try {
+      render(<TodayView />);
+      fireEvent.click(await screen.findByTestId("today-since-toggle"));
+      fireEvent.click(await screen.findByTestId("today-since-decisions"));
+      expect(useDesk.getState().windowsById["surface-decisions"]).toBeTruthy();
+      expect(useDesk.getState().windowsById["surface-decisions"]?.scope ?? null).toBeNull();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(asked).toEqual([]);
+    } finally {
+      window.removeEventListener("holdspeak:intelligence-navigate", listen);
+    }
+  });
+
   it("Done on a row is the Needs-you verb: the same write, and the row's Undo in Today's foot", async () => {
     const { posts } = replay();
     render(<TodayView />);
