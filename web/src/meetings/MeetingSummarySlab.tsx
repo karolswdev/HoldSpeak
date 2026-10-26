@@ -44,7 +44,6 @@ export function MeetingSummarySlab({
   intel,
   receipt,
   facts,
-  saidOnFace,
   reader = false,
 }: {
   /** Window grammar (2026-10-24): the meeting window reads its summary as
@@ -53,8 +52,6 @@ export function MeetingSummarySlab({
   reader?: boolean;
   intel: MeetingIntel | null;
   receipt: RunReceipt | null;
-  /** PHILO-17 (U16): the engine host a chip already names on this face. */
-  saidOnFace?: string | null;
   facts?: ReactNode;
 }) {
   const summary = String(intel?.summary ?? "").trim();
@@ -65,7 +62,7 @@ export function MeetingSummarySlab({
       <section className="meeting-summary-reader" aria-label="Summary" data-testid="meeting-summary">
         <header className="meeting-summary-reader-head">
           <h2 className="meeting-summary-heading">Summary</h2>
-          <RunAttempts receipt={receipt} testId="summary-record-attempts" saidOnFace={saidOnFace} />
+          <RunAttempts receipt={receipt} testId="summary-record-attempts" />
         </header>
         <ReadingDocument className="meeting-summary-document" data-testid="meeting-summary-text">{summary}</ReadingDocument>
         {topics.length > 0 ? (
@@ -87,7 +84,7 @@ export function MeetingSummarySlab({
       head={
         <span className="summary-well-head">
           <span>SUMMARY</span>
-          <RunAttempts receipt={receipt} testId="summary-record-attempts" saidOnFace={saidOnFace} />
+          <RunAttempts receipt={receipt} testId="summary-record-attempts" />
         </span>
       }
     >

@@ -556,7 +556,6 @@ export function MeetingDetail({
   onSendBack,
   runRefusal,
   onTranscribe,
-  saidOnFace,
   revision = 0,
   sendRequested = false,
   decideRequested = false,
@@ -567,8 +566,6 @@ export function MeetingDetail({
   meeting: Record<string, unknown> | null;
   sendRequested?: boolean;
   decideRequested?: boolean;
-  /** PHILO-17 (U16): the engine host the window's foot already names. */
-  saidOnFace?: string | null;
   /** PHILO-17 transcribe: start Transcribe on this audio-only meeting. */
   onTranscribe?: (id: string) => Promise<unknown>;
   /** "outcomes" (the face) or "artifacts". */
@@ -667,7 +664,7 @@ export function MeetingDetail({
     <SurfaceSection>
       {/* Window grammar: no headline (the title bar names the meeting); a
           compact head, its glyph and one muted line. */}
-      <MeetingHeader meeting={meeting} data={data} compact={compactSavedOutcome} saidOnFace={saidOnFace} />
+      <MeetingHeader meeting={meeting} data={data} compact={compactSavedOutcome} />
       {/* PHILO-17 (the desk sweep): the record's body is mounted at once
           (its wells start their reads) but drawn only when its first reads
           end, the Send well's included, or at the cap: a late read never
@@ -711,7 +708,7 @@ export function MeetingDetail({
           {/* PHILO-17 (the Today language): what was said first (the
               summary), then what was decided and who owes what, then the
               follow-up (Send), the transcript last. */}
-          <MeetingSummarySlab reader intel={summaryIntel} receipt={runReceipt} saidOnFace={saidOnFace} />
+          <MeetingSummarySlab reader intel={summaryIntel} receipt={runReceipt} />
           {/* betterment/capture C6: what changed since the last meeting of this kind. */}
           <SinceLastWell since={readSinceLast(data.aftercare)} meetingId={id} />
           <MeetingOutcomes data={data} meeting={meeting} />

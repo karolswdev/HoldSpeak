@@ -1,0 +1,1 @@
+- `isLanHost.test.ts`: `isLanHost` and its test, lifted from `SpeakFace.tsx` after the owner ruling of 2026-10-25 (UX-CANON A.9 amended) retired the Speak LAN chip; no caller remained.

@@ -92,15 +92,15 @@ describe("HS-93-04 Desk tool inspector", () => {
     const { container } = render(<MemoryRouter><DeskToolInspector /></MemoryRouter>);
     const post = screen.getByRole("button", { name: "Post Release checklist to Custom webhook" });
     expect(post).toHaveClass("btn");
+    expect(post).toHaveAttribute("title", "Goes to Launch workspace");
     fireEvent.click(post);
     const receipt = await screen.findByRole("status", { name: label });
     expect(receipt).toHaveAttribute("data-state", tone);
     expect(receipt.closest(".surface-footer-receipt")).not.toBeNull();
     expect(screen.getByRole("button", { name: "Return to Release checklist" })).toHaveClass("btn");
     expect(container.querySelector(".desk-integration-receipt")).toBeNull();
-    const egress = container.querySelector(".surface-footer-egress .gadget-chip-egress");
-    expect(egress).toHaveTextContent("Launch workspace");
-    expect(egress).not.toHaveAttribute("data-scope", "local");
+    // Owner ruling 2026-10-25 (UX-CANON A.9): no egress chip in the status bar; the verb names the route.
+    expect(container.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeNull();
     if (status === "failed") {
       expect(screen.getByRole("button", { name: /Retry/ })).toHaveClass("btn");
       expect(screen.getByRole("alert")).toHaveTextContent("Endpoint unavailable");
@@ -119,13 +119,12 @@ describe("HS-93-04 Desk tool inspector", () => {
       toolInspector: { kind: "integration", id: "companion_webhook" },
     });
     const { container } = render(<MemoryRouter><DeskToolInspector /></MemoryRouter>);
-    const egress = container.querySelector(".surface-footer-egress .gadget-chip-egress");
-    expect(egress).toHaveTextContent("hooks.example.invalid");
-    expect(egress).not.toHaveTextContent("private-path");
-    expect(egress).toHaveAttribute("data-scope", "cloud");
+    expect(container.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeNull();
+    const verb = screen.getByRole("button", { name: "Post Release checklist to Custom webhook" });
+    expect(verb).toHaveAttribute("title", "Goes to hooks.example.invalid");
   });
 
-  it("keeps the exact GitHub repository visible before creating an issue and its host in the footer", () => {
+  it("keeps the exact GitHub repository visible before creating an issue and its host on the verb", () => {
     vi.stubGlobal("fetch", vi.fn(async () => json({ control_mode: "neutral" })));
     useDesk.setState({
       setup: { trust: { destinations: [{ ...webhook, id: "github", name: "GitHub", destination: "owner/architecture-reports" }] } },
@@ -133,10 +132,10 @@ describe("HS-93-04 Desk tool inspector", () => {
     });
     const { container } = render(<MemoryRouter><DeskToolInspector /></MemoryRouter>);
     expect(container.querySelector(".desk-tool-status .surface-primary")).toHaveTextContent("owner/architecture-reports");
-    expect(screen.getByRole("button", { name: "Create GitHub issue from Release checklist" })).toBeVisible();
-    const egress = container.querySelector(".surface-footer-egress .gadget-chip-egress");
-    expect(egress).toHaveTextContent("github.com");
-    expect(egress).toHaveAttribute("data-scope", "cloud");
+    const create = screen.getByRole("button", { name: "Create GitHub issue from Release checklist" });
+    expect(create).toBeVisible();
+    expect(create).toHaveAttribute("title", "Goes to github.com");
+    expect(container.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeNull();
   });
 
   it("names an unconfigured integration once without repeating a placeholder destination", () => {

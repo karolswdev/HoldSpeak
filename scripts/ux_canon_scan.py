@@ -522,6 +522,13 @@ _A3_PROSE_TAG = re.compile(r"<(?:p|small)\b[^>]*>([^<]+)")
 # ruling of 2026-10-25 (UX-CANON A.9 amended) forbids the chip on working
 # windows' rows; tests/unit/test_egress_labels_canon.py fences that side.
 # `[\s\S]{0,200}?` is the bounded stand-in for the old per-line `.*`.
+# Working windows under the amended A.9 carry no chip in their rows, toolbars
+# or status bars (WORKING_FACES in tests/unit/test_egress_labels_canon.py), so
+# a provider-shaped call there is never "missing" a chip. DeliveryBoard's
+# `discover()` reads the hub's own delivery targets.
+_A9_WORKING_FACES = frozenset({
+    "desk/components/DeliveryBoard.tsx",
+})
 _A9_PROVIDER = (
     re.compile(r"/api/providers/", re.IGNORECASE),
     re.compile(r"\bdiscover\b[\s\S]{0,200}?(?:fetch|api|post|get)", re.IGNORECASE),
@@ -799,7 +806,7 @@ def scan_file(rel_path: str, content: str, lines: list[str]) -> list[Violation]:
     # Post-file checks
 
     # Rule A9: Provider fetch without EgressChip
-    if is_tsx and has_provider_fetch and not has_egress_chip:
+    if is_tsx and has_provider_fetch and not has_egress_chip and rel_path not in _A9_WORKING_FACES:
         violations.append(Violation(rel_path, 1, "A9",
             "Provider fetch found but no EgressChip rendered in this file"))
 

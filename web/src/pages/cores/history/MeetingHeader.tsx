@@ -27,8 +27,6 @@ export function peopleCount(segments: readonly Record<string, unknown>[]): numbe
 export function meetingStripItems(
   meeting: Record<string, unknown>,
   data: Pick<MeetingData, "detail" | "startedAt" | "durationS" | "segments">,
-  /** PHILO-17 (U16): the engine host the window's foot already names. */
-  saidOnFace?: string | null,
 ): StatusStripItem[] {
   const { detail, startedAt, durationS, segments } = data;
   const source = detail ?? meeting;
@@ -190,8 +188,6 @@ export function MeetingHeader({
 }: {
   meeting: Record<string, unknown>;
   data: MeetingData;
-  /** PHILO-17 (U16): the engine host the window's foot already names. */
-  saidOnFace?: string | null;
   /** A settled record: no step ladder (the pipeline is done). */
   compact?: boolean;
 }) {

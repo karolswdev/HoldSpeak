@@ -8,9 +8,10 @@ ancient relic now."
 Two fences over the live web/src tree:
 
 1. The working windows (Today, Needs you, the Room, Meetings, Ask, Speak,
-   Agents, the drawers, Activity, Automations) draw no egress chip, no route
-   lamp and no scope word in their rows, toolbars and status bars. A row
-   with a host chip fails here; nothing here requires one.
+   Agents, the drawers, Activity, Automations, the Workbench, Delivery,
+   Rhythm, the tool inspector) draw no egress chip, no route lamp and no
+   scope word in their rows, toolbars and status bars. A row with a host
+   chip fails here; nothing here requires one.
 2. The places where the choice or the act is made keep their disclosure:
    the Send preview, the Hand confirm, Settings (Engines, Connections,
    Destinations), Setup and the New Project Door still name the
@@ -57,6 +58,14 @@ WORKING_FACES = (
     "pages/cores/ActivityFinishedReceipts.tsx",
     "desk/components/automation/AutomationWindow.tsx",
     "desk/components/automation/ResultCard.tsx",
+    # The left-overs (2026-10-25): Workbench, Delivery, Rhythm, the tool inspector.
+    "desk/components/WorkbenchWindow.tsx",
+    "desk/components/workbench/WorkbenchRunsWing.tsx",
+    "desk/components/WorkbenchAutomations.tsx",
+    "desk/components/DeliveryBoard.tsx",
+    "desk/components/DeliveryDossierWindow.tsx",
+    "pages/cores/CadenceCore.tsx",
+    "desk/components/DeskToolInspector.tsx",
 )
 
 # The chip species, the route lamp, and a scope word or LAN suffix built into
@@ -67,6 +76,8 @@ _LABELS = (
     (re.compile(r"<TurnLamp\b"), "a route lamp"),
     (re.compile(r"""["'`][^"'`\n]*·\s*(?:LAN|CLOUD|LOCAL|REMOTE|MIXED)\b"""), "a '· <scope word>' label"),
     (re.compile(r"""\bREMOTE ·"""), "a 'REMOTE ·' label"),
+    (re.compile(r"""className=["'`]egress-badge\b"""), "an egress badge"),
+    (re.compile(r"""\b(?:boundaryEgressLamp|egressScopeLamp|inferenceEgressLamp)\("""), "a LOCAL / LAN / CLOUD lamp word"),
 )
 
 

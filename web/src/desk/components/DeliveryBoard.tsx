@@ -38,7 +38,6 @@ import {
 } from "../surface/Surface";
 import {
   CycleGadget,
-  EgressChip,
   GadgetGroup,
   GadgetRow,
   StringGadget,
@@ -412,7 +411,6 @@ export function DeliveryBoard() {
       entrance={false}
       actions={
         <>
-          <EgressChip label="Hub" scope="cloud" />
           <Button
             dense
             variant="ghost"

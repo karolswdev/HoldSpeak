@@ -30,7 +30,7 @@ const PRESETS = [
 ];
 
 function providerLabel(provider: WorkbenchAutomation["provider"]): string {
-  return provider === "github" ? "GITHUB" : provider === "jira" ? "JIRA" : "EVENT";
+  return provider === "github" ? "GitHub" : provider === "jira" ? "Jira" : "Event";
 }
 
 function statusTone(status: WorkbenchAutomation["status"]): "ok" | "warn" | "fail" {
@@ -109,7 +109,7 @@ function AutomationRow({
   return (
     <div className="wb-automation">
       <Button variant="ghost" className="wb-automation-head" onClick={() => setOpen(!open)} aria-expanded={open}>
-        <span className="egress-badge is-cloud" title={providerLabel(automation.provider)}>{providerLabel(automation.provider)}</span>
+        <span className="wb-automation-source">{providerLabel(automation.provider)}</span>
         <span className="wb-automation-title">{automation.name}</span>
         <span className="desk-chip" data-tone={statusTone(automation.status)}>{automation.status.toUpperCase()}</span>
         <span aria-hidden="true">{open ? "▴" : "▾"}</span>

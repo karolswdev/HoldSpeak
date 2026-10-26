@@ -1,0 +1,1 @@
+- `draftChip.philo1505.test.tsx`: pinned the lane draft host chip (`useDraftEgress`). Owner ruling 2026-10-25 (UX-CANON A.9 amended) retired the chip; the hook is parked at `desk/lane/_parked/useDraftEgress.tsx`.

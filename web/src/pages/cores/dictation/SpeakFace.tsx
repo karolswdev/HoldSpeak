@@ -38,7 +38,6 @@ import {
 import { StateChip } from "../../../desk/surface/patterns";
 import { Disclosure } from "../../../desk/surface/patterns";
 import { presentValue } from "../../../desk/surface/format";
-import { egressScopeLamp } from "../../../desk/inferenceEgress";
 import {
   getAssignmentEditor,
   type AssignmentEditorProjection,
@@ -56,37 +55,6 @@ import { useSpeechSetup, type SpeechSetupState } from "../../../desk/firstrun/Sp
 import { openSurfaceOr } from "../../../desk/shell";
 import { useDesk } from "../../../desk/store";
 import type { VoiceCommandFired } from "../../../lib/micStreamSession";
-
-/** Whether a hostname is on a local/LAN network (RFC1918, loopback,
- *  link-local, CGNAT/Tailscale, or named local suffixes). Mirrors
- *  concierge_service._is_lan_host on the server. */
-export function isLanHost(host: string): boolean {
-  if (!host) return false;
-  // Named local suffixes
-  for (const suffix of [".local", ".internal", ".lan", ".home", ".localhost", ".ts.net"])
-    if (host.endsWith(suffix)) return true;
-  if (host === "localhost") return true;
-  // IPv4 classification
-  const parts = host.split(".");
-  if (parts.length === 4 && parts.every((p) => /^\d{1,3}$/.test(p))) {
-    const octets = parts.map(Number);
-    if (octets.some((o) => o > 255)) return false;
-    const [a, b] = octets;
-    // 10.0.0.0/8
-    if (a === 10) return true;
-    // 172.16.0.0/12
-    if (a === 172 && b >= 16 && b <= 31) return true;
-    // 192.168.0.0/16
-    if (a === 192 && b === 168) return true;
-    // 127.0.0.0/8
-    if (a === 127) return true;
-    // 169.254.0.0/16 (link-local)
-    if (a === 169 && b === 254) return true;
-    // 100.64.0.0/10 (CGNAT / Tailscale)
-    if (a === 100 && b >= 64 && b <= 127) return true;
-  }
-  return false;
-}
 
 /** Extract hostname from a URL string. */
 function hostnameOf(url: string): string {

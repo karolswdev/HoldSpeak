@@ -182,7 +182,6 @@ export function MeetingSelectionVerbs({
   drainerAbsent,
   refusal,
   onTranscribe,
-  saidOnFace,
 }: {
   row: Record<string, unknown>;
   /** The run verb wears the window's one primary. */
@@ -192,7 +191,6 @@ export function MeetingSelectionVerbs({
   drainerAbsent?: boolean;
   refusal?: SummaryRefusal | null;
   onTranscribe?: (id: string) => Promise<unknown>;
-  saidOnFace?: string | null;
 }) {
   const view = meetingRowView(row, { runningId, drainerAbsent, refusal });
   const runs = view.verb === "Run summary" || view.verb === "Retry";
@@ -215,7 +213,7 @@ export function MeetingSelectionVerbs({
         <AudioOnlyVerb row={row} onTranscribe={onTranscribe} otherwise={runButton} testId="row-transcribe" />
       ) : runButton}
       {view.showRoute ? <RouteDisclosure route={view.plannedRoute} testId="row-route" /> : null}
-      <RunAttempts receipt={view.runReceipt} testId="row-attempts" saidOnFace={saidOnFace} />
+      <RunAttempts receipt={view.runReceipt} testId="row-attempts" />
       <RefusalToken refusal={refusal} durable={readLastRefusal(row)} testId="row-refusal" />
       {/* PHILO-15-07 (B01): honest gaps carry a warn lamp beside the words. */}
       {unclear ? (
@@ -260,7 +258,6 @@ export function CatalogRail({
    *  MeetingSelectionVerbs); accepted so older callers still compile. */
   onRunIntelligence?: (id: string, route: PlannedRoute | null) => void;
   onTranscribe?: (id: string) => Promise<unknown>;
-  saidOnFace?: string | null;
   restoredId?: string | null;
   runningId: string | null;
   /** The `runtime_queue` frame says no hub drainer will execute the queue. */

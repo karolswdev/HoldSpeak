@@ -16,7 +16,6 @@ import { Button } from "../../components/signal/Signal";
 import {
   CheckGadget,
   CycleGadget,
-  EgressChip,
   LampGadget,
   PadGadget,
 } from "../../desk/surface/gadgets";
@@ -472,11 +471,6 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
                 <span className="surface-token" data-chip data-muted>
                   SWEEP · {receipt.rooms} {receipt.rooms === 1 ? "ROOM" : "ROOMS"}
                 </span>
-                <EgressChip
-                  label={`REMOTE · ${settings.runs_on}`}
-                  scope="remote"
-                  data-testid="rhythm-receipt-egress"
-                />
                 {settings.last_remote_run_at ? (
                   <span className="surface-token" data-chip data-muted>
                     {fmtTime(settings.last_remote_run_at)}
@@ -700,7 +694,6 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
       </div>
       {/* ── Footer ─────────────────────────────────────────────── */}
       {embedded ? null : <SurfaceFooter
-        egress={<EgressChip />}
         receipt={saving || saveError || writtenAt ? (
           <span className="surface-token" data-chip data-muted={!saveError || undefined} data-tone={saveError ? "fail" : undefined} role="status">
             {saving ? "Saving" : saveError ? "Unconfirmed" : `Saved ${fmtEpoch(writtenAt)}`}
