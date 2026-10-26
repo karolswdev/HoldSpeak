@@ -53,7 +53,7 @@ import { qualifiedRef } from "../api";
 import { DeskWindowFrame } from "./DeskWindow";
 import { Material } from "../surface/Material";
 import { FoldGadget, PadGadget } from "../surface/gadgets";
-import { TurnLamp, routeFromWire, type TurnRoute } from "../turnRoute";
+import { routeFromWire, type TurnRoute } from "../turnRoute";
 import { NoteSendWells } from "../documentSendsLazy";
 import { Button } from "../../components/signal/Signal";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
@@ -835,10 +835,10 @@ export function AskPanel() {
     </div>
   ) : null;
 
-  // Window grammar: the status bar says the engine where the answer runs,
-  // Asking… with Stop while a turn runs, the receipts in warm words, and the
-  // route of the last answer as its egress lamp (said once, A.9).
-  const engineWords = engine.state === "set" ? [engine.model, engine.place].filter(Boolean).join(" · ") : "";
+  // Window grammar: the status bar names the engine that answers (by name;
+  // no place word, no address: owner ruling 2026-10-25), Asking… with Stop
+  // while a turn runs, and the receipts in warm words.
+  const engineWords = engine.state === "set" ? engine.model : "";
   const statusItems: StatusBarItem[] = [
     running ? { key: "asking", lamp: "info", text: "Asking…", testId: "ask-status-asking" } : null,
     !running && !failedRun && engineWords ? { key: "engine", lamp: "ok", text: engineWords, testId: "ask-status-engine" } : null,
@@ -963,7 +963,6 @@ export function AskPanel() {
                       phase="running"
                       verb={progressWords(progress)}
                       model={progress?.state === "busy" ? "" : engine.model}
-                      place={progress?.state === "busy" ? "" : engine.place}
                       startedAt={runStartedAt}
                     />
                     {held.calls.map((call) => (
@@ -986,7 +985,6 @@ export function AskPanel() {
                       phase="failure"
                       reason={failedRun.reason}
                       model={engine.model}
-                      place={route ? "" : engine.place}
                       elapsedSeconds={finishedElapsedSeconds}
                       onAction={failedRun.reason === "no_engine" ? () => openSurfaceOr("configure-runs-on", "/settings", "models") : undefined}
                       onRetry={failedRun.reason !== "no_engine" && failedRun.reason !== "source_changed" && failedRun.reason !== "source_gone" && reasonVerb(failedRun.reason) && sent ? () => void run(sent) : undefined}
@@ -1071,7 +1069,6 @@ export function AskPanel() {
           data-testid="ask-status"
           items={statusItems}
           verbs={running ? <Button dense variant="secondary" onClick={stop}>Stop</Button> : undefined}
-          egress={!running && lastRoute ? <TurnLamp lamp={lastRoute.lamp} /> : undefined}
         />
       </div>
 

@@ -11,9 +11,8 @@ import type { DeskProjection } from "../../desk/projections";
 import { openSurface } from "../../desk/shell";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { SurfaceState } from "../../desk/surface/Surface";
-import { EgressChip } from "../../desk/surface/gadgets";
 import { deSnake } from "../../desk/surface/format";
-import { egressForEvent, receiptLabel } from "../../desk/surface/egress";
+import { receiptLabel } from "../../desk/surface/egress";
 import { ActionNotice } from "../../desk/surface/patterns/ActionNotice";
 import { StatusBar, ToolGlyph, countWords, type StatusBarItem } from "../../desk/surface/kit";
 import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../desk/surface/objects/ObjectList";
@@ -36,13 +35,6 @@ function receiptDoor(row: DeskProjection): { key: string; scope?: string } | nul
   const meeting = params.get("meeting");
   if (params.size !== 1 || !meeting || row.subject_ref !== `meeting:${meeting}`) return null;
   return { key: "review-meetings", scope: row.subject_ref };
-}
-
-function receiptEgress(row: DeskProjection) {
-  const destination = row.actual_destination ?? "";
-  const local = ["", "this_machine", "this_device", "same_device", "local", "LOCAL", "configured_inference_target", "active_app"].includes(destination)
-    || row.source_kind === "dictation_journal" || row.source_kind === "steering_audit";
-  return egressForEvent({ origin: row.origin, caller: row.caller, host: local ? "" : destination });
 }
 
 /** The object the receipt acted on, for its row glyph. */
@@ -173,13 +165,12 @@ export function ActivityFinishedReceipts({ query, records = [] }: {
   const listRows: ObjectListRow[] = (() => {
     const out: ObjectListRow[] = visible.map((row) => {
       const title = titleOf(row);
-      const egress = receiptEgress(row);
-      const remote = egress.scope === "remote";
+      // Owner ruling 2026-10-25: who did it in plain words; no address and
+      // no scope word on the row (a remote caller's IP stays off the row).
+      const fromElsewhere = row.origin === "remote" && Boolean(row.caller);
       const who: ReactNode = (
         <span className="activity-who">
-          {remote ? null : <span>You</span>}
-          {/* Article III: the chip is drawn where egress happened, and only there. */}
-          <EgressChip label={egress.label} scope={egress.scope} />
+          <span>{fromElsewhere ? "Another device" : "You"}</span>
         </span>
       );
       const at = new Date(row.timestamp).getTime();
@@ -190,7 +181,7 @@ export function ActivityFinishedReceipts({ query, records = [] }: {
         when: relativeWhen(row.timestamp, now),
         whenSort: Number.isFinite(at) ? at : 0,
         cells: { who },
-        sortValues: { who: remote ? egress.label : "You" },
+        sortValues: { who: fromElsewhere ? "Another device" : "You" },
         state: outcomeState(row.outcome),
         nameTestId: `activity-receipt-name-${row.id}`,
       };
@@ -217,10 +208,8 @@ export function ActivityFinishedReceipts({ query, records = [] }: {
   const selectedTitle = selected ? titleOf(selected) : "";
   const door = selected ? receiptDoor(selected) : null;
   const today = visible.filter((row) => new Date(row.timestamp).toDateString() === now.toDateString()).length;
-  const remote = visible.filter((row) => receiptEgress(row).scope === "remote").length;
   const items: StatusBarItem[] = [
     { key: "today", text: countWords(today, "today", "today"), testId: "activity-today" },
-    { key: "remote", lamp: "info", text: countWords(remote, "remote", "remote"), testId: "activity-remote" },
     (error || loading) && visible.length > 0 ? { key: "last", lamp: "warn", text: "Last read" } : null,
   ].filter(Boolean) as StatusBarItem[];
   const verbs = (

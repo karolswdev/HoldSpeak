@@ -176,7 +176,7 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     expect(await screen.findByTestId("today-armed")).toHaveTextContent(`Armed for ${pad(start.getHours())}:${pad(start.getMinutes())}`);
   });
 
-  it("MUST 2: Make the summary shows where the run goes before the press", async () => {
+  it("MUST 2 (amended 2026-10-25): Make the summary names where the run goes in its hover title; no chip on the row", async () => {
     hub({
       "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
       "/api/meetings?limit=40": () => json({ meetings: [{
@@ -190,14 +190,15 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     });
     render(<TodayView />);
     const row = await screen.findByTestId("today-finish");
-    const route = within(row).getByTestId("today-route");
-    // The lead host and its fallback, said before the press.
-    expect(route.textContent).toMatch(/LAN|192\.168\.1\.43/i);
-    expect(route.textContent).toMatch(/api\.example\.com|CLOUD|FALLBACK|\+1/i);
-    expect(within(row).getByRole("button", { name: "Make the summary" })).toBeTruthy();
+    expect(within(row).queryByTestId("today-route")).toBeNull();
+    expect(row.querySelector(".gadget-chip-egress")).toBeNull();
+    expect(row.textContent).not.toMatch(/192\.168|api\.example\.com|\bLAN\b|CLOUD/);
+    // The lead host and its fallback, said before the press, on the verb.
+    const verb = within(row).getByRole("button", { name: "Make the summary" });
+    expect(verb.getAttribute("title")).toBe("Summary runs on 192.168.1.43 · LAN, fallback api.example.com");
   });
 
-  it("MUST 1 (Astra r1 on #1111): after the run, the hosts it reached stay shown", async () => {
+  it("MUST 1 (amended 2026-10-25): after the run, a failed attempt stays shown as its outcome, the host in its title", async () => {
     const route = { status: "ready", reason_code: null, selection_hash: "sha256:abc", legs: [
       { ordinal: 1, host: "192.168.1.43", boundary: "lan", profile_id: "p1", profile_revision: 1, deployment_revision_id: "d1" },
       { ordinal: 2, host: "api.example.com", boundary: "cloud", profile_id: "p2", profile_revision: 1, deployment_revision_id: "d2" },
@@ -228,9 +229,10 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     const made = await screen.findByTestId("today-just-made");
     await waitFor(() => expect(made).toHaveTextContent("Summary made"));
     const attempts = within(made).getByTestId("today-made-attempts");
-    // Both places the run reached, the failed one with its outcome.
-    expect(attempts.querySelectorAll(".egress-chip, [data-scope]").length).toBeGreaterThanOrEqual(2);
-    expect(attempts.textContent).toContain("FAILED");
+    // The failed attempt with its outcome; the host only in its title.
+    expect(attempts.textContent).toBe("FAILED");
+    expect(attempts.querySelector("[title]")?.getAttribute("title")).toBe("192.168.1.43 · LAN");
+    expect(attempts.querySelector(".gadget-chip-egress")).toBeNull();
     expect(screen.queryByTestId("today-finish")).toBeNull();
   });
 

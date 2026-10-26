@@ -670,7 +670,7 @@ describe("Five verbs as separate controls", () => {
 describe("Egress badge on model drafting", () => {
   // PHILO-15 B53: the chip names the host of the model assigned to update
   // drafts (a LAN box here), never a fixed LOCAL + CLOUD.
-  it("names the update-draft model's host next to Draft update", async () => {
+  it("names the update-draft model by name, never its host (owner ruling 2026-10-25)", async () => {
     setupUpdatePosture({
       listUpdates: [],
       modelDraftResult: draftUpdateFixture({
@@ -699,7 +699,8 @@ describe("Egress badge on model drafting", () => {
     // Betterment P1: the engine's draft replaces the records draft when ready.
     await waitFor(() => expect(screen.getByTestId("update-engine-pass").getAttribute("data-state")).toBe("success"),
       { timeout: 4000 });
-    expect(document.querySelector(".surface-footer-egress")?.textContent).toContain("192.168.1.43");
+    expect(document.querySelector(".surface-footer-egress")?.textContent).toBe("QWEN");
+    expect(document.querySelector(".surface-footer-egress .gadget-chip-egress")).toBeNull();
     expect(apiFetch.mock.calls.some(([u]) => String(u).includes("/api/inference/assignments"))).toBe(true);
   });
 });

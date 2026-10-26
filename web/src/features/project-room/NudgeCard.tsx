@@ -124,7 +124,6 @@ export function NudgeCard({
               </span>
             ) : null}
             <span className="surface-token">{formatTimeShort(card.sentAt)}</span>
-            <EgressChip label="GITHUB.COM" scope="cloud" />
           </>
         }
       />
@@ -147,7 +146,6 @@ export function NudgeCard({
                 <a href={prUrl} target="_blank" rel="noopener noreferrer" className="room-nudge-pr-link">CHECK #{card.prNumber}</a>
               ) : `CHECK #${card.prNumber}`}
             </span>
-            <EgressChip label="GITHUB.COM" scope="cloud" />
           </>
         }
       />
@@ -193,6 +191,7 @@ export function NudgeCard({
             </div>
           ) : null}
           <div className="room-nudge-card-footer">
+            {/* The preview before Send: it names where the comment goes. */}
             <EgressChip label="GITHUB.COM" scope="cloud" data-testid="nudge-card-egress" />
             <span className="room-nudge-card-verbs">
               <Button dense variant="primary" loading={card.phase === "open" && card.busy} onClick={() => void handleSend()} data-testid="nudge-send">

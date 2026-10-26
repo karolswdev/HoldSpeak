@@ -88,9 +88,34 @@ Owner aesthetic acceptance stays live and open.
    head repeats the outcome only when the title bar truncates it.
 8. **No counters of zero.** `0 Watches`, `REV 1`, `0 today` are bounces;
    omit the zero token or say the true thing (`CLEAR`, `Nothing today`).
-9. **Egress exactly where egress happens.** The host chip on the row
-   that leaves the machine, never in a header for decoration, never
-   missing where a fetch is triggered (Article III).
+9. **Egress where the choice or the act is made (owner ruling
+   2026-10-25).** Owner, on a Today shot with `KAROLSANEAPPLE.ATLASSIAN.NET`
+   chips on every Jira row: "I'm also pissed off at the ever-present
+   'labels' (the LAN, the 192.168.1.36, the jira label as visible on that
+   screen) - I know it was a core tenet of the entire app, but you know
+   what? It feels like an ancient relic now..." The rule:
+   - No host, IP address or scope word (LAN, CLOUD, LOCAL, REMOTE, MIXED)
+     on the list rows, toolbars or status bars of a working window: Today,
+     Needs you, the Room (Now, History, Prepare), Ask, Speak, Agents,
+     Meetings, the drawers, Activity, Automations.
+   - An engine is named by its name (`Codex`, `qwen3.8-27b`), with no scope
+     word and no address.
+   - Egress stays disclosed where the choice or the act is made: Settings ▸
+     Engines and What runs where (the inspector may show the address), the
+     Send preview and confirm before the press (the channel destination),
+     Setup and the Door, the Processes window. There the address is a fact
+     row, not a chip.
+   - A press that leaves the device from a working window names its
+     destination in its confirm or preview; a link, or a run whose route
+     the owner chose in Settings, names it in the verb's hover title.
+   Inventory: `docs/internal/betterment/native-experience/EGRESS-LABELS-2026-10-25.md`.
+   Fences: `tests/unit/test_egress_labels_canon.py` and the desk sweep's
+   `labels` fence.
+
+   *Superseded 2026-10-25, kept for the record:* **Egress exactly where
+   egress happens.** The host chip on the row that leaves the machine,
+   never in a header for decoration, never missing where a fetch is
+   triggered (Article III).
 10. **Honest states, plain reasons.** `CAN'T CHECK · Jira rejected the
     query`, never a stack, never a smoothed-over green.
 11. **A verb that does nothing is a lie.** Withhold it (and ledger it)
@@ -112,7 +137,8 @@ adoption or owner acceptance. Update the matching specimen and contract
 when a shared pattern changes.
 
 Button (primary · ghost · dense) · StateChip (success · warning ·
-failure · idle · unreachable; `●` for health) · EgressChip (the host)
+failure · idle · unreachable; `●` for health) · EgressChip (the host;
+only where the choice or the act is made, A.9)
 · ProvenanceChip · surface-token[data-chip] · SurfaceLedger /
 SurfaceLedgerRow (52px lead slot; hover verbs; `wrap`) · SurfaceSection
 (caption + count) · SurfaceIdentity · SurfaceStream/Day/Entry ·

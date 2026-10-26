@@ -141,7 +141,9 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     expect(screen.getByTestId("meeting-summary-topics")).toHaveTextContent("Budget");
     expect(screen.getAllByTestId("meeting-summary-text")).toHaveLength(1);
     expect(screen.getAllByText("The team reviewed the budget.")).toHaveLength(1);
-    expect(screen.getByTestId("summary-record-attempts")).not.toHaveTextContent("THIS DEVICE");
+    // A run whose attempts all succeeded says nothing on the record (owner
+    // ruling 2026-10-25): no host, no THIS DEVICE.
+    expect(screen.queryByTestId("summary-record-attempts")).toBeNull();
     const transcript = await screen.findByRole("button", { name: /Transcript/ });
     expect(transcript).toHaveAttribute("aria-expanded", "false");
     fireEvent.click(transcript);

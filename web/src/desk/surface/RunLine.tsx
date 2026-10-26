@@ -9,7 +9,6 @@ export function RunLine({
   verb = "Running",
   pastVerb = "Done",
   model = "",
-  place = "",
   startedAt,
   elapsedSeconds,
   reason,
@@ -21,7 +20,6 @@ export function RunLine({
   verb?: string;
   pastVerb?: string;
   model?: string;
-  place?: string;
   startedAt?: number;
   elapsedSeconds?: number;
   reason?: string;
@@ -39,7 +37,7 @@ export function RunLine({
   if (phase === "idle") return null;
   const seconds = elapsedSeconds ?? (startedAt ? Math.max(0, Math.round((now - startedAt) / 1000)) : 0);
   if (phase === "running") {
-    return <div className="surface-run-line" data-testid="run-line" data-state="running">{verb}{model ? ` · ${model}` : ""}{place ? ` · ${place}` : ""} · {seconds} s</div>;
+    return <div className="surface-run-line" data-testid="run-line" data-state="running">{verb}{model ? ` · ${model}` : ""} · {seconds} s</div>;
   }
   if (phase === "success") {
     return <div className="surface-run-line" data-testid="run-line" data-state="success">{pastVerb} in {seconds} s</div>;

@@ -72,9 +72,12 @@ describe("Activity Finished receipts", () => {
     const open = screen.getByRole("button", { name: "Open receipt: SWEEP 2 ROOMS" });
     expect(open.closest(".kit-statusbar-verbs")).not.toBeNull();
     expect(view.container.querySelector("[id='activity-receipt-pipeline:ev-shade-0']")).not.toBeNull();
-    // Who: the REMOTE egress chip on the remote row, and only there.
-    expect(screen.getByText("REMOTE · 192.168.1.43")).toBeInTheDocument();
-    expect(screen.getByTestId("activity-remote").textContent).toBe("1 remote");
+    // Who (owner ruling 2026-10-25): plain words, never the caller's IP,
+    // never a REMOTE scope word, no egress chip on any row.
+    expect(screen.getByText("Another device")).toBeInTheDocument();
+    expect(view.container.textContent).not.toContain("192.168.1.43");
+    expect(view.container.textContent).not.toMatch(/REMOTE/);
+    expect(view.container.querySelector(".gadget-chip-egress")).toBeNull();
     const url = new URL(mocks.apiFetch.mock.calls[0][0], "http://desk.test");
     expect(Object.fromEntries(url.searchParams)).toEqual({ kind: "receipt", attention_state: "resolved", offset: "0", limit: "50" });
     fireEvent.click(open);
@@ -95,12 +98,14 @@ describe("Activity Finished receipts", () => {
     expect(screen.queryByTestId("activity-remote")).toBeNull();
   });
 
-  it("keeps a concrete outgoing destination on its receipt", async () => {
+  it("keeps an outgoing destination off the row (owner ruling 2026-10-25)", async () => {
     const result = wire();
     Object.assign(result.projections[0], { origin: "local", caller: "", actual_destination: "192.168.1.44" });
     mocks.apiFetch.mockResolvedValue(result);
-    render(<ActivityFinishedReceipts query=""/>);
-    expect(await screen.findByText("192.168.1.44 · LAN")).toBeInTheDocument();
+    const view = render(<ActivityFinishedReceipts query=""/>);
+    await waitFor(() => expect(sweeps()).toHaveLength(1));
+    expect(view.container.textContent).not.toContain("192.168.1.44");
+    expect(view.container.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
   it("retains read rows through failure and Retry repeats only the failed GET", async () => {

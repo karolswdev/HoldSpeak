@@ -9482,7 +9482,7 @@
         },
         {
           "path": "web/src/pages/cores/history/MeetingRecord.tsx",
-          "symbol": "saidOnFace={footerHost}",
+          "symbol": "sendRequested={requestedWell === \"send\"}",
           "claim": "The meeting window renders the same well: its body is the Meetings record (PHILO-17, one window per meeting)."
         },
         {

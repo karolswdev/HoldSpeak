@@ -9,8 +9,6 @@ import type { ObjectTone } from "../../../desk/surface/objects/kinds";
 import { objectSprite } from "../../../desk/surface/objects/kinds";
 import { listSprite } from "../../../desk/sprites";
 import { ledgerDate, durationToken, stateToken, unclearLampLabel } from "./helpers";
-import { EgressChip } from "../../../desk/surface/gadgets";
-import { egressFor } from "../../../desk/surface/egress";
 import type { MeetingData } from "./useMeetingData";
 import { readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
 import { speechWasMissing } from "../../../desk/firstrun/speechTruth";
@@ -41,10 +39,9 @@ export function meetingStripItems(
   const summarised = runToken.label === "RAN" || (runToken.label === "OFF" && stored);
   // HS-201-10: `durationToken` says seconds under a minute; no floor.
   const when = [ledgerDate(startedAt), durationS > 0 ? durationToken(durationS) : ""].filter(Boolean).join(" · ");
-  // HS-172: the run's seconds and host from the wire (intel_duration_s,
-  // intel_model_host), not from proposals.
+  // HS-172: the run's seconds from the wire (intel_duration_s), not from
+  // proposals.
   const intelDurS = Number(source.intel_duration_s ?? 0);
-  const rawHost = String(source.intel_model_host ?? "") || null;
   const items: StatusStripItem[] = [];
   if (when) items.push({ key: "when", text: when });
   // PHILO-17 speech: the meeting has audio only because the speech model
@@ -70,15 +67,7 @@ export function meetingStripItems(
   // fresh detail is authoritative; the list row speaks only before it loads.
   const unclear = unclearLampLabel(source);
   if (unclear) items.push({ key: "unclear", lamp: "warn", text: unclear, testId: "unclear-lamp" });
-  // Egress where egress happened: the summary's host, for RAN, RUNNING, QUEUED.
-  if (["RAN", "RUNNING", "QUEUED"].includes(runToken.label) && rawHost) {
-    const eg = egressFor(rawHost);
-    // PHILO-17 (U16): the meeting says its engine once; the foot already
-    // names this host, so the strip does not repeat it.
-    if (eg.label !== saidOnFace) {
-      items.push({ key: "intel-host", text: <EgressChip label={eg.label} scope={eg.scope} /> });
-    }
-  }
+  // No host chip in the strip (owner ruling 2026-10-25).
   const people = peopleCount(segments ?? []);
   if (people > 0) items.push({ key: "people", text: `${people} ${people === 1 ? "PERSON" : "PEOPLE"}` });
   return items;

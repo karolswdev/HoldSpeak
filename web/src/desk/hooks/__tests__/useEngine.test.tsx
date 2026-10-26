@@ -23,7 +23,7 @@ function Probe({ capability }: { capability: string }) {
   const engine = useEngine(capability);
   return (
     <output data-testid={capability}>
-      {engine.state}|{engine.model}|{engine.place}
+      {engine.state}|{engine.model}
     </output>
   );
 }
@@ -69,9 +69,9 @@ describe("useEngine", () => {
       </>,
     );
 
-    await screen.findByText("set|Ask engine|This Mac");
+    await screen.findByText("set|Ask engine");
     expect(screen.getByTestId("thought.interview")).toHaveTextContent(
-      "set|Thought engine|This Mac",
+      "set|Thought engine",
     );
     expect(screen.getByTestId("ask.answer")).not.toHaveTextContent("profile-ask-internal");
     expect(apiFetch).toHaveBeenCalledTimes(1);
@@ -81,11 +81,11 @@ describe("useEngine", () => {
     });
     await waitFor(() =>
       expect(screen.getByTestId("ask.answer")).toHaveTextContent(
-        "set|New ask engine|This Mac",
+        "set|New ask engine",
       ),
     );
     expect(screen.getByTestId("thought.interview")).toHaveTextContent(
-      "set|New thought engine|This Mac",
+      "set|New thought engine",
     );
     expect(apiFetch).toHaveBeenCalledTimes(2);
   });

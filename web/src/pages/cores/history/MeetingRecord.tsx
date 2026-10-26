@@ -24,8 +24,6 @@ import {
 } from "../../../desk/surface";
 import { parkMeeting, restoreMeeting } from "../../../desk/api";
 import { writeFailureReason } from "../../../desk/hooks/useWriteReceipt";
-import { EgressChip } from "../../../desk/surface/gadgets";
-import { egressFor } from "../../../desk/surface/egress";
 import { readPlannedRoute, routeOff, routeReady } from "../../../meetings/summaryRoute";
 import { readMeetingIntel } from "../../../meetings/MeetingSummarySlab";
 import { useRuntimeBus } from "../../../runtime/RuntimeBus";
@@ -257,28 +255,6 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
   // The record publishes its title again on every face change.
   useWindowTitle(title || null, [title, wings.view]);
 
-  // PHILO-17 (U16, #1083): the window's foot names the summary engine.
-  // Window grammar: the status bar's chip is where the summary RAN (the
-  // run's recorded host) when it ran, else where the next one runs (the
-  // route). The record's summary does not say the same host again.
-  const ranHost = ["RAN", "RUNNING", "QUEUED"].includes(stateToken(meeting ?? {}).label)
-    ? String(meeting?.intel_model_host ?? "").trim() || null
-    : null;
-  const ranEgress = ranHost ? egressFor(ranHost) : null;
-  const footerHost = ranEgress?.label
-    ? ranEgress.label
-    : route && routeReady(route) ? egressFor(route.legs[0].host).label : null;
-  // HS-201-04 (UX-CANON A.9): the status bar says where this meeting's
-  // summary runs (egress where egress happens); a missing route is a lamp and
-  // a word, with Choose engine as the status bar's verb.
-  const footerEgress = useMemo(() => {
-    if (ranEgress?.label) {
-      return <EgressChip label={ranEgress.label} scope={ranEgress.scope} title="Where this meeting's summary ran." />;
-    }
-    if (!route || !routeReady(route)) return null;
-    const lead = egressFor(route.legs[0].host);
-    return <EgressChip label={lead.label} scope={lead.scope} title="Where a meeting summary runs." />;
-  }, [route, ranEgress?.label, ranEgress?.scope]);
   const routeWord = route && !routeReady(route)
     ? (routeOff(route) ? "Summaries off" : "No engine for summaries")
     : null;
@@ -405,7 +381,6 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         <MeetingDetail
           sendRequested={requestedWell === "send"}
           decideRequested={requestedWell === "decide"}
-          saidOnFace={footerHost}
           meeting={meeting}
           onTranscribe={async (id: string) => {
             // PHILO-17 transcribe: the hub starts it (202); the record reads again.
@@ -445,7 +420,6 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         <StatusBar
           data-testid="meeting-status"
           items={statusItems}
-          egress={footerEgress}
           verbs={engineMissing ? (
             <Button dense variant={hasSummary ? "secondary" : "primary"} data-testid="meeting-choose-engine"
               onClick={() => openSurfaceOr("open-concierge", "/models", "meetings")}>

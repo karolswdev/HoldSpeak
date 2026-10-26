@@ -274,7 +274,8 @@ export function decodeRoute(raw: Record<string, unknown> | null | undefined): Br
 }
 
 /** The refusal's receipt line: what happened to the request, honestly.
- *  `NOTHING SENT` only when no kernel operation exists (P0). */
+ *  `NOTHING SENT` only when no kernel operation exists (P0). The line names
+ *  the engine by name, never its host (owner ruling 2026-10-25). */
 export function refusalReceipt(route: BriefRoute): { sent: boolean; host: string; line: string } {
   if (!route.invoke.sent) return { sent: false, host: "", line: "NOTHING SENT" };
   const host = route.invoke.host || route.host;
@@ -283,7 +284,8 @@ export function refusalReceipt(route: BriefRoute): { sent: boolean; host: string
     route.state === "stopped" ? "REQUEST HAD LEFT"
     : answered ? "NOTHING USABLE RECEIVED"
     : "NOT ANSWERED";
-  return { sent: true, host, line: `SENT · ${host} · ${what}` };
+  const engine = (route.model || "the engine").toUpperCase();
+  return { sent: true, host, line: `SENT · ${engine} · ${what}` };
 }
 
 /* ── tokens the face draws, from stored facts only ── */

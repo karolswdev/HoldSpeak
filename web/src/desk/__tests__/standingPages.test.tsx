@@ -86,13 +86,13 @@ describe("StandingPagesSection", () => {
     render(<StandingPagesSection pages={[DECIDED, CHANGED]} presentation="questions" now={NOW} onOpenRef={() => {}} />);
     expect(screen.queryByRole("heading", { level: 3 })).toBeNull();
     expect(screen.getAllByRole("heading", { level: 4 }).map((node) => node.textContent)).toEqual(["What did we decide", "What changed this week"]);
-    expect(screen.getByTestId("standing-pages-model")).toHaveTextContent("Written by qwen3.8-27b · LAN");
+    expect(screen.getByTestId("standing-pages-model")).toHaveTextContent("Written by qwen3.8-27b");
     expect(screen.getByTestId("standing-page-stale")).toHaveTextContent("STALE · 3 NEW SOURCES");
   });
   it("draws the scope's pages under Standing pages · N with the engine token", () => {
     render(<StandingPagesSection pages={[DECIDED, CHANGED]} now={NOW} onOpenRef={() => {}} />);
     expect(screen.getByRole("heading", { level: 3 }).textContent).toBe("Standing pages · 2");
-    expect(screen.getByTestId("standing-pages-model").textContent).toBe("Written by qwen3.8-27b · LAN");
+    expect(screen.getByTestId("standing-pages-model").textContent).toBe("Written by qwen3.8-27b");
     expect(screen.getAllByTestId("standing-page").map((p) => p.getAttribute("aria-label"))).toEqual(
       ["What did we decide", "What changed this week"],
     );
@@ -129,7 +129,7 @@ describe("StandingPagesSection", () => {
     expect(builtToken(iso(new Date(2026, 8, 28, 8, 2)), NOW)).toBe("BUILT 09-28");
     expect(pageTitle({ slug: "what-i-owe", question: "What do I owe?" })).toBe("What I owe");
     expect(pageTitle({ slug: "new-slug", question: "Anything new?" })).toBe("Anything new");
-    expect(modelToken([{ ...DECIDED, model: "pages", boundary: "local" }])).toBe("Written by pages · THIS DEVICE");
+    expect(modelToken([{ ...DECIDED, model: "pages", boundary: "local" }])).toBe("Written by pages");
     // PHILO-17: no engine name, no credit.
     expect(modelToken([{ ...DECIDED, model: "", boundary: "local" }])).toBeNull();
   });

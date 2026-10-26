@@ -16,6 +16,7 @@ import {
   RefusalToken,
   RouteDisclosure,
   RunAttempts,
+  routeTitle,
 } from "../../../meetings/RouteDisclosure";
 import {
   executedReceipt,
@@ -199,6 +200,7 @@ export function MeetingSelectionVerbs({
     <Button
       dense
       variant={primary ? "primary" : "secondary"}
+      title={view.showRoute ? routeTitle(view.plannedRoute) : undefined}
       onClick={() => onRunIntelligence(String(row.id), view.plannedRoute)}
       data-testid={view.verb === "Run summary" ? "run-intelligence-btn" : "retry-intelligence-btn"}
     >

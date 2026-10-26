@@ -268,7 +268,9 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
 
     const pr = face(row("#412 Add the ledger freeze flag"));
     expect(pr).toMatchObject({ kind: "pr", lamps: ["PR open"], verbs: ["Open PR"] });
-    expect(row("#412 Add the ledger freeze flag").textContent).toContain("github.com");
+    // Owner ruling 2026-10-25: no host on the row; Open PR names the link.
+    expect(row("#412 Add the ledger freeze flag").textContent).not.toContain("github.com");
+    expect(within(row("#412 Add the ledger freeze flag")).getByRole("button", { name: /Open PR/ }).getAttribute("title")).toMatch(/^https:\/\/github\.com\//);
 
     expect(face(row("Run a second ops interview"))).toMatchObject({
       kind: "decision", fact: "Staff hiring loop", lamps: ["To review"], verbs: ["Decide"],
@@ -816,13 +818,15 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
     expect(face(stale).fact).toBe("not checked recently · observed yesterday 21:23");
   });
 
-  it("Astra r1 P2-6: a Retry that reaches GitHub carries its egress badge; a local one does not", async () => {
+  it("Astra r1 P2-6 (amended 2026-10-25): a Retry that reaches GitHub names the host in its title; no badge on either row", async () => {
     render(<NeedsDrawer />);
     await screen.findByText("1 needs you");
     const [gh, mtg] = ["GitHub", "Meetings"].map((name) =>
       screen.getAllByTestId("needs-source-row").find((li) => li.textContent?.includes(name))!);
-    expect(face(gh).egress).toBe("github.com");
+    expect(face(gh).egress).toBe("");
     expect(face(mtg).egress).toBe("");
+    expect(within(gh).getByRole("button", { name: /^Retry/ }).getAttribute("title")).toBe("Checks github.com again");
+    expect(within(mtg).getByRole("button", { name: /^Retry/ }).getAttribute("title")).toBeNull();
   });
 
   it("B61: Retry re-checks THAT source through the single-Watch route and leaves a receipt", async () => {

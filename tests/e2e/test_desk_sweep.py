@@ -56,6 +56,14 @@ each, in place of one "this face renders cleanly" file per phase.
               the area answer elementFromPoint with the control itself (the
               HS-202-05 hit reader, type_floor_rig.HIT_PROBE_JS)
     egress    every request goes to the hub's own origin (data:, blob: allowed)
+    labels    on a WORKING window (WORKING_WINDOWS: Today, Needs you, the
+              Room, Meetings, Ask, Speak, Agents, Activity, Automations) no
+              list row, toolbar or status bar wears an egress chip, an IP
+              address or a scope word (LAN, CLOUD, LOCAL, REMOTE, MIXED):
+              the owner ruling of 2026-10-25 (UX-CANON A.9 amended). The
+              address shows where the choice or the act is made (Settings,
+              the Send preview, Setup, Processes); those windows are not
+              fenced here.
   The bare desk (no window) is one more case, read over the whole screen.
 * Every HTML route the hub serves (tests/unit/test_route_preflight.PAGE_ROUTES, fenced
   against the live app there) draws what it is for: a standalone page its
@@ -136,6 +144,35 @@ AGENT_FACE_WORDS = re.compile(
     r"|\bTARGET\b|INCOMPATIBLE|stopped_by_owner|\bRaw\b"
 )
 AGENT_FACES = {"conductor", "lane"}
+# The owner ruling of 2026-10-25 (UX-CANON A.9 amended): the working windows
+# whose rows, toolbars and status bars carry no host, IP or scope word.
+WORKING_WINDOWS = {
+    "pullout:intelligence:desk", "chair:needs", "surface-project-memory", "surface-meetings",
+    "ask", "surface-dictation", "conductor", "surface-activity", "surface-workbenches",
+}
+LABELS_JS = r"""(sel) => {
+  const root = sel ? document.querySelector(sel) : null;
+  if (!root) return [];
+  const shown = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
+    return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none'; };
+  const zones = root.querySelectorAll('.object-list-row, .surface-ledger-row, .needs-row, [role=row], '
+    + '[role=toolbar], .kit-toolbar, .kit-statusbar, .surface-footer');
+  const ip = /\b(?:\d{1,3}\.){3}\d{1,3}\b/;
+  const word = /\b(?:LAN|CLOUD|LOCAL|REMOTE|MIXED)\b/;
+  const out = new Set();
+  for (const zone of zones) {
+    if (!shown(zone)) continue;
+    const kind = zone.matches('[role=toolbar], .kit-toolbar') ? 'toolbar'
+      : zone.matches('.kit-statusbar, .surface-footer') ? 'status bar' : 'row';
+    for (const chip of zone.querySelectorAll('.gadget-chip-egress')) {
+      if (shown(chip)) out.add(`egress chip '${chip.textContent.trim()}' on a ${kind}`);
+    }
+    const text = zone.innerText || '';
+    const a = text.match(ip); if (a) out.add(`address '${a[0]}' on a ${kind}`);
+    const w = text.match(word); if (w) out.add(`scope word '${w[0]}' on a ${kind}`);
+  }
+  return [...out];
+}"""
 WORDS_JS = "(sel) => { const el = sel ? document.querySelector(sel) : document.body; return el ? el.innerText : ''; }"
 TOLERANCE = 2
 PALETTE_QUERY = "ledger"  # a Project, meetings, a decision, a note of the seed
@@ -497,7 +534,7 @@ def _seed_automation(note_id: str) -> str:
 
 def _seed_finished_receipts() -> None:
     """The Missed shade's Finished rows: a sweep a LAN agent ran (origin
-    remote: its REMOTE egress chip) and a local Steward run, seeded as
+    remote: Activity says "Another device", no chip) and a local Steward run, seeded as
     tests/integration/test_face_wire_fences.py::test_shade_finished_remote_receipt
     seeds them."""
     import time
@@ -1033,6 +1070,8 @@ class _Case:
         fail("clean", [e for e in self.errors if "ResizeObserver" not in e])
         if not page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"):
             fail("clean", "the page scrolls sideways")
+        if self.wid in WORKING_WINDOWS:
+            fail("labels", page.evaluate(LABELS_JS, sel))
         origin = urllib.parse.urlsplit(self.base).netloc
         fail("egress", sorted({u for u in self.requests
                                if not u.startswith(("data:", "blob:")) and urllib.parse.urlsplit(u).netloc != origin}))
@@ -1249,8 +1288,9 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
             if case_id == "surface-activity":
                 # Window grammar (2026-10-24): the remote sweep seed is a dense
                 # list row (What · Who · When · Outcome). Its words and its
-                # subject are whole, never squeezed into an ellipsis, and the
-                # REMOTE chip sits on that row only (Article III).
+                # subject are whole, never squeezed into an ellipsis. Owner
+                # ruling 2026-10-25: Who says "Another device" in plain words;
+                # no REMOTE chip and no caller address on any row.
                 receipt = page.locator('[id="activity-receipt-pipeline:ev-sweep-0"]')
                 receipt.wait_for(timeout=T)
                 name = receipt.locator("[data-testid^=activity-receipt-name-]")
@@ -1261,15 +1301,15 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 assert extent["width"] > 0 and extent["content"] <= extent["width"] + 1, (
                     f"Activity receipt text is truncated at {width}: {extent}")
                 for badge in (receipt.get_by_text("Completed", exact=True),
-                              receipt.get_by_text("REMOTE · studio.local", exact=True)):
+                              receipt.get_by_text("Another device", exact=True)):
                     assert badge.is_visible(), f"Activity receipt badge missing at {width}"
                     box = badge.bounding_box()
                     assert box and box["x"] >= 0 and box["y"] >= 0 and (
                         box["x"] + box["width"] <= width
                         and box["y"] + box["height"] <= SIZES[width]), (
                         f"Activity receipt badge is off glass at {width}: {box}")
-                remote_rows = page.locator('#surface-activity [id^="activity-receipt-"]:has(.gadget-chip-egress)')
-                assert remote_rows.count() >= 1
+                chipped = page.locator('#surface-activity [id^="activity-receipt-"]:has(.gadget-chip-egress)')
+                assert chipped.count() == 0, "an Activity row wears an egress chip (owner ruling 2026-10-25)"
             if palette:
                 sweep.palette()
             elif wid:

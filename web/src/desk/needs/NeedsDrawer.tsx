@@ -31,7 +31,7 @@ import { PeopleReadFailed } from "../people/PeopleReadFailed";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { ConfirmVerb, EgressChip, ScrollHint, StatusBar, StatusStrip, StringGadget, SurfaceSection, SurfaceState, Toolbar, type StatusBarItem } from "../surface";
+import { ConfirmVerb, ScrollHint, StatusBar, StatusStrip, StringGadget, SurfaceSection, SurfaceState, Toolbar, type StatusBarItem } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
@@ -235,9 +235,8 @@ function NeedVerbsView({ face, primary, onWell, well }: {
     case "pr":
       return (
         <>
-          <EgressChip label={(urlHost(v.url) || "github.com").toLowerCase()} scope="cloud" />
           <Button dense variant={lead} aria-label={named(`Open PR #${v.number ?? ""}`)} data-testid="needs-row-verb" data-verb="open-pr"
-            onClick={() => window.open(v.url, "_blank", "noopener")}>Open PR</Button>
+            title={v.url} onClick={() => window.open(v.url, "_blank", "noopener")}>Open PR</Button>
         </>
       );
     case "session":
@@ -418,11 +417,10 @@ function NeedVerbsView({ face, primary, onWell, well }: {
             data-testid="needs-row-verb" data-verb="details"
             onClick={() => onWell(well === "detail" ? null : "detail")}>Details</Button>
         ) : null}
-        {/* Astra r1 P2-6: a Retry that re-checks a remote source names where it goes. */}
-        {v.verb === "Retry" && v.watchIds?.length && v.host ? (
-          <EgressChip label={v.host.toLowerCase()} scope="cloud" />
-        ) : null}
+        {/* Owner ruling 2026-10-25: no host chip on the row. A Retry that
+            re-checks a remote source names the host in its hover title. */}
         <Button dense variant="secondary" disabled={busy} aria-label={named(v.verb)} data-testid="needs-row-verb" data-verb="repair"
+          title={v.verb === "Retry" && v.watchIds?.length && v.host ? `Checks ${v.host.toLowerCase()} again` : undefined}
           onClick={() => {
             if (v.verb === "Retry" && v.watchIds?.length) {
               const ids = v.watchIds;
@@ -479,7 +477,9 @@ function NeedVerbsView({ face, primary, onWell, well }: {
       const canRetry = v.state !== "unknown" || Boolean(s.retry_command);
       return (
         <>
-          <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
+          {/* Owner ruling 2026-10-25: no host chip on the row. The fact names
+              the destination; Look opens the preview; Send names the
+              address in its hover title. */}
           {v.state === "unknown" ? (
             <Button dense variant="ghost" disabled={busy} aria-label={named("Check")} data-testid="needs-row-verb" data-verb="check"
               onClick={() => void act("Check", check, face.id)}>Check</Button>
@@ -487,6 +487,7 @@ function NeedVerbsView({ face, primary, onWell, well }: {
           {canRetry ? (
             <Button dense variant={lead} loading={busy} disabled={busy} aria-label={named(v.state === "prepared" ? "Send" : "Try again")}
               data-testid="needs-row-verb" data-verb={v.state === "prepared" ? "send" : "try-again"}
+              title={eg.title || eg.label || undefined}
               onClick={() => void act(v.state === "prepared" ? "Send" : "Try again", run, face.id)}>
               {v.state === "prepared" ? "Send" : "Try again"}
             </Button>

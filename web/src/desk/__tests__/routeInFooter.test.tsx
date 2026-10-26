@@ -19,7 +19,7 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-describe("Ask: visible receipt egress and ordinary status, no host and no receipt id", () => {
+describe("Ask: no route lamp, no host, no scope word, no receipt id (owner ruling 2026-10-25)", () => {
   const LAN_ASK = {
     output: "The cutover is on 17 October.",
     invocation_id: "inv-1",
@@ -58,15 +58,12 @@ describe("Ask: visible receipt egress and ordinary status, no host and no receip
     return view;
   }
 
-  it("the Answer turn discloses the actual LAN route once, with no host string and no receipt id", async () => {
+  it("the Answer turn draws no route lamp: no host string, no scope word and no receipt id", async () => {
     const { container } = await askWith(LAN_ASK);
-    // Window grammar: the last answer's route is the status bar's egress lamp.
-    const lamp = container.querySelector("[data-testid=ask-status] .kit-statusbar-egress .gadget-lamp")!;
-    expect(lamp).toHaveTextContent("LAN");
-    await waitFor(() => expect(container.querySelector("[data-testid=ask-status] .gadget-lamp")).toBeVisible());
-    // Betterment Q5 (FOLLOWUPS Q4): the route is said once, on the answer; the footer has no second chip.
-    expect(container.querySelector(".kit-statusbar-egress .gadget-chip-egress")).toBeNull();
-    expect(container.querySelectorAll(".gadget-lamp")).toHaveLength(1);
+    expect(container.querySelector("[data-testid=ask-status] .kit-statusbar-egress")).toBeNull();
+    expect(container.querySelector("[data-testid=ask-status] .gadget-lamp")).toBeNull();
+    expect(container.querySelector(".gadget-chip-egress")).toBeNull();
+    expect(container.querySelector("[data-testid=ask-status]")?.textContent ?? "").not.toMatch(/\bLAN\b|CLOUD|LOCAL/);
     expect(container.querySelector("[data-testid=ask-status-receipt]")?.textContent ?? "").toMatch(/^(Answered in [1-9]\d* s)?$/);
     expect(container.textContent).not.toContain("192.168.1.43");
     expect(container.textContent).not.toContain("a91f");
@@ -81,10 +78,9 @@ describe("Ask: visible receipt egress and ordinary status, no host and no receip
     expect(text.split("qwen3.8-27b").length - 1).toBeLessThanOrEqual(1);
   });
 
-  it("the lamp is the receipt route, not the placement boundary", async () => {
-    // #855: a loopback engine stored as private_network runs LOCAL.
+  it("a local receipt route wears no lamp either", async () => {
     const { container } = await askWith({ ...LAN_ASK, route: { lamp: "local", host: "", model: "qwen3.8-27b", receipt: "exec-0000a91f" } });
-    expect(container.querySelector("[data-testid=ask-status] .gadget-lamp")!.textContent).toBe("LOCAL");
+    expect(container.querySelector("[data-testid=ask-status] .gadget-lamp")).toBeNull();
     expect(container.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
@@ -94,17 +90,16 @@ describe("Ask: visible receipt egress and ordinary status, no host and no receip
     expect(container.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
-  it("a refused Ask keeps its visible cloud egress and its reason in words", async () => {
+  it("a refused Ask keeps its reason in words, with no scope word", async () => {
     const refusal = {
       error: "No assigned model completed this request",
       receipt: { execution_id: "exec-00007c02", outcome: "failed", attempts: [{ boundary: "cloud", send_phase: "provider_no_generation" }] },
       route: { lamp: "cloud", host: "api.openai.com", model: "gpt-5-mini", receipt: "exec-00007c02", fallback: false },
     };
     const { container } = await askWith(refusal, 409);
-    const lamp = container.querySelector("[data-testid=ask-status] .gadget-lamp")!;
-    expect(lamp.textContent).toBe("CLOUD");
-    await waitFor(() => expect(container.querySelector("[data-testid=ask-status] .gadget-lamp")).toBeVisible());
-    expect(container.querySelector(".kit-statusbar-egress .gadget-chip-egress")).toBeNull();
+    expect(container.querySelector("[data-testid=ask-status] .gadget-lamp")).toBeNull();
+    expect(container.querySelector("[data-testid=ask-status]")?.textContent ?? "").not.toContain("CLOUD");
+    expect(container.querySelector(".gadget-chip-egress")).toBeNull();
     const error = container.querySelector("[data-testid=run-line][data-state=failure]")!;
     expect(error).toHaveTextContent("did not answer");
     expect(error).toBeVisible();
@@ -121,7 +116,7 @@ describe("Ask: visible receipt egress and ordinary status, no host and no receip
     expect(container.querySelector(".gadget-chip-egress")).toBeNull();
   });
 
-  it("discloses fallback egress and keeps its completed status fixed as time advances", async () => {
+  it("says Fallback with no route lamp and keeps its completed status fixed as time advances", async () => {
     const clock = vi.spyOn(Date, "now").mockReturnValue(1_000);
     try {
       const fallback = {
@@ -130,8 +125,8 @@ describe("Ask: visible receipt egress and ordinary status, no host and no receip
         route: { lamp: "private_network", host: "fallback-box", model: "fallback-model", receipt: "exec-fallback", fallback: true },
       };
       const view = await askWith(fallback, 200, () => clock.mockReturnValue(4_100));
-      expect(view.container.querySelector("[data-testid=ask-status] .gadget-lamp")!.textContent).toBe("LAN");
-      expect(view.container.querySelector(".kit-statusbar-egress .gadget-chip-egress")).toBeNull();
+      expect(view.container.querySelector("[data-testid=ask-status] .gadget-lamp")).toBeNull();
+      expect(view.container.querySelector(".gadget-chip-egress")).toBeNull();
       const completedStatus = "Answered in 3 s · Fallback";
       expect(view.container.querySelector("[data-testid=ask-status-receipt]")?.textContent).toBe(completedStatus);
       expect(view.container.querySelector("[data-testid=run-line]")).toBeNull();

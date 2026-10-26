@@ -1,15 +1,14 @@
 /** HS-201-04 — the disclosure that rides beside every summary verb.
  *
- *  BEFORE the click: the host the run WILL use (`legs[0].host`) and each
- *  disclosed fallback (`+ FALLBACK <host>`). AFTER the run: the hosts
- *  actually contacted, in order, from the receipt's attempts.
- *
- *  UX-CANON A.9 (egress exactly where egress happens) and Article III
- *  (the point of decision). The chip species is the library EgressChip;
- *  the label mapper is the one canonical `egressFor`.
+ *  Owner ruling 2026-10-25 (UX-CANON A.9, amended): no host chip on a
+ *  working window. BEFORE the click the summary verb's hover title names
+ *  the host the run WILL use and each fallback (`routeTitle`); a route that
+ *  cannot run says its reason. AFTER the run only a failed attempt shows,
+ *  as its outcome, with the host in its hover title. Settings ▸ Engines
+ *  shows where each engine runs. The label mapper is the one canonical
+ *  `egressFor`.
  */
 import { Fragment } from "react";
-import { EgressChip } from "../desk/surface/gadgets";
 import { egressFor } from "../desk/surface/egress";
 import type { PlannedRoute, RunReceipt, SummaryRefusal } from "./summaryRoute";
 import { refusalFact, routeOff, routeReasonToken, routeReady } from "./summaryRoute";
@@ -73,66 +72,44 @@ export function RouteDisclosure({
       </span>
     );
   }
-  const [first, ...fallbacks] = route.legs;
-  const lead = egressFor(first.host);
-  return (
-    <span className="summary-route" data-testid={testId}>
-      <EgressChip
-        label={lead.label}
-        scope={lead.scope}
-        title={lead.label}
-        ariaLabel={`Summary runs on ${lead.label}`}
-      />
-      {fallbacks.map((leg) => {
-        const fallback = egressFor(leg.host);
-        return (
-          <EgressChip
-            key={leg.ordinal}
-            label={`+ FALLBACK ${fallback.label}`}
-            scope={fallback.scope}
-            title={`+ FALLBACK ${fallback.label}`}
-          />
-        );
-      })}
-    </span>
-  );
+  // Ready: nothing on the row. The verb's hover title names the host.
+  return null;
 }
 
-/** The destinations contacted, in order, after a run. Failed dispatches
- *  are shown with their outcome token — the receipt never hides one. */
+/** The hover title for a summary verb: where the run goes, and each
+ *  fallback. Undefined when the route cannot run. */
+export function routeTitle(route: PlannedRoute | null | undefined): string | undefined {
+  if (!route || !routeReady(route)) return undefined;
+  const [first, ...fallbacks] = route.legs;
+  return [
+    `Summary runs on ${egressFor(first.host).label || "this device"}`,
+    ...fallbacks.map((leg) => `fallback ${egressFor(leg.host).label || "this device"}`),
+  ].join(", ");
+}
+
+/** A run's failed attempts, in order: the outcome token, the host in its
+ *  hover title. A succeeded attempt says nothing (owner ruling 2026-10-25). */
 export function RunAttempts({
   receipt,
   testId = "summary-attempts",
-  saidOnFace,
 }: {
   receipt: RunReceipt | null | undefined;
   testId?: string;
-  /** PHILO-17 (U16): the egress label the face already says (its foot). A
-   *  succeeded attempt on that same host is not said again; a failed one,
-   *  or one on another host, still is. */
+  /** Kept for callers; a succeeded attempt is never said now. */
   saidOnFace?: string | null;
 }) {
   if (!receipt || receipt.attempts.length === 0) return null;
-  const shown = receipt.attempts.filter(
-    (attempt) => !saidOnFace || attempt.outcome !== "succeeded" || egressFor(attempt.host).label !== saidOnFace,
-  );
-  if (shown.length === 0) return null;
+  const failed = receipt.attempts.filter((attempt) => attempt.outcome !== "succeeded");
+  if (failed.length === 0) return null;
   return (
     <span className="summary-route" data-testid={testId}>
-      {shown.map((attempt, index) => {
-        const contacted = egressFor(attempt.host);
-        const failed = attempt.outcome !== "succeeded";
-        return (
-          <Fragment key={`${attempt.leg_ordinal}-${index}`}>
-            <EgressChip label={contacted.label} scope={contacted.scope} title={contacted.label} />
-            {failed ? (
-              <span className="surface-token" data-chip data-tone="danger">
-                {attempt.outcome.toUpperCase()}
-              </span>
-            ) : null}
-          </Fragment>
-        );
-      })}
+      {failed.map((attempt, index) => (
+        <Fragment key={`${attempt.leg_ordinal}-${index}`}>
+          <span className="surface-token" data-chip data-tone="danger" title={egressFor(attempt.host).label || undefined}>
+            {attempt.outcome.toUpperCase()}
+          </span>
+        </Fragment>
+      ))}
     </span>
   );
 }

@@ -393,7 +393,7 @@ describe("HS-173-04: Nudge unfolds the card; Send leaves a SENT receipt", () => 
 
   // replaces: tests/e2e/test_hs173_health_glass.py::test_nudge_sent_1440
   // replaces: tests/e2e/test_hs173_health_glass.py::test_nudge_sent_393
-  it("Send posts the comment and leaves SENT · name · #612 · GITHUB.COM, no Undo; the row says NUDGED JUST NOW", async () => {
+  it("Send posts the comment and leaves SENT · name · #612 (no host: owner ruling 2026-10-25), no Undo; the row says NUDGED JUST NOW", async () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
     fireEvent.click(await screen.findByTestId("nudge-verb"));
@@ -403,7 +403,7 @@ describe("HS-173-04: Nudge unfolds the card; Send leaves a SENT receipt", () => 
     expect(text).toContain("SENT");
     expect(text).toContain("ANIA KOWALSKA");
     expect(receipt.textContent).toContain("#612");
-    expect(text).toContain("GITHUB.COM");
+    expect(text).not.toContain("GITHUB.COM");
     expect(text).not.toContain("UNDO");
     expect(screen.getByTestId("nudge-cooldown").textContent).toBe("NUDGED JUST NOW");
     expect(calls.find((c) => c.key === "POST /api/nudges/step1/send")?.json).toEqual({ text: STEP.comment_text });
@@ -777,7 +777,7 @@ describe("HS-200-11: Prepare pressed — sent, kept, refused and stopped as the 
 
   // replaces: tests/e2e/_parked/test_hs200_preparation_brief_glass.py::test_running_then_kept_brief_with_claims_and_not_read
   // (the face's receipt, egress and Keep legs at :754-:771; the claims ledger is the T1 successor's)
-  it("a sent and answered request: Brief ready, the receipt names the model on THIS DEVICE, Keep keeps it and the receipt stays", async () => {
+  it("a sent and answered request: Brief ready, the receipt names the model, Keep keeps it and the receipt stays", async () => {
     wire(table(() => clone(PREPARE_OK)));
     await pressPrepare();
     expect(calls.find((c) => c.key === prepareKey)?.json).toMatchObject({ purpose: PURPOSE, generator: "model" });
@@ -785,7 +785,7 @@ describe("HS-200-11: Prepare pressed — sent, kept, refused and stopped as the 
     expect(screen.getByTestId("prepare-head-name").textContent?.trim()).toBe("Brief ready");
     const lifecycle = () => screen.getByTestId("prepare-lifecycle").querySelector(".surface-state-chip")?.getAttribute("aria-label");
     expect(lifecycle()).toBe("DRAFT");
-    expect(screen.getByTestId("prepare-footer-egress").textContent?.trim()).toBe("");
+    expect(screen.queryByTestId("prepare-footer-egress")).toBeNull();
     const receipt = screen.getByTestId("prepare-footer-receipt").textContent?.trim() ?? "";
     expect(receipt.startsWith("QWEN3 35B")).toBe(true);
     expect(screen.getByTestId("prepare-head").textContent).not.toContain("NOTHING SENT");
@@ -804,15 +804,16 @@ describe("HS-200-11: Prepare pressed — sent, kept, refused and stopped as the 
 
   // replaces: tests/e2e/_parked/test_hs200_preparation_brief_glass.py::test_a_sent_and_answered_request_is_never_reported_as_nothing_sent
   // (the prose leg, :933-:945; the HTTP 500 leg reads NOT ANSWERED by the same refusalReceipt)
-  it("P0: a kernel success with a prose answer reads SENT · 127.0.0.1 · NOTHING USABLE RECEIVED, never NOTHING SENT", async () => {
+  it("P0: a kernel success with a prose answer reads SENT · QWEN3 35B · NOTHING USABLE RECEIVED, never NOTHING SENT", async () => {
     const error = await refuse(PREPARE_PROSE_409);
     wire(table(() => { throw error; }));
     await pressPrepare();
     const sent = await screen.findByTestId("prepare-sent-token");
     expect(screen.getByTestId("prepare-head").textContent).not.toContain("NOTHING SENT");
-    expect(sent.textContent?.trim()).toBe("SENT · 127.0.0.1 · NOTHING USABLE RECEIVED");
-    expect(screen.getByTestId("prepare-footer-egress").textContent?.trim()).toBe("127.0.0.1");
-    expect(screen.getByTestId("prepare-footer-receipt").textContent?.trim()).toBe("SENT · 127.0.0.1 · NOTHING USABLE RECEIVED");
+    // Owner ruling 2026-10-25: the engine by name; never its address.
+    expect(sent.textContent?.trim()).toBe("SENT · QWEN3 35B · NOTHING USABLE RECEIVED");
+    expect(screen.queryByTestId("prepare-footer-egress")).toBeNull();
+    expect(screen.getByTestId("prepare-footer-receipt").textContent?.trim()).toBe("SENT · QWEN3 35B · NOTHING USABLE RECEIVED");
     expect(screen.getByTestId("prepare-route").querySelector(".surface-state-chip")?.getAttribute("aria-label")).toBe("OUTPUT UNUSABLE");
     expect(screen.getByTestId("prepare-purpose-kept").textContent?.trim()).toBe("PURPOSE KEPT");
     expect((screen.getByRole("textbox", { name: "Purpose" }) as HTMLTextAreaElement).value).toBe(PURPOSE);
@@ -971,14 +972,13 @@ async function openFirstUpdate() {
 describe("HS-173-02: the Update editor names who drafted it", () => {
   // replaces: tests/e2e/test_hs173_update_glass.py::test_model_draft_footer_and_claims_1440
   // replaces: tests/e2e/test_hs173_update_glass.py::test_model_draft_footer_393 (the same DOM fact; the rig's 393 leg asserted the model token only)
-  it("a model draft: the footer names QWEN3 32B Q6 and the LAN host; 1 UNSUPPORTED, 3 LINKED · MIGRATED; PR #612, KAN-7, MTG 09-05", async () => {
+  it("a model draft: the footer names QWEN3 32B Q6 and no host; 1 UNSUPPORTED, 3 LINKED · MIGRATED; PR #612, KAN-7, MTG 09-05", async () => {
     const { pid, gets } = U173.model;
     replay(gets, {}, true);
     render(<WindowHarness scope={`project:${pid}`} />);
     await openFirstUpdate();
     expect(screen.getByTestId("update-footer-model").textContent).toContain("QWEN3 32B Q6");
-    const host = Array.from(document.querySelectorAll(".gadget-chip-egress")).find((c) => (c.textContent ?? "").includes("192.168.1.43"));
-    expect(host?.textContent).toContain("LAN");
+    expect(Array.from(document.querySelectorAll(".gadget-chip-egress")).some((c) => (c.textContent ?? "").includes("192.168.1.43"))).toBe(false);
     const support = chipLabels("update-claim-support");
     expect(support.filter((s) => s === "UNSUPPORTED")).toHaveLength(1);
     expect(support.filter((s) => s === "LINKED · MIGRATED")).toHaveLength(3);
@@ -1052,7 +1052,7 @@ describe("PHILO-10-02: a nudge whose answer never came back is never offered aga
     const text = (row.textContent ?? "").toUpperCase();
     expect(text).toContain("RESULT UNKNOWN");
     expect(text).toContain("CHECK #612");
-    expect(text).toContain("GITHUB.COM");
+    expect(text).not.toContain("GITHUB.COM");
     expect(screen.queryByTestId("nudge-send")).toBeNull();
   }
 
@@ -1198,7 +1198,7 @@ describe("HS-174-04: the Room's writes under History carry egress where egress h
   // replaces: tests/e2e/test_hs174_receipts_glass.py::test_room_receipts_1440
   // replaces: tests/e2e/test_hs174_receipts_glass.py::test_room_receipts_393 (the same DOM asserts at 393)
   // (the hub half, ProjectService.room's receipts: tests/unit/test_reach_wire.py::TestRoomReceipts)
-  it("History ▸ Writes: the remote write wears REMOTE · <caller>; the local CREATE ITEM wears none", async () => {
+  it("History ▸ Writes: no row wears a host or REMOTE chip (owner ruling 2026-10-25)", async () => {
     const { pid, gets } = R174 as unknown as { pid: string; gets: Gets };
     replay(gets);
     render(<WindowHarness scope={`project:${pid}`} />);
@@ -1213,8 +1213,8 @@ describe("HS-174-04: the Room's writes under History carry egress where egress h
     const local = rows.filter((_, i) => texts[i].includes("CREATE ITEM"));
     expect(remote).toHaveLength(1);
     expect(local.length).toBeGreaterThanOrEqual(1);
-    expect(within(remote[0]).getByTestId("receipt-egress").textContent?.trim()).toBe("REMOTE · 192.168.1.43");
-    for (const row of local) expect(within(row).queryByTestId("receipt-egress")).toBeNull();
+    for (const row of rows) expect(within(row).queryByTestId("receipt-egress")).toBeNull();
+    for (const row of rows) expect(row.textContent).not.toMatch(/REMOTE|192\.168/);
     // No machine tokens (UX-CANON): no "Service." on a row.
     for (const row of rows) expect(row.textContent).not.toContain("Service.");
     expect(misses).toEqual([]);

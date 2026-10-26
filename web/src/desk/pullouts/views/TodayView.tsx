@@ -28,7 +28,7 @@ import { agentSpriteName } from "../../sprites";
 import { meetingRowState } from "../../../pages/cores/history/helpers";
 import { useSummaryRun } from "../../../pages/cores/history/useSummaryRun";
 import { executedReceipt, readPlannedRoute, readRunReceipt, routeReady } from "../../../meetings/summaryRoute";
-import { RouteDisclosure, RunAttempts } from "../../../meetings/RouteDisclosure";
+import { RouteDisclosure, RunAttempts, routeTitle } from "../../../meetings/RouteDisclosure";
 import { StandingPagesSection, useStandingPages } from "../../standingPages";
 import { useAgentFlights, useAgentFlightsLive, type AgentFlight } from "../../agentFlights";
 import { conductorMembers, fleetCounts } from "../../conductor/members";
@@ -393,15 +393,16 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
               <DotWord tone={failed ? "fail" : "warn"}>{failed ? "Summary failed" : "No summary yet"}</DotWord>
             </span>
           </div>
-          {/* MUST 2 (Astra r1 on #1110): where the run goes, before the
-              press (the route and its fallbacks); after it, every place
-              the run reached (the attempt receipt). CatalogRail's grammar. */}
+          {/* MUST 2 (Astra r1 on #1110), amended by the owner ruling of
+              2026-10-25: where the run goes rides the verb's hover title;
+              the row shows only a failed attempt or a route that cannot run. */}
           <span className="today-row-route">
             <RunAttempts receipt={executedReceipt(id, summary.runRefusal?.meetingId === id ? summary.runRefusal.refusal.receipt : undefined, readRunReceipt(row))} testId="today-attempts" />
             <RouteDisclosure route={summary.runRefusal?.meetingId === id ? summary.runRefusal.refusal.route : route} testId="today-route" />
           </span>
           {routeReady(route) ? (
             <Button dense variant={lead === "finish" && index === 0 ? "primary" : "secondary"} loading={summary.runningId === id}
+              title={routeTitle(route)}
               onClick={() => { setJustMade({ id, title: String(row.title ?? "Meeting") }); void summary.run(id, route); }} data-testid="today-make-summary">
               Make the summary
             </Button>

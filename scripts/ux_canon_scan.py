@@ -517,6 +517,10 @@ _A3_PROSE_TAG = re.compile(r"<(?:p|small)\b[^>]*>([^<]+)")
 # `{\n  x.length\n}` shape (HS-200-44 audit).
 
 # Rule A9: a provider call whose verb and path Prettier split across lines.
+# A provider fetch (discover, recheck, evaluate) is an act where the choice is
+# made (Settings, Setup, the Door), so its file names the host. The owner
+# ruling of 2026-10-25 (UX-CANON A.9 amended) forbids the chip on working
+# windows' rows; tests/unit/test_egress_labels_canon.py fences that side.
 # `[\s\S]{0,200}?` is the bounded stand-in for the old per-line `.*`.
 _A9_PROVIDER = (
     re.compile(r"/api/providers/", re.IGNORECASE),

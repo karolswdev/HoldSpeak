@@ -114,7 +114,7 @@ describe("isLanHost", () => {
 
 describe("resolveEngine (HS-170-04)", () => {
   // (a) profileId match on detect engines
-  it("(a) matches by profileId and uses detect engine name + host", () => {
+  it("(a) matches by profileId and uses the detect engine name", () => {
     const assignment = fakeAssignment(LEGACY_PROFILE_ID, LEGACY_LABEL, "private_network");
     const engines = [
       fakeEngine({
@@ -126,7 +126,6 @@ describe("resolveEngine (HS-170-04)", () => {
     ];
     const result = resolveEngine(assignment, engines);
     expect(result.name).toBe("Qwen3.6 35B");
-    expect(result.egressLabel).toBe("192.168.1.43 · LAN");
   });
 
   it("(a) matches by id prefix (lan:profileId)", () => {
@@ -142,7 +141,6 @@ describe("resolveEngine (HS-170-04)", () => {
     ];
     const result = resolveEngine(assignment, engines);
     expect(result.name).toBe("Qwen3.6 35B");
-    expect(result.egressLabel).toBe("192.168.1.43 · LAN");
   });
 
   // (b) base_url host match via targets when profileId doesn't match
@@ -159,20 +157,17 @@ describe("resolveEngine (HS-170-04)", () => {
     ];
     const result = resolveEngine(assignment, engines, [LEGACY_TARGET]);
     expect(result.name).toBe("Qwen3.6 35B");
-    expect(result.egressLabel).toBe("192.168.1.43 · LAN");
   });
 
-  // (c) no detect match — classify from profile base_url
-  it("(c) classifies LAN host from target base_url when detect is empty", () => {
+  // (c) no detect match — never an address as the name (owner ruling 2026-10-25)
+  it("(c) names a migrated endpoint with no model id plainly, never by its address", () => {
     const assignment = fakeAssignment(LEGACY_PROFILE_ID, LEGACY_LABEL, "cloud");
     // Note: boundary says "cloud" but the base_url is on 192.168.1.43 (LAN).
     // The resolver must classify by the actual host, not the stale boundary.
     const result = resolveEngine(assignment, [], [LEGACY_TARGET]);
     // Name: "Migrated ..." is rejected; model is "default" also rejected;
-    // falls back to host:port
-    expect(result.name).toBe("192.168.1.43:8081");
-    expect(result.egressLabel).toBe("192.168.1.43 · LAN");
-    expect(result.egressHost).toBe("192.168.1.43");
+    // the plain name, never host:port.
+    expect(result.name).toBe("Assigned engine");
   });
 
   it("(c) uses non-migration label as the name", () => {
@@ -183,7 +178,6 @@ describe("resolveEngine (HS-170-04)", () => {
     };
     const result = resolveEngine(assignment, [], [target]);
     expect(result.name).toBe("My Custom Model");
-    expect(result.egressLabel).toBe("10.0.0.5 · LAN");
   });
 
   it("(c) uses model id when label is migration and model is not default", () => {
@@ -194,22 +188,20 @@ describe("resolveEngine (HS-170-04)", () => {
     };
     const result = resolveEngine(assignment, [], [target]);
     expect(result.name).toBe("qwen-3.5-0.8b");
-    expect(result.egressLabel).toBe("192.168.1.43 · LAN");
   });
 
   // Edge cases
-  it("shows THIS DEVICE for a local/loopback engine", () => {
+  it("names a local/loopback engine by name", () => {
     const assignment = fakeAssignment("p4", "Local MLX", "local");
     const engines = [
       fakeEngine({ profileId: "p4", kind: "local", host: "", name: "Whisper v3" }),
     ];
     const result = resolveEngine(assignment, engines);
     expect(result.name).toBe("Whisper v3");
-    expect(result.egressLabel).toBe("THIS DEVICE");
   });
 
   // The owner's real fixture: legacy-intel profile → cloud:legacy-intel detect engine
-  it("(a) matches legacy-intel by cloud:profileId prefix and shows GPT-5 mini + host", () => {
+  it("(a) matches legacy-intel by cloud:profileId prefix and shows GPT-5 mini", () => {
     const assignment = fakeAssignment("legacy-intel", LEGACY_LABEL, "cloud");
     const engines = [
       fakeEngine({
@@ -224,7 +216,6 @@ describe("resolveEngine (HS-170-04)", () => {
     ];
     const result = resolveEngine(assignment, engines);
     expect(result.name).toBe("GPT 5 mini");
-    expect(result.egressLabel).toBe("API.OPENAI.COM");
     expect(result.engineState).toBe("NOT_SET");
     expect(result.keySet).toBe(false);
   });
@@ -237,7 +228,6 @@ describe("resolveEngine (HS-170-04)", () => {
     ];
     const result = resolveEngine(assignment, engines);
     expect(result.name).toBe("GPT-4o");
-    expect(result.egressLabel).toBe("API.OPENAI.COM");
     expect(result.engineState).toBe("READY");
     expect(result.keySet).toBe(true);
   });
@@ -252,17 +242,16 @@ describe("resolveEngine (HS-170-04)", () => {
     expect(result.keySet).toBe(false);
   });
 
-  it("returns null name when no assignment entries exist", () => {
+  it("returns null name when no assignment entries exist, and carries no egress field", () => {
     const result = resolveEngine(null, []);
     expect(result.name).toBeNull();
-    expect(result.egressLabel).toBe("THIS DEVICE");
+    expect(Object.keys(result).sort()).toEqual(["engineState", "keySet", "name"]);
   });
 
   it("falls back to assignment boundary when no targets and no detect", () => {
     const assignment = fakeAssignment("p6", "Some Model", "private_network");
     const result = resolveEngine(assignment, []);
     expect(result.name).toBe("Some Model");
-    expect(result.egressLabel).toBe("LAN");
   });
 
   // Pending/failed: engineState is null — EngineRow uses detectStatus to decide
@@ -291,7 +280,6 @@ describe("resolveEngine (HS-170-04)", () => {
     ];
     const result = resolveEngine(assignment, engines);
     expect(result.name).toBe("GPT 5 mini");
-    expect(result.egressLabel).toBe("API.OPENAI.COM");
     expect(result.engineState).toBe("NOT_SET");
     expect(result.keySet).toBe(false);
   });
@@ -313,7 +301,6 @@ describe("resolveEngine (HS-170-04)", () => {
     ];
     const result = resolveEngine(assignment, engines);
     expect(result.name).toBe("GPT 5 mini");
-    expect(result.egressLabel).toBe("API.OPENAI.COM");
     expect(result.engineState).toBe("NOT_SET");
   });
 });

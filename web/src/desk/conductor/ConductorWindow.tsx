@@ -13,7 +13,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
-  EgressChip,
   StatusBar,
   SurfaceState,
   ToolGlyph,
@@ -29,7 +28,7 @@ import { FootSlotContext } from "../surface/foot";
 import { ObjectList } from "../surface/objects/ObjectList";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { reviewResult, useAgentFlights } from "../agentFlights";
-import { AGENT_HOST, AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId, type AgentRow } from "../firstrun/agentsStep";
+import { AGENT_INSTALL, AGENT_NAME, needsHooks, type AgentId, type AgentRow } from "../firstrun/agentsStep";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useDesk } from "../store";
 import { useOnCoderFrame, useOnDeskChanged } from "../useDeskChangedRefresh";
@@ -869,7 +868,6 @@ export function ConductorWindow() {
       <footer ref={setFoot} className="desk-surface-foot surface-footer cw-footer" />
       <StatusBar
         data-testid="conductor-head"
-        egress={selected?.role === "live" ? <EgressChip label={AGENT_HOST[selected.agent as AgentId] ?? AGENT_HOST.claude} scope="cloud" /> : null}
         items={items}
         // The receipt (Stop, a hooks install, a stale launch's close) leads
         // the verbs: an empty receipt leaves no separator behind.
