@@ -386,11 +386,12 @@ function NeedVerbsView({ face, primary, onWell, well }: {
     }
     case "link":
       return (
-        <>
-          <EgressChip label={urlHost(v.url) || "NOT SET"} scope="cloud" />
-          <Button dense variant={lead} aria-label={named("Open")} data-testid="needs-row-verb" data-verb="open"
-            onClick={() => window.open(v.url, "_blank", "noopener")}>Open link</Button>
-        </>
+        /* Owner 2026-10-25: the host chip on every row is "an ancient relic";
+           the browser shows where the link goes. The host stays on the verb's
+           title for the pointer. */
+        <Button dense variant={lead} aria-label={named("Open")} title={urlHost(v.url).toLowerCase() || undefined}
+          data-testid="needs-row-verb" data-verb="open"
+          onClick={() => window.open(v.url, "_blank", "noopener")}>Open link</Button>
       );
     case "summarize":
       // The summary route (where the text goes) is disclosed on the meeting,
