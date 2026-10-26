@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-25 (the window grammar #1457–#1479; egress labels ruling)
+**Last updated:** 2026-10-25 (the window grammar #1457–#1481; egress labels retired)
 
 ## Current phase
 
@@ -42,8 +42,16 @@ Open link row's host chip removed. OWNER RULING 2026-10-25 evening: the
 ever-present egress labels (LAN, 192.168.1.36, the Jira host chip) "feel like
 an ancient relic now" → no host / address / scope chip on rows, toolbars or
 status bars of working windows; egress disclosed at the choice or the act
-(Settings ▸ Engines, Send preview, Setup). Lane running: ../wt-ng-egress
-(inventory doc EGRESS-LABELS-2026-10-25.md, UX-CANON amendment, sweep check). CATCH 2026-10-25: his hub had served main 33fdbce59
+(Settings ▸ Engines, Send preview, Setup). MERGED #1481: 26 site groups in 34 files
+lose their chips (Today, Needs you, Room, Meetings, Ask, Speak, Agents, drawers,
+Activity, Automations; engines by name, hosts as hover titles, Activity's Who =
+You / Another device); kept at the act (Send preview, Destinations, Settings ▸
+Engines / What runs where, Hand confirm, Setup, Door); UX-CANON A.9 amended;
+inventory docs/internal/betterment/native-experience/EGRESS-LABELS-2026-10-25.md;
+guard tests/unit/test_egress_labels_canon.py + a sweep `labels` fence. Left: the
+menu-bar trust badge (⌂ This device / → Your network) unchanged; Workbench,
+Delivery board/dossier, Rhythm and the tool inspector still wear chips; dead
+code kept for its tests (useDraftEgress, saidOnFace, isLanHost). CATCH 2026-10-25: his hub had served main 33fdbce59
 since 2026-10-24 (no watcher alive); redeployed from
 /Users/karol/dev/tools/wt-desk-main-20261025 (see memory reference_owner_hub_redeploy).
 Open fix-forward: a meeting decision with no record yet and WHY with several
