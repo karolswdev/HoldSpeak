@@ -216,12 +216,16 @@
   justify-items: center;
   align-content: center;
   gap: 0;
-  /* A tile is as wide as its word (72 px at least); a label never leaves
-     its tile. */
-  min-width: 72px;
+  /* Owner 2026-10-25 ("random-ass inconsistencies between those icons"):
+     every tile is ONE width, so the icons sit on one even pitch. The
+     widest word (Meetings) and the widest live tag (REC 10:42, 1:1 15:00)
+     fit inside 84 px; no tile reserves extra room for a tag it may get. */
+  width: 84px;
+  min-width: 84px;
+  max-width: 84px;
   height: 52px;
   align-self: center;
-  padding: 0 10px 2px;
+  padding: 0 4px 2px;
   /* transparent: the Button's hit face covers the border edge (global.css) */
   border: 1px solid transparent;
   border-radius: 8px;
@@ -409,15 +413,10 @@
 .desk-next .desk-dock-state[data-soon]::before {
   background: var(--lamp-ok);
 }
-/* the People tag: the time alone at the picture's top right (the badge
-   place); its `1:1` word is read, not drawn */
+/* the People tag sits in the word's row (2026-10-25), so it says what it
+   is: `1:1 15:00` */
 .desk-next .desk-dock-state-word {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
+  position: static;
 }
 @media (min-width: 721px) {
   .desk-next .desk-dock-launch .desk-dock-state[data-tone="ok"] {
@@ -425,31 +424,32 @@
     transform: none;
   }
 }
-/* an icon with a tag is wide enough for it; with a tag and a count, the
-   tag takes the top left and the count the top right (never one box) */
-/* Reserve the tag's width before its async read completes. A late 1:1 or
-   recording fact must not move the next app under the owner's pointer. */
+/* A tag and a count never share a tile (counts: Today, Agents; tags:
+   Meetings, People), and both fit the one tile width, so no tile is wider
+   than its neighbours and a late tag never moves the next icon. */
+/* Owner 2026-10-25: the shelf reads as one even row. On the desktop a live
+   tag (REC 10:42, 1:1 15:00) takes the WORD's row of its tile, so the icon
+   stays whole and the tile keeps its width; the lamps ride the icon's
+   shoulders, not the tile's corner. The phone block below keeps its own
+   placement (the tag on the icon's foot). */
 @media (min-width: 721px) {
-  .desk-next .desk-dock-app[data-app="surface-meetings"] {
-    min-width: 104px;
+  .desk-next .desk-dock-launch .desk-dock-state {
+    position: static;
+    grid-row: 2;
+    align-self: center;
+    justify-self: center;
+    transform: none;
+    height: 16px;
+    max-width: 100%;
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    font: 600 12px / 16px var(--font-sans);
   }
-  .desk-next .desk-dock .desk-dock-app[data-app="surface-people"] {
-    min-width: 128px;
+  .desk-next .desk-dock-launch:has(.desk-dock-state) .desk-dock-label {
+    display: none;
   }
-}
-.desk-next .desk-dock-launch:has(.desk-dock-state) {
-  min-width: 104px;
-}
-.desk-next .desk-dock-launch:has(.desk-dock-state):has(.desk-dock-badge) {
-  min-width: 128px;
-}
-.desk-next .desk-dock-launch:has(.desk-dock-badge) .desk-dock-state {
-  left: 4px;
-  transform: none;
-}
-.desk-next .desk-dock-launch:has(.desk-dock-state) .desk-dock-badge {
-  left: auto;
-  right: 4px;
 }
 /* disconnected: one tag heads the shelf; Dock.tsx draws no tag and no
    count, so nothing claims to be fresh */
@@ -540,6 +540,8 @@
 }
 .desk-next .desk-dock .desk-orb-wrap {
   align-self: center;
+  /* the orb owns a slot of its own, the same breath as a tile's edge */
+  padding: 0 10px;
 }
 /* the orb's note rides inside the shelf (the shelf clips what leaves it) */
 .desk-next .desk-dock .desk-orb-note,
@@ -841,4 +843,18 @@
 .desk-dock-app[data-drop="true"] {
   outline: 2px dotted currentColor;
   outline-offset: -3px;
+}
+/* Owner 2026-10-25: the lamps ride the icon's shoulders, not the tile's
+   corner (a dot before the word read as a stray mark). Last, so it wins. */
+@media (min-width: 721px) {
+  .desk-next .desk-dock-launch .desk-dock-fleet {
+    top: 4px;
+    bottom: auto;
+    left: calc(50% - 22px);
+  }
+  .desk-next .desk-dock-launch .desk-dock-mic-lamp {
+    top: 4px;
+    bottom: auto;
+    right: calc(50% - 22px);
+  }
 }
