@@ -12,8 +12,10 @@
   align-self: flex-start;
   padding-top: 2px;
 }
+/* A time is quiet sans figures, not mono (window grammar 2026-10-25). */
 .coming-up-slot {
-  font: 600 12px / 1.25 var(--font-mono);
+  font: 500 12px / 1.25 var(--font-sans);
+  font-variant-numeric: tabular-nums;
   color: var(--text-muted);
   white-space: nowrap;
 }

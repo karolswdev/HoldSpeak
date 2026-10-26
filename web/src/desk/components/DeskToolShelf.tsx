@@ -99,7 +99,7 @@ interface DeckRow {
   /** PHILO-13-14 (C4): a week verb's label wraps (never an ellipsis over the
    * destination he picks). */
   wrap?: boolean;
-  /** HS-171-07: trailing badge chip (e.g. "2 NEED YOU"); absent when falsy. */
+  /** HS-171-07: trailing badge chip (e.g. "3 open"); absent when falsy. */
   badge?: string;
   /** A MEMORY row (⌘K option B, ratified 2026-10-05): the second line
    * under the title — the snippet with the match marked, FoundBy, the day. */
@@ -214,6 +214,29 @@ export function stableDeck<T extends { id: string }>(
  *  section, in the order each section first appears; inside a section the
  *  rows keep their order (OBJECTS and MEETINGS were drawn twice when their
  *  rows were ranked between other sections). */
+/** Window grammar (2026-10-25): a kind word reads in sentence case. */
+export function kindText(kind: string): string {
+  const word = kind.trim();
+  return word ? word.charAt(0).toLocaleUpperCase() + word.slice(1) : word;
+}
+
+const BAND_WORD: Record<string, string> = { Do: "Do", Ask: "Ask", Person: "People", Recent: "Recent" };
+
+/** Window grammar (2026-10-25): a section caption is the kind's plural in
+ *  sentence case ("Notes", "Desk decisions"); a verb kind stays ("Do", "Ask"). */
+export function bandWord(kind: string): string {
+  const word = kindText(kind);
+  if (BAND_WORD[word]) return BAND_WORD[word];
+  return /s$/i.test(word) ? word : `${word}s`;
+}
+
+/** Window grammar (2026-10-25): a badge token reads in sentence case
+ *  ("3 open", "Read failed"), never caps. */
+export function badgeText(token: string): string {
+  const lower = token.toLocaleLowerCase();
+  return /^\d/.test(lower) ? lower : kindText(lower);
+}
+
 export function oneBandPerSection<T extends { section: string }>(rows: readonly T[]): T[] {
   const bands = new Map<string, T[]>();
   for (const row of rows) {
@@ -360,7 +383,7 @@ export function DeskToolShelf() {
   const readNeedsYou = useCallback(() => {
     return apiFetch<{
       items?: Array<{ projectId?: string; muted?: boolean; waiting?: boolean }>;
-      /** The hub's members by Project: a project badge ("N OPEN"). */
+      /** The hub's members by Project: a project badge ("N open"). */
       projectCounts?: Record<string, number>;
       coverage?: CoverageRecord[];
     }>("/api/desk/needs-you")
@@ -574,7 +597,7 @@ export function DeskToolShelf() {
       const badge =
         needs && needs > 0
           // PHILO-13-03: a Room's own count is narrower than "needs you".
-          ? `${needs} OPEN`
+          ? `${needs} open`
           : projectCoverage[project.id];
       push({
         id: `project.open.${project.id}`,
@@ -1144,8 +1167,9 @@ export function DeskToolShelf() {
                   role="listbox"
                 >
                   {rows.map((row) => {
-                    const band = showBands && !seenKinds.has(row.kind) ? row.kind : null;
-                    seenKinds.add(row.kind);
+                    const word = bandWord(row.kind);
+                    const band = showBands && !seenKinds.has(word) ? word : null;
+                    seenKinds.add(word);
                     const isSel = selected?.id === row.id;
                     const isExpanded = expandedId === row.id && !!row.verbEntries?.length;
                     const verbs = row.verbEntries ?? [];
@@ -1197,9 +1221,9 @@ export function DeskToolShelf() {
                               {row.meetingMeta ? <span className="desk-deck-meeting-meta">{row.meetingMeta}</span> : null}
                             </span>
                             {row.badge ? (
-                              <span className="desk-deck-badge">{row.badge}</span>
+                              <span className="desk-deck-badge">{badgeText(row.badge)}</span>
                             ) : null}
-                            <span className="desk-deck-kind">{row.kind}</span>
+                            <span className="desk-deck-kind">{kindText(row.kind)}</span>
                             {/* PHILO-15 11 (B21): no ⌘ hint on a phone. */}
                             {row.keycap && !(typeof window !== "undefined" && window.innerWidth <= 720) ? <kbd>{row.keycap}</kbd> : null}
                           </Button>

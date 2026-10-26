@@ -379,9 +379,10 @@
 .desk-next .desk-tool-search .gadget-string {
   min-height: var(--size-btn);
 }
-/* HS-111-07: the command deck — 26px mono ledger rows in section
-   bands (VERBS / PROGRAMS / OBJECTS / SETTINGS / MEETINGS); the
-   selection is an index painted as the full-width accent band. */
+/* HS-111-07, on the window grammar (2026-10-25): the command deck is a
+   dense list — 30 px sans rows under sentence-case section captions
+   ("Notes", "Meetings", "Do"); the selection is the Workbench blue band.
+   Mono only for an id. */
 .desk-next .desk-deck-list {
   display: block;
   margin: 8px 0 0;
@@ -395,23 +396,21 @@
   /* PHILO-16 §11 Section: the caption sits on a hairline */
   border-bottom: 1px solid var(--border);
   color: var(--text-muted);
-  font: 600 var(--font-size-xs) var(--font-mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font: 600 12px/16px var(--font-sans);
 }
 .desk-next .desk-deck-row {
   display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
-  height: 26px;
+  height: 30px;
   padding: 0 8px;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
   text-align: left;
   cursor: pointer;
 }
@@ -427,13 +426,13 @@
 .desk-next .desk-deck-arrow {
   flex: 0 0 34px;
   min-width: 34px;
-  min-height: 26px;
+  min-height: 30px;
   padding: 0;
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--text-muted);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 16px;
   cursor: pointer;
 }
@@ -452,8 +451,10 @@
   padding-left: 16px;
 }
 .desk-next .desk-deck-glyph {
-  width: var(--size-icon-sm);
+  width: 16px;
   flex: none;
+  font-size: 13px;
+  line-height: 16px;
   text-align: center;
   color: var(--text-muted);
 }
@@ -468,7 +469,7 @@
    to a second line instead of cutting the destination with an ellipsis. */
 .desk-next .desk-deck-row[data-wrap] {
   height: auto;
-  min-height: 26px;
+  min-height: 30px;
   padding-block: 4px;
 }
 .desk-next .desk-deck-row[data-wrap] .desk-deck-label {
@@ -478,9 +479,8 @@
 }
 .desk-next .desk-deck-kind {
   flex: none;
-  color: var(--text-faint);
-  font-size: var(--font-size-xs);
-  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font: 400 12px/16px var(--font-sans);
 }
 .desk-next .desk-deck-row kbd {
   flex: none;
@@ -546,6 +546,17 @@
   color: var(--text-muted);
   font: 400 12px/1.4 var(--font-sans);
 }
+/* The day under a hit is quiet metadata, not a mono token. */
+.desk-next .desk-deck-day {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: 400 12px/1.4 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-transform: none;
+}
 .desk-next .desk-deck-row.is-selected .desk-deck-found,
 .desk-next .desk-deck-row:hover:not(.is-ghost) .desk-deck-found,
 .desk-next .desk-deck-row:focus-visible:not(.is-ghost) .desk-deck-found,
@@ -567,18 +578,18 @@
   color: var(--text-faint);
   cursor: default;
 }
-/* HS-171-07: trailing needs-you badge chip on PROJECTS rows. */
+/* HS-171-07, window grammar: a Project's count ("3 open") in the tone
+   colour, sentence case, no chip. */
 .desk-next .desk-deck-badge {
   display: inline-flex;
   align-items: center;
   flex: none;
   min-height: 16px;
   padding: 0 6px;
-  background: color-mix(in srgb, var(--surface-1) 50%, transparent);
-  color: var(--tone-warn, #fbbf24);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  border-radius: var(--radius-sm);
+  color: var(--wb-warn-ink);
+  font: 600 12px/16px var(--font-sans);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 /* On the blue plate the badge is paper on the plate itself (4.76:1), drawn

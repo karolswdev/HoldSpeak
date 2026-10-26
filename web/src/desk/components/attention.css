@@ -291,7 +291,8 @@
   display: block;
   margin-top: 3px;
   color: var(--text-muted);
-  font: 400 12px/1.5 var(--font-mono);
+  font: 400 12px/1.5 var(--font-sans);
+  font-variant-numeric: tabular-nums;
   white-space: normal;
   overflow-wrap: anywhere;
 }

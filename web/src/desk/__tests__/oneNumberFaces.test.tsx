@@ -185,7 +185,7 @@ describe("one needs-you number on every face (one seeded desk, real producers)",
     fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "room" } });
     const label = await screen.findByText(`Open ${room.name}`);
     const row = label.closest("li, [role=option], div");
-    await waitFor(() => expect(row?.textContent).toContain(`${hub.projectCounts[room.id]} OPEN`));
+    await waitFor(() => expect(row?.textContent).toContain(`${hub.projectCounts[room.id]} open`));
   });
 
   it("the palette re-reads the hub when it opens again: a muted Room loses its badge", async () => {
@@ -208,7 +208,7 @@ describe("one needs-you number on every face (one seeded desk, real producers)",
     fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "room" } });
     const label = await screen.findByText(`Open ${room.name}`);
     await waitFor(() =>
-      expect(label.closest("li, [role=option], div")?.textContent).toContain(`${hub.projectCounts[room.id]} OPEN`));
+      expect(label.closest("li, [role=option], div")?.textContent).toContain(`${hub.projectCounts[room.id]} open`));
     // The owner mutes the Room; the palette closes and opens again.
     answer = after;
     act(() => usePalette.setState({ open: false }));
@@ -216,7 +216,7 @@ describe("one needs-you number on every face (one seeded desk, real producers)",
     fireEvent.change(screen.getByRole("combobox", { name: "Find, open or ask" }), { target: { value: "room" } });
     const again = await screen.findByText(`Open ${room.name}`);
     await waitFor(() =>
-      expect(again.closest("li, [role=option], div")?.textContent).not.toMatch(/\d+ OPEN/));
+      expect(again.closest("li, [role=option], div")?.textContent).not.toMatch(/\d+ open/i));
   });
 
 });

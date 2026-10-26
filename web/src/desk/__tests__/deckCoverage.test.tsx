@@ -68,8 +68,8 @@ describe("Command deck coverage (HS-200-07 / C4)", () => {
       expect(screen.getByText("Open Q4 Platform")).toBeTruthy());
     const alpha = screen.getByText("Open Q4 Platform").closest("li, [role=option], div");
     const beta = screen.getByText("Open Governance").closest("li, [role=option], div");
-    await waitFor(() => expect(alpha?.textContent).toContain("1 OPEN"));
+    await waitFor(() => expect(alpha?.textContent).toContain("1 open"));
     // The unobserved Room never reads as a quiet zero.
-    expect(beta?.textContent).toContain("READ FAILED");
+    expect(beta?.textContent).toContain("Read failed");
   });
 });
