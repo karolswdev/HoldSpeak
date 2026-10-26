@@ -99,7 +99,7 @@ describe("CalendarSnapshotReviewCore", () => {
     expect(screen.getByDisplayValue("2026-09-07")).toBeTruthy();
   });
 
-  it("CONFIRM disabled without valid anchor", () => {
+  it("Confirm disabled without valid anchor", () => {
     const noAnchor = JSON.stringify({
       anchor_date: null,
       anchor_confidence: "absent",
@@ -113,14 +113,14 @@ describe("CalendarSnapshotReviewCore", () => {
       ],
     });
     render(<CalendarSnapshotReviewCore scope={noAnchor} />);
-    const confirm = screen.getByText("CONFIRM");
+    const confirm = screen.getByText("Confirm");
     expect(confirm).toBeTruthy();
     expect((confirm as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it("CONFIRM enabled with valid anchor", () => {
+  it("Confirm enabled with valid anchor", () => {
     render(<CalendarSnapshotReviewCore scope={VALID_SCOPE} />);
-    const confirm = screen.getByText("CONFIRM");
+    const confirm = screen.getByText("Confirm");
     expect((confirm as HTMLButtonElement).disabled).toBe(false);
   });
 
@@ -132,7 +132,7 @@ describe("CalendarSnapshotReviewCore", () => {
     render(<CalendarSnapshotReviewCore scope={errorScope} />);
     // UX-CANON A10: a token pair, never a sentence.
     expect(screen.getByTestId("calendar-snapshot-refusal").textContent).toBe(
-      "✗CAN'T READ Not a calendar image",
+      "Can't read Not a calendar image",
     );
   });
 
@@ -147,7 +147,7 @@ describe("CalendarSnapshotReviewCore", () => {
       />,
     );
     const refusal = screen.getByTestId("calendar-snapshot-refusal");
-    expect(refusal.textContent).toBe("✗CAN'T READ No vision model");
+    expect(refusal.textContent).toBe("Can't read No vision model");
     expect(refusal.textContent).not.toMatch(/_/);
   });
 
@@ -158,7 +158,7 @@ describe("CalendarSnapshotReviewCore", () => {
       />,
     );
     expect(screen.getByTestId("calendar-snapshot-refusal").textContent).toBe(
-      "✗CAN'T READ Vision engine timed out",
+      "Can't read Vision engine timed out",
     );
   });
 
@@ -177,7 +177,7 @@ describe("CalendarSnapshotReviewCore", () => {
       source_label: "O365 SNAPSHOT",
     });
     render(<CalendarSnapshotReviewCore scope={VALID_SCOPE} />);
-    const confirm = screen.getByText("CONFIRM");
+    const confirm = screen.getByText("Confirm");
     fireEvent.click(confirm);
     await waitFor(() => expect(apiFetch).toHaveBeenCalledTimes(1));
     const [url, opts] = apiFetch.mock.calls[0];
@@ -194,10 +194,10 @@ describe("CalendarSnapshotReviewCore", () => {
       source_label: "O365 SNAPSHOT",
     });
     render(<CalendarSnapshotReviewCore scope={VALID_SCOPE} />);
-    fireEvent.click(screen.getByText("CONFIRM"));
+    fireEvent.click(screen.getByText("Confirm"));
     const receipt = await screen.findByTestId("calendar-snapshot-receipt");
-    expect(receipt).toHaveTextContent("SAVED");
-    expect(receipt).toHaveTextContent("EVENTS 2");
+    expect(receipt).toHaveTextContent("Saved");
+    expect(receipt).toHaveTextContent("2 events");
     expect(receipt).toHaveTextContent("O365 SNAPSHOT");
   });
 
@@ -260,7 +260,7 @@ describe("CalendarSnapshotReviewCore", () => {
     render(<CalendarSnapshotReviewCore scope={VALID_SCOPE} />);
     const title = screen.getByRole("textbox", { name: "Event 1 title" });
     const anchor = screen.getByRole("textbox", { name: "Week of" });
-    const confirm = screen.getByRole("button", { name: "CONFIRM" });
+    const confirm = screen.getByRole("button", { name: "Confirm" });
     act(() => {
       confirm.click();
       confirm.click();
@@ -311,11 +311,11 @@ describe("CalendarSnapshotReviewCore", () => {
     const remove = screen.getByRole("button", { name: "Remove event 2" });
     fireEvent.click(remove);
     fireEvent.click(remove);
-    fireEvent.click(screen.getByRole("button", { name: "CONFIRM" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     const retry = await screen.findByRole("button", { name: "Retry" });
     expect(
       screen.getByTestId("calendar-snapshot-save-refusal"),
-    ).toHaveTextContent("CAN'T SAVE Calendar unavailable");
+    ).toHaveTextContent("Can't save Calendar unavailable");
     expect(screen.getByRole("textbox", { name: "Event 1 title" })).toBe(title);
     expect(title).toHaveValue("Ready for release");
     expect(anchor).toHaveValue("2026-10-19 ");
@@ -343,12 +343,12 @@ describe("CalendarSnapshotReviewCore", () => {
       });
     render(<CalendarSnapshotReviewCore scope={VALID_SCOPE} />);
     const title = screen.getByRole("textbox", { name: "Event 1 title" });
-    fireEvent.click(screen.getByRole("button", { name: "CONFIRM" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     await screen.findByRole("button", { name: "Retry" });
     expect(title).toHaveValue("Standup");
     fireEvent.change(title, { target: { value: "Revised standup" } });
     expect(screen.queryByTestId("calendar-snapshot-save-refusal")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "CONFIRM" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     await screen.findByTestId("calendar-snapshot-receipt");
     expect(JSON.parse(apiFetch.mock.calls[1][1].body).events[0].title).toBe(
       "Revised standup",
@@ -363,7 +363,7 @@ describe("CalendarSnapshotReviewCore", () => {
     const { container } = render(
       <CalendarSnapshotReviewCore scope={VALID_SCOPE} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: "CONFIRM" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     const refusal = await screen.findByTestId("calendar-snapshot-save-refusal");
     const footer = screen.getByTestId("surface-footer");
     const receipt = footer.querySelector(".surface-footer-receipt");
@@ -375,7 +375,7 @@ describe("CalendarSnapshotReviewCore", () => {
     expect(refusal).toHaveAttribute("role", "alert");
     expect(refusal).toHaveClass("surface-footer-receipt-line");
     expect(refusal).toHaveAttribute("data-wrap");
-    expect(refusal).toHaveTextContent("CAN'T SAVE Calendar unavailable");
+    expect(refusal).toHaveTextContent("Can't save Calendar unavailable");
     expect(
       container.querySelector(".calendar-snapshot-fields"),
     ).not.toContainElement(refusal);
@@ -389,7 +389,7 @@ describe("CalendarSnapshotReviewCore", () => {
       fireEvent.click(remove);
       fireEvent.click(remove);
     }
-    expect(screen.getByRole("button", { name: "CONFIRM" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Confirm" })).toBeDisabled();
     expect(screen.queryByText(/EVENTS 0|0 events/i)).toBeNull();
     expect(apiFetch).not.toHaveBeenCalled();
   });
@@ -397,10 +397,10 @@ describe("CalendarSnapshotReviewCore", () => {
   it("never invents a source or event count absent from the accepted response", async () => {
     apiFetch.mockResolvedValue({ success: true });
     render(<CalendarSnapshotReviewCore scope={VALID_SCOPE} />);
-    fireEvent.click(screen.getByRole("button", { name: "CONFIRM" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     const receipt = await screen.findByTestId("calendar-snapshot-receipt");
-    expect(receipt).toHaveTextContent("SAVED");
+    expect(receipt).toHaveTextContent("Saved");
     expect(receipt).not.toHaveTextContent("O365");
-    expect(receipt).not.toHaveTextContent("EVENTS");
+    expect(receipt).not.toHaveTextContent(/events/i);
   });
 });

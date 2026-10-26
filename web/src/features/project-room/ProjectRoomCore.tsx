@@ -218,17 +218,31 @@ function localDateStr(d: Date): string {
 }
 
 /** PHILO-15 B69: the Room head's one source word, from the hub's freshness
- *  states (the rule Needs you reads): `STALE · CHECKED 10H AGO`, `QUIET UNTIL
- *  08:00`, else `CHECKED <age>`. Null with no checked source. */
+ *  states (the rule Needs you reads), in sentence case (2026-10-25 audit):
+ *  `Stale · checked 10h ago`, `Quiet until 08:00`, else `Checked <age>`.
+ *  Null with no checked source. */
 export function sourcesWord(items: RoomSourceItem[], quietUntil?: string | null): { word: string; stale: boolean } | null {
   const checked = maxCheckedAt(items);
   if (items.some((i) => i.freshness === "stale")) {
-    return { word: checked ? `STALE · CHECKED ${humanTime(checked)}` : "STALE", stale: true };
+    return { word: checked ? `Stale · checked ${humanTime(checked)}` : "Stale", stale: true };
   }
   if (quietUntil && items.some((i) => i.freshness === "quiet")) {
-    return { word: `QUIET UNTIL ${formatTimeShort(quietUntil)}`, stale: false };
+    return { word: `Quiet until ${formatTimeShort(quietUntil)}`, stale: false };
   }
-  return checked ? { word: `CHECKED ${humanTime(checked)}`, stale: false } : null;
+  return checked ? { word: `Checked ${humanTime(checked)}`, stale: false } : null;
+}
+
+/** A hub source token in sentence case (2026-10-25 audit): `13 OVERDUE` →
+ *  `13 overdue`, `3 OPEN PRS` → `3 open PRs`, `CI RED` → `CI red`,
+ *  `NEXT MON 10:00` → `Next Mon 10:00`. The hub keeps its caps over MCP. */
+const TOKEN_WORDS: Record<string, string> = {
+  pr: "PR", prs: "PRs", ci: "CI",
+  mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri", sat: "Sat", sun: "Sun",
+};
+export function sentenceToken(token: string): string {
+  if (!/[A-Z]/.test(token) || token !== token.toUpperCase()) return token;
+  const words = token.toLowerCase().replace(/\p{L}+/gu, (word) => TOKEN_WORDS[word] ?? word);
+  return words.replace(/^\p{Ll}/u, (c) => c.toUpperCase());
 }
 
 function maxCheckedAt(items: RoomSourceItem[]): string | null {
@@ -350,7 +364,7 @@ function RoomHead({
   const facts = headFacts(now);
   // PHILO-15 B69/B60: a STALE source, or quiet hours holding the sweep, is
   // said on the head (a plain CHECKED time is not: the window reads itself).
-  const sourceFact = sourceWord && !/^CHECKED /.test(sourceWord.word) ? sourceWord : null;
+  const sourceFact = sourceWord && !/^Checked /.test(sourceWord.word) ? sourceWord : null;
 
   const nameRef = useRef<HTMLSpanElement>(null);
   const [showOutcome, setShowOutcome] = useState(false);
@@ -408,7 +422,7 @@ function RoomHead({
         <p className="room-now-facts" data-testid="room-head-facts">
           {facts.map((fact) => <span key={fact}>{fact}</span>)}
           {sourceFact ? (
-            <span data-testid="room-sources-word" data-tone={sourceFact.stale ? "warn" : undefined}>{sourceFact.word}</span>
+            <DotWord tone={sourceFact.stale ? "warn" : "idle"} data-testid="room-sources-word">{sourceFact.word}</DotWord>
           ) : null}
         </p>
       ) : null}
@@ -1209,7 +1223,8 @@ function SourcesSection({
 
   return (
     <SurfaceSection
-      label={acceptedCount > 0 ? `SOURCES ${acceptedCount}` : "SOURCES"}
+      label="Sources"
+      count={acceptedCount || null}
       actions={
         /* HS-169-07 park candidate: the steward's settings live under the
            sources (D4/D5).  Until per-source Adjust exists, this ghost verb
@@ -1225,7 +1240,7 @@ function SourcesSection({
               Add source
             </Button>
           ) : null}
-          <FoldGadget title="RAW" className="room-sources-raw">
+          <FoldGadget title="Raw" className="room-sources-raw">
             <Button dense variant="ghost" loading={stewardCtrl.loading} onClick={() => void stewardCtrl.enterSteward()} data-testid="steward-verb" data-verb="steward">
               Watch sources
             </Button>
@@ -1261,8 +1276,8 @@ function SourcesSection({
               primary={<span className="surface-primary" data-testid="suggested-ref">{sug.reference}</span>}
               wrap
               cells={
-                <span className="surface-token room-chip-faint" data-testid="suggested-caption">
-                  {`SUGGESTED · FROM ${sugMeetingTitle ? sugMeetingTitle.toUpperCase() : "MEETING"} ${formatMMDD(sug.createdAt)}`}
+                <span className="room-source-tok" data-testid="suggested-caption">
+                  {`Suggested from ${sugMeetingTitle || "a meeting"} ${formatMMDD(sug.createdAt)}`.trim()}
                 </span>
               }
               trailing={
@@ -1288,7 +1303,7 @@ function SourcesSection({
                   wrap
                   open
                   expands={false}
-                  cells={<StateChip state="warning" label="CAN'T CHECK" />}
+                  cells={<DotWord tone="warn">Can't check</DotWord>}
                   trailing={
                     <>
                       {/* S-3 / HS-169-07 park candidate: the design names "Fix"
@@ -1326,7 +1341,7 @@ function SourcesSection({
                   lead={emblemFor(src.provider)}
                   primary={<span className="surface-primary">{src.scope}</span>}
                   wrap
-                  cells={<span className="surface-token room-chip-faint">SUGGESTED</span>}
+                  cells={<DotWord tone="info">Suggested</DotWord>}
                   data-testid="source-suggested-row"
                 />
               );
@@ -1349,8 +1364,8 @@ function SourcesSection({
                   <span className="room-source-primary">
                     <span className="surface-primary" data-testid="source-scope">{src.scope}</span>
                     {src.tokens.map((tok, ti) => (
-                      <span key={ti} className="surface-token room-source-tok" data-testid={isMeeting ? "source-meeting-token" : undefined}>
-                        {ti > 0 ? " · " : ""}{tok}
+                      <span key={ti} className="room-source-tok" data-testid={isMeeting ? "source-meeting-token" : undefined}>
+                        {ti > 0 ? " · " : ""}{sentenceToken(tok)}
                       </span>
                     ))}
                   </span>
@@ -1377,28 +1392,28 @@ function SourcesSection({
                   {/* HS-175 counsel C7(b): a paused Watch SAYS so (idle chip)
                       beside its Resume verb -- one grammar for MTG / GH / J. */}
                   {src.state === "paused" ? (
-                    <span data-testid="source-paused"><StateChip state="idle" label="PAUSED" /></span>
+                    <span data-testid="source-paused"><DotWord tone="idle">Paused</DotWord></span>
                   ) : null}
                   {/* PHILO-15 B69: the source's one state, the one Needs you shows. */}
                   {src.freshness === "stale" ? (
-                    <span data-testid="source-freshness"><StateChip state="warning" label="STALE" /></span>
+                    <span data-testid="source-freshness"><DotWord tone="warn">Stale</DotWord></span>
                   ) : src.freshness === "quiet" && src.quietUntil ? (
                     <span data-testid="source-freshness">
-                      <StateChip state="idle" label={`QUIET UNTIL ${formatTimeShort(src.quietUntil)}`} />
+                      <DotWord tone="idle">{`Quiet until ${formatTimeShort(src.quietUntil)}`}</DotWord>
                     </span>
                   ) : null}
                   {isMeeting ? (
                     <span data-testid="source-meeting-checked">
                       {src.checkedAt ? (
-                        <StateChip state="success" label={`CHECKED ${formatTimeShort(src.checkedAt)}`} icon={"●"} />
+                        <DotWord tone="ok">{`Checked ${formatTimeShort(src.checkedAt)}`}</DotWord>
                       ) : (
-                        <StateChip state="idle" label="NEVER" />
+                        <DotWord tone="idle">Never checked</DotWord>
                       )}
                     </span>
                   ) : (
                     <>
                       {src.checkedAt ? (
-                        <span className="room-source-checked">checked {humanTime(src.checkedAt)}</span>
+                        <span className="room-source-checked">Checked {humanTime(src.checkedAt)}</span>
                       ) : null}
                     </>
                   )}

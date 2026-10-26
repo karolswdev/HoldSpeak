@@ -407,6 +407,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     surface: {
       eyebrow: "Kernel",
       minW: 520,
+      // 2026-10-25 audit: five one-line columns need the room.
+      defaultW: 760,
       load: () =>
         import("../pages/cores/ProcessCore").then((module) => ({
           default: module.ProcessCore,

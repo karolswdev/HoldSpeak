@@ -18,7 +18,7 @@ import { EMPTY_ITEMS } from "../../../desk/api";
 import { TitleSlotContext } from "../../../desk/surface/title";
 import { WingSlotContext } from "../../../desk/surface/wings";
 import { useDesk } from "../../../desk/store";
-import { ProjectRoomCore } from "../ProjectRoomCore";
+import { ProjectRoomCore, sentenceToken } from "../ProjectRoomCore";
 import { RoomPeopleSection } from "../RoomPeopleSection";
 import { ApiError } from "../../../lib/api";
 // The final diet lane's recorded wires (scripts/record_room_wires.py: the real
@@ -1114,17 +1114,18 @@ describe("HS-175-04: the meeting source row in SOURCES", () => {
       .sources.items.find((s) => s.provider === "meeting")!;
     expect(wired.tokens.some((t) => t.startsWith("NEXT "))).toBe(true);
     const tokens = within(meetingRow()).getAllByTestId("source-meeting-token").map((t) => t.textContent?.trim());
-    expect(tokens).toEqual(wired.tokens);
+    // 2026-10-25 audit: the face reads the hub token in sentence case.
+    expect(tokens).toEqual(wired.tokens.map(sentenceToken));
     // The CHECKED chip is on the row's second line (a sibling of the testid line, inside its li).
-    expect(screen.getAllByTestId("source-meeting-checked")[0].textContent).toMatch(/CHECKED|NEVER/);
+    expect(screen.getAllByTestId("source-meeting-checked")[0].textContent).toMatch(/Checked|Never checked/);
     expect(meetingRow().querySelectorAll(".surface-egress-chip, [data-scope]")).toHaveLength(0);
     const sources = Array.from(document.querySelectorAll(".surface-section-head, .surface-section-label"))
-      .map((s) => (s.textContent ?? "").trim()).find((t) => t.startsWith("SOURCES"));
-    expect(Number(/SOURCES\s+(\d+)/.exec(sources ?? "")?.[1] ?? 0)).toBeGreaterThanOrEqual(2);
+      .map((s) => (s.textContent ?? "").trim()).find((t) => t.startsWith("Sources"));
+    expect(Number(/Sources · (\d+)/.exec(sources ?? "")?.[1] ?? 0)).toBeGreaterThanOrEqual(2);
 
     expect(verb().textContent).toBe("Pause");
     fireEvent.click(verb());
-    await waitFor(() => expect(screen.getAllByTestId("source-paused")[0].textContent).toContain("PAUSED"));
+    await waitFor(() => expect(screen.getAllByTestId("source-paused")[0].textContent).toContain("Paused"));
     expect(verb().textContent).toBe("Resume");
     fireEvent.click(verb());
     await waitFor(() => expect(verb().textContent).toBe("Pause"));

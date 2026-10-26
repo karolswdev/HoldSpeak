@@ -89,13 +89,20 @@ function kindSprite(kind: string): string {
   return spriteUrl(KIND_SPRITE[head] ?? "thread", kind, "rest", null, 20);
 }
 
-const PROCESS_COLUMNS = [
-  { key: "name", word: "What", track: "minmax(150px, 0.9fr)" },
-  { key: "target", word: "For", track: "minmax(0, 1fr)" },
-  { key: "where", word: "Where", track: "minmax(0, 0.8fr)" },
-  { key: "started", word: "Started", track: "76px" },
-  { key: "state", word: "State", track: "112px" },
-] as const;
+/* Each row is one line (2026-10-25 audit): What takes the free width and
+ * ends in an ellipsis; For is as wide as its longest target (each row is its
+ * own grid, so the width is measured here, not by `max-content`); Where ends
+ * in an ellipsis with the full text on hover; Started is a fixed 8ch clock. */
+function processColumns(targets: string[]) {
+  const longest = Math.min(20, Math.max(4, ...targets.map((target) => target.length)));
+  return [
+    { key: "name", word: "What", track: "minmax(170px, 1.6fr)" },
+    { key: "target", word: "For", track: `minmax(0, calc(${longest}ch + 20px))` },
+    { key: "where", word: "Where", track: "minmax(0, 1fr)" },
+    { key: "started", word: "Started", track: "calc(8ch + 20px)" },
+    { key: "state", word: "State", track: "104px" },
+  ];
+}
 
 /* Window grammar (2026-10-24): Processes reads title bar → Toolbar
  * [Refresh] → the dense list of every run the kernel holds (glyph · What ·
@@ -149,12 +156,13 @@ export function ProcessCore(_props: CoreProps) {
       state: { ...rowState(row), testId: "process-state" },
       cells: {
         target: target ? <span className="process-target" data-testid="process-target">{target}</span> : "",
-        where,
+        where: where ? <span className="process-where" title={where}>{where}</span> : "",
         started: <span className="process-clock">{clockToken(row.timestamp)}</span>,
       },
       sortValues: { order: index, started: String(row.timestamp), target, where },
     };
   });
+  const columns = processColumns(flat.map(({ row }) => shownTarget(row, items)));
 
   const count = (id: string) => store.sections.find((section) => section.id === id)?.rows.length ?? 0;
   const selected = selectedId ? byId.get(selectedId) : undefined;
@@ -190,7 +198,7 @@ export function ProcessCore(_props: CoreProps) {
             label="Processes"
             density="dense"
             rows={rows}
-            columns={PROCESS_COLUMNS.filter((column) => !["target", "where"].includes(column.key)
+            columns={columns.filter((column) => !["target", "where"].includes(column.key)
               || rows.some((row) => row.cells?.[column.key]))}
             sort={sort}
             onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}

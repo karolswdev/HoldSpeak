@@ -1647,7 +1647,7 @@ describe("PHILO-9-03 F15: a suggested source row offers no dead verb", () => {
     });
     render(<WindowHarness scope="project:p1" />);
     const row = await screen.findByTestId("source-suggested-row");
-    expect(row.textContent).toContain("SUGGESTED");
+    expect(row.textContent).toContain("Suggested");
     expect(row.querySelectorAll("button").length).toBe(0);
   });
 });

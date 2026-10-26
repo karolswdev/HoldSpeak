@@ -10,6 +10,7 @@ import { BriefSendWells } from "../../documentSendsLazy";
 import { refOpener } from "../../openObject";
 import { openIntelligence } from "../../intelligenceNavigation";
 import { StandingPagesSection, useStandingPages } from "../../standingPages";
+import { DotWord } from "../../surface/kit";
 import "../attention-records.css";
 
 interface BriefItem {
@@ -120,7 +121,7 @@ export function generatedLabelLocal(generatedAt: string | null | undefined): str
  *
  * Item text is e.g. "Review decision: Ania owns the API spec" or
  * "Commitment due 2026-09-04: Ania owns the API spec".
- * Kind = prefix before first ": " (uppercased, ISO dates humanized).
+ * Kind = prefix before first ": " (sentence case, ISO dates humanized).
  * Primary = text after the colon. */
 function parseLookbackItem(item: BriefItem): {
   kind: string | null;
@@ -130,7 +131,11 @@ function parseLookbackItem(item: BriefItem): {
   const colonIdx = item.text.indexOf(": ");
   if (colonIdx > 0) {
     const rawKind = item.text.slice(0, colonIdx);
-    const kind = humanizeDate(rawKind).toUpperCase();
+    // Window grammar (2026-10-25 audit): the kind reads in sentence case
+    // (`Meeting recorded`, `Commitment due Sep 04`), never mono caps.
+    const humane = humanizeDate(rawKind).replace(/\b(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\b/g,
+      (month) => month.charAt(0) + month.slice(1).toLowerCase());
+    const kind = humane.charAt(0).toUpperCase() + humane.slice(1);
     const primary = item.text.slice(colonIdx + 2);
     return { kind, primary, detail: item.detail ?? null };
   }
@@ -146,6 +151,11 @@ export function blockerKey(sourceRef: string | null | undefined): string | null 
 
 /** One kind of change, for the folded count line. */
 export type SinceKind = "meeting" | "decision" | "promise" | "failed" | "unread" | "other";
+
+/** A Since row's kind as a dot and a word: its colour by what changed. */
+const SINCE_TONE: Record<SinceKind, "ok" | "warn" | "fail" | "info" | "ask" | "idle"> = {
+  meeting: "info", decision: "ok", promise: "warn", failed: "fail", unread: "ask", other: "idle",
+};
 
 export function sinceKind(item: Pick<BriefItem, "section" | "text"> & { source_ref?: string | null }): SinceKind {
   if (String(item.source_ref ?? "").startsWith(NOT_READ_REF)) return "unread";
@@ -269,7 +279,7 @@ export function SinceYesterday({ brief, failed, now, defaultOpen = false, openRe
                   <Button variant="chrome" className="today-fold-primary" onClick={() => opener()}>{parsed.primary}</Button>
                 ) : <span className="today-fold-primary">{parsed.primary}</span>}
                 <span className="today-fold-facts">
-                  {parsed.kind ? <span className="today-fold-kind" data-testid="brief-sf-kind">{parsed.kind}</span> : null}
+                  {parsed.kind ? <DotWord tone={SINCE_TONE[sinceKind(item)]} className="today-fold-state" data-testid="brief-sf-kind">{parsed.kind}</DotWord> : null}
                   {parsed.detail ? <span>{humanizeDate(parsed.detail)}</span> : null}
                 </span>
               </div>

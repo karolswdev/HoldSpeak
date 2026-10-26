@@ -1,7 +1,8 @@
-import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/signal/Signal";
-import { CycleGadget, LampGadget, PadGadget } from "../../desk/surface/gadgets";
+import { CycleGadget, PadGadget } from "../../desk/surface/gadgets";
+import { StatusBar, Toolbar, type StatusBarItem } from "../../desk/surface/kit";
+import { useWindowInterior } from "../../desk/surface/interior";
 import { SurfaceSection, SurfaceState } from "../../desk/surface/Surface";
 import { apiFetch } from "../../lib/api";
 import type {
@@ -23,12 +24,14 @@ export function ConstitutionalContextCore() {
   const [draft, setDraft] = useState("");
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [saveError, setSaveError] = useState("");
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [viewingRev, setViewingRev] = useState<number | null>(null);
 
   const limit = ctx?.char_limit || CHAR_LIMIT;
+  // The Toolbar and the editor run edge to edge (window grammar).
+  useWindowInterior("editor");
 
   const load = useCallback(async () => {
     setLoadError("");
@@ -69,8 +72,7 @@ export function ConstitutionalContextCore() {
         setCtx(res.context ?? null);
         setDirty(false);
         setViewingRev(null);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        setSavedAt(new Date());
         void loadHistory();
       }
     } catch {
@@ -112,68 +114,68 @@ export function ConstitutionalContextCore() {
     );
   }
 
+  // Window grammar (2026-10-25 audit): title bar → Toolbar (Version
+  // history, Cancel, Save) → the editor → StatusBar (revision, size,
+  // unsaved, the Saved time). No "Status" caption, no dead foot.
+  const lastSaved = savedAt ?? (() => {
+    const current = history.find((entry) => entry.revision === revision);
+    const at = current?.created_at ? new Date(current.created_at) : null;
+    return at && !Number.isNaN(at.getTime()) ? at : null;
+  })();
+  const clock = (at: Date) => `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  const statusItems: Array<StatusBarItem | null> = [
+    saveError ? { key: "error", lamp: "fail", text: saveError } : null,
+    overLimit ? { key: "over", lamp: "fail", text: "Over the limit" } : null,
+    viewingRev !== null ? { key: "viewing", lamp: "warn", text: `Viewing revision ${viewingRev}` } : null,
+    dirty ? { key: "unsaved", lamp: "warn", text: "Not saved yet" } : null,
+    revision > 0 ? { key: "rev", text: `Revision ${revision}` } : null,
+    charCount > 0 ? { key: "tokens", text: `About ${tokenEstimate.toLocaleString()} tokens` } : null,
+    // One line: the canon scan (A8, no counters of zero) reads the guard with its text.
+    charCount > 0 ? { key: "chars", lamp: overLimit ? "fail" : nearLimit ? "warn" : undefined, text: `${charCount.toLocaleString()} of ${limit.toLocaleString()} characters` } : null,
+    !dirty && lastSaved ? { key: "saved", lamp: "ok", text: `Saved ${clock(lastSaved)}`, testId: "context-saved" } : null,
+  ];
+
   return (
     <div className="constitutional-context-core">
-      <SurfaceSection
-        label="Status"
-        actions={
-          <div className="constitutional-context-actions">
-            {history.length > 0 ? (
-              <CycleGadget
-                label="Version history"
-                value={version}
-                onChange={(next) => {
-                  if (next === "current") {
-                    exitHistory();
-                    return;
-                  }
-                  const revision = history.find((entry) => entry.revision === Number(next));
-                  if (revision) restoreRevision(revision);
-                }}
-                options={[
-                  { value: "current", label: "current" },
-                  ...history.map((entry) => ({
-                    value: String(entry.revision),
-                    label: `rev ${entry.revision}`,
-                  })),
-                ]}
-              />
-            ) : null}
-            {viewingRev !== null ? (
-              <Button dense variant="ghost" onClick={exitHistory}>
-                Cancel
-              </Button>
-            ) : null}
-            <Button
-              dense
-              disabled={!dirty || saving || overLimit}
-              loading={saving}
-              onClick={() => void save()}
-            >
-              {viewingRev !== null ? "Restore" : "Save"}
-            </Button>
-          </div>
-        }
-      >
-        <div className="constitutional-context-status" aria-live="polite">
-          {revision > 0 ? <span className="constitutional-context-fact">rev {revision}</span> : null}
-          {charCount > 0 ? <span className="constitutional-context-fact">~{tokenEstimate.toLocaleString()} tokens</span> : null}
-          {charCount > 0 ? (
-            <LampGadget
-              label={`${charCount.toLocaleString()}/${limit.toLocaleString()} chars`}
-              on={overLimit || nearLimit}
-              tone={overLimit ? "fail" : "warn"}
-            />
-          ) : null}
-          {overLimit ? <LampGadget label="over limit" on tone="fail" /> : null}
-          {dirty ? <LampGadget label="unsaved" on tone="warn" /> : null}
-          {saved ? <LampGadget label="saved" on tone="ok" /> : null}
-          {saveError ? <LampGadget label={saveError} on tone="fail" /> : null}
-          {viewingRev !== null ? <LampGadget label={`viewing rev ${viewingRev}`} on tone="warn" /> : null}
-        </div>
-      </SurfaceSection>
+      <Toolbar label="Context" data-testid="context-toolbar">
+        {history.length > 0 ? (
+          <CycleGadget
+            label="Version history"
+            value={version}
+            onChange={(next) => {
+              if (next === "current") {
+                exitHistory();
+                return;
+              }
+              const revision = history.find((entry) => entry.revision === Number(next));
+              if (revision) restoreRevision(revision);
+            }}
+            options={[
+              { value: "current", label: "Current" },
+              ...history.map((entry) => ({
+                value: String(entry.revision),
+                label: `Revision ${entry.revision}`,
+              })),
+            ]}
+          />
+        ) : null}
+        {viewingRev !== null ? (
+          <Button dense variant="ghost" onClick={exitHistory}>
+            Cancel
+          </Button>
+        ) : null}
+        <Button
+          dense
+          variant="primary"
+          disabled={!dirty || saving || overLimit}
+          loading={saving}
+          onClick={() => void save()}
+        >
+          {viewingRev !== null ? "Restore" : "Save"}
+        </Button>
+      </Toolbar>
 
-      <SurfaceSection label="Constitutional context" className="constitutional-context-editor-section">
+      <SurfaceSection className="constitutional-context-editor-section">
         <PadGadget
           label="Constitutional context"
           value={draft}
@@ -193,7 +195,7 @@ export function ConstitutionalContextCore() {
           autoGrow
         />
       </SurfaceSection>
-      <SurfaceFooter />
+      <StatusBar data-testid="context-status" items={statusItems} />
     </div>
   );
 }

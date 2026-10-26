@@ -13,3 +13,30 @@
 .process-target {
   color: var(--wb-text);
 }
+/* Each run is one 32 px line (2026-10-25 audit): no cell wraps; a long What
+   or Where ends in an ellipsis (Where shows its full text on hover); the
+   Started clock is tabular and never breaks mid-number. At 520 px or less
+   the list keeps its own fold line. */
+.process-clock {
+  white-space: nowrap;
+}
+@container surface (min-width: 520.1px) {
+  .process-list .object-list[data-density="dense"] .object-list-row {
+    min-height: 32px;
+  }
+  .process-list .object-list[data-density="dense"] .object-list-name-word,
+  .process-list .object-list[data-density="dense"] .object-list-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: normal;
+  }
+  .process-list .object-list-name-text {
+    overflow: hidden;
+  }
+  .process-where {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

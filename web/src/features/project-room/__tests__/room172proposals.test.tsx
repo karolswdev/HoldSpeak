@@ -366,7 +366,7 @@ describe("HS-172-06: Suggested sources in SOURCES", () => {
     expect(ref?.textContent).toBe("karolswdev/hs-infra");
 
     const caption = row.querySelector('[data-testid="suggested-caption"]');
-    expect(caption?.textContent).toContain("SUGGESTED");
+    expect(caption?.textContent).toContain("Suggested from");
   });
 
   it("shows Add and Dismiss verbs on suggested source", async () => {
@@ -389,9 +389,9 @@ describe("HS-172-06: Suggested sources in SOURCES", () => {
     // The sources section label should count only accepted sources (1), not suggestions
     const sourceHeaders = document.querySelectorAll(".surface-section h3");
     const sourcesHeader = Array.from(sourceHeaders).find((h) =>
-      h.textContent?.startsWith("SOURCES"),
+      h.textContent?.startsWith("Sources"),
     );
-    expect(sourcesHeader?.textContent).toBe("SOURCES 1");
+    expect(sourcesHeader?.textContent).toBe("Sources · 1");
   });
 });
 

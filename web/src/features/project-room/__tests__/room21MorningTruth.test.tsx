@@ -115,8 +115,8 @@ describe("B69: one state per source on the Room", () => {
     render(<WindowHarness scope="project:p1" />);
     await screen.findByTestId("room-body");
     expect(screen.getByTestId("room-headline").textContent).toBe("Not all read");
-    expect(screen.getByTestId("room-sources-word").textContent).toMatch(/^STALE · CHECKED /);
-    expect(screen.getByTestId("source-freshness").textContent).toContain("STALE");
+    expect(screen.getByTestId("room-sources-word").textContent).toMatch(/^Stale · checked /);
+    expect(screen.getByTestId("source-freshness").textContent).toContain("Stale");
   });
 
   it("quiet hours read QUIET UNTIL on the head and the row; no next check in the past", async () => {
@@ -125,8 +125,8 @@ describe("B69: one state per source on the Room", () => {
     await screen.findByTestId("room-body");
     // Betterment P3: quiet hours are not a failure: the head says the state.
     expect(screen.getByTestId("room-headline").textContent).not.toBe("Not all read");
-    expect(screen.getByTestId("room-sources-word").textContent).toBe(`QUIET UNTIL ${hhmm(QUIET_END)}`);
-    expect(screen.getByTestId("source-freshness").textContent).toContain(`QUIET UNTIL ${hhmm(QUIET_END)}`);
+    expect(screen.getByTestId("room-sources-word").textContent).toBe(`Quiet until ${hhmm(QUIET_END)}`);
+    expect(screen.getByTestId("source-freshness").textContent).toContain(`Quiet until ${hhmm(QUIET_END)}`);
     expect(screen.queryByTestId("needs-you-empty")).toBeNull();
   });
 });

@@ -90,7 +90,7 @@ describe("HS-175 C7(b): a paused Watch says so", () => {
     // The testid sits on the row's line; the open line 2 is its sibling.
     const line = await screen.findByTestId("source-meeting-row");
     const mtg = line.parentElement as HTMLElement;
-    expect(within(mtg).getByTestId("source-paused").textContent).toContain("PAUSED");
+    expect(within(mtg).getByTestId("source-paused").textContent).toContain("Paused");
     expect(within(mtg).getByTestId("source-meeting-verb").textContent).toBe("Resume");
     const pausedChips = screen.getAllByTestId("source-paused");
     expect(pausedChips).toHaveLength(2);
@@ -106,7 +106,7 @@ describe("HS-175 C8: CHECKED in the viewer's clock", () => {
     const mtg = (await screen.findByTestId("source-meeting-row")).parentElement as HTMLElement;
     const d = new Date(CHECKED_AT);
     const pad = (n: number) => String(n).padStart(2, "0");
-    expect(within(mtg).getByTestId("source-meeting-checked").textContent).toContain(`CHECKED ${pad(d.getHours())}:${pad(d.getMinutes())}`);
+    expect(within(mtg).getByTestId("source-meeting-checked").textContent).toContain(`Checked ${pad(d.getHours())}:${pad(d.getMinutes())}`);
   });
 });
 
