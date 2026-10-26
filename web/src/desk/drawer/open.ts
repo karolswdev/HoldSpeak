@@ -6,8 +6,8 @@ import { openPrimitive } from "../shell";
 import { useDesk } from "../store";
 import type { DrawerMember } from "./members";
 
-// PHILO-14 A2b: a decision record the Room did not list opens through its
-// own route (`openDecisionRecord`: the decision it was made from).
+// PHILO-14 A2b: a decision record opens through its own route
+// (`openDecisionRecord`: the reader in the Decisions window).
 const WINDOW_REF = /^(meeting|decision|decision_record|note|artifact|thread|repository|commitment):\S/;
 
 /** True when Open does something for this member (UX-CANON A.11). */

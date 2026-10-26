@@ -276,7 +276,7 @@ export function SinceYesterday({ brief, failed, now, defaultOpen = false, openRe
             );
           })}
           <div className="today-fold-verbs">
-            {/* The Decisions wing's one door, from here (Betterment D4). */}
+            {/* The Decisions door: it opens the Decisions window (2026-10-25). */}
             <Button dense variant="ghost" data-testid="today-since-decisions"
               onClick={() => openIntelligence({ view: "receipts" })}>Decisions</Button>
           </div>
