@@ -52,6 +52,9 @@ export const DOCK_SPRITES: Record<string, string> = {
   attention: SYSTEM.dockDeskMemory,
   "delivery-board": SYSTEM.dockDelivery,
   panes: SYSTEM.dockPanes,
+  // W1-KIT: the Capture window (a Chair door) wears the Record orb in its
+  // title bar, as its phone Dock door does.
+  "chair:capture": SYSTEM.recordOrb,
 };
 
 /** The floating dock (owner pick 2026-10-26, dock-direction canvas D1): its

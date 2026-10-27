@@ -35,7 +35,7 @@ doors.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Calendar snapshot (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
 | Room ▸ History (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
-| Live meeting (W1-TRUTH, W1-FACES; Lane / PR: W2-LIVE) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
+| Live meeting (W1-TRUTH, W1-FACES; Lane / PR: W2-LIVE, W2-LIVE-2) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 3 | **19** |
 | Speak (+ wings) (W1-FACES) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Components (W2-BUILDER) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Ask | 2 | 1 | 2 | 2 | 1 | 1 | 1 | 1 | **11** |
@@ -45,20 +45,20 @@ doors.
 | Capture (W2-ASKWELLS) | 2 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | Today (W2-ASKWELLS words) | 2 | 2 | 2 | 3 | 2 | 2 | 2 | 1 | **16** |
 | Room ▸ Now (Ask: W2-ASKWELLS) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
-| People (W1-TRUTH) | 3 | 2 | 2 | 2 | 2 | 3 | 1 | 2 | **17** |
-| Decisions (W1-TRUTH) | 3 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **18** |
-| Engines (W1-TRUTH) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 2 | **18** |
+| People (W1-KIT; was 15 + W1-TRUTH) | 2 | 2 | 1 | 3 | 2 | 3 | 2 | 3 | **18** (W1-KIT; was 15) |
+| Decisions (W1-KIT; was 15 + W1-TRUTH) | 3 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **18** |
+| Engines (W1-KIT; was 15 + W1-TRUTH) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 2 | **18** |
 | Processes | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 1 | **15** |
 | Activity (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | Agents (ask card: W1-FACES) | 2 | 2 | 2 | 3 | 2 | 3 | 1 | 2 | **17** |
-| Settings (frame + 8 panes) | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
+| Settings (frame + 8 panes) (W1-KIT; was 17) | 3 | 2 | 2 | 2 | 2 | 2 | 3 | 2 | **18** (W1-KIT; was 17) |
 | Automations | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | New Project | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
-| Meetings (gear wing: W1-FACES) | 3 | 3 | 2 | 2 | 2 | 3 | 2 | 2 | **19** |
+| Meetings (W1-KIT; was 18 + gear wing: W1-FACES) | 3 | 2 | 2 | 3 | 2 | 3 | 3 | 3 | **21** (W1-KIT; was 18) |
 | Setup | 3 | 2 | 2 | 3 | 2 | 3 | 2 | 1 | **18** |
 | Person | 2 | 3 | 2 | 3 | 2 | 2 | 2 | 2 | **18** |
 | Automation (one open) | 2 | 2 | 3 | 3 | 2 | 2 | 2 | 2 | **18** |
-| Projects | 3 | 3 | 2 | 2 | 2 | 3 | 2 | 2 | **19** |
+| Projects | 3 | 3 | 2 | 2 | 2 | 3 | 3 | 3 | **21** (W1-KIT; was 19) |
 | New decision | 3 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | **21** |
 
 No window scores 2 or more on every axis. The phone axis and the consistency axis are the
@@ -69,21 +69,21 @@ weakest across the board.
 1. **The phone status bar eats the window.** At 393 the status bar wraps to two or three lines
    and puts a 44 px Button on its own row; content is cut under it (Today, Meetings, Setup,
    Speak, People, Engines). Owner: "half my phone is the footer". Owner: the status-bar species,
-   `web/src/desk/surface/kit.tsx` (StatusBar) + `kit.css`.
+   `web/src/desk/surface/kit.tsx` (StatusBar) + `kit.css`. *Healed W1-KIT: one 24 px line, facts ellipsised, dense verbs at the right.*
 2. **Column headers lie on the phone.** Meetings, People, Agents, Decisions, Processes,
    Engines, Automations and Setup draw four column headers over rows that have turned into two
-   lines; the header cells no longer sit over anything. Owner: `web/src/desk/surface/objects/ObjectList.tsx`.
+   lines; the header cells no longer sit over anything. Owner: `web/src/desk/surface/objects/ObjectList.tsx`. *Healed W1-KIT: the header hides on a narrow surface; a dense Sort verb sits in the toolbar.*
 3. **A press selects, nothing opens.** In Meetings and People a press on a row selects it; the
    meeting or person opens only on a double press or Enter
    (`ObjectList.tsx:12`, `:283`), and no collection toolbar carries an Open verb. Flow log:
    Dock ▸ Meetings ▸ press a row = 2 presses, 0 windows opened
    ([flow-meeting-1440](atlas-2026-10-27/flow-meeting-1440.png),
-   [flow-person-1440](atlas-2026-10-27/flow-person-1440.png)).
+   [flow-person-1440](atlas-2026-10-27/flow-person-1440.png)). *Healed W1-KIT: one press opens a dense collection row; ⌘/shift-press, Space select; Enter opens. Setup keeps press-to-select (its open runs a fix).*
 4. **Half the windows have no glyph in the title bar.** Today, Ask, Meetings, Agents, People,
    Decisions, Speak, Settings carry their object glyph; Projects, Memory, Engines, Setup,
    Context, Automations, Components, Activity, Processes, Live, Capture, Calendar snapshot do
    not. Owner: `web/src/desk/applications.ts` `surface.sprite` and the head in
-   `web/src/desk/components/DeskWindow.tsx`.
+   `web/src/desk/components/DeskWindow.tsx`. *Healed W1-KIT: every listed window wears a 20 px D glyph (nearest objects: Setup ▸ gear, Live and Calendar snapshot ▸ meeting, Activity ▸ note, Context and Components ▸ artifact, Automations, Processes and Engines ▸ cartridge, Capture ▸ the Record orb; the Room wears its project).*
 5. **Three Ask wells.** Ask, Memory ("Ask your desk") and the Room ("Ask this project…") each
    draw their own composer, engine line and refusal. Owner: "which one do I use?"
    (`web/src/desk/components/AskPanel.tsx`, `web/src/pages/cores/MemoryCore.tsx`,
@@ -97,7 +97,7 @@ weakest across the board.
    show a toolbar over a blank body
    ([people](atlas-2026-10-27/people-loading-1440.png),
    [room](atlas-2026-10-27/room-loading-1440.png),
-   [meetings](atlas-2026-10-27/meetings-loading-1440.png)).
+   [meetings](atlas-2026-10-27/meetings-loading-1440.png)). *Healed W1-KIT: the kit `Loading` (3 still ghost rows) in Meetings, People, Projects, Decisions and the Room.*
 7. **The gear wings are the old desk.** The `⚙` wing of Meetings (*Meeting plumbing*),
    Activity (*Candidates and connectors*), Speak (*Configure dictation*) and Live (*Configure
    meeting*) keep the 2026-09 grammar: mono caps tokens (`QUEUED`, `CLI_ENRICHMENT`,
@@ -110,11 +110,11 @@ weakest across the board.
 9. **Raw buttons in Settings.** Every number field (Working at once, Quiet from/until, Max
    nudges, Make at, the meeting retry fields) has two raw `<button>` steppers with 6 px `▲▼`
    glyphs (`web/src/desk/surface/gadgets.tsx:563`). Canon: every verb is the library Button;
-   nothing under 12 px.
+   nothing under 12 px. *Healed W1-KIT: one "−  n  +" control of library Buttons.*
 10. **The primary verb wanders.** Meetings makes *Choose engine* the blue verb over *Record
     meeting*; People puts its primary (*Open prep*) in the status bar; Agents' *Start an agent*
     is blue on an empty desk and plain on a full one; Projects' *New Project* is plain while
-    Decisions' and People's *New* verbs are blue.
+    Decisions' and People's *New* verbs are blue. *Healed W1-KIT: the make verb is the primary, always (rule in the kit Toolbar doc comment); Agents' ask verbs are plain.*
 11. **Phone floor bleed.** In every 393 shot a desk-icon label (`Inbox`) shows in the strip
     between the sheet and the Dock (Part B owns the phone desk; noted here because every
     application shot shows it). **Healed, W3-A:** while a sheet stands the Go list under it is
@@ -368,6 +368,25 @@ Shots: [1440](atlas-2026-10-27/live-1440.png) · [393](atlas-2026-10-27/live-393
   `settings-meetings-{1440,393}.png`. Left: Before's ready sheet (sources and engines as rows),
   After's rail at Summary in MeetingRecord, the phone status bar wraps to two rows while it
   records (four items).
+- **W2-LIVE-2 (2026-10-27), Lane / PR: W2-LIVE-2, slice 2 (Before and After):** Before is the
+  ready sheet (`LiveReady.tsx`): the meeting's name as a quiet line (sent with `PATCH
+  /api/meeting` once the meeting is live; the hub's start takes no title), then *It will hear*
+  (Microphone, System audio: the device from `/api/settings`, ● Ready) and *It will write*
+  (Transcript: `Whisper base, on this Mac`, ● Ready or ● Not set up with *Set up speech · 144 MB*
+  on the row; Summary: `<engine>, after the meeting`, ● Ready, ● Off, or ● No engine with
+  *Choose engine*). "Start a meeting to begin" is gone; the steps band stays (the canvas keeps
+  it); Set up speech left the toolbar. After: the meeting window already becomes the record (the
+  same window, `MeetingWindow.tsx`); the record now has Today's rail under its toolbar
+  (`recordSteps`: Summary now while he reads and decides, Send follow-up now when nothing waits),
+  *Send follow-up…* as the primary, Settings as the trailing verb, and *Decide…* on every decided
+  row (the record when it has one, else the decision's reader, else New decision). The phone
+  status bar while recording is one line: no title (the title bar has it), the link only when it
+  is not connected. Shots: `scratchpad/shots/w2-live2/live-before-{nospeech,ready}-{1440,393}.png`,
+  `meeting-after-{1440,393}.png`. Left: the project line on the ready sheet (a meeting has no id
+  before Start; Add to Project is on the record); the microphone level and an *Allow* verb (the
+  hub sends no level or permission fact before a meeting); the section name stays *Decisions*
+  (it holds proposed rows too, so *Decided* would not be true); the record's rows show their
+  verbs on hover and focus (the ledger species), the canvas draws them always.
 
 #### Setup — `surface-setup` (18)
 
@@ -662,7 +681,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | --- | --- | --- | --- | --- | --- |
 | Calendar snapshot | J6 | Go ▸ Builder → Import image, Check sources | 8 → 15 | healed: toolbar, true empty state, feeds line; left: no feed-success shot (the seed's feed reads idle) | W1-TRUTH |
 | Room ▸ History | J3 | Room wing → item Open | 9 | 2026-09 dashboard grammar | lane |
-| Live meeting (W1-TRUTH, W2-LIVE) | J2 | Meetings ▸ Record → Start meeting | 10 → 16 | healed: honest status, phone title, Today's stepper; left: gear wing (old grammar), during/after canvas | W1-TRUTH (+ canvas) |
+| Live meeting (W1-TRUTH, W2-LIVE, W2-LIVE-2) | J2 | Meetings ▸ Record → Start meeting | 10 → 19 | healed: honest status, phone title, Today's stepper, gear wing moved, during as a document, the ready sheet, the record's rail and Decide…, one-line phone status bar; left: project line, mic level | W1-TRUTH, W2-LIVE, W2-LIVE-2 |
 | Speak | J1, dictation | Dock, ⌃5 → Talk | 10 | Speak/Speak; verbs move to the status bar; gear wing | lane |
 | Components | J7 | Go ▸ Builder → specimens | 10 → 16 | healed: a group rail (32 px rows, glyphs; the list first at 393), a toolbar (Preset, Reset), the specimen on the paper, one status bar (`Local specimen · Forms · Saved`); no caps tokens, no specimen headlines; left: the Forms specimen draws Settings at its narrow width inside a 640 px window | W2-BUILDER |
 | Ask | J3 | ⌘I/Ctrl+I, ⌘K → Save as note, Send | 11 | chat-demo look, oversized composer, mono errors | canvas (ASK) |
@@ -672,20 +691,20 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Capture | J1 | Go, phone Dock → Talk, New note | 14 → 17 | healed: one empty line, verbs with glyphs, visible row verb, phone tiles | W2-ASKWELLS |
 | Today | J2–J4 | Dock 0, ⌃1 → items | 14 → 16 | healed (W1-FACES + W2-ASKWELLS): sans words, `N more in Needs you`, no help sentence; left: phone status bar (kit), Open item → the item | W2-ASKWELLS |
 | Room ▸ Now | J3, J4 | Projects, Today → Write update | 15 → 16 | healed: the Ask is the Ask composer row; left: Risk pills, mono caps in Plan | W2-ASKWELLS (+ lane) |
-| People | J3 | Dock 2, ⌃3 → person | 15 → 17 | healed: no fake person from a 1:1 title, the name row once and quiet; left: `None` in Next 1:1, avatars, primary in the status bar | W1-TRUTH |
-| Decisions | J2 | Go → record | 15 → 18 | healed: title as the name, one state word (Open / Accepted / Superseded / Retired / Rejected) | W1-TRUTH |
-| Engines | J6 | HoldSpeak menu → pickers | 15 → 18 | healed: Not answering after a failed check (row, inspector, pickers), the owner's name with the model id as meta, the inspector follows the row; left: an auto-named engine (host:port label) still reads its model name here and the label in Ask | W1-TRUTH |
+| People | J3 | Dock 2, ⌃3 → person | 15 → 17 | healed: no fake person from a 1:1 title, the name row once and quiet; left: `None` in Next 1:1, avatars, primary in the status bar | W1-TRUTH · W1-KIT (press opens, Open prep in the toolbar, phone bar) |
+| Decisions | J2 | Go → record | 15 → 18 | healed: title as the name, one state word (Open / Accepted / Superseded / Retired / Rejected) | W1-TRUTH · W1-KIT (press opens, phone bar, loading face); list title + state word: lane |
+| Engines | J6 | HoldSpeak menu → pickers | 15 → 18 | healed: Not answering after a failed check (row, inspector, pickers), the owner's name with the model id as meta, the inspector follows the row; left: an auto-named engine (host:port label) still reads its model name here and the label in Ask | W1-TRUTH · W1-KIT (Add an engine is the primary, phone bar); state + name: lane |
 | Processes | J7 | Go ▸ Builder | 15 | machine words; phone line off the edge | lane |
-| Activity | J7 | Go ▸ Builder → receipt | 17 | Records rows wrap at 1440 | W1-FACES (gear wing, Rules empty) |
-| Agents | J4 | Dock 3, ⌃4 → Answer, Open | 17 | runs and tools in one list | W1-FACES (ask card) |
-| Settings | J6 | HoldSpeak menu → panes | 17 | raw enums; raw steppers; scope lands at top | lane |
+| Activity | J7 | Go ▸ Builder → receipt | 16 | gear wing tokens; Rules says activity | lane |
+| Agents | J4 | Dock 3, ⌃4 → Answer, Open | 16 | runs and tools in one list; mono refusal | lane |
+| Settings | J6 | HoldSpeak menu → panes | 18 | raw enums; scope lands at top | W1-KIT (steppers are library Buttons); enums + scope: lane |
 | Automations | J4 | Go ▸ Work → automation | 17 | "No engine" vs the result's model | lane |
 | New Project | J3 | Projects → Room | 17 | clipped placeholder | lane (small) |
-| Meetings | J2 | Dock 1, ⌃2 → meeting | 19 | press does not open; Choose engine primary (W1-KIT) | W1-FACES (gear wing) |
+| Meetings (W1-KIT) | J2 | Dock 1, ⌃2 → meeting | 21 | gear wing | W1-KIT (press opens, Record meeting primary, phone bar, Sort verb, loading face); gear wing: lane |
 | Setup | J6 | HoldSpeak menu → Use everything found | 18 | "Priya Karol"; phone footer | lane |
 | Person | J3 | People → Record meeting | 18 | lone Add Buttons | — |
 | Automation (open) | J4 | Automations → Run now | 18 | empty band | — |
-| Projects | J3 | Go ▸ Projects ▸ All → Room | 19 | three levels deep | — |
+| Projects | J3 | Go ▸ Projects ▸ All → Room | 21 | three levels deep | W1-KIT (press opens, New Project primary, glyph, loading face) |
 | New decision | J2 | the verb → Create | 21 | — | — |
 
 ## Part B — the object windows, the doors, the phone (lane ATLAS-B)
@@ -714,7 +733,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | --- | --- | --- | - | - | - | - | - | - | - | - | - |
 | Note (`pullout:note:*`) | J1 | floor icon (1), ⌘K (2), Inbox drawer row (2) → Done closes; Send… in place. Lane / PR: W1-DOORS (opens rendered, caret at the end) | 2 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | 20 |
 | Decision (`pullout:decision:*`) | J3 | Needs you ▸ Decide (2), ⌘K (2), Go ▸ Decisions ▸ row (3) | 0 | 1 | 2 | 2 | 1 | 1 | 0 | 1 | 8 |
-| Meeting (`surface-meetings@meeting:*`) | J2 | dock Meetings ▸ row (2), Needs you row (2) → Back to the list | 2 | 2 | 1 | 3 | 2 | 2 | 2 | 1 | 15 |
+| Meeting (`surface-meetings@meeting:*`) | J2 | dock Meetings ▸ row (2), Needs you row (2) → Back to the list. Lane / PR: W2-LIVE-2 (Today's rail at Summary, Send follow-up… primary, Settings trailing, Decide… on decided rows) | 3 | 2 | 2 | 3 | 2 | 2 | 3 | 1 | 18 |
 | Person (`pullout:people:*`) | J3 | dock People ▸ row (2), Today 1:1 (2) | 2 | 3 | 2 | 2 | 2 | 1 | 2 | 1 | 15 |
 | Room via floor icon (`surface-project-memory@project:*`) | J3 | floor Project icon (1), Go ▸ Projects ▸ name (3) | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |
 | Project as a pullout (`pullout:project:*`) | J3 | hub/agent → the Room (`surface-project-memory` scoped `project:<id>`). Lane / PR: W1-DOORS | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |

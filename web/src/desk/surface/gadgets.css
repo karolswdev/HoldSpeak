@@ -424,43 +424,51 @@
   color: var(--text-muted);
   white-space: nowrap;
 }
-/* Stepper arrows: two 14px beveled arrow gadgets fused to the right edge. */
-.gadget-arrows {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  width: 14px;
-  border-inline-start: 1px solid var(--border);
+/* W1-KIT (2026-10-27): the stepper is one dense "−  n  +" control: two
+   24 px library Buttons (12 px glyphs) inside the field, either side of
+   the number and its unit. */
+.gadget-stepper {
+  align-items: center;
+  gap: 0;
+  min-width: 112px;
+  padding-inline: 2px;
 }
-.gadget-arrows button {
-  flex: 1;
-  min-height: 0;
+.desk-next .gadget-stepper .btn.gadget-step,
+.gadget-stepper .btn.gadget-step {
+  flex: none;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
   padding: 0;
   border: 0;
-  border-radius: 0;
-  background: var(--wb-steel);
+  border-radius: var(--radius-sm);
+  background: transparent;
   box-shadow: none;
-  color: var(--text-muted);
-  font-size: 6px;
-  line-height: 1;
-  cursor: pointer;
+  color: var(--wb-sel, var(--accent));
+  font: 600 14px / 1 var(--font-sans);
 }
-.gadget-arrows button + button {
-  border-top: 1px solid var(--border);
+.desk-next .gadget-stepper .btn.gadget-step:hover:not(:disabled) {
+  background: var(--wb-hover, var(--wb-steel-2));
 }
-.gadget-arrows button:hover {
-  color: var(--text);
-  background: var(--wb-steel-2);
+.desk-next .gadget-stepper .btn.gadget-step:disabled {
+  color: var(--text-faint, var(--text-muted));
+  opacity: 0.6;
 }
-.gadget-arrows button:active {
-  background: var(--surface-active);
-}
-.gadget-arrows button:focus-visible {
-  outline: 1px solid var(--accent);
-  outline-offset: -1px;
+.gadget-stepper .gadget-unit {
+  font-family: var(--font-sans);
+  font-size: 12px;
 }
 .gadget-stepper input {
-  text-align: left;
+  min-width: 0;
+  padding-inline: 4px;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.gadget-stepper input::-webkit-inner-spin-button,
+.gadget-stepper input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 /* ── PropGadget: sunken track, rectangular knob, quartile ticks ── */
@@ -1203,6 +1211,8 @@ button.gadget-chip-egress {
   font: 650 15px / 1 var(--font-mono);
 }
 .gadget-row[data-control-width="short"] .gadget-row-gadget > :is(.gadget-cycle, .gadget-string) { width: 84px; }
+/* W1-KIT: the "−  n  +" stepper holds two 24 px steps beside its number. */
+.gadget-row[data-control-width="short"] .gadget-row-gadget > .gadget-string.gadget-stepper { width: 124px; }
 .gadget-group[data-material="inset"] .gadget-row:is([data-wide], [data-control-width="full"]),
 .gadget-row[data-control-width="full"] { grid-template-columns: minmax(0, 1fr); }
 .gadget-row[data-control-width="full"] .gadget-row-gadget { width: 100%; }

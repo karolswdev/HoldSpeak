@@ -644,22 +644,18 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
     min-height: 44px;
     min-width: 44px;
   }
-  /* PHILO-17 (the desk sweep): the stepper's two arrows own 44 x 44 each,
-     so at 393 they sit side by side; in the 14 px column they ran 30 px
-     past it and the body scrolled sideways. */
-  .desk-next .desk-window-shell.is-sheet :is(.desk-pullout-body, .desk-surface-body) .gadget-arrows {
-    flex-direction: row;
-    width: auto;
-  }
-  /* The short desktop well is 84 px. Its phone arrows alone need 88 px;
-     use the value column so the number and unit remain readable too. */
+  /* W1-KIT: at 393 the stepper's two step Buttons own 44 x 44 each (the
+     phone target), either side of the number; the control takes the value
+     column so the number and unit stay readable. */
   .desk-next .desk-window-shell.is-sheet :is(.desk-pullout-body, .desk-surface-body) .gadget-stepper {
     width: var(--gadget-value-width, 172px);
     max-width: 100%;
   }
-  .desk-next .desk-window-shell.is-sheet :is(.desk-pullout-body, .desk-surface-body) .gadget-arrows button + button {
-    border-top: 0;
-    box-shadow: none;
+  .desk-next .desk-window-shell.is-sheet :is(.desk-pullout-body, .desk-surface-body) .gadget-stepper .btn.gadget-step {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
   }
   .desk-next .desk-window.desk-window-shell > .desk-pullout-head {
     margin: 0;

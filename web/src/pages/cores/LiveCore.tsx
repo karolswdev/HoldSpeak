@@ -57,10 +57,12 @@ import { DotWord, StatusBar, Steps, ToolGlyph, Toolbar, meetingSteps, type Statu
 import { useWindowInterior } from "../../desk/surface/interior";
 import { countToken } from "../../desk/surface/count";
 import { LiveTranscript } from "./LiveTranscript";
+import { LiveReady } from "./LiveReady";
+import { useCompactViewport } from "../../desk/useCompactViewport";
 import "./liveTranscript.css";
 import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
-import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
+import { useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
 import { NO_TRANSCRIPT_SPEECH, speechWasMissing } from "../../desk/firstrun/speechTruth";
 import {
   meetingStopReceiptLabel,
@@ -89,6 +91,13 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
      shows on its "Summaries run on" row (`meetings.engine`, `engineSet`,
      `summariesOff` from /api/settings/hub). */
   const settingsHub = useResource<Record<string, unknown>>("/api/settings/hub", {});
+  /* W2-LIVE-2: the ready sheet's devices (`meeting.mic_device`,
+     `meeting.system_audio_device`), the facts Settings ▸ Meetings shows. */
+  const settings = useResource<Record<string, unknown>>("/api/settings", {});
+  const compact = useCompactViewport();
+  /* The name he gives before Start; the hub's start takes no title, so it
+     is sent with PATCH /api/meeting once the meeting is live. */
+  const [readyName, setReadyName] = useState("");
   const { state: connection, subscribe } = useRuntimeBus();
   /* HS-202-02 (Astra's counsel finding 3) — the Intelligence badge maps
      the hub's real posture, but only what it read ONCE on mount. Set an
@@ -261,6 +270,14 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       if (path.endsWith("start")) {
         setStopOutcome(null);
         const startedId = String((value.meeting as Record<string, unknown> | undefined)?.id ?? "");
+        const named = readyName.trim();
+        if (named) {
+          // The name never blocks the recording: a refused name stays the
+          // hub's default title, and Edit details can set it again.
+          await apiFetch("/api/meeting", { method: "PATCH", json: { title: named } }).catch(() => undefined);
+          setTitle(named);
+          setReadyName("");
+        }
         if (!meetingId && startedId) {
           useDesk.setState((st) => ({
             recording: "recording",
@@ -520,7 +537,6 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
 
   /* The status bar: the capture state with its clock, audio only, the
      summary engine, and the link to the hub, each said once. */
-  const meetingTitle = presentValue(state.title);
   const statusItems: StatusBarItem[] = [
     // W1-TRUTH (atlas 2026-10-27): never "Ready" next to "Speech not set
     // up". Before a meeting with no speech model the one state is the
@@ -532,8 +548,12 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
         : { key: "capture", lamp: "ok" as const, text: "Ready", testId: "live-capture-state" },
     active && audioOnly ? { key: "audio", text: "Audio only" } : null,
     summaryItem,
-    active && meetingTitle && !meetingId ? { key: "title", text: meetingTitle } : null,
-    { key: "link", lamp: linkTone, text: `Link ${link}`, testId: "live-link-state" },
+    /* W2-LIVE-2: no title here (the title bar names the meeting), so the
+       phone keeps one line; on the phone the link is said only when it is
+       not connected. */
+    compact && link === "connected"
+      ? null
+      : { key: "link", lamp: linkTone, text: `Link ${link}`, testId: "live-link-state" },
   ].filter(Boolean) as StatusBarItem[];
 
   return (
@@ -550,9 +570,8 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
               <span className="live-verb-label">Edit details</span>
             </Button>
           ) : null}
-          {/* W2-LIVE: while it records, the setup cannot help this meeting;
-              the status bar says Audio only. The verb is back after Stop. */}
-          {active ? null : <SpeechSetup setup={speech} primary={false} toolbar testId="live-speech-setup" />}
+          {/* W2-LIVE-2: Set up speech is the Transcript row's verb on the
+              ready sheet; while it records the status bar says Audio only. */}
         </Toolbar>
       )}
       <div className="live-room" data-testid="live-room" data-active={active || undefined}>
@@ -642,12 +661,15 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       {intelFace}
       {segments.length ? (
         <LiveTranscript segments={segments} listening={active} />
-      ) : (
+      ) : active ? (
         <p className="live-empty" role="status" data-testid="live-transcript-empty">
-          {active
-            ? audioOnly ? NO_TRANSCRIPT_SPEECH : "Listening for speech"
-            : "Start a meeting to begin"}
+          {audioOnly ? NO_TRANSCRIPT_SPEECH : "Listening for speech"}
         </p>
+      ) : (
+        /* W2-LIVE-2 (canvas A, Before): the ready sheet, not an empty
+           Transcript head. */
+        <LiveReady settings={settings.data} hub={settingsHub.data} speech={speech}
+          name={readyName} onName={setReadyName} />
       )}
       </div>
       <StatusBar items={statusItems} data-testid="live-statusbar" />

@@ -168,13 +168,16 @@ describe("gadget kit", () => {
         onChange={onChange}
       />,
     );
-    await user.click(
-      screen.getByRole("button", { name: "Increase History lines" }),
-    );
-    expect(onChange).toHaveBeenCalledWith(10); // clamped at max
-    await user.click(
-      screen.getByRole("button", { name: "Decrease History lines" }),
-    );
+    // W1-KIT: at its max the + step is disabled (the value cannot pass it).
+    const increase = screen.getByRole("button", { name: "Increase History lines" });
+    expect(increase).toBeDisabled();
+    await user.click(increase);
+    expect(onChange).not.toHaveBeenCalled();
+    const decrease = screen.getByRole("button", { name: "Decrease History lines" });
+    // Both steps are the library Button (dense), never a raw <button>.
+    expect(decrease.className).toContain("btn--sm");
+    expect(increase.className).toContain("btn--sm");
+    await user.click(decrease);
     expect(onChange).toHaveBeenCalledWith(9);
   });
 

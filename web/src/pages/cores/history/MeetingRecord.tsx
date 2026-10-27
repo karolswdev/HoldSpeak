@@ -31,10 +31,10 @@ import { SPEECH_SETUP_EVENT } from "../../../desk/firstrun/SpeechSetup";
 import { burstTimer } from "../../../desk/burstTimer";
 import { onReturnToTask } from "../../../desk/returnToTask";
 import { useWindowTitle } from "../../../desk/surface/title";
-import { StatusBar, ToolGlyph, Toolbar, type StatusBarItem } from "../../../desk/surface/kit";
+import { StatusBar, Steps, ToolGlyph, Toolbar, type StatusBarItem } from "../../../desk/surface/kit";
 import { useWindowInterior } from "../../../desk/surface/interior";
 import { MeetingRunSlotContext } from "../../../meetings/runSlot";
-import { meetingSummaryState } from "./MeetingHeader";
+import { meetingSummaryState, recordSteps } from "./MeetingHeader";
 import { stateToken } from "./helpers";
 import "./meeting-record.css";
 import { useDesk } from "../../../desk/store";
@@ -323,7 +323,6 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
     ...(projects.some((project) => !project.is_archived) ? [{ type: "item" as const, id: "project", label: "Add to Project", onSelect: () => requestWell("project") }] : []),
     { type: "item", id: "markdown", label: "Export MD", onSelect: () => void exportMeeting("markdown") },
     { type: "item", id: "srt", label: "Export SRT", onSelect: () => void exportMeeting("srt") },
-    { type: "item", id: "settings", label: "Settings", onSelect: () => openSurfaceOr("configure-settings", "/settings", "meetings") },
     { type: "item", id: "park", label: "Park", ghost: parking ? "Busy" : undefined, onSelect: () => void park() },
   ];
   const hasSummary = meeting.has_summary === true || String(readMeetingIntel(meeting)?.summary ?? "").trim() !== "";
@@ -354,7 +353,18 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
       {/* Window grammar: the toolbar under the title bar. The run verbs the
           record's wells own (Run summary, Retry, Skip, Transcribe) land in
           the run slot first; the one primary is the run verb, else Send. */}
-      <Toolbar label="Meeting" data-testid="meeting-toolbar">
+      <Toolbar label="Meeting" data-testid="meeting-toolbar" trailingStays trailing={
+        /* W2-LIVE-2 (canvas A, After): Settings is the trailing verb, as on
+           the Live window (a glyph on the phone). */
+        <Button dense variant="secondary" data-testid="meeting-settings" aria-label="Settings"
+          title="Settings ▸ Meetings" onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}>
+          <svg className="kit-toolglyph" width={16} height={16} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="2.25" stroke="currentColor" strokeWidth={1.5} />
+            <path d="M8 1.75v1.75M8 12.5v1.75M1.75 8h1.75M12.5 8h1.75M3.6 3.6l1.25 1.25M11.15 11.15l1.25 1.25M3.6 12.4l1.25-1.25M11.15 4.85l1.25-1.25" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" />
+          </svg>
+          {compact ? null : "Settings"}
+        </Button>
+      }>
         {!compact ? (
           <Button
             dense
@@ -370,15 +380,21 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         <span className="meeting-run-slot" ref={setRunSlot} />
         {view === "outcomes" && hasSummary ? (
           <Button ref={sendButtonRef} dense variant="primary" data-testid="meeting-send" onClick={() => requestWell("send")}>
-            <ToolGlyph kind="open" />
-            Send…
+            <ToolGlyph kind="send" />
+            Send follow-up…
           </Button>
         ) : null}
         <RecordMenu label="Export" ariaLabel="Export" glyph="import" entries={exportEntries} />
         <RecordMenu label="More" ariaLabel="More actions" entries={moreMenu} />
       </Toolbar>
+      {/* W2-LIVE-2 (canvas A, After): Today's four steps under the toolbar;
+          the saved record is at Summary while he reads and decides. */}
+      <div className="meeting-record-steps" data-testid="meeting-steps">
+        <Steps label="Meeting steps" steps={recordSteps(meeting, reviewCount)} />
+      </div>
       <MeetingRunSlotContext.Provider value={runSlot}>
         <MeetingDetail
+          onDecide={() => requestWell("decide")}
           sendRequested={requestedWell === "send"}
           decideRequested={requestedWell === "decide"}
           meeting={meeting}

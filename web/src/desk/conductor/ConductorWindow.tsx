@@ -598,9 +598,9 @@ export function ConductorWindow() {
     const session = ((raw as Record<string, unknown>).session ?? raw) as Record<string, unknown>;
     return session.wait_id ? String(session.wait_id) : null;
   };
-  // ONE filled primary per window: the first ask's Answer, else Start an
-  // agent. While Start an agent is open, its Start is the one primary.
-  const leadAsk = starting ? null : asks[0]?.id ?? null;
+  // W1-KIT (2026-10-27) — the primary verb: Start an agent (the verb that
+  // makes an agent) is the one primary, empty or full; an ask's verbs stay
+  // plain. While Start an agent is open, its Start is the one primary.
   const [cancelling, setCancelling] = useState<string | null>(null);
   const cancelQueued = (m: ConductorMember) => {
     setCancelling(m.id);
@@ -639,7 +639,7 @@ export function ConductorWindow() {
       member={m}
       question={question(m)}
       waitId={waitIdOf(m)}
-      lead={m.id === leadAsk}
+      lead={false}
       selected={m.id === selectedId}
       onSelect={() => select(m.id)}
       onTerminal={() => {
@@ -777,7 +777,7 @@ export function ConductorWindow() {
         <Toolbar label="Agents" data-testid="conductor-toolbar">
           <Button
             dense
-            variant={starting || leadAsk ? "secondary" : "primary"}
+            variant={starting ? "secondary" : "primary"}
             aria-expanded={starting}
             onClick={() => setStarting((open) => !open)}
             data-testid="conductor-start"
@@ -850,8 +850,9 @@ export function ConductorWindow() {
                   const m = everyone.find((row) => row.id === id);
                   const group = groupOf.get(id);
                   if (!m) return;
-                  if (group === "mac") info(m);
-                  else if (group !== "own" && m.live !== "queued") openMember(m);
+                  // W1-KIT: one press opens the agent (a session found on
+                  // this Mac opens its session window, as its Open verb does).
+                  if (group !== "own" && m.live !== "queued") openMember(m);
                 }}
                 rowProps={(row) => ({ "data-testid": "conductor-row", "data-group": groupOf.get(row.id) })}
               />

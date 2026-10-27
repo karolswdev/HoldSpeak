@@ -98,6 +98,27 @@ export function meetingSteps(
   ];
 }
 
+/** W2-LIVE-2 (canvas live-direction-2026-10-27, A, After): the record's rail
+ *  is Today's four steps (kit MEETING_STEPS: Prep · Record · Summary · Send
+ *  follow-up), drawn under the record's toolbar at every state. Prep is done;
+ *  Record is now while it records; Summary is now while he reads and decides
+ *  (failed when the summary failed); Send follow-up is now when nothing is
+ *  left to review. */
+export function recordSteps(meeting: Record<string, unknown>, reviewCount: number): Step[] {
+  const token = stateToken(meeting);
+  const stored = Boolean(String(readMeetingIntel(meeting)?.summary ?? "").trim());
+  const recording = token.label === "REC";
+  const summarised = token.label === "RAN" || stored;
+  const failed = !summarised && (token.tone === "danger" || token.label === "FAILED");
+  const sendNow = summarised && reviewCount === 0;
+  return [
+    { key: "Prep", label: "Prep", state: "done" },
+    { key: "Record", label: "Record", state: recording ? "now" : "done" },
+    { key: "Summary", label: "Summary", state: recording ? "later" : failed ? "failed" : sendNow ? "done" : "now" },
+    { key: "Send follow-up", label: "Send follow-up", state: sendNow ? "now" : "later" },
+  ];
+}
+
 /** The saved review face keeps the window name in its title bar. This is the
  * one useful fact in the body: pending work, or the current summary state. */
 /** What this meeting still asks of him: the legacy needs and the
@@ -185,11 +206,15 @@ export function MeetingHeader({
   meeting,
   data,
   compact,
+  ladder = false,
 }: {
   meeting: Record<string, unknown>;
   data: MeetingData;
   /** A settled record: no step ladder (the pipeline is done). */
   compact?: boolean;
+  /** The head's own ladder (Record · Summary · Decide · Send follow-up).
+   *  Off in the meeting window, which draws Today's rail under its toolbar. */
+  ladder?: boolean;
 }) {
   const source = data.detail ?? meeting;
   const when = [
@@ -216,7 +241,10 @@ export function MeetingHeader({
           {people.length ? <AvatarStack names={people} data-testid="meeting-head-people" /> : null}
         </span>
       </div>
-      {steps ? <Steps steps={meetingSteps(meeting, data)} label="Meeting steps" data-testid="meeting-steps" /> : null}
+      {/* W2-LIVE-2: the record's rail (recordSteps) is drawn under its
+          toolbar by MeetingRecord; the head keeps this ladder only where a
+          host asks for it (`ladder`). */}
+      {steps && ladder ? <Steps steps={meetingSteps(meeting, data)} label="Meeting steps" data-testid="meeting-steps" /> : null}
     </>
   );
 }
