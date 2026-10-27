@@ -67,7 +67,7 @@ def _selection_has_ink(
 
 def _capture(page: Any, window: Any, width: int, stem: str) -> dict[str, Any]:
     window.locator("button[aria-label^='Give feedback on ']").click()
-    page.locator("[data-ui-feedback]").get_by_text("RECORDING", exact=True).wait_for()
+    page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for()
     page.wait_for_timeout(1200)
     report = _save_feedback(page, width, shot_stem=stem,
                             window_id=str(window.get_attribute("id")), draft=None)

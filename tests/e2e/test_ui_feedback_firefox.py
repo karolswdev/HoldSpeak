@@ -88,7 +88,7 @@ def test_loaded_settings_repeated_feedback_and_save_retry(
                 strip = page.locator("[data-ui-feedback]")
                 page.wait_for_function("""() => {
                   const strip = document.querySelector('[data-ui-feedback]');
-                  return strip && /RECORDING|RETRY/.test(strip.textContent);
+                  return strip && /Recording|Not saved/.test(strip.textContent);
                 }""")
                 observation = {
                     "attempt": index + 1,
@@ -99,7 +99,7 @@ def test_loaded_settings_repeated_feedback_and_save_retry(
                 observations.append(observation)
                 (SHOTS / f"settings-{width}-timing.json").write_text(json.dumps(observations, indent=2))
                 page.screenshot(path=str(SHOTS / f"settings-{width}-{index + 1}-recording.png"))
-                assert strip.get_by_text("RECORDING", exact=True).is_visible(), observation
+                assert strip.get_by_text("Recording", exact=True).is_visible(), observation
                 assert observation["capture_ms"] < 3000, observation
                 # Concurrent glass runs need scheduling headroom; the
                 # original regression blocks this heartbeat for >7 seconds.
@@ -117,7 +117,7 @@ def test_loaded_settings_repeated_feedback_and_save_retry(
                             route.continue_()
                     page.route("**/api/ui-feedback", interrupt_once)
                     strip.get_by_role("button", name="Stop and save", exact=True).click()
-                    strip.get_by_text("RETRY", exact=True).wait_for()
+                    strip.get_by_text("Not saved", exact=True).wait_for()
                     stop = strip.get_by_role("button", name="Retry", exact=True)
                 else:
                     stop = strip.get_by_role("button", name="Stop and save", exact=True)
@@ -130,7 +130,7 @@ def test_loaded_settings_repeated_feedback_and_save_retry(
                 if rejected:
                     assert response.request.post_data == rejected[0], "Retry changed the frozen report"
                 receipt = response.json()
-                strip.get_by_text("SAVED", exact=True).wait_for()
+                strip.get_by_text("Saved", exact=True).wait_for()
                 directory = Path(receipt["directory"])
                 report = json.loads((directory / "report.json").read_text())
                 assert report["context"]["owner"]["window_id"] == "surface-settings"

@@ -191,3 +191,13 @@
   position: fixed;
   z-index: var(--desk-z-transient);
 }
+/* W3-A (atlas Part A #11, "phone floor bleed"): at 393 a sheet fills the work
+   area down to the dock reserve. The Go list under it must not show through
+   the strip between the sheet and the dock (nor through the dock's glass):
+   while a sheet stands, the floor is its plain material. A minimized sheet
+   is `display: none` and leaves the list in place. */
+@media (max-width: 720px) {
+  .desk-next:has(.desk-window-shell.is-sheet:not([style*="display: none"])) .desk-screen > .desk-go-home {
+    visibility: hidden;
+  }
+}

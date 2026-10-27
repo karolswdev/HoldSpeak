@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { apiFetch, readableError } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
-import { EgressChip } from "../surface/gadgets";
+import { DotWord, ToolGlyph, Toolbar } from "../surface/kit";
+import { openSurfaceOr } from "../shell";
 import { TALK_STOP_EVENT } from "../components/MicButton";
 import {
   audioBase64,
@@ -67,6 +68,54 @@ function transcriptFailureText(reason: unknown): string {
   return "Transcript unavailable.";
 }
 
+/** W3-A: the sheet stands above the dock AND above the front window's status
+ *  bar. Its seat is the dock reserve + 8 px; when the front window's status
+ *  bar lies in that band (a phone sheet ends at the dock, so its bar does),
+ *  the sheet lifts to 8 px above the bar. It pushes nothing. */
+function useSeatAboveStatusBar(active: boolean) {
+  const ref = useRef<HTMLElement | null>(null);
+  const [bottom, setBottom] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    if (!active) return;
+    const place = () => {
+      const sheet = ref.current;
+      if (!sheet) return;
+      const dock = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--desk-dock-h")) || 0;
+      const seat = dock + 8;
+      const box = sheet.getBoundingClientRect();
+      const low = window.innerHeight - seat;
+      const high = low - box.height;
+      let next = seat;
+      const fronts = document.querySelectorAll<HTMLElement>(".desk-window-shell.is-front");
+      for (const front of fronts) {
+        for (const bar of front.querySelectorAll<HTMLElement>(".kit-statusbar")) {
+          const b = bar.getBoundingClientRect();
+          if (!b.width || !b.height) continue;
+          if (b.right <= box.left || b.left >= box.right) continue;
+          if (b.bottom <= high || b.top >= low) continue;
+          next = Math.max(next, Math.ceil(window.innerHeight - b.top + 8));
+        }
+      }
+      setBottom((current) => {
+        const value = next === seat ? null : next;
+        return current === value ? current : value;
+      });
+    };
+    place();
+    const again = () => requestAnimationFrame(place);
+    window.addEventListener("resize", again);
+    document.addEventListener("pointerup", again, true);
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(again) : null;
+    if (observer && ref.current) observer.observe(ref.current);
+    return () => {
+      window.removeEventListener("resize", again);
+      document.removeEventListener("pointerup", again, true);
+      observer?.disconnect();
+    };
+  }, [active]);
+  return { ref, style: bottom === null ? undefined : { bottom } };
+}
+
 export function UiFeedbackHost() {
   const capability = useUiFeedbackState();
   const [phase, setPhase] = useState<Phase>("idle");
@@ -81,6 +130,7 @@ export function UiFeedbackHost() {
   const payload = useRef<PreparedFeedback | null>(null);
   const gestureCleanup = useRef<(() => void) | null>(null);
   const stopAndSaveRef = useRef<() => Promise<void>>(async () => undefined);
+  const seat = useSeatAboveStatusBar(capability.enabled && phase !== "idle");
 
   useEffect(() => {
     void hydrateUiFeedback();
@@ -402,49 +452,90 @@ export function UiFeedbackHost() {
     }
     beginPicking();
   };
+  // W3-A (window grammar): the sheet is a 36 px toolbar (the verbs) with the
+  // state as a dot and a word at its right end, and one quiet line under it:
+  // what the feedback is about, the transcript, or the reason it stopped.
+  // No mono caps, no route chip (UX-CANON A.9): the speech route is the
+  // hover title of the transcript state.
   const boundary = prepared?.egressBoundary ?? "";
-  const boundaryLabel: Record<string, string> = {
-    same_device: "THIS DEVICE",
-    local: "THIS DEVICE",
-    private_network: "PRIVATE NETWORK",
-    mesh: "MESH",
-    cloud: "CLOUD",
+  const boundaryWords: Record<string, string> = {
+    same_device: "this device",
+    local: "this device",
+    private_network: "the private network",
+    mesh: "the mesh",
+    cloud: "the cloud",
   };
-  const speechLabel = boundary ? `SPEECH · ${boundaryLabel[boundary] ?? boundary.toUpperCase()}` : prepared?.transcriptStatus === "failed" ? "SPEECH · UNAVAILABLE" : "SPEECH · PENDING";
-  const speechScope = boundary === "cloud" ? "cloud" : boundary === "private_network" || boundary === "mesh" ? "remote" : "local";
+  const routeTitle = boundary
+    ? `Speech used ${boundaryWords[boundary] ?? boundary}. The feedback files stay on this hub.`
+    : "The feedback files stay on this hub.";
+  const state: { word: string; tone: "ok" | "warn" | "fail" | "info" | "ask" | "idle" } =
+    phase === "picking" ? { word: status || "Select an element", tone: "info" }
+    : phase === "preparing" ? { word: "Capturing", tone: "info" }
+    : phase === "recording" ? { word: "Recording", tone: "fail" }
+    : phase === "saving" ? { word: "Saving", tone: "info" }
+    : phase === "transcribing" ? { word: "Transcribing", tone: "info" }
+    : phase === "saved" ? { word: "Saved", tone: "ok" }
+    : { word: "Not saved", tone: "fail" };
+  const speechFailed = phase === "saved" && prepared?.transcriptStatus === "failed";
+  const speechNotSetUp = speechFailed && transcriptFailureText(prepared?.transcriptError) === "Speech is not set up.";
+  const transcript = phase === "saved" && prepared?.transcriptStatus === "complete" ? (prepared.transcript ?? "").trim() : "";
   return (
-    <aside className="desk-next hs-feedback-strip" data-ui-feedback="true" role="status" aria-live="polite">
-      <div className="hs-feedback-identity">
-        <span className="hs-feedback-caption">{phase === "picking" ? "SELECT" : phase === "preparing" ? "CAPTURING" : phase === "recording" ? "RECORDING" : phase === "saving" ? "SAVING" : phase === "transcribing" ? "TRANSCRIBING" : phase === "saved" ? "SAVED" : "RETRY"}</span>
-        <strong>{phase === "picking" ? status : selectedName}</strong>
-        {error ? <span className="hs-feedback-error">{error}</span> : null}
+    <aside ref={seat.ref} style={seat.style} className="desk-next hs-feedback-strip" data-ui-feedback="true" data-phase={phase} role="status" aria-live="polite">
+      <Toolbar label="Feedback" className="hs-feedback-toolbar">
+        {phase === "picking" || phase === "preparing" ? (
+          <Button dense variant="secondary" onClick={cancelCurrent}>Cancel</Button>
+        ) : phase === "recording" && audioReady ? (
+          <>
+            <Button dense variant="primary" onClick={() => void stopAndSave()}><ToolGlyph kind="done" />Stop and save</Button>
+            <Button dense variant="ghost" onClick={cancelCurrent}>Cancel</Button>
+          </>
+        ) : phase === "recording" ? (
+          <Button dense variant="ghost" onClick={cancelCurrent}>Cancel</Button>
+        ) : phase === "saving" || phase === "transcribing" ? null : phase === "saved" ? (
+          <>
+            <Button dense variant="primary" onClick={beginPicking}><ToolGlyph kind="new" />New feedback</Button>
+            {speechFailed ? (
+              <Button dense variant="ghost" className="hs-feedback-verb" title="Retry transcription" onClick={retry}>
+                <ToolGlyph kind="retry" /><span className="hs-feedback-verb-label">Retry transcription</span>
+              </Button>
+            ) : null}
+            {prepared?.directory ? (
+              <Button dense variant="ghost" className="hs-feedback-verb is-glyph" title={`Copy path · ${prepared.directory}`} onClick={copyPath}>
+                <ToolGlyph kind="copy" /><span className="hs-feedback-verb-label">Copy path</span>
+              </Button>
+            ) : null}
+            <Button dense variant="ghost" onClick={cancelCurrent}>Done</Button>
+          </>
+        ) : (
+          <>
+            <Button dense variant="primary" onClick={retry}><ToolGlyph kind="retry" />Retry</Button>
+            {prepared?.directory ? (
+              <Button dense variant="ghost" className="hs-feedback-verb is-glyph" title={`Copy path · ${prepared.directory}`} onClick={copyPath}>
+                <ToolGlyph kind="copy" /><span className="hs-feedback-verb-label">Copy path</span>
+              </Button>
+            ) : null}
+            <Button dense variant="ghost" onClick={cancelCurrent}>Cancel</Button>
+          </>
+        )}
+      </Toolbar>
+      <div className="hs-feedback-line">
+        <DotWord tone={state.tone} className="hs-feedback-state">{state.word}</DotWord>
+        {phase === "picking" ? null : <span className="hs-feedback-about">{selectedName}</span>}
+        {speechFailed ? (
+          <span className="hs-feedback-speech">
+            <DotWord tone="warn">Speech unavailable</DotWord>
+            {error && !speechNotSetUp ? <span className="hs-feedback-reason">{error}</span> : null}
+            {speechNotSetUp ? (
+              <Button dense variant="ghost" title={error || undefined} onClick={() => openSurfaceOr("configure-settings", "/settings", "speak")}>Set up speech</Button>
+            ) : null}
+          </span>
+        ) : phase === "saved" ? (
+          <span className="hs-feedback-speech" title={routeTitle}>
+            <DotWord tone="ok">Transcript saved</DotWord>
+          </span>
+        ) : error ? <span className="hs-feedback-error">{error}</span> : null}
+        {transcript ? <span className="hs-feedback-transcript">{transcript}</span> : null}
       </div>
-      <EgressChip label={speechLabel} scope={speechScope} title={boundary ? `Speech used the configured ${boundaryLabel[boundary] ?? boundary} route. Original feedback files stay on this hub.` : "Speech route pending. Original feedback files stay on this hub."} />
-      {phase === "picking" || phase === "preparing" ? (
-        <Button variant="secondary" onClick={cancelCurrent}>Cancel</Button>
-      ) : phase === "recording" && audioReady ? (
-        <span className="hs-feedback-verbs">
-          <Button variant="primary" onClick={() => void stopAndSave()}>Stop and save</Button>
-          <Button variant="secondary" onClick={cancelCurrent}>Cancel</Button>
-        </span>
-      ) : phase === "recording" ? (
-        <Button variant="secondary" onClick={cancelCurrent}>Cancel</Button>
-      ) : phase === "saving" || phase === "transcribing" ? (
-        <span className="hs-feedback-caption">{phase === "saving" ? "Saving" : "Transcribing"}</span>
-      ) : phase === "saved" ? (
-        <span className="hs-feedback-verbs">
-          {prepared?.directory ? <Button variant="secondary" onClick={copyPath}>Copy path</Button> : null}
-          {prepared?.transcriptStatus === "failed" ? <Button variant="secondary" onClick={retry}>Retry transcription</Button> : null}
-          <Button variant="primary" onClick={beginPicking}>New feedback</Button>
-          <Button variant="secondary" onClick={cancelCurrent}>Done</Button>
-        </span>
-      ) : (
-        <span className="hs-feedback-verbs">
-          {prepared?.directory ? <Button variant="secondary" onClick={copyPath}>Copy path</Button> : null}
-          <Button variant="primary" onClick={retry}>Retry</Button>
-          <Button variant="secondary" onClick={cancelCurrent}>Cancel</Button>
-        </span>
-      )}
     </aside>
   );
 }

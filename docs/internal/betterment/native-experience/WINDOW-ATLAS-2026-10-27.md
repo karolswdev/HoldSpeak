@@ -39,7 +39,7 @@ doors.
 | Speak (+ wings) (W1-FACES) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Components (W2-BUILDER) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Ask | 2 | 1 | 2 | 2 | 1 | 1 | 1 | 1 | **11** |
-| Decision record (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
+| Decision record (W1-TRUTH; Lane / PR: W3-A) | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 3 | **17** |
 | Memory (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 3 | 2 | 2 | **17** |
 | Context (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **16** |
 | Capture (W2-ASKWELLS) | 2 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
@@ -117,7 +117,8 @@ weakest across the board.
     Decisions' and People's *New* verbs are blue.
 11. **Phone floor bleed.** In every 393 shot a desk-icon label (`Inbox`) shows in the strip
     between the sheet and the Dock (Part B owns the phone desk; noted here because every
-    application shot shows it).
+    application shot shows it). **Healed, W3-A:** while a sheet stands the Go list under it is
+    hidden (`screen.css`); the strip and the dock glass show the floor's plain material.
 
 ### The windows
 
@@ -665,7 +666,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Speak | J1, dictation | Dock, ⌃5 → Talk | 10 | Speak/Speak; verbs move to the status bar; gear wing | lane |
 | Components | J7 | Go ▸ Builder → specimens | 10 → 16 | healed: a group rail (32 px rows, glyphs; the list first at 393), a toolbar (Preset, Reset), the specimen on the paper, one status bar (`Local specimen · Forms · Saved`); no caps tokens, no specimen headlines; left: the Forms specimen draws Settings at its narrow width inside a 640 px window | W2-BUILDER |
 | Ask | J3 | ⌘I/Ctrl+I, ⌘K → Save as note, Send | 11 | chat-demo look, oversized composer, mono errors | canvas (ASK) |
-| Decision record | J2 | Decisions row → Edit, Accept / Retire, Send…, Open record | 12 → 15 | healed: reader grammar, verbs in the toolbar, Filed in: in the status bar; left: toolbar wraps to two rows at 393; window is 440 px, not content-fit | W1-TRUTH |
+| Decision record | J2 | Decisions row → Edit, Accept / Retire, Send…, Open record | 12 → 15 → 17 | healed: reader grammar, verbs in the toolbar, Filed in: in the status bar; W3-A: the window fits its content (320 to 640 px; a long decision scrolls in the reader), the toolbar is one row at 393 (Send…, Copy, Dictate about this, Open record show their glyph on a narrow window; the word is the name and the hover title) | W1-TRUTH, W3-A |
 | Memory | J5 | Go ▸ Memory → Room, person | 13 → 17 | healed: one Ask composer, the field finds as typed, honest empty lines; left: Memory against Ask (canvas) | W2-ASKWELLS (+ canvas) |
 | Context | J4 | Go ▸ Builder → Save | 14 → 16 | healed: on/off in the status bar, the editor is the page; left: no door outside Builder | W2-ASKWELLS |
 | Capture | J1 | Go, phone Dock → Talk, New note | 14 → 17 | healed: one empty line, verbs with glyphs, visible row verb, phone tiles | W2-ASKWELLS |
@@ -736,9 +737,9 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Window switcher | J7 | ⌘` held (1) | 2 | 3 | 3 | 3 | 1 | 3 | 2 | 0 | 17 |
 | Mission control (Overview) | J7 | ⌘⇧E, Window ▸ Overview (2) | 2 | 3 | 3 | 3 | 1 | 2 | 2 | – | 16 |
 | Send preview (in the note) | J1, J3 | note toolbar Send… (1) → destination (2) → Send (3) | 1 | 0 | 3 | 3 | 1 | 2 | 1 | – | 11 |
-| Feedback sheet | J7 | Desk ▸ Give feedback, title-bar Feedback (only with `HOLDSPEAK_UI_FEEDBACK=1`). Lane / PR: W1-DOORS (above the dock) | 1 | 0 | 2 | 2 | 1 | 2 | 1 | – | 9 |
+| Feedback sheet | J7 | Desk ▸ Give feedback, title-bar Feedback (only with `HOLDSPEAK_UI_FEEDBACK=1`). Lane / PR: W1-DOORS (above the dock); W3-A (a toolbar of dense verbs, the state a dot and a word, `● Speech unavailable` + *Set up speech*, no caps, no route chip; it stands above the dock and above the front window's status bar at 1440 and 393) | 3 | 2 | 2 | 3 | 2 | 2 | 2 | 2 | 18 |
 | Floor: icon menu / blank floor | J5, J7 | right-click an icon (1) / right-click the floor (1): the Desk menu's rows. Lane / PR: W1-DOORS | 2 | 3 | 2 | 3 | 2 | 3 | 1 | – | 16 |
-| Phone desk (393) | all | Go list as home, five dock tiles. Lane / PR: W2-BUILDER (with two or more windows open the screen title is `<window> ▾` again and lists every open window) | 2 | 2 | 1 | 2 | 2 | 2 | 1 | 2 | 14 |
+| Phone desk (393) | all | Go list as home, five dock tiles. Lane / PR: W2-BUILDER (with two or more windows open the screen title is `<window> ▾` again and lists every open window); W3-A (no Go-list label shows between a sheet and the dock) | 2 | 2 | 1 | 2 | 2 | 2 | 2 | 2 | 15 |
 
 "–" = not shot or not applicable (no keyboard at 393). Friction numbers are presses counted by
 doing them in the rig.
