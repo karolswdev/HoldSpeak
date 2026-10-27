@@ -198,7 +198,9 @@ function MemoryComposer({ value, onChange }: { value: string; onChange: (next: s
           onText={(text) => onChange(value ? `${value} ${text}` : text)}
         />
       }
-      engine={engine.state === "unread" ? null : (
+      engine={(
+        // Always drawn (the "unread" word while the read is out) in a fixed
+        // slot: nothing right of the field moves when the read lands.
         <AskEngineWord
           state={engine.state}
           name={engine.model}

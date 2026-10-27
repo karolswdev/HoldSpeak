@@ -94,6 +94,18 @@
   padding: 3px 8px;
   font: 400 13.5px / 20px var(--font-sans);
 }
+/* A host's engine word (Memory, the Room) sits in a fixed slot, so the
+   mic and Ask never move when the engine read lands. */
+.desk-next .memory-composer .desk-ask-engine.btn,
+.desk-next .room-ask-composer .desk-ask-engine.btn {
+  width: 120px;
+  min-width: 120px;
+  justify-content: flex-start;
+}
+.memory-composer .desk-ask-engine .kit-dotword,
+.room-ask-composer .desk-ask-engine .kit-dotword {
+  white-space: nowrap;
+}
 /* A preset scope (the Room's project): the word with its glyph, no menu. */
 .desk-ask-scope-preset {
   display: inline-flex;

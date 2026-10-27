@@ -1676,8 +1676,9 @@ export function RoomAskWell({
             ) : null}
           </>
         }
-        engine={engine.state === "unread" ? null : (
-          <span className="room-ask-engine-slot" data-testid={engine.state === "set" ? "room-ask-engine" : "room-ask-no-engine"}>
+        engine={(
+          // Always drawn in a fixed slot (the desk sweep's still fence).
+          <span className="room-ask-engine-slot" data-testid={engine.state === "set" ? "room-ask-engine" : engine.state === "none" ? "room-ask-no-engine" : undefined}>
             <AskEngineWord
               state={engine.state}
               name={engine.name}
