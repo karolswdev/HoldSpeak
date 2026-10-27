@@ -1963,9 +1963,28 @@ class RefinementThoughtService:
             # PHILO-3-04: the foot's filing line names the drawer ("IN <drawer>").
             drawer=conn.execute("SELECT name FROM directories WHERE id=? AND deleted=0",(member["directory_id"],)).fetchone()
             out["directory_name"]=str(drawer["name"]) if drawer else ""
+        out.update(self._place_in_transaction(conn,note))
         if include_raw:
             out["raw_text"]=base64.b64decode(record["raw_utf8_b64"]).decode("utf-8","strict"); out["source"]["ref"]=record["raw_source_ref"]
         return out
+    @staticmethod
+    def _place_in_transaction(conn:Any,note:Any)->dict[str,Any]:
+        """The note's place (Note canvas A, step 5): the Projects that file it
+        (`project_resources` rows for `note:<id>`) and the meeting it came
+        from (the `meeting:<id>` tag the meeting's Open as note writes).
+        Each key is present only when the hub knows it."""
+        if note is None: return {}
+        place:dict[str,Any]={}
+        rows=conn.execute("""SELECT p.id,p.name FROM project_resources r JOIN projects p ON p.id=r.project_id
+            WHERE r.resource_ref=? AND r.deleted=0 AND p.is_archived=0 ORDER BY r.created_at,p.name""",(f"note:{note['id']}",)).fetchall()
+        if rows: place["projects"]=[{"id":str(row["id"]),"name":str(row["name"] or "")} for row in rows]
+        try: tags=json.loads(note["tags_json"] or "[]")
+        except (TypeError,ValueError): tags=[]
+        meeting_id=next((tag.split(":",1)[1].strip() for tag in tags if isinstance(tag,str) and tag.startswith("meeting:") and tag[8:].strip()),"")
+        if meeting_id:
+            meeting=conn.execute("SELECT id,title,started_at FROM meetings WHERE id=? AND parked=0",(meeting_id,)).fetchone()
+            if meeting: place["source_meeting"]={"id":str(meeting["id"]),"title":str(meeting["title"] or ""),"at":str(meeting["started_at"] or "")}
+        return place
     @staticmethod
     def _note(row:Any)->dict[str,Any]|None:
         return None if row is None else {"id":row["id"],"title":row["title"],"body_markdown":row["body_markdown"],"tags":json.loads(row["tags_json"]),"deleted":bool(row["deleted"]),"last_modified":row["last_modified"]}

@@ -397,6 +397,145 @@
   text-underline-offset: 3px;
 }
 
+/* Note canvas A, step 4: an object the text names. Ink and a 14 px glyph,
+   no box: a person in person green, the rest in link blue. The peek card
+   rises after the pointer rests 400 ms (opacity only, no transform). */
+.desk-next .thought-note-body .cm-line .cm-lp-obj {
+  position: relative;
+  white-space: nowrap;
+  border-radius: 4px;
+  color: var(--wb-link-ink);
+  font-weight: 500;
+}
+.desk-next .thought-note-body .cm-line .cm-lp-obj[data-kind="person"],
+.desk-next .thought-note-body .cm-line .cm-lp-obj-ink[data-kind="person"],
+.desk-next .thought-note-body .cm-line .cm-lp-obj-ink[data-kind="person"] * {
+  color: var(--wb-person-ink);
+}
+.desk-next .thought-note-body .cm-line .cm-lp-obj-ink,
+.desk-next .thought-note-body .cm-line .cm-lp-obj-ink * {
+  color: var(--wb-link-ink);
+}
+/* A task line inks its words (.cm-lp-task-line *); a token keeps its own. */
+.desk-next .thought-note-body .cm-line .cm-lp-obj .cm-lp-obj-text {
+  color: inherit;
+}
+.desk-next .thought-note-body .cm-lp-obj[data-kind="jira"] .cm-lp-obj-text {
+  font: 500 13px/1 var(--font-mono);
+}
+.desk-next .thought-note-body .cm-lp-obj[data-opens] {
+  cursor: pointer;
+}
+.desk-next .thought-note-body .cm-lp-obj:hover {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 10%, transparent);
+}
+.desk-next .thought-note-body .cm-lp-obj-glyph {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 3px;
+  vertical-align: -2px;
+}
+.desk-next .thought-note-body .cm-lp-peek {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+  min-width: 180px;
+  max-width: 300px;
+  padding: 8px 12px 9px;
+  border-radius: 8px;
+  background: var(--wb-well);
+  box-shadow: 0 10px 28px rgba(8, 14, 22, 0.22), 0 0 0 1px var(--wb-rule);
+  color: var(--wb-ink);
+  font: 400 12.5px/1.4 var(--font-ui);
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease-out 0ms, visibility 0ms linear 120ms;
+}
+.desk-next .thought-note-body .cm-lp-obj:hover .cm-lp-peek {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 140ms ease-out 400ms, visibility 0ms linear 400ms;
+}
+.desk-next .thought-note-body .cm-line .cm-lp-obj .cm-lp-peek-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--wb-ink);
+  font: 600 13.5px/1.3 var(--font-display, var(--font-ui));
+}
+.desk-next .thought-note-body .cm-line .cm-lp-obj .cm-lp-peek-line {
+  color: var(--wb-muted);
+  font-size: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .thought-note-body .cm-lp-peek,
+  .desk-next .thought-note-body .cm-lp-obj:hover .cm-lp-peek {
+    transition-duration: 0ms;
+  }
+}
+
+/* The @ and # completion: a dense list view (30 px rows, glyph, name,
+   quiet detail). */
+.desk-next .cm-tooltip.cm-lp-complete {
+  border: 0;
+  border-radius: 8px;
+  background: var(--wb-well);
+  box-shadow: 0 10px 28px rgba(8, 14, 22, 0.22), 0 0 0 1px var(--wb-rule);
+  overflow: hidden;
+  font: 400 13px/1.3 var(--font-ui);
+}
+.desk-next .cm-tooltip.cm-lp-complete > ul {
+  min-width: 220px;
+  max-height: calc(8 * 30px + 8px);
+  padding: 4px 0;
+  font-family: var(--font-ui);
+}
+.desk-next .cm-tooltip.cm-lp-complete > ul > li.cm-lp-complete-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 12px 0 10px;
+  color: var(--wb-ink);
+}
+.desk-next .cm-tooltip.cm-lp-complete > ul > li.cm-lp-complete-option[aria-selected] {
+  background: var(--wb-sel-vivid);
+  color: var(--wb-paper);
+}
+.desk-next .cm-tooltip.cm-lp-complete .cm-lp-complete-glyph {
+  flex: 0 0 16px;
+}
+.desk-next .cm-tooltip.cm-lp-complete .cm-completionLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.desk-next .cm-tooltip.cm-lp-complete .cm-completionDetail {
+  margin-left: 12px;
+  color: var(--wb-muted);
+  font-style: normal;
+  font-size: 12px;
+}
+.desk-next .cm-tooltip.cm-lp-complete li[aria-selected] .cm-completionDetail {
+  color: color-mix(in srgb, var(--wb-paper) 80%, transparent);
+}
+.desk-next .cm-tooltip.cm-lp-complete .cm-completionMatchedText {
+  text-decoration: none;
+  font-weight: 600;
+}
+
 .desk-next .thought-note-body .cm-lp-li {
   padding-left: 4px;
 }
@@ -718,6 +857,40 @@
    conflicted save keeps its red word. ── */
 .desk-next .thought-note-foot .thought-note-status[data-tone="danger"] {
   color: var(--wb-danger-ink);
+}
+
+/* Note canvas A, step 6: the place line. The Project and the source meeting
+   are words with their glyphs that you can press, quiet in the bar. */
+.desk-next .thought-note-foot .btn.thought-note-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 260px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0 4px;
+  margin-inline: -4px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-muted);
+  font: 400 12px/1 var(--font-sans, var(--font-ui));
+}
+.desk-next .thought-note-foot .btn.thought-note-place:hover {
+  background: var(--wb-row-hover);
+  color: var(--wb-ink);
+}
+.desk-next .thought-note-foot .thought-note-place img {
+  flex: 0 0 14px;
+  width: 14px;
+  height: 14px;
+}
+.desk-next .thought-note-foot .thought-note-place-words {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* The shell rule — and the ONLY viewport rule here: it sizes the window
