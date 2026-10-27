@@ -10,6 +10,7 @@ const load = () => import("./documentSends");
 const Brief = lazy(() => load().then((m) => ({ default: m.BriefSendWells })));
 const Head = lazy(() => load().then((m) => ({ default: m.BriefHeadVerbs })));
 const Desk = lazy(() => load().then((m) => ({ default: m.DeskDecisionSendWells })));
+const DeskSheet = lazy(() => load().then((m) => ({ default: m.DeskDecisionSendSheet })));
 const Record = lazy(() => load().then((m) => ({ default: m.DecisionRecordSendWells })));
 const RecordSheet = lazy(() => load().then((m) => ({ default: m.DecisionRecordSendSheet })));
 const Artifact = lazy(() => load().then((m) => ({ default: m.ArtifactSendWells })));
@@ -23,6 +24,7 @@ export const BriefHeadVerbs = (p: P<typeof Head> & { children: ReactNode }) => (
   <Suspense fallback={<>{p.children}</>}><Head {...p} /></Suspense>
 );
 export const DeskDecisionSendWells = (p: P<typeof Desk>) => <Suspense fallback={<SurfaceState loading />}><Desk {...p} /></Suspense>;
+export const DeskDecisionSendSheet = (p: P<typeof DeskSheet>) => <Suspense fallback={<SurfaceState loading />}><DeskSheet {...p} /></Suspense>;
 export const DecisionRecordSendWells = (p: P<typeof Record>) => <Suspense fallback={<SurfaceState loading />}><Record {...p} /></Suspense>;
 export const DecisionRecordSendSheet = (p: P<typeof RecordSheet>) => <Suspense fallback={<SurfaceState loading />}><RecordSheet {...p} /></Suspense>;
 export const DecisionRecordPreparedChip = (p: P<typeof Chip>) => <Suspense fallback={null}><Chip {...p} /></Suspense>;

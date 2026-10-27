@@ -61,12 +61,33 @@ def name_from_email(address: Any) -> str:
     return name_like(" ".join(p.capitalize() for p in parts))
 
 
-def name_from_one_on_one_title(title: str, is_self: Callable[[str], bool]) -> str:
-    """"1:1 with Mira", "Mira / Karol 1:1", "Mira <> Karol" read "Mira"."""
+#: What stands between the two people of a 1:1 title ("Priya / Karol",
+#: "Mira <> Karol", "Theo & Karol", "Jun x Karol").
+_TITLE_PEOPLE_SPLIT = re.compile(r"\s*(?:/|<->|<>|&|\+|\||,|\s(?:x|and|with)\s)\s*", re.IGNORECASE)
+
+
+def names_from_one_on_one_title(title: str, is_self: Callable[[str], bool]) -> list[str]:
+    """Each person a 1:1 title names, never two joined into one.
+
+    W1-TRUTH (atlas 2026-10-27): "1:1 Priya / Karol" is Priya and Karol,
+    not a person called "Priya Karol". The owner's own name is dropped.
+    """
     rest = _ONE_ON_ONE_TITLE.sub(" ", str(title or ""))
-    words = [w for w in _TITLE_SPLIT.split(rest) if w and w.casefold() not in _TITLE_FILLER]
-    words = [w for w in words if not is_self(w)]
-    return name_like(" ".join(words))
+    out: list[str] = []
+    for part in _TITLE_PEOPLE_SPLIT.split(f" {rest} "):
+        words = [w for w in _TITLE_SPLIT.split(part) if w and w.casefold() not in _TITLE_FILLER]
+        name = name_like(" ".join(words))
+        if name and not is_self(name) and not any(is_self(w) for w in name.split(" ")) and name not in out:
+            out.append(name)
+    return out
+
+
+def name_from_one_on_one_title(title: str, is_self: Callable[[str], bool]) -> str:
+    """"1:1 with Mira", "Mira / Karol 1:1" (Karol is the owner) read "Mira".
+    Two names that are not the owner read nothing: the face never guesses
+    which one he meets."""
+    names = names_from_one_on_one_title(title, is_self)
+    return names[0] if len(names) == 1 else ""
 
 
 @dataclass
@@ -176,7 +197,16 @@ def collect(
     for (uid, source_id), entry in series.items():
         others = [a for a in entry["attendees"] if not is_self(name_from_email(a))]
         from_mail = [name_from_email(a) for a in others]
-        titled = name_from_one_on_one_title(entry["title"], is_self) if _ONE_ON_ONE_TITLE.search(entry["title"]) else ""
+        titled = ""
+        if _ONE_ON_ONE_TITLE.search(entry["title"]):
+            parts = names_from_one_on_one_title(entry["title"], is_self)
+            if len(parts) > 1:
+                # Two names and the owner's is not set: one of them is his.
+                # An attendee's address settles which one he meets; else
+                # nothing is guessed (never "Priya Karol", never him).
+                parts = [p for p in parts if any(
+                    n and _key(n).split(" ")[0] == _key(p).split(" ")[0] for n in from_mail)]
+            titled = parts[0] if len(parts) == 1 else ""
         name = ""
         if titled:
             # The calendar knows the full name when one attendee's starts with it.

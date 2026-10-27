@@ -33,21 +33,21 @@ doors.
 
 | Window | G | T | H | F | De | Dn | C | P | Sum |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Calendar snapshot | 1 | 2 | 0 | 0 | 0 | 2 | 1 | 2 | **8** |
+| Calendar snapshot (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
 | Room ▸ History (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
-| Live meeting (gear wing: W1-FACES) | 1 | 2 | 1 | 2 | 1 | 2 | 1 | 1 | **11** |
+| Live meeting (W1-TRUTH + gear wing: W1-FACES) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
 | Speak (+ wings) (W1-FACES) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Components | 0 | 1 | 2 | 2 | 1 | 2 | 1 | 1 | **10** |
 | Ask | 2 | 1 | 2 | 2 | 1 | 1 | 1 | 1 | **11** |
-| Decision record | 1 | 1 | 2 | 2 | 1 | 2 | 1 | 2 | **12** |
+| Decision record (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
 | Memory | 2 | 2 | 1 | 1 | 1 | 3 | 1 | 2 | **13** |
 | Context | 2 | 2 | 1 | 2 | 1 | 2 | 2 | 2 | **14** |
 | Capture | 2 | 3 | 1 | 2 | 1 | 2 | 1 | 2 | **14** |
 | Today | 2 | 1 | 2 | 3 | 2 | 2 | 1 | 1 | **14** |
 | Room ▸ Now | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | **15** |
-| People | 2 | 2 | 1 | 2 | 2 | 3 | 1 | 2 | **15** |
-| Decisions | 3 | 2 | 1 | 2 | 2 | 2 | 1 | 2 | **15** |
-| Engines | 3 | 2 | 1 | 2 | 2 | 2 | 1 | 2 | **15** |
+| People (W1-TRUTH) | 3 | 2 | 2 | 2 | 2 | 3 | 1 | 2 | **17** |
+| Decisions (W1-TRUTH) | 3 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **18** |
+| Engines (W1-TRUTH) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 2 | **18** |
 | Processes | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 1 | **15** |
 | Activity (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | Agents (ask card: W1-FACES) | 2 | 2 | 2 | 3 | 2 | 3 | 1 | 2 | **17** |
@@ -343,6 +343,7 @@ Shots: [1440](atlas-2026-10-27/live-1440.png) · [393](atlas-2026-10-27/live-393
   plugin jobs?" "No title on the phone." Owner: `web/src/pages/cores/LiveCore.tsx`.
 - **Not reached:** Live during a meeting (the rig has no capture runtime).
 - **Fix needs:** a canvas (what Live is before, during and after; the gear wing's place).
+- **W1-TRUTH (2026-10-27):** the status bar reads `● Speech not set up` (warn) and never `Ready` beside it; the phone title bar names `Live meeting` (a window with only a gear door folds to its name, `SurfaceWings name`); the stepper is Today's (kit `meetingSteps`: Prep · Record · Summary · Send follow-up). Shots: `scratchpad/shots/w1-truth/live-{1440,393}.png`.
 - **W1-FACES (2026-10-27), gear wing only:** `Routing`, `Try a phrase` with one quiet
   sentence (no `TESTS ROUTING · …` caps), route facts in sentence case, the Summary state as a
   dot and a word, *Background work*, Devices says `Checking… N s` then `No answer` instead of
@@ -519,6 +520,7 @@ Shots: [People 1440](atlas-2026-10-27/people-1440.png) · [393](atlas-2026-10-27
 - **Top defects:** "Why does People ask my name?" "Who is Priya Karol?" Owner:
   `web/src/pages/cores/PeopleCore.tsx` (the "From your meetings" row and the owner-name band).
 - **Fix needs:** a lane.
+- **W1-TRUTH (2026-10-27):** a 1:1 title splits on its separator (`/`, `<>`, `&`, `x`) and drops the owner; with two names and no owner name nothing is guessed (`people_suggestions.names_from_one_on_one_title`). The name band is one quiet row, once per browser, with *Set your name* (Settings ▸ You).
 
 #### Projects — `surface-projects` (19)
 
@@ -556,6 +558,7 @@ Shots: [Decisions 1440](atlas-2026-10-27/decisions-1440.png) · [393](atlas-2026
   canonical record — I am in the record." Owner: `web/src/pages/cores/DecisionsCore.tsx`,
   `web/src/desk/pullouts/DecisionPullout.tsx`, `web/src/pages/cores/NewDecisionCore.tsx`.
 - **Fix needs:** a lane (list title; one state word; the record on the reader grammar).
+- **W1-TRUTH (2026-10-27):** the hub's record list carries a Desk decision's `title`; the list names a row by it. One state word: Open / Accepted / Superseded / Retired / Rejected, in the list, the Decisions reader and the record. The record: toolbar (Edit · Accept or Retire · Send… · Copy · Dictate about this · Open record), the decision as plain reader text, the folds, a status bar (`● Accepted` · `Filed in: Desk`, a press opens the drawers); no state cycle, no box, no full-width bar; the window opens at 440 px.
 
 #### Calendar snapshot — `surface-calendar-snapshot` (8, builder tool)
 
@@ -571,6 +574,7 @@ Shots: [dense 1440](atlas-2026-10-27/calendar-snapshot-1440.png) · [393](atlas-
   `web/src/pages/cores/CalendarSnapshotReviewCore.tsx`.
 - **Fix needs:** a lane (a verb to add a screenshot, a true empty line) or park it behind
   Accounts ▸ Import image only.
+- **W1-TRUTH (2026-10-27):** toolbar *Import image* (the one Accounts flow, `desk/calendarImageImport.ts`) · *Check sources*; no caption; `● No screenshot yet`; the status bar says `2 sources connected` when feeds work.
 
 #### Engines — `surface-engines` + inspector (15)
 
@@ -594,6 +598,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 - **Could not verify:** whether the inspector follows the selected row: pressing a row left
   *What runs where* unchanged (the same block for every engine).
 - **Fix needs:** a lane (state after a failed check; one engine name).
+- **W1-TRUTH (2026-10-27):** detect reads an endpoint whose `/models` does not answer `UNREACHABLE` (a 401/403 is an answer); the face says `Not answering` on the row, beside each job's picker and in the inspector head (`Studio engine · ● Not answering · checked just now · stub-qwen`); the status bar's check is its age (`Checked 2 h ago`). The name he gave wins over the served model id (`concierge_service.owner_engine_name`); the model id is `modelId`, quiet meta.
 
 #### Parked rows (no window of their own)
 
@@ -624,21 +629,21 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 
 | Window | Jobs | Doors in → out | Score | Top defects | Lane / PR |
 | --- | --- | --- | --- | --- | --- |
-| Calendar snapshot | J6 | Go ▸ Builder → none | 8 | red dot, no verb, wrong on a desk with a feed | lane or park |
-| Room ▸ History | J3 | Room wing → item Open | 18 | — (list view by day, Source ▾, one-line status bar) | W1-FACES |
-| Live meeting | J2 | Meetings ▸ Record → Start meeting | 11 | Ready + not set up; no phone title (W1-TRUTH); gear wing words healed | canvas · W1-FACES (gear wing) |
-| Speak | J1, dictation | Dock, ⌃5 → Talk | 16 | Learned has no toolbar; Talk toolbar on two rows at 393 | W1-FACES |
+| Calendar snapshot | J6 | Go ▸ Builder → Import image, Check sources | 8 → 15 | healed: toolbar, true empty state, feeds line; left: no feed-success shot (the seed's feed reads idle) | W1-TRUTH |
+| Room ▸ History | J3 | Room wing → item Open | 9 | 2026-09 dashboard grammar | lane |
+| Live meeting (W1-TRUTH) | J2 | Meetings ▸ Record → Start meeting | 10 → 15 | healed: honest status, phone title, Today's stepper; left: gear wing (old grammar), during/after canvas | W1-TRUTH (+ canvas) |
+| Speak | J1, dictation | Dock, ⌃5 → Talk | 10 | Speak/Speak; verbs move to the status bar; gear wing | lane |
 | Components | J7 | Go ▸ Builder → specimens | 10 | breaks the grammar it shows | lane |
 | Ask | J3 | ⌘I/Ctrl+I, ⌘K → Save as note, Send | 11 | chat-demo look, oversized composer, mono errors | canvas (ASK) |
-| Decision record | J2 | Decisions row → Edit, Send | 12 | card box, "canonical", dead band | lane |
+| Decision record | J2 | Decisions row → Edit, Accept / Retire, Send…, Open record | 12 → 15 | healed: reader grammar, verbs in the toolbar, Filed in: in the status bar; left: toolbar wraps to two rows at 393; window is 440 px, not content-fit | W1-TRUTH |
 | Memory | J5 | Go ▸ Memory → Room, person | 13 | second Ask; blank empty | canvas |
 | Context | J4 | Go ▸ Builder → Save | 14 | no state | lane |
 | Capture | J1 | Go, phone Dock → Talk, New note | 14 | blank band | lane |
 | Today | J2–J4 | Dock 0, ⌃1 → items | 14 | mono ask card, count 32 vs 5, Send form in a fold | lane |
 | Room ▸ Now | J3, J4 | Projects, Today → Write update | 15 | third Ask; Risk pills; items hidden in Plan | lane |
-| People | J3 | Dock 2, ⌃3 → person | 15 | owner-name band; "Priya Karol" | lane |
-| Decisions | J2 | Go → record | 15 | body as name; Decided vs Accepted | lane |
-| Engines | J6 | HoldSpeak menu → pickers | 15 | Ready after a failed check; two names | lane |
+| People | J3 | Dock 2, ⌃3 → person | 15 → 17 | healed: no fake person from a 1:1 title, the name row once and quiet; left: `None` in Next 1:1, avatars, primary in the status bar | W1-TRUTH |
+| Decisions | J2 | Go → record | 15 → 18 | healed: title as the name, one state word (Open / Accepted / Superseded / Retired / Rejected) | W1-TRUTH |
+| Engines | J6 | HoldSpeak menu → pickers | 15 → 18 | healed: Not answering after a failed check (row, inspector, pickers), the owner's name with the model id as meta, the inspector follows the row; left: an auto-named engine (host:port label) still reads its model name here and the label in Ask | W1-TRUTH |
 | Processes | J7 | Go ▸ Builder | 15 | machine words; phone line off the edge | lane |
 | Activity | J7 | Go ▸ Builder → receipt | 17 | Records rows wrap at 1440 | W1-FACES (gear wing, Rules empty) |
 | Agents | J4 | Dock 3, ⌃4 → Answer, Open | 17 | runs and tools in one list | W1-FACES (ask card) |

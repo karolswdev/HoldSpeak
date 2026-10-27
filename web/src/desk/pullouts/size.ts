@@ -17,7 +17,10 @@ export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
   note: { w: 760, h: 560 },
   intelligence: { w: 880, h: 700 },
   thread: { w: 740, h: 680 },
-  decision: { w: 680, h: 640 },
+  // W1-TRUTH (atlas 2026-10-27): the decision reads on the reader grammar
+  // (toolbar, the decision, a status bar); 640 px left 300 px of blank
+  // under a short decision. A long one scrolls in its body.
+  decision: { w: 680, h: 440 },
   // PHILO-17: a meeting is a whole window (its record, its wings, its foot).
   meeting: { w: 720, h: 600 },
   // PHILO-17 (2b): a person is a whole window (the six lenses on one row).

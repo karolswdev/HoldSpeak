@@ -48,8 +48,9 @@ import {
   SurfaceWell,
 } from "../../desk/surface";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
-import { egressFor, hostPlace } from "../../desk/surface/egress";
-import { openSurface, openSurfaceOr } from "../../desk/shell";
+import { egressFor } from "../../desk/surface/egress";
+import { openSurfaceOr } from "../../desk/shell";
+import { importCalendarImage, snapshotEgressChip } from "../../desk/calendarImageImport";
 import { announceTaskReturn } from "../../desk/returnToTask";
 import { HotkeyCapture } from "./settingsBespoke";
 import { toggleSfx } from "../../lib/sfx";
@@ -170,19 +171,8 @@ export function calendarSourceIdentity(source: { label: string; url: string }, r
   return { native, snapshot, type, label: name && !technical ? name : type };
 }
 
-/** HS-175 counsel C10 -- the chip beside ``Snapshot``: the resolved
- * vision host (LAN / cloud / paired device) or THIS DEVICE when the model
- * runs here.  ``null`` when no vision model resolves (nothing can leave
- * and the upload refuses by name) -- absence is the signal. */
-export function snapshotEgressChip(
-  egress: { scope?: string; host?: string | null } | null | undefined,
-): { label: string; scope: "local" | "cloud" | "mixed"; title: string } | null {
-  if (!egress || !egress.scope) return null;
-  const host = (egress.host || "").trim();
-  if (!host || hostPlace(host).place === "mac") return null;
-  const where = egress.scope === "cloud" ? "a cloud service" : egress.scope === "mesh" ? "a paired device" : "a device on your network";
-  return { label: host, scope: egress.scope === "cloud" ? "cloud" : "mixed", title: `The screenshot is sent to ${host} (${where}) for extraction.` };
-}
+// W1-TRUTH: the snapshot egress words live with the one Import image flow.
+export { snapshotEgressChip } from "../../desk/calendarImageImport";
 
 /** Render one egress chip per source with off-device reach. */
 export function calendarSourceEgressChips(
@@ -2138,17 +2128,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
                     {/* UX-CANON A.9 (amended 2026-10-25): where the image goes is
                         said at the act, in the verb's hover title, never as a
                         host chip resting on the pane. */}
-                    <Button variant="secondary" dense data-testid="calendar-snapshot-btn" title={snapshotEgressChip(calSources?.snapshot_egress)?.title} onClick={() => {
-                      const input = document.createElement("input");
-                      input.type = "file"; input.accept = ".png,.jpg,.jpeg,.webp"; input.multiple = true;
-                      input.onchange = async () => {
-                        if (!input.files?.length) return;
-                        const fd = new FormData();
-                        for (let i = 0; i < Math.min(input.files.length, 3); i++) fd.append("files", input.files[i]);
-                        try { openSurface("review-calendar-snapshot", JSON.stringify(await apiFetch<Record<string, unknown>>("/api/calendar/snapshot", { method: "POST", body: fd }))); }
-                        catch (error) { setRefusal(readableError(error)); }
-                      }; input.click();
-                    }}>Import image</Button>
+                    <Button variant="secondary" dense data-testid="calendar-snapshot-btn" title={snapshotEgressChip(calSources?.snapshot_egress)?.title} onClick={() => importCalendarImage(setRefusal)}>Import image</Button>
                   </div>
                 }>
                 {calLoading && !calSources ? <span className="gadget-fact" role="status">Reading calendars…</span> : null}

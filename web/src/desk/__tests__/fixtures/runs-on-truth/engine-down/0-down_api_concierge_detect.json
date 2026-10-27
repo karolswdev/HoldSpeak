@@ -1,0 +1,237 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_runs_on_hub.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-27T09:28:11.975252Z",
+  "wire": {
+    "agents": [
+      {
+        "added": false,
+        "install": "npm install -g @anthropic-ai/claude-code",
+        "installed": false,
+        "name": "Claude Code",
+        "preset": "claude",
+        "vendor": "ANTHROPIC",
+        "vendorScope": "cloud"
+      },
+      {
+        "added": false,
+        "install": "npm install -g @openai/codex",
+        "installed": false,
+        "name": "Codex",
+        "preset": "codex",
+        "vendor": "OPENAI",
+        "vendorScope": "cloud"
+      },
+      {
+        "added": false,
+        "install": "npm install -g @earendil-works/pi-coding-agent",
+        "installed": false,
+        "name": "pi",
+        "preset": "pi",
+        "vendor": "PI CONFIG",
+        "vendorScope": "cloud"
+      },
+      {
+        "added": false,
+        "install": "npm install -g @google/gemini-cli",
+        "installed": false,
+        "name": "Gemini CLI",
+        "preset": "gemini",
+        "vendor": "GOOGLE",
+        "vendorScope": "cloud"
+      }
+    ],
+    "checkedAt": "2026-10-27T09:28:11.944449+00:00",
+    "engines": [
+      {
+        "audioCapable": false,
+        "baseUrl": "http://127.0.0.1:8099/v1",
+        "fits": {
+          "agents_tools": {
+            "blocked": [
+              "Agents"
+            ],
+            "state": "LIMITED"
+          },
+          "background": {
+            "blocked": [
+              "Calendar",
+              "Memory"
+            ],
+            "state": "LIMITED"
+          },
+          "meetings": {
+            "state": "READY"
+          },
+          "speech_recognition": {
+            "blocked": [
+              "Speech"
+            ],
+            "state": "INCOMPATIBLE"
+          },
+          "thoughts_notes": {
+            "state": "READY"
+          },
+          "writing_dictation": {
+            "state": "READY"
+          }
+        },
+        "host": "127.0.0.1",
+        "id": "local:library_provider_engine-127-0-0-1-8099-stub-qwen",
+        "kind": "local",
+        "legacyLabel": "Studio engine",
+        "modelId": "stub-qwen",
+        "name": "Studio engine",
+        "profileId": "engine-127-0-0-1-8099-stub-qwen",
+        "profileRevision": 1,
+        "quantToken": null,
+        "state": "UNREACHABLE"
+      },
+      {
+        "downloadHost": "huggingface.co",
+        "host": "THIS DEVICE",
+        "id": "preset:preset_local_qwen35_4b_gguf_q4km",
+        "installed": false,
+        "kind": "preset",
+        "name": "Quick local Qwen",
+        "presetId": "preset_local_qwen35_4b_gguf_q4km",
+        "sizeBytes": 2740937888,
+        "state": "WAITING"
+      },
+      {
+        "downloadHost": "huggingface.co",
+        "host": "THIS DEVICE",
+        "id": "preset:preset_local_qwen35_08b_gguf_q4km",
+        "installed": false,
+        "kind": "preset",
+        "name": "Tiny local Qwen",
+        "presetId": "preset_local_qwen35_08b_gguf_q4km",
+        "sizeBytes": 532517120,
+        "state": "WAITING"
+      }
+    ],
+    "hardware": {
+      "capability": {
+        "accelerators": [
+          "metal"
+        ],
+        "apple_silicon": true,
+        "architecture": "arm64",
+        "logical_cpu_count": 12,
+        "sha256": "sha256:28c82ad0634fbe2be400b096a8c33868e646704aa3e2caff5f76ab7d80e86721",
+        "system": "darwin",
+        "total_memory_bytes": 34359738368,
+        "unified_memory": true
+      },
+      "detection": {
+        "reason": null,
+        "state": "available"
+      },
+      "observation": {
+        "available_memory_bytes": null,
+        "sha256": "sha256:f54bf3911a8461b63d61cada01091db48016c27c5cbf051b3c7a31b247b320a5",
+        "storage_available_bytes": 79971958784
+      }
+    },
+    "lastApply": null,
+    "repairs": [],
+    "runtimes": [
+      {
+        "id": "llama_cpp_prompt_v1",
+        "state": "available"
+      },
+      {
+        "id": "mlx_text_v1",
+        "state": "unavailable"
+      },
+      {
+        "id": "openai_compatible_v1",
+        "state": "available"
+      }
+    ],
+    "services": [
+      {
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "host": "openrouter.ai",
+        "id": "openrouter",
+        "name": "OpenRouter",
+        "presets": [
+          {
+            "contextTokens": 131072,
+            "id": "preset_openrouter_qwen3_8b",
+            "label": "OpenRouter · Quick Qwen",
+            "model": "qwen/qwen3-8b",
+            "summary": "A small, fast Qwen for short Notes and everyday work."
+          },
+          {
+            "contextTokens": 262144,
+            "id": "preset_openrouter_qwen35_35b_a3b",
+            "label": "OpenRouter · Balanced Qwen",
+            "model": "qwen/qwen3.5-35b-a3b",
+            "summary": "Strong general reasoning without using a giant model."
+          },
+          {
+            "contextTokens": 262144,
+            "id": "preset_openrouter_qwen38_27b",
+            "label": "OpenRouter · Deep Qwen",
+            "model": "qwen/qwen3.8-27b",
+            "summary": "Deeper cloud reasoning for harder synthesis."
+          },
+          {
+            "contextTokens": 1000000,
+            "id": "preset_openrouter_qwen37_flash",
+            "label": "OpenRouter · Qwen Flash",
+            "model": "qwen/qwen3.7-flash",
+            "summary": "The quickest economical Qwen choice for everyday work."
+          },
+          {
+            "contextTokens": 262144,
+            "id": "preset_openrouter_gemma4_26b",
+            "label": "OpenRouter · Gemma 4",
+            "model": "google/gemma-4-26b-a4b-it",
+            "summary": "A capable Gemma 4 alternative for writing and synthesis."
+          },
+          {
+            "contextTokens": 262144,
+            "id": "preset_openrouter_qwen3_coder_next",
+            "label": "OpenRouter · Coding Qwen",
+            "model": "qwen/qwen3-coder-next",
+            "summary": "A coding-focused Qwen for technical plans and implementation."
+          }
+        ]
+      },
+      {
+        "baseUrl": "https://api.openai.com/v1",
+        "host": "api.openai.com",
+        "id": "openai",
+        "name": "OpenAI",
+        "presets": []
+      },
+      {
+        "baseUrl": "https://api.anthropic.com/v1",
+        "host": "api.anthropic.com",
+        "id": "anthropic",
+        "name": "Anthropic",
+        "presets": []
+      },
+      {
+        "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "host": "generativelanguage.googleapis.com",
+        "id": "gemini",
+        "name": "Gemini",
+        "presets": []
+      }
+    ],
+    "summaryAssignment": {
+      "assignmentRevision": 0,
+      "boundary": "local",
+      "capabilityId": "meeting.deferred_analysis",
+      "inheritedFrom": "global",
+      "label": "Studio engine",
+      "profileId": "engine-127-0-0-1-8099-stub-qwen",
+      "profileRevision": 1,
+      "readiness": "ready",
+      "schema": "ConciergeSummaryAssignmentProjection@1",
+      "status": "assigned"
+    }
+  }
+}

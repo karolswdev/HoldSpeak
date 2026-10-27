@@ -1,0 +1,509 @@
+{
+  "_": "The hub's own answer, captured by tests/integration/test_desk_runs_on_hub.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
+  "captured_at": "2026-10-27T09:28:11.990077Z",
+  "wire": {
+    "candidates": [
+      {
+        "boundary": "local",
+        "issues": [
+          {
+            "capability_id": "agent.plan",
+            "code": "structured_output_unsupported",
+            "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "agent.tool_turn",
+            "code": "structured_output_unsupported",
+            "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "calendar.snapshot_extract",
+            "code": "vision_unsupported",
+            "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "memory.embed",
+            "code": "capability_class_unsupported",
+            "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "speech.transcribe",
+            "code": "modality_unsupported",
+            "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+            "profile_revision": 1,
+            "severity": "blocking"
+          }
+        ],
+        "label": "Studio engine",
+        "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+        "profile_revision": 1,
+        "readiness": "ready",
+        "status": "savable_with_repair"
+      },
+      {
+        "boundary": "local",
+        "issues": [
+          {
+            "capability_id": "agent.code",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "agent.plan",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "agent.tool_turn",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "ask.answer",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "background.cadence_draft",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "background.rails_summary",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "calendar.snapshot_extract",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "chat.turn",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "decision.promotion_draft",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "delivery.pr_review_draft",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.auto_title",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.bookmark_label",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.deferred_analysis",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.live_analysis",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.action_owner_enforcer",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.adr_drafter",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.customer_signal_extractor",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.decision_announcement_drafter",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.decision_capture",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.dependency_mapper",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.incident_timeline",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.mermaid_architecture",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.milestone_planner",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.project_detector",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.requirements_extractor",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.risk_heatmap",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.runbook_delta",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.scope_guard",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "meeting.plugin.stakeholder_update_drafter",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "memory.consolidate",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "memory.embed",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "memory.extract",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "memory.page",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "project.brief_prepare",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "project.update_draft",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "project_doc.suggest_update",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "recipe.run",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "sequence.step",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "speech.intent_classify",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "speech.rewrite",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "speech.target_classify",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "thought.interview",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "voice.reference_resolve",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "workbench.item",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "workflow.node",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "code": "binding_not_ready",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "repair"
+          }
+        ],
+        "label": "Whisper mlx base",
+        "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+        "profile_revision": 1,
+        "readiness": "unavailable",
+        "status": "savable_with_repair"
+      }
+    ],
+    "configured_assignment": {
+      "created_at": "2026-10-27T09:28:11.368841Z",
+      "effective_retry_policy_id": null,
+      "entries": [
+        {
+          "boundary": "local",
+          "label": "Studio engine",
+          "ordinal": 1,
+          "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+          "profile_revision": 1,
+          "profile_schema_version": 2,
+          "readiness": "ready"
+        }
+      ],
+      "id": "ia_ff2be787a382431bbbaa0be13ba74733",
+      "issues": [
+        {
+          "capability_id": "agent.plan",
+          "code": "structured_output_unsupported",
+          "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+          "profile_revision": 1,
+          "severity": "blocking"
+        },
+        {
+          "capability_id": "agent.tool_turn",
+          "code": "structured_output_unsupported",
+          "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+          "profile_revision": 1,
+          "severity": "blocking"
+        },
+        {
+          "capability_id": "calendar.snapshot_extract",
+          "code": "vision_unsupported",
+          "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+          "profile_revision": 1,
+          "severity": "blocking"
+        },
+        {
+          "capability_id": "memory.embed",
+          "code": "capability_class_unsupported",
+          "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+          "profile_revision": 1,
+          "severity": "blocking"
+        },
+        {
+          "capability_id": "speech.transcribe",
+          "code": "modality_unsupported",
+          "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+          "profile_revision": 1,
+          "severity": "blocking"
+        }
+      ],
+      "retry_policy_id": null,
+      "retry_policy_source": "per_capability_default",
+      "revision": 1,
+      "schema": "InferenceAssignmentProjection@1",
+      "scope": {
+        "kind": "global"
+      },
+      "sha256": "sha256:23e81fd5c2dc83f9faff3457f325e93bd22422f8bd3b2805937ca0b8e7a379f7"
+    },
+    "draft_base_revision": 1,
+    "effective": {
+      "assignment": {
+        "created_at": "2026-10-27T09:28:11.368841Z",
+        "effective_retry_policy_id": "retry.text.standard",
+        "entries": [
+          {
+            "boundary": "local",
+            "label": "Studio engine",
+            "ordinal": 1,
+            "profile_id": "engine-127-0-0-1-8099-stub-qwen",
+            "profile_revision": 1,
+            "profile_schema_version": 2,
+            "readiness": "ready"
+          }
+        ],
+        "id": "ia_ff2be787a382431bbbaa0be13ba74733",
+        "issues": [],
+        "retry_policy_id": null,
+        "retry_policy_source": "capability_default",
+        "revision": 1,
+        "schema": "InferenceAssignmentProjection@1",
+        "scope": {
+          "kind": "global"
+        },
+        "sha256": "sha256:23e81fd5c2dc83f9faff3457f325e93bd22422f8bd3b2805937ca0b8e7a379f7"
+      },
+      "capability_id": "ask.answer",
+      "inherited_from": "global",
+      "repair": null,
+      "status": "assigned"
+    },
+    "retry_policy": {
+      "default_id": "retry.text.standard",
+      "permitted_ids": [
+        "retry.text.standard"
+      ]
+    },
+    "schema": "AssignmentEditorProjection@1",
+    "scope": {
+      "kind": "global"
+    },
+    "selected_capability": {
+      "allowed_boundaries": [
+        "cloud",
+        "local",
+        "mesh",
+        "private_network"
+      ],
+      "fallback_dispositions": [
+        "context_overflow",
+        "invalid_typed_output",
+        "known_no_generation_transient",
+        "local_capacity_unavailable",
+        "provider_permanent"
+      ],
+      "group": {
+        "id": "thoughts_notes",
+        "label": "Thoughts & notes"
+      },
+      "id": "ask.answer",
+      "label": "Ask answer",
+      "revision": 2
+    }
+  }
+}

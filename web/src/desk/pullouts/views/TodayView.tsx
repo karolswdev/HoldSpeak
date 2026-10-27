@@ -22,7 +22,7 @@ import { SinceYesterday, type MondayBrief } from "./BriefView";
 import { PreparedBlock, type PreparedRead } from "./PreparedBlock";
 import { useOnDeskChanged } from "../../useDeskChangedRefresh";
 import { newsWords, useAutomationNews } from "../../automationNews";
-import { Avatar, DotWord, StatusBar, Steps, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../../surface/kit";
+import { Avatar, DotWord, StatusBar, Steps, ToolGlyph, Toolbar, countWords, meetingSteps, type StatusBarItem } from "../../surface/kit";
 import { openChairWindow } from "../../chair/chairWindows";
 import { agentSpriteName } from "../../sprites";
 import { meetingRowState } from "../../../pages/cores/history/helpers";
@@ -124,17 +124,9 @@ export function currentStep(event: DayEvent, now: Date): number {
   return 0;
 }
 
-const STEPS = ["Prep", "Record", "Summary", "Send follow-up"];
-
 function Stepper({ step }: { step: number }) {
-  return (
-    <Steps
-      label="Meeting steps"
-      steps={STEPS.map((label, index) => ({
-        key: label, label, state: index < step ? "done" : index === step ? "now" : "later",
-      }))}
-    />
-  );
+  // W1-TRUTH: the one meeting stepper (kit meetingSteps), shared with Live.
+  return <Steps label="Meeting steps" steps={meetingSteps(step)} />;
 }
 
 /** One node of the spine: the time in the gutter, a bead on the rail. */

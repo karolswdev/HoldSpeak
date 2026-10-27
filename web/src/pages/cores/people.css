@@ -800,6 +800,7 @@
   background: color-mix(in srgb, var(--wb-sel) 6%, var(--wb-paper));
 }
 .people-you-row .gadget-string { flex: 1 1 220px; min-width: 0; }
+.people-you-row .kit-dotword { font-size: 12px; color: var(--wb-muted); }
 .people-roster > .people-new .gadget-string { flex: 1 1 200px; }
 .people-roster .people-duplicate {
   margin: 0;

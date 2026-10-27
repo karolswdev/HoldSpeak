@@ -54,3 +54,32 @@
   font: 400 12px / 1.35 var(--font-sans);
   color: var(--wb-muted);
 }
+/* W1-TRUTH (atlas 2026-10-27): title bar → toolbar → the body → status
+   bar. The toolbar touches the frame (interior "editor"); the body keeps
+   its inset. */
+.calendar-snapshot-window {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+.calendar-snapshot-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+.calendar-snapshot-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: 120px;
+  margin: 0;
+  font: 400 14px / 1.4 var(--font-sans);
+}

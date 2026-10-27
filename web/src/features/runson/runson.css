@@ -269,6 +269,14 @@
 .runson-inspector { flex: none; min-width: 0; padding: 14px 16px 16px; }
 .runson-inspector + .runson-inspector { padding-top: 0; }
 .runson-inspector .settings-page-section { min-width: 0; }
+/* W1-TRUTH: the inspector follows the selected engine: name, state, model id. */
+.runson-inspector-head {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
+  min-width: 0; margin: 0 0 12px;
+}
+.runson-inspector-name { font: 600 14px / 1.3 var(--font-sans); color: var(--wb-ink); overflow-wrap: anywhere; }
+.runson-inspector-head .kit-dotword { font-size: 12px; }
+.runson-inspector-meta { font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); overflow-wrap: anywhere; }
 .runson-inspector .settings-page-section-title {
   margin: 0 0 4px;
   padding-bottom: 6px;

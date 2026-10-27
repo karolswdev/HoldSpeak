@@ -55,8 +55,10 @@ describe("Phase 93 Desk arrival", () => {
     for (const tool of DESK_TOOLS.filter((t) => !BUILDER_APPLICATION_ACTIONS.has(t.action))) {
       // HS-111-10: the query well's speak-to-fill mic is also a button
       // ("Speak …") — the dispatcher row is the non-mic hit.
+      // W1-DOORS (#1511): a retired row is named for where it lands
+      // (paletteLabel); the old word still matches, the row reads the new one.
       const hits = screen.getAllByRole("option", {
-        name: new RegExp(tool.label),
+        name: new RegExp(escapeRe((tool as { paletteLabel?: string }).paletteLabel ?? tool.label)),
       });
       expect(hits.some((el) => !el.className.includes("desk-mic"))).toBe(true);
     }
@@ -250,3 +252,7 @@ describe("Phase 93 Desk arrival", () => {
     expect(openPullout).toHaveBeenCalledWith("persona:scout");
   });
 });
+
+function escapeRe(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}

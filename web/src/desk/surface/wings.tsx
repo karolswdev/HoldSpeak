@@ -62,10 +62,15 @@ export function SurfaceWings({
   door,
   doorOpen,
   onDoor,
+  name,
 }: {
   wings: WingSpec[];
   active: string;
   onChange: (id: string) => void;
+  /** W1-TRUTH: the window's name, shown by the folded phone menu when no
+   *  wing is the current face (a window with only a gear door), never a
+   *  bare ▾. */
+  name?: string;
   /** Label for the configuration door; omit for doorless windows. */
   door?: string;
   doorOpen?: boolean;
@@ -102,6 +107,7 @@ export function SurfaceWings({
           door={door}
           doorOpen={doorOpen}
           onDoor={onDoor}
+          emptyLabel={name}
           variant="chrome"
           className="desk-wing desk-wings-menu"
         />

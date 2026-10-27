@@ -111,8 +111,10 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
       ref: { id: "d8", kind: "decision", title: "Glass decision", status: "proposed", ...fields },
     }) as unknown as WorldObject;
   const heads = () =>
-    // PHILO-11-05a: the decision's own headings (its SEND well carries its own head).
-    Array.from(document.querySelectorAll(".attention-decision-paper > .attention-decision-main > h2, .attention-decision-paper > .gadget-fold > summary > .gadget-fold-title"))
+    // PHILO-11-05a: the decision's own headings. W1-TRUTH (reader grammar):
+    // the decision text reads with no heading over it (its region is named
+    // "Decision"); a support field is a fold only when it has text.
+    Array.from(document.querySelectorAll(".desk-decision-reader > .gadget-fold > summary > .gadget-fold-title"))
       .map((h) => h.textContent).filter((label) => label !== "State");
 
   it("a title-only decision shows no heading; Edit offers all three fields", () => {
@@ -142,7 +144,8 @@ describe("PHILO-8-04 the decision window shows no empty heading", () => {
         onClose={() => {}}
       />,
     );
-    expect(heads()).toEqual(["Decision", "Background", "Consequences"]);
+    expect(heads()).toEqual(["Background", "Consequences"]);
+    expect(screen.getByRole("region", { name: "Decision" }).textContent).toContain("D");
     for (const body of ["C", "D", "Q"]) expect(screen.getByText(body)).toBeInTheDocument();
   });
 });

@@ -144,6 +144,8 @@ export interface RunsOnEngine extends Engine {
   vendorScope?: string;
   /** The model the agent engine asks for (`default` = the CLI's own). */
   model?: string;
+  /** W1-TRUTH: an endpoint engine's model id (meta under its name). */
+  modelId?: string;
   spend?: AgentSpend;
   /** The host a preset's file comes from. */
   downloadHost?: string;
@@ -240,6 +242,7 @@ function decodeEngine(raw: Record<string, unknown>): RunsOnEngine {
     vendor: str(raw.vendor),
     vendorScope: str(raw.vendorScope),
     model: str(raw.model),
+    modelId: str(raw.modelId),
     spend: decodeSpend(raw.spend),
   };
 }

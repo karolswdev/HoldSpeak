@@ -111,7 +111,7 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
   const path = "/api/decisions/body-decision";
   const initial = { context_markdown: "Current context", decision_markdown: "Current decision", consequences_markdown: "Current consequences" };
 
-  async function renderEditor() {
+  async function renderEditor(beforeEdit?: () => Promise<void>) {
     hub.decisions = [decisionWire({ id: "body-decision", title: "Use the shared runners", ...initial })];
     await act(async () => { await useDesk.getState().refresh(); });
     function Face() {
@@ -120,6 +120,7 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
       return <>{object ? <DecisionPullout object={object} onClose={() => {}} /> : null}<DeskReceiptRow /></>;
     }
     const view = render(<Face />);
+    if (beforeEdit) await beforeEdit();
     fireEvent.click(screen.getByRole("button", { name: "Edit" }));
     return { ...view, reopen: () => render(<Face />) };
   }
@@ -137,12 +138,10 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
   }
 
   it("Save waits for one write and disables conflicting status, Retry and cancel presses", async () => {
-    await renderEditor();
-    fillDraft("to keep");
     let complete!: () => void;
     let statusWrites = 0;
     vi.mocked(fetch).mockImplementation((input, init) => {
-      if (String(input).endsWith("/status")) {
+      if (String(input) === `${path}/status`) {
         statusWrites += 1;
         return Promise.resolve(json({ error: "state_refused" }, 403));
       }
@@ -155,9 +154,13 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
       }
       return hubFetch(input, init);
     });
-    fireEvent.pointerDown(screen.getByRole("combobox", { name: "Decision status" }), { button: 0 });
-    fireEvent.click(within(screen.getByRole("listbox", { name: "Decision status" })).getByRole("option", { name: "Retired" }));
-    await screen.findByText(/STATUS FAILED.*HTTP 403/);
+    // W1-TRUTH: the state changes by a toolbar verb (Accept on an open
+    // decision), never a cycle at the top; a refused write keeps its Retry.
+    await renderEditor(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Accept" }));
+      await screen.findByText(/STATUS FAILED.*HTTP 403/);
+    });
+    fillDraft("to keep");
     const statusRetry = screen.getByRole("button", { name: "Retry" });
     expect(statusRetry).not.toBeDisabled();
     const done = screen.getByRole("button", { name: "Save" });
@@ -166,7 +169,6 @@ describe("the decision editor keeps its draft until the save is accepted", () =>
     expectDraft("to keep");
     expect(done).toBeDisabled();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
-    expect(screen.getByRole("combobox", { name: "Decision status" })).toBeDisabled();
     expect(statusRetry).toBeDisabled();
     fireEvent.click(statusRetry);
     expect(statusWrites).toBe(1);
@@ -364,11 +366,13 @@ describe("the decision window shows a heading only with text under it", () => {
       title: "Move the nightly build to the shared runners",
       context_markdown: "Our own runners are full every night. The shared runner pool has spare capacity after 8 PM.",
       decision_markdown: "Move the nightly build to the shared runners.",
-    }, ["Decision", "Background"]],
+    }, ["Background"]],
   ];
   const heads = () =>
-    // The decision's own headings (its SEND well carries its own head).
-    Array.from(document.querySelectorAll(".attention-decision-paper > .attention-decision-main > h2, .attention-decision-paper > .gadget-fold > summary > .gadget-fold-title"))
+    // The decision's own headings. W1-TRUTH (reader grammar): the decision
+    // text reads with no "Decision" heading over it; a support field is a
+    // fold only when it has text.
+    Array.from(document.querySelectorAll(".desk-decision-reader > .gadget-fold > summary > .gadget-fold-title"))
       .map((h) => (h.textContent ?? "").trim()).filter((label) => label !== "State");
 
   beforeEach(async () => {
@@ -426,6 +430,8 @@ describe("the decision window shows a heading only with text under it", () => {
 });
 
 describe("the decision window chooses a named state", () => {
+  // W1-TRUTH (atlas 2026-10-27): the state is a dot and a word in the status
+  // bar, and it changes by one toolbar verb (Accept, Retire), never a cycle.
   async function renderDecision() {
     hub.decisions = [decisionWire({ id: "state-decision", title: "Use the shared runners", status: "accepted" })];
     await act(async () => { await useDesk.getState().refresh(); });
@@ -436,14 +442,12 @@ describe("the decision window chooses a named state", () => {
     }
     render(<Face />);
   }
+  const stateText = () => screen.getByTestId("desk-decision-state").textContent ?? "";
 
-  it("inspecting status writes nothing; a chosen state renders only after success", async () => {
+  it("reading the state writes nothing; a chosen state renders only after success", async () => {
     await renderDecision();
-    const select = screen.getByRole("combobox", { name: "Decision status" });
-    expect(select).toHaveValue("accepted");
-    fireEvent.pointerDown(select, { button: 0 });
-    const choices = screen.getByRole("listbox", { name: "Decision status" });
-    expect(within(choices).getByRole("option", { name: "Retired" })).toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Decision status" })).toBeNull();
+    expect(stateText()).toContain("Accepted");
     expect(hub.puts).toHaveLength(0);
     let complete!: () => void;
     vi.mocked(fetch).mockImplementation((input, init) => {
@@ -456,14 +460,14 @@ describe("the decision window chooses a named state", () => {
       }
       return hubFetch(input, init);
     });
-    fireEvent.click(within(choices).getByRole("option", { name: "Retired" }));
-    expect(select).toHaveValue("accepted");
-    expect(select).toBeDisabled();
-    fireEvent.change(select, { target: { value: "proposed" } });
+    const retire = screen.getByRole("button", { name: "Retire" });
+    fireEvent.click(retire);
+    expect(stateText()).toContain("Saving");
+    expect(retire).toBeDisabled();
+    fireEvent.click(retire);
     expect(hub.puts).toHaveLength(1);
     await act(async () => complete());
-    await waitFor(() => expect(select).toHaveValue("deprecated"));
-    expect(select).not.toBeDisabled();
+    await waitFor(() => expect(stateText()).toContain("Retired"));
   });
 
   it("a refused status keeps the old state and Retry repeats the exact choice", async () => {
@@ -479,14 +483,12 @@ describe("the decision window chooses a named state", () => {
       }
       return hubFetch(input, init);
     });
-    const select = screen.getByRole("combobox", { name: "Decision status" });
-    fireEvent.pointerDown(select, { button: 0 });
-    fireEvent.click(within(screen.getByRole("listbox", { name: "Decision status" })).getByRole("option", { name: "Replaced" }));
+    fireEvent.click(screen.getByRole("button", { name: "Retire" }));
     expect(await screen.findByText(/STATUS FAILED.*HTTP 403/)).toBeInTheDocument();
-    expect(select).toHaveValue("accepted");
+    expect(stateText()).toContain("Accepted");
     refuse = false;
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    await waitFor(() => expect(select).toHaveValue("superseded"));
-    expect(hub.puts.map((put) => put.body)).toEqual([{ status: "superseded" }, { status: "superseded" }]);
+    await waitFor(() => expect(stateText()).toContain("Retired"));
+    expect(hub.puts.map((put) => put.body)).toEqual([{ status: "deprecated" }, { status: "deprecated" }]);
   });
 });

@@ -112,9 +112,12 @@ describe("every speech face says speech is not set up", () => {
     expect(verb.closest('[role="toolbar"]')).not.toBeNull();
     expect(verb.getAttribute("title")).toContain("huggingface.co");
     expect(screen.getByTestId("live-speech-setup").textContent?.toUpperCase()).not.toContain("HUGGINGFACE.CO");
-    // The state is the status bar's words: Ready · audio only · Speech not set up.
+    // W1-TRUTH (atlas 2026-10-27): the status bar says the one honest state,
+    // "Speech not set up" (warn), never "Ready" beside it.
     const bar = screen.getByTestId("live-statusbar");
-    expect(bar).toHaveTextContent(/Ready.*audio only.*Speech not set up/);
+    expect(screen.getByTestId("live-capture-state")).toHaveTextContent("Speech not set up");
+    expect(bar).not.toHaveTextContent(/Ready/);
+    expect(bar.querySelector('[data-testid="live-capture-state"] .kit-dot')?.getAttribute("data-tone")).toBe("warn");
     expect(screen.queryByText("Ready to record", { exact: true })).toBeNull();
     expect(screen.queryByText("Ready to record audio only", { exact: true })).toBeNull();
   });

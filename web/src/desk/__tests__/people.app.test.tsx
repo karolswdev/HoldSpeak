@@ -23,7 +23,7 @@
  * tests/unit/test_people_brief.py::TestBriefEnrichment proves the
  * producer writes it from the persisted watch snapshots.
  */
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -81,7 +81,11 @@ function rawButtons(root: HTMLElement): string[] {
       || tag.includes("gadget-chip") || tag.includes("surface-"))));
 }
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  // W1-TRUTH: the "Your name is not set" row shows once per browser.
+  try { window.localStorage.removeItem("hs.people.name-asked"); } catch { /* none */ }
+});
 
 describe("People: the Prep card (HS-172-05)", () => {
   it("every verb in the Prep card is the library Button; no zero counter; no pronoun", async () => {
@@ -353,8 +357,17 @@ describe("People from his work (Betterment daily D6), on the recorded week", () 
     }
     expect(screen.queryByText("Set up People")).toBeNull();
     expect(screen.queryByText("Do it")).toBeNull();
-    // His own name is not set: People asks it once.
-    expect(await screen.findByTestId("people-who-are-you")).toBeTruthy();
+    // His own name is not set: People says so once, quietly, with the one
+    // verb to Settings ▸ You (W1-TRUTH: no name field band on every visit).
+    const you = await screen.findByTestId("people-who-are-you");
+    expect(you.textContent).toContain("Your name is not set");
+    expect(within(you).getByRole("button", { name: "Set your name" })).toBeTruthy();
+    expect(within(you).queryByRole("textbox")).toBeNull();
+    cleanup();
+    replayWeek();
+    render(<PeopleCore />);
+    await screen.findAllByTestId("people-suggestion");
+    expect(screen.queryByTestId("people-who-are-you")).toBeNull();
   });
 
   it("three Add presses make them, and Mira's prep shows her promise with no other step", async () => {
