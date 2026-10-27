@@ -12,7 +12,9 @@ import type { CoreProps, DictationJournalResponse } from "./core-types";
 import { useCoreWings } from "./core-hooks";
 import { renderHeroSlot } from "./core-layout";
 import { Button } from "../../components/signal/Signal";
-import { StatusBar, countWords, type StatusBarItem } from "../../desk/surface/kit";
+import { StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../../desk/surface/kit";
+import "./settingsWindow.css";
+import { useWindowInterior } from "../../desk/surface/interior";
 import { openSurfaceOr } from "../../desk/shell";
 import { FoldGadget } from "../../desk/surface";
 import { useResource } from "../pageSupport";
@@ -44,7 +46,9 @@ import { CommandsCore } from "./CommandsCore";
    shape change. The corrections table moved OUT of the Configure door and
    became `Learned`; the door keeps the digest. */
 const WINGS = [
-  { id: "speak", label: "Speak" },
+  // Window Program W1 (2026-10-27): the first wing is named for its job;
+  // the window is Speak, so the wing is not "Speak" again.
+  { id: "speak", label: "Talk" },
   { id: "journal", label: "Journal" },
   { id: "blocks", label: "Blocks" },
   { id: "learned", label: "Learned" },
@@ -58,15 +62,20 @@ const WINGS = [
 function Configure() {
   // Betterment C8: the diagnostics fold is behind RAW (Builder tools).
   const raw = useBuilderTools((state) => state.on);
+  // W1: the toolbar and the grid run edge to edge (the window grammar).
+  useWindowInterior("list");
   return (
-    <div className="surface-door">
-      {/* Lane speak (2026-10-25): Settings left the status bar for the
-          gear; the door hands over to Settings ▸ Speak. */}
-      <div className="speak-door-settings">
+    <div className="surface-door speak-configure">
+      {/* Window Program W1 (2026-10-27): the gear wing is the Settings
+          label/control grid (no mono caps, no lone verb in a blank band);
+          its one verb hands over to Settings ▸ Speak from the toolbar. */}
+      <Toolbar label="Configure dictation" data-testid="speak-configure-toolbar">
         <Button dense variant="secondary" onClick={() => openSurfaceOr("configure-settings", "/settings", "speak")}>
-          Open Settings
+          <ToolGlyph kind="open" />
+          Manage in Settings
         </Button>
-      </div>
+      </Toolbar>
+      <div className="pref-window pref-bare">
       <Readiness />
       {raw ? (
         <FoldGadget title="More diagnostics">
@@ -77,6 +86,7 @@ function Configure() {
         <Nudges />
         </FoldGadget>
       ) : null}
+      </div>
     </div>
   );
 }
@@ -138,22 +148,30 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
         new Blob([markdown], { type: "text/markdown;charset=utf-8" }),
         `holdspeak-journal-${new Date().toISOString().slice(0, 10)}.md`,
       );
-      announce("EXPORTED MD");
+      announce("Journal exported");
     } catch {
-      announce("EXPORT FAILED", "warn");
+      announce("Export failed", "warn");
     }
   };
+  // W1: Export lives in a toolbar (the Talk wing's and the Journal's),
+  // never in the status bar.
+  const exportVerb = (
+    <Button dense variant="ghost" onClick={() => void exportJournal()}>
+      Export
+    </Button>
+  );
   const active = wings.doorOpen ? "configure" : wings.view;
   const current = useMemo(
     () =>
       ({
         speak: <SpeakFace />,
-        journal: <Journal />,
+        journal: <Journal exportVerb={exportVerb} />,
         blocks: <Blocks />,
         learned: <Learned />,
         commands: <CommandsCore />,
         configure: <Configure />,
       })[active],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [active],
   );
 
@@ -194,9 +212,7 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
       >
         Review
       </Button>
-      <Button dense variant="ghost" onClick={() => void exportJournal()}>
-        Export
-      </Button>
+      {exportVerb}
     </>
   );
   const onSpeak = active === "speak";
@@ -216,16 +232,16 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
           </SpeakVerbsContext.Provider>
         </SpeakStatusContext.Provider>
       </ReceiptContext.Provider>
-      {/* HS-170-04 — the footer: the window's ONE status bar. On the Speak
+      {/* HS-170-04 — the footer: the window's ONE status bar. On the Talk
           wing: the level, the phase, the fact, clean-up · the one verb and
           the hold key at the right. On the other wings: the receipt or the
-          day's count · Review, Export. No egress slot (owner ruling
-          2026-10-25). */}
+          day's count; Review and Export live in the toolbars (W1,
+          2026-10-27). No egress slot (owner ruling 2026-10-25). */}
       <StatusBar
         className="speak-footer"
         data-testid="speak-footer"
         items={statusItems}
-        verbs={onSpeak ? (speakReport?.trailing ?? null) : windowVerbs}
+        verbs={onSpeak ? (speakReport?.trailing ?? null) : undefined}
       />
     </>
   );

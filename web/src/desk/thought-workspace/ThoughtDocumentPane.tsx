@@ -25,7 +25,7 @@ import { bindThoughtVoiceTarget, deskThoughtVoiceDraft, thoughtVoiceKey, type Th
 /** The note in live preview: every line the caret is not on shows as
  *  written text (livePreview.ts); the diagrams draw in place
  *  (mermaidPreview.ts). */
-const NOTE_EDITOR_EXTENSIONS = [livePreview(), mermaidPreview(), marginDrawerRoom()];
+const NOTE_EDITOR_EXTENSIONS = [livePreview({ renderUntilFocus: true }), mermaidPreview(), marginDrawerRoom()];
 
 export function ownTitle(title: string, body: string): boolean {
   const clean = title.trim();
@@ -180,7 +180,11 @@ export function ThoughtDocumentPane({
         ariaLabel="Note body"
         value={draft.body}
         editable={!disabled}
-        autoFocus
+        // W1-DOORS (atlas 2026-10-27): a note with words opens rendered, its
+        // caret at the end (the writer's position) and no focus until he
+        // presses into it; an empty note (a new thought) takes the focus.
+        autoFocus={!draft.body.trim()}
+        initialCaret={draft.body.trim() ? "end" : "start"}
         placeholder="Start with what you know…"
         showToolbar={false}
         lineWrapping

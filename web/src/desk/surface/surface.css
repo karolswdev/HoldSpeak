@@ -5473,3 +5473,14 @@ button.surface-edit-in-place:hover {
     align-items: stretch;
   }
 }
+
+/* Window Program W1 (2026-10-27): Live ▸ Configure meeting reads in sans,
+   sentence case: a row's caption is a quiet sentence, a value is a word. */
+.desk-next .live-configure .gadget-fact,
+.desk-next .live-configure .prefs-value {
+  font: 400 12px / 1.4 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-muted);
+}
+.desk-next .live-configure .prefs-value { color: var(--wb-ink); font-size: 13px; }

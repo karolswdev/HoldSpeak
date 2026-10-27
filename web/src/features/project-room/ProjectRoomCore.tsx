@@ -7,7 +7,6 @@ import { HandRowVerb } from "../../desk/components/HandRowVerb";
 import { wireDate } from "../../desk/surface/format";
 import React, { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback, useReducer } from "react";
 import {
-  countLabel,
   countWords,
   DotWord,
   StatusBar,
@@ -19,23 +18,22 @@ import {
   SurfaceState,
   SurfaceLedger,
   SurfaceLedgerRow,
-  SurfaceStream,
-  SurfaceStreamDay,
-  SurfaceStreamEntry,
   SurfaceWell,
   ConfirmVerb,
   StateChip,
   humanTime,
-  streamDayLabel,
   MicButton,
   sourceLabel,
   ObjectList,
-  FilterTokens,
+  ListView,
+  ListDay,
+  ListRow,
   type ObjectSort,
   type ObjectSortKey,
 } from "../../desk/surface";
 import { RunLine } from "../../desk/surface";
 import { useCompactViewport } from "../../desk/useCompactViewport";
+import { StripMenuButton } from "../../desk/surface/stripMenu";
 import { spriteUrl } from "../../desk/sprites";
 import {
   PENDING_PLACE, ROOM_READS_CAP_MS, RoomReadsContext, RoomSlotContext, placeResolved, unresolvedSlots,
@@ -1485,52 +1483,47 @@ function UpdateLine({ room, updateCtrl, onReload }: {
 
 /* ── FILES section (PHILO-17 U30: the drawer's objects, in the Room) ── */
 
+/** A wire token in sentence case (`CREATE ITEM` → `Create item`). */
+function sentenceWord(token: string): string {
+  const words = token.trim().toLowerCase();
+  return words ? words[0].toUpperCase() + words.slice(1) : words;
+}
+
+const RECEIPT_TONE: Record<string, "ok" | "fail" | "warn" | "idle"> = {
+  success: "ok", failure: "fail", warning: "warn", idle: "idle",
+};
+
 function ReceiptsSection({ room }: { room: RoomSnapshot }) {
   if (room.receipts.state !== "ok") return null;
   const { items } = room.receipts;
   if (items.length === 0) return null;
 
+  // W1 (2026-10-27): the writes are the History list view's rows, in
+  // sentence case; a refused or failed write says so as a dot and a word
+  // with its plain reason (never a success chip, PHILO-9-03).
   return (
-    <SurfaceSection label={countLabel("RECEIPTS", items.length)}>
-      <SurfaceLedger count="" cols="room">
-        <ul className="surface-ledger-rows">
-          {items.map((item) => {
-            const label = receiptLabel({ op: item.op, title: item.title, outcome: item.outcome });
-            // PHILO-9-03 (Codex Astra r1 finding 1): the row says what
-            // happened -- a refused write is ✗ REFUSED + the plain reason,
-            // never a success chip.
-            const face = receiptFace(item.outcome);
-            return (
-              <SurfaceLedgerRow
-                key={item.id}
-                lead={<StateChip state={face.state} label="" icon={face.icon} wordless={Boolean(face.word)} />}
-                primary={
-                  <span className="surface-primary" data-outcome={item.outcome || "ok"} data-code={item.reason ?? undefined}>
-                    {label}
-                  </span>
-                }
-                wrap
-                expands={false}
-                data-testid="receipt-row"
-                cells={
-                  <>
-                    {face.word ? (
-                      <span data-testid="receipt-outcome"><StateChip state={face.state} label={face.word} /></span>
-                    ) : null}
-                    {face.word && item.reason ? (
-                      <span className="surface-token" data-chip data-testid="receipt-reason">{refusalWord(item.reason)}</span>
-                    ) : null}
-                    {item.timestamp ? (
-                      <span className="surface-token" data-muted>{humanTime(item.timestamp)}</span>
-                    ) : null}
-                  </>
-                }
-              />
-            );
-          })}
-        </ul>
-      </SurfaceLedger>
-    </SurfaceSection>
+    <ListView label="Writes" className="room-writes">
+      <ul className="kit-listrows">
+        {items.map((item) => {
+          const label = sentenceWord(receiptLabel({ op: item.op, title: item.title, outcome: item.outcome }));
+          const face = receiptFace(item.outcome);
+          return (
+            <ListRow
+              key={item.id}
+              data-testid="receipt-row"
+              name={
+                <span className="surface-primary" data-outcome={item.outcome || "ok"} data-code={item.reason ?? undefined}>
+                  {label}
+                </span>
+              }
+              meta={face.word && item.reason ? <span data-testid="receipt-reason">{sentenceWord(refusalWord(item.reason))}</span> : undefined}
+              state={face.word ? { word: sentenceWord(face.word), tone: RECEIPT_TONE[face.state], testId: "receipt-outcome" } : undefined}
+              age={item.timestamp ? humanTime(item.timestamp) : undefined}
+            />
+          );
+        })}
+      </ul>
+    </ListView>
   );
 }
 
@@ -1704,12 +1697,15 @@ interface HistoryEntry {
   itemType: string | null;
 }
 
+/* Window Program W1 (2026-10-27): the source filter is the toolbar's one
+   menu (All ▾), in sentence case; the values stay the wire's groups. */
 const HISTORY_FILTERS = [
-  { field: "source", value: "ALL" },
-  { field: "source", value: "GITHUB" },
-  { field: "source", value: "JIRA" },
-  { field: "source", value: "ROOM" },
+  { value: "ALL", label: "All" },
+  { value: "GITHUB", label: "GitHub" },
+  { value: "JIRA", label: "Jira" },
+  { value: "ROOM", label: "Room" },
 ];
+const SOURCE_WORD: Record<string, string> = { ALL: "All", GITHUB: "GitHub", JIRA: "Jira", ROOM: "Room" };
 
 function changeToHistoryEntry(c: RoomChangeRow): HistoryEntry {
   const phrase = kindToPhrase(c.kind);
@@ -1728,6 +1724,16 @@ function changeToHistoryEntry(c: RoomChangeRow): HistoryEntry {
   };
 }
 
+/** Today / Yesterday / Mon, Oct 20: the list view's day captions. */
+function historyDayLabel(d: Date, now: Date = new Date()): string {
+  if (Number.isNaN(d.getTime())) return "Undated";
+  if (localDateStr(d) === localDateStr(now)) return "Today";
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (localDateStr(d) === localDateStr(yesterday)) return "Yesterday";
+  return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+}
+
 function groupByDay(entries: HistoryEntry[]): { label: string; date: string; entries: HistoryEntry[] }[] {
   const groups: { label: string; date: string; entries: HistoryEntry[] }[] = [];
   for (const entry of entries) {
@@ -1737,23 +1743,51 @@ function groupByDay(entries: HistoryEntry[]): { label: string; date: string; ent
     if (last && last.date === dateStr) {
       last.entries.push(entry);
     } else {
-      groups.push({ label: streamDayLabel(d), date: dateStr, entries: [entry] });
+      groups.push({ label: historyDayLabel(d), date: dateStr, entries: [entry] });
     }
   }
   return groups;
 }
 
+/** The row's 20 px object glyph: the thing the change touched. */
+const HISTORY_SPRITES = `${import.meta.env.BASE_URL || "/_built/"}desk/sprites/20/`;
+function historyGlyph(entry: HistoryEntry): string {
+  const ref = entry.targetRef ?? "";
+  const name =
+    entry.source === "GITHUB" ? "pull-request"
+      : entry.source === "JIRA" ? "action-item"
+        : ref.startsWith("meeting:") ? "meeting"
+          : ref.startsWith("decision:") || entry.itemType === "decision" ? "decision"
+            : ref.startsWith("note:") ? "note"
+              : entry.itemId ? "action-item"
+                : "project-drawer";
+  return `${HISTORY_SPRITES}${name}.png`;
+}
+
+/** The status bar's one line: `42 events · since Oct 1`. */
+export function historyEventsWords(changes: RoomChangeRow[]): string {
+  const count = changes.length;
+  if (!count) return "No history yet";
+  const times = changes
+    .map((c) => (c.occurredAt ? wireDate(c.occurredAt) : null))
+    .filter((d): d is Date => Boolean(d))
+    .map((d) => d.getTime());
+  const words = `${count} ${count === 1 ? "event" : "events"}`;
+  if (!times.length) return words;
+  const first = new Date(Math.min(...times));
+  const since = localDateStr(first) === localDateStr(new Date())
+    ? "today"
+    : first.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return `${words} · since ${since}`;
+}
+
 function HistoryWing({
   room,
-  todayCount,
-  weekCount,
   itemIds,
   onOpenItem,
   onRetry,
 }: {
   room: RoomSnapshot;
-  todayCount: number;
-  weekCount: number;
   itemIds: string[];
   onOpenItem: (id: string) => void;
   onRetry: () => void;
@@ -1784,49 +1818,55 @@ function HistoryWing({
 
   return (
     <div className="room-history" data-testid="room-history">
-      <SurfaceStream
-        count={!available || !allEntries.length ? "History" : todayCount > 0 ? `${todayCount} today` : "Nothing today"}
-        controls={
-          <div className="room-history-controls">
-            {/* PHILO-17 (the desk sweep): the library's filter strip (it was
-                promoted from this very strip, FilterTokens.tsx), so the
-                tokens wear the kit's bevel. */}
-            <FilterTokens
-              label="Source filter"
-              className="room-history-filters"
-              options={HISTORY_FILTERS.map((f) => ({ value: f.value, label: f.value }))}
-              value={sourceFilter}
-              onChange={setSourceFilter}
+      {/* Window Program W1 (2026-10-27): History is a list view, not the
+          old dashboard: the toolbar holds the source menu and the search;
+          days are quiet captions; a row is glyph · what happened · where ·
+          the time. No headline, no caps pills, no box. */}
+      <Toolbar
+        label="History"
+        className="room-history-toolbar"
+        trailing={
+          <span className="room-history-search">
+            <StringGadget
+              type="search"
+              label="Search history"
+              placeholder="Search history…"
+              value={searchQuery}
+              onChange={setSearchQuery}
+              micDraftScope="room-history-search"
             />
-            <div className="room-history-search">
-              <StringGadget
-                type="search"
-                label="Search history"
-                placeholder="Search history…"
-                value={searchQuery}
-                onChange={setSearchQuery}
-                micDraftScope="room-history-search"
-              />
-            </div>
-          </div>
+          </span>
         }
       >
-        {!available ? (
-          <SurfaceState error="History unavailable" onRetry={onRetry} />
-        ) : !allEntries.length ? (
-          <SurfaceState empty emptyLabel="No history yet" />
-        ) : !searchFiltered.length ? (
-          <SurfaceState empty
-            emptyLabel={searchQuery.trim() ? "No matching changes" : `No changes from ${sourceFilter}`}
-            actionLabel="Clear filters" onAction={clearFilters} />
-        ) : days.map((day) => (
-          <SurfaceStreamDay key={day.label} label={day.label}>
-            {day.entries.map((entry) => (
-              <HistoryEntryRow key={entry.id} entry={entry} itemIds={itemIds} onOpenItem={onOpenItem} />
-            ))}
-          </SurfaceStreamDay>
-        ))}
-      </SurfaceStream>
+        {available && allEntries.length ? (
+          <StripMenuButton
+            label="Source"
+            choices={HISTORY_FILTERS}
+            value={sourceFilter}
+            onChange={setSourceFilter}
+            variant="secondary"
+          />
+        ) : null}
+      </Toolbar>
+      {!available ? (
+        <SurfaceState error="History unavailable" onRetry={onRetry} />
+      ) : !allEntries.length ? (
+        <SurfaceState empty emptyLabel="No history yet" />
+      ) : !searchFiltered.length ? (
+        <SurfaceState empty
+          emptyLabel={searchQuery.trim() ? "No matching changes" : `No changes from ${SOURCE_WORD[sourceFilter] ?? sourceFilter}`}
+          actionLabel="Clear filters" onAction={clearFilters} />
+      ) : (
+        <ListView label="History" className="room-history-list">
+          {days.map((day) => (
+            <ListDay key={day.date || day.label} label={day.label}>
+              {day.entries.map((entry) => (
+                <HistoryEntryRow key={entry.id} entry={entry} itemIds={itemIds} onOpenItem={onOpenItem} />
+              ))}
+            </ListDay>
+          ))}
+        </ListView>
+      )}
     </div>
   );
 }
@@ -1843,36 +1883,20 @@ function HistoryEntryRow({ entry, itemIds, onOpenItem }: {
   const open = entry.itemId
     ? (itemIds.includes(entry.itemId) ? () => onOpenItem(entry.itemId!) : null)
     : entry.targetRef?.startsWith("project:") ? null : refOpener(entry.targetRef);
+  // W1: the row itself opens what it touched (one press); a row about the
+  // Room itself names nothing to open.
   return (
-    <SurfaceStreamEntry
-      when={entry.time}
-      dense
-      verbs={open ? (
-        <Button dense variant="ghost" onClick={open} aria-label={`Open: ${entry.phrase}`} data-testid="history-entry-open">
-          Open
-        </Button>
-      ) : undefined}
-    >
-      <span data-testid="history-entry">{entry.phrase}</span>
-    </SurfaceStreamEntry>
+    <ListRow
+      glyph={historyGlyph(entry)}
+      name={entry.phrase}
+      nameTestId="history-entry"
+      meta={SOURCE_WORD[entry.source] ?? entry.source}
+      age={entry.time}
+      onOpen={open ?? undefined}
+      openLabel={open ? `Open: ${entry.phrase}` : undefined}
+      openTestId={open ? "history-entry-open" : undefined}
+    />
   );
-}
-
-/* ── History count helper (shared between footer and HistoryWing) ── */
-
-function computeHistoryCounts(changes: RoomChangeRow[]): { todayCount: number; weekCount: number } {
-  const entries = changes.map(changeToHistoryEntry);
-  const todayStr = localDateStr(new Date());
-  const weekAgo = new Date(Date.now() - 7 * 86_400_000);
-  const todayCount = entries.filter((e) => {
-    const d = new Date(e.occurredAt);
-    return localDateStr(d) === todayStr;
-  }).length;
-  const weekCount = entries.filter((e) => {
-    const d = new Date(e.occurredAt);
-    return d >= weekAgo;
-  }).length;
-  return { todayCount, weekCount };
 }
 
 /* ── PHILO-17 refit: a folded section ── */
@@ -2240,12 +2264,6 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
 
   const pendingCount = reviewData?.pendingCount ?? 0;
 
-  // Condition 2: history counts computed here, shared with HistoryWing and footer.
-  const historyCounts = useMemo(() => {
-    if (!ctrl.room || ctrl.room.changes.state !== "ok") return { todayCount: 0, weekCount: 0 };
-    return computeHistoryCounts(ctrl.room.changes.recent);
-  }, [ctrl.room]);
-
   // The unscoped surface is Desk memory: the recall face (HS-200-13,
   // posture 5) -- CURRENT / SUPERSEDED / OWED over one query, never a
   // dead empty state.
@@ -2319,15 +2337,11 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
   const sourceCount = ctrl.room?.sources.state === "ok"
     ? ctrl.room.sources.items.filter((x) => !x.suggested).length : 0;
 
-  // S-1: footer receipt omits zero parts — "Nothing today" / "Nothing this week"
-  const historyReceipt = (() => {
-    if (ctrl.room?.changes.state !== "ok") return "History unavailable";
-    const { todayCount: t, weekCount: w } = historyCounts;
-    if (t === 0 && w === 0) return "Nothing this week";
-    if (t === 0) return `Nothing today · ${w} this week`;
-    if (w === 0) return `${t} today · nothing this week`;
-    return `${t} today · ${w} this week`;
-  })();
+  // W1 (2026-10-27): the History status bar is one line, `42 events ·
+  // since Oct 1`; a failed read says so (never a quiet claim).
+  const historyReceipt = ctrl.room?.changes.state === "ok"
+    ? historyEventsWords(ctrl.room.changes.recent)
+    : "History unavailable";
   // Conductor F2 (K6): a commitment an agent's merged PR closed names
   // itself on the receipt line (K4's follow-through: the PR, the close).
   const merged = mergeReceipt(agentFlights, ctrl.projectId);
@@ -2445,7 +2459,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
             </>
           ) : (
             <>
-              <HistoryWing room={ctrl.room} todayCount={historyCounts.todayCount} weekCount={historyCounts.weekCount}
+              <HistoryWing room={ctrl.room}
                 itemIds={itemsRead.items?.map((item) => item.id) ?? []} onOpenItem={openHistoryItem} onRetry={handleRefresh} />
               {/* PHILO-17 U31: the writes are what happened: History holds
                   them, folded under the stream (PHILO-17 refit). */}

@@ -647,4 +647,27 @@ describe("PHILO-17 objverbs — the Chair has the desk's one selection", () => {
     act(() => palette.run({ selectedRef: null } as never));
     expect(useDrawers.getState().parked).not.toBeNull();
   });
+
+  it("W1-DOORS: a right-click on the blank floor opens the Desk menu's rows, the same as the menu bar's", async () => {
+    render(<><Screen /><DeskMenuBar /></>);
+    await waitFor(() => expect(keys()).toContain("note:n-2"));
+    fireEvent.contextMenu(screen.getByTestId("desk-screen"), { clientX: 600, clientY: 400 });
+    const floor = await screen.findByRole("menu", { name: "Desk menu" });
+    const floorRows = within(floor).getAllByRole("menuitem").map((row) => row.textContent);
+    expect(floorRows.some((row) => /New note/i.test(row ?? ""))).toBe(true);
+    fireEvent.keyDown(floor, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("menu", { name: "Desk menu" })).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: /^Desk$/ }), { detail: 0 });
+    const bar = screen.getAllByRole("menu").find((menu) => menu.getAttribute("aria-label") === "Desk menu")!;
+    expect(within(bar).getAllByRole("menuitem").map((row) => row.textContent)).toEqual(floorRows);
+  });
+
+  it("W1-DOORS: a right-click on an icon keeps the icon's own menu, not the Desk menu", async () => {
+    render(<Screen />);
+    await waitFor(() => expect(keys()).toContain("note:n-2"));
+    fireEvent.contextMenu(icon(/^Questions for Avery 1:1/), { clientX: 200, clientY: 200 });
+    await screen.findByRole("menu", { name: "Questions for Avery 1:1 menu" });
+    expect(screen.queryByRole("menu", { name: "Desk menu" })).toBeNull();
+  });
 });
+

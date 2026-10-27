@@ -1238,12 +1238,14 @@
   display: inline-flex;
   align-items: center;
 }
+/* W1 (2026-10-27): a small 12-segment bar, not a strip. */
 .desk-next .kit-statusbar .speak-level .gadget-ledmeter {
-  width: 88px;
+  width: 60px;
   min-width: 0;
 }
 .desk-next .kit-statusbar .speak-level .gadget-ledmeter-track {
-  height: 10px;
+  height: 8px;
+  gap: 1px;
 }
 /* How long he has talked: a tabular m:ss that ticks. */
 .desk-next .kit-statusbar .speak-elapsed {
@@ -1783,3 +1785,63 @@
     height: auto;
   }
 }
+
+/* Window Program W1 (2026-10-27): the wings' empty state — the D mic, the
+   true word, one quiet line of what lands here. Centred in the wing. */
+.desk-next .speak-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 36px 16px;
+  text-align: center;
+}
+.desk-next .speak-empty-glyph {
+  width: 40px;
+  height: 40px;
+  filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--wb-ink) 16%, transparent));
+}
+.desk-next .speak-empty-word {
+  color: var(--wb-ink);
+  font: 600 13px / 1.35 var(--font-sans);
+}
+.desk-next .speak-empty-hint {
+  max-width: 320px;
+  color: var(--wb-muted);
+  font: 400 12px / 1.4 var(--font-sans);
+}
+
+/* W1 (2026-10-27): on the phone the Talk status bar is ONE line: the level,
+   the state and its fact. Clean-up and its verb live in Configure
+   dictation at this width; the hold key needs a keyboard. */
+@container surface (max-width: 520px) {
+  .desk-next .speak-footer .kit-statusbar-item:has(> .speak-engine),
+  .desk-next .speak-footer .kit-statusbar-verbs { display: none; }
+  .desk-next .speak-footer .kit-statusbar-items {
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .desk-next .speak-footer .kit-statusbar-item:has(> .speak-fact) {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+.desk-next .surface-state:has(> .speak-empty) {
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.desk-next .surface-ledger:has(.speak-empty),
+.desk-next .surface-section:has(.speak-empty) {
+  align-self: stretch;
+  width: 100%;
+}
+.desk-next .surface-state:has(> .speak-empty) { align-self: stretch; }
+@container surface (max-width: 520px) {
+  /* The fact is the bar's last shown item at this width: no trailing dot. */
+  .desk-next .speak-footer .kit-statusbar-item:has(> .speak-fact)::after { content: none; }
+}
+.desk-next .surface-state > .speak-empty { align-self: center; margin-inline: auto; }

@@ -13,6 +13,11 @@ import { Annotation, Compartment, EditorState, StateEffect, StateField, type Ext
 import { Decoration, EditorView, keymap, placeholder } from "@codemirror/view";
 import { deskEditorTheme, deskMarkdownHighlighting } from "./deskEditorTheme";
 
+/** The caret seat after the last character of `text`. */
+function endOfText(text: string): number {
+  return text.length;
+}
+
 export interface DeskEditorHandle {
   insertAtCursor(text: string): void;
   captureVoiceTarget(): DeskEditorVoiceTarget | null;
@@ -80,6 +85,9 @@ interface DeskEditorProps {
   value: string;
   onChange: (value: string) => void;
   autoFocus?: boolean;
+  /** W1-DOORS: where the caret starts. "end" puts it after the last
+   *  character (the writer's position); default the start. */
+  initialCaret?: "start" | "end";
   onEscape?: () => void;
   placeholder?: string;
   className?: string;
@@ -213,6 +221,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
       value,
       onChange,
       autoFocus = false,
+      initialCaret = "start",
       onEscape,
       placeholder: placeholderText,
       className,
@@ -336,9 +345,13 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
 
     useEffect(() => {
       if (!host.current) return;
+      // the caret's first seat: the end of the words (a note that has words
+      // opens rendered) or the start (an empty note takes the caret)
+      const firstSeat = initialCaret === "end" ? endOfText(value) : null;
       const view = new EditorView({
         state: EditorState.create({
           doc: value,
+          ...(firstSeat === null ? {} : { selection: { anchor: firstSeat } }),
           extensions: [
             history(),
             // GFM (tables, task lists, strikethrough, bare urls): the same

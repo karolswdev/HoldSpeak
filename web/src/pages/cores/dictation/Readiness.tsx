@@ -8,6 +8,7 @@ import { useBuilderTools } from "../../../desk/builderTools";
 import type { DictationReadinessResponse } from "../core-types";
 import { egressScopeLamp } from "../../../desk/inferenceEgress";
 import { presentValue } from "../../../desk/surface/format";
+import { DotWord } from "../../../desk/surface/kit";
 import { countToken } from "../../../desk/surface";
 import { SurfaceFooter } from "../../../desk/surface/SurfaceFooter";
 import {
@@ -63,13 +64,17 @@ export function Readiness() {
     (w) => w.code !== "pipeline_disabled" && w.code !== "missing_project_kb",
   );
   const modelMissing = otherWarnings.some((warning) => warning.code === "runtime_model_missing");
-  const warningNames: Record<string, string> = {
-    no_project: "No project",
-    no_blocks: "No blocks",
-    invalid_blocks: "Blocks invalid",
-    invalid_project_kb: "Project KB invalid",
-    runtime_unavailable: "Engine unavailable",
+  /* Window Program W1 (2026-10-27): each warning is a row of the label /
+     control grid: the axis on the left, a dot and a word on the right. */
+  const warningRows: Record<string, { axis: string; word: string }> = {
+    no_project: { axis: "Project", word: "No project" },
+    no_blocks: { axis: "Blocks", word: "No blocks" },
+    invalid_blocks: { axis: "Blocks", word: "Not valid" },
+    invalid_project_kb: { axis: "Project KB", word: "Not valid" },
+    runtime_unavailable: { axis: "Engine", word: "Not available" },
   };
+  const rest = otherWarnings.filter((warning) => warning.code !== "runtime_model_missing");
+  const latency = presentValue(config.max_total_latency_ms);
   return (
     <SurfaceState
       loading={resource.loading}
@@ -78,36 +83,36 @@ export function Readiness() {
     >
       {modelMissing ? (
         <GadgetGroup label="Engine">
-          <GadgetRow label="Model missing">
+          <GadgetRow label="Speech model">
+            <DotWord tone="warn">Model missing</DotWord>
             <Button dense variant="secondary" onClick={() => openSurfaceOr("open-concierge", "/models", "writing_dictation")}>
               Choose engine
             </Button>
           </GadgetRow>
         </GadgetGroup>
       ) : null}
-      {otherWarnings.filter((warning) => warning.code !== "runtime_model_missing").map((warning, index) => (
-        <p className="speak-token-line" data-tone="warn" key={String(warning.code ?? index)}>
-          {warningNames[String(warning.code)] ?? "Readiness needs a check"}
-        </p>
-      ))}
-      <FoldGadget title="Pipeline + delivery">
+      {rest.length ? (
+        <GadgetGroup label="Needs a check">
+          {rest.map((warning, index) => {
+            const known = warningRows[String(warning.code)] ?? { axis: "Readiness", word: "Needs a check" };
+            return (
+              <GadgetRow key={String(warning.code ?? index)} label={known.axis}>
+                <DotWord tone="warn">{known.word}</DotWord>
+              </GadgetRow>
+            );
+          })}
+        </GadgetGroup>
+      ) : null}
       <GadgetGroup label="Pipeline">
         {/* HS-130-07: the pipeline's ON/OFF is a Settings-owned preference
-            (one writer). This readiness sheet shows the EFFECTIVE state and
-            opens the exact Settings module; it no longer persists the toggle
-            (two writers silently clobbered each other before). */}
+            (one writer). This sheet shows the EFFECTIVE state; the toolbar's
+            Manage in Settings opens the exact module. */}
         <GadgetRow
           label="Dictation pipeline"
-          fact={`${presentValue(config.backend) || "automatic"} · ${
-            presentValue(config.max_total_latency_ms) || "—"
-          } MS`}
+          fact={`${presentValue(config.backend) || "Automatic"}${latency ? ` · ${latency} ms` : ""}`}
         >
-          <span className="gadget-checkline">
-            <LampGadget
-              label={enabled ? "ON" : "OFF"}
-              on={enabled}
-              tone={enabled ? "ok" : "warn"}
-            />
+          <DotWord tone={enabled ? "ok" : "warn"}>{enabled ? "On" : "Off"}</DotWord>
+          {enabled ? null : (
             <Button
               dense
               variant="ghost"
@@ -115,12 +120,13 @@ export function Readiness() {
                 openSurfaceOr("configure-settings", "/settings", "voice-typing")
               }
             >
-              {enabled ? "Manage in Settings" : "Enable in Settings"}
+              Turn on in Settings
             </Button>
-          </span>
+          )}
         </GadgetRow>
         {hasKbWarning ? (
-          <GadgetRow label="Project KB" fact="MISSING">
+          <GadgetRow label="Project KB">
+            <DotWord tone="warn">Missing</DotWord>
             <Button dense loading={kbBusy} onClick={() => void createStarterKb()}>
               Create
             </Button>
@@ -129,31 +135,27 @@ export function Readiness() {
       </GadgetGroup>
       <GadgetGroup label="Delivery">
         <GadgetRow label="Delivery target">
-          <span className="speak-token-line">
-            {target.label
+          <span className="prefs-value">
+            {presentValue(target.label).trim()
               ? `${presentValue(target.label)}${
-                  target.source === "hints" ? " · BROWSER BRIDGE" : ""
+                  target.source === "hints" ? " · browser bridge" : ""
                 }`
-              : "—"}
+              : "Not known yet"}
           </span>
         </GadgetRow>
-        {confidencePct !== null ? (
+        {confidencePct ? (
           <GadgetRow label="Confidence">
-            <span className="speak-token-line">{confidencePct}%</span>
+            <span className="prefs-value">{confidencePct}%</span>
           </GadgetRow>
         ) : null}
-        {/* HS-202-04 (UX-CANON A.8: no counters of zero) — the gear door
-            printed `Runs 0` on a machine that had never run the pipeline,
-            on all four walked legs (`01-measured-walk.md`, leg
-            `door-speak`). A count that is zero says nothing, so the row
-            stands only once there is a run to name. */}
+        {/* HS-202-04 (UX-CANON A.8: no counters of zero) — the row stands
+            only once there is a run to name. */}
         {runs > 0 ? (
           <GadgetRow label="Runs">
-            <span className="speak-token-line">{runs}</span>
+            <span className="prefs-value">{runs}</span>
           </GadgetRow>
         ) : null}
       </GadgetGroup>
-      </FoldGadget>
       {/* HS-202-04 — this fold shows the readiness WIRE verbatim, zeros
           and all; a raw fold that edits the wire is a lie. It now says so
           in the owner's own word (debug hides behind RAW), which is the

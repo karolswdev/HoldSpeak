@@ -54,6 +54,11 @@ def test_the_hub_answer_is_the_oracle_week(tmp_path: Path, monkeypatch: pytest.M
     assert matches[0]["source"] == "meeting"
     assert matches[0]["projectId"] == seeded["ids"]["mutedProject"]
     assert matches[0]["muted"] is True
+    # W1-DOORS (atlas 2026-10-27): the row is the meeting's, keyed by the
+    # meeting (two meetings that say one word are two rows, never one id).
+    assert matches[0]["ref"] == f"meeting:{matches[0]['meetingId']}"
+    assert matches[0]["id"].endswith(f":meeting:meeting:{matches[0]['meetingId']}")
+    assert matches[0]["meetingTitle"]
     assert answer["mutedCount"] == 2
     assert answer["sourceErrors"] == {}
 

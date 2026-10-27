@@ -29,6 +29,7 @@ import { objectMenuEntries, windowObjectRef } from "../objectMenu";
 import { useScreenMembersStore } from "../screen/members";
 import { objectByRef } from "../world";
 import { WorkMenu, withholdGhosts, type WorkMenuEntry } from "./DeskMenu";
+import { menuVerbEntries } from "./menuVerbEntries";
 import { useCompactViewport } from "../useCompactViewport";
 import { CHAIR_WINDOW_IDS } from "../chair/chairWindows";
 import {
@@ -325,7 +326,6 @@ export function DeskMenuBar() {
   };
 
   const menuEntries = (id: MenuId, out: WorkMenuEntry[]): void => {
-    let lastGroup: string | undefined;
     // PHILO-13-15 (C5, fork 5): the Object menu leads with the front
     // window's `Send to ▸`, its own group (the same composition as the
     // window menu). At 393 it leads the Object group inside Go.
@@ -347,38 +347,8 @@ export function DeskMenuBar() {
     }
     // PHILO-13-11 (C1, slice two): a verb with a `submenu` rides in ONE
     // submenu of that name (Window ▸ Chair), at the place of its first verb.
-    const subs = new Map<string, WorkMenuEntry[]>();
-    for (const v of menuVerbs(id)) {
-      if (!offeredHere(v)) continue;
-      const item: WorkMenuEntry = {
-        type: "item",
-        id: v.id,
-        label: verbLabel(v, ctx),
-        glyph: v.glyph,
-        keycap: v.key,
-        ghost: v.ghost(ctx),
-        ...(v.checked ? { checked: v.checked(ctx) } : {}),
-        onSelect: () => v.run(ctx),
-      };
-      if (v.submenu) {
-        const known = subs.get(v.submenu);
-        if (known) {
-          known.push(item);
-          continue;
-        }
-        const entries: WorkMenuEntry[] = [item];
-        subs.set(v.submenu, entries);
-        if (out.length && v.group !== lastGroup)
-          out.push({ type: "sep", id: `sep-${v.id}` });
-        lastGroup = v.group;
-        out.push({ type: "sub", id: `sub-${v.group ?? v.id}`, label: v.submenu, entries });
-        continue;
-      }
-      if (out.length && v.group !== lastGroup)
-        out.push({ type: "sep", id: `sep-${v.id}` });
-      lastGroup = v.group;
-      out.push(item);
-    }
+    // W1-DOORS: the rows are menuVerbEntries, which the floor's menu shares.
+    menuVerbEntries(id, ctx, out);
     // One window, one row: Window ▸ Chair already offers the Chair windows
     // (a check on each open one), so the open-windows list leaves them out.
     if (id === "window")

@@ -34,7 +34,8 @@ import {
   SurfaceSection,
   SurfaceState,
 } from "../../desk/surface/Surface";
-import { humanTime, presentValue } from "../../desk/surface/format";
+import { deSnake, humanTime, presentValue } from "../../desk/surface/format";
+import { ListDay, ListRow, ListView, ageWords, useWaitWord, type ListRowState } from "../../desk/surface/objects/ListView";
 import { useAction, useCoreWings } from "./core-hooks";
 import { CoreResourceGuard, renderHeroSlot } from "./core-layout";
 import "./activity.css";
@@ -140,7 +141,7 @@ export function ActivityCore({ hero }: CoreProps) {
       <CoreResourceGuard
         resource={resource}
         empty={!rows.length}
-        emptyLabel="No activity yet"
+        emptyLabel={kind === "rules" ? "No rules yet" : "No activity yet"}
         emptyGlyph="◍"
       >
         <SurfaceRows>
@@ -246,14 +247,22 @@ export function ActivityCore({ hero }: CoreProps) {
       </Toolbar>
       {action.message ? <SurfaceState error={action.message} /> : null}
       {wings.doorOpen ? (
-        <>
-          <SurfaceSection label="Meeting candidates">
-            {list("candidates")}
-          </SurfaceSection>
-          <SurfaceSection label="Connectors">
-            {list("connectors")}
-          </SurfaceSection>
-        </>
+        <ActivityGear
+          query={query}
+          candidates={asRows(candidates.data, ["candidates"])}
+          connectors={asRows(connectors.data, ["connectors"])}
+          candidatesLoading={candidates.loading}
+          connectorsLoading={connectors.loading}
+          onDryRun={(id) =>
+            void invoke(
+              `/api/activity/enrichment/connectors/${encodeURIComponent(id)}/dry-run?limit=25`,
+              { method: "GET" },
+            )
+          }
+          onStart={(id) =>
+            void invoke(`/api/activity/meeting-candidates/${encodeURIComponent(id)}/start`)
+          }
+        />
       ) : wings.view === "records" ? (
         // One list view: the finished receipts and the watched pages.
         <ActivityFinishedReceipts query={query} records={recordRows} />
@@ -263,5 +272,102 @@ export function ActivityCore({ hero }: CoreProps) {
         </SurfaceSection>
       )}
     </>
+  );
+}
+
+/* Window Program W1 (2026-10-27): the gear wing on the window grammar.
+   A connector reads by its own name and what it does ("Enrich with the
+   CLI"), a dot-and-word state and a quiet age; never `first-party` or a
+   `CLI_ENRICHMENT` token. A read that never answers says so. */
+const CONNECTOR_KIND_WORDS: Record<string, string> = {
+  cli_enrichment: "Enrich with the CLI",
+  candidate_inference: "Find meeting candidates",
+};
+
+function kindWords(kind: unknown): string {
+  const key = String(kind ?? "");
+  if (CONNECTOR_KIND_WORDS[key]) return CONNECTOR_KIND_WORDS[key];
+  const words = deSnake(key).toLowerCase();
+  return words ? words[0].toUpperCase() + words.slice(1) : "";
+}
+
+function connectorState(row: Record<string, unknown>): ListRowState {
+  if (row.last_error) return { word: "Failed", tone: "fail" };
+  if (row.enabled === false) return { word: "Off", tone: "idle" };
+  const cli = row.cli_status as Record<string, unknown> | undefined;
+  if (row.requires_cli && cli && cli.available === false) return { word: "CLI not found", tone: "warn" };
+  return { word: "On", tone: "ok" };
+}
+
+function ActivityGear({
+  query,
+  candidates,
+  connectors,
+  candidatesLoading,
+  connectorsLoading,
+  onDryRun,
+  onStart,
+}: {
+  query: string;
+  candidates: Record<string, unknown>[];
+  connectors: Record<string, unknown>[];
+  candidatesLoading: boolean;
+  connectorsLoading: boolean;
+  onDryRun(id: string): void;
+  onStart(id: string): void;
+}) {
+  const match = (row: Record<string, unknown>) =>
+    !query || JSON.stringify(row).toLowerCase().includes(query.toLowerCase());
+  const candidateWait = useWaitWord(candidatesLoading && !candidates.length);
+  const connectorWait = useWaitWord(connectorsLoading && !connectors.length);
+  const shownCandidates = candidates.filter(match);
+  const shownConnectors = connectors.filter(match);
+  return (
+    <ListView label="Candidates and connectors">
+      <ListDay label="Meeting candidates">
+        {candidateWait ? (
+          <ListRow name="Meeting candidates" state={candidateWait} />
+        ) : shownCandidates.length ? (
+          shownCandidates.map((row, index) => {
+            const id = rowId(row, index);
+            return (
+              <ListRow
+                key={id}
+                name={String(row.title ?? row.name ?? "Meeting candidate")}
+                meta={presentValue(row.source_connector_id ? kindWords(row.source_connector_id) : row.source) || undefined}
+                state={row.status ? { word: kindWords(row.status), tone: row.status === "started" ? "ok" : "idle" } : undefined}
+                age={ageWords(row.starts_at ?? row.created_at)}
+                verbs={row.status !== "started" ? (
+                  <Button dense onClick={() => onStart(id)}>Start meeting</Button>
+                ) : undefined}
+              />
+            );
+          })
+        ) : (
+          <li><SurfaceState empty emptyLabel="No meeting candidates yet" emptyGlyph="·" /></li>
+        )}
+      </ListDay>
+      <ListDay label="Connectors">
+        {connectorWait ? (
+          <ListRow name="Connectors" state={connectorWait} />
+        ) : shownConnectors.length ? (
+          shownConnectors.map((row, index) => {
+            const id = rowId(row, index);
+            return (
+              <ListRow
+                key={id}
+                name={String(row.label ?? row.name ?? kindWords(row.id))}
+                meta={kindWords(row.kind) || undefined}
+                state={connectorState(row)}
+                age={row.last_run_at ? `Ran ${ageWords(row.last_run_at)}` : "Never ran"}
+                verbs={<Button dense onClick={() => onDryRun(id)}>Dry run</Button>}
+              />
+            );
+          })
+        ) : (
+          <li><SurfaceState empty emptyLabel="No connectors" emptyGlyph="·" /></li>
+        )}
+      </ListDay>
+    </ListView>
   );
 }
