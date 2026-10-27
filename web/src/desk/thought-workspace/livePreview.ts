@@ -609,6 +609,9 @@ const inlinePlugin = (ctx: Context) => ViewPlugin.fromClass(
 
     constructor(view: EditorView) {
       this.decorations = buildInline(view, ctx);
+      // The People roster is read only for a note that names a person: a
+      // note without one (the Components specimen) does no IO.
+      if (!/\]\((?:person|people):/i.test(view.state.doc.toString())) return;
       void ctx.objects.ready?.().then(() => {
         if (view.dom.isConnected) view.dispatch({ effects: objectsReady.of(null) });
       }, () => undefined);
