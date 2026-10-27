@@ -1,0 +1,309 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_ask.py::test_an_answer_arrives_as_text_frames_and_a_closed_window_claims_it_back (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "frames": [
+  {
+   "invocation_id": "ask_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "text": "You owe Mira feedback on her cutover design doc, due Friday.\n"
+  },
+  {
+   "invocation_id": "ask_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "text": "You owe Mira feedback on her cutover design doc, due Friday.\nWe freeze the old ledger on Nov 5 after the reconciliation job runs."
+  }
+ ],
+ "running": {
+  "runs": [
+   {
+    "invocation_id": "ask_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "question": "What do I owe Mira, and when is the freeze?",
+    "state": "running",
+    "started_at": "2026-10-27T22:47:09.306300Z",
+    "text": "You owe Mira feedback on her cutover design doc, due Friday.\n"
+   }
+  ]
+ },
+ "answer": {
+  "actual_placement": {
+   "boundary": "private_network",
+   "data_classes": [
+    "prompt",
+    "grounding"
+   ],
+   "engine": "configured_local_engine",
+   "fallback_reason": null,
+   "model": "qwen3.8-27b",
+   "owner": "hub",
+   "target_id": "glass-lan",
+   "target_kind": "assigned_profile",
+   "target_name": "glass-lan",
+   "transport": "private_network"
+  },
+  "context_ids": [
+   "n-mira",
+   "d-freeze",
+   "n-mira",
+   "d-freeze"
+  ],
+  "context_titles": [
+   "1:1 with Mira",
+   "Freeze the old ledger on Nov 5",
+   "1:1 with Mira",
+   "Freeze the old ledger on Nov 5"
+  ],
+  "egress": {
+   "scope": "private_network",
+   "host": "192.168.1.43"
+  },
+  "grounding": {
+   "artifact_ids": [],
+   "expand": "summary",
+   "matched_count": 2,
+   "meeting_ids": [],
+   "overflow_count": 0,
+   "selection": "ecosystem_relevance",
+   "source_refs": [
+    "note:n-mira",
+    "desk_decision:d-freeze"
+   ],
+   "titles": [
+    "1:1 with Mira",
+    "Freeze the old ledger on Nov 5"
+   ]
+  },
+  "lens": "Ask",
+  "model": "qwen3.8-27b",
+  "output": "You owe Mira feedback on her cutover design doc, due Friday.\nWe freeze the old ledger on Nov 5 after the reconciliation job runs.",
+  "profile_id": "glass-lan",
+  "provider": "configured_local_engine",
+  "invocation_id": "invoke_848c6681ac20cb980bacc603e478f0f0",
+  "operation_id": "op_80eff0f7b7604410829aad9fcf1d345e",
+  "receipt_id": "rcpt_859183f140da43ea9b74826deaccf864",
+  "result_ref": "inference-result:invoke_848c6681ac20cb980bacc603e478f0f0/sha256:d4c6c5e01dc8975f78aa7a41ddbea356cb5544d5506260c8f555ed5a3ceff8e1",
+  "route_execution_receipt": {
+   "schema": "RouteExecutionReceipt@1",
+   "execution_id": "ire_06bcb3f90772f8a6d70338d555af671e",
+   "route_plan_id": "irp_e7f48e41aa87c77968195dfb398a5b4fea093804597017f2875e20b0a69e5eeb",
+   "route_plan_sha256": "sha256:304f24d6967d3c65fc2ccd3be6a1aff7fb880140b07a906c9be8c7b5c28b8219",
+   "operation_plan_id": "iorp_5fe1017ba00f5849c9061957e5fc65df181d1540268ec329027d1eca0bf18ff8",
+   "operation_plan_sha256": "sha256:9b9361c87f0e34ebf6dc68567e89b9e9effced13cf64a3f2de8aa4f7db4a6c80",
+   "state": "terminal",
+   "outcome": "succeeded",
+   "disposition": "owner_terminal",
+   "winning_attempt_id": "ira_2883bb154c2f26eb54f942d7d2729eb0",
+   "result_ref": "inference-result:invoke_848c6681ac20cb980bacc603e478f0f0/sha256:d4c6c5e01dc8975f78aa7a41ddbea356cb5544d5506260c8f555ed5a3ceff8e1",
+   "winning_deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
+   "winning_boundary": "private_network",
+   "considerations": [
+    {
+     "route_leg_ordinal": 1,
+     "profile_id": "glass-lan",
+     "profile_revision": 1,
+     "deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
+     "boundary": "private_network",
+     "status": "attempted",
+     "disposition": null,
+     "reason_code": null,
+     "physical_attempts": 1
+    }
+   ],
+   "all_models_physically_failed": false,
+   "physically_failed_attempt_count": 0,
+   "attempts": [
+    {
+     "attempt_id": "ira_2883bb154c2f26eb54f942d7d2729eb0",
+     "route_leg_ordinal": 1,
+     "leg_attempt_ordinal": 1,
+     "profile_id": "glass-lan",
+     "profile_revision": 1,
+     "physical_attempt_ordinal": 1,
+     "purpose": "primary",
+     "deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
+     "boundary": "private_network",
+     "child_operation_id": "op_80eff0f7b7604410829aad9fcf1d345e",
+     "disposition": "owner_terminal",
+     "outcome": "succeeded",
+     "send_phase": "provider_returned",
+     "child_receipt_sha256": "sha256:c05ddde3a8dab723222c8d3e9897b53bf66b305300c809f028a50ac5ae648740",
+     "disposition_evidence_sha256": "sha256:d95a67e4ad57d0715c66b52ec47c353acbd0e843d09a411bdae4a90e2a46936b"
+    }
+   ]
+  },
+  "route": {
+   "lamp": "private_network",
+   "host": "192.168.1.43",
+   "model": "qwen3.8-27b",
+   "fallback": false,
+   "receipt": "ire_06bcb3f90772f8a6d70338d555af671e"
+  },
+  "thread_id": "th_aaf4ccec390f",
+  "message_ids": {
+   "question": "tm_209892565313",
+   "answer": "tm_2017fff63ff7"
+  },
+  "looked_at": [
+   {
+    "ref": "note:n-mira",
+    "title": "1:1 with Mira",
+    "kind": "note",
+    "at": "2026-10-27T22:47:09Z"
+   },
+   {
+    "ref": "decision:d-freeze",
+    "title": "Freeze the old ledger on Nov 5",
+    "kind": "decision",
+    "at": "2026-10-27T08:00:00Z",
+    "state": "accepted"
+   }
+  ],
+  "tools": "",
+  "grounding_claims": [
+   {
+    "text": "You owe Mira feedback on her cutover design doc, due Friday.",
+    "score": 0.875,
+    "label": "entailed",
+    "flagged": false,
+    "ref": "note:n-mira",
+    "title": "1:1 with Mira"
+   },
+   {
+    "text": "We freeze the old ledger on Nov 5 after the reconciliation job runs.",
+    "score": 1.0,
+    "label": "entailed",
+    "flagged": false,
+    "ref": "decision:d-freeze",
+    "title": "Freeze the old ledger on Nov 5"
+   }
+  ]
+ },
+ "answered": {
+  "runs": [
+   {
+    "invocation_id": "ask_bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "question": "What do I owe Mira, and when is the freeze?",
+    "thread_id": "th_aaf4ccec390f",
+    "state": "answered",
+    "started_at": "2026-10-27T22:47:09.306300Z",
+    "text": "You owe Mira feedback on her cutover design doc, due Friday.\nWe freeze the old ledger on Nov 5 after the reconciliation job runs.",
+    "answer_id": "tm_2017fff63ff7"
+   },
+   {
+    "invocation_id": "ask_cccccccccccccccccccccccccccccccc",
+    "state": "unknown",
+    "reason": "did_not_answer"
+   }
+  ]
+ },
+ "thread": {
+  "id": "th_aaf4ccec390f",
+  "title": "What do I owe Mira, and when is the freeze?",
+  "recipe_id": "",
+  "profile_override": "",
+  "directory_id": "",
+  "call_mode": 0,
+  "parent_thread_id": null,
+  "status_line": "",
+  "token_in": 0,
+  "token_out": 0,
+  "created_at": 1793141229.40198,
+  "updated_at": 1793141229.402926,
+  "last_turn_at": 1793141229.402926,
+  "mode": null,
+  "messages": [
+   {
+    "id": "tm_209892565313",
+    "role": "user",
+    "parent_id": null,
+    "streaming": false,
+    "receipt_id": "",
+    "egress_scope": "",
+    "egress_host": "",
+    "egress_receipt_id": "",
+    "egress_fallback": false,
+    "model_id": "",
+    "error_json": null,
+    "stats_json": null,
+    "parts": [
+     {
+      "id": "tp_8f9b7c975a1d",
+      "kind": "text",
+      "text": "What do I owe Mira, and when is the freeze?",
+      "ordinal": 0,
+      "sensitive": false,
+      "draft": false
+     }
+    ],
+    "created_at": 1793141229.402223,
+    "updated_at": 1793141229.402614,
+    "completed_at": 1793141229.402614,
+    "aborted_at": null
+   },
+   {
+    "id": "tm_2017fff63ff7",
+    "role": "assistant",
+    "parent_id": "tm_209892565313",
+    "streaming": false,
+    "receipt_id": "ire_06bcb3f90772f8a6d70338d555af671e",
+    "egress_scope": "private_network",
+    "egress_host": "192.168.1.43",
+    "egress_receipt_id": "",
+    "egress_fallback": false,
+    "model_id": "qwen3.8-27b",
+    "error_json": null,
+    "stats_json": null,
+    "parts": [
+     {
+      "id": "tp_209dc1b3bb6e",
+      "kind": "text",
+      "text": "You owe Mira feedback on her cutover design doc, due Friday.\nWe freeze the old ledger on Nov 5 after the reconciliation job runs.",
+      "ordinal": 0,
+      "sensitive": false,
+      "draft": false
+     }
+    ],
+    "created_at": 1793141229.402926,
+    "updated_at": 1793141229.403172,
+    "completed_at": 1793141229.403172,
+    "aborted_at": null
+   }
+  ],
+  "siblings": {},
+  "refs": [
+   {
+    "id": "tr_23d06374732a",
+    "ref_kind": "note",
+    "ref_id": "n-mira",
+    "frozen_json": "{\"title\":\"1:1 with Mira\"}",
+    "created_at": 1793141229.402735,
+    "message_id": "tm_209892565313",
+    "origin": "reference"
+   },
+   {
+    "id": "tr_7dd83e95b623",
+    "ref_kind": "decision",
+    "ref_id": "d-freeze",
+    "frozen_json": "{\"title\":\"Freeze the old ledger on Nov 5\"}",
+    "created_at": 1793141229.402735,
+    "message_id": "tm_209892565313",
+    "origin": "reference"
+   },
+   {
+    "id": "tr_13de16719233",
+    "ref_kind": "note",
+    "ref_id": "n-mira",
+    "frozen_json": "{\"at\":\"2026-10-27T22:47:09Z\",\"claims\":[{\"label\":\"entailed\",\"text\":\"You owe Mira feedback on her cutover design doc, due Friday.\"}],\"title\":\"1:1 with Mira\"}",
+    "created_at": 1793141229.4034822,
+    "message_id": "tm_2017fff63ff7",
+    "origin": "relevance"
+   },
+   {
+    "id": "tr_ef26386253b5",
+    "ref_kind": "decision",
+    "ref_id": "d-freeze",
+    "frozen_json": "{\"at\":\"2026-10-27T08:00:00Z\",\"claims\":[{\"label\":\"entailed\",\"text\":\"We freeze the old ledger on Nov 5 after the reconciliation job runs.\"}],\"state\":\"accepted\",\"title\":\"Freeze the old ledger on Nov 5\"}",
+    "created_at": 1793141229.4034822,
+    "message_id": "tm_2017fff63ff7",
+    "origin": "relevance"
+   }
+  ],
+  "draft_annotations": []
+ }
+}

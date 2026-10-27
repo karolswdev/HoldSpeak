@@ -16,7 +16,7 @@ from typing import Any
 import pytest
 
 from tests._evidence import evidence_dir
-from .engine_stub_rig import _StubHandler
+from .engine_stub_rig import _StubHandler, completion_reply
 from .glass_infra import _api, _boot, _ensure_build, _normal_chair
 from .test_desk_sweep import TARGET_JS
 
@@ -155,8 +155,9 @@ def test_selected_note_ask_save_and_return(
                              "message": {"role": "assistant", "content": ANSWER}}],
                 "usage": {"prompt_tokens": 12, "completion_tokens": 13, "total_tokens": 25},
             }).encode()
+            ctype, payload = completion_reply(request, payload)
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(payload)))
             self.end_headers()
             self.wfile.write(payload)

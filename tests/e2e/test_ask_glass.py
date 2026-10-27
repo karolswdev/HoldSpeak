@@ -104,7 +104,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
 
     from playwright.sync_api import expect, sync_playwright
     from tests._evidence import evidence_dir
-    from .engine_stub_rig import _StubHandler
+    from .engine_stub_rig import _StubHandler, completion_reply
     from .glass_infra import _settle, clear_hub_windows
 
     answer = (
@@ -134,8 +134,9 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                              "message": {"role": "assistant", "content": answer}}],
                 "usage": {"prompt_tokens": 12, "completion_tokens": 9, "total_tokens": 21},
             }).encode()
+            ctype, body = completion_reply(request, body)
             self.send_response(200)
-            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Type", ctype)
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
