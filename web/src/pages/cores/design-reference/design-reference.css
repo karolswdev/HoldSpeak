@@ -69,6 +69,9 @@
     inset 0 1px 0 color-mix(in srgb, var(--white) 28%, transparent),
     0 1px 3px color-mix(in srgb, var(--wb-sel) 45%, transparent);
 }
+/* A rail row is strip chrome: its target is its own box, never a halo
+   over its neighbour (as the Settings rail). 44 px tall at 520 px and less. */
+.desk-next .reference-rail .reference-rail-row.btn::after { inset: 0; }
 .reference-rail-glyph {
   display: inline-grid;
   place-items: center;

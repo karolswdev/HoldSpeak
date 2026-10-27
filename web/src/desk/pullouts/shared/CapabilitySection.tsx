@@ -131,7 +131,7 @@ export function CapabilitySection({ object: o, blocked }: {
     .filter((value) => !value.includes(":"))
     .map((value) => humanizeWireValue(value));
   const runTitle = [
-    placementWords.length ? `Runs on ${placementWords.join(" or ").toLowerCase()}` : "",
+    placementWords.length ? `Works on ${placementWords.join(" or ").toLowerCase()}` : "",
     effectClasses?.includes("creates_artifact") ? "keeps the result" : "",
   ].filter(Boolean).join(", ");
 
@@ -228,7 +228,7 @@ export function capabilityBlockedWords(readiness: { state: string; detail?: stri
   // The hub's machine words for an empty Sequence: the window's own empty
   // state says what to do (Add mode).
   if (/linear sequence/i.test(detail)) return "Add a mode, then type the material.";
-  return detail || "This cannot run yet.";
+  return detail || "Nothing ran yet. Your material stays here. Choose engine, then press Run.";
 }
 
 /** The window toolbar's engine verb: opens Runs on with this object. */

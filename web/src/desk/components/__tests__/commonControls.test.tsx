@@ -174,7 +174,7 @@ describe("common controls keep their actions", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Run" })).not.toBeDisabled());
     // W2-BUILDER: where it runs is the Run's hover title (A.9); the engine
     // verb is the window toolbar's Choose engine (openCapabilityEngines).
-    expect(screen.getByRole("button", { name: "Run" })).toHaveAttribute("title", "Runs on this machine, keeps the result");
+    expect(screen.getByRole("button", { name: "Run" })).toHaveAttribute("title", "Works on this machine, keeps the result");
     expect(screen.queryByText(/Where it runs/)).toBeNull();
     openCapabilityEngines({ kind: "workflow", id: "flow-1", title: "Review" } as never);
     expect(openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/profiles", "workflow:flow-1");
