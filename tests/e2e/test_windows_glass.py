@@ -143,9 +143,6 @@ BODY44 = "() => {" + JS_LIB + r"""
   const out = [];
   for (const t of f.querySelectorAll(':scope > :not(.desk-pullout-head) :is(button, a[href], [role=button])')) {
     if (!shown(t) || t.closest('[role=menu]')) continue;
-    // W1-KIT (2026-10-27, the atlas fix the owner approved): the phone status
-    // bar is ONE 24 px line; its verbs are dense verbs, not 44 px plates.
-    if (t.closest('.kit-statusbar-verbs')) continue;
     if (t.parentElement && t.parentElement.closest('button, [role=button], a[href]')) continue;
     const v = vrect(t); if (!v.full) continue;
     const r = t.getBoundingClientRect();
