@@ -67,6 +67,26 @@ def _selection_and_scroll(frame: Any) -> dict[str, Any]:
     }""")
 
 
+def _settled_selection_and_scroll(frame: Any) -> dict[str, Any]:
+    """The selection and scroll once CodeMirror has finished the key's
+    scroll: Ctrl+End scrolls the caret into view in the editor's next measure
+    (an animation frame), above the margin drawer at 393. A read in the same
+    task as the key can see the scroll before that measure (1857 against the
+    1969 the Ask handoff kept, 2026-10-27), so this waits until scrollTop and
+    scrollHeight hold for three frames."""
+    frame.locator(".thought-note-body .cm-scroller").evaluate("""scroller => new Promise(done => {
+      let last = '', still = 0, frames = 0;
+      const tick = () => {
+        const shape = `${scroller.scrollTop}:${scroller.scrollHeight}:${scroller.clientHeight}`;
+        still = shape === last ? still + 1 : 0;
+        last = shape;
+        if (still >= 3 || ++frames > 60) done(null); else requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    })""")
+    return _selection_and_scroll(frame)
+
+
 def _current_caret_visible(frame: Any) -> None:
     """Read the painted caret before a Playwright action can scroll it."""
     state = frame.evaluate("""root => {
@@ -217,7 +237,7 @@ def test_selected_note_ask_save_and_return(
             page.keyboard.press("ControlOrMeta+End")
             page.keyboard.press("Home")
             page.keyboard.press("Shift+End")
-            captured = _selection_and_scroll(note)
+            captured = _settled_selection_and_scroll(note)
             assert captured["text"] == QUOTE, captured
             assert captured["scroll"] > 0, captured
             assert _visible_tail(note) == QUOTE
@@ -416,12 +436,12 @@ def test_selected_note_ask_save_and_return(
             assert "is-front" in (note.get_attribute("class") or "")
             note.locator(".thought-note-body .cm-scroller").click(position={"x": 28, "y": 28})
             page.keyboard.press("ControlOrMeta+End")
-            whole = _selection_and_scroll(note)
+            whole = _settled_selection_and_scroll(note)
             assert not whole["text"] and whole["scroll"] > 0, whole
             note.get_by_role("button", name="Ask about this", exact=True).click()
             expect(ask.get_by_test_id("ask-selected-passage")).to_contain_text("Source")
             ask.get_by_role("button", name="Back to Thought").click()
-            returned_whole = _selection_and_scroll(note)
+            returned_whole = _settled_selection_and_scroll(note)
             expected_scroll = min(whole["scroll"], returned_whole["maxScroll"])
             assert not returned_whole["text"] and abs(returned_whole["scroll"] - expected_scroll) <= 1, (whole, returned_whole)
             _current_caret_visible(note)

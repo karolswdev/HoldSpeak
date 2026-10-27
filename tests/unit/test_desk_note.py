@@ -166,3 +166,57 @@ def test_add_to_note_appends_and_undo_restores_recorded_for_the_face(hub, tmp_pa
         "undo": {"open": undo_open, "request": undo_request, "answer": undone},
     }, tmp_path, "tests/unit/test_desk_note.py::test_add_to_note_appends_and_undo_restores_recorded_for_the_face",
         folder=WIRE)
+
+
+def test_a_note_knows_its_place_recorded_for_the_face(hub, tmp_path) -> None:
+    """Note canvas A, step 5: the note's read names the Projects that file it
+    and the meeting it came from (the `meeting:<id>` tag that a meeting's
+    Open as note writes). A note with neither has neither key, so the face
+    draws no place words. The face replays these answers
+    (``web/src/test/wire/note.place.wire.json``)."""
+    from datetime import datetime, timedelta
+
+    from holdspeak.meeting_session.models import MeetingState
+    from tests.unit.test_desk_speak import _record
+
+    start = datetime(2026, 10, 24, 10, 0, 0)
+    hub.db.meetings.save_meeting(MeetingState(
+        id="m-ledger-sync", started_at=start, ended_at=start + timedelta(minutes=30), title="Ledger sync"))
+    hub.db.projects.create_project(project_id="p-ledger", name="Payments ledger cutover", description="", keywords=[])
+    hub.db.projects.create_project(project_id="p-old", name="Old ledger", description="", keywords=[])
+
+    plain = _seed(hub)
+    bare = _ok(hub.client.post("/api/thoughts/open-note", json={"note_id": plain}))["thought"]
+    assert "projects" not in bare and "source_meeting" not in bare
+
+    note = _ok(hub.client.post("/api/notes", json={
+        "title": "Ledger cutover plan", "body_markdown": "We move the payments ledger on Nov 14.",
+        "tags": ["meeting", "meeting:m-ledger-sync"],
+    }))["note"]
+    _ok(hub.client.put(f"/api/projects/p-ledger/resources/note:{note['id']}", json={"relationship": "related"}))
+    # A Project that let the note go does not name it.
+    _ok(hub.client.put(f"/api/projects/p-old/resources/note:{note['id']}", json={"relationship": "related"}))
+    _ok(hub.client.delete(f"/api/projects/p-old/resources/note:{note['id']}"))
+
+    opened = _ok(hub.client.post("/api/thoughts/open-note", json={"note_id": note["id"]}))
+    thought = opened["thought"]
+    assert thought["projects"] == [{"id": "p-ledger", "name": "Payments ledger cutover"}]
+    assert thought["source_meeting"]["id"] == "m-ledger-sync"
+    assert thought["source_meeting"]["title"] == "Ledger sync"
+    assert thought["source_meeting"]["at"].startswith("2026-10-24")
+    # Every read of the thought says it: the workbench and a save answer too.
+    workbench = _ok(hub.client.get(f"/api/thoughts/{thought['id']}/workbench"))
+    assert workbench["thought"]["projects"] == thought["projects"]
+    saved = _ok(hub.client.patch(f"/api/thoughts/{thought['id']}/working", json={
+        "expected_aggregate_revision": thought["aggregate_revision"],
+        "expected_working_revision": thought["working_revision"],
+        "title": "Ledger cutover plan", "body_markdown": "We move the payments ledger on Nov 14. Freeze first.",
+        "tags": ["meeting", "meeting:m-ledger-sync"],
+    }))
+    assert saved["thought"]["source_meeting"] == thought["source_meeting"]
+
+    _record("note.place.wire", {
+        "note_id": note["id"],
+        "open": opened,
+        "workbench": workbench,
+    }, tmp_path, "tests/unit/test_desk_note.py::test_a_note_knows_its_place_recorded_for_the_face", folder=WIRE)

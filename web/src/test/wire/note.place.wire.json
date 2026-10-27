@@ -1,0 +1,140 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_note.py::test_a_note_knows_its_place_recorded_for_the_face (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "note_id": "note_4278e9f872af",
+ "open": {
+  "thought": {
+   "id": "thought_711655b6d533",
+   "raw_id": "thought_711655b6d533",
+   "raw_sha256": "62b38b03a8663e9846626dc024afd78725bb337323f2270bd56af9957c8cccde",
+   "source": {
+    "kind": "note"
+   },
+   "raw_captured_at": "2026-10-27T13:00:16Z",
+   "state": "working",
+   "aggregate_revision": 1,
+   "lifecycle_revision": 1,
+   "working_revision": 1,
+   "attachment_revision": 0,
+   "attachment_sha256": "bc964b9773ec7161799ddec8441ea4e885bc185fd6aaacfbf876d3bc4166ce0c",
+   "attachments": [],
+   "working_note": {
+    "id": "note_4278e9f872af",
+    "title": "Ledger cutover plan",
+    "body_markdown": "We move the payments ledger on Nov 14.",
+    "tags": [
+     "meeting",
+     "meeting:m-ledger-sync"
+    ],
+    "deleted": false,
+    "last_modified": "2026-10-27T13:00:16Z"
+   },
+   "filing_status": "missing",
+   "continuity": {
+    "state": "idle",
+    "code": ""
+   },
+   "projects": [
+    {
+     "id": "p-ledger",
+     "name": "Payments ledger cutover"
+    }
+   ],
+   "source_meeting": {
+    "id": "m-ledger-sync",
+    "title": "Ledger sync",
+    "at": "2026-10-24T16:00:00+00:00"
+   }
+  }
+ },
+ "workbench": {
+  "schema_version": 1,
+  "process_scope": {
+   "kind": "hub_local",
+   "hub_id": "hub_64f48db1a96cb94e95e8648fbe7a3309",
+   "state": "unavailable"
+  },
+  "workspace_cursor": {
+   "hub_id": "hub_64f48db1a96cb94e95e8648fbe7a3309",
+   "thought_id": "thought_711655b6d533",
+   "aggregate_revision": 1,
+   "continuity_revision": 0
+  },
+  "thought": {
+   "id": "thought_711655b6d533",
+   "raw_id": "thought_711655b6d533",
+   "raw_sha256": "62b38b03a8663e9846626dc024afd78725bb337323f2270bd56af9957c8cccde",
+   "source": {
+    "kind": "note"
+   },
+   "raw_captured_at": "2026-10-27T13:00:16Z",
+   "state": "working",
+   "aggregate_revision": 1,
+   "lifecycle_revision": 1,
+   "working_revision": 1,
+   "attachment_revision": 0,
+   "attachment_sha256": "bc964b9773ec7161799ddec8441ea4e885bc185fd6aaacfbf876d3bc4166ce0c",
+   "attachments": [],
+   "working_note": {
+    "id": "note_4278e9f872af",
+    "title": "Ledger cutover plan",
+    "body_markdown": "We move the payments ledger on Nov 14.",
+    "tags": [
+     "meeting",
+     "meeting:m-ledger-sync"
+    ],
+    "deleted": false,
+    "last_modified": "2026-10-27T13:00:16Z"
+   },
+   "filing_status": "missing",
+   "continuity": {
+    "state": "idle",
+    "code": ""
+   },
+   "projects": [
+    {
+     "id": "p-ledger",
+     "name": "Payments ledger cutover"
+    }
+   ],
+   "source_meeting": {
+    "id": "m-ledger-sync",
+    "title": "Ledger sync",
+    "at": "2026-10-24T16:00:00+00:00"
+   }
+  },
+  "workspace_state": "idle",
+  "actions": {
+   "primary": {
+    "kind": "configure_ai"
+   },
+   "state": [
+    {
+     "kind": "configure_ai"
+    }
+   ],
+   "ambient": [
+    "update_working",
+    "attach_context",
+    "complete"
+   ]
+  },
+  "review": null,
+  "context_status": {
+   "summary": "",
+   "state": "empty",
+   "repair_ref": null
+  },
+  "inference": {
+   "availability": "unavailable",
+   "continuation_admission": "unavailable",
+   "intended_placement": {
+    "target_id": "this_machine",
+    "target_name": "This device",
+    "target_kind": "this_device",
+    "boundary": "same_device",
+    "readiness": "unavailable"
+   }
+  },
+  "terminal_status": null
+ }
+}

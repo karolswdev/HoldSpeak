@@ -172,8 +172,9 @@ const FOLLOW_THROUGH_REF = /^(?:follow-through|action_item|action):(.+)$/;
 export function refOpener(ref: string | null | undefined, navigation?: DeskNavigation): Opener | null {
   const clean = (ref ?? "").trim();
   if (!clean) return null;
-  if (clean.startsWith("people:")) {
-    const id = clean.slice("people:".length);
+  // `person:<id>` is the same person (a Note's @ link, the About picker).
+  if (clean.startsWith("people:") || clean.startsWith("person:")) {
+    const id = clean.slice(clean.indexOf(":") + 1);
     if (!id || id.startsWith("project:")) return null;
     return () => openPerson(id);
   }

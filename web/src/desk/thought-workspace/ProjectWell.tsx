@@ -10,7 +10,7 @@ export function ProjectWell({
   onClose,
 }: {
   noteId: string;
-  onAdded(receipt: string): void;
+  onAdded(receipt: string, project: { id: string; name: string }): void;
   onClose(): void;
 }) {
   const projects = useDesk((state) => state.projects).filter((project) => !project.is_archived);
@@ -28,7 +28,7 @@ export function ProjectWell({
         `/api/projects/${encodeURIComponent(project.id)}/resources/${encodeURIComponent(`note:${noteId}`)}`,
         { method: "PUT", json: { relationship: "related" } },
       );
-      onAdded(`In ${project.name || "project"}`);
+      onAdded(`In ${project.name || "project"}`, { id: project.id, name: project.name || "" });
       onClose();
     } catch (cause) {
       setError(readableError(cause));

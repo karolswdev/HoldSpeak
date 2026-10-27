@@ -730,7 +730,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 
 | Window (id) | Jobs | Doors in → out | G | T | H | F | D | Dn | C | P | Sum |
 | --- | --- | --- | - | - | - | - | - | - | - | - | - |
-| Note (`pullout:note:*`) | J1 | floor icon (1), ⌘K (2), Inbox drawer row (2) → Done closes; Send… in place. Lane / PR: W1-DOORS (opens rendered, caret at the end) | 2 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | 20 |
+| Note (`pullout:note:*`) | J1 | floor icon (1), ⌘K (2), Inbox drawer row (2) → Done closes; Send… in place. Lane / PR: W1-DOORS (opens rendered, caret at the end); W3-NOTE-STEPS (objects in the text: glyph + ink, peek card, press opens; @ and # completion; the status-bar place line from the hub's `projects` and `source_meeting`) | 2 | 3 | 3 | 3 | 3 | 3 | 2 | 2 | 21 |
 | Decision (`pullout:decision:*`) | J3 | Needs you ▸ Decide (2), ⌘K (2), Go ▸ Decisions ▸ row (3) | 0 | 1 | 2 | 2 | 1 | 1 | 0 | 1 | 8 |
 | Meeting (`surface-meetings@meeting:*`) | J2 | dock Meetings ▸ row (2), Needs you row (2) → Back to the list. Lane / PR: W2-LIVE-2 (Today's rail at Summary, Send follow-up… primary, Settings trailing, Decide… on decided rows) | 3 | 2 | 2 | 3 | 2 | 2 | 3 | 1 | 18 |
 | Person (`pullout:people:*`) | J3 | dock People ▸ row (2), Today 1:1 (2) | 2 | 3 | 2 | 2 | 2 | 1 | 2 | 1 | 15 |

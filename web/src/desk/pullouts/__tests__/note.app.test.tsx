@@ -23,6 +23,8 @@ import { clearEngineCache } from "../../hooks/useEngine";
 import { NOTE_GREW_EVENT } from "../../thoughts";
 import NOTE from "../../../test/wire/note.one-note.wire.json";
 import THREAD from "../../../test/wire/ask.thread.wire.json";
+import PLACE from "../../../test/wire/note.place.wire.json";
+import { __resetSurfaces, registerSurface } from "../../shell";
 
 vi.mock("../../../runtime/RuntimeBus", () => {
   const value = { state: "connected", lastFrame: null, subscribe: () => () => undefined };
@@ -386,5 +388,50 @@ describe("Direction A: the note's margin", () => {
     expect(findLine(body, "Write the handbook")).toBeNull();
     expect(decisionLines(body).map((line) => line.text)).toEqual(["the old ledger stays read-only for 30 days.", "keep the shim"]);
     expect(peopleNamed(body)).toBe(2);
+  });
+});
+
+describe("Note canvas A, step 6: the status bar's place line", () => {
+  const placeObject = {
+    kind: "note", id: PLACE.note_id, title: "Ledger cutover plan",
+    ref: { kind: "note", title: "Ledger cutover plan", bodyMarkdown: PLACE.open.thought.working_note.body_markdown },
+  } as never;
+
+  afterEach(() => __resetSurfaces());
+
+  it("names the Project that files the note and the meeting it came from; each word opens its window", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET");
+      if (method === "POST" && url.endsWith("/api/thoughts/open-note")) return Promise.resolve(reply(PLACE.open));
+      if (method === "GET" && url.endsWith(`/api/thoughts/${PLACE.open.thought.id}/workbench`)) return Promise.resolve(reply(PLACE.workbench));
+      return Promise.resolve(reply({}));
+    }));
+    const opened: Array<[string, string | undefined]> = [];
+    registerSurface("open-project-memory", (scope) => { opened.push(["room", scope]); });
+    registerSurface("review-meetings", (scope) => { opened.push(["meetings", scope]); });
+    const ref = `note:${PLACE.note_id}`;
+    const { container } = render(<MemoryRouter><Pullout o={placeObject} pulloutId={ref} /></MemoryRouter>);
+
+    const project = await waitFor(() => {
+      const item = container.querySelector('[data-testid="note-place-project"]');
+      expect(item).not.toBeNull();
+      return item as HTMLElement;
+    });
+    expect(project.textContent).toBe("Payments ledger cutover");
+    const meeting = container.querySelector('[data-testid="note-place-meeting"]') as HTMLElement;
+    expect(meeting.textContent).toBe("From Ledger sync, Oct 24");
+    // The press words are library Buttons with their glyphs.
+    fireEvent.click(within(project).getByRole("button"));
+    fireEvent.click(within(meeting).getByRole("button"));
+    expect(opened).toEqual([["room", "project:p-ledger"], ["meetings", "meeting:m-ledger-sync"]]);
+  });
+
+  it("draws no place words when the hub names no place", async () => {
+    const { container } = render(<MemoryRouter><Pullout o={noteObject} pulloutId={NOTE_REF} /></MemoryRouter>);
+    await waitFor(() => expect(container.textContent).toContain("Theo could own the handbook."));
+    expect(container.querySelector('[data-testid="note-place-project"]')).toBeNull();
+    expect(container.querySelector('[data-testid="note-place-meeting"]')).toBeNull();
+    expect(container.textContent).not.toContain("Desk root");
   });
 });
