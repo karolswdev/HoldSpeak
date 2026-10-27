@@ -625,14 +625,46 @@
 .object-list[data-density="dense"] .object-list-row[data-selected="true"] .kit-dot {
   box-shadow: 0 0 0 1px var(--wb-paper);
 }
+/* W1-KIT (2026-10-27): the narrow sort verb (a dense "Sort" Button in the
+   toolbar's sort slot, or in place above the rows when no toolbar holds a
+   slot) and its menu of columns. Wide, the column header sorts. */
+.object-list-sortline {
+  display: none;
+}
+.desk-next .surface-popover:has(> .object-list-sortmenu) {
+  padding: 4px;
+  font-family: var(--font-sans);
+}
+.object-list-sortmenu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+}
+.desk-next .object-list-sortmenu .btn {
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  font: 500 13px / 1 var(--font-sans);
+  text-align: left;
+}
+.desk-next .object-list-sortmenu .btn[aria-pressed="true"] {
+  background: var(--wb-blue);
+  color: var(--wb-sel);
+}
 @container surface (max-width: 520px) {
-  /* Narrow: the header keeps one sort gadget per column (44 px), the row
-     keeps the name and the state on its first line and lets the other
-     cells fall under the name: every cell stays visible and readable. */
+  /* Narrow: the rows fold to two lines, so the column header (cells that no
+     longer sit over anything) is hidden; the sort lives in the Sort verb.
+     The row keeps the name and the state on its first line and lets the
+     other cells fall under the name: every cell stays visible. */
   .object-list[data-density="dense"] .object-list-head {
-    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    display: none;
+  }
+  .object-list[data-density="dense"] .object-list-sortline {
     display: flex;
-    flex-wrap: wrap;
+    justify-content: flex-end;
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--wb-rule-soft);
   }
   .object-list[data-density="dense"] .object-list-th {
     flex: 1 1 0;

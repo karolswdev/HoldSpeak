@@ -1021,11 +1021,11 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
           last check; the last change's receipt, Undo and its egress). No
           headline, no mono strip. */}
       <Toolbar label="Engines" data-testid="runson-toolbar">
-        {/* One primary: a cold desk leads with discovery (Find on LAN); with
-            an engine, Add an engine leads. */}
+        {/* W1-KIT: the one primary is Add an engine (the verb that makes an
+            engine), on a cold desk and a full one; Find on LAN is plain. */}
         <Button
           dense
-          variant={noEngine ? "secondary" : "primary"}
+          variant="primary"
           className="runson-add-open"
           aria-expanded={ctrl.add.open}
           data-testid="concierge-add-engine"
@@ -1036,7 +1036,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         </Button>
         <Button
           dense
-          variant={noEngine ? "primary" : "secondary"}
+          variant="secondary"
           className="runson-find-lan"
           data-testid="runson-find-lan"
           onClick={() => void ctrl.findOnLan()}

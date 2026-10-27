@@ -816,8 +816,14 @@ class TestTheRunsOnFooter(FitRig):
                 rb, cb = receipt.evaluate(BOX_JS), undo.evaluate(BOX_JS)
                 text = receipt.inner_text()
                 # The text's own box (the span may be wider than its glyphs when it wraps).
+                # W1-KIT: the phone status bar is one line whose facts end in
+                # an ellipsis: the drawn ink stops at the facts' clip box.
                 ink = receipt.evaluate("(e) => { const r = document.createRange(); r.selectNodeContents(e);"
-                                       " const rs = [...r.getClientRects()]; return rs.map((b) => ({x: b.left, r: b.right, y: b.top, btm: b.bottom})); }")
+                                       " const clip = e.closest('.kit-statusbar-items'); const cs = clip && getComputedStyle(clip).overflow === 'hidden' ? clip.getBoundingClientRect() : null;"
+                                       " const rs = [...r.getClientRects()]; return rs.map((b) => ({x: b.left, r: cs ? Math.min(b.right, cs.right) : b.right, y: b.top, btm: b.bottom})); }")
+                rb = receipt.evaluate("(e) => { const b = e.getBoundingClientRect(); const clip = e.closest('.kit-statusbar-items');"
+                                      " const cs = clip && getComputedStyle(clip).overflow === 'hidden' ? clip.getBoundingClientRect() : null;"
+                                      " return {x: b.left, y: b.top, r: cs ? Math.min(b.right, cs.right) : b.right, btm: b.bottom, w: b.width, h: b.height}; }")
                 self.facts["B27"] = {"receipt": rb, "undo": cb, "text": text, "ink": ink}
                 same_row = lambda b: not (b["btm"] <= cb["y"] or b["y"] >= cb["btm"])  # noqa: E731
                 assert rb["r"] <= cb["x"] + 0.5 or not same_row(rb), self.facts["B27"]

@@ -71,7 +71,8 @@
 .room-settling-line {
   position: absolute;
   top: 0;
-  left: var(--desk-surface-row-pad-x, 14px);
+  right: 0;
+  left: 0;
   visibility: visible;
 }
 /* A late section's place at the foot while its read is out. */
