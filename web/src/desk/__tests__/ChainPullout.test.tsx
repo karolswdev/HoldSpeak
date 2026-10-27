@@ -20,7 +20,7 @@ describe("Sequence actions", () => {
 
   it("keeps Dictate as a library action that opens the real surface with its source", () => {
     render(<ChainPullout object={object([])} onClose={() => {}} />);
-    expect(screen.getByText("No steps")).toBeTruthy();
+    expect(screen.getByText(/^No steps yet/)).toBeTruthy();
     const dictate = screen.getByRole("button", { name: "Dictate about this" });
     expect(dictate.classList.contains("btn")).toBe(true);
     fireEvent.click(dictate);

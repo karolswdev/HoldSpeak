@@ -69,7 +69,7 @@ describe("Components editing specimen", () => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
     render(<EditingReference preset="read-only" />);
 
-    expect(screen.getByText("READ ONLY")).toBeVisible();
+    expect(screen.getByText("Read only")).toBeVisible();
     expect(screen.getByText("NOT INSERTED")).toBeVisible();
     expect(screen.getByRole("button", { name: "Capture target" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Insert at caret" })).toBeDisabled();

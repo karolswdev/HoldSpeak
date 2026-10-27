@@ -71,6 +71,7 @@ import type {
 } from "./model";
 import { lifecycleLabel, formatDays, needsYouWhyWords, whyFaceWords } from "./model";
 import { StringGadget, CycleGadget, FoldGadget } from "../../desk/surface/gadgets";
+import { AskComposer, AskEngineWord, AskSendButton, kindGlyph } from "../../desk/components/askFace";
 import { receiptFace, receiptLabel, refusalWord } from "../../desk/surface/egress";
 import { useProjectRoomController } from "./useProjectRoomController";
 import { useReviewController } from "./review/useReviewController";
@@ -1531,12 +1532,12 @@ function ReceiptsSection({ room }: { room: RoomSnapshot }) {
 
 /* ── Ask well ── */
 
-/** The name of the engine that answers this project's questions, or
- *  NOT SET when unassigned. Owner ruling 2026-10-25: the engine is named by
- *  name only; no host and no place word on the Room. Settings ▸ Engines
- *  and the Ask window name where it runs. */
-function useModelLabel(projectId: string): { host: string } {
-  const [host, setHost] = useState("NOT SET");
+/** The engine that answers this project's questions: its name, or `none`
+ *  when unassigned, `unread` before the first read. Owner ruling
+ *  2026-10-25: the engine is named by name only; no host and no place word
+ *  on the Room. Settings ▸ Engines and the Ask window name where it runs. */
+function useModelLabel(projectId: string): { state: "unread" | "set" | "none"; name: string } {
+  const [label, setLabel] = useState<{ state: "unread" | "set" | "none"; name: string }>({ state: "unread", name: "" });
   const deskTargets = useDesk((s) => s.inferenceTargets);
   // HS-200-41 — the defect on this very seam. The hook used to re-read only
   // on `[projectId, targets]`, and `inferenceTargets` moves only when the
@@ -1569,14 +1570,14 @@ function useModelLabel(projectId: string): { host: string } {
       if (eff.status === "assigned" && eff.assignment?.entries?.length) {
         const entry = eff.assignment.entries[0];
         const target = targets.find((t) => t.profile_id === entry.profile_id);
-        setHost(entry.label || target?.name || "Assigned engine");
+        setLabel({ state: "set", name: entry.label || target?.name || "Assigned engine" });
       } else {
-        setHost("NOT SET");
+        setLabel({ state: "none", name: "" });
       }
     }).catch(() => { /* non-fatal */ });
     return () => { cancelled = true; };
   }, [projectId, targets, reread]);
-  return { host };
+  return label;
 }
 
 /** The Room's ask (Betterment Q5): the field opens the one Ask window with
@@ -1594,89 +1595,99 @@ export function useRoomAsk(projectId: string, projectName: string) {
     );
     setPrompt("");
   };
-  return { prompt, setPrompt, inputRef, ask };
+  return { prompt, setPrompt, inputRef, ask, projectName };
 }
 
 export type RoomAsk = ReturnType<typeof useRoomAsk>;
 
-/** The Room's ask (Phase 16: the kit's AskWell: the sunken paper well with
- *  the mic on its right edge, the model's egress chip beside it). The
- *  Room window on the desk (the Project's drawer) draws the same well. */
+/** The Room's ask (Window Program W2, 2026-10-27): the Ask window's own
+ *  composer row (askFace AskComposer), its scope preset to this project:
+ *  [project ▸ name] [field] [mic] [Result] [● engine] [Ask ⏎]. The question
+ *  runs in the Ask window, so it lands in Ask's Recent too. The Room's
+ *  well, engine chip and hidden Submit are parked
+ *  (`_parked/roomAskWell.v1-2026-10-27.tsx`). The Room window on the desk
+ *  (the Project's drawer) draws the same row. */
 export function RoomAskWell({
   ask,
   projectId,
-  onOpenRef,
   onPrepare,
 }: {
   ask: RoomAsk;
   projectId: string;
-  onOpenRef: (ref: string) => void;
+  onOpenRef?: (ref: string) => void;
   /** HS-200-11: `Result → Preparation brief` hands the words to the Prepare
    *  posture; nothing here requires a calendar (AC1). */
   onPrepare?: (purpose: string) => void;
 }) {
   const { prompt, setPrompt, inputRef } = ask;
-  const modelLabel = useModelLabel(projectId);
+  const engine = useModelLabel(projectId);
+  const name = ask.projectName || "This project";
+  const chooseEngine = () => {
+    // The verb he leaves is the engine word; the place to come back to is
+    // the field he was typing in, with his words still in it (design D2(a)).
+    rememberTaskFocus(inputRef.current);
+    openSurfaceOr("configure-runs-on", "/settings", "models");
+  };
 
   return (
     <div className="room-ask-section" data-testid="room-ask-well">
-      <div className="room-ask-well" data-testid="room-ask-input-well">
-        {/* Phase 16 (the interior kit, §11 "AskWell"): the library string
-            well (sunken paper, the mic on its right edge) replaces the raw
-            input HS-170-04 left for a redesign. */}
-        <StringGadget
-          label="Ask this project"
-          value={prompt}
-          onChange={setPrompt}
-          placeholder="Ask this project…"
-          micLabel="Speak to ask this project"
-          micDraftScope={`project-ask-${projectId}`}
-          inputRef={inputRef}
-          inputProps={{ className: "room-ask-input" }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              void ask.ask();
-            }
-          }}
-        />
-        {onPrepare ? (
-          <span className="room-ask-result" data-testid="room-ask-result">
-            <CycleGadget
-              label="Result"
-              value="answer"
-              options={RESULT_OPTIONS}
-              onChange={(next) => { if (next === "brief") onPrepare(prompt); }}
+      <AskComposer
+        className="room-ask-composer"
+        data-testid="room-ask-input-well"
+        scope={
+          <span className="desk-ask-scope-word desk-ask-scope-preset" title={`About: ${name}`}>
+            <img src={kindGlyph("project", `project:${projectId}`)} alt="" width={16} height={16} draggable={false} />
+            <span className="desk-ask-scope-text">{name}</span>
+          </span>
+        }
+        field={
+          <StringGadget
+            label="Ask this project"
+            mic={false}
+            value={prompt}
+            onChange={setPrompt}
+            placeholder="Ask this project…"
+            inputRef={inputRef}
+            inputProps={{ className: "room-ask-input" }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                void ask.ask();
+              }
+            }}
+          />
+        }
+        capture={
+          <>
+            <MicButton
+              label="Speak to ask this project"
+              draftScope={`project-ask-${projectId}`}
+              onText={(text) => setPrompt((current) => (current ? `${current} ${text}` : text))}
+            />
+            {onPrepare ? (
+              <span className="room-ask-result" data-testid="room-ask-result">
+                <CycleGadget
+                  label="Result"
+                  value="answer"
+                  options={RESULT_OPTIONS}
+                  onChange={(next) => { if (next === "brief") onPrepare(prompt); }}
+                />
+              </span>
+            ) : null}
+          </>
+        }
+        engine={(
+          // Always drawn in a fixed slot (the desk sweep's still fence).
+          <span className="room-ask-engine-slot" data-testid={engine.state === "set" ? "room-ask-engine" : engine.state === "none" ? "room-ask-no-engine" : undefined}>
+            <AskEngineWord
+              state={engine.state}
+              name={engine.name}
+              onPress={chooseEngine}
             />
           </span>
-        ) : null}
-        {/* NOT SET = the plain fact and Choose; assigned = the engine's name. */}
-        {modelLabel.host === "NOT SET" ? (
-          <span className="room-ask-model-chip">
-            {/* PHILO-17 U31: the plain fact, not MODEL · NOT SET. */}
-            <DotWord tone="warn" data-testid="room-ask-no-engine">No engine for answers</DotWord>
-            <Button
-              dense
-              variant="ghost"
-              onClick={() => {
-                // The verb he leaves is `Choose`, but `Choose` is GONE once a
-                // model is set — so the place to come back to is the well he
-                // was typing in, with his words still in it (design D2(a)).
-                rememberTaskFocus(inputRef.current);
-                openSurfaceOr("configure-runs-on", "/settings", "models");
-              }}
-            >
-              Choose
-            </Button>
-          </span>
-        ) : (
-          <span className="room-ask-model-chip room-ask-engine" data-testid="room-ask-engine">{modelLabel.host}</span>
         )}
-        {/* Condition 1: no raw <button>; visually-hidden submit for a11y */}
-        <Button dense variant="ghost" className="room-ask-submit-hidden" aria-label="Submit" onClick={() => void ask.ask()} tabIndex={-1}>
-          Submit
-        </Button>
-      </div>
+        action={<AskSendButton variant="secondary" disabled={!prompt.trim()} onClick={() => void ask.ask()} />}
+      />
     </div>
   );
 }

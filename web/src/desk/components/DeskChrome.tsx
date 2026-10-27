@@ -28,7 +28,8 @@ import { openSourceRef } from "../surface/citations";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDeskWriteReceipt } from "../hooks/useWriteReceipt";
 import { useCompactViewport } from "../useCompactViewport";
-import { usePhoneSwipe } from "./window/phoneRing";
+import { phoneRing, usePhoneSwipe } from "./window/phoneRing";
+import { ScreenSwitcher } from "./window/ScreenSwitcher";
 import { SYSTEM } from "../systemSprites";
 import { MARK_APPLICATION_COMMANDS } from "../applications";
 import { Button } from "../../components/signal/Signal";
@@ -114,6 +115,12 @@ function ScreenTitle() {
   const front = useFrontWindowId();
   const open = useAllOpenWindows();
   const name = (front ? open.find((w) => w.id === front)?.label : null) ?? "Desk";
+  // W2-BUILDER (atlas 2026-10-27, phone-three-393): at 393 only the front
+  // sheet shows. With more than one window open the title is the switcher
+  // again (PHILO-13-17 Q2, ratified 2026-10-03): `<window> ▾` lists every
+  // open window, so the ones behind are two taps away.
+  const compact = useCompactViewport();
+  if (compact && open.length > 1 && phoneRing().length > 1) return <ScreenSwitcher name={name} />;
   return (
     <span className="desk-screen-title" data-testid="desk-screen-title">
       <span className="desk-screen-name" title={name}>{name}</span>

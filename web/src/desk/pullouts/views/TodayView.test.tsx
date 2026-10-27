@@ -122,7 +122,7 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     render(<TodayView />);
     // Betterment D4: the empty desk is ONE line under Needs you.
     const empty = await screen.findByTestId("today-empty-desk");
-    expect(empty.textContent).toContain("Your meetings and calendar fill this.");
+    expect(empty.textContent).toContain("No meetings and no calendar yet.");
     expect(within(empty).getByRole("button", { name: "Connect calendar" }).className).toContain("btn--primary");
     expect(screen.queryByTestId("today-empty")).toBeNull();
     expect(screen.getByRole("button", { name: "Record now" }).className).not.toContain("btn--primary");

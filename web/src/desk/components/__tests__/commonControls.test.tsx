@@ -7,7 +7,7 @@ import type { ResourcefulPolicy } from "../../detail-types";
 import { InfoWindow } from "../InfoWindow";
 import { ZoneWindow } from "../ZoneWindow";
 import { WorkbenchResourceful } from "../WorkbenchResourceful";
-import { CapabilitySection } from "../../pullouts/shared/CapabilitySection";
+import { CapabilitySection, openCapabilityEngines } from "../../pullouts/shared/CapabilitySection";
 import { openSurfaceOr } from "../../shell";
 import { useWriteReceipt } from "../../hooks/useWriteReceipt";
 import { readDurableDraft } from "../../../lib/durableDraft";
@@ -171,9 +171,13 @@ describe("common controls keep their actions", () => {
     expect(await screen.findByText("Kept review")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Open kept Artifact" }));
     expect(openPullout).toHaveBeenCalledWith("artifact-1");
-    fireEvent.click(screen.getByRole("button", { name: "Assignments" }));
-    expect(openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/profiles", "workflow:flow-1");
     await waitFor(() => expect(screen.getByRole("button", { name: "Run" })).not.toBeDisabled());
+    // W2-BUILDER: where it runs is the Run's hover title (A.9); the engine
+    // verb is the window toolbar's Choose engine (openCapabilityEngines).
+    expect(screen.getByRole("button", { name: "Run" })).toHaveAttribute("title", "Works on this machine, keeps the result");
+    expect(screen.queryByText(/Where it runs/)).toBeNull();
+    openCapabilityEngines({ kind: "workflow", id: "flow-1", title: "Review" } as never);
+    expect(openSurfaceOr).toHaveBeenCalledWith("configure-runs-on", "/profiles", "workflow:flow-1");
   });
 
   it("keeps selected paragraphs and newer edits when a late voice result fills capability material", async () => {

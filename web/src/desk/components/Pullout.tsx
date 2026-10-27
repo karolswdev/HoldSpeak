@@ -39,7 +39,7 @@ function PulloutFrame({
 }) {
   const profiles = useDesk((s) => s.profiles);
   const editing = useDesk((s) => s.editingId === o.id);
-  const { closePullout, openEditor } = useDesk.getState();
+  const { closePullout } = useDesk.getState();
   const closeGuard = useRef<(() => Promise<boolean>) | null>(null);
   const registerClose = useCallback<RegisterCloseGuard>((guard) => {
     closeGuard.current = guard;
@@ -114,15 +114,8 @@ function PulloutFrame({
               {egress.text}
             </span>
           )}
-          {o.kind === "workflow" && (
-            <Button
-              dense
-              variant="ghost"
-              onClick={() => openEditor(o.id)}
-            >
-              Edit Workflow
-            </Button>
-          )}
+          {/* W2-BUILDER: Edit Workflow left the title bar; Edit is the
+              first verb of the Workflow's own toolbar. */}
         </>
       }
     >

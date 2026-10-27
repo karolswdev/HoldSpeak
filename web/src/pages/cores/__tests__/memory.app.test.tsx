@@ -118,7 +118,7 @@ describe("Q12 Memory", () => {
     expect(screen.getByTestId("memory-status").textContent).toContain("1 project");
     expect(screen.getByTestId("memory-status").textContent).toContain("1 person");
 
-    fireEvent.change(within(home).getByRole("searchbox", { name: "Ask your desk" }), { target: { value: "what changed?" } });
+    fireEvent.change(within(home).getByRole("searchbox", { name: "Find or ask your desk" }), { target: { value: "what changed?" } });
     fireEvent.click(within(home).getByRole("button", { name: "Ask" }));
     expect(useDesk.getState().askQuestion).toHaveBeenCalledWith("what changed?");
     expect(useDesk.getState().askThread?.about).toBeUndefined();
@@ -148,7 +148,7 @@ describe("Q12 Memory", () => {
       vi.mocked(apiFetch).mockImplementation((url, init) =>
         String(url).startsWith(held) ? pending : original(url, init));
       render(<MemoryCore />);
-      expect(screen.getByRole("searchbox", { name: "Ask your desk" })).toBeTruthy();
+      expect(screen.getByRole("searchbox", { name: "Find or ask your desk" })).toBeTruthy();
       expect(screen.queryByTestId("memory-projects")).toBeNull();
       expect(screen.queryByTestId("memory-status")).toBeNull();
       release(held === "/api/memory/pages" ? pages : held === "/api/projects"
@@ -187,11 +187,47 @@ describe("Q12 Memory", () => {
     });
     render(<MemoryCore />);
     const empty = await screen.findByTestId("memory-empty");
-    expect(empty.textContent).toBe("Not written yet");
-    expect(screen.getAllByText("Not written yet")).toHaveLength(1);
+    expect(empty.textContent).toBe("Desk pages not written yet");
+    expect(screen.getAllByText("Desk pages not written yet")).toHaveLength(1);
+    expect(screen.getByTestId("memory-pages-line").textContent).toContain("No engine writes the desk pages");
     // No RAW fold on this face (debug hides behind RAW on the desk floor).
     expect(screen.queryByRole("button", { name: /^RAW$/ })).toBeNull();
-    fireEvent.click(within(screen.getByTestId("memory-toolbar")).getByRole("button", { name: "Choose engine" }));
+    fireEvent.click(within(screen.getByTestId("memory-pages-line")).getByRole("button", { name: "Choose engine" }));
     await waitFor(() => expect(vi.mocked(openSurfaceOr)).toHaveBeenCalledWith("open-concierge", "/models", "background"));
+  });
+
+  it("W2: the composer field finds as it is typed: names, then what the desk remembers, as name · kind · date rows", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (url) => {
+      if (String(url).startsWith("/api/memory/pages")) return pages;
+      if (String(url).startsWith("/api/memory/recall?query=")) {
+        return {
+          ...beliefs, query: "ledger", recent: false, beliefs: [],
+          current: [{ id: "d1", ref: "decision:d1", text: "Freeze the ledger on Nov 5", decided_at: "2026-10-20T10:00:00Z",
+            rationale: "", lifecycle: "accepted", state: "current", dec_token: "", axes: [], support: "", acceptance: "",
+            successor: null, predecessor_id: null, supersession_reason: null, dispute_reason: null, project: null,
+            source: null, carried: false, commitment_ids: [] }],
+          meetings: [{ kind: "calendar_event", source_ref: "meeting:m1", title: "Ledger sync", snippet: "", occurred_at: "2026-10-21T10:00:00Z" }],
+        };
+      }
+      if (String(url).startsWith("/api/memory/recall")) return beliefs;
+      if (url === "/api/projects") return { projects: [{ id: "p1", name: "Ledger" }] };
+      if (url === "/api/people/relationships?counts=1") return { relationships: [{ id: "r1", display_name: "Mira Kovacs" }] };
+      if (url === "/api/inference/assignments") return {};
+      return {};
+    });
+    render(<MemoryCore />);
+    const home = await screen.findByTestId("memory-home");
+    await within(home).findByTestId("memory-projects");
+    // One field: the Ask composer row over the whole desk, with Ask ⏎.
+    const toolbar = screen.getByTestId("memory-toolbar");
+    expect(toolbar.textContent).toContain("My whole desk");
+    expect(within(toolbar).getByRole("button", { name: "Ask" })).toBeDisabled();
+    fireEvent.change(within(home).getByRole("searchbox", { name: "Find or ask your desk" }), { target: { value: "ledger" } });
+    const found = await screen.findByTestId("memory-found");
+    await waitFor(() => expect(within(found).getByRole("button", { name: /Freeze the ledger on Nov 5, Decision · Oct 20/ })).toBeTruthy());
+    expect(within(found).getByRole("button", { name: "Ledger, Project" })).toBeTruthy();
+    expect(within(found).getByRole("button", { name: /Ledger sync, Calendar · Oct 21/ })).toBeTruthy();
+    expect(screen.queryByTestId("memory-people")).toBeNull();
+    expect(screen.getByTestId("memory-found-count").textContent).toBe("3 found");
   });
 });

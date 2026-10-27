@@ -37,14 +37,14 @@ doors.
 | Room ▸ History (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
 | Live meeting (W1-TRUTH, W1-FACES; Lane / PR: W2-LIVE, W2-LIVE-2) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 3 | **19** |
 | Speak (+ wings) (W1-FACES) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
-| Components | 0 | 1 | 2 | 2 | 1 | 2 | 1 | 1 | **10** |
+| Components (W2-BUILDER) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Ask | 2 | 1 | 2 | 2 | 1 | 1 | 1 | 1 | **11** |
 | Decision record (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
-| Memory | 2 | 2 | 1 | 1 | 1 | 3 | 1 | 2 | **13** |
-| Context | 2 | 2 | 1 | 2 | 1 | 2 | 2 | 2 | **14** |
-| Capture | 2 | 3 | 1 | 2 | 1 | 2 | 1 | 2 | **14** |
-| Today | 2 | 1 | 2 | 3 | 2 | 2 | 1 | 1 | **14** |
-| Room ▸ Now | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | **15** |
+| Memory (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 3 | 2 | 2 | **17** |
+| Context (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **16** |
+| Capture (W2-ASKWELLS) | 2 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
+| Today (W2-ASKWELLS words) | 2 | 2 | 2 | 3 | 2 | 2 | 2 | 1 | **16** |
+| Room ▸ Now (Ask: W2-ASKWELLS) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | People (W1-TRUTH) | 3 | 2 | 2 | 2 | 2 | 3 | 1 | 2 | **17** |
 | Decisions (W1-TRUTH) | 3 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **18** |
 | Engines (W1-TRUTH) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 2 | **18** |
@@ -88,6 +88,10 @@ weakest across the board.
    draw their own composer, engine line and refusal. Owner: "which one do I use?"
    (`web/src/desk/components/AskPanel.tsx`, `web/src/pages/cores/MemoryCore.tsx`,
    `web/src/features/project-room/ProjectRoomCore.tsx`).
+   **W2-ASKWELLS (2026-10-27):** one composer. Memory and the Room compose Ask's own row
+   (`web/src/desk/components/askFace.tsx` AskComposer, AskEngineWord, AskSendButton); both
+   hand the question to the Ask window, which runs it and keeps its answer, its
+   not-answered line and its Recent. Their own wells are parked.
 6. **Three loading faces.** Meetings and People show a faint grey ring (People also drops its
    toolbar while it waits), the Room shows a centred mono `Loading…`, Decisions and Projects
    show a toolbar over a blank body
@@ -150,6 +154,7 @@ Shots: [dense 1440](atlas-2026-10-27/today-1440.png) · [dense 393](atlas-2026-1
   dumps me in the project, where is the item?"; "What is a destination form doing in Since
   yesterday?" (TodayView.tsx Since fold).
 - **Fix needs:** a lane (ask card → a row; count = what is listed; Open item opens the item).
+- **W2-ASKWELLS (2026-10-27), Today's words:** a DOM read of the seeded Today (rows, Since yesterday, This week, the 1:1) finds no mono and no caps left but the stepper's numbers, now sans; the rows Today leaves out are one quiet row `11 more in Needs you` (opens Needs you), so the toolbar's 14 adds up; the empty desk says `No meetings and no calendar yet.` + *Connect calendar* (no help sentence). Left: the phone status bar (KIT), *Open item* lands on the Room, not the item. Shots: `scratchpad/shots/w2-askwells/today{,-since}-*.png`.
 
 #### Capture — `chair:capture` (14)
 
@@ -165,6 +170,7 @@ Shots: [dense 1440](atlas-2026-10-27/capture-1440.png) · [393](atlas-2026-10-27
   as a label · P2.
 - **Top defect:** "It is three words and a hole." Owner: `web/src/desk/chair/ChairHome.tsx`.
 - **Fix needs:** a lane (one true empty line; the row verb visible as a verb).
+- **W2-ASKWELLS (2026-10-27):** New note and Record carry their glyphs; *Record when it starts* is the library secondary Button (no ghost that reads as a label); read and empty, Coming up says `Nothing is coming up`; at 393 the three verbs are three 76 px tiles, the glyph over the word. Shots: `scratchpad/shots/w2-askwells/capture-{1440,393}.png`.
 
 #### Speak — `surface-dictation` + Journal, Blocks, Learned, Commands, ⚙ Configure dictation (10)
 
@@ -409,6 +415,7 @@ Shots: [1440](atlas-2026-10-27/context-1440.png) · [393](atlas-2026-10-27/conte
 - **Top defect:** "Is this sent to my agents right now?" Owner:
   `web/src/pages/cores/ConstitutionalContextCore.tsx`.
 - **Fix needs:** a lane.
+- **W2-ASKWELLS (2026-10-27):** the status bar always answers it: `● Every engine run reads this first` (the saved text is the first system message of every engine run, `holdspeak/intel/engine.py` `run_prompt`) or `Empty: no run reads it`; the editor is the page, edge to edge (no inset well). Left: Context has no door outside Builder tools. Shots: `scratchpad/shots/w2-askwells/context-{1440,393}.png`.
 
 #### Automations — `surface-workbenches` (17) and one automation open (18)
 
@@ -445,6 +452,14 @@ Shots: [1440](atlas-2026-10-27/components-1440.png) · [393](atlas-2026-10-27/co
 - **Top defect:** "The catalog of our grammar breaks our grammar." Owner:
   `web/src/pages/cores/ComponentsCore.tsx`.
 - **Fix needs:** a lane (wings for the groups, the specimen edge to edge).
+- **W2-BUILDER (2026-10-27):** the nine groups are a rail (the Settings rail's 32 px rows and
+  selection plate, a kit glyph each; drawn by the reference itself so no Settings pane style
+  reaches a specimen); the pane opens with a toolbar (`Preset` + the example state, Reset at the
+  right); the specimen runs on the paper; one status bar `Local specimen · <group> · <preset>`.
+  `PRESET`, `PROPOSED`, `THIS MAC`, `LOCAL SPECIMEN`, `N SHOWN`, `READ ONLY`, `OPENED LOCALLY` and
+  the specimen headlines are gone. At 393 the rail is the first view; a group opens with ‹ Groups.
+  Left: a specimen that is a whole window (Window, Forms, Conversation) keeps its own status bar
+  inside its frame; the Forms specimen draws Settings at its narrow width in a 640 px window.
 
 #### Activity — `surface-activity` + Rules, ⚙ Candidates and connectors (16)
 
@@ -480,6 +495,7 @@ Shots: [dense 1440](atlas-2026-10-27/memory-1440.png) · [393](atlas-2026-10-27/
 - **Top defect:** "Is this Ask, Projects or People? Why does it exist?" Owner:
   `web/src/pages/cores/MemoryCore.tsx`.
 - **Fix needs:** a canvas (Memory's job against Ask; possibly fold into Ask's About).
+- **W2-ASKWELLS (2026-10-27):** the toolbar is the Ask composer row (`askFace.tsx` AskComposer): `My whole desk` · one field *Find or ask your desk* · mic · `● No engine` · *Ask ⏎*. The field finds as it is typed: names, then `/api/memory/recall` hits, as dense rows of name · kind · date (`Decision · Oct 20`), status `15 found`; *Ask ⏎* runs the question in the Ask window. Pages not written: one line `● No engine writes the desk pages` + *Choose engine* (not a toolbar verb); an empty desk says `No projects or people yet`. Left: the canvas above. Shots: `scratchpad/shots/w2-askwells/memory{,-find,-asked}-*.png`.
 
 #### Room — `surface-project-memory` scoped `project:<id>`: Now (15), History (9)
 
@@ -506,6 +522,7 @@ Shots: [Now 1440](atlas-2026-10-27/room-1440.png) · [Now 393](atlas-2026-10-27/
   Now and History; Sources and Plan are folds). My press on the folds did not open them in the
   shot; their content is known from the DOM read only.
 - **Fix needs:** a lane for History (list view, dot + word, sentence case); Now is close.
+- **W2-ASKWELLS (2026-10-27), the Room's Ask:** the Ask composer row (`askFace.tsx` AskComposer), the scope preset to the project (folded on the phone, where the menu bar names it): `▣ Payments Platform Rewrite` · *Ask this project…* · mic · Result ▾ · `● No engine` · *Ask ⏎* (secondary: Write update is the Room's primary). The question runs in the Ask window with the project as its scope (shot `room-asked-1440.png`). The old well, chip and hidden Submit are parked (`_parked/roomAskWell.v1-2026-10-27.tsx`). Left: the Plan fold's mono caps dates (`JUL 15`, `LATE`, `26 DAYS`), the grey `Risk` pills.
 - **W1-FACES (2026-10-27):** History is a list view (`desk/surface/objects/ListView.tsx`):
   a toolbar with *All ▾* (All / GitHub / Jira / Room) and the search, quiet day captions
   (Today / Yesterday / Mon, Oct 20), rows of glyph · what happened · where · `14:02`, a press
@@ -665,14 +682,14 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Room ▸ History | J3 | Room wing → item Open | 9 | 2026-09 dashboard grammar | lane |
 | Live meeting (W1-TRUTH, W2-LIVE, W2-LIVE-2) | J2 | Meetings ▸ Record → Start meeting | 10 → 19 | healed: honest status, phone title, Today's stepper, gear wing moved, during as a document, the ready sheet, the record's rail and Decide…, one-line phone status bar; left: project line, mic level | W1-TRUTH, W2-LIVE, W2-LIVE-2 |
 | Speak | J1, dictation | Dock, ⌃5 → Talk | 10 | Speak/Speak; verbs move to the status bar; gear wing | lane |
-| Components | J7 | Go ▸ Builder → specimens | 10 | breaks the grammar it shows | lane |
+| Components | J7 | Go ▸ Builder → specimens | 10 → 16 | healed: a group rail (32 px rows, glyphs; the list first at 393), a toolbar (Preset, Reset), the specimen on the paper, one status bar (`Local specimen · Forms · Saved`); no caps tokens, no specimen headlines; left: the Forms specimen draws Settings at its narrow width inside a 640 px window | W2-BUILDER |
 | Ask | J3 | ⌘I/Ctrl+I, ⌘K → Save as note, Send | 11 | chat-demo look, oversized composer, mono errors | canvas (ASK) |
 | Decision record | J2 | Decisions row → Edit, Accept / Retire, Send…, Open record | 12 → 15 | healed: reader grammar, verbs in the toolbar, Filed in: in the status bar; left: toolbar wraps to two rows at 393; window is 440 px, not content-fit | W1-TRUTH |
-| Memory | J5 | Go ▸ Memory → Room, person | 13 | second Ask; blank empty | canvas |
-| Context | J4 | Go ▸ Builder → Save | 14 | no state | lane |
-| Capture | J1 | Go, phone Dock → Talk, New note | 14 | blank band | lane |
-| Today | J2–J4 | Dock 0, ⌃1 → items | 14 | mono ask card, count 32 vs 5, Send form in a fold | lane |
-| Room ▸ Now | J3, J4 | Projects, Today → Write update | 15 | third Ask; Risk pills; items hidden in Plan | lane |
+| Memory | J5 | Go ▸ Memory → Room, person | 13 → 17 | healed: one Ask composer, the field finds as typed, honest empty lines; left: Memory against Ask (canvas) | W2-ASKWELLS (+ canvas) |
+| Context | J4 | Go ▸ Builder → Save | 14 → 16 | healed: on/off in the status bar, the editor is the page; left: no door outside Builder | W2-ASKWELLS |
+| Capture | J1 | Go, phone Dock → Talk, New note | 14 → 17 | healed: one empty line, verbs with glyphs, visible row verb, phone tiles | W2-ASKWELLS |
+| Today | J2–J4 | Dock 0, ⌃1 → items | 14 → 16 | healed (W1-FACES + W2-ASKWELLS): sans words, `N more in Needs you`, no help sentence; left: phone status bar (kit), Open item → the item | W2-ASKWELLS |
+| Room ▸ Now | J3, J4 | Projects, Today → Write update | 15 → 16 | healed: the Ask is the Ask composer row; left: Risk pills, mono caps in Plan | W2-ASKWELLS (+ lane) |
 | People | J3 | Dock 2, ⌃3 → person | 15 → 17 | healed: no fake person from a 1:1 title, the name row once and quiet; left: `None` in Next 1:1, avatars, primary in the status bar | W1-TRUTH |
 | Decisions | J2 | Go → record | 15 → 18 | healed: title as the name, one state word (Open / Accepted / Superseded / Retired / Rejected) | W1-TRUTH |
 | Engines | J6 | HoldSpeak menu → pickers | 15 → 18 | healed: Not answering after a failed check (row, inspector, pickers), the owner's name with the model id as meta, the inspector follows the row; left: an auto-named engine (host:port label) still reads its model name here and the label in Ask | W1-TRUTH |
@@ -719,16 +736,16 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Person (`pullout:people:*`) | J3 | dock People ▸ row (2), Today 1:1 (2) | 2 | 3 | 2 | 2 | 2 | 1 | 2 | 1 | 15 |
 | Room via floor icon (`surface-project-memory@project:*`) | J3 | floor Project icon (1), Go ▸ Projects ▸ name (3) | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |
 | Project as a pullout (`pullout:project:*`) | J3 | hub/agent → the Room (`surface-project-memory` scoped `project:<id>`). Lane / PR: W1-DOORS | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |
-| Project drawer (`drawer:project:*`) | J3, J5 | hub/agent; its own Room button | 0 | 0 | 2 | 1 | 1 | 1 | 0 | 1 | 6 |
+| Project drawer (`drawer:project:*`) | J3, J5 | hub/agent; its own Room button. Lane / PR: W2-BUILDER (head facts as dot + word: `1 need you`, `At risk`; a connection scope reads `Jira`) | 0 | 1 | 2 | 1 | 1 | 1 | 1 | 1 | 8 |
 | Artifact (`pullout:artifact:*`) | J4 | Today "has a new result ▸ Open" (2) | 1 | 1 | 2 | 2 | 1 | 1 | 1 | 2 | 11 |
-| Agent's window (`lane@launch:*`) | J4 | dock Agents ▸ row (2) | 1 | 1 | 1 | 1 | 1 | 0 | 1 | 2 | 8 |
+| Agent's window (`lane@launch:*`) | J4 | dock Agents ▸ row (2). Lane / PR: W2-BUILDER (toolbar Tell it · Open PR · Stop; the ask first; `No steps reported yet` in words; `Last step N min ago` in the status bar) | 2 | 2 | 2 | 1 | 1 | 2 | 2 | 2 | 14 |
 | Automation (`workbench:*`) | J4 | Go ▸ Automations ▸ row (3) | 3 | 2 | 3 | 3 | 2 | 3 | 2 | 2 | 20 |
 | Drawer (`pullout:zone:*`) | J5 | floor drawer icon (1), Go ▸ Drawers ▸ name (3) | 1 | 2 | 3 | 3 | 2 | 1 | 1 | 2 | 15 |
-| Knowledge base (`pullout:knowledge:*`) | J5 | floor icon that says DRAWER (1) | 1 | 1 | 1 | 1 | 1 | 2 | 0 | 2 | 9 |
+| Knowledge base (`pullout:knowledge:*`) | J5 | floor icon (1), its label says KNOWLEDGE. Lane / PR: W2-BUILDER (toolbar Add · Edit · Copy · Dictate; Add opens the item picker) | 2 | 2 | 2 | 2 | 1 | 2 | 1 | 2 | 14 |
 | Archive (`drawer:parked`) | J5 | Go ▸ Archive (2) | 2 | 1 | 2 | 2 | 2 | 2 | 2 | 2 | 15 |
-| Mode / recipe (`pullout:persona:*`) | J4, J6 | no ordinary door found (Go ▸ Builder only with builder tools on) | 0 | 0 | 1 | 1 | 1 | 1 | 0 | 1 | 5 |
-| Sequence / chain (`pullout:sequence:*`) | J4 | no ordinary door found | 0 | 0 | 1 | 0 | 1 | 1 | 0 | 1 | 4 |
-| Workflow (`pullout:workflow:*`) | J4 | no ordinary door found | 0 | 1 | 1 | 1 | 1 | 1 | 0 | 1 | 6 |
+| Mode / recipe (`pullout:persona:*`) | J4, J6 | no ordinary door found (Go ▸ Builder only with builder tools on). Lane / PR: W2-BUILDER (toolbar; "Which engine answers in a thread" / "Which engine runs it" in sans; no raw id) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | 15 |
+| Sequence / chain (`pullout:sequence:*`) | J4 | no ordinary door found. Lane / PR: W2-BUILDER (Add mode adds a step, PUT /api/chains/{id}; a greyed Run says why) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | 15 |
+| Workflow (`pullout:workflow:*`) | J4 | no ordinary door found. Lane / PR: W2-BUILDER (Edit left the title bar for the toolbar; Steps as a quiet list; a greyed Run says why) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | 15 |
 | Thread (`pullout:thread:*`) | J1 | → opens Ask (by design, Betterment Q4); scored by ATLAS-A/ASK | – | – | – | – | – | – | – | – | – |
 | Needs you (`chair:needs`) | J2, J3 | bell (1), ⌃J (1), Go ▸ Needs you (2). Lane / PR: W1-DOORS (rows named after the meeting; one calendar truth) | 3 | 2 | 2 | 3 | 2 | 3 | 2 | 2 | 19 |
 | Capture (`chair:capture`) | J1, J2 | Go ▸ Capture (2), dock at 393 (1) | 2 | 3 | 2 | 3 | 1 | 3 | 2 | 2 | 18 |
@@ -740,7 +757,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Send preview (in the note) | J1, J3 | note toolbar Send… (1) → destination (2) → Send (3) | 1 | 0 | 3 | 3 | 1 | 2 | 1 | – | 11 |
 | Feedback sheet | J7 | Desk ▸ Give feedback, title-bar Feedback (only with `HOLDSPEAK_UI_FEEDBACK=1`). Lane / PR: W1-DOORS (above the dock) | 1 | 0 | 2 | 2 | 1 | 2 | 1 | – | 9 |
 | Floor: icon menu / blank floor | J5, J7 | right-click an icon (1) / right-click the floor (1): the Desk menu's rows. Lane / PR: W1-DOORS | 2 | 3 | 2 | 3 | 2 | 3 | 1 | – | 16 |
-| Phone desk (393) | all | Go list as home, five dock tiles | 2 | 2 | 1 | 2 | 2 | 2 | 1 | 1 | 13 |
+| Phone desk (393) | all | Go list as home, five dock tiles. Lane / PR: W2-BUILDER (with two or more windows open the screen title is `<window> ▾` again and lists every open window) | 2 | 2 | 1 | 2 | 2 | 2 | 1 | 2 | 14 |
 
 "–" = not shot or not applicable (no keyboard at 393). Friction numbers are presses counted by
 doing them in the rig.
@@ -944,8 +961,10 @@ with `HOLDSPEAK_UI_FEEDBACK=1` (`holdspeak/services/ui_feedback.py:27`).
    (`web/src/desk/screen/Screen.tsx:226`). **Healed (W1-DOORS):** the floor opens the Desk menu's rows
    (`components/menuVerbEntries.ts`, one source with the menu bar).
 5. The floor icon "Payments runbooks" is captioned DRAWER, but it opens a knowledge base with no
-   way to add to it.
-6. The Sequence window says "Add at least one Agent" and has no verb to do it.
+   way to add to it. **Healed (W2-BUILDER):** its kind word is KNOWLEDGE, and the window's toolbar Add opens
+   the item picker (`PUT /api/kbs/{id}/members/{ref}`).
+6. The Sequence window says "Add at least one Agent" and has no verb to do it. **Healed (W2-BUILDER):** the toolbar's Add mode
+   lists the Modes and appends one to the steps; the greyed Run says "Add a mode first".
 7. Give feedback is hidden unless the hub has `HOLDSPEAK_UI_FEEDBACK=1`. This is a switch, not a
    broken door, but the owner's desk shows no feedback door if the switch is off.
 8. By design, and named here so nobody "fixes" them: `pullout:meeting:<id>` opens the Meetings

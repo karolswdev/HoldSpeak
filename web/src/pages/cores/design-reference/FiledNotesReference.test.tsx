@@ -25,7 +25,7 @@ describe("Components filed Note specimen", () => {
       fireEvent.click(await screen.findByRole("button", { name: /Review record, Note/i }));
       expect(scroll).not.toHaveBeenCalled(); // a passive Files read leaves the viewport alone
       fireEvent.click(screen.getByTestId("room-files-open"));
-      await waitFor(() => expect(screen.getByText(/OPENED LOCALLY/)).toBeInTheDocument());
+      await waitFor(() => expect(screen.getByText(/Opened locally/)).toBeInTheDocument());
       expect(scroll).toHaveBeenCalledExactlyOnceWith({ block: "nearest", inline: "nearest" });
       fireEvent.click(screen.getByTestId("room-files-open"));
       await waitFor(() => expect(scroll).toHaveBeenCalledTimes(2));
