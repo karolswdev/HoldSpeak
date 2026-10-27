@@ -47,6 +47,17 @@ describe("shared illustrated icon source", () => {
       }
     }
   });
+
+  it("draws the floating dock's tiles and the Record orb at 48 px (2026-10-26)", () => {
+    const dock = names(resolve(PNG, "system", "48"), ".png");
+    expect(dock.length).toBeGreaterThan(0);
+    for (const name of dock) {
+      expect(names(resolve(SOURCE, "system"), ".svg"), name).toContain(name);
+      const file = readFileSync(resolve(PNG, "system", "48", `${name}.png`));
+      expect([file.readUInt32BE(16), file.readUInt32BE(20)], `system/48/${name}`).toEqual([48, 48]);
+      expect(file[25], `system/48/${name} must retain alpha`).toBe(6);
+    }
+  });
 });
 
 describe("Icons D construction (owner pick 2026-10-24)", () => {

@@ -1,6 +1,6 @@
 // Dock — the application launcher + running window toolbar.
 // Extracted from DeskWindow.tsx (HS-117-04).
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
+import { cloneElement, isValidElement, useCallback, useEffect, useRef, useState, useSyncExternalStore, type MouseEvent as ReactMouseEvent, type ReactElement, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openIntelligence } from "../../intelligenceNavigation";
@@ -8,7 +8,8 @@ import { refreshNeedsYou, useNeedsYou } from "../../needsYou";
 import { useNextOneOnOneRead } from "../../screen/nextOneOnOne";
 import { micPhase, subscribeMicPhase } from "../../../lib/micSession";
 import { useOptionalRuntimeBus } from "../../../runtime/RuntimeBus";
-import { DOCK_SPRITES } from "../../systemSprites";
+import { DOCK_SPRITES, DOCK_SPRITES_48 } from "../../systemSprites";
+import { seatSprite } from "../../sprites";
 import { useDesk } from "../../store";
 import { useSettleState } from "../../settleState";
 import { useShortcutSheet } from "../../chromeState";
@@ -91,7 +92,27 @@ const seatRef = (windowId: string) => (el: HTMLElement | null) => {
   if (el) chipEls.set(windowId, el);
   else chipEls.delete(windowId);
 };
+/** The floating dock (2026-10-26): a seated window's mark is the hollow dot
+ * under its tile, where a running app has its filled dot. */
 const seatLamp = <span className="desk-dock-seat" aria-hidden="true" />;
+
+/** The 48 px picture of a dock tile: the D drawing at 48 when there is one,
+ * else the 32 px drawing drawn up, smooth (dock.css). */
+function dockSpriteFor(windowId: string): string | undefined {
+  return DOCK_SPRITES_48[windowId] ?? DOCK_SPRITES[windowId];
+}
+
+/** A seated window's title-bar icon at the tile's 48 px. */
+function seatFace(icon: ReactNode): ReactNode {
+  if (isValidElement<{ src?: unknown }>(icon) && icon.type === "img" && typeof icon.props.src === "string") {
+    return cloneElement(icon as ReactElement<Record<string, unknown>>, {
+      src: seatSprite(icon.props.src),
+      width: 48,
+      height: 48,
+    });
+  }
+  return icon;
+}
 
 /** PHILO-16 (A1) §5: a seated window whose application has no Dock tile
  * gets its own seat tile: its icon (the title bar's), its shown name, the
@@ -117,11 +138,12 @@ function SeatTile({
       onContextMenu={(e) => onMenu(e, name)}
     >
       {icon != null ? (
-        <span className="desk-dock-seat-icon" aria-hidden="true">{icon}</span>
+        <span className="desk-dock-seat-icon" aria-hidden="true">{seatFace(icon)}</span>
       ) : (
         <span aria-hidden="true">{w.glyph}</span>
       )}
-      <span className="desk-dock-label">{name}</span>
+      {/* The name shows on hover and focus, above the tile (dock.css). */}
+      <span className="desk-dock-label" aria-hidden="true">{name}</span>
       {seatLamp}
     </Button>
   );
@@ -145,18 +167,6 @@ function useNearStart(at: string | null): boolean {
   return Number.isFinite(until) && until >= 0 && until <= ONE_ON_ONE_NEAR_MS;
 }
 
-/** The People tag shows the time; its `1:1` word stays in the text for a
- *  reader (and in the tile's name), out of sight. */
-function oneOnOneTag(label: string): ReactNode {
-  const m = /^(1:1)\s+(.*)$/.exec(label);
-  if (!m) return label;
-  return (
-    <>
-      <span className="desk-dock-state-word">{m[1]} </span>
-      {m[2]}
-    </>
-  );
-}
 
 function useDockMicPhase(): ReturnType<typeof micPhase> {
   return useSyncExternalStore(subscribeMicPhase, micPhase, micPhase);
@@ -320,7 +330,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     return () => window.removeEventListener("pointerdown", close);
   }, [chipMenu]);
 
-  // HS-202-02 — publish the dock's own height as `--desk-dock-h`. At
+  // HS-202-02 — publish the dock's own reserve as `--desk-dock-h`. At
   // phone width the dock wraps, so its height is not a constant any
   // stylesheet can guess; the sheets read this to stop above it instead
   // of burying the only persistent door the phone has.
@@ -339,7 +349,11 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
     const root = document.documentElement;
     if (!el) return;
     const publish = () => {
-      const next = `${Math.ceil(el.offsetHeight)}px`;
+      // The floating dock (2026-10-26): the plate floats `bottom` above the
+      // edge, so the reserve is its height, that inset and the same air
+      // above it (1440: 64 + 10 + 10 = 84 px).
+      const inset = parseFloat(getComputedStyle(el).bottom) || 0;
+      const next = `${Math.ceil(el.offsetHeight + 2 * inset)}px`;
       if (root.style.getPropertyValue("--desk-dock-h") === next) return;
       root.style.setProperty("--desk-dock-h", next);
       // The working band moved: open windows clamp above the Dock again.
@@ -426,6 +440,54 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const seatedWithoutTile = NUB_CHIPS
     ? []
     : visibleWindowChips.filter((w) => panelMin.includes(w.id) && !tiledIds.has(w.id));
+  // The floating dock (owner pick 2026-10-26, canvas D1): a tile is the 48 px
+  // D picture and nothing under it. The name, and a live fact (REC 10:42,
+  // 1:1 15:00), show on hover and focus as a label above the tile; the
+  // tile's aria-label says the same. A count rides the icon's top-right
+  // corner; a running app has a dot under its tile (dock.css).
+  const face = (application: (typeof DOCK_FACE_APPLICATIONS)[number], minimized: boolean) => {
+    const sprite = dockSpriteFor(application.windowId);
+    const id = application.windowId;
+    return (
+      <>
+        {sprite ? (
+          <img src={sprite} alt="" width={48} height={48} className="desk-dock-sprite" draggable={false} />
+        ) : (
+          <span aria-hidden="true">{application.glyph}</span>
+        )}
+        <span className="desk-dock-label" aria-hidden="true">
+          {application.label}
+          {id === "surface-meetings" && recordingLabel ? (
+            <span className="desk-dock-state" data-testid="desk-dock-meetings-state" data-tone="rec">
+              {recordingLabel}
+            </span>
+          ) : null}
+          {id === "surface-people" && people.label ? (
+            <span className="desk-dock-state" data-testid="desk-dock-people-state" data-tone="ok" data-soon={peopleNear ? "" : undefined}>
+              {people.label}
+            </span>
+          ) : null}
+        </span>
+        {minimized ? seatLamp : null}
+        {id === "intelligence:desk" && needsYouCount > 0 ? (
+          <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-today-count" aria-hidden="true">
+            {needsYouCount}
+          </span>
+        ) : null}
+        {id === "conductor" && agentsTile.lamp ? (
+          <span className="desk-dock-fleet" data-tone={agentsTile.lamp} data-testid="desk-dock-agents-lamp" aria-hidden="true" />
+        ) : null}
+        {id === "conductor" && agentsTile.needYou ? (
+          <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-agents-count" aria-hidden="true">
+            {agentsTile.needYou}
+          </span>
+        ) : null}
+        {!compact && id === "surface-dictation" && micIsLive(mic) ? (
+          <span className="desk-dock-mic-lamp" data-testid="desk-dock-speak-lamp" aria-label="Mic open" />
+        ) : null}
+      </>
+    );
+  };
   return (
     <div
       ref={dockRef}
@@ -471,7 +533,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               (running && winId === front && !minimized ? " is-front" : "") +
               ""
             }
-            aria-label={`${application.label}${application.windowId === "conductor" && agentsTile.words ? `, ${agentsTile.words}` : ""}${application.windowId === "intelligence:desk" && needsYouCount > 0 ? `, ${needsYouCount} needs you` : ""}${application.windowId === "surface-people" && people.label ? `, ${people.label}` : ""}${application.windowId === "surface-dictation" && micIsLive(mic) ? ", mic open" : ""}${minimized ? ", iconified" : ""}`}
+            aria-label={`${application.label}${application.windowId === "conductor" && agentsTile.words ? `, ${agentsTile.words}` : ""}${application.windowId === "intelligence:desk" && needsYouCount > 0 ? `, ${needsYouCount} needs you` : ""}${application.windowId === "surface-people" && people.label ? `, ${people.label}` : ""}${application.windowId === "surface-meetings" && recordingLabel ? `, ${recordingLabel}` : ""}${application.windowId === "surface-dictation" && micIsLive(mic) ? ", mic open" : ""}${minimized ? ", iconified" : ""}`}
             onClick={() => {
               const s = useDesk.getState();
               if (isChair) openChairWindow(application.windowId);
@@ -501,46 +563,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
               });
             }}
           >
-            {/* The owner's 2026-10-16 density direction draws desktop art
-                at 24 CSS px; the phone keeps 32 px. CSS owns that size;
-                the intrinsic 32 px source stays unchanged. */}
-            {DOCK_SPRITES[application.windowId] ? (
-              <img src={DOCK_SPRITES[application.windowId]} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
-            ) : (
-              <span aria-hidden="true">{application.glyph}</span>
-            )}
-            <span className="desk-dock-label">{application.label}</span>
-            {minimized ? seatLamp : null}
-            {application.windowId === "intelligence:desk" && needsYouCount > 0 ? (
-              <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-today-count" aria-hidden="true">
-                {needsYouCount}
-              </span>
-            ) : null}
-            {application.windowId === "conductor" && agentsTile.lamp ? (
-              <span className="desk-dock-fleet" data-tone={agentsTile.lamp} data-testid="desk-dock-agents-lamp" aria-hidden="true" />
-            ) : null}
-            {application.windowId === "conductor" && agentsTile.needYou ? (
-              <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-agents-count" aria-hidden="true">
-                {agentsTile.needYou}
-              </span>
-            ) : null}
-            {application.windowId === "surface-meetings" && recordingLabel ? (
-              <span
-                className="desk-dock-state"
-                data-testid="desk-dock-meetings-state"
-                data-tone="rec"
-              >
-                {recordingLabel}
-              </span>
-            ) : null}
-            {application.windowId === "surface-people" && people.label ? (
-              <span className="desk-dock-state" data-testid="desk-dock-people-state" data-tone="ok" data-soon={peopleNear ? "" : undefined}>
-                {oneOnOneTag(people.label)}
-              </span>
-            ) : null}
-            {application.windowId === "surface-dictation" && micIsLive(mic) ? (
-              <span className="desk-dock-mic-lamp" data-testid="desk-dock-speak-lamp" aria-label="Mic open" />
-            ) : null}
+            {face(application, minimized)}
           </Button>
         );
         })}
@@ -567,7 +590,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 data-drop={application.windowId === "conductor" && handOver === "drawer:conductor" ? true : undefined}
                 {...(application.windowId === "conductor" ? handTargetProps("drawer:conductor") : {})}
                 className={`desk-dock-launch desk-dock-app${running && !minimized ? " is-run" : ""}${minimized ? " is-seated" : ""}${running && winId === front && !minimized ? " is-front" : ""}`}
-                aria-label={`${application.label}${application.windowId === "intelligence:desk" && needsYouCount > 0 ? `, ${needsYouCount} needs you` : ""}${application.windowId === "surface-people" && people.label ? `, ${people.label}` : ""}${application.windowId === "conductor" && agentsTile.words ? `, ${agentsTile.words}` : ""}${minimized ? ", iconified" : ""}`}
+                aria-label={`${application.label}${application.windowId === "intelligence:desk" && needsYouCount > 0 ? `, ${needsYouCount} needs you` : ""}${application.windowId === "surface-people" && people.label ? `, ${people.label}` : ""}${application.windowId === "conductor" && agentsTile.words ? `, ${agentsTile.words}` : ""}${application.windowId === "surface-meetings" && recordingLabel ? `, ${recordingLabel}` : ""}${minimized ? ", iconified" : ""}`}
                 onClick={() => {
                   if (isChair) openChairWindow(application.windowId);
                   else if (running && minimized) useDesk.getState().restorePanel(winId);
@@ -578,43 +601,21 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                   );
                 }}
               >
-                {DOCK_SPRITES[application.windowId] ? (
-                  <img src={DOCK_SPRITES[application.windowId]} alt="" width={32} height={32} className="desk-dock-sprite" draggable={false} />
-                ) : (
-                  <span aria-hidden="true">{application.glyph}</span>
-                )}
-                <span className="desk-dock-label">{application.label}</span>
-                {minimized ? seatLamp : null}
-                {application.windowId === "intelligence:desk" && needsYouCount > 0 ? (
-                  <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-today-count" aria-hidden="true">
-                    {needsYouCount}
-                  </span>
-                ) : null}
-                {application.windowId === "conductor" && agentsTile.lamp ? (
-                  <span className="desk-dock-fleet" data-tone={agentsTile.lamp} data-testid="desk-dock-agents-lamp" aria-hidden="true" />
-                ) : null}
-                {application.windowId === "conductor" && agentsTile.needYou ? (
-                  <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-agents-count" aria-hidden="true">
-                    {agentsTile.needYou}
-                  </span>
-                ) : null}
-                {application.windowId === "surface-meetings" && recordingLabel ? (
-                  <span className="desk-dock-state" data-testid="desk-dock-meetings-state" data-tone="rec">
-                    {recordingLabel}
-                  </span>
-                ) : null}
-                {application.windowId === "surface-people" && people.label ? (
-                  <span className="desk-dock-state" data-testid="desk-dock-people-state" data-tone="ok" data-soon={peopleNear ? "" : undefined}>
-                    {oneOnOneTag(people.label)}
-                  </span>
-                ) : null}
+                {face(application, minimized)}
               </Button>
             );
           })}
         </>
       ) : null}
+      {/* The Record tile ends the applications (canvas D1). PHILO-17 (owner
+          2026-10-10, "everything must become one desk"): the Chair/Floor
+          toggle is gone; the Screen is the one desk. */}
+      {!compact ? center : null}
       {/* PHILO-16 (A1) §5: a seated window always has a seat. One whose
-          application has no tile here gets its own. */}
+          application has no tile here gets its own, after a thin rule. */}
+      {seatedWithoutTile.length > 0 ? (
+        <span className="desk-dock-sep desk-dock-seat-sep" aria-hidden="true" />
+      ) : null}
       {seatedWithoutTile.map((w) => (
         <SeatTile
           key={`seat:${w.id}`}
@@ -625,9 +626,6 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
           }}
         />
       ))}
-      {/* PHILO-17 (owner 2026-10-10, "everything must become one desk"):
-          the Chair/Floor toggle is gone; the Screen is the one desk. */}
-      {!compact ? center : null}
       {NUB_CHIPS && visibleWindowChips.length > 0 ? (
         <span className="desk-dock-sep" aria-hidden="true" />
       ) : null}

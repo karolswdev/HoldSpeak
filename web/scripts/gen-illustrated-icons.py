@@ -14,6 +14,8 @@ with its 64-unit level as CSS custom properties; ``LEVELS`` below overrides
 them per export size: the 32 pass draws the bevel at one pixel under a heavier
 outline, and the 20 pass (world ``20/`` and ``system/20/``, for dense rows and
 title-bar glyphs) drops the bevel, thickens the outline and lightens the greys.
+The 48 pass (``system/48/``, the floating dock of 2026-10-26) keeps the
+detail and draws the bevel at two pixels, as the D spec gives it at 48.
 
 Run the normal export only after the SVG source set is frozen::
 
@@ -59,6 +61,9 @@ LEVELS = {
         "svg{--ow:2.2px!important;--u:3.1px!important;--nu:-3.1px!important}"
         ".detail{display:none!important}"
     ),
+    # 48 px (the floating dock, 2026-10-26): a two-pixel bevel (2.67 units)
+    # under a 1.8 outline; the detail stays.
+    48: "svg{--ow:1.8px!important;--u:3.55px!important;--nu:-3.55px!important}",
     # 20 px: no bevel, a 3-unit outline, heavier lines and lighter greys.
     20: (
         "svg{--ow:3px!important;--u:0px!important;--nu:0px!important;--lw:1.35!important}"
@@ -76,6 +81,8 @@ class Family:
     size: int
     target_dir: Path
     optical: bool = False
+    # Only these source stems (None: every source in the folder).
+    stems: tuple[str, ...] | None = None
 
 
 FAMILIES = (
@@ -85,6 +92,15 @@ FAMILIES = (
     Family("system", SVG_ROOT / "system", 32, PNG_ROOT / "system", optical=True),
     Family("system20", SVG_ROOT / "system", 20, PNG_ROOT / "system" / "20", optical=True),
     Family("settings", SVG_ROOT / "settings", 32, PNG_ROOT / "settings", optical=True),
+    # The floating dock (2026-10-26): its tiles and the Record orb at 48.
+    Family(
+        "system48", SVG_ROOT / "system", 48, PNG_ROOT / "system" / "48", optical=True,
+        stems=(
+            "dock-agents", "dock-delivery", "dock-desk-memory", "dock-intelligence",
+            "dock-meetings", "dock-panes", "dock-people", "dock-settings",
+            "dock-speak", "record-orb",
+        ),
+    ),
 )
 
 _STATES = ("_sel", "_stale")
@@ -99,6 +115,8 @@ def source_files(family: Family) -> list[Path]:
     if not family.source_dir.is_dir():
         raise RuntimeError(f"missing SVG source directory: {family.source_dir}")
     files = sorted(family.source_dir.glob("*.svg"))
+    if family.stems is not None:
+        files = [path for path in files if path.stem in family.stems]
     if not files:
         raise RuntimeError(f"no SVG sources found under {family.source_dir}")
     return files
@@ -268,7 +286,7 @@ def park_active_pngs() -> int:
     """Copy active PNGs once, preserving their relative sprite structure."""
 
     count = 0
-    for folder in (PNG_ROOT, PNG_ROOT / "32", PNG_ROOT / "20", PNG_ROOT / "system", PNG_ROOT / "system" / "20", PNG_ROOT / "settings"):
+    for folder in (PNG_ROOT, PNG_ROOT / "32", PNG_ROOT / "20", PNG_ROOT / "system", PNG_ROOT / "system" / "20", PNG_ROOT / "system" / "48", PNG_ROOT / "settings"):
         if not folder.is_dir():
             continue
         for source in sorted(folder.glob("*.png")):

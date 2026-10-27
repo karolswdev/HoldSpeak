@@ -62,48 +62,67 @@
     );
   }
 }
-/* The AppIcon shelf remains a 60px working band. It scrolls inside itself
-   when full, and an icon never shrinks inside the shelf. */
+/* ══ The floating dock (owner pick 2026-10-26: canvas
+   docs/internal/betterment/canvases/dock-direction-2026-10-26.html, D1, with
+   the D objects at 48) ══
+   A centred plate 10 px above the bottom edge in the floor's slate glass:
+   64 px high, radius 14, as wide as its tiles. A tile is 56 px wide, its
+   48 px D picture centred and no word under it. The name (and a live fact:
+   REC 10:42, 1:1 15:00) shows on hover and focus as a small paper label
+   above the tile; the tile's aria-label says the same. A running app has a
+   4 px dot under its tile; the front app's dot is the vivid blue and its
+   tile wears the soft plate. A count rides the icon's top-right corner.
+   Record is one tile of the same size; a thin rule comes before the seated
+   windows. The phone block below keeps the plate edge to edge. */
 .desk-next .desk-dock {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 10px;
+  /* centred by its inset auto margins, never by a transform: the tiles are
+     measured (test_dock_glass.py, the desk sweep) */
+  margin-inline: auto;
+  width: max-content;
+  max-width: calc(100vw - 32px);
   transform: none;
   z-index: var(--desk-z-dock);
   display: flex;
   justify-content: flex-start;
-  align-items: stretch;
-  gap: 2px;
-  height: 60px;
+  align-items: center;
+  gap: 4px;
+  height: 64px;
   box-sizing: border-box;
-  padding: 4px 8px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  border-radius: 0;
-  /* Chrome lane 2026-10-24: a paper plate with a faint top shine, a 1 px
-     soft rule on top and a soft shade on the floor above it. */
-  background: var(--desk-dock-plate);
-  border-top: 0;
-  box-shadow: var(--desk-dock-shine);
-  scrollbar-width: thin;
+  padding: 7px 8px;
+  /* the hover label rises above the plate: the plate does not clip */
+  overflow: visible;
+  border: 1px solid var(--desk-dock-glass-rule);
+  border-radius: 14px;
+  background: var(--desk-dock-glass);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: var(--desk-dock-glass-shade);
 }
 .desk-next .desk-dock > * {
   flex-shrink: 0;
 }
-/* The working band ends above the desktop shelf. */
+/* The working band ends above the plate and its air (64 + 10 + 10). */
 @media (min-width: 721px) {
   :root {
-    --desk-snap-bottom: 60px;
+    --desk-snap-bottom: 84px;
   }
 }
+/* PHILO-16 (A1): the window chips are parked (NUB_CHIPS in Dock.tsx); their
+   rules stay for the parked code. */
 .desk-next .desk-dock-chip {
   position: relative;
   display: inline-flex;
   align-items: center;
+  align-self: center;
+  max-width: 200px;
+  height: 32px;
+  border: 1px solid var(--wb-rule-soft);
   border-radius: var(--radius-sm);
   background: var(--wb-field);
-  border: 1px solid var(--wb-rule-soft);
   box-shadow: var(--wb-drop);
   animation: desk-chip-in var(--duration-short) var(--ease-quart);
 }
@@ -113,26 +132,27 @@
     transform: translateY(6px) scale(0.92);
   }
 }
+.desk-next .desk-dock-chip.is-front {
+  background: var(--wb-blue);
+  border-color: var(--wb-sel);
+}
 .desk-next .desk-dock-chip.is-min {
-  opacity: 0.55;
+  opacity: 1;
+  background: var(--wb-field);
+  box-shadow: none;
 }
 .desk-next .desk-dock-main {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   max-width: 168px;
-  padding: 5px 8px;
+  padding: 0 8px;
   border: 0;
   background: transparent;
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
+  color: var(--wb-ink);
+  font: 600 13px var(--font-sans);
   cursor: pointer;
-}
-.desk-next .desk-dock-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .desk-next .desk-dock-x {
   width: 0;
@@ -140,7 +160,9 @@
   border: 0;
   overflow: hidden;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--wb-ink);
+  box-shadow: none;
+  border-radius: var(--radius-sm);
   font-size: 11px;
   cursor: pointer;
   transition: width var(--duration-short) var(--ease-standard);
@@ -149,255 +171,174 @@
 .desk-next .desk-dock-x:focus-visible {
   width: 20px;
 }
-.desk-next .desk-dock-x:hover {
-  color: var(--text);
-}
-.desk-next .desk-dock-reset {
-  border: 0;
-  background: transparent;
-  color: var(--text-faint);
-  font-size: 13px;
-  padding: 4px 6px;
-  cursor: pointer;
-}
-.desk-next .desk-dock-reset:hover {
-  color: var(--text);
-}
 /* HS-111-09 — the dock verbs are VerbGlyph SVGs (⊞/⟲/✕ retired). */
-.desk-next .desk-dock-reset svg {
-  width: 14px;
-  height: 14px;
-  display: block;
-}
 .desk-next .desk-dock-x svg {
   width: 11px;
   height: 11px;
   display: block;
   margin: 0 auto;
 }
+.desk-next .desk-dock-reset {
+  align-self: center;
+  padding: 4px 6px;
+  border: 1px solid var(--desk-dock-glass-rule);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
+  color: var(--desk-dock-glass-ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+.desk-next .desk-dock-reset:hover {
+  background: var(--desk-dock-tile-plate);
+}
+.desk-next .desk-dock-reset svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.desk-next .desk-dock .desk-room-actions {
+  align-self: center;
+}
+.desk-next .desk-dock .desk-room-actions > button {
+  color: var(--desk-dock-glass-ink);
+  border: 1px solid var(--desk-dock-glass-rule);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
+  font: 600 13px var(--font-sans);
+}
+.desk-next .desk-dock .desk-room-actions > button:hover,
+.desk-next .desk-dock .desk-room-actions > button[aria-pressed="true"] {
+  background: var(--desk-dock-tile-plate-strong);
+}
 
+/* The thin rule before the seated windows. */
 .desk-next .desk-dock-sep {
+  align-self: center;
   width: 1px;
-  height: 22px;
-  background: var(--border);
+  height: 36px;
+  margin-inline: 6px;
+  background: var(--desk-dock-glass-rule);
+  box-shadow: none;
 }
-.desk-next .desk-dock .desk-orb-wrap {
-  position: relative;
-  bottom: auto;
-  left: auto;
-  transform: none;
-  z-index: auto;
-}
-.desk-next .desk-dock .desk-orb {
-  width: 40px;
-  height: 40px;
-}
-.desk-next .desk-dock .desk-orb-note,
-.desk-next .desk-dock .desk-orb-elapsed {
-  position: absolute;
-  top: -26px;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  /* The live note can overhang the adjacent Speak tile. It is a fact label,
-     not a door, so it must never steal the tile's 44 px hit area. */
-  pointer-events: none;
-}
-/* ══ PHILO-13-13 C3-W — the AppIcons and their live state (C1-1, C1-8a–c) ══
-   An AppIcon is the 32 px sprite over its name (12 px mono ink). States are
-   drawn ON the icon: rest (no plate), running (a sunken plate, the name
-   inverted), front (the name on the blue plate), a count (the ember-ink
-   notch, top right, never a zero), a state tag (top left), and one
-   OFFLINE · AS OF tag heading the shelf. No status window. */
+
+/* ── a tile ── */
 .desk-next .desk-dock-launch {
   position: relative;
   display: grid;
-  grid-template-rows: 32px 16px;
-  justify-items: center;
-  align-content: center;
-  gap: 0;
-  /* Owner 2026-10-25 ("random-ass inconsistencies between those icons"):
-     every tile is ONE width, so the icons sit on one even pitch. The
-     widest word (Meetings) and the widest live tag (REC 10:42, 1:1 15:00)
-     fit inside 84 px; no tile reserves extra room for a tag it may get. */
-  width: 84px;
-  min-width: 84px;
-  max-width: 84px;
-  height: 52px;
-  align-self: center;
-  padding: 0 4px 2px;
+  place-items: center;
+  width: 56px;
+  min-width: 56px;
+  max-width: 56px;
+  height: 48px;
+  padding: 0;
   /* transparent: the Button's hit face covers the border edge (global.css) */
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 10px;
   background: transparent;
-  color: var(--wb-ink);
+  color: var(--desk-dock-glass-ink);
   box-shadow: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: box-shadow var(--duration-short) var(--ease-standard),
-    background-color var(--duration-short) var(--ease-standard);
+  transition: background-color var(--duration-short) var(--ease-standard);
 }
-/* hover lifts the tile: a paper plate, a soft shadow and a ring (never a
-   transform: the tile is measured) */
-.desk-next .desk-dock-launch:is(:hover, :focus-visible) {
-  background: var(--wb-paper);
-  box-shadow: var(--desk-dock-tile-lift);
-  color: var(--wb-ink);
+/* under the pointer, and the front app: the soft plate (never a transform:
+   the tile is measured) */
+.desk-next .desk-dock-launch:is(:hover, :focus-visible),
+.desk-next .desk-dock-launch.is-front {
+  background: var(--desk-dock-tile-plate);
+}
+.desk-next .desk-dock-launch.is-front:is(:hover, :focus-visible) {
+  background: var(--desk-dock-tile-plate-strong);
+}
+.desk-next .desk-dock-launch .desk-dock-sprite {
+  display: block;
+  width: 48px;
+  height: 48px;
+  filter: none;
 }
 .desk-next .desk-dock-launch:hover .desk-dock-sprite {
   filter: brightness(1.08);
 }
-.desk-next .desk-dock-launch .desk-dock-sprite {
-  width: 32px;
-  height: 32px;
-  align-self: end;
-  filter: none;
+/* a text glyph, when an item has no picture */
+.desk-next .desk-dock-launch > span[aria-hidden="true"]:not(.desk-dock-label, .desk-dock-seat, .desk-dock-seat-icon) {
+  font-size: 24px;
+  line-height: 24px;
+  color: var(--desk-dock-glass-ink);
 }
-/* a text glyph (Intelligence ◈) sits low in the picture row, so the state
-   tag above it never covers it */
-.desk-next .desk-dock-launch > span[aria-hidden="true"] {
-  align-self: end;
-  font-size: 20px;
-  line-height: 20px;
-  color: var(--wb-ink);
-}
-.desk-next .desk-dock-launch .desk-dock-label {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 0 6px;
-  border-radius: 4px;
-  font: 500 12px / 16px var(--font-sans);
-  color: var(--wb-ink);
-  background: transparent;
-}
-.desk-next .desk-dock-project .desk-dock-label {
-  max-width: 96px;
-}
-/* a running app: a small lamp under its name; the active (front) app: its
-   name on the soft blue plate. No bordered box. */
-/* (drawn as a background: the Button's ::after is its hit face) */
-.desk-next .desk-dock-launch.is-run {
-  --desk-dock-run-dot: radial-gradient(circle at 50% calc(100% - 2px), var(--wb-muted) 0 2px, transparent 2.5px);
-  background: var(--desk-dock-run-dot);
-}
-.desk-next .desk-dock-launch.is-run:is(:hover, :focus-visible) {
-  background: var(--desk-dock-run-dot), var(--wb-paper);
-}
-.desk-next .desk-dock-launch.is-run .desk-dock-label {
-  background: transparent;
-  color: var(--wb-ink);
-}
-.desk-next .desk-dock-launch.is-front {
-  --desk-dock-run-dot: radial-gradient(circle at 50% calc(100% - 2px), var(--wb-sel-vivid) 0 2px, transparent 2.5px);
-}
-.desk-next .desk-dock-launch.is-front .desk-dock-label {
-  background: var(--desk-dock-active);
-  color: var(--wb-ink);
-  font-weight: 600;
-}
-/* A seated window keeps its 10px status lamp at the top right. */
-.desk-next .desk-dock-seat {
+/* a running app: the 4 px dot under its tile; the front app's dot is the
+   vivid blue (drawn as ::before: the Button's ::after is its hit face) */
+.desk-next .desk-dock-launch.is-run::before {
+  content: "";
   position: absolute;
-  top: 4px;
-  right: 8px;
-  width: 10px;
-  height: 10px;
-  box-sizing: border-box;
-  border: 1px solid var(--wb-rule-soft);
-  /* lit: a seat is a lamp, not an empty box */
-  background: var(--wb-paper);
+  bottom: -6px;
+  left: calc(50% - 2px);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--desk-dock-glass-ink);
+  box-shadow: 0 0 4px rgba(233, 238, 245, 0.6);
   pointer-events: none;
 }
-/* the count notch owns the top right: the seat moves to the top left */
-.desk-next .desk-dock-launch:has(.desk-dock-badge) .desk-dock-seat {
-  right: auto;
-  left: 4px;
+.desk-next .desk-dock-launch.is-front::before {
+  background: var(--wb-sel-vivid);
+  box-shadow: 0 0 4px var(--wb-sel-vivid);
 }
-/* a tag owns the top left too: the seat rides the foot, right */
-.desk-next .desk-dock-launch:has(.desk-dock-badge):has(.desk-dock-state) .desk-dock-seat {
-  top: auto;
-  right: 4px;
-  bottom: 4px;
-  left: auto;
-}
-/* PHILO-16 (A1) §5: the seat tile of a seated window that has no
-   application tile: its title-bar icon at the tile's 32 px, its name at
-   96 px at most (ellipsised inside the tile), the seat lamp */
-.desk-next .desk-dock-seat-icon {
-  display: grid;
-  place-items: center;
-  align-self: end;
-  width: 32px;
-  height: 32px;
-}
-.desk-next .desk-dock-seat-icon :is(img, svg) {
-  width: 32px;
-  height: 32px;
-  image-rendering: auto;
-  filter: drop-shadow(1px 1px 0 var(--shadow-ink-4));
-}
-.desk-next .desk-dock-seat-tile .desk-dock-label {
-  max-width: 96px;
-}
-/* the count: the one badge (floor icons and the bell wear it too): vivid
-   blue, paper digits, at the picture's top right */
-.desk-next .desk-dock-launch .desk-dock-badge {
+/* a seated (iconified) window: the same place, a hollow dot */
+.desk-next .desk-dock-seat {
   position: absolute;
-  top: 1px;
-  left: calc(50% + 8px);
+  bottom: -6px;
+  left: calc(50% - 2.5px);
+  width: 5px;
+  height: 5px;
   box-sizing: border-box;
-  min-width: var(--desk-badge-h);
-  height: var(--desk-badge-h);
-  padding: 0 4px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: calc(var(--desk-badge-h) / 2);
-  background: var(--desk-chrome-badge-on);
-  color: var(--wb-paper);
-  box-shadow: var(--desk-badge-ring);
-  font: 700 12px / var(--desk-badge-h) var(--font-sans);
-  letter-spacing: 0;
+  border: 1px solid var(--desk-dock-glass-ink);
+  border-radius: 50%;
+  background: transparent;
+  pointer-events: none;
 }
-.desk-next .desk-dock-launch .desk-dock-badge[data-tone="ask"] {
-  background: var(--desk-chrome-badge-on);
-  color: var(--wb-paper);
-}
-.desk-next .desk-dock-launch .desk-dock-badge:not([data-tone]) {
-  background: var(--wb-paper);
-  color: var(--wb-ink);
-}
-/* the state tag (1:1, REC): a quiet dock badge, a small paper plate with
-   sans ink; a lamp dot leads it when it is near (the 1:1 within 30 min) or
-   live (REC) */
-.desk-next .desk-dock-state {
+
+/* ── the hover label: the name (and a live fact) above the tile ── */
+.desk-next .desk-dock-launch .desk-dock-label {
   position: absolute;
-  top: 1px;
+  bottom: calc(100% + 14px);
   left: 50%;
   transform: translateX(-50%);
-  height: 18px;
-  box-sizing: border-box;
-  padding: 0 6px;
-  /* inline, so the tag's words read as one line */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  box-shadow: 0 2px 8px rgba(8, 14, 22, 0.35);
+  font: 500 12px / 16px var(--font-sans);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+}
+/* out of sight until the pointer or the focus is on the tile (opacity, so
+   the label keeps its place and a reader of the page still finds it) */
+.desk-next .desk-dock-launch .desk-dock-label,
+.desk-next .desk-dock-launch .desk-dock-label * {
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-dock-launch:is(:hover, :focus-visible) .desk-dock-label,
+.desk-next .desk-dock-launch:is(:hover, :focus-visible) .desk-dock-label * {
+  opacity: 1;
+}
+/* the live fact in the label: quiet muted words; a lamp dot leads it when it
+   is live (REC) or near (the 1:1 within 30 min) */
+.desk-next .desk-dock-state {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border: 0;
-  border-radius: 9px;
-  background: var(--wb-paper);
-  color: var(--wb-ink);
-  box-shadow: 0 0 0 1px var(--wb-rule-soft), var(--wb-umbra-near);
+  color: var(--wb-muted);
   font: 500 12px / 16px var(--font-sans);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-.desk-next .desk-dock-state[data-tone="ok"] {
-  color: var(--wb-ink);
-}
-.desk-next .desk-dock-state[data-tone="warn"] {
-  color: var(--wb-warn-ink);
 }
 .desk-next .desk-dock-state:is([data-tone="rec"], [data-tone="fail"]) {
   color: var(--wb-rec);
@@ -413,56 +354,88 @@
 .desk-next .desk-dock-state[data-soon]::before {
   background: var(--lamp-ok);
 }
-/* the People tag sits in the word's row (2026-10-25), so it says what it
-   is: `1:1 15:00` */
-.desk-next .desk-dock-state-word {
-  position: static;
+
+/* ── the count: at the icon's top-right corner, never over the picture ── */
+.desk-next .desk-dock-launch .desk-dock-badge {
+  position: absolute;
+  top: -7px;
+  left: 42px;
+  box-sizing: border-box;
+  min-width: var(--desk-badge-h);
+  height: var(--desk-badge-h);
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: calc(var(--desk-badge-h) / 2);
+  background: var(--desk-chrome-badge-on);
+  color: var(--wb-paper);
+  box-shadow: var(--desk-badge-ring);
+  font: 700 12px / var(--desk-badge-h) var(--font-sans);
+  letter-spacing: 0;
 }
-@media (min-width: 721px) {
-  .desk-next .desk-dock-launch .desk-dock-state[data-tone="ok"] {
-    left: calc(50% + 6px);
-    transform: none;
-  }
+.desk-next .desk-dock-launch .desk-dock-badge:not([data-tone]) {
+  background: var(--wb-paper);
+  color: var(--wb-ink);
 }
-/* A tag and a count never share a tile (counts: Today, Agents; tags:
-   Meetings, People), and both fit the one tile width, so no tile is wider
-   than its neighbours and a late tag never moves the next icon. */
-/* Owner 2026-10-25: the shelf reads as one even row. On the desktop a live
-   tag (REC 10:42, 1:1 15:00) takes the WORD's row of its tile, so the icon
-   stays whole and the tile keeps its width; the lamps ride the icon's
-   shoulders, not the tile's corner. The phone block below keeps its own
-   placement (the tag on the icon's foot). */
-@media (min-width: 721px) {
-  .desk-next .desk-dock-launch .desk-dock-state {
-    position: static;
-    grid-row: 2;
-    align-self: center;
-    justify-self: center;
-    transform: none;
-    height: 16px;
-    max-width: 100%;
-    padding: 0 2px;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
-    font: 600 12px / 16px var(--font-sans);
-  }
-  .desk-next .desk-dock-launch:has(.desk-dock-state) .desk-dock-label {
-    display: none;
-  }
+/* Betterment AG8: the Agents tile's lamp, its fleet's worst state, at the
+   icon's top-left corner: needs you (the ask colour), New (the ok colour),
+   working (calm). */
+.desk-next .desk-dock-launch .desk-dock-fleet {
+  position: absolute;
+  top: -3px;
+  left: 2px;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 50%;
+  background: var(--wb-paper);
+  box-shadow: var(--desk-lamp-ring);
 }
-/* disconnected: one tag heads the shelf; Dock.tsx draws no tag and no
+.desk-next .desk-dock-launch .desk-dock-fleet[data-tone="ask"] { background: var(--lamp-ask); }
+.desk-next .desk-dock-launch .desk-dock-fleet[data-tone="new"] { background: var(--lamp-ok); }
+.desk-next .desk-dock-launch .desk-dock-fleet[data-tone="work"] { background: var(--lamp-info); }
+/* Speak's open mic: a lamp at the icon's top-right corner */
+.desk-next .desk-dock-launch .desk-dock-mic-lamp {
+  position: absolute;
+  top: -3px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 50%;
+  background: var(--lamp-ok);
+  box-shadow: var(--desk-lamp-ring);
+}
+
+/* PHILO-16 (A1) §5: the seat tile of a seated window that has no
+   application tile: its title-bar icon at 48 px, no word under it */
+.desk-next .desk-dock-seat-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+}
+.desk-next .desk-dock-seat-icon :is(img, svg) {
+  width: 48px;
+  height: 48px;
+  image-rendering: auto;
+}
+
+/* disconnected: one tag heads the plate; Dock.tsx draws no tag and no
    count, so nothing claims to be fresh */
 .desk-next .desk-dock-offline {
   align-self: center;
   flex: none;
   height: 26px;
+  margin-inline-end: 4px;
   padding: 0 8px;
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--wb-rule-soft);
-  background: var(--wb-paper);
-  color: var(--wb-ink);
+  border: 1px solid var(--desk-dock-glass-rule);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--desk-dock-glass-ink);
   box-shadow: none;
   font: 700 12px var(--font-mono);
   white-space: nowrap;
@@ -471,82 +444,84 @@
 .desk-next .desk-dock:has(.desk-dock-offline) .desk-dock-badge {
   display: none;
 }
-/* Open windows that are not applications use the same paper tabs. */
-.desk-next .desk-dock-sep {
-  align-self: center;
-  width: 1px;
-  height: 32px;
-  margin-inline: var(--space-2);
-  background: var(--wb-rule-soft);
-  box-shadow: none;
-}
-.desk-next .desk-dock-chip {
-  align-self: center;
-  max-width: 200px;
-  height: 32px;
-  border: 1px solid var(--wb-rule-soft);
-  border-radius: var(--radius-sm);
-  background: var(--wb-field);
-  box-shadow: var(--wb-drop);
-}
-.desk-next .desk-dock-chip.is-front {
-  background: var(--wb-blue);
-  border-color: var(--wb-sel);
-}
-.desk-next .desk-dock-chip.is-min {
-  opacity: 1;
-  background: var(--wb-field);
-  box-shadow: none;
-}
-.desk-next .desk-dock-main {
-  min-width: 0;
-  padding: 0 8px;
-  color: var(--wb-ink);
-  background: transparent;
-  font: 600 13px var(--font-sans);
-}
-.desk-next .desk-dock-x {
-  color: var(--wb-ink);
-  box-shadow: none;
-  border-radius: var(--radius-sm);
-}
-.desk-next .desk-dock-reset {
-  align-self: center;
-  color: var(--wb-ink);
-  border: 1px solid var(--wb-rule-soft);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  box-shadow: none;
-}
-.desk-next .desk-dock-reset:hover {
-  color: var(--wb-ink);
-  background: var(--wb-blue);
-}
-.desk-next .desk-dock .desk-room-actions {
-  align-self: center;
-}
-.desk-next .desk-dock .desk-room-actions > button {
-  color: var(--wb-ink);
-  border: 1px solid var(--wb-rule-soft);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  box-shadow: none;
-  font: 600 13px var(--font-sans);
-}
-.desk-next .desk-dock .desk-room-actions > button:hover,
-.desk-next .desk-dock .desk-room-actions > button[aria-pressed="true"] {
-  color: var(--wb-ink);
-  background: var(--wb-blue);
-}
+
+/* ── the Record tile (RecordOrb.tsx): one tile of the same size ── */
 .desk-next .desk-dock .desk-orb-wrap {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  z-index: auto;
+  display: block;
   align-self: center;
-  /* the orb owns a slot of its own, the same breath as a tile's edge */
-  padding: 0 10px;
+  padding: 0;
 }
-/* the orb's note rides inside the shelf (the shelf clips what leaves it) */
-.desk-next .desk-dock .desk-orb-note,
-.desk-next .desk-dock .desk-orb-elapsed {
-  top: -16px;
+.desk-next .desk-dock .desk-orb {
+  width: 56px;
+  height: 48px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-dock .desk-orb:is(:hover, :focus-visible) {
+  background: var(--desk-dock-tile-plate);
+}
+.desk-next .desk-dock .desk-orb-face {
+  width: 48px;
+  height: 48px;
+}
+/* while recording: the orb's live pulse (record-orb.css) and the dot */
+.desk-next .desk-dock .desk-orb.is-recording::before {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: calc(50% - 2px);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--wb-rec);
+  box-shadow: 0 0 4px var(--wb-rec);
+  pointer-events: none;
+}
+/* the Record tile's hover label: Record a meeting, or Recording 0:42 */
+.desk-next .desk-dock .desk-orb-label {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  box-shadow: 0 2px 8px rgba(8, 14, 22, 0.35);
+  font: 500 12px / 16px var(--font-sans);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 2;
+}
+.desk-next .desk-dock .desk-orb-label,
+.desk-next .desk-dock .desk-orb-label * {
+  opacity: 0;
+  transition: opacity var(--duration-short) var(--ease-standard);
+}
+.desk-next .desk-dock .desk-orb-wrap:has(.desk-orb:is(:hover, :focus-visible)) :is(.desk-orb-label, .desk-orb-label *) {
+  opacity: 1;
+}
+.desk-next .desk-dock .desk-orb-label .desk-orb-elapsed,
+.desk-next .desk-dock .desk-orb-label .desk-orb-note {
+  position: static;
+  transform: none;
+  color: var(--wb-rec);
+  font: 500 12px / 16px var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  text-shadow: none;
+}
+.desk-next .desk-dock .desk-orb-label .desk-orb-note {
+  color: var(--wb-muted);
 }
 /* SEND FAILED is the 1440 label; FAILED is the phone's (393 block) */
 .desk-next .desk-dock-state-short {
@@ -557,18 +532,21 @@
   display: none;
 }
 
-/* Phone projection keeps one 60px shelf row and 44px control targets. */
+/* ── the phone (≤ 720 px): the plate edge to edge with an 8 px inset, the
+   same tiles; it scrolls inside itself when a seat makes it full ── */
 @media (max-width: 720px) {
-  :root {
-    --desk-snap-bottom: 60px;
+  /* html:root: tokens.css loads after this sheet and sets the desktop
+     default on :root */
+  html:root {
+    /* the plate (64), its 8 px inset and 8 px of air */
+    --desk-snap-bottom: 80px;
   }
   .desk-next .desk-window-shell.is-sheet {
     position: fixed;
     left: 0;
     right: 0;
     /* HS-202-02 — the sheet stops where the dock starts. `--desk-dock-h`
-       is published by Dock.tsx from the dock's own measured height, so a
-       dock that wraps to two rows still keeps every door reachable. */
+       is published by Dock.tsx from the dock's measured reserve. */
     bottom: var(--desk-dock-h, 0px);
     /* PHILO-13-11 (C1, R2): the phone is one window at a time — the
        window fills the work area from the screen bar to the Dock. */
@@ -581,32 +559,26 @@
     max-height: none;
     border-radius: var(--desk-window-radius);
     /* HS-129-02 — the sheet body owns scroll so the fixed head and foot stay
-       visible above the material. The shell stays overflow-visible so its
-       full 44px head controls are not clipped by the rounded frame corners. */
+       visible above the material. */
     overflow: visible;
   }
   /* PHILO-13-13 C3-W (Astra's condition 1): a standing receipt is a row
      between the bar and the work (PHILO-3-01), so EVERY phone window
-     starts under it, not only the Chair's (chair.css:40): the named
-     failure and its Retry / OK are never under an open application. */
+     starts under it. */
   .desk-next:has(> .desk-receipt-row) .desk-window-shell.is-sheet {
     top: calc(var(--desk-work-top) + var(--desk-receipt-row-h, 0px) + var(--space-2));
   }
-  /* HS-202-02 — the dock is the phone's ONLY persistent door. The desktop
-     Record orb leaves this projection. It lays out FOR the phone: pinned to both edges,
-     it never runs past the viewport (it ran 410px past its right edge),
-     and it keeps the shell layer so a sheet never buries its buttons
-     (03-interaction-walk.md finding 1).
-     PHILO-13-11 (C1, R2): it no longer wraps. The shelf is ONE 60 px row so
-     the window above keeps ≥ 700 px of content; a full shelf scrolls
-     inside itself when a minimized window adds a seat. */
+  /* HS-202-02 — the dock is the phone's ONLY persistent door. It is pinned
+     to both edges with an 8 px inset, one row; a full plate scrolls inside
+     itself when a minimized window adds a seat. */
   .desk-next .desk-dock {
-    left: 0;
-    right: 0;
-    bottom: 0;
-    transform: none;
+    left: 8px;
+    right: 8px;
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+    width: auto;
     max-width: none;
-    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    margin-inline: 0;
+    height: 64px;
     flex-wrap: nowrap;
     justify-content: flex-start;
     overflow-x: auto;
@@ -614,8 +586,8 @@
     gap: 0;
     /* The 4 px left gutter is the sticky cover below, not padding: content
        scrolls under padding, so a paged shelf showed the last 4 px of the
-       icon before it there (STATUS: "a 5 px strip of the next page"). */
-    padding: 0 0 env(safe-area-inset-bottom, 0px) 0;
+       icon before it there. */
+    padding: 0;
     z-index: var(--desk-z-dock);
     /* C3-W: the shelf snaps to whole manifest tiles. */
     scroll-snap-type: x mandatory;
@@ -625,29 +597,25 @@
   .desk-next .desk-dock > * {
     flex-shrink: 0;
   }
-  /* HS-202-02: the Chair keeps its own hands clear of the dock. The
-     phone dock keeps its measured height, so the work
-     band reserves, and the arrival's capture bar sat UNDER it (caught by
-     tests/e2e/test_hs141_chair_geometry.py). The work-band token is a
-     shell-wide invariant and is left alone; the Chair pads itself by the
-     dock's own measured height (`--desk-dock-h`, published by Dock.tsx),
-     minus the band already reserved. */
+  /* HS-202-02: the Chair keeps its own hands clear of the dock. */
   .desk-next .chair:not(.chair-first-value) {
     padding-bottom: calc(
       var(--space-4) +
         max(0px, var(--desk-dock-h, var(--desk-snap-bottom)) - var(--desk-snap-bottom))
     );
   }
-  /* Phone labels are part of the door. The accessible name and the printed
-     word use the same manifest label. */
+  /* no hover on a phone: the label stays out of sight (the aria-label
+     carries the name and the live fact) */
   .desk-next .desk-dock-launch .desk-dock-label {
-    display: block;
+    display: none;
   }
-  .desk-next .desk-dock-launch {
-    min-width: 44px;
+  .desk-next .desk-dock > .desk-dock-launch {
+    width: 56px;
+    min-width: 56px;
+    max-width: 56px;
+    height: 48px;
     min-height: 44px;
-    justify-content: center;
-    padding: 4px;
+    margin-inline: 1px;
   }
   .desk-next .desk-dock-main {
     max-width: 96px;
@@ -659,14 +627,8 @@
     width: 28px;
     min-height: 44px;
   }
-  /* HS-202-03 — the STRIP owes every row it carries a 44px target at the
-     phone width. Story 05's ruling splits the duty: a PLATED Button owns
-     its 44px through the halo, and a CHROME Button is a strip row, so the
-     strip owns its height. HS-202-02 paid the launchers and the chip
-     close; measured on the live 393 desk, these were the rest of the dock:
-     the manifest tiles own the strip's 44px reach.
-     Height and hit box only — the printed face, the sprites and the
-     1440 dock are untouched (this block is phone-only). */
+  /* HS-202-03 — the strip owes every row it carries a 44px target at the
+     phone width. */
   .desk-next .desk-dock-reset {
     display: inline-grid;
     place-items: center;
@@ -674,19 +636,8 @@
     min-height: 44px;
     padding: 4px;
   }
-  .desk-next .desk-dock .desk-orb {
-    width: 44px;
-    height: 44px;
-  }
   .desk-next .desk-room-actions > button {
     min-height: 44px;
-  }
-  /* PHILO-13-13 C3-W — the AppIcons at 393 */
-  .desk-next .desk-dock-launch .desk-dock-sprite,
-  .desk-next .desk-dock-seat-icon,
-  .desk-next .desk-dock-seat-icon :is(img, svg) {
-    width: 32px;
-    height: 32px;
   }
   .desk-next .desk-dock::-webkit-scrollbar {
     display: none;
@@ -695,36 +646,8 @@
     order: 10;
     scroll-snap-align: start;
   }
-  .desk-next .desk-dock > .desk-dock-launch,
-  .desk-next .desk-dock > .desk-dock-launch:has(.desk-dock-state),
-  .desk-next .desk-dock > .desk-dock-launch:has(.desk-dock-state):has(.desk-dock-badge) {
-    width: 76px;
-    min-width: 76px;
-    max-width: 76px;
-    height: 50px;
-    min-height: 44px;
-    grid-template-rows: 32px 14px;
-    padding: 1px 2px;
-  }
-  .desk-next .desk-dock-launch .desk-dock-label {
-    line-height: 14px;
-  }
-  /* the phone tag rides the tile's foot in place of the name, so it says
-     what it is: `1:1 22:29` */
-  .desk-next .desk-dock-state-word {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip: auto;
-  }
-  /* the phone tile has no room under its name: the plate alone marks the
-     front app */
-  .desk-next .desk-dock > .desk-dock-launch.is-run {
-    --desk-dock-run-dot: linear-gradient(transparent, transparent);
-  }
-  /* disconnected, the one tag still heads the shelf (§6), before the seats */
-  .desk-next .desk-dock > .desk-dock-offline { order: 0; }
+  /* disconnected, the one tag still heads the plate (§6), before the seats */
+  .desk-next .desk-dock > .desk-dock-offline { order: 0; margin-inline-start: 4px; }
   /* a snapped shelf re-snaps to the icon it held when the tag arrives,
      which would push the tag off the left edge: no snap while offline */
   .desk-next .desk-dock:has(> .desk-dock-offline) { scroll-snap-type: none; }
@@ -734,35 +657,15 @@
   .desk-next .desk-dock > [data-app="surface-people"] { order: 4; }
   .desk-next .desk-dock > [data-app="conductor"] { order: 5; }
   .desk-next .desk-dock > .desk-dock-project { order: 6; }
-  /* the tag rides the icon's foot and reads short; the count keeps the top right */
-  .desk-next .desk-dock-launch .desk-dock-state,
-  .desk-next .desk-dock-launch:has(.desk-dock-badge) .desk-dock-state {
-    top: auto;
-    bottom: 1px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  /* the ratified short label (C1-8b): FAILED, real text; the Button's
-     description says "Send failed" */
   .desk-next .desk-dock-state-wide {
     display: none;
   }
   .desk-next .desk-dock-state-short {
     display: inline;
   }
-  /* the tag rides the foot here, so the glyph rides the top */
-  .desk-next .desk-dock-launch > span[aria-hidden="true"] {
-    align-self: start;
-  }
-  .desk-next .desk-dock-launch .desk-dock-badge,
-  .desk-next .desk-dock-launch:has(.desk-dock-state) .desk-dock-badge {
-    top: 1px;
-    left: auto;
-    right: 4px;
-  }
-  /* The left gutter: a steel cover that stays at the shelf's left edge, so a
-     snapped page starts on a whole icon and nothing of the page before it
-     shows (the snap leaves each page's first icon 4 px in). */
+  /* The left gutter: a glass cover that stays at the plate's left edge, so
+     a snapped page starts on a whole icon and nothing of the page before it
+     shows. */
   .desk-next .desk-dock::before {
     content: "";
     order: -1;
@@ -770,7 +673,7 @@
     left: 0;
     flex: 0 0 4px;
     align-self: stretch;
-    background: var(--desk-dock-plate);
+    background: var(--desk-dock-glass-solid);
     z-index: 2;
   }
   /* The end spacer: Dock.tsx sets its width so the last page also starts on
@@ -784,20 +687,16 @@
   .desk-next .desk-dock > .desk-dock-more {
     order: 99;
     position: sticky;
-    /* PHILO-13-01 (B0): the sticky gadget is never a snap target. As one it
-       moved with the shelf, so every tap's gesture end re-snapped the shelf
-       one page on and the tap pressed the icon a page further (Floor →
-       Hide the menus). */
+    /* PHILO-13-01 (B0): the sticky gadget is never a snap target. */
     scroll-snap-align: none;
     right: 0;
-    /* 48 px, plus the width left over after the last whole 85 px icon, so
-       the page ends on a whole icon at any phone width (393: 49 px). Without
-       it the remainder showed a strip of the next page's first icon. */
-    --desk-dock-more-w: calc(100% - 4px - round(down, 100% - 52px, 85px));
+    /* 48 px, plus the width left over after the last whole 58 px tile, so
+       the page ends on a whole icon at any phone width. */
+    --desk-dock-more-w: calc(100% - 4px - round(down, 100% - 52px, 58px));
     flex: 0 0 var(--desk-dock-more-w);
     width: var(--desk-dock-more-w);
     min-height: 0;
-    height: 60px;
+    height: 62px;
     align-self: stretch;
     display: grid;
     place-items: center;
@@ -805,37 +704,12 @@
     padding: 0;
     border: 0;
     border-radius: var(--radius-sm);
-    background: var(--desk-dock-plate);
+    background: var(--desk-dock-glass-solid);
     box-shadow: none;
-    color: var(--wb-ink);
+    color: var(--desk-dock-glass-ink);
     font: 700 18px var(--font-mono);
     z-index: 2;
   }
-}
-/* Betterment AG8: the Agents tile's lamp, its fleet's worst state: needs
-   you (the ask colour), New (a dot in the ok colour), working (calm). */
-.desk-next .desk-dock-launch .desk-dock-fleet {
-  position: absolute;
-  bottom: 4px;
-  left: 4px;
-  width: 8px;
-  height: 8px;
-  border: 1px solid var(--wb-rule-soft);
-  border-radius: 50%;
-  background: var(--wb-paper);
-}
-.desk-next .desk-dock-launch .desk-dock-fleet[data-tone="ask"] { background: var(--lamp-ask); }
-.desk-next .desk-dock-launch .desk-dock-fleet[data-tone="new"] { background: var(--lamp-ok); }
-.desk-next .desk-dock-launch .desk-dock-fleet[data-tone="work"] { background: var(--lamp-info); }
-.desk-next .desk-dock-launch .desk-dock-mic-lamp {
-  position: absolute;
-  right: 4px;
-  bottom: 4px;
-  width: 8px;
-  height: 8px;
-  border: 1px solid var(--wb-rule-soft);
-  border-radius: 50%;
-  background: var(--lamp-ok);
 }
 
 /* The Agents AppIcon keeps the existing handoff target after the Floor
@@ -843,18 +717,4 @@
 .desk-dock-app[data-drop="true"] {
   outline: 2px dotted currentColor;
   outline-offset: -3px;
-}
-/* Owner 2026-10-25: the lamps ride the icon's shoulders, not the tile's
-   corner (a dot before the word read as a stray mark). Last, so it wins. */
-@media (min-width: 721px) {
-  .desk-next .desk-dock-launch .desk-dock-fleet {
-    top: 4px;
-    bottom: auto;
-    left: calc(50% - 22px);
-  }
-  .desk-next .desk-dock-launch .desk-dock-mic-lamp {
-    top: 4px;
-    bottom: auto;
-    right: calc(50% - 22px);
-  }
 }

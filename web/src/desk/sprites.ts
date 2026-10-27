@@ -1,3 +1,5 @@
+import { dockSprite48 } from "./systemSprites";
+
 const M64 = 1n << 64n;
 const HALF = 1n << 63n;
 
@@ -164,6 +166,19 @@ const SYSTEM_FILE = /^system\/(?:20\/)?([a-z0-9-]+)\.png$/;
  * row or a title-bar glyph. A world sprite (64 or 32, any state) maps to
  * `20/`, a system sprite to `system/20/`; any other URL comes back
  * unchanged. */
+/** The floating dock (2026-10-26): the picture a seated window wears on its
+ * 48 px dock tile. A system sprite maps to its `system/48/` drawing, a world
+ * sprite (any size or state) to its 64 px drawing, drawn down to 48. Any
+ * other URL comes back unchanged (the tile scales it, smooth). */
+export function seatSprite(url: string): string {
+  if (!url.startsWith(SPRITE_BASE)) return url;
+  const file = url.slice(SPRITE_BASE.length);
+  if (SYSTEM_FILE.exec(file)) return dockSprite48(url);
+  const m = SIZED_FILE.exec(file);
+  if (!m || !allSpriteNames().includes(m[1])) return url;
+  return `${SPRITE_BASE}${m[1]}${m[2] ?? ""}.png`;
+}
+
 export function glyphSprite(url: string): string {
   if (!url.startsWith(SPRITE_BASE)) return url;
   const file = url.slice(SPRITE_BASE.length);

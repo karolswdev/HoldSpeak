@@ -113,7 +113,7 @@ vi.mock("../../../components/signal/Signal", () => ({
   ),
 }));
 vi.mock("../../intelligenceNavigation", () => ({ openIntelligence: mocks.openIntelligence }));
-vi.mock("../../systemSprites", () => ({ DOCK_SPRITES: {}, SYSTEM: { floorGrid: "floor.svg" } }));
+vi.mock("../../systemSprites", () => ({ DOCK_SPRITES: {}, DOCK_SPRITES_48: {}, SYSTEM: { floorGrid: "floor.svg" }, SYSTEM_48: {}, dockSprite48: (url: string) => url }));
 vi.mock("../../store", () => ({ useDesk: mocks.useDesk }));
 vi.mock("../../settleState", () => ({
   useSettleState: (selector: (state: typeof mocks.settle) => unknown) => selector(mocks.settle),
