@@ -241,6 +241,10 @@ MIC_HOST_AUTHORITIES: tuple[tuple[str, str, str], ...] = (
      "The Thread composer MicButton appends to the latest draft"),
     ("desk/components/ThreadComposer.tsx", 'label={placeholder ?? "Edit message"}',
      "The inline editor MicButton appends inside its editor focus group"),
+    ("features/project-room/ProjectRoomCore.tsx", 'label="Ask this project"',
+     "The Room's Ask composer row (askFace AskComposer) carries its host MicButton in the capture slot"),
+    ("pages/cores/MemoryCore.tsx", 'label="Find or ask your desk"',
+     "Memory's Ask composer row (askFace AskComposer) carries its host MicButton in the capture slot"),
     # Parked by Betterment Q4 with the Thread window: ("desk/pullouts/ThreadPullout.tsx",
     # 'label="Comment"', "The annotation MicButton appends to the current comment").
 )

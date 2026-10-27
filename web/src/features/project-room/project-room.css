@@ -1467,3 +1467,25 @@
 }
 /* W1: a write reads like a History row (sans 13, ink), not a bold caption. */
 .room-writes .surface-primary { font: inherit; color: inherit; letter-spacing: 0; text-transform: none; }
+
+/* Window Program W2 (2026-10-27): the Room's ask is the Ask window's
+   composer row (askFace AskComposer) in the flow of Now, ruled above and
+   below like the Room's other bands; no well, no chip. */
+.room-ask-composer.kit-toolbar {
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 6px;
+  background: var(--wb-paper);
+}
+.room-ask-composer .room-ask-result .gadget-cycle,
+.room-ask-composer .room-ask-result select {
+  height: 28px;
+}
+.room-ask-composer .room-ask-engine-slot { display: contents; }
+@container surface (max-width: 560px) {
+  /* Line 1: the Result choice and the engine; line 2: the field, the mic
+     and Ask (the Ask window's phone composer). */
+  /* The phone's menu bar names the project: the preset scope folds away. */
+  .room-ask-composer .desk-ask-composer-scope { display: none; }
+  .room-ask-composer .room-ask-result { order: 3; }
+  .room-ask-composer .room-ask-result .gadget-cycle { height: 44px; }
+}
