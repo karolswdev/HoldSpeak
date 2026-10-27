@@ -7,7 +7,7 @@
   /* Delight (2026-10-24): warm near-white paper, mixed from the paper and the
      warm attention ground; the caret and selection in the Workbench blue. */
   --thought-paper: color-mix(in srgb, var(--wb-paper) 90%, var(--desk-pill-accent));
-  /* Thought opens as a 520 x 360 sticky. DeskWindow's fit-content mode
+  /* A note opens at 760 x 560 (pullouts/size.ts). DeskWindow's fit-content mode
      leaves height to the material; these caps keep growth useful on a desk. */
   width: min(820px, calc(100vw - 48px));
   height: auto;
@@ -75,9 +75,17 @@
 .desk-next .thought-note-document {
   /* The editor takes the free space and yields it when band 3 opens: a long
      note must never squeeze the question's own pad out of reach. */
-  flex: 1 1 0;
+  /* Owner 2026-10-27: a note opens at 760 x 560 (pullouts/size.ts). An
+     unarranged note is content-sized (DeskWindow fitContent), so the
+     document asks for the opening height as its basis (560 less the title
+     bar and the status bar); any set height (arranged, a sheet, an open
+     band) shrinks it to its 140 px floor or grows it. */
+  flex: 1 1 auto;
+  height: 502px;
   min-height: 140px;
+  min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   grid-auto-rows: auto;
   gap: 0;
@@ -89,6 +97,39 @@
 .desk-next .thought-note-toolbar {
   grid-row: 1;
   user-select: none;
+  /* Owner 2026-10-27: the verbs are ONE row at every width. A narrow window
+     drops the secondary verbs to their glyphs (below), never a second row. */
+  flex-wrap: nowrap;
+}
+
+.desk-next .thought-note-toolbar .kit-toolbar-verbs {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.desk-next .thought-note-toolbar .kit-toolbar-verbs > .btn {
+  flex: none;
+}
+
+/* A window narrower than the five labelled verbs: the secondary verbs show
+   their glyph only; the word stays the Button's accessible name and its
+   hover title. */
+@container surface (max-width: 660px) {
+  .desk-next .thought-note-toolbar .thought-note-verb {
+    position: relative;
+    min-width: 32px;
+    padding-inline: 8px;
+    justify-content: center;
+  }
+
+  .desk-next .thought-note-toolbar .thought-note-verb-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 /* Done: the one primary, a little room before the quiet verbs. */
@@ -126,6 +167,7 @@
 .desk-next .thought-note-field {
   grid-row: 2;
   position: relative;
+  min-width: 0;
   min-height: 0;
   height: 100%;
   display: flex;
@@ -146,10 +188,16 @@
   color: var(--wb-ink);
   font: 600 17px/1.4 var(--font-ui);
   letter-spacing: 0;
-  /* The title wraps to as many lines as it needs — presented AND while
-     it is edited (HS-201-12: the owner's title was cut mid-sentence). */
-  white-space: normal;
-  overflow-wrap: anywhere;
+  /* Owner 2026-10-27: the title is one line on its own 40 px row, a
+     document's name line. A long name ends in an ellipsis; the field shows
+     all of it while it is edited. */
+  height: 40px;
+  min-height: 40px;
+  line-height: 40px;
+  padding-block: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* The title is the page's first line, above the editor's own scroller (the
@@ -158,16 +206,11 @@
 .desk-next .thought-note-title,
 .desk-next .thought-note-title.is-editing {
   max-width: none;
-  padding-bottom: 8px;
   border-bottom: 1px solid var(--wb-rule-soft);
   background: var(--thought-paper, var(--wb-paper));
 }
 
 .desk-next .thought-note-title.is-editing {
-  min-height: 1.4em;
-  resize: none;
-  overflow-y: auto;
-  field-sizing: content;
   background: var(--wash-1);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
@@ -246,6 +289,48 @@
 .desk-next .thought-note-body .cm-placeholder {
   color: var(--wb-muted);
   font-style: italic;
+}
+
+/* The note's diagrams (mermaidPreview.ts): the drawn ```mermaid fence on a
+   soft paper plate, as wide as the reading measure and never wider than the
+   window; a press on it opens the source. */
+.desk-next .thought-note-body .cm-mermaid {
+  box-sizing: border-box;
+  margin: 6px 0;
+  padding: 12px;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wb-paper);
+  cursor: text;
+  overflow: hidden;
+  text-align: center;
+}
+
+.desk-next .thought-note-body .cm-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.desk-next .thought-note-body .cm-mermaid[data-state="rendering"] {
+  background: color-mix(in srgb, var(--wb-paper) 70%, transparent);
+}
+
+.desk-next .thought-note-body .cm-mermaid[data-state="failed"] {
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.desk-next .thought-note-body .cm-mermaid-source {
+  margin: 0;
+  white-space: pre-wrap;
+  color: var(--wb-ink);
+  font: 400 13px/1.5 var(--font-mono);
+}
+
+.desk-next .thought-note-body .cm-mermaid-error {
+  margin: 6px 0 0;
+  color: var(--danger);
+  font: 400 12px/1.4 var(--font-ui);
 }
 
 .desk-next .thought-note-body .cm-thought-answer-reveal {

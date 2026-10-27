@@ -50,6 +50,19 @@ def _drag(page: Any, handle: Any, dy: float, during: Callable[[], None] | None =
     page.mouse.up()
 
 
+def _owner_sticky(page: Any, frame: Any, height: int) -> None:
+    """The owner's small arranged note. A note opens at 760 x 560 (owner
+    2026-10-27, pullouts/size.ts); these cases start from a sticky he made
+    smaller with the grip."""
+    # The open flies out of the object: measure once its motion ends.
+    page.wait_for_function("id => !document.getElementById(id).getAnimations().some((a) => a.playState === 'running')",
+                           arg=frame.get_attribute("id"))
+    now = frame.evaluate("el => el.getBoundingClientRect().height")
+    _drag(page, frame.locator(".desk-window-grip"), height - now)
+    page.wait_for_function("([id, h]) => Math.abs(document.getElementById(id).getBoundingClientRect().height - h) <= 2",
+                           arg=[frame.get_attribute("id"), height])
+
+
 def _grow(frame: Any) -> None:
     frame.evaluate("""el => {
       const marker = document.createElement('div');
@@ -85,8 +98,7 @@ def test_arranged_frame_lifts_on_growth_without_saving_new_height(
             assert frame_id and frame_id.startswith("pullout:note:")
             note_id = frame_id.removeprefix("pullout:note:")
 
-            if owner_height == 500:
-                _drag(page, frame.locator(".desk-window-grip"), 140)
+            _owner_sticky(page, frame, owner_height)
             _drag(page, frame.locator(".desk-pullout-head"), 330 if owner_height == 360 else 220)
             page.wait_for_function("id => !!JSON.parse(localStorage.getItem('hs.desk.workspace.v1') || '{}').panel?.rects?.[id]", arg=frame_id)
             before = _frame_state(frame)
@@ -181,6 +193,7 @@ def test_growth_waits_for_owner_gesture_to_end(
             _new_note(page, 1440)
             frame = page.locator(THOUGHT).first
             frame.locator(".thought-note-body .cm-content").wait_for()
+            _owner_sticky(page, frame, 360)
             _drag(page, frame.locator(".desk-pullout-head"), 330)
             before = _frame_state(frame)
             assert before["savedRect"] and before["top"] > 300, before
@@ -273,6 +286,7 @@ def test_saved_frame_already_oversize_on_reopen_lifts_at_mount(
             _new_note(page, 1440)
             frame = page.locator(THOUGHT).first
             frame.locator(".thought-note-body .cm-content").wait_for()
+            _owner_sticky(page, frame, 360)
             _drag(page, frame.locator(".desk-pullout-head"), 330)
             before = _frame_state(frame)
             assert before["savedRect"] and before["top"] > 300, before

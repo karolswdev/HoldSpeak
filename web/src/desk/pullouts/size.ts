@@ -10,9 +10,11 @@
  * The width keeps the Intelligence tabs on one row: they stack when the
  * window body is 420 px or less (intelligence.css). */
 export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
-  // PHILO-17 (windows): a note opens as a small sticky and grows with its
-  // material until the Thought window's 820 x 640 cap.
-  note: { w: 520, h: 360 },
+  // Owner 2026-10-27: a note opens as a document window, wide enough that
+  // its toolbar (Done · Ask about this · Find the tasks · Project · Send) is
+  // one row. The loading frame seats the note window at this size, and the
+  // note window keeps that seat.
+  note: { w: 760, h: 560 },
   intelligence: { w: 880, h: 700 },
   thread: { w: 740, h: 680 },
   decision: { w: 680, h: 640 },

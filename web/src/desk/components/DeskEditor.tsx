@@ -9,7 +9,7 @@ import {
   isolateHistory,
 } from "@codemirror/commands";
 import { markdown, markdownKeymap } from "@codemirror/lang-markdown";
-import { Annotation, Compartment, EditorState, StateEffect, StateField } from "@codemirror/state";
+import { Annotation, Compartment, EditorState, StateEffect, StateField, type Extension } from "@codemirror/state";
 import { Decoration, EditorView, keymap, placeholder } from "@codemirror/view";
 import { deskEditorTheme, deskMarkdownHighlighting } from "./deskEditorTheme";
 
@@ -75,6 +75,9 @@ interface DeskEditorProps {
    * draft cut owners and due dates at 393, Astra's B5 check #739). A code
    * embed that needs one line per line passes `lineWrapping={false}`. */
   lineWrapping?: boolean;
+  /** Extra CodeMirror extensions, read once at mount (the Note's diagram
+   *  preview, mermaidPreview.ts). */
+  extensions?: Extension;
 }
 
 function toggleInlineWrap(view: EditorView, marker: string, closingMarker = marker): boolean {
@@ -201,6 +204,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
       showToolbar = true,
       editable = true,
       lineWrapping = true,
+      extensions: extraExtensions,
     },
     forwardedRef,
   ) {
@@ -303,6 +307,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
             revealField,
             editableCompartment.current.of(EditorView.editable.of(editable)),
             ...(lineWrapping ? [EditorView.lineWrapping] : []),
+            ...(extraExtensions ? [extraExtensions] : []),
             keymap.of([
               {
                 key: "Escape",

@@ -8,6 +8,7 @@ import { refOpener } from "../openObject";
 import type { ThoughtDraft } from "../pullouts/editors/useThoughtNoteWriter";
 import { claimThoughtKeys } from "../thoughtKeys";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
+import { mermaidPreview } from "./mermaidPreview";
 import { bindThoughtVoiceTarget, deskThoughtVoiceDraft, thoughtVoiceKey, type ThoughtVoiceDraftIO } from "./thoughtVoiceDraft";
 
 /* HS-201-12 — bands 1 and 2 of the one clean note (the owner's first-use
@@ -19,6 +20,9 @@ import { bindThoughtVoiceTarget, deskThoughtVoiceDraft, thoughtVoiceKey, type Th
    (it writes at the cursor), never a button beside the field. */
 /** A title of his own: not the untitled name, and not the first words of the
  *  note (the name the save rule gives an untitled note). */
+/** The note's diagrams draw in place (mermaidPreview.ts). */
+const NOTE_EDITOR_EXTENSIONS = mermaidPreview();
+
 export function ownTitle(title: string, body: string): boolean {
   const clean = title.trim();
   return Boolean(clean) && clean !== NEW_THOUGHT_TITLE && clean !== firstWords(body);
@@ -152,12 +156,13 @@ export function ThoughtDocumentPane({
           named by its first words, thoughtTitle.ts) left the window. A title
           of his own, which the first line does not say, stays editable here
           as the page's first line at the body step, never a display
-          headline (Object ▸ Rename opens this window). */}
+          headline (Object ▸ Rename opens this window). Owner 2026-10-27:
+          it is one line, a document's name line (17 px, ellipsis when
+          long, the whole name while it is edited), never a three-line H1. */}
       {ownTitle(draft.title, draft.body) ? <EditInPlace
         className="thought-note-title"
         label="Title"
         value={draft.title}
-        multiline
         disabledReason={lockedReason}
         onCommit={(next) => onEdit({ title: next })}
       /> : null}
@@ -171,6 +176,7 @@ export function ThoughtDocumentPane({
         placeholder="Start with what you know…"
         showToolbar={false}
         lineWrapping
+        extensions={NOTE_EDITOR_EXTENSIONS}
         onChange={(body) => onEdit({ body })}
         onSelectionChange={onSelectionChange}
       />
