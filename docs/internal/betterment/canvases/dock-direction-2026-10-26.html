@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dock directions</title>
+<style>
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-paper:#fafbfc; --wb-rule:#c5cfdd;
+  --wb-backdrop:#293847; --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-rec:#b3261e;
+  --desk-floor: radial-gradient(1200px 700px at 8% 0%, rgba(255,255,255,.12), rgba(255,255,255,0) 65%), linear-gradient(180deg,#33495f 0%,var(--wb-backdrop) 100%);
+  --desk-badge-ring: 0 0 0 1.5px var(--wb-paper), 0 1px 3px rgba(12,20,32,.35);
+  /* the new dock material: the floor's slate, not paper */
+  --dock-glass: rgba(30,43,58,.72);
+  --dock-glass-rule: rgba(233,238,245,.16);
+  --dock-glass-shade: 0 10px 30px rgba(8,14,22,.45), 0 2px 6px rgba(8,14,22,.30), inset 0 1px 0 rgba(255,255,255,.10);
+  --dock-shelf: linear-gradient(180deg,#223142 0%,#1c2937 100%);
+  --dock-paper-ink:#e9eef5; --dock-paper-dim:#b8c4d3;
+  --dock-hover: rgba(233,238,245,.10);
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#e9eef4;color:var(--wb-ink);font:15px/1.5 var(--font-ui);min-width:1520px}
+main{padding:32px 40px 80px}
+h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+h2{font-size:20px;margin:0 0 4px}
+h3{font-size:14px;margin:18px 0 8px;color:var(--wb-muted);font-weight:600}
+p{margin:0 0 10px;max-width:980px}
+.lede{display:grid;grid-template-columns:1fr 560px;gap:28px;align-items:start;margin-bottom:28px}
+.why li{margin:0 0 6px;max-width:860px}
+.now img{width:560px;border-radius:8px;border:1px solid var(--wb-rule);display:block}
+.now figcaption{font-size:12px;color:var(--wb-muted);margin-top:4px}
+section.dir{margin:40px 0 0;padding:24px 0 0;border-top:1px solid var(--wb-rule)}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:3px;margin-left:8px}
+.cost{font-size:14px;color:var(--wb-muted);max-width:1100px}
+.switch{display:inline-flex;gap:0;margin:8px 0 10px;border:1px solid var(--wb-rule);border-radius:8px;overflow:hidden;background:#fff}
+.switch button{font:500 13px var(--font-ui);border:0;background:transparent;padding:6px 14px;color:var(--wb-ink);cursor:pointer}
+.switch button[aria-pressed="true"]{background:var(--wb-sel);color:#fff}
+
+/* ---------- the real 1440 desk ---------- */
+.desk{position:relative;width:1440px;height:900px;overflow:hidden;background:url(dock-direction-2026-10-26/desk-1440.png) 0 0/1440px 900px no-repeat;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule)}
+.patch{position:absolute;background-image:url(dock-direction-2026-10-26/desk-1440.png);background-size:1440px 900px;background-repeat:no-repeat}
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:url(dock-direction-2026-10-26/desk-1440.png) 0 0/1440px 900px no-repeat}
+.phone .floorfill{position:absolute;left:0;right:0;top:770px;bottom:0;background:linear-gradient(180deg,#2a3a4b,#283746)}
+.phones{display:flex;gap:56px;align-items:flex-start;margin:6px 0 0 10px}
+.phones figure{margin:0}
+.phones figcaption{font-size:12px;color:var(--wb-muted);margin-top:14px;text-align:center}
+.zoom{display:flex;flex-direction:column;gap:14px;margin-top:6px}
+.zoomrow{display:flex;align-items:center;gap:18px}
+.zoomrow > span{width:72px;font-size:12px;color:var(--wb-muted);text-align:right}
+.zoombox{zoom:2;background:var(--desk-floor);padding:14px 18px;border-radius:6px;position:relative}
+.zoombox.shelfz{padding:0;width:700px}
+.zoombox.colz{padding:10px 14px}
+
+/* ---------- dock parts shared ---------- */
+.dock{position:absolute;display:flex;font-family:var(--font-ui)}
+.tile{position:relative;display:grid;place-items:center;border-radius:10px}
+.tile img.ic{display:block}
+.tile.hover{background:var(--dock-hover)}
+.badge{position:absolute;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--wb-sel-vivid);color:#fff;font:600 11px/18px var(--font-ui);text-align:center;box-shadow:var(--desk-badge-ring)}
+.run{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--dock-paper-ink);box-shadow:0 0 4px rgba(233,238,245,.6)}
+.sep{background:var(--dock-glass-rule)}
+.tip{position:absolute;white-space:nowrap;font:500 12px/16px var(--font-ui);color:var(--wb-ink);background:var(--wb-paper);padding:3px 8px;border-radius:6px;box-shadow:0 2px 8px rgba(8,14,22,.35)}
+.tip small{color:var(--wb-muted);font-size:12px;margin-left:6px}
+
+/* 1. FLOATING */
+.dock.float{left:50%;transform:translateX(-50%);bottom:10px;height:64px;padding:8px;gap:4px;align-items:center;border-radius:14px;background:var(--dock-glass);backdrop-filter:blur(18px) saturate(1.2);-webkit-backdrop-filter:blur(18px) saturate(1.2);box-shadow:var(--dock-glass-shade);border:1px solid var(--dock-glass-rule)}
+.float .tile{width:56px;height:48px}
+.float .tile img.ic{width:48px;height:48px}
+.float .tile img.ic.sym{width:28px;height:28px}
+.float .badge{top:-7px;left:42px}
+.float .run{bottom:-6px;left:26px}
+.float .sep{width:1px;height:36px;margin:0 6px}
+.float .tip{bottom:62px;left:50%;transform:translateX(-50%)}
+/* phone floating */
+.phone .dock.float{bottom:12px;padding:6px;gap:2px;height:56px;max-width:calc(100% - 16px)}
+.phone .float .tile{width:48px;height:44px}
+.phone .float .tile img.ic{width:40px;height:40px}
+.phone .float .tile img.ic.sym{width:26px;height:26px}
+.phone .float .badge{left:34px}
+.phone .float .run{left:22px;bottom:-5px}
+
+/* 2. SHELF */
+.dock.shelf{left:0;right:0;bottom:0;height:64px;justify-content:center;align-items:stretch;gap:6px;padding:2px 8px 6px;background:var(--dock-shelf);box-shadow:inset 0 1px 0 rgba(233,238,245,.18),0 -6px 18px rgba(8,14,22,.25)}
+.shelf .tile{width:76px;grid-template-rows:40px 16px;gap:0;align-content:center;place-items:center}
+.shelf .tile img.ic{width:40px;height:40px}
+.shelf .tile img.ic.sym{width:26px;height:26px}
+.shelf .tile b{font:500 12px/16px var(--font-ui);color:var(--dock-paper-ink);white-space:nowrap}
+.shelf .tile b i{font-style:normal;color:var(--dock-paper-dim)}
+.shelf .badge{top:0;left:52px}
+.shelf .run{bottom:-5px;left:36px}
+.shelf .sep{width:1px;margin:10px 6px}
+.phone .dock.shelf{justify-content:flex-start;gap:0;padding:4px 2px;overflow:hidden}
+.phone .shelf .tile{width:56px;flex-shrink:0}
+.phone .shelf .tile img.ic{width:32px;height:32px}
+.phone .shelf .tile img.ic.sym{width:24px;height:24px}
+.phone .shelf .badge{left:36px}
+.phone .shelf .run{left:26px}
+
+/* 3. NEXT COLUMN */
+.dock.col{right:0;top:36px;bottom:0;width:68px;flex-direction:column;align-items:center;gap:4px;padding:8px 6px;background:var(--dock-shelf);box-shadow:inset 1px 0 0 rgba(233,238,245,.16),-6px 0 18px rgba(8,14,22,.25)}
+.col .tile{width:56px;height:56px}
+.col .tile img.ic{width:48px;height:48px}
+.col .tile img.ic.sym{width:28px;height:28px}
+.col .badge{top:-4px;right:-2px}
+.col .run{left:-3px;top:26px}
+.col .sep{height:1px;width:40px;margin:4px 0}
+.col .grow{flex:1}
+.col .tip{right:66px;top:50%;transform:translateY(-50%)}
+.phone .dock.col{top:0;width:56px;padding:56px 4px 8px;gap:2px}
+.phone .col .tile{width:48px;height:48px}
+.phone .col .tile img.ic{width:40px;height:40px}
+.phone .col .tile img.ic.sym{width:26px;height:26px}
+.zoombox .dock{position:relative;left:auto;right:auto;bottom:auto;top:auto;transform:none}
+.zoombox .dock.shelf{width:100%}
+.zoombox .dock.col{height:520px}
+.zoomcols{display:flex;gap:30px;align-items:flex-start;margin-top:6px}
+.zoomcols > div{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted)}
+.zoombox.colz{height:auto}
+.shot-note{font-size:12px;color:var(--wb-muted);margin:6px 0 0}
+</style>
+</head>
+<body>
+<main>
+<div class="lede">
+  <div class="why">
+    <h1>Dock directions</h1>
+    <p>You asked why the bottom bar is ugly. These are the causes:</p>
+    <ul>
+      <li><b>It is a Windows taskbar.</b> A full-width near-white paper band, 60 px high, on a dark slate floor. The tiles are left-aligned at one 84 px pitch, with a 12 px word under each icon.</li>
+      <li><b>The parts do not match.</b> The count badge sits over the picture. The red Record ring is a different object from the other tiles.</li>
+      <li><b>The icons are too small for their family.</b> The D icons are exported at 32 px. At 32 px on white, the bevel is gone and each icon is a small literal object: a light bulb with an M, a calendar with two heads, two coloured people, a robot in a blue box. Mixed fills and shapes at that size look like emoji, whatever the family.</li>
+    </ul>
+    <p>Below are three directions on the real 1440 desk, at real pixel size. Each uses the D icons at 48 px (where D keeps its 2 px bevel) and a symbol set I drew (one ink, 2 px stroke, 24 px grid). Use the switch on each direction to compare objects and symbols. The Talk orb and the Archive icon are not drawn: a parallel lane removes them.</p>
+  </div>
+  <figure class="now">
+    <img src="dock-direction-2026-10-26/desk-1440.png" alt="The desk now, with the current dock">
+    <figcaption>Now: the paper band, 32 px icons, words, the badge over the bulb, the Record ring.</figcaption>
+  </figure>
+</div>
+
+<section class="dir" id="d1">
+  <h2>1. Floating dock <span class="tag">Recommended</span></h2>
+  <p>A centred plate 10 px above the bottom edge, in the floor's slate glass. Radius 14 px, 48 px icons, height 64 px. No words: the name shows on hover as a small label above the tile (Meetings is shown hovered). A 4 px dot under a running app. The count badge on the icon's top right corner. Record is one tile of the same size. A thin rule before the seated windows.</p>
+  <p class="cost"><b>Cost.</b> The tile pins hold (test_dock_glass.py `_whole_dock_target`: every tile at least 44 × 44 and inside the dock), but the swipe and `.desk-dock-more` pager probes (test_dock_glass.py:311, test_desk_sweep.py:772) assume a full-width band, so the plate keeps `overflow-x: auto` with the phone cap it already has (dock.css:51). `--desk-snap-bottom` goes from 60 to about 82 px so snapped windows clear the plate, and the 1:1 time word under People moves into the hover label and the badge.</p>
+  <div class="switch" data-for="d1"><button aria-pressed="true" data-set="obj">D objects at 48</button><button aria-pressed="false" data-set="sym">Symbols</button></div>
+  <div class="desk" data-dock="float"></div>
+  <h3>2× zoom, the dock alone</h3>
+  <div class="zoom">
+    <div class="zoomrow"><span>Objects</span><div class="zoombox"><div class="dock float" data-static="float" data-set="obj" style="position:relative"></div></div></div>
+    <div class="zoomrow"><span>Symbols</span><div class="zoombox"><div class="dock float" data-static="float" data-set="sym" style="position:relative"></div></div></div>
+  </div>
+  <h3>Phone, 393 px</h3>
+  <div class="phones">
+    <figure><div class="phone" data-dock="float" data-set="obj"></div><figcaption>Objects at 40</figcaption></figure>
+    <figure><div class="phone" data-dock="float" data-set="sym"></div><figcaption>Symbols</figcaption></figure>
+  </div>
+</section>
+
+<section class="dir" id="d2">
+  <h2>2. Shelf</h2>
+  <p>The full-width band stays, but in the floor's slate: dark, with a light rule on top. Icons 40 px, words kept in paper ink at 12 px, the tiles centred as a group, the badge on the corner.</p>
+  <p class="cost"><b>Cost.</b> The cheapest change: the plate and shine tokens (tokens.css:369–370), icons 32 → 40 and `justify-content: center` in dock.css; every geometry pin and the swipe probes hold. `--desk-snap-bottom` goes from 60 to 64 px. It is still a taskbar, only a dark one.</p>
+  <div class="switch" data-for="d2"><button aria-pressed="true" data-set="obj">D objects at 40</button><button aria-pressed="false" data-set="sym">Symbols</button></div>
+  <div class="desk" data-dock="shelf"></div>
+  <h3>2× zoom, the centre of the dock</h3>
+  <div class="zoom">
+    <div class="zoomrow"><span>Objects</span><div class="zoombox shelfz"><div class="dock shelf" data-static="shelf" data-set="obj" style="position:relative"></div></div></div>
+    <div class="zoomrow"><span>Symbols</span><div class="zoombox shelfz"><div class="dock shelf" data-static="shelf" data-set="sym" style="position:relative"></div></div></div>
+  </div>
+  <h3>Phone, 393 px</h3>
+  <div class="phones">
+    <figure><div class="phone" data-dock="shelf" data-set="obj"></div><figcaption>Objects at 32 (the band scrolls)</figcaption></figure>
+    <figure><div class="phone" data-dock="shelf" data-set="sym"></div><figcaption>Symbols</figcaption></figure>
+  </div>
+</section>
+
+<section class="dir" id="d3">
+  <h2>3. NeXT column</h2>
+  <p>A vertical dock on the right edge in the NeXT and Workbench manner: 56 px tiles, 48 px icons, no words, the Record tile at the bottom, the menu bar unchanged. A dot on the left edge marks a running app.</p>
+  <p class="cost"><b>Cost.</b> The largest change: the work band loses its bottom reserve and gets a right one, so `--desk-snap-bottom`, windowGeometry.ts and its workBand test, and every snap rule in desk.css and pullout.css change. The horizontal swipe and pager probes become vertical. On a phone the column takes 56 of 393 px, so the phone needs its own bottom row.</p>
+  <div class="switch" data-for="d3"><button aria-pressed="true" data-set="obj">D objects at 48</button><button aria-pressed="false" data-set="sym">Symbols</button></div>
+  <div class="desk" data-dock="col"></div>
+  <h3>2× zoom, the dock alone</h3>
+  <div class="zoomcols">
+    <div><div class="zoombox colz"><div class="dock col" data-static="col" data-set="obj" style="position:relative"></div></div>Objects</div>
+    <div><div class="zoombox colz"><div class="dock col" data-static="col" data-set="sym" style="position:relative"></div></div>Symbols</div>
+  </div>
+  <h3>Phone, 393 px</h3>
+  <div class="phones">
+    <figure><div class="phone" data-dock="col" data-set="obj"></div><figcaption>Objects at 40</figcaption></figure>
+    <figure><div class="phone" data-dock="col" data-set="sym"></div><figcaption>Symbols</figcaption></figure>
+  </div>
+</section>
+</main>
+
+<script>
+const A = "dock-direction-2026-10-26/";
+const APPS = [
+  {id:"today",    name:"Today",    obj:"D/today.svg",    sym:"glyphs/today.svg",    badge:"26", run:true},
+  {id:"meetings", name:"Meetings", obj:"D/meeting.svg",  sym:"glyphs/meetings.svg", hover:true},
+  {id:"people",   name:"People",   obj:"D/people.svg",   sym:"glyphs/people.svg",   word:"1:1 23:44"},
+  {id:"agents",   name:"Agents",   obj:"D/agent.svg",    sym:"glyphs/agents.svg",   run:true},
+  {id:"speak",    name:"Speak",    obj:"D/mic.svg",      sym:"glyphs/speak.svg"},
+  {id:"settings", name:"Settings", obj:"D/settings.svg", sym:"glyphs/settings.svg"},
+  {id:"record",   name:"Record",   obj:"D/record.svg",   sym:"glyphs/record.svg"},
+];
+const SEATED = [{id:"note", name:"Ledger cutover risks", obj:"D/note.svg", sym:"glyphs/note.svg"}];
+
+function tile(app, kind, set, opts){
+  const el = document.createElement("div");
+  el.className = "tile" + (app.hover && opts.hover ? " hover" : "");
+  el.title = app.name;
+  const img = document.createElement("img");
+  img.className = "ic" + (set === "sym" ? " sym" : "");
+  img.src = A + app[set]; img.alt = app.name;
+  el.appendChild(img);
+  if (kind === "shelf"){
+    const b = document.createElement("b");
+    b.innerHTML = app.word ? "1:1 <i>23:44</i>" : app.name;
+    el.appendChild(b);
+  }
+  if (app.badge){ const s=document.createElement("span"); s.className="badge"; s.textContent=app.badge; el.appendChild(s); }
+  if (app.run){ const s=document.createElement("span"); s.className="run"; el.appendChild(s); }
+  if (app.hover && opts.hover && kind !== "shelf"){
+    const t=document.createElement("span"); t.className="tip"; t.innerHTML = app.name + "<small>next at 23:44</small>"; el.appendChild(t);
+  }
+  return el;
+}
+function buildDock(dock, kind, set, opts){
+  dock.innerHTML = "";
+  let apps = APPS;
+  if (kind === "col"){ // Record at the bottom
+    apps = APPS.filter(a=>a.id!=="record");
+  }
+  apps.forEach(a => dock.appendChild(tile(a, kind, set, opts)));
+  if (!opts.phone){
+    const sep=document.createElement("span"); sep.className="sep"; dock.appendChild(sep);
+    SEATED.forEach(a => dock.appendChild(tile(a, kind, set, opts)));
+  }
+  if (kind === "col"){
+    const g=document.createElement("span"); g.className="grow"; dock.appendChild(g);
+    dock.appendChild(tile(APPS.find(a=>a.id==="record"), kind, set, opts));
+  }
+}
+function fill(host, x, y, w, h, bg, feather){
+  const p=document.createElement("div"); p.className="patch";
+  Object.assign(p.style,{left:x+"px",top:y+"px",width:w+"px",height:h+"px",background:bg});
+  if (feather){ p.style.maskImage=feather; p.style.webkitMaskImage=feather; }
+  host.appendChild(p);
+}
+function buildDesk(host, set){
+  host.innerHTML="";
+  const kind = host.dataset.dock;
+  // erase the current dock band, the Talk orb and the Archive corner with the floor's own colour (sampled from the shot)
+  fill(host, 0, 790, 1440, 110, "linear-gradient(180deg, rgba(41,56,72,0) 0, rgb(41,56,72) 34px, rgb(40,55,70) 100%)");
+  fill(host, 0, 740, 170, 160, "rgb(41,56,72)", "linear-gradient(90deg, #000 72%, transparent)");
+  fill(host, 1296, 680, 144, 110, "rgb(42,58,74)", "radial-gradient(closest-side, #000 80%, transparent 100%)");
+  const d=document.createElement("div"); d.className="dock "+kind; host.appendChild(d);
+  buildDock(d, kind, set, {hover:true});
+}
+function buildPhone(host){
+  const kind=host.dataset.dock, set=host.dataset.set;
+  const f=document.createElement("div"); f.className="floorfill"; host.appendChild(f);
+  const d=document.createElement("div"); d.className="dock "+kind; host.appendChild(d);
+  buildDock(d, kind, set, {phone:true});
+}
+document.querySelectorAll(".desk").forEach(h=>buildDesk(h,"obj"));
+document.querySelectorAll(".phone").forEach(buildPhone);
+document.querySelectorAll("[data-static]").forEach(d=>buildDock(d, d.dataset.static, d.dataset.set, {hover:false}));
+document.querySelectorAll(".switch").forEach(sw=>{
+  sw.addEventListener("click", e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    sw.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", String(x===b)));
+    buildDesk(document.querySelector("#"+sw.dataset.for+" .desk"), b.dataset.set);
+  });
+});
+</script>
+</body>
+</html>
