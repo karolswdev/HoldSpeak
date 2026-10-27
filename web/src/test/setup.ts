@@ -47,3 +47,20 @@ if (typeof window !== "undefined" && !window.matchMedia) {
     }),
   });
 }
+
+// jsdom has no text layout: a Range has no client rects. CodeMirror measures
+// them on its own frame after any view update (the note's live preview, a
+// scroll into view), and threw an unhandled error between cases. An empty
+// layout is the truth of jsdom.
+if (typeof Range !== "undefined") {
+  if (typeof Range.prototype.getClientRects !== "function") {
+    Range.prototype.getClientRects = function getClientRects() {
+      return Object.assign([], { item: () => null }) as unknown as DOMRectList;
+    };
+  }
+  if (typeof Range.prototype.getBoundingClientRect !== "function") {
+    Range.prototype.getBoundingClientRect = function getBoundingClientRect() {
+      return new DOMRect();
+    };
+  }
+}

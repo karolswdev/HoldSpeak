@@ -33,7 +33,7 @@
   min-height: 520px;
 }
 
-.desk-next .desk-pullout.thought-workspace-window:where(:not(.is-sending):has(.thought-reads-well, .thought-note-ask-open, .note-outcomes, .thought-voice-recovery)) {
+.desk-next .desk-pullout.thought-workspace-window:where(:not(.is-sending):has(.thought-reads-well, .thought-voice-recovery)) {
   /* A restored sticky can pin 360px. Open material needs room, within the
      existing cap; larger owner-arranged heights still win. */
   min-height: min(640px, calc(100dvh - var(--desk-work-top) - var(--desk-work-bottom)));
@@ -541,16 +541,8 @@
   flex-wrap: wrap;
 }
 
-/* ── Band 3: one question ── */
-
-.desk-next .thought-note-ask {
-  flex: none;
-  max-height: 58%;
-  overflow-y: auto;
-  padding: 10px var(--thought-gutter, 22px) 14px;
-  border-top: 1px solid var(--border-strong);
-  background: var(--surface-2);
-}
+/* ── An older thought's open question or draft: a card in the margin
+   (Direction A, 2026-10-27; it was band 3 under the toolbar). ── */
 
 .desk-next .thought-note-ask-label {
   color: var(--text-faint);
@@ -565,8 +557,7 @@
 
 .desk-next .thought-note-ask-open {
   display: grid;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 8px;
 }
 
 .desk-next .thought-note-ask-kicker {
@@ -577,11 +568,11 @@
 .desk-next .thought-note-ask-text {
   /* A long question never pushes the answer pad off the glass: the
      question itself scrolls past four lines (HS-201-12 fence). */
-  max-height: 6em;
+  max-height: 9em;
   margin: 0;
   overflow-y: auto;
-  color: var(--text);
-  font: 400 15px/1.5 var(--font-ui);
+  color: var(--wb-ink);
+  font: 400 13px/1.45 var(--font-ui);
   overflow-wrap: anywhere;
 }
 
@@ -764,7 +755,6 @@
     margin-block: 0;
   }
 
-  .desk-next .thought-note-ask,
   .desk-next .thought-note-line,
   .desk-next .thought-reads-well,
   .desk-next .thought-action-well {
@@ -776,7 +766,7 @@
     grid-template-columns: 1fr;
   }
 
-  .desk-next .thought-note-ask-verbs .btn {
+  .desk-next .note-margin-verbs .btn {
     min-height: 40px;
   }
 }
@@ -824,13 +814,392 @@
   }
 }
 
-/* Betterment Q9 (Find the tasks): the meeting's outcome rows under the note,
-   in the band's inset, scrolling on their own so the note keeps its room. */
-.desk-next .note-outcomes {
+/* ── Direction A, step 2 (owner pick 2026-10-27): the page and its margin.
+   docs/internal/betterment/canvases/note-workspace-2026-10-27.html, ".margin".
+   The editor keeps its place; the margin takes a 248 px right column of the
+   same paper, a hairline on its left. A narrow window (under 720 px) gets
+   it as a drawer over the foot of the page. ── */
+
+.desk-next .thought-note-document {
+  position: relative;
+}
+
+.desk-next .thought-note-document.has-margin {
+  grid-template-columns: minmax(0, 1fr) 248px;
+}
+
+.desk-next .thought-note-document > :not(.thought-note-field, .note-margin) {
+  grid-column: 1 / -1;
+}
+
+.desk-next .thought-note-document > .thought-note-field {
+  grid-column: 1;
+}
+
+.desk-next .note-margin {
+  grid-row: 2;
+  grid-column: 2;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* The hairline on its left is an inset shadow (HS-101 rule 6: no rail). */
+  box-shadow: inset 1px 0 0 var(--wb-rule-soft);
+  background:
+    linear-gradient(90deg, rgba(37, 52, 73, 0.045), rgba(37, 52, 73, 0) 10px),
+    color-mix(in srgb, var(--wb-steel-2) 70%, var(--thought-paper, var(--wb-paper)));
+  user-select: none;
+}
+
+.desk-next .note-margin-head {
   flex: none;
-  max-height: 46%;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px 0 12px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  color: var(--wb-muted);
+  font: 600 12px/1 var(--font-display);
+}
+
+.desk-next .note-margin-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.desk-next .note-margin-head .note-margin-close.btn {
+  min-height: 22px;
+  height: 22px;
+  width: 24px;
+  padding: 0;
+  justify-content: center;
+  color: var(--wb-muted);
+  font-size: 13px;
+}
+
+.desk-next .note-margin-body {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
-  padding: 8px var(--thought-gutter, 22px) 12px;
-  border-top: 1px solid var(--border-strong);
-  background: var(--surface-2);
+  padding-bottom: 10px;
+}
+
+/* The cards beside their lines: each sits at its line's height (--top, set
+   from the editor's line), pushed down by the card above it. */
+.desk-next .note-margin-cards {
+  position: relative;
+  height: var(--cards-h, auto);
+}
+
+.desk-next .note-margin-card-place {
+  position: absolute;
+  top: var(--top, 8px);
+  left: 14px;
+  right: 10px;
+}
+
+/* The lead: a thin line from the card to its line in the text, drawn by
+   CSS from the measured offset (--lead, px from the card's top). */
+.desk-next .note-margin-card-place[data-lead]::before {
+  --lead-ink: linear-gradient(#8fb0e6, #8fb0e6);
+  content: "";
+  position: absolute;
+  left: -12px;
+  width: 12px;
+  top: min(var(--lead), 14px);
+  height: max(calc(var(--lead) - 14px), calc(14px - var(--lead)), 1.5px);
+  pointer-events: none;
+}
+
+/* The lead is painted (a stroke down, a stroke across), never a rail. */
+.desk-next .note-margin-card-place[data-lead="up"]::before {
+  background: var(--lead-ink) left top / 1.5px 100% no-repeat, var(--lead-ink) left bottom / 100% 1.5px no-repeat;
+}
+
+.desk-next .note-margin-card-place[data-lead="down"]::before {
+  background: var(--lead-ink) left top / 1.5px 100% no-repeat, var(--lead-ink) left top / 100% 1.5px no-repeat;
+}
+
+.desk-next .note-margin-card-place[data-lead="level"]::before {
+  background: var(--lead-ink) left top / 100% 1.5px no-repeat;
+}
+
+.desk-next .note-margin-card-place[data-lead]::after {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: calc(var(--lead) - 2.5px);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #8fb0e6;
+  pointer-events: none;
+}
+
+.desk-next .note-margin-card {
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: var(--wb-well);
+  box-shadow: 0 1px 3px rgba(22, 40, 62, 0.12), 0 0 0 1px var(--wb-rule-soft);
+  color: var(--wb-ink);
+  font: 400 13px/1.45 var(--font-ui);
+  user-select: text;
+  animation: note-margin-arrive 240ms ease-out both;
+}
+
+.desk-next .note-margin-q {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin-bottom: 4px;
+  color: var(--wb-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.desk-next .note-margin-q .kit-toolglyph {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  margin-top: 1px;
+  color: var(--wb-sel);
+}
+
+.desk-next .note-margin-q > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.desk-next .note-margin-answer {
+  max-height: 16em;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.desk-next .note-margin-verbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.desk-next .note-margin-card .thought-note-answer textarea {
+  font-size: 13px;
+}
+
+/* Found in this note: dense 30 px rows, one verb each. */
+.desk-next .note-margin-found {
+  padding-top: 8px;
+}
+
+.desk-next .note-margin-cap {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  color: var(--wb-muted);
+  font: 600 12px/1 var(--font-display);
+}
+
+.desk-next .note-margin-run {
+  padding: 2px 12px 6px;
+  font-size: 12px;
+}
+
+.desk-next .note-margin-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-next .note-margin-decisions {
+  margin-top: 14px;
+}
+
+.desk-next .note-margin-row {
+  position: relative;
+  animation: note-margin-arrive 240ms ease-out both;
+  animation-delay: var(--arrive, 0ms);
+}
+
+.desk-next .note-margin-row:hover,
+.desk-next .note-margin-row:focus-within {
+  background: var(--wb-row-hover);
+  box-shadow: inset 0 0 0 1px #c9d6ea;
+}
+
+.desk-next .note-margin-row-line {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px 0 4px;
+}
+
+.desk-next .note-margin-row-go.btn--chrome {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px 0 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--wb-ink);
+  font: 400 12.5px/1 var(--font-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+.desk-next .note-margin-row-go.btn--chrome:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.desk-next .note-margin-row-go.btn--chrome:focus-visible {
+  outline: 2px solid var(--wb-sel-vivid);
+  outline-offset: -2px;
+}
+
+.desk-next .note-margin-glyph {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.desk-next .note-margin-row-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-next .note-margin-row[data-state="done"] .note-margin-row-text {
+  color: var(--wb-muted);
+}
+
+.desk-next .note-margin-who.kit-avatar {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+}
+
+.desk-next .note-margin-row .btn--sm {
+  flex: none;
+  min-height: 22px;
+  height: 22px;
+  padding-inline: 8px;
+  font-size: 12px;
+}
+
+.desk-next .note-margin-done {
+  flex: none;
+  font-size: 12px;
+  color: var(--wb-ok-ink);
+}
+
+/* The canvas: at rest a row is its glyph, its words and its owner; Confirm
+   (and More: Edit, Dismiss) show under the pointer or the keys, so the
+   words keep the width. The phone sheet shows them always (below). */
+.desk-next .note-margin-row .note-margin-more.btn {
+  width: 22px;
+  padding: 0;
+  justify-content: center;
+}
+
+.desk-next .thought-workspace-window:not(.is-sheet) .note-margin-row[data-state="proposed"]:not(:hover, :focus-within, :has([aria-expanded="true"], [aria-busy="true"])) .note-margin-row-line > .btn:not(.note-margin-row-go) {
+  display: none;
+}
+
+.desk-next .note-margin .note-outcome-edit {
+  display: grid;
+  gap: 6px;
+  padding: 4px 10px 10px 12px;
+}
+
+/* The line a margin row is about, lit while the pointer is on the row. */
+.desk-next .thought-note-body .cm-note-margin-lit {
+  background: color-mix(in srgb, var(--wb-sel-vivid) 10%, transparent);
+  box-shadow: inset 2px 0 0 var(--wb-sel-vivid);
+}
+
+@keyframes note-margin-arrive {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .note-margin-card,
+  .desk-next .note-margin-row {
+    animation: none;
+  }
+}
+
+/* A narrow window: the margin is a drawer over the foot of the page (the
+   canvas's sheet). Cards stack in order; the leads go. */
+@container surface (max-width: 719px) {
+  .desk-next .thought-note-document.has-margin {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .desk-next .note-margin {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    grid-column: 1;
+    max-height: min(60%, 300px);
+    border-top: 1px solid var(--wb-rule);
+    box-shadow: 0 -8px 18px rgba(22, 40, 62, 0.1);
+    background: var(--thought-paper, var(--wb-paper));
+  }
+
+  /* The drawer is as tall as what it holds, up to its cap; then it scrolls. */
+  .desk-next .note-margin-body {
+    flex: 0 1 auto;
+  }
+
+  .desk-next .note-margin-cards {
+    height: auto;
+    display: grid;
+    gap: 8px;
+    padding: 8px 10px 0;
+  }
+
+  .desk-next .note-margin-card-place {
+    position: static;
+  }
+
+  .desk-next .note-margin-card-place[data-lead]::before,
+  .desk-next .note-margin-card-place[data-lead]::after {
+    content: none;
+  }
+}
+
+/* The phone sheet: 44 px rows and targets. */
+.desk-next .thought-workspace-window.is-sheet .note-margin-row-line {
+  height: 44px;
+}
+
+.desk-next .thought-workspace-window.is-sheet .note-margin-row .btn--sm,
+.desk-next .thought-workspace-window.is-sheet .note-margin-head .note-margin-close.btn,
+.desk-next .thought-workspace-window.is-sheet .note-margin-verbs .btn {
+  min-height: var(--desk-button-hit-size);
+  height: var(--desk-button-hit-size);
+}
+
+.desk-next .thought-workspace-window.is-sheet .note-margin-head {
+  height: 44px;
+}
+
+.desk-next .thought-workspace-window.is-sheet .note-margin-row .note-margin-more.btn {
+  width: var(--desk-button-hit-size);
 }

@@ -523,6 +523,17 @@
   margin-left: auto;
   min-width: 0;
 }
+.kit-statusbar-trailing {
+  margin-left: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--wb-muted);
+}
+.kit-statusbar-verbs + .kit-statusbar-trailing {
+  margin-left: 0;
+}
 .kit-statusbar-verbs + .kit-statusbar-egress {
   margin-left: 0;
 }

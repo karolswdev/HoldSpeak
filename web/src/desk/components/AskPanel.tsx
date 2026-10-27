@@ -69,6 +69,7 @@ import { deleteThread, getThread, listThreads, type ThreadWire } from "../thread
 import { UsedLines } from "./UsedLines";
 import type { AgentUse } from "../used";
 import { requestAskReturn } from "../thought-workspace/askReturn";
+import { dropMarginAsk, putMarginAsk, updateMarginAsk } from "../thought-workspace/marginAsks";
 import { AskSourceFrame } from "./AskSourceFrame";
 import { ASK_GLYPH, ASK_SPRITE, AskAbout, AskAnswer, AskFresh, AskQuestion, AskThread, AskToolbar, AskTurnRow, AskVerbs } from "./askFace";
 import type { DeskNavigation, ProjectReturn } from "../store/types";
@@ -536,6 +537,16 @@ export function AskPanel() {
     setFinishedElapsedSeconds(undefined);
     setSent(snapshot);
     setPassageOpen(false);
+    // Direction A (2026-10-27): an Ask from a note shows in the note's
+    // margin, beside the passage it asked about.
+    const marginNote = fromNote;
+    if (marginNote) {
+      const passage = snapshot.sourceSnapshot && selectedPassage?.noteRef === `note:${marginNote.id}` ? selectedPassage : null;
+      putMarginAsk({
+        key: invocationId, noteId: marginNote.id, question: snapshot.question, answer: "", state: "working",
+        range: passage?.range ? { ...passage.range } : null, body: passage?.body ?? "",
+      });
+    }
     const r = await runAsk({
       prompt: snapshot.prompt,
       lens: snapshot.lens,
@@ -546,6 +557,10 @@ export function AskPanel() {
       invocationId,
       thread: threadId || true,
     });
+    if (marginNote) {
+      if (!mounted.current || controller.signal.aborted || pendingRequest.current?.id !== id) dropMarginAsk(marginNote.id, invocationId);
+      else updateMarginAsk(marginNote.id, invocationId, r.ok ? { state: "answered", answer: r.output } : { state: "failed" });
+    }
     if (!mounted.current || controller.signal.aborted || pendingRequest.current?.id !== id) return;
     pendingRequest.current = null;
     invocationRef.current = "";

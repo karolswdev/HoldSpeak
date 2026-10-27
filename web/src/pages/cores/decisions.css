@@ -122,7 +122,7 @@
   color: var(--wb-ink);
   font: 600 13px / 1.3 var(--font-sans);
 }
-@media (max-width: 520px) {
+@container surface (max-width: 520px) {
   .decision-reader { padding: 16px; }
   .decision-reader-title { font-size: 20px; }
   .decision-reader-fact { grid-template-columns: minmax(0, 1fr); gap: 2px; }

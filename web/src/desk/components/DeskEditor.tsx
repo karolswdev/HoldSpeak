@@ -22,6 +22,12 @@ export interface DeskEditorHandle {
   restoreSelection(from: number, to: number, options?: { scrollTop?: number | null; focus?: boolean }): boolean;
   revealRange(from: number, to: number, options?: { focus?: boolean }): boolean;
   clearReveal(): void;
+  /** The top of the line that holds `pos`, in viewport pixels (the note's
+   *  margin sets its cards beside their lines). Null with no view. */
+  lineTop?(pos: number): number | null;
+  /** Light one range (a margin row under the pointer); null clears it. It
+   *  moves no caret and scrolls nothing. */
+  lightRange?(range: { from: number; to: number } | null): void;
 }
 
 /** Opaque to consumers: a range in one editor and one document generation. */
@@ -40,6 +46,21 @@ export interface DeskEditorSelection {
 
 const setReveal = StateEffect.define<{ from: number; to: number } | null>();
 const authoritativeSync = Annotation.define<boolean>();
+const setLight = StateEffect.define<{ from: number; to: number } | null>();
+const lightField = StateField.define({
+  create: () => Decoration.none,
+  update(value, transaction) {
+    value = value.map(transaction.changes);
+    for (const effect of transaction.effects) {
+      if (!effect.is(setLight)) continue;
+      value = effect.value && effect.value.to <= transaction.state.doc.length
+        ? Decoration.set([Decoration.line({ class: "cm-note-margin-lit" }).range(transaction.state.doc.lineAt(effect.value.from).from)])
+        : Decoration.none;
+    }
+    return value;
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
 const revealField = StateField.define({
   create: () => Decoration.none,
   update(value, transaction) {
@@ -290,6 +311,25 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
         clearReveal() {
           viewRef.current?.dispatch({ effects: setReveal.of(null) });
         },
+        lineTop(pos) {
+          const view = viewRef.current;
+          if (!view || pos < 0 || pos > view.state.doc.length) return null;
+          // The drawn line first (it reads the DOM); the height map when
+          // the line is outside the drawn part of the note.
+          // A document with no layout (jsdom) gives null, never a throw.
+          try {
+            const line = view.state.doc.lineAt(pos);
+            return view.coordsAtPos(line.from, 1)?.top ?? view.lineBlockAt(pos).top + view.documentTop;
+          } catch {
+            return null;
+          }
+        },
+        lightRange(range) {
+          const view = viewRef.current;
+          if (!view) return;
+          if (range && (range.from < 0 || range.to < range.from || range.to > view.state.doc.length)) return;
+          view.dispatch({ effects: setLight.of(range) });
+        },
       }),
       [],
     );
@@ -307,6 +347,7 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
             deskEditorTheme,
             deskMarkdownHighlighting,
             revealField,
+            lightField,
             editableCompartment.current.of(EditorView.editable.of(editable)),
             ...(lineWrapping ? [EditorView.lineWrapping] : []),
             ...(extraExtensions ? [extraExtensions] : []),
