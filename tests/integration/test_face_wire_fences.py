@@ -496,3 +496,25 @@ def test_decisions_window_scope_reads(hub: Any, tmp_path: Path) -> None:
     _fence("decision-records.work-two", governing, tmp_path, hub)
     for name, record_id in zip(("decision-record.governing-a", "decision-record.governing-b"), ids):
         _fence(name, _ok(hub.client.get(f"/api/decision-records/{record_id}")), tmp_path, hub)
+
+
+def test_live_segment_frames(hub: Any, tmp_path: Path) -> None:
+    """live.app.test.tsx (W2-LIVE): the `segment` frames the hub broadcasts while
+    a meeting records. The payload is `TranscriptSegment.to_dict()`
+    (holdspeak/meeting_session/transcribe_loop.py `_emit_broadcast("segment", …)`,
+    holdspeak/runtime/meeting_glue.py `broadcast("segment", …)`): text, speaker,
+    start_time and end_time in seconds since the start, is_bookmarked."""
+    from holdspeak.meeting_session import TranscriptSegment
+
+    said = [
+        ("Me", 4.2, 9.8, "Let's start with the freeze date. We said Nov 12, does that still hold?", False),
+        ("Priya", 19.1, 30.4, "It holds if the backup job moves to 22:00.", False),
+        ("Priya", 41.0, 46.5, "I can move it today, it is one line in the cron file.", False),
+        ("Me", 62.3, 66.0, "Then we freeze the ledger on Nov 12.", True),
+    ]
+    frames = [
+        TranscriptSegment(text=text, speaker=who, start_time=start, end_time=end, is_bookmarked=flag).to_dict()
+        for who, start, end, text, flag in said
+    ]
+    _fence("live.segments", frames, tmp_path, hub)
+    assert all(isinstance(frame["start_time"], float) for frame in frames)

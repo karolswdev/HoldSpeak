@@ -21,50 +21,43 @@
 // the `bookmark` confirmation, `capture_recovery`, `intent_controls_updated`,
 // `device_health`, and `plugin_jobs_processed`. C1 publishes complete semantic
 // results, not provider token streams.
-import { useEffect, useMemo, useRef, useState } from "react";
+// W2-LIVE (2026-10-27, canvas betterment/canvases/live-direction-2026-10-27.html,
+// direction A "the transcript is the page"): while it records, the body is the
+// transcript as a document (a time mark from the wire's `start_time`, the
+// speaker's name when the speaker changes, a bookmark as an ember mark); the
+// status bar carries the live state once (Recording · 12:04 · Summaries on
+// <engine>); Bookmark is a toolbar verb. The gear wing moved to Settings ▸
+// Meetings (LiveMeetingTools); the toolbar verb Settings opens it.
+import { useEffect, useRef, useState } from "react";
 import { openPrimitive } from "../../desk/shell";
 import { useDesk } from "../../desk/store";
+import { openSurfaceOr } from "../../desk/shell";
 import type {
   CoreProps,
   MeetingStateResponse,
   RuntimeStatusResponse,
-  IntentControlResponse,
-  PluginJobsSummaryResponse,
-  DevicesHealthResponse,
 } from "./core-types";
 import { Button } from "../../components/signal/Signal";
 import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
-import { asRows, rowId, useResource } from "../pageSupport";
+import { asRows, useResource } from "../pageSupport";
 import {
-  SurfaceCode,
   SurfaceFacts,
-  SurfaceRow,
-  SurfaceRows,
   SurfaceSection,
   SurfaceState,
-  SurfaceStream,
-  SurfaceStreamEntry,
-  SurfaceWell,
 } from "../../desk/surface/Surface";
 import { useAction } from "./core-hooks";
 import {
-  CycleGadget,
-  EgressChip,
-  FoldGadget,
   GadgetGroup,
   GadgetRow,
-  LampGadget,
-  PadGadget,
   StringGadget,
 } from "../../desk/surface/gadgets";
-import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
-import { useWaitWord } from "../../desk/surface/objects/ListView";
 import { DotWord, StatusBar, Steps, ToolGlyph, Toolbar, meetingSteps, type StatusBarItem } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { countToken } from "../../desk/surface/count";
-import { intelEgressBadge } from "./liveEgress";
+import { LiveTranscript } from "./LiveTranscript";
+import "./liveTranscript.css";
 import { burstTimer } from "../../desk/burstTimer";
 import { onReturnToTask } from "../../desk/returnToTask";
 import { SpeechSetup, useSpeechSetup } from "../../desk/firstrun/SpeechSetup";
@@ -92,17 +85,22 @@ export type LiveCoreProps = CoreProps & { meetingId?: string; onStopped?: () => 
 export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   const initial = useResource<MeetingStateResponse>("/api/state", {});
   const runtimeStatus = useResource<RuntimeStatusResponse>("/api/runtime/status", {});
-  const intentControl = useResource<IntentControlResponse>("/api/intents/control", {});
-  const pluginJobs = useResource<PluginJobsSummaryResponse>("/api/plugin-jobs/summary", {});
-  const devices = useResource<DevicesHealthResponse>("/api/devices/health", {});
+  /* W2-LIVE: the summary engine by its name, the fact Settings ▸ Meetings
+     shows on its "Summaries run on" row (`meetings.engine`, `engineSet`,
+     `summariesOff` from /api/settings/hub). */
+  const settingsHub = useResource<Record<string, unknown>>("/api/settings/hub", {});
   const { state: connection, subscribe } = useRuntimeBus();
   /* HS-202-02 (Astra's counsel finding 3) — the Intelligence badge maps
      the hub's real posture, but only what it read ONCE on mount. Set an
      engine in the Concierge and this face kept the old placement until it
      remounted. It rides the same signals the Meetings face does. */
   const reloadRuntimeStatus = runtimeStatus.reload;
+  const reloadSettingsHub = settingsHub.reload;
   useEffect(() => {
-    const burst = burstTimer(() => void reloadRuntimeStatus(), 300);
+    const burst = burstTimer(() => {
+      void reloadRuntimeStatus();
+      void reloadSettingsHub();
+    }, 300);
     const bump = burst.bump;
     const offDeskChanged = subscribe("desk_changed", bump);
     const offReturn = onReturnToTask(() => void reloadRuntimeStatus());
@@ -114,7 +112,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       offReturn();
       window.removeEventListener("focus", onFocus);
     };
-  }, [subscribe, reloadRuntimeStatus]);
+  }, [subscribe, reloadRuntimeStatus, reloadSettingsHub]);
   const [state, setState] = useState<Record<string, unknown>>({});
   const [segments, setSegments] = useState<Segment[]>([]);
   const action = useAction();
@@ -123,11 +121,8 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   const [metaOpen, setMetaOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [tags, setTags] = useState("");
-  const [previewText, setPreviewText] = useState("");
-  const [previewResult, setPreviewResult] = useState<Record<string, unknown> | null>(null);
   const [retainedMeetingId, setRetainedMeetingId] = useState("");
   const [stopOutcome, setStopOutcome] = useState<MeetingStopOutcome | null>(null);
-  const [doorOpen, setDoorOpen] = useState(false);
   // Routed analysis publishes one elected semantic result. The provider token
   // stream retired with the C1 controller boundary; no private partial output
   // reaches this surface or a journal.
@@ -140,19 +135,10 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   } | null>(null);
   const [captureAlert, setCaptureAlert] = useState("");
   const bookmarkSeq = useRef(0);
-  const deviceReloadAt = useRef(0);
-  useWindowWings(
-    <SurfaceWings
-      wings={[]}
-      active="live"
-      onChange={() => {}}
-      name="Live meeting"
-      door="Configure meeting"
-      doorOpen={doorOpen}
-      onDoor={() => setDoorOpen((v) => !v)}
-    />,
-    [doorOpen],
-  );
+  /* W2-LIVE: no gear wing. Its parts (routing, try a phrase, background
+     work, attached devices) are in Settings ▸ Meetings ▸ Live meeting; the
+     toolbar verb Settings opens them. With no wing the head shows the
+     window's own name, on the phone too. */
 
   useEffect(() => {
     setState(initial.data);
@@ -245,34 +231,8 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
     [subscribe],
   );
 
-  // ── the dials other surfaces moved ─────────────────────────────────
-  const setIntentControls = intentControl.setData;
-  useEffect(
-    () =>
-      subscribe("intent_controls_updated", (frame) => {
-        if (frame.data && typeof frame.data === "object")
-          setIntentControls(frame.data as IntentControlResponse);
-      }),
-    [subscribe, setIntentControls],
-  );
-  const reloadPluginJobs = pluginJobs.reload;
-  useEffect(
-    () => subscribe("plugin_jobs_processed", () => void reloadPluginJobs()),
-    [subscribe, reloadPluginJobs],
-  );
-  // Battery/RSSI frames are chatty; one refetch per 5s is enough to keep
-  // the device list honest without hammering the hub.
-  const reloadDevices = devices.reload;
-  useEffect(
-    () =>
-      subscribe("device_health", () => {
-        const now = Date.now();
-        if (now - deviceReloadAt.current < 5000) return;
-        deviceReloadAt.current = now;
-        void reloadDevices();
-      }),
-    [subscribe, reloadDevices],
-  );
+  // (W2-LIVE: the intent, queue and device frames moved with the gear wing
+  // to LiveMeetingTools in Settings ▸ Meetings.)
 
   // The meeting's own window shows this room only while it records.
   // PHILO-17 (Astra r1): the hub's idle state says `meeting_active: false`
@@ -413,16 +373,6 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       setMetaOpen(false);
     });
   };
-  const previewRoute = async () => {
-    await action.run(async () => {
-      setPreviewResult(
-        await apiFetch<Record<string, unknown>>("/api/intents/preview", {
-          method: "POST",
-          json: { text: previewText },
-        }),
-      );
-    });
-  };
   const commitBookmark = async () => {
     if (!bookmarking) return;
     setBookmarking(false);
@@ -430,17 +380,11 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
     setBookmark("");
     await perform("/api/bookmark", { label });
   };
-  const transcript = useMemo<Array<Segment & { key: string }>>(
-    () =>
-      segments.map((segment, index) => ({
-        ...segment,
-        key: String(segment.id ?? segment.segment_id ?? index),
-      })),
-    [segments],
-  );
 
-  /* Window grammar (2026-10-24): title bar → toolbar → the four steps and
-     the transcript → status bar. "editor": edge to edge, the body scrolls. */
+  /* Window grammar (2026-10-24): title bar → toolbar → the body → status
+     bar. "editor": edge to edge, the body scrolls. W2-LIVE: before a meeting
+     the body holds the four steps; while it records, the transcript is the
+     page. */
   useWindowInterior("editor");
   const verbs = (
     <Button
@@ -451,8 +395,56 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
         void perform(active ? "/api/meeting/stop" : "/api/meeting/start")
       }
     >
-      {active ? null : <ToolGlyph kind="record" />}
+      {active ? <span className="live-stop-glyph" aria-hidden="true" /> : <ToolGlyph kind="record" />}
       {active ? "Stop meeting" : "Start meeting"}
+    </Button>
+  );
+  const bookmarkVerb = active ? (
+    bookmarking ? (
+      <span
+        className="live-bookmark-composer"
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+            void commitBookmark();
+        }}
+      >
+        <StringGadget
+          autoFocus
+          label="Name this moment"
+          value={bookmark}
+          onChange={setBookmark}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") void commitBookmark();
+            if (event.key === "Escape") {
+              setBookmark("");
+              setBookmarking(false);
+            }
+          }}
+        />
+      </span>
+    ) : (
+      <Button dense variant="secondary" onClick={() => setBookmarking(true)} data-testid="live-bookmark">
+        <svg className="kit-toolglyph" width={16} height={16} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M3.75 14V2.5M3.75 3h8.25l-2 3 2 3H3.75" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Bookmark
+      </Button>
+    )
+  ) : null;
+  const settingsVerb = (
+    <Button
+      dense
+      variant="secondary"
+      data-testid="live-settings"
+      aria-label="Settings"
+      title="Settings ▸ Meetings"
+      onClick={() => openSurfaceOr("configure-settings", "/settings", "meetings")}
+    >
+      <svg className="kit-toolglyph" width={16} height={16} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <circle cx="8" cy="8" r="2.25" stroke="currentColor" strokeWidth={1.5} />
+        <path d="M8 1.75v1.75M8 12.5v1.75M1.75 8h1.75M12.5 8h1.75M3.6 3.6l1.25 1.25M11.15 11.15l1.25 1.25M3.6 12.4l1.25-1.25M11.15 4.85l1.25-1.25" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" />
+      </svg>
+      <span className="live-verb-label">Settings</span>
     </Button>
   );
   const intelState = String(
@@ -460,41 +452,12 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       state.intel_status ??
       "idle",
   );
-  /* HS-202-04 (M6, UX-CANON A.7) — one fact, one place. This row printed
-     the running clock that the footer receipt already carries, and the
-     segment count that the stream head already counts, so the same two
-     facts stood three times on one screen.
-     Astra's counsel on #599, finding 2: the row's remaining state word
-     still repeated the footer receipt (`ready` beside `READY`). The two
-     slots hold DIFFERENT facts and now say so: this row is the LINK to
-     the hub (`runtime/RuntimeBus.tsx:14` — connecting/connected/
-     reconnecting/offline), the footer receipt is the CAPTURE. The axis is
-     named, per the copy contract's `unqualified-state` rule. */
+  /* HS-202-04 (M6, UX-CANON A.7) — one fact, one place. The link to the
+     hub (`runtime/RuntimeBus.tsx` connecting/connected/reconnecting/
+     offline) and the capture are different facts, each named. */
   const link: string = connection || "unknown";
   const linkTone =
     link === "connected" ? ("ok" as const) : link === "offline" ? ("fail" as const) : link === "unknown" ? undefined : ("warn" as const);
-
-  /** HS-202-04 — the queue summary with its zero counts dropped. A
-   *  non-count value (a timestamp, a state word) is kept as it is; only a
-   *  number that counts nothing is withheld (UX-CANON A.8). */
-  const jobFacts = useMemo(() => {
-    const wire = (pluginJobs.data ?? {}) as Record<string, unknown>;
-    const kept: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(wire)) {
-      /* Keep only what `SurfaceFacts` would actually DRAW
-         (`desk/surface/Surface.tsx:381-393`: string | number | boolean,
-         minus anything that presents as nothing). The idle wire carries
-         `next_retry_at: null` (`holdspeak/services/plugin_job_service.py:29`),
-         which draws nothing — counted as a fact it left the section
-         looking non-empty and the shot showed a header with a lone verb
-         under it (M5). */
-      if (!["string", "number", "boolean"].includes(typeof value)) continue;
-      if (typeof value === "number" && value <= 0) continue;
-      if (typeof value === "string" && !value.trim()) continue;
-      kept[key] = value;
-    }
-    return kept;
-  }, [pluginJobs.data]);
 
   const intelSummary = String(intelResult?.summary ?? "");
   const intelTopics = Array.isArray(intelResult?.topics)
@@ -505,227 +468,60 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
     : Number(intelResult?.action_item_count ?? 0);
   const intelFace =
     intelResult ? (
-      /* HS-202-04 (F06) — a meeting result is a SUMMARY on every face.
-         The registry ruled it already (`docs/product-language.json:23`:
-         "The wire calls it meeting intelligence… Every face says
-         Summary") and Live was the one face that disobeyed its own
-         registry. `Intelligence` stays the name of the durable ledger
-         application, never of a meeting's result. */
+      /* HS-202-04 (F06) — a meeting result is a SUMMARY on every face
+         (`docs/product-language.json:23`). */
       <SurfaceSection
         label="Summary"
-        actions={<LampGadget on tone="ok" label="READY" />}
+        actions={<DotWord tone="ok">Ready</DotWord>}
       >
-        {intelResult ? (
-          <div className="live-intel-result">
-            {intelSummary ? <p>{intelSummary}</p> : null}
-            {intelTopics.length ? (
-              <div className="surface-actions">
-                {intelTopics.slice(0, 8).map((topic) => (
-                  <span className="surface-token" key={topic}>
-                    {topic}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-            {/* HS-202-04 (UX-CANON A.8; Astra's counsel on #599, finding
-                2) — a Summary with nothing to do printed `0 action
-                items`. `countToken` withholds the zero, and the line is
-                omitted entirely when it would carry no fact. */}
-            <SurfaceFacts
-              value={[
-                countToken(intelActionCount, "action item", "action items"),
-                intelResult.final ? "final" : "",
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            />
-          </div>
-        ) : null}
+        <div className="live-intel-result">
+          {intelSummary ? <p>{intelSummary}</p> : null}
+          {intelTopics.length ? (
+            <div className="surface-actions">
+              {intelTopics.slice(0, 8).map((topic) => (
+                <span className="surface-token" key={topic}>
+                  {topic}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {/* HS-202-04 (UX-CANON A.8) — `countToken` withholds the zero,
+              and the line is omitted when it would carry no fact. */}
+          <SurfaceFacts
+            value={[
+              countToken(intelActionCount, "action item", "action items"),
+              intelResult.final ? "final" : "",
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          />
+        </div>
       </SurfaceSection>
     ) : null;
 
-  const routeFacts = previewResult
-    ? (["route", "intent", "confidence"] as const)
-        .map((key) => [key, presentValue(previewResult[key])] as const)
-        .filter(([, value]) => value !== "")
-    : [];
-  /* HS-202-02 — the badge states what the hub said. `intel_egress.label`
-     was never a key the hub publishes, so this chip printed the species
-     default ("⌂ This device") on every desk, under a hardcoded home glyph
-     and with no scope (03-interaction-walk.md Appendix B.2). */
-  const intelBadge = intelEgressBadge(runtimeStatus.data.intel_egress);
-  const intelEgressChip = intelBadge ? (
-    <EgressChip
-      label={intelBadge.label}
-      scope={intelBadge.scope}
-      title={
-        intelBadge.scope === "local"
-          ? "Transcript processing stays on this device."
-          : "Transcript text can leave this device."
-      }
-    />
-  ) : null;
-  const devicesWait = useWaitWord(devices.loading);
-  const configureFace = (
-    <div className="live-configure">
-      <SurfaceSection label="Intent routing">
-        <GadgetGroup>
-          <GadgetRow label="Routing">
-            <CycleGadget
-              label="Intent routing preset"
-              value={String(intentControl.data.profile ?? "auto")}
-              onChange={(next) =>
-                void apiFetch("/api/intents/profile", {
-                  method: "PUT",
-                  json: { profile: next },
-                }).then(() => intentControl.reload())
-              }
-              options={[
-                { value: "auto", label: "Auto" },
-                { value: "off", label: "Off" },
-                { value: "balanced", label: "Balanced" },
-                { value: "aggressive", label: "Aggressive" },
-              ]}
-            />
-          </GadgetRow>
-          {/* W1 (2026-10-27): the caption is one quiet sentence, not a
-              mono caps token line. */}
-          <GadgetRow
-            label="Try a phrase"
-            fact="Tests the route only, the live meeting does not change"
-            wide
-          >
-            <PadGadget
-              label="Preview route"
-              value={previewText}
-              rows={2}
-              onChange={setPreviewText}
-            />
-          </GadgetRow>
-        </GadgetGroup>
-        <div className="surface-actions">
-          <Button
-            dense
-            loading={action.busy}
-            disabled={!previewText.trim()}
-            onClick={previewRoute}
-          >
-            Preview route
-          </Button>
-        </div>
-        {previewResult ? (
-          <>
-            {routeFacts.length ? (
-              <GadgetGroup>
-                {routeFacts.map(([key, value]) => (
-                  <GadgetRow key={key} label={key[0].toUpperCase() + key.slice(1)}>
-                    <span className="prefs-value">{value}</span>
-                  </GadgetRow>
-                ))}
-              </GadgetGroup>
-            ) : null}
-            <FoldGadget title="RAW · ROUTE">
-              <SurfaceWell head="RAW · ROUTE">
-                <SurfaceCode>
-                  {JSON.stringify(previewResult, null, 2)}
-                </SurfaceCode>
-              </SurfaceWell>
-            </FoldGadget>
-          </>
-        ) : null}
-      </SurfaceSection>
-      {/* HS-202-04 (F06) — the gear door's run-state section names the
-          same thing the result section does: the Summary. */}
-      <SurfaceSection label="Summary">
-        <div className="surface-actions">
-          <DotWord tone={intelState === "error" ? "fail" : intelState === "running" ? "info" : "idle"}>
-            {intelState === "error" ? "Failed" : intelState === "idle" ? "Nothing running" : intelState[0].toUpperCase() + intelState.slice(1).replace(/_/g, " ")}
-          </DotWord>
-          {intelEgressChip}
-        </div>
-      </SurfaceSection>
-      <SurfaceSection label="Background work">
-        <SurfaceState
-          loading={pluginJobs.loading}
-          error={pluginJobs.error}
-          empty={!Object.keys(jobFacts).length}
-          emptyLabel="No jobs waiting"
-          emptyGlyph="○"
-          onRetry={() => void pluginJobs.reload()}
-        >
-          {/* HS-202-04 (UX-CANON A.8; Astra's counsel on #599, finding 2)
-              — the hub's queue summary is all counts, so an idle desk drew
-              SIX counters of zero in this one section
-              (`assets/story-04-shots/live-door-summary-393.png`). A count
-              of zero says nothing; the section says the true thing. */}
-          <SurfaceFacts value={jobFacts} />
-          <div className="surface-actions">
-            <Button
-              dense
-              onClick={() =>
-                void apiFetch("/api/plugin-jobs/process", {
-                  method: "POST",
-                  json: {},
-                }).then(() => pluginJobs.reload())
-              }
-            >
-              Process pending
-            </Button>
-          </div>
-        </SurfaceState>
-      </SurfaceSection>
-      <SurfaceSection label="Devices">
-        <SurfaceState
-          error={devices.error}
-          empty={!devices.loading && !asRows(devices.data, ["devices", "items"]).length}
-          emptyLabel="No attached audio devices"
-          emptyGlyph="◌"
-          onRetry={() => void devices.reload()}
-        >
-          {/* W1: a read that may never answer says how long it has waited,
-              then No answer; never a ring that turns forever. */}
-          {devicesWait ? (
-            <DotWord tone={devicesWait.tone} data-testid="live-devices-wait">{devicesWait.word}</DotWord>
-          ) : null}
-          <SurfaceRows>
-            {asRows(devices.data, ["devices", "items"]).map(
-              (device, index) => {
-                const battery = presentValue(device.battery_pct);
-                const rssi = presentValue(device.rssi_dbm);
-                const facts = [
-                  battery ? `Battery ${battery}%` : "",
-                  rssi ? `Signal ${rssi} dBm` : "",
-                ]
-                  .filter(Boolean)
-                  .join(" · ");
-                return (
-                  <SurfaceRow
-                    key={rowId(device, index)}
-                    title={String(device.name ?? device.id ?? "Device")}
-                    detail={facts || undefined}
-                    meta={
-                      <DotWord tone={device.stale ? "warn" : "ok"}>
-                        {device.stale ? "Stale" : "Live"}
-                      </DotWord>
-                    }
-                  />
-                );
-              },
-            )}
-          </SurfaceRows>
-        </SurfaceState>
-      </SurfaceSection>
-    </div>
-  );
+  /* W2-LIVE: the summary engine by its name (the hub's own fact), or the
+     honest word when there is none. Egress is not drawn here (A.9 as
+     amended 2026-10-25); Settings ▸ Meetings and Engines disclose it. */
+  const meetingsHub = (settingsHub.data?.meetings ?? null) as Record<string, unknown> | null;
+  const intelPosture = runtimeStatus.data?.intel_egress as Record<string, unknown> | undefined;
+  const engineName = presentValue(meetingsHub?.engine);
+  const summaryItem: StatusBarItem | null =
+    meetingsHub?.summariesOff === true || intelPosture?.enabled === false
+      ? { key: "summary", text: "Summaries off", testId: "live-summary-engine" }
+      : intelState === "running" || intelState === "queued"
+        ? { key: "summary", lamp: "info" as const, text: intelState === "running" ? "Summary running" : "Summary queued", testId: "live-summary-engine" }
+        : intelState === "error"
+          ? { key: "summary", lamp: "fail" as const, text: "Summary failed", testId: "live-summary-engine" }
+          : meetingsHub?.engineSet === false
+            ? { key: "summary", lamp: "warn" as const, text: "No engine for summaries", testId: "live-summary-engine" }
+            : engineName
+              ? { key: "summary", text: `Summaries on ${engineName}`, testId: "live-summary-engine" }
+              : null;
 
-  /* The status bar: the capture state, audio only, speech, and the link to
-     the hub, each a dot and a word (UX-CANON A.9 as amended 2026-10-25: no
-     egress chip here; the configure face keeps it, where the choice is made).
-     HS-202-04 (F21, M6): the clock stands once, here; the stream head owns
-     the segment count. The link and the capture are different facts. */
+  /* The status bar: the capture state with its clock, audio only, the
+     summary engine, and the link to the hub, each said once. */
   const meetingTitle = presentValue(state.title);
   const statusItems: StatusBarItem[] = [
-    active && meetingTitle ? { key: "title", text: meetingTitle } : null,
     // W1-TRUTH (atlas 2026-10-27): never "Ready" next to "Speech not set
     // up". Before a meeting with no speech model the one state is the
     // warning (its one verb, Set up speech, is in the toolbar).
@@ -735,6 +531,8 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
         ? { key: "capture", lamp: "warn" as const, text: "Speech not set up", testId: "live-capture-state" }
         : { key: "capture", lamp: "ok" as const, text: "Ready", testId: "live-capture-state" },
     active && audioOnly ? { key: "audio", text: "Audio only" } : null,
+    summaryItem,
+    active && meetingTitle && !meetingId ? { key: "title", text: meetingTitle } : null,
     { key: "link", lamp: linkTone, text: `Link ${link}`, testId: "live-link-state" },
   ].filter(Boolean) as StatusBarItem[];
 
@@ -743,18 +541,21 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       {hero ? (
         hero(verbs)
       ) : (
-        <Toolbar label="Live meeting" data-testid="live-toolbar">
+        <Toolbar label="Live meeting" data-testid="live-toolbar" trailing={settingsVerb} trailingStays>
           {verbs}
+          {bookmarkVerb}
           {active ? (
-            <Button dense variant="secondary" onClick={() => setMetaOpen((open) => !open)}>
+            <Button dense variant="secondary" aria-label="Edit details" onClick={() => setMetaOpen((open) => !open)}>
               <ToolGlyph kind="edit" />
-              Edit details
+              <span className="live-verb-label">Edit details</span>
             </Button>
           ) : null}
-          <SpeechSetup setup={speech} primary={false} toolbar testId="live-speech-setup" />
+          {/* W2-LIVE: while it records, the setup cannot help this meeting;
+              the status bar says Audio only. The verb is back after Stop. */}
+          {active ? null : <SpeechSetup setup={speech} primary={false} toolbar testId="live-speech-setup" />}
         </Toolbar>
       )}
-      <div className="live-room" data-testid="live-room">
+      <div className="live-room" data-testid="live-room" data-active={active || undefined}>
       {action.message ? <SurfaceState error={action.message} /> : null}
       {captureAlert ? (
         <SurfaceState
@@ -813,112 +614,40 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           ) : null}
         </p>
       ) : null}
-      {doorOpen ? (
-        configureFace
-      ) : (
-        <>
-          {/* PHILO-17 (the Today language): the meeting's place in its four
-              steps, and a REC lamp that is dark at rest and breathes red
-              while it records (colour only; nothing moves). */}
-          <div className="live-deck" data-active={active || undefined} data-testid="live-deck">
-            {active ? <DotWord tone="fail" className="live-rec-word" data-testid="live-rec">Rec</DotWord> : null}
-            {/* W1-TRUTH: Today's stepper, the same four steps (Prep,
-                Record, Summary, Send follow-up); Live is at Record. */}
-            <Steps label="Meeting steps" data-testid="live-steps" steps={meetingSteps(1)} />
+      {metaOpen ? (
+        <GadgetGroup label="Meeting details">
+          <GadgetRow label="Title">
+            <StringGadget label="Title" value={title} onChange={setTitle} />
+          </GadgetRow>
+          <GadgetRow label="Tags" fact="Comma separated">
+            <StringGadget label="Tags" value={tags} onChange={setTags} />
+          </GadgetRow>
+          <div className="surface-actions">
+            <Button variant="primary" dense loading={action.busy} onClick={saveMetadata}>
+              Save
+            </Button>
+            <Button dense variant="ghost" onClick={() => setMetaOpen(false)}>
+              Close
+            </Button>
           </div>
-          {intelFace}
-          <SurfaceSection label="Transcript" className="live-transcript">
-            {metaOpen ? (
-              <GadgetGroup label="Meeting details">
-                <GadgetRow label="TITLE">
-                  <StringGadget
-                    label="Title"
-                    value={title}
-                    onChange={setTitle}
-                  />
-                </GadgetRow>
-                <GadgetRow label="TAGS" fact="COMMA SEPARATED">
-                  <StringGadget label="Tags" value={tags} onChange={setTags} />
-                </GadgetRow>
-                <div className="surface-actions">
-                  <Button
-                    variant="primary"
-                    dense
-                    loading={action.busy}
-                    onClick={saveMetadata}
-                  >
-                    Save
-                  </Button>
-                  <Button
-                    dense
-                    variant="ghost"
-                    onClick={() => setMetaOpen(false)}
-                  >
-                    Close
-                  </Button>
-                </div>
-              </GadgetGroup>
-            ) : null}
-            {transcript.length ? (
-              <SurfaceStream
-                count={segments.length}
-                countLabel={segments.length === 1 ? "segment" : "segments"}
-                controls={
-                  active ? (
-                    bookmarking ? (
-                      <span
-                        className="live-bookmark-composer"
-                        onBlur={(event) => {
-                          if (
-                            !event.currentTarget.contains(
-                              event.relatedTarget as Node | null,
-                            )
-                          )
-                            void commitBookmark();
-                        }}
-                      >
-                        <StringGadget
-                          autoFocus
-                          label="Name this moment"
-                          value={bookmark}
-                          onChange={setBookmark}
-                          onKeyDown={(event) => {
-                            if (event.key === "Enter") void commitBookmark();
-                            if (event.key === "Escape") {
-                              setBookmark("");
-                              setBookmarking(false);
-                            }
-                          }}
-                        />
-                      </span>
-                    ) : (
-                      <Button dense onClick={() => setBookmarking(true)}>
-                        + Bookmark
-                      </Button>
-                    )
-                  ) : undefined
-                }
-              >
-                <ul className="surface-stream-entries">
-                  {transcript.map((segment) => (
-                    <SurfaceStreamEntry
-                      key={String(segment.key)}
-                      when={String(segment.timestamp ?? segment.start ?? "")}
-                    >
-                      {String(segment.text ?? segment.transcript ?? "")}
-                    </SurfaceStreamEntry>
-                  ))}
-                </ul>
-              </SurfaceStream>
-            ) : (
-              <p className="live-empty" role="status" data-testid="live-transcript-empty">
-                {active
-                  ? audioOnly ? NO_TRANSCRIPT_SPEECH : "Listening for speech"
-                  : "Start a meeting to begin"}
-              </p>
-            )}
-          </SurfaceSection>
-        </>
+        </GadgetGroup>
+      ) : null}
+      {active ? null : (
+        /* PHILO-17 (the Today language), W1-TRUTH: Today's four steps
+           (Prep, Record, Summary, Send follow-up); Live is at Record. */
+        <div className="live-deck" data-testid="live-deck">
+          <Steps label="Meeting steps" data-testid="live-steps" steps={meetingSteps(1)} />
+        </div>
+      )}
+      {intelFace}
+      {segments.length ? (
+        <LiveTranscript segments={segments} listening={active} />
+      ) : (
+        <p className="live-empty" role="status" data-testid="live-transcript-empty">
+          {active
+            ? audioOnly ? NO_TRANSCRIPT_SPEECH : "Listening for speech"
+            : "Start a meeting to begin"}
+        </p>
       )}
       </div>
       <StatusBar items={statusItems} data-testid="live-statusbar" />
