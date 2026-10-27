@@ -5,7 +5,10 @@
   left: 0;
   right: 0;
   top: var(--wb-screen-h, 28px);
-  bottom: var(--desk-dock-h, 76px);
+  /* 2026-10-27 (owner: "why isn't the desktop stretching there?"): the floor
+     and its place image run to the bottom edge, UNDER the floating dock; the
+     icon grid keeps the dock's reserve as padding (below). */
+  bottom: 0;
   z-index: 0;
   /* The slate under the gradient: a floor label measures its contrast on it. */
   background: var(--desk-floor), var(--wb-backdrop);
