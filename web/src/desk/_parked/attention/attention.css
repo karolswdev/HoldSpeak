@@ -183,7 +183,7 @@
   width: auto;
   margin: 0 18px 18px;
 }
-@media (max-width: 720px) {
+@container surface (max-width: 720px) {
   .desk-next .desk-chrome-tl {
     top: 10px;
     left: 10px;
@@ -260,12 +260,12 @@
     gap: 3px;
   }
 }
-@media (max-width: 720px) {
+@container surface (max-width: 720px) {
   .desk-next .desk-chrome .egress-badge {
     max-width: 40vw;
   }
 }
-@media (max-width: 420px) {
+@container surface (max-width: 420px) {
   .desk-next .desk-mc-tab {
     left: 16px;
     bottom: 60px;
