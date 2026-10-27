@@ -1,0 +1,138 @@
+/* Window Program W1 (2026-10-27) — ListView (ListView.tsx): the plain list
+   view. 32 px rows on the paper, a hairline between rows, a quiet day
+   caption, sans 13 names, sans 12 muted meta and ages. At a surface of
+   520 px or less the meta folds under the name and the row is 44 px. */
+
+.kit-listview {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--wb-paper);
+}
+.kit-listday { min-width: 0; }
+.kit-listday-label {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 10px 12px 4px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: var(--wb-paper);
+  color: var(--wb-muted);
+  font: 600 12px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.kit-listrows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kit-listrow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 32px;
+  padding: 0 12px 0 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
+  transition: background-color var(--duration-short, 120ms) var(--ease-standard, ease);
+}
+.kit-listrow[data-open]:hover { background: var(--wb-row-hover); }
+@media (prefers-reduced-motion: reduce) {
+  .kit-listrow { transition: none; }
+}
+.desk-next .kit-listrow .kit-listrow-main,
+.kit-listrow-main {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 32px;
+  padding: 4px 0 4px 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-ink);
+  font: 400 13px / 1.35 var(--font-sans);
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+  justify-content: flex-start;
+}
+.desk-next .kit-listrow .kit-listrow-main.btn:hover:not(:disabled) { background: transparent; transform: none; }
+.desk-next .kit-listrow .kit-listrow-main.btn:active:not(:disabled) { transform: none; }
+.kit-listrow-main:focus-visible {
+  outline: 2px solid var(--wb-sel);
+  outline-offset: -2px;
+}
+.kit-listrow-glyph {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  filter: drop-shadow(0 1px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent));
+}
+.kit-listrow-text {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: baseline;
+  gap: 4px 10px;
+  min-width: 0;
+}
+.kit-listrow-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--wb-text, var(--wb-ink));
+  font: 500 13px / 1.35 var(--font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kit-listrow-meta {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--wb-muted);
+  font: 400 12px / 1.35 var(--font-sans);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kit-listrow-state { flex: none; }
+.kit-listrow-age {
+  flex: none;
+  color: var(--wb-muted);
+  font: 400 12px / 1.35 var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.kit-listrow-verbs {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The phone: the meta folds under the name; the row keeps a 44 px target. */
+@container surface (max-width: 520px) {
+  .kit-listrow,
+  .kit-listrow .kit-listrow-main { min-height: 44px; }
+  .kit-listrow-text {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+  }
+  .kit-listrow-name,
+  .kit-listrow-meta { max-width: 100%; }
+}
+
+/* A list item that is not a row (a filter, an empty word) sits inset. */
+.kit-listrows > li:not(.kit-listrow) {
+  padding: 6px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
+}
+.kit-listrows > li:not(.kit-listrow) .surface-state { padding: 8px 0; }

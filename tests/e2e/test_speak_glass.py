@@ -396,6 +396,8 @@ def _loop(page: Any, width: int) -> None:
     assert _api(page, "GET", "/api/dictation/corrections", token=TOKEN)["items"] == []
 
     # ── 6. `Review` reviews: it crosses to the JOURNAL wing ────────
+    # W1 (2026-10-27): Review is a Talk toolbar verb, never the status bar.
+    _wing(page, "Talk")
     page.get_by_role("button", name="Review").click()
     page.locator(".speak-journal").wait_for(timeout=8000)
     assert _wing_is_on(page, "Journal")
@@ -423,7 +425,7 @@ def _run(tmp_path, monkeypatch, width: int, height: int) -> None:
             # Folded, the menu also holds the configuration door, after the faces.
             door = ["CONFIGURE DICTATION"] if _folded(page).count() else []
             assert wings == [
-                "SPEAK", "JOURNAL", "BLOCKS", "LEARNED", "COMMANDS"
+                "TALK", "JOURNAL", "BLOCKS", "LEARNED", "COMMANDS"
             ] + door, wings
             _loop(page, width)
             _assert_clean(page, errors)

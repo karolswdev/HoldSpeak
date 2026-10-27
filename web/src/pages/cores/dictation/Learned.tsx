@@ -23,6 +23,7 @@
  *   6. Empty state: ONE token, `NOTHING LEARNED` — no sentence, no zero.
  */
 import "./learned.css";
+import { SpeakEmpty } from "./SpeakEmpty";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
 import { asRows, rowId, useResource } from "../../pageSupport";
@@ -186,7 +187,7 @@ export function Learned() {
           error={error}
           empty={!rows.length}
           emptyLabel="Nothing learned"
-          emptyGlyph="▤"
+          emptyContent={<SpeakEmpty label="Nothing learned" hint="Press Wrong on a phrase to teach a fix" />}
           onRetry={() => void load()}
         >
           {rows.map((row, index) => {
