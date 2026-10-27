@@ -1,9 +1,9 @@
 /** PHILO-14 A1 — the A-1 arrangement at 1440 (pure).
  *
  *  The drawers and Projects down the left (a second column when they do not
- *  fit), the loose objects flowing in the field beside them, and Archive at
- *  the bottom right. 393 uses no positions: one 4-column grid in DOM order
- *  (screen.css). */
+ *  fit) and the loose objects flowing in the field beside them. (Archive left
+ *  the floor 2026-10-26; a "parked" role keeps its old bottom-right seat.)
+ *  393 uses no positions: one 4-column grid in DOM order (screen.css). */
 import type { ScreenObject } from "./compose";
 
 export interface Placed {
@@ -18,7 +18,7 @@ const EDGE = 20;
 const TOP = 12;
 const FIELD_GAP = 70; // A-1: the field starts 70 px right of the drawer column
 const BOTTOM = 136; // Parked: its top this far above the screen's foot
-const TALK_ZONE = 72; // the TALK control at the foot-left (Astra's P3 on #939)
+const TALK_ZONE = 72; // the foot reserve (the parked TALK orb's old seat, Astra's P3 on #939)
 const NOT_READ_LINE = 30; // a NOT READ drawer's Retry line
 // PHILO-17 (phonepass): a caption (People's `1:1 15:00`) adds 24 px to the
 // compact desktop icon; preserve that extra room above the next drawer's

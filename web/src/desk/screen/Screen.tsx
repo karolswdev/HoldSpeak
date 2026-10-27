@@ -16,8 +16,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useAgentFlights } from "../agentFlights";
 import { projectOpenHere, useNeedsYou } from "../needsYou";
 import { Button } from "../../components/signal/Signal";
-import { Talk } from "../components/Talk";
-import { openNewThought } from "../newThought";
 import { useDesk } from "../store";
 import { WorkMenu } from "../components/DeskMenu";
 import { objectMenuEntries } from "../objectMenu";
@@ -291,14 +289,9 @@ export function Screen() {
         />
       ) : null}
       <HandConfirmSlot host={SCREEN_HOST} className="desk-screen-hand" />
-      {compact ? null : (
-        // Astra's P3 on #939 (ruling): TALK is one press on the Chair. The
-        // Capture window's own control, at the screen's foot-left.
-        <span className="desk-screen-talk arrival-capture-talk" data-testid="desk-screen-talk">
-          {/* Betterment C8: the one Talk rule (desk/components/Talk.tsx). */}
-          <Talk onText={(text) => void openNewThought(text)} label="Talk" setupTestId="desk-screen-talk-setup" />
-        </span>
-      )}
+      {/* Floor lane (owner 2026-10-26): no Talk orb on the floor. Speak is the
+          Dock's Speak tile, the menu bar, ⌥R and ⌘K; the orb is parked in
+          screen/_parked/floorTalkAndArchive.tsx. */}
       {bare ? (
         <p className="desk-screen-empty" data-testid="desk-screen-empty">
           The desk is empty. Press Speak to start.

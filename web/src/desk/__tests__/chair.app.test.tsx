@@ -318,26 +318,23 @@ describe("C8: Capture — three large verbs, the one Talk rule, New note on the 
     expect(bar.textContent).not.toMatch(/Write a thought|Record meeting/);
   });
 
-  it("no speech model: Capture's Talk and the floor TALK open the same Set up speech in place", async () => {
+  it("no speech model: Capture's Talk opens Set up speech in place; the floor has no Talk orb", async () => {
     captureHub([]);
-    // The Chair draws the floor (desk/screen/Screen.tsx) with its TALK.
+    // The Chair draws the floor (desk/screen/Screen.tsx). Owner 2026-10-26:
+    // no Talk orb floats on it; the orb is parked (screen/_parked/).
     render(<ChairHome />);
     const bar = await screen.findByTestId("arrival-capture-bar");
     const capture = await within(bar).findByTestId("arrival-talk-setup-key");
-    const floor = await within(await screen.findByTestId("desk-screen-talk")).findByTestId("desk-screen-talk-setup-key");
-    for (const key of [capture, floor]) expect(key).not.toBeDisabled();
+    expect(screen.queryByTestId("desk-screen-talk")).toBeNull();
+    expect(capture).not.toBeDisabled();
     fireEvent.click(capture);
-    fireEvent.click(floor);
-    const verbs = [
-      await within(bar).findByTestId("arrival-talk-setup-verb"),
-      await within(screen.getByTestId("desk-screen-talk")).findByTestId("desk-screen-talk-setup-verb"),
-    ];
-    for (const verb of verbs) expect(verb.textContent?.trim()).toMatch(/^Set up speech · 144 MB$/);
+    const verb = await within(bar).findByTestId("arrival-talk-setup-verb");
+    expect(verb.textContent?.trim()).toMatch(/^Set up speech · 144 MB$/);
     // Pressing Talk asks nothing of the hub: setup waits for its own press.
     expect(wire.paths.filter(([, init]) => (init as any)?.method === "POST")).toEqual([]);
   });
 
-  async function spokenWordsReachNote(surface: "capture" | "floor") {
+  async function spokenWordsReachNote() {
     const posts: Array<[string, any]> = [];
     hub(weekStripDoor(), (path, init) => {
       if (init?.method && init.method !== "GET") posts.push([path, init]);
@@ -353,9 +350,7 @@ describe("C8: Capture — three large verbs, the one Talk rule, New note on the 
     });
     render(<ChairHome />);
     try {
-      const host = surface === "capture"
-        ? within(await screen.findByTestId("arrival-capture-bar"))
-        : within(await screen.findByTestId("desk-screen-talk"));
+      const host = within(await screen.findByTestId("arrival-capture-bar"));
       await act(async () => {
         fireEvent.click(await host.findByTestId("mock-mic-Talk"));
       });
@@ -372,11 +367,18 @@ describe("C8: Capture — three large verbs, the one Talk rule, New note on the 
   }
 
   it("spoken Capture words reach the New note editor handoff", async () => {
-    await spokenWordsReachNote("capture");
+    await spokenWordsReachNote();
   });
 
-  it("spoken floor Talk words reach the New note editor handoff", async () => {
-    await spokenWordsReachNote("floor");
+  // Re-pointed 2026-10-26: the floor Talk orb is parked, so its spoken-words
+  // case asks that the floor offers no second Talk beside Capture's.
+  it("the floor offers no second Talk beside Capture's", async () => {
+    captureHub([]);
+    render(<ChairHome />);
+    const bar = await screen.findByTestId("arrival-capture-bar");
+    await within(bar).findByTestId("arrival-talk-setup-key");
+    expect(screen.queryByTestId("desk-screen-talk")).toBeNull();
+    expect(screen.queryByTestId("desk-screen-talk-setup-key")).toBeNull();
   });
 
   it("New note: a press with no typing leaves no record; the first character makes it and opens it", async () => {
