@@ -217,7 +217,7 @@
 /* 393: with no Chair window open, the Chair shows a reopen Button for each. */
 .desk-next .chair-reopen-list {
   position: fixed;
-  inset: var(--wb-screen-h, 44px) 0 var(--desk-dock-h, 56px) 0;
+  inset: var(--wb-screen-h, 44px) 0 var(--desk-dock-h, var(--desk-snap-bottom)) 0;
   display: grid;
   align-content: center;
   justify-items: center;

@@ -1461,7 +1461,7 @@ describe("Betterment Q5: the Room's Ask field opens Ask with the project in Abou
     fireEvent.keyDown(well, { key: "Enter" });
 
     expect(await screen.findByText(ASK_THREAD.first.output)).toBeInTheDocument();
-    expect(screen.getByTestId("ask-context")).toHaveTextContent(`About${name}`);
+    expect(screen.getByTestId("ask-context")).toHaveTextContent(`${name}`);
     expect(asked).toHaveLength(1);
     expect(asked[0].prompt).toBe("What blocks the freeze?");
     expect(asked[0].thread).toBe(true);

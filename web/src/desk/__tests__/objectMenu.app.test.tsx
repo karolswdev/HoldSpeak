@@ -111,7 +111,7 @@ describe("Betterment Q5: Ask about this, on every object", () => {
     const menu = screen.getByRole("menu", { name: "Note menu" });
     fireEvent.click(within(menu).getByRole("menuitem", { name: /Ask about this/ }));
     const about = await screen.findByTestId("ask-context");
-    expect(about).toHaveTextContent("About1:1 with Mira");
+    expect(about).toHaveTextContent("1:1 with Mira");
     expect(screen.getByRole("textbox", { name: "Ask about your work" })).toHaveValue("");
     expect(asked).toEqual([]);
   });
@@ -139,7 +139,7 @@ describe("Betterment Q5: Ask about this, on every object", () => {
     expect(rows).toEqual(["Open", "Ask about Mira", "Prep 1:1", "Keep on desk"]);
     fireEvent.click(within(menu).getByRole("menuitem", { name: /Ask about Mira/ }));
 
-    expect(await screen.findByTestId("ask-context")).toHaveTextContent("AboutMira Kovacs");
+    expect(await screen.findByTestId("ask-context")).toHaveTextContent("Mira Kovacs");
     fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What do I owe Mira this week?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     expect(await screen.findByText(THREAD.first.output)).toBeInTheDocument();

@@ -10,6 +10,7 @@ import { claimThoughtKeys } from "../thoughtKeys";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { livePreview } from "./livePreview";
 import { mermaidPreview } from "./mermaidPreview";
+import { marginDrawerRoom } from "./marginDrawerRoom";
 import { bindThoughtVoiceTarget, deskThoughtVoiceDraft, thoughtVoiceKey, type ThoughtVoiceDraftIO } from "./thoughtVoiceDraft";
 
 /* HS-201-12 — bands 1 and 2 of the one clean note (the owner's first-use
@@ -24,7 +25,7 @@ import { bindThoughtVoiceTarget, deskThoughtVoiceDraft, thoughtVoiceKey, type Th
 /** The note in live preview: every line the caret is not on shows as
  *  written text (livePreview.ts); the diagrams draw in place
  *  (mermaidPreview.ts). */
-const NOTE_EDITOR_EXTENSIONS = [livePreview({ renderUntilFocus: true }), mermaidPreview()];
+const NOTE_EDITOR_EXTENSIONS = [livePreview({ renderUntilFocus: true }), mermaidPreview(), marginDrawerRoom()];
 
 export function ownTitle(title: string, body: string): boolean {
   const clean = title.trim();

@@ -1,10 +1,12 @@
-/* The Ask window on the window grammar (2026-10-24): title bar → toolbar
-   (New ask, Recent, the About line) → the thread, edge to edge with a 16 px
-   reader inset → the composer held still at the foot → the status bar.
-   No headline, no mono captions, no card in a card. Tokens only. */
+/* The Ask window, direction D1 "The question at the top" (canvas
+   docs/internal/betterment/canvases/ask-direction-2026-10-27.html, ratified
+   2026-10-27): title bar → the composer row (the toolbar) → the Recent rail
+   and the answer document → the 24 px status bar. No headline, no mono, no
+   card in a card, no picture on an empty Ask. Tokens only. */
 .desk-next .desk-ask {
   height: 620px;
 }
+.desk-ask-body,
 .desk-next .desk-pullout-body.desk-ask-body {
   container: surface / inline-size;
   display: flex;
@@ -12,156 +14,331 @@
   gap: 0;
   overflow: hidden;
   padding: 0;
+  min-height: 0;
   background: var(--alive-paper, var(--wb-paper));
   color: var(--wb-ink, var(--text));
 }
 
-/* ── The toolbar's trailing control: the About line ── */
-.desk-ask-toolbar .kit-toolbar-trailing {
+/* ── The composer row: [Recent] [scope ▾] [field] [mic] [engine] [Ask ⏎] ── */
+.desk-ask-composer-row.kit-toolbar {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 4px 6px 4px 4px;
+}
+.desk-ask-composer-row .kit-toolbar-verbs {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 6px;
   min-width: 0;
 }
-.desk-ask-about {
+.desk-ask-composer-scope,
+.desk-ask-composer-end {
   display: inline-flex;
+  flex: none;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 2px 4px;
+  gap: 4px;
+  min-height: 28px;
+}
+.desk-ask-composer-field {
+  display: flex;
+  flex: 1 1 auto;
   min-width: 0;
-  max-height: 88px;
+}
+/* The field: one line, white well with a fine rule, grows to three lines,
+   then scrolls. */
+.desk-ask-composer-field .gadget-pad {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: auto;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.desk-ask-composer-field .gadget-pad textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 26px;
+  max-height: calc(3 * 20px + 6px);
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--wb-well, #fff);
+  box-shadow: inset 0 0 0 1px var(--wb-rule, var(--border));
+  font: 400 13.5px / 20px var(--font-sans);
+  color: var(--wb-ink, var(--text));
+  resize: none;
   overflow-y: auto;
-  overscroll-behavior: contain;
-  font: 400 13px / 1.4 var(--font-sans);
-  color: var(--wb-ink, var(--text));
 }
-.desk-ask-about-label {
+.desk-ask-composer-field .gadget-pad textarea::placeholder {
   color: var(--wb-muted, var(--text-muted));
-  font: 400 13px / 1.4 var(--font-sans);
 }
-.desk-ask-about-label::after {
-  content: ":";
+.desk-ask-composer-field .gadget-pad textarea:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--wb-sel-vivid, var(--accent)), 0 0 0 3px color-mix(in srgb, var(--wb-sel-vivid, var(--accent)) 18%, transparent);
 }
-.desk-ask-about-desk,
-.desk-ask-about-set {
-  padding-inline: 4px;
-  font: 500 13px / 1.4 var(--font-sans);
-  color: var(--wb-ink, var(--text));
-}
-.desk-ask-about-chip {
-  display: inline-flex;
-  align-items: center;
+/* The specimen's field (DeskComposer) sits flat in the row. */
+.desk-ask-composer-field .surface-compose-well {
+  flex: 1;
   min-width: 0;
-  max-width: 100%;
-  border-radius: var(--radius-sm, 5px);
-  background: color-mix(in srgb, var(--wb-sel-vivid, var(--wb-blue)) 10%, transparent);
-  transition: background-color 120ms ease;
-}
-.desk-ask-about-chip:hover {
-  background: color-mix(in srgb, var(--wb-sel-vivid, var(--wb-blue)) 16%, transparent);
-}
-/* At 393 every library Button reserves a block margin for its touch halo;
-   inside a chip the Buttons are painted at the touch height already. */
-.desk-ask-about .btn {
-  margin-block: 0;
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  border: 0;
   background: transparent;
-  border-color: transparent;
   box-shadow: none;
+  padding: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.desk-ask-composer-field .surface-compose-well > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+.desk-ask-composer-field .surface-compose-actions {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+.desk-ask-composer-field .desk-ask-input .gadget-pad textarea {
+  height: 26px;
+}
+/* The mic: a quiet 28 px key in the row (no etched plate). */
+.desk-next .desk-ask-composer-end .desk-mic {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--wb-muted, var(--text-muted));
+}
+.desk-next .desk-ask-composer-end .desk-mic:hover:not(:disabled) {
+  background: var(--wb-hover, var(--wb-row-hover));
+}
+.desk-next .desk-ask-composer-row .desk-ask-railtoggle.btn {
+  width: 28px;
+  min-width: 28px;
+  padding: 0;
+  justify-content: center;
+  color: var(--wb-muted, var(--text-muted));
+}
+.desk-next .desk-ask-composer-row .desk-ask-railtoggle.btn[aria-pressed="true"] {
+  color: var(--wb-sel, var(--accent));
+}
+.desk-next .desk-ask-composer-row .desk-ask-scope-word.btn {
+  gap: 6px;
+  max-width: 220px;
+  padding-inline: 6px;
+  font-weight: 500;
   color: var(--wb-ink, var(--text));
 }
-.desk-ask-about .btn:hover:not(:disabled) {
-  border-color: var(--wb-rule-soft, var(--border));
+.desk-next .desk-ask-composer-row .desk-ask-scope-word.btn[aria-expanded="true"] {
+  border-color: color-mix(in srgb, var(--wb-sel) 30%, var(--wb-rule-soft));
+  background: var(--wb-blue);
 }
-/* The chip is the plate: its open and ✕ verbs draw no plate of their own
-   (the window's ghost-button plate would box each one). */
-.desk-next .desk-ask .desk-ask-about-chip .btn.btn--ghost:not(:disabled) {
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-}
-.desk-next .desk-ask .desk-ask-about-chip .btn.btn--ghost:not(:disabled):hover {
-  background: color-mix(in srgb, var(--wb-sel-vivid, var(--wb-blue)) 10%, transparent);
-}
-.desk-next .desk-ask-about-remove,
-.desk-next .desk-ask-about-add {
-  min-width: 28px;
+.desk-ask-scope-text {
+  min-width: 0;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .desk-ask-caret {
-  margin-inline-start: 2px;
+  font-size: 12px;
+  color: var(--wb-muted, var(--text-muted));
+}
+.desk-next .desk-ask-composer-row .desk-ask-engine.btn {
+  padding-inline: 6px;
+  font-weight: 400;
+}
+.desk-ask-engine .kit-dotword {
+  font: 400 12.5px / 1 var(--font-sans);
+  color: var(--wb-ink, var(--text));
+}
+.desk-ask-engine[data-state="none"] .kit-dotword,
+.desk-ask-engine[data-state="unread"] .kit-dotword {
+  color: var(--wb-muted, var(--text-muted));
+}
+.desk-next .desk-ask-composer-row .desk-ask-send.btn {
+  gap: 6px;
+  padding-inline: 10px;
+}
+.desk-ask-key {
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.18);
+  font: 500 12px / 1 var(--font-sans);
+  opacity: 0.85;
+}
+.desk-ask-composer-details {
+  flex: none;
+  border-bottom: 1px solid var(--wb-rule-soft, var(--border));
+  padding: 4px 12px;
+}
+
+/* ── The scope menu: under the word, no band, no modal ── */
+.desk-ask-scope {
+  position: relative;
+  display: inline-flex;
+}
+.desk-next .desk-ask-scope-menu,
+.desk-ask-scope-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: var(--desk-z-popover, 40);
+  width: 300px;
+  max-height: 380px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+}
+.desk-ask-scope-find {
+  padding: 2px 2px 6px;
+}
+.desk-ask-scope-find .gadget-string {
+  min-height: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: var(--wb-field);
+}
+.desk-ask-scope-find .gadget-string input {
+  font-size: 13px;
+  padding-inline: 8px;
+}
+.desk-next .desk-ask-scope-menu .desk-ask-scope-row {
+  width: 100%;
+  min-height: 30px;
+  height: 30px;
+  gap: 8px;
+  padding: 0 8px;
+}
+.desk-ask-scope-row img {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.desk-ask-check {
+  color: var(--wb-sel-vivid, var(--accent));
+  font-weight: 600;
+}
+.desk-ask-scope-meta {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--wb-muted, var(--text-muted));
+}
+.desk-ask-scope-chosen {
+  display: flex;
+  align-items: center;
+}
+.desk-ask-scope-chosen .desk-ask-scope-row {
+  flex: 1;
+  min-width: 0;
+}
+.desk-next .desk-ask-scope-menu .desk-ask-scope-remove {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  justify-content: center;
+  color: var(--wb-muted, var(--text-muted));
+}
+.desk-ask-scope-caption {
+  display: block;
+  padding: 8px 10px 2px;
+  font: 600 12px / 1.3 var(--font-display, var(--font-sans));
+  color: var(--wb-muted, var(--text-muted));
+}
+.desk-ask-scope-none {
+  display: block;
+  padding: 8px 10px;
+  font-size: 13px;
   color: var(--wb-muted, var(--text-muted));
 }
 
-/* ── Recent and the About picker: in-flow under the toolbar ── */
-.desk-ask-recent {
-  flex: none;
-  max-height: 240px;
+/* ── Rail + page ── */
+.desk-ask-main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.desk-ask-rail {
+  flex: 0 0 196px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  border-bottom: 1px solid var(--wb-rule-soft, var(--border));
-  background: var(--alive-paper, var(--wb-paper));
-  padding: 4px 0;
+  padding: 4px 0 8px;
+  border-right: 1px solid var(--wb-rule-soft, var(--border));
+  background: color-mix(in srgb, var(--wb-steel-2, var(--wb-field)) 70%, var(--wb-paper));
 }
-.desk-ask-recent-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
+.desk-ask-rail-group {
+  display: flex;
+  flex-direction: column;
 }
-.desk-next .desk-ask-recent-row.btn {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) max-content;
-  align-items: center;
-  gap: 10px;
+.desk-ask-rail-caption {
+  display: flex;
+  align-items: flex-end;
+  height: 26px;
+  padding: 0 12px 4px;
+  font: 600 12px / 1 var(--font-display, var(--font-sans));
+  color: var(--wb-muted, var(--text-muted));
+}
+.desk-next .desk-ask-body .desk-ask-rail .desk-ask-rail-row.btn.btn--ghost {
+  display: flex;
+  justify-content: flex-start;
+  gap: 7px;
   width: 100%;
   min-height: 30px;
+  height: 30px;
   margin: 0;
-  padding: 4px 16px;
+  padding: 0 10px 0 12px;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  font: 400 12.5px / 1.3 var(--font-sans);
+  color: var(--wb-ink, var(--text));
   text-align: start;
-  white-space: normal;
-  font: 400 13px / 1.35 var(--font-sans);
-  transition: background-color 120ms ease;
 }
-.desk-next .desk-ask-recent-row.btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--wb-sel-vivid, var(--wb-blue)) 8%, transparent);
+.desk-next .desk-ask-body .desk-ask-rail .desk-ask-rail-row.btn.btn--ghost:hover:not(:disabled) {
+  background: var(--wb-row-hover, var(--wb-hover));
 }
-.desk-next .desk-ask-recent-row.btn[aria-current="true"] {
+.desk-next .desk-ask-body .desk-ask-rail .desk-ask-rail-row.btn.btn--ghost[aria-current="true"] {
   background: var(--wb-sel-vivid, var(--wb-sel));
-  color: var(--wb-paper);
+  color: #fff;
 }
-.desk-ask-recent-glyph {
-  width: 20px;
-  height: 20px;
+.desk-next .desk-ask-body .desk-ask-rail .desk-ask-rail-new.btn.btn--ghost {
+  color: var(--wb-sel, var(--accent));
+  font-weight: 500;
 }
-.desk-ask-recent-title {
+.desk-ask-rail-title {
+  flex: 1;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.desk-ask-recent-age {
-  font: 400 12px / 1.35 var(--font-sans);
-  font-variant-numeric: tabular-nums;
+.desk-ask-rail-key {
+  font: 400 12px / 1 var(--font-sans);
   color: var(--wb-muted, var(--text-muted));
 }
-.desk-ask-recent-row[aria-current="true"] .desk-ask-recent-age {
-  color: inherit;
-}
-.desk-ask-recent-note {
-  display: block;
-  padding: 6px 16px;
-  font: 400 13px / 1.5 var(--font-sans);
+.desk-ask-rail-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 6px 12px;
+  font: 400 12px / 1.4 var(--font-sans);
   color: var(--wb-muted, var(--text-muted));
-}
-.desk-ask-about-picker {
-  flex: none;
-  max-height: 45%;
-  overflow: auto;
-  border-bottom: 1px solid var(--wb-rule-soft, var(--border));
 }
 
-/* ── The thread: the reading viewport scrolls inside the window ── */
+/* ── The page: the answer as a document ── */
 .desk-ask-reading-wrap {
   --scroll-hint-background: var(--alive-paper, var(--wb-paper));
   --scroll-hint-depth: 12px;
@@ -173,7 +350,8 @@
   height: 100%;
   min-height: 0;
   min-width: 0;
-  padding-inline: 16px;
+  box-sizing: border-box;
+  padding: 0 24px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
@@ -181,117 +359,181 @@
 .desk-ask-thread {
   display: flex;
   flex-direction: column;
-  width: min(100%, 72ch);
-  margin: 0 auto;
-  padding: 4px 0 12px;
+  max-width: 72ch;
+  margin: 0;
+  padding: 16px 0 16px;
   list-style: none;
 }
 .desk-ask-turn {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 0;
+  gap: 6px;
+  min-width: 0;
 }
 .desk-ask-turn + .desk-ask-turn {
+  margin-top: 14px;
+  padding-top: 12px;
   border-top: 1px solid var(--wb-rule-soft, var(--border-subtle));
 }
-
-/* The question: the asker's disc and his words. */
-.desk-ask-question {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  align-items: start;
+/* The question: the heading line, its age at the right. */
+.desk-next .desk-ask .desk-ask-q,
+.desk-ask-q {
+  display: flex;
+  align-items: baseline;
   gap: 10px;
+  margin: 0;
+  font: 600 16px / 1.3 var(--font-display, var(--font-sans));
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-head-ink, var(--wb-sel, var(--wb-ink)));
 }
-.desk-ask-question .kit-avatar {
-  width: 20px;
-  height: 20px;
-  margin-top: 2px;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-ink) 18%, transparent);
-  font-size: 12px;
-}
-.desk-ask-question-text {
+.desk-ask-q-text {
+  flex: 1;
   min-width: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  font: 500 15px / 1.5 var(--font-sans);
-  color: var(--wb-ink, var(--text));
 }
-
-/* The answer: Ask's glyph, then the reading document. */
-.desk-ask-reply {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  align-items: start;
-  gap: 10px;
-}
-.desk-ask-reply-glyph {
-  width: 20px;
-  height: 20px;
-  margin-top: 3px;
-}
-.desk-ask-reply-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
+.desk-ask-q-when {
+  flex: none;
+  font: 400 12px / 1 var(--font-sans);
+  color: var(--wb-muted, var(--text-muted));
+  white-space: nowrap;
 }
 .desk-ask-answer {
   min-width: 0;
-  font: 400 15px / 1.6 var(--font-sans);
   color: var(--wb-ink, var(--text));
   overflow-wrap: anywhere;
 }
+/* The Note's reading rules (thought-workspace.css: 15/1.65 sans, h2 17,
+   h3 15): a heading in the answer is a sans heading in ink, never mono
+   caps. */
 .desk-ask-answer .surface-material {
-  font-size: 15px;
-  line-height: 1.6;
+  font: 400 15px / 1.6 var(--font-sans);
+  gap: 7px;
 }
-.desk-ask-reading .desk-ask-answer .surface-material .reading-heading:first-child {
+.desk-next .desk-ask .desk-ask-answer .surface-material :is(h1, h2, h3, h4, h5, h6),
+.desk-ask-answer .surface-material :is(h1, h2, h3, h4, h5, h6) {
+  margin: 6px 0 0;
+  font: 600 15px / 1.5 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--wb-ink, var(--text));
+}
+.desk-next .desk-ask .desk-ask-answer .surface-material :is(h1, h2),
+.desk-ask-answer .surface-material :is(h1, h2) {
+  font-size: 17px;
+}
+.desk-ask-answer .surface-material :is(h1, h2, h3, h4, h5, h6):first-child {
   margin-top: 0;
-  font: 650 22px / 1.25 var(--font-display);
 }
-/* The kit's row verbs reveal on a row's hover; an answer's verbs are always
-   there (one row under the answer), and nothing in them moves. */
-.desk-ask-verbs.surface-row-verbs {
-  opacity: 1;
-  transform: none;
-  transition: none;
+.desk-ask-answer .surface-material ul,
+.desk-ask-answer .surface-material ol {
+  gap: 2px;
 }
+
+/* References: dense object rows that open their windows. */
+.desk-ask-refs {
+  display: flex;
+  flex-direction: column;
+  margin: 4px 0 0;
+}
+.desk-ask-refs-caption {
+  margin: 4px 0 2px;
+  font: 600 12px / 1.3 var(--font-display, var(--font-sans));
+  color: var(--wb-muted, var(--text-muted));
+}
+.desk-next .desk-ask-body .desk-ask-refs .desk-ask-ref.btn.btn--ghost,
+.desk-ask-refs .desk-ask-ref {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: calc(100% + 12px);
+  min-height: 30px;
+  height: 30px;
+  margin: 0 -6px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  box-shadow: none;
+  font: 400 13px / 1 var(--font-sans);
+  text-align: start;
+  white-space: nowrap;
+}
+.desk-next .desk-ask-body .desk-ask-refs .desk-ask-ref.btn.btn--ghost:hover:not(:disabled) {
+  background: var(--wb-row-hover, var(--wb-hover));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--wb-sel) 22%, transparent);
+}
+.desk-ask-ref img {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.desk-ask-ref-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  color: var(--wb-sel-vivid, var(--accent));
+}
+.desk-ask-ref[data-static] .desk-ask-ref-title {
+  color: var(--wb-ink, var(--text));
+}
+.desk-ask-ref-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding-left: 12px;
+  font: 400 12px / 1 var(--font-sans);
+  color: var(--wb-muted, var(--text-muted));
+}
+
+/* The answer's verbs: one row; Save as note is the one plated verb. */
 .desk-ask-verbs {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
+  margin: 6px 0 0 -4px;
 }
-.desk-next .desk-ask-verbs .btn:not(.btn--primary) {
+.desk-next .desk-ask-verbs .btn {
+  min-height: 26px;
+  height: 26px;
+  gap: 6px;
+  padding-inline: 8px;
+  font-size: 12.5px;
+}
+.desk-next .desk-ask-body .desk-ask-verbs .btn.btn--ghost.btn--sm {
   border-color: transparent;
   background: transparent;
   box-shadow: none;
   color: var(--wb-ink, var(--text));
-  transition: background-color 120ms ease, border-color 120ms ease;
 }
-.desk-next .desk-ask-verbs .btn:not(.btn--primary):hover:not(:disabled) {
+.desk-next .desk-ask-body .desk-ask-verbs .btn.btn--ghost.btn--sm:hover:not(:disabled) {
   border-color: var(--wb-rule-soft, var(--border));
-  background: color-mix(in srgb, var(--wb-sel-vivid, var(--wb-blue)) 8%, transparent);
+  background: var(--wb-row-hover, var(--wb-hover));
 }
-.desk-ask-reading-fold > summary {
-  font: 500 12px / 1.5 var(--font-sans);
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--wb-muted, var(--text-muted));
+.desk-ask-more {
+  position: relative;
+  display: inline-flex;
 }
-.desk-ask-sources {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 8px;
-  min-width: 0;
-  font: 400 13px / 1.5 var(--font-sans);
+.desk-next .desk-ask-verbs .desk-ask-more-press.btn {
+  width: 26px;
+  padding: 0;
+  justify-content: center;
 }
-.desk-ask-sources .btn {
-  max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
+.desk-next .desk-ask-more-menu,
+.desk-ask-more-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: var(--desk-z-popover, 40);
+  min-width: 180px;
+}
+.desk-next .desk-ask-more-menu .btn--chrome {
+  width: 100%;
 }
 .desk-ask-saved {
   display: flex;
@@ -303,14 +545,22 @@
 .desk-ask-send-well {
   margin-top: 4px;
 }
-.desk-ask .surface-run-line[data-state="running"]::before {
-  content: "◌";
-  display: inline-block;
-  margin-inline-end: var(--space-2);
-  opacity: 0.75;
-  animation: surface-state-pulse calc(var(--duration-long) * 4) ease-in-out infinite;
-}
 
+/* Running: one quiet line (no spinner theatre); the seconds and Stop are
+   in the status bar. */
+.desk-ask-running {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.desk-ask-reading-line,
+.desk-ask-running .surface-run-line,
+.desk-ask-turn > .surface-run-line {
+  font: 400 12.5px / 1.4 var(--font-sans);
+  color: var(--wb-muted, var(--text-muted));
+  text-transform: none;
+  letter-spacing: 0;
+}
 /* Betterment Q7: a call the desk's tool loop holds for his press. */
 .desk-ask-hold {
   display: flex;
@@ -324,126 +574,143 @@
   font: 500 14px / 1.5 var(--font-sans);
 }
 
-/* ── A fresh Ask: the big drawing and the starter questions ── */
-.desk-ask-empty {
+/* Not answered: one line and the one verb. Never red, never mono. */
+.desk-ask-fail {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding-block: 24px;
-}
-.desk-ask-empty-sprite {
-  display: block;
-  width: 64px;
-  height: 64px;
-}
-.desk-ask-prompts {
-  display: grid;
-  gap: 2px;
-  width: min(100%, 360px);
-  min-width: 0;
-}
-.desk-next .desk-ask-prompts .desk-ask-starter.btn {
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-  width: 100%;
-  min-height: 36px;
-  margin-block: 0;
-  padding: 6px 12px;
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-  text-align: start;
-  white-space: normal;
-  transition: background-color 120ms ease, border-color 120ms ease;
+  min-height: 32px;
 }
-.desk-next .desk-ask-prompts .desk-ask-starter.btn:hover:not(:disabled) {
-  border-color: var(--wb-rule-soft, var(--border));
-  background: color-mix(in srgb, var(--wb-sel-vivid, var(--wb-blue)) 8%, transparent);
-}
-.desk-ask-starter img {
-  width: 20px;
-  height: 20px;
-}
-.desk-ask-starter-label {
-  font: 500 14px / 1.4 var(--font-sans);
+.desk-ask-fail .kit-dotword {
+  font: 400 13.5px / 1.4 var(--font-sans);
   color: var(--wb-ink, var(--text));
 }
 
-/* ── The composer, held still at the foot ── */
-.desk-ask-input {
+/* ── A fresh Ask: "From your desk now" and three plain links ── */
+.desk-ask-empty {
+  padding-top: 14px;
+}
+.desk-ask-prompts {
   display: flex;
-  align-items: flex-end;
-  gap: var(--space-2);
-  min-width: 0;
-  height: 88px;
-  min-height: 88px;
-  flex: none;
+  flex-direction: column;
+  max-width: 72ch;
 }
-.desk-next .desk-ask-input .gadget-pad {
-  flex: 1;
-  height: 100%;
-  min-height: 0;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
+.desk-ask-prompts-caption {
+  margin: 2px 0 4px;
+  font: 600 12px / 1.3 var(--font-display, var(--font-sans));
+  color: var(--wb-muted, var(--text-muted));
 }
-.desk-next .desk-ask-input .gadget-pad textarea {
-  min-height: 0;
-  height: 100%;
-  max-height: 100%;
-  background: transparent;
-  padding: 12px 16px;
-  font: 400 15px / 1.6 var(--font-sans);
-  resize: none;
-  overflow-y: auto;
-}
-.desk-ask-engine-line {
+.desk-next .desk-ask-body .desk-ask-prompts .desk-ask-prompt.btn.btn--ghost,
+.desk-ask-prompts .desk-ask-prompt.btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 0;
-  color: var(--wb-muted, var(--text-muted));
-  font: 400 12px / 1.5 var(--font-sans);
+  justify-content: flex-start;
+  gap: 9px;
+  width: calc(100% + 16px);
+  min-height: 32px;
+  height: 32px;
+  margin: 0 -8px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  box-shadow: none;
+  text-align: start;
+  white-space: nowrap;
 }
-.desk-ask-tools {
+.desk-next .desk-ask-body .desk-ask-prompts .desk-ask-prompt.btn.btn--ghost:hover:not(:disabled) {
+  background: var(--wb-row-hover, var(--wb-hover));
+}
+.desk-ask-prompt img {
+  width: 16px;
+  height: 16px;
   flex: none;
+}
+.desk-ask-prompt-text {
   min-width: 0;
-  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 500 14px / 1.3 var(--font-sans);
+  color: var(--wb-sel-vivid, var(--accent));
 }
-.desk-ask-tools > summary {
-  min-height: 34px;
-  margin: 0;
-  padding-inline: 7px;
-  font-family: var(--font-sans);
-  letter-spacing: normal;
-  text-transform: none;
-}
-.desk-ask-tools .gadget-fold-body {
-  max-width: min(560px, 100%);
+.desk-ask-prompt-source {
+  margin-left: auto;
+  padding-left: 12px;
+  font: 400 12px / 1 var(--font-sans);
   color: var(--wb-muted, var(--text-muted));
-  font: 400 12px / 1.5 var(--font-sans);
-  overflow-wrap: anywhere;
 }
 
+/* ── The phone (393): the composer takes two lines (the scope and the
+   engine, then the field, the mic and Ask); Recent is a sheet; rows are
+   44 px. ── */
 @container surface (max-width: 560px) {
-  .desk-ask-reading { padding-inline: 12px; }
-  .desk-ask-empty { padding-block: 16px; gap: 12px; }
-  .desk-ask-empty-sprite { width: 32px; height: 32px; }
-  .desk-next .desk-ask-prompts .desk-ask-starter.btn { min-height: 44px; }
-  .desk-next .desk-ask-recent-row.btn { min-height: 44px; padding-inline: 12px; }
-  .desk-next .desk-ask-input .gadget-pad textarea { padding: 10px 12px; }
-  .desk-ask-reading-fold > summary { min-height: 44px; }
-  .desk-ask-tools > summary { min-height: 44px; }
-  .desk-ask-about { max-height: 132px; }
+  .desk-ask-composer-row.kit-toolbar {
+    flex-wrap: wrap;
+    padding: 6px 8px;
+  }
+  .desk-ask-composer-row .kit-toolbar-verbs {
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 6px;
+  }
+  .desk-ask-composer-end {
+    display: contents;
+  }
+  .desk-ask-composer-row .desk-ask-railtoggle { order: 1; }
+  .desk-ask-composer-scope { order: 2; }
+  .desk-ask-composer-row .desk-ask-engine { order: 3; margin-left: auto; }
+  .desk-ask-composer-field { order: 4; flex: 1 1 calc(100% - 150px); }
+  .desk-ask-composer-row .desk-mic { order: 5; }
+  .desk-ask-composer-row .desk-ask-send { order: 6; }
+  .desk-next .desk-ask-composer-row .btn,
+  .desk-next .desk-ask-composer-end .desk-mic {
+    min-height: 44px;
+    height: 44px;
+  }
+  .desk-next .desk-ask-composer-row .desk-ask-railtoggle.btn,
+  .desk-next .desk-ask-composer-end .desk-mic {
+    width: 44px;
+  }
+  .desk-ask-composer-field .gadget-pad textarea {
+    min-height: 44px;
+    padding: 11px 10px;
+    font-size: 15px;
+    line-height: 20px;
+    max-height: calc(3 * 20px + 22px);
+  }
+  .desk-ask-rail[data-sheet] {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    flex: none;
+    width: 100%;
+    border-right: 0;
+    background: var(--wb-paper);
+  }
+  .desk-next .desk-ask-body .desk-ask-rail .desk-ask-rail-row.btn.btn--ghost { min-height: 44px; height: 44px; font-size: 14px; }
+  .desk-ask-reading { padding: 0 16px; }
+  .desk-next .desk-ask-body .desk-ask-refs .desk-ask-ref.btn.btn--ghost,
+  .desk-ask-refs .desk-ask-ref { min-height: 44px; height: 44px; width: 100%; margin: 0; padding: 0 4px; font-size: 14px; }
+  .desk-ask-ref-meta { display: none; }
+  .desk-next .desk-ask-body .desk-ask-prompts .desk-ask-prompt.btn.btn--ghost,
+  .desk-ask-prompts .desk-ask-prompt.btn { min-height: 48px; height: auto; width: 100%; margin: 0; padding: 2px 4px; }
+  .desk-ask-prompt-text { white-space: normal; line-height: 1.3; font-size: 15px; }
+  .desk-ask-prompt-source { display: none; }
+  .desk-next .desk-ask-verbs .btn { min-height: 44px; height: 44px; font-size: 13.5px; }
+  .desk-next .desk-ask-verbs .desk-ask-more-press.btn { width: 44px; }
+  .desk-next .desk-ask-scope-menu .desk-ask-scope-row { min-height: 44px; height: 44px; }
+  .desk-ask-scope-menu { width: min(300px, calc(100cqw - 16px)); }
+  .desk-ask-q { font-size: 17px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .desk-ask .surface-run-line[data-state="running"]::before { animation: none; }
-  .desk-ask-about-chip,
-  .desk-next .desk-ask-recent-row.btn,
+  .desk-next .desk-ask-body .desk-ask-rail .desk-ask-rail-row.btn.btn--ghost,
   .desk-next .desk-ask-verbs .btn,
-  .desk-next .desk-ask-prompts .desk-ask-starter.btn { transition: none; }
+  .desk-next .desk-ask-body .desk-ask-prompts .desk-ask-prompt.btn.btn--ghost { transition: none; }
+}
+
+/* Borderless rows stack edge to edge: each row's hit face is its own box
+   (the library halo's 1 px border overlap would reach the row above). */
+.desk-next .desk-ask-body :is(.desk-ask-prompt, .desk-ask-ref, .desk-ask-rail-row).btn::after {
+  inset: 0;
 }

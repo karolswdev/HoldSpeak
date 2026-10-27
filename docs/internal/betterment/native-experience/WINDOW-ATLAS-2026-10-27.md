@@ -886,6 +886,12 @@ with `HOLDSPEAK_UI_FEEDBACK=1` (`holdspeak/services/ui_feedback.py:27`).
 - Agents shows CLI versions ("2.1.310", "0.163.0") as row subtitles.
 - With three windows open (`phone-three-393.png`) only the front sheet shows, and nothing says two
   more are there. ⌃` and ⌃W changed nothing at 393 (unknown: the note editor may hold the focus).
+- Lane / PR: W1-GEOM (2026-10-27). After the floating dock (#1497) Go scrolled by 2 px above the
+  plate; the rules between its groups now take 2 px of air, not 4, at 420 px and less, so every Go
+  row shows with no scroll. Every dock reserve (Go, the Chair's reopen list, the note's phone sheet,
+  the floor's Talk, Delivery, the phone in-world editor, the `.desk-mc-tab`) reads `--desk-dock-h` /
+  `--desk-snap-bottom`, no 52/56/60/76 px literal. Sheets keep the ratified 8 px of air: 682 px of
+  content at 852. Score unchanged (13): the status-bar wrap and the Go-as-home list stand.
 
 ### Doors that lead nowhere, or to a window other than their name
 
