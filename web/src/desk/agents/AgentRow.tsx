@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
-import { ActionNotice, SurfaceState } from "../surface";
+import { DotWord, SurfaceState } from "../surface";
 import { StringGadget } from "../surface/gadgets";
 import { AgentWords } from "../components/AgentWords";
 import { useGate } from "../gate";
@@ -131,7 +131,11 @@ function refusalWords(error: unknown): string {
   if (status === "wait_not_current") return "The question changed · Nothing was sent";
   if (status === "pane_gone" || status === "pane_mismatch" || status === "target_gone") return "This agent's terminal is gone · Nothing was sent";
   if (status === "tmux_absent") return "The terminal is not running · Nothing was sent";
-  return `Not sent · ${readableError(error)}`;
+  const said = readableError(error);
+  // The hub's custody words ("a current registered session and pane
+  // identity are required") in his words.
+  if (/pane identity|registered session/i.test(said)) return "The desk cannot reach this agent's terminal · Nothing was sent";
+  return `Not sent · ${said}`;
 }
 
 export interface AgentRowProps {
@@ -311,8 +315,12 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
       data-testid="conductor-ask-row"
       aria-label={`${agentName} ${reviewNeedsYou ? "needs you" : held ? "wants to run" : "asks"}`}
     >
+      {/* Window Program W1 (2026-10-27): the ask's state is a dot and a
+          word, its age a quiet sans line; no mono caps chip, no framed box. */}
       <header className="cw-ask-bar">
-        <span className="cw-ask-label">{reviewNeedsYou ? "Needs you" : held ? "Wants to run" : "Asks you"}</span>
+        <DotWord className="cw-ask-label" tone={reviewNeedsYou ? "info" : held ? "warn" : "ask"}>
+          {reviewNeedsYou ? "Needs you" : held ? "Wants to run" : "Asks you"}
+        </DotWord>
         <span className="cw-ask-age">{askedWord(member.when, member.whenSort)}</span>
       </header>
       <div className="cw-ask-body">
@@ -346,9 +354,13 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
         </div>
       </div>
       {failure ? (
-        <ActionNotice tone="danger" role="alert" action={busy || !failure.retry ? undefined : { label: "Retry", onClick: failure.retry }}>
-          {failure.label}
-        </ActionNotice>
+        // W1: the refusal is one quiet line with a dense Try again.
+        <p className="cw-ask-refusal" role="alert" data-testid="agent-row-refusal">
+          <DotWord tone="fail">{failure.label}</DotWord>
+          {busy || !failure.retry ? null : (
+            <Button dense variant="ghost" onClick={failure.retry}>Try again</Button>
+          )}
+        </p>
       ) : null}
       {!failure && callError ? <SurfaceState error={callError} onRetry={busy ? undefined : () => void reread()} /> : null}
       {sent && !failure ? (

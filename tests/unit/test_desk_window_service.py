@@ -467,3 +467,35 @@ def test_a_zone_window_open_is_refused_and_an_old_row_still_closes(svc: Any) -> 
         )
     assert svc.close("zone:dir-8")["closed"] is True
     assert [w["id"] for w in svc.list()["windows"]] == []
+
+
+# ---- W1-DOORS (atlas 2026-10-27, Part B): doors that led nowhere ----------
+
+
+@pytest.mark.parametrize(("word", "canonical"), [
+    ("kb", "knowledge"), ("directory", "zone"), ("recipe", "persona"), ("chain", "sequence"),
+])
+def test_a_kind_word_opens_the_window_the_browser_draws(svc: Any, word: str, canonical: str) -> None:
+    row = svc.open(f"pullout:{word}:obj-1")
+    assert row["id"] == f"pullout:{canonical}:obj-1"
+    assert row["app"] == "pullout" and row["object_ref"] == f"{canonical}:obj-1"
+    assert _order(svc.list()) == [f"pullout:{canonical}:obj-1"]
+    # The canonical word and the kind word are one window.
+    assert svc.open(f"pullout:{canonical}:obj-1")["revision"] == row["revision"]
+
+
+def test_a_project_pullout_opens_the_projects_room(svc: Any) -> None:
+    row = svc.open("pullout:project:p-9")
+    assert row["id"] == "surface-project-memory"
+    assert row["app"] == "open-project-memory" and row["object_ref"] == "project:p-9"
+    assert _order(svc.list()) == ["surface-project-memory"]
+
+
+def test_an_object_window_of_an_unknown_kind_is_refused(svc: Any) -> None:
+    with pytest.raises(ValidationError) as caught:
+        svc.open("pullout:gadget:g-1")
+    assert caught.value.code == "window_unknown"
+    assert svc.list()["windows"] == []
+    # A known kind and a bare legacy id still open.
+    assert svc.open("pullout:note:n-1")["object_ref"] == "note:n-1"
+    assert svc.open("pullout:n-legacy")["object_ref"] == "n-legacy"

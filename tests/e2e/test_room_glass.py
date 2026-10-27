@@ -1346,7 +1346,8 @@ FACTS = r"""() => {
     delivery_head: head('[data-section=delivery]'),
     delivery_rows: text('[data-testid=delivery-row]'),
     delivery_egress: win.querySelectorAll('[data-section=delivery] .gadget-chip-egress, [data-section=delivery] [data-testid*=egress]').length,
-    receipts: text('[data-testid=receipt-row] .surface-primary'),
+    // W1 (2026-10-27): the writes read in sentence case; the fence compares the words.
+    receipts: text('[data-testid=receipt-row] .surface-primary').map((t) => t.toUpperCase()),
     plan: text('[data-testid=steward-run-plan] .surface-plan-step'),
     steward_outcome: text('[data-testid=steward-run-outcome]')[0] ?? null,
     words_send: /\bsend\b|\bsent\b/i.test(win.innerText),
@@ -2070,8 +2071,10 @@ class TestRoomFaceGlass:
                 row.wait_for(timeout=T)
                 row.scroll_into_view_if_needed()
                 page.wait_for_timeout(300)
-                face = row.evaluate(r"""r => ({text: r.innerText.replace(/\s+/g, ' ').trim(),
-                    lead: r.querySelector('.surface-state-chip')?.getAttribute('data-state'),
+                # W1 (2026-10-27): the writes read in sentence case with the
+                # outcome as a dot and a word; the fence compares the words.
+                face = row.evaluate(r"""r => ({text: r.innerText.replace(/\s+/g, ' ').trim().toUpperCase(),
+                    lead: r.querySelector('[data-testid=receipt-outcome]')?.getAttribute('data-tone') === 'fail' ? 'failure' : null,
                     code: r.querySelector('[data-outcome]')?.dataset.code})""")
                 _rf_record("receipt-refused", width, {"hub": hub, "face": face})
                 _rf_shot(page, "receipt-refused", width)

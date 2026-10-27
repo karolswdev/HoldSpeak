@@ -502,11 +502,13 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
     ]);
 
     // ── 10. Review reviews: it crosses to the Journal wing, not the door ──
-    await userEvent.click(screen.getByRole("button", { name: "Review" }));
+    // W1 (2026-10-27): Review is a Talk toolbar verb (never the status bar).
+    await userEvent.click(screen.getByRole("tab", { name: "Talk" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Review" }));
     await waitFor(() => expect(container.querySelector(".speak-journal")).toBeTruthy());
     expect(screen.getByRole("tab", { name: "Journal" }).getAttribute("aria-selected")).toBe("true");
     expect(container.querySelector(".surface-door")).toBeNull();
-    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Speak", "Journal", "Blocks", "Learned", "Commands"]);
+    expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual(["Talk", "Journal", "Blocks", "Learned", "Commands"]);
     // Every read the window made was one the hub answered, but the scan.
     expect([...new Set(misses)]).toEqual(["/api/concierge/detect"]);
   });

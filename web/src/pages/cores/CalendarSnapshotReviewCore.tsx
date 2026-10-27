@@ -164,7 +164,8 @@ function useCalendarSources(enabled: boolean) {
   const rows = read?.sources ?? [];
   const connected = rows.filter((row) => row.status === "success").length;
   const failing = rows.filter((row) => row.status === "failure").length;
-  return { read, checking, failed, check, connected, failing, total: rows.length };
+  const total = rows.length;
+  return { read, checking, failed, check, connected, failing, total };
 }
 
 function isAnchorValid(anchor: string): boolean {
