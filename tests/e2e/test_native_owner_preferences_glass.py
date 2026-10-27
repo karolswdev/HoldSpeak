@@ -315,6 +315,10 @@ def test_components_settings_you_uses_local_writer_only(
             _api(page, "PUT", "/api/setup/onboarding", {"disposition": "completed"}, token=TOKEN)
             page.goto(f"{base}/design/components?token={TOKEN}", wait_until="load")
             _normal_chair(page)
+            if width == 393:
+                # #1521: on a narrow surface the Components rail is the first
+                # view; the Forms group opens with Back.
+                page.get_by_test_id("reference-group-forms").click()
             reference = page.get_by_test_id("reference-owner-preferences")
             reference.wait_for(timeout=15_000)
             state = page.get_by_role("combobox", name="Example state")
