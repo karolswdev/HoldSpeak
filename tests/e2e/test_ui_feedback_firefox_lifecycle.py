@@ -26,6 +26,12 @@ from .test_ui_feedback_glass import _browser_png_facts
 
 
 TOKEN = "feedback-firefox-lifecycle"
+
+
+def _feedback_name(width: int) -> str:
+    """The title-bar Feedback verb names what the window shows: on the phone
+    the title bar names the open Settings pane (#1458), here You."""
+    return "Give feedback on Settings" if width >= 720 else "Give feedback on You"
 SHOTS = evidence_dir("ui-feedback-firefox-lifecycle")
 
 
@@ -77,7 +83,7 @@ def _capture_ready(page: Any, window: Any, width: int, attempt: int,
                    observations: list[dict[str, Any]]) -> Any:
     page.evaluate("window.__feedbackBeat = {last: performance.now(), max: 0}")
     started = time.monotonic()
-    window.get_by_role("button", name="Give feedback on Settings", exact=True).click()
+    window.get_by_role("button", name=_feedback_name(width), exact=True).click()
     strip = page.locator("[data-ui-feedback]")
     strip.get_by_text("RECORDING", exact=True).wait_for()
     capture_ms = round((time.monotonic() - started) * 1000)
@@ -180,6 +186,10 @@ def test_loaded_settings_cancel_retry_generation_and_return(
                 _normal_chair(page)
                 window = page.locator("[id='surface-settings'][data-layer='window']")
                 name = window.get_by_role("textbox", name="Your name", exact=True)
+                if width < 720:
+                    # Settings on the phone opens on its rail (#1458, the native
+                    # preference window); the You pane holds the name field.
+                    window.get_by_test_id("settings-index-you").click()
                 name.wait_for()
                 window.locator("[data-settings-section='this-mac']").wait_for(state="attached")
                 initial_box = window.bounding_box()
@@ -214,7 +224,7 @@ def test_loaded_settings_cancel_retry_generation_and_return(
                     release(fonts);
                   };
                 }""")
-                window.get_by_role("button", name="Give feedback on Settings", exact=True).click()
+                window.get_by_role("button", name=_feedback_name(width), exact=True).click()
                 strip = page.locator("[data-ui-feedback]")
                 strip.get_by_text("CAPTURING", exact=True).wait_for()
                 page.wait_for_function("() => !!document.querySelector('body > div[style*=\"-100000px\"]')")
@@ -332,7 +342,13 @@ def test_loaded_settings_cancel_retry_generation_and_return(
                 assert strip.count() == 0
                 assert window.is_visible()
                 name.fill("Isolated Settings return")
+                if width < 720:
+                    # The phone shows one pane at a time (#1458): the title
+                    # bar's Back returns to the rail between panes.
+                    window.get_by_test_id("settings-back").click()
                 window.get_by_test_id("settings-index-speak").click()
+                if width < 720:
+                    window.get_by_test_id("settings-back").click()
                 window.get_by_test_id("settings-index-you").click()
                 assert name.input_value() == "Isolated Settings return"
                 return_box = window.bounding_box()
