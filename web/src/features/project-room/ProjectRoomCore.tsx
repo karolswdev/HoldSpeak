@@ -30,6 +30,7 @@ import {
   ListRow,
   type ObjectSort,
   type ObjectSortKey,
+  type ObjectTone,
 } from "../../desk/surface";
 import { RunLine } from "../../desk/surface";
 import { useCompactViewport } from "../../desk/useCompactViewport";
@@ -166,7 +167,7 @@ const SOURCE_SPRITE: Record<string, string> = {
   decision: "decision",
 };
 
-function RowSprite({ source, kind }: { source: string; kind?: string }) {
+export function RowSprite({ source, kind }: { source: string; kind?: string }) {
   const sprite = SOURCE_SPRITE[source.toLowerCase()] ?? (kind === "decision" ? "decision" : null);
   if (!sprite) return <>{emblemFor(source)}</>;
   return (
@@ -175,6 +176,10 @@ function RowSprite({ source, kind }: { source: string; kind?: string }) {
     </span>
   );
 }
+
+/** A source's object glyph (GitHub a pull request, Jira an action item),
+ *  for the Room window's Sources (W3-B: no `GH`/`J` plates). */
+export const SourceGlyph = RowSprite;
 
 /* ── time formatting ── */
 
@@ -931,7 +936,8 @@ type ItemRow = {
   details_json: string | null;
 };
 
-const ITEM_MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+// W3-B (atlas 2026-10-27): the Plan's dates are sentence-case sans (`Jul 15`).
+const ITEM_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 function dayNumber(ymd: string): number {
   const [y, m, d] = ymd.slice(0, 10).split("-").map(Number);
@@ -967,12 +973,14 @@ function ItemPills({ item }: { item: ItemRow }) {
   const late = daysLate(item);
   let details: Record<string, unknown> = {};
   try { details = item.details_json ? JSON.parse(item.details_json) : {}; } catch { details = {}; }
-  const pills: { text: string; tone?: string }[] = [];
-  if (late > 0) pills.push({ text: `${pluralize(late, "day", "days")} late`, tone: "danger" });
-  else if (item.lifecycle === "missed") pills.push({ text: "Missed", tone: "danger" });
-  else if (item.lifecycle === "dropped") pills.push({ text: "Dropped" });
-  else if (CLOSED.has(item.lifecycle)) pills.push({ text: plainWord(item.lifecycle), tone: "ok" });
-  else if (item.item_type === "risk") pills.push({ text: "Open risk", tone: "warn" });
+  // W3-B (atlas 2026-10-27): the row grammar of the Now wing (#1483): the
+  // facts quiet at the row's right, the state a dot and a word (no pill).
+  const states: { text: string; tone: ObjectTone | "idle" }[] = [];
+  if (late > 0) states.push({ text: `${pluralize(late, "day", "days")} late`, tone: "fail" });
+  else if (item.lifecycle === "missed") states.push({ text: "Missed", tone: "fail" });
+  else if (item.lifecycle === "dropped") states.push({ text: "Dropped", tone: "idle" });
+  else if (CLOSED.has(item.lifecycle)) states.push({ text: plainWord(item.lifecycle), tone: "ok" });
+  else if (item.item_type === "risk") states.push({ text: "Open risk", tone: "warn" });
   const facts: string[] = [plainWord(item.item_type)];
   if (item.item_type === "risk") {
     if (details.likelihood) facts.push(`likelihood ${String(details.likelihood).toLowerCase()}`);
@@ -980,12 +988,12 @@ function ItemPills({ item }: { item: ItemRow }) {
   }
   return (
     <span className="room-row-meta">
-      {pills.map((t, i) => (
-        <span key={i} className="kit-pill" data-tone={t.tone} data-dot={t.tone ? "" : undefined} data-testid="item-token">
-          {t.text}
-        </span>
-      ))}
       <span className="room-row-facts">{facts.join(" · ")}</span>
+      {states.map((t, i) => (
+        <DotWord key={i} tone={t.tone} className="room-plan-state" data-testid="item-token">
+          {t.text}
+        </DotWord>
+      ))}
     </span>
   );
 }
@@ -1048,7 +1056,7 @@ function ItemsSection({ read }: { read: ItemsRead }) {
   if (failed) {
     return (
       <SurfaceSection
-        label="PLAN"
+        label="Plan"
         actions={
           <Button dense variant="ghost" onClick={retry} data-testid="items-retry">
             Retry
@@ -1077,7 +1085,7 @@ function ItemsSection({ read }: { read: ItemsRead }) {
   const nodes: React.ReactNode[] = [];
   const nowNode = (
     <li key="now" className="room-plan-now" data-testid="room-plan-now" aria-label="Today">
-      <span className="room-plan-time">TODAY</span>
+      <span className="room-plan-time">Today</span>
       <span className="room-plan-now-bead" aria-hidden="true" />
       <span className="room-plan-now-line" aria-hidden="true" />
     </li>
@@ -1089,7 +1097,7 @@ function ItemsSection({ read }: { read: ItemsRead }) {
   if (nowAt === -1 && dated.length) nodes.push(nowNode);
   for (const item of undated) nodes.push(<PlanNode key={item.id} item={item} focus={item === focus} />);
   return (
-    <SurfaceSection label="PLAN" count={items.length || null}>
+    <SurfaceSection label="Plan" count={items.length || null}>
       <ol className="room-plan" data-testid="items-section" aria-label="Plan">
         {nodes}
       </ol>
@@ -1106,8 +1114,8 @@ function PlanNode({ item, focus }: { item: ItemRow; focus: boolean }) {
         <span className="room-plan-bead" data-tone="danger" aria-hidden="true" />
         <article className="room-focus" aria-label={`Late: ${item.title}`} data-testid="room-late-plate">
           <header className="room-focus-bar">
-            <span className="room-focus-label">LATE</span>
-            <span className="room-focus-in">{pluralize(late, "DAY", "DAYS")}</span>
+            <span className="room-focus-label">Late</span>
+            <span className="room-focus-in">{pluralize(late, "day", "days")}</span>
           </header>
           <div className="room-focus-body">
             <span className="room-focus-title">{item.title}</span>
@@ -1122,7 +1130,7 @@ function PlanNode({ item, focus }: { item: ItemRow; focus: boolean }) {
       <span className="room-plan-time">{railDate(item.due_at)}</span>
       <span className="room-plan-bead" data-tone={itemBead(item)} aria-hidden="true" />
       <div className="room-plan-row">
-        <span className="room-row-title">{item.title}</span>
+        <span className="room-row-title" title={item.title}>{item.title}</span>
         <ItemPills item={item} />
       </div>
     </li>

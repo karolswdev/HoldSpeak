@@ -36,7 +36,7 @@ doors.
 | Calendar snapshot (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
 | Room ▸ History (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
 | Live meeting (W1-TRUTH, W1-FACES; Lane / PR: W2-LIVE) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
-| Speak (+ wings) (W1-FACES) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
+| Speak (+ wings) (W1-FACES; Talk at 393, Learned: W3-B) | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | Components (W2-BUILDER) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Ask | 2 | 1 | 2 | 2 | 1 | 1 | 1 | 1 | **11** |
 | Decision record (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
@@ -44,7 +44,7 @@ doors.
 | Context (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **16** |
 | Capture (W2-ASKWELLS) | 2 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | Today (W2-ASKWELLS words) | 2 | 2 | 2 | 3 | 2 | 2 | 2 | 1 | **16** |
-| Room ▸ Now (Ask: W2-ASKWELLS) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
+| Room ▸ Now (Ask: W2-ASKWELLS; Plan: W3-B) | 2 | 3 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
 | People (W1-TRUTH) | 3 | 2 | 2 | 2 | 2 | 3 | 1 | 2 | **17** |
 | Decisions (W1-TRUTH) | 3 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **18** |
 | Engines (W1-TRUTH) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 2 | **18** |
@@ -204,6 +204,11 @@ Shots: [Speak 1440](atlas-2026-10-27/speak-1440.png) · [393](atlas-2026-10-27/s
   Settings* in its toolbar; Journal, Learned and Blocks draw the D mic over the true word and
   one quiet line. Left: Learned has no toolbar (it has no verb); the Talk toolbar still takes
   two rows at 393. Shots: `scratchpad/shots/w1-faces/speak-*`.
+- **W3-B (2026-10-27):** the Talk toolbar is one row at every width: under 600 px the
+  secondary verbs (Try it here, Copy, Review, Export) show their glyph, the word kept as the
+  accessible name and hover title; the `Types into` caption folds. Learned gets a toolbar with
+  *Export* (the wing's rules as Markdown) when it holds rules; an empty wing keeps its empty
+  state and no toolbar. Shots: `scratchpad/shots/w3-b/after-speak-*`.
 
 #### Ask — `ask:desk` (11)
 
@@ -504,6 +509,7 @@ Shots: [Now 1440](atlas-2026-10-27/room-1440.png) · [Now 393](atlas-2026-10-27/
   shot; their content is known from the DOM read only.
 - **Fix needs:** a lane for History (list view, dot + word, sentence case); Now is close.
 - **W2-ASKWELLS (2026-10-27), the Room's Ask:** the Ask composer row (`askFace.tsx` AskComposer), the scope preset to the project (folded on the phone, where the menu bar names it): `▣ Payments Platform Rewrite` · *Ask this project…* · mic · Result ▾ · `● No engine` · *Ask ⏎* (secondary: Write update is the Room's primary). The question runs in the Ask window with the project as its scope (shot `room-asked-1440.png`). The old well, chip and hidden Submit are parked (`_parked/roomAskWell.v1-2026-10-27.tsx`). Left: the Plan fold's mono caps dates (`JUL 15`, `LATE`, `26 DAYS`), the grey `Risk` pills.
+- **W3-B (2026-10-27), the Plan and This week:** dates `Jul 15`, `Today`; the late plate `Late` · `26 days` in sans; one-line rows (title, then `Risk · likelihood high · impact critical` quiet at the right, the state `● Open risk` / `● Reached` / `● 26 days late`); the fold counts sans; This week's open risk items read `● At risk` and the line opens the item (no grey `Risk` token). Shots: `scratchpad/shots/w3-b/after-room-plan-*`.
 - **W1-FACES (2026-10-27):** History is a list view (`desk/surface/objects/ListView.tsx`):
   a toolbar with *All ▾* (All / GitHub / Jira / Room) and the search, quiet day captions
   (Today / Yesterday / Mon, Oct 20), rows of glyph · what happened · where · `14:02`, a press
@@ -670,7 +676,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Context | J4 | Go ▸ Builder → Save | 14 → 16 | healed: on/off in the status bar, the editor is the page; left: no door outside Builder | W2-ASKWELLS |
 | Capture | J1 | Go, phone Dock → Talk, New note | 14 → 17 | healed: one empty line, verbs with glyphs, visible row verb, phone tiles | W2-ASKWELLS |
 | Today | J2–J4 | Dock 0, ⌃1 → items | 14 → 16 | healed (W1-FACES + W2-ASKWELLS): sans words, `N more in Needs you`, no help sentence; left: phone status bar (kit), Open item → the item | W2-ASKWELLS |
-| Room ▸ Now | J3, J4 | Projects, Today → Write update | 15 → 16 | healed: the Ask is the Ask composer row; left: Risk pills, mono caps in Plan | W2-ASKWELLS (+ lane) |
+| Room ▸ Now | J3, J4 | Projects, Today → Write update | 15 → 16 → 18 | healed: the Ask is the Ask composer row (W2); the Plan in sentence-case sans (`Jul 15`, `Today`, `Late`, `26 days`), one-line rows with the facts at the right and the state a dot + word; This week risks say `● At risk`, the line opens the item (W3-B) | W2-ASKWELLS, W3-B |
 | People | J3 | Dock 2, ⌃3 → person | 15 → 17 | healed: no fake person from a 1:1 title, the name row once and quiet; left: `None` in Next 1:1, avatars, primary in the status bar | W1-TRUTH |
 | Decisions | J2 | Go → record | 15 → 18 | healed: title as the name, one state word (Open / Accepted / Superseded / Retired / Rejected) | W1-TRUTH |
 | Engines | J6 | HoldSpeak menu → pickers | 15 → 18 | healed: Not answering after a failed check (row, inspector, pickers), the owner's name with the model id as meta, the inspector follows the row; left: an auto-named engine (host:port label) still reads its model name here and the label in Ask | W1-TRUTH |
@@ -717,12 +723,12 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Person (`pullout:people:*`) | J3 | dock People ▸ row (2), Today 1:1 (2) | 2 | 3 | 2 | 2 | 2 | 1 | 2 | 1 | 15 |
 | Room via floor icon (`surface-project-memory@project:*`) | J3 | floor Project icon (1), Go ▸ Projects ▸ name (3) | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |
 | Project as a pullout (`pullout:project:*`) | J3 | hub/agent → the Room (`surface-project-memory` scoped `project:<id>`). Lane / PR: W1-DOORS | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |
-| Project drawer (`drawer:project:*`) | J3, J5 | hub/agent; its own Room button. Lane / PR: W2-BUILDER (head facts as dot + word: `1 need you`, `At risk`; a connection scope reads `Jira`) | 0 | 1 | 2 | 1 | 1 | 1 | 1 | 1 | 8 |
+| Project drawer (`drawer:project:*`) | J3, J5 | hub/agent; its own Room button. Lane / PR: W2-BUILDER (head facts as dot + word: `1 need you`, `At risk`; a connection scope reads `Jira`); W3-B (no body title: the title bar is the title; toolbar Room · History · Icons/List toggles; the facts in the foot; sources lead with the object glyph, `● Checked 1 min ago`) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | 15 |
 | Artifact (`pullout:artifact:*`) | J4 | Today "has a new result ▸ Open" (2) | 1 | 1 | 2 | 2 | 1 | 1 | 1 | 2 | 11 |
 | Agent's window (`lane@launch:*`) | J4 | dock Agents ▸ row (2). Lane / PR: W2-BUILDER (toolbar Tell it · Open PR · Stop; the ask first; `No steps reported yet` in words; `Last step N min ago` in the status bar) | 2 | 2 | 2 | 1 | 1 | 2 | 2 | 2 | 14 |
 | Automation (`workbench:*`) | J4 | Go ▸ Automations ▸ row (3) | 3 | 2 | 3 | 3 | 2 | 3 | 2 | 2 | 20 |
 | Drawer (`pullout:zone:*`) | J5 | floor drawer icon (1), Go ▸ Drawers ▸ name (3) | 1 | 2 | 3 | 3 | 2 | 1 | 1 | 2 | 15 |
-| Knowledge base (`pullout:knowledge:*`) | J5 | floor icon (1), its label says KNOWLEDGE. Lane / PR: W2-BUILDER (toolbar Add · Edit · Copy · Dictate; Add opens the item picker) | 2 | 2 | 2 | 2 | 1 | 2 | 1 | 2 | 14 |
+| Knowledge base (`pullout:knowledge:*`) | J5 | floor icon (1), its label says KNOWLEDGE. Lane / PR: W2-BUILDER (toolbar Add · Edit · Copy · Dictate; Add opens the item picker); W3-B (editor: toolbar Done · Add items, Name on the label/control grid, items and picker as dense 30 px rows, kind in sans) | 2 | 3 | 2 | 2 | 1 | 2 | 2 | 2 | 16 |
 | Archive (`drawer:parked`) | J5 | Go ▸ Archive (2) | 2 | 1 | 2 | 2 | 2 | 2 | 2 | 2 | 15 |
 | Mode / recipe (`pullout:persona:*`) | J4, J6 | no ordinary door found (Go ▸ Builder only with builder tools on). Lane / PR: W2-BUILDER (toolbar; "Which engine answers in a thread" / "Which engine runs it" in sans; no raw id) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | 15 |
 | Sequence / chain (`pullout:sequence:*`) | J4 | no ordinary door found. Lane / PR: W2-BUILDER (Add mode adds a step, PUT /api/chains/{id}; a greyed Run says why) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | 15 |

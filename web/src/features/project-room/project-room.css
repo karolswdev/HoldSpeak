@@ -1489,3 +1489,55 @@
   .room-ask-composer .room-ask-result { order: 3; }
   .room-ask-composer .room-ask-result .gadget-cycle { height: 44px; }
 }
+
+/* ══ W3-B (atlas 2026-10-27): the Plan on the Now wing's row grammar ══
+   The dates are sentence-case sans (`Jul 15`, `Today`), never mono caps;
+   the late plate says `Late` and `26 days` in sans; a row is one line at a
+   desk width: the title, then its facts quiet at the right and the state a
+   dot and a word (no pill). */
+.room-plan-time {
+  font: 400 12px / 1 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.room-plan-now > .room-plan-time { font-weight: 600; }
+.room-plan-node[data-kind="focus"] > .room-plan-time { font-weight: 600; }
+.room-focus-label {
+  font: 600 12px / 1.2 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.room-focus-in {
+  font: 400 12px / 1.2 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.room-row-title { font-weight: 500; }
+.room-row-meta .room-row-facts { color: var(--wb-muted); }
+.room-plan-state { font-size: 12px; }
+@container surface (min-width: 640px) {
+  .room-plan-row {
+    flex-wrap: nowrap;
+    min-height: 30px;
+    padding-block: 0;
+  }
+  .room-plan-row > .room-row-title {
+    flex: 1 1 auto;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow-wrap: normal;
+  }
+  .room-plan-row > .room-row-meta {
+    flex: 0 0 auto;
+    margin-left: auto;
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+  .room-focus-body .room-row-meta { gap: 12px; }
+}
+/* The fold's count is a quiet sans number, not a mono token. */
+.room-fold > .gadget-fold > summary .gadget-fold-token {
+  font: 500 12px / 1 var(--font-sans);
+  color: var(--wb-muted);
+}
