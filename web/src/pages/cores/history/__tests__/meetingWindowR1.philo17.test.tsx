@@ -219,6 +219,15 @@ describe("daily work: Send opens on request", () => {
     // Window grammar: Send, Export and More are the toolbar's verbs.
     const toolbar = screen.getByRole("toolbar", { name: "Meeting" });
     expect(within(toolbar).getByTestId("meeting-send")).toBeTruthy();
+    // W2-LIVE-2 (canvas A, After): Send follow-up… is the primary, Settings
+    // the trailing verb; with a summary and nothing to review the rail is at
+    // Send follow-up (Summary done).
+    expect(within(toolbar).getByTestId("meeting-send")).toHaveTextContent("Send follow-up…");
+    expect(within(toolbar).getByTestId("meeting-send").className).toContain("btn--primary");
+    expect(within(toolbar).getByRole("button", { name: "Settings" })).toBeTruthy();
+    const rail = screen.getByTestId("meeting-steps");
+    expect(rail.querySelector("[aria-current=step]")?.textContent).toContain("Send follow-up");
+    expect(rail.querySelector('[data-state="done"]:nth-child(3)')?.textContent).toContain("Summary");
     fireEvent.click(within(toolbar).getByRole("button", { name: "Export" }));
     expect(screen.getByRole("menuitem", { name: "Export MD" })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: "Export SRT" })).toBeTruthy();

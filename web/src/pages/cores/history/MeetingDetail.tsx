@@ -44,7 +44,7 @@ import { SinceLastWell, readSinceLast } from "./SinceLastWell";
 import { AudioOnlyVerb } from "./TranscribeVerb";
 import { CycleGadget, StringGadget } from "../../../desk/surface/gadgets";
 import { WorkMenu, type WorkMenuEntry } from "../../../desk/components/DeskMenu";
-import { openPerson, openRef } from "../../../desk/openObject";
+import { openDecisionRecord, openPerson, openRef } from "../../../desk/openObject";
 import { openProjectRoom } from "../../../desk/shell";
 import { openSourceRef } from "../../../desk/surface/citations";
 
@@ -119,13 +119,18 @@ export function meetingOutcomes(
       key: `ft-${p.id}`, plate: "DEC", text: p.text,
       meta: stateOf(paired) || owner(p.owner) || owner(p.owner_hint) || owner(p.speaker_label) || "DECIDED",
       proposalId: p.id, projectId: p.project_id, segmentIndex: p.segment_index,
+      recordId: p.decision_record_id || paired?.record_id || null,
+      decisionId: paired?.id ?? null,
     });
   }
   const decisionProposals = live.filter((p) => p.kind === "decision");
   for (const d of recorded) {
     const lifecycle = String(d.lifecycle ?? "").toLowerCase();
     if (lifecycle === "rejected" || !String(d.text ?? "").trim() || decisionProposals.some((p) => same(p, d))) continue;
-    decisions.push({ key: `dec-${d.id}`, plate: "DEC", text: d.text, meta: stateOf(d) || "DECIDED" });
+    decisions.push({
+      key: `dec-${d.id}`, plate: "DEC", text: d.text, meta: stateOf(d) || "DECIDED",
+      recordId: d.record_id || null, decisionId: d.id ?? null,
+    });
   }
 
   const actionProposals = data.ftProposals.filter((p) => p.kind === "action");
@@ -197,7 +202,13 @@ export function meetingOutcomes(
   return { decisions, commitments };
 }
 
-export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting: Record<string, unknown> }) {
+export function MeetingOutcomes({ data, meeting, onDecide }: {
+  data: MeetingData;
+  meeting: Record<string, unknown>;
+  /** W2-LIVE-2: a decided row with no record and no reader asks the record
+   *  for its New decision well. */
+  onDecide?: () => void;
+}) {
   const intel = ((data.detail ?? meeting)?.intel ?? null) as { action_items?: unknown } | null;
   const intelActions = Array.isArray(intel?.action_items)
     ? (intel!.action_items as unknown[]).filter((a): a is Record<string, unknown> => Boolean(a) && typeof a === "object")
@@ -434,7 +445,21 @@ export function MeetingOutcomes({ data, meeting }: { data: MeetingData; meeting:
     // Betterment capture C5: the Result this action asked for is ready.
     const serving = resultServing(data.prepared ?? [], row.actionItemId?.trim());
     const draftReady = serving ? <DraftReady meetingId={String(meeting.id)} result={serving} /> : null;
-    return <>{draftReady}{lifecycle}{actionLifecycle}{destinationVerbs(row, !pending)}{menu}</>;
+    /* W2-LIVE-2 (canvas A, After): a decided row's one verb, Decide…: its
+       record when it has one, else the decision's reader, else New decision. */
+    const recordId = String(row.recordId ?? "").trim();
+    const decisionId = String(row.decisionId ?? "").trim();
+    const decide = row.plate === "DEC" && !pending && (recordId || decisionId || onDecide) ? (
+      <Button dense variant="secondary" data-testid="decision-decide-btn" aria-label={`Decide: ${row.text}`}
+        onClick={() => {
+          if (recordId) openDecisionRecord(recordId);
+          else if (decisionId) openRef(`decision:${decisionId}`);
+          else onDecide?.();
+        }}>
+        Decide…
+      </Button>
+    ) : null;
+    return <>{draftReady}{lifecycle}{decide}{actionLifecycle}{destinationVerbs(row, !pending)}{menu}</>;
   };
   const peopleReadRow = commitments.find((row) => row.proposalId
     && (row.gap || editing[row.proposalId])
@@ -560,7 +585,10 @@ export function MeetingDetail({
   sendRequested = false,
   decideRequested = false,
   onReviewCount,
+  onDecide,
 }: {
+  /** W2-LIVE-2: a decided row's Decide… with no record opens New decision. */
+  onDecide?: () => void;
   /** Window grammar: the window's status bar says what is left to review. */
   onReviewCount?: (count: number) => void;
   meeting: Record<string, unknown> | null;
@@ -711,7 +739,7 @@ export function MeetingDetail({
           <MeetingSummarySlab reader intel={summaryIntel} receipt={runReceipt} />
           {/* betterment/capture C6: what changed since the last meeting of this kind. */}
           <SinceLastWell since={readSinceLast(data.aftercare)} meetingId={id} />
-          <MeetingOutcomes data={data} meeting={meeting} />
+          <MeetingOutcomes data={data} meeting={meeting} onDecide={onDecide} />
           <NeedsYouTable
             needsRows={needsRows}
             needsCount={needsCount}

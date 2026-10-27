@@ -15,6 +15,11 @@ export type OutcomeRow = {
   tone?: "ask" | "ok";
   actionItemId?: string;
   proposalId?: string;
+  /** A decision row: the record it has (`decision_record` id), else the
+   *  decision the meeting recorded (`decisions` id). W2-LIVE-2: Decide… opens
+   *  the record, else the decision's reader, else New decision. */
+  recordId?: string | null;
+  decisionId?: string | null;
   actionStatus?: string | null;
   owner?: string;
   due?: string;

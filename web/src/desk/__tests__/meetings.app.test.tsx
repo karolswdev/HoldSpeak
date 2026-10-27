@@ -274,7 +274,7 @@ describe("the hosted meeting record returns to its list", () => {
 
 describe("the meeting window over the HS-170 seed", () => {
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (the detail half) */
-  it("one review fact, no static step ladder, three rows with Decide and Dismiss, the proposal text, speaker tokens", async () => {
+  it("one review fact, the rail at Summary, three rows with Decide and Dismiss, the proposal text, speaker tokens", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-saved-outcomes" onClose={() => undefined} /></Shell>);
@@ -283,7 +283,9 @@ describe("the meeting window over the HS-170 seed", () => {
     await waitFor(() => expect(screen.getByTestId("meeting-review-count").textContent).toBe("3 to review"));
     expect(document.querySelectorAll(".meetings-detail-head .surface-display")).toHaveLength(0);
     expect(screen.getByRole("toolbar", { name: "Meeting" })).toBeTruthy();
-    expect(screen.queryByTestId("meeting-steps")).toBeNull();
+    // W2-LIVE-2 (canvas live-direction-2026-10-27, A, After): Today's rail
+    // under the toolbar, at Summary while three wait for review.
+    expect(screen.getByTestId("meeting-steps").querySelector("[aria-current=step]")?.textContent).toContain("Summary");
     const head = await screen.findByText("TO REVIEW 3");
     expect(head.closest(".meetings-detail-needs-head")).toBeTruthy();
     const rows = document.querySelectorAll(".meetings-detail-outcome-row");
