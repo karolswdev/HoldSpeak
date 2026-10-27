@@ -333,6 +333,175 @@
   font: 400 12px/1.4 var(--font-ui);
 }
 
+/* The note in live preview (livePreview.ts). A line the caret is not on
+   shows as written text; the line the caret is on shows its source at the
+   same size, so the caret never jumps. */
+.desk-next .thought-note-body .cm-lp-h {
+  color: var(--wb-ink);
+  font-weight: 600;
+}
+
+.desk-next .thought-note-body .cm-lp-h1 {
+  font-size: 20px;
+  line-height: 1.45;
+  padding-top: 6px;
+}
+
+.desk-next .thought-note-body .cm-lp-h2 {
+  font-size: 17px;
+  line-height: 1.5;
+  padding-top: 4px;
+}
+
+.desk-next .thought-note-body .cm-lp-h3 {
+  font-size: 15px;
+  line-height: 1.55;
+  padding-top: 2px;
+}
+
+.desk-next .thought-note-body .cm-lp-strong {
+  font-weight: 650;
+}
+
+.desk-next .thought-note-body .cm-lp-em {
+  font-style: italic;
+}
+
+.desk-next .thought-note-body .cm-lp-strike {
+  text-decoration: line-through;
+  text-decoration-color: var(--wb-muted);
+}
+
+.desk-next .thought-note-body .cm-lp-icode,
+.desk-next .thought-note-body .cm-lp-icode * {
+  color: var(--wb-ink);
+  background: none;
+}
+
+.desk-next .thought-note-body .cm-lp-icode {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--wb-steel-2);
+  box-shadow: inset 0 0 0 1px var(--wb-rule-soft);
+  font: 400 13px/1 var(--font-mono);
+}
+
+.desk-next .thought-note-body .cm-lp-link,
+.desk-next .thought-note-body .cm-lp-link * {
+  color: var(--wb-sel);
+}
+
+.desk-next .thought-note-body .cm-lp-link {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--wb-sel) 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+.desk-next .thought-note-body .cm-lp-li {
+  padding-left: 4px;
+}
+
+.desk-next .thought-note-body .cm-lp-bullet,
+.desk-next .thought-note-body .cm-lp-number {
+  display: inline-block;
+  min-width: 1.3em;
+  color: var(--wb-sel);
+}
+
+.desk-next .thought-note-body .cm-lp-bullet {
+  font-weight: 700;
+}
+
+.desk-next .thought-note-body .cm-lp-number {
+  font-variant-numeric: tabular-nums;
+  color: var(--wb-muted);
+}
+
+.desk-next .thought-note-body .cm-lp-checkbox {
+  position: relative;
+  top: -1px;
+  width: 15px;
+  height: 15px;
+  min-height: 0;
+  margin: 0 8px 0 2px;
+  vertical-align: middle;
+  accent-color: var(--wb-sel);
+  cursor: pointer;
+}
+
+/* An open task reads in the note's ink (the list tag's faint ink is for
+   the list marks); a done task is muted. */
+.desk-next .thought-note-body .cm-lp-task-line,
+.desk-next .thought-note-body .cm-lp-task-line * {
+  color: var(--wb-ink);
+}
+
+.desk-next .thought-note-body .cm-lp-done,
+.desk-next .thought-note-body .cm-lp-done * {
+  color: var(--wb-muted);
+}
+
+.desk-next .thought-note-body .cm-lp-quote {
+  padding-left: 12px;
+  box-shadow: inset 2px 0 0 var(--wb-rule);
+  color: var(--wb-muted);
+}
+
+.desk-next .thought-note-body .cm-lp-hr {
+  background: linear-gradient(var(--wb-rule), var(--wb-rule)) center / 100% 1px no-repeat;
+}
+
+/* A code fence: a quiet mono plate; the language word at its top right. */
+.desk-next .thought-note-body .cm-lp-code {
+  padding: 0 12px;
+  background: var(--wb-steel-2);
+  box-shadow: inset 1px 0 0 var(--wb-rule-soft), inset -1px 0 0 var(--wb-rule-soft);
+  font: 400 13px/1.6 var(--font-mono);
+}
+
+.desk-next .thought-note-body .cm-lp-code-open {
+  display: flow-root;
+  padding-top: 2px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  box-shadow: inset 1px 0 0 var(--wb-rule-soft), inset -1px 0 0 var(--wb-rule-soft), inset 0 1px 0 var(--wb-rule-soft);
+}
+
+.desk-next .thought-note-body .cm-lp-code-close {
+  padding-bottom: 2px;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  box-shadow: inset 1px 0 0 var(--wb-rule-soft), inset -1px 0 0 var(--wb-rule-soft), inset 0 -1px 0 var(--wb-rule-soft);
+}
+
+.desk-next .thought-note-body .cm-lp-fence-label {
+  float: right;
+  color: var(--wb-muted);
+  font: 400 12px/20.8px var(--font-ui);
+}
+
+/* A table: the GFM table as a real table while the caret is outside it. */
+.desk-next .thought-note-body .cm-lp-table {
+  margin: 6px 0;
+  overflow-x: auto;
+  cursor: text;
+}
+
+.desk-next .thought-note-body .cm-lp-table table {
+  border-collapse: collapse;
+  font: 400 14px/1.5 var(--font-ui);
+  color: var(--wb-ink);
+}
+
+.desk-next .thought-note-body .cm-lp-table th,
+.desk-next .thought-note-body .cm-lp-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+
+.desk-next .thought-note-body .cm-lp-table th {
+  font-weight: 600;
+  border-bottom-color: var(--wb-rule);
+}
+
 .desk-next .thought-note-body .cm-thought-answer-reveal {
   background: color-mix(in srgb, var(--ok) 10%, transparent);
   box-shadow: inset 2px 0 0 var(--ok);

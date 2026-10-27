@@ -8,7 +8,7 @@ import {
   indentWithTab,
   isolateHistory,
 } from "@codemirror/commands";
-import { markdown, markdownKeymap } from "@codemirror/lang-markdown";
+import { markdown, markdownKeymap, markdownLanguage } from "@codemirror/lang-markdown";
 import { Annotation, Compartment, EditorState, StateEffect, StateField, type Extension } from "@codemirror/state";
 import { Decoration, EditorView, keymap, placeholder } from "@codemirror/view";
 import { deskEditorTheme, deskMarkdownHighlighting } from "./deskEditorTheme";
@@ -301,7 +301,9 @@ export const DeskEditor = forwardRef<DeskEditorHandle, DeskEditorProps>(
           doc: value,
           extensions: [
             history(),
-            markdown(),
+            // GFM (tables, task lists, strikethrough, bare urls): the same
+            // grammar the reading view parses (ReadingDocument.tsx).
+            markdown({ base: markdownLanguage }),
             deskEditorTheme,
             deskMarkdownHighlighting,
             revealField,

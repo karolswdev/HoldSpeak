@@ -8,6 +8,7 @@ import { refOpener } from "../openObject";
 import type { ThoughtDraft } from "../pullouts/editors/useThoughtNoteWriter";
 import { claimThoughtKeys } from "../thoughtKeys";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
+import { livePreview } from "./livePreview";
 import { mermaidPreview } from "./mermaidPreview";
 import { bindThoughtVoiceTarget, deskThoughtVoiceDraft, thoughtVoiceKey, type ThoughtVoiceDraftIO } from "./thoughtVoiceDraft";
 
@@ -20,8 +21,10 @@ import { bindThoughtVoiceTarget, deskThoughtVoiceDraft, thoughtVoiceKey, type Th
    (it writes at the cursor), never a button beside the field. */
 /** A title of his own: not the untitled name, and not the first words of the
  *  note (the name the save rule gives an untitled note). */
-/** The note's diagrams draw in place (mermaidPreview.ts). */
-const NOTE_EDITOR_EXTENSIONS = mermaidPreview();
+/** The note in live preview: every line the caret is not on shows as
+ *  written text (livePreview.ts); the diagrams draw in place
+ *  (mermaidPreview.ts). */
+const NOTE_EDITOR_EXTENSIONS = [livePreview(), mermaidPreview()];
 
 export function ownTitle(title: string, body: string): boolean {
   const clean = title.trim();
