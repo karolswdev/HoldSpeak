@@ -35,7 +35,7 @@ doors.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Calendar snapshot (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
 | Room ▸ History (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
-| Live meeting (W1-TRUTH + gear wing: W1-FACES) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
+| Live meeting (W1-TRUTH, W1-FACES; Lane / PR: W2-LIVE) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Speak (+ wings) (W1-FACES) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Components | 0 | 1 | 2 | 2 | 1 | 2 | 1 | 1 | **10** |
 | Ask | 2 | 1 | 2 | 2 | 1 | 1 | 1 | 1 | **11** |
@@ -348,6 +348,19 @@ Shots: [1440](atlas-2026-10-27/live-1440.png) · [393](atlas-2026-10-27/live-393
   sentence (no `TESTS ROUTING · …` caps), route facts in sentence case, the Summary state as a
   dot and a word, *Background work*, Devices says `Checking… N s` then `No answer` instead of
   a ring that turns forever. The canvas stays open.
+- **W2-LIVE (2026-10-27), Lane / PR: W2-LIVE:** canvas
+  `docs/internal/betterment/canvases/live-direction-2026-10-27.html` (A, "the transcript is the
+  page", recommended; B, transcript and notes side by side). Built, slice 1: while it records
+  the body is the transcript as a document (time mark from the wire's `start_time`, which the
+  old stream never read, so every mark was empty; the speaker's name when the speaker changes;
+  a bookmark as the ember mark; Listening at the foot); the status bar says the live state once
+  (`Recording 12:04 · Summaries on <engine>` or `No engine for summaries`); Stop is the danger
+  verb, Bookmark a toolbar verb, Settings the trailing verb (a glyph on the phone). The gear wing
+  is gone: its parts are Settings ▸ Meetings ▸ Live meeting (`LiveMeetingTools`). Shots:
+  `scratchpad/shots/w2-live/live-{before,during}-{1440,393}.png`,
+  `settings-meetings-{1440,393}.png`. Left: Before's ready sheet (sources and engines as rows),
+  After's rail at Summary in MeetingRecord, the phone status bar wraps to two rows while it
+  records (four items).
 
 #### Setup — `surface-setup` (18)
 
@@ -631,7 +644,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | --- | --- | --- | --- | --- | --- |
 | Calendar snapshot | J6 | Go ▸ Builder → Import image, Check sources | 8 → 15 | healed: toolbar, true empty state, feeds line; left: no feed-success shot (the seed's feed reads idle) | W1-TRUTH |
 | Room ▸ History | J3 | Room wing → item Open | 9 | 2026-09 dashboard grammar | lane |
-| Live meeting (W1-TRUTH) | J2 | Meetings ▸ Record → Start meeting | 10 → 15 | healed: honest status, phone title, Today's stepper; left: gear wing (old grammar), during/after canvas | W1-TRUTH (+ canvas) |
+| Live meeting (W1-TRUTH, W2-LIVE) | J2 | Meetings ▸ Record → Start meeting | 10 → 16 | healed: honest status, phone title, Today's stepper; left: gear wing (old grammar), during/after canvas | W1-TRUTH (+ canvas) |
 | Speak | J1, dictation | Dock, ⌃5 → Talk | 10 | Speak/Speak; verbs move to the status bar; gear wing | lane |
 | Components | J7 | Go ▸ Builder → specimens | 10 | breaks the grammar it shows | lane |
 | Ask | J3 | ⌘I/Ctrl+I, ⌘K → Save as note, Send | 11 | chat-demo look, oversized composer, mono errors | canvas (ASK) |

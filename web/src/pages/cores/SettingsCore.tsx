@@ -66,6 +66,7 @@ import { PrefSection, PrefWindow, clockWord } from "./settingsWindow";
 import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 import { Destinations } from "./connections/Destinations";
 import { RunsOnCore } from "../../features/runson/RunsOnCore";
+import { LiveMeetingTools } from "./LiveMeetingTools";
 import "./settingsSurfaceRepair.css";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
 import {
@@ -2479,6 +2480,9 @@ function SettingsFace({ hero, scope }: CoreProps) {
                   </GadgetRow>
                 </FoldGadget>
               </GadgetGroup>
+              {/* W2-LIVE (2026-10-27): the Live window's old gear wing
+                  lives here now; Live's toolbar verb Settings opens it. */}
+              <LiveMeetingTools />
             </>} side={<>
             <GadgetGroup material="inset" label="Export">
               <GadgetRow label="Auto export" controlWidth="short" highlight={hl(["meeting", "auto_export"])}>

@@ -304,8 +304,16 @@ class TestDashboardEndpoint:
         assert "HoldSpeak" in response.text or "holdspeak" in response.text.lower()
 
     def _bundled_runtime_js(self, test_client) -> str:
+        # W2-LIVE (2026-10-27): the Live window is LiveCore plus its
+        # transcript document; its old gear wing (routing, try a phrase,
+        # background work, devices) moved to Settings ▸ Meetings as
+        # LiveMeetingTools. The source of all three is the runtime face.
         del test_client
-        return (Path(__file__).resolve().parents[2] / "web/src/pages/cores/LiveCore.tsx").read_text()
+        cores = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
+        return "\n".join(
+            (cores / name).read_text()
+            for name in ("LiveCore.tsx", "LiveTranscript.tsx", "LiveMeetingTools.tsx")
+        )
 
     def test_dashboard_references_runtime_control_endpoints(self, test_client):
         """Dashboard JS should still call the runtime-level meeting
@@ -315,7 +323,7 @@ class TestDashboardEndpoint:
         response = test_client.get("/live")
         assert response.status_code == 200
         js = self._bundled_runtime_js(test_client)
-        assert "Intent routing" in js and "Preview route" in js and "Deferred plugin jobs" in js
+        assert "Intent routing" in js and "Preview route" in js and "Background work" in js
         assert "/api/runtime/status" in js
         assert "/api/meeting/start" in js
         assert "/api/meeting/stop" in js
@@ -335,7 +343,7 @@ class TestDashboardEndpoint:
         response = test_client.get("/live")
         assert response.status_code == 200
         js = self._bundled_runtime_js(test_client)
-        assert "Devices" in js
+        assert "Attached devices" in js
         assert "/api/devices/health" in js
         assert "battery_pct" in js and "rssi_dbm" in js and "stale" in js
 
@@ -362,11 +370,11 @@ class TestDashboardEndpoint:
         response = test_client.get("/live")
         assert response.status_code == 200
         source = self._bundled_runtime_js(test_client)
-        assert "Ready to record" in source
         assert "Start a meeting to begin" in source
-        # HS-111-03: the preview description became the gadget row's
-        # fact token — same read-only-while-idle promise, token-cased.
-        assert "TESTS ROUTING · NEVER TOUCHES THE LIVE MEETING" in source
+        assert "Listening for speech" in source
+        # W1 (2026-10-27): the preview caption is one quiet sentence in
+        # sentence case — the same read-only promise.
+        assert "Tests the route only, the live meeting does not change" in source
 
     def test_dashboard_bootstrap_prefers_runtime_status_payload(self, test_client):
         """The runtime-status payload is still preferred at bootstrap.
