@@ -31,12 +31,14 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
-/** The words of a card's own state chip (its icon left out). */
+/** The words of a card's own state (window grammar 2026-10-27: a dot and a
+ *  word, then the quiet age of its own check), read as one line. */
 function chipWords(card: HTMLElement): string {
-  const chip = card.querySelector(".surface-state-chip") as HTMLElement;
-  expect(chip, "no state chip").not.toBeNull();
-  const icon = chip.querySelector(".surface-state-chip-icon")?.textContent ?? "";
-  return (chip.textContent ?? "").slice(icon.length).trim();
+  const cell = card.querySelector(".connections-row-state") as HTMLElement;
+  expect(cell, "no row state").not.toBeNull();
+  const word = cell.querySelector(".connections-state")?.textContent ?? "";
+  const when = cell.querySelector(".connections-checked")?.textContent ?? "";
+  return when ? `${word} · ${when}` : word;
 }
 
 const tool = (id: string) => wire.tools.find((t: Json) => t.provider_id === id);
@@ -55,10 +57,10 @@ describe("each card shows its own check age", () => {
     }
     render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
     const ghCard = await screen.findByTestId("connections-github");
-    expect(chipWords(ghCard)).toBe("Works · Checked now");
+    expect(chipWords(ghCard)).toBe("Works · checked just now");
     const alphaRef = tool("jira").connections.find((c: Json) => c.account.site === "alpha.atlassian.net").connection_ref;
     const betaRef = tool("jira").connections.find((c: Json) => c.account.site === "beta.atlassian.net").connection_ref;
-    expect(chipWords(screen.getByTestId(`connections-jira-conn-${alphaRef}`))).toBe("Works · Checked 2 h ago");
+    expect(chipWords(screen.getByTestId(`connections-jira-conn-${alphaRef}`))).toBe("Works · checked 2 hours ago");
     expect(chipWords(screen.getByTestId(`connections-jira-conn-${betaRef}`))).toBe("Not checked");
     expect(chipWords(screen.getByTestId("connections-confluence"))).toBe("Not checked");
     expect(chipWords(screen.getByTestId("connections-calendar"))).toBe("Not set up");
@@ -115,8 +117,8 @@ describe("Recheck asks the hub and the card shows its answer", () => {
     const card = await screen.findByTestId("connections-github");
     expect(chipWords(card)).toBe("Not checked");
     fireEvent.click(within(card).getByRole("button", { name: "Check" }));
-    await screen.findByText(/Works · Checked now/);
-    expect(chipWords(screen.getByTestId("connections-github"))).toBe("Works · Checked now");
+    await screen.findByText("checked just now");
+    expect(chipWords(screen.getByTestId("connections-github"))).toBe("Works · checked just now");
     expect(reads).toContain("POST /api/connections/github/recheck");
     expect(reads.filter((read) => read === "GET /api/connections")).toHaveLength(2);
     const foot = onFooterUpdate.mock.calls.at(-1)?.[0];
@@ -135,7 +137,9 @@ describe("a sign-in read from gh's config", () => {
     const onFooterUpdate = vi.fn();
     render(<ConnectionsPane onFooterUpdate={onFooterUpdate} onOpenModule={vi.fn()} />);
     const card = await screen.findByTestId("connections-github");
-    expect(chipWords(card).toUpperCase()).toBe("SIGNED IN · KAROLSWDEV · FROM GH CONFIG");
+    // The login is the row's account; the state says where the sign-in was read.
+    expect(chipWords(card).toUpperCase()).toBe("SIGNED IN · FROM GH CONFIG");
+    expect(within(card).getByText("karolswdev")).toBeTruthy();
     expect(card.textContent?.toUpperCase()).not.toContain("NEVER CHECKED");
     expect(card.textContent).not.toMatch(/CHECKED\s+\d/i);
     // No row carries a check time: the footer has none (SettingsCore draws NOT CHECKED).
@@ -196,24 +200,26 @@ describe("account rows keep their status and actions together", () => {
     expect((within(form).getByRole("textbox", { name: "Email" }) as HTMLInputElement).value).toBe("draft@example.com");
   });
 
-  it("uses wrapping state chips and puts Add in the last provider account row", async () => {
+  it("gives each account row one verb and puts Add in the quiet row after the last account", async () => {
+    // Window grammar 2026-10-27: one Button per account row (Check); adding
+    // another account is the list's own quiet last row.
     wire = clone(checkedWire);
     render(<ConnectionsPane onFooterUpdate={vi.fn()} onOpenModule={vi.fn()} />);
     await screen.findByTestId("connections-github");
-    for (const chip of document.querySelectorAll(".connections-pane .surface-state-chip")) {
-      expect(chip.hasAttribute("data-wrap")).toBe(true);
-    }
     const rows = tool("jira").connections;
     const first = screen.getByTestId(`connections-jira-conn-${rows[0].connection_ref}`);
     const last = screen.getByTestId(`connections-jira-conn-${rows.at(-1).connection_ref}`);
     const add = screen.getByTestId("connections-add-open-jira");
-    expect(add.closest(".surface-ledger-row")).toBe(last.closest(".surface-ledger-row"));
+    const addRow = screen.getByTestId("connections-jira-add").closest(".surface-ledger-row");
+    expect(add.closest(".surface-ledger-row")).toBe(addRow);
+    expect(last.closest(".surface-ledger-row")?.nextElementSibling).toBe(addRow);
     expect(within(first).queryByRole("button", { name: "Add Jira account" })).toBeNull();
+    expect(within(last).queryByRole("button", { name: "Add Jira account" })).toBeNull();
     expect(within(last).getByRole("button", { name: "Check" })).toBeTruthy();
     expect(document.querySelector(".connections-add-account")).toBeNull();
   });
 
-  it("keeps Add drafts on Cancel and when switching to sign-in in the same row", async () => {
+  it("keeps Add drafts on Cancel and when switching to sign-in on the account above", async () => {
     wire = clone(checkedWire);
     const last = tool("jira").connections.at(-1);
     last.state = "owner_action_required";
@@ -221,7 +227,8 @@ describe("account rows keep their status and actions together", () => {
     const row = await screen.findByTestId(`connections-jira-conn-${last.connection_ref}`);
     fireEvent.click(screen.getByTestId("connections-add-open-jira"));
     let form = screen.getByTestId("connections-add-jira");
-    expect(form.closest(".surface-ledger-row")).toBe(row.closest(".surface-ledger-row"));
+    // The form lives in the quiet Add row right after the last account.
+    expect(form.closest(".surface-ledger-row")).toBe(row.closest(".surface-ledger-row")?.nextElementSibling);
     fireEvent.change(within(form).getByRole("textbox", { name: "Site" }), { target: { value: "draft.atlassian.net" } });
     fireEvent.change(within(form).getByRole("textbox", { name: "Email" }), { target: { value: "draft@example.com" } });
     fireEvent.click(within(form).getByRole("button", { name: "Cancel" }));
@@ -336,7 +343,7 @@ describe("account writers retain their existing routes and results", () => {
       { site: added.account.site, email: added.account.email },
     ]);
     expect(reads).toContain("POST /api/connections/jira/recheck");
-    expect(form.closest(".surface-ledger-row")).toBe(screen.getByTestId(`connections-jira-conn-${added.connection_ref}`).closest(".surface-ledger-row"));
+    expect(form.closest(".surface-ledger-row")).toBe(screen.getByTestId(`connections-jira-conn-${added.connection_ref}`).closest(".surface-ledger-row")?.nextElementSibling);
   });
 
   it("a failed Recheck offers Retry and redraws the recovered hub state", async () => {
@@ -361,7 +368,8 @@ describe("account writers retain their existing routes and results", () => {
     const alert = await screen.findByRole("alert");
     expect(within(alert).getByText("Check failed")).toBeTruthy();
     fireEvent.click(within(alert).getByRole("button", { name: "Check" }));
-    await screen.findByText("Works · Checked now");
+    await screen.findByText("checked just now");
+    expect(chipWords(screen.getByTestId("connections-github"))).toBe("Works · checked just now");
     expect(screen.queryByRole("alert")).toBeNull();
     expect(attempts).toBe(2);
   });

@@ -5,8 +5,9 @@
 
 .desk-next .pref-window {
   --pref-rail-w: 180px;
-  /* Warm near-white paper and a warm steel rail: never clinical white. */
-  --pref-paper: color-mix(in srgb, var(--wb-paper) 94%, var(--p-color-orange-300));
+  /* One paper: the pane is the window's own paper (the status bar and the
+     window body share it); the rail is the steel beside it. */
+  --pref-paper: var(--wb-paper);
   --pref-rail-ground: color-mix(in srgb, var(--wb-steel) 62%, var(--pref-paper));
   --pref-plate: linear-gradient(180deg, color-mix(in srgb, var(--wb-sel) 82%, var(--white)) 0%, var(--wb-sel) 100%);
   --pref-ease: 140ms var(--desk-ease);
@@ -31,8 +32,12 @@
 }
 /* The window body gives its inset to the rail and pane: edge to edge. */
 .desk-next .desk-surface-body:has(> .settings-page-content > .pref-window) { padding: 0; }
-.desk-next .desk-surface-body > .settings-page-content:has(> .pref-window) { flex: 1 1 auto; display: flex; flex-direction: column; }
-.desk-next .settings-page-content > .pref-window { flex: 1 1 auto; }
+/* The window grows with its pane and never shrinks under it: a long pane
+   (Accounts) scrolls on the same paper and rail to its last row. With a
+   shrinkable flex item and `min-height: 100%` the paper stopped at the
+   first screen and Destinations scrolled up onto the bare body. */
+.desk-next .desk-surface-body > .settings-page-content:has(> .pref-window) { flex: 1 0 auto; display: flex; flex-direction: column; }
+.desk-next .settings-page-content > .pref-window { flex: 1 0 auto; }
 
 /* ── The rail: a plain list, one selected row ── */
 .desk-next .pref-window > .pref-rail {
@@ -215,9 +220,9 @@
   padding: 0 0 6px;
   border-bottom: 1px solid var(--wb-rule-soft);
   background: transparent;
-  color: var(--wb-ink);
-  font: 600 15px / 1.3 var(--font-display);
-  letter-spacing: -0.005em;
+  color: var(--wb-muted);
+  font: 600 13px / 1.3 var(--font-sans);
+  letter-spacing: 0;
   text-transform: none;
   text-shadow: none;
 }
@@ -242,8 +247,8 @@
 .desk-next .pref-window .gadget-row[data-control-width] {
   grid-template-columns: var(--pref-label-w) minmax(0, 1fr);
   align-items: center;
-  min-height: 40px;
-  padding: 6px 0;
+  min-height: 32px;
+  padding: 4px 0;
   gap: 4px 16px;
   border-bottom: 1px solid var(--wb-rule-soft);
   background: transparent;
@@ -308,8 +313,16 @@
   color: var(--wb-ink);
   font: 400 13px / 1.4 var(--font-sans);
 }
-/* Folds read as a section's last row, never a card. */
+/* Folds read as a section's last row, never a card: the caption grammar
+   (sans 13/600 muted), one 32 px line. */
 .desk-next .pref-window .gadget-fold { margin: 0; }
+.desk-next .pref-window .gadget-fold > summary { min-height: 32px; padding-block: 0; }
+.desk-next .pref-window .gadget-fold > summary .gadget-fold-title {
+  color: var(--wb-muted);
+  font: 600 13px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
 .desk-next .pref-window .settings-page-section-body > .gadget-fold { border-top: 0; }
 
 /* ── The status bar is the kit StatusBar (kit.css); the save word keeps
@@ -449,3 +462,14 @@
 .desk-next .pref-window .gadget-stepper input { flex: 1 0 5ch; min-width: 5ch; width: 5ch; }
 /* A refusal's plain reason sits at the top of the pane, in the column. */
 .desk-next .pref-window .pref-pane-alert { max-width: 720px; margin: 0 auto 14px; }
+
+/* A preference pane's verbs are the dense library Button at 24 px with a
+   12 px word; a narrow window keeps the 44 px touch target. */
+@container surface (min-width: 521px) {
+  .desk-next .pref-window > .pref-pane .btn:not(.pref-rail-row) {
+    min-height: 24px;
+    height: 24px;
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+}

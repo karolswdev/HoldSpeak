@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ConnectionsPane, type ConnectionsFoot } from "../connections";
 import type { ConnectionsResponse, ConnectionTool } from "../connections/api";
 import { decodeConnectionsResponse, decodeState } from "../connections/api";
-import { checkedAgo, stateWords } from "../connections/ConnectionsPane";
+import { checkedAgo, checkedWords, stateWords } from "../connections/ConnectionsPane";
 // The hub's own /api/connections on a fresh HOME (scripts/record_needs_you_fixture.py,
 // the "grouped" boot): the test diet's SCAR LAW, no typed state.
 import RECORDED from "../../../desk/__tests__/fixtures/needsYou.recorded.json";
@@ -23,6 +23,16 @@ import ST2_FOUND_AFTER_USE from "../../../desk/__tests__/fixtures/connections-wi
 import ST2_REMOVE from "../../../desk/__tests__/fixtures/connections-wire/st2-remove.json";
 
 const RECORDED_CONNECTIONS = RECORDED.grouped.gets["/api/connections"] as unknown as ConnectionsResponse;
+/** Window grammar 2026-10-27: a row's state is a dot + word, then the quiet
+ *  age of its own check; read as one line, "Works · checked 5 minutes ago". */
+function rowWords(el: HTMLElement): string {
+  const cell = el.querySelector(".connections-row-state");
+  expect(cell, "no row state").not.toBeNull();
+  const word = cell!.querySelector(".connections-state")?.textContent ?? "";
+  const when = cell!.querySelector(".connections-checked")?.textContent ?? "";
+  return when ? `${word} · ${when}` : word;
+}
+
 function recordedTool(id: string): ConnectionTool {
   const tool = RECORDED_CONNECTIONS.tools.find((t) => t.provider_id === id);
   if (!tool) throw new Error(`the recorded hub sent no ${id} row`);
@@ -213,8 +223,8 @@ describe("ConnectionsPane", () => {
       const card = (await screen.findByTestId("connections-github")).closest("li")!;
       expect(within(card).getByText("GitHub")).toBeInTheDocument();
       expect(within(card).getByText("karolswdev")).toBeInTheDocument();
-      // PHILO-9-02 B1: the chip carries the row's own check age.
-      expect(within(card).getByText(/^Works · Checked /)).toBeInTheDocument();
+      // PHILO-9-02 B1: the row carries its own check age.
+      expect(rowWords(card)).toMatch(/^Works · checked /);
       expect(within(card).getByText("github.com")).toBeInTheDocument();
       expect(within(card).getByText("Check")).toBeInTheDocument();
     });
@@ -258,8 +268,8 @@ describe("ConnectionsPane", () => {
       };
       renderPane(response);
       const card = (await screen.findByTestId("connections-github")).closest("li")!;
-      // PHILO-9-02 B1: the chip carries the row's own check age.
-      expect(within(card).getByText(/^Could not check: gh did not answer · Checked /)).toBeInTheDocument();
+      // PHILO-9-02 B1: the row carries its own check age.
+      expect(rowWords(card)).toMatch(/^Could not check: gh did not answer · checked /);
       expect(within(card).queryByText(/Unreachable/)).toBeNull();
       expect(within(card).getByText("Check")).toBeInTheDocument();
       expect(within(card).queryByText("gh auth login")).toBeNull();
@@ -550,6 +560,12 @@ describe("ConnectionsPane", () => {
       expect(checkedAgo("2026-09-26T12:00:00Z", undefined, now)).toBe("Checked 2 d ago");
       expect(checkedAgo(undefined, 125, now)).toBe("Checked 2 min ago");
       expect(checkedAgo(undefined, undefined, now)).toBeUndefined();
+      // Window grammar 2026-10-27: the row says the age as a quiet sentence.
+      expect(checkedWords("2026-09-28T11:59:30Z", undefined, now)).toBe("checked just now");
+      expect(checkedWords("2026-09-28T11:59:00Z", undefined, now)).toBe("checked 1 minute ago");
+      expect(checkedWords("2026-09-28T09:00:00Z", undefined, now)).toBe("checked 3 hours ago");
+      expect(checkedWords("2026-09-17T12:00:00Z", undefined, now)).toBe("checked 11 days ago");
+      expect(checkedWords(undefined, undefined, now)).toBeUndefined();
       expect(stateWords("never_checked", "github", {})).toBe("Not checked");
       expect(stateWords("connected", "jira", {})).toBe("Works");
       // Betterment ST2: the four row states in words.
@@ -596,11 +612,11 @@ describe("ConnectionsPane", () => {
       expect(within(gh).getByText("Not checked")).toBeInTheDocument();
       expect(within(gh).getByText("Check")).toBeInTheDocument();
       const alpha = await screen.findByTestId("connections-jira-conn-alpha-user");
-      expect(within(alpha).getByText("Works · Checked 5 min ago")).toBeInTheDocument();
+      expect(rowWords(alpha)).toBe("Works · checked 5 minutes ago");
       const beta = await screen.findByTestId("connections-jira-conn-beta-user");
       expect(within(beta).getByText("Not checked")).toBeInTheDocument();
       const gamma = await screen.findByTestId("connections-confluence-conn-gamma-user");
-      expect(within(gamma).getByText("Works · Checked 3 h ago")).toBeInTheDocument();
+      expect(rowWords(gamma)).toBe("Works · checked 3 hours ago");
       // Calendar and Models are local reads: no age.
       const cal = await screen.findByTestId("connections-calendar");
       expect(within(cal).getByText("Connected")).toBeInTheDocument();
@@ -616,7 +632,7 @@ describe("ConnectionsPane", () => {
       };
       renderPane({ tools: [degraded, emptyJira(), connectedCalendar(), connectedModels()] });
       const card = (await screen.findByTestId("connections-github")).closest("li")!;
-      expect(within(card).getByText(/^Could not check: gh did not answer · Checked /)).toBeInTheDocument();
+      expect(rowWords(card)).toMatch(/^Could not check: gh did not answer · checked /);
       expect(within(card).queryByText("Not signed in")).toBeNull();
       expect(within(card).getByRole("button", { name: "Check" })).toBeInTheDocument();
     });
@@ -965,7 +981,7 @@ describe("Accounts that say Works (betterment ST2)", () => {
     for (const site of ["alpha.atlassian.net", "beta.atlassian.net"]) {
       const row = await screen.findByTestId(`connections-jira-conn-${site}|owner@example.com`);
       expect(within(row).getByText(site)).toBeInTheDocument();
-      expect(within(row).getByText(/^Works · Checked/)).toBeInTheDocument();
+      expect(rowWords(row)).toMatch(/^Works · checked/);
       expect(within(row).getByRole("button", { name: "Check" })).toBeInTheDocument();
     }
   });
@@ -990,7 +1006,7 @@ describe("Accounts that say Works (betterment ST2)", () => {
       "/api/onboarding/connections/use", { method: "POST", json: { id: GAMMA_ID } }));
     act(() => { window.dispatchEvent(new Event(ACCOUNTS_CHANGED)); });
     const gamma = await screen.findByTestId("connections-jira-conn-gamma.atlassian.net|owner@example.com");
-    await waitFor(() => expect(within(gamma).getByText(/^Works · Checked/)).toBeInTheDocument());
+    await waitFor(() => expect(rowWords(gamma)).toMatch(/^Works · checked/));
     await waitFor(() => expect(screen.queryByTestId(`connections-found-${GAMMA_ID}`)).toBeNull());
   });
 
