@@ -13,9 +13,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import {
-  AppHead,
   DeskIcon,
-  FilterBar,
+  Toolbar,
+  ToolGlyph,
   ParkReceipt,
   restoreFailedOutcome,
   restoredOutcome,
@@ -33,7 +33,7 @@ import {
   type ObjectSortKey,
   type StatusStripItem,
 } from "../surface";
-import { RoomAskWell, emblemFor, useRoomAsk } from "../../features/project-room/ProjectRoomCore";
+import { RoomAskWell, SourceGlyph, emblemFor, useRoomAsk } from "../../features/project-room/ProjectRoomCore";
 import type { RoomSnapshot } from "../../features/project-room/model";
 import { openProjectRoomAt, refOpener } from "../openObject";
 import { DeskWindowFrame } from "../components/DeskWindow";
@@ -61,9 +61,10 @@ import "./drawer.css";
 
 export type DrawerView = "icons" | "list";
 
-/** `16 OBJECTS · 1 SELECTED`; a zero is never said (UX-CANON A.8). */
+/** `16 objects · 1 selected` in sentence case (W3-B, atlas 2026-10-27: no
+ *  mono caps in a status bar); a zero is never said (UX-CANON A.8). */
 export function drawerReceipt(count: number, selected: number): string {
-  return [count > 0 ? `${count} ${count === 1 ? "OBJECT" : "OBJECTS"}` : "", selected > 0 ? `${selected} SELECTED` : ""]
+  return [count > 0 ? `${count} ${count === 1 ? "object" : "objects"}` : "", selected > 0 ? `${selected} selected` : ""]
     .filter(Boolean)
     .join(" · ");
 }
@@ -130,28 +131,37 @@ export function sourceScopeWords(provider: string, scope: string): string {
  *  provider's plate, the scope, its one state word). Pause, Resume and
  *  Remove live in the Room's Steward posture (the Section's Steward verb). */
 export function sourceRows(room: RoomSnapshot | null): Array<{
-  id: string; plate: string; scope: string; meta: string; tone?: "ok" | "fail"; provider: string;
+  id: string; plate: string; scope: string; meta: string; tone?: "ok" | "warn" | "fail"; provider: string;
 }> {
   if (!room || room.sources.state !== "ok") return [];
   return room.sources.items
     .filter((src) => !src.suggested)
     .map((src) => {
-      const checked = src.checkedAt ? humanTime(src.checkedAt) : "";
+      const checked = src.checkedAt ? checkedWords(humanTime(src.checkedAt)) : "";
       const provider = src.provider;
-      if (src.state === "cant_check") return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: "CAN'T CHECK", tone: "fail" as const, provider };
-      if (src.state === "paused") return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: "PAUSED", provider };
+      if (src.state === "cant_check") return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: "Can't check", tone: "fail" as const, provider };
+      if (src.state === "paused") return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: "Paused", provider };
       if (src.freshness === "stale") {
-        return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: checked ? `STALE · CHECKED ${checked}` : "STALE", provider };
+        return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: checked ? `Stale · checked ${checked}` : "Stale", tone: "warn" as const, provider };
       }
       return {
         id: src.watchId,
         plate: emblemFor(src.provider),
         scope: src.scope,
-        meta: checked ? `CHECKED ${checked}` : "NEVER CHECKED",
+        meta: checked ? `Checked ${checked}` : "Never checked",
         tone: checked ? ("ok" as const) : undefined,
         provider,
       };
     });
+}
+
+/** `1m ago` → `1 min ago`, `3h ago` → `3 h ago`, `2d ago` → `2 days ago`:
+ *  a quiet sans fact, never a mono caps token. */
+export function checkedWords(time: string): string {
+  return time
+    .replace(/^(\d+)m ago$/, "$1 min ago")
+    .replace(/^(\d+)h ago$/, (_, n) => `${n} ${n === "1" ? "hour" : "hours"} ago`)
+    .replace(/^(\d+)d ago$/, (_, n) => `${n} ${n === "1" ? "day" : "days"} ago`);
 }
 
 /** The Project itself as a drawer member: what Get Info opens with nothing selected. */
@@ -267,38 +277,44 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
       unmountOnMinimize
       onClose={() => useDrawers.getState().closeDrawer(projectId)}
     >
-      <div className="desk-pullout-body drawer-body">
+      <div className="desk-pullout-body drawer-body" data-interior="editor">
+        {/* W3-B (atlas 2026-10-27): the title bar is the title (no second
+            name in the body); the view and the Room's doors are the
+            toolbar's verbs; the head facts are the status bar's. */}
+        <Toolbar
+          label="Drawer"
+          data-testid="drawer-filter"
+          trailingStays
+          trailing={(
+            <span className="drawer-view" role="group" aria-label="Drawer view">
+              {(["icons", "list"] as const).map((option) => (
+                <Button
+                  key={option}
+                  dense
+                  variant={view === option ? "secondary" : "ghost"}
+                  aria-pressed={view === option}
+                  data-on={view === option ? "" : undefined}
+                  onClick={() => useDesk.getState().setZoneViewPref(prefKey, { view: option })}
+                >
+                  {option === "icons" ? "Icons" : "List"}
+                </Button>
+              ))}
+            </span>
+          )}
+        >
+          <Button dense variant="secondary" onClick={() => openProjectRoom(projectId)}>
+            <ToolGlyph kind="project" />Room
+          </Button>
+          <Button dense variant="ghost" data-testid="drawer-history" onClick={() => openProjectRoomAt(projectId, "history")}>
+            History
+          </Button>
+          {data.failed.length ? (
+            <Button dense variant="ghost" onClick={data.retry}>
+              <ToolGlyph kind="retry" />Retry
+            </Button>
+          ) : null}
+        </Toolbar>
         <div className="drawer-scroll">
-          {/* Phase 16 (the interior kit; the canvas window "Payments ledger
-              cutover"): AppHead → FilterBar → IconGrid → Sources → AskWell. */}
-          <AppHead fact={name} data-testid="drawer-facts">
-            <HeadFacts items={headItems(data.head, members.length || 0, data.failed)} />
-          </AppHead>
-          <FilterBar
-            label="Drawer view"
-            data-testid="drawer-filter"
-            value={view}
-            onChange={(next) => useDesk.getState().setZoneViewPref(prefKey, { view: next as DrawerView })}
-            options={[
-              { value: "icons", label: "Icons" },
-              { value: "list", label: "List" },
-            ]}
-            trailing={(
-              <>
-                {data.failed.length ? (
-                  <Button dense variant="ghost" onClick={data.retry}>
-                    Retry
-                  </Button>
-                ) : null}
-                <Button dense variant="ghost" onClick={() => openProjectRoom(projectId)}>
-                  Room
-                </Button>
-                <Button dense variant="ghost" data-testid="drawer-history" onClick={() => openProjectRoomAt(projectId, "history")}>
-                  History
-                </Button>
-              </>
-            )}
-          />
           <HandConfirmSlot host={host} />
           {data.loading ? (
             <SurfaceState loading />
@@ -360,10 +376,9 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
                       <SurfaceLedgerRow
                         key={src.id}
                         data-testid="drawer-source-row"
-                        kind={src.plate}
+                        lead={<SourceGlyph source={src.provider} />}
                         primary={sourceScopeWords(src.provider, src.scope)}
-                        meta={src.meta}
-                        metaTone={src.tone}
+                        meta={<DotWord tone={src.tone ?? "idle"}>{src.meta}</DotWord>}
                       />
                     ))}
                   </ul>
@@ -383,7 +398,10 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
           ) : registerFailure ? (
             <span className="drawer-receipt" data-tone="fail" role="status">{registerFailure}</span>
           ) : (
-            <span className="drawer-receipt">{drawerReceipt(members.length, selected ? 1 : 0)}</span>
+            <span className="drawer-receipt" data-testid="drawer-facts">
+              <HeadFacts items={headItems(data.head, members.length || 0, data.failed)} />
+              {selected ? <span className="kit-dotword drawer-head-fact">1 selected</span> : null}
+            </span>
           )
         }
         verbs={

@@ -3,8 +3,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../../store";
 import { apiFetch } from "../../../lib/api";
 import { Button } from "../../../components/signal/Signal";
-import { StringGadget } from "../../surface/gadgets";
-import { SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, SurfaceWell } from "../../surface/Surface";
+import { GadgetRow, StringGadget } from "../../surface/gadgets";
+import { ToolGlyph, Toolbar } from "../../surface/kit";
+// @ts-ignore — shared ESM module (see ../../sprites.d.ts)
+import { refAgent, spriteUrl } from "../../sprites";
+import "./kbEditor.css";
+import { SurfaceState } from "../../surface/Surface";
 import { Material } from "../../surface/Material";
 import { allObjects, objectByRef } from "../../world";
 import { qualifiedRef } from "../../api";
@@ -16,7 +20,7 @@ import { keptEditorPatch, keptField, updateKeptEditorFields } from "./editorDraf
 import type { KB } from "../../../lib/primitives";
 import type { InlineEditorContentProps } from "./types";
 
-export function KbEditor({ object: o, autoFocusName, onWriter, openAdd }: InlineEditorContentProps) {
+export function KbEditor({ object: o, autoFocusName, onWriter, openAdd, toolbar }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
   const save = useDebouncedSave("kb", o.id);
   const live = (items.kb || []).find((x) => x.id === o.id) || o.ref as KB;
@@ -98,31 +102,61 @@ export function KbEditor({ object: o, autoFocusName, onWriter, openAdd }: Inline
 
   const members = refs.map((ref) => ({ ref, object: objectByRef(items, ref) }));
   const choices = allObjects(items).filter((entry) => entry.kind !== "kb" && !refs.includes(qualifiedRef(entry.kind, entry.id)) && (!query || entry.title.toLocaleLowerCase().includes(query.toLocaleLowerCase())));
+  const busy = mutation.state === "saving";
+  // W3-B (atlas 2026-10-27): the editor on the window grammar. The toolbar
+  // holds the host's verbs (Done; Retry after a refusal) and Add items; the
+  // name is the Settings label/control grid; the items and the picker are
+  // dense list rows (the object glyph, the name, the kind in quiet sans).
   return <>
-    <StringGadget label="Knowledge name" value={name} autoFocus={autoFocusName} onChange={(value) => { setName(value); save({ name: value }); }} />
-    <SurfaceSection label="Items" count={refs.length || undefined}>
-      {readError ? <SurfaceState error={readError} onRetry={() => void readMembers()} /> : null}
-      {members.length ? <SurfaceLedger count={null} cols="room">
-        {members.map(({ ref, object }) => <SurfaceLedgerRow key={ref}
-          primary={object?.title || "Item unavailable"} meta={object ? KIND_LABEL[object.kind] || kindWord(object.kind) : "Unavailable"}
-          trailing={<>
-            {object ? <Button dense variant="ghost" disabled={mutation.state === "saving"} onClick={async () => { if (await writer.flush()) useDesk.getState().openPullout(ref); }}>Open {kindWord(object.kind).toLowerCase()}</Button> : null}
-            <Button dense variant="ghost" disabled={mutation.state === "saving"} onClick={() => void member(ref, true)}>Remove</Button>
-          </>} />)}
-      </SurfaceLedger> : <SurfaceState empty emptyLabel="No items" />}
-      <Button dense variant="ghost" onClick={() => setAdding((value) => !value)}>{adding ? "Close items" : "Add items"}</Button>
-      {adding ? <SurfaceWell>
-        <StringGadget label="Find items" value={query} autoFocus={Boolean(openAdd)} onChange={setQuery} />
-        <SurfaceLedger count={null} cols="room">
-          {choices.map((entry) => <SurfaceLedgerRow key={qualifiedRef(entry.kind, entry.id)} primary={entry.title} meta={KIND_LABEL[entry.kind] || kindWord(entry.kind)}
-            trailing={<Button dense variant="ghost" disabled={mutation.state === "saving"} onClick={() => void member(qualifiedRef(entry.kind, entry.id), false)}>Add</Button>} />)}
-        </SurfaceLedger>
-        {!choices.length ? <SurfaceState empty emptyLabel="No items found" /> : null}
-      </SurfaceWell> : null}
-    </SurfaceSection>
-    {recovered ? <SurfaceSection label="Recovered text">
-      <Material>{recovered}</Material>
-      <Button variant="primary" disabled={mutation.state === "saving"} onClick={() => void recover()}>Save as Note</Button>
-    </SurfaceSection> : null}
+    <Toolbar label="Knowledge editor" data-testid="knowledge-editor-toolbar">
+      {toolbar}
+      <Button dense variant={adding ? "secondary" : "ghost"} aria-pressed={adding} onClick={() => setAdding((value) => !value)}>
+        <ToolGlyph kind="new" />{adding ? "Close items" : "Add items"}
+      </Button>
+    </Toolbar>
+    <div className="kb-editor-page">
+      <div className="kb-editor-grid">
+        <GadgetRow label="Name" controlWidth="full">
+          <StringGadget label="Knowledge name" value={name} autoFocus={autoFocusName} onChange={(value) => { setName(value); save({ name: value }); }} />
+        </GadgetRow>
+      </div>
+      <section className="kb-editor-section" aria-label="Items">
+        <h3 className="kb-editor-caption">Items{refs.length ? <span className="kb-editor-count">{` · ${refs.length}`}</span> : null}</h3>
+        {readError ? <SurfaceState error={readError} onRetry={() => void readMembers()} /> : null}
+        {members.length ? <ul className="kb-editor-list" data-testid="knowledge-editor-items">
+          {members.map(({ ref, object }) => <li key={ref} className="kb-editor-row">
+            {object ? <img className="kb-editor-glyph" src={spriteUrl(object.kind, object.id, "rest", refAgent(object.ref))} width={20} height={20} alt="" /> : <span className="kb-editor-glyph" aria-hidden="true" />}
+            <span className="kb-editor-name" title={object?.title || ref}>{object?.title || "Item unavailable"}</span>
+            <span className="kb-editor-kind">{object ? KIND_LABEL[object.kind] || kindWord(object.kind) : "Unavailable"}</span>
+            <span className="kb-editor-verbs">
+              {object ? <Button dense variant="ghost" disabled={busy} onClick={async () => { if (await writer.flush()) useDesk.getState().openPullout(ref); }}>Open {kindWord(object.kind).toLowerCase()}</Button> : null}
+              <Button dense variant="ghost" disabled={busy} onClick={() => void member(ref, true)}>Remove</Button>
+            </span>
+          </li>)}
+        </ul> : !readError ? <SurfaceState empty emptyLabel="No items" /> : null}
+      </section>
+      {adding ? <section className="kb-editor-section" aria-label="Add items" data-testid="knowledge-picker">
+        <h3 className="kb-editor-caption">Add items</h3>
+        <StringGadget label="Find items" value={query} autoFocus={Boolean(openAdd)} onChange={setQuery} placeholder="Find items" />
+        {choices.length ? <ul className="kb-editor-list">
+          {choices.map((entry) => {
+            const ref = qualifiedRef(entry.kind, entry.id);
+            return <li key={ref} className="kb-editor-row">
+              <img className="kb-editor-glyph" src={spriteUrl(entry.kind, entry.id, "rest", refAgent(entry.ref))} width={20} height={20} alt="" />
+              <span className="kb-editor-name" title={entry.title}>{entry.title}</span>
+              <span className="kb-editor-kind">{KIND_LABEL[entry.kind] || kindWord(entry.kind)}</span>
+              <span className="kb-editor-verbs">
+                <Button dense variant="ghost" disabled={busy} onClick={() => void member(ref, false)}>Add</Button>
+              </span>
+            </li>;
+          })}
+        </ul> : <SurfaceState empty emptyLabel="No items found" />}
+      </section> : null}
+      {recovered ? <section className="kb-editor-section" aria-label="Recovered text">
+        <h3 className="kb-editor-caption">Recovered text</h3>
+        <Material>{recovered}</Material>
+        <span><Button variant="primary" disabled={busy} onClick={() => void recover()}>Save as Note</Button></span>
+      </section> : null}
+    </div>
   </>;
 }

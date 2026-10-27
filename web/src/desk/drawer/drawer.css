@@ -33,7 +33,18 @@
 .drawer-fact[data-tone="fail"] b { color: var(--lamp-fail, var(--danger)); }
 .drawer-head-verbs { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
-.drawer-receipt { font: 12px/1.3 var(--font-mono); letter-spacing: 0.06em; color: var(--text-muted); }
+/* W3-B (atlas 2026-10-27): the foot's facts are quiet sans 12, sentence
+   case (dots and words), never a mono caps receipt. */
+.drawer-receipt {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  min-width: 0;
+  font: 400 12px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  color: var(--wb-muted, var(--text-muted));
+}
 .drawer-receipt[data-tone="fail"] { color: var(--lamp-fail, var(--danger)); }
 
 .drawer-info-rename { display: flex; }
@@ -56,3 +67,27 @@
   gap: 4px 14px;
   min-width: 0;
 }
+
+/* W3-B (atlas 2026-10-27): the toolbar sits under the title bar, outside
+   the scroll; the view is two dense toggle verbs at its right end. */
+.drawer-window .drawer-body > .kit-toolbar { flex: 0 0 auto; }
+.drawer-view { display: inline-flex; align-items: center; gap: 2px; }
+/* The Sources rows: the provider's object glyph (no GH / J plate), the
+   scope, then the state as a dot and a sentence-case word. */
+.drawer-window .surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line,
+.drawer-window .surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  min-height: 32px;
+}
+@container surface (max-width: 559.9px) {
+  .drawer-window .surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line,
+  .drawer-window .surface-ledger[data-cols="kit"] .surface-ledger-row > .surface-ledger-line[data-has-trailing] {
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+  }
+  .drawer-window .surface-ledger[data-cols="kit"] .surface-ledger-line > .surface-ledger-meta {
+    grid-column: auto;
+  }
+}
+.drawer-window .surface-ledger-meta .kit-dotword { white-space: nowrap; }
+/* The foot's facts read from the left, as a status bar's items do. */
+.desk-next .drawer-window .surface-footer-receipt { justify-content: flex-start; }

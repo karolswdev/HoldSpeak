@@ -1,0 +1,73 @@
+/* W3-B (Window Program, atlas 2026-10-27): the Knowledge editor on the
+   window grammar. The toolbar touches the frame; the page has its own
+   inset; the name is the Settings label/control grid (label sans 13 at
+   160 px, the control at the right, a 1 px soft rule); the items and the
+   picker are dense list rows (30 px: the object glyph, the name, the kind
+   in quiet sans 12, the verbs at the right). No mono caps. */
+.kb-editor-page {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 10px 16px 16px;
+  container: kbedit / inline-size;
+  color: var(--wb-ink);
+  font: 400 13px / 1.45 var(--font-sans);
+}
+.kb-editor-grid .gadget-row {
+  grid-template-columns: 160px minmax(0, 1fr);
+  min-height: 36px;
+  padding: 2px 0;
+  border-bottom: 0;
+}
+.desk-next .kb-editor-grid .gadget-row-label,
+.kb-editor-grid .gadget-row-label {
+  font: 400 13px / 1.4 var(--font-sans);
+  color: var(--wb-ink);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.kb-editor-section { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.desk-next .kb-editor-page .kb-editor-caption,
+.kb-editor-caption {
+  margin: 0;
+  padding: 0 0 6px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  color: var(--wb-muted);
+  font: 600 13px / 1.3 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.kb-editor-count { font-weight: 400; }
+.kb-editor-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; min-width: 0; }
+.kb-editor-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 30px;
+  padding: 0 6px;
+  border-radius: 3px;
+  transition: background-color 120ms ease;
+}
+.kb-editor-row:hover { background: color-mix(in srgb, var(--wb-blue) 45%, transparent); }
+.kb-editor-glyph { width: 20px; height: 20px; display: block; image-rendering: auto; }
+.kb-editor-name {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font: 400 13px / 1.3 var(--font-sans);
+  color: var(--wb-ink);
+}
+.kb-editor-kind { font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); white-space: nowrap; }
+.kb-editor-verbs { display: inline-flex; align-items: center; gap: 2px; }
+@container kbedit (max-width: 488px) {
+  .kb-editor-grid .gadget-row { grid-template-columns: minmax(0, 1fr); }
+  .kb-editor-row { grid-template-columns: 20px minmax(0, 1fr) auto; min-height: 44px; }
+  .kb-editor-kind { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .kb-editor-row { transition: none; } }

@@ -24,7 +24,11 @@
  */
 import "./learned.css";
 import { SpeakEmpty } from "./SpeakEmpty";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Button } from "../../../components/signal/Signal";
+import { Toolbar, ToolGlyph } from "../../../desk/surface/kit";
+import { download } from "../history";
+import { ReceiptContext } from "./shared";
 import { apiFetch, readableError } from "../../../lib/api";
 import { asRows, rowId, useResource } from "../../pageSupport";
 import { useRuntimeBus } from "../../../runtime/RuntimeBus";
@@ -124,6 +128,25 @@ function blockLabels(data: Record<string, unknown> | undefined): Record<string, 
   return map;
 }
 
+/** W3-B (atlas 2026-10-27): what the desk learned, as Markdown (one line per
+ *  fix: the heard words → the label, its kind). The rows are the wing's own
+ *  read; nothing else is fetched. */
+export function learnedMarkdown(
+  rows: Row[],
+  blocks: Record<string, string>,
+  targets: Record<string, string>,
+): string {
+  return [
+    "# HoldSpeak learned fixes",
+    "",
+    ...rows.map((row) => {
+      const applied = appliedToken(row);
+      return `- ${String(row.key ?? "")} → ${valueLabel(row, blocks, targets)} (${kindEmblem(row.kind) || "Fix"}${applied ? `, ${applied}` : ""})`;
+    }),
+    "",
+  ].join("\n");
+}
+
 export function Learned() {
   // Window grammar: the Learned wing is a list window, edge to edge.
   useWindowInterior("list");
@@ -171,6 +194,15 @@ export function Learned() {
     [subscribe, load],
   );
 
+  const announce = useContext(ReceiptContext);
+  const exportLearned = () => {
+    download(
+      new Blob([learnedMarkdown(rows, blockMap, targets)], { type: "text/markdown;charset=utf-8" }),
+      `holdspeak-learned-${new Date().toISOString().slice(0, 10)}.md`,
+    );
+    announce("Learned fixes exported");
+  };
+
   const forget = async (row: Row) => {
     await apiFetch(
       `/api/dictation/corrections/${encodeURIComponent(String(row.id))}`,
@@ -181,6 +213,15 @@ export function Learned() {
 
   return (
     <SurfaceSection className="speak-learned">
+      {/* W3-B: the wing's toolbar holds its one verb, Export, when there is
+          something learned; an empty wing shows its empty state alone. */}
+      {rows.length && !loading && !error ? (
+        <Toolbar label="Learned" data-testid="learned-toolbar">
+          <Button dense variant="secondary" data-testid="learned-export" onClick={exportLearned}>
+            <ToolGlyph kind="import" />Export
+          </Button>
+        </Toolbar>
+      ) : null}
       <SurfaceLedger count={null}>
         <SurfaceState
           loading={loading}

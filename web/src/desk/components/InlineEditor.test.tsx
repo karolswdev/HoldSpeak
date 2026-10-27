@@ -10,8 +10,10 @@ import { WorkflowPullout } from "../pullouts/WorkflowPullout";
 import { useDebouncedSave } from "../pullouts/editors/useDebouncedSave";
 
 vi.mock("../pullouts/editors", () => {
-  const Content = ({ object }: { object: { kind: string } }) => (
-    <div data-testid={`editor-${object.kind}`}>Editor</div>
+  // W3-B: an editor that draws its own toolbar (Knowledge) gets the host's
+  // verbs (Done) through the `toolbar` prop, as KbEditor renders them.
+  const Content = ({ object, toolbar }: { object: { kind: string }; toolbar?: React.ReactNode }) => (
+    <div data-testid={`editor-${object.kind}`}>Editor{toolbar}</div>
   );
   return {
     EDITOR_LABELS: { note: "Note", kb: "Knowledge", recipe: "Recipe", workflow: "Workflow" },
