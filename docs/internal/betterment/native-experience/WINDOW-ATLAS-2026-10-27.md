@@ -35,7 +35,7 @@ doors.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Calendar snapshot (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
 | Room ▸ History (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
-| Live meeting (W1-TRUTH, W1-FACES; Lane / PR: W2-LIVE) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
+| Live meeting (W1-TRUTH, W1-FACES; Lane / PR: W2-LIVE, W2-LIVE-2) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 3 | **19** |
 | Speak (+ wings) (W1-FACES) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Components (W2-BUILDER) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Ask | 2 | 1 | 2 | 2 | 1 | 1 | 1 | 1 | **11** |
@@ -367,6 +367,25 @@ Shots: [1440](atlas-2026-10-27/live-1440.png) · [393](atlas-2026-10-27/live-393
   `settings-meetings-{1440,393}.png`. Left: Before's ready sheet (sources and engines as rows),
   After's rail at Summary in MeetingRecord, the phone status bar wraps to two rows while it
   records (four items).
+- **W2-LIVE-2 (2026-10-27), Lane / PR: W2-LIVE-2, slice 2 (Before and After):** Before is the
+  ready sheet (`LiveReady.tsx`): the meeting's name as a quiet line (sent with `PATCH
+  /api/meeting` once the meeting is live; the hub's start takes no title), then *It will hear*
+  (Microphone, System audio: the device from `/api/settings`, ● Ready) and *It will write*
+  (Transcript: `Whisper base, on this Mac`, ● Ready or ● Not set up with *Set up speech · 144 MB*
+  on the row; Summary: `<engine>, after the meeting`, ● Ready, ● Off, or ● No engine with
+  *Choose engine*). "Start a meeting to begin" is gone; the steps band stays (the canvas keeps
+  it); Set up speech left the toolbar. After: the meeting window already becomes the record (the
+  same window, `MeetingWindow.tsx`); the record now has Today's rail under its toolbar
+  (`recordSteps`: Summary now while he reads and decides, Send follow-up now when nothing waits),
+  *Send follow-up…* as the primary, Settings as the trailing verb, and *Decide…* on every decided
+  row (the record when it has one, else the decision's reader, else New decision). The phone
+  status bar while recording is one line: no title (the title bar has it), the link only when it
+  is not connected. Shots: `scratchpad/shots/w2-live2/live-before-{nospeech,ready}-{1440,393}.png`,
+  `meeting-after-{1440,393}.png`. Left: the project line on the ready sheet (a meeting has no id
+  before Start; Add to Project is on the record); the microphone level and an *Allow* verb (the
+  hub sends no level or permission fact before a meeting); the section name stays *Decisions*
+  (it holds proposed rows too, so *Decided* would not be true); the record's rows show their
+  verbs on hover and focus (the ledger species), the canvas draws them always.
 
 #### Setup — `surface-setup` (18)
 
@@ -661,7 +680,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | --- | --- | --- | --- | --- | --- |
 | Calendar snapshot | J6 | Go ▸ Builder → Import image, Check sources | 8 → 15 | healed: toolbar, true empty state, feeds line; left: no feed-success shot (the seed's feed reads idle) | W1-TRUTH |
 | Room ▸ History | J3 | Room wing → item Open | 9 | 2026-09 dashboard grammar | lane |
-| Live meeting (W1-TRUTH, W2-LIVE) | J2 | Meetings ▸ Record → Start meeting | 10 → 16 | healed: honest status, phone title, Today's stepper; left: gear wing (old grammar), during/after canvas | W1-TRUTH (+ canvas) |
+| Live meeting (W1-TRUTH, W2-LIVE, W2-LIVE-2) | J2 | Meetings ▸ Record → Start meeting | 10 → 19 | healed: honest status, phone title, Today's stepper, gear wing moved, during as a document, the ready sheet, the record's rail and Decide…, one-line phone status bar; left: project line, mic level | W1-TRUTH, W2-LIVE, W2-LIVE-2 |
 | Speak | J1, dictation | Dock, ⌃5 → Talk | 10 | Speak/Speak; verbs move to the status bar; gear wing | lane |
 | Components | J7 | Go ▸ Builder → specimens | 10 → 16 | healed: a group rail (32 px rows, glyphs; the list first at 393), a toolbar (Preset, Reset), the specimen on the paper, one status bar (`Local specimen · Forms · Saved`); no caps tokens, no specimen headlines; left: the Forms specimen draws Settings at its narrow width inside a 640 px window | W2-BUILDER |
 | Ask | J3 | ⌘I/Ctrl+I, ⌘K → Save as note, Send | 11 | chat-demo look, oversized composer, mono errors | canvas (ASK) |
@@ -713,7 +732,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | --- | --- | --- | - | - | - | - | - | - | - | - | - |
 | Note (`pullout:note:*`) | J1 | floor icon (1), ⌘K (2), Inbox drawer row (2) → Done closes; Send… in place. Lane / PR: W1-DOORS (opens rendered, caret at the end) | 2 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | 20 |
 | Decision (`pullout:decision:*`) | J3 | Needs you ▸ Decide (2), ⌘K (2), Go ▸ Decisions ▸ row (3) | 0 | 1 | 2 | 2 | 1 | 1 | 0 | 1 | 8 |
-| Meeting (`surface-meetings@meeting:*`) | J2 | dock Meetings ▸ row (2), Needs you row (2) → Back to the list | 2 | 2 | 1 | 3 | 2 | 2 | 2 | 1 | 15 |
+| Meeting (`surface-meetings@meeting:*`) | J2 | dock Meetings ▸ row (2), Needs you row (2) → Back to the list. Lane / PR: W2-LIVE-2 (Today's rail at Summary, Send follow-up… primary, Settings trailing, Decide… on decided rows) | 3 | 2 | 2 | 3 | 2 | 2 | 3 | 1 | 18 |
 | Person (`pullout:people:*`) | J3 | dock People ▸ row (2), Today 1:1 (2) | 2 | 3 | 2 | 2 | 2 | 1 | 2 | 1 | 15 |
 | Room via floor icon (`surface-project-memory@project:*`) | J3 | floor Project icon (1), Go ▸ Projects ▸ name (3) | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |
 | Project as a pullout (`pullout:project:*`) | J3 | hub/agent → the Room (`surface-project-memory` scoped `project:<id>`). Lane / PR: W1-DOORS | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |
