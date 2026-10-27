@@ -1036,13 +1036,20 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
   const [now, setNow] = useState(() => Date.now());
   const [preparedAt] = useState(() => new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false }));
   // The person's record is re-read after each write; the brief follows it.
+  // A failed brief read is a state: it stays on screen until Try again (a
+  // new `attempt`); a quiet re-read of the record never erases it
+  // (peoplePrepB4: "a failed brief read is a named failure with Try again").
+  const failedAt = useRef<{ attempt: number; id: string } | null>(null);
   useEffect(() => {
+    if (failedAt.current?.attempt === attempt && failedAt.current.id === relationship.id) return;
+    failedAt.current = null;
     let live = true;
     void apiFetch<{ brief: OneOnOneBrief }>(`/api/people/relationships/${encodeURIComponent(relationship.id)}/brief`)
       .then((result) => { if (live) { setBrief(result.brief ?? ({ open_commitments: [], agenda_items: [] } as unknown as OneOnOneBrief)); setFailure(""); } })
       .catch((cause) => {
         if (!live) return;
         if (isProtectedFailure(cause) && !isStoreOutage(cause)) { onProtectedFailure(cause); return; }
+        failedAt.current = { attempt, id: relationship.id };
         setFailure(plainFailure("PREP DID NOT LOAD", cause));
       });
     return () => { live = false; };
