@@ -262,7 +262,7 @@
   filter: brightness(1.08);
 }
 /* a text glyph, when an item has no picture */
-.desk-next .desk-dock-launch > span[aria-hidden="true"]:not(.desk-dock-label, .desk-dock-seat, .desk-dock-seat-icon) {
+.desk-next .desk-dock-launch > span[aria-hidden="true"]:not(.desk-dock-label, .desk-dock-seat, .desk-dock-seat-icon, .desk-dock-badge, .desk-dock-fleet, .desk-dock-state) {
   font-size: 24px;
   line-height: 24px;
   color: var(--desk-dock-glass-ink);
@@ -358,20 +358,23 @@
 /* ── the count: at the icon's top-right corner, never over the picture ── */
 .desk-next .desk-dock-launch .desk-dock-badge {
   position: absolute;
-  top: -7px;
-  left: 42px;
+  /* 2026-10-27 (owner: "that shitty-ass 13"): a small count on the icon's
+     top-right corner, half outside the picture, a slate ring, 12 px digits (the floor) */
+  top: -2px;
+  left: 40px;
   box-sizing: border-box;
-  min-width: var(--desk-badge-h);
-  height: var(--desk-badge-h);
+  min-width: 16px;
+  height: 16px;
   padding: 0 4px;
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: calc(var(--desk-badge-h) / 2);
+  border-radius: 8px;
   background: var(--desk-chrome-badge-on);
   color: var(--wb-paper);
-  box-shadow: var(--desk-badge-ring);
-  font: 700 12px / var(--desk-badge-h) var(--font-sans);
+  box-shadow: 0 0 0 1.5px var(--desk-dock-glass-solid);
+  font: 600 12px / 16px var(--font-sans);
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0;
 }
 .desk-next .desk-dock-launch .desk-dock-badge:not([data-tone]) {
@@ -383,8 +386,9 @@
    working (calm). */
 .desk-next .desk-dock-launch .desk-dock-fleet {
   position: absolute;
-  top: -3px;
-  left: 2px;
+  /* on the icon's top-left corner, not floating above the tile */
+  top: 2px;
+  left: 6px;
   width: 8px;
   height: 8px;
   border: 1px solid var(--wb-rule-soft);
