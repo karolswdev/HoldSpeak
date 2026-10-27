@@ -53,3 +53,47 @@ export const DOCK_SPRITES: Record<string, string> = {
   "delivery-board": SYSTEM.dockDelivery,
   panes: SYSTEM.dockPanes,
 };
+
+/** The floating dock (owner pick 2026-10-26, dock-direction canvas D1): its
+ * tiles and the Record orb wear the D drawing at 48 px (`system/48/`, a
+ * two-pixel bevel; web/scripts/gen-illustrated-icons.py `system48`). The
+ * registry test guards this set in both directions too. */
+const BASE_48 = `${BASE}48/`;
+export const SYSTEM_48 = {
+  dockSpeak: `${BASE_48}dock-speak.png`,
+  dockMeetings: `${BASE_48}dock-meetings.png`,
+  dockAgents: `${BASE_48}dock-agents.png`,
+  dockSettings: `${BASE_48}dock-settings.png`,
+  dockPeople: `${BASE_48}dock-people.png`,
+  dockIntelligence: `${BASE_48}dock-intelligence.png`,
+  dockDeskMemory: `${BASE_48}dock-desk-memory.png`,
+  dockDelivery: `${BASE_48}dock-delivery.png`,
+  dockPanes: `${BASE_48}dock-panes.png`,
+  recordOrb: `${BASE_48}record-orb.png`,
+} as const;
+
+/** The 48 px dock tile of each Dock item (the same keys as DOCK_SPRITES). */
+export const DOCK_SPRITES_48: Record<string, string> = {
+  "intelligence:desk": SYSTEM_48.dockIntelligence,
+  "surface-dictation": SYSTEM_48.dockSpeak,
+  "surface-meetings": SYSTEM_48.dockMeetings,
+  "surface-companion": SYSTEM_48.dockAgents,
+  conductor: SYSTEM_48.dockAgents,
+  "surface-settings": SYSTEM_48.dockSettings,
+  "surface-people": SYSTEM_48.dockPeople,
+  attention: SYSTEM_48.dockDeskMemory,
+  "delivery-board": SYSTEM_48.dockDelivery,
+  panes: SYSTEM_48.dockPanes,
+  /* The phone's Capture door is its Record door (the desktop Record tile
+     leaves the phone projection): it wears the Record orb. */
+  "chair:capture": SYSTEM_48.recordOrb,
+};
+
+/** The 48 px sibling of a system sprite URL (a seated window's title-bar
+ * icon on its dock tile). Any other URL comes back unchanged. */
+export function dockSprite48(url: string): string {
+  if (!url.startsWith(BASE)) return url;
+  const file = url.slice(BASE.length).replace(/^(?:20|48)\//, "");
+  const match = Object.values(SYSTEM_48).find((u) => u.endsWith(`/48/${file}`));
+  return match ?? url;
+}

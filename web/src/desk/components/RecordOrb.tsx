@@ -10,7 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDesk } from "../store";
-import { SYSTEM } from "../systemSprites";
+import { SYSTEM_48 } from "../systemSprites";
 import { Button } from "../../components/signal/Signal";
 import { openSurfaceOr } from "../shell";
 
@@ -81,12 +81,18 @@ export function RecordOrb() {
   const recording = state === "recording";
   return (
     <div className="desk-orb-wrap">
-      {recording && external && (
-        <span className="desk-orb-note">live elsewhere</span>
-      )}
-      {recording && elapsed && (
-        <span className="desk-orb-elapsed">{elapsed}</span>
-      )}
+      {/* The floating dock (2026-10-26): Record is one dock tile. Its name,
+          the elapsed time and "live elsewhere" show on hover and focus as the
+          tile's label above it (dock.css); the aria-label says the same. */}
+      <span className="desk-orb-label" aria-hidden="true">
+        {recording ? "Stop recording" : "Record a meeting"}
+        {recording && external && (
+          <span className="desk-orb-note">live elsewhere</span>
+        )}
+        {recording && elapsed && (
+          <span className="desk-orb-elapsed">{elapsed}</span>
+        )}
+      </span>
       <Button
         variant="chrome"
         className={`desk-orb is-${state}`}
@@ -117,18 +123,18 @@ export function RecordOrb() {
           // live room; on Stop the same window shows the saved meeting).
           void useDesk.getState().startRecording();
         }}
-        aria-label={recording ? "Stop recording" : "Record a meeting"}
-        title={recording ? "Stop recording" : "Record a meeting"}
+        aria-label={recording
+          ? `Stop recording${external ? ", live elsewhere" : ""}${elapsed ? `, ${elapsed}` : ""}`
+          : "Record a meeting"}
         disabled={state === "busy"}
       >
-        {/* HS-111-09 — the record key is the 40px system sprite
-            (80 device px at DPR 2, exact 2x): Signal Workbench material,
-            not the macOS gloss gradient it replaces. */}
+        {/* The floating dock (2026-10-26): the record key is the 48 px D
+            drawing (system/48/), the size of every dock tile. */}
         <img
-          src={SYSTEM.recordOrb}
+          src={SYSTEM_48.recordOrb}
           alt=""
-          width={40}
-          height={40}
+          width={48}
+          height={48}
           className="desk-orb-face desk-chrome-sprite"
           draggable={false}
         />

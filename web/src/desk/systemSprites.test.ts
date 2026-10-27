@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, resolve } from "node:path";
-import { DOCK_SPRITES, SYSTEM } from "./systemSprites";
+import { DOCK_SPRITES, DOCK_SPRITES_48, SYSTEM, SYSTEM_48, dockSprite48 } from "./systemSprites";
 import { DOCK_APPLICATIONS } from "./applications";
 
 const DIR = resolve(__dirname, "../../public/desk/sprites/system");
@@ -21,6 +21,35 @@ describe("system sprite sheet", () => {
   it("every banked system png is registered (no orphans)", () => {
     const banked = readdirSync(DIR).filter((f) => f.endsWith(".png"));
     expect(banked.sort()).toEqual([...registered].sort());
+  });
+});
+
+// The floating dock (2026-10-26): the 48 px dock set has no orphans either,
+// and every Dock item that has a 32 px sprite has its 48 px drawing.
+describe("the 48 px dock set", () => {
+  const DIR48 = resolve(DIR, "48");
+  const registered = Object.values(SYSTEM_48).map((url) => basename(url));
+
+  it("every registered 48 px sprite exists on disk, and every banked one is registered", () => {
+    for (const file of registered)
+      expect(existsSync(resolve(DIR48, file)), `missing 48/${file}`).toBe(true);
+    const banked = readdirSync(DIR48).filter((f) => f.endsWith(".png"));
+    expect(banked.sort()).toEqual([...registered].sort());
+  });
+
+  it("draws each Dock item and the Record orb at 48 from the same source name", () => {
+    for (const [id, url] of Object.entries(DOCK_SPRITES))
+      expect(basename(DOCK_SPRITES_48[id] ?? ""), id).toBe(basename(url));
+    // The phone's Capture door (no 32 px Dock sprite) wears the Record orb.
+    expect(DOCK_SPRITES_48["chair:capture"]).toBe(SYSTEM_48.recordOrb);
+    expect(basename(SYSTEM_48.recordOrb)).toBe(basename(SYSTEM.recordOrb));
+  });
+
+  it("maps a 32 or 20 px system URL to its 48 px drawing, and leaves others alone", () => {
+    expect(dockSprite48(SYSTEM.dockPeople)).toBe(SYSTEM_48.dockPeople);
+    expect(dockSprite48(SYSTEM.dockPeople.replace("/system/", "/system/20/"))).toBe(SYSTEM_48.dockPeople);
+    expect(dockSprite48(SYSTEM.menuBell)).toBe(SYSTEM.menuBell);
+    expect(dockSprite48("/thread.png")).toBe("/thread.png");
   });
 });
 

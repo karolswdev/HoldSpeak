@@ -259,7 +259,7 @@
   --desk-window-grab: 72px; /* minimum grabbable head strip (HS-93 contract) */
   --desk-window-cascade: 26px; /* default-corner cascade step */
   --desk-snap-top: 28px; /* fallback screen bar boundary; live geometry reads --desk-work-top */
-  --desk-snap-bottom: 60px; /* snap tiles clear the dock band */
+  --desk-snap-bottom: 84px; /* snap tiles clear the floating dock: its 64 px plate, 10 px above the edge, 10 px of air (2026-10-26) */
   --desk-work-top: var(--wb-screen-h); /* the working band begins below the system bar */
   --desk-work-bottom: var(--desk-snap-bottom); /* the working band ends above the dock */
   --glow-meeting: #56C7F5;
@@ -370,6 +370,13 @@
   --desk-dock-shine: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 -1px 0 rgba(22, 40, 62, 0.10), 0 -6px 18px rgba(12, 20, 32, 0.18); /* the dock's faint top shine, its 1 px soft top rule and the soft shade it casts on the floor */
   --desk-dock-tile-lift: 0 2px 8px rgba(22, 40, 62, 0.16), 0 0 0 1px var(--wb-rule); /* a dock tile lifted under the pointer (a shadow and a ring, never a transform) */
   --desk-dock-active: color-mix(in srgb, var(--wb-sel-vivid) 14%, var(--wb-paper)); /* the soft blue plate under the active app's dock label */
+  --desk-dock-glass: rgba(30, 43, 58, 0.72); /* the floating dock (2026-10-26): the floor's slate as glass, not paper */
+  --desk-dock-glass-solid: #222f3e; /* the dock glass as one opaque tone, for the phone shelf's sticky gutter cover */
+  --desk-dock-glass-rule: rgba(233, 238, 245, 0.16); /* the dock plate's 1 px rim and the rule before the seated windows */
+  --desk-dock-glass-shade: 0 10px 30px rgba(8, 14, 22, 0.45), 0 2px 6px rgba(8, 14, 22, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1); /* the dock plate's shadow on the floor and its top shine */
+  --desk-dock-glass-ink: #e9eef5; /* paper ink on the dock glass (the running dot, the offline tag) */
+  --desk-dock-tile-plate: rgba(233, 238, 245, 0.1); /* the soft plate under the front app's tile and a tile under the pointer */
+  --desk-dock-tile-plate-strong: rgba(233, 238, 245, 0.16); /* the front app's tile under the pointer */
   --desk-chrome-badge-on: var(--wb-sel-vivid); /* the count badge fill (paper digits 5.3:1) */
   --wb-screen-h: 36px; /* desktop system bar; narrow shell keeps 44px elsewhere */
   --wb-gadget-w: 32px; /* desktop title-bar gadget width */
