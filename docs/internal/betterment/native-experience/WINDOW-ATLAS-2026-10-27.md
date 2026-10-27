@@ -34,9 +34,9 @@ doors.
 | Window | G | T | H | F | De | Dn | C | P | Sum |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Calendar snapshot | 1 | 2 | 0 | 0 | 0 | 2 | 1 | 2 | **8** |
-| Room ▸ History | 0 | 0 | 2 | 2 | 1 | 2 | 0 | 2 | **9** |
-| Live meeting | 1 | 1 | 1 | 2 | 1 | 2 | 1 | 1 | **10** |
-| Speak (+ wings) | 1 | 1 | 1 | 2 | 1 | 2 | 1 | 1 | **10** |
+| Room ▸ History (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
+| Live meeting (gear wing: W1-FACES) | 1 | 2 | 1 | 2 | 1 | 2 | 1 | 1 | **11** |
+| Speak (+ wings) (W1-FACES) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Components | 0 | 1 | 2 | 2 | 1 | 2 | 1 | 1 | **10** |
 | Ask | 2 | 1 | 2 | 2 | 1 | 1 | 1 | 1 | **11** |
 | Decision record | 1 | 1 | 2 | 2 | 1 | 2 | 1 | 2 | **12** |
@@ -49,12 +49,12 @@ doors.
 | Decisions | 3 | 2 | 1 | 2 | 2 | 2 | 1 | 2 | **15** |
 | Engines | 3 | 2 | 1 | 2 | 2 | 2 | 1 | 2 | **15** |
 | Processes | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 1 | **15** |
-| Activity | 3 | 1 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
-| Agents | 2 | 1 | 2 | 3 | 2 | 3 | 1 | 2 | **16** |
+| Activity (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
+| Agents (ask card: W1-FACES) | 2 | 2 | 2 | 3 | 2 | 3 | 1 | 2 | **17** |
 | Settings (frame + 8 panes) | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | Automations | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | New Project | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
-| Meetings | 3 | 2 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
+| Meetings (gear wing: W1-FACES) | 3 | 3 | 2 | 2 | 2 | 3 | 2 | 2 | **19** |
 | Setup | 3 | 2 | 2 | 3 | 2 | 3 | 2 | 1 | **18** |
 | Person | 2 | 3 | 2 | 3 | 2 | 2 | 2 | 2 | **18** |
 | Automation (one open) | 2 | 2 | 3 | 3 | 2 | 2 | 2 | 2 | **18** |
@@ -191,6 +191,13 @@ Shots: [Speak 1440](atlas-2026-10-27/speak-1440.png) · [393](atlas-2026-10-27/s
   `web/src/pages/cores/dictation/SpeakFace.tsx`.
 - **Fix needs:** a lane (wing named for its job, one toolbar per wing, illustrated empty
   states; Configure dictation on the grid).
+- **W1-FACES (2026-10-27):** the first wing is *Talk*; Review and Export sit in the Talk
+  toolbar and Export, Search and Clear in the Journal's toolbar, never in the status bar; the
+  status bar is one line on the phone (a 12-segment meter, the state, its fact); Commands say
+  "opens Ask"; Configure dictation is the Settings label/control grid with *Manage in
+  Settings* in its toolbar; Journal, Learned and Blocks draw the D mic over the true word and
+  one quiet line. Left: Learned has no toolbar (it has no verb); the Talk toolbar still takes
+  two rows at 393. Shots: `scratchpad/shots/w1-faces/speak-*`.
 
 #### Ask — `ask:desk` (11)
 
@@ -256,6 +263,10 @@ Shots: [dense 1440](atlas-2026-10-27/meetings-1440.png) · [393](atlas-2026-10-2
 - **Could not verify:** the *Record* wing: the tab press left the Records face on screen at
   1440 (unknown whether the wing switched).
 - **Fix needs:** a lane.
+- **W1-FACES (2026-10-27), Meeting plumbing:** one list view; an action reads by its task with
+  owner · meeting and *Open / Done* as a dot and a word; background work by its job (*Summary*,
+  *Enrich with the CLI*) with *Waiting / Running / Failed / Done*; the filter now filters; no
+  `QUEUED` token, no row that only says `actions`.
 
 #### Agents — `conductor` (16)
 
@@ -277,6 +288,11 @@ Shots: [dense 1440](atlas-2026-10-27/agents-1440.png) · [393](atlas-2026-10-27/
 - **Top defects:** "Is Claude Code running or not? It is in the list twice." "Pane identity
   — what?" Owner: `web/src/desk/conductor/ConductorWindow.tsx`, `web/src/desk/agents/AgentRow.tsx`.
 - **Fix needs:** a lane (runs list and installed tools apart; refusal in plain words).
+- **W1-FACES (2026-10-27), the ask card (Agents and Today):** *Asks you* is a dot and a word,
+  the age a quiet sans line, the card a soft plate (no ink frame, no stipple bar); the refusal
+  is one quiet line with a dense *Try again*, and the pane-identity refusal reads "The desk
+  cannot reach this agent's terminal · Nothing was sent". Not shot: in this rig the seeded
+  sessions read *Session gone* (cause not known); proven by the vitest files.
 
 #### Settings — `surface-settings`, panes You, Speak, Meetings, Notices, Accounts, Agents, Desk, This Mac (17)
 
@@ -327,6 +343,10 @@ Shots: [1440](atlas-2026-10-27/live-1440.png) · [393](atlas-2026-10-27/live-393
   plugin jobs?" "No title on the phone." Owner: `web/src/pages/cores/LiveCore.tsx`.
 - **Not reached:** Live during a meeting (the rig has no capture runtime).
 - **Fix needs:** a canvas (what Live is before, during and after; the gear wing's place).
+- **W1-FACES (2026-10-27), gear wing only:** `Routing`, `Try a phrase` with one quiet
+  sentence (no `TESTS ROUTING · …` caps), route facts in sentence case, the Summary state as a
+  dot and a word, *Background work*, Devices says `Checking… N s` then `No answer` instead of
+  a ring that turns forever. The canvas stays open.
 
 #### Setup — `surface-setup` (18)
 
@@ -408,6 +428,10 @@ Shots: [Records 1440](atlas-2026-10-27/activity-1440.png) · [393](atlas-2026-10
   *Clear records* (destructive) sits as a plain verb next to the Watching lamp · P2.
 - **Top defect:** "first-party, first-party, first-party." Owner: `web/src/pages/cores/ActivityCore.tsx`.
 - **Fix needs:** a lane.
+- **W1-FACES (2026-10-27):** the gear wing is a list view: each connector by its own name
+  (*GitHub CLI*) with what it does (*Enrich with the CLI*), On / Off / Failed as a dot and a
+  word, *Ran 2 h ago* or *Never ran*; no `first-party`, no `CLI_ENRICHMENT`; Rules' empty
+  state says *No rules yet*.
 
 #### Memory — `surface-project-memory` without a scope (13)
 
@@ -449,6 +473,11 @@ Shots: [Now 1440](atlas-2026-10-27/room-1440.png) · [Now 393](atlas-2026-10-27/
   Now and History; Sources and Plan are folds). My press on the folds did not open them in the
   shot; their content is known from the DOM read only.
 - **Fix needs:** a lane for History (list view, dot + word, sentence case); Now is close.
+- **W1-FACES (2026-10-27):** History is a list view (`desk/surface/objects/ListView.tsx`):
+  a toolbar with *All ▾* (All / GitHub / Jira / Room) and the search, quiet day captions
+  (Today / Yesterday / Mon, Oct 20), rows of glyph · what happened · where · `14:02`, a press
+  opens the item; the Writes fold uses the same rows in sentence case; the status bar is
+  `8 events · since today`. No headline, no caps pills, no box.
 
 #### New Project — `surface-project-setup` (17)
 
@@ -596,9 +625,9 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Window | Jobs | Doors in → out | Score | Top defects | Lane / PR |
 | --- | --- | --- | --- | --- | --- |
 | Calendar snapshot | J6 | Go ▸ Builder → none | 8 | red dot, no verb, wrong on a desk with a feed | lane or park |
-| Room ▸ History | J3 | Room wing → item Open | 9 | 2026-09 dashboard grammar | lane |
-| Live meeting | J2 | Meetings ▸ Record → Start meeting | 10 | Ready + not set up; gear wing; no phone title | canvas |
-| Speak | J1, dictation | Dock, ⌃5 → Talk | 10 | Speak/Speak; verbs move to the status bar; gear wing | lane |
+| Room ▸ History | J3 | Room wing → item Open | 18 | — (list view by day, Source ▾, one-line status bar) | W1-FACES |
+| Live meeting | J2 | Meetings ▸ Record → Start meeting | 11 | Ready + not set up; no phone title (W1-TRUTH); gear wing words healed | canvas · W1-FACES (gear wing) |
+| Speak | J1, dictation | Dock, ⌃5 → Talk | 16 | Learned has no toolbar; Talk toolbar on two rows at 393 | W1-FACES |
 | Components | J7 | Go ▸ Builder → specimens | 10 | breaks the grammar it shows | lane |
 | Ask | J3 | ⌘I/Ctrl+I, ⌘K → Save as note, Send | 11 | chat-demo look, oversized composer, mono errors | canvas (ASK) |
 | Decision record | J2 | Decisions row → Edit, Send | 12 | card box, "canonical", dead band | lane |
@@ -611,12 +640,12 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Decisions | J2 | Go → record | 15 | body as name; Decided vs Accepted | lane |
 | Engines | J6 | HoldSpeak menu → pickers | 15 | Ready after a failed check; two names | lane |
 | Processes | J7 | Go ▸ Builder | 15 | machine words; phone line off the edge | lane |
-| Activity | J7 | Go ▸ Builder → receipt | 16 | gear wing tokens; Rules says activity | lane |
-| Agents | J4 | Dock 3, ⌃4 → Answer, Open | 16 | runs and tools in one list; mono refusal | lane |
+| Activity | J7 | Go ▸ Builder → receipt | 17 | Records rows wrap at 1440 | W1-FACES (gear wing, Rules empty) |
+| Agents | J4 | Dock 3, ⌃4 → Answer, Open | 17 | runs and tools in one list | W1-FACES (ask card) |
 | Settings | J6 | HoldSpeak menu → panes | 17 | raw enums; raw steppers; scope lands at top | lane |
 | Automations | J4 | Go ▸ Work → automation | 17 | "No engine" vs the result's model | lane |
 | New Project | J3 | Projects → Room | 17 | clipped placeholder | lane (small) |
-| Meetings | J2 | Dock 1, ⌃2 → meeting | 18 | press does not open; Choose engine primary; gear wing | lane |
+| Meetings | J2 | Dock 1, ⌃2 → meeting | 19 | press does not open; Choose engine primary (W1-KIT) | W1-FACES (gear wing) |
 | Setup | J6 | HoldSpeak menu → Use everything found | 18 | "Priya Karol"; phone footer | lane |
 | Person | J3 | People → Record meeting | 18 | lone Add Buttons | — |
 | Automation (open) | J4 | Automations → Run now | 18 | empty band | — |

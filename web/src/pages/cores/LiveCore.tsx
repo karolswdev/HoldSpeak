@@ -60,6 +60,7 @@ import {
 } from "../../desk/surface/gadgets";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
+import { useWaitWord } from "../../desk/surface/objects/ListView";
 import { DotWord, StatusBar, Steps, ToolGlyph, Toolbar, type StatusBarItem } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { countToken } from "../../desk/surface/count";
@@ -563,11 +564,12 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       }
     />
   ) : null;
+  const devicesWait = useWaitWord(devices.loading);
   const configureFace = (
-    <>
+    <div className="live-configure">
       <SurfaceSection label="Intent routing">
         <GadgetGroup>
-          <GadgetRow label="ROUTING">
+          <GadgetRow label="Routing">
             <CycleGadget
               label="Intent routing preset"
               value={String(intentControl.data.profile ?? "auto")}
@@ -585,9 +587,11 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
               ]}
             />
           </GadgetRow>
+          {/* W1 (2026-10-27): the caption is one quiet sentence, not a
+              mono caps token line. */}
           <GadgetRow
-            label="PREVIEW"
-            fact="TESTS ROUTING · NEVER TOUCHES THE LIVE MEETING"
+            label="Try a phrase"
+            fact="Tests the route only, the live meeting does not change"
             wide
           >
             <PadGadget
@@ -613,8 +617,8 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
             {routeFacts.length ? (
               <GadgetGroup>
                 {routeFacts.map(([key, value]) => (
-                  <GadgetRow key={key} label={key.toUpperCase()}>
-                    <span className="gadget-fact">{value.toUpperCase()}</span>
+                  <GadgetRow key={key} label={key[0].toUpperCase() + key.slice(1)}>
+                    <span className="prefs-value">{value}</span>
                   </GadgetRow>
                 ))}
               </GadgetGroup>
@@ -633,16 +637,13 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           same thing the result section does: the Summary. */}
       <SurfaceSection label="Summary">
         <div className="surface-actions">
-          <span
-            className="surface-token"
-            data-tone={intelState === "error" ? "danger" : undefined}
-          >
-            {intelState}
-          </span>
+          <DotWord tone={intelState === "error" ? "fail" : intelState === "running" ? "info" : "idle"}>
+            {intelState === "error" ? "Failed" : intelState === "idle" ? "Nothing running" : intelState[0].toUpperCase() + intelState.slice(1).replace(/_/g, " ")}
+          </DotWord>
           {intelEgressChip}
         </div>
       </SurfaceSection>
-      <SurfaceSection label="Deferred plugin jobs">
+      <SurfaceSection label="Background work">
         <SurfaceState
           loading={pluginJobs.loading}
           error={pluginJobs.error}
@@ -674,13 +675,17 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       </SurfaceSection>
       <SurfaceSection label="Devices">
         <SurfaceState
-          loading={devices.loading}
           error={devices.error}
-          empty={!asRows(devices.data, ["devices", "items"]).length}
+          empty={!devices.loading && !asRows(devices.data, ["devices", "items"]).length}
           emptyLabel="No attached audio devices"
           emptyGlyph="◌"
           onRetry={() => void devices.reload()}
         >
+          {/* W1: a read that may never answer says how long it has waited,
+              then No answer; never a ring that turns forever. */}
+          {devicesWait ? (
+            <DotWord tone={devicesWait.tone} data-testid="live-devices-wait">{devicesWait.word}</DotWord>
+          ) : null}
           <SurfaceRows>
             {asRows(devices.data, ["devices", "items"]).map(
               (device, index) => {
@@ -688,7 +693,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
                 const rssi = presentValue(device.rssi_dbm);
                 const facts = [
                   battery ? `Battery ${battery}%` : "",
-                  rssi ? `RSSI ${rssi} dBm` : "",
+                  rssi ? `Signal ${rssi} dBm` : "",
                 ]
                   .filter(Boolean)
                   .join(" · ");
@@ -698,11 +703,9 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
                     title={String(device.name ?? device.id ?? "Device")}
                     detail={facts || undefined}
                     meta={
-                      <LampGadget
-                        label={device.stale ? "STALE" : "LIVE"}
-                        on
-                        tone={device.stale ? "warn" : "ok"}
-                      />
+                      <DotWord tone={device.stale ? "warn" : "ok"}>
+                        {device.stale ? "Stale" : "Live"}
+                      </DotWord>
                     }
                   />
                 );
@@ -711,7 +714,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
           </SurfaceRows>
         </SurfaceState>
       </SurfaceSection>
-    </>
+    </div>
   );
 
   /* The status bar: the capture state, audio only, speech, and the link to

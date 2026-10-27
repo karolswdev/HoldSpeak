@@ -473,3 +473,19 @@
     font-size: 12px;
   }
 }
+
+/* Window Program W1 (2026-10-27): `pref-window pref-bare` is the pane's
+   label/control grid without the rail, for a window's gear wing
+   (Configure dictation): the same rows, captions and dot-word states as
+   Settings, on the window's paper. */
+.desk-next .pref-window.pref-bare {
+  display: block;
+  min-height: 0;
+  padding: 12px 16px 16px;
+  background: var(--wb-paper);
+}
+.desk-next .pref-window.pref-bare > * {
+  max-width: 720px;
+  margin-inline: auto;
+}
+.desk-next .pref-window.pref-bare .gadget-group + .gadget-group { margin-top: 18px; }

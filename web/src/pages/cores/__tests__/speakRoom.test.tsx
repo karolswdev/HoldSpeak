@@ -418,7 +418,7 @@ describe("HS-170-04 Speak footer composition", () => {
      worse than a missing one: it is a reassurance."). The badge that pays
      Article III sits beside the verb, on the engine row; the foot now
      carries the receipt and the two verbs and claims no placement. */
-  it("publishes Review and Export through one foot, and claims no placement", async () => {
+  it("publishes Review and Export in the Talk toolbar (W1), and the foot claims no placement", async () => {
     mockRoutes({
       "/api/dictation/readiness": () =>
         Promise.resolve({

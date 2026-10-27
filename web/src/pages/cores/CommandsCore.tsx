@@ -49,7 +49,7 @@ const preview = (macro: Macro) =>
         record: "starts a recording",
         stop: "stops the recording",
         new_note: "opens a new note",
-        ask: "opens Ask HoldSpeak",
+        ask: "opens Ask",
         open_today: "opens Today",
       }[macro.action.payload] ?? "uses a Desk verb")
     : (({
@@ -62,7 +62,7 @@ const DESK_VERBS: Array<{ value: DeskVerb; label: string }> = [
   { value: "record", label: "Start recording" },
   { value: "stop", label: "Stop recording" },
   { value: "new_note", label: "New note" },
-  { value: "ask", label: "Ask HoldSpeak" },
+  { value: "ask", label: "Open Ask" },
   { value: "open_today", label: "Open Today" },
 ];
 
