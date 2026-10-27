@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Note workspace directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material: the values below are copied from web/src/styles/tokens.css (2026-10-27). */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-backdrop:#293847; --wb-rec:#b3261e;
+  --wb-row-hover:color-mix(in srgb,#3b5d93 8%,#fafbfc);
+  --ok:#34d399; --ok-strong:#10b981; --ember:#a86e4a; --ember-ink:#8a5a3d; --warn:#f59e0b; --danger:#dc2626;
+  --person-ink:#1f7a6b; --person-tint:rgba(52,211,153,.14);
+  --link-ink:#2f67c8; --head-ink:#2b4a7a;
+  --plate:#f3f6fb; --plate-rule:#d3ddea;
+  --lamp-ring:0 0 0 1.5px var(--wb-paper),0 1px 2px rgba(12,20,32,.4);
+  --win-shadow:0 18px 44px rgba(8,14,22,.40),0 3px 10px rgba(8,14,22,.24);
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#e9eef4;color:var(--wb-ink);font:15px/1.5 var(--font-ui);min-width:1520px}
+main{padding:32px 40px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+h3{font:600 14px/1.3 var(--font-ui);margin:20px 0 8px;color:var(--wb-muted)}
+p{margin:0 0 10px;max-width:1000px}
+.lede{display:grid;grid-template-columns:1fr 600px;gap:32px;align-items:start;margin-bottom:12px}
+.now{display:flex;gap:12px}
+.now figure{margin:0}
+.now img{display:block;border-radius:6px;border:1px solid var(--wb-rule)}
+figcaption{font-size:12px;color:var(--wb-muted);margin-top:4px}
+section.block{margin:40px 0 0;padding:24px 0 0;border-top:1px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#fff;color:var(--wb-muted);box-shadow:0 0 0 1px var(--wb-rule)}
+
+/* inventory */
+.inv{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;max-width:1440px}
+.inv div{background:#fff;border:1px solid var(--wb-rule-soft);border-radius:8px;padding:12px 14px}
+.inv h4{font:600 13px var(--font-display);margin:0 0 6px;color:var(--head-ink)}
+.inv ul{margin:0;padding:0 0 0 16px;font-size:13px;line-height:1.5}
+.inv li{margin:0 0 4px}
+.inv code{font:12px var(--font-mono);color:var(--wb-muted)}
+.inv .gap{color:var(--ember-ink)}
+
+/* answers grid */
+.qa{display:grid;grid-template-columns:200px 1fr 1fr 1fr;max-width:1440px;border:1px solid var(--wb-rule-soft);border-radius:8px;overflow:hidden;background:#fff;font-size:13px}
+.qa > div{padding:9px 12px;border-top:1px solid var(--wb-rule-soft);border-left:1px solid var(--wb-rule-soft)}
+.qa > div:nth-child(4n+1){border-left:0;font-weight:600;color:var(--wb-muted)}
+.qa > .h{border-top:0;font:600 13px var(--font-display);background:var(--wb-steel-2)}
+.qa > .h.rec{background:var(--wb-blue);color:var(--head-ink)}
+.qa > .rec{background:color-mix(in srgb,var(--wb-blue) 45%,#fff)}
+
+.cost{font-size:14px;color:var(--wb-ink);max-width:1200px}
+.cost code{font:12.5px var(--font-mono);color:var(--wb-muted)}
+.order{font-size:14px;max-width:1200px;padding-left:22px}
+.order li{margin:0 0 6px}
+.order b{font-weight:600}
+
+/* ---------- the real 1440 desk ---------- */
+.desk{position:relative;width:1440px;height:900px;overflow:hidden;background:url(note-workspace-2026-10-27/desk-1440.png) 0 0/1440px 900px no-repeat;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);margin-top:8px}
+.mbpatch{position:absolute;left:322px;top:0;width:670px;height:35px;background:var(--wb-paper)}
+.floorpatch{position:absolute;left:660px;top:56px;width:780px;height:580px;background:linear-gradient(180deg,#2f4155 0%,#2c3d50 100%)}
+.wpos{left:670px;top:64px}
+
+/* ---------- the window ---------- */
+.win{position:absolute;width:760px;height:560px;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--win-shadow);overflow:hidden;display:flex;flex-direction:column;font-family:var(--font-ui)}
+.win.short{height:auto}
+.win.short .page{flex:none}
+.tb{flex:0 0 30px;height:30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tb .x{width:20px;text-align:center;font-size:15px;opacity:.9}
+.tb .gl{width:18px;height:18px;border-radius:4px;background:#fff;display:grid;place-items:center}
+.tb .gl img{width:14px;height:14px}
+.tb .name{font:600 13.5px/1 var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;display:flex;align-items:center;gap:6px;min-width:0}
+.tb .name .dim{opacity:.72;font-weight:500}
+.tb .name .sep{opacity:.55}
+.tb .name .edit{background:#fff;color:var(--wb-ink);border-radius:4px;padding:3px 6px;font:500 13px var(--font-ui);box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.tb .gad{display:flex;gap:2px}
+.tb .gad span{width:28px;height:22px;display:grid;place-items:center}
+.tb .gad svg{width:14px;height:14px;stroke:#f7f9fc;fill:none;stroke-width:1.6}
+.toolbar{flex:0 0 36px;height:36px;display:flex;align-items:center;gap:2px;padding:0 6px;border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-paper)}
+.btn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:5px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc;padding:0 11px}
+.btn.secondary{background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule)}
+.btn.on{background:var(--wb-blue);box-shadow:inset 0 0 0 1px #b8c8e0}
+.btn.sm{height:22px;font-size:12px;padding:0 8px}
+.toolbar .grow{flex:1}
+.mic{width:28px;height:26px;display:grid;place-items:center;border-radius:5px;color:var(--wb-muted)}
+.mic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6}
+.body{flex:1;display:flex;min-height:0;position:relative}
+.page{flex:1;min-width:0;padding:16px 22px 0 22px;overflow:hidden;position:relative}
+.sb{flex:0 0 24px;height:24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:14px;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .it img{width:14px;height:14px}
+.sb .press{color:var(--wb-ink);border-radius:4px;padding:1px 4px;margin:0 -4px}
+.sb .press:hover,.sb .press.hov{background:var(--wb-hover,rgba(37,52,73,.07))}
+.sb .grow{flex:1}
+.lamp{width:8px;height:8px;border-radius:50%;background:var(--ok-strong);box-shadow:var(--lamp-ring);display:inline-block}
+.lamp.breath{animation:breath 2.4s ease-in-out infinite}
+@keyframes breath{0%,70%,100%{box-shadow:var(--lamp-ring)}35%{box-shadow:var(--lamp-ring),0 0 0 5px rgba(16,185,129,.22)}}
+
+/* ---------- the note's text (live preview) ---------- */
+.doc{font:14px/1.6 var(--font-ui);color:var(--wb-ink)}
+.doc p{margin:0 0 10px}
+.doc .h1{font:600 22px/1.25 var(--font-display);color:var(--head-ink);margin:2px 0 10px}
+.doc .h2{font:600 15.5px/1.3 var(--font-display);color:var(--head-ink);margin:12px 0 6px}
+.doc .task{display:flex;align-items:center;gap:9px;height:26px;border-radius:4px;margin:0 -6px;padding:0 6px;position:relative}
+.doc .task .box{flex:0 0 15px;height:15px;border-radius:4px;border:1.5px solid #8fa4bd;background:#fff;display:grid;place-items:center}
+.doc .task.done .box{background:var(--wb-sel-vivid);border-color:var(--wb-sel-vivid)}
+.doc .task.done .box svg{width:11px;height:11px;stroke:#fff;fill:none;stroke-width:2.4;stroke-dasharray:14;stroke-dashoffset:0;animation:tick .6s ease-out 1s both}
+@keyframes tick{from{stroke-dashoffset:14}to{stroke-dashoffset:0}}
+.doc .task.done .t{color:var(--wb-faint);text-decoration:line-through;text-decoration-color:#a9b6c6}
+.doc .task.lit{background:color-mix(in srgb,var(--wb-sel-vivid) 10%,transparent);box-shadow:inset 2px 0 0 var(--wb-sel-vivid)}
+.doc .meta{color:var(--wb-faint);font-size:12.5px}
+.plate{margin:10px 0 10px;border-radius:8px;background:radial-gradient(circle,#d7e0ec 1px,transparent 1.2px) 0 0/14px 14px,var(--plate);border:1px solid var(--plate-rule);box-shadow:inset 0 1px 2px rgba(37,52,73,.06);padding:8px 10px;position:relative}
+.plate .cap{position:absolute;right:8px;top:6px;font:500 11px var(--font-ui);color:var(--wb-faint)}
+.plate svg{display:block}
+.decision{display:flex;gap:9px;align-items:flex-start;padding:6px 10px;border-radius:6px;background:color-mix(in srgb,var(--ember) 9%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--ember);margin:4px 0}
+.decision img{width:16px;height:16px;margin-top:3px}
+.decision b{font-weight:600;color:var(--ember-ink)}
+
+/* object tokens, per direction */
+.tok{white-space:nowrap;border-radius:4px}
+.tok img{width:14px;height:14px;vertical-align:-2px;margin-right:3px}
+.tok .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--ok-strong);margin-left:4px;vertical-align:1px}
+.mono{font:12.5px var(--font-mono)}
+/* A: ink + glyph, no box */
+.dA .tok.person{color:var(--person-ink);font-weight:500}
+.dA .tok.pr,.dA .tok.jira,.dA .tok.proj{color:var(--link-ink);font-weight:500}
+.dA .tok.hov{background:color-mix(in srgb,var(--link-ink) 10%,transparent);box-shadow:0 0 0 2px color-mix(in srgb,var(--link-ink) 10%,transparent)}
+/* B: soft capsules */
+.dB .tok{padding:1px 5px 1px 3px;box-shadow:inset 0 0 0 1px var(--wb-rule-soft);background:var(--wb-well)}
+.dB .tok.person{background:var(--person-tint);box-shadow:none;color:var(--person-ink)}
+.dB .tok.sel{box-shadow:0 0 0 2px var(--wb-sel-vivid)}
+/* C: plain underlined links in their kind ink */
+.dC .tok{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.dC .tok.person{color:var(--person-ink);text-decoration-color:rgba(31,122,107,.45)}
+.dC .tok.pr,.dC .tok.jira,.dC .tok.proj{color:var(--link-ink);text-decoration-color:rgba(47,103,200,.4)}
+.dC .tok img{display:none}
+
+/* ---------- A: the margin ---------- */
+.margin{flex:0 0 250px;border-left:1px solid var(--wb-rule-soft);background:linear-gradient(90deg,rgba(37,52,73,.045),rgba(37,52,73,0) 10px),#f4f6fa;position:relative;overflow:hidden}
+.mhead{height:28px;display:flex;align-items:center;gap:6px;padding:0 6px 0 12px;font:600 12px var(--font-display);color:var(--wb-muted);border-bottom:1px solid var(--wb-rule-soft)}
+.mhead .grow{flex:1}
+.mhead .xx{width:22px;height:20px;display:grid;place-items:center;color:var(--wb-faint);font-size:13px}
+.mnote{position:absolute;left:10px;right:10px;background:var(--wb-well);border-radius:7px;box-shadow:0 1px 3px rgba(22,40,62,.12),0 0 0 1px var(--wb-rule-soft);padding:8px 10px 8px 10px;font-size:12.5px;line-height:1.45}
+.mnote .q{color:var(--wb-muted);font-size:12px;margin-bottom:4px;display:flex;gap:5px;align-items:center}
+.mnote .q svg{width:13px;height:13px;stroke:var(--wb-sel);fill:none;stroke-width:1.7}
+.mnote .vb{display:flex;gap:6px;margin-top:7px}
+.mlist{position:absolute;left:0;right:0}
+.mcap{font:600 11.5px var(--font-display);color:var(--wb-muted);padding:0 12px;height:22px;display:flex;align-items:center;gap:6px}
+.mrow{height:30px;display:flex;align-items:center;gap:7px;padding:0 8px 0 12px;font-size:12.5px;position:relative}
+.mrow img{width:16px;height:16px;flex:0 0 16px}
+.mrow .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mrow .who{flex:0 0 18px;height:18px;border-radius:50%;background:var(--person-tint);color:var(--person-ink);font:600 10px/18px var(--font-ui);text-align:center}
+.mrow.hov{background:var(--wb-row-hover);box-shadow:inset 0 0 0 1px #c9d6ea}
+.mrow.ok .t{color:var(--wb-muted)}
+.mrow .okw{font-size:11.5px;color:var(--ok-strong);display:inline-flex;align-items:center;gap:4px}
+.arrive{animation:arrive .32s ease-out both}
+@keyframes arrive{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.leader{position:absolute;pointer-events:none}
+
+/* peek card (A) */
+.peek{position:absolute;width:300px;background:var(--wb-well);border-radius:8px;box-shadow:0 10px 28px rgba(8,14,22,.22),0 0 0 1px var(--wb-rule);padding:10px 12px;font-size:12.5px;z-index:3}
+.peek .hd{display:flex;gap:8px;align-items:center;font:600 13.5px var(--font-display);margin-bottom:4px}
+.peek .hd img{width:20px;height:20px}
+.peek .ln{color:var(--wb-muted);margin:2px 0}
+.peek .vb{display:flex;gap:6px;margin-top:8px}
+.state{display:inline-flex;align-items:center;gap:5px;color:var(--ok-strong);font-weight:500}
+
+/* ---------- B: Info wing + drawer ---------- */
+.wing{flex:0 0 222px;border-left:1px solid var(--wb-rule-soft);background:#f4f6fa;overflow:hidden}
+.wcap{font:600 11.5px var(--font-display);color:var(--wb-muted);padding:10px 12px 3px}
+.wrow{height:30px;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:12.5px;white-space:nowrap}
+.wrow img{width:16px;height:16px}
+.wrow .t{overflow:hidden;text-overflow:ellipsis}
+.wrow.sel{background:var(--wb-sel-vivid);color:#fff}
+.wrow .m{margin-left:auto;color:var(--wb-faint);font-size:11.5px}
+.wrow.sel .m{color:#dbe6f7}
+.pcard{margin:6px 10px 8px;background:#fff;border-radius:7px;box-shadow:0 0 0 1px var(--wb-rule-soft);padding:8px 10px;font-size:12px;color:var(--wb-muted);line-height:1.5}
+.pcard b{color:var(--wb-ink);font-weight:600}
+.drawer{position:absolute;left:0;right:0;bottom:0;height:196px;background:var(--wb-paper);border-top:1px solid var(--wb-rule);box-shadow:0 -8px 18px rgba(22,40,62,.10);display:flex;flex-direction:column}
+.drawer .grip{height:6px;display:grid;place-items:center}
+.drawer .grip i{width:36px;height:3px;border-radius:2px;background:#c2cddb}
+.dtabs{height:30px;display:flex;align-items:center;gap:4px;padding:0 8px;border-bottom:1px solid var(--wb-rule-soft)}
+.seg{display:inline-flex;background:var(--wb-steel);border-radius:6px;padding:2px}
+.seg span{height:22px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;font:500 12px var(--font-ui);border-radius:4px;color:var(--wb-muted)}
+.seg span.on{background:#fff;color:var(--wb-ink);box-shadow:0 1px 2px rgba(22,40,62,.14)}
+.seg .n{font-variant-numeric:tabular-nums;color:var(--wb-faint)}
+.lv{font-size:12.5px}
+.lv .hdr,.lv .r{display:grid;grid-template-columns:22px 1fr 96px 70px 78px;align-items:center;height:30px;padding:0 10px}
+.lv .hdr{height:24px;font:500 11.5px var(--font-ui);color:var(--wb-faint);border-bottom:1px solid var(--wb-rule-soft)}
+.lv .r{border-bottom:1px solid #e9eef4}
+.lv .r img{width:16px;height:16px}
+.lv .r.sel{background:var(--wb-sel-vivid);color:#fff}
+.lv .r.sel .m{color:#dbe6f7}
+.lv .m{color:var(--wb-muted)}
+
+/* ---------- C: inline answers + gutter ---------- */
+.dC .page{padding-left:40px}
+.gut{position:absolute;left:-28px;width:18px;height:18px;display:grid;place-items:center}
+.gut .ring{width:13px;height:13px;border-radius:50%;border:1.6px solid var(--wb-sel-vivid);background:#fff}
+.gut .ring.pop{animation:pop .3s ease-out both}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+.gut .fill{width:13px;height:13px;border-radius:50%;background:var(--wb-sel-vivid);display:grid;place-items:center}
+.gut .fill svg{width:9px;height:9px;stroke:#fff;fill:none;stroke-width:2.6}
+.gut .dia{width:11px;height:11px;background:var(--ember);transform:rotate(45deg);border-radius:2px}
+.ghost{color:#7f90a6;font-style:italic;font-size:12.5px;margin-left:6px}
+.answerplate{margin:0 0 12px;border-radius:7px;background:color-mix(in srgb,var(--wb-sel-vivid) 6%,var(--wb-paper));box-shadow:inset 3px 0 0 #8fb0e6,0 0 0 1px #d6e1f2;padding:8px 12px;font-size:13px;line-height:1.5;color:#33465f}
+.answerplate .q{font-size:12px;color:var(--wb-muted);display:flex;gap:6px;align-items:center;margin-bottom:3px}
+.answerplate .q svg{width:13px;height:13px;stroke:var(--wb-sel);fill:none;stroke-width:1.7}
+.answerplate .vb{display:flex;gap:6px;margin-top:6px}
+.slash{position:absolute;width:280px;background:#fff;border-radius:8px;box-shadow:0 10px 28px rgba(8,14,22,.22),0 0 0 1px var(--wb-rule);padding:4px 0;font-size:13px}
+.slash .r{height:30px;display:flex;align-items:center;gap:9px;padding:0 12px}
+.slash .r img{width:16px;height:16px}
+.slash .r .k{margin-left:auto;color:var(--wb-faint);font-size:11.5px}
+.slash .r.sel{background:var(--wb-sel-vivid);color:#fff}
+.slash .r.sel .k{color:#dbe6f7}
+.hover-card{position:absolute;width:320px;background:#fff;border-radius:8px;box-shadow:0 10px 28px rgba(8,14,22,.22),0 0 0 1px var(--wb-rule);padding:12px;font-size:12.5px;z-index:3}
+
+/* empty-note templates (A) */
+.cue{color:var(--wb-faint);font-size:14px;margin:0 0 14px}
+.tpl{width:340px}
+.tpl .r{height:30px;display:flex;align-items:center;gap:9px;padding:0 8px;border-radius:5px;font-size:13px;color:var(--wb-ink)}
+.tpl .r img{width:16px;height:16px}
+.tpl .r .m{color:var(--wb-faint);font-size:12px;margin-left:auto}
+.tpl .r.hov{background:var(--wb-row-hover);box-shadow:inset 0 0 0 1px #c9d6ea}
+.tpl .cap{font:600 11.5px var(--font-display);color:var(--wb-muted);padding:0 8px 4px}
+
+/* state strips */
+.strip{display:flex;gap:28px;align-items:flex-start;margin-top:14px}
+.frag{position:relative;background:linear-gradient(180deg,#33495f 0%,#293847 100%);border-radius:6px;padding:20px;box-shadow:0 0 0 1px var(--wb-rule)}
+.frag .win{position:relative}
+.note-s{font-size:12px;color:var(--wb-muted);margin-top:6px;max-width:760px}
+
+/* phone */
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:url(note-workspace-2026-10-27/today-393.png) 0 0/393px 852px no-repeat;font-family:var(--font-ui)}
+.phones{display:flex;gap:64px;align-items:flex-start;margin:14px 0 0 10px}
+.ph-sys{position:absolute;left:92px;top:0;width:200px;height:44px;background:var(--wb-paper)}
+.ph-win{position:absolute;left:0;right:0;top:44px;height:726px;background:var(--wb-paper);display:flex;flex-direction:column}
+.ph-tb{height:44px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 14px var(--font-display)}
+.ph-tb .back{font:500 13px var(--font-ui);opacity:.9}
+.ph-tb .n{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ph-tb .done{font:600 13px var(--font-ui);background:rgba(255,255,255,.16);padding:6px 10px;border-radius:6px}
+.ph-tool{height:44px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid var(--wb-rule-soft)}
+.ph-tool .ib{width:40px;height:36px;display:grid;place-items:center;color:var(--wb-ink)}
+.ph-tool .ib svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ph-tool .grow{flex:1}
+.ph-page{flex:1;padding:14px 16px 0;overflow:hidden;position:relative}
+.ph-sheet{position:absolute;left:0;right:0;bottom:24px;height:300px;background:var(--wb-paper);border-radius:14px 14px 0 0;box-shadow:0 -10px 24px rgba(8,14,22,.18),0 0 0 1px var(--wb-rule-soft)}
+.ph-sheet .grip{height:14px;display:grid;place-items:center}
+.ph-sheet .grip i{width:40px;height:4px;border-radius:2px;background:#c2cddb}
+.ph-row{height:44px;display:flex;align-items:center;gap:10px;padding:0 16px;font-size:14px;border-bottom:1px solid #e9eef4}
+.ph-row img{width:20px;height:20px}
+.ph-row .t{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ph-sb{position:absolute;left:0;right:0;bottom:0;height:24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:10px;padding:0 12px;font-size:12px;color:var(--wb-muted)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="g-done" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></symbol>
+  <symbol id="g-ask" viewBox="0 0 16 16"><path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/><path d="M5 6.3h6M5 8.3h4"/></symbol>
+  <symbol id="g-tasks" viewBox="0 0 16 16"><path d="M2 4.2l1.2 1.2 2-2.2M2 9.2l1.2 1.2 2-2.2M7.5 4.5h6.5M7.5 9.5h6.5M7.5 13h6.5"/></symbol>
+  <symbol id="g-proj" viewBox="0 0 16 16"><path d="M1.8 4.2h4.4l1.4 1.5h6.6v7H1.8z"/></symbol>
+  <symbol id="g-send" viewBox="0 0 16 16"><path d="M14 2L1.8 7.2 6.5 9l1.8 4.8z"/><path d="M6.5 9L14 2"/></symbol>
+  <symbol id="g-mic" viewBox="0 0 16 16"><rect x="5.5" y="1.8" width="5" height="8" rx="2.5"/><path d="M3.3 7.6a4.7 4.7 0 0 0 9.4 0M8 12.4v2"/></symbol>
+  <symbol id="g-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4M8 4.8v.2"/></symbol>
+  <symbol id="g-min" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M5 10.5h6"/></symbol>
+  <symbol id="g-max" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><rect x="5" y="5" width="6" height="4"/></symbol>
+  <symbol id="g-depth" viewBox="0 0 16 16"><rect x="2" y="5" width="8" height="8" rx="1.2"/><path d="M6 5V3h8v8h-4"/></symbol>
+  <symbol id="g-check" viewBox="0 0 12 12"><path d="M2.2 6.3l2.4 2.3L9.8 3.4"/></symbol>
+</svg>
+<main>
+
+<div class="lede">
+  <div>
+    <h1>The Note as a workspace</h1>
+    <p>Three directions for the Note window, drawn at real size (760 × 560) over the real 1440 desk, in our tokens and window grammar. Each one answers the same six questions. The recommendation is first.</p>
+    <p>The worked example is an architect's note, "Ledger cutover plan": a heading, a paragraph with a PR link, a task list, a flowchart, a decision line and an @Priya mention. The live preview (headings, lists, task boxes, links, code, tables) is assumed, as the parallel lane builds it.</p>
+    <p style="color:var(--wb-muted);font-size:13px">Today: the title shows three times (menu bar, title bar, title row). The question band and the task rows push the editor down. Links collect in a "Linked items" fold under the text. The Project link is a well that opens under the editor.</p>
+  </div>
+  <div class="now">
+    <figure><img src="note-workspace-2026-10-27/today-mermaid-1440.png" width="300" alt="Today, a note with a diagram"><figcaption>Today at 1440, after #1499</figcaption></figure>
+    <figure><img src="note-workspace-2026-10-27/today-default-1440.png" width="300" alt="Today, a seeded note"><figcaption>Today: one long name three times</figcaption></figure>
+  </div>
+</div>
+
+<section class="block">
+  <h2>What a note can do today</h2>
+  <p style="font-size:13px;color:var(--wb-muted)">Read from the code on main 94129956f. One line each.</p>
+  <div class="inv">
+    <div><h4>Verbs (toolbar)</h4><ul>
+      <li><b>Done</b>: saves, then closes the window. <code>ThoughtWorkspaceWindow.tsx:592</code></li>
+      <li><b>Ask about this</b>: saves, opens the Ask window with the note in About and the selected text quoted. <code>:593, :499</code></li>
+      <li><b>Find the tasks</b>: the hub reads the note and returns task and decision rows. <code>:594</code>, <code>POST /api/notes/{id}/outcomes/find</code></li>
+      <li><b>Project ▾</b>: opens a well to pick a project and Add (a project resource, "related"). <code>ProjectWell.tsx:27</code></li>
+      <li><b>Send…</b>: saves, then the Send wells replace the editor (destinations, preview, Send). <code>:596, :659</code></li>
+      <li><b>Mic</b>: speaks into the note at the caret; a kept voice draft offers Insert at caret or Copy. <code>ThoughtDocumentPane.tsx:135, :48</code></li>
+      <li><b>⌘S</b> saves; <b>⌘↵</b> adds the answer, adds the draft, or is Done. <code>:540–556</code></li>
+    </ul></div>
+    <div><h4>Wells and bands</h4><ul>
+      <li><b>The question band</b>: a refinement turn asks a question; answer by text or voice, then Add to note. <code>:600–611</code></li>
+      <li><b>The draft band</b>: a refinement draft; Add to note appends it (never replaces your words). <code>:614, :374</code></li>
+      <li><b>Task rows</b>: "Who owes what" and "Decisions" ledgers; Confirm, Edit, Dismiss per row. <code>NoteOutcomesWell.tsx:121–193</code></li>
+      <li><b>Project well</b>: a project picker with Add and Close. <code>ProjectWell.tsx:41</code></li>
+      <li><b>Linked items</b>: a fold under the text with one Button per object link in the body. <code>ReadingDocument.tsx:80</code></li>
+      <li><b>Diagram</b>: a mermaid block draws as a flowchart in place. <code>mermaidPreview.ts</code></li>
+      <li class="gap">Built, not mounted: <b>TaskWell</b> (Task, Who, When) and <b>ThoughtReadsWell</b> ("Add notes" context). No import outside their own files.</li>
+    </ul></div>
+    <div><h4>Returns</h4><ul>
+      <li><b>From Ask</b>: Add to note grows the note; a clean window reads it again, a dirty one shows Changed elsewhere with Reload. <code>:262</code></li>
+      <li><b>Back from Ask</b>: the caret goes back to the quoted range, or the line says Source changed. <code>askReturn.ts:6</code></li>
+      <li><b>A draft added</b>: the added range is checked by SHA-256 and revealed. <code>:75</code></li>
+      <li><b>Status bar</b>: the save lamp and words (Saved just now, Changed elsewhere) and one verb: Reload, Retry or Stop. <code>:640</code></li>
+      <li><b>Return to Project</b>: a title-bar verb when the note opened from a Project. <code>:737</code></li>
+    </ul></div>
+    <div><h4>Filing and relations</h4><ul>
+      <li><b>Project</b>: <code>PUT /api/projects/{p}/resources/note:{id}</code>. The note does not show which projects hold it.</li>
+      <li><b>Drawers</b>: a note icon on the floor drops into a zone drawer (<code>zone_file</code> MCP).</li>
+      <li><b>People</b>: a person's notes are a People write (<code>people_note_create</code>), not a link from this note.</li>
+      <li><b>Object menu</b>: Open, Rename, Duplicate, Delete, Hand to agent. <code>objectMenu.ts:60</code></li>
+      <li><b>Object links</b>: a Markdown link with a ref (<code>people:</code>, <code>project:</code>, <code>decision:</code>, <code>coder:</code>…) opens that object's window. <code>openObject.ts:172</code></li>
+      <li class="gap">Not known to the note today: the meeting it came from (the source is typed, voice or note, <code>thoughts.ts:15</code>), its projects (no reverse read), plain PR numbers and Jira keys.</li>
+    </ul></div>
+  </div>
+</section>
+
+<!-- ======================= A ======================= -->
+<section class="block">
+  <h2>A. The page and its margin <span class="tag">Recommended</span></h2>
+  <p>The text never moves. Answers and found tasks land in a margin at the window's right edge, each one beside the line it came from. The title lives in the title bar only. The filed place and the source meeting are words in the status bar that you can press.</p>
+  <div class="desk">
+    <div class="mbpatch"></div>
+    <div class="win wpos dA" id="winA">
+      <div class="tb"><span class="x">✕</span><span class="gl"><img src="note-workspace-2026-10-27/glyphs/note-20.png" alt=""></span><span class="name">Ledger cutover plan</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+      <div class="toolbar">
+        <span class="btn primary"><svg><use href="#g-done"/></svg>Done</span>
+        <span class="btn"><svg><use href="#g-ask"/></svg>Ask about this</span>
+        <span class="btn"><svg><use href="#g-tasks"/></svg>Find the tasks</span>
+        <span class="btn"><svg><use href="#g-proj"/></svg>Project ▾</span>
+        <span class="btn"><svg><use href="#g-send"/></svg>Send…</span>
+        <span class="grow"></span><span class="mic"><svg><use href="#g-mic"/></svg></span>
+      </div>
+      <div class="body">
+        <div class="page doc" id="pageA"></div>
+        <div class="margin">
+          <div class="mhead">In the margin<span class="grow"></span><span class="xx">✕</span></div>
+          <div class="mnote arrive" style="top:38px">
+            <div class="q"><svg><use href="#g-ask"/></svg>Ask: what can block the freeze?</div>
+            The shim in PR #1482 has one failing check. The backup job runs at 02:00, so a freeze at 22:00 leaves a 4-hour gap.
+            <div class="vb"><span class="btn secondary sm">Add to note</span><span class="btn sm">Dismiss</span></div>
+          </div>
+          <div class="mlist" style="top:206px">
+            <div class="mcap">Found in this note</div>
+            <div class="mrow ok arrive" style="animation-delay:.05s"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t">Freeze schema changes</span><span class="okw"><span class="lamp" style="width:7px;height:7px"></span>Done</span></div>
+            <div class="mrow hov arrive" style="animation-delay:.15s"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t">Review PR #1482</span><span class="who">M</span><span class="btn secondary sm">Confirm</span></div>
+            <div class="mrow arrive" style="animation-delay:.25s"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t">Dry run on staging</span><span class="who">Me</span></div>
+            <div class="mrow arrive" style="animation-delay:.35s"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t">Tell the team in the channel</span><span class="who">Me</span></div>
+            <div class="mrow arrive" style="animation-delay:.9s;margin-top:32px"><img src="note-workspace-2026-10-27/glyphs/decision-20.png" alt=""><span class="t">Old ledger read-only, 30 days</span></div>
+          </div>
+        </div>
+        <svg class="leader" style="left:0;top:0" width="760" height="480"><path d="M486 30 C 504 30, 502 56, 520 56" stroke="#8fb0e6" stroke-width="1.5" fill="none"/><circle cx="486" cy="30" r="2.5" fill="#8fb0e6"/></svg>
+      </div>
+      <div class="sb">
+        <span class="it"><span class="lamp breath"></span>Saved just now</span>
+        <span class="it press hov"><img src="note-workspace-2026-10-27/glyphs/project-drawer-20.png" alt="">Payments ledger cutover</span>
+        <span class="it press"><img src="note-workspace-2026-10-27/glyphs/meeting-20.png" alt="">From Ledger sync, Oct 24</span>
+        <span class="grow"></span>
+        <span class="it">2 people · 1 decision</span>
+      </div>
+    </div>
+  </div>
+  <p class="note-s">Shown: Find the tasks has returned (rows arrive one by one, 100 ms apart); the pointer is on "Review PR #1482", so its line in the text lights. An Ask answer is pinned beside the paragraph it quoted. The menu bar has no title (the patch over the menu bar shows its new empty middle). The project word in the status bar is under the pointer: press opens the Project room.</p>
+
+  <h3>States at real size</h3>
+  <div class="strip">
+    <div class="frag">
+      <div class="win short dA" style="width:760px">
+        <div class="tb"><span class="x">✕</span><span class="gl"><img src="note-workspace-2026-10-27/glyphs/note-20.png" alt=""></span><span class="name"><span class="edit">New note</span></span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+        <div class="toolbar"><span class="btn primary"><svg><use href="#g-done"/></svg>Done</span><span class="btn"><svg><use href="#g-ask"/></svg>Ask about this</span><span class="btn" style="opacity:.45"><svg><use href="#g-tasks"/></svg>Find the tasks</span><span class="btn"><svg><use href="#g-proj"/></svg>Project ▾</span><span class="btn"><svg><use href="#g-send"/></svg>Send…</span><span class="grow"></span><span class="mic" style="color:var(--wb-sel)"><svg><use href="#g-mic"/></svg></span></div>
+        <div class="page doc" style="height:236px;padding-top:18px">
+          <div class="cue">Start with what you know, or start from one of these.</div>
+          <div class="tpl">
+            <div class="r"><img src="note-workspace-2026-10-27/glyphs/meeting-20.png" alt="">Meeting notes<span class="m">Who, decisions, tasks</span></div>
+            <div class="r hov"><img src="note-workspace-2026-10-27/glyphs/decision-20.png" alt="">Decision<span class="m">Context, options, choice</span></div>
+            <div class="r"><img src="note-workspace-2026-10-27/glyphs/note-20.png" alt="">Plan<span class="m">Goal, steps, risks</span></div>
+            <div class="r"><img src="note-workspace-2026-10-27/glyphs/person-20.png" alt="">1:1<span class="m">Their topics, mine, follow-ups</span></div>
+          </div>
+        </div>
+        <div class="sb"><span class="it">Not saved yet</span></div>
+      </div>
+      <div class="note-s" style="color:#dbe4ee">The empty note: the cue line and four starts. The first key you type or speak removes them. The title is in the title bar, ready to type; Enter goes to the page.</div>
+    </div>
+    <div class="frag" style="width:520px">
+      <div class="win short dA" style="width:480px">
+        <div class="page doc" style="height:230px;padding-top:14px">
+          <p>We move the payments ledger to the new store on Nov 14. The dual-write shim is in <span class="tok pr hov"><img src="note-workspace-2026-10-27/glyphs/pull-request-20.png" alt="">PR #1482<span class="dot"></span></span> and must land before the freeze.</p>
+          <div class="peek" style="left:150px;top:62px">
+            <div class="hd"><img src="note-workspace-2026-10-27/glyphs/pull-request-20.png" alt="">Dual-write shim for the ledger store</div>
+            <div class="ln"><span class="mono">#1482</span> · <span class="state"><span class="lamp" style="width:7px;height:7px"></span>Open</span> · 1 check fails</div>
+            <div class="ln">Marcus Chen · changed 2 hours ago</div>
+            <div class="vb"><span class="btn secondary sm">Open</span><span class="btn sm"><svg><use href="#g-ask"/></svg>Ask about this</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="note-s" style="color:#dbe4ee">Hover on an object gives a peek card (no modal; it goes when the pointer leaves). Press the token opens the object's own window.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= B ======================= -->
+<section class="block">
+  <h2>B. The drawer and the Info wing <span class="tag alt">Direction</span></h2>
+  <p>The page names itself: its first line is the title. Answers and tasks rise in a drawer from the status bar, as a real list view with columns. Relations live in an Info wing that you open from the toolbar.</p>
+  <div class="desk">
+    <div class="mbpatch"></div>
+    <div class="win wpos dB">
+      <div class="tb"><span class="x">✕</span><span class="gl"><img src="note-workspace-2026-10-27/glyphs/note-20.png" alt=""></span><span class="name">Note</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+      <div class="toolbar">
+        <span class="btn primary"><svg><use href="#g-done"/></svg>Done</span>
+        <span class="btn"><svg><use href="#g-ask"/></svg>Ask about this</span>
+        <span class="btn"><svg><use href="#g-tasks"/></svg>Find the tasks</span>
+        <span class="btn"><svg><use href="#g-send"/></svg>Send…</span>
+        <span class="grow"></span>
+        <span class="btn on"><svg><use href="#g-info"/></svg>Info</span>
+        <span class="mic"><svg><use href="#g-mic"/></svg></span>
+      </div>
+      <div class="body">
+        <div style="flex:1;position:relative;min-width:0">
+          <div class="page doc" id="pageB" style="height:100%"></div>
+          <div class="drawer">
+            <div class="grip"><i></i></div>
+            <div class="dtabs"><span class="seg"><span class="on">Tasks <span class="n">4</span></span><span>Decisions <span class="n">1</span></span><span>Answers <span class="n">1</span></span></span></div>
+            <div class="lv">
+              <div class="hdr"><span></span><span>Task</span><span>Who</span><span>When</span><span></span></div>
+              <div class="r"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span>Freeze schema changes</span><span class="m">Priya</span><span class="m">Nov 10</span><span class="m">Confirmed</span></div>
+              <div class="r sel"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span>Review PR #1482</span><span class="m">Marcus</span><span class="m">Nov 6</span><span><span class="btn secondary sm" style="color:var(--wb-ink)">Confirm</span></span></div>
+              <div class="r"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span>Dry run on staging</span><span class="m">Me</span><span class="m"></span><span></span></div>
+              <div class="r"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span>Tell the team in the channel</span><span class="m">Me</span><span class="m"></span><span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="wing">
+          <div class="wcap">Filed in</div>
+          <div class="wrow"><img src="note-workspace-2026-10-27/glyphs/project-drawer-20.png" alt=""><span class="t">Payments ledger cutover</span></div>
+          <div class="wcap">From</div>
+          <div class="wrow"><img src="note-workspace-2026-10-27/glyphs/meeting-20.png" alt=""><span class="t">Ledger sync</span><span class="m">Oct 24</span></div>
+          <div class="wcap">People</div>
+          <div class="wrow sel"><img src="note-workspace-2026-10-27/glyphs/person-20.png" alt=""><span class="t">Priya Raman</span><span class="m">2 tasks</span></div>
+          <div class="pcard"><b>Priya Raman</b> · Staff engineer<br>1:1 on Thursday · owes 1 from last week</div>
+          <div class="wrow"><img src="note-workspace-2026-10-27/glyphs/person-20.png" alt=""><span class="t">Marcus Chen</span><span class="m">1 task</span></div>
+          <div class="wcap">Linked</div>
+          <div class="wrow"><img src="note-workspace-2026-10-27/glyphs/pull-request-20.png" alt=""><span class="t">PR #1482</span><span class="m">Open</span></div>
+          <div class="wrow"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t mono">PAY-311</span><span class="m">To do</span></div>
+          <div class="wrow"><img src="note-workspace-2026-10-27/glyphs/decision-20.png" alt=""><span class="t">Old ledger read-only</span></div>
+        </div>
+      </div>
+      <div class="sb"><span class="it"><span class="lamp breath"></span>Saved just now</span><span class="grow"></span><span class="it">142 words</span></div>
+    </div>
+  </div>
+  <p class="note-s">Shown: the drawer is open on Tasks; @Priya was pressed in the text, so the Info wing selects her and shows a short card. The editor keeps its top; the drawer covers its lower part and can be dragged taller. The Project verb leaves the toolbar: Filed in is in the wing.</p>
+  <h3>States at real size</h3>
+  <div class="strip">
+    <div class="frag">
+      <div class="win short dB" style="width:760px">
+        <div class="tb"><span class="x">✕</span><span class="gl"><img src="note-workspace-2026-10-27/glyphs/note-20.png" alt=""></span><span class="name">Note</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+        <div class="toolbar"><span class="btn primary"><svg><use href="#g-done"/></svg>Done</span><span class="btn"><svg><use href="#g-ask"/></svg>Ask about this</span><span class="btn" style="opacity:.45"><svg><use href="#g-tasks"/></svg>Find the tasks</span><span class="btn"><svg><use href="#g-send"/></svg>Send…</span><span class="grow"></span><span class="btn"><svg><use href="#g-info"/></svg>Info</span><span class="mic"><svg><use href="#g-mic"/></svg></span></div>
+        <div class="page doc" style="height:150px;padding-top:16px"><div class="h1" style="color:#b3bfcd">Title</div><div class="cue">Start with what you know…</div></div>
+        <div class="sb"><span class="it">Not saved yet</span></div>
+      </div>
+      <div class="note-s" style="color:#dbe4ee">The empty note: a faint first line for the title and the cue. Nothing else. Templates are in the menu bar: Note ▸ New from ▸ Meeting notes, Decision, Plan, 1:1.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= C ======================= -->
+<section class="block">
+  <h2>C. Inline, in the text <span class="tag alt">Direction</span></h2>
+  <p>Everything happens in the text. An answer opens as a plate under the paragraph you asked about. Find the tasks marks the lines in a left gutter, and you confirm a task by pressing its mark. The title bar holds the place and the name together.</p>
+  <div class="desk">
+    <div class="mbpatch"></div>
+    <div class="win wpos dC">
+      <div class="tb"><span class="x">✕</span><span class="gl"><img src="note-workspace-2026-10-27/glyphs/note-20.png" alt=""></span><span class="name"><span class="dim">Payments ledger cutover</span><span class="sep">›</span>Ledger cutover plan</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+      <div class="toolbar">
+        <span class="btn primary"><svg><use href="#g-done"/></svg>Done</span>
+        <span class="btn"><svg><use href="#g-ask"/></svg>Ask about this</span>
+        <span class="btn"><svg><use href="#g-tasks"/></svg>Find the tasks</span>
+        <span class="btn"><svg><use href="#g-proj"/></svg>Project ▾</span>
+        <span class="btn"><svg><use href="#g-send"/></svg>Send…</span>
+        <span class="grow"></span><span class="mic"><svg><use href="#g-mic"/></svg></span>
+      </div>
+      <div class="body"><div class="page doc" id="pageC"></div></div>
+      <div class="sb"><span class="it"><span class="lamp breath"></span>Saved just now</span><span class="it">From Ledger sync, Oct 24</span><span class="grow"></span><span class="it">3 tasks to confirm</span></div>
+    </div>
+  </div>
+  <p class="note-s">Shown: an answer plate under the first paragraph (it is not part of the note until Add to note); the gutter marks pop in one by one; a filled mark is confirmed, a ring is proposed, the ember diamond is a decision. The ghost words after a line are the found owner and date.</p>
+  <h3>States at real size</h3>
+  <div class="strip">
+    <div class="frag">
+      <div class="win short dC" style="width:760px">
+        <div class="tb"><span class="x">✕</span><span class="gl"><img src="note-workspace-2026-10-27/glyphs/note-20.png" alt=""></span><span class="name"><span class="dim">Inbox</span><span class="sep">›</span>New note</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+        <div class="toolbar"><span class="btn primary"><svg><use href="#g-done"/></svg>Done</span><span class="btn"><svg><use href="#g-ask"/></svg>Ask about this</span><span class="btn" style="opacity:.45"><svg><use href="#g-tasks"/></svg>Find the tasks</span><span class="btn"><svg><use href="#g-proj"/></svg>Project ▾</span><span class="btn"><svg><use href="#g-send"/></svg>Send…</span><span class="grow"></span><span class="mic"><svg><use href="#g-mic"/></svg></span></div>
+        <div class="page doc" style="height:250px;padding-top:16px">
+          <div>/<span style="display:inline-block;width:1.5px;height:17px;background:var(--wb-sel-vivid);vertical-align:-3px;margin-left:1px"></span></div>
+          <div class="slash" style="left:40px;top:44px">
+            <div class="r sel"><img src="note-workspace-2026-10-27/glyphs/meeting-20.png" alt="">Meeting notes<span class="k">↵</span></div>
+            <div class="r"><img src="note-workspace-2026-10-27/glyphs/decision-20.png" alt="">Decision</div>
+            <div class="r"><img src="note-workspace-2026-10-27/glyphs/note-20.png" alt="">Plan</div>
+            <div class="r"><img src="note-workspace-2026-10-27/glyphs/person-20.png" alt="">1:1</div>
+            <div class="r"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt="">Task list</div>
+            <div class="r"><img src="note-workspace-2026-10-27/glyphs/thread-20.png" alt="">Flowchart</div>
+          </div>
+        </div>
+        <div class="sb"><span class="it">Type / for a start, or speak</span></div>
+      </div>
+      <div class="note-s" style="color:#dbe4ee">The empty note: one cue in the status bar; "/" opens the starts in place.</div>
+    </div>
+    <div class="frag" style="width:540px">
+      <div class="win short dC" style="width:500px">
+        <div class="page doc" style="height:250px;padding-top:14px">
+          <p>…the shim is in <span class="tok pr" style="background:rgba(47,103,200,.08)">PR #1482</span> and must land before the freeze.</p>
+          <div class="hover-card" style="left:60px;top:46px">
+            <div class="hd" style="display:flex;gap:8px;align-items:center;font:600 13.5px var(--font-display)"><img src="note-workspace-2026-10-27/glyphs/pull-request-32.png" width="24" height="24" alt="">Dual-write shim for the ledger store</div>
+            <div style="color:var(--wb-muted);margin:6px 0 2px"><span class="mono">#1482</span> · <span class="state"><span class="lamp" style="width:7px;height:7px"></span>Open</span> · 1 check fails · Marcus Chen</div>
+            <div style="color:var(--wb-muted)">+412 −88 in 9 files · 2 reviews asked</div>
+            <div style="display:flex;gap:6px;margin-top:10px"><span class="btn secondary sm">Open</span><span class="btn sm">Ask about this</span><span class="btn sm">Send…</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="note-s" style="color:#dbe4ee">Hover gives a full card with three verbs.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= the six questions ======================= -->
+<section class="block">
+  <h2>The six questions, side by side</h2>
+  <div class="qa">
+    <div class="h"></div><div class="h rec">A. Page and margin (recommended)</div><div class="h">B. Drawer and Info wing</div><div class="h">C. Inline</div>
+    <div>1. The title's one home</div>
+    <div class="rec">The title bar. Press the name to rename it there. The menu bar and the title row lose it. An untitled note is named by its first words, as today.</div>
+    <div>The page's first line (a heading). The title bar says "Note". The window list and Go use the first line.</div>
+    <div>The title bar, with the place first: Project › name. Press the place to open the Project; press the name to rename.</div>
+    <div>2. Where answers land</div>
+    <div class="rec">A margin at the right edge (250 px), opened when something comes back. Each answer and each found row sits beside its line; hover a row and its line lights.</div>
+    <div>A drawer that rises from the status bar (196 px, can be dragged), with Tasks, Decisions and Answers tabs and a real list view.</div>
+    <div>In the text: an answer plate under the asked paragraph; found tasks as gutter marks and ghost words on the lines.</div>
+    <div>3. Filed place and relations</div>
+    <div class="rec">Words in the status bar: the Project, the source meeting, and "2 people · 1 decision". Each word opens its object.</div>
+    <div>An Info wing from the toolbar: Filed in, From, People, Linked. It replaces the Linked items fold and the Project verb.</div>
+    <div>The place in the title bar; the source meeting in the status bar; people and decisions only in the text.</div>
+    <div>4. The empty note</div>
+    <div class="rec">A cue line and four starts as list rows: Meeting notes, Decision, Plan, 1:1. They go at the first key or word.</div>
+    <div>A faint "Title" first line and the cue. Starts are in the menu bar (Note ▸ New from).</div>
+    <div>Nothing on the page; "/" opens the starts in place, Flowchart and Task list among them.</div>
+    <div>5. Objects in the text</div>
+    <div class="rec">Ink and a 14 px glyph, no box: people in person green, PRs, Jira keys and Projects in link blue, a PR with its state dot. Hover: a peek card. Press: the object's window.</div>
+    <div>Soft capsules with the glyph. Press selects the object in the Info wing (a short card there); a second press opens its window.</div>
+    <div>Plain underlined links in their kind's ink. Hover: a full card with Open, Ask about this, Send. Press: the object's window.</div>
+    <div>6. Delight with restraint</div>
+    <div class="rec">The save lamp breathes once when it saves; a task box draws its tick; found rows arrive one by one; headings in the display face and head ink; the flowchart on a dotted plate.</div>
+    <div>The drawer rises with an eased 180 ms slide; the selected row is vivid blue; tab counts tabular. Quieter than A.</div>
+    <div>Gutter marks pop in one by one; the plate unfolds under the paragraph. The most motion in the text itself.</div>
+  </div>
+</section>
+
+<!-- ======================= phone ======================= -->
+<section class="block">
+  <h2>A on the phone (393)</h2>
+  <p>The margin becomes a sheet that rises from the status bar. The name is in the title strip only. Rows are 44 px.</p>
+  <div class="phones">
+    <figure style="margin:0">
+      <div class="phone">
+        <div class="ph-sys"></div>
+        <div class="ph-win dA">
+          <div class="ph-tb"><span class="back">‹ Back</span><span class="n">Ledger cutover plan</span><span class="done">Done</span></div>
+          <div class="ph-tool">
+            <span class="ib"><svg><use href="#g-ask"/></svg></span><span class="ib" style="color:var(--wb-sel)"><svg><use href="#g-tasks"/></svg></span><span class="ib"><svg><use href="#g-proj"/></svg></span><span class="ib"><svg><use href="#g-send"/></svg></span><span class="grow"></span><span class="ib"><svg><use href="#g-mic"/></svg></span>
+          </div>
+          <div class="ph-page doc" id="pagePhone"></div>
+          <div class="ph-sheet">
+            <div class="grip"><i></i></div>
+            <div class="mcap" style="padding:0 16px;height:26px">Found in this note</div>
+            <div class="ph-row arrive"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t" style="color:var(--wb-muted)">Freeze schema changes</span><span class="okw" style="font-size:12px;color:var(--ok-strong)">Done</span></div>
+            <div class="ph-row arrive" style="animation-delay:.1s"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t">Review PR #1482</span><span class="btn secondary sm" style="height:30px;font-size:13px">Confirm</span></div>
+            <div class="ph-row arrive" style="animation-delay:.2s"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t">Dry run on staging</span><span class="btn secondary sm" style="height:30px;font-size:13px">Confirm</span></div>
+            <div class="ph-row arrive" style="animation-delay:.3s"><img src="note-workspace-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t">Tell the team in the channel</span><span class="btn secondary sm" style="height:30px;font-size:13px">Confirm</span></div>
+            <div class="ph-row arrive" style="animation-delay:.4s;border:0"><img src="note-workspace-2026-10-27/glyphs/decision-20.png" alt=""><span class="t">Old ledger read-only, 30 days</span></div>
+          </div>
+          <div class="ph-sb"><span class="lamp breath"></span>Saved just now<span style="margin-left:6px;color:var(--wb-ink)">Payments ledger cutover</span></div>
+        </div>
+      </div>
+      <figcaption style="text-align:center;margin-top:14px">The sheet after Find the tasks. Drag it down to read; the status bar keeps it one press away.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ======================= cost ======================= -->
+<section class="block">
+  <h2>What each direction costs</h2>
+  <p class="cost"><b>A. Page and margin.</b> Changes: <code>ThoughtWorkspaceWindow.tsx</code> (the bands and the outcome well move into the margin; the editor stays put), <code>ThoughtDocumentPane.tsx</code> (the title row goes; the empty-note starts; Linked items fold retired), <code>NoteOutcomesWell.tsx</code> (the rows render as margin rows), <code>components/DeskWindow</code> (rename in the title bar), <code>DeskMenuBar.tsx</code> (no title in the middle), <code>thought-workspace.css</code>. New kit species: <b>Margin</b> (a wing inside a window's content, which collapses to a sheet on the phone), <b>ObjectToken</b> (a CodeMirror decoration for <code>people:</code>, <code>project:</code>, <code>decision:</code>, PR and Jira refs), <b>PeekCard</b> (a hover card with one or two verbs), and a pressable StatusBar item. Hub: a reverse read "which projects hold this note" and a source-meeting field for "From…" (neither exists, see the inventory); rows carry no source offsets, so the row-to-line tie is a client text match that falls back to stacking.</p>
+  <p class="cost"><b>B. Drawer and Info wing.</b> Changes: the same window file, plus a new title rule: the title becomes the body's first heading, so <code>thoughtTitle.ts</code>, <code>ownTitle</code> and the window name follow the first line, and the hub's title field must track it (a rename becomes an edit of the text). New species: <b>Drawer</b> (a resizable bottom pane with segmented tabs), <b>InfoWing</b> (sections of 30 px object rows with a small card). The list view reuses <code>ObjectList</code> dense. The same two hub reads as A. Risk: a page H1 is what the window grammar removed elsewhere.</p>
+  <p class="cost"><b>C. Inline.</b> Changes: the editor itself. Answer plates are CodeMirror block widgets inside the document, which must survive edits, the reveal code (<code>verifiedReveal</code>) and the Ask return range. Gutter marks need each found row's exact text range, and the hub does not return one today (<code>noteOutcomes.ts:9</code>), so <code>note_find_tasks</code> must change. New species: a gutter extension, a block widget, a slash menu, a hover card. Highest cost and the most risk to the sole-writer save path.</p>
+</section>
+
+<section class="block">
+  <h2>Order of build for A</h2>
+  <p style="font-size:13px;color:var(--wb-muted)">Smallest useful slice first. Each one is one lane and can merge alone.</p>
+  <ol class="order">
+    <li><b>The title once.</b> Remove the menu-bar title and the title row; rename in place in the title bar. Small, and the owner sees it at once.</li>
+    <li><b>The margin, with Find the tasks.</b> The new Margin species; the outcome rows move into it and arrive one by one; the editor no longer moves down.</li>
+    <li><b>Row to line.</b> Hover a margin row and its line lights; press it and the caret goes there (client text match).</li>
+    <li><b>Answers in the margin.</b> The question and draft bands, and Ask's return, become margin notes beside the quoted passage, with Add to note and Dismiss.</li>
+    <li><b>Objects in the text.</b> ObjectToken for the refs that open today (people, project, decision), then PR numbers and Jira keys; press opens the window; the Linked items fold is retired.</li>
+    <li><b>The status bar place line.</b> Needs the hub's reverse read of a note's projects; then the source meeting when the hub records it.</li>
+    <li><b>The empty note.</b> The cue line and the four starts.</li>
+    <li><b>Peek cards</b> on hover.</li>
+    <li><b>Motion.</b> The save lamp's one breath, the task tick, the row arrival.</li>
+    <li><b>The phone.</b> The margin as a sheet from the status bar.</li>
+  </ol>
+</section>
+</main>
+
+<script>
+const G = (n) => `note-workspace-2026-10-27/glyphs/${n}-20.png`;
+const tok = (kind, glyph, text, extra = "") => `<span class="tok ${kind}${extra}"><img src="${G(glyph)}" alt="">${text}</span>`;
+const prTok = (extra = "") => `<span class="tok pr${extra}"><img src="${G("pull-request")}" alt="">PR #1482<span class="dot"></span></span>`;
+const flow = (w) => `<div class="plate"><span class="cap">Flowchart</span><svg width="${w}" height="112" viewBox="0 0 470 112" font-family="Inter,system-ui" font-size="11" fill="#253449">
+  <defs><marker id="ar${w}" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L8 4L0 8z" fill="#3b5d93"/></marker></defs>
+  <g stroke="#3b5d93" stroke-width="1.2" fill="#fff">
+    <rect x="4" y="40" width="86" height="28" rx="3"/><path d="M150 14 L196 54 L150 94 L104 54 Z"/>
+    <rect x="246" y="14" width="96" height="28" rx="3"/><rect x="366" y="14" width="96" height="28" rx="3"/>
+    <rect x="246" y="70" width="96" height="28" rx="3"/>
+  </g>
+  <g stroke="#3b5d93" stroke-width="1.1" fill="none">
+    <path d="M90 54 H102" marker-end="url(#ar${w})"/><path d="M186 44 C 210 30, 220 28, 244 28" marker-end="url(#ar${w})"/>
+    <path d="M186 64 C 210 80, 220 84, 244 84" marker-end="url(#ar${w})"/><path d="M342 28 H364" marker-end="url(#ar${w})"/>
+  </g>
+  <g text-anchor="middle"><text x="47" y="58">Freeze writes</text><text x="150" y="58">Backup ok?</text><text x="294" y="32">Run migration</text><text x="414" y="32">Open writes</text><text x="294" y="88">Page Priya</text></g>
+  <g fill="#53647a" font-size="10"><text x="214" y="26">yes</text><text x="216" y="92">no</text></g></svg></div>`;
+const box = `<span class="box"><svg viewBox="0 0 12 12"><use href="#g-check"/></svg></span>`;
+
+/* A */
+document.getElementById("pageA").innerHTML = `
+  <p>We move the payments ledger to the new store on Nov 14. The dual-write shim is in ${prTok()} and must land before the freeze. ${tok("person", "person", "@Priya")} owns the rollback.</p>
+  <div class="h2">Steps</div>
+  <div class="task done">${box}<span class="t">Freeze schema changes on Nov 10</span></div>
+  <div class="task lit"><span class="box"></span><span class="t">Review ${prTok()} <span class="meta">· Marcus, Nov 6</span></span></div>
+  <div class="task"><span class="box"></span><span class="t">Dry run on staging ${tok("jira", "action-item", '<span class="mono">PAY-311</span>')}</span></div>
+  <div class="task"><span class="box"></span><span class="t">Tell the team in the channel</span></div>
+  ${flow(440)}
+  <div class="decision"><img src="${G("decision")}" alt=""><span><b>Decision:</b> the old ledger stays read-only for 30 days.</span></div>`;
+
+/* B */
+document.getElementById("pageB").innerHTML = `
+  <div class="h1">Ledger cutover plan</div>
+  <p>We move the payments ledger to the new store on Nov 14. The dual-write shim is in ${tok("pr", "pull-request", "PR #1482")} and must land before the freeze. ${tok("person", "person", "@Priya", " sel")} owns the rollback.</p>
+  <div class="h2">Steps</div>
+  <div class="task done">${box}<span class="t">Freeze schema changes on Nov 10</span></div>
+  <div class="task"><span class="box"></span><span class="t">Review PR #1482 <span class="meta">· Marcus, Nov 6</span></span></div>`;
+
+/* C */
+const ring = (d) => `<span class="gut" style="top:4px"><span class="ring pop" style="animation-delay:${d}s"></span></span>`;
+document.getElementById("pageC").innerHTML = `
+  <p>We move the payments ledger to the new store on Nov 14. The dual-write shim is in ${tok("pr", "pull-request", "PR #1482")} and must land before the freeze. ${tok("person", "person", "@Priya")} owns the rollback.</p>
+  <div class="answerplate"><div class="q"><svg><use href="#g-ask"/></svg>Ask: what can block the freeze?</div>The shim in PR #1482 has one failing check. The backup job runs at 02:00, so a freeze at 22:00 leaves a 4-hour gap.<div class="vb"><span class="btn secondary sm">Add to note</span><span class="btn sm">Discard</span></div></div>
+  <div class="h2">Steps</div>
+  <div class="task done"><span class="gut" style="top:4px"><span class="fill"><svg viewBox="0 0 12 12"><use href="#g-check"/></svg></span></span>${box}<span class="t">Freeze schema changes on Nov 10</span></div>
+  <div class="task">${ring(.1)}<span class="box"></span><span class="t">Review ${tok("pr", "pull-request", "PR #1482")}</span><span class="ghost">Marcus · Nov 6</span></div>
+  <div class="task">${ring(.25)}<span class="box"></span><span class="t">Dry run on staging ${tok("jira", "action-item", '<span class="mono">PAY-311</span>')}</span><span class="ghost">me</span></div>
+  <div class="task">${ring(.4)}<span class="box"></span><span class="t">Tell the team in the channel</span><span class="ghost">me</span></div>
+  ${flow(470)}
+  <div class="decision" style="position:relative"><span class="gut" style="top:7px;left:-28px"><span class="dia"></span></span><img src="${G("decision")}" alt=""><span><b>Decision:</b> the old ledger stays read-only for 30 days.</span></div>`;
+
+/* phone */
+document.getElementById("pagePhone").innerHTML = `
+  <p>We move the payments ledger to the new store on Nov 14. The dual-write shim is in ${prTok()} and must land before the freeze. ${tok("person", "person", "@Priya")} owns the rollback.</p>
+  <div class="h2">Steps</div>
+  <div class="task done">${box}<span class="t">Freeze schema changes on Nov 10</span></div>
+  <div class="task"><span class="box"></span><span class="t">Review PR #1482</span></div>`;
+</script>
+</body>
+</html>
