@@ -5,7 +5,20 @@ import { EditorView } from "@codemirror/view";
 import { undo } from "@codemirror/commands";
 
 import { DeskEditor, type DeskEditorHandle } from "../components/DeskEditor";
+import { startCompletion } from "@codemirror/autocomplete";
 import { livePreview } from "./livePreview";
+import type { NoteObjects } from "./noteObjects";
+
+/** Recorded-shape desk answers for the objects (the People roster rows and
+ *  the Project summaries the store keeps). */
+const OBJECTS: NoteObjects = {
+  peek: (token) => token.kind === "person" ? { name: "Priya Shah", kind: "Person", fact: "Direct report" }
+    : token.kind === "project" ? { name: "Payments ledger cutover", kind: "Project", fact: "Changed Oct 24" }
+    : token.kind === "pr" ? { name: token.label, kind: "Pull request", fact: "acme/ledger" }
+    : { name: token.label, kind: token.kind === "jira" ? "Jira issue" : "Object" },
+  people: async () => [{ id: "p-priya", name: "Priya Shah", detail: "Direct report" }, { id: "p-marcus", name: "Marcus Chen" }],
+  projects: () => [{ id: "proj-ledger", name: "Payments ledger cutover", detail: "Project" }],
+};
 
 const NOTE = [
   "# Ledger cutover",
@@ -72,11 +85,20 @@ describe("the Note in live preview", () => {
     const value = "Read [the runbook](https://example.com/runbook) and [the room](project:p-1).\n\nEnd.";
     const { ref, container } = mount(value, { openUrl, openRef });
     ref.current!.restoreSelection(value.length, value.length, { focus: false });
-    await waitFor(() => expect(container.querySelectorAll(".cm-lp-link").length).toBe(2));
-    const [web, room] = Array.from(container.querySelectorAll<HTMLElement>(".cm-lp-link"));
+    await waitFor(() => expect(container.querySelectorAll(".cm-lp-link").length).toBe(1));
+    const web = container.querySelector<HTMLElement>(".cm-lp-link")!;
     fireEvent.mouseDown(web, { button: 0, metaKey: true });
     expect(openUrl).toHaveBeenCalledWith("https://example.com/runbook");
-    fireEvent.mouseDown(room, { button: 0, metaKey: true });
+    // Step 4: a desk ref is an object token; a press opens it.
+    const room = container.querySelector<HTMLElement>('[data-testid="note-object"]')!;
+    fireEvent.mouseDown(room, { button: 0 });
+    expect(openRef).toHaveBeenCalledWith("project:p-1");
+    // On the caret's line the link shows its source, and ⌘-click still opens it.
+    const at = value.indexOf("the room");
+    ref.current!.restoreSelection(at, at, { focus: false });
+    await waitFor(() => expect(container.querySelector('[data-testid="note-object"]')).toBeNull());
+    openRef.mockClear();
+    fireEvent.mouseDown(container.querySelector<HTMLElement>('.cm-lp-obj-ink[data-lp-href="project:p-1"]')!, { button: 0, metaKey: true });
     expect(openRef).toHaveBeenCalledWith("project:p-1");
   });
 
@@ -142,5 +164,66 @@ describe("the Note in live preview", () => {
     view!.dispatch({ effects: [] });
     await waitFor(() => expect(container.querySelector(".cm-content")?.textContent).toContain("- [ ] Tell Priya"));
   });
-});
 
+  it("step 4: every object kind renders as glyph and ink with its peek card; a press opens it", async () => {
+    const openRef = vi.fn(() => true);
+    const openUrl = vi.fn();
+    const value = [
+      "The shim is in https://github.com/acme/ledger/pull/1482 and [@Priya](person:p-priya) owns the rollback.",
+      "File it in [#Payments](project:proj-ledger); see [the choice](decision:d-1) from [Ledger sync](meeting:m-1).",
+      "- [ ] Review #1482 and dry run PAY-311 (not UTF-8)",
+      "",
+      "End.",
+    ].join("\n");
+    const { ref, container, text } = mount(value, { openRef, openUrl, objects: OBJECTS });
+    ref.current!.restoreSelection(value.length, value.length, { focus: false });
+    await waitFor(() => expect(container.querySelectorAll('[data-testid="note-object"]').length).toBe(7));
+    const tokens = Array.from(container.querySelectorAll<HTMLElement>('[data-testid="note-object"]'));
+    expect(tokens.map((t) => [t.dataset.kind, t.querySelector(".cm-lp-obj-text")?.textContent])).toEqual([
+      ["pr", "PR #1482"], ["person", "@Priya"], ["project", "#Payments"], ["decision", "the choice"],
+      ["meeting", "Ledger sync"], ["pr", "#1482"], ["jira", "PAY-311"],
+    ]);
+    expect(text()).not.toContain("person:p-priya");
+    expect(text()).not.toContain("UTF-8 ");
+    // Each token carries its glyph and its peek card (name · kind · one fact).
+    const person = tokens[1];
+    expect(person.querySelector("img.cm-lp-obj-glyph")).not.toBeNull();
+    expect(person.querySelector('[data-testid="note-object-peek"]')?.textContent).toBe("Priya ShahPerson · Direct report");
+    // A press opens: the person through the desk opener, the PR in a tab;
+    // the bare #1482 opens the same pull request the note links.
+    fireEvent.mouseDown(person, { button: 0 });
+    expect(openRef).toHaveBeenLastCalledWith("person:p-priya");
+    fireEvent.mouseDown(tokens[0], { button: 0 });
+    fireEvent.mouseDown(tokens[5], { button: 0 });
+    expect(openUrl).toHaveBeenCalledTimes(2);
+    expect(openUrl).toHaveBeenLastCalledWith("https://github.com/acme/ledger/pull/1482");
+    // A Jira key has no window on the desk: it names, it does not open.
+    expect(tokens[6].hasAttribute("data-opens")).toBe(false);
+    expect(container.querySelector(".cm-content")?.textContent).not.toContain("(person:");
+  });
+
+  it("step 4: @ offers the people and # the Projects; ⏎ writes a plain Markdown link", async () => {
+    const value = "Ask ";
+    const { ref, view } = mount(value, { objects: OBJECTS });
+    ref.current!.restoreSelection(value.length, value.length, { focus: true });
+    view().dispatch({ changes: { from: value.length, insert: "@Pri" }, selection: { anchor: value.length + 4 }, userEvent: "input.type" });
+    startCompletion(view());
+    await waitFor(() => expect(document.querySelector(".cm-tooltip.cm-lp-complete")).not.toBeNull());
+    const options = Array.from(document.querySelectorAll(".cm-lp-complete-option"));
+    expect(options[0]?.textContent).toContain("Priya Shah");
+    expect(options[0]?.querySelector("img.cm-lp-complete-glyph")).not.toBeNull();
+    // CodeMirror takes ⏎ for a list once it has been open 75 ms (its interaction delay).
+    await new Promise((done) => setTimeout(done, 120));
+    fireEvent.keyDown(view().contentDOM, { key: "Enter" });
+    await waitFor(() => expect(view().state.doc.toString()).toBe("Ask [@Priya Shah](person:p-priya)"));
+
+    const end = view().state.doc.length;
+    view().dispatch({ changes: { from: end, insert: " in #Pay" }, selection: { anchor: end + 8 }, userEvent: "input.type" });
+    startCompletion(view());
+    await waitFor(() => expect(document.querySelector(".cm-lp-complete-option")?.textContent).toContain("Payments ledger cutover"));
+    // CodeMirror takes ⏎ for a list once it has been open 75 ms (its interaction delay).
+    await new Promise((done) => setTimeout(done, 120));
+    fireEvent.keyDown(view().contentDOM, { key: "Enter" });
+    await waitFor(() => expect(view().state.doc.toString()).toBe("Ask [@Priya Shah](person:p-priya) in [#Payments ledger cutover](project:proj-ledger)"));
+  });
+});

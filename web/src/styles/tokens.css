@@ -359,6 +359,8 @@
   --wb-toolbar-h: 36px; /* window toolbar band under the title bar */
   --wb-statusbar-h: 24px; /* window status bar band at the foot */
   --wb-sel-vivid: #2f67c8; /* vivid Workbench blue for a selected list row (paper ink 5.3:1) */
+  --wb-link-ink: #2f67c8; /* an object named in a note's text: a Project, a pull request, a Jira key, a decision (Note canvas A, 2026-10-27; paper ink 5.3:1) */
+  --wb-person-ink: #1f7a6b; /* a person named in a note's text (Note canvas A, 2026-10-27; paper ink 5.6:1) */
   --wb-row-hover: color-mix(in srgb, var(--wb-sel) 8%, var(--wb-paper)); /* a list row lifted under the pointer */
   --wb-row-dense: 30px; /* dense list view row on the desktop; narrow rows stay 44px */
   --desk-floor-label-halo: 0 1px 2px rgba(12, 20, 32, 0.9), 0 0 1px rgba(12, 20, 32, 0.95), 0 0 8px rgba(12, 20, 32, 0.55); /* a floor label's soft dark halo: paper ink reads on the slate floor and on a wallpaper, with no plate */

@@ -27,6 +27,10 @@ export interface Thought {
   /** The drawer the working note is filed in (present when filed). */
   directory_id?: string;
   directory_name?: string;
+  /** Note canvas A, step 5: the Projects that file this note (absent when none). */
+  projects?: Array<{ id: string; name: string }>;
+  /** The meeting this note came from (its `meeting:<id>` tag), when the hub knows it. */
+  source_meeting?: { id: string; title: string; at: string };
   continuity?: { state: string; invocation_id?: string; review_result_id?: string; code?: string };
 }
 

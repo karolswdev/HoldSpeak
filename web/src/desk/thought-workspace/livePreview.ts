@@ -6,7 +6,16 @@
    The line the caret is on shows its source again, at the same size, so
    nothing under the caret moves. Everything is Decorations (mark, replace,
    line, widget) over the Markdown syntax tree; the document text is the only
-   copy. The mermaid fences are mermaidPreview.ts (same mechanism). */
+   copy. The mermaid fences are mermaidPreview.ts (same mechanism).
+
+   Note canvas A, step 4: the objects the text names (a person, a Project, a
+   decision, a meeting, a pull request, a Jira key) draw as a glyph and ink
+   on the lines the caret is not on; a press opens the object's window; the
+   pointer that rests on one for 400 ms shows its peek card (CSS only). Typing
+   @ or # offers the people and the Projects; the choice is written as a
+   plain Markdown link (`[@Priya](person:<id>)`). noteObjects.ts says what
+   the desk knows about each one. */
+import { autocompletion, type CompletionContext, type CompletionResult } from "@codemirror/autocomplete";
 import { syntaxTree } from "@codemirror/language";
 import { type EditorState, type Extension, type Range, StateEffect, StateField } from "@codemirror/state";
 import {
@@ -19,6 +28,15 @@ import {
 } from "@codemirror/view";
 import type { SyntaxNode } from "@lezer/common";
 import { refOpener } from "../openObject";
+import {
+  deskObjects,
+  objectGlyph,
+  pullRequestOf,
+  refKind,
+  type NoteObjectPeek,
+  type NoteObjects,
+  type NoteObjectToken,
+} from "./noteObjects";
 
 export interface LivePreviewOptions {
   /** Opens a desk object ref (`project:…`, `decision:…`). Return false when
@@ -31,7 +49,17 @@ export interface LivePreviewOptions {
    *  line does not open on that line's source. After the first focus the
    *  caret's lines show their source as before. */
   renderUntilFocus?: boolean;
+  /** What the desk knows about the objects the text names, and the people
+   *  and Projects that @ and # offer. Default: the desk store
+   *  (noteObjects.ts). */
+  objects?: NoteObjects;
 }
+
+type Context = {
+  objects: NoteObjects;
+  openRef: (ref: string) => boolean;
+  openUrl: (url: string) => void;
+};
 
 /* ── the caret's lines ───────────────────────────────────────────────── */
 
@@ -139,6 +167,79 @@ class FenceLabelWidget extends WidgetType {
     label.className = "cm-lp-fence-label";
     label.textContent = this.language;
     return label;
+  }
+}
+
+/** An object the text names: a glyph and the words in their kind's ink,
+ *  with the peek card inside it (shown by CSS after 400 ms of hover). A
+ *  press opens the object when the desk can open it. */
+class ObjectTokenWidget extends WidgetType {
+  constructor(readonly token: NoteObjectToken, readonly peek: NoteObjectPeek, readonly open: (() => void) | null) {
+    super();
+  }
+
+  eq(other: ObjectTokenWidget) {
+    return other.token.kind === this.token.kind && other.token.label === this.token.label &&
+      other.token.href === this.token.href && JSON.stringify(other.peek) === JSON.stringify(this.peek) &&
+      Boolean(other.open) === Boolean(this.open);
+  }
+
+  toDOM() {
+    const token = document.createElement("span");
+    token.className = "cm-lp-obj";
+    token.setAttribute("data-kind", this.token.kind);
+    token.setAttribute("data-testid", "note-object");
+    if (this.token.href) token.setAttribute("data-href", this.token.href);
+    if (this.open) {
+      token.setAttribute("data-opens", "");
+      token.setAttribute("role", "link");
+      token.setAttribute("aria-label", `Open ${this.peek.kind.toLowerCase()}: ${this.peek.name}`);
+    }
+    const glyph = document.createElement("img");
+    glyph.className = "cm-lp-obj-glyph";
+    glyph.src = objectGlyph(this.token.kind);
+    glyph.alt = "";
+    glyph.width = 14;
+    glyph.height = 14;
+    glyph.draggable = false;
+    const words = document.createElement("span");
+    words.className = "cm-lp-obj-text";
+    words.textContent = this.token.label;
+    token.append(glyph, words, this.peekCard());
+    token.addEventListener("mousedown", (event) => {
+      if (event.button !== 0) return;
+      // The press opens the object; the caret stays where it is.
+      event.preventDefault();
+      this.open?.();
+    });
+    return token;
+  }
+
+  private peekCard() {
+    const card = document.createElement("span");
+    card.className = "cm-lp-peek";
+    card.setAttribute("data-testid", "note-object-peek");
+    card.setAttribute("aria-hidden", "true");
+    const head = document.createElement("span");
+    head.className = "cm-lp-peek-head";
+    const glyph = document.createElement("img");
+    glyph.src = objectGlyph(this.token.kind);
+    glyph.alt = "";
+    glyph.width = 20;
+    glyph.height = 20;
+    const name = document.createElement("span");
+    name.className = "cm-lp-peek-name";
+    name.textContent = this.peek.name;
+    head.append(glyph, name);
+    const line = document.createElement("span");
+    line.className = "cm-lp-peek-line";
+    line.textContent = [this.peek.kind, this.peek.fact].filter(Boolean).join(" · ");
+    card.append(head, line);
+    return card;
+  }
+
+  ignoreEvent() {
+    return true;
   }
 }
 
@@ -274,7 +375,23 @@ function linkHref(url: string): string {
   return /^www\./i.test(url) ? `https://${url}` : url;
 }
 
-function buildInline(view: EditorView): DecorationSet {
+/** The opener of an object token: a desk ref through the one open grammar,
+ *  a pull request url in a new tab; null when nothing opens. */
+function tokenOpener(token: NoteObjectToken, ctx: Context): (() => void) | null {
+  const href = token.href;
+  if (!href) return null;
+  if (/^https?:\/\//i.test(href)) return () => ctx.openUrl(href);
+  return refOpener(href) ? () => { ctx.openRef(href); } : null;
+}
+
+/* A pull request number (`#1482`, `PR #1482`) and a Jira key (`PAY-311`) in
+   the words. Words that only look like a key are left alone. */
+const PLAIN_OBJECT = /(^|[\s(\[])((?:PR\s+)?#(\d{1,7})(?![\w-])|([A-Z][A-Z0-9]{1,9}-\d{1,7})(?![\w-]))/g;
+const NOT_JIRA = new Set(["UTF", "ISO", "SHA", "RFC", "TLS", "SSL", "MP", "COVID", "GPT"]);
+/** Nodes whose words are never object tokens (code, links, raw html). */
+const NO_TOKENS = new Set(["InlineCode", "FencedCode", "CodeBlock", "Link", "Autolink", "URL", "HTMLTag", "HTMLBlock", "Image", "Table", "LinkReference"]);
+
+function buildInline(view: EditorView, ctx: Context): DecorationSet {
   const { state } = view;
   const doc = state.doc;
   const out: Range<Decoration>[] = [];
@@ -291,6 +408,20 @@ function buildInline(view: EditorView): DecorationSet {
   if (!view.visibleRanges.length) return Decoration.none;
   const from = view.visibleRanges[0].from;
   const to = view.visibleRanges[view.visibleRanges.length - 1].to;
+  /** Ranges the plain-word scan for PR numbers and Jira keys skips. */
+  const busy: Array<[number, number]> = [];
+  /** A number's pull request url, when the note holds one. */
+  const prUrls = new Map<string, string>();
+  for (const match of doc.toString().matchAll(/https?:\/\/(?:www\.)?github\.com\/[\w.-]+\/[\w.-]+\/pull\/(\d+)/gi))
+    if (!prUrls.has(match[1])) prUrls.set(match[1], match[0]);
+  const token = (kind: NoteObjectToken["kind"], label: string, href: string | null, at: number, end: number) => {
+    const shown: NoteObjectToken = { kind, label, href };
+    if (lineTouched(state, at)) {
+      out.push(mark(`cm-lp-obj-ink${href ? " cm-lp-link" : ""}`, { "data-kind": kind, ...(href ? { "data-lp-href": href, title: href } : {}) }).range(at, end));
+      return;
+    }
+    out.push(Decoration.replace({ widget: new ObjectTokenWidget(shown, ctx.objects.peek(shown), tokenOpener(shown, ctx)) }).range(at, end));
+  };
 
   syntaxTree(state).iterate({
     from,
@@ -298,6 +429,7 @@ function buildInline(view: EditorView): DecorationSet {
     enter(ref) {
       const name = ref.name;
       const node = ref.node;
+      if (NO_TOKENS.has(name) && name !== "Link" && name !== "Autolink" && name !== "URL") busy.push([ref.from, ref.to]);
 
       const heading = /^ATXHeading([1-6])$/.exec(name);
       if (heading) {
@@ -356,6 +488,12 @@ function buildInline(view: EditorView): DecorationSet {
         const href = doc.sliceString(url.from, url.to);
         const textFrom = marks[0].to;
         const textTo = marks[1].from;
+        busy.push([ref.from, ref.to]);
+        const kind = refKind(href) ?? (pullRequestOf(href) ? "pr" : null);
+        if (kind && textTo > textFrom) {
+          token(kind, doc.sliceString(textFrom, textTo), href, ref.from, ref.to);
+          return false;
+        }
         if (textTo > textFrom)
           out.push(mark("cm-lp-link", { title: href, "data-lp-href": linkHref(href) }).range(textFrom, textTo));
         if (!lineTouched(state, ref.from)) {
@@ -369,6 +507,12 @@ function buildInline(view: EditorView): DecorationSet {
         const url = node.getChild("URL");
         if (!url) return false;
         const href = doc.sliceString(url.from, url.to);
+        busy.push([ref.from, ref.to]);
+        const pr = pullRequestOf(href);
+        if (pr) {
+          token("pr", `PR #${pr.number}`, href, ref.from, ref.to);
+          return false;
+        }
         out.push(mark("cm-lp-link", { title: href, "data-lp-href": linkHref(href) }).range(url.from, url.to));
         if (!lineTouched(state, ref.from)) {
           hideMark(ref.from, url.from);
@@ -383,6 +527,12 @@ function buildInline(view: EditorView): DecorationSet {
         const parent = node.parent?.name;
         if (parent === "Link" || parent === "Image" || parent === "Autolink" || parent === "LinkReference") return;
         const href = doc.sliceString(ref.from, ref.to);
+        busy.push([ref.from, ref.to]);
+        const pr = pullRequestOf(href);
+        if (pr) {
+          token("pr", `PR #${pr.number}`, href, ref.from, ref.to);
+          return;
+        }
         out.push(mark("cm-lp-link", { title: href, "data-lp-href": linkHref(href) }).range(ref.from, ref.to));
         return;
       }
@@ -435,27 +585,116 @@ function buildInline(view: EditorView): DecorationSet {
     },
   });
 
+  for (const range of view.visibleRanges) {
+    const text = doc.sliceString(range.from, range.to);
+    for (const match of text.matchAll(PLAIN_OBJECT)) {
+      const at = range.from + (match.index ?? 0) + match[1].length;
+      const end = at + match[2].length;
+      if (busy.some(([a, b]) => at < b && end > a)) continue;
+      if (match[3]) token("pr", match[2].replace(/\s+/, " "), prUrls.get(match[3]) ?? null, at, end);
+      else if (match[4] && !NOT_JIRA.has(match[4].split("-")[0])) token("jira", match[4], null, at, end);
+    }
+  }
+
   for (const [at, classes] of lines) out.push(line(classes.join(" ")).range(at));
   return Decoration.set(out, true);
 }
 
-const inlinePlugin = ViewPlugin.fromClass(
+/** The People roster (or another slow read of the objects) came in. */
+const objectsReady = StateEffect.define<null>();
+
+const inlinePlugin = (ctx: Context) => ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
 
     constructor(view: EditorView) {
-      this.decorations = buildInline(view);
+      this.decorations = buildInline(view, ctx);
+      // The People roster is read only for a note that names a person: a
+      // note without one (the Components specimen) does no IO.
+      if (!/\]\((?:person|people):/i.test(view.state.doc.toString())) return;
+      void ctx.objects.ready?.().then(() => {
+        if (view.dom.isConnected) view.dispatch({ effects: objectsReady.of(null) });
+      }, () => undefined);
     }
 
     update(update: ViewUpdate) {
       if (update.docChanged || update.selectionSet || update.viewportChanged ||
           syntaxTree(update.state) !== syntaxTree(update.startState) ||
-          update.state.field(focusedOnce, false) !== update.startState.field(focusedOnce, false))
-        this.decorations = buildInline(update.view);
+          update.state.field(focusedOnce, false) !== update.startState.field(focusedOnce, false) ||
+          update.transactions.some((tr) => tr.effects.some((effect) => effect.is(objectsReady))))
+        this.decorations = buildInline(update.view, ctx);
     }
   },
   { decorations: (plugin) => plugin.decorations },
 );
+
+/* ── @ and # : the people and the Projects ───────────────────────────── */
+
+const TRIGGER = /[@#][\p{L}\p{N}_.'-]*/u;
+const NO_COMPLETION = new Set(["InlineCode", "FencedCode", "CodeBlock", "CodeText", "Link", "URL", "Autolink"]);
+
+function markdownText(name: string): string {
+  return name.replace(/([\\[\]])/g, "\\$1");
+}
+
+/** The completion source: @ offers the people, # the Projects. The choice
+ *  is written as a plain Markdown link. */
+export function objectCompletions(objects: NoteObjects) {
+  return async (context: CompletionContext): Promise<CompletionResult | null> => {
+    const match = context.matchBefore(TRIGGER);
+    if (!match) return null;
+    const before = match.from > 0 ? context.state.sliceDoc(match.from - 1, match.from) : "";
+    if (before && !/[\s([]/.test(before)) return null;
+    const trigger = match.text[0] as "@" | "#";
+    const query = match.text.slice(1);
+    if (trigger === "#" && /^\d/.test(query)) return null; // a pull request number
+    // `#` then a space at the start of a line is a heading.
+    if (trigger === "#" && !query && context.state.doc.lineAt(match.from).from === match.from) return null;
+    for (let node: SyntaxNode | null = syntaxTree(context.state).resolveInner(match.from, 1); node; node = node.parent)
+      if (NO_COMPLETION.has(node.name)) return null;
+    const choices = trigger === "@" ? await objects.people() : objects.projects();
+    if (context.aborted || !choices.length) return null;
+    const scheme = trigger === "@" ? "person" : "project";
+    return {
+      from: match.from + 1,
+      validFor: /^[\p{L}\p{N}_.'-]*$/u,
+      options: choices.map((choice) => ({
+        label: choice.name,
+        detail: choice.detail,
+        type: scheme,
+        apply: (view: EditorView, _completion: unknown, from: number, to: number) => {
+          const insert = `[${trigger}${markdownText(choice.name)}](${scheme}:${choice.id})`;
+          view.dispatch({
+            changes: { from: from - 1, to, insert },
+            selection: { anchor: from - 1 + insert.length },
+            userEvent: "input.complete",
+          });
+        },
+      })),
+    };
+  };
+}
+
+function objectCompletion(objects: NoteObjects): Extension {
+  return autocompletion({
+    override: [objectCompletions(objects)],
+    icons: false,
+    tooltipClass: () => "cm-lp-complete",
+    optionClass: () => "cm-lp-complete-option",
+    addToOptions: [{
+      position: 20,
+      render: (completion) => {
+        const glyph = document.createElement("img");
+        glyph.className = "cm-lp-complete-glyph";
+        glyph.src = objectGlyph(completion.type === "person" ? "person" : "project");
+        glyph.alt = "";
+        glyph.width = 16;
+        glyph.height = 16;
+        return glyph;
+      },
+    }],
+  });
+}
 
 /* ── ⌘-click on a link ───────────────────────────────────────────────── */
 
@@ -470,9 +709,8 @@ function defaultOpenUrl(url: string) {
   window.open(url, "_blank", "noopener,noreferrer");
 }
 
-function linkClicks(options: LivePreviewOptions): Extension {
-  const openRef = options.openRef ?? defaultOpenRef;
-  const openUrl = options.openUrl ?? defaultOpenUrl;
+function linkClicks(ctx: Context): Extension {
+  const { openRef, openUrl } = ctx;
   return EditorView.domEventHandlers({
     mousedown(event) {
       if (!(event.metaKey || event.ctrlKey) || event.button !== 0) return false;
@@ -489,5 +727,10 @@ function linkClicks(options: LivePreviewOptions): Extension {
 
 /** The live-preview extension for the Note's editor. */
 export function livePreview(options: LivePreviewOptions = {}): Extension {
-  return [...(options.renderUntilFocus ? [untilFocus] : []), inlinePlugin, tableField, linkClicks(options)];
+  const ctx: Context = {
+    objects: options.objects ?? deskObjects,
+    openRef: options.openRef ?? defaultOpenRef,
+    openUrl: options.openUrl ?? defaultOpenUrl,
+  };
+  return [...(options.renderUntilFocus ? [untilFocus] : []), inlinePlugin(ctx), tableField, linkClicks(ctx), objectCompletion(ctx.objects)];
 }

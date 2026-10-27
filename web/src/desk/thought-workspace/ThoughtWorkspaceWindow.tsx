@@ -37,8 +37,15 @@ import { useWindowId } from "../components/window/windowIdContext";
 import { useCompactViewport } from "../useCompactViewport";
 import { thoughtStatusWords, thoughtWriteLine } from "./thoughtReceipt";
 import { openDecisionRecord, openProjectRoomAtResource, openRef } from "../openObject";
+import { openProjectRoom } from "../shell";
 import type { ProjectReturn } from "../store/types";
 import "./thought-workspace.css";
+
+/** `Oct 24`: the day of the meeting a note came from. */
+function shortDay(value: string): string {
+  const at = new Date(value);
+  return Number.isNaN(at.getTime()) ? "" : at.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 /* Direction A (2026-10-27): the margin's closed state, per window. */
 function readMarginClosed(key: string | null): boolean {
@@ -147,6 +154,9 @@ function WorkspaceReady({
      SAVE / CHANGED ELSEWHERE), never again as prose on the message line. */
   const sayFault = (cause: unknown) => say(cause instanceof ThoughtSaveFault ? "" : readableError(cause));
   const [actionWell, setActionWell] = useState<"project" | null>(null);
+  /* Note canvas A, step 6: a Project this window filed the note in since
+     the hub's last read (the next read names it too). */
+  const [filedHere, setFiledHere] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedPassage, setSelectedPassage] = useState<{ from: number; to: number; text: string; body: string } | null>(null);
   const [actionPassage, setActionPassage] = useState<string | null>(null);
   const ignoreSelectionAfterEdit = useRef(false);
@@ -627,6 +637,15 @@ function WorkspaceReady({
     countWords(peopleNamed(shownBody), "person", "people"),
     countWords(noteDecisions.length + hubOnlyDecisions.length, "decision"),
   ].filter(Boolean).join(" · ");
+  /* Note canvas A, step 6: the place line. The Project that files the note
+     opens its Room; the meeting it came from opens the meeting. Nothing
+     when the hub names nothing. */
+  // The Project just filed comes first: the bar is its receipt.
+  const filedIn = [...filedHere, ...(documentThought.projects ?? [])]
+    .filter((project, index, all) => project.id && all.findIndex((row) => row.id === project.id) === index);
+  const placeProject = filedIn[0] ?? null;
+  const fromMeeting = documentThought.source_meeting?.id ? documentThought.source_meeting : null;
+  const meetingDay = fromMeeting ? shortDay(fromMeeting.at) : "";
   const openDecision = (recordId: string | null) => {
     if (recordId) openDecisionRecord(recordId);
     else useDesk.getState().openSurfaceWindow("open-decisions");
@@ -708,7 +727,7 @@ function WorkspaceReady({
 
     {actionWell === "project" ? <ProjectWell
       noteId={draftNoteId}
-      onAdded={say}
+      onAdded={(_line, project) => setFiledHere((rows) => [project, ...rows])}
       onClose={() => { setActionWell(null); setActionPassage(null); }}
     /> : null}
 
@@ -724,6 +743,23 @@ function WorkspaceReady({
           text: <span className="thought-note-status" data-tone={statusWords.tone === "danger" ? "danger" : undefined} data-lamp={statusWords.tone}>{statusWords.text}</span>,
         } : null,
         working ? { key: "working", lamp: "info", text: "Working" } : null,
+        placeProject ? {
+          key: "project",
+          testId: "note-place-project",
+          text: <Button dense variant="ghost" className="thought-note-place" title={filedIn.length > 1 ? filedIn.map((row) => row.name).join(", ") : undefined}
+            onClick={() => openProjectRoom(placeProject.id)}>
+            <img src={spriteUrl("project", placeProject.id, "rest", null, 20)} alt="" width={14} height={14} />
+            <span className="thought-note-place-words">{placeProject.name || "Project"}</span>
+          </Button>,
+        } : null,
+        fromMeeting ? {
+          key: "meeting",
+          testId: "note-place-meeting",
+          text: <Button dense variant="ghost" className="thought-note-place" onClick={() => openRef(`meeting:${fromMeeting.id}`)}>
+            <img src={spriteUrl("meeting", fromMeeting.id, "rest", null, 20)} alt="" width={14} height={14} />
+            <span className="thought-note-place-words">From {fromMeeting.title || "a meeting"}{meetingDay ? `, ${meetingDay}` : ""}</span>
+          </Button>,
+        } : null,
       ]}
       verbs={footVerbs ? <>
         {writer.conflicted
@@ -732,7 +768,9 @@ function WorkspaceReady({
         {working ? <Button dense disabled={busy} onClick={() => void stop()}>Stop</Button> : null}
         {marginHas && marginClosed ? <Button dense variant="ghost" onClick={showMargin}>Show the margin</Button> : null}
       </> : undefined}
-      trailing={relations || undefined}
+      // On the phone's one-line bar the place words come first; the counts
+      // stay in the text.
+      trailing={compact && (placeProject || fromMeeting) ? undefined : relations || undefined}
     />
     </> : <>
       <ScrollHint axis="y" scrollRef={sendScrollRef} className="thought-send-scroll">
