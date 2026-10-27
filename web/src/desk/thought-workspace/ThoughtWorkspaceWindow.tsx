@@ -16,8 +16,11 @@ import {
 } from "../thoughts";
 import type { WorldObject } from "../world";
 import { Button } from "../../components/signal/Signal";
-import { PadGadget, RunLine, ScrollHint, StatusBar, SurfaceFooter, ToolGlyph } from "../surface";
-import { NoteOutcomesWell, useNoteOutcomes } from "./NoteOutcomesWell";
+import { countWords, DotWord, PadGadget, ScrollHint, StatusBar, SurfaceFooter, ToolGlyph } from "../surface";
+import { useNoteOutcomes } from "./NoteOutcomesWell";
+import { MarginNote, NoteMargin, type MarginCard } from "./NoteMargin";
+import { dropMarginAsk, useMarginAsks, type MarginAsk } from "./marginAsks";
+import { decisionLines, findLine, peopleNamed } from "./marginText";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { PULLOUT_SIZE } from "../pullouts/size";
 import { ThoughtSaveFault, useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
@@ -33,9 +36,22 @@ import { SEND_OPEN, useAnnounceWindowDocument } from "../windowSend";
 import { useWindowId } from "../components/window/windowIdContext";
 import { useCompactViewport } from "../useCompactViewport";
 import { thoughtStatusWords, thoughtWriteLine } from "./thoughtReceipt";
-import { openProjectRoomAtResource, openRef } from "../openObject";
+import { openDecisionRecord, openProjectRoomAtResource, openRef } from "../openObject";
 import type { ProjectReturn } from "../store/types";
 import "./thought-workspace.css";
+
+/* Direction A (2026-10-27): the margin's closed state, per window. */
+function readMarginClosed(key: string | null): boolean {
+  if (!key) return false;
+  try { return localStorage.getItem(key) === "closed"; } catch { return false; }
+}
+function writeMarginClosed(key: string | null, closed: boolean) {
+  if (!key) return;
+  try {
+    if (closed) localStorage.setItem(key, "closed");
+    else localStorage.removeItem(key);
+  } catch { /* The margin still opens and closes in this window. */ }
+}
 
 const workspaceRequestIds = new Map<string, string | null>();
 function stableId(key: string): string {
@@ -371,8 +387,11 @@ function WorkspaceReady({
      durable edit supersedes the frozen review by itself ("owner_edited",
      refinement_thought_service.py:509), so the band folds with no second
      command.  The reveal lands on the appended range. */
-  const addDraft = async (): Promise<boolean> => {
-    const text = draftBody;
+  const addDraft = (): Promise<boolean> => appendText(draftBody);
+  /* Direction A: an Ask answer in the margin joins the note the same way,
+     through the sole writer, at the note's end. */
+  const appendText = async (words: string): Promise<boolean> => {
+    const text = words.trim();
     if (!text || busy) return false;
     const body = writer.draft.body;
     const gap = !body ? "" : body.endsWith("\n\n") ? "" : body.endsWith("\n") ? "\n" : "\n\n";
@@ -538,6 +557,81 @@ function WorkspaceReady({
     } catch (cause) { sayFault(cause); }
     finally { writer.release(); setBusy(false); }
   };
+  /* Direction A (owner pick 2026-10-27): what comes back lands in the
+     margin beside the text, never in a band that moves the editor. */
+  const asks = useMarginAsks(draftNoteId);
+  const marginKey = winId ? `hs.note-margin.${winId}` : null;
+  const [marginClosed, setMarginClosed] = useState(() => readMarginClosed(marginKey));
+  const showMargin = () => { setMarginClosed(false); writeMarginClosed(marginKey, false); };
+  const closeMargin = () => { setMarginClosed(true); writeMarginClosed(marginKey, true); };
+  // A new arrival (a run of Find the tasks, a new Ask) opens the margin again.
+  const seenAsks = useRef<Set<string> | null>(null);
+  if (!seenAsks.current) seenAsks.current = new Set(asks.map((ask) => ask.key));
+  useEffect(() => {
+    const seen = seenAsks.current!;
+    const fresh = asks.some((ask) => !seen.has(ask.key));
+    for (const ask of asks) seen.add(ask.key);
+    if (fresh) showMargin();
+  }, [asks]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (outcomes.finding) showMargin(); }, [outcomes.finding]); // eslint-disable-line react-hooks/exhaustive-deps
+  const askAnchor = (ask: MarginAsk): number | null => {
+    const quote = ask.range?.text ?? "";
+    if (!quote.trim()) return null;
+    if (ask.body === shownBody && ask.range && shownBody.slice(ask.range.from, ask.range.to) === quote) return ask.range.from;
+    const at = shownBody.indexOf(quote);
+    return at >= 0 ? at : null;
+  };
+  const cards: MarginCard[] = [];
+  if (showAskBand) {
+    cards.push({
+      key: `review:${review?.id ?? "open"}`,
+      anchor: null,
+      node: <MarginNote className="thought-note-ask" label="Ask about this note" testId="thought-note-ask"
+        question={draftBody ? <span className="thought-note-ask-kicker">A draft from your note</span> : "A question about your note"}
+        verbs={question
+          ? <Button dense variant="secondary" disabled={busy || !answer.trim()} onClick={() => void addAnswer()}>Add to note</Button>
+          : <Button dense variant="secondary" disabled={busy} onClick={() => void addDraft()}>Add to note</Button>}>
+        {projection.workspace_state === "named_failure" && projection.terminal_status?.message
+          ? <p className="thought-note-ask-reason" role="status">{projection.terminal_status.message}</p> : null}
+        <div className="thought-note-ask-open">
+          <p className="thought-note-ask-text">{question || draftBody}</p>
+          {question ? <label ref={answerRef} className="thought-note-answer">
+            <PadGadget label="Your answer" micLabel="Speak your answer" value={answer} onChange={setAnswer} rows={3} />
+          </label> : null}
+        </div>
+      </MarginNote>,
+    });
+  }
+  for (const ask of asks) {
+    cards.push({
+      key: `ask:${ask.key}`,
+      anchor: askAnchor(ask),
+      node: <MarginNote label={`Ask: ${ask.question}`} testId="note-margin-ask" question={`Ask: ${ask.question}`}
+        verbs={<>
+          {ask.state === "answered" ? <Button dense variant="secondary" disabled={busy}
+            onClick={() => void appendText(ask.answer).then((added) => { if (added) dropMarginAsk(draftNoteId, ask.key); })}>Add to note</Button> : null}
+          <Button dense variant="ghost" onClick={() => dropMarginAsk(draftNoteId, ask.key)}>Dismiss</Button>
+        </>}>
+        {ask.state === "working" ? <DotWord tone="info" className="note-margin-working">Working</DotWord>
+          : ask.state === "failed" ? <DotWord tone="fail">No answer</DotWord>
+          : <div className="note-margin-answer">{ask.answer}</div>}
+      </MarginNote>,
+    });
+  }
+  const showFound = outcomes.finding || outcomes.rows.length > 0;
+  const marginHas = cards.length > 0 || showFound;
+  const marginOpen = marginHas && !marginClosed;
+  const noteDecisions = decisionLines(shownBody);
+  const hubOnlyDecisions = outcomes.rows.filter((row) => row.kind === "decision" && !noteDecisions.some((line) => findLine(line.text, row.text)));
+  const relations = [
+    countWords(peopleNamed(shownBody), "person", "people"),
+    countWords(noteDecisions.length + hubOnlyDecisions.length, "decision"),
+  ].filter(Boolean).join(" · ");
+  const openDecision = (recordId: string | null) => {
+    if (recordId) openDecisionRecord(recordId);
+    else useDesk.getState().openSurfaceWindow("open-decisions");
+  };
+  const footVerbs = writer.conflicted || writer.failed || working || (marginHas && marginClosed);
   return <div ref={noteWindowRef} className="thought-note-window" onKeyDown={(event) => {
     if (sending) return;
     if (!(event.metaKey || event.ctrlKey) || event.nativeEvent.isComposing) return;
@@ -584,6 +678,8 @@ function WorkspaceReady({
           : null);
       }}
       onOpenLink={(ref) => openRef(ref, { projectReturn: projectReturn ?? null })}
+      margin={marginOpen ? <NoteMargin body={shownBody} editorRef={bodyEditorRef} cards={cards}
+        outcomes={outcomes} showFound={showFound} onClose={closeMargin} onOpenDecision={openDecision} /> : null}
       verbs={<>
         {/* Window grammar (2026-10-24): the verbs are the toolbar under the
             title bar, Done (the one primary) first. Betterment Q8 (one
@@ -597,36 +693,18 @@ function WorkspaceReady({
       </>}
     />
 
-    {showAskBand ? <section className="thought-note-ask" aria-label="Ask about this note">
-      {projection.workspace_state === "named_failure" && projection.terminal_status?.message
-        ? <p className="thought-note-ask-reason" role="status">{projection.terminal_status.message}</p> : null}
-      {open ? <div className="thought-note-ask-open">
-        {draftBody ? <span className="thought-note-ask-kicker">A draft from your note</span> : null}
-        <p className="thought-note-ask-text">{question || draftBody}</p>
-        {question ? <>
-          <label ref={answerRef} className="thought-note-answer">
-            <PadGadget label="Your answer" micLabel="Speak your answer" value={answer} onChange={setAnswer} rows={4} />
-          </label>
-          <div className="thought-note-ask-verbs">
-            <Button dense disabled={busy || !answer.trim()} onClick={() => void addAnswer()}>Add to note</Button>
-          </div>
-        </> : <div className="thought-note-ask-verbs">
-          <Button dense disabled={busy} onClick={() => void addDraft()}>Add to note</Button>
-        </div>}
-      </div> : null}
-    </section> : null}
-
+    {/* Direction A (2026-10-27): the open question or draft that used to
+        be a band under the toolbar is a card in the margin (above); the
+        editor never moves. */}
     {message ? <p className="thought-note-line" role="status">
       {message}
       {messageVerb === "reload" ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button> : null}
     </p> : null}
 
-    {outcomes.finding ? <RunLine phase="running" verb="Finding the tasks" startedAt={outcomes.startedAt} /> : null}
     {outcomes.failure ? <p className="thought-note-line" role="status">
       {outcomes.failure}
       <Button dense disabled={busy} onClick={() => void findTasks()}>Try again</Button>
     </p> : null}
-    <NoteOutcomesWell outcomes={outcomes} />
 
     {actionWell === "project" ? <ProjectWell
       noteId={draftNoteId}
@@ -647,12 +725,14 @@ function WorkspaceReady({
         } : null,
         working ? { key: "working", lamp: "info", text: "Working" } : null,
       ]}
-      verbs={writer.conflicted || writer.failed || working ? <>
+      verbs={footVerbs ? <>
         {writer.conflicted
           ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>
           : writer.failed ? <Button dense onClick={writer.retry}>Retry</Button> : null}
         {working ? <Button dense disabled={busy} onClick={() => void stop()}>Stop</Button> : null}
+        {marginHas && marginClosed ? <Button dense variant="ghost" onClick={showMargin}>Show the margin</Button> : null}
       </> : undefined}
+      trailing={relations || undefined}
     />
     </> : <>
       <ScrollHint axis="y" scrollRef={sendScrollRef} className="thought-send-scroll">

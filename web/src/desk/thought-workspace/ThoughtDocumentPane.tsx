@@ -75,6 +75,7 @@ export function ThoughtDocumentPane({
   mic = true,
   voiceInput,
   verbs,
+  margin,
 }: {
   /** The thought's note. With it, the field takes the keys typed between
    *  `Write a thought` and this window (thoughtKeys.ts). */
@@ -101,6 +102,9 @@ export function ThoughtDocumentPane({
    *  toolbar under the title bar, left; the field's voice control sits at
    *  its right end. */
   verbs?: ReactNode;
+  /** Direction A (2026-10-27): the margin beside the text (NoteMargin). The
+   *  editor keeps its place; the margin takes the right column. */
+  margin?: ReactNode;
 }) {
   const ownBodyRef = useRef<DeskEditorHandle | null>(null);
   const bodyRef = editorRef ?? ownBodyRef;
@@ -139,7 +143,7 @@ export function ThoughtDocumentPane({
     onText={(text) => bodyRef.current?.insertAtCursor(text)}
     bindText={bindText} /> : voiceInput?.(bindText, disabled) ?? null;
 
-  return <section className="thought-note-document" aria-label="Note">
+  return <section className={margin ? "thought-note-document has-margin" : "thought-note-document"} aria-label="Note">
     {/* Window grammar (2026-10-24): a native editor window. The verbs are
         on the kit Toolbar under the title bar; the field's own voice control is
         at the toolbar's right end and still writes at the field's captured
@@ -184,6 +188,7 @@ export function ThoughtDocumentPane({
         onSelectionChange={onSelectionChange}
       />
     </div>
+    {margin}
     {retained && voiceKey ? <ThoughtVoiceRecovery text={retained} disabled={disabled} onInsert={() => {
       const editor = bodyRef.current;
       const target = editor?.captureVoiceTarget();

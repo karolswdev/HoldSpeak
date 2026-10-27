@@ -211,8 +211,13 @@ describe("Betterment Q9: Find the tasks on a note", () => {
       expect.stringContaining("Pair Jun with Mira on call for the cutover weekend"),
       expect.stringContaining("Write the on-call handbook"),
     ]);
-    expect(tasks[0]).toHaveTextContent("Me · no date");
-    expect(tasks[1]).toHaveTextContent("Theo Park · no date");
+    // Direction A (2026-10-27): the rows are in the margin. The owner is a
+    // pill of initials; the owner and date are its hover words.
+    expect(screen.getByTestId("note-margin")).toContainElement(tasks[0]);
+    expect(tasks[0].querySelector(".note-margin-who")).toHaveTextContent("Me");
+    expect(tasks[0].querySelector(".note-margin-who")).toHaveAttribute("title", "Me · no date");
+    expect(tasks[1].querySelector(".note-margin-who")).toHaveTextContent("TP");
+    expect(tasks[1].querySelector(".note-margin-who")).toHaveAttribute("title", "Theo Park · no date");
     const decisions = screen.getAllByTestId("note-decisions-row");
     expect(decisions.map((row) => row.textContent)).toEqual([expect.stringContaining("Theo owns the on-call handbook")]);
   });
@@ -227,7 +232,8 @@ describe("Betterment Q9: Find the tasks on a note", () => {
       method: "POST", url: `/api/notes/${NOTE.note_id}/outcomes/${FIND.confirm_row}/confirm`,
     });
     const theo = screen.getAllByTestId("note-commitments-row").find((row) => row.textContent?.includes("Write the on-call handbook"))!;
-    expect(theo).toHaveTextContent("Theo Park · Confirmed");
+    expect(theo).toHaveTextContent("Done");
+    expect(theo.querySelector(".note-margin-who")).toHaveAttribute("title", "Theo Park · Confirmed");
   });
 
   it("Edit changes a proposed row's words, owner and date before Confirm (as a meeting's rows)", async () => {
@@ -245,7 +251,7 @@ describe("Betterment Q9: Find the tasks on a note", () => {
       method: "POST", url: `/api/notes/${NOTE.note_id}/outcomes/${FIND.edit_row}/edit`, body: FIND.edit_request,
     });
     const mine = screen.getAllByTestId("note-commitments-row").find((row) => row.textContent?.includes(FIND.edit_request.text))!;
-    expect(mine).toHaveTextContent("Me · by Friday");
+    expect(mine.querySelector(".note-margin-who")).toHaveAttribute("title", "Me · by Friday");
     expect(screen.getByRole("button", { name: `Confirm: ${FIND.edit_request.text}` })).toBeInTheDocument();
   });
 
@@ -268,5 +274,113 @@ describe("Betterment Q9: Find the tasks on a note", () => {
     expect(await screen.findByText(FIND.refused.body.message)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
     expect(screen.queryByTestId("note-outcomes")).toBeNull();
+  });
+});
+
+/* Direction A, step 2 (owner pick 2026-10-27, "The page and its margin"):
+ * what comes back lands in the note's margin, beside the text; the editor
+ * never moves. Ask's answer is ask.thread.wire.json's; the found rows are
+ * note.find-tasks.wire.json's (both the hub's own recorded answers). */
+import { resetMarginAsks } from "../../thought-workspace/marginAsks";
+import { decisionLines, findLine, peopleNamed } from "../../thought-workspace/marginText";
+
+describe("Direction A: the note's margin", () => {
+  beforeEach(() => {
+    resetMarginAsks();
+  });
+  afterEach(() => resetMarginAsks());
+
+  it("an Ask about this note lands as a card in the note's margin; Dismiss takes it away", async () => {
+    const { container } = render(<MemoryRouter><Pullout o={noteObject} pulloutId={NOTE_REF} /><AskPanel /></MemoryRouter>);
+    await waitFor(() => expect(container.querySelector(".thought-note-toolbar")).not.toBeNull());
+    await waitFor(() => expect(container.textContent).toContain("Theo could own the handbook."));
+    // Closed: nothing in the margin, the editor takes the whole width.
+    expect(screen.queryByTestId("note-margin")).toBeNull();
+    expect(container.querySelector(".thought-note-document")).not.toHaveClass("has-margin");
+
+    fireEvent.click(within(container.querySelector(".thought-note-toolbar") as HTMLElement).getByRole("button", { name: "Ask about this" }));
+    await waitFor(() => expect(screen.getByTestId("ask-context")).toHaveTextContent(`About${NOTE.title}`));
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What should I do about Jun?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+
+    const card = await screen.findByTestId("note-margin-ask");
+    const margin = screen.getByTestId("note-margin");
+    expect(margin).toContainElement(card);
+    expect(within(margin).getByText("In the margin")).toBeInTheDocument();
+    expect(container.querySelector(".thought-note-document")).toHaveClass("has-margin");
+    expect(card).toHaveTextContent("Ask: What should I do about Jun?");
+    await waitFor(() => expect(card).toHaveTextContent(THREAD.first.output.slice(0, 40)));
+    expect(within(card).getAllByRole("button").map((b) => b.textContent)).toEqual(["Add to note", "Dismiss"]);
+    // No band under the toolbar: the old question band left the flow.
+    expect(container.querySelector(".thought-note-window > .thought-note-ask")).toBeNull();
+
+    fireEvent.click(within(card).getByRole("button", { name: "Dismiss" }));
+    await waitFor(() => expect(screen.queryByTestId("note-margin-ask")).toBeNull());
+    expect(screen.queryByTestId("note-margin")).toBeNull();
+  });
+
+  it("Add to note in the margin appends the answer through the note's own writer", async () => {
+    const { container } = render(<MemoryRouter><Pullout o={noteObject} pulloutId={NOTE_REF} /><AskPanel /></MemoryRouter>);
+    await waitFor(() => expect(container.textContent).toContain("Theo could own the handbook."));
+    fireEvent.click(within(container.querySelector(".thought-note-toolbar") as HTMLElement).getByRole("button", { name: "Ask about this" }));
+    await waitFor(() => expect(screen.getByTestId("ask-context")).toHaveTextContent(`About${NOTE.title}`));
+    fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What should I do about Jun?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const card = await screen.findByTestId("note-margin-ask");
+    await waitFor(() => expect(within(card).getByRole("button", { name: "Add to note" })).toBeEnabled());
+    const before = calls.length;
+    fireEvent.click(within(card).getByRole("button", { name: "Add to note" }));
+    await waitFor(() => expect(screen.queryByTestId("note-margin-ask")).toBeNull());
+    const writes = calls.slice(before).filter((c) => c.method === "PATCH");
+    expect(writes).toHaveLength(1);
+    expect(JSON.stringify(writes[0].body)).toContain(JSON.stringify(THREAD.first.output.slice(0, 30)).slice(1, -1));
+  });
+
+  it("Find the tasks puts its rows in the margin, one by one, each with one verb; close is kept for the window", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET");
+      calls.push({ url, method, body: init.body ? JSON.parse(String(init.body)) : undefined });
+      if (method === "POST" && url.endsWith("/api/thoughts/open-note")) return Promise.resolve(reply(NOTE.open));
+      if (method === "GET" && url.endsWith(`/api/thoughts/${THOUGHT_ID}/workbench`)) return Promise.resolve(reply(NOTE.workbench));
+      if (method === "GET" && url.endsWith("/outcomes")) return Promise.resolve(reply(FIND.before));
+      if (method === "POST" && url.endsWith("/outcomes/find")) return Promise.resolve(reply(FIND.found));
+      return Promise.resolve(reply({}));
+    }));
+    const view = render(<MemoryRouter><Pullout o={noteObject} pulloutId={NOTE_REF} /></MemoryRouter>);
+    await waitFor(() => expect(view.container.textContent).toContain("Theo could own the handbook."));
+    fireEvent.click(screen.getByRole("button", { name: "Find the tasks" }));
+    const rows = await screen.findAllByTestId("note-commitments-row");
+    const margin = screen.getByTestId("note-margin");
+    expect(within(margin).getByText("Found in this note")).toBeInTheDocument();
+    // The delight: a 120 ms stagger, opacity only (CSS reads --arrive).
+    expect(rows.map((row) => row.style.getPropertyValue("--arrive"))).toEqual(["0ms", "120ms"]);
+    // One verb at rest; More (Edit, Dismiss) is the row's quiet second key.
+    expect(within(rows[0]).getByRole("button", { name: `Confirm: ${FIND.found.rows[0].text}` })).toBeInTheDocument();
+    // A row whose words are on a line of the note is tied to it (press goes there).
+    const tied = rows.find((row) => row.textContent?.includes("Write the on-call handbook"))!;
+    expect(tied).toHaveAttribute("data-tied");
+    expect(within(tied).getByRole("button", { name: "Go to: Write the on-call handbook" })).toBeEnabled();
+    expect(screen.getAllByTestId("note-decisions-row")).toHaveLength(1);
+    // The status bar's right end names the note's relations (a zero is no item).
+    const foot = view.container.querySelector(".kit-statusbar-trailing");
+    expect(foot).toHaveTextContent("1 decision");
+
+    fireEvent.click(within(margin).getByRole("button", { name: "Close the margin" }));
+    expect(screen.queryByTestId("note-margin")).toBeNull();
+    expect(Object.keys(localStorage).some((key) => key.startsWith("hs.note-margin.") && localStorage.getItem(key) === "closed")).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Show the margin" }));
+    expect(screen.getByTestId("note-margin")).toBeInTheDocument();
+  });
+
+  it("ties rows to lines by their words, and reads decision lines and people from the text", () => {
+    const body = "We move the ledger on Nov 14. @Priya owns the rollback.\n- [ ] Review PR #1482 with Marcus\nDecision: the old ledger stays read-only for 30 days.\n**Decision:** keep the shim\nAsk [Marcus](people:p-marcus) and @Priya.";
+    const from = body.indexOf("- [ ] Review");
+    const line = { from, to: body.indexOf("\n", from) };
+    expect(findLine(body, "Review PR #1482 with Marcus")).toEqual(line);
+    expect(findLine(body, "review the PR 1482 with marcus")).toEqual(line);
+    expect(findLine(body, "Write the handbook")).toBeNull();
+    expect(decisionLines(body).map((line) => line.text)).toEqual(["the old ledger stays read-only for 30 days.", "keep the shim"]);
+    expect(peopleNamed(body)).toBe(2);
   });
 });

@@ -277,11 +277,14 @@ export function StatusBar({
   items,
   egress,
   verbs,
+  trailing,
   className,
   "data-testid": testId,
 }: {
   items: ReadonlyArray<StatusBarItem | null | false | undefined>;
   egress?: ReactNode;
+  /** A quiet fact at the bar's right end (`2 people · 1 decision`). */
+  trailing?: ReactNode;
   /** The selection's verbs (library Buttons) at the right, before the
    *  egress chip: the bar grows from the foot, so nothing above moves. */
   verbs?: ReactNode;
@@ -290,7 +293,7 @@ export function StatusBar({
 }) {
   const target = useContext(FootSlotContext);
   const shown = items.filter((item): item is StatusBarItem => Boolean(item) && (item as StatusBarItem).text != null);
-  if (!shown.length && !egress && !verbs) return null;
+  if (!shown.length && !egress && !verbs && !trailing) return null;
   const bar = (
     <div
       className={className ? `kit-statusbar ${className}` : "kit-statusbar"}
@@ -311,6 +314,7 @@ export function StatusBar({
         ))}
       </span>
       {verbs ? <span className="kit-statusbar-verbs">{verbs}</span> : null}
+      {trailing ? <span className="kit-statusbar-trailing">{trailing}</span> : null}
       {egress ? <span className="kit-statusbar-egress">{egress}</span> : null}
     </div>
   );

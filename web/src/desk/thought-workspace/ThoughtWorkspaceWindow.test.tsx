@@ -53,7 +53,7 @@ vi.mock("../components/DeskWindow", async () => {
   };
 });
 vi.mock("./ThoughtDocumentPane", () => ({
-  ThoughtDocumentPane: ({ draft, onEdit, onSelectionChange, lockedReason, returnRange, editorRef, verbs }: { verbs?: React.ReactNode; draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; onSelectionChange?: (selection: { from: number; to: number; text: string }) => void; lockedReason?: string; returnRange?: { from: number; to: number } | null; editorRef?: { current: { getScrollTop: () => number; getSelection: () => { from: number; to: number; text: string }; restoreSelection: (from: number, to: number) => boolean } | null } }) => {
+  ThoughtDocumentPane: ({ draft, onEdit, onSelectionChange, lockedReason, returnRange, editorRef, verbs, margin }: { verbs?: React.ReactNode; margin?: React.ReactNode; draft: { title: string; body: string }; onEdit: (patch: { body: string }) => void; onSelectionChange?: (selection: { from: number; to: number; text: string }) => void; lockedReason?: string; returnRange?: { from: number; to: number } | null; editorRef?: { current: { getScrollTop: () => number; getSelection: () => { from: number; to: number; text: string }; restoreSelection: (from: number, to: number) => boolean } | null } }) => {
     const body = () => document.querySelector<HTMLTextAreaElement>('textarea[aria-label="Note body"]');
     if (editorRef) editorRef.current = {
       getScrollTop: () => 24,
@@ -70,7 +70,7 @@ vi.mock("./ThoughtDocumentPane", () => ({
         return true;
       },
     };
-    return <section aria-label="Note"><div role="toolbar" aria-label="Note actions" className="thought-note-toolbar"><span className="thought-note-toolbar-verbs">{verbs}</span></div><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}{returnRange ? <span data-testid="return-range">{returnRange.from}:{returnRange.to}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); body()?.setSelectionRange(from, from + text.length); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>;
+    return <section aria-label="Note">{margin}<div role="toolbar" aria-label="Note actions" className="thought-note-toolbar"><span className="thought-note-toolbar-verbs">{verbs}</span></div><span data-testid="note-title">{draft.title}</span>{lockedReason ? <span data-testid="note-locked">{lockedReason}</span> : null}{returnRange ? <span data-testid="return-range">{returnRange.from}:{returnRange.to}</span> : null}<textarea aria-label="Note body" value={draft.body} onChange={(event) => { onEdit({ body: event.target.value }); onSelectionChange?.({ from: 0, to: 0, text: "" }); }} /><button type="button" data-testid="select-second-line" onClick={() => { const text = draft.body.split(/\r?\n/)[1] || draft.body.split(/\r?\n/)[0] || ""; const from = draft.body.indexOf(text); body()?.setSelectionRange(from, from + text.length); onSelectionChange?.({ from, to: from + text.length, text }); }}>Select second line</button></section>;
   },
 }));
 vi.mock("../documentSendsLazy", () => ({
