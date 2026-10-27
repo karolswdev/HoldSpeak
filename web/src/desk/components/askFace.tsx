@@ -23,6 +23,8 @@ import { glyphSprite, spriteUrl } from "../sprites";
 import { humanTime } from "../surface/format";
 import { aboutMatches, type AboutCandidate } from "./about/AboutPicker";
 import type { AskPrompt } from "../askPrompts";
+// The parts carry their own style: Memory and the Room compose them too.
+import "./ask-panel.css";
 
 /** The Ask object's own drawing (a conversation), at 64 and at 20 px. */
 export const ASK_SPRITE = spriteUrl("thread", "ask");
@@ -115,10 +117,16 @@ export function AskComposer({ className, railOpen, onRail, scope, field, capture
   );
 }
 
-/** Ask ⏎: the one primary verb, with its key. */
-export function AskSendButton({ disabled, onClick }: { disabled: boolean; onClick: () => void }) {
+/** Ask ⏎: the one primary verb, with its key. A host whose window has its
+ *  own primary (the Room's Write update) passes `secondary`: one filled
+ *  primary per face. */
+export function AskSendButton({ disabled, onClick, variant = "primary" }: {
+  disabled: boolean;
+  onClick: () => void;
+  variant?: "primary" | "secondary";
+}) {
   return (
-    <Button dense variant="primary" className="desk-ask-send" disabled={disabled} onClick={onClick} aria-label="Ask">
+    <Button dense variant={variant} className="desk-ask-send" disabled={disabled} onClick={onClick} aria-label="Ask">
       Ask<span className="desk-ask-key" aria-hidden="true">⏎</span>
     </Button>
   );

@@ -70,7 +70,12 @@ export function comingUpRows(
   return rows;
 }
 
-export function ComingUp({ limit, "data-testid": testId = "coming-up" }: { limit?: number; "data-testid"?: string }) {
+export function ComingUp({ limit, emptyLine, "data-testid": testId = "coming-up" }: {
+  limit?: number;
+  /** Read and empty: this one quiet line (Capture), else nothing. */
+  emptyLine?: string;
+  "data-testid"?: string;
+}) {
   const read = useDesk((s) => s.comingUp);
   const schedules = useDesk((s) => s.scheduledRecordings);
   const [now, setNow] = useState(() => new Date());
@@ -97,7 +102,9 @@ export function ComingUp({ limit, "data-testid": testId = "coming-up" }: { limit
   // (Capture's seat, chair.css) is measured with the rows' room; read and
   // empty: nothing (no empty list, UX-CANON).
   if (read === null) return <section className="coming-up" data-testid={testId} aria-busy="true" />;
-  if (!rows.length) return null;
+  if (!rows.length) {
+    return emptyLine ? <p className="coming-up-none" data-testid={`${testId}-none`}>{emptyLine}</p> : null;
+  }
 
   const act = async (key: string, failText: string, run: () => Promise<boolean | { ok: boolean; reason?: string }>) => {
     setBusy(key);

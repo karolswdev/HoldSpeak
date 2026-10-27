@@ -936,9 +936,30 @@
   .desk-next .arrival-capture-bar .arrival-capture-big {
     flex: 1 1 0;
   }
+  /* Window Program W2 (2026-10-27): on the phone the three verbs are three
+     tiles, the glyph over the word: Capture is the phone's quick place. */
+  .desk-next .arrival-capture-bar > .arrival-capture-toolbar {
+    padding-block: 8px;
+  }
+  .desk-next .arrival-capture-toolbar .kit-toolbar-verbs {
+    gap: 8px;
+  }
+  .desk-next .arrival-capture-bar .btn.arrival-capture-big,
   .desk-next .arrival-capture-bar .arrival-capture-talk.arrival-capture-big > .desk-mic.gadget-transport-key {
-    height: 44px;
-    min-height: 44px;
+    flex-direction: column;
+    gap: 6px;
+    height: 76px;
+    min-height: 76px;
+    font-size: 14px;
+  }
+  .desk-next .arrival-capture-bar .btn.arrival-capture-big {
+    border: 1px solid var(--wb-rule-soft);
+    background: var(--wb-well, var(--wb-paper));
+  }
+  .desk-next .arrival-capture-bar .arrival-capture-big .kit-toolglyph,
+  .desk-next .arrival-capture-bar .arrival-capture-big .gadget-transport-glyph svg {
+    width: 22px;
+    height: 22px;
   }
 }
 /* Coming up in Capture: 32 px rows — the time in quiet sans figures, the
@@ -961,16 +982,13 @@
 .desk-next .chair-window--capture .coming-up .surface-row-main {
   flex: 1 1 8rem;
 }
-.desk-next .chair-window--capture .coming-up .surface-row-verbs .btn--secondary {
-  border-color: transparent;
-  background: transparent;
-  box-shadow: none;
-  color: var(--wb-ink);
-  font-weight: 500;
-}
-.desk-next .chair-window--capture .coming-up .surface-row-verbs .btn--secondary:hover:not(:disabled) {
-  border-color: var(--wb-rule-soft);
-  background: var(--wb-hover);
+/* Window Program W2 (2026-10-27): Record when it starts is a visible
+   verb (the library secondary Button), not a ghost that reads as a label. */
+.desk-next .chair-window--capture .coming-up-none {
+  margin: 0;
+  padding: 10px 4px 4px;
+  font: 400 13px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
 }
 .desk-next .arrival-capture-place .speech-setup-verbs {
   margin-left: 0;

@@ -40,11 +40,11 @@ doors.
 | Components (W2-BUILDER) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Ask | 2 | 1 | 2 | 2 | 1 | 1 | 1 | 1 | **11** |
 | Decision record (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
-| Memory | 2 | 2 | 1 | 1 | 1 | 3 | 1 | 2 | **13** |
-| Context | 2 | 2 | 1 | 2 | 1 | 2 | 2 | 2 | **14** |
-| Capture | 2 | 3 | 1 | 2 | 1 | 2 | 1 | 2 | **14** |
-| Today | 2 | 1 | 2 | 3 | 2 | 2 | 1 | 1 | **14** |
-| Room ▸ Now | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | **15** |
+| Memory (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 3 | 2 | 2 | **17** |
+| Context (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **16** |
+| Capture (W2-ASKWELLS) | 2 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
+| Today (W2-ASKWELLS words) | 2 | 2 | 2 | 3 | 2 | 2 | 2 | 1 | **16** |
+| Room ▸ Now (Ask: W2-ASKWELLS) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | People (W1-TRUTH) | 3 | 2 | 2 | 2 | 2 | 3 | 1 | 2 | **17** |
 | Decisions (W1-TRUTH) | 3 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **18** |
 | Engines (W1-TRUTH) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 2 | **18** |
@@ -88,6 +88,10 @@ weakest across the board.
    draw their own composer, engine line and refusal. Owner: "which one do I use?"
    (`web/src/desk/components/AskPanel.tsx`, `web/src/pages/cores/MemoryCore.tsx`,
    `web/src/features/project-room/ProjectRoomCore.tsx`).
+   **W2-ASKWELLS (2026-10-27):** one composer. Memory and the Room compose Ask's own row
+   (`web/src/desk/components/askFace.tsx` AskComposer, AskEngineWord, AskSendButton); both
+   hand the question to the Ask window, which runs it and keeps its answer, its
+   not-answered line and its Recent. Their own wells are parked.
 6. **Three loading faces.** Meetings and People show a faint grey ring (People also drops its
    toolbar while it waits), the Room shows a centred mono `Loading…`, Decisions and Projects
    show a toolbar over a blank body
@@ -150,6 +154,7 @@ Shots: [dense 1440](atlas-2026-10-27/today-1440.png) · [dense 393](atlas-2026-1
   dumps me in the project, where is the item?"; "What is a destination form doing in Since
   yesterday?" (TodayView.tsx Since fold).
 - **Fix needs:** a lane (ask card → a row; count = what is listed; Open item opens the item).
+- **W2-ASKWELLS (2026-10-27), Today's words:** a DOM read of the seeded Today (rows, Since yesterday, This week, the 1:1) finds no mono and no caps left but the stepper's numbers, now sans; the rows Today leaves out are one quiet row `11 more in Needs you` (opens Needs you), so the toolbar's 14 adds up; the empty desk says `No meetings and no calendar yet.` + *Connect calendar* (no help sentence). Left: the phone status bar (KIT), *Open item* lands on the Room, not the item. Shots: `scratchpad/shots/w2-askwells/today{,-since}-*.png`.
 
 #### Capture — `chair:capture` (14)
 
@@ -165,6 +170,7 @@ Shots: [dense 1440](atlas-2026-10-27/capture-1440.png) · [393](atlas-2026-10-27
   as a label · P2.
 - **Top defect:** "It is three words and a hole." Owner: `web/src/desk/chair/ChairHome.tsx`.
 - **Fix needs:** a lane (one true empty line; the row verb visible as a verb).
+- **W2-ASKWELLS (2026-10-27):** New note and Record carry their glyphs; *Record when it starts* is the library secondary Button (no ghost that reads as a label); read and empty, Coming up says `Nothing is coming up`; at 393 the three verbs are three 76 px tiles, the glyph over the word. Shots: `scratchpad/shots/w2-askwells/capture-{1440,393}.png`.
 
 #### Speak — `surface-dictation` + Journal, Blocks, Learned, Commands, ⚙ Configure dictation (10)
 
@@ -390,6 +396,7 @@ Shots: [1440](atlas-2026-10-27/context-1440.png) · [393](atlas-2026-10-27/conte
 - **Top defect:** "Is this sent to my agents right now?" Owner:
   `web/src/pages/cores/ConstitutionalContextCore.tsx`.
 - **Fix needs:** a lane.
+- **W2-ASKWELLS (2026-10-27):** the status bar always answers it: `● Every engine run reads this first` (the saved text is the first system message of every engine run, `holdspeak/intel/engine.py` `run_prompt`) or `Empty: no run reads it`; the editor is the page, edge to edge (no inset well). Left: Context has no door outside Builder tools. Shots: `scratchpad/shots/w2-askwells/context-{1440,393}.png`.
 
 #### Automations — `surface-workbenches` (17) and one automation open (18)
 
@@ -469,6 +476,7 @@ Shots: [dense 1440](atlas-2026-10-27/memory-1440.png) · [393](atlas-2026-10-27/
 - **Top defect:** "Is this Ask, Projects or People? Why does it exist?" Owner:
   `web/src/pages/cores/MemoryCore.tsx`.
 - **Fix needs:** a canvas (Memory's job against Ask; possibly fold into Ask's About).
+- **W2-ASKWELLS (2026-10-27):** the toolbar is the Ask composer row (`askFace.tsx` AskComposer): `My whole desk` · one field *Find or ask your desk* · mic · `● No engine` · *Ask ⏎*. The field finds as it is typed: names, then `/api/memory/recall` hits, as dense rows of name · kind · date (`Decision · Oct 20`), status `15 found`; *Ask ⏎* runs the question in the Ask window. Pages not written: one line `● No engine writes the desk pages` + *Choose engine* (not a toolbar verb); an empty desk says `No projects or people yet`. Left: the canvas above. Shots: `scratchpad/shots/w2-askwells/memory{,-find,-asked}-*.png`.
 
 #### Room — `surface-project-memory` scoped `project:<id>`: Now (15), History (9)
 
@@ -495,6 +503,7 @@ Shots: [Now 1440](atlas-2026-10-27/room-1440.png) · [Now 393](atlas-2026-10-27/
   Now and History; Sources and Plan are folds). My press on the folds did not open them in the
   shot; their content is known from the DOM read only.
 - **Fix needs:** a lane for History (list view, dot + word, sentence case); Now is close.
+- **W2-ASKWELLS (2026-10-27), the Room's Ask:** the Ask composer row (`askFace.tsx` AskComposer), the scope preset to the project (folded on the phone, where the menu bar names it): `▣ Payments Platform Rewrite` · *Ask this project…* · mic · Result ▾ · `● No engine` · *Ask ⏎* (secondary: Write update is the Room's primary). The question runs in the Ask window with the project as its scope (shot `room-asked-1440.png`). The old well, chip and hidden Submit are parked (`_parked/roomAskWell.v1-2026-10-27.tsx`). Left: the Plan fold's mono caps dates (`JUL 15`, `LATE`, `26 DAYS`), the grey `Risk` pills.
 - **W1-FACES (2026-10-27):** History is a list view (`desk/surface/objects/ListView.tsx`):
   a toolbar with *All ▾* (All / GitHub / Jira / Room) and the search, quiet day captions
   (Today / Yesterday / Mon, Oct 20), rows of glyph · what happened · where · `14:02`, a press
@@ -657,11 +666,11 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Components | J7 | Go ▸ Builder → specimens | 10 → 16 | healed: a group rail (32 px rows, glyphs; the list first at 393), a toolbar (Preset, Reset), the specimen on the paper, one status bar (`Local specimen · Forms · Saved`); no caps tokens, no specimen headlines; left: the Forms specimen draws Settings at its narrow width inside a 640 px window | W2-BUILDER |
 | Ask | J3 | ⌘I/Ctrl+I, ⌘K → Save as note, Send | 11 | chat-demo look, oversized composer, mono errors | canvas (ASK) |
 | Decision record | J2 | Decisions row → Edit, Accept / Retire, Send…, Open record | 12 → 15 | healed: reader grammar, verbs in the toolbar, Filed in: in the status bar; left: toolbar wraps to two rows at 393; window is 440 px, not content-fit | W1-TRUTH |
-| Memory | J5 | Go ▸ Memory → Room, person | 13 | second Ask; blank empty | canvas |
-| Context | J4 | Go ▸ Builder → Save | 14 | no state | lane |
-| Capture | J1 | Go, phone Dock → Talk, New note | 14 | blank band | lane |
-| Today | J2–J4 | Dock 0, ⌃1 → items | 14 | mono ask card, count 32 vs 5, Send form in a fold | lane |
-| Room ▸ Now | J3, J4 | Projects, Today → Write update | 15 | third Ask; Risk pills; items hidden in Plan | lane |
+| Memory | J5 | Go ▸ Memory → Room, person | 13 → 17 | healed: one Ask composer, the field finds as typed, honest empty lines; left: Memory against Ask (canvas) | W2-ASKWELLS (+ canvas) |
+| Context | J4 | Go ▸ Builder → Save | 14 → 16 | healed: on/off in the status bar, the editor is the page; left: no door outside Builder | W2-ASKWELLS |
+| Capture | J1 | Go, phone Dock → Talk, New note | 14 → 17 | healed: one empty line, verbs with glyphs, visible row verb, phone tiles | W2-ASKWELLS |
+| Today | J2–J4 | Dock 0, ⌃1 → items | 14 → 16 | healed (W1-FACES + W2-ASKWELLS): sans words, `N more in Needs you`, no help sentence; left: phone status bar (kit), Open item → the item | W2-ASKWELLS |
+| Room ▸ Now | J3, J4 | Projects, Today → Write update | 15 → 16 | healed: the Ask is the Ask composer row; left: Risk pills, mono caps in Plan | W2-ASKWELLS (+ lane) |
 | People | J3 | Dock 2, ⌃3 → person | 15 → 17 | healed: no fake person from a 1:1 title, the name row once and quiet; left: `None` in Next 1:1, avatars, primary in the status bar | W1-TRUTH |
 | Decisions | J2 | Go → record | 15 → 18 | healed: title as the name, one state word (Open / Accepted / Superseded / Retired / Rejected) | W1-TRUTH |
 | Engines | J6 | HoldSpeak menu → pickers | 15 → 18 | healed: Not answering after a failed check (row, inspector, pickers), the owner's name with the model id as meta, the inspector follows the row; left: an auto-named engine (host:port label) still reads its model name here and the label in Ask | W1-TRUTH |

@@ -22,22 +22,30 @@
   padding: 12px 16px;
 }
 
-/* The Ask well: the toolbar's search-style field with its verb. */
+/* The toolbar is the Ask composer row (askFace AskComposer); the field is
+   the library search well, flat in the row. */
 .memory-ask {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  flex: 0 1 360px;
+  display: flex;
+  flex: 1 1 auto;
   min-width: 0;
 }
-
-.memory-ask > :first-child {
+.memory-ask > .gadget-string {
   flex: 1 1 auto;
-  min-width: 140px;
+  min-width: 0;
+  height: 28px;
 }
 
-.memory-ask > .btn {
-  flex: none;
+/* One quiet line: an empty state or why the pages are not written. */
+.desk-next .memory-line,
+.memory-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  font: 400 13px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
 }
 
 .memory-reader {
@@ -102,8 +110,8 @@
 }
 
 @container surface (max-width: 560px) {
-  .memory-ask {
-    flex-basis: 100%;
+  .memory-ask > .gadget-string {
+    height: 46px;
   }
 
   .memory-why {

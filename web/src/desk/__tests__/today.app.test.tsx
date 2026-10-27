@@ -90,6 +90,8 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
       "Do it", "Talk about the staff path in our next one-on-one",
     ]));
     expect(rowNames()).toHaveLength(5);
+    // W2: every counted row is listed, so no "N more in Needs you" row (no zero).
+    expect(screen.queryByTestId("today-needs-more")).toBeNull();
     expect(rowNames()).toContain("Confirm the vendor freeze dates");
     for (const later of ["Draft the rollback runbook", "Profile the reconciliation job", "Write up alert rule changes"]) {
       expect(rowNames()).not.toContain(later);
@@ -181,13 +183,13 @@ describe("Today is one page (Betterment daily D4), on the recorded week", () => 
     await waitFor(() => expect(posts.some((p) => p.url === "/api/follow-through/complete")).toBe(true));
   });
 
-  it("an empty desk is one line: Your meetings and calendar fill this, with Connect calendar", async () => {
+  it("an empty desk is one line: No meetings and no calendar yet, with Connect calendar", async () => {
     // A fresh hub's own answers (no calendar, no meeting, nothing waits).
     vi.setSystemTime(new Date(String(EMPTY.recordedAt)));
     replay(EMPTY.gets as Gets);
     render(<TodayView />);
     const line = await screen.findByTestId("today-empty-desk");
-    expect(line.textContent).toContain("Your meetings and calendar fill this.");
+    expect(line.textContent).toContain("No meetings and no calendar yet.");
     expect(within(line).getByRole("button", { name: "Connect calendar" })).toBeTruthy();
     expect(screen.getByTestId("today-record-now")).toBeTruthy();
     expect(screen.queryByTestId("today-needs-count")).toBeNull();
