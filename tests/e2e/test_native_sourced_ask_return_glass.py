@@ -506,17 +506,13 @@ def test_reference_source_frame_keeps_back_during_busy_and_quote_closed(
                     if request.method != "GET" and any(path in request.url for path in ("/api/ask", "/api/notes", "/api/threads")) else None)
             page.goto(f"{base}/design/components?token={TOKEN}", wait_until="load")
             _normal_chair(page)
-            patterns = page.get_by_role("group", name="Patterns")
+            patterns = page.get_by_role("navigation", name="Patterns")
             expect(patterns).to_be_visible()
-            if width == 1440:
-                conversation = patterns.get_by_role("button", name="Conversation", exact=True)
-                expect(conversation).to_be_visible()
-                conversation.click()
-            else:
-                picker = patterns.locator(".surface-filter-menu")
-                expect(picker).to_be_visible()
-                picker.click()
-                page.locator("[role^='menuitem']").filter(has_text="Conversation").first.click()
+            # W2-BUILDER: the groups are a rail at both widths (at 393 the
+            # rail is the first view, a list of groups).
+            conversation = patterns.get_by_role("button", name="Conversation", exact=True)
+            expect(conversation).to_be_visible()
+            conversation.click()
             specimen = page.get_by_test_id("reference-conversation")
             specimen.wait_for()
             assert specimen.locator(".desk-mic").count() == 0

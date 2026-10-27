@@ -18,7 +18,8 @@ describe("a knowledge collection is a drawer", () => {
       filed: new Set(), persons: [], membersLoaded: true,
     });
     const drawer = objects.find((o) => o.key === "knowledge:kb_ref");
-    expect(drawer).toMatchObject({ role: "drawer", kindWord: "DRAWER", name: "Reference", target: { type: "ref", ref: "knowledge:kb_ref" } });
+    // W2-BUILDER: the floor caption says Knowledge (atlas 2026-10-27).
+    expect(drawer).toMatchObject({ role: "drawer", kindWord: "KNOWLEDGE", name: "Reference", target: { type: "ref", ref: "knowledge:kb_ref" } });
     // A collection is many-to-many: unlike a real drawer it files nothing away.
     expect(objects.some((o) => o.key === "note:n1" && o.role === "loose")).toBe(true);
   });

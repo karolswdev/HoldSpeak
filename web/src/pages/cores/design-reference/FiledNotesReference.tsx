@@ -1,5 +1,4 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { StateChip } from "../../../desk/surface";
 import { RoomFiledNotesSection, type FiledNoteAdapter, type FiledNoteRequest } from "../../../features/project-room/RoomFiledNotesSection";
 import type { ResourcesRead, ResourcesState } from "../../../desk/drawer/useDrawerData";
 
@@ -29,12 +28,11 @@ export function FiledNotesReference({ preset }: { preset: FiledNotesPreset }) {
     if (opened) outcomeRef.current?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
   }, [opened]);
   return <section className="reference-example reference-filed-notes" data-testid="reference-filed-notes" aria-label="Filed notes pattern">
-    <div className="reference-example-head"><h2>Project room · Files</h2><StateChip state="idle" label="LOCAL SPECIMEN" /></div>
     <RoomFiledNotesSection projectId="local-project" resourceRefs={refs} resourcesState={resourcesState}
       refreshResources={refreshResources} followCurrentResources={followCurrentResources}
       members={[]} request={request} onRequestHandled={() => setRequest(null)} adapter={adapter} />
     {opened ? <p ref={outcomeRef} className="reference-receipt" role="status">
-      OPENED LOCALLY · {opened.noteRef} · {opened.projectId}
+      Opened locally · {opened.noteRef} · {opened.projectId}
     </p> : null}
   </section>;
 }

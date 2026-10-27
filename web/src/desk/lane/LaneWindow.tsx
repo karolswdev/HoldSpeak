@@ -38,12 +38,12 @@ import {
   PRCard,
   StationTrack,
   StringGadget,
-  SurfaceFooter,
   TimelineRail,
   TransportKey,
   type TimelineEntry,
 } from "../surface";
 import { wireClock, wireDate } from "../surface/format";
+import { DotWord, StatusBar, ToolGlyph, Toolbar } from "../surface/kit";
 import { controlModeLabel } from "../../lib/productLanguage";
 import { useCompactViewport } from "../useCompactViewport";
 import { useOnCoderFrame } from "../useDeskChangedRefresh";
@@ -162,7 +162,7 @@ function LaneFrame({ launchId }: { launchId: string }) {
       minW={360}
       minH={320}
       defaultW={940}
-      defaultH={720}
+      defaultH={560}
       icon={
         <img
           src={laneTitleSprite(lane?.launch.agent ?? flight?.agent, sessionKey ?? launchId)}
@@ -189,6 +189,7 @@ function LaneFrame({ launchId }: { launchId: string }) {
       open
       onClose={() => useLane.getState().close()}
     >
+      {lane ? <LaneToolbar lane={lane} /> : null}
       <LaneBody lane={lane} error={error} raw={raw} agent={agent} compact={compact} itemTitle={flight?.title ?? ""}
         done={flight?.state === "done"} screenSaid={flight?.screen?.said ?? null} />
       {lane ? <LaneFooter lane={lane} /> : null}
@@ -283,17 +284,34 @@ function LaneBody({
   return (
     <div className="desk-pullout-body lw-body" data-testid="lane-body" ref={bodyRef} onScroll={onScroll}>
       <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} done={done} />
-      {!raw && (done || Boolean(reviewResult(lane.launch.review))) ? <ResultBlock lane={lane} screenSaid={screenSaid} /> : null}
-      {unreadParts(lane).map(([part, reason]) => (
-        <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
-      ))}
+      {/* W2-BUILDER (atlas 2026-10-27): the wait (the ask he must answer)
+          comes first, then the result, then the work; Details last. */}
       {lane.launch.stopped ? null : rebrief ? <RebriefWell /> : (
         <>
           {!raw ? <HeldPlate lane={lane} agent={agent} /> : null}
           <WaitWell lane={lane} agent={agent} />
         </>
       )}
+      {!raw && (done || Boolean(reviewResult(lane.launch.review))) ? <ResultBlock lane={lane} screenSaid={screenSaid} /> : null}
+      {unreadParts(lane).map(([part, reason]) => (
+        <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
+      ))}
       {raw ? <RawPane /> : null}
+      {!raw && onlyBrief && !prCard && !done && !reviewResult(lane.launch.review) ? (
+        <section className="lw-work-empty" data-testid="lane-work-empty" aria-label="Its work">
+          {screenSaid ? (
+            <>
+              <span className="lw-work-caption">Its last words</span>
+              <AgentWords className="lw-ev-text" text={screenSaid} />
+            </>
+          ) : (
+            <>
+              <span className="lw-work-caption">No steps reported yet</span>
+              <span className="lw-work-line">{agent || "The agent"} reports each step here when it uses a tool. Terminal shows its screen now.</span>
+            </>
+          )}
+        </section>
+      ) : null}
       {compact ? (
         <div className="lw-col">
           {prCard}
@@ -311,11 +329,6 @@ function LaneBody({
         <StationTrack data-testid="lane-track" label="Recorded stages" stations={stations.filter((s) => s.state !== "ahead")} />
         {branch ? <span className="lw-footer-branch" data-testid="lane-branch">{branch}</span> : null}
         {files}
-        {lane.launch.session_key && !lane.launch.stopped && (!lane.control || isNotRead(lane.control) || lane.control.pane !== false) ? <div className="lw-verbs">
-          {/* Stop retains its own session-control grant and confirmation. */}
-          {rebrief || !lane.wait || isNotRead(lane.wait) || lane.wait.kind !== "TO ANSWER" || !lane.wait.question ? <ArmLine lane={lane} compact /> : null}
-          <StopVerb />
-        </div> : null}
       </FoldGadget>
     </div>
   );
@@ -641,19 +654,38 @@ export function laneDoing(lane: LaneWire, agent: string, done = false): { word: 
 
 function LaneHead({ lane, agent, itemTitle, done = false }: { lane: LaneWire; agent: string; itemTitle: string; done?: boolean }) {
   const doing = laneDoing(lane, agent, done);
+  // W2-BUILDER: one line, not a headline: the face, the state as a dot and
+  // a word, the item. Its last step is the status bar's.
   return (
     <div className="lw-head" data-testid="lane-head">
       <span className="lw-head-sprite" aria-hidden="true">
         <img src={laneTitleSprite(lane.launch.agent, lane.launch.session_key ?? lane.launch.launch_id ?? "lane")} alt="" draggable={false} />
       </span>
       <div className="lw-head-text">
-        <h2 className="lw-head-title" data-tone={doing.tone}>{doing.word}</h2>
+        <DotWord tone={doing.tone} className="lw-head-title">{doing.word}</DotWord>
         <span className="lw-head-meta">
           {itemTitle ? <span>{itemTitle}</span> : null}
         </span>
       </div>
     </div>
   );
+}
+
+/** When the agent last reported a step: its newest event. (The hub's
+ *  screen read time is when the desk looked, not when the agent spoke, so
+ *  it is not used.) */
+function lastStep(events: readonly LaneEvent[]): Date | null {
+  const times = events.map((event) => wireDate(event.ts)).filter((date): date is Date => Boolean(date));
+  if (!times.length) return null;
+  return new Date(Math.max(...times.map((date) => date.getTime())));
+}
+
+function spokeWord(at: Date, now: number = Date.now()): string {
+  const minutes = Math.floor((now - at.getTime()) / 60_000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 24 * 60) return `${Math.floor(minutes / 60)} h ago`;
+  return `on ${at.toLocaleDateString([], { month: "short", day: "numeric" })}`;
 }
 
 /** The held call on a focus plate: the Workbench title bar, the call (its
@@ -881,41 +913,65 @@ function RawPane() {
 
 /* ── the footer ───────────────────────────────────────────────────── */
 
-function LaneFooter({ lane }: { lane: LaneWire }) {
+/** W2-BUILDER (atlas 2026-10-27): the agent's verbs are the window's
+ *  toolbar: Tell it, Open PR, Stop (two presses), and the ARM beside Stop
+ *  when the mode asks for it. The answer to a waiting ask is its card. */
+function LaneToolbar({ lane }: { lane: LaneWire }) {
   const pr = lane.follow_through?.pr;
   const prUrl = pr?.number != null && pr.url ? pr.url : null;
   const sessionKey = lane.launch.stopped || (lane.control && !isNotRead(lane.control) && lane.control.pane === false) ? null : lane.launch.session_key;
   const rebrief = useLane((s) => s.rebrief);
+  const canStop = Boolean(lane.launch.session_key && !lane.launch.stopped && (!lane.control || isNotRead(lane.control) || lane.control.pane !== false));
+  const armHere = rebrief || !lane.wait || isNotRead(lane.wait) || lane.wait.kind !== "TO ANSWER" || !lane.wait.question;
+  if (!sessionKey && !prUrl && !canStop) return null;
   return (
-    <SurfaceFooter
+    <Toolbar
+      label="Agent"
+      className="lw-toolbar"
+      data-testid="lane-toolbar"
+      trailing={canStop && armHere ? <ArmLine lane={lane} compact /> : undefined}
+    >
+      {sessionKey ? (
+        <Button
+          dense
+          variant="secondary"
+          aria-pressed={rebrief}
+          data-testid="lane-rebrief"
+          onClick={() => useLane.getState().setRebrief(!rebrief)}
+        >
+          <ToolGlyph kind="ask" />Tell it
+        </Button>
+      ) : null}
+      {prUrl ? (
+        <Button
+          dense
+          variant="secondary"
+          data-testid="lane-open-pr"
+          title={prUrl}
+          onClick={() => window.open(prUrl, "_blank", "noopener,noreferrer")}
+        >
+          <ToolGlyph kind="open" />Open PR
+        </Button>
+      ) : null}
+      {/* Stop retains its own session-control grant and confirmation. */}
+      {canStop ? <StopVerb /> : null}
+    </Toolbar>
+  );
+}
+
+/** The status bar: when it last reported a step, and the lane's receipts (the stop,
+ *  the last send or refusal). */
+function LaneFooter({ lane }: { lane: LaneWire }) {
+  const events = useLane((s) => s.events);
+  const spoke = lastStep(events);
+  return (
+    <StatusBar
       className="lw-footer"
-      receipt={<LaneReceipts lane={lane} />}
-      verbs={
-        <>
-          {sessionKey ? (
-            <Button
-              dense
-              variant="ghost"
-              aria-pressed={rebrief}
-              data-testid="lane-rebrief"
-              onClick={() => useLane.getState().setRebrief(!rebrief)}
-            >
-              Tell it
-            </Button>
-          ) : null}
-          {prUrl ? (
-            <Button
-              dense
-              variant="secondary"
-              data-testid="lane-open-pr"
-              title={prUrl}
-              onClick={() => window.open(prUrl, "_blank", "noopener,noreferrer")}
-            >
-              Open PR
-            </Button>
-          ) : null}
-        </>
-      }
+      data-testid="lane-status"
+      items={[
+        spoke ? { key: "spoke", text: `Last step ${spokeWord(spoke)}`, testId: "lane-last-step" } : null,
+      ]}
+      trailing={<LaneReceipts lane={lane} />}
     />
   );
 }

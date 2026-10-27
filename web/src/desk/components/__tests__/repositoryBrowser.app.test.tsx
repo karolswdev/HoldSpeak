@@ -153,7 +153,7 @@ describe("repository read browser", () => {
 
   it("Components uses the production browser for populated, refused, and resumed specimens", async () => {
     render(<DesignReference />);
-    fireEvent.click(within(screen.getByRole("group", { name: "Patterns" })).getByRole("button", { name: "Resources" }));
+    fireEvent.click(within(screen.getByRole("navigation", { name: "Patterns" })).getByRole("button", { name: "Resources" }));
     await screen.findByRole("row", { name: "README.md" });
     fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: "failed" } });
     await screen.findByText("READ REFUSED · src");

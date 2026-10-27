@@ -5,7 +5,6 @@ import { useRepositoryBrowser, type RepositoryReadAdapter } from "../../../desk/
 import type { RepoFile } from "../../../desk/repository";
 import {
   CycleGadget,
-  FilterTokens,
   StringGadget,
   SurfaceRows,
   SurfaceRow,
@@ -13,13 +12,15 @@ import {
   SurfaceSplit,
   SurfaceState,
   SurfaceWell,
-  SurfaceFooter,
   ProgressPlan,
-  ProvenanceChip,
   Receipt,
-  StateChip,
   type PlanStep,
   ReadingDocument,
+  StatusBar,
+  ToolGlyph,
+  Toolbar,
+  type ToolGlyphKind,
+  DotWord,
 } from "../../../desk/surface";
 import type { CoreProps } from "../core-types";
 import { ControlsGallery } from "./ControlsGallery";
@@ -192,25 +193,13 @@ const STATE_OPTIONS: Record<Pattern, Array<{ id: ExampleState; label: string }>>
   controls: [],
 };
 
-function PatternSelector({ pattern, onChange }: { pattern: Pattern; onChange: (value: Pattern) => void }) {
-  return (
-    <FilterTokens
-      options={PATTERNS.map((item) => ({ value: item.id, label: item.label }))}
-      value={pattern}
-      onChange={(value) => onChange(value as Pattern)}
-      label="Patterns"
-      className="reference-pattern-selector"
-    />
-  );
-}
-
 function StateSelector({ pattern, state, onChange }: { pattern: Pattern; state: ExampleState; onChange: (value: ExampleState) => void }) {
   if (pattern === "controls") return null;
   const options = STATE_OPTIONS[pattern];
   const value = options.some((item) => item.id === state) ? state : options[0].id;
   return (
-    <div className="reference-state-selector" data-testid="reference-state-selector" aria-label="Example state">
-      <span className="reference-selector-label">Preset</span>
+    <div className="reference-state-selector" data-testid="reference-state-selector">
+      <span className="reference-selector-label" aria-hidden="true">Preset</span>
       <CycleGadget
         label="Example state"
         value={value}
@@ -234,9 +223,6 @@ function ReadingPattern({ state }: { state: ExampleState }) {
   }, [state]);
   return (
     <section className="reference-example" data-testid="reference-reading" aria-label="Reading pattern">
-      <div className="reference-example-head">
-        <ProvenanceChip source="Desk record" boundary="Local" />
-      </div>
       {state === "empty" ? (
         <SurfaceState
           empty
@@ -252,8 +238,8 @@ function ReadingPattern({ state }: { state: ExampleState }) {
         {hasResult ? <Button variant="primary" onClick={() => setKeptExcerpt(EXCERPT)}>Keep excerpt</Button> : null}
         {hasResult || sourceOpen ? <Button variant="ghost" onClick={toggleSource}>{sourceOpen ? "Close source" : "Open source"}</Button> : null}
       </div>
-      {keptExcerpt ? <SurfaceWell head="KEPT EXCERPT"><p className="reference-receipt" data-testid="reference-kept-excerpt" role="status">{keptExcerpt}</p></SurfaceWell> : null}
-      {sourceOpen ? <SurfaceWell head="SOURCE NOTE"><ReadingDocument data-testid="reference-source-note" className="reference-source-note">{SOURCE_NOTE}</ReadingDocument></SurfaceWell> : null}
+      {keptExcerpt ? <SurfaceWell head="Kept excerpt"><p className="reference-receipt" data-testid="reference-kept-excerpt" role="status">{keptExcerpt}</p></SurfaceWell> : null}
+      {sourceOpen ? <SurfaceWell head="Source note"><ReadingDocument data-testid="reference-source-note" className="reference-source-note">{SOURCE_NOTE}</ReadingDocument></SurfaceWell> : null}
     </section>
   );
 }
@@ -268,8 +254,7 @@ function ListsPattern({ state }: { state: ExampleState }) {
   const selectedItem = state === "empty" && !emptyReleased ? undefined : visibleRows.find((item) => item.id === selected);
   return (
     <section className="reference-example" data-testid="reference-list" aria-label="List pattern" id="reference-panel-lists">
-      <div className="reference-example-head"><div><h2>Work items</h2></div><StateChip state={state === "empty" ? "idle" : "active"} label={visibleRows.length ? `${visibleRows.length} SHOWN` : "EMPTY"} /></div>
-      <StringGadget label="Filter work items" value={query} placeholder="FILTER WORK ITEMS" onChange={setQuery} />
+      <StringGadget label="Filter work items" value={query} placeholder="Filter work items" onChange={setQuery} />
       {visibleRows.length ? (
         <SurfaceSplit
           main={<SurfaceRows>{visibleRows.map((item) => <SurfaceRow key={item.id} title={item.title} detail={item.detail} meta={item.kind} selected={selected === item.id} onOpen={() => setSelected(item.id)} />)}</SurfaceRows>}
@@ -300,7 +285,6 @@ function ResourcesPattern({ state }: { state: ExampleState }) {
     if (state === "resumed") browser.inspect("README.md");
   }, [browser, state]);
   return <section className="reference-example reference-resource" data-testid="reference-resource" aria-label="Resource pattern">
-    <div className="reference-example-head"><div><h2>Registered repository</h2><p className="reference-receipt">RepoWindow · read and inspect</p></div></div>
     <RepositoryBrowserView browser={browser} />
   </section>;
 }
@@ -315,8 +299,8 @@ function ProgressPattern({ state }: { state: ExampleState }) {
       : [{ id: "prepare", label: "Prepare review", status: "done" }, { id: "check", label: "Check source", status: "running", progress: 0.55 }, { id: "record", label: "Record result", status: "queued" }];
   return (
     <section className="reference-example" data-testid="reference-progress" aria-label="Progress pattern">
-      <div className="reference-example-head"><div><h2>Review run</h2></div><StateChip state={run === "success" ? "success" : run === "failed" ? "failure" : "working"} label={run.toUpperCase()} /></div>
-      <ProgressPlan steps={steps} ariaLabel="Local review progress" receipt={run === "success" ? <Receipt status="ok" label="Review complete" timestamp="now" /> : run === "failed" ? <Receipt status="danger" label="Needs retry" /> : <ProvenanceChip source="This Mac" />} action={run === "failed" ? { label: "Retry", onClick: () => setRun("running") } : run === "success" ? { label: "Run again", onClick: () => setRun("running") } : undefined} />
+      <DotWord tone={run === "success" ? "ok" : run === "failed" ? "fail" : "info"} data-testid="reference-progress-state">{run === "success" ? "Done" : run === "failed" ? "Failed" : "Running"}</DotWord>
+      <ProgressPlan steps={steps} ariaLabel="Local review progress" receipt={run === "success" ? <Receipt status="ok" label="Review complete" timestamp="now" /> : run === "failed" ? <Receipt status="danger" label="Needs retry" /> : undefined} action={run === "failed" ? { label: "Retry", onClick: () => setRun("running") } : run === "success" ? { label: "Run again", onClick: () => setRun("running") } : undefined} />
       <div className="reference-actions"><Button variant="ghost" onClick={() => setRun("success")}>Finish review</Button><Button variant="ghost" onClick={() => setRun("failed")}>Fail locally</Button></div>
     </section>
   );
@@ -337,26 +321,92 @@ function PatternPanel({ pattern, state }: { pattern: Pattern; state: ExampleStat
   }
 }
 
+/** The group glyphs on the rail: the toolbar glyphs of the kit, one per
+ *  group, so the rail reads as objects and not as a word list. */
+const PATTERN_GLYPH: Record<Pattern, ToolGlyphKind> = {
+  window: "open",
+  forms: "edit",
+  editing: "note",
+  reading: "summary",
+  lists: "tasks",
+  resources: "project",
+  conversation: "ask",
+  progress: "run",
+  controls: "engine",
+};
+
+/** W2-BUILDER (atlas 2026-10-27, Components 10/24: "the catalog of our
+ *  grammar breaks our grammar"): the groups are a wing rail (the Settings
+ *  rail's rows), the pane opens with a toolbar (the preset and Reset), the
+ *  specimen runs edge to edge on the paper, and the window has one status
+ *  bar. At a content width of 520 px or less the rail is the first view and
+ *  a group opens with Back. */
 export function DesignReference({ hero }: CoreProps) {
   const [pattern, setPattern] = useState<Pattern>("forms");
   const [state, setState] = useState<ExampleState>("saved");
   const [resetEpoch, setResetEpoch] = useState(0);
+  const [paneOpen, setPaneOpen] = useState(false);
   const reset = () => { setPattern("forms"); setState("saved"); setResetEpoch((epoch) => epoch + 1); };
   const activeLabel = PATTERNS.find((item) => item.id === pattern)?.label ?? "Forms";
+  const options = STATE_OPTIONS[pattern];
+  const presetLabel = options.find((item) => item.id === state)?.label ?? options[0]?.label ?? "";
+  const select = (next: Pattern) => {
+    setPattern(next);
+    setPaneOpen(true);
+    if (next !== "controls") setState(next === "forms" ? "saved" : next === "window" ? "populated" : "ordinary");
+  };
   return (
     <>
       {hero ? hero(null) : null}
-      <SurfaceSection className="design-reference-shell" data-testid="design-reference">
-        <div className="reference-toolbar" aria-label="Pattern controls">
-          <PatternSelector pattern={pattern} onChange={(next) => { setPattern(next); if (next !== "controls") setState(next === "forms" ? "saved" : next === "window" ? "populated" : "ordinary"); }} />
-          <StateSelector pattern={pattern} state={state} onChange={setState} />
-          <Button dense variant="ghost" onClick={reset}>Reset</Button>
+      <div className="design-reference-shell" data-testid="design-reference">
+      <div className="reference-layout" data-pane-open={paneOpen || undefined}>
+        {/* The group rail: the same 32 px rows and selection plate as the
+            Settings rail, drawn here so no Settings pane style reaches a
+            specimen (a specimen renders as it does in its own window). */}
+        <nav className="reference-rail" aria-label="Patterns">
+          {PATTERNS.map((item) => {
+            const active = item.id === pattern;
+            return (
+              <Button
+                key={item.id}
+                variant="ghost"
+                dense
+                className={`reference-rail-row${active ? " is-active" : ""}`}
+                aria-current={active ? "location" : undefined}
+                aria-pressed={active}
+                onClick={() => select(item.id)}
+                data-testid={`reference-group-${item.id}`}
+              >
+                <span className="reference-rail-glyph" aria-hidden="true"><ToolGlyph kind={PATTERN_GLYPH[item.id]} /></span>
+                <span className="reference-rail-label">{item.label}</span>
+                <span className="reference-rail-chevron" aria-hidden="true">›</span>
+              </Button>
+            );
+          })}
+        </nav>
+        <div className="reference-pane">
+          <div className="reference-pane-back">
+            <Button variant="ghost" dense onClick={() => setPaneOpen(false)} data-testid="reference-back">
+              <span aria-hidden="true">‹</span> Groups
+            </Button>
+            <span className="reference-pane-back-name">{activeLabel}</span>
+          </div>
+          <Toolbar label="Pattern controls" className="reference-toolbar" trailingStays trailing={<Button dense variant="ghost" onClick={reset}>Reset</Button>}>
+            <StateSelector pattern={pattern} state={state} onChange={setState} />
+          </Toolbar>
+          <div className="reference-panel" data-active-pattern={pattern} data-state={state} aria-label={`${activeLabel} pattern`} id={`reference-panel-${pattern}`}>
+            <PatternPanel key={`${pattern}-${resetEpoch}`} pattern={pattern} state={state} />
+          </div>
         </div>
-        <div className="reference-panel" data-active-pattern={pattern} data-state={state} aria-label={`${activeLabel} pattern`} id={`reference-panel-${pattern}`}>
-          <PatternPanel key={`${pattern}-${resetEpoch}`} pattern={pattern} state={state} />
-        </div>
-      </SurfaceSection>
-      <SurfaceFooter receipt={<StateChip state="idle" label="LOCAL SPECIMEN" />} egress={<ProvenanceChip source="This Mac" />} />
+      </div>
+      </div>
+      <StatusBar
+        data-testid="reference-status"
+        items={[
+          { key: "specimen", text: "Local specimen" },
+          { key: "pattern", text: presetLabel && pattern !== "controls" ? `${activeLabel} · ${presetLabel}` : activeLabel },
+        ]}
+      />
     </>
   );
 }

@@ -78,13 +78,13 @@ def _components_ready(page: Any) -> None:
       const visible = e => !!e && e.getClientRects().length > 0 &&
         getComputedStyle(e).visibility !== 'hidden';
       return visible(document.querySelector('.chair.chair-first-value')) ||
-        visible(document.querySelector('#surface-components .reference-pattern-selector'));
+        visible(document.querySelector('#surface-components .design-reference-shell .pref-rail'));
     }""")
     gate = page.locator(".chair.chair-first-value")
     if gate.is_visible():
         gate.get_by_role("button", name=re.compile(r"^(Continue later|Open my desk)$")).click()
     page.locator("#surface-components").wait_for(state="visible")
-    page.get_by_role("group", name="Patterns").wait_for(state="visible")
+    page.get_by_role("navigation", name="Patterns").wait_for(state="visible")
 
 
 def _open_project(page: Any, project_id: str, name: str) -> Any:
@@ -544,11 +544,11 @@ def test_reference_filed_notes_uses_local_read_and_open_only(
             page.set_default_timeout(20_000)
             page.goto(f"{base}/design/components?token={TOKEN}", wait_until="load")
             _components_ready(page)
-            pattern = page.get_by_role("group", name="Patterns").get_by_role("button", name="Lists", exact=True)
+            pattern = page.get_by_role("navigation", name="Patterns").get_by_role("button", name="Lists", exact=True)
             if pattern.count():
                 pattern.click()
             else:
-                page.get_by_role("group", name="Patterns").get_by_role("button").click()
+                page.get_by_role("navigation", name="Patterns").get_by_role("button").click()
                 page.locator("[role^='menuitem']").filter(has_text="Lists").first.click()
             page.get_by_role("combobox", name="Example state").select_option("filed-notes")
             specimen = page.get_by_test_id("reference-filed-notes")
@@ -580,7 +580,7 @@ def test_reference_filed_notes_uses_local_read_and_open_only(
             _hit_before_action(specimen, "[data-testid='room-files-open']")
             files.get_by_test_id("room-files-open").click()
             expect(specimen.locator(".reference-receipt[role='status']")).to_contain_text(
-                "OPENED LOCALLY · note:review-record · local-project")
+                "Opened locally · note:review-record · local-project")
             if width == 393:
                 _phone_targets(page, "[data-testid='reference-filed-notes']")
             page.screenshot(path=str(shots / f"reference-filed-notes-{width}.png"))

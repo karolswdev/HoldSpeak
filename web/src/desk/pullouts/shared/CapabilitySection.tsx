@@ -9,7 +9,7 @@ import { openSurfaceOr } from "../../shell";
 import { qualifiedRef } from "../../api";
 import { ContextualAssignment } from "../../../pages/cores/ContextualAssignment";
 import { Material } from "../../surface/Material";
-import { SurfaceState } from "../../surface/Surface";
+import { DotWord } from "../../surface/kit";
 import { PadGadget } from "../../surface/gadgets";
 import { humanizeWireValue } from "../../../lib/productLanguage";
 import {
@@ -17,7 +17,12 @@ import {
 } from "../../contextual";
 import type { WorldObject } from "../../world";
 
-export function CapabilitySection({ object: o }: { object: WorldObject }) {
+export function CapabilitySection({ object: o, blocked }: {
+  object: WorldObject;
+  /** The window knows why it cannot run yet (an empty Sequence): this one
+   *  line replaces the hub's reason under a greyed Run. */
+  blocked?: string;
+}) {
   const items = useDesk((s) => s.items);
   const selectedIds = useDesk((s) => s.selectedIds);
   const { openPullout } = useDesk.getState();
@@ -44,8 +49,6 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
     `capability:${o.kind}:${o.id}`,
     contextualAction?.input || "",
   );
-
-  const resourceRef = qualifiedRef(o.kind, o.id);
 
   useEffect(() => {
     if (o.kind === "recipe") {
@@ -111,11 +114,29 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
     setRunBusy(false);
   };
 
+  // W2-BUILDER (atlas 2026-10-27): the material and its Run, nothing else.
+  // A greyed Run says why in one line beside it; where it runs is the Run's
+  // hover title (UX-CANON A.9: no placement chip on a working window); the
+  // engine choice is the window's toolbar verb.
+  const runReason = runBusy
+    ? ""
+    : blocked
+      ? blocked
+      : !capabilityCanRun
+      ? capabilityBlockedWords(readiness)
+      : !runInput.trim()
+        ? `Type the material, then press ${o.kind === "recipe" ? "Ask" : "Run"}.`
+        : "";
+  const placementWords = supportedPlacements
+    .filter((value) => !value.includes(":"))
+    .map((value) => humanizeWireValue(value));
+  const runTitle = [
+    placementWords.length ? `Runs on ${placementWords.join(" or ").toLowerCase()}` : "",
+    effectClasses?.includes("creates_artifact") ? "keeps the result" : "",
+  ].filter(Boolean).join(", ");
+
   return (
-    <section className="desk-pullout-capability">
-      {readiness.state !== "ready" ? (
-        <SurfaceState error={readiness.detail || "Unavailable"} />
-      ) : null}
+    <section className="desk-pullout-capability" data-testid="capability-section">
       <div className="desk-chat-well">
         <div className="desk-chat-composer desk-capability-composer">
           <PadGadget
@@ -132,9 +153,11 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
             dense
             variant={o.kind === "recipe" ? "ghost" : "primary"}
             loading={runBusy}
+            title={runTitle || undefined}
             onClick={() => void run()}
             disabled={
               runBusy ||
+              Boolean(blocked) ||
               !capabilityCanRun ||
               !runInput.trim()
             }
@@ -151,7 +174,7 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
         {o.kind === "recipe" ? (
           <div className="desk-chat-well-foot">
             <ContextualAssignment
-              label="Run assignment"
+              label="Which engine runs it"
               capabilityId="recipe.run"
               scope={{
                 kind: "subject",
@@ -163,31 +186,14 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
           </div>
         ) : null}
       </div>
+      {runReason ? (
+        <DotWord tone={capabilityCanRun && !blocked ? "idle" : "warn"} className="capability-run-reason" data-testid="capability-run-reason">
+          {runReason}
+        </DotWord>
+      ) : null}
       {runInputRecovered ? (
         <span className="quiet">Recovered local run material.</span>
       ) : null}
-      <div className="desk-pullout-capability-foot">
-        <span className="quiet">
-          Where it runs:{" "}
-          {supportedPlacements
-            .map((value: string) => humanizeWireValue(value))
-            .join(" · ")}
-          {effectClasses?.length
-            ? ` · ${effectClasses
-                .map((value: string) => humanizeWireValue(value))
-                .join(" · ")}`
-            : ""}
-        </span>
-        <Button
-          dense
-          variant="ghost"
-          onClick={() =>
-            openSurfaceOr("configure-runs-on", "/profiles", resourceRef)
-          }
-        >
-          Assignments
-        </Button>
-      </div>
       {runWarning && <span className="desk-run-warning"><span aria-hidden="true">{String.fromCodePoint(0x26A0)}</span> {runWarning}</span>}
       {runOut && (
         <div className="surface-aerogel">
@@ -213,4 +219,19 @@ export function CapabilitySection({ object: o }: { object: WorldObject }) {
       )}
     </section>
   );
+}
+
+/** The one line a greyed Run says: the hub's reason in plain words. */
+export function capabilityBlockedWords(readiness: { state: string; detail?: string }): string {
+  const detail = String(readiness.detail || "").trim();
+  if (/no model configured/i.test(detail)) return "No engine is chosen for this. Choose engine.";
+  // The hub's machine words for an empty Sequence: the window's own empty
+  // state says what to do (Add mode).
+  if (/linear sequence/i.test(detail)) return "Add a mode, then type the material.";
+  return detail || "This cannot run yet.";
+}
+
+/** The window toolbar's engine verb: opens Runs on with this object. */
+export function openCapabilityEngines(o: WorldObject): void {
+  openSurfaceOr("configure-runs-on", "/profiles", qualifiedRef(o.kind, o.id));
 }
