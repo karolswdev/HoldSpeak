@@ -100,7 +100,7 @@ describe("the Parked drawer", () => {
     expect(rowOf(/^Vendor call, MEETING/)).toBeTruthy();
     expect(rowOf(/^Draft the runbook, AUTOMATION ITEM/)).toBeTruthy();
     expect(rowOf(/^Old migration, PROJECT/)).toBeTruthy();
-    expect(screen.getByText("3 OBJECTS")).toBeTruthy();
+    expect(screen.getByText("3 objects")).toBeTruthy();
   });
 
   it("Restore uses each kind's own route and shows the park receipt", async () => {
@@ -162,7 +162,7 @@ describe("the Parked drawer", () => {
     render(<ParkedDrawer origin={null} />);
     expect(await screen.findByText("Nothing parked")).toBeTruthy();
     // no counter of zero
-    expect(screen.queryByText(/0 OBJECTS/)).toBeNull();
+    expect(screen.queryByText(/0 objects/i)).toBeNull();
   });
 
   it("a kind read part way shows its rows and says NOT READ · PARTIAL", async () => {

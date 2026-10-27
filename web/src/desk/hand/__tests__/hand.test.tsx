@@ -271,8 +271,9 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     // The line sits under the drawer head, before the icons. Phase 16 A3
     // (the interior kit): the head is AppHead then the FilterBar, so the
     // line follows the FilterBar.
-    expect(line.previousElementSibling).toHaveAttribute("data-testid", "drawer-filter");
-    expect(line.previousElementSibling?.previousElementSibling).toHaveAttribute("data-testid", "drawer-facts");
+    // W3-B: the toolbar sits above the scroll; the line opens the scroll.
+    expect(line.previousElementSibling).toBeNull();
+    expect(line.parentElement?.previousElementSibling).toHaveAttribute("data-testid", "drawer-filter");
     expect(posts("/api/agent/hand/preview")[0].init?.json).toEqual({
       kind: "action", id: "a-comms", profile: "claude-default", project_id: "p-ledger",
     });

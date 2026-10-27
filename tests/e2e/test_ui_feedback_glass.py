@@ -68,7 +68,7 @@ def _start_feedback(page: Any, width: int, target: Any, *, again: bool = False) 
     box = target.bounding_box()
     assert box, "the selected rendered control has no hit box"
     page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
-    page.locator("[data-ui-feedback]").get_by_text("RECORDING", exact=True).wait_for(timeout=T)
+    page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for(timeout=T)
     # Let Chromium's fake track deliver real frames before the hold is ended.
     page.wait_for_timeout(500)
 
@@ -278,7 +278,7 @@ def _save_feedback(
     assert response.status == 200, response.text()
     payload = response.json()
     assert payload["success"] is True, payload
-    page.locator("[data-ui-feedback]").get_by_text("SAVED", exact=True).wait_for(timeout=T)
+    page.locator("[data-ui-feedback]").get_by_text("Saved", exact=True).wait_for(timeout=T)
     page.screenshot(path=str(SHOTS / f"{shot_stem}-{width}-saved.png"))
     window = page.locator(f"[id='{window_id}'][data-layer='window']")
     box = window.bounding_box()
@@ -440,7 +440,7 @@ def test_window_feedback_button_records_its_window_without_picking(feedback_page
 
     button.click()
     strip = page.locator("[data-ui-feedback]")
-    strip.get_by_text("RECORDING", exact=True).wait_for(timeout=T)
+    strip.get_by_text("Recording", exact=True).wait_for(timeout=T)
     assert strip.get_by_text("Select an element", exact=True).count() == 0
     page.wait_for_timeout(500)
     report = _save_feedback(page, width, shot_stem="feedback-direct", window_id=window_id, draft=draft)
@@ -533,7 +533,7 @@ def test_reference_artifact_feedback_png(artifact_reference_page: Any) -> None:
     )
     feedback_button.wait_for(timeout=T)
     feedback_button.click()
-    page.locator("[data-ui-feedback]").get_by_text("RECORDING", exact=True).wait_for(timeout=T)
+    page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for(timeout=T)
     page.wait_for_timeout(500)
     report = _save_feedback(
         page,

@@ -19,7 +19,9 @@ export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
   thread: { w: 740, h: 680 },
   // W1-TRUTH (atlas 2026-10-27): the decision reads on the reader grammar
   // (toolbar, the decision, a status bar); 640 px left 300 px of blank
-  // under a short decision. A long one scrolls in its body.
+  // under a short decision. A long one scrolls in its body. W3-A: this is the
+  // first seat only; the window fits its content between 320 and 640 px
+  // (Pullout fitContent, decisions.css).
   decision: { w: 680, h: 440 },
   // PHILO-17: a meeting is a whole window (its record, its wings, its foot).
   meeting: { w: 720, h: 600 },

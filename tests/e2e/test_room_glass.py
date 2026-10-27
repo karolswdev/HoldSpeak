@@ -1335,7 +1335,7 @@ FACTS = r"""() => {
     item_rows: text('[data-testid=item-row]'),
     item_titles: text('[data-testid=item-row] .room-row-title, [data-testid=item-row] .room-focus-title'),
     item_beads: [...win.querySelectorAll('[data-testid=item-row] .room-plan-bead')].map((b) => b.getAttribute('data-tone')),
-    item_danger_tokens: text('[data-testid=item-row] [data-testid=item-token][data-tone=danger]'),
+    item_danger_tokens: text('[data-testid=item-row] [data-testid=item-token][data-tone=fail]'),
     controls_in_items: [...win.querySelectorAll('[data-testid=items-section] button, [data-testid=items-section] input')].length,
     update_list_head: text('.update-list .surface-ledger-count')[0] ?? null,
     update_rows: text('[data-testid=update-list-item]'),
@@ -1671,12 +1671,12 @@ class TestRoomFaceGlass:
                 # The ratified order and words.
                 # PHILO-17 refit: the plan is a timeline: the dated items by
                 # date (TODAY between the past and the future), the undated
-                # after; the most late milestone on the LATE plate; plain pills.
+                # after; the most late milestone on the Late plate; dot + word states (W3-B).
                 rows = facts["item_rows"]
                 assert facts["items_head"].upper() == "PLAN 5", facts["items_head"]
                 assert facts["item_titles"] == ["Parallel run", "Cutover rehearsal", "Vendor shadow run",
                                                 "Ledger go-live", "Old ledger freeze slips"], facts["item_titles"]
-                assert "7 days late" in rows[1] and "Milestone" in rows[1] and "LATE" in rows[1]
+                assert "7 days late" in rows[1] and "Milestone" in rows[1] and "Late" in rows[1]
                 assert "Open risk" in rows[4] and "likelihood high" in rows[4] and "impact high" in rows[4]
                 assert "Missed" in rows[0] and "Dropped" in rows[2]
                 assert facts["item_beads"] == ["danger", "danger", "idle", "planned", "warn"], facts["item_beads"]
