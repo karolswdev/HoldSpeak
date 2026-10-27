@@ -434,3 +434,32 @@ def test_a_pull_request_the_tool_read_keeps_its_state() -> None:
     ref, title = _object("provider.github_pr_get", {"owner_repo": "acme/ledger", "number": 412}, value)
     assert (ref, title) == ("pr:acme/ledger#412", "Cutover flag")
     assert _read_facts(ref, value) == {"state": "open"}
+
+
+class _WholeReplyEngine(_StreamingEngine):
+    """The hub's engine on a provider that answers a streamed request with a
+    whole completion (an endpoint that ignores ``stream``)."""
+
+    def run_prompt_stream(self, **_kw: Any) -> Any:
+        from holdspeak.intel.engine import _whole_reply_deltas
+
+        reply = SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content="The cutover is on 17 October."))],
+                                usage=SimpleNamespace(prompt_tokens=9, completion_tokens=7, total_tokens=16))
+        yield from _whole_reply_deltas(reply)
+
+
+def test_a_provider_that_does_not_stream_still_answers_with_one_text_frame(hub, monkeypatch) -> None:
+    client, frames = _frames_app(hub, _WholeReplyEngine("qwen3.8-27b", []), monkeypatch)
+    invocation = "ask_" + "f" * 32
+    body = client.post("/api/ask", json={"prompt": "When is the cutover?", "thread": True, "invocation_id": invocation}).json()
+    assert body["output"] == "The cutover is on 17 October."
+    assert [data for kind, data in frames if kind == "ask_text"] == [{"invocation_id": invocation, "text": body["output"]}]
+
+
+def test_a_whole_completion_reads_as_its_answer_and_a_stream_stays_a_stream() -> None:
+    from holdspeak.intel.engine import _whole_reply_deltas
+
+    local = _whole_reply_deltas({"choices": [{"message": {"content": "Ready."}}], "usage": {"prompt_tokens": 3, "completion_tokens": 1, "total_tokens": 4}})
+    assert [(d.kind, d.text) for d in local] == [("text", "Ready."), ("usage", ""), ("done", "")]
+    assert _whole_reply_deltas(iter([])) is None
+    assert _whole_reply_deltas(x for x in []) is None

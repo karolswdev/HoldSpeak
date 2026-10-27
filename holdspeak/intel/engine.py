@@ -181,6 +181,39 @@ def _response_format_compatibility_retry(endpoint_key: str, exc: BaseException) 
     return True
 
 
+
+def _whole_reply_deltas(reply: Any) -> "list[Any] | None":
+    """The deltas of a reply that is a whole completion, not a stream.
+
+    A streamed request is sometimes answered in one piece: an endpoint that
+    ignores ``stream`` (its JSON body), a client or a local runtime that
+    returns the completion object.  Its text, its usage and ``done`` are the
+    answer; ``None`` means the reply is a real stream to iterate."""
+    from ..kernel.inference_stream import Delta
+
+    def field(obj: Any, name: str) -> Any:
+        return obj.get(name) if isinstance(obj, dict) else getattr(obj, name, None)
+
+    is_stream = hasattr(reply, "__iter__") and not isinstance(reply, (dict, str, bytes))
+    choices = field(reply, "choices")
+    if not isinstance(choices, (list, tuple)) or not choices:
+        # A stream iterates; anything else carried no answer.
+        return None if is_stream else [Delta(kind="done")]
+    message = field(choices[0], "message")
+    if message is None:
+        return None
+    deltas: list[Any] = []
+    text = _extract_openai_message_text(field(message, "content"))
+    if text:
+        deltas.append(Delta(kind="text", text=text))
+    usage = field(reply, "usage")
+    meta = {name: value for name in ("prompt_tokens", "completion_tokens", "total_tokens")
+            if isinstance(value := field(usage, name) if usage is not None else None, int)}
+    if meta:
+        deltas.append(Delta(kind="usage", meta=meta))
+    deltas.append(Delta(kind="done"))
+    return deltas
+
 class MeetingIntel:
     """Extract structured meeting intelligence via local or cloud provider."""
 
@@ -643,6 +676,10 @@ class MeetingIntel:
             if tool_choice is not None:
                 local_kwargs["tool_choice"] = tool_choice
             stream_iter = self._llm.create_chat_completion(**local_kwargs)
+            whole = _whole_reply_deltas(stream_iter)
+            if whole is not None:
+                yield from whole
+                return
             usage_seen = False
             for chunk in stream_iter:
                 try:
@@ -753,6 +790,12 @@ class MeetingIntel:
             ))
             return
 
+        # A provider that answered the streamed request in one piece (a whole
+        # completion, not a stream) is read as that answer, never as nothing.
+        whole = _whole_reply_deltas(stream_iter)
+        if whole is not None:
+            yield from whole
+            return
         for chunk in stream_iter:
             try:
                 # OpenAI SDK: the final chunk with stream_options has
