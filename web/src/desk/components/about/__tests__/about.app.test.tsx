@@ -84,86 +84,93 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const matches = () => screen.queryAllByTestId("about-match").map((m) => m.textContent ?? "");
+// Ask D1: the scope word ▾ opens the menu; each match is a row with its kind.
+const matches = () => screen.queryAllByTestId("about-match").map((m) => (m.querySelector(".desk-menu-label")?.textContent ?? ""));
+const matchKinds = () => screen.queryAllByTestId("about-match").map((m) => m.getAttribute("data-kind") ?? "");
 
 async function openPicker() {
   render(<AskPanel />);
   await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([u]) => String(u).startsWith("/api/people/relationships"))).toBe(true));
-  fireEvent.click(screen.getByRole("button", { name: "Add to About" }));
-  return screen.getByRole("textbox", { name: "Find by name" });
+  fireEvent.click(screen.getByTestId("ask-context"));
+  return screen.getByRole("textbox", { name: "Find a meeting, note, person" });
 }
 
-describe("Betterment Q6: About in Ask", () => {
+describe("Betterment Q6 + Ask D1: the scope menu in Ask", () => {
   it("before he types: My whole desk, This week's meetings, each person, each project", async () => {
     await openPicker();
-    await waitFor(() => expect(matches().some((m) => m.startsWith("Avery Chen"))).toBe(true));
+    await waitFor(() => expect(matches()).toContain("Avery Chen"));
+    expect(screen.getByRole("menuitemradio", { name: /My whole desk/ })).toHaveAttribute("aria-checked", "true");
     const shown = matches();
-    expect(shown[0]).toMatch(/^My whole desk/);
     expect(shown).toEqual(expect.arrayContaining([
-      expect.stringMatching(/^This week's meetings/),
-      ...PEOPLE.relationships.map((p) => expect.stringMatching(new RegExp(`^${p.display_name}Person`))),
-      expect.stringMatching(/^Ledger migrationProject/),
+      "This week's meetings",
+      ...PEOPLE.relationships.map((p) => p.display_name),
+      "Ledger migration",
     ]));
   });
 
-  it("+ then \"Avery\": Avery, the 1:1 and her meetings, grouped, newest first; never a mode, a thread, a result or a roadmap", async () => {
+  it("then \"Avery\": Avery, the 1:1 and her meetings, grouped, newest first; never a mode, a thread, a result or a roadmap", async () => {
     const field = await openPicker();
     fireEvent.change(field, { target: { value: "Avery" } });
-    await waitFor(() => expect(matches().some((m) => m.startsWith("Avery Chen"))).toBe(true));
+    await waitFor(() => expect(matches()).toContain("Avery Chen"));
     const shown = matches();
-    expect(shown).toEqual(expect.arrayContaining([
-      "Avery ChenPerson", "1:1 with AveryNote", "Ledger cutover syncMeeting", "Hiring loopMeeting",
-    ]));
+    expect(shown).toEqual(expect.arrayContaining(["Avery Chen", "1:1 with Avery", "Ledger cutover sync", "Hiring loop"]));
     // Grouped: each kind's rows sit together; inside a group, newest first.
-    const kinds = shown.map((m) => m.replace(/^.*?(Person|Note|Meeting|Decision|Drawer|Project|Set)$/, "$1"));
+    const kinds = matchKinds();
     expect(kinds.filter((k, i) => i === 0 || k !== kinds[i - 1])).toEqual([...new Set(kinds)]);
-    expect(shown.indexOf("Ledger cutover syncMeeting")).toBeLessThan(shown.indexOf("Hiring loopMeeting"));
-    expect(shown.indexOf("1:1 with AveryNote")).toBeLessThan(shown.indexOf("Avery onboarding planNote"));
+    expect(shown.indexOf("Ledger cutover sync")).toBeLessThan(shown.indexOf("Hiring loop"));
+    expect(shown.indexOf("1:1 with Avery")).toBeLessThan(shown.indexOf("Avery onboarding plan"));
     for (const never of ["Avery mode", "Avery question", "Avery summary", "Avery roadmap"])
       expect(shown.some((m) => m.startsWith(never))).toBe(false);
   });
 
-  it("a pick is a chip; Ask asks with it in About; ✕ takes it out; My whole desk clears About", async () => {
+  it("one pick changes the word; Ask asks with it; ✕ takes it out; My whole desk clears it", async () => {
     const field = await openPicker();
     fireEvent.change(field, { target: { value: "Avery" } });
-    await waitFor(() => expect(matches()).toContain("Avery ChenPerson"));
-    fireEvent.click(screen.getByRole("button", { name: "Add Avery Chen" }));
-    fireEvent.click(screen.getByRole("button", { name: "Add Ledger cutover sync" }));
-    const about = screen.getByTestId("ask-context");
-    expect(within(about).getAllByTestId("ask-about-chip").map((c) => c.textContent)).toEqual(["Avery Chen✕", "Ledger cutover sync✕"]);
+    await waitFor(() => expect(matches()).toContain("Avery Chen"));
+    fireEvent.click(screen.getAllByTestId("about-match").find((m) => m.textContent?.includes("Avery Chen"))!);
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("Avery Chen");
 
     fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What does Avery owe?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     expect(await screen.findByText(THREAD.first.output)).toBeInTheDocument();
     expect(asked[0].context).toEqual([
       { id: AVERY.id, kind: "people", title: "Avery Chen", ref: `people:${AVERY.id}` },
-      { id: "m-new", kind: "meeting", title: "Ledger cutover sync", ref: "meeting:m-new" },
     ]);
 
-    fireEvent.click(within(about).getByRole("button", { name: "Remove Avery Chen" }));
-    expect(within(about).getAllByTestId("ask-about-chip").map((c) => c.textContent)).toEqual(["Ledger cutover sync✕"]);
-    fireEvent.change(screen.getByRole("textbox", { name: "Find by name" }), { target: { value: "whole desk" } });
-    fireEvent.click(screen.getByRole("button", { name: "Add My whole desk" }));
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("AboutMy whole desk");
+    // A second pick replaces the first.
+    fireEvent.click(screen.getByTestId("ask-context"));
+    fireEvent.change(screen.getByRole("textbox", { name: "Find a meeting, note, person" }), { target: { value: "Ledger cutover" } });
+    await waitFor(() => expect(matches()).toContain("Ledger cutover sync"));
+    fireEvent.click(screen.getAllByTestId("about-match").find((m) => m.textContent?.includes("Ledger cutover sync"))!);
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("Ledger cutover sync");
+
+    fireEvent.click(screen.getByTestId("ask-context"));
+    expect(screen.getAllByTestId("ask-about-chip").map((c) => c.textContent)).toEqual(["✓Ledger cutover sync✕"]);
+    fireEvent.click(screen.getByRole("button", { name: "Remove Ledger cutover sync" }));
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("My whole desk");
+    fireEvent.click(screen.getByRole("menuitemradio", { name: /My whole desk/ }));
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("My whole desk");
   });
 
   it("This week's meetings asks about this week's meetings only", async () => {
     await openPicker();
-    await waitFor(() => expect(matches().some((m) => m.startsWith("This week's meetings"))).toBe(true));
-    fireEvent.click(screen.getByRole("button", { name: "Add This week's meetings" }));
+    await waitFor(() => expect(matches()).toContain("This week's meetings"));
+    fireEvent.click(screen.getAllByTestId("about-match").find((m) => m.textContent?.startsWith("This week's meetings"))!);
     fireEvent.change(screen.getByRole("textbox", { name: "Ask about your work" }), { target: { value: "What changed?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
     expect(await screen.findByText(THREAD.first.output)).toBeInTheDocument();
     expect(asked[0].context).toEqual([{ id: "m-new", kind: "meeting", title: "Ledger cutover sync", ref: "meeting:m-new" }]);
   });
 
-  it("a desk object dropped on the Ask window is a chip", async () => {
+  it("a desk object dropped on the Ask window joins the scope", async () => {
     render(<AskPanel />);
     const body = screen.getByTestId("ask-body");
     const data = { types: [HAND_MIME], getData: (type: string) => (type === HAND_MIME ? "note:n-avery" : ""), dropEffect: "none" };
     fireEvent.dragOver(body, { dataTransfer: data });
     fireEvent.drop(body, { dataTransfer: data });
-    expect(within(screen.getByTestId("ask-context")).getAllByTestId("ask-about-chip").map((c) => c.textContent)).toEqual(["1:1 with Avery✕"]);
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Avery");
+    fireEvent.click(screen.getByTestId("ask-context"));
+    expect(screen.getAllByTestId("ask-about-chip").map((c) => c.textContent)).toEqual(["✓1:1 with Avery✕"]);
   });
 
   it("matches are grouped by kind (the best match's group first), newest first inside a group", () => {

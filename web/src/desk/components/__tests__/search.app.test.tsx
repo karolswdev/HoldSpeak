@@ -124,7 +124,7 @@ describe("Betterment Q3: Search asks", () => {
     expect(asks).toHaveLength(1);
     expect(asks[0].body?.prompt).toBe(QUESTION);
     expect(asks[0].body?.thread).toBe(true);
-    expect(screen.getByText(QUESTION, { selector: ".desk-ask-question-text" })).toBeInTheDocument();
+    expect(screen.getByText(QUESTION, { selector: ".desk-ask-q-text" })).toBeInTheDocument();
   });
 
   it("text that is not a question puts Ask \"…\" last, and Enter opens the object", async () => {

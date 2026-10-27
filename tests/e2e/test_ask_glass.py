@@ -1,7 +1,7 @@
 """The Ask window, AS RENDERED: what only a real browser proves (the test diet).
 
 Betterment Q6 (docs/internal/betterment/asking/RECIPE.md): a desk object
-dropped on the Ask window becomes an About chip. The drop is a real HTML drag
+dropped on the Ask window joins its scope (Ask D1: the scope word names it). The drop is a real HTML drag
 from the Screen's note icon (the hand's drag: `hand/drag.ts`) onto the window,
 through the real hub on an isolated HOME at 1440 x 900. The phone (393) has no
 loose Screen icons to drag; its About is the picker
@@ -79,7 +79,9 @@ def test_1440_a_screen_note_dropped_on_ask_becomes_an_about_chip(hub: str) -> No
             moved = frame.bounding_box()
             assert moved and moved["y"] > icon_box["y"] + icon_box["height"], (icon_box, moved)
             page.locator(ICON).drag_to(body)
-            about.get_by_test_id("ask-about-chip").filter(has_text=NOTE).wait_for(timeout=T)
+            page.wait_for_function(
+                "note => (document.querySelector('[data-testid=\"ask-context\"]')?.textContent || '').includes(note)",
+                arg=NOTE, timeout=T)
             assert "My whole desk" not in about.inner_text()
             assert not errors, errors
         finally:
@@ -96,6 +98,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
     thread, durable editor and rendered Firefox layout all use product code.
     """
     import json
+    import re
     import threading
     from http.server import ThreadingHTTPServer
 
@@ -192,12 +195,12 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 assert facts["body"]["scroll"] <= facts["body"]["client"] + 1, facts
                 assert window.evaluate("el => {const r=el.getBoundingClientRect();return r.left>=-1 && r.right<=innerWidth+1;}")
                 assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-                window.get_by_role("button", name="What needs my attention?", exact=True).click()
-                expect(editor).to_have_value("What needs my attention?")
+                window.get_by_role("button", name="What needs my attention today?", exact=True).click()
+                expect(editor).to_have_value("What needs my attention today?")
                 expect(editor).to_be_focused()
                 assert not requests
                 editor.press("Shift+Enter")
-                expect(editor).to_have_value("What needs my attention?\n")
+                expect(editor).to_have_value("What needs my attention today?\n")
                 assert not requests
 
                 question, draft = "What should I review with Mira?", "And what can wait until Monday?"
@@ -245,7 +248,7 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                 expect(window.get_by_role("button", name="Ask", exact=True)).to_be_in_viewport()
                 if width == 393:
                     controls = [window.get_by_role("button", name="Ask", exact=True),
-                                window.locator(".surface-compose-well button.desk-mic").first]
+                                window.locator(".desk-ask-composer-row button.desk-mic").first]
                     boxes = [control.bounding_box() for control in controls]
                     assert all(boxes) and abs(boxes[0]["y"] - boxes[1]["y"]) <= 1, boxes
                     for control in controls:
@@ -258,23 +261,23 @@ def test_firefox_ask_enter_clears_at_send_and_keeps_the_next_draft(
                         }""")
                         assert hit["w"] >= 44 and hit["h"] >= 44 and hit["owned"], hit
                 reading.evaluate("el => el.scrollTop = el.scrollHeight")
-                actions = window.locator(".desk-ask-turn .surface-row-verbs").last
+                actions = window.locator(".desk-ask-turn .desk-ask-verbs").last
                 expect(actions).to_be_in_viewport(ratio=1)
                 page.screenshot(path=str(shots / f"ask-answer-tail-{width}.png"))
-                window.locator(".desk-ask-tools > summary").click()
-                expect(window.locator(".desk-ask-tools")).to_have_attribute("open", "")
-                expect(actions).to_be_in_viewport(ratio=1)
-                assert reading.evaluate("el => el.scrollHeight-el.clientHeight-el.scrollTop <= 2")
+                # Ask D1: the engine is a dot and its name in the composer row;
+                # what it can do is the hover title (no Tools fold).
+                expect(window.get_by_test_id("engine-line")).to_have_attribute("title", re.compile(r"desk"))
+                # ⋯ opens the rarer verbs under it; nothing moves the reader.
+                kept_top = reading.evaluate("el => el.scrollTop")
+                actions.get_by_role("button", name="More", exact=True).click()
+                expect(actions.get_by_role("button", name="Forget", exact=True)).to_be_visible()
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(100)
+                expect(actions.get_by_role("button", name="Forget", exact=True)).to_have_count(0)
+                assert abs(reading.evaluate("el => el.scrollTop") - kept_top) <= 2, "The More menu must not pull a reader away from the answer"
                 assert window.get_by_test_id("ask-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
                 expect(editor).to_be_in_viewport()
                 expect(window.get_by_role("button", name="Ask", exact=True)).to_be_in_viewport()
-                page.screenshot(path=str(shots / f"ask-tools-{width}.png"))
-                window.locator(".desk-ask-tools > summary").click()
-                reading.evaluate("el => el.scrollTop = 80")
-                page.wait_for_timeout(100)
-                window.locator(".desk-ask-tools > summary").click()
-                page.wait_for_timeout(100)
-                assert abs(reading.evaluate("el => el.scrollTop") - 80) <= 2, "Tools must not pull a reader away from earlier text"
                 assert not errors, errors
             finally:
                 browser.close()

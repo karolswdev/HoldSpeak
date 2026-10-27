@@ -313,8 +313,8 @@ function askBox() {
   return screen.getByRole("textbox", { name: "Ask about your work" });
 }
 
+// Ask D1: the Recent rail is open at a desk width; its rows are buttons.
 async function openRecentThread(id: string) {
-  fireEvent.click(screen.getByRole("button", { name: "Recent" }));
   const row = await screen.findByRole("button", { name: new RegExp(`^Thread ${id}\\b`) });
   fireEvent.click(row);
 }
@@ -336,14 +336,16 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
 
   it("ask, read, follow up, read the second answer: one window, one thread", async () => {
     render(<AskPanel />);
-    expect(screen.getByTestId("ask-context")).toHaveTextContent("About1:1 with Mira");
+    // Ask D1: the scope word names what the question is about.
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
     await askText("What do I owe Mira this week?", THREAD.first.output);
 
     const first = calls.filter((c) => c.url.endsWith("/api/ask"))[0];
     expect(first.body?.thread).toBe(true);
-    // Looked at names the note, folded, as a link.
-    const looked = screen.getByText("Looked at · 1:1 with Mira");
-    expect(looked.closest("details")?.open).toBe(false);
+    // Ask D1: References name the note as an object row that opens it.
+    const refs = screen.getByTestId("ask-looked-at");
+    expect(refs).toHaveTextContent("References");
+    expect(within(refs).getByRole("button", { name: /1:1 with Mira/ })).toBeInTheDocument();
     // The box is a follow-up box now, and starts empty.
     expect(screen.getByPlaceholderText("Ask a follow-up")).toHaveValue("");
 
@@ -360,8 +362,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
   it("Recent lists the kept asks; a row reopens the thread in the same window", async () => {
     useDesk.setState({ selectedIds: [] });
     render(<AskPanel />);
-    fireEvent.click(screen.getByRole("button", { name: "Recent" }));
-    const row = await screen.findByRole("button", { name: /What do I owe Mira this week\?/ });
+    const row = await within(await screen.findByTestId("ask-recent")).findByRole("button", { name: /What do I owe Mira this week\?/ });
     fireEvent.click(row);
 
     await waitFor(() => expect(screen.getAllByTestId("ask-turn")).toHaveLength(2));
@@ -369,7 +370,8 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     expect(screen.getByText(THREAD.second.output)).toBeInTheDocument();
     // The thread's About comes back with it.
     expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
-    expect(screen.queryByTestId("ask-recent")).toBeNull();
+    // The rail stays, with the open ask selected.
+    expect(within(screen.getByTestId("ask-recent")).getByRole("button", { name: /What do I owe Mira this week\?/ })).toHaveAttribute("aria-current", "true");
     // A follow-up continues that thread and carries its About.
     await askText("Anything else?", THREAD.first.output);
     const sent = calls.filter((c) => c.url.endsWith("/api/ask")).at(-1)!;
@@ -553,6 +555,8 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     });
     render(<AskPanel />);
     act(() => useDesk.getState().askAbout([{ id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }], { handoffNonce: 1 }));
+    // Ask D1: the scope menu lists what is chosen, each with its ✕.
+    fireEvent.click(screen.getByTestId("ask-context"));
     fireEvent.click(screen.getByRole("button", { name: "Remove 1:1 with Mira" }));
     expect(screen.getByTestId("ask-context")).toHaveTextContent("My whole desk");
     expect(screen.getByRole("button", { name: "Return to Project" })).toBeInTheDocument();
@@ -637,7 +641,8 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
   it("Forget hides the ask with Undo; Undo brings it back and deletes nothing", async () => {
     render(<AskPanel />);
     await askText("What do I owe Mira this week?", THREAD.first.output);
-    // Window grammar: Forget is a toolbar verb (Undo keeps it safe).
+    // Ask D1: Forget is in the answer's ⋯ menu (Undo keeps it safe).
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
     fireEvent.click(screen.getByRole("button", { name: "Forget" }));
     expect(screen.getByText("Forgotten: What do I owe Mira this week?")).toBeInTheDocument();
     expect(screen.queryAllByTestId("ask-turn")).toHaveLength(0);
@@ -650,7 +655,8 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
   it("a Forget still deletes the thread when the window closes before Undo", async () => {
     const view = render(<AskPanel />);
     await askText("What do I owe Mira this week?", THREAD.first.output);
-    // Window grammar: Forget is a toolbar verb (Undo keeps it safe).
+    // Ask D1: Forget is in the answer's ⋯ menu (Undo keeps it safe).
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
     fireEvent.click(screen.getByRole("button", { name: "Forget" }));
     view.unmount();
     expect(calls.some((c) => c.method === "DELETE" && c.url.endsWith(`/api/threads/${TID}`))).toBe(true);
@@ -787,13 +793,15 @@ describe("Betterment Q4: Stop while a question runs", () => {
     fireEvent.change(prompt, { target: { value: "Keep this while the first answer stops" } });
     // Window grammar: Stop is the status bar's verb while a turn runs; Ask waits.
     expect(screen.getByRole("button", { name: "Ask" })).toBeDisabled();
-    expect(screen.getByTestId("ask-status")).toHaveTextContent("Asking…");
+    // Ask D1: the status bar says what runs, with its seconds.
+    expect(screen.getByTestId("ask-status")).toHaveTextContent("Writing the answer");
     fireEvent.click(within(screen.getByTestId("ask-status")).getByRole("button", { name: "Stop" }));
     expect(calls.some((c) => c.method === "POST" && c.url === `/api/ask/${BUSY.busy.invocation_id}/cancel`)).toBe(true);
-    const line = await screen.findByTestId("run-line");
-    expect(line.dataset.state).toBe("failure");
+    const line = await screen.findByTestId("ask-not-answered");
+    expect(line.dataset.reason).toBe("stopped");
     expect(line).toHaveTextContent("Stopped");
-    expect(screen.getByRole("button", { name: "Ask again" })).toBeInTheDocument();
+    expect(within(line).getByRole("button", { name: "Ask again" })).toBeInTheDocument();
+    expect(screen.getByTestId("ask-status")).toHaveTextContent("Stopped · your question is kept");
     expect(prompt).toHaveValue("Keep this while the first answer stops");
   });
 
@@ -870,24 +878,27 @@ describe("Betterment Q7: Ask my whole desk", () => {
   it("the engine line says it can use the desk", async () => {
     hubWithTools();
     render(<AskPanel />);
+    // Ask D1: the engine is a dot and its name; what it can do is its hover title.
     const line = await screen.findByTestId("engine-line");
-    await waitFor(() => expect(line).toHaveTextContent(
+    await waitFor(() => expect(line).toHaveAttribute("title",
       "Can use your desk: reads meetings, people, projects, Jira, GitHub; writes notes and drafts; never sends"));
-    expect(line).not.toHaveTextContent("reads only what is in About");
+    expect(line).not.toHaveTextContent("Can use your desk");
   });
 
   it("the answer shows Looked at (the 1:1) and Wrote (the task, with Undo); Undo sets the task aside", async () => {
     hubWithTools();
     render(<AskPanel />);
     await askTool("What do I owe Mira this week?");
-    expect(screen.getByText(/Looked at/)).toHaveTextContent("1:1 with Mira");
+    expect(screen.getByTestId("ask-looked-at")).toHaveTextContent("1:1 with Mira");
     const wrote = screen.getByTestId("ask-wrote");
     const [task] = TOOLS.answer.used.wrote;
     expect(wrote).toHaveTextContent(task.label);
     expect(screen.getByText("Wrote").closest("details")?.textContent).toContain("1 task");
     expect(screen.queryByTestId("ask-prepared")).toBeNull();
     // The agent made the task: Make it a task is not offered twice.
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
     expect(screen.queryByRole("button", { name: "Make it a task" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
 
     fireEvent.click(screen.getByTestId("ask-wrote-undo"));
     const id = task.ref.slice("action_item:".length);
@@ -903,22 +914,23 @@ describe("Betterment Q7: Ask my whole desk", () => {
     render(<AskPanel />);
     await askTool("What do I owe Mira this week?");
     expect(screen.queryByTestId("ask-wrote")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
     fireEvent.click(screen.getByRole("button", { name: "Make it a task" }));
     await waitFor(() => expect(screen.getByTestId("ask-wrote")).toBeInTheDocument());
     const todo = calls.find((c) => c.method === "POST" && c.url.endsWith(`/api/threads/${TOOL_TID}/todo`))!;
     expect(String(todo.body?.text)).not.toMatch(/^[#*-]/);
     expect(screen.getByTestId("ask-wrote-undo")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
     expect(screen.queryByRole("button", { name: "Make it a task" })).toBeNull();
   });
 
   it("a reopened thread draws Wrote from the hub's record", async () => {
     hubWithTools();
     render(<AskPanel />);
-    fireEvent.click(screen.getByRole("button", { name: "Recent" }));
-    fireEvent.click(await screen.findByRole("button", { name: /What do I owe Mira this week\?/ }));
+    fireEvent.click(await within(screen.getByTestId("ask-recent")).findByRole("button", { name: /What do I owe Mira this week\?/ }));
     await screen.findByTestId("ask-wrote");
     expect(screen.getByTestId("ask-wrote")).toHaveTextContent(TOOLS.answer.used.wrote[0].label);
-    expect(screen.getByText(/Looked at/)).toHaveTextContent("1:1 with Mira");
+    expect(screen.getByTestId("ask-looked-at")).toHaveTextContent("1:1 with Mira");
   });
 
   it("a held call waits with Allow once and Deny; Deny goes to the thread's decide", async () => {
@@ -943,5 +955,154 @@ describe("Betterment Q7: Ask my whole desk", () => {
     await act(async () => { answer?.(); });
     await screen.findByTestId("ask-turn");
     expect(screen.queryByTestId("ask-wrote")).toBeNull();
+  });
+});
+
+/* ── Ask D1 "The question at the top" (canvas ask-direction-2026-10-27) ──
+ *
+ * The composer is the toolbar row, the answer is a document with its
+ * References as rows that open, a fresh Ask offers questions from this
+ * desk, an Ask that did not answer says why in one line with one verb, and
+ * the Recent rail folds. The answers are the recorded thread wire
+ * (ask.thread.wire.json); the no-engine refusal uses the hub's reason token
+ * in the shape the source-changed case above replays. */
+describe("Ask D1: the question at the top", () => {
+  beforeEach(() => {
+    hubWithThread();
+    useDesk.setState({
+      items: {
+        ...EMPTY_ITEMS,
+        note: [{ kind: "note", id: "n-mira", title: "1:1 with Mira", bodyMarkdown: "", tags: [], createdAt: "2026-10-24T09:00:00Z" }],
+        decision: [{
+          kind: "decision", id: "d-freeze", title: "Freeze the old ledger on Nov 5", status: "accepted", deciders: [],
+          contextMarkdown: "", decisionMarkdown: "", alternatives: [], consequencesMarkdown: "", tags: ["the ledger cutover"],
+          createdAt: "2026-10-27T08:00:00Z",
+        }],
+      },
+      selectedIds: [], askThread: null,
+    });
+  });
+
+  it("the composer is the toolbar row: rail, scope word, field, mic, engine, Ask", () => {
+    render(<AskPanel />);
+    const row = screen.getByRole("toolbar", { name: "Ask" });
+    expect(within(row).getByRole("button", { name: "Recent" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(row).getByTestId("ask-context")).toHaveTextContent("My whole desk");
+    expect(within(row).getByRole("textbox", { name: "Ask about your work" })).toBeInTheDocument();
+    expect(within(row).getByTestId("engine-line")).toBeInTheDocument();
+    expect(within(row).getByRole("button", { name: "Ask" })).toBeDisabled();
+    // No New ask in the row: it is the rail's first row.
+    expect(within(row).queryByRole("button", { name: /New ask/ })).toBeNull();
+    expect(within(screen.getByTestId("ask-recent")).getByRole("button", { name: /New ask/ })).toBeInTheDocument();
+  });
+
+  it("an empty Ask offers questions from this desk; a press fills the composer and does not send", () => {
+    render(<AskPanel />);
+    const empty = screen.getByTestId("ask-empty");
+    expect(empty).toHaveTextContent("From your desk now");
+    expect(empty.querySelector("img[src*='/64/'], .desk-ask-empty-sprite")).toBeNull();
+    const decision = within(empty).getByRole("button", { name: "What did we decide about the ledger cutover?" });
+    fireEvent.click(decision);
+    expect(askBox()).toHaveValue("What did we decide about the ledger cutover?");
+    expect(document.activeElement).toBe(askBox());
+    expect(calls.some((c) => c.method === "POST" && c.url.endsWith("/api/ask"))).toBe(false);
+    // The status bar says what My whole desk covers (no count of zero).
+    expect(screen.getByTestId("ask-status-scope")).toHaveTextContent("My whole desk: 1 decision");
+  });
+
+  it("an answer is a document: the question as its heading, References as rows that open their windows", async () => {
+    render(<AskPanel />);
+    await askText("What do I owe Mira this week?", THREAD.first.output);
+    const turn = screen.getByTestId("ask-turn");
+    expect(within(turn).getByRole("heading", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
+    const refs = within(turn).getByTestId("ask-looked-at");
+    const row = within(refs).getByRole("button", { name: /1:1 with Mira/ });
+    expect(row).toHaveTextContent("Note ·");
+    fireEvent.click(row);
+    await waitFor(() => expect(useDesk.getState().pullouts.some((p) => p.id === NOTE_REF)).toBe(true));
+    // The verbs on the answer.
+    for (const name of ["Save as note", "Copy", "Ask again", "Send…", "More"]) {
+      expect(within(turn).getByRole("button", { name })).toBeInTheDocument();
+    }
+  });
+
+  it("a follow-up appends below, and Ask again sends the same question as a new turn", async () => {
+    render(<AskPanel />);
+    await askText("What do I owe Mira this week?", THREAD.first.output);
+    fireEvent.click(within(screen.getByTestId("ask-turn")).getByRole("button", { name: "Ask again" }));
+    await waitFor(() => expect(screen.getAllByTestId("ask-turn")).toHaveLength(2));
+    const asks = calls.filter((c) => c.method === "POST" && c.url.endsWith("/api/ask"));
+    expect(asks[1].body?.prompt).toBe("What do I owe Mira this week?");
+    expect(asks[1].body?.thread_id).toBe(TID);
+  });
+
+  it("not answered: one line that says why and the one verb that fixes it; the question is kept", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET");
+      calls.push({ url, method, body: init.body ? JSON.parse(String(init.body)) : undefined });
+      return Promise.resolve(method === "POST" && url.endsWith("/api/ask")
+        ? reply({ error: "No engine", reason: "no_engine" }, 409)
+        : reply({}));
+    }));
+    render(<AskPanel />);
+    fireEvent.change(askBox(), { target: { value: "What needs my attention today?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const line = await screen.findByTestId("ask-not-answered");
+    expect(line).toHaveTextContent("No engine answers Ask yet.");
+    expect(within(line).getAllByRole("button")).toHaveLength(1);
+    expect(within(line).getByRole("button", { name: "Choose engine" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /What needs my attention today\?/ })).toBeInTheDocument();
+    expect(screen.getByTestId("ask-status")).toHaveTextContent("Not answered · your question is kept");
+    expect(line.closest("[data-testid=run-line]")).toBeNull();
+  });
+
+  it("the scope word opens a menu under it; one pick changes the word", async () => {
+    useDesk.setState({ projects: [{ id: "p-ledger", name: "Payments ledger cutover" }] as never });
+    render(<AskPanel />);
+    fireEvent.click(screen.getByTestId("ask-context"));
+    const menu = screen.getByTestId("ask-scope-menu");
+    expect(within(menu).getByRole("menuitemradio", { name: /My whole desk/ })).toHaveAttribute("aria-checked", "true");
+    fireEvent.click(within(menu).getByRole("menuitemradio", { name: /Payments ledger cutover/ }));
+    expect(screen.queryByTestId("ask-scope-menu")).toBeNull();
+    expect(screen.getByTestId("ask-context")).toHaveTextContent("Payments ledger cutover");
+    await askText("What is left before the freeze?", THREAD.first.output);
+    const sent = calls.find((c) => c.method === "POST" && c.url.endsWith("/api/ask"))!;
+    expect((sent.body?.context as Array<{ ref: string }>).map((c) => c.ref)).toEqual(["project:p-ledger"]);
+  });
+
+  it("the rail folds with the row's first button, and the fold is kept", async () => {
+    const view = render(<AskPanel />);
+    expect(await within(screen.getByTestId("ask-recent")).findByRole("button", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Recent" }));
+    expect(screen.queryByTestId("ask-recent")).toBeNull();
+    expect(screen.getByRole("button", { name: "Recent" })).toHaveAttribute("aria-pressed", "false");
+    view.unmount();
+    render(<AskPanel />);
+    expect(screen.queryByTestId("ask-recent")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Recent" }));
+    expect(screen.getByTestId("ask-recent")).toBeInTheDocument();
+  });
+
+  it("the rail lists only asks: an interview or a specialist thread is not one", async () => {
+    vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET");
+      calls.push({ url, method, body: undefined });
+      if (method === "GET" && url.endsWith("/api/threads")) {
+        const [row] = THREAD.recent.threads;
+        return Promise.resolve(reply({ threads: [
+          row,
+          { ...row, id: "th_mode", title: "A specialist chat", mode: { id: "m", name: "Reviewer", avatar: "" } },
+          { ...row, id: "th_recipe", title: "A recipe run", recipe_id: "recipe-1" },
+        ] }));
+      }
+      return Promise.resolve(reply({}));
+    }));
+    render(<AskPanel />);
+    const rail = screen.getByTestId("ask-recent");
+    expect(await within(rail).findByRole("button", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
+    expect(within(rail).queryByRole("button", { name: /A specialist chat/ })).toBeNull();
+    expect(within(rail).queryByRole("button", { name: /A recipe run/ })).toBeNull();
   });
 });
