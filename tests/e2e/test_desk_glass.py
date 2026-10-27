@@ -641,14 +641,15 @@ class TestOneDecisionRecord:
                 # The owner, 2026-10-25: the Room opens the record in the
                 # Decisions window reader (never the old desk decision window):
                 # the front window, the decision as its heading, Send and
-                # Back to the list in its toolbar, when it was decided below.
+                # Back to the list in its toolbar, when it was decided below
+                # (TRUTH #1516: one state vocabulary, "Accepted just now").
                 room_decisions = page.locator("#surface-decisions")
                 page.locator("[id='surface-decisions'].is-front").wait_for(timeout=T)
                 room_reader = room_decisions.get_by_test_id("decision-reader").filter(has_text=P9_DECISION_TEXT)
                 room_reader.wait_for(timeout=T)
                 room_decisions.get_by_role("button", name=re.compile(r"^Send")).first.wait_for(timeout=T)
                 room_decisions.get_by_test_id("decision-reader-back").wait_for(timeout=T)
-                assert re.match(r"^Decided ", room_decisions.get_by_test_id("decision-reader-state").inner_text()), \
+                assert re.match(r"^Accepted ", room_decisions.get_by_test_id("decision-reader-state").inner_text()), \
                     room_decisions.get_by_test_id("decision-reader-state").inner_text()
                 assert page.locator(".desk-window-shell:not([id='surface-decisions'])[aria-label=" + json.dumps(P9_DECISION_TEXT) + "]").count() == 0
                 page.screenshot(path=str(P9_SHOTS / f"project-this-week-reader-{width}.png"))

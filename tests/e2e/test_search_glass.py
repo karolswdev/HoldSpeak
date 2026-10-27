@@ -161,8 +161,11 @@ def test_search_people_prep_ask_and_keep_remove_on_real_desk(people_face: Any) -
     # The chip is seeded with the exact protected ref. Its compact label is
     # intentionally "This person" until the person window supplies a name;
     # opening that chip proves the ref itself is carried into About.
-    chip = about.get_by_test_id("ask-about-chip")
-    chip.get_by_role("button", name="This person", exact=True).click()
+    # Ask D1 (#1515): About is one scope word; its menu holds the chosen
+    # chip, so open the word first, then the chip.
+    about.click()
+    chip = page.get_by_test_id("ask-scope-menu").get_by_test_id("ask-about-chip")
+    chip.get_by_role("menuitemcheckbox", name="This person", exact=True).click()
     page.locator(f'[id="pullout:{person}"]').wait_for(timeout=T)
     page.screenshot(path=str(shots / f"search-mira-cmdenter-{width}.png"))
     # On the phone the newly opened Person pane owns the compact Back button;
