@@ -19,6 +19,7 @@ import { Button } from "../../components/signal/Signal";
 import { PadGadget, RunLine, ScrollHint, StatusBar, SurfaceFooter, ToolGlyph } from "../surface";
 import { NoteOutcomesWell, useNoteOutcomes } from "./NoteOutcomesWell";
 import { DeskWindowFrame } from "../components/DeskWindow";
+import { PULLOUT_SIZE } from "../pullouts/size";
 import { ThoughtSaveFault, useThoughtNoteWriter } from "../pullouts/editors/useThoughtNoteWriter";
 import { ThoughtDocumentPane } from "./ThoughtDocumentPane";
 import type { DeskEditorHandle } from "../components/DeskEditor";
@@ -589,10 +590,10 @@ function WorkspaceReady({
             note): Done, Ask about this, Find the tasks (Q9), Project ▾ and
             Send…; on the phone Done sits in the title strip. */}
         {!compact ? <Button dense variant="primary" className="thought-note-primary" disabled={busy} onClick={onDone}><ToolGlyph kind="done" />Done</Button> : null}
-        <Button dense variant="ghost" className="thought-note-verb" disabled={busy} onClick={() => void askFromNote()}><ToolGlyph kind="ask" /><span className="thought-note-verb-label">Ask about this</span></Button>
-        <Button dense variant="ghost" disabled={busy || outcomes.finding || !writer.draft.body.trim()} loading={outcomes.finding} className="thought-note-verb" onClick={() => void findTasks()}>{outcomes.finding ? null : <ToolGlyph kind="tasks" />}<span className="thought-note-verb-label">Find the tasks</span></Button>
-        {hasProjects ? <Button dense variant="ghost" disabled={busy} aria-expanded={actionWell === "project"} className="thought-note-verb" onClick={() => void openActionWell("project")}><ToolGlyph kind="project" /><span className="thought-note-verb-label">Project ▾</span></Button> : null}
-        <Button ref={sendRef} dense variant="ghost" className="thought-note-verb" disabled={busy} onClick={() => void openSend()}><ToolGlyph kind="send" /><span className="thought-note-verb-label">Send…</span></Button>
+        <Button dense variant="ghost" className="thought-note-verb" title="Ask about this" disabled={busy} onClick={() => void askFromNote()}><ToolGlyph kind="ask" /><span className="thought-note-verb-label">Ask about this</span></Button>
+        <Button dense variant="ghost" disabled={busy || outcomes.finding || !writer.draft.body.trim()} loading={outcomes.finding} className="thought-note-verb" title="Find the tasks" onClick={() => void findTasks()}>{outcomes.finding ? null : <ToolGlyph kind="tasks" />}<span className="thought-note-verb-label">Find the tasks</span></Button>
+        {hasProjects ? <Button dense variant="ghost" disabled={busy} aria-expanded={actionWell === "project"} className="thought-note-verb" title="Project" onClick={() => void openActionWell("project")}><ToolGlyph kind="project" /><span className="thought-note-verb-label">Project ▾</span></Button> : null}
+        <Button ref={sendRef} dense variant="ghost" className="thought-note-verb" title="Send" disabled={busy} onClick={() => void openSend()}><ToolGlyph kind="send" /><span className="thought-note-verb-label">Send…</span></Button>
       </>}
     />
 
@@ -737,8 +738,8 @@ export function ThoughtWorkspaceWindow({
     className={`desk-pullout thought-workspace-window${sending ? " is-sending" : ""}`}
     minW={520}
     minH={sending ? 520 : 360}
-    defaultW={680}
-    defaultH={360}
+    defaultW={PULLOUT_SIZE.note?.w}
+    defaultH={PULLOUT_SIZE.note?.h}
     fitContent
     origin={origin}
     open

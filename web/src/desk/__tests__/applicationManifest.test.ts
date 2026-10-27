@@ -62,7 +62,7 @@ describe("DeskOS application manifest", () => {
 
   it("keeps the PHILO-17 first-open size matrix declarative", () => {
     expect(PULLOUT_SIZE).toMatchObject({
-      note: { w: 520, h: 360 },
+      note: { w: 760, h: 560 },
       meeting: { w: 720, h: 600 },
       people: { w: 640, h: 560 },
       room: { w: 760, h: 480 },
