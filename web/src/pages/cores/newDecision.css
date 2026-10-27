@@ -95,7 +95,7 @@
 }
 
 /* A narrow screen: the picture leaves, the labels sit over their controls. */
-@media (max-width: 520px) {
+@container surface (max-width: 520px) {
   .new-decision { grid-template-columns: minmax(0, 1fr); padding: 14px 16px 12px; }
   .new-decision-picture { display: none; }
   .new-decision-row { grid-template-columns: minmax(0, 1fr); gap: 6px; }
