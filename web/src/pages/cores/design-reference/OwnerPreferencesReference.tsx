@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../../../lib/api";
 import { type OwnerNameAdapter, type OwnerSetting } from "../../../desk/firstrun/ownerName";
-import { StateChip } from "../../../desk/surface";
 import { Button } from "../../../components/signal/Signal";
 import { OwnerNameFields, ownerSaveState, useOwnerPreferences } from "../settingsPeople";
 import { SETTINGS_SECTIONS, SettingsRailGlyph } from "../settingsPrefs";
@@ -82,10 +81,6 @@ function OwnerPreferencesSpecimen({ state }: { state: OwnerPreferencesState }) {
   }));
   return (
     <section className="reference-example" data-testid="reference-owner-preferences" aria-label="Settings You pattern">
-      <div className="reference-example-head">
-        <h2>Settings · You</h2>
-        <StateChip state="idle" label="PROPOSED" />
-      </div>
       {pending ? (
         <div className="reference-actions">
           <Button variant="secondary" onClick={fixture.complete}>Complete local write</Button>

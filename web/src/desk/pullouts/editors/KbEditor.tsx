@@ -16,13 +16,13 @@ import { keptEditorPatch, keptField, updateKeptEditorFields } from "./editorDraf
 import type { KB } from "../../../lib/primitives";
 import type { InlineEditorContentProps } from "./types";
 
-export function KbEditor({ object: o, autoFocusName, onWriter }: InlineEditorContentProps) {
+export function KbEditor({ object: o, autoFocusName, onWriter, openAdd }: InlineEditorContentProps) {
   const items = useDesk((s) => s.items);
   const save = useDebouncedSave("kb", o.id);
   const live = (items.kb || []).find((x) => x.id === o.id) || o.ref as KB;
   const [name, setName] = useState(() => keptField(keptEditorPatch("kb", o.id), "name", live.name || ""));
   const [refs, setRefs] = useState<string[]>(live.memberIds || []);
-  const [adding, setAdding] = useState(false);
+  const [adding, setAdding] = useState(Boolean(openAdd));
   const [query, setQuery] = useState("");
   const [readError, setReadError] = useState("");
   const [recovered, setRecovered] = useState(() => keptField(keptEditorPatch("kb", o.id), "body_markdown", ""));
@@ -112,7 +112,7 @@ export function KbEditor({ object: o, autoFocusName, onWriter }: InlineEditorCon
       </SurfaceLedger> : <SurfaceState empty emptyLabel="No items" />}
       <Button dense variant="ghost" onClick={() => setAdding((value) => !value)}>{adding ? "Close items" : "Add items"}</Button>
       {adding ? <SurfaceWell>
-        <StringGadget label="Find items" value={query} onChange={setQuery} />
+        <StringGadget label="Find items" value={query} autoFocus={Boolean(openAdd)} onChange={setQuery} />
         <SurfaceLedger count={null} cols="room">
           {choices.map((entry) => <SurfaceLedgerRow key={qualifiedRef(entry.kind, entry.id)} primary={entry.title} meta={KIND_LABEL[entry.kind] || kindWord(entry.kind)}
             trailing={<Button dense variant="ghost" disabled={mutation.state === "saving"} onClick={() => void member(qualifiedRef(entry.kind, entry.id), false)}>Add</Button>} />)}

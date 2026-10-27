@@ -1,4 +1,3 @@
-import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Knowledge pullout content (HS-117-15). */
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
@@ -14,24 +13,28 @@ import { productLabel } from "../../lib/productLanguage";
 import {
   SurfaceRow,
   SurfaceRows,
-  SurfaceSection,
   SurfaceState,
 } from "../surface/Surface";
+import { StatusBar, ToolGlyph, Toolbar, countWords } from "../surface/kit";
+import { useState } from "react";
 import { INLINE_EDITOR_CONTENT } from "./editors";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useEditorSession } from "./editors/useDebouncedSave";
+import { SurfaceFooter } from "../surface/SurfaceFooter";
+import "./capability-window.css";
 
 export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
   const editing = useDesk((s) => s.editingId === o.id);
   const { openEditor, closeEditor } = useDesk.getState();
   const session = useEditorSession(closeEditor, editing ? registerClose : undefined);
+  const [addOnOpen, setAddOnOpen] = useState(false);
+  const { copy, receipt: copyReceipt } = useCopyReceipt();
   if (o.ref.kind !== "kb") return null;
   const ir = o.ref;
   const Content = INLINE_EDITOR_CONTENT[o.kind];
   const resourceRef = qualifiedRef(o.kind, o.id);
-  const { copy, receipt: copyReceipt } = useCopyReceipt();
 
   // Betterment Q10 (Knowledge becomes drawers): a collection reads as a
   // drawer, its Contents drawn as a drawer's are (DirectoryPullout).
@@ -44,65 +47,80 @@ export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
     return [{ ref, member }];
   });
 
+  // W2-BUILDER (atlas 2026-10-27): the reader on the window grammar.
+  // Toolbar (Add · Edit · Copy · Dictate about this); Add opens the editor
+  // on its item picker (the hub's member route, PUT /api/kbs/{id}/members);
+  // the contents edge to edge; the count and receipts in the status bar.
+  if (editing && Content) {
+    return (
+      <>
+        <div className="desk-pullout-body desk-surface-body desk-editor-body">
+          <Content object={o} openAdd={addOnOpen} onClose={() => void session.done()} onWriter={session.onWriter} />
+        </div>
+        <SurfaceFooter receipt={session.receipt} verbs={session.verbs} />
+      </>
+    );
+  }
   return (
     <>
-      <div className="desk-pullout-body desk-surface-body desk-editor-body">
-        {editing && Content ? (
-          <Content object={o} onClose={() => void session.done()} onWriter={session.onWriter} />
-        ) : (
-          <SurfaceSection label="Contents" count={members.length}>
-            {members.length ? (
-              <SurfaceRows>
-                {members.map(({ ref, member }) => (
-                  <SurfaceRow
-                    key={ref}
-                    glyph={member ? (
-                      <img src={spriteUrl(member.kind, member.id, "rest", refAgent(member.ref))} width={22} height={22} alt="" />
-                    ) : undefined}
-                    title={<span data-member-ref={ref}>{member?.title || "Item unavailable"}</span>}
-                    detail={member ? member.kind === "directory" || member.kind === "kb" ? "Drawer" : productLabel(member.kind) : "Unavailable"}
-                    onOpen={member ? () => openScreenRef(ref) : undefined}
-                  />
-                ))}
-              </SurfaceRows>
-            ) : (
-              <SurfaceState empty emptyLabel="No items" emptyGlyph="○" />
-            )}
-          </SurfaceSection>
-        )}
-        {!editing && (
+      <div className="desk-pullout-body desk-surface-body kb-window" data-interior="editor" data-testid="knowledge-window">
+        <Toolbar label="Knowledge" data-testid="knowledge-toolbar">
+          <Button
+            dense
+            variant="primary"
+            data-testid="knowledge-add"
+            onClick={() => { setAddOnOpen(true); openEditor(o.id); }}
+          >
+            <ToolGlyph kind="new" />Add
+          </Button>
+          <Button dense variant="secondary" onClick={() => { setAddOnOpen(false); openEditor(o.id); }}>
+            <ToolGlyph kind="edit" />Edit
+          </Button>
+          {members.length ? (
+            <Button
+              dense
+              variant="ghost"
+              onClick={() => void copy(members.map(({ ref, member }) => member?.title || ref).join("\n"))}
+            >
+              <ToolGlyph kind="copy" />Copy
+            </Button>
+          ) : null}
+          <Button dense variant="ghost" onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}>
+            Dictate about this
+          </Button>
+        </Toolbar>
+        <div className="kb-page">
+          {members.length ? (
+            <SurfaceRows>
+              {members.map(({ ref, member }) => (
+                <SurfaceRow
+                  key={ref}
+                  glyph={member ? (
+                    <img src={spriteUrl(member.kind, member.id, "rest", refAgent(member.ref))} width={22} height={22} alt="" />
+                  ) : undefined}
+                  title={<span data-member-ref={ref}>{member?.title || "Item unavailable"}</span>}
+                  detail={member ? member.kind === "directory" || member.kind === "kb" ? "Drawer" : productLabel(member.kind) : "Unavailable"}
+                  onOpen={member ? () => openScreenRef(ref) : undefined}
+                />
+              ))}
+            </SurfaceRows>
+          ) : (
+            <SurfaceState empty emptyLabel="No items" emptyGlyph="○" />
+          )}
           <DeskFilingStrip
             objectRef={resourceRef}
             objectKind={o.kind}
             objectId={o.id}
           />
-        )}
+        </div>
       </div>
-      <SurfaceFooter receipt={editing ? session.receipt : copyReceipt} verbs={editing ? session.verbs : <>
-        <Button
-          dense
-          variant="ghost"
-          onClick={() => void copy(members.map(({ ref, member }) => member?.title || ref).join("\n"))}
-        >
-          Copy
-        </Button>
-        <Button
-          dense
-          variant="ghost"
-          onClick={() =>
-            openSurfaceOr("dictate", "/dictation", resourceRef)
-          }
-        >
-          Dictate about this
-        </Button>
-        <Button
-          dense
-          variant="primary"
-          onClick={() => openEditor(o.id)}
-        >
-          Edit
-        </Button>
-      </>} />
+      <StatusBar
+        data-testid="knowledge-status"
+        items={[
+          { key: "count", text: countWords(members.length, "item") },
+          copyReceipt ? { key: "receipt", text: copyReceipt } : null,
+        ]}
+      />
     </>
   );
 }

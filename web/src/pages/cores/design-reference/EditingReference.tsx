@@ -3,7 +3,7 @@ import { Button } from "../../../components/signal/Signal";
 import { ThoughtDocumentPane } from "../../../desk/thought-workspace/ThoughtDocumentPane";
 import { thoughtVoiceKey, type ThoughtVoiceDraftIO } from "../../../desk/thought-workspace/thoughtVoiceDraft";
 import type { ThoughtDraft } from "../../../desk/pullouts/editors/useThoughtNoteWriter";
-import { StateChip } from "../../../desk/surface";
+import { DotWord } from "../../../desk/surface";
 import "../../../desk/thought-workspace/thought-workspace.css";
 
 export type EditingPreset = "ordinary" | "retained" | "newer" | "read-only" | "linked";
@@ -43,10 +43,7 @@ export function EditingReference({ preset }: { preset: EditingPreset }) {
   const [done, setDone] = useState(false);
 
   return <section className="reference-example reference-editing" data-testid="reference-editing" aria-label="Editing pattern">
-    <div className="reference-example-head">
-      <div><h2>Thought note</h2></div>
-      <StateChip state={readOnly ? "idle" : "active"} label={readOnly ? "READ ONLY" : "LOCAL SPECIMEN"} />
-    </div>
+    {readOnly ? <DotWord className="reference-editing-state">Read only</DotWord> : null}
     <div className="reference-editing-document">
       <ThoughtDocumentPane
         noteId={NOTE_ID}

@@ -378,11 +378,11 @@ def test_components_filed_notes_uses_same_two_column_section_locally(
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.goto(f"{base}/design/components?token={TOKEN}", wait_until="load")
             _components_ready(page)
-            pattern = page.get_by_role("group", name="Patterns").get_by_role("button", name="Lists", exact=True)
+            pattern = page.get_by_role("navigation", name="Patterns").get_by_role("button", name="Lists", exact=True)
             if pattern.count():
                 pattern.click()
             else:
-                page.get_by_role("group", name="Patterns").get_by_role("button").click()
+                page.get_by_role("navigation", name="Patterns").get_by_role("button").click()
                 page.locator("[role^='menuitem']").filter(has_text="Lists").first.click()
             page.get_by_role("combobox", name="Example state").select_option("filed-notes")
             specimen = page.get_by_test_id("reference-filed-notes")
@@ -420,7 +420,7 @@ def test_components_filed_notes_uses_same_two_column_section_locally(
             _reachable_action(page, "[data-testid='reference-filed-notes'] [data-testid='room-files-open']", width, probes)
             files.get_by_test_id("room-files-open").click()
             expect(specimen.locator(".reference-receipt[role='status']")).to_contain_text(
-                "OPENED LOCALLY · note:review-record · local-project")
+                "Opened locally · note:review-record · local-project")
             receipt = specimen.locator(".reference-receipt[role='status']")
             outcome = receipt.evaluate("""e => {
               const frame=e.closest('.desk-window');

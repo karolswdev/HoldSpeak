@@ -26,6 +26,12 @@ export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
   // PHILO-17 (2b): a person is a whole window (the six lenses on one row).
   people: { w: 640, h: 560 },
   room: { w: 760, h: 480 },
+  // W2-BUILDER (atlas 2026-10-27): the builder windows on the grammar; the
+  // toolbar's verbs fit one row, the material and its Run below.
+  recipe: { w: 560, h: 640 },
+  chain: { w: 560, h: 560 },
+  workflow: { w: 560, h: 520 },
+  kb: { w: 560, h: 420 },
   // Settings is hosted by SurfaceWindows, but stays in this table so the
   // first-open matrix has one source of truth for every desk room.
   settings: { w: 1040, h: 720 },
