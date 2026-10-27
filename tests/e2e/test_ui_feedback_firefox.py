@@ -17,6 +17,12 @@ SHOTS = evidence_dir("ui-feedback-firefox")
 TOKEN = "feedback-firefox-settings"
 
 
+def _feedback_name(width: int) -> str:
+    """The title-bar Feedback verb names what the window shows: on the phone
+    the title bar names the open Settings pane (#1458), here You."""
+    return "Give feedback on Settings" if width >= 720 else "Give feedback on You"
+
+
 # Absolute UI timing is measured as a separate locked run. Concurrent
 # Chromium/Firefox startup can exceed these limits through CPU contention;
 # the complete tape still runs this check, with all budgets unchanged.
@@ -65,6 +71,10 @@ def test_loaded_settings_repeated_feedback_and_save_retry(
             _normal_chair(page)
             window = page.locator("[id='surface-settings'][data-layer='window']")
             name = window.get_by_role("textbox", name="Your name", exact=True)
+            if width < 720:
+                # Settings on the phone opens on its rail (#1458, the native
+                # preference window); the You pane holds the name field.
+                window.get_by_test_id("settings-index-you").click()
             name.wait_for()
             # The loading placeholder is cheap. The real Settings document is
             # the reported failure and must be present before measurements.
@@ -74,7 +84,7 @@ def test_loaded_settings_repeated_feedback_and_save_retry(
                 name.fill(draft)
                 page.evaluate("window.__feedbackBeat = {last: performance.now(), max: 0}")
                 started = time.monotonic()
-                window.get_by_role("button", name="Give feedback on Settings", exact=True).click()
+                window.get_by_role("button", name=_feedback_name(width), exact=True).click()
                 strip = page.locator("[data-ui-feedback]")
                 page.wait_for_function("""() => {
                   const strip = document.querySelector('[data-ui-feedback]');
