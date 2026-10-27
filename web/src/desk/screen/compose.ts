@@ -304,14 +304,10 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
   }
   // The People, Agents and Needs you doors have their own homes in the Dock,
   // Go and the bell. They are deliberately absent from the Floor.
-  out.push({
-    key: "drawer:parked",
-    role: "parked",
-    kind: "parked",
-    name: "Archive",
-    ...sprites("parked", "parked"),
-    target: { type: "parked" },
-  });
+  // Floor lane (owner 2026-10-26, "the trash can being there"): Archive is
+  // no floor icon either; its bottom-right seat read as the Mac's Trash. Go ▸
+  // Archive and ⌘K open its window. The old icon is parked in
+  // screen/_parked/floorTalkAndArchive.tsx.
 
   // ── the Floor: unfiled content notes, then explicit Desk members ──
   // Unknown stays unknown (Astra's P1 on #939): a failed Project filing read

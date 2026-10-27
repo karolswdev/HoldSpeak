@@ -14,6 +14,7 @@ import { aboutTarget, askAboutLabel, askAboutRef } from "./askAbout";
 import { useDesk } from "./store";
 import { openIntelligence } from "./intelligenceNavigation";
 import { openSurfaceOr } from "./shell";
+import { openParkedDrawer } from "./drawer/store";
 import { openPerson, openProjectRename, openProjectUpdates, writeProjectUpdate } from "./openObject";
 import { apiFetch } from "../lib/api";
 import { qualifiedRef } from "./api";
@@ -427,6 +428,17 @@ export const VERBS: Verb[] = [
     app: "People",
     ghost: never,
     run: () => openSurfaceOr("open-people", "/", undefined),
+  },
+  {
+    // Floor lane (owner 2026-10-26): Archive left the floor (its corner read
+    // as the Mac's Trash). Go ▸ Archive and ⌘K open the same window.
+    id: "desk.open-archive",
+    label: "Open Archive",
+    scope: "floor",
+    group: "view",
+    keywords: ["archive", "parked", "restore", "trash", "deleted"],
+    ghost: never,
+    run: () => openParkedDrawer(),
   },
   {
     id: "desk.intelligence-brief",

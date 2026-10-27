@@ -640,6 +640,8 @@ export const GO_EXTRA_ROWS: readonly (GoExtra & { go: { group: GoGroup; order: n
   // Projects window), then each project; it is drawn on an empty desk too.
   { kind: "projects", go: { group: "daily", order: 4 } },
   { kind: "drawers", go: { group: "work", order: 3 } },
+  // Floor lane (2026-10-26): Archive is no floor icon; Go is its door.
+  { kind: "verb", verbId: "desk.open-archive", label: "Archive", go: { group: "work", order: 3.5 } },
   { kind: "verb", verbId: "desk.give-feedback", go: { group: "work", order: 4 } },
   { kind: "launcher", launcherId: "delivery-board", label: "Delivery board", glyph: "▤", go: { group: "builder", order: 5 } },
   { kind: "launcher", launcherId: "panes", label: "Terminals", glyph: "⧉", go: { group: "builder", order: 6 } },

@@ -221,7 +221,9 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(screen.queryByRole("button", { name: /^People/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Agents/ })).toBeNull();
     expect(screen.queryByRole("button", { name: /^Needs you/ })).toBeNull();
-    expect(icon(/^Archive, DRAWER$/).querySelector(".desk-icon-lamp")).toBeNull();
+    // Floor lane (owner 2026-10-26): Archive is no floor icon (it read as
+    // the Mac's Trash in its bottom-right seat); Go ▸ Archive opens it.
+    expect(screen.queryByRole("button", { name: /^Archive/ })).toBeNull();
     // Notes arrive when unfiled. Meetings, decisions, repositories and people
     // arrive only through the explicit Desk membership ledger.
     expect(keys()).toEqual(expect.arrayContaining([
@@ -234,7 +236,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(document.querySelector(".desk-screen .state-chip, .desk-screen .surface-token")).toBeNull();
   });
 
-  it("1440: the drawers down the left, Archive bottom right, the field between", async () => {
+  it("1440: the drawers down the left, the field beside them, nothing in the Trash corner", async () => {
     render(<Screen />);
     await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
     expect(screen.getByTestId("desk-screen").getAttribute("data-layout")).toBe("free");
@@ -244,7 +246,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     };
     expect(at(/^Payments ledger cutover/)).toEqual({ x: 20, y: 12 });
     expect(at(/^Platform observability/)).toEqual({ x: 20, y: 108 });
-    expect(at(/^Archive/)).toEqual({ x: 1300, y: 660 });
+    expect(screen.queryByRole("button", { name: /^Archive/ })).toBeNull();
     expect(at(/^Vendor call/).x).toBe(210);
   });
 
@@ -257,7 +259,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     expect(keys()).toEqual([]);
     expect(screen.getByRole("menu", { name: "Go menu" })).toBeTruthy();
     for (const el of document.querySelectorAll<HTMLElement>(".desk-screen-cell")) expect(el.style.left).toBe("");
-    // TALK lives in the Capture window at 393 (Speak opens it on demand)
+    // No Talk orb at 393 either: the Capture window has Talk (Speak opens it)
     expect(screen.queryByTestId("desk-screen-talk")).toBeNull();
   });
 
@@ -281,17 +283,15 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     fireEvent.pointerUp(grid, { pointerId: 1 });
   });
 
-  it("Enter or a double press opens Projects, Archive and explicit Desk objects", async () => {
+  it("Enter or a double press opens Projects and explicit Desk objects", async () => {
     render(<Screen />);
     await waitFor(() => expect(keys()).toContain("meeting:m-vendor"));
     fireEvent.keyDown(icon(/^Payments ledger cutover/), { key: "Enter" });
     // PHILO-17 U30: a Project opens its Room (one home), never a drawer.
     expect(shell.openProjectRoom).toHaveBeenCalledWith("p-ledger");
     expect(useDrawers.getState().drawers).toEqual([]);
-    // PHILO-15 04 (gap 14): Parked opens the Parked drawer, not Meetings.
-    fireEvent.keyDown(icon(/^Archive/), { key: "Enter" });
-    expect(useDrawers.getState().parked).not.toBeNull();
-    expect(shell.openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history");
+    // Archive is no floor icon (2026-10-26): see "Go ▸ Archive and ⌘K open
+    // the Archive window" below.
     fireEvent.doubleClick(icon(/^Vendor call/));
     expect(openMeeting).toHaveBeenCalledWith("meeting:m-vendor");
     fireEvent.keyDown(icon(/^Avery Chen/), { key: "Enter" });
@@ -381,10 +381,10 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     localStorage.removeItem("hs.desk.atmosphere");
   });
 
-  it("Astra's P3 (ruling): TALK is one press on the Chair at 1440", async () => {
+  it("owner 2026-10-26: no Talk orb floats on the floor at 1440 (Speak is the Dock tile, ⌥R, ⌘K)", async () => {
     render(<Screen />);
-    const talk = screen.getByTestId("desk-screen-talk");
-    expect(within(talk).getByRole("button", { name: /talk/i })).toBeTruthy();
+    expect(screen.queryByTestId("desk-screen-talk")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^talk/i })).toBeNull();
   });
 
   it("no Projects: the drawers that always exist stand; one line only when nothing else exists", async () => {
@@ -393,7 +393,7 @@ describe("PHILO-14 A1 — the screen of objects", () => {
     vi.mocked(apiFetch).mockImplementation(async () => null);
     render(<Screen />);
     await waitFor(() => expect(screen.getByTestId("desk-screen-empty")).toBeTruthy());
-    expect(keys()).toEqual(["drawer:parked"]);
+    expect(keys()).toEqual([]);
     // a loose note: the line goes
     act(() => useDesk.setState({ items: { ...EMPTY_ITEMS, note: [{ kind: "note", id: "n1", title: "A note" }] } as never, updatedAt: 2 }));
     await waitFor(() => expect(keys()).toContain("note:n1"));
@@ -532,7 +532,7 @@ describe("PHILO-14 A1 — the pure parts", () => {
       projectCounts: {}, needsCount: 0, needsRefs: new Set(), heldCalls: 0, sessions: [], flights: [],
       filed: new Set(), persons: [{ id: "p1", name: "Kept person" }], membersLoaded: true,
     });
-    expect(objects.map((o) => o.key)).toEqual(["drawer:parked", "note:n1", "meeting:m1", "note:n2", "people:p1"]);
+    expect(objects.map((o) => o.key)).toEqual(["note:n1", "meeting:m1", "note:n2", "people:p1"]);
     expect(objects.map((o) => o.key)).not.toContain("meeting:m2");
   });
 
@@ -627,10 +627,24 @@ describe("PHILO-17 objverbs — the Chair has the desk's one selection", () => {
     expect(useDesk.getState().pullouts.map((p) => p.id)).toContain("note:n-2");
   });
 
-  it("a drawer with no desk object opens no menu", async () => {
-    render(<Screen />);
+  // Re-pointed 2026-10-26: this case pressed the floor Archive icon (a drawer
+  // with no desk object, so no menu). Archive left the floor; its doors are
+  // Go ▸ Archive and ⌘K, and both open the one Archive window (PHILO-15 04,
+  // gap 14: the Parked drawer, never Meetings).
+  it("Go ▸ Archive and ⌘K open the Archive window", async () => {
+    render(<><Screen /><DeskMenuBar /></>);
     await waitFor(() => expect(keys()).toContain("note:n-2"));
-    fireEvent.contextMenu(icon(/^Archive, DRAWER$/));
-    expect(screen.queryByRole("menu")).toBeNull();
+    expect(keys()).not.toContain("drawer:parked");
+    fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
+    const go = screen.getByRole("menu", { name: "Go menu" });
+    fireEvent.click(within(go).getByRole("menuitem", { name: /^Archive/ }));
+    expect(useDrawers.getState().parked).not.toBeNull();
+    expect(shell.openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history");
+    act(() => useDrawers.setState({ parked: null }));
+    const palette = verbById("desk.open-archive")!;
+    expect(palette.label).toBe("Open Archive");
+    expect(palette.palette).not.toBe(false);
+    act(() => palette.run({ selectedRef: null } as never));
+    expect(useDrawers.getState().parked).not.toBeNull();
   });
 });
