@@ -17,6 +17,7 @@ import {
   SurfaceState,
   StringGadget,
   PaneWell,
+  DotWord,
   type ChipState,
 } from "../../../desk/surface";
 import { Button } from "../../../components/signal/Signal";
@@ -120,6 +121,59 @@ export function stateWords(
   if (state === "signed_in") return [label, login, "From gh config"].filter(Boolean).join(" · ");
   const age = checkedAgo(row.last_checked_at, row.checked_age_seconds);
   return age ? `${label} · ${age}` : label;
+}
+
+/** Window grammar: the age of a row's own check as a quiet sentence-case
+ *  fact after its state word (`checked 11 days ago`). */
+export function checkedWords(
+  lastCheckedAt: string | undefined | null,
+  ageSeconds?: number,
+  now: number = Date.now(),
+): string | undefined {
+  let seconds: number | undefined;
+  if (lastCheckedAt) {
+    const then = wireDate(lastCheckedAt)?.getTime() ?? Number.NaN;
+    if (!Number.isNaN(then)) seconds = Math.max(0, Math.floor((now - then) / 1000));
+  }
+  if (seconds === undefined && typeof ageSeconds === "number") seconds = Math.max(0, ageSeconds);
+  if (seconds === undefined) return undefined;
+  const ago = (n: number, unit: string) => `checked ${n} ${unit}${n === 1 ? "" : "s"} ago`;
+  if (seconds < 60) return "checked just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return ago(minutes, "minute");
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return ago(hours, "hour");
+  return ago(Math.floor(hours / 24), "day");
+}
+
+const DOT_TONE: Record<ChipState, "ok" | "warn" | "fail" | "info" | "idle"> = {
+  success: "ok", active: "info", working: "info", warning: "warn",
+  failure: "fail", unreachable: "warn", idle: "idle",
+};
+
+/** A row's state: a dot and a word, then the quiet age of its own check. */
+function RowState({ state, providerId, row, title }: {
+  state: ConnectionState;
+  providerId: string;
+  row: Parameters<typeof stateWords>[2];
+  title?: string;
+}) {
+  const word = chipLabel(state, providerId, row);
+  const when = state === "never_checked" ? undefined
+    : state === "signed_in" ? "from gh config"
+      : checkedWords(row.last_checked_at, row.checked_age_seconds);
+  return <RowFact state={chipState(state)} word={word} when={when} title={title}/>;
+}
+
+function RowFact({ state, word, when, title }: { state: ChipState; word: string; when?: string; title?: string }) {
+  return (
+    <span className="surface-ledger-cells connections-row-state" title={title}>
+      <span className="connections-state" role="status" aria-label={word} data-state={state}>
+        <DotWord tone={DOT_TONE[state]}>{word}</DotWord>
+      </span>
+      {when ? <span className="connections-checked">{when}</span> : null}
+    </span>
+  );
 }
 
 function formatTime(iso: string | undefined | null): string {
@@ -388,8 +442,8 @@ function GitHubCard({ tool, onRecheck, busy, blocked, lead = false, open, onTogg
   };
   return <SurfaceLedgerRow data-testid="connections-github" wrap open={open} onToggle={onToggle} lineLabel="GitHub"
     lead={<ServiceGlyph provider="github"/>}
-    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">GitHub</strong>{tool.account?.login ? <span className="connections-tool-summary">{tool.account.login}</span> : null}<span className="connections-tool-summary connections-site">{host}</span></span>}
-    cells={<span className="surface-ledger-cells connections-tool-chips" title={state === "degraded" ? tool.error_detail : undefined}><StateChip wrap state={chipState(state)} label={stateWords(state, "github", tool)}/></span>}
+    primary={<span className="connections-tool-identity" title={[tool.account?.login, host].filter(Boolean).join(" · ")}><strong className="connections-tool-label">GitHub</strong>{tool.account?.login ? <span className="connections-tool-summary">{tool.account.login}</span> : null}<span className="connections-tool-summary connections-site">{host}</span></span>}
+    cells={<RowState state={state} providerId="github" row={tool} title={state === "degraded" ? tool.error_detail : undefined}/>}
     trailing={<span className="connections-tool-actions">{needsFix(state) ? <Button dense variant={lead ? "primary" : "secondary"} aria-expanded={open} onClick={state === "owner_action_required" && !open ? startFromRow : onToggle} data-testid="connections-github-show">{open ? "Close" : fixLabel(state, "gh")}</Button> : null}{check}</span>}>
     {open ? <AccountUnfold testid="connections-github-unfold" usedBy={tool.used_by} hint={hint}
       signInLabel={fixLabel(state, "gh")} commandOpen={needsFix(state)}
@@ -408,14 +462,14 @@ function HostChip({ site }: { site: string }) {
   return <EgressChip label={site.toUpperCase()} scope="cloud" title={site}/>;
 }
 
+/** The account, cut with an ellipsis when the row is narrow (the row's
+ *  hover title carries the whole account and site). */
 function AccountEmail({ email }: { email: string }) {
-  const at = email.indexOf("@");
-  return <span className="connections-tool-summary">{at < 0 ? email : <>{email.slice(0, at + 1)}<wbr/>{email.slice(at + 1)}</>}</span>;
+  return <span className="connections-tool-summary">{email}</span>;
 }
 
-function AtlassianConnectionRow({ provider, conn, onRecheck, onRemove, busy, blocked, open, onToggle, addAction, addWell, addOpen = false, onSignIn, signin, onSigninFinished }: {
+function AtlassianConnectionRow({ provider, conn, onRecheck, onRemove, busy, blocked, open, onToggle, onSignIn, signin, onSigninFinished }: {
   provider: "jira" | "confluence"; conn: JiraSubConnection; onRecheck: () => void; onRemove: () => void; busy: boolean; blocked: boolean; open: boolean; onToggle: () => void;
-  addAction?: ReactNode; addWell?: ReactNode; addOpen?: boolean;
   onSignIn?: () => Promise<boolean>; signin?: SigninRun | null;
   onSigninFinished?: (status: SigninStatusResponse) => void;
 }) {
@@ -428,17 +482,13 @@ function AtlassianConnectionRow({ provider, conn, onRecheck, onRemove, busy, blo
     onToggle();
     if (onSignIn) void onSignIn();
   };
-  // The Add form keeps its pending/refusal state through sign-in detours.
   return <SurfaceLedgerRow data-testid={`connections-${provider}-conn-${conn.connection_ref}`} wrap onToggle={onToggle} lineLabel={`${name} ${conn.account.site}`}
-    // The last row keeps the Add form mounted (its draft and refusal survive a
-    // sign-in detour), so it claims no aria-expanded of its own.
-    open={open || addOpen || Boolean(addWell)} expands={!addWell}
+    open={open}
     lead={<ServiceGlyph provider={provider}/>}
-    primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{name}</strong><AccountEmail email={conn.account.email}/><span className="connections-tool-summary connections-site">{conn.account.site}</span></span>}
-    cells={<span className="surface-ledger-cells connections-tool-chips"><StateChip wrap state={chipState(state)} label={stateWords(state, provider, conn)}/></span>}
-    trailing={<span className="connections-tool-actions">{needsFix(state) ? <Button dense variant="secondary" aria-expanded={open} onClick={state === "owner_action_required" && !open ? startFromRow : onToggle}>{open ? "Close" : fixLabel(state, "acli")}</Button> : null}{check}{addAction}</span>}>
-    <div className="connections-account-wells" hidden={!(open || addOpen)}>
-      {addWell ? <div hidden={!addOpen}>{addWell}</div> : null}
+    primary={<span className="connections-tool-identity" title={`${conn.account.email} · ${conn.account.site}`}><strong className="connections-tool-label">{name}</strong><AccountEmail email={conn.account.email}/><span className="connections-tool-summary connections-site">{conn.account.site}</span></span>}
+    cells={<RowState state={state} providerId={provider} row={conn}/>}
+    trailing={<span className="connections-tool-actions">{needsFix(state) ? <Button dense variant="secondary" aria-expanded={open} onClick={state === "owner_action_required" && !open ? startFromRow : onToggle}>{open ? "Close" : fixLabel(state, "acli")}</Button> : null}{check}</span>}>
+    <div className="connections-account-wells" hidden={!open}>
       {open ? <AccountUnfold testid={`connections-${provider}-unfold-${conn.connection_ref}`} usedBy={conn.used_by} hint={hint} onRemove={onRemove}
         signInLabel={fixLabel(state, "acli")} commandOpen={needsFix(state)}
         onSignIn={state !== "unavailable" ? onSignIn : undefined} signin={signin} onSigninFinished={onSigninFinished}/> : null}
@@ -527,29 +577,34 @@ function AtlassianCards({ tool, onRecheck, onAddAccount, onRemove, busyRef, onSi
   const connections = tool.connections ?? [];
   const [well, setWell] = useState<string | null>(null);
   const [draft, setDraft] = useState<AccountDraft>({ site: "", email: "" });
-  const addButton = <Button dense variant="ghost" aria-expanded={well === "add"} onClick={() => setWell(value => value === "add" ? null : "add")} data-testid={`connections-add-open-${provider}`}>{well === "add" ? "Cancel" : connections.length ? `Add ${name} account` : "Add account"}</Button>;
+  const addButton = <Button dense variant={connections.length ? "ghost" : "secondary"} aria-expanded={well === "add"} onClick={() => setWell(value => value === "add" ? null : "add")} data-testid={`connections-add-open-${provider}`}>{well === "add" ? "Cancel" : connections.length ? `Add ${name} account` : "Add account"}</Button>;
   const form = <SurfaceWell><div className="connections-well-head"><strong>Add {name} account</strong></div><AddAccountFields compact provider={provider} onAdd={onAddAccount} busy={busyRef !== null} onCancel={() => setWell(null)} draft={draft} onDraftChange={setDraft}/></SurfaceWell>;
   if (!connections.length) return <SurfaceLedgerRow data-testid={`connections-${provider}`} wrap expands={false} open
     lead={<ServiceGlyph provider={provider}/>}
     primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{name}</strong></span>}
-    cells={<span className="surface-ledger-cells connections-tool-chips"><StateChip wrap state={chipState(tool.state)} label={stateWords(tool.state, provider, tool)}/></span>}
+    cells={<RowState state={tool.state} providerId={provider} row={tool}/>}
     trailing={addButton}><div className="connections-account-wells" hidden={well !== "add"}>{form}</div></SurfaceLedgerRow>;
   return <>
-    {connections.map((conn, index) => {
-      const last = index === connections.length - 1;
+    {connections.map((conn) => {
       return <AtlassianConnectionRow
         key={conn.connection_ref} provider={provider} conn={conn}
         onRecheck={() => onRecheck(conn.connection_ref)} onRemove={() => onRemove(conn)}
         busy={busyRef === conn.connection_ref} blocked={busyRef !== null}
         open={well === conn.connection_ref}
         onToggle={() => setWell(value => value === conn.connection_ref ? null : conn.connection_ref)}
-        addAction={last ? addButton : undefined} addWell={last ? form : undefined}
-        addOpen={last && well === "add"}
         onSignIn={onSignIn ? () => onSignIn(conn.account.site, conn.account.email, conn.connection_ref) : undefined}
         signin={signin?.connectionRef === conn.connection_ref ? signin : null}
         onSigninFinished={onSigninFinished}
       />;
     })}
+    {/* Window grammar: one verb per account row (Check); adding another
+        account is the list's own quiet last row. The form stays mounted, so
+        its draft and refusal survive a sign-in detour. */}
+    <SurfaceLedgerRow data-testid={`connections-${provider}-add`} expands={false} open
+      lead={<span className="connections-add-glyph" aria-hidden="true">+</span>}
+      primary={addButton}>
+      <div className="connections-account-wells" hidden={well !== "add"}>{form}</div>
+    </SurfaceLedgerRow>
   </>;
 }
 
@@ -569,7 +624,7 @@ function CalendarCard({
   return <SurfaceLedgerRow data-testid="connections-calendar" wrap expands={false}
     lead={<span className="connections-tool-emblem" data-provider="calendar" aria-hidden="true"><CalendarEmblem/></span>}
     primary={<span className="connections-tool-identity"><strong className="connections-tool-label">Calendar</strong>{summary ? <span className="connections-tool-summary">{summary}</span> : null}</span>}
-    cells={<span className="surface-ledger-cells connections-tool-chips"><StateChip wrap state={state} label={label}/></span>}
+    cells={<RowFact state={state} word={label}/>}
     // Betterment setup ST1: the sources are under this row now (no
     // `Sources` verb that went to Meetings).
     trailing={<span className="connections-tool-actions"><Button dense variant="secondary" onClick={onChoose}>Choose calendar</Button></span>}/>;
@@ -855,8 +910,8 @@ export function ConnectionsPane({
           const st = found.states[row.id];
           return <SurfaceLedgerRow key={row.id} data-testid={`connections-found-${row.id}`} wrap expands={false}
             lead={<ServiceGlyph provider={row.provider}/>}
-            primary={<span className="connections-tool-identity"><strong className="connections-tool-label">{PROVIDER_NAME[row.provider]}</strong><AccountEmail email={row.account}/><span className="connections-tool-summary connections-site">{row.site}</span></span>}
-            cells={st?.kind === "refused" ? <span className="surface-ledger-cells connections-tool-chips"><StateChip wrap state="failure" label={`Does not work: ${st.reason}`}/></span> : undefined}
+            primary={<span className="connections-tool-identity" title={`${row.account} · ${row.site}`}><strong className="connections-tool-label">{PROVIDER_NAME[row.provider]}</strong><AccountEmail email={row.account}/><span className="connections-tool-summary connections-site">{row.site}</span></span>}
+            cells={st?.kind === "refused" ? <RowFact state="failure" word={`Does not work: ${st.reason}`}/> : undefined}
             trailing={<span className="connections-check-action"><HostChip site={row.egress_host}/><Button dense variant="secondary" loading={st?.kind === "busy"} onClick={() => void useFound(row)}>Use</Button></span>}/>;
         })}
       </ul></SurfaceLedger></SurfaceSection> : null}

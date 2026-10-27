@@ -198,7 +198,7 @@
 }
 .desk-next .pref-window .prefs-calendar-section > .gadget-group > .gadget-group-label,
 .desk-next .pref-window .connections-destinations > .gadget-group > .gadget-group-label {
-  grid-column:1 / -1; grid-row:1; display:flex; align-items:flex-end; min-height:36px;
+  grid-column:1 / -1; grid-row:1; display:flex; align-items:flex-end; min-height:28px;
 }
 .desk-next .pref-window .prefs-calendar-section > .gadget-group > .gadget-sheet,
 .desk-next .pref-window .connections-destinations > .gadget-group > .gadget-sheet { grid-column:1 / -1; grid-row:2; }
@@ -233,3 +233,67 @@
   min-width: 0;
   width: 100%;
 }
+
+/* ── Window grammar 2026-10-27 (owner: "the accounts window looks like utter
+   shit"): every list in Accounts is ONE grid on the pane's paper.
+     glyph 18 · name and account (ellipsis) · state 200 · verb 120
+   A row is 32 px; the name is sans 13/500, the account and host sans 12
+   muted; the state is a dot and a word, its age a quiet sans 12 fact; the
+   one verb sits at the right edge, so every column lines up across
+   Services, Calendar, Calendar feeds and Destinations. ── */
+.desk-next .pref-window :is(.connections-pane, .prefs-calendar-section, .connections-destinations) .surface-ledger[data-cols] .surface-ledger-row > .surface-ledger-line {
+  display:grid;
+  grid-template-columns:18px minmax(0,1fr) 200px 120px;
+  grid-template-rows:auto;
+  grid-template-areas:"lead primary cells trailing";
+  align-items:center; gap:0 12px; min-height:32px; padding:0 8px;
+}
+.desk-next .pref-window :is(.connections-pane, .prefs-calendar-section, .connections-destinations) .surface-ledger[data-cols] .surface-ledger-line > .surface-ledger-lead { grid-row:auto; grid-column:auto; grid-area:lead; display:inline-grid; place-items:center; min-width:0; width:18px; }
+.desk-next .pref-window :is(.connections-pane, .prefs-calendar-section, .connections-destinations) .surface-ledger[data-cols] .surface-ledger-line > .surface-ledger-primary { grid-row:auto; grid-column:auto; grid-area:primary; min-width:0; overflow:hidden; white-space:nowrap; font:500 13px/1.3 var(--font-sans); }
+.desk-next .pref-window :is(.connections-pane, .prefs-calendar-section, .connections-destinations) .surface-ledger[data-cols] .surface-ledger-line > .surface-ledger-cells { grid-row:auto; grid-column:auto; grid-area:cells; min-width:0; margin:0; }
+.desk-next .pref-window :is(.connections-pane, .prefs-calendar-section, .connections-destinations) .surface-ledger[data-cols] .surface-ledger-line > .surface-ledger-trailing { grid-row:auto; grid-column:auto; grid-area:trailing; min-width:0; margin:0; display:flex; flex-wrap:nowrap; justify-content:flex-end; gap:6px; }
+.desk-next .pref-window .connections-tool-actions { flex-wrap:nowrap; gap:6px; }
+/* The name column: the service name, then the account and host, cut with
+   an ellipsis (the row's hover title has them whole). */
+.desk-next .pref-window .connections-tool-identity { display:flex; flex-wrap:nowrap; align-items:baseline; gap:8px; min-width:0; overflow:hidden; }
+.desk-next .pref-window .connections-tool-label { flex:0 0 84px; min-width:0; font:500 13px/1.3 var(--font-sans); color:var(--wb-ink); overflow:hidden; text-overflow:ellipsis; }
+.desk-next .pref-window .connections-tool-identity > .connections-tool-summary,
+.desk-next .pref-window .connections-tool-identity > .connections-tool-summary:not(.connections-site) { flex:0 1 auto; max-width:none; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:400 12px/1.3 var(--font-sans); color:var(--wb-muted); }
+.desk-next .pref-window .connections-tool-identity > .connections-site { flex:0 100 auto; }
+/* A destination's name is read whole; its path takes the rest, cut. */
+.desk-next .pref-window .connections-destinations .connections-tool-label { flex:0 0 auto; max-width:60%; }
+@container surface (min-width:561px) {
+  .desk-next .pref-window .connections-destinations .surface-ledger[data-cols] .surface-ledger-row > .surface-ledger-line { grid-template-columns:18px minmax(0,1fr) max-content 120px; }
+}
+/* The state: a dot and a word, then its age, quiet. */
+.desk-next .pref-window .connections-row-state { display:flex; flex-wrap:wrap; align-items:baseline; gap:0 8px; min-width:0; }
+.desk-next .pref-window .connections-state { display:inline-flex; min-width:0; }
+.desk-next .pref-window .connections-state .kit-dotword { font:500 12px/1.35 var(--font-sans); align-items:center; }
+.desk-next .pref-window .connections-checked { font:400 12px/1.35 var(--font-sans); color:var(--wb-muted); white-space:nowrap; }
+/* The quiet last row of a service's accounts: + Add Jira account. */
+.desk-next .pref-window .connections-add-glyph { font:400 15px/1 var(--font-sans); color:var(--wb-muted); }
+.desk-next .pref-window .surface-ledger-line .surface-ledger-primary > .btn[data-testid^="connections-add-open-"] { padding-inline:4px; color:var(--wb-sel); font-weight:500; }
+/* Calendar feeds: dot + name · source, the quiet facts, Edit. */
+.desk-next .pref-window .prefs-calendar-dot { display:inline-grid; place-items:center; width:18px; height:18px; }
+.desk-next .pref-window .prefs-calendar-name { display:flex; align-items:baseline; gap:8px; min-width:0; overflow:hidden; }
+.desk-next .pref-window .prefs-calendar-name > * { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.desk-next .pref-window .prefs-calendar-name > .gadget-fact::before { content:"· "; }
+.desk-next .pref-window .prefs-calendar-facts { display:flex; flex-wrap:wrap; align-items:baseline; gap:0 8px; min-width:0; }
+.desk-next .pref-window .prefs-calendar-facts > .gadget-fact { white-space:nowrap; }
+.desk-next .pref-window .prefs-calendar-section .surface-ledger-open { padding:8px 8px 12px 38px; }
+.desk-next .pref-window .connections-destinations .send-pick { color:var(--wb-muted); font-size:12px; }
+.desk-next .pref-window .connections-destinations .surface-ledger-cells { display:flex; align-items:baseline; gap:0 8px; font:400 12px/1.35 var(--font-sans); color:var(--wb-muted); }
+@container surface (max-width:560px) {
+  .desk-next .pref-window :is(.connections-pane, .prefs-calendar-section, .connections-destinations) .surface-ledger[data-cols] .surface-ledger-row > .surface-ledger-line {
+    grid-template-columns:18px minmax(0,1fr) max-content;
+    grid-template-areas:"lead primary trailing" ". cells cells";
+    gap:2px 8px; padding:6px 8px; min-height:44px;
+  }
+  .desk-next .pref-window :is(.connections-pane, .prefs-calendar-section, .connections-destinations) .surface-ledger[data-cols] .surface-ledger-line > .surface-ledger-trailing .btn { flex:none; max-width:none; }
+  .desk-next .pref-window .connections-tool-identity { flex-wrap:wrap; }
+  .desk-next .pref-window .connections-tool-identity > .connections-tool-summary { white-space:normal; overflow-wrap:anywhere; }
+}
+/* A group's caption and its verbs share one line: centred on each other. */
+.desk-next .pref-window :is(.prefs-calendar-section, .connections-destinations) > .gadget-group.gadget-group > .gadget-group-label { display:flex; align-items:center; min-height:30px; }
+.desk-next .pref-window :is(.prefs-calendar-section, .connections-destinations) > .gadget-group.gadget-group > .gadget-group-actions { align-self:start; margin-top:3px; padding:0; }
+.desk-next .pref-window .connections-destinations > .gadget-group > .gadget-group-actions > .send-verbs { margin:0; }

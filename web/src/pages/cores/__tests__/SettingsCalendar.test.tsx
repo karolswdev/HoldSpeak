@@ -103,16 +103,18 @@ describe("Accounts calendar source rows", () => {
     expect(well.getByRole("button", { name: /^Speak Calendar URL/ })).toBeInTheDocument();
   });
 
-  it("names the host on the HTTPS source's egress chip and wears NO chip on the file source (absence is the signal)", () => {
-    // HS-175 counsel C9 (H2-2): egress where egress happens; a file source
-    // carries no reassurance chip; local snapshot models also omit it.
+  it("names the HTTPS source's host in its Edit hover title and none on the file source (absence is the signal)", () => {
+    // HS-175 counsel C9 (H2-2), as amended by UX-CANON A.9 (2026-10-25): no
+    // host chip rests on the row; the Edit verb's hover title names the host.
     render(<SettingsCore scope="integrations" />);
-    const chip = screen.getByText("work.example");
-    expect(chip).toHaveClass("gadget-chip-egress");
-    expect(chip).toHaveAttribute("data-scope", "cloud");
-    expect(chip).toHaveAttribute("title", expect.stringContaining("Work"));
+    const work = screen.getByTestId("calendar-source-src-work");
+    expect(work.querySelector(".gadget-chip-egress")).toBeNull();
+    const edit = within(work).getByRole("button", { name: "Edit" });
+    expect(edit).toHaveAttribute("title", expect.stringContaining("work.example"));
+    expect(edit).toHaveAttribute("title", expect.stringContaining("Work"));
     const personal = screen.getByTestId("calendar-source-src-personal");
     expect(personal.querySelector(".gadget-chip-egress")).toBeNull();
+    expect(within(personal).getByRole("button", { name: "Edit" })).not.toHaveAttribute("title");
     expect(within(personal).queryByText("THIS DEVICE")).toBeNull();
   });
 
@@ -439,21 +441,19 @@ describe("HS-175 counsel: honest tokens on the calendar rows", () => {
     render(<SettingsCore scope="integrations" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
     const work = screen.getByTestId("calendar-source-src-work");
-    expect(within(work).getByTestId("calendar-source-events").textContent).toBe("40 EVENTS");
+    expect(within(work).getByTestId("calendar-source-events").textContent).toBe("40 events");
     expect(within(work).queryByText(/CALENDARS/)).toBeNull();
     const expected = formatLocalClock("2026-09-05T23:47:00Z");
-    expect(within(work).getByTestId("calendar-source-last-read").textContent).toBe(`LAST READ ${expected}`);
+    expect(within(work).getByTestId("calendar-source-last-read").textContent).toBe(`read ${expected}`);
   });
 
-  it("wears the vision model's egress chip beside Import image BEFORE any upload", async () => {
+  it("names the vision model's host in Import image's hover title BEFORE any upload, never as a resting chip", async () => {
+    // UX-CANON A.9 (amended 2026-10-25): the address is said at the act.
     render(<SettingsCore scope="integrations" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(10); });
     const importAction = screen.getByRole("button", { name: "Import image" });
-    const chip = within(importAction.parentElement!).getByText("192.168.1.43");
-    expect(chip).not.toBeNull();
-    expect(chip).toHaveClass("gadget-chip-egress");
-    expect(chip).toHaveAttribute("data-scope", "mixed");
-    expect(chip.textContent).toBe("192.168.1.43");
+    expect(within(importAction.parentElement!).queryByText("192.168.1.43")).toBeNull();
+    expect(importAction).toHaveAttribute("title", "The screenshot is sent to 192.168.1.43 (a device on your network) for extraction.");
     expect(screen.getByTestId("calendar-snapshot-btn")).toBeInTheDocument();
   });
 
