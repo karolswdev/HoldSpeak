@@ -33,7 +33,7 @@ import {
 } from "../../desk/surface/Surface";
 import { Disclosure } from "../../desk/surface/patterns/Disclosure";
 import { countToken } from "../../desk/surface";
-import { Avatar, StatusBar, ToolGlyph, Toolbar, countWords, hueOf, initialsOf } from "../../desk/surface/kit";
+import { Avatar, DotWord, StatusBar, ToolGlyph, Toolbar, countWords, hueOf, initialsOf } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../desk/surface/objects/ObjectList";
 import { renderHeroSlot } from "./core-layout";
@@ -640,16 +640,29 @@ function suggestionSource(row: Suggestion): string {
   return parts.join(" · ");
 }
 
-/** FOLLOWUPS D1: an owner string the hub cannot tell is him counts as
- *  theirs. While his own name is not set, People asks it once: one row at
- *  the top of the list (Settings ▸ You holds the same field). */
+/** W1-TRUTH (atlas 2026-10-27): "Why does People ask my name?" His name
+ *  belongs to Settings ▸ You. While it is not set, People says so ONCE: a
+ *  quiet row with the one verb that opens Settings ▸ You; later visits
+ *  show nothing. */
+const NAME_ASKED_KEY = "hs.people.name-asked";
+
+function nameAsked(): boolean {
+  try { return window.localStorage.getItem(NAME_ASKED_KEY) === "1"; } catch { return false; }
+}
+
 function WhoAreYou() {
   const owner = useOwnerName();
   const [asked, setAsked] = useState(false);
-  useEffect(() => { if (!owner.loading && !owner.readError && !owner.isSet) setAsked(true); }, [owner.loading, owner.readError, owner.isSet]);
-  if (!asked) return null;
+  const [seen] = useState(nameAsked);
+  useEffect(() => {
+    if (seen || owner.loading || owner.readError || owner.isSet) return;
+    setAsked(true);
+    try { window.localStorage.setItem(NAME_ASKED_KEY, "1"); } catch { /* a private window asks again */ }
+  }, [seen, owner.loading, owner.readError, owner.isSet]);
+  if (!asked || owner.isSet) return null;
   return <div className="people-you-row" data-testid="people-who-are-you">
-    <StringGadget label="Your name" value={owner.name} onChange={owner.setName} placeholder="Your name" inputProps={{ onBlur: () => void owner.flush() }} />
+    <DotWord tone="warn">Your name is not set</DotWord>
+    <Button dense variant="ghost" onClick={() => openSurfaceOr("configure-settings", "/settings", "owner")} data-testid="people-set-name">Set your name</Button>
   </div>;
 }
 

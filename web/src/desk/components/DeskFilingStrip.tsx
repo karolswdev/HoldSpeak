@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "../../lib/api";
 import { qualifiedRef } from "../api";
 import { useDesk } from "../store";
@@ -11,6 +11,12 @@ interface DeskFilingStripProps {
   objectRef: string;
   objectKind: string;
   objectId: string;
+  /** W1-TRUTH (reader grammar): the drawers and Projects open, with no
+   *  "Filed · …" fold around them (the window's status bar names where it
+   *  is filed and opens this). */
+  bare?: boolean;
+  /** Where the object is filed, in words (`Desk`, `Ledger · 1 Project`). */
+  onSummary?: (summary: string) => void;
 }
 
 function FilingRefusal({
@@ -30,11 +36,34 @@ function FilingRefusal({
   );
 }
 
+/** Where an object is filed, in words: its drawer (`Desk` at the root), its
+ *  collections and its Project count. */
+function filedWords(relationships: any, zones: any[], knowledgeChoices: any[], objectRef: string, objectId: string, objectKind: string): string {
+  const home = zones.find((zone) => {
+    const members = zone.memberIds || [];
+    return members.includes(objectId) || members.includes(objectRef);
+  });
+  const parentId = objectKind === "directory" ? zones.find((zone) => zone.id === objectId)?.parentId : null;
+  const parent = parentId ? zones.find((zone) => zone.id === parentId) : undefined;
+  const collections = knowledgeChoices
+    .filter((knowledge) => objectRef !== qualifiedRef("kb", knowledge.id))
+    .filter((knowledge) => (relationships.knowledge || []).some((row: any) => row.knowledge_id === knowledge.id))
+    .map((knowledge) => String(knowledge.name || "Drawer"));
+  const projects = (relationships.projects || []).length;
+  return [
+    parent ? String(parent.name || parent.id) : home ? String(home.name || home.id) : "Desk",
+    ...collections,
+    projects ? `${projects} Project${projects === 1 ? "" : "s"}` : "",
+  ].filter(Boolean).join(" · ");
+}
+
 /** The one filing disclosure: named drawers and project membership. */
 export function DeskFilingStrip({
   objectRef,
   objectKind,
   objectId,
+  bare = false,
+  onSummary,
 }: DeskFilingStripProps) {
   const items = useDesk((state) => state.items);
   const [relationships, setRelationships] = useState<any>(null);
@@ -42,6 +71,8 @@ export function DeskFilingStrip({
   const [projectChoices, setProjectChoices] = useState<any[]>([]);
   const [relationshipError, setRelationshipError] = useState("");
   const zones = items.directory || [];
+  const onSummaryRef = useRef(onSummary);
+  onSummaryRef.current = onSummary;
 
   const refreshRelationships = async () => {
     try {
@@ -99,6 +130,12 @@ export function DeskFilingStrip({
     }
   };
 
+  // The summary in words for a status bar (`Desk`, `Ledger · 1 Project`).
+  const summaryWords = relationships ? filedWords(relationships, zones, knowledgeChoices, objectRef, objectId, objectKind) : "";
+  useEffect(() => {
+    if (summaryWords) onSummaryRef.current?.(summaryWords);
+  }, [summaryWords]);
+
   if (!relationships) return relationshipError ? (
     <FilingRefusal
       detail={relationshipError}
@@ -129,9 +166,7 @@ export function DeskFilingStrip({
     .filter(Boolean)
     .join(" · ");
 
-  return (
-    <>
-      <FoldGadget title={`Filed · ${filedSummary}`}>
+  const body = (
         <div className="desk-pullout-filed">
           {(zones.length > 0 || knowledgeHomes.length > 0) && (
             <div className="desk-pullout-filed-axis">
@@ -215,7 +250,10 @@ export function DeskFilingStrip({
             <SurfaceState empty emptyLabel="No destinations" />
           )}
         </div>
-      </FoldGadget>
+  );
+  return (
+    <>
+      {bare ? body : <FoldGadget title={`Filed · ${filedSummary}`}>{body}</FoldGadget>}
       {relationshipError ? (
         <FilingRefusal
           detail={relationshipError}

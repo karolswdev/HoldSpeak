@@ -1,47 +1,47 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-25T17:10:44.368585Z",
+  "captured_at": "2026-10-27T09:02:43.533854Z",
   "wire": {
     "decision": {
       "alternatives": [],
       "consequences_markdown": "Why: One writer, one file. Postgres waits until we need a second host.",
       "context_markdown": "About: Payments ledger cutover",
-      "created_at": "2026-10-25T17:10:44Z",
+      "created_at": "2026-10-27T09:02:43Z",
       "decided_at": null,
       "deciders": [],
       "decision_markdown": "Keep the ledger on SQLite",
       "deleted": false,
-      "id": "decision_a8162f61eb26",
+      "id": "decision_e458f6bad351",
       "status": "accepted",
       "superseded_by": null,
       "tags": [
-        "project:proj-57969b0497a9"
+        "project:proj-18d769d34e12"
       ],
       "title": "Keep the ledger on SQLite",
-      "updated_at": "2026-10-25T17:10:44Z"
+      "updated_at": "2026-10-27T09:02:43Z"
     },
-    "operation_id": "op_ca8ed17e9a774bb398d39ea4a99fa9ae",
+    "operation_id": "op_34e6f2df41bd416cbd096401ca0b57e4",
     "receipt": {
       "actor_identity": "owner-session",
       "actor_kind": "owner",
       "authority_basis": "authenticated_principal+declared_capability+hard_prerequisites+interruption_policy",
-      "created_at": 1792948244.365937,
+      "created_at": 1793091763.531754,
       "delegator_identity": "",
       "delegator_kind": "",
-      "operation_id": "op_ca8ed17e9a774bb398d39ea4a99fa9ae",
+      "operation_id": "op_34e6f2df41bd416cbd096401ca0b57e4",
       "outcome": "succeeded",
-      "receipt_id": "rcpt_13f6be802bf94c839d92264910c89980",
-      "result_ref": "decision:decision_a8162f61eb26",
+      "receipt_id": "rcpt_63cbe799ea4a402bb4ed254aed0f4f46",
+      "result_ref": "decision:decision_e458f6bad351",
       "state": "succeeded",
-      "target_ref": "decision:decision_a8162f61eb26"
+      "target_ref": "decision:decision_e458f6bad351"
     },
     "record": {
       "alternatives": null,
-      "created_at": "2026-10-25T17:10:44.363783+00:00",
+      "created_at": "2026-10-27T09:02:43.530139+00:00",
       "decision_text": "Keep the ledger on SQLite",
       "deleted": 0,
       "dispute_reason": null,
-      "id": "record-d5e688f375a4499c81a4df0974b9d38f",
+      "id": "record-b70126f949c64e64bf0eac60f3fd36d9",
       "kind": "decision",
       "lifecycle": "active",
       "owner": null,
@@ -49,21 +49,22 @@
       "rationale": "About: Payments ledger cutover\n\nWhy: One writer, one file. Postgres waits until we need a second host.",
       "review_date": null,
       "revisions": [],
-      "source_id": "decision_a8162f61eb26",
+      "source_id": "decision_e458f6bad351",
       "source_type": "desk",
       "sources": [
         {
-          "created_at": "2026-10-25T17:10:44.364263+00:00",
-          "id": "record-source-5f94e2bccd1a41d0a6736f30b8d465d9",
-          "record_id": "record-d5e688f375a4499c81a4df0974b9d38f",
-          "source_ref": "proj-57969b0497a9",
+          "created_at": "2026-10-27T09:02:43.530540+00:00",
+          "id": "record-source-a9ef66cf04244a069567623f30f64e2d",
+          "record_id": "record-b70126f949c64e64bf0eac60f3fd36d9",
+          "source_ref": "proj-18d769d34e12",
           "source_type": "project"
         }
       ],
       "status": "accepted",
       "successor_id": null,
       "supersession_reason": null,
-      "updated_at": "2026-10-25T17:10:44.363783+00:00",
+      "title": "Keep the ledger on SQLite",
+      "updated_at": "2026-10-27T09:02:43.530139+00:00",
       "work": []
     }
   }

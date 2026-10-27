@@ -39,6 +39,7 @@ import {
   MEETINGS_JOB,
   SPEECH_JOB,
   agentChip,
+  checkedWords,
   costTokens,
   enginePlace,
   foundAgentName,
@@ -227,7 +228,9 @@ function engineState(
   if (engine.kind === "cloud" && engine.keySet === false) return { label: "No key", tone: "warn" };
   const raw = String(engine.state ?? "").trim().toUpperCase().replace(/[\s-]+/g, "_");
   if (raw === "NOT_SUPPORTED") return { label: "Not supported yet", tone: "fail" };
-  if (raw === "UNREACHABLE") return { label: "Unreachable", tone: "fail" };
+  // W1-TRUTH (atlas 2026-10-27): a server that did not answer the last
+  // check says so; never Ready.
+  if (raw === "UNREACHABLE") return { label: "Not answering", tone: "fail" };
   if (raw === "NOT_SET") return { label: "Not set up", tone: "idle" };
   if (raw === "UNKNOWN" || !raw) return { label: "Not checked", tone: "idle" };
   const word = stateWord(engine.state);
@@ -236,6 +239,30 @@ function engineState(
   if (word === "OFF") return { label: "Off", tone: "idle" };
   if (word === "BROKEN") return { label: sentence(raw.replace(/_/g, " ")), tone: "fail" };
   return { label: raw === "CHECKING" ? "Checking" : sentence(raw.replace(/_/g, " ")), tone: "idle" };
+}
+
+/** W1-TRUTH: the inspector follows the selected row: its name, its state
+ *  as a dot and a word with the last check's age, and the model id as
+ *  quiet meta (one name per engine; the id never replaces it). */
+function InspectorHead({
+  engine,
+  state,
+  checked,
+}: {
+  engine: BoardEngine;
+  state: { label: string; tone: ObjectListTone };
+  checked: string | null;
+}) {
+  const meta = engine.modelId && engine.modelId !== engine.name ? engine.modelId : null;
+  return (
+    <div className="runson-inspector-head" data-testid="runson-inspector-head" data-engine={engine.key}>
+      <span className="runson-inspector-name">{engine.name}</span>
+      <DotWord tone={state.tone} data-testid="runson-inspector-state">
+        {checked && !engine.found && engine.kind !== "preset" ? `${state.label} · ${checked}` : state.label}
+      </DotWord>
+      {meta ? <span className="runson-inspector-meta" data-testid="runson-inspector-model">{meta}</span> : null}
+    </div>
+  );
 }
 
 /** More models than this, and the picker has a search field. */
@@ -928,6 +955,9 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     ? wireDate(detection.checkedAt)?.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
     : null;
   const hw = hardwareToken(detection);
+  // W1-TRUTH: the last check's age in quiet words (`Checked 2 h ago`).
+  const checkedAge = checkedWords(detection?.checkedAt);
+  const checkedLine = checkedAge ? checkedAge[0].toUpperCase() + checkedAge.slice(1) : null;
 
   /* ── the status bar: what he has, in warm words; never a zero ── */
   const stripText = [
@@ -941,14 +971,14 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
   const unreachable = listed.filter((engine) => !engine.found && engineState(engine, undefined, undefined, false).tone === "fail").length;
   const grammarItems: Array<StatusBarItem | null> = [
     { key: "fact", lamp: engineCount ? "ok" : "warn", text: <span data-testid="runson-fact">{roster ? (countWords(engineCount, "engine") ?? "No engine yet") : "Engines"}</span> },
-    unreachable ? { key: "unreachable", lamp: "fail", text: `${unreachable} unreachable` } : null,
+    unreachable ? { key: "unreachable", lamp: "fail", text: `${unreachable} not answering` } : null,
     found.length ? { key: "found", lamp: "info", text: <span data-testid="runson-found-engines">{`${found.length} found${foundOnMac ? " on this Mac" : ""}`}</span> } : null,
     speech.notSetUp ? {
       key: "speech",
       lamp: speechRunning ? "info" : "warn",
       text: <span data-testid="runson-speech-setup-line">{speechRunning ? "Setting up speech" : "Speech is not set up"}</span>,
     } : null,
-    checked ? { key: "checked", text: <span className="runson-strip" data-testid="runson-strip">{`Checked ${checked}`}</span> } : detection || !roster ? null : { key: "checked", text: "Checking" },
+    checkedLine ? { key: "checked", text: <span className="runson-strip" data-testid="runson-strip" title={checked ? `Checked ${checked}` : undefined}>{checkedLine}</span> } : detection || !roster ? null : { key: "checked", text: "Checking" },
     ctrl.receipt ? {
       key: "receipt",
       lamp: ctrl.receipt.tone === "danger" ? "fail" : undefined,
@@ -1057,6 +1087,13 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
           ) : null}
           {roster && !noEngine ? (
             <div className="runson-inspector">
+              {selectedEngine ? (
+                <InspectorHead
+                  engine={selectedEngine}
+                  state={engineState(selectedEngine, ctrl.downloads[selectedEngine.key], ctrl.failedDownloads[selectedEngine.key], ctrl.trying?.engine === selectedEngine.key)}
+                  checked={checkedAge}
+                />
+              ) : null}
               <WhatRunsWhere ctrl={ctrl} selected={selectedEngine?.profileId ?? null} />
             </div>
           ) : null}

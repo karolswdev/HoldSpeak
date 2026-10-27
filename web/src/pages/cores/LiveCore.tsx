@@ -60,7 +60,7 @@ import {
 } from "../../desk/surface/gadgets";
 import { SurfaceWings, useWindowWings } from "../../desk/surface/wings";
 import { presentValue } from "../../desk/surface/format";
-import { DotWord, StatusBar, Steps, ToolGlyph, Toolbar, type StatusBarItem } from "../../desk/surface/kit";
+import { DotWord, StatusBar, Steps, ToolGlyph, Toolbar, meetingSteps, type StatusBarItem } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { countToken } from "../../desk/surface/count";
 import { intelEgressBadge } from "./liveEgress";
@@ -145,6 +145,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
       wings={[]}
       active="live"
       onChange={() => {}}
+      name="Live meeting"
       door="Configure meeting"
       doorOpen={doorOpen}
       onDoor={() => setDoorOpen((v) => !v)}
@@ -722,11 +723,15 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
   const meetingTitle = presentValue(state.title);
   const statusItems: StatusBarItem[] = [
     active && meetingTitle ? { key: "title", text: meetingTitle } : null,
+    // W1-TRUTH (atlas 2026-10-27): never "Ready" next to "Speech not set
+    // up". Before a meeting with no speech model the one state is the
+    // warning (its one verb, Set up speech, is in the toolbar).
     active
       ? { key: "capture", lamp: "fail" as const, text: "Recording", value: duration, testId: "live-capture-state" }
-      : { key: "capture", lamp: audioOnly ? ("warn" as const) : ("ok" as const), text: "Ready", testId: "live-capture-state" },
-    audioOnly ? { key: "audio", text: "audio only" } : null,
-    !active && speech.notSetUp ? { key: "speech", text: "Speech not set up" } : null,
+      : speech.notSetUp
+        ? { key: "capture", lamp: "warn" as const, text: "Speech not set up", testId: "live-capture-state" }
+        : { key: "capture", lamp: "ok" as const, text: "Ready", testId: "live-capture-state" },
+    active && audioOnly ? { key: "audio", text: "Audio only" } : null,
     { key: "link", lamp: linkTone, text: `Link ${link}`, testId: "live-link-state" },
   ].filter(Boolean) as StatusBarItem[];
 
@@ -814,16 +819,9 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
               while it records (colour only; nothing moves). */}
           <div className="live-deck" data-active={active || undefined} data-testid="live-deck">
             {active ? <DotWord tone="fail" className="live-rec-word" data-testid="live-rec">Rec</DotWord> : null}
-            <Steps
-              label="Meeting steps"
-              data-testid="live-steps"
-              steps={[
-                { key: "record", label: "Record", state: "now" },
-                { key: "summary", label: "Summary", state: "later" },
-                { key: "decide", label: "Decide", state: "later" },
-                { key: "send", label: "Send follow-up", state: "later" },
-              ]}
-            />
+            {/* W1-TRUTH: Today's stepper, the same four steps (Prep,
+                Record, Summary, Send follow-up); Live is at Record. */}
+            <Steps label="Meeting steps" data-testid="live-steps" steps={meetingSteps(1)} />
           </div>
           {intelFace}
           <SurfaceSection label="Transcript" className="live-transcript">

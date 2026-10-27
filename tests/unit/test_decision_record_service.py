@@ -748,3 +748,24 @@ def test_promotion_assignment_freeze_uses_elected_draft_only(tmp_path, monkeypat
         assert [row[0] for row in conn.execute(
             "SELECT profile_id FROM inference_route_plan_entries"
         ).fetchall()] == ["promotion-initial"]
+
+
+def test_a_desk_record_in_the_list_carries_its_decision_title(tmp_path):
+    """W1-TRUTH (atlas 2026-10-27): the Decisions list names a Desk decision
+    by its title; the record itself holds only the decision text."""
+    db = Database(tmp_path / "records.db")
+    db.desk_decisions.upsert(
+        decision_id="desk-freeze",
+        title="Freeze the old ledger on Nov 5",
+        status="accepted",
+        decision_markdown="Freeze writes to the old ledger on Nov 5.",
+    )
+    service = DecisionRecordService(db)
+    service.create_from_desk(None, "desk-freeze")
+    meeting = service.create(None, decision_text="Keep Kafka.", source_type="meeting", source_id="m-1")
+
+    rows = {row["id"]: row for row in service.list_records(None)}
+    desk = next(row for row in rows.values() if row["source_type"] == "desk")
+    assert desk["title"] == "Freeze the old ledger on Nov 5"
+    assert desk["decision_text"] == "Freeze writes to the old ledger on Nov 5."
+    assert "title" not in rows[meeting["id"]]

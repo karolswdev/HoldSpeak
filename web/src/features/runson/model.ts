@@ -93,6 +93,8 @@ export interface BoardEngine {
   found: boolean;
   baseUrl?: string;
   model?: string;
+  /** W1-TRUTH: the model id the server serves (meta, never the name). */
+  modelId?: string;
   presetId?: string;
   downloadHost?: string;
   keySet?: boolean;
@@ -286,6 +288,7 @@ export function buildEngines(roster: Roster | null, detection: Detection | null)
       found: Boolean(e.found),
       baseUrl: e.baseUrl,
       model: e.legacyLabel,
+      modelId: e.modelId,
       presetId: e.presetId,
       downloadHost: e.downloadHost,
       keySet: e.keySet,
@@ -416,4 +419,25 @@ export function taskLine(job: string, _roster: Roster | null, row: RosterRow | u
   const parts: string[] = [];
   if (row && row.inherited_from === "global") parts.push("Uses default engine");
   return parts.join(" · ");
+}
+
+/** W1-TRUTH: how old the last check is, in quiet words: `checked just now`,
+ *  `checked 4 min ago`, `checked 2 h ago`. An unreadable time says nothing. */
+export function checkedWords(iso: string | null | undefined, now: number = Date.now()): string | null {
+  const at = iso ? Date.parse(iso) : NaN;
+  if (!Number.isFinite(at)) return null;
+  const minutes = Math.floor(Math.max(0, now - at) / 60_000);
+  if (minutes < 1) return "checked just now";
+  if (minutes < 60) return `checked ${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `checked ${hours} h ago`;
+  return `checked ${Math.floor(hours / 24)} d ago`;
+}
+
+/** A check older than this reads as stale (quiet, never a warning). */
+export const STALE_CHECK_MS = 10 * 60_000;
+
+/** True when the engine's server did not answer the last check. */
+export function notAnswering(engine: BoardEngine | undefined): boolean {
+  return String(engine?.state ?? "").trim().toUpperCase() === "UNREACHABLE";
 }

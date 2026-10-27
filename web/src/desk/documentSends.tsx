@@ -79,6 +79,12 @@ export function DeskDecisionSendWells({ id, title, version }: { id: string; titl
   return <div data-seat="desk-decision"><SendWellsFold doc={deskDecisionDoc(id, title, version)} /></div>;
 }
 
+/** W1-TRUTH: a Desk decision's window on the reader grammar: its toolbar's
+ *  Send… opens this sheet, and Back returns to the decision. */
+export function DeskDecisionSendSheet({ id, title, version, onBack }: { id: string; title?: string | null; version?: string; onBack: () => void }) {
+  return <div data-seat="desk-decision"><SendWells doc={deskDecisionDoc(id, title, version)} onBack={onBack} /></div>;
+}
+
 /** A decision record's well (B4b, B5). */
 export function DecisionRecordSendWells({ id, text }: { id: string; text?: string | null }) {
   return <div data-seat="decision-record"><SendWellsFold doc={decisionRecordDoc(id, text)} /></div>;

@@ -5,10 +5,12 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CalendarSnapshotReviewCore } from "../CalendarSnapshotReviewCore";
+import CALENDAR_SOURCES from "../../../test/wire/calendar-sources.wire.json";
 
 const apiFetch = vi.hoisted(() => vi.fn());
 
@@ -82,6 +84,33 @@ function deferred<T>() {
   });
   return { promise, resolve };
 }
+
+describe("CalendarSnapshotReviewCore: the empty window (W1-TRUTH, atlas 2026-10-27)", () => {
+  it("with no screenshot it says so, with Import image and Check sources in its toolbar, never a red Can't read", async () => {
+    apiFetch.mockImplementation(async (url: string) => (url === "/api/calendar/sources" ? structuredClone(CALENDAR_SOURCES.wire) : undefined));
+    render(<CalendarSnapshotReviewCore />);
+    expect(screen.getByTestId("calendar-snapshot-empty").textContent).toBe("No screenshot yet");
+    const toolbar = screen.getByTestId("calendar-snapshot-toolbar");
+    expect(within(toolbar).getByRole("button", { name: "Import image" })).toBeTruthy();
+    expect(within(toolbar).getByRole("button", { name: "Check sources" })).toBeTruthy();
+    expect(screen.queryByTestId("calendar-snapshot-refusal")).toBeNull();
+    expect(screen.queryByText("Calendar snapshot", { selector: "h3" })).toBeNull();
+    await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/calendar/sources"));
+  });
+
+  it("a desk with working feeds says how many are connected; Check sources reads them again", async () => {
+    const working = structuredClone(CALENDAR_SOURCES.wire);
+    working.sources = [
+      { ...working.sources[0], status: "success" },
+      { ...working.sources[0], id: "src_home", label: "HOME", status: "success" },
+    ];
+    apiFetch.mockImplementation(async (url: string) => (url === "/api/calendar/sources" ? structuredClone(working) : undefined));
+    render(<CalendarSnapshotReviewCore />);
+    expect((await screen.findByTestId("calendar-snapshot-sources")).textContent).toBe("2 sources connected");
+    fireEvent.click(screen.getByRole("button", { name: "Check sources" }));
+    await waitFor(() => expect(apiFetch.mock.calls.filter(([url]) => url === "/api/calendar/sources")).toHaveLength(2));
+  });
+});
 
 describe("CalendarSnapshotReviewCore", () => {
   it("renders events from valid scope", () => {

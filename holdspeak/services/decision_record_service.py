@@ -747,19 +747,19 @@ class DecisionRecordService:
         """Expose the retained Desk source status with the canonical row."""
         if record.get("source_type") != "desk":
             return record
+        query = "SELECT status, title FROM desk_decisions WHERE id = ? AND deleted = 0"
         if conn is not None:
-            row = conn.execute(
-                "SELECT status FROM desk_decisions WHERE id = ? AND deleted = 0",
-                (record.get("source_id"),),
-            ).fetchone()
+            row = conn.execute(query, (record.get("source_id"),)).fetchone()
         else:
             with self._db._connection() as connection:
-                row = connection.execute(
-                    "SELECT status FROM desk_decisions WHERE id = ? AND deleted = 0",
-                    (record.get("source_id"),),
-                ).fetchone()
+                row = connection.execute(query, (record.get("source_id"),)).fetchone()
         if row is not None:
             record["status"] = str(row["status"] or "proposed")
+            # W1-TRUTH (atlas 2026-10-27): a Desk decision's list row is
+            # named by its title; the record holds only the decision text.
+            title = str(row["title"] or "").strip()
+            if title:
+                record["title"] = title
         return record
 
     @staticmethod
