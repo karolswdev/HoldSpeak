@@ -3,24 +3,28 @@ import { Button } from "../../../components/signal/Signal";
 import { AskSourceFrame } from "../../../desk/components/AskSourceFrame";
 import { DeskComposer } from "../../../desk/components/DeskComposer";
 import {
-  AskAbout,
-  AskAnswer,
-  AskFresh,
-  AskQuestion,
-  AskThread,
-  AskToolbar,
-  AskTurnRow,
+  AskComposer,
+  AskEngineWord,
+  AskNotAnswered,
+  AskPage,
+  AskPrompts,
+  AskRail,
+  AskReferences,
+  AskScope,
+  AskTurnDoc,
   AskVerbs,
-  type AskAboutRow,
+  type AskScopeRow,
 } from "../../../desk/components/askFace";
+import type { AskPrompt } from "../../../desk/askPrompts";
 import { FootSlotContext, Material, RunLine, StatusBar, ToolGlyph, type StatusBarItem } from "../../../desk/surface";
 import "../../../desk/components/ask-panel.css";
 import "../../../desk/surface/patterns/conversation.css";
 
-/** Components ▸ Conversation: the Ask window's own parts (askFace) over a
- *  local fixture adapter. The same toolbar, thread, answer verbs, source
- *  frame, composer and status bar the live Ask composes; no hub read, no
- *  engine, no thread write, no egress. */
+/** Components ▸ Conversation: the Ask window's own parts (askFace, Ask D1
+ *  "The question at the top") over a local fixture adapter. The same
+ *  composer row, Recent rail, answer document, references, source frame
+ *  and status bar the live Ask composes; no hub read, no engine, no thread
+ *  write, no egress. */
 export type ConversationPreset = "empty" | "ordinary" | "busy" | "failed" | "saved";
 
 export const CONVERSATION_STATES: Array<{ id: ConversationPreset; label: string }> = [
@@ -38,7 +42,16 @@ export const FAILED_REPLY = "The reply is available locally for the captured req
 const QUESTION = "What did we decide about the ledger?";
 const ANSWER = "## Ledger freeze\n\nThe team agreed to **freeze the ledger on Nov 12**. Mira owns the rollback runbook.\n\n- Review the cutover plan by Thursday.\n- Book the second hiring loop.";
 const LOCAL_REPLY = "Yes. The source stays beside the result.";
-const ABOUT: AskAboutRow[] = [{ ref: "note:specimen", title: "Ledger rollback" }];
+const ABOUT: AskScopeRow[] = [{ ref: "note:specimen", title: "Ledger rollback" }];
+const PROMPTS: AskPrompt[] = [
+  { key: "needs", text: "What needs my attention today?", source: "14 in Needs you", kind: "action" },
+  { key: "decision", text: "What did we decide about “Freeze the old ledger on Nov 5”?", source: "Accepted, 2h ago", kind: "decision" },
+  { key: "waiting", text: "Who is waiting on me?", source: "Avery, Jordan and Sam", kind: "person" },
+];
+const RAIL = [
+  { id: "r1", title: "What did we decide about the ledger?", at: Date.now() },
+  { id: "r2", title: "Summarize the tracing review", at: Date.now() - 86_400_000 },
+];
 
 function presetTurns(preset: ConversationPreset): Turn[] {
   if (preset === "empty" || preset === "failed") return [];
@@ -51,9 +64,8 @@ export function ConversationReference({ preset }: { preset: ConversationPreset }
   const [pending, setPending] = useState<string | null>(preset === "busy" ? "Who owns the rollback runbook?" : null);
   const [failed, setFailed] = useState<string | null>(preset === "failed" ? FAILED_REQUEST : null);
   const [saved, setSaved] = useState<Record<string, boolean>>(preset === "saved" ? { t1: true } : {});
-  const [about, setAbout] = useState<AskAboutRow[]>(preset === "empty" ? [] : ABOUT);
-  const [picking, setPicking] = useState(false);
-  const [recentOpen, setRecentOpen] = useState(false);
+  const [about, setAbout] = useState<AskScopeRow[]>(preset === "empty" ? [] : ABOUT);
+  const [railOpen, setRailOpen] = useState(false);
   const [sourceQuote, setSourceQuote] = useState("The source stays beside the decision.");
   const [sourceOpen, setSourceOpen] = useState(true);
   const [receipt, setReceipt] = useState("");
@@ -91,8 +103,9 @@ export function ConversationReference({ preset }: { preset: ConversationPreset }
 
   const savedCount = Object.values(saved).filter(Boolean).length;
   const items: StatusBarItem[] = [
-    pending ? { key: "asking", lamp: "info", text: "Asking…" } : null,
-    !pending && !failed ? { key: "engine", lamp: "ok", text: "qwen3.8-27b · Private network" } : null,
+    pending ? { key: "asking", lamp: "info", text: "Writing the answer · 3 s" } : null,
+    !pending && failed ? { key: "failed", text: "Not answered · your question is kept" } : null,
+    !pending && !failed && !turns.length ? { key: "scope", text: "My whole desk: 3 projects · 3 meetings this week · 4 people" } : null,
     savedCount && !pending ? { key: "saved", lamp: "ok", text: "Saved as note" } : null,
     receipt ? { key: "receipt", text: <span role="status">{receipt}</span> } : null,
   ].filter(Boolean) as StatusBarItem[];
@@ -101,71 +114,65 @@ export function ConversationReference({ preset }: { preset: ConversationPreset }
   return (
     <section className="reference-example reference-conversation" data-testid="reference-conversation" aria-label="Conversation pattern">
       <div className="reference-window-frame reference-conversation-frame desk-ask">
-        <div className="desk-ask-body">
-          <AskToolbar
-            onNew={() => { setTurns([]); setFailed(null); setPending(null); setSaved({}); setAbout([]); }}
-            recentOpen={recentOpen}
-            onRecent={() => setRecentOpen((open) => !open)}
-            onForget={turns.length ? () => setTurns([]) : undefined}
-            about={<AskAbout rows={about} picking={picking} onTogglePick={() => setPicking((open) => !open)}
-              onOpen={() => () => setReceipt("Opened locally")} onRemove={(row) => setAbout((rows) => rows.filter((r) => r.ref !== row.ref))} />}
+        <div className="desk-ask-body" data-rail={railOpen ? "open" : "folded"}>
+          <AskComposer
+            railOpen={railOpen}
+            onRail={() => setRailOpen((open) => !open)}
+            scope={<AskScope rows={about} candidates={[]} onPick={(pick) => setAbout(pick.ref === "desk:whole" ? [] : [{ ref: pick.ref, title: pick.label }])}
+              onRemove={(row) => setAbout((rows) => rows.filter((r) => r.ref !== row.ref))} onOpenRow={() => () => setReceipt("Opened locally")} />}
+            field={
+              // The shared ComposerWell and PadGadget (DeskComposer, no mic:
+              // a specimen records nothing); Ask's own host composes the same
+              // row with its MicButton.
+              <DeskComposer className="desk-ask-input" value={draft} onChange={setDraft} placeholder="Ask about your work"
+                multiline rows={1} mic={false} micDraftScope="design-reference-conversation" actionLabel="Ask"
+                actionDisabled={Boolean(pending) || !draft.trim()} onAction={ask} />
+            }
+            engine={<AskEngineWord state="set" name="Codex" onPress={() => setReceipt("Engines open in Settings")} />}
+            details={
+              /* The source frame as it is (AskSourceFrame), under the row. */
+              <div className="reference-conversation-source" data-testid="reference-conversation-source">
+                <AskSourceFrame quote={sourceQuote} open={sourceOpen} onToggle={setSourceOpen}
+                  onClear={() => setSourceQuote("")} onBack={() => setReceipt("Back to the Note, locally")} />
+              </div>
+            }
           />
-          {/* The source frame as it is (AskSourceFrame). In the live Ask it
-              rides in the composer's details; the specimen shows it under
-              the toolbar so its Back stays in reach in a short gallery
-              window. */}
-          <div className="reference-conversation-source" data-testid="reference-conversation-source">
-            <AskSourceFrame quote={sourceQuote} open={sourceOpen} onToggle={setSourceOpen}
-              onClear={() => setSourceQuote("")} onBack={() => setReceipt("Back to the Note, locally")} />
-          </div>
-          {recentOpen ? (
-            <div className="desk-ask-recent" role="region" aria-label="Recent">
-              <span className="desk-ask-recent-note">Nothing asked yet</span>
-            </div>
-          ) : null}
-          {hasThread ? (
-            <AskThread readingRef={readingRef}>
-              {turns.map((turn) => (
-                <AskTurnRow key={turn.key}>
-                  <AskQuestion asker="Karol A">{turn.question}</AskQuestion>
-                  <AskAnswer>
+          <div className="desk-ask-main">
+            {railOpen ? (
+              <AskRail rows={RAIL} selectedId="r1" onPick={() => setReceipt("Opened locally")}
+                onNew={() => { setTurns([]); setFailed(null); setPending(null); setSaved({}); setAbout([]); }} />
+            ) : null}
+            {hasThread ? (
+              <AskPage readingRef={readingRef}>
+                {turns.map((turn) => (
+                  <AskTurnDoc key={turn.key} question={turn.question}>
                     <div className="desk-ask-answer"><Material>{turn.answer}</Material></div>
-                    {turn.sources.length ? (
-                      <span className="desk-ask-saved">Looked at · {turn.sources.join(", ")}</span>
-                    ) : null}
+                    <AskReferences rows={turn.sources.map((title, index) => ({
+                      ref: `meeting:specimen-${index}`, title, kind: "meeting", meta: "Meeting · 2h ago", onOpen: () => setReceipt("Opened locally"),
+                    }))} />
                     <AskVerbs>
                       {saved[turn.key]
-                        ? <Button dense variant="ghost" onClick={() => setReceipt("Opened locally")}><ToolGlyph kind="open" />Open note</Button>
-                        : <Button dense variant="ghost" onClick={() => setSaved((current) => ({ ...current, [turn.key]: true }))}><ToolGlyph kind="note" />Save as note</Button>}
-                      <Button dense variant="ghost" onClick={() => setReceipt("Copied locally")}>Copy</Button>
+                        ? <Button dense variant="secondary" onClick={() => setReceipt("Opened locally")}><ToolGlyph kind="open" />Open note</Button>
+                        : <Button dense variant="secondary" onClick={() => setSaved((current) => ({ ...current, [turn.key]: true }))}><ToolGlyph kind="note" />Save as note</Button>}
+                      <Button dense variant="ghost" onClick={() => setReceipt("Copied locally")}><ToolGlyph kind="copy" />Copy</Button>
                       <Button dense variant="ghost" onClick={() => setReceipt("Send prepared locally")}><ToolGlyph kind="send" />Send…</Button>
                     </AskVerbs>
-                  </AskAnswer>
-                </AskTurnRow>
-              ))}
-              {pending || failed ? (
-                <AskTurnRow testId={null}>
-                  <AskQuestion asker="Karol A">{pending ?? failed}</AskQuestion>
-                  <AskAnswer failed={Boolean(failed)}>
+                  </AskTurnDoc>
+                ))}
+                {pending || failed ? (
+                  <AskTurnDoc testId={null} question={(pending ?? failed)!}>
                     {pending
-                      ? <RunLine phase="running" verb="Working" model="qwen3.8-27b" />
-                      : <RunLine phase="failure" reason="did_not_answer" onRetry={retry} />}
-                  </AskAnswer>
-                </AskTurnRow>
-              ) : null}
-            </AskThread>
-          ) : (
-            <AskThread readingRef={readingRef} empty>
-              <AskFresh onPrompt={setDraft} />
-            </AskThread>
-          )}
-          <div className="reference-conversation-composer">
-            {/* The shared ComposerWell and PadGadget (DeskComposer, no mic:
-                a specimen records nothing); Ask's own host composes the same
-                species with its MicButton. */}
-            <DeskComposer className="desk-ask-input" value={draft} onChange={setDraft} placeholder="Ask about your work"
-              multiline rows={3} mic={false} micDraftScope="design-reference-conversation" actionLabel="Ask"
-              actionDisabled={Boolean(pending) || !draft.trim()} onAction={ask} />
+                      ? <RunLine phase="running" verb="Working" />
+                      : <AskNotAnswered reason="did_not_answer" words="The engine did not answer."
+                          verb={<Button dense variant="secondary" onClick={retry}>Try again</Button>} />}
+                  </AskTurnDoc>
+                ) : null}
+              </AskPage>
+            ) : (
+              <AskPage readingRef={readingRef} empty>
+                <AskPrompts prompts={PROMPTS} onPrompt={setDraft} />
+              </AskPage>
+            )}
           </div>
         </div>
         <FootSlotContext.Provider value={null}>

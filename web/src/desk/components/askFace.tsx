@@ -1,97 +1,360 @@
-// The Ask face (window grammar, 2026-10-24): the parts of the Ask window
-// that draw, with no hub, thread or engine authority. AskPanel composes them
-// over the live Ask; Components ▸ Conversation composes the same parts over a
-// local fixture. Title bar → Toolbar (New ask, Recent, the About line) → the
-// thread (question with the asker's disc, the answer as a reading document
-// with its 20 px glyph and its verbs in one row) → the composer → StatusBar.
-// The composer itself stays in its host (AskPanel composes ComposerWell,
-// PadGadget and its MicButton in one component: the voice law's host
-// authority, scripts/ux_canon_scan.py MIC_HOST_AUTHORITIES).
-import type { ReactNode, Ref, RefObject } from "react";
+// The Ask face, direction D1 "The question at the top" (canvas
+// docs/internal/betterment/canvases/ask-direction-2026-10-27.html, ratified
+// 2026-10-27: "go with suggestions going forward, they are good").
+//
+// Title bar → the composer IS the toolbar row ([Recent] [scope ▾] [field]
+// [mic] [engine] [Ask ⏎]) → the Recent rail at the left and the answer as a
+// document at the right → the 24 px status bar. These parts draw and hold
+// no hub, thread or engine authority: AskPanel composes them over the live
+// Ask; Components ▸ Conversation composes the same parts over a fixture.
+// The composer row takes its field and its mic from its host (the voice
+// law's host authority, scripts/ux_canon_scan.py MIC_HOST_AUTHORITIES), so
+// Memory's and the Room's Ask boxes can adopt AskComposer later.
+//
+// The parts of the 2026-10-24 grammar (New ask in the toolbar, the About
+// chips, the You / answer pair, the big drawing) are parked in
+// `_parked/askFace.v1-2026-10-24.tsx`.
+import { useEffect, useMemo, useRef, useState, type ReactNode, type Ref, type RefObject } from "react";
 import { Button } from "../../components/signal/Signal";
-import { Avatar, ToolGlyph, Toolbar } from "../surface/kit";
+import { DotWord, ToolGlyph, Toolbar } from "../surface/kit";
 import { ScrollHint } from "../surface";
+import { StringGadget } from "../surface/gadgets";
 import { glyphSprite, spriteUrl } from "../sprites";
+import { humanTime } from "../surface/format";
+import { aboutMatches, type AboutCandidate } from "./about/AboutPicker";
+import type { AskPrompt } from "../askPrompts";
 
 /** The Ask object's own drawing (a conversation), at 64 and at 20 px. */
 export const ASK_SPRITE = spriteUrl("thread", "ask");
 export const ASK_GLYPH = glyphSprite(ASK_SPRITE);
 
-/** The toolbar under the title bar: New ask (the one primary), Recent ▾
- *  (the saved threads), Forget when a thread is open; the About line at the
- *  trailing end. */
-export function AskToolbar({ onNew, recentOpen, onRecent, onForget, about }: {
-  onNew: () => void;
-  recentOpen: boolean;
-  onRecent: () => void;
-  onForget?: () => void;
-  about: ReactNode;
-}) {
+/** The 20 px drawing of a desk object kind (a reference row, a menu row). */
+export function kindGlyph(kind: string, id = "ask"): string {
+  const k = kind === "action_item" ? "action" : kind === "people" ? "person" : kind;
+  return spriteUrl(k, id, "rest", null, 20);
+}
+
+function RailGlyph() {
   return (
-    <Toolbar label="Ask" className="desk-ask-toolbar" data-testid="ask-toolbar" trailing={about}>
-      <Button dense variant="primary" className="desk-ask-new" onClick={onNew}>
-        <ToolGlyph kind="ask" />
-        New ask
-      </Button>
-      <Button dense variant="secondary" aria-expanded={recentOpen} onClick={onRecent}>
-        <ToolGlyph kind="open" />
-        Recent<span className="desk-ask-caret" aria-hidden="true">▾</span>
-      </Button>
-      {onForget ? <Button dense variant="secondary" onClick={onForget}>Forget</Button> : null}
-    </Toolbar>
+    <svg className="kit-toolglyph" width={16} height={16} viewBox="0 0 16 16" fill="none" stroke="currentColor"
+      strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M2.5 3h11v10h-11Z M6.5 3v10" />
+    </svg>
   );
 }
 
-export interface AskAboutRow {
+function MoreGlyph() {
+  return (
+    <svg className="kit-toolglyph" width={16} height={16} viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">
+      <circle cx="3.5" cy="8" r="1.1" /><circle cx="8" cy="8" r="1.1" /><circle cx="12.5" cy="8" r="1.1" />
+    </svg>
+  );
+}
+
+/** Close a popover on Escape and on a press outside it. */
+function useDismiss(open: boolean, ref: RefObject<HTMLElement | null>, onClose: () => void) {
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.stopPropagation();
+      onClose();
+    };
+    const onDown = (event: PointerEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) onClose();
+    };
+    document.addEventListener("keydown", onKey, true);
+    document.addEventListener("pointerdown", onDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKey, true);
+      document.removeEventListener("pointerdown", onDown, true);
+    };
+  }, [open, ref, onClose]);
+}
+
+/* ── The composer row (kit Toolbar species) ─────────────────────────── */
+
+/** The composer is the toolbar row: [Recent] [scope ▾] [field] [mic]
+ *  [engine] [Ask ⏎]. The field grows to three lines, then scrolls. On a
+ *  phone the row takes two lines: the scope and the engine, then the field,
+ *  the mic and Ask. The host passes the field and its mic. */
+export function AskComposer({ className, railOpen, onRail, scope, field, capture, engine, action, details, "data-testid": testId }: {
+  className?: string;
+  /** Absent: no rail in this host (the button is not drawn). */
+  railOpen?: boolean;
+  onRail?: () => void;
+  scope: ReactNode;
+  field: ReactNode;
+  capture?: ReactNode;
+  engine?: ReactNode;
+  /** Ask ⏎ (absent when the field carries its own verb). */
+  action?: ReactNode;
+  /** A band under the row for a handed-over source (the Note's quote). */
+  details?: ReactNode;
+  "data-testid"?: string;
+}) {
+  return (
+    <>
+      <Toolbar label="Ask" className={`desk-ask-composer-row${className ? ` ${className}` : ""}`} data-testid={testId}>
+        {onRail ? (
+          <Button dense variant="ghost" className="desk-ask-railtoggle" aria-label="Recent" aria-pressed={Boolean(railOpen)}
+            title="Recent asks" onClick={onRail}>
+            <RailGlyph />
+          </Button>
+        ) : null}
+        <span className="desk-ask-composer-scope">{scope}</span>
+        <span className="desk-ask-composer-field">{field}</span>
+        <span className="desk-ask-composer-end">
+          {capture}
+          {engine}
+          {action}
+        </span>
+      </Toolbar>
+      {details ? <div className="desk-ask-composer-details">{details}</div> : null}
+    </>
+  );
+}
+
+/** Ask ⏎: the one primary verb, with its key. */
+export function AskSendButton({ disabled, onClick }: { disabled: boolean; onClick: () => void }) {
+  return (
+    <Button dense variant="primary" className="desk-ask-send" disabled={disabled} onClick={onClick} aria-label="Ask">
+      Ask<span className="desk-ask-key" aria-hidden="true">⏎</span>
+    </Button>
+  );
+}
+
+/** The engine: a dot and its name (`● Codex`); grey and `No engine` when
+ *  none answers Ask. A press opens the engine choice. No host, no mono. */
+export function AskEngineWord({ state, name, title, onPress }: {
+  state: "set" | "none" | "unread" | "failed";
+  name: string;
+  title?: string;
+  onPress?: () => void;
+}) {
+  const words = state === "set" ? name : state === "failed" ? "Engine not read" : state === "unread" ? "Engine" : "No engine";
+  const tone = state === "set" ? "ok" : state === "failed" ? "warn" : "idle";
+  return (
+    <Button dense variant="ghost" className="desk-ask-engine" data-testid="engine-line" data-state={state} title={title}
+      aria-label={state === "set" ? `Engine: ${name}` : words} onClick={onPress}>
+      <DotWord tone={tone}>{words}</DotWord>
+    </Button>
+  );
+}
+
+/* ── The scope word and its menu ─────────────────────────────────────── */
+
+export interface AskScopeRow {
   ref: string;
   title: string;
 }
 
-/** The About line: what the question is about, `My whole desk` when
- *  nothing is chosen. Each chosen object opens and has its ✕; + opens the
- *  picker. It is the toolbar's trailing control. */
-export function AskAbout({ rows, picking, onTogglePick, onOpen, onRemove }: {
-  rows: readonly AskAboutRow[];
-  picking: boolean;
-  onTogglePick: () => void;
-  /** Absent for a row that only names a set (`This week's meetings`). */
-  onOpen?: (row: AskAboutRow) => (() => void) | undefined;
-  onRemove: (row: AskAboutRow) => void;
+/** The scope word: what the question is about, with ▾. `My whole desk`
+ *  when nothing is chosen; one object's name; or `<name> and N more`. */
+export function scopeWord(rows: readonly AskScopeRow[]): string {
+  if (!rows.length) return "My whole desk";
+  if (rows.length === 1) return rows[0].title;
+  return `${rows[0].title} and ${rows.length - 1} more`;
+}
+
+/** The scope word ▾ and the menu it opens under it (no band, no modal):
+ *  My whole desk, This week's meetings, Projects, People, with a filter
+ *  field. One pick changes the word. What is chosen now is listed first,
+ *  each with its ✕. */
+export function AskScope({ rows, candidates, weekCount, onPick, onRemove, onOpenRow, compact }: {
+  rows: readonly AskScopeRow[];
+  candidates: readonly AboutCandidate[];
+  /** This week's meetings, said at the set's row (no zero). */
+  weekCount?: number;
+  onPick: (pick: AboutCandidate) => void;
+  onRemove: (row: AskScopeRow) => void;
+  /** Open a chosen object's window (absent for a set). */
+  onOpenRow?: (row: AskScopeRow) => (() => void) | undefined;
+  compact?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const wrapRef = useRef<HTMLSpanElement | null>(null);
+  const close = () => { setOpen(false); setQuery(""); };
+  useDismiss(open, wrapRef, close);
+  const word = scopeWord(rows);
+  const single = rows.length === 1 ? rows[0] : null;
+  const glyphKind = single ? single.ref.split(":")[0] : "";
+  const groups = useMemo(() => {
+    const chosen = new Set(rows.map((row) => row.ref));
+    const asked = query.trim();
+    const list = asked
+      ? aboutMatches([...candidates], asked, 10)
+      : candidates.filter((c) => c.kind === "project" || c.kind === "person" || c.ref === "meetings:this_week");
+    const out: Array<{ key: string; caption: string; rows: AboutCandidate[] }> = [];
+    const caption: Record<string, string> = {
+      project: "Projects", person: "People", meeting: "Meetings", note: "Notes", decision: "Decisions", zone: "Drawers", set: "",
+    };
+    for (const c of list) {
+      if (c.ref === "desk:whole" || chosen.has(c.ref)) continue;
+      const key = c.kind;
+      const group = out.find((g) => g.key === key);
+      if (group) { if (group.rows.length < 6) group.rows.push(c); }
+      else out.push({ key, caption: caption[key] ?? "Other", rows: [c] });
+    }
+    return out;
+  }, [candidates, query, rows]);
+
+  const pick = (candidate: AboutCandidate) => {
+    onPick(candidate);
+    close();
+  };
+
   return (
-    <div className="desk-ask-about" data-testid="ask-context">
-      <span className="desk-ask-about-label">About</span>
-      {rows.length ? rows.map((row) => {
-        const open = onOpen?.(row);
-        return (
-          <span className="desk-ask-about-chip" key={row.ref} data-testid="ask-about-chip">
-            {open
-              ? <Button dense variant="ghost" onClick={open}>{row.title}</Button>
-              : <span className="desk-ask-about-set">{row.title}</span>}
-            <Button dense variant="ghost" className="desk-ask-about-remove" aria-label={`Remove ${row.title}`} onClick={() => onRemove(row)}>✕</Button>
-          </span>
-        );
-      }) : <span className="desk-ask-about-desk">My whole desk</span>}
-      <Button dense variant="ghost" className="desk-ask-about-add" aria-label="Add to About" aria-expanded={picking} onClick={onTogglePick}>
-        <ToolGlyph kind="new" />
+    <span className="desk-ask-scope" ref={wrapRef}>
+      <Button dense variant="ghost" className="desk-ask-scope-word" data-testid="ask-context" aria-expanded={open}
+        aria-haspopup="true" aria-label={`About: ${word}`} onClick={() => (open ? close() : setOpen(true))}>
+        {single && glyphKind && glyphKind !== "meetings" ? <img src={kindGlyph(glyphKind, single.ref)} alt="" width={16} height={16} draggable={false} /> : null}
+        <span className="desk-ask-scope-text">{word}</span>
+        <span className="desk-ask-caret" aria-hidden="true">▾</span>
       </Button>
-    </div>
+      {open ? (
+        <div className="desk-menu-list desk-ask-scope-menu" role="group" aria-label="About" data-compact={compact || undefined} data-testid="ask-scope-menu">
+          <div className="desk-ask-scope-find">
+            <StringGadget label="Find a meeting, note, person" value={query} onChange={setQuery} placeholder="Find a meeting, note, person…" autoFocus
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") return;
+                const top = groups[0]?.rows[0];
+                if (!top) return;
+                event.preventDefault();
+                pick(top);
+              }} />
+          </div>
+          {!query.trim() ? (
+            <Button variant="chrome" className="desk-ask-scope-row" aria-checked={!rows.length} role="menuitemradio"
+              onClick={() => pick({ ref: "desk:whole", kind: "set", label: "My whole desk" })}>
+              <span className="desk-menu-glyph desk-ask-check" aria-hidden="true">{rows.length ? "" : "✓"}</span>
+              <span className="desk-menu-label">My whole desk</span>
+            </Button>
+          ) : null}
+          {rows.map((row) => {
+            const openRow = onOpenRow?.(row);
+            const kind = row.ref.split(":")[0];
+            return (
+              <span className="desk-ask-scope-chosen" key={row.ref} data-testid="ask-about-chip">
+                <Button variant="chrome" className="desk-ask-scope-row" aria-checked="true" role="menuitemcheckbox"
+                  onClick={() => { if (openRow) { openRow(); close(); } }}>
+                  <span className="desk-menu-glyph desk-ask-check" aria-hidden="true">✓</span>
+                  {kind !== "meetings" && kind !== "desk" ? <img src={kindGlyph(kind, row.ref)} alt="" width={16} height={16} draggable={false} /> : null}
+                  <span className="desk-menu-label">{row.title}</span>
+                </Button>
+                <Button variant="chrome" className="desk-ask-scope-remove" aria-label={`Remove ${row.title}`} onClick={() => onRemove(row)}>✕</Button>
+              </span>
+            );
+          })}
+          {groups.map((group) => (
+            <div key={group.key} className="desk-ask-scope-group">
+              {group.caption ? <span className="desk-ask-scope-caption">{group.caption}</span> : null}
+              {group.rows.map((c) => (
+                <Button key={c.ref} variant="chrome" className="desk-ask-scope-row" role="menuitemradio" aria-checked="false"
+                  data-testid="about-match" data-kind={c.kind} onClick={() => pick(c)}>
+                  <span className="desk-menu-glyph desk-ask-check" aria-hidden="true" />
+                  {c.kind !== "set" ? <img src={kindGlyph(c.kind === "zone" ? "directory" : c.kind, c.ref)} alt="" width={16} height={16} draggable={false} />
+                    : <img src={kindGlyph("meeting", c.ref)} alt="" width={16} height={16} draggable={false} />}
+                  <span className="desk-menu-label">{c.label}</span>
+                  {c.ref === "meetings:this_week" && weekCount ? <span className="desk-ask-scope-meta">{weekCount}</span> : null}
+                </Button>
+              ))}
+            </div>
+          ))}
+          {query.trim() && !groups.length ? <span className="desk-ask-scope-none">Nothing on this desk has that name</span> : null}
+        </div>
+      ) : null}
+    </span>
   );
 }
 
-/** The reading viewport of the thread: it scrolls inside the window; the
- *  newest turn is at the bottom. */
-export function AskThread({ readingRef, empty, children, testId }: {
+/* ── The Recent rail ─────────────────────────────────────────────────── */
+
+export interface AskRailRow {
+  id: string;
+  title: string;
+  /** The last turn's time (ISO, epoch ms or epoch seconds). */
+  at?: unknown;
+}
+
+function toMs(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value < 1e12 ? value * 1000 : value;
+  const parsed = Date.parse(String(value ?? ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+/** Today / Yesterday / This week / Earlier, by local day. */
+export function railGroups(rows: readonly AskRailRow[], now = new Date()): Array<{ caption: string; rows: AskRailRow[] }> {
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const day = 86_400_000;
+  const order = ["Today", "Yesterday", "This week", "Earlier"];
+  const groups = new Map<string, AskRailRow[]>();
+  for (const row of [...rows].sort((a, b) => toMs(b.at) - toMs(a.at))) {
+    const at = toMs(row.at);
+    const caption = at >= today ? "Today" : at >= today - day ? "Yesterday" : at >= today - 6 * day ? "This week" : "Earlier";
+    groups.set(caption, [...(groups.get(caption) ?? []), row]);
+  }
+  return order.filter((c) => groups.has(c)).map((caption) => ({ caption, rows: groups.get(caption)! }));
+}
+
+/** The Recent rail: + New ask ⌘N, then the kept asks grouped by day, the
+ *  current one selected. It folds with the composer row's first button. */
+export function AskRail({ rows, selectedId, onPick, onNew, loading, failed, onRetry, sheet }: {
+  rows: readonly AskRailRow[];
+  selectedId?: string | null;
+  onPick: (id: string) => void;
+  onNew: () => void;
+  loading?: boolean;
+  failed?: boolean;
+  onRetry?: () => void;
+  /** On a phone the rail opens as a sheet over the page. */
+  sheet?: boolean;
+}) {
+  const groups = railGroups(rows);
+  return (
+    <nav className="desk-ask-rail" aria-label="Recent" data-testid="ask-recent" data-sheet={sheet || undefined}>
+      <Button dense variant="ghost" className="desk-ask-rail-row desk-ask-rail-new" onClick={onNew}>
+        <ToolGlyph kind="new" />
+        <span className="desk-ask-rail-title">New ask</span>
+        <span className="desk-ask-rail-key" aria-hidden="true">⌘N</span>
+      </Button>
+      {loading && !rows.length ? <span className="desk-ask-rail-note">Reading</span> : null}
+      {failed ? (
+        <span className="desk-ask-rail-note">
+          <DotWord tone="warn">Recent not read</DotWord>
+          {onRetry ? <Button dense variant="ghost" onClick={onRetry}>Try again</Button> : null}
+        </span>
+      ) : null}
+      {groups.map((group) => (
+        <div key={group.caption} className="desk-ask-rail-group" role="group" aria-label={group.caption}>
+          <span className="desk-ask-rail-caption">{group.caption}</span>
+          {group.rows.map((row) => (
+            <Button key={row.id} dense variant="ghost" className="desk-ask-rail-row" aria-current={row.id === selectedId ? "true" : undefined}
+              title={row.title} onClick={() => onPick(row.id)}>
+              <span className="desk-ask-rail-title">{row.title}</span>
+            </Button>
+          ))}
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+/* ── The answer as a document ────────────────────────────────────────── */
+
+/** The page: it scrolls inside the window; the newest turn is at the foot. */
+export function AskPage({ readingRef, children, testId, empty }: {
   readingRef: RefObject<HTMLDivElement | null>;
-  empty?: boolean;
   children: ReactNode;
   testId?: string;
+  empty?: boolean;
 }) {
   return (
     <ScrollHint axis="y" scrollRef={readingRef} className="desk-ask-reading-wrap">
       <div
         ref={readingRef as Ref<HTMLDivElement>}
-        className={`conversation-reading desk-ask-reading${empty ? " desk-ask-empty" : ""}`}
+        className={`desk-ask-reading${empty ? " desk-ask-empty" : ""}`}
         role="region"
         aria-label="Ask conversation"
         tabIndex={0}
@@ -103,52 +366,125 @@ export function AskThread({ readingRef, empty, children, testId }: {
   );
 }
 
-/** One turn: the question, then its answer (or its run line). */
-export function AskTurnRow({ children, testId = "ask-turn" }: { children: ReactNode; testId?: string | null }) {
-  return <li className="desk-ask-turn" data-testid={testId ?? undefined}>{children}</li>;
+/** One turn: the question as the heading line with its age at the right,
+ *  then the answer, its references and its verbs. A rule sits between
+ *  turns. */
+export function AskTurnDoc({ question, at, children, testId = "ask-turn" }: {
+  question: string;
+  at?: unknown;
+  children?: ReactNode;
+  testId?: string | null;
+}) {
+  const when = at == null ? "" : humanTime(typeof at === "number" && at < 1e12 ? at * 1000 : at);
+  return (
+    <li className="desk-ask-turn" data-testid={testId ?? undefined}>
+      <h3 className="desk-ask-q">
+        <span className="desk-ask-q-text">{question}</span>
+        {when ? <span className="desk-ask-q-when">{when === "just now" ? "now" : when}</span> : null}
+      </h3>
+      {children}
+    </li>
+  );
 }
 
-/** The question: the asker's disc and his words, sans 15/500 ink. */
-export function AskQuestion({ asker, children }: { asker: string; children: ReactNode }) {
+export interface AskReferenceRowData {
+  ref: string;
+  title: string;
+  /** The object kind (from the ref's prefix). */
+  kind: string;
+  /** Quiet words at the right: `Meeting · 2h ago`, `Direct report`. */
+  meta?: string;
+  /** A state lamp before the meta (`● Accepted`). */
+  lamp?: "ok" | "warn" | "info" | "idle";
+  /** Absent: the row only names what was read (a PR or a Jira item). */
+  onOpen?: () => void;
+}
+
+/** References: what the answer read, as dense object rows that open their
+ *  windows. A ref with no local record shows its title only. */
+export function AskReferences({ rows }: { rows: readonly AskReferenceRowData[] }) {
+  if (!rows.length) return null;
   return (
-    <div className="desk-ask-question">
-      <Avatar name={asker} />
-      <div className="desk-ask-question-text">{children}</div>
+    <div className="desk-ask-refs" data-testid="ask-looked-at">
+      <span className="desk-ask-refs-caption">References</span>
+      {rows.map((row) => {
+        const body = (
+          <>
+            <img src={kindGlyph(row.kind, row.ref)} alt="" width={16} height={16} draggable={false} />
+            <span className="desk-ask-ref-title">{row.title}</span>
+            {row.meta ? (
+              <span className="desk-ask-ref-meta">
+                {row.lamp ? <span className="kit-dot" data-tone={row.lamp} aria-hidden="true" /> : null}
+                {row.meta}
+              </span>
+            ) : null}
+          </>
+        );
+        return row.onOpen ? (
+          <Button key={row.ref} dense variant="ghost" className="desk-ask-ref" data-ref={row.ref} onClick={row.onOpen}>{body}</Button>
+        ) : (
+          <span key={row.ref} className="desk-ask-ref" data-ref={row.ref} data-static="true">{body}</span>
+        );
+      })}
     </div>
   );
 }
 
-/** The answer: led by Ask's 20 px glyph; the body is the reading document
- *  (its own headings allowed), then its facts and its verbs. */
-export function AskAnswer({ children, failed }: { children: ReactNode; failed?: boolean }) {
-  return (
-    <div className="desk-ask-reply" data-failed={failed || undefined}>
-      <img className="desk-ask-reply-glyph" src={ASK_GLYPH} alt="" width={20} height={20} draggable={false} />
-      <div className="desk-ask-reply-body">{children}</div>
-    </div>
-  );
-}
-
-/** The answer's verbs, in one row under it: quiet Buttons, icon + label. */
+/** The answer's verbs, in one row under it. */
 export function AskVerbs({ children }: { children: ReactNode }) {
-  return <div className="surface-row-verbs desk-ask-verbs">{children}</div>;
+  return <div className="desk-ask-verbs" role="group" aria-label="Answer">{children}</div>;
 }
 
-/** A fresh Ask: Ask's big drawing and the starter questions. */
-export function AskFresh({ onPrompt }: { onPrompt: (text: string) => void }) {
+/** ⋯ on an answer: the rarer verbs in a small menu under it. */
+export function AskMore({ children, label = "More" }: { children: (close: () => void) => ReactNode; label?: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement | null>(null);
+  const close = () => setOpen(false);
+  useDismiss(open, ref, close);
   return (
-    <>
-      <img className="desk-ask-empty-sprite" src={ASK_SPRITE} alt="" width={64} height={64} draggable={false} />
-      <div className="desk-ask-prompts">
-        <Button dense variant="ghost" className="desk-ask-starter" onClick={() => onPrompt("What needs my attention?")}>
-          <img src={glyphSprite(spriteUrl("action", "ask-attention"))} alt="" width={20} height={20} draggable={false} />
-          <span className="desk-ask-starter-label">What needs my attention?</span>
+    <span className="desk-ask-more" ref={ref}>
+      <Button dense variant="ghost" className="desk-ask-more-press" aria-label={label} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <MoreGlyph />
+      </Button>
+      {open ? <div className="desk-menu-list desk-ask-more-menu" role="group" aria-label={label}>{children(close)}</div> : null}
+    </span>
+  );
+}
+
+/** Ask D1's words for an Ask that did not answer: one line, why. */
+export function askReasonLine(reason: string, fallbackWords: string): string {
+  if (reason === "no_engine") return "No engine answers Ask yet.";
+  if (reason === "timed_out") return "The engine did not answer in time.";
+  if (reason === "did_not_answer") return "The engine did not answer.";
+  if (reason === "not_reachable") return "The engine could not be reached.";
+  return fallbackWords;
+}
+
+/** Not answered: ONE line under the question that says why, and the one
+ *  verb that fixes it. The question is kept. Never red, never mono. */
+export function AskNotAnswered({ reason, words, verb }: { reason: string; words: string; verb?: ReactNode }) {
+  return (
+    <div className="desk-ask-fail" data-testid="ask-not-answered" data-reason={reason} role="status">
+      <DotWord tone={reason === "stopped" ? "idle" : "warn"}>{words}</DotWord>
+      {verb}
+    </div>
+  );
+}
+
+/** A fresh Ask: no picture, no cards. "From your desk now" and the
+ *  questions built from this desk, as plain links with their source at the
+ *  right. A press fills the composer; it does not send. */
+export function AskPrompts({ prompts, onPrompt }: { prompts: readonly AskPrompt[]; onPrompt: (text: string) => void }) {
+  return (
+    <div className="desk-ask-prompts">
+      <span className="desk-ask-prompts-caption">From your desk now</span>
+      {prompts.map((p) => (
+        <Button key={p.key} dense variant="ghost" className="desk-ask-prompt" onClick={() => onPrompt(p.text)} aria-label={p.text}>
+          <img src={kindGlyph(p.kind)} alt="" width={16} height={16} draggable={false} />
+          <span className="desk-ask-prompt-text">{p.text}</span>
+          {p.source ? <span className="desk-ask-prompt-source">{p.source}</span> : null}
         </Button>
-        <Button dense variant="ghost" className="desk-ask-starter" onClick={() => onPrompt("Summarize this week's meetings")}>
-          <img src={glyphSprite(spriteUrl("meeting", "ask-meetings"))} alt="" width={20} height={20} draggable={false} />
-          <span className="desk-ask-starter-label">Summarize this week's meetings</span>
-        </Button>
-      </div>
-    </>
+      ))}
+    </div>
   );
 }
