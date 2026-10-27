@@ -647,12 +647,12 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 
 | Window (id) | Jobs | Doors in → out | G | T | H | F | D | Dn | C | P | Sum |
 | --- | --- | --- | - | - | - | - | - | - | - | - | - |
-| Note (`pullout:note:*`) | J1 | floor icon (1), ⌘K (2), Inbox drawer row (2) → Done closes; Send… in place | 2 | 3 | 2 | 3 | 2 | 3 | 2 | 2 | 19 |
+| Note (`pullout:note:*`) | J1 | floor icon (1), ⌘K (2), Inbox drawer row (2) → Done closes; Send… in place. Lane / PR: W1-DOORS (opens rendered, caret at the end) | 2 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | 20 |
 | Decision (`pullout:decision:*`) | J3 | Needs you ▸ Decide (2), ⌘K (2), Go ▸ Decisions ▸ row (3) | 0 | 1 | 2 | 2 | 1 | 1 | 0 | 1 | 8 |
 | Meeting (`surface-meetings@meeting:*`) | J2 | dock Meetings ▸ row (2), Needs you row (2) → Back to the list | 2 | 2 | 1 | 3 | 2 | 2 | 2 | 1 | 15 |
 | Person (`pullout:people:*`) | J3 | dock People ▸ row (2), Today 1:1 (2) | 2 | 3 | 2 | 2 | 2 | 1 | 2 | 1 | 15 |
 | Room via floor icon (`surface-project-memory@project:*`) | J3 | floor Project icon (1), Go ▸ Projects ▸ name (3) | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |
-| Project as a pullout (`pullout:project:*`) | — | hub/agent only → "No detail view for project" | 0 | 1 | 0 | 0 | 0 | 1 | 0 | 1 | 3 |
+| Project as a pullout (`pullout:project:*`) | J3 | hub/agent → the Room (`surface-project-memory` scoped `project:<id>`). Lane / PR: W1-DOORS | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |
 | Project drawer (`drawer:project:*`) | J3, J5 | hub/agent; its own Room button | 0 | 0 | 2 | 1 | 1 | 1 | 0 | 1 | 6 |
 | Artifact (`pullout:artifact:*`) | J4 | Today "has a new result ▸ Open" (2) | 1 | 1 | 2 | 2 | 1 | 1 | 1 | 2 | 11 |
 | Agent's window (`lane@launch:*`) | J4 | dock Agents ▸ row (2) | 1 | 1 | 1 | 1 | 1 | 0 | 1 | 2 | 8 |
@@ -664,16 +664,16 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Sequence / chain (`pullout:sequence:*`) | J4 | no ordinary door found | 0 | 0 | 1 | 0 | 1 | 1 | 0 | 1 | 4 |
 | Workflow (`pullout:workflow:*`) | J4 | no ordinary door found | 0 | 1 | 1 | 1 | 1 | 1 | 0 | 1 | 6 |
 | Thread (`pullout:thread:*`) | J1 | → opens Ask (by design, Betterment Q4); scored by ATLAS-A/ASK | – | – | – | – | – | – | – | – | – |
-| Needs you (`chair:needs`) | J2, J3 | bell (1), ⌃J (1), Go ▸ Needs you (2) | 3 | 2 | 1 | 3 | 2 | 3 | 2 | 2 | 18 |
+| Needs you (`chair:needs`) | J2, J3 | bell (1), ⌃J (1), Go ▸ Needs you (2). Lane / PR: W1-DOORS (rows named after the meeting; one calendar truth) | 3 | 2 | 2 | 3 | 2 | 3 | 2 | 2 | 19 |
 | Capture (`chair:capture`) | J1, J2 | Go ▸ Capture (2), dock at 393 (1) | 2 | 3 | 2 | 3 | 1 | 3 | 2 | 2 | 18 |
-| ⌘K palette | J5, J7 | ⌘K or Search (1) → the row's window | 2 | 1 | 2 | 3 | 2 | 2 | 1 | 2 | 15 |
+| ⌘K palette | J5, J7 | ⌘K or Search (1) → the row's window. Lane / PR: W1-DOORS (parked rows name where they land; an app once) | 2 | 2 | 2 | 3 | 2 | 2 | 1 | 2 | 16 |
 | Menu bar + menus (HoldSpeak, Desk, Object, Go, Window) | J7 | always on | 3 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | 21 |
 | Shortcut sheet | J7 | ⌘/ , HoldSpeak ▸ Keyboard shortcuts (2) | 1 | 0 | 3 | 2 | 1 | 2 | 1 | – | 10 |
 | Window switcher | J7 | ⌘` held (1) | 2 | 3 | 3 | 3 | 1 | 3 | 2 | 0 | 17 |
 | Mission control (Overview) | J7 | ⌘⇧E, Window ▸ Overview (2) | 2 | 3 | 3 | 3 | 1 | 2 | 2 | – | 16 |
 | Send preview (in the note) | J1, J3 | note toolbar Send… (1) → destination (2) → Send (3) | 1 | 0 | 3 | 3 | 1 | 2 | 1 | – | 11 |
-| Feedback sheet | J7 | Desk ▸ Give feedback, title-bar Feedback (only with `HOLDSPEAK_UI_FEEDBACK=1`) | 1 | 0 | 1 | 2 | 1 | 2 | 1 | – | 8 |
-| Floor: icon menu / blank floor | J5, J7 | right-click an icon (1) / right-click the floor: nothing | 2 | 3 | 1 | 2 | 2 | 3 | 1 | – | 14 |
+| Feedback sheet | J7 | Desk ▸ Give feedback, title-bar Feedback (only with `HOLDSPEAK_UI_FEEDBACK=1`). Lane / PR: W1-DOORS (above the dock) | 1 | 0 | 2 | 2 | 1 | 2 | 1 | – | 9 |
+| Floor: icon menu / blank floor | J5, J7 | right-click an icon (1) / right-click the floor (1): the Desk menu's rows. Lane / PR: W1-DOORS | 2 | 3 | 2 | 3 | 2 | 3 | 1 | – | 16 |
 | Phone desk (393) | all | Go list as home, five dock tiles | 2 | 2 | 1 | 2 | 2 | 2 | 1 | 1 | 13 |
 
 "–" = not shot or not applicable (no keyboard at 393). Friction numbers are presses counted by
@@ -859,13 +859,18 @@ with `HOLDSPEAK_UI_FEEDBACK=1` (`holdspeak/services/ui_feedback.py:27`).
    These use the registry's own kind words, and the hub answers 200 but no window opens: the
    browser keys these objects as `zone:`, `knowledge:`, `persona:`, `sequence:`
    (`web/src/desk/api.ts:131-139`, `qualifiedRef`). An agent that calls `desk_window_open` with the
-   kind word gets success and nothing on the desk.
-2. `pullout:project:<id>` opens "No detail view for project" in place of the Room.
+   kind word gets success and nothing on the desk. **Healed (W1-DOORS):** the hub opens the canonical
+   window for a kind word (`desk_window_service.canonical_open`); an unknown kind is refused
+   (`window_unknown`).
+2. `pullout:project:<id>` opens "No detail view for project" in place of the Room. **Healed (W1-DOORS):**
+   the hub opens the Room; an old row opens the Room and closes itself (`pullouts/ProjectToRoom.tsx`).
 3. The palette rows "Change places", "Rhythm" and "Commands" open Settings ▸ Desk, Settings ▸
    Notices and Speak ▸ Commands. They land, but under names of retired windows. Memory appears
-   twice in the same list.
+   twice in the same list. **Healed (W1-DOORS):** "Wallpaper — Settings ▸ Desk", "Notices — Settings",
+   "Commands — Speak" (`applications.ts` `paletteLabel`); an app in Recent is not listed again.
 4. Right-clicking the blank floor shows no menu: there is no handler on the floor, only on icons
-   (`web/src/desk/screen/Screen.tsx:226`).
+   (`web/src/desk/screen/Screen.tsx:226`). **Healed (W1-DOORS):** the floor opens the Desk menu's rows
+   (`components/menuVerbEntries.ts`, one source with the menu bar).
 5. The floor icon "Payments runbooks" is captioned DRAWER, but it opens a knowledge base with no
    way to add to it.
 6. The Sequence window says "Add at least one Agent" and has no verb to do it.

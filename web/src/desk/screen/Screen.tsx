@@ -17,7 +17,8 @@ import { useAgentFlights } from "../agentFlights";
 import { projectOpenHere, useNeedsYou } from "../needsYou";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
-import { WorkMenu } from "../components/DeskMenu";
+import { WorkMenu, withholdGhosts } from "../components/DeskMenu";
+import { menuVerbEntries } from "../components/menuVerbEntries";
 import { objectMenuEntries } from "../objectMenu";
 import { objectByRef } from "../world";
 import { DeskIcon, IconGrid, iconsInRect, type GridRect } from "../surface";
@@ -106,6 +107,9 @@ export function Screen() {
   const setSelected = (keys: Iterable<string>) => useDesk.getState().setSelected([...keys]);
   const [marquee, setMarquee] = useState<GridRect | null>(null);
   const [menu, setMenu] = useState<{ key: string; id: string; kind: string; title: string; x: number; y: number } | null>(null);
+  // W1-DOORS (atlas 2026-10-27): the blank floor's right-click menu holds the
+  // menu bar Desk menu's rows (one source: menuVerbEntries).
+  const [floorMenu, setFloorMenu] = useState<{ x: number; y: number } | null>(null);
   // The selection holds only what is on the screen.
   useEffect(() => {
     const prev = useDesk.getState().selectedIds;
@@ -199,6 +203,15 @@ export function Screen() {
       data-layout={compact ? "grid" : "free"}
       data-place={placeId}
       data-place-still={still ? "" : undefined}
+      onContextMenu={(event) => {
+        // An icon answers with its own menu first; a press on the floor
+        // itself opens the Desk menu.
+        if (compact || event.defaultPrevented) return;
+        if ((event.target as HTMLElement).closest?.(".desk-screen-cell")) return;
+        event.preventDefault();
+        setMenu(null);
+        setFloorMenu({ x: event.clientX, y: event.clientY });
+      }}
       style={still ? ({ "--desk-place-still": `url("${still}")` } as React.CSSProperties) : undefined}
     >
       {place.load ? <Atmosphere id={placeId} onReadyChange={onAtmosphereReady} /> : null}
@@ -286,6 +299,18 @@ export function Screen() {
           autoFocus
           entries={objectMenuEntries({ ref: menu.key })}
           onClose={() => setMenu(null)}
+        />
+      ) : null}
+      {floorMenu ? (
+        <WorkMenu
+          className="desk-world-menu"
+          label="Desk menu"
+          anchor="below"
+          x={floorMenu.x}
+          y={floorMenu.y}
+          autoFocus
+          entries={withholdGhosts(menuVerbEntries("desk", { selectedRef: null }))}
+          onClose={() => setFloorMenu(null)}
         />
       ) : null}
       <HandConfirmSlot host={SCREEN_HOST} className="desk-screen-hand" />

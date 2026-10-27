@@ -138,6 +138,50 @@ RETIRED_WINDOWS: dict[str, str] = {
     "surface-places": "Wallpaper is a section of Settings (Betterment ST1)",
 }
 
+#: The kinds an object window (``pullout:<kind>:<id>``) can show: the
+#: browser's PrimitiveKind words (web/src/lib/primitives.ts) and the four
+#: canonical words of web/src/desk/api.ts ``qualifiedRef``.
+PULLOUT_KINDS: frozenset[str] = frozenset({
+    "meeting", "artifact", "note", "decision", "directory", "kb", "project",
+    "recipe", "chain", "workflow", "coder", "game", "layout", "roadmap",
+    "story", "repository", "workbench", "intelligence", "people", "thread",
+    "knowledge", "zone", "persona", "sequence",
+})
+
+#: W1-DOORS (atlas 2026-10-27, Part B): the registry's kind words and the
+#: browser's canonical words name one object. An open with the kind word
+#: (``pullout:kb:<id>``) opens the window the browser draws
+#: (``pullout:knowledge:<id>``); before, the hub answered 200 and no window drew.
+PULLOUT_KIND_ALIASES: dict[str, str] = {
+    "kb": "knowledge",
+    "directory": "zone",
+    "recipe": "persona",
+    "chain": "sequence",
+}
+
+_PULLOUT_KIND = re.compile(r"^pullout:([a-z_]+):(.+)$")
+
+
+def canonical_open(window_id: str, object_ref: Optional[str] = None) -> tuple[str, Optional[str]]:
+    """The window an open names: ``(window_id, object_ref)``.
+
+    A kind word opens the canonical window, and ``pullout:project:<id>``
+    opens that Project's Room (``surface-project-memory`` scoped
+    ``project:<id>``), as the floor icon does.
+    """
+    wid = str(window_id or "")
+    match = _PULLOUT_KIND.match(wid)
+    if not match:
+        return wid, object_ref
+    kind, rest = match.groups()
+    if kind == "project":
+        return "surface-project-memory", f"project:{rest}"
+    if kind in PULLOUT_KIND_ALIASES:
+        canonical = f"pullout:{PULLOUT_KIND_ALIASES[kind]}:{rest}"
+        return canonical, object_ref
+    return wid, object_ref
+
+
 _WINDOW_ID = re.compile(r"^[A-Za-z0-9:_-]{1,200}$")
 _MAX_REF = 400
 _ROOM = re.compile(r"^[A-Za-z0-9:_.-]{0,200}$")
@@ -156,6 +200,15 @@ def window_app(window_id: str) -> tuple[str, Optional[str]]:
             )
     if wid in STATIC_WINDOWS:
         return STATIC_WINDOWS[wid], None
+    kind_match = _PULLOUT_KIND.match(wid)
+    if kind_match and kind_match.group(1) not in PULLOUT_KINDS:
+        # An object window of a kind no view draws: an honest refusal, never
+        # a row that opens nothing.
+        raise ValidationError(
+            f"The desk has no window for the kind {kind_match.group(1)!r} ({wid!r})",
+            code="window_unknown",
+            context={"window_id": wid, "kind": kind_match.group(1)},
+        )
     for prefix in sorted(WINDOW_FAMILIES, key=len, reverse=True):
         if wid.startswith(prefix) and len(wid) > len(prefix):
             rest = wid[len(prefix):]
@@ -338,7 +391,9 @@ class DeskWindowService:
         expected_revision: Optional[int] = None,
     ) -> dict[str, Any]:
         """Open a window on top. Idempotent: an open window returns its row,
-        shown (restored) and raised to the front."""
+        shown (restored) and raised to the front. A kind word or a Project
+        pullout opens its canonical window (:func:`canonical_open`)."""
+        window_id, object_ref = canonical_open(window_id, object_ref)
         known_app, known_ref = window_app(window_id)
         if window_id in RETIRED_WINDOWS or known_app in RETIRED_APPS:
             # PHILO-17 (owner 2026-10-10, "Yes, everything must become one
