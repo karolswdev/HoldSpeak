@@ -644,6 +644,16 @@
       ]
     },
     {
+      "path": "/api/ask/runs",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.primitives.ask",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/ask/{invocation_id}/cancel",
       "methods": [
         "POST"
