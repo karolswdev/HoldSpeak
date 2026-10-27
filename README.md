@@ -8,7 +8,7 @@
   <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-blue"></a>
   <img alt="Python 3.10+" src="https://img.shields.io/badge/python-3.10%2B-3776ab">
   <img alt="macOS Apple Silicon and Linux" src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey">
-  <img alt="MCP: 256 tools" src="https://img.shields.io/badge/MCP-256%20tools-8a63d2">
+  <img alt="MCP: 285 tools" src="https://img.shields.io/badge/MCP-285%20tools-8a63d2">
   <img alt="Version 0.4, pre-alpha" src="https://img.shields.io/badge/status-0.4%20pre--alpha-orange">
 </p>
 
@@ -25,7 +25,7 @@
 You lead a team. Your work lives in your voice, your meetings, your projects, your people, and a growing fleet of coding agents.
 HoldSpeak is one local workbench for all of it.
 
-**Speak** into any app. **Record** a meeting and confirm what was decided. **Ask** your model about any meeting, note, or project, with sources. **Send** the result to GitHub, Jira, Slack, or email. **Steer** your Claude Code and Codex sessions by voice. **Extend** every part with plugins, connectors, and 256 MCP tools.
+**Speak** into any app. **Record** a meeting and confirm what was decided. **Ask** your model about any meeting, note, or project, with sources. **Send** the result to GitHub, Jira, Slack, or email. **Steer** your Claude Code and Codex sessions by voice. **Extend** every part with plugins, connectors, and 285 MCP tools.
 
 Whisper runs on your machine. The language model is yours: a local GGUF or MLX model, or any OpenAI-compatible endpoint you choose. There is no account and no HoldSpeak cloud.
 
@@ -39,9 +39,9 @@ Whisper runs on your machine. The language model is yours: a local GGUF or MLX m
 | --- | --- | --- |
 | 🎙️ | [**Voice typing that learns**](#speak-anywhere): hold a key, speak, the text lands in any app and improves with each correction | [Speak](docs/USER_GUIDE.md#speak) |
 | 🗂️ | [**Meetings that close the loop**](#meetings-that-close-the-loop): live or imported, read by 14 built-in plugins, confirmed by you | [Meeting mode](docs/MEETING_MODE_GUIDE.md) |
-| ✦ | [**Ask AI on everything**](#ask-anything-about-your-work): any meeting, note, project, or Knowledge collection, grounded and cited | [Threads](docs/USER_GUIDE.md#threads) |
+| ✦ | [**Ask AI on everything**](#ask-anything-about-your-work): any meeting, note, project, or person, grounded and cited | [Ask](docs/USER_GUIDE.md#ask) |
 | 🧠 | [**Memory with receipts**](#memory-that-cites-its-sources): facts, beliefs, and standing pages where every sentence cites a source | [Memory](docs/RELATIONSHIP_AWARE_MEMORY.md) |
-| 🧭 | [**A Desk for the work you lead**](#a-desk-for-the-work-you-lead): what needs you, Project Rooms, people, your week | [The Desk](docs/WEB_DESK.md) |
+| 🧭 | [**A Desk for the work you lead**](#a-desk-for-the-work-you-lead): Today, what needs you, Project Rooms, people | [The Desk](docs/WEB_DESK.md) |
 | 📤 | [**Send it anywhere**](#send-it-anywhere): a folder, GitHub, Jira, Confluence, email, or Slack, previewed first | [Integrations](docs/INTEGRATIONS.md) |
 | 🤖 | [**Command your coding agents**](#command-your-coding-agents): watch and answer Claude Code and Codex sessions from the Desk | [Coders](docs/CODER_INTEGRATION.md) |
 | 🧩 | [**Extend everything**](#extend-everything): plugins, connectors, actuators, agents, Workflows, voice commands, MCP | [Plugin authoring](docs/PLUGIN_AUTHORING.md) |
@@ -68,17 +68,13 @@ Record your microphone and system audio, or import a recording or a transcript f
 
 Every piece of your work is something you can talk to.
 
-- **Ask AI** on a Meeting, a Note, an Artifact, a Knowledge collection, or a Workflow. The answer shows what it was grounded on, with citations you can open. **Keep** it as an Artifact with the exact sources and instruction, or select **Bin** to close it without creating an Artifact. The run result and its receipt stay stored.
+- **Ask AI** (`⌘I`, or **Go > Ask AI**) is one window. Select **+** beside **About** to pick a meeting, a Note, a drawer, a Project, or a person. With nothing picked, Ask is about your whole desk.
+- **Ask about this** sits on every record in the **Object** menu. On a person it reads **Ask about <name>**.
+- **The answer shows its sources.** **Looked at** lists what the answer read, with links you can open. **Save as note** keeps the answer, **Copy** copies it, and **Send...** opens the Send preview.
+- **Recent** reopens a saved conversation. **Forget** deletes it, with a short Undo.
+- **Ask has hands.** On an engine that can use tools, the model can call real tools. A held call waits for **Allow once** or **Deny**.
 - **Ask this project** sits in every Project Room. Ask what is blocked, who owes what, or what changed, and get an answer from that project's records.
 - **Develop a thought.** Keep a rough sentence as a Note and select **Develop this thought**. Each **Ask AI** turn asks you one question, until the idea is clear. Your original text is always kept.
-- **Threads** are saved, multi-turn conversations with your work:
-  - Type `@` to attach Meetings, Notes, Artifacts, and decisions. Select **Continue in thread** on a Desk object to start from it.
-  - Pick a mode: **Desk**, **Chase**, **Draft**, **Plan**, **Project**, or **Interview**. Each one gives the model its own instructions and tools.
-  - **The Thread has hands.** The model can call real tools. A held call asks you: **Allow once**, **Allow always**, or **Deny**.
-  - Slash commands: `/todo` creates an action item, `/keep` saves the reply as a Note, `/fork` branches, `/compact` summarizes, `/prompt` inserts a saved prompt.
-  - Edit or regenerate a message to branch the conversation. Saved prompts and guardrails are Notes with a tag.
-  - **The Call** turns a Thread into a voice conversation: you speak, and it answers aloud.
-- **Interview mode** asks about your goals, Projects, cadences, and decisions, and saves the answers as context.
 
 ## Memory that cites its sources
 
@@ -102,6 +98,7 @@ Fact extraction, belief consolidation, and page generation need an assigned mode
 - **The steward** works for each Room. It drafts the update and proposes a reviewer nudge on a pull request that waits too long.
 - **People** keeps your reports and peers. Before a 1:1, the 1:1 card collects what is open between you. The Monday brief adds what each person owes you and what you owe them.
 - **The Heartbeat** sweeps your Watches on a schedule and keeps **Needs you** current, so the Desk is ready when you arrive.
+- **Today** (the first icon in the dock) shows what needs you, the day ahead, and the next 1:1 with its Prep.
 - **Search** (`⌘K`) finds your records and runs any Desk verb.
 
 ## Send it anywhere
@@ -126,7 +123,7 @@ Your Claude Code and Codex sessions report to the Desk through agent hooks.
 - **Watch live.** Open a session to see its terminal pane, read-only.
 - **Answer by voice.** Select **Arm this pane** when the Control mode asks for it. Click the microphone, speak, and click it again to stop. Review your reply and select **SEND** to type it into that pane, on this machine or a configured remote machine.
 - **Ground the answer.** Attach a meeting or an Artifact, so the agent gets the context you have.
-- **Watch the pull requests.** Mission Control shows open PRs and their CI status.
+- **Watch the pull requests.** **Go > Delivery board** shows open PRs and their CI status.
 
 ## Extend everything
 
@@ -140,12 +137,12 @@ HoldSpeak is built from parts you can add to. You do not need to fork it.
 | **Agent** | A role you author, with its own instructions. | [Agents and Threads](docs/AGENTS_AND_THREADS.md) |
 | **Workflow** | A sequence of steps that runs with a receipt for each step. | [Automation](docs/AUTOMATION.md) |
 | **Voice command** | Maps a spoken phrase to a registered action. | [Voice commands](docs/VOICE_COMMANDS.md) |
-| **Saved prompt or guardrail** | A Note tagged `prompt` or `guardrail`, used in any Thread. | [Threads](docs/USER_GUIDE.md#threads) |
+| **Saved prompt or guardrail** | A Note tagged `prompt` or `guardrail`, used by a Thread through the hub API and MCP. | [Agents and Threads](docs/AGENTS_AND_THREADS.md) |
 | **Model** | Any local GGUF or MLX model, or any OpenAI-compatible endpoint, assigned per job. | [Models](docs/MODELS.md) |
 
 **MCP, first-class.** One service layer declares every operation. The web app, the MCP server, and the tests all reach the same operation, with the same authority checks.
 
-- **The MCP sidecar** gives Claude Code, Cursor, or any MCP client 283 tools across 48 families. It acts with your owner authority on this machine.
+- **The MCP sidecar** gives Claude Code, Cursor, or any MCP client 285 tools across 49 families. It acts with your owner authority on this machine.
 - **Reach** lets a remote agent connect over Streamable HTTP with a scoped credential: a tool palette and a time limit, shown once.
 - **Every consequential write leaves a Receipt.** Control modes (**Secure**, **Normal**, **YOLO**) set how much runs without asking you.
 
@@ -164,7 +161,7 @@ flowchart LR
     D --> A["Agents over MCP<br/>local owner or scoped Reach"]
 ```
 
-Transcription is always local. Model work goes to the host you assign in **Settings > Models**, and the Desk shows that host before you run. See [Security & Privacy](docs/SECURITY.md) for every data boundary.
+Transcription is always local. Model work goes to the engine you assign in **Engines**. Engines and the Send preview show where the data goes; a working window does not repeat it on every row. See [Security & Privacy](docs/SECURITY.md) for every data boundary.
 
 ## Quick start
 

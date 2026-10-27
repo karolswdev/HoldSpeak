@@ -1,5 +1,7 @@
 # Interview
 
+Status 2026-10-27: the Desk has no Interview face at present. The Thread window that carried the Interview mode was parked when Ask and Thread became one window (2026-10-18). The hub and the `interview.*` MCP tools still run it. The Thought Workbench's Interview pane is live.
+
 Interview helps you describe your work and find useful ways to use HoldSpeak.
 It runs in a normal Thread. You can return to each topic as your goals and Projects change.
 
@@ -156,6 +158,6 @@ Review every model answer. A successful tool call proves that the call ran. It d
 ## See also
 
 - [Architecture work](ARCHITECTURE_WORK.md)
-- [Threads](USER_GUIDE.md#threads)
+- [Threads](USER_GUIDE.md#ask)
 - [Automation](AUTOMATION.md)
 - [Control modes](AUTHORITY.md)

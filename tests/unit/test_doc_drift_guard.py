@@ -321,7 +321,7 @@ def test_mcp_tool_count_claims_match_registry() -> None:
     claim = re.compile(
         r"(\d+)\s+(?:MCP\s+)?tools\s+(?:across|are organized)", re.IGNORECASE
     )
-    for relative in (Path("docs/README.md"), Path("docs/MCP_SIDECAR.md")):
+    for relative in (Path("README.md"), Path("docs/README.md"), Path("docs/MCP_SIDECAR.md")):
         text = (_REPO / relative).read_text(encoding="utf-8")
         counts = [int(value) for value in claim.findall(text)]
         assert counts, f"{relative} must state its MCP tool count"

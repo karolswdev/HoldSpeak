@@ -95,9 +95,9 @@ flowchart TD
 
 ## Configure it
 
-Open **Settings > Voice** and unfold **RAW**. The **Pipeline** group holds
+Open **Settings > Speak** and unfold **RAW**. The **Pipeline** group holds
 **Stages**, **Latency budget**, **Rewrite passes**, **LLM target detect**, and
-**Detect below**. Choose the dictation model in **Settings > Models**. See
+**Detect below**. Choose the dictation model in **HoldSpeak > Engines**. See
 the [Dictation Pipeline Guide](./DICTATION_PIPELINE_GUIDE.md).
 
 For a headless setup, edit `~/.config/holdspeak/config.json`:
@@ -116,7 +116,7 @@ For a headless setup, edit `~/.config/holdspeak/config.json`:
 ```
 
 The endpoint and model are not dictation config keys. Assign them in
-**Settings > Models**. See [Models](./MODELS.md).
+**HoldSpeak > Engines**. See [Models](./MODELS.md).
 
 ## Run the demo yourself
 

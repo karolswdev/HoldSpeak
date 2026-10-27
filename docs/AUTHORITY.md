@@ -108,5 +108,5 @@ already bounded. It is not a bypass.
 
 - [Authority model](AUTHORITY_MODEL.md): how the runtime enforces this.
 - [Automation](AUTOMATION.md): triggers and execution paths.
-- [Threads](USER_GUIDE.md#the-thread-has-hands): per-tool policy and Thread admission.
+- [Ask has hands](USER_GUIDE.md#ask-has-hands): per-tool policy and Thread admission.
 - [Security and privacy](SECURITY.md): credentials and data boundaries.

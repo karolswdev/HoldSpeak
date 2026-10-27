@@ -228,11 +228,11 @@ Filters combine with each other and with the search text.
 
 HoldSpeak transcribes on your machine. The summary and assigned plugins can send text to their model hosts.
 
-Meeting model work uses the assigned route for each capability. Check the primary and fallback hosts in **Settings > Models**. The retained `meeting.intel_provider` value is a legacy migration input. It does not select a current route or prevent egress.
+Meeting model work uses the assigned route for each capability. Check the primary and fallback hosts in **HoldSpeak > Engines**. The retained `meeting.intel_provider` value is a legacy migration input. It does not select a current route or prevent egress.
 
-- Add and assign models in **Settings > Models**. See [Models](MODELS.md).
-- The host chip beside **Run summary** shows the destination before you run. The receipt shows the hosts that HoldSpeak contacted.
-- `holdspeak doctor` checks the meeting settings. The live face shows an egress chip: whether the text stays on this device.
+- Add and assign models in **HoldSpeak > Engines**. See [Models](MODELS.md).
+- Engines shows where each job runs before you pick its engine; the Meetings window does not repeat the host on its rows (owner ruling 2026-10-25). A hover title on **Run summary** names the host. The receipt shows the hosts that HoldSpeak contacted.
+- `holdspeak doctor` checks the meeting settings.
 - If a summary cannot run, HoldSpeak queues it and retries with a growing delay.
   Tune it with `meeting.intel_retry_base_seconds`, `meeting.intel_retry_max_seconds`, and `meeting.intel_retry_max_attempts`.
 - To check the queue, run `holdspeak intel`. Use `--process` to run queued jobs now and `--retry MEETING_ID` to requeue one.
@@ -292,7 +292,7 @@ Use **Settings** in the browser when you can. The file is `~/.config/holdspeak/c
 | `similarity_threshold` | `0.75` | Speaker match threshold, `0.0` to `1.0`. |
 | `auto_record` | `off` | Record calendar events that have a meeting link: `off`, `all_calendar`, or `room_linked`. |
 
-The old `intel_cloud_*` keys are read once for migration. Do not use them. Assign models in **Settings > Models**.
+The old `intel_cloud_*` keys are read once for migration. Do not use them. Assign models in **HoldSpeak > Engines**.
 
 ## HTTP API
 
@@ -356,9 +356,9 @@ Events include `segment`, `intel_status`, `intel_complete`, `duration`, `bookmar
 | --- | --- |
 | BlackHole not found | Run `brew install blackhole-2ch`. Restart **Audio MIDI Setup**. Run `holdspeak meeting --list-devices`. |
 | No remote audio | Set the Multi-Output Device as the system output. Check **BlackHole 2ch** in it. Run `holdspeak meeting --setup`. |
-| No **Run summary** button | Read the **NO SUMMARY ROUTE** reason. Assign a model in **Settings > Models**. |
+| No **Run summary** button | Read the **NO SUMMARY ROUTE** reason. Assign a model in **HoldSpeak > Engines**. |
 | The summary is slow | Use a smaller model. Use a GPU. HoldSpeak uses Metal on Apple Silicon. |
-| The summary fails on an endpoint | Read the error on the meeting. Check the host, the key, and the model name in **Settings > Models**. Check that the base URL ends with the API prefix, often `/v1`. |
+| The summary fails on an endpoint | Read the error on the meeting. Check the host, the key, and the model name in **HoldSpeak > Engines**. Check that the base URL ends with the API prefix, often `/v1`. |
 | The page does not load | Run `holdspeak doctor`. Check the URL that the runtime printed. Check that nothing blocks localhost. |
 | Poor transcript quality | Check microphone permission. Reduce noise. Use a larger speech model in **Settings**. |
 | Memory use is high | Use a smaller quantization. Assign a smaller model to meetings. |

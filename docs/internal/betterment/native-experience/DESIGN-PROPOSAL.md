@@ -1,5 +1,7 @@
 # The proposed HoldSpeak desktop
 
+**Status 2026-10-27:** design record. The visual parts (D1 shell, D8 grammar) were delivered by the window grammar (`WINDOW-GRAMMAR-2026-10-24.md`, #1457–#1492), the floating dock (#1497/#1498), the floor (#1495) and the Note (#1499/#1502), not by this proposal's artboards. The behavioural parts (D2–D7) stand as the reference for the slices in EXECUTION.md.
+
 **Design v1 — owner-authorized execution, 2026-10-23.** Still UNCHECKED by
 Muad'Dib; execution authorization does not invent his ratification or owner
 aesthetic acceptance.
@@ -48,6 +50,8 @@ flowchart LR
 ```
 
 ## D1. One desktop, recognizable applications
+
+Status 2026-10-27: shipped in another form. Go has Daily, Work and Builder groups; the floating dock (#1497) and the HoldSpeak menu (Settings, Engines, Accounts, Setup) carry the shell. The Documents row is the Note window of #1499/#1502.
 
 The Desk remains the operating surface. Go opens applications; object doors
 open the appropriate resource view. The contextual application menu changes
@@ -276,6 +280,8 @@ resource browsing to source/context; readiness repair back to the blocked job;
 and window/reference/feedback work without losing the user's task.
 
 ## D8. A common visual grammar with task-specific proportions
+
+Status 2026-10-27: superseded by the window grammar (`WINDOW-GRAMMAR-2026-10-24.md`, #1457–#1492): one 36 px toolbar, content edge to edge, one 24 px status bar, 32 px list rows, dot-and-word states. Icons are D (#1468).
 
 Use the existing Workbench × Pop!_OS material: cool paper, slate type, quiet
 blue chrome, fine borders, restrained rounding/depth and rich illustrated

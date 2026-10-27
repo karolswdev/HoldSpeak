@@ -1,16 +1,16 @@
 # Places
 
 Choose an environment for the desk and save your favorites.
+This guide is for the Desk user. Checked against the live Desk on 2026-10-27: the picker is **Settings > Desk > Wallpaper**; "Places" is the former name.
 Use **Hide the menus** (Settle in) when you want fewer navigation controls around your open work.
 
 ## Change places
 
-1. Open **Places** from the Dock, or press **Command/Ctrl+Shift+P**.
-2. Select an environment.
+1. Open **Settings > Desk**. Search for "wallpaper" also finds it.
+2. Under **Wallpaper**, select an environment.
 
 There is one desk. The picker changes the scene behind it immediately.
 Selecting a place preserves your work and object positions.
-You can also open the picker from **Settings > Wallpaper**.
 Arrow keys and Home/End change the selected place.
 
 ## Available places
@@ -35,7 +35,7 @@ The scenes do not acquire a microphone or start product work.
 
 ### In Jupiter's orbit
 
-Open **Settings > Wallpaper** and select **In Jupiter's orbit**.
+Open **Settings > Desk > Wallpaper** and select **In Jupiter's orbit**.
 Jupiter's cloud bands move slowly. Its four large moons pass at different intervals.
 Spacecraft can pass at rare intervals while motion is on.
 The scene uses local [NASA cloud and star maps](internal/JUPITER-ORBIT-2026-10-15/ASSETS.md).
@@ -64,7 +64,9 @@ Quiet Desk has no room sound.
 
 ## Settle in
 
-1. Select **Hide the menus** in the dock or the Desk menu.
+Status 2026-10-27: the Desk has no door to **Hide the menus** at present. The verb is still registered, but the dock control that carried it is not mounted and the verb is in no menu, key or Search. The steps below describe the behaviour when a door returns.
+
+1. Select **Hide the menus**.
 2. Continue your work in the open windows.
 3. Select **Back to Desk** to restore the navigation controls.
 

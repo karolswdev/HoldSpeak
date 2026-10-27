@@ -8,6 +8,20 @@ them is a defect to fix consciously, never to paper over. Cited by
 stories as law. Read [`AGENT_BRIEF.md`](AGENT_BRIEF.md) before any UI
 work; the [Constitution](CONSTITUTION.md) outranks both.
 
+## 0. Status 2026-10-27 (what the live desk adds to the laws below)
+
+- The floor holds drawers, Projects and Notes. The Talk orb and the Archive
+  icon left the floor on 2026-10-26 (#1495); **Go ▸ Archive** and ⌘K open
+  the Archive. The parked spatial Floor stays in `web/src/desk/_parked/floor/`.
+- The dock is the floating plate of #1497/#1498: launchers for Today,
+  Meetings, People, Agents and Speak, the record control, then one tile per
+  iconified window. No words under the icons; a 16 px count badge.
+- The menu bar is HoldSpeak, Desk, Object (titled by the kind in front),
+  Go and Window. Settings, Engines, Accounts and Setup are in the HoldSpeak
+  menu; Go has Daily, Work and Builder groups (`applications.ts` `go`,
+  `GO_EXTRA_ROWS`).
+- Icons are the D family (`docs/internal/betterment/ICONS-D-2026-10-24.md`).
+
 ## 1. The icon law (HS-105-01)
 
 1. World art is 64×64 pixel art rendered **1:1** — never fractionally

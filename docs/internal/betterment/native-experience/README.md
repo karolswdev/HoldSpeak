@@ -1,5 +1,7 @@
 # Native-feeling HoldSpeak within the current stack
 
+**Status 2026-10-27:** research packet of 2026-10-23. What shipped since: the window grammar (#1457–#1492), Icons D (#1468), egress at the act (#1481), the floating dock (#1497/#1498), the floor (#1495), the Note (#1499/#1502), Settings ▸ Accounts (#1503). The drift ledger is `DOC-DRIFT-2026-10-27.md`.
+
 Research commissioned by the owner on 2026-10-23. Baseline: main
 `787c55c8096f746b06a4c8d5d42ae48ef5c1fe20` (PR1428).
 

@@ -1,5 +1,7 @@
 # Delivery plan: proposed native-feeling desktop
 
+**Status 2026-10-27:** the execution log (EXECUTION.md) of this plan ends at #1456 (2026-10-24). Visual adoption then moved to the window grammar (`WINDOW-GRAMMAR-2026-10-24.md`, #1457–#1492) and the Window Program (`WINDOW-PROGRAM-2026-10-27.md`). Packages P01–P10 are a record of scope, not open work orders.
+
 **Execution authorized by the owner — 2026-10-23.** Astra orchestrates Sol High
 agents to deliver the complete plan. This task-specific direction supersedes
 the earlier design-only hold and older reviewer-only/Luna defaults. It does
@@ -79,6 +81,8 @@ slice. Integration corrections and bounded evidence are recorded in
 its cause is fixed. No latest-main full-suite green is claimed.
 
 ## Delivery adjustment: visible adoption alongside behavior
+
+Status 2026-10-27: superseded. Visible adoption across every manifest window was done by the window grammar (`WINDOW-GRAMMAR-2026-10-24.md`, #1457–#1492).
 
 Behavior and architectural reuse are ahead of visual coherence. The latest
 shots show working source/return behavior, but do not establish the desired
@@ -442,6 +446,8 @@ press, and no source-wide freshness gate.
 Edit-to-note distinct from external Send.
 
 ## P10: Desktop, reference, feedback and native boundary
+
+Status 2026-10-27: the desktop shell part is superseded by the floating dock (#1497/#1498) and the floor (#1495). Presence stays disabled.
 
 **Delivery:** the Resources reference merged with its production consumer in
 [PR1438](https://github.com/karolswdev/HoldSpeak/pull/1438). Forms (#1439), Editing (#1443), and Conversation (#1446/#1448) also use
