@@ -523,6 +523,14 @@ def build_aggregate(
                 row["nextAction"] = item.get("next_action")
                 row["decisionRecordId"] = item.get("decision_record_id")
             _proposal_fields(row, item)
+            if item.get("kind") == "meeting_match" and item.get("meeting_id"):
+                # W1-DOORS (atlas 2026-10-27): a meeting that names the
+                # Project is that meeting's row. Its ref was the match text
+                # ("mentions ledger"), so two meetings that say one word were
+                # one id, and the row was named after the word.
+                row["ref"] = f"meeting:{item['meeting_id']}"
+                row["meetingId"] = item["meeting_id"]
+                row["meetingTitle"] = item.get("meeting_title") or item.get("why", "")
             row["id"] = _item_id(pid, row)
             fresh.append(row)
             project_ids.add(pid)

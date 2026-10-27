@@ -335,11 +335,20 @@ function openRefOf(item: NeedsYouRoomItem, card: DoorCardLike): string {
 
 function attentionFace(item: NeedsYouRoomItem, ctx: NeedCtx): NeedFace {
   const id = String(item.id ?? item.ref ?? "");
-  const title = String(item.title || "Untitled");
+  // W1-DOORS (atlas 2026-10-27): a meeting that names a Project's word is
+  // named after the meeting; the matched word ("mentions ledger") is its
+  // state. Before, three rows read "mentions ledger" / "mentions cutover".
+  const matchMeeting = item.kind === "meeting_match"
+    ? String(item.meetingTitle ?? item.meeting_title ?? item.why ?? "")
+    : "";
+  const title = matchMeeting || String(item.title || "Untitled");
   // The wire's own case (`PROPOSED · Standup`, a meeting's title): the row
   // says it in sentence case at render (NeedsRow `stateWords`), so a name
   // keeps its capitals.
-  const why = String(item.why ?? "");
+  const matchWord = String(item.title ?? "");
+  const why = matchMeeting
+    ? matchWord.charAt(0).toUpperCase() + matchWord.slice(1)
+    : String(item.why ?? "");
   const project = String(item.projectName ?? "");
   const source = String(item.source ?? "");
 

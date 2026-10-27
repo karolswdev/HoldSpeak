@@ -16,6 +16,7 @@ import { DirectoryPullout } from "./DirectoryPullout";
 import { IntelligencePullout } from "./IntelligencePullout";
 import { FallbackPullout } from "./FallbackPullout";
 import { ThreadToAsk } from "./ThreadToAsk";
+import { ProjectToRoom } from "./ProjectToRoom";
 import { PeoplePullout } from "./PeoplePullout";
 
 /**
@@ -35,7 +36,8 @@ export const PULLOUT_CONTENT: Record<PrimitiveKind, PulloutContent> = {
   coder: CoderPullout,
   directory: DirectoryPullout,
   thread: ThreadToAsk,
-  project: FallbackPullout,
+  // W1-DOORS: a Project opens its Room; the fallback face is parked for it.
+  project: ProjectToRoom,
   repository: FallbackPullout,
   roadmap: FallbackPullout,
   story: FallbackPullout,
