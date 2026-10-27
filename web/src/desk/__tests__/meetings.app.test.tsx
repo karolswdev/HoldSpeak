@@ -236,15 +236,19 @@ describe("the Meetings list over the HS-170 seed", () => {
   });
 
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (row → the meeting's own window) */
-  it("a press selects a row; a double press opens the meeting's own window", async () => {
+  it("one press opens the meeting's own window (W1-KIT); Space or a ⌘-press selects", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-saved-outcomes");
+    // detail 0 (Space, element.click()) and a ⌘-press select only.
     fireEvent.click(within(row).getByRole("button"));
     expect(row).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(within(row).getByRole("button"), { detail: 1, metaKey: true });
     expect(openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-saved-outcomes");
-    fireEvent.doubleClick(within(row).getByRole("button"));
+    // W1-KIT: Record meeting is the one primary.
+    expect(screen.getByTestId("meetings-record").className).toContain("btn--primary");
+    fireEvent.click(within(row).getByRole("button"), { detail: 1 });
     // `openSourceRef` hands the shell the meeting scope. The one Meetings
     // surface owns the record and its Back control returns to this list.
     expect(openSurfaceOr).toHaveBeenCalledWith(
@@ -274,7 +278,7 @@ describe("the hosted meeting record returns to its list", () => {
 
 describe("the meeting window over the HS-170 seed", () => {
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (the detail half) */
-  it("one review fact, no static step ladder, three rows with Decide and Dismiss, the proposal text, speaker tokens", async () => {
+  it("one review fact, the rail at Summary, three rows with Decide and Dismiss, the proposal text, speaker tokens", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<Shell><MeetingRecord meetingId="m-saved-outcomes" onClose={() => undefined} /></Shell>);
@@ -283,7 +287,9 @@ describe("the meeting window over the HS-170 seed", () => {
     await waitFor(() => expect(screen.getByTestId("meeting-review-count").textContent).toBe("3 to review"));
     expect(document.querySelectorAll(".meetings-detail-head .surface-display")).toHaveLength(0);
     expect(screen.getByRole("toolbar", { name: "Meeting" })).toBeTruthy();
-    expect(screen.queryByTestId("meeting-steps")).toBeNull();
+    // W2-LIVE-2 (canvas live-direction-2026-10-27, A, After): Today's rail
+    // under the toolbar, at Summary while three wait for review.
+    expect(screen.getByTestId("meeting-steps").querySelector("[aria-current=step]")?.textContent).toContain("Summary");
     const head = await screen.findByText("TO REVIEW 3");
     expect(head.closest(".meetings-detail-needs-head")).toBeTruthy();
     const rows = document.querySelectorAll(".meetings-detail-outcome-row");

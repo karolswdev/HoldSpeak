@@ -827,7 +827,7 @@ describe("A7: home, New automation and starters", () => {
     expect(useDesk.getState().workbenchWindows.length).toBe(windows);
   });
 
-  it("window grammar: home rows are a list view (Name, When, Engine, Last result); a press selects, a double press or Open opens", async () => {
+  it("window grammar: home rows are a list view (Name, When, Engine, Last result); a programmatic press selects, one pointer press or Open opens", async () => {
     hub.step = homeRows as Step;
     render(<WorkbenchesHomeCore />);
     const [row] = await screen.findAllByTestId("automation-home-row");
@@ -846,7 +846,8 @@ describe("A7: home, New automation and starters", () => {
     expect(row).toHaveAttribute("aria-selected", "true");
     expect(useDesk.getState().workbenchWindows).toEqual([]);
     expect(screen.getByTestId("automation-home-run")).toBeInTheDocument();
-    fireEvent.doubleClick(name);
+    // W1-KIT: one pointer press (detail 1) opens it.
+    fireEvent.click(name, { detail: 1 });
     expect(useDesk.getState().workbenchWindows.map((w) => w.id)).toEqual([(homeRows as Step).workbench_id]);
     fireEvent.click(screen.getByTestId("automation-home-open"));
     expect(useDesk.getState().workbenchWindows.map((w) => w.id)).toEqual([(homeRows as Step).workbench_id]);

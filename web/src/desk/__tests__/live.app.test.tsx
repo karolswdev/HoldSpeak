@@ -15,6 +15,8 @@ import { useState, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import segmentsWire from "../../test/wire/live.segments.wire.json";
 import hubNoEngine from "./fixtures/settings-wire/hub.json";
+import localAiCold from "../../test/wire/setup-local-ai.wire.json";
+import meetingsHubReady from "./fixtures/meetings-hub/p17t-ready.json";
 import needsYouRecorded from "./fixtures/needsYou.recorded.json";
 import { recordedGet, type Gets } from "../../test/recordedHub";
 import { WingSlotContext } from "../surface/wings";
@@ -166,24 +168,105 @@ describe("Live meeting: during, the transcript is the page", () => {
   });
 });
 
-describe("Live meeting: before, the honest summary word", () => {
+describe("Live meeting: before, the ready sheet (W2-LIVE-2)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.listeners.clear();
     useDesk.setState({ recording: "idle", liveMeetingId: null });
   });
 
-  it("says No engine for summaries on the hub that has none, and keeps the four steps", async () => {
-    answer({ "/api/settings/hub": hubNoEngine });
+  it("on a hub with no speech and no engine: each row says its state and carries its one verb", async () => {
+    answer({
+      "/api/settings/hub": hubNoEngine,
+      "/api/settings": recorded.calendar.none.gets["/api/settings"],
+      "/api/setup/local-ai": (localAiCold as { wire: unknown }).wire,
+    });
     await mount();
-    const engine = await screen.findByTestId("live-summary-engine");
-    expect(engine).toHaveTextContent("No engine for summaries");
-    expect(engine.querySelector(".kit-dot")?.getAttribute("data-tone")).toBe("warn");
+    const sheet = await screen.findByTestId("live-ready");
+    expect(within(sheet).getByText("It will hear")).toBeInTheDocument();
+    expect(within(sheet).getByText("It will write")).toBeInTheDocument();
+    expect(screen.getByTestId("live-ready-mic")).toHaveTextContent(/Microphone\s*System default\s*Ready/);
+    expect(screen.getByTestId("live-ready-system")).toHaveTextContent(/System audio\s*Auto\s*Ready/);
+    const transcript = screen.getByTestId("live-ready-transcript");
+    await waitFor(() => expect(within(transcript).getByTestId("live-ready-transcript-state")).toHaveTextContent("Not set up"));
+    expect(transcript).toHaveTextContent("Whisper base, on this Mac");
+    // Set up speech is the Transcript row's verb, not a toolbar item.
+    expect(within(transcript).getByRole("button", { name: "Set up speech · 144 MB" })).toBeInTheDocument();
+    expect(within(screen.getByTestId("live-toolbar")).queryByRole("button", { name: /Set up speech/ })).toBeNull();
+    const summary = screen.getByTestId("live-ready-summary");
+    expect(within(summary).getByTestId("live-ready-summary-state")).toHaveTextContent("No engine");
+    expect(within(summary).getByTestId("live-ready-summary-state").getAttribute("data-tone")).toBe("warn");
+    fireEvent.click(within(summary).getByRole("button", { name: "Choose engine" }));
+    expect(mocks.openSurfaceOr).toHaveBeenCalledWith("open-concierge", "/models", "meetings");
+
+    // The status bar keeps the honest words; the steps band stays.
+    expect(screen.getByTestId("live-summary-engine")).toHaveTextContent("No engine for summaries");
+    expect(screen.getByTestId("live-capture-state")).toHaveTextContent("Speech not set up");
     expect(screen.getByTestId("live-steps")).toBeInTheDocument();
-    expect(within(screen.getByTestId("live-toolbar")).getByRole("button", { name: "Start meeting" }).className).toContain(
-      "btn--primary",
+    expect(document.body.textContent ?? "").not.toContain("Start a meeting to begin");
+    const toolbar = screen.getByTestId("live-toolbar");
+    expect(within(toolbar).getByRole("button", { name: "Start meeting" }).className).toContain("btn--primary");
+    expect(within(toolbar).queryByRole("button", { name: "Bookmark" })).toBeNull();
+  });
+
+  it("on a hub with speech on this Mac and an engine: every row is Ready, no fixing verb", async () => {
+    answer({
+      "/api/settings/hub": hubWithEngine,
+      "/api/settings": recorded.calendar.none.gets["/api/settings"],
+      "/api/setup/local-ai": (meetingsHubReady as Record<string, unknown>)["/api/setup/local-ai"],
+    });
+    await mount();
+    const transcript = await screen.findByTestId("live-ready-transcript");
+    await waitFor(() => expect(within(transcript).getByTestId("live-ready-transcript-state")).toHaveTextContent("Ready"));
+    expect(transcript).toHaveTextContent("Whisper base, on this Mac");
+    expect(screen.getByTestId("live-ready-summary")).toHaveTextContent(/Hs201 Meeting Engine, after the meeting\s*Ready/);
+    expect(screen.queryByRole("button", { name: /Set up speech/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Choose engine" })).toBeNull();
+    expect(screen.getByTestId("live-capture-state")).toHaveTextContent("Ready");
+  });
+
+  it("sends the name he typed before Start to the live meeting", async () => {
+    answer({ "/api/settings/hub": hubWithEngine, "/api/settings": recorded.calendar.none.gets["/api/settings"] });
+    await mount();
+    fireEvent.change(screen.getByRole("textbox", { name: "Meeting name" }), { target: { value: "Ledger cutover sync" } });
+    fireEvent.click(within(screen.getByTestId("live-toolbar")).getByRole("button", { name: "Start meeting" }));
+    await waitFor(() =>
+      expect(mocks.apiFetch).toHaveBeenCalledWith("/api/meeting", { method: "PATCH", json: { title: "Ledger cutover sync" } }),
     );
-    expect(within(screen.getByTestId("live-toolbar")).queryByRole("button", { name: "Bookmark" })).toBeNull();
+    const order = mocks.apiFetch.mock.calls.map(([path]) => path);
+    expect(order.indexOf("/api/meeting/start")).toBeLessThan(order.indexOf("/api/meeting"));
+  });
+});
+
+describe("Live meeting: the phone status bar while it records is one line (W2-LIVE-2)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.listeners.clear();
+    useDesk.setState({ recording: "recording", liveMeetingId: "m-live" });
+    answer({
+      "/api/settings/hub": hubWithEngine,
+      "/api/state": { active: true, meeting_active: true, meeting_id: "m-live", title: "Ledger cutover sync" },
+    });
+  });
+
+  it("drops the title (the title bar has it) and, on the phone, the connected link", async () => {
+    const original = window.matchMedia;
+    window.matchMedia = ((query: string) => ({
+      matches: query === "(max-width: 720px)", media: query, onchange: null,
+      addEventListener: () => undefined, removeEventListener: () => undefined,
+      addListener: () => undefined, removeListener: () => undefined, dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia;
+    try {
+      await mount();
+      emit("duration", "12:04");
+      const bar = screen.getByTestId("live-statusbar");
+      await waitFor(() => expect(within(bar).getByTestId("live-capture-state")).toHaveTextContent(/Recording\s*12:04/));
+      const items = [...bar.querySelectorAll(".kit-statusbar-item")].map((item) => item.textContent);
+      expect(items).toEqual(["Recording 12:04", "Summaries on Hs201 Meeting Engine"]);
+      expect(bar).not.toHaveTextContent("Ledger cutover sync");
+    } finally {
+      window.matchMedia = original;
+    }
   });
 });
 

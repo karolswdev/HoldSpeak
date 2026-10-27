@@ -42,6 +42,7 @@ import {
 } from "./roomReads";
 import { registerProjectRepository, registrable, useProjectRepository } from "../../desk/projectRepository";
 import { plainFailure } from "../../desk/surface/plainFailure";
+import { Loading } from "../../desk/surface/kit";
 import { useWindowTitle } from "../../desk/surface/title";
 import { Button } from "../../components/signal/Signal";
 import {
@@ -2389,7 +2390,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
         <RoomReadsContext.Provider value={reportRead}>
         <div className="room-body" data-testid="room-body" ref={roomBodyRef}
           data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
-          {shown ? null : <p className="room-empty-line room-settling-line">Loading…</p>}
+          {shown ? null : <div className="room-settling-line"><Loading /></div>}
           {sendFailure}
           {ctrl.readError ? <SurfaceState error={ctrl.readError} onRetry={handleRefresh} /> : null}
           {ctrl.view === "room" ? (
@@ -2492,7 +2493,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
         </div>
         </RoomReadsContext.Provider>
       ) : loading ? (
-        <div className="room-loading"><p className="room-empty-line">Loading…</p></div>
+        <Loading data-testid="room-loading" />
       ) : ctrl.error ? (
         // PHILO-13-04 ledger, paid in B1: a plain failure name and Try again,
         // never the hub's own text (plainFailure in the controller).

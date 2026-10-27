@@ -32,7 +32,8 @@ describe("Signal component gallery", () => {
     expect(within(window).getByRole("button", { name: /Retry/ })).toHaveClass("btn--primary");
     expect([...within(window).getByRole("status").querySelectorAll(".kit-statusbar-item")].map((item) => item.textContent))
       .toEqual(["4 meetings", "2 to review", "1 failed"]);
-    fireEvent.doubleClick(within(grid).getByRole("button", { name: /Ledger cutover sync/ }));
+    // W1-KIT: one pointer press opens the row.
+    fireEvent.click(within(grid).getByRole("button", { name: /Ledger cutover sync/ }), { detail: 1 });
     expect(screen.getByTestId("reference-window-opened").textContent).toBe("Opened locally · Ledger cutover sync");
     const people = within(screen.getByTestId("reference-window-people")).getByRole("grid", { name: "Specimen people" });
     expect([...people.querySelectorAll(".object-list-avatar")].map((disc) => disc.textContent)).toEqual(["AC", "PN", "SR"]);

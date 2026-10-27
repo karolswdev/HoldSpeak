@@ -38,7 +38,7 @@ import {
 } from "./history";
 import { useSummaryRun } from "./history/useSummaryRun";
 import { IMPORT_ACCEPT } from "./history/importWhen";
-import { MeetingSelectionVerbs, meetingRowView } from "./history/CatalogRail";
+import { MeetingSelectionVerbs } from "./history/CatalogRail";
 import { RecordHome } from "./history/RecordHome";
 import { StatusBar, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
@@ -311,9 +311,9 @@ export function HistoryCore({ hero, scope }: CoreProps) {
     );
   }
 
-  // PHILO-17 ALIVE: one obvious first move, ONE primary per window. With
-  // no engine for summaries, Choose engine leads; else the selected
-  // meeting's run verb leads when it can run; else Record meeting.
+  // W1-KIT (2026-10-27) — the primary verb: Record meeting (the verb that
+  // makes a meeting) is the one primary, empty or full. Choose engine (the
+  // warning's fix) and the selection's run verb stay plain.
   const engineMissing = Boolean(faceRoute) && !routeReady(faceRoute) && !routeOff(faceRoute);
   const selectedRow = selectedMeeting
     ? meetingRows.find((row) => String(row.id) === String(selectedMeeting.id)) ?? null
@@ -321,10 +321,6 @@ export function HistoryCore({ hero, scope }: CoreProps) {
   const selectedRefusal = selectedRow && runRefusal && runRefusal.meetingId === String(selectedRow.id)
     ? runRefusal.refusal
     : null;
-  const selectionRuns = Boolean(selectedRow) && ["Run summary", "Retry"].includes(
-    meetingRowView(selectedRow!, { runningId, drainerAbsent, refusal: selectedRefusal }).verb ?? "",
-  );
-  const recordLeads = !engineMissing && !selectionRuns;
 
   // PHILO-13-02 (A1-F) — Restore (C1-5a–e).
   const showParkOutcome = (outcome: ParkOutcome) => {
@@ -360,7 +356,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       {engineMissing ? (
         <Button
           dense
-          variant="primary"
+          variant="secondary"
           data-testid="meetings-choose-engine"
           onClick={() => openSurfaceOr("open-concierge", "/models", "meetings")}
         >
@@ -370,7 +366,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       ) : null}
       <Button
         dense
-        variant={recordLeads ? "primary" : "secondary"}
+        variant="primary"
         data-testid="meetings-record"
         onClick={() => openSurfaceOr("record-live", "/live", scope)}
       >
@@ -406,7 +402,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
       </Button>
       <MeetingSelectionVerbs
         row={selectedRow}
-        primary={!engineMissing && selectionRuns}
+        primary={false}
         onTranscribe={transcribeMeeting}
         onRunIntelligence={(id, route) => void summary.run(id, route)}
         runningId={runningId}

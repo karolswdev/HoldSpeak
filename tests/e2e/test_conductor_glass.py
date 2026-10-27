@@ -299,9 +299,9 @@ class TestSessionOpenGlass:
                         assert abs(bounds["x"]) < 1 and abs(bounds["width"] - width) < 1, bounds
                     assert face.locator(".desk-pullout-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
 
+                # #1523 (W1-KIT): one press on the row opens it; the status
+                # bar's Open stays for a keyboard selection.
                 conductor.locator("[data-object-id='coder:codex:surface-working'] .object-list-open").click()
-                # Window grammar: Open is the selected row's verb, in the status bar.
-                conductor.locator(".cw-footer").get_by_test_id("conductor-open").click()
                 session = page.locator(".is-session")
                 session.get_by_test_id("session-head").wait_for()
                 shot("plain-working", session)
@@ -336,9 +336,9 @@ class TestSessionOpenGlass:
                 session.locator(".desk-gadget-close").click()
                 page.locator(".conductor-info-window .desk-gadget-close").click()
 
+                # #1523 (W1-KIT): one press on the row opens it; the status
+                # bar's Open stays for a keyboard selection.
                 conductor.locator("[data-object-id='launch:launch_c4_recon'] .object-list-open").click()
-                # Window grammar: Open is the selected row's verb, in the status bar.
-                conductor.locator(".cw-footer").get_by_test_id("conductor-open").click()
                 lane = page.locator(".is-lane")
                 lane.get_by_test_id("lane-head").wait_for()
                 # AG10 omits an empty timeline rather than drawing a lone brief.

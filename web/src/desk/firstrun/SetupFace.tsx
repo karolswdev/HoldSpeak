@@ -567,6 +567,9 @@ export function SetupFace({ initial, standalone = false }: { initial: SetupInven
             onSort={(key: string) => setSort((current) => ({ key, dir: current.key === key && current.dir === "asc" ? "desc" : "asc" }))}
             selectedId={selected?.id ?? null}
             onSelect={setChosenId}
+            // W1-KIT: a readiness row's open RUNS its fix, so a press only
+            // selects here; Enter (or a double press) runs it.
+            pressOpens={false}
             onOpen={(id) => {
               const row = listed.find((candidate) => candidate.id === id);
               if (row && row.action && row.state !== "works") void useRow(row);

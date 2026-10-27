@@ -307,12 +307,13 @@ class TestDashboardEndpoint:
         # W2-LIVE (2026-10-27): the Live window is LiveCore plus its
         # transcript document; its old gear wing (routing, try a phrase,
         # background work, devices) moved to Settings ▸ Meetings as
-        # LiveMeetingTools. The source of all three is the runtime face.
+        # LiveMeetingTools. W2-LIVE-2: the ready sheet is LiveReady. The source
+        # of all four is the runtime face.
         del test_client
         cores = Path(__file__).resolve().parents[2] / "web/src/pages/cores"
         return "\n".join(
             (cores / name).read_text()
-            for name in ("LiveCore.tsx", "LiveTranscript.tsx", "LiveMeetingTools.tsx")
+            for name in ("LiveCore.tsx", "LiveReady.tsx", "LiveTranscript.tsx", "LiveMeetingTools.tsx")
         )
 
     def test_dashboard_references_runtime_control_endpoints(self, test_client):
@@ -370,7 +371,7 @@ class TestDashboardEndpoint:
         response = test_client.get("/live")
         assert response.status_code == 200
         source = self._bundled_runtime_js(test_client)
-        assert "Start a meeting to begin" in source
+        assert "It will hear" in source  # W2-LIVE-2: the ready sheet
         assert "Listening for speech" in source
         # W1 (2026-10-27): the preview caption is one quiet sentence in
         # sentence case — the same read-only promise.

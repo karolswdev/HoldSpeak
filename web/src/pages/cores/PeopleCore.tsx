@@ -33,7 +33,7 @@ import {
 } from "../../desk/surface/Surface";
 import { Disclosure } from "../../desk/surface/patterns/Disclosure";
 import { countToken } from "../../desk/surface";
-import { Avatar, DotWord, StatusBar, ToolGlyph, Toolbar, countWords, hueOf, initialsOf } from "../../desk/surface/kit";
+import { Avatar, DotWord, Loading, StatusBar, ToolGlyph, Toolbar, countWords, hueOf, initialsOf } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../desk/surface/objects/ObjectList";
 import { renderHeroSlot } from "./core-layout";
@@ -435,7 +435,12 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const [sort, setSort] = useState<ObjectListSort>({ key: "next", dir: "asc" });
   const openAdd = () => { setAdding(true); window.setTimeout(() => document.getElementById("people-new-relationship")?.focus(), 0); };
 
-  if (loading) return <SurfaceState loading />;
+  // W1-KIT: the first read shows the ghost rows of the list grammar; the
+  // roster keeps its toolbar band (its verbs arrive with the roster).
+  if (loading) return selectedId ? <Loading data-testid="people-loading" /> : <>
+    <Toolbar label="People" />
+    <Loading data-testid="people-loading" />
+  </>;
   if (unavailable) {
     const state = stateOf(readiness);
     // Betterment daily D8: People cannot hold a key on this Mac: one line, no verb.
@@ -526,7 +531,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
   const chosenSuggestion = chosen ? bySuggestion.get(chosen) ?? null : null;
   const chosenNoOneOnOne = chosenPerson ? personRows.find((r) => r.id === chosenPerson.id)?.cells?.next === "None" : false;
   const selectionVerbs = chosenSuggestion ? <>
-    <Button dense variant={prepDue ? "secondary" : "primary"} loading={suggestionBusy === chosenSuggestion.key} disabled={Boolean(suggestionBusy)} onClick={() => void addSuggestion(chosenSuggestion)} aria-label={`Add ${chosenSuggestion.name}`} data-testid="people-suggestion-add"><ToolGlyph kind="new" />Add</Button>
+    <Button dense variant="secondary" loading={suggestionBusy === chosenSuggestion.key} disabled={Boolean(suggestionBusy)} onClick={() => void addSuggestion(chosenSuggestion)} aria-label={`Add ${chosenSuggestion.name}`} data-testid="people-suggestion-add"><ToolGlyph kind="new" />Add</Button>
     <Button dense variant="secondary" disabled={Boolean(suggestionBusy)} onClick={() => void hideSuggestion(chosenSuggestion)} aria-label={`${chosenSuggestion.name} is not a person`} data-testid="people-suggestion-hide">Not a person</Button>
   </> : chosenPerson ? <>
     <Button dense variant="secondary" onClick={() => openPerson(chosenPerson.id)} data-testid="people-open-selected">
@@ -535,10 +540,10 @@ export function PeopleCore({ hero, scope }: CoreProps) {
     </Button>
     {chosenNoOneOnOne ? <Button dense variant="secondary" onClick={() => openPerson(chosenPerson.id, "prep")} data-testid="people-plan">Plan</Button> : null}
   </> : null;
-  const verbs = selectionVerbs || prepDue ? <>
-    {selectionVerbs}
-    {prepDue && soonest ? <Button dense variant="primary" onClick={() => openPerson(soonest.row.id, "prep")} data-testid="people-open-prep">Open prep</Button> : null}
-  </> : null;
+  // W1-KIT: the status bar holds the selection's verbs only; Open prep (a
+  // 1:1 within a day) is a plain toolbar verb beside Add person, the one
+  // primary.
+  const verbs = selectionVerbs;
   const everyone = projectFilter && scopedOut > 0 ? (
     <Button dense variant="secondary" aria-label="Everyone: clear the Project scope" onClick={() => setProjectFilter(null)} data-testid="people-roster-everyone">{`${scopedOut} more · Everyone`}</Button>
   ) : null;
@@ -550,6 +555,7 @@ export function PeopleCore({ hero, scope }: CoreProps) {
       </span> : null}
     </>}>
       <Button dense variant="primary" onClick={openAdd} data-testid="people-add"><ToolGlyph kind="new" />Add person</Button>
+      {prepDue && soonest ? <Button dense variant="secondary" onClick={() => openPerson(soonest.row.id, "prep")} data-testid="people-open-prep"><ToolGlyph kind="open" />Open prep</Button> : null}
     </Toolbar>
   );
   const firstName = (name: string) => name.trim().split(/\s+/)[0] || name;

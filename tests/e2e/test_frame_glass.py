@@ -354,7 +354,12 @@ class TestTitleBarB:
                 people = page.locator(".desk-window-shell[aria-label='People']")
                 people.wait_for()
                 page.wait_for_timeout(800)
-                press(people.get_by_text("Priya Nair", exact=True).first)
+                # W1-KIT: a plain press OPENS Priya; the boards want People in
+                # front with Priya selected, so the desktop selects (⌘-press).
+                if phone:
+                    press(people.get_by_text("Priya Nair", exact=True).first)
+                else:
+                    people.get_by_text("Priya Nair", exact=True).first.click(modifiers=["Meta"])
                 page.wait_for_timeout(800)
                 if not phone:
                     t = people.locator(":scope > .desk-pullout-head .desk-pullout-title").bounding_box()

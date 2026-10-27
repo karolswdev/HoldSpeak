@@ -17,6 +17,7 @@ export function Popover({
   onClose,
   children,
   placement = "below",
+  align = "start",
   ariaLabel,
 }: {
   anchor: RefObject<HTMLElement | null>;
@@ -24,6 +25,9 @@ export function Popover({
   onClose: () => void;
   children: ReactNode;
   placement?: "above" | "below" | "start" | "end";
+  /** Above or below: `end` lines the popover's right edge up with the
+   *  anchor's (a verb at a band's right end stays on screen). */
+  align?: "start" | "end";
   ariaLabel?: string;
 }) {
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -106,6 +110,11 @@ export function Popover({
       style.left = rect.right + 4;
       style.top = rect.top;
       break;
+  }
+
+  if (align === "end" && (placement === "above" || placement === "below")) {
+    delete style.left;
+    style.right = window.innerWidth - rect.right;
   }
 
   /* Portal into the desk-next root so `.desk-next .surface-popover`

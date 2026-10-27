@@ -107,9 +107,14 @@ describe("every speech face says speech is not set up", () => {
     const verb = await screen.findByTestId("live-speech-setup-verb");
     expect(verb.textContent?.trim()).toMatch(VERB);
     expect(verb.className.split(" ")).toContain("btn");
-    // Window grammar + UX-CANON A.9 (2026-10-25): the verb is a toolbar
-    // item; the host is its hover title, never a chip on the row.
-    expect(verb.closest('[role="toolbar"]')).not.toBeNull();
+    // W2-LIVE-2 (canvas betterment/canvases/live-direction-2026-10-27.html, A,
+    // Before): the verb is on the ready sheet's Transcript row, which says
+    // "● Not set up"; UX-CANON A.9 (2026-10-25): the host is its hover title,
+    // never a chip on the row.
+    const row = screen.getByTestId("live-ready-transcript");
+    expect(row.contains(verb)).toBe(true);
+    expect(screen.getByTestId("live-ready-transcript-state")).toHaveTextContent("Not set up");
+    expect(screen.getByTestId("live-ready-transcript-state").getAttribute("data-tone")).toBe("warn");
     expect(verb.getAttribute("title")).toContain("huggingface.co");
     expect(screen.getByTestId("live-speech-setup").textContent?.toUpperCase()).not.toContain("HUGGINGFACE.CO");
     // W1-TRUTH (atlas 2026-10-27): the status bar says the one honest state,

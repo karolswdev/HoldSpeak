@@ -11,6 +11,7 @@ import {
   SurfaceState,
 } from "../../../desk/surface/Surface";
 import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../../desk/surface/objects/ObjectList";
+import { Loading } from "../../../desk/surface/kit";
 import type { ObjectTone } from "../../../desk/surface/objects/kinds";
 import {
   RefusalToken,
@@ -296,8 +297,7 @@ export function CatalogRail({
   });
   return (
     <div className="meetings-stream" data-narrowed={narrowed || undefined}>
-      <SurfaceState
-        loading={meetings.loading}
+      {meetings.loading ? <Loading data-testid="meetings-loading" /> : <SurfaceState
         error={meetings.error}
         empty={!meetingRows.length}
         /* UX-CANON A.3: an empty state is ONE true line with the next move. */
@@ -323,7 +323,7 @@ export function CatalogRail({
           }}
           rowProps={(row) => ({ "data-testid": `meeting-row-${row.id}` })}
         />
-      </SurfaceState>
+      </SurfaceState>}
     </div>
   );
 }

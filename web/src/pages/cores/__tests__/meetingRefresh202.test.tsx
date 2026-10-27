@@ -319,7 +319,7 @@ describe("C1 readiness acknowledgement", () => {
     wire();
   });
 
-  it("a real Meetings row opens the meeting's own window on a double press", async () => {
+  it("a real Meetings row opens the meeting's own window on one press (W1-KIT)", async () => {
     render(<HistoryCore />);
     const rowBody = await waitFor(() => {
       const found = document.querySelector(
@@ -328,7 +328,7 @@ describe("C1 readiness acknowledgement", () => {
       expect(found, "the real Meetings ledger draws the row").toBeTruthy();
       return found as Element;
     });
-    fireEvent.doubleClick(rowBody);
+    fireEvent.click(rowBody, { detail: 1 });
     expect(openSurfaceOr).toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-1");
   });
 

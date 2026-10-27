@@ -129,8 +129,33 @@
 }
 
 /* W1-TRUTH (atlas 2026-10-27): a Desk decision's own window on the reader
-   grammar. The body fits a short decision (the window opens at 440 px) and
-   never drops below 320 px. */
-.desk-pullout-body.decision-reader-window { min-height: 320px; }
+   grammar. W3-A: the window fits its content. DeskWindow keeps a content-sized
+   frame at `height: auto` (min 320 px, the band cap inline) until the owner
+   sizes it; while it is content-sized the reader stops so the whole window
+   is at most 640 px, and a long decision scrolls in the reader. */
+.desk-pullout-body.decision-reader-window { min-height: 0; }
+.desk-next .desk-decision-window[style*="height: auto"] .decision-reader {
+  /* 106 px: the title bar (30), the toolbar (36), the status bar (36 at
+     1440, its foot padding included) and the frame's borders. */
+  max-height: calc(640px - 106px);
+}
+/* The toolbar never wraps on a narrow window: the quiet verbs show their
+   glyph only; the word stays the Button's name and its hover title. */
+@container surface (max-width: 560px) {
+  .desk-decision-reader-toolbar .decision-verb {
+    position: relative;
+    min-width: 32px;
+    padding-inline: 8px;
+    justify-content: center;
+  }
+  .desk-decision-reader-toolbar .decision-verb-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
 .desk-decision-reader .decision-reader-why { margin: 0; }
 .desk-decision-filing { padding-top: 4px; border-top: 1px solid var(--wb-rule-soft); }

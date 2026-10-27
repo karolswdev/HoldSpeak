@@ -1,55 +1,131 @@
+/* W3-A (window grammar, 2026-10-27): the feedback sheet is a small window
+   part, not a panel of caps. A 36 px toolbar (the verbs, dense; the state as
+   a dot and a word at its right end) and one quiet line: what the feedback
+   is about, the transcript, or why it stopped. Sans 12/13, no mono, no caps.
+   It sits above the dock (the reserve + 8 px) and above the front window's
+   status bar (UiFeedbackHost lifts it there); it pushes nothing. */
 .desk-next.hs-feedback-strip {
   position: fixed;
   right: 12px;
-  /* W1-DOORS (atlas 2026-10-27): the sheet opens above the dock's reserve
-     and never over the dock (it covered the Record tile). */
   bottom: calc(var(--desk-dock-h, 0px) + 8px);
   z-index: 100;
   display: flex;
+  flex-direction: column;
   min-height: 0;
   margin: 0;
-  color: var(--wb-ink);
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  width: min(560px, calc(100vw - 24px));
-  padding: 10px 12px;
-  border: 2px solid var(--wb-ink, #22313b);
-  background: var(--wb-steel);
-  box-shadow: var(--wb-raised, inset 1px 1px #fff, 3px 3px #22313b);
-}
-
-.hs-feedback-identity {
-  display: grid;
-  min-width: 0;
-  flex: 1 1 240px;
-  gap: 3px;
-}
-
-.hs-feedback-caption {
-  color: var(--wb-ink, #22313b);
-  font: 600 12px/1.2 var(--font-mono);
-  letter-spacing: .07em;
-}
-
-.hs-feedback-identity strong {
+  width: min(520px, calc(100vw - 24px));
+  box-sizing: border-box;
   overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--wb-ink);
+  border: 1px solid var(--wb-rule, #22313b);
+  border-radius: var(--desk-window-radius, 8px);
+  background: var(--wb-paper);
+  box-shadow: 0 10px 28px rgb(20 32 44 / 22%), 0 1px 3px rgb(20 32 44 / 18%);
+}
+
+.hs-feedback-strip .hs-feedback-toolbar {
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+
+.hs-feedback-strip .hs-feedback-state {
   white-space: nowrap;
 }
 
+/* One row of verbs at every width: Copy path is its glyph (the word is the
+   name, the path the hover title); on a phone Retry transcription is its
+   glyph too. */
+.hs-feedback-strip .hs-feedback-verb {
+  position: relative;
+}
+.hs-feedback-strip .hs-feedback-verb.is-glyph {
+  min-width: 32px;
+  padding-inline: 8px;
+  justify-content: center;
+}
+.hs-feedback-strip .hs-feedback-verb.is-glyph .hs-feedback-verb-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Recording: the dot breathes (a still dot under reduced motion). */
+.hs-feedback-strip[data-phase="recording"] .hs-feedback-state .kit-dot {
+  animation: hs-feedback-live 1.4s ease-in-out infinite;
+}
+@keyframes hs-feedback-live {
+  50% { opacity: .35; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hs-feedback-strip[data-phase="recording"] .hs-feedback-state .kit-dot { animation: none; }
+}
+
+.hs-feedback-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  min-width: 0;
+  padding: 6px 12px 8px;
+  font: 400 13px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+
+.hs-feedback-about {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--wb-ink);
+  font-weight: 500;
+}
+
+.hs-feedback-speech {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.hs-feedback-reason,
 .hs-feedback-error {
-  color: var(--signal-fail, #8d2f2f);
   font-size: 12px;
 }
 
-.hs-feedback-verbs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.hs-feedback-error {
+  color: var(--wb-danger-ink, #8d2f2f);
 }
 
-.hs-feedback-strip .gadget-chip-egress {
+.hs-feedback-transcript {
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   color: var(--wb-ink);
-  background: var(--wb-paper);
+}
+
+@media (max-width: 720px) {
+  /* A phone verb owns its whole 44 px target inside the sheet. */
+  .desk-next.hs-feedback-strip .btn {
+    min-height: 44px;
+  }
+  .hs-feedback-strip .hs-feedback-verb {
+    min-width: 44px;
+    padding-inline: 10px;
+    justify-content: center;
+  }
+  .hs-feedback-strip .hs-feedback-verb .hs-feedback-verb-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
