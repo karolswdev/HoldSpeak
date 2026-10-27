@@ -236,15 +236,19 @@ describe("the Meetings list over the HS-170 seed", () => {
   });
 
   /* replaces: tests/e2e/test_hs170_meetings_glass.py::TestMeetingsGlass::test_meetings_face (row → the meeting's own window) */
-  it("a press selects a row; a double press opens the meeting's own window", async () => {
+  it("one press opens the meeting's own window (W1-KIT); Space or a ⌘-press selects", async () => {
     at(hs170 as Fixture);
     hub(hs170 as Fixture);
     render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-saved-outcomes");
+    // detail 0 (Space, element.click()) and a ⌘-press select only.
     fireEvent.click(within(row).getByRole("button"));
     expect(row).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(within(row).getByRole("button"), { detail: 1, metaKey: true });
     expect(openSurfaceOr).not.toHaveBeenCalledWith("review-meetings", "/history", "meeting:m-saved-outcomes");
-    fireEvent.doubleClick(within(row).getByRole("button"));
+    // W1-KIT: Record meeting is the one primary.
+    expect(screen.getByTestId("meetings-record").className).toContain("btn--primary");
+    fireEvent.click(within(row).getByRole("button"), { detail: 1 });
     // `openSourceRef` hands the shell the meeting scope. The one Meetings
     // surface owns the record and its Back control returns to this list.
     expect(openSurfaceOr).toHaveBeenCalledWith(

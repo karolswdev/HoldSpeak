@@ -30,7 +30,7 @@ import { TitleSlotContext } from "../surface/title";
 import { InteriorSlotContext, type WindowInterior } from "../surface/interior";
 import { BackSlotContext, type WindowBack } from "../surface/back";
 import { windowName } from "../windowName";
-import { spriteUrl } from "../sprites";
+import { SPRITE_BASE, spriteUrl } from "../sprites";
 import { WingSlotContext } from "../surface/wings";
 import type { CoreProps } from "../../pages/cores/core-types";
 import { SurfaceState } from "../surface/Surface";
@@ -234,9 +234,7 @@ export function SurfaceWindowHost({
     <DeskWindowFrame
       id={row.id}
       glyph={row.glyph}
-      icon={row.sprite
-        ? <img src={spriteUrl(row.sprite, row.id)} alt="" width={14} height={14} draggable={false} />
-        : undefined}
+      icon={windowSprite(project ? "project" : row.sprite, row.id)}
       eyebrow={row.eyebrow}
       title={titleOverride ?? scopedName ?? row.title}
       minW={row.minW}
@@ -305,4 +303,16 @@ export function SurfaceWindowHost({
       </FootSlotContext.Provider>
     </DeskWindowFrame>
   );
+}
+
+/** W1-KIT: the title-bar glyph of a hosted window: its manifest sprite (a
+ *  world-object kind, or `system:<name>` for a system drawing such as the
+ *  Settings gear), drawn at 20 px by the frame (Icons D). A Room wears its
+ *  project's glyph. */
+function windowSprite(sprite: string | undefined, id: string) {
+  if (!sprite) return undefined;
+  const src = sprite.startsWith("system:")
+    ? `${SPRITE_BASE}system/${sprite.slice("system:".length)}.png`
+    : spriteUrl(sprite, id);
+  return <img src={src} alt="" width={14} height={14} draggable={false} />;
 }

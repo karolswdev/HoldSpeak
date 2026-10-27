@@ -521,7 +521,11 @@ export function FoldGadget({
   );
 }
 
-/* ── StepperGadget: string gadget + ▲▼ arrows + a unit fact ── */
+/* ── StepperGadget: one dense "−  n  +" control ──
+   W1-KIT (2026-10-27): the two steps are library Buttons (dense, 24 px,
+   12 px glyphs) on either side of the number and its unit; no raw
+   <button>, nothing under 12 px (UX-CANON: every verb is the library
+   Button). */
 
 export function StepperGadget({
   label,
@@ -547,34 +551,39 @@ export function StepperGadget({
     // Kill float drift from repeated ± steps.
     return Number(out.toFixed(6));
   };
+  const current = Number.isFinite(value) ? value : 0;
   return (
     <span className="gadget-string gadget-stepper">
+      <Button
+        dense
+        variant="ghost"
+        className="gadget-step"
+        aria-label={`Decrease ${label}`}
+        disabled={typeof min === "number" && current <= min}
+        onClick={() => onChange(clamp((value || 0) - step))}
+      >
+        <span aria-hidden="true">−</span>
+      </Button>
       <input
         aria-label={label}
         type="number"
-        value={Number.isFinite(value) ? value : 0}
+        value={current}
         min={min}
         max={max}
         step={step}
         onChange={(event) => onChange(clamp(Number(event.target.value)))}
       />
       {unit ? <span className="gadget-unit">{unit}</span> : null}
-      <span className="gadget-arrows">
-        <button
-          type="button"
-          aria-label={`Increase ${label}`}
-          onClick={() => onChange(clamp((value || 0) + step))}
-        >
-          ▲
-        </button>
-        <button
-          type="button"
-          aria-label={`Decrease ${label}`}
-          onClick={() => onChange(clamp((value || 0) - step))}
-        >
-          ▼
-        </button>
-      </span>
+      <Button
+        dense
+        variant="ghost"
+        className="gadget-step"
+        aria-label={`Increase ${label}`}
+        disabled={typeof max === "number" && current >= max}
+        onClick={() => onChange(clamp((value || 0) + step))}
+      >
+        <span aria-hidden="true">+</span>
+      </Button>
     </span>
   );
 }

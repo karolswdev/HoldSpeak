@@ -154,7 +154,18 @@ export function FilterBar({
  *  quiet secondary form, ONE primary at most) sit at the left; the
  *  `trailing` slot (a search StringGadget, a filter) sits at the right. No
  *  headline, no count, no stat tiles. At a narrow width the band wraps and
- *  every Button keeps its 44 px target. */
+ *  every Button keeps its 44 px target.
+ *
+ *  THE PRIMARY VERB (W1-KIT, 2026-10-27): a collection window's one blue
+ *  verb is the verb that MAKES its object (Record meeting, New Project,
+ *  New decision, Add person, Start an agent, Add an engine) — always, on an
+ *  empty desk and a full one. A fix verb for a warning (Choose engine) and
+ *  a selection's verbs are never the primary, and the primary never lives
+ *  in the status bar.
+ *
+ *  The band carries an empty sort slot (`.kit-toolbar-sort`): on a narrow
+ *  surface a dense ObjectList puts its "Sort" verb there in place of its
+ *  column header. */
 export function Toolbar({
   label,
   children,
@@ -185,6 +196,7 @@ export function Toolbar({
       data-testid={testId}
     >
       <span className="kit-toolbar-verbs">{children}</span>
+      <span className="kit-toolbar-sort" />
       {trailing ? <span className="kit-toolbar-trailing">{trailing}</span> : null}
     </div>
   );
@@ -472,5 +484,37 @@ export function Steps({ steps, label, "data-testid": testId }: { steps: Readonly
         </li>
       ))}
     </ol>
+  );
+}
+
+const LOADING_WIDTHS = ["62%", "48%", "56%"];
+
+/** W1-KIT (2026-10-27) — THE LOADING FACE: a window's first read. The
+ *  toolbar stays (the caller draws it first); the body shows ghost rows of
+ *  the list grammar: 32 px rows, a glyph square and two pale steel bars. No
+ *  spinner, no "Loading…" word on the glass, nothing moves (the sweep
+ *  settles on `aria-busy`). Meetings, People, Projects, Decisions and the
+ *  Room wear it. */
+export function Loading({
+  rows = 3,
+  label = "Loading",
+  "data-testid": testId,
+}: {
+  rows?: number;
+  /** The words a screen reader hears. */
+  label?: string;
+  "data-testid"?: string;
+}) {
+  return (
+    <div className="kit-loading" role="status" aria-busy="true" data-kind="loading" data-testid={testId}>
+      <span className="sr-only">{label}</span>
+      {Array.from({ length: rows }, (_, index) => (
+        <span key={index} className="kit-loading-row" aria-hidden="true">
+          <span className="kit-loading-glyph" />
+          <span className="kit-loading-bar" style={{ width: LOADING_WIDTHS[index % LOADING_WIDTHS.length] }} />
+          <span className="kit-loading-bar kit-loading-meta" />
+        </span>
+      ))}
+    </div>
   );
 }

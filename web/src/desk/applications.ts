@@ -224,6 +224,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/live",
     surface: {
       eyebrow: "Meeting room",
+      sprite: "meeting",
       minW: 560,
       load: () =>
         import("../pages/cores/LiveCore").then((module) => ({
@@ -276,6 +277,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     mark: 5,
     surface: {
       eyebrow: "Readiness",
+      sprite: "system:dock-settings",
       minW: 560,
       defaultH: 560,
       load: () =>
@@ -295,6 +297,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     group: "tool",
     surface: {
       eyebrow: "Owner",
+      sprite: "artifact",
       minW: 480,
       load: () =>
         import("../pages/cores/ConstitutionalContextCore").then((module) => ({
@@ -313,6 +316,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     group: "tool",
     surface: {
       eyebrow: "Work",
+      sprite: "workbench",
       minW: 560,
       load: () =>
         import("../pages/cores/WorkbenchesHomeCore").then((module) => ({
@@ -332,6 +336,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     go: { group: "builder", order: 3 },
     surface: {
       eyebrow: "Signal React",
+      sprite: "artifact",
       minW: 640,
       load: () =>
         import("../pages/cores/ComponentsCore").then((module) => ({
@@ -351,6 +356,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     group: "tool",
     surface: {
       eyebrow: "This-device context",
+      sprite: "note",
       minW: 480,
       load: () =>
         import("../pages/cores/ActivityCore").then((module) => ({
@@ -370,6 +376,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     group: "tool",
     surface: {
       eyebrow: "Long memory",
+      sprite: "memory",
       minW: 800,
       load: () =>
         import("../pages/cores/MemoryCore").then((module) => ({
@@ -387,6 +394,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     href: "/",
     surface: {
       eyebrow: "Setup",
+      sprite: "project",
       minW: 560,
       defaultH: 580,
       load: () =>
@@ -406,6 +414,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     group: "tool",
     surface: {
       eyebrow: "Kernel",
+      sprite: "workflow",
       minW: 520,
       // 2026-10-25 audit: five one-line columns need the room.
       defaultW: 760,
@@ -462,6 +471,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     // above each project (GO_EXTRA_ROWS `projects`, DeskMenuBar goEntries).
     surface: {
       eyebrow: "Work in flight",
+      sprite: "project",
       minW: 480,
       defaultW: 640,
       defaultH: 520,
@@ -527,6 +537,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     go: { group: "builder", order: 4 },
     surface: {
       eyebrow: "Calendar",
+      sprite: "meeting",
       minW: 640,
       load: () =>
         import("../pages/cores/CalendarSnapshotReviewCore").then((module) => ({
@@ -550,6 +561,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     aliases: [{ key: "open-concierge" }],
     surface: {
       eyebrow: "Engine assignments",
+      sprite: "model",
       minW: 760,
       defaultW: 1040,
       defaultH: 720,

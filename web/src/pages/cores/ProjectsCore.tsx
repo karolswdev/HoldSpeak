@@ -17,7 +17,7 @@ import { useDesk } from "../../desk/store";
 import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { SurfaceState } from "../../desk/surface/Surface";
-import { StatusBar, ToolGlyph, Toolbar, countWords } from "../../desk/surface/kit";
+import { Loading, StatusBar, ToolGlyph, Toolbar, countWords } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../desk/surface/objects/ObjectList";
 import { wireDate } from "../../desk/surface/format";
@@ -133,7 +133,7 @@ export function ProjectsCore(_props: CoreProps) {
   useWindowInterior("list");
 
   const newProject = (
-    <Button dense variant={projects.length ? "secondary" : "primary"} data-testid="projects-new"
+    <Button dense variant="primary" data-testid="projects-new"
       onClick={() => openSurfaceOr("project-setup", "/")}>
       <ToolGlyph kind="new" />
       New Project
@@ -205,7 +205,7 @@ export function ProjectsCore(_props: CoreProps) {
   // Rank one complete read. Partial replies otherwise move visible rows as
   // each Room arrives. On refresh, keep the previous complete read in place.
   if (!complete) {
-    return <>{toolbar}<SurfaceState loading /></>;
+    return <>{toolbar}<Loading data-testid="projects-loading" /></>;
   }
 
   return (

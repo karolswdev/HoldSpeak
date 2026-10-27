@@ -309,8 +309,8 @@ describe("PHILO-14 C4 the Conductor window", () => {
     fireEvent.click(icon("Shard the reconciliation job"));
     fireEvent.click(within(document.querySelector(".cw-footer") as HTMLElement).getByTestId("conductor-open"));
     expect(shell.lanes).toEqual([["l-recon"]]);
-    // A double press opens the row too.
-    fireEvent.doubleClick(icon("scratch"));
+    // W1-KIT: one pointer press opens the row too.
+    fireEvent.click(icon("scratch"), { detail: 1 });
     expect(shell.sessions).toEqual([["claude:solo"]]);
     fireEvent.click(icon("Shard the reconciliation job"));
     fireEvent.click(screen.getByRole("button", { name: "Get Info" }));
@@ -320,8 +320,10 @@ describe("PHILO-14 C4 the Conductor window", () => {
   it("the asking agent has Answer (the ask well); a working one has none; Stop is two presses", async () => {
     render(<ConductorWindow />);
     fireEvent.click(await screen.findByRole("button", { name: "Write the rollback runbook" }));
-    // The ask plate carries the ONE primary of the window.
-    expect(screen.getByRole("button", { name: "Answer" }).className).toContain("btn--primary");
+    // W1-KIT: the window's ONE primary is Start an agent (the verb that
+    // makes an agent); the ask plate's Answer is a plain verb.
+    expect(screen.getByRole("button", { name: "Answer" }).className).not.toContain("btn--primary");
+    expect(screen.getByTestId("conductor-start").className).toContain("btn--primary");
     expect(document.querySelectorAll(".conductor-window .btn--primary")).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "Answer" }));
     expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", answer: true }]]);
@@ -594,7 +596,8 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(call.textContent).toContain("psql -h staging-ledger");
     const plate = screen.getByTestId("conductor-ask-row");
     expect(plate.querySelector(".cw-ask-label")?.textContent).toBe("Wants to run");
-    expect(within(plate).getByRole("button", { name: "Allow" }).className).toContain("btn--primary");
+    // W1-KIT: Start an agent is the window's one primary; Allow is plain.
+    expect(within(plate).getByRole("button", { name: "Allow" }).className).toContain("btn--secondary");
     expect(within(plate).getByRole("button", { name: "Deny" }).className).toContain("btn--secondary");
     await act(async () => {
       fireEvent.click(within(plate).getByRole("button", { name: "Allow" }));

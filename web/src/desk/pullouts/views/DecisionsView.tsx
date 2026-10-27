@@ -18,7 +18,7 @@ import { Material } from "../../surface/Material";
 import { FoldGadget, GadgetGroup, GadgetRow } from "../../surface/gadgets";
 import { StateChip } from "../../surface";
 import { CheckGadget } from "../../surface/gadgets";
-import { StatusBar, ToolGlyph, Toolbar, countWords } from "../../surface/kit";
+import { Loading, StatusBar, ToolGlyph, Toolbar, countWords } from "../../surface/kit";
 import { useWindowInterior } from "../../surface/interior";
 import { useHasWindowBack, useWindowBack } from "../../surface/back";
 import { useCompactViewport } from "../../useCompactViewport";
@@ -532,9 +532,8 @@ export function DecisionsView({
         </Toolbar>
         {error ? <SurfaceState error={error} /> : null}
         <div className="decisions-list">
-          <SurfaceState
-            loading={loading}
-            empty={!loading && !results.length && !error}
+          {loading ? <Loading data-testid="decisions-loading" /> : <SurfaceState
+            empty={!results.length && !error}
             emptyLabel={query.trim() ? "No decisions match this search" : whyOnly ? "No current decisions" : "No decisions yet"}
             emptyImage={DECISION_SPRITE}
           >
@@ -550,7 +549,7 @@ export function DecisionsView({
               onOpen={open}
               rowProps={() => ({ "data-testid": "decisions-row" })}
             />
-          </SurfaceState>
+          </SurfaceState>}
         </div>
         <StatusBar
           data-testid="decisions-status"

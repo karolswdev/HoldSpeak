@@ -107,12 +107,12 @@ describe("Q12 Memory", () => {
     expect(within(home).getByTestId("memory-belief").textContent).not.toContain("Theo owns the on-call handbook.");
     expect(within(home).getAllByRole("button", { name: "Open the source: 1:1 With Mira" }).length).toBeGreaterThan(0);
 
-    // The links are list views: a press selects (Open in the status bar), a
-    // double press opens.
+    // The links are list views: a programmatic press selects (Open in the
+    // status bar); one pointer press opens (W1-KIT).
     fireEvent.click(within(home).getByRole("button", { name: "Ledger" }));
     fireEvent.click(screen.getByTestId("memory-open-selected"));
     expect(vi.mocked(openProjectRoom)).toHaveBeenCalledWith("p1");
-    fireEvent.doubleClick(within(home).getByRole("button", { name: "Mira Kovacs" }));
+    fireEvent.click(within(home).getByRole("button", { name: "Mira Kovacs" }), { detail: 1 });
     expect(vi.mocked(openPerson)).toHaveBeenCalledWith("r1");
     expect(screen.getByTestId("memory-written").textContent).toMatch(/^Written /);
     expect(screen.getByTestId("memory-status").textContent).toContain("1 project");

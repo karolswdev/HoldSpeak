@@ -105,23 +105,30 @@ describe("P4: the Projects window", () => {
     expect(within(atRiskRow).getByTestId("projects-reason").textContent).toBe("Tokenization waits on the HSM key ceremony");
   });
 
-  it("a press selects a project; a double press, Enter or the toolbar's Open opens it", async () => {
+  it("one press opens a project (W1-KIT); a programmatic press selects; Enter or the toolbar's Open opens it", async () => {
     useDesk.setState({ projects: projects.map((p) => ({ id: p.id, name: p.name })) } as never);
     render(<ProjectsCore />);
     await act(async () => { await Promise.resolve(); await Promise.resolve(); });
     // Window grammar: a toolbar, a dense list view, a status bar; no band.
     expect(screen.getByRole("toolbar", { name: "Projects" })).toContainElement(screen.getByTestId("projects-new"));
+    // W1-KIT: New Project is the one primary on a full window too.
+    expect(screen.getByTestId("projects-new").className).toContain("btn--primary");
     expect(screen.getByRole("grid", { name: "Projects" })).toHaveAttribute("data-density", "dense");
     expect(screen.getByTestId("projects-status").textContent).toContain("2 projects");
     const name = screen.getByRole("button", { name: /^Payments migration/ });
+    // detail 0: Space or element.click() selects only.
     fireEvent.click(name);
     expect(opened.rooms).toEqual([]);
     expect(rows()[0]).toHaveAttribute("aria-selected", "true");
     fireEvent.click(screen.getByTestId("projects-open-selected"));
     expect(opened.rooms).toEqual([WIRE.payments]);
-    fireEvent.doubleClick(name);
     fireEvent.keyDown(name, { key: "Enter" });
+    expect(opened.rooms).toEqual([WIRE.payments, WIRE.payments]);
+    // A pointer press (detail 1) opens; a ⌘-press only selects.
+    fireEvent.click(name, { detail: 1 });
     expect(opened.rooms).toEqual([WIRE.payments, WIRE.payments, WIRE.payments]);
+    fireEvent.click(name, { detail: 1, metaKey: true });
+    expect(opened.rooms).toHaveLength(3);
   });
 
   it("a Room that cannot be read says so; it never claims a state", async () => {

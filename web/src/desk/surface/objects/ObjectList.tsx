@@ -9,7 +9,18 @@
  *  marks) and the row stays at least 44 px tall.
  *
  *  Keyboard: one Tab stop; arrows walk the rows (useRovingRows); Space
- *  selects; Enter (or a double press) opens.
+ *  selects; Enter opens.
+ *
+ *  W1-KIT (2026-10-27) — one press opens: in a dense collection list a
+ *  plain press OPENS the row's object (objects open, Phase 14). A ⌘-, ⌃- or
+ *  shift-press, Space and a programmatic click select only; Enter opens the
+ *  focused row. `pressOpens={false}` keeps press-to-select for a list whose
+ *  open is an act (Setup's readiness rows run their fix).
+ *
+ *  On a narrow surface (520 px or less) the rows fold to two lines, so the
+ *  column header is hidden and the sort lives in a dense "Sort" verb in the
+ *  nearest toolbar's sort slot (kit Toolbar), or in place when no toolbar
+ *  holds one.
  *
  *  Window grammar (2026-10-24): `density="dense"` is the native list view
  *  of a collection window: 30 px rows (44 px in a surface of 520 px or
@@ -19,7 +30,9 @@
  *  `columns` lets the provider declare its own columns (and order); a
  *  column whose key is not a built-in reads `row.cells[key]`.
  */
-import { useEffect, useMemo, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { Popover } from "../patterns/Popover";
 import { Button } from "../../../components/signal/Signal";
 import { LampGadget } from "../gadgets";
 import { useRovingRows } from "../roving";
@@ -143,6 +156,9 @@ export interface ObjectListProps {
   selectedLabel?: string;
   onSelect?(id: string): void;
   onOpen?(id: string): void;
+  /** W1-KIT: a plain press opens the row (default: on for a dense list).
+   *  False keeps press-to-select (a list whose open is an act). */
+  pressOpens?: boolean;
   /** PHILO-17 U30: extra props for a row (the Room's FILES: a filed object
    *  drags onto an agent, as the drawer's icons did). */
   rowProps?(row: ObjectListRow): Record<string, unknown>;
@@ -162,16 +178,24 @@ export function ObjectList({
   selectedLabel,
   onSelect,
   onOpen,
+  pressOpens,
   rowProps,
   className,
 }: ObjectListProps) {
   const bodyRef = useRef<HTMLDivElement>(null);
-  // Dense: a touch tap opens (the phone's list view has no double press);
-  // a mouse press selects and a double press or Enter opens.
-  const touchPress = useRef(false);
+  const listRef = useRef<HTMLDivElement>(null);
   useRovingRows(bodyRef, { selector: ".object-list-open" });
   const sorted = useMemo(() => sortRows(rows, sort), [rows, sort]);
   const dense = density === "dense";
+  // W1-KIT: a plain press opens a dense list's object.
+  const opensOnPress = Boolean(onOpen) && (pressOpens ?? dense);
+  // The narrow sort verb rides the nearest toolbar's sort slot.
+  const [sortSlot, setSortSlot] = useState<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (!dense || !onSort) return;
+    const found = nearestSortSlot(listRef.current);
+    setSortSlot((now) => (now === found ? now : found));
+  });
   const columns: ObjectListColumn[] = declared
     ? [declared.find((column) => column.key === "name") ?? COLUMNS[0], ...declared.filter((column) => column.key !== "name")]
     : COLUMNS.filter((column) => column.key === "name" || !visibleColumns || visibleColumns.includes(column.key as ObjectSortKey));
@@ -198,8 +222,19 @@ export function ObjectList({
       onOpen?.(id);
     }
   };
+  // A pointer press has `detail` 1 (Space and element.click() have 0); a
+  // modifier press is a multi-select gesture and only selects.
+  const press = (id: string) => (event: MouseEvent<HTMLButtonElement>) => {
+    onSelect?.(id);
+    const modified = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+    if (opensOnPress && !modified && event.detail === 1) onOpen?.(id);
+  };
+  const sortVerb = dense && onSort ? (
+    <ListSortVerb columns={columns} sort={sort} onSort={(key) => onSort(key as ObjectSortKey)} />
+  ) : null;
   return (
     <div
+      ref={listRef}
       className={`object-list${className ? ` ${className}` : ""}`}
       data-density={dense ? "dense" : undefined}
       data-compact-columns={compactColumns || undefined}
@@ -208,6 +243,7 @@ export function ObjectList({
       aria-label={label}
       aria-rowcount={rows.length + 1}
     >
+      {sortVerb ? (sortSlot ? createPortal(sortVerb, sortSlot) : <div className="object-list-sortline">{sortVerb}</div>) : null}
       <div className="object-list-head" role="row">
         {columns.map((column) => {
           const active = sort.key === column.key;
@@ -274,13 +310,8 @@ export function ObjectList({
                     : [row.name, kindWord, row.when, row.state?.label, selected ? selectedLabel : undefined])
                     .filter(Boolean)
                     .join(", ")}
-                  onPointerDown={dense ? (event) => { touchPress.current = event.pointerType === "touch"; } : undefined}
-                  onClick={() => {
-                    onSelect?.(row.id);
-                    if (dense && touchPress.current && onOpen) onOpen(row.id);
-                    touchPress.current = false;
-                  }}
-                  onDoubleClick={onOpen ? () => onOpen(row.id) : undefined}
+                  onClick={press(row.id)}
+                  onDoubleClick={onOpen && !opensOnPress ? () => onOpen(row.id) : undefined}
                   onKeyDown={keyDown(row.id)}
                 >
                   {row.avatar ? (
@@ -339,5 +370,71 @@ export function ObjectList({
         })}
       </div>
     </div>
+  );
+}
+
+/** The nearest toolbar sort slot above a list: the first `.kit-toolbar-sort`
+ *  found walking up from the list that is not inside the list itself. */
+function nearestSortSlot(list: HTMLElement | null): HTMLElement | null {
+  if (!list) return null;
+  for (let node = list.parentElement; node; node = node.parentElement) {
+    const slot = [...node.querySelectorAll<HTMLElement>(".kit-toolbar-sort")].find((el) => !list.contains(el));
+    if (slot) return slot;
+    if (node.classList.contains("desk-window-shell")) break;
+  }
+  return null;
+}
+
+/** The narrow list's sort: one dense verb (`Sort ▾`) that opens the columns
+ *  as library Buttons; the active one carries its direction and a second
+ *  press on it flips the order. Shown only on a narrow surface (CSS). */
+function ListSortVerb({
+  columns,
+  sort,
+  onSort,
+}: {
+  columns: ObjectListColumn[];
+  sort: ObjectListSort;
+  onSort(key: string): void;
+}) {
+  const anchor = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const active = columns.find((column) => column.key === sort.key);
+  const dirWord = sort.dir === "asc" ? "ascending" : "descending";
+  return (
+    <span className="object-list-sortverb">
+      <Button
+        ref={anchor}
+        dense
+        variant="secondary"
+        aria-haspopup="true"
+        aria-expanded={open}
+        aria-label={active ? `Sort: ${active.word}, ${dirWord}` : "Sort"}
+        data-testid="object-list-sort-verb"
+        onClick={() => setOpen((now) => !now)}
+      >
+        Sort ▾
+      </Button>
+      <Popover anchor={anchor} open={open} onClose={() => setOpen(false)} ariaLabel="Sort by" placement="below" align="end">
+        <span className="object-list-sortmenu" role="group" aria-label="Sort by">
+          {columns.map((column) => {
+            const on = column.key === sort.key;
+            return (
+              <Button
+                key={column.key}
+                dense
+                variant="ghost"
+                aria-pressed={on ? "true" : "false"}
+                data-col={column.key}
+                onClick={() => { onSort(column.key); setOpen(false); }}
+              >
+                <span className="object-list-sortmenu-word">{column.word}</span>
+                {on ? <span className="object-list-sort-mark" aria-hidden="true">{sort.dir === "asc" ? "▲" : "▼"}</span> : null}
+              </Button>
+            );
+          })}
+        </span>
+      </Popover>
+    </span>
   );
 }

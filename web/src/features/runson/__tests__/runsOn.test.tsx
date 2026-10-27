@@ -883,8 +883,10 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     const view = render(<RunsOnCore />);
     await screen.findByText("No engine yet");
     const find = screen.getByRole("button", { name: "Find on LAN" });
-    expect(find.className).toContain("btn--primary");
-    expect(screen.getByRole("button", { name: "Add an engine" })).toBeTruthy();
+    // W1-KIT: Add an engine (the verb that makes an engine) is the one
+    // primary on a cold desk too; Find on LAN is a plain verb beside it.
+    expect(find.className).toContain("btn--secondary");
+    expect(screen.getByRole("button", { name: "Add an engine" }).className).toContain("btn--primary");
     await screen.findByTestId("runson-download-preset:vision");
     expect(view.container.querySelector<HTMLDetailsElement>(".runson-downloads")?.open).toBe(false);
     expect(view.container.querySelectorAll("[data-job-id]")).toHaveLength(0);

@@ -470,6 +470,19 @@
   }
 }
 
+/* The sort slot: empty on a wide surface; on a narrow one a dense
+   ObjectList's "Sort" verb sits here (its column header is hidden). */
+.kit-toolbar-sort {
+  display: none;
+}
+@container surface (max-width: 520px) {
+  .kit-toolbar-sort:not(:empty) {
+    display: inline-flex;
+    align-items: center;
+    margin-left: auto;
+  }
+}
+
 /* `trailingStays`: the trailing control (the Note's mic) is the band's
    own, not a search well: it stays at the band's right end at every width. */
 .kit-toolbar[data-trailing="stays"] > .kit-toolbar-trailing {
@@ -553,20 +566,71 @@
   flex-wrap: wrap;
   padding-block: 3px;
 }
-/* Narrow: the bar grows to 44 px and the verbs take their own line under
-   the words, each keeping its whole 44 px target. */
-@container surface (max-width: 520px) {
-  .kit-statusbar {
-    --wb-statusbar-h: 44px;
+/* W1-KIT (2026-10-27) — the phone status bar: at 560 px or less the bar
+   is ONE 24 px line. Its facts run on one line and end in an ellipsis; its
+   verbs are dense verbs at the right end (never a row of their own, never
+   a 44 px plate). Owner, 2026-10-27: "half my phone is the footer". */
+@container surface (max-width: 559.9px) {
+  .kit-statusbar,
+  .kit-statusbar:has(> .kit-statusbar-verbs) {
+    --wb-statusbar-h: 24px;
+    flex-wrap: nowrap;
+    gap: 8px;
+    height: 24px;
+    padding: 0 24px 0 10px;
+    overflow: hidden;
+  }
+  .kit-statusbar-items {
+    display: block;
+    flex: 1 1 auto;
+    /* The facts keep a readable share of the line beside a verb. */
+    min-width: min(40%, 160px);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    line-height: 24px;
+  }
+  .kit-statusbar-item {
+    display: inline;
+  }
+  .kit-statusbar-item > .kit-dot {
+    margin-inline-end: 5px;
+    vertical-align: -0.5px;
+  }
+  .kit-statusbar-item:not(:last-child)::after {
+    margin-inline: 4px 6px;
   }
   .kit-statusbar > .kit-statusbar-verbs {
-    flex: 1 1 100%;
-    justify-content: flex-end;
-    padding-top: 2px;
+    flex: none;
+    flex-wrap: nowrap;
+    gap: 4px;
+    margin-left: auto;
+    padding: 0;
   }
-  .desk-next .kit-statusbar .kit-statusbar-verbs .btn {
-    height: auto;
-    min-height: 44px;
+  .kit-statusbar > :is(.kit-statusbar-trailing, .kit-statusbar-egress) {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .kit-statusbar > .kit-statusbar-verbs {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .desk-next .kit-statusbar .kit-statusbar-verbs .btn,
+  .desk-next .desk-window-shell.is-sheet .kit-statusbar .kit-statusbar-verbs .btn {
+    height: 20px;
+    min-height: 20px;
+    min-width: 0;
+    padding-inline: 8px;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .desk-next .kit-statusbar .kit-statusbar-verbs .btn .kit-toolglyph {
+    width: 12px;
+    height: 12px;
   }
 }
 .kit-statusbar-egress {
@@ -685,4 +749,39 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .kit-toolbar .btn { transition: none; }
+}
+
+/* W1-KIT (2026-10-27) — the loading face: ghost rows of the list grammar
+   (32 px, a glyph square, a name bar and a quiet meta bar), still. */
+.kit-loading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 4px 0;
+}
+.kit-loading-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.kit-loading-glyph {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--wb-steel);
+}
+.kit-loading-bar {
+  flex: none;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--wb-steel);
+}
+.kit-loading-meta {
+  width: 72px;
+  margin-left: auto;
+  opacity: 0.7;
 }
