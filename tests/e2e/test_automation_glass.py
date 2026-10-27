@@ -84,15 +84,18 @@ class TestAboutDrop:
                 frame = page.locator(f"[id='workbench:{WB}']")
                 box = frame.bounding_box()
                 assert icon_box and box
+                # Sideways: a window stops above the dock (windowGeometry.ts
+                # workBand), and since the floating dock (#1497, #1514) a
+                # 680 px window at 900 px cannot drop below the icon's foot.
                 grab = (box["x"] + 120, box["y"] + 12)
-                shift = max(0.0, icon_box["y"] + icon_box["height"] + 24 - box["y"])
+                shift = max(0.0, icon_box["x"] + icon_box["width"] + 24 - box["x"])
                 page.mouse.move(*grab)
                 page.mouse.down()
-                page.mouse.move(grab[0], grab[1] + shift / 2, steps=6)
-                page.mouse.move(grab[0], grab[1] + shift, steps=6)
+                page.mouse.move(grab[0] + shift / 2, grab[1], steps=6)
+                page.mouse.move(grab[0] + shift, grab[1], steps=6)
                 page.mouse.up()
                 moved = frame.bounding_box()
-                assert moved and moved["y"] > icon_box["y"] + icon_box["height"], (icon_box, moved)
+                assert moved and moved["x"] > icon_box["x"] + icon_box["width"], (icon_box, moved)
                 with page.expect_response(lambda r: r.url.endswith(f"/api/workbenches/{WB}")
                                           and r.request.method == "PUT") as kept:
                     page.locator(ICON).drag_to(window)

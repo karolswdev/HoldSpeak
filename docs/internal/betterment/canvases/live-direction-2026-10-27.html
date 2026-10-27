@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Live meeting directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material: the values below are copied from web/src/styles/tokens.css (2026-10-27),
+   the same set the Note and Ask canvases use. */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-rec:#b3261e;
+  --wb-row-hover:color-mix(in srgb,#3b5d93 8%,#fafbfc);
+  --ok:#34d399; --ok-strong:#10b981; --ember:#a86e4a; --ember-ink:#8a5a3d; --warn:#f59e0b; --danger:#dc2626;
+  --person-ink:#1f7a6b; --person-tint:rgba(52,211,153,.14); --link-ink:#2f67c8; --head-ink:#2b4a7a;
+  --lamp-ring:0 0 0 1.5px var(--wb-paper),0 1px 2px rgba(12,20,32,.4);
+  --win-shadow:0 18px 44px rgba(8,14,22,.40),0 3px 10px rgba(8,14,22,.24);
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#e9eef4;color:var(--wb-ink);font:15px/1.5 var(--font-ui);min-width:1520px}
+main{padding:32px 40px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+h3{font:600 14px/1.3 var(--font-ui);margin:20px 0 8px;color:var(--wb-muted)}
+p{margin:0 0 10px;max-width:1040px}
+.lede{display:grid;grid-template-columns:1fr 640px;gap:32px;align-items:start;margin-bottom:12px}
+.now{display:flex;gap:12px;flex-wrap:wrap}
+.now figure{margin:0}
+.now img{display:block;border-radius:6px;border:1px solid var(--wb-rule)}
+figcaption{font-size:12px;color:var(--wb-muted);margin-top:4px}
+section.block{margin:40px 0 0;padding:24px 0 0;border-top:1px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#fff;color:var(--wb-muted);box-shadow:0 0 0 1px var(--wb-rule)}
+.inv{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;max-width:1440px}
+.inv div{background:#fff;border:1px solid var(--wb-rule-soft);border-radius:8px;padding:12px 14px}
+.inv h4{font:600 13px var(--font-display);margin:0 0 6px;color:var(--head-ink)}
+.inv ul{margin:0;padding:0 0 0 16px;font-size:13px;line-height:1.5}
+.inv li{margin:0 0 4px}
+.inv code{font:12px var(--font-mono);color:var(--wb-muted)}
+.inv .gap{color:var(--ember-ink)}
+.qa{display:grid;grid-template-columns:200px 1fr 1fr;max-width:1200px;border:1px solid var(--wb-rule-soft);border-radius:8px;overflow:hidden;background:#fff;font-size:13px}
+.qa > div{padding:9px 12px;border-top:1px solid var(--wb-rule-soft);border-left:1px solid var(--wb-rule-soft)}
+.qa > div:nth-child(3n+1){border-left:0;font-weight:600;color:var(--wb-muted)}
+.qa > .h{border-top:0;font:600 13px var(--font-display);background:var(--wb-steel-2)}
+.qa > .h.rec{background:var(--wb-blue);color:var(--head-ink)}
+.qa > .rec{background:color-mix(in srgb,var(--wb-blue) 45%,#fff)}
+.cost{font-size:14px;max-width:1200px}
+.cost code,.order code{font:12.5px var(--font-mono);color:var(--wb-muted)}
+.order{font-size:14px;max-width:1200px;padding-left:22px}
+.order li{margin:0 0 6px}
+
+/* the three moments, side by side, each a real 760 x 560 window over the real desk crop */
+.trio{display:flex;flex-direction:column;gap:22px}
+.moment{display:grid;grid-template-columns:200px 820px;gap:20px;align-items:start}
+.moment .say{font-size:13.5px;color:var(--wb-ink)}
+.moment .say b{display:block;font:600 15px var(--font-display);color:var(--head-ink);margin-bottom:4px}
+.stage{position:relative;width:820px;height:620px;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);background:url(live-direction-2026-10-27/desk-1440.png) -620px -40px/1440px 900px no-repeat}
+.stage .floor{position:absolute;inset:0;background:linear-gradient(180deg,#2f4155 0%,#2c3d50 100%);opacity:.94}
+
+/* the window */
+.win{position:absolute;left:30px;top:30px;width:760px;height:560px;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--win-shadow);overflow:hidden;display:flex;flex-direction:column}
+.tb{flex:0 0 30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tb .x{width:20px;text-align:center;font-size:15px;opacity:.9}
+.tb .gl{width:18px;height:18px;border-radius:4px;background:#fff;display:grid;place-items:center}
+.tb .gl img{width:14px;height:14px}
+.tb .name{font:600 13.5px/1 var(--font-display);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb .gad{display:flex;gap:2px}
+.tb .gad span{width:28px;height:22px;display:grid;place-items:center}
+.tb .gad svg{width:14px;height:14px;stroke:#f7f9fc;fill:none;stroke-width:1.6}
+.toolbar{flex:0 0 36px;display:flex;align-items:center;gap:2px;padding:0 6px;border-bottom:1px solid var(--wb-rule-soft)}
+.toolbar .grow{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:5px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc;padding:0 11px}
+.btn.danger{background:var(--wb-rec);color:#fff;padding:0 11px}
+.btn.secondary{background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule)}
+.btn.sm{height:22px;font-size:12px;padding:0 8px}
+.btn .stopsq{width:9px;height:9px;border-radius:2px;background:#fff}
+.btn .recdot{width:10px;height:10px;border-radius:50%;background:#ff6a5f;box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.body{flex:1;min-height:0;overflow:hidden;position:relative}
+.sb{flex:0 0 24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:8px;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .sep{opacity:.5}
+.sb .strong{color:var(--wb-ink);font-variant-numeric:tabular-nums}
+.sb .grow{flex:1}
+.lamp{width:8px;height:8px;border-radius:50%;background:var(--ok-strong);box-shadow:var(--lamp-ring);display:inline-block}
+.lamp.warn{background:var(--warn)}
+.lamp.live{background:#e5483d;animation:breathe 1.4s ease-in-out infinite alternate}
+@keyframes breathe{from{opacity:1}to{opacity:.45}}
+
+/* step rail (Today's meetingSteps) */
+.rail{display:flex;align-items:center;gap:0;padding:12px 18px 12px;border-bottom:1px solid var(--wb-rule-soft)}
+.rail .st{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--wb-muted);white-space:nowrap}
+.rail .st i{width:18px;height:18px;border-radius:5px;display:grid;place-items:center;font:600 11px var(--font-ui);font-style:normal;box-shadow:inset 0 0 0 1px var(--wb-rule);background:#fff}
+.rail .st.done i{background:#e3f5ec;box-shadow:inset 0 0 0 1px #9fd8bd;color:#167a55}
+.rail .st.now{color:var(--wb-ink);font-weight:600}
+.rail .st.now i{background:var(--wb-sel);color:#fff;box-shadow:none}
+.rail .ln{flex:1;height:1px;background:var(--wb-rule-soft);margin:0 10px;min-width:16px}
+
+/* BEFORE: the ready sheet */
+.ready{padding:14px 18px}
+.ready .cap{font:600 12px var(--font-ui);color:var(--wb-muted);margin:6px 0 4px}
+.orow{height:32px;display:flex;align-items:center;gap:10px;padding:0 8px;border-bottom:1px solid #e9eef4;font-size:13px}
+.orow img,.orow .ic{width:18px;height:18px;flex:0 0 18px}
+.orow .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orow .m{color:var(--wb-muted);font-size:12px;white-space:nowrap}
+.orow .dw{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--wb-muted);min-width:92px}
+.honest{margin:12px 0 4px;padding:9px 12px;border-radius:7px;background:color-mix(in srgb,var(--warn) 10%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--warn);font-size:13px;display:flex;align-items:center;gap:10px}
+.honest .grow{flex:1}
+.meter{display:flex;align-items:flex-end;gap:2px;height:14px}
+.meter i{width:3px;border-radius:1px;background:var(--ok-strong);opacity:.85}
+
+/* DURING: the transcript as a document */
+.doc{padding:10px 18px 0 0;font:14px/1.6 var(--font-ui)}
+.para{display:grid;grid-template-columns:62px 1fr;gap:0 10px;padding:2px 0}
+.para .when{text-align:right;color:var(--wb-faint);font-size:12px;font-variant-numeric:tabular-nums;padding-top:3px}
+.para .who{font:600 12.5px var(--font-ui);color:var(--person-ink);margin:8px 0 0}
+.para .said{color:var(--wb-ink)}
+.para.flag .when{color:var(--ember-ink);font-weight:600}
+.para.flag .said{background:color-mix(in srgb,var(--ember) 9%,var(--wb-paper));box-shadow:inset 3px 0 0 var(--ember);padding:2px 8px;border-radius:4px}
+.para.new .said{animation:arrive .4s ease-out both}
+@keyframes arrive{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.listen{display:grid;grid-template-columns:62px 1fr;gap:0 10px;color:var(--wb-faint);font-size:13px;padding:6px 0}
+.listen span:last-child{display:inline-flex;align-items:center;gap:8px}
+.caret{width:2px;height:15px;background:var(--wb-sel-vivid);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* B: the notes pane */
+.split{display:grid;grid-template-columns:1fr 268px;height:100%}
+.notes{border-left:1px solid var(--wb-rule-soft);background:#fff;padding:10px 14px;font-size:13.5px;line-height:1.55;position:relative}
+.notes .h{font:600 12px var(--font-ui);color:var(--wb-muted);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.notes .bm{font:600 12.5px var(--font-ui);color:var(--ember-ink);margin:8px 0 2px}
+.notes .forming{position:absolute;left:10px;right:10px;bottom:10px;border-radius:7px;background:color-mix(in srgb,var(--wb-sel-vivid) 6%,var(--wb-paper));box-shadow:inset 3px 0 0 #8fb0e6,0 0 0 1px #d6e1f2;padding:8px 10px;font-size:12.5px;color:#33465f}
+.notes .forming b{font-weight:600;display:block;font-size:12px;color:var(--wb-muted);margin-bottom:2px}
+
+/* AFTER: the record */
+.rec{padding:12px 18px}
+.rec .sum{font-size:14px;margin:4px 0 10px}
+.rec .cap{font:600 12px var(--font-ui);color:var(--wb-muted);margin:10px 0 2px;display:flex;align-items:center;gap:8px}
+.rec .cap::after{content:"";flex:1;height:1px;background:var(--wb-rule-soft)}
+.who-chip{display:inline-flex;align-items:center;gap:5px;color:var(--person-ink);font-size:12px}
+.who-chip i{width:16px;height:16px;border-radius:50%;background:var(--person-tint);font:600 9.5px/16px var(--font-ui);text-align:center;font-style:normal}
+
+/* gear wing: Settings > Meetings */
+.settings{display:grid;grid-template-columns:172px 1fr;height:100%}
+.side{background:#f1f4f8;border-right:1px solid var(--wb-rule-soft);padding:8px 6px;font-size:13px}
+.side div{height:30px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:6px}
+.side div.on{background:var(--wb-sel);color:#fff}
+.pane{padding:12px 22px;font-size:13px;overflow:hidden}
+.pane .g{font:600 13px var(--font-ui);margin:10px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--wb-rule-soft)}
+.pane .r{height:32px;display:grid;grid-template-columns:170px 1fr auto;align-items:center;gap:10px;border-bottom:1px solid #eef2f6}
+.pane .r .v{color:var(--wb-ink)}
+.pane .r .q{color:var(--wb-muted);font-size:12px}
+.pane .new{background:color-mix(in srgb,var(--wb-sel-vivid) 5%,transparent);box-shadow:inset 2px 0 0 var(--wb-sel-vivid)}
+
+/* phones */
+.phones{display:flex;gap:56px;align-items:flex-start;margin:14px 0 0 10px}
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:url(live-direction-2026-10-27/today-393.png) 0 0/393px 852px no-repeat;font-family:var(--font-ui)}
+.ph-sys{position:absolute;left:92px;top:0;width:200px;height:44px;background:var(--wb-paper);display:flex;align-items:center;padding-left:10px;font:600 15px var(--font-ui)}
+.ph-win{position:absolute;left:0;right:0;top:44px;height:726px;background:var(--wb-paper);display:flex;flex-direction:column}
+.ph-tb{flex:0 0 44px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 14px var(--font-display)}
+.ph-tb .back{font:500 13px var(--font-ui);opacity:.9}
+.ph-tb .n{flex:1;text-align:center;margin-right:44px}
+.ph-tool{flex:0 0 48px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid var(--wb-rule-soft)}
+.ph-tool .btn{height:36px;font-size:14px}
+.ph-tool .grow{flex:1}
+.ph-body{flex:1;overflow:hidden;position:relative}
+.ph-sb{flex:0 0 26px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:8px;padding:0 12px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.phone .para{grid-template-columns:46px 1fr}
+.phone .doc{padding:10px 14px 0 0;font-size:15px}
+.phone .orow{height:44px;font-size:14px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="g-gear" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.3"/><path d="M8 1.8v1.8M8 12.4v1.8M1.8 8h1.8M12.4 8h1.8M3.6 3.6l1.3 1.3M11.1 11.1l1.3 1.3M3.6 12.4l1.3-1.3M11.1 4.9l1.3-1.3"/></symbol>
+  <symbol id="g-flag" viewBox="0 0 16 16"><path d="M3.5 14V2.5M3.5 3h8l-2 3 2 3h-8"/></symbol>
+  <symbol id="g-edit" viewBox="0 0 16 16"><path d="M10.5 2.5l3 3-8 8h-3v-3z"/></symbol>
+  <symbol id="g-send" viewBox="0 0 16 16"><path d="M14 2L1.8 7.2 6.5 9l1.8 4.8z"/><path d="M6.5 9L14 2"/></symbol>
+  <symbol id="g-export" viewBox="0 0 16 16"><path d="M8 2v8M5 7l3 3 3-3M2.5 11.5v2h11v-2"/></symbol>
+  <symbol id="g-mic" viewBox="0 0 16 16"><rect x="5.5" y="1.8" width="5" height="8" rx="2.5"/><path d="M3.3 7.6a4.7 4.7 0 0 0 9.4 0M8 12.4v2"/></symbol>
+  <symbol id="g-spk" viewBox="0 0 16 16"><path d="M2.5 6h2.5l3.5-3v10L5 10H2.5z"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5"/></symbol>
+  <symbol id="g-note" viewBox="0 0 16 16"><path d="M3 2h7l3 3v9H3z"/><path d="M5.5 7h5M5.5 9.5h5"/></symbol>
+  <symbol id="g-min" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M5 10.5h6"/></symbol>
+  <symbol id="g-max" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><rect x="5" y="5" width="6" height="4"/></symbol>
+  <symbol id="g-depth" viewBox="0 0 16 16"><rect x="2" y="5" width="8" height="8" rx="1.2"/><path d="M6 5V3h8v8h-4"/></symbol>
+</svg>
+<main>
+
+<div class="lede">
+  <div>
+    <h1>Live meeting: before, during and after</h1>
+    <p>The job (J2, USE_CASES "Record a meeting and find the result again"): he presses Start, he sees the words arrive, he presses Stop, he reads the summary, he decides, he sends the follow-up. Audio readiness and model readiness are separate facts, and a queued job is not a summary.</p>
+    <p><b>Recommendation: A, the transcript is the page.</b> One window carries the meeting. Before, it is a short ready sheet with one primary verb. During, the body is the transcript as a document: a time mark in the margin, the speaker's name when the speaker changes, the newest line at the foot. The status bar carries the live state: <i>Recording · 12:04 · Summaries on Codex</i>. After, the same window is the record (MeetingRecord, already built). The gear wing goes: its parts move to Settings ▸ Meetings, and <i>Settings</i> is a toolbar verb.</p>
+    <p style="color:var(--wb-muted);font-size:13px">Drawn at real size (760 × 560 windows over the real 1440 desk, 393 phones), in our tokens and window grammar. The worked example is the seeded "Ledger cutover sync".</p>
+  </div>
+  <div class="now">
+    <figure><img src="live-direction-2026-10-27/today-live-1440.png" width="400" alt="Live meeting today at 1440"><figcaption>Today (after W1-TRUTH): the stepper and an empty Transcript head</figcaption></figure>
+    <figure><img src="live-direction-2026-10-27/today-gear-393.png" width="180" alt="Configure meeting today at 393"><figcaption>Today: the gear wing</figcaption></figure>
+  </div>
+</div>
+
+<section class="block">
+  <h2>What Live does today</h2>
+  <div class="inv">
+    <div><h4>Before</h4><ul>
+      <li>Toolbar: <i>Start meeting</i> (primary), <i>Set up speech · 144 MB</i> when no speech model.</li>
+      <li>Body: the four steps, a <i>Transcript</i> head and "Start a meeting to begin".</li>
+      <li>Status bar: <i>Speech not set up</i> or <i>Ready</i>, and <i>Link connected</i>.</li>
+      <li class="gap">No device line, no engine by name: he does not know what will hear him or what will write the summary.</li>
+    </ul></div>
+    <div><h4>Start</h4><ul>
+      <li><code>POST /api/meeting/start</code> → the meeting opens in its own window (<code>pullout:meeting:&lt;id&gt;</code>), the Live window closes (<code>LiveCore.tsx</code> <code>perform</code>).</li>
+      <li>Doors: Meetings ▸ Record meeting, Today ▸ Record now, Capture ▸ Record, the dock's record orb, ⌥R, MCP <code>meeting_start_capture</code>.</li>
+    </ul></div>
+    <div><h4>During</h4><ul>
+      <li>Bus frames: <code>segment</code> (<code>text, speaker, start_time, end_time, is_bookmarked</code>), <code>duration</code> ("MM:SS" each second), <code>bookmark</code>, <code>intel_status</code>, <code>intel_complete</code>, <code>capture_recovery</code>.</li>
+      <li>Body: a dated stream with a count head; <i>+ Bookmark</i> rides the stream head.</li>
+      <li class="gap">The time column reads <code>timestamp</code>/<code>start</code>, the wire sends <code>start_time</code>: every line has an empty time mark. The speaker is never shown.</li>
+    </ul></div>
+    <div><h4>After</h4><ul>
+      <li><code>POST /api/meeting/stop</code> → the stop receipt; the same window becomes MeetingRecord: Summary, Who owes what (rows), Prepared, Transcript fold, <i>Send…</i>, status bar <i>Summary stored</i>.</li>
+      <li class="gap">The gear wing (Routing, Try a phrase, Summary state, Background work, Devices) is plumbing, and it hides the face it belongs to.</li>
+    </ul></div>
+  </div>
+  <div class="now" style="margin-top:14px"><figure><img src="live-direction-2026-10-27/today-after-1440.png" width="460" alt="The meeting record today"><figcaption>After, today: the record in the meeting's own window</figcaption></figure></div>
+</section>
+
+<!-- ======================= A ======================= -->
+<section class="block">
+  <h2>A. The transcript is the page <span class="tag">Recommended</span></h2>
+  <p>One window, three moments. The body changes; the toolbar and the status bar keep their places. Nothing floats in a blank band.</p>
+  <div class="trio">
+
+  <div class="moment">
+    <div class="say"><b>Before</b>Ready to record. The two sources as object rows with a dot and a word; the summary engine by its name. <i>Start meeting</i> is the one primary. <i>Settings</i> replaces the gear.</div>
+    <div class="stage"><div class="floor"></div>
+      <div class="win">
+        <div class="tb"><span class="x">✕</span><span class="gl"><img src="live-direction-2026-10-27/glyphs/meeting-20.png" alt=""></span><span class="name">Live meeting</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+        <div class="toolbar"><span class="btn primary"><span class="recdot"></span>Start meeting</span><span class="grow"></span><span class="btn"><svg><use href="#g-gear"/></svg>Settings</span></div>
+        <div class="rail"><span class="st done"><i>✓</i>Prep</span><span class="ln"></span><span class="st now"><i>2</i>Record</span><span class="ln"></span><span class="st"><i>3</i>Summary</span><span class="ln"></span><span class="st"><i>4</i>Send follow-up</span></div>
+        <div class="body ready">
+          <div class="cap">It will hear</div>
+          <div class="orow"><svg class="ic" viewBox="0 0 16 16" style="stroke:var(--wb-sel);fill:none;stroke-width:1.5"><use href="#g-mic"/></svg><span class="t">Microphone</span><span class="m">System default</span><span class="dw"><span class="meter"><i style="height:5px"></i><i style="height:9px"></i><i style="height:12px"></i><i style="height:7px"></i><i style="height:4px"></i></span>Hearing</span></div>
+          <div class="orow"><svg class="ic" viewBox="0 0 16 16" style="stroke:var(--wb-sel);fill:none;stroke-width:1.5"><use href="#g-spk"/></svg><span class="t">System audio</span><span class="m">Auto</span><span class="dw"><span class="lamp"></span>Ready</span></div>
+          <div class="cap" style="margin-top:14px">It will write</div>
+          <div class="orow"><svg class="ic" viewBox="0 0 16 16" style="stroke:var(--wb-sel);fill:none;stroke-width:1.5"><use href="#g-note"/></svg><span class="t">Transcript</span><span class="m">Whisper small, on this Mac</span><span class="dw"><span class="lamp"></span>Ready</span></div>
+          <div class="orow"><svg class="ic" viewBox="0 0 16 16" style="stroke:var(--wb-sel);fill:none;stroke-width:1.5"><use href="#g-note"/></svg><span class="t">Summary</span><span class="m">Codex, after the meeting</span><span class="dw"><span class="lamp"></span>Ready</span></div>
+          <div class="honest" style="margin-top:22px"><span class="lamp warn"></span><span>The other state: <b>Speech is not set up.</b> The meeting records audio only; the transcript comes after setup.</span><span class="grow"></span><span class="btn secondary sm">Set up speech · 144 MB</span></div>
+        </div>
+        <div class="sb"><span class="it"><span class="lamp"></span>Ready</span><span class="sep">·</span><span class="it">Summaries on Codex</span><span class="grow"></span><span class="it" style="opacity:.8">Link connected</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="moment">
+    <div class="say"><b>During</b>The transcript arrives as a document: a time mark in the margin, the speaker's name when the speaker changes, a bookmark as an ember mark. The status bar says the live state once. <i>Stop meeting</i> is the danger verb in the primary's place.</div>
+    <div class="stage"><div class="floor"></div>
+      <div class="win">
+        <div class="tb"><span class="x">✕</span><span class="gl"><img src="live-direction-2026-10-27/glyphs/meeting-20.png" alt=""></span><span class="name">Ledger cutover sync</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+        <div class="toolbar"><span class="btn danger"><span class="stopsq"></span>Stop meeting</span><span class="btn"><svg><use href="#g-flag"/></svg>Bookmark</span><span class="btn"><svg><use href="#g-edit"/></svg>Edit details</span><span class="grow"></span><span class="btn"><svg><use href="#g-gear"/></svg>Settings</span></div>
+        <div class="body doc">
+          <div class="para"><span class="when">0:04</span><span><div class="who" style="margin-top:0">Me</div><span class="said">Let's start with the freeze date. We said Nov 12, does that still hold?</span></span></div>
+          <div class="para"><span class="when">0:19</span><span><div class="who">Priya</div><span class="said">It holds if the backup job moves to 22:00. Right now it runs at 02:00, which leaves a four-hour gap.</span></span></div>
+          <div class="para"><span class="when">0:41</span><span class="said">I can move it today, it is one line in the cron file.</span></div>
+          <div class="para flag"><span class="when">1:02</span><span><div class="who">Me</div><span class="said">Then we freeze the ledger on Nov 12. That is the decision.</span></span></div>
+          <div class="para"><span class="when">1:20</span><span><div class="who">Tomás</div><span class="said">Who writes the rollback runbook? I can shard the reconciliation job, but not both.</span></span></div>
+          <div class="para new"><span class="when">1:37</span><span><div class="who">Me</div><span class="said">I will write the runbook. Tomás, you take the sharding, and add the freeze flag behind a switch.</span></span></div>
+          <div class="listen"><span></span><span><span class="caret"></span>Listening</span></div>
+        </div>
+        <div class="sb"><span class="it"><span class="lamp live"></span>Recording</span><span class="strong">12:04</span><span class="sep">·</span><span class="it">Summaries on Codex</span><span class="grow"></span><span class="it" style="opacity:.8">Link connected</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="moment">
+    <div class="say"><b>After</b>The same window is the record (built: MeetingRecord). The rail moves to Summary. Decisions and actions are object rows with their one verb. <i>Send follow-up…</i> is the primary.</div>
+    <div class="stage"><div class="floor"></div>
+      <div class="win">
+        <div class="tb"><span class="x">✕</span><span class="gl"><img src="live-direction-2026-10-27/glyphs/meeting-20.png" alt=""></span><span class="name">Ledger cutover sync</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+        <div class="toolbar"><span class="btn primary"><svg><use href="#g-send"/></svg>Send follow-up…</span><span class="btn"><svg><use href="#g-export"/></svg>Export</span><span class="btn">More</span><span class="grow"></span><span class="btn"><svg><use href="#g-gear"/></svg>Settings</span></div>
+        <div class="rail"><span class="st done"><i>✓</i>Prep</span><span class="ln"></span><span class="st done"><i>✓</i>Record</span><span class="ln"></span><span class="st now"><i>3</i>Summary</span><span class="ln"></span><span class="st"><i>4</i>Send follow-up</span></div>
+        <div class="body rec">
+          <div class="sum">We freeze the ledger on Nov 12. The backup job moves to 22:00 first. Karol writes the rollback runbook; Tomás shards the reconciliation job and adds the freeze flag.</div>
+          <div class="cap">Decided</div>
+          <div class="orow"><img src="live-direction-2026-10-27/glyphs/decision-20.png" alt=""><span class="t">Freeze the ledger on Nov 12</span><span class="m">1:02</span><span class="btn secondary sm">Decide…</span></div>
+          <div class="cap">Who owes what</div>
+          <div class="orow"><img src="live-direction-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t">Write the rollback runbook</span><span class="who-chip"><i>K</i>Karol</span><span class="btn secondary sm">Confirm</span></div>
+          <div class="orow"><img src="live-direction-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t">Shard the reconciliation job</span><span class="who-chip"><i>T</i>Tomás</span><span class="btn secondary sm">Confirm</span></div>
+          <div class="orow"><img src="live-direction-2026-10-27/glyphs/action-item-20.png" alt=""><span class="t">Move the backup job to 22:00</span><span class="who-chip"><i>P</i>Priya</span><span class="btn secondary sm">Confirm</span></div>
+        </div>
+        <div class="sb"><span class="it"><span class="lamp"></span>Summary stored</span><span class="sep">·</span><span class="it">14:22 recorded</span><span class="grow"></span></div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+</section>
+
+<!-- ======================= gear wing ======================= -->
+<section class="block">
+  <h2>Where the gear wing goes</h2>
+  <p>The Live window keeps no gear tab. <i>Configure meeting</i> becomes the toolbar verb <i>Settings</i>, which opens Settings ▸ Meetings. The wing's four parts land there, in a new <b>Live meeting</b> group under Recording: attached devices (each a row with a dot and a word), background work (Process pending, only when work waits), and Try a phrase (the route preview). The routing preset is already there (More ▸ Routing).</p>
+  <div class="stage" style="height:520px"><div class="floor"></div>
+    <div class="win" style="height:460px">
+      <div class="tb"><span class="x">✕</span><span class="name">Settings</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+      <div class="body settings">
+        <div class="side"><div>You</div><div>Speak</div><div class="on">Meetings</div><div>Notices</div><div>Accounts</div><div>Agents</div><div>Desk</div><div>This Mac</div></div>
+        <div class="pane">
+          <div class="g">Recording</div>
+          <div class="r"><span>Microphone</span><span class="v">System default</span><span></span></div>
+          <div class="r"><span>System audio</span><span class="v">Auto</span><span></span></div>
+          <div class="g">Live meeting</div>
+          <div class="r new"><span>Attached devices</span><span class="q">None attached</span><span></span></div>
+          <div class="r new"><span>Background work</span><span class="q">No jobs waiting</span><span></span></div>
+          <div class="r new"><span>Try a phrase</span><span class="q">Tests the route only, the live meeting does not change</span><span class="btn secondary sm">Preview route</span></div>
+          <div class="g">Export</div>
+          <div class="r"><span>Auto export</span><span class="v">Off</span><span></span></div>
+        </div>
+      </div>
+      <div class="sb"><span class="it"><span class="lamp"></span>Saved 5 min ago</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= B ======================= -->
+<section class="block">
+  <h2>B. Transcript and notes side by side <span class="tag alt">Direction</span></h2>
+  <p>During the meeting the body splits: the transcript on the left, a notes pane on the right where he types. A bookmark becomes a heading in his notes. When the hub publishes a summary mid-meeting it forms at the foot of the notes pane. Before and after are the same as A.</p>
+  <div class="moment">
+    <div class="say"><b>During (B)</b>More to hold while he talks. It needs a notes field on the meeting (the hub has none) and a second pane that folds to a switch on the phone.</div>
+    <div class="stage"><div class="floor"></div>
+      <div class="win">
+        <div class="tb"><span class="x">✕</span><span class="gl"><img src="live-direction-2026-10-27/glyphs/meeting-20.png" alt=""></span><span class="name">Ledger cutover sync</span><span class="gad"><span><svg><use href="#g-min"/></svg></span><span><svg><use href="#g-max"/></svg></span><span><svg><use href="#g-depth"/></svg></span></span></div>
+        <div class="toolbar"><span class="btn danger"><span class="stopsq"></span>Stop meeting</span><span class="btn"><svg><use href="#g-flag"/></svg>Bookmark</span><span class="grow"></span><span class="btn"><svg><use href="#g-gear"/></svg>Settings</span></div>
+        <div class="body"><div class="split">
+          <div class="doc">
+            <div class="para"><span class="when">0:19</span><span><div class="who" style="margin-top:0">Priya</div><span class="said">It holds if the backup job moves to 22:00.</span></span></div>
+            <div class="para flag"><span class="when">1:02</span><span><div class="who">Me</div><span class="said">Then we freeze the ledger on Nov 12.</span></span></div>
+            <div class="para"><span class="when">1:20</span><span><div class="who">Tomás</div><span class="said">Who writes the rollback runbook?</span></span></div>
+            <div class="para new"><span class="when">1:37</span><span><div class="who">Me</div><span class="said">I will write the runbook. Tomás takes the sharding.</span></span></div>
+            <div class="listen"><span></span><span><span class="caret"></span>Listening</span></div>
+          </div>
+          <div class="notes">
+            <div class="h"><svg width="13" height="13" viewBox="0 0 16 16" style="stroke:currentColor;fill:none;stroke-width:1.6"><use href="#g-note"/></svg>My notes</div>
+            Backup job first, then the freeze.
+            <div class="bm">1:02 · Freeze decision</div>
+            Nov 12 holds. Ask Priya to confirm the cron change by Friday.<span class="caret" style="display:inline-block;vertical-align:-2px;margin-left:2px"></span>
+            <div class="forming"><b>Summary so far</b>Freeze on Nov 12; backup job to 22:00; runbook to Karol.</div>
+          </div>
+        </div></div>
+        <div class="sb"><span class="it"><span class="lamp live"></span>Recording</span><span class="strong">12:04</span><span class="sep">·</span><span class="it">Summaries on Codex</span><span class="grow"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <h2>The questions, side by side</h2>
+  <div class="qa">
+    <div class="h"></div><div class="h rec">A. Transcript is the page</div><div class="h">B. Transcript and notes</div>
+    <div>Before</div><div class="rec">Ready sheet: sources, engines, one primary</div><div>Same as A</div>
+    <div>During: what he reads</div><div class="rec">One document; time marks, speakers, bookmarks</div><div>Two panes; less width for each</div>
+    <div>During: what he does</div><div class="rec">Stop, Bookmark, Edit details</div><div>Also types notes</div>
+    <div>Live state</div><div class="rec">Status bar: Recording · 12:04 · Summaries on Codex</div><div>Same</div>
+    <div>After</div><div class="rec">The record (built): summary, rows, Send follow-up</div><div>The record, plus his notes merged</div>
+    <div>Gear wing</div><div class="rec">Settings ▸ Meetings ▸ Live meeting</div><div>Same</div>
+    <div>Phone</div><div class="rec">The document fits as it is</div><div>A switch between two panes</div>
+    <div>Hub change</div><div class="rec">None</div><div>A notes field on the meeting</div>
+  </div>
+</section>
+
+<!-- ======================= phone ======================= -->
+<section class="block">
+  <h2>A on the phone (393)</h2>
+  <div class="phones">
+    <figure style="margin:0"><div class="phone"><div class="ph-sys">Live meeting</div>
+      <div class="ph-win">
+        <div class="ph-tb"><span class="back">‹ Back</span><span class="n">Live meeting</span></div>
+        <div class="ph-tool"><span class="btn primary"><span class="recdot"></span>Start meeting</span><span class="grow"></span><span class="btn"><svg><use href="#g-gear"/></svg>Settings</span></div>
+        <div class="rail" style="padding:10px 12px"><span class="st done"><i>✓</i>Prep</span><span class="ln"></span><span class="st now"><i>2</i>Record</span><span class="ln"></span><span class="st"><i>3</i></span><span class="ln"></span><span class="st"><i>4</i></span></div>
+        <div class="ph-body ready" style="padding:10px 14px">
+          <div class="cap">It will hear</div>
+          <div class="orow"><span class="t">Microphone</span><span class="dw"><span class="lamp"></span>Hearing</span></div>
+          <div class="orow"><span class="t">System audio</span><span class="dw"><span class="lamp"></span>Ready</span></div>
+          <div class="cap" style="margin-top:12px">It will write</div>
+          <div class="orow"><span class="t">Transcript</span><span class="dw"><span class="lamp"></span>Ready</span></div>
+          <div class="orow"><span class="t">Summary · Codex</span><span class="dw"><span class="lamp"></span>Ready</span></div>
+        </div>
+        <div class="ph-sb"><span class="lamp"></span>Ready · Summaries on Codex</div>
+      </div></div><figcaption style="text-align:center;margin-top:14px">Before</figcaption></figure>
+
+    <figure style="margin:0"><div class="phone"><div class="ph-sys">Ledger cutover sync</div>
+      <div class="ph-win">
+        <div class="ph-tb"><span class="back">‹ Back</span><span class="n">Ledger cutover sync</span></div>
+        <div class="ph-tool"><span class="btn danger"><span class="stopsq"></span>Stop</span><span class="btn"><svg><use href="#g-flag"/></svg>Bookmark</span><span class="grow"></span><span class="btn"><svg><use href="#g-gear"/></svg></span></div>
+        <div class="ph-body doc">
+          <div class="para"><span class="when">0:19</span><span><div class="who" style="margin-top:0">Priya</div><span class="said">It holds if the backup job moves to 22:00. Right now it runs at 02:00.</span></span></div>
+          <div class="para flag"><span class="when">1:02</span><span><div class="who">Me</div><span class="said">Then we freeze the ledger on Nov 12.</span></span></div>
+          <div class="para"><span class="when">1:20</span><span><div class="who">Tomás</div><span class="said">Who writes the rollback runbook? I can shard the reconciliation job, but not both.</span></span></div>
+          <div class="para new"><span class="when">1:37</span><span><div class="who">Me</div><span class="said">I will write the runbook. Tomás, you take the sharding.</span></span></div>
+          <div class="listen"><span></span><span><span class="caret"></span>Listening</span></div>
+        </div>
+        <div class="ph-sb"><span class="lamp live"></span>Recording <b style="color:var(--wb-ink);font-weight:500">12:04</b> · Summaries on Codex</div>
+      </div></div><figcaption style="text-align:center;margin-top:14px">During</figcaption></figure>
+  </div>
+</section>
+
+<section class="block">
+  <h2>What each direction costs</h2>
+  <p class="cost"><b>A.</b> <code>LiveCore.tsx</code> only for the window: the transcript document (read <code>start_time</code> and <code>speaker</code>, the wire's own keys), the live state and the summary engine in the status bar (<code>/api/settings/hub</code> <code>meetings.engine</code>), Bookmark as a toolbar verb, the gear door removed. The gear parts move to a new <code>LiveMeetingTools</code> module rendered in Settings ▸ Meetings. Before's "It will hear / It will write" sheet reads <code>/api/settings</code> (mic, system audio), the speech setup state and the same engine fact; the mic level meter needs a level frame the hub does not send (draw "Ready" until it does). No hub change.</p>
+  <p class="cost"><b>B.</b> All of A, plus a meeting notes field (schema and PATCH), a notes pane with its own save, the summary-so-far plate fed by <code>intel_complete</code>, and a pane switch on the phone.</p>
+</section>
+
+<section class="block">
+  <h2>Order of build for A</h2>
+  <ol class="order">
+    <li><b>During</b>: the transcript as a document with time marks and speakers; the status bar's live state with the engine name; Stop as the danger verb; Bookmark in the toolbar. (Slice 1, this lane.)</li>
+    <li><b>The gear wing's move</b>: <code>LiveMeetingTools</code> in Settings ▸ Meetings; <i>Settings</i> as the toolbar verb; the gear tab gone. (Slice 1, this lane.)</li>
+    <li><b>Before</b>: the ready sheet (sources and engines as object rows) in place of the empty Transcript head.</li>
+    <li><b>After</b>: the record's rail at Summary, Decided rows with Decide, Send follow-up as the primary (MeetingRecord's lane).</li>
+    <li><b>The phone</b>: Stop and Bookmark as the two toolbar verbs; the Settings verb as a glyph.</li>
+  </ol>
+</section>
+
+</main>
+</body>
+</html>
