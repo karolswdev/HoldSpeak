@@ -1845,3 +1845,58 @@
   .desk-next .speak-footer .kit-statusbar-item:has(> .speak-fact)::after { content: none; }
 }
 .desk-next .surface-state > .speak-empty { align-self: center; margin-inline: auto; }
+
+/* W3-B (atlas 2026-10-27): the Talk toolbar is ONE row at every width (the
+   Note's rule). A narrow window drops the secondary verbs to their glyph;
+   the word stays the Button's accessible name and its hover title. */
+.desk-next .speak-toolbar,
+.desk-next .speak-toolbar .kit-toolbar-verbs {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.desk-next .speak-toolbar .kit-toolbar-verbs > *,
+.desk-next .speak-toolbar .kit-toolbar-trailing > * { flex: none; }
+.desk-next .speak-toolbar .speak-lands-in { flex-wrap: nowrap; min-width: 0; }
+.desk-next .speak-toolbar .kit-toolbar-trailing,
+.desk-next .speak-toolbar[data-trailing="stays"] .kit-toolbar-trailing {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 2px;
+  margin-left: auto;
+}
+/* A wide window keeps the words; the glyph only stands in for a word. */
+.desk-next .speak-toolbar .speak-verb[data-glyph="narrow"] .kit-toolglyph { display: none; }
+@container surface (max-width: 600px) {
+  .desk-next .speak-toolbar .speak-verb[data-glyph="narrow"] .kit-toolglyph { display: inline-block; }
+  .desk-next .speak-toolbar .speak-verb {
+    position: relative;
+    min-width: 32px;
+    padding-inline: 8px;
+    justify-content: center;
+  }
+  .desk-next .speak-toolbar .speak-verb-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .desk-next .speak-toolbar .speak-lands-in-caption,
+  .desk-next .speak-toolbar .speak-lands-in-dot,
+  .desk-next .speak-toolbar .speak-lands-in-latency { display: none; }
+  .desk-next .speak-toolbar .speak-lands-in { gap: 4px; }
+}
+/* The phone: the band's gaps close so Talk, Types into and the four glyph
+   verbs (44 px targets) stay on one row in 393 px. */
+@container surface (max-width: 420px) {
+  .desk-next .speak-toolbar { gap: 4px; padding-inline: 4px; }
+  .desk-next .speak-toolbar .kit-toolbar-verbs,
+  .desk-next .speak-toolbar .speak-lands-in,
+  .desk-next .speak-toolbar .kit-toolbar-trailing { gap: 0; }
+  .desk-next .speak-toolbar .speak-transport-spacer { display: none; }
+}
+/* No verb ever shrinks under its neighbour (the overlap fence). */
+.desk-next .speak-toolbar .kit-toolbar-verbs { flex: 0 0 auto; }

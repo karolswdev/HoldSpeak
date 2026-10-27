@@ -210,14 +210,16 @@ describe("PHILO-14 A2 the drawer", () => {
   it("selection is the row; the footer never says a zero", async () => {
     useDesk.getState().setZoneViewPref("project:p-ledger", { view: "list" });
     await renderDrawer();
-    expect(footer()).toBe(`${EXPECTED.length} OBJECTS`);
-    expect(footer()).not.toMatch(/0 SELECTED/);
+    // W3-B: the foot holds the head facts in sentence case, the count among them.
+    expect(footer()).toContain(`${EXPECTED.length} objects`);
+    expect(footer()).not.toMatch(/selected/i);
     // PHILO-15 16: nothing selected, Get Info is the Project's own Info.
     expect(screen.getByRole("button", { name: "Get Info" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: /^Ledger cutover sync, MEETING/ }), { detail: 1 });
     const row = document.querySelector('.object-list-row[data-object-id="meeting:m-standup"]')!;
     expect(row).toHaveAttribute("aria-selected", "true");
-    expect(footer()).toBe(`${EXPECTED.length} OBJECTS · 1 SELECTED`);
+    expect(footer()).toContain(`${EXPECTED.length} objects`);
+    expect(footer()).toContain("1 selected");
   });
 
   it("Get Info opens the object's Info window; Open opens the object", async () => {
@@ -334,7 +336,8 @@ describe("PHILO-14 A2 the drawer", () => {
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
     await screen.findByText("Nothing filed here");
     expect(screen.getByTestId("drawer-facts")).not.toHaveTextContent(/need you|object/i);
-    expect(footer()).toBe("");
+    // W3-B: the foot holds the head facts; it counts nothing and says no zero.
+    expect(footer()).not.toMatch(/object|selected|\b0\b/i);
   });
 
   // PHILO-17 U30: a project ref and a calendar row open the Room (one home);
@@ -381,8 +384,8 @@ describe("PHILO-14 A2 drawer members (pure)", () => {
   });
   it("receipt never says a zero", () => {
     expect(drawerReceipt(0, 0)).toBe("");
-    expect(drawerReceipt(1, 0)).toBe("1 OBJECT");
-    expect(drawerReceipt(16, 1)).toBe("16 OBJECTS · 1 SELECTED");
+    expect(drawerReceipt(1, 0)).toBe("1 object");
+    expect(drawerReceipt(16, 1)).toBe("16 objects · 1 selected");
   });
   it("a filed ref the desk cannot name is left out, never shown as an id", () => {
     const members = drawerMembers({
@@ -511,14 +514,18 @@ describe("PHILO-14 A2 Get Info window", () => {
 // AppHead → FilterBar (Icons | List + Room, History) → the IconGrid well →
 // Sources · n + Steward → the AskWell → the Foot.
 describe("Phase 16 the Room window on the interior kit", () => {
-  it("heads with the Room's name once, the strip under it, and composes in the canvas order", async () => {
+  it("the title bar is the title; the toolbar, then the canvas order (W3-B)", async () => {
     await renderDrawer();
-    const head = screen.getByTestId("drawer-facts");
-    expect(head.querySelector(".kit-disp")?.textContent).toBe("Payments ledger cutover");
-    expect(document.querySelectorAll(".kit-disp")).toHaveLength(1);
+    // W3-B (atlas 2026-10-27): no second name in the body; the head facts
+    // are the foot's, as dots and words.
+    expect(document.querySelectorAll(".kit-disp")).toHaveLength(0);
+    expect(screen.getByTestId("drawer-facts")).toHaveTextContent("3 need you");
+    const toolbar = screen.getByTestId("drawer-filter");
+    expect(toolbar).toHaveAttribute("role", "toolbar");
+    expect(within(toolbar).getByRole("button", { name: "Icons" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(toolbar).getByRole("button", { name: "List" })).toHaveAttribute("aria-pressed", "false");
     const order = [
-      head,
-      screen.getByTestId("drawer-filter"),
+      toolbar,
       document.querySelector(".desk-icon-grid[data-well]"),
       screen.getByTestId("drawer-sources"),
       screen.getByTestId("room-ask-well"),
@@ -540,7 +547,7 @@ describe("Phase 16 the Room window on the interior kit", () => {
     expect(takeRoomAtRequest("p-ledger")).toBeNull();
   });
 
-  it("Sources: no count at zero; each accepted source is a kind-plated row with its one state word", async () => {
+  it("Sources: no count at zero; each accepted source is a glyph row with its one state word", async () => {
     await renderDrawer();
     expect(screen.getByTestId("drawer-sources").querySelector("h3")?.textContent).toBe("Sources");
     const { sourceRows } = await import("../DrawerWindow");
@@ -557,12 +564,13 @@ describe("Phase 16 the Room window on the interior kit", () => {
         ],
       },
     } as never);
-    expect(rows.map((r) => [r.plate, r.scope, r.tone])).toEqual([
-      ["GH", "karolswdev/payments-ledger", "ok"],
-      ["J", "OPS", "fail"],
+    expect(rows.map((r) => [r.provider, r.scope, r.tone])).toEqual([
+      ["github", "karolswdev/payments-ledger", "ok"],
+      ["jira", "OPS", "fail"],
     ]);
-    expect(rows[0].meta).toMatch(/^CHECKED /);
-    expect(rows[1].meta).toBe("CAN'T CHECK");
+    // W3-B: quiet sans words (`Checked 10 min ago`), never mono caps.
+    expect(rows[0].meta).toBe("Checked 10 min ago");
+    expect(rows[1].meta).toBe("Can't check");
   });
 });
 

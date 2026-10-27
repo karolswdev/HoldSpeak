@@ -153,4 +153,19 @@ describe("the Room Now page groups", () => {
     expect(groups.map((group) => group.title)).toEqual(["Open", "Decided"]);
     expect(groups[0].lines[0].refs).toEqual([{ ref: "meeting:m1", token: "1:1 WITH MIRA", opens: true }]);
   });
+
+  it("names an open risk item as a dot and a word, not a Risk token (W3-B)", () => {
+    const groups = thisWeekGroups({
+      nextDate: null, lastUpdateAt: null, meetingsThisWeek: 0, decided: [],
+      risks: [
+        { text: "Card vault vendor contract ends", ref: "project_item:i1", token: "RISK", source: "Risk", opens: true },
+        { text: "Settlement may slip", ref: "meeting:m1", token: "MTG", source: "Standup", opens: true },
+      ],
+    }, []);
+    const [risk, said] = groups[0].lines;
+    expect(risk.riskRef).toBe("project_item:i1");
+    expect(risk.refs).toEqual([]);
+    expect(said.riskRef).toBeUndefined();
+    expect(said.refs).toEqual([{ ref: "meeting:m1", token: "MTG", opens: true }]);
+  });
 });

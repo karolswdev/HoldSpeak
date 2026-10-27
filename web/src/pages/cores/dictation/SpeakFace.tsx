@@ -409,7 +409,10 @@ export function SpeakFace() {
           edge to edge → the result → the checks → the status bar. No
           headline, no plate in the window. */}
       <article className="speak-plate" aria-label="Talk">
-        <Toolbar label="Speak" data-testid="speak-toolbar" trailing={windowVerbs}>
+        {/* W3-B (atlas 2026-10-27): one row at every width (the Note's
+            rule): a narrow window shows the secondary verbs as their glyph,
+            the word kept as the accessible name and the hover title. */}
+        <Toolbar label="Speak" className="speak-toolbar" data-testid="speak-toolbar" trailing={windowVerbs} trailingStays>
           <TransportRow deck={deck} speech={speech} talkKey={talkKey} raw={raw} />
           <TypesIntoRow deck={deck} />
           <CopyVerb text={deck.utterance} announce={announce} />
@@ -590,6 +593,8 @@ function CopyVerb({ text, announce }: { text: string; announce: (text: string, t
       variant="secondary"
       disabled={!text.trim()}
       data-testid="speak-copy"
+      className="speak-verb"
+      title="Copy"
       onClick={() => {
         const write = navigator.clipboard?.writeText(text);
         if (!write) {
@@ -600,7 +605,7 @@ function CopyVerb({ text, announce }: { text: string; announce: (text: string, t
       }}
     >
       <ToolGlyph kind="copy" />
-      Copy
+      <span className="speak-verb-label">Copy</span>
     </Button>
   );
 }
@@ -634,8 +639,11 @@ function TypesIntoRow({ deck }: { deck: ReturnType<typeof useSpeakDeck> }) {
         disabled={!deck.utterance.trim()}
         onClick={() => void deck.run()}
         data-testid="speak-try-it-here"
+        className="speak-verb"
+        title="Try it here" data-glyph="narrow"
       >
-        Try it here
+        <ToolGlyph kind="run" />
+        <span className="speak-verb-label">Try it here</span>
       </Button>
     </span>
   );

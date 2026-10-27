@@ -13,6 +13,9 @@ export interface InlineEditorContentProps {
   /** W2-BUILDER: the reader's Add opened the editor; a Knowledge editor
    *  opens on its item picker. */
   openAdd?: boolean;
+  /** W3-B: the host's verbs (Done; Retry after a refusal) for an editor
+   *  that draws its own toolbar (Knowledge). */
+  toolbar?: React.ReactNode;
 }
 
 /** An inline editor content component — renders form fields + footer
