@@ -14,7 +14,7 @@ import { EgressChip, SurfaceWell } from "../../desk/surface";
 import { DotWord } from "../../desk/surface/kit";
 import { PrefSection } from "../../pages/cores/settingsWindow";
 import type { RowEditor } from "./api";
-import { agentChip, enginePlace, hostLabel, type BoardEngine } from "./model";
+import { agentChip, enginePlace, hostLabel, notAnswering, type BoardEngine } from "./model";
 import type { RunsOnController } from "./useRunsOn";
 import { EVERYTHING_ELSE, WHAT_ROWS, type WhatRow } from "./whatRows";
 
@@ -131,6 +131,10 @@ export function WhatRunsWhere({ ctrl, selected }: { ctrl: RunsOnController; sele
                   </Button>
                 )}
                 {editor?.effective ? chipOf(effective) : null}
+                {/* W1-TRUTH: a job on an engine whose server did not answer says so. */}
+                {editor?.effective && notAnswering(effective) ? (
+                  <DotWord tone="fail" data-testid={`runson-what-down-${row.id}`}>Not answering</DotWord>
+                ) : null}
                 {canTry ? (
                   <Button
                     dense
@@ -183,6 +187,7 @@ export function WhatRunsWhere({ ctrl, selected }: { ctrl: RunsOnController; sele
                           {nameOf(candidate.profileId, candidate.label)}
                         </Button>
                         {chipOf(engine)}
+                        {notAnswering(engine) ? <DotWord tone="fail">Not answering</DotWord> : null}
                         {candidate.status === "savable_with_repair" ? <DotWord tone="warn">Limited</DotWord> : null}
                       </li>
                     );

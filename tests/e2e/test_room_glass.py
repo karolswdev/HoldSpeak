@@ -1346,7 +1346,8 @@ FACTS = r"""() => {
     delivery_head: head('[data-section=delivery]'),
     delivery_rows: text('[data-testid=delivery-row]'),
     delivery_egress: win.querySelectorAll('[data-section=delivery] .gadget-chip-egress, [data-section=delivery] [data-testid*=egress]').length,
-    receipts: text('[data-testid=receipt-row] .surface-primary'),
+    // W1 (2026-10-27): the writes read in sentence case; the fence compares the words.
+    receipts: text('[data-testid=receipt-row] .surface-primary').map((t) => t.toUpperCase()),
     plan: text('[data-testid=steward-run-plan] .surface-plan-step'),
     steward_outcome: text('[data-testid=steward-run-outcome]')[0] ?? null,
     words_send: /\bsend\b|\bsent\b/i.test(win.innerText),
@@ -2070,8 +2071,10 @@ class TestRoomFaceGlass:
                 row.wait_for(timeout=T)
                 row.scroll_into_view_if_needed()
                 page.wait_for_timeout(300)
-                face = row.evaluate(r"""r => ({text: r.innerText.replace(/\s+/g, ' ').trim(),
-                    lead: r.querySelector('.surface-state-chip')?.getAttribute('data-state'),
+                # W1 (2026-10-27): the writes read in sentence case with the
+                # outcome as a dot and a word; the fence compares the words.
+                face = row.evaluate(r"""r => ({text: r.innerText.replace(/\s+/g, ' ').trim().toUpperCase(),
+                    lead: r.querySelector('[data-testid=receipt-outcome]')?.getAttribute('data-tone') === 'fail' ? 'failure' : null,
                     code: r.querySelector('[data-outcome]')?.dataset.code})""")
                 _rf_record("receipt-refused", width, {"hub": hub, "face": face})
                 _rf_shot(page, "receipt-refused", width)
@@ -2516,7 +2519,9 @@ class TestRowsHoldStill(_Rig):
                 assert "desk-palette-option-project.open.p-ledger" not in first[:10], first
                 assert len(first) >= 10, first
                 badge = page.locator("[id='desk-palette-option-project.open.p-ledger'] .desk-deck-badge")
-                assert badge.count() and "OPEN" in badge.first.inner_text(), "the count never landed"
+                # The badge reads in sentence case ("3 open") since the window
+                # grammar of the palette (#1486, badgeText); it was "3 OPEN".
+                assert badge.count() and badge.first.inner_text().strip() == "3 open", "the count never landed"
                 assert not _moved(rows), _moved(rows)
                 assert not errors, errors
             finally:

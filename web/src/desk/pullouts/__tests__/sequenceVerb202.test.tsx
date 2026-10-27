@@ -52,7 +52,7 @@ describe("the Sequence pullout names its own object (F08)", () => {
   it("withholds unsupported Edit and keeps Dictate about this", () => {
     useDesk.setState({ items: { ...EMPTY_ITEMS, chain: [emptySequence] } });
     render(<ChainPullout object={world()} onClose={() => undefined} />);
-    expect(screen.getByText("No steps")).toBeInTheDocument();
+    expect(screen.getByText(/^No steps yet/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Edit Sequence|Edit chain/ })).toBeNull();
     const dictate = screen.getByRole("button", { name: "Dictate about this" });
     expect(dictate.classList.contains("btn")).toBe(true);

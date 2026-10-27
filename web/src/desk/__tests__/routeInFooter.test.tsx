@@ -53,7 +53,7 @@ describe("Ask: no route lamp, no host, no scope word, no receipt id (owner rulin
     const view = render(<AskPanel />);
     fireEvent.change(view.container.querySelector("textarea")!, { target: { value: "What did we decide about the cutover date?" } });
     fireEvent.keyDown(view.container.querySelector("textarea")!, { key: "Enter" });
-    if (status >= 400) await waitFor(() => expect(view.container.querySelector("[data-testid=run-line][data-state=failure]")).toBeTruthy());
+    if (status >= 400) await waitFor(() => expect(view.container.querySelector("[data-testid=ask-not-answered]")).toBeTruthy());
     else await waitFor(() => expect(screen.getByText("The cutover is on 17 October.")).toBeTruthy());
     return view;
   }
@@ -100,9 +100,10 @@ describe("Ask: no route lamp, no host, no scope word, no receipt id (owner rulin
     expect(container.querySelector("[data-testid=ask-status] .gadget-lamp")).toBeNull();
     expect(container.querySelector("[data-testid=ask-status]")?.textContent ?? "").not.toContain("CLOUD");
     expect(container.querySelector(".gadget-chip-egress")).toBeNull();
-    const error = container.querySelector("[data-testid=run-line][data-state=failure]")!;
+    const error = container.querySelector("[data-testid=ask-not-answered]")!;
     expect(error).toHaveTextContent("did not answer");
-    expect(error).toBeVisible();
+    // The window's entrance fades it in: wait for the frame to settle.
+    await waitFor(() => expect(error).toBeVisible());
     expect(within(error as HTMLElement).getByRole("button", { name: "Try again" })).toBeVisible();
     expect(container.querySelector("[data-testid=ask-status-receipt]")?.textContent ?? "").not.toContain("Answered");
     expect(within(container).queryByText("The cutover is on 17 October.")).toBeNull();

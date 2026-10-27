@@ -1,38 +1,40 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-26T05:05:03.230939Z",
+  "captured_at": "2026-10-27T09:02:43.752410Z",
   "wire": [
     {
       "alternatives": null,
-      "created_at": "2026-10-26T05:05:03.223571+00:00",
+      "created_at": "2026-10-27T09:02:43.747330+00:00",
       "decision_text": "Ship the cutover on Nov 5",
       "deleted": 0,
-      "id": "record-b9dd06f0833140999219b25463fc5a36",
+      "id": "record-ac9b6ef2f32f4f9a87c621a715f3d897",
       "kind": "decision",
       "lifecycle": "active",
       "owner": null,
       "rationale": "Why: Dual-write is stable.",
       "review_date": null,
-      "source_id": "decision_0735b0b9ebb1",
+      "source_id": "decision_c06639d56c1e",
       "source_type": "desk",
       "status": "accepted",
-      "updated_at": "2026-10-26T05:05:03.223571+00:00"
+      "title": "Ship the cutover on Nov 5",
+      "updated_at": "2026-10-27T09:02:43.747330+00:00"
     },
     {
       "alternatives": null,
-      "created_at": "2026-10-26T05:05:03.211348+00:00",
+      "created_at": "2026-10-27T09:02:43.741465+00:00",
       "decision_text": "Keep the ledger on SQLite",
       "deleted": 0,
-      "id": "record-8df265d938b242e6a271354876f99e66",
+      "id": "record-7de10d4eddb242f5bc084f5486b98295",
       "kind": "decision",
       "lifecycle": "active",
       "owner": null,
       "rationale": "Why: One writer, one file.",
       "review_date": null,
-      "source_id": "decision_fbfe3c8151c5",
+      "source_id": "decision_b43391883d78",
       "source_type": "desk",
       "status": "accepted",
-      "updated_at": "2026-10-26T05:05:03.211348+00:00"
+      "title": "Keep the ledger on SQLite",
+      "updated_at": "2026-10-27T09:02:43.741465+00:00"
     }
   ]
 }

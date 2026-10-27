@@ -1,20 +1,128 @@
 /* The reference owns navigation and arrangement only. Surface, gadget,
    composer and Button material remains in the shared library. */
-.design-reference-shell > .reference-toolbar,
-.design-reference-shell > .reference-panel {
+/* W2-BUILDER (atlas 2026-10-27): the groups are a rail (the Settings rail's
+   rows); the pane is the toolbar (preset, Reset) touching the frame, then
+   the specimen edge to edge on the paper. The window body gives its inset
+   away. At 520 px or less the rail is the first view. */
+.desk-next .desk-surface-body:has(> .design-reference-shell) { padding: 0; }
+.design-reference-shell {
+  container: reference / inline-size;
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
   min-width: 0;
 }
-
-.reference-toolbar {
+.reference-layout {
+  --reference-rail-w: 180px;
+  display: grid;
+  grid-template-columns: var(--reference-rail-w) minmax(0, 1fr);
+  align-items: start;
+  flex: 1 0 auto;
+  min-width: 0;
+  min-height: 100%;
+  background:
+    linear-gradient(to right,
+      color-mix(in srgb, var(--wb-steel) 62%, var(--wb-paper)) 0 var(--reference-rail-w),
+      var(--wb-rule-soft) var(--reference-rail-w) calc(var(--reference-rail-w) + 1px),
+      var(--wb-paper) calc(var(--reference-rail-w) + 1px));
+}
+.reference-rail {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 8px;
+}
+.desk-next .reference-rail .reference-rail-row.btn {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-block: var(--space-1) var(--space-2);
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-md, 6px);
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-ink);
+  font: 400 13px / 1.2 var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: left;
+  white-space: nowrap;
+}
+.desk-next .reference-rail .reference-rail-row.btn:hover:not(.is-active) {
+  background: color-mix(in srgb, var(--wb-blue) 80%, var(--wb-paper));
+  box-shadow: inset 0 0 0 1px var(--wb-rule);
+}
+.desk-next .reference-rail .reference-rail-row.btn.is-active {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--wb-sel) 82%, var(--white)) 0%, var(--wb-sel) 100%);
+  color: var(--wb-paper);
+  font-weight: 600;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--white) 28%, transparent),
+    0 1px 3px color-mix(in srgb, var(--wb-sel) 45%, transparent);
+}
+/* A rail row is strip chrome: its target is its own box, never a halo
+   over its neighbour (as the Settings rail). 44 px tall at 520 px and less. */
+.desk-next .reference-rail .reference-rail-row.btn::after { inset: 0; }
+.reference-rail-glyph {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+}
+.desk-next .reference-rail .reference-rail-row.btn.is-active .reference-rail-glyph {
+  background: color-mix(in srgb, var(--white) 88%, transparent);
+}
+.reference-rail-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.reference-rail-chevron { display: none; }
+.reference-pane { min-width: 0; min-height: 100%; }
+.reference-pane-back { display: none; }
+.design-reference-shell .reference-toolbar { position: sticky; top: 0; z-index: 1; }
+.reference-pane > .reference-panel {
+  min-width: 0;
+  padding: 12px 20px 20px;
 }
 
-.reference-toolbar > .btn {
-  margin-inline-start: auto;
+@container reference (max-width: 520px) {
+  .reference-layout { display: block; background: var(--wb-paper); }
+  .reference-layout[data-pane-open] > .reference-rail { display: none; }
+  .reference-layout:not([data-pane-open]) > .reference-pane { display: none; }
+  .reference-rail { position: static; padding: 0; gap: 0; }
+  .desk-next .reference-rail .reference-rail-row.btn,
+  .desk-next .reference-rail .reference-rail-row.btn.is-active {
+    min-height: 44px;
+    height: 44px;
+    padding: 0 16px;
+    border-radius: 0;
+    border-bottom: 1px solid var(--wb-rule-soft);
+    background: transparent;
+    color: var(--wb-ink);
+    font-size: 15px;
+    font-weight: 400;
+    box-shadow: none;
+  }
+  .desk-next .reference-rail .reference-rail-row.btn.is-active .reference-rail-glyph { background: transparent; }
+  .reference-rail-chevron { display: inline; color: var(--wb-muted); font: 400 17px / 1 var(--font-sans); }
+  .reference-pane-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 8px;
+    border-bottom: 1px solid var(--wb-rule-soft);
+  }
+  .reference-pane-back-name { flex: 1 1 auto; min-width: 0; margin-right: 52px; text-align: center; font: 600 15px / 1.2 var(--font-sans); }
+  .reference-pane > .reference-panel { padding: 12px 16px 16px; }
 }
 
 .reference-example h2,
@@ -34,22 +142,20 @@
   gap: var(--space-1);
 }
 
-.reference-pattern-selector {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
 .reference-state-selector {
   flex: none;
   gap: var(--space-1);
 }
 
+.reference-state-selector {
+  display: inline-flex;
+  align-items: center;
+}
+
 .reference-selector-label {
   margin-right: var(--space-1);
-  color: var(--text-muted);
-  font: 600 var(--font-size-xs) / 1 var(--font-mono);
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  color: var(--wb-muted);
+  font: 500 12px / 1 var(--font-sans);
 }
 
 .reference-panel,

@@ -15,7 +15,7 @@ import { openNewThought } from "../newThought";
 import { Button } from "../../components/signal/Signal";
 import { useTalk } from "../components/Talk";
 import { PadGadget } from "../surface/gadgets";
-import { Toolbar } from "../surface/kit";
+import { ToolGlyph, Toolbar } from "../surface/kit";
 import { useCompactViewport } from "../useCompactViewport";
 import { workBand } from "../components/window/windowGeometry";
 import type { PanelRect } from "../store/types";
@@ -126,7 +126,7 @@ function Arrival() {
           <CaptureBar />
           {/* Capture C7: Schedule is replaced by the next two Coming-up rows
               (the same list as Meetings ▸ Record and Today). */}
-          <ComingUp limit={2} data-testid="arrival-coming-up" />
+          <ComingUp limit={2} data-testid="arrival-coming-up" emptyLine="Nothing is coming up" />
         </>
       }
     />
@@ -180,6 +180,7 @@ function CaptureBar() {
           data-testid="arrival-develop-thought"
         >
           {/* Betterment Q8 (one note): one kind, one name. */}
+          <ToolGlyph kind="note" />
           New note
         </Button>
         <Button
@@ -188,6 +189,7 @@ function CaptureBar() {
           onClick={() => void useDesk.getState().startRecording()}
           data-testid="arrival-record-meeting"
         >
+          <ToolGlyph kind="record" />
           Record
         </Button>
       </Toolbar>

@@ -436,22 +436,30 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(start).toHaveBeenCalledWith({ calendarEventId: "event-ledger" });
   });
 
-  it("NEXT is a quiet footer line; no calendar is an offer in the foot, never a row (PHILO-15-09 B11)", async () => {
+  it("NEXT is a quiet footer line; with a next meeting there is no calendar offer (PHILO-15-09 B11, W1-DOORS)", async () => {
     const at = new Date();
     at.setHours(14, 0, 0, 0);
     DOOR = { upcoming: [{ title: "Ledger cutover sync", starts_at: at.toISOString(), source: "calendar_event" }], calendar_configured: false };
     await mount();
     await waitFor(() => expect(screen.getByTestId("needs-next").textContent).toBe("Next 14:00 · Ledger cutover sync"));
+    // W1-DOORS (atlas 2026-10-27): one truth. A next meeting in the status
+    // bar means there is a calendar: the toolbar does not say "No calendar".
+    expect(screen.queryByTestId("needs-no-calendar")).toBeNull();
+    // One count: the head says the number of rows under it.
+    const rows = document.querySelectorAll("[data-testid='needs-list'] li.needs-row");
+    expect(screen.getByTestId("arrival-display").textContent).toBe(`${rows.length} need you`);
+    expect(rows.length).toBe(8);
+  });
+
+  it("no calendar and no next meeting: the offer is in the toolbar, never a row (PHILO-15-09 B11)", async () => {
+    DOOR = { upcoming: [], calendar_configured: false };
+    await mount();
     const offer = await screen.findByTestId("needs-no-calendar");
     expect(offer.textContent).toBe("No calendarConnect calendar");
     expect(offer.closest("[role='toolbar']")).toBeTruthy();
     expect(screen.queryByTestId("needs-source-row")).toBeNull();
     fireEvent.click(screen.getByTestId("needs-drawer").querySelector("[data-verb='connect-calendar']")!);
     expect(openSurfaceOr).toHaveBeenCalledWith("configure-settings", "/settings", "integration:calendar");
-    // One count: the head says the number of rows under it.
-    const rows = document.querySelectorAll("[data-testid='needs-list'] li.needs-row");
-    expect(screen.getByTestId("arrival-display").textContent).toBe(`${rows.length} need you`);
-    expect(rows.length).toBe(8);
   });
 
   it("muted rows are not drawn; Muted · N opens them", async () => {
@@ -1165,3 +1173,21 @@ describe("NeedsDrawer muted rows are dimmed", () => {
     expect(within(muted).getByText("A muted decision")).toBeTruthy();
   });
 });
+
+describe("W1-DOORS (atlas 2026-10-27): a meeting that names a Project", () => {
+  it("is named after the meeting; the matched word is its state", async () => {
+    const { needFace } = await import("../needsFace");
+    // The hub's row (needs_you_aggregate, a recorded seeded-hub answer).
+    const item = {
+      projectId: "p-ledger", projectName: "Payments ledger cutover", ref: "meeting:m-standup",
+      title: "mentions ledger", why: "Ledger cutover sync", kind: "meeting_match", source: "meeting",
+      severity: "info", id: "p-ledger:meeting:meeting:m-standup", meetingId: "m-standup",
+      meetingTitle: "Ledger cutover sync", since: "2026-10-27T00:57:26",
+    };
+    const face = needFace({ ref: item.id, kind: "attention", item } as never,
+      { flights: [], sessions: [], now: new Date("2026-10-27T03:00:00") });
+    expect(face.name).toBe("Ledger cutover sync");
+    expect(face.lamp?.label).toBe("Mentions ledger");
+  });
+});
+

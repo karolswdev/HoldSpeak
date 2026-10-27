@@ -99,7 +99,9 @@ TOKEN = "windows-glass"
 SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-17-shots")
 SIZES = {1440: 900, 393: 852}
 MEETING = "Ledger cutover sync"
-FRAME_MAX, CONTENT_MIN = 142, 700
+# CONTENT_MIN: the floating dock (#1494/#1497) reserves 80 px on the phone
+# (plate 64 + 8 inset + 8 air): 852 - 44 - 80 - 44 title - 2 border = 682.
+FRAME_MAX, CONTENT_MIN = 142, 680
 T = 30_000
 
 # C1's ratified fence library and the C7 canvas CHROME_OWNS fence, ported
@@ -1308,7 +1310,11 @@ class TestHubWindows:
                 _normal_chair(a)
                 a.keyboard.press("Control+3")
                 a.locator(".desk-window-shell[aria-label='People']").wait_for(timeout=T)
-                reseated = _h_until(lambda: windows(a), lambda value: "People" in value and "Meetings" in value)
+                _h_until(lambda: windows(a), lambda value: "People" in value and "Meetings" in value)
+                # The reopened window glides to its seat: read it at rest
+                # (mid-glide its rect is up to 60 px off the placed x).
+                _settle(a)
+                reseated = windows(a)
                 assert not head_overlap(reseated["People"], reseated["Meetings"]), reseated
                 assert reseated["People"]["rect"][2:] == collided["People"]["rect"][2:], {"before": collided["People"], "after": reseated["People"]}
                 assert reachable(a, {"People": reseated["People"], "Meetings": reseated["Meetings"]}) == []

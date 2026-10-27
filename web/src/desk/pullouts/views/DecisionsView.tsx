@@ -45,6 +45,9 @@ type ReceiptRevision = {
 
 type Receipt = {
   id: string;
+  /** W1-TRUTH: a Desk decision's title (the hub's `_decorate`); a meeting's
+   *  decision has none. */
+  title?: string | null;
   decision_text: string;
   rationale: string | null;
   alternatives: string | null;
@@ -77,6 +80,8 @@ const RECEIPT_WORD = { governing: "CURRENT", superseded: "REPLACED", related: "R
 type DeskDecision = {
   source: "meeting" | "desk" | "record";
   id: string;
+  /** W1-TRUTH: the row's name when the decision has a title. */
+  title?: string | null;
   text: string;
   rationale?: string | null;
   decided_at?: string | null;
@@ -104,7 +109,7 @@ function stateWord(row: DeskDecision): string {
 
 function fromReceipt(receipt: Receipt & { created_at?: string | null }): DeskDecision {
   return {
-    source: "record", id: receipt.id, text: receipt.decision_text, rationale: receipt.rationale,
+    source: "record", id: receipt.id, title: receipt.title ?? null, text: receipt.decision_text, rationale: receipt.rationale,
     decided_at: receipt.created_at ?? null, lifecycle: receipt.lifecycle, status: receipt.status, record_id: receipt.id,
   };
 }
@@ -123,11 +128,13 @@ function openDeskDecision(id: string): void {
 }
 
 /** Window grammar: a decision's state as a dot and a word. Open: proposed,
- *  not decided yet. Decided: it stands. Superseded: a newer one replaced it. */
+ *  not decided yet. Accepted: it stands. Superseded: a newer one replaced
+ *  it. W1-TRUTH: the same words as the decision's own window
+ *  (DecisionPullout DECISION_STATES). */
 function decisionState(row: DeskDecision): { word: string; tone: ObjectTone; rank: number } {
   const word = stateWord(row);
   if (word === "PROPOSED") return { word: "Open", tone: "ask", rank: 0 };
-  if (!word) return { word: "Decided", tone: "ok", rank: 1 };
+  if (!word) return { word: "Accepted", tone: "ok", rank: 1 };
   if (word === "REPLACED") return { word: "Superseded", tone: "info", rank: 2 };
   if (word === "RETIRED") return { word: "Retired", tone: "info", rank: 3 };
   return { word: word.charAt(0) + word.slice(1).toLowerCase(), tone: "warn", rank: 4 };
@@ -502,7 +509,9 @@ export function DecisionsView({
       return {
         id: rowKey(row),
         kind: "decision",
-        name: row.text || "New decision",
+        // W1-TRUTH: the Name column names the decision by its title; the
+        // decision text names it only when it has no title.
+        name: (row.title || "").trim() || row.text || "New decision",
         when: dayWords(row.decided_at),
         whenSort: at !== undefined && Number.isFinite(at) ? at * 1000 - index : -index,
         cells: { where: row.meeting_title || (row.source === "desk" ? "Desk" : row.meeting_id ? "Meeting" : "") },
@@ -699,7 +708,7 @@ function MeetingDecisionReader({
   const meetingId = (decision.meeting_id ?? "").trim();
   const state = decisionState(decision);
   const decidedAt = decision.decided_at ? wireDate(decision.decided_at) : null;
-  const when = decidedAt && state.word === "Decided" ? ` ${sinceWord(decidedAt)}` : "";
+  const when = decidedAt && state.word === "Accepted" ? ` ${sinceWord(decidedAt)}` : "";
   return (
     <div className="decision-reader-window" data-testid="decision-reader" data-from="meeting">
       <Toolbar label="Decision" data-testid="decision-reader-toolbar">
@@ -752,7 +761,7 @@ function rationaleParts(rationale: string | null | undefined): { about: string; 
  *  Decisions window. Toolbar: ‹ Decisions, Send…. Body: the decision as the
  *  reader's first heading, the Why as its words, About and the other facts as
  *  a quiet label/value grid, Evidence and History as folds. Status bar: the
- *  state as a dot and a word with when (`● Decided just now`). No captions in
+ *  state as a dot and a word with when (`● Accepted just now`). No captions in
  *  mono capitals, no state chip. */
 function DecisionReader({
   receipt,
@@ -811,7 +820,7 @@ function DecisionReader({
   const { about, why } = rationaleParts(receipt.rationale);
   const state = decisionState(fromReceipt(receipt));
   const decidedAt = receipt.created_at ? wireDate(receipt.created_at) : null;
-  const when = decidedAt && state.word === "Decided" ? ` ${sinceWord(decidedAt)}` : "";
+  const when = decidedAt && state.word === "Accepted" ? ` ${sinceWord(decidedAt)}` : "";
   const sourceLabel = (source: ReceiptSource): string | null => source.meeting_id || source.source_type === "meeting"
     ? "Open meeting" : source.source_type === "artifact" ? "Open artifact" : null;
   const sources = receipt.sources?.filter((source) => source.source_type !== "predecessor" && source.source_type !== "successor"
@@ -846,8 +855,11 @@ function DecisionReader({
         ) : (
           <>
             <h2 id={`decision-reader-title-${receipt.id}`} className="decision-reader-title" data-testid="decision-reader-title">
-              {receipt.decision_text}
+              {(receipt.title || "").trim() || receipt.decision_text}
             </h2>
+            {(receipt.title || "").trim() && receipt.title!.trim() !== receipt.decision_text.trim() ? (
+              <Material className="decision-reader-why">{receipt.decision_text}</Material>
+            ) : null}
             {why ? <Material className="decision-reader-why">{why}</Material> : null}
             {facts.length ? (
               <dl className="decision-reader-facts">

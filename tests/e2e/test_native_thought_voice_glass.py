@@ -63,11 +63,11 @@ def _editor_text(scope: Any) -> str:
 
 def _pattern(page: Any, label: str) -> None:
     page.get_by_test_id("design-reference").wait_for(timeout=15_000)
-    direct = page.get_by_role("group", name="Patterns").get_by_role("button", name=label, exact=True)
+    direct = page.get_by_role("navigation", name="Patterns").get_by_role("button", name=label, exact=True)
     if direct.count():
         direct.click()
         return
-    folded = page.get_by_role("group", name="Patterns").get_by_role("button")
+    folded = page.get_by_role("navigation", name="Patterns").get_by_role("button")
     assert folded.count() == 1, folded.all_text_contents()
     folded.click()
     page.locator("[role^='menuitem']").filter(has_text=label).first.click()
@@ -207,7 +207,7 @@ def test_components_captured_selection_and_stale_recovery_are_one_undo(
             # The read-only specimen retains words and permits Copy, but it
             # exposes neither capture nor insertion into its CodeMirror body.
             page.get_by_role("combobox", name="Example state").select_option("read-only")
-            specimen.get_by_text("READ ONLY").wait_for()
+            specimen.get_by_text("Read only", exact=True).first.wait_for()
             assert specimen.get_by_role("button", name="Capture target").is_disabled()
             assert specimen.get_by_role("button", name="Insert at caret").is_disabled()
             assert specimen.locator(".cm-content").get_attribute("contenteditable") == "false"

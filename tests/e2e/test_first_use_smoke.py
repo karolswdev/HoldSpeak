@@ -32,7 +32,7 @@ from .glass_infra import (
 )
 from .engine_stub_rig import _StubHandler
 from .concierge_rig import _quiet_concierge
-from .meeting_rig import _FixtureImportTranscriber, _chip_label, _wait_record_host
+from .meeting_rig import _FixtureImportTranscriber, _chip_label
 from tests._evidence import evidence_dir
 from .chair_windows import go_group, open_chair_window
 from . import runs_on
@@ -654,12 +654,15 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                 _desk(page, base)
                 _meetings(page, recovery=not meetings_ok)
                 page.get_by_test_id("meeting-row-" + meeting_id).locator(".object-list-open").dblclick()
-            route = _loaded(page.get_by_test_id("detail-route"))
-            expect(route.locator(".gadget-chip-egress")).to_have_text(f"{host} · LAN")
+            # UX-CANON A.9 as amended 2026-10-25 (#1481): a ready route draws
+            # no host chip in the meeting window; the Run summary verb's hover
+            # title names where the run goes.
+            expect(page.get_by_test_id("detail-route")).to_have_count(0)
             run = page.get_by_test_id("detail-run-intelligence-btn")
+            expect(run).to_have_attribute("title", re.compile("^Summary runs on .*" + re.escape(host)))
             assert _hit(run), "Run summary must be reachable on the loaded record"
-            route_box, verb_box = route.bounding_box(), run.bounding_box()
-            assert route_box and verb_box and abs(route_box["y"] - verb_box["y"]) < 100
+            # The disclosure rides the verb itself (its title), so the old
+            # "chip beside the verb" distance check has nothing to measure.
             shot("planned-host")
             with page.expect_response(lambda response: response.url.endswith("/intelligence/run")
                                       and response.request.method == "POST") as admitted:
@@ -691,42 +694,44 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
                   s.display!=='none' && Number(s.opacity)>0;
               };
               const text=document.querySelector('[data-testid=meeting-summary-text]');
-              // PHILO-17 U16: the host is said ONCE: on the slab, or on the
-              // window foot when the foot already names it.
+              // Owner ruling 2026-10-25 (#1481, RunAttempts): a succeeded run
+              // names no host on the record; only a failed attempt is drawn.
+              // (PHILO-17 U16 "said once" is superseded.)
               const win=text && (text.closest('.desk-surface-window') || document);
               const said=win ? ['[data-testid=summary-record-attempts]', '.surface-footer-egress']
                 .map(sel => win.querySelector(sel)).filter(el => drawn(el) && el.textContent.includes(host)) : [];
-              return drawn(text) && text.textContent.trim()===summary && said.length===1;
-            }""", "The open record shows the completed summary and actual host without a reload",
+              return drawn(text) && text.textContent.trim()===summary && said.length===0;
+            }""", "The open record shows the completed summary without a reload and names no host",
                 [engine.result.summary, _chip_label(host)])
             # A stale/missing result is expected today; a visible lie is not.
             summary_on_screen = page.get_by_test_id("meeting-summary-text")
             if summary_on_screen.is_visible():
                 expect(summary_on_screen).to_have_text(engine.result.summary)
-            attempts_on_screen = page.get_by_test_id("summary-record-attempts")
-            if attempts_on_screen.is_visible():
-                expect(attempts_on_screen.get_by_text(_chip_label(host), exact=True)).to_be_visible()
+            expect(page.get_by_test_id("summary-record-attempts")).to_have_count(0)
             if not refreshed:
                 print("RECOVERY: reopen the persisted meeting after the recorded refresh failure.")
                 _desk(page, base)
                 _meetings(page, recovery=not meetings_ok)
                 page.get_by_test_id("meeting-row-" + meeting_id).locator(".object-list-open").dblclick()
             expect(page.get_by_test_id("meeting-summary-text")).to_have_text(engine.result.summary)
-            _wait_record_host(page, _chip_label(host), scope=".desk-surface-window:has([data-testid=meeting-summary-text])")
-            print("PASS: the persisted summary and run receipt agree with the planned host")
+            # The receipt (above) holds the planned host; the face says none.
+            said = page.evaluate("""([label]) => {
+              const base = document.querySelector('.desk-surface-window:has([data-testid=meeting-summary-text])');
+              const root = base || document;
+              return ['[data-testid=summary-record-attempts]', '.surface-footer-egress']
+                .map(sel => root.querySelector(sel)).filter(el => el && (el.textContent || '').includes(label)).length;
+            }""", [_chip_label(host)])
+            assert said == 0, "a succeeded run names its host"
+            expect(page.get_by_test_id("summary-record-attempts")).to_have_count(0)
+            print("PASS: the persisted summary agrees with the receipt; a succeeded run names no host")
             # PHILO-16 R2 (Astra item 2): `drawn` proves layout; the owner must
             # SEE it. After the real-signal wait, the record is scrolled to the
             # attempts row and the summary, and both must sit in the viewport.
-            # PHILO-17 U16: the host row is the slab's attempts, or (when the
-            # foot names the host) the window foot.
-            host_row = "summary-record-attempts" if page.get_by_test_id("summary-record-attempts").count() else None
-            for test_id in (host_row, "meeting-summary-text"):
-                if test_id:
-                    page.get_by_test_id(test_id).scroll_into_view_if_needed()
-            in_view = page.evaluate("""() => [document.querySelector('[data-testid=summary-record-attempts]') ? 'summary-record-attempts' : 'foot', 'meeting-summary-text'].map(id => {
-              const el = id === 'foot'
-                ? document.querySelector('.desk-surface-window:has([data-testid=meeting-summary-text]) .surface-footer-egress')
-                : document.querySelector(`[data-testid=${id}]`);
+            # A succeeded run has no host row (#1481), so the summary is the
+            # one thing that must sit in the viewport.
+            page.get_by_test_id("meeting-summary-text").scroll_into_view_if_needed()
+            in_view = page.evaluate("""() => ['meeting-summary-text'].map(id => {
+              const el = document.querySelector(`[data-testid=${id}]`);
               if (!el) return [id, false];
               const r=el.getBoundingClientRect();
               return [id, r.width>0 && r.height>0 && r.top>=0 && r.left>=0 &&

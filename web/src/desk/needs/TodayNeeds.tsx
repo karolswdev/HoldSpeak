@@ -10,6 +10,7 @@
 import { useRef } from "react";
 import { Button } from "../../components/signal/Signal";
 import { openSurfaceOr } from "../shell";
+import { openChairWindow } from "../chair/chairWindows";
 import { refreshNeedsYou } from "../needsYou";
 import { NeedsList } from "../surface/objects";
 import { wireDate } from "../surface/format";
@@ -70,6 +71,10 @@ export function TodayNeeds({ work, count, now, limit, primary, projects, loaded,
     const face = rows.find((f) => f.id === id);
     if (face) faceOpener(face)?.();
   };
+  // The count says what is listed (atlas 2026-10-27, Today: "14 needs me
+  // but I see five"): the rows Today leaves out are one quiet row at the
+  // list's foot, and it opens the whole list.
+  const more = Math.max(0, count - members.size);
   const firstId = primary ? rows.find((f) => !f.source && f.verbs.kind !== "setup")?.id ?? null : null;
   return (
     <section className="today-needs" aria-label="Needs you" data-testid="today-needs">
@@ -85,6 +90,12 @@ export function TodayNeeds({ work, count, now, limit, primary, projects, loaded,
               <NeedRow key={face.id} face={face} primary={face.id === firstId} projects={projects} plates={false} />
             ))}
           </NeedsList>
+          {more > 0 ? (
+            <Button dense variant="ghost" className="today-needs-more" data-testid="today-needs-more"
+              onClick={() => openChairWindow("chair:needs")}>
+              {more === 1 ? "1 more in Needs you" : `${more} more in Needs you`}
+            </Button>
+          ) : null}
         </div>
       ) : !loaded ? null : failed ? (
         <div className="today-failed" data-testid="today-needs-failed" role="status">
@@ -93,7 +104,7 @@ export function TodayNeeds({ work, count, now, limit, primary, projects, loaded,
         </div>
       ) : emptyDesk ? (
         <p className="today-needs-none" data-testid="today-empty-desk">
-          <span>Your meetings and calendar fill this.</span>
+          <span>No meetings and no calendar yet.</span>
           <Button dense variant={calendarLead ? "primary" : "secondary"} onClick={() => openSurfaceOr("configure-settings", "/settings", "integration:calendar")}>
             Connect calendar
           </Button>

@@ -56,6 +56,10 @@ export interface DeskApplication {
   mark?: number;
   toolLabel?: string;
   toolGlyph?: string;
+  /** W1-DOORS (atlas 2026-10-27): the Search row of a parked application
+   * names the place it lands ("Wallpaper — Settings ▸ Desk"), never the name
+   * of its retired window. Its old name stays a search word. */
+  paletteLabel?: string;
 }
 
 export type GoGroup = "daily" | "work" | "builder";
@@ -77,6 +81,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     // The row keeps its id and Search words; each opens Settings
     // there (the `change-places` alias on Settings). ChangePlacesCore stays.
     parked: "settings:wallpaper",
+    paletteLabel: "Wallpaper — Settings ▸ Desk",
     mark: 4,
     surface: {
       eyebrow: "Places to think",
@@ -244,6 +249,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     // sweep and the loops are under its Advanced fold (CadenceCore, embedded
     // there); the window is parked, its id and Search word open Settings.
     parked: "settings:rhythm",
+    paletteLabel: "Notices — Settings",
     surface: {
       eyebrow: "Follow-through",
       minW: 520,
@@ -428,6 +434,7 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     action: "configure-commands",
     windowId: "surface-commands",
     parked: "speak:commands",
+    paletteLabel: "Commands — Speak",
     label: "Commands",
     description: "Map spoken phrases to registered actions.",
     glyph: "⌘",

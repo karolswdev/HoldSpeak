@@ -93,11 +93,12 @@ def _current_caret_visible(frame: Any) -> None:
           && caret.right <= editorBox.right + 1,
         aboveFooter: !!caret && !!footBox && caret.bottom <= footBox.top - 1,
         inViewport: !!caret && caret.top >= 0 && caret.bottom <= innerHeight,
-        hitInEditor: !!hit && !!scroller && scroller.contains(hit)};
+        hitInEditor: !!hit && !!scroller && scroller.contains(hit),
+        hitBy: hit ? `${hit.tagName}.${String(hit.className)} "${(hit.textContent || '').trim().slice(0, 40)}" under .${String(hit.parentElement?.className || '')} in #${hit.closest('[id]')?.id || ''}` : ''};
     }""")
     assert state["focused"] and state["insideEditor"] and state["collapsed"] and not state["text"], state
     assert state["lineText"].endswith("Newer source words."), state
-    assert state["inEditor"] and state["aboveFooter"] and state["inViewport"] and state["hitInEditor"], state
+    assert state["inEditor"] and state["aboveFooter"] and state["inViewport"] and state["hitInEditor"], json.dumps(state)
 
 
 def _visible_before_scroll(frame: Any, label: str) -> None:
@@ -343,7 +344,7 @@ def test_selected_note_ask_save_and_return(
             old_result = refused.value
             assert old_result.status == 409 and old_result.json()["reason"] == "source_changed", old_result.json()
             assert old_result.request.post_data_json["source_snapshot"] == sent["source_snapshot"]
-            expect(ask.get_by_test_id("run-line")).to_contain_text("Source changed. Select it again")
+            expect(ask.get_by_test_id("ask-not-answered")).to_contain_text("Source changed. Select it again")
             expect(ask.get_by_role("button", name="Back to Thought")).to_be_visible()
             assert ask.get_by_role("button", name="Try again").count() == 0
             assert len(Model.requests) == 1, Model.requests
@@ -355,7 +356,14 @@ def test_selected_note_ask_save_and_return(
             saved_note = page.locator(f'[id="pullout:note:{saved[0]["id"]}"]')
             saved_note.locator(".thought-note-body .cm-content").wait_for()
             editor_text = saved_note.locator(".thought-note-body .cm-content").inner_text()
-            assert ANSWER in editor_text and f"thread:{result['thread_id']}" in editor_text, editor_text
+            # The Note's live preview (#1502) draws a Markdown link as its
+            # words and keeps the target on the link mark (`data-lp-href`),
+            # so the editor's text no longer shows `thread:…`. The saved
+            # body carries it (asserted above, saved_body); here the thread
+            # ref is the "Ask thread" link's own target in the editor.
+            assert ANSWER in editor_text and "Ask thread" in editor_text, editor_text
+            thread_link = saved_note.locator(f'.thought-note-body .cm-lp-link[data-lp-href="thread:{result["thread_id"]}"]')
+            expect(thread_link).to_have_count(1)
             saved_note.locator(".thought-note-body .cm-scroller").click(position={"x": 28, "y": 28})
             page.keyboard.press("ControlOrMeta+End")
             page.keyboard.type("\n\n" + "\n".join(
@@ -434,6 +442,9 @@ def test_selected_note_ask_save_and_return(
             # The Save-as-note write remains real; this second answer is not
             # a claim that the server pinned those display-only sources.
             # The fresh real Ask above already owns the front window.
+            # Ask D1: New ask is the Recent rail's first row (a sheet at 393).
+            if not ask.get_by_role("button", name="New ask").is_visible():
+                ask.get_by_role("button", name="Recent", exact=True).click()
             ask.get_by_role("button", name="New ask").click()
             display_answer = "These two references can be named, but not opened here."
             display_wire = {
@@ -495,17 +506,13 @@ def test_reference_source_frame_keeps_back_during_busy_and_quote_closed(
                     if request.method != "GET" and any(path in request.url for path in ("/api/ask", "/api/notes", "/api/threads")) else None)
             page.goto(f"{base}/design/components?token={TOKEN}", wait_until="load")
             _normal_chair(page)
-            patterns = page.get_by_role("group", name="Patterns")
+            patterns = page.get_by_role("navigation", name="Patterns")
             expect(patterns).to_be_visible()
-            if width == 1440:
-                conversation = patterns.get_by_role("button", name="Conversation", exact=True)
-                expect(conversation).to_be_visible()
-                conversation.click()
-            else:
-                picker = patterns.locator(".surface-filter-menu")
-                expect(picker).to_be_visible()
-                picker.click()
-                page.locator("[role^='menuitem']").filter(has_text="Conversation").first.click()
+            # W2-BUILDER: the groups are a rail at both widths (at 393 the
+            # rail is the first view, a list of groups).
+            conversation = patterns.get_by_role("button", name="Conversation", exact=True)
+            expect(conversation).to_be_visible()
+            conversation.click()
             specimen = page.get_by_test_id("reference-conversation")
             specimen.wait_for()
             assert specimen.locator(".desk-mic").count() == 0

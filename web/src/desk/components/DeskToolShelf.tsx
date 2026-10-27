@@ -553,10 +553,10 @@ export function DeskToolShelf() {
             id: `recent:${recent}`,
             section: "RECENT",
             glyph: tool.glyph,
-            label: tool.label,
+            label: tool.paletteLabel ?? tool.label,
             kind: "App",
             terms: `${tool.label} ${tool.description} ${(tool.aliases ?? []).join(" ")}`.toLocaleLowerCase(),
-            name: tool.label,
+            name: tool.paletteLabel ?? tool.label,
             verbEntries: [{ type: "item", id: `app.open.${action}`, label: "Open", glyph: "▷", onSelect: () => v.run(ctx) }],
             run: () => v.run(ctx),
           });
@@ -724,16 +724,20 @@ export function DeskToolShelf() {
       const application = applicationForAction(tool.action);
       const v = application ? verbById(applicationVerbId(application)) : undefined;
       if (!v) continue;
+      // W1-DOORS (atlas 2026-10-27): an application the Recent rows already
+      // show is not listed a second time in the empty deck.
+      if (!normalized && recents.includes(`app:${tool.action}`)) continue;
       push({
         id: v.id,
         section: "PROGRAMS",
         glyph: tool.glyph,
-        // The application's own name (Today, People), not its verb's.
-        label: tool.label,
+        // The application's own name (Today, People), not its verb's; a
+        // parked application names the place it lands.
+        label: tool.paletteLabel ?? tool.label,
         kind: "App",
         keycap: v.key,
         terms: `${tool.label} ${tool.description} ${(tool.aliases ?? []).join(" ")} ${tool.parked ?? ""}`.toLocaleLowerCase(),
-        name: tool.label,
+        name: tool.paletteLabel ?? tool.label,
         verbEntries: [{ type: "item", id: `app.open.${tool.action}`, label: "Open", glyph: "▷", onSelect: () => v.run(ctx) }],
         run: () => v.run(ctx),
       });

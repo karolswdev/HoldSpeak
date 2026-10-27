@@ -22,6 +22,11 @@ SHOTS = evidence_dir("design-reference")
 
 def _select_pattern(page, label: str) -> None:
     direct = page.get_by_role("button", name=label, exact=True)
+    back = page.get_by_test_id("reference-back")
+    if not direct.count() and back.count() and back.is_visible():
+        # W2-BUILDER: at 393 an open group returns to the group rail first.
+        back.click()
+        direct = page.get_by_role("button", name=label, exact=True)
     if direct.count():
         direct.click()
         return
@@ -62,8 +67,11 @@ def test_patterns_are_real_local_compositions(desk: str, width: int, height: int
         page.goto(f"{desk}/design/components?token={TOKEN}", wait_until="load")
         reference = page.get_by_test_id("design-reference")
         expect(reference).to_be_visible()
-        expect(page.locator('[aria-label="LOCAL SPECIMEN"]')).to_be_visible()
+        expect(page.get_by_test_id("reference-status")).to_contain_text("Local specimen")
         expect(page.get_by_role("button", name="Give feedback on Components", exact=True)).to_be_visible()
+        if width < 720:
+            # W2-BUILDER: at 393 the group rail is the first view.
+            _select_pattern(page, "Forms")
 
         writes: list[str] = []
         page.on("request", lambda request: writes.append(request.url)
@@ -177,17 +185,20 @@ def test_patterns_are_real_local_compositions(desk: str, width: int, height: int
         conversation_state.select_option("failed")
         failed_request = "Can we keep the release note local while we review it?"
         expect(conversation.get_by_text(failed_request, exact=True)).to_have_count(1)
-        draft = conversation.get_by_role("textbox", name="Write a review note")
+        # The specimen composes Ask's own D1 parts (askFace, #1515): the
+        # shared composer field "Ask about your work", the Ask verb, and
+        # "Try again" on a turn the engine did not answer.
+        draft = conversation.get_by_role("textbox", name="Ask about your work")
         draft.fill("Newer composer draft")
-        conversation.get_by_role("button", name="Retry", exact=True).first.click()
-        expect(conversation.get_by_role("button", name="Retry…", exact=True)).to_be_disabled()
+        conversation.get_by_role("button", name="Try again", exact=True).first.click()
+        expect(conversation.get_by_role("button", name="Ask", exact=True)).to_be_disabled()
         draft.fill("Newer composer draft while retrying")
         expect(conversation.get_by_text("The reply is available locally for the captured request.", exact=True)).to_be_visible()
         expect(draft).to_have_value("Newer composer draft while retrying")
         expect(conversation.get_by_text(failed_request, exact=True)).to_have_count(1)
         conversation_state.select_option("ordinary")
-        conversation.get_by_role("textbox", name="Write a review note").fill("Keep the review local")
-        conversation.get_by_role("button", name="Send locally").click()
+        conversation.get_by_role("textbox", name="Ask about your work").fill("Keep the review local")
+        conversation.get_by_role("button", name="Ask", exact=True).click()
         expect(conversation.get_by_text("Keep the review local", exact=True)).to_be_visible()
         page.screenshot(path=str(SHOTS / f"conversation-{width}.png"), full_page=False)
 

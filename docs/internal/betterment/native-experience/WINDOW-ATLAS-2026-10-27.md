@@ -33,28 +33,28 @@ doors.
 
 | Window | G | T | H | F | De | Dn | C | P | Sum |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Calendar snapshot | 1 | 2 | 0 | 0 | 0 | 2 | 1 | 2 | **8** |
-| Room ▸ History | 0 | 0 | 2 | 2 | 1 | 2 | 0 | 2 | **9** |
-| Live meeting | 1 | 1 | 1 | 2 | 1 | 2 | 1 | 1 | **10** |
-| Speak (+ wings) | 1 | 1 | 1 | 2 | 1 | 2 | 1 | 1 | **10** |
-| Components | 0 | 1 | 2 | 2 | 1 | 2 | 1 | 1 | **10** |
+| Calendar snapshot (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
+| Room ▸ History (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
+| Live meeting (W1-TRUTH, W1-FACES; Lane / PR: W2-LIVE, W2-LIVE-2) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 3 | **19** |
+| Speak (+ wings) (W1-FACES) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
+| Components (W2-BUILDER) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
 | Ask | 2 | 1 | 2 | 2 | 1 | 1 | 1 | 1 | **11** |
-| Decision record | 1 | 1 | 2 | 2 | 1 | 2 | 1 | 2 | **12** |
-| Memory | 2 | 2 | 1 | 1 | 1 | 3 | 1 | 2 | **13** |
-| Context | 2 | 2 | 1 | 2 | 1 | 2 | 2 | 2 | **14** |
-| Capture | 2 | 3 | 1 | 2 | 1 | 2 | 1 | 2 | **14** |
-| Today | 2 | 1 | 2 | 3 | 2 | 2 | 1 | 1 | **14** |
-| Room ▸ Now | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | **15** |
-| People | 2 | 2 | 1 | 3 | 2 | 3 | 2 | 3 | **18** (W1-KIT; was 15) |
-| Decisions | 3 | 2 | 1 | 3 | 2 | 2 | 1 | 3 | **17** (W1-KIT; was 15) |
-| Engines | 3 | 2 | 1 | 2 | 2 | 2 | 1 | 3 | **16** (W1-KIT; was 15) |
+| Decision record (W1-TRUTH) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **15** |
+| Memory (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 3 | 2 | 2 | **17** |
+| Context (W2-ASKWELLS) | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **16** |
+| Capture (W2-ASKWELLS) | 2 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
+| Today (W2-ASKWELLS words) | 2 | 2 | 2 | 3 | 2 | 2 | 2 | 1 | **16** |
+| Room ▸ Now (Ask: W2-ASKWELLS) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
+| People (W1-KIT; was 15 + W1-TRUTH) | 2 | 2 | 1 | 3 | 2 | 3 | 2 | 3 | **18** (W1-KIT; was 15) |
+| Decisions (W1-KIT; was 15 + W1-TRUTH) | 3 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **18** |
+| Engines (W1-KIT; was 15 + W1-TRUTH) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 2 | **18** |
 | Processes | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 1 | **15** |
-| Activity | 3 | 1 | 2 | 2 | 2 | 2 | 2 | 2 | **16** |
-| Agents | 2 | 1 | 2 | 3 | 2 | 3 | 1 | 2 | **16** |
-| Settings (frame + 8 panes) | 3 | 2 | 2 | 2 | 2 | 2 | 3 | 2 | **18** (W1-KIT; was 17) |
+| Activity (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
+| Agents (ask card: W1-FACES) | 2 | 2 | 2 | 3 | 2 | 3 | 1 | 2 | **17** |
+| Settings (frame + 8 panes) (W1-KIT; was 17) | 3 | 2 | 2 | 2 | 2 | 2 | 3 | 2 | **18** (W1-KIT; was 17) |
 | Automations | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | New Project | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
-| Meetings | 3 | 2 | 2 | 3 | 2 | 3 | 3 | 3 | **21** (W1-KIT; was 18) |
+| Meetings (W1-KIT; was 18 + gear wing: W1-FACES) | 3 | 2 | 2 | 3 | 2 | 3 | 3 | 3 | **21** (W1-KIT; was 18) |
 | Setup | 3 | 2 | 2 | 3 | 2 | 3 | 2 | 1 | **18** |
 | Person | 2 | 3 | 2 | 3 | 2 | 2 | 2 | 2 | **18** |
 | Automation (one open) | 2 | 2 | 3 | 3 | 2 | 2 | 2 | 2 | **18** |
@@ -88,6 +88,10 @@ weakest across the board.
    draw their own composer, engine line and refusal. Owner: "which one do I use?"
    (`web/src/desk/components/AskPanel.tsx`, `web/src/pages/cores/MemoryCore.tsx`,
    `web/src/features/project-room/ProjectRoomCore.tsx`).
+   **W2-ASKWELLS (2026-10-27):** one composer. Memory and the Room compose Ask's own row
+   (`web/src/desk/components/askFace.tsx` AskComposer, AskEngineWord, AskSendButton); both
+   hand the question to the Ask window, which runs it and keeps its answer, its
+   not-answered line and its Recent. Their own wells are parked.
 6. **Three loading faces.** Meetings and People show a faint grey ring (People also drops its
    toolbar while it waits), the Room shows a centred mono `Loading…`, Decisions and Projects
    show a toolbar over a blank body
@@ -150,6 +154,7 @@ Shots: [dense 1440](atlas-2026-10-27/today-1440.png) · [dense 393](atlas-2026-1
   dumps me in the project, where is the item?"; "What is a destination form doing in Since
   yesterday?" (TodayView.tsx Since fold).
 - **Fix needs:** a lane (ask card → a row; count = what is listed; Open item opens the item).
+- **W2-ASKWELLS (2026-10-27), Today's words:** a DOM read of the seeded Today (rows, Since yesterday, This week, the 1:1) finds no mono and no caps left but the stepper's numbers, now sans; the rows Today leaves out are one quiet row `11 more in Needs you` (opens Needs you), so the toolbar's 14 adds up; the empty desk says `No meetings and no calendar yet.` + *Connect calendar* (no help sentence). Left: the phone status bar (KIT), *Open item* lands on the Room, not the item. Shots: `scratchpad/shots/w2-askwells/today{,-since}-*.png`.
 
 #### Capture — `chair:capture` (14)
 
@@ -165,6 +170,7 @@ Shots: [dense 1440](atlas-2026-10-27/capture-1440.png) · [393](atlas-2026-10-27
   as a label · P2.
 - **Top defect:** "It is three words and a hole." Owner: `web/src/desk/chair/ChairHome.tsx`.
 - **Fix needs:** a lane (one true empty line; the row verb visible as a verb).
+- **W2-ASKWELLS (2026-10-27):** New note and Record carry their glyphs; *Record when it starts* is the library secondary Button (no ghost that reads as a label); read and empty, Coming up says `Nothing is coming up`; at 393 the three verbs are three 76 px tiles, the glyph over the word. Shots: `scratchpad/shots/w2-askwells/capture-{1440,393}.png`.
 
 #### Speak — `surface-dictation` + Journal, Blocks, Learned, Commands, ⚙ Configure dictation (10)
 
@@ -191,6 +197,13 @@ Shots: [Speak 1440](atlas-2026-10-27/speak-1440.png) · [393](atlas-2026-10-27/s
   `web/src/pages/cores/dictation/SpeakFace.tsx`.
 - **Fix needs:** a lane (wing named for its job, one toolbar per wing, illustrated empty
   states; Configure dictation on the grid).
+- **W1-FACES (2026-10-27):** the first wing is *Talk*; Review and Export sit in the Talk
+  toolbar and Export, Search and Clear in the Journal's toolbar, never in the status bar; the
+  status bar is one line on the phone (a 12-segment meter, the state, its fact); Commands say
+  "opens Ask"; Configure dictation is the Settings label/control grid with *Manage in
+  Settings* in its toolbar; Journal, Learned and Blocks draw the D mic over the true word and
+  one quiet line. Left: Learned has no toolbar (it has no verb); the Talk toolbar still takes
+  two rows at 393. Shots: `scratchpad/shots/w1-faces/speak-*`.
 
 #### Ask — `ask:desk` (11)
 
@@ -256,6 +269,10 @@ Shots: [dense 1440](atlas-2026-10-27/meetings-1440.png) · [393](atlas-2026-10-2
 - **Could not verify:** the *Record* wing: the tab press left the Records face on screen at
   1440 (unknown whether the wing switched).
 - **Fix needs:** a lane.
+- **W1-FACES (2026-10-27), Meeting plumbing:** one list view; an action reads by its task with
+  owner · meeting and *Open / Done* as a dot and a word; background work by its job (*Summary*,
+  *Enrich with the CLI*) with *Waiting / Running / Failed / Done*; the filter now filters; no
+  `QUEUED` token, no row that only says `actions`.
 
 #### Agents — `conductor` (16)
 
@@ -277,6 +294,11 @@ Shots: [dense 1440](atlas-2026-10-27/agents-1440.png) · [393](atlas-2026-10-27/
 - **Top defects:** "Is Claude Code running or not? It is in the list twice." "Pane identity
   — what?" Owner: `web/src/desk/conductor/ConductorWindow.tsx`, `web/src/desk/agents/AgentRow.tsx`.
 - **Fix needs:** a lane (runs list and installed tools apart; refusal in plain words).
+- **W1-FACES (2026-10-27), the ask card (Agents and Today):** *Asks you* is a dot and a word,
+  the age a quiet sans line, the card a soft plate (no ink frame, no stipple bar); the refusal
+  is one quiet line with a dense *Try again*, and the pane-identity refusal reads "The desk
+  cannot reach this agent's terminal · Nothing was sent". Not shot: in this rig the seeded
+  sessions read *Session gone* (cause not known); proven by the vitest files.
 
 #### Settings — `surface-settings`, panes You, Speak, Meetings, Notices, Accounts, Agents, Desk, This Mac (17)
 
@@ -327,6 +349,43 @@ Shots: [1440](atlas-2026-10-27/live-1440.png) · [393](atlas-2026-10-27/live-393
   plugin jobs?" "No title on the phone." Owner: `web/src/pages/cores/LiveCore.tsx`.
 - **Not reached:** Live during a meeting (the rig has no capture runtime).
 - **Fix needs:** a canvas (what Live is before, during and after; the gear wing's place).
+- **W1-TRUTH (2026-10-27):** the status bar reads `● Speech not set up` (warn) and never `Ready` beside it; the phone title bar names `Live meeting` (a window with only a gear door folds to its name, `SurfaceWings name`); the stepper is Today's (kit `meetingSteps`: Prep · Record · Summary · Send follow-up). Shots: `scratchpad/shots/w1-truth/live-{1440,393}.png`.
+- **W1-FACES (2026-10-27), gear wing only:** `Routing`, `Try a phrase` with one quiet
+  sentence (no `TESTS ROUTING · …` caps), route facts in sentence case, the Summary state as a
+  dot and a word, *Background work*, Devices says `Checking… N s` then `No answer` instead of
+  a ring that turns forever. The canvas stays open.
+- **W2-LIVE (2026-10-27), Lane / PR: W2-LIVE:** canvas
+  `docs/internal/betterment/canvases/live-direction-2026-10-27.html` (A, "the transcript is the
+  page", recommended; B, transcript and notes side by side). Built, slice 1: while it records
+  the body is the transcript as a document (time mark from the wire's `start_time`, which the
+  old stream never read, so every mark was empty; the speaker's name when the speaker changes;
+  a bookmark as the ember mark; Listening at the foot); the status bar says the live state once
+  (`Recording 12:04 · Summaries on <engine>` or `No engine for summaries`); Stop is the danger
+  verb, Bookmark a toolbar verb, Settings the trailing verb (a glyph on the phone). The gear wing
+  is gone: its parts are Settings ▸ Meetings ▸ Live meeting (`LiveMeetingTools`). Shots:
+  `scratchpad/shots/w2-live/live-{before,during}-{1440,393}.png`,
+  `settings-meetings-{1440,393}.png`. Left: Before's ready sheet (sources and engines as rows),
+  After's rail at Summary in MeetingRecord, the phone status bar wraps to two rows while it
+  records (four items).
+- **W2-LIVE-2 (2026-10-27), Lane / PR: W2-LIVE-2, slice 2 (Before and After):** Before is the
+  ready sheet (`LiveReady.tsx`): the meeting's name as a quiet line (sent with `PATCH
+  /api/meeting` once the meeting is live; the hub's start takes no title), then *It will hear*
+  (Microphone, System audio: the device from `/api/settings`, ● Ready) and *It will write*
+  (Transcript: `Whisper base, on this Mac`, ● Ready or ● Not set up with *Set up speech · 144 MB*
+  on the row; Summary: `<engine>, after the meeting`, ● Ready, ● Off, or ● No engine with
+  *Choose engine*). "Start a meeting to begin" is gone; the steps band stays (the canvas keeps
+  it); Set up speech left the toolbar. After: the meeting window already becomes the record (the
+  same window, `MeetingWindow.tsx`); the record now has Today's rail under its toolbar
+  (`recordSteps`: Summary now while he reads and decides, Send follow-up now when nothing waits),
+  *Send follow-up…* as the primary, Settings as the trailing verb, and *Decide…* on every decided
+  row (the record when it has one, else the decision's reader, else New decision). The phone
+  status bar while recording is one line: no title (the title bar has it), the link only when it
+  is not connected. Shots: `scratchpad/shots/w2-live2/live-before-{nospeech,ready}-{1440,393}.png`,
+  `meeting-after-{1440,393}.png`. Left: the project line on the ready sheet (a meeting has no id
+  before Start; Add to Project is on the record); the microphone level and an *Allow* verb (the
+  hub sends no level or permission fact before a meeting); the section name stays *Decisions*
+  (it holds proposed rows too, so *Decided* would not be true); the record's rows show their
+  verbs on hover and focus (the ledger species), the canvas draws them always.
 
 #### Setup — `surface-setup` (18)
 
@@ -356,6 +415,7 @@ Shots: [1440](atlas-2026-10-27/context-1440.png) · [393](atlas-2026-10-27/conte
 - **Top defect:** "Is this sent to my agents right now?" Owner:
   `web/src/pages/cores/ConstitutionalContextCore.tsx`.
 - **Fix needs:** a lane.
+- **W2-ASKWELLS (2026-10-27):** the status bar always answers it: `● Every engine run reads this first` (the saved text is the first system message of every engine run, `holdspeak/intel/engine.py` `run_prompt`) or `Empty: no run reads it`; the editor is the page, edge to edge (no inset well). Left: Context has no door outside Builder tools. Shots: `scratchpad/shots/w2-askwells/context-{1440,393}.png`.
 
 #### Automations — `surface-workbenches` (17) and one automation open (18)
 
@@ -392,6 +452,14 @@ Shots: [1440](atlas-2026-10-27/components-1440.png) · [393](atlas-2026-10-27/co
 - **Top defect:** "The catalog of our grammar breaks our grammar." Owner:
   `web/src/pages/cores/ComponentsCore.tsx`.
 - **Fix needs:** a lane (wings for the groups, the specimen edge to edge).
+- **W2-BUILDER (2026-10-27):** the nine groups are a rail (the Settings rail's 32 px rows and
+  selection plate, a kit glyph each; drawn by the reference itself so no Settings pane style
+  reaches a specimen); the pane opens with a toolbar (`Preset` + the example state, Reset at the
+  right); the specimen runs on the paper; one status bar `Local specimen · <group> · <preset>`.
+  `PRESET`, `PROPOSED`, `THIS MAC`, `LOCAL SPECIMEN`, `N SHOWN`, `READ ONLY`, `OPENED LOCALLY` and
+  the specimen headlines are gone. At 393 the rail is the first view; a group opens with ‹ Groups.
+  Left: a specimen that is a whole window (Window, Forms, Conversation) keeps its own status bar
+  inside its frame; the Forms specimen draws Settings at its narrow width in a 640 px window.
 
 #### Activity — `surface-activity` + Rules, ⚙ Candidates and connectors (16)
 
@@ -408,6 +476,10 @@ Shots: [Records 1440](atlas-2026-10-27/activity-1440.png) · [393](atlas-2026-10
   *Clear records* (destructive) sits as a plain verb next to the Watching lamp · P2.
 - **Top defect:** "first-party, first-party, first-party." Owner: `web/src/pages/cores/ActivityCore.tsx`.
 - **Fix needs:** a lane.
+- **W1-FACES (2026-10-27):** the gear wing is a list view: each connector by its own name
+  (*GitHub CLI*) with what it does (*Enrich with the CLI*), On / Off / Failed as a dot and a
+  word, *Ran 2 h ago* or *Never ran*; no `first-party`, no `CLI_ENRICHMENT`; Rules' empty
+  state says *No rules yet*.
 
 #### Memory — `surface-project-memory` without a scope (13)
 
@@ -423,6 +495,7 @@ Shots: [dense 1440](atlas-2026-10-27/memory-1440.png) · [393](atlas-2026-10-27/
 - **Top defect:** "Is this Ask, Projects or People? Why does it exist?" Owner:
   `web/src/pages/cores/MemoryCore.tsx`.
 - **Fix needs:** a canvas (Memory's job against Ask; possibly fold into Ask's About).
+- **W2-ASKWELLS (2026-10-27):** the toolbar is the Ask composer row (`askFace.tsx` AskComposer): `My whole desk` · one field *Find or ask your desk* · mic · `● No engine` · *Ask ⏎*. The field finds as it is typed: names, then `/api/memory/recall` hits, as dense rows of name · kind · date (`Decision · Oct 20`), status `15 found`; *Ask ⏎* runs the question in the Ask window. Pages not written: one line `● No engine writes the desk pages` + *Choose engine* (not a toolbar verb); an empty desk says `No projects or people yet`. Left: the canvas above. Shots: `scratchpad/shots/w2-askwells/memory{,-find,-asked}-*.png`.
 
 #### Room — `surface-project-memory` scoped `project:<id>`: Now (15), History (9)
 
@@ -449,6 +522,12 @@ Shots: [Now 1440](atlas-2026-10-27/room-1440.png) · [Now 393](atlas-2026-10-27/
   Now and History; Sources and Plan are folds). My press on the folds did not open them in the
   shot; their content is known from the DOM read only.
 - **Fix needs:** a lane for History (list view, dot + word, sentence case); Now is close.
+- **W2-ASKWELLS (2026-10-27), the Room's Ask:** the Ask composer row (`askFace.tsx` AskComposer), the scope preset to the project (folded on the phone, where the menu bar names it): `▣ Payments Platform Rewrite` · *Ask this project…* · mic · Result ▾ · `● No engine` · *Ask ⏎* (secondary: Write update is the Room's primary). The question runs in the Ask window with the project as its scope (shot `room-asked-1440.png`). The old well, chip and hidden Submit are parked (`_parked/roomAskWell.v1-2026-10-27.tsx`). Left: the Plan fold's mono caps dates (`JUL 15`, `LATE`, `26 DAYS`), the grey `Risk` pills.
+- **W1-FACES (2026-10-27):** History is a list view (`desk/surface/objects/ListView.tsx`):
+  a toolbar with *All ▾* (All / GitHub / Jira / Room) and the search, quiet day captions
+  (Today / Yesterday / Mon, Oct 20), rows of glyph · what happened · where · `14:02`, a press
+  opens the item; the Writes fold uses the same rows in sentence case; the status bar is
+  `8 events · since today`. No headline, no caps pills, no box.
 
 #### New Project — `surface-project-setup` (17)
 
@@ -490,6 +569,7 @@ Shots: [People 1440](atlas-2026-10-27/people-1440.png) · [393](atlas-2026-10-27
 - **Top defects:** "Why does People ask my name?" "Who is Priya Karol?" Owner:
   `web/src/pages/cores/PeopleCore.tsx` (the "From your meetings" row and the owner-name band).
 - **Fix needs:** a lane.
+- **W1-TRUTH (2026-10-27):** a 1:1 title splits on its separator (`/`, `<>`, `&`, `x`) and drops the owner; with two names and no owner name nothing is guessed (`people_suggestions.names_from_one_on_one_title`). The name band is one quiet row, once per browser, with *Set your name* (Settings ▸ You).
 
 #### Projects — `surface-projects` (19)
 
@@ -527,6 +607,7 @@ Shots: [Decisions 1440](atlas-2026-10-27/decisions-1440.png) · [393](atlas-2026
   canonical record — I am in the record." Owner: `web/src/pages/cores/DecisionsCore.tsx`,
   `web/src/desk/pullouts/DecisionPullout.tsx`, `web/src/pages/cores/NewDecisionCore.tsx`.
 - **Fix needs:** a lane (list title; one state word; the record on the reader grammar).
+- **W1-TRUTH (2026-10-27):** the hub's record list carries a Desk decision's `title`; the list names a row by it. One state word: Open / Accepted / Superseded / Retired / Rejected, in the list, the Decisions reader and the record. The record: toolbar (Edit · Accept or Retire · Send… · Copy · Dictate about this · Open record), the decision as plain reader text, the folds, a status bar (`● Accepted` · `Filed in: Desk`, a press opens the drawers); no state cycle, no box, no full-width bar; the window opens at 440 px.
 
 #### Calendar snapshot — `surface-calendar-snapshot` (8, builder tool)
 
@@ -542,6 +623,7 @@ Shots: [dense 1440](atlas-2026-10-27/calendar-snapshot-1440.png) · [393](atlas-
   `web/src/pages/cores/CalendarSnapshotReviewCore.tsx`.
 - **Fix needs:** a lane (a verb to add a screenshot, a true empty line) or park it behind
   Accounts ▸ Import image only.
+- **W1-TRUTH (2026-10-27):** toolbar *Import image* (the one Accounts flow, `desk/calendarImageImport.ts`) · *Check sources*; no caption; `● No screenshot yet`; the status bar says `2 sources connected` when feeds work.
 
 #### Engines — `surface-engines` + inspector (15)
 
@@ -565,6 +647,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 - **Could not verify:** whether the inspector follows the selected row: pressing a row left
   *What runs where* unchanged (the same block for every engine).
 - **Fix needs:** a lane (state after a failed check; one engine name).
+- **W1-TRUTH (2026-10-27):** detect reads an endpoint whose `/models` does not answer `UNREACHABLE` (a 401/403 is an answer); the face says `Not answering` on the row, beside each job's picker and in the inspector head (`Studio engine · ● Not answering · checked just now · stub-qwen`); the status bar's check is its age (`Checked 2 h ago`). The name he gave wins over the served model id (`concierge_service.owner_engine_name`); the model id is `modelId`, quiet meta.
 
 #### Parked rows (no window of their own)
 
@@ -595,17 +678,17 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 
 | Window | Jobs | Doors in → out | Score | Top defects | Lane / PR |
 | --- | --- | --- | --- | --- | --- |
-| Calendar snapshot | J6 | Go ▸ Builder → none | 8 | red dot, no verb, wrong on a desk with a feed | lane or park |
+| Calendar snapshot | J6 | Go ▸ Builder → Import image, Check sources | 8 → 15 | healed: toolbar, true empty state, feeds line; left: no feed-success shot (the seed's feed reads idle) | W1-TRUTH |
 | Room ▸ History | J3 | Room wing → item Open | 9 | 2026-09 dashboard grammar | lane |
-| Live meeting | J2 | Meetings ▸ Record → Start meeting | 10 | Ready + not set up; gear wing; no phone title | canvas |
+| Live meeting (W1-TRUTH, W2-LIVE, W2-LIVE-2) | J2 | Meetings ▸ Record → Start meeting | 10 → 19 | healed: honest status, phone title, Today's stepper, gear wing moved, during as a document, the ready sheet, the record's rail and Decide…, one-line phone status bar; left: project line, mic level | W1-TRUTH, W2-LIVE, W2-LIVE-2 |
 | Speak | J1, dictation | Dock, ⌃5 → Talk | 10 | Speak/Speak; verbs move to the status bar; gear wing | lane |
-| Components | J7 | Go ▸ Builder → specimens | 10 | breaks the grammar it shows | lane |
+| Components | J7 | Go ▸ Builder → specimens | 10 → 16 | healed: a group rail (32 px rows, glyphs; the list first at 393), a toolbar (Preset, Reset), the specimen on the paper, one status bar (`Local specimen · Forms · Saved`); no caps tokens, no specimen headlines; left: the Forms specimen draws Settings at its narrow width inside a 640 px window | W2-BUILDER |
 | Ask | J3 | ⌘I/Ctrl+I, ⌘K → Save as note, Send | 11 | chat-demo look, oversized composer, mono errors | canvas (ASK) |
 | Decision record | J2 | Decisions row → Edit, Send | 12 | card box, "canonical", dead band | lane |
 | Memory | J5 | Go ▸ Memory → Room, person | 13 | second Ask; blank empty | canvas |
 | Context | J4 | Go ▸ Builder → Save | 14 | no state | lane |
 | Capture | J1 | Go, phone Dock → Talk, New note | 14 | blank band | lane |
-| Today | J2–J4 | Dock 0, ⌃1 → items | 14 | mono ask card, count 32 vs 5, Send form in a fold | lane |
+| Today (W1-FACES + W2-ASKWELLS) | J2–J4 | Dock 0, ⌃1 → items | 14 | mono ask card, count 32 vs 5, Send form in a fold | lane |
 | Room ▸ Now | J3, J4 | Projects, Today → Write update | 15 | third Ask; Risk pills; items hidden in Plan | lane |
 | People | J3 | Dock 2, ⌃3 → person | 18 | owner-name band; "Priya Karol" | W1-KIT (press opens, Open prep in the toolbar, phone bar) |
 | Decisions | J2 | Go → record | 17 | body as name; Decided vs Accepted | W1-KIT (press opens, phone bar, loading face); list title + state word: lane |
@@ -616,9 +699,292 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Settings | J6 | HoldSpeak menu → panes | 18 | raw enums; scope lands at top | W1-KIT (steppers are library Buttons); enums + scope: lane |
 | Automations | J4 | Go ▸ Work → automation | 17 | "No engine" vs the result's model | lane |
 | New Project | J3 | Projects → Room | 17 | clipped placeholder | lane (small) |
-| Meetings | J2 | Dock 1, ⌃2 → meeting | 21 | gear wing | W1-KIT (press opens, Record meeting primary, phone bar, Sort verb, loading face); gear wing: lane |
+| Meetings (W1-KIT) | J2 | Dock 1, ⌃2 → meeting | 21 | gear wing | W1-KIT (press opens, Record meeting primary, phone bar, Sort verb, loading face); gear wing: lane |
 | Setup | J6 | HoldSpeak menu → Use everything found | 18 | "Priya Karol"; phone footer | lane |
 | Person | J3 | People → Record meeting | 18 | lone Add Buttons | — |
 | Automation (open) | J4 | Automations → Run now | 18 | empty band | — |
 | Projects | J3 | Go ▸ Projects ▸ All → Room | 21 | three levels deep | W1-KIT (press opens, New Project primary, glyph, loading face) |
 | New decision | J2 | the verb → Create | 21 | — | — |
+
+## Part B — the object windows, the doors, the phone (lane ATLAS-B)
+
+### How the shots were made
+
+- Rig: the fixtures of `tests/e2e/test_desk_sweep.py` (`desk`, `pw_browser`, `_page`,
+  `_hub_open`, `SETTLED_JS`), in a scratch test that is deleted. Every window was opened with
+  `POST /api/desk/windows/{id}/open` before the page loaded, or by its real door (dock tile, menu,
+  ⌘K, key, floor icon).
+- Seed: the sweep's seed (canvas week, Priya's 1:1, the agent flight, the failed Vendor sync,
+  the Payments Project, the Friday automation), plus `POST /api/desk/seed` (drawers and modes),
+  five notes, four decisions, five more Project items (16 in the Plan), a knowledge base, a
+  sequence, a workflow, a thread. Three more people failed to post (`relationship_kind`), so the
+  People list has the canvas seven.
+- Wallpaper: there is no hub API; the choice is a browser preference. The rig set
+  `localStorage["hs.desk.atmosphere"] = "rainy-city"` (`web/src/desk/gl/atmospherePreference.ts:8`).
+- Widths: 1440×900 (the window crop + 24 px of floor) and 393×852 (the whole screen). All PNGs are
+  1×, each under 300 KB (pngquant on the four full-desk shots).
+- Only the dense state. A fresh empty hub, a lost connection and a loading hold were not shot
+  (see "Not reached").
+
+### Scores
+
+| Window (id) | Jobs | Doors in → out | G | T | H | F | D | Dn | C | P | Sum |
+| --- | --- | --- | - | - | - | - | - | - | - | - | - |
+| Note (`pullout:note:*`) | J1 | floor icon (1), ⌘K (2), Inbox drawer row (2) → Done closes; Send… in place. Lane / PR: W1-DOORS (opens rendered, caret at the end) | 2 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | 20 |
+| Decision (`pullout:decision:*`) | J3 | Needs you ▸ Decide (2), ⌘K (2), Go ▸ Decisions ▸ row (3) | 0 | 1 | 2 | 2 | 1 | 1 | 0 | 1 | 8 |
+| Meeting (`surface-meetings@meeting:*`) | J2 | dock Meetings ▸ row (2), Needs you row (2) → Back to the list. Lane / PR: W2-LIVE-2 (Today's rail at Summary, Send follow-up… primary, Settings trailing, Decide… on decided rows) | 3 | 2 | 2 | 3 | 2 | 2 | 3 | 1 | 18 |
+| Person (`pullout:people:*`) | J3 | dock People ▸ row (2), Today 1:1 (2) | 2 | 3 | 2 | 2 | 2 | 1 | 2 | 1 | 15 |
+| Room via floor icon (`surface-project-memory@project:*`) | J3 | floor Project icon (1), Go ▸ Projects ▸ name (3) | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |
+| Project as a pullout (`pullout:project:*`) | J3 | hub/agent → the Room (`surface-project-memory` scoped `project:<id>`). Lane / PR: W1-DOORS | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | 15 |
+| Project drawer (`drawer:project:*`) | J3, J5 | hub/agent; its own Room button. Lane / PR: W2-BUILDER (head facts as dot + word: `1 need you`, `At risk`; a connection scope reads `Jira`) | 0 | 1 | 2 | 1 | 1 | 1 | 1 | 1 | 8 |
+| Artifact (`pullout:artifact:*`) | J4 | Today "has a new result ▸ Open" (2) | 1 | 1 | 2 | 2 | 1 | 1 | 1 | 2 | 11 |
+| Agent's window (`lane@launch:*`) | J4 | dock Agents ▸ row (2). Lane / PR: W2-BUILDER (toolbar Tell it · Open PR · Stop; the ask first; `No steps reported yet` in words; `Last step N min ago` in the status bar) | 2 | 2 | 2 | 1 | 1 | 2 | 2 | 2 | 14 |
+| Automation (`workbench:*`) | J4 | Go ▸ Automations ▸ row (3) | 3 | 2 | 3 | 3 | 2 | 3 | 2 | 2 | 20 |
+| Drawer (`pullout:zone:*`) | J5 | floor drawer icon (1), Go ▸ Drawers ▸ name (3) | 1 | 2 | 3 | 3 | 2 | 1 | 1 | 2 | 15 |
+| Knowledge base (`pullout:knowledge:*`) | J5 | floor icon (1), its label says KNOWLEDGE. Lane / PR: W2-BUILDER (toolbar Add · Edit · Copy · Dictate; Add opens the item picker) | 2 | 2 | 2 | 2 | 1 | 2 | 1 | 2 | 14 |
+| Archive (`drawer:parked`) | J5 | Go ▸ Archive (2) | 2 | 1 | 2 | 2 | 2 | 2 | 2 | 2 | 15 |
+| Mode / recipe (`pullout:persona:*`) | J4, J6 | no ordinary door found (Go ▸ Builder only with builder tools on). Lane / PR: W2-BUILDER (toolbar; "Which engine answers in a thread" / "Which engine runs it" in sans; no raw id) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | 15 |
+| Sequence / chain (`pullout:sequence:*`) | J4 | no ordinary door found. Lane / PR: W2-BUILDER (Add mode adds a step, PUT /api/chains/{id}; a greyed Run says why) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | 15 |
+| Workflow (`pullout:workflow:*`) | J4 | no ordinary door found. Lane / PR: W2-BUILDER (Edit left the title bar for the toolbar; Steps as a quiet list; a greyed Run says why) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | 15 |
+| Thread (`pullout:thread:*`) | J1 | → opens Ask (by design, Betterment Q4); scored by ATLAS-A/ASK | – | – | – | – | – | – | – | – | – |
+| Needs you (`chair:needs`) | J2, J3 | bell (1), ⌃J (1), Go ▸ Needs you (2). Lane / PR: W1-DOORS (rows named after the meeting; one calendar truth) | 3 | 2 | 2 | 3 | 2 | 3 | 2 | 2 | 19 |
+| Capture (`chair:capture`) | J1, J2 | Go ▸ Capture (2), dock at 393 (1) | 2 | 3 | 2 | 3 | 1 | 3 | 2 | 2 | 18 |
+| ⌘K palette | J5, J7 | ⌘K or Search (1) → the row's window. Lane / PR: W1-DOORS (parked rows name where they land; an app once) | 2 | 2 | 2 | 3 | 2 | 2 | 1 | 2 | 16 |
+| Menu bar + menus (HoldSpeak, Desk, Object, Go, Window) | J7 | always on | 3 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | 21 |
+| Shortcut sheet | J7 | ⌘/ , HoldSpeak ▸ Keyboard shortcuts (2) | 1 | 0 | 3 | 2 | 1 | 2 | 1 | – | 10 |
+| Window switcher | J7 | ⌘` held (1) | 2 | 3 | 3 | 3 | 1 | 3 | 2 | 0 | 17 |
+| Mission control (Overview) | J7 | ⌘⇧E, Window ▸ Overview (2) | 2 | 3 | 3 | 3 | 1 | 2 | 2 | – | 16 |
+| Send preview (in the note) | J1, J3 | note toolbar Send… (1) → destination (2) → Send (3) | 1 | 0 | 3 | 3 | 1 | 2 | 1 | – | 11 |
+| Feedback sheet | J7 | Desk ▸ Give feedback, title-bar Feedback (only with `HOLDSPEAK_UI_FEEDBACK=1`). Lane / PR: W1-DOORS (above the dock) | 1 | 0 | 2 | 2 | 1 | 2 | 1 | – | 9 |
+| Floor: icon menu / blank floor | J5, J7 | right-click an icon (1) / right-click the floor (1): the Desk menu's rows. Lane / PR: W1-DOORS | 2 | 3 | 2 | 3 | 2 | 3 | 1 | – | 16 |
+| Phone desk (393) | all | Go list as home, five dock tiles. Lane / PR: W2-BUILDER (with two or more windows open the screen title is `<window> ▾` again and lists every open window) | 2 | 2 | 1 | 2 | 2 | 2 | 1 | 2 | 14 |
+
+"–" = not shot or not applicable (no keyboard at 393). Friction numbers are presses counted by
+doing them in the rig.
+
+### The five worst by score
+
+1. **Sequence / chain — 4.** `chain-1440.png`. A caps STEPS label over "No steps", then "Add at
+   least one Agent to this linear Sequence." and no verb to add one; a mono "Material" well with a
+   ghost Run; "Where it runs: This machine · Creates artifact"; Assignments. A dead end in machine
+   words. Owner: "it tells me what to do and gives me no way to do it." `web/src/desk/pullouts/ChainPullout.tsx`.
+2. **Project as a pullout — 3 (dead door).** `project-as-pullout-1440.png`: an empty window
+   that says "No detail view for project". The hub accepts `pullout:project:<id>` and the browser
+   pushes the pullout without `openPullout`'s surface redirect (`web/src/desk/compositor/hubWindows.ts:277-293`;
+   `web/src/desk/pullouts/registry.ts` maps `project` to `FallbackPullout`). An agent that opens a
+   Project this way gets this face.
+3. **Mode (recipe) — 5.** `recipe-1440.png`. A centred avatar and a centred "Continue in
+   thread"; two bordered cards, "Thread assignment" and "Run assignment", each "No default model"
+   in mono and a bold mono "Choose default"; "Where it runs: Assignment:recipe" (a raw id). Owner:
+   "what is an assignment, and why is it in typewriter font?" `web/src/desk/pullouts/RecipePullout.tsx`.
+4. **Project drawer — 6.** `drawer-project-1440.png`. A 17 px page title that repeats the title
+   bar; caps tokens "1 NEED YOU" and "STATUS AT RISK"; an Icons/List toggle; a "Nothing filed here"
+   band; Sources as bordered cards with GH/J chips, `jira.example.com|team@example.com` on the row
+   (an address on a working row, against UX-CANON A.9 as amended 2026-10-25) and mono caps "CHECKED
+   1M AGO"; a footer of Register · Get Info · ghost Open. Owner: "a third face for my Project."
+   `web/src/desk/drawer/DrawerWindow.tsx`.
+5. **Workflow — 6.** `workflow-1440.png`. "Edit Workflow" sits in the title bar as a tab; caps
+   STEPS; a card holding a mono "Material" well and a ghost Run with no reason; Assignments;
+   "Creates artifact". `web/src/desk/pullouts/WorkflowPullout.tsx`.
+
+Next worst, and the ones he actually meets: **Decision (8)**, **the agent's window (8)**,
+**the feedback sheet (8)**, **knowledge base (9)**. Chain, recipe and workflow have no ordinary door
+(see below), so the owner meets them seldom. On the windows he meets, Decision is the first fix.
+
+### Findings, window by window
+
+**Note** (`note-1440.png`, `note-rich-1440.png`, `note-393.png`, `note-rich-393.png`). On the
+grammar: toolbar (Done · Ask about this · Find the tasks · Project · Send…), page, status bar.
+- The first line of a list shows its source: "- [ ] Freeze writes" in raw markdown, and the next
+  two lines show real boxes. The caret line is shown as source (the live-preview rule), and the
+  caret starts on line 1, so every note with a task list opens looking broken.
+  `web/src/desk/thought-workspace/ThoughtWorkspaceWindow.tsx` (the live-preview editor of #1502).
+- The name shows twice at 1440 (title bar, then the title field) and three times at 393 (menu bar,
+  sheet head, title field). WINDOW-GRAMMAR §1 names this case.
+- "Saved just now" on a note nobody touched. If it reflects the last save, it is true but it reads
+  like a write on open.
+- At 393 the toolbar is five bare glyphs with no words.
+- Fix: a lane (place the caret at the end, or render the caret line on open; let the title field
+  stand in for the title bar on phone).
+
+**Decision** (`decision-1440.png`, `decision-proposed-1440.png`, `decision-393.png`). The oldest
+face on the desk. No toolbar; an "↻ Accepted" chip floating at the top (the glyph is 11 px); a
+bordered "Decision" card inside the paper; a full-width "Open canonical record" bar; a lone
+"Send…" in its own band; "Filed · Desk root"; 250 px of blank; a footer that says "Accepted" again
+in the middle, then Copy · Dictate about this · Edit. Proposed and accepted look the same. Owner:
+"this is a form from 2019." `web/src/desk/pullouts/DecisionPullout.tsx`. Fix: a lane (toolbar
+Edit · Send… · Open record; status as dot + word in the status bar; the record body edge to edge).
+The New decision and Decisions windows (ATLAS-A) show the target grammar.
+
+**Meeting** (`meeting-1440.png`, `meeting-failed-1440.png`, `meeting-393.png`,
+`meeting-failed-393.png`). Good bones: Outcomes wing, toolbar, 30 px rows, status bar.
+- The failed meeting reads "ERROR KEPT 2 SEGMENTS NOT DONE: SUMMARY, TOPICS, ACTION ITEMS" in caps
+  tokens. `web/src/desk/pullouts/MeetingWindow.tsx`.
+- The good meeting's status bar says "Summary stored · No engine for summaries" — true, but it
+  reads as a contradiction. Choose engine shows twice on the failed one (inline and in the bar).
+- At 393 every action row grows a Done + Follow-through pair under it (80 px rows); the status bar
+  wraps to two lines.
+- `pullout:meeting:<id>` opens the Meetings window (by design, PHILO-17); `meeting-as-pullout-1440.png`.
+
+**Person** (`person-1440.png`, `person-393.png`). On the grammar. The Commitments block puts
+lone Add buttons in bands; Context, History, Info are three folds with wide gaps; at 393 the status
+bar wraps to two lines. `web/src/desk/pullouts/PeoplePullout.tsx`. Lane.
+
+**Room from the floor** (`room-1440.png`, `room-393.png`, `door-project-icon-1440.png`). Scored
+here only as the object door; the Room itself is ATLAS-A's. Opened from the floor icon it seats
+low and its lower edge goes under the dock. The risks wear grey "Risk" chips beside a "Risks"
+heading.
+
+**Artifact** (`artifact-1440.png`, `artifact-393.png`). No toolbar. The result is a card inside the
+paper; Send is a heading, then the destinations as bordered cards with mono caps "FILE" and mono
+paths; Filed fold; a footer of Copy · Dictate about this. The automation window shows the same
+result on the new grammar, so the two faces of one result do not match.
+`web/src/desk/pullouts/ArtifactPullout.tsx`, `web/src/desk/surface/send/SendWell.tsx`. Lane.
+
+**The agent's window** (`lane-1440.png`, `lane-393.png`). 960×720 of blank: "Claude Code is
+working · Write the rollback runbook", a Details fold, and an empty status bar. The fold holds mono
+caps BRIEF, FILES, "· NOT READ ·" and "the launch has no worktree". Nothing says what the agent is
+doing or when it last spoke. Owner: "it's working on what?" `web/src/desk/lane/LaneWindow.tsx`.
+Needs a canvas (what a running agent's window shows).
+
+**Automation** (`automation-1440.png`, `automation-393.png`). The best object window: toolbar,
+the sentence, a list view with column heads and the selected row, the result, a status bar. A caps
+"NEW" chip over the result.
+
+**Drawer** (`directory-1440.png`, `door-drawer-floor-1440.png`, `directory-393.png`). "Contents · 3"
+as a heading, 47 px two-line rows with an inset, a Filed fold, a footer with one verb ("Dictate
+about this"). Not a list view, and it does not look like the Archive or the Project drawer.
+`web/src/desk/pullouts/DirectoryPullout.tsx`.
+
+**Knowledge base** (`kb-1440.png`, `kb-393.png`). The floor calls "Payments runbooks" a DRAWER;
+it opens "Contents · No items" with no verb to add one, and a footer of Copy · Dictate about this ·
+Edit. `web/src/desk/pullouts/KbPullout.tsx`.
+
+**Archive** (`archive-1440.png`, `archive-393.png`). The title says Archive, the body says
+"Nothing parked"; on an empty list the footer still shows ghost Restore and Open (dead footer).
+`web/src/desk/drawer/ParkedDrawer.tsx`.
+
+**Needs you** (`needs-1440.png`, `needs-393.png`, `door-bell-1440.png`). On the grammar. The words
+are the problem:
+- Three rows named "mentions ledger" / "mentions cutover": a watch hit is named after the watch,
+  not after what was said.
+- "Write the rollback runbook" shows twice.
+- The toolbar says "No calendar · Connect calendar" while the status bar names "Next 1:1 03:23 ·
+  Priya / Karol".
+- "16 of 16 available" as a fold label.
+- `web/src/desk/needs/NeedsDrawer.tsx`, `web/src/desk/needs/needsFace.ts`.
+
+**Capture** (`capture-1440.png`, `phone-tile-capture-393.png`). Clean. Three verbs and Coming up;
+little colour.
+
+**⌘K palette** (`door-palette-empty-1440.png`, `-typed-`, `-none-`, `-verb-`, `phone-palette-393.png`).
+- Empty: Memory is listed twice. "Change places", "Rhythm" and "Commands" are listed as Apps, but
+  those windows are retired. They land in Settings ▸ Desk, Settings ▸ Notices and Speak ▸ Commands
+  (`door-palette-to-*-1440.png`).
+- Typed "ledger": a Project ("Payments ledger cutover") under Decisions; a Note ("Cutover
+  checklist") under "Do"; Decisions and "Desk decisions" both list "Freeze the ledger schema on Nov
+  12"; a Desk-decision row is 103 px with a mono "10-27"; a stray "Hand to agent" button breaks the
+  grid under the top row.
+- No result: only Ask "qqzzx". That is honest and useful.
+- `web/src/desk/components/DeskToolShelf.tsx`, `web/src/desk/components/paletteHit.tsx`.
+
+**Menus** (`door-menu-*-1440.png`, `door-menu-*-phone-393.png`, `door-icon-menu-1440.png`). Clean
+32 px rows with key caps. Issues:
+- The Desk menu holds only the New rows (plus Give feedback when the flag is on).
+- Settings and Setup share one glyph.
+- The Note menu offers Open and Edit for the note that is open and in edit.
+- The menu bar shows "Desk" twice (the Desk menu, then the bold screen title).
+- On the phone the HoldSpeak menu draws over the Go list.
+- `web/src/desk/components/DeskMenuBar.tsx`, `web/src/desk/components/DeskChrome.tsx`.
+
+**Shortcut sheet** (`door-shortcuts-1440.png`). Every word is mono; caps headings APPS, NEW,
+WINDOWS, DESK; Esc is listed twice (Back; Close / cancel); the sheet writes ^ where the menus write
+⌃. It is a centred overlay over the desk. `web/src/desk/components/window/ShortcutSheet.tsx`. Lane.
+
+**Window switcher** (`door-switcher-1440.png`). A strip of names, no icons. At 393 ⌃` shows
+nothing. `web/src/desk/components/window/Switcher.tsx`.
+
+**Mission control** (`door-mission-1440.png`). The wallpaper goes flat grey; the thumbnails have no
+names under them; the text in them cannot be read. Sterile. `web/src/desk/missioncontrol.ts`,
+`web/src/desk/components/MissionControlConveyor.tsx`.
+
+**Send preview** (`door-send-menu-1440.png`, `door-send-preview-1440.png`). Three presses from an
+open note, which is good. The look is bad: mono caps FILE, PREVIEW, FOLDER and a mono path, and the
+selected destination is a bordered box holding a preview card holding a grey Send band (card in
+card in card). The same destinations look different in the artifact window.
+`web/src/desk/surface/send/SendWell.tsx`. Lane.
+
+**Feedback sheet** (`door-feedback-1440.png`, `door-feedback-picked-1440.png`). It sits over the
+right half of the dock and covers the record orb. Mono caps "SELECT", "SPEECH · PENDING", "RETRY";
+after a pick it says "Desk · Not supported" with no reason (in the headless rig there is no mic, so
+this may be the honest result; the words do not say so). The door exists only when the hub runs
+with `HOLDSPEAK_UI_FEEDBACK=1` (`holdspeak/services/ui_feedback.py:27`).
+`web/src/desk/feedback/UiFeedbackHost.tsx`.
+
+**The phone (393)** (`desk-393.png`, `phone-tile-*-393.png`, `phone-three*-393.png`,
+`phone-bell-393.png`).
+- Home is the Go list itself: 29 rows of apps, projects, drawers. At the end come "Note",
+  "Meeting", "Decision", "Project", "Person", "Automation", "Drawer" with no "New" word, so they
+  read as lists, not as creating something.
+- The dock has five tiles (Today, Capture, Meetings, People, Agents) and no pager (`.desk-dock-more`
+  is absent). Speak is only in Go.
+- Sheets: Today, Meetings, People, Needs you, the person and the failed meeting all wrap the status
+  bar to two lines.
+- Meetings makes "Choose engine" the primary (blue) verb ahead of Record meeting.
+- People shows a "Your name" field inside the list, and "Open prep" floats over the status bar.
+- Agents shows CLI versions ("2.1.310", "0.163.0") as row subtitles.
+- With three windows open (`phone-three-393.png`) only the front sheet shows, and nothing says two
+  more are there. ⌃` and ⌃W changed nothing at 393 (unknown: the note editor may hold the focus).
+- Lane / PR: W1-GEOM (2026-10-27). After the floating dock (#1497) Go scrolled by 2 px above the
+  plate; the rules between its groups now take 2 px of air, not 4, at 420 px and less, so every Go
+  row shows with no scroll. Every dock reserve (Go, the Chair's reopen list, the note's phone sheet,
+  the floor's Talk, Delivery, the phone in-world editor, the `.desk-mc-tab`) reads `--desk-dock-h` /
+  `--desk-snap-bottom`, no 52/56/60/76 px literal. Sheets keep the ratified 8 px of air: 682 px of
+  content at 852. Score unchanged (13): the status-bar wrap and the Go-as-home list stand.
+
+### Doors that lead nowhere, or to a window other than their name
+
+1. `pullout:directory:<id>`, `pullout:kb:<id>`, `pullout:recipe:<id>`, `pullout:chain:<id>`.
+   These use the registry's own kind words, and the hub answers 200 but no window opens: the
+   browser keys these objects as `zone:`, `knowledge:`, `persona:`, `sequence:`
+   (`web/src/desk/api.ts:131-139`, `qualifiedRef`). An agent that calls `desk_window_open` with the
+   kind word gets success and nothing on the desk. **Healed (W1-DOORS):** the hub opens the canonical
+   window for a kind word (`desk_window_service.canonical_open`); an unknown kind is refused
+   (`window_unknown`).
+2. `pullout:project:<id>` opens "No detail view for project" in place of the Room. **Healed (W1-DOORS):**
+   the hub opens the Room; an old row opens the Room and closes itself (`pullouts/ProjectToRoom.tsx`).
+3. The palette rows "Change places", "Rhythm" and "Commands" open Settings ▸ Desk, Settings ▸
+   Notices and Speak ▸ Commands. They land, but under names of retired windows. Memory appears
+   twice in the same list. **Healed (W1-DOORS):** "Wallpaper — Settings ▸ Desk", "Notices — Settings",
+   "Commands — Speak" (`applications.ts` `paletteLabel`); an app in Recent is not listed again.
+4. Right-clicking the blank floor shows no menu: there is no handler on the floor, only on icons
+   (`web/src/desk/screen/Screen.tsx:226`). **Healed (W1-DOORS):** the floor opens the Desk menu's rows
+   (`components/menuVerbEntries.ts`, one source with the menu bar).
+5. The floor icon "Payments runbooks" is captioned DRAWER, but it opens a knowledge base with no
+   way to add to it. **Healed (W2-BUILDER):** its kind word is KNOWLEDGE, and the window's toolbar Add opens
+   the item picker (`PUT /api/kbs/{id}/members/{ref}`).
+6. The Sequence window says "Add at least one Agent" and has no verb to do it. **Healed (W2-BUILDER):** the toolbar's Add mode
+   lists the Modes and appends one to the steps; the greyed Run says "Add a mode first".
+7. Give feedback is hidden unless the hub has `HOLDSPEAK_UI_FEEDBACK=1`. This is a switch, not a
+   broken door, but the owner's desk shows no feedback door if the switch is off.
+8. By design, and named here so nobody "fixes" them: `pullout:meeting:<id>` opens the Meetings
+   window, and `pullout:thread:<id>` opens Ask.
+9. Not followed (unknown): the Decision's "Open canonical record", the Project drawer's Register
+   and Room, the knowledge base's Edit.
+
+### Not reached, and why
+
+- **The empty and error states of a fresh hub**: the rig boots one hub per module and seeds it
+  once. A second cold hub was not booted. The only error states shot are the failed meeting and
+  the failed automation run; no lost-connection or loading hold.
+- **coder**: `/api/coders/status` has no sessions; a coder of a launch opens the agent's window
+  (`coderOpenFirst`), which is shot.
+- **repository, roadmap, story, game, layout** (FallbackPullout kinds): no seeded objects.
+- **brief / report**: there is no brief or report pullout kind now. The brief is Today's Since
+  yesterday fold (ATLAS-A, Today), and a report is an artifact (shot).
+- **Shortcut sheet, mission control, send preview, feedback at 393**: not shot.
+- **The screen switcher**: `.desk-screen-switcher` is absent with one desk. The bold "Desk" is a
+  title, not a door.
+- **Ordinary doors to modes, sequences and workflows**: Go ▸ Builder appears only with builder
+  tools on (`web/src/desk/components/DeskMenuBar.tsx:197`). They were opened through the hub.
+- **The feedback capture itself**: the headless browser has no mic.

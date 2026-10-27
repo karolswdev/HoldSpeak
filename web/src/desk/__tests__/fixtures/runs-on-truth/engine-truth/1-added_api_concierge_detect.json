@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_runs_on_hub.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T23:37:03.288619Z",
+  "captured_at": "2026-10-27T08:47:39.635198Z",
   "wire": {
     "agents": [
       {
@@ -40,7 +40,7 @@
         "vendorScope": "cloud"
       }
     ],
-    "checkedAt": "2026-10-18T23:37:03.284131+00:00",
+    "checkedAt": "2026-10-27T08:47:39.630619+00:00",
     "engines": [
       {
         "audioCapable": false,
@@ -79,6 +79,7 @@
         "id": "local:library_provider_engine-127-0-0-1-8099-stub-qwen",
         "kind": "local",
         "legacyLabel": "127.0.0.1:8099",
+        "modelId": "stub-qwen",
         "name": "stub Qwen",
         "profileId": "engine-127-0-0-1-8099-stub-qwen",
         "profileRevision": 1,
@@ -127,8 +128,8 @@
       },
       "observation": {
         "available_memory_bytes": null,
-        "sha256": "sha256:06a32079bcc7c3cb9edc28b032f9930d2801bf195f9ba9092f1e6c6fa9d9779e",
-        "storage_available_bytes": 216946438144
+        "sha256": "sha256:a5c770e48a5be5f47d3b4b339b9e8929703ea58a2e6148397fa4f75ae1709aab",
+        "storage_available_bytes": 66620657664
       }
     },
     "lastApply": null,

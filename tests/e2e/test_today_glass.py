@@ -132,7 +132,11 @@ def test_today_opens_between_the_icon_columns(desk: dict[str, Any], pw_browser: 
                     placed: Boolean(e.closest('.desk-screen-placed'))}; })
           .filter((r) => r.right > r.left)""")
         columns = [i for i in icons if i["right"] <= 160 or (i["placed"] and i["left"] >= 1440 * 0.75)]
-        assert any(i["left"] >= 1440 * 0.75 for i in columns), icons
+        # The drawers column down the left must be drawn. The right column was
+        # the Archive icon in the Trash corner; it left the floor in #1495
+        # (owner 2026-10-26; Go > Archive and the palette open it), so a right
+        # icon is checked only when one is placed there.
+        assert any(i["right"] <= 160 for i in columns), icons
         covered = [i["name"] for i in columns
                    if i["left"] < box["x"] + box["width"] and i["right"] > box["x"]
                    and i["top"] < box["y"] + box["height"] and i["bottom"] > box["y"]]

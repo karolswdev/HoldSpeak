@@ -566,6 +566,36 @@ describe("Runs on — the engine tells the truth (recorded hub)", () => {
   });
 });
 
+describe("Runs on — an engine whose server stopped (recorded hub, W1-TRUTH)", () => {
+  // The hub half records these answers: test_desk_runs_on_hub.py::
+  // test_an_engine_whose_server_stops_reads_not_answering_by_the_name_he_gave_it.
+  const KEY = "engine-127-0-0-1-8099-stub-qwen";
+  // The owner's face: the engine list and What runs where (no Builder tools).
+  beforeEach(() => useBuilderTools.getState().setOn(false));
+
+  it("reads Not answering on its row, in the inspector and on the job it runs, by the name he gave it", async () => {
+    const rec = new RecordedHub("engine-down", "0-down", {
+      "/api/inference/assignments/editor": ["editor-default", null],
+    });
+    replay(rec);
+    render(<RunsOnCore />);
+    const row = await screen.findByTestId(`runson-engine-${KEY}`);
+    fireEvent.click(row.querySelector(".object-list-open") as HTMLElement);
+    await waitFor(() => expect(screen.getByTestId(`runson-engine-state-${KEY}`).textContent).toBe("Not answering"));
+    // One name: his, never the model id; the model id is quiet meta.
+    expect(row.textContent).toContain("Studio engine");
+    expect(row.textContent).not.toContain("Stub qwen");
+    const head = screen.getByTestId("runson-inspector-head");
+    expect(head.getAttribute("data-engine")).toBe(KEY);
+    expect(head.textContent).toContain("Studio engine");
+    expect(screen.getByTestId("runson-inspector-model").textContent).toBe("stub-qwen");
+    expect(screen.getByTestId("runson-inspector-state").textContent).toMatch(/^Not answering · checked (just now|\d+ (min|h|d) ago)$/);
+    // The job that runs on it (Everything else) says so beside its picker.
+    expect((await screen.findByTestId("runson-what-down-default")).textContent).toBe("Not answering");
+    expect(screen.getByTestId("runson-status").textContent).toContain("1 not answering");
+  });
+});
+
 /** The board measures its container (Switchboard.tsx useSwitchboardLayout);
  *  jsdom measures 0, so the phone list is asked for by giving it 393 px. */
 function atPhoneWidth() {

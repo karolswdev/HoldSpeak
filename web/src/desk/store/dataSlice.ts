@@ -622,6 +622,8 @@ export const createDataSlice: SliceCreator<DataSlice> = (set, get) => {
       tools: "tools",
       kb_id: "kbId",
       avatar: "avatar",
+      // W2-BUILDER: a Sequence's Add mode patches its steps in place.
+      steps: "steps",
     };
     const itemsKind =
       kind === "directory" ? "directory" : (kind as keyof Items);

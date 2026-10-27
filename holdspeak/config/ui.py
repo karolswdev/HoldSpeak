@@ -94,7 +94,7 @@ class VoiceMacroAction:
                 "record": "starts a recording",
                 "stop": "stops the recording",
                 "new_note": "opens a new note",
-                "ask": "opens Ask HoldSpeak",
+                "ask": "opens Ask",
                 "open_today": "opens Today",
             }[self.payload]
         return self.payload

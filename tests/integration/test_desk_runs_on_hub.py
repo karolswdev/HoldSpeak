@@ -405,3 +405,47 @@ def test_an_anthropic_profile_is_a_service_on_the_hub(hub_dir) -> None:
     reads = _record_reads("anthropic", "0-open", base, tmp_path)
     claude = next(e for e in reads["/api/concierge/detect"]["engines"] if e.get("profileId") == "cloud-anthropic")
     assert claude["state"] == "NOT_SET", claude
+
+
+def test_an_engine_whose_server_stops_reads_not_answering_by_the_name_he_gave_it(hub_dir) -> None:
+    """W1-TRUTH (atlas 2026-10-27): "It says Ready; the server is off." "Two
+    names for one engine."
+
+    He adds an engine named Studio engine and makes it the default; its
+    server stops; Check all (detect) reads it UNREACHABLE, by his name, with
+    the model id as its own field. The face half replays these answers
+    (runs-on.app.test.tsx "an engine whose server stopped").
+    """
+    base, tmp_path = hub_dir
+    _ok(base, "PUT", "/api/setup/onboarding", {"disposition": "completed"})
+    server = ThreadingHTTPServer(("127.0.0.1", 0), _ToolsEngine)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    engine = f"http://127.0.0.1:{server.server_address[1]}/v1"
+    key = _key_for(engine, TOOLS_MODEL)
+    try:
+        defined = _ok(base, "POST", "/api/inference/model-library/define-endpoint", {
+            "draft": {
+                "request_id": "engine-down-add", "profile_id": key, "expected_profile_revision": 0,
+                "label": "Studio engine", "provider_family": "openai_compatible", "model": TOOLS_MODEL,
+                "endpoint": engine, "requires_key": False, "context_tokens": None,
+            },
+            "secret": None,
+        })
+        revision = int(defined["provider"]["profile_revision"])
+        _ok(base, "POST", "/api/inference/assignments/set", {
+            "command_id": "engine-down-default", "expected_revision": _rows(base)["global"]["expected_revision"],
+            "scope": {"kind": "global"}, "entries": [{"profile_id": key, "profile_revision": revision}],
+        })
+        up = next(e for e in _ok(base, "GET", "/api/concierge/detect")["engines"] if e.get("profileId") == key)
+        assert up["state"] == "READY", up
+    finally:
+        server.shutdown()
+        server.server_close()
+
+    reads = _record_reads("engine-down", "0-down", base, tmp_path, engine)
+    down = next(e for e in reads["/api/concierge/detect"]["engines"] if e.get("profileId") == key)
+    assert down["state"] == "UNREACHABLE", down
+    assert down["name"] == "Studio engine", down
+    assert down["modelId"] == TOOLS_MODEL, down
+    editor = _ok(base, "POST", "/api/inference/assignments/editor", {"scope": {"kind": "global"}, "capability_id": "ask.answer"})
+    _record("engine-down", "editor-default", editor, tmp_path, base, engine)

@@ -358,7 +358,7 @@ export function SpeakFace() {
         ? speechName
         : "Ready to talk";
   const report = useContext(SpeakStatusContext);
-  const meter = <span className="speak-level" data-testid="speak-level"><LedMeter label="Audio level" labelHidden segments={8} value={deck.level} scanning={deck.micState === "busy"} /></span>;
+  const meter = <span className="speak-level" data-testid="speak-level"><LedMeter label="Audio level" labelHidden segments={12} value={deck.level} scanning={deck.micState === "busy"} /></span>;
   // Clean-up is a setting, not a strip: its state is one status bar fact
   // and, only when it needs one, the bar's one verb.
   const engine = engineView(resolved.name, resolved.engineState, resolved.keySet, detectStatus);

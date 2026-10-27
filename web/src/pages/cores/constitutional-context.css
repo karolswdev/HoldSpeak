@@ -18,13 +18,37 @@
   font-size: var(--font-size-xs);
 }
 
+/* Window grammar: the editor IS the page, edge to edge under the toolbar
+   (no well in the window, no inset card); the mic keeps its corner. */
+.constitutional-context-core {
+  flex: 1 1 auto;
+  min-height: 100%;
+}
+.desk-next .constitutional-context-editor-section,
 .constitutional-context-editor-section {
-  flex: 1;
+  display: flex;
+  flex: 1 1 auto;
   min-height: 0;
-  padding: 12px 16px 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
-.constitutional-context-editor-section .gadget-pad,
+.constitutional-context-editor-section .gadget-pad {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 240px;
+  border: 0;
+  border-radius: 0;
+  background: var(--wb-paper);
+  box-shadow: none;
+}
 .constitutional-context-editor-section .gadget-pad textarea {
   width: 100%;
+  min-height: 100%;
+  padding: 12px 16px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font: 400 14px / 1.55 var(--font-sans);
 }

@@ -3,7 +3,8 @@
 .desk-next .desk-dlv-board {
   position: fixed;
   right: var(--space-3);
-  bottom: 56px;
+  /* above the floating dock's reserve (#1497), never under the plate */
+  bottom: var(--desk-dock-h, var(--desk-snap-bottom));
   width: min(560px, calc(100vw - 2 * var(--space-3)));
   max-height: 70vh;
   display: flex;

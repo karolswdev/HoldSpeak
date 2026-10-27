@@ -38,6 +38,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch, readableError } from "../../../lib/api";
@@ -66,6 +67,8 @@ import {
 } from "../../../desk/surface/Surface";
 import { StringGadget } from "../../../desk/surface/gadgets";
 import { useWindowInterior } from "../../../desk/surface/interior";
+import { Toolbar } from "../../../desk/surface/kit";
+import { SpeakEmpty } from "./SpeakEmpty";
 
 type Row = Record<string, unknown>;
 
@@ -317,7 +320,7 @@ function JournalRow({
   );
 }
 
-export function Journal() {
+export function Journal({ exportVerb }: { exportVerb?: ReactNode } = {}) {
   // Window grammar: the Journal is a list window, edge to edge.
   useWindowInterior("list");
   const { subscribe } = useRuntimeBus();
@@ -531,49 +534,59 @@ export function Journal() {
 
   return (
     <SurfaceSection className="speak-journal">
-      <SurfaceLedger
-        count={null}
-        controls={
+      {/* Window Program W1 (2026-10-27): the wing's ONE toolbar: Search
+          (it opens the search well and the source tokens), Clear, and the
+          window's Export, never in the status bar. */}
+      {hasAny || findOpen || query || source ? (
+      <Toolbar
+        label="Journal"
+        className="journal-toolbar"
+        data-testid="journal-toolbar"
+        trailing={
           findOpen || query || source ? (
-            <>
-              <span className="journal-search-row">
-                <StringGadget
-                  label="Search the journal"
-                  placeholder="search"
-                  value={query}
-                  onChange={setQuery}
-                />
-                {hasAny ? (
-                  <ConfirmVerb
-                    label="Clear"
-                    confirmLabel="Clear all?"
-                    onConfirm={() => void remove("all")}
-                  />
-                ) : null}
-              </span>
-              <FilterTokens
-                className="journal-filters"
-                label="Source filter"
-                options={SOURCE_FILTERS}
-                value={source}
-                onChange={setSource}
+            <span className="journal-search-row">
+              <StringGadget
+                label="Search the journal"
+                placeholder="Search the journal"
+                value={query}
+                onChange={setQuery}
               />
-            </>
-          ) : hasAny ? (
-            <span className="journal-find">
-              <Button dense variant="ghost" onClick={() => setFindOpen(true)}>
-                Search
-              </Button>
             </span>
-          ) : null
+          ) : undefined
         }
       >
+        {findOpen || query || source ? (
+          <FilterTokens
+            className="journal-filters"
+            label="Source filter"
+            options={SOURCE_FILTERS}
+            value={source}
+            onChange={setSource}
+          />
+        ) : hasAny ? (
+          <Button dense variant="secondary" onClick={() => setFindOpen(true)}>
+            Search
+          </Button>
+        ) : null}
+        {hasAny ? exportVerb : null}
+        {hasAny ? (
+          <ConfirmVerb
+            label="Clear"
+            confirmLabel="Clear all?"
+            onConfirm={() => void remove("all")}
+          />
+        ) : null}
+      </Toolbar>
+      ) : null}
+      <SurfaceLedger count={null}>
         <SurfaceState
           loading={loading}
           error={error}
           empty={!filtered.length}
           emptyLabel={emptyLabel}
-          emptyGlyph="▤"
+          emptyContent={hasAny ? undefined : (
+            <SpeakEmpty label={emptyLabel} hint="What you say shows here, with the place it went" />
+          )}
           onRetry={() => void load()}
         >
           {days.map((day) => (

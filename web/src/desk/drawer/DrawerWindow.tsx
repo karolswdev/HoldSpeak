@@ -21,7 +21,7 @@ import {
   restoredOutcome,
   IconGrid,
   ObjectList,
-  StatusStrip,
+  DotWord,
   SurfaceFooter,
   SurfaceLedger,
   SurfaceLedgerRow,
@@ -68,43 +68,80 @@ export function drawerReceipt(count: number, selected: number): string {
     .join(" · ");
 }
 
-/** Phase 16 (the interior kit): the Room window's status strip: the reads
- *  that failed (A.10), PARTIAL, `N NEED YOU` (its lamp), the target, the
- *  status, the object count. A zero is never said (A.8). */
+/** The Room window's head facts, each a dot and a sentence-case word
+ *  (W2-BUILDER, atlas 2026-10-27: no caps tokens): the reads that failed
+ *  (A.10), Partial, `N need you`, the target, the status, the object count.
+ *  A zero is never said (A.8). */
 export function headItems(head: DrawerHead, count: number, failed: readonly DrawerRead[]): StatusStripItem[] {
   const items: StatusStripItem[] = [];
   // A failed read is named, never an empty or complete drawer (A.10).
   for (const read of failed) {
-    items.push({ key: `fail-${read}`, lamp: "fail", text: `${read} ·`, value: "NOT READ", testId: "drawer-not-read" });
+    items.push({ key: `fail-${read}`, lamp: "fail", text: `${sentenceWord(read)} not read`, testId: "drawer-not-read" });
   }
-  if (failed.length && count > 0) items.push({ key: "partial", value: "PARTIAL", testId: "drawer-partial" });
-  if (head.needsYou > 0) items.push({ key: "need", lamp: "warn", text: `${head.needsYou} NEED YOU` });
+  if (failed.length && count > 0) items.push({ key: "partial", text: "Partial", testId: "drawer-partial" });
+  if (head.needsYou > 0) items.push({ key: "need", lamp: "warn", text: `${head.needsYou} need you` });
   if (head.target) {
-    items.push({ key: "target", text: head.targetPassed ? "OVERDUE" : "TARGET", value: head.target });
+    items.push({ key: "target", text: `${head.targetPassed ? "Overdue" : "Target"} ${dateWord(head.target)}` });
   }
   // An unread section is never spoken as ON TRACK.
   if (head.status && !(failed.length && head.statusTone === "ok")) {
-    items.push({ key: "status", lamp: head.statusTone, text: "STATUS", value: head.status });
+    items.push({ key: "status", lamp: head.statusTone, text: sentenceWord(head.status) });
   }
-  if (count > 0) items.push({ key: "objects", text: `${count} ${count === 1 ? "OBJECT" : "OBJECTS"}` });
+  if (count > 0) items.push({ key: "objects", text: `${count} ${count === 1 ? "object" : "objects"}` });
   return items;
+}
+
+/** `AT RISK` → `At risk`. */
+function sentenceWord(word: string): string {
+  const lower = String(word).toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
+
+/** `NOV 5` → `Nov 5`. */
+function dateWord(word: string): string {
+  return String(word).replace(/[A-Z]{3,}/g, (month) => month.charAt(0) + month.slice(1).toLowerCase());
+}
+
+/** The head facts drawn as dot + word (DotWord), never a mono caps strip. */
+function HeadFacts({ items }: { items: readonly StatusStripItem[] }) {
+  if (!items.length) return null;
+  return (
+    <span className="drawer-head-facts">
+      {items.map((item) => item.lamp ? (
+        <DotWord key={item.key} tone={item.lamp} data-testid={item.testId}>{item.text}</DotWord>
+      ) : (
+        <span key={item.key} className="kit-dotword drawer-head-fact" data-testid={item.testId}>{item.text}</span>
+      ))}
+    </span>
+  );
+}
+
+/** A source's scope in words: a connection reference (`site|account`) or a
+ *  bare host is the provider's name (UX-CANON A.9 as amended 2026-10-25: no
+ *  host or address on a working row). */
+export function sourceScopeWords(provider: string, scope: string): string {
+  const name = provider === "jira" ? "Jira" : provider === "github" ? "GitHub" : provider === "confluence" ? "Confluence" : sentenceWord(provider || "Source");
+  if (!scope) return name;
+  if (scope.includes("|") || scope.includes("@") || /^[\w-]+(\.[\w-]+)+(:\d+)?$/.test(scope)) return name;
+  return scope;
 }
 
 /** The Room window's Sources: one kit LedgerRow per accepted source (the
  *  provider's plate, the scope, its one state word). Pause, Resume and
  *  Remove live in the Room's Steward posture (the Section's Steward verb). */
 export function sourceRows(room: RoomSnapshot | null): Array<{
-  id: string; plate: string; scope: string; meta: string; tone?: "ok" | "fail";
+  id: string; plate: string; scope: string; meta: string; tone?: "ok" | "fail"; provider: string;
 }> {
   if (!room || room.sources.state !== "ok") return [];
   return room.sources.items
     .filter((src) => !src.suggested)
     .map((src) => {
       const checked = src.checkedAt ? humanTime(src.checkedAt) : "";
-      if (src.state === "cant_check") return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: "CAN'T CHECK", tone: "fail" as const };
-      if (src.state === "paused") return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: "PAUSED" };
+      const provider = src.provider;
+      if (src.state === "cant_check") return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: "CAN'T CHECK", tone: "fail" as const, provider };
+      if (src.state === "paused") return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: "PAUSED", provider };
       if (src.freshness === "stale") {
-        return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: checked ? `STALE · CHECKED ${checked}` : "STALE" };
+        return { id: src.watchId, plate: emblemFor(src.provider), scope: src.scope, meta: checked ? `STALE · CHECKED ${checked}` : "STALE", provider };
       }
       return {
         id: src.watchId,
@@ -112,6 +149,7 @@ export function sourceRows(room: RoomSnapshot | null): Array<{
         scope: src.scope,
         meta: checked ? `CHECKED ${checked}` : "NEVER CHECKED",
         tone: checked ? ("ok" as const) : undefined,
+        provider,
       };
     });
 }
@@ -234,7 +272,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
           {/* Phase 16 (the interior kit; the canvas window "Payments ledger
               cutover"): AppHead → FilterBar → IconGrid → Sources → AskWell. */}
           <AppHead fact={name} data-testid="drawer-facts">
-            <StatusStrip items={headItems(data.head, members.length || 0, data.failed)} />
+            <HeadFacts items={headItems(data.head, members.length || 0, data.failed)} />
           </AppHead>
           <FilterBar
             label="Drawer view"
@@ -323,7 +361,7 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
                         key={src.id}
                         data-testid="drawer-source-row"
                         kind={src.plate}
-                        primary={src.scope}
+                        primary={sourceScopeWords(src.provider, src.scope)}
                         meta={src.meta}
                         metaTone={src.tone}
                       />

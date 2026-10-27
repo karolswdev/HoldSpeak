@@ -1194,7 +1194,9 @@ export function NeedsDrawer() {
   // Window grammar (2026-10-24): title bar → toolbar (the filter toggles and
   // the calendar offer) → the rows edge to edge → the status bar, which says
   // the one number (`14 need you`) in warm words with a lamp.
-  const offer = noCalendar ? (
+  // W1-DOORS (atlas 2026-10-27): one truth. A next 1:1 in the status bar
+  // means there is a calendar; the toolbar does not say "No calendar" then.
+  const offer = noCalendar && !next ? (
     <span className="needs-calendar-offer" data-testid="needs-no-calendar">
       <span className="needs-calendar-word">No calendar</span>
       <Button dense variant="secondary" aria-label="Connect calendar" data-testid="needs-row-verb" data-verb="connect-calendar"

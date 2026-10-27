@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { useEffect, useRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { openNoteThought, type Thought } from "../thoughts";
@@ -7,6 +7,8 @@ import { Pullout } from "./Pullout";
 import type { RegisterCloseGuard } from "../pullouts/types";
 
 const editorGuard = vi.hoisted(() => vi.fn(async () => true));
+
+import { WorkflowPullout } from "../pullouts/WorkflowPullout";
 
 vi.mock("./DeskWindow", () => ({ DeskWindowFrame: ({ children, actions, onClose, beforeClose }: { children: React.ReactNode; actions?: React.ReactNode; onClose: () => void; beforeClose?: () => Promise<boolean> }) => {
   const waiting = useRef(false);
@@ -87,14 +89,18 @@ describe("Pullout editor chrome close", () => {
   });
 });
 
-describe("Workflow chrome editor action", () => {
+describe("Workflow editor action", () => {
+  // W2-BUILDER: Edit left the title bar; it is the Workflow toolbar's first verb.
   it("opens the current Workflow editor instead of the Workbenches application", () => {
     const openEditor = vi.fn();
     const openSurfaceWindow = vi.fn();
     const workflow = { kind: "workflow", id: "workflow-edit", title: "Review risks", ref: { kind: "workflow" } } as never;
     useDesk.setState({ profiles: [], editingId: null, openEditor, openSurfaceWindow });
-    render(<Pullout o={workflow} />);
-    fireEvent.click(screen.getByRole("button", { name: "Edit Workflow" }));
+    const chrome = render(<Pullout o={workflow} />);
+    expect(screen.queryByRole("button", { name: "Edit Workflow" })).toBeNull();
+    chrome.unmount();
+    render(<WorkflowPullout object={workflow} onClose={() => undefined} />);
+    fireEvent.click(within(screen.getByRole("toolbar", { name: "Workflow" })).getByRole("button", { name: "Edit" }));
     expect(openEditor).toHaveBeenCalledWith("workflow-edit");
     expect(openSurfaceWindow).not.toHaveBeenCalled();
   });

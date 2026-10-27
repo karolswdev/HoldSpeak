@@ -475,9 +475,11 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 # route its own bounded cell.
                 assert lead.startswith("Meeting summaries → ") and " · on " in lead, lead
                 where = page.locator("[data-testid='switchboard-job-meetings'] .switchboard-job-pill").inner_text()
-                assert "Qwen3.8 27B" in where and " · ON " in where.upper() and "192.168.77.43" in where, where
+                # TRUTH #1516: the name the owner gave (the seed's label
+                # "qwen3.8 27B") wins over the cleaned model id.
+                assert "qwen3.8 27B" in where and " · ON " in where.upper() and "192.168.77.43" in where, where
                 default_name = page.locator("[data-testid='switchboard-job-default'] .switchboard-job-name").text_content() or ""
-                assert default_name == "Default engine → Qwen3.8 27B · on 192.168.77.43", default_name
+                assert default_name == "Default engine → qwen3.8 27B · on 192.168.77.43", default_name
             else:
                 # The phone list: the outcome name, its engine and place under it.
                 assert lead == "Meeting summaries", lead

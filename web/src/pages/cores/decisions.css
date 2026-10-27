@@ -127,3 +127,10 @@
   .decision-reader-title { font-size: 20px; }
   .decision-reader-fact { grid-template-columns: minmax(0, 1fr); gap: 2px; }
 }
+
+/* W1-TRUTH (atlas 2026-10-27): a Desk decision's own window on the reader
+   grammar. The body fits a short decision (the window opens at 440 px) and
+   never drops below 320 px. */
+.desk-pullout-body.decision-reader-window { min-height: 320px; }
+.desk-decision-reader .decision-reader-why { margin: 0; }
+.desk-decision-filing { padding-top: 4px; border-top: 1px solid var(--wb-rule-soft); }

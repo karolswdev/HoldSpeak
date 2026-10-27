@@ -8,7 +8,7 @@
    line, widget) over the Markdown syntax tree; the document text is the only
    copy. The mermaid fences are mermaidPreview.ts (same mechanism). */
 import { syntaxTree } from "@codemirror/language";
-import { type EditorState, type Extension, type Range, StateField } from "@codemirror/state";
+import { type EditorState, type Extension, type Range, StateEffect, StateField } from "@codemirror/state";
 import {
   Decoration,
   type DecorationSet,
@@ -26,12 +26,31 @@ export interface LivePreviewOptions {
   openRef?: (ref: string) => boolean;
   /** Opens an external url. Default: a new browser tab. */
   openUrl?: (url: string) => void;
+  /** W1-DOORS (atlas 2026-10-27): every line shows as written text until the
+   *  editor first takes focus, so a note that opens with its caret on a task
+   *  line does not open on that line's source. After the first focus the
+   *  caret's lines show their source as before. */
+  renderUntilFocus?: boolean;
 }
 
 /* ── the caret's lines ───────────────────────────────────────────────── */
 
-/** True when any selection range touches [from, to]. */
+/** The editor took focus once (only with `renderUntilFocus`). */
+const firstFocus = StateEffect.define<null>();
+const focusedOnce = StateField.define<boolean>({
+  create: () => false,
+  update: (value, tr) => value || tr.effects.some((effect) => effect.is(firstFocus)),
+});
+const untilFocus: Extension = [
+  focusedOnce,
+  EditorView.focusChangeEffect.of((state, focusing) =>
+    focusing && !state.field(focusedOnce) ? firstFocus.of(null) : null),
+];
+
+/** True when any selection range touches [from, to]. Before the first focus
+ *  of a `renderUntilFocus` editor, no line is touched. */
 function touched(state: EditorState, from: number, to: number): boolean {
+  if (state.field(focusedOnce, false) === false) return false;
   return state.selection.ranges.some((range) => range.from <= to && range.to >= from);
 }
 
@@ -226,7 +245,8 @@ function buildTables(state: EditorState): DecorationSet {
 const tableField = StateField.define<DecorationSet>({
   create: buildTables,
   update(value, tr) {
-    if (tr.docChanged || tr.selection || syntaxTree(tr.state) !== syntaxTree(tr.startState)) return buildTables(tr.state);
+    if (tr.docChanged || tr.selection || syntaxTree(tr.state) !== syntaxTree(tr.startState) ||
+        tr.effects.some((effect) => effect.is(firstFocus))) return buildTables(tr.state);
     return value;
   },
   provide: (field) => EditorView.decorations.from(field),
@@ -429,7 +449,8 @@ const inlinePlugin = ViewPlugin.fromClass(
 
     update(update: ViewUpdate) {
       if (update.docChanged || update.selectionSet || update.viewportChanged ||
-          syntaxTree(update.state) !== syntaxTree(update.startState))
+          syntaxTree(update.state) !== syntaxTree(update.startState) ||
+          update.state.field(focusedOnce, false) !== update.startState.field(focusedOnce, false))
         this.decorations = buildInline(update.view);
     }
   },
@@ -468,5 +489,5 @@ function linkClicks(options: LivePreviewOptions): Extension {
 
 /** The live-preview extension for the Note's editor. */
 export function livePreview(options: LivePreviewOptions = {}): Extension {
-  return [inlinePlugin, tableField, linkClicks(options)];
+  return [...(options.renderUntilFocus ? [untilFocus] : []), inlinePlugin, tableField, linkClicks(options)];
 }

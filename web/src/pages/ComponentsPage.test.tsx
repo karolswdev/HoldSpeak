@@ -110,7 +110,7 @@ describe("Signal component gallery", () => {
     expect(conversation.querySelector(".desk-mic")).toBeNull();
     // Window grammar: the specimen is the Ask window's own composition.
     expect(within(conversation).getByRole("toolbar", { name: "Ask" })).toBeInTheDocument();
-    expect(within(conversation).getByTestId("ask-context")).toHaveTextContent("AboutLedger rollback");
+    expect(within(conversation).getByTestId("ask-context")).toHaveTextContent("Ledger rollback");
     fireEvent.change(within(conversation).getByRole("textbox", { name: "Ask about your work" }), { target: { value: "Keep this local" } });
     fireEvent.click(within(conversation).getByRole("button", { name: "Ask" }));
     expect(within(conversation).getByText("Keep this local")).toBeInTheDocument();
@@ -138,7 +138,7 @@ describe("Signal component gallery", () => {
     fireEvent.click(within(conversation).getByRole("button", { name: "Try again" }));
     // Asking: the status bar says it and holds Stop; Ask waits.
     const status = within(conversation).getByTestId("reference-conversation-status");
-    expect(status).toHaveTextContent("Asking…");
+    expect(status).toHaveTextContent("Writing the answer");
     expect(within(status).getByRole("button", { name: "Stop" })).toBeInTheDocument();
     expect(within(conversation).getByRole("button", { name: "Ask" })).toBeDisabled();
     fireEvent.change(draft, { target: { value: "Newer draft while retrying" } });
@@ -153,7 +153,7 @@ describe("Signal component gallery", () => {
     fireEvent.click(screen.getByRole("button", { name: "Conversation" }));
     const pick = (value: string) => fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value } });
     pick("empty");
-    expect(within(screen.getByTestId("reference-conversation")).getByRole("button", { name: "What needs my attention?" })).toBeInTheDocument();
+    expect(within(screen.getByTestId("reference-conversation")).getByRole("button", { name: "What needs my attention today?" })).toBeInTheDocument();
     expect(screen.getByTestId("reference-conversation").querySelector("h1, .reference-example-head")).toBeNull();
     pick("ordinary");
     const answered = screen.getByTestId("reference-conversation");

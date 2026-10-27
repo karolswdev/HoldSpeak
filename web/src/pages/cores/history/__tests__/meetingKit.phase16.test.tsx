@@ -628,3 +628,38 @@ describe("Meeting People read recovery", () => {
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });
+
+// W2-LIVE-2 (canvas betterment/canvases/live-direction-2026-10-27.html, A,
+// After): a decided row carries its one verb, Decide…: the record when it has
+// one, else New decision on the record. A proposed decision keeps Confirm.
+describe("the meeting's decided rows carry Decide… (W2-LIVE-2)", () => {
+  it("opens the record a decision has, asks for New decision when it has none, and keeps Confirm on a proposal", async () => {
+    apiFetch.mockResolvedValue({ relationships: [] });
+    const { useDesk } = await import("../../../../desk/store");
+    const openSurfaceWindow = vi.fn();
+    useDesk.setState({ openSurfaceWindow } as never);
+    const onDecide = vi.fn();
+    const data = {
+      ftProposals: [
+        { id: "p-dec", meeting_id: "m-dec", kind: "decision" as const, text: "Freeze the ledger on Nov 12", state: "confirmed" as const, created_at: "", owner: "Karol" },
+        { id: "p-ask", meeting_id: "m-dec", kind: "decision" as const, text: "Move the backup job to 22:00", state: "proposed" as const, created_at: "" },
+      ],
+      meetingDecisions: [{ id: "d-rec", text: "Shard the reconciliation job", lifecycle: "active", record_id: "record-abc" }],
+      openActions: [], settledActions: [], segments: [], busy: false,
+      outcomeRefreshFailed: false, retryOutcomeReview: async () => undefined,
+      confirmProposal: async () => undefined, dismissProposal: async () => undefined,
+      deferProposal: async () => undefined, confirmAll: async () => undefined,
+      completeAction: async () => undefined,
+    };
+    render(<MeetingOutcomes data={data as never} meeting={{ id: "m-dec" }} onDecide={onDecide} />);
+    const decisions = await screen.findByTestId("meeting-decisions");
+    expect(within(decisions).getByRole("button", { name: "Confirm: Move the backup job to 22:00" })).toBeTruthy();
+    expect(within(decisions).queryByRole("button", { name: "Decide: Move the backup job to 22:00" })).toBeNull();
+
+    fireEvent.click(within(decisions).getByRole("button", { name: "Decide: Shard the reconciliation job" }));
+    expect(openSurfaceWindow).toHaveBeenCalledWith("open-decisions", "record:record-abc");
+
+    fireEvent.click(within(decisions).getByRole("button", { name: "Decide: Freeze the ledger on Nov 12" }));
+    expect(onDecide).toHaveBeenCalledTimes(1);
+  });
+});

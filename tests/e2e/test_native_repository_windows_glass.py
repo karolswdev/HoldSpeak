@@ -386,7 +386,7 @@ def test_components_resource_specimen_uses_local_browser_seam(
                     page.locator("[role^='menuitem']").filter(has_text="Resources").first.click()
                 specimen = page.get_by_test_id("reference-resource")
                 expect(specimen.locator(".repo-browser")).to_be_visible()
-                expect(page.locator('[aria-label="LOCAL SPECIMEN"]')).to_be_visible()
+                expect(page.get_by_test_id("reference-status")).to_contain_text("Local specimen")
                 expect(specimen.locator('tr[aria-label="README.md"]')).to_be_visible()
                 specimen.locator('tr[aria-label="README.md"]').click()
                 expect(specimen.get_by_test_id("repo-file-content")).to_contain_text("registered repository")

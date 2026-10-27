@@ -518,3 +518,14 @@ export function Loading({
     </div>
   );
 }
+
+/** W1-TRUTH (atlas 2026-10-27): a meeting's four steps, one list for
+ *  Today and Live (Prep · Record · Summary · Send follow-up); `step` is the
+ *  index of the step that is now. */
+export const MEETING_STEPS = ["Prep", "Record", "Summary", "Send follow-up"] as const;
+
+export function meetingSteps(step: number): Step[] {
+  return MEETING_STEPS.map((label, index) => ({
+    key: label, label, state: index < step ? "done" : index === step ? "now" : "later",
+  }));
+}

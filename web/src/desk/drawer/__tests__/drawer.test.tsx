@@ -161,10 +161,12 @@ describe("PHILO-14 A2 the drawer", () => {
   it("the head is the Room's intelligence line", async () => {
     await renderDrawer();
     const facts = screen.getByTestId("drawer-facts");
-    expect(facts).toHaveTextContent("3 NEED YOU");
-    expect(facts).toHaveTextContent("TARGET NOV 5");
-    expect(facts).toHaveTextContent("STATUS ON TRACK");
-    expect(facts).toHaveTextContent(`${EXPECTED.length} OBJECTS`);
+    // W2-BUILDER (atlas 2026-10-27): dot + sentence-case word, no caps tokens.
+    expect(facts).toHaveTextContent("3 need you");
+    expect(facts).toHaveTextContent("Target Nov 5");
+    expect(facts).toHaveTextContent("On track");
+    expect(facts).toHaveTextContent(`${EXPECTED.length} objects`);
+    expect(facts.textContent).not.toMatch(/NEED YOU|STATUS|OBJECTS/);
     fireEvent.click(screen.getByRole("button", { name: "Room" }), { detail: 1 });
     expect(shell.rooms).toEqual(["p-ledger"]);
   });
@@ -247,9 +249,9 @@ describe("PHILO-14 A2 the drawer", () => {
     apiFetch.mockImplementation((url: string) =>
       url.includes("/people") && peopleFails ? Promise.reject(new Error("locked")) : Promise.resolve(route(url)));
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
-    await screen.findByText(/PEOPLE ·/);
-    expect(screen.getByTestId("drawer-facts")).toHaveTextContent("PEOPLE · NOT READ");
-    expect(screen.getByTestId("drawer-partial")).toHaveTextContent("PARTIAL");
+    await screen.findByText(/People not read/);
+    expect(screen.getByTestId("drawer-facts")).toHaveTextContent("People not read");
+    expect(screen.getByTestId("drawer-partial")).toHaveTextContent("Partial");
     expect(screen.queryByRole("button", { name: /^Jordan Patel/ })).toBeNull();
     const before = apiFetch.mock.calls.map(([u]) => String(u));
     peopleFails = false;
@@ -272,10 +274,10 @@ describe("PHILO-14 A2 the drawer", () => {
       return Promise.resolve(route(url));
     });
     await renderDrawer();
-    await screen.findByText(/DECISIONS ·/);
-    expect(screen.getByTestId("drawer-facts")).toHaveTextContent("DECISIONS · NOT READ");
-    expect(screen.getByTestId("drawer-partial")).toHaveTextContent("PARTIAL");
-    expect(screen.getByTestId("drawer-facts")).not.toHaveTextContent("ON TRACK");
+    await screen.findByText(/Decisions not read/);
+    expect(screen.getByTestId("drawer-facts")).toHaveTextContent("Decisions not read");
+    expect(screen.getByTestId("drawer-partial")).toHaveTextContent("Partial");
+    expect(screen.getByTestId("drawer-facts")).not.toHaveTextContent("On track");
     // One decision (the lifecycle read), never a second copy from the flight.
     const refs = () => [...document.querySelectorAll(".drawer-window [data-object-id], [data-object-id]")]
       .map((e) => (e as HTMLElement).dataset.objectId ?? "");
@@ -286,7 +288,7 @@ describe("PHILO-14 A2 the drawer", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry" }), { detail: 1 });
     await waitFor(() => expect(screen.queryByTestId("drawer-partial")).toBeNull());
     expect(rooms()).toBeGreaterThan(before);
-    expect(screen.getByTestId("drawer-facts")).toHaveTextContent("ON TRACK");
+    expect(screen.getByTestId("drawer-facts")).toHaveTextContent("On track");
     expect(refs().filter((r) => r.startsWith("decision"))).toEqual(["decision:dec-1"]);
   });
 
@@ -331,7 +333,7 @@ describe("PHILO-14 A2 the drawer", () => {
     useDesk.setState({ items: EMPTY_ITEMS });
     render(<DrawerWindow drawer={{ projectId: "p-ledger", origin: null }} />);
     await screen.findByText("Nothing filed here");
-    expect(screen.getByTestId("drawer-facts")).not.toHaveTextContent(/NEED YOU|OBJECT/);
+    expect(screen.getByTestId("drawer-facts")).not.toHaveTextContent(/need you|object/i);
     expect(footer()).toBe("");
   });
 

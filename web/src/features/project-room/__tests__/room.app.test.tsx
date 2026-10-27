@@ -1267,12 +1267,14 @@ describe("History reader states", () => {
   it("names a source miss and clears it back to the recorded changes", async () => {
     wire({ [room(pid)]: () => clone(BARE_ROOM) });
     const history = await openHistory();
-    fireEvent.click(within(history).getByRole("button", { name: "JIRA" }));
-    expect(within(history).getByText("No changes from JIRA")).toBeInTheDocument();
+    // W1 (2026-10-27): the source filter is the toolbar's Source ▾ menu.
+    fireEvent.click(within(history).getByRole("button", { name: "Source: All" }));
+    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Jira" }));
+    expect(within(history).getByText("No changes from Jira")).toBeInTheDocument();
     expect(within(history).queryByText("No history yet")).toBeNull();
     fireEvent.click(within(history).getByRole("button", { name: "Clear filters" }));
     expect(within(history).getByTestId("history-entry")).toHaveTextContent("Created");
-    expect(within(history).queryByText("No changes from JIRA")).toBeNull();
+    expect(within(history).queryByText("No changes from Jira")).toBeNull();
   });
 
   it("uses the library search with its mic, names a query miss and clears query and source", async () => {
@@ -1281,12 +1283,13 @@ describe("History reader states", () => {
     const search = within(history).getByRole("searchbox", { name: "Search history" });
     expect(search.closest(".gadget-string")).not.toBeNull();
     expect(within(history).getByRole("button", { name: /^Speak Search history/ })).toBeInTheDocument();
-    fireEvent.click(within(history).getByRole("button", { name: "ROOM" }));
+    fireEvent.click(within(history).getByRole("button", { name: "Source: All" }));
+    fireEvent.click(screen.getByRole("menuitemcheckbox", { name: "Room" }));
     fireEvent.change(search, { target: { value: "zz-no-such-migration" } });
     expect(within(history).getByText("No matching changes")).toBeInTheDocument();
     fireEvent.click(within(history).getByRole("button", { name: "Clear filters" }));
     expect(search).toHaveValue("");
-    expect(within(history).getByRole("button", { name: "ALL" })).toHaveAttribute("aria-pressed", "true");
+    expect(within(history).getByRole("button", { name: "Source: All" })).toBeInTheDocument();
     expect(within(history).getByTestId("history-entry")).toHaveTextContent("Created");
     expect(rawButtons(history)).toEqual([]);
     expect(calls.filter((c) => c.key === room(pid))).toHaveLength(1);
@@ -1458,7 +1461,7 @@ describe("Betterment Q5: the Room's Ask field opens Ask with the project in Abou
     fireEvent.keyDown(well, { key: "Enter" });
 
     expect(await screen.findByText(ASK_THREAD.first.output)).toBeInTheDocument();
-    expect(screen.getByTestId("ask-context")).toHaveTextContent(`About${name}`);
+    expect(screen.getByTestId("ask-context")).toHaveTextContent(`${name}`);
     expect(asked).toHaveLength(1);
     expect(asked[0].prompt).toBe("What blocks the freeze?");
     expect(asked[0].thread).toBe(true);

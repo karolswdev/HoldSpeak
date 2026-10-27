@@ -534,6 +534,9 @@ _MIC_HOST_FIELDS = (
     ("desk/components/DeskComposer.tsx", "StringGadget", 'label={placeholder || actionLabel}'),
     ("desk/components/ThreadComposer.tsx", "PadGadget", 'label="Thread message"'),
     ("desk/components/ThreadComposer.tsx", "PadGadget", 'label={placeholder ?? "Edit message"}'),
+    # Window Program W2: the Room's and Memory's Ask composer rows.
+    ("features/project-room/ProjectRoomCore.tsx", "StringGadget", 'label="Ask this project"'),
+    ("pages/cores/MemoryCore.tsx", "StringGadget", 'label="Find or ask your desk"'),
 )  # Betterment Q4: the Thread window's Comment field is parked with it.
 
 
@@ -592,7 +595,7 @@ class TestMicHostAuthorities:
         assert {(path, label) for path, label, _ in scanner.MIC_HOST_AUTHORITIES} == {
             (path, label) for path, _species, label in _MIC_HOST_FIELDS
         }
-        assert len(scanner.MIC_HOST_AUTHORITIES) == 4  # DeskComposer owns both reply editor variants
+        assert len(scanner.MIC_HOST_AUTHORITIES) == 6  # DeskComposer owns both reply editor variants; + the Room and Memory composer rows (W2)
         src = Path(__file__).resolve().parents[2] / "web" / "src"
         for path, label, reason in scanner.MIC_HOST_AUTHORITIES:
             assert label in (src / path).read_text()

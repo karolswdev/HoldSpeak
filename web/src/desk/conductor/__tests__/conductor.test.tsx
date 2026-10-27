@@ -662,7 +662,7 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(attempts).toBe(1);
     await act(async () => { release(); });
     expect(await screen.findByRole("alert")).toHaveTextContent("Allow failed · Approval refused");
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
     const posts = apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"));
     expect(posts).toHaveLength(2);
@@ -693,10 +693,10 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     render(<ConductorWindow />);
     fireEvent.click(await screen.findByRole("button", { name: "Allow" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Decision saved · Gate read failed · Retry · Gate read unavailable");
-    await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled());
     expect(screen.queryByRole("button", { name: "Allow" })).toBeNull();
     unavailable = false;
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(screen.queryByRole("alert")).toBeNull());
     expect(apiFetch.mock.calls.filter(([url]) => String(url).endsWith("/decide"))).toHaveLength(1);
     expect(screen.queryByTestId("conductor-held-call")).toBeNull();

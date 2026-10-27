@@ -161,7 +161,11 @@ def test_pending_ask_stop_is_reachable_and_cancels_accepted_run(
                 stop.click()
             cancel_request = cancelled.value
             assert cancel_request.url.endswith(f"/api/ask/{invocation_id}/cancel")
-            expect(ask.get_by_test_id("run-line")).to_contain_text("Stopped")
+            # Ask D1 (#1515): the stopped run is one line under the question
+            # (ask-not-answered, reason "stopped") and the status bar says it.
+            expect(ask.get_by_test_id("ask-not-answered")).to_have_attribute("data-reason", "stopped")
+            expect(ask.get_by_test_id("ask-not-answered")).to_contain_text("Stopped")
+            expect(ask.get_by_test_id("ask-status-failed")).to_contain_text("Stopped")
             expect(ask.get_by_role("button", name="Ask again")).to_be_visible()
             expect(ask.get_by_role("region", name="Ask conversation")).to_contain_text(QUESTION)
             expect(prompt).to_have_value(DRAFT)
@@ -172,7 +176,7 @@ def test_pending_ask_stop_is_reachable_and_cancels_accepted_run(
             assert cancel_response is not None and cancel_response.ok, cancel_response
             receipt = cancel_response.json()
             assert receipt["invocation_id"] == invocation_id, receipt
-            expect(ask.get_by_test_id("run-line")).to_contain_text("Stopped")
+            expect(ask.get_by_test_id("ask-not-answered")).to_contain_text("Stopped")
             assert ANSWER not in ask.inner_text()
             assert len(requests) == 1 and not errors, (requests, errors)
             page.screenshot(path=str(SHOTS / f"stopped-{width}.png"))

@@ -615,3 +615,27 @@
   .desk-next .today-bead,
   .desk-next .today-next { transition: none; }
 }
+
+/* Window Program W2 (2026-10-27): what Today leaves out of Needs you is
+   one quiet row at the list's foot ("9 more in Needs you"); it opens the
+   whole list. The toolbar count and the rows now add up. */
+.desk-next .today .today-needs .today-needs-more.btn,
+.desk-next .today-needs .today-needs-more.btn {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  margin: 0;
+  padding-inline: 8px;
+  border-color: transparent;
+  background: transparent;
+  font: 400 12.5px / 1 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .today .today-needs .today-needs-more.btn:hover:not(:disabled) {
+  color: var(--wb-sel, var(--accent));
+}
+/* The 1:1's stepper numbers are sans figures in Today (no mono). */
+.desk-next .today .kit-step-n {
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+}

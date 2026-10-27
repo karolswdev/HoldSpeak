@@ -1,6 +1,5 @@
-import { SurfaceFooter } from "../surface/SurfaceFooter";
 /** Decision pullout content (HS-117-15). */
-import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { apiFetch, apiRequest } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../store";
@@ -15,30 +14,34 @@ import {
   SurfaceState,
 } from "../surface/Surface";
 import { humanTime } from "../surface/format";
-import { CycleGadget, FoldGadget, PadGadget } from "../surface/gadgets";
+import { FoldGadget, PadGadget } from "../surface/gadgets";
+import { StatusBar, ToolGlyph, Toolbar } from "../surface/kit";
 import { ActionNotice, StateChip } from "../surface";
 import { currentWriteFailure, subscribeWriteFailure, writeFailureReason } from "../hooks/useWriteReceipt";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
-import { DeskDecisionSendWells } from "../documentSendsLazy";
+import { DeskDecisionSendSheet } from "../documentSendsLazy";
 import { keptEditorPatch, keptField, updateKeptEditorFields } from "./editors/editorDraft";
 import "./attention-records.css";
+import "../../pages/cores/decisions.css";
 
 /** The title createPrimitive("decision") gives (store/dataSlice.ts). */
 export const DEFAULT_DECISION_TITLE = "New decision";
 
-const DECISION_STATES = [
-  { value: "proposed", label: "Proposed" },
+/** W1-TRUTH: one state word per decision, the same in the Decisions list
+ *  (DecisionsView decisionState) and here. */
+export const DECISION_STATES = [
+  { value: "proposed", label: "Open" },
   { value: "accepted", label: "Accepted" },
-  { value: "superseded", label: "Replaced" },
+  { value: "superseded", label: "Superseded" },
   { value: "deprecated", label: "Retired" },
+  { value: "rejected", label: "Rejected" },
 ];
 const DECISION_FIELDS = ["context_markdown", "decision_markdown", "consequences_markdown"] as const;
 type DecisionField = typeof DECISION_FIELDS[number];
 
 export function DecisionPullout({ object: o }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
-  const decisionHeading = useId();
   const { openPullout } = useDesk.getState();
   if (o.ref.kind !== "decision") return null;
   const ir = o.ref;
@@ -87,6 +90,9 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
   const [savingDecision, setSavingDecision] = useState(false);
   const decisionWrite = useRef({ pending: false, generation: 0 });
   const draftVersion = useRef(0);
+  const [sending, setSending] = useState(false);
+  const [filing, setFiling] = useState(false);
+  const [filed, setFiled] = useState("");
   const writeFailure = useSyncExternalStore(subscribeWriteFailure, currentWriteFailure, currentWriteFailure);
   const [savedStatus, setSavedStatus] = useState<string | null>(null);
   const [savingStatus, setSavingStatus] = useState(false);
@@ -189,35 +195,73 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     }
   };
 
+  // W1-TRUTH (atlas 2026-10-27): the record on the reader grammar. Toolbar
+  // (every verb), the decision as the reader's words (no box, no state cycle
+  // at the top), the folds, and a status bar: the state as a dot and a word,
+  // and where it is filed (a press opens the drawers and Projects).
+  const stateWord = DECISION_STATES.find((entry) => entry.value === status)?.label ?? "Open";
+  const stateTone = status === "accepted" ? "ok" : status === "proposed" ? "ask" : "info";
+  const receiptWords = copyReceipt || (editingDecision ? "Draft kept" : savedDecision ? "Saved" : "");
+  const facts = [
+    Array.isArray(ir.deciders) && ir.deciders.length ? ir.deciders.join(" · ") : "",
+    ir.decidedAt ? humanTime(String(ir.decidedAt)) : "",
+  ].filter(Boolean).join(" · ");
   return (
     <>
-      <div className="desk-pullout-body desk-surface-body">
-        <section className="desk-decision-card attention-decision">
-          <div className="attention-decision-strip">
-            <CycleGadget label="Decision status" value={status} options={DECISION_STATES}
-              disabled={savingStatus || savingDecision} onChange={(next) => void writeStatus(next)} />
-            {Array.isArray(ir.deciders) && ir.deciders.length ? <span className="attention-decision-fact">{ir.deciders.join(" · ")}</span> : null}
-            {ir.decidedAt ? <span className="attention-decision-fact">{humanTime(String(ir.decidedAt))}</span> : null}
-            {editingDecision ? <Button variant="ghost" dense disabled={savingDecision || savingStatus} onClick={cancelDecisionEdit}>Cancel</Button> : null}
-          </div>
-          {savingStatus ? <StateChip state="working" label="Saving status" /> : null}
-          {statusFailure ? <div className="attention-record-feedback">
-            <SurfaceState error={statusFailure} />
-            <Button dense variant="ghost" disabled={savingStatus || savingDecision} onClick={() => retryStatus && void writeStatus(retryStatus)}>Retry</Button>
-          </div> : null}
-          {editingDecision && savingDecision ? <StateChip state="working" label="Saving decision" /> : null}
-          {editingDecision && writeFailure?.subject === resourceRef && writeFailure.verb === "SAVE" ? (
-            <ActionNotice tone="danger" role="alert"><StateChip state="failure" label="Save failed" /><span>{o.title}</span></ActionNotice>
-          ) : null}
-          {editingDecision || [ir.decisionMarkdown, ir.contextMarkdown, ir.consequencesMarkdown].some((value) => String(value || "").trim()) ? (
-            <div className={`attention-decision-paper${editingDecision ? " desk-decision-editor" : ""}`}>
+      <div className="desk-pullout-body desk-surface-body decision-reader-window" data-interior="editor" data-testid="desk-decision-reader">
+        <Toolbar label="Decision" data-testid="desk-decision-toolbar">
+          {editingDecision ? (
+            <>
+              <Button variant="primary" dense disabled={savingDecision || savingStatus} onClick={() => void commitDecisionEdit()}>Save</Button>
+              <Button variant="secondary" dense disabled={savingDecision || savingStatus} onClick={cancelDecisionEdit}>Cancel</Button>
+            </>
+          ) : (
+            <>
+              <Button variant="primary" dense onClick={startDecisionEdit}><ToolGlyph kind="edit" />Edit</Button>
+              {/* The state changes by a verb, never a cycle at the top: an
+                  open decision is accepted; an accepted one can retire. */}
+              {status === "proposed" ? (
+                <Button variant="secondary" dense disabled={savingStatus || savingDecision} loading={savingStatus}
+                  onClick={() => void writeStatus("accepted")} data-testid="desk-decision-accept">
+                  <ToolGlyph kind="done" />Accept
+                </Button>
+              ) : status === "accepted" ? (
+                <Button variant="ghost" dense disabled={savingStatus || savingDecision}
+                  onClick={() => void writeStatus("deprecated")} data-testid="desk-decision-retire">
+                  Retire
+                </Button>
+              ) : null}
+              <Button variant="secondary" dense aria-expanded={sending} onClick={() => setSending((open) => !open)} data-testid="desk-decision-send">
+                <ToolGlyph kind="send" />Send…
+              </Button>
+              <Button variant="ghost" dense onClick={() => void copy(decisionContent)}>Copy</Button>
+              <Button variant="ghost" dense onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}>Dictate about this</Button>
+              {canonicalId ? (
+                <Button variant="ghost" dense onClick={() => openIntelligence({ view: "receipts", receiptId: canonicalId })} data-testid="desk-decision-open-record">
+                  Open record
+                </Button>
+              ) : null}
+            </>
+          )}
+        </Toolbar>
+        <article className="decision-reader desk-decision-reader desk-decision-card" aria-label={String(o.title || "Decision")}>
+          {sending && !editingDecision ? (
+            <DeskDecisionSendSheet id={o.id} title={o.title} version={documentVersion} onBack={() => setSending(false)} />
+          ) : (
+            <>
+              {statusFailure ? <div className="attention-record-feedback">
+                <SurfaceState error={statusFailure} />
+                <Button dense variant="ghost" disabled={savingStatus || savingDecision} onClick={() => retryStatus && void writeStatus(retryStatus)}>Retry</Button>
+              </div> : null}
+              {editingDecision && writeFailure?.subject === resourceRef && writeFailure.verb === "SAVE" ? (
+                <ActionNotice tone="danger" role="alert"><StateChip state="failure" label="Save failed" /><span>{o.title}</span></ActionNotice>
+              ) : null}
               {editingDecision || String(ir.decisionMarkdown || "").trim() ? (
-                <section className="attention-decision-main" aria-labelledby={decisionHeading}>
-                  <h2 id={decisionHeading}>Decision</h2>
+                <section className={`desk-decision-main${editingDecision ? " desk-decision-editor" : ""}`} aria-label="Decision">
                   {editingDecision ? (
                     <PadGadget label="Decision" value={decisionDraft.decision_markdown} rows={6} autoGrow autoFocus
                       onChange={(value) => changeDecisionField("decision_markdown", value)} />
-                  ) : <Material>{String(ir.decisionMarkdown)}</Material>}
+                  ) : <Material className="decision-reader-why">{String(ir.decisionMarkdown)}</Material>}
                 </section>
               ) : null}
               {([
@@ -233,71 +277,51 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
                   </FoldGadget>
                 ) : null
               ))}
-            </div>
-          ) : null}
-          {Array.isArray(ir.alternatives) && ir.alternatives.length ? (
-            <FoldGadget title="Alternatives considered">
-              <SurfaceRows>{ir.alternatives.map((alternative: any, index: number) => (
-                <SurfaceRow key={`${alternative.name}-${index}`} title={String(alternative.name || "Alternative")} detail={String(alternative.reason || "")} />
-              ))}</SurfaceRows>
-            </FoldGadget>
-          ) : null}
-          {(items.decision || []).filter((candidate) => candidate.supersededBy === o.id).map((candidate) => (
-            <Button key={candidate.id} variant="ghost" dense onClick={() => openPullout(String(candidate.id))}>
-              Previous decision · {String(candidate.title || "Decision")}
-            </Button>
-          ))}
-          {ir.supersededBy ? (
-            <Button variant="ghost" dense onClick={() => openPullout(String(ir.supersededBy))}>
-              Next decision{items.decision.find((candidate) => candidate.id === ir.supersededBy)?.title
-                ? ` · ${items.decision.find((candidate) => candidate.id === ir.supersededBy)!.title}` : ""}
-            </Button>
-          ) : null}
-          {canonicalId ? (
-            <Button variant="ghost" dense onClick={() => openIntelligence({ view: "receipts", receiptId: canonicalId })}>
-              Open canonical record
-            </Button>
-          ) : null}
-          {editingDecision ? <FoldGadget title="More" className="attention-decision-support">
-            <div className="attention-record-verbs">
-              <Button variant="ghost" dense onClick={() => void copy(decisionContent)}>Copy</Button>
-              <Button variant="ghost" dense onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}>Dictate about this</Button>
-            </div>
-          </FoldGadget> : null}
-          {!editingDecision ? <DeskDecisionSendWells id={o.id} title={o.title} version={documentVersion} /> : null}
-        </section>
-        <DeskFilingStrip
-          objectRef={resourceRef}
-          objectKind={o.kind}
-          objectId={o.id}
-        />
+              {Array.isArray(ir.alternatives) && ir.alternatives.length ? (
+                <FoldGadget title="Alternatives considered">
+                  <SurfaceRows>{ir.alternatives.map((alternative: any, index: number) => (
+                    <SurfaceRow key={`${alternative.name}-${index}`} title={String(alternative.name || "Alternative")} detail={String(alternative.reason || "")} />
+                  ))}</SurfaceRows>
+                </FoldGadget>
+              ) : null}
+              {(items.decision || []).filter((candidate) => candidate.supersededBy === o.id).map((candidate) => (
+                <Button key={candidate.id} variant="ghost" dense onClick={() => openPullout(String(candidate.id))}>
+                  Previous decision · {String(candidate.title || "Decision")}
+                </Button>
+              ))}
+              {ir.supersededBy ? (
+                <Button variant="ghost" dense onClick={() => openPullout(String(ir.supersededBy))}>
+                  Next decision{items.decision.find((candidate) => candidate.id === ir.supersededBy)?.title
+                    ? ` · ${items.decision.find((candidate) => candidate.id === ir.supersededBy)!.title}` : ""}
+                </Button>
+              ) : null}
+              {filing ? (
+                <div className="desk-decision-filing" data-testid="desk-decision-filing">
+                  <DeskFilingStrip objectRef={resourceRef} objectKind={o.kind} objectId={o.id} bare onSummary={setFiled} />
+                </div>
+              ) : null}
+            </>
+          )}
+        </article>
+        {filing ? null : (
+          <span hidden aria-hidden="true">
+            <DeskFilingStrip objectRef={resourceRef} objectKind={o.kind} objectId={o.id} bare onSummary={setFiled} />
+          </span>
+        )}
       </div>
-      <SurfaceFooter receipt={copyReceipt || (editingDecision ? "Draft kept" : savedDecision ? "Saved" : DECISION_STATES.find((entry) => entry.value === status)?.label)} verbs={<>
-        {!editingDecision ? <>
-        <Button
-          variant="ghost"
-          dense
-          onClick={() => void copy(decisionContent)}
-        >
-          Copy
-        </Button>
-        <Button
-          variant="ghost"
-          dense
-          onClick={() =>
-            openSurfaceOr("dictate", "/dictation", resourceRef)
-          }
-        >
-          Dictate about this
-        </Button>
-        </> : null}
-        {editingDecision ? (
-          <>
-            <Button variant="primary" dense disabled={savingDecision || savingStatus} onClick={() => void commitDecisionEdit()}>Save</Button>
-          </>
-        ) : (
-          <Button variant="primary" dense onClick={startDecisionEdit}>Edit</Button>
-        )} </>} />
+      <StatusBar
+        data-testid="desk-decision-status"
+        items={[
+          { key: "state", lamp: savingStatus || (editingDecision && savingDecision) ? "info" : stateTone, testId: "desk-decision-state",
+            text: savingStatus ? "Saving" : editingDecision && savingDecision ? "Saving" : facts ? `${stateWord} · ${facts}` : stateWord },
+          receiptWords ? { key: "receipt", text: receiptWords } : null,
+        ]}
+        trailing={filed ? (
+          <Button dense variant="ghost" aria-expanded={filing} onClick={() => setFiling((open) => !open)} data-testid="desk-decision-filed">
+            {`Filed in: ${filed}`}
+          </Button>
+        ) : undefined}
+      />
     </>
   );
 }

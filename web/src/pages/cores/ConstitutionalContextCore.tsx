@@ -123,7 +123,15 @@ export function ConstitutionalContextCore() {
     return at && !Number.isNaN(at.getTime()) ? at : null;
   })();
   const clock = (at: Date) => `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
+  // The one fact he asks first (atlas 2026-10-27, Context): is this read
+  // now? The saved text, not the draft, is what a run reads
+  // (holdspeak/constitutional_context.py: the first system message of
+  // every engine run; an empty text sends nothing).
+  const live = Boolean((ctx?.content || "").trim());
   const statusItems: Array<StatusBarItem | null> = [
+    live
+      ? { key: "on", lamp: "ok", text: "Every engine run reads this first", testId: "context-on" }
+      : { key: "on", text: "Empty: no run reads it", testId: "context-on" },
     saveError ? { key: "error", lamp: "fail", text: saveError } : null,
     overLimit ? { key: "over", lamp: "fail", text: "Over the limit" } : null,
     viewingRev !== null ? { key: "viewing", lamp: "warn", text: `Viewing revision ${viewingRev}` } : null,

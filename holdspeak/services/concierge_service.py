@@ -194,6 +194,37 @@ def engine_display_name(
     return ("Unknown engine", "")
 
 
+#: Labels the face writes for an engine when the owner names nothing
+#: (endpointDraft.ts: host:port, or a named service's name).
+_AUTO_ENGINE_LABELS = frozenset({"engine", "endpoint"})
+#: A local server's own name names the server, not one engine on it.
+_LOCAL_SERVER_NAMES = frozenset({"ollama", "lm studio", "llama.cpp", "llama-server", "vllm"})
+
+
+def owner_engine_name(
+    label: str, host_port: str, model_id: str = "", served_models: list[str] | None = None,
+) -> str:
+    """The name the owner gave an engine, or "" when the label is automatic.
+
+    Automatic: empty, a migration label, the host:port the face fills in, a
+    named service's name (Ollama, LM Studio, OpenRouter), or the model id
+    itself. Anything else is his name (``Studio engine``) and wins over the
+    served model id (W1-TRUTH, atlas 2026-10-27)."""
+    name = str(label or "").strip()
+    if not name or name.startswith("Migrated"):
+        return ""
+    low = name.lower()
+    if low in _AUTO_ENGINE_LABELS or low == str(host_port or "").lower():
+        return ""
+    if low in {str(m).lower() for m in [model_id, *(served_models or [])] if m}:
+        return ""
+    if low in {tile["name"].lower() for tile in SERVICE_TILES} | _LOCAL_SERVER_NAMES:
+        return ""
+    if _re.fullmatch(r"[\w.-]+:\d+", name):  # any host:port
+        return ""
+    return name
+
+
 def _clean_model_name(raw: str) -> tuple[str, str]:
     """Clean a raw model name/id into (display_name, quant_token).
 
@@ -784,12 +815,19 @@ def detect(
             raw_label = profile.name or profile.id
             profile_model = str(getattr(profile, "model", "") or "")
             served_models: list[str] = []
+            # W1-TRUTH (atlas 2026-10-27): a server that does not answer is
+            # UNREACHABLE, never READY. An HTTP 401/403 is an answer (the
+            # server is up and asks for a key).
+            answering = False
             try:
                 discovered = discover_endpoint_models(
                     base, timeout_seconds=1.5, http_get=http_get,
                 )
                 if discovered.get("ok"):
                     served_models = list(discovered.get("models") or [])
+                    answering = True
+                elif discovered.get("reason") == "key_required":
+                    answering = True
             except Exception:
                 pass  # timeout/failure — fall back
             # Fallback name: host:port when no model resolved and label is migration
@@ -805,6 +843,14 @@ def detect(
             if display.startswith("Migrated"):
                 display = host_port_fallback
                 quant = ""
+            # W1-TRUTH: one name per engine. The name the owner gave wins
+            # over the served model id; the model id travels as meta.
+            model_id = (profile_model if profile_model.lower() not in ("", "default") else "") or (
+                served_models[0] if served_models else ""
+            )
+            given = owner_engine_name(raw_label, host_port_fallback, model_id, served_models)
+            if given:
+                display, quant = given, ""
             kind = KIND_LOCAL if is_loopback else KIND_LAN
             engines.append({
                 "id": f"{kind}:{profile.id}",
@@ -812,8 +858,9 @@ def detect(
                 "name": display,
                 "quantToken": quant or None,
                 "legacyLabel": raw_label,
+                "modelId": model_id or None,
                 "host": host,
-                "state": STATE_READY,
+                "state": STATE_READY if answering else STATE_UNREACHABLE,
                 **_detected_profile_fields(db, str(profile.id)),
                 "baseUrl": base,
             })

@@ -46,3 +46,13 @@
 .drawer-window .desk-icon-name {
   -webkit-line-clamp: 2;
 }
+
+/* W2-BUILDER (atlas 2026-10-27): the head facts are dots and sentence-case
+   words on one line (no mono caps strip). */
+.drawer-head-facts {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  min-width: 0;
+}

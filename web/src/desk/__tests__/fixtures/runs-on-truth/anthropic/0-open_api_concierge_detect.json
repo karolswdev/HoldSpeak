@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_runs_on_hub.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-18T23:37:03.233428Z",
+  "captured_at": "2026-10-27T08:47:41.581676Z",
   "wire": {
     "agents": [
       {
@@ -40,7 +40,7 @@
         "vendorScope": "cloud"
       }
     ],
-    "checkedAt": "2026-10-18T23:37:03.230672+00:00",
+    "checkedAt": "2026-10-27T08:47:41.579068+00:00",
     "engines": [
       {
         "baseUrl": "https://api.anthropic.com/v1",
@@ -148,8 +148,8 @@
       },
       "observation": {
         "available_memory_bytes": null,
-        "sha256": "sha256:3624fa37f53ee747b7f9764c1d89658ca99a9d44d5d7510cbd2e5976466a1389",
-        "storage_available_bytes": 216947888128
+        "sha256": "sha256:0e9b97590bd3e44c48ee3e1d887b45167a97b7b77b9ccf71ced956e223198fb1",
+        "storage_available_bytes": 66624737280
       }
     },
     "lastApply": null,

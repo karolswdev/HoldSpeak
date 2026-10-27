@@ -10,6 +10,9 @@ export interface InlineEditorContentProps {
   /** True when the editor opened as part of a creation gesture — the name
    * field should receive focus so the user can name the thing immediately. */
   autoFocusName?: boolean;
+  /** W2-BUILDER: the reader's Add opened the editor; a Knowledge editor
+   *  opens on its item picker. */
+  openAdd?: boolean;
 }
 
 /** An inline editor content component — renders form fields + footer

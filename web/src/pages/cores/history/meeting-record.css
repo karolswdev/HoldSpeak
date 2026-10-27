@@ -283,3 +283,10 @@
   font-weight: 600;
   color: var(--wb-danger-ink);
 }
+
+/* W2-LIVE-2 (canvas A, After): the step rail under the toolbar, Today's
+   meetingSteps at Summary; one hairline below it, as on the Live window. */
+.meeting-record-steps {
+  padding: 10px 16px 10px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}

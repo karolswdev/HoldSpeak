@@ -423,6 +423,9 @@ export interface AskTurn {
   lookedAt: LookedAt[];
   /** Betterment Q7: what its tools wrote and prepared (Looked at is above). */
   used?: AgentUse | null;
+  /** Ask D1: when the question was asked (epoch ms, ISO or epoch seconds as
+   *  the hub sends it), for the age on the question's heading line. */
+  askedAt?: number | string;
 }
 
 /** Betterment Q7: Looked at with what the tools read after it, once each. */
@@ -497,7 +500,7 @@ function frozenTitle(raw: unknown): string {
  * answer's Looked at, and the About its questions named. Only text parts are
  * drawn; a question with no answer yet is left out. */
 export function askTurnsFromThread(detail: {
-  messages: Array<{ id: string; role: string; parts: Array<{ kind: string; text: string }> }>;
+  messages: Array<{ id: string; role: string; parts: Array<{ kind: string; text: string }>; createdAt?: unknown }>;
   refs: Array<{ messageId: string; refKind: string; refId: string; frozenJson: unknown; origin?: string }>;
   used?: Record<string, AgentUse>;
 }): { turns: AskTurn[]; about: LookedAt[] } {
@@ -521,11 +524,12 @@ export function askTurnsFromThread(detail: {
   };
   const turns: AskTurn[] = [];
   const about: LookedAt[] = [];
-  let question: { id: string; text: string } | null = null;
+  let question: { id: string; text: string; at?: number | string } | null = null;
   for (const message of detail.messages) {
     const text = message.role === "assistant" ? answerOf(message) : textOf(message);
     if (message.role === "user") {
-      question = text ? { id: message.id, text } : null;
+      const at = message.createdAt;
+      question = text ? { id: message.id, text, ...(typeof at === "number" || typeof at === "string" ? { at } : {}) } : null;
       for (const row of refsFor(message.id, "reference")) {
         if (!about.some((known) => known.ref === row.ref)) about.push(row);
       }
@@ -534,6 +538,7 @@ export function askTurnsFromThread(detail: {
       turns.push({
         key: message.id, question: question.text, answer: text,
         lookedAt: withToolReads(refsFor(message.id, "relevance"), used), used,
+        ...(question.at != null ? { askedAt: question.at } : {}),
       });
       question = null;
     }

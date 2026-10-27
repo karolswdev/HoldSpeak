@@ -275,7 +275,9 @@ export function composeScreen(input: ScreenInputs): ScreenObject[] {
       key: ref,
       role: "drawer",
       kind: "kb",
-      kindWord: "DRAWER",
+      // W2-BUILDER (atlas 2026-10-27): the caption says what it is. It
+      // opens a Knowledge window (its own Add), not a drawer's.
+      kindWord: "KNOWLEDGE",
       name: kb.name,
       ...sprites("directory", kb.id),
       target: { type: "ref", ref },

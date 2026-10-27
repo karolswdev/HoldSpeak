@@ -641,14 +641,15 @@ class TestOneDecisionRecord:
                 # The owner, 2026-10-25: the Room opens the record in the
                 # Decisions window reader (never the old desk decision window):
                 # the front window, the decision as its heading, Send and
-                # Back to the list in its toolbar, when it was decided below.
+                # Back to the list in its toolbar, when it was decided below
+                # (TRUTH #1516: one state vocabulary, "Accepted just now").
                 room_decisions = page.locator("#surface-decisions")
                 page.locator("[id='surface-decisions'].is-front").wait_for(timeout=T)
                 room_reader = room_decisions.get_by_test_id("decision-reader").filter(has_text=P9_DECISION_TEXT)
                 room_reader.wait_for(timeout=T)
                 room_decisions.get_by_role("button", name=re.compile(r"^Send")).first.wait_for(timeout=T)
                 room_decisions.get_by_test_id("decision-reader-back").wait_for(timeout=T)
-                assert re.match(r"^Decided ", room_decisions.get_by_test_id("decision-reader-state").inner_text()), \
+                assert re.match(r"^Accepted ", room_decisions.get_by_test_id("decision-reader-state").inner_text()), \
                     room_decisions.get_by_test_id("decision-reader-state").inner_text()
                 assert page.locator(".desk-window-shell:not([id='surface-decisions'])[aria-label=" + json.dumps(P9_DECISION_TEXT) + "]").count() == 0
                 page.screenshot(path=str(P9_SHOTS / f"project-this-week-reader-{width}.png"))
@@ -953,13 +954,19 @@ def _band_law(page, when: str, failures: list[str]) -> None:
       // PHILO-14 A1: with no Chair window open, the screen of objects is
       // that surface.
       const bar = document.querySelector('[data-testid="arrival-capture-bar"]')
-        || document.querySelector('.desk-window.chair-window.is-sheet')
-        || document.querySelector('.desk-screen');
+        || document.querySelector('.desk-window.chair-window.is-sheet');
+      // #1498 (owner 2026-10-27): the floor runs under the floating dock and
+      // keeps the reserve as padding, so with no Chair window the objects on
+      // it (the icons) are what must end above the dock, not the floor.
+      const icons = [...document.querySelectorAll('.desk-screen .desk-icon')]
+        .map((el) => el.getBoundingClientRect()).filter((r) => r.width && r.height);
+      const iconsBottom = icons.length ? Math.max(...icons.map((r) => r.bottom)) : null;
       const dock = document.querySelector('.desk-dock');
       const style = getComputedStyle(document.documentElement);
       return { chairBottom: chair.getBoundingClientRect().bottom,
                chairHeight: chair.getBoundingClientRect().height,
-               barBottom: bar ? bar.getBoundingClientRect().bottom : null,
+               barBottom: bar ? bar.getBoundingClientRect().bottom : iconsBottom,
+               emptyFloor: !bar && iconsBottom === null && !!document.querySelector('.desk-screen'),
                dockTop: dock ? dock.getBoundingClientRect().top : null,
                vh: innerHeight,
                workBottom: parseFloat(style.getPropertyValue('--desk-work-bottom')),
@@ -967,7 +974,9 @@ def _band_law(page, when: str, failures: list[str]) -> None:
     }""")
     if g["chairBottom"] > g["vh"] - g["workBottom"] + 0.5:
         failures.append(f"band@393 ({when}): the Chair ends at {g['chairBottom']:.1f}, past the band ({g['vh'] - g['workBottom']}); {g}")
-    if g["barBottom"] is None or g["dockTop"] is None:
+    if g.get("emptyFloor") and g["dockTop"] is not None:
+        pass  # an empty floor (#1498 runs it under the dock) has nothing to end above it
+    elif g["barBottom"] is None or g["dockTop"] is None:
         failures.append(f"band@393 ({when}): no capture bar or no dock to measure; {g}")
     elif g["barBottom"] > g["dockTop"]:
         failures.append(f"band@393 ({when}): the capture bar ends at {g['barBottom']:.1f}, under the dock ({g['dockTop']:.1f})")

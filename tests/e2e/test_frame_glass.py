@@ -38,6 +38,8 @@ FRAME_TOKEN = "philo13-11-frame"
 FRAME_SHOTS = evidence_dir("pm/roadmap/holdspeak-philo/phase-13-the-desk/assets/story-11-build")
 
 FRAME_SIZES = {1440: 900, 393: 852}
+# The floating dock (#1497): 10 px of air between the work band and the plate.
+DOCK_AIR = 10
 
 class TestTheFrame:
     @pytest.fixture(autouse=True)
@@ -104,7 +106,10 @@ class TestTheFrame:
         if m["clipped"] or m["sideways"]:
             fails["F3 nothing clips, nothing scrolls sideways"] = {"clipped": m["clipped"], "sideways": m["sideways"]}
         if width <= 720:
-            if (expect_window and (m["content"] is None or m["content"] < 700)) or m["small_targets"]:
+            # The floating dock (#1494/#1497) reserves 80 px on the phone (the
+            # 64 px plate, its 8 px inset, 8 px of air): 852 - 44 bar - 80 -
+            # 44 title bar - 2 border = 682 px of content; the floor is 680.
+            if (expect_window and (m["content"] is None or m["content"] < 680)) or m["small_targets"]:
                 fails["F4 393 content and targets"] = {"content": m["content"], "small": m["small_targets"]}
         if m["small_text"] or m["low_contrast"]:
             fails["F5 frame text in place"] = {"small": m["small_text"], "low": m["low_contrast"]}
@@ -965,8 +970,10 @@ class TestTheGadgets:
                 page.mouse.up()
                 page.wait_for_timeout(400)
                 saved = page.evaluate(owns)
-                assert saved["owns"] and saved["foot"] == saved["dockTop"], saved
-                assert saved["foot"] > 900 - 76, saved  # under the Dock at 900 unless lifted
+                # The floating dock (#1494/#1497): the band ends 10 px of air
+                # above the plate (reserve 84 = plate 64 + inset 10 + air 10).
+                assert saved["owns"] and saved["foot"] == saved["dockTop"] - DOCK_AIR, saved
+                assert saved["foot"] > 900 - 84, saved  # under the band at 900 unless lifted
 
                 # The reload at a smaller height: a new page of the same
                 # context (the same saved workspace), never a resize.
@@ -980,13 +987,13 @@ class TestTheGadgets:
                 meetings.wait_for()
                 page.wait_for_timeout(800)
                 reloaded = page.evaluate(owns)
-                assert reloaded["owns"] and reloaded["foot"] <= reloaded["dockTop"], reloaded
+                assert reloaded["owns"] and reloaded["foot"] <= reloaded["dockTop"] - DOCK_AIR, reloaded
 
                 # The viewport gets smaller: the window is clamped again.
                 page.set_viewport_size({"width": 1440, "height": 860})
                 page.wait_for_timeout(700)
                 smaller = page.evaluate(owns)
-                assert smaller["owns"] and smaller["foot"] <= smaller["dockTop"], smaller
+                assert smaller["owns"] and smaller["foot"] <= smaller["dockTop"] - DOCK_AIR, smaller
                 assert not errors, errors
             finally:
                 browser.close()

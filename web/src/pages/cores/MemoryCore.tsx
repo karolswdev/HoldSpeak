@@ -4,28 +4,32 @@
  * `q:` scope opens the recall/search face, while a project scope continues to
  * open the Room through the same application registration.
  *
- * Window grammar (2026-10-24): Toolbar [Choose engine when none | Ask your
- * desk] → the written pages as a reader → Projects and People as dense list
- * views under sentence-case captions → StatusBar (`Written 3h ago · 4
- * projects · 4 people`, or `Not written yet`). The old recall face is not a
- * fold on this face any more (debug hides behind RAW on the desk floor).
+ * Window grammar (2026-10-24) + Window Program W2 (2026-10-27): the toolbar
+ * is the Ask window's composer row (askFace AskComposer) over the whole
+ * desk: one field that finds as it is typed (results are dense rows of
+ * name · kind · date) and asks on Ask ⏎ (the question runs in the Ask
+ * window and lands in its Recent). Under it: the written pages as a
+ * reader, then Projects and People as dense list views under sentence-case
+ * captions → StatusBar (`Written 3h ago · 4 projects · 6 people`). The old
+ * "Ask your desk" well is parked (`_parked/memoryAskYourDesk.v1-2026-10-27.tsx`).
  */
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { useDesk } from "../../desk/store";
 import { openPerson, openRef } from "../../desk/openObject";
 import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
 import { apiFetch } from "../../lib/api";
-import { Disclosure, RefTokens, StandingPage, StringGadget } from "../../desk/surface";
-import { StatusBar, ToolGlyph, Toolbar, countWords, hueOf, initialsOf } from "../../desk/surface/kit";
+import { Disclosure, MicButton, RefTokens, StandingPage, StringGadget } from "../../desk/surface";
+import { DotWord, StatusBar, ToolGlyph, countWords, hueOf, initialsOf } from "../../desk/surface/kit";
+import { AskComposer, AskEngineWord, AskSendButton } from "../../desk/components/askFace";
 import { useWindowInterior } from "../../desk/surface/interior";
-import { humanTime } from "../../desk/surface/format";
+import { humanTime, wireDate } from "../../desk/surface/format";
 import { ObjectList, type ObjectListRow } from "../../desk/surface/objects/ObjectList";
 import { projectOpenHere, useNeedsYou } from "../../desk/needsYou";
-import { useEngine } from "../../desk/hooks/useEngine";
+import { refreshEngine, useEngine } from "../../desk/hooks/useEngine";
 import { builtToken, useStandingPagesRead, type StandingPageWire } from "../../desk/standingPages";
 import { RecallFace } from "../../features/project-room/recall/RecallFace";
-import { decodeRecall, type BeliefCardData } from "../../features/project-room/recall/model";
+import { decodeRecall, type BeliefCardData, type RecallResult } from "../../features/project-room/recall/model";
 import type { CoreProps } from "./core-types";
 import { ProjectRoomCore } from "../../features/project-room/ProjectRoomCore";
 import "./memory.css";
@@ -97,30 +101,114 @@ function DeskPage({ page, beliefs }: { page: StandingPageWire; beliefs: BeliefCa
   );
 }
 
-function AskYourDesk() {
-  const [question, setQuestion] = useState("");
-  const ask = useCallback(() => {
-    const text = question.trim();
+/** Sentence-case kind words for a found row (the kit's are caps). */
+const FOUND_KIND: Record<string, string> = {
+  project: "Project", person: "Person", decision: "Decision", action: "Commitment",
+  meeting: "Meeting", note: "Note", brief: "Brief", artifact: "Result",
+  desk_decision: "Decision", calendar_event: "Calendar", thought: "Note", action_item: "Commitment",
+};
+
+function shortDay(value: unknown): string {
+  const date = wireDate(value);
+  return date ? date.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+}
+
+function foundMeta(kind: string, at?: unknown): string {
+  const plain = kind.replace(/_/g, " ");
+  return [FOUND_KIND[kind] ?? (plain ? plain[0].toUpperCase() + plain.slice(1) : ""), shortDay(at)].filter(Boolean).join(" · ");
+}
+
+/** What the desk remembers that matches the words: decisions, commitments,
+ *  meetings and briefs from `/api/memory/recall` as found rows. */
+function recallRows(result: RecallResult): ObjectListRow[] {
+  const rows: ObjectListRow[] = [];
+  const seen = new Set<string>();
+  const glyphKind: Record<string, string> = {
+    desk_decision: "decision", calendar_event: "meeting", brief: "note", thought: "note", action_item: "action",
+  };
+  const add = (ref: string, kind: string, name: string, at?: unknown) => {
+    if (!ref || !name || seen.has(ref)) return;
+    seen.add(ref);
+    rows.push({ id: ref, kind: glyphKind[kind] ?? kind, name, cells: { meta: foundMeta(kind, at) }, sortValues: { none: rows.length } });
+  };
+  for (const d of [...result.current, ...result.disputed, ...result.superseded]) add(d.ref, "decision", d.text, d.decided_at);
+  for (const o of result.owed) add(o.ref, "action", o.text, o.due_at);
+  for (const h of [...result.meetings, ...result.briefs, ...result.also]) {
+    add(h.source_ref, h.kind, h.title || h.snippet, h.occurred_at);
+  }
+  return rows;
+}
+
+/** The found rows for the words, read after a short pause in typing. */
+function useFound(query: string) {
+  const [state, setState] = useState<{ query: string; rows: ObjectListRow[]; status: "idle" | "reading" | "ready" | "failed" }>(
+    { query: "", rows: [], status: "idle" },
+  );
+  useEffect(() => {
+    const words = query.trim();
+    if (words.length < 2) { setState({ query: words, rows: [], status: "idle" }); return undefined; }
+    let live = true;
+    setState((current) => ({ ...current, query: words, status: "reading" }));
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams({ query: words, filter: "all" });
+      void apiFetch<Record<string, unknown>>(`/api/memory/recall?${params}`)
+        .then((raw) => { if (live) setState({ query: words, rows: recallRows(decodeRecall(raw)), status: "ready" }); })
+        .catch(() => { if (live) setState({ query: words, rows: [], status: "failed" }); });
+    }, 250);
+    return () => { live = false; window.clearTimeout(timer); };
+  }, [query]);
+  return state;
+}
+
+/** Memory's toolbar: the Ask composer row over the whole desk. The field
+ *  finds as it is typed; Ask ⏎ asks the Ask window. */
+function MemoryComposer({ value, onChange }: { value: string; onChange: (next: string) => void }) {
+  const engine = useEngine("ask.answer");
+  const ask = () => {
+    const text = value.trim();
     if (!text) return;
     // No About chip means the Ask window uses the owner's whole desk.
     useDesk.getState().askQuestion(text);
-  }, [question]);
+  };
   return (
-    <span className="memory-ask" data-testid="memory-ask">
-      <StringGadget
-        label="Ask your desk"
-        micLabel="Dictate into your question"
-        type="search"
-        value={question}
-        placeholder="Ask your desk"
-        onChange={setQuestion}
-        onKeyDown={(event) => { if (event.key === "Enter") ask(); }}
-      />
-      <Button dense variant="secondary" disabled={!question.trim()} onClick={ask}>
-        <ToolGlyph kind="ask" />
-        Ask
-      </Button>
-    </span>
+    <AskComposer
+      className="memory-composer"
+      data-testid="memory-toolbar"
+      scope={<span className="desk-ask-scope-word desk-ask-scope-preset" title="About: My whole desk"><span className="desk-ask-scope-text">My whole desk</span></span>}
+      field={
+        <span className="memory-ask" data-testid="memory-ask">
+          <StringGadget
+            label="Find or ask your desk"
+            mic={false}
+            type="search"
+            value={value}
+            placeholder="Find or ask your desk"
+            onChange={onChange}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); ask(); }
+              if (event.key === "Escape" && value) { event.stopPropagation(); onChange(""); }
+            }}
+          />
+        </span>
+      }
+      capture={
+        <MicButton
+          label="Speak your question"
+          draftScope="memory-ask"
+          onText={(text) => onChange(value ? `${value} ${text}` : text)}
+        />
+      }
+      engine={(
+        // Always drawn (the "unread" word while the read is out) in a fixed
+        // slot: nothing right of the field moves when the read lands.
+        <AskEngineWord
+          state={engine.state}
+          name={engine.model}
+          onPress={engine.state === "failed" ? () => void refreshEngine("ask.answer") : () => openSurfaceOr("configure-runs-on", "/settings", "models")}
+        />
+      )}
+      action={<AskSendButton disabled={!value.trim()} onClick={ask} />}
+    />
   );
 }
 
@@ -167,12 +255,14 @@ function MemoryHome() {
   useWindowInterior("list");
   const { loaded, pages } = useStandingPagesRead("desk");
   const { projects, people, loaded: linksLoaded } = useDeskLinks();
-  const engine = useEngine("memory.page");
+  const pageEngine = useEngine("memory.page");
   const needs = useNeedsYou({ poll: false });
   const [beliefs, setBeliefs] = useState<BeliefCardData[]>([]);
   const [beliefsLoaded, setBeliefsLoaded] = useState(false);
   const [shown, setShown] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const found = useFound(query);
 
   useEffect(() => {
     let live = true;
@@ -190,8 +280,8 @@ function MemoryHome() {
   // First paint keeps every control below the answers in one settled batch.
   // Ask stays available while independent reads finish or fail.
   useEffect(() => {
-    if (loaded && linksLoaded && beliefsLoaded && (hasPages || engine.state !== "unread")) setShown(true);
-  }, [loaded, linksLoaded, beliefsLoaded, hasPages, engine.state]);
+    if (loaded && linksLoaded && beliefsLoaded && (hasPages || pageEngine.state !== "unread")) setShown(true);
+  }, [loaded, linksLoaded, beliefsLoaded, hasPages, pageEngine.state]);
 
   const openHere = projectOpenHere(needs);
   const projectRows: ObjectListRow[] = projects.flatMap((project, index) => {
@@ -220,33 +310,61 @@ function MemoryHome() {
       sortValues: { none: index },
     }];
   });
+  const words = query.trim().toLowerCase();
+  const finding = words.length > 0;
+  // Found: the projects and people whose names hold the words, then what
+  // the desk remembers (decisions, commitments, meetings, briefs).
+  const foundRows = useMemo<ObjectListRow[]>(() => {
+    if (!finding) return [];
+    const named = [...projectRows, ...personRows]
+      .filter((row) => row.name.toLowerCase().includes(words))
+      .map((row, index) => ({ ...row, cells: { meta: foundMeta(row.kind) }, sortValues: { none: index } }));
+    const recalled = found.query.toLowerCase() === words ? found.rows : [];
+    return [...named, ...recalled.map((row, index) => ({ ...row, sortValues: { none: named.length + index } }))];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finding, words, projects, people, found]);
   const openLink = (ref: string) => {
     const [kind, ...rest] = ref.split(":");
     const id = rest.join(":");
     if (kind === "project") openProjectRoom(id);
-    else openPerson(id);
+    else if (kind === "person") openPerson(id);
+    else openRef(ref);
   };
-  const chosen = selected && [...projectRows, ...personRows].some((row) => row.id === selected) ? selected : null;
+  const visible = finding ? foundRows : [...projectRows, ...personRows];
+  const chosen = selected && visible.some((row) => row.id === selected) ? selected : null;
   const newest = ordered.map((page) => page.built_at).filter(Boolean).sort().pop();
-  const noEngine = engine.state === "none";
+  const nothingYet = shown && !hasPages && !projectRows.length && !personRows.length;
+  const reading = finding && found.status === "reading";
 
   return (
     <div className="memory-home" data-testid="memory-home">
-      <Toolbar label="Memory" data-testid="memory-toolbar" trailing={<AskYourDesk />}>
-        {shown && noEngine ? (
-          <Button dense variant="secondary" data-testid="memory-choose-engine"
-            onClick={() => openSurfaceOr("open-concierge", "/models", "background")}>
-            <ToolGlyph kind="engine" />
-            Choose engine
-          </Button>
-        ) : null}
-      </Toolbar>
+      <MemoryComposer value={query} onChange={setQuery} />
       <div className="memory-body">
-        {!shown ? <p className="room-empty-line">Loading…</p> : (<>
+        {!shown ? <p className="room-empty-line">Reading your desk</p> : finding ? (
+          foundRows.length ? (
+            <LinkGroup label="Found" rows={foundRows} selected={chosen} onSelect={setSelected} onOpen={openLink} />
+          ) : reading ? null : (
+            <p className="memory-line" data-testid="memory-none-found">
+              {found.status === "failed" ? <DotWord tone="warn">Memory not read</DotWord> : "Nothing on this desk has these words"}
+            </p>
+          )
+        ) : (<>
           {hasPages ? (
             <div className="memory-reader memory-home-pages">
               {ordered.map((page) => <DeskPage key={page.slug} page={page} beliefs={beliefs} />)}
             </div>
+          ) : pageEngine.state === "none" ? (
+            <p className="memory-line" data-testid="memory-pages-line">
+              <DotWord tone="idle">No engine writes the desk pages</DotWord>
+              <Button dense variant="ghost" data-testid="memory-choose-engine"
+                onClick={() => openSurfaceOr("open-concierge", "/models", "background")}>
+                <ToolGlyph kind="engine" />
+                Choose engine
+              </Button>
+            </p>
+          ) : null}
+          {nothingYet ? (
+            <p className="memory-line" data-testid="memory-nothing">No projects or people yet</p>
           ) : null}
           <LinkGroup label="Projects" rows={projectRows} selected={chosen} onSelect={setSelected} onOpen={openLink} />
           <LinkGroup label="People" rows={personRows} selected={chosen} onSelect={setSelected} onOpen={openLink} />
@@ -261,10 +379,12 @@ function MemoryHome() {
               Open
             </Button>
           ) : null}
-          items={[
+          items={finding ? [
+            reading ? { key: "found", text: "Finding" } : foundRows.length ? { key: "found", testId: "memory-found-count", text: `${foundRows.length} found` } : null,
+          ] : [
             hasPages
               ? { key: "written", testId: "memory-written", text: newest ? `Written ${humanTime(newest)}` : "Written" }
-              : loaded ? { key: "written", testId: "memory-empty", text: "Not written yet" } : null,
+              : loaded ? { key: "written", testId: "memory-empty", text: "Desk pages not written yet" } : null,
             { key: "projects", text: countWords(projectRows.length, "project") },
             { key: "people", text: countWords(personRows.length, "person", "people") },
           ]}

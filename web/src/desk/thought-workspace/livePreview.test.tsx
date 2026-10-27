@@ -125,4 +125,22 @@ describe("the Note in live preview", () => {
     expect(container.querySelectorAll(".cm-line.cm-lp-code").length).toBe(3);
     expect(container.querySelector(".cm-line.cm-lp-quote")?.textContent).toBe("A quote");
   });
+
+  it("W1-DOORS: opens with the caret at the end and every line rendered until the editor takes focus", async () => {
+    const TASKS = "- [ ] Freeze writes\n- [ ] Tell Priya";
+    const ref = createRef<DeskEditorHandle>();
+    let view: EditorView | null = null;
+    const { container } = render(<DeskEditor ref={ref} value={TASKS} onChange={vi.fn()} showToolbar={false}
+      initialCaret="end" extensions={livePreview({ renderUntilFocus: true })} onViewChange={(v) => { view = v; }} />);
+    // The caret is the writer's: after the last character.
+    expect(view!.state.selection.main.head).toBe(TASKS.length);
+    // No line shows its source, the caret's line too: two real boxes.
+    await waitFor(() => expect(container.querySelectorAll("input[type=checkbox]").length).toBe(2));
+    expect(container.querySelector(".cm-content")?.textContent).not.toContain("[ ]");
+    // The first press into the editor brings the caret's line source back.
+    view!.focus();
+    view!.dispatch({ effects: [] });
+    await waitFor(() => expect(container.querySelector(".cm-content")?.textContent).toContain("- [ ] Tell Priya"));
+  });
 });
+

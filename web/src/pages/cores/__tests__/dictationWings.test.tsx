@@ -102,7 +102,8 @@ describe("the Speak window's wings", () => {
     mount();
     await waitFor(() =>
       expect(screen.getAllByRole("tab").map((t) => t.textContent)).toEqual([
-        "Speak",
+        // W1 (2026-10-27): the first wing is named for its job.
+        "Talk",
         "Journal",
         "Blocks",
         "Learned",
@@ -125,7 +126,7 @@ describe("the Speak window's wings", () => {
 describe("the footer's Review", () => {
   it("crosses to the Journal wing, not the Configure door", async () => {
     mount();
-    await screen.findByRole("tab", { name: "Speak" });
+    await screen.findByRole("tab", { name: "Talk" });
     await userEvent.click(screen.getByRole("button", { name: "Review" }));
 
     await waitFor(() =>

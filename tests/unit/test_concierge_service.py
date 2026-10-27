@@ -837,6 +837,53 @@ class TestDetectNameResolution:
         # Should fall back to host:port, not the migration label
         assert lan_engines[0]["name"] == "192.168.1.43:8081"
 
+    def test_lan_endpoint_that_does_not_answer_is_unreachable(self):
+        """W1-TRUTH: a server that does not answer is never READY."""
+        from urllib.error import URLError
+        profile = _fake_profile(
+            profile_id="down-lan",
+            name="Studio engine",
+            base_url="http://192.168.1.43:8081/v1",
+        )
+        db = _fake_db(profiles=[profile])
+
+        def fail_http_get(url, **kw):
+            raise URLError("connection refused")
+
+        from holdspeak.services.concierge_service import detect
+        result = detect(db=db, home=Path("/tmp/test"), http_get=fail_http_get)
+        engine = [e for e in result["engines"] if "down-lan" in e["id"]][0]
+        assert engine["state"] == "UNREACHABLE"
+        # The owner's name survives a dead server.
+        assert engine["name"] == "Studio engine"
+
+    def test_lan_endpoint_keeps_the_owner_name_and_carries_the_model_id(self):
+        """W1-TRUTH: one name per engine; the model id is meta."""
+        import json
+        profile = _fake_profile(
+            profile_id="studio",
+            name="Studio engine",
+            base_url="http://192.168.1.43:8081/v1",
+            model="atlas-fixture",
+        )
+        db = _fake_db(profiles=[profile])
+        body = json.dumps({"data": [{"id": "atlas-fixture"}]}).encode("utf-8")
+
+        from holdspeak.services.concierge_service import detect
+        result = detect(db=db, home=Path("/tmp/test"), http_get=lambda url, **kw: (200, body))
+        engine = [e for e in result["engines"] if "studio" in e["id"]][0]
+        assert engine["state"] == "READY"
+        assert engine["name"] == "Studio engine"
+        assert engine["modelId"] == "atlas-fixture"
+
+    def test_an_automatic_label_still_names_the_engine_by_its_model(self):
+        """The face's host:port label is not a name the owner gave."""
+        from holdspeak.services.concierge_service import owner_engine_name
+        assert owner_engine_name("192.168.1.43:8081", "192.168.1.43:8081") == ""
+        assert owner_engine_name("OpenRouter", "openrouter.ai") == ""
+        assert owner_engine_name("qwen3.6-35b", "h:1", "qwen3.6-35b") == ""
+        assert owner_engine_name("Studio engine", "h:1", "atlas-fixture") == "Studio engine"
+
     def test_cloud_endpoint_stays_cloud(self):
         """api.anthropic.com stays kind=cloud."""
         profile = _fake_cloud_profile()
