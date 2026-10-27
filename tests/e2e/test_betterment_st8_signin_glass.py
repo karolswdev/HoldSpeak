@@ -142,7 +142,9 @@ def test_private_native_signin_keys_marker_check_and_durable_works(
                 "status": signin_status, "commands": commands, "responses": command_responses,
             }
             assert signin_status.get("exit_code") == 0, signin_status
-            page.locator('[data-testid="connections-github"] .surface-state-chip').get_by_text("Works").wait_for(timeout=15_000)
+            # Settings > Accounts draws a state as a dot and a word
+            # (.connections-state, #1503); it was a .surface-state-chip.
+            page.locator('[data-testid="connections-github"] .connections-state').get_by_text("Works").wait_for(timeout=15_000)
             assert any(url.endswith("/api/connections/github/recheck") for url in rechecks)
 
             body = _api(page, "GET", "/api/connections", token=TOKEN)
@@ -160,7 +162,7 @@ def test_private_native_signin_keys_marker_check_and_durable_works(
             helper.focus()
             helper.press("Enter")
             terminal.wait_for(state="detached", timeout=15_000)
-            page.locator('[data-testid="connections-github"] .surface-state-chip').get_by_text(
+            page.locator('[data-testid="connections-github"] .connections-state').get_by_text(
                 "Works",
             ).wait_for(timeout=15_000)
 

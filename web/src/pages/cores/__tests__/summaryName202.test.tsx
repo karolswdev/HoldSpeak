@@ -55,10 +55,12 @@ vi.mock("../../../lib/api", () => ({
 
 vi.mock("../../../runtime/RuntimeBus", () => ({
   useRuntimeBus: () => ({ state: "connected", lastFrame: null, subscribe }),
+  useOptionalRuntimeBus: () => ({ state: "connected", lastFrame: null, subscribe }),
   useRuntimeFrame: () => null,
 }));
 
 import { LiveCore } from "../LiveCore";
+import { LiveMeetingTools } from "../LiveMeetingTools";
 
 /* The wing strip (and with it the gear door) lives in the HOSTING
  * window's head: the core publishes it through `WingSlotContext`
@@ -76,11 +78,13 @@ function WindowHost({ children }: { children: ReactNode }) {
   );
 }
 
-/** Press the Live window's configuration door. */
+/** W2-LIVE (2026-10-27): the Live window's gear door is gone; its face
+ *  (routing, try a phrase, background work, devices) is Settings ▸
+ *  Meetings ▸ Live meeting (`LiveMeetingTools`). These fences follow it
+ *  there. */
 async function openDoor() {
-  const gear = screen.getByRole("button", { name: "Configure meeting" });
+  render(<LiveMeetingTools />);
   await act(async () => {
-    gear.click();
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
 }
@@ -146,14 +150,11 @@ describe("the Live gear door counts nothing to zero (A.8)", () => {
     mocks.apiFetch.mockResolvedValue({});
   });
 
-  it("names its run-state section Summary, never Intelligence", async () => {
-    await mount();
+  it("never says Intelligence in the moved gear face", async () => {
+    // W2-LIVE: the run-state section went to Live's status bar
+    // (`Summary running` / `Summary failed`); the tools never name it
+    // Intelligence.
     await openDoor();
-    const labels = [...document.querySelectorAll("h3")].map(
-      (head) => head.textContent ?? "",
-    );
-    expect(labels).toContain("Summary");
-    expect(labels).not.toContain("Intelligence");
     expect(document.body.textContent ?? "").not.toMatch(/Intelligence/);
   });
 
@@ -170,7 +171,6 @@ describe("the Live gear door counts nothing to zero (A.8)", () => {
           } as never)
         : ({} as never),
     );
-    await mount();
     await openDoor();
     const text = document.body.textContent ?? "";
     expect(text).toContain("No jobs waiting");
@@ -194,7 +194,6 @@ describe("the Live gear door counts nothing to zero (A.8)", () => {
           } as never)
         : ({} as never),
     );
-    await mount();
     await openDoor();
     expect(document.body.textContent ?? "").toContain("No jobs waiting");
   });
@@ -205,12 +204,11 @@ describe("the Live gear door counts nothing to zero (A.8)", () => {
         ? ({ total_jobs: 2, queued_jobs: 0, failed_jobs: 1 } as never)
         : ({} as never),
     );
-    await mount();
     await openDoor();
-    const facts = [...document.querySelectorAll(".surface-facts div")].map(
-      (row) => row.textContent ?? "",
+    // W2-LIVE: one quiet line in the Background work row, no zero.
+    expect(screen.getByTestId("settings-live-jobs").textContent).toContain(
+      "Total jobs 2 · Failed jobs 1",
     );
-    expect(facts).toEqual(["total jobs2", "failed jobs1"]);
   });
 });
 
@@ -282,19 +280,15 @@ describe("Live spells its words and states each fact once (F21, M6)", () => {
     expect(document.body.textContent ?? "").not.toMatch(/\bSEG\b/);
   });
 
-  it("states the segment count exactly once", async () => {
+  it("never counts the segments at all (W2-LIVE: a document, not a stream)", async () => {
     await mount();
     emit("segment", { id: 1, text: "first line", timestamp: "00:00:01" });
     emit("segment", { id: 2, text: "second line", timestamp: "00:00:05" });
     await screen.findByText("first line");
-    // The stream head owns the count (`Surface.tsx:686-692` draws the
-    // number and its noun as two elements).
-    const heads = [...document.querySelectorAll(".surface-stream-head")].map(
-      (head) => head.textContent ?? "",
-    );
-    expect(heads).toEqual(["2segments"]);
-    // …and nothing else on the face counts them a second time.
-    const elsewhere = (document.body.textContent ?? "").replace("2segments", "");
-    expect(elsewhere).not.toMatch(/2 ?segments?/i);
+    // The transcript is the page: each line has its time mark, and nothing
+    // on the face counts the lines (the old stream head said `2segments`).
+    expect(document.querySelector(".surface-stream-head")).toBeNull();
+    expect(document.body.textContent ?? "").not.toMatch(/\d+ ?segments?/i);
+    expect(screen.getAllByTestId("live-transcript-line")).toHaveLength(2);
   });
 });

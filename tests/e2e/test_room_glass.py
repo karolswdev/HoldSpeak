@@ -2519,7 +2519,9 @@ class TestRowsHoldStill(_Rig):
                 assert "desk-palette-option-project.open.p-ledger" not in first[:10], first
                 assert len(first) >= 10, first
                 badge = page.locator("[id='desk-palette-option-project.open.p-ledger'] .desk-deck-badge")
-                assert badge.count() and "OPEN" in badge.first.inner_text(), "the count never landed"
+                # The badge reads in sentence case ("3 open") since the window
+                # grammar of the palette (#1486, badgeText); it was "3 OPEN".
+                assert badge.count() and badge.first.inner_text().strip() == "3 open", "the count never landed"
                 assert not _moved(rows), _moved(rows)
                 assert not errors, errors
             finally:
