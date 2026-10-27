@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-26 night (the window grammar #1457–#1492; the window audit #1485–#1493; the dock: owner "why is the bottom menu so ugly… those icons" → dock direction canvas #1494 (docs/internal/betterment/canvases/dock-direction-2026-10-26.html, floating dock recommended; his pick pending, no dock code before it); #1495 the floor loses the Talk orb and the Archive-in-the-Trash-corner icon, Go ▸ Archive + ⌘K open Archive; hub on 1aa3a860b)
+**Last updated:** 2026-10-27 01:15 (the window grammar #1457–#1492; the window audit #1485–#1493; THE DOCK: owner "why is the bottom menu so ugly" → canvas #1494, his pick direction 1 with D objects → #1497 the floating dock (48 px D export, no words, --desk-snap-bottom 84), #1498 the floor runs under it + the 16 px badge (his live catch: dead band on his wallpaper, a 24 px "13"); #1495 the floor loses the Talk orb and the Archive-in-the-Trash-corner icon (Go ▸ Archive + ⌘K); #1499 THE NOTE draws mermaid fences in place (lazy mermaid 12.2.0, live-preview widget), opens 760×560, one-row toolbar, one-line title (his bundle e7524147). Hub on 94816f37b. OPEN: the dock ICONS still rejected live ("icons look like shit") — the canvas's symbol set is the next offer; the Note as a workspace = the next design (the lane's 8-point list in PR #1499's thread of this file's history); at 393 the dock overlaps the Note's status bar; Go menu at 393 red to confirm on main.)
 
 ## Current phase
 
