@@ -4,7 +4,7 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-26 (the window grammar #1457–#1492; the window audit of 2026-10-25 and its seven lanes)
+**Last updated:** 2026-10-26 night (the window grammar #1457–#1492; the window audit #1485–#1493; the dock: owner "why is the bottom menu so ugly… those icons" → dock direction canvas #1494 (docs/internal/betterment/canvases/dock-direction-2026-10-26.html, floating dock recommended; his pick pending, no dock code before it); #1495 the floor loses the Talk orb and the Archive-in-the-Trash-corner icon, Go ▸ Archive + ⌘K open Archive; hub on 1aa3a860b)
 
 ## Current phase
 
