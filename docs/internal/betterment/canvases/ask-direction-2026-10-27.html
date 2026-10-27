@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ask window directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material: values copied from web/src/styles/tokens.css (as in note-workspace-2026-10-27). */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-backdrop:#293847;
+  --wb-row-hover:color-mix(in srgb,#3b5d93 8%,#fafbfc);
+  --ok:#34d399; --ok-strong:#10b981; --ember:#a86e4a; --ember-ink:#8a5a3d; --warn:#f59e0b; --danger:#dc2626; --info:#3b82f6;
+  --person-ink:#1f7a6b; --person-tint:rgba(52,211,153,.14);
+  --link-ink:#2f67c8; --head-ink:#2b4a7a;
+  --lamp-ring:0 0 0 1.5px var(--wb-paper),0 1px 2px rgba(12,20,32,.4);
+  --win-shadow:0 18px 44px rgba(8,14,22,.40),0 3px 10px rgba(8,14,22,.24);
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#e9eef4;color:var(--wb-ink);font:15px/1.5 var(--font-ui);min-width:1520px}
+main{padding:32px 40px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px;letter-spacing:-.01em}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+h3{font:600 14px/1.3 var(--font-ui);margin:20px 0 8px;color:var(--wb-muted)}
+p{margin:0 0 10px;max-width:1000px}
+code{font:12.5px var(--font-mono);color:var(--wb-muted)}
+.lede{display:grid;grid-template-columns:1fr 560px;gap:32px;align-items:start}
+.now img{display:block;border-radius:6px;border:1px solid var(--wb-rule)}
+figcaption{font-size:12px;color:var(--wb-muted);margin-top:4px}
+section.block{margin:40px 0 0;padding:24px 0 0;border-top:1px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.alt{background:#fff;color:var(--wb-muted);box-shadow:0 0 0 1px var(--wb-rule)}
+.note-s{font-size:12px;color:var(--wb-muted);margin-top:6px;max-width:900px}
+
+/* audit */
+.jobs{display:grid;grid-template-columns:190px 1fr 1fr 1fr;max-width:1440px;border:1px solid var(--wb-rule-soft);border-radius:8px;overflow:hidden;background:#fff;font-size:13px;line-height:1.45}
+.jobs > div{padding:8px 12px;border-top:1px solid var(--wb-rule-soft);border-left:1px solid var(--wb-rule-soft)}
+.jobs > div:nth-child(4n+1){border-left:0;font-weight:600}
+.jobs > .h{border-top:0;font:600 13px var(--font-display);background:var(--wb-steel-2);color:var(--wb-muted)}
+.jobs .gap{color:var(--ember-ink)}
+.audit2{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:1440px;margin-top:16px}
+.card{background:#fff;border:1px solid var(--wb-rule-soft);border-radius:8px;padding:12px 16px;font-size:13.5px}
+.card h4{font:600 14px var(--font-display);margin:0 0 6px;color:var(--head-ink)}
+.card ol,.card ul{margin:0;padding-left:20px}
+.card li{margin:0 0 5px}
+.count{font:600 30px/1 var(--font-display);color:var(--head-ink);margin-right:6px;font-variant-numeric:tabular-nums}
+
+/* the real 1440 desk */
+.desk{position:relative;width:1440px;height:900px;overflow:hidden;background:url(ask-direction-2026-10-27/desk-1440.png) 0 0/1440px 900px no-repeat;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);margin-top:8px}
+.mbpatch{position:absolute;left:168px;top:0;width:300px;height:35px;background:#fbfcfd;display:flex;align-items:center;gap:20px;padding-left:8px;font:500 14px var(--font-ui);color:#2c3a4d}
+.mbpatch b{font-weight:600}
+.floorpatch{position:absolute;left:660px;top:56px;width:780px;height:580px;background:linear-gradient(180deg,#2f4155 0%,#2d3e51 100%)}
+.wpos{left:600px;top:62px}
+
+/* window */
+.win{position:absolute;width:760px;height:560px;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--win-shadow);overflow:hidden;display:flex;flex-direction:column;font-family:var(--font-ui)}
+.win.short{position:relative;height:auto}
+.tb{flex:0 0 30px;height:30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 6px 0 8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.16)}
+.tb .x{width:20px;text-align:center;font-size:15px;opacity:.9}
+.tb .gl{width:18px;height:18px;border-radius:4px;background:#fff;display:grid;place-items:center}
+.tb .gl img{width:14px;height:14px}
+.tb .name{font:600 13.5px/1 var(--font-display);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb .name .dim{opacity:.7;font-weight:500}
+.tb .gad{display:flex;gap:2px}
+.tb .gad span{width:28px;height:22px;display:grid;place-items:center}
+.tb .gad svg{width:14px;height:14px;stroke:#f7f9fc;fill:none;stroke-width:1.6}
+.toolbar{flex:0 0 36px;height:36px;display:flex;align-items:center;gap:4px;padding:0 6px;border-bottom:1px solid var(--wb-rule-soft);background:var(--wb-paper)}
+.toolbar .grow{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:5px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.btn img{width:16px;height:16px}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc;padding:0 10px}
+.btn.secondary{background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule)}
+.btn.quiet{color:var(--wb-muted)}
+.btn.on{background:var(--wb-blue);box-shadow:inset 0 0 0 1px #b8c8e0}
+.btn.sm{height:22px;font-size:12px;padding:0 8px}
+.btn.icon{width:28px;padding:0;justify-content:center}
+.btn.off{opacity:.5}
+.key{font:500 11px/1 var(--font-ui);color:inherit;opacity:.78;border-radius:3px;padding:2px 4px;background:rgba(255,255,255,.18)}
+.btn.secondary .key,.btn:not(.primary) .key{background:var(--wb-steel)}
+.sb{flex:0 0 24px;height:24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:14px;padding:0 4px 0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.sb .it{display:inline-flex;align-items:center;gap:6px}
+.sb .press{color:var(--wb-ink);border-radius:4px;padding:1px 4px;margin:0 -4px}
+.sb .grow{flex:1}
+.sb .btn{height:20px;font-size:12px;padding:0 8px}
+.lamp{width:8px;height:8px;border-radius:50%;background:var(--ok-strong);box-shadow:var(--lamp-ring);display:inline-block;flex:0 0 8px}
+.lamp.info{background:var(--info)}
+.lamp.off{background:#a9b6c6}
+.lamp.warn{background:var(--warn)}
+.lamp.breath{animation:breath 1.8s ease-in-out infinite}
+@keyframes breath{0%,100%{box-shadow:var(--lamp-ring)}50%{box-shadow:var(--lamp-ring),0 0 0 5px rgba(59,130,246,.22)}}
+
+/* D1 composer row = the toolbar */
+.cmp{gap:6px;padding:0 6px 0 4px}
+.scope{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 6px;border-radius:5px;font:500 13px/1 var(--font-ui);color:var(--wb-muted);white-space:nowrap}
+.scope img{width:16px;height:16px}
+.scope .v{color:var(--wb-ink)}
+.scope .car{font-size:10px;color:var(--wb-faint)}
+.scope.open{background:var(--wb-blue);box-shadow:inset 0 0 0 1px #b8c8e0}
+.field{flex:1;min-width:0;height:26px;border-radius:6px;background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule);display:flex;align-items:center;padding:0 8px;font-size:13.5px;color:var(--wb-ink);white-space:nowrap;overflow:hidden}
+.field .ph{color:var(--wb-faint)}
+.field.focus{box-shadow:inset 0 0 0 1px var(--wb-sel-vivid),0 0 0 3px rgba(47,103,200,.18)}
+.caret{display:inline-block;width:1.5px;height:16px;background:var(--wb-sel-vivid);vertical-align:-3px;margin:0 1px;animation:blink 1.06s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.eng{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 6px;font-size:12.5px;color:var(--wb-ink);white-space:nowrap;border-radius:5px}
+.eng.none{color:var(--wb-muted)}
+.mic{width:28px;height:26px;display:grid;place-items:center;border-radius:5px;color:var(--wb-muted)}
+.mic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6}
+.sep{width:1px;height:18px;background:var(--wb-rule-soft)}
+
+.body{flex:1;display:flex;min-height:0;position:relative}
+/* rail */
+.rail{flex:0 0 196px;border-right:1px solid var(--wb-rule-soft);background:#f4f6fa;overflow:hidden;font-size:12.5px}
+.rcap{font:600 11.5px var(--font-display);color:var(--wb-muted);height:26px;display:flex;align-items:flex-end;padding:0 12px 4px}
+.rrow{height:30px;display:flex;align-items:center;gap:7px;padding:0 10px 0 12px;white-space:nowrap}
+.rrow img{width:16px;height:16px;flex:0 0 16px}
+.rrow .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.rrow.sel{background:var(--wb-sel-vivid);color:#fff}
+.rrow.new{color:var(--wb-sel);font-weight:500}
+.rrow .live{font-size:11px;color:var(--info);display:inline-flex;gap:4px;align-items:center}
+/* the answer document */
+.page{flex:1;min-width:0;padding:16px 24px 0;overflow:hidden;position:relative}
+.q{font:600 16px/1.3 var(--font-display);color:var(--head-ink);display:flex;align-items:baseline;gap:10px;margin:0 0 6px}
+.q .t{flex:1}
+.q .when{font:400 12px var(--font-ui);color:var(--wb-faint);white-space:nowrap}
+.ans{font:14px/1.55 var(--font-ui);color:var(--wb-ink)}
+.ans p{margin:0 0 7px}
+.ans ul{margin:0 0 7px;padding-left:18px}
+.ans li{margin:0 0 2px}
+.ans .lk{color:var(--link-ink);font-weight:500}
+.ans .pk{color:var(--person-ink);font-weight:500}
+.refcap{font:600 11.5px var(--font-display);color:var(--wb-muted);margin:10px 0 2px}
+.ref{height:30px;display:flex;align-items:center;gap:8px;padding:0 6px;margin:0 -6px;border-radius:5px;font-size:13px;white-space:nowrap}
+.ref img{width:16px;height:16px;flex:0 0 16px}
+.ref .t{color:var(--link-ink);font-weight:500;overflow:hidden;text-overflow:ellipsis}
+.ref .m{color:var(--wb-faint);font-size:12px;margin-left:auto;display:inline-flex;align-items:center;gap:5px}
+.ref .m .lamp{width:7px;height:7px;flex:0 0 7px}
+.ref.hov{background:var(--wb-row-hover);box-shadow:inset 0 0 0 1px #c9d6ea}
+.verbs{display:flex;gap:4px;margin:8px 0 0 -4px}
+.turnrule{height:1px;background:var(--wb-rule-soft);margin:14px 0 12px}
+.arriving{color:var(--wb-ink)}
+.arriving .w{animation:fadein .5s ease-out both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.reading{font-size:12px;color:var(--wb-faint);display:flex;align-items:center;gap:6px;margin-top:4px}
+.reading img{width:14px;height:14px}
+/* empty state */
+.prompts .cap{font:600 11.5px var(--font-display);color:var(--wb-muted);margin:2px 0 4px}
+.pr{height:32px;display:flex;align-items:center;gap:9px;padding:0 8px;margin:0 -8px;border-radius:5px;font-size:14px;white-space:nowrap}
+.pr img{width:16px;height:16px}
+.pr .t{color:var(--link-ink);font-weight:500}
+.pr .m{color:var(--wb-faint);font-size:12px;margin-left:auto}
+.pr.hov{background:var(--wb-row-hover)}
+/* failure line */
+.fail{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--wb-ink);margin:4px 0 0;height:32px}
+/* About menu */
+.menu{position:absolute;width:290px;background:#fff;border-radius:8px;box-shadow:0 10px 28px rgba(8,14,22,.22),0 0 0 1px var(--wb-rule);padding:4px 0 6px;font-size:13px;z-index:4}
+.menu .find{margin:4px 8px 6px;height:28px;border-radius:6px;background:var(--wb-field);display:flex;align-items:center;padding:0 8px;color:var(--wb-faint);font-size:13px}
+.menu .mc{font:600 11px var(--font-display);color:var(--wb-muted);padding:6px 12px 2px}
+.menu .r{height:30px;display:flex;align-items:center;gap:9px;padding:0 12px}
+.menu .r img{width:16px;height:16px}
+.menu .r .ck{width:14px;color:var(--wb-sel-vivid);font-weight:600}
+.menu .r .m{margin-left:auto;color:var(--wb-faint);font-size:12px}
+.menu .r.sel{background:var(--wb-sel-vivid);color:#fff}
+.menu .r.sel .m,.menu .r.sel .ck{color:#dbe6f7}
+.menu .hint{font-size:11.5px;color:var(--wb-faint);padding:6px 12px 0;border-top:1px solid #eef2f6;margin-top:4px}
+
+/* D2 notebook */
+.nb{flex:1;display:flex;min-height:0}
+.nbpage{flex:1;min-width:0;padding:14px 22px 0 46px;overflow:hidden;position:relative}
+.nbq{font:600 15.5px/1.3 var(--font-display);color:var(--head-ink);position:relative;margin:0 0 5px}
+.nbq .gut{position:absolute;left:-30px;top:1px;font:500 11px var(--font-ui);color:var(--wb-faint);width:26px;text-align:right}
+.nbvb{display:flex;gap:4px;margin:4px 0 0 -4px}
+.nbmargin{flex:0 0 226px;border-left:1px solid var(--wb-rule-soft);background:linear-gradient(90deg,rgba(37,52,73,.045),rgba(37,52,73,0) 10px),#f4f6fa;position:relative;overflow:hidden}
+.mgrp{position:absolute;left:10px;right:10px;background:#fff;border-radius:7px;box-shadow:0 1px 3px rgba(22,40,62,.12),0 0 0 1px var(--wb-rule-soft);padding:4px 0}
+.mgrp .ttl{font:600 11px var(--font-display);color:var(--wb-muted);padding:3px 10px 1px}
+.mgrp .rw{height:28px;display:flex;align-items:center;gap:7px;padding:0 10px;font-size:12.5px;white-space:nowrap}
+.mgrp .rw img{width:16px;height:16px}
+.mgrp .rw .t{overflow:hidden;text-overflow:ellipsis;color:var(--link-ink);font-weight:500}
+.pin{flex:0 0 36px;height:36px;display:flex;align-items:center;gap:6px;padding:0 6px;border-top:1px solid var(--wb-rule-soft);background:var(--wb-paper)}
+
+/* state strips */
+.strip{display:flex;gap:24px;align-items:flex-start;margin-top:14px;flex-wrap:wrap}
+.frag{position:relative;background:linear-gradient(180deg,#33495f 0%,#293847 100%);border-radius:6px;padding:20px;box-shadow:0 0 0 1px var(--wb-rule)}
+.frag .note-s{color:#dbe4ee}
+
+/* phone */
+.phones{display:flex;gap:56px;align-items:flex-start;margin:14px 0 0 10px}
+.phone{position:relative;width:393px;height:852px;overflow:hidden;border-radius:28px;box-shadow:0 0 0 8px #1a2430,0 0 0 9px #46566a;background:url(ask-direction-2026-10-27/today-393.png) 0 0/393px 852px no-repeat;font-family:var(--font-ui)}
+.ph-win{position:absolute;left:0;right:0;top:44px;bottom:82px;background:var(--wb-paper);display:flex;flex-direction:column}
+.ph-tb{flex:0 0 44px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 10px;font:600 15px var(--font-display)}
+.ph-tb .back{font:500 13px var(--font-ui);opacity:.9}
+.ph-tb .n{flex:1;text-align:center}
+.ph-tb .ib{width:36px;height:32px;display:grid;place-items:center}
+.ph-tb .ib svg{width:19px;height:19px;stroke:#f7f9fc;fill:none;stroke-width:1.6}
+.ph-cmp{flex:0 0 auto;padding:6px 8px;border-bottom:1px solid var(--wb-rule-soft);display:flex;flex-direction:column;gap:6px}
+.ph-cmp .line{display:flex;align-items:center;gap:6px}
+.ph-cmp .field{height:40px;font-size:15px;border-radius:8px}
+.ph-cmp .btn.primary{height:40px;padding:0 14px;font-size:15px}
+.ph-cmp .mic{width:40px;height:40px}
+.ph-cmp .scope{height:32px;font-size:14px}
+.ph-cmp .eng{font-size:13px;margin-left:auto}
+.ph-page{flex:1;padding:14px 16px 0;overflow:hidden}
+.ph-page .ref{height:44px;font-size:14px}
+.ph-page .verbs .btn{height:36px;font-size:13.5px}
+.ph-sb{flex:0 0 24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:8px;padding:0 12px;font-size:12px;color:var(--wb-muted)}
+.ph-sb .btn{height:20px;font-size:12px;padding:0 8px;margin-left:auto}
+
+.cost{font-size:14px;max-width:1200px}
+.order{font-size:14px;max-width:1200px;padding-left:22px}
+.order li{margin:0 0 6px}
+.gaps{font-size:14px;max-width:1200px;padding-left:22px}
+.gaps li{margin:0 0 7px}
+.gaps b{color:var(--ember-ink)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="g-mic" viewBox="0 0 16 16"><rect x="5.5" y="1.8" width="5" height="8" rx="2.5"/><path d="M3.3 7.6a4.7 4.7 0 0 0 9.4 0M8 12.4v2"/></symbol>
+  <symbol id="g-min" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><path d="M5 10.5h6"/></symbol>
+  <symbol id="g-max" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><rect x="5" y="5" width="6" height="4"/></symbol>
+  <symbol id="g-depth" viewBox="0 0 16 16"><rect x="2" y="5" width="8" height="8" rx="1.2"/><path d="M6 5V3h8v8h-4"/></symbol>
+  <symbol id="g-rail" viewBox="0 0 16 16"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M6 2.5v11"/></symbol>
+  <symbol id="g-copy" viewBox="0 0 16 16"><rect x="5" y="5" width="8.5" height="8.5" rx="1.4"/><path d="M3 10.5V3.4C3 3 3.3 2.6 3.8 2.6H10"/></symbol>
+  <symbol id="g-again" viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.6-3.7"/><path d="M13 2.6v3h-3"/></symbol>
+  <symbol id="g-send" viewBox="0 0 16 16"><path d="M14 2L1.8 7.2 6.5 9l1.8 4.8z"/><path d="M6.5 9L14 2"/></symbol>
+  <symbol id="g-note" viewBox="0 0 16 16"><path d="M3.5 2h6l3 3v9h-9z"/><path d="M9.5 2v3h3M5.5 8.5h5M5.5 11h3.5"/></symbol>
+  <symbol id="g-more" viewBox="0 0 16 16"><circle cx="3.5" cy="8" r=".9"/><circle cx="8" cy="8" r=".9"/><circle cx="12.5" cy="8" r=".9"/></symbol>
+  <symbol id="g-list" viewBox="0 0 16 16"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></symbol>
+  <symbol id="g-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></symbol>
+</svg>
+<main>
+
+<div class="lede">
+  <div>
+    <h1>The Ask window</h1>
+    <p>An audit of the Ask window and two directions for it, drawn at real size (760 × 560) over the real 1440 desk, in our tokens and the window grammar. The recommendation is first.</p>
+    <p>The worked example uses the seeded desk of the browser rig (<code>tests/e2e/chair_rig.py:28–76</code>): the projects Payments ledger cutover, Platform observability and Staff hiring loop; the decision "Freeze the old ledger on Nov 5"; the note "Ledger cutover risks"; the meetings Ledger cutover sync, Architecture review: tracing and 1:1 Avery; the people Avery Chen, Jordan Patel, Sam Rivera and Priya Nair, three of them with a request for a status by Thursday.</p>
+  </div>
+  <figure class="now" style="margin:0"><img src="ask-direction-2026-10-27/today-ask-1440.png" width="560" alt="The Ask window today at 1440"><figcaption>Today at 1440 (main of 2026-10-25, no engine set).</figcaption></figure>
+</div>
+
+<!-- =================== 1. AUDIT =================== -->
+<section class="block">
+  <h2>1. Audit: what Ask is for, and what the window does</h2>
+  <p style="font-size:13px;color:var(--wb-muted)">Read from the code on branch lane/ask-canvas-20261027 (b7913204c) and the reviews <code>adversarial/ask_whole_desk.md</code> and <code>adversarial/keep_answer.md</code>, with the workflow map rows ask_whole_desk, threads and keep_answer (<code>design-proposal/WORKFLOW-MAP.md:87–89</code>).</p>
+  <div class="jobs">
+    <div class="h">Job</div><div class="h">What the hub returns</div><div class="h">What the window does today</div><div class="h">What is wrong</div>
+    <div>Ask about the whole desk</div>
+    <div><code>POST /api/ask</code> with no context. The hub reads memory, or the engine reads with the desk tools. It returns the answer, <code>looked_at</code> as ref and title (<code>ask_service.py:710</code>), a grounding receipt (matched and overflow counts), per-claim support, what the tools wrote and prepared, and the thread id (<code>ask.ts:338–393</code>).</div>
+    <div>"About: My whole desk" is a small word at the toolbar's far right. The answer is a You / answer pair. Looked at is folded: "Looked at · 4 sources" (<code>AskPanel.tsx:918</code>).</div>
+    <div class="gap">Nothing says what "whole desk" covers. The sources are hidden by default. The claim support and the receipt are parsed but dropped: <code>AskTurn</code> has no field for them (<code>ask.ts:418–426</code>).</div>
+    <div>Ask about a project or chosen records</div>
+    <div>The same call with context refs. The hub reads each ref from its own store and refuses an unknown id by name (<code>ask.ts:225</code>).</div>
+    <div>Chips in the toolbar's About line, a + that opens a picker band under the toolbar, a drop of a desk icon, Ask about this from a note or the floor (<code>AskPanel.tsx:409–520</code>).</div>
+    <div class="gap">The scope is a row of chips and a second band. It is far from the question it changes.</div>
+    <div>Keep an answer as a note</div>
+    <div><code>saveAnswerAsNote</code> writes the answer and the Looked-at names into a Note (<code>ask.ts:567</code>). No Keep or Bin (DECISIONS #14).</div>
+    <div>Save as note, Copy, Send…, Make it a task and Add to note under each answer (<code>AskPanel.tsx:927–945</code>).</div>
+    <div class="gap">Five ghost verbs at equal weight. The note keeps the source names as text, not as links (keep_answer P1).</div>
+    <div>Continue a thread</div>
+    <div>Every ask is a thread from its first answer; a follow-up sends <code>thread_id</code>. <code>listThreads</code> gives title and last turn time (<code>threads.ts:24–39</code>).</div>
+    <div>Recent ▾ opens a list panel under the toolbar; a pick replaces the view (<code>AskPanel.tsx:814</code>).</div>
+    <div class="gap">History is behind a press. A slow ask that is closed is lost: the saved-ask claim path exists (<code>ask.ts:631–715</code>) and Ask does not call it (ask_whole_desk P1).</div>
+    <div>The engine</div>
+    <div><code>useEngine("ask.answer")</code> gives the engine's name (<code>useEngine.ts:46</code>). Progress frames say busy, trying again, or a held call (<code>AskPanel.tsx:254</code>). There is no answer text until the end.</div>
+    <div>No engine: "No engine" in mono and Choose engine in the composer band (<code>AskPanel.tsx:1032</code>). Engine set: a "Tools" fold; the status bar names the engine.</div>
+    <div class="gap">The engine reads as a debug warning. While an answer runs, the window shows a run line and nothing arrives.</div>
+  </div>
+
+  <div class="audit2">
+    <div class="card">
+      <h4><span class="count">3–8</span>presses from the key to the first answer</h4>
+      <ol>
+        <li><b>⌘I</b> opens Ask with the composer focused (<code>verbRegistry.ts:741</code>), type, <b>Enter</b>: 3 acts. This is good.</li>
+        <li>From the mouse: Ask has no dock tile (the dock is Today, Meetings, 1:1, Agents, Speak, Record). Go ▸ Ask AI, then type and Enter: 4 acts.</li>
+        <li>A suggestion card fills the composer and does not send (owner canvas 2026-10-21), then Enter: 2 acts for a question that knows nothing of the desk.</li>
+        <li>About a project: + , type, pick, then ask: 3 more acts.</li>
+        <li>No engine (the shot above): type, Ask, the failure, Choose engine opens Settings in another window, choose, come back, Ask again: about 8 acts and two windows.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h4>Why it reads as "total shit", in plain words</h4>
+      <ul>
+        <li><b>The empty theatre.</b> About 390 px of blank paper with a speech-bubble picture in the centre. Seventy percent of the window is nothing.</li>
+        <li><b>The composer is a page footer.</b> A 140 px band at the bottom: a grey placeholder, then the mic and a big disabled Ask far to the right. It looks like a web form, not a window.</li>
+        <li><b>The engine is a mono warning.</b> "No engine" in code type beside a button reads as a debug line.</li>
+        <li><b>The suggestion cards are the chatbot cliché.</b> Two bordered cards with generic words. They do not know the 14 items in Needs you, the Nov 5 freeze or the three people who wait for him.</li>
+        <li><b>No sense of the desk.</b> The scope is small grey text at the far right. Nothing says what Ask will read.</li>
+        <li><b>The loudest thing is the least needed.</b> New ask is the filled primary Button, on a window that is already new.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =================== D1 =================== -->
+<section class="block">
+  <h2>D1. The question at the top <span class="tag">Recommended</span></h2>
+  <p>The composer is the toolbar row: the scope word with ▾, one line to type in, the mic, the engine as a dot and its name, and Ask with ⏎. Below it, the answer is a document. Its references are a list of object rows that open their windows. The verbs sit on the answer. Recent asks are a rail at the left that folds.</p>
+  <div class="desk">
+    <div class="mbpatch"><span>Go</span><span>Window</span><b>Ask</b></div>
+    <div class="floorpatch"></div>
+    <div class="win wpos" id="d1main"></div>
+  </div>
+  <p class="note-s">Shown: a thread with one answer and a follow-up whose text arrives. The pointer is on the decision row (it opens the decision's window). The status bar says what runs and holds Stop. The composer is empty and ready for the next question while the answer arrives. A long question grows the row to three lines, then the field scrolls.</p>
+
+  <h3>States at real size</h3>
+  <div class="strip">
+    <div class="frag"><div class="win short" id="d1empty" style="width:760px"></div>
+      <div class="note-s">Empty. No picture and no cards: the composer has the caret, and three questions built from this desk are plain links under it, each with where it comes from. A press puts the words in the composer (as ruled 2026-10-21); ⏎ asks. The status bar says what "My whole desk" covers.</div></div>
+    <div class="frag"><div class="win short" id="d1about" style="width:760px"></div>
+      <div class="note-s">The scope word opens a menu under it (no band, no modal). One pick changes the word: "Payments ledger cutover ▾" with the project picture. A desk icon dropped on the window adds it.</div></div>
+    <div class="frag"><div class="win short" id="d1fail" style="width:760px"></div>
+      <div class="note-s">Not answered: one line that says why, and the one verb that fixes it. The engine slot shows a grey dot and "No engine". The rail is folded here (the left button in the row opens it). Other reasons use the same line: "The engine did not answer in time." with Try again; "The note changed since you asked." with Ask again.</div></div>
+  </div>
+</section>
+
+<section class="block">
+  <h2>D1 on the phone (393)</h2>
+  <p>The composer stays at the top under the title strip, in two lines: the scope and the engine, then the field and Ask. Recent is the list button in the title strip; it opens as a full sheet. Rows are 44 px.</p>
+  <div class="phones">
+    <figure style="margin:0"><div class="phone" id="phoneAns"></div><figcaption style="text-align:center;margin-top:14px">An answer with its references.</figcaption></figure>
+    <figure style="margin:0"><div class="phone" id="phoneEmpty"></div><figcaption style="text-align:center;margin-top:14px">Empty: three questions from the desk.</figcaption></figure>
+  </div>
+</section>
+
+<!-- =================== D2 =================== -->
+<section class="block">
+  <h2>D2. The notebook <span class="tag alt">Direction</span></h2>
+  <p>Asks and answers are one running page. Each question is a heading line; the answer is under it; its references are cards in the margin beside it, as in the Note canvas direction A. The composer is one 36 px row pinned at the bottom. The scope and the engine are words in the status bar.</p>
+  <div class="desk">
+    <div class="mbpatch"><span>Go</span><span>Window</span><b>Ask</b></div>
+    <div class="floorpatch"></div>
+    <div class="win wpos" id="d2main"></div>
+  </div>
+  <p class="note-s">Shown: the same thread. The follow-up's margin card fills as the engine reads; its text arrives under the heading. The page scrolls as one document; Recent ▾ in the toolbar opens other notebooks.</p>
+</section>
+
+<!-- =================== 3. COST =================== -->
+<section class="block">
+  <h2>3. What each direction costs</h2>
+  <p class="cost"><b>D1. The question at the top.</b> Files: <code>components/AskPanel.tsx</code> (layout: the composer moves into the toolbar; the bottom ComposerWell and the Recent panel go), <code>components/askFace.tsx</code> (AskToolbar becomes the composer row; AskThread becomes the document; AskFresh becomes the prompt links), <code>components/ask-panel.css</code>, a new <code>askPrompts.ts</code> (three questions from the store), <code>ask.ts</code> (AskTurn keeps claim support and the receipt). Kit species: <b>ToolbarField</b> (a one-line field that lives in a Toolbar and grows to three lines; new), <b>MenuWord</b> (a quiet word with ▾ that opens a menu; the chrome menus exist, the word form is new), <b>Rail</b> (a folding left list; ObjectList dense gives the rows), <b>ReferenceRow</b> (ObjectList dense row with picture, name, kind and date), <b>DotWord</b> (exists) for the engine, <b>StatusBar</b> with a verb (exists), <b>ArrivingText</b> (text that grows with a caret; new, small).</p>
+  <p class="cost"><b>D2. The notebook.</b> Files: the same three Ask files, plus the Margin species that the Note canvas (direction A) also needs, so one build serves two windows. Kit species: <b>Margin</b> (new, shared with Note A), pressable <b>StatusBar</b> items (new, shared with Note A), the existing ComposerWell cut down to one 36 px row. Risk: each margin card must line up with its answer while the page scrolls and while text arrives, so the margin moves under the reader's eye. The scope in the status bar is far from the question it changes, the same fault as today.</p>
+
+  <h3>Hub gaps found in the code</h3>
+  <ol class="gaps">
+    <li><b>No streaming.</b> <code>runAsk</code> waits for one JSON body (<code>ask.ts:225–331</code>). The <code>ask_progress</code> frames carry only busy, retry and hold (<code>AskPanel.tsx:254–271</code>; <code>routes/primitives/ask.py:43</code>). The meeting engine already streams (<code>holdspeak/intel/engine.py:528</code>); Ask does not use it. Text that arrives needs a text frame keyed by <code>invocation_id</code>. Until then the arriving state is the run line with the question shown.</li>
+    <li><b>References carry ref and title only.</b> <code>looked_at</code> is <code>{ref, title}</code> (<code>ask_service.py:710</code>). Kind comes from the ref prefix; the date and state of meetings, notes, decisions and projects come from the desk store. A tool read of a PR or a Jira item has no local record, so its row has no date or state unless the hub returns them.</li>
+    <li><b>Claim support is dropped on the face.</b> <code>groundingClaims</code> and <code>groundingReceipt</code> are parsed (<code>ask.ts:363–385</code>) and <code>AskTurn</code> has no field for them (<code>ask.ts:418–426</code>). There are no text offsets, so the answer cannot carry inline citation marks; D1 uses a list for that reason. Unknown: whether a saved thread keeps the claims when it is read again.</li>
+    <li><b>No desk-grounded questions from the hub.</b> No endpoint suggests questions. The three prompts can be built in the client from reads that exist: the Needs you count, the newest decision and its project, and the people requests (<code>/api/people/relationships</code> is read already, <code>AskPanel.tsx:470</code>; unknown: a cheap count of open requests).</li>
+    <li><b>An interrupted ask cannot come back.</b> Save, list and claim of a saved ask exist (<code>ask.ts:631–715</code>) and Ask does not call them. A rail row "Still answering" needs that wiring.</li>
+    <li><b>Ask again</b> on an answer re-sends its question as a new turn; the thread API has a regenerate route (<code>routes/threads.py:272</code>) that the Ask path does not use. Either works; no hub change is needed for a new turn.</li>
+    <li>Unknown: whether <code>listThreads</code> returns only Ask threads or also interview and specialist threads; the rail must show only asks.</li>
+  </ol>
+
+  <h3>Build order for D1</h3>
+  <p style="font-size:13px;color:var(--wb-muted)">Each step is one lane and can merge alone. The first three change the face the owner sees.</p>
+  <ol class="order">
+    <li><b>The composer in the toolbar row.</b> ToolbarField with the scope word ▾, the mic, the engine dot and name, and Ask ⏎. The bottom band goes. New ask leaves the toolbar (⌘N and the rail's New ask row).</li>
+    <li><b>The answer as a document.</b> The question as a heading line, the answer text, References as object rows (open on press), and the verbs Save as note · Copy · Ask again · Send… · More (Make it a task, Add to note).</li>
+    <li><b>The empty state.</b> askPrompts.ts builds three questions from the store; the picture and the cards go; the status bar says what the whole desk covers.</li>
+    <li><b>The Recent rail.</b> Grouped by day, folds to the edge, the fold kept per viewer.</li>
+    <li><b>The failure line.</b> One line and one verb for every reason (reasonWords and reasonVerb exist).</li>
+    <li><b>The phone.</b> Two composer lines, Recent as a sheet, 44 px rows.</li>
+    <li><b>Hub: text frames</b> (gap 1), then ArrivingText.</li>
+    <li><b>Hub: reference details</b> for tool reads (gap 2) and claim support kept on the turn (gap 3).</li>
+    <li><b>Return of an interrupted ask</b> in the rail (gap 5).</li>
+  </ol>
+</section>
+</main>
+
+<script>
+const G = (n, s = 20) => `ask-direction-2026-10-27/glyphs/${n}-${s}.png`;
+const svg = (id) => `<svg><use href="#g-${id}"/></svg>`;
+const tb = (name = "Ask") => `<div class="tb"><span class="x">✕</span><span class="gl"><img src="${G("thread")}" alt=""></span><span class="name">${name}</span><span class="gad"><span>${svg("min")}</span><span>${svg("max")}</span><span>${svg("depth")}</span></span></div>`;
+const composer = ({ scope = "My whole desk", scopeImg = "", open = false, field = '<span class="ph">Ask a follow-up</span>', focus = false, engine = "Codex", engineOn = true, ask = false } = {}) => `
+  <div class="toolbar cmp">
+    <span class="btn icon quiet" title="Recent">${svg("rail")}</span>
+    <span class="scope${open ? " open" : ""}">${scopeImg ? `<img src="${G(scopeImg)}" alt="">` : ""}<span class="v">${scope}</span><span class="car">▾</span></span>
+    <span class="field${focus ? " focus" : ""}">${field}</span>
+    <span class="mic">${svg("mic")}</span>
+    <span class="eng${engineOn ? "" : " none"}"><span class="lamp${engineOn ? "" : " off"}"></span>${engine}</span>
+    <span class="btn primary${ask ? "" : " off"}">Ask <span class="key">⏎</span></span>
+  </div>`;
+const rail = (sel = 0, live = false) => {
+  const rows = [
+    ["Today", [["What did we decide about the ledger cutover?", 0]]],
+    ["Yesterday", [["Summarize the tracing review", 1], ["Who owns the OTel pilot?", 2]]],
+    ["This week", [["What does Avery want from the promo?", 3], ["Draft the status for Thursday", 4], ["Risks before the Nov 5 freeze", 5]]],
+  ];
+  return `<div class="rail">
+    <div class="rrow new" style="margin-top:4px">${svg("plus").replace("<svg>", '<svg style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8">')}New ask<span style="margin-left:auto;color:var(--wb-faint);font-weight:400;font-size:11.5px">⌘N</span></div>
+    ${rows.map(([cap, items]) => `<div class="rcap">${cap}</div>${items.map(([t, i]) => `<div class="rrow${i === sel ? " sel" : ""}"><span class="t">${t}</span>${live && i === sel ? "" : ""}</div>`).join("")}`).join("")}
+  </div>`;
+};
+const refRow = (img, title, meta, hov = false) => `<div class="ref${hov ? " hov" : ""}"><img src="${G(img)}" alt=""><span class="t">${title}</span><span class="m">${meta}</span></div>`;
+const verbs = `<div class="verbs">
+  <span class="btn secondary sm"><img src="${G("note")}" alt="" style="width:14px;height:14px">Save as note</span>
+  <span class="btn sm">${svg("copy")}Copy</span>
+  <span class="btn sm">${svg("again")}Ask again</span>
+  <span class="btn sm">${svg("send")}Send…</span>
+  <span class="btn sm icon" style="width:24px">${svg("more")}</span>
+</div>`;
+const answer1 = `
+  <div class="q"><span class="t">What did we decide about the ledger cutover?</span><span class="when">2 min ago</span></div>
+  <div class="ans">
+    <p>You decided to freeze writes to the old ledger on <b>Nov 5</b>. The decision is accepted. Dual-write is stable, so the date holds.</p>
+    <ul><li><span class="pk">Jordan Patel</span> owns the rollback plan. The runbook is not written yet.</li><li>The reconciliation job is slow (from your note).</li></ul>
+  </div>
+  <div class="refcap">References</div>
+  ${refRow("decision", "Freeze the old ledger on Nov 5", '<span class="lamp"></span>Accepted', true)}
+  ${refRow("meeting", "Ledger cutover sync", "Meeting · today, 2 h ago")}
+  ${refRow("note", "Ledger cutover risks", "Note · Oct 24")}
+  ${refRow("person", "Jordan Patel", "Direct report")}
+  ${verbs}`;
+const words = (s) => s.split(" ").map((w, i) => `<span class="w" style="animation-delay:${(i * 0.09).toFixed(2)}s">${w}</span>`).join(" ");
+
+/* D1 main */
+document.getElementById("d1main").innerHTML = `${tb()}
+  ${composer()}
+  <div class="body">${rail(0)}
+    <div class="page">
+      ${answer1}
+      <div class="turnrule"></div>
+      <div class="q"><span class="t">Who owns the rollback, and is the runbook started?</span><span class="when">now</span></div>
+      <div class="ans arriving"><p>${words("Jordan Patel owns it. The task Write the rollback runbook came from Ledger cutover sync today and is still open, with no due")}<span class="caret"></span></p></div>
+      <div class="reading"><img src="${G("meeting")}" alt="">Read Ledger cutover sync · <img src="${G("action-item")}" alt="">Write the rollback runbook</div>
+    </div>
+  </div>
+  <div class="sb"><span class="it"><span class="lamp info breath"></span>Writing the answer · 3 s</span><span class="grow"></span><span class="btn secondary">Stop</span></div>`;
+
+/* D1 empty */
+document.getElementById("d1empty").innerHTML = `${tb()}
+  ${composer({ field: '<span class="caret"></span><span class="ph">Ask about your work</span>', focus: true })}
+  <div class="body" style="height:250px">${rail(-1)}
+    <div class="page prompts" style="padding-top:14px">
+      <div class="cap">From your desk now</div>
+      <div class="pr hov"><img src="${G("action-item")}" alt=""><span class="t">What needs my attention today?</span><span class="m">14 in Needs you</span></div>
+      <div class="pr"><img src="${G("decision")}" alt=""><span class="t">What did we decide about the ledger cutover?</span><span class="m">Ledger cutover sync, 2 h ago</span></div>
+      <div class="pr"><img src="${G("person")}" alt=""><span class="t">Who is waiting on me?</span><span class="m">Avery, Jordan and Sam</span></div>
+    </div>
+  </div>
+  <div class="sb"><span class="it">My whole desk: 3 projects · 3 meetings this week · 4 people · 2 decisions</span></div>`;
+
+/* D1 About menu */
+document.getElementById("d1about").innerHTML = `${tb()}
+  ${composer({ open: true, field: '<span>What is left before the freeze?</span><span class="caret"></span>', ask: true })}
+  <div class="body" style="height:330px">${rail(-1)}
+    <div class="page"></div>
+    <div class="menu" style="left:36px;top:2px">
+      <div class="find">Find a meeting, note, person…</div>
+      <div class="r"><span class="ck">✓</span>My whole desk</div>
+      <div class="r"><span class="ck"></span><img src="${G("meeting")}" alt="">This week's meetings<span class="m">3</span></div>
+      <div class="mc">Projects</div>
+      <div class="r sel"><span class="ck"></span><img src="${G("project-drawer")}" alt="">Payments ledger cutover</div>
+      <div class="r"><span class="ck"></span><img src="${G("project-drawer")}" alt="">Platform observability</div>
+      <div class="mc">People</div>
+      <div class="r"><span class="ck"></span><img src="${G("person")}" alt="">Avery Chen</div>
+      <div class="r"><span class="ck"></span><img src="${G("person")}" alt="">Jordan Patel</div>
+    </div>
+  </div>
+  <div class="sb"><span class="it">My whole desk: 3 projects · 3 meetings this week · 4 people · 2 decisions</span></div>`;
+
+/* D1 failure */
+document.getElementById("d1fail").innerHTML = `${tb()}
+  ${composer({ engine: "No engine", engineOn: false, field: '<span class="ph">Ask a follow-up</span>' })}
+  <div class="body" style="height:150px">
+    <div class="page">
+      <div class="q"><span class="t">What needs my attention today?</span><span class="when">now</span></div>
+      <div class="fail"><span class="lamp warn"></span>No engine answers Ask yet.<span class="btn primary sm" style="height:26px;font-size:13px">Choose engine</span></div>
+    </div>
+  </div>
+  <div class="sb"><span class="it">Not answered · your question is kept</span></div>`;
+
+/* phones */
+const phoneWin = (inner) => `<div class="ph-win">${inner}</div>`;
+const phTb = `<div class="ph-tb"><span class="back">‹ Back</span><span class="n">Ask</span><span class="ib">${svg("list")}</span></div>`;
+const phCmp = (field, ask) => `<div class="ph-cmp">
+  <div class="line"><span class="scope"><span class="v">My whole desk</span><span class="car">▾</span></span><span class="eng"><span class="lamp"></span>Codex</span></div>
+  <div class="line"><span class="field${ask ? "" : " focus"}">${field}</span><span class="mic">${svg("mic")}</span><span class="btn primary${ask ? "" : " off"}">Ask</span></div></div>`;
+document.getElementById("phoneAns").innerHTML = phoneWin(`${phTb}${phCmp('<span class="ph">Ask a follow-up</span>', false)}
+  <div class="ph-page">
+    <div class="q" style="font-size:17px"><span class="t">What did we decide about the ledger cutover?</span></div>
+    <div class="ans" style="font-size:15px"><p>You decided to freeze writes to the old ledger on <b>Nov 5</b>. The decision is accepted. Dual-write is stable, so the date holds.</p><ul><li><span class="pk">Jordan Patel</span> owns the rollback plan. The runbook is not written yet.</li></ul></div>
+    <div class="refcap">References</div>
+    ${refRow("decision", "Freeze the old ledger on Nov 5", '<span class="lamp"></span>Accepted')}
+    ${refRow("meeting", "Ledger cutover sync", "2 h ago")}
+    ${refRow("note", "Ledger cutover risks", "Oct 24")}
+    <div class="verbs"><span class="btn secondary">Save as note</span><span class="btn">Copy</span><span class="btn">Ask again</span><span class="btn icon" style="width:36px">${svg("more")}</span></div>
+  </div>
+  <div class="ph-sb"><span class="lamp"></span>Answered in 6 s</div>`);
+document.getElementById("phoneEmpty").innerHTML = phoneWin(`${phTb}${phCmp('<span class="caret"></span><span class="ph">Ask about your work</span>', false)}
+  <div class="ph-page prompts">
+    <div class="cap">From your desk now</div>
+    <div class="pr" style="height:48px;font-size:15px"><img src="${G("action-item")}" alt=""><span class="t">What needs my attention today?</span></div>
+    <div class="pr" style="height:48px;font-size:15px"><img src="${G("decision")}" alt=""><span class="t" style="white-space:normal;line-height:1.3">What did we decide about the ledger cutover?</span></div>
+    <div class="pr" style="height:48px;font-size:15px"><img src="${G("person")}" alt=""><span class="t">Who is waiting on me?</span></div>
+  </div>
+  <div class="ph-sb">3 projects · 3 meetings this week · 4 people</div>`);
+
+/* D2 main */
+document.getElementById("d2main").innerHTML = `${tb('Ask <span class="dim">· Ledger cutover</span>')}
+  <div class="toolbar">
+    <span class="btn">${svg("plus")}New page</span>
+    <span class="btn">${svg("list")}Recent<span style="font-size:10px;color:var(--wb-faint)">▾</span></span>
+    <span class="grow"></span>
+    <span class="btn">${svg("note")}Save page as note</span>
+  </div>
+  <div class="nb">
+    <div class="nbpage">
+      <div class="nbq"><span class="gut">10:41</span>What did we decide about the ledger cutover?</div>
+      <div class="ans">
+        <p>You decided to freeze writes to the old ledger on <b>Nov 5</b>. The decision is accepted. Dual-write is stable, so the date holds.</p>
+        <ul><li><span class="pk">Jordan Patel</span> owns the rollback plan. The runbook is not written yet.</li><li>The reconciliation job is slow (from your note).</li></ul>
+      </div>
+      <div class="nbvb"><span class="btn sm">Save as note</span><span class="btn sm">Copy</span><span class="btn sm">Ask again</span><span class="btn sm">Send…</span><span class="btn sm icon" style="width:24px">${svg("more")}</span></div>
+      <div class="turnrule" style="margin:16px 0 14px"></div>
+      <div class="nbq"><span class="gut">now</span>Who owns the rollback, and is the runbook started?</div>
+      <div class="ans arriving"><p>${words("Jordan Patel owns it. The task Write the rollback runbook came from Ledger cutover sync today and is still open, with no due")}<span class="caret"></span></p></div>
+    </div>
+    <div class="nbmargin">
+      <div class="mgrp" style="top:14px">
+        <div class="ttl">References</div>
+        <div class="rw"><img src="${G("decision")}" alt=""><span class="t">Freeze the old ledger on Nov 5</span></div>
+        <div class="rw"><img src="${G("meeting")}" alt=""><span class="t">Ledger cutover sync</span></div>
+        <div class="rw"><img src="${G("note")}" alt=""><span class="t">Ledger cutover risks</span></div>
+        <div class="rw"><img src="${G("person")}" alt=""><span class="t">Jordan Patel</span></div>
+      </div>
+      <div class="mgrp" style="top:214px">
+        <div class="ttl">Reading</div>
+        <div class="rw" style="animation:fadein .4s both"><img src="${G("meeting")}" alt=""><span class="t">Ledger cutover sync</span></div>
+        <div class="rw" style="animation:fadein .4s .6s both"><img src="${G("action-item")}" alt=""><span class="t">Write the rollback runbook</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="pin"><span class="mic">${svg("mic")}</span><span class="field"><span class="ph">Ask a follow-up</span></span><span class="btn primary off">Ask <span class="key">⏎</span></span></div>
+  <div class="sb"><span class="it press">About: My whole desk ▾</span><span class="it"><span class="lamp"></span>Codex</span><span class="grow"></span><span class="it"><span class="lamp info breath"></span>Writing · 3 s</span><span class="btn secondary">Stop</span></div>`;
+</script>
+</body>
+</html>
