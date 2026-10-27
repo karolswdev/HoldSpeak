@@ -726,7 +726,7 @@
 @media (max-width: 720px) {
   .desk-next .desk-pullout.thought-workspace-window {
     /* Clear of the phone dock: its measured height (56 px + the safe area). */
-    inset: var(--desk-work-top) 0 var(--desk-dock-h, calc(56px + env(safe-area-inset-bottom, 0px))) 0 !important;
+    inset: var(--desk-work-top) 0 var(--desk-dock-h, calc(var(--desk-snap-bottom) + env(safe-area-inset-bottom, 0px))) 0 !important;
     width: 100vw;
     height: auto;
     min-width: 0;

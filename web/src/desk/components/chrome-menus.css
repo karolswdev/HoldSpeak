@@ -1046,7 +1046,9 @@
      any pointer, which is what Astra's first-use fence caught. The panel
      scrolls, inside the viewport, above the dock. */
   .desk-next .desk-work-menu {
-    max-height: calc(100dvh - var(--desk-snap-top) - var(--desk-dock-h, 52px) - 16px);
+    /* The work band, one source of truth (the floating dock #1497: the
+       reserve is the plate, its inset and its air, 80 px on the phone). */
+    max-height: calc(100dvh - var(--desk-work-top) - var(--desk-dock-h, var(--desk-snap-bottom)));
     overflow-y: auto;
     overscroll-behavior: contain;
   }
@@ -1182,6 +1184,12 @@
      a strip menu included, owns the 44 px — not only plain items. */
   .desk-next .desk-work-menu :is([role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]) {
     min-height: var(--desk-button-hit-size);
+  }
+  /* The floating dock (#1497) took 24 px of the phone's band: the rows keep
+     their 44 px, the rules between the groups give back their air, so Go
+     holds every door above the plate without a scroll. */
+  .desk-next .desk-work-menu .desk-menu-sep {
+    margin-block: 2px;
   }
   .desk-next .desk-menu-list :is(a, button) {
     height: 44px;

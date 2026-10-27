@@ -205,7 +205,7 @@
     top: auto !important;
     left: 10px !important;
     right: 10px !important;
-    bottom: 84px;
+    bottom: var(--desk-dock-h, var(--desk-snap-bottom));
     width: auto;
     max-height: 62vh;
     overflow: auto;
@@ -307,7 +307,8 @@
 @media (max-width: 420px) {
   .desk-next .desk-mc-tab {
     left: 16px;
-    bottom: 60px;
+    /* above the phone dock's 80 px reserve (#1497), not under the plate */
+    bottom: var(--desk-dock-h, var(--desk-snap-bottom));
   }
 }
 @media (prefers-reduced-motion: reduce) {
