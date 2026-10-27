@@ -82,6 +82,8 @@ describe("Context status", () => {
     expect(screen.queryByText(/tokens$/)).toBeNull();
     expect(screen.queryByText(/characters$/)).toBeNull();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    // W2: the status bar says whether a run reads it (the saved text).
+    expect(screen.getByTestId("context-on").textContent).toBe("Empty: no run reads it");
   });
 
   it("keeps a real revision and saved outcome when the draft is cleared", async () => {
@@ -89,6 +91,7 @@ describe("Context status", () => {
     render(<ConstitutionalContextCore />);
     const pad = await screen.findByRole("textbox", { name: "Constitutional context" });
     expect(screen.getByText("Revision 4")).toBeTruthy();
+    expect(screen.getByTestId("context-on").textContent).toBe("Every engine run reads this first");
     expect(screen.getByText("About 4 tokens")).toBeTruthy();
     expect(screen.getByText("16 of 32,768 characters")).toBeTruthy();
 

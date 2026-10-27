@@ -81,6 +81,42 @@
   outline: none;
   box-shadow: inset 0 0 0 1px var(--wb-sel-vivid, var(--accent)), 0 0 0 3px color-mix(in srgb, var(--wb-sel-vivid, var(--accent)) 18%, transparent);
 }
+/* A host's one-line field (Memory, the Room): the library string well,
+   flat in the row at the field's height. */
+.desk-ask-composer-field .gadget-string {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+}
+.desk-ask-composer-field .gadget-string input {
+  min-height: 0;
+  height: 26px;
+  padding: 3px 8px;
+  font: 400 13.5px / 20px var(--font-sans);
+}
+/* A host's engine word (Memory, the Room) sits in a fixed slot, so the
+   mic and Ask never move when the engine read lands. */
+.desk-next .memory-composer .desk-ask-engine.btn,
+.desk-next .room-ask-composer .desk-ask-engine.btn {
+  width: 120px;
+  min-width: 120px;
+  justify-content: flex-start;
+}
+.memory-composer .desk-ask-engine .kit-dotword,
+.room-ask-composer .desk-ask-engine .kit-dotword {
+  white-space: nowrap;
+}
+/* A preset scope (the Room's project): the word with its glyph, no menu. */
+.desk-ask-scope-preset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  min-height: 28px;
+  padding-inline: 6px;
+  font: 500 13px / 1 var(--font-sans);
+  color: var(--wb-ink, var(--text));
+}
 /* The specimen's field (DeskComposer) sits flat in the row. */
 .desk-ask-composer-field .surface-compose-well {
   flex: 1;
@@ -172,6 +208,9 @@
   background: rgba(255, 255, 255, 0.18);
   font: 500 12px / 1 var(--font-sans);
   opacity: 0.85;
+}
+.btn--secondary .desk-ask-key {
+  background: var(--wb-rule-soft, rgba(0, 0, 0, 0.08));
 }
 .desk-ask-composer-details {
   flex: none;
@@ -672,6 +711,8 @@
   .desk-next .desk-ask-composer-end .desk-mic {
     width: 44px;
   }
+  .desk-ask-composer-field .gadget-string { height: 46px; }
+  .desk-ask-composer-field .gadget-string input { height: 44px; padding: 11px 10px; font-size: 15px; }
   .desk-ask-composer-field .gadget-pad textarea {
     min-height: 44px;
     padding: 11px 10px;
