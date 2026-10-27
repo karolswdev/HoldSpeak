@@ -284,6 +284,8 @@ export interface AskRailRow {
   title: string;
   /** The last turn's time (ISO, epoch ms or epoch seconds). */
   at?: unknown;
+  /** Ask hub gap 5: an ask that has no answer yet says so (a dot + word). */
+  state?: "writing" | "not_answered";
 }
 
 function toMs(value: unknown): number {
@@ -339,8 +341,13 @@ export function AskRail({ rows, selectedId, onPick, onNew, loading, failed, onRe
           <span className="desk-ask-rail-caption">{group.caption}</span>
           {group.rows.map((row) => (
             <Button key={row.id} dense variant="ghost" className="desk-ask-rail-row" aria-current={row.id === selectedId ? "true" : undefined}
-              title={row.title} onClick={() => onPick(row.id)}>
+              title={row.title} onClick={() => onPick(row.id)} data-state={row.state}>
               <span className="desk-ask-rail-title">{row.title}</span>
+              {row.state ? (
+                <DotWord tone={row.state === "writing" ? "info" : "warn"} className="desk-ask-rail-state">
+                  {row.state === "writing" ? "Writing…" : "Not answered"}
+                </DotWord>
+              ) : null}
             </Button>
           ))}
         </div>
@@ -435,6 +442,46 @@ export function AskReferences({ rows }: { rows: readonly AskReferenceRowData[] }
         );
       })}
     </div>
+  );
+}
+
+/** Ask hub gap 3: the quiet word in the answer's verbs row. It opens the
+ *  list of the answer's claims and the records that support them (no inline
+ *  marks: the hub sends no text offsets). */
+export function AskGroundedWord({ records, open, onToggle }: { records: number; open: boolean; onToggle: () => void }) {
+  if (!records) return null;
+  return (
+    <Button dense variant="ghost" className="desk-ask-basis" aria-expanded={open} onClick={onToggle} data-testid="ask-grounded">
+      {records === 1 ? "Grounded in 1 record" : `Grounded in ${records} records`}
+    </Button>
+  );
+}
+
+/** The claims under an answer, each with the record that supports it. */
+export function AskClaims({ claims, onOpen }: {
+  claims: ReadonlyArray<{ text: string; ref?: string; title?: string; label: string }>;
+  onOpen: (ref: string) => (() => void) | undefined;
+}) {
+  return (
+    <ul className="desk-ask-basis-list" data-testid="ask-claims" aria-label="Claims and their records">
+      {claims.map((claim, index) => {
+        const open = claim.ref ? onOpen(claim.ref) : undefined;
+        return (
+          <li key={`${index}:${claim.text}`} className="desk-ask-basis-row" data-label={claim.label}>
+            <span className="desk-ask-basis-text">{claim.text}</span>
+            {claim.ref ? (
+              open ? (
+                <Button dense variant="ghost" className="desk-ask-basis-record" data-ref={claim.ref} onClick={open}>
+                  <img src={kindGlyph(claim.ref.split(":", 1)[0], claim.ref)} alt="" width={16} height={16} draggable={false} />
+                  {claim.title || "A source"}
+                </Button>
+              ) : <span className="desk-ask-basis-record" data-ref={claim.ref}>{claim.title || "A source"}</span>
+            ) : null}
+            {claim.label === "partial" ? <span className="desk-ask-basis-partial">In part</span> : null}
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

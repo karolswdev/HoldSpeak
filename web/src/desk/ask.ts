@@ -205,18 +205,42 @@ export interface AskRunResult {
   answerId?: string;
 }
 
-/** Betterment Q4: one record an answer read, as a link. */
+/** Betterment Q4: one record an answer read, as a link. Ask hub gap 2:
+ *  the hub says its kind, its time (a meeting's date, a note's modified
+ *  time) and its state (a decision's, a pull request's) when it has them. */
 export interface LookedAt {
   ref: string;
   title: string;
+  kind?: string;
+  at?: string;
+  state?: string;
 }
 
-/** One decomposed claim from the answer, scored against the cited material. */
+/** One decomposed claim from the answer, scored against the cited material.
+ *  Ask hub gap 3: `ref`/`title` name the record that supports it best (absent
+ *  when no record does). */
 export interface GroundingClaim {
   text: string;
   score: number;
   label: "entailed" | "partial" | "unsupported";
   flagged: boolean;
+  ref?: string;
+  title?: string;
+}
+
+function lookedAtRow(row: Record<string, unknown>, title: string): LookedAt {
+  return {
+    ref: String(row.ref),
+    title,
+    ...(typeof row.kind === "string" && row.kind ? { kind: row.kind } : {}),
+    ...(typeof row.at === "string" && row.at ? { at: row.at } : {}),
+    ...(typeof row.state === "string" && row.state ? { state: row.state } : {}),
+  };
+}
+
+/** Claims that a record supports: the face's "Grounded in N records". */
+export function supportedClaims(claims: readonly GroundingClaim[] | undefined): GroundingClaim[] {
+  return (claims ?? []).filter((claim) => claim.ref && claim.label !== "unsupported");
 }
 
 /** Run Ask through the hub; thread mode keeps the answered exchange.
@@ -369,6 +393,8 @@ export function parseAskResult(data: Record<string, any>): AskRunResult {
               ? c.label
               : "unsupported",
           flagged: Boolean(c.flagged),
+          ...(typeof c.ref === "string" && c.ref ? { ref: c.ref } : {}),
+          ...(typeof c.title === "string" && c.title ? { title: sourceName(String(c.ref || ""), c.title) } : {}),
         }))
       : [],
     groundingReceipt:
@@ -386,7 +412,7 @@ export function parseAskResult(data: Record<string, any>): AskRunResult {
     lookedAt: Array.isArray(data.looked_at)
       ? data.looked_at
           .filter((row: Record<string, unknown>) => row && typeof row.ref === "string" && row.ref.includes(":"))
-          .map((row: Record<string, unknown>) => ({ ref: String(row.ref), title: sourceName(String(row.ref), String(row.title || "")) }))
+          .map((row: Record<string, unknown>) => lookedAtRow(row, sourceName(String(row.ref), String(row.title || ""))))
       : [],
     used: parseUse(data.used),
     deskTools: data.tools === "desk",
@@ -426,13 +452,20 @@ export interface AskTurn {
   /** Ask D1: when the question was asked (epoch ms, ISO or epoch seconds as
    *  the hub sends it), for the age on the question's heading line. */
   askedAt?: number | string;
+  /** Ask hub gap 3: the answer's claims, each with the record that supports it. */
+  claims?: GroundingClaim[];
 }
 
 /** Betterment Q7: Looked at with what the tools read after it, once each. */
 export function withToolReads(lookedAt: LookedAt[], used: AgentUse | null | undefined): LookedAt[] {
   const rows = [...lookedAt];
   for (const row of used?.looked_at ?? []) {
-    if (!rows.some((known) => known.ref === row.ref)) rows.push({ ref: row.ref, title: sourceName(row.ref, row.label) });
+    if (!rows.some((known) => known.ref === row.ref)) {
+      rows.push({
+        ref: row.ref, title: sourceName(row.ref, row.label),
+        ...(row.state ? { state: row.state } : {}), ...(row.at ? { at: row.at } : {}),
+      });
+    }
   }
   return rows;
 }
@@ -488,12 +521,16 @@ export async function decideHeldCall(threadId: string, callId: string, decision:
   }
 }
 
-function frozenTitle(raw: unknown): string {
-  if (raw && typeof raw === "object") return String((raw as Record<string, unknown>).title || "");
+function frozenRecord(raw: unknown): Record<string, unknown> {
+  if (raw && typeof raw === "object") return raw as Record<string, unknown>;
   if (typeof raw === "string" && raw.trim().startsWith("{")) {
-    try { return String((JSON.parse(raw) as Record<string, unknown>).title || ""); } catch { return ""; }
+    try { return JSON.parse(raw) as Record<string, unknown>; } catch { return {}; }
   }
-  return "";
+  return {};
+}
+
+function frozenTitle(raw: unknown): string {
+  return String(frozenRecord(raw).title || "");
 }
 
 /** A kept thread as the Ask window draws it: question and answer pairs, the
@@ -518,10 +555,23 @@ export function askTurnsFromThread(detail: {
       const ref = `${row.refKind}:${row.refId}`;
       if (!row.refKind || !row.refId || seen.has(ref)) continue;
       seen.add(ref);
-      out.push({ ref, title: sourceName(ref, frozenTitle(row.frozenJson)) });
+      // Ask hub gaps 2 and 3: the facts and the claims kept with the answer.
+      const frozen = frozenRecord(row.frozenJson);
+      out.push({ ...lookedAtRow({ ...frozen, ref, kind: row.refKind }, sourceName(ref, frozenTitle(row.frozenJson))) });
     }
     return out;
   };
+  const claimsFor = (messageId: string): GroundingClaim[] => detail.refs
+    .filter((row) => row.messageId === messageId && row.origin === "relevance")
+    .flatMap((row) => {
+      const frozen = frozenRecord(row.frozenJson);
+      const ref = `${row.refKind}:${row.refId}`;
+      const kept = Array.isArray(frozen.claims) ? frozen.claims as Array<Record<string, unknown>> : [];
+      return kept.filter((claim) => claim && typeof claim.text === "string").map((claim): GroundingClaim => {
+        const label = claim.label === "entailed" ? "entailed" : "partial";
+        return { text: String(claim.text), score: 0, label, flagged: label !== "entailed", ref, title: sourceName(ref, String(frozen.title || "")) };
+      });
+    });
   const turns: AskTurn[] = [];
   const about: LookedAt[] = [];
   let question: { id: string; text: string; at?: number | string } | null = null;
@@ -535,10 +585,12 @@ export function askTurnsFromThread(detail: {
       }
     } else if (message.role === "assistant" && question && text) {
       const used = detail.used?.[message.id] ?? null;
+      const claims = claimsFor(message.id);
       turns.push({
         key: message.id, question: question.text, answer: text,
         lookedAt: withToolReads(refsFor(message.id, "relevance"), used), used,
         ...(question.at != null ? { askedAt: question.at } : {}),
+        ...(claims.length ? { claims } : {}),
       });
       question = null;
     }
@@ -835,5 +887,80 @@ export async function discardAskTask(taskId: string): Promise<boolean> {
     return res.ok;
   } catch {
     return false;
+  }
+}
+
+/* ── Ask hub gap 5: an ask that runs while its window closes ───────────
+ *
+ * The hub keeps running an Ask after its window closes (or the page
+ * reloads); only Stop ends it. The window keeps each running ask here, per
+ * viewer, by its invocation id, and claims it back from `/api/ask/runs`:
+ * still writing (with its words so far), answered (its thread), or not
+ * answered. The store is a convenience: when it is empty the asks are still
+ * in Recent once they answer. */
+
+/** One ask this viewer left running. */
+export interface PendingAsk {
+  invocationId: string;
+  question: string;
+  /** The thread a follow-up continues (empty for a new ask). */
+  threadId: string;
+  startedAt: number;
+}
+
+/** The hub's view of one run (`/api/ask/runs`). */
+export interface AskRun {
+  invocationId: string;
+  state: "running" | "answered" | "failed" | "unknown";
+  question: string;
+  text: string;
+  threadId: string;
+  reason: string;
+}
+
+const PENDING_KEY = "holdspeak.ask.pending";
+/** A run older than this is not claimed (the hub keeps an hour of answers). */
+const PENDING_KEEP_MS = 60 * 60 * 1000;
+
+export function readPendingAsks(now = Date.now()): PendingAsk[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PENDING_KEY) || "[]");
+    return Array.isArray(raw)
+      ? raw.filter((row): row is PendingAsk => row && typeof row.invocationId === "string" && now - Number(row.startedAt) < PENDING_KEEP_MS)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePendingAsks(rows: PendingAsk[]): void {
+  try { localStorage.setItem(PENDING_KEY, JSON.stringify(rows.slice(-8))); } catch { /* a convenience */ }
+}
+
+export function putPendingAsk(row: PendingAsk): void {
+  writePendingAsks([...readPendingAsks().filter((known) => known.invocationId !== row.invocationId), { ...row }]);
+}
+
+export function dropPendingAsk(invocationId: string): void {
+  writePendingAsks(readPendingAsks().filter((known) => known.invocationId !== invocationId));
+}
+
+/** The hub's view of the named runs; an unread answer reads as unknown. */
+export async function readAskRuns(ids: readonly string[]): Promise<AskRun[]> {
+  if (!ids.length) return [];
+  try {
+    const res = await apiRequest(`/api/ask/runs?ids=${ids.map(encodeURIComponent).join(",")}`);
+    if (!res.ok) return [];
+    const data = await res.json().catch(() => ({}));
+    return (Array.isArray(data?.runs) ? data.runs : []).map((row: Record<string, unknown>): AskRun => ({
+      invocationId: String(row.invocation_id || ""),
+      state: row.state === "running" || row.state === "answered" || row.state === "failed" ? row.state : "unknown",
+      question: String(row.question || ""),
+      text: String(row.text || ""),
+      threadId: String(row.thread_id || ""),
+      reason: String(row.reason || ""),
+    }));
+  } catch {
+    return [];
   }
 }

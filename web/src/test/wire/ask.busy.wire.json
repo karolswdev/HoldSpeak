@@ -61,16 +61,16 @@
   "profile_id": "glass-lan",
   "provider": "configured_local_engine",
   "invocation_id": "invoke_72bb9fb8a31e5ce8db3edee4831b9c0f",
-  "operation_id": "op_ba0892d3e55640c9a11d6f6578d26d92",
-  "receipt_id": "rcpt_e77907a4a0874189b9c80a251873f5a7",
+  "operation_id": "op_7d53e01b808943439f4282e25ef5ffe0",
+  "receipt_id": "rcpt_10daeadf942943229b93f2154050fba3",
   "result_ref": "inference-result:invoke_72bb9fb8a31e5ce8db3edee4831b9c0f/sha256:ea4e363d6bcea484fce2029eb1225e99bf7293eb4b9dad4cf576d62a20cf4648",
   "route_execution_receipt": {
    "schema": "RouteExecutionReceipt@1",
    "execution_id": "ire_d103b3f3d8c341a3eb6696dda147f9ea",
    "route_plan_id": "irp_2e03674bc1dbfc1ce72efb125dedb6ff447a29579b865530722531e2e54cd93c",
-   "route_plan_sha256": "sha256:d4d20cb02c848b892d5f7bc163347aae2ff07a3e46166f435b94182dadd86b73",
+   "route_plan_sha256": "sha256:608d1ec0330d36e6f8e4c60d2a18b1f428d463ae339409523bad3e4dc9f50dca",
    "operation_plan_id": "iorp_924e184fe312687b13cd111aa5c049067bfe204077ff25e9e5dd96a181f548a2",
-   "operation_plan_sha256": "sha256:1779984ba00a6972d3680cdc14342ed4e83e2f138348360fad46b1911b8f29be",
+   "operation_plan_sha256": "sha256:74e62ea563eb7a403409d470abba4fcdd654ad8527ddb601632a68886764898e",
    "state": "terminal",
    "outcome": "succeeded",
    "disposition": "owner_terminal",
@@ -104,12 +104,12 @@
      "purpose": "primary",
      "deployment_revision_id": "dep2_4e3a1ff6818887d50f17bd97fd892755fed9499a1a67a78b5dc278a9de8c84de",
      "boundary": "private_network",
-     "child_operation_id": "op_ba0892d3e55640c9a11d6f6578d26d92",
+     "child_operation_id": "op_7d53e01b808943439f4282e25ef5ffe0",
      "disposition": "owner_terminal",
      "outcome": "succeeded",
      "send_phase": "provider_returned",
-     "child_receipt_sha256": "sha256:24c3a7029573baf2fbe1f8fbeee8e1dfb1d8f81ae29635b3cec1c1f4c1def144",
-     "disposition_evidence_sha256": "sha256:d59f1f23f9a617182f0d68fc0d30634d036f5e0d00bfea2042a428243435d3a0"
+     "child_receipt_sha256": "sha256:65e5ecbf3bfa70440707275fda9e8484f5df44ad741bcd92d22673c63bea4335",
+     "disposition_evidence_sha256": "sha256:44d3df721c68e17b89694fa4c8b87069615255c235775fcfaf7c256b6406d890"
     }
    ]
   },

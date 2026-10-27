@@ -50,10 +50,12 @@ class _FakeOpenAI(BaseHTTPRequestHandler):
 
     MODEL = "qwen3.8-27b"
 
-    def _json(self, payload: dict[str, Any]) -> None:
-        body = json.dumps(payload).encode()
+    def _json(self, payload: dict[str, Any], request: dict[str, Any] | None = None) -> None:
+        from .engine_stub_rig import completion_reply
+
+        ctype, body = completion_reply(request or {}, json.dumps(payload).encode())
         self.send_response(200)
-        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -85,7 +87,7 @@ class _FakeOpenAI(BaseHTTPRequestHandler):
                 "choices": [{"index": 0, "finish_reason": "stop",
                              "message": {"role": "assistant", "content": content}}],
                 "usage": {"prompt_tokens": 8, "completion_tokens": 1, "total_tokens": 9},
-            })
+            }, request)
             return
         self.send_response(404)
         self.end_headers()

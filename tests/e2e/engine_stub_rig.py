@@ -11,6 +11,30 @@ from http.server import BaseHTTPRequestHandler
 from typing import Any
 
 
+def completion_reply(request: dict[str, Any], payload: bytes) -> tuple[str, bytes]:
+    """A chat completion as a real OpenAI-compatible server sends it: the
+    JSON body, or (``"stream": true``) the same answer as server-sent events.
+
+    The hub streams an Ask's answer (Ask hub gap 1) as it streams a thread
+    turn; llama.cpp, Ollama, vLLM and OpenAI all answer a streamed request
+    this way."""
+    if not request.get("stream"):
+        return "application/json", payload
+    completion = json.loads(payload)
+    choice = (completion.get("choices") or [{}])[0]
+    content = str((choice.get("message") or {}).get("content") or "")
+    chunk = {"id": completion.get("id", "stub"), "object": "chat.completion.chunk",
+             "model": completion.get("model", ""), "created": 0}
+    events = [
+        {**chunk, "choices": [{"index": 0, "delta": {"role": "assistant", "content": content}, "finish_reason": None}]},
+        {**chunk, "choices": [{"index": 0, "delta": {}, "finish_reason": choice.get("finish_reason") or "stop"}]},
+    ]
+    if completion.get("usage"):
+        events.append({**chunk, "choices": [], "usage": completion["usage"]})
+    body = "".join(f"data: {json.dumps(event)}\n\n" for event in events) + "data: [DONE]\n\n"
+    return "text/event-stream", body.encode()
+
+
 class _StubHandler(BaseHTTPRequestHandler):
     MODEL = "stub-openai-compatible"
 

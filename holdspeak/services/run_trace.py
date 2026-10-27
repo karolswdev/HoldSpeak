@@ -242,6 +242,35 @@ def _desk_object(arguments: Mapping[str, Any], value: Any) -> tuple[str, str]:
     return (f"{ref_kind}:{obj_id}" if obj_id else ""), title
 
 
+#: The read kinds with no desk record behind them: their facts are the tool's.
+_NO_LOCAL_RECORD = {"pr", "jira"}
+_STATE_KEYS = ("state", "status", "lifecycle")
+_AT_KEYS = ("updated_at", "updated", "updatedAt", "modified_at", "started_at", "created_at", "created")
+
+
+def _read_facts(ref: str, value: Any) -> dict[str, str]:
+    """The state and the time of the one record a read returned ("" when
+    the tool said nothing about them). Only short words are kept."""
+    obj_id = ref.split(":", 1)[1] if ":" in ref else ""
+    records = _records(value)
+    own = [r for r in records if str(r.get("id") or r.get("key") or r.get("number") or "") == obj_id]
+    facts: dict[str, str] = {}
+    for record in own or records[:1]:
+        for key in _STATE_KEYS:
+            word = record.get(key)
+            if isinstance(word, Mapping):
+                word = word.get("name") or word.get("value")
+            if isinstance(word, str) and word.strip() and len(word) <= 40 and "state" not in facts:
+                facts["state"] = word.strip()
+        for key in _AT_KEYS:
+            at = record.get(key)
+            if isinstance(at, str) and at.strip() and len(at) <= 40 and "at" not in facts:
+                facts["at"] = at.strip()
+        if facts:
+            break
+    return facts
+
+
 def _object(name: str, arguments: Mapping[str, Any], value: Any) -> tuple[str, str]:
     """``(ref, title)`` of the one object a call touched; ``("", "")`` when none."""
     if name.startswith("desk."):
@@ -250,6 +279,12 @@ def _object(name: str, arguments: Mapping[str, Any], value: Any) -> tuple[str, s
     # operation's generic changed-for projection quite correctly names the
     # owning project.  The automation trace needs the object the model
     # actually edited so the Project Update face can cite it.
+    if name == "provider.github_pr_get" and isinstance(value, Mapping):
+        # Ask hub gap 2: a pull request the tool read is named as the desk
+        # names one (``pr:owner/repo#12``); it has no local record.
+        repo = str(value.get("repository") or arguments.get("owner_repo") or "")
+        number = value.get("number") or arguments.get("number")
+        return (f"pr:{repo}#{number}" if repo and number else ""), _title_of(value)
     if name in {"project.draft_update", "project.update_draft", "project.publish_update"}:
         update_id = ""
         title = ""
@@ -404,6 +439,11 @@ def record_value(run_id: str, name: str, arguments: Any, value: Any, *, db: Any 
             ref, title = _object(name, args, value)
             if effect == WRITE:
                 detail = {"op": name.rsplit(".", 1)[-1]}
+            elif effect == READ and ref.split(":", 1)[0] in _NO_LOCAL_RECORD:
+                # Ask hub gap 2: a read keeps the facts the tool returned
+                # (a PR's or a Jira item's state and updated time), so its
+                # reference row can say them with no local record.
+                detail = _read_facts(ref, value)
             rows = [(ref, title, detail)] if ref else []
         if db is None:
             from ..db import get_database
@@ -440,6 +480,9 @@ def _fold(rows: Any, key_of: Any) -> dict[str, dict[str, list[dict[str, Any]]]]:
         ref, title, effect = str(row["ref"]), str(row["title"] or ""), str(row["effect"])
         if effect == READ:
             entry = lists["looked_at"].setdefault(ref, _row(ref, title))
+            for fact in ("state", "at"):
+                if isinstance(detail.get(fact), str) and detail[fact]:
+                    entry[fact] = detail[fact]
         elif effect == WRITE:
             entry = lists["wrote"].setdefault(ref, {**_row(ref, title), "undo": False})
             op = str(detail.get("op") or "")

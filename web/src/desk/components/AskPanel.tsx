@@ -35,6 +35,11 @@ import {
   askContexts,
   askTurnsFromThread,
   decideHeldCall,
+  dropPendingAsk,
+  putPendingAsk,
+  readAskRuns,
+  readPendingAsks,
+  supportedClaims,
   latchAskSelection,
   makeTaskFromAnswer,
   readAskEngineTools,
@@ -49,6 +54,8 @@ import {
   type AskSourceSnapshot,
   type AskTurn,
   type LookedAt,
+  type AskRun,
+  type PendingAsk,
 } from "../ask";
 import { aboutCandidates, type AboutCandidate } from "./about/AboutPicker";
 import { aboutTarget, type AboutChip } from "../askAbout";
@@ -68,7 +75,7 @@ import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { reportWriteFailure } from "../hooks/useWriteReceipt";
 import { useEngine, refreshEngine } from "../hooks/useEngine";
 import { ActionNotice, StateChip, RunLine, StatusBar, ToolGlyph, reasonVerb, reasonWords, useReadingEndAnchor, type StatusBarItem } from "../surface";
-import { openProjectRoomAtResource, openRef } from "../openObject";
+import { openProjectRoomAtResource, openRef, refOpener } from "../openObject";
 import { openSurfaceOr } from "../shell";
 import { useOptionalRuntimeBus } from "../../runtime/RuntimeBus";
 import { busyWords, otherEngineVerb, retryWords } from "../surface/waitWords";
@@ -79,7 +86,7 @@ import { requestAskReturn } from "../thought-workspace/askReturn";
 import { dropMarginAsk, putMarginAsk, updateMarginAsk } from "../thought-workspace/marginAsks";
 import { AskSourceFrame } from "./AskSourceFrame";
 import {
-  ASK_SPRITE, AskComposer, AskEngineWord, AskMore, AskNotAnswered, AskPage, AskPrompts, AskRail, AskReferences, AskScope,
+  ASK_SPRITE, AskClaims, AskComposer, AskEngineWord, AskGroundedWord, AskMore, AskNotAnswered, AskPage, AskPrompts, AskRail, AskReferences, AskScope,
   AskSendButton, AskTurnDoc, AskVerbs, askReasonLine, type AskReferenceRowData,
 } from "./askFace";
 import { chosenScopeWords, deskPrompts, wholeDeskWords } from "../askPrompts";
@@ -272,7 +279,24 @@ export function AskPanel() {
   const [deskTools, setDeskTools] = useState(false);
   const [tasks, setTasks] = useState<Record<string, { ref: string; label: string }>>({});
   const [makingTask, setMakingTask] = useState<string | null>(null);
+  // Ask hub gap 3: which answers show their claims and records.
+  const [groundedOpen, setGroundedOpen] = useState<Record<string, boolean>>({});
   const bus = useOptionalRuntimeBus();
+  // Ask hub gap 1: the answer's words so far, as the hub sends them.
+  const [arriving, setArriving] = useState("");
+  useEffect(() => {
+    if (!bus) return undefined;
+    return bus.subscribe("ask_text", (frame) => {
+      const data = (frame as { data?: Record<string, unknown> }).data;
+      if (!data || !invocationRef.current || data.invocation_id !== invocationRef.current) return;
+      if (typeof data.text === "string") setArriving(data.text);
+    });
+  }, [bus]);
+  // Ask hub gap 5: the asks this viewer left running, claimed back from
+  // the hub; `adoptedRef` is the one this window shows while it writes.
+  const [pendingAsks, setPendingAsks] = useState<Array<PendingAsk & { run?: AskRun }>>(() => readPendingAsks());
+  const adoptedRef = useRef("");
+  const liveRef = useRef("");
   useEffect(() => {
     if (!bus) return undefined;
     return bus.subscribe("ask_progress", (frame) => {
@@ -307,15 +331,26 @@ export function AskPanel() {
     };
   }, []);
 
-  /** Abandon this view's wait. The hub is told to stop the run. */
+  /** Leave this view's wait. Ask hub gap 5: the hub keeps writing the
+   *  answer (only Stop ends a run); the ask stays in Recent as Writing… and
+   *  its answer lands there. */
   const abandonRun = useCallback(() => {
     requestId.current += 1;
     pendingRequest.current?.controller.abort();
     pendingRequest.current = null;
-    const waiting = invocationRef.current;
     invocationRef.current = "";
-    if (waiting) void apiFetch(`/api/ask/${encodeURIComponent(waiting)}/cancel`, { method: "POST" }).catch(() => undefined);
+    liveRef.current = "";
+    adoptedRef.current = "";
+    setArriving("");
+    setPendingAsks(readPendingAsks());
   }, []);
+
+  /** Stop: the hub is told to stop this run. */
+  const cancelRun = (invocationId: string) => {
+    if (!invocationId) return;
+    dropPendingAsk(invocationId);
+    void apiFetch(`/api/ask/${encodeURIComponent(invocationId)}/cancel`, { method: "POST" }).catch(() => undefined);
+  };
 
   const close = useCallback(() => {
     threadReadGeneration.current += 1;
@@ -550,6 +585,9 @@ export function AskPanel() {
     if (pendingRequest.current || !mounted.current) return;
     const controller = new AbortController();
     invocationRef.current = invocationId;
+    liveRef.current = invocationId;
+    adoptedRef.current = "";
+    setArriving("");
     setProgress(null);
     const id = ++requestId.current;
     pendingRequest.current = { id, controller };
@@ -561,6 +599,7 @@ export function AskPanel() {
     setFinishedElapsedSeconds(undefined);
     setSent(snapshot);
     setPassageOpen(false);
+    putPendingAsk({ invocationId, question: snapshot.question, threadId: threadId || "", startedAt });
     // Direction A (2026-10-27): an Ask from a note shows in the note's
     // margin, beside the passage it asked about.
     const marginNote = fromNote;
@@ -588,6 +627,9 @@ export function AskPanel() {
     if (!mounted.current || controller.signal.aborted || pendingRequest.current?.id !== id) return;
     pendingRequest.current = null;
     invocationRef.current = "";
+    liveRef.current = "";
+    dropPendingAsk(invocationId);
+    setArriving("");
     setProgress(null);
     setHeld({ threadId: "", calls: [] });
     setRunning(false);
@@ -606,6 +648,7 @@ export function AskPanel() {
       lookedAt: r.lookedAt,
       used: r.used,
       askedAt: startedAt,
+      claims: supportedClaims(r.groundingClaims),
     }]);
     setSent(null);
     // The rail shows the new (or continued) ask at the top.
@@ -668,6 +711,7 @@ export function AskPanel() {
   /** Stop ends the wait and tells the hub; the question stays, marked
    *  stopped, with Ask again. */
   const stop = () => {
+    cancelRun(invocationRef.current);
     abandonRun();
     setRunning(false);
     setProgress(null);
@@ -685,7 +729,7 @@ export function AskPanel() {
     requestId.current += 1;
     pendingRequest.current?.controller.abort();
     pendingRequest.current = null;
-    if (waiting) void apiFetch(`/api/ask/${encodeURIComponent(waiting)}/cancel`, { method: "POST" }).catch(() => undefined);
+    cancelRun(waiting);
     const next = mintInvocationId();
     try {
       await apiFetch("/api/inference/assignments/set", {
@@ -813,6 +857,72 @@ export function AskPanel() {
   // Ask D1: the rail is open by default at a desk width, so Recent is read
   // when the window opens (and again after each answer).
   useEffect(() => { void readRecent(); }, [readRecent]);
+
+  /** Ask hub gap 5: what the hub says about the asks this viewer left
+   *  running. An answered one joins Recent (and lands here when this window
+   *  shows it); one the hub could not answer reads as not answered. */
+  const refreshPending = useCallback(async () => {
+    const rows = readPendingAsks().filter((row) => row.invocationId !== liveRef.current);
+    if (!rows.length) { setPendingAsks([]); return; }
+    const runs = await readAskRuns(rows.map((row) => row.invocationId));
+    if (!mounted.current) return;
+    if (!runs.length) { setPendingAsks(rows); return; }
+    const byId = new Map(runs.map((run) => [run.invocationId, run]));
+    const kept: Array<PendingAsk & { run?: AskRun }> = [];
+    let answered = false;
+    for (const row of rows) {
+      const run = byId.get(row.invocationId);
+      const shown = adoptedRef.current === row.invocationId;
+      if (run?.state === "answered") {
+        dropPendingAsk(row.invocationId);
+        answered = true;
+        if (shown && run.threadId) void loadThread(run.threadId);
+        continue;
+      }
+      if (shown && run && run.state !== "running") {
+        dropPendingAsk(row.invocationId);
+        adoptedRef.current = "";
+        invocationRef.current = "";
+        setArriving("");
+        setRunning(false);
+        setFinishedElapsedSeconds(Math.max(0, Math.round((Date.now() - row.startedAt) / 1000)));
+        setFailedRun({ ...stoppedRun(), reason: run.reason || "did_not_answer" });
+        continue;
+      }
+      if (shown && run?.text) setArriving((current) => (run.text.length > current.length ? run.text : current));
+      kept.push({ ...row, run });
+    }
+    setPendingAsks(kept);
+    if (answered) void readRecent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readRecent]);
+  useEffect(() => { void refreshPending(); }, [refreshPending]);
+  const waitingOnHub = pendingAsks.some((row) => !row.run || row.run.state === "running");
+  useEffect(() => {
+    if (!waitingOnHub) return undefined;
+    const timer = window.setInterval(() => { void refreshPending(); }, 2000);
+    return () => window.clearInterval(timer);
+  }, [waitingOnHub, refreshPending]);
+
+  /** A Writing… (or Not answered) row of the rail, shown on the page. */
+  const adoptPending = (row: PendingAsk & { run?: AskRun }) => {
+    if (row.threadId) void loadThread(row.threadId);
+    else startNew();
+    const snapshot: AskRequestSnapshot = { question: row.question, prompt: row.question, lens, context: [], grounding: null };
+    setSent(snapshot);
+    setRunStartedAt(row.startedAt);
+    if (row.run && row.run.state !== "running") {
+      dropPendingAsk(row.invocationId);
+      setPendingAsks((current) => current.filter((known) => known.invocationId !== row.invocationId));
+      setFinishedElapsedSeconds(undefined);
+      setFailedRun({ ...stoppedRun(), reason: row.run.reason || "did_not_answer" });
+      return;
+    }
+    adoptedRef.current = row.invocationId;
+    invocationRef.current = row.invocationId;
+    setArriving(row.run?.text || "");
+    setRunning(true);
+  };
   const toggleRail = () => {
     if (compact) { setRailSheet((open) => !open); return; }
     setRailPref((open) => {
@@ -903,47 +1013,69 @@ export function AskPanel() {
 
   const chooseEngine = () => openSurfaceOr("configure-runs-on", "/settings", "models");
 
-  /** A reference row: kind, date and state from the desk store when the ref
-   *  is a desk object; a tool read with no local record shows its title. */
+  /** A reference row. Ask hub gap 2: the hub sends each row's kind, time
+   *  and state; the desk store fills what the hub did not send. A ref with
+   *  no desk window (a pull request) names what was read and does not open. */
   const referenceRow = (row: LookedAt): AskReferenceRowData => {
-    const [prefix, ...rest] = row.ref.split(":");
+    const [rawPrefix, ...rest] = row.ref.split(":");
+    const prefix = row.kind || rawPrefix;
     const id = rest.join(":");
-    const open = () => openRef(row.ref, { projectReturn: activeProjectReturn });
+    const open = refOpener(row.ref) ? () => openRef(row.ref, { projectReturn: activeProjectReturn }) : undefined;
     const base = { ref: row.ref, title: row.title, onOpen: open };
+    const word = (state: string) => state.charAt(0).toUpperCase() + state.slice(1).replace(/_/g, " ");
+    const timed = (noun: string, at?: string) => {
+      const when = at ? humanTime(at) : "";
+      return when ? `${noun} · ${when}` : noun;
+    };
     switch (prefix) {
       case "meeting": {
         const m = (items.meeting ?? []).find((x) => x.id === id);
-        const when = m?.startedAt ? humanTime(m.startedAt) : "";
-        return { ...base, kind: "meeting", meta: when ? `Meeting · ${when}` : "Meeting" };
+        return { ...base, kind: "meeting", meta: timed("Meeting", row.at || m?.startedAt) };
       }
       case "note": {
         const n = (items.note ?? []).find((x) => x.id === id);
-        const when = n?.createdAt ? humanTime(n.createdAt) : "";
-        return { ...base, kind: "note", meta: when ? `Note · ${when}` : "Note" };
+        return { ...base, kind: "note", meta: timed("Note", row.at || n?.createdAt) };
       }
       case "desk_decision":
       case "decision_record":
       case "decision": {
         const d = (items.decision ?? []).find((x) => x.id === id);
-        const word = d?.status ? d.status.charAt(0).toUpperCase() + d.status.slice(1) : "Decision";
-        return { ...base, kind: "decision", meta: word, lamp: d?.status === "accepted" ? "ok" : d?.status === "proposed" ? "info" : d ? "idle" : undefined };
+        const status = row.state || d?.status || "";
+        return { ...base, kind: "decision", meta: status ? word(status) : "Decision", lamp: status === "accepted" || status === "active" ? "ok" : status === "proposed" ? "info" : status ? "idle" : undefined };
       }
-      case "project": return { ...base, kind: "project", meta: "Project" };
+      case "project": return { ...base, kind: "project", meta: row.state ? `Project · ${word(row.state)}` : "Project" };
       case "people":
       case "person": {
         const p = people.find((x) => x.id === id);
         return { ...base, kind: "person", meta: (p && RELATIONSHIP_WORD[p.kind]) || "Person" };
       }
       case "action":
-      case "action_item": return { ...base, kind: "action", meta: "Task" };
+      case "action_item": return { ...base, kind: "action", meta: row.state ? `Task · ${word(row.state)}` : "Task" };
       case "directory": return { ...base, kind: "directory", meta: "Drawer" };
-      default: return { ...base, kind: prefix === "github" || prefix === "pr" ? "pr" : "note" };
+      case "pr":
+      case "github": {
+        const meta = [row.state ? word(row.state) : "", row.at ? humanTime(row.at) : ""].filter(Boolean).join(" · ");
+        return { ...base, kind: "pr", meta: meta ? `Pull request · ${meta}` : "Pull request", lamp: row.state === "open" ? "info" : row.state === "merged" ? "ok" : undefined };
+      }
+      default: return { ...base, kind: "note", meta: row.state ? word(row.state) : undefined };
     }
   };
 
-  const railRows = recent.rows
-    .filter((row) => row.id !== forgotten?.threadId)
-    .map((row) => ({ id: row.id, title: row.title?.trim() || "An ask with no question", at: row.last_turn_at || row.updated_at }));
+  const PENDING_ROW = "pending:";
+  const railRows = [
+    ...pendingAsks.map((row) => ({
+      id: `${PENDING_ROW}${row.invocationId}`, title: row.question || "An ask with no question", at: row.startedAt,
+      state: (row.run && row.run.state !== "running" ? "not_answered" : "writing") as "writing" | "not_answered",
+    })),
+    ...recent.rows
+      .filter((row) => row.id !== forgotten?.threadId)
+      .map((row) => ({ id: row.id, title: row.title?.trim() || "An ask with no question", at: row.last_turn_at || row.updated_at })),
+  ];
+  const pickRail = (id: string) => {
+    if (!id.startsWith(PENDING_ROW)) { void loadThread(id); return; }
+    const row = pendingAsks.find((known) => `${PENDING_ROW}${known.invocationId}` === id);
+    if (row) adoptPending(row);
+  };
 
   const notAnswered = (result: AskRunResult) => {
     const reason = result.reason || "did_not_answer";
@@ -1057,13 +1189,13 @@ export function AskPanel() {
           {railOpen ? (
             <AskRail
               rows={railRows}
-              selectedId={threadId}
+              selectedId={adoptedRef.current ? `pending:${adoptedRef.current}` : threadId}
               sheet={compact}
               loading={recent.loading}
               failed={Boolean(recent.error)}
               onRetry={() => void readRecent()}
               onNew={() => { setRailSheet(false); startNew(); promptRef.current?.focus(); }}
-              onPick={(id) => { setRailSheet(false); void loadThread(id); }}
+              onPick={(id) => { setRailSheet(false); pickRail(id); }}
             />
           ) : null}
           {hasConversation ? (
@@ -1090,6 +1222,11 @@ export function AskPanel() {
                     <Button dense variant="ghost" onClick={() => void copy(turn.answer)}><ToolGlyph kind="copy" />Copy</Button>
                     <Button dense variant="ghost" disabled={running} onClick={() => void askQuestion(turn.question)}><ToolGlyph kind="retry" />Ask again</Button>
                     <Button dense variant="ghost" aria-expanded={sending === turn.key} onClick={() => void sendAnswer(turn)}><ToolGlyph kind="send" />Send…</Button>
+                    <AskGroundedWord
+                      records={new Set(supportedClaims(turn.claims).map((claim) => claim.ref)).size}
+                      open={Boolean(groundedOpen[turn.key])}
+                      onToggle={() => setGroundedOpen((current) => ({ ...current, [turn.key]: !current[turn.key] }))}
+                    />
                     <AskMore>
                       {(closeMore) => (
                         <>
@@ -1112,6 +1249,12 @@ export function AskPanel() {
                       )}
                     </AskMore>
                   </AskVerbs>
+                  {groundedOpen[turn.key] && supportedClaims(turn.claims).length ? (
+                    <AskClaims
+                      claims={supportedClaims(turn.claims)}
+                      onOpen={(ref) => (refOpener(ref) ? () => openRef(ref, { projectReturn: activeProjectReturn }) : undefined)}
+                    />
+                  ) : null}
                   {saved[turn.key] ? <span className="desk-ask-saved" role="status">Saved to your desk</span> : null}
                   {fromNote && added[turn.key] ? (
                     <span className="desk-ask-saved desk-ask-added" role="status" data-testid="ask-added">
@@ -1130,13 +1273,16 @@ export function AskPanel() {
                 <AskTurnDoc testId={null} question={sent.question} at={runStartedAt}>
                   {running ? (
                     <div className="desk-ask-running">
-                      {/* Until the hub sends text frames (canvas gap 1), the
-                          arriving answer is this one quiet line; the seconds
-                          and Stop are in the status bar. A text frame
-                          handler fills this slot when the hub streams. */}
-                      <span className="desk-ask-reading-line" data-testid="run-line" data-state="running">
-                        {progress ? progressWords(progress) : "Reading your desk"}
-                      </span>
+                      {/* Ask hub gap 1: the words arrive here as the hub
+                          sends them; before the first word, one quiet line.
+                          The seconds and Stop are in the status bar. */}
+                      {arriving ? (
+                        <div className="desk-ask-answer desk-ask-arriving" data-testid="ask-arriving" aria-live="polite"><Material>{arriving}</Material></div>
+                      ) : (
+                        <span className="desk-ask-reading-line" data-testid="run-line" data-state="running">
+                          {progress ? progressWords(progress) : "Reading your desk"}
+                        </span>
+                      )}
                       {held.calls.map((call) => (
                         <div className="desk-ask-hold" data-testid="ask-hold" key={call.call_id} role="group" aria-label={call.words}>
                           <span className="desk-ask-hold-words">{call.words}?</span>

@@ -47,6 +47,9 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
                                 #   trying again (Betterment Q2)
                                 # payload: {invocation_id, state: busy|retry, job?,
                                 #           engine?, alternatives?, attempt?, of?}
+    "ask_text",                 # a running Ask's words so far, as the engine
+                                #   writes them (Ask hub gap 1)
+                                # payload: {invocation_id, text}
     "audio_level",              # live mic level
     "bookmark",                 # a moment was named mid-meeting
     "capture_recovery",         # capture degraded and wants a choice
