@@ -1,11 +1,11 @@
 # Models
 
-Open **Settings > Engines** to choose the engine for each AI job.
+Open **HoldSpeak > Engines** to choose the engine for each AI job.
 Open **Settings > Accounts** to connect GitHub, Jira, Confluence or a calendar.
 
 ## Choose an engine
 
-1. Open **Settings > Engines**.
+1. Open **HoldSpeak > Engines**.
 2. Use **Find on LAN**, **Add an engine**, or **Download a local model**.
 3. Select a job and choose its engine.
 4. Use **Default engine** for jobs that do not need a separate assignment.
@@ -113,7 +113,7 @@ It records models, deployment information, and readiness observations.
 An **assignment** selects the compatible model list for a capability or eligible saved item.
 These are separate service contracts beneath Engines.
 
-**Settings > Engines** and the assignment entry points open the engine picker.
+**HoldSpeak > Engines** and the assignment entry points open the engine picker.
 Use the [MCP reference](MCP_SIDECAR.md) or [API surface](API_SURFACE.md) for programmatic access to those services.
 
 The assignment service supports complete ordered lists of one to four compatible models.

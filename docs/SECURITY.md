@@ -234,7 +234,7 @@ host, and approving principal. A refusal or failure also leaves a receipt with a
 named reason.
 
 A project update drafted by a model sends the prompt and output to the host named
-by the deployment revision. The footer egress chip shows that host. The
+by the deployment revision. The Send preview and Engines name that host. The
 deterministic fallback has no egress.
 
 ### The remote boundary
@@ -268,7 +268,7 @@ directly on the tailnet.
   `blog list`, `blog view`). HoldSpeak makes no Confluence REST call. The CLI holds
   the credentials.
 - **Calendar.** The only egress is the ICS fetch for HTTPS sources
-  (`calendar_ingest_conductor.py`). The Settings row egress chip names the host.
+  (`calendar_ingest_conductor.py`). The feed URL is in the feed's Edit view in Settings > Accounts.
   HoldSpeak stores no calendar credential and runs no OAuth flow. File sources
   cause no network egress. Arming a recording is your standing consent for a Room
   or for all calendar meetings. Armed never means started. The meeting watch reads

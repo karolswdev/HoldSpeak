@@ -1,10 +1,12 @@
 # Missed: attention and receipts
 
+Status 2026-10-27: the **Missed** face is parked; the dock has no Missed entry. The read model and its API below still run. For what needs you, open **Go > Needs you**.
+
 Missed shows what still needs you and what happened while you were away.
 It is a read model over records that HoldSpeak already keeps.
 It is not a new queue and not an audit log.
 
-This page covers the **Missed** entry in the Dock.
+This page describes the read model and its API. The **Open it** steps describe the parked face.
 To search what HoldSpeak remembers, see [Memory](RELATIONSHIP_AWARE_MEMORY.md).
 
 ## Open it

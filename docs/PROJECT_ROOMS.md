@@ -14,7 +14,7 @@ A connected Project needs a configured provider and access to its source scope.
 | Jira | The `acli` CLI and the intended site and account. | The hub calls the Atlassian site. Jira access is read-only. |
 | Confluence | The `acli` CLI and the intended site and account. | The hub calls the Atlassian site. Confluence access is read-only. |
 
-Open **Settings > Connections** to check each provider.
+Open **Settings > Accounts** to check each provider.
 Use **Recheck** after you change a provider setup.
 The provider CLIs keep their credentials.
 Do not put a token in a Project description or a Thread.
@@ -133,7 +133,7 @@ A scheduler trigger can return `scheduler_not_wired` when no scheduler is availa
 
 | Problem | Action |
 | --- | --- |
-| A provider does not connect | Follow its recovery command in **Settings > Connections**. Select **Recheck**. |
+| A provider does not connect | Follow its recovery command in **Settings > Accounts**. Select **Recheck**. |
 | The count check fails | Check the source scope, the account, and your access. Read the reason. |
 | The Room shows no decisions | Link the work, or keep a brief by hand. An empty section does not prove that no decision exists elsewhere. |
 | A Watch creates too much work | Adjust its source, or pause it. Check the effect before you resume. |

@@ -27,7 +27,7 @@ No additional Python packages are required by the script.
 
 ## Store the scoped credential
 
-1. Open **Settings > System** on the hub. Switch the hub row to `REMOTE ON`.
+1. Open **Settings > This Mac** on the hub. Switch the hub row to `REMOTE ON`.
 2. In the `CREDENTIALS` section, select **Issue credential**. Pick the **Palette** that the runner needs, then select **Issue**.
 3. Save the displayed token in a private file on the runner machine.
 4. Restrict the file permissions.

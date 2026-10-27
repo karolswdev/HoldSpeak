@@ -1,7 +1,8 @@
 # Getting Started
 
 Install HoldSpeak and keep your first sentence as text.
-Then set up models for Threads, Interview, and other AI work.
+Then set up models for Ask and other AI work.
+This guide is for a new user on macOS or Linux. It describes `main`.
 
 ## Requirements
 
@@ -103,16 +104,18 @@ See [Develop a thought](USER_GUIDE.md#develop-a-thought) for the controls.
 
 ## Find your work
 
-The **arrival** shows items that need you, unfinished Thoughts, a brief, and recent Meetings.
-Select **Floor** to open the spatial Desk.
-Use the **Desk** menu to create records and the **Go** menu to open tools.
+The Desk shows your drawers and Notes as icons.
+The dock at the bottom opens **Today**, **Meetings**, **People**, **Agents** and **Speak**. Its red button records a meeting.
+**Today** shows what needs you, the day ahead, and your next 1:1.
+Use the **Desk** menu to create records and the **Go** menu to open every app.
+**Go > Archive** opens the records that you put away. You can restore them from there.
 
 | Address | Opens |
 | --- | --- |
 | `/` | The Desk, with first capture on a new installation |
 | `/dictation` | Speak |
 | `/history` | Meetings |
-| `/studio` | Studio |
+| `/studio` | Settings (an older address) |
 | `/settings` | Settings |
 | `/setup` | Setup checks and recovery |
 
@@ -121,28 +124,25 @@ See [The Desk](WEB_DESK.md) for windows and navigation.
 
 ## Set up models
 
-1. Open **Settings > Models**.
-2. Read the engines that **Settings > Engines** lists.
-3. Add an endpoint or download a model if no engine fits.
-4. Check the host and engine proposed for each capability group.
-5. Select **Use these** when the required groups are ready.
+1. Open **HoldSpeak > Engines**, or the `/models` address.
+2. Read the list. Each engine shows **Where** it runs, what it is **Used for**, and its **State**.
+3. If no engine fits, select **Add an engine** or **Find on LAN**, or open **Download a local model**.
+4. Under **What runs where**, select the engine for each job.
+5. Select **Check all** to read every engine again.
 
-Select **Adjust** to change one capability.
-A cloud **Check** can make a paid request. Its control shows a cost indicator.
-Select **Test** to send one real request through the assigned route.
+A cloud check can make a paid request. Engines shows where each job sends its data.
 See [Models](MODELS.md) for requirements and readiness failures.
 
-## Start an Interview
+## Ask your first question
 
-1. Select **Desk > New Thread**.
-2. Select the **Interview** mode.
-3. Describe one outcome that you want from HoldSpeak.
-4. Select **Send**.
+1. Press **⌘I**, or select **Go > Ask AI**.
+2. Enter a question about your work, for example "What did we decide about the ledger?"
+3. Select **Ask**.
 
-Example: "Help me prepare a weekly architecture decision review."
-The model asks questions, reads permitted records, and saves context or suggestions.
-Use **Section** to revisit a topic.
-See [Interview](INTERVIEW.md) for details.
+With nothing in **About**, Ask reads your whole desk.
+The answer shows **Looked at** with the records it read.
+Select **Save as note** to keep it.
+[Interview](INTERVIEW.md) runs through the hub API and MCP; the Desk has no Interview window at present.
 
 ## Dictate into another app
 
@@ -217,12 +217,12 @@ See [Project Rooms](PROJECT_ROOMS.md) for source-provider requirements.
 | Transcription fails | Read the backend error. Install the platform extra if it is missing. |
 | The key works but no text appears | Grant Accessibility to the launching application. Restart it. Check the preview setting. On Wayland, try clipboard paste. |
 | The key does nothing | Grant Input Monitoring to the launching application. Restart it. Select **Re-check** in Speak. |
-| A Thread does not run | Open **Settings > Models**. Repair the named assignment or engine. |
+| Ask does not answer | Open **HoldSpeak > Engines**. Repair the named engine or job. |
 | You need to restore data | Read [Release and recovery](RELEASING.md). Then run `holdspeak restore`. |
 
 ## See also
 
 - [User Guide](USER_GUIDE.md): daily tasks and controls.
-- [Interview](INTERVIEW.md): repeatable context discovery.
+- [The Desk](WEB_DESK.md): windows, menus and keys.
 - [Models](MODELS.md): engines and capability assignments.
 - [Control modes](AUTHORITY.md): approval rules and action limits.

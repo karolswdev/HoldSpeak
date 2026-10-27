@@ -64,5 +64,5 @@ Secrets stay out of projections and Receipts. `holdspeak/mcp/families/model_libr
 
 ## See also
 
-- [Models](MODELS.md): user steps for Settings > Engines.
+- [Models](MODELS.md): user steps for HoldSpeak > Engines.
 - [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md)

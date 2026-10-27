@@ -11,9 +11,9 @@ The category numbers refer to the standard, not to HoldSpeak feature groups.
 
 | Terms | Category | Permitted meaning and source |
 | --- | --- | --- |
-| Desk, Chair, Floor, arrival, Speak, Places, Settle in, Concierge, Interview, Thought Workbench | 19: computer science and information technology | Named product surfaces and controls. Use the meanings in the public glossary. |
+| Desk, Today, Needs you, Ask, Capture, Speak, Meetings, Agents, People, Engines, Accounts, Archive, dock, Settle in, Interview, Thought Workbench | 19: computer science and information technology | Named product surfaces and controls (the live names on 2026-10-27). Use the meanings in the public glossary. Chair, Floor, arrival, Places, Rhythm and Concierge are former names: use them only to point to the current name. |
 | Thread, Note, Artifact, Project, Zone, decision record, Receipt, grant, Watch, assignment | 19 | Product records or contracts. Use the schema meaning, not a metaphor. |
-| agent, Coder session, Steward, Heartbeat, Cadence, Rhythm, Resourceful | 19 | Specific product components or execution concepts. Keep an agent distinct from a Coder session. |
+| agent, Coder session, Steward, Heartbeat, Cadence, Resourceful | 19 | Specific product components or execution concepts. Keep an agent distinct from a Coder session. |
 | Model Library, model, engine, runtime, endpoint, inference, capability, context, grounding | 19 | Model availability, input, routing, or execution concepts. Define ambiguous terms on first use. |
 | MCP, API, HTTP, JSON, SQLite, WebSocket, CLI, GGUF, MLX | 19 | Protocol, interface, format, database, or runtime identifiers. Expand an abbreviation when the reader needs its meaning. |
 | macOS, Linux, GitHub, Jira, Confluence, Whisper, HoldSpeak | 11: names of people, organizations, and products | Product or organization names. Preserve their spelling. |

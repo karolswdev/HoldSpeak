@@ -12,11 +12,11 @@ The client, runtime, model assignment, and operation policy still matter.
 | Path and guide | Trigger | Result |
 | --- | --- | --- |
 | [Interview](INTERVIEW.md) | You send an answer or select **Try draft** | Saved context, suggestions, manual drafts, and supported Project setup |
-| [Thread tools](USER_GUIDE.md#threads) | A model requests a permitted tool during a turn | Tool execution within the Thread mode and its policy |
+| [Thread tools](USER_GUIDE.md#ask) | A model requests a permitted tool during a turn | Tool execution within the Thread mode and its policy |
 | [Agent or Ask](WEB_DESK.md) | You submit an instruction | A model result from selected context |
 | [Sequence or Workflow](MCP_SIDECAR.md#sequence) | You start a configured run | Existing multi-step processing with run results |
 | [Project Watches and Steward](PROJECT_ROOMS.md) | A supported source change and configured Project behavior | Project-scoped observation, proposals, and supported effects |
-| [Heartbeat](USER_GUIDE.md#rhythm) | A configured unattended sweep | Evaluation of available work under the Heartbeat policy |
+| [Heartbeat](USER_GUIDE.md#notices-and-the-heartbeat) | A configured unattended sweep | Evaluation of available work under the Heartbeat policy |
 | [Cadence](CADENCE.md) | **run-now** or an enabled runtime loop | Review of unresolved work and preparation of next actions |
 | [Scheduled recording](USER_GUIDE.md#schedule-a-recording) | A configured recording time | Meeting capture when the hub can run it |
 | [Voice commands](VOICE_COMMANDS.md) | A keyword that you configured | The specific action mapped to that keyword |

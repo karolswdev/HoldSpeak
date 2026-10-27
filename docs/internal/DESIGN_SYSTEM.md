@@ -29,6 +29,50 @@ outline) for dense rows and title glyphs. Title glyphs sit on a paper chip.
 Rules, pipeline and parked family: betterment/ICONS-D-2026-10-24.md. The
 2026-10-22 text stays as history.
 
+## Shipped 2026-10-24 to 2026-10-27 (the window grammar week)
+
+Recorded 2026-10-27 by the docs-currency lane so this canon matches the live desk.
+Each line names the ruling, its canvas or design note, and the PR.
+
+- **The window grammar (owner 2026-10-24: "still look like … pages inside
+  OS-like containers").** Every window is title bar → one 36 px kit
+  `Toolbar` → content edge to edge → one 24 px kit `StatusBar`. No page H1,
+  no verbs floating in blank bands, no card in card; list rows 30–32 px;
+  metadata quiet sans 12 px in sentence case; a state is a dot and a word
+  (`DotWord`); mono only for code and ids; no dead footer. Design:
+  `betterment/native-experience/WINDOW-GRAMMAR-2026-10-24.md`. Built
+  #1457–#1472 (kit species #1459, Settings rail #1458, every manifest window
+  by #1472), audited #1485 (`WINDOW-AUDIT-2026-10-25.md`).
+- **Icons D (owner 2026-10-24: "Yes, I like D").** See the section above;
+  `betterment/ICONS-D-2026-10-24.md`, #1468.
+- **Egress at the act (owner 2026-10-25: the labels "feel like an ancient
+  relic").** A.9 below as amended: no host, address or scope chip on rows,
+  toolbars or status bars of working windows; disclosure only at the act
+  (Send preview, Destinations, Engines, Accounts, Setup, the Door); a hover
+  title on the verb is allowed. Inventory
+  `betterment/native-experience/EGRESS-LABELS-2026-10-25.md`; #1481, #1489;
+  guard `tests/unit/test_egress_labels_canon.py`.
+- **The floating dock (owner 2026-10-26: "why is the bottom menu so ugly";
+  picked direction 1 with D objects).** A centred slate-glass plate, 48 px D
+  objects, no words under the icons (the name shows on hover and focus), a
+  16 px count badge at the icon's corner, one tile per iconified window.
+  Canvas `betterment/canvases/dock-direction-2026-10-26.html` (#1494); built
+  #1497, #1498 (the floor runs under the plate). Open: the owner still
+  rejects the dock icons live; the symbol set is the next offer.
+- **The floor (2026-10-26).** The floor holds drawers, Projects and Notes
+  only. The Talk orb and the Archive icon are gone; **Go ▸ Archive** and ⌘K
+  open the Archive. #1495.
+- **The Note (owner bundle e7524147, 2026-10-27).** It opens at 760 × 560
+  with a one-row toolbar (Done, Ask about this, Find the tasks, Project ▾,
+  Send…) and a one-line title, and renders its Markdown in place (live
+  preview: headings, emphasis, lists and task boxes, links, code, quotes,
+  tables) and Mermaid fences as diagrams. #1499, #1502; the workspace
+  canvas `betterment/canvases/note-workspace-2026-10-27.html` (#1501) is the
+  next design and is not yet ratified.
+- **Settings ▸ Accounts (2026-10-27).** One paper, one label/control grid,
+  dot-and-word states, one verb per row; Services, Calendar, Calendar feeds
+  and Destinations on the same paper. #1491, #1503.
+
 ## Owner direction — crisp illustrated icons (2026-10-22)
 
 The owner rejected the first implementation as “toilet bowls” and too basic.
@@ -299,6 +343,7 @@ legs (`placement`, `arrangement`, `depth`, `frame`, `switcher`,
   minimized windows join as dimmed cards; Escape cancels. Ctrl+`
   cycles MRU with a transient strip naming every open window and the
   landing target.
+- Status 2026-10-27: the dock is now the floating plate of #1497 (no words, 48 px D objects); see "Shipped 2026-10-24 to 2026-10-27" above.
 - **One shelf.** The dock, centered on the bottom edge, is the only
   shelf: launcher entries from the application manifest, the
   record control, and a chip per open window. Overview/arrangement commands
@@ -388,7 +433,8 @@ foundation catches it mechanically.
    `--desk-control-h`; date/search/file/number inputs and the
    checkbox row wear the same treatment; options inherit surface
    colors.
-5. **The dock is alive** (HS-99-05): frosted two-layer material, a
+5. Status 2026-10-27: superseded in look by the floating slate-glass dock (#1497); the motion rules stand.
+   **The dock is alive** (HS-99-05): frosted two-layer material, a
    running underline per open window (grows on hover), compositor
    hover scale, enter/exit motion — all instant under reduced motion.
 6. **Motion has a family**: `--ease-quart` (default) / `--ease-expo`

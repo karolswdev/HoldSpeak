@@ -1,6 +1,6 @@
 # Models and assignments
 
-Use **Settings > Engines** to make models available and to assign them to jobs. See [Models](MODELS.md) for the steps.
+Use **HoldSpeak > Engines** to make models available and to assign them to jobs. See [Models](MODELS.md) for the steps.
 
 - Adding, downloading, or connecting a model makes it available. It does not give that model any work.
 - An assignment chooses which available models do a job. The server checks the capability, the readiness, and the saved boundary before it saves an assignment.

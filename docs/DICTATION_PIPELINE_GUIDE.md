@@ -18,7 +18,7 @@ The pipeline is on by default. Every stage fails open. If a stage fails or its
 model is not available, HoldSpeak types your plain transcript.
 
 An optional last gate sits after the pipeline. Turn on **Preview before
-type** in **Settings > Voice > Typing**. HoldSpeak then shows the finished
+type** in **Settings > Speak > Typing**. HoldSpeak then shows the finished
 text on a card. **Type it** commits the text. **Discard** drops it.
 
 ## Project knowledge: facts and context
@@ -53,8 +53,8 @@ The dictation runtime is not set on the dictation face. The **Dictation
 runtime** group in **Configure dictation** says **SET IN ENGINES**.
 Click **Open Engines**.
 
-1. In **Settings > Engines**, add your endpoint or local model.
-2. Assign it to **Dictation clean-up** in **Settings > Engines**.
+1. In **HoldSpeak > Engines**, add your endpoint or local model.
+2. Assign it to **Dictation clean-up** in **HoldSpeak > Engines**.
 3. Click **Use these**.
 
 See [Models](./MODELS.md) for the full contract, API keys, and the headless
@@ -95,7 +95,7 @@ default is `intent-router` and `kb-enricher`.
 | `kb-enricher` | No | Stamps project facts into the block template. |
 | `project-rewriter` | Yes | Rewrites speech with `.hs/` context. Adds one model call. |
 
-To add the rewriter, set `stages` in **Settings > Voice**. Unfold **RAW** and
+To add the rewriter, set `stages` in **Settings > Speak**. Unfold **RAW** and
 edit **Stages** in the **Pipeline** group. Or edit the config file:
 
 ```json
@@ -131,7 +131,7 @@ The **Delivery** group in **Configure dictation** shows the detected target.
 Set the value back to `auto` when detection works again.
 
 When the window gives weak hints, the model can infer the target. Turn on
-**LLM target detect** in **Settings > Voice > RAW**. **Detect below** sets
+**LLM target detect** in **Settings > Speak > RAW**. **Detect below** sets
 the confidence limit. The default is `0.8`. A manual override always wins.
 
 ## 5. Set up project knowledge
@@ -295,7 +295,7 @@ is 1 to 5. The default is `1`. A higher value adds a critique and a refine
 pass. HoldSpeak skips a pass that would break `max_total_latency_ms`. A failed
 refine pass keeps the best draft.
 
-Set **Rewrite passes** in **Settings > Voice > RAW**, or in the config:
+Set **Rewrite passes** in **Settings > Speak > RAW**, or in the config:
 
 ```json
 { "dictation": { "pipeline": { "rewrite_passes": 2 } } }
@@ -360,7 +360,7 @@ When you dictate into another app, the web dashboard is not visible. Desktop
 presence shows what HoldSpeak does now: listening, transcribing, processing,
 or typing. It is off by default and never takes keyboard focus.
 
-Turn on **Presence** in **Settings > Sounds & Presence**. Or set the config:
+Turn on **Presence** in **Settings > Desk**. Or set the config:
 
 ```json
 { "presence": { "enabled": true } }
@@ -400,7 +400,7 @@ overlay also needs `gir1.2-gtk-3.0` and `gir1.2-webkit2-4.1`.
 ### Qlippy, the mascot
 
 Qlippy is a small pixel-art companion on the presence surface. Turn on
-**Mascot** in **Settings > Sounds & Presence**, or set
+**Mascot** in **Settings > Desk**, or set
 `presence.mascot` to `true`. It is off by default.
 
 The dock is a small animated sprite that mirrors the runtime state. A card

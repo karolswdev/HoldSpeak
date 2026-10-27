@@ -1,13 +1,22 @@
 # The Desk
 
 The Desk is the HoldSpeak web app. It holds your records and opens your tools.
+This guide is for the person who works on the Desk every day. It describes `main`
+(checked against the live Desk on 2026-10-27).
 
 ## Start work
 
 1. Open the address that `holdspeak` prints.
-2. Open **Today** to see current work.
-3. Open **Needs you** for items that need your action.
+2. Open **Today** to see current work. It is the first icon in the dock.
+3. Open **Needs you** (**Go > Needs you**, or **⌃J**) for items that need your action.
 4. Use **Go** to open an app, project or drawer.
+
+The desk shows your drawers, Projects and Notes as icons. The floating dock
+at the bottom opens **Today**, **Meetings**, **People**, **Agents** and
+**Speak**; the red button records a meeting. A badge on an icon is a live
+count, never a zero. An iconified window gets its own tile in the dock.
+**Go > Archive** and **⌘K** open the Archive, where the records you put away
+wait until you restore them.
 
 On a phone, **Go** lists the apps. An app fills the screen.
 See [Getting Started](GETTING_STARTED.md) for the first capture.
@@ -15,13 +24,16 @@ See [Getting Started](GETTING_STARTED.md) for the first capture.
 ## Create work
 
 The **Desk** menu offers **New Note**, **New Decision**, **New Automation**,
-**New Thread** and **New Project**. On a phone, use **Go > New** or Search.
-**New Project** opens project setup. See [Project Rooms](PROJECT_ROOMS.md).
-**New Thread** opens Ask.
+**New Project**, **New Meeting**, **New Person** and **New Drawer**. On a phone,
+use **Go > New** or Search. **New Project** opens project setup. See
+[Project Rooms](PROJECT_ROOMS.md). To start a conversation, open Ask (**⌘I**).
 
-**New Note** opens a sticky note. Use **Ask about this**, **Find the tasks**,
-**Project** or **Send…** from the note. **Done** finishes the note.
-Asking about a note does not move it to another drawer.
+**New Note** opens a Note window. The toolbar has **Done**, **Ask about
+this**, **Find the tasks**, **Project** and **Send…**. The Note shows its
+Markdown in place as you type: headings, emphasis, lists and task boxes,
+links, code, quotes, tables and Mermaid diagrams. The status bar shows when
+the Note was saved. **Done** finishes the note. Asking about a note does not
+move it to another drawer.
 
 ## Open and file records
 
@@ -41,16 +53,18 @@ hub.
 ## Use windows
 
 Speak, Meetings, Agents, Settings and other apps open in Desk windows.
-Drag a desktop window by its title bar. Use its edge or corner to resize it.
-Iconify a window to keep it in the dock. Select its dock entry to return to it.
-Use **Window** to close, cycle, snap, zoom or send a window to the back.
+Every window has the same parts: a title bar, a toolbar with its verbs, the
+content, and a status bar with its state. Drag a desktop window by its title
+bar. Use its edge or corner to resize it. Iconify a window to keep it in the
+dock. Select its dock tile to return to it. Use **Window** to close, cycle,
+snap, zoom or send a window to the back.
 
 The Desk keeps the window layout in your browser. On a phone, **Back**
 returns to the previous window.
 
 ## Ask about your work
 
-1. Open **Ask** from Go, or press **⌘I**.
+1. Open **Ask AI** from Go, or press **⌘I**.
 2. Use **+** beside **About** to select a meeting, note, drawer, project or
    person. With no selection, Ask is about your whole desk.
 3. Enter your question, then press **Ask**.
@@ -73,9 +87,12 @@ calendar screenshot to read events from it.
 
 ## Set preferences
 
-Open **Settings** from the HoldSpeak menu. Rhythm, Wallpaper and Calendar
-each have one Settings home. Engines has the model and job assignments;
-Accounts has the external service accounts. Use Search to find a setting.
+Open **Settings** from the HoldSpeak menu, or press **⌃,**. The rail lists
+**You**, **Speak**, **Meetings**, **Notices**, **Accounts**, **Agents**,
+**Desk** and **This Mac**. Notices holds the Heartbeat (quiet hours, the daily
+brief, notifications). Desk holds Wallpaper, sounds and motion. Accounts holds
+connections, Calendar, Destinations and secrets. **HoldSpeak > Engines** has
+the model and job assignments. Use Search to find a setting.
 
 ## Keys
 
@@ -85,7 +102,10 @@ Accounts has the external service accounts. Use Search to find a setting.
 | **⌃⇧N** | New Decision |
 | **⌘I** | Ask |
 | **⌘K** | Search |
-| **⌃1** to **⌃4** | Speak, Meetings, Agents, Settings |
+| **⌃1** to **⌃5** | Today, Meetings, People, Agents, Speak |
+| **⌃J** | Needs you |
+| **⌃,** | Settings |
+| **⌘⇧E** | Window > Overview: every open window at once |
 | **⌘/** | Keyboard shortcuts |
 
 The browser keeps some **⌘** keys. The menus show **⌃** alternatives for them.

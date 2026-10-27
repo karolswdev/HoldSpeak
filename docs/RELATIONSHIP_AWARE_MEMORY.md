@@ -55,7 +55,7 @@ A Project search checks every hit against the Project before it returns the hit.
 ### Meaning search
 
 Meaning search is off until the owner turns it on.
-Open the **Models** window and use the **Meaning search** row.
+Open the **Engines** window (HoldSpeak > Engines) and use the **Meaning search** row.
 The row shows OFF, DOWNLOADING, INDEXING, or ON.
 **Turn on** downloads a small embedding model. This is the only path that starts the download.
 The hub checks the file against a pinned hash.
@@ -78,7 +78,7 @@ A page read makes no model call.
 
 These jobs run only when a model is assigned to the capability, or when a local default exists.
 With no model, nothing runs and nothing is written.
-Set the models in the **Models** window.
+Set the models in the **Engines** window.
 
 ## Where you see memory
 

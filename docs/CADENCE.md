@@ -6,7 +6,7 @@ It can use meeting action items, proposed actions, and Coder sessions that need 
 The background Cadence loop is off by default.
 The morning Brief job is on by default. It makes the day's Brief at 06:00 local time.
 Manual commands can still inspect work or request an evaluation.
-Cadence is separate from the [Heartbeat](USER_GUIDE.md#rhythm) and from preferences saved in [Interview](INTERVIEW.md).
+Cadence is separate from the [Heartbeat](USER_GUIDE.md#notices-and-the-heartbeat) and from preferences saved in [Interview](INTERVIEW.md).
 
 ## Inspect work manually
 
@@ -121,6 +121,6 @@ See [Security & Privacy](SECURITY.md) for the complete data boundary.
 ## See also
 
 - [Automation](AUTOMATION.md): triggers and execution paths.
-- [Rhythm](USER_GUIDE.md#rhythm): Heartbeat configuration.
+- [Notices and the Heartbeat](USER_GUIDE.md#notices-and-the-heartbeat): Heartbeat configuration.
 - [Control modes](AUTHORITY.md): approval and grant rules.
 - [Security & Privacy](SECURITY.md): data and credential boundaries.

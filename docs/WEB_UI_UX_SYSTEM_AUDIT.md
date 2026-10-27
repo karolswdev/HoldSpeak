@@ -17,7 +17,7 @@ Those two files win when they differ from this page.
 5. **Align an action with its control.** An action beside a field lines up with the field, not with its label.
 6. **Match the control to the choice count.** Use direct choices for a few options, a select for a moderate list, and a searchable combobox for a long or remote list.
 7. **Keep native semantics.** Use real inputs, buttons, labels, and disclosure elements. Styling must not remove keyboard or screen reader support.
-8. **Show where data goes.** Put the egress chip on the row that leaves the machine. Never show a secret.
+8. **Show where data goes at the act.** Name the destination where the data leaves: the Send preview, Destinations, Engines, Accounts, Setup. Do not put a host, address or scope chip on the rows, toolbars or status bars of working windows (owner ruling 2026-10-25, UX-CANON A.9). A hover title on the verb is allowed. Never show a secret.
 9. **A state uses more than color.** Use an icon and text. The closed state set is `idle`, `active`, `working`, `success`, `warning`, `failure`, and `unreachable`.
 10. **Use tokens.** Spacing, type, color, and motion come from `web/design-tokens.json`. Do not use raw values.
 
