@@ -86,6 +86,7 @@ MEASURE = """(win) => [...win.querySelectorAll('.btn')]
     return {
       word: b.textContent.trim().slice(0, 24),
       cls: b.className,
+      toolbar: Boolean(b.closest('.kit-toolbar')),
       h: Math.round(r.height * 10) / 10,
       halo: halo.content !== 'none' ? parseFloat(halo.height) || 0 : 0,
     };
@@ -123,8 +124,15 @@ def test_every_verb_is_one_plate_height(tmp_path: Path, monkeypatch: pytest.Monk
                 expected.add("Open")
             assert expected <= words, verbs
             if width == 1440:
-                heights = {v["h"] for v in verbs}
+                # One plate height per band: the window grammar's 36 px
+                # toolbar holds 28 px verbs (kit.css `.kit-toolbar .btn`);
+                # since #1520 the Room drawer's Ask composer is such a
+                # toolbar. Every other verb is the 32 px plate. (Not the
+                # #1523 status bar: it changes only at 560 px or less.)
+                heights = {v["h"] for v in verbs if not v["toolbar"]}
                 assert heights == {32.0}, json.dumps(verbs, indent=2)
+                bar = {v["h"] for v in verbs if v["toolbar"]}
+                assert bar <= {28.0}, json.dumps(verbs, indent=2)
             else:
                 heights = {v["h"] for v in verbs}
                 assert heights == {44.0}, json.dumps(verbs, indent=2)

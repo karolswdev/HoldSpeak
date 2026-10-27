@@ -209,7 +209,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
   return (
     <>
       <div className="desk-pullout-body desk-surface-body decision-reader-window" data-interior="editor" data-testid="desk-decision-reader">
-        <Toolbar label="Decision" data-testid="desk-decision-toolbar">
+        <Toolbar label="Decision" className="desk-decision-reader-toolbar" data-testid="desk-decision-toolbar">
           {editingDecision ? (
             <>
               <Button variant="primary" dense disabled={savingDecision || savingStatus} onClick={() => void commitDecisionEdit()}>Save</Button>
@@ -231,14 +231,16 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
                   Retire
                 </Button>
               ) : null}
-              <Button variant="secondary" dense aria-expanded={sending} onClick={() => setSending((open) => !open)} data-testid="desk-decision-send">
-                <ToolGlyph kind="send" />Send…
+              {/* W3-A: on a narrow window the quiet verbs show their glyph
+                  only (decisions.css); the word stays the name and title. */}
+              <Button variant="secondary" dense className="decision-verb" title="Send" aria-expanded={sending} onClick={() => setSending((open) => !open)} data-testid="desk-decision-send">
+                <ToolGlyph kind="send" /><span className="decision-verb-label">Send…</span>
               </Button>
-              <Button variant="ghost" dense onClick={() => void copy(decisionContent)}>Copy</Button>
-              <Button variant="ghost" dense onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}>Dictate about this</Button>
+              <Button variant="ghost" dense className="decision-verb" title="Copy" onClick={() => void copy(decisionContent)}><ToolGlyph kind="copy" /><span className="decision-verb-label">Copy</span></Button>
+              <Button variant="ghost" dense className="decision-verb" title="Dictate about this" onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}><ToolGlyph kind="record" /><span className="decision-verb-label">Dictate about this</span></Button>
               {canonicalId ? (
-                <Button variant="ghost" dense onClick={() => openIntelligence({ view: "receipts", receiptId: canonicalId })} data-testid="desk-decision-open-record">
-                  Open record
+                <Button variant="ghost" dense className="decision-verb" title="Open record" onClick={() => openIntelligence({ view: "receipts", receiptId: canonicalId })} data-testid="desk-decision-open-record">
+                  <ToolGlyph kind="open" /><span className="decision-verb-label">Open record</span>
                 </Button>
               ) : null}
             </>

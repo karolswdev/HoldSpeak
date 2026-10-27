@@ -10,7 +10,7 @@
  * it rests on. A block with nothing to say is not drawn. */
 import { Fragment, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
-import { RefTokens, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, type MemoryRefToken } from "../../../desk/surface";
+import { DotWord, RefTokens, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, type MemoryRefToken } from "../../../desk/surface";
 import { openDecisionRecord, openRef } from "../../../desk/openObject";
 import type { StandingPageWire } from "../../../desk/standingPages";
 import type { RoomHealthNudge, RoomHealthPerson, RoomNeedsYouItem, RoomNowData } from "../model";
@@ -127,7 +127,10 @@ export function WaitingOnSection({
   );
 }
 
-type Line = { key: string; text: string; refs: MemoryRefToken[]; decisionId?: string };
+/** `riskRef`: an open risk item of the project. The line opens it, and its
+ *  state is a dot and a word (`● At risk`), never a grey `Risk` token under
+ *  the Risks caption (W3-B, atlas 2026-10-27). */
+type Line = { key: string; text: string; refs: MemoryRefToken[]; decisionId?: string; riskRef?: string };
 
 function pageLines(pages: StandingPageWire[], slug: string): Line[] {
   const page = pages.find((p) => p.slug === slug);
@@ -144,11 +147,15 @@ export function thisWeekGroups(now: RoomNowData | null, pages: StandingPageWire[
   }));
   const open = pageLines(pages, "what-is-open");
   const pageRisks = pageLines(pages, "risks-and-disputes");
-  const risks: Line[] = pageRisks.length ? pageRisks : (now?.risks ?? []).map((r, i) => ({
-    key: `risk:${i}`,
-    text: r.text,
-    refs: r.ref ? [{ ref: r.ref, token: r.token || r.source, opens: r.opens }] : [],
-  }));
+  const risks: Line[] = pageRisks.length ? pageRisks : (now?.risks ?? []).map((r, i) => {
+    const item = r.token.toUpperCase() === "RISK" && Boolean(r.ref) && r.opens;
+    return {
+      key: `risk:${i}`,
+      text: r.text,
+      refs: r.ref && !item ? [{ ref: r.ref, token: r.token || r.source, opens: r.opens }] : [],
+      riskRef: item ? r.ref : undefined,
+    };
+  });
   const changed = pageLines(pages, "what-changed-this-week");
   return [
     { title: "Open", lines: open },
@@ -191,9 +198,16 @@ export function ThisWeekSection({
                         onClick={() => openDecisionRecord(line.decisionId as string)}>
                         {line.text}
                       </Button>
+                    ) : line.riskRef ? (
+                      <Button variant="chrome" className="room-now-decided" data-testid="this-week-risk"
+                        aria-label={`Open the risk: ${line.text}`}
+                        onClick={() => openRef(line.riskRef as string)}>
+                        {line.text}
+                      </Button>
                     ) : (
                       <span className="room-now-text">{line.text}</span>
                     )}
+                    {line.riskRef ? <DotWord tone="warn" className="room-now-state">At risk</DotWord> : null}
                     <RefTokens refs={line.refs} onOpen={openRef} />
                   </li>
                 ))}

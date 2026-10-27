@@ -259,7 +259,7 @@ describe("local UI feedback", () => {
     await startPicker();
     await selectAction(view.action);
     act(() => window.dispatchEvent(new Event(TALK_STOP_EVENT)));
-    await screen.findByText("SAVED");
+    await screen.findByText("Saved");
 
     expect(recording.stop).toHaveBeenCalledTimes(1);
     expect(mocks.apiFetch).toHaveBeenCalledWith("/api/ui-feedback", expect.objectContaining({
@@ -293,7 +293,7 @@ describe("local UI feedback", () => {
     fireEvent.click(screen.getByRole("button", { name: "Stop and save" }));
     await screen.findByRole("button", { name: "Retry" });
     fireEvent.click(screen.getByRole("button", { name: "Retry" }));
-    await screen.findByText("SAVED");
+    await screen.findByText("Saved");
 
     expect(posts).toHaveLength(2);
     expect(posts[1]).toEqual(posts[0]);
@@ -325,13 +325,17 @@ describe("local UI feedback", () => {
     await selectAction(view.action);
     fireEvent.click(screen.getByRole("button", { name: "Stop and save" }));
     await screen.findByRole("button", { name: "Retry transcription" });
-    expect(screen.getByText("Speech is not set up.")).toBeTruthy();
+    expect(screen.getByText("Speech unavailable")).toBeTruthy();
+    // The one verb that fixes it; the reason is its hover title.
+    expect(screen.getByRole("button", { name: "Set up speech" }).getAttribute("title")).toBe("Speech is not set up.");
     fireEvent.click(screen.getByRole("button", { name: "Retry transcription" }));
-    await screen.findByText("SAVED");
+    await screen.findByText("Saved");
     expect(saveCalls).toBe(1);
     expect(transcribeCalls).toBe(2);
     expect(recording.stop).toHaveBeenCalledTimes(1);
-    expect(screen.getByText("SPEECH · PRIVATE NETWORK")).toBeTruthy();
+    expect(screen.getByText("Transcript saved").closest("[title]")?.getAttribute("title")).toContain("the private network");
+    expect(screen.getByText("clipboard period")).toBeTruthy();
+    expect(document.querySelector(".gadget-chip-egress")).toBeNull();
     view.unmount();
   });
 

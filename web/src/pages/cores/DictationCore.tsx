@@ -156,8 +156,9 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
   // W1: Export lives in a toolbar (the Talk wing's and the Journal's),
   // never in the status bar.
   const exportVerb = (
-    <Button dense variant="ghost" onClick={() => void exportJournal()}>
-      Export
+    <Button dense variant="ghost" className="speak-verb" title="Export" data-glyph="narrow" onClick={() => void exportJournal()}>
+      <ToolGlyph kind="import" />
+      <span className="speak-verb-label">Export</span>
     </Button>
   );
   const active = wings.doorOpen ? "configure" : wings.view;
@@ -205,12 +206,15 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
       <Button
         dense
         variant="ghost"
+        className="speak-verb"
+        title="Review" data-glyph="narrow"
         onClick={() => {
           wings.setDoorOpen(false);
           wings.setView("journal");
         }}
       >
-        Review
+        <ToolGlyph kind="tasks" />
+        <span className="speak-verb-label">Review</span>
       </Button>
       {exportVerb}
     </>

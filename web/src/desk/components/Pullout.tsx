@@ -91,11 +91,14 @@ function PulloutFrame({
       kindWord={kindWord(o.kind)}
       // A whole window wears the application window's material, as the
       // Meetings window's record did.
-      className={hosted ? "desk-surface-window desk-object-window" : "desk-pullout is-card"}
+      className={hosted ? "desk-surface-window desk-object-window" : o.kind === "decision" ? "desk-pullout is-card desk-decision-window" : "desk-pullout is-card"}
       wings={hosted ? wings : undefined}
       // B24 (Astra r1): a kind with a declared size opens AT that size; a
       // content-fitted card would drop the height until it is arranged.
-      fitContent={!PULLOUT_SIZE[o.kind]}
+      // W3-A: a decision is content-sized (its seat is the declared size; the
+      // material decides the height, 320 to 640 px; decisions.css).
+      fitContent={!PULLOUT_SIZE[o.kind] || o.kind === "decision"}
+      minH={o.kind === "decision" ? 320 : undefined}
       defaultW={PULLOUT_SIZE[o.kind]?.w}
       defaultH={PULLOUT_SIZE[o.kind]?.h}
       origin={origin}

@@ -85,7 +85,7 @@ def _capture_ready(page: Any, window: Any, width: int, attempt: int,
     started = time.monotonic()
     window.get_by_role("button", name=_feedback_name(width), exact=True).click()
     strip = page.locator("[data-ui-feedback]")
-    strip.get_by_text("RECORDING", exact=True).wait_for()
+    strip.get_by_text("Recording", exact=True).wait_for()
     capture_ms = round((time.monotonic() - started) * 1000)
     heartbeat_gap_ms = page.evaluate("window.__feedbackBeat.max")
     assert capture_ms < 3000, (width, attempt, capture_ms)
@@ -226,7 +226,7 @@ def test_loaded_settings_cancel_retry_generation_and_return(
                 }""")
                 window.get_by_role("button", name=_feedback_name(width), exact=True).click()
                 strip = page.locator("[data-ui-feedback]")
-                strip.get_by_text("CAPTURING", exact=True).wait_for()
+                strip.get_by_text("Capturing", exact=True).wait_for()
                 page.wait_for_function("() => !!document.querySelector('body > div[style*=\"-100000px\"]')")
                 mic_during_capture = page.evaluate("window.__feedbackMicRequests")
                 assert mic_during_capture == 0
@@ -261,7 +261,7 @@ def test_loaded_settings_cancel_retry_generation_and_return(
                 )) as retried:
                     strip.get_by_role("button", name="Retry transcription", exact=True).click()
                 assert retried.value.json()["transcript_status"] == "complete"
-                strip.get_by_text("SAVED", exact=True).wait_for()
+                strip.get_by_text("Saved", exact=True).wait_for()
                 after_retry = _bundle_facts(page, directory_one, draft_one)
                 for key in ("id", "captured_at", "context_sha256", "wav_sha256", "png_sha256"):
                     assert after_retry[key] == before_retry[key], key
@@ -285,7 +285,7 @@ def test_loaded_settings_cancel_retry_generation_and_return(
                 name.fill(draft_two)
                 strip = _capture_ready(page, window, width, 2, observations)
                 receipt_two, directory_two = _save(page, strip)
-                strip.get_by_text("TRANSCRIBING", exact=True).wait_for()
+                strip.get_by_text("Transcribing", exact=True).wait_for()
                 assert held_routes, "Second report's transcription was not held"
                 facts_two = _bundle_facts(page, directory_two, draft_two)
                 assert facts_two["transcript_status"] == "pending"
@@ -297,7 +297,7 @@ def test_loaded_settings_cancel_retry_generation_and_return(
                 name.fill(draft_three)
                 strip = _capture_ready(page, window, width, 3, observations)
                 receipt_three, directory_three = _save(page, strip)
-                strip.get_by_text("SAVED", exact=True).wait_for()
+                strip.get_by_text("Saved", exact=True).wait_for()
                 facts_three = _bundle_facts(page, directory_three, draft_three)
                 assert facts_three["transcript_status"] == "complete"
                 assert facts_three["egress_boundary"] == "local"

@@ -5,7 +5,10 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Learned, appliedToken, kindEmblem, valueLabel } from "../Learned";
+import { Learned, appliedToken, kindEmblem, learnedMarkdown, valueLabel } from "../Learned";
+
+const download = vi.hoisted(() => vi.fn());
+vi.mock("../../history", () => ({ download }));
 
 const mocks = vi.hoisted(() => ({
   apiFetch: vi.fn(),
@@ -246,5 +249,40 @@ describe("the pure helpers", () => {
     expect(appliedToken({ applied: 4 })).toBe("4 applied");
     expect(appliedToken({ applied: 0 })).toBe("");
     expect(appliedToken({})).toBe("");
+  });
+});
+
+// W3-B (atlas 2026-10-27): the wing has a verb, so it has a toolbar: Export
+// (the wing's own rows as Markdown). An empty wing keeps its empty state alone.
+describe("the Learned toolbar", () => {
+  it("holds Export when something is learned, and the export is the rows", async () => {
+    const user = userEvent.setup();
+    render(<Learned />);
+    await waitFor(() => expect(rows()).toHaveLength(3));
+    const toolbar = screen.getByTestId("learned-toolbar");
+    await user.click(within(toolbar).getByRole("button", { name: "Export" }));
+    expect(download).toHaveBeenCalledTimes(1);
+    const [blob, name] = download.mock.calls[0] as [Blob, string];
+    expect(name).toMatch(/^holdspeak-learned-\d{4}-\d{2}-\d{2}\.md$/);
+    expect(blob.type).toContain("text/markdown");
+  });
+
+  it("is absent on an empty wing", async () => {
+    items = [];
+    render(<Learned />);
+    await waitFor(() => expect(screen.getByText("Nothing learned")).toBeTruthy());
+    expect(screen.queryByTestId("learned-toolbar")).toBeNull();
+  });
+
+  it("learnedMarkdown says each fix as heard → meant, with its kind and count", () => {
+    const md = learnedMarkdown(RULES, { delivery: "Delivery" }, { terminal_shell: "Terminal shell" });
+    expect(md.split("\n")).toEqual([
+      "# HoldSpeak learned fixes",
+      "",
+      "- queue for → Q4 (Text, 1 applied)",
+      "- ship the q4 platform on schedule → Delivery (Intent, 3 applied)",
+      "- payments cut-over runbook → Terminal shell (Target)",
+      "",
+    ]);
   });
 });

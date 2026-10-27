@@ -21,7 +21,6 @@ import { INLINE_EDITOR_CONTENT } from "./editors";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { useEditorSession } from "./editors/useDebouncedSave";
-import { SurfaceFooter } from "../surface/SurfaceFooter";
 import "./capability-window.css";
 
 export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
@@ -54,10 +53,12 @@ export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
   if (editing && Content) {
     return (
       <>
-        <div className="desk-pullout-body desk-surface-body desk-editor-body">
-          <Content object={o} openAdd={addOnOpen} onClose={() => void session.done()} onWriter={session.onWriter} />
+        {/* W3-B: the editor draws the toolbar (Done, Add items); the save
+            receipt is the status bar's. */}
+        <div className="desk-pullout-body desk-surface-body desk-editor-body kb-window" data-interior="editor" data-testid="knowledge-editor">
+          <Content object={o} openAdd={addOnOpen} onClose={() => void session.done()} onWriter={session.onWriter} toolbar={session.verbs} />
         </div>
-        <SurfaceFooter receipt={session.receipt} verbs={session.verbs} />
+        <StatusBar data-testid="knowledge-editor-status" items={[session.receipt ? { key: "save", text: session.receipt } : null]} />
       </>
     );
   }

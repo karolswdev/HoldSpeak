@@ -99,7 +99,7 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             _settle(page)
             page.screenshot(path=str(SHOTS / f"agent-report-{width}.png"))
             agent.get_by_role("button", name=re.compile(r"^Give feedback on ")).click()
-            page.locator("[data-ui-feedback]").get_by_text("RECORDING", exact=True).wait_for()
+            page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for()
             page.wait_for_timeout(500)
             _save_feedback(page, width, shot_stem="reported-agent", window_id="session", draft=None,
                            png_regions={"portrait": portrait, "report": agent.get_by_test_id("session-report")})
@@ -127,7 +127,7 @@ def test_reported_faces_and_saved_images(tmp_path: Path, monkeypatch: pytest.Mon
             assert chooser.locator(".wb-body").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
             page.screenshot(path=str(SHOTS / f"new-automation-{width}.png"))
             chooser.get_by_role("button", name="Give feedback on New Automation", exact=True).click()
-            page.locator("[data-ui-feedback]").get_by_text("RECORDING", exact=True).wait_for()
+            page.locator("[data-ui-feedback]").get_by_text("Recording", exact=True).wait_for()
             page.wait_for_timeout(500)
             _save_feedback(page, width, shot_stem="reported-automation", window_id="workbench:__new__", draft=None,
                            png_regions={"scratch": scratch, "choices": chooser.locator(".automation-starter-grid")})
