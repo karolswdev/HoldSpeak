@@ -2857,6 +2857,11 @@ def _seed_window(db_brief: Database) -> None:
                VALUES (?, ?, ?, ?, ?, 'open', 'accepted')""",
             ("overdue-action", "brief-meeting", "Call the customer", "Ada", (datetime.date.today() - datetime.timedelta(days=1)).isoformat()),
         )
+        conn.execute(
+            """INSERT INTO action_items (id, meeting_id, task, owner, due, status, review_state)
+               VALUES (?, ?, ?, ?, ?, 'open', 'accepted')""",
+            ("tomorrow-action", "brief-meeting", "Send the draft", "Bea", (datetime.date.today() + datetime.timedelta(days=1)).isoformat()),
+        )
     db_brief.desk_decisions.upsert(
         decision_id="proposed-brief-decision",
         title="Adopt the Monday Brief",
@@ -2878,6 +2883,14 @@ def test_walk_generates_and_delivers_all_four_sections(db_brief: Database) -> No
     assert any(item.text == "Decision recorded" for item in brief.sections["changed"])
     assert brief.sections["broke"][0].text == "Workflow did not complete"
     assert any("Call the customer" in item.text for item in brief.sections["waiting"])
+    # Ada's overdue item waits on Ada: the title stays in the line, the
+    # wait goes beside it.
+    late = next(item for item in brief.sections["waiting"] if "Call the customer" in item.text)
+    assert late.text == "Overdue: Call the customer" and "Waiting on Ada" in str(late.detail), late
+    # Bea's item in the two-day window: its due word leads, the wait beside it.
+    soon = next(item for item in brief.sections["waiting"] if "Send the draft" in item.text)
+    assert soon.text == "Due tomorrow: Send the draft", soon
+    assert str(soon.detail).startswith("Waiting on Bea · Due "), soon
     assert any("Adopt the Monday Brief" in item.text for item in brief.sections["decisions"])
 
     mcp_brief = tools.dispatch("monday_brief.get", {}, OWNER_brief)

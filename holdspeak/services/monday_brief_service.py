@@ -488,6 +488,21 @@ def _not_read_item(source: str, reason: Any) -> "BriefItem":
     )
 
 
+def _waiting_due_word(row: dict[str, Any]) -> str:
+    """The due word of a ``WAITING ON <NAME> · <word>`` reason, in sentence case.
+
+    ``Overdue``, ``Due today``, ``Due tomorrow``, ``Due Thu``; ``""`` when the
+    reason has no due word (a plain ``WAITING ON <NAME>``).
+    """
+    head, _, word = str(row.get("why") or "").partition(" · ")
+    if not head.strip().upper().startswith("WAITING ON") or not word.strip():
+        return ""
+    tokens = [t.lower() if t.isupper() else t for t in word.split()]
+    if not tokens:
+        return ""
+    return " ".join([tokens[0][:1].upper() + tokens[0][1:], *tokens[1:]])
+
+
 @dataclass
 class BriefItem:
     id: str
@@ -1242,7 +1257,12 @@ class MondayBriefService:
         priority = 300
         counted_decisions: set[str] = set()
         for row in answer.get("items") or []:
-            if row.get("muted") or row.get("waiting"):
+            # Another person's Door item that is overdue or in the two-day
+            # window waits on them (``WAITING ON ADA · OVERDUE``,
+            # ``WAITING ON BEA · DUE TOMORROW``); it is not counted, but the
+            # brief still lists it, as it did before the rule named whose it is.
+            due_word = _waiting_due_word(row) if row.get("waiting") else ""
+            if row.get("muted") or (row.get("waiting") and not due_word):
                 continue
             if row.get("source") == "decision":
                 counted_decisions.add(str(row.get("ref") or row.get("id")))
@@ -1253,7 +1273,12 @@ class MondayBriefService:
             if card is not None:
                 source_ref = f"{card.get('source') or 'action_item'}:{card.get('id')}"
                 due = card.get("due")
-                if why.startswith("OVERDUE"):
+                if due_word:
+                    owner = str(row.get("owner") or "").strip()
+                    text = f"{due_word}: {title}"
+                    detail = " · ".join(part for part in (
+                        f"Waiting on {owner}" if owner else "", f"Due {due}" if due else "") if part) or None
+                elif why.startswith("OVERDUE"):
                     text, detail = f"Overdue: {title}", f"Due {due}" if due else None
                 elif row.get("_toReview"):
                     # An item that has an owner and is not reviewed yet.

@@ -273,6 +273,8 @@ function doorItems(
           ? Math.max(1, Math.floor((now.getTime() - due) / 86_400_000))
           : 0;
         why = days > 0 ? `OVERDUE · ${days}D` : "OVERDUE";
+        // computeNeedsYou makes another person's overdue item a wait too.
+        dueWord = "OVERDUE";
         severity = "danger";
       } else if (column === "now") {
         // The two-day window: the word says the day (the twin of
@@ -677,8 +679,9 @@ export function computeNeedsYou(
   const selfNames = input.selfNames ?? SELF_OWNER_NAMES;
   // An item the owner himself holds is his: it reads `YOURS`, never
   // `WAITING ON ME`, and it is counted.
-  // The Door's two-day window: another person's item there is a wait on
-  // that person, with its due word beside it; his own keeps the word.
+  // The Door's two-day window and its overdue column: another person's item
+  // there is a wait on that person, with its due word beside it
+  // (`WAITING ON ADA · OVERDUE`); his own keeps the word.
   const windowed = [...doorItems(asBoard(input), covered, now), ...room].map((row) => {
     const word = String((row as { _dueWord?: unknown })._dueWord ?? "");
     const owner = String(row.owner ?? "").trim();
