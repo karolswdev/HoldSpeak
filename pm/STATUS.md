@@ -53,6 +53,17 @@ canvas and #1572 its build (Mission control captions on a slate veil, the
 Record ring and clock, Context's pad). Whole browser suite on main after each
 batch: green modulo the Engines stillness flake. Open owner calls: the Note's
 first-line title; moving engine groups back from Codex when he is home.
+Evening: #1574 the last failure surfaces and the whole Rhythm face in plain
+words, #1575 mono text keeps its line through the webfont swap (the recurring
+Engines stillness red, fixed at its cause: a metric-twin fallback font + a
+guard), #1576 / #1578 / #1580 the remaining plainFailure callers, REFUSED
+receipts and success receipts in one case, #1577 feedback capture skips hidden
+subtrees (the recurring Firefox lifecycle red, fixed at its cause), #1579 four
+unit guards that were never in quick_check fixed at cause and added to it, plus
+the Remote access test case made fast. Whole browser suite on main 7981babc8:
+419 passed, 0 failed (the first fully green run with no flake). Left in the
+words wave: Runs on's success receipts and ~150 state-token vocabularies in
+caps.
 
 **The window grammar — 2026-10-24 (owner: "still look like pages inside OS-like
 containers"; "make it look nice and attractive, not boring"; then "that tilt…
