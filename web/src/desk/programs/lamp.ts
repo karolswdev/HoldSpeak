@@ -44,3 +44,38 @@ export function useProgramsLamp(): ProgramsLamp {
   useProgramFrames(() => load());
   return lamp;
 }
+
+/** Today's Since this morning line (design §9 Seams, "Today"): `Programs:
+ *  1 running, 1 waits on you`, when any Program moved today; else "". */
+export function programsTodayLine(programs: readonly { state: string; updated_at: string }[], now: Date): string {
+  const day = (value: Date) => `${value.getFullYear()}-${value.getMonth()}-${value.getDate()}`;
+  const moved = programs.filter((row) => {
+    const at = new Date(row.updated_at);
+    return Number.isFinite(at.getTime()) && day(at) === day(now);
+  });
+  if (!moved.length) return "";
+  const running = moved.filter((row) => row.state === "running").length;
+  const waiting = moved.filter((row) => row.state === "waiting" || row.state === "failed").length;
+  const done = moved.filter((row) => row.state === "done").length;
+  const parts = [
+    running ? `${running} running` : "",
+    waiting ? `${waiting} ${waiting === 1 ? "waits" : "wait"} on you` : "",
+    done ? `${done} done` : "",
+  ].filter(Boolean);
+  return parts.length ? `Programs: ${parts.join(", ")}` : "";
+}
+
+/** The Programs that moved today, read once (and on a Program frame). */
+export function useProgramsToday(now: Date): string {
+  const [rows, setRows] = useState<{ state: string; updated_at: string }[]>([]);
+  const alive = useRef(true);
+  useEffect(() => () => { alive.current = false; }, []);
+  const load = useCallback(() => {
+    void readPrograms()
+      .then((list) => { if (alive.current) setRows(list.programs); })
+      .catch(() => undefined);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  useProgramFrames(() => load());
+  return programsTodayLine(rows, now);
+}

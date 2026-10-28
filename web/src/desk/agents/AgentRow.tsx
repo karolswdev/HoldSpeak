@@ -11,6 +11,7 @@
  *  `wait_id`: the press is the authority for that one wait, so there is no
  *  ARM step (the hub checks the pane and the wait again before it types).
  */
+import { ProgramStepLine } from "../programs/StepLine";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
@@ -335,6 +336,7 @@ export function AgentRow({ member, question, waitId, lead, selected, onSelect, o
             <span>{agentName}</span>
             {member.facts.where ? <span className="kit-pill" data-tone="info">{String(member.facts.where)}</span> : null}
             {reviewWords(member.review) ? <span data-testid="conductor-review">{reviewWords(member.review)}</span> : null}
+            <ProgramStepLine program={member.program} />
           </span>
           {held ? (
             <>

@@ -130,19 +130,19 @@ export function durationWords(seconds: number | null | undefined): string {
   return `${days} ${days === 1 ? "day" : "days"}`;
 }
 
-/** `after 4, 5` (`after 1–19` for a run). */
+/** `after 4, 5` (`after 1 to 19` for a run). */
 export function afterWords(after: readonly number[]): string {
   if (!after.length) return "";
   const sorted = [...after].sort((a, b) => a - b);
   const run = sorted.length > 2 && sorted.every((value, index) => index === 0 || value === sorted[index - 1] + 1);
-  return run ? `after ${sorted[0]}–${sorted[sorted.length - 1]}` : `after ${sorted.join(", ")}`;
+  return run ? `after ${sorted[0]} to ${sorted[sorted.length - 1]}` : `after ${sorted.join(", ")}`;
 }
 
 /** The agent's name with its engine for pi (`pi · qwen3.8-27b on karol`). */
 export function runsOnWords(agent: string, engine: ProgramStep["engine"]): string {
   if (!engine) return agent;
   if (engine.assignment) return `${agent} · the desk's assignment`;
-  return `${agent} · ${engine.short || engine.label}`;
+  return `${agent} · ${engine.label || engine.short}`;
 }
 
 /** The sprite agent key of a profile (`claude`, `codex`, `pi`). */
@@ -182,7 +182,7 @@ export function stationsOf(step: ProgramStep): StationView[] {
     if (key === "check" && step.check.verdict) sub = step.check.verdict === "green" ? "green" : "log";
     if (key === "review" && step.review.verdict) sub = step.review.verdict === "pass" ? "passed" : "findings";
     if (key === "pr" && step.pr?.number) sub = `#${step.pr.number}`;
-    if (key === "merge" && step.state === "merged" && step.pr?.number) sub = `#${step.pr.number}`;
+    if (key === "merge" && finished && step.pr?.number) sub = `#${step.pr.number}`;
     const person = key === "review" && step.gate.review === "person" && step.for_person ? step.for_person : undefined;
     return {
       key, word: STATION_WORDS[key], sub, state, person,

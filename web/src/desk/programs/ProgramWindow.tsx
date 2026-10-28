@@ -22,15 +22,17 @@ import { openRef } from "../openObject";
 import { openProjectRoom } from "../shell";
 import { spriteUrl } from "../sprites";
 import { useDesk } from "../store";
+import { useCompactViewport } from "../useCompactViewport";
 import {
-  CheckGadget, DotWord, FoldGadget, ListView, PadGadget, StatusBar, SurfaceState, Toolbar,
+  CheckGadget, DotWord, FoldGadget, ListView, PadGadget, StatusBar, SurfaceState, Toolbar, countWords,
   type StatusBarItem,
 } from "../surface";
 import { useWindowInterior } from "../surface/interior";
 import { Token } from "../surface/Token";
 import { plainFail } from "../surface/plainFailure";
 import { useWindowTitle } from "../surface/title";
-import { decide, overturn, planProgram, programVerb, race, updateProgram, useProgram } from "./api";
+import { stateWords } from "../surface/words";
+import { closeProgram, decide, overturn, planProgram, programVerb, race, updateProgram, useProgram } from "./api";
 import { GateFold } from "./GateFold";
 import { CONTROLS, agentKey, controlValue, controlWord, durationWords, programTone } from "./model";
 import { runsOnLabel, DraftStepRow, StepRow } from "./StepRow";
@@ -44,14 +46,19 @@ const VERBS: Record<string, { choice: string; word: string; primary?: boolean }[
   finding: [{ choice: "fix_now", word: "Fix now", primary: true }, { choice: "later", word: "Later" }, { choice: "skip", word: "Skip" }],
   parked: [{ choice: "resume", word: "Resume", primary: true }, { choice: "skip", word: "Skip" }],
   ask_review: [{ choice: "prepare", word: "Send…", primary: true }],
+  core: [{ choice: "go_on", word: "Go on", primary: true }, { choice: "park", word: "Park" }],
+  race: [{ choice: "pick", word: "Pick", primary: true }],
+  add_step: [{ choice: "add", word: "Add", primary: true }, { choice: "skip", word: "Skip" }],
+  close: [{ choice: "close", word: "Close", primary: true }],
 };
 
 /** The quiet fact beside an item's verbs (`Check green · review passed`). */
 function itemFact(item: YourTurnItem, step: ProgramStep | undefined): string {
   if (item.kind === "merge") return step?.review.verdict === "pass" ? "Check green · review passed" : "Check green";
-  if (item.kind === "finding") return [item.level ? item.level.charAt(0).toUpperCase() + item.level.slice(1) : "", step?.rounds ? `after ${step.rounds} rounds` : ""].filter(Boolean).join(" · ");
+  if (item.kind === "finding") return [item.level ? stateWords(item.level.toUpperCase()) : "", step?.rounds ? `after ${step.rounds} rounds` : ""].filter(Boolean).join(" · ");
   if (item.kind === "answer") return "Asks you";
   if (item.kind === "parked") return step?.parked_reason ? "Parked" : "";
+  if (item.kind === "core") return "A core question";
   return "";
 }
 
@@ -63,7 +70,8 @@ function itemWords(item: YourTurnItem, step: ProgramStep | undefined): ReactNode
   else if (item.kind === "finding") tail = (step?.findings.find((finding) => finding.id === item.finding_id)?.text) ?? item.title;
   else if (item.kind === "parked") tail = step?.parked_reason ?? "it stopped";
   else if (item.kind === "answer") tail = `${step?.agent ?? "the agent"} asks you`;
-  else if (item.kind === "ask_review") return item.title;
+  else if (item.kind === "core") tail = item.reason ?? item.title;
+  else return item.title;
   return <><b>{head}:</b> {tail}</>;
 }
 
@@ -78,8 +86,9 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
     setFailed(null);
     const body: DecideBody = { kind: item.kind, choice };
     if (item.finding_id) body.finding_id = item.finding_id;
+    if (item.kind === "add_step" && item.proposal != null) body.finding_id = String(item.proposal);
     try {
-      onDecided(await decide(program.id, item.step_id, body));
+      onDecided(item.kind === "close" ? await closeProgram(program.id) : await decide(program.id, item.step_id, body));
     } catch (error) {
       setFailed(plainFail("Your answer did not reach the program", error, "The step is unchanged", "Try again"));
     } finally {
@@ -116,6 +125,14 @@ export function YourTurnWell({ program, onDecided }: { program: Program; onDecid
       {failed ? <p className="pg-failure" role="status" title={failed.title} data-testid="programs-turn-failure">{failed.words}</p> : null}
     </section>
   );
+}
+
+/** The check's name as the hub's status line says it (`quick_check.sh`). */
+function checkName(program: Program): string {
+  const said = /check: ([^·]+)/.exec(program.status_line ?? "")?.[1]?.trim();
+  if (said) return said;
+  const words = String(program.check_command ?? "").split(/\s+/).filter((word) => !word.includes("="));
+  return (words.find((word) => /\.(sh|py)$/.test(word)) ?? words[0] ?? "").split("/").pop() ?? "";
 }
 
 function lampOf(tone: ReturnType<typeof programTone>): StatusBarItem["lamp"] {
@@ -200,11 +217,11 @@ function DecidedFold({ program, open, onToggle, onOverturned }: {
   const [failed, setFailed] = useState<{ words: string; title: string } | null>(null);
   if (!rows.length) return null;
   const press = async (row: DecidedRow) => {
-    setBusy(row.id);
+    setBusy(String(row.id));
     setFailed(null);
     try {
-      const next = await overturn(program.id, row.id);
-      setDone((now) => ({ ...now, [row.id]: true }));
+      const next = await overturn(program.id, String(row.id));
+      setDone((now) => ({ ...now, [String(row.id)]: true }));
       onOverturned(next);
     } catch (cause) {
       setFailed(plainFail("The decision was not overturned", cause, "It stands", "Try again"));
@@ -216,9 +233,9 @@ function DecidedFold({ program, open, onToggle, onOverturned }: {
     <FoldGadget className="pg-decided" title="Decided for you" token={String(rows.length)} open={open} onToggle={onToggle}>
       <ul className="pg-ledger" data-testid="programs-decided">
         {rows.map((row) => {
-          const overturned = row.overturned || done[row.id];
+          const overturned = Boolean(row.overturned_at) || done[String(row.id)];
           const step = row.step_id ? program.steps.find((candidate) => candidate.id === row.step_id) : undefined;
-          const ordinal = row.ordinal ?? step?.ordinal;
+          const ordinal = step?.ordinal;
           return (
             <li key={row.id} className="pg-ledger-row pg-decided-row" data-overturned={overturned ? "" : undefined} data-testid="programs-decided-row" data-decision={row.id}>
               <span className="pg-ledger-at pg-decided-at">{clock(row.at)}</span>
@@ -229,7 +246,7 @@ function DecidedFold({ program, open, onToggle, onOverturned }: {
               <span className="pg-decided-verb">
                 {overturned ? <DotWord data-testid="programs-decided-overturned">Overturned</DotWord>
                   : row.overturnable ? (
-                    <Button dense variant="secondary" loading={busy === row.id} disabled={Boolean(busy)} onClick={() => void press(row)}
+                    <Button dense variant="secondary" loading={busy === String(row.id)} disabled={Boolean(busy)} onClick={() => void press(row)}
                       data-testid="programs-overturn">Overturn</Button>
                   ) : null}
               </span>
@@ -252,9 +269,16 @@ function toPlan(step: ProgramStep): PlanStep {
 
 /** The Program's place line (§9b): Project ▸ name · From … · For …, or the
  *  No project Token that files it. */
-function placeItems(program: Program, fileTo: (anchor: HTMLElement) => void): StatusBarItem[] {
+function placeItems(program: Program, fileTo: (anchor: HTMLElement) => void, compact = false): StatusBarItem[] {
   const place = program.place;
   const items: StatusBarItem[] = [];
+  // At 393 the 24 px bar holds no 44 px target: the place line is words
+  // (the project and the person open from the Programs list and the Room).
+  if (compact) {
+    if (place.project) items.push({ key: "project", testId: "programs-place-project", text: <span>{`Project ▸ ${place.project.name}`}</span> });
+    if (place.person) items.push({ key: "person", testId: "programs-place-person", text: <span>{`For ${place.person.name}`}</span> });
+    return items;
+  }
   if (place.project) {
     items.push({
       key: "project", testId: "programs-place-project",
@@ -308,6 +332,7 @@ export function ProgramBody({ programId }: { programId: string }) {
   const projects = useDesk((s) => s.items.project ?? []);
   useWindowInterior("list");
   useWindowTitle(program?.title ?? null, [program?.title]);
+  const compact = useCompactViewport();
 
   const drafting = program?.state === "drafting";
   useEffect(() => {
@@ -336,7 +361,7 @@ export function ProgramBody({ programId }: { programId: string }) {
   };
 
   if (loading || (error && !program) || !program) {
-    return <SurfaceState loading={loading} error={error ? plainFail("Could not read the program", error).words : undefined} onRetry={() => void reload()} />;
+    return <SurfaceState loading={loading} error={error ? "The program did not load. Nothing on it changed. Try again." : undefined} onRetry={() => void reload()} />;
   }
 
   const savePlan = (next: PlanStep[]) => {
@@ -354,15 +379,16 @@ export function ProgramBody({ programId }: { programId: string }) {
 
   const status: StatusBarItem[] = [
     { key: "state", lamp: lampOf(programTone(program.state)), live: program.state === "running", text: program.state === "done" && program.done_in ? `Done in ${program.done_in}` : program.state_word, testId: "programs-status-state" },
-    { key: "done", text: `${program.done} of ${program.total} done`, tick: program.done, testId: "programs-status-done" },
+    { key: "done", text: program.done ? `${program.done} of ${program.total} done` : countWords(program.total, "step"), tick: program.done || null, testId: "programs-status-done" },
     program.your_turn ? { key: "turn", text: `${program.your_turn} ${program.your_turn === 1 ? "waits" : "wait"} on you`, tick: program.your_turn, testId: "programs-status-turn" } : null,
-    program.check_command ? { key: "check", text: `check: ${program.check_command.split(/\s+/)[0].split("/").pop()}` } : null,
-    { key: "control", text: `control ${controlWord(program.control)}`, testId: "programs-status-control" },
-    ...placeItems(program, fileTo),
+    program.check_command ? { key: "check", text: <span>{`check: ${checkName(program)}`}</span> } : null,
+    // The ladder's own word (`YOLO` keeps its capitals: an element, not a wire token).
+    { key: "control", text: <span>{`control ${program.control_word || controlWord(program.control)}`}</span>, testId: "programs-status-control" },
+    ...placeItems(program, fileTo, compact),
   ].filter(Boolean) as StatusBarItem[];
 
   const idle = program.prefer_idle;
-  const defaultLabel = `Runs on: ${runsOnLabel(program.default.profile, program.default.engine)}`;
+  const defaultLabel = `Agent: ${runsOnLabel(program.default.profile, program.default.engine)}`;
 
   return (
     <div className="pg-window" data-testid="program-window" data-state={program.state} data-program={program.id}>
@@ -407,7 +433,7 @@ export function ProgramBody({ programId }: { programId: string }) {
             </div>
             <ListView label="Steps" className="pg-board" data-testid="programs-board">
               <div className="pg-board-head pg-draft-head" aria-hidden="true">
-                <span>Step</span><span>Owns</span><span>Runs on</span><span>Effort</span><span>After</span><span>Down time</span>
+                <span>Step</span><span>Owns</span><span>Agent</span><span>Effort</span><span>After</span><span>Down time</span>
               </div>
               <ul className="kit-listrows">
                 {(draft ?? []).map((step, index) => (

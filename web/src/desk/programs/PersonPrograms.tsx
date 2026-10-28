@@ -35,7 +35,7 @@ export function PersonPrograms({ programs, name }: { programs: readonly PersonPr
             </span>
             <StateChip state={programChip(row.state)} label={row.state_word} />
             <span className="kit-listrow-verbs">
-              <Button dense variant="ghost" onClick={() => openProgram(row.id)} aria-label={`Open ${row.title}`} data-testid="person-program-open">Open</Button>
+              <Button dense variant="ghost" onClick={() => openProgram(row.id)} aria-label={`Open ${row.title}`} data-testid="person-program-open">Open program</Button>
             </span>
           </li>
         ))}

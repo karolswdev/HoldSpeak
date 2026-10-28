@@ -39,7 +39,7 @@ export function GateFold({ step, open, onToggle }: { step: ProgramStep; open?: b
   const check = step.check;
   const tone = check.verdict === "green" ? "ok" : check.verdict ? "fail" : "idle";
   return (
-    <FoldGadget className="pg-gate" title="Gate" token={`step ${step.ordinal}, ${step.title}`} open={open} onToggle={onToggle}>
+    <FoldGadget className="pg-gate" title={<>Gate<span className="pg-fold-sub">{` · step ${step.ordinal}, ${step.title}`}</span></>} open={open} onToggle={onToggle}>
       <dl className="pg-gate-facts" data-testid="programs-gate">
         <dt>Track</dt>
         <dd><StationTrack form="words" stations={stationsOf(step)} data-testid="programs-gate-track" /></dd>

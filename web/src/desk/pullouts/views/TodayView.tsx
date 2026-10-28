@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openSurfaceOr } from "../../shell";
+import { useProgramsToday } from "../../programs/lamp";
 import { openSourceRef } from "../../surface/citations";
 import { calendarOpener, openDecisionRecord, openRef } from "../../openObject";
 import { useDesk } from "../../store";
@@ -168,8 +169,10 @@ export function openDone(ref: string): void {
   else openRef(ref);
 }
 
-function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now }: {
+function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now, programs = "" }: {
   rows: readonly DoneRow[]; failed: boolean; open: boolean; onToggle: () => void; onRetry: () => void; now: Date;
+  /** Programs (2026-10-28): `Programs: 1 running, 1 waits on you`, or "". */
+  programs?: string;
 }) {
   if (failed) {
     return (
@@ -189,6 +192,13 @@ function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now }: {
           {rows.length ? `${rows.length} done` : "Nothing done yet"}
         </span>
       </Button>
+      {programs ? (
+        <Button variant="chrome" className="today-done-row today-programs" data-kind="program" data-testid="today-programs"
+          onClick={() => openSurfaceOr("open-programs", "/")}>
+          <img src={`${GLYPHS}program.png`} alt="" width={20} height={20} draggable={false} />
+          <span className="today-done-title">{programs}</span>
+        </Button>
+      ) : null}
       {shown ? (
         <ul className="today-done-list" data-testid="today-done-rows">
           {rows.map((row) => {
@@ -374,6 +384,8 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     [agentSessions, agentFlights]);
   const finishedAgents = useMemo(() => agentFlights.filter((f) => f.state === "done" && f.isNew && f.launchId), [agentFlights]);
   const agentsWords = agentsLine(agentCounts.needYou, finishedAgents.length);
+  // Programs (2026-10-28): one Since this morning line when any moved today.
+  const programsToday = useProgramsToday(now);
   // Betterment A6: an automation's NEW result ("<name> has a new result").
   const news = useAutomationNews();
   const [loaded, setLoaded] = useState(false);
@@ -796,7 +808,7 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         </Toolbar>
         <div className="today-scroll">
           {evening && done ? (
-            <SinceThisMorning rows={done.rows} failed={done.failed} open={sinceShown} now={now}
+            <SinceThisMorning rows={done.rows} failed={done.failed} open={sinceShown} now={now} programs={programsToday}
               onToggle={() => setSinceOpen(!sinceShown)} onRetry={retry} />
           ) : null}
           <PreparedBlock read={prepared} events={door?.upcoming ?? []} />

@@ -124,10 +124,6 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
 #: Frames the hub emits that no web surface listens for, WITH the reason.
 #: Every entry here is a deliberate, named exception — never a silent one.
 EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
-    "program_changed": (
-        "consumed by PG-FACES: the Programs window, the Program window and the "
-        "Dock lamp subscribe in the faces lane of the same PR."
-    ),
     "wake_armed": (
         "Dormant desktop wake-word leg: arming is a host-side hotkey window "
         "with no web affordance; the web consumes only its result "

@@ -18,17 +18,21 @@ export type Control = "secure" | "normal" | "yolo";
 
 /** One engine decision, "Decided for you" (§6, §8, §9 item 3). */
 export interface DecidedRow {
-  id: string;
+  id: number | string;
   at: string;
   step_id: string | null;
-  ordinal?: number | null;
-  /** What was decided (`Merged step 3`, `SHOULD finding → Later`). */
+  /** The decision's kind and choice (`add_step` / `add`, `merge` / `merge`). */
+  kind?: string | null;
+  choice?: string | null;
+  /** What was decided (`Merged PR #101 of step 1 (check green)`). */
   line: string;
-  /** The rule, in muted words (`Normal merges on green and PASS`). */
-  rule: string;
+  /** The rule, in muted words (`YOLO: the engine adds a missing step and says so`). */
+  rule: string | null;
   /** It can still be undone (a merge cannot). */
   overturnable: boolean;
-  overturned?: boolean;
+  /** When he overturned it; null while it stands. */
+  overturned_at?: string | null;
+  operation_id?: string | null;
 }
 
 export interface ProgramCheckpoint {
@@ -38,12 +42,20 @@ export interface ProgramCheckpoint {
   by: "agent" | "engine" | "owner";
   line: string;
   operation_id?: string | null;
+  /** An engine decision's own fields (null on a plain checkpoint). */
+  kind?: string | null;
+  choice?: string | null;
+  rule?: string | null;
+  overturnable?: boolean;
+  overturned_at?: string | null;
 }
 
 /** The program's Runs on engine (pi only): `null` for Claude Code / Codex. */
 export interface ProgramEngine {
   id: string | null;
+  /** `qwen3.8-27b on karol`. */
   label: string;
+  /** `qwen` (the held word: `Ready · waiting for qwen`). */
   short: string;
   model?: string | null;
   /** No engine named: the desk's assignment for coding. */
@@ -65,6 +77,8 @@ export interface ProgramSummary {
   asks: number;
   project_id: string | null;
   control: Control;
+  /** `Secure`, `Normal`, `YOLO` (the Program wire only). */
+  control_word?: string;
   updated_at: string;
   created_at: string;
   last_checkpoint: ProgramCheckpoint | null;
@@ -115,7 +129,8 @@ export interface ProgramStep {
   held_reason: string | null;
   race: number;
   race_of: string | null;
-  gate: { check: boolean; review: "none" | "agent" | "person"; review_depth: string | null; merge: "owner" | "auto" | "none" | null };
+  /** `merge`: `level` (the Control level decides), `owner`, `auto`, `none`. */
+  gate: { check: boolean; review: "none" | "agent" | "person"; review_depth: string | null; merge: string | null };
   launch_id: string | null;
   branch: string | null;
   worktree: string | null;
@@ -149,7 +164,7 @@ export interface ProgramStep {
   contenders?: ProgramStep[];
 }
 
-export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review";
+export type YourTurnKind = "answer" | "merge" | "finding" | "parked" | "ask_review" | "core" | "race" | "add_step" | "close";
 
 export interface YourTurnItem {
   id: string;
@@ -168,6 +183,12 @@ export interface YourTurnItem {
   pr: { number: number | null; url: string | null } | null;
   finding_id?: string;
   level?: string;
+  /** A core question (the goal, the shape of the work, egress, money,
+   *  authority, safety, no rule): its reason. */
+  core?: boolean;
+  reason?: string | null;
+  /** add_step: the proposal's index (sent as `finding_id`). */
+  proposal?: number;
 }
 
 export interface ProgramPlace {
@@ -193,6 +214,9 @@ export interface Program extends ProgramSummary {
   checkpoints: ProgramCheckpoint[];
   your_turn_items: YourTurnItem[];
   decided_for_you?: DecidedRow[];
+  spend_limit_usd?: number | null;
+  /** He closed it (Secure). */
+  closed_at?: string | null;
   revision: number;
   status_line: string;
 }

@@ -37,7 +37,7 @@ function ProgramRow({ row }: { row: ProgramSummary }) {
         <span className="pg-row-title">{row.title}</span>
       </Button>
       <span className="pg-row-state"><StateChip state={programChip(row.state)} label={row.state_word} data-testid="programs-row-state" /></span>
-      <span className="pg-row-steps">{row.total ? `${row.done} of ${row.total} steps` : "No steps"}</span>
+      <span className="pg-row-steps">{row.total ? `${row.done} of ${row.total} ${row.total === 1 ? "step" : "steps"}` : "No steps"}</span>
       <span className="pg-row-in" data-tone={row.state === "done" ? "ok" : undefined}>{inState}</span>
       <span className="pg-row-line" title={line ?? undefined}>{line ? `“${line}”` : ""}</span>
     </li>
@@ -83,7 +83,7 @@ export function ProgramsCore(_props: CoreProps) {
 
   let body;
   if (loading || (error && !list.programs.length)) {
-    body = <SurfaceState loading={loading} error={error ? plainFail("Could not read the programs", error).words : undefined} onRetry={() => void reload()} />;
+    body = <SurfaceState loading={loading} error={error ? "The programs did not load. Nothing changed. Try again." : undefined} onRetry={() => void reload()} />;
   } else if (!list.programs.length) {
     body = (
       <SurfaceState empty emptyKind="program" emptyImage={spriteUrl("program", "programs")} emptyLabel="No program yet"

@@ -80,6 +80,11 @@ export async function overturn(programId: string, decisionId: string): Promise<P
     `${base(programId)}/decisions/${encodeURIComponent(decisionId)}/overturn`, { method: "POST", json: {} }));
 }
 
+/** Secure: he closes a Program whose steps are all finished. */
+export async function closeProgram(programId: string): Promise<Program | null> {
+  return unwrap(await apiFetch<Program | { program?: Program }>(`${base(programId)}/close`, { method: "POST", json: {} }));
+}
+
 export async function race(programId: string, stepId: string, n: number): Promise<Program | null> {
   return unwrap(await apiFetch<Program | { program?: Program }>(
     `${base(programId)}/steps/${encodeURIComponent(stepId)}/race`, { method: "POST", json: { n } }));

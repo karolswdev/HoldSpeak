@@ -43,7 +43,7 @@
 .pg-list-head,
 .pg-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1.4fr) 116px 96px 112px minmax(0, 1.6fr);
+  grid-template-columns: minmax(180px, 1.4fr) 116px 96px 156px minmax(0, 1.5fr);
   align-items: center;
   column-gap: 12px;
 }
@@ -143,7 +143,7 @@
   font: 600 12px / 1.3 var(--font-sans);
 }
 .pg-step {
-  --pg-cols: minmax(170px, 1.3fr) 262px 170px 56px minmax(0, 1.4fr) 64px;
+  --pg-cols: minmax(190px, 1.3fr) 246px 190px 96px minmax(0, 1.2fr) 88px;
 }
 .desk-next .kit-listrow.pg-step {
   display: grid;
@@ -196,8 +196,9 @@
   top: -6px;
   width: 8px;
   height: 14px;
-  border-left: 1px solid var(--wb-steel);
-  border-bottom: 1px solid var(--wb-steel);
+  background:
+    linear-gradient(var(--wb-steel), var(--wb-steel)) left top / 1px 100% no-repeat,
+    linear-gradient(var(--wb-steel), var(--wb-steel)) left bottom / 100% 1px no-repeat;
 }
 .pg-step[data-contender] .pg-step-name { font-weight: 500; }
 .pg-step-after,
@@ -222,6 +223,7 @@
 .pg-step-word[data-tone="fail"] { color: var(--wb-danger-ink); }
 .pg-step-word[data-tone="ask"] { color: var(--wb-ember-ink); }
 .pg-step-verbs { display: inline-flex; justify-content: flex-end; }
+.desk-next .pg-step-verbs .btn { white-space: nowrap; }
 .pg-step-chip,
 .pg-step-meta { display: none; }
 
@@ -296,7 +298,7 @@
 .pg-station[data-tone="ask"][data-state="current"] .pg-station-word { color: var(--wb-ember-ink); }
 .pg-station-sub { color: var(--wb-muted); font-weight: 400; }
 .pg-station-person { display: inline-flex; }
-.pg-station-person .kit-avatar { width: 16px; height: 16px; font-size: 9px; }
+.pg-station-person .kit-avatar { width: 18px; height: 18px; }
 /* The lit station breathes with the live lamp (kit-lamp-live, 2.4 s, a
    box-shadow): none under reduced motion; never on hover. */
 @media (prefers-reduced-motion: no-preference) {
@@ -449,3 +451,18 @@
 /* ── the Room's Programs fold (§9b) ── */
 .pg-room { margin: 8px 12px 0; }
 .desk-next .kit-listrow.pg-room-row .kit-listrow-main { padding-left: 4px; }
+
+/* ── the Agents row's step line (§9 Seams) ── */
+.desk-next .btn.pg-step-line {
+  min-height: 20px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-sel);
+  font: 400 12px / 1.3 var(--font-sans);
+}
+.desk-next .btn.pg-step-line:hover:not(:disabled) { transform: none; text-decoration: underline; }
+
+/* A fold's quiet words after its name (sans 12 muted, never mono). */
+.pg-fold-sub { color: var(--wb-muted); font-weight: 400; font-size: 12px; }

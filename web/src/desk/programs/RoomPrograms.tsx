@@ -37,7 +37,7 @@ export function RoomPrograms({ programs }: { programs: readonly RoomProgram[] })
               {row.your_turn ? <DotWord tone="ask">{`${row.your_turn} ${row.your_turn === 1 ? "waits" : "wait"} on you`}</DotWord> : null}
               <span className="kit-listrow-verbs">
                 <Button dense variant="secondary" onClick={() => openProgram(row.id)} aria-label={`Open ${row.title}`}
-                  data-testid="room-program-open">Open</Button>
+                  data-testid="room-program-open">Open program</Button>
               </span>
             </li>
           ))}

@@ -36,6 +36,8 @@ export function StepRow({
   const word = stepWord(step);
   const agent = agentKey(step.profile, step.agent);
   const started = step.state !== "planned" && step.state !== "ready";
+  // A step held for its engine names the engine it waits for.
+  const shown = started || Boolean(step.held_reason);
   const runsOn = runsOnWords(step.agent, step.engine);
   const when = step.elapsed;
   const after = afterWords(step.after);
@@ -64,7 +66,7 @@ export function StepRow({
       </span>
       <span className="pg-step-chip"><StateChip state={stepChip(step.state)} label={word} wordless={false} /></span>
       <span className="pg-step-agent">
-        {started && !contender ? (
+        {shown && !contender ? (
           <>
             {step.gate.review === "person" && step.for_person && (step.state === "pr_open" || step.state === "review") ? null : (
               <img className="pg-step-sprite" src={spriteUrl("coder", agent, "rest", agent, 20)} alt="" width={20} height={20} />
@@ -74,14 +76,14 @@ export function StepRow({
         ) : null}
       </span>
       <span className="pg-step-meta">
-        {[started ? runsOn : "", when, after].filter(Boolean).join(" · ")}
+        {[shown ? runsOn : "", when, after].filter(Boolean).join(" · ")}
         {line ? <span className="pg-step-meta-line"> · {line}</span> : null}
       </span>
       <span className="pg-step-when">{started ? when : ""}</span>
       <span className="pg-step-line" title={step.last_checkpoint?.line ?? undefined}>{line}</span>
       <span className="pg-step-verbs">
         {step.launch_id ? (
-          <Button dense variant="secondary" onClick={() => openRef(`launch:${step.launch_id}`)} data-testid="programs-step-open">Open</Button>
+          <Button dense variant="secondary" onClick={() => openRef(`launch:${step.launch_id}`)} data-testid="programs-step-open">Open lane</Button>
         ) : null}
       </span>
     </li>

@@ -98,7 +98,7 @@ export function RunsOnPicker({
         </svg>
       </Button>
       {open && rect ? (
-        <WorkMenu label="Runs on" x={rect.left} y={rect.bottom} opener={opener.current} autoFocus
+        <WorkMenu label="Agent" x={rect.left} y={rect.bottom} opener={opener.current} autoFocus
           returnFocus={() => opener.current?.focus()} entries={entries} onClose={() => setOpen(false)} />
       ) : null}
     </>
