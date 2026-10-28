@@ -19,6 +19,7 @@ import { dockChipMenuEntries } from "../../windowMenuAdapter";
 import { useOpenWindows, useShownName, useFrontWindowId, chipEls } from "./windowRegistry";
 import { windowIcons } from "./seatIcons";
 import { VerbGlyph } from "./VerbGlyph";
+import { TickNumber } from "../../surface/kit";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, PHONE_DOCK_APPLICATIONS } from "../../applications";
 import { useAgentsTile } from "../../conductor/fleetTile";
@@ -471,7 +472,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         {minimized ? seatLamp : null}
         {id === "intelligence:desk" && needsYouCount > 0 ? (
           <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-today-count" aria-hidden="true">
-            {needsYouCount}
+            <TickNumber value={needsYouCount} />
           </span>
         ) : null}
         {id === "conductor" && agentsTile.lamp ? (
@@ -479,7 +480,7 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
         ) : null}
         {id === "conductor" && agentsTile.needYou ? (
           <span className="desk-dock-badge" data-tone="ask" data-testid="desk-dock-agents-count" aria-hidden="true">
-            {agentsTile.needYou}
+            <TickNumber value={agentsTile.needYou} />
           </span>
         ) : null}
         {!compact && id === "surface-dictation" && micIsLive(mic) ? (

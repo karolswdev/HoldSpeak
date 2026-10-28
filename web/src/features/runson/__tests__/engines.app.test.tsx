@@ -120,6 +120,29 @@ describe("Engines — Found on this Mac (Betterment E2)", () => {
   });
 });
 
+describe("Engines — the empty list (DELIGHT 2)", () => {
+  it("no engine is the engine object, one line and Add an engine, which opens the kinds", async () => {
+    // The recorded fresh desk, with its one migrated speech engine unbound
+    // the way the hub records every other unassigned job (no engine at all).
+    const gets = structuredClone(recorded.nothingFound.gets) as unknown as Gets;
+    const answer = gets["/api/inference/assignments"] as { task_overrides: Array<{ id: string; effective: Record<string, unknown> }> };
+    const unassigned = answer.task_overrides.find((task) => task.effective.assignment == null)!.effective;
+    for (const task of answer.task_overrides)
+      if (task.effective.assignment != null) task.effective = { ...unassigned, capability_id: task.id };
+    hub(gets);
+    render(<RunsOnCore />);
+    const empty = await screen.findByTestId("runson-engines-empty");
+    const object = empty.querySelector('.surface-state[data-object="engine"]') as HTMLElement;
+    expect(object.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/cartridge\.png$/);
+    expect(object.querySelector(".surface-state-line")?.textContent).toBe("No engine yet");
+    expect(object.textContent).not.toMatch(/\b0\b/);
+    fireEvent.click(within(object).getByRole("button", { name: "Add an engine" }));
+    expect(await screen.findByTestId("runson-add-kinds")).toBeInTheDocument();
+    // The kinds are open: the empty state offers no second Add.
+    expect(within(object).queryByRole("button", { name: "Add an engine" })).toBeNull();
+  });
+});
+
 describe("Engines — pi on his LAN model (Betterment E7)", () => {
   const PI = (recorded as unknown as { pi: { steps: Step[] } }).pi.steps;
   const piStep = (name: string) => PI.find((s) => s.name === name)!;

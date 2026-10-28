@@ -19,7 +19,7 @@ import {
   SurfaceState,
 } from "../../../desk/surface/Surface";
 import { ToolGlyph, Toolbar } from "../../../desk/surface/kit";
-import { SpeakEmpty } from "./SpeakEmpty";
+import { SYSTEM_48 } from "../../../desk/systemSprites";
 import { useWindowInterior } from "../../../desk/surface/interior";
 import {
   CycleGadget,
@@ -177,7 +177,10 @@ export function Blocks() {
           error={resource.error}
           empty={!rows.length && !drafting}
           emptyLabel="No blocks yet"
-          emptyContent={<SpeakEmpty label="No blocks yet" hint="Say the name of a block to type its saved text" />}
+          emptyImage={SYSTEM_48.dockSpeak}
+          emptyKind="dictation"
+          onAction={() => setDrafting(true)}
+          actionLabel="New block"
           onRetry={() => void resource.reload()}
         >
           <ul className="surface-ledger-rows">

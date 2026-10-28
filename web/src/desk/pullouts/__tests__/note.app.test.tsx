@@ -315,6 +315,8 @@ describe("Direction A: the note's margin", () => {
     expect(within(margin).getByText("In the margin")).toBeInTheDocument();
     expect(container.querySelector(".thought-note-document")).toHaveClass("has-margin");
     expect(card).toHaveTextContent("Ask: What should I do about Jun?");
+    // DELIGHT slice 2: the card is about the note; its rule and lead take the note's hue.
+    expect(card).toHaveAttribute("data-kind", "note");
     await waitFor(() => expect(card).toHaveTextContent(THREAD.first.output.slice(0, 40)));
     expect(within(card).getAllByRole("button").map((b) => b.textContent)).toEqual(["Add to note", "Dismiss"]);
     // No band under the toolbar: the old question band left the flow.
@@ -361,6 +363,9 @@ describe("Direction A: the note's margin", () => {
     expect(within(margin).getByText("Found in this note")).toBeInTheDocument();
     // The delight: a 120 ms stagger, opacity only (CSS reads --arrive).
     expect(rows.map((row) => row.style.getPropertyValue("--arrive"))).toEqual(["0ms", "120ms"]);
+    // DELIGHT slice 2: each found row lands in its kind's wash (a task is an action, a decision a decision).
+    expect(rows.map((row) => row.getAttribute("data-kind"))).toEqual(["action", "action"]);
+    expect(screen.getAllByTestId("note-decisions-row").map((row) => row.getAttribute("data-kind"))).toEqual(["decision"]);
     // One verb at rest; More (Edit, Dismiss) is the row's quiet second key.
     expect(within(rows[0]).getByRole("button", { name: `Confirm: ${FIND.found.rows[0].text}` })).toBeInTheDocument();
     // A row whose words are on a line of the note is tied to it (press goes there).

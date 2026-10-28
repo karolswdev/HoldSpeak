@@ -4,7 +4,7 @@
  *  its kind for its hue. */
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { StatusBar } from "../kit";
+import { StatusBar, TickNumber } from "../kit";
 import { SurfaceState } from "../Surface";
 import { ObjectList } from "../objects/ObjectList";
 
@@ -45,6 +45,34 @@ describe("DELIGHT — the kit", () => {
     rerender(bar("2026-10-27T09:00:09Z"));
     expect(dot()).not.toBe(first);
     expect(dot().hasAttribute("data-pulse")).toBe(true);
+  });
+
+  it("slice 2: a count ticks (fades in once) when it changes after the first paint, never on the first paint", () => {
+    const { container, rerender } = render(<TickNumber value={4} />);
+    const tick = () => container.querySelector(".kit-tick")!;
+    expect(tick().textContent).toBe("4");
+    expect(tick().hasAttribute("data-tick")).toBe(false);
+    rerender(<TickNumber value={4} />);
+    expect(tick().hasAttribute("data-tick")).toBe(false);
+    rerender(<TickNumber value={3} />);
+    expect(tick().textContent).toBe("3");
+    expect(tick().hasAttribute("data-tick")).toBe(true);
+    const first = tick();
+    rerender(<TickNumber value={2} />);
+    expect(tick()).not.toBe(first);
+    expect(tick().textContent).toBe("2");
+  });
+
+  it("slice 2: a status item with a tick fades its words in once when its number changes", () => {
+    const bar = (n: number) => <StatusBar items={[{ key: "head", lamp: "ask", text: `${n} need you`, tick: n, testId: "head" }]} />;
+    const { rerender } = render(bar(8));
+    const head = () => screen.getByTestId("head");
+    expect(head().textContent).toBe("8 need you");
+    expect(screen.getByText("8 need you").hasAttribute("data-tick")).toBe(false);
+    rerender(bar(7));
+    expect(head().textContent).toBe("7 need you");
+    expect(screen.getByText("7 need you").classList.contains("kit-tick")).toBe(true);
+    expect(screen.getByText("7 need you").hasAttribute("data-tick")).toBe(true);
   });
 
   it("a dense list row names its kind (its hue reads from data-kind)", () => {

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PERSON_OPEN_EVENT } from "../../objectWindows";
-import { TodayView, countdown, currentStep, toFinish } from "./TodayView";
+import { TodayView, countdown, currentStep, dayGreeting, dayLight, dayPart, toFinish } from "./TodayView";
 
 const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn() }));
 vi.mock("../../shell", async () => {
@@ -38,6 +38,46 @@ afterEach(() => {
 });
 
 describe("PHILO-17 Today: the day as a timeline", () => {
+  it("DELIGHT slice 2: knows the hour — the greeting and the day's light", () => {
+    // 2026-10-27 is a Tuesday.
+    const at = (h: number, m = 0) => new Date(2026, 9, 27, h, m, 0);
+    expect(dayGreeting(at(7))).toBe("Tuesday morning");
+    expect(dayGreeting(at(14))).toBe("Tuesday afternoon");
+    expect(dayGreeting(at(19, 30))).toBe("Tuesday evening");
+    expect(dayGreeting(at(23))).toBe("Tuesday night");
+    expect(dayPart(at(4, 59))).toBe("night");
+    expect(dayPart(at(5))).toBe("morning");
+    expect(dayPart(at(12))).toBe("afternoon");
+    expect(dayPart(at(18))).toBe("evening");
+    expect(dayLight(at(7))).toBe("warm");
+    expect(dayLight(at(14))).toBeUndefined();
+    expect(dayLight(at(19))).toBe("cool");
+    expect(dayLight(at(2))).toBe("cool");
+  });
+
+  it("DELIGHT slice 2: after the day's last meeting the status bar says That is the day", async () => {
+    vi.setSystemTime(new Date(2026, 9, 12, 17, 30, 0));
+    hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
+      "/api/meetings?limit=40": () => json({ meetings: [{ id: "m1", title: "Payments weekly", started_at: inMinutes(-120),
+        transcriptWords: 40, intel_status: "ready", has_summary: true }] }),
+      "/api/desk/needs-you": () => json({ items: [] }),
+    });
+    render(<TodayView />);
+    expect((await screen.findByTestId("today-status-day")).textContent).toContain("That is the day");
+    expect(screen.queryByTestId("today-status-ahead")).toBeNull();
+  });
+
+  it("DELIGHT slice 2: the day line greets by the hour and the paper takes the light", async () => {
+    hub({ "/api/door": () => json({ calendar_configured: true, upcoming: [] }), "/api/desk/needs-you": () => json({ items: [] }) });
+    const { container } = render(<TodayView />);
+    // The suite's clock: Monday 12 Oct 2026, 09:00.
+    expect(screen.getByTestId("today-greeting").textContent).toBe("Monday morning");
+    expect(screen.getByTestId("today-day").textContent).toBe("Monday morning · 12 Oct");
+    expect(container.querySelector(".today")?.getAttribute("data-light")).toBe("warm");
+    await screen.findByTestId("today-toolbar");
+  });
+
   it("counts down in minutes, then hours, then now", () => {
     const now = new Date("2026-10-12T09:00:00");
     expect(countdown(new Date("2026-10-12T10:08:00"), now)).toBe("in 1 h 08 min");

@@ -19,7 +19,8 @@ import { useDesk } from "../../desk/store";
 import { openPerson, openRef } from "../../desk/openObject";
 import { openProjectRoom, openSurfaceOr } from "../../desk/shell";
 import { apiFetch } from "../../lib/api";
-import { Disclosure, MicButton, RefTokens, StandingPage, StringGadget } from "../../desk/surface";
+import { Disclosure, MicButton, RefTokens, StandingPage, StringGadget, SurfaceState } from "../../desk/surface";
+import { spriteUrl } from "../../desk/sprites";
 import { DotWord, StatusBar, ToolGlyph, countWords, hueOf, initialsOf } from "../../desk/surface/kit";
 import { AskComposer, AskEngineWord, AskSendButton } from "../../desk/components/askFace";
 import { useWindowInterior } from "../../desk/surface/interior";
@@ -364,7 +365,9 @@ function MemoryHome() {
             </p>
           ) : null}
           {nothingYet ? (
-            <p className="memory-line" data-testid="memory-nothing">No projects or people yet</p>
+            <div data-testid="memory-nothing">
+              <SurfaceState empty emptyLabel="No projects or people yet" emptyImage={spriteUrl("memory", "memory")} emptyKind="memory" />
+            </div>
           ) : null}
           <LinkGroup label="Projects" rows={projectRows} selected={chosen} onSelect={setSelected} onOpen={openLink} />
           <LinkGroup label="People" rows={personRows} selected={chosen} onSelect={setSelected} onOpen={openLink} />

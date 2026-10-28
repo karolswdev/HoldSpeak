@@ -40,6 +40,7 @@ import preparedFailed from "./fixtures/meetings-hub/prepared-failed.json";
 import comingUp from "./fixtures/coming-up/coming-up.json";
 import settingsWire from "./fixtures/settings-wire/settings.json";
 import { ComingUp } from "../../pages/cores/history/ComingUp";
+import { meetingRowView } from "../../pages/cores/history/CatalogRail";
 
 vi.mock("../shell", async (original) => ({
   ...(await original<typeof import("../shell")>()),
@@ -351,6 +352,9 @@ describe("the meeting after a run (HS-172 seed)", () => {
     const list = render(<Shell><HistoryCore /></Shell>);
     const row = await screen.findByTestId("meeting-row-m-queued");
     expect(within(row).getByTestId("state-token").textContent).toContain("Queued");
+    // DELIGHT 2 (small joys): a summary that runs is a blue dot that breathes.
+    expect(within(row).getByTestId("state-token")).toHaveAttribute("data-tone", "info");
+    expect(within(row).getByTestId("state-token")).toHaveAttribute("data-live");
     list.unmount();
     render(<Shell><MeetingRecord meetingId="m-queued" onClose={() => undefined} /></Shell>);
     await waitFor(() => expect(screen.getByTestId("meeting-summary-state").textContent).toBe("Summary queued"));
@@ -880,5 +884,32 @@ describe("One home for recording: Meetings ▸ Record (betterment/capture C7)", 
     fireEvent.click(toggle);
     await waitFor(() => expect(writes).toEqual([{ path: "/api/settings", method: "PUT", json: { meeting: { auto_record: "all_calendar" } } }]));
     expect(toggle.checked).toBe(true);
+  });
+});
+
+describe("DELIGHT 2 small joy: Try again turns the red dot blue, then green", () => {
+  // The recorded HS-170 rows: m-saved-clean (complete, nothing to review)
+  // and m-queued (queued). The failed row is m-saved-clean with the one field
+  // the hub writes on a failed run (`intel_status: "failed"`, helpers.ts
+  // stateToken).
+  const rows = (hs170 as Fixture)["/api/meetings?limit=100"] as { meetings: Array<Record<string, unknown>> };
+  const clean = rows.meetings.find((m) => m.id === "m-saved-clean")!;
+  const queued = rows.meetings.find((m) => m.id === "m-queued")!;
+  const failed: Record<string, unknown> = { ...clean, intel_status: "failed" };
+
+  it("failed is red with Retry; the press makes it blue and live; the stored summary is green", () => {
+    const before = meetingRowView(failed, { runningId: null });
+    expect(before).toMatchObject({ tone: "fail", live: false });
+    // The press: this client's run, before the hub's next read.
+    const pressed = meetingRowView(failed, { runningId: String(failed.id) });
+    expect(pressed).toMatchObject({ tone: "info", live: true, isRunning: true });
+    // The poll reads the hub's queued state: still blue.
+    expect(meetingRowView(queued, { runningId: null })).toMatchObject({ tone: "info", live: true });
+    // The run settles: the recorded complete row is green, the dot is still.
+    expect(meetingRowView(clean, { runningId: null })).toMatchObject({ tone: "ok", live: false });
+  });
+
+  it("a run that cannot drain stays red, never a calm blue", () => {
+    expect(meetingRowView(failed, { runningId: String(failed.id), drainerAbsent: true })).toMatchObject({ tone: "fail", live: false });
   });
 });

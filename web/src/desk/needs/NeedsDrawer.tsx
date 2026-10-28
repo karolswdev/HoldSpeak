@@ -31,7 +31,7 @@ import { PeopleReadFailed } from "../people/PeopleReadFailed";
 import { openProjectProposal, refOpener, type Opener } from "../openObject";
 import { openCoderSession, openProjectRoom, openSurfaceOr } from "../shell";
 import { useDesk } from "../store";
-import { ConfirmVerb, ScrollHint, StatusBar, StatusStrip, StringGadget, SurfaceSection, SurfaceState, Toolbar, type StatusBarItem } from "../surface";
+import { ConfirmVerb, ScrollHint, StatusBar, StatusStrip, StringGadget, SurfaceSection, SurfaceState, TickNumber, Toolbar, type StatusBarItem } from "../surface";
 import { openSourceRef } from "../surface/citations";
 import { NeedsList, NeedsRow } from "../surface/objects";
 import { spriteUrl } from "../sprites";
@@ -890,7 +890,7 @@ function Chip({ label, count, on, onPress, menu, testId }: {
       aria-haspopup={menu ? "menu" : undefined} data-testid={testId}
       aria-label={count != null ? `${label} · ${count}` : label}
       onClick={onPress}>
-      {label}{count != null ? <span className="needs-chip-count">{count}</span> : null}{menu && !on ? " ▾" : ""}
+      {label}{count != null ? <TickNumber className="needs-chip-count" value={count} /> : null}{menu && !on ? " ▾" : ""}
     </Button>
   );
 }
@@ -1223,8 +1223,12 @@ export function NeedsDrawer() {
       muted={muted.length > 0 ? muted.length : 0} showMuted={showMuted} setShowMuted={setShowMuted} />
   ) : null;
   const counted = Number(needs.count ?? 0) > 0;
+  // DELIGHT slice 2: the head's number ticks (with the dock's badge and the
+  // chips' counts) when a Done lands. Before the hub's first answer there is
+  // no number yet, so its arrival is not a tick.
   const statusItems: StatusBarItem[] = [
-    { key: "head", lamp: counted ? "ask" : coverage.complete ? "ok" : "warn", text: head, testId: "arrival-display" },
+    { key: "head", lamp: counted ? "ask" : coverage.complete ? "ok" : "warn", text: head,
+      tick: needsRead ? Number(needs.count ?? 0) : null, testId: "arrival-display" },
     next ? { key: "next", text: next, testId: "needs-next" } : null,
     outcome.receipt ? { key: "receipt", text: outcome.receipt, testId: "needs-receipt" } : null,
     !outcome.receipt && sourceReceipt

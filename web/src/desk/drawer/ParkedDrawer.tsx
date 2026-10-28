@@ -224,7 +224,7 @@ export function ParkedDrawer({ origin }: { origin: { x: number; y: number } | nu
           {!read && !failed ? (
             <SurfaceState loading />
           ) : !rows.length && notRead.length ? null : !rows.length ? (
-            <SurfaceState empty emptyLabel="Nothing parked" emptyImage={objectSprite("parked", "parked")} />
+            <SurfaceState empty emptyLabel="Nothing parked" emptyImage={objectSprite("parked", "parked")} emptyKind="parked" />
           ) : (
             <ObjectList
               label="Archive"

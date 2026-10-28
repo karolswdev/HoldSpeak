@@ -68,7 +68,7 @@ import {
 import { StringGadget } from "../../../desk/surface/gadgets";
 import { useWindowInterior } from "../../../desk/surface/interior";
 import { Toolbar } from "../../../desk/surface/kit";
-import { SpeakEmpty } from "./SpeakEmpty";
+import { SYSTEM_48 } from "../../../desk/systemSprites";
 
 type Row = Record<string, unknown>;
 
@@ -530,7 +530,7 @@ export function Journal({ exportVerb }: { exportVerb?: ReactNode } = {}) {
      soon as the ledger holds a row (design D2(b).3). */
   const hasAny = total > 0 || rows.length > 0;
   /* Two empty states, two true tokens (A.3's one sanctioned exception). */
-  const emptyLabel = hasAny ? "Nothing matches" : "Nothing said yet";
+  const emptyLabel = hasAny ? "Nothing matches" : "What you say shows here";
 
   return (
     <SurfaceSection className="speak-journal">
@@ -584,9 +584,8 @@ export function Journal({ exportVerb }: { exportVerb?: ReactNode } = {}) {
           error={error}
           empty={!filtered.length}
           emptyLabel={emptyLabel}
-          emptyContent={hasAny ? undefined : (
-            <SpeakEmpty label={emptyLabel} hint="What you say shows here, with the place it went" />
-          )}
+          emptyImage={hasAny ? undefined : SYSTEM_48.dockSpeak}
+          emptyKind={hasAny ? undefined : "dictation"}
           onRetry={() => void load()}
         >
           {days.map((day) => (

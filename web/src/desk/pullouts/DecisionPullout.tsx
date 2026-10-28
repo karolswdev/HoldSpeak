@@ -99,9 +99,13 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
   const [statusFailure, setStatusFailure] = useState("");
   const [retryStatus, setRetryStatus] = useState<string | null>(null);
   const statusWrite = useRef({ pending: false, generation: 0 });
+  // DELIGHT 2 (small joys): an Accept pressed in this window makes the status
+  // bar count what is left ("Accepted · 3 open"), from the desk's decisions.
+  const [acceptedHere, setAcceptedHere] = useState(false);
   useEffect(() => {
     setSavedStatus(null);
   }, [o.id, ir.status]);
+  useEffect(() => { setAcceptedHere(false); }, [o.id]);
   useEffect(() => () => { statusWrite.current.generation += 1; }, [o.id]);
   useEffect(() => () => { decisionWrite.current.generation += 1; }, [o.id]);
   useEffect(() => {
@@ -173,6 +177,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     const generation = statusWrite.current.generation;
     setSavingStatus(true);
     setStatusFailure("");
+    setAcceptedHere(false);
     try {
       const response = await apiRequest(`/api/decisions/${encodeURIComponent(o.id)}/status`, {
         method: "PUT",
@@ -182,7 +187,9 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
       if (!response.ok) throw response;
       const body = await response.json();
       if (generation !== statusWrite.current.generation) return;
-      setSavedStatus(String(body?.decision?.status ?? next));
+      const saved = String(body?.decision?.status ?? next);
+      setSavedStatus(saved);
+      setAcceptedHere(saved === "accepted");
       setRetryStatus(null);
       void useDesk.getState().refresh();
     } catch (cause) {
@@ -201,6 +208,11 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
   // and where it is filed (a press opens the drawers and Projects).
   const stateWord = DECISION_STATES.find((entry) => entry.value === status)?.label ?? "Open";
   const stateTone = status === "accepted" ? "ok" : status === "proposed" ? "ask" : "info";
+  // The receipt counts what is left: the other open decisions on the desk.
+  // No counter of zero: the last one reads "all decided".
+  const leftOpen = (items.decision || []).filter((candidate) => candidate.id !== o.id && candidate.status === "proposed").length;
+  const acceptedWords = acceptedHere && status === "accepted"
+    ? `Accepted · ${leftOpen > 0 ? `${leftOpen} open` : "all decided"}` : "";
   const receiptWords = copyReceipt || (editingDecision ? "Draft kept" : savedDecision ? "Saved" : "");
   const facts = [
     Array.isArray(ir.deciders) && ir.deciders.length ? ir.deciders.join(" · ") : "",
@@ -315,7 +327,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
         data-testid="desk-decision-status"
         items={[
           { key: "state", lamp: savingStatus || (editingDecision && savingDecision) ? "info" : stateTone, testId: "desk-decision-state",
-            text: savingStatus ? "Saving" : editingDecision && savingDecision ? "Saving" : facts ? `${stateWord} · ${facts}` : stateWord },
+            text: savingStatus ? "Saving" : editingDecision && savingDecision ? "Saving" : acceptedWords ? acceptedWords : facts ? `${stateWord} · ${facts}` : stateWord },
           receiptWords ? { key: "receipt", text: receiptWords } : null,
         ]}
         trailing={filed ? (

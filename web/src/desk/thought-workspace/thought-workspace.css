@@ -451,7 +451,9 @@
   padding: 8px 12px 9px;
   border-radius: 8px;
   background: var(--wb-well);
-  box-shadow: 0 10px 28px rgba(8, 14, 22, 0.22), 0 0 0 1px var(--wb-rule);
+  /* DELIGHT slice 2: the depth scale's card step, and a 3 px rule in the
+     kind's hue at its left edge (--row-kind from the token, objects.css). */
+  box-shadow: inset 3px 0 0 var(--row-kind, var(--kind-other)), var(--depth-card), 0 0 0 1px var(--wb-rule);
   color: var(--wb-ink);
   font: 400 12.5px/1.4 var(--font-ui);
   white-space: normal;
@@ -489,7 +491,7 @@
   border: 0;
   border-radius: 8px;
   background: var(--wb-well);
-  box-shadow: 0 10px 28px rgba(8, 14, 22, 0.22), 0 0 0 1px var(--wb-rule);
+  box-shadow: var(--depth-card), 0 0 0 1px var(--wb-rule); /* DELIGHT slice 2: the depth scale */
   overflow: hidden;
   font: 400 13px/1.3 var(--font-ui);
 }
@@ -1133,8 +1135,12 @@
 
 /* The lead: a thin line from the card to its line in the text, drawn by
    CSS from the measured offset (--lead, px from the card's top). */
+.desk-next .note-margin-card-place:has(> .note-margin-card[data-kind="note"]) {
+  --lead-tone: color-mix(in srgb, var(--kind-note) 55%, var(--wb-paper));
+}
+
 .desk-next .note-margin-card-place[data-lead]::before {
-  --lead-ink: linear-gradient(#8fb0e6, #8fb0e6);
+  --lead-ink: linear-gradient(var(--lead-tone, #8fb0e6), var(--lead-tone, #8fb0e6));
   content: "";
   position: absolute;
   left: -12px;
@@ -1165,7 +1171,7 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #8fb0e6;
+  background: var(--lead-tone, #8fb0e6);
   pointer-events: none;
 }
 
@@ -1173,7 +1179,9 @@
   padding: 8px 10px;
   border-radius: 7px;
   background: var(--wb-well);
-  box-shadow: 0 1px 3px rgba(22, 40, 62, 0.12), 0 0 0 1px var(--wb-rule-soft);
+  /* DELIGHT slice 2: the depth scale's row step, and a 3 px rule in the hue
+     of the object the card is about (MarginNote `kind`, a note by default). */
+  box-shadow: inset 3px 0 0 var(--row-kind, var(--kind-note)), var(--depth-row), 0 0 0 1px var(--wb-rule-soft);
   color: var(--wb-ink);
   font: 400 13px/1.45 var(--font-ui);
   user-select: text;
@@ -1252,8 +1260,11 @@
 
 .desk-next .note-margin-row {
   position: relative;
-  animation: note-margin-arrive 240ms ease-out both;
-  animation-delay: var(--arrive, 0ms);
+  /* DELIGHT slice 2: a found row lands in its kind's wash (a task the
+     action ember, a decision violet) and the wash fades to paper over
+     400 ms; colour and opacity only, the row never moves. */
+  animation: note-margin-arrive 240ms ease-out both, note-margin-wash 400ms ease-out backwards;
+  animation-delay: var(--arrive, 0ms), var(--arrive, 0ms);
 }
 
 .desk-next .note-margin-row:hover,
@@ -1364,6 +1375,28 @@
 @keyframes note-margin-arrive {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes note-margin-wash {
+  from { background-color: color-mix(in srgb, var(--row-kind, var(--kind-other)) 16%, var(--wb-paper)); }
+  to { background-color: transparent; }
+}
+
+/* DELIGHT slice 2: the lead from an Ask card to its line draws in from the
+   card toward the text (a clip, 200 ms, after the card has come up), then
+   its end dot comes up. A painted line, never a measured box. */
+@keyframes note-margin-lead-draw {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .desk-next .note-margin-card-place[data-lead]::before {
+    animation: note-margin-lead-draw 200ms ease-out 240ms backwards;
+  }
+  .desk-next .note-margin-card-place[data-lead]::after {
+    animation: note-margin-arrive 120ms ease-out 440ms backwards;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
