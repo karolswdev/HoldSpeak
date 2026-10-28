@@ -9,6 +9,7 @@ import { fromWireMeeting } from "./api";
 import { apiFetch } from "../lib/api";
 import {
   computeNeedsYou,
+  refreshNeedsYou,
   useNeedsYou,
   type NeedsYouDoorProjection,
   type NeedsYouInputs,
@@ -431,7 +432,7 @@ describe("the shared needs-you read", () => {
     }
   }, REAL_PRODUCER_TIMEOUT_MS);
 
-  it("uses the cached Room read on mount and poll, and fresh only for explicit refresh", async () => {
+  it("uses the cached Room read on mount, poll, and hook refresh; direct retries stay fresh", async () => {
     vi.useFakeTimers();
     try {
       const paths = installWire();
@@ -453,6 +454,12 @@ describe("the shared needs-you read", () => {
 
       paths.length = 0;
       await act(async () => { await hook.result.current.refresh(); });
+      expect(paths.filter((path) => path.startsWith("/api/desk/needs-you"))).toEqual([
+        "/api/desk/needs-you",
+      ]);
+
+      paths.length = 0;
+      await act(async () => { await refreshNeedsYou(true); });
       expect(paths.filter((path) => path.startsWith("/api/desk/needs-you"))).toEqual([
         "/api/desk/needs-you?fresh=1",
       ]);
@@ -511,15 +518,10 @@ describe("the shared needs-you read", () => {
     let releaseRoom!: (value: unknown) => void;
     const roomPending = new Promise((resolve) => { releaseRoom = resolve; });
     const paths: string[] = [];
-    let freshRoomReads = 0;
     vi.mocked(apiFetch).mockImplementation(asHub(async (path: string) => {
       paths.push(String(path));
       if (path === "/api/door") return { board: {} } as never;
       if (path === "/api/desk/needs-you") return roomPending as never;
-      if (path === "/api/desk/needs-you?fresh=1") {
-        freshRoomReads += 1;
-        return emptyRoom() as never;
-      }
       if (path === "/api/inference/assignments") return { ...noEngines, task_overrides: [] } as never;
       if (path.startsWith("/api/meetings?")) return { meetings: [], total: 0 } as never;
       if (path === "/api/settings/heartbeat") return { muted_projects: [] } as never;
@@ -534,7 +536,9 @@ describe("the shared needs-you read", () => {
       releaseRoom(emptyRoom());
       await Promise.all(refreshes);
     });
-    expect(freshRoomReads).toBe(1);
+    expect(paths.filter((path) => path.startsWith("/api/desk/needs-you"))).toEqual([
+      "/api/desk/needs-you",
+    ]);
     expect(first.result.current.complete).toBe(true);
     expect(second.result.current.complete).toBe(true);
     first.unmount();

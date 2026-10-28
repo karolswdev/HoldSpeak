@@ -124,6 +124,21 @@ describe("proposal confirmation result belongs to its write", () => {
   });
 });
 
+describe("decision writes refresh Needs you through the dirty cache", () => {
+  it("uses a plain read after accepting a decision", async () => {
+    const { result } = renderHook(() => useProjectRoomController("project:p1", "Test"));
+    await waitFor(() => expect(result.current.extrasStatus).toBe("ready"));
+    apiFetchMock.mockImplementation((url: string) => url === "/api/decisions/d1/accept"
+      ? Promise.resolve({ decision: { id: "d1" } }) : Promise.resolve(response(url)));
+
+    await act(async () => { await result.current.transition({ id: "d1" }, "accept"); });
+
+    await waitFor(() => expect(apiFetchMock.mock.calls.map(([url]) => url)
+      .filter((url): url is string => String(url).startsWith("/api/desk/needs-you"))).toContain("/api/desk/needs-you"));
+    expect(apiFetchMock.mock.calls.map(([url]) => url)).not.toContain("/api/desk/needs-you?fresh=1");
+  });
+});
+
 describe("useProjectRoomController — loadStatus discrimination", () => {
   it("starts idle when no scope is provided", () => {
     const { result } = renderHook(() => useProjectRoomController(undefined, undefined));
