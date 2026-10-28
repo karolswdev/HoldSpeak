@@ -112,6 +112,12 @@
 @container surface (max-width: 719px) {
   .runson-foot .btn { min-height: 44px; }
 }
+/* W4-PHONE (2026-10-27): in a narrow window the speech verb carries its
+   host on its title (as Speak and Live do); the host chip beside it took
+   the room the status bar's facts need ("2 en…" at 393). */
+@container surface (max-width: 559.9px) {
+  .runson-foot .runson-speech-host { display: none; }
+}
 
 /* PHILO-17 runsonfoot: an empty foot is a steel strip with nothing on it.
    On first use Runs on has no egress, no receipt and no verb, and the
