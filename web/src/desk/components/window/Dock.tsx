@@ -20,6 +20,7 @@ import { useOpenWindows, useShownName, useFrontWindowId, chipEls } from "./windo
 import { windowIcons } from "./seatIcons";
 import { VerbGlyph } from "./VerbGlyph";
 import { TickNumber } from "../../surface/kit";
+import { RecordClock } from "../RecordClock";
 import { ShortcutSheet } from "./ShortcutSheet";
 import { DOCK_APPLICATIONS, PHONE_DOCK_APPLICATIONS } from "../../applications";
 import { useAgentsTile } from "../../conductor/fleetTile";
@@ -290,6 +291,12 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
   const windows = useOpenWindows();
   const front = useFrontWindowId();
   const compact = useCompactViewport();
+  // W7: the phone's Record tile (Capture), for the clock above it.
+  const captureTile = useRef<HTMLElement | null>(null);
+  const captureRef = useCallback((winId: string) => (el: HTMLElement | null) => {
+    seatRef(winId)(el);
+    captureTile.current = el;
+  }, []);
   // HS-111-07 — the HS-101 B8 keyboard grammar (Cmd+1-Cmd+4, Cmd+W, Cmd+M, Ctrl+`,
   // Cmd+/) moved into desk/keymap.ts, driven by the registry's key
   // fields: ONE binder (refcounted -- the chrome mounts it too). The
@@ -582,10 +589,15 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
                 ? Boolean(windowsById[application.windowId])
                 : Boolean(windows.some((w) => w.id === winId));
             const minimized = running && panelMin.includes(winId);
+            // W7 (canvas 2026-10-28 (b)): on the phone the Capture tile is
+            // the Record tile; while a meeting records it wears the red ring
+            // (record-orb.css) and the clock above it.
+            const recordTile = application.windowId === "chair:capture";
             return (
               <Button
                 key={application.windowId}
-                ref={seatRef(winId)}
+                ref={recordTile ? captureRef(winId) : seatRef(winId)}
+                data-recording={recordTile && recording ? "" : undefined}
                 variant="chrome"
                 data-app={application.windowId}
                 data-drop={application.windowId === "conductor" && handOver === "drawer:conductor" ? true : undefined}
@@ -607,6 +619,12 @@ export function Dock({ center }: { center?: ReactNode } = {}) {
             );
           })}
         </>
+      ) : null}
+      {compact && recording ? (
+        <RecordClock
+          target={captureTile}
+          startedAt={recording.startedAt ? Date.parse(recording.startedAt) : null}
+        />
       ) : null}
       {/* The Record tile ends the applications (canvas D1). PHILO-17 (owner
           2026-10-10, "everything must become one desk"): the Chair/Floor

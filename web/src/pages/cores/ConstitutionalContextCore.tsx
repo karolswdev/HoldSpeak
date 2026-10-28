@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { CycleGadget, PadGadget } from "../../desk/surface/gadgets";
 import { StatusBar, Toolbar, type StatusBarItem } from "../../desk/surface/kit";
 import { useWindowInterior } from "../../desk/surface/interior";
 import { SurfaceSection, SurfaceState } from "../../desk/surface/Surface";
 import { apiFetch } from "../../lib/api";
+import { spriteUrl } from "../../desk/sprites";
 import type {
   ContextState,
   HistoryEntry,
@@ -17,6 +18,9 @@ import "./constitutional-context.css";
 const CHAR_LIMIT = 32_768;
 const WARN_THRESHOLD = 0.8;
 const NOT_SAVED = "Not saved";
+/** W7 (canvas 2026-10-28 (c), direction B): one fact a Senior Architect
+ * would write. It is the placeholder, and "Use the example" puts it in. */
+export const EXAMPLE_FACT = "I lead the payments platform team: three reports, Python 3.12, Postgres 16.";
 
 export function ConstitutionalContextCore() {
   const [ctx, setCtx] = useState<ContextState | null>(null);
@@ -28,6 +32,7 @@ export function ConstitutionalContextCore() {
   const [saveError, setSaveError] = useState("");
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [viewingRev, setViewingRev] = useState<number | null>(null);
+  const padRef = useRef<HTMLTextAreaElement | null>(null);
 
   const limit = ctx?.char_limit || CHAR_LIMIT;
   // The Toolbar and the editor run edge to edge (window grammar).
@@ -88,6 +93,19 @@ export function ConstitutionalContextCore() {
     setDirty(true);
   };
 
+  const useExample = () => {
+    setDraft(EXAMPLE_FACT);
+    setDirty(true);
+    setSaveError("");
+    // The caret goes to the end of the fact, so he can type the next line.
+    requestAnimationFrame(() => {
+      const pad = padRef.current;
+      if (!pad) return;
+      pad.focus();
+      pad.setSelectionRange(EXAMPLE_FACT.length, EXAMPLE_FACT.length);
+    });
+  };
+
   const exitHistory = () => {
     setViewingRev(null);
     setDraft(ctx?.content || "");
@@ -101,6 +119,8 @@ export function ConstitutionalContextCore() {
   const overLimit = charCount > limit;
   const nearLimit = pct >= WARN_THRESHOLD && !overLimit;
   const version = viewingRev === null ? "current" : String(viewingRev);
+  // W7 (c): while the pad is empty, the face says what it is for.
+  const empty = !draft.trim();
 
   if (ctx === null) {
     return (
@@ -181,10 +201,25 @@ export function ConstitutionalContextCore() {
         >
           {viewingRev !== null ? "Restore" : "Save"}
         </Button>
+        {empty && viewingRev === null ? (
+          <Button dense variant="ghost" data-testid="context-use-example" onClick={useExample}>
+            Use the example
+          </Button>
+        ) : null}
       </Toolbar>
 
       <SurfaceSection className="constitutional-context-editor-section">
+        {empty ? (
+          <div className="constitutional-context-head" data-testid="context-head">
+            <img src={spriteUrl("artifact", "context", "rest", null, 32)} alt="" width={32} height={32} />
+            <div>
+              <b>Every engine run reads this first</b>
+              <span>One fact per line. You can change it at any time.</span>
+            </div>
+          </div>
+        ) : null}
         <PadGadget
+          inputRef={padRef}
           label="Constitutional context"
           value={draft}
           onChange={(next) => {
@@ -198,7 +233,7 @@ export function ConstitutionalContextCore() {
               if (dirty && !overLimit) void save();
             }
           }}
-          placeholder={"Role, stack, rules\nOne fact per line"}
+          placeholder={EXAMPLE_FACT}
           rows={10}
           autoGrow
         />

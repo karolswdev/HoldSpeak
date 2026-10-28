@@ -221,8 +221,14 @@ export function stage(
   return map;
 }
 
+/** W7 (canvas 2026-10-28 (a)): the room under each overview plate for its
+ * caption (8 px air + a 24 px paper pill), so a caption never touches the
+ * next row or the dock. */
+export const EXPOSE_CAPTION = 32;
+
 /** Exposé: every shown window as a live plate in a grid of cells inside the
- * band, scaled (never reflowed) to fit its cell with a 20 px air. */
+ * band, scaled (never reflowed) to fit its cell with a 20 px air, and
+ * `EXPOSE_CAPTION` px under it for its name. */
 export function exposeGrid(
   ids: readonly string[],
   rects: Readonly<Record<string, Rect>>,
@@ -237,11 +243,12 @@ export function exposeGrid(
   const ch = (band.h - 40) / rows;
   ids.forEach((id, i) => {
     const r = rects[id] ?? { x: 0, y: 0, w: cw, h: ch };
-    const k = Math.min(1, (cw - 40) / r.w, (ch - 40) / r.h);
+    const k = Math.min(1, (cw - 40) / r.w, Math.max(1, ch - 40 - EXPOSE_CAPTION) / r.h);
     const w = r.w * k;
     const h = r.h * k;
     const px = 20 + (i % cols) * cw + (cw - w) / 2;
-    const py = 20 + Math.floor(i / cols) * ch + (ch - h) / 2;
+    // The plate and its caption are centred together in the cell.
+    const py = 20 + Math.floor(i / cols) * ch + (ch - h - EXPOSE_CAPTION) / 2;
     map.set(id, {
       rect: { x: `-1/2 + ${Math.round(px)}`, y: `-1/2 + ${Math.round(py)}`, w: r.w, h: r.h },
       k,

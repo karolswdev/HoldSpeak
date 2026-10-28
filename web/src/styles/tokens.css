@@ -283,6 +283,7 @@
   --desk-z-dock-under: 40; /* the dock on compact viewports — sheets own the phone's bottom */
   --desk-z-popover: 82; /* popovers/toasts above even the transient band */
   --desk-glass: #e9edf3; /* cool pale shell chrome */
+  --desk-expose-veil: rgba(18, 27, 38, 0.42); /* W7 2026-10-28: the overview veil, slate over the wallpaper (window-chrome.css .desk-expose-scrim) */
   --desk-window-fill: var(--wb-paper); /* near-white window paper */
   --desk-panel-fill: var(--wb-field); /* secondary cool slate panel fill */
   --desk-window-radius: 8px; /* modern window radius */

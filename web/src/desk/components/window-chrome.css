@@ -114,12 +114,23 @@
 }
 
 /* HS-97-06 — the exposé: the world dims below the window band while the
-   pick grid rides the transient band above it. */
+   pick grid rides the transient band above it. W7 (canvas 2026-10-28 (a)):
+   the wallpaper stays, under a slate veil with a 7 px blur (the floor icons
+   blur away: they cannot be picked here). */
 .desk-next .desk-expose-scrim {
   position: fixed;
   inset: 0;
   z-index: var(--desk-z-world-overlay);
-  background: var(--desk-glass);
+  background: var(--desk-expose-veil);
+  -webkit-backdrop-filter: blur(7px) saturate(1.1);
+  backdrop-filter: blur(7px) saturate(1.1);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .desk-next .desk-expose-scrim {
+    background: rgb(18, 27, 38);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 .desk-next .desk-expose {
   position: fixed;
@@ -1132,6 +1143,8 @@
   scale: var(--plate-k);
   transform-origin: 0 0;
   cursor: pointer;
+  /* W7 (canvas 2026-10-28 (a)): a scaled plate takes the card step. */
+  box-shadow: var(--depth-card);
 }
 .desk-next .desk-window-shell[data-plate="scaled"] > * {
   pointer-events: none;
@@ -1144,9 +1157,66 @@
   box-shadow: none;
   padding: 0;
 }
+/* W7: hover and focus draw a paper ring; the front plate a 3 px vivid-blue
+   ring. A ring is an outline: nothing moves. */
+.desk-next .desk-expose-cell.is-plate {
+  overflow: visible;
+  outline: 3px solid transparent;
+  outline-offset: 1px;
+}
 .desk-next .desk-expose-cell.is-plate:hover,
 .desk-next .desk-expose-cell.is-plate:focus-visible {
-  box-shadow: 0 0 0 3px var(--wb-blue);
+  box-shadow: none;
+  outline-color: color-mix(in srgb, var(--wb-paper) 85%, transparent);
+}
+.desk-next .desk-expose-cell.is-plate[data-front],
+.desk-next .desk-expose-cell.is-plate[data-front]:is(:hover, :focus-visible) {
+  outline-color: var(--wb-sel-vivid);
+}
+/* W7: the plate's caption, a paper pill 8 px under it: the 20 px glyph, the
+   name in 12 px semibold, a 3 px rule in the kind hue (--k) at its foot. */
+.desk-next .desk-expose-caption {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  max-width: 340px;
+  padding: 0 10px 0 4px;
+  border-radius: 7px;
+  background: var(--wb-paper);
+  color: var(--wb-ink);
+  box-shadow: var(--depth-row), inset 0 -3px 0 var(--k, var(--kind-other));
+  font: 600 12px / 16px var(--font-sans);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.desk-next .desk-expose-caption > img,
+.desk-next .desk-expose-caption-char {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.desk-next .desk-expose-caption-char {
+  display: inline-grid;
+  place-items: center;
+  font-size: 14px;
+}
+.desk-next .desk-expose-caption-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.desk-next .desk-expose-cell[data-front] .desk-expose-caption {
+  background: var(--wb-sel-vivid);
+  color: #fff;
+}
+.desk-next .desk-expose-cell[data-front] .desk-expose-caption > img {
+  border-radius: 4px;
+  background: var(--wb-paper);
 }
 /* L8: one steel divider on the seam of two touching windows. */
 .desk-next .desk-window-divider {

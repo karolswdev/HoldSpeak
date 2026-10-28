@@ -6,21 +6,22 @@
 // anywhere (the /live page, the CLI, the iPad) shows here and the orb can
 // only stop it — never double-start.
 import "./record-orb.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { apiFetch } from "../../lib/api";
 import { useRuntimeBus } from "../../runtime/RuntimeBus";
 import { useDesk } from "../store";
 import { SYSTEM_48 } from "../systemSprites";
 import { Button } from "../../components/signal/Signal";
 import { openSurfaceOr } from "../shell";
+import { RecordClock, useRecordingElapsed } from "./RecordClock";
 
 const RECORD_WING_LONG_PRESS_MS = 500;
 
 export function RecordOrb() {
   const state = useDesk((s) => s.recording);
   const external = useDesk((s) => s.recordingExternal);
-  const startedAt = useDesk((s) => s.recordingStartedAt);
-  const [elapsed, setElapsed] = useState("");
+  const elapsed = useRecordingElapsed();
+  const orbRef = useRef<HTMLButtonElement | null>(null);
   const longPressTimer = useRef<number | null>(null);
   const longPressed = useRef(false);
   const { subscribe } = useRuntimeBus();
@@ -66,18 +67,6 @@ export function RecordOrb() {
     };
   }, []);
 
-  useEffect(() => {
-    if (state !== "recording" || startedAt == null) {
-      setElapsed("");
-      return;
-    }
-    const t = window.setInterval(() => {
-      const s = Math.floor((Date.now() - startedAt) / 1000);
-      setElapsed(`${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`);
-    }, 1000);
-    return () => window.clearInterval(t);
-  }, [state, startedAt]);
-
   const recording = state === "recording";
   return (
     <div className="desk-orb-wrap">
@@ -93,7 +82,9 @@ export function RecordOrb() {
           <span className="desk-orb-elapsed">{elapsed}</span>
         )}
       </span>
+      <RecordClock target={orbRef} />
       <Button
+        ref={orbRef}
         variant="chrome"
         className={`desk-orb is-${state}`}
         onPointerDown={() => {
