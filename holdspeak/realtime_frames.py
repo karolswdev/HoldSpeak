@@ -75,6 +75,9 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "meeting_started",          # a meeting began
     "meeting_updated",          # title/tags changed mid-meeting
     "plugin_jobs_processed",    # the deferred plugin queue was drained
+    "program_changed",          # a Program or one of its steps moved (Programs
+                                #   2026-10-28): payload {program_id, step_id?,
+                                #   state, your_turn}
     "runtime_activity",         # the one activity line
     "runtime_queue",            # the deferred intel queue's real truth
     "scheduled_recording.arming",    # countdown before a scheduled capture fires
@@ -121,6 +124,10 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
 #: Frames the hub emits that no web surface listens for, WITH the reason.
 #: Every entry here is a deliberate, named exception — never a silent one.
 EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
+    "program_changed": (
+        "consumed by PG-FACES: the Programs window, the Program window and the "
+        "Dock lamp subscribe in the faces lane of the same PR."
+    ),
     "wake_armed": (
         "Dormant desktop wake-word leg: arming is a host-side hotkey window "
         "with no web affordance; the web consumes only its result "

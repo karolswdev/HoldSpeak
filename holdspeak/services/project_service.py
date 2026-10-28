@@ -850,9 +850,17 @@ class ProjectService:
             # HS-174-04: pipeline receipts scoped to this project.
             "receipts": self._room_section(
                 "receipts", lambda: self._read_room_receipts(project_id)),
+            # Programs (2026-10-28, §9b): the Room's Programs fold, worst first.
+            "programs": self._room_section(
+                "programs", lambda: self._read_room_programs(project_id)),
         }
 
     # ── room sub-readers (fault-isolated) ────────────────────────────
+
+    def _read_room_programs(self, project_id: str) -> dict[str, Any]:
+        from .program_service import ProgramService
+
+        return {"programs": ProgramService(self._db).for_project(project_id)}
 
     @staticmethod
     def _room_section(name: str, fn: Any) -> dict[str, Any]:

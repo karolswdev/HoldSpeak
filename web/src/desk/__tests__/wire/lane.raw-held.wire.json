@@ -1,12 +1,12 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T02:01:25.941609Z",
+  "captured_at": "2026-10-28T18:05:39.631823Z",
   "wire": {
     "answers": [],
     "attempt_events": [
       {
         "from": null,
-        "occurred_at": "2026-10-28T02:01:25.799600Z",
+        "occurred_at": "2026-10-28T18:05:39.494517Z",
         "reason": "created:launch",
         "to": "working"
       }
@@ -29,7 +29,7 @@
         "id": 1,
         "text": null,
         "tool": null,
-        "ts": "2026-10-28T02:01:24.617916Z"
+        "ts": "2026-10-28T18:05:38.335534Z"
       },
       {
         "detail": {},
@@ -38,7 +38,7 @@
         "id": 2,
         "text": "Write the ledger rollback runbook.",
         "tool": null,
-        "ts": "2026-10-28T02:01:24.618902Z"
+        "ts": "2026-10-28T18:05:38.336485Z"
       },
       {
         "detail": {
@@ -49,7 +49,7 @@
         "id": 3,
         "text": null,
         "tool": "Read",
-        "ts": "2026-10-28T02:01:24.619742Z"
+        "ts": "2026-10-28T18:05:38.337185Z"
       },
       {
         "detail": {
@@ -60,7 +60,7 @@
         "id": 4,
         "text": null,
         "tool": "Grep",
-        "ts": "2026-10-28T02:01:24.620478Z"
+        "ts": "2026-10-28T18:05:38.337842Z"
       },
       {
         "detail": {
@@ -71,7 +71,7 @@
         "id": 5,
         "text": null,
         "tool": "Read",
-        "ts": "2026-10-28T02:01:24.621088Z"
+        "ts": "2026-10-28T18:05:38.338467Z"
       },
       {
         "detail": {},
@@ -80,7 +80,7 @@
         "id": 6,
         "text": "I will draft the runbook from the freeze decision and the Nov 12 rollback window.",
         "tool": null,
-        "ts": "2026-10-28T02:01:24.621704Z"
+        "ts": "2026-10-28T18:05:38.339082Z"
       },
       {
         "detail": {
@@ -91,7 +91,7 @@
         "id": 7,
         "text": null,
         "tool": "Write",
-        "ts": "2026-10-28T02:01:24.622316Z"
+        "ts": "2026-10-28T18:05:38.339777Z"
       },
       {
         "detail": {
@@ -102,7 +102,7 @@
         "id": 8,
         "text": null,
         "tool": "Bash",
-        "ts": "2026-10-28T02:01:24.622883Z"
+        "ts": "2026-10-28T18:05:38.340713Z"
       },
       {
         "detail": {},
@@ -111,7 +111,7 @@
         "id": 9,
         "text": "The runbook needs a rollback owner. Jordan or Avery?",
         "tool": null,
-        "ts": "2026-10-28T02:01:25.797738Z"
+        "ts": "2026-10-28T18:05:39.492943Z"
       }
     ],
     "events_next_after": null,
@@ -173,7 +173,7 @@
         "args_head": "{\"command\":\"cd /private/var/folders/q7/T/hs-r2/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558 && pwd",
         "args_hidden": 133,
         "args_shown": "cd /private/var/folders/q7/T/hs-r2/.holdspeak/repositories/karolswdev/holdspeak-dayone-rehearsal-1558 && pwd",
-        "created_at": 1793152885.807412,
+        "created_at": 1793210739.501743,
         "decided_at": null,
         "decided_by": null,
         "hold_reason": "OUTSIDE THE WORKTREE",
@@ -219,7 +219,7 @@
         "args_head": "{\"command\":\"psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
         "args_hidden": 90,
         "args_shown": "psql -h staging-ledger -U ops -d payments -c 'select count(*) from entries where ledger_id = 777777777777777",
-        "created_at": 1793152885.820587,
+        "created_at": 1793210739.515265,
         "decided_at": null,
         "decided_by": null,
         "hold_reason": "OUTSIDE THE WORKTREE",
@@ -265,7 +265,7 @@
         "args_head": "{\"command\":\"cat > /tmp/hs_huge.txt <<'EOF'\\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
         "args_hidden": 65927,
         "args_shown": "cat > /tmp/hs_huge.txt <<'EOF'\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        "created_at": 1793152885.833241,
+        "created_at": 1793210739.528779,
         "decided_at": null,
         "decided_by": null,
         "hold_reason": "OUTSIDE THE WORKTREE",
@@ -310,7 +310,7 @@
     "last_words": "I will draft the runbook from the freeze decision and the Nov 12 rollback window.",
     "launch": {
       "agent": "claude",
-      "attempt_id": "att_2c1bab3b2d624cff",
+      "attempt_id": "att_304f48819e524742",
       "branch": "hs/write-the-rollback-runbook",
       "brief_sent_at": null,
       "brief_text": "Write the ledger rollback runbook.\n\nSources: the freeze decision; the Nov 12 window.\nChecks: the runbook names an owner.",
@@ -319,7 +319,7 @@
       "gate": "gated",
       "instruction_state": "sent",
       "launch_id": "launch_c2_runbook",
-      "launched_at": "2026-10-28T01:41:25.800083Z",
+      "launched_at": "2026-10-28T17:45:39.495008Z",
       "origin_ref": {
         "id": "m-cutover-a1",
         "kind": "action"
@@ -336,14 +336,14 @@
       "worktree_path": "~/dev/wt/hs-action-runbook"
     },
     "session": {
-      "created_at": "2026-10-28T02:01:24.617916Z",
+      "created_at": "2026-10-28T18:05:38.335534Z",
       "event_count": 9,
       "last_assistant_text": null,
       "last_tool_name": "Bash",
       "lifecycle": "waiting",
       "model": null,
       "state": "waiting",
-      "updated_at": "2026-10-28T02:01:25.797738Z"
+      "updated_at": "2026-10-28T18:05:39.492943Z"
     },
     "usage": null,
     "used": {
@@ -360,9 +360,9 @@
       },
       "kind": "TO ANSWER",
       "question": "The runbook needs a rollback owner. Jordan or Avery?",
-      "started": "2026-10-28T02:01:25.797738Z",
+      "started": "2026-10-28T18:05:39.492943Z",
       "turn_end": "asks",
-      "wait_id": "2026-10-28T02:01:25.797738Z#9",
+      "wait_id": "2026-10-28T18:05:39.492943Z#9",
       "wait_kind": "answer"
     },
     "worktree": {
@@ -370,8 +370,8 @@
       "branch": "hs/write-the-rollback-runbook",
       "commits": [
         {
-          "at": 1793152885,
-          "sha": "d8dd041",
+          "at": 1793210739,
+          "sha": "be80e63",
           "subject": "Draft the ledger rollback runbook"
         }
       ],
@@ -385,7 +385,7 @@
           "status": "A"
         }
       ],
-      "read_at": 1793152885.9382038,
+      "read_at": 1793210739.628504,
       "uncommitted": {
         "modified": 0,
         "staged": 0,

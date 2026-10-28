@@ -44,7 +44,8 @@ if [ -n "$uncovered" ]; then
   printf '%s\n' "$uncovered" | sed 's/^/   /'
 fi
 
-HOME_REAL="$HOME"; H="$(mktemp -d)"
+# A caller that already isolated HOME (the Programs engine) names the real one.
+HOME_REAL="${HOME_REAL:-$HOME}"; H="$(mktemp -d)"
 log_dir="${QUICK_LOG_DIR:-.tmp/quick-check/$(date +%Y%m%d-%H%M%S)}"
 keep_logs() {
   mkdir -p "$log_dir"
@@ -62,6 +63,7 @@ fail=0
 #      bundle under a locked browser run) ───────────────────────────────────────
 echo "== build"
 lock npm --prefix web run build >"$H/build.log" 2>&1 || { tail -20 "$H/build.log"; red "the web build failed"; }
+echo "   build ok"
 
 # ── 3. vitest related ────────────────────────────────────────────────────────
 web="$(printf '%s\n' "$changed" | grep -E '^web/src/.*\.(ts|tsx|css)$' | sed 's#^web/##' || true)"

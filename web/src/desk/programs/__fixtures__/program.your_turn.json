@@ -1,0 +1,865 @@
+{
+  "asks": 0,
+  "check_command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+  "checkpoints": [
+    {
+      "at": "2026-10-28T17:50:11.177680+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 50,
+      "kind": null,
+      "line": "2 findings for you",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-e650b8b2deb1",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:11.170602+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 49,
+      "kind": null,
+      "line": "Review round 2",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-e650b8b2deb1",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.935929+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 48,
+      "kind": null,
+      "line": "Merge? PR #103: check green, review passed",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-9eb4521d06dc",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.909078+00:00",
+      "by": "engine",
+      "choice": "fix",
+      "id": 47,
+      "kind": "finding_required",
+      "line": "Round 1: 1 REQUIRED finding back to the builder",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "a REQUIRED finding goes back to the builder (round 1 of 2)",
+      "step_id": "step-e650b8b2deb1",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.908590+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 46,
+      "kind": null,
+      "line": "Opened PR #103",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-9eb4521d06dc",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.804414+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 45,
+      "kind": null,
+      "line": "Review passed (round 1)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-9eb4521d06dc",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.370163+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 43,
+      "kind": null,
+      "line": "The program waits on you",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.369317+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 42,
+      "kind": null,
+      "line": "A core question for you: it touches files no step owns (other/thing.py)",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2909f8dbb559",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.311551+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 41,
+      "kind": null,
+      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-2909f8dbb559/.tmp/program-check/step-2909f8dbb559/20261028T175010Z.log",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2909f8dbb559",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.228840+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 40,
+      "kind": null,
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2909f8dbb559",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.228372+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 39,
+      "kind": null,
+      "line": "New commit 3eb6b0e3; the check runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2909f8dbb559",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.205455+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 38,
+      "kind": null,
+      "line": "Codex reviews at depth delta",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-e650b8b2deb1",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.145161+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 37,
+      "kind": null,
+      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-e650b8b2deb1/.tmp/program-check/step-e650b8b2deb1/20261028T175010Z.log",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-e650b8b2deb1",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.058055+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 36,
+      "kind": null,
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-e650b8b2deb1",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.057586+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 35,
+      "kind": null,
+      "line": "New commit 8dc0b18b; the check runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-e650b8b2deb1",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:10.016616+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 34,
+      "kind": null,
+      "line": "Codex reviews at depth delta",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-9eb4521d06dc",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:09.933169+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 33,
+      "kind": null,
+      "line": "Checked · green · under a minute · /private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-9eb4521d06dc/.tmp/program-check/step-9eb4521d06dc/20261028T175009Z.log",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-9eb4521d06dc",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:09.835579+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 32,
+      "kind": null,
+      "line": "Running the check: sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-9eb4521d06dc",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:09.835182+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 31,
+      "kind": null,
+      "line": "New commit 2fb106cd; the check runs",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-9eb4521d06dc",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:09.491063+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 30,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-2909f8dbb559",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-2909f8dbb559",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:09.359448+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 29,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-e650b8b2deb1",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-e650b8b2deb1",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:09.171783+00:00",
+      "by": "engine",
+      "choice": null,
+      "id": 28,
+      "kind": null,
+      "line": "Handed to Claude Code in hs-program-step-9eb4521d06dc",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "step-9eb4521d06dc",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:09.023409+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 27,
+      "kind": null,
+      "line": "Started the program",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:09.022105+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 26,
+      "kind": null,
+      "line": "Added 3 steps",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    },
+    {
+      "at": "2026-10-28T17:50:09.020213+00:00",
+      "by": "owner",
+      "choice": null,
+      "id": 25,
+      "kind": null,
+      "line": "Made the program from the Build and review template",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": null,
+      "step_id": "",
+      "undo": {}
+    }
+  ],
+  "closed_at": null,
+  "control": "secure",
+  "control_word": "Secure",
+  "created_at": "2026-10-28T17:50:09.020086+00:00",
+  "decided_for_you": [
+    {
+      "at": "2026-10-28T17:50:10.909078+00:00",
+      "choice": "fix",
+      "id": 47,
+      "kind": "finding_required",
+      "line": "Round 1: 1 REQUIRED finding back to the builder",
+      "operation_id": null,
+      "overturnable": false,
+      "overturned_at": null,
+      "rule": "a REQUIRED finding goes back to the builder (round 1 of 2)",
+      "step_id": "step-e650b8b2deb1"
+    }
+  ],
+  "default": {
+    "agent": "Claude Code",
+    "engine": null,
+    "profile": "claude-default"
+  },
+  "done": 0,
+  "for_person_id": null,
+  "goal": "The words wave.",
+  "id": "program-2d8660fe0960",
+  "in_state_seconds": 2,
+  "last_checkpoint": {
+    "at": "2026-10-28T17:50:11.177680+00:00",
+    "by": "engine",
+    "choice": null,
+    "id": 50,
+    "kind": null,
+    "line": "2 findings for you",
+    "operation_id": null,
+    "overturnable": false,
+    "overturned_at": null,
+    "rule": null,
+    "step_id": "step-e650b8b2deb1",
+    "undo": {}
+  },
+  "note_id": "program-program-2d8660fe0960",
+  "note_window": "pullout:note:program-program-2d8660fe0960",
+  "origin_ref": null,
+  "place": {
+    "origin": null,
+    "person": null,
+    "project": {
+      "id": "proj-holdspeak",
+      "name": "HoldSpeak"
+    }
+  },
+  "prefer_idle": false,
+  "project_id": "proj-holdspeak",
+  "repository": {
+    "base_branch": "main",
+    "label": "app",
+    "root": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/app"
+  },
+  "reviewer": {
+    "agent": "Codex",
+    "engine": null,
+    "profile": "codex-default"
+  },
+  "revision": 3,
+  "spend_limit_usd": null,
+  "state": "waiting",
+  "state_word": "Your turn",
+  "status_line": "Your turn · 0 of 3 done · 4 waits on you · check: fake_program_check.sh · control Secure",
+  "steps": [
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": "program/the-words-wave/1-settings-words",
+      "brief": "Plain words in Settings.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+        "commit": "2fb106cd4b859be40ee90f3fd9302a2260b4ab92",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-9eb4521d06dc/.tmp/program-check/step-9eb4521d06dc/20261028T175009Z.log",
+        "minutes": 0.0,
+        "reasons": [],
+        "running": false,
+        "sections": [
+          {
+            "name": "build",
+            "state": "green"
+          },
+          {
+            "name": "vitest",
+            "state": "green"
+          },
+          {
+            "name": "pytest",
+            "state": "green"
+          },
+          {
+            "name": "sweep",
+            "state": "green"
+          },
+          {
+            "name": "canon",
+            "state": "green"
+          },
+          {
+            "name": "repo",
+            "state": "green"
+          }
+        ],
+        "verdict": "green"
+      },
+      "contenders": [],
+      "effort": "low",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 3,
+      "ended_at": null,
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "agent",
+        "review_depth": "delta"
+      },
+      "held_reason": null,
+      "id": "step-9eb4521d06dc",
+      "last_checkpoint": {
+        "at": "2026-10-28T17:50:10.935929+00:00",
+        "by": "engine",
+        "choice": null,
+        "id": 48,
+        "kind": null,
+        "line": "Merge? PR #103: check green, review passed",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "rule": null,
+        "step_id": "step-9eb4521d06dc",
+        "undo": {}
+      },
+      "launch_id": "L5",
+      "ordinal": 1,
+      "origin_ref": null,
+      "owns": [
+        "web/src/desk/settings/words.ts"
+      ],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": {
+        "number": 103,
+        "url": "https://github.com/acme/app/pull/103"
+      },
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": "Codex",
+        "round": 1,
+        "verdict": "pass"
+      },
+      "rounds": 0,
+      "started_at": "2026-10-28T17:50:09.171416+00:00",
+      "state": "merge_ask",
+      "state_word": "Merge?",
+      "station": 5,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "Settings words",
+      "updated_at": "2026-10-28T17:50:10.935737+00:00",
+      "worktree": "hs-program-step-9eb4521d06dc"
+    },
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": "program/the-words-wave/2-dock-words",
+      "brief": "Plain words on the Dock.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+        "commit": "8dc0b18b71b4cc1d9d0b8f8b265868b07b977780",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-e650b8b2deb1/.tmp/program-check/step-e650b8b2deb1/20261028T175010Z.log",
+        "minutes": 0.0,
+        "reasons": [],
+        "running": false,
+        "sections": [
+          {
+            "name": "build",
+            "state": "green"
+          },
+          {
+            "name": "vitest",
+            "state": "green"
+          },
+          {
+            "name": "pytest",
+            "state": "green"
+          },
+          {
+            "name": "sweep",
+            "state": "green"
+          },
+          {
+            "name": "canon",
+            "state": "green"
+          },
+          {
+            "name": "repo",
+            "state": "green"
+          }
+        ],
+        "verdict": "green"
+      },
+      "contenders": [],
+      "effort": "low",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 3,
+      "ended_at": null,
+      "engine": null,
+      "findings": [
+        {
+          "core": false,
+          "decision": null,
+          "id": "f1",
+          "level": "REQUIRED",
+          "text": "the empty state still says nothing",
+          "to_owner": true
+        },
+        {
+          "core": false,
+          "decision": null,
+          "id": "s1",
+          "level": "SHOULD",
+          "text": "sentence case the title",
+          "to_owner": true
+        }
+      ],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "agent",
+        "review_depth": "delta"
+      },
+      "held_reason": null,
+      "id": "step-e650b8b2deb1",
+      "last_checkpoint": {
+        "at": "2026-10-28T17:50:11.177680+00:00",
+        "by": "engine",
+        "choice": null,
+        "id": 50,
+        "kind": null,
+        "line": "2 findings for you",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "rule": null,
+        "step_id": "step-e650b8b2deb1",
+        "undo": {}
+      },
+      "launch_id": "L6",
+      "ordinal": 2,
+      "origin_ref": null,
+      "owns": [
+        "web/src/desk/dock/words.ts"
+      ],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": "Codex",
+        "round": 2,
+        "verdict": "fail"
+      },
+      "rounds": 0,
+      "started_at": "2026-10-28T17:50:09.358728+00:00",
+      "state": "findings",
+      "state_word": "Findings",
+      "station": 3,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "Dock words",
+      "updated_at": "2026-10-28T17:50:11.177444+00:00",
+      "worktree": "hs-program-step-e650b8b2deb1"
+    },
+    {
+      "after": [],
+      "agent": "Claude Code",
+      "branch": "program/the-words-wave/3-door-words",
+      "brief": "Plain words on the Door.",
+      "check": {
+        "command": "sh /Users/karol/dev/tools/wt-ng-prog1/tests/fixtures/fake_program_check.sh",
+        "commit": "3eb6b0e38b6926d5e18a2746a00e61a3d2dbacc1",
+        "log": "/private/var/folders/q7/5dzz5g2116b3lq8rhg7hwjrr0000gn/T/program-fixtures-bb678g_d/rig/hs-program-step-2909f8dbb559/.tmp/program-check/step-2909f8dbb559/20261028T175010Z.log",
+        "minutes": 0.0,
+        "reasons": [],
+        "running": false,
+        "sections": [
+          {
+            "name": "build",
+            "state": "green"
+          },
+          {
+            "name": "vitest",
+            "state": "green"
+          },
+          {
+            "name": "pytest",
+            "state": "green"
+          },
+          {
+            "name": "sweep",
+            "state": "green"
+          },
+          {
+            "name": "canon",
+            "state": "green"
+          },
+          {
+            "name": "repo",
+            "state": "green"
+          }
+        ],
+        "verdict": "green"
+      },
+      "contenders": [],
+      "effort": "low",
+      "elapsed": "under a minute",
+      "elapsed_seconds": 2,
+      "ended_at": null,
+      "engine": null,
+      "findings": [],
+      "for_person": null,
+      "for_person_id": null,
+      "gate": {
+        "check": true,
+        "merge": "level",
+        "review": "agent",
+        "review_depth": "delta"
+      },
+      "held_reason": null,
+      "id": "step-2909f8dbb559",
+      "last_checkpoint": {
+        "at": "2026-10-28T17:50:10.369317+00:00",
+        "by": "engine",
+        "choice": null,
+        "id": 42,
+        "kind": null,
+        "line": "A core question for you: it touches files no step owns (other/thing.py)",
+        "operation_id": null,
+        "overturnable": false,
+        "overturned_at": null,
+        "rule": null,
+        "step_id": "step-2909f8dbb559",
+        "undo": {}
+      },
+      "launch_id": "L7",
+      "ordinal": 3,
+      "origin_ref": null,
+      "owns": [
+        "web/src/desk/door/words.ts"
+      ],
+      "parked_by": null,
+      "parked_reason": null,
+      "pr": null,
+      "prefer_idle": false,
+      "profile": "claude-default",
+      "race": 0,
+      "race_of": null,
+      "report": null,
+      "review": {
+        "reviewer": null,
+        "round": null,
+        "verdict": null
+      },
+      "rounds": 0,
+      "started_at": "2026-10-28T17:50:09.490667+00:00",
+      "state": "checking",
+      "state_word": "Checking",
+      "station": 2,
+      "stations": [
+        "brief",
+        "work",
+        "check",
+        "review",
+        "pr",
+        "merge"
+      ],
+      "title": "Door words",
+      "updated_at": "2026-10-28T17:50:10.368729+00:00",
+      "worktree": "hs-program-step-2909f8dbb559"
+    }
+  ],
+  "template": "build-and-review",
+  "title": "The words wave",
+  "total": 3,
+  "updated_at": "2026-10-28T17:50:10.370067+00:00",
+  "your_turn": 4,
+  "your_turn_items": [
+    {
+      "choices": [
+        "merge",
+        "not_yet"
+      ],
+      "for_person_id": null,
+      "id": "step-9eb4521d06dc:merge",
+      "kind": "merge",
+      "launch_id": "L5",
+      "ordinal": 1,
+      "pr": {
+        "number": 103,
+        "url": "https://github.com/acme/app/pull/103"
+      },
+      "program_id": "program-2d8660fe0960",
+      "program_title": "The words wave",
+      "project_id": "proj-holdspeak",
+      "since": "2026-10-28T17:50:10.935737+00:00",
+      "step_id": "step-9eb4521d06dc",
+      "step_title": "Settings words",
+      "title": "Merge step 1 “Settings words”? (PR #103, check green, review passed)"
+    },
+    {
+      "choices": [
+        "fix_now",
+        "later",
+        "skip"
+      ],
+      "core": false,
+      "finding_id": "f1",
+      "for_person_id": null,
+      "id": "step-e650b8b2deb1:finding:f1",
+      "kind": "finding",
+      "launch_id": "L6",
+      "level": "REQUIRED",
+      "ordinal": 2,
+      "pr": null,
+      "program_id": "program-2d8660fe0960",
+      "program_title": "The words wave",
+      "project_id": "proj-holdspeak",
+      "since": "2026-10-28T17:50:11.177444+00:00",
+      "step_id": "step-e650b8b2deb1",
+      "step_title": "Dock words",
+      "title": "Finding on step 2 “Dock words”: the empty state still says nothing"
+    },
+    {
+      "choices": [
+        "fix_now",
+        "later",
+        "skip"
+      ],
+      "core": false,
+      "finding_id": "s1",
+      "for_person_id": null,
+      "id": "step-e650b8b2deb1:finding:s1",
+      "kind": "finding",
+      "launch_id": "L6",
+      "level": "SHOULD",
+      "ordinal": 2,
+      "pr": null,
+      "program_id": "program-2d8660fe0960",
+      "program_title": "The words wave",
+      "project_id": "proj-holdspeak",
+      "since": "2026-10-28T17:50:11.177444+00:00",
+      "step_id": "step-e650b8b2deb1",
+      "step_title": "Dock words",
+      "title": "Finding on step 2 “Dock words”: sentence case the title"
+    },
+    {
+      "choices": [
+        "go_on",
+        "park"
+      ],
+      "core": true,
+      "for_person_id": null,
+      "id": "step-2909f8dbb559:core",
+      "kind": "core",
+      "launch_id": "L7",
+      "ordinal": 3,
+      "pr": null,
+      "program_id": "program-2d8660fe0960",
+      "program_title": "The words wave",
+      "project_id": "proj-holdspeak",
+      "reason": "it touches files no step owns (other/thing.py)",
+      "since": "2026-10-28T17:50:10.368729+00:00",
+      "step_id": "step-2909f8dbb559",
+      "step_title": "Door words",
+      "title": "Step 3 “door words”: it touches files no step owns (other/thing.py)"
+    }
+  ]
+}

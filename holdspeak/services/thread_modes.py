@@ -73,7 +73,9 @@ def _thread_side(name: str) -> bool:
          # Betterment Q9: Find the tasks on a note (the note.* MCP family).
          "note.",
          # Calls (2026-10-28): the phone line is an MCP and REST family.
-         "calls.")
+         "calls.",
+         # Programs (2026-10-28): an MCP and REST family (agents orchestrate).
+         "program.")
     )
 
 

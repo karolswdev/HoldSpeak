@@ -357,6 +357,17 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "calls.list": ("evidence_read", False),
     "calls.hangup": ("effect_proposal", False),
     "calls.place": ("effect_proposal", False),
+    # Programs (2026-10-28): the engine's goal-cut-into-steps verbs.
+    "program.list": ("evidence_read", False),
+    "program.get": ("evidence_read", False),
+    "program.create": ("effect_proposal", False),
+    "program.plan": ("effect_proposal", False),
+    "program.update": ("effect_proposal", False),
+    "program.start": ("effect_proposal", False),
+    "program.park": ("effect_proposal", False),
+    "program.resume": ("effect_proposal", False),
+    "program.checkpoint": ("effect_proposal", False),
+    "program.step_done": ("effect_proposal", False),
     "project.mark_update_delivered": ("effect_proposal", False),
 }
 # Betterment M3: the ``automation.*`` aliases, each in its Workbench tool's class.

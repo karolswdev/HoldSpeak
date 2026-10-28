@@ -317,6 +317,23 @@ TOOL_AUTHORITY: dict[str, str] = {
     "practice_recipe.list": WORK,
     "practice_recipe.get": WORK,
     "practice_recipe.compile": WORK,
+    # Programs (2026-10-28, design §7): an orchestrating agent makes, plans
+    # and runs the Programs it created; a step's agent writes its own lines.
+    # The engine hands each step through agent.hand's service (the Start is
+    # the owner's or the orchestrating agent's own Program); merge and the
+    # findings are his alone.
+    "program.create": WORK,
+    "program.plan": WORK,
+    "program.update": WORK,
+    "program.start": WORK,
+    "program.park": WORK,
+    "program.resume": WORK,
+    "program.get": WORK,
+    "program.list": WORK,
+    "program.checkpoint": WORK,
+    "program.step_done": WORK,
+    "program.decide": AUTHORITY,  # a merge and a finding's fate are the owner's press
+    "program.overturn": AUTHORITY,  # undoing the engine's decision is the owner's press
     "agent.hand": EGRESS,  # starts a cloud coding agent and sends it a brief from the desk
     # PHILO-16 (16b): the owner's desk windows. A window is not egress,
     # authority or config: an agent composes the desk beside the owner.

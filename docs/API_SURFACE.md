@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 824 (plus static mounts). iOS-consumed: 89. Web-consumed: 653.
+Routes: 839 (plus static mounts). iOS-consumed: 89. Web-consumed: 656.
 
 ## device_audio_ws
 
@@ -951,6 +951,26 @@ Routes: 824 (plus static mounts). iOS-consumed: 89. Web-consumed: 653.
 | GET | `/api/workflows/{workflow_id}` | web |
 | PUT | `/api/workflows/{workflow_id}` | web |
 | POST | `/api/workflows/{workflow_id}/run` | ios, web |
+
+## web.routes.programs
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/programs` | server only |
+| POST | `/api/programs` | server only |
+| GET | `/api/programs/templates` | web |
+| GET | `/api/programs/{program_id}` | web |
+| PATCH | `/api/programs/{program_id}` | web |
+| POST | `/api/programs/{program_id}/close` | server only |
+| POST | `/api/programs/{program_id}/decisions/{decision_id}/overturn` | server only |
+| POST | `/api/programs/{program_id}/from-desk` | server only |
+| POST | `/api/programs/{program_id}/park` | server only |
+| POST | `/api/programs/{program_id}/plan` | server only |
+| POST | `/api/programs/{program_id}/resume` | server only |
+| POST | `/api/programs/{program_id}/start` | server only |
+| POST | `/api/programs/{program_id}/steps/{step_id}/checkpoint` | server only |
+| POST | `/api/programs/{program_id}/steps/{step_id}/decide` | server only |
+| POST | `/api/programs/{program_id}/steps/{step_id}/race` | server only |
 
 ## web.routes.project_briefs
 

@@ -41,6 +41,7 @@ REQUIRED_SECTIONS = {
     "needsYou", "health", "sinceRead", "decisions", "commitments", "target",
     "receipts",  # HS-174: the Room's RECEIPTS section (remote receipts wear REMOTE · host)
     "now",  # Betterment P3: the Now wing (next date, last update, this week)
+    "programs",  # Programs (2026-10-28, §9b): the Room's Programs fold
 }
 TOP_LEVEL_KEYS = {"project_id", "revision", "observed_at", "nextCheckAt"} | REQUIRED_SECTIONS
 

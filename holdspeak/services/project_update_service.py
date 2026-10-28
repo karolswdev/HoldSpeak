@@ -682,6 +682,33 @@ def _build_closed(
     return lines
 
 
+def _build_programs(db: Any, project_id: str, claims: list[Claim]) -> list[str]:
+    """Programs (2026-10-28, §9b): one Progress line per Program of the
+    Project: done, running, waiting, with the merged PR numbers."""
+    try:
+        from .program_service import FINISHED_STATES, ProgramService
+
+        service = ProgramService(db)
+        rows = service.for_project(project_id)
+    except Exception:
+        return []
+    lines: list[str] = []
+    for ordinal, row in enumerate(rows):
+        steps = service.store.list_steps(row["id"])
+        merged = [f"#{step['pr_number']}" for step in steps if step.get("pr_number") and step.get("state") in FINISHED_STATES]
+        text = f"Program {row['title']}: {row['state_word'].lower()}, {row['done']} of {row['total']} steps done"
+        if merged:
+            text += f" (merged {', '.join(merged)})"
+        if row["your_turn"]:
+            text += f"; {row['your_turn']} waits on the owner"
+        claims.append(Claim(
+            span_id=f"s_progress_program_{ordinal}", text=text, refs=[f"program:{row['id']}"],
+            section="progress", kind=KIND_OBSERVATION, support=SUPPORT_SOURCE_LINKED,
+        ))
+        lines.append(f"- {text}")
+    return lines
+
+
 def _carry_closed_rows(
     body_md: str,
     claims_json: str,
@@ -2052,6 +2079,11 @@ class ProjectUpdateService:
         if closed_lines:
             progress = "\n".join(closed_lines) if progress == _HONEST_MINIMAL["progress"] else (
                 progress + "\n" + "\n".join(closed_lines)
+            )
+        program_lines = _build_programs(self._db, project_id, det_claims)
+        if program_lines:
+            progress = "\n".join(program_lines) if progress == _HONEST_MINIMAL["progress"] else (
+                progress + "\n" + "\n".join(program_lines)
             )
         det_sections: dict[str, str] = {
             "progress": progress,

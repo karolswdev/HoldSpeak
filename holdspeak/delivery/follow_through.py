@@ -672,6 +672,8 @@ class FollowThroughObserver:
                 "state": row.get("state"), "review_decision": row.get("review_decision"),
                 # PHILO-14 C0: the checks rollup and each check, for the lane.
                 "ci": row.get("ci"), "checks": list(row.get("checks") or []),
+                # Programs (§9b): who approved it, for a person review gate.
+                **({"approved_by": list(row["approved_by"])} if row.get("approved_by") else {}),
             }
         if pr_state == "pr_closed_unmerged":
             # The PR was closed without a merge: nothing closes, nothing is
@@ -811,6 +813,15 @@ class FollowThroughObserver:
         kind, item_id = str(origin.get("kind") or ""), str(origin.get("id") or "")
         if not kind or not item_id:
             return "no_origin"
+        if kind == "program_step":
+            # Programs (§9b): a step closes the desk item it came from (an
+            # action of From the desk, the Program's decision), the same way.
+            from ..services.program_service import step_origin
+
+            found = step_origin(self._db, item_id)
+            if found is None:
+                return "not_closable"
+            kind, item_id = found
         if kind not in CLOSABLE_KINDS:
             return "not_closable"
         # Once the owner was asked, his answer decides, whatever the mode is
