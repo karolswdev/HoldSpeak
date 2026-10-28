@@ -239,7 +239,7 @@ def test_the_rig_returns_from_rhythm_to_the_same_activity_receipt(viewport, tmp_
     if viewport == 393:
         assert after["hit_test"]["rect"]["w"] >= 44
     # The same receipt row, still the list's row (its name leads its label).
-    assert after["attrs"]["aria-label"].startswith("SWEEP")
+    assert after["attrs"]["aria-label"].startswith("Checked")
 
     sources = []
     activity = []

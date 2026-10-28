@@ -10,7 +10,7 @@ from ..principals import PrincipalKind, PrincipalRight
 from .admission import parse_request, refusal_values
 from .causation import causality, live_owner_parent
 from .executor import ExecutorPlane
-from . import desk_broker
+from . import desk_broker, process_words
 from .journal import JournalStore
 from .liveness import reap_and_recover_projections as _reap_and_recover
 from .model import KernelRefused, OperationRequest, OperationSpec
@@ -66,7 +66,7 @@ class Broker(ExecutorPlane):
                         operation["native_id"]
                     )
             objects.append(item)
-        return {"view": view, "consistency": consistency, "objects": objects}
+        return process_words.labelled({"view": view, "consistency": consistency, "objects": objects})
 
     def submit(self, raw: Any, principal: Any) -> dict[str, Any]:
         operation_id = "op_" + uuid.uuid4().hex

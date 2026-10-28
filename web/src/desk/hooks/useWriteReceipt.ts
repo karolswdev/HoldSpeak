@@ -38,6 +38,12 @@ export interface WriteFailure {
   /** PHILO-13-04 — the face's own state when "<VERB> FAILED" is not the
    *  truth to show (a refused start is "NOT RECORDING · <why>"). */
   label?: string;
+  /** Atlas pass 3 (defect 16): the label is a sentence (`Could not mark it
+   *  seen`), drawn in sans and sentence case, with the reason in the hover
+   *  title only; never the mono caps `MARK SEEN FAILED · HTTP 404`. */
+  plain?: boolean;
+  /** The retry verb's word when it is not `Retry` (`Try again`). */
+  retryLabel?: string;
 }
 
 export type WriteResult<T> =
@@ -94,19 +100,17 @@ function receiptElement(
   onDismiss: () => void,
 ): ReactElement | null {
   if (!failure) return null;
+  const title = [writeFailureLabel(failure), failure.plain ? failure.reason : "", failure.detail ?? ""]
+    .filter(Boolean)
+    .join(" · ");
   return createElement(
     "span",
-    { className: "write-receipt", role: "status" },
+    { className: failure.plain ? "write-receipt write-receipt-plain" : "write-receipt", role: "status" },
     createElement("span", { className: "write-receipt-lamp" }),
     createElement(
       "span",
       // PHILO-3-01: the whole label stays readable where the strip clips it.
-      {
-        className: "write-receipt-label",
-        title: failure.detail
-          ? `${writeFailureLabel(failure)} · ${failure.detail}`
-          : writeFailureLabel(failure),
-      },
+      { className: "write-receipt-label", title },
       writeFailureLabel(failure),
     ),
     failure.retry
@@ -118,7 +122,7 @@ function receiptElement(
             className: "write-receipt-retry",
             onClick: failure.retry,
           },
-          "Retry",
+          failure.retryLabel ?? "Retry",
         )
       : null,
     createElement(
@@ -227,6 +231,7 @@ export function reportWriteFailure(
   retry?: () => void,
   subject?: string,
   label?: string,
+  face?: { plain?: boolean; retryLabel?: string },
 ): WriteFailure {
   const failure: WriteFailure = {
     verb: verb.toUpperCase(),
@@ -235,6 +240,8 @@ export function reportWriteFailure(
     detail: writeFailureDetail(cause),
     subject,
     ...(label ? { label } : {}),
+    ...(face?.plain ? { plain: true } : {}),
+    ...(face?.retryLabel ? { retryLabel: face.retryLabel } : {}),
   };
   publish(failure);
   return failure;

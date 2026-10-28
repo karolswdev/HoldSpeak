@@ -40,3 +40,17 @@
     text-overflow: ellipsis;
   }
 }
+/* Atlas pass 3 (defect 8): at 520 px or less the fold line (For · Where ·
+   Started) is one line: For ends in an ellipsis before the clock wraps. The
+   row sets --process-facts to the width Where and Started need. */
+@container surface (max-width: 520px) {
+  .process-list .object-list[data-density="dense"] .object-list-cell {
+    white-space: nowrap;
+  }
+  .process-list .object-list[data-density="dense"] .object-list-cell[data-col="target"] {
+    min-width: 0;
+    max-width: calc(100% - var(--process-facts, 30ch));
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

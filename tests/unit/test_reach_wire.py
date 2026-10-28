@@ -1106,7 +1106,15 @@ class TestSittingReceiptDoors:
         )
         rows = self._pipeline_rows(_wire_db)
         assert [r["detail_url"] for r in rows] == ["/cadence"]
-        assert rows[0]["title"] == "SWEEP"
+        assert rows[0]["title"] == "Checked for changes"
+
+    def test_sweep_receipt_says_what_it_checked_in_sentence_case(self, _wire_db):
+        # Atlas pass 3 (defect 10): `Checked 2 rooms`, never `SWEEP 2 ROOMS`.
+        _insert_pipeline_event(
+            _wire_db, event_id="ev-sweep-2", service="HeartbeatService",
+            method="run_sweep", result_summary='{"watches":3,"rooms":2,"held":false}',
+        )
+        assert [r["title"] for r in self._pipeline_rows(_wire_db)] == ["Checked 2 rooms"]
 
     def test_receipt_with_no_face_behind_it_carries_no_door(self, _wire_db):
         _insert_pipeline_event(

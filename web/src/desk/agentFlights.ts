@@ -499,7 +499,10 @@ export async function markLaunchSeen(launchId: string, turnId: string | null): P
     await apiFetch(`/api/agent/launches/${encodeURIComponent(launchId)}/seen`, { method: "POST", json: turnId ? { wait_id: turnId } : {} });
   } catch (cause) {
     // The next read says NEW again; the next open marks it again.
-    reportWriteFailure("Mark seen", cause, () => void markLaunchSeen(launchId, turnId), `agent:${launchId}`);
+    // Atlas pass 3 (defect 16): the band says it as a sentence, not
+    // `MARK SEEN FAILED · HTTP 404` (the reason is its hover title).
+    reportWriteFailure("Mark seen", cause, () => void markLaunchSeen(launchId, turnId), `agent:${launchId}`,
+      "Could not mark it seen", { plain: true, retryLabel: "Try again" });
   }
 }
 
