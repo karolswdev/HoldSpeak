@@ -153,7 +153,7 @@ export async function recheckSource(name: string, watchIds: readonly string[]): 
     for (const id of watchIds) {
       await apiFetch(`/api/watches/${encodeURIComponent(id)}/evaluate`, { method: "POST" });
     }
-    return { tone: "ok", text: `CHECKED · ${name} · ${hhmm(new Date())}` };
+    return { tone: "ok", text: `Checked ${name} at ${hhmm(new Date())}` };
   } catch (error) {
     return { tone: "fail", text: `Could not check ${name} · Nothing changed · Try again`, title: readableError(error) };
   } finally {

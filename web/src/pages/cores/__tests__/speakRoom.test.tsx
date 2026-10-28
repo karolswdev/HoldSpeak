@@ -295,7 +295,7 @@ describe("Speak delivers one pipeline pass (HS-132-04)", () => {
 
     await clickToggle(talk);
 
-    expect(await screen.findByText("COMMAND · types: ## Standup")).toBeVisible();
+    expect(await screen.findByText("Command ran · types: ## Standup")).toBeVisible();
     // nothing was dictated: no delivery, no rehearsal, and the well is clean
     expect(callsTo("/api/dictation/remote")).toHaveLength(0);
     expect(callsTo("/api/dictation/dry-run")).toHaveLength(0);

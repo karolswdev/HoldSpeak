@@ -103,7 +103,7 @@ export function DrawerInfoWindow({ info }: { info: OpenInfo }) {
     try {
       await parkMeeting(id);
       // The receipt lands on the surviving face: the drawer, with Restore.
-      useDrawers.getState().setReceipt(info.projectId, { kind: "parked", text: `PARKED · ${name}`, ids: [id] });
+      useDrawers.getState().setReceipt(info.projectId, { kind: "parked", text: `Parked ${name}`, ids: [id] });
       close();
       useDrawers.getState().changed();
       void useDesk.getState().refresh();

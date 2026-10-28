@@ -49,7 +49,7 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe("the Parked drawer on the hub's recorded answers", () => {
-  it("lists the parked meeting and the parked Project; Restore of the Project says RESTORED and its row leaves", async () => {
+  it("lists the parked meeting and the parked Project; Restore of the Project says Restored and its row leaves", async () => {
     // replaces: tests/e2e/test_philo15_04_small_gaps_glass.py::TestParkedDrawer::test_park_a_meeting_and_a_project_see_both_restore_one
     // (hub half: tests/integration/test_desk_parked.py::test_park_a_meeting_and_a_project_see_both_restore_one)
     vi.spyOn(useDesk.getState(), "refresh").mockResolvedValue(undefined as never);
@@ -64,7 +64,7 @@ describe("the Parked drawer on the hub's recorded answers", () => {
       fireEvent.click(screen.getByTestId("parked-restore"));
     });
     expect(calls.filter((c) => c.method === "POST").map((c) => c.path)).toEqual(["/api/projects/p-hiring/restore"]);
-    await waitFor(() => expect(screen.getByTestId("parked-receipt").textContent).toMatch(/^RESTORED/));
+    await waitFor(() => expect(screen.getByTestId("parked-receipt").textContent).toMatch(/^Restored at/));
     await waitFor(() => expect(screen.queryByRole("button", { name: /^Staff hiring loop/ })).toBeNull());
     expect(screen.getByRole("button", { name: /^Architecture review: tracing, Meeting/ })).toBeTruthy();
     expect(within(screen.getByRole("grid", { name: "Archive" })).getAllByRole("row")).toHaveLength(2);

@@ -266,7 +266,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         `holdspeak-meeting-${meetingId}.${format === "markdown" ? "md" : format}`,
       );
       setReceipt({
-        text: `EXPORTED ${format === "markdown" ? "MD" : format.toUpperCase()} ${clockTime(new Date().toISOString())}`,
+        text: `Exported as ${format === "markdown" ? "Markdown" : format.toUpperCase()} at ${clockTime(new Date().toISOString())}`,
       });
     } catch (reason) {
       setReceipt({ text: `Could not export the meeting as ${format === "markdown" ? "Markdown" : format.toUpperCase()} · Nothing changed · Try again`, tone: "danger", title: readableError(reason) });
@@ -339,7 +339,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
     parkOutcome
       ? { key: "receipt", text: <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restore(ids)} data-testid="meeting-park-receipt" /> }
       : receipt
-        ? { key: "receipt", text: <span className="surface-footer-receipt-line" data-tone={receipt.tone} data-testid="meetings-run-receipt" title={receipt.title || undefined}>{receipt.text}</span> }
+        ? { key: "receipt", text: <span className="surface-footer-receipt-line" data-words="" data-tone={receipt.tone} data-testid="meetings-run-receipt" title={receipt.title || undefined}>{receipt.text}</span> }
         : null,
   ].filter(Boolean) as StatusBarItem[];
   const exportEntries: WorkMenuEntry[] = [
@@ -427,7 +427,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
       </MeetingRunSlotContext.Provider>
       {requestedWell === "project" ? <div id={`meeting-${meetingId}-project`} className="meeting-record-project">
         <SurfaceWell head="Project"><AddToProject meetingId={meetingId} autoOpen
-          onReceipt={(next) => setReceipt(next.tone === "danger" ? { text: next.text, tone: "danger" } : { text: next.text })} /></SurfaceWell>
+          onReceipt={(next) => setReceipt(next.tone === "danger" ? { text: next.text, tone: "danger", title: next.title } : { text: next.text })} /></SurfaceWell>
       </div> : null}
       {/* Window grammar: the status bar says the summary's state in warm
           words with its lamp, the receipt beside it, Choose engine when no

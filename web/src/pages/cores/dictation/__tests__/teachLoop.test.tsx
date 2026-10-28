@@ -140,7 +140,7 @@ describe("the teach row's three FIELDs", () => {
     expect(sent).toHaveLength(1);
     expect(sent[0].init.json).toEqual({ kind: "target", value: "terminal_shell" });
     expect(result.current.receipt).toEqual({
-      token: "TAUGHT",
+      token: "Taught",
       tone: "ok",
       tail: "Terminal shell",
     });
@@ -181,7 +181,7 @@ describe("the receipts — a token pair, never a sentence", () => {
       said: "Ship the Q4 platform on schedule",
     });
     expect(result.current.receipt).toEqual({
-      token: "TAUGHT",
+      token: "Taught",
       tone: "ok",
       tail: "queue for → Q4",
     });
@@ -193,7 +193,7 @@ describe("the receipts — a token pair, never a sentence", () => {
     await act(async () => {
       await result.current.teach();
     });
-    expect(result.current.receipt).toEqual({ token: "NO CHANGE" });
+    expect(result.current.receipt).toEqual({ token: "No change" });
   });
 
   it("Not taught · It looks like a secret says what happened, and that nothing was written", async () => {
@@ -225,7 +225,7 @@ describe("the receipts — a token pair, never a sentence", () => {
     await act(async () => {
       await result.current.teach();
     });
-    expect(result.current.receipt?.token).toBe("TAUGHT");
+    expect(result.current.receipt?.token).toBe("Taught");
     expect(result.current.receipt?.tail).toBe("postgress → PostgreSQL");
   });
 

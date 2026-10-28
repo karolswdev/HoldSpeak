@@ -3,8 +3,8 @@
  *  "Parked and Restore", boards C1-5a–j).
  *
  *  Every outcome is a compact receipt in the footer's receipt slot:
- *    PARKED hh:mm + Restore · PARKED n · hh:mm + Restore (bulk)
- *    RESTORED hh:mm · `Could not restore · … · It stays parked` + Retry ·
+ *    `Parked at hh:mm` + Restore · `Parked n at hh:mm` + Restore (bulk)
+ *    `Restored at hh:mm` (W6-I words: every outcome in sentence case, sans) · `Could not restore · … · It stays parked` + Retry ·
  *    `Could not park · <why> · Nothing changed · Try again` (W6-H words: a failure in
  *    sentence case, sans, the raw reason in the hover title)
  *  The strip is a `PARKED n` token (absent at zero) that, when on, lists
@@ -38,11 +38,11 @@ export function parkedToken(n: number): string | null {
 
 export function parkedOutcome(ids: string[], at = parkClock()): ParkOutcome {
   const n = ids.length;
-  return { kind: "parked", text: n > 1 ? `PARKED ${n} · ${at}` : `PARKED ${at}`, ids };
+  return { kind: "parked", text: n > 1 ? `Parked ${n} at ${at}` : `Parked at ${at}`, ids };
 }
 
 export function restoredOutcome(ids: string[], at = parkClock()): ParkOutcome {
-  return { kind: "restored", text: `RESTORED ${at}`, ids };
+  return { kind: "restored", text: `Restored at ${at}`, ids };
 }
 
 export const RESTORE_REFUSED = "Could not restore · The hub did not accept the change · It stays parked";
@@ -68,7 +68,7 @@ export function ParkReceipt({
   return (
     <span className="park-receipt" data-testid={testId} data-outcome={outcome.kind}>
       <span className="surface-footer-receipt-line" role="status" data-tone={outcome.tone}
-        data-words={outcome.tone === "danger" ? "" : undefined} title={outcome.title || undefined}>
+        data-words="" title={outcome.title || undefined}>
         {outcome.text}
       </span>
       {outcome.kind === "parked" ? (

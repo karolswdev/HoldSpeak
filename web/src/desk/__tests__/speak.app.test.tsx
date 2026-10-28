@@ -445,11 +445,11 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
       expect(el).toBeTruthy();
       return el as HTMLElement;
     });
-    expect(receipt.textContent).toContain("TAUGHT");
+    expect(receipt.textContent).toContain("Taught");
     expect(receipt.textContent).toContain("queue for");
     expect(receipt.textContent).toContain("Q4");
     expect(container.querySelector(".speak-teach")).toBeNull();
-    expect(footerText()).not.toContain("TAUGHT");
+    expect(footerText()).not.toContain("Taught");
     expect(presses[1].call).toMatch(/^POST \/api\/dictation\/journal\/\d+\/correct$/);
     expect(presses[1].body).toEqual({ kind: "text", heard: HEARD, said: SAID });
 

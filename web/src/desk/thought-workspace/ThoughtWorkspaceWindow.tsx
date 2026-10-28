@@ -262,7 +262,7 @@ function WorkspaceReady({
       const range = validAskReturnRange(source, `note:${draftNoteId}`, savedBody);
       if (source.body !== writer.draft.body || (source.range && !range)) {
         setReturnRange(null);
-        say("SOURCE CHANGED");
+        say("The note changed since you asked · Select the text again");
         setChangedReturn((value) => value + 1);
         return;
       }
@@ -796,7 +796,7 @@ function WorkspaceReady({
       </ScrollHint>
       <SurfaceFooter
         className="thought-send-foot"
-        receipt={message || writeLine?.danger ? <span className="surface-footer-receipt-line" role="status" data-wrap="" data-tone="danger">{message || writeLine?.text}</span> : null}
+        receipt={message || writeLine?.danger ? <span className="surface-footer-receipt-line" role="status" data-wrap="" data-tone="danger" data-words="">{message || writeLine?.text}</span> : null}
         verbs={<>
           {writer.conflicted
             ? <Button dense disabled={busy} onClick={() => void reloadNote()}>Reload</Button>

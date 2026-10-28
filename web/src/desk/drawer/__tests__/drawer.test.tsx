@@ -339,12 +339,12 @@ describe("PHILO-14 A2 the drawer", () => {
 
   it("Park leaves its receipt on the drawer, with Restore", async () => {
     await renderDrawer();
-    useDrawers.getState().setReceipt("p-ledger", { kind: "parked", text: "PARKED · Ledger cutover sync", ids: ["m-standup"] });
+    useDrawers.getState().setReceipt("p-ledger", { kind: "parked", text: "Parked Ledger cutover sync", ids: ["m-standup"] });
     const receipt = await screen.findByTestId("drawer-park-receipt");
-    expect(receipt).toHaveTextContent("PARKED · Ledger cutover sync");
+    expect(receipt).toHaveTextContent("Parked Ledger cutover sync");
     fireEvent.click(within(receipt).getByRole("button", { name: "Restore" }), { detail: 1 });
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m-standup/restore", { method: "POST" }));
-    await waitFor(() => expect(screen.getByTestId("drawer-park-receipt")).toHaveTextContent("RESTORED"));
+    await waitFor(() => expect(screen.getByTestId("drawer-park-receipt")).toHaveTextContent("Restored at"));
   });
 
   it("an empty drawer says so and counts nothing", async () => {
@@ -510,7 +510,7 @@ describe("PHILO-14 A2 Get Info window", () => {
     fireEvent.click(screen.getByRole("button", { name: "Park" }), { detail: 1 });
     await waitFor(() => expect(useDrawers.getState().infos).toEqual([]));
     expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m1", { method: "DELETE" });
-    expect(useDrawers.getState().receipts.p).toEqual({ kind: "parked", text: "PARKED · Ledger cutover sync", ids: ["m1"] });
+    expect(useDrawers.getState().receipts.p).toEqual({ kind: "parked", text: "Parked Ledger cutover sync", ids: ["m1"] });
     expect(useDrawers.getState().revision).toBe(1);
   });
 

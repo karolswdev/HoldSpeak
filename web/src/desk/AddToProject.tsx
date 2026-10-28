@@ -79,7 +79,7 @@ export function AddToProject({
 
   const add = async (projectId: string, name: string) => {
     if (linked.includes(projectId)) {
-      setReceipt({ text: `IN ${name.toUpperCase()}`, tone: "ok" });
+      setReceipt({ text: `In ${name}`, tone: "ok" });
       return;
     }
     setBusy(true);
@@ -87,7 +87,7 @@ export function AddToProject({
     try {
       await apiFetch(linkMeetingPath(projectId, meetingId), { method: "POST" });
       setLinked((now) => [...now, projectId]);
-      setReceipt({ text: `IN ${name.toUpperCase()}`, tone: "ok" });
+      setReceipt({ text: `In ${name}`, tone: "ok" });
       void useDesk.getState().refresh();
     } catch (reason) {
       const failure = plainFail(`Could not add it to ${name}`, reason, undefined, "Try again");
@@ -132,8 +132,8 @@ export function AddToProject({
           <DotWord tone="fail">{receipt.text}</DotWord>
         </span>
       ) : receipt ? (
-        <span className="surface-token" data-tone={receipt.tone} role="status" data-testid="add-to-project-receipt">
-          {receipt.text}
+        <span data-tone={receipt.tone} role="status" data-testid="add-to-project-receipt">
+          <DotWord tone="ok">{receipt.text}</DotWord>
         </span>
       ) : null}
       {at ? (

@@ -111,7 +111,7 @@ describe("the Parked drawer", () => {
       fireEvent.click(screen.getByTestId("parked-restore"));
     });
     expect(posts).toEqual(["/api/projects/p-old/restore"]);
-    await waitFor(() => expect(screen.getByTestId("parked-receipt").textContent).toMatch(/^RESTORED \d\d:\d\d/));
+    await waitFor(() => expect(screen.getByTestId("parked-receipt").textContent).toMatch(/^Restored at \d\d:\d\d/));
     await waitFor(() => expect(screen.queryByRole("button", { name: /^Old migration/ })).toBeNull());
     expect(refresh).toHaveBeenCalled();
 

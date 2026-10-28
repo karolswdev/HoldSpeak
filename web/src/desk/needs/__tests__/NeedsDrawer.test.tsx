@@ -867,7 +867,7 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
     await screen.findByText("1 needs you");
     const stale = screen.getAllByTestId("needs-source-row").find((li) => li.textContent?.includes("Meetings"))!;
     fireEvent.click(within(stale).getByRole("button", { name: "Retry: Meetings" }));
-    await waitFor(() => expect(screen.getByTestId("needs-source-receipt").textContent).toMatch(/^CHECKED · Meetings · \d\d:\d\d$/));
+    await waitFor(() => expect(screen.getByTestId("needs-source-receipt").textContent).toMatch(/^Checked Meetings at \d\d:\d\d$/));
     expect(evaluated).toEqual(["/api/watches/w-mtg/evaluate"]);
     // A refused check says so in plain words; the hub's reason is the hover.
     refuse = true;

@@ -85,7 +85,7 @@ export function useSummaryRun(
       }
       const result = outcome.result;
       const identity: RunIdentity = { meetingId, jobId: String(result.jobId ?? meetingId) };
-      setReceipt({ text: `QUEUED ${clockTime(new Date().toISOString())}`, run: identity });
+      setReceipt({ text: `Queued at ${clockTime(new Date().toISOString())}`, run: identity });
       // HS-200-42: when the route says no drainer exists, polling every 3s for
       // 120s is a lie told forty times — nothing in the hub will move this job.
       // Stop the poll and refresh the row once. `runningId` is deliberately

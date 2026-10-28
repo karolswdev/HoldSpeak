@@ -519,14 +519,14 @@ describe("Runs on — a drop writes", () => {
       new ApiError(409, "Assignment changed.", { code: "inference_assignment_revision_conflict" }),
     );
     fireEvent.click(await screen.findByTestId("runson-undo"));
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("CHANGED ELSEWHERE · Answers and notes"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("Could not undo Answers and notes · It changed elsewhere first"));
     expect(m.writeChain.mock.calls[1][0].expectedRevision).toBe(7);
     // The entry is gone: no second Undo can overwrite the other writer.
     expect(screen.queryByTestId("runson-undo")).toBeNull();
     expect(m.writeChain).toHaveBeenCalledTimes(2);
   });
 
-  it("409: re-reads, redraws, and says CHANGED ELSEWHERE (no blind retry)", async () => {
+  it("409: re-reads, redraws, and says it changed elsewhere first (no blind retry)", async () => {
     await board();
     const reads = m.readRoster.mock.calls.length;
     m.writeChain.mockRejectedValueOnce(
@@ -534,7 +534,7 @@ describe("Runs on — a drop writes", () => {
     );
     fireEvent.click(screen.getByTestId("switchboard-job-agents_tools"));
     fireEvent.keyDown(screen.getByTestId("switchboard-engine-q27"), { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("CHANGED ELSEWHERE"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("Could not change Custom tasks · It changed elsewhere first"));
     expect(m.writeChain).toHaveBeenCalledTimes(1);
     expect(m.readRoster.mock.calls.length).toBeGreaterThan(reads);
   });
@@ -543,10 +543,10 @@ describe("Runs on — a drop writes", () => {
     await board();
     fireEvent.click(screen.getByTestId("switchboard-job-speech_recognition"));
     fireEvent.keyDown(screen.getByTestId("switchboard-engine-q27"), { key: "Enter" });
-    expect((await screen.findByTestId("runson-receipt")).textContent).toBe("REFUSED · SPEECH TO TEXT · SPEECH ENGINES ONLY");
+    expect((await screen.findByTestId("runson-receipt")).textContent).toMatch(/^Could not put Speech to text on .+ · Speech engines only · Nothing changed$/);
     fireEvent.click(screen.getByTestId("switchboard-job-agents_tools"));
     fireEvent.keyDown(screen.getByTestId("switchboard-engine-q4b"), { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("REFUSED · CUSTOM TASKS · WITHOUT AGENTS"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Could not put Custom tasks on .+ · Without agents · Nothing changed$/));
     expect(m.writeChain).not.toHaveBeenCalled();
   });
 });

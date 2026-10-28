@@ -222,7 +222,7 @@ export function adoptDurableRunReceipt(
     return {
       active: true,
       receipt: {
-        text: `QUEUED ${clockTime(at)}`,
+        text: `Queued at ${clockTime(at)}`,
         run: { meetingId: String(active.id), jobId: `durable:${String(active.id)}` },
       },
     };
@@ -254,14 +254,15 @@ export function intelStateOf(raw: unknown): string {
 }
 
 /** PHILO-15-07 (B15) — the footer receipt once a queued summary run ends:
- *  `RAN · 11:02`, or a failed run in plain words (`Summary failed at 11:02 ·
+ *  `Ran at 11:02` (W6-I words), or a failed run in plain words (`Summary failed at 11:02 ·
  *  The transcript stays · Run it again`); another final state says its own word. */
 export function finishedRunReceipt(state: string, at: string): Receipt {
   const s = String(state || "").toLowerCase();
   const clock = clockTime(at);
-  if (s === "ready" || s === "complete") return { text: `RAN · ${clock}` };
+  if (s === "ready" || s === "complete") return { text: `Ran at ${clock}` };
   if (s === "error" || s === "failed") return { text: `Summary failed at ${clock} · The transcript stays · Run it again`, tone: "danger" };
-  return { text: `${(s || "done").toUpperCase().replace(/_/g, " ")} · ${clock}` };
+  const said = (s || "done").replace(/_/g, " ");
+  return { text: `${said.charAt(0).toUpperCase()}${said.slice(1)} at ${clock}` };
 }
 
 /** Needs-you table row shape shared between useMeetingData and NeedsYouTable. */

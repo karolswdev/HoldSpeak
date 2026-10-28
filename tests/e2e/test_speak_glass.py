@@ -347,7 +347,7 @@ def _loop(page: Any, width: int) -> None:
     page.get_by_role("button", name="Teach correction").click()
     receipt = page.locator(".speak-receipt")
     receipt.wait_for(timeout=8000)
-    assert "TAUGHT" in receipt.inner_text(), receipt.inner_text()
+    assert "Taught" in receipt.inner_text(), receipt.inner_text()
 
     # ── 2. speak it again, in the SAME session: the rule fires ─────
     result = _land(page, AGAIN)

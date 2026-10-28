@@ -81,12 +81,12 @@ function openDeskCommandResult(
   const intent = value.ui_intent;
   if (intent === "ask") {
     useDesk.getState().openAsk();
-    announce("ASK HOLDSPEAK");
+    announce("Opened Ask");
     return true;
   }
   if (intent === "open_today") {
     openSurfaceOr("open-intelligence", "/");
-    announce("TODAY");
+    announce("Opened Today");
     return true;
   }
   if (value.desk_verb === "new_note") {
@@ -98,7 +98,7 @@ function openDeskCommandResult(
     const id = useDesk.getState().adoptCreated("note", note);
     if (id) {
       useDesk.getState().openPullout(`note:${id}`);
-      announce("NEW NOTE");
+      announce("Made a new note");
       return true;
     }
     setPhase("refused");
@@ -535,7 +535,7 @@ function useSpeakTalk(
         if (fired.ok) {
           deck.setPhase("landed");
           deck.setRefusal("");
-          announce(`COMMAND · ${fired.preview}`);
+          announce(`Command ran · ${fired.preview}`);
         } else {
           deck.setPhase("refused");
           deck.setRefusal("command_failed");
@@ -661,9 +661,9 @@ function TypesIntoRow({ deck }: { deck: ReturnType<typeof useSpeakDeck> }) {
      TEXT is one wrapping well pre-filled with the RAW transcript, the
      routing kinds are a pick over the real enum (label on the face, id
      on the wire).
-   - `Teach` replaces the row with a token receipt — TAUGHT · a -> b,
-     NO CHANGE, REFUSED · SECRET, REFUSED · ONE WORD. Never a sentence,
-     never a modal. */
+   - `Teach` replaces the row with a receipt: `Taught` · a -> b,
+     `No change`, `Not taught · It looks like a secret` (W6-H, W6-I words:
+     sentence case). Never a modal. */
 
 function AppliedRule({
   rule,

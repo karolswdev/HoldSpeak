@@ -137,7 +137,7 @@ export type TeachReceipt = {
 export const TEACH_REFUSALS: Record<string, TeachReceipt> = {
   // W6-H words: what did not happen and why, in sentence case; the tail
   // says what stayed. The pair beside it is the next move (edit, Teach).
-  no_change: { token: "NO CHANGE" },
+  no_change: { token: "No change" },
   secret: { token: "Not taught · It looks like a secret", tone: "danger", tail: "Nothing written" },
   one_word: { token: "Not taught · Use two words or more", tone: "danger", tail: "Nothing written" },
   empty: { token: "Not taught · Both sides need words", tone: "danger", tail: "Nothing written" },

@@ -734,14 +734,14 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
                 }, token=TOKEN)
                 assert writer_b["revision"] == row["expected_revision"] + 1
             page.get_by_test_id("runson-undo").click()
-            page.wait_for_function(f"() => /^(UNDONE|CHANGED ELSEWHERE)/.test(({receipt})())")
+            page.wait_for_function(f"() => /^(UNDONE|Could not undo)/.test(({receipt})())")
             after = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
             said = page.get_by_test_id("runson-receipt").inner_text()
             if case == "lost_update":
                 row = next(r for r in after["rows"] if r["id"] == job)
                 observed = [e["profile_id"] for e in row["assignment"]["entries"]]
                 assert observed == ["glass-mac-4b", "glass-lan-27b"], "Undo must not overwrite the intervening writer's chain"
-                assert said.upper().startswith("CHANGED ELSEWHERE"), said
+                assert said.startswith("Could not undo") and "changed elsewhere first" in said, said
                 assert page.get_by_test_id("runson-undo").count() == 0
             else:
                 prior = next(r for r in before["task_overrides"] if r["id"] == "meeting.deferred_analysis")

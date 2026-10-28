@@ -500,12 +500,12 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
               String(reply.value ?? said),
             )}`
           : labelFor(kind, String(reply.value ?? correctionValue));
-      showReceipt({ token: "TAUGHT", tone: "ok", tail });
+      showReceipt({ token: "Taught", tone: "ok", tail });
       void corrections.reload();
     } catch {
       // An HTTP refusal carries no body the face can name; what is TRUE
       // either way is that nothing was written.
-      showReceipt({ token: "REFUSED", tone: "danger", tail: "nothing written" });
+      showReceipt({ token: "Not taught · The hub did not accept it", tone: "danger", tail: "Nothing written" });
     } finally {
       setBusy(false);
     }

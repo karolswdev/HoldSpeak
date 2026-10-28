@@ -192,7 +192,7 @@ describe("the RESULT row's teach loop", () => {
     await userEvent.click(within(teach).getByRole("button", { name: "Teach correction" }));
 
     const receipt = await within(result).findByRole("status");
-    expect(receipt.textContent).toContain("TAUGHT");
+    expect(receipt.textContent).toContain("Taught");
     expect(receipt.textContent).toContain("queue for → Q4");
     // the row it replaced is gone; no sentence took its place
     await waitFor(() =>
@@ -202,7 +202,7 @@ describe("the RESULT row's teach loop", () => {
     // A.7 — the name is said ONCE per face: the footer keeps its own
     // status vocabulary and never mirrors the teach outcome.
     expect(announced).toContain("Preview ready · not sent");
-    expect(announced.filter((t) => t.includes("TAUGHT"))).toEqual([]);
+    expect(announced.filter((t) => t.includes("Taught"))).toEqual([]);
     expect(announced.filter((t) => t.includes("queue for"))).toEqual([]);
   });
 
@@ -478,7 +478,7 @@ describe("the SPOKEN run feeds the same loop (counsel C1)", () => {
     );
 
     const receipt = await within(result).findByRole("status");
-    expect(receipt.textContent).toContain("TAUGHT");
+    expect(receipt.textContent).toContain("Taught");
     const taught = mocks.apiFetch.mock.calls.filter(
       (c: unknown[]) => (c[1] as { method?: string })?.method === "POST"
         && String(c[0]).includes("/api/dictation/journal/11/correct"),
