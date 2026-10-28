@@ -208,6 +208,8 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       // Betterment setup ST1: the parked Rhythm window and Change places.
       { key: "configure-cadence", scope: "rhythm" },
       { key: "change-places", scope: "wallpaper" },
+      // Calls (2026-10-28): Settings ▸ Calls.
+      { key: "configure-calls", scope: "calls" },
     ],
     surface: {
       eyebrow: "Configuration",
@@ -427,6 +429,32 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       load: () =>
         import("../pages/cores/ProcessCore").then((module) => ({
           default: module.ProcessCore,
+        })),
+    },
+  },
+  // Calls (CALLS-DESIGN-2026-10-28 §6): call HoldSpeak, and HoldSpeak calls
+  // you. Go ▸ Work ▸ Calls; on the phone its Go row is the door on the home.
+  // Icon gap: no handset object in the D family yet, so the window wears the
+  // meeting object (the Live window's sprite) until one is drawn.
+  {
+    action: "open-calls",
+    windowId: "surface-calls",
+    label: "Calls",
+    description: "Call HoldSpeak from your phone, or let it call you.",
+    glyph: "☏",
+    href: "/",
+    go: { group: "work", order: 1.5 },
+    group: "tool",
+    surface: {
+      eyebrow: "Phone",
+      sprite: "meeting",
+      minW: 420,
+      // pullouts/size.ts `calls` (the first-open matrix): 720 x 520.
+      defaultW: 720,
+      defaultH: 520,
+      load: () =>
+        import("./calls/CallsWindow").then((module) => ({
+          default: module.CallsCore,
         })),
     },
   },

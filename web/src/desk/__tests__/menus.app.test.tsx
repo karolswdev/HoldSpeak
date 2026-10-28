@@ -299,7 +299,7 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
   // Betterment P4 (projects): Projects ▸ (All projects, then each) and Decisions.
   // Floor lane (2026-10-26): Archive left the floor; Go ▸ Archive is its door.
   const DAILY_WORK = ["Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents",
-    "Ask AI", "Speak", "Automations", "Memory", "Voice commands", "Archive"];
+    "Ask AI", "Speak", "Automations", "Memory", "Calls", "Voice commands", "Archive"];
 
   it("Go shows Daily then Work; Builder ▸ only when Builder tools is on, with eight rows", () => {
     phone(isPhone);
@@ -350,9 +350,9 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
     const fromManifest = GO_GROUPS.flatMap(goRows).length;
     // Daily: Today, Needs you, Capture, Projects ▸ and six applications
     // (daily D5 retired Brief and The week into Today; P4 added Decisions).
-    // Work declares six rows, including the opt-in feedback verb and
-    // Archive (off the floor 2026-10-26).
-    expect(fromManifest).toBe(10 + 6 + 8);
+    // Work declares seven rows, including the opt-in feedback verb,
+    // Archive (off the floor 2026-10-26) and Calls (2026-10-28).
+    expect(fromManifest).toBe(10 + 7 + 8);
   });
 
   // Betterment P4 (projects): Projects and Decisions are one press from Go,

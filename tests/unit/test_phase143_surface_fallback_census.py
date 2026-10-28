@@ -123,6 +123,13 @@ BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
 # behind a wire helper or a "display-only" component.
 WEB_ROUTING_SURFACES: dict[str, tuple[str, str]] = {
     "web/src/desk/api.ts": ("display-transport", "143-11"),
+    # Calls (2026-10-28): the Calls faces read `/api/calls/status`; its
+    # `engine.profile_id` is drawn as the engine row's words, never chosen.
+    "web/src/desk/calls/api.ts": ("display-transport", "143-11"),
+    "web/src/desk/calls/types.ts": ("display-transport", "143-11"),
+    "web/src/desk/calls/__fixtures__/status.notRunning.ts": ("display-transport", "143-11"),
+    "web/src/desk/calls/__fixtures__/status.off.ts": ("display-transport", "143-11"),
+    "web/src/desk/calls/__fixtures__/status.ready.ts": ("display-transport", "143-11"),
     "web/src/desk/ask.ts": ("inference-route", "143-07"),
     # Betterment Q2: "Use another engine" on a busy Ask writes a one-run
     # (scope `invocation`) assignment through the assignment authority.

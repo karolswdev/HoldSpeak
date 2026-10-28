@@ -16,7 +16,7 @@ describe("Settings You local reference", () => {
     const { container } = render(<OwnerPreferencesReference state="saved" />);
     await screen.findByTestId("settings-owner-name");
     const rail = container.querySelector(".pref-rail")!;
-    expect(within(rail as HTMLElement).getAllByRole("button")).toHaveLength(8);
+    expect(within(rail as HTMLElement).getAllByRole("button")).toHaveLength(9); // + Calls (2026-10-28)
     expect(screen.getByTestId("reference-settings-index-you")).toHaveClass("is-active");
     expect(container.querySelector(".pref-pane .gadget-row")).not.toBeNull();
     expect(container.querySelector(".surface-state-chip")?.textContent ?? "").not.toMatch(/SAVED|EDITED|SAVING/);

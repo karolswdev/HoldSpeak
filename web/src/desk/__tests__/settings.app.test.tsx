@@ -930,7 +930,7 @@ it("opens You, shows one category at a time, and navigates as the owner does", a
     await screen.findByTestId("settings-page");
     const sections = Array.from(container.querySelectorAll("[data-settings-section]"))
       .map((section) => section.getAttribute("data-settings-section"));
-    expect(sections).toEqual(["you", "speak", "meetings", "notices", "accounts", "agents", "desk", "this-mac"]);
+    expect(sections).toEqual(["you", "speak", "meetings", "notices", "accounts", "calls", "agents", "desk", "this-mac"]);
     expect(screen.getByRole("navigation", { name: "Settings sections" })).toBeInTheDocument();
     expect(screen.getByTestId("settings-index-you")).toHaveClass("is-active");
     expect(container.querySelector('[data-settings-section="you"]')).not.toHaveAttribute("hidden");
