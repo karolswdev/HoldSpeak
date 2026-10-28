@@ -104,6 +104,38 @@ describe("Needs you: Name an owner and Review on a meeting's action items", () =
     expect(rowNamed(UNOWNED)!.textContent).not.toContain("Unassigned");
   });
 
+  it("two unassigned twins (same text, same Project) are one row; the earlier one stays", async () => {
+    // Atlas pass 3 #20: "Write the rollback runbook" twice. The hub's half is
+    // tests/unit/test_desk_needs_you.py::test_two_unassigned_twins_are_one_row_and_the_earlier_stays.
+    const TWIN = "Write the rollback runbook";
+    let named: string | null = null;
+    vi.mocked(apiFetch).mockImplementation(asHub(async (path: string, init?: unknown) => {
+      const value = String(path);
+      if (value === "/api/inference/assignments") return ROSTER;
+      if (value.startsWith("/api/desk/needs-you")) return { count: 0, projects: [], items: [], next: null, coverage: [], complete: true };
+      if (value === "/api/follow-through/complete") {
+        const body = (init as { json?: { card_id?: string } }).json;
+        named = body?.card_id ?? null;
+        return { card_id: body?.card_id, verb: "delegate" };
+      }
+      if (value.startsWith("/api/door")) {
+        return { board: { unassigned: [
+          { ...producerCard("ai-late", TWIN, null), created_at: "2026-10-03T11:00:00" },
+          { ...producerCard("ai-early", TWIN, null), created_at: "2026-10-02T09:00:00" },
+        ] }, counts: {}, upcoming: [], calendar_configured: false };
+      }
+      return null;
+    }));
+    render(<ChairHome />);
+    await waitFor(() => expect(rowNamed(TWIN)).toBeTruthy());
+    expect(needsRows().filter((r) => r.querySelector(".needs-row-name")?.textContent === TWIN)).toHaveLength(1);
+    fireEvent.click(rowNamed(TWIN)!.querySelector('[data-verb="name-owner"]') as HTMLElement);
+    const well = await screen.findByTestId("needs-well");
+    fireEvent.change(within(well).getByRole("textbox", { name: "Owner" }), { target: { value: "Avery" } });
+    fireEvent.click(within(well).getByRole("button", { name: /Save owner/ }));
+    await waitFor(() => expect(named).toBe("ai-early"));
+  });
+
   it("Review's destination: the Needs-you window (Betterment D4: Follow-through is parked)", async () => {
     // The Follow-through wing is parked (Today is one page); a follow-through
     // drill opens the Needs-you window, where the card's row and verbs are.

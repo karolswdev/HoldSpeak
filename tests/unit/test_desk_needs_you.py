@@ -585,6 +585,32 @@ def test_a_rooms_meeting_action_is_one_door_card_on_the_desk(hub: Hub) -> None:
     assert len(titles) == len(set(titles)), titles
 
 
+def test_two_unassigned_twins_are_one_row_and_the_earlier_stays(hub: Hub) -> None:
+    """Atlas pass 3 #20 ("*Write the rollback runbook* twice"): two meetings
+    make the same unowned action item; Needs you shows it one time, and the
+    row is the one made first (the earlier ``created_at``)."""
+    from holdspeak.meeting_session import IntelSnapshot, MeetingState, TranscriptSegment
+
+    db = hub.db
+    now = datetime.now()
+    for mid, hours_ago in (("m-late", 2), ("m-early", 30)):
+        start = (now - timedelta(hours=hours_ago)).replace(microsecond=0)
+        db.meetings.save_meeting(MeetingState(
+            id=mid, started_at=start, ended_at=start + timedelta(minutes=30), title=f"Sync {mid}",
+            segments=[TranscriptSegment(text="We need a runbook.", speaker="Me",
+                                        start_time=1.0, end_time=4.0)],
+            intel=IntelSnapshot(timestamp=1.0, topics=["cutover"], summary="We need a runbook.",
+                                action_items=[{
+                "id": f"{mid}-a1", "task": "Write the rollback runbook", "owner": None, "due": None,
+                "status": "pending", "review_state": "accepted",
+                "source_timestamp": None, "created_at": start.isoformat()}]),
+            intel_status="completed",
+        ))
+    items = [row for row in _needs(hub)["items"] if row["title"] == "Write the rollback runbook"]
+    assert len(items) == 1, items
+    assert items[0]["ref"] == "m-early-a1", items
+
+
 # ── PHILO-17 (evalerror): a failed Evaluate reaches Needs you ──────────────
 # The seed of tests/e2e/test_philo17_evaluate_error_glass.py: a gh runner that
 # answers as a signed-out gh does, its stderr carrying synthetic credentials;
