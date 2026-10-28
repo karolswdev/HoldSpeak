@@ -29,6 +29,9 @@ function hub(routes: Record<string, (init?: RequestInit) => Response>) {
 // The day is fixed at 09:00: "+120 min" is still today at any wall-clock
 // hour (the suite failed after 22:00).
 beforeEach(() => {
+  // DELIGHT slice 3: the once-per-day flag lives in localStorage; each case
+  // starts as a viewer who has not seen the day's line.
+  window.localStorage.clear();
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 9, 12, 9, 0, 0));
 });
@@ -79,6 +82,25 @@ describe("PHILO-17 Today: the day as a timeline", () => {
     render(<TodayView />);
     expect(await screen.findByTestId("today-status-day")).toBeTruthy();
     window.localStorage.removeItem(DAY_SAID_KEY);
+  });
+
+  it("DELIGHT slice 3: a day line already said today shows the counts instead", async () => {
+    vi.setSystemTime(new Date(2026, 9, 12, 17, 30, 0));
+    window.localStorage.setItem(DAY_SAID_KEY, "2026-10-12");
+    hub({
+      "/api/door": () => json({ calendar_configured: true, upcoming: [] }),
+      "/api/meetings?limit=40": () => json({ meetings: [{ id: "m1", title: "Payments weekly", started_at: inMinutes(-120),
+        transcriptWords: 40, intel_status: "ready", has_summary: true }] }),
+      "/api/desk/needs-you": () => json({ items: [] }),
+    });
+    const said = render(<TodayView />);
+    await waitFor(() => expect(screen.getByTestId("today-body").getAttribute("aria-busy")).toBeNull());
+    expect(screen.queryByTestId("today-status-day")).toBeNull();
+    // The same day without the flag says the line: the case above is not empty.
+    said.unmount();
+    window.localStorage.removeItem(DAY_SAID_KEY);
+    render(<TodayView />);
+    expect(await screen.findByTestId("today-status-day")).toBeTruthy();
   });
 
   it("DELIGHT slice 2: the day line greets by the hour and the paper takes the light", async () => {

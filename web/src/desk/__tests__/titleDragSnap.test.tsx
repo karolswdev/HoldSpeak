@@ -13,9 +13,13 @@ import { handSourceProps } from "../hand/drag";
 import { useDropHand } from "../hand/store";
 import { DeskIcon } from "../surface/objects";
 import { useDesk } from "../store";
+import { DESK_WINDOW } from "../../lib/tokens.gen";
 
 const VW = 1440;
 const VH = 900;
+/** The lowest top a 720 px window keeps in the band: the dock's reserve is
+ *  the generated token (84 px, #1497), read from the one source. */
+const lowest = (y: number) => Math.min(y, VH - DESK_WINDOW.snapBottom - 720);
 
 // jsdom has no pointer events and no pointer capture. The gesture library
 // reads its device once, at import: the shim goes in before every import.
@@ -142,7 +146,7 @@ describe("a title drag (PHILO-17 snapjump)", () => {
     });
     // The window stays where the first step put it (moved by -50, +30).
     expect(rect()).not.toEqual(quarter);
-    expect(rect()).toEqual({ x: 94, y: 102, w: 920, h: 720 });
+    expect(rect()).toEqual({ x: 94, y: lowest(102), w: 920, h: 720 });
   });
 
   it("a cancelled drag inside a snap region does not tile", () => {
@@ -178,7 +182,7 @@ describe("a title drag (PHILO-17 snapjump)", () => {
       fireEvent.pointerUp(head, at(654, 140));
     });
     expect(snapForPointer(654, 140, VW, VH)).toBeNull();
-    expect(rect()).toEqual({ x: 194, y: 120, w: 920, h: 720 });
+    expect(rect()).toEqual({ x: 194, y: lowest(120), w: 920, h: 720 });
   });
 
   it("while the title drag holds the pointer, no native drag starts (a desk icon under the press point)", () => {
@@ -260,6 +264,6 @@ describe("a title drag (PHILO-17 snapjump)", () => {
     act(() => {
       fireEvent.pointerUp(head, { ...at(654, 140), pointerType: "touch" });
     });
-    expect(rect()).toEqual({ x: 194, y: 120, w: 920, h: 720 });
+    expect(rect()).toEqual({ x: 194, y: lowest(120), w: 920, h: 720 });
   });
 });
