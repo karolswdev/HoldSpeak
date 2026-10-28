@@ -200,6 +200,20 @@ export function goEntries(inputs: GoInputs): WorkMenuEntry[] {
   return out;
 }
 
+/** CALLS-REDS (2026-10-28): the Calls row made Go one row taller than a
+ * 393 x 852 phone; every row is already the 44 px target. On the phone the
+ * Archive (the parked drawer) is the last row of Drawers ▸, so Go fits with
+ * no scroll. With no Drawers ▸ the Archive row stays where it is. */
+function foldArchiveIntoDrawers(entries: WorkMenuEntry[]): WorkMenuEntry[] {
+  const archive = entries.find((e) => e.type === "item" && e.id === "desk.open-archive");
+  const drawers = entries.find((e) => e.type === "sub" && e.id === "go-drawers");
+  if (!archive || !drawers || drawers.type !== "sub") return entries;
+  return entries.flatMap((e) =>
+    e === archive ? []
+      : e === drawers ? [{ ...drawers, entries: [...drawers.entries, { type: "sep" as const, id: "go-drawers-archive-sep" }, archive] }]
+        : [e]);
+}
+
 /** Go at 393: the same groups as the desktop, then New ▸ (the phone has no
  * Desk menu). No row carries a keycap: a phone has no ⌘ key. */
 export function phoneGo(inputs: GoInputs): WorkMenuEntry[] {
@@ -207,7 +221,7 @@ export function phoneGo(inputs: GoInputs): WorkMenuEntry[] {
     .map((verb) => inputs.row(verb.id, verbLabel(verb, { selectedRef: null }).replace(/^New /, "")))
     .filter((e): e is WorkMenuEntry => e !== null);
   return [
-    ...goEntries({ ...inputs, phone: true }),
+    ...foldArchiveIntoDrawers(goEntries({ ...inputs, phone: true })),
     { type: "sep", id: "go-new-sep" },
     { type: "sub", id: "go-new", label: "New", entries: newRows },
   ];

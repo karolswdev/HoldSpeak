@@ -40,7 +40,7 @@ def _open_page(page: Any, base: str, *, scope: str = "") -> Any:
 
 def _assert_page_shape(page: Any, width: int) -> None:
     settings = page.locator("#surface-settings [data-testid='settings-page']")
-    expected = ["you", "speak", "meetings", "notices", "accounts", "agents", "desk", "this-mac"]
+    expected = ["you", "speak", "meetings", "notices", "accounts", "calls", "agents", "desk", "this-mac"]
     assert settings.locator("[data-settings-section]").evaluate_all(
         "els => els.map(el => el.getAttribute('data-settings-section'))"
     ) == expected

@@ -157,7 +157,7 @@ def test_reported_settings_categories_and_guided_builder_in_firefox(
                     assert plate["ink"] == plate["paper"] and "gradient" in plate["image"], plate
                 for image in settings.locator(".settings-page-index img").all():
                     page.wait_for_function("el => el.complete && el.naturalWidth > 0", arg=image.element_handle())
-                assert settings.locator(".settings-page-index img").count() == 8
+                assert settings.locator(".settings-page-index img").count() == 9
                 # A real category press blurs and commits an alias. It must still
                 # be present when the owner returns to You.
                 alias = settings.get_by_test_id("settings-owner-aliases").get_by_role("textbox")

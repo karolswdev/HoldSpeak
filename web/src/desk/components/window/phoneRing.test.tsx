@@ -296,6 +296,18 @@ describe("Go at 393 is the manifest's Go groups (betterment shell S1)", () => {
     expect(words(phoneGo({ row, projects: [], openProject: () => {}, builder: true }))).toContain("Builder");
   });
 
+  it("with Drawers ▸ the phone's Archive is its last row, so Go fits 393 x 852 (CALLS-REDS)", () => {
+    const row = (id: string, label?: string): WorkMenuEntry => ({ type: "item", id, label: label ?? id, onSelect: () => {} });
+    const out = phoneGo({
+      row, projects: [], openProject: () => {},
+      drawers: [{ ref: "directory:d-1", name: "Inbox" }], openDrawer: () => {},
+    });
+    const labels = out.map((e) => (e.type === "sep" ? "—" : e.type === "note" ? e.label : e.label));
+    expect(labels).not.toContain("Archive");
+    const drawers = out.find((e) => e.type === "sub" && e.id === "go-drawers") as Extract<WorkMenuEntry, { type: "sub" }>;
+    expect(drawers.entries.map((e) => (e.type === "item" ? e.label : "—"))).toEqual(["Inbox", "—", "Archive"]);
+  });
+
   it("renders on the real menu bar: no Desk ▸ Object ▸ Window ▸, and New opens as a menu", () => {
     render(<DeskMenuBar />);
     fireEvent.click(screen.getByRole("button", { name: "Go" }), { detail: 0 });
