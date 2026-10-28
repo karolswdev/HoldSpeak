@@ -42,6 +42,7 @@ import { openProjectRoom } from "../shell";
 import type { ProjectReturn } from "../store/types";
 import "./thought-workspace.css";
 import { Token } from "../surface/Token";
+import { runNoteAsProgram } from "../programs/fromNote";
 
 /** `Oct 24`: the day of the meeting a note came from. */
 function shortDay(value: string): string {
@@ -712,6 +713,14 @@ function WorkspaceReady({
         <Button dense variant="ghost" disabled={busy || outcomes.finding || !writer.draft.body.trim()} loading={outcomes.finding} className="thought-note-verb" title="Find the tasks" onClick={() => void findTasks()}>{outcomes.finding ? null : <ToolGlyph kind="tasks" />}<span className="thought-note-verb-label">Find the tasks</span></Button>
         {hasProjects ? <Button dense variant="ghost" disabled={busy} aria-expanded={actionWell === "project"} className="thought-note-verb" title="Project" onClick={() => void openActionWell("project")}><ToolGlyph kind="project" /><span className="thought-note-verb-label">Project ▾</span></Button> : null}
         <Button ref={sendRef} dense variant="ghost" className="thought-note-verb" title="Send" disabled={busy} onClick={() => void openSend()}><ToolGlyph kind="send" /><span className="thought-note-verb-label">Send…</span></Button>
+        {/* Programs (2026-10-28, §9b): the note's words become a Program's
+            goal, the note its origin. */}
+        <Button dense variant="ghost" className="thought-note-verb" title="Run as a program" disabled={busy || !writer.draft.body.trim()}
+          data-testid="note-run-as-program"
+          onClick={() => void runNoteAsProgram({ id: draftNoteId, title: writer.draft.title, body: writer.draft.body, projectId: placeProject?.id ?? null })
+            .then((failed) => { if (failed) say(failed.words); })}>
+          <ToolGlyph kind="run" /><span className="thought-note-verb-label">Run as a program</span>
+        </Button>
       </>}
     />
 

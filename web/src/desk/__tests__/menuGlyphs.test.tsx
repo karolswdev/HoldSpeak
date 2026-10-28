@@ -175,7 +175,8 @@ describe("Go menu grouping separator (HS-148-02)", () => {
     // Betterment shell S1: every manifest Go row (Daily, Work, Builder).
     // Betterment P4: + Decisions (Projects is Go ▸ Projects ▸ All projects).
     // Calls (2026-10-28): + Calls (Go ▸ Work ▸ Calls); + Recordings.
-    expect(goVerbs.filter((v) => !v.submenu)).toHaveLength(17);
+    // Programs (2026-10-28): + Programs (Go ▸ Daily, after Agents).
+    expect(goVerbs.filter((v) => !v.submenu)).toHaveLength(18);
     for (const id of ["go.configure-settings", "go.configure-runs-on", "go.configure-integrations", "go.configure-setup", "go.change-places"])
       expect(goVerbs.some((v) => v.id === id), id).toBe(false);
   });
@@ -244,6 +245,7 @@ describe("bound-key-set byte-identical proof (HS-148-02)", () => {
       "desk.open-people": "⌃3",
       "go.open-conductor": "⌃4",
       "go.dictate": "⌃5",
+      "go.open-programs": "⌃7",
       "go.configure-settings": "⌃,",
       "window.close": "⌃W",
       "window.minimize": "⌃M",

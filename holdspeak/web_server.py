@@ -1801,6 +1801,10 @@ class MeetingWebServer:
         from .web.routes.calls import build_calls_router
 
         mount_router(app, build_calls_router(web_ctx))
+        # Programs (2026-10-28): a goal cut into steps, each handed to an agent.
+        from .web.routes.programs import build_programs_router
+
+        mount_router(app, build_programs_router(web_ctx))
         # Recordings (2026-10-28): a desk session as a video for the iPhone.
         from .web.routes.recordings import build_recordings_router
 

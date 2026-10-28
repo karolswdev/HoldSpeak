@@ -75,6 +75,9 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
     "meeting_started",          # a meeting began
     "meeting_updated",          # title/tags changed mid-meeting
     "plugin_jobs_processed",    # the deferred plugin queue was drained
+    "program_changed",          # a Program or one of its steps moved (Programs
+                                #   2026-10-28): payload {program_id, step_id?,
+                                #   state, your_turn}
     "recording_state",          # a screen recording changed (Recordings, 2026-10-28)
                                 # payload: {reason: started|chunk|stopped|encoding|
                                 #           progress|ready|failed|parked|shared, recording}

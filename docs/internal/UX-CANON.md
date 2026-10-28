@@ -80,6 +80,23 @@ Each line names the ruling, its canvas or design note, and the PR.
 - **Settings ▸ Accounts (2026-10-27).** One paper, one label/control grid,
   dot-and-word states, one verb per row; Services, Calendar, Calendar feeds
   and Destinations on the same paper. #1491, #1503.
+- **Programs (owner 2026-10-28: "a proper, well built-out … and well
+  delightful software orchestration engine").** The Programs window
+  (`surface-programs`, Go ▸ Daily and ⌃7: `Toolbar` with New program and the
+  Templates `WorkMenu`, a banded `ListView` with `StateChip` and
+  `countWords`, the `StatusBar`, `SurfaceState` empty with the program
+  sprite) and the Program window (`pullout:program:<id>`: `Toolbar` with
+  Control ▾ and the Agent: … ▾ picker as `WorkMenu`s and When idle as a
+  `CheckGadget`; the Your turn well with library `Button` verbs; the board
+  as `ListView` rows with the Programs' own `StationTrack` (dots, `Avatar`
+  for a person station), `DotWord` states through `stateWords`; `FoldGadget`
+  folds for Decided for you, Checkpoints and Gate (`SurfaceCode` for the
+  command); `StringGadget`, `PadGadget`, `CycleGadget` and `Token` in
+  Drafting; the place line and the "No project" `Token` in the
+  `StatusBar`). Design `betterment/programs/PROGRAMS-DESIGN-2026-10-28.md`
+  (the "Built" section names the faces' divergences), canvas direction C
+  "the ledger" (`betterment/programs/CANVAS-NOTES-2026-10-28.md`), user doc
+  `docs/programs.md`; the Programs PR.
 
 ## Owner direction — crisp illustrated icons (2026-10-22)
 

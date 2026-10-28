@@ -617,7 +617,8 @@ export function foldAsks(
   }
 }
 
-const DECIDE_SOURCES = new Set(["decision", "coder", "gate"]);
+// Programs (2026-10-28): a Program's your-turn row is his to decide.
+const DECIDE_SOURCES = new Set(["decision", "coder", "gate", "program"]);
 
 /** Whose move a ranked row is. The twin of `row_direction` in
  *  `holdspeak/services/needs_you_membership.py`. */

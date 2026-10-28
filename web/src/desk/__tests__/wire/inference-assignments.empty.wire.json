@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T04:13:34.105389Z",
+  "captured_at": "2026-10-28T18:05:37.593692Z",
   "wire": {
     "issue_count": 1,
     "rows": [
@@ -908,7 +908,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T04:13:32.306883Z",
+            "created_at": "2026-10-28T18:05:35.423804Z",
             "effective_retry_policy_id": "retry.audio.transcription",
             "entries": [
               {
@@ -921,7 +921,7 @@
                 "readiness": "unavailable"
               }
             ],
-            "id": "ia_c1b725ed84684625ae1382c7a7f6b558",
+            "id": "ia_8340ae9906c4453daa48bf3ed74b173a",
             "issues": [
               {
                 "code": "binding_not_ready",
@@ -938,7 +938,7 @@
               "capability_id": "speech.transcribe",
               "kind": "capability"
             },
-            "sha256": "sha256:4dd421735a4d36873afaffd1b4cf58222fbef502fd72f00ef18a033ef48f11fa"
+            "sha256": "sha256:af8d381c9ccb536a7bebddfbb910a9cd09095bb9c20bd990a47f10b0dce0ef12"
           },
           "capability_id": "speech.transcribe",
           "inherited_from": "capability",

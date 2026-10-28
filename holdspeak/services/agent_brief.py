@@ -50,6 +50,8 @@ BRIEF_KINDS = (
     # Conductor R4: a Room issue (a Jira or GitHub issue a Room Watch reads),
     # ``issue:<watch_id>.<entity_id>`` (services/agent_issue.py).
     "issue",
+    # Programs (2026-10-28): one step of a Program (program_brief.compose).
+    "program_step",
 )
 
 #: The memory policy row this job reads under (not a built-in capability,
@@ -125,7 +127,14 @@ def project_for_item(db: Any, kind: str, item_id: str) -> Optional[str]:
     In order: the item is filed in a Project (``project_resources``); a
     Project item names its Project; the item's meeting is linked to a
     Project (highest confidence first). An issue belongs to its Watch's
-    Room."""
+    Room; a Program step to its Program's Project."""
+    if kind == "program_step":
+        from ..db.programs import ProgramStore
+
+        store = ProgramStore(db)
+        step = store.get_step(item_id)
+        program = store.get_program(step["program_id"]) if step else None
+        return (program or {}).get("project_id") or None
     if kind == "issue":
         from .agent_issue import read_issue
 
@@ -296,6 +305,12 @@ def compose_agent_brief(
     ``item_kind_unsupported`` / ``item_unknown`` / ``brief_over_cap`` by
     name."""
     kind, item_id = parse_item_ref(item_ref)
+    if kind == "program_step":
+        # Programs: the step's brief is the engine's (who and where, theirs,
+        # the proof), composed by program_brief on top of this one's parts.
+        from .program_brief import compose as compose_program_step
+
+        return compose_program_step(db, item_id, control_mode=control_mode, repo_path=repo_path)
     own_ref = f"{kind}:{item_id}"
     tracker: Optional[dict[str, str]] = None
     if kind == "issue":

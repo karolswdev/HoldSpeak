@@ -1905,7 +1905,8 @@
      "ends_at": "2026-10-24T04:48:00Z",
      "source_id": "daily-work",
      "source_label": "Work"
-    }
+    },
+    "programs": []
    }
   },
   "/api/people/relationships/rel-mira/one-on-ones": {
@@ -2002,7 +2003,8 @@
     "memory": {
      "excerpts": [],
      "refs": []
-    }
+    },
+    "programs": []
    }
   },
   "/api/people/relationships/rel-theo": {
@@ -2025,7 +2027,8 @@
     "owed_to_you": [],
     "notes": [],
     "next_one_on_one": null,
-    "next_one_on_one_event": null
+    "next_one_on_one_event": null,
+    "programs": []
    }
   },
   "/api/people/relationships/rel-theo/one-on-ones": {
@@ -2121,7 +2124,8 @@
     "memory": {
      "excerpts": [],
      "refs": []
-    }
+    },
+    "programs": []
    }
   }
  }

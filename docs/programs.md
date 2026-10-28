@@ -1,0 +1,209 @@
+# Programs
+
+A program is a goal cut into steps. An agent does each step in its own worktree. HoldSpeak checks the result of each step, starts a review, opens the pull request and merges it. What only you can do waits for you in **Needs you**. The program keeps a note on your desk that tells its state in plain words.
+
+Use a program when one goal is too big for one agent: "make the hub stop stalling", "the words wave", "wave 6 of the atlas".
+
+![The Programs window at 1440: five programs in bands, Your turn first](assets/programs/programs-1440.png)
+
+*The Programs window. The programs that wait on you are on top.*
+
+## What a program has
+
+| Part | What it is |
+|---|---|
+| **Program** | A goal, a repository, a base branch, a control level, the steps and a handover note. |
+| **Step** | One bounded part of the goal: a brief, the files it owns, the agent that does it, an effort and a gate. One step is one agent in one worktree. |
+| **Gate** | What must be true before a step is done: the check log is green, the review passed, the pull request merged. |
+| **Checkpoint** | One line that the agent, HoldSpeak or you write on a step at an important moment. |
+| **Your turn** | A thing that only you can do: merge, decide a finding, resume a parked step, answer a core question. |
+| **Handover note** | A desk note named "Program: <title>". HoldSpeak writes it again after each change. |
+
+## Start a program
+
+### From a goal
+
+1. Open **Go ▸ Programs** (after Agents), or press ⌃7.
+2. Press **New program**. The Program window opens in **Drafting**.
+3. Type the goal. Choose the repository (or a project, which gives its repository).
+4. Add the steps. Paste a brief for each step. Give each step the files it owns. A step can start after other steps ("after 2, 3").
+5. Press **Start**.
+
+### From the desk
+
+Choose the **From the desk** template and a project. HoldSpeak makes one step for each open action of the project. When the pull request of a step merges, HoldSpeak closes its action and keeps the pull request as the evidence.
+
+### From a note
+
+On a note, open the toolbar fold and press **Run as a program**. The note becomes the goal.
+
+## Templates
+
+| Template | Steps | Gate | Review |
+|---|---|---|---|
+| **Fast cycle** | One step for each brief you paste. | The repository's check. | None. Your control level decides the merge. |
+| **Build and review** | One step for each brief. | The check. | Codex reviews each change. |
+| **Race** | One brief, two agents (Claude Code and Codex) in two worktrees. | The check. | None. The first green change wins. HoldSpeak parks the other. |
+| **Overnight on the home box** | One step for each brief. pi builds on your home engine when it is idle. | The check. | Claude Code reviews. The program runs at YOLO. |
+| **From the desk** | One step for each open action of a project. | The check. | None. |
+
+You can change all values after you pick a template.
+
+### Overnight on the home box
+
+Use this template for work you want done while you sleep. pi does the steps on your home engine (for example qwen3.8-27b over Tailscale). Claude Code reviews each change. The program runs at YOLO, so a green and reviewed step merges without you. In the morning you find the merged pull requests, a note that tells what HoldSpeak decided for you, and only the core questions in Needs you.
+
+## The agent and the engine
+
+Each role in a program (the agent that builds a step, the reviewer, each agent in a race) has an agent, and pi also has an engine. Choose them with **Agent: … ▾** in the Program window's toolbar, or on the step's row:
+
+| Choice | What runs |
+|---|---|
+| **Claude Code** | The `claude` harness. |
+| **Codex** | The `codex` harness. |
+| **pi on an engine** | The `pi` harness on an engine from your library: your home engine, a LAN engine, or a hosted model. |
+| **The desk's assignment** | pi on the engine that **Settings ▸ Engines** gives to code. |
+
+The default pair: Codex reviews the work of Claude Code, and Claude Code reviews the work of Codex. You can change each role on each step.
+
+**When idle.** A pi step with **When idle** starts only when its engine is idle. Until then the step says **Ready · waiting for qwen**. Your own use (dictation, Ask) always gets the engine first. The step starts on the next pass after the engine is idle again.
+
+## The steps and their states
+
+A step goes through six stations: BRIEF · WORK · CHECK · REVIEW · PR · MERGE. The board shows the stations as dots. The lit dot is the current station.
+
+| The step says | What it means |
+|---|---|
+| **Planned** | The steps it waits for are not done. |
+| **Ready** | It can start. It waits for a free agent. |
+| **Working** | The agent works on it. |
+| **Asks you** | The agent waits for you. The row is in Needs you. |
+| **Checking** | The agent made a commit. The check runs in the worktree. |
+| **Check failed** | The check log is not green. The agent gets the end of the log and tries again. |
+| **In review** | A reviewer reads the change. |
+| **Findings** | The reviewer found problems. The agent gets them and tries again. |
+| **PR open** | The pull request is open. HoldSpeak waits for CI. |
+| **Merge?** | The step waits for your merge. |
+| **Merged** | The pull request merged. |
+| **Parked** | You parked the step, or HoldSpeak parked it after it failed. |
+
+The program is **Drafting**, **Running**, **Your turn**, **Done**, **Parked** or **Failed**. The worst state of its steps shows in the Programs list and on the Dock.
+
+A step moves on a receipt, not on a claim. "Done" from the agent is not enough: HoldSpeak waits for a new commit on the step's branch. "Green" is a green check log. "Merged" is the merge that GitHub reports.
+
+![The Program window at 1440: the Gate fold of a step whose check failed, and one agent that asks you](assets/programs/program-running-gate-1440.png)
+
+*A running program at YOLO. Step 3's check failed in the Pytest section; the Gate fold shows the command, the verdict and each section. Step 5 waits for its idle engine.*
+
+On a phone, the board is the screen and each step shows its state as one word:
+
+![The Program window at 393](assets/programs/program-running-393.png)
+
+## Your turn, and what is a core question
+
+HoldSpeak decides what it can decide by rule at the program's control level. A **core question** always comes to you, at every level:
+
+- **The goal.** A step would change what the program is for, or a finding says that the goal is wrong.
+- **The shape of the work.** A step touches files outside the repository, or files that no step owns.
+- **Egress.** A step would send something beyond its own pull request: a message to a person, a post, a publish.
+- **Money.** pi on a paid engine, and the program has no spend limit, or the cost is more than the limit.
+- **Authority or settings.** The gate holds a tool call, a change to Settings, a credential.
+- **Safety.** A finding about security or data loss, a deleted test, a migration that drops or changes rows.
+- **No rule.** HoldSpeak has no rule for the choice.
+
+Each item of your turn is a row in Needs you, in a group with the program's title. It is also on top of the Program window, with its verbs: **Merge** / **Not yet**, **Fix now** / **Later** / **Skip**, **Go on** / **Park** for a core question, **Resume** / **Skip**, **Answer**.
+
+![The Program window at 1440: Your turn with a merge, two findings and a core question](assets/programs/program-your-turn-1440.png)
+
+*Your turn at Secure: a merge, a REQUIRED and a SHOULD finding, and a core question (a step touched a file that no step owns).*
+
+**Open lane** on a step opens that agent's lane window. **Open program** in a project's Room or a person's room opens the program. In Agents, the "Step 4 of …" line under an agent opens it too.
+
+## The control ladder: Secure, Normal, YOLO
+
+A program uses your desk's control mode when you make it. You can change it for each program with **Control ▾**.
+
+| Decision | Secure | Normal | YOLO |
+|---|---|---|---|
+| Start, brief again, run the check, start a reviewer | HoldSpeak | HoldSpeak | HoldSpeak |
+| Open the step's pull request on your repository | HoldSpeak | HoldSpeak | HoldSpeak |
+| Merge when the check is green and the review passed | You | HoldSpeak | HoldSpeak |
+| A REQUIRED finding | Two rounds for the agent, then you | Two rounds, then you | Three rounds, then you |
+| A SHOULD finding | You | HoldSpeak: **Later** (a task for you) | HoldSpeak: fixed in the open round, else Later |
+| A NOTE finding | HoldSpeak: Skip | HoldSpeak: Skip | HoldSpeak: Skip |
+| A routine question from the agent | You | HoldSpeak types the desk's draft | HoldSpeak types the desk's draft |
+| A tool call that the gate can allow by its rules | You | HoldSpeak | HoldSpeak |
+| A failed check | Two rounds, then you | Two rounds, then you | Three rounds, then you |
+| A step that still fails | You | HoldSpeak parks it, the other steps go on | HoldSpeak tries one smaller brief, then parks it |
+| The winner of a race | You | HoldSpeak | HoldSpeak |
+| A step the plan did not have | You | You | HoldSpeak adds it and tells you |
+| The program is done | You close it | HoldSpeak | HoldSpeak |
+| A core question | You | You | You |
+
+Use Secure for a repository where you do not trust the engine yet. Use YOLO when you want HoldSpeak to do as much as possible without you.
+
+Note: the agents' routine questions and the gate's held calls follow your desk's control mode, not the program's level. A program at YOLO on a desk at Secure still asks you about them.
+
+## Decided for you, and Overturn
+
+Each decision that HoldSpeak makes for you is a line in the **Decided for you** fold of the Program window, and in the handover note. Each line gives the rule. While a decision can be undone, it has an **Overturn** verb: a Later task, a Skip, a parked step, an added step. A merge cannot be undone.
+
+## The gate and its log
+
+Each program has a check command. The default is the `check` command in the repository's `.holdspeak/program.json`, then `scripts/quick_check.sh` if the repository has it.
+
+HoldSpeak runs the check in the step's worktree with an isolated home folder. If the repository has `scripts/test_lock.py`, only one check runs at a time on the machine. The check writes a log to `<worktree>/.tmp/program-check/<step>/<time>.log`. Then HoldSpeak reads the log. The exit code is not enough. The check is green only when:
+
+1. the log names the commit, and the worktree was clean at the start;
+2. each section of the check has a result line;
+3. no section is red, and no section shows two times;
+4. the log ends with the check's own result line.
+
+A check with no log is not green. The **Gate** fold of a step shows the command, the result of each section and **Open log**.
+
+A new worktree has no installed packages. If your check needs them, put a command in `.holdspeak/program.json` that installs them first (for example `uv sync --extra dev` and `npm ci`). Otherwise the check is red, and the log tells why.
+
+## The handover note
+
+Each program has one desk note, "Program: <title>". HoldSpeak writes it again after each change. You do not edit it. It has:
+
+- one line of state ("Running · 2 of 6 steps done · 1 waits on you");
+- **Your turn**: what waits on you;
+- **Steps**: each step, its state, its agent, its time and its last checkpoint;
+- **Parked**: the parked steps and why;
+- **Decided for you**: each decision of HoldSpeak and its rule;
+- **Last checked**: the time of the last change.
+
+Read this note first after a day away. A new chat or a new agent also reads it first. When the program is done, the note gets one last line ("Done · date · number of pull requests · time") and stays as the record of the program.
+
+## The program on your desk
+
+A program is a desk object, like a meeting or a note.
+
+- **Its project.** A program made from a project uses the project's repository. A program without a project goes to the project of its repository. If there is none, the Program window shows **No project**: on a wide screen, press it to file the program. The project's Room shows a **Programs** fold, and its Needs you rows. The handover note goes to the project's memory. The project's update draft gets a Programs paragraph, and the Monday brief counts the running programs.
+- **Its origin.** A program can come from a meeting (its actions are the steps), a decision (the pull requests become the decision's work), a note, or a project item. The status bar of the Program window tells where the program lives and where it came from: "Project ▸ HoldSpeak · From the meeting of Tue 28 Oct · For Alice".
+- **The person it is for.** A program or a step can name a person. The person's room shows the program under their commitments. Your 1:1 brief with that person lists a merged step under "To show them", and a finding they own under "To ask".
+- **A human review.** A step can name a person as its reviewer. Then Needs you shows "Ask Alice to review PR #1591" with **Send…** (a prepared send; you press Send). The merge waits until that person approves the pull request on GitHub.
+- **What it leaves.** Each merged step is a result on Today and in the timelines of the project and the person. A **Later** decision makes a task for you, filed to the project and to the person. A **Skip** writes one line with your reason in the note.
+
+## For tools and agents
+
+The MCP tools are in the `program` family:
+
+| Tool | What it does | Who can use it |
+|---|---|---|
+| `program.create` | Make a program (title, goal, repository or project, base branch, control, check command, agent and engine, template). | You, an agent |
+| `program.plan` | Replace or add steps. `size: "auto"` sets each step's effort by rule. | You, an agent |
+| `program.update` | Change the title, goal, control, project, spend limit, agent or engine. | You, an agent |
+| `program.start`, `program.park`, `program.resume` | Start, park or resume a program. | You, an agent |
+| `program.get`, `program.list` | Read programs, their steps, checkpoints and your turn. | Everyone |
+| `program.checkpoint` | Write one line on a step. | The step's own agent, you |
+| `program.step_done` | The step's agent says that it is done, with its report. HoldSpeak still waits for the commit. | The step's own agent |
+| `program.decide` | Merge, decide a finding, resume a parked step, answer a core question. | You only |
+| `program.overturn` | Undo a decision of HoldSpeak. | You only |
+
+An agent can make and start a program, but it cannot decide for you, and it does not prompt a step's agent: HoldSpeak does that. The skill `agent/skills/holdspeak-programs/SKILL.md` tells an agent how to drive a program.
+
+The routes are under `/api/programs` (see [API surface](API_SURFACE.md)). Each change of a program is a `program_changed` frame.
+
+`HOLDSPEAK_PROGRAMS=off` stops the engine: it hands, checks and merges nothing. Test hubs set it.

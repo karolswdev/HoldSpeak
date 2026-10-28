@@ -116,7 +116,7 @@ describe("DeskMenuBar Go at 1440 (PHILO-17 doors)", () => {
     const menu = screen.getByRole("menu", { name: "Go menu" });
     // Betterment shell S1: Daily, then Work (Builder ▸ only behind its switch).
     expect(top(menu)).toEqual([
-      "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents", "Ask AI", "Speak",
+      "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents", "Programs", "Ask AI", "Speak",
       "Automations", "Memory", "Calls", "Recordings", "Voice commands", "Archive",
     ]);
     expect(menu.textContent).not.toMatch(/Settings|Runs on|Connections|Setup|Desk memory|List view/);

@@ -25,6 +25,9 @@ export const VARIANTS: Record<string, string[]> = {
   meeting: ["meeting"],
   // Calls (2026-10-28): a desk telephone, the blue handset on its cradle.
   call: ["call"],
+  // Programs (2026-10-28): three stacked cards, the front one lit with the
+  // station track (canvases/programs-2026-10-28.html).
+  program: ["program"],
   note: ["note"],
   decision: ["decision"],
   artifact: ["artifact"],

@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -132,6 +133,117 @@ def coding_engine(db: Any) -> PiEngine:
     raise LaunchRefused(
         "no_compatible_assignment", "the engine for coding work is not an OpenAI-compatible endpoint"
     )
+
+
+@dataclass(frozen=True)
+class LibraryEngine:
+    """One engine of the model library by its profile id (Programs: a step's
+    Runs on), with the words a face shows."""
+
+    profile_id: str
+    label: str
+    engine: Optional[PiEngine]
+    #: "" when pi can run on it; else the refusal code.
+    refusal: str = ""
+
+    @property
+    def short_name(self) -> str:
+        """"qwen" for "qwen3.8-27b": the model's leading word, else the label."""
+        model = self.engine.model if self.engine is not None else ""
+        lead = re.match(r"[A-Za-z]+", model or "")
+        return (lead.group(0).lower() if lead else "") or self.label or self.profile_id
+
+    @property
+    def lane_key(self) -> str:
+        """The engine lanes' key for this server (``engine_lanes.engine_key``)."""
+        if self.engine is None:
+            return ""
+        return f"{self.engine.endpoint.strip().rstrip('/')}|{self.engine.model}"
+
+
+def _deployment_row(conn: Any, profile_id: str) -> tuple[str, Any]:
+    """(label, deployment_revisions row) of a v2 profile's newest revision."""
+    head = conn.execute(
+        "SELECT revision, label FROM model_profile_revisions WHERE profile_id=? ORDER BY revision DESC LIMIT 1",
+        (profile_id,),
+    ).fetchone()
+    if head is None:
+        return "", None
+    binding = conn.execute(
+        """SELECT b.deployment_revision_id FROM model_profile_binding_heads h
+             JOIN model_profile_binding_revisions b
+               ON b.binding_id=h.binding_id AND b.revision=h.revision
+            WHERE h.profile_id=? AND b.profile_revision=?""",
+        (profile_id, int(head["revision"])),
+    ).fetchone()
+    if binding is None:
+        return str(head["label"] or ""), None
+    row = conn.execute(
+        "SELECT engine, endpoint, model, secret_slot, context_ceiling, boundary FROM deployment_revisions WHERE id=?",
+        (binding["deployment_revision_id"],),
+    ).fetchone()
+    return str(head["label"] or ""), row
+
+
+def library_engine(db: Any, profile_id: str) -> Optional[LibraryEngine]:
+    """The engine profile ``profile_id`` of the model library, or ``None``
+    when the library has no such profile. A v2 profile resolves its newest
+    revision's deployment; a legacy ``profiles`` row its v1 execution."""
+    pid = str(profile_id or "").strip()
+    if not pid or db is None:
+        return None
+    with db._connection() as conn:
+        label, row = _deployment_row(conn, pid)
+        legacy = None
+        if not label and row is None:
+            legacy = conn.execute(
+                "SELECT * FROM profiles WHERE id=? AND deleted=0", (pid.removeprefix("legacy-"),),
+            ).fetchone()
+    fields: Optional[dict[str, Any]] = None
+    if row is not None:
+        fields = {key: row[key] for key in ("engine", "endpoint", "model", "secret_slot", "context_ceiling", "boundary")}
+    elif legacy is not None:
+        from types import SimpleNamespace
+
+        from ..services.model_profile_service import resolve_v1_profile_execution
+
+        label = str(legacy["name"] if "name" in legacy.keys() else "") or pid
+        try:
+            deployment = resolve_v1_profile_execution(SimpleNamespace(**dict(legacy)), db=db).deployment_revision
+        except Exception:
+            return LibraryEngine(pid, label, None, "engine_not_compatible")
+        fields = {key: getattr(deployment, key, "") for key in
+                  ("engine", "endpoint", "model", "secret_slot", "context_ceiling", "boundary")}
+    elif not label:
+        return None
+    if fields is None:
+        return LibraryEngine(pid, label or pid, None, "engine_not_compatible")
+    endpoint = str(fields.get("endpoint") or "").strip().rstrip("/")
+    parsed = urlparse(endpoint)
+    model = str(fields.get("model") or "").strip()
+    if (str(fields.get("engine") or "") != "openai_compatible" or parsed.scheme not in ("http", "https")
+            or not parsed.netloc or not model):
+        return LibraryEngine(pid, label or model or pid, None, "engine_not_compatible")
+    engine = PiEngine(
+        endpoint=endpoint, model=model,
+        context_window=int(fields.get("context_ceiling") or 0) or DEFAULT_CONTEXT_WINDOW,
+        key_slot=str(fields.get("secret_slot") or ""), host=str(parsed.netloc),
+        boundary=str(fields.get("boundary") or ""),
+    )
+    return LibraryEngine(pid, label or model, engine)
+
+
+def engine_for_profile(db: Any, profile_id: str) -> PiEngine:
+    """The pi engine of one library profile (a step's Runs on), or the
+    refusal by name: ``engine_unknown`` / ``engine_not_compatible``."""
+    from .factory_launch import LaunchRefused
+
+    found = library_engine(db, profile_id)
+    if found is None:
+        raise LaunchRefused("engine_unknown", f"the model library has no engine {profile_id!r}")
+    if found.engine is None:
+        raise LaunchRefused("engine_not_compatible", f"pi cannot run on {found.label!r}: it is not an OpenAI-compatible engine")
+    return found.engine
 
 
 def key_for_slot(slot: str) -> Optional[str]:
@@ -273,6 +385,9 @@ __all__ = [
     "PROVIDER",
     "PiEngine",
     "coding_engine",
+    "engine_for_profile",
+    "library_engine",
+    "LibraryEngine",
     "launch_args",
     "launch_env",
     "key_for_slot",

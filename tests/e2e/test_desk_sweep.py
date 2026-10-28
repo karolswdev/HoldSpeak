@@ -267,6 +267,9 @@ def _cases() -> tuple[list[tuple[str, str, str | None]], dict[str, str]]:
         ("meeting", "surface-meetings", "meeting:{meeting}"),
         ("note", "pullout:note:{note}", None),
         ("person", "pullout:people:{person}", None),
+        # Programs (2026-10-28): a Program's window (the board of direction
+        # C), seeded through the real routes on a real git folder.
+        ("program", "pullout:program:{program}", None),
         # Betterment A3: an automation's window (an object window, so a seeded
         # subject: the sentence, its newest result, an older failed one).
         ("automation", "workbench:{automation}", None),
@@ -474,13 +477,38 @@ def desk(tmp_path_factory: pytest.TempPathFactory, pw_browser: Any) -> Any:
                 "initial_note": {"title": "Ledger rollback", "body_markdown": "Write the ledger rollback runbook before Friday."},
             }, token=TOKEN)
             note_id = thought["thought"]["working_note"]["id"]
+            program_id = _seed_program(page, tmp)
             ctx.close()
             _seed_finished_receipts()
             automation = _seed_automation(note_id)
             yield {"base": base, "room": room, "meeting": "m-standup", "person": week["priya"], "note": note_id,
-                   "automation": automation}
+                   "automation": automation, "program": program_id}
         finally:
             server.stop()
+
+
+def _seed_program(page: Any, tmp: Path) -> str:
+    """Programs (2026-10-28): one Program on a real git folder, three steps
+    (the third after the first two), started. The rig hub's runner is off
+    (``HOLDSPEAK_PROGRAMS=off``), so the steps stay Ready and Planned and no
+    agent is launched."""
+    repo = tmp / "program-repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+    subprocess.run(["git", "-C", str(repo), "-c", "user.name=Sweep", "-c", "user.email=sweep@example.com",
+                    "commit", "-q", "--allow-empty", "-m", "start"], check=True)
+    made = _api(page, "POST", "/api/programs", {
+        "title": "The hub stops stalling", "goal": "The hub answers every read within a second.",
+        "repository": str(repo), "template": "fast-cycle", "check_command": "true",
+    }, token=TOKEN)
+    program_id = str(made.get("id") or (made.get("program") or {}).get("id"))
+    _api(page, "POST", f"/api/programs/{program_id}/plan", {"replace": True, "steps": [
+        {"title": "Indexes", "brief": "Index the three pipeline_events scans.", "owns": ["holdspeak/db/schema.py"]},
+        {"title": "Retention", "brief": "Prune read receipts after 14 days."},
+        {"title": "The fan-out", "brief": "One read for the desk.", "after": [1, 2]},
+    ]}, token=TOKEN)
+    _api(page, "POST", f"/api/programs/{program_id}/start", {}, token=TOKEN)
+    return program_id
 
 
 def _seed_automation(note_id: str) -> str:
@@ -1264,6 +1292,9 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                                        arg=[provider, pick.split("/")[-1]], timeout=T)
             page.get_by_test_id("door-counts-github").wait_for(timeout=T)
             page.mouse.move(2, 2)
+        if case_id == "program":
+            # Programs (2026-10-28): the seeded Program's board, read.
+            page.locator(f'[id="{wid}"] [data-testid=programs-board]').wait_for(timeout=T)
         if case_id == "person":
             # This pose is the seeded person's content, not the transient
             # readiness/detail gap or a frame whose lazy body has not loaded.

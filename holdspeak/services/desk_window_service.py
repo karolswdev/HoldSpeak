@@ -64,6 +64,8 @@ STATIC_WINDOWS: dict[str, str] = {
     "surface-commands": "configure-commands",
     # Calls (2026-10-28): the Calls window (desk/calls/CallsWindow.tsx).
     "surface-calls": "open-calls",
+    # Programs (2026-10-28): the Programs window (desk/programs/ProgramsWindow.tsx).
+    "surface-programs": "open-programs",
     # Recordings (2026-10-28): the Recordings window (desk/recordings/RecordingsWindow.tsx).
     "surface-recordings": "open-recordings",
     "surface-people": "open-people",
@@ -150,6 +152,9 @@ PULLOUT_KINDS: frozenset[str] = frozenset({
     "recipe", "chain", "workflow", "coder", "game", "layout", "roadmap",
     "story", "repository", "workbench", "intelligence", "people", "thread",
     "knowledge", "zone", "persona", "sequence",
+    # Programs (2026-10-28): the Program window, a pullout family of the hub's
+    # Program (web/src/desk/pullouts/registry.ts PULLOUT_FAMILIES).
+    "program",
 })
 
 #: W1-DOORS (atlas 2026-10-27, Part B): the registry's kind words and the

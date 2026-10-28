@@ -148,5 +148,18 @@ export function objectWindowStandIn(ref: string): WorldObject | null {
       ref: { kind: "people", id, name: "Person" } as unknown as Primitive,
     };
   }
+  // Programs (2026-10-28): a Program is the hub's, not a desk item; its
+  // window reads its own record (ProgramWindow).
+  if (ref.startsWith("program:") && ref.length > "program:".length) {
+    const id = ref.slice("program:".length);
+    return {
+      // A pullout family, not a desk primitive (pullouts/registry.ts
+      // PULLOUT_FAMILIES): the kind names the family.
+      kind: "program" as unknown as WorldObject["kind"],
+      id,
+      title: "Program",
+      ref: { kind: "program", id, title: "Program" } as unknown as Primitive,
+    };
+  }
   return null;
 }

@@ -50,7 +50,7 @@ BRANCH_PR_LIMIT = 5
 GH_FIELDS = (
     "number,title,url,headRefName,baseRefName,headRefOid,baseRefOid,state,isDraft,"
     "statusCheckRollup,author,reviewDecision,mergedAt,mergeCommit,"
-    "isCrossRepository,headRepository,headRepositoryOwner,createdAt"
+    "isCrossRepository,headRepository,headRepositoryOwner,createdAt,latestReviews"
 )
 
 #: The named gh states of a source (Conductor K4). ``live`` means the last
@@ -198,6 +198,18 @@ def order_key(row: dict[str, Any]) -> tuple[int, int]:
     else:
         band = 4
     return (band, -int(row.get("number") or 0))
+
+
+def _approved_by(reviews: Any) -> list[str]:
+    """The logins whose latest review of a PR is APPROVED."""
+    if not isinstance(reviews, list):
+        return []
+    return sorted({
+        str((review.get("author") or {}).get("login") or "")
+        for review in reviews
+        if isinstance(review, dict) and str(review.get("state") or "").upper() == "APPROVED"
+        and isinstance(review.get("author"), dict) and (review.get("author") or {}).get("login")
+    })
 
 
 def _github_repo(url: str) -> str:
@@ -422,6 +434,8 @@ class PrReceiptsService:
                 "checks": check_details(pr.get("statusCheckRollup")),
                 "author": str((pr.get("author") or {}).get("login") or ""),
                 "review_decision": str(pr.get("reviewDecision") or "").lower(),
+                # Programs (§9b): the logins whose latest review approves it.
+                "approved_by": _approved_by(pr.get("latestReviews")),
                 "merged_at": str(pr.get("mergedAt") or ""),
                 # PHILO-15 B58: when the PR was opened (the Brief's PR row).
                 "created_at": str(pr.get("createdAt") or ""),

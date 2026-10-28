@@ -58,6 +58,7 @@ import {
   useDropHand,
 } from "../hand";
 import type { DrawerHead, DrawerMember } from "./members";
+import { RoomPrograms } from "../programs/RoomPrograms";
 import { plainReason } from "../surface/plainFailure";
 import { registerProjectRepository, registrable, useProjectRepository } from "../projectRepository";
 import "./drawer.css";
@@ -405,6 +406,8 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
               ) : null}
             </SurfaceSection>
           ) : null}
+          {/* Programs (2026-10-28, §9b): the Room's Programs fold. */}
+          {data.room?.programs?.state === "ok" ? <RoomPrograms programs={data.room.programs.programs} /> : null}
           {data.room ? (
             <RoomAskWell ask={ask} projectId={projectId} onOpenRef={(ref) => refOpener(ref)?.()} />
           ) : null}

@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T02:01:26.414019Z",
+  "captured_at": "2026-10-28T18:05:35.864897Z",
   "wire": {
     "agents": [
       {
@@ -39,7 +39,7 @@
         "skill": "missing",
         "skill_path": "/tmp/rig/home/.agents/skills/holdspeak/SKILL.md",
         "verb": "Use it",
-        "version": "0.163.0"
+        "version": "0.165.0"
       },
       {
         "hooks": "not_read",

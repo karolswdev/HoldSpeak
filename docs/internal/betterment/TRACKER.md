@@ -41,7 +41,7 @@ Shared illustrated icon follow-up (2026-10-22): #1426 replaces the
 pixel-art family with crisp illustrated shared app/object/Settings icons.
 Existing recipe slices only; owner aesthetic acceptance remains open.
 
-**Total: 115 of 117 slices merged**.
+**Total: 115 of 135 slices merged** (Programs added 2026-10-28: 18 slices, 11 in the Programs PR, not merged yet).
 Merged means implementation on main; delivery and owner acceptance are tracked separately in `pm/STATUS.md`.
 Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-19.md` for the interrupted worktrees and PRs.
 
@@ -58,6 +58,7 @@ Codex took delivery on 2026-10-19 at the owner's request. See `RECOVERY-2026-10-
 | Desk shell | `shell/` | 9 of 10 |
 | Send | `send/` | 7 of 8 |
 | Capture | `capture/` | 12 of 12 |
+| Programs | `programs/` | 0 of 18 (PG1–PG11 in the Programs PR) |
 
 Owner feedback follow-up (2026-10-21): #1419 implements a guided Automation
 builder and one-category Settings with pictograms and clearer dropdowns. This
@@ -256,3 +257,26 @@ claim aesthetic acceptance or closure of the remaining full-tape failures.
 | C10 | Meetings record in their own process (decision 1) | Done · #1382 | Child owns native streams and journal; bounded Stop confirms exit before releasing the floor. Hardware acceptance remains open. |
 | C11 | Voice commands run desk verbs (decision 3) | Done · #1386 | Closed owner desk verbs; spoken Stop reaches the real recording controller without taking its capture claim. |
 | C12 | The glyph tells the truth | Done · #1387 | Recording time and Stop in the native menu bar; lost desk state disables Stop. Native rendering remains owner acceptance. |
+
+## Programs (`programs/RECIPE.md`): 0 of 18
+
+| Slice | What | State | Note |
+|---|---|---|---|
+| PG1 | The record: Programs, Steps, Checkpoints | In the Programs PR |  |
+| PG2 | The control ladder and core questions | In the Programs PR |  |
+| PG3 | The gate: a verified log | In the Programs PR |  |
+| PG4 | The tick, the hand kind and the brief | In the Programs PR | Ticks every 30 s and after a press; not on a coder frame (PG12). |
+| PG5 | Review, findings, the PR and the merge | In the Programs PR | YOLO's third round reuses the worktree (design, Built). |
+| PG6 | The handover note, Decided for you and Overturn | In the Programs PR |  |
+| PG7 | The desk's tools: REST, MCP and the frame | In the Programs PR | 15 routes, 12 tools; 301 tools in 51 families. |
+| PG8 | The Program in the ecosystem, hub half | In the Programs PR |  |
+| PG9 | The Programs window and the Program window | In the Programs PR | No race shot (no race fixture). |
+| PG10 | The seams on the faces | In the Programs PR | Person line, Room fold, Note verb pinned in app tests only. |
+| PG11 | The documents | In the Programs PR |  |
+| PG12 | Tick on the coder frame | Open |  |
+| PG13 | The Program's level drives the desk's answers | Open |  |
+| PG14 | Automations run a program | Open |  |
+| PG15 | Start a program on a call | Open |  |
+| PG16 | Decisions from a Program | Open |  |
+| PG17 | The first Program is the engine's own history | Open | On his desk. |
+| PG18 | Programs on Today | Open |  |

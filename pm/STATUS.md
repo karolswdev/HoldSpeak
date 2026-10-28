@@ -4,9 +4,27 @@ The one status file. Update it when a PR merges. Rules: `CLAUDE.md`, "How we wor
 The old roadmap under `pm/roadmap/` is history; it is not updated. Its shots and run
 dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
-**Last updated:** 2026-10-27 23:30 — THE WINDOW PROGRAM (WINDOW-PROGRAM-2026-10-27.md #1504; 'go with suggestions'). MERGED SINCE 17:50: the atlas pass 2 #1533 (every window re-shot and rescored; README hero shots regenerated); wave 3 ZONE #1534; DELIGHT #1535 + #1540 (canvas delight-2026-10-27.html: kind hues, lamps that pulse, task ticks, first-paint fade, Done settle, empty states with objects, Today by the hour, counts tick, depth tokens, small joys); the agent window #1537 (canvas agent-window-2026-10-27.html, A the step log); the Note steps 4–6 #1529; Ask's hub gaps #1530 (streaming, references with facts, claims kept, slow asks recovered) + W4-ASK #1538; wave 4 PHONE #1539, WORDS #1541; the first-use fence #1532; the Context word #1536. Hub on 13c98b789; the hub is also on the tailnet (Tailscale Serve, https://karols-macbook-pro.tailad9943.ts.net, tailnet only). LIVE BUG found and worked around tonight: an unreachable engine's connect timeout hangs the hub's reads (the desk shows Loading forever) — lane HUB TIMEOUTS running (connect timeouts, no synchronous probes on read routes, the Loading face times out honestly). RUNNING: AGENT 2 (slice 2, the done/Idle truth, the Agents window split), HUB TIMEOUTS, the whole browser suite on main. OPEN CALLS for the owner: the Note's title from its first line (clashes with Q8); the token drift --desk-snap-bottom 84 vs 60; moving the engine groups back to the LAN/Tailscale engine when home. Honest progress: ~70 % (every window on the grammar, delight slices 1–2 shipped, docs images current; left: the owner's live verdict, the agent/Live third slices, the remaining joys).)
+**Last updated:** 2026-10-28 — PROGRAMS, the orchestration engine (owner: "one, holistic PR … a proper, well built-out, well specified, and well delightful software orchestration engine that runs on top of HoldSpeak"): one PR from `lane/programs-20261028`, three lanes (PG-HUB engine merged into the program branch; PG-FACES the two windows and the seams, merged into the program branch `bad00fb76`; PG-DOCS). Merged on main before it: the hub-stalling refactor program #1584, #1585, then off the loop parts 1–9 #1586–#1594, #1595 Needs you rebuilt only on Retry, #1597 one desk write reads only what it changed, #1598 the loop guard's allowlist is empty.
+
+**Before it (2026-10-27):** 2026-10-27 23:30 — THE WINDOW PROGRAM (WINDOW-PROGRAM-2026-10-27.md #1504; 'go with suggestions'). MERGED SINCE 17:50: the atlas pass 2 #1533 (every window re-shot and rescored; README hero shots regenerated); wave 3 ZONE #1534; DELIGHT #1535 + #1540 (canvas delight-2026-10-27.html: kind hues, lamps that pulse, task ticks, first-paint fade, Done settle, empty states with objects, Today by the hour, counts tick, depth tokens, small joys); the agent window #1537 (canvas agent-window-2026-10-27.html, A the step log); the Note steps 4–6 #1529; Ask's hub gaps #1530 (streaming, references with facts, claims kept, slow asks recovered) + W4-ASK #1538; wave 4 PHONE #1539, WORDS #1541; the first-use fence #1532; the Context word #1536. Hub on 13c98b789; the hub is also on the tailnet (Tailscale Serve, https://karols-macbook-pro.tailad9943.ts.net, tailnet only). LIVE BUG found and worked around tonight: an unreachable engine's connect timeout hangs the hub's reads (the desk shows Loading forever) — lane HUB TIMEOUTS running (connect timeouts, no synchronous probes on read routes, the Loading face times out honestly). RUNNING: AGENT 2 (slice 2, the done/Idle truth, the Agents window split), HUB TIMEOUTS, the whole browser suite on main. OPEN CALLS for the owner: the Note's title from its first line (clashes with Q8); the token drift --desk-snap-bottom 84 vs 60; moving the engine groups back to the LAN/Tailscale engine when home. Honest progress: ~70 % (every window on the grammar, delight slices 1–2 shipped, docs images current; left: the owner's live verdict, the agent/Live third slices, the remaining joys).)
 
 ## Current phase
+
+**Programs — 2026-10-28.** Design
+`docs/internal/betterment/programs/PROGRAMS-DESIGN-2026-10-28.md` (with its
+"Built, 2026-10-28" section), recipe `programs/RECIPE.md` (PG1–PG18; PG1–PG11
+in this PR), canvas direction C "the ledger" (`programs/CANVAS-NOTES-2026-10-28.md`),
+user doc `docs/programs.md`, skill `agent/skills/holdspeak-programs/SKILL.md`.
+A Program is a goal cut into steps; each step is one agent (Claude Code, Codex,
+or pi on any engine, when idle) in one worktree; a verified check log, a
+review, a PR and a merge by the control level (Secure · Normal · YOLO); only
+core questions reach him; Decided for you with Overturn; a handover note on
+the desk. 12 `program.*` MCP tools (301 tools in 51 families), 15 routes, the
+`program_changed` frame, `HOLDSPEAK_PROGRAMS=off` for rig hubs. Left (open
+work): PG12 tick on the coder frame, PG13 the Program's level drives
+`AgentResponder` and the gate, PG14 Automations, PG15 Calls, PG16 decisions,
+PG17 the refactor program re-created on his desk, PG18 Programs on Today; his live verdict on the two
+windows.
 
 **Calls — 2026-10-28 (owner: "place calls and use them to integrate with a
 specific HoldSpeak instance… push things forward, prepare things, send things";
@@ -2361,6 +2379,10 @@ Now: the fast-lane change (owner ruling 2026-10-03): remove the commit gate; sto
 committing generated docs and line-number test maps; split the tests.
 
 ## Open work
+
+- **Programs (2026-10-28):** the Programs PR (one PR, three lanes) to merge;
+  then PG12–PG18 in `docs/internal/betterment/programs/RECIPE.md`; his live
+  verdict on the Programs window and the Program window.
 
 - **Adversarial review follow-through:** the 47 records and shared delivery
   priorities are in `docs/internal/betterment/native-experience/adversarial/README.md`.

@@ -300,8 +300,11 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
   // Floor lane (2026-10-26): Archive left the floor; Go ▸ Archive is its door.
   const DAILY_WORK = ["Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents",
     "Ask AI", "Speak", "Automations", "Memory", "Calls", "Voice commands", "Archive"];
-  // Recordings (2026-10-28) is on the desktop Go only: a phone cannot film its screen.
-  const DESK_DAILY_WORK = [...DAILY_WORK.slice(0, DAILY_WORK.indexOf("Calls") + 1), "Recordings",
+  // Programs and Recordings (2026-10-28) are on the desktop Go only: a Program
+  // is driven from the desk (its asks reach the phone through Needs you) and a
+  // phone cannot film its screen; the phone's Go is at its 852 px limit.
+  const DESK_DAILY_WORK = [...DAILY_WORK.slice(0, DAILY_WORK.indexOf("Agents") + 1), "Programs",
+    ...DAILY_WORK.slice(DAILY_WORK.indexOf("Agents") + 1, DAILY_WORK.indexOf("Calls") + 1), "Recordings",
     ...DAILY_WORK.slice(DAILY_WORK.indexOf("Calls") + 1)];
 
   it("Go shows Daily then Work; Builder ▸ only when Builder tools is on, with eight rows", () => {
@@ -355,7 +358,8 @@ describe.each([[1440, false], [393, true]] as const)("S1: Go at %i is the manife
     // (daily D5 retired Brief and The week into Today; P4 added Decisions).
     // Work declares eight rows, including the opt-in feedback verb,
     // Archive (off the floor 2026-10-26), Calls and Recordings (2026-10-28).
-    expect(fromManifest).toBe(10 + 8 + 8);
+    // Daily gained Programs (2026-10-28), after Agents.
+    expect(fromManifest).toBe(11 + 8 + 8);
   });
 
   // Betterment P4 (projects): Projects and Decisions are one press from Go,

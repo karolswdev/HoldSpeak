@@ -1,5 +1,6 @@
 // HS-135-04: People is a single protected Desk application.  Its roster is
 // a relationship projection, never a field of person tiles or a scorecard.
+import { PersonPrograms, personProgramsOf } from "../../desk/programs/PersonPrograms";
 import { PersonPages } from "../../desk/standingPages";
 import { wireDate } from "../../desk/surface/format";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
@@ -1290,6 +1291,10 @@ function PrepPane({ relationship, onRefresh, onProtectedFailure, onRead, onNext 
         </div>
       </div>
     </section>
+
+    {/* Programs (2026-10-28, §9b): the Programs for this person, and the
+        1:1's "To show them" and "To ask". */}
+    <PersonPrograms programs={personProgramsOf(brief, relationship)} name={firstName} />
 
     {showLast && lastId ? <section className="people-section" aria-label="Last time" data-testid="prep-last">
       <header className="people-section-head">

@@ -949,6 +949,78 @@
     },
     {
       "transport": "mcp",
+      "entry_point": "program.checkpoint",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.create",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.decide",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.get",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.overturn",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.park",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.plan",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.resume",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.start",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.step_done",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "program.update",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/program.py) over the one ProgramService"
+    },
+    {
+      "transport": "mcp",
       "entry_point": "coder.audit",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/coder.py)"
