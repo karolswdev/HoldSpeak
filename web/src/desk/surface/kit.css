@@ -694,11 +694,45 @@
   background: var(--wb-steel);
   box-shadow: 0 0 0 1px var(--wb-rule-soft);
 }
-.kit-dot[data-tone="ok"] { background: var(--lamp-ok); }
-.kit-dot[data-tone="warn"] { background: var(--lamp-warn); }
-.kit-dot[data-tone="fail"] { background: var(--lamp-fail); }
-.kit-dot[data-tone="info"] { background: var(--lamp-info); }
-.kit-dot[data-tone="ask"] { background: var(--lamp-ask); }
+.kit-dot[data-tone="ok"] { background: var(--lamp-ok); --dot-tone: var(--lamp-ok); }
+.kit-dot[data-tone="warn"] { background: var(--lamp-warn); --dot-tone: var(--lamp-warn); }
+.kit-dot[data-tone="fail"] { background: var(--lamp-fail); --dot-tone: var(--lamp-fail); }
+.kit-dot[data-tone="info"] { background: var(--lamp-info); --dot-tone: var(--lamp-info); }
+.kit-dot[data-tone="ask"] { background: var(--lamp-ask); --dot-tone: var(--lamp-ask); }
+/* DELIGHT (2026-10-27) — a window's status-bar lamp is a real lamp: a lit
+   dot (ok, info, ask: something is true and alive) wears a soft 3 px ring
+   in its own tone. Idle, warn and fail do not glow (a fault is not lit).
+   Only the status bar: a list's state dots stay plain (one accent per row). */
+.kit-statusbar-item > .kit-dot:is([data-tone="ok"], [data-tone="info"], [data-tone="ask"]) {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--dot-tone) 40%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--dot-tone) 18%, transparent);
+}
+/* DELIGHT — the save pulse (StatusBar `pulse`): the ring opens to 6 px and
+   fades back to the glow, once, 600 ms. A box-shadow on a lamp, never a
+   transform; nothing moves; nothing runs under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .kit-statusbar-item > .kit-dot[data-pulse] {
+    animation: kit-lamp-pulse 600ms var(--ease-standard) 1;
+  }
+}
+@keyframes kit-lamp-pulse {
+  0% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--dot-tone, var(--lamp-ok)) 40%, transparent),
+      0 0 0 3px color-mix(in srgb, var(--dot-tone, var(--lamp-ok)) 18%, transparent);
+  }
+  30% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--dot-tone, var(--lamp-ok)) 60%, transparent),
+      0 0 0 6px color-mix(in srgb, var(--dot-tone, var(--lamp-ok)) 30%, transparent);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--dot-tone, var(--lamp-ok)) 40%, transparent),
+      0 0 0 3px color-mix(in srgb, var(--dot-tone, var(--lamp-ok)) 18%, transparent);
+  }
+}
 /* Idle: nothing is happening; a quiet grey, legible on paper. */
 .kit-dot[data-tone="idle"] { background: color-mix(in srgb, var(--wb-muted) 55%, var(--wb-paper)); }
 

@@ -15,7 +15,7 @@
  *  `SurfaceFooter`, Verb is the library `Button` (contract.md, "The interior
  *  kit").
  */
-import { useContext, type CSSProperties, type ReactNode } from "react";
+import { useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import type { ObjectTone } from "./objects/kinds";
 import { FilterTokens, type FilterTokenOption } from "./FilterTokens";
@@ -276,8 +276,26 @@ export type StatusBarItem = {
   value?: ReactNode;
   /** A round lamp dot before the word, in its tone. */
   lamp?: ObjectTone;
+  /** DELIGHT (2026-10-27): a value that changes when the moment happens
+   *  (the Note passes its kept time). Each change AFTER the first paint
+   *  pulses the lamp once: its ring opens and fades (600 ms, a lamp is not
+   *  a control, so the still fence holds); instant under reduced motion. */
+  pulse?: string | number | null;
   testId?: string;
 };
+
+/** The status bar's lamp: lit dots (ok, info, ask) glow (kit.css); a change
+ *  of `pulse` after the first paint replays the pulse (a new key). */
+function StatusLamp({ tone, pulse }: { tone: ObjectTone; pulse?: string | number | null }) {
+  const seen = useRef(pulse);
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    if (pulse == null || pulse === seen.current) return;
+    seen.current = pulse;
+    setBeat((count) => count + 1);
+  }, [pulse]);
+  return <span key={beat} className="kit-dot" data-tone={tone} data-pulse={beat ? "" : undefined} aria-hidden="true" />;
+}
 
 /** Window grammar (2026-10-24) — the status bar: a 24 px band at the
  *  window's foot, sans 12 muted: items separated by a middle dot at the
@@ -314,7 +332,7 @@ export function StatusBar({
       <span className="kit-statusbar-items" role="status">
         {shown.map((item, index) => (
           <span key={item.key ?? index} className="kit-statusbar-item" data-testid={item.testId}>
-            {item.lamp ? <span className="kit-dot" data-tone={item.lamp} aria-hidden="true" /> : null}
+            {item.lamp ? <StatusLamp tone={item.lamp} pulse={item.pulse} /> : null}
             {item.text}
             {item.value != null ? (
               <>

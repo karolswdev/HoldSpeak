@@ -141,6 +141,21 @@
 .gadget-check input:checked + .gadget-check-well svg {
   opacity: 1;
 }
+/* DELIGHT (2026-10-27) — the tick: when a box is checked its check draws in
+   with its stroke (160 ms). A transition, so a box that paints checked
+   draws still; nothing under reduced motion. */
+.gadget-check-well svg path {
+  stroke-dasharray: 14;
+  stroke-dashoffset: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .gadget-check input:not(:checked) + .gadget-check-well svg path {
+    stroke-dashoffset: 14;
+  }
+  .gadget-check input + .gadget-check-well svg path {
+    transition: stroke-dashoffset 160ms var(--ease-standard);
+  }
+}
 .gadget-check input:focus-visible + .gadget-check-well {
   border-color: var(--accent);
 }

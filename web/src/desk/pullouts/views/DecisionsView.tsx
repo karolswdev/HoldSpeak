@@ -545,6 +545,9 @@ export function DecisionsView({
             empty={!results.length && !error}
             emptyLabel={query.trim() ? "No decisions match this search" : whyOnly ? "No current decisions" : "No decisions yet"}
             emptyImage={DECISION_SPRITE}
+            emptyKind="decision"
+            onAction={query.trim() || whyOnly ? undefined : () => void useDesk.getState().createPrimitive("decision", {})}
+            actionLabel="New decision"
           >
             <ObjectList
               label="Decisions"

@@ -270,8 +270,8 @@ gear wing tab is a small bare `⚙` in the title bar (Meetings, Activity).
 | Capture (W2-ASKWELLS) | 2 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | Today (W2-ASKWELLS words) | 2 | 2 | 2 | 3 | 2 | 2 | 2 | 1 | **16** |
 | Room ▸ Now (Ask: W2-ASKWELLS; Plan: W3-B) | 2 | 3 | 2 | 2 | 2 | 3 | 2 | 2 | **18** |
-| People (W1-KIT; was 15 + W1-TRUTH) | 2 | 2 | 1 | 3 | 2 | 3 | 2 | 3 | **18** (W1-KIT; was 15) |
-| Decisions (W1-TRUTH) | 3 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **18** |
+| People (W1-KIT; was 15 + W1-TRUTH; Lane / PR: W3-DELIGHT) | 2 | 2 | 1 | 3 | 3 | 3 | 2 | 3 | **19** (W3-DELIGHT; was 18) |
+| Decisions (W1-TRUTH; Lane / PR: W3-DELIGHT) | 3 | 3 | 2 | 2 | 3 | 2 | 2 | 2 | **19** (W3-DELIGHT; was 18) |
 | Engines (W1-TRUTH) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 2 | **18** |
 | Processes | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 1 | **15** |
 | Activity (W1-FACES) | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
@@ -279,12 +279,14 @@ gear wing tab is a small bare `⚙` in the title bar (Meetings, Activity).
 | Settings (frame + 8 panes) (W1-KIT; was 17) | 3 | 2 | 2 | 2 | 2 | 2 | 3 | 2 | **18** (W1-KIT; was 17) |
 | Automations | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
 | New Project | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** |
-| Meetings (W1-KIT; was 18 + gear wing: W1-FACES) | 3 | 2 | 2 | 3 | 2 | 3 | 3 | 3 | **21** (W1-KIT; was 18) |
+| Meetings (W1-KIT; was 18 + gear wing: W1-FACES; Lane / PR: W3-DELIGHT) | 3 | 2 | 2 | 3 | 3 | 3 | 3 | 3 | **22** (W3-DELIGHT; was 21) |
 | Setup | 3 | 2 | 2 | 3 | 2 | 3 | 2 | 1 | **18** |
 | Person | 2 | 3 | 2 | 3 | 2 | 2 | 2 | 2 | **18** |
 | Automation (one open) | 2 | 2 | 3 | 3 | 2 | 2 | 2 | 2 | **18** |
 | Projects | 3 | 3 | 2 | 2 | 2 | 3 | 3 | 3 | **21** (W1-KIT; was 19) |
 | New decision | 3 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | **21** |
+
+W3-DELIGHT (2026-10-27, canvas `canvases/delight-2026-10-27.html`): the kind hue on every dense list row and Needs-you row (a 20 px glyph on its kind's seat, the hover wash, the quiet selection of an unfocused list), the status-bar lamp that glows and pulses once on each save, the Note's task tick, the body's first-paint fade, Done settling a Needs-you row, and the object empty state (Meetings, Decisions, People). Delight rescored where it shows; Today stays 2 until its day light (slice 2).
 
 No window scores 2 or more on every axis. The phone axis and the consistency axis are the
 weakest across the board.
@@ -990,7 +992,7 @@ Shots: [with engine 1440](atlas-2026-10-27/engines-1440.png) · [393](atlas-2026
 | Sequence / chain (`pullout:sequence:*`) | J4 | no ordinary door found. Lane / PR: W2-BUILDER (Add mode adds a step, PUT /api/chains/{id}; a greyed Run says why) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | 15 |
 | Workflow (`pullout:workflow:*`) | J4 | no ordinary door found. Lane / PR: W2-BUILDER (Edit left the title bar for the toolbar; Steps as a quiet list; a greyed Run says why) | 2 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | 15 |
 | Thread (`pullout:thread:*`) | J1 | → opens Ask (by design, Betterment Q4); scored by ATLAS-A/ASK | – | – | – | – | – | – | – | – | – |
-| Needs you (`chair:needs`) | J2, J3 | bell (1), ⌃J (1), Go ▸ Needs you (2). Lane / PR: W1-DOORS (rows named after the meeting; one calendar truth) | 3 | 2 | 2 | 3 | 2 | 3 | 2 | 2 | 19 |
+| Needs you (`chair:needs`) | J2, J3 | bell (1), ⌃J (1), Go ▸ Needs you (2). Lane / PR: W1-DOORS (rows named after the meeting; one calendar truth); W3-DELIGHT (kind-hued glyph seats, Done settles the row out) | 3 | 2 | 2 | 3 | 3 | 3 | 2 | 2 | 20 |
 | Capture (`chair:capture`) | J1, J2 | Go ▸ Capture (2), dock at 393 (1) | 2 | 3 | 2 | 3 | 1 | 3 | 2 | 2 | 18 |
 | ⌘K palette | J5, J7 | ⌘K or Search (1) → the row's window. Lane / PR: W1-DOORS (parked rows name where they land; an app once) | 2 | 2 | 2 | 3 | 2 | 2 | 1 | 2 | 16 |
 | Menu bar + menus (HoldSpeak, Desk, Object, Go, Window) | J7 | always on | 3 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | 21 |
