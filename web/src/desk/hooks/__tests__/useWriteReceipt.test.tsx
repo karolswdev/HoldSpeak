@@ -107,4 +107,22 @@ describe("HS-132-06 write-receipt channel", () => {
     act(() => clearWriteFailure());
     expect(q(".write-receipt")).toBeNull();
   });
+
+  it("draws a plain failure as one sans sentence with its own retry word (atlas pass 3, defect 16)", async () => {
+    render(<DeskHarness />);
+    const retry = vi.fn();
+    act(() => {
+      reportWriteFailure("Mark seen", new Response("", { status: 404 }), retry, "agent:l1",
+        "Could not mark it seen", { plain: true, retryLabel: "Try again" });
+    });
+    const band = q(".write-receipt") as HTMLElement;
+    expect(band.classList.contains("write-receipt-plain")).toBe(true);
+    expect(band.textContent).toContain("Could not mark it seen");
+    expect(band.textContent).not.toMatch(/MARK SEEN|FAILED|HTTP 404/);
+    // The reason stays reachable as the hover title, never on the face.
+    expect(q(".write-receipt-label")?.getAttribute("title")).toBe("Could not mark it seen · HTTP 404");
+    await userEvent.setup().click(screen.getByRole("button", { name: "Try again" }));
+    expect(retry).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+  });
 });

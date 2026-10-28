@@ -43,8 +43,8 @@ export function RecipePullout({ object: o, registerClose }: PulloutContentProps)
 
   // W2-BUILDER (atlas 2026-10-27): the Mode on the window grammar. Toolbar
   // (Continue in thread · Edit · Dictate about this), the Mode's line (its
-  // face, name and role, left-aligned), which engine answers and which runs
-  // it in plain words, the instructions, the material, the filing fold.
+  // face, name and role, left-aligned), the one engine its Ask runs on in
+  // plain words, the instructions, the material, the filing fold.
   if (editing && Content) {
     return (
       <>
@@ -85,14 +85,18 @@ export function RecipePullout({ object: o, registerClose }: PulloutContentProps)
               {ir.role ? <small>{String(ir.role)}</small> : null}
             </span>
           </div>
+          {/* Atlas pass 3 (defect 9): one engine line, the one the Ask in
+              this window runs on (recipe.run), with one Change. The thread's
+              engine is the thread's own fact (Runs on), never a second line
+              here that can disagree with this one. */}
           <ContextualAssignment
-            label="Which engine answers in a thread"
-            capabilityId="chat.turn"
+            label="Which engine runs it"
+            capabilityId="recipe.run"
             scope={{
               kind: "subject",
               subject_kind: "recipe",
               subject_id: o.id,
-              capability_id: "chat.turn",
+              capability_id: "recipe.run",
             }}
           />
           {ir.systemPrompt ? (

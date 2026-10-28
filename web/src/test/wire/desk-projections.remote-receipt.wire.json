@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_face_wire_fences.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-13T02:15:53.823102Z",
+  "captured_at": "2026-10-28T07:43:41.130964Z",
   "wire": {
     "counts": {
       "acknowledged": 0,
@@ -23,7 +23,7 @@
         "caller": "192.168.1.43",
         "caller_identity": "sweep-runner",
         "control_mode": null,
-        "correlation_id": "84807bf5-6ce2-4355-9406-0e4b7f2aa075",
+        "correlation_id": "d88bab0a-3287-43b7-bc62-a88605750a46",
         "decision_kind": "receipt",
         "detail_url": "/cadence",
         "dismissed": false,
@@ -41,8 +41,8 @@
         "subject_label": "Heartbeat",
         "subject_ref": "service:HeartbeatService",
         "summary": "{\"watches\":4,\"rooms\":2,\"held\":false}",
-        "timestamp": "2026-10-13T02:15:53Z",
-        "title": "SWEEP 2 ROOMS",
+        "timestamp": "2026-10-28T07:43:41Z",
+        "title": "Checked 2 rooms",
         "version": 1
       }
     ],

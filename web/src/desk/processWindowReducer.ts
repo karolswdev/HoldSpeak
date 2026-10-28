@@ -42,6 +42,9 @@ export interface ProcessRow {
   correlationId: string;
   principal: string;
   kind: string;
+  /** Atlas pass 3 (defect 8): what the run did for him, from the hub's
+   *  process words (`Checked the LAN`); empty on an older hub. */
+  label?: string;
   target: string;
   placement: string;
   /** W5-WORDS: the engine's name the hub resolved for an inference placement. */
@@ -242,6 +245,7 @@ export function foldProcessWindow(
       correlationId: text(operation.correlation_id) || text(event.correlation_id),
       principal: text(process.principal) || text(operation.principal_identity),
       kind: text(process.kind) || text(operation.name),
+      label: text(process.label),
       target: text(process.target_ref) || text(operation.target_ref),
       placement: text(operation.placement),
       placementLabel: text(process.placement_label),
@@ -275,6 +279,7 @@ export function foldProcessWindow(
       correlationId: text(operation.correlation_id),
       principal: text(process.principal) || text(operation.principal_identity),
       kind: text(process.kind) || text(operation.name),
+      label: text(process.label),
       target: text(process.target_ref) || text(operation.target_ref),
       placement: text(operation.placement),
       placementLabel: text(process.placement_label),

@@ -1,5 +1,5 @@
 import { wireClock } from "../../desk/surface/format";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { Button } from "../../components/signal/Signal";
 import { useLaunchers } from "../../desk/components/DeskWindow";
 import { useProcessWindow } from "../../desk/processWindow";
@@ -171,6 +171,9 @@ export function ProcessCore(_props: CoreProps) {
   const openDecisions = () => decisions?.activate();
   const isDecision = (row: ProcessRow | undefined) => row?.latestEventType === "operation.awaiting_decision";
 
+  // Atlas pass 3 (defect 8): at 393 the fold line is For · Where · Started;
+  // For gives up its width (an ellipsis) so the clock stays on that line.
+  const whereLength = new Map<string, number>();
   const rows: ObjectListRow[] = flat.map(({ row, depth, group }, index) => {
     const target = shownTarget(row, items);
     // Window Program W4 (the words): who and where in words; the wire's ids
@@ -180,10 +183,11 @@ export function ProcessCore(_props: CoreProps) {
       principalWords(String(row.principal ?? "")),
       String(row.placementLabel ?? "").trim() || placementWords(String(row.placement ?? "")),
     ].filter(Boolean))].join(" · ");
+    whereLength.set(row.operationId, where.length);
     return {
       id: row.operationId,
       kind: "process",
-      name: `${depth > 0 ? "└ " : ""}${kindWords(row.kind)}`,
+      name: `${depth > 0 ? "└ " : ""}${row.label || kindWords(row.kind)}`,
       sprite: kindSprite(row.kind),
       group,
       state: { ...rowState(row), testId: "process-state" },
@@ -238,7 +242,11 @@ export function ProcessCore(_props: CoreProps) {
             selectedId={selected ? selectedId : null}
             onSelect={setSelectedId}
             onOpen={(id) => { if (isDecision(byId.get(id))) openDecisions(); }}
-            rowProps={(row) => ({ "data-testid": "process-row", "data-operation": row.id })}
+            rowProps={(row) => ({
+              "data-testid": "process-row",
+              "data-operation": row.id,
+              style: { "--process-facts": `calc(${(whereLength.get(row.id) ?? 0) + 11}ch + 24px)` } as CSSProperties,
+            })}
           />
         </div>
       )}

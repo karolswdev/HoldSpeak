@@ -7708,12 +7708,12 @@
           "collection": "projections",
           "match": {
             "source_kind": "pipeline_event",
-            "title__prefix": "SWEEP"
+            "title__prefix": "Checked"
           },
           "min_new": 1
         },
         "observe_at": "protocol: GET /api/desk/projections",
-        "words": "a pipeline_event row exists with service 'HeartbeatService' and method 'run_sweep', and a desk projection appears reading receipt/resolved titled SWEEP [the audit's stated observation location: protocol: GET /api/desk/projections]"
+        "words": "a pipeline_event row exists with service 'HeartbeatService' and method 'run_sweep', and a desk projection appears reading receipt/resolved titled Checked … (sentence case, atlas pass 3) [the audit's stated observation location: protocol: GET /api/desk/projections]"
       },
       "completion_bound_s": 180,
       "viewports": []
@@ -7801,7 +7801,7 @@
       "expected": {
         "predicate": {
           "kind": "text_contains",
-          "value": "SWEEP"
+          "value": "Checked"
         },
         "observe_at": "section[aria-label=\"Finished\"]",
         "words": "the sweep receipt appears under Finished and carries exactly one Open verb [the audit's stated observation location: face: the shade's Finished section]"

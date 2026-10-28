@@ -69,3 +69,18 @@
     box-sizing: border-box;
   }
 }
+/* Atlas pass 3 (defect 10): at the default width each row is one line; a
+   long name (`Meeting saved · Card vault vendor call`) ends in an ellipsis
+   on its detail, with the whole name as the hover title. */
+@container surface (min-width: 520.1px) {
+  .activity-list .object-list[data-density="dense"] .object-list-name-word {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: normal;
+  }
+  .activity-list .object-list[data-density="dense"] .object-list-name-text {
+    overflow: hidden;
+    min-width: 0;
+  }
+}

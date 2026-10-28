@@ -184,3 +184,15 @@ describe("process window journal fold", () => {
     expect(ended[0].latestEventType).toBe("operation.receipt");
   });
 });
+
+describe("atlas pass 3 (defect 8): the hub's words for a run", () => {
+  it("carries the process label the kernel read gives", () => {
+    const labelled = object("op_lan", "succeeded", "succeeded");
+    labelled.process = { ...labelled.process, kind: "setup.lan.scan", label: "Checked the LAN" };
+    const [row] = foldProcessWindow([event("op_lan", 1, "operation.succeeded")], [labelled])
+      .flatMap((section) => section.rows);
+    expect(row.kind).toBe("setup.lan.scan");
+    expect(row.label).toBe("Checked the LAN");
+  });
+});
+
