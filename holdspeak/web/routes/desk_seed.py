@@ -30,14 +30,14 @@ def build_desk_seed_router(ctx: WebContext) -> APIRouter:
         return DeskService(get_database(), observer=get_observer())
 
     @router.post("/api/desk/seed")
-    async def api_desk_seed(request: Request) -> Any:
+    def api_desk_seed(request: Request) -> Any:
         try:
             return JSONResponse(_svc().seed(getattr(request.state, "principal", None)))
         except Exception as exc:
             return error_500(exc, log, "Failed to seed the desk")
 
     @router.post("/api/desk/reset")
-    async def api_desk_reset(request: Request) -> Any:
+    def api_desk_reset(request: Request) -> Any:
         try:
             return JSONResponse(_svc().reset(getattr(request.state, "principal", None)))
         except Exception as exc:

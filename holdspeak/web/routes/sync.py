@@ -38,14 +38,14 @@ def build_sync_router(ctx: WebContext) -> APIRouter:
         service = SyncService(hsdb.get_database(), hub_model_name=lambda: _hub_model_name(None), observer=get_observer())
 
     @router.get("/api/artifacts/{artifact_id}")
-    async def api_get_artifact(artifact_id: str, request: Request) -> Any:
+    def api_get_artifact(artifact_id: str, request: Request) -> Any:
         try:
             return JSONResponse(service.get_artifact(getattr(request.state, "principal", UNAUTHENTICATED), artifact_id))
         except ServiceError as exc:
             return _error(exc)
 
     @router.get("/api/sync/pull")
-    async def api_sync_pull(request: Request, limit: int = 50) -> Any:
+    def api_sync_pull(request: Request, limit: int = 50) -> Any:
         try:
             return JSONResponse(service.pull(getattr(request.state, "principal", UNAUTHENTICATED), limit=limit))
         except ServiceError as exc:

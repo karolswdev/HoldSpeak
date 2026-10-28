@@ -59,7 +59,7 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
     def service() -> AskService:
         return build_ask_service(ctx)
     @router.get("/api/models")
-    async def api_list_models(request: Request) -> Any:
+    def api_list_models(request: Request) -> Any:
         try: return JSONResponse({"models":service().list_models(principal(request))})
         except Exception as exc: return error_500(exc,log,"Failed to list models")
     @router.get("/api/ask/engine")
@@ -114,13 +114,13 @@ def build_ask_router(ctx: WebContext) -> APIRouter:
         except ServiceError as exc: return _error(exc)
         except Exception as exc: return error_500(exc,log,"Failed to keep ask")
     @router.get("/api/ask/runs")
-    async def api_ask_runs(request: Request) -> Any:
+    def api_ask_runs(request: Request) -> Any:
         # Ask hub gap 5: the asks a window left running, by invocation id.
         from ....services.ask_service import runs
         ids=[part for part in str(request.query_params.get("ids") or "").split(",") if part.strip()][:20]
         return JSONResponse({"runs":runs(ids)})
     @router.post("/api/ask/{invocation_id}/cancel")
-    async def api_cancel_ask(invocation_id: str, request: Request) -> Any:
+    def api_cancel_ask(invocation_id: str, request: Request) -> Any:
         try:
             return JSONResponse(service().cancel(principal(request), invocation_id))
         except ServiceError as exc: return _error(exc)

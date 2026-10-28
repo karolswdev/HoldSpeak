@@ -18,6 +18,7 @@ pattern instead of a raw WebSocket) is documented in
 from __future__ import annotations
 
 from pathlib import Path
+from threading import Lock
 from typing import Any, Optional
 
 from fastapi import APIRouter, Header
@@ -86,21 +87,26 @@ def build_delivery_node_router(
     _ = ctx
     router = APIRouter()
     holder: dict[str, Any] = {"link": link}
+    holder_lock = Lock()
+    link_lock = Lock()
 
     def _link() -> Any:
         if holder["link"] is None:
-            from ...delivery.node_link import NodeLinkState, NodeTokenStore
+            with holder_lock:
+                if holder["link"] is None:
+                    from ...delivery.node_link import NodeLinkState, NodeTokenStore
 
-            holder["link"] = NodeLinkState(
-                NodeTokenStore(token_store_path), web_token=web_token
-            )
+                    holder["link"] = NodeLinkState(
+                        NodeTokenStore(token_store_path), web_token=web_token
+                    )
         return holder["link"]
 
     def _guarded(fn: Any) -> Any:
         from ...delivery.node_link import NodeLinkError
 
         try:
-            return fn()
+            with link_lock:
+                return fn()
         except NodeLinkError as exc:
             return _refusal(exc)
         except Exception as exc:  # §12.3: classified, never raw
@@ -110,7 +116,7 @@ def build_delivery_node_router(
             )
 
     @router.post("/api/delivery/node/hello")
-    async def api_node_hello(
+    def api_node_hello(
         body: _HelloRequest,
         x_holdspeak_node_token: Optional[str] = Header(default=None),
     ) -> Any:
@@ -127,7 +133,7 @@ def build_delivery_node_router(
         )
 
     @router.post("/api/delivery/node/heartbeat")
-    async def api_node_heartbeat(
+    def api_node_heartbeat(
         body: _HeartbeatRequest,
         x_holdspeak_node_token: Optional[str] = Header(default=None),
     ) -> Any:
@@ -142,7 +148,7 @@ def build_delivery_node_router(
         )
 
     @router.post("/api/delivery/node/disconnect")
-    async def api_node_disconnect(
+    def api_node_disconnect(
         body: _DisconnectRequest,
         x_holdspeak_node_token: Optional[str] = Header(default=None),
     ) -> Any:
@@ -151,7 +157,7 @@ def build_delivery_node_router(
         )
 
     @router.get("/api/delivery/node/commands")
-    async def api_node_commands(
+    def api_node_commands(
         name: str = "",
         x_holdspeak_node_token: Optional[str] = Header(default=None),
     ) -> Any:
@@ -161,7 +167,7 @@ def build_delivery_node_router(
         return _guarded(lambda: _link().poll_commands(name, x_holdspeak_node_token))
 
     @router.get("/api/delivery/nodes")
-    async def api_delivery_nodes() -> Any:
+    def api_delivery_nodes() -> Any:
         """Browser-facing liveness projection: typed status with
         last-seen retained; legacy env-table steering nodes appear
         labeled ``legacy-direct``. No secrets cross (§13)."""
