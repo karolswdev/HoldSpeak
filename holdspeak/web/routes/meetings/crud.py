@@ -5,6 +5,7 @@ These read routes delegate through the composition-bound meeting service.
 
 from __future__ import annotations
 
+from threading import Lock
 from typing import Any, Optional
 
 from fastapi import APIRouter, Request
@@ -18,16 +19,20 @@ from ....services.errors import NotFound, ValidationError
 from ...context import WebContext
 
 log = get_logger("web.routes.meetings")
+_SERVICE_CACHE_LOCK = Lock()
 
 
 def _service(ctx: WebContext) -> MeetingService:
     if isinstance(ctx.meeting_service, MeetingService):
         return ctx.meeting_service
-    from ....db import get_database, get_observer
+    with _SERVICE_CACHE_LOCK:
+        if isinstance(ctx.meeting_service, MeetingService):
+            return ctx.meeting_service
+        from ....db import get_database, get_observer
 
-    service = MeetingService(get_database(), observer=get_observer())  # _service composition
-    ctx.meeting_service = service
-    return service
+        service = MeetingService(get_database(), observer=get_observer())  # _service composition
+        ctx.meeting_service = service
+        return service
 
 
 def _ops(ctx: WebContext) -> operations.OperationRegistry:
@@ -43,12 +48,12 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/meetings/ready")
-    async def api_list_unread_ready_meetings(request: Request) -> Any:
+    def api_list_unread_ready_meetings(request: Request) -> Any:
         """Read producer-created meeting readiness that is still unseen."""
         return JSONResponse(_service(ctx).list_ready(_principal(request)))
 
     @router.post("/api/meetings/{meeting_id}/ready/read")
-    async def api_mark_meeting_ready_read(meeting_id: str, request: Request) -> Any:
+    def api_mark_meeting_ready_read(meeting_id: str, request: Request) -> Any:
         """Acknowledge the readiness marker opened by the Meetings face."""
         try:
             result = _service(ctx).mark_ready_read(_principal(request), meeting_id)
@@ -62,7 +67,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
         return JSONResponse(result)
 
     @router.get("/api/meetings")
-    async def api_list_meetings(
+    def api_list_meetings(
         request: Request,
         limit: int = 50,
         offset: int = 0,
@@ -117,7 +122,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             )
 
     @router.get("/api/meetings/facets")
-    async def api_meeting_facets(request: Request) -> Any:
+    def api_meeting_facets(request: Request) -> Any:
         """Distinct speakers + tags for the /history filter row (HS-55-04)."""
         try:
             return JSONResponse(_service(ctx).facets(_principal(request)))
@@ -126,7 +131,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": str(e)}, status_code=500)
 
     @router.get("/api/meetings/{meeting_id}")
-    async def api_get_meeting(
+    def api_get_meeting(
         meeting_id: str, request: Request, include_parked: bool = False
     ) -> Any:
         """Get meeting details from database."""
@@ -168,7 +173,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": str(e)}, status_code=500)
 
     @router.delete("/api/meetings/{meeting_id}")
-    async def api_delete_meeting(meeting_id: str, request: Request) -> Any:
+    def api_delete_meeting(meeting_id: str, request: Request) -> Any:
         """Park a meeting while retaining its transcript and related work."""
         try:
             _service(ctx).delete_meeting(_principal(request), meeting_id)
@@ -182,7 +187,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             )
 
     @router.post("/api/meetings/{meeting_id}/restore")
-    async def api_restore_meeting(meeting_id: str, request: Request) -> Any:
+    def api_restore_meeting(meeting_id: str, request: Request) -> Any:
         """Restore a parked meeting with all retained work intact."""
         try:
             return JSONResponse(
@@ -195,7 +200,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": str(e)}, status_code=500)
 
     @router.post("/api/meetings/{meeting_id}/capture/recover")
-    async def api_recover_meeting_capture(meeting_id: str, request: Request) -> Any:
+    def api_recover_meeting_capture(meeting_id: str, request: Request) -> Any:
         """Keep the last atomic checkpoint as an honestly partial Meeting."""
         try:
             return JSONResponse(_service(ctx).recover_capture(_principal(request), meeting_id))
@@ -205,7 +210,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": f"Recovery failed; the original Meeting is retained: {exc}. Retry recovery."}, status_code=500)
 
     @router.get("/api/meetings/{meeting_id}/sync-conflicts")
-    async def api_meeting_sync_conflicts(meeting_id: str, request: Request) -> Any:
+    def api_meeting_sync_conflicts(meeting_id: str, request: Request) -> Any:
         try:
             return JSONResponse(_service(ctx).list_sync_conflicts(_principal(request), meeting_id))
         except NotFound:
@@ -216,7 +221,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
     @router.post(
         "/api/meetings/{meeting_id}/sync-conflicts/{conflict_id}/resolve"
     )
-    async def api_resolve_meeting_sync_conflict(
+    def api_resolve_meeting_sync_conflict(
         meeting_id: str,
         conflict_id: str,
         payload: dict[str, Any],
@@ -237,7 +242,7 @@ def build_crud_router(ctx: WebContext) -> APIRouter:
             return JSONResponse({"error": f"Conflict recovery failed; both versions remain: {exc}. Retry the resolution."}, status_code=500)
 
     @router.get("/api/meetings/{meeting_id}/export")
-    async def api_export_meeting(
+    def api_export_meeting(
         meeting_id: str,
         request: Request,
         format: str = "markdown",
