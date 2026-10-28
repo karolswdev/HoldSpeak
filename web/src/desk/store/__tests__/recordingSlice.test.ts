@@ -116,7 +116,7 @@ describe("recordingSlice", () => {
     expect(state.recording).toBe("idle");
     expect(state.recordingStartedAt).toBeNull();
     const refusal = currentWriteFailure();
-    expect(refusal?.label).toBe("NOT RECORDING · NO RECORDER ON THIS HUB");
+    expect(refusal?.label).toBe("Not recording · No recorder on this hub");
     // A Retry cannot add a recorder: the verb that does nothing is withheld (A.11).
     expect(refusal?.retry).toBeNull();
     // Never the hub's raw words on the face.
@@ -130,7 +130,7 @@ describe("recordingSlice", () => {
     await state.startRecording();
 
     expect(state.recording).toBe("idle");
-    expect(currentWriteFailure()?.label).toBe("NOT RECORDING · THE HUB DID NOT START IT");
+    expect(currentWriteFailure()?.label).toBe("Not recording · The hub did not start it");
     expect(currentWriteFailure()?.retry).toEqual(expect.any(Function));
   });
 
@@ -141,7 +141,7 @@ describe("recordingSlice", () => {
     await state.startRecording({ calendarEventId: "event-gone" });
 
     expect(state.recording).toBe("idle");
-    expect(currentWriteFailure()?.label).toBe("NOT RECORDING · MEETING CONTEXT EXPIRED");
+    expect(currentWriteFailure()?.label).toBe("Not recording · The meeting time is over");
     expect(currentWriteFailure()?.retry).toBeNull();
   });
 
@@ -152,7 +152,7 @@ describe("recordingSlice", () => {
     await state.startRecording();
 
     expect(state.recording).toBe("idle");
-    expect(currentWriteFailure()?.label).toBe("NOT RECORDING · HUB UNREACHABLE");
+    expect(currentWriteFailure()?.label).toBe("Not recording · No connection to the hub");
   });
 
   it("a refused stop (500) keeps the recording and its Retry", async () => {
@@ -164,7 +164,7 @@ describe("recordingSlice", () => {
 
     expect(state.recording).toBe("recording");
     expect(currentWriteFailure()?.verb).toBe("STOP RECORDING");
-    expect(currentWriteFailure()?.label).toBe("STILL RECORDING · THE HUB DID NOT STOP IT");
+    expect(currentWriteFailure()?.label).toBe("Still recording · The hub did not stop it");
     expect(currentWriteFailure()?.retry).toEqual(expect.any(Function));
   });
 
@@ -183,7 +183,7 @@ describe("recordingSlice", () => {
     await state.stopRecording();
 
     expect(state.recording).toBe("idle");
-    expect(currentWriteFailure()?.label).toBe("STOPPED · PARTLY SAVED");
+    expect(currentWriteFailure()?.label).toBe("Stopped · Partly saved");
     expect(currentWriteFailure()?.detail).toBe("JSON export failed");
     expect(currentWriteFailure()?.retry).toBeNull();
     expect(request).toHaveBeenCalledTimes(1);
@@ -223,7 +223,7 @@ describe("recordingSlice", () => {
     await state.stopRecording();
 
     expect(state.recording).toBe("recording");
-    expect(currentWriteFailure()?.label).toBe("STILL RECORDING · THE HUB DID NOT STOP IT");
+    expect(currentWriteFailure()?.label).toBe("Still recording · The hub did not stop it");
   });
 
   it("stopped capture reports save failure without inventing a Stop retry", async () => {
@@ -240,7 +240,7 @@ describe("recordingSlice", () => {
     await state.stopRecording();
 
     expect(state.recording).toBe("idle");
-    expect(currentWriteFailure()?.label).toBe("STOPPED · SAVE FAILED");
+    expect(currentWriteFailure()?.label).toBe("Stopped · Could not save it");
     expect(currentWriteFailure()?.retry).toBeNull();
     expect(request).toHaveBeenCalledTimes(1);
   });
@@ -260,7 +260,7 @@ describe("recordingSlice", () => {
     await state.stopRecording();
 
     expect(state.recording).toBe("idle");
-    expect(currentWriteFailure()?.label).toBe("STOPPED · SAVED · AUDIO DEVICE CLEANUP FAILED");
+    expect(currentWriteFailure()?.label).toBe("Stopped · Saved · Could not close the audio device");
     expect(currentWriteFailure()?.detail).toBe("Mic audio device did not close.");
     expect(currentWriteFailure()?.retry).toBeNull();
   });

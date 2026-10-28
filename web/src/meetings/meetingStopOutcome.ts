@@ -97,10 +97,10 @@ export function parseMeetingStopOutcome(
 export function meetingStopReceiptLabel(outcome: MeetingStopOutcome): string {
   if (outcome.saveStatus === "saved") {
     return outcome.deviceCleanupError
-      ? "STOPPED · SAVED · AUDIO DEVICE CLEANUP FAILED"
+      ? "Stopped · Saved · Could not close the audio device"
       : "Meeting saved";
   }
-  if (outcome.saveStatus === "partial") return "STOPPED · PARTLY SAVED";
-  if (outcome.saveStatus === "failed") return "STOPPED · SAVE FAILED";
-  return "STOPPED · SAVE STATUS UNKNOWN";
+  if (outcome.saveStatus === "partial") return "Stopped · Partly saved";
+  if (outcome.saveStatus === "failed") return "Stopped · Could not save it";
+  return "Stopped · Save state not known";
 }

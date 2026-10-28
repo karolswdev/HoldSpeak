@@ -10,6 +10,7 @@ import {
   useDeskWriteReceipt,
   useWriteReceipt,
   writeFailureLabel,
+  writeFailurePhrase,
   writeFailureReason,
 } from "../useWriteReceipt";
 
@@ -64,10 +65,12 @@ describe("HS-132-06 write-receipt channel", () => {
     render(<Harness run={run} />);
 
     await user.click(screen.getByText("GO"));
-    expect(screen.getByText("ADD ITEM FAILED · HTTP 500")).toBeInTheDocument();
+    expect(screen.getByText("Could not add the item")).toBeInTheDocument();
+    // The reason is the hover title, never the face.
+    expect(q(".write-receipt-label")?.getAttribute("title")).toBe("Could not add the item · HTTP 500");
 
     // Retry re-issues the exact same call; a landed retry clears the receipt.
-    await user.click(screen.getByRole("button", { name: "Retry" }));
+    await user.click(screen.getByRole("button", { name: "Try again" }));
     expect(run).toHaveBeenCalledTimes(2);
     expect(q(".write-receipt")).toBeNull();
   });
@@ -76,7 +79,7 @@ describe("HS-132-06 write-receipt channel", () => {
     const user = userEvent.setup();
     render(<Harness run={async () => new Response("", { status: 422 })} />);
     await user.click(screen.getByText("GO"));
-    expect(screen.getByText("ADD ITEM FAILED · HTTP 422")).toBeInTheDocument();
+    expect(screen.getByText("Could not add the item")).toBeInTheDocument();
   });
 
   it("dismisses on OK without re-issuing anything", async () => {
@@ -84,7 +87,7 @@ describe("HS-132-06 write-receipt channel", () => {
     const run = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
     render(<Harness run={run} />);
     await user.click(screen.getByText("GO"));
-    expect(screen.getByText("ADD ITEM FAILED · HUB UNREACHABLE")).toBeInTheDocument();
+    expect(screen.getByText("Could not add the item")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "OK" }));
     expect(q(".write-receipt")).toBeNull();
     expect(run).toHaveBeenCalledTimes(1);
@@ -98,25 +101,25 @@ describe("HS-132-06 write-receipt channel", () => {
     act(() => {
       reportWriteFailure("SEED DESK", new Response("", { status: 500 }), retry);
     });
-    expect(screen.getByText("SEED DESK FAILED · HTTP 500")).toBeInTheDocument();
-    expect(writeFailureLabel(currentWriteFailure()!)).toBe("SEED DESK FAILED · HTTP 500");
+    expect(screen.getByText("Could not set up the desk")).toBeInTheDocument();
+    expect(writeFailureLabel(currentWriteFailure()!)).toBe("Could not set up the desk");
 
-    await userEvent.setup().click(screen.getByRole("button", { name: "Retry" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "Try again" }));
     expect(retry).toHaveBeenCalledTimes(1);
 
     act(() => clearWriteFailure());
     expect(q(".write-receipt")).toBeNull();
   });
 
-  it("draws a plain failure as one sans sentence with its own retry word (atlas pass 3, defect 16)", async () => {
+  it("draws every failure as one sans sentence with Try again (atlas pass 3, defect 16; W6-E)", async () => {
     render(<DeskHarness />);
     const retry = vi.fn();
     act(() => {
-      reportWriteFailure("Mark seen", new Response("", { status: 404 }), retry, "agent:l1",
-        "Could not mark it seen", { plain: true, retryLabel: "Try again" });
+      reportWriteFailure("Mark seen", new Response("", { status: 404 }), retry, "agent:l1");
     });
     const band = q(".write-receipt") as HTMLElement;
     expect(band.classList.contains("write-receipt-plain")).toBe(true);
+    expect(band.classList.contains("write-receipt-mono")).toBe(false);
     expect(band.textContent).toContain("Could not mark it seen");
     expect(band.textContent).not.toMatch(/MARK SEEN|FAILED|HTTP 404/);
     // The reason stays reachable as the hover title, never on the face.
@@ -124,5 +127,31 @@ describe("HS-132-06 write-receipt channel", () => {
     await userEvent.setup().click(screen.getByRole("button", { name: "Try again" }));
     expect(retry).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
+  });
+
+  it("says each verb in its own words, with the noun from the subject (W6-E)", () => {
+    expect(writeFailurePhrase("SAVE", "note:n1")).toBe("save the note");
+    expect(writeFailurePhrase("SAVE", "knowledge:k1")).toBe("save the drawer");
+    expect(writeFailurePhrase("SAVE")).toBe("save it");
+    expect(writeFailurePhrase("RENAME", "zone:z1")).toBe("rename the zone");
+    expect(writeFailurePhrase("DELETE", "decision:d1")).toBe("delete the decision");
+    expect(writeFailurePhrase("CREATE note")).toBe("make the note");
+    expect(writeFailurePhrase("CREATE kb")).toBe("make the drawer");
+    expect(writeFailurePhrase("READ Meetings")).toBe("load the meetings");
+    expect(writeFailurePhrase("Send")).toBe("send it");
+    expect(writeFailurePhrase("New Note")).toBe("make the note");
+    // A verb with no phrase of its own is said in lower case.
+    expect(writeFailurePhrase("Hold as source")).toBe("hold as source");
+  });
+
+  it("keeps the parked mono caps face behind the opt-in (W6-E)", () => {
+    render(<DeskHarness />);
+    act(() => {
+      reportWriteFailure("SEED DESK", new Response("", { status: 500 }), vi.fn(), undefined, undefined, { mono: true });
+    });
+    const band = q(".write-receipt") as HTMLElement;
+    expect(band.classList.contains("write-receipt-mono")).toBe(true);
+    expect(band.textContent).toContain("SEED DESK FAILED · HTTP 500");
+    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
   });
 });

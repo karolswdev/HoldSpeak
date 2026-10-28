@@ -218,11 +218,11 @@ class TestDockGlass:
                     self._press(page, page.locator("[aria-controls=desk-tool-shelf]"), width)
                 field.fill("Refresh from hub")
                 self._press(page, page.locator("[id='desk-palette-option-desk.refresh']"), width)
-                receipt = page.locator(".write-receipt", has_text="READ MEETINGS FAILED · HUB UNREACHABLE").first
+                receipt = page.locator(".write-receipt", has_text="Could not load the meetings").first
                 receipt.wait_for(timeout=T)
                 assert any("/api/meetings?limit=24" in url for url in refresh_requests), refresh_requests
                 _settle(page)  # the phone window yields to the receipt row in a layout pass; measure after it
-                for name in ("Retry", "OK"):
+                for name in ("Try again", "OK"):
                     button = receipt.get_by_role("button", name=name, exact=True)
                     assert button.count() == 1, f"{name} is missing from the outage receipt"
                     owned = page.evaluate(OWNS_ITS_CENTRE, button.element_handle())

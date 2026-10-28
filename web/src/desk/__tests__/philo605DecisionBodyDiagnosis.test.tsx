@@ -278,7 +278,7 @@ describe("PHILO-6-05 decision body fences", () => {
     await waitFor(() => expect(currentWriteFailure()?.verb).toBe("SAVE"));
     const body = decisionSection();
     expect(document.querySelector(".write-receipt-label")?.textContent).toContain(
-      "SAVE FAILED",
+      "Could not save the decision",
     );
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe("Prior saved decision");
     expect(body?.textContent).toContain("Prior saved decision");
@@ -305,7 +305,7 @@ describe("PHILO-6-05 decision body fences", () => {
     await waitFor(() => expect(currentWriteFailure()?.verb).toBe("SAVE"));
     const body = decisionSection();
     expect(document.querySelector(".write-receipt-label")?.textContent).toContain(
-      "SAVE FAILED",
+      "Could not save the decision",
     );
     expect(useDesk.getState().items.decision[0]?.decisionMarkdown).toBe(
       "Prior saved decision",
@@ -321,7 +321,7 @@ describe("PHILO-6-05 decision body fences", () => {
     );
     expect(body?.textContent).toContain("Prior saved decision");
     expect(document.querySelector(".write-receipt-label")?.textContent).toContain(
-      "SAVE FAILED",
+      "Could not save the decision",
     );
   });
 

@@ -18,33 +18,35 @@
   background: var(--wash-1);
   border: 1px solid var(--danger-signal);
   box-shadow: var(--desk-window-etch);
-  font-family: var(--font-mono);
+  /* W6-E words: every write failure is one sans sentence in sentence case
+     (`Could not save the note · Try again`), with a round dot. */
+  font-family: var(--font-sans);
   /* PHILO-3-01: the type-scale ruling's 12 px floor (UX-CANON). */
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--danger-signal);
   animation: receipt-seat var(--duration-short) cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-/* Atlas pass 3 (defect 16): a plain receipt says its failure as a sentence
-   in sans and sentence case (`Could not mark it seen · Try again`); the lamp
-   is a dot, as every state on the desk is. */
-.write-receipt.write-receipt-plain {
-  font-family: var(--font-sans);
-  font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
+/* Parked (W6-E): the old mono caps face (`SAVE FAILED · HTTP 404`), kept
+   behind the `mono` opt-in. No caller uses it now. */
+.write-receipt.write-receipt-mono {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
-.write-receipt-plain .write-receipt-lamp {
-  border-radius: 50%;
+.write-receipt-mono .write-receipt-lamp {
+  border-radius: 0;
 }
 
 .write-receipt-lamp {
   width: 6px;
   height: 6px;
   flex-shrink: 0;
+  border-radius: 50%;
   background: var(--danger-signal);
 }
 

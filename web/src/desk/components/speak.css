@@ -1284,6 +1284,14 @@
   font: 400 15px / 1.55 var(--font-sans);
   resize: none;
 }
+/* W6-D (2026-10-28): the focused writing area says so. A 2 px ring drawn
+   inside the edge (box-shadow inset, so nothing moves) in the field-focus
+   blue: 6.7:1 on the paper. --accent-tint is a 12% wash (1.13:1) and
+   cannot carry a ring at 3:1. */
+.desk-next .speak-face .speak-well textarea:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--field-focus-border);
+}
 .desk-next .speak-face .speak-result {
   padding: 10px 16px;
   border-top: 1px solid var(--wb-rule-soft);

@@ -133,9 +133,9 @@ describe("HS-132-06 workbench write receipts", () => {
     await user.click(screen.getByRole("button", { name: "Add" }));
 
     await waitFor(() =>
-      expect(receiptText()).toBe("ADD ITEM FAILED · HTTP 500"),
+      expect(receiptText()).toBe("Could not add the item"),
     );
-    expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
     expect(inlet).toHaveValue("Write the memo");
   });
 
@@ -145,14 +145,14 @@ describe("HS-132-06 workbench write receipts", () => {
     await openWindow();
     await user.type(screen.getByLabelText("New item instruction"), "Write the memo");
     await user.click(screen.getByRole("button", { name: "Add" }));
-    await waitFor(() => expect(receiptText()).toContain("ADD ITEM FAILED"));
+    await waitFor(() => expect(receiptText()).toContain("Could not add the item"));
 
     const posts = () =>
       fetchMock.mock.calls.filter(
         ([, init]) => (init as RequestInit | undefined)?.method === "POST",
       ).length;
     const before = posts();
-    await user.click(screen.getByRole("button", { name: "Retry" }));
+    await user.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(posts()).toBe(before + 1));
   });
 
@@ -162,7 +162,7 @@ describe("HS-132-06 workbench write receipts", () => {
     await expand("Draft the brief");
     await user.click(screen.getByRole("button", { name: "Dismiss" }));
     await waitFor(() =>
-      expect(receiptText()).toBe("DISMISS ITEM FAILED · HTTP 500"),
+      expect(receiptText()).toBe("Could not dismiss the item"),
     );
   });
 
@@ -172,7 +172,7 @@ describe("HS-132-06 workbench write receipts", () => {
     await expand("Summarize the call");
     await user.click(screen.getByRole("button", { name: "Re-run" }));
     await waitFor(() =>
-      expect(receiptText()).toBe("RE-RUN ITEM FAILED · HTTP 500"),
+      expect(receiptText()).toBe("Could not run the item again"),
     );
   });
 
@@ -182,7 +182,7 @@ describe("HS-132-06 workbench write receipts", () => {
     await expand("Summarize the call");
     await user.click(screen.getByRole("button", { name: "Retry mint" }));
     await waitFor(() =>
-      expect(receiptText()).toBe("RETRY MINT FAILED · HTTP 500"),
+      expect(receiptText()).toBe("Could not keep the result"),
     );
   });
 
@@ -190,7 +190,7 @@ describe("HS-132-06 workbench write receipts", () => {
     const user = userEvent.setup();
     await openWindow();
     await user.click(screen.getByRole("button", { name: /Run/ }));
-    await waitFor(() => expect(receiptText()).toBe("RUN FAILED · HTTP 500"));
+    await waitFor(() => expect(receiptText()).toBe("Could not start the run"));
   });
 
   it("names a refused DROP TO WORK and a malformed drop", async () => {
@@ -204,12 +204,16 @@ describe("HS-132-06 workbench write receipts", () => {
       },
     });
     await waitFor(() =>
-      expect(receiptText()).toBe("DROP TO WORK FAILED · HTTP 500"),
+      expect(receiptText()).toBe("Could not add it to the work"),
     );
 
     fireEvent.drop(body, { dataTransfer: { getData: () => "not-json" } });
     await waitFor(() =>
-      expect(receiptText()).toBe("DROP TO WORK FAILED · BAD PAYLOAD"),
+      expect(receiptText()).toBe("Could not add it to the work"),
+    );
+    // The reason is in the hover title only, never on the face.
+    await waitFor(() =>
+      expect(q(".write-receipt-label")?.getAttribute("title")).toBe("Could not add it to the work · BAD PAYLOAD"),
     );
   });
 
@@ -329,7 +333,7 @@ describe("HS-132-06 populated-floor write receipts", () => {
     });
     await waitFor(() =>
       expect(q(".write-receipt-label")?.textContent).toBe(
-        "NEW NOTE FAILED · HTTP 500",
+        "Could not make the note",
       ),
     );
     // In flow inside the system bar — not a floating overlay.
@@ -342,15 +346,15 @@ describe("HS-132-06 populated-floor write receipts", () => {
         ([, init]) => (init as RequestInit | undefined)?.method === "POST",
       ).length;
     const before = posts();
-    await user.click(screen.getByRole("button", { name: "Retry" }));
+    await user.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(posts()).toBe(before + 1));
     expect(q(".write-receipt-label")?.textContent).toBe(
-      "NEW NOTE FAILED · HTTP 500",
+      "Could not make the note",
     );
 
     // A landed retry clears the line: success is quiet.
     refuse = false;
-    await user.click(screen.getByRole("button", { name: "Retry" }));
+    await user.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() =>
       expect(q(".write-receipt")).toBeNull(),
     );

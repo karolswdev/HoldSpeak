@@ -43,7 +43,7 @@ describe("Dock app: the hub goes away", () => {
     clearWriteFailure();
   });
 
-  it("Refresh from hub names READ MEETINGS FAILED · HUB UNREACHABLE on the screen bar, with Retry and OK", async () => {
+  it("Refresh from hub says Could not load the meetings on the screen bar, with Try again and OK", async () => {
     render(<MemoryRouter><DeskChrome /></MemoryRouter>);
     await act(async () => {
       await useDesk.getState().refresh();
@@ -53,8 +53,8 @@ describe("Dock app: the hub goes away", () => {
       expect(node, "the receipt sits in the screen bar").toBeTruthy();
       return node as HTMLElement;
     });
-    expect(receipt.querySelector(".write-receipt-label")?.textContent).toBe("READ MEETINGS FAILED · HUB UNREACHABLE");
-    expect(within(receipt).getByRole("button", { name: "Retry" })).toBeTruthy();
+    expect(receipt.querySelector(".write-receipt-label")?.textContent).toBe("Could not load the meetings");
+    expect(within(receipt).getByRole("button", { name: "Try again" })).toBeTruthy();
     expect(within(receipt).getByRole("button", { name: "OK" })).toBeTruthy();
     expect(screen.queryByLabelText("Preparing HoldSpeak")).toBeNull();
   });

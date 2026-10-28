@@ -246,7 +246,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
       void useDesk.getState().refresh();
     } catch (cause) {
       if (generation !== statusWrite.current.generation) return;
-      setStatusFailure(`STATUS FAILED · ${writeFailureReason(cause)}`);
+      setStatusFailure(writeFailureReason(cause));
       setRetryStatus(next);
     } finally {
       statusWrite.current.pending = false;
@@ -321,9 +321,9 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
             <DeskDecisionSendSheet id={o.id} title={o.title} version={documentVersion} onBack={() => setSending(false)} />
           ) : (
             <>
-              {statusFailure ? <div className="attention-record-feedback">
-                <SurfaceState error={statusFailure} />
-                <Button dense variant="ghost" disabled={savingStatus || savingDecision} onClick={() => retryStatus && void writeStatus(retryStatus)}>Retry</Button>
+              {statusFailure ? <div className="attention-record-feedback" title={statusFailure}>
+                <SurfaceState error="Could not change the status. The decision is unchanged; choose a status again." />
+                <Button dense variant="ghost" disabled={savingStatus || savingDecision} onClick={() => retryStatus && void writeStatus(retryStatus)}>Try again</Button>
               </div> : null}
               {editingDecision && writeFailure?.subject === resourceRef && writeFailure.verb === "SAVE" ? (
                 <ActionNotice tone="danger" role="alert"><StateChip state="failure" label="Save failed" /><span>{o.title}</span></ActionNotice>

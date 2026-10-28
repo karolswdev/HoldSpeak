@@ -69,16 +69,16 @@ describe("PHILO-3-01 a read failure never takes a pending write's Retry", () => 
       await useDesk.getState().createPrimitive("decision", { title: "Adopt the one bus" });
     });
     expect(hub.posts).toBe(1);
-    expect(screen.getByTestId("line").textContent).toContain("CREATE DECISION FAILED · HTTP 500");
+    expect(screen.getByTestId("line").textContent).toContain("Could not make the decision");
 
     // a later refresh that still fails keeps the write's receipt too
     await act(async () => { await useDesk.getState().refresh(); });
-    expect(screen.getByTestId("line").textContent).toContain("CREATE DECISION FAILED");
+    expect(screen.getByTestId("line").textContent).toContain("Could not make the decision");
 
     hub.failPost = false;
     hub.failRead = false;
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+      fireEvent.click(screen.getByRole("button", { name: "Try again" }));
       await new Promise((r) => setTimeout(r, 0));
     });
     await act(async () => { await new Promise((r) => setTimeout(r, 0)); });

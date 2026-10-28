@@ -19,11 +19,11 @@ export function recordStartRefusal(status: number | null): {
   reason: string;
   retry: boolean;
 } {
-  if (status === null) return { reason: "HUB UNREACHABLE", retry: true };
-  if (status === 501) return { reason: "NO RECORDER ON THIS HUB", retry: false };
-  if (status === 409) return { reason: "MEETING CONTEXT EXPIRED", retry: false };
-  if (status === 404) return { reason: "MICROPHONE NOT FOUND", retry: false };
-  return { reason: "THE HUB DID NOT START IT", retry: true };
+  if (status === null) return { reason: "No connection to the hub", retry: true };
+  if (status === 501) return { reason: "No recorder on this hub", retry: false };
+  if (status === 409) return { reason: "The meeting time is over", retry: false };
+  if (status === 404) return { reason: "No microphone found", retry: false };
+  return { reason: "The hub did not start it", retry: true };
 }
 
 export type RecordingSlice = Pick<
@@ -99,7 +99,7 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
         cause,
         why.retry ? () => void get().startRecording(context) : undefined,
         undefined,
-        `NOT RECORDING · ${why.reason}`,
+        `Not recording · ${why.reason}`,
       );
     };
     let res: Response;
@@ -178,7 +178,7 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
               error,
               retryRecovery,
               subject,
-              "RECOVERY FAILED",
+              "Could not recover the recording",
             );
           }
         };
@@ -208,8 +208,8 @@ export const createRecordingSlice: SliceCreator<RecordingSlice> = (set, get) => 
         () => void get().stopRecording(),
         undefined,
         error instanceof Response
-          ? "STILL RECORDING · THE HUB DID NOT STOP IT"
-          : "STILL RECORDING · HUB UNREACHABLE",
+          ? "Still recording · The hub did not stop it"
+          : "Still recording · No connection to the hub",
       );
       // The retry is only honest while this session remains stoppable.  Do
       // not fall through to the idle/reset path: that would make its retry
