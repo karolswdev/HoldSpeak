@@ -1430,6 +1430,11 @@ function SettingsFace({ hero, scope }: CoreProps) {
   const [highlight, setHighlight] = useState("");
   const [saving, setSaving] = useState(false);
   const [writtenAt, setWrittenAt] = useState("");
+  // W6 (owner decision 2026-10-28): Saved counts per window. A You write is
+  // a write made in this window, so every pane's bar says Saved after it.
+  useEffect(() => {
+    if (ownerPrefs.savedAt) setWrittenAt(ownerPrefs.savedAt.toTimeString().slice(0, 8));
+  }, [ownerPrefs.savedAt]);
   /** Betterment setup ST1: a Notify or quiet-hours write draws the
    *  embedded sweep again (it reads the same heartbeat). */
   const [heartbeatRevision, setHeartbeatRevision] = useState(0);
@@ -2775,9 +2780,12 @@ function SettingsFace({ hero, scope }: CoreProps) {
     }
   };
 
-  // You has its own owner writer and field receipts. A success from the
-  // general preferences writer cannot acknowledge those independent edits.
-  const receipt = { saving: saving || Boolean(secretBusy), writtenAt: moduleId === "you" ? "" : writtenAt, refusal };
+  // You has its own owner writer and field receipts: while a You field is
+  // Edited, Saving or Not saved, the bar says that word (ownerSaveState), and
+  // a success of the general writer cannot acknowledge it. With no You state
+  // to say, the bar says the window's last write (Saved counts per window).
+  const receipt = { saving: saving || Boolean(secretBusy), writtenAt, refusal };
+  const ownerSave = moduleId === "you" ? ownerSaveState(ownerPrefs) : undefined;
   const focusHighlight = SETTINGS_FOCUS_PATHS[navigation.focus ?? ""] ?? navigation.focus ?? "";
   const pageSection = (id: SettingsSectionId, label: string, children: ReactNode) => (
     <PrefSection id={id} label={label} hidden={moduleId !== id} quiet={id === "you" || id === "agents"}>{children}</PrefSection>
@@ -2847,7 +2855,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
       </div>
       <PrefStatusBar
         receipt={receipt}
-        save={moduleId === "you" ? ownerSaveState(ownerPrefs) : undefined}
+        save={ownerSave ?? undefined}
         failureTestId={moduleId === "you" ? undefined : null}
         onRetry={moduleId === "you"
           ? (ownerPrefs.state === "Not saved" ? () => void ownerPrefs.owner.flush() : undefined)
