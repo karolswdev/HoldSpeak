@@ -127,6 +127,11 @@
   .desk-next .chair-desk:has(.chair-window--capture [data-testid="arrival-coming-up"]) :is(.chair-window, .chair-window-closed) {
     --chair-capture-h: 180px;
   }
+  /* W4-PHONE (2026-10-27): read and empty, Capture holds its one quiet
+     line (`Nothing is coming up`) whole; the 100 px seat cut it in half. */
+  .desk-next .chair-desk:has(.chair-window--capture [data-testid="arrival-coming-up-none"]) :is(.chair-window, .chair-window-closed) {
+    --chair-capture-h: 140px;
+  }
   .desk-next .chair-desk:has(.chair-window--capture [data-aftercare-slot]:not(:empty)) :is(.chair-window, .chair-window-closed) {
     --chair-capture-h: 300px;
   }

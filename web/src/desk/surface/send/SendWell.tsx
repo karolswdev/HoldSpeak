@@ -30,6 +30,7 @@
  * row, R8). The update fills the `history` slot with its own DELIVERY N and
  * Mark delivered (features/channels/SendWell.tsx).
  */
+import { createPortal } from "react-dom";
 import { createContext, lazy, Suspense, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { ConfirmVerb, SurfaceLedger, SurfaceLedgerRow, SurfaceSection, SurfaceState, SurfaceWell } from "../Surface";
@@ -37,6 +38,7 @@ import { SurfaceFooter } from "../SurfaceFooter";
 import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
 import { StateChip } from "../patterns";
+import { ToolGlyph, Toolbar } from "../kit";
 import { fetchConnections, type ConnectionsResponse, type ConnectionState } from "../../../pages/cores/connections/api";
 import { chipLabel } from "../../../pages/cores/connections/ConnectionsPane";
 import {
@@ -55,6 +57,11 @@ import { SEND_OPEN } from "../../windowSend";
 // Settings owns the admitted destination form. It is loaded only when the
 // sheet asks for Add destination, which keeps the shared Send species free of
 // a second form implementation and avoids a static Settings import cycle.
+/** W4-PHONE: the channel as a plain word on a destination row (`Folder`,
+ *  `GitHub`); the menus keep CHANNEL_WORD. */
+const CHANNEL_NAME: Record<string, string> = {
+  file: "Folder", github: "GitHub", jira: "Jira", confluence: "Confluence", email: "Email", slack: "Slack",
+};
 const AdmittedDestinationForm = lazy(() => import("../../../pages/cores/connections/Destinations").then((m) => ({ default: m.DestForm })));
 
 /** The one document a well sends: `ref` is `<kind>:<id>` (the wire's
@@ -245,25 +252,29 @@ export function accountChip(
 export function PreviewWell({ preview, testid, verbs, onEdit, editBusy }: {
   preview: Preview; testid: string; verbs?: ReactNode; onEdit?: () => void; editBusy?: boolean;
 }) {
+  // W4-PHONE (2026-10-27): the preview is the document — one quiet line of
+  // frozen fields (sans 12, sentence case) with Edit at its end, then the
+  // words on the paper. No PREVIEW caption, no card in a card.
   return (
     <div className="send-preview" data-send="well" data-testid={testid}>
-      <SurfaceSection label="Preview" actions={onEdit ? (
-        <Button dense variant="ghost" data-testid="send-edit" loading={editBusy} disabled={editBusy} onClick={onEdit}>Edit</Button>
-      ) : undefined}>
+      <div className="send-preview-head">
         <dl className="send-fields">
           {preview.fields.map((f) => (
             <div key={f.label} className="send-field" data-testid="send-preview-field">
-              <dt className="surface-token">{f.label}</dt>
+              <dt>{f.label}</dt>
               <dd>{f.value}</dd>
             </div>
           ))}
         </dl>
-        <SurfaceWell>
-          <div className="send-preview-body" data-testid="send-preview-body">
-            {preview.body_kind === "markdown" ? <Material>{preview.body}</Material> : <div className="send-preview-text">{preview.body}</div>}
-          </div>
-        </SurfaceWell>
-      </SurfaceSection>
+        {onEdit ? (
+          <Button dense variant="ghost" data-testid="send-edit" loading={editBusy} disabled={editBusy} onClick={onEdit}>Edit</Button>
+        ) : null}
+      </div>
+      <SurfaceWell>
+        <div className="send-preview-body" data-testid="send-preview-body">
+          {preview.body_kind === "markdown" ? <Material>{preview.body}</Material> : <div className="send-preview-text">{preview.body}</div>}
+        </div>
+      </SurfaceWell>
       {verbs ?? null}
     </div>
   );
@@ -684,6 +695,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
   const [addingDestination, setAddingDestination] = useState(false);
   const [editingPreview, setEditingPreview] = useState<string | null>(null);
   const [editFailure, setEditFailure] = useState<string | null>(null);
+  const [verbSlot, setVerbSlot] = useState<HTMLSpanElement | null>(null);
   useEffect(() => {
     if (!picked) { setPreview(null); return; }
     let live = true;
@@ -764,15 +776,21 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
     <div data-send="well" data-testid="send-well" data-doc={ref}
       aria-busy={wellRead ? undefined : "true"}
       aria-label={`${SEND_WORDS.send} ${doc.title}`} role="group">
-      <header className="send-sheet-header" data-testid="send-sheet-header">
-        {onBack ? <Button dense variant="ghost" data-testid="send-back" onClick={onBack}>‹ Back</Button> : null}
-        <span className="surface-primary">Send</span>
-        <Button dense variant="ghost" className="send-add-destination" data-testid="send-add-destination"
-          aria-expanded={addingDestination}
-          onClick={() => setAddingDestination((open) => !open)}>
-          {SEND_WORDS.addDestination}
-        </Button>
-      </header>
+      {/* W4-PHONE (2026-10-27): the sheet's toolbar — Send (the picked
+          destination's verb, portaled into the slot below) and Cancel
+          (the host's Back); Add destination at the end. */}
+      <Toolbar label={SEND_WORDS.send} className="send-sheet-header" data-testid="send-sheet-header"
+        trailingStays
+        trailing={
+          <Button dense variant="ghost" className="send-add-destination" data-testid="send-add-destination"
+            aria-expanded={addingDestination}
+            onClick={() => setAddingDestination((open) => !open)}>
+            <ToolGlyph kind="new" />{SEND_WORDS.addDestination}
+          </Button>
+        }>
+        <span className="send-toolbar-slot" ref={setVerbSlot} />
+        {onBack ? <Button dense variant="secondary" data-testid="send-back" onClick={onBack}>Cancel</Button> : null}
+      </Toolbar>
       <SurfaceSection className="send-destination-section">
         {head}
         {pendingReads ? <div data-testid="send-read-loading"><SurfaceState loading /></div> : null}
@@ -846,14 +864,10 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
                 // Try again) and never stays SENDING; a press still waiting in
                 // this tab lets go, and Try again replays its held command.
                 const noAnswer = last?.state === "unknown" && last.reason === "no_answer_in_time";
+                // W4-PHONE: Send (and Check) are the sheet's toolbar verbs; the
+                // receipt is the sheet's status line; the egress is the row's.
                 const verbs = (
                   <div className="send-verbs" data-testid="send-verbs">
-                    {noAnswer ? (
-                      <span className="send-line send-no-answer" data-testid="send-no-answer" data-receipt="latest" data-state="unknown">
-                        {noAnswerWords(d.channel, d.account, d.target)}
-                      </span>
-                    ) : null}
-                    <EgressChip label={eg.label} scope={eg.scope} title={eg.title} />
                     <Button dense variant="primary" loading={(busy && !noAnswer) || waitingForSend}
                       disabled={!activePreview || waitingForSend || waitingForHistory}
                       data-testid={lost && !noAnswer ? "send-retry" : "send-verb"}
@@ -864,6 +878,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
                           preview_digest: (pv as { digest: string }).digest,
                         }), reload, onSettled, activePreview ?? undefined);
                       }}>
+                      <ToolGlyph kind="send" />
                       {lost && !noAnswer ? SEND_WORDS.retry
                         : last?.state === "failed" || last?.state === "unknown" ? SEND_WORDS.tryAgain
                           : last ? SEND_WORDS.sendAgain : SEND_WORDS.send}
@@ -872,6 +887,15 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
                       <Button dense variant="ghost" data-testid="send-check" data-href={far} onClick={() => openFar(far)}>
                         {`${SEND_WORDS.check} ${targetToken(d.channel, d.target)}`}
                       </Button>
+                    ) : null}
+                  </div>
+                );
+                const receipt = (
+                  <div className="send-receipt-line" data-testid="send-receipt-line">
+                    {noAnswer ? (
+                      <span className="send-line send-no-answer" data-testid="send-no-answer" data-receipt="latest" data-state="unknown">
+                        {noAnswerWords(d.channel, d.account, d.target)}
+                      </span>
                     ) : null}
                     {/* ONE source: the latest send by dispatch_started_at. The press
                         cache keeps only what no record holds: a lost answer (with its
@@ -895,7 +919,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
                       <span className="send-pick" aria-hidden="true">{open ? "●" : "○"}</span>
                       <span className="surface-primary" data-destination={d.name} title={targetToken(d.channel, d.target)}>{d.name}</span>
                       <span className="send-cells">
-                        <span className="surface-token" data-chip>{CHANNEL_WORD[d.channel] ?? d.channel}</span>
+                        <span className="surface-token send-channel" data-chip>{CHANNEL_NAME[d.channel] ?? CHANNEL_WORD[d.channel] ?? d.channel}</span>
                         {!open ? <span className="surface-token send-literal send-wrap send-target" data-chip title={targetToken(d.channel, d.target)}>{targetName(d.channel, d.target)}</span> : null}
                         {acc ? <StateChip state={acc.state} label={acc.label} /> : null}
                         {open ? <LastChip s={last} /> : <ClosedReceipt o={o} last={last} />}
@@ -909,11 +933,12 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
                           ? <>
                               <PreviewWell preview={activePreview} testid="send-preview"
                                 onEdit={() => void edit(d, activePreview)} editBusy={editingPreview === d.id} />
+                              {verbSlot ? createPortal(verbs, verbSlot) : null}
                               <SurfaceFooter dataSend="actions" className="send-sheet-footer" fold={false}
                                 verbs={
                                   <>
                                     {editFailure ? <span className="send-line" data-testid="send-edit-failed"><StateChip state="failure" label="EDIT NOT SAVED" /><span className="surface-token" data-chip>{editFailure.toUpperCase().replace(/[_:]/g, " ")}</span></span> : null}
-                                    {verbs}
+                                    {receipt}
                                   </>
                                 } />
                             </>

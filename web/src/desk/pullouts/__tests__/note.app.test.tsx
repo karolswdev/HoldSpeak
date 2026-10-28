@@ -327,6 +327,21 @@ describe("Direction A: the note's margin", () => {
     expect(screen.queryByTestId("note-margin")).toBeNull();
   });
 
+  it("pass 2: the margin's Ask card reads as the note reads: no raw Markdown", async () => {
+    const { putMarginAsk } = await import("../../thought-workspace/marginAsks");
+    const { container } = render(<MemoryRouter><Pullout o={noteObject} pulloutId={NOTE_REF} /></MemoryRouter>);
+    await waitFor(() => expect(container.textContent).toContain("Theo could own the handbook."));
+    // The answer as the W4-ASK rig's engine wrote it (the atlas's margin shot).
+    const answer = "The cutover holds on **Nov 14**.\n\n- Shadow traffic at 50 percent is planned for Nov 11.\n\n### Next step\n\nConfirm the freeze date.";
+    act(() => putMarginAsk({ key: "ask_md", noteId: NOTE_REF.slice("note:".length), question: "What must happen before the freeze?", answer, state: "answered", range: null, body: "" }));
+    const card = await screen.findByTestId("note-margin-ask");
+    const shown = within(card).getByTestId("note-margin-answer");
+    expect(shown.textContent).not.toMatch(/\*\*|###|^- /m);
+    expect(shown.querySelector("strong")?.textContent).toBe("Nov 14");
+    expect(shown.querySelector("li")?.textContent).toContain("Shadow traffic");
+    expect(within(shown).getByRole("heading", { name: "Next step" })).toBeInTheDocument();
+  });
+
   it("Add to note in the margin appends the answer through the note's own writer", async () => {
     const { container } = render(<MemoryRouter><Pullout o={noteObject} pulloutId={NOTE_REF} /><AskPanel /></MemoryRouter>);
     await waitFor(() => expect(container.textContent).toContain("Theo could own the handbook."));

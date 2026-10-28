@@ -927,10 +927,11 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
       </Button>
     ) : speech.canSetUp ? (
       <>
-        {speechHost ? <EgressChip label={speechHost} scope="cloud" /> : null}
+        {speechHost ? <span className="runson-speech-host"><EgressChip label={speechHost} scope="cloud" /></span> : null}
         <Button
           dense
           variant="secondary"
+          title={speechHost ? `Downloads from ${speechHost}` : undefined}
           loading={speech.ai.busy}
           disabled={speech.ai.busy}
           data-testid="runson-speech-setup-verb"

@@ -18,9 +18,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
 import { useDurableDraft } from "../../lib/durableDraft";
-import { markLaunchSeen, reviewResult, useAgentFlights } from "../agentFlights";
+import { GONE, markLaunchSeen, reviewResult, useAgentFlights, type AgentFlight } from "../agentFlights";
+import { handRefOf, openHand } from "../agentHand";
+import type { AgentId } from "../firstrun/agentsStep";
+import { useConductor } from "../conductor/store";
 import { WhyThisState } from "../agents/WhyThisState";
-import { ResultBlock } from "./ResultBlock";
+import { ResultBlock, filesWords } from "./ResultBlock";
 import { AgentWords, cutAtWord } from "../components/AgentWords";
 import { DeskWindowFrame } from "../components/DeskWindow";
 import { ArmStrip, KeyPalette, PANE_STATE_LABEL } from "../components/SessionPullout";
@@ -32,16 +35,14 @@ import { useDesk } from "../store";
 import {
   AskWell,
   ActionNotice,
-  FilesChanged,
   FoldGadget,
   PaneWell,
-  PRCard,
   StationTrack,
   StringGadget,
-  TimelineRail,
   TransportKey,
-  type TimelineEntry,
 } from "../surface";
+import { SurfaceWings } from "../surface/wings";
+import { StepList, type StepEntry } from "./StepList";
 import { wireClock, wireDate } from "../surface/format";
 import { DotWord, StatusBar, ToolGlyph, Toolbar } from "../surface/kit";
 import { controlModeLabel } from "../../lib/productLanguage";
@@ -54,6 +55,7 @@ import {
   checksSummary,
   gatedHead,
   isNotRead,
+  isToolCall,
   laneEntries,
   laneStations,
   laneTitle,
@@ -82,6 +84,11 @@ export function laneTitleSprite(agent: string | null | undefined, key: string): 
 /** The lane refreshes this often while its window is in front. */
 export const LANE_FRONT_POLL_MS = 5_000;
 export const LANE_WINDOW_ID = "lane";
+/** The window's two faces: its steps, its terminal. */
+export const LANE_WINGS = [
+  { id: "steps", label: "Steps" },
+  { id: "terminal", label: "Terminal" },
+];
 
 /** The lane window host: mounted once on the Desk. It opens on a launch by
  * id, or on the launch of the open coder session; a coder object of a launch
@@ -123,7 +130,17 @@ function LaneFrame({ launchId }: { launchId: string }) {
   const lane = useLane((s) => s.lane);
   const raw = useLane((s) => s.raw);
   const error = useLane((s) => s.error);
-  const flight = useAgentFlights((s) => s.flights.find((f) => f.launchId === launchId) ?? null);
+  // Atlas pass 2: the window's state is the Agents list's truth: the live
+  // flight, else the launch's entry in the hub's history (an ended launch,
+  // a session gone), never a "working" guessed from no flight at all.
+  const live = useAgentFlights((s) => s.flights.find((f) => f.launchId === launchId) ?? null);
+  const past = useConductor((s) => s.history.find((f) => f.launchId === launchId) ?? null);
+  const flight = live ?? past;
+  useEffect(() => {
+    if (!live && useConductor.getState().flightsState !== "ok") void useConductor.getState().readFlights();
+  }, [live, launchId]);
+  const gone = flight && GONE.has(flight.state) ? flight : null;
+  const flightTurn = live?.state === "waiting" && (live.turnEnd === "idle" || live.turnEnd === "done") ? live.turnEnd : null;
   const front = useFrontWindowId() === LANE_WINDOW_ID;
   const compact = useCompactViewport();
   const reload = useCallback(() => {
@@ -173,33 +190,35 @@ function LaneFrame({ launchId }: { launchId: string }) {
           draggable={false}
         />
       }
-      actions={
-        <Button
-          dense
-          variant="ghost"
-          aria-pressed={raw}
-          aria-label={raw ? "Story" : "Terminal"}
-          data-testid="lane-raw"
-          disabled={!sessionKey && flight?.stateSource !== "screen"}
-          onClick={() => useLane.getState().setRaw(!raw)}
-        >
-          {raw ? "Story" : "Terminal"}
-        </Button>
+      wings={
+        // W3 AGENT WINDOW: the terminal is the window's second face, a wing
+        // (the strip Speak and the Room wear), not a title-bar tab.
+        sessionKey || flight?.stateSource === "screen" ? (
+          <SurfaceWings
+            wings={LANE_WINGS}
+            active={raw ? "terminal" : "steps"}
+            onChange={(id) => useLane.getState().setRaw(id === "terminal")}
+            name={title}
+          />
+        ) : undefined
       }
       open
       onClose={() => useLane.getState().close()}
     >
-      {lane ? <LaneToolbar lane={lane} /> : null}
+      {lane ? <LaneToolbar lane={lane} done={flight?.state === "done"} agent={agent} gone={gone} flightTurn={flightTurn} /> : null}
       <LaneBody lane={lane} error={error} raw={raw} agent={agent} compact={compact} itemTitle={flight?.title ?? ""}
-        done={flight?.state === "done"} screenSaid={flight?.screen?.said ?? null} />
-      {lane ? <LaneFooter lane={lane} /> : null}
+        done={flight?.state === "done"} gone={Boolean(gone)} flightTurn={flightTurn} screenSaid={flight?.screen?.said ?? null} />
+      {lane ? <LaneFooter lane={lane} agent={agent} done={flight?.state === "done"} gone={gone} flightTurn={flightTurn} /> : null}
     </DeskWindowFrame>
   );
 }
 
 function LaneBody({
-  lane, error, raw, agent, compact, itemTitle, done = false, screenSaid = null,
+  lane, error, raw, agent, compact, itemTitle, done = false, screenSaid = null, gone = false, flightTurn = null,
 }: {
+  flightTurn?: "done" | "idle" | null;
+  /** The session is gone (the Agents list's truth): nothing is lit. */
+  gone?: boolean;
   screenSaid?: string | null;
   /** Betterment AG10: the turn is done; its Result leads the Story. */
   done?: boolean;
@@ -234,28 +253,24 @@ function LaneBody({
   const stations = laneStations(lane, events);
   const pr = lane.follow_through?.pr;
   const worktree = lane.worktree;
-  const checks = checksSummary(pr?.checks);
   const branch = branchFace(lane.launch.branch ?? (isNotRead(worktree) ? null : worktree.branch)) || undefined;
-  const prCard = pr && pr.number != null ? (
-    <PRCard
-      data-testid="lane-pr"
-      number={pr.number}
-      title={pr.title || itemTitle}
-      item={pr.title ? itemTitle : undefined}
-      checks={checks}
-      review={reviewWord(pr.review_decision)}
-      branch={branch}
-      base={isNotRead(worktree) ? undefined : baseWord(worktree.base) || undefined}
-    />
-  ) : null;
-  const files = isNotRead(worktree) ? (
-    <NotReadLine part="FILES" reason={worktree.not_read} testId="lane-files-not-read" />
-  ) : (
-    <FilesChanged data-testid="lane-files" files={worktree.files.map((f) => ({ path: f.path }))} />
+  const base = isNotRead(worktree) ? "" : baseWord(worktree.base);
+  const doing = gone ? { word: "", tone: "idle" as const } : laneDoing(lane, agent, done, flightTurn);
+  // W3 AGENT WINDOW (canvas direction A): the objects the agent made, as
+  // object rows: the PR, its branch, the files it changed.
+  const objects = (
+    <LaneObjects lane={lane} itemTitle={itemTitle} branch={branch} base={base} />
   );
+  const entries = laneEntries(lane, events);
   // AG10 face: a lane whose only entry is the brief (an agent with no hook
-  // reports no events) shows the brief as a plain fold, not a one-row rail.
-  const onlyBrief = laneEntries(lane, events).every((entry) => entry.kind === "brief") && !eventsNotRead && !more;
+  // reports no events) shows the brief as a plain fold, not a one-row list.
+  const onlyBrief = entries.every((entry) => entry.kind === "brief") && !eventsNotRead && !more;
+  const steps = stepEntries(lane, entries, briefOpen, () => setBriefOpen((v) => !v));
+  // The newest reported step is lit while the agent works; the wait is lit
+  // while it asks; nothing is lit when it is done, idle or stopped.
+  const lit = doing.tone === "info" && doing.word.endsWith("is working")
+    ? [...steps].reverse().find((s) => s.at != null && s.kind !== "brief")?.id ?? null
+    : steps.find((s) => s.kind === "asks")?.id ?? null;
   const rail = onlyBrief ? (
     <div className="lw-col">
       {isNotRead(lane.gated) ? <NotReadLine part="HELD" reason={lane.gated.not_read} /> : null}
@@ -266,10 +281,10 @@ function LaneBody({
       ) : null}
     </div>
   ) : (
-    <div className="lw-col">
+    <div className="lw-col lw-steps-col">
       {eventsNotRead ? <NotReadLine part="TIMELINE" reason={eventsNotRead} testId="lane-events-not-read" /> : null}
       {isNotRead(lane.gated) ? <NotReadLine part="HELD" reason={lane.gated.not_read} /> : null}
-      <TimelineRail data-testid="lane-rail" label="Activity" entries={railEntries(lane, events, briefOpen, () => setBriefOpen((v) => !v))} />
+      <StepList data-testid="lane-rail" entries={steps} lit={lit} />
       {briefOpen && lane.launch.brief_text ? (
         <pre className="lw-brief" data-testid="lane-brief-text">{lane.launch.brief_text}</pre>
       ) : null}
@@ -283,13 +298,12 @@ function LaneBody({
 
   return (
     <div className="desk-pullout-body lw-body" data-testid="lane-body" ref={bodyRef} onScroll={onScroll}>
-      <LaneHead lane={lane} agent={agent} itemTitle={itemTitle} done={done} />
       {/* W2-BUILDER (atlas 2026-10-27): the wait (the ask he must answer)
           comes first, then the result, then the work; Details last. */}
       {lane.launch.stopped ? null : rebrief ? <RebriefWell /> : (
         <>
           {!raw ? <HeldPlate lane={lane} agent={agent} /> : null}
-          <WaitWell lane={lane} agent={agent} />
+          <WaitWell lane={lane} agent={agent} flightTurn={flightTurn} />
         </>
       )}
       {!raw && (done || Boolean(reviewResult(lane.launch.review))) ? <ResultBlock lane={lane} screenSaid={screenSaid} /> : null}
@@ -297,7 +311,7 @@ function LaneBody({
         <NotReadLine key={part} part={part} reason={reason} testId={`lane-not-read-${part.toLowerCase()}`} />
       ))}
       {raw ? <RawPane /> : null}
-      {!raw && onlyBrief && !prCard && !done && !reviewResult(lane.launch.review) ? (
+      {!raw && onlyBrief && !done && !reviewResult(lane.launch.review) ? (
         <section className="lw-work-empty" data-testid="lane-work-empty" aria-label="Its work">
           {screenSaid ? (
             <>
@@ -314,32 +328,91 @@ function LaneBody({
       ) : null}
       {compact ? (
         <div className="lw-col">
-          {prCard}
+          {objects}
           {rail}
         </div>
       ) : (
         <div className="lw-cols">
           {rail}
-          <div className="lw-col">
-            {prCard}
+          <div className="lw-col lw-objects-col">
+            {objects}
           </div>
         </div>
       )}
       <FoldGadget title="Details" className="lw-details">
         <StationTrack data-testid="lane-track" label="Recorded stages" stations={stations.filter((s) => s.state !== "ahead")} />
-        {branch ? <span className="lw-footer-branch" data-testid="lane-branch">{branch}</span> : null}
-        {files}
       </FoldGadget>
     </div>
   );
 }
 
-/** The rail entries with their verbs: Brief on BRIEF, Deny / Approve on a
- * held call. */
-function railEntries(lane: LaneWire, events: readonly LaneEvent[], briefOpen: boolean, toggleBrief: () => void): TimelineEntry[] {
-  return laneEntries(lane, events).map((entry: LaneEntry) => {
-    const { at: _at, kind, gated, heads: _heads, ...rest } = entry;
-    if (kind === "brief" && lane.launch.brief_text) {
+/** W3 AGENT WINDOW: what the agent made, as object rows: the PR (its checks
+ *  and review as dots and words), the branch, the files changed. */
+function LaneObjects({ lane, itemTitle, branch, base }: { lane: LaneWire; itemTitle: string; branch?: string; base: string }) {
+  const pr = lane.follow_through?.pr;
+  const worktree = lane.worktree;
+  const checks = checksSummary(pr?.checks);
+  const review = prReviewWords(pr?.review_decision);
+  const files = isNotRead(worktree) ? null : worktree.files;
+  if (!(pr && pr.number != null) && !branch && !files?.length && !isNotRead(worktree)) return null;
+  return (
+    <section className="lw-objects" aria-label="It made">
+      <span className="lw-objects-cap">It made</span>
+      {pr && pr.number != null ? (
+        <div className="lw-obj" data-testid="lane-pr" title={pr.url ?? undefined}>
+          <img className="lw-obj-sprite" src={spriteUrl("pr", `pr-${pr.number}`, "rest", null, 20)} alt="" width={20} height={20} draggable={false} />
+          <span className="lw-obj-text">
+            <span className="lw-obj-title">{`#${pr.number} ${pr.title || itemTitle}`}</span>
+            {pr.title && itemTitle ? <span className="lw-obj-sub" data-testid="lane-pr-item">{itemTitle}</span> : null}
+          </span>
+          <span className="lw-obj-facts">
+            {checks ? (
+              <DotWord tone={checks.failed ? "fail" : checks.running ? "warn" : "ok"} data-testid="lane-pr-checks">
+                {`Checks ${checks.passed} of ${checks.total}`}
+              </DotWord>
+            ) : null}
+            <DotWord tone={review.tone} data-testid="lane-pr-review">{review.word}</DotWord>
+          </span>
+        </div>
+      ) : null}
+      {branch ? (
+        <div className="lw-obj">
+          <img className="lw-obj-sprite" src={spriteUrl("repository", `branch-${branch}`, "rest", null, 20)} alt="" width={20} height={20} draggable={false} />
+          <span className="lw-obj-text">
+            <code className="lw-obj-code" data-testid="lane-branch">{branch}</code>
+            {base ? <span className="lw-obj-sub">{`into ${base}`}</span> : null}
+          </span>
+        </div>
+      ) : null}
+      {isNotRead(worktree) ? (
+        <NotReadLine part="FILES" reason={worktree.not_read} testId="lane-files-not-read" />
+      ) : files && files.length ? (
+        <div className="lw-files" data-testid="lane-files">
+          <span className="lw-files-cap">{filesWords(files.length)}</span>
+          {files.map((f) => (
+            <code key={f.path} className="lw-file">{f.path}</code>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+/** The PR's review in sentence case, as a dot and a word. */
+function prReviewWords(decision: string | null | undefined): { word: string; tone: "ok" | "warn" | "fail" | "idle" } {
+  const d = String(decision ?? "").toUpperCase();
+  if (d === "APPROVED") return { word: "Approved", tone: "ok" };
+  if (d === "CHANGES_REQUESTED") return { word: "Changes asked", tone: "fail" };
+  if (d === "REVIEW_REQUIRED") return { word: "Review asked", tone: "warn" };
+  return { word: "No review yet", tone: "idle" };
+}
+
+/** The step entries with their verbs (Brief on the brief) and, while the
+ *  agent asks, the wait as the last step. */
+function stepEntries(lane: LaneWire, entries: readonly LaneEntry[], briefOpen: boolean, toggleBrief: () => void): StepEntry[] {
+  const out: StepEntry[] = entries.map((entry: LaneEntry) => {
+    const { gated: _gated, ...rest } = entry;
+    if (entry.kind === "brief" && lane.launch.brief_text) {
       return {
         ...rest,
         verbs: (
@@ -350,9 +423,15 @@ function railEntries(lane: LaneWire, events: readonly LaneEvent[], briefOpen: bo
       };
     }
     // PHILO-17 THE REFIT: a held call's Deny / Approve live on the held
-    // plate at the top of the lane (heldNow), not on the rail.
+    // plate at the top of the lane (heldNow), not on the list.
     return rest;
   });
+  const wait = isNotRead(lane.wait) ? null : lane.wait;
+  if (wait?.question && (wait.kind === "TO ANSWER" || wait.kind === "TO APPROVE") && !turnEndWord(wait) && turnWord(wait).word === "ASKS") {
+    out.push({ id: "asks", at: wireDate(wait.started)?.getTime() ?? null, time: wireClock(wait.started), kind: "asks", word: "ASKS",
+      text: wait.kind === "TO APPROVE" ? "to run a call · above" : "above" });
+  }
+  return out;
 }
 
 function DecideVerbs({ call }: { call: LaneGated }) {
@@ -432,19 +511,19 @@ function NotReadLine({ part, reason, testId }: { part: string; reason: string; t
 
 /* ── the wait ─────────────────────────────────────────────────────── */
 
-function WaitWell({ lane, agent }: { lane: LaneWire; agent: string }) {
+function WaitWell({ lane, agent, flightTurn = null }: { lane: LaneWire; agent: string; flightTurn?: "done" | "idle" | null }) {
   const wait = lane.wait;
   if (isNotRead(wait)) return <NotReadLine part="ASKS" reason={wait.not_read} />;
   if (!wait || !wait.question) return null;
   if (wait.kind === "TO ANSWER") return <AnswerWell lane={lane} wait={wait} agent={agent} />;
   // TO APPROVE: the held plate above says it (HeldPlate).
   if (wait.kind === "TO APPROVE") return null;
-  const turn = turnEndWord(wait);
+  const turn = turnEndWord(wait) ? (flightTurn ? (flightTurn === "done" ? "DONE" : "IDLE") : turnEndWord(wait)) : null;
   if (turn) {
     // PHILO-15 15: the agent's last words, as a fact; not a wait for you.
     return (
       <div className="lw-deciding" data-testid="lane-turn-end" data-turn={turn.toLowerCase()}>
-        <span className="lw-word">{turn}</span>
+        <DotWord tone={turn === "DONE" ? "ok" : "info"} className="lw-turn-word">{turn === "DONE" ? "Done" : "Idle"}</DotWord>
         <AgentWords className="lw-ev-text" text={wait.question} />
       </div>
     );
@@ -477,6 +556,7 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
   return (
     <AskWell
       data-testid="lane-ask"
+      plate
       // PHILO-17: one filled primary. When the held plate's Approve shows,
       // it is the lane's first move and Answer is quieter.
       primary={!approveShowing(lane)}
@@ -499,7 +579,7 @@ function AnswerWell({ lane, wait, agent }: { lane: LaneWire; wait: LaneWait; age
       inputRef={inputRef}
       // Betterment AG2: Answer needs no ARM (the press is the authority for
       // this wait); the ARM stays behind Terminal with the keys.
-      arm={lane.control && !isNotRead(lane.control) && lane.control.pane === false ? <span className="surface-token">Terminal unavailable</span> : <TerminalGone />}
+      arm={lane.control && !isNotRead(lane.control) && lane.control.pane === false ? <span className="lw-quiet" data-testid="lane-terminal-unavailable">Terminal unavailable</span> : <TerminalGone />}
     />
   );
 }
@@ -629,8 +709,32 @@ export function approveShowing(lane: LaneWire): boolean {
   return Boolean(held && !held.args_cut);
 }
 
+/** Atlas pass 2: a launch whose session left, in the Agents list's words. */
+export function goneWord(flight: Pick<AgentFlight, "state">): string {
+  if (flight.state === "expired") return "Session gone";
+  if (flight.state === "stopped_by_restart") return "Stopped by restart";
+  if (flight.state === "resume_failed") return "Could not resume";
+  return "Ended";
+}
+
+/** Start again: a new agent on the same item (Hand again, as Agents does). */
+function againRef(flight: AgentFlight): ReturnType<typeof handRefOf> {
+  return handRefOf(`${flight.kind}:${flight.id}`) ?? handRefOf(flight.originRef);
+}
+
+function startAgain(flight: AgentFlight): void {
+  const ref = againRef(flight);
+  if (!ref) return;
+  openHand({ kind: ref.kind, id: ref.id, title: flight.title, projectId: flight.projectId || null, agent: flight.agent as AgentId });
+}
+
 /** PHILO-17 THE REFIT: what the coder does now, as the lane's one headline. */
-export function laneDoing(lane: LaneWire, agent: string, done = false): { word: string; tone: "ok" | "warn" | "info" | "idle" } {
+export function laneDoing(
+  lane: LaneWire, agent: string, done = false,
+  /** The flight's own turn end (the Agents list reads it): it leads the
+   *  lane's wait when the two differ, so both faces say the same word. */
+  flightTurn: "done" | "idle" | null = null,
+): { word: string; tone: "ok" | "warn" | "info" | "idle" } {
   const name = agent || "The agent";
   if (lane.launch.stopped) return { word: "Stopped by you", tone: "idle" };
   // AG12: a durable pair finding is the lane's owner-facing state. Keep the
@@ -644,31 +748,12 @@ export function laneDoing(lane: LaneWire, agent: string, done = false): { word: 
   if (heldNow(lane) || wait?.kind === "TO APPROVE") return { word: `${name} wants to run`, tone: "warn" };
   if (wait?.question && wait.kind === "TO ANSWER") return { word: `${name} asks you`, tone: "warn" };
   if (wait?.question && wait.kind === "DECIDING") return { word: "HoldSpeak drafts the answer", tone: "info" };
-  const turn = wait ? turnEndWord(wait) : null;
+  const turn = flightTurn ? (flightTurn === "done" ? "DONE" : "IDLE") : wait ? turnEndWord(wait) : null;
   if (turn === "DONE") return { word: `${name} is done`, tone: "ok" };
   if (turn === "IDLE") return { word: `${name} is idle`, tone: "idle" };
   const pr = lane.follow_through?.pr;
   if (pr?.number != null && pr.state === "merged") return { word: `PR #${pr.number} merged`, tone: "ok" };
   return { word: `${name} is working`, tone: "info" };
-}
-
-function LaneHead({ lane, agent, itemTitle, done = false }: { lane: LaneWire; agent: string; itemTitle: string; done?: boolean }) {
-  const doing = laneDoing(lane, agent, done);
-  // W2-BUILDER: one line, not a headline: the face, the state as a dot and
-  // a word, the item. Its last step is the status bar's.
-  return (
-    <div className="lw-head" data-testid="lane-head">
-      <span className="lw-head-sprite" aria-hidden="true">
-        <img src={laneTitleSprite(lane.launch.agent, lane.launch.session_key ?? lane.launch.launch_id ?? "lane")} alt="" draggable={false} />
-      </span>
-      <div className="lw-head-text">
-        <DotWord tone={doing.tone} className="lw-head-title">{doing.word}</DotWord>
-        <span className="lw-head-meta">
-          {itemTitle ? <span>{itemTitle}</span> : null}
-        </span>
-      </div>
-    </div>
-  );
 }
 
 /** When the agent last reported a step: its newest event. (The hub's
@@ -911,65 +996,102 @@ function RawPane() {
   );
 }
 
-/* ── the footer ───────────────────────────────────────────────────── */
+/* ── the toolbar and the status bar ─────────────────────────────── */
 
-/** W2-BUILDER (atlas 2026-10-27): the agent's verbs are the window's
- *  toolbar: Tell it, Open PR, Stop (two presses), and the ARM beside Stop
- *  when the mode asks for it. The answer to a waiting ask is its card. */
-function LaneToolbar({ lane }: { lane: LaneWire }) {
+/** W3 AGENT WINDOW (canvas direction A): the toolbar by state. Working and
+ *  asking: Tell it, Open PR; the answer to a waiting ask is its card's
+ *  primary. Done: Open PR is the primary, Tell it continues the work. Stop
+ *  (two presses) and the mode's ARM stay at the right end. */
+function LaneToolbar({ lane, done = false, agent, gone = null, flightTurn = null }: { lane: LaneWire; done?: boolean; agent: string; gone?: AgentFlight | null; flightTurn?: "done" | "idle" | null }) {
   const pr = lane.follow_through?.pr;
   const prUrl = pr?.number != null && pr.url ? pr.url : null;
   const sessionKey = lane.launch.stopped || (lane.control && !isNotRead(lane.control) && lane.control.pane === false) ? null : lane.launch.session_key;
   const rebrief = useLane((s) => s.rebrief);
   const canStop = Boolean(lane.launch.session_key && !lane.launch.stopped && (!lane.control || isNotRead(lane.control) || lane.control.pane !== false));
   const armHere = rebrief || !lane.wait || isNotRead(lane.wait) || lane.wait.kind !== "TO ANSWER" || !lane.wait.question;
+  const finished = laneDoing(lane, agent, done, flightTurn).tone === "ok";
+  // The one filled primary: Open PR when the work is done and nothing else
+  // asks for a press (a held call's Approve, an answer).
+  const prPrimary = finished && !approveShowing(lane);
+  if (gone) {
+    // The session is gone: the one verb that fits is Start again (a new
+    // agent on the same item); its PR stays one press away.
+    const again = Boolean(againRef(gone));
+    if (!again && !prUrl) return null;
+    return (
+      <Toolbar label="Agent" className="lw-toolbar" data-testid="lane-toolbar">
+        {again ? (
+          <Button dense variant="primary" data-testid="lane-start-again" onClick={() => startAgain(gone)}>
+            <ToolGlyph kind="run" />Start again
+          </Button>
+        ) : null}
+        {prUrl ? (
+          <Button dense variant="secondary" data-testid="lane-open-pr" title={prUrl}
+            onClick={() => window.open(prUrl, "_blank", "noopener,noreferrer")}>
+            <ToolGlyph kind="open" />Open PR
+          </Button>
+        ) : null}
+      </Toolbar>
+    );
+  }
   if (!sessionKey && !prUrl && !canStop) return null;
+  const openPr = prUrl ? (
+    <Button
+      dense
+      variant={prPrimary ? "primary" : "secondary"}
+      data-testid="lane-open-pr"
+      title={prUrl}
+      onClick={() => window.open(prUrl, "_blank", "noopener,noreferrer")}
+    >
+      <ToolGlyph kind="open" />Open PR
+    </Button>
+  ) : null;
+  const tellIt = sessionKey ? (
+    <Button
+      dense
+      variant="secondary"
+      aria-pressed={rebrief}
+      data-testid="lane-rebrief"
+      onClick={() => useLane.getState().setRebrief(!rebrief)}
+    >
+      <ToolGlyph kind="ask" />Tell it
+    </Button>
+  ) : null;
   return (
     <Toolbar
       label="Agent"
       className="lw-toolbar"
       data-testid="lane-toolbar"
-      trailing={canStop && armHere ? <ArmLine lane={lane} compact /> : undefined}
+      trailingStays
+      trailing={canStop ? (
+        <span className="lw-toolbar-end">
+          {armHere ? <ArmLine lane={lane} compact /> : null}
+          {/* Stop retains its own session-control grant and confirmation. */}
+          <StopVerb />
+        </span>
+      ) : undefined}
     >
-      {sessionKey ? (
-        <Button
-          dense
-          variant="secondary"
-          aria-pressed={rebrief}
-          data-testid="lane-rebrief"
-          onClick={() => useLane.getState().setRebrief(!rebrief)}
-        >
-          <ToolGlyph kind="ask" />Tell it
-        </Button>
-      ) : null}
-      {prUrl ? (
-        <Button
-          dense
-          variant="secondary"
-          data-testid="lane-open-pr"
-          title={prUrl}
-          onClick={() => window.open(prUrl, "_blank", "noopener,noreferrer")}
-        >
-          <ToolGlyph kind="open" />Open PR
-        </Button>
-      ) : null}
-      {/* Stop retains its own session-control grant and confirmation. */}
-      {canStop ? <StopVerb /> : null}
+      {prPrimary ? <>{openPr}{tellIt}</> : <>{tellIt}{openPr}</>}
     </Toolbar>
   );
 }
 
-/** The status bar: when it last reported a step, and the lane's receipts (the stop,
+/** The status bar: the agent's state as a dot and a word, when it last
+ *  reported a step, how many it reported, and the lane's receipts (the stop,
  *  the last send or refusal). */
-function LaneFooter({ lane }: { lane: LaneWire }) {
+function LaneFooter({ lane, agent, done = false, gone = null, flightTurn = null }: { lane: LaneWire; agent: string; done?: boolean; gone?: AgentFlight | null; flightTurn?: "done" | "idle" | null }) {
   const events = useLane((s) => s.events);
   const spoke = lastStep(events);
+  const doing = gone ? { word: goneWord(gone), tone: "idle" as const } : laneDoing(lane, agent, done, flightTurn);
+  const steps = events.filter(isToolCall).length;
   return (
     <StatusBar
       className="lw-footer"
       data-testid="lane-status"
       items={[
+        { key: "state", text: doing.word, lamp: doing.tone === "idle" ? undefined : doing.tone, testId: "lane-head" },
         spoke ? { key: "spoke", text: `Last step ${spokeWord(spoke)}`, testId: "lane-last-step" } : null,
+        steps ? { key: "steps", text: `${steps} ${steps === 1 ? "step" : "steps"}`, testId: "lane-step-count" } : null,
       ]}
       trailing={<LaneReceipts lane={lane} />}
     />

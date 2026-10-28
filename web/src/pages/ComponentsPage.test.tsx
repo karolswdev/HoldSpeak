@@ -176,7 +176,7 @@ describe("Signal component gallery", () => {
     expect(fold).toHaveAttribute("open");
     fireEvent.click(within(frame).getByText("Selected text"));
     await waitFor(() => expect(fold).not.toHaveAttribute("open"));
-    fireEvent.click(within(frame).getByRole("button", { name: "Back to Thought" }));
+    fireEvent.click(within(frame).getByRole("button", { name: "Back to note" }));
     expect(screen.getByTestId("reference-conversation-status")).toHaveTextContent("Back to the Note, locally");
 
     fireEvent.click(within(frame).getByText("Selected text"));
@@ -184,7 +184,7 @@ describe("Signal component gallery", () => {
     fireEvent.click(within(frame).getByRole("button", { name: "Clear quote" }));
     expect(within(frame).getByText("Source")).toBeInTheDocument();
     expect(within(frame).queryByText("The source stays beside the decision.")).not.toBeInTheDocument();
-    expect(within(frame).getByRole("button", { name: "Back to Thought" })).toBeInTheDocument();
+    expect(within(frame).getByRole("button", { name: "Back to note" })).toBeInTheDocument();
     expect(screen.getByTestId("reference-conversation")).toHaveTextContent("The team agreed to freeze the ledger on Nov 12");
   });
 

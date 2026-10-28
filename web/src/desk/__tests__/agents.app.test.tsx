@@ -155,15 +155,18 @@ describe("the agent's lane on the hub's lane answer", () => {
     expect(screen.getByTestId("lane-ask").querySelector(".ask-well-question")?.textContent).toBe(QUESTION);
     expect(screen.getByTestId("lane-ask").querySelector(".ask-well-draft")?.textContent).toContain("Jordan owns it. Avery reviews.");
     const rail = screen.getByTestId("lane-rail").textContent ?? "";
-    for (const word of ["BRIEF", "READ", "SAYS", "WRITE", "RUN", "COMMIT", "PR", "HELD"]) expect(rail).toContain(word);
+    // W3 AGENT WINDOW: the steps in sentence-case words (the step log).
+    for (const word of ["Got the brief", "Read", "Wrote", "Ran", "Committed", "Pull request", "Held"]) expect(rail).toContain(word);
+    expect(rail).toContain("I will draft the runbook");
     expect(rail).toContain("Draft the ledger rollback runbook");
     expect(rail).toContain("psql -h staging-ledger");
     expect(rail).not.toContain("Your press in GitHub");
     expect(rail).not.toContain(QUESTION);
     const pr = screen.getByTestId("lane-pr").textContent ?? "";
     expect(pr).toContain("#413");
-    expect(pr).toContain("CHECKS 6 OF 7");
-    expect(pr).toContain("1 RUNNING");
+    expect(pr).toContain("Checks 6 of 7");
+    // One check still runs: the checks dot is the warn tone, not ok.
+    expect(screen.getByTestId("lane-pr-checks").getAttribute("data-tone")).toBe("warn");
     const files = screen.getByTestId("lane-files").textContent ?? "";
     expect(files).toContain("docs/ledger-rollback.md");
     expect(files).toContain("freeze.py");
@@ -175,12 +178,14 @@ describe("the agent's lane on the hub's lane answer", () => {
   });
 
   /** replaces: tests/e2e/test_philo14_c2_lane_glass.py::test_the_agents_lane_window_at_1440_and_393 (Raw) */
-  it("Raw puts the terminal pane in place of the lane, and back", async () => {
+  it("the Terminal wing puts the terminal pane in the window, and Steps goes back", async () => {
     await openLane(LANE.wire);
-    fireEvent.click(screen.getByTestId("lane-raw"));
+    // W3 AGENT WINDOW: the terminal is a wing of the title bar, not a tab.
+    fireEvent.click(screen.getByRole("tab", { name: "Terminal" }));
     expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
     expect(screen.getByTestId("lane-rail")).toBeTruthy();
-    fireEvent.click(screen.getByTestId("lane-raw"));
+    fireEvent.click(screen.getByRole("tab", { name: "Steps" }));
+    expect(screen.queryByTestId("lane-raw-pane")).toBeNull();
     expect(screen.getByTestId("lane-rail")).toBeTruthy();
   });
 
@@ -201,7 +206,7 @@ describe("the agent's lane on the hub's lane answer", () => {
     await act(async () => {
       await useLane.getState().load();
     });
-    const after = [...screen.getByTestId("lane-rail").querySelectorAll<HTMLElement>(".lane-rail-entry")]
+    const after = [...screen.getByTestId("lane-rail").querySelectorAll<HTMLElement>(".lw-step")]
       .filter((el) => (el.textContent ?? "").includes("psql -h staging-ledger -c"));
     expect(after.length).toBeGreaterThan(0);
     expect(screen.queryByTestId("lane-approve")).toBeNull();
@@ -484,15 +489,16 @@ describe("the agent faces say Agents and agent (Betterment AG1)", () => {
     expect(document.body.textContent).not.toMatch(OLD_WORDS);
   });
 
-  it("the agent's window: Terminal and Story, a held call says Wants to run, no old word", async () => {
+  it("the agent's window: the Steps and Terminal wings, a held call says Wants to run, no old word", async () => {
     await openLane(LANE_CUT.wire);
-    expect(screen.getByTestId("lane-raw").textContent).toBe("Terminal");
+    // W3 AGENT WINDOW: the window's two faces are wings (Steps, Terminal).
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Steps", "Terminal"]);
     expect(screen.getByTestId("lane-approve-well").querySelector(".lw-plate-label")?.textContent).toBe("Wants to run");
     expect(screen.getByTestId("lane-raw-cut").textContent).toBe("Terminal");
     // Tell it (was Re-brief) needs a live pane; laneWindow.c2.test.tsx drives it.
     expect(document.body.textContent).not.toMatch(OLD_WORDS);
-    fireEvent.click(screen.getByTestId("lane-raw"));
-    expect(screen.getByTestId("lane-raw").textContent).toBe("Story");
+    fireEvent.click(screen.getByRole("tab", { name: "Terminal" }));
+    expect(screen.getByRole("tab", { name: "Terminal" }).getAttribute("aria-selected")).toBe("true");
   });
 
   it("branchFace: the hub's id branch reads new branch; a branch with words shows as it is", () => {

@@ -29,7 +29,7 @@
 import "./chrome-menus.css";
 import "./ask-panel.css";
 import "../surface/patterns/conversation.css";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useDesk } from "../store";
 import {
   askContexts,
@@ -92,6 +92,7 @@ import {
 import { chosenScopeWords, deskPrompts, wholeDeskWords } from "../askPrompts";
 import { useNeedsYou } from "../needsYou";
 import { humanTime } from "../surface/format";
+import { countWords } from "../surface/kit";
 import type { DeskNavigation, ProjectReturn } from "../store/types";
 import { useCompactViewport } from "../useCompactViewport";
 
@@ -143,6 +144,51 @@ function progressWords(progress: AskProgress | null): string {
   return retryWords(progress.attempt, progress.of);
 }
 
+
+/** The reasons that mean the engine itself did not answer. */
+const ENGINE_DOWN_REASONS = new Set(["did_not_answer", "not_reachable", "timed_out"]);
+
+/** Pass 2 (Ask): one rail row per question. Rows come newest first; a
+ *  thread id is listed once, and the same question asked again as a new
+ *  ask is one row (the newest), so Recent never repeats a line. */
+export function dedupeRailRows<T extends { id: string; title: string }>(rows: readonly T[]): T[] {
+  const ids = new Set<string>();
+  const questions = new Set<string>();
+  const out: T[] = [];
+  for (const row of rows) {
+    const question = row.title.trim().replace(/\s+/g, " ").toLowerCase();
+    if (ids.has(row.id) || (question && questions.has(question))) continue;
+    ids.add(row.id);
+    if (question) questions.add(question);
+    out.push(row);
+  }
+  return out;
+}
+
+/** A row's facts: a bare kind word (`Decision`, `Note`) says nothing more. */
+const BARE_KIND_WORDS = new Set(["decision", "note", "task", "project", "person", "meeting", "drawer", "pull request"]);
+function factsOf(meta: string | undefined): string {
+  return meta && !BARE_KIND_WORDS.has(meta.trim().toLowerCase()) ? meta : "";
+}
+
+/** Pass 2 (Ask): one reference row per record. The same ref is one row; the
+ *  same name of the same kind with the same facts (a decision kept twice, a
+ *  meeting and its memory page) is one row too, the one that opens and says
+ *  the most. */
+export function dedupeReferenceRows(rows: readonly AskReferenceRowData[]): AskReferenceRowData[] {
+  const out: AskReferenceRowData[] = [];
+  const score = (row: AskReferenceRowData) => (row.onOpen ? 4 : 0) + (row.lamp ? 2 : 0) + (row.meta ? 1 : 0);
+  for (const row of rows) {
+    const name = row.title.trim().replace(/\s+/g, " ").toLowerCase();
+    // Two rows that read the same (kind, name and facts) are one record to him.
+    const at = out.findIndex((known) => known.ref === row.ref || (Boolean(name) && known.kind === row.kind
+      && known.title.trim().replace(/\s+/g, " ").toLowerCase() === name
+      && (!factsOf(known.meta) || !factsOf(row.meta) || known.meta === row.meta)));
+    if (at < 0) out.push(row);
+    else if (score(row) > score(out[at])) out[at] = row;
+  }
+  return out;
+}
 
 /** Forget waits this long for Undo before the thread is deleted. */
 export const FORGET_UNDO_MS = 10_000;
@@ -219,6 +265,9 @@ export function AskPanel() {
     recovered: promptRecovered,
   } = useDurableDraft("desk-ask", "");
   const engine = useEngine("ask.answer");
+  // Pass 2 (Ask): the engine did not answer this window's last ask, so the
+  // toolbar's dot says so until an answer lands (or its check says ready).
+  const [engineDown, setEngineDown] = useState(false);
   // The kept thread this window shows; null until the first answer lands.
   const [threadId, setThreadId] = useState<string | null>(null);
   const [turns, setTurns] = useState<AskTurn[]>([]);
@@ -637,9 +686,12 @@ export function AskPanel() {
     if (r.deskTools) setDeskTools(true);
     setFinishedElapsedSeconds(Math.max(0, Math.round((Date.now() - startedAt) / 1000)));
     if (!r.ok) {
-      setFailedRun({ ...r, reason: r.reason || "did_not_answer" });
+      const reason = r.reason || "did_not_answer";
+      if (ENGINE_DOWN_REASONS.has(reason)) setEngineDown(true);
+      setFailedRun({ ...r, reason });
       return;
     }
+    setEngineDown(false);
     if (r.threadId) setThreadId(r.threadId);
     setTurns((current) => [...current, {
       key: r.answerId || `${r.threadId || "ask"}:${current.length}:${invocationId}`,
@@ -964,6 +1016,19 @@ export function AskPanel() {
 
   const hasConversation = turns.length > 0 || running || Boolean(failedRun) || threadRead.loading || Boolean(threadRead.error);
   useReadingEndAnchor(readingRef, hasConversation);
+  // Pass 2 (Ask): an answer lands at its question, not at its References.
+  // When a turn is added (an answer, or a kept ask opened from Recent) the
+  // page puts the newest question at its top; the end anchor then keeps out.
+  const newestTurn = turns.at(-1)?.key ?? "";
+  useLayoutEffect(() => {
+    const reading = readingRef.current;
+    if (!newestTurn || !reading) return;
+    const heads = reading.querySelectorAll<HTMLElement>("[data-testid=ask-turn] .desk-ask-q");
+    const head = heads[heads.length - 1];
+    if (!head) return;
+    const offset = head.getBoundingClientRect().top - reading.getBoundingClientRect().top;
+    reading.scrollTop = Math.max(0, reading.scrollTop + offset - 8);
+  }, [newestTurn]);
   const lastRoute = route;
   const savedCount = Object.keys(saved).length;
   // Ask D1: the status bar counts the running answer's seconds (no spinner).
@@ -979,7 +1044,6 @@ export function AskPanel() {
     ? ""
     : [
         promptRecovered ? "Draft kept" : "",
-        !failedRun && turns.length && finishedElapsedSeconds ? `Answered in ${finishedElapsedSeconds} s` : "",
         lastRoute?.fallback ? "Fallback" : "",
         sourceReturnReceipt,
       ].filter(Boolean).join(" · ");
@@ -996,20 +1060,6 @@ export function AskPanel() {
     waiting: people.filter((p) => p.youOwe > 0),
     meetingsThisWeek,
   }), [needs.count, items.decision, people, meetingsThisWeek]);
-
-  // Window grammar: the status bar says what runs (with Stop), why an Ask
-  // was not answered, what the scope covers, and the receipts in warm words.
-  // The engine is named in the composer row (by name; no place word, no
-  // address: owner ruling 2026-10-25).
-  const statusItems: StatusBarItem[] = [
-    running ? { key: "asking", lamp: "info", text: `Writing the answer · ${runSeconds} s`, testId: "ask-status-asking" } : null,
-    !running && failedRun ? { key: "failed", text: failedRun.reason === "stopped" ? "Stopped · your question is kept" : "Not answered · your question is kept", testId: "ask-status-failed" } : null,
-    statusLine ? { key: "receipt", text: statusLine, testId: "ask-status-receipt" } : null,
-    savedCount && !running ? { key: "saved", lamp: "ok", text: savedCount === 1 ? "Saved as note" : `${savedCount} answers saved as notes`, testId: "ask-status-saved" } : null,
-    copyState === "copied" ? { key: "copy", lamp: "ok", text: "Copied", testId: "ask-status-copied" } : null,
-    copyState === "failed" ? { key: "copy", lamp: "fail", text: "Not copied", testId: "ask-status-copied" } : null,
-    !hasConversation && coverage ? { key: "scope", text: coverage, testId: "ask-status-scope" } : null,
-  ].filter(Boolean) as StatusBarItem[];
 
   const chooseEngine = () => openSurfaceOr("configure-runs-on", "/settings", "models");
 
@@ -1052,6 +1102,10 @@ export function AskPanel() {
       case "action":
       case "action_item": return { ...base, kind: "action", meta: row.state ? `Task · ${word(row.state)}` : "Task" };
       case "directory": return { ...base, kind: "directory", meta: "Drawer" };
+      // A kept ask the answer read: named as one, with the Ask drawing.
+      case "thread": return { ...base, kind: "thread", meta: "Earlier ask" };
+      // A calendar entry is the meeting it books (one row with the meeting).
+      case "calendar_event": return { ...base, kind: "meeting", meta: timed("Meeting", row.at) };
       case "pr":
       case "github": {
         const meta = [row.state ? word(row.state) : "", row.at ? humanTime(row.at) : ""].filter(Boolean).join(" · ");
@@ -1061,8 +1115,31 @@ export function AskPanel() {
     }
   };
 
+  // Window grammar: the status bar says what runs (with Stop), why an Ask
+  // was not answered, what the scope covers, and the receipts in warm words.
+  // The engine is named in the composer row (by name; no place word, no
+  // address: owner ruling 2026-10-25).
+
+  // The records said are the rows References shows (after the dedupe).
+  const newestTurnRefs = turns.at(-1)?.lookedAt;
+  const newestRefs = newestTurnRefs ? dedupeReferenceRows(newestTurnRefs.map(referenceRow)).length : 0;
+  const answered = !running && !failedRun && turns.length > 0
+    ? ["Answered", countWords(newestRefs, "record"), finishedElapsedSeconds ? `${finishedElapsedSeconds} s` : ""].filter(Boolean).join(" · ")
+    : "";
+  const statusItems: StatusBarItem[] = [
+    answered ? { key: "answered", lamp: "ok", text: answered, testId: "ask-status-answered" } : null,
+    running ? { key: "asking", lamp: "info", text: `Writing the answer · ${runSeconds} s`, testId: "ask-status-asking" } : null,
+    !running && failedRun ? { key: "failed", text: failedRun.reason === "stopped" ? "Stopped · your question is kept" : "Not answered · your question is kept", testId: "ask-status-failed" } : null,
+    statusLine ? { key: "receipt", text: statusLine, testId: "ask-status-receipt" } : null,
+    savedCount && !running ? { key: "saved", lamp: "ok", text: savedCount === 1 ? "Saved as note" : `${savedCount} answers saved as notes`, testId: "ask-status-saved" } : null,
+    copyState === "copied" ? { key: "copy", lamp: "ok", text: "Copied", testId: "ask-status-copied" } : null,
+    copyState === "failed" ? { key: "copy", lamp: "fail", text: "Not copied", testId: "ask-status-copied" } : null,
+    // The scope line stays whenever nothing else is said (a kept ask opening).
+    coverage && (!hasConversation || (!running && !failedRun && !answered)) ? { key: "scope", text: coverage, testId: "ask-status-scope" } : null,
+  ].filter(Boolean) as StatusBarItem[];
+
   const PENDING_ROW = "pending:";
-  const railRows = [
+  const railRows = dedupeRailRows([
     ...pendingAsks.map((row) => ({
       id: `${PENDING_ROW}${row.invocationId}`, title: row.question || "An ask with no question", at: row.startedAt,
       state: (row.run && row.run.state !== "running" ? "not_answered" : "writing") as "writing" | "not_answered",
@@ -1070,7 +1147,7 @@ export function AskPanel() {
     ...recent.rows
       .filter((row) => row.id !== forgotten?.threadId)
       .map((row) => ({ id: row.id, title: row.title?.trim() || "An ask with no question", at: row.last_turn_at || row.updated_at })),
-  ];
+  ]);
   const pickRail = (id: string) => {
     if (!id.startsWith(PENDING_ROW)) { void loadThread(id); return; }
     const row = pendingAsks.find((known) => `${PENDING_ROW}${known.invocationId}` === id);
@@ -1160,6 +1237,7 @@ export function AskPanel() {
             <AskEngineWord
               state={engine.state}
               name={engine.model}
+              down={engineDown || Boolean(engine.down)}
               title={engine.state === "set" ? (deskTools ? DESK_TOOLS_WORDS : "No desk tools") : undefined}
               onPress={engine.state === "failed" ? () => void refreshEngine("ask.answer") : chooseEngine}
             />
@@ -1211,7 +1289,7 @@ export function AskPanel() {
               {turns.map((turn) => (
                 <AskTurnDoc key={turn.key} question={turn.question} at={turn.askedAt}>
                   <div className="desk-ask-answer"><Material>{turn.answer}</Material></div>
-                  <AskReferences rows={turn.lookedAt.map(referenceRow)} />
+                  <AskReferences rows={dedupeReferenceRows(turn.lookedAt.map(referenceRow))} />
                   <UsedLines used={usedWithTasks(turn.used, tasks[turn.key])} testPrefix="ask" lookedAt={false} />
                   <AskVerbs>
                     {saved[turn.key] ? (

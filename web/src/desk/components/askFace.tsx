@@ -134,17 +134,22 @@ export function AskSendButton({ disabled, onClick, variant = "primary" }: {
 
 /** The engine: a dot and its name (`● Codex`); grey and `No engine` when
  *  none answers Ask. A press opens the engine choice. No host, no mono. */
-export function AskEngineWord({ state, name, title, onPress }: {
+export function AskEngineWord({ state, name, title, onPress, down = false }: {
   state: "set" | "none" | "unread" | "failed";
   name: string;
   title?: string;
   onPress?: () => void;
+  /** The engine did not answer (its last check, or this window's last
+   *  ask): a red dot and `Not answering`; the press opens Engines. */
+  down?: boolean;
 }) {
-  const words = state === "set" ? name : state === "failed" ? "Engine not read" : state === "unread" ? "Engine" : "No engine";
-  const tone = state === "set" ? "ok" : state === "failed" ? "warn" : "idle";
+  const isDown = state === "set" && down;
+  const words = isDown ? "Not answering" : state === "set" ? name : state === "failed" ? "Engine not read" : state === "unread" ? "Engine" : "No engine";
+  const tone = isDown ? "fail" : state === "set" ? "ok" : state === "failed" ? "warn" : "idle";
   return (
-    <Button dense variant="ghost" className="desk-ask-engine" data-testid="engine-line" data-state={state} title={title}
-      aria-label={state === "set" ? `Engine: ${name}` : words} onClick={onPress}>
+    <Button dense variant="ghost" className="desk-ask-engine" data-testid="engine-line" data-state={isDown ? "down" : state}
+      title={isDown ? `${name || "The engine"} is not answering. Open Engines` : title}
+      aria-label={isDown ? `Engine: ${name}, not answering` : state === "set" ? `Engine: ${name}` : words} onClick={onPress}>
       <DotWord tone={tone}>{words}</DotWord>
     </Button>
   );
