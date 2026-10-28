@@ -141,7 +141,7 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
         return _compose_overlay(result, service, request)
 
     @router.post("/generate")
-    async def generate(request: Request) -> dict[str, Any]:
+    def generate(request: Request) -> dict[str, Any]:
         registry = ops()
         result = asdict(registry.invoke(principal(request), "brief.generate", {}))
         result["period_label"] = _period_label(result)
@@ -151,11 +151,11 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
 
     # HS-132-08 -- brief triage is a durable owner verb, not React state.
     @router.get("/shelf")
-    async def read_shelf(request: Request) -> dict[str, str]:
+    def read_shelf(request: Request) -> dict[str, str]:
         return ops().invoke(principal(request), "brief.shelf.read", {})
 
     @router.post("/items/{item_id}/shelf")
-    async def write_shelf(
+    def write_shelf(
         request: Request,
         item_id: str,
         body: dict[str, Any] = Body(default_factory=dict),
@@ -171,7 +171,7 @@ def build_monday_brief_router(ctx: WebContext) -> APIRouter:
             raise HTTPException(status_code=422, detail=str(unknown_state)) from unknown_state
 
     @router.get("/{brief_id}")
-    async def read_by_id(request: Request, brief_id: str) -> dict[str, Any]:
+    def read_by_id(request: Request, brief_id: str) -> dict[str, Any]:
         """Read one stored brief without changing the latest-brief pointer.
 
         This is a plain read for the exact-id handoff from the Desk.  Keep it
