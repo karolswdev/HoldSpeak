@@ -29,9 +29,9 @@ describe("MeaningSearchRow", () => {
     render(<ul><MeaningSearchRow /></ul>);
     const row = await screen.findByTestId("concierge-meaning-search");
     expect(row.textContent).toContain("Meaning search");
-    expect(row.textContent).toContain("OFF");
+    expect(row.textContent).toContain("Off");
     expect(row.textContent).toContain("146 MB");
-    expect(row.textContent).toContain("DOWNLOAD");
+    expect(row.textContent).toContain("To download");
     expect(row.textContent).toContain("HUGGINGFACE.CO");
     expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Turn on");
     // A read makes no command request.
@@ -44,7 +44,7 @@ describe("MeaningSearchRow", () => {
     const row = await screen.findByTestId("concierge-meaning-search");
     expect(row.textContent).not.toContain("THIS DEVICE");
     expect(row.textContent).not.toContain("HUGGINGFACE.CO");
-    expect(row.textContent).not.toContain("DOWNLOAD");
+    expect(row.textContent).not.toContain("To download");
   });
 
   it("Turn on issues one POST and draws the state the server returns", async () => {
@@ -53,7 +53,7 @@ describe("MeaningSearchRow", () => {
       .mockResolvedValue(status({ state: "downloading", percent: 42 }));
     render(<ul><MeaningSearchRow /></ul>);
     fireEvent.click(await screen.findByTestId("meaning-search-verb"));
-    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("DOWNLOADING 42%"));
+    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("Downloading 42%"));
     expect(mocks.apiFetch.mock.calls[1]).toEqual(["/api/memory/meaning-search/turn-on", { method: "POST" }]);
     expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Turn off");
   });
@@ -64,9 +64,9 @@ describe("MeaningSearchRow", () => {
       .mockResolvedValue(status({ state: "off", egress: null }));
     render(<ul><MeaningSearchRow /></ul>);
     const chip = await screen.findByTestId("meaning-search-state");
-    expect(chip.textContent).toContain("INDEXING 32 OF 710");
+    expect(chip.textContent).toContain("Indexing 32 of 710");
     fireEvent.click(screen.getByTestId("meaning-search-verb"));
-    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("OFF"));
+    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("Off"));
     expect(mocks.apiFetch.mock.calls[1]).toEqual(["/api/memory/meaning-search/turn-off", { method: "POST" }]);
   });
 
@@ -83,19 +83,19 @@ describe("MeaningSearchRow", () => {
     expect((await screen.findByTestId("meaning-search-error")).textContent).toBe(
       "The file was not correct. Press Try again to download it again.",
     );
-    expect(screen.getByTestId("meaning-search-state").textContent).toContain("WRONG FILE");
+    expect(screen.getByTestId("meaning-search-state").textContent).toContain("Wrong file");
     expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Try again");
     fireEvent.click(screen.getByTestId("meaning-search-verb"));
-    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("DOWNLOADING 3%"));
+    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("Downloading 3%"));
     expect(mocks.apiFetch.mock.calls[1][0]).toBe("/api/memory/meaning-search/turn-on");
     expect(screen.queryByTestId("meaning-search-error")).toBeNull();
   });
 
   it.each([
-    [new ApiError(401, "missing_right: owner", { missing_right: "owner" }), "NOT PERMITTED", "Only the owner can do this."],
-    [new ApiError(403, "Owner access is required.", {}), "NOT PERMITTED", "Only the owner can do this."],
-    [new ApiError(500, "boom", {}), "HUB ERROR", "The hub did not do this (error 500)."],
-    [new TypeError("Failed to fetch"), "NO ANSWER", "The hub did not answer."],
+    [new ApiError(401, "missing_right: owner", { missing_right: "owner" }), "Not permitted", "Only the owner can do this."],
+    [new ApiError(403, "Owner access is required.", {}), "Not permitted", "Only the owner can do this."],
+    [new ApiError(500, "boom", {}), "Hub error", "The hub did not do this (error 500)."],
+    [new TypeError("Failed to fetch"), "No answer", "The hub did not answer."],
   ])("a refused or failed press is never silent: %s", async (error, token, words) => {
     mocks.apiFetch
       .mockResolvedValueOnce(status({}))
@@ -111,7 +111,7 @@ describe("MeaningSearchRow", () => {
     // The recovery action repeats the press that failed.
     expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Try again");
     fireEvent.click(screen.getByTestId("meaning-search-verb"));
-    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("DOWNLOADING 1%"));
+    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("Downloading 1%"));
     expect(mocks.apiFetch.mock.calls[2]).toEqual(["/api/memory/meaning-search/turn-on", { method: "POST" }]);
   });
 
@@ -121,7 +121,7 @@ describe("MeaningSearchRow", () => {
       .mockResolvedValueOnce(status({ state: "downloading", percent: 37 }))
       .mockResolvedValue(status({}));
     render(<ul><MeaningSearchRow /></ul>);
-    expect((await screen.findByTestId("meaning-search-state")).textContent).toContain("DOWNLOADING 37%");
+    expect((await screen.findByTestId("meaning-search-state")).textContent).toContain("Downloading 37%");
     expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Turn off");
     fireEvent.click(screen.getByTestId("meaning-search-verb"));
     await waitFor(() => expect(screen.getByTestId("meaning-search-state").getAttribute("data-state")).toBe("off"));
@@ -139,7 +139,7 @@ describe("MeaningSearchRow", () => {
     const alert = await screen.findByTestId("meaning-search-error");
     expect(alert.getAttribute("role")).toBe("alert");
     expect(alert.textContent).toBe("Only the owner can do this. Open this desk as the owner. Then press Try again.");
-    expect(screen.getByTestId("meaning-search-state").textContent).toContain("NOT PERMITTED");
+    expect(screen.getByTestId("meaning-search-state").textContent).toContain("Not permitted");
     expect(screen.getByTestId("meaning-search-verb").textContent).toBe("Try again");
   });
 
@@ -148,9 +148,9 @@ describe("MeaningSearchRow", () => {
       .mockImplementationOnce(async () => { throw new TypeError("Failed to fetch"); })
       .mockResolvedValue(status({}));
     render(<ul><MeaningSearchRow /></ul>);
-    expect((await screen.findByTestId("meaning-search-state")).textContent).toContain("NO ANSWER");
+    expect((await screen.findByTestId("meaning-search-state")).textContent).toContain("No answer");
     fireEvent.click(screen.getByTestId("meaning-search-verb"));
-    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("OFF"));
+    await waitFor(() => expect(screen.getByTestId("meaning-search-state").textContent).toContain("Off"));
     expect(mocks.apiFetch.mock.calls[1][0]).toBe("/api/memory/meaning-search");
   });
 });

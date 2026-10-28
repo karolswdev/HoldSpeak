@@ -534,7 +534,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 receipt = page.get_by_test_id("runson-receipt")
                 receipt.wait_for()
                 page.wait_for_function(
-                    "() => /^PATCHED .* · Meeting summaries → /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
+                    "() => /^Changed at .* · Meeting summaries → /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
                 )
                 page.get_by_test_id("runson-undo").wait_for()
                 assert "192.168.77.43" in page.get_by_test_id("runson-egress").inner_text()
@@ -559,7 +559,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                     found.get_by_role("button", name="Use it").click()
                 assert used.value.ok, used.value.text()
                 page.wait_for_function(
-                    "() => /^ADDED /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
+                    "() => /^Added at /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
                 )
                 found.wait_for(state="detached", timeout=15_000)
                 _shot(page, "c5-after-use-it", width)
@@ -581,7 +581,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 _shot(page, "c6-download-mid-bar", width)
                 ticks["hold"] = 0
                 page.wait_for_function(
-                    "() => /^DOWNLOADED /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')",
+                    "() => /^Downloaded at /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')",
                     timeout=10_000,
                 )
             else:
@@ -612,7 +612,7 @@ def test_runs_on_switchboard(tmp_path: Path, monkeypatch: Any, width: int) -> No
                 # Runs on's Undo is that action at both widths.
                 page.locator(".runson-foot").get_by_test_id("runson-undo").click()
                 page.wait_for_function(
-                    "() => /^UNDONE /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
+                    "() => /^Undone at /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
                 )
                 after = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
                 meetings = next(row for row in after["rows"] if row["id"] == "meetings")
@@ -702,7 +702,7 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
                 # Meetings patches its group and its summary capability.
                 # The receipt follows both writes, so admission sees the
                 # completed change rather than an intermediate group write.
-                page.wait_for_function(f"() => /^PATCHED /.test(({receipt})())")
+                page.wait_for_function(f"() => /^Changed at /.test(({receipt})())")
                 with page.expect_response(lambda r: r.url.endswith("/api/concierge/probe")) as refused:
                     pending[0].continue_()
                 answer = refused.value.json()
@@ -722,7 +722,7 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
             with page.expect_response(lambda r: r.url.endswith("/api/inference/assignments/set")) as patched:
                 lan_plate.drag_to(page.get_by_test_id(f"switchboard-job-{job}"))
             assert patched.value.ok, patched.value.text()
-            page.wait_for_function(f"() => /^PATCHED /.test(({receipt})())")
+            page.wait_for_function(f"() => /^Changed at /.test(({receipt})())")
             if case == "lost_update":
                 roster = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
                 row = next(r for r in roster["rows"] if r["id"] == job)
@@ -734,7 +734,7 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
                 }, token=TOKEN)
                 assert writer_b["revision"] == row["expected_revision"] + 1
             page.get_by_test_id("runson-undo").click()
-            page.wait_for_function(f"() => /^(UNDONE|Could not undo)/.test(({receipt})())")
+            page.wait_for_function(f"() => /^(Undone at|Could not undo)/.test(({receipt})())")
             after = _api(page, "GET", "/api/inference/assignments", token=TOKEN)
             said = page.get_by_test_id("runson-receipt").inner_text()
             if case == "lost_update":
@@ -750,7 +750,7 @@ def test_astra_review_real_producer(tmp_path: Path, monkeypatch: Any, case: str)
                 assert not current["has_override"], "Undo of first Meetings patch must remove its exact summary override"
                 meetings = next(r for r in after["rows"] if r["id"] == "meetings")
                 assert meetings["inherited_from"] == "global", meetings
-                assert said.upper().startswith("UNDONE"), said
+                assert said.startswith("Undone at"), said
             browser.close()
     finally:
         server.stop()
@@ -812,7 +812,7 @@ class TestTheRunsOnFooter(FitRig):
                 undo = page.locator(".runson-foot").get_by_test_id("runson-undo")
                 undo.wait_for(timeout=T)
                 page.wait_for_function(
-                    "() => /^PATCHED /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '') && !document.querySelector('[data-testid=runson-undo]')?.disabled"
+                    "() => /^Changed at /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '') && !document.querySelector('[data-testid=runson-undo]')?.disabled"
                 )
                 _settle(page)
                 rb, cb = receipt.evaluate(BOX_JS), undo.evaluate(BOX_JS)
@@ -832,7 +832,7 @@ class TestTheRunsOnFooter(FitRig):
                 for line in ink:
                     if same_row(line):
                         assert line["r"] <= cb["x"] + 0.5, self.facts["B27"]
-                assert text.upper().startswith("PATCHED "), text
+                assert text.startswith("Changed at "), text
                 footer = page.locator(".kit-statusbar.runson-foot").first
                 self._shot(page, "B27-runson-footer", width, footer)
                 self._shot(page, "B27-runson", width)
@@ -843,7 +843,7 @@ class TestTheRunsOnFooter(FitRig):
                     _whole_hit(undo)
                     undo.click()
                     page.wait_for_function(
-                        "() => /^UNDONE /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
+                        "() => /^Undone at /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')"
                     )
                     after_undo = _api(page, "GET", "/api/inference/assignments", token=FIT_TOKEN)
                     restored = next(row for row in after_undo["rows"] if row["id"] == "global")
@@ -906,7 +906,7 @@ def test_runs_on_find_on_lan_found_then_use_it_real_scanner(
             found_text = found.inner_text()
             assert expected_model in found_text, found_text
             assert "192.168.77.44:8080" in found_text, found_text
-            assert page.get_by_test_id("runson-receipt").inner_text() == "FOUND ON LAN"
+            assert page.get_by_test_id("runson-receipt").inner_text() == "Found on the LAN"
             assert expected_url in probe_urls
             assert discover_urls == [expected_url]
             assert all(url.startswith("http://192.168.77.") and url.endswith(":8080/v1") for url in probe_urls)
@@ -926,7 +926,7 @@ def test_runs_on_find_on_lan_found_then_use_it_real_scanner(
             assert request_body["draft"]["model"] == expected_model
             assert request_body["draft"]["profile_id"] == expected_profile_id
             page.wait_for_function(
-                "() => /^ADDED /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')",
+                "() => /^Added at /.test(document.querySelector('[data-testid=runson-receipt]')?.textContent || '')",
                 timeout=30_000,
             )
             found.wait_for(state="detached", timeout=30_000)

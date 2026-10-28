@@ -128,7 +128,7 @@ export function MicButton({
   const [audioRetained, setAudioRetained] = useState(false);
   const [proposal, setProposal] = useState<VoiceProposal | null>(null);
   const [classifying, setClassifying] = useState(false);
-  const [receipt, setReceipt] = useState<{ text: string; scope: string } | null>(null);
+  const [receipt, setReceipt] = useState<{ text: string; scope: string; tone?: "ok" | "fail" } | null>(null);
   const [level, setLevel] = useState(0);
   const sessionRef = useRef<StreamSession | null>(null);
   const firedRef = useRef<VoiceCommandFired | null>(null);
@@ -299,9 +299,9 @@ export function MicButton({
     try {
       if (onProposalConfirm) await onProposalConfirm(armed);
       else onText(armed.transcript);
-      setReceipt({ text: "DONE", scope: armed.requiresLLM ? "cloud" : "local" });
+      setReceipt({ text: "Done", scope: armed.requiresLLM ? "cloud" : "local", tone: "ok" });
     } catch {
-      setReceipt({ text: "ACTION FAILED", scope: "local" });
+      setReceipt({ text: "Could not do this · Try again", scope: "local", tone: "fail" });
     }
   };
 

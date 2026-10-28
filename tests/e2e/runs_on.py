@@ -89,7 +89,7 @@ def patch(page: Any, job: str, engine_key: str, *, fallback: bool = False) -> di
             if fallback:
                 page.keyboard.up("Alt")
     assert written.value.ok, written.value.text()
-    wait_receipt(page, r"^PATCHED ")
+    wait_receipt(page, r"^Changed at ")
     return written.value.request.post_data_json
 
 

@@ -107,7 +107,7 @@ describe("FlightChip and FlightVerbs (K4a, K4b)", () => {
   it("in flight: the chip and Session, which opens the agent's session", () => {
     const flight = fromWireFlight(wire());
     render(<><FlightChip flight={flight} /><FlightVerbs flight={flight} title="Write the rollback runbook" /></>);
-    expect(screen.getByTestId("flight-chip").textContent).toContain("CLAUDE CODE · WAITING");
+    expect(screen.getByTestId("flight-chip").textContent).toContain("Claude Code · Waiting");
     fireEvent.click(screen.getByRole("button", { name: "Open session: Write the rollback runbook" }));
     expect(openCoderSession).toHaveBeenCalledWith("claude:s1");
     expect(screen.queryByText("GITHUB.COM")).toBeNull();

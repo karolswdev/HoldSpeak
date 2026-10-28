@@ -40,7 +40,7 @@ describe("DeskModule (HS-112-03)", () => {
     await user.click(screen.getByRole("button", { name: "Reset the desk?" }));
     expect(resetDesk).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole("status")).toHaveTextContent(
-      "CLEARED 7 · ADDED 8",
+      "Cleared 7 · Added 8",
     );
   });
 

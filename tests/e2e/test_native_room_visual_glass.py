@@ -277,9 +277,9 @@ def test_room_files_before_compact_sources_and_real_note_return(
             _api(page, "POST", f"/api/projects/{PROJECT_A}/room/read", {}, token=TOKEN)
             page.wait_for_function("() => !!window.__roomVisualResourceHold?.release")
             assert page.evaluate("window.__roomVisualResourceHold.serverRead")
-            chip = files.locator(".surface-section-head .surface-state-chip[aria-label='READING FILES · LAST READ']")
+            chip = files.locator(".surface-section-head [role=status][aria-label='Reading files · Last read']")
             expect(chip).to_be_visible()
-            assert files.locator(":scope > .surface-state-chip").count() == 0
+            assert files.locator("[role=status][aria-label^='Reading files']").count() == 1
             held_refresh = _files_geometry(room)
             _same_files_geometry(before_refresh, held_refresh)
             page.screenshot(path=str(shots / f"room-files-refresh-held-{width}.png"))

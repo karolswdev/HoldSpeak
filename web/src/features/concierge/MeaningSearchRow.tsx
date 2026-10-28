@@ -1,6 +1,6 @@
 // Meaning search: one row in THE SET. OFF / DOWNLOADING n% / INDEXING n of m / ON,
 // and one verb (Turn on / Turn off). Composes the species THE SET already
-// uses: SurfaceLedgerRow, StateChip, EgressChip, the library Button.
+// uses: SurfaceLedgerRow, DotWord, EgressChip, the library Button.
 // Server truth: GET /api/memory/meaning-search (MeaningSearchService.status).
 //
 // A failure is never silent. A refused press, a 4xx or 5xx answer, no answer,
@@ -9,7 +9,8 @@
 // wraps inside the row, and the verb "Try again".
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SurfaceLedgerRow, StateChip, EgressChip } from "../../desk/surface";
+import { SurfaceLedgerRow, DotWord, EgressChip } from "../../desk/surface";
+import { stateWords } from "../../desk/surface/objects/NeedsRow";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch } from "../../lib/api";
 import { GROUP_GLYPHS, humanSize } from "./useConciergeController";
@@ -72,13 +73,12 @@ export function requestFailure(error: unknown, retry: Action): MeaningSearchFail
   };
 }
 
+/** W6-J words: the state is a dot and a word in sentence case. */
 export function meaningSearchChip(status: MeaningSearchStatus) {
-  if (status.state === "on") return <StateChip state="success" label="ON" icon="●" />;
-  if (status.state === "downloading")
-    return <StateChip state="working" label={`DOWNLOADING ${status.percent}%`} icon="○" />;
-  if (status.state === "indexing")
-    return <StateChip state="working" label={`INDEXING ${status.indexed} OF ${status.total}`} icon="○" />;
-  return <StateChip state="idle" label="OFF" />;
+  if (status.state === "on") return <DotWord tone="ok">On</DotWord>;
+  if (status.state === "downloading") return <DotWord tone="info">{`Downloading ${status.percent}%`}</DotWord>;
+  if (status.state === "indexing") return <DotWord tone="info">{`Indexing ${status.indexed} of ${status.total}`}</DotWord>;
+  return <DotWord tone="idle">Off</DotWord>;
 }
 
 function isStatus(value: unknown): value is MeaningSearchStatus {
@@ -162,14 +162,14 @@ export function MeaningSearchRow() {
             data-testid="meaning-search-state"
             data-state={failure ? "failed" : status!.state}
           >
-            {failure ? <StateChip state="failure" label={failure.token} /> : meaningSearchChip(status!)}
+            {failure ? <DotWord tone="fail">{stateWords(failure.token)}</DotWord> : meaningSearchChip(status!)}
           </span>
           {status ? (
             <span className="concierge-set-line2 concierge-meaning-line">
               {/* One short line at 393: the model name, or what the press downloads. */}
               {!leaves ? <span className="concierge-token">{status.model.label}</span> : null}
               {leaves && size ? <span className="concierge-token">{size}</span> : null}
-              {off && leaves ? <span className="concierge-token">DOWNLOAD</span> : null}
+              {off && leaves ? <span className="concierge-token">To download</span> : null}
               {leaves ? (
                 <EgressChip
                   label={status.model.source.toUpperCase()}

@@ -68,7 +68,7 @@ export const KEEP_CAPS = new Set(["PR", "CI", "AI", "ID", "OK", "LAN", "MCP", "A
  *  `LAN`), numbers, times and ids stay as they are (`OVERDUE · 23 DAYS` →
  *  `Overdue · 23 days`, `PR OPEN` → `PR open`, `PROPOSED · Standup` →
  *  `Proposed · Standup`). */
-export function stateWords(label: string): string {
+export function stateWords(label: string, keep: ReadonlySet<string> = KEEP_CAPS): string {
   return label
     .split(" · ")
     .map((part) => {
@@ -79,7 +79,7 @@ export function stateWords(label: string): string {
         const named = afterLink && !COMMON_AFTER_LINK.has(word);
         first = false;
         afterLink = LINK_WORDS.has(word);
-        if (!/^[A-Z][A-Z'’-]+$/.test(word) || KEEP_CAPS.has(word)) return word;
+        if (!/^[A-Z][A-Z'’-]+$/.test(word) || keep.has(word)) return word;
         // `WAITING ON PRIYA`: the word after a link word is a name; it keeps
         // its capital (`Waiting on Priya`, `Waiting on your review`).
         return lead || named ? word.charAt(0) + word.slice(1).toLowerCase() : word.toLowerCase();

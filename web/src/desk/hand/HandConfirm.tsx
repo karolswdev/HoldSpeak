@@ -6,7 +6,7 @@
  *  the hub's preview (`POST /api/agent/hand/preview`, no side effect); Brief ▸
  *  unfolds the same brief text the launch sheet shows, read only; Hand calls
  *  `POST /api/agent/hand` and the line then reads the receipt the sheet reads
- *  (`LAUNCHED · BRIEF SENT`, pending, or not sent with Send again).
+ *  (`Launched · Brief sent`, pending, or not sent with Send again).
  *
  *  Nothing leaves the machine before Hand is pressed, except a Room issue's
  *  tracker read by the preview (its EgressChip and READ / NOT READ, as the
@@ -278,16 +278,10 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
         </span>
       ) : null}
       {delivery ? (
-        delivery.title ? (
-          // W6-H words: a brief not sent reads as a dot + words, sans.
-          <span role="status" data-testid="hand-confirm-receipt" title={delivery.title}>
-            <DotWord tone="fail">{delivery.label}</DotWord>
-          </span>
-        ) : (
-          <span className="surface-token" data-tone={delivery.tone} role="status" data-testid="hand-confirm-receipt">
-            {delivery.label}
-          </span>
-        )
+        // W6-H / W6-J words: the delivery reads as a dot + words, sans.
+        <span role="status" data-testid="hand-confirm-receipt" title={delivery.title}>
+          <DotWord tone={delivery.tone === "danger" ? "fail" : delivery.tone === "warning" ? "warn" : delivery.tone === "ok" ? "ok" : "info"}>{delivery.label}</DotWord>
+        </span>
       ) : launchError ? (
         <span className="surface-token" data-tone="danger" role="alert" data-testid="hand-confirm-launch-refused">
           NOT LAUNCHED · {refusalToken(launchError, agent)}

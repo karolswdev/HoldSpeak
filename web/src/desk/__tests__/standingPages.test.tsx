@@ -1,7 +1,7 @@
 // Memory on the Desk (canvas section 2, option B, ratified 2026-10-05): the
 // StandingPage species and the standing pages of one scope. Fresh: the
 // question, the numbered sentences with refs that open, BUILT. Stale: the
-// warn border and `STALE · N NEW SOURCES`. A withheld sentence is simply
+// warn border and `Stale · N new sources`. A withheld sentence is simply
 // not drawn: no gap, no counter, no marker. No page: the section is absent.
 // No verb rewrites a page.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
@@ -60,18 +60,18 @@ describe("StandingPage", () => {
     expect(screen.getAllByRole("button").map((b) => b.textContent)).toEqual(["Decision 10-01", "Meeting 10-01 · 14:25"]);
   });
 
-  it("stale: the warn border and STALE · 3 NEW SOURCES", () => {
+  it("stale: the warn border and Stale · 3 new sources", () => {
     render(<StandingPage title="What changed this week" sentences={CHANGED.sentences} built="BUILT MON 08:02"
       stale newSources={3} onOpenRef={() => {}} />);
     expect(screen.getByTestId("standing-page").hasAttribute("data-stale")).toBe(true);
-    expect(screen.getByTestId("standing-page-stale").textContent).toContain("STALE · 3 NEW SOURCES");
+    expect(screen.getByTestId("standing-page-stale").textContent).toContain("Stale · 3 new sources");
   });
 
   it("stale with no source count: STALE alone, never a counter of zero", () => {
     render(<StandingPage title="What changed this week" sentences={CHANGED.sentences} built="BUILT 08:02"
       stale newSources={0} onOpenRef={() => {}} />);
     const chip = screen.getByTestId("standing-page-stale").textContent ?? "";
-    expect(chip).toContain("STALE");
+    expect(chip).toContain("Stale");
     expect(chip).not.toMatch(/\b0\b/);
   });
 
@@ -87,7 +87,7 @@ describe("StandingPagesSection", () => {
     expect(screen.queryByRole("heading", { level: 3 })).toBeNull();
     expect(screen.getAllByRole("heading", { level: 4 }).map((node) => node.textContent)).toEqual(["What did we decide", "What changed this week"]);
     expect(screen.getByTestId("standing-pages-model")).toHaveTextContent("Written by qwen3.8-27b");
-    expect(screen.getByTestId("standing-page-stale")).toHaveTextContent("STALE · 3 NEW SOURCES");
+    expect(screen.getByTestId("standing-page-stale")).toHaveTextContent("Stale · 3 new sources");
   });
   it("draws the scope's pages under Standing pages · N with the engine token", () => {
     render(<StandingPagesSection pages={[DECIDED, CHANGED]} now={NOW} onOpenRef={() => {}} />);

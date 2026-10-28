@@ -311,7 +311,7 @@ describe("Runs on — the Meaning search row sits in the window", () => {
     await waitFor(() => expect(within(row).getByTestId("meaning-search-state").getAttribute("data-state")).toBe("off"));
     expect(row.textContent).toContain("Meaning search");
     expect(row.textContent).toContain("HUGGINGFACE.CO");
-    expect(row.textContent).toContain("DOWNLOAD");
+    expect(row.textContent).toContain("To download");
     expect(within(row).getByTestId("meaning-search-verb").textContent).toBe("Turn on");
     expect(document.querySelectorAll("[role='dialog']")).toHaveLength(0);
   });
@@ -347,8 +347,8 @@ describe("Runs on — a NOT_SUPPORTED plate reads NOT SUPPORTED YET", () => {
     ];
     await open();
     const plate = await screen.findByTestId("switchboard-engine-cloud-anthropic");
-    expect(plate.textContent).toContain("NOT SUPPORTED YET");
-    expect(plate.textContent).not.toContain("READY");
+    expect(plate.textContent).toContain("Not supported yet");
+    expect(plate.textContent).not.toContain("Ready");
     expect(plate.querySelectorAll("button")).toHaveLength(0);
     expect(screen.getByTestId("switchboard-lamp-cloud-anthropic").getAttribute("data-lamp")).toBe("broken");
     fireEvent.click(screen.getByTestId("switchboard-job-thoughts_notes"));
@@ -375,7 +375,7 @@ describe("Runs on — a stranger connects an engine and the face keeps his choic
     fireEvent.click(screen.getByTestId(`switchboard-job-${job}`));
     fireEvent.keyDown(screen.getByTestId(`switchboard-engine-${KEY}`), { key: "Enter" });
     await waitFor(() => expect(hub.calls.filter((c) => c.path === "/api/inference/assignments/set").length).toBe(before + 1));
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^PATCHED /));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Changed at /));
     return hub.calls.filter((c) => c.path === "/api/inference/assignments/set").at(-1)!.body as Record<string, unknown>;
   }
 
@@ -421,7 +421,7 @@ describe("Runs on — a stranger connects an engine and the face keeps his choic
 
     // Use: the engine joins the column, with no wire and no assignment.
     fireEvent.click(screen.getByTestId("concierge-add-use"));
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED /));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Added at /));
     await screen.findByTestId(`switchboard-engine-${KEY}`);
     expect(screen.queryAllByTestId("switchboard-wire").filter((w) => w.getAttribute("data-engine") === KEY)).toHaveLength(0);
     expect(hub.calls.some((c) => c.path === "/api/inference/assignments/set")).toBe(false);
@@ -439,16 +439,16 @@ describe("Runs on — a stranger connects an engine and the face keeps his choic
 
     // Undo, Undo: the Default, then Meetings and its summary row back to inheritance.
     fireEvent.click(screen.getByTestId("runson-undo"));
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .*Default engine/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Undone at .*Default engine/));
     fireEvent.click(screen.getByTestId("runson-undo"));
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .*Meeting summaries$/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Undone at .*Meeting summaries$/));
     const summaryTask = hub.roster().task_overrides.find((t) => t.id === SUMMARY)!;
     expect(summaryTask.has_override).toBe(false);
 
     // Back ON over the tombstone: no CHANGED ELSEWHERE.
     await patchOnto("meetings");
     await waitFor(() => expect(hub.summaryAssignment()).toMatchObject({ status: "assigned", profileId: KEY }));
-    expect(screen.getByTestId("runson-receipt").textContent).not.toContain("CHANGED ELSEWHERE");
+    expect(screen.getByTestId("runson-receipt").textContent?.toLowerCase()).not.toContain("changed elsewhere");
   });
 });
 
@@ -524,7 +524,7 @@ describe("Runs on — the engine tells the truth (recorded hub)", () => {
   const ENGINE = "http://127.0.0.1:8099/v1";
   const KEY = "engine-127-0-0-1-8099-stub-qwen";
 
-  it("Check names TOOLS; Add keeps the window (ADDED); the Default patch says PATCHED; Agents reads LIMITED with WITHOUT AGENTS", async () => {
+  it("Check names TOOLS; Add keeps the window (Added at); the Default patch says Changed at; Agents reads LIMITED with WITHOUT AGENTS", async () => {
     // replaces: tests/e2e/test_philo15_10_engine_truth_glass.py::TestEngineTruth::test_ready_means_ready_and_every_press_leaves_a_receipt
     // (the hub half is tests/integration/test_desk_runs_on_hub.py::test_ready_means_ready_and_a_default_engine_is_limited_where_it_serves_part,
     // which records these answers. The receipt-under-Undo pixel leg is geometry: it stays in test_philo15_12_ugly_glass.py B27.)
@@ -543,13 +543,13 @@ describe("Runs on — the engine tells the truth (recorded hub)", () => {
     expect((await screen.findByTestId("concierge-add-tools")).textContent).toBe("TOOLS");
 
     fireEvent.click(screen.getByTestId("concierge-add-use"));
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED .* · stub-qwen · 127\.0\.0\.1:8099$/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Added at .* · stub-qwen · 127\.0\.0\.1:8099$/));
     await screen.findByTestId(`switchboard-engine-${KEY}`);
     expect(screen.getAllByTestId("runson-root")).toHaveLength(1);
 
     fireEvent.click(screen.getByTestId("switchboard-job-default"));
     fireEvent.keyDown(screen.getByTestId(`switchboard-engine-${KEY}`), { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^PATCHED /));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Changed at /));
     const set = rec.calls.filter((c) => c.path === "/api/inference/assignments/set");
     expect(set).toHaveLength(1);
     expect((set[0].body as { scope: unknown }).scope).toEqual({ kind: "global" });
@@ -648,9 +648,9 @@ describe("Runs on — Anthropic is a service, never a NOT SUPPORTED YET dead end
     const rec = new RecordedHub("anthropic", "0-open");
     await openRecorded(rec);
     const plate = await screen.findByTestId("switchboard-engine-cloud-anthropic");
-    expect(plate.textContent).toContain("NO KEY");
-    expect(plate.textContent).not.toContain("NOT SUPPORTED");
-    expect(plate.textContent).not.toContain("READY");
+    expect(plate.textContent).toContain("No key");
+    expect(plate.textContent).not.toContain("Not supported");
+    expect(plate.textContent).not.toContain("Ready");
     expect(rec.calls.filter((c) => c.method !== "GET")).toEqual([]);
     expect(rec.misses).toEqual([]);
   });

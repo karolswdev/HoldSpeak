@@ -188,11 +188,11 @@ describe("active Room filed Note", () => {
     expect(wire.openRef).not.toHaveBeenCalled();
   });
 
-  it("keeps prior material labeled LAST READ when resource membership is not read", () => {
+  it("keeps prior material labeled Last read when resource membership is not read", () => {
     mount({ resourcesState: "failed" });
     fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
     expect(screen.getByText("Files not read")).toBeInTheDocument();
-    expect(screen.getByText("LAST READ")).toBeInTheDocument();
+    expect(screen.getByText("Last read")).toBeInTheDocument();
     expect(screen.getByTestId("room-files-open")).toBeDisabled();
   });
 
@@ -209,8 +209,8 @@ describe("active Room filed Note", () => {
       request={null} onRequestHandled={mounted.onRequestHandled} />);
 
     const section = screen.getByTestId("room-files");
-    expect(within(section.querySelector("header")!).getByRole("status", { name: "READING FILES · LAST READ" })).toBeVisible();
-    expect(section.querySelectorAll(":scope > .surface-state-chip")).toHaveLength(0);
+    expect(within(section.querySelector("header")!).getByRole("status", { name: "Reading files · Last read" })).toBeVisible();
+    expect(section.querySelectorAll("[role=status][aria-label^='Reading files']")).toHaveLength(1);
     expect(within(section).getByRole("row", { name: /API boundary/i })).toBe(selectedRow);
     expect(selectedRow).toHaveAttribute("aria-selected", "true");
     expect(screen.getByTestId("room-files-open")).toBeDisabled();

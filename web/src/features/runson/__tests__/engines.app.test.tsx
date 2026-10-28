@@ -108,7 +108,7 @@ describe("Engines — Found on this Mac (Betterment E2)", () => {
     expect(within(engine).getByTestId("runson-engine-state-agent-claude").textContent).toBe("Ready");
     expect(within(status()).getByText("Anthropic")).toBeTruthy();
     expect(engine.textContent).not.toContain("Not signed in");
-    expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED \d\d:\d\d · Claude Code$/);
+    expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Added at \d\d:\d\d · Claude Code$/);
   });
 
   it("with no agent CLI on this Mac the section is absent", async () => {
@@ -192,7 +192,7 @@ describe("Engines — an agent engine's Spend limit per run (Betterment E2)", ()
         label: "Claude Code", model: "default", spend_limit_usd: 0.5,
       }),
     ]);
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("SPEND LIMIT $0.50 PER RUN · Claude Code"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("Spend limit $0.50 per run · Claude Code"));
     const inspector = () => screen.getByTestId("runson-inspector-spend-agent-claude");
     await waitFor(() => expect(within(inspector()).getByRole("button", { name: "No limit" })).toBeTruthy());
     expect((within(inspector()).getByLabelText("Spend limit per run") as HTMLInputElement).value).toBe("0.50");
@@ -312,7 +312,7 @@ describe("Engines — the model picker (Betterment E3)", () => {
       expect.objectContaining({ profile_id: "engine-127-0-0-1-8099-gamma-3b", model: "gamma-3b", context_tokens: null, endpoint: STUB_URL }),
     ]);
     expect(within(row("beta-13b")).getByRole("button", { name: "Use" })).toBeTruthy();
-    expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED \d\d:\d\d · gamma-3b · 127\.0\.0\.1:8099$/);
+    expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Added at \d\d:\d\d · gamma-3b · 127\.0\.0\.1:8099$/);
     // Both are in Your engines (Betterment E5: one list at both widths).
     const board = screen.getByTestId("runson-engines");
     expect(await within(board).findByTestId("runson-engine-engine-127-0-0-1-8099-alpha-7b")).toBeTruthy();
@@ -420,7 +420,7 @@ describe("Engines — Add an engine, by kind (Betterment E4)", () => {
     // The draft the hub recorded for this Use, but for its request id.
     const { request_id: _id, ...recordedDraft } = orStep(CHOSEN).body!;
     expect(sent[1].json.draft).toMatchObject(recordedDraft);
-    expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED \d\d:\d\d · qwen\/qwen3\.5-35b-a3b · OPENROUTER\.AI$/);
+    expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Added at \d\d:\d\d · qwen\/qwen3\.5-35b-a3b · openrouter\.ai$/);
   });
 
   it("Anthropic is a working service tile, never a NOT SUPPORTED YET dead end", async () => {
@@ -527,7 +527,7 @@ describe("Engines — What runs where (Betterment E5)", () => {
       entries: [{ profile_id: "engine-stub", profile_revision: 1 }],
     }) });
     await waitFor(() => expect(within(whatRow("summaries")).getByTestId("runson-what-pick-summaries").textContent).not.toContain("Everything else"));
-    expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^SET \d\d:\d\d · Meeting summaries → stub fallback$/);
+    expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Set at \d\d:\d\d · Meeting summaries → stub fallback$/);
 
     // Answers → Claude Code: two presses.
     fireEvent.click(within(whatRow("answers")).getByTestId("runson-what-pick-answers"));

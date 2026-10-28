@@ -3,7 +3,7 @@
  *  A refused Cancel is named on the row (`Could not cancel · Nothing changed`,
  *  the reason in its hover title, Retry);
  *  a cancelled recording leaves a receipt line in the drawer
- *  (`CANCELLED · <meeting> · hh:mm`) that stays after the row is gone. Both
+ *  (`Cancelled · <meeting> · hh:mm`) that stays after the row is gone. Both
  *  read the real store: `cancelArmedSchedule`'s result and the hub's
  *  `scheduled_recording.cancelled` event (`scheduledRecordingSlice.ts`).
  */
@@ -49,7 +49,7 @@ useDesk.subscribe((state, prev) => {
   const before = prev.scheduledArming;
   if (now?.outcome === "cancelled" && before?.outcome !== "cancelled") {
     useArmingOutcome.setState({
-      receipt: `CANCELLED · ${now.title || "Scheduled recording"} · ${clock(new Date())}`,
+      receipt: `Cancelled · ${now.title || "Scheduled recording"} · ${clock(new Date())}`,
       refusal: null,
     });
   } else if (now && !now.outcome && (!before || before.scheduleId !== now.scheduleId)) {

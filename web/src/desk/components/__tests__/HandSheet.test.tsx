@@ -307,12 +307,12 @@ describe("the launch sheet follows the real answers (Astra #905)", () => {
       await screen.findByText("Ledger cutover sync");
       fireEvent.click(screen.getByTestId("hand-launch"));
       const receipt = await screen.findByTestId("hand-launch-receipt");
-      expect(receipt.textContent).toBe("LAUNCHED · BRIEF PENDING");
+      expect(receipt.textContent).toBe("Launched · Brief pending");
       expect(useAgentHand.getState().origin).not.toBeNull();
       expect(screen.queryByTestId("hand-launch")).toBeNull();
       await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
       expect(calls.some((c) => c.url.endsWith(`/api/agent/launches/${REAL_PENDING.launch_id}`))).toBe(true);
-      expect(screen.getByTestId("hand-launch-receipt").textContent).toBe("LAUNCHED · BRIEF PENDING");
+      expect(screen.getByTestId("hand-launch-receipt").textContent).toBe("Launched · Brief pending");
       state = "sent";
       await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
       // Betterment AG4: the brief is in: the sheet closes; Agents shows the agent.
@@ -423,9 +423,9 @@ describe("after Launch (Astra #905 round 2)", () => {
       openSheet();
       await screen.findByText("Ledger cutover sync");
       fireEvent.click(screen.getByTestId("hand-launch"));
-      expect((await screen.findByTestId("hand-launch-receipt")).textContent).toBe("LAUNCHED · BRIEF PENDING");
+      expect((await screen.findByTestId("hand-launch-receipt")).textContent).toBe("Launched · Brief pending");
       await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
-      await waitFor(() => expect(screen.getByTestId("hand-launch-receipt").textContent).toBe("LAUNCHED · BRIEF DELIVERING"));
+      await waitFor(() => expect(screen.getByTestId("hand-launch-receipt").textContent).toBe("Launched · Sending the brief"));
       expect(screen.queryByTestId("hand-send-again")).toBeNull();
       const reads = calls.filter((c) => c.url.includes("/api/agent/launches/")).length;
       await act(async () => { await vi.advanceTimersByTimeAsync(2100); });

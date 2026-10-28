@@ -80,7 +80,9 @@ export interface JobResult {
 
 export interface Receipt {
   text: string;
-  tone?: "danger";
+  /** W6-J words: "working" while a search runs (an info dot); a done
+   *  receipt draws an ok dot, a failure the fail dot. */
+  tone?: "danger" | "working";
   /** W6-G words: the raw reason of a failure, for the hover title only. */
   title?: string;
 }
@@ -355,7 +357,7 @@ export function useRunsOn(scope?: string) {
             setDetection((prev) => (prev ? { ...prev, summaryAssignment: answer.summaryAssignment } : prev));
           }
           if (answer.state === "READY") return { produced: answer.summaryAssignment?.assignmentRevision ?? 0 };
-          return { refused: answer.state === "CONFLICT" ? "CHANGED ELSEWHERE" : "NOT SAVED" };
+          return { refused: answer.state === "CONFLICT" ? "changed elsewhere" : "not saved" };
         }
         if (expected < 1) return { produced: 0 };
         const cleared = await clearChain({
@@ -366,7 +368,7 @@ export function useRunsOn(scope?: string) {
         void loadDetection();
         return { produced: Number(cleared.revision ?? 0) };
       } catch (err) {
-        return { refused: isConflict(err) ? "CHANGED ELSEWHERE" : "NOT SAVED" };
+        return { refused: isConflict(err) ? "changed elsewhere" : "not saved" };
       }
     },
     [loadDetection],
@@ -435,7 +437,7 @@ export function useRunsOn(scope?: string) {
         if (!mounted.current) return;
         setUndoStack((stack) => [...stack, { job: row.id, scope: row.scope, capabilityId: capability, entries: before, produced }]);
         const engine = candidate ? engines.find((e) => e.profileId === candidate.profileId) : undefined;
-        setReceipt({ text: `SET ${clock()} · ${row.name} → ${candidate ? engine?.name || candidate.label : "Everything else"}` });
+        setReceipt({ text: `Set at ${clock()} · ${row.name} → ${candidate ? engine?.name || candidate.label : "Everything else"}` });
         if (candidate) {
           setEgress(engine ? { label: hostLabel(engine), scope: enginePlace(engine).place === "cloud" ? "cloud" : "local" } : null);
         }
@@ -533,7 +535,7 @@ export function useRunsOn(scope?: string) {
           produced: Number(written.revision ?? 0),
         };
         const label = jobName(job, row);
-        let text = `PATCHED ${clock()} · ${label} → ${engine.name}${asFallback ? " · FALLBACK" : ""}`;
+        let text = `Changed at ${clock()} · ${label} → ${engine.name}${asFallback ? " · Fallback" : ""}`;
         if (job === MEETINGS_JOB) {
           const before = det?.summaryAssignment ?? null;
           const first = entries[0];
@@ -541,7 +543,7 @@ export function useRunsOn(scope?: string) {
             first ? { profileId: first.profile_id, profileRevision: first.profile_revision } : null,
             before?.assignmentRevision ?? 0,
           );
-          if ("refused" in answer) text += ` · SUMMARIES ${answer.refused}`;
+          if ("refused" in answer) text += ` · Summaries ${answer.refused}`;
           else
             step.summary = {
               own: summaryOwn,
@@ -595,7 +597,7 @@ export function useRunsOn(scope?: string) {
         const cleared = await clearChain({ scope: step.scope ?? scopeFor(step.job), capabilityId: capability, expectedRevision: step.produced });
         restored = Number(cleared.revision ?? 0);
       }
-      let text = `UNDONE ${clock()} · ${label}`;
+      let text = `Undone at ${clock()} · ${label}`;
       let tone: Receipt["tone"];
       let summaryRestored: number | null = null;
       if (step.summary) {
@@ -608,7 +610,7 @@ export function useRunsOn(scope?: string) {
           step.summary.produced,
         );
         if ("refused" in answer) {
-          text += ` · SUMMARIES ${answer.refused}`;
+          text += ` · Summaries ${answer.refused}`;
           tone = "danger";
         } else {
           summaryRestored = answer.produced;
@@ -813,12 +815,12 @@ export function useRunsOn(scope?: string) {
                 return next;
               });
               if (acquisition.state === "ready") {
-                setReceipt({ text: `DOWNLOADED ${clock()} · ${engine.name}` });
+                setReceipt({ text: `Downloaded at ${clock()} · ${engine.name}` });
               } else {
                 // V3: the failure and its reason stay on the plate.
                 const reason = downloadReason(acquisition.state, acquisition.error);
                 setFailedDownloads((prev) => ({ ...prev, [key]: reason }));
-                setReceipt({ text: `DOWNLOAD STOPPED · ${engine.name} · ${reason}`, tone: "danger" });
+                setReceipt({ text: `Download stopped · ${engine.name} · ${sentence(reason)}`, tone: "danger" });
               }
               // The repairs say which wire it mends; read both again.
               void loadDetection();
@@ -837,7 +839,7 @@ export function useRunsOn(scope?: string) {
         });
         const reason = codeToken(err);
         setFailedDownloads((prev) => ({ ...prev, [key]: reason }));
-        setReceipt({ text: `DOWNLOAD STOPPED · ${engine.name} · ${reason}`, tone: "danger" });
+        setReceipt({ text: `Download stopped · ${engine.name} · ${sentence(reason)}`, tone: "danger" });
       }
     },
     [engineByKey, loadDetection, loadRoster],
@@ -859,7 +861,7 @@ export function useRunsOn(scope?: string) {
             expectedProfileRevision: engines.find((e) => e.profileId === profileId)?.profileRevision ?? 0,
           });
           if (!mounted.current) return;
-          setReceipt({ text: `ADDED ${clock()} · ${engine.name}` });
+          setReceipt({ text: `Added at ${clock()} · ${engine.name}` });
           await Promise.all([loadDetection(), loadRoster()]);
         } catch (err) {
           setReceipt({ text: `Could not add ${engine.name} · Nothing changed · Try again`, tone: "danger", title: codeToken(err) });
@@ -882,7 +884,7 @@ export function useRunsOn(scope?: string) {
           }),
         );
         if (!mounted.current) return;
-        setReceipt({ text: `ADDED ${clock()} · ${engine.name}` });
+        setReceipt({ text: `Added at ${clock()} · ${engine.name}` });
         await Promise.all([loadDetection(), loadRoster()]);
       } catch (err) {
         setReceipt({ text: `Could not add ${engine.name} · Nothing changed · Try again`, tone: "danger", title: codeToken(err) });
@@ -935,7 +937,7 @@ export function useRunsOn(scope?: string) {
         if (!mounted.current) return;
         setSpendDraft(limit != null ? limit.toFixed(2) : "");
         setReceipt({
-          text: `${limit != null ? `SPEND LIMIT ${usd(limit)} PER RUN` : "NO SPEND LIMIT"} · ${engine.name}`,
+          text: `${limit != null ? `Spend limit ${usd(limit)} per run` : "No spend limit"} · ${engine.name}`,
         });
         await loadDetection();
       } catch (err) {
@@ -952,21 +954,21 @@ export function useRunsOn(scope?: string) {
   const findOnLan = useCallback(async () => {
     if (lanDiscovery === "CHECKING") return;
     setLanDiscovery("CHECKING");
-    setReceipt({ text: "SEARCHING LAN…" });
+    setReceipt({ text: "Searching the LAN", tone: "working" });
     try {
       const answer = await discoverLan();
       if (!mounted.current) return;
       setLanFound(answer.engines);
-      const suffix = answer.partial ? " · PARTIAL" : "";
+      const suffix = answer.partial ? " · Partial" : "";
       if (answer.unavailable) {
-        setReceipt({ text: "LAN DISCOVERY UNAVAILABLE", tone: "danger" });
+        setReceipt({ text: "LAN search not available", tone: "danger" });
       } else if (answer.engines.length) {
-        setReceipt({ text: `FOUND ON LAN${suffix}` });
+        setReceipt({ text: `Found on the LAN${suffix}` });
       } else {
-        setReceipt({ text: `NO ENGINE FOUND ON LAN${suffix}` });
+        setReceipt({ text: `No engine found on the LAN${suffix}` });
       }
     } catch (_error) {
-      if (mounted.current) setReceipt({ text: "LAN DISCOVERY FAILED", tone: "danger" });
+      if (mounted.current) setReceipt({ text: "LAN search failed", tone: "danger" });
     } finally {
       if (mounted.current) setLanDiscovery("IDLE");
     }
@@ -1060,7 +1062,7 @@ export function useRunsOn(scope?: string) {
         addKey,
       );
       if (!mounted.current) return;
-      setReceipt({ text: `ADDED ${clock()} · ${model} · ${endpointHostPort(url).toUpperCase()}` });
+      setReceipt({ text: `Added at ${clock()} · ${model} · ${endpointHostPort(url)}` });
       setAddUsed((used) => (used.includes(model) ? used : [...used, model]));
       await Promise.all([loadDetection(), loadRoster()]);
     } catch (err) {
