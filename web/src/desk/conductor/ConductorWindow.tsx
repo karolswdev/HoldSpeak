@@ -47,7 +47,7 @@ import {
   reviewWords,
   type ConductorMember,
 } from "./members";
-import { allowHelper, answerMember, answers, cancelQueuedHand, openMember, removeLaunch, resumeAll, stopMember, stops } from "./open";
+import { allowHelper, answerMember, answers, cancelQueuedHand, doneMember, openMember, removeLaunch, resumeAll, stopMember, stops } from "./open";
 import { StartAgent } from "./StartAgent";
 import { handRefOf, openHand } from "../agentHand";
 import { AgentRow as AgentRowFace, DeskAnswerLine } from "../agents/AgentRow";
@@ -465,6 +465,8 @@ function RowVerb({
   onCancel,
   removing = null,
   onRemove,
+  checking = null,
+  onDone,
 }: {
   member: ConductorMember;
   group: RowGroup;
@@ -474,6 +476,8 @@ function RowVerb({
   onCancel: () => void;
   removing?: string | null;
   onRemove?: () => void;
+  checking?: string | null;
+  onDone?: () => void;
 }) {
   if (group === "mac") return <ReadyVerb member={member} lead={false} />;
   if (group === "restart") {
@@ -496,6 +500,14 @@ function RowVerb({
   }
   return (
     <>
+      {group === "work" && member.live === "done" && member.launchId && onDone ? (
+        // W4 AGENT 3 (slice 3): he checked the work; the row moves to Ended today.
+        <Button dense variant="secondary" loading={checking === member.id} disabled={checking !== null}
+          onClick={onDone} data-testid="conductor-done">
+          <ToolGlyph kind="done" />
+          Done
+        </Button>
+      ) : null}
       {group === "ended" && member.launchId ? (
         // W4 AGENT 2 (slice 3): the hub keeps the record; the list lets it go.
         <Button dense variant="ghost" loading={removing === member.id} disabled={removing !== null}
@@ -617,6 +629,7 @@ export function ConductorWindow() {
   // plain. While Start an agent is open, its Start is the one primary.
   const [cancelling, setCancelling] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  const [checking, setChecking] = useState<string | null>(null);
   const cancelQueued = (m: ConductorMember) => {
     setCancelling(m.id);
     void cancelQueuedHand(m).finally(() => setCancelling(null));
@@ -769,7 +782,9 @@ export function ConductorWindow() {
     { key: "queued", text: countWords(queued, "waiting", "waiting") },
     { key: "mac", lamp: "warn" as const, text: fixable.length ? `${fixable.length} not connected` : null },
     { key: "restart", lamp: "warn" as const, text: countWords(stopped.length, "stopped by restart", "stopped by restart") },
-    { key: "ended", text: ended.length ? `${ended.length} stopped today` : null },
+    // W4 AGENT 3: a launch he checked (Done) is done, not stopped.
+    { key: "checked", lamp: "ok" as const, text: countWords(ended.filter((m) => m.flightState === "checked").length, "done today", "done today") },
+    { key: "ended", text: countWords(ended.filter((m) => m.flightState !== "checked").length, "stopped today", "stopped today") },
     { key: "own", text: ownMembers.length ? `${ownMembers.length} started by you` : null },
     !fleet && !loading && !failed.length ? { key: "fact", text: headFact(head, members) } : null,
     ...words.filter((w) => / OF /.test(w)).map((w) => ({ key: w, text: w.toLowerCase() })),
@@ -915,6 +930,11 @@ export function ConductorWindow() {
                 onRemove={() => {
                   setRemoving(selected.id);
                   void removeLaunch(selected).finally(() => setRemoving(null));
+                }}
+                checking={checking}
+                onDone={() => {
+                  setChecking(selected.id);
+                  void doneMember(selected).finally(() => setChecking(null));
                 }}
               />
             ) : null}

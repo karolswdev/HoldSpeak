@@ -293,6 +293,13 @@
   background: var(--lamp-ok);
 }
 .desk-next .is-lane .lw-result-said { font-size: 14px; line-height: 1.5; }
+/* W4 AGENT 3: the done card's head: the dot and word, its age quiet at the right. */
+.desk-next .is-lane .lw-result-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
+.desk-next .is-lane .lw-result-age { font: 12px / 1.3 var(--font-sans); color: var(--wb-muted); white-space: nowrap; }
+/* W4 AGENT 3: a run's counts (a dot and a word) and the done face's step fold. */
+.desk-next .is-lane .lw-step-result { margin-left: 4px; font: 12px / 1.3 var(--font-sans); }
+.desk-next .is-lane .lw-steps-fold { display: flex; align-items: center; gap: 8px; padding: 2px 0 4px; }
+.desk-next .is-lane .lw-steps-fold-cap { font: 600 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
 .desk-next .is-lane .lw-result-facts { font: 12px / 1.4 var(--font-sans); color: var(--wb-muted); }
 
 .desk-next .is-lane .lw-toolbar-end { display: inline-flex; align-items: center; gap: 6px; }

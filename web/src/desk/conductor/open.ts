@@ -12,6 +12,7 @@ import type { LaneControl, LaneWire, NotRead } from "../lane/laneWire";
 import { openAgentLane, openCoderSession } from "../shell";
 import type { ConductorMember } from "./members";
 import { useConductor } from "./store";
+import { useAgentFlights } from "../agentFlights";
 
 export function openMember(member: ConductorMember): void {
   if (member.role === "ready") {
@@ -130,6 +131,34 @@ export async function allowHelper(member: ConductorMember): Promise<boolean> {
   } finally {
     void useConductor.getState().readFlights();
   }
+}
+
+/** W4 AGENT 3 (slice 3, canvas direction A): Done: he checked the work of a
+ *  launch whose turn ended done. The hub closes the launch (`checked_at`):
+ *  it leaves Running for Ended today. Both reads follow. `null` when done;
+ *  else the refusal in plain words. */
+export async function checkLaunchDone(launchId: string): Promise<string | null> {
+  try {
+    await apiFetch(`/api/agent/launches/${encodeURIComponent(launchId)}/done`, { method: "POST", json: {} });
+    return null;
+  } catch (error) {
+    const payload = ((error as { payload?: Record<string, unknown> })?.payload ?? {}) as Record<string, unknown>;
+    const reason = String(payload.reason ?? payload.code ?? "") || "hub_unreachable";
+    return reason === "not_done" ? "it works again" : reason.replace(/_/g, " ");
+  } finally {
+    void useConductor.getState().readFlights();
+    void useAgentFlights.getState().load();
+  }
+}
+
+/** Done on an Agents row: a refusal lands on the member (the foot's receipt). */
+export async function doneMember(member: ConductorMember): Promise<boolean> {
+  if (!member.launchId) return false;
+  const refused = await checkLaunchDone(member.launchId);
+  if (refused) {
+    useConductor.getState().setStop(member.ref, { word: "NOT DONE", at: Date.now(), text: refused, tone: "fail" });
+  }
+  return !refused;
 }
 
 /** W4 AGENT 2 (slice 3): Remove an ended launch from the list. The hub keeps

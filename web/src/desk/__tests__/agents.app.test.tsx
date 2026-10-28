@@ -38,7 +38,7 @@ import { NeedRow } from "../needs/NeedsDrawer";
 import { ResultBlock, filesWords } from "../lane/ResultBlock";
 import type { LaneWire } from "../lane/laneWire";
 import type { NeedFace } from "../needs/needsFace";
-import { __resetConductor } from "../conductor/store";
+import { __resetConductor, useConductor } from "../conductor/store";
 import { useSteering } from "../steering";
 
 const QUESTION = "The runbook needs a rollback owner. Jordan or Avery?";
@@ -457,6 +457,116 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
     await waitFor(() => expect(screen.getByTestId("lane-terminal-gone").textContent).toBe("This agent's terminal is gone"));
     const steer = posted.find(([url]) => url.endsWith("/steer"));
     expect(steer?.[1]).toMatchObject({ text: "1", kind: "answer", wait_id: lane.wire.wait.wait_id });
+  });
+});
+
+/* ── W4 AGENT 3 (slice 3, canvas direction A): Done ──────────────────
+ * Recorded on a real hub by tests/integration/test_desk_agents_wire.py::
+ * test_done_checks_a_done_agent_and_moves_it_to_ended_today
+ * (fixtures/agents-ag0: done, done.refused, coders-sessions.checked). */
+describe("Done checks the work and the agent moves to Ended today (W4 AGENT 3)", () => {
+  const CHECKED = ag0<{ sessions: unknown[]; flights: Array<Record<string, unknown>>; history: Array<Record<string, unknown>> }>("coders-sessions.checked");
+  const DONE = ag0<{ checked_at: string }>("done");
+  const REFUSED = ag0("done.refused");
+  const LANE_DONE = ag0<{ launch: { session_key: string } }>("lane.done");
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(CHECKED.captured_at));
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+  });
+
+  function laneRoutes(sessions: unknown): Routes {
+    return {
+      "/api/agent/launches/launch_ag0_done/done": DONE.wire,
+      "/api/agent/launches/": LANE_DONE.wire,
+      "/api/coders/sessions": sessions,
+      "/api/inference/assignments": ASSIGNMENTS.wire,
+      "/api/gate/proposals": { proposals: [] },
+    };
+  }
+  async function openDoneLane(wire: { sessions: unknown[]; flights: Array<Record<string, unknown>> }) {
+    steering();
+    useAgentFlights.setState({
+      flights: wire.flights.map((f) => fromWireFlight(f as never)),
+      sessions: wire.sessions.map(fromWireSessionRow),
+      loaded: true,
+    });
+    render(<LaneWindow />);
+    await act(async () => {
+      await useLane.getState().open("launch_ag0_done", { sessionKey: LANE_DONE.wire.launch.session_key });
+    });
+  }
+
+  it("the done face leads with Done and its age; Done is the one primary with no PR, and a press posts the hub's done route", async () => {
+    serve(laneRoutes(AG0.wire));
+    await openDoneLane(AG0.wire as never);
+    const cap = await screen.findByTestId("lane-result-cap");
+    expect(cap.textContent).toBe("Done");
+    expect(screen.getByTestId("lane-result-age").textContent).toMatch(/ago$|^just now$/);
+    const done = screen.getByTestId("lane-done");
+    expect(done.className).toContain("btn--primary");
+    expect(screen.queryByTestId("lane-start-again")).toBeNull();
+    await act(async () => {
+      fireEvent.click(done);
+    });
+    expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag0_done/done", { method: "POST", json: {} });
+    expect(screen.queryByTestId("lane-done-refused")).toBeNull();
+  });
+
+  it("a refused Done says so on the verb, in words (the hub's 409 not_done)", async () => {
+    serve(laneRoutes(AG0.wire));
+    const answer = api.fetch.getMockImplementation()!;
+    api.fetch.mockImplementation(async (url: string, init?: unknown) => {
+      if (String(url).endsWith("/done")) throw new ApiError(409, "refused", REFUSED.wire);
+      return answer(url, init);
+    });
+    await openDoneLane(AG0.wire as never);
+    await act(async () => {
+      fireEvent.click(await screen.findByTestId("lane-done"));
+    });
+    expect((await screen.findByTestId("lane-done-refused")).textContent).toBe("Not done · it works again");
+    expect(screen.getByTestId("lane-done").textContent).toContain("Try Done again");
+  });
+
+  it("a checked launch reads Done · checked by you: the result stays, no Done, no Start again", async () => {
+    serve(laneRoutes(CHECKED.wire));
+    useConductor.setState({ history: CHECKED.wire.history.map((f) => fromWireFlight(f as never)), flightsState: "ok" });
+    await openDoneLane(CHECKED.wire as never);
+    await waitFor(() => expect(screen.getByTestId("lane-head").textContent).toBe("Done · checked by you"));
+    expect(screen.getByTestId("lane-result-cap").textContent).toBe("Done · checked by you");
+    expect(screen.queryByTestId("lane-done")).toBeNull();
+    expect(screen.queryByTestId("lane-start-again")).toBeNull();
+    expect(screen.queryByTestId("lane-turn-end")).toBeNull();
+  });
+
+  it("in Agents a done row offers Done; a checked one stands in Ended today with Remove, not in Running", async () => {
+    serve({ "/api/coders/sessions": AG0.wire, "/api/onboarding/agents": DETECT.wire,
+      "/api/agent/launches/launch_ag0_done/done": DONE.wire });
+    const { unmount } = render(<ConductorWindow />);
+    await findMember("launch:launch_ag0_done");
+    selectRow("launch:launch_ag0_done");
+    const press = screen.getByTestId("conductor-done");
+    await act(async () => {
+      fireEvent.click(press);
+    });
+    expect(api.fetch).toHaveBeenCalledWith("/api/agent/launches/launch_ag0_done/done", { method: "POST", json: {} });
+    unmount();
+
+    __resetConductor();
+    useAgentFlights.setState({ sessions: [], flights: [], loaded: false });
+    serve({ "/api/coders/sessions": CHECKED.wire, "/api/onboarding/agents": DETECT.wire });
+    render(<ConductorWindow />);
+    const row = await findMember("launch:launch_ag0_done");
+    expect(row.getAttribute("data-group")).toBe("ended");
+    expect(pillOf("launch:launch_ag0_done")).toBe("Done · checked by you");
+    expect(document.querySelectorAll("[data-object-id='launch:launch_ag0_done']")).toHaveLength(1);
+    expect(statusWords()).toContain("1 done today");
+    expect(statusWords()).not.toContain("stopped today");
+    selectRow("launch:launch_ag0_done");
+    expect(screen.getByTestId("conductor-remove")).toBeTruthy();
+    expect(screen.queryByTestId("conductor-hand-again")).toBeNull();
+    expect(screen.queryByTestId("conductor-done")).toBeNull();
   });
 });
 
