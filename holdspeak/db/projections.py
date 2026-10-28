@@ -712,22 +712,23 @@ class ProjectionRepository(BaseRepository):
             error = row["error"]
             result_summary = str(row["result_summary"] or "")
 
-            # Build a human title: SERVICE.METHOD -> readable
+            # Atlas pass 3 (defect 10): what it did, in sentence words
+            # (`Checked 2 rooms`), never the method in caps (`SWEEP 2 ROOMS`).
             title_map = {
-                "run_sweep": "SWEEP",
-                "project_list": "READ project_list",
-                "project_run_steward": "STEWARD RUN",
+                "run_sweep": "Checked for changes",
+                "project_list": "Read the project list",
+                "project_run_steward": "Ran the steward",
             }
-            title = title_map.get(method, f"{method}")
+            words = " ".join(method.replace("_", " ").split()).lower()
+            title = title_map.get(method, words[:1].upper() + words[1:])
             if service == "HeartbeatService" and method == "run_sweep":
-                title = "SWEEP"
                 # Extract entity count from result_summary if available
                 try:
                     import json as _json
                     rs = _json.loads(result_summary)
                     rooms = rs.get("rooms", 0)
                     if rooms:
-                        title = f"SWEEP {rooms} {'ROOM' if rooms == 1 else 'ROOMS'}"
+                        title = f"Checked {rooms} {'room' if rooms == 1 else 'rooms'}"
                 except Exception:
                     pass
 

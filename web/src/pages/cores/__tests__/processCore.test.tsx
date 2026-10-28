@@ -185,3 +185,26 @@ describe("W4 (the words): who and where a process ran", () => {
     expect(shownTarget({ kind: "connection.recheck", target: "connection:github" })).toBe("GitHub");
   });
 });
+
+describe("Processes names each run by what it did (atlas pass 3, defect 8)", () => {
+  it("shows the hub's label, and sentence words from the name when an older hub sends none", () => {
+    const done = (id: string, extra: Partial<ProcessRow>): ProcessRow => ({ ...row, operationId: id, correlationId: id,
+      latestEventType: "", state: "succeeded", target: "", ...extra });
+    useProcessWindow.setState({
+      sections: [{ id: "recently-ended", label: "Recently ended", rows: [
+        done("op_lan", { kind: "setup.lan.scan", label: "Checked the LAN" }),
+        done("op_old", { kind: "project.watch.pause" }),
+      ] }],
+      loading: false, inflight: false, error: "", started: true,
+    });
+    const { container } = render(<ProcessCore />);
+    const names = [...container.querySelectorAll("[data-testid=process-row] .object-list-name-word")].map((e) => e.textContent);
+    expect(names).toEqual(["Checked the LAN", "Project watch pause"]);
+    expect(container.textContent).not.toMatch(/Setup lan scan/);
+    // At 393 the fold line keeps the clock: each row says how much room
+    // Where and Started need, and For gives up the rest (an ellipsis).
+    const first = container.querySelector("[data-testid=process-row]") as HTMLElement;
+    expect(first.style.getPropertyValue("--process-facts")).toMatch(/^calc\(\d+ch \+ 24px\)$/);
+  });
+});
+

@@ -28,6 +28,19 @@
   animation: receipt-seat var(--duration-short) cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
+/* Atlas pass 3 (defect 16): a plain receipt says its failure as a sentence
+   in sans and sentence case (`Could not mark it seen · Try again`); the lamp
+   is a dot, as every state on the desk is. */
+.write-receipt.write-receipt-plain {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.write-receipt-plain .write-receipt-lamp {
+  border-radius: 50%;
+}
+
 .write-receipt-lamp {
   width: 6px;
   height: 6px;

@@ -12,7 +12,6 @@ import { openSurface } from "../../desk/shell";
 import { useOnDeskChanged } from "../../desk/useDeskChangedRefresh";
 import { SurfaceState } from "../../desk/surface/Surface";
 import { deSnake } from "../../desk/surface/format";
-import { receiptLabel } from "../../desk/surface/egress";
 import { ActionNotice } from "../../desk/surface/patterns/ActionNotice";
 import { StatusBar, ToolGlyph, countWords, type StatusBarItem } from "../../desk/surface/kit";
 import { ObjectList, type ObjectListRow, type ObjectListSort } from "../../desk/surface/objects/ObjectList";
@@ -62,6 +61,12 @@ function outcomeState(outcome: string): { label: string; tone: ObjectTone } {
       : /complet|final|done|sent|saved|ok|ran|success/.test(lower) ? "ok"
         : "info";
   return { label: lower ? lower.charAt(0).toUpperCase() + lower.slice(1) : "Done", tone };
+}
+
+/** A pipeline receipt's title in sentence case (`run_sweep` → `Run sweep`). */
+function sentenceWords(value: unknown): string {
+  const words = deSnake(value).replace(/\s+/g, " ");
+  return words ? words.charAt(0).toUpperCase() + words.slice(1) : "";
 }
 
 /** `Just now`, `4 min ago`, `16:22` today, `Oct 22` before. */
@@ -149,7 +154,9 @@ export function ActivityFinishedReceipts({ query, records = [] }: {
   useOnDeskChanged(() => void read(0, true));
 
   const visible = rows.filter((row) => !needle || [row.subject_label, row.title, row.summary, row.reason_code, row.outcome].join(" ").toLowerCase().includes(needle.toLowerCase()));
-  const titleOf = (row: DeskProjection) => row.source_kind === "pipeline_event" ? receiptLabel({ title: deSnake(row.title) }) : row.title;
+  // Atlas pass 3 (defect 10): the hub writes a receipt's words in sentence
+  // case (`Checked 2 rooms`); the row shows them so, never in caps.
+  const titleOf = (row: DeskProjection) => row.source_kind === "pipeline_event" ? sentenceWords(row.title) : row.title;
   const openReceipt = (row: DeskProjection) => {
     const door = receiptDoor(row);
     try {

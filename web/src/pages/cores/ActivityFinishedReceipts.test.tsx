@@ -18,7 +18,7 @@ function wire() { return structuredClone(recorded.wire); }
 // words and its subject; a press selects it, and the selection's Open
 // receipt sits in the status bar (Enter or a double press opens).
 const names = () => [...document.querySelectorAll("[data-testid^='activity-receipt-name-']")].map((n) => n.textContent ?? "");
-const sweeps = () => names().filter((name) => name.startsWith("SWEEP 2 ROOMS"));
+const sweeps = () => names().filter((name) => name.startsWith("Checked 2 rooms"));
 async function select(prefix: string) {
   const row = await waitFor(() => {
     const found = [...document.querySelectorAll<HTMLElement>("[id^='activity-receipt-']")]
@@ -67,9 +67,9 @@ describe("Activity Finished receipts", () => {
     useProjections.setState({ query: "other face", kind: "attention", selectedId: "other-row" });
     const before = useProjections.getState();
     const view = render(<ActivityFinishedReceipts query=""/>);
-    const row = await select("SWEEP 2 ROOMS");
+    const row = await select("Checked 2 rooms");
     expect(row.getAttribute("aria-selected")).toBe("true");
-    const open = screen.getByRole("button", { name: "Open receipt: SWEEP 2 ROOMS" });
+    const open = screen.getByRole("button", { name: "Open receipt: Checked 2 rooms" });
     expect(open.closest(".kit-statusbar-verbs")).not.toBeNull();
     expect(view.container.querySelector("[id='activity-receipt-pipeline:ev-shade-0']")).not.toBeNull();
     // Who (owner ruling 2026-10-25): plain words, never the caller's IP,
@@ -82,7 +82,9 @@ describe("Activity Finished receipts", () => {
     expect(Object.fromEntries(url.searchParams)).toEqual({ kind: "receipt", attention_state: "resolved", offset: "0", limit: "50" });
     fireEvent.click(open);
     expect(mocks.openSurface).toHaveBeenCalledWith("configure-cadence", undefined);
-    expect(sweeps()).toEqual(["SWEEP 2 ROOMS · Heartbeat"]);
+    expect(sweeps()).toEqual(["Checked 2 rooms · Heartbeat"]);
+    // Atlas pass 3 (defect 10): the hub's sentence words, never caps.
+    expect(view.container.textContent).not.toMatch(/SWEEP|ROOMS/);
     expect(useProjections.getState()).toBe(before);
     expect(mocks.apiFetch.mock.calls.every((call) => call[1].method === "GET")).toBe(true);
     expect(mocks.openPrimitive).not.toHaveBeenCalled();
@@ -147,7 +149,7 @@ describe("Activity Finished receipts", () => {
     result.projections[0].detail_url = detail_url;
     mocks.apiFetch.mockResolvedValue(result);
     render(<ActivityFinishedReceipts query=""/>);
-    await select("SWEEP 2 ROOMS");
+    await select("Checked 2 rooms");
     expect(await screen.findByText("Receipt view unavailable")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Open receipt/ })).toBeNull();
     expect(mocks.openSurface).not.toHaveBeenCalled();
@@ -157,8 +159,8 @@ describe("Activity Finished receipts", () => {
   it("names an unregistered canonical door and keeps its row", async () => {
     mocks.openSurface.mockReturnValue(false);
     render(<ActivityFinishedReceipts query=""/>);
-    await select("SWEEP 2 ROOMS");
-    fireEvent.click(screen.getByRole("button", { name: "Open receipt: SWEEP 2 ROOMS" }));
+    await select("Checked 2 rooms");
+    fireEvent.click(screen.getByRole("button", { name: "Open receipt: Checked 2 rooms" }));
     expect(screen.getByText("Receipt view unavailable")).toBeInTheDocument();
     expect(sweeps()).toHaveLength(1);
     expect(mocks.openPrimitive).not.toHaveBeenCalled();

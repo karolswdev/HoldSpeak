@@ -1294,7 +1294,7 @@ def test_every_window_holds_the_fences(desk: dict[str, Any], pw_browser: Any,
                 receipt = page.locator('[id="activity-receipt-pipeline:ev-sweep-0"]')
                 receipt.wait_for(timeout=T)
                 name = receipt.locator("[data-testid^=activity-receipt-name-]")
-                assert name.inner_text().replace("\n", " ").startswith("SWEEP 2 ROOMS")
+                assert name.inner_text().replace("\n", " ").startswith("Checked 2 rooms")
                 assert name.inner_text().replace("\n", " ").endswith("Heartbeat")
                 extent = name.evaluate("""el => ({text: el.textContent,
                     width: el.clientWidth, content: el.scrollWidth})""")

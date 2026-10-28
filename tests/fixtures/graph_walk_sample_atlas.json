@@ -203,7 +203,7 @@
             "subject_ref": "service:HeartbeatService",
             "projection_kind": "receipt",
             "attention_state": "resolved",
-            "title__prefix": "SWEEP"
+            "title__prefix": "Checked"
           },
           "min_new": 1
         }

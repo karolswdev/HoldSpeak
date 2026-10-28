@@ -7,7 +7,6 @@ import { useDurableDraft } from "../../../lib/durableDraft";
 import { useDesk } from "../../store";
 import { openSurfaceOr } from "../../shell";
 import { qualifiedRef } from "../../api";
-import { ContextualAssignment } from "../../../pages/cores/ContextualAssignment";
 import { Material } from "../../surface/Material";
 import { DotWord } from "../../surface/kit";
 import { PadGadget } from "../../surface/gadgets";
@@ -171,20 +170,6 @@ export function CapabilitySection({ object: o, blocked }: {
                   : "Run"}
           </Button>
         </div>
-        {o.kind === "recipe" ? (
-          <div className="desk-chat-well-foot">
-            <ContextualAssignment
-              label="Which engine runs it"
-              capabilityId="recipe.run"
-              scope={{
-                kind: "subject",
-                subject_kind: "recipe",
-                subject_id: o.id,
-                capability_id: "recipe.run",
-              }}
-            />
-          </div>
-        ) : null}
       </div>
       {runReason ? (
         <DotWord tone={capabilityCanRun && !blocked ? "idle" : "warn"} className="capability-run-reason" data-testid="capability-run-reason">
