@@ -1042,3 +1042,5 @@
   text-transform: none;
   color: inherit;
 }
+/* W6-G words: the wrapper that carries a failure's hover title draws no box. */
+.people-failure-title { display: contents; }

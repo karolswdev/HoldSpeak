@@ -39,3 +39,27 @@ export function plainReason(cause: unknown): string {
 export function plainFailure(what: string, cause: unknown): string {
   return `${what.toUpperCase()} · ${plainReason(cause)}`;
 }
+
+/** W6-G words: why it failed, for a hover title only (`Hub unreachable`,
+ *  `Not available now · HTTP 503`). The face never shows it. */
+export function failureTitle(cause: unknown): string {
+  const reason = plainReason(cause);
+  const status = statusOf(cause);
+  const said = reason.charAt(0) + reason.slice(1).toLowerCase();
+  return status ? `${said} · HTTP ${status}` : said;
+}
+
+/** W6-G words: a failure face in plain words and sentence case: what failed
+ *  and what stayed (`Could not load people · Nothing changed`), then what to
+ *  do next when no Try again Button stands beside it (`· Try again`). The
+ *  reason goes in the hover title (`failureTitle`). */
+export function plainWords(failed: string, stayed = "Nothing changed", next?: string): string {
+  return next ? `${failed} · ${stayed} · ${next}` : `${failed} · ${stayed}`;
+}
+
+/** A failure for a face: the plain words and the hover title. */
+export type PlainFail = { words: string; title: string };
+
+export function plainFail(failed: string, cause: unknown, stayed?: string, next?: string): PlainFail {
+  return { words: plainWords(failed, stayed, next), title: failureTitle(cause) };
+}

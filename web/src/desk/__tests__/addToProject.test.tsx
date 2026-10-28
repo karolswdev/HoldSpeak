@@ -87,7 +87,8 @@ describe("PHILO-15 16 Add to Project ▸", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add to Project ▸" }));
     fireEvent.click(within(await screen.findByRole("menu", { name: "Add to Project" })).getByText("Hiring loop"));
     const receipt = await screen.findByTestId("add-to-project-receipt");
-    expect(receipt.textContent).toMatch(/^NOT ADDED/);
+    expect(receipt.textContent).toBe("Could not add it to Hiring loop · Nothing changed · Try again");
+    expect(receipt.getAttribute("title")).toBeTruthy();
     expect(receipt).toHaveAttribute("data-tone", "danger");
   });
 

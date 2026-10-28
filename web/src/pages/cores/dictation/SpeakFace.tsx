@@ -103,7 +103,7 @@ function openDeskCommandResult(
     }
     setPhase("refused");
     setRefusal("command_result_missing");
-    announce("NEW NOTE NOT OPENED", "warn");
+    announce("Could not open the new note · Nothing changed · Try again", "warn");
     return true;
   }
   announce(fired.preview);
@@ -539,7 +539,7 @@ function useSpeakTalk(
         } else {
           deck.setPhase("refused");
           deck.setRefusal("command_failed");
-          announce(`COMMAND FAILED · ${fired.preview}`, "warn");
+          announce(`Could not run “${fired.preview}” · Nothing changed · Try again`, "warn");
         }
       },
       onFailure: (category) => {

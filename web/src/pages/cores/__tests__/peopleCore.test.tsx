@@ -867,7 +867,7 @@ describe("Calendar reads keep their actual state", () => {
     expect(picker.querySelector('[data-kind="loading"]')).toBeTruthy();
     expect(screen.queryByText("No upcoming events")).toBeNull();
     await act(async () => { settle(json({ error: "unavailable" }, 503)); });
-    expect(within(picker).getByRole("alert")).toHaveTextContent("CALENDAR DID NOT LOAD");
+    expect(within(picker).getByRole("alert")).toHaveTextContent("Could not load the calendar");
     expect(screen.getByLabelText("Note")).toHaveValue("Keep the rollout draft");
     fireEvent.click(within(picker).getByRole("button", { name: "Try again" }));
     expect(await within(picker).findByText("No upcoming events")).toBeTruthy();

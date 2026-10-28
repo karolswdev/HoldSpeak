@@ -41,7 +41,7 @@ import {
   useRoomRead, withRead, type SlotReads,
 } from "./roomReads";
 import { registerProjectRepository, registrable, useProjectRepository } from "../../desk/projectRepository";
-import { plainFailure } from "../../desk/surface/plainFailure";
+import { plainFail, type PlainFail } from "../../desk/surface/plainFailure";
 import { Loading } from "../../desk/surface/kit";
 import { useWindowTitle } from "../../desk/surface/title";
 import { Button } from "../../components/signal/Signal";
@@ -1157,23 +1157,23 @@ function SourcesSection({
   const [busyWatch, setBusyWatch] = useState<string>("");
   const watchPending = useRef(false);
   type WatchAction = "Pause" | "Resume" | "Remove";
-  const [watchFailures, setWatchFailures] = useState<Record<string, { action: WatchAction; ids: string[]; reason: string }>>({});
+  const [watchFailures, setWatchFailures] = useState<Record<string, { action: WatchAction; ids: string[]; reason: PlainFail }>>({});
   // Astra r2 on #1068: an older project that watches a repository nobody
   // registered registers it here (the call New Project makes on create).
   const repository = useProjectRepository(room.projectId);
   useRoomRead("repository", repository.state !== null || repository.failed);
   const toRegister = registrable(repository.state);
   const [registering, setRegistering] = useState(false);
-  const [registerFailure, setRegisterFailure] = useState("");
+  const [registerFailure, setRegisterFailure] = useState<PlainFail | null>(null);
   const register = async () => {
     if (!toRegister) return;
     setRegistering(true);
-    setRegisterFailure("");
+    setRegisterFailure(null);
     try {
       await registerProjectRepository(room.projectId, toRegister);
       repository.reload();
     } catch (reason) {
-      setRegisterFailure(plainFailure("NOT REGISTERED", reason));
+      setRegisterFailure(plainFail(`Could not register ${toRegister}`, reason, undefined, "Try again"));
     } finally {
       setRegistering(false);
     }
@@ -1204,7 +1204,12 @@ function SourcesSection({
         const next = { ...current };
         if (rejected.length) next[rowId] = {
           action, ids: rejected.map((failure) => failure.id),
-          reason: plainFailure(`${action.toUpperCase()} FAILED · ${items.find((source) => source.watchIds.includes(rowId))?.scope ?? rowId}`, rejected[0].cause),
+          reason: plainFail(
+            `Could not ${action.toLowerCase()} the watch on ${items.find((source) => source.watchIds.includes(rowId))?.scope ?? rowId}`,
+            rejected[0].cause,
+            // W6-G words: what stayed is true when some siblings landed.
+            rejected.length < watchIds.length ? "The other watches changed" : "Nothing changed",
+          ),
         };
         else delete next[rowId];
         return next;
@@ -1256,9 +1261,9 @@ function SourcesSection({
         </>
       }
     >
-      {Object.entries(watchFailures).map(([rowId, failure]) => <SurfaceState key={rowId} error={failure.reason} onRetry={busyWatch ? undefined : () => void changeWatches(failure.action, failure.ids, rowId)} />)}
+      {Object.entries(watchFailures).map(([rowId, failure]) => <div key={rowId} className="room-failure-title" title={failure.reason.title}><SurfaceState error={failure.reason.words} onRetry={busyWatch ? undefined : () => void changeWatches(failure.action, failure.ids, rowId)} /></div>)}
       {registerFailure ? (
-        <span className="surface-token" data-chip data-tone="fail" role="status" data-testid="room-register-failure">{registerFailure}</span>
+        <span role="status" data-testid="room-register-failure" title={registerFailure.title}><DotWord tone="fail">{registerFailure.words}</DotWord></span>
       ) : null}
       {adding && room.projectId ? (
         <AddSourcesWell
@@ -2392,7 +2397,7 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
           data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
           {shown ? null : <div className="room-settling-line"><Loading /></div>}
           {sendFailure}
-          {ctrl.readError ? <SurfaceState error={ctrl.readError} onRetry={handleRefresh} /> : null}
+          {ctrl.readError ? <div className="room-failure-title" title={ctrl.errorTitle || undefined}><SurfaceState error={ctrl.readError} onRetry={handleRefresh} /></div> : null}
           {ctrl.view === "room" ? (
             <>
               <div className="room-section-rise" style={{ animationDelay: "0ms" }}>
@@ -2496,9 +2501,10 @@ function ProjectRoomCoreFor({ hero, scope, scopeLabel }: CoreProps) {
         <Loading data-testid="room-loading" />
       ) : ctrl.error ? (
         // PHILO-13-04 ledger, paid in B1: a plain failure name and Try again,
-        // never the hub's own text (plainFailure in the controller).
-        <div className="room-error" role="alert" data-testid="room-load-failed">
-          <span className="surface-token" data-chip>{ctrl.error}</span>
+        // never the hub's own text. W6-G words: one sans sentence, the reason
+        // in the hover title only.
+        <div className="room-error" role="alert" data-testid="room-load-failed" title={ctrl.errorTitle || undefined}>
+          <DotWord tone="fail">{ctrl.error}</DotWord>
           <Button dense variant="primary" onClick={handleRefresh} data-testid="room-load-retry">Try again</Button>
         </div>
       ) : null}

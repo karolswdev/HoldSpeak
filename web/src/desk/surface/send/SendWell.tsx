@@ -38,7 +38,7 @@ import { SurfaceFooter } from "../SurfaceFooter";
 import { EgressChip } from "../gadgets";
 import { Material } from "../Material";
 import { StateChip } from "../patterns";
-import { ToolGlyph, Toolbar } from "../kit";
+import { DotWord, ToolGlyph, Toolbar } from "../kit";
 import { fetchConnections, type ConnectionsResponse, type ConnectionState } from "../../../pages/cores/connections/api";
 import { chipLabel } from "../../../pages/cores/connections/ConnectionsPane";
 import {
@@ -937,7 +937,7 @@ export function SendWell({ doc, sendsRead, onSettled, head, destinationIds, onBa
                               <SurfaceFooter dataSend="actions" className="send-sheet-footer" fold={false}
                                 verbs={
                                   <>
-                                    {editFailure ? <span className="send-line" data-testid="send-edit-failed"><StateChip state="failure" label="EDIT NOT SAVED" /><span className="surface-token" data-chip>{editFailure.toUpperCase().replace(/[_:]/g, " ")}</span></span> : null}
+                                    {editFailure ? <span className="send-line" data-testid="send-edit-failed" title={editFailure}><DotWord tone="fail">Could not make a note to edit · The preview stays here · Press Edit again</DotWord></span> : null}
                                     {receipt}
                                   </>
                                 } />

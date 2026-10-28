@@ -82,6 +82,10 @@
 .room-loading, .room-error {
   display: flex; align-items: center; justify-content: center; min-height: 200px;
 }
+/* W6-G words: the load failure is a dot + one sentence and Try again; the
+   wrapper that carries a failure's hover title draws no box. */
+.room-error { flex-wrap: wrap; gap: 8px 12px; padding: 0 16px; }
+.room-failure-title { display: contents; }
 
 /* ── Condition 6: primary text uses the sans face ── */
 .surface-ledger[data-cols="room"] .surface-primary,
