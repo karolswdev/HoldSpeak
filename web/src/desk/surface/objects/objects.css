@@ -482,15 +482,15 @@
    blue. A row names its kind on `data-kind`. Slice 2: the Note's object
    tokens (their peek card), the margin's found rows and its cards read the
    same map. */
-:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card) { --row-kind: var(--kind-other); }
-:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="project"], [data-kind="room"]) { --row-kind: var(--kind-project); }
-:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="meeting"], [data-kind="call"]) { --row-kind: var(--kind-meeting); }
-:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="person"], [data-kind="people"]) { --row-kind: var(--kind-person); }
-:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="decision"], [data-kind="decision_record"]) { --row-kind: var(--kind-decision); }
-:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="note"], [data-kind="thought"]) { --row-kind: var(--kind-note); }
-:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="pr"], [data-kind="pull-request"]) { --row-kind: var(--kind-pr); }
-:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="action"], [data-kind="action-item"], [data-kind="commitment"], [data-kind="jira"]) { --row-kind: var(--kind-action); }
-:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="agent"], [data-kind="coder"]) { --row-kind: var(--kind-agent); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card, .today-done-row) { --row-kind: var(--kind-other); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card, .today-done-row):is([data-kind="project"], [data-kind="room"]) { --row-kind: var(--kind-project); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card, .today-done-row):is([data-kind="meeting"], [data-kind="call"]) { --row-kind: var(--kind-meeting); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card, .today-done-row):is([data-kind="person"], [data-kind="people"]) { --row-kind: var(--kind-person); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card, .today-done-row):is([data-kind="decision"], [data-kind="decision_record"]) { --row-kind: var(--kind-decision); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card, .today-done-row):is([data-kind="note"], [data-kind="thought"]) { --row-kind: var(--kind-note); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card, .today-done-row):is([data-kind="pr"], [data-kind="pull-request"]) { --row-kind: var(--kind-pr); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card, .today-done-row):is([data-kind="action"], [data-kind="action-item"], [data-kind="commitment"], [data-kind="jira"]) { --row-kind: var(--kind-action); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card, .today-done-row):is([data-kind="agent"], [data-kind="coder"]) { --row-kind: var(--kind-agent); }
 
 /* ── ObjectList density="dense": the native list view (window grammar,
    2026-10-24). 30 px rows on the desktop, 44 px in a surface of 520 px or
@@ -588,7 +588,8 @@
 }
 /* DELIGHT: the glyph seat (below). */
 .object-list[data-density="dense"] .object-list-open img,
-:is(.needs-drawer, .today-needs) .needs-row > img {
+:is(.needs-drawer, .today-needs) .needs-row > img,
+.today-done-row > img {
   border-radius: 4px;
   background: color-mix(in srgb, var(--row-kind) 13%, var(--wb-paper));
   box-shadow:

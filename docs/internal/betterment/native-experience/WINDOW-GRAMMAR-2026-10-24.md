@@ -170,3 +170,32 @@ corner. Record is one tile of the same size. A thin rule comes before the seated
 working band reserves 84 px (`--desk-snap-bottom`); on the phone the plate runs edge to edge with
 an 8 px inset and the reserve is 80 px. The same day the floor lost its Talk orb and the Archive
 icon that sat in the Trash corner (#1495); Archive opens from Go ▸ Archive and ⌘K.
+
+## The depth scale, 2026-10-28
+
+The delight canvas (`canvases/delight-2026-10-27.html`, "Depth: one shadow scale, named") asked
+for one shadow scale. Slice 2 named five steps in `web/design-tokens.json`; slice 5 moved every
+remaining popover, sheet, tooltip, dropdown, toast and plate onto them. A new shadow names its
+step; it never adds a value. The rule: the higher a surface floats over the work, the deeper its
+step.
+
+| Step | Token | Who sits there | Why |
+|---|---|---|---|
+| Paper | `--depth-paper` | The front window; the first-run sheet and the first-words card on the empty floor | A sheet on the floor is a window's peer: the deepest drop the desk uses |
+| Row | `--depth-row` | The Note's margin card; plates that sit in their column (the lane's approve plate, the Room's Late plate, a standing page, the Conductor's ask card); a topology node at rest | It belongs to the page it sits on; the lift only says "this is one object" |
+| Card | `--depth-card` | Cards that float over text (the peek card, the completion list, the feedback strip); a plate or node under the pointer | It covers words for a moment; the hover is a shadow change only, never a transform |
+| Menu | `--depth-menu` | Menus, popovers (`surface-popover`), dropdowns (the Workbench select, the @ autocomplete), the window switcher, the pane picker, the Note's context picker, the dock chip, the Ask bundle bar, the dock tooltips, toasts (the undo receipt, the voice proposal, the AI verb bar), sheets (the model detail, the assignment sheet) | It floats above windows and goes when he looks away |
+| Dock | `--depth-dock` | The dock glass on the floor | The darkest drop: slate glass on a slate floor |
+
+Kept outside the scale on purpose: a lamp's glow (a lamp is not a control), the kind-tinted seat
+of an empty-state object, focus and selection rings (`0 0 0 Npx`), the Workbench insets, the
+resting window (`--desk-window-shadow-rest`, a window step of its own), the row hover lift
+(`--alive-lift`), the Note's phone margin sheet (it casts up, from the bottom edge), and the
+document shell's dark `--elev-*` ramp (the Astro pages, another material).
+
+A finding of the audit: a shadow list that leads with a token whose value is `none`
+(`var(--wb-raised), …`, `var(--desk-window-etch), …`) is invalid CSS, so the whole value drops
+to no shadow. The plates, the voice proposal, the AI verb bar and the Workbench dropdown drew
+flat for that reason; slice 5 gave them their step without the void token. The same void is
+still in a few rings and one tab underline (`speak.css`, `project-room.css`, `people.css`) and
+on the primary Button's hard drop (`surface.css`), which the sweep's material fence reads.

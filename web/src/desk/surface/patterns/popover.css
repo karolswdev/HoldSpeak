@@ -18,7 +18,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
-  box-shadow: var(--desk-window-etch);
+  box-shadow: var(--depth-menu); /* DELIGHT slice 5: a popover is the menu step (was var(--desk-window-etch) only, which is none: no depth) */
   color: var(--text);
   font-family: var(--font-mono);
   font-size: var(--desk-surface-detail-size, 12px);

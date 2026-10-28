@@ -193,7 +193,7 @@
 }
 .desk-next .runson-root .switchboard-engine:hover {
   background: var(--wb-steel-2, var(--wb-steel));
-  box-shadow: var(--wb-raised), 2px 3px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent);
+  box-shadow: var(--depth-card); /* DELIGHT slice 5 (the old list led with var(--wb-raised), which is none, and voided the whole value): the engine plate lifts to the card step under the pointer (was 2px 3px 0 ink 18 %) */
 }
 @media (prefers-reduced-motion: reduce) {
   .desk-next .runson-root .switchboard-job,

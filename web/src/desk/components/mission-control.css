@@ -296,7 +296,7 @@
   border: 1px solid
     color-mix(in srgb, var(--accent) 35%, var(--border));
   background: var(--surface-2);
-  box-shadow: var(--desk-window-shadow);
+  box-shadow: var(--depth-menu); /* DELIGHT slice 5: a bar over the floor is the menu step, like the dock chip (was --desk-window-shadow, the front window's) */
   backdrop-filter: none;
 }
 .desk-next .desk-askbar-count {

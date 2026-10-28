@@ -153,7 +153,7 @@
   padding: 0 0 10px;
   border: 1px solid var(--wb-ink);
   background: var(--wb-paper);
-  box-shadow: var(--wb-raised), 3px 4px 0 color-mix(in srgb, var(--wb-ink) 18%, transparent), 4px 10px 22px color-mix(in srgb, var(--wb-ink) 14%, transparent);
+  box-shadow: var(--depth-row); /* DELIGHT slice 5 (the old list led with var(--wb-raised), which is none, and voided the whole value): a plate in its column is the row step (was 3px 4px 0 ink 18 % + 4px 10px 22px ink 14 %) */
 }
 .desk-next .is-lane .lw-plate-bar {
   display: flex;

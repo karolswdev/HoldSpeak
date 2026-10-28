@@ -8,7 +8,7 @@
   border: 1px solid var(--wb-ink);
   border-radius: 0;
   background: var(--wb-field);
-  box-shadow: var(--wb-raised), var(--wb-drop);
+  box-shadow: var(--wb-drop); /* DELIGHT slice 5: a dropdown is the menu step (--wb-drop reads --depth-menu); the old list led with var(--wb-raised), which is none, and voided the whole value */
   scrollbar-color: var(--wb-muted) var(--wb-field);
   touch-action: pan-y;
 }

@@ -179,7 +179,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
-  box-shadow: var(--desk-window-etch), var(--desk-window-shadow);
+  box-shadow: var(--depth-menu); /* DELIGHT slice 5 (the old list led with var(--desk-window-etch), which is none, and voided the whole value): a toast is the menu step (was --desk-window-shadow, the front window's) */
   font: var(--font-size-xs)/1.25 var(--font-mono);
 }
 .desk-voice-proposal-heard {
