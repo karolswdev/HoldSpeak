@@ -43,6 +43,9 @@ dependencies = [
     "numpy>=1.24.0",
     "pynput>=1.7.6",
     "pyperclip>=1.8.2",
+    # channel_email renders Markdown bodies (5f02f6619); declared so CI's
+    # `.[test,linux]` install has it, not only the dev extra through rich.
+    "markdown-it-py>=3.0.0",
     # Web runtime is the default `holdspeak` command, so its deps live in core.
     # `uvicorn[standard]` pulls in websockets/uvloop/httptools/watchfiles.
     "fastapi>=0.100.0",
