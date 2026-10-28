@@ -6,6 +6,7 @@ import json
 from typing import Any
 from holdspeak import operations
 from holdspeak.principals import Principal
+from holdspeak.timestamps import local_now as wall_clock_now
 from holdspeak.services.monday_brief_service import brief_period_label, brief_title
 from holdspeak.services.workbench_service import WorkbenchService
 
@@ -149,7 +150,7 @@ def _first_line(text: Any) -> str:
 def since_morning_read(db: Any, now: datetime.datetime | None = None,
                        limit: int = SINCE_MORNING_LIMIT) -> dict[str, Any]:
     """What got done since the local midnight of ``now`` (the hub's clock)."""
-    local_now = (now or datetime.datetime.now()).astimezone()
+    local_now = (now or wall_clock_now()).astimezone()
     morning = local_now.replace(hour=0, minute=0, second=0, microsecond=0)
     start = morning.astimezone(datetime.timezone.utc)
     # A coarse SQL bound (a day before the UTC morning, as a date prefix,
