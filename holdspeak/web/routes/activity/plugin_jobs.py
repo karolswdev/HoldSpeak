@@ -18,15 +18,15 @@ def _err(e:Exception)->JSONResponse:return JSONResponse({"success":False,"error"
 def build_plugin_jobs_router(ctx:WebContext)->APIRouter:
  router=APIRouter()
  @router.get("/api/plugin-jobs")
- async def list_jobs(request:Request,status:str="all",meeting_id:Optional[str]=None,limit:int=200)->Any:
+ def list_jobs(request:Request,status:str="all",meeting_id:Optional[str]=None,limit:int=200)->Any:
   try:return JSONResponse(_svc().list(_principal(request),status,meeting_id,limit))
   except Exception as e:return error_500(e,log,"Failed to list deferred plugin jobs")
  @router.get("/api/plugin-jobs/summary")
- async def summary(request:Request)->Any:
+ def summary(request:Request)->Any:
   try:return JSONResponse(_svc().summary(_principal(request)))
   except Exception as e:return error_500(e,log,"Failed to load deferred plugin-job summary")
  @router.post("/api/plugin-jobs/process")
- async def process(payload:Optional[_PluginJobProcessRequest]=None)->Any:
+ def process(payload:Optional[_PluginJobProcessRequest]=None)->Any:
   if ctx.on_process_plugin_jobs is None:return JSONResponse({"success":False,"error":"Deferred plugin queue processing not supported"},status_code=501)
   max_jobs=payload.max_jobs if payload else None
   if max_jobs is not None and int(max_jobs)<=0:return JSONResponse({"success":False,"error":"max_jobs must be greater than 0"},status_code=400)
@@ -36,12 +36,12 @@ def build_plugin_jobs_router(ctx:WebContext)->APIRouter:
    data=ctx.on_process_plugin_jobs(max_jobs=max_jobs,include_scheduled=mode=="retry_now"); out=dict(data) if isinstance(data,dict) else {"processed":int(data)};out.update(mode=mode,success=True);ctx.broadcast("plugin_jobs_processed",out);return JSONResponse(out)
   except Exception as e:log.error(f"Failed to process deferred plugin jobs: {e}");return JSONResponse({"success":False,"error":str(e)},status_code=500)
  @router.post("/api/plugin-jobs/{job_id}/retry-now")
- async def retry(request:Request,job_id:int)->Any:
+ def retry(request:Request,job_id:int)->Any:
   try:return JSONResponse(_svc().retry(_principal(request),job_id))
   except (NotFound,ConflictError) as e:return _err(e)
   except Exception as e:log.error(f"Failed to retry deferred plugin job {job_id}: {e}");return JSONResponse({"success":False,"error":str(e)},status_code=500)
  @router.post("/api/plugin-jobs/{job_id}/cancel")
- async def cancel(request:Request,job_id:int)->Any:
+ def cancel(request:Request,job_id:int)->Any:
   try:return JSONResponse(_svc().cancel(_principal(request),job_id))
   except (NotFound,ConflictError) as e:return _err(e)
   except Exception as e:log.error(f"Failed to cancel deferred plugin job {job_id}: {e}");return JSONResponse({"success":False,"error":str(e)},status_code=500)
