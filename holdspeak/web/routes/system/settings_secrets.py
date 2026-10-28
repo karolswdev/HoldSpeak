@@ -31,7 +31,7 @@ def register_settings_secret_routes(router: APIRouter, ctx: WebContext) -> None:
         raise RuntimeError("CredentialService must be supplied at application composition")
 
     @router.put("/api/settings/secrets/{secret_id}")
-    async def api_replace_secret(
+    def api_replace_secret(
         secret_id: str, body: dict[str, Any], request: Request
     ) -> Any:
         try:
@@ -45,7 +45,7 @@ def register_settings_secret_routes(router: APIRouter, ctx: WebContext) -> None:
             return error_500(exc, log, "Failed to replace secret setting")
 
     @router.post("/api/settings/secrets/{secret_id}/rotate")
-    async def api_rotate_secret(secret_id: str, request: Request) -> Any:
+    def api_rotate_secret(secret_id: str, request: Request) -> Any:
         try:
             secrets = service.rotate(request.state.principal, secret_id)
             return JSONResponse({"success": True, "secrets": secrets})
@@ -55,7 +55,7 @@ def register_settings_secret_routes(router: APIRouter, ctx: WebContext) -> None:
             return error_500(exc, log, "Failed to rotate secret setting")
 
     @router.delete("/api/settings/secrets/{secret_id}")
-    async def api_delete_secret(secret_id: str, request: Request) -> Any:
+    def api_delete_secret(secret_id: str, request: Request) -> Any:
         try:
             secrets = service.delete(request.state.principal, secret_id)
             return JSONResponse({"success": True, "secrets": secrets})

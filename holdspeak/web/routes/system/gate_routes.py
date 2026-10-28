@@ -55,7 +55,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
         return JSONResponse({"principal": credential.principal.name, "identity": credential.principal.identity, "credential": credential.token}, status_code=201)
 
     @router.delete("/api/principals/agents/{identity}")
-    async def api_revoke_agent_principal(identity: str, request: Request) -> Any:
+    def api_revoke_agent_principal(identity: str, request: Request) -> Any:
         # PHILO-7-02 (invariant 5, durable first): the identity's LIVE desk
         # grant is revoked FIRST, with its own receipt -- even when no
         # credential remains -- and only then the credential. A kernel
@@ -75,7 +75,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
                              "project_grants_revoked": project_grants})
 
     @router.delete("/api/principals/self")
-    async def api_revoke_self(request: Request) -> Any:
+    def api_revoke_self(request: Request) -> Any:
         principal = request.state.principal
         return JSONResponse({"principal": principal.name, "identity": principal.identity, "revoked": request.app.state.agent_credentials.revoke(principal.identity)})
 
@@ -93,7 +93,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to propose gate operation")
 
     @router.get("/api/gate/proposals/{proposal_id}")
-    async def api_gate_read(proposal_id: str, request: Request) -> Any:
+    def api_gate_read(proposal_id: str, request: Request) -> Any:
         try:
             return JSONResponse(service.get_proposal(request.state.principal, proposal_id))
         except ServiceError as exc:
@@ -102,7 +102,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to read gate proposal")
 
     @router.get("/api/gate/proposals/{proposal_id}/command")
-    async def api_gate_full_call(proposal_id: str, request: Request) -> Any:
+    def api_gate_full_call(proposal_id: str, request: Request) -> Any:
         """PHILO-15 20 (B63): the whole command of a held cut call, for the
         owner's Raw read only (403 for an agent; 409 once decided)."""
         try:
@@ -113,7 +113,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to read the held call")
 
     @router.get("/api/gate/proposals")
-    async def api_gate_list(request: Request, state: str = HELD) -> Any:
+    def api_gate_list(request: Request, state: str = HELD) -> Any:
         try:
             return JSONResponse(service.list_proposals(request.state.principal, {"state": state}))
         except ServiceError as exc:
@@ -160,7 +160,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to record gate usage")
 
     @router.get("/api/sessions/{session_key}/receipt")
-    async def api_session_receipt(session_key: str, request: Request) -> Any:
+    def api_session_receipt(session_key: str, request: Request) -> Any:
         try:
             return JSONResponse(service.get_session_receipt(request.state.principal, session_key))
         except ServiceError as exc:
@@ -169,7 +169,7 @@ def build_gate_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to read session receipt")
 
     @router.get("/api/gate/audit")
-    async def api_gate_audit(request: Request, limit: int = 100) -> Any:
+    def api_gate_audit(request: Request, limit: int = 100) -> Any:
         try:
             return JSONResponse(service.audit(request.state.principal, {"limit": limit}))
         except ServiceError as exc:
