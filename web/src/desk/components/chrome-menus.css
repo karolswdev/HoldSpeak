@@ -165,7 +165,7 @@
   border: 0;
   background: none;
   color: var(--wb-ink);
-  font: 600 12px var(--font-mono);
+  font: 600 12px / 16px var(--font-mono);
   letter-spacing: 0.04em;
 }
 .desk-next .desk-menu-list button:hover kbd,
@@ -328,7 +328,7 @@
   border: 1px solid var(--surface-3);
   border-radius: 2px;
   color: var(--text-muted);
-  font: 600 var(--font-size-xs) var(--font-mono);
+  font: 600 var(--font-size-xs) / 16px var(--font-mono);
 }
 /* Tool shelf uses the same paper panel as menus. */
 .desk-next .desk-tool-shelf {
@@ -353,7 +353,7 @@
   margin: 0;
 }
 .desk-next .desk-tool-shelf h2 {
-  font: 600 12px var(--font-mono);
+  font: 600 12px / 16px var(--font-mono);
 }
 .desk-next .desk-tool-shelf h3 {
   margin: 12px 0 4px;
@@ -488,7 +488,7 @@
   padding: 0;
   background: none;
   color: var(--text-muted);
-  font: 600 var(--font-size-xs) var(--font-mono);
+  font: 600 var(--font-size-xs) / 16px var(--font-mono);
 }
 /* PHILO-16 §2/§11: the palette is a slate transient in the window material
    (window-interior.css scopes the tool shelf), so its selection is the
@@ -1162,7 +1162,7 @@
   }
   .desk-next .desk-menubar .egress-badge::before {
     content: "⇡";
-    font: 700 16px var(--font-mono);
+    font: 700 16px / 21px var(--font-mono);
     color: var(--wb-ink);
   }
   .desk-next .desk-menubar .egress-badge.is-local::before {

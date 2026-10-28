@@ -203,7 +203,7 @@
         "value": "\"Inter\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\",\n    sans-serif"
       },
       "mono": {
-        "value": "\"JetBrains Mono\", \"SFMono-Regular\", \"SF Mono\", Consolas, \"Liberation Mono\",\n    monospace"
+        "value": "\"JetBrains Mono\", \"JetBrains Mono Fallback\", \"SFMono-Regular\", \"SF Mono\", Consolas, \"Liberation Mono\",\n    monospace"
       }
     }
   },
@@ -1048,6 +1048,11 @@
         "name": "--desk-glass",
         "value": "#e9edf3",
         "doc": "cool pale shell chrome"
+      },
+      {
+        "name": "--desk-expose-veil",
+        "value": "rgba(18, 27, 38, 0.42)",
+        "doc": "W7 2026-10-28: the overview veil, slate over the wallpaper (window-chrome.css .desk-expose-scrim)"
       },
       {
         "name": "--desk-window-fill",
