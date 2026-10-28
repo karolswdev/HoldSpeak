@@ -613,7 +613,8 @@
   font: 500 14px / 1.5 var(--font-sans);
 }
 
-/* Not answered: one line and the one verb. Never red, never mono. */
+/* Not answered: one line and the one verb. Never mono; the words stay ink,
+   only the dot of an engine that did not answer is red (W6-B). */
 .desk-ask-fail {
   display: flex;
   flex-wrap: wrap;
