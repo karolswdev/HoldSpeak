@@ -147,10 +147,11 @@ describe("the agent's lane on the hub's lane answer", () => {
     await openLane(LANE.wire);
     expect(screen.getAllByText("Claude Code: Write the rollback runbook").length).toBeGreaterThan(0);
     const track = screen.getByTestId("lane-track").textContent ?? "";
-    for (const word of ["BRIEF", "WORK", "COMMIT", "PR", "HELD", "ASKS"]) expect(track).toContain(word);
-    expect(track).not.toContain("MERGE");
+    // W4 AGENT 2: the recorded stages as dots and sentence-case words.
+    for (const word of ["Brief", "Work", "Commit", "PR", "Held", "Asks"]) expect(track).toContain(word);
+    expect(track).not.toContain("Merge");
     expect(track).toContain("#413");
-    expect(track).toContain("1 HELD · 1 WAITING");
+    expect(track).toContain("1 held · 1 waiting");
     expect(track).toContain("now");
     expect(screen.getByTestId("lane-ask").querySelector(".ask-well-question")?.textContent).toBe(QUESTION);
     expect(screen.getByTestId("lane-ask").querySelector(".ask-well-draft")?.textContent).toContain("Jordan owns it. Avery reviews.");
@@ -297,7 +298,7 @@ describe("Raw reads a cut call whole (PHILO-15 20)", () => {
     );
     await waitFor(() => expect(screen.getAllByTestId("lane-raw-held")).toHaveLength(2));
     expect(cardFor(WHOLE.wire.command)).toBeUndefined();
-    expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^APPROVED · \d\d:\d\d$/);
+    expect(screen.getByTestId("lane-receipt").textContent).toMatch(/^Approved · .+$/);
     expect(screen.getByTestId("lane-raw-pane")).toBeTruthy();
   });
 });
@@ -384,11 +385,11 @@ describe("the Agents list tells the truth about state (Betterment AG0)", () => {
     expect(document.body.textContent).not.toContain("Working");
   });
 
-  it("after the seen mark the same agent reads Quiet", async () => {
+  it("after the seen mark the same agent reads Done (W4 AGENT 2: was Quiet; one word with the agent's window)", async () => {
     serve({ "/api/coders/sessions": AG0_SEEN.wire, "/api/onboarding/agents": DETECT.wire });
     render(<ConductorWindow />);
     await findMember("launch:launch_ag0_done");
-    expect(pillOf("launch:launch_ag0_done")).toBe("Quiet");
+    expect(pillOf("launch:launch_ag0_done")).toBe("Done");
   });
 
   it("opening the agent's window marks its done turn seen (the hub's seen route, then Quiet)", async () => {
@@ -493,7 +494,7 @@ describe("the agent faces say Agents and agent (Betterment AG1)", () => {
     await openLane(LANE_CUT.wire);
     // W3 AGENT WINDOW: the window's two faces are wings (Steps, Terminal).
     expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Steps", "Terminal"]);
-    expect(screen.getByTestId("lane-approve-well").querySelector(".lw-plate-label")?.textContent).toBe("Wants to run");
+    expect(screen.getByTestId("lane-approve-well").querySelector(".ask-well-state")?.textContent).toBe("Wants to run");
     expect(screen.getByTestId("lane-raw-cut").textContent).toBe("Terminal");
     // Tell it (was Re-brief) needs a live pane; laneWindow.c2.test.tsx drives it.
     expect(document.body.textContent).not.toMatch(OLD_WORDS);
@@ -787,11 +788,12 @@ describe("the Agents list is the fleet (Betterment AG8)", () => {
     expect(working.map((el) => el.querySelector("[data-col='project']")?.textContent))
       .toEqual(["Platform", "Ledger", "Ledger", "Platform"]);
     expect(pillOf("launch:launch_ag8_new")).toBe("Done · New");
-    expect(pillOf("launch:launch_ag8_quiet")).toBe("Quiet");
-    // The rig's agents lack their hooks: "On this Mac" shows (it shows only
-    // when something is missing), each with Connect.
-    expect([...document.querySelectorAll("[data-group='mac'] [data-testid='conductor-pill']")].map((el) => el.textContent))
-      .toEqual(["Not connected", "Not connected"]);   // Claude Code, Codex (pi: hooks not checked)
+    expect(pillOf("launch:launch_ag8_quiet")).toBe("Done");
+    // W4 AGENT 2: the tools are their own section, Installed, each with its
+    // state (the rig's agents lack their hooks).
+    expect([...document.querySelectorAll("[data-section='installed'] [data-testid='conductor-pill']")].map((el) => el.textContent))
+      .toEqual(["Not connected", "Not connected", "Hooks not checked"]);   // Claude Code, Codex, pi
+    expect(screen.getAllByTestId("conductor-section").map((el) => el.textContent)).toEqual(["Running", "Installed"]);
   });
 
   it("the Dock tile carries the worst lamp, the mark for New and the count that needs him", () => {

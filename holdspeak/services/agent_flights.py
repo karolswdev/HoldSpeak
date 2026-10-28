@@ -127,6 +127,22 @@ def _session_state(session: Any, now: datetime) -> str:
     return "working"
 
 
+def _pr_turn(session: Any, clock: datetime, responder_turn: Optional[str]) -> Optional[str]:
+    """How the bound session's turn ended while the launch's PR is open:
+    the responder's record of the current wait first, else ``done`` (a turn
+    that completed, or ended with no question: the open PR is the work) or
+    ``asks`` (a real question, a permission prompt); ``None`` while the
+    session works or is gone."""
+    if session is None:
+        return None
+    own = _session_state(session, clock)
+    if own == "done":
+        return responder_turn or "done"
+    if own == "waiting":
+        return responder_turn or _turn_end(session, "open")
+    return None
+
+
 def _turn_end(session: Any, pr_state: str) -> str:
     from ..agent_context.models import turn_end
 
@@ -215,7 +231,13 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
     responder_turn = _responder_turn(session_key, session) if state in ("waiting", "pr_open") else None
     if state == "waiting" and responder_turn == "done":
         state = "done"   # the responder read the turn end as a completion report
-    turn_id = _turn_id(session) if state == "done" else None
+    # W4 AGENT 2 (the done / Idle mismatch): with its PR open, the launch's
+    # agent can still end a turn. The lane reads that turn end with the open
+    # PR as work done (``launch_lane._wait``); the flight reads it the same
+    # way, so the Agents row and the agent's window say one word (Done), not
+    # Idle on one face and Done on the other.
+    pr_turn = _pr_turn(session, clock, responder_turn) if state == "pr_open" else None
+    turn_id = _turn_id(session) if state == "done" or pr_turn == "done" else None
     # Betterment AG7: the screen fills in where no hook speaks (herdr's
     # order: the hook first, then the rule, then No signal).
     screen_row, state_source, screen_turn = _screen(record, session, state, clock)
@@ -255,6 +277,10 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
     desk_answer = _desk_answer(record, session_key, session, clock)
     project_id, project_name = _project_of(db, kind, item_id)
     evidence = follow.get("evidence") or {}
+    turn_end_word = review_turn_end or ("done" if state == "done" else screen_end if state_source == "screen" else (
+        pr_turn if state == "pr_open"
+        else responder_turn or _turn_end(session, pr_state)
+    ) if state in ("waiting", "pr_open") else None)
     return {
         "origin_ref": ref,
         "kind": kind,
@@ -269,10 +295,13 @@ def _flight(db: Any, record: Mapping[str, Any], by_key: Mapping[str, Any], clock
         # PHILO-15 B48 (lane 14) and 15: the responder's record of the
         # current wait (done / idle: not the owner's) first, else the turn
         # end the session's last words read as.
-        "turn_end": review_turn_end or ("done" if state == "done" else screen_end if state_source == "screen" else (
-            responder_turn
-            or (_turn_end(session, pr_state) if state == "waiting" else None)
-        ) if state in ("waiting", "pr_open") else None),
+        "turn_end": turn_end_word,
+        # W4 AGENT 2 (slice 3): when a done turn ended (the bound session's
+        # last report; the screen's read when the screen decided).
+        "done_at": (
+            (screen_row.since.isoformat() if state_source == "screen" and screen_row is not None else None)
+            or (_field(session, "updated_at") if session is not None else None)
+        ) if turn_end_word == "done" else None,
         # Betterment AG7/AG12: which source decided the state (``hook``,
         # ``screen``, ``review``) and the screen's own read (its prompt's command and
         # choices, the rule), for the faces and "Why this state".
@@ -525,7 +554,9 @@ def launch_history(
     ledger, by_key, clock = _registry(db, sessions, ledger, now)
     out: list[tuple[datetime, dict[str, Any]]] = []
     for record in ledger.list():
-        if not _launched(record):
+        # W4 AGENT 2 (slice 3): the owner removed this ended launch from the
+        # list (``removed_at``; the record stays on the ledger).
+        if not _launched(record) or record.get("removed_at"):
             continue
         flight = _flight(db, record, by_key, clock)
         if flight["state"] in _IN_FLIGHT or (flight["state"] == "merged" and flight["close"] == "awaiting_confirm"):
@@ -640,6 +671,23 @@ def explain_agent(db: Any, target: str, *, ledger: Any = None, sessions: Optiona
             "launch_id": None, "session_key": target}
 
 
+def remove_ended_launch(db: Any, launch_id: str, *, ledger: Any = None, now: Optional[datetime] = None) -> dict[str, Any]:
+    """W4 AGENT 2 (slice 3): take an ENDED launch off the Agents list. The
+    record stays on the ledger with ``removed_at`` (never deleted); a launch
+    still in flight is refused (``in_flight``), an unknown one is
+    ``unknown``."""
+    ledger, by_key, clock = _registry(db, None, ledger, now)
+    record = ledger.get(launch_id)
+    if not record or not _launched(record):
+        return {"launch_id": launch_id, "removed": False, "reason": "unknown"}
+    flight = _flight(db, record, by_key, clock)
+    if flight["state"] in _IN_FLIGHT or (flight["state"] == "merged" and flight["close"] == "awaiting_confirm"):
+        return {"launch_id": launch_id, "removed": False, "reason": "in_flight", "state": flight["state"]}
+    stamp = record.get("removed_at") or clock.isoformat().replace("+00:00", "Z")
+    ledger.update(launch_id, removed_at=stamp)
+    return {"launch_id": launch_id, "removed": True, "removed_at": stamp}
+
+
 def annotate_sessions(items: list[dict[str, Any]], flights: list[dict[str, Any]]) -> None:
     """Each session row that a flight names gets ``flight`` (its item)."""
     by_session = {f["session_key"]: f for f in flights if f.get("session_key")}
@@ -651,4 +699,4 @@ def annotate_sessions(items: list[dict[str, Any]], flights: list[dict[str, Any]]
             row["flight"] = flight
 
 
-__all__ = ["STOPPED_BY_RESTART", "agent_flights", "annotate_sessions", "explain_agent", "flight_of_launch", "slot_holders"]
+__all__ = ["STOPPED_BY_RESTART", "agent_flights", "remove_ended_launch", "annotate_sessions", "explain_agent", "flight_of_launch", "slot_holders"]

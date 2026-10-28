@@ -1230,6 +1230,11 @@ button.surface-edit-in-place:hover {
   font: 600 15px / 1.3 var(--font-display);
   color: var(--wb-ink);
 }
+.surface-state-hint {
+  margin-top: -4px;
+  font: 400 12px / 1.4 var(--font-sans);
+  color: var(--text-muted);
+}
 .surface-state-verb {
   margin-top: 2px;
 }

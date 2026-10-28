@@ -216,6 +216,7 @@ export function SurfaceState({
   error,
   empty,
   emptyLabel = "Nothing yet",
+  emptyHint,
   emptyGlyph = "○",
   emptyImage,
   emptyKind,
@@ -230,6 +231,10 @@ export function SurfaceState({
   error?: string;
   empty?: boolean;
   emptyLabel?: string;
+  /** W4-REDS-C (2026-10-27): an optional second quiet line under the
+   *  object empty state — what to do to make the first row appear
+   *  ("Nothing learned yet" + "Press Wrong on a phrase to teach a fix"). */
+  emptyHint?: string;
   emptyGlyph?: string;
   /** A pixel-sprite URL — the world's own objects carry the empty
    * state (wins over the glyph). */
@@ -288,6 +293,7 @@ export function SurfaceState({
           <img className="surface-state-sprite" src={emptyImage} alt="" draggable={false} />
         </span>
         <span className="surface-state-line">{emptyLabel}</span>
+        {emptyHint ? <span className="surface-state-hint">{emptyHint}</span> : null}
         {onAction && actionLabel ? (
           <Button dense variant="secondary" className="surface-state-verb" onClick={onAction}>
             {actionLabel}

@@ -442,6 +442,27 @@ def build_agent_hand_router(ctx: WebContext) -> APIRouter:
             )
         return JSONResponse(result, status_code=202 if result.get("status") == "launched" else 409)
 
+    @router.post("/api/agent/launches/{launch_id}/remove")
+    async def api_agent_launch_remove(launch_id: str, request: Request) -> Any:
+        """W4 AGENT 2 (slice 3): Remove an ended launch from the Agents list
+        (``removed_at`` on the launch; the record stays). Owner only. 200 when
+        removed; 409 for a launch still in flight; 404 for an unknown one."""
+        from ...db import get_database
+        from ...services.agent_flights import remove_ended_launch
+
+        principal = getattr(request.state, "principal", Principal(PrincipalKind.OWNER, "owner-session"))
+        if getattr(principal, "kind", None) is not PrincipalKind.OWNER:
+            return JSONResponse({"error": "owner_required", "code": "owner_required"}, status_code=403)
+
+        try:
+            result = await asyncio.to_thread(remove_ended_launch, get_database(), launch_id)
+        except Exception as exc:
+            log.error(f"launch remove failed: {exc}")
+            return JSONResponse({"error": "launch_remove_failed"}, status_code=500)
+        if result.get("removed"):
+            return JSONResponse(result)
+        return JSONResponse(result, status_code=404 if result.get("reason") == "unknown" else 409)
+
     @router.post("/api/agent/launches/{launch_id}/resume")
     async def api_agent_resume(launch_id: str, request: Request) -> Any:
         """Betterment AG6: Resume an agent a restart stopped: a new terminal

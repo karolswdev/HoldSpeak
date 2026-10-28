@@ -222,6 +222,23 @@ def test_the_claude_rider_reports_file_changes_after_each_tool() -> None:
     assert set(matcher.split("|")) >= {"Bash", "Edit", "Write", "MultiEdit", "NotebookEdit"}
 
 
+def test_a_test_run_keeps_its_counts_and_never_its_output() -> None:
+    """W4 AGENT 2 (slice 3): the step says the run's result ("6 passed")."""
+    row = event_log.event_row({
+        "hook_event_name": "PostToolUse", "tool_name": "Bash", "tool_input": {"command": "pytest -q"},
+        "tool_response": {"stdout": "....F.\nsecret=abc line\n1 failed, 5 passed in 0.42s\n", "stderr": ""},
+    })
+    assert row["detail"]["result"] == "1 failed, 5 passed"
+    assert "secret" not in str(row)
+    vitest = event_log.run_result({"stdout": " Test Files  1 passed (1)\n      Tests  6 passed (6)\n"})
+    assert vitest == "6 passed"
+    assert event_log.run_result({"stdout": "built in 2s"}) is None
+    assert event_log.run_result(None) is None
+    plain = event_log.event_row({"hook_event_name": "PostToolUse", "tool_name": "Read", "tool_input": {"file_path": "a.py"},
+                                 "tool_response": {"stdout": "6 passed"}})
+    assert "result" not in plain["detail"]
+
+
 def test_codex_apply_patch_head_names_the_files() -> None:
     patch = "*** Begin Patch\n*** Update File: src/a.py\n@@\n-x\n+y\n*** Add File: src/b.py\n+z\n*** End Patch"
     assert event_log.tool_head("apply_patch", {"command": patch}) == "src/a.py, src/b.py"
