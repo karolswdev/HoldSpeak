@@ -213,6 +213,17 @@ class RuntimeServices:
                 memory_conductor.wake([(change[0], change[1]) for change in changes])
             except Exception:  # pragma: no cover - a wake never fails a write
                 pass
+            # PERF-DOCK (2026-10-28): a write that is not only window placement
+            # marks the cached Needs you dirty BEFORE the frame goes, so the
+            # browser's plain read after the frame rebuilds it. The browser no
+            # longer forces a rebuild (``?fresh=1``) on each frame.
+            if self.db is not None and any(change[0] != "windows" for change in changes):
+                try:
+                    from holdspeak.services.needs_you_aggregate import mark_needs_you_dirty
+
+                    mark_needs_you_dirty(self.db)
+                except Exception:  # pragma: no cover - a marker never fails a write
+                    pass
         if self.broadcast is None or not changes:
             return
         unique = list(dict.fromkeys(changes))

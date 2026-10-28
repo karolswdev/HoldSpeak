@@ -1017,3 +1017,36 @@ class TestDirtyMarkerCache:
 
         bridge.dismiss_proposal(OWNER, created[0].id)
         assert _read_dirty_at(db) is not None
+
+    def test_desk_change_marks_dirty_but_a_window_change_does_not(self, db: Database) -> None:
+        """PERF-DOCK 2026-10-28: the browser no longer forces a rebuild on a
+        frame; the hub marks the cache dirty for every desk change that is not
+        only window placement, before the frame goes."""
+        from holdspeak.runtime.composition import RuntimeServices
+        from holdspeak.services.needs_you_aggregate import _read_dirty_at
+
+        frames: list[dict] = []
+        root = RuntimeServices(db=db, broadcast=lambda kind, data: frames.append(data))
+        root._send_desk_changed([("windows", "today", "open", "hub")])
+        assert _read_dirty_at(db) is None
+        assert frames and frames[0]["kind"] == "windows"
+
+        root._send_desk_changed([("windows", "today", "close", "hub"), ("project_item", "i1", "update", "hub")])
+        assert _read_dirty_at(db) is not None
+
+    def test_write_during_a_build_rebuilds_on_the_next_read(self, db: Database) -> None:
+        """A dirty mark written while a build runs is newer than that build."""
+        from holdspeak.services.needs_you_aggregate import NeedsYouCache, mark_needs_you_dirty
+
+        calls = {"n": 0}
+
+        def builder() -> dict:
+            calls["n"] += 1
+            if calls["n"] == 1:
+                mark_needs_you_dirty(db)  # a write lands mid-build
+            return {"items": [], "n": calls["n"]}
+
+        cache = NeedsYouCache(builder, db_factory=lambda: db)
+        assert cache.get()["n"] == 1
+        assert cache.get()["n"] == 2
+        assert cache.get()["n"] == 2
