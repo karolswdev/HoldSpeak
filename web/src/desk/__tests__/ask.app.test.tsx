@@ -20,6 +20,8 @@ import THREAD from "../../test/wire/ask.thread.wire.json";
 import NOTE_WIRE from "../../test/wire/notes-create.wire.json";
 import TOOLS from "../../test/wire/ask.tools.wire.json";
 import HOLD from "../../test/wire/ask.hold.wire.json";
+import STREAM from "../../test/wire/ask.stream.wire.json";
+import NO_ENGINE from "../../test/wire/ask.no-engine.wire.json";
 import { verbById } from "../verbRegistry";
 import { durableDraftKey } from "../../lib/durableDraft";
 
@@ -964,8 +966,8 @@ describe("Betterment Q7: Ask my whole desk", () => {
  * References as rows that open, a fresh Ask offers questions from this
  * desk, an Ask that did not answer says why in one line with one verb, and
  * the Recent rail folds. The answers are the recorded thread wire
- * (ask.thread.wire.json); the no-engine refusal uses the hub's reason token
- * in the shape the source-changed case above replays. */
+ * (ask.thread.wire.json); the no-engine refusal is the hub's recorded 409
+ * (ask.no-engine.wire.json). */
 describe("Ask D1: the question at the top", () => {
   beforeEach(() => {
     hubWithThread();
@@ -1042,7 +1044,7 @@ describe("Ask D1: the question at the top", () => {
       const method = String(init.method ?? "GET");
       calls.push({ url, method, body: init.body ? JSON.parse(String(init.body)) : undefined });
       return Promise.resolve(method === "POST" && url.endsWith("/api/ask")
-        ? reply({ error: "No engine", reason: "no_engine" }, 409)
+        ? reply(NO_ENGINE.refusal, NO_ENGINE.status)
         : reply({}));
     }));
     render(<AskPanel />);
@@ -1104,5 +1106,135 @@ describe("Ask D1: the question at the top", () => {
     expect(await within(rail).findByRole("button", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
     expect(within(rail).queryByRole("button", { name: /A specialist chat/ })).toBeNull();
     expect(within(rail).queryByRole("button", { name: /A recipe run/ })).toBeNull();
+  });
+});
+
+/* ── Ask hub gaps (canvas ask-direction-2026-10-27) ───────────────────────
+ *
+ * The hub half is tests/unit/test_desk_ask.py
+ * ::test_an_answer_arrives_as_text_frames_and_a_closed_window_claims_it_back.
+ * It records the `ask_text` frames as the engine writes, the run while it
+ * writes, the answer with its references' facts and its claims by record, the
+ * run once answered and the thread read (web/src/test/wire/ask.stream.wire.json;
+ * HOLDSPEAK_WIRE_WRITE=1 rewrites it). */
+describe("Ask hub gaps: words arrive, references say their facts, claims are kept, a slow ask comes back", () => {
+  const INVOCATION = STREAM.running.runs[0].invocation_id;
+  const STREAM_TID = STREAM.answer.thread_id;
+  let runsReplies: unknown[] = [];
+
+  function hubWithStream(askAnswer: () => Promise<Response> = () => new Promise<Response>((resolve) => { answerAsk = () => resolve(reply(STREAM.answer)); })) {
+    vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET");
+      calls.push({ url, method, body: init.body ? JSON.parse(String(init.body)) : undefined });
+      if (method === "POST" && url.endsWith("/api/ask")) return askAnswer();
+      if (method === "GET" && url.includes("/api/ask/runs")) return Promise.resolve(reply(runsReplies.length > 1 ? runsReplies.shift() : runsReplies[0] ?? { runs: [] }));
+      if (method === "GET" && url.endsWith("/api/threads")) return Promise.resolve(reply({ threads: [] }));
+      if (method === "GET" && url.endsWith(`/api/threads/${STREAM_TID}`)) return Promise.resolve(reply(STREAM.thread));
+      return Promise.resolve(reply({}));
+    }));
+  }
+
+  beforeEach(() => {
+    runsReplies = [];
+    vi.spyOn(crypto, "randomUUID").mockReturnValue("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+    useDesk.setState({ items: EMPTY_ITEMS, selectedIds: [], askThread: null });
+  });
+
+  it("the answer's words arrive under the question while the status bar counts with Stop", async () => {
+    hubWithStream();
+    render(<AskPanel />);
+    fireEvent.change(askBox(), { target: { value: "What do I owe Mira, and when is the freeze?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(answerAsk).not.toBeNull());
+    expect(screen.getByTestId("run-line")).toHaveTextContent("Reading your desk");
+    act(() => deliver("ask_text", STREAM.frames[0]));
+    const arriving = screen.getByTestId("ask-arriving");
+    expect(arriving).toHaveTextContent("You owe Mira feedback on her cutover design doc, due Friday.");
+    expect(screen.queryByTestId("run-line")).toBeNull();
+    expect(screen.getByTestId("ask-status")).toHaveTextContent("Writing the answer");
+    expect(within(screen.getByTestId("ask-status")).getByRole("button", { name: "Stop" })).toBeInTheDocument();
+    // A frame of another ask changes nothing here.
+    act(() => deliver("ask_text", { invocation_id: "ask_other", text: "Not this one" }));
+    expect(screen.getByTestId("ask-arriving")).not.toHaveTextContent("Not this one");
+    await act(async () => { answerAsk?.(); });
+    await screen.findByTestId("ask-turn");
+    expect(screen.queryByTestId("ask-arriving")).toBeNull();
+  });
+
+  it("references say the hub's facts: the decision's state, the note's time", async () => {
+    hubWithStream(() => Promise.resolve(reply(STREAM.answer)));
+    render(<AskPanel />);
+    fireEvent.change(askBox(), { target: { value: "What do I owe Mira, and when is the freeze?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const refs = within(await screen.findByTestId("ask-turn")).getByTestId("ask-looked-at");
+    expect(within(refs).getByRole("button", { name: /Freeze the old ledger on Nov 5/ })).toHaveTextContent("Accepted");
+    expect(within(refs).getByRole("button", { name: /1:1 with Mira/ })).toHaveTextContent(/Note · /);
+  });
+
+  it("'Grounded in 2 records' opens the claims and the record that supports each", async () => {
+    hubWithStream(() => Promise.resolve(reply(STREAM.answer)));
+    render(<AskPanel />);
+    fireEvent.change(askBox(), { target: { value: "What do I owe Mira, and when is the freeze?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    const turn = await screen.findByTestId("ask-turn");
+    const word = within(turn).getByRole("button", { name: "Grounded in 2 records" });
+    expect(word).toHaveAttribute("aria-expanded", "false");
+    expect(within(turn).queryByTestId("ask-claims")).toBeNull();
+    fireEvent.click(word);
+    const claims = within(turn).getByTestId("ask-claims");
+    const rows = within(claims).getAllByRole("listitem");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent("You owe Mira feedback on her cutover design doc, due Friday.");
+    expect(within(rows[0]).getByRole("button", { name: /1:1 with Mira/ })).toBeInTheDocument();
+    expect(within(rows[1]).getByRole("button", { name: /Freeze the old ledger on Nov 5/ })).toBeInTheDocument();
+  });
+
+  it("closing the window leaves the ask running; Recent shows it Writing…, and its answer lands", async () => {
+    hubWithStream();
+    const first = render(<AskPanel />);
+    fireEvent.change(askBox(), { target: { value: "What do I owe Mira, and when is the freeze?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await waitFor(() => expect(answerAsk).not.toBeNull());
+    first.unmount();
+    // The hub is not told to stop: only Stop ends a run.
+    expect(calls.some((c) => c.url.endsWith("/cancel"))).toBe(false);
+
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      runsReplies = [STREAM.running, STREAM.answered];
+      render(<AskPanel />);
+      const rail = screen.getByTestId("ask-recent");
+      const row = await within(rail).findByRole("button", { name: /What do I owe Mira, and when is the freeze\?/ });
+      expect(row).toHaveTextContent("Writing…");
+      fireEvent.click(row);
+      expect(screen.getByTestId("ask-arriving")).toHaveTextContent("You owe Mira feedback");
+      expect(screen.getByTestId("ask-status")).toHaveTextContent("Writing the answer");
+      await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
+      // Answered: the thread the hub kept opens here, with its claims kept.
+      const turn = await screen.findByTestId("ask-turn");
+      expect(turn).toHaveTextContent("We freeze the old ledger on Nov 5");
+      expect(within(turn).getByRole("button", { name: "Grounded in 2 records" })).toBeInTheDocument();
+      expect(within(turn).getByRole("button", { name: /Freeze the old ledger on Nov 5/ })).toHaveTextContent("Accepted");
+      expect(within(screen.getByTestId("ask-recent")).queryByText("Writing…")).toBeNull();
+      expect(localStorage.getItem("holdspeak.ask.pending")).toBe("[]");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("an ask the hub could not answer reads as the one-line not answered", async () => {
+    localStorage.setItem("holdspeak.ask.pending", JSON.stringify([{ invocationId: INVOCATION, question: "What do I owe Mira, and when is the freeze?", threadId: "", startedAt: Date.now() - 5000 }]));
+    // The hub was restarted: it does not hold this run.
+    runsReplies = [{ runs: [{ invocation_id: INVOCATION, state: "unknown", reason: "did_not_answer" }] }];
+    hubWithStream();
+    render(<AskPanel />);
+    const row = await within(screen.getByTestId("ask-recent")).findByRole("button", { name: /What do I owe Mira/ });
+    await waitFor(() => expect(row).toHaveTextContent("Not answered"));
+    fireEvent.click(row);
+    const line = await screen.findByTestId("ask-not-answered");
+    expect(line).toHaveTextContent("The engine did not answer.");
+    expect(within(line).getAllByRole("button")).toHaveLength(1);
+    expect(within(screen.getByTestId("ask-recent")).queryByRole("button", { name: /What do I owe Mira/ })).toBeNull();
   });
 });

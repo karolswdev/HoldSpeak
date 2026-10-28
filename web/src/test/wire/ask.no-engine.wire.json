@@ -1,0 +1,49 @@
+{
+ "_source": "The hub's own answers, captured by tests/unit/test_desk_ask.py::test_the_no_engine_refusal_is_recorded_for_the_face (MeetingWebServer + TestClient, isolated HOME, the browser rigs' seeds). HOLDSPEAK_WIRE_WRITE=1 rewrites this file; never hand-edit a field a test reads.",
+ "status": 409,
+ "refusal": {
+  "error": "not set up: Set up local AI downloads this model",
+  "code": "inference_target_unavailable",
+  "inference_target": {
+   "version": 1,
+   "id": "this_machine",
+   "profile_id": null,
+   "name": "This device",
+   "kind": "this_device",
+   "boundary": "same_device",
+   "owner": "you",
+   "transport": "in_process",
+   "data_scope": {
+    "sent": [
+     "instruction",
+     "selected_context",
+     "grounding"
+    ],
+    "returned": [
+     "generated_output"
+    ]
+   },
+   "engine": "configured_local_engine",
+   "model": "Qwen3.5-4B-Q4_K_M",
+   "context_limit": 16384,
+   "readiness": {
+    "state": "unavailable",
+    "available": false,
+    "reason": "not set up: Set up local AI downloads this model",
+    "recovery": {
+     "reason": "not set up: Set up local AI downloads this model",
+     "action": "choose_alternate_target",
+     "alternate_target_id": "this_machine"
+    }
+   },
+   "secret": {
+    "required": false,
+    "present": false
+   },
+   "endpoint": "",
+   "node": ""
+  },
+  "alternate_target_id": "this_machine",
+  "reason": "no_engine"
+ }
+}

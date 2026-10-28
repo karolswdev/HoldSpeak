@@ -148,7 +148,7 @@ def test_a_tool_engine_ask_looks_at_the_1on1_and_writes_the_task_with_undo(hub, 
     assert {"meeting.get", "memory.page", "door.add_item", "channel.prepare"} <= offered
     assert not offered & {"channel.send", "settings.update", "inference_assignment.set", "agent.hand"}
     # Looked at: the 1:1, by its name.
-    assert {"ref": "meeting:m-mira-1on1", "title": "1:1 with Mira"} in body["looked_at"], body["looked_at"]
+    assert ("meeting:m-mira-1on1", "1:1 with Mira") in {(row["ref"], row["title"]) for row in body["looked_at"]}, body["looked_at"]
     # Wrote: the task, with Undo; the task is on the desk with its date.
     [task] = _action_items(hub.db)
     assert task["due"] == "2026-10-23" and task["status"] == "open", task
@@ -212,7 +212,7 @@ def test_a_held_call_waits_for_his_press_and_deny_writes_nothing(hub, monkeypatc
     body = result["response"].json()
     assert _action_items(hub.db) == []
     assert body["used"].get("wrote", []) == []
-    assert {"ref": "meeting:m-mira-1on1", "title": "1:1 with Mira"} in body["looked_at"]
+    assert ("meeting:m-mira-1on1", "1:1 with Mira") in {(row["ref"], row["title"]) for row in body["looked_at"]}
 
     from tests.unit.test_desk_speak import _record
 
@@ -294,7 +294,7 @@ def test_a_cli_engine_ask_records_reads_writes_and_a_prepared_send(real_hub: str
     assert _ok(real_hub, "GET", "/api/settings") == settings_before
     assert list(folder.iterdir()) == []  # prepared only: nothing left the desk
 
-    assert {"ref": "meeting:m-mira-1on1", "title": "1:1 with Mira"} in body["looked_at"], body["looked_at"]
+    assert ("meeting:m-mira-1on1", "1:1 with Mira") in {(row["ref"], row["title"]) for row in body["looked_at"]}, body["looked_at"]
     [wrote] = body["used"]["wrote"]
     assert wrote["ref"].startswith("action_item:") and wrote["undo"] is True, wrote
     assert wrote["label"] == "Give Mira feedback on the cutover design doc"

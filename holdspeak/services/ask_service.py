@@ -148,6 +148,178 @@ class _AskAnswerAdapter:
         return self._inner.cancel()
 
 
+class _TextFrames:
+    """Ask hub gap 1: the words so far, at most every
+    :data:`TEXT_FRAME_SECONDS`; words held back by that gap are sent when it
+    ends, so a stream that pauses never hides its last words."""
+
+    def __init__(self, say: Callable[[str], None]) -> None:
+        import threading
+
+        self._say, self._lock = say, threading.Lock()
+        self._said_at, self._latest, self._sent, self._timer = 0.0, "", None, None
+
+    def _send(self) -> None:
+        with self._lock:
+            self._timer = None
+            text = self._latest
+            if text == self._sent:
+                return
+            self._sent, self._said_at = text, time.monotonic()
+        try:
+            self._say(text)
+        except Exception:  # a text frame is never a gate
+            pass
+
+    def feed(self, text: str) -> None:
+        import threading
+
+        with self._lock:
+            self._latest = text
+            wait = TEXT_FRAME_SECONDS - (time.monotonic() - self._said_at)
+            if wait > 0:
+                if self._timer is None:
+                    self._timer = threading.Timer(wait, self._send)
+                    self._timer.daemon = True
+                    self._timer.start()
+                return
+        self._send()
+
+    def finish(self, text: str) -> None:
+        with self._lock:
+            self._latest = text
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
+        self._send()
+
+
+class _AskStreamAdapter:
+    """Ask hub gap 1: the answer's words reach the face as the engine writes them.
+
+    The hub's own engine (``MeetingIntel`` and its CLI twin) is read through
+    ``run_prompt_stream``, the meeting engine's streaming path, delta by
+    delta; ``on_text`` gets the text so far, at most every
+    :data:`TEXT_FRAME_SECONDS` and once at the end.  Any other engine answers
+    through the canonical adapter in one piece, and ``on_text`` gets it once.
+    The dispatch result has the canonical shape: the runner, its receipts and
+    its retries see no difference."""
+
+    connector_id = "inference-provider"
+
+    def __init__(self, inner: Any, on_text: Callable[[str], None]) -> None:
+        self._inner = inner
+        self._on_text = on_text
+
+    def cancel(self) -> str:
+        return self._inner.cancel()
+
+    def dispatch(self, engine: Any, payload: dict[str, Any], cancellation: Any) -> dict[str, str]:
+        # The hub's own engine class has the streaming seam; a test double or
+        # a relay engine (mesh) answers in one piece.
+        streams = callable(getattr(engine, "_chat_completion_deltas", None)) and callable(getattr(engine, "run_prompt_stream", None))
+        if not streams or payload.get("response_format") is not None:
+            result = self._inner.dispatch(engine, payload, cancellation)
+            _TextFrames(self._on_text).finish(str(result.get("output") or ""))
+            return result
+        from ..constitutional_context import constitutional_system_message
+        from ..intel.models import MeetingIntelError
+
+        messages: list[dict[str, str]] = []
+        constitutional = constitutional_system_message()
+        if constitutional:
+            messages.append({"role": "system", "content": constitutional})
+        if payload.get("system_prompt"):
+            messages.append({"role": "system", "content": str(payload["system_prompt"])})
+        messages.append({"role": "user", "content": str(payload["user_prompt"])})
+        parts: list[str] = []
+        frames = _TextFrames(self._on_text)
+        for delta in engine.run_prompt_stream(
+            messages=messages, temperature=payload.get("temperature"), max_tokens=payload.get("max_tokens"),
+        ):
+            if cancellation is not None and cancellation.is_set():
+                break
+            kind = getattr(delta, "kind", "")
+            if kind == "text" and delta.text:
+                parts.append(str(delta.text))
+                frames.feed("".join(parts))
+            elif kind == "usage" and hasattr(engine, "_record_usage"):
+                engine._record_usage(dict(delta.meta))
+            elif kind == "error":
+                # The same failure ``run_prompt`` raises for a failed call.
+                raise MeetingIntelError(f"Persona run failed: {delta.text}")
+        text = "".join(parts)
+        frames.finish(text)
+        return {"output": text, "provider": str(getattr(engine, "active_provider", "")),
+                "model": str(getattr(engine, "active_model", "") or getattr(engine, "model", ""))}
+
+
+#: Ask hub gap 1: the shortest gap between two ``ask_text`` frames of one Ask.
+TEXT_FRAME_SECONDS = 0.15
+
+#: Ask hub gap 5: the asks this hub runs or ran lately, by invocation id, so
+#: a window that closed (or a page that reloaded) while one ran can claim it
+#: back.  It lives as long as the hub process: an Ask dies with the hub, and a
+#: run the hub does not know reads as not answered.
+_RUNS: dict[str, dict[str, Any]] = {}
+_RUNS_KEPT = 64
+_RUN_SETTLED_KEEP_SECONDS = 3600.0
+
+
+def run_started(invocation_id: str, question: str, thread_id: str = "") -> None:
+    now = time.time()
+    for key, row in list(_RUNS.items()):
+        if row["state"] != "running" and now - float(row.get("settled") or now) > _RUN_SETTLED_KEEP_SECONDS:
+            _RUNS.pop(key, None)
+    while len(_RUNS) >= _RUNS_KEPT:
+        _RUNS.pop(next(iter(_RUNS)))
+    _RUNS[invocation_id] = {"invocation_id": invocation_id, "question": thread_title(question),
+                            "thread_id": thread_id, "state": "running", "started_at": now, "text": ""}
+
+
+def run_text(invocation_id: str, text: str) -> None:
+    row = _RUNS.get(invocation_id)
+    if row is not None and row["state"] == "running":
+        row["text"] = text
+
+
+def run_settled(invocation_id: str, *, thread_id: str = "", answer_id: str = "", reason: str = "") -> None:
+    row = _RUNS.get(invocation_id)
+    if row is None:
+        return
+    row.update(state="failed" if reason else "answered", settled=time.time())
+    if thread_id:
+        row["thread_id"] = thread_id
+    if answer_id:
+        row["answer_id"] = answer_id
+    if reason:
+        row["reason"] = reason
+        row["text"] = ""
+
+
+def runs(ids: Sequence[str]) -> list[dict[str, Any]]:
+    """Each named Ask as the face reads it; ``unknown`` for one this hub does not hold."""
+    out: list[dict[str, Any]] = []
+    for raw in ids:
+        key = str(raw or "").strip()
+        if not key:
+            continue
+        row = _RUNS.get(key)
+        if row is None:
+            out.append({"invocation_id": key, "state": "unknown", "reason": "did_not_answer"})
+            continue
+        view = {k: v for k, v in row.items() if k not in {"settled"} and v not in ("", None)}
+        view["started_at"] = local_iso(row["started_at"])
+        out.append(view)
+    return out
+
+
+def local_iso(epoch: float) -> str:
+    from datetime import datetime, timezone
+
+    return datetime.fromtimestamp(epoch, tz=timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 #: Betterment Q4: how much of a thread a follow-up carries.
 _HISTORY_EXCHANGES = 6
 _HISTORY_TEXT_CAP = 1500
@@ -175,6 +347,92 @@ def _with_tool_reads(looked: list[dict[str, str]], used: dict[str, Any]) -> list
             seen.add(ref)
             rows.append({"ref": ref, "title": readable_title(ref, str(row.get("label") or ""))})
     return rows
+
+
+#: Ask hub gap 2: the facts a reference row says, per desk kind:
+#: (title, time, state) from the record itself.
+_FACT_SQL = {
+    "meeting": "SELECT title, started_at AS at, NULL AS state FROM meetings WHERE id=?",
+    "note": "SELECT title, updated_at AS at, NULL AS state FROM notes WHERE id=? AND deleted=0",
+    "decision": "SELECT title, updated_at AS at, status AS state FROM desk_decisions WHERE id=? AND deleted=0",
+    "desk_decision": "SELECT title, updated_at AS at, status AS state FROM desk_decisions WHERE id=? AND deleted=0",
+    "decision_record": "SELECT decision_text AS title, updated_at AS at, lifecycle AS state FROM decision_records WHERE id=? AND deleted=0",
+    "project": "SELECT name AS title, updated_at AS at, NULLIF(lifecycle, 'active') AS state FROM projects WHERE id=?",
+    "action_item": "SELECT task AS title, created_at AS at, status AS state FROM action_items WHERE id=?",
+    "artifact": "SELECT title, updated_at AS at, status AS state FROM artifacts WHERE id=?",
+}
+
+
+def reference_facts(db: Database, rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Each looked-at row as ``{ref, title, kind, at?, state?}``.
+
+    A desk record says its own facts (a meeting's date, a note's modified
+    time, a decision's state, a project's name).  A tool read with no local
+    record keeps the state and time its tool returned (``run_trace``)."""
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        ref = str(row.get("ref") or "")
+        kind, _, rid = ref.partition(":")
+        rid = rid.split("#", 1)[0]
+        fact: dict[str, Any] = {"ref": ref, "title": str(row.get("title") or ""), "kind": kind}
+        for key in ("at", "state"):
+            if row.get(key):
+                fact[key] = str(row[key])
+        sql = _FACT_SQL.get(kind)
+        if sql and rid:
+            try:
+                with db._connection() as conn:
+                    record = conn.execute(sql, (rid,)).fetchone()
+            except Exception:
+                record = None
+            if record is not None:
+                if record["at"]:
+                    fact["at"] = str(record["at"])
+                if record["state"]:
+                    fact["state"] = str(record["state"])
+                if fact["title"] == _KIND_WORDS.get(kind) and record["title"]:
+                    fact["title"] = readable_title(ref, str(record["title"]))
+        out.append(fact)
+    return out
+
+
+#: Ask hub gap 3: a claim names the record that supports it best when the
+#: support is at least partial.
+def claims_by_record(db: Database, answer: str, rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    """The answer's claims, each with the looked-at record that supports it.
+
+    Each record's own text is read again (the grounding hydrator) and every
+    claim is scored against it; a claim no record supports keeps no ref.
+    The hub sends no text offsets, so the face shows a list, not marks."""
+    from ..grounding import classify_support, decompose_claims, entailment_score
+
+    claims = decompose_claims(str(answer or ""))
+    if not claims or not rows:
+        return []
+    texts: list[tuple[dict[str, Any], str]] = []
+    for row in rows:
+        ref = str(row.get("ref") or "")
+        try:
+            blocks, *_rest = hydrate_grounding_blocks(db, [], [], "summary", qualified_refs=[ref])
+        except Exception:
+            blocks = []
+        text = "\n".join(blocks)
+        if text.strip():
+            texts.append((row, text))
+    out: list[dict[str, Any]] = []
+    for claim in claims:
+        best: tuple[float, dict[str, Any] | None] = (0.0, None)
+        for row, text in texts:
+            score = entailment_score(claim, text)
+            if score > best[0]:
+                best = (score, row)
+        label = classify_support(best[0])
+        entry: dict[str, Any] = {"text": claim, "score": round(best[0], 3), "label": label, "flagged": label != "entailed"}
+        if best[1] is not None and label != "unsupported":
+            entry["ref"] = str(best[1]["ref"])
+            entry["title"] = str(best[1].get("title") or "")
+        out.append(entry)
+    return out
 
 
 def thread_title(question: str) -> str:
@@ -225,7 +483,7 @@ def _containers_as_refs(context: list[dict[str, Any]]) -> tuple[list[dict[str, A
 class AskService:
     def __init__(self, db: Database, hub_model: Callable[[], str] | None = None,
                  broadcast: Callable[..., None] | None = None,
-                 rails_hydrator: Callable[[list[dict[str, Any]], Principal], tuple[list[Any], list[str]]] | None = None, *, observer: PipelineObserver | None = None, broker: Any = None, progress: Callable[[dict[str, Any]], None] | None = None, thread_service: Callable[..., Any] | None = None) -> None:
+                 rails_hydrator: Callable[[list[dict[str, Any]], Principal], tuple[list[Any], list[str]]] | None = None, *, observer: PipelineObserver | None = None, broker: Any = None, progress: Callable[[dict[str, Any]], None] | None = None, thread_service: Callable[..., Any] | None = None, text: Callable[[dict[str, Any]], None] | None = None) -> None:
         if broker is None:
             from ..kernel.runtime import _service
             broker = _service()
@@ -248,16 +506,33 @@ class AskService:
         # Betterment Q7: builds the ThreadService whose tool loop answers an
         # Ask on an HTTP engine that takes tool calls (None: no loop here).
         self._thread_service = thread_service
+        # Ask hub gap 1: the ``ask_text`` frames of one running Ask (its
+        # words so far), keyed by its invocation id.
+        self._text = text
         # Cancellation must reach the SAME runner instance whose in-process
         # registry holds the in-flight invocation, across per-request service
         # constructions: the runner is the broker-owned singleton, and the
         # acting principal rides the kernel `_as_principal` context.
         self._runner = self._broker.inference_runner
 
-    def _invoke(self, principal: Principal, request: InvocationRequest, *, publish: Any) -> Any:
+    def _invoke(self, principal: Principal, request: InvocationRequest, *, publish: Any, adapter: Any = None) -> Any:
         from ..kernel.runtime import _as_principal
         with _as_principal(principal):
-            return self._runner.invoke(request, CanonicalPromptAdapter(), publish=publish)
+            return self._runner.invoke(request, adapter or CanonicalPromptAdapter(), publish=publish)
+
+    def send_text(self, invocation_id: str, text: str) -> None:
+        """Ask hub gap 1: one ``ask_text`` frame (the answer's words so far)."""
+        run_text(invocation_id, text)
+        if self._text is None:
+            return
+        try:
+            self._text({"invocation_id": invocation_id, "text": text})
+        except Exception:  # a text frame is never a gate
+            pass
+
+    def _answer_adapter(self, invocation_id: str) -> Any:
+        """The Ask answer's dispatch: streamed to the face when anyone listens."""
+        return _AskStreamAdapter(CanonicalPromptAdapter(), lambda text: self.send_text(invocation_id, text))
 
     def list_models(self, principal: Principal) -> list[dict[str, Any]]:
         # HS-130-06: one row PER DESTINATION, never deduped by model name. Id
@@ -440,7 +715,7 @@ class AskService:
             if capability_id == "thought.interview":
                 adapter = _QuestionOrSynthesisAdapter(adapter)
             else:
-                adapter = _AskAnswerAdapter(adapter, trace=ask_trace(invocation_id) if desk_tools else "")
+                adapter = _AskAnswerAdapter(self._answer_adapter(invocation_id), trace=ask_trace(invocation_id) if desk_tools else "")
             if routed_execution_id:
                 coordinator = self._broker.inference_adoption_service
                 from .inference_route_plan_service import ROUTE_PLANNING_AUTHORITY
@@ -600,6 +875,7 @@ class AskService:
                 principal,
                 InvocationRequest(revision.id, ServiceContract.for_payload(ASK_SERVICE_CONTRACT, ASK_SERVICE_SCHEMA_VERSION, payload), time.time() + 60, payload, invocation_id, before_physical_dispatch=before_physical_dispatch, before_compatibility_retry=before_compatibility_retry),
                 publish=self._broker.projection_stager.publisher(invocation_id, "ask-result", lambda output: self._ask_projection(output, payload, target, ran_profile_id, placement.placement_dict())),
+                adapter=self._answer_adapter(invocation_id) if capability_id == "ask.answer" else None,
             )
         except KernelRefused as exc:
             self._emit("error", kind="ask", ref="ask", name=lens, error=exc.reason)
@@ -656,12 +932,57 @@ class AskService:
         # desk's tools (DECISIONS #16).
         mode = await asyncio.to_thread(ask_desk.tools_mode, self._db)
         invocation_id = str(invocation_id or ("ask_" + uuid.uuid4().hex)).strip()
-        if mode == ask_desk.LOOP and self._thread_service is not None:
-            return await self._ask_in_loop(
-                principal, question, grounding, thread_id=thread_id, context=context or [],
-                invocation_id=invocation_id, pinned_note=pinned,
-            )
-        desk_tools = mode == ask_desk.CLI
+        # Ask hub gap 5: the hub holds this run, so a window that closes
+        # while it runs can claim it back.
+        run_started(invocation_id, str(question or ""), thread_id)
+        try:
+            if mode == ask_desk.LOOP and self._thread_service is not None:
+                result = await self._ask_in_loop(
+                    principal, question, grounding, thread_id=thread_id, context=context or [],
+                    invocation_id=invocation_id, pinned_note=pinned,
+                )
+            else:
+                result = await self._ask_in_thread_once(
+                    principal, question, grounding, thread_id=thread_id, lens=lens, context=context,
+                    invocation_id=invocation_id, pinned=pinned, history=history,
+                    desk_tools=mode == ask_desk.CLI,
+                )
+        except ServiceError as exc:
+            run_settled(invocation_id, reason=self.refusal_reason(exc))
+            raise
+        except BaseException:
+            run_settled(invocation_id, reason="did_not_answer")
+            raise
+        run_settled(invocation_id, thread_id=str(result.get("thread_id") or ""),
+                    answer_id=str((result.get("message_ids") or {}).get("answer") or ""))
+        return result
+
+    def _facts_and_claims(self, result: dict[str, Any]) -> None:
+        """Ask hub gaps 2 and 3: reference rows with their facts; claims kept
+        with the record that supports each."""
+        result["looked_at"] = reference_facts(self._db, result.get("looked_at") or [])
+        claims = claims_by_record(self._db, str(result.get("output") or ""), result["looked_at"])
+        if claims:
+            result["grounding_claims"] = claims
+        else:
+            result.pop("grounding_claims", None)
+
+    @staticmethod
+    def _frozen(row: dict[str, Any], claims: Sequence[dict[str, Any]]) -> dict[str, Any]:
+        """A relevance ref as the thread keeps it: its name, its facts at the
+        time of the answer, and the claims it supports."""
+        frozen: dict[str, Any] = {"title": row["title"]}
+        for key in ("at", "state"):
+            if row.get(key):
+                frozen[key] = row[key]
+        supported = [{"text": c["text"], "label": c["label"]} for c in claims if c.get("ref") == row["ref"]]
+        if supported:
+            frozen["claims"] = supported
+        return frozen
+
+    async def _ask_in_thread_once(self, principal: Principal, question: str, grounding: Any, *, thread_id: str, lens: str, context: list[dict[str, Any]] | None, invocation_id: str, pinned: dict[str, str] | None, history: list[tuple[str, str]], desk_tools: bool) -> dict[str, Any]:
+        """One Ask answered in one dispatch (no tool loop), then kept."""
+        threads = self._db.threads
         result = await self.ask(
             principal, question, grounding, lens=lens, context=context,
             invocation_id=invocation_id, history=history,
@@ -699,12 +1020,6 @@ class AskService:
             (ref, title) for ref, title in titles
             if ref != f"thread:{thread_id}" and not ref.startswith(f"thread:{thread_id}#")
         ]
-        if looked:
-            threads.freeze_refs(thread_id, answer.id, [
-                {"ref_kind": ref.split(":", 1)[0], "ref_id": ref.split(":", 1)[1],
-                 "frozen_json": {"title": title}, "origin": "relevance"}
-                for ref, title in looked
-            ])
         result["thread_id"] = thread_id
         result["message_ids"] = {"question": user.id, "answer": answer.id}
         result["looked_at"] = [{"ref": ref, "title": title} for ref, title in looked]
@@ -713,6 +1028,15 @@ class AskService:
             used = use_by_trace(self._db, [ask_trace(invocation_id)]).get(ask_trace(invocation_id)) or {}
             result["used"] = used
             result["looked_at"] = _with_tool_reads(result["looked_at"], used)
+        self._facts_and_claims(result)
+        if looked:
+            frozen_refs = dict(looked)
+            claims = result.get("grounding_claims") or []
+            threads.freeze_refs(thread_id, answer.id, [
+                {"ref_kind": row["ref"].split(":", 1)[0], "ref_id": row["ref"].split(":", 1)[1],
+                 "frozen_json": self._frozen(row, claims), "origin": "relevance"}
+                for row in result["looked_at"] if row["ref"] in frozen_refs
+            ])
         return result
 
     async def _ask_in_loop(self, principal: Principal, question: str, grounding: Any, *, thread_id: str, context: list[dict[str, Any]], invocation_id: str, pinned_note: dict[str, str] | None = None) -> dict[str, Any]:
@@ -731,6 +1055,7 @@ class AskService:
             thread_id = threads.create_thread(title=thread_title(text)).id
         refs = [ref for ref, _title in self._about_refs(context, grounding, [])]
         service = self._thread_service(system_prompt=ask_desk.DESK_PROMPT, palette=resolve_palette(ASK))
+        self._tap_loop_text(service, thread_id, invocation_id)
         try:
             turn = await ask_desk.run_loop(
                 service, principal, thread_id=thread_id, question=text, refs=refs,
@@ -759,7 +1084,7 @@ class AskService:
                 "note", pinned_note["id"], pinned_note["title"], "", "",
             )).title
             pinned_looked_at.append({"ref": pinned_note["ref"], "title": pinned_title})
-        return {
+        result = {
             "output": turn["text"],
             "invocation_id": invocation_id,
             "model": turn["model"],
@@ -770,6 +1095,35 @@ class AskService:
             "used": used,
             "tools": "desk",
         }
+        self._facts_and_claims(result)
+        return result
+
+    def _tap_loop_text(self, service: Any, thread_id: str, invocation_id: str) -> None:
+        """Ask hub gap 1 on the tool loop: its ``thread_delta`` text becomes
+        this Ask's ``ask_text`` frames.  A pass that calls a tool starts the
+        words again: the answer is the last pass's text."""
+        original = getattr(service, "_broadcast", None)
+        if original is None:
+            return
+        parts: list[str] = []
+        frames = _TextFrames(lambda text: self.send_text(invocation_id, text))
+
+        def tap(kind: str, data: Any = None, *args: Any, **kwargs: Any) -> Any:
+            out = original(kind, data, *args, **kwargs)
+            try:
+                if isinstance(data, dict) and data.get("thread_id") == thread_id:
+                    if kind == "thread_delta" and data.get("kind") == "text" and data.get("text"):
+                        parts.append(str(data["text"]))
+                        frames.feed("".join(parts))
+                    elif kind in {"thread_tool_pending", "thread_tool_result"} and parts:
+                        parts.clear()
+                    elif kind == "thread_turn_done" and parts:
+                        frames.finish("".join(parts))
+            except Exception:  # a text frame is never a gate
+                pass
+            return out
+
+        service._broadcast = tap
 
     def engine_tools(self) -> dict[str, str]:
         """Betterment Q7: whether the Answers engine can use the desk's tools

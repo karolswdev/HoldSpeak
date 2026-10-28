@@ -16,6 +16,7 @@ export const RUNTIME_FRAME_TYPES = [
   "actuator_result",
   "aftercare_ready",
   "ask_progress",
+  "ask_text",
   "audio_level",
   "bookmark",
   "capture_recovery",
