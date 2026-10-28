@@ -51,6 +51,18 @@ function draftCommandId(): string {
 const updatePlaceKey = (projectId: string) => `room/update/${projectId}`;
 const updateDraftKey = (updateId: string) => `room/update-body/${updateId}`;
 
+/** W6-F words: each update failure as one plain sentence (what failed ·
+ *  what stayed). Keys are the old label grammar, kept for the hover title. */
+const UPDATE_FAILURE_WORDS = {
+  "UPDATES DID NOT LOAD": "Could not load the updates · Nothing changed",
+  "UPDATE DID NOT OPEN": "Could not open the update · Nothing changed",
+  "DRAFT NOT MADE": "Could not make the draft · Your words stay here",
+  "NOT SAVED": "Could not save the update · Your words stay here",
+  "NOT REVIEWED": "Could not mark the claim reviewed · Your words stay here",
+  "NOT PUBLISHED": "Could not publish the update · It stays a draft on the hub",
+  "NOT COPIED": "Could not copy it to the clipboard · Your words stay here",
+} as const;
+
 export function useUpdateController(
   projectId: string,
   onRoomRefresh: () => void,
@@ -66,8 +78,13 @@ export function useUpdateController(
   // PHILO-13-04 (A3): a failure is plain words (never the hub's text) and
   // keeps the verb that failed, so the face can offer it again.
   const [retryFailed, setRetryFailed] = useState<(() => void) | null>(null);
-  const fail = (what: string, reason: unknown, again?: () => void) => {
-    setError(plainFailure(what, reason));
+  // W6-F words: the face says what failed and what stayed in a plain
+  // sentence; the label-grammar reason (`NOT SAVED · HUB FAILED`) is the
+  // hover title only. The verb beside it (Try again) is the next action.
+  const [errorTitle, setErrorTitle] = useState("");
+  const fail = (what: keyof typeof UPDATE_FAILURE_WORDS, reason: unknown, again?: () => void) => {
+    setError(UPDATE_FAILURE_WORDS[what]);
+    setErrorTitle(plainFailure(what, reason));
     setRetryFailed(() => again ?? null);
   };
   // PHILO-13-04 fix round (Astra counsel P1): Try again calls the LATEST
@@ -667,6 +684,7 @@ export function useUpdateController(
     hasUpdates,
     loading,
     error,
+    errorTitle,
     retryFailed,
 
     // Editor
