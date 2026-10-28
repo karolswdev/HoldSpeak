@@ -5,7 +5,7 @@
 // row, the hub's refusal, and the poll.
 import { useCallback, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
-import { postSummaryRun, type PlannedRoute, type SummaryRefusal } from "../../../meetings/summaryRoute";
+import { postSummaryRun, refusalFact, type PlannedRoute, type SummaryRefusal } from "../../../meetings/summaryRoute";
 import type { MeetingDetailResponse } from "../core-types";
 import { clockTime, finishedRunReceipt, type Receipt, type RunIdentity } from "./helpers";
 
@@ -76,8 +76,9 @@ export function useSummaryRun(
         setRunningId(null);
         setRunRefusal({ meetingId, refusal: outcome.refusal });
         setReceipt({
-          text: `REFUSED · ${outcome.refusal.plainReason}`,
+          text: `Summary did not start · ${refusalFact(outcome.refusal)} · Nothing changed`,
           tone: "danger",
+          title: outcome.refusal.plainReason,
         });
         refreshFace();
         return;
@@ -127,7 +128,7 @@ export function useSummaryRun(
       }, 120_000);
     } catch (reason) {
       setRunningId(null);
-      setReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      setReceipt({ text: "Summary did not start · Nothing changed · Try again", tone: "danger", title: readableError(reason) });
     }
   }, [settleRun]);
 

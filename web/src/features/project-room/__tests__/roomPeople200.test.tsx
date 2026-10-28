@@ -1,6 +1,6 @@
 // HS-200-14 -- the PEOPLE section as a preparation face.
 //
-// AC1  an ambiguous owner is `OWNER · AMBIGUOUS · 2 MATCHES` with `Resolve`;
+// AC1  an ambiguous owner is `Owner not clear · 2 matches` with `Resolve`;
 //      the candidates unfold under the row (no modal); a pick links the
 //      alias through the ledger's own write; nothing is attributed on its own.
 // AC2  a linked person's row carries commitments (DUE, source, `Open source`)
@@ -90,11 +90,11 @@ describe("the pure token builders", () => {
     expect(peopleGapTokens({ state: "unconfigured", gaps: { ambiguous: 0, not_linked: 0, unreadable: 2 } })).toEqual(["NOT SET UP"]);
   });
   it("types the owner and the head verb", () => {
-    expect(ownerToken({ link: "ambiguous", candidates: [{ relationship_id: "a", display_name: "A" }, { relationship_id: "b", display_name: "B" }] })).toBe("OWNER · AMBIGUOUS · 2 MATCHES");
-    expect(ownerToken({ link: "not_linked", candidates: [] })).toBe("OWNER · NOT LINKED");
-    expect(ownerToken({ link: "locked", candidates: [] })).toBe("OWNER · LOCKED");
-    expect(ownerToken({ link: "unconfigured", candidates: [] })).toBe("OWNER · NOT SET UP");
-    expect(ownerToken({ link: "unavailable", candidates: [] })).toBe("OWNER · UNAVAILABLE");
+    expect(ownerToken({ link: "ambiguous", candidates: [{ relationship_id: "a", display_name: "A" }, { relationship_id: "b", display_name: "B" }] })).toBe("Owner not clear · 2 matches");
+    expect(ownerToken({ link: "not_linked", candidates: [] })).toBe("Owner not linked");
+    expect(ownerToken({ link: "locked", candidates: [] })).toBe("Owner locked");
+    expect(ownerToken({ link: "unconfigured", candidates: [] })).toBe("Owner not set up");
+    expect(ownerToken({ link: "unavailable", candidates: [] })).toBe("Owner not available");
     expect(headVerbLabel("ready")).toBe("People");
     expect(headVerbLabel("locked")).toBe("Unlock");
     expect(headVerbLabel("unconfigured")).toBe("Set up People");
@@ -107,7 +107,7 @@ describe("RoomPeopleSection (HS-200-14)", () => {
   it("AC1: an ambiguous owner is typed, resolvable in place, and never attributed", async () => {
     apiFetch.mockResolvedValueOnce(ready());
     render(<RoomPeopleSection projectId="p1" />);
-    const token = await screen.findByText("OWNER · AMBIGUOUS · 2 MATCHES");
+    const token = await screen.findByText("Owner not clear · 2 matches");
     expect(token).toBeTruthy();
     expect(screen.getByText("PEOPLE 1 OF 3")).toBeTruthy();
     expect(screen.getByTestId("room-people-gaps")).toHaveTextContent("1 AMBIGUOUS · 1 NOT LINKED");
@@ -204,7 +204,7 @@ describe("RoomPeopleSection (HS-200-14)", () => {
     const first = render(<RoomPeopleSection projectId="p1" />);
     expect(await screen.findByText("PEOPLE 0 OF 2")).toBeTruthy();
     expect(screen.getByTestId("room-people-gaps")).toHaveTextContent("LOCKED");
-    expect(screen.getAllByText("OWNER · LOCKED")).toHaveLength(2);
+    expect(screen.getAllByText("Owner locked")).toHaveLength(2);
     const unlock = screen.getByTestId("room-people-head-verb");
     expect(unlock).toHaveTextContent("Unlock");
     expect(unlock.className).toContain("btn--secondary");
@@ -221,8 +221,8 @@ describe("RoomPeopleSection (HS-200-14)", () => {
     expect(await screen.findByText("Set up People")).toBeTruthy();
     expect(screen.getByTestId("room-people-gaps")).toHaveTextContent("NOT SET UP");
     // The row agrees with the head (counsel P2-ii): never LOCKED under NOT SET UP.
-    expect(screen.getByText("OWNER · NOT SET UP")).toBeTruthy();
-    expect(screen.queryByText("OWNER · LOCKED")).toBeNull();
+    expect(screen.getByText("Owner not set up")).toBeTruthy();
+    expect(screen.queryByText("Owner locked")).toBeNull();
     second.unmount();
 
     apiFetch.mockResolvedValueOnce(prep({ state: "unconfigured" }));
@@ -234,7 +234,7 @@ describe("RoomPeopleSection (HS-200-14)", () => {
   it("AC5: an owner nobody answers for is NOT LINKED · Link, and Link with no candidate opens People", async () => {
     apiFetch.mockResolvedValueOnce(ready());
     render(<RoomPeopleSection projectId="p1" />);
-    await screen.findByText("OWNER · NOT LINKED");
+    await screen.findByText("Owner not linked");
     const link = screen.getByRole("button", { name: "Link: Zbigniew" });
     fireEvent.click(link);
     expect(openSurfaceOr).toHaveBeenCalledWith("open-people", "/", "people:project:p1");

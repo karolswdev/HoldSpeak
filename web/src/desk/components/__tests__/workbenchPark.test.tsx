@@ -183,14 +183,14 @@ describe("PHILO-13-02 the Workbench window's Park", () => {
     await waitFor(() => expect(screen.queryByText(/^PARKED \d+$/)).toBeNull());
   });
 
-  it("a claimed item is refused in place: NOT PARKED · CLAIMED BY A RUN, no Restore", async () => {
+  it("a claimed item is refused in place: Could not park · A run holds it, no Restore", async () => {
     const hub = mockHub();
     hub.claimed.add("i1");
     render(<WorkbenchWindow workbenchId="wb1" />);
     await parkItem("First item");
     const r = await receipt();
     const line = within(r).getByRole("status");
-    expect(line.textContent).toBe("NOT PARKED · CLAIMED BY A RUN");
+    expect(line.textContent).toBe("Could not park · A run holds it · Nothing changed · Try again");
     expect(line.getAttribute("data-tone")).toBe("danger");
     expect(within(r).queryByRole("button", { name: "Restore" })).toBeNull();
     expect(screen.getByText("First item")).toBeTruthy();
@@ -203,7 +203,7 @@ describe("PHILO-13-02 the Workbench window's Park", () => {
     hub.claimed.add("i1");
     render(<WorkbenchWindow workbenchId="wb1" />);
     await parkItem("First item");
-    expect(within(await receipt()).getByRole("status").textContent).toBe("NOT PARKED · CLAIMED BY A RUN");
+    expect(within(await receipt()).getByRole("status").textContent).toBe("Could not park · A run holds it · Nothing changed · Try again");
     hub.claimed.delete("i1");
     fireEvent.click(await screen.findByRole("button", { name: "Park" }));
     await waitFor(() => expect(hub.requests.filter((r) => r.method === "DELETE")).toHaveLength(2));
@@ -240,7 +240,7 @@ describe("PHILO-13-02 the Workbench window's Park", () => {
     hub.refuseRestore = true;
     fireEvent.click(within(await receipt()).getByRole("button", { name: "Restore" }));
     await waitFor(async () =>
-      expect((await receipt()).textContent).toContain("NOT RESTORED · THE HUB DID NOT ACCEPT THE CHANGE"),
+      expect((await receipt()).textContent).toContain("Could not restore · The hub did not accept the change · It stays parked"),
     );
     hub.refuseRestore = false;
     fireEvent.click(within(await receipt()).getByRole("button", { name: "Retry" }));

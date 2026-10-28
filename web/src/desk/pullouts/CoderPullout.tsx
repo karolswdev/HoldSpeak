@@ -136,13 +136,14 @@ export function CoderPullout({ object: o, onClose }: PulloutContentProps) {
                   </div>
                 </div>
                 <span className="quiet desk-coder-answer-state" role="status">
+                  {/* W6-H words: sentence case; a failure says what stayed and what next. */}
                   {answered === "sent"
-                    ? "REPLY SENT"
+                    ? "Reply sent"
                     : answered === "failed"
-                      ? "REPLY FAILED · RETRY"
+                      ? "The agent did not get your reply · Your draft stays here · Retry reply"
                       : coderDraftRecovered
-                        ? "DRAFT RECOVERED"
-                        : "REPLY"}
+                        ? "Draft recovered"
+                        : "Reply"}
                 </span>
                 <Button dense variant="ghost"
                   onClick={() => {

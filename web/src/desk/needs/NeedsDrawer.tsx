@@ -135,7 +135,8 @@ function followThrough(cardId: string, verb: string, payload: Record<string, unk
 }
 
 /** PHILO-15 B61: the receipt a source Retry leaves in the drawer. */
-type SourceReceipt = { tone: "ok" | "fail"; text: string };
+/** W6-H words: `title` is the raw reason of a failed check (the hover only). */
+type SourceReceipt = { tone: "ok" | "fail"; text: string; title?: string };
 export const useSourceReceipt = create<{ receipt: SourceReceipt | null; set(r: SourceReceipt | null): void }>(
   (setState) => ({ receipt: null, set: (receipt) => setState({ receipt }) }),
 );
@@ -154,7 +155,7 @@ export async function recheckSource(name: string, watchIds: readonly string[]): 
     }
     return { tone: "ok", text: `CHECKED · ${name} · ${hhmm(new Date())}` };
   } catch (error) {
-    return { tone: "fail", text: `NOT CHECKED · ${name} · ${readableError(error)}` };
+    return { tone: "fail", text: `Could not check ${name} · Nothing changed · Try again`, title: readableError(error) };
   } finally {
     void refreshNeedsYou(true);
   }
@@ -794,6 +795,7 @@ function PlainNeedRow({ face, primary, projects, plates }: { face: NeedFace; pri
         kind={face.kind}
         name={face.name}
         fact={face.fact || undefined}
+        factTitle={face.factTitle}
         factCode={face.factCode}
         factWords={face.factWords}
         lamp={face.lamp}
@@ -1271,7 +1273,7 @@ export function NeedsDrawer() {
     next ? { key: "next", text: next, testId: "needs-next" } : null,
     outcome.receipt ? { key: "receipt", text: outcome.receipt, testId: "needs-receipt" } : null,
     !outcome.receipt && sourceReceipt
-      ? { key: "source", lamp: sourceReceipt.tone === "fail" ? "fail" as const : "ok" as const, text: sourceReceipt.text, testId: "needs-source-receipt" }
+      ? { key: "source", lamp: sourceReceipt.tone === "fail" ? "fail" as const : "ok" as const, text: sourceReceipt.title ? <span title={sourceReceipt.title}>{sourceReceipt.text}</span> : sourceReceipt.text, testId: "needs-source-receipt" }
       : null,
     !outcome.receipt && !sourceReceipt && checked ? { key: "checked", text: checked, testId: "needs-checked" } : null,
   ].filter(Boolean) as StatusBarItem[];

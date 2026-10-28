@@ -588,7 +588,9 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     const armed = () => document.querySelector<HTMLElement>("[data-object-id='arming:sch-9']");
     fireEvent.click(armed()!.querySelector("[data-verb='cancel']")!);
     await waitFor(() => expect(armed()!.querySelector(".needs-row-fact")?.textContent)
-      .toBe("NOT CANCELLED · the recording already started"));
+      .toBe("Could not cancel · Nothing changed"));
+    // W6-H words: the hub's reason rides the hover title.
+    expect(armed()!.querySelector(".needs-row-fact")?.getAttribute("title")).toBe("the recording already started");
     expect(armed()!.querySelector("[data-verb='retry']")?.textContent).toBe("Retry");
     refuse = false;
     fireEvent.click(armed()!.querySelector("[data-verb='retry']")!);
@@ -867,11 +869,12 @@ describe("NeedsDrawer the second morning (PHILO-15 21)", () => {
     fireEvent.click(within(stale).getByRole("button", { name: "Retry: Meetings" }));
     await waitFor(() => expect(screen.getByTestId("needs-source-receipt").textContent).toMatch(/^CHECKED · Meetings · \d\d:\d\d$/));
     expect(evaluated).toEqual(["/api/watches/w-mtg/evaluate"]);
-    // A refused check says so, by the hub's reason.
+    // A refused check says so in plain words; the hub's reason is the hover.
     refuse = true;
     fireEvent.click(within(stale).getByRole("button", { name: "Retry: Meetings" }));
     await waitFor(() => expect(screen.getByTestId("needs-source-receipt").textContent).toBe(
-      "NOT CHECKED · Meetings · gh is not signed in"));
+      "Could not check Meetings · Nothing changed · Try again"));
+    expect(screen.getByTestId("needs-source-receipt").querySelector("[title]")?.getAttribute("title")).toBe("gh is not signed in");
   });
 });
 

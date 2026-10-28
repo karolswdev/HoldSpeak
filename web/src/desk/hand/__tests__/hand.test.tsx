@@ -333,7 +333,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     );
     world.hand = () => ({ status: "launched", launch_id: "launch-2", instruction_state: "paste_failed" });
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
-    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("LAUNCHED · BRIEF NOT SENT");
+    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("Brief not sent to the agent · It stays on the hub · Send again");
     expect(within(line).getByTestId("hand-confirm-send-again")).toBeTruthy();
   });
 

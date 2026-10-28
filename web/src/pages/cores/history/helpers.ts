@@ -188,7 +188,8 @@ export function download(blob: Blob, name: string) {
 /** The one receipt channel: what the machine just did, on the footer. */
 /** PHILO-15-07 (B15): the summary run a receipt speaks for. */
 export type RunIdentity = { meetingId: string; jobId: string };
-export type Receipt = { text: string; tone?: "danger"; run?: RunIdentity };
+/** W6-H words: `title` carries the raw reason of a failure, for the hover only. */
+export type Receipt = { text: string; tone?: "danger"; run?: RunIdentity; title?: string };
 
 export const ACTIVE_RUN_STATES = new Set(["queued", "pending", "running", "claimed", "reserved", "retrying"]);
 export const FINAL_RUN_STATES = new Set(["ready", "complete", "error", "failed"]);
@@ -253,12 +254,13 @@ export function intelStateOf(raw: unknown): string {
 }
 
 /** PHILO-15-07 (B15) — the footer receipt once a queued summary run ends:
- *  `RAN · 11:02` or `FAILED · 11:02`; another final state says its own word. */
+ *  `RAN · 11:02`, or a failed run in plain words (`Summary failed at 11:02 ·
+ *  The transcript stays · Run it again`); another final state says its own word. */
 export function finishedRunReceipt(state: string, at: string): Receipt {
   const s = String(state || "").toLowerCase();
   const clock = clockTime(at);
   if (s === "ready" || s === "complete") return { text: `RAN · ${clock}` };
-  if (s === "error" || s === "failed") return { text: `FAILED · ${clock}`, tone: "danger" };
+  if (s === "error" || s === "failed") return { text: `Summary failed at ${clock} · The transcript stays · Run it again`, tone: "danger" };
   return { text: `${(s || "done").toUpperCase().replace(/_/g, " ")} · ${clock}` };
 }
 

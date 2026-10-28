@@ -180,6 +180,7 @@ export function DictationCore({ hero, scope, scopeLabel }: CoreProps) {
   const receiptSlot = receipt ? (
     <span
       className="surface-footer-readiness"
+      data-words=""
       data-tone={receipt.tone === "warn" ? "warn" : undefined}
       role={receipt.tone === "warn" ? "alert" : "status"}
     >

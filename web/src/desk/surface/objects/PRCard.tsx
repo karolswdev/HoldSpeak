@@ -2,8 +2,9 @@
  *  lane (board A-4; C-4 puts them in the right column).
  *
  *  PRCard: the PR's sprite, `#413` and its title (primary step); then
- *  `CHECKS n OF m` as a lamp (fail when a check failed), `N RUNNING` when
- *  checks run, `REVIEW <word>`; then `branch → base` in mono. A raised
+ *  `Checks n of m` as a dot + words (fail when a check failed), `N running`
+ *  when checks run, `Review <word>` (W6-H words: sentence case, sans); then
+ *  `branch → base` in mono. A raised
  *  FLAT card (read-only facts): the verb that opens it is the lane's
  *  (Open PR, in the footer, by the GITHUB.COM egress chip).
  *
@@ -11,7 +12,7 @@
  *  mono and its `+added −removed` counts; a zero count is not drawn.
  */
 import { SurfaceSection } from "../Surface";
-import { LampGadget } from "../gadgets";
+import { DotWord } from "../kit";
 import { listSprite } from "../../sprites";
 import { objectSprite } from "./kinds";
 import "./objects.css";
@@ -23,7 +24,7 @@ export interface PRCardProps {
   /** PHILO-15 B50: the desk item the PR is for, as the second line. */
   item?: string;
   checks?: { passed: number; total: number; failed?: number; running?: number };
-  /** `NONE YET`, `APPROVED`, `CHANGES ASKED`. */
+  /** `none yet`, `approved`, `changes asked` (any case; drawn lower case). */
   review?: string;
   branch?: string;
   base?: string;
@@ -32,26 +33,26 @@ export interface PRCardProps {
   "data-testid"?: string;
 }
 
-/** The checks as lamps, never a counter of zero (UX-CANON A.8):
- *  some passed → `CHECKS p OF t` (fail tone when one failed) + `N FAILED` +
- *  `N RUNNING`; none passed yet → `CHECKS · N RUNNING` / `CHECKS · N FAILED`
- *  / `CHECKS · N PENDING`, with no `0 OF`. */
+/** The checks as dot + words, never a counter of zero (UX-CANON A.8):
+ *  some passed → `Checks p of t` (fail tone when one failed) + `N failed` +
+ *  `N running`; none passed yet → `Checks · N running` / `Checks · N failed`
+ *  / `Checks · N pending`, with no `0 of`. */
 function checkLamps(checks: NonNullable<PRCardProps["checks"]>) {
   const { passed, total } = checks;
   const failed = checks.failed ?? 0;
   const running = checks.running ?? 0;
   if (total <= 0) return [];
-  const lamps: { label: string; on: boolean; tone: "ok" | "fail" | "info" }[] = [];
+  const lamps: { label: string; tone: "ok" | "fail" | "info" | "idle" }[] = [];
   if (passed > 0) {
-    lamps.push({ label: `CHECKS ${passed} OF ${total}`, on: true, tone: failed > 0 ? "fail" : "ok" });
-    if (failed > 0) lamps.push({ label: `${failed} FAILED`, on: true, tone: "fail" });
-    if (running > 0) lamps.push({ label: `${running} RUNNING`, on: false, tone: "info" });
+    lamps.push({ label: `Checks ${passed} of ${total}`, tone: failed > 0 ? "fail" : "ok" });
+    if (failed > 0) lamps.push({ label: `${failed} failed`, tone: "fail" });
+    if (running > 0) lamps.push({ label: `${running} running`, tone: "info" });
     return lamps;
   }
-  if (failed > 0) lamps.push({ label: `CHECKS · ${failed} FAILED`, on: true, tone: "fail" });
+  if (failed > 0) lamps.push({ label: `Checks · ${failed} failed`, tone: "fail" });
   if (running > 0)
-    lamps.push({ label: failed > 0 ? `${running} RUNNING` : `CHECKS · ${running} RUNNING`, on: false, tone: "info" });
-  if (!lamps.length && total > 0) lamps.push({ label: `CHECKS · ${total} PENDING`, on: false, tone: "info" });
+    lamps.push({ label: failed > 0 ? `${running} running` : `Checks · ${running} running`, tone: "info" });
+  if (!lamps.length && total > 0) lamps.push({ label: `Checks · ${total} pending`, tone: "idle" });
   return lamps;
 }
 
@@ -85,11 +86,11 @@ export function PRCard({
       {lamps.length || review ? (
         <div className="pr-card-line pr-card-facts">
           {lamps.map((lamp) => (
-            <LampGadget key={lamp.label} label={lamp.label} on={lamp.on} tone={lamp.tone} />
+            <DotWord key={lamp.label} tone={lamp.tone}>{lamp.label}</DotWord>
           ))}
           {review ? (
             <span className="pr-card-fact">
-              REVIEW <b>{review.toUpperCase()}</b>
+              Review <b>{review.toLowerCase()}</b>
             </span>
           ) : null}
         </div>

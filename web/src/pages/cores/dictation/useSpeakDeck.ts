@@ -267,7 +267,7 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
     setLandedMs(null);
     setPhase("refused");
     setRefusal(code);
-    announce(`⚠ REFUSED · ${refusalLabel(code)}`, "warn");
+    announce(`⚠ Could not deliver the words · ${refusalLabel(code)} · Nothing was typed · Try again`, "warn");
   };
 
   /* THE FLAGSHIP ACT — release TALK and the words land where you aimed
@@ -415,7 +415,7 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
       announce("Listening");
     } catch (reason) {
       setOpenMic(false);
-      // A floor refusal names its owner ("FLOOR HELD MEETING"); anything
+      // A floor refusal names its owner ("A meeting holds the mic"); anything
       // else falls back to the shared dictation failure vocabulary.
       if (reason instanceof FloorHeldError) {
         refuse(reason.refusal);

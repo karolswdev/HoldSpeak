@@ -71,6 +71,8 @@ export interface NeedFace {
   kind: string;
   name: string;
   fact: string;
+  /** W6-H words: the raw reason behind a failure fact (the hover title). */
+  factTitle?: string;
   /** PHILO-15 15: the fact is a command (a held call): its lines are kept
    *  and it wraps, in the mono face. */
   factCode?: boolean;
@@ -848,7 +850,9 @@ export function armingFace(
     // A refused Cancel is named here, by the hub's own reason.
     fact: failed
       ? `Did not record${failedClock ? ` · ${failedClock}` : ""} · ${didNotRecord?.reason || "Something went wrong"}`
-      : refusal ? `NOT CANCELLED · ${refusal}` : `Arms in ${word.toLowerCase()}`,
+      : refusal ? "Could not cancel · Nothing changed" : `Arms in ${word.toLowerCase()}`,
+    // W6-H words: the hub's reason for a refused Cancel rides the hover; Retry is beside it.
+    factTitle: !failed && refusal ? refusal : undefined,
     lamp: { label: failed ? "FAILED" : `ARMS · ${word}`, tone: failed || refusal ? "fail" : "ask" },
     kindWord: "MEETING",
     group: "agents",

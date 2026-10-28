@@ -2,7 +2,8 @@
  * pm/roadmap/holdspeak-philo/phase-3-the-meeting-loop/assets/story-04-canvas).
  *
  * Line 1 is the write: Saved <time> from the hub's stamp on the last kept
- * write, SAVING… from an edit until the write lands, DID NOT SAVE · <cause>,
+ * write, SAVING… from an edit until the write lands, `Could not save · <cause> ·
+ * Your words stay here`,
  * or CHANGED ELSEWHERE. Line 2 is the filing state. */
 import { wireDate } from "../surface/format";
 import { keptReceipt } from "../keptReceipt";
@@ -10,8 +11,8 @@ import type { Thought } from "../thoughts";
 import type { ThoughtSaveFailure } from "../pullouts/editors/useThoughtNoteWriter";
 
 export const SAVE_FAILURE_CAUSE: Record<ThoughtSaveFailure, string> = {
-  no_answer: "THE HUB DID NOT ANSWER",
-  not_accepted: "THE HUB DID NOT ACCEPT THE CHANGE",
+  no_answer: "The hub did not answer",
+  not_accepted: "The hub did not accept the change",
 };
 
 /** The hub stamps ISO UTC (`...Z`); an older SQLite stamp has no zone and is UTC too. */
@@ -29,7 +30,8 @@ export type ThoughtWriteState = {
 
 export function thoughtWriteLine(state: ThoughtWriteState): { text: string; danger: boolean } | null {
   if (state.conflicted) return { text: "CHANGED ELSEWHERE", danger: true };
-  if (state.failure) return { text: `DID NOT SAVE · ${SAVE_FAILURE_CAUSE[state.failure]}`, danger: true };
+  // W6-H words: what failed, why, and what stayed, in sentence case; Retry is beside it.
+  if (state.failure) return { text: `Could not save · ${SAVE_FAILURE_CAUSE[state.failure]} · Your words stay here`, danger: true };
   if (state.pending || state.saving) return { text: "SAVING…", danger: false };
   const kept = keptReceipt(hubStampMs(state.keptAt));
   return kept ? { text: kept.replace(/^Kept · /, "Saved "), danger: false } : null;
@@ -37,8 +39,9 @@ export function thoughtWriteLine(state: ThoughtWriteState): { text: string; dang
 
 export function thoughtFilingLine(thought: Thought, finished: boolean): string {
   const name = (thought.directory_name || "").trim();
-  const filing = thought.filing_status === "filed" ? (name ? `IN ${name.toUpperCase()}` : "IN A DRAWER") : "NOT IN A DRAWER";
-  return finished ? `${filing} · FINISHED` : filing;
+  // W6-H words: sentence case; the drawer's name keeps its own case.
+  const filing = thought.filing_status === "filed" ? (name ? `In ${name}` : "In a drawer") : "Not in a drawer";
+  return finished ? `${filing} · Finished` : filing;
 }
 
 /** Window grammar, delight (2026-10-24): the Note's status bar says the

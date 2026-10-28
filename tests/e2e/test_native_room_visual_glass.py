@@ -218,7 +218,7 @@ def test_room_files_before_compact_sources_and_real_note_return(
             assert NOTE_TITLE in note.inner_text()
             page.screenshot(path=str(shots / f"room-note-open-{width}.png"))
             room = _return_project(page, note, PROJECT_A_NAME, width)
-            expect(room.get_by_test_id("room-files-return")).to_have_text("FILED HERE")
+            expect(room.get_by_test_id("room-files-return")).to_have_text("Filed here")
             files = room.get_by_test_id("room-files")
             probes["returnFocus"] = _focused_filed_row(room)
             probes["returnColumns"] = _columns(files)

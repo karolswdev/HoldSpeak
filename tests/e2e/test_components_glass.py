@@ -20,7 +20,7 @@ WHAT THIS RIG PROVES, at 1440 and 393 (Astra's counsel on #932, r1):
   3. IconGrid navigation follows the RENDERED columns: Right lands on the
      icon to the right on the same line; Down lands on the icon straight
      below (finding 3).
-  4. The all-running PRCard reads `CHECKS · 7 RUNNING` with no `0 OF`
+  4. The all-running PRCard reads `Checks · 7 running` with no `0 of`
      (finding 4).
   5. One object, one colour: the row lamp of the asking object and of the
      working object paints the same colour as its icon lamp (finding 5).
@@ -193,8 +193,8 @@ class TestObjectSpeciesGlass:
 
             facts = gallery.evaluate(_PROBE_JS.replace("() =>", "(_) =>"))
             # 4. all pending without a zero
-            assert any("CHECKS · 7 RUNNING" in t for t in facts["prText"]), facts["prText"]
-            assert not any(" 0 OF" in t or "0 FAILED" in t for t in facts["prText"]), facts["prText"]
+            assert any("Checks · 7 running" in t for t in facts["prText"]), facts["prText"]
+            assert not any(" 0 of" in t.lower() or "0 failed" in t.lower() for t in facts["prText"]), facts["prText"]
             # 5. one object, one colour
             assert facts["askRow"] == facts["askIcon"], facts
             assert facts["workRow"] == facts["workIcon"], facts
