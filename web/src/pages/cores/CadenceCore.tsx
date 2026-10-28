@@ -468,8 +468,9 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
             )}
             {receipt ? (
               <>
-                <span className="surface-token" data-chip data-muted>
-                  SWEEP · {receipt.rooms} {receipt.rooms === 1 ? "ROOM" : "ROOMS"}
+                {/* W6-D (2026-10-28): the receipt in sentence case, as Activity says it. */}
+                <span className="surface-token" data-chip data-muted data-testid="rhythm-runs-on-checked">
+                  Checked {receipt.rooms} {receipt.rooms === 1 ? "room" : "rooms"}
                 </span>
                 {settings.last_remote_run_at ? (
                   <span className="surface-token" data-chip data-muted>

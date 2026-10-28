@@ -9,9 +9,23 @@ import {
   type AssignmentScope,
 } from "./assignmentExperience";
 
-function namedChain(editor: AssignmentEditorProjection): string {
+/** W6-D (2026-10-28): the jobs a capability with no row of its own follows
+ *  (the hub's `_FOLLOWS`), in the words Runs on uses for them. */
+const FOLLOWED_WORDS: Record<string, string> = {
+  "ask.answer": "Answers",
+  "meeting.deferred_analysis": "Meeting summaries",
+};
+
+function namedChain(editor: AssignmentEditorProjection, capabilityId: string): string {
   const entries = editor.effective?.assignment?.entries ?? [];
   const chain = entries.length ? entries.map((entry) => entry.label).join(" → ") : "No default model";
+  // A row of another capability answers for this one: it follows that job.
+  // Say the engine, then the quiet word "Follows Answers".
+  const rowScope = editor.effective?.assignment?.scope;
+  const followed = rowScope?.kind === "capability" && rowScope.capability_id !== capabilityId
+    ? FOLLOWED_WORDS[rowScope.capability_id]
+    : undefined;
+  if (followed) return `${chain} · Follows ${followed}`;
   const source = editor.effective?.inherited_from;
   return source ? `Uses ${source} · ${chain}` : chain;
 }
@@ -68,7 +82,7 @@ export function ContextualAssignment({
   return <div className="contextual-assignment" data-capability={capabilityId}>
     {projection ? <AssignmentSummary
       label={label}
-      effective={namedChain(projection)}
+      effective={namedChain(projection, capabilityId)}
       repair={projection.effective.repair}
       onChange={change}
     /> : error ? <p className="contextual-assignment-error" role="status">{error}</p> : editor ? <p className="contextual-assignment-error" role="status">Assignment unavailable</p> : <p className="contextual-assignment-loading">Loading assignment</p>}
