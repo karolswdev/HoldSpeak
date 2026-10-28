@@ -234,6 +234,25 @@ describe("PHILO-14 A2 the drawer", () => {
     expect(opened.refs).toEqual(["meeting:m-standup", "people:rel-j"]);
   });
 
+  it("W6 (atlas pass 3): no dead foot; the verbs live in the toolbar; Open shows only for a selection", async () => {
+    await renderDrawer();
+    const toolbar = screen.getByTestId("drawer-filter");
+    expect(within(toolbar).getByRole("button", { name: "Get Info" })).toBeTruthy();
+    // Nothing selected: no Open at all (never a ghost).
+    expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
+    // No foot of verbs: the status bar holds the facts only.
+    expect(document.querySelector(".surface-footer-verbs")).toBeNull();
+    const status = screen.getByTestId("drawer-status");
+    expect(within(status).queryAllByRole("button")).toHaveLength(0);
+    fireEvent.click(screen.getByRole("button", { name: /^Ledger cutover sync, MEETING/ }), { detail: 1 });
+    expect(within(toolbar).getByRole("button", { name: "Open" })).toBeEnabled();
+    // On a narrow window the quiet verbs fold into More: the menu holds them.
+    fireEvent.click(within(toolbar).getByRole("button", { name: "More" }));
+    const items = within(screen.getByRole("menu", { name: "More" })).getAllByRole("menuitem").map((i) => i.textContent?.trim());
+    expect(items).toContain("Get Info");
+    expect(items).toContain("History");
+  });
+
   it("a pull request opens its page, and names where in the verb's hover title", async () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     await renderDrawer();

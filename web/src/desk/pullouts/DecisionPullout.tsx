@@ -15,13 +15,14 @@ import {
 } from "../surface/Surface";
 import { humanTime } from "../surface/format";
 import { FoldGadget, PadGadget } from "../surface/gadgets";
-import { StatusBar, ToolGlyph, Toolbar } from "../surface/kit";
+import { StatusBar, ToolGlyph, Toolbar, ToolbarFold } from "../surface/kit";
 import { ActionNotice, StateChip } from "../surface";
 import { currentWriteFailure, subscribeWriteFailure, writeFailureReason } from "../hooks/useWriteReceipt";
 import type { PulloutContentProps } from "./types";
 import { useCopyReceipt } from "../hooks/useCopyReceipt";
 import { DeskDecisionSendSheet } from "../documentSendsLazy";
 import { keptEditorPatch, keptField, updateKeptEditorFields } from "./editors/editorDraft";
+import { DECISION_EDIT_EVENT as EDIT_EVENT, hasDecisionEditRequest, takeDecisionEditRequest as takeEditRequest } from "./decisionEdit";
 import "./attention-records.css";
 import "../../pages/cores/decisions.css";
 
@@ -39,6 +40,45 @@ export const DECISION_STATES = [
 ];
 const DECISION_FIELDS = ["context_markdown", "decision_markdown", "consequences_markdown"] as const;
 type DecisionField = typeof DECISION_FIELDS[number];
+
+/** W6 (atlas pass 3, defect 11): the record's words in the reader's
+ *  sections. The from-desk producer writes `About: …` into the background and
+ *  `Why: …` into the consequences (decision_records.py create_from_desk);
+ *  each goes under its own head, in the reader's order: About, Background,
+ *  Why, Consequences. Any other words stay where they were written. */
+export function decisionSections(context: string, consequences: string): {
+  about: string; background: string; why: string; consequences: string;
+} {
+  const split = (text: string) => {
+    let rest = String(text || "");
+    let about = "";
+    let why = "";
+    rest = rest.replace(/(?:^|\n\n)\s*About:[ \t]*([^\n]*(?:\n(?!\s*Why:)(?!\n)[^\n]*)*)/i, (_, words: string) => {
+      about = words.trim();
+      return "";
+    });
+    rest = rest.replace(/(?:^|\n\n)\s*Why:\s*([\s\S]*)$/i, (_, words: string) => {
+      why = words.trim();
+      return "";
+    });
+    return { about, why, rest: rest.trim() };
+  };
+  const a = split(context);
+  const b = split(consequences);
+  return {
+    about: a.about || b.about,
+    background: a.rest,
+    why: [a.why, b.why].filter(Boolean).join("\n\n"),
+    consequences: b.rest,
+  };
+}
+
+/** The decision's own words repeat its title (the from-desk producer writes
+ *  the title as the decision text): the title bar says it once. */
+export function repeatsTitle(body: string, title: string): boolean {
+  const plain = (text: string) => String(text || "").replace(/^#+\s*/, "").trim().replace(/[.!]+$/, "").toLowerCase();
+  return Boolean(plain(title)) && plain(body) === plain(title);
+}
 
 export function DecisionPullout({ object: o }: PulloutContentProps) {
   const items = useDesk((s) => s.items);
@@ -83,7 +123,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
   };
   // Reopening restores unsaved words without submitting them to the hub.
   const [editingDecision, setEditingDecision] = useState(() =>
-    useDesk.getState().newIds.includes(o.id) || DECISION_FIELDS.some((field) => field in keptEditorPatch("decision", o.id)),
+    hasDecisionEditRequest(o.id) || useDesk.getState().newIds.includes(o.id) || DECISION_FIELDS.some((field) => field in keptEditorPatch("decision", o.id)),
   );
   const [decisionDraft, setDecisionDraft] = useState(draftFromMemory);
   const [savedDecision, setSavedDecision] = useState(false);
@@ -127,6 +167,18 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
     setSavedDecision(false);
     setEditingDecision(true);
   };
+  const startEditRef = useRef(startDecisionEdit);
+  startEditRef.current = startDecisionEdit;
+  useEffect(() => {
+    // The request this window opened with is spent.
+    takeEditRequest(o.id);
+    const heard = (event: Event) => {
+      if ((event as CustomEvent<string>).detail !== o.id || !takeEditRequest(o.id)) return;
+      startEditRef.current();
+    };
+    window.addEventListener(EDIT_EVENT, heard);
+    return () => window.removeEventListener(EDIT_EVENT, heard);
+  }, [o.id]);
   const changeDecisionField = (field: DecisionField, value: string) => {
     draftVersion.current += 1;
     setDecisionDraft((current) => ({ ...current, [field]: value }));
@@ -243,18 +295,24 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
                   Retire
                 </Button>
               ) : null}
-              {/* W3-A: on a narrow window the quiet verbs show their glyph
-                  only (decisions.css); the word stays the name and title. */}
-              <Button variant="secondary" dense className="decision-verb" title="Send" aria-expanded={sending} onClick={() => setSending((open) => !open)} data-testid="desk-decision-send">
-                <ToolGlyph kind="send" /><span className="decision-verb-label">Send…</span>
+              {/* W6 (atlas pass 3): every verb says its word. Send stays on
+                  the band; on a narrow window Copy, Dictate and Open record
+                  fold into More ▾ (the kit's ToolbarFold), never bare icons. */}
+              <Button variant="secondary" dense aria-expanded={sending} onClick={() => setSending((open) => !open)} data-testid="desk-decision-send">
+                <ToolGlyph kind="send" />Send…
               </Button>
-              <Button variant="ghost" dense className="decision-verb" title="Copy" onClick={() => void copy(decisionContent)}><ToolGlyph kind="copy" /><span className="decision-verb-label">Copy</span></Button>
-              <Button variant="ghost" dense className="decision-verb" title="Dictate about this" onClick={() => openSurfaceOr("dictate", "/dictation", resourceRef)}><ToolGlyph kind="record" /><span className="decision-verb-label">Dictate about this</span></Button>
-              {canonicalId ? (
-                <Button variant="ghost" dense className="decision-verb" title="Open record" onClick={() => openIntelligence({ view: "receipts", receiptId: canonicalId })} data-testid="desk-decision-open-record">
-                  <ToolGlyph kind="open" /><span className="decision-verb-label">Open record</span>
-                </Button>
-              ) : null}
+              <ToolbarFold
+                foldAt="medium"
+                data-testid="desk-decision-fold"
+                verbs={[
+                  { key: "copy", label: "Copy", glyph: "copy", onSelect: () => void copy(decisionContent) },
+                  { key: "dictate", label: "Dictate about this", glyph: "record", onSelect: () => openSurfaceOr("dictate", "/dictation", resourceRef) },
+                  ...(canonicalId ? [{
+                    key: "record", label: "Open record", glyph: "open" as const, testId: "desk-decision-open-record",
+                    onSelect: () => openIntelligence({ view: "receipts", receiptId: canonicalId }),
+                  }] : []),
+                ]}
+              />
             </>
           )}
         </Toolbar>
@@ -270,7 +328,7 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
               {editingDecision && writeFailure?.subject === resourceRef && writeFailure.verb === "SAVE" ? (
                 <ActionNotice tone="danger" role="alert"><StateChip state="failure" label="Save failed" /><span>{o.title}</span></ActionNotice>
               ) : null}
-              {editingDecision || String(ir.decisionMarkdown || "").trim() ? (
+              {editingDecision || (String(ir.decisionMarkdown || "").trim() && !repeatsTitle(String(ir.decisionMarkdown), String(o.title || ""))) ? (
                 <section className={`desk-decision-main${editingDecision ? " desk-decision-editor" : ""}`} aria-label="Decision">
                   {editingDecision ? (
                     <PadGadget label="Decision" value={decisionDraft.decision_markdown} rows={6} autoGrow autoFocus
@@ -278,19 +336,27 @@ export function DecisionPullout({ object: o }: PulloutContentProps) {
                   ) : <Material className="decision-reader-why">{String(ir.decisionMarkdown)}</Material>}
                 </section>
               ) : null}
-              {([
-                ["context_markdown", "contextMarkdown", "Background"],
-                ["consequences_markdown", "consequencesMarkdown", "Consequences"],
-              ] as const).map(([field, recordField, label]) => (
-                editingDecision || String(ir[recordField] || "").trim() ? (
-                  <FoldGadget key={field} title={label} open={editingDecision ? Boolean(decisionDraft[field].trim()) : true} className="attention-decision-support">
-                    {editingDecision ? (
-                      <PadGadget label={label} value={decisionDraft[field]} rows={3} autoGrow
-                        onChange={(value) => changeDecisionField(field, value)} />
-                    ) : <Material>{String(ir[recordField])}</Material>}
+              {editingDecision ? ([
+                ["context_markdown", "Background"],
+                ["consequences_markdown", "Consequences"],
+              ] as const).map(([field, label]) => (
+                <FoldGadget key={field} title={label} open={Boolean(decisionDraft[field].trim())} className="attention-decision-support">
+                  <PadGadget label={label} value={decisionDraft[field]} rows={3} autoGrow
+                    onChange={(value) => changeDecisionField(field, value)} />
+                </FoldGadget>
+              )) : (() => {
+                const parts = decisionSections(String(ir.contextMarkdown || ""), String(ir.consequencesMarkdown || ""));
+                return ([
+                  ["about", "About", parts.about],
+                  ["background", "Background", parts.background],
+                  ["why", "Why", parts.why],
+                  ["consequences", "Consequences", parts.consequences],
+                ] as const).map(([key, label, words]) => words ? (
+                  <FoldGadget key={key} title={label} open className="attention-decision-support">
+                    <Material>{words}</Material>
                   </FoldGadget>
-                ) : null
-              ))}
+                ) : null);
+              })()}
               {Array.isArray(ir.alternatives) && ir.alternatives.length ? (
                 <FoldGadget title="Alternatives considered">
                   <SurfaceRows>{ir.alternatives.map((alternative: any, index: number) => (

@@ -1,6 +1,8 @@
 import { wireDate } from "../../surface/format";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { apiFetch, readableError } from "../../../lib/api";
+import { apiFetch, apiRequest, readableError } from "../../../lib/api";
+import { requestDecisionEdit } from "../decisionEdit";
+import { plainReason } from "../../surface/plainFailure";
 import { Button } from "../../../components/signal/Signal";
 import { holdObject, qualifiedRef } from "../../api";
 import { decisionRecordSourceRef, openRef } from "../../openObject";
@@ -795,6 +797,39 @@ function DecisionReader({
   useWindowBack(compact ? { onBack: () => backRef.current(), testId: "decision-reader-back" } : null, [compact]);
   const viaFrame = useHasWindowBack() && compact;
   const proposed = String(receipt?.status || "").toLowerCase() === "proposed";
+  // W6 (atlas pass 3, defect 18): an open decision's verbs. Its state lives
+  // on the Desk decision the record came from (decision_record_service
+  // `_decorate`), so Accept writes that decision's status and Edit opens its
+  // own window in its editor.
+  const deskId = receipt?.source_type === "desk" && receipt.source_id ? String(receipt.source_id) : "";
+  const [accepting, setAccepting] = useState(false);
+  const [acceptFailure, setAcceptFailure] = useState("");
+  useEffect(() => { setAccepting(false); setAcceptFailure(""); }, [receipt?.id]);
+  const accept = async () => {
+    if (!deskId || accepting) return;
+    setAccepting(true);
+    setAcceptFailure("");
+    try {
+      const response = await apiRequest(`/api/decisions/${encodeURIComponent(deskId)}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "accepted" }),
+      });
+      if (!response.ok) throw response;
+      void useDesk.getState().refresh();
+      onRetry();
+    } catch (cause) {
+      const why = plainReason(cause);
+      setAcceptFailure(`Could not accept it · ${why.charAt(0)}${why.slice(1).toLowerCase()}`);
+    } finally {
+      setAccepting(false);
+    }
+  };
+  const edit = () => {
+    if (!deskId) return;
+    requestDecisionEdit(deskId);
+    openDeskDecision(deskId);
+  };
   const toolbar = (
     <Toolbar label="Decision" data-testid="decision-reader-toolbar">
       {viaFrame ? null : (
@@ -802,6 +837,17 @@ function DecisionReader({
           <span aria-hidden="true">‹</span> Decisions
         </Button>
       )}
+      {receipt && proposed && deskId ? (
+        <>
+          <Button dense variant="primary" loading={accepting} disabled={accepting} onClick={() => void accept()}
+            data-testid="decision-reader-accept">
+            <ToolGlyph kind="done" />Accept
+          </Button>
+          <Button dense variant="secondary" onClick={edit} data-testid="decision-reader-edit">
+            <ToolGlyph kind="edit" />Edit
+          </Button>
+        </>
+      ) : null}
       {receipt && !proposed ? (
         <Button dense variant="secondary" aria-expanded={sending} onClick={() => setSending((open) => !open)}
           data-testid="decision-reader-send">
@@ -904,7 +950,10 @@ function DecisionReader({
       </article>
       <StatusBar
         data-testid="decision-reader-status"
-        items={[{ key: "state", lamp: state.tone, text: `${state.word}${when}`, testId: "decision-reader-state" }]}
+        items={[
+          { key: "state", lamp: state.tone, text: accepting ? "Accepting" : `${state.word}${when}`, testId: "decision-reader-state" },
+          acceptFailure ? { key: "failure", lamp: "fail", text: acceptFailure, testId: "decision-reader-failure" } : null,
+        ]}
       />
     </div>
   );

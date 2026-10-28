@@ -249,6 +249,14 @@ describe("shared collection read truth", () => {
 
 /** The read view's "Decision" paper, found by its accessible name
  * (an empty field draws no heading, so a position is not stable). */
+/** W6 (atlas pass 3, defect 11): Save names a "New decision" by its first
+ *  line, and a body that repeats the title is said once, by the title bar. */
+function expectSaid(words: string) {
+  const title = String(useDesk.getState().items.decision[0].title || "");
+  if (title === words) expect(decisionSection()).toBeUndefined();
+  else expect(decisionSection()?.textContent).toContain(words);
+}
+
 function decisionSection(): Element | undefined {
   return screen.queryByRole("region", { name: "Decision" }) ?? undefined;
 }
@@ -356,7 +364,7 @@ describe("PHILO-6-05 decision body fences", () => {
 
     // This is the production-host control: if it fails, inspect refresh or
     // host/window caching rather than assuming a stale prop.
-    expect(decisionSection()?.textContent).toContain("Keep the local ledger");
+    expectSaid("Keep the local ledger");
   });
 
   it("keeps an optimistic body when a pre-write refresh resolves", async () => {
@@ -374,7 +382,7 @@ describe("PHILO-6-05 decision body fences", () => {
     await act(async () => {
       fireEvent.click(screen.getByRole("button", { name: "Save" }));
     });
-    expect(decisionSection()?.textContent).toContain("Keep the local ledger");
+    expectSaid("Keep the local ledger");
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe("Keep the local ledger");
 
     await act(async () => {
@@ -386,7 +394,7 @@ describe("PHILO-6-05 decision body fences", () => {
     expect(useDesk.getState().items.decision[0].decisionMarkdown).toBe(
       "Keep the local ledger",
     );
-    expect(decisionSection()?.textContent).toContain("Keep the local ledger");
+    expectSaid("Keep the local ledger");
   });
 
   it("keeps an optimistic body when a refresh starts during a pending write", async () => {
