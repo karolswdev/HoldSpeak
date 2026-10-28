@@ -29,6 +29,7 @@ import {
   CheckGadget,
   ConfirmVerb,
   CycleGadget,
+  DotWord,
   EgressChip,
   FoldGadget,
   GadgetGroup,
@@ -45,7 +46,7 @@ import { ACCOUNTS_CHANGED, fetchConnections } from "./api";
 import "./connections.css";
 import { accountChip } from "../../../desk/surface/send";
 import {
-  CHANNEL_WORD, DEFAULT_EMAIL_PROVIDER, DEST_FOCUS, EMAIL_PROVIDERS, SEND_WORDS, egressOf, emailProvider, refusedWord, stamp,
+  CHANNEL_WORD, DEFAULT_EMAIL_PROVIDER, DEST_FOCUS, EMAIL_PROVIDERS, SEND_WORDS, egressOf, emailProvider, keyNotSavedNext, refusedWord, stamp,
   takeDestinationsFocus, targetToken, wire, Refusal, type Channel, type Destination, type EmailProvider,
   type SaveBody,
 } from "../../../features/channels/channels";
@@ -338,9 +339,8 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
             </span>
           ) : null}
           {keyRefused ? (
-            <span className="send-line" data-testid="dest-key-refused" data-code={keyRefused}>
-              <StateChip state="failure" label={SEND_WORDS.keyNotSaved} />
-              <span className="surface-token" data-chip>{refusedWord(keyRefused)}</span>
+            <span className="send-line" data-testid="dest-key-refused" data-code={keyRefused} title={refusedWord(keyRefused)}>
+              <DotWord tone="fail">{`${SEND_WORDS.keyNotSaved} · ${keyNotSavedNext(keyRefused)}`}</DotWord>
             </span>
           ) : null}
         </div>
@@ -370,9 +370,8 @@ export function DestForm({ conns, accountsLoading, accountsReadError, onAccounts
               }}>Check</Button>
           ) : null}
           {keyRefused ? (
-            <span className="send-line" data-testid="dest-key-refused" data-code={keyRefused}>
-              <StateChip state="failure" label={SEND_WORDS.keyNotSaved} />
-              <span className="surface-token" data-chip>{refusedWord(keyRefused)}</span>
+            <span className="send-line" data-testid="dest-key-refused" data-code={keyRefused} title={refusedWord(keyRefused)}>
+              <DotWord tone="fail">{`${SEND_WORDS.keyNotSaved} · ${keyNotSavedNext(keyRefused)}`}</DotWord>
             </span>
           ) : null}
         </div>

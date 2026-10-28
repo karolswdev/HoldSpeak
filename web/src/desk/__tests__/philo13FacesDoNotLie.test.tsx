@@ -16,7 +16,7 @@ import { resolve } from "node:path";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../lib/api";
-import { plainFailure, plainReason } from "../surface/plainFailure";
+import { failureTitle, plainFailure, plainReason, plainWords } from "../surface/plainFailure";
 import { askFailureLabel } from "../components/AskPanel";
 import { PeopleCore } from "../../pages/cores/PeopleCore";
 import { meetingSummaryState } from "../../pages/cores/history/MeetingHeader";
@@ -39,6 +39,11 @@ describe("plain failure words (A.3, A.10, Tenet 4)", () => {
   it("names the failure and never carries the hub's own text", () => {
     const cause = new ApiError(503, "people_store_unavailable", { detail: "people_store_unavailable" });
     expect(plainFailure("PEOPLE STORE", cause)).toBe("PEOPLE STORE · NOT AVAILABLE NOW");
+    // W6-G words: the plain sentence face, and the reason for the hover only.
+    expect(plainWords("Could not load people")).toBe("Could not load people · Nothing changed");
+    expect(plainWords("Could not park it", "It stays here", "Try again")).toBe("Could not park it · It stays here · Try again");
+    expect(failureTitle(cause)).toBe("Not available now · HTTP 503");
+    expect(failureTitle(new TypeError("Failed to fetch"))).toBe("Hub unreachable");
     expect(plainFailure("NOT PUBLISHED", new ApiError(500, "injected failure", {}))).toBe(
       "NOT PUBLISHED · HUB FAILED",
     );
@@ -158,7 +163,7 @@ describe("a People store failure keeps the window and the note", () => {
     fireEvent.change(note, { target: { value: "Wants the cutover plan in writing" } });
     fireEvent.click(screen.getByRole("button", { name: "Add note" }));
 
-    expect(await screen.findByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeTruthy();
+    expect(await screen.findByText("Could not read the people store · What is on screen stays · Try again")).toBeTruthy();
     // The window keeps the person and the unsent note.
     expect(screen.queryByTestId("people-joy-state")).toBeNull();
     expect(screen.getAllByText("Priya Nair").length).toBeGreaterThan(0);
@@ -171,7 +176,7 @@ describe("a People store failure keeps the window and the note", () => {
     // Try again re-reads the store; the row leaves and the note is still there.
     storeDown = false;
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-    await waitFor(() => expect(screen.queryByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeNull());
+    await waitFor(() => expect(screen.queryByText("Could not read the people store · What is on screen stays · Try again")).toBeNull());
     expect((screen.getByLabelText("Note") as HTMLTextAreaElement).value).toBe(
       "Wants the cutover plan in writing",
     );
@@ -210,14 +215,14 @@ describe("People Try again re-reads the person", () => {
   it("a failed detail read: Try again fetches the person again, then the row leaves", async () => {
     const calls = people(["down", "up"]);
     render(<PeopleCore scope="people:r1" />);
-    expect(await screen.findByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeTruthy();
+    expect(await screen.findByText("Could not read the people store · What is on screen stays · Try again")).toBeTruthy();
     expect(calls["/api/people/relationships/r1"]).toBe(1);
 
     // The window's own failure row. The Next 1:1 side section has a Try again
     // too when its read fails; which one is on the face first is a race.
     fireEvent.click(within(screen.getByTestId("people-failure")).getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(calls["/api/people/relationships/r1"]).toBe(2));
-    await waitFor(() => expect(screen.queryByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeNull());
+    await waitFor(() => expect(screen.queryByText("Could not read the people store · What is on screen stays · Try again")).toBeNull());
     // Betterment D7: Context is a fold; the kept place may already hold it open.
     const context = screen.getByRole("button", { name: "Context" });
     if (context.getAttribute("aria-expanded") !== "true") fireEvent.click(context);
@@ -227,13 +232,13 @@ describe("People Try again re-reads the person", () => {
   it("the row stays while the person read still fails", async () => {
     const calls = people(["down", "down", "up"]);
     render(<PeopleCore scope="people:r1" />);
-    expect(await screen.findByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeTruthy();
+    expect(await screen.findByText("Could not read the people store · What is on screen stays · Try again")).toBeTruthy();
     // The window's own failure row. The Next 1:1 side section has a Try again
     // too when its read fails; which one is on the face first is a race.
     fireEvent.click(within(screen.getByTestId("people-failure")).getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(calls["/api/people/relationships/r1"]).toBe(2));
     await new Promise((r) => setTimeout(r, 50));
-    expect(screen.getByText("PEOPLE STORE · NOT AVAILABLE NOW")).toBeTruthy();
+    expect(screen.getByText("Could not read the people store · What is on screen stays · Try again")).toBeTruthy();
   });
 });
 
