@@ -125,7 +125,7 @@ export function LiveReady({ settings, hub, speech, name, onName, mic = null, che
     micFace.verb === "allow" && mic?.settings_url ? (
       <Button dense variant="secondary" data-testid="live-mic-allow"
         title="Opens System Settings ▸ Privacy & Security ▸ Microphone on the Mac that runs HoldSpeak"
-        onClick={() => window.location.assign(String(mic.settings_url))}>
+        onClick={() => window.open(String(mic.settings_url), "_self", "noopener")}>
         Allow…
       </Button>
     ) : micFace.verb === "check" && onCheckMic ? (

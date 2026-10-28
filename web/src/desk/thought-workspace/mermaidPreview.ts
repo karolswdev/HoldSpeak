@@ -101,6 +101,14 @@ function renderDiagram(source: string): Promise<Rendered> {
   return job;
 }
 
+/** mermaid's drawn markup as nodes. An inert HTML parse (no script runs, as
+   with innerHTML; mermaid's strict level has already sanitized it), adopted
+   into the editor's document. */
+function svgNodes(svg: string): Node[] {
+  const parsed = new DOMParser().parseFromString(svg, "text/html");
+  return Array.from(parsed.body.childNodes, (node) => document.adoptNode(node));
+}
+
 class MermaidWidget extends WidgetType {
   constructor(readonly source: string, readonly sourceFrom: number) {
     super();
@@ -131,7 +139,7 @@ class MermaidWidget extends WidgetType {
     const paint = (result: Rendered) => {
       if ("svg" in result) {
         box.setAttribute("data-state", "drawn");
-        box.innerHTML = result.svg;
+        box.replaceChildren(...svgNodes(result.svg));
       } else {
         box.setAttribute("data-state", "failed");
         const code = document.createElement("pre");

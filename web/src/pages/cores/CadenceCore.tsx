@@ -396,7 +396,7 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
         />
       </SurfaceLedger>
       {/* W6-F words: the facts are one quiet sans line in sentence case
-          (`Quiet 22:00–08:00 · Next 10:15 · Last 10:00 · Checked 3 rooms in
+          (`Quiet 22:00 to 08:00 · Next 10:15 · Last 10:00 · Checked 3 rooms in
           42 ms`); a state is a dot and a word. */}
       <div className="rhythm-facts" data-testid="rhythm-sweep-facts">
         {sweeping ? (
@@ -407,7 +407,7 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
         {!sweeping && (
           <span className="rhythm-facts-line">
             {[
-              `Quiet ${fmtHour(settings.quiet_hours.start)}–${fmtHour(settings.quiet_hours.end)}`,
+              `Quiet ${fmtHour(settings.quiet_hours.start)} to ${fmtHour(settings.quiet_hours.end)}`,
               settings.next_sweep_at ? `Next ${fmtTime(settings.next_sweep_at)}` : null,
               settings.last_sweep_at ? `Last ${fmtTime(settings.last_sweep_at)}` : null,
               receipt
