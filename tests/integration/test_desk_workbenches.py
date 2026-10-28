@@ -132,8 +132,8 @@ def test_park_one_and_clear_done_keep_the_rows_parked_across_a_reload(tmp_path: 
 def test_a_claimed_item_is_refused_in_place(tmp_path: Path) -> None:
     """replaces: tests/e2e/test_philo13_02_park_glass.py::test_a_claimed_item_is_refused_in_place
     A run claims the item between the face's read and his press: Park is
-    refused (409, the status the face reads to say NOT PARKED · CLAIMED BY A
-    RUN, WorkbenchWindow.tsx), and the row stays claimed and not parked."""
+    refused (409, the status the face reads to say `Could not park · A run holds
+    it`, WorkbenchWindow.tsx), and the row stays claimed and not parked."""
     db = Database(tmp_path / "workbench.db")
     client = _client(db)
     wb, ids = _seed(db, client)

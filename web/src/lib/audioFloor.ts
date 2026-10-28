@@ -22,7 +22,7 @@ export class FloorHeldError extends Error {
     super(`Audio floor held by ${owner}`);
     this.name = "FloorHeldError";
   }
-  /** The room's refusal code — rendered as WHAT ("FLOOR HELD MEETING"). */
+  /** The room's refusal code — rendered as WHAT ("A meeting holds the mic"). */
   get refusal(): string {
     return `floor_held_${this.owner || "unknown"}`;
   }

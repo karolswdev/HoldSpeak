@@ -72,7 +72,7 @@ describe("HS-93-04 contextual pull-out actions", () => {
       expect(
         screen
           .getAllByRole("status")
-          .some((status) => status.textContent === "REPLY FAILED · RETRY"),
+          .some((status) => status.textContent === "The agent did not get your reply · Your draft stays here · Retry reply"),
       ).toBe(true),
     );
     expect(editor).toHaveValue("Keep this answer until delivery succeeds.");
@@ -86,7 +86,7 @@ describe("HS-93-04 contextual pull-out actions", () => {
     expect(
       screen.getByRole("textbox", { name: "Reply to the agent" }),
     ).toHaveValue("Keep this answer until delivery succeeds.");
-    expect(screen.getByRole("status")).toHaveTextContent("DRAFT RECOVERED");
+    expect(screen.getByRole("status")).toHaveTextContent("Draft recovered");
   });
 
   it("reviews and explicitly sends selected material only to a waiting Coder", async () => {

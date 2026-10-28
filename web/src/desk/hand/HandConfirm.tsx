@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../../components/signal/Signal";
 import { ApiError, apiFetch, readableError } from "../../lib/api";
-import { ConfirmLine, EgressChip, StateChip, objectSprite } from "../surface";
+import { ConfirmLine, DotWord, EgressChip, StateChip, objectSprite } from "../surface";
 import { countToken } from "../surface/count";
 import { AGENT_PROFILE, HAND_PATH, HAND_PREVIEW_PATH, rememberAgent } from "../agentHand";
 import { useAgentFlights } from "../agentFlights";
@@ -278,9 +278,16 @@ export function HandConfirm({ pending }: { pending: HandPending }) {
         </span>
       ) : null}
       {delivery ? (
-        <span className="surface-token" data-tone={delivery.tone} role="status" data-testid="hand-confirm-receipt">
-          {delivery.label}
-        </span>
+        delivery.title ? (
+          // W6-H words: a brief not sent reads as a dot + words, sans.
+          <span role="status" data-testid="hand-confirm-receipt" title={delivery.title}>
+            <DotWord tone="fail">{delivery.label}</DotWord>
+          </span>
+        ) : (
+          <span className="surface-token" data-tone={delivery.tone} role="status" data-testid="hand-confirm-receipt">
+            {delivery.label}
+          </span>
+        )
       ) : launchError ? (
         <span className="surface-token" data-tone="danger" role="alert" data-testid="hand-confirm-launch-refused">
           NOT LAUNCHED · {refusalToken(launchError, agent)}

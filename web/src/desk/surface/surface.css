@@ -3071,6 +3071,11 @@ button.surface-edit-in-place:hover {
   letter-spacing: 0.02em;
   color: var(--text-muted);
 }
+/* W6-H words: a receipt in plain words is sans; mono stays for code and ids. */
+.surface-receipt-line[data-words] {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
 .surface-receipt-line[data-tone="ok"] {
   color: var(--ok);
 }

@@ -97,7 +97,7 @@ describe("active Room filed Note", () => {
     fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
     fireEvent.click(await screen.findByRole("button", { name: /Before deletion/i }));
     fireEvent.click(screen.getByTestId("room-files-open"));
-    await screen.findByText("NOTE NOT AVAILABLE");
+    await screen.findByText("Note not available");
     expect(wire.openRef).not.toHaveBeenCalled();
     expect(screen.getByTestId("room-files-open")).toBeDisabled();
   });
@@ -105,7 +105,7 @@ describe("active Room filed Note", () => {
   it("returns to the exact filed row only after fresh membership and a successful Note read", async () => {
     wire.apiFetch.mockResolvedValue({ note: { id: "api-boundary", title: "API boundary" } });
     const result = mount({ request: { ref, seq: 5 } });
-    await screen.findByText("FILED HERE");
+    await screen.findByText("Filed here");
     expect(result.refreshResources).toHaveBeenCalledOnce();
     expect(result.onRequestHandled).toHaveBeenCalledWith(5);
     const grid = screen.getByRole("grid", { name: "Filed notes" });
@@ -123,7 +123,7 @@ describe("active Room filed Note", () => {
     const prior = document.createElement("button");
     document.body.append(prior);
     prior.focus();
-    await screen.findByText("FILED HERE");
+    await screen.findByText("Filed here");
     const row = within(screen.getByRole("grid", { name: "Filed notes" })).getByRole("row", { name: /API boundary/i });
     const button = within(row).getByRole("button", { name: /API boundary/i });
     const focus = vi.spyOn(button, "focus");
@@ -154,7 +154,7 @@ describe("active Room filed Note", () => {
     });
     const refreshResources = vi.fn(async () => ({ state: "stale" } as ResourcesRead));
     const result = mount({ request: { ref, seq: 13 }, refreshResources, followCurrentResources });
-    await screen.findByText("FILED HERE");
+    await screen.findByText("Filed here");
     expect(followCurrentResources).toHaveBeenCalledOnce();
     expect(result.onRequestHandled).toHaveBeenCalledWith(13);
     const row = within(screen.getByRole("grid", { name: "Filed notes" })).getByRole("row", { name: /Current record/i });
@@ -165,7 +165,7 @@ describe("active Room filed Note", () => {
   it("reports moved membership without inventing a filed row or reading the Note", async () => {
     const refreshResources = vi.fn(async () => ({ state: "ok", refs: [] } as ResourcesRead));
     mount({ resourceRefs: [ref], request: { ref, seq: 7 }, refreshResources });
-    await screen.findByText("NOT FILED HERE");
+    await screen.findByText("Not filed here");
     expect(refreshResources).toHaveBeenCalledOnce();
     expect(wire.apiFetch).not.toHaveBeenCalled();
     expect(screen.getByTestId("room-files-open")).toBeDisabled();
@@ -176,14 +176,14 @@ describe("active Room filed Note", () => {
       .mockRejectedValueOnce(new Error("offline"))
       .mockResolvedValueOnce({ note: { id: "api-boundary", title: "API boundary" } });
     const first = mount({ request: { ref, seq: 8 } });
-    await screen.findByText("NOTE NOT AVAILABLE");
+    await screen.findByText("Note not available");
     expect(screen.getByTestId("room-files-open")).toBeDisabled();
     first.unmount();
     const second = mount({ request: { ref, seq: 9 } });
-    await screen.findByText("NOTE NOT READ");
+    await screen.findByText("Could not read the note · Nothing changed");
     expect(screen.getByTestId("room-files-retry")).toBeEnabled();
     fireEvent.click(screen.getByTestId("room-files-retry"));
-    await screen.findByText("FILED HERE");
+    await screen.findByText("Filed here");
     expect(second.refreshResources).toHaveBeenCalledTimes(2);
     expect(wire.openRef).not.toHaveBeenCalled();
   });
@@ -191,7 +191,7 @@ describe("active Room filed Note", () => {
   it("keeps prior material labeled LAST READ when resource membership is not read", () => {
     mount({ resourcesState: "failed" });
     fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-    expect(screen.getByText("RESOURCES NOT READ")).toBeInTheDocument();
+    expect(screen.getByText("Files not read")).toBeInTheDocument();
     expect(screen.getByText("LAST READ")).toBeInTheDocument();
     expect(screen.getByTestId("room-files-open")).toBeDisabled();
   });

@@ -361,8 +361,13 @@ function frozenClone(root: Element, signal?: AbortSignal): {
     : [...standardStyleProperties, "content"];
   const captureClassPrefix = `hs-feedback-pseudo-${++frozenCaptureSequence}`;
   const pseudoRules: string[] = [];
-  const copyComputedStyle = (from: Element, to: HTMLElement | SVGElement, includeCustomProperties = false) => {
-    const style = from === root ? rootStyle : getComputedStyle(from);
+  const copyComputedStyle = (
+    from: Element,
+    to: HTMLElement | SVGElement,
+    includeCustomProperties = false,
+    computed?: CSSStyleDeclaration,
+  ) => {
+    const style = computed ?? (from === root ? rootStyle : getComputedStyle(from));
     const properties = includeCustomProperties
       ? Array.from(style)
       : standardStyleProperties;
@@ -392,15 +397,36 @@ function frozenClone(root: Element, signal?: AbortSignal): {
       child.style.transform = `translate(${-from.scrollLeft}px, ${-from.scrollTop}px)${transform && transform !== "none" ? ` ${transform}` : ""}`;
     }
   };
+  // A subtree that draws nothing (display: none) leaves the image. A loaded
+  // Settings window at 1440 holds about 1,400 elements and most of them are
+  // closed panes; freezing ~370 properties on each of them blocked the page
+  // for about a second before the strip showed "Capturing".
+  const dropped = new Set<Element>();
   source.forEach((element, index) => {
     throwIfCaptureAborted(signal);
     const copy = copies[index];
     if (!copy) return;
-    if (element.matches("[data-ui-feedback], [data-ui-feedback] *") || isSensitiveElement(element)) {
-      copy.remove();
+    if (element.parentElement && dropped.has(element.parentElement)) {
+      dropped.add(element);
       return;
     }
-    if (copy instanceof HTMLElement || copy instanceof SVGElement) copyComputedStyle(element, copy, index === 0);
+    if (element.matches("[data-ui-feedback], [data-ui-feedback] *") || isSensitiveElement(element)) {
+      copy.remove();
+      dropped.add(element);
+      return;
+    }
+    const style = element === root ? rootStyle : getComputedStyle(element);
+    if (
+      index > 0
+      && element instanceof HTMLElement
+      && !(element instanceof HTMLStyleElement)
+      && style.getPropertyValue("display") === "none"
+    ) {
+      copy.remove();
+      dropped.add(element);
+      return;
+    }
+    if (copy instanceof HTMLElement || copy instanceof SVGElement) copyComputedStyle(element, copy, index === 0, style);
     freezePseudoStyles(element, copy, index);
     if (element instanceof HTMLInputElement && copy instanceof HTMLInputElement) {
       copy.value = element.value;
@@ -424,6 +450,7 @@ function frozenClone(root: Element, signal?: AbortSignal): {
   source.forEach((element, index) => {
     throwIfCaptureAborted(signal);
     const copy = copies[index];
+    if (dropped.has(element)) return;
     if (element instanceof HTMLElement && copy instanceof HTMLElement) preserveScroll(element, copy);
   });
   if (pseudoRules.length > 0) {

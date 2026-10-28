@@ -1247,7 +1247,7 @@ export function WorkbenchWindow({
           else await parkWorkbenchItems(workbenchId, ids);
         } catch (cause) {
           if (cause instanceof ApiError && cause.status === 409) {
-            setParkOutcome(notParkedOutcome("CLAIMED BY A RUN"));
+            setParkOutcome(notParkedOutcome("A run holds it"));
             load();
             return;
           }

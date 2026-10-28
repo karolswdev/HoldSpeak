@@ -214,10 +214,10 @@ describe("the RESULT row's teach loop", () => {
     await userEvent.click(within(teach).getByRole("button", { name: "Teach correction" }));
 
     const receipt = await within(result).findByRole("status");
-    expect(receipt.textContent).toContain("REFUSED · SECRET");
-    expect(receipt.textContent).toContain("nothing written");
+    expect(receipt.textContent).toContain("Not taught · It looks like a secret");
+    expect(receipt.textContent).toContain("Nothing written");
     // the refusal is said once too — in the row, never in the footer
-    expect(announced.filter((t) => t.includes("REFUSED"))).toEqual([]);
+    expect(announced.filter((t) => t.includes("Not taught"))).toEqual([]);
   });
 });
 

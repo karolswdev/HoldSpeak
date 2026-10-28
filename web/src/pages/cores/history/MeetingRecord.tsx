@@ -269,7 +269,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
         text: `EXPORTED ${format === "markdown" ? "MD" : format.toUpperCase()} ${clockTime(new Date().toISOString())}`,
       });
     } catch (reason) {
-      setReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      setReceipt({ text: `Could not export the meeting as ${format === "markdown" ? "Markdown" : format.toUpperCase()} · Nothing changed · Try again`, tone: "danger", title: readableError(reason) });
     }
   };
   // PHILO-13-02 (A1-F): Park, never delete. One press, no confirm; the
@@ -286,7 +286,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
       showParkOutcome(parkedOutcome([meetingId], parkClock()));
       void useDesk.getState().refresh().catch(() => undefined);
     } catch (reason) {
-      showParkOutcome(notParkedOutcome(writeFailureReason(reason)));
+      showParkOutcome(notParkedOutcome("The hub did not accept it", writeFailureReason(reason)));
     } finally {
       setParking(false);
     }
@@ -339,7 +339,7 @@ export function MeetingRecord({ meetingId, onClose }: { meetingId: string; onClo
     parkOutcome
       ? { key: "receipt", text: <ParkReceipt outcome={parkOutcome} onRestore={(ids) => void restore(ids)} data-testid="meeting-park-receipt" /> }
       : receipt
-        ? { key: "receipt", text: <span className="surface-footer-receipt-line" data-tone={receipt.tone} data-testid="meetings-run-receipt">{receipt.text}</span> }
+        ? { key: "receipt", text: <span className="surface-footer-receipt-line" data-tone={receipt.tone} data-testid="meetings-run-receipt" title={receipt.title || undefined}>{receipt.text}</span> }
         : null,
   ].filter(Boolean) as StatusBarItem[];
   const exportEntries: WorkMenuEntry[] = [

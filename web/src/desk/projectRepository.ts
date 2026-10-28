@@ -38,15 +38,16 @@ export function registerProjectRepository(projectId: string, repository: string)
   return apiFetch<ProjectRepository>(projectRepositoryPath(projectId), { method: "POST", json: { repository } });
 }
 
-/** `owner/name · CLONED`, `owner/name · NOT CLONED`, or `owner/name · NOT REGISTERED`
- *  (a watched repository nobody registered); "" when the Project names none. */
+/** `owner/name · Cloned`, `owner/name · Not cloned`, or `owner/name · Not registered`
+ *  (a watched repository nobody registered); "" when the Project names none.
+ *  W6-H words: states in sentence case; the repository id keeps its case. */
 export function repositoryWords(state: ProjectRepository | null, failed = false): string {
-  // A read that failed, or a store the hub cannot read, is NOT READ (A.10).
-  if (failed || state?.store === "not_read") return "NOT READ";
+  // A read that failed, or a store the hub cannot read, is Not read (A.10).
+  if (failed || state?.store === "not_read") return "Not read";
   if (!state) return "";
-  if (state.repository) return `${state.repository} · ${state.cloned ? "CLONED" : "NOT CLONED"}`;
+  if (state.repository) return `${state.repository} · ${state.cloned ? "Cloned" : "Not cloned"}`;
   const watched = state.watched?.[0];
-  return watched ? `${watched} · NOT REGISTERED` : "";
+  return watched ? `${watched} · Not registered` : "";
 }
 
 /** The repository the drawer's Register verb names: the first watched one,

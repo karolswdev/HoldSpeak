@@ -241,7 +241,7 @@ describe("HS-201-04 the record's Retry", () => {
 
     const refusal = await screen.findByTestId("recovery-refusal");
     // ONE short fact line, not the hub's two-sentence instruction.
-    expect(refusal.textContent).toBe("REFUSED · ROUTE CHANGED");
+    expect(refusal.textContent).toBe("Summary did not start · Route changed");
     expect(refusal.getAttribute("title")).toContain(
       "The summary route changed. Check it, then try again.",
     );
@@ -266,7 +266,7 @@ describe("HS-201-04 the record's Retry", () => {
     render(<MeetingIntelRecovery meetingId="meeting-durable" />);
     const refusal = await screen.findByTestId("recovery-refusal");
     // No 409 in hand: the token says the state and invents no cause.
-    expect(refusal.textContent).toBe("REFUSED");
+    expect(refusal.textContent).toBe("The last summary did not start");
     expect(refusal.getAttribute("title")).toContain("before any model was contacted");
     expect(screen.getByTestId("recovery-attempts").textContent).toBe("Failed");
   });

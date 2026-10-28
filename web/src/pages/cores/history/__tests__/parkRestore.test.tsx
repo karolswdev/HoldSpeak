@@ -159,7 +159,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     fireEvent.click(within(receipt).getByRole("button", { name: "Restore" }));
     await waitFor(() =>
       expect(screen.getByTestId("meeting-park-receipt").textContent).toContain(
-        "NOT RESTORED · THE HUB DID NOT ACCEPT THE CHANGE",
+        "Could not restore · The hub did not accept the change · It stays parked",
       ),
     );
     const failed = screen.getByTestId("meeting-park-receipt");
