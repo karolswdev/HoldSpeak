@@ -159,6 +159,11 @@ describe("the one needs-you membership", () => {
     for (const [days, due] of [["0", "2026-10-01"], ["1", "2026-10-02"], ["2", "2026-10-03"]]) {
       now.now!.push(doorCard(`mine-${days}`, { owner: "Me", due }), doorCard(`bea-${days}`, { owner: "Bea", due }));
     }
+    // The overdue column: his own stays his; Bea's waits on Bea.
+    now.overdue = [
+      doorCard("mine-late", { owner: "Me", due: "2026-09-30" }),
+      doorCard("bea-late", { owner: "Bea", due: "2026-09-30" }),
+    ];
     const result = computeNeedsYou({ door: { board: now }, selfNames: ["me", "you", "manager"], now: NOW });
     const rows = Object.fromEntries(result.unmutedItems.map((item) => [item.ref, item]));
     const words = ["DUE TODAY", "DUE TOMORROW", "DUE Sat"];
@@ -166,9 +171,13 @@ describe("the one needs-you membership", () => {
       expect(rows[`mine-${days}`]).toMatchObject({ why: word, waiting: false, direction: "mine" });
       expect(rows[`bea-${days}`]).toMatchObject({ why: `WAITING ON BEA · ${word}`, waiting: true, direction: "theirs" });
     });
-    expect(result.waitingItems.map((item) => item.ref).sort()).toEqual(["bea-0", "bea-1", "bea-2"]);
-    // His own counts on its day; Bea's never counts.
-    expect(result.members.map(({ ref }) => ref)).toEqual(["mine-0"]);
+    expect(rows["mine-late"]).toMatchObject({ waiting: false, direction: "mine" });
+    expect(String(rows["mine-late"].why)).toMatch(/^OVERDUE/);
+    expect(rows["bea-late"]).toMatchObject({ why: "WAITING ON BEA · OVERDUE", waiting: true, direction: "theirs" });
+    expect(result.waitingItems.map((item) => item.ref).sort()).toEqual(["bea-0", "bea-1", "bea-2", "bea-late"]);
+    // His own counts on its day (and when late); Bea's never counts.
+    expect(result.members.map(({ ref }) => ref).sort()).toEqual(["mine-0", "mine-late"]);
+    expect(stateWords("WAITING ON BEA · OVERDUE")).toBe("Waiting on Bea · Overdue");
     // The row says it in sentence case (NeedsRow `stateWords`).
     expect(stateWords("WAITING ON BEA · DUE TOMORROW")).toBe("Waiting on Bea · Due tomorrow");
     expect(stateWords("DUE Sat")).toBe("Due Sat");

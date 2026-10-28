@@ -734,8 +734,9 @@ def test_the_overdue_door_item_ranks_first_and_an_active_thought_is_no_member(hu
     # (an owned item due next week waits on its owner; the hub's own count).
     assert [row["ref"] for row in door_rows] == ["hs144-overdue", "hs144-now", "hs144-unassigned", "hs144-waiting"]
     assert door_rows[0]["title"] == "Unblock the overdue Door proof"
-    # "OVERDUE · <n>D": n counts from the hub's day, so only the word is pinned.
-    assert str(door_rows[0]["why"]).startswith("OVERDUE"), door_rows[0]
+    # Ada's overdue item waits on Ada, with the word beside it.
+    assert door_rows[0]["why"] == "WAITING ON ADA · OVERDUE", door_rows[0]
+    assert door_rows[0]["waiting"] is True, door_rows[0]
     assert door_rows[3]["why"] == "WAITING ON CY" and door_rows[3]["waiting"] is True
     # Betterment D1: what Ada and Bea owe is theirs and never counts, late or
     # not; the item nobody owns is his to place.
@@ -765,7 +766,7 @@ def test_the_now_window_says_the_day_and_theirs_waits(
     rows = [
         (f"due-{who}-{days}", f"{who} item due in {days} days", owner, WIRE_DAY + timedelta(days=days))
         for who, owner in (("mine", "me"), ("theirs", "Bea"))
-        for days in (0, 1, 2)
+        for days in (-1, 0, 1, 2)
     ]
     meeting_id = "due-label-meeting"
     pushed = _ok(hub.client.post("/api/sync/push", json={"meetings": [{
@@ -787,7 +788,8 @@ def test_the_now_window_says_the_day_and_theirs_waits(
     }]}))
     assert pushed["received"]["meetings"] == 1
     board = _ok(hub.client.get("/api/door"))["board"]
-    assert {str(card["id"]) for card in board["now"]} >= {row[0] for row in rows}, board["now"]
+    assert {str(card["id"]) for card in board["now"]} >= {row[0] for row in rows if row[3] >= WIRE_DAY}, board["now"]
+    assert {str(card["id"]) for card in board["overdue"]} >= {"due-mine--1", "due-theirs--1"}, board["overdue"]
 
     answer = _needs(hub)
     got = {str(row.get("ref")): row for row in answer["items"] if str(row.get("ref") or "").startswith("due-")}
@@ -801,7 +803,16 @@ def test_the_now_window_says_the_day_and_theirs_waits(
         assert (theirs["why"], theirs["direction"], theirs["waiting"], theirs["counted"]) == (
             f"WAITING ON BEA · {word}", "theirs", True, False), theirs
         assert f"due-theirs-{days}" not in members
-    assert answer["waitingCount"] >= 3
+    # The overdue column: his own stays OVERDUE, his and counted; Bea's
+    # waits on Bea with the word beside it, and is not counted.
+    mine, theirs = got["due-mine--1"], got["due-theirs--1"]
+    assert str(mine["why"]).startswith("OVERDUE"), mine
+    assert (mine["direction"], mine["waiting"], mine["counted"]) == ("mine", False, True), mine
+    assert "due-mine--1" in members
+    assert (theirs["why"], theirs["direction"], theirs["waiting"], theirs["counted"]) == (
+        "WAITING ON BEA · OVERDUE", "theirs", True, False), theirs
+    assert "due-theirs--1" not in members
+    assert answer["waitingCount"] >= 4
     # The one count rule: his item counts on its day, not before.
     assert got["due-mine-0"]["counted"] is True and "due-mine-0" in members
     assert got["due-mine-1"]["counted"] is False and got["due-mine-2"]["counted"] is False

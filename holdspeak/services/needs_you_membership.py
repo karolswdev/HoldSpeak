@@ -163,7 +163,10 @@ def door_items(
                 "_isDoor": True,
                 "_isUnassigned": column == "unassigned" and not has_owner,
                 "_toReview": column == "unassigned" and has_owner,
+                # ``compute_needs_you`` makes another person's item in the
+                # two-day window or the overdue column a wait on that person.
                 **({"_dueWord": door_due_word(due_at, now.date())} if column == "now" else {}),
+                **({"_dueWord": "OVERDUE"} if column == "overdue" else {}),
             })
     return rows
 
@@ -1118,8 +1121,9 @@ def compute_needs_you(
         return waits_on_other(row, names, personal, identified, persons)
 
     for row in combined:
-        # The Door's two-day window: another person's item there is a wait
-        # on that person, with its due word beside it; his own keeps the word.
+        # The Door's two-day window and its overdue column: another person's
+        # item there is a wait on that person, with its due word beside it
+        # (``WAITING ON ADA · OVERDUE``); his own keeps the word.
         if (row.get("_dueWord") and str(row.get("owner") or "").strip()
                 and not _is_me(row, names, personal, identified, persons)):
             row["why"] = f"WAITING ON {str(row['owner']).strip().upper()} · {row['_dueWord']}"
