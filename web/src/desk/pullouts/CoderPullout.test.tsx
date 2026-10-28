@@ -49,14 +49,14 @@ describe("Coder reply custody", () => {
     const field = screen.getByRole("textbox", { name: "Reply to the agent" });
     fireEvent.change(field, { target: { value: "Jordan owns rollback." } });
     fireEvent.click(screen.getByRole("button", { name: "Send reply" }));
-    expect(await screen.findByText("REPLY FAILED · RETRY")).toBeVisible();
+    expect(await screen.findByText("The agent did not get your reply · Your draft stays here · Retry reply")).toBeVisible();
     expect(field).toHaveValue("Jordan owns rollback.");
     expect(readDurableDraft(scope)?.text).toBe("Jordan owns rollback.");
     fireEvent.click(screen.getByRole("button", { name: "Retry reply" }));
     await waitFor(() => expect(field).toHaveValue(""));
     expect(speak).toHaveBeenCalledTimes(2);
     expect(readDurableDraft(scope)).toBeNull();
-    expect(screen.getByText("REPLY SENT")).toBeVisible();
+    expect(screen.getByText("Reply sent")).toBeVisible();
   });
 
   it("names a rejected send and keeps the reply for Retry", async () => {

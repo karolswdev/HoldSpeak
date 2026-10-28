@@ -356,7 +356,7 @@ describe("Speak refusals land in-flow", () => {
 
     await clickToggle(talk);
 
-    const receipt = await screen.findByText(/REFUSED.*NO FOCUSED APP/);
+    const receipt = await screen.findByText(/Could not deliver the words · No app in front/);
     expect(receipt).toBeVisible();
     // in-flow, in the ONE receipt channel — no dialog, no toast species
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -380,7 +380,7 @@ describe("Speak refusals land in-flow", () => {
     await clickToggle(talk);
 
     expect(
-      await screen.findByText(/REFUSED.*NO AGENT AWAITING/),
+      await screen.findByText(/Could not deliver the words · No agent waits for words/),
     ).toBeVisible();
   });
 
@@ -406,7 +406,7 @@ describe("Speak refusals land in-flow", () => {
     await clickToggle(talk);
 
     expect(
-      await screen.findByText(/REFUSED.*NO DELIVERY TARGET/),
+      await screen.findByText(/Could not deliver the words · No place to deliver to/),
     ).toBeVisible();
   });
 });

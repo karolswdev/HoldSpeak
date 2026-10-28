@@ -40,15 +40,15 @@ describe("Components filed Note specimen", () => {
   it("keeps refusal, moved membership, and unavailable Note distinct with no real IO", async () => {
     const first = render(<FiledNotesReference preset="files-not-read" />);
     fireEvent.click(screen.getByTestId("room-fold-files").querySelector("summary")!);
-    expect(screen.getByText("RESOURCES NOT READ")).toBeInTheDocument();
+    expect(screen.getByText("Files not read")).toBeInTheDocument();
     fireEvent.click(screen.getByTestId("room-files-retry"));
     await screen.findByRole("button", { name: /Review record/i });
     first.unmount();
     const second = render(<FiledNotesReference preset="not-filed" />);
-    await screen.findByText("NOT FILED HERE");
+    await screen.findByText("Not filed here");
     second.unmount();
     render(<FiledNotesReference preset="unavailable" />);
-    await screen.findByText("NOTE NOT AVAILABLE");
+    await screen.findByText("Note not available");
     expect(screen.getByTestId("room-files-open")).toBeDisabled();
     expect(wire.apiFetch).not.toHaveBeenCalled();
     expect(wire.openRef).not.toHaveBeenCalled();

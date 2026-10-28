@@ -391,7 +391,7 @@ export function useMeetingData(
         text: decision === "approved" ? "APPROVED" : "REJECTED",
       });
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: `Could not ${decision === "approved" ? "approve" : "reject"} the proposal · Nothing changed · Try again`, tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }
@@ -427,7 +427,7 @@ export function useMeetingData(
       onReceipt({ text: "CONFIRMED" });
       await refreshOutcomeReview();
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: "Could not confirm the proposal · Nothing changed · Try again", tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }
@@ -453,7 +453,7 @@ export function useMeetingData(
       )));
       onReceipt({ text: "NOT NOW" });
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: "Could not move the proposal to later · Nothing changed · Try again", tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }
@@ -473,7 +473,7 @@ export function useMeetingData(
       onReceipt({ text: accepted > 0 ? `CONFIRMED ${accepted}` : "CONFIRMED" });
       await refreshOutcomeReview();
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: "Could not confirm the reviewed proposals · Nothing changed · Try again", tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }
@@ -488,7 +488,7 @@ export function useMeetingData(
       setFtProposals((prev) => prev.map((p) => (p.id === proposalId ? { ...p, state: "dismissed" } : p)));
       onReceipt({ text: "DISMISSED" });
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: "Could not dismiss the proposal · Nothing changed · Try again", tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }
@@ -528,7 +528,7 @@ export function useMeetingData(
       });
       onReceipt({ text: verb === "done" ? "DONE" : "REOPENED" });
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: `Could not ${verb === "done" ? "mark the action done" : "open the action again"} · Nothing changed · Try again`, tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }

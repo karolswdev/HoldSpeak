@@ -1093,7 +1093,7 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
             assert section.locator("h3").inner_text().strip() == "PEOPLE 1 OF 2"
             assert page.get_by_test_id("room-people-gaps").inner_text().strip() == "1 AMBIGUOUS"
             owner_tokens = [t.strip() for t in page.get_by_test_id("room-people-owner-token").all_inner_texts()]
-            assert owner_tokens == ["OWNER · AMBIGUOUS · 2 MATCHES"], owner_tokens
+            assert owner_tokens == ["Owner not clear · 2 matches"], owner_tokens
             body = section.inner_text()
             assert "Priya Sharma" not in body and "Priya Nair" not in body, "an ambiguous owner was attributed"
             assert "marek-k" not in body, "a raw login crossed onto the face"
@@ -1182,7 +1182,7 @@ def _run_ready_resolve_and_people(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
             assert page.get_by_test_id("room-people-gaps").inner_text().strip() == "LOCKED"
             assert page.get_by_test_id("room-people-head-verb").inner_text().strip() == "Unlock"
             owner_tokens = sorted(t.strip() for t in page.get_by_test_id("room-people-owner-token").all_inner_texts())
-            assert owner_tokens == ["OWNER · LOCKED", "OWNER · LOCKED"], owner_tokens
+            assert owner_tokens == ["Owner locked", "Owner locked"], owner_tokens
             assert page.get_by_test_id("room-people-resolve-verb").count() == 0, "no dead verb under a lock"
             body = section.inner_text()
             assert "Priya Sharma" not in body and "Marek Kubiak" not in body, "a locked store named nobody"

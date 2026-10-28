@@ -477,6 +477,18 @@
   padding: 8px 0 0;
   border-top: 1px solid var(--border-faint, rgba(255, 255, 255, 0.035));
 }
+/* W6-H words: a refused teach reads as sans words in sentence case
+   (`Not taught · Use two words or more`), not a mono caps chip. */
+.desk-next .speak-receipt > .surface-token[data-tone="danger"] {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: normal;
+}
+.desk-next .speak-receipt > .surface-token[data-tone="danger"] + .speak-receipt-tail {
+  font: 400 12px / 1.3 var(--font-sans);
+}
 .desk-next .speak-receipt-tail {
   min-width: 0;
   overflow: hidden;

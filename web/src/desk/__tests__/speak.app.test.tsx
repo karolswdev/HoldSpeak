@@ -460,11 +460,11 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
     await userEvent.clear(said);
     await userEvent.paste(SECRET_SAID);
     await userEvent.click(screen.getByRole("button", { name: "Teach correction" }));
-    await waitFor(() => expect(container.querySelector(".speak-receipt")?.textContent ?? "").toContain("REFUSED"));
+    await waitFor(() => expect(container.querySelector(".speak-receipt")?.textContent ?? "").toContain("Not taught"));
     receipt = container.querySelector(".speak-receipt") as HTMLElement;
-    expect(receipt.textContent).toContain("SECRET");
-    expect(receipt.textContent).toContain("nothing written");
-    expect(footerText()).not.toContain("REFUSED");
+    expect(receipt.textContent).toContain("secret");
+    expect(receipt.textContent).toContain("Nothing written");
+    expect(footerText()).not.toContain("Not taught");
 
     // ── 6. speak it again: the rule fires and says so ──
     result = await land(AGAIN);

@@ -10,7 +10,27 @@ import { ObjectList, SurfaceSection, StateChip, type ObjectSort, type ObjectSort
 import { FoldGadget } from "../../desk/surface/gadgets";
 import type { DrawerMember } from "../../desk/drawer/members";
 import type { ResourcesRead, ResourcesState } from "../../desk/drawer/useDrawerData";
+import { DotWord } from "../../desk/surface/kit";
 import "./project-room.css";
+
+/** W6-H words: the return receipts in sentence case, as a dot + words. A
+ *  failure says what failed and what stayed; Retry stands beside it. */
+const RETURN = {
+  checking: "Checking files",
+  filesNotRead: "Could not read the files · Nothing changed",
+  notFiled: "Not filed here",
+  noteUnavailable: "Note not available",
+  noteNotRead: "Could not read the note · Nothing changed",
+  filed: "Filed here",
+} as const;
+const RETURN_TONE: Record<string, "ok" | "warn" | "fail" | "idle"> = {
+  [RETURN.checking]: "idle",
+  [RETURN.filesNotRead]: "fail",
+  [RETURN.notFiled]: "warn",
+  [RETURN.noteUnavailable]: "warn",
+  [RETURN.noteNotRead]: "fail",
+  [RETURN.filed]: "ok",
+};
 
 type NoteRef = `note:${string}`;
 export type NoteRead = { state: "loading" | "ok" | "unavailable" | "failed"; title?: string };
@@ -118,7 +138,7 @@ export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState,
     const generation = ++returnGeneration.current;
     setExpanded(true);
     setReturnTarget(ref);
-    setReturnReceipt("CHECKING FILES");
+    setReturnReceipt(RETURN.checking);
     setSelectedRef(null);
     const result = await followCurrentResources(await refreshResources());
     if (generation !== returnGeneration.current) return;
@@ -127,21 +147,21 @@ export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState,
       return;
     }
     if (result.state === "failed") {
-      setReturnReceipt("RESOURCES NOT READ");
+      setReturnReceipt(RETURN.filesNotRead);
       onRequestHandled(seq);
       return;
     }
     if (!filedNoteRefs(result.refs).includes(ref)) {
-      setReturnReceipt("NOT FILED HERE");
+      setReturnReceipt(RETURN.notFiled);
       onRequestHandled(seq);
       return;
     }
     const note = await readNote(ref, true);
     if (generation !== returnGeneration.current) return;
-    if (note.state === "unavailable") setReturnReceipt("NOTE NOT AVAILABLE");
-    else if (note.state !== "ok") setReturnReceipt("NOTE NOT READ");
+    if (note.state === "unavailable") setReturnReceipt(RETURN.noteUnavailable);
+    else if (note.state !== "ok") setReturnReceipt(RETURN.noteNotRead);
     else {
-      setReturnReceipt("FILED HERE");
+      setReturnReceipt(RETURN.filed);
       setSelectedRef(ref);
       setFocusRequest({ ref, seq });
     }
@@ -187,24 +207,24 @@ export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState,
     if (read?.state !== "ok") return;
     const generation = ++openGeneration.current;
     const context = { projectReturn: { projectId, resourceRef: ref } };
-    setReturnReceipt("CHECKING FILES");
+    setReturnReceipt(RETURN.checking);
     const resources = await followCurrentResources(await refreshResources());
     if (generation !== openGeneration.current || resources.state === "stale") return;
-    if (resources.state === "failed") { setReturnReceipt("RESOURCES NOT READ"); return; }
-    if (!filedNoteRefs(resources.refs).includes(ref)) { setReturnReceipt("NOT FILED HERE"); setSelectedRef(null); return; }
+    if (resources.state === "failed") { setReturnReceipt(RETURN.filesNotRead); return; }
+    if (!filedNoteRefs(resources.refs).includes(ref)) { setReturnReceipt(RETURN.notFiled); setSelectedRef(null); return; }
     const note = await readNote(ref, true);
     if (generation !== openGeneration.current) return;
     if (note.state !== "ok") {
-      setReturnReceipt(note.state === "unavailable" ? "NOTE NOT AVAILABLE" : "NOTE NOT READ");
+      setReturnReceipt(note.state === "unavailable" ? RETURN.noteUnavailable : RETURN.noteNotRead);
       return;
     }
     setReturnReceipt("");
     adapter.open(ref, context);
   };
   const retry = () => {
-    if ((returnReceipt === "RESOURCES NOT READ" || returnReceipt === "NOTE NOT READ") && returnTarget)
+    if ((returnReceipt === RETURN.filesNotRead || returnReceipt === RETURN.noteNotRead) && returnTarget)
       void resolveReturn(returnTarget, Date.now());
-    else if (resourcesState === "failed" || returnReceipt === "RESOURCES NOT READ") void refreshResources();
+    else if (resourcesState === "failed" || returnReceipt === RETURN.filesNotRead) void refreshResources();
     else if (selectedRef && noteReads[selectedRef]?.state === "failed") void readNote(selectedRef, true);
     else if (failedNote) void readNote(failedNote, true);
   };
@@ -221,13 +241,13 @@ export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState,
       open={expanded || undefined} onToggle={setExpanded}>
       <SurfaceSection label="Files" data-testid="room-files" actions={<>
         {retainedLoading ? <StateChip state="working" label="READING FILES · LAST READ" /> : null}
-        {(resourcesState === "failed" || returnReceipt === "RESOURCES NOT READ" || returnReceipt === "NOTE NOT READ" || failedNote) ?
+        {(resourcesState === "failed" || returnReceipt === RETURN.filesNotRead || returnReceipt === RETURN.noteNotRead || failedNote) ?
           <Button dense variant="ghost" onClick={retry} data-testid="room-files-retry">Retry</Button> : null}
         <Button dense variant="ghost" disabled={!canOpen} onClick={() => selectedRef && void open(selectedRef)} data-testid="room-files-open">Open note</Button>
       </>}>
         {resourcesState === "loading" && !retainedLoading ? <StateChip state="working" label="READING FILES" /> : null}
-        {resourcesState === "failed" ? <StateChip state="failure" label="RESOURCES NOT READ" /> : null}
-        {returnReceipt ? <div role="status" data-testid="room-files-return">{returnReceipt}</div> : null}
+        {resourcesState === "failed" ? <DotWord tone="fail">Files not read</DotWord> : null}
+        {returnReceipt ? <div role="status" data-testid="room-files-return"><DotWord tone={RETURN_TONE[returnReceipt] ?? "idle"}>{returnReceipt}</DotWord></div> : null}
         {resourcesState !== "ok" && noteRefs.length && !retainedLoading ? <StateChip state="warning" label="LAST READ" /> : null}
         {rows.length ? <ObjectList label="Filed notes" rows={rows} sort={sort} onSort={sortBy} visibleColumns={["name", "kind"]}
           selectedId={selectedRef} onSelect={(id) => setSelectedRef(isFiledNoteRef(id) ? id : null)} onOpen={(id) => void open(id)} /> : null}

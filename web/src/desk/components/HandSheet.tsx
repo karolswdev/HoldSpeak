@@ -142,7 +142,7 @@ export function agentOfProfile(profile: string | null | undefined, fallback: Age
 }
 
 /** The launch's delivery as one token: the brief is pending, held, sent or refused. */
-export function deliveryToken(launch: HandLaunch): { label: string; tone: "ok" | "warning" | "danger" | undefined; done: boolean } {
+export function deliveryToken(launch: HandLaunch): { label: string; tone: "ok" | "warning" | "danger" | undefined; done: boolean; title?: string } {
   // Betterment AG5: at the working-at-once limit the hand waits in the queue.
   if (launch.status === "queued") return { label: "WAITS FOR A FREE AGENT", tone: undefined, done: true };
   const state = String(launch.instruction_state ?? "");
@@ -152,7 +152,9 @@ export function deliveryToken(launch: HandLaunch): { label: string; tone: "ok" |
   if (state === "pending" || state === "") return { label: "LAUNCHED · BRIEF PENDING", tone: undefined, done: false };
   if (state === "delivering") return { label: "LAUNCHED · BRIEF DELIVERING", tone: undefined, done: false };
   if (state === "hooks_missing") return { label: "LAUNCHED · BRIEF HELD · NO HOOKS", tone: "warning", done: true };
-  return { label: `LAUNCHED · BRIEF NOT SENT · ${codeWords(state)} · KEPT ON THE HUB · SEND AGAIN`, tone: "danger", done: true };
+  // W6-H words: what failed, what stayed, what next, in sentence case; the
+  // hub's reason code rides the hover title.
+  return { label: "Brief not sent to the agent · It stays on the hub · Send again", tone: "danger", done: true, title: codeWords(state).toLowerCase() };
 }
 
 const AGENTS: AgentId[] = ["claude", "codex", "pi"];
@@ -621,7 +623,8 @@ function Sheet({ origin }: { origin: HandOrigin }) {
         egress={<EgressChip {...engineEgress(actual, preview)} />}
         receipt={
           delivery ? (
-            <span className="surface-footer-receipt-line" data-tone={delivery.tone} role="status" data-testid="hand-launch-receipt">
+            <span className="surface-footer-receipt-line" data-tone={delivery.tone} role="status" data-testid="hand-launch-receipt"
+              data-words={delivery.title ? "" : undefined} title={delivery.title}>
               {delivery.label}
             </span>
           ) : launchError ? (

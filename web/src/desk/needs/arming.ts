@@ -1,6 +1,7 @@
 /** PHILO-14 A5 — the outcome of a Cancel on the ARMED row (Astra r1, P1-2).
  *
- *  A refused Cancel is named on the row (`NOT CANCELLED · <reason>`, Retry);
+ *  A refused Cancel is named on the row (`Could not cancel · Nothing changed`,
+ *  the reason in its hover title, Retry);
  *  a cancelled recording leaves a receipt line in the drawer
  *  (`CANCELLED · <meeting> · hh:mm`) that stays after the row is gone. Both
  *  read the real store: `cancelArmedSchedule`'s result and the hub's

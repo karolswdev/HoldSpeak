@@ -52,7 +52,7 @@ describe("PHILO-15-07 the transcript never lies", () => {
     expect(finishedRunReceipt("ready", at).text).toMatch(/^RAN · \d{1,2}:\d{2}/);
     expect(finishedRunReceipt("complete", at).text).toMatch(/^RAN · /);
     expect(finishedRunReceipt("error", at)).toMatchObject({ tone: "danger" });
-    expect(finishedRunReceipt("error", at).text).toMatch(/^FAILED · /);
+    expect(finishedRunReceipt("error", at).text).toMatch(/^Summary failed at \d\d:\d\d · The transcript stays · Run it again$/);
     expect(finishedRunReceipt("skipped", at).text).toMatch(/^SKIPPED · /);
   });
 });

@@ -1567,7 +1567,7 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     const { openProjectRoomAtResource, takeRoomAtRequest } = await import("../../../desk/openObject");
     openProjectRoomAtResource(pid, ref);
     const view = render(<WindowHarness scope={`project:${pid}`} />);
-    await screen.findByText("FILED HERE");
+    await screen.findByText("Filed here");
     const fold = screen.getByTestId("room-fold-files");
     const sources = screen.getByTestId("room-fold-sources");
     expect(fold.compareDocumentPosition(sources) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -1586,7 +1586,7 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
     await screen.findByTestId("room-headline");
-    expect(screen.queryByText("FILED HERE")).toBeNull();
+    expect(screen.queryByText("Filed here")).toBeNull();
     expect(takeRoomAtRequest("another-project")).toEqual({ kind: "file", ref: "note:api-boundary" });
   });
 
