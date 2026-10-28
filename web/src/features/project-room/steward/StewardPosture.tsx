@@ -5,6 +5,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { Button } from "../../../components/signal/Signal";
+import { spriteUrl } from "../../../desk/sprites";
 import {
   EgressChip,
   SurfaceFooter,
@@ -830,10 +831,13 @@ export function StewardPosture({
         ) : null}
 
         {ctrl.runs.length === 0 && !ctrl.loading ? (
+          /* DELIGHT slice 3: the Steward's object and one line; Run once
+             stays on the toolbar (it knows when it cannot run). */
           <SurfaceState
             empty
-            emptyLabel="No runs yet. Run once to start."
-            emptyGlyph={"*"}
+            emptyLabel="No runs yet"
+            emptyImage={spriteUrl("conductor", "steward")}
+            emptyKind="agent"
           />
         ) : (
           <RunList ctrl={ctrl} />

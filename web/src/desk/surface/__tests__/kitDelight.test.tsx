@@ -2,6 +2,7 @@
  *  the kit's share of the delight system — the object empty state, the
  *  status-bar lamp that pulses once per save, and the list row that names
  *  its kind for its hue. */
+import { readFileSync } from "node:fs";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { StatusBar, TickNumber } from "../kit";
@@ -85,4 +86,53 @@ describe("DELIGHT — the kit", () => {
     const kinds = [...container.querySelectorAll(".object-list-row")].map((row) => row.getAttribute("data-kind"));
     expect(kinds.sort()).toEqual(["decision", "meeting"]);
   });
+});
+
+/** DELIGHT slice 3 — the motion audit. jsdom does not match media queries,
+ *  so these read the sheets: the browser half is the desk sweep's `still`
+ *  fence, which runs every case under reduced motion. */
+describe("DELIGHT — motion honours reduced motion", () => {
+  const sheet = (path: string) => readFileSync(path, "utf8");
+  /** The at-rule preludes that hold each `animation:` declaration naming one
+   *  of the `names`. */
+  function contexts(source: string, names: string[]): Array<{ name: string; at: string[] }> {
+    const css = source.replace(/\/\*[\s\S]*?\*\//g, "");
+    const out: Array<{ name: string; at: string[] }> = [];
+    const stack: string[] = [];
+    let start = 0;
+    for (let i = 0; i < css.length; i += 1) {
+      const ch = css[i];
+      if (ch === "{") { stack.push(css.slice(start, i).trim()); start = i + 1; }
+      else if (ch === "}") { stack.pop(); start = i + 1; }
+      else if (ch === ";") {
+        const decl = css.slice(start, i).trim();
+        const m = /^animation:\s*([\w-]+)/.exec(decl);
+        if (m && names.includes(m[1])) out.push({ name: m[1], at: stack.filter((p) => p.startsWith("@")) });
+        start = i + 1;
+      }
+    }
+    return out;
+  }
+
+  it("the desk's kill switch stops every animation and transition under reduced motion", () => {
+    const css = sheet("src/styles/react-app.css");
+    const block = /@media \(prefers-reduced-motion: reduce\) \{\s*\*,\s*\*::before,\s*\*::after \{([^}]*)\}/.exec(css);
+    expect(block, "react-app.css: the global reduced-motion block").not.toBeNull();
+    expect(block![1]).toMatch(/animation-duration:\s*0ms !important/);
+    expect(block![1]).toMatch(/transition-duration:\s*0ms !important/);
+  });
+
+  it("the kit's delight motions run only with no motion preference", () => {
+    const found = contexts(sheet("src/desk/surface/kit.css"), ["kit-lamp-pulse", "kit-tick-in"]);
+    expect(found.map((f) => f.name).sort()).toEqual(["kit-lamp-pulse", "kit-tick-in"]);
+    for (const f of found) expect(f.at, f.name).toContain("@media (prefers-reduced-motion: no-preference)");
+  });
+
+  it("nothing in the kit moves on hover", () => {
+    const css = sheet("src/desk/surface/kit.css");
+    const hovers = [...css.matchAll(/([^{}]*:hover[^{}]*)\{([^}]*)\}/g)];
+    expect(hovers.length).toBeGreaterThan(0);
+    for (const [, selector, body] of hovers) expect(body, selector.trim()).not.toMatch(/\btransform\s*:/);
+  });
+
 });

@@ -42,6 +42,7 @@ import "./update-posture.css";
 import { ListChips, PublishedWells } from "../../channels/SendWell";
 import { openSurfaceOr } from "../../../desk/shell";
 import { useEngine, refreshEngine } from "../../../desk/hooks/useEngine";
+import { spriteUrl } from "../../../desk/sprites";
 
 /** The capability that drafts a project update (`project_update_service`). */
 const UPDATE_DRAFT_CAPABILITY = "project.update_draft";
@@ -606,10 +607,14 @@ export function UpdatePosture({ ctrl }: { ctrl: UpdateController }) {
         ) : null}
 
         {ctrl.updates.length === 0 && !ctrl.loading ? (
+          /* DELIGHT slice 3: the object, one line, the making verb. */
           <SurfaceState
             empty
-            emptyLabel="No updates yet. Draft the first one."
-            emptyGlyph={"▤"}
+            emptyLabel="No updates yet"
+            emptyImage={spriteUrl("artifact", "update")}
+            emptyKind="project"
+            actionLabel="Draft the first one"
+            onAction={() => void ctrl.write(engine.state === "set")}
           />
         ) : (
           <UpdateList ctrl={ctrl} />

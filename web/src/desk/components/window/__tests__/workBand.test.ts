@@ -32,14 +32,17 @@ describe("window working band", () => {
     const css = readFileSync("src/styles/tokens.css", "utf8");
     expect(css).toMatch(/--desk-work-top:\s*var\(--wb-screen-h\);/);
     expect(DESK_WINDOW.snapTop).toBe(28);
-    expect(DESK_WINDOW.snapBottom).toBe(60);
+    // #1497: the floating dock reserves 84 px (its 64 px plate, 10 px above
+    // the edge, 10 px of air). The TS fallback is the same value as the CSS.
+    expect(DESK_WINDOW.snapBottom).toBe(84);
+    expect(css).toMatch(/--desk-snap-bottom:\s*84px;/);
     computedBand("", "");
-    expect(workBand()).toEqual({ top: 28, bottom: 60 });
+    expect(workBand()).toEqual({ top: 28, bottom: 84 });
   });
 
   it.each([
-    { name: "desktop", top: 28, bottom: 60, width: 1440 },
-    { name: "phone", top: 44, bottom: 56, width: 393 },
+    { name: "desktop", top: 28, bottom: 84, width: 1440 },
+    { name: "phone", top: 44, bottom: 80, width: 393 },
     { name: "explicit working-band override", top: 36, bottom: 60, width: 1440 },
   ])("keeps drag, restore, open and snap at the $name boundary", ({ top, bottom, width }) => {
     computedBand(`${top}px`, `${bottom}px`, `${bottom}px`);
