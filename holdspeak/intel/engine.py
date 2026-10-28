@@ -194,6 +194,19 @@ def _whole_reply_deltas(reply: Any) -> "list[Any] | None":
     def field(obj: Any, name: str) -> Any:
         return obj.get(name) if isinstance(obj, dict) else getattr(obj, name, None)
 
+    # The OpenAI SDK wraps any reply to ``stream=True`` in a Stream, which
+    # reads only server-sent events: an endpoint that answered with its JSON
+    # completion instead would read as no answer at all.  Its body is the reply.
+    response = getattr(reply, "response", None)
+    headers = getattr(response, "headers", None)
+    if headers is not None and "application/json" in str(headers.get("content-type") or "").lower():
+        import json as _json
+
+        try:
+            reply = _json.loads(response.read())
+        except Exception:
+            return [Delta(kind="done")]
+
     is_stream = hasattr(reply, "__iter__") and not isinstance(reply, (dict, str, bytes))
     choices = field(reply, "choices")
     if not isinstance(choices, (list, tuple)) or not choices:
