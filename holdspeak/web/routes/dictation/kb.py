@@ -19,7 +19,7 @@ def build_kb_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/dictation/project-kb")
-    async def api_dictation_project_kb_get(project_root: Optional[str] = None) -> Any:
+    def api_dictation_project_kb_get(project_root: Optional[str] = None) -> Any:
         from ....plugins.dictation.project_kb import ProjectKBError, read_project_kb
 
         try:
@@ -45,7 +45,7 @@ def build_kb_router(ctx: WebContext) -> APIRouter:
         })
 
     @router.put("/api/dictation/project-kb")
-    async def api_dictation_project_kb_put(
+    def api_dictation_project_kb_put(
         payload: dict[str, Any],
         project_root: Optional[str] = None,
     ) -> Any:
@@ -93,7 +93,7 @@ def build_kb_router(ctx: WebContext) -> APIRouter:
         })
 
     @router.post("/api/dictation/project-kb/starter")
-    async def api_dictation_project_kb_starter(project_root: Optional[str] = None) -> Any:
+    def api_dictation_project_kb_starter(project_root: Optional[str] = None) -> Any:
         from ....plugins.dictation.project_kb import (
             ProjectKBError,
             kb_path_for,
@@ -140,7 +140,7 @@ def build_kb_router(ctx: WebContext) -> APIRouter:
         )
 
     @router.delete("/api/dictation/project-kb")
-    async def api_dictation_project_kb_delete(project_root: Optional[str] = None) -> Any:
+    def api_dictation_project_kb_delete(project_root: Optional[str] = None) -> Any:
         from ....plugins.dictation.project_kb import delete_project_kb
 
         try:
