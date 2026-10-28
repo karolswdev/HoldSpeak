@@ -237,9 +237,11 @@ import { useDropped } from "../needs/NeedsDrawer";
 
 describe("Needs you after the week's summaries: kept on arrival, Drop and Undo (Betterment D3)", () => {
   let posts: Array<{ url: string; json: unknown }>;
+  let needsReads: string[];
   beforeEach(() => {
     vi.setSystemTime(new Date(String(dailyArrival.needsYou.computedAt)));
     posts = [];
+    needsReads = [];
     useDropped.getState().set(null);
     const gets: Gets = {
       "/api/desk/needs-you?fresh=1": dailyArrival.needsYou,
@@ -250,6 +252,7 @@ describe("Needs you after the week's summaries: kept on arrival, Drop and Undo (
         posts.push({ url: String(url), json: init.json });
         return {};
       }
+      if (String(url).startsWith("/api/desk/needs-you")) needsReads.push(String(url));
       return recordedGet(gets, String(url));
     });
   });
@@ -295,6 +298,7 @@ describe("Needs you after the week's summaries: kept on arrival, Drop and Undo (
     expect(posts).toContainEqual({ url: "/api/follow-through/complete", json: { card_id: card, verb: "dismiss", payload: {} } });
     fireEvent.click(screen.getByRole("button", { name: "Undo: Write up alert rule changes" }));
     await waitFor(() => expect(posts).toContainEqual({ url: "/api/follow-through/complete", json: { card_id: card, verb: "reopen", payload: {} } }));
+    await waitFor(() => expect(needsReads.at(-1)).toBe("/api/desk/needs-you"));
   });
 
   it("Drop on \"Do it\" dismisses the decision; Undo restores it", async () => {
@@ -326,6 +330,7 @@ describe("Needs you when People could not be read (Betterment D6)", () => {
     const before = reads.filter((u) => u.startsWith("/api/desk/needs-you")).length;
     fireEvent.click(within(line).getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(reads.filter((u) => u.startsWith("/api/desk/needs-you")).length).toBe(before + 1));
+    expect(reads.at(-1)).toBe("/api/desk/needs-you?fresh=1");
   });
 
   it("the week with People readable draws no such line", async () => {
@@ -347,11 +352,13 @@ import { resetSendStore } from "../surface/send";
 describe("Needs you with a prepared Send row (Send S3)", () => {
   let current: any;
   let posts: Array<{ url: string; json: any }>;
+  let needsReads: string[];
 
   beforeEach(() => {
     resetSendStore();
     current = structuredClone(sendNeeds.needsYou);
     posts = [];
+    needsReads = [];
     vi.setSystemTime(new Date(String(current.computedAt)));
     api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
       const path = String(url);
@@ -369,7 +376,7 @@ describe("Needs you with a prepared Send row (Send S3)", () => {
         }
         return {};
       }
-      if (path.startsWith("/api/desk/needs-you")) return current;
+      if (path.startsWith("/api/desk/needs-you")) { needsReads.push(path); return current; }
       if (path === "/api/door") return hubWire("door.empty").wire;
       if (path.startsWith("/api/channels/sends?send_id=")) return { sends: [current.items[0]?.send].filter(Boolean) };
       throw new Error(`no recorded answer for ${path}`);
@@ -394,6 +401,7 @@ describe("Needs you with a prepared Send row (Send S3)", () => {
     fireEvent.click(li.querySelector("[data-verb='send']")!);
     await waitFor(() => expect(posts.some((post) => post.url === "/api/channels/send")).toBe(true));
     await waitFor(() => expect(screen.queryByText("S3 private delivery — update r1 (2026-10-20)")).toBeNull());
+    expect(needsReads.at(-1)).toBe("/api/desk/needs-you");
     const sendPost = posts.find((post) => post.url === "/api/channels/send")!;
     expect(sendPost.json).toEqual(expect.objectContaining({ send_id: expect.any(String), command_id: expect.any(String) }));
   });
@@ -469,6 +477,7 @@ describe("Needs you with a recorded unknown Send (Send S3)", () => {
     let answer: any = structuredClone(sendNeedsUnknown.needsYou);
     const posts: Array<{ url: string; json: any }> = [];
     const reads: string[] = [];
+    const needsReads: string[] = [];
     let firstSend = true;
     vi.setSystemTime(new Date(String(answer.computedAt)));
     api.fetch.mockImplementation(async (url: string, init?: { method?: string; json?: unknown }) => {
@@ -482,7 +491,7 @@ describe("Needs you with a recorded unknown Send (Send S3)", () => {
         if (path === "/api/channels/send") return { send: answer.items[0].send };
         return {};
       }
-      if (path.startsWith("/api/desk/needs-you")) return answer;
+      if (path.startsWith("/api/desk/needs-you")) { needsReads.push(path); return answer; }
       if (path === "/api/door") return hubWire("door.empty").wire;
       if (path.startsWith("/api/channels/sends?send_id=")) { reads.push(path); return { sends: [answer.items[0].send] }; }
       throw new Error(`no recorded answer for ${path}`);
@@ -500,8 +509,10 @@ describe("Needs you with a recorded unknown Send (Send S3)", () => {
       const retry = row.querySelector("[data-verb='try-again']") as HTMLElement;
       fireEvent.click(retry);
       await waitFor(() => expect(posts.filter((post) => post.url === "/api/channels/send")).toHaveLength(1));
+      await waitFor(() => expect(needsReads.at(-1)).toBe("/api/desk/needs-you"));
       fireEvent.click(row.querySelector("[data-verb='try-again']")!);
       await waitFor(() => expect(posts.filter((post) => post.url === "/api/channels/send")).toHaveLength(2));
+      await waitFor(() => expect(needsReads.at(-1)).toBe("/api/desk/needs-you"));
       const attempts = posts.filter((post) => post.url === "/api/channels/send");
       expect(attempts[0].json).toEqual(attempts[1].json);
     } finally {

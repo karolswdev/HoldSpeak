@@ -147,7 +147,8 @@ describe("PHILO-13-03 A2-W — the Chair reads the one needs-you number", () => 
       { timeout: 1000 },
     );
     expect(screen.getByTestId("other-reader").textContent).toBe("5");
-    // The refresh is explicit and fresh, never the cached minute poll.
-    expect(hub.paths).toContain("/api/desk/needs-you?fresh=1");
+    // The write dirties the hub cache before the plain follow-up read.
+    expect(hub.paths).toContain("/api/desk/needs-you");
+    expect(hub.paths).not.toContain("/api/desk/needs-you?fresh=1");
   });
 });
