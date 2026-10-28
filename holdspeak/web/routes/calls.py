@@ -59,11 +59,11 @@ def build_calls_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to read calls")
 
     @router.get("/api/calls")
-    async def api_calls_list() -> Any:
+    def api_calls_list() -> Any:
         return JSONResponse({"calls": CALLS.list()})
 
     @router.get("/api/calls/{call_id}")
-    async def api_call_get(call_id: str) -> Any:
+    def api_call_get(call_id: str) -> Any:
         found = CALLS.get(call_id)
         return JSONResponse(found) if found is not None else _missing()
 

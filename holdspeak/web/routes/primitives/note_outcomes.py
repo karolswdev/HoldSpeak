@@ -56,7 +56,7 @@ def build_note_outcomes_router(ctx: WebContext) -> APIRouter:
             return _error(exc)
 
     @router.get("/api/notes/{note_id}/outcomes")
-    async def read(note_id: str, request: Request) -> Any:
+    def read(note_id: str, request: Request) -> Any:
         return call(request, "note.outcomes.read", {"note_id": note_id})
 
     @router.post("/api/notes/{note_id}/outcomes/find")
@@ -76,11 +76,11 @@ def build_note_outcomes_router(ctx: WebContext) -> APIRouter:
         return call(request, "note.outcome.edit", {"note_id": note_id, "row_id": row_id, **fields})
 
     @router.post("/api/notes/{note_id}/outcomes/{row_id}/dismiss")
-    async def dismiss(note_id: str, row_id: str, request: Request) -> Any:
+    def dismiss(note_id: str, row_id: str, request: Request) -> Any:
         return call(request, "note.outcome.dismiss", {"note_id": note_id, "row_id": row_id})
 
     @router.post("/api/notes/{note_id}/outcomes/{row_id}/confirm")
-    async def confirm(note_id: str, row_id: str, request: Request) -> Any:
+    def confirm(note_id: str, row_id: str, request: Request) -> Any:
         return call(request, "note.outcome.confirm", {"note_id": note_id, "row_id": row_id})
 
     return router

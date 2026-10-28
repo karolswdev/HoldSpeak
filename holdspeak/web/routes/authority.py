@@ -42,7 +42,7 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/authority/policy")
-    async def api_authority_policy(request: Request) -> Any:
+    def api_authority_policy(request: Request) -> Any:
         try:
             return JSONResponse(service.get_policy(request.state.principal))
         except ServiceError as exc:
@@ -93,7 +93,7 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to evaluate operation")
 
     @router.get("/api/authority/grants")
-    async def api_list_grants(request: Request, actor: str | None = None) -> Any:
+    def api_list_grants(request: Request, actor: str | None = None) -> Any:
         try:
             return JSONResponse(
                 {"grants": service.list_grants(request.state.principal, actor)}
@@ -125,7 +125,7 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to issue grant")
 
     @router.delete("/api/authority/grants/{grant_id}")
-    async def api_revoke_grant(grant_id: str, request: Request) -> Any:
+    def api_revoke_grant(grant_id: str, request: Request) -> Any:
         try:
             return JSONResponse(service.revoke_grant(request.state.principal, grant_id))
         except ServiceError as exc:
@@ -134,7 +134,7 @@ def build_authority_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to revoke grant")
 
     @router.get("/api/authority/grants/{grant_id}/uses")
-    async def api_grant_uses(grant_id: str, request: Request) -> Any:
+    def api_grant_uses(grant_id: str, request: Request) -> Any:
         try:
             uses = service.list_grant_uses(request.state.principal, grant_id)
             return JSONResponse({"grant_id": grant_id, "uses": uses})

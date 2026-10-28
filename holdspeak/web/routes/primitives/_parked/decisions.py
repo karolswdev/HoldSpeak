@@ -29,7 +29,7 @@ def build_parked_desk_decisions_router(ctx: WebContext) -> APIRouter:
         return getattr(request.state, "principal", None)
 
     @router.get("/api/decisions")
-    async def api_list_desk_decisions(request: Request) -> Any:
+    def api_list_desk_decisions(request: Request) -> Any:
         try:
             return JSONResponse({"decisions": _ops().invoke(_principal(request), "decision.list", {})})
         except Exception as exc:

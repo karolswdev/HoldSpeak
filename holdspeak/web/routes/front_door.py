@@ -316,7 +316,7 @@ def build_front_door_router(ctx: WebContext) -> APIRouter:
             )
 
     @router.get("/apply")
-    async def get_apply(request: Request) -> Any:
+    def get_apply(request: Request) -> Any:
         principal = getattr(request.state, "principal", UNAUTHENTICATED)
         if principal.kind is not PrincipalKind.OWNER:
             return _error(ServiceError(

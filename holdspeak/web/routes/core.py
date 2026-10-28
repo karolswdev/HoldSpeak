@@ -23,13 +23,13 @@ def build_core_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.get("/health")
-    async def health() -> Any:
+    def health() -> Any:
         from ...db import get_database, get_observer
 
         return JSONResponse(DeskService(get_database(), observer=get_observer()).health())
 
     @router.get("/api/state")
-    async def api_state() -> Any:
+    def api_state() -> Any:
         try:
             state = ctx.get_state() or {}
         except Exception as e:  # noqa: BLE001 - preserve prior fail-soft behavior

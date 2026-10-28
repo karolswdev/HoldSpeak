@@ -94,7 +94,7 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to create decision")
 
     @router.get("/api/decisions/{decision_id}")
-    async def api_get_desk_decision(decision_id: str, request: Request) -> Any:
+    def api_get_desk_decision(decision_id: str, request: Request) -> Any:
         try:
             return JSONResponse({"decision": _ops().invoke(
                 _principal(request), "decision.read", {"decision_id": decision_id})})
@@ -127,7 +127,7 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to update decision")
 
     @router.delete("/api/decisions/{decision_id}")
-    async def api_delete_decision(decision_id: str, request: Request) -> Any:
+    def api_delete_decision(decision_id: str, request: Request) -> Any:
         try:
             _deleted, kernel = _ops().invoke_receipted(
                 _principal(request), "decision.delete", {"decision_id": decision_id})
@@ -161,7 +161,7 @@ def build_desk_decisions_router(ctx: WebContext) -> APIRouter:
             return error_500(exc, log, "Failed to update decision status")
 
     @router.post("/api/decisions/{decision_id}/supersede")
-    async def api_supersede_decision(decision_id: str, request: Request) -> Any:
+    def api_supersede_decision(decision_id: str, request: Request) -> Any:
         try:
             decision, kernel = _ops().invoke_receipted(
                 _principal(request), "decision.supersede", {"decision_id": decision_id})

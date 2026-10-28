@@ -23,7 +23,7 @@ def build_desk_actuators_router(ctx: WebContext) -> APIRouter:
     principal = lambda request: getattr(request.state, "principal", UNAUTHENTICATED)
 
     @router.get("/api/desk/actuators/status")
-    async def api_desk_actuators_status() -> Any:
+    def api_desk_actuators_status() -> Any:
         config = service._config_provider().meeting
         return {"webhook_configured": bool(config.companion_webhook_url), "github_configured": bool(config.companion_github_repo)}
 

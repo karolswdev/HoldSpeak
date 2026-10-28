@@ -391,7 +391,7 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
 
     # ── GET /api/settings/remote ───────────────────────────────────
     @router.get("/api/settings/remote")
-    async def get_remote_settings(request: Request) -> JSONResponse:
+    def get_remote_settings(request: Request) -> JSONResponse:
         principal = getattr(request.state, "principal", UNAUTHENTICATED)
         if principal.kind is not PrincipalKind.OWNER:
             return JSONResponse({"error": "owner_required"}, status_code=403)
@@ -520,7 +520,7 @@ def build_mcp_http_router(ctx: WebContext) -> APIRouter:
 
     # ── DELETE /api/settings/remote/credentials/{id} ───────────────
     @router.delete("/api/settings/remote/credentials/{credential_id}")
-    async def revoke_credential(request: Request, credential_id: str) -> JSONResponse:
+    def revoke_credential(request: Request, credential_id: str) -> JSONResponse:
         principal = getattr(request.state, "principal", UNAUTHENTICATED)
         if principal.kind is not PrincipalKind.OWNER:
             return JSONResponse({"error": "owner_required"}, status_code=403)

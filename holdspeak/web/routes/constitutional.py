@@ -25,7 +25,7 @@ def build_constitutional_router() -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/constitutional-context")
-    async def api_get_context() -> Any:
+    def api_get_context() -> Any:
         try:
             ctx = get_constitutional_context()
             ctx["char_limit"] = CHAR_LIMIT
@@ -52,7 +52,7 @@ def build_constitutional_router() -> APIRouter:
             return error_500(exc, log, "Failed to update constitutional context")
 
     @router.get("/api/constitutional-context/history")
-    async def api_context_history() -> Any:
+    def api_context_history() -> Any:
         try:
             revisions = get_constitutional_history()
             return JSONResponse({"revisions": revisions})

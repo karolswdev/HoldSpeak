@@ -205,7 +205,7 @@ def build_missioncontrol_router(
             return {"status": "unavailable", "detail": "evidence read failed"}
 
     @router.post("/api/missioncontrol/rails/remote-events")
-    async def api_missioncontrol_rails_remote_events(body: dict[str, Any]) -> Any:
+    def api_missioncontrol_rails_remote_events(body: dict[str, Any]) -> Any:
         """A remote node's rail-event envelope (HS-88-04) — the far node's
         worker tails its OWN `dw events` and pushes `{node, ts, events}`
         here; the ambient observer merges them, each stamped with its

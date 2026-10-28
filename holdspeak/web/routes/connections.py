@@ -42,7 +42,7 @@ def build_connections_router(ctx: WebContext) -> APIRouter:
     # makes no provider call.
 
     @router.get("/api/connections")
-    async def list_connections(request: Request) -> Any:
+    def list_connections(request: Request) -> Any:
         """The ONE readiness shape: one entry per known tool."""
         try:
             if ctx.connections_service is None:

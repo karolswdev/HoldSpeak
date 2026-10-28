@@ -87,7 +87,7 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
             log.warning(f"default rule kick failed: {exc}")
 
     @router.get("/api/inference/model-library")
-    async def get_model_library(request: Request) -> Any:
+    def get_model_library(request: Request) -> Any:
         try:
             _owner(request)
             return service.get_library(request.state.principal)
