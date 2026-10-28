@@ -68,6 +68,7 @@ import { Destinations } from "./connections/Destinations";
 import { RunsOnCore } from "../../features/runson/RunsOnCore";
 import { LiveMeetingTools } from "./LiveMeetingTools";
 import { CallsSettingsPane } from "../../desk/calls/CallsSettings";
+import { RecordingsSettings } from "../../desk/recordings/RecordingsSettings";
 import "./settingsSurfaceRepair.css";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
 import {
@@ -2833,6 +2834,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         {pageSection("desk", "Desk", <>
           {renderModule("sounds")}
           <WallpaperModule showFavorites highlight={focusHighlight} />
+          <RecordingsSettings />
         </>)}
         {pageSection("this-mac", "This Mac", <>
           {engineLink}

@@ -1,0 +1,112 @@
+/* Recordings (RECORDINGS-DESIGN-2026-10-28; canvas
+   betterment/canvases/recordings-2026-10-28.html). The window: Toolbar → the
+   body (the dense list, or one recording as a document) → the 24 px
+   StatusBar. The video sits in one dark well; the links are quiet rows with
+   Copy. Nothing moves on hover. */
+.desk-next .recordings-window {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  min-width: 0;
+}
+.desk-next .recordings-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+.desk-next .recordings-list { min-height: 100%; }
+.desk-next .recordings-doc {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 880px;
+  padding: 12px 14px 14px;
+}
+/* The video's well: the glass of a screen (dark, the paper's rule around it). */
+.desk-next .recordings-well {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 10;
+  max-height: 420px;
+  border: 1px solid var(--wb-rule-soft);
+  border-radius: 6px;
+  background: #0f1724;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 1px 2px rgba(12, 20, 32, 0.16);
+}
+.desk-next .recordings-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #0f1724;
+}
+.desk-next .recordings-well-wait {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  background: color-mix(in srgb, var(--wb-steel) 70%, var(--wb-paper));
+  color: var(--wb-ink);
+}
+.desk-next .recordings-meter {
+  display: block;
+  width: min(280px, 70%);
+  height: 6px;
+  border-radius: 3px;
+  background: var(--wb-rule-soft);
+  overflow: hidden;
+}
+.desk-next .recordings-meter > span {
+  display: block;
+  height: 100%;
+  background: var(--wb-sel-vivid, #2f67c8);
+  transition: width 400ms var(--ease-standard, ease);
+}
+.desk-next .recordings-links {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--wb-rule-soft);
+}
+.desk-next .recordings-link {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.desk-next .recordings-link-label {
+  font: 500 13px / 1.3 var(--font-sans);
+  color: var(--wb-ink);
+}
+.desk-next .recordings-link-url {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 12px / 1.3 var(--font-mono);
+  color: var(--wb-link-ink, #2f67c8);
+}
+.desk-next .recordings-fact {
+  margin: 0;
+  font: 12px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .recordings-clock { font-variant-numeric: tabular-nums; }
+/* At phone width a link stacks: the label and Copy on one line, the address under. */
+@container surface (max-width: 520px) {
+  .desk-next .recordings-doc { padding: 10px 10px 12px; }
+  .desk-next .recordings-link {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "label copy" "url url";
+    padding: 6px 0;
+  }
+  .desk-next .recordings-link-label { grid-area: label; }
+  .desk-next .recordings-link-url { grid-area: url; }
+  .desk-next .recordings-link > :last-child { grid-area: copy; }
+}
+/* The menu-bar lamp: the mic lamp's species, the record red. */
+.desk-next .desk-screen-lamp { white-space: nowrap; }

@@ -1801,6 +1801,10 @@ class MeetingWebServer:
         from .web.routes.calls import build_calls_router
 
         mount_router(app, build_calls_router(web_ctx))
+        # Recordings (2026-10-28): a desk session as a video for the iPhone.
+        from .web.routes.recordings import build_recordings_router
+
+        mount_router(app, build_recordings_router(web_ctx))
         mount_router(app, build_project_reviews_router(web_ctx))
         mount_router(app, build_project_door_router(web_ctx))
         mount_router(app, build_project_setup_router(web_ctx))
@@ -1832,6 +1836,13 @@ class MeetingWebServer:
                 CALLS.ensure_listening()
             except Exception as e:
                 log.error(f"calls listener startup failed: {e}")
+            # Recordings: park old ones, finish a cut encode, watch for stale.
+            try:
+                from .recordings.service import RECORDINGS
+
+                await asyncio.to_thread(RECORDINGS.startup)
+            except Exception as e:
+                log.error(f"recordings startup failed: {e}")
             # HS-104-02 restart honesty: revalidate-or-expire, never resume.
             try:
                 from .web.routes.system.gate_routes import invalidate_held_on_startup
@@ -2050,6 +2061,12 @@ class MeetingWebServer:
                 await CALLS.stop_listening()
             except Exception as e:
                 log.error(f"calls listener stop failed: {e}")
+            try:
+                from .recordings.service import RECORDINGS
+
+                RECORDINGS.shutdown()
+            except Exception as e:
+                log.error(f"recordings stop failed: {e}")
             # HS-200-03: EVERY conductor this lifespan started is stopped here.
             # Only the calendar one was, so the workbench and scheduled-recording
             # conductors (started at the two `startup` sites above) outlived the

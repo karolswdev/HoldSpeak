@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Recordings direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
+<style>
+/* Our material: the values of web/src/styles/tokens.css, as the Calls canvas copies them. */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-steel-2:#f0f3f8; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-rec:#b3261e;
+  --ok-strong:#10b981; --warn:#f59e0b; --link-ink:#2f67c8; --head-ink:#2b4a7a;
+  --lamp-ring:0 0 0 1.5px var(--wb-paper),0 1px 2px rgba(12,20,32,.4);
+  --win-shadow:0 18px 44px rgba(8,14,22,.40),0 3px 10px rgba(8,14,22,.24);
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#e9eef4;color:var(--wb-ink);font:15px/1.5 var(--font-ui);min-width:1520px}
+main{padding:32px 40px 96px}
+h1{font:600 28px/1.2 var(--font-display);margin:0 0 6px}
+h2{font:600 21px/1.25 var(--font-display);margin:0 0 6px}
+p{margin:0 0 10px;max-width:1040px}
+section.block{margin:40px 0 0;padding:24px 0 0;border-top:1px solid var(--wb-rule)}
+.tag{display:inline-block;font:600 12px/1 var(--font-ui);padding:5px 10px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:4px;margin-left:10px}
+.tag.no{background:#8b93a3}
+.note{font-size:13.5px;color:var(--wb-muted);max-width:1200px}
+.note code{font:12.5px var(--font-mono)}
+.moment{display:grid;grid-template-columns:240px 1000px;gap:24px;align-items:start;margin:22px 0 0}
+.moment .say{font-size:13.5px}
+.moment .say b{display:block;font:600 15px var(--font-display);color:var(--head-ink);margin-bottom:4px}
+.stage{position:relative;width:1000px;height:680px;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);background:url(calls-2026-10-28/desk-1440.png) 0 -220px/1000px 900px no-repeat}
+.stage.short{height:250px}
+/* the floating dock (crop of the desk shot) with the new tile */
+.dock{position:absolute;left:534px;bottom:12px;height:64px;padding:0 10px;display:flex;gap:10px;align-items:center;border-radius:14px;background:rgba(20,28,40,.72);box-shadow:0 0 0 1px rgba(255,255,255,.14),0 10px 24px rgba(0,0,0,.4)}
+.tile{position:relative;width:48px;height:48px;display:grid;place-items:center}
+.tile img{width:48px;height:48px}
+.tile.rec::before{content:"";position:absolute;inset:4px;border-radius:50%;box-shadow:0 0 0 3px var(--wb-rec),0 0 0 7px rgba(179,38,30,.3)}
+.tip{position:absolute;bottom:62px;left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(20,28,40,.9);color:#fff;font:500 12px/1 var(--font-ui);padding:6px 8px;border-radius:6px}
+.tip b{margin-left:6px;background:var(--wb-rec);padding:2px 5px;border-radius:9px;font-weight:600}
+.menubar{position:absolute;left:0;right:0;top:0;height:36px;background:#fff;display:flex;align-items:center;justify-content:flex-end;gap:14px;padding:0 14px;font:500 13px var(--font-ui);box-shadow:0 1px 0 var(--wb-rule-soft)}
+.lampw{display:inline-flex;align-items:center;gap:8px}
+.lamp{width:8px;height:8px;border-radius:50%;background:var(--ok-strong);box-shadow:var(--lamp-ring);display:inline-block}
+.lamp.rec{background:#e5483d;animation:breathe 1.4s ease-in-out infinite alternate}
+.lamp.idle{background:#9aa8b9}.lamp.warn{background:var(--warn)}.lamp.info{background:var(--wb-sel-vivid)}
+@keyframes breathe{from{opacity:1}to{opacity:.45}}
+.ghost{font:500 12px var(--font-ui);padding:3px 8px;border-radius:5px;box-shadow:inset 0 0 0 1px var(--wb-rule)}
+/* the window */
+.win{position:absolute;left:150px;top:60px;width:720px;height:520px;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--win-shadow);overflow:hidden;display:flex;flex-direction:column}
+.tb{flex:0 0 30px;background:var(--wb-sel);color:#f7f9fc;display:flex;align-items:center;gap:8px;padding:0 8px;font:600 13.5px/1 var(--font-display)}
+.tb img{width:18px;height:18px;background:#fff;border-radius:4px;padding:1px}
+.toolbar{flex:0 0 36px;display:flex;align-items:center;gap:4px;padding:0 6px;border-bottom:1px solid var(--wb-rule-soft)}
+.toolbar .grow{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:5px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc}.btn.danger{background:var(--wb-rec);color:#fff}
+.btn.secondary{background:var(--wb-well);box-shadow:inset 0 0 0 1px var(--wb-rule)}
+.btn .dot{width:10px;height:10px;border-radius:50%;background:#e2554f;box-shadow:0 0 0 1.5px #fff inset}
+.tok{font:600 12px var(--font-mono);padding:4px 8px;border-radius:4px;box-shadow:inset 0 0 0 1px var(--wb-rule);color:var(--wb-muted)}
+.body{flex:1;min-height:0;overflow:hidden}
+.sb{flex:0 0 24px;background:var(--wb-field);border-top:1px solid var(--wb-rule-soft);display:flex;align-items:center;gap:8px;padding:0 10px;font-size:12px;color:var(--wb-muted);white-space:nowrap}
+.sb b{color:var(--wb-ink);font-weight:500}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font:500 12px var(--font-ui);color:var(--wb-muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--wb-rule-soft)}
+td{height:31px;padding:0 10px;border-bottom:1px solid var(--wb-rule-soft)}
+td img{width:20px;height:20px;vertical-align:-5px;margin-right:8px}
+td.n{font-variant-numeric:tabular-nums;color:var(--wb-muted)}
+tr.sel td{background:var(--wb-blue)}
+.doc{padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.well{aspect-ratio:16/10;max-height:300px;border-radius:6px;background:#0f1724 url(calls-2026-10-28/desk-1440.png) center/cover;position:relative;border:1px solid var(--wb-rule-soft)}
+.well .play{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px;border-radius:50%;background:rgba(255,255,255,.88)}
+.well .play::after{content:"";position:absolute;left:21px;top:16px;border-left:16px solid var(--wb-ink);border-top:10px solid transparent;border-bottom:10px solid transparent}
+.link{display:grid;grid-template-columns:112px 1fr auto;gap:10px;align-items:center;min-height:36px;border-bottom:1px solid var(--wb-rule-soft);font-size:13px}
+.link a{font:12px var(--font-mono);color:var(--link-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meter{width:280px;height:6px;border-radius:3px;background:var(--wb-rule-soft);overflow:hidden}.meter span{display:block;height:100%;width:42%;background:var(--wb-sel-vivid)}
+.wait{aspect-ratio:16/10;max-height:300px;border-radius:6px;background:var(--wb-steel);display:flex;flex-direction:column;gap:10px;align-items:center;justify-content:center;font-size:13px}
+/* the Note and the phone */
+.notewin{position:absolute;left:520px;top:70px;width:440px;height:300px;background:var(--wb-paper);border:1px solid var(--wb-sel);border-radius:8px;box-shadow:var(--win-shadow);overflow:hidden}
+.notewin .md{padding:14px 18px;font-size:14px}
+.notewin h3{font:600 18px var(--font-display);margin:0 0 10px}
+.notewin a{color:var(--link-ink);text-decoration:underline}
+.phone{position:absolute;left:60px;top:40px;width:300px;height:600px;border-radius:40px;background:#0c1118;box-shadow:0 0 0 6px #2a3340,var(--win-shadow);overflow:hidden}
+.phone .bar{height:44px;background:#f4f6f9;font:500 12px var(--font-ui);display:flex;align-items:center;justify-content:center;color:var(--wb-muted)}
+.phone .vid{position:absolute;left:0;right:0;top:200px;height:170px;background:url(calls-2026-10-28/desk-1440.png) center/cover}
+.phone .ctl{position:absolute;left:16px;right:16px;bottom:40px;height:44px;border-radius:12px;background:rgba(255,255,255,.14);color:#fff;font:500 13px var(--font-ui);display:flex;align-items:center;justify-content:center}
+.qa{display:grid;grid-template-columns:200px 1fr 1fr;max-width:1240px;border:1px solid var(--wb-rule-soft);border-radius:8px;overflow:hidden;background:#fff;font-size:13px}
+.qa > div{padding:9px 12px;border-top:1px solid var(--wb-rule-soft);border-left:1px solid var(--wb-rule-soft)}
+.qa > div:nth-child(3n+1){border-left:0;font-weight:600;color:var(--wb-muted)}
+.qa > .h{border-top:0;font:600 13px var(--font-display);background:var(--wb-steel-2)}
+.qa > .rec{background:color-mix(in srgb,var(--wb-blue) 45%,#fff)}
+</style>
+</head>
+<body>
+<main>
+<h1>Recordings: record a session, watch it on the iPhone</h1>
+<p class="note">Lane RECORD, 2026-10-28. Design: <code>docs/internal/betterment/recordings/RECORDINGS-DESIGN-2026-10-28.md</code>. Our material: the floating dock, the window grammar (title bar, 36 px toolbar, dense list, 24 px status bar), dot and word states, the D icon family. The owner pre-approved the recommended direction.</p>
+
+<section class="block">
+<h2>A. Capture in the browser, encode on the hub <span class="tag">Recommended · built</span></h2>
+
+<div class="moment">
+  <div class="say"><b>1 · The tile</b>A flat D screen with a red dot, after the meeting Record key. Hover: <i>Record screen ⌃⇧R</i>. The press opens the browser's own picker, "this tab" first.</div>
+  <div class="stage short">
+    <div class="dock">
+      <span class="tile"><img src="../../../../web/public/desk/sprites/system/48/dock-intelligence.png" alt=""></span>
+      <span class="tile"><img src="../../../../web/public/desk/sprites/system/48/dock-meetings.png" alt=""></span>
+      <span class="tile"><img src="../../../../web/public/desk/sprites/system/48/dock-people.png" alt=""></span>
+      <span class="tile"><img src="../../../../web/public/desk/sprites/system/48/dock-agents.png" alt=""></span>
+      <span class="tile"><img src="../../../../web/public/desk/sprites/system/48/dock-speak.png" alt=""></span>
+      <span class="tile"><img src="../../../../web/public/desk/sprites/system/48/record-orb.png" alt=""></span>
+      <span class="tile"><img src="../../../../web/public/desk/sprites/system/48/dock-screen-record.png" alt=""><span class="tip">Record screen <b style="background:#53647a">⌃⇧R</b></span></span>
+    </div>
+  </div>
+</div>
+
+<div class="moment">
+  <div class="say"><b>2 · Recording, on every view</b>The tile wears the Record key's red ring. The menu bar says <i>● Recording 3:12</i> with Stop, beside the mic lamp. A second view of the same desk says <i>Recording on another view</i> and its Stop works.</div>
+  <div class="stage short">
+    <div class="menubar"><span class="lampw"><span class="lamp rec"></span>Recording 3:12</span><span class="ghost">Stop</span><span>🔔</span><span>Search ⌘K</span><span>Wed, Oct 28 5:43 PM</span></div>
+    <div class="dock">
+      <span class="tile"><img src="../../../../web/public/desk/sprites/system/48/dock-speak.png" alt=""></span>
+      <span class="tile"><img src="../../../../web/public/desk/sprites/system/48/record-orb.png" alt=""></span>
+      <span class="tile rec"><img src="../../../../web/public/desk/sprites/system/48/dock-screen-record.png" alt=""><span class="tip">Stop screen recording <b>3:12</b></span></span>
+    </div>
+  </div>
+</div>
+
+<div class="moment">
+  <div class="say"><b>3 · The Recordings window</b>Go ▸ Work ▸ Recordings, or the tile's right button. Record screen is the primary; Voice adds the microphone (off by default). A dense row: when, length, size, state.</div>
+  <div class="stage">
+    <div class="win">
+      <div class="tb"><img src="../../../../web/public/desk/sprites/system/dock-screen-record.png" alt="">Recordings</div>
+      <div class="toolbar"><span class="btn primary"><span class="dot"></span>Record screen</span><span class="grow"></span><span class="tok">Voice</span></div>
+      <div class="body"><table>
+        <tr><th>Recorded</th><th>Length</th><th>Size</th><th>State</th></tr>
+        <tr><td><img src="../../../../web/public/desk/sprites/system/dock-screen-record.png" alt="">Wed 28 Oct 17:40</td><td class="n">12:05</td><td class="n">—</td><td><span class="lampw"><span class="lamp info"></span>Encoding 42 %</span></td></tr>
+        <tr><td><img src="../../../../web/public/desk/sprites/system/dock-screen-record.png" alt="">Wed 28 Oct 09:12</td><td class="n">4:31</td><td class="n">14 MB</td><td><span class="lampw"><span class="lamp"></span>Ready</span></td></tr>
+        <tr><td><img src="../../../../web/public/desk/sprites/system/dock-screen-record.png" alt="">Tue 27 Oct 21:03</td><td class="n">0:48</td><td class="n">—</td><td><span class="lampw"><span class="lamp rec" style="animation:none;background:#dc2626"></span>Failed</span></td></tr>
+      </table></div>
+      <div class="sb">3 recordings · 52 MB used</div>
+    </div>
+  </div>
+</div>
+
+<div class="moment">
+  <div class="say"><b>4 · One recording</b>The video in a dark well (the desk's own player). The two links: Tailscale first, then 127.0.0.1, each with Copy. Toolbar: All recordings, Open note, Stop sharing, Park. Encoding shows its meter; Failed shows why and Retry.</div>
+  <div class="stage">
+    <div class="win">
+      <div class="tb"><img src="../../../../web/public/desk/sprites/system/dock-screen-record.png" alt="">Recordings</div>
+      <div class="toolbar"><span class="btn secondary">All recordings</span><span class="btn secondary">Open note</span><span class="btn secondary">Stop sharing</span><span class="btn secondary">Park</span></div>
+      <div class="body"><div class="doc">
+        <div class="well"><span class="play"></span></div>
+        <div>
+          <div class="link"><span>On your phone</span><a>https://karols-macbook-pro.tailad9943.ts.net/r/r2fd81…/recording-2026-10-28-1740.mp4</a><span class="btn secondary">Copy</span></div>
+          <div class="link"><span>On this Mac</span><a>http://127.0.0.1:8765/r/r2fd81…/recording-2026-10-28-1740.mp4</a><span class="btn secondary">Copy</span></div>
+        </div>
+      </div></div>
+      <div class="sb"><span class="lamp"></span>Ready · <b>4:31</b> · 14 MB</div>
+    </div>
+    <div class="win" style="left:620px;top:330px;width:360px;height:250px">
+      <div class="tb">Encoding</div>
+      <div class="body"><div class="doc"><div class="wait"><span class="lampw"><span class="lamp info"></span>Encoding 42 %</span><span class="meter"><span></span></span></div></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="moment">
+  <div class="say"><b>5 · The Note, then the phone</b>On ready the hub writes a Note, filed to the project in front when he started. He taps the first link on his iPhone over Tailscale: Safari plays it; Share ▸ Save Video puts it in Photos.</div>
+  <div class="stage">
+    <div class="phone"><div class="bar">karols-macbook-pro.tailad9943.ts.net</div><div class="vid"></div><div class="ctl">▶  0:00 / 12:05   ⤓ Save Video</div></div>
+    <div class="notewin"><div class="tb" style="font:600 13.5px var(--font-display)">Recording · Wed 28 Oct 17:40 · 12 min</div>
+      <div class="md"><h3>Recording · Wed 28 Oct 17:40 · 12 min</h3><p><a>Watch on your phone</a></p><p><a>Watch on this Mac</a></p></div></div>
+  </div>
+</div>
+</section>
+
+<section class="block">
+<h2>B. The hub films the screen (ffmpeg avfoundation) <span class="tag no">Weighed · not chosen</span></h2>
+<div class="qa">
+  <div class="h"></div><div class="h rec">A · browser capture</div><div class="h">B · hub capture</div>
+  <div>Consent</div><div class="rec">The browser's picker, each time</div><div>One macOS Screen Recording grant for the hub's Python, for every later run</div>
+  <div>What it films</div><div class="rec">The desk tab, or what he picks</div><div>The whole screen: mail, the password manager, everything</div>
+  <div>New machine state</div><div class="rec">None</div><div>A permission and a device read</div>
+  <div>The file</div><div class="rec">VP9 webm in, H.264 mp4 out</div><div>The same encode</div>
+</div>
+<p class="note" style="margin-top:10px">Why not: a hub that can film the whole screen on one old grant is more than he asked for, and it films what is not the desk. Also weighed: an mp4 straight from Chromium's MediaRecorder; its fragmented file has no faststart and no size control, and iPhone Save Video is not reliable with it.</p>
+</section>
+
+<section class="block">
+<h2>Not in this slice</h2>
+<p class="note">A QR for the link (the desk has no QR library; the Note's link is one tap on the phone desk). A Needs-you row for a failed encode (a new Needs-you source is its own change; the failed row has Retry). A second send route (the Note's Send already prepares one).</p>
+</section>
+</main>
+</body>
+</html>

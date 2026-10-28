@@ -18,6 +18,8 @@ vi.mock("../../runtime/RuntimeBus", () => ({
     lastFrame: null,
     subscribe: () => () => undefined,
   }),
+  // Recordings (2026-10-28): the menu-bar lamp reads the optional bus.
+  useOptionalRuntimeBus: () => null,
 }));
 
 

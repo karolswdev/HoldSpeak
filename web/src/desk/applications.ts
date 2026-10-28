@@ -50,7 +50,9 @@ export interface DeskApplication {
    * draws Daily, then Work, then Builder ▸ (only when the Builder tools
    * setting is on), each in `order`. `label` is Go's word when it differs.
    * No `go`: not in Go (Search still finds a grouped application). */
-  go?: { group: GoGroup; order: number; label?: string };
+  /** `desktop`: the row is not in the phone's Go (a phone cannot do the job,
+   *  and Go must fit 393 x 852; Recordings, 2026-10-28). */
+  go?: { group: GoGroup; order: number; label?: string; desktop?: boolean };
   shortcut?: string;
   /** PHILO-17 (doors): the row in the HoldSpeak menu, in this order. */
   mark?: number;
@@ -455,6 +457,33 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
       load: () =>
         import("./calls/CallsWindow").then((module) => ({
           default: module.CallsCore,
+        })),
+    },
+  },
+  // Recordings (RECORDINGS-DESIGN-2026-10-28): a desk session as a video he
+  // opens on his iPhone. Go ▸ Work ▸ Recordings; the dock's screen-record
+  // tile opens it on the right button.
+  {
+    action: "open-recordings",
+    windowId: "surface-recordings",
+    label: "Recordings",
+    description: "Record this desk and watch the video on your phone.",
+    glyph: "⏺",
+    href: "/",
+    // Not on the phone's Go: a phone cannot film its screen, and its Go is
+    // at the 393 x 852 limit (CALLS-REDS); the Note carries the links there.
+    go: { group: "work", order: 1.6, desktop: true },
+    group: "tool",
+    surface: {
+      eyebrow: "Screen",
+      sprite: "system:dock-screen-record",
+      minW: 420,
+      // pullouts/size.ts `recordings` (the first-open matrix): 720 x 520.
+      defaultW: 720,
+      defaultH: 520,
+      load: () =>
+        import("./recordings/RecordingsWindow").then((module) => ({
+          default: module.RecordingsCore,
         })),
     },
   },

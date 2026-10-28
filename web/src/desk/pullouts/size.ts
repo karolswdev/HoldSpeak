@@ -43,4 +43,6 @@ export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
   // Calls (2026-10-28): the call as a document and its toolbar on one row.
   // A SurfaceWindows host: applications.ts carries the same size.
   calls: { w: 720, h: 520 },
+  // Recordings (2026-10-28): the list, or one video with its two links.
+  recordings: { w: 720, h: 520 },
 };

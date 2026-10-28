@@ -150,6 +150,7 @@ describe("the verb registry (HS-105-05 / HS-111-07 v2)", () => {
     expect(Object.fromEntries(keys)).toEqual({
       "desk.new-note": "⌃N",
       "desk.new-decision": "⌃⇧N",
+      "desk.screen-record": "⌃⇧R",
       "desk.overview": "⌘⇧E",
       "object.rename": "F2",
       "object.delete": "Delete",

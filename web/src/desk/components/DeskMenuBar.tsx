@@ -151,6 +151,7 @@ export function goEntries(inputs: GoInputs): WorkMenuEntry[] {
   const draw = (r: GoRow): WorkMenuEntry | null => {
     switch (r.kind) {
       case "app":
+        if (phone && r.app.go?.desktop) return null;
         return row(applicationVerbId(r.app), r.label);
       case "verb":
         return row(phone && r.phoneVerbId ? r.phoneVerbId : r.verbId, r.label);

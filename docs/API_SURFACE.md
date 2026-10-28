@@ -10,7 +10,7 @@ and the clients that call it (extracted from the real call sites in
 it today.
 Route semantics and authority live in [Intelligence Router architecture](internal/ARCHITECTURE_INTELLIGENCE_ROUTER.md).
 
-Routes: 824 (plus static mounts). iOS-consumed: 89. Web-consumed: 653.
+Routes: 837 (plus static mounts). iOS-consumed: 89. Web-consumed: 659.
 
 ## device_audio_ws
 
@@ -1102,6 +1102,24 @@ Routes: 824 (plus static mounts). iOS-consumed: 89. Web-consumed: 653.
 | POST | `/api/providers/jira/validate-scope` | server only |
 | DELETE | `/api/providers/{provider}/connections/{ref}` | web |
 | POST | `/api/watches/{watch_id}/evaluate` | web |
+
+## web.routes.recordings
+
+| Method | Path | Consumers |
+|---|---|---|
+| GET | `/api/recordings` | web |
+| POST | `/api/recordings` | web |
+| POST | `/api/recordings/folder/open` | web |
+| GET | `/api/recordings/{recording_id}` | web |
+| POST | `/api/recordings/{recording_id}/chunks` | web |
+| POST | `/api/recordings/{recording_id}/park` | server only |
+| GET | `/api/recordings/{recording_id}/poster` | server only |
+| POST | `/api/recordings/{recording_id}/retry` | server only |
+| POST | `/api/recordings/{recording_id}/share` | server only |
+| POST | `/api/recordings/{recording_id}/stop` | web |
+| POST | `/api/recordings/{recording_id}/unshare` | server only |
+| GET | `/api/recordings/{recording_id}/video` | server only |
+| GET | `/r/{recording_id}/{token}/{name}` | server only |
 
 ## web.routes.repositories
 

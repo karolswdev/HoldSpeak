@@ -99,6 +99,8 @@ FAMILIES = (
             "dock-agents", "dock-delivery", "dock-desk-memory", "dock-intelligence",
             "dock-meetings", "dock-panes", "dock-people", "dock-settings",
             "dock-speak", "record-orb",
+            # Recordings (2026-10-28): the screen-record tile.
+            "dock-screen-record",
         ),
     ),
 )

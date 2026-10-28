@@ -29,6 +29,8 @@ export const SYSTEM = {
   micListening: `${BASE}mic-listening.png`,
   micRecording: `${BASE}mic-recording.png`,
   recordOrb: `${BASE}record-orb.png`,
+  /** Recordings (2026-10-28): the screen-record tile and window. */
+  dockScreenRecord: `${BASE}dock-screen-record.png`,
   /** HS-135-14 — the dock Floor toggle glyph (replaces the ▦ character). */
   floorGrid: `${BASE}floor-grid.png`,
   /** HS-135-14 — cadence identity + per-meaning empty-state glyphs. */
@@ -73,6 +75,7 @@ export const SYSTEM_48 = {
   dockDelivery: `${BASE_48}dock-delivery.png`,
   dockPanes: `${BASE_48}dock-panes.png`,
   recordOrb: `${BASE_48}record-orb.png`,
+  dockScreenRecord: `${BASE_48}dock-screen-record.png`,
 } as const;
 
 /** The 48 px dock tile of each Dock item (the same keys as DOCK_SPRITES). */
