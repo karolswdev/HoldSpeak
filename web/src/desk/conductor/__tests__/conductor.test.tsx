@@ -243,7 +243,7 @@ describe("PHILO-14 C4 the Conductor members", () => {
 });
 
 describe("PHILO-14 C4 the Conductor window", () => {
-  it("lists every live member as a row with a plain pill; the status bar says 1 needs you · 3 working · 3 of 3", async () => {
+  it("lists every live member as a row with a plain pill; the status bar says 1 needs you · 2 working · 3 of 3", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Write the rollback runbook" });
     await findRow("Shard the reconciliation job");
@@ -251,13 +251,16 @@ describe("PHILO-14 C4 the Conductor window", () => {
     expect(pillOf("scratch")).toBe("Working");
     expect(pillOf("Add the ledger freeze flag")).toBe("PR #412 open");
     expect(pillOf("Write the cutover checklist")).toBe("PR #413 merged · item closed · session stopped");
-    // Betterment AG8: Claude Code can run and Codex is not wanted here:
-    // nothing is missing, so no "On this Mac".
-    expect(document.querySelector("[data-group='mac']")).toBeNull();
+    // W4 AGENT 2: the tools are their own section (Installed), apart from
+    // the runs; Claude Code can run.
+    expect(document.querySelector("[data-section='running'] [data-group='mac']")).toBeNull();
+    expect(document.querySelector("[data-section='installed'] [data-object-id='agent:claude'] [data-testid='conductor-pill']")?.textContent).toBe("Ready");
     // Window grammar: no headline in the window; the status bar counts only
     // what is there, and keeps the limit when he is at it.
     expect(document.querySelector(".conductor-window .kit-disp")).toBeNull();
-    expect(statusWords()).toMatch(/^1 needs you · 3 working · /);
+    // W4 AGENT 2: "working" counts the rows that say Working (two); the PR
+    // row says "PR #412 open" and is not counted as working.
+    expect(statusWords()).toMatch(/^1 needs you · 2 working · /);
     expect(statusWords()).toContain("3 of 3");
     expect(statusWords()).not.toContain("1 ASK");
     expect(statusWords()).not.toMatch(/\b0 /);
@@ -387,9 +390,11 @@ describe("PHILO-14 C4 the Conductor window", () => {
     await screen.findByRole("button", { name: "Write the rollback runbook" });
     const names = [...document.querySelectorAll(".conductor-window [data-object-id]")].map((el) => el.getAttribute("data-object-id"));
     expect(names[0]).toBe("launch:l-runbook");
-    expect(names).not.toContain("agent:claude");
-    // The ended launches close the list, folded (in the hub's history order).
-    expect(names.slice(-2)).toEqual(["launch:l-old", "launch:l-done"]);
+    // W4 AGENT 2: the tools close the window in their own section.
+    const runs = names.filter((name) => !String(name).startsWith("agent:"));
+    expect(names.slice(runs.length).every((name) => String(name).startsWith("agent:"))).toBe(true);
+    // The ended launches close the runs (in the hub's history order).
+    expect(runs.slice(-2)).toEqual(["launch:l-old", "launch:l-done"]);
   });
 
   it("a hooks install the hub refuses is named in the Get Info that pressed it, with Retry (Astra r1 P2)", async () => {
@@ -420,14 +425,14 @@ describe("PHILO-14 C4 the Conductor window", () => {
     const missing = { ...DETECT, agents: [{ ...DETECT.agents[0], hooks: "missing" }, DETECT.agents[1]] };
     detectReply = () => missing;
     render(<ConductorWindow />);
-    // Betterment AG8: "On this Mac" lists only what is missing: Claude Code
-    // is not connected; Codex (not installed) is not his agent here.
+    // W4 AGENT 2: Installed lists every tool with its state: Claude Code is
+    // not connected; Codex is not installed.
     const claude = await waitFor(() => {
       const row = document.querySelector("[data-object-id='agent:claude']");
       if (!row) throw new Error("no Claude Code row yet");
       return row as HTMLElement;
     });
-    expect(document.querySelector("[data-object-id='agent:codex']")).toBeNull();
+    expect(within(document.querySelector("[data-object-id='agent:codex']") as HTMLElement).getByTestId("conductor-pill").textContent).toBe("Not installed");
     expect(claude.getAttribute("data-group")).toBe("mac");
     expect(within(claude).getByTestId("conductor-pill").textContent).toBe("Not connected");
     // Its fix is the selected row's verb, at the status bar's right.
@@ -500,8 +505,8 @@ describe("PHILO-14 C4 the Conductor window", () => {
     // Window grammar: no prose chip in the window (the Get Info keeps it).
     expect(screen.queryByTestId("conductor-hooks-line")).toBeNull();
     expect(document.body.textContent).not.toContain(HOOKS_LINE);
-    // Betterment AG8: "On this Mac" lists only what is missing: Codex.
-    expect(document.querySelector("[data-object-id='agent:claude']")).toBeNull();
+    // W4 AGENT 2: Installed lists every tool: Claude Code is ready.
+    expect(within(document.querySelector("[data-object-id='agent:claude']") as HTMLElement).getByTestId("conductor-pill").textContent).toBe("Ready");
     fireEvent.click(document.querySelector("[data-object-id='agent:codex'] .object-list-open")!);
     expect(screen.getByRole("button", { name: "Connect Codex" })).toBeTruthy();
   });
@@ -734,14 +739,38 @@ describe("PHILO-17 the Conductor reads like Today", () => {
     expect(shell.lanes).toEqual([["l-runbook", { sessionKey: "claude:c1", raw: true }]]);
   });
 
-  it("On this Mac shows only when something is missing; stopped launches are the list's last group", async () => {
+  it("Installed is its own section after the runs; stopped launches are the runs' last group", async () => {
     render(<ConductorWindow />);
     await screen.findByRole("button", { name: "Write the rollback runbook" });
     await findRow("Write the cutover checklist");
-    expect(document.querySelector("[data-group='mac']")).toBeNull();
+    expect(document.querySelector("[data-section='installed'] [data-group='mac']")).toBeTruthy();
+    expect(document.querySelector("[data-section='running'] [data-group='mac'], [data-section='ended'] [data-group='mac']")).toBeNull();
     expect([...document.querySelectorAll("[data-group='ended']")].map((r) => r.getAttribute("data-object-id")))
       .toEqual(["launch:l-old", "launch:l-done"]);
     expect(statusWords()).toContain("2 stopped today");
+  });
+
+  it("W4 AGENT 2: an ended launch has Remove; the hub's remove route takes it, then the list reads again", async () => {
+    const base = apiFetch.getMockImplementation()!;
+    apiFetch.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url === "/api/agent/launches/l-old/remove") return { launch_id: "l-old", removed: true, removed_at: "2026-10-27T20:00:00Z" };
+      return base(url, init);
+    });
+    render(<ConductorWindow />);
+    await screen.findByRole("button", { name: "Write the rollback runbook" });
+    const row = await waitFor(() => {
+      const el = document.querySelector("[data-object-id='launch:l-old']");
+      if (!el) throw new Error("no ended row yet");
+      return el as HTMLElement;
+    });
+    fireEvent.click(row.querySelector(".object-list-open")!);
+    const reads = apiFetch.mock.calls.filter(([url]) => String(url).startsWith("/api/coders/sessions")).length;
+    await act(async () => {
+      fireEvent.click(await screen.findByTestId("conductor-remove"));
+    });
+    expect(apiFetch).toHaveBeenCalledWith("/api/agent/launches/l-old/remove", { method: "POST", json: {} });
+    await waitFor(() => expect(apiFetch.mock.calls.filter(([url]) => String(url).startsWith("/api/coders/sessions")).length).toBeGreaterThan(reads));
+    apiFetch.mockImplementation(base);
   });
 });
 

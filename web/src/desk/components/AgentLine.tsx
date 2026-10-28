@@ -7,29 +7,17 @@ import { Button } from "../../components/signal/Signal";
 import { flightForItem, useAgentFlights, type AgentFlight } from "../agentFlights";
 import { AGENT_NAME, type AgentId } from "../firstrun/agentsStep";
 import { openAgentLane } from "../shell";
+import { launchLive, liveWord } from "../conductor/members";
 
-/** The flight's state in his words (the Agents row's own words). */
+/** The flight's state in his words: the Agents row's own word (W4 AGENT 2:
+ *  one source, `members.launchLive` + `liveWord`, on every face). */
 export function agentLineWord(flight: AgentFlight): string {
-  switch (flight.state) {
-    case "waiting":
-      return flight.turnEnd === "idle" ? "Quiet" : flight.screen?.wait === "approve" ? "Wants to run" : "Asks you";
-    case "done":
-      return flight.isNew ? "Done · New" : "Quiet";
-    case "pr_open":
-      return flight.pr?.number ? `PR #${flight.pr.number} open` : "PR open";
-    case "queued":
-      return "Waits for a free agent";
-    case "starting":
-      return "Starting";
-    case "resuming":
-      return "Resuming";
-    case "no_signal":
-      return "No signal";
-    case "merged":
-      return "Merged";
-    default:
-      return "Working";
-  }
+  if (flight.state === "merged") return "Merged";
+  return liveWord(launchLive(flight), {
+    isNew: flight.isNew,
+    pr: flight.pr?.number ?? null,
+    phase: flight.state === "starting" ? "starting" : flight.state === "resuming" ? "resuming" : null,
+  }).word;
 }
 
 export function AgentLine({ objectRef }: { objectRef: string | null | undefined }) {
