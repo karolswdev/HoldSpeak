@@ -282,8 +282,8 @@ describe("Workbench STARTS WHEN automations", () => {
     await waitFor(() => expect(writes).toHaveLength(1));
     expect(screen.getByRole("button", { name: "Enable overnight resourcefulness" })).toBeDisabled();
     resolveWrite(new Response("{}", { status: 503, headers: { "content-type": "application/json" } }));
-    const retry = await screen.findByRole("button", { name: "Retry" });
-    expect(screen.getByText("ENABLE RESOURCEFULNESS FAILED · HTTP 503")).toBeInTheDocument();
+    const retry = await screen.findByRole("button", { name: "Try again" });
+    expect(screen.getByText("Could not turn on resourcefulness")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Increase Nightly target" }));
     fireEvent.click(retry);
     await waitFor(() => expect(writes).toHaveLength(2));
@@ -312,13 +312,13 @@ describe("Workbench STARTS WHEN automations", () => {
       return calls(input, init);
     }));
     fireEvent.click(screen.getByRole("button", { name: "Save policy" }));
-    await screen.findByText("SAVE POLICY FAILED · HTTP 503");
-    expect(screen.queryByText("ENABLE RESOURCEFULNESS FAILED · HTTP 503")).toBeNull();
+    await screen.findByText("Could not save the policy");
+    expect(screen.queryByText("Could not turn on resourcefulness")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Increase Nightly target" }));
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(writes).toHaveLength(2));
     expect(writes[1].body).toEqual(writes[0].body);
     expect(JSON.parse(String(writes[1].body))).toMatchObject({ enabled: true, nightly_target: 3 });
-    expect(await screen.findByText("SAVE POLICY FAILED · HTTP 503")).toBeInTheDocument();
+    expect(await screen.findByText("Could not save the policy")).toBeInTheDocument();
   });
 });

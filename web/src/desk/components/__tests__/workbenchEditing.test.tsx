@@ -199,7 +199,7 @@ describe("HS-132-07 item body draft", () => {
 
     await waitFor(
       () =>
-        expect(receiptText()).toBe("SAVE ITEM FAILED · HTTP 500"),
+        expect(receiptText()).toBe("Could not save the item"),
       { timeout: BODY_SAVE_PAUSE_MS + 1500 },
     );
     expect(pad).toHaveValue("keep me");
@@ -510,11 +510,11 @@ describe("Workbench inlet draft custody", () => {
       ? new Response(JSON.stringify({ error: "Unavailable" }), { status: accepted ? 200 : 503, headers: { "content-type": "application/json" } }) : read(input, init));
     fireEvent.change(screen.getByRole("combobox", { name: "New item instruction" }), { target: { value: instruction } });
     fireEvent.click(screen.getByRole("button", { name: "Add" }));
-    await waitFor(() => expect(receiptText()).toContain("ADD ITEM FAILED"));
+    await waitFor(() => expect(receiptText()).toContain("Could not add the item"));
     expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue(instruction);
     expect(useDesk.getState().drafts[inletKey]).toContain(instruction);
     accepted = true;
-    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(screen.getByRole("combobox", { name: "New item instruction" })).toHaveValue(""));
     expect(useDesk.getState().drafts[inletKey]).toBeUndefined();
   });
@@ -550,7 +550,7 @@ describe("Workbench inlet draft custody", () => {
     expect(posts()).toHaveLength(1);
     fireEvent.change(field, { target: { value: "Keep the next item" } });
     await act(async () => { release(new Response("{}", { status: 503, headers: { "content-type": "application/json" } })); });
-    const retry = screen.getByRole("button", { name: "Retry" });
+    const retry = screen.getByRole("button", { name: "Try again" });
     fireEvent.click(retry);
     fireEvent.click(retry);
     fireEvent.click(add);
@@ -642,7 +642,7 @@ describe("HS-132-07 drop-target honesty", () => {
       dataTransfer: { types: ["text/plain"], getData: () => "" },
     });
     await waitFor(() =>
-      expect(receiptText()).toBe("DROP TO WORK FAILED · NOT AN AUTOMATION ITEM"),
+      expect(receiptText()).toBe("Could not add it to the work"),
     );
   });
 });

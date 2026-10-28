@@ -122,7 +122,7 @@ describe("LiveCore hears the live meeting frames", () => {
     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalled());
 
     fireEvent.click(screen.getByRole("button", { name: "Stop meeting" }));
-    await waitFor(() => expect(screen.getByText("STOPPED · PARTLY SAVED")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Stopped · Partly saved")).toBeInTheDocument());
     expect(screen.queryByText("Meeting saved")).toBeNull();
     expect(screen.queryByRole("button", { name: "Return to saved Meeting" })).toBeNull();
     expect(screen.getByTitle(/Database write failed/)).toBeInTheDocument();
@@ -145,7 +145,7 @@ describe("LiveCore hears the live meeting frames", () => {
     await waitFor(() => expect(mocks.apiFetch).toHaveBeenCalled());
 
     fireEvent.click(screen.getByRole("button", { name: "Stop meeting" }));
-    await waitFor(() => expect(screen.getByText("STOPPED · PARTLY SAVED")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Stopped · Partly saved")).toBeInTheDocument());
     expect(screen.getByRole("button", { name: "Open Meeting" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Return to saved Meeting" })).toBeNull();
   });
@@ -162,7 +162,7 @@ describe("LiveCore hears the live meeting frames", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Stop meeting" }));
     await waitFor(() => expect(screen.getByText("Recording")).toBeInTheDocument());
-    expect(screen.queryByText(/STOPPED/)).toBeNull();
+    expect(screen.queryByText(/Stopped/)).toBeNull();
   });
 
   it("offers recovery only for a recoverable database save and returns to that Meeting", async () => {
@@ -256,11 +256,11 @@ describe("LiveCore hears the live meeting frames", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Stop meeting" }));
     await waitFor(() => expect(screen.getByTestId("meeting-record-back")).toBeInTheDocument());
-    expect(document.getElementById("desk-next")?.textContent).toContain("STOPPED · PARTLY SAVED");
+    expect(document.getElementById("desk-next")?.textContent).toContain("Stopped · Partly saved");
     expect(currentWriteFailure()).toMatchObject({
       verb: "STOP RECORDING",
       subject: "meeting-window",
-      label: "STOPPED · PARTLY SAVED",
+      label: "Stopped · Partly saved",
       detail: "Database write failed",
       retry: null,
     });

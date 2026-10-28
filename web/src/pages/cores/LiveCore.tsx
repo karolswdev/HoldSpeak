@@ -342,7 +342,7 @@ export function LiveCore({ hero, meetingId, onStopped }: LiveCoreProps) {
             new Error("capture remains active"),
             () => void perform(path, json),
             outcome.meetingId || undefined,
-            "STILL RECORDING · THE HUB DID NOT STOP IT",
+            "Still recording · The hub did not stop it",
           );
           return;
         }
