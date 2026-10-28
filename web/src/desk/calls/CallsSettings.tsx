@@ -27,7 +27,7 @@ export const SIP_COMMAND =
   "uv run ai-phone lines add sip --id agent --user agent --host <your Mac's tailnet name> --trusted <your iPhone's tailnet IP>";
 export const TELNYX_COMMAND = "uv run ai-phone lines add telnyx --key-env TELNYX_API_KEY --country US --area 212";
 export const TWILIO_COMMAND =
-  "uv run ai-phone lines add twilio --key-env TWILIO_ACCOUNT_SID --secret-env TWILIO_AUTH_TOKEN --existing +1…";
+  "uv run ai-phone lines add twilio --key-env TWILIO_ACCOUNT_SID --secret-env TWILIO_AUTH_TOKEN --existing <your Twilio number>";
 
 const STEP_LABELS: Record<CallStepId, string> = {
   install: "Install ai-phone",
@@ -127,7 +127,7 @@ function NumbersField({ numbers, busy, onSave }: { numbers: string[]; busy: bool
           type="tel"
           value={draft}
           onChange={setDraft}
-          placeholder="+1 212 555 0142"
+          placeholder="Your mobile number"
           onKeyDown={(event) => { if (event.key === "Enter") add(); }}
         />
         <Button dense variant="secondary" disabled={busy || !draft.trim()} onClick={add} data-testid="calls-number-add">Add</Button>
@@ -142,7 +142,7 @@ function engineTone(state: CallsStatus["engine"]["state"]): "ok" | "warn" | "idl
 
 /** The pane. It reads the `calls` settings and the status itself; a hub
  *  without the Calls slice draws the checklist with every step open. */
-export function CallsSettingsPane({ highlight }: { highlight?: string }) {
+export function CallsSettingsPane({ highlight, onSaved }: { highlight?: string; onSaved?: () => void }) {
   const [settings, setSettings] = useState<CallsSettings | null>(null);
   const [status, setStatus] = useState<CallsStatus>(ABSENT_STATUS);
   const [loaded, setLoaded] = useState(false);
@@ -181,6 +181,7 @@ export function CallsSettingsPane({ highlight }: { highlight?: string }) {
       if (key === "passphrase") setChanging(false);
       if (next) setSettings(next);
       else setSettings((now) => now ? { ...now, ...(key === "passphrase" ? { passphrase_set: true } : { [key]: value }) } : now);
+      onSaved?.();
       setStatus(await readCallsStatus());
     } catch (error) {
       setRefusal(readableError(error));
@@ -219,7 +220,8 @@ export function CallsSettingsPane({ highlight }: { highlight?: string }) {
         )}
         <p className="calls-step-say">A real number: Telnyx.</p>
         <CommandWell hint={TELNYX_COMMAND} />
-        <p className="calls-step-say calls-step-quiet">Twilio, for a number you have: <code>{TWILIO_COMMAND}</code></p>
+        <p className="calls-step-say">Twilio, for a number you have.</p>
+        <CommandWell hint={TWILIO_COMMAND} />
       </StepRow>
     ),
     engine: (

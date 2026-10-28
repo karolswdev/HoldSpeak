@@ -1310,6 +1310,23 @@ describe("Window pass 2: Ask says one thing once", () => {
     ]);
   });
 
+  it("W6-B (defect 5): a decision cited as Proposed and as Active is one row, the one that opens", async () => {
+    const { dedupeReferenceRows } = await import("../components/AskPanel");
+    const open = () => {};
+    const rows = dedupeReferenceRows([
+      { ref: "decision:dd_freeze", title: "Freeze the ledger schema on Nov 12", kind: "decision", meta: "Proposed", lamp: "info", onOpen: open },
+      { ref: "decision_record:dr_freeze", title: "Freeze the ledger schema on Nov 12", kind: "decision", meta: "Active", lamp: "ok" },
+    ]);
+    expect(rows.map((row) => row.ref)).toEqual(["decision:dd_freeze"]);
+  });
+
+  it("W6-B (defect 6): an answer never cites an earlier ask", async () => {
+    const { citedRefs } = await import("../components/AskPanel");
+    expect(citedRefs([
+      { ref: "thread:th_fea2620e5be6" }, { ref: "meeting:m-standup" }, { ref: "thread:th_61f89d3ee5ce#msg_1" },
+    ]).map((row) => row.ref)).toEqual(["meeting:m-standup"]);
+  });
+
   it("two meetings of one name at different times stay two rows", async () => {
     const { dedupeReferenceRows } = await import("../components/AskPanel");
     const rows = dedupeReferenceRows([
@@ -1330,10 +1347,13 @@ describe("Window pass 2: Ask says one thing once", () => {
     await waitFor(() => expect(line).toHaveAttribute("data-state", "set"));
     fireEvent.change(askBox(), { target: { value: "What do I owe Mira this week?" } });
     fireEvent.click(screen.getByRole("button", { name: "Ask" }));
-    await screen.findByTestId("ask-not-answered");
+    const failed = await screen.findByTestId("ask-not-answered");
     expect(line).toHaveAttribute("data-state", "down");
     expect(line).toHaveTextContent("Not answering");
     expect(line.querySelector(".kit-dot, [data-tone]")?.getAttribute("data-tone")).toBe("fail");
+    // W6-B (atlas pass 3, defect 7): the line under the question has the same
+    // danger tone as the toolbar's lamp (393 drew it amber).
+    expect(failed.querySelector(".kit-dot")?.getAttribute("data-tone")).toBe("fail");
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await screen.findByTestId("ask-turn");
     expect(line).toHaveAttribute("data-state", "set");

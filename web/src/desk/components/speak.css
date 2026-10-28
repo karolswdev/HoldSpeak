@@ -547,8 +547,8 @@
   animation: speak-breathe 1.4s ease-in-out infinite alternate;
 }
 @keyframes speak-breathe {
-  from { box-shadow: var(--wb-sunken), 0 0 0 2px color-mix(in srgb, var(--lamp-fail) 70%, transparent), 0 0 0 7px color-mix(in srgb, var(--lamp-fail) 22%, transparent); }
-  to { box-shadow: var(--wb-sunken), 0 0 0 2px color-mix(in srgb, var(--lamp-fail) 30%, transparent), 0 0 0 7px color-mix(in srgb, var(--lamp-fail) 0%, transparent); }
+  from { box-shadow: 0 0 0 2px color-mix(in srgb, var(--lamp-fail) 70%, transparent), 0 0 0 7px color-mix(in srgb, var(--lamp-fail) 22%, transparent); }
+  to { box-shadow: 0 0 0 2px color-mix(in srgb, var(--lamp-fail) 30%, transparent), 0 0 0 7px color-mix(in srgb, var(--lamp-fail) 0%, transparent); }
 }
 .desk-next .speak-transport > .gadget-transport-key:not(.desk-mic) {
   height: 64px;
@@ -859,7 +859,7 @@
 .desk-next .speak-check[data-tone="danger"] > .speak-check-bead { background: var(--lamp-fail); }
 .desk-next .speak-check[data-tone="idle"] > .speak-check-bead { background: var(--wb-field); }
 .desk-next .speak-check:hover > .speak-check-bead {
-  box-shadow: var(--wb-raised), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
 }
 .desk-next .speak-check > :not(.speak-check-bead) {
   min-width: 0;
@@ -1066,7 +1066,7 @@
 }
 .desk-next .speak-journal .surface-ledger-row:hover .surface-ledger-line::before {
   background: var(--wb-sel);
-  box-shadow: var(--wb-raised), 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--lamp-info) 28%, transparent);
 }
 .desk-next .speak-journal .surface-ledger-time {
   flex: 0 0 52px;

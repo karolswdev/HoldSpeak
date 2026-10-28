@@ -702,7 +702,7 @@
   width: 10px;
   height: 10px;
   vertical-align: middle;
-  box-shadow: var(--bevel-raised), 0 0 0 1px var(--wb-ink);
+  box-shadow: 0 0 0 1px var(--wb-ink);
 }
 .surface-token[data-chip][data-wrap]::before { margin-right: 6px; }
 .surface-token[data-chip][data-tone="warn"]::before { background: var(--lamp-warn); }
@@ -4739,14 +4739,17 @@ button.surface-edit-in-place:hover {
     box-shadow var(--alive-dur) var(--alive-ease),
     color var(--alive-dur) var(--alive-ease);
 }
-/* The primary: the ONE first move of a window. Blue plate, the bevel, and
-   a soft cast shadow so it sits above the steel verbs. */
+/* The primary: the ONE first move of a window. Blue plate on a fine
+   border. The cast shadow this rule once listed after var(--wb-raised)
+   never drew (--wb-raised is none, and a list that holds none is void);
+   the sweep's material fence registers only the bevel tokens for a Button,
+   so the primary stays flat at rest and under the pointer. */
 .desk-next .desk-window-shell .btn--primary:not(:disabled) {
-  box-shadow: var(--wb-raised), 1px 2px 0 color-mix(in srgb, var(--wb-ink) 22%, transparent);
+  box-shadow: none;
   font-weight: 650;
 }
 .desk-next .desk-window-shell .btn--primary:not(:disabled):hover {
-  box-shadow: var(--wb-raised), 2px 4px 10px color-mix(in srgb, var(--wb-sel) 45%, transparent);
+  box-shadow: none;
 }
 .desk-next .desk-window-shell .btn--primary:not(:disabled):is(:active, [aria-pressed="true"]) {
   box-shadow: var(--wb-sunken);

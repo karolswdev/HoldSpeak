@@ -50,7 +50,7 @@ vi.mock("../openObject", async (importOriginal) => ({
 
 import { ApiError } from "../../lib/api";
 import { CallsCore } from "../calls/CallsWindow";
-import { CallsSettingsPane, EGRESS_SENTENCE, INSTALL_COMMAND, RUN_COMMAND, TELNYX_COMMAND } from "../calls/CallsSettings";
+import { CallsSettingsPane, EGRESS_SENTENCE, INSTALL_COMMAND, RUN_COMMAND, TELNYX_COMMAND, TWILIO_COMMAND } from "../calls/CallsSettings";
 import { SETTINGS_SECTIONS } from "../../pages/cores/settingsPrefs";
 import { DESK_APPLICATIONS, goRows } from "../applications";
 
@@ -279,6 +279,18 @@ describe("Settings ▸ Calls", () => {
     expect(within(screen.getByTestId("calls-engine")).getByText("qwen3.8-27b")).toBeInTheDocument();
     expect(screen.getByTestId("calls-egress").textContent).toBe(EGRESS_SENTENCE);
     expect(screen.getAllByRole("button", { name: "Copy" }).length).toBeGreaterThanOrEqual(4);
+    // W6-A (atlas pass 3, defects 14, 15): Twilio is its own code block
+    // with its own Copy, whole (no "…"); the number field's placeholder
+    // cannot read as a saved number.
+    for (const command of [TELNYX_COMMAND, TWILIO_COMMAND]) {
+      const code = screen.getByText(command);
+      expect(code.tagName).toBe("CODE");
+      expect(within(code.parentElement as HTMLElement).getByRole("button", { name: "Copy" })).toBeInTheDocument();
+    }
+    expect(TWILIO_COMMAND).not.toContain("…");
+    const number = screen.getByLabelText("Add a number") as HTMLInputElement;
+    expect(number.placeholder).toBe("Your mobile number");
+    expect(number.placeholder).not.toMatch(/\d/);
   });
 
   it("writes the passphrase as write only: the field clears and shows Set, never the value", async () => {

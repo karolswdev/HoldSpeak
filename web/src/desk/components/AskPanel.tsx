@@ -183,11 +183,19 @@ export function dedupeReferenceRows(rows: readonly AskReferenceRowData[]): AskRe
     // Two rows that read the same (kind, name and facts) are one record to him.
     const at = out.findIndex((known) => known.ref === row.ref || (Boolean(name) && known.kind === row.kind
       && known.title.trim().replace(/\s+/g, " ").toLowerCase() === name
-      && (!factsOf(known.meta) || !factsOf(row.meta) || known.meta === row.meta)));
+      // W6-B (defect 5): a decision in two states (Proposed, Active) is one
+      // decision; the hub keeps its current state, this keeps older answers.
+      && (row.kind === "decision" || !factsOf(known.meta) || !factsOf(row.meta) || known.meta === row.meta)));
     if (at < 0) out.push(row);
     else if (score(row) > score(out[at])) out[at] = row;
   }
   return out;
+}
+
+/** W6-B (atlas pass 3, defect 6): an answer never cites his own earlier
+ *  ask. The hub leaves them out of new answers; this keeps older ones clean. */
+export function citedRefs<T extends { ref: string }>(rows: readonly T[]): T[] {
+  return rows.filter((row) => !row.ref.startsWith("thread:"));
 }
 
 /** Forget waits this long for Undo before the thread is deleted. */
@@ -1122,7 +1130,7 @@ export function AskPanel() {
 
   // The records said are the rows References shows (after the dedupe).
   const newestTurnRefs = turns.at(-1)?.lookedAt;
-  const newestRefs = newestTurnRefs ? dedupeReferenceRows(newestTurnRefs.map(referenceRow)).length : 0;
+  const newestRefs = newestTurnRefs ? dedupeReferenceRows(citedRefs(newestTurnRefs).map(referenceRow)).length : 0;
   const answered = !running && !failedRun && turns.length > 0
     ? ["Answered", countWords(newestRefs, "record"), finishedElapsedSeconds ? `${finishedElapsedSeconds} s` : ""].filter(Boolean).join(" · ")
     : "";
@@ -1289,7 +1297,7 @@ export function AskPanel() {
               {turns.map((turn) => (
                 <AskTurnDoc key={turn.key} question={turn.question} at={turn.askedAt}>
                   <div className="desk-ask-answer"><Material>{turn.answer}</Material></div>
-                  <AskReferences rows={dedupeReferenceRows(turn.lookedAt.map(referenceRow))} />
+                  <AskReferences rows={dedupeReferenceRows(citedRefs(turn.lookedAt).map(referenceRow))} />
                   <UsedLines used={usedWithTasks(turn.used, tasks[turn.key])} testPrefix="ask" lookedAt={false} />
                   <AskVerbs>
                     {saved[turn.key] ? (

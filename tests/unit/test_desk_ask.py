@@ -499,3 +499,59 @@ def test_an_endpoint_that_answers_a_streamed_request_with_json_reads_as_its_answ
         assert [d.text for d in deltas if d.kind == "text"] == ["FALLBACK ENGINE ANSWER"]
     finally:
         server.shutdown()
+
+
+# ── W6-B (atlas pass 3): Ask's references ──────────────────────────────
+
+
+def test_a_decision_cited_in_two_states_is_one_reference_with_the_desk_state(hub) -> None:
+    """Defect 5: the desk decision (Proposed) and its decision record (Active
+    by default) are one decision; the row is the desk decision."""
+    from holdspeak.services.ask_service import one_row_per_decision, reference_facts
+
+    with hub.db._connection() as conn:
+        conn.execute(
+            "INSERT INTO desk_decisions (id, title, status, decision_markdown, created_at, updated_at)"
+            " VALUES ('d-schema', 'Freeze the ledger schema on Nov 12', 'proposed', 'Freeze it.',"
+            " '2026-10-27T08:00:00Z', '2026-10-27T08:00:00Z')")
+        conn.execute(
+            "INSERT INTO decision_records (id, decision_text, lifecycle, source_type, source_id, created_at, updated_at)"
+            " VALUES ('dr-schema', 'Freeze the ledger schema on Nov 12', 'active', 'desk', 'd-schema',"
+            " '2026-10-28T08:00:00Z', '2026-10-28T08:00:00Z')")
+    facts = reference_facts(hub.db, [
+        {"ref": "decision:d-schema", "title": "Freeze the ledger schema on Nov 12"},
+        {"ref": "note:n-x", "title": "Cutover rehearsal"},
+        {"ref": "decision_record:dr-schema", "title": "Freeze the ledger schema on Nov 12"},
+    ])
+    rows = one_row_per_decision(hub.db, facts)
+    assert [row["ref"] for row in rows] == ["decision:d-schema", "note:n-x"]
+    assert rows[0]["state"] == "proposed"
+
+
+def test_an_answer_never_cites_or_reads_an_earlier_ask(hub) -> None:
+    """Defect 6: every kept thread is out of the recall and out of the
+    references, unless he put that thread in About."""
+    _note(hub)
+    client, _seen = _ask_app(hub, ["You owe Mira feedback.", "Feedback, due Friday."])
+    first = client.post("/api/ask", json={
+        "prompt": "What do I owe Mira this week?", "lens": "Ask", "context": ABOUT, "thread": True,
+    }).json()
+    earlier = f"thread:{first['thread_id']}"
+    from holdspeak.services.ask_service import AskService
+
+    excluded = AskService._earlier_asks(SimpleNamespace(_db=hub.db, _about_refs=AskService._about_refs), "", [], None)
+    assert earlier in excluded
+    chosen = [{"id": first["thread_id"], "kind": "thread", "title": "What do I owe Mira this week?", "ref": earlier}]
+    assert earlier not in AskService._earlier_asks(
+        SimpleNamespace(_db=hub.db, _about_refs=AskService._about_refs), "", chosen, None)
+
+    result = {"looked_at": [{"ref": earlier, "title": "What do I owe Mira this week?"},
+                            {"ref": "note:n-mira", "title": "1:1 with Mira"}], "output": ""}
+    AskService._facts_and_claims(SimpleNamespace(_db=hub.db), result)
+    assert [row["ref"] for row in result["looked_at"]] == ["note:n-mira"]
+    kept = {"looked_at": [{"ref": earlier, "title": "What do I owe Mira this week?"}], "output": ""}
+    AskService._facts_and_claims(SimpleNamespace(_db=hub.db), kept, about=[earlier])
+    assert [row["ref"] for row in kept["looked_at"]] == [earlier]
+
+    second = client.post("/api/ask", json={"prompt": "What is due Friday for Mira?", "lens": "Ask", "thread": True}).json()
+    assert not [row for row in second["looked_at"] if str(row["ref"]).startswith("thread:")]

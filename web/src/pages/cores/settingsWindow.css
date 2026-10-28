@@ -435,6 +435,10 @@
     gap: 6px 12px;
   }
   .desk-next .pref-window .gadget-row:is([data-wide], [data-control-width="full"]),
+  /* W6-A: an inset group's row outranks the line above (0,5,0); without
+     this its wide row kept "label | auto" and Try a phrase stood one
+     letter per line at 393. */
+  .desk-next .pref-window .gadget-group[data-material="inset"] .gadget-row:is([data-wide], [data-control-width="full"]),
   .desk-next .pref-window .gadget-row:has(.gadget-string:not(.gadget-stepper)),
   .desk-next .pref-window .gadget-row:has(.gadget-prop) { grid-template-columns: minmax(0, 1fr); }
   .desk-next .pref-window .gadget-row-gadget > .gadget-cycle { width: min(100%, 200px); }
