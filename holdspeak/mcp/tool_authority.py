@@ -300,6 +300,12 @@ TOOL_AUTHORITY: dict[str, str] = {
     "channel.discard": EGRESS,  # decides a prepared send (the Send's other answer)
     "channel.send": EGRESS,  # sends a prepared document out (the owner's Send)
     "channel.sends": WORK,
+    # Calls (2026-10-28): reads and hang up are work; a real call leaves the
+    # machine and can cost money.
+    "calls.status": WORK,
+    "calls.list": WORK,
+    "calls.hangup": WORK,
+    "calls.place": EGRESS,  # places a real phone call
     "heartbeat.status": WORK,
     "heartbeat.run_now": WORK,
     "heartbeat.set": CONFIG,  # the heartbeat sweep settings

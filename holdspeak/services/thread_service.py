@@ -268,6 +268,8 @@ class ThreadService:
         control_mode_fn: Callable[[], str] | None = None,
         system_prompt: str | None = None,
         palette: frozenset[str] | None = None,
+        capability_id: str = "chat.turn",
+        held_egress: frozenset[str] = frozenset(),
     ) -> None:
         self._db = db
         self._broadcast = broadcast
@@ -279,6 +281,11 @@ class ThreadService:
         # thread's mode, when one is bound, still decides both.
         self._system_prompt = system_prompt
         self._palette = palette
+        # Calls (2026-10-28): a call's turn is its own capability
+        # (``calls.turn``), and the egress tools it offers (``held_egress``)
+        # always hold for the caller's spoken yes (``thread_tools``).
+        self._capability_id = str(capability_id or "chat.turn")
+        self._held_egress = frozenset(held_egress or ())
 
     @property
     def _threads(self) -> ThreadRepository:
@@ -614,7 +621,7 @@ class ThreadService:
                     expand="summary",
                     qualified_refs=hydrate_grounding_refs,
                     query=text,
-                    include_memory=memory_enabled("chat.turn") and not (
+                    include_memory=memory_enabled(self._capability_id) and not (
                         pinned_note is not None and grounding_refs
                     ),
                     exclude_refs=[f"thread:{thread_id}", *([pinned_note["ref"]] if pinned_note is not None else [])],
@@ -731,7 +738,7 @@ class ThreadService:
 
         # -- Admit chat.turn through the adoption service exactly like Ask --
         invocation_id = "chat_turn_" + uuid.uuid4().hex
-        capability_id = "chat.turn"
+        capability_id = self._capability_id
 
         # Assemble the payload (assembler law).
         try:
@@ -1308,6 +1315,7 @@ class ThreadService:
                 control_mode_fn=self._control_mode_fn,
                 broker=self._broker,
                 allowed_names=frozenset(schema["function"]["name"] for schema in payload["tools"]),
+                held_egress=self._held_egress,
             )
             tool_schemas = list(payload["tools"])
             ThreadService._tool_executor.register(assistant_msg_id, tool_executor)
@@ -1488,7 +1496,7 @@ class ThreadService:
                         new_admitted = self._broker.inference_adoption_service.admit(
                             principal,
                             command_id=f"admit-{new_inv}",
-                            capability_id="chat.turn",
+                            capability_id=self._capability_id,
                             operation_id=new_inv,
                             payload=pass_payload,
                             invocation_id=new_inv,
@@ -2348,7 +2356,7 @@ class ThreadService:
             principal,
             command_id=f"override-{invocation_id}",
             invocation_id=invocation_id,
-            capability_id="chat.turn",
+            capability_id=self._capability_id,
             entries=entries,
         )
 
@@ -2629,7 +2637,7 @@ class ThreadService:
         from .memory_grounding import EMPTY_MEMORY, fit_reflect, reflect_block, reflect_for
 
         reflect = reflect_for(
-            "chat.turn", self._db, scopes=scopes, query=text,
+            self._capability_id, self._db, scopes=scopes, query=text,
             exclude_refs=[f"thread:{thread_id}", *([pinned_ref] if pinned_ref else [])],
         )
         if not reflect:
@@ -2645,7 +2653,7 @@ class ThreadService:
 
         fitted = fit_reflect(
             self._broker.inference_adoption_service, reflect,
-            capability_id="chat.turn", operation_id=operation_id,
+            capability_id=self._capability_id, operation_id=operation_id,
             reserved_output_tokens=512, build=build,
         )
         return (build(fitted), fitted) if fitted else (payload, EMPTY_MEMORY)
@@ -2681,7 +2689,7 @@ class ThreadService:
 
         fitted = fit_reflect(
             self._broker.inference_adoption_service, reflect,
-            capability_id="chat.turn", operation_id=operation_id,
+            capability_id=self._capability_id, operation_id=operation_id,
             reserved_output_tokens=512, build=build,
         )
         return build(fitted), fitted

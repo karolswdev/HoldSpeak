@@ -187,6 +187,11 @@ def redacted_settings(
                 state["destination"] = host.lower()
         states[secret_id] = state
     payload["_secrets"] = states
+    # Calls (2026-10-28): the passphrase is write only; the read says whether
+    # one is set.
+    calls_payload = payload.get("calls")
+    if isinstance(calls_payload, dict):
+        calls_payload["passphrase_set"] = bool(calls_payload.pop("passphrase", ""))
     return payload
 
 
@@ -355,6 +360,7 @@ class SettingsService:
     def _update(self, patch: dict[str, Any]) -> dict[str, Any]:
         from holdspeak.config import (
             AgentsConfig,
+            CallsConfig,
             Config,
             CalendarConfig,
             CalendarSource,
@@ -1047,6 +1053,10 @@ class SettingsService:
             remote_cfg = RemoteConfig(**(merged.get("remote") or {}))
             # Betterment AG5: the working-at-once limit (clamped 1 to 20).
             agents_cfg = AgentsConfig(**(merged.get("agents") or {}))
+            # Calls (2026-10-28): the read's passphrase_set is not a field.
+            calls_data = dict(merged.get("calls") or {})
+            calls_data.pop("passphrase_set", None)
+            calls_cfg = CallsConfig(**calls_data)
         except (TypeError, ValueError) as exc:
             return {"success": False, "error": f"Invalid preference: {exc}"}
 
@@ -1069,6 +1079,7 @@ class SettingsService:
             mesh=mesh_cfg,
             remote=remote_cfg,
             agents=agents_cfg,
+            calls=calls_cfg,
         )
         updated.save()
 

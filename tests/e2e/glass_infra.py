@@ -275,6 +275,8 @@ def _boot(
     # Betterment AG7: the hub reads no agent's screen (a test that walks one
     # turns it on with its own TMUX_TMPDIR).
     monkeypatch.setenv("HOLDSPEAK_SCREEN_RULES", "off")
+    # Calls (2026-10-28): no listener, no read of ai-phone's state.
+    monkeypatch.setenv("HOLDSPEAK_CALLS", "off")
     monkeypatch.setattr(config_module, "CONFIG_FILE", home / ".holdspeak" / "config.json")
     monkeypatch.setattr(db_core, "DEFAULT_DB_PATH", tmp_path / "holdspeak.db")
     reset_database()

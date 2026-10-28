@@ -1166,6 +1166,60 @@
       ]
     },
     {
+      "path": "/api/calls",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.calls",
+      "consumers": []
+    },
+    {
+      "path": "/api/calls/place",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calls",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calls/status",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.calls",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calls/{call_id}",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.calls",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
+      "path": "/api/calls/{call_id}/decide",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calls",
+      "consumers": []
+    },
+    {
+      "path": "/api/calls/{call_id}/hangup",
+      "methods": [
+        "POST"
+      ],
+      "module": "web.routes.calls",
+      "consumers": []
+    },
+    {
       "path": "/api/chains",
       "methods": [
         "GET"

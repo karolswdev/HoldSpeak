@@ -51,7 +51,7 @@ _BOUNDARY_ALIASES = {
     "external_service": "cloud",
 }
 #: Betterment Q4: a capability with no assignment of its own uses this one's.
-_FOLLOWS = {"chat.turn": "ask.answer"}
+_FOLLOWS = {"chat.turn": "ask.answer", "calls.turn": "ask.answer"}
 #: Betterment E5: a meeting plugin with no row of its own follows the
 #: meeting summary's engine (FOLLOWUPS C4: plugins skipped as no_assignment
 #: when only Meeting summaries was set).

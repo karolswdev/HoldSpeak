@@ -82,6 +82,7 @@ MEMORY_POLICIES: Mapping[str, MemoryPolicy] = MappingProxyType({
     "thought.interview": _grounding("Ask grounding with the Thought's text; the Thought's own note is excluded."),
     "ask.answer": _grounding("Ask grounding with the question."),
     "chat.turn": _grounding("Thread grounding with the message; the thread itself is excluded."),
+    "calls.turn": _grounding("Call grounding with what he said; the call's own thread is excluded."),
     "chat.guardrail": _off("A check on one message; memory does not change it."),
     "chat.compact": _off("Compacts the thread it has; memory adds nothing."),
     # Speech and dictation

@@ -8,6 +8,26 @@ dumps are on branch `archive/evidence-2026-10-04` (`pm/ARCHIVE.md`).
 
 ## Current phase
 
+**Calls — 2026-10-28 (owner: "place calls and use them to integrate with a
+specific HoldSpeak instance… push things forward, prepare things, send things";
+then "deliver on it fully… a note on my holdspeak desktop that explains which
+service I am supposed to sign up to and how to book it up in settings").**
+Design `docs/internal/betterment/calls/CALLS-DESIGN-2026-10-28.md` + canvas
+(#1549): HoldSpeak does not build telephony; it drives the owner's own
+oxnw/ai-phone install (Apple Silicon only, so beside the hub on the Mac) in
+relay mode as a separate process; the home box over Tailscale is the agent's
+mind (ai-phone's brain too). The hub slice: `holdspeak/calls/` (adapter, the
+call runner on the `calls.turn` capability with the Ask palette + channel.send
++ nudge.send held for his spoken yes behind allowed numbers + a passphrase,
+read back from the turn's record, transcript saved as a Note), the five
+`calls.*` settings keys, six REST routes, the `call_state` frame, four MCP
+tools, `docs/calls.md`; proofs run the fake ai-phone as a real subprocess with a
+recorded home-engine reply. The faces: the Calls window (Go ▸ Work ▸ Calls),
+Settings ▸ Calls (the install checklist with the exact commands; Telnyx
+recommended for a real number), the phone Calls row. Left: the owner installs
+ai-phone and presses the line; a handset icon; recorded fixtures for the faces;
+channel 0 (the phone web app's call screen); HoldSpeak calling others.
+
 **The window grammar — 2026-10-24 (owner: "still look like pages inside OS-like
 containers"; "make it look nice and attractive, not boring"; then "that tilt…
 absolute cringe" → icon direction D picked: "Yes, I like D").** Design and

@@ -1792,6 +1792,10 @@ class MeetingWebServer:
         mount_router(app, build_sync_router(web_ctx))
         mount_router(app, build_threads_router(web_ctx))
         mount_router(app, build_tts_router(web_ctx))
+        # Calls (2026-10-28): HoldSpeak drives ai-phone and owns each turn.
+        from .web.routes.calls import build_calls_router
+
+        mount_router(app, build_calls_router(web_ctx))
         mount_router(app, build_project_reviews_router(web_ctx))
         mount_router(app, build_project_door_router(web_ctx))
         mount_router(app, build_project_setup_router(web_ctx))
@@ -1806,6 +1810,14 @@ class MeetingWebServer:
 
         @app.on_event("startup")
         async def _startup() -> None:
+            # Calls: with calls on and enabled, the hub waits for a call.
+            try:
+                from .calls.service import CALLS
+
+                CALLS.bind_loop()
+                CALLS.ensure_listening()
+            except Exception as e:
+                log.error(f"calls listener startup failed: {e}")
             # HS-104-02 restart honesty: revalidate-or-expire, never resume.
             try:
                 from .web.routes.system.gate_routes import invalidate_held_on_startup
@@ -2006,6 +2018,12 @@ class MeetingWebServer:
 
         @app.on_event("shutdown")
         async def _shutdown() -> None:
+            try:
+                from .calls.service import CALLS
+
+                await CALLS.stop_listening()
+            except Exception as e:
+                log.error(f"calls listener stop failed: {e}")
             # HS-200-03: EVERY conductor this lifespan started is stopped here.
             # Only the calendar one was, so the workbench and scheduled-recording
             # conductors (started at the two `startup` sites above) outlived the

@@ -1,6 +1,6 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_runs_on_hub.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-27T09:28:11.990077Z",
+  "captured_at": "2026-10-28T04:13:28.147949Z",
   "wire": {
     "candidates": [
       {
@@ -95,6 +95,13 @@
           },
           {
             "capability_id": "calendar.snapshot_extract",
+            "code": "modality_unsupported",
+            "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
+            "profile_revision": 1,
+            "severity": "blocking"
+          },
+          {
+            "capability_id": "calls.turn",
             "code": "modality_unsupported",
             "profile_id": "speech-migrated-dfd3d641b539d8acc136fd7a",
             "profile_revision": 1,
@@ -381,7 +388,7 @@
       }
     ],
     "configured_assignment": {
-      "created_at": "2026-10-27T09:28:11.368841Z",
+      "created_at": "2026-10-28T04:13:27.546187Z",
       "effective_retry_policy_id": null,
       "entries": [
         {
@@ -394,7 +401,7 @@
           "readiness": "ready"
         }
       ],
-      "id": "ia_ff2be787a382431bbbaa0be13ba74733",
+      "id": "ia_2744b8b847f547ca92c4f78c6bd67a49",
       "issues": [
         {
           "capability_id": "agent.plan",
@@ -439,12 +446,12 @@
       "scope": {
         "kind": "global"
       },
-      "sha256": "sha256:23e81fd5c2dc83f9faff3457f325e93bd22422f8bd3b2805937ca0b8e7a379f7"
+      "sha256": "sha256:7146c5cc24940a2b0fd64147f187e1b521709ebdfdd7a07ba94e5ecf8906d0f8"
     },
     "draft_base_revision": 1,
     "effective": {
       "assignment": {
-        "created_at": "2026-10-27T09:28:11.368841Z",
+        "created_at": "2026-10-28T04:13:27.546187Z",
         "effective_retry_policy_id": "retry.text.standard",
         "entries": [
           {
@@ -457,7 +464,7 @@
             "readiness": "ready"
           }
         ],
-        "id": "ia_ff2be787a382431bbbaa0be13ba74733",
+        "id": "ia_2744b8b847f547ca92c4f78c6bd67a49",
         "issues": [],
         "retry_policy_id": null,
         "retry_policy_source": "capability_default",
@@ -466,7 +473,7 @@
         "scope": {
           "kind": "global"
         },
-        "sha256": "sha256:23e81fd5c2dc83f9faff3457f325e93bd22422f8bd3b2805937ca0b8e7a379f7"
+        "sha256": "sha256:7146c5cc24940a2b0fd64147f187e1b521709ebdfdd7a07ba94e5ecf8906d0f8"
       },
       "capability_id": "ask.answer",
       "inherited_from": "global",
