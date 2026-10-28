@@ -67,6 +67,7 @@ import { ConnectionsPane, type ConnectionsFoot } from "./connections";
 import { Destinations } from "./connections/Destinations";
 import { RunsOnCore } from "../../features/runson/RunsOnCore";
 import { LiveMeetingTools } from "./LiveMeetingTools";
+import { CallsSettingsPane } from "../../desk/calls/CallsSettings";
 import "./settingsSurfaceRepair.css";
 // HS-139-05: activateLauncher removed (Delivery tile absorbed).
 import {
@@ -2804,6 +2805,7 @@ function SettingsFace({ hero, scope }: CoreProps) {
         {pageSection("meetings", "Meetings", renderModule("meetings"))}
         {pageSection("notices", "Notices", renderModule("rhythm"))}
         {pageSection("accounts", "Accounts", renderModule("integrations"))}
+        {pageSection("calls", "Calls", moduleId === "calls" ? <CallsSettingsPane highlight={focusHighlight} /> : null)}
         {pageSection("agents", "Agents", <>
           {renderModule("agents")}
           <GadgetGroup material="inset" label="Agents act">

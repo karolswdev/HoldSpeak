@@ -1171,7 +1171,9 @@
         "GET"
       ],
       "module": "web.routes.calls",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/calls/place",
@@ -1209,7 +1211,9 @@
         "POST"
       ],
       "module": "web.routes.calls",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/calls/{call_id}/hangup",
@@ -1217,7 +1221,9 @@
         "POST"
       ],
       "module": "web.routes.calls",
-      "consumers": []
+      "consumers": [
+        "web"
+      ]
     },
     {
       "path": "/api/chains",
