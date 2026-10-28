@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Request, UploadFile
+from starlette.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
 from ...services.errors import ServiceError
@@ -119,7 +120,7 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
     async def connect_hosted_model(request: Request) -> Any:
         try:
             draft, secret = await _provider_body(request)
-            result = service.connect_hosted_model(request.state.principal, draft, secret)
+            result = await run_in_threadpool(service.connect_hosted_model, request.state.principal, draft, secret)
             _engine_changed("connect_hosted_model")
             return JSONResponse(result, status_code=200)
         except ServiceError as exc:
@@ -131,7 +132,7 @@ def build_model_library_router(ctx: WebContext) -> APIRouter:
     async def define_endpoint(request: Request) -> Any:
         try:
             draft, secret = await _provider_body(request)
-            result = service.define_endpoint(request.state.principal, draft, secret)
+            result = await run_in_threadpool(service.define_endpoint, request.state.principal, draft, secret)
             _engine_changed("define_endpoint")
             return JSONResponse(result, status_code=200)
         except ServiceError as exc:

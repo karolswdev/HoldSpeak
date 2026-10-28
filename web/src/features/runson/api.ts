@@ -325,8 +325,10 @@ function decodeAgent(raw: Record<string, unknown>): AgentTile {
   };
 }
 
-export async function readDetection(): Promise<Detection> {
-  const raw = await apiFetch<Record<string, unknown>>("/api/concierge/detect");
+/** `fresh`: every endpoint is checked now (Check all, Try again); without it
+ *  the hub answers an endpoint that does not answer from its last check. */
+export async function readDetection(fresh = false): Promise<Detection> {
+  const raw = await apiFetch<Record<string, unknown>>(fresh ? "/api/concierge/detect?fresh=1" : "/api/concierge/detect");
   return {
     engines: Array.isArray(raw.engines)
       ? (raw.engines as Record<string, unknown>[]).map(decodeEngine)

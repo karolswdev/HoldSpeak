@@ -20,6 +20,7 @@ import { createPortal } from "react-dom";
 import type { ObjectTone } from "./objects/kinds";
 import { FilterTokens, type FilterTokenOption } from "./FilterTokens";
 import { FootSlotContext } from "./foot";
+import { Button } from "../../components/signal/Signal";
 // kit.css is imported by surface.css (the kit restyles live beside it).
 
 /** One token of a StatusStrip: a lamp square and a word, a word alone, a
@@ -507,6 +508,42 @@ export function Steps({ steps, label, "data-testid": testId }: { steps: Readonly
 
 const LOADING_WIDTHS = ["62%", "48%", "56%"];
 
+/** Lane HUB TIMEOUTS (2026-10-27): a first read that has not answered in
+ *  this long is said, never drawn as Loading for good. The owner's desk, away
+ *  from his LAN, showed two windows Loading forever while the hub was held. */
+export const NOT_ANSWERED_MS = 8000;
+
+/** True when `active` (still reading) has lasted `ms`; false again when the
+ *  read lands or restarts. `ms` 0 never times out. */
+export function useNotAnswered(active: boolean, ms: number = NOT_ANSWERED_MS): boolean {
+  const [late, setLate] = useState(false);
+  useEffect(() => {
+    setLate(false);
+    if (!active || !(ms > 0)) return undefined;
+    const timer = window.setTimeout(() => setLate(true), ms);
+    return () => window.clearTimeout(timer);
+  }, [active, ms]);
+  return active && late;
+}
+
+/** The window's not-answered line: `● Not answering` and one verb, Try
+ *  again (the caller's read again; without one, the desk reads again). The
+ *  read that is still on its way still lands and replaces this line. */
+export function NotAnswering({
+  onRetry,
+  "data-testid": testId,
+}: {
+  onRetry?: () => void;
+  "data-testid"?: string;
+}) {
+  return (
+    <div className="kit-not-answering" role="status" data-kind="not-answering" data-testid={testId ?? "not-answering"}>
+      <DotWord tone="fail">Not answering</DotWord>
+      <Button dense variant="secondary" onClick={onRetry ?? (() => window.location.reload())}>Try again</Button>
+    </div>
+  );
+}
+
 /** W1-KIT (2026-10-27) — THE LOADING FACE: a window's first read. The
  *  toolbar stays (the caller draws it first); the body shows ghost rows of
  *  the list grammar: 32 px rows, a glyph square and two pale steel bars. No
@@ -516,13 +553,21 @@ const LOADING_WIDTHS = ["62%", "48%", "56%"];
 export function Loading({
   rows = 3,
   label = "Loading",
+  timeout = NOT_ANSWERED_MS,
+  onRetry,
   "data-testid": testId,
 }: {
   rows?: number;
   /** The words a screen reader hears. */
   label?: string;
+  /** After this many ms the face is the not-answered line (0: never). */
+  timeout?: number;
+  /** Try again on the not-answered line: the caller's read again. */
+  onRetry?: () => void;
   "data-testid"?: string;
 }) {
+  const late = useNotAnswered(true, timeout);
+  if (late) return <NotAnswering onRetry={onRetry} />;
   return (
     <div className="kit-loading" role="status" aria-busy="true" data-kind="loading" data-testid={testId}>
       <span className="sr-only">{label}</span>

@@ -15,6 +15,7 @@ import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Request
+from starlette.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 
 from ...principals import UNAUTHENTICATED, PrincipalKind
@@ -82,12 +83,16 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             home = setup_svc._home_provider() if setup_svc is not None else Path.home()
 
             live_hub = _live_hub()
-            result = detect(
+            result = await run_in_threadpool(
+                detect,
                 db=db,
                 home=home,
                 assignment_service=ctx.inference_assignment_service,
                 principal=getattr(request.state, "principal", None),
                 scan_loopback=live_hub,
+                # Read again: every endpoint is checked now, not read from
+                # its last check (lane HUB TIMEOUTS).
+                **({"fresh": True} if request.query_params.get("fresh") == "1" else {}),
             )
             # PHILO-16 (C): the Switchboard accepts or refuses a drop with
             # the authority's own answer, per engine and group.  A fit read
@@ -178,7 +183,7 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             from pathlib import Path
             home = setup_svc._home_provider() if setup_svc is not None else Path.home()
 
-            detection = detect(db=db, home=home, scan_loopback=_live_hub())
+            detection = await run_in_threadpool(detect, db=db, home=home, scan_loopback=_live_hub())
             # PHILO-15 10 (B05): READY only where the assignment authority
             # serves the whole group; the same check a write runs.
             fit = None
@@ -247,7 +252,8 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
                         {"code": "concierge_unavailable", "message": "Database is not available."},
                         status_code=503,
                     )
-                result = task_probe(
+                result = await run_in_threadpool(
+                    task_probe,
                     kernel_service(),
                     request.state.principal,
                     db=db,
@@ -280,7 +286,7 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             from pathlib import Path
             home = setup_svc._home_provider() if setup_svc is not None else Path.home()
 
-            detection = detect(db=db, home=home)
+            detection = await run_in_threadpool(detect, db=db, home=home)
             engine = None
             for e in detection["engines"]:
                 if e["id"] == engine_id:
@@ -294,7 +300,7 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
                     context={"status": 404},
                 )
 
-            result = probe(engine=engine, generate=generate)
+            result = await run_in_threadpool(probe, engine=engine, generate=generate)
             return JSONResponse(result)
         except ServiceError as exc:
             return _safe_error(exc)
@@ -338,7 +344,7 @@ def build_concierge_router(ctx: WebContext) -> APIRouter:
             from pathlib import Path
             home = setup_svc._home_provider() if setup_svc is not None else Path.home()
 
-            detection = detect(db=db, home=home)
+            detection = await run_in_threadpool(detect, db=db, home=home)
             principal = request.state.principal
 
             result = apply(

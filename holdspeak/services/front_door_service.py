@@ -142,9 +142,20 @@ def _endpoint_facts(
     Every endpoint in known_endpoints is probed exactly once.
     Unreachable endpoints get a reason field.
     """
-    _probe = probe or _default_probe
     reachable: list[dict[str, Any]] = []
     probed_urls: list[str] = []
+    if probe is None:
+        # Lane HUB TIMEOUTS: each endpoint checked side by side; one that
+        # does not answer reads as its last check after half a second.
+        from ..net_bounds import endpoint_checks
+
+        bases = {str(ep.get("base_url") or "").strip() for ep in known_endpoints} - {""}
+        answers = endpoint_checks.read_many(
+            {f"reach:{b}": (lambda b=b: _default_probe(b)) for b in bases}
+        )
+        _probe = lambda url: bool(answers[f"reach:{url}"][0])  # noqa: E731
+    else:
+        _probe = probe
 
     for ep in known_endpoints:
         base_url = str(ep.get("base_url") or "").strip()

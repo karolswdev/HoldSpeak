@@ -1035,7 +1035,11 @@ def _reset_endpoint_health():
     default base URL). Reset before AND after so a test can't pollute a
     sibling either direction."""
     from holdspeak.intel.endpoint_health import default_health
+    from holdspeak.net_bounds import endpoint_checks
 
+    # Lane HUB TIMEOUTS: the endpoints' last checks are process-wide too.
     default_health.reset()
+    endpoint_checks.reset()
     yield
     default_health.reset()
+    endpoint_checks.reset()

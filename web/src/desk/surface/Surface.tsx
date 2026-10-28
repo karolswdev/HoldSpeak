@@ -19,7 +19,7 @@ import { CheckGadget, StringGadget } from "./gadgets";
 import type { PaneGeometry } from "./XtermPane";
 import { humanTime, presentValue } from "./format";
 import { Disclosure } from "./patterns";
-import { KindPlate } from "./kit";
+import { KindPlate, NotAnswering, useNotAnswered } from "./kit";
 import { useRovingRows } from "./roving";
 import { SPARSE_THRESHOLD } from "./sparse";
 import "./surface.css";
@@ -251,6 +251,10 @@ export function SurfaceState({
   actionLabel?: string;
   children?: ReactNode;
 }) {
+  // Lane HUB TIMEOUTS: a read still on its way after 8 s is said
+  // (`● Not answering`, Try again), never this glyph for good.
+  const late = useNotAnswered(Boolean(loading));
+  if (late) return <NotAnswering onRetry={onRetry} />;
   // aria-busy: the region is still reading. The desk sweep (and a screen
   // reader) waits on it; without it a window that showed only this glyph read
   // as settled, and what drew in after its read moved under load.
