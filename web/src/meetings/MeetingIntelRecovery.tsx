@@ -11,7 +11,7 @@ import { apiFetch, readableError } from "../lib/api";
 import { countToken } from "../desk/surface/count";
 import { RefusalToken, RouteDisclosure, RunAttempts, routeTitle } from "./RouteDisclosure";
 import { MeetingRunVerb } from "./runSlot";
-import { ToolGlyph } from "../desk/surface/kit";
+import { DotWord, ToolGlyph } from "../desk/surface/kit";
 import {
   executedReceipt,
   postSummaryRun,
@@ -70,11 +70,40 @@ function keptToken(completed: RecoveryFact[]): string {
     if (!match) continue;
     const token = countToken(
       Number(match[1]),
-      match[2].toLowerCase() === "segment" ? "SEGMENT" : "ARTIFACT",
+      match[2].toLowerCase() === "segment" ? "segment" : "artifact",
+      match[2].toLowerCase() === "segment" ? "segments" : "artifacts",
     );
     if (token) tokens.push(token);
   }
-  return tokens.join(" · ");
+  return tokens.join(" and ");
+}
+
+/** Window Program W4 (the words): the state is a dot and one word, never
+ *  the wire's caps token (`ERROR` reads `Failed`). */
+export function recoveryStateWord(state: string): { word: string; tone: "fail" | "warn" | "idle" } {
+  const st = state.trim().toLowerCase();
+  if (st === "error" || st === "failed") return { word: "Failed", tone: "fail" };
+  if (st === "partial") return { word: "Partial", tone: "warn" };
+  if (st === "skipped") return { word: "Skipped", tone: "idle" };
+  const word = st.replace(/[_-]+/g, " ");
+  return { word: word ? word.charAt(0).toUpperCase() + word.slice(1) : "Not done", tone: "warn" };
+}
+
+/** Window Program W4: a list in plain words (`summary, topics and action
+ *  items`). */
+function listWords(label: string): string {
+  const parts = remainingWords(label).toLowerCase().split(/\s*,\s*(?:and\s+)?|\s+and\s+/).filter(Boolean);
+  if (parts.length < 2) return parts.join("");
+  return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
+}
+
+/** Window Program W4: one quiet sentence pair: `Kept 2 segments. The
+ *  summary, topics and action items did not finish.` */
+export function recoverySentence(kept: string, remaining: string): string {
+  const keptLine = kept ? `Kept ${kept}.` : "";
+  const list = listWords(remaining);
+  const rest = list ? `The ${list} did not finish.` : "";
+  return [keptLine, rest].filter(Boolean).join(" ");
 }
 
 /** HS-201-06: the hub names the remaining work in its own vocabulary
@@ -230,6 +259,7 @@ export function MeetingIntelRecovery({
 
   const kept = recovery ? keptToken(recovery.completed) : "";
   const running = recovery?.state === "running";
+  const stateWord = recoveryStateWord(recovery?.state ?? "");
   return (
     <section
       className="meeting-intel-recovery"
@@ -248,17 +278,11 @@ export function MeetingIntelRecovery({
           <GadgetRow
             label={
               <span className="meeting-intel-recovery-facts">
-                <span
-                  className="surface-token"
-                  data-tone={running ? undefined : "warn"}
-                >
-                  {recovery.state.toUpperCase()}
-                </span>
-                {kept ? (
-                  <span className="gadget-fact">{`KEPT ${kept}`}</span>
-                ) : null}
-                <span className="gadget-fact" title={recovery.remaining.detail}>
-                  {`NOT DONE: ${remainingWords(recovery.remaining.label)}`}
+                <DotWord tone={running ? "idle" : stateWord.tone} data-testid="recovery-state">
+                  {stateWord.word}
+                </DotWord>
+                <span className="gadget-fact" title={recovery.remaining.detail} data-testid="recovery-sentence">
+                  {recoverySentence(kept, recovery.remaining.label)}
                 </span>
                 {/* Article III: the destinations of the LAST run, then the
                     route the NEXT run will use. */}

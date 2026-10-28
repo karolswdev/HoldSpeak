@@ -45,7 +45,8 @@ def test_policy_and_control_mode_are_one_future_operation_contract(rig) -> None:
     assert policy.status_code == 200
     # HS-139-08: fresh install defaults to yolo.
     assert policy.json()["control_mode"] == "yolo"
-    assert policy.json()["control_mode_label"] == "YOLO"
+    # Window Program W4 (the words): the owner's word for the posture.
+    assert policy.json()["control_mode_label"] == "Open throttle"
     assert policy.json()["policy_version"] == "operation-policy/v2"
     assert policy.json()["unsupported_family_behavior"] == "refused"
     assert policy.json()["applies_to"] == "future_operations_only"

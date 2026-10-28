@@ -1649,6 +1649,7 @@ class MeetingWebServer:
             inference_assignment_service=web_ctx.inference_assignment_service,
             model_library_service=web_ctx.model_library_service,
             people_service=web_ctx.people_service,
+            connections_service=web_ctx.connections_service,
         )
 
         # HS-200-45 R1/R4: ONE composition root. The desk-primitive services are

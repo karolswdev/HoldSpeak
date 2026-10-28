@@ -750,6 +750,13 @@ export function RuntimeIdentityModule({ children }: { children?: ReactNode } = {
 
 /** HS-174: the System module face — owns the display step + hub chips
  *  so the REMOTE chip updates live when the toggle fires. */
+/** The hub's place in words: the wire's `THIS DEVICE` reads `This Mac`. */
+export function hubPlaceWord(host: string): string {
+  const clean = String(host || "").trim();
+  if (!clean || /^this (device|mac)$/i.test(clean)) return "This Mac";
+  return clean;
+}
+
 function SystemModule({
   hubSystem,
   deviceName,
@@ -769,15 +776,19 @@ function SystemModule({
 }) {
   return (
     <>
-      <div className="prefs-hub-chips" data-testid="system-hub-chips">
-        <span className="surface-token" data-chip data-testid="system-display">{hubSystem.host}</span>
-      </div>
       <SurfaceColumns
         variant="preferences"
         main={<RemoteAccessModule grantAct={grantAct} receiptOpen={receiptOpen} onGrantAct={onGrantAct} />}
         side={deskModule}
       />
       <GadgetGroup material="inset" label="This Mac">
+        {/* Window Program W4 (the words): the hub's place is a row of this
+            group in sentence case, never an orphan caps caption. */}
+        <GadgetRow label="Hub runs on">
+          <span className="gadget-fact" data-testid="system-hub-chips">
+            <span data-testid="system-display">{hubPlaceWord(hubSystem.host)}</span>
+          </span>
+        </GadgetRow>
         {deviceName}
       </GadgetGroup>
       {/* PHILO-17 U35: one RAW fold holds the diagnostics (build hashes,
@@ -1063,7 +1074,7 @@ export function RemoteAccessModule({
         <CycleGadget
           label="Remote transport"
           value={enabled ? "ON" : "OFF"}
-          options={[{ value: "OFF" }, { value: "ON" }]}
+          options={[{ value: "OFF", label: "Off" }, { value: "ON", label: "On" }]}
           disabled={toggleBusy || loading}
           onChange={toggleEnabled}
         />

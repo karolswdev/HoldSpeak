@@ -51,15 +51,18 @@ export function runsOnWords(automation: AutomationDetail): string {
   return [whenWords(automation), off].filter(Boolean).join(" · ");
 }
 
-/** The last result as a dot and a word, with its day: New (a result he has
- *  not opened), Done, Failed. Null when it has not run yet. */
+/** The last result as a dot and a word, with its day: Done or Failed, from
+ *  the result's one status field (Window Program W4: the same result read
+ *  `New` at one moment and `Done` at the next). A result he has not opened
+ *  keeps its word and takes the warm dot; the status bar says `1 new`.
+ *  Null when it has not run yet. */
 export function lastResult(automation: AutomationDetail): { label: string; tone: ObjectTone; at: number } | null {
   const results = (automation.results ?? []).filter((r: AutomationResult) => r.status === "done" || r.status === "failed");
   const last = results[0];
   if (!last) return null;
   const day = resultDay(last.completed_at);
-  const word = last.status === "failed" ? "Failed" : newResultCount(automation) ? "New" : "Done";
-  const tone: ObjectTone = word === "Failed" ? "fail" : word === "New" ? "ask" : "ok";
+  const word = last.status === "failed" ? "Failed" : "Done";
+  const tone: ObjectTone = word === "Failed" ? "fail" : last.new ? "ask" : "ok";
   const at = last.completed_at ? new Date(last.completed_at).getTime() : 0;
   return { label: day ? `${word} · ${day}` : word, tone, at: Number.isFinite(at) ? at : 0 };
 }

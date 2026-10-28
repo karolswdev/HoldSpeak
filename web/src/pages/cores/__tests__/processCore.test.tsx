@@ -70,7 +70,10 @@ describe("ProcessCore", () => {
     const rowEl = container.querySelector("[data-testid=process-row]") as HTMLElement;
     expect(rowEl.textContent).toContain("Process spawn");
     expect(screen.getByTestId("process-target").textContent).toBe("agent:build");
-    expect(screen.getByText(/Owner · Node:studio/)).toBeTruthy();
+    // W4 (the words): who and where in words; the wire's ids are the hover title.
+    const where = screen.getByText("You · Studio");
+    expect(where.getAttribute("title")).toBe("owner · node:studio");
+    expect(container.textContent).not.toMatch(/Node:/);
     expect(screen.getByTestId("process-state").textContent).toBe("Needs you");
     expect(container.textContent).not.toMatch(/PROCESS\.SPAWN/);
     expect(container.querySelector(".signal-status")).toBeNull();
@@ -153,5 +156,17 @@ describe("ProcessCore names the target, never a raw id and never a blank (Astra,
     expect([...container.querySelectorAll("[data-testid=process-target]")].map((e) => e.textContent)).toEqual(
       ["Freeze the old ledger on Nov 5", "Adopt OpenTelemetry"]);
     expect(container.textContent).not.toMatch(/decision_[0-9a-f]/);
+  });
+});
+
+describe("W4 (the words): who and where a process ran", () => {
+  it("never shows a machine id", async () => {
+    const { placementWords, principalWords, shownTarget } = await import("../ProcessCore");
+    expect(placementWords("node:inference-d380f9fc7c6dc84f")).toBe("Engine");
+    expect(placementWords("node:local")).toBe("This Mac");
+    expect(placementWords("node:hub-project-writer")).toBe("Hub");
+    expect(principalWords("owner-session")).toBe("You");
+    expect(principalWords("local-owner")).toBe("You");
+    expect(shownTarget({ kind: "connection.recheck", target: "connection:github" })).toBe("GitHub");
   });
 });

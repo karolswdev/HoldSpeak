@@ -41,6 +41,7 @@ class SetupService:
         inference_assignment_service: Any = None,
         model_library_service: Any = None,
         people_service: Any = None,
+        connections_service: Any = None,
         lan_scanner: Any = None,
         lan_checked_at: Any = None,
         home_provider: Any = Path.home,
@@ -57,6 +58,7 @@ class SetupService:
         self._assignments = inference_assignment_service
         self._model_library = model_library_service
         self._people = people_service
+        self._connections = connections_service
         self._lan_scanner = lan_scanner
         self._lan_checked_at = lan_checked_at
         self._home = home_provider
@@ -71,6 +73,7 @@ class SetupService:
         inference_assignment_service: Any = None,
         model_library_service: Any = None,
         people_service: Any = None,
+        connections_service: Any = None,
     ) -> None:
         """Bind the composition-owned producers after the web context exists."""
         self._onboarding = onboarding_service or self._onboarding
@@ -79,6 +82,24 @@ class SetupService:
         self._assignments = inference_assignment_service or self._assignments
         self._model_library = model_library_service or self._model_library
         self._people = people_service or self._people
+        self._connections = connections_service or self._connections
+
+    def _saved_connections(self, principal: Principal) -> dict[str, dict[str, Any]]:
+        """The stored Connections entries by provider (Settings > Accounts' read).
+
+        A cached read: no ``gh``/``acli`` process and no network call.
+        """
+        if self._connections is None:
+            return {}
+        try:
+            tools = self._connections.list_tools(principal).get("tools", [])
+        except Exception:
+            return {}
+        return {
+            str(entry.get("provider_id") or "").lower(): entry
+            for entry in tools
+            if isinstance(entry, dict)
+        }
 
     def found(self, principal: Principal) -> dict[str, Any]:
         """Read the one Setup inventory without running a process or network call.
@@ -216,6 +237,11 @@ class SetupService:
                         verb=candidate_verb or None, payload={"id": cid},
                     )
                 seen_providers = {str(candidate.get("provider") or "").lower() for candidate in connection_candidates}
+                # Window Program W4 (one truth): Setup reads the same stored
+                # connection record as Settings > Accounts. A provider whose
+                # record works is a working row here too, even when this Mac
+                # holds no sign-in file for it (no process, no network).
+                saved = self._saved_connections(principal)
                 missing_accounts = (
                     ("github", "GitHub", "gh"),
                     ("jira", "Jira", "acli"),
@@ -223,6 +249,18 @@ class SetupService:
                 )
                 for provider, label, tool in missing_accounts:
                     if provider in seen_providers:
+                        continue
+                    entry = saved.get(provider) or {}
+                    if str(entry.get("state") or "") in ("connected", "signed_in"):
+                        account = entry.get("account") or {}
+                        who = str(account.get("login") or account.get("email") or "") if isinstance(account, dict) else ""
+                        site = str(account.get("site") or "") if isinstance(account, dict) else ""
+                        row(
+                            f"connection:{provider}:saved", "account", label,
+                            " · ".join(value for value in (who, site) if value) or "Signed in",
+                            state="works",
+                            egress_host=str(entry.get("egress_host") or "") or None,
+                        )
                         continue
                     installed = bool((connection_tools.get(tool) or {}).get("installed"))
                     detail = "No account found" if installed else f"{tool} is not installed"

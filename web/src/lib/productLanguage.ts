@@ -84,7 +84,7 @@ export type ControlMode = (typeof CONTROL_MODES)[number];
 export const CONTROL_MODE_LABELS = {
   safe: "Secure",
   neutral: "Normal",
-  yolo: "YOLO",
+  yolo: "Open throttle",
 } as const satisfies Record<ControlMode, string>;
 
 export const CONTROL_MODE_DESCRIPTIONS = {

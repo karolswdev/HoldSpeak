@@ -239,7 +239,7 @@
   "control_mode_labels": {
     "safe": "Secure",
     "neutral": "Normal",
-    "yolo": "YOLO"
+    "yolo": "Open throttle"
   },
   "control_mode_descriptions": {
     "safe": "Reviews consequential work before it runs.",
@@ -337,7 +337,7 @@
       {
         "id": "raw-control-mode-labels",
         "pattern": "\\b(?-i:ControlMode|Safe|Neutral)\\b",
-        "reason": "Product UI renders Control mode with Secure, Normal, and YOLO labels."
+        "reason": "Product UI renders Control mode with Secure, Normal, and Open throttle labels."
       },
       {
         "id": "unqualified-state",

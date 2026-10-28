@@ -13,8 +13,8 @@ import { useSettleState } from "../settleState";
 import { WorkMenu, type WorkMenuEntry } from "./DeskMenu";
 import { verbById, verbLabel, type VerbContext } from "../verbRegistry";
 import { useKeymap } from "../keymap";
-import { egressBadge, inboundBadge } from "../setup";
-import { EgressChip, LampGadget } from "../surface/gadgets";
+import { egressBadge, inboundBadge, type EgressBadge } from "../setup";
+import { LampGadget } from "../surface/gadgets";
 import { subscribeMicPhase, type MicPhase } from "../../lib/micSession";
 import { callLoopState, stopCallLoop } from "../../lib/callLoop";
 import { TALK_STOP_EVENT } from "./MicButton";
@@ -152,6 +152,14 @@ function DeskClock() {
   );
 }
 
+/** The HoldSpeak menu's first line: where the desk's data goes, in words. */
+export function trustLine(badge: EgressBadge): string {
+  if (badge.scope === "local") return "Stays on this Mac";
+  const name = badge.text.replace(/^[^\p{L}\p{N}]+/u, "").trim();
+  if (badge.scope === "cloud") return name.startsWith("Leaves device · ") ? `Can send to ${name.slice(16)}` : "Can send to an endpoint";
+  return /^your network$/i.test(name) ? "Sends to your network" : `Sends to ${name}`;
+}
+
 export function DeskChrome({
   showDailyStarts = true,
 }: {
@@ -254,6 +262,16 @@ export function DeskChrome({
                   : null;
               };
               const entries: WorkMenuEntry[] = [
+                // Window Program W4 (UX-CANON A.9 as amended 2026-10-25): the
+                // device and trust word is the HoldSpeak menu's first line,
+                // never a chip in the bar; it opens Privacy and trust.
+                {
+                  type: "item" as const,
+                  id: "mark.trust",
+                  label: trustLine(badge),
+                  onSelect: () => useTrustWindow.getState().setOpen(true),
+                },
+                { type: "sep" as const, id: "mark-trust-sep" },
                 ...MARK_VERBS.map(row),
                 ...MARK_APPLICATION_COMMANDS.map(row),
                 { type: "sep" as const, id: "mark-sep" },
@@ -278,17 +296,19 @@ export function DeskChrome({
         <ScreenTitle />
         <span
           className={`desk-hub-dot is-${hubState}`}
-          title={hubTitle}
+          data-scope={badge.scope}
+          title={`${hubTitle} · ${badge.title}`}
           aria-label={hubTitle}
+          data-testid="chrome-hub-dot"
         />
         {runtimeState === "reconnecting" ? (
           <LampGadget label="RECONNECTING" on tone="warn" />
         ) : runtimeState === "offline" ? (
           <LampGadget label="OFFLINE" on tone="fail" />
         ) : null}
-        {/* HS-111-07 — ONE badge species: the chrome badge is the same
-            EgressChip the gadget rows wear, with the trust click-through
-            (egressBadge() stays the data source). */}
+        {/* Window Program W4 (A.9 as amended 2026-10-25): no scope chip at
+            rest. The bar keeps the hub's lamp; the device and trust word is
+            the HoldSpeak menu's first line (egressBadge() stays its data). */}
         {inbound ? (
           // HS-201-01 (counsel round 2, condition 2): at phone width the
           // words collapse to the lamp itself; the fact stays in the
@@ -304,14 +324,6 @@ export function DeskChrome({
             <LampGadget label={inbound.text} on tone="warn" />
           </span>
         ) : null}
-        <EgressChip
-          label={badge.text}
-          title={badge.title}
-          scope={badge.scope}
-          className={`egress-badge is-${badge.scope} egress-badge-button`}
-          ariaLabel={`Privacy and trust: ${badge.text}`}
-          onClick={() => useTrustWindow.getState().setOpen(true)}
-        />
       </div>
 
       {writeReceipt && !compact ? (

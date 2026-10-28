@@ -20,7 +20,9 @@ vi.mock("../../runtime/RuntimeBus", () => ({
   useOptionalRuntimeBus: () => ({ state: "offline", subscribe: () => () => undefined }),
 }));
 
-const MARK_ROWS = ["Settings", "Engines", "Accounts", "Wallpaper", "Setup", "Keyboard shortcuts"];
+// Window Program W4 (A.9 as amended 2026-10-25): the first line is the device
+// and trust word (no scope chip in the bar); it opens Privacy and trust.
+const MARK_ROWS = ["Stays on this Mac", "Settings", "Engines", "Accounts", "Wallpaper", "Setup", "Keyboard shortcuts"];
 
 function phone(on: boolean) {
   if (!on) return;
@@ -142,7 +144,7 @@ import { useDesk } from "../store";
 import statusOpen from "./fixtures/trust-wire/status-open.json";
 
 describe.each([[1440, false], [393, true]] as const)("the chrome over an open hub at %i", (_width, isPhone) => {
-  it("keeps OPEN TO NETWORK dark when a token guards the bind, and the egress chip reads This device", async () => {
+  it("keeps OPEN TO NETWORK dark when a token guards the bind, and the bar has no scope chip (the lamp says This device on hover)", async () => {
     // replaces: tests/e2e/test_hs201_one_thing_glass.py::TestOneThing::test_open_to_network_is_its_own_token (the chrome half; the Trust line is components/__tests__/trustInbound.test.tsx)
     phone(isPhone);
     expect(statusOpen.trust.web_bind).toBe("0.0.0.0");
@@ -151,8 +153,10 @@ describe.each([[1440, false], [393, true]] as const)("the chrome over an open hu
     render(<MemoryRouter><DeskChrome /></MemoryRouter>);
     await act(async () => { await Promise.resolve(); });
     expect(screen.queryByTestId("chrome-inbound")).toBeNull();
-    const chip = document.querySelector(".egress-badge") as HTMLElement;
-    expect(chip.textContent?.toUpperCase()).toContain("THIS DEVICE");
+    // Window Program W4 (A.9 as amended 2026-10-25): no scope chip at rest;
+    // the hub's lamp carries the fact in its hover title.
+    expect(document.querySelector(".desk-menubar .egress-badge")).toBeNull();
+    expect(screen.getByTestId("chrome-hub-dot").getAttribute("title")?.toLowerCase()).toContain("this device");
     useDesk.setState({ setup: null } as never);
   });
 });
