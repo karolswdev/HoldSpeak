@@ -6,6 +6,266 @@ Honest states, Friction, Delight, Density, Consistency, Phone; 24 is the top). P
 application windows of `web/src/desk/applications.ts`; Part B is the object windows and the
 doors.
 
+## Pass 3 — 2026-10-28 morning
+
+Lane ATLAS PASS 3, on main `a324dd62a` (pass 2's main plus #1530–#1559). Every row was scored
+again from the pass-3 shots. The PNGs in [atlas-2026-10-27/](atlas-2026-10-27/) keep their names,
+so the links in Parts A and B and in Pass 2 now open the pass-3 shot, except where "kept" is
+written below.
+
+**How:** one isolated hub (the desk sweep's `desk` fixture, every isolation switch), the sweep
+seed plus `POST /api/desk/seed`, 6 notes (one with a Project, PR #412 and KAN-7 in its text),
+6 more decisions, 10 more Plan items, 8 more meetings (3 failed in total), 5 more people, a
+knowledge base, a sequence, a workflow, a thread, and a pushed meeting with three owned action
+items for the Door's due words (mine due tomorrow, Bea's due tomorrow, Bea's two days late).
+Wallpaper *In Jupiter's orbit* (`hs.desk.atmosphere`; no hub API). A local OpenAI-compatible
+stub engine named *Studio engine* answers Ask (it streams one word per 0.35 s for the streaming
+shot, and answers 503 for "engine down"). A second, bare hub gave the empty faces. Calls are
+drawn from the faces lane's fixtures (`web/src/desk/calls/__fixtures__`, routed in the page:
+status, the list, the live call with a held send, the ended call, the `calls` settings). The
+agent's finished face replays the recorded hub wires
+`web/src/desk/__tests__/fixtures/agents-ag0/lane.done.wire.json` and
+`coders-sessions.wire.json`. Live "during" and the Record tile's breath use a routed
+`/api/state` that says a meeting is live. 1440 shots are the window + 24 px of floor; 393 shots
+are the whole screen; 1×, each under 300 KB. Every shot named below was looked at.
+
+**New states shot:** `calls-1440/393` (the real hub: no ai-phone, Calls off), `calls-empty-*`,
+`calls-empty-hub-*` (bare hub), `calls-list-*`, `calls-live-*` (on a call, the held Yes/No),
+`calls-live-yes-*` (after Yes), `calls-ended-*`, `settings-calls-*` (real hub),
+`settings-calls-ready-*` (fixtures), `settings-calls-empty-*` (bare hub), `lane-done-*` (the
+agent's finished face with Done), `agents-done-*`, `needs-due-*` (the Door's due words),
+`dock-record-breath-1440`, `desk-recording-*`, and the 393 empty faces
+(`*-empty-393.png`, new this pass).
+
+### Scores, pass 3 (G T H F De Dn C P; 24 is the top)
+
+| Window | G | T | H | F | De | Dn | C | P | Pass 3 | Pass 2 |
+| --- | - | - | - | - | - | - | - | - | --- | --- |
+| Calls (new: empty, list, on a call, ended) | 3 | 3 | 3 | 2 | 3 | 3 | 3 | 3 | **23** | – |
+| Live meeting (ready with the Microphone row, during) | 3 | 2 | 3 | 2 | 2 | 3 | 3 | 3 | **21** | 22 |
+| Agents (Running · Ended today · Installed) | 3 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | **21** | 18 |
+| Meetings | 3 | 3 | 2 | 3 | 2 | 3 | 3 | 2 | **21** | 20 |
+| Meeting, failed summary | 3 | 3 | 3 | 3 | 2 | 2 | 3 | 2 | **21** | 16 |
+| Needs you (with the due words) | 3 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | **21** | 18 |
+| New decision | 3 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | **21** | 21 |
+| Note | 3 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | **21** | 21 |
+| Menu bar + menus | 3 | 3 | 3 | 3 | 2 | 3 | 2 | 2 | **21** | 20 |
+| Agent's window (gone; finished with Done) | 3 | 2 | 3 | 3 | 2 | 3 | 2 | 2 | **20** | 19 |
+| Artifact | 3 | 3 | 2 | 3 | 2 | 2 | 3 | 2 | **20** | 11 |
+| Projects | 3 | 3 | 2 | 2 | 2 | 2 | 3 | 3 | **20** | 20 |
+| Decisions | 3 | 3 | 2 | 2 | 2 | 3 | 3 | 2 | **20** | 20 |
+| Setup | 3 | 3 | 2 | 3 | 2 | 3 | 2 | 2 | **20** | 17 |
+| Meeting (object window) | 3 | 3 | 2 | 3 | 2 | 2 | 3 | 2 | **20** | 19 |
+| Person | 2 | 3 | 2 | 3 | 2 | 2 | 3 | 3 | **20** | 18 |
+| Today | 3 | 3 | 2 | 2 | 3 | 2 | 2 | 2 | **19** | 16 |
+| Memory | 3 | 3 | 2 | 2 | 2 | 3 | 2 | 2 | **19** | 14 |
+| Settings ▸ Calls (new) | 3 | 2 | 3 | 2 | 2 | 2 | 3 | 2 | **19** | – |
+| Decision record (Decisions reader) | 3 | 3 | 2 | 2 | 2 | 3 | 2 | 2 | **19** | 21 |
+| Room ▸ History | 3 | 3 | 2 | 2 | 2 | 3 | 2 | 2 | **19** | 19 |
+| Components | 3 | 2 | 2 | 2 | 2 | 2 | 3 | 3 | **19** | 19 |
+| Automation (one open) | 3 | 2 | 2 | 3 | 2 | 3 | 2 | 2 | **19** | 19 |
+| Window switcher | 2 | 3 | 3 | 3 | 1 | 3 | 2 | 2 | **19** | 19 |
+| Ask | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 2 | **18** | 12 |
+| People | 2 | 3 | 2 | 3 | 2 | 3 | 2 | 2 | **18** | 18 |
+| Capture | 2 | 3 | 2 | 3 | 2 | 2 | 2 | 2 | **18** | 17 |
+| Engines (ready, down) | 3 | 2 | 3 | 2 | 2 | 2 | 2 | 2 | **18** | 16 |
+| Automations (list) | 3 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **18** | 15 |
+| Speak (+ wings) | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** | 17 |
+| Send preview | 3 | 3 | 3 | 3 | 1 | 2 | 2 | – | **17** | 11 |
+| Room ▸ Now | 2 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **17** | 16 |
+| Room from the floor icon | 2 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **17** | 16 |
+| Project as a pullout (opens the Room) | 2 | 3 | 2 | 2 | 2 | 2 | 2 | 2 | **17** | 16 |
+| New Project | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **17** | 17 |
+| Drawer (zone, e.g. Inbox) | 2 | 3 | 2 | 3 | 2 | 2 | 2 | 1 | **17** | 15 |
+| Knowledge | 3 | 3 | 2 | 2 | 2 | 2 | 2 | 1 | **17** | 16 |
+| Floor: icon menu / blank floor | 2 | 3 | 2 | 3 | 2 | 3 | 2 | – | **17** | 17 |
+| Phone desk (393) | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 3 | **17** | 16 |
+| Shortcut sheet | 2 | 3 | 3 | 2 | 1 | 3 | 2 | – | **16** | 10 |
+| Decision (object window) | 3 | 2 | 2 | 3 | 1 | 2 | 2 | 1 | **16** | 17 |
+| Project drawer | 2 | 2 | 2 | 2 | 2 | 2 | 2 | 2 | **16** | 13 |
+| Activity (+ wings) | 3 | 1 | 2 | 2 | 2 | 2 | 2 | 2 | **16** | 16 |
+| Calendar snapshot | 2 | 3 | 2 | 2 | 1 | 2 | 2 | 2 | **16** | 16 |
+| Context | 2 | 2 | 3 | 2 | 1 | 2 | 2 | 2 | **16** | 14 |
+| Sequence | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **16** | 15 |
+| Workflow | 3 | 2 | 2 | 2 | 1 | 2 | 2 | 2 | **16** | 15 |
+| Archive | 2 | 3 | 2 | 2 | 2 | 2 | 1 | 2 | **16** | 16 |
+| Mission control | 2 | 3 | 3 | 3 | 1 | 2 | 2 | – | **16** | 16 |
+| Settings (frame + 9 panes) | 3 | 2 | 2 | 2 | 2 | 2 | 2 | 1 | **16** | 17 |
+| ⌘K palette | 2 | 2 | 2 | 2 | 2 | 2 | 1 | 2 | **15** | 15 |
+| Mode / recipe (Chase) | 2 | 2 | 1 | 2 | 1 | 2 | 2 | 2 | **14** | 15 |
+| Processes | 3 | 1 | 2 | 2 | 1 | 2 | 2 | 1 | **14** | 14 |
+| Note margin (kept: not re-shot) | 2 | 0 | 2 | 3 | 2 | 2 | 1 | 2 | **14** | 14 |
+| Feedback sheet (kept: not reached) | 3 | 2 | 1 | 3 | 2 | 2 | 2 | – | **15** | 15 |
+| Record tile breath (new; a frame of the dock) | 3 | 3 | 2 | 3 | 1 | 3 | 3 | 3 | **21** | – |
+
+Evidence, one line each, for the rows that moved:
+
+- **Calls** (`calls-empty-*`, `calls-list-*`, `calls-live-*`, `calls-ended-393`): title bar →
+  toolbar (Call me / Hang up) → body → status bar (`● Ready for calls · 2 calls`, `● On a call ·
+  0:00 · Waiting for your answer`, `● Calls are off · Settings ▸ Calls`); the held send is one
+  warm plate with Yes / No; *Done on this call* rows carry a kind glyph and an effect word; the
+  empty face is the telephone object, one line, one verb. Friction 2: at 1440 a double press on a
+  past call did not open it in the rig (the 393 press did; unknown whether 1440 needs Enter).
+- **Agents** (`agents-1440/393`): three sections, each run says one state (`PR #412 open`,
+  `Session gone`), the status bar counts what the rows say (`2 not connected · 2 stopped today`).
+- **Meeting, failed** (`meeting-failed-*`): `● Failed · Kept 2 segments. The summary, topics and
+  action items did not finish.` replaces `ERROR KEPT 2 SEGMENTS…`.
+- **Needs you** (`needs-due-*`): `Due tomorrow` (mine, with Done), `Waiting on Bea · Due tomorrow`
+  and `Waiting on Bea · Overdue` (with Nudge); watch hits are two grouped rows (`2 mentions of
+  ledger`, `9 mentions of cutover`), not thirteen.
+- **Menu bar**: no `⌂ This device` chip at 1440 or on the bare phone desk (`desk-1440`,
+  `desk-393`).
+- **Agent's window** (`lane-1440/393`, `lane-done-*`): the gone face says `Session gone` with
+  Start again, as the Agents row does; the finished face has Done as the primary, a green result
+  card with its age, the step list and *It made*. Text 2: at 393 the error band reads
+  `MARK SEEN FAILED · HTTP 404 · Retry · OK` in red mono caps (the 404 is the rig's: the replayed
+  launch is not on this hub; the face of the error is the product's).
+- **Artifact** (`artifact-*`): toolbar Copy / Send… / Reveal, the result as a document, status
+  `● Automation result · Filed in: Desk`. One face for one result now.
+- **Send preview** (`door-send-preview-1440`): Send / Cancel / Add destination in the note's own
+  window, one row per destination with a radio dot, the folder as a quiet line, the preview as the
+  note's own text. No mono caps, no card in card.
+- **Shortcut sheet** (`door-shortcuts-1440`): sans, sentence-case heads (Apps, New, Windows,
+  Desk), keycaps with `⌃ ⌘ ⇧`, Esc once. It is still a centred overlay that dims the desk.
+- **Ask** (`ask-answer-*`, `ask-streaming-*`, `ask-enginedown-*`, `ask-recent-*`, the README
+  hero): the answer lands at its question; words stream (6 s in: the first sentence and a bullet);
+  the toolbar lamp says `● Not answering` when the engine is down; Recent is one row per
+  question; the answered face has its status bar (`● Answered · 13 records`). Still: references
+  repeat a record in two states (*Freeze the ledger schema on Nov 12* as Proposed and as Active;
+  *Use Kafka…* as Active and Accepted) and cite an earlier ask; at 393 the engine-down dot is
+  amber, at 1440 red.
+- **Memory** (`memory-*`): one engine truth (`● Studio engine`, status `Desk pages not written
+  yet · 4 projects · 9 people`).
+- **Settings** (`settings-*`): at 393 Settings ▸ Meetings breaks the label *Try a phrase* into
+  one letter per line (`T`, `r`, … `settings-meetings-393`; the same in pass 2, missed then)
+  (Phone 1). Every pane's lamp says `● Saved just now` at open; the rig's seed wrote settings
+  first, so its honesty is unknown.
+- **Settings ▸ Calls** (`settings-calls-*`, and `settings-calls-ready-*` with every step done:
+  `Installed`, `Running`, `A SIP address`, `Ready · qwen3.8-27b`, `Set`): the checklist in order, a dot + word per step, each
+  command in a code block with its own Copy, the egress sentence; Text 2: the Twilio command is cut
+  with `…` mid-command, and *Your numbers* shows `● Any caller` over a placeholder that reads like
+  a real number (`+1 212 555 0142`).
+- **Decision record** (`decision-record-1440`, an open decision): the reader has only
+  `‹ Decisions` on its toolbar; pass 2's accepted decision had Send.
+
+### The ten worst now
+
+1. **Note margin — 14 (kept).** `note-margin-1440.png` is pass 2's shot: *Find the tasks* did not
+   run in the rig (the `note.find_tasks` assignment answered 500 to the scratch rig), so the Ask
+   card's raw Markdown is not re-checked. Owner of the open defect: `NoteMargin.tsx`.
+2. **Processes — 14.** `processes-1440/393`: `Setup lan scan`, `Decision create`, `Connection
+   recheck`, `Channel save destination` (method names in title case), `You · Hub`; at 393 the time
+   falls on its own line at the row's left edge (`· 03:02:03`). `web/src/pages/cores/ProcessCore.tsx`.
+3. **Mode / recipe (Chase) — 14.** `recipe-*`: two engine lines that disagree in one window —
+   `Which engine answers in a thread · Uses capability · Studio engine` and `Which engine runs it ·
+   No default model · Choose default`. `web/src/desk/pullouts/` persona window.
+4. **⌘K palette — 15.** `door-palette-typed-1440`: two *Thread* rows per question
+   (`Is the ledger cutover still on track?` ×2, `What did we decide about the ledger sc…` ×2) while
+   Ask's Recent shows one; a stray *Hand to agent* under the top row. Typing *Rhythm* or *Change
+   places* and pressing the first row asked the engine and kept threads named *Rhythm* and
+   *Change places* (they show in Ask's Recent in the README hero). `web/src/desk/palette/`.
+5. **Feedback sheet — 15 (kept).** Not reached: the rig found no *Feedback* verb in the Desk menu
+   or a title bar on this main (`door-feedback-*` are pass 2's shots).
+6. **Settings — 16.** The 393 letter stack in Settings ▸ Meetings (`settings-meetings-393`); the
+   Calls pane's cut Twilio line. `web/src/pages/cores/settingsWindow.tsx`, `settingsPrefs.tsx`.
+7. **Activity — 16.** `activity-1440`: `SWEEP 2 ROOMS · Heartbeat` in caps; `Meeting saved · Card
+   vault vendor call` rows wrap to two lines at the default width. `ActivityCore.tsx`.
+8. **Decision (object window) — 16.** `decision-1440/393`: the body repeats the title as its first
+   line; *Background* holds `About: …`; *Consequences* holds `Why: …`; at 393 the toolbar is five
+   unlabeled icons after Edit and Retire. `web/src/desk/pullouts/DecisionPullout.tsx`.
+9. **Project drawer — 16.** `drawer-project-*`: a dead foot of Register · Get Info · ghost Open
+   (393: Register · More); the sources in a bordered box under a `Sources · 2` head; at 393 the
+   Ask composer is three scattered rows. `web/src/desk/drawer/DrawerWindow.tsx`.
+10. **Context, Calendar snapshot, Archive, Sequence, Workflow, Mission control — 16** (tied).
+    Context: a ghost Save as the only verb over a
+    two-line placeholder. Calendar snapshot: one grey dot and `No screenshot yet` in a blank
+    window. Archive: an empty grey status bar under `Nothing parked`. Mission control: flat grey
+    floor, no names under the thumbnails.
+
+### What regressed
+
+**None proven.** Each candidate was checked against pass 2's committed shot (`git show
+HEAD:…/atlas-2026-10-27/<name>.png`):
+
+- Settings ▸ Meetings at 393, *Try a phrase* one letter per line: the same in pass 2's shot;
+  pass 2 missed it. Listed below as a defect.
+- Settings' status lamp `● Saved just now` / `Saved 1 min ago` at open: the same in pass 2. The
+  rig's seed writes settings before the shot, so whether the lamp lies on a desk where nothing was
+  saved is **unknown**.
+- The Decisions reader with only `‹ Decisions` on its toolbar: pass 2 shot an accepted decision
+  (Send shown); this pass shot an open one (*Drop the nightly export*). An open decision's reader
+  has no Send; not a regression, listed as a defect.
+- Live's `● Link connected`: in pass 2 too. Live's Microphone row went from `Ready` (no check had
+  run) to `Not checked`: that is the honest word (Live slice 3).
+
+Healed since pass 2: the menu bar's `⌂ This device` chip, Today's one-line status bar at 393,
+Capture's fit, Engines' first fact at 393, Automations' one state word (`Done · 16 Oct` at both
+widths), Setup against Accounts (GitHub `Ready · karolswdev` in both), the failed meeting's caps,
+Needs you's thirteen watch rows, Ask's landing, streaming and engine lamp, the Artifact and Send
+faces, the shortcut sheet's words, Memory's two engine truths, the agent's *working or gone*.
+
+### Defects that remain, in the owner's words
+
+"Tonight" = a lane can take it without a canvas (clear direction).
+
+| # | Owner's words | Window | Axis | The fix, in one sentence | Tonight |
+| - | --- | --- | --- | --- | --- |
+| 1 | "It says *Saved just now* when I open it." | Settings (every pane) | Honest | Check on a desk with no write first (unknown in the rig); if it shows, draw the save lamp only after a write in this window. | yes |
+| 2 | "*T, r, y* — one letter per line." | Settings ▸ Meetings at 393 | Phone | Let the *Try a phrase* row stack its label above the field at phone width, as the other rows do. | yes |
+| 3 | "I typed Rhythm and it asked the AI." | ⌘K palette | Friction | Rank the Settings rows (Rhythm → Notices, Change places → Desk) above the Ask row for an exact name. | yes |
+| 4 | "Why does the same question show twice?" | ⌘K palette (Threads) | Consistency | Group the palette's thread rows by question, as Ask's Recent does. | yes |
+| 5 | "*Freeze the ledger schema* is both Proposed and Active." | Ask references | Honest | Collapse a record cited in two states into one row with its current state. | yes |
+| 6 | "Why does it cite my own earlier question?" | Ask references | Text | Leave earlier asks out of an answer's references. | yes |
+| 7 | "Red on the desk, amber on the phone." | Ask, engine down | Consistency | Use the danger tone for *The engine did not answer* at both widths. | yes |
+| 8 | "*Setup lan scan, Decision create*… what is this?" | Processes | Text | Name each process by what it did for him (`Checked the LAN`, `Made a decision: …`) and keep the time on the row's line at 393. | yes |
+| 9 | "Which engine is it, Studio or no default?" | Mode / recipe | Honest | Show one engine line, the one the run uses, with one Change. | yes |
+| 10 | "`SWEEP 2 ROOMS`." | Activity | Text | Write the sweep row in sentence case (`Checked 2 rooms`) and let rows keep one line at the default width. | yes |
+| 11 | "The decision says its own title twice." | Decision (object) | Grammar | Drop the repeated first line and put *Why* under *Why*, *About* under *About*. | yes |
+| 12 | "Five icons and no words on my phone." | Decision (object) at 393 | Phone | Keep the labels on Send, Copy, Dictate and Open record at 393, overflowing into More. | yes |
+| 13 | "Register, Get Info, and a grey Open at the bottom." | Project drawer | Grammar | Move the foot's verbs into the toolbar and remove the foot. | yes |
+| 14 | "The Twilio line is cut off." | Settings ▸ Calls | Text | Let the Twilio command wrap in its own code block with its own Copy, like Telnyx. | yes |
+| 15 | "It shows a phone number I never typed." | Settings ▸ Calls ▸ Your numbers | Honest | Use a placeholder that cannot read as a saved number (`Your mobile number`). | yes |
+| 16 | "*MARK SEEN FAILED · HTTP 404*." | Agent's window, error band | Text | Say the failure in sentence case, sans (`Could not mark it seen · Try again`). | yes |
+| 17 | "*Link connected* — which link?" | Live meeting, ready sheet | Text | Name what is connected (`Phone connected`) or leave the fact out when it is not his. | yes |
+| 18 | "The open decision has only a Back." | Decision record (reader), an open decision | Friction | Give an open decision's reader its verbs (Accept, Edit) on the toolbar, as an accepted one has Send. | yes |
+| 19 | "None, None, None." | People ▸ Next 1:1 | Text | Leave the cell empty when no 1:1 is planned. | yes |
+| 20 | "*Write the rollback runbook* twice." | Needs you | Density | Merge two unassigned rows with the same text and project into one. | yes |
+| 21 | "A grey box with a grey dot." | Calendar snapshot, empty | Delight | Give the empty face its object and one verb (Import image), as the other empty faces have. | yes |
+| 22 | "The Archive has an empty grey bar at the bottom." | Archive | Grammar | Draw no status bar when it has no fact. | yes |
+| 23 | "Mission control is a grey slab with no names." | Mission control | Delight | Keep the wallpaper and print each window's title under its thumbnail. | canvas |
+| 24 | "The breath — I cannot see it." | Record tile, recording | Delight | Widen the ring and pair it with the elapsed time on the tile; judge it live first. | canvas |
+| 25 | "The Room's Ask box is three loose rows on my phone." | Room ▸ Now / Project drawer at 393 | Phone | Put scope and engine on one quiet line above one field with mic and Ask. | yes |
+| 26 | "Context is a grey Save and two grey lines." | Context | Delight | Show one example fact and a one-line purpose, with Save live once he types. | canvas |
+
+### Not reached, and why
+
+- **The note's margin** (Ask card, *Found in this note*): the scratch rig's `note.find_tasks`
+  assignment answered 500 (`inference_assignment_invalid`); `note-margin-*` is pass 2's shot.
+- **The feedback sheet**: no *Feedback* verb was found in the Desk menu or a title bar;
+  `door-feedback-*` are pass 2's shots.
+- **The phone Go ▸ Calls press**: the Go menu at 393 lists *Calls* (`door-menu-go-phone-393`), but
+  the scripted press landed on another row; the Calls sheet at 393 is shown by `calls-*-393`
+  (opened by the hub).
+- **Today ▸ Open item**: the scripted press did not find the verb by its name (the button is on the face, `today-1440`);
+  `flow-today-item-1440.png` is pass 2's shot. `today-since-393.png`, `today-since-send-1440.png`,
+  `decision-record-393.png`, `automation-open-393.png`, `flow-agent-answer-1440.png`, the
+  `*-loading-1440.png` files, `live--configure-meeting-393.png`, `phone-three-next-393.png` and the
+  six `b-*.png` files are kept from pass 2 or earlier.
+- **The call's clock**: `On a call · 0:00` beside a transcript at 0:13 comes from the fixture's
+  `started_at` (in the future of the rig's clock); unknown on a real call.
+- **The mic check**: the rig has no microphone, so the Microphone row's level and *Checked* words
+  were not drawn.
+
+### The docs' product images
+
+- Regenerated: `docs/assets/readme/desk-meeting-review.jpg` (Today on the seeded desk, 1440×900,
+  215 KB) and `docs/assets/readme/desk-project-room.jpg` (the note *Ledger review with Mira* with
+  its PR and Jira tokens behind Ask and its answer, 197 KB). Same names; the README needs no edit.
+  The hero's Ask Recent shows the *Rhythm* and *Change places* threads that the palette door made
+  (defect 3).
+- No other `docs/assets` image a live guide embeds shows a face that changed (the drift ledger:
+  S3 `demo.gif` left, S4 Presence retired, S7 art).
+
 ## Pass 2 — 2026-10-27 evening
 
 Lane ATLAS PASS 2, on main `0a6ac88f3` (waves 1–3, #1511–#1529). Every row below was scored
