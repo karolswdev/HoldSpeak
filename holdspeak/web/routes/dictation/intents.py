@@ -22,7 +22,7 @@ def build_intents_router(ctx: WebContext) -> APIRouter:
     router = APIRouter()
 
     @router.get("/api/intents/control")
-    async def api_get_intent_controls() -> Any:
+    def api_get_intent_controls() -> Any:
         if ctx.on_get_intent_controls is None:
             return JSONResponse(
                 {
@@ -41,7 +41,7 @@ def build_intents_router(ctx: WebContext) -> APIRouter:
         return JSONResponse(payload if isinstance(payload, dict) else {"controls": payload})
 
     @router.put("/api/intents/profile")
-    async def api_set_intent_profile(payload: _IntentProfileRequest) -> Any:
+    def api_set_intent_profile(payload: _IntentProfileRequest) -> Any:
         if ctx.on_set_intent_profile is None:
             return JSONResponse(
                 {"success": False, "error": "Intent profile updates not supported"},
@@ -58,7 +58,7 @@ def build_intents_router(ctx: WebContext) -> APIRouter:
         return JSONResponse({"success": True, "controls": result})
 
     @router.put("/api/intents/override")
-    async def api_set_intent_override(payload: _IntentOverrideRequest) -> Any:
+    def api_set_intent_override(payload: _IntentOverrideRequest) -> Any:
         if ctx.on_set_intent_override is None:
             return JSONResponse(
                 {"success": False, "error": "Intent override updates not supported"},
@@ -75,7 +75,7 @@ def build_intents_router(ctx: WebContext) -> APIRouter:
         return JSONResponse({"success": True, "controls": result})
 
     @router.post("/api/intents/preview")
-    async def api_preview_intent_route(payload: Optional[_IntentPreviewRequest] = None) -> Any:
+    def api_preview_intent_route(payload: Optional[_IntentPreviewRequest] = None) -> Any:
         if ctx.on_route_preview is None:
             return JSONResponse(
                 {"success": False, "error": "Intent route preview not supported"},

@@ -1077,7 +1077,7 @@ def build_pipeline_router(
             raise
 
     @router.get("/api/dictation/corrections")
-    async def api_dictation_corrections_list() -> Any:
+    def api_dictation_corrections_list() -> Any:
         from ....config import Config
         from ....plugins.dictation.corrections import CORRECTION_KINDS
 
@@ -1112,7 +1112,7 @@ def build_pipeline_router(
         )
 
     @router.get("/api/dictation/learning-digest")
-    async def api_dictation_learning_digest(window: str = "week") -> Any:
+    def api_dictation_learning_digest(window: str = "week") -> Any:
         """HS-48-01: a read-only "What HoldSpeak learned" aggregation.
 
         Reads the correction memory + the journal and returns honest, windowed
@@ -1149,7 +1149,7 @@ def build_pipeline_router(
         return JSONResponse(digest)
 
     @router.post("/api/dictation/corrections")
-    async def api_dictation_corrections_record(payload: dict[str, Any]) -> Any:
+    def api_dictation_corrections_record(payload: dict[str, Any]) -> Any:
         """Teach one correction (the fallback route — no journal row to attach).
 
         Request:
@@ -1200,7 +1200,7 @@ def build_pipeline_router(
         return _teach_response(store, kind, key=text, value=value)
 
     @router.delete("/api/dictation/corrections/{correction_id}")
-    async def api_dictation_corrections_delete(correction_id: int) -> Any:
+    def api_dictation_corrections_delete(correction_id: int) -> Any:
         """HS-40-04: remove one persistent correction by id (curate the memory)."""
         store = ctx.corrections
         if store is None:
@@ -1210,7 +1210,7 @@ def build_pipeline_router(
         return JSONResponse({"removed": False, "error": "correction not found"}, status_code=404)
 
     @router.delete("/api/dictation/corrections")
-    async def api_dictation_corrections_clear() -> Any:
+    def api_dictation_corrections_clear() -> Any:
         """HS-40-04: forget everything the copilot has learned (ring + durable)."""
         store = ctx.corrections
         if store is None:
@@ -1258,7 +1258,7 @@ def build_pipeline_router(
         return dictation_service
 
     @router.get("/api/dictation/journal")
-    async def api_dictation_journal_list(
+    def api_dictation_journal_list(
         request: Request,
         limit: int = 200,
         source: Optional[str] = None,
@@ -1303,7 +1303,7 @@ def build_pipeline_router(
         )
 
     @router.put("/api/dictation/journal/{entry_id}")
-    async def api_dictation_journal_update(
+    def api_dictation_journal_update(
         entry_id: int, payload: dict[str, Any]
     ) -> Any:
         """HS-101 B3 — edit the transcript record in place.
@@ -1327,7 +1327,7 @@ def build_pipeline_router(
         )
 
     @router.delete("/api/dictation/journal/{entry_id}")
-    async def api_dictation_journal_delete(entry_id: int) -> Any:
+    def api_dictation_journal_delete(entry_id: int) -> Any:
         """Delete one journal entry by id (HS-45-02)."""
         repo = _journal_repo()
         if repo is None:
@@ -1337,14 +1337,14 @@ def build_pipeline_router(
         return JSONResponse({"removed": False, "error": "entry not found"}, status_code=404)
 
     @router.delete("/api/dictation/journal")
-    async def api_dictation_journal_clear(request: Request) -> Any:
+    def api_dictation_journal_clear(request: Request) -> Any:
         """Wipe the whole journal (HS-45-02 — the one-click local wipe)."""
         if _journal_repo() is None:
             return JSONResponse({"error": "journal unavailable"}, status_code=404)
         return JSONResponse(_dictation_service().clear_journal(getattr(request.state, "principal", None)))
 
     @router.post("/api/dictation/journal/{entry_id}/correct")
-    async def api_dictation_journal_correct(entry_id: int, payload: dict[str, Any]) -> Any:
+    def api_dictation_journal_correct(entry_id: int, payload: dict[str, Any]) -> Any:
         """HS-45-03: correct a journaled run in the moment — and teach.
 
         Records a correction (reusing the Phase-40 `CorrectionStore`, so future

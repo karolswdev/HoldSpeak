@@ -36,7 +36,7 @@ def build_blocks_router(
     router = APIRouter()
 
     @router.get("/api/dictation/block-templates")
-    async def api_dictation_block_templates() -> Any:
+    def api_dictation_block_templates() -> Any:
         return JSONResponse(
             {
                 "templates": [
@@ -54,7 +54,7 @@ def build_blocks_router(
         )
 
     @router.get("/api/dictation/blocks")
-    async def api_dictation_blocks_list(
+    def api_dictation_blocks_list(
         scope: str = "global",
         project_root: Optional[str] = None,
     ) -> Any:
@@ -88,7 +88,7 @@ def build_blocks_router(
         )
 
     @router.post("/api/dictation/blocks")
-    async def api_dictation_blocks_create(
+    def api_dictation_blocks_create(
         payload: dict[str, Any],
         scope: str = "global",
         project_root: Optional[str] = None,
@@ -265,7 +265,7 @@ def build_blocks_router(
         return JSONResponse(response_payload, status_code=201)
 
     @router.put("/api/dictation/blocks/{block_id}")
-    async def api_dictation_blocks_update(
+    def api_dictation_blocks_update(
         block_id: str,
         payload: dict[str, Any],
         scope: str = "global",
@@ -328,7 +328,7 @@ def build_blocks_router(
         )
 
     @router.delete("/api/dictation/blocks/{block_id}")
-    async def api_dictation_blocks_delete(
+    def api_dictation_blocks_delete(
         block_id: str,
         scope: str = "global",
         project_root: Optional[str] = None,

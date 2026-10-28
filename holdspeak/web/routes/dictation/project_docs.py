@@ -36,7 +36,7 @@ def build_project_docs_router(
     router = APIRouter()
 
     @router.get("/api/dictation/project-hs")
-    async def api_dictation_project_hs_get(project_root: Optional[str] = None) -> Any:
+    def api_dictation_project_hs_get(project_root: Optional[str] = None) -> Any:
         try:
             project = _resolve_project_context(project_root)
         except ValueError as exc:
@@ -44,7 +44,7 @@ def build_project_docs_router(
         return JSONResponse(_project_hs_payload(project))
 
     @router.put("/api/dictation/project-hs")
-    async def api_dictation_project_hs_put(
+    def api_dictation_project_hs_put(
         payload: dict[str, Any],
         project_root: Optional[str] = None,
     ) -> Any:
@@ -72,7 +72,7 @@ def build_project_docs_router(
         return JSONResponse(_project_hs_payload(redetected))
 
     @router.get("/api/dictation/project-doc-suggestion")
-    async def api_dictation_project_doc_suggestion_get(
+    def api_dictation_project_doc_suggestion_get(
         project_root: Optional[str] = None,
     ) -> Any:
         try:
@@ -87,7 +87,7 @@ def build_project_docs_router(
         )
 
     @router.post("/api/dictation/project-doc-suggestion/apply")
-    async def api_dictation_project_doc_suggestion_apply(
+    def api_dictation_project_doc_suggestion_apply(
         payload: dict[str, Any],
         project_root: Optional[str] = None,
     ) -> Any:
@@ -116,7 +116,7 @@ def build_project_docs_router(
         )
 
     @router.post("/api/dictation/project-doc-suggestion/dismiss")
-    async def api_dictation_project_doc_suggestion_dismiss(
+    def api_dictation_project_doc_suggestion_dismiss(
         project_root: Optional[str] = None,
     ) -> Any:
         try:
