@@ -53,7 +53,7 @@ describe("Knowledge reader membership", () => {
     expect(missing).toHaveTextContent("Item unavailable");
     expect(missing).toHaveTextContent("Unavailable");
     expect(within(missing).queryByRole("button")).toBeNull();
-    expect(screen.queryByText("No items")).toBeNull();
+    expect(screen.queryByText("No items yet")).toBeNull();
     fireEvent.click(within(available).getByRole("button"));
     expect(openScreenRef).toHaveBeenCalledWith(mixed.memberIds[0]);
     expect(screen.getByTestId("filing-strip")).toBeInTheDocument();
@@ -63,7 +63,7 @@ describe("Knowledge reader membership", () => {
   it("keeps all-unavailable membership distinct from an empty collection and copies its ref", async () => {
     render(<KbPullout object={object(unavailable)} onClose={vi.fn()} />);
     expect(memberRow(unavailable.memberIds[0])).toHaveTextContent("Item unavailable");
-    expect(screen.queryByText("No items")).toBeNull();
+    expect(screen.queryByText("No items yet")).toBeNull();
     expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Copy" }));
     await waitFor(() => expect(copy).toHaveBeenCalledWith(unavailable.memberIds[0]));
@@ -79,9 +79,14 @@ describe("Knowledge reader membership", () => {
     expect(openEditor).toHaveBeenCalledWith(mixed.id);
   });
 
-  it("reserves No items for genuinely empty stored membership", () => {
-    render(<KbPullout object={object({ ...mixed, memberIds: [] })} onClose={vi.fn()} />);
-    expect(screen.getByText("No items")).toBeInTheDocument();
+  it("reserves No items yet for genuinely empty stored membership", () => {
+    const { container } = render(<KbPullout object={object({ ...mixed, memberIds: [] })} onClose={vi.fn()} />);
+    expect(screen.getByText("No items yet")).toBeInTheDocument();
+    // DELIGHT slice 3: the empty state is the object, one line and Add.
+    const empty = container.querySelector('.surface-state[data-object="kb"]');
+    expect(empty?.querySelector("img.surface-state-sprite")).toBeTruthy();
+    fireEvent.click(within(empty as HTMLElement).getByRole("button", { name: "Add" }));
+    expect(openEditor).toHaveBeenCalledWith(mixed.id);
     expect(screen.queryByText("Item unavailable")).toBeNull();
     expect(screen.queryByRole("button", { name: "Open" })).toBeNull();
     expect(apiFetch).not.toHaveBeenCalled();

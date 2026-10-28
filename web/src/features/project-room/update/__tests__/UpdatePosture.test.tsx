@@ -4,7 +4,7 @@
 // unverified banner, generator provenance, fallback_reason.
 // Proves the mount: from the real Room, open the Update posture by real clicks.
 
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TitleSlotContext } from "../../../../desk/surface/title";
@@ -754,6 +754,24 @@ describe("Draft update picks its generator from the engine read", () => {
     await waitFor(() => expect(verb).not.toBeDisabled());
     await draftFromRoom();
     expect((draftCall()![1] as { json: { generator: string } }).json.generator).toBe("deterministic");
+  });
+});
+
+// ── DELIGHT slice 3: the empty list is the object, one line, the making verb ──
+
+describe("Empty update list", () => {
+  it("shows the object and No updates yet; Draft the first one drafts", async () => {
+    setupUpdatePosture({ listUpdates: [] });
+    render(<WindowHarness scope="project:p1" />);
+    await openUpdateList();
+    const line = screen.getByText("No updates yet");
+    const empty = line.closest('.surface-state[data-object="project"]') as HTMLElement;
+    expect(empty.querySelector("img.surface-state-sprite")).toBeTruthy();
+    const drafts = () => apiFetch.mock.calls.filter(([u, init]) =>
+      String(u).includes("/updates/draft") && (init as { method?: string } | undefined)?.method === "POST").length;
+    const before = drafts();
+    fireEvent.click(within(empty).getByRole("button", { name: "Draft the first one" }));
+    await waitFor(() => expect(drafts()).toBe(before + 1));
   });
 });
 

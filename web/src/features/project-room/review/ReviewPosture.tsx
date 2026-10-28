@@ -5,6 +5,7 @@
 
 import { useCallback, useRef, useState, type KeyboardEvent } from "react";
 import { Button } from "../../../components/signal/Signal";
+import { spriteUrl } from "../../../desk/sprites";
 import {
   SurfaceFooter,
   SurfaceLedger,
@@ -730,7 +731,7 @@ export function ReviewPosture({ ctrl }: { ctrl: ReviewController }) {
       </div>
 
       {ctrl.openProposals.length === 0 ? (
-        <SurfaceState empty emptyLabel="No proposals to review" emptyGlyph={"⊘"} />
+        <SurfaceState empty emptyLabel="No proposals to review" emptyImage={spriteUrl("decision", "review")} emptyKind="decision" />
       ) : null}
 
       {/* Footer: tally + Close (D5) */}

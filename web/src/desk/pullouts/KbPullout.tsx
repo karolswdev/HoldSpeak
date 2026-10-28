@@ -106,7 +106,10 @@ export function KbPullout({ object: o, registerClose }: PulloutContentProps) {
               ))}
             </SurfaceRows>
           ) : (
-            <SurfaceState empty emptyLabel="No items" emptyGlyph="○" />
+            /* DELIGHT slice 3: the empty Knowledge base is its object, one
+               line and the making verb (was "Contents · No items"). */
+            <SurfaceState empty emptyLabel="No items yet" emptyImage={spriteUrl("kb", o.id)} emptyKind="kb"
+              onAction={() => { setAddOnOpen(true); openEditor(o.id); }} actionLabel="Add" />
           )}
           <DeskFilingStrip
             objectRef={resourceRef}

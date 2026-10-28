@@ -125,6 +125,20 @@ export function dayLight(d: Date): "warm" | "cool" | undefined {
   return "cool";
 }
 
+/** DELIGHT slice 3: "That is the day" is said once per day, per viewer.
+ *  The flag is the local date it was said on; storage that throws or is
+ *  empty only means the line is said again. */
+export const DAY_SAID_KEY = "holdspeak.today.daySaid";
+export function dayKey(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function readDaySaid(): string | null {
+  try { return window.localStorage.getItem(DAY_SAID_KEY); } catch { return null; }
+}
+function writeDaySaid(key: string): void {
+  try { window.localStorage.setItem(DAY_SAID_KEY, key); } catch { /* a private window: said again */ }
+}
+
 /** `in 68 min`, `in 2 h 05 min`, `now`. */
 export function countdown(start: Date, now: Date): string {
   const minutes = Math.ceil((start.getTime() - now.getTime()) / 60_000);
@@ -346,6 +360,8 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   );
 
   const today = startOfDay(now);
+  // The day the closing line was said before this window opened (read once).
+  const [saidOn] = useState(readDaySaid);
   const events = useMemo(() => (door?.upcoming ?? [])
     .filter((event) => {
       const start = when(event.starts_at);
@@ -626,7 +642,10 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
     const at = when(row.started_at ?? row.created_at);
     return at !== null && startOfDay(at) === today;
   });
-  const dayDone = loaded && !failed.door && ahead === 0 && metToday && now.getHours() >= 12;
+  // Said once per day: a window opened again the same day shows the count.
+  const dayDone = loaded && !failed.door && ahead === 0 && metToday && now.getHours() >= 12
+    && saidOn !== dayKey(now);
+  useEffect(() => { if (dayDone) writeDaySaid(dayKey(now)); }, [dayDone, now]);
   const statusItems: Array<StatusBarItem | null> = [
     dayDone
       ? { key: "day", lamp: "ok", text: "That is the day", testId: "today-status-day" }

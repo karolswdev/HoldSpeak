@@ -961,8 +961,10 @@ describe("Empty state", () => {
     await waitFor(() => screen.getByTestId("steward-posture"));
 
     // The empty state is visible
-    const emptyLabel = screen.getByText("No runs yet. Run once to start.");
+    const emptyLabel = screen.getByText("No runs yet");
     expect(emptyLabel).toBeTruthy();
+    // DELIGHT slice 3: the Steward's empty state is its object.
+    expect(emptyLabel.closest('.surface-state[data-object="agent"]')?.querySelector("img")).toBeTruthy();
   });
 });
 

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PERSON_OPEN_EVENT } from "../../objectWindows";
-import { TodayView, countdown, currentStep, dayGreeting, dayLight, dayPart, toFinish } from "./TodayView";
+import { DAY_SAID_KEY, TodayView, countdown, currentStep, dayGreeting, dayLight, dayPart, toFinish } from "./TodayView";
 
 const shell = vi.hoisted(() => ({ openSurfaceOr: vi.fn() }));
 vi.mock("../../shell", async () => {
@@ -63,9 +63,22 @@ describe("PHILO-17 Today: the day as a timeline", () => {
         transcriptWords: 40, intel_status: "ready", has_summary: true }] }),
       "/api/desk/needs-you": () => json({ items: [] }),
     });
-    render(<TodayView />);
+    window.localStorage.removeItem(DAY_SAID_KEY);
+    const first = render(<TodayView />);
     expect((await screen.findByTestId("today-status-day")).textContent).toContain("That is the day");
     expect(screen.queryByTestId("today-status-ahead")).toBeNull();
+    // DELIGHT slice 3: said once per day, per viewer. Today opened again the
+    // same day shows the count; the next day says it again.
+    expect(window.localStorage.getItem(DAY_SAID_KEY)).toBe("2026-10-12");
+    first.unmount();
+    const again = render(<TodayView />);
+    await waitFor(() => expect(screen.getByTestId("today-body").getAttribute("aria-busy")).toBeNull());
+    expect(screen.queryByTestId("today-status-day")).toBeNull();
+    again.unmount();
+    window.localStorage.setItem(DAY_SAID_KEY, "2026-10-11");
+    render(<TodayView />);
+    expect(await screen.findByTestId("today-status-day")).toBeTruthy();
+    window.localStorage.removeItem(DAY_SAID_KEY);
   });
 
   it("DELIGHT slice 2: the day line greets by the hour and the paper takes the light", async () => {

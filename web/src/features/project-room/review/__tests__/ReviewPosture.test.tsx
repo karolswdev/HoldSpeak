@@ -250,6 +250,27 @@ describe("Posture swap", () => {
   });
 });
 
+describe("Empty review (DELIGHT slice 3)", () => {
+  it("an open review with no proposals is the object and one line", async () => {
+    apiFetch.mockImplementation((url: string) => {
+      if (url.includes("/room/read")) return Promise.resolve({ read_at: new Date().toISOString() });
+      if (url.includes("/room")) {
+        return Promise.resolve(roomResponse({
+          review: { state: "ok", pending_count: 1, open_review_id: "prev_r1", last_accepted_at: null },
+        }));
+      }
+      if (url.includes("/reviews") && !url.includes("/decide") && !url.includes("/accept")) {
+        return Promise.resolve({ ...reviewWindowResponse(), proposals: [] });
+      }
+      return Promise.resolve(detailResponse(url));
+    });
+    render(<WindowHarness scope="project:p1" />);
+    fireEvent.click(await screen.findByTestId("review-verb"));
+    const line = await screen.findByText("No proposals to review");
+    expect(line.closest('.surface-state[data-object="decision"]')?.querySelector("img")).toBeTruthy();
+  });
+});
+
 describe("Review grouping with count chips (WEB-NOW-004)", () => {
   it("renders kind groups with count chips", async () => {
     apiFetch.mockImplementation((url: string) => {

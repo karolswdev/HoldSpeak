@@ -28,6 +28,8 @@ export const DOCK_HEIGHT_EVENT = "desk:dock-height";
 /** The usable desktop is one contract: below the system bar, above the dock.
  * CSS owns the dimensions so shell changes cannot make window physics drift. */
 export function workBand() {
+  // Before CSS arrives, the fallback is the generated token: 84 px at the
+  // foot, the floating dock's reserve (#1497), the same value tokens.css sets.
   const fallback = {
     top: DESK_WINDOW.snapTop,
     bottom: DESK_WINDOW.snapBottom,
