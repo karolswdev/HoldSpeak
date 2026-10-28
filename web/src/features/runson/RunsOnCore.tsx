@@ -936,11 +936,10 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
         <Button
           dense
           variant="secondary"
-          title={speechHost ? `Downloads from ${speechHost}` : undefined}
+          title={[compact ? formatBytes(speech.bytes) : "", speechHost ? `Downloads from ${speechHost}` : ""].filter(Boolean).join(" · ") || undefined}
           loading={speech.ai.busy}
           disabled={speech.ai.busy}
           data-testid="runson-speech-setup-verb"
-          title={compact ? [formatBytes(speech.bytes), speechHost ? `from ${speechHost}` : ""].filter(Boolean).join(" ") : undefined}
           onClick={() => void speech.ai.startSpeech().then(() => window.dispatchEvent(new Event(SPEECH_SETUP_EVENT)))}
         >
           <ToolGlyph kind="import" />
