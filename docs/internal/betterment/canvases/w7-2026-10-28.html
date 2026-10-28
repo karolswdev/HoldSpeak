@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Overview, breath, context</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Our material: every value is copied from web/src/styles/tokens.css (main 517d3b6b5). */
+:root{
+  --wb-ink:#253449; --wb-muted:#53647a; --wb-faint:#63758b; --wb-paper:#fafbfc; --wb-field:#edf1f6;
+  --wb-steel:#e7ecf3; --wb-rule:#c5cfdd; --wb-rule-soft:#d9e1eb; --wb-well:#ffffff; --border:#bbc7d6;
+  --wb-sel:#3b5d93; --wb-sel-vivid:#2f67c8; --wb-blue:#e6eef9; --wb-backdrop:#293847; --wb-rec:#b3261e;
+  --desk-glass:#e9edf3;
+  --kind-project:#3b62c4; --kind-meeting:#1c78a8; --kind-person:#1f7a6b; --kind-decision:#6a4bc4;
+  --kind-note:#94620f; --kind-other:var(--wb-sel);
+  --lamp-ok:#10b981; --lamp-warn:#f59e0b;
+  --depth-row:0 1px 3px rgba(22,40,62,.12);
+  --depth-card:0 10px 28px rgba(8,14,22,.22);
+  --depth-menu:0 8px 22px rgba(22,40,62,.12);
+  --depth-dock:0 10px 30px rgba(8,14,22,.45),0 2px 6px rgba(8,14,22,.3);
+  --desk-dock-glass:rgba(30,43,58,.72); --desk-dock-glass-rule:rgba(233,238,245,.16);
+  --font-ui:"Inter",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  /* the canvas page itself */
+  --page:#e9eef4; --page-ink:var(--wb-ink);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --page:#1b2531; --page-ink:#e3e9f1; }
+}
+:root[data-theme="dark"]{ --page:#1b2531; --page-ink:#e3e9f1; }
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--page-ink);font:15px/1.5 var(--font-ui);min-width:1520px}
+main{padding:32px 40px 80px}
+h1{font-size:26px;margin:0 0 6px;letter-spacing:-.01em}
+h2{font-size:21px;margin:0 0 6px}
+h3{font-size:15px;margin:22px 0 8px}
+p,li{max-width:1000px}
+p{margin:0 0 10px}
+ol,ul{margin:0 0 10px;padding-left:22px}
+li{margin:0 0 5px}
+code{font:13px/1.4 ui-monospace,"SF Mono",Menlo,monospace}
+.muted{opacity:.78}
+section.part{margin:48px 0 0;padding:28px 0 0;border-top:2px solid var(--wb-rule)}
+.dir{margin:34px 0 0}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:var(--wb-sel-vivid);color:#fff;vertical-align:3px;margin-left:8px}
+.tag.alt{background:#7b8aa0}
+.rec{border-left:4px solid var(--wb-sel-vivid);padding:10px 16px;background:color-mix(in srgb,var(--wb-sel-vivid) 8%,transparent);border-radius:0 8px 8px 0;max-width:1100px;margin:14px 0}
+.cap{font-size:12px;opacity:.8;margin:6px 0 0}
+figure{margin:0}
+.row{display:flex;gap:36px;align-items:flex-start;flex-wrap:wrap}
+.shot{display:block;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule)}
+.today{display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:1440px}
+.today ul{font-size:14px}
+
+/* ===================== (a) MISSION CONTROL ===================== */
+.mc{position:relative;width:1440px;height:900px;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule);
+  background:url(w7-2026-10-28/desk-recording-1440.png) 0 0/1440px 900px no-repeat}
+/* the real menu bar and dock of the overview shot, over the wallpaper */
+.mc .bar{position:absolute;left:0;top:0;width:1440px;height:36px;background:url(w7-2026-10-28/door-mission-1440.png) 0 0/1440px 900px no-repeat;z-index:3}
+.mc .dockpatch{position:absolute;left:533px;top:826px;width:374px;height:64px;border-radius:14px;box-shadow:var(--depth-dock);background:url(w7-2026-10-28/door-mission-1440.png) -533px -826px/1440px 900px no-repeat;z-index:3}
+/* A: a slate veil that keeps the wallpaper and blurs the floor icons away */
+.mc.a .veil{position:absolute;inset:36px 0 0 0;background:rgba(18,27,38,.42);backdrop-filter:blur(7px) saturate(1.1);-webkit-backdrop-filter:blur(7px) saturate(1.1);z-index:1}
+.mc .plate{position:absolute;z-index:2;border-radius:6px;box-shadow:var(--depth-card)}
+.mc .plate img{display:block;border-radius:6px}
+.mc .plate.front::after{content:"";position:absolute;inset:-4px;border-radius:9px;box-shadow:0 0 0 3px var(--wb-sel-vivid);pointer-events:none}
+.mc .plate.hover::after{content:"";position:absolute;inset:-4px;border-radius:9px;box-shadow:0 0 0 3px color-mix(in srgb,var(--wb-paper) 85%,transparent);pointer-events:none}
+/* A: the caption, a paper pill 8 px under the plate */
+.mc .name{position:absolute;z-index:2;transform:translateX(-50%);display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px 0 4px;border-radius:7px;
+  background:var(--wb-paper);color:var(--wb-ink);font:600 12px/16px var(--font-ui);white-space:nowrap;max-width:340px;box-shadow:var(--depth-row),inset 0 -3px 0 var(--k)}
+.mc .name img{width:20px;height:20px;flex:none}
+.mc .name span{overflow:hidden;text-overflow:ellipsis}
+.mc .name.front{background:var(--wb-sel-vivid);color:#fff;box-shadow:var(--depth-row),inset 0 -3px 0 var(--k)}
+.mc .name.front img{background:var(--wb-paper);border-radius:4px}
+/* B: names on the glass */
+.mc.b .nameb{position:absolute;z-index:2;transform:translateX(-50%);display:inline-flex;align-items:center;gap:7px;font:600 13px/18px var(--font-ui);color:#fff;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.75)}
+.mc.b .nameb i{width:9px;height:9px;border-radius:50%;background:var(--k);box-shadow:0 0 0 1.5px #fff}
+.mc.b .nameb.front{border-bottom:2px solid #fff;padding-bottom:1px}
+
+/* ===================== (b) THE RECORD TILE ===================== */
+.stage{position:relative;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule)}
+.stage.s1440{width:620px;height:210px;background:url(w7-2026-10-28/desk-recording-1440.png) -560px -690px/1440px 900px no-repeat}
+.stage.s393{width:393px;height:852px;border-radius:24px;background:url(w7-2026-10-28/desk-recording-393.png) 0 0/393px 852px no-repeat}
+/* the overlay sits exactly on the real tile: 1440 sprite at (845,834); 393 sprite 40 px at (80,793) */
+.tileo{position:absolute;width:56px;height:48px}
+.s1440 .tileo{left:281px;top:144px}
+.s393 .tileo{left:72px;top:789px;width:56px;height:48px}
+.tileo .face{position:absolute;left:4px;top:0;width:48px;height:48px}
+.s393 .tileo .face{left:8px;top:4px;width:40px;height:40px}
+/* the ring: a lamp, not a control; box-shadow only; the tile never moves */
+.ring{position:absolute;border-radius:50%;pointer-events:none}
+.s1440 .ring,.frame .ring,.full .ring{left:8px;top:4px;width:40px;height:40px}
+.s393 .ring{left:11px;top:7px;width:34px;height:34px}
+.ring.a{box-shadow:0 0 0 3px var(--wb-rec),0 0 0 calc(3px + var(--h,2px)) color-mix(in srgb,var(--wb-rec) var(--o,50%),transparent)}
+.ring.a.live{animation:breathA 2.4s ease-in-out infinite}
+@keyframes breathA{0%,100%{box-shadow:0 0 0 3px var(--wb-rec),0 0 0 5px color-mix(in srgb,var(--wb-rec) 50%,transparent)}50%{box-shadow:0 0 0 3px var(--wb-rec),0 0 0 11px color-mix(in srgb,var(--wb-rec) 18%,transparent)}}
+/* the clock: a red pill above the tile, outside the dock plate */
+.clock{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 13px);height:18px;padding:0 6px;border-radius:9px;background:var(--wb-rec);color:#fff;
+  font:600 12px/18px var(--font-ui);font-variant-numeric:tabular-nums;white-space:nowrap;box-shadow:0 0 0 1.5px var(--wb-paper),0 1px 3px rgba(12,20,32,.4)}
+.s393 .clock{bottom:calc(100% + 12px)}
+/* B: the red tile */
+.redtile{position:absolute;inset:0;border-radius:10px;background:var(--wb-rec);display:grid;justify-items:center;align-content:center;gap:3px}
+.redtile.live{animation:breathB 2.4s ease-in-out infinite}
+@keyframes breathB{0%,100%{background:#b3261e}50%{background:#d8473c}}
+.redtile .stop{width:14px;height:14px;border-radius:3px;background:#fff}
+.redtile b{font:600 12px/14px var(--font-ui);color:#fff;font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion: reduce){ .ring.a.live,.redtile.live{animation:none} }
+/* the frame strip */
+.strip{display:flex;gap:14px;align-items:flex-end}
+.frame{position:relative;width:96px;height:100px;border-radius:10px;background:linear-gradient(180deg,#2a3746,#222e3b);box-shadow:0 0 0 1px var(--desk-dock-glass-rule)}
+.frame .tileo{left:20px;top:44px}
+.frame .clock{bottom:calc(100% + 8px)}
+.frame + .t{display:none}
+.fcell{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px}
+.strip.z3 .frame{zoom:2.5}
+.far{display:flex;gap:30px}
+.far figure{width:432px}
+.far .mini{width:432px;height:270px;overflow:hidden;border-radius:4px;box-shadow:0 0 0 1px var(--wb-rule);position:relative}
+.far .mini > .full{position:absolute;left:0;top:0;width:1440px;height:900px;transform:scale(.3);transform-origin:0 0;background:url(w7-2026-10-28/desk-recording-1440.png) 0 0/1440px 900px no-repeat}
+.far .full .tileo{left:841px;top:834px}
+
+/* ===================== (c) CONTEXT ===================== */
+.cx{position:relative;overflow:hidden;border-radius:6px;box-shadow:0 0 0 1px var(--wb-rule)}
+.cx.w{width:688px;height:384px;background:url(w7-2026-10-28/context-1440.png) 0 0/688px 384px no-repeat}
+.cx.p{width:393px;height:852px;border-radius:24px;background:url(w7-2026-10-28/context-393.png) 0 0/393px 852px no-repeat}
+.cx .in{position:absolute;display:flex;flex-direction:column;background:var(--wb-paper);font-family:var(--font-ui);color:var(--wb-ink)}
+.cx.w .in{left:25px;top:55px;width:638px;height:304px}
+.cx.p .in{left:0;top:89px;width:393px;height:682px}
+.tb{flex:none;height:36px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid var(--wb-rule-soft)}
+.cx.p .tb{height:52px;padding:0 8px}
+.btn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:5px;font:500 13px/1 var(--font-ui);color:var(--wb-ink);white-space:nowrap}
+.cx.p .btn{height:36px;padding:0 12px;font-size:14px}
+.btn.primary{background:var(--wb-sel);color:#f7f9fc}
+.btn.off{background:var(--wb-steel);color:#8592a5;box-shadow:inset 0 0 0 1px var(--wb-rule-soft)}
+.btn.ghost{background:transparent;box-shadow:inset 0 0 0 1px var(--wb-rule)}
+.tb .grow{flex:1}
+.pad{flex:1;position:relative;padding:12px 16px;font:14px/22px var(--font-ui);background:var(--wb-paper)}
+.pad .ph{color:#8090a4}
+.pad .typed{color:var(--wb-ink);white-space:pre-wrap}
+.pad .caret{display:inline-block;width:1.5px;height:17px;background:var(--wb-sel-vivid);vertical-align:-3px;margin-left:1px}
+.pad .mic{position:absolute;right:6px;bottom:6px;width:24px;height:24px;border-radius:5px;background:var(--wb-steel);box-shadow:inset 0 0 0 1px var(--wb-rule-soft);display:grid;place-items:center}
+.cx.p .pad .mic{width:40px;height:40px;right:12px;bottom:12px}
+.pad .mic svg{width:13px;height:13px;stroke:var(--wb-muted);fill:none;stroke-width:1.8;stroke-linecap:round}
+.head{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:0 0 10px;border-bottom:1px dashed var(--wb-rule-soft)}
+.head img{width:32px;height:32px}
+.head b{font:600 13px/18px var(--font-ui)}
+.head span{font:400 12px/16px var(--font-ui);color:var(--wb-muted);display:block}
+.sb{flex:none;height:24px;display:flex;align-items:center;gap:14px;padding:0 10px;background:#edf1f6;border-top:1px solid var(--wb-rule-soft);font:12px/16px var(--font-ui);color:var(--wb-muted);white-space:nowrap;overflow:hidden}
+.sb i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:0}
+.sb i.ok{background:var(--lamp-ok)} .sb i.warn{background:var(--lamp-warn)}
+/* A: the object face */
+.objface{flex:1;display:grid;place-content:center;justify-items:center;gap:10px;text-align:center}
+.objface img{width:64px;height:64px}
+.objface p{margin:0;font:400 14px/20px var(--font-ui);color:var(--wb-ink)}
+.cxrow{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.cxrow figure figcaption{font-size:12px;margin-top:6px;opacity:.8;max-width:688px}
+table.cost{border-collapse:collapse;font-size:14px;max-width:1200px;margin:8px 0}
+table.cost td,table.cost th{border-bottom:1px solid var(--wb-rule);padding:6px 10px;text-align:left;vertical-align:top}
+</style>
+</head>
+<body>
+<main>
+<h1>Overview, breath, context</h1>
+<p>Atlas pass 3 marks three defects as “canvas”: design before build. This page draws each one at real size on the real shot from <code>native-experience/atlas-2026-10-27/</code>, with two directions and a recommendation. You pre-approved the recommended direction (2026-10-27: “go with suggestions going forward”), so each part ends with a build order that a lane can take next without a pick.</p>
+<ul>
+  <li><b>23 · Mission control:</b> “a grey slab with no names.”</li>
+  <li><b>24 · The Record tile while it records:</b> “the breath, I cannot see it.”</li>
+  <li><b>26 · Context:</b> “a grey Save and two grey lines.”</li>
+</ul>
+
+<!-- ============================================================ -->
+<section class="part" id="mission">
+<h2>(a) Mission control: keep the wallpaper, name every window</h2>
+<div class="today">
+  <div>
+    <h3>What it does today</h3>
+    <ul>
+      <li>⌘⇧E, the dock, or Window ▸ Overview puts every shown window into a grid as a live plate: the window itself, scaled by <code>k</code>, never reflowed (<code>web/src/desk/components/window/Expose.tsx</code>).</li>
+      <li>The scrim is one solid fill, <code>--desk-glass</code> <code>#e9edf3</code> (<code>components/window-chrome.css:118</code>). That is the grey slab: the wallpaper and the floor go away.</li>
+      <li>A plate has no name under it. The pick target carries the name only for a screen reader (<code>sr-only</code>, <code>title</code>), by the PHILO-16 §7 rule “its own title bar, no extra label”. At <code>k</code> ≈ 0.5 the title bar text is 6 px high and does not read.</li>
+      <li>The front window is told only by its own blue title bar (the Room in the shot). Keyboard focus lands on the first plate (the decision), so the one ring on the screen marks the wrong window.</li>
+      <li>The registry already has each window’s name, glyph and kind (<code>windowRegistry.ts</code>, <code>useAllOpenWindows</code>) and the front id (<code>useFrontWindowId</code>). Nothing new is needed from the hub.</li>
+    </ul>
+  </div>
+  <figure><img class="shot" src="w7-2026-10-28/door-mission-1440.png" width="700" alt="Overview today: four scaled windows on a flat grey fill"><figcaption class="cap">Today, <code>door-mission-1440.png</code> at half size. The real size is the base of both directions below.</figcaption></figure>
+</div>
+
+<div class="dir">
+<h2>A · Captions on a slate veil <span class="tag">Recommended</span></h2>
+<p>The wallpaper stays, under a slate veil with a 7 px blur: the floor icons blur away (you cannot pick them here), and Jupiter stays. Each plate gets the card step of the depth scale and, 8 px under it, a paper caption: the window’s 20 px glyph, its name in 12 px semibold, and a 3 px rule in the kind’s hue at its foot (decision violet, Project blue, note amber, an app the Workbench blue). The front window has a 3 px vivid-blue ring and a filled blue caption. Keyboard focus starts on the front plate. Hover draws a paper ring; nothing moves.</p>
+<div class="mc a" id="mc-a">
+  <div class="bar"></div><div class="veil"></div><div class="dockpatch"></div>
+  <div class="plate" style="left:48px;top:72px"><img src="w7-2026-10-28/plate-decision.png" width="655" height="338" alt=""></div>
+  <div class="plate front" style="left:740px;top:145px"><img src="w7-2026-10-28/plate-room.png" width="651" height="193" alt=""></div>
+  <div class="plate hover" style="left:152px;top:446px"><img src="w7-2026-10-28/plate-note.png" width="447" height="330" alt=""></div>
+  <div class="plate" style="left:890px;top:446px"><img src="w7-2026-10-28/plate-needs.png" width="351" height="332" alt=""></div>
+  <div class="name" style="left:375px;top:416px;--k:var(--kind-decision)"><img src="w7-2026-10-28/g20-decision.png" alt=""><span>Use Kafka for the settlement events</span></div>
+  <div class="name front" style="left:1065px;top:350px;--k:var(--kind-project)"><img src="w7-2026-10-28/g20-project-drawer.png" alt=""><span>Payments Platform Rewrite</span></div>
+  <div class="name" style="left:375px;top:784px;--k:var(--kind-note)"><img src="w7-2026-10-28/g20-note.png" alt=""><span>Ledger rollback</span></div>
+  <div class="name" style="left:1065px;top:786px;--k:var(--kind-other)"><img src="w7-2026-10-28/g20-needs.png" alt=""><span>Needs you</span></div>
+</div>
+<p class="cap">1440 × 900, real size. The plates are the real pass-3 plates cut from <code>door-mission-1440.png</code> at their real grid rects. The Room is the front window; the pointer is on the note (paper ring). The menu bar and the dock are the real ones from the same shot.</p>
+</div>
+
+<div class="dir">
+<h2>B · Names on the glass <span class="tag alt">Direction</span></h2>
+<p>No veil: the wallpaper and the floor at full strength, as on the desk. The name is white text with a shadow under each plate and a 9 px kind dot before it; the front window’s name has a white underline. It is lighter, and closer to macOS. It is weak where the wallpaper is bright: the Room’s name sits on Jupiter’s cloud bands and holds only by its shadow, and the floor icons and their labels collide with the plates (<i>Architecture review prep</i> runs under the Room).</p>
+<div class="mc b" id="mc-b">
+  <div class="bar"></div><div class="dockpatch"></div>
+  <div class="plate" style="left:48px;top:72px"><img src="w7-2026-10-28/plate-decision.png" width="655" height="338" alt=""></div>
+  <div class="plate front" style="left:740px;top:145px"><img src="w7-2026-10-28/plate-room.png" width="651" height="193" alt=""></div>
+  <div class="plate" style="left:152px;top:446px"><img src="w7-2026-10-28/plate-note.png" width="447" height="330" alt=""></div>
+  <div class="plate" style="left:890px;top:446px"><img src="w7-2026-10-28/plate-needs.png" width="351" height="332" alt=""></div>
+  <div class="nameb" style="left:375px;top:418px;--k:var(--kind-decision)"><i></i>Use Kafka for the settlement events</div>
+  <div class="nameb front" style="left:1065px;top:350px;--k:var(--kind-project)"><i></i>Payments Platform Rewrite</div>
+  <div class="nameb" style="left:375px;top:786px;--k:var(--kind-note)"><i></i>Ledger rollback</div>
+  <div class="nameb" style="left:1065px;top:788px;--k:var(--kind-other)"><i></i>Needs you</div>
+</div>
+<p class="cap">1440 × 900, real size, the same plates.</p>
+</div>
+
+<div class="rec"><b>Recommendation: A.</b> The paper caption reads on any wallpaper, it carries the kind hue the rest of the desk uses on its rows and cards (delight slice 2), and the blue ring plus the blue caption say “front” twice, where today nothing does. B depends on the wallpaper: on the bright one you chose, the names hold only by a shadow and the floor labels run into the plates. The phone has no overview (the atlas row has no 393 score), so there is no 393 face to draw.</div>
+
+<h3>Build order for A (one lane, one PR)</h3>
+<ol>
+  <li><b>The veil.</b> <code>window-chrome.css</code> <code>.desk-expose-scrim</code>: replace <code>--desk-glass</code> with a new token <code>--desk-expose-veil: rgba(18,27,38,.42)</code> and <code>backdrop-filter: blur(7px) saturate(1.1)</code>. Under <code>prefers-reduced-transparency</code> use the veil colour opaque over the wallpaper, not the grey.</li>
+  <li><b>The depth.</b> Each scaled plate (<code>.desk-window-shell[data-plate="scaled"]</code>) takes <code>--depth-card</code>.</li>
+  <li><b>The caption.</b> In <code>Expose.tsx</code>, render inside each pick Button one <code>.desk-expose-caption</code>: the 20 px glyph from the registry entry, the shown name (<code>useAllOpenWindows().label</code>), the kind hue as <code>--k</code> (map: decision, project, note, meeting, person, agent; an app is <code>--kind-other</code>). Place it 8 px under the plate rect from <code>plateVisual</code>; one line, ellipsis at 340 px. Amend the PHILO-16 §7 comment: the plate keeps its own title bar; the caption is the name you can read.</li>
+  <li><b>The room for it.</b> In <code>compositor/geometry.ts</code>, reserve 32 px under each row of the overview grid, so a caption never touches the next row or the dock (the shot has 36 px and 50 px free today; a 5-window grid may have less).</li>
+  <li><b>Front.</b> Read <code>useFrontWindowId()</code>: the front plate gets <code>data-front</code> (the 3 px <code>--wb-sel-vivid</code> ring) and its caption the blue fill; move the first focus (<code>firstBtnRef</code>) to the front plate. Hover and focus: a paper ring, no transform.</li>
+  <li><b>Tests.</b> T2 <code>Expose</code> vitest: every plate has a caption with the window’s name; the front plate has <code>data-front</code> and the focus. T3: the sweep’s overview state at 1440 (fit, contrast, 12 px, overlap) on the seeded desk.</li>
+  <li><b>Judge live</b> on your desk with <i>In Jupiter’s orbit</i> and with the plain floor.</li>
+</ol>
+</section>
+
+<!-- ============================================================ -->
+<section class="part" id="breath">
+<h2>(b) The Record tile while it records: a breath you can see from across the room</h2>
+<div class="today">
+  <div>
+    <h3>What it does today</h3>
+    <ul>
+      <li>The breath is a <code>drop-shadow</code> on the orb picture: 1 px at 45 % red to 6 px at 80 % red and back, 2.4 s (<code>components/record-orb.css:36</code>, keyframes <code>desk-next-orb-breath</code>). On the dark dock glass a 6 px red haze around a red orb is a small change in a small area.</li>
+      <li>Under the tile, a 4 px red dot (<code>components/dock.css:478</code>), the size of the “running” dots under the other tiles.</li>
+      <li>The elapsed time shows only on hover, in the label above the tile (<code>RecordOrb.tsx</code> <code>.desk-orb-label</code>; the Meetings tile’s <code>REC 10:42</code> is hover-only too, <code>Dock.tsx:461</code>). At a glance the tile says nothing about how long.</li>
+      <li>Reduced motion: a still 3 px haze.</li>
+    </ul>
+  </div>
+  <figure><img class="shot" src="w7-2026-10-28/dock-record-breath-1440.png" width="336" height="206" alt="The dock's end while recording: the orb, a faint haze, a dot"><figcaption class="cap">Today, <code>dock-record-breath-1440.png</code>, real size: the breath at its widest.</figcaption></figure>
+</div>
+
+<div class="dir">
+<h2>A · The ring and the clock <span class="tag">Recommended</span></h2>
+<p>Around the orb, a 3 px solid red ring that is there the whole time the meeting records: from across the room a red circle on the dark dock says “recording” even at the low point of the breath. Outside it, a red halo opens from 2 px to 8 px and fades from 50 % to 18 %, 2.4 s a breath: box-shadow on a lamp, colour only, the tile never moves. Above the tile, outside the dock plate, a red clock pill: the elapsed time in 12 px semibold white, tabular figures. On hover the label (“Stop recording · 12:04”) takes the pill’s place. The 4 px dot goes: the ring says it.</p>
+<div class="row">
+  <figure><div class="stage s1440"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a live"></div><span class="clock">12:04</span></div></div><figcaption class="cap">1440, real size, live (the canvas loops the breath).</figcaption></figure>
+  <figure><div class="stage s1440"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a" style="--h:5px;--o:34%"></div><span class="clock">12:04</span></div></div><figcaption class="cap">1440, the still frame (reduced motion: the ring at mid-breath).</figcaption></figure>
+</div>
+<h3>Five frames across one breath, 2.4 s (real size, then 2.5 ×)</h3>
+<div class="strip" id="strip-a">
+  <div class="fcell"><div class="frame"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a" style="--h:2px;--o:50%"></div><span class="clock">12:04</span></div></div>0.0 s</div>
+  <div class="fcell"><div class="frame"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a" style="--h:5px;--o:34%"></div><span class="clock">12:04</span></div></div>0.6 s</div>
+  <div class="fcell"><div class="frame"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a" style="--h:8px;--o:18%"></div><span class="clock">12:05</span></div></div>1.2 s</div>
+  <div class="fcell"><div class="frame"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a" style="--h:5px;--o:34%"></div><span class="clock">12:05</span></div></div>1.8 s</div>
+  <div class="fcell"><div class="frame"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a" style="--h:2px;--o:50%"></div><span class="clock">12:06</span></div></div>2.4 s</div>
+</div>
+<div class="strip z3" style="margin-top:14px">
+  <div class="fcell"><div class="frame"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a" style="--h:2px;--o:50%"></div><span class="clock">12:04</span></div></div></div>
+  <div class="fcell"><div class="frame"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a" style="--h:5px;--o:34%"></div><span class="clock">12:04</span></div></div></div>
+  <div class="fcell"><div class="frame"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a" style="--h:8px;--o:18%"></div><span class="clock">12:05</span></div></div></div>
+  <div class="fcell"><div class="frame"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a" style="--h:5px;--o:34%"></div><span class="clock">12:05</span></div></div></div>
+  <div class="fcell"><div class="frame"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a" style="--h:2px;--o:50%"></div><span class="clock">12:06</span></div></div></div>
+</div>
+</div>
+
+<div class="dir">
+<h2>B · The red tile <span class="tag alt">Direction</span></h2>
+<p>While it records, the whole 56 × 48 tile plate is red, with a white stop square and the elapsed time in white inside it. The breath is the plate’s red, from <code>#b3261e</code> to <code>#d8473c</code> and back, 2.4 s (colour only). It is the loudest thing on the screen from across the room. It also makes Record a different object from every other tile: the D drawing goes away for a flat red block, which is the complaint the dock canvas of 2026-10-26 fixed (“the red Record ring is a different object from the other tiles”).</p>
+<div class="row">
+  <figure><div class="stage s1440"><div class="tileo"><div class="redtile live"><span class="stop"></span><b>12:04</b></div></div></div><figcaption class="cap">1440, real size, live.</figcaption></figure>
+</div>
+<h3>Five frames across one breath, 2.4 s</h3>
+<div class="strip">
+  <div class="fcell"><div class="frame"><div class="tileo"><div class="redtile" style="background:#b3261e"><span class="stop"></span><b>12:04</b></div></div></div>0.0 s</div>
+  <div class="fcell"><div class="frame"><div class="tileo"><div class="redtile" style="background:#c6372d"><span class="stop"></span><b>12:04</b></div></div></div>0.6 s</div>
+  <div class="fcell"><div class="frame"><div class="tileo"><div class="redtile" style="background:#d8473c"><span class="stop"></span><b>12:05</b></div></div></div>1.2 s</div>
+  <div class="fcell"><div class="frame"><div class="tileo"><div class="redtile" style="background:#c6372d"><span class="stop"></span><b>12:05</b></div></div></div>1.8 s</div>
+  <div class="fcell"><div class="frame"><div class="tileo"><div class="redtile" style="background:#b3261e"><span class="stop"></span><b>12:06</b></div></div></div>2.4 s</div>
+</div>
+</div>
+
+<h3>From across the room (the whole 1440 desk at 30 %)</h3>
+<div class="far">
+  <figure><div class="mini"><div class="full"></div></div><figcaption class="cap">Today.</figcaption></figure>
+  <figure><div class="mini"><div class="full"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a live"></div><span class="clock">12:04</span></div></div></div><figcaption class="cap">A: the ring and the clock.</figcaption></figure>
+  <figure><div class="mini"><div class="full"><div class="tileo"><div class="redtile live"><span class="stop"></span><b>12:04</b></div></div></div></div><figcaption class="cap">B: the red tile.</figcaption></figure>
+</div>
+
+<h3>At 393 (the real phone shot: the rig left the Go menu open)</h3>
+<div class="row">
+  <figure><div class="stage s393"></div><figcaption class="cap">Today.</figcaption></figure>
+  <figure><div class="stage s393"><div class="tileo"><img class="face" src="w7-2026-10-28/record-orb-48.png" alt=""><div class="ring a live"></div><span class="clock">12:04</span></div></div><figcaption class="cap">A, live. The clock sits above the dock plate, over the menu’s foot.</figcaption></figure>
+  <figure><div class="stage s393"><div class="tileo"><div class="redtile live"><span class="stop"></span><b>12:04</b></div></div></div><figcaption class="cap">B, live.</figcaption></figure>
+</div>
+
+<div class="rec"><b>Recommendation: A, the ring and the clock.</b> The solid ring makes the state visible at every point of the breath, the halo keeps it alive, and the clock answers “how long” without a hover. The Record tile stays the D orb, one tile of the dock’s family. B reads farther, but it breaks the family. Judge A live: if from your chair the ring is still too quiet, widen the solid ring to 4 px before you reach for B.</div>
+
+<h3>Build order for A (one lane, one PR)</h3>
+<ol>
+  <li><b>The ring.</b> <code>components/record-orb.css</code>: retire the <code>drop-shadow</code> breath (park the keyframes as a comment). Add <code>.desk-orb.is-recording::after</code>: a 40 px circle centred on the 48 px face (34 px on the phone’s 40 px face), <code>box-shadow: 0 0 0 3px var(--wb-rec), 0 0 0 5px color-mix(in srgb, var(--wb-rec) 50%, transparent)</code>, <code>pointer-events: none</code>. Keyframes <code>desk-orb-ring</code> 2.4 s ease-in-out: the halo 5 px at 50 % → 11 px at 18 % → back. Under reduced motion: no animation, the halo at 8 px, 34 %.</li>
+  <li><b>The dot.</b> <code>components/dock.css:478</code>: remove the 4 px dot under the Record tile while it records (the ring says it).</li>
+  <li><b>The clock.</b> <code>RecordOrb.tsx</code>: render <code>elapsed</code> in a new <code>span.desk-orb-clock</code> outside the hover label (aria-hidden; the Button’s aria-label already says it). <code>dock.css</code>: a red pill above the tile, <code>bottom: calc(100% + 13px)</code> (12 px on the phone), 18 px high, 12 px semibold white, tabular figures, the badge ring. Hide it while the hover label shows. When the hub gives no start time, show no pill (never <code>0:00</code>).</li>
+  <li><b>Tests.</b> T2 in the Dock vitest file: while recording, the tile has the clock with the elapsed time and no running dot; it shows nothing when idle. Kit delight test (<code>surface/__tests__/kitDelight.test.tsx</code>): the ring keyframes exist, and a reduced-motion rule stops them. T3: the sweep’s <code>desk-recording</code> state at 1440 and 393 (still, 12 px, contrast of the clock).</li>
+  <li><b>Judge live</b> from your chair, with a real meeting on.</li>
+</ol>
+</section>
+
+<!-- ============================================================ -->
+<section class="part" id="context">
+<h2>(c) Context: say what it is for, show one fact, make Save live</h2>
+<div class="today">
+  <div>
+    <h3>What it does today</h3>
+    <ul>
+      <li>Context is the always-on briefing that every engine run reads first: the saved text goes in as the first system message of every agent, Ask and meeting-intelligence run (<code>holdspeak/constitutional_context.py:1</code>; callers in <code>intel/engine.py</code>, <code>services/ask_service.py</code>, <code>workbench_conductor.py</code>). It is one text for the whole desk, not the context of one thought.</li>
+      <li>The face (<code>web/src/pages/cores/ConstitutionalContextCore.tsx</code>): a toolbar with Save only (Version history when there are revisions), a pad whose placeholder is “Role, stack, rules / One fact per line”, and a status bar “Empty: no run reads it”.</li>
+      <li>Save is already disabled until you type (<code>disabled={!dirty …}</code>); disabled, the primary Button draws grey, so on an empty desk the only verb looks dead, and nothing says what a good fact is.</li>
+      <li>Its purpose is written once, in <code>applications.ts</code>: “The always-on briefing every agent receives.” The window does not show it.</li>
+    </ul>
+  </div>
+  <div class="row" style="gap:18px">
+    <figure><img class="shot" src="w7-2026-10-28/context-1440.png" width="458" alt="Context today at 1440"><figcaption class="cap">Today, <code>context-1440.png</code> (⅔ size).</figcaption></figure>
+  </div>
+</div>
+
+<div class="dir">
+<h2>A · The object face <span class="tag alt">Direction</span></h2>
+<p>While nothing is saved and the pad is empty, the body is an empty face like the other empty faces (Calls has its telephone): the document object at 64 px, one line, one verb. <i>Start from an example</i> fills the pad with three example facts that are his to change, and Save turns live. Clicking the face puts the caret in the pad.</p>
+<div class="cxrow">
+  <figure><div class="cx w"><div class="in">
+    <div class="tb"><span class="btn off">Save</span></div>
+    <div class="objface"><img src="w7-2026-10-28/artifact.png" alt=""><p>Every engine run reads this first.</p><span class="btn primary">Start from an example</span></div>
+    <div class="sb"><span>Empty: no run reads it</span></div>
+  </div></div><figcaption>A, empty, 1440 real size.</figcaption></figure>
+  <figure><div class="cx w"><div class="in">
+    <div class="tb"><span class="btn primary">Save</span></div>
+    <div class="pad"><div class="typed">I lead the payments platform team: three reports, Python 3.12, Postgres 16.
+Decisions get a record before we build.
+Write to me in short lines; no tables.<span class="caret"></span></div><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg></span></div>
+    <div class="sb"><span><i class="warn"></i>Not saved yet</span><span>About 40 tokens</span><span>160 of 32,768 characters</span></div>
+  </div></div><figcaption>A, after <i>Start from an example</i>: three facts, Save live.</figcaption></figure>
+</div>
+</div>
+
+<div class="dir">
+<h2>B · The pad says it <span class="tag">Recommended</span></h2>
+<p>The pad is the body from the first second, so he can type at once. While the pad is empty, its head is one quiet row: the document object at 32 px, “Every engine run reads this first”, and under it “One fact per line. You can change it at any time.” The placeholder is one real example fact. <i>Use the example</i> (a ghost Button, shown only while the pad is empty) puts that fact in as text. Save is the primary: disabled while the pad is empty, blue the moment he types. Once there is text, the head row goes; the status bar keeps the purpose.</p>
+<div class="cxrow">
+  <figure><div class="cx w"><div class="in">
+    <div class="tb"><span class="btn off">Save</span><span class="btn ghost">Use the example</span></div>
+    <div class="pad"><div class="head"><img src="w7-2026-10-28/artifact.png" alt=""><div><b>Every engine run reads this first</b><span>One fact per line. You can change it at any time.</span></div></div><div class="ph">I lead the payments platform team: three reports, Python 3.12, Postgres 16.</div><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg></span></div>
+    <div class="sb"><span>Empty: no run reads it</span></div>
+  </div></div><figcaption>B, empty, 1440 real size.</figcaption></figure>
+  <figure><div class="cx w"><div class="in">
+    <div class="tb"><span class="btn primary">Save</span></div>
+    <div class="pad"><div class="typed">I lead the payments platform team: three reports, Python 3.12, Postgres 16.
+Decisions get a record before we build<span class="caret"></span></div><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg></span></div>
+    <div class="sb"><span>Empty: no run reads it</span><span><i class="warn"></i>Not saved yet</span><span>About 30 tokens</span><span>115 of 32,768 characters</span></div>
+  </div></div><figcaption>B, typing: Save is live; the head row has gone.</figcaption></figure>
+  <figure><div class="cx w"><div class="in">
+    <div class="tb"><span class="btn off">Save</span></div>
+    <div class="pad"><div class="typed">I lead the payments platform team: three reports, Python 3.12, Postgres 16.
+Decisions get a record before we build.</div><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg></span></div>
+    <div class="sb"><span><i class="ok"></i>Every engine run reads this first</span><span>Revision 1</span><span>About 30 tokens</span><span><i class="ok"></i>Saved 10:42</span></div>
+  </div></div><figcaption>B, saved: the status bar says it is read.</figcaption></figure>
+</div>
+<h3>B at 393</h3>
+<div class="cxrow">
+  <figure><div class="cx p"><div class="in">
+    <div class="tb"><span class="btn off">Save</span><span class="btn ghost">Use the example</span></div>
+    <div class="pad"><div class="head"><img src="w7-2026-10-28/artifact.png" alt=""><div><b>Every engine run reads this first</b><span>One fact per line. You can change it at any time.</span></div></div><div class="ph">I lead the payments platform team: three reports, Python 3.12, Postgres 16.</div><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg></span></div>
+    <div class="sb"><span>Empty: no run reads it</span></div>
+  </div></div><figcaption>B, empty, 393.</figcaption></figure>
+  <figure><div class="cx p"><div class="in">
+    <div class="tb"><span class="btn primary">Save</span></div>
+    <div class="pad"><div class="typed">I lead the payments platform team: three reports, Python 3.12, Postgres 16.
+Decisions get a record before we build<span class="caret"></span></div><span class="mic"><svg viewBox="0 0 16 16"><rect x="5.5" y="1.5" width="5" height="8" rx="2.5"/><path d="M3 7.5a5 5 0 0 0 10 0M8 12.5v2"/></svg></span></div>
+    <div class="sb"><span><i class="warn"></i>Not saved yet</span><span>About 30 tokens</span></div>
+  </div></div><figcaption>B, typing, 393.</figcaption></figure>
+</div>
+</div>
+
+<div class="rec"><b>Recommendation: B, the pad says it.</b> He types at once (A puts a press before the first word); the purpose and one example fact are on the face; Save turns blue at the first key. The example is a fact a Senior Architect would write, and <i>Use the example</i> makes it a one-press start. The object is on the face, at the size of a row, not a hero.</div>
+
+<h3>Build order for B (one lane, one PR)</h3>
+<ol>
+  <li><b>The head row.</b> In <code>ConstitutionalContextCore.tsx</code>, when <code>draft.trim()</code> is empty, render above the <code>PadGadget</code> one row: the <code>artifact</code> sprite at 32 px, “Every engine run reads this first” (13 px semibold), “One fact per line. You can change it at any time.” (12 px muted). <code>constitutional-context.css</code>: a dashed <code>--wb-rule-soft</code> rule under it. It goes at the first character.</li>
+  <li><b>The example.</b> The placeholder becomes the one fact <code>I lead the payments platform team: three reports, Python 3.12, Postgres 16.</code> A ghost Button <i>Use the example</i> in the toolbar, only while the draft is empty: it sets the draft to that line (dirty) and puts the caret at its end.</li>
+  <li><b>Save.</b> No logic change: it is already disabled until dirty. Check that the library Button’s disabled primary and its live primary are the two faces in the canvas (grey, then <code>--wb-sel</code>).</li>
+  <li><b>The status bar.</b> Keep it as it is (“Empty: no run reads it” → “● Every engine run reads this first”).</li>
+  <li><b>Tests.</b> T2 in the Context vitest file: empty → the head row, the placeholder fact, <i>Use the example</i>, Save disabled; press <i>Use the example</i> → the draft has the fact, Save enabled, the head row gone; typing one character → Save enabled. T3: the sweep’s Context window at 1440 and 393 (fit, 12 px, library Button).</li>
+</ol>
+</section>
+
+<section class="part">
+<h2>What this canvas could not establish</h2>
+<ul>
+  <li><b>The 1440 atlas shots are palette-reduced.</b> In <code>desk-recording-1440.png</code> and <code>desk-1440.png</code> the red orb comes out brown (<code>rgb(97,87,79)</code> at its centre): the shots were reduced to stay under 300 KB. The 393 shot keeps the red. The canvas draws the real sprite over the tile. Part of “I cannot see it” may be the shot, not the product; judge the breath live, not on an atlas PNG.</li>
+  <li>Whether every window announces its kind to the registry. <code>announceWindow(…, kind?)</code> takes it as optional; the build lane must map the apps without one to <code>--kind-other</code>.</li>
+  <li>How the overview grid places five or more windows: the room under each row was measured on four plates only.</li>
+  <li>How bright the ring and clock read on your real display from your chair: the “across the room” row is a scale-down, not a distance.</li>
+</ul>
+</section>
+</main>
+</body>
+</html>
