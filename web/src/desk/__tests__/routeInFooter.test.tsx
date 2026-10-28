@@ -128,14 +128,18 @@ describe("Ask: no route lamp, no host, no scope word, no receipt id (owner rulin
       const view = await askWith(fallback, 200, () => clock.mockReturnValue(4_100));
       expect(view.container.querySelector("[data-testid=ask-status] .gadget-lamp")).toBeNull();
       expect(view.container.querySelector(".gadget-chip-egress")).toBeNull();
-      const completedStatus = "Answered in 3 s · Fallback";
+      // Pass 2 (Ask): the answered face keeps its status bar: "Answered · … · 3 s".
+      const completedStatus = "Fallback";
+      const answered = /^Answered( · \d+ records?)? · 3 s$/;
       expect(view.container.querySelector("[data-testid=ask-status-receipt]")?.textContent).toBe(completedStatus);
+      expect(view.container.querySelector("[data-testid=ask-status-answered]")?.textContent).toMatch(answered);
       expect(view.container.querySelector("[data-testid=run-line]")).toBeNull();
       expect(view.container.textContent).not.toContain("fallback-box");
 
       clock.mockReturnValue(9_000);
       view.rerender(<AskPanel />);
       expect(view.container.querySelector("[data-testid=ask-status-receipt]")?.textContent).toBe(completedStatus);
+      expect(view.container.querySelector("[data-testid=ask-status-answered]")?.textContent).toMatch(answered);
     } finally {
       clock.mockRestore();
     }

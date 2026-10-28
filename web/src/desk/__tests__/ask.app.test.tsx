@@ -446,11 +446,11 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     const sent = calls.find((call) => call.url.endsWith("/api/ask"))!;
     expect(sent.body?.context).toEqual([{ id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }]);
     expect(sent.body?.prompt).toContain("Mira owns review");
-    expect(screen.getByRole("button", { name: "Back to Thought" }).closest("details")).toBeNull();
+    expect(screen.getByRole("button", { name: "Back to note" }).closest("details")).toBeNull();
     const returned: unknown[] = [];
     const onReturn = (event: Event) => returned.push((event as CustomEvent).detail);
     window.addEventListener(ASK_RETURN_EVENT, onReturn);
-    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to note" }));
     window.removeEventListener(ASK_RETURN_EVENT, onReturn);
     expect(returned).toEqual([source]);
     useDesk.setState({ selectedIds: ["note:other"] });
@@ -470,7 +470,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     const observed: boolean[] = [];
     const onReturn = () => observed.push(useDesk.getState().pullouts.some((entry) => entry.id === "note:n-mira"));
     window.addEventListener(ASK_RETURN_EVENT, onReturn);
-    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to note" }));
     window.removeEventListener(ASK_RETURN_EVENT, onReturn);
     expect(observed).toEqual([false]);
     expect(screen.getByText("SOURCE WINDOW CLOSED")).toBeInTheDocument();
@@ -508,7 +508,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     const savedRef = `note:${NOTE_WIRE.wire.note.id}`;
     await waitFor(() => expect(useDesk.getState().pullouts.find((row) => row.id === savedRef)?.projectReturn).toEqual(fromA));
 
-    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to note" }));
     await waitFor(() => expect(useDesk.getState().pullouts.find((row) => row.id === "n-mira")).toMatchObject({
       origin: { x: 18, y: 27 }, projectReturn: fromA,
     }));
@@ -517,7 +517,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     });
 
     useDesk.getState().closePullout("n-mira");
-    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to note" }));
     await waitFor(() => expect(useDesk.getState().pullouts.find((row) => row.id === source.noteRef)?.projectReturn).toEqual(fromA));
     expect(takeAskReturn("pullout:n-mira", source.noteRef)).toBeNull();
     expect(takeAskReturn(`pullout:${source.noteRef}`, source.noteRef)).toMatchObject({
@@ -538,7 +538,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
       source: { id: "n-mira", kind: "note", title: "1:1 with Mira", ref: "note:n-mira" }, projectReturn,
     });
     render(<AskPanel />);
-    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back to note" }));
     await waitFor(() => expect(useDesk.getState().pullouts.find((row) => row.id === "note:n-mira")?.projectReturn).toEqual(projectReturn));
     expect(useDesk.getState().pullouts.find((row) => row.id === "n-mira")).toBe(raw);
     expect(takeAskReturn("pullout:n-mira", "note:n-mira")).toBeNull();
@@ -580,12 +580,12 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     });
     render(<AskPanel />);
     act(() => useDesk.getState().askAbout(about, { handoffNonce: 1 }));
-    expect(screen.getByRole("button", { name: "Back to Thought" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back to note" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Return to Project" })).toBeInTheDocument();
 
     // The floor's ordinary Ask about this has the same ref but no handoff.
     act(() => useDesk.getState().askAbout(about));
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Back to Thought" })).toBeNull());
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Back to note" })).toBeNull());
     expect(screen.queryByRole("button", { name: "Return to Project" })).toBeNull();
     await askText("Who owns review?", THREAD.first.output);
     const sent = calls.find((call) => call.method === "POST" && call.url.endsWith("/api/ask"))!;
@@ -607,8 +607,8 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     fireEvent.click(screen.getByRole("button", { name: "Clear quote" }));
     expect(screen.getByTestId("ask-context")).toHaveTextContent("1:1 with Mira");
     expect(screen.getByTestId("ask-selected-passage")).toHaveTextContent("Source");
-    expect(screen.getByRole("button", { name: "Back to Thought" }).closest("details")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Back to Thought" }));
+    expect(screen.getByRole("button", { name: "Back to note" }).closest("details")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Back to note" }));
     expect(takeAskReturn("pullout:note:n-mira", "note:n-mira")?.range).toEqual({ from: 0, to: 16, text: "Mira owns review" });
     await askText("Who owns review?", THREAD.first.output);
     const sent = calls.find((call) => call.url.endsWith("/api/ask"))!;
@@ -635,7 +635,7 @@ describe("Betterment Q4: one Ask window, every Ask kept as a thread", () => {
     expect(await screen.findByText("Source changed. Select it again")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ask again" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Back to Thought" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back to note" })).toBeInTheDocument();
     expect(calls.filter((call) => call.url.endsWith("/api/ask"))).toHaveLength(1);
     expect(calls.find((call) => call.url.endsWith("/api/ask"))?.body?.source_snapshot).toEqual(sourceSnapshot);
   });
@@ -1236,5 +1236,139 @@ describe("Ask hub gaps: words arrive, references say their facts, claims are kep
     expect(line).toHaveTextContent("The engine did not answer.");
     expect(within(line).getAllByRole("button")).toHaveLength(1);
     expect(within(screen.getByTestId("ask-recent")).queryByRole("button", { name: /What do I owe Mira/ })).toBeNull();
+  });
+});
+
+/* ── Window pass 2 (WINDOW-ATLAS-2026-10-27, Ask 12) ──────────────────────
+ *
+ * The prompt never shows a ref; Recent is one row per question; References
+ * are one row per record; the toolbar's engine dot says when the engine did
+ * not answer; the answered face keeps its status bar. The reference rows
+ * below are the hub's own looked_at for one Ask on the desk sweep's seed
+ * (the W4-ASK rig, 2026-10-27): a calendar entry and its meeting, a Friday
+ * update kept as a workbench item and as its artifact, two kept asks of the
+ * same question. */
+describe("Window pass 2: Ask says one thing once", () => {
+  beforeEach(() => {
+    useDesk.setState({ items: EMPTY_ITEMS, selectedIds: [], askThread: null });
+  });
+
+  it("a decision tagged with a ref is asked about by its title, never the ref", () => {
+    useDesk.setState({
+      items: {
+        ...EMPTY_ITEMS,
+        decision: [{
+          kind: "decision", id: "d-gw", title: "Keep the legacy gateway read-only until March", status: "proposed", deciders: [],
+          contextMarkdown: "", decisionMarkdown: "", alternatives: [], consequencesMarkdown: "", tags: ["project:proj-6d2a82a5e2dc"],
+          createdAt: "2026-10-27T08:00:00Z",
+        }],
+      },
+    });
+    render(<AskPanel />);
+    const empty = screen.getByTestId("ask-empty");
+    expect(empty).not.toHaveTextContent("project:");
+    expect(within(empty).getByRole("button", { name: "What did we decide about “Keep the legacy gateway read-only until March”?" })).toBeInTheDocument();
+  });
+
+  it("Recent lists a question asked three times as one row", async () => {
+    const [row] = THREAD.recent.threads;
+    vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => {
+      const url = String(input);
+      const method = String(init.method ?? "GET");
+      calls.push({ url, method, body: undefined });
+      if (method === "GET" && url.endsWith("/api/threads")) {
+        return Promise.resolve(reply({ threads: [
+          { ...row, id: "th_3", title: "Is the ledger cutover still on track for Nov 14?" },
+          { ...row, id: "th_2", title: "Is the ledger cutover still on track for Nov 14?" },
+          { ...row, id: "th_1", title: "Is the ledger cutover  still on track for Nov 14?" },
+          row,
+        ] }));
+      }
+      return Promise.resolve(reply({}));
+    }));
+    render(<AskPanel />);
+    const rail = screen.getByTestId("ask-recent");
+    expect(await within(rail).findByRole("button", { name: /What do I owe Mira this week\?/ })).toBeInTheDocument();
+    expect(within(rail).getAllByRole("button", { name: /Is the ledger cutover/ })).toHaveLength(1);
+  });
+
+  it("references that read the same are one row: the one that opens and says the most", async () => {
+    const { dedupeReferenceRows } = await import("../components/AskPanel");
+    const open = () => {};
+    const rows = dedupeReferenceRows([
+      { ref: "calendar_event:ce_7fff", title: "Ledger cutover sync", kind: "meeting", meta: "Meeting" },
+      { ref: "workbench_item:wbocc_sweep_new", title: "Friday team update, Fri 16 Oct 2026", kind: "note" },
+      { ref: "thread:th_fea2620e5be6", title: "Is the ledger cutover still on track for Nov 14?", kind: "thread", meta: "Earlier ask", onOpen: open },
+      { ref: "artifact:artifact_sweep_friday", title: "Friday team update, Fri 16 Oct 2026", kind: "note", meta: "New", onOpen: open },
+      { ref: "meeting:m-standup", title: "Ledger cutover sync", kind: "meeting", meta: "Meeting · 2h ago", onOpen: open },
+      { ref: "thread:th_61f89d3ee5ce", title: "Is the ledger cutover still on track for Nov 14?", kind: "thread", meta: "Earlier ask", onOpen: open },
+      { ref: "meeting:m-avery", title: "1:1 Avery", kind: "meeting", meta: "Meeting · 2d ago", onOpen: open },
+      { ref: "meeting:m-avery", title: "1:1 Avery", kind: "meeting", meta: "Meeting · 2d ago", onOpen: open },
+    ]);
+    expect(rows.map((row) => row.ref)).toEqual([
+      "meeting:m-standup", "artifact:artifact_sweep_friday", "thread:th_fea2620e5be6", "meeting:m-avery",
+    ]);
+  });
+
+  it("two meetings of one name at different times stay two rows", async () => {
+    const { dedupeReferenceRows } = await import("../components/AskPanel");
+    const rows = dedupeReferenceRows([
+      { ref: "meeting:m-1", title: "Ledger cutover sync", kind: "meeting", meta: "Meeting · 2h ago" },
+      { ref: "meeting:m-2", title: "Ledger cutover sync", kind: "meeting", meta: "Meeting · 3d ago" },
+    ]);
+    expect(rows).toHaveLength(2);
+  });
+
+  it("the engine did not answer: the toolbar dot says Not answering and opens Engines; an answer clears it", async () => {
+    let attempts = 0;
+    hubWithTools(() => {
+      attempts += 1;
+      return Promise.resolve(attempts === 1 ? reply({ error: "No answer", reason: "did_not_answer" }, 503) : reply(TOOLS.answer));
+    });
+    render(<AskPanel />);
+    const line = await screen.findByTestId("engine-line");
+    await waitFor(() => expect(line).toHaveAttribute("data-state", "set"));
+    fireEvent.change(askBox(), { target: { value: "What do I owe Mira this week?" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ask" }));
+    await screen.findByTestId("ask-not-answered");
+    expect(line).toHaveAttribute("data-state", "down");
+    expect(line).toHaveTextContent("Not answering");
+    expect(line.querySelector(".kit-dot, [data-tone]")?.getAttribute("data-tone")).toBe("fail");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    await screen.findByTestId("ask-turn");
+    expect(line).toHaveAttribute("data-state", "set");
+    expect(line).toHaveTextContent("Glass Lan");
+  });
+
+  it("an engine whose last check did not reach it reads Not answering before any ask", async () => {
+    const assignments = JSON.parse(JSON.stringify(TOOLS.assignments));
+    const ask = assignments.task_overrides.find((row: { id: string }) => row.id === "ask.answer");
+    // The hub writes `unavailable` when a check does not reach the engine
+    // (holdspeak/services/model_profile_service.py, the readiness observation).
+    ask.effective.assignment.entries[0].readiness = "unavailable";
+    hubWithTools();
+    const recorded = vi.mocked(fetch).getMockImplementation()!;
+    vi.stubGlobal("fetch", vi.fn((input: string, init: RequestInit = {}) => (
+      String(input).endsWith("/api/inference/assignments") && String(init.method ?? "GET") === "GET"
+        ? Promise.resolve(reply(assignments))
+        : recorded(input, init))));
+    render(<AskPanel />);
+    const line = await screen.findByTestId("engine-line");
+    await waitFor(() => expect(line).toHaveAttribute("data-state", "down"));
+  });
+
+  it("the answered face keeps its status bar: Answered and the records it read", async () => {
+    hubWithTools();
+    render(<AskPanel />);
+    await askTool("What do I owe Mira this week?");
+    expect(screen.getByTestId("ask-status-answered")).toHaveTextContent(/^Answered · \d+ records?/);
+  });
+
+  it("a kept ask opened from Recent keeps its status bar", async () => {
+    hubWithTools();
+    render(<AskPanel />);
+    fireEvent.click(await within(screen.getByTestId("ask-recent")).findByRole("button", { name: /What do I owe Mira this week\?/ }));
+    await screen.findByTestId("ask-turn");
+    expect(screen.getByTestId("ask-status-answered")).toHaveTextContent(/^Answered/);
   });
 });

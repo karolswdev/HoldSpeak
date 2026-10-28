@@ -20,7 +20,7 @@ export function AskSourceFrame({ quote, open, onToggle, onClear, onBack }: {
       </div> : null}
     </FoldGadget>
     <div className="desk-ask-selection-verbs">
-      <Button dense variant="ghost" onClick={onBack}>Back to Thought</Button>
+      <Button dense variant="ghost" onClick={onBack}>Back to note</Button>
     </div>
   </div>;
 }
