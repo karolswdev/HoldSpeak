@@ -612,16 +612,16 @@ describe("W1-DOORS (atlas 2026-10-27): the palette names where a parked app land
   it("the empty deck lists Wallpaper, Notices and Commands by the place they open, and no retired name", async () => {
     await deck();
     const labels = rows().map((o) => o.textContent ?? "");
-    expect(labels.some((l) => l.includes("Wallpaper — Settings ▸ Desk"))).toBe(true);
-    expect(labels.some((l) => l.includes("Notices — Settings"))).toBe(true);
-    expect(labels.some((l) => l.includes("Commands — Speak"))).toBe(true);
+    expect(labels.some((l) => l.includes("Wallpaper, in Settings ▸ Desk"))).toBe(true);
+    expect(labels.some((l) => l.includes("Notices, in Settings"))).toBe(true);
+    expect(labels.some((l) => l.includes("Commands, in Speak"))).toBe(true);
     expect(labels.some((l) => /Change places|Rhythm/.test(l))).toBe(false);
   });
 
   it("the old name still finds the row: \"change places\" lists Wallpaper", async () => {
     const input = await deck();
     await type(input, "change places");
-    expect(rows().some((o) => (o.textContent ?? "").includes("Wallpaper — Settings ▸ Desk"))).toBe(true);
+    expect(rows().some((o) => (o.textContent ?? "").includes("Wallpaper, in Settings ▸ Desk"))).toBe(true);
   });
 
   it("an app the Recent rows show is listed once in the empty deck", async () => {
@@ -641,7 +641,7 @@ describe("W6-B (atlas pass 3): exact names and one row per question", () => {
     useDesk.setState({ askQuestion } as never);
     const input = await deck();
     await type(input, "Rhythm", 700);
-    expect(top()?.textContent).toContain("Notices — Settings");
+    expect(top()?.textContent).toContain("Notices, in Settings");
     fireEvent.keyDown(input, { key: "Enter" });
     expect(askQuestion).not.toHaveBeenCalled();
     expect(openedSurfaces.calls).toContainEqual(["configure-settings", "rhythm"]);
@@ -655,7 +655,7 @@ describe("W6-B (atlas pass 3): exact names and one row per question", () => {
     useDesk.setState({ askQuestion } as never);
     const input = await deck();
     await type(input, "Change places", 700);
-    expect(top()?.textContent).toContain("Wallpaper — Settings ▸ Desk");
+    expect(top()?.textContent).toContain("Wallpaper, in Settings ▸ Desk");
     fireEvent.keyDown(input, { key: "Enter" });
     expect(askQuestion).not.toHaveBeenCalled();
     expect(openedSurfaces.calls).toContainEqual(["configure-settings", "wallpaper"]);

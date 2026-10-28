@@ -586,7 +586,7 @@ describe("Settings › System › Remote access", () => {
   it("OFF: Other devices with the switch at OFF; no CREDENTIALS, no Issue credential; library verbs only", async () => {
     // replaces: tests/e2e/test_hs174_remote_settings_glass.py::TestSettingsRemoteAccess::test_remote_off_state
     const { container } = render(<SettingsCore scope="system" />);
-    const toggle = (await screen.findByRole("combobox", { name: "Remote transport" })) as HTMLSelectElement;
+    const toggle = (await screen.findByLabelText("Remote transport")) as HTMLSelectElement;
     expect(toggle.value).toBe("OFF");
     const text = container.querySelector(".settings-page")?.textContent ?? "";
     expect(text).toContain("Other devices");
@@ -598,14 +598,17 @@ describe("Settings › System › Remote access", () => {
 
   it("ON, issue: the token shows once with Copy; the row reads NEVER USED; Revoke removes that row only", async () => {
     // replaces: tests/e2e/test_hs174_remote_settings_glass.py::TestSettingsRemoteAccess::test_remote_on_issue_revoke (the face half; the hub half is tests/integration/test_desk_settings.py)
+    // Label and test-id queries, not role queries: a role query computes the
+    // accessible name of every node of the whole System page on each poll,
+    // and under load that alone ran this case past 5 s (2026-10-28).
     const view = render(<SettingsCore scope="system" />);
-    fireEvent.change(await screen.findByRole("combobox", { name: "Remote transport" }), { target: { value: "ON" } });
-    await screen.findByRole("button", { name: "Issue credential" });
-    await waitFor(() => expect(screen.getByRole("combobox", { name: "Remote transport" })).toHaveValue("ON"));
+    fireEvent.change(await screen.findByLabelText("Remote transport"), { target: { value: "ON" } });
+    expect(await screen.findByTestId("issue-credential-btn")).toHaveTextContent("Issue credential");
+    await waitFor(() => expect(screen.getByLabelText("Remote transport")).toHaveValue("ON"));
     expect(screen.getByTestId("system-hub-chips").textContent).not.toContain("Other devices");
 
-    fireEvent.click(screen.getByRole("button", { name: "Issue credential" }));
-    fireEvent.change(screen.getByRole("textbox", { name: "Credential name" }), { target: { value: "test-glass-runner" } });
+    fireEvent.click(screen.getByTestId("issue-credential-btn"));
+    fireEvent.change(screen.getByLabelText("Credential name"), { target: { value: "test-glass-runner" } });
     fireEvent.click(screen.getByTestId("issue-submit"));
     expect((await screen.findByTestId("token-value")).textContent).toBe("hs_agent_fixture_token_shown_once");
     expect(screen.getByTestId("token-copy")).toBeInTheDocument();

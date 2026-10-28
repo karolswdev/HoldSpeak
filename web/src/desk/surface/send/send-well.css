@@ -513,8 +513,9 @@
 }
 /* On the phone the sheet's toolbar verbs (Send, Cancel, Add destination)
    keep the device's 44 px target (global.css), over the kit's 28 px desk
-   toolbar face. */
-@media (max-width: 420px) {
+   toolbar face. The well is a surface container, so the rule answers to
+   it (DESIGN_SYSTEM.md rule 2); on the phone the well is the window's width. */
+@container surface (max-width: 420px) {
   .desk-next [data-send="well"] .kit-toolbar .btn {
     min-height: var(--desk-button-hit-size);
   }
