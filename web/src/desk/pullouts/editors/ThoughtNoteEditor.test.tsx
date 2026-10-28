@@ -90,7 +90,7 @@ describe("ThoughtNoteEditor", () => {
     render(<ThoughtNoteEditor ref={editor} thought={base} onThought={vi.fn()} />);
     fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Unsaved" } });
     await act(async () => { await vi.advanceTimersByTimeAsync(500); });
-    expect(screen.getByRole("status")).toHaveTextContent("DID NOT SAVE · THE HUB DID NOT ANSWER");
+    expect(screen.getByRole("status")).toHaveTextContent("Could not save · The hub did not answer · Your words stay here");
     expect(screen.getByRole("button", { name: "Retry" })).toBeInTheDocument();
     await expect(editor.current!.flush()).rejects.toThrow("thought save failed");
     expect(saveThoughtWorking).toHaveBeenCalledTimes(1);

@@ -500,14 +500,14 @@ describe("the meeting's Decisions through Confirm (the hook and the ledger, rend
     render(<Harness />);
 
     fireEvent.click(await screen.findByTestId("proposal-confirm-all-btn"));
-    await waitFor(() => expect(receipts.some((receipt) => receipt.text === "CONFIRMED 1")).toBe(true));
+    await waitFor(() => expect(receipts.some((receipt) => receipt.text === "Confirmed 1")).toBe(true));
     expect(receipts.some((receipt) => receipt.text?.startsWith("REFUSED"))).toBe(false);
     expect(await screen.findByTestId("outcome-refresh-retry-btn")).toBeTruthy();
 
     rereadFailed = false;
     fireEvent.click(screen.getByTestId("outcome-refresh-retry-btn"));
     await waitFor(() => expect(screen.getByTestId("action-done-btn")).toBeTruthy());
-    expect(receipts.at(-1)?.text).toBe("REFRESHED");
+    expect(receipts.at(-1)?.text).toBe("Refreshed");
   });
 });
 

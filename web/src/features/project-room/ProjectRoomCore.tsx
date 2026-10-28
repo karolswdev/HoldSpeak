@@ -1186,7 +1186,13 @@ function SourcesSection({
   useEffect(() => { onAdding?.(showsAdding); }, [showsAdding, onAdding]);
 
   if (room.sources.state === "degraded")
-    return <SurfaceSection label="Sources"><SurfaceState error="SOURCES NOT READ" onRetry={() => void onReload()} /></SurfaceSection>;
+    return (
+      <SurfaceSection label="Sources">
+        {/* W6-I words: the state is the chip; the line says what failed and what stayed. */}
+        <StateChip state="failure" label="Sources not read" data-testid="room-sources-not-read" />
+        <SurfaceState error="Could not read the sources · Nothing changed · Try again" onRetry={() => void onReload()} />
+      </SurfaceSection>
+    );
   if (room.sources.state !== "ok") return null;
   const { items, count } = room.sources;
 

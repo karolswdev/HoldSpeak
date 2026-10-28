@@ -558,11 +558,13 @@ describe("PHILO-17 sources: the Room's SOURCES on a bare project", () => {
     render(<WindowHarness scope={`project:${pid}`} />);
     const sources = await screen.findByTestId("room-fold-sources");
     expect(sources.querySelector("details")!.open).toBe(true);
-    await waitFor(() => expect(within(sources).getByText("SOURCES NOT READ")).toBeVisible());
+    await waitFor(() => expect(within(sources).getByText("Could not read the sources · Nothing changed · Try again")).toBeVisible());
+    expect(within(sources).getByTestId("room-sources-not-read")).toHaveTextContent("Sources not read");
     expect(screen.queryByTestId("room-add-sources")).toBeNull();
     failed = false;
     fireEvent.click(within(sources).getByRole("button", { name: "Try again" }));
-    await waitFor(() => expect(within(sources).queryByText("SOURCES NOT READ")).toBeNull());
+    await waitFor(() => expect(within(sources).queryByText("Could not read the sources · Nothing changed · Try again")).toBeNull());
+    expect(within(sources).queryByTestId("room-sources-not-read")).toBeNull();
     if (!sources.querySelector("details")!.open) fireEvent.click(sources.querySelector("summary")!);
     expect(within(sources).getByTestId("room-add-source")).toBeVisible();
   });
@@ -1567,7 +1569,7 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     const { openProjectRoomAtResource, takeRoomAtRequest } = await import("../../../desk/openObject");
     openProjectRoomAtResource(pid, ref);
     const view = render(<WindowHarness scope={`project:${pid}`} />);
-    await screen.findByText("FILED HERE");
+    await screen.findByText("Filed here");
     const fold = screen.getByTestId("room-fold-files");
     const sources = screen.getByTestId("room-fold-sources");
     expect(fold.compareDocumentPosition(sources) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -1586,7 +1588,7 @@ describe("Betterment P3: the Now wing says where the project stands", () => {
     wire(table());
     render(<WindowHarness scope={`project:${pid}`} />);
     await screen.findByTestId("room-headline");
-    expect(screen.queryByText("FILED HERE")).toBeNull();
+    expect(screen.queryByText("Filed here")).toBeNull();
     expect(takeRoomAtRequest("another-project")).toEqual({ kind: "file", ref: "note:api-boundary" });
   });
 

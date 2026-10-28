@@ -30,20 +30,18 @@ export function RefusalToken({
   testId: string;
 }) {
   if (!refusal && !durable) return null;
-  const label = refusal ? `REFUSED · ${refusalFact(refusal)}` : "REFUSED";
+  // W6-H words: what did not happen and why, in sentence case, as a dot +
+  // words; the summary verb beside it is the next move.
+  const label = refusal
+    ? `Summary did not start · ${refusalFact(refusal)}`
+    : "The last summary did not start";
   const title = refusal
     ? refusal.plainReason
     : `The last run was refused before any model was contacted (${durable?.selection_hash ?? "no selection"}).`;
   return (
-    <span
-      className="surface-token summary-refusal"
-      data-chip
-      data-tone="danger"
-      data-testid={testId}
-      title={title}
-    >
+    <DotWord tone="fail" className="summary-refusal" data-testid={testId} title={title}>
       {label}
-    </span>
+    </DotWord>
   );
 }
 

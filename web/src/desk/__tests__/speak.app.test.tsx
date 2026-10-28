@@ -445,11 +445,11 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
       expect(el).toBeTruthy();
       return el as HTMLElement;
     });
-    expect(receipt.textContent).toContain("TAUGHT");
+    expect(receipt.textContent).toContain("Taught");
     expect(receipt.textContent).toContain("queue for");
     expect(receipt.textContent).toContain("Q4");
     expect(container.querySelector(".speak-teach")).toBeNull();
-    expect(footerText()).not.toContain("TAUGHT");
+    expect(footerText()).not.toContain("Taught");
     expect(presses[1].call).toMatch(/^POST \/api\/dictation\/journal\/\d+\/correct$/);
     expect(presses[1].body).toEqual({ kind: "text", heard: HEARD, said: SAID });
 
@@ -460,11 +460,11 @@ describe("the teach loop on the Speak window, replayed from the hub", () => {
     await userEvent.clear(said);
     await userEvent.paste(SECRET_SAID);
     await userEvent.click(screen.getByRole("button", { name: "Teach correction" }));
-    await waitFor(() => expect(container.querySelector(".speak-receipt")?.textContent ?? "").toContain("REFUSED"));
+    await waitFor(() => expect(container.querySelector(".speak-receipt")?.textContent ?? "").toContain("Not taught"));
     receipt = container.querySelector(".speak-receipt") as HTMLElement;
-    expect(receipt.textContent).toContain("SECRET");
-    expect(receipt.textContent).toContain("nothing written");
-    expect(footerText()).not.toContain("REFUSED");
+    expect(receipt.textContent).toContain("secret");
+    expect(receipt.textContent).toContain("Nothing written");
+    expect(footerText()).not.toContain("Not taught");
 
     // ── 6. speak it again: the rule fires and says so ──
     result = await land(AGAIN);

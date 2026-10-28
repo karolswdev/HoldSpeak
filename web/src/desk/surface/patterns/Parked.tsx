@@ -3,8 +3,10 @@
  *  "Parked and Restore", boards C1-5a–j).
  *
  *  Every outcome is a compact receipt in the footer's receipt slot:
- *    PARKED hh:mm + Restore · PARKED n · hh:mm + Restore (bulk)
- *    RESTORED hh:mm · NOT RESTORED · <why> + Retry · NOT PARKED · <why>
+ *    `Parked at hh:mm` + Restore · `Parked n at hh:mm` + Restore (bulk)
+ *    `Restored at hh:mm` (W6-I words: every outcome in sentence case, sans) · `Could not restore · … · It stays parked` + Retry ·
+ *    `Could not park · <why> · Nothing changed · Try again` (W6-H words: a failure in
+ *    sentence case, sans, the raw reason in the hover title)
  *  The strip is a `PARKED n` token (absent at zero) that, when on, lists
  *  the parked rows with their own Restore. */
 import { Button } from "../../../components/signal/Signal";
@@ -18,6 +20,8 @@ export type ParkOutcome = {
   /** The ids the receipt's Restore (or Retry) acts on. */
   ids: string[];
   tone?: "danger";
+  /** W6-H words: the raw reason of a failure, for the hover title only. */
+  title?: string;
 };
 
 export type ParkedRow = { id: string; title: string; at: string };
@@ -34,21 +38,21 @@ export function parkedToken(n: number): string | null {
 
 export function parkedOutcome(ids: string[], at = parkClock()): ParkOutcome {
   const n = ids.length;
-  return { kind: "parked", text: n > 1 ? `PARKED ${n} · ${at}` : `PARKED ${at}`, ids };
+  return { kind: "parked", text: n > 1 ? `Parked ${n} at ${at}` : `Parked at ${at}`, ids };
 }
 
 export function restoredOutcome(ids: string[], at = parkClock()): ParkOutcome {
-  return { kind: "restored", text: `RESTORED ${at}`, ids };
+  return { kind: "restored", text: `Restored at ${at}`, ids };
 }
 
-export const RESTORE_REFUSED = "NOT RESTORED · THE HUB DID NOT ACCEPT THE CHANGE";
+export const RESTORE_REFUSED = "Could not restore · The hub did not accept the change · It stays parked";
 
 export function restoreFailedOutcome(ids: string[]): ParkOutcome {
   return { kind: "restore-failed", text: RESTORE_REFUSED, ids, tone: "danger" };
 }
 
-export function notParkedOutcome(why: string): ParkOutcome {
-  return { kind: "refused", text: `NOT PARKED · ${why}`, ids: [], tone: "danger" };
+export function notParkedOutcome(why: string, title?: string): ParkOutcome {
+  return { kind: "refused", text: `Could not park · ${why} · Nothing changed · Try again`, ids: [], tone: "danger", title };
 }
 
 export function ParkReceipt({
@@ -63,7 +67,8 @@ export function ParkReceipt({
 }) {
   return (
     <span className="park-receipt" data-testid={testId} data-outcome={outcome.kind}>
-      <span className="surface-footer-receipt-line" role="status" data-tone={outcome.tone}>
+      <span className="surface-footer-receipt-line" role="status" data-tone={outcome.tone}
+        data-words="" title={outcome.title || undefined}>
         {outcome.text}
       </span>
       {outcome.kind === "parked" ? (

@@ -73,10 +73,10 @@ it("renders the footer receipt QUEUED → RAN for the run it names", async () =>
   hub(states, { terminalA: false });
   render(<HistoryCore />);
   await runFromToolbar("a");
-  await screen.findByText(/^QUEUED \d/);
+  await screen.findByText(/^Queued at \d/);
   states.a = "ready";
-  await screen.findByText(/^RAN · \d/, undefined, { timeout: 6000 });
-  expect(screen.queryByText(/^QUEUED \d/)).toBeNull();
+  await screen.findByText(/^Ran at \d/, undefined, { timeout: 6000 });
+  expect(screen.queryByText(/^Queued at \d/)).toBeNull();
 }, 10000);
 
 it("a completion of meeting A cannot finish the receipt for queued meeting B", async () => {
@@ -85,14 +85,14 @@ it("a completion of meeting A cannot finish the receipt for queued meeting B", a
   hub(states, reads);
   render(<HistoryCore />);
   await runFromToolbar("a");
-  await screen.findByText(/^QUEUED \d/);
+  await screen.findByText(/^Queued at \d/);
   await runFromToolbar("b");
   await waitFor(() => expect(states.b).toBe("queued"));
   states.a = "ready";
   await waitFor(() => expect(reads.terminalA).toBe(true), { timeout: 5000 });
   await act(async () => { await new Promise((r) => setTimeout(r, 50)); });
-  expect(screen.queryByText(/^RAN ·/)).toBeNull();
-  expect(screen.getByText(/^QUEUED \d/)).toBeInTheDocument();
+  expect(screen.queryByText(/^Ran at/)).toBeNull();
+  expect(screen.getByText(/^Queued at \d/)).toBeInTheDocument();
 }, 10000);
 
 it("a fresh detail's zero removes a stale list warning", () => {
@@ -143,14 +143,14 @@ it("the full parent → Outcomes transition shows QUEUED then RAN, and Outcomes 
   expect(screen.getByRole("tab", { name: "Outcomes" })).toBeTruthy();
   expect(screen.queryByRole("tab", { name: /Review/i })).toBeNull();
   fireEvent.click(await screen.findByTestId("detail-run-intelligence-btn"));
-  await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent(/^QUEUED /));
+  await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent(/^Queued at /));
   const readsBefore = reviewReads;
   states.a = "ready";
   await act(async () => {
     window.dispatchEvent(new Event("focus"));
   });
   await waitFor(
-    () => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent(/^RAN · \d/),
+    () => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent(/^Ran at \d/),
     { timeout: 6000 },
   );
   await waitFor(() => expect(reviewReads).toBeGreaterThan(readsBefore));
@@ -194,7 +194,7 @@ it("a completed action survives reload and can be reopened", async () => {
   render(<MeetingRecord meetingId="a" onClose={() => undefined} />);
   const done = await screen.findByTestId("action-done-btn");
   fireEvent.click(done);
-  await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent("DONE"));
+  await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent("Done"));
   expect(screen.getByTestId("action-reopen-btn")).toBeTruthy();
 
   // A real window refresh must retain the server's completed state and the
@@ -204,7 +204,7 @@ it("a completed action survives reload and can be reopened", async () => {
   });
   await waitFor(() => expect(screen.getByTestId("action-reopen-btn")).toBeTruthy());
   fireEvent.click(screen.getByTestId("action-reopen-btn"));
-  await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent("REOPENED"));
+  await waitFor(() => expect(screen.getByTestId("meetings-run-receipt")).toHaveTextContent("Opened again"));
   expect(completeCalls).toContainEqual({ card_id: "ai-migration", verb: "done", payload: {} });
   expect(completeCalls).toContainEqual({ card_id: "ai-migration", verb: "reopen", payload: {} });
 });
@@ -230,20 +230,20 @@ it("a reload during a run recovers its timed receipt from the real producer rows
   // Window grammar: select the row; its Run summary sits in the status bar.
   fireEvent.click(within(await screen.findByTestId(`meeting-row-${id}`)).getByRole("button"));
   fireEvent.click(await screen.findByTestId("run-intelligence-btn"));
-  await screen.findByText(/^QUEUED \d/);
+  await screen.findByText(/^Queued at \d/);
   first.unmount();
   deskQueryClient.clear();
   render(<HistoryCore />);
   await screen.findByTestId(`meeting-row-${id}`);
   // The remount adopts the active run from the durable row, beside the count.
   const queued = await screen.findByTestId("meetings-run-receipt");
-  expect(queued.textContent).toMatch(/^QUEUED \d/);
-  expect(queued.closest("[role=status]")?.textContent).toMatch(/^1 meeting.*QUEUED/);
+  expect(queued.textContent).toMatch(/^Queued at \d/);
+  expect(queued.closest("[role=status]")?.textContent).toMatch(/^1 meeting.*Queued at/);
   phase = "success";
   await act(async () => {
     window.dispatchEvent(new Event("focus"));
   });
-  await screen.findByText(/^RAN · \d/, undefined, { timeout: 6000 });
+  await screen.findByText(/^Ran at \d/, undefined, { timeout: 6000 });
 }, 12000);
 
 function successRowAt(at: string): Record<string, unknown> {
@@ -266,9 +266,9 @@ it("a reload after today's run shows the record count first and the RAN receipt 
   const id = mountWithOnly(successRowAt(new Date().toISOString()));
   await screen.findByTestId(`meeting-row-${id}`);
   const receipt = await screen.findByTestId("meetings-run-receipt");
-  expect(receipt.textContent).toMatch(/^RAN · \d/);
+  expect(receipt.textContent).toMatch(/^Ran at \d/);
   const line = receipt.closest("[role=status]");
-  expect(line?.textContent).toMatch(/^1 meeting.*RAN · \d/);
+  expect(line?.textContent).toMatch(/^1 meeting.*Ran at \d/);
 });
 
 it("a reload with only an old run shows the record count alone", async () => {
@@ -276,5 +276,5 @@ it("a reload with only an old run shows the record count alone", async () => {
   await screen.findByTestId(`meeting-row-${id}`);
   await screen.findByText("1 meeting");
   expect(screen.queryByTestId("meetings-run-receipt")).toBeNull();
-  expect(screen.queryByText(/^RAN · /)).toBeNull();
+  expect(screen.queryByText(/^Ran at /)).toBeNull();
 });

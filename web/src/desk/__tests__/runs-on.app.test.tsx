@@ -353,7 +353,7 @@ describe("Runs on — a NOT_SUPPORTED plate reads NOT SUPPORTED YET", () => {
     expect(screen.getByTestId("switchboard-lamp-cloud-anthropic").getAttribute("data-lamp")).toBe("broken");
     fireEvent.click(screen.getByTestId("switchboard-job-thoughts_notes"));
     fireEvent.keyDown(plate, { key: "Enter" });
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/REFUSED .* NOT SUPPORTED/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Could not put .* · Not supported · Nothing changed$/));
     expect(hub.calls.some((c) => c.path === "/api/inference/assignments/set")).toBe(false);
   });
 });
@@ -611,11 +611,11 @@ describe("Runs on — a record-less engine is refused on the drop (recorded hub)
     const rec = new RecordedHub("no-record", "0-open");
     await openRecorded(rec);
     const plate = await screen.findByTestId("switchboard-engine-old-box");
-    for (const [job, label] of [["thoughts_notes", "ANSWERS AND NOTES"], ["agents_tools", "CUSTOM TASKS"]]) {
+    for (const [job, label] of [["thoughts_notes", "Answers and notes"], ["agents_tools", "Custom tasks"]]) {
       fireEvent.click(screen.getByTestId(`switchboard-job-${job}`));
       fireEvent.keyDown(plate, { key: "Enter" });
       await waitFor(() =>
-        expect(screen.getByTestId("runson-receipt").textContent).toMatch(new RegExp(`^REFUSED · ${label} · NO MODEL RECORD$`)),
+        expect(screen.getByTestId("runson-receipt").textContent).toMatch(new RegExp(`^Could not put ${label} on .+ · No model record · Nothing changed$`)),
       );
     }
     expect(rec.calls.filter((c) => c.method !== "GET")).toEqual([]);

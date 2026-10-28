@@ -158,7 +158,7 @@ describe("PHILO-3-02 Arrival summary completion", () => {
     render(<MeetingRecord meetingId={snapshot.detail.id} onClose={() => undefined} />);
     if (state === "retry") {
       expect(await screen.findByTestId("meeting-summary-state")).toHaveTextContent("Summary queued");
-      expect(await screen.findByTestId("meetings-run-receipt")).toHaveTextContent(/^QUEUED \d/);
+      expect(await screen.findByTestId("meetings-run-receipt")).toHaveTextContent(/^Queued at \d/);
       expect(screen.queryByRole("region", { name: "Meeting intelligence recovery" })).toBeNull();
       expect(snapshot.recovery.remaining.detail).toBe("PROVIDER FAILED");
       return;

@@ -99,12 +99,12 @@ describe("Astra r1: the meeting window's own records follow the hub", () => {
       (isDetail(String(path)) ? meeting(intel) : {}) as never);
     render(<MeetingRecord meetingId="m-1" onClose={() => undefined} />);
     const receipt = await screen.findByTestId("meetings-run-receipt");
-    expect(receipt.textContent).toMatch(/^QUEUED \d/);
+    expect(receipt.textContent).toMatch(/^Queued at \d/);
     intel = "ready";
     await act(async () => {
       window.dispatchEvent(new Event("focus"));
     });
-    await waitFor(() => expect(screen.getByTestId("meetings-run-receipt").textContent).toMatch(/^RAN · \d/));
+    await waitFor(() => expect(screen.getByTestId("meetings-run-receipt").textContent).toMatch(/^Ran at \d/));
   });
 });
 

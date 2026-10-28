@@ -31,6 +31,7 @@ import { Button } from "../../components/signal/Signal";
 import { openPrimitive, openSurfaceOr } from "../../desk/shell";
 import { onReturnToTask, rememberTaskFocus } from "../../desk/returnToTask";
 import { countToken, countLabel } from "../../desk/surface/count";
+import { DotWord } from "../../desk/surface/kit";
 import {
   fetchRoomPeoplePreparation,
   linkOwnerAlias,
@@ -101,16 +102,17 @@ export function peopleGapTokens(prep: Pick<RoomPeoplePreparation, "state" | "gap
   return tokens;
 }
 
-/** The owner-state token on an unresolved row. */
+/** The owner state on an unresolved row, as words in sentence case
+ *  (W6-H words: a state is a dot + word, never a mono caps chip). */
 export function ownerToken(row: Pick<RoomUnresolvedOwner, "link" | "candidates">): string {
   if (row.link === "ambiguous") {
-    const matches = countToken(row.candidates.length, "MATCH", "MATCHES");
-    return matches ? `OWNER · AMBIGUOUS · ${matches}` : "OWNER · AMBIGUOUS";
+    const n = row.candidates.length;
+    return n > 0 ? `Owner not clear · ${n} ${n === 1 ? "match" : "matches"}` : "Owner not clear";
   }
-  if (row.link === "locked") return "OWNER · LOCKED";
-  if (row.link === "unconfigured") return "OWNER · NOT SET UP";
-  if (row.link === "unavailable") return "OWNER · UNAVAILABLE";
-  return "OWNER · NOT LINKED";
+  if (row.link === "locked") return "Owner locked";
+  if (row.link === "unconfigured") return "Owner not set up";
+  if (row.link === "unavailable") return "Owner not available";
+  return "Owner not linked";
 }
 
 /** The one head verb: the repair while the ledger is not ready, else
@@ -458,12 +460,12 @@ export function RoomPeopleSection({
                 primary={
                   <span className="room-people-primary">
                     <span className="surface-primary">{row.owner}</span>
-                    <span
-                      className={`surface-token room-people-tok ${row.link === "ambiguous" || row.link === "not_linked" ? "room-people-warn" : "room-people-fail"}`}
+                    <DotWord
+                      tone={row.link === "ambiguous" || row.link === "not_linked" ? "warn" : "fail"}
                       data-testid="room-people-owner-token"
                     >
                       {token}
-                    </span>
+                    </DotWord>
                     {openCount ? (
                       <span className="surface-token room-people-tok">{openCount}</span>
                     ) : null}

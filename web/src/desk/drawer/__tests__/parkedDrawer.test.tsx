@@ -111,7 +111,7 @@ describe("the Parked drawer", () => {
       fireEvent.click(screen.getByTestId("parked-restore"));
     });
     expect(posts).toEqual(["/api/projects/p-old/restore"]);
-    await waitFor(() => expect(screen.getByTestId("parked-receipt").textContent).toMatch(/^RESTORED \d\d:\d\d/));
+    await waitFor(() => expect(screen.getByTestId("parked-receipt").textContent).toMatch(/^Restored at \d\d:\d\d/));
     await waitFor(() => expect(screen.queryByRole("button", { name: /^Old migration/ })).toBeNull());
     expect(refresh).toHaveBeenCalled();
 
@@ -122,7 +122,7 @@ describe("the Parked drawer", () => {
     expect(posts[1]).toBe("/api/workbenches/wb-1/items/i-1/restore");
   });
 
-  it("a refused restore says NOT RESTORED with Retry", async () => {
+  it("a refused restore says Could not restore with Retry", async () => {
     apiFetch.mockImplementation(async (path: string, init?: { method?: string }) => {
       if (path === "/api/desk/parked") return { items: parked, not_read: [] };
       if (init?.method === "POST") throw new Error("409");
@@ -134,7 +134,7 @@ describe("the Parked drawer", () => {
       fireEvent.click(screen.getByTestId("parked-restore"));
     });
     const receipt = await screen.findByTestId("parked-receipt");
-    expect(receipt.textContent).toContain("NOT RESTORED");
+    expect(receipt.textContent).toContain("Could not restore");
     expect(within(receipt).getByRole("button", { name: "Retry" })).toBeTruthy();
   });
 

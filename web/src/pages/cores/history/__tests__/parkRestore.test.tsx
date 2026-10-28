@@ -112,7 +112,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     expect(hub.calls.filter((c) => c.method === "DELETE").map((c) => c.path)).toEqual([
       "/api/meetings/m-2",
     ]);
-    expect(within(receipt).getByRole("status").textContent).toMatch(/^PARKED \d\d:\d\d$/);
+    expect(within(receipt).getByRole("status").textContent).toMatch(/^Parked at \d\d:\d\d$/);
     expect(within(receipt).getByRole("button", { name: "Restore" })).toBeTruthy();
     expect(screen.queryByText(/DELETED/)).toBeNull();
     expect(screen.queryByRole("button", { name: "Delete?" })).toBeNull();
@@ -135,7 +135,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     expect(screen.queryByTestId("meeting-row-m-1")).toBeNull();
   });
 
-  it("Restore brings the meeting back, marked, with RESTORED hh:mm; the token goes", async () => {
+  it("Restore brings the meeting back, marked, with Restored at hh:mm; the token goes", async () => {
     const hub = wireHub();
     renderDesk();
     await selectAndPark("Hiring debrief");
@@ -143,7 +143,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     const row = await screen.findByTestId("parked-row");
     fireEvent.click(within(row.closest("li")!).getByRole("button", { name: "Restore" }));
     await waitFor(() =>
-      expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^RESTORED \d\d:\d\d$/),
+      expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^Restored at \d\d:\d\d$/),
     );
     expect(hub.calls.some((c) => c.path === "/api/meetings/m-2/restore" && c.method === "POST")).toBe(true);
     const back = await screen.findByTestId("meeting-row-m-2");
@@ -159,7 +159,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     fireEvent.click(within(receipt).getByRole("button", { name: "Restore" }));
     await waitFor(() =>
       expect(screen.getByTestId("meeting-park-receipt").textContent).toContain(
-        "NOT RESTORED · THE HUB DID NOT ACCEPT THE CHANGE",
+        "Could not restore · The hub did not accept the change · It stays parked",
       ),
     );
     const failed = screen.getByTestId("meeting-park-receipt");
@@ -167,7 +167,7 @@ describe("PHILO-13-02 Park and Restore on Meetings", () => {
     hub.refuseRestore = false;
     fireEvent.click(within(failed).getByRole("button", { name: "Retry" }));
     await waitFor(() =>
-      expect(screen.getByTestId("meeting-park-receipt").textContent).toMatch(/^RESTORED \d\d:\d\d$/),
+      expect(screen.getByTestId("meeting-park-receipt").textContent).toMatch(/^Restored at \d\d:\d\d$/),
     );
     hubChanged();
     await screen.findByTestId("meeting-row-m-2");
@@ -197,7 +197,7 @@ describe("PHILO-13-02 Meetings after a reload", () => {
     expect(hub.calls.some((c) => c.path === "/api/meetings?parked=true")).toBe(true);
     fireEvent.click(within(row.closest("li")!).getByRole("button", { name: "Restore" }));
     await waitFor(() =>
-      expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^RESTORED \d\d:\d\d$/),
+      expect(screen.getByTestId("meetings-park-receipt").textContent).toMatch(/^Restored at \d\d:\d\d$/),
     );
     const back = await screen.findByTestId("meeting-row-m-2");
     await waitFor(() => expect(back.getAttribute("aria-selected")).toBe("true"));

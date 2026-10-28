@@ -11,6 +11,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "../../lib/api";
+import { plainWords } from "../../desk/surface/plainFailure";
 import { announceTaskReturn } from "../../desk/returnToTask";
 import {
   checkEndpoint,
@@ -174,6 +175,19 @@ function codeToken(err: unknown): string {
     if (code) return code.replace(/^inference_assignment_/, "").replace(/_/g, " ").toUpperCase();
   }
   return "NOT SAVED";
+}
+
+/** W6-I words: a caps reason token (`TEXT ENGINES ONLY`) said in sentence
+ *  case (`Text engines only`) for a plain failure line. */
+function sentence(token: string): string {
+  const said = token.trim().toLowerCase();
+  return said ? said.charAt(0).toUpperCase() + said.slice(1) : "";
+}
+
+/** W6-I words: a failed write in plain words; the code token goes in the
+ *  hover title (`plainWords`, desk/surface/plainFailure.ts). */
+function notChanged(name: string, err: unknown): Receipt {
+  return { text: plainWords(`Could not change ${name}`, "Nothing changed", "Try again"), tone: "danger", title: sentence(codeToken(err)) };
 }
 
 function endpointKey(url: string | undefined): string {
@@ -431,8 +445,8 @@ export function useRunsOn(scope?: string) {
           return next;
         });
       } catch (err) {
-        if (isConflict(err)) setReceipt({ text: `CHANGED ELSEWHERE · ${row.name}`, tone: "danger" });
-        else setReceipt({ text: `REFUSED · ${codeToken(err)}`, tone: "danger" });
+        if (isConflict(err)) setReceipt({ text: plainWords(`Could not change ${row.name}`, "It changed elsewhere first"), tone: "danger" });
+        else setReceipt(notChanged(row.name, err));
       } finally {
         if (mounted.current) setBusy(false);
         const next = await loadRoster();
@@ -488,7 +502,7 @@ export function useRunsOn(scope?: string) {
       if (!engine?.profileId || !row) return;
       const verdict = acceptsRule(job, engine);
       if (!verdict.ok) {
-        setReceipt({ text: `REFUSED · ${verdict.reason}`, tone: "danger" });
+        setReceipt({ text: plainWords(`Could not put ${jobName(job, row)} on ${engine.name}`, sentence(verdict.reason ?? ""), "Nothing changed"), tone: "danger" });
         return;
       }
       const own = ownEntries(row);
@@ -542,8 +556,8 @@ export function useRunsOn(scope?: string) {
         setSelected(job);
         announceTaskReturn(null);
       } catch (err) {
-        if (isConflict(err)) setReceipt({ text: "CHANGED ELSEWHERE", tone: "danger" });
-        else setReceipt({ text: `REFUSED · ${codeToken(err)}`, tone: "danger" });
+        if (isConflict(err)) setReceipt({ text: plainWords(`Could not change ${jobName(job, row)}`, "It changed elsewhere first"), tone: "danger" });
+        else setReceipt(notChanged(jobName(job, row), err));
       } finally {
         if (mounted.current) setBusy(false);
         await loadRoster();
@@ -552,10 +566,12 @@ export function useRunsOn(scope?: string) {
     [detection, engineByKey, loadRoster, roster, rowOf, writeSummary],
   );
 
-  const refuse = useCallback((job: string, _key: string, reason: string) => {
+  const refuse = useCallback((job: string, key: string, reason: string) => {
     const label = jobName(job, rowOf(job));
-    setReceipt({ text: `REFUSED · ${label.toUpperCase()} · ${reason}`, tone: "danger" });
-  }, [rowOf]);
+    const engine = engineByKey(key);
+    const failed = engine ? `Could not put ${label} on ${engine.name}` : `Could not change ${label}`;
+    setReceipt({ text: plainWords(failed, sentence(reason) || "Not accepted", "Nothing changed"), tone: "danger" });
+  }, [engineByKey, rowOf]);
 
   const undo = useCallback(async () => {
     const step = undoStack[undoStack.length - 1];
@@ -622,8 +638,8 @@ export function useRunsOn(scope?: string) {
       if (mounted.current) setReceipt({ text, tone });
     } catch (err) {
       if (mounted.current) {
-        if (isConflict(err)) setReceipt({ text: `CHANGED ELSEWHERE · ${label}`, tone: "danger" });
-        else setReceipt({ text: `REFUSED · ${codeToken(err)}`, tone: "danger" });
+        if (isConflict(err)) setReceipt({ text: plainWords(`Could not undo ${label}`, "It changed elsewhere first"), tone: "danger" });
+        else setReceipt({ text: plainWords(`Could not undo ${label}`, "Nothing changed"), tone: "danger", title: sentence(codeToken(err)) });
       }
     } finally {
       if (mounted.current) setBusy(false);

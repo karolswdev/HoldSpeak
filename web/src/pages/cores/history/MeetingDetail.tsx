@@ -57,8 +57,8 @@ function deferredToken(value: unknown): string {
   const stamp = String(value ?? "").trim();
   if (!stamp) return "";
   const date = new Date(stamp);
-  if (Number.isNaN(date.getTime())) return `NOT NOW · UNTIL ${stamp}`;
-  return `NOT NOW · UNTIL ${date.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}`;
+  if (Number.isNaN(date.getTime())) return `Not now · Until ${stamp}`;
+  return `Not now · Until ${date.toLocaleDateString(undefined, { weekday: "short" })}`;
 }
 
 /** Phase 16 (the interior kit; the canvas window "Cutover sync"): the

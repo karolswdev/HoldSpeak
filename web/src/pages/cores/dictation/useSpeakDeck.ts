@@ -267,7 +267,7 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
     setLandedMs(null);
     setPhase("refused");
     setRefusal(code);
-    announce(`⚠ REFUSED · ${refusalLabel(code)}`, "warn");
+    announce(`⚠ Could not deliver the words · ${refusalLabel(code)} · Nothing was typed · Try again`, "warn");
   };
 
   /* THE FLAGSHIP ACT — release TALK and the words land where you aimed
@@ -415,7 +415,7 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
       announce("Listening");
     } catch (reason) {
       setOpenMic(false);
-      // A floor refusal names its owner ("FLOOR HELD MEETING"); anything
+      // A floor refusal names its owner ("A meeting holds the mic"); anything
       // else falls back to the shared dictation failure vocabulary.
       if (reason instanceof FloorHeldError) {
         refuse(reason.refusal);
@@ -500,12 +500,12 @@ export function useSpeakDeck(announce: (text: string, tone?: "ok" | "warn") => v
               String(reply.value ?? said),
             )}`
           : labelFor(kind, String(reply.value ?? correctionValue));
-      showReceipt({ token: "TAUGHT", tone: "ok", tail });
+      showReceipt({ token: "Taught", tone: "ok", tail });
       void corrections.reload();
     } catch {
       // An HTTP refusal carries no body the face can name; what is TRUE
       // either way is that nothing was written.
-      showReceipt({ token: "REFUSED", tone: "danger", tail: "nothing written" });
+      showReceipt({ token: "Not taught · The hub did not accept it", tone: "danger", tail: "Nothing written" });
     } finally {
       setBusy(false);
     }

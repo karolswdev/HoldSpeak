@@ -74,18 +74,27 @@ export const MIC_PHASE_LIVE: MicPhase[] = ["open", "segmenting", "held"];
 /* The kernel's own refusal vocabulary, rendered as WHAT in the fewest
    words. An unknown code rides through verbatim — never swallowed. */
 export const REFUSAL_LABELS: Record<string, string> = {
-  no_awaiting_agent: "NO AGENT AWAITING",
-  desktop_focus_unresolved: "NO FOCUSED APP",
-  desktop_type_driver_unavailable: "NO TYPING DRIVER",
-  desktop_type_claim_refused: "KERNEL CLAIM REFUSED",
-  desktop_type_refused: "KERNEL REFUSED",
-  delivery_pending: "OUTCOME UNKNOWN",
-  delivery_conflict: "DELIVERY CONFLICT",
-  no_delivery_target: "NO DELIVERY TARGET",
+  // W6-H words: sentence case; the face's own words, never the wire code.
+  no_awaiting_agent: "No agent waits for words",
+  desktop_focus_unresolved: "No app in front",
+  desktop_type_driver_unavailable: "No typing driver",
+  desktop_type_claim_refused: "The kernel did not allow it",
+  desktop_type_refused: "The kernel did not allow it",
+  delivery_pending: "Outcome not known",
+  delivery_conflict: "Another delivery is in progress",
+  no_delivery_target: "No place to deliver to",
 };
 
 export function refusalLabel(code: string): string {
-  return REFUSAL_LABELS[code] ?? code.replace(/_/g, " ").toUpperCase();
+  const known = REFUSAL_LABELS[code];
+  if (known) return known;
+  // The audio floor names its owner (`floor_held_meeting`, audioFloor.ts).
+  if (code.startsWith("floor_held_")) {
+    const owner = code.slice("floor_held_".length).replace(/_/g, " ").trim();
+    return owner && owner !== "unknown" ? `A ${owner} holds the mic` : "Another source holds the mic";
+  }
+  const said = code.replace(/_/g, " ").trim().toLowerCase();
+  return said ? said.charAt(0).toUpperCase() + said.slice(1) : "No reason given";
 }
 
 /** The named refusal behind a failed delivery, or "" when it is not one. */
@@ -126,21 +135,24 @@ export type TeachReceipt = {
    receipt the owner reads. `no_change` wrote nothing and is not a
    refusal — it is the honest "you changed nothing". */
 export const TEACH_REFUSALS: Record<string, TeachReceipt> = {
-  no_change: { token: "NO CHANGE" },
-  secret: { token: "REFUSED · SECRET", tone: "danger", tail: "nothing written" },
-  one_word: { token: "REFUSED · ONE WORD", tone: "danger", tail: "nothing written" },
-  empty: { token: "REFUSED · EMPTY", tone: "danger", tail: "nothing written" },
-  kind: { token: "REFUSED · KIND", tone: "danger", tail: "nothing written" },
+  // W6-H words: what did not happen and why, in sentence case; the tail
+  // says what stayed. The pair beside it is the next move (edit, Teach).
+  no_change: { token: "No change" },
+  secret: { token: "Not taught · It looks like a secret", tone: "danger", tail: "Nothing written" },
+  one_word: { token: "Not taught · Use two words or more", tone: "danger", tail: "Nothing written" },
+  empty: { token: "Not taught · Both sides need words", tone: "danger", tail: "Nothing written" },
+  kind: { token: "Not taught · Unknown kind of fix", tone: "danger", tail: "Nothing written" },
 };
 
-/** A named refusal, or the reason verbatim as a token — never swallowed. */
+/** A named refusal, or the reason in plain words — never swallowed. */
 export function teachReceiptFor(reason: string): TeachReceipt {
   const known = TEACH_REFUSALS[reason];
   if (known) return known;
-  const named = reason.trim()
-    ? `REFUSED · ${reason.replace(/_/g, " ").toUpperCase()}`
-    : "REFUSED";
-  return { token: named, tone: "danger", tail: "nothing written" };
+  const said = reason.replace(/_/g, " ").trim().toLowerCase();
+  const named = said
+    ? `Not taught · ${said.charAt(0).toUpperCase()}${said.slice(1)}`
+    : "Not taught";
+  return { token: named, tone: "danger", tail: "Nothing written" };
 }
 
 /** The receipt's spans are truncated at 40 characters (the design's cap). */

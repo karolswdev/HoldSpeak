@@ -91,7 +91,7 @@ describe("microphone ownership on the Speak face", () => {
     await openDetails();
 
     await waitFor(() =>
-      expect(screen.getByText("FLOOR HELD MEETING")).toBeTruthy(),
+      expect(screen.getByText("A meeting holds the mic")).toBeTruthy(),
     );
   });
 });

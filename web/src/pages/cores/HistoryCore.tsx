@@ -434,7 +434,7 @@ export function HistoryCore({ hero, scope }: CoreProps) {
         ? {
             key: "receipt",
             text: (
-              <span className="surface-footer-receipt-line" data-tone={receipt.tone} data-testid={receipt.run ? "meetings-run-receipt" : undefined}>
+              <span className="surface-footer-receipt-line" data-words="" data-tone={receipt.tone} data-testid={receipt.run ? "meetings-run-receipt" : undefined} title={receipt.title || undefined}>
                 {receipt.text}
               </span>
             ),

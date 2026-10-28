@@ -102,7 +102,7 @@ export function Knowledge() {
   const addFact = () => {
     const key = draftKey.trim();
     if (!key || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
-      announce("REFUSED · key format A-Z _ 0-9, letter first", "warn");
+      announce("Fact not added · Start the key with a letter, then use only A-Z, 0-9 and _ · Nothing changed", "warn");
       return;
     }
     void putKb({ ...kbFacts, [key]: draftValue.trim() });

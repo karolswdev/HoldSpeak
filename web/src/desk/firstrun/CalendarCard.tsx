@@ -123,8 +123,8 @@ export function CalendarCard({ step, lit, reselectNative = false, onUsed, before
       ) : null}
       {step.notAllowed && nativeAccessVisible ? (
         <div className="firstrun-fail" role="alert" data-testid="firstrun-calendar-denied">
-          <StateChip state="failure" label="CALENDAR · NOT ALLOWED" />
-          {macos?.state === "write_only" ? <span className="surface-token">WRITE ONLY</span> : null}
+          <StateChip state="failure" label="Calendar not allowed" />
+          {macos?.state === "write_only" ? <DotWord tone="warn">Write only</DotWord> : null}
           {/* PHILO-15 04 (gap 12): the way forward. His press opens System
               Settings > Privacy & Security > Calendars; Check again reads
               the access state after he changes it there. */}

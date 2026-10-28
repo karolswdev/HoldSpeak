@@ -335,7 +335,7 @@ def test_selected_note_ask_save_and_return(
             _raise_ask(page)
             _visible_before_scroll(ask, "Back to note")
             ask.get_by_role("button", name="Back to note").click()
-            expect(note).to_contain_text("SOURCE CHANGED")
+            expect(note).to_contain_text("The note changed since you asked")
             assert _selection_and_scroll(note)["text"] != QUOTE
             assert _visible_tail(note) == QUOTE + changed
             _current_caret_visible(note)

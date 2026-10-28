@@ -539,19 +539,19 @@ describe("AskWell", () => {
 });
 
 describe("PRCard + FilesChanged", () => {
-  it("all pending: CHECKS · 7 RUNNING, never CHECKS 0 OF 7; never 0 FAILED", () => {
+  it("all pending: Checks · 7 running, never Checks 0 of 7; never 0 failed", () => {
     const { container, rerender } = render(<PRCard number={9} title="t" checks={{ passed: 0, total: 7, running: 7 }} />);
-    expect(container.textContent).toContain("CHECKS · 7 RUNNING");
-    expect(container.textContent).not.toMatch(/\b0 OF\b|\b0 FAILED\b|\b0 RUNNING\b/);
+    expect(container.textContent).toContain("Checks · 7 running");
+    expect(container.textContent).not.toMatch(/\b0 of\b|\b0 failed\b|\b0 running\b/i);
     rerender(<PRCard number={9} title="t" checks={{ passed: 0, total: 7, failed: 2, running: 5 }} />);
-    expect(container.textContent).toContain("CHECKS · 2 FAILED");
-    expect(container.textContent).toContain("5 RUNNING");
-    expect(container.textContent).not.toMatch(/\b0 OF\b/);
+    expect(container.textContent).toContain("Checks · 2 failed");
+    expect(container.textContent).toContain("5 running");
+    expect(container.textContent).not.toMatch(/\b0 of\b/i);
     rerender(<PRCard number={9} title="t" checks={{ passed: 7, total: 7, failed: 0, running: 0 }} />);
-    expect(container.textContent).toContain("CHECKS 7 OF 7");
-    expect(container.textContent).not.toMatch(/\b0 (FAILED|RUNNING)\b/);
+    expect(container.textContent).toContain("Checks 7 of 7");
+    expect(container.textContent).not.toMatch(/\b0 (failed|running)\b/i);
     rerender(<PRCard number={9} title="t" checks={{ passed: 0, total: 3 }} />);
-    expect(container.textContent).toContain("CHECKS · 3 PENDING");
+    expect(container.textContent).toContain("Checks · 3 pending");
   });
 
   it("checks as a lamp, running only when running, review, branch → base", () => {
@@ -566,9 +566,9 @@ describe("PRCard + FilesChanged", () => {
       />,
     );
     const card = screen.getByRole("article", { name: /#413/ });
-    expect(within(card).getByText("CHECKS 6 OF 7")).toBeInTheDocument();
-    expect(within(card).getByText("1 RUNNING")).toBeInTheDocument();
-    expect(card.textContent).toContain("REVIEW NONE YET");
+    expect(within(card).getByText("Checks 6 of 7")).toBeInTheDocument();
+    expect(within(card).getByText("1 running")).toBeInTheDocument();
+    expect(card.textContent).toContain("Review none yet");
     expect(card.textContent).toContain("hs/write-the-rollback-runbook → main");
   });
 
@@ -579,7 +579,7 @@ describe("PRCard + FilesChanged", () => {
         <FilesChanged files={[{ path: "a.py", added: 3, removed: 1 }, { path: "b.md", added: 84, removed: 0 }]} />
       </>,
     );
-    expect(screen.queryByText(/RUNNING/)).toBeNull();
+    expect(screen.queryByText(/running/i)).toBeNull();
     expect(screen.getByText("Files changed · 2")).toBeInTheDocument();
     expect(screen.getByText("+3 −1")).toBeInTheDocument();
     expect(screen.getByText("+84")).toBeInTheDocument();

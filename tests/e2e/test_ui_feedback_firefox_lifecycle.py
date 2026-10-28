@@ -254,7 +254,14 @@ def test_loaded_settings_cancel_retry_generation_and_return(
                 assert receipt_one["transcript_status"] == "pending"
                 strip.get_by_role("button", name="Retry transcription", exact=True).wait_for()
                 before_retry = _bundle_facts(page, directory_one, draft_one)
-                assert before_retry["transcript_status"] == "failed"
+                assert before_retry["transcript_status"] == "failed", {
+                    "report_transcript": json.loads((directory_one / "report.json").read_text())["transcript"],
+                    "strip_text": strip.inner_text(),
+                    "admitted_calls": len(calls),
+                    "closes": list(closes),
+                    "transcribe_posts": [url for url in requests if "/transcribe" in url],
+                    "save_posts": sum(url.endswith("/api/ui-feedback") for url in requests),
+                }
                 posts_before_retry = sum(url.endswith("/api/ui-feedback") for url in requests)
                 with page.expect_response(lambda response: response.url.endswith(
                     f"/api/ui-feedback/{receipt_one['id']}/transcribe"

@@ -329,7 +329,9 @@ describe("the launch sheet follows the real answers (Astra #905)", () => {
     await screen.findByText("Ledger cutover sync");
     fireEvent.click(screen.getByTestId("hand-launch"));
     const receipt = await screen.findByTestId("hand-launch-receipt");
-    expect(receipt.textContent).toBe("LAUNCHED · BRIEF NOT SENT · SESSION GONE · KEPT ON THE HUB · SEND AGAIN");
+    expect(receipt.textContent).toBe("Brief not sent to the agent · It stays on the hub · Send again");
+    // W6-H words: the reason rides the hover title.
+    expect(receipt.getAttribute("title")).toBe("session gone");
     const stub = globalThis.fetch;
     vi.stubGlobal("fetch", vi.fn((url: string, init?: RequestInit) => {
       if (String(url).endsWith(`/api/agent/launches/${REAL_PENDING.launch_id}/deliver`)) {
@@ -447,7 +449,7 @@ describe("after Launch (Astra #905 round 2)", () => {
       await screen.findByTestId("hand-launch-receipt");
       await act(async () => { await vi.advanceTimersByTimeAsync(2100); });
       await waitFor(() => expect(screen.getByTestId("hand-launch-receipt").textContent)
-        .toBe("LAUNCHED · BRIEF NOT SENT · TRANSPORT ERROR · KEPT ON THE HUB · SEND AGAIN"));
+        .toBe("Brief not sent to the agent · It stays on the hub · Send again"));
       expect(screen.getByTestId("hand-send-again")).toBeTruthy();
     } finally {
       vi.useRealTimers();

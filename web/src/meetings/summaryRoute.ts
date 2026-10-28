@@ -234,21 +234,23 @@ export function refusalFact(refusal: {
   code?: string;
   plainReason?: string;
 }): string {
+  // W6-H words: sentence case, sans; the hub's full sentence rides the title.
   const words: Record<string, string> = {
-    selection_drift: "ROUTE CHANGED",
-    selection_hash_required: "ROUTE NOT READ",
-    route_unavailable: "NO SUMMARY ROUTE",
-    running: "SUMMARY IS RUNNING",
-    queued: "SUMMARY IS QUEUED",
-    ready: "SUMMARY IS READY",
-    reserved: "MEETING IS NOT SETTLED",
-    empty: "NO TRANSCRIPT",
-    no_assignment: "NO ENGINE FOR SUMMARIES",
+    selection_drift: "Route changed",
+    selection_hash_required: "Route not read",
+    route_unavailable: "No summary route",
+    running: "Summary is running",
+    queued: "Summary is queued",
+    ready: "Summary is ready",
+    reserved: "Meeting is not settled",
+    empty: "No transcript",
+    no_assignment: "No engine for summaries",
   };
   const known = words[String(refusal.code ?? "")];
   if (known) return known;
   const first = String(refusal.plainReason ?? "").split(/(?<=[.!?])\s/)[0] ?? "";
-  return (first.replace(/[.!?]+$/, "").trim() || "REFUSED").toUpperCase();
+  const said = first.replace(/[.!?]+$/, "").trim();
+  return said ? said.charAt(0).toUpperCase() + said.slice(1) : "The hub gave no reason";
 }
 
 export interface SummaryRefusal {

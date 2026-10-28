@@ -16,14 +16,14 @@ export interface BrowserEntry {
 }
 
 /* W6-F words: a refused read says what failed and what stayed, in plain
-   words; the code (`HTTP 404`, `READ REFUSED`) is the hover title only. */
+   words; the code (`HTTP 404`, `Read refused`) is the hover title only. */
 const isGone = (error: unknown) => error instanceof ApiError && error.status === 404;
 function readFailureWords(gone: boolean, path: string): string {
   return `${gone ? "Could not find" : "Could not read"} ${path || "the top folder"} · The last view stays here`;
 }
 function readFailureReason(error: unknown): string {
   if (error instanceof ApiError) return `HTTP ${error.status}${error.message ? ` · ${error.message}` : ""}`;
-  return error instanceof Error && error.message ? error.message : "READ REFUSED";
+  return error instanceof Error && error.message ? error.message : "Read refused";
 }
 
 export interface BrowserFailure {
@@ -89,7 +89,7 @@ export function useRepositoryBrowser(adapter: RepositoryReadAdapter, initialPath
           ? current.entries.map((entry, index) => index === current.index ? nextEntry : entry)
           : [...current.entries.slice(0, current.index + 1), nextEntry];
         return { entries, index: mode === "refresh" ? current.index : entries.length - 1, busy: null,
-          failure: missingInspection ? { kind: "file", path: inspectedPath!, message: readFailureWords(true, inspectedPath!), reason: "NOT IN THE TREE" } : null };
+          failure: missingInspection ? { kind: "file", path: inspectedPath!, message: readFailureWords(true, inspectedPath!), reason: "Not in the tree" } : null };
       });
       if (inspectedPath && !missingInspection) inspect(inspectedPath);
     }).catch((error: unknown) => {

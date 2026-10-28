@@ -132,6 +132,14 @@
 .desk-next .surface-footer-readiness[data-tone="warn"] {
   color: var(--warn);
 }
+/* W6-H words: a receipt in plain words (`Could not deliver the words · …`)
+   is quiet sans in sentence case; the caps token stays for a state word. */
+.desk-next .surface-footer-readiness[data-words] {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
 
 /* HS-129-05 — migrated receipt-bar children retain their prior slot face. */
 .desk-next .surface-footer-receipt > .surface-footer-receipt-line,
@@ -150,6 +158,13 @@
 .desk-next .surface-footer-receipt > .surface-footer-receipt-line[data-tone="danger"],
 .desk-next .surface-footer-receipt > .park-receipt > .surface-footer-receipt-line[data-tone="danger"] {
   color: var(--danger);
+}
+/* W6-H words: a failed park or restore reads in sentence case, sans. */
+.desk-next .surface-footer-receipt > .park-receipt > .surface-footer-receipt-line[data-words],
+.desk-next .surface-footer-receipt > .surface-footer-receipt-line[data-words] {
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+  text-transform: none;
 }
 /* PHILO-13-02 r2 — a park outcome (PARKED, RESTORED, NOT RESTORED, NOT
    PARKED) wraps instead of clipping, and its Restore / Retry stays whole. */

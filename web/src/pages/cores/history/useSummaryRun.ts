@@ -5,7 +5,7 @@
 // row, the hub's refusal, and the poll.
 import { useCallback, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { apiFetch, readableError } from "../../../lib/api";
-import { postSummaryRun, type PlannedRoute, type SummaryRefusal } from "../../../meetings/summaryRoute";
+import { postSummaryRun, refusalFact, type PlannedRoute, type SummaryRefusal } from "../../../meetings/summaryRoute";
 import type { MeetingDetailResponse } from "../core-types";
 import { clockTime, finishedRunReceipt, type Receipt, type RunIdentity } from "./helpers";
 
@@ -76,15 +76,16 @@ export function useSummaryRun(
         setRunningId(null);
         setRunRefusal({ meetingId, refusal: outcome.refusal });
         setReceipt({
-          text: `REFUSED · ${outcome.refusal.plainReason}`,
+          text: `Summary did not start · ${refusalFact(outcome.refusal)} · Nothing changed`,
           tone: "danger",
+          title: outcome.refusal.plainReason,
         });
         refreshFace();
         return;
       }
       const result = outcome.result;
       const identity: RunIdentity = { meetingId, jobId: String(result.jobId ?? meetingId) };
-      setReceipt({ text: `QUEUED ${clockTime(new Date().toISOString())}`, run: identity });
+      setReceipt({ text: `Queued at ${clockTime(new Date().toISOString())}`, run: identity });
       // HS-200-42: when the route says no drainer exists, polling every 3s for
       // 120s is a lie told forty times — nothing in the hub will move this job.
       // Stop the poll and refresh the row once. `runningId` is deliberately
@@ -127,7 +128,7 @@ export function useSummaryRun(
       }, 120_000);
     } catch (reason) {
       setRunningId(null);
-      setReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      setReceipt({ text: "Summary did not start · Nothing changed · Try again", tone: "danger", title: readableError(reason) });
     }
   }, [settleRun]);
 

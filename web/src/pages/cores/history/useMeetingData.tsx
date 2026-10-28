@@ -388,10 +388,10 @@ export function useMeetingData(
         await apiFetch(`/api/meetings/${encodeURIComponent(id)}/proposals`),
       );
       onReceipt({
-        text: decision === "approved" ? "APPROVED" : "REJECTED",
+        text: decision === "approved" ? "Approved" : "Rejected",
       });
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: `Could not ${decision === "approved" ? "approve" : "reject"} the proposal · Nothing changed · Try again`, tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }
@@ -424,10 +424,10 @@ export function useMeetingData(
           }
           : p
       )));
-      onReceipt({ text: "CONFIRMED" });
+      onReceipt({ text: "Confirmed" });
       await refreshOutcomeReview();
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: "Could not confirm the proposal · Nothing changed · Try again", tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }
@@ -436,8 +436,8 @@ export function useMeetingData(
   const retryOutcomeReview = async () => {
     setBusy(true);
     const refreshed = await refreshOutcomeReview();
-    if (refreshed) onReceipt({ text: "REFRESHED" });
-    else onReceipt({ text: "CONFIRMED · RETRY" });
+    if (refreshed) onReceipt({ text: "Refreshed" });
+    else onReceipt({ text: "Confirmed · Could not refresh the list · Try again" });
     setBusy(false);
   };
 
@@ -451,9 +451,9 @@ export function useMeetingData(
       setFtProposals((prev) => prev.map((p) => (
         p.id === proposalId ? { ...p, deferred_until: result.deferred_until ?? null } : p
       )));
-      onReceipt({ text: "NOT NOW" });
+      onReceipt({ text: "Moved to later" });
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: "Could not move the proposal to later · Nothing changed · Try again", tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }
@@ -470,10 +470,10 @@ export function useMeetingData(
       // The eligible guard belongs to the face, but a concurrent read can
       // still leave the hub with nothing to accept. Never print a counter of
       // zero; the receipt's useful fact is simply that confirmation finished.
-      onReceipt({ text: accepted > 0 ? `CONFIRMED ${accepted}` : "CONFIRMED" });
+      onReceipt({ text: accepted > 0 ? `Confirmed ${accepted}` : "Confirmed" });
       await refreshOutcomeReview();
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: "Could not confirm the reviewed proposals · Nothing changed · Try again", tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }
@@ -486,9 +486,9 @@ export function useMeetingData(
         method: "POST",
       });
       setFtProposals((prev) => prev.map((p) => (p.id === proposalId ? { ...p, state: "dismissed" } : p)));
-      onReceipt({ text: "DISMISSED" });
+      onReceipt({ text: "Dismissed" });
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: "Could not dismiss the proposal · Nothing changed · Try again", tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }
@@ -526,9 +526,9 @@ export function useMeetingData(
           }),
         };
       });
-      onReceipt({ text: verb === "done" ? "DONE" : "REOPENED" });
+      onReceipt({ text: verb === "done" ? "Done" : "Opened again" });
     } catch (reason) {
-      onReceipt({ text: `REFUSED · ${readableError(reason)}`, tone: "danger" });
+      onReceipt({ text: `Could not ${verb === "done" ? "mark the action done" : "open the action again"} · Nothing changed · Try again`, tone: "danger", title: readableError(reason) });
     } finally {
       setBusy(false);
     }

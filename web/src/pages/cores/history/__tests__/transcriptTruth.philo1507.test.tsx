@@ -49,10 +49,10 @@ describe("PHILO-15-07 the transcript never lies", () => {
 
   it("turns the QUEUED receipt into the run's final state", () => {
     const at = "2026-10-07T11:02:00";
-    expect(finishedRunReceipt("ready", at).text).toMatch(/^RAN · \d{1,2}:\d{2}/);
-    expect(finishedRunReceipt("complete", at).text).toMatch(/^RAN · /);
+    expect(finishedRunReceipt("ready", at).text).toMatch(/^Ran at \d{1,2}:\d{2}/);
+    expect(finishedRunReceipt("complete", at).text).toMatch(/^Ran at /);
     expect(finishedRunReceipt("error", at)).toMatchObject({ tone: "danger" });
-    expect(finishedRunReceipt("error", at).text).toMatch(/^FAILED · /);
-    expect(finishedRunReceipt("skipped", at).text).toMatch(/^SKIPPED · /);
+    expect(finishedRunReceipt("error", at).text).toMatch(/^Summary failed at \d\d:\d\d · The transcript stays · Run it again$/);
+    expect(finishedRunReceipt("skipped", at).text).toMatch(/^Skipped at /);
   });
 });

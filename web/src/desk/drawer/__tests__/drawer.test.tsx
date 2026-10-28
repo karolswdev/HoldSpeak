@@ -339,12 +339,12 @@ describe("PHILO-14 A2 the drawer", () => {
 
   it("Park leaves its receipt on the drawer, with Restore", async () => {
     await renderDrawer();
-    useDrawers.getState().setReceipt("p-ledger", { kind: "parked", text: "PARKED · Ledger cutover sync", ids: ["m-standup"] });
+    useDrawers.getState().setReceipt("p-ledger", { kind: "parked", text: "Parked Ledger cutover sync", ids: ["m-standup"] });
     const receipt = await screen.findByTestId("drawer-park-receipt");
-    expect(receipt).toHaveTextContent("PARKED · Ledger cutover sync");
+    expect(receipt).toHaveTextContent("Parked Ledger cutover sync");
     fireEvent.click(within(receipt).getByRole("button", { name: "Restore" }), { detail: 1 });
     await waitFor(() => expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m-standup/restore", { method: "POST" }));
-    await waitFor(() => expect(screen.getByTestId("drawer-park-receipt")).toHaveTextContent("RESTORED"));
+    await waitFor(() => expect(screen.getByTestId("drawer-park-receipt")).toHaveTextContent("Restored at"));
   });
 
   it("an empty drawer says so and counts nothing", async () => {
@@ -427,7 +427,7 @@ function member(over: Partial<DrawerMember> = {}): DrawerMember {
 describe("PHILO-15 16 the Project knows its repository", () => {
   const REPO = "karolswdev/holdspeak-dayone-rehearsal-1558";
 
-  it("Get Info with nothing selected: REPOSITORY · owner/name · NOT CLONED", async () => {
+  it("Get Info with nothing selected: REPOSITORY · owner/name · Not cloned", async () => {
     repo.state = { project_id: "p-ledger", repository: REPO, registered: true, cloned: false, watched: [REPO], host: "github.com" };
     await renderDrawer();
     expect(screen.queryByTestId("drawer-register")).toBeNull();
@@ -441,10 +441,10 @@ describe("PHILO-15 16 the Project knows its repository", () => {
       return el!;
     });
     expect(within(fact as HTMLElement).getByText("Repository")).toBeTruthy();
-    expect(within(fact as HTMLElement).getByText(`${REPO} · NOT CLONED`)).toBeTruthy();
+    expect(within(fact as HTMLElement).getByText(`${REPO} · Not cloned`)).toBeTruthy();
   });
 
-  it("a store the hub cannot read is NOT READ with Retry, never NOT REGISTERED (Astra r1 on #1000)", async () => {
+  it("a store the hub cannot read is Not read with Retry, never NOT REGISTERED (Astra r1 on #1000)", async () => {
     repo.state = { project_id: "p-ledger", repository: null, registered: false, cloned: false, watched: [REPO], host: "github.com", store: "not_read" };
     await renderDrawer();
     expect(screen.queryByTestId("drawer-register")).toBeNull();
@@ -452,7 +452,7 @@ describe("PHILO-15 16 the Project knows its repository", () => {
     render(<DrawerInfoWindow info={useDrawers.getState().infos[0]} />);
     const fact = await waitFor(() => {
       const el = document.querySelector('.object-info-fact[data-fact="repository"] dd');
-      expect(el?.textContent).toBe("NOT READ");
+      expect(el?.textContent).toBe("Not read");
       return el!;
     });
     expect(fact).toBeTruthy();
@@ -460,7 +460,7 @@ describe("PHILO-15 16 the Project knows its repository", () => {
     repo.state = { project_id: "p-ledger", repository: REPO, registered: true, cloned: false, watched: [REPO], host: "github.com", store: "read" };
     fireEvent.click(screen.getByTestId("info-repository-retry"));
     await waitFor(() =>
-      expect(document.querySelector('.object-info-fact[data-fact="repository"] dd')?.textContent).toBe(`${REPO} · NOT CLONED`),
+      expect(document.querySelector('.object-info-fact[data-fact="repository"] dd')?.textContent).toBe(`${REPO} · Not cloned`),
     );
   });
 
@@ -470,7 +470,7 @@ describe("PHILO-15 16 the Project knows its repository", () => {
     await renderDrawer();
     fireEvent.click(screen.getByRole("button", { name: "Get Info" }), { detail: 1 });
     render(<DrawerInfoWindow info={useDrawers.getState().infos[0]} />);
-    expect(await screen.findByText(`${REPO} · CLONED`)).toBeTruthy();
+    expect(await screen.findByText(`${REPO} · Cloned`)).toBeTruthy();
     expect(document.querySelector('.object-info-fact[data-fact="folder"] dd')?.textContent).toBe(folder);
   });
 
@@ -510,7 +510,7 @@ describe("PHILO-14 A2 Get Info window", () => {
     fireEvent.click(screen.getByRole("button", { name: "Park" }), { detail: 1 });
     await waitFor(() => expect(useDrawers.getState().infos).toEqual([]));
     expect(apiFetch).toHaveBeenCalledWith("/api/meetings/m1", { method: "DELETE" });
-    expect(useDrawers.getState().receipts.p).toEqual({ kind: "parked", text: "PARKED · Ledger cutover sync", ids: ["m1"] });
+    expect(useDrawers.getState().receipts.p).toEqual({ kind: "parked", text: "Parked Ledger cutover sync", ids: ["m1"] });
     expect(useDrawers.getState().revision).toBe(1);
   });
 

@@ -140,7 +140,7 @@ describe("the teach row's three FIELDs", () => {
     expect(sent).toHaveLength(1);
     expect(sent[0].init.json).toEqual({ kind: "target", value: "terminal_shell" });
     expect(result.current.receipt).toEqual({
-      token: "TAUGHT",
+      token: "Taught",
       tone: "ok",
       tail: "Terminal shell",
     });
@@ -181,7 +181,7 @@ describe("the receipts — a token pair, never a sentence", () => {
       said: "Ship the Q4 platform on schedule",
     });
     expect(result.current.receipt).toEqual({
-      token: "TAUGHT",
+      token: "Taught",
       tone: "ok",
       tail: "queue for → Q4",
     });
@@ -193,30 +193,30 @@ describe("the receipts — a token pair, never a sentence", () => {
     await act(async () => {
       await result.current.teach();
     });
-    expect(result.current.receipt).toEqual({ token: "NO CHANGE" });
+    expect(result.current.receipt).toEqual({ token: "No change" });
   });
 
-  it("REFUSED · SECRET says what happened, and that nothing was written", async () => {
+  it("Not taught · It looks like a secret says what happened, and that nothing was written", async () => {
     wire({}, { recorded: false, reason: "secret" });
     const { result } = await deckWithResult();
     await act(async () => {
       await result.current.teach();
     });
     expect(result.current.receipt).toEqual({
-      token: "REFUSED · SECRET",
+      token: "Not taught · It looks like a secret",
       tone: "danger",
-      tail: "nothing written",
+      tail: "Nothing written",
     });
   });
 
-  it("REFUSED · ONE WORD is the store's own refusal, named on the face", async () => {
+  it("Not taught · Use two words or more is the store's own refusal, named on the face", async () => {
     wire({}, { recorded: false, reason: "one_word" });
     const { result } = await deckWithResult();
     await act(async () => result.current.pickCorrectionKind("target"));
     await act(async () => {
       await result.current.teach();
     });
-    expect(result.current.receipt?.token).toBe("REFUSED · ONE WORD");
+    expect(result.current.receipt?.token).toBe("Not taught · Use two words or more");
   });
 
   it("reads `taught` when a route answers with the mirror key alone (R4)", async () => {
@@ -225,7 +225,7 @@ describe("the receipts — a token pair, never a sentence", () => {
     await act(async () => {
       await result.current.teach();
     });
-    expect(result.current.receipt?.token).toBe("TAUGHT");
+    expect(result.current.receipt?.token).toBe("Taught");
     expect(result.current.receipt?.tail).toBe("postgress → PostgreSQL");
   });
 

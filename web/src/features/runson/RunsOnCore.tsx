@@ -431,7 +431,7 @@ function AddByKind({
                   </Button>
                 ) : agent.install ? (
                   <span className="runson-kind-install">
-                    <span className="surface-token">NOT ON THIS MAC · INSTALL</span>
+                    <DotWord tone="idle">Not on this Mac · Install it with</DotWord>
                     <code data-testid={`runson-agent-install-${agent.preset}`}>{agent.install}</code>
                   </span>
                 ) : null}

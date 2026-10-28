@@ -8,7 +8,7 @@
  *
  *  A row's Open goes to where the object lives (the Meetings window, its
  *  Workbench, its Project drawer). Its verb is Restore, on that kind's own
- *  route, with the one park receipt (`RESTORED hh:mm`, or NOT RESTORED +
+ *  route, with the one park receipt (`RESTORED hh:mm`, or Could not restore +
  *  Retry). A kind the hub could not read is named, never an empty kind.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";

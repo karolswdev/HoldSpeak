@@ -58,7 +58,7 @@ describe("PHILO-15 16 Add to Project ▸", () => {
     expect(rows.join("|")).toContain("Hiring loop");
     expect(rows.join("|")).not.toContain("Old archive");
     fireEvent.click(within(menu).getByText("Payments ledger cutover"));
-    expect(await screen.findByTestId("add-to-project-receipt")).toHaveTextContent("IN PAYMENTS LEDGER CUTOVER");
+    expect(await screen.findByTestId("add-to-project-receipt")).toHaveTextContent("In Payments ledger cutover");
     expect(calls.filter((c) => c.method === "POST").map((c) => c.url)).toEqual([linkMeetingPath("p-ledger", "m-sync")]);
     expect(refresh).toHaveBeenCalled();
   });
@@ -77,7 +77,7 @@ describe("PHILO-15 16 Add to Project ▸", () => {
     const menu = await screen.findByRole("menu", { name: "Add to Project" });
     await waitFor(() => expect(within(menu).getByRole("menuitemcheckbox", { name: /Payments ledger cutover/ })).toHaveAttribute("aria-checked", "true"));
     fireEvent.click(within(menu).getByText("Payments ledger cutover"));
-    expect(await screen.findByTestId("add-to-project-receipt")).toHaveTextContent("IN PAYMENTS LEDGER CUTOVER");
+    expect(await screen.findByTestId("add-to-project-receipt")).toHaveTextContent("In Payments ledger cutover");
     expect(calls.filter((c) => c.method === "POST")).toEqual([]);
   });
 

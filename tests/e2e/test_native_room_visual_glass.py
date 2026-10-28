@@ -218,7 +218,7 @@ def test_room_files_before_compact_sources_and_real_note_return(
             assert NOTE_TITLE in note.inner_text()
             page.screenshot(path=str(shots / f"room-note-open-{width}.png"))
             room = _return_project(page, note, PROJECT_A_NAME, width)
-            expect(room.get_by_test_id("room-files-return")).to_have_text("FILED HERE")
+            expect(room.get_by_test_id("room-files-return")).to_have_text("Filed here")
             files = room.get_by_test_id("room-files")
             probes["returnFocus"] = _focused_filed_row(room)
             probes["returnColumns"] = _columns(files)
@@ -321,7 +321,8 @@ def test_room_files_before_compact_sources_and_real_note_return(
             room = _open_project(page, PROJECT_A, PROJECT_A_NAME)
             sources_fold = room.get_by_test_id("room-fold-sources")
             expect(sources_fold.locator("details").first).to_have_attribute("open", "")
-            expect(sources_fold.get_by_text("SOURCES NOT READ")).to_be_visible()
+            expect(sources_fold.get_by_text("Could not read the sources · Nothing changed · Try again")).to_be_visible()
+            expect(sources_fold.get_by_test_id("room-sources-not-read")).to_contain_text("Sources not read")
             expect(room.get_by_test_id("room-fold-files")).to_be_visible()
             expect(room.get_by_test_id("room-add-sources")).to_have_count(0)
             expect(room.locator("[data-testid^='door-row-']")).to_have_count(0)
@@ -339,7 +340,8 @@ def test_room_files_before_compact_sources_and_real_note_return(
             }""")
             fault["retry_armed"] = True
             retry.click()
-            expect(sources_fold.get_by_text("SOURCES NOT READ")).to_have_count(0)
+            expect(sources_fold.get_by_text("Could not read the sources · Nothing changed · Try again")).to_have_count(0)
+            expect(sources_fold.get_by_test_id("room-sources-not-read")).to_have_count(0)
             expect(sources_fold.locator("details").first).not_to_have_attribute("open", "")
             expect(room.get_by_test_id("room-add-sources")).to_have_count(0)
             assert fault["reads"] >= 1 and fault["real_reads"] >= 1, fault

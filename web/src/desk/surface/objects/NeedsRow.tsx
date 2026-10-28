@@ -27,6 +27,8 @@ export interface NeedsRowProps {
   name: string;
   /** The one fact (the question, the held call, `Sam Rivera · 1:1`). */
   fact?: string;
+  /** W6-H words: the raw reason behind a failure fact, for the hover only. */
+  factTitle?: string;
   /** The fact is a command (a held call): lines kept, mono, wraps. */
   factCode?: boolean;
   /** Phase 16: the fact is an agent's words: AgentWords, compact, two
@@ -88,12 +90,12 @@ export function stateWords(label: string): string {
 const LINK_WORDS = new Set(["ON", "FOR", "WITH", "BY", "FROM"]);
 const COMMON_AFTER_LINK = new Set(["YOUR", "YOU", "THE", "A", "AN", "IT", "THIS", "THAT", "ME", "HIM", "HER", "THEM", "REVIEW", "TRACK", "HOLD", "TIME"]);
 
-export function NeedsRow({ id, kind, name, fact, factCode, factWords, lamp, verbs, sprite, project, kindWord, plate, glyphLabel, dotState }: NeedsRowProps) {
+export function NeedsRow({ id, kind, name, fact, factTitle, factCode, factWords, lamp, verbs, sprite, project, kindWord, plate, glyphLabel, dotState }: NeedsRowProps) {
   const factClass = factCode ? "needs-row-fact is-code" : "needs-row-fact";
   const factNode = !fact ? null : factWords && !factCode ? (
     <AgentWords compact lines={2} className="needs-row-fact needs-row-words" text={fact} />
   ) : (
-    <span className={factClass}>{fact}</span>
+    <span className={factClass} title={factTitle || undefined}>{fact}</span>
   );
   return (
     <li className="needs-row" data-object-id={id} data-kind={kind} data-plate={plate ? "true" : undefined}

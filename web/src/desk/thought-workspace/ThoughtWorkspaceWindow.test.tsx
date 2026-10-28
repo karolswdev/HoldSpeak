@@ -358,7 +358,7 @@ describe("ThoughtWorkspaceWindow — the four bands", () => {
     field.setSelectionRange(body.length, body.length);
     act(() => requestAskReturn({ ...source, body: `${body} changed` }));
     expect(screen.queryByTestId("return-range")).toBeNull();
-    expect(screen.getByText("SOURCE CHANGED")).toBeInTheDocument();
+    expect(screen.getByText("The note changed since you asked · Select the text again")).toBeInTheDocument();
     expect(restoreSelectionMock).toHaveBeenCalledWith(body.length, body.length);
     expect(field).toHaveFocus();
     expect(field.selectionStart).toBe(body.length);
