@@ -3535,7 +3535,7 @@ button.surface-edit-in-place:hover {
     z-index: var(--desk-z-transient);
     gap: 7px;
     padding: 10px;
-    box-shadow: inset 0 1px 0 var(--border), var(--elev-2);
+    box-shadow: inset 0 1px 0 var(--border), var(--depth-menu); /* DELIGHT slice 5: a sheet is the menu step (was --elev-2, the dark shell's) */
   }
   .model-library-detail .gadget-fold {
     display: none;
@@ -3677,7 +3677,7 @@ button.surface-edit-in-place:hover {
   overflow: hidden;
   padding: var(--space-3);
   background: var(--desk-window-fill);
-  box-shadow: inset 0 0 0 1px var(--border), var(--elev-2);
+  box-shadow: inset 0 0 0 1px var(--border), var(--depth-menu); /* DELIGHT slice 5: a sheet is the menu step (was --elev-2, the dark shell's) */
 }
 .assignment-sheet-body { display: grid; align-content: start; gap: var(--space-3); min-block-size: 0; overflow-y: auto; padding-block: var(--space-2); }
 .assignment-sheet-error { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }

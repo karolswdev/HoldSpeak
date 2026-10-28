@@ -674,3 +674,74 @@
   font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
 }
+
+/* DELIGHT slice 5 (2026-10-28) — Since this morning: after 17:00 the day
+   ends with what got done, newest first. One object row each (a library
+   Button): the kind's 20 px glyph on its seat, the title, one quiet word,
+   the time. The row's hover is the kind's 8 % wash (colour only; nothing
+   moves). 30 px rows; 44 px on the phone. */
+.desk-next .today-done-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0 0 0 22px;
+  list-style: none;
+  min-width: 0;
+}
+.desk-next .today-done-list > li { min-width: 0; }
+.desk-next .today .today-done-row {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto 44px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--wb-row-dense);
+  padding: 4px 8px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--wb-rule-soft) 60%, transparent);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-text);
+  text-align: left;
+  font: 400 13px / 1.35 var(--font-sans);
+  transition: background-color var(--duration-short) var(--ease-standard);
+}
+.desk-next .today .today-done-row:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--row-kind) 8%, var(--wb-paper));
+}
+.desk-next .today .today-done-row:focus-visible {
+  outline: 2px solid var(--wb-sel);
+  outline-offset: -2px;
+}
+.desk-next .today-done-row > img { width: 20px; height: 20px; }
+.desk-next .today-done-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.desk-next .today-done-word,
+.desk-next .today-done-time {
+  font: 400 12px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+  white-space: nowrap;
+}
+.desk-next .today-done-time {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+@container surface (max-width: 559.9px) {
+  .desk-next .today-done-list { padding-left: 0; }
+  .desk-next .today .today-done-row {
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    min-height: 44px;
+  }
+  /* On the phone the time steps out; the word stays (the list is newest first). */
+  .desk-next .today-done-time { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .desk-next .today .today-done-row { transition: none; }
+}

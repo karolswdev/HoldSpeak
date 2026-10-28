@@ -523,7 +523,7 @@ body:has(.desk-next .desk-pullout:not(.is-card)) .ambient-qlippy {
   border: 1px solid var(--wb-rule-soft);
   border-radius: var(--desk-window-radius);
   background: var(--wb-paper);
-  box-shadow: var(--desk-window-shadow-rest);
+  box-shadow: var(--depth-menu); /* DELIGHT slice 5: the picker is a sheet, the menu step (was --desk-window-shadow-rest, a resting window's) */
   display: block;
 }
 /* The picker composes the same fields, rows and Buttons as the Desk. */

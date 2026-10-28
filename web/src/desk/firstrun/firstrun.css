@@ -34,7 +34,7 @@
   --gleam-2: var(--wb-steel-2);
   --shade-1: var(--wb-ink);
   color: var(--wb-text);
-  box-shadow: 0 24px 80px var(--shadow-ink-1);
+  box-shadow: var(--depth-paper); /* DELIGHT slice 5: a sheet on the floor is the paper step (was 0 24px 80px var(--shadow-ink-1)) */
 }
 
 .firstrun-heading {

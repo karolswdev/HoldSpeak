@@ -1111,8 +1111,8 @@
       },
       {
         "name": "--desk-transient-shadow",
-        "value": "none",
-        "doc": "HS-110-01: no shadow on menus — border only"
+        "value": "var(--depth-menu)",
+        "doc": "DELIGHT slice 5 (2026-10-28): a transient (the window switcher, the pane picker) takes the depth scale's menu step; was none (HS-110-01, border only), parked when the menus took --depth-menu"
       },
       {
         "name": "--desk-window-pad-x",

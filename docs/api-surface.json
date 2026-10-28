@@ -7104,6 +7104,16 @@
       ]
     },
     {
+      "path": "/api/today/since-morning",
+      "methods": [
+        "GET"
+      ],
+      "module": "web.routes.today",
+      "consumers": [
+        "web"
+      ]
+    },
+    {
       "path": "/api/tts",
       "methods": [
         "POST"

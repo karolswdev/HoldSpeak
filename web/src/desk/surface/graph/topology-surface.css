@@ -118,7 +118,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
-  box-shadow: var(--elev-1);
+  box-shadow: var(--depth-row); /* DELIGHT slice 5: a node card at rest is the row step (was --elev-1, the dark shell's) */
   cursor: pointer;
   z-index: var(--z-sticky, 10);
   font-family: inherit;
@@ -129,7 +129,7 @@
 
 .desk-next .surface-topology-node:hover {
   border-color: var(--accent);
-  box-shadow: var(--elev-2);
+  box-shadow: var(--depth-card); /* DELIGHT slice 5: a lifted node is the card step (was --elev-2, the dark shell's) */
 }
 
 .desk-next .surface-topology-node:focus-visible {
@@ -139,7 +139,7 @@
 
 .desk-next .surface-topology-node[data-selected] {
   border-color: var(--accent);
-  box-shadow: var(--elev-2), 0 0 0 1px var(--accent-tint);
+  box-shadow: var(--depth-card), 0 0 0 1px var(--accent-tint); /* DELIGHT slice 5: was --elev-2 */
 }
 
 /* ── Home node: visually anchored, distinct ── */

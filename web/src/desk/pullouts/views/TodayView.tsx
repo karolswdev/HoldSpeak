@@ -13,7 +13,7 @@ import { Button } from "../../../components/signal/Signal";
 import { apiFetch } from "../../../lib/api";
 import { openSurfaceOr } from "../../shell";
 import { openSourceRef } from "../../surface/citations";
-import { calendarOpener } from "../../openObject";
+import { calendarOpener, openDecisionRecord, openRef } from "../../openObject";
 import { useDesk } from "../../store";
 import { useNeedFaces, useDropped, NeedsDroppedReceipt } from "../../needs/NeedsDrawer";
 import { TodayNeeds } from "../../needs/TodayNeeds";
@@ -137,6 +137,77 @@ function readDaySaid(): string | null {
 }
 function writeDaySaid(key: string): void {
   try { window.localStorage.setItem(DAY_SAID_KEY, key); } catch { /* a private window: said again */ }
+}
+
+/** DELIGHT slice 5 (2026-10-28, canvases/delight-2026-10-27.html "Today
+ *  knows the hour", the evening): after 17:00 Today lists what got done
+ *  since the morning (`GET /api/today/since-morning`: tasks ticked,
+ *  decisions recorded, notes filed, sends sent, meetings held), newest
+ *  first, each an object row that opens its object. It is said once per
+ *  day: the first evening open shows the list; a later open the same day
+ *  folds it to one line (the "That is the day" pattern, slice 3). */
+export const EVENING_HOUR = 17;
+export const EVENING_SAID_KEY = "holdspeak.today.eveningSaid";
+export type DoneRow = { kind: string; ref: string; title: string; word: string; at: string };
+type DoneRead = { since?: string; items?: DoneRow[] };
+function readEveningSaid(): string | null {
+  try { return window.localStorage.getItem(EVENING_SAID_KEY); } catch { return null; }
+}
+function writeEveningSaid(key: string): void {
+  try { window.localStorage.setItem(EVENING_SAID_KEY, key); } catch { /* a private window: said again */ }
+}
+/** A done row's 20 px glyph (the kind's own D object). */
+const DONE_SPRITE: Record<string, string> = {
+  action: "action-item", decision: "decision", note: "note", send: "artifact", meeting: "meeting",
+};
+/** A done row opens its object: a decision record in the Decisions reader,
+ *  every other ref through the one open grammar. */
+export function openDone(ref: string): void {
+  if (ref.startsWith("decision_record:")) openDecisionRecord(ref.slice("decision_record:".length));
+  else openRef(ref);
+}
+
+function SinceThisMorning({ rows, failed, open, onToggle, onRetry, now }: {
+  rows: readonly DoneRow[]; failed: boolean; open: boolean; onToggle: () => void; onRetry: () => void; now: Date;
+}) {
+  if (failed) {
+    return (
+      <section className="today-fold today-done" data-testid="today-done" aria-label="Since this morning">
+        <ReadFailed what="today's work" onRetry={onRetry} testId="today-done-failed" />
+      </section>
+    );
+  }
+  const shown = open && rows.length > 0;
+  return (
+    <section className="today-fold today-done" data-testid="today-done" aria-label="Since this morning">
+      <Button variant="chrome" className="today-fold-head" aria-expanded={rows.length ? shown : undefined}
+        data-testid="today-done-toggle" onClick={onToggle} disabled={!rows.length}>
+        <span className="today-fold-mark" aria-hidden="true">{rows.length ? (shown ? "▾" : "▸") : ""}</span>
+        <span className="today-fold-label">Since this morning</span>
+        <span className="today-fold-counts" data-testid="today-done-counts">
+          {rows.length ? `${rows.length} done` : "Nothing done yet"}
+        </span>
+      </Button>
+      {shown ? (
+        <ul className="today-done-list" data-testid="today-done-rows">
+          {rows.map((row) => {
+            const at = when(row.at);
+            return (
+              <li key={`${row.kind}:${row.ref}:${row.at}`}>
+                <Button variant="chrome" className="today-done-row" data-kind={row.kind} data-testid="today-done-row"
+                  onClick={() => openDone(row.ref)}>
+                  <img src={`${GLYPHS}${DONE_SPRITE[row.kind] ?? "artifact"}.png`} alt="" width={20} height={20} draggable={false} />
+                  <span className="today-done-title">{row.title}</span>
+                  <span className="today-done-word">{row.word}</span>
+                  <span className="today-done-time">{at ? (startOfDay(at) === startOfDay(now) ? clock(at) : SHORT_DAYS[at.getDay()]) : ""}</span>
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </section>
+  );
 }
 
 /** `in 68 min`, `in 2 h 05 min`, `now`. */
@@ -308,6 +379,11 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   // MUST 1 (Astra r1 on #1111): the last summary made from here keeps its
   // receipt (every place the run reached) after its row leaves the spine.
   const [justMade, setJustMade] = useState<{ id: string; title: string } | null>(null);
+  // DELIGHT slice 5: Since this morning, read after 17:00 only.
+  const evening = now.getHours() >= EVENING_HOUR;
+  const eveningRef = useRef(evening);
+  eveningRef.current = evening;
+  const [done, setDone] = useState<{ rows: DoneRow[]; failed: boolean } | null>(null);
 
   // PHILO-17 (Astra r1 on #1110, MUST 3): a source that could not be read
   // says so (with Retry); it never reads as empty.
@@ -339,6 +415,13 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
         if (briefRead.ok) setBrief(briefRead.v ?? null);
         // A Prepared read that fails keeps the last block (never invents none).
         if (preparedRead.ok) setPrepared(preparedRead.v ?? null);
+        if (eveningRef.current) {
+          const doneRead = await apiFetch<DoneRead>("/api/today/since-morning")
+            .then((v) => ({ ok: true as const, v }), () => ({ ok: false as const }));
+          // A read that fails says so; one that answers keeps the hub's order (newest first).
+          setDone((current) => doneRead.ok ? { rows: doneRead.v?.items ?? [], failed: false }
+            : { rows: current?.rows ?? [], failed: !current?.rows.length });
+        }
         setFailed({ door: !doorRead.ok, meetings: !meetingRead.ok, brief: !briefRead.ok });
         setLoaded(true);
       } while (again.current);
@@ -646,6 +729,14 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
   const dayDone = loaded && !failed.door && ahead === 0 && metToday && now.getHours() >= 12
     && saidOn !== dayKey(now);
   useEffect(() => { if (dayDone) writeDaySaid(dayKey(now)); }, [dayDone, now]);
+  // The evening list is said once per day: open on the first evening read.
+  const [eveningSaidOn] = useState(readEveningSaid);
+  const [sinceOpen, setSinceOpen] = useState<boolean | null>(null);
+  const sinceShown = sinceOpen ?? eveningSaidOn !== dayKey(now);
+  const doneLoaded = done !== null && !done.failed;
+  // The clock passes 17:00 with Today open: one more read fetches the list.
+  useEffect(() => { if (evening && loaded && done === null) void load(); }, [evening, loaded, done, load]);
+  useEffect(() => { if (evening && doneLoaded) writeEveningSaid(dayKey(now)); }, [evening, doneLoaded, now]);
   const statusItems: Array<StatusBarItem | null> = [
     dayDone
       ? { key: "day", lamp: "ok", text: "That is the day", testId: "today-status-day" }
@@ -703,6 +794,10 @@ export function TodayView({ sinceRequest = 0 }: { sinceRequest?: number }) {
           {actError?.key === "prepare" ? <span role="status"><DotWord tone="fail">{actError.text}</DotWord></span> : null}
         </Toolbar>
         <div className="today-scroll">
+          {evening && done ? (
+            <SinceThisMorning rows={done.rows} failed={done.failed} open={sinceShown} now={now}
+              onToggle={() => setSinceOpen(!sinceShown)} onRetry={retry} />
+          ) : null}
           <PreparedBlock read={prepared} events={door?.upcoming ?? []} />
           <div className="today-grid">
             <TodayNeeds work={rows.work} count={rows.needs.count} now={now} limit={phone ? NEEDS_TOP_PHONE : NEEDS_TOP}
