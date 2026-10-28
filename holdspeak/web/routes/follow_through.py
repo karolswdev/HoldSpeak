@@ -94,7 +94,7 @@ def build_follow_through_router(ctx: WebContext) -> APIRouter:
     principal = lambda request: getattr(request.state, "principal", UNAUTHENTICATED)
 
     @router.get("/board")
-    async def board(
+    def board(
         request: Request,
         project_id: str | None = None,
         owner: str | None = None,
@@ -111,7 +111,7 @@ def build_follow_through_router(ctx: WebContext) -> APIRouter:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @router.post("/complete")
-    async def complete(request: Request, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+    def complete(request: Request, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
         try:
             return service.complete(
                 principal(request),
@@ -123,7 +123,7 @@ def build_follow_through_router(ctx: WebContext) -> APIRouter:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     @router.post("/commit-decision")
-    async def commit_decision(request: Request, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
+    def commit_decision(request: Request, body: dict[str, Any] = Body(default={})) -> dict[str, Any]:
         try:
             return service.commit_decision(
                 principal(request),
