@@ -184,7 +184,7 @@ describe("on a call", () => {
     await waitFor(() => expect(calls).toContain('POST /api/calls/c9b1e0/decide {"decision":"approve"}'));
     await waitFor(() => expect(screen.queryByTestId("calls-hold")).toBeNull());
     const done = screen.getAllByTestId("calls-result").map((row) => row.textContent);
-    expect(done).toContain("➤Runbook reminder to Platform channelSent on your yes");
+    expect(done).toContain("Runbook reminder to Platform channelSent on your yes");
     // The transcript stays after the decide (the answer is a summary).
     expect(screen.getAllByTestId("live-transcript-line")).toHaveLength(callLive.transcript.length);
     expect(status()).not.toContain("Waiting for your answer");
@@ -244,8 +244,8 @@ describe("an ended call opens as a document", () => {
     expect(await screen.findAllByTestId("live-transcript-line")).toHaveLength(callEnded.transcript.length);
     expect(screen.queryByTestId("live-listening")).toBeNull();
     expect(screen.getAllByTestId("calls-result").map((row) => row.textContent)).toEqual([
-      "NTomorrow: three meetings, two reviewsWrote",
-      "➤Runbook reminder to Platform channelSent on your yes",
+      "Tomorrow: three meetings, two reviewsWrote",
+      "Runbook reminder to Platform channelSent on your yes",
     ]);
     fireEvent.click(screen.getByTestId("calls-open-note"));
     expect(mocks.openRef).toHaveBeenCalledWith("note:call-c7a2f1");

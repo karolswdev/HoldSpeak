@@ -83,8 +83,8 @@
   border-radius: 4px;
   background: color-mix(in srgb, var(--wb-info-ink) 12%, var(--wb-paper));
   color: var(--wb-info-ink);
-  font: 700 12px / 1 var(--font-sans);
 }
+.desk-next .calls-result-mark .kit-toolglyph { width: 14px; height: 14px; color: inherit; }
 .desk-next .calls-result[data-kind="action"] .calls-result-mark,
 .desk-next .calls-result[data-kind="task"] .calls-result-mark {
   background: color-mix(in srgb, var(--wb-ok-ink) 14%, var(--wb-paper));

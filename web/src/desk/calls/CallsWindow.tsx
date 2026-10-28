@@ -22,7 +22,7 @@ import { openRef } from "../openObject";
 import { openSurfaceOr } from "../shell";
 import { spriteUrl } from "../sprites";
 import { useWindowInterior } from "../surface/interior";
-import { StatusBar, TickNumber, ToolGlyph, Toolbar, countWords, type StatusBarItem } from "../surface/kit";
+import { StatusBar, TickNumber, ToolGlyph, Toolbar, countWords, type StatusBarItem, type ToolGlyphKind } from "../surface/kit";
 import { ObjectList, type ObjectListRow, type ObjectListSort, type ObjectListTone } from "../surface/objects/ObjectList";
 import { SurfaceState } from "../surface/Surface";
 import { decide, hangUp, placeCall, readCall, refusalWords, useCalls, withTranscript } from "./api";
@@ -97,14 +97,15 @@ const EFFECT_WORDS: Record<CallResult["effect"], string> = {
   sent: "Sent on your yes",
 };
 
-const KIND_MARK: Record<string, string> = { note: "N", action: "✓", task: "✓", send: "➤", decision: "D", project: "P" };
+/** A result's kind mark: the toolbar glyph of its kind (kit ToolGlyph). */
+const KIND_MARK: Record<string, ToolGlyphKind> = { note: "note", action: "done", task: "done", send: "send", decision: "summary", project: "project" };
 
 function ResultRow({ kind, label, word, onOpen, testId }: {
   kind: string; label: string; word: string; onOpen?: () => void; testId?: string;
 }) {
   return (
     <Button variant="chrome" className="calls-result" data-kind={kind} onClick={onOpen} disabled={!onOpen} data-testid={testId}>
-      <span className="calls-result-mark" aria-hidden="true">{KIND_MARK[kind] ?? "•"}</span>
+      <span className="calls-result-mark" aria-hidden="true"><ToolGlyph kind={KIND_MARK[kind] ?? "open"} /></span>
       <span className="calls-result-label">{label}</span>
       <span className="calls-result-word">{word}</span>
     </Button>

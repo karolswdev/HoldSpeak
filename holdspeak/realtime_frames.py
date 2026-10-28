@@ -118,11 +118,6 @@ RUNTIME_FRAME_TYPES: tuple[str, ...] = (
 #: Frames the hub emits that no web surface listens for, WITH the reason.
 #: Every entry here is a deliberate, named exception — never a silent one.
 EMITTED_WITHOUT_CONSUMER: dict[str, str] = {
-    "call_state": (
-        "Calls (2026-10-28): the hub slice ships first; the Calls window, "
-        "Settings > Calls and the phone tile (the FACES lane, design doc "
-        "betterment/calls §6) subscribe to it."
-    ),
     "wake_armed": (
         "Dormant desktop wake-word leg: arming is a host-side hotkey window "
         "with no web affordance; the web consumes only its result "

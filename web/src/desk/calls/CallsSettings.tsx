@@ -94,7 +94,6 @@ function CheckoutField({ value, busy, onSave }: { value: string; busy: boolean; 
     <span className="calls-field-line">
       <StringGadget
         label="ai-phone checkout"
-        mic={false}
         value={draft}
         onChange={setDraft}
         placeholder="~/dev/ai-phone"
@@ -126,7 +125,6 @@ function NumbersField({ numbers, busy, onSave }: { numbers: string[]; busy: bool
         <StringGadget
           label="Add a number"
           type="tel"
-          mic={false}
           value={draft}
           onChange={setDraft}
           placeholder="+1 212 555 0142"
