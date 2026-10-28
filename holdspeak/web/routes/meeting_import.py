@@ -56,7 +56,7 @@ def build_meeting_import_router(ctx) -> APIRouter:
         return getattr(request.state, "principal", UNAUTHENTICATED)
 
     @router.post("/api/meetings/import")
-    async def import_recording(
+    def import_recording(
         request: Request,
         file: UploadFile = File(...),
         title: Optional[str] = Form(None),
@@ -126,7 +126,7 @@ def build_meeting_import_router(ctx) -> APIRouter:
         return JSONResponse(result, status_code=202)
 
     @router.post("/api/meetings/{meeting_id}/transcribe")
-    async def transcribe_meeting(request: Request, meeting_id: str):
+    def transcribe_meeting(request: Request, meeting_id: str):
         """PHILO-17: Transcribe a meeting saved with its audio only (202)."""
         try:
             result = operations.for_context(ctx, meeting_service=_service).invoke(
