@@ -535,3 +535,79 @@ describe("DELIGHT 2 small joy: Accept counts what is left", () => {
     expect(stateText()).not.toMatch(/\b0\b/);
   });
 });
+
+describe("W6 (atlas pass 3): the decision says its title once; About under About, Why under Why", () => {
+  // The from-desk producer's own shape (holdspeak/web/routes/decision_records.py
+  // create_from_desk): the title is the decision text, `About: …` is the
+  // background, `Why: …` is the consequences.
+  const kafka = decisionWire({
+    id: "decision_kafka", title: "Use Kafka for the settlement events", status: "accepted",
+    decision_markdown: "Use Kafka for the settlement events",
+    context_markdown: "About: Payments Platform Rewrite",
+    consequences_markdown: "Why: It is the team standard and the ops team runs it.",
+  });
+  const own = decisionWire({
+    id: "decision_own", title: "Move the nightly build",
+    decision_markdown: "Move the nightly build to the shared runners after 8 PM.",
+    context_markdown: "Our own runners are full every night.",
+    consequences_markdown: "The nightly takes 20 minutes longer.",
+  });
+  const heads = () =>
+    Array.from(document.querySelectorAll(".desk-decision-reader > .gadget-fold > summary > .gadget-fold-title"))
+      .map((h) => (h.textContent ?? "").trim());
+  const body = () => document.querySelector('.desk-decision-reader section[aria-label="Decision"]');
+
+  beforeEach(async () => {
+    hub.decisions = [kafka, own];
+    await act(async () => { await useDesk.getState().refresh(); });
+  });
+
+  it("a body that repeats the title is not drawn; About and Why are their own heads", () => {
+    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_kafka")!} onClose={() => {}} />);
+    expect(body()).toBeNull();
+    expect(heads()).toEqual(["About", "Why"]);
+    const reader = document.querySelector(".desk-decision-reader")!;
+    expect(reader.textContent).toContain("Payments Platform Rewrite");
+    expect(reader.textContent).toContain("It is the team standard and the ops team runs it.");
+    expect(reader.textContent).not.toMatch(/About:|Why:/);
+  });
+
+  it("his own words keep their heads: the decision, Background, Consequences", () => {
+    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_own")!} onClose={() => {}} />);
+    expect(body()?.textContent).toContain("Move the nightly build to the shared runners after 8 PM.");
+    expect(heads()).toEqual(["Background", "Consequences"]);
+  });
+
+  it("Edit still edits the fields as written (nothing is lost)", () => {
+    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_kafka")!} onClose={() => {}} />);
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    expect(screen.getByRole("textbox", { name: "Background" })).toHaveValue("About: Payments Platform Rewrite");
+    expect(screen.getByRole("textbox", { name: "Consequences" })).toHaveValue("Why: It is the team standard and the ops team runs it.");
+  });
+
+  it("every verb says its word; a narrow window folds Copy and Dictate into More", () => {
+    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_kafka")!} onClose={() => {}} />);
+    const toolbar = screen.getByTestId("desk-decision-toolbar");
+    for (const name of ["Edit", "Retire", "Send…", "Copy", "Dictate about this"]) {
+      expect(within(toolbar).getByRole("button", { name }).textContent).toContain(name.replace("…", ""));
+    }
+    fireEvent.click(within(toolbar).getByRole("button", { name: "More" }));
+    const menu = screen.getByRole("menu", { name: "More" });
+    expect(within(menu).getAllByRole("menuitem").map((item) => item.textContent?.trim())).toEqual(["Copy", "Dictate about this"]);
+  });
+
+  it("the Decisions reader's Edit opens this window in its editor", async () => {
+    const { requestDecisionEdit } = await import("../pullouts/decisionEdit");
+    requestDecisionEdit("decision_own");
+    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_own")!} onClose={() => {}} />);
+    expect(screen.getByRole("textbox", { name: "Decision" })).toHaveValue("Move the nightly build to the shared runners after 8 PM.");
+  });
+
+  it("an open window hears Edit at once", async () => {
+    const { requestDecisionEdit } = await import("../pullouts/decisionEdit");
+    render(<DecisionPullout object={objectByRef(useDesk.getState().items, "decision:decision_own")!} onClose={() => {}} />);
+    expect(screen.queryByRole("textbox", { name: "Decision" })).toBeNull();
+    act(() => { requestDecisionEdit("decision_own"); });
+    expect(screen.getByRole("textbox", { name: "Decision" })).toBeTruthy();
+  });
+});

@@ -139,23 +139,7 @@
      1440, its foot padding included) and the frame's borders. */
   max-height: calc(640px - 106px);
 }
-/* The toolbar never wraps on a narrow window: the quiet verbs show their
-   glyph only; the word stays the Button's name and its hover title. */
-@container surface (max-width: 560px) {
-  .desk-decision-reader-toolbar .decision-verb {
-    position: relative;
-    min-width: 32px;
-    padding-inline: 8px;
-    justify-content: center;
-  }
-  .desk-decision-reader-toolbar .decision-verb-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
+/* W6 (atlas pass 3): on a narrow window the quiet verbs fold into More ▾
+   (the kit's ToolbarFold); every verb keeps its word. */
 .desk-decision-reader .decision-reader-why { margin: 0; }
 .desk-decision-filing { padding-top: 4px; border-top: 1px solid var(--wb-rule-soft); }

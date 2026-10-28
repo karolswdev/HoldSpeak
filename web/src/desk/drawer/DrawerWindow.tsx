@@ -4,8 +4,9 @@
  *  status, the object count), the Icons | List view (remembered per drawer)
  *  and the Room one press away. The body is the Project's objects as icons
  *  (IconGrid of DeskIcons with their lamps) or as a real list (ObjectList:
- *  Name, Kind, When, State; sort by header). The footer counts the objects
- *  and the selection, and holds Get Info and Open.
+ *  Name, Kind, When, State; sort by header). The status bar counts the
+ *  objects and the selection; the toolbar holds Open, Get Info and Register
+ *  (W6, atlas pass 3: no dead foot).
  *
  *  The ruling (lane A2): the drawer is the Project's face; the Room is its
  *  intelligence, one press away (the `Room` Button in the head).
@@ -15,14 +16,15 @@ import { Button } from "../../components/signal/Signal";
 import {
   DeskIcon,
   Toolbar,
+  ToolbarFold,
   ToolGlyph,
+  StatusBar,
   ParkReceipt,
   restoreFailedOutcome,
   restoredOutcome,
   IconGrid,
   ObjectList,
   DotWord,
-  SurfaceFooter,
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceSection,
@@ -56,7 +58,7 @@ import {
   useDropHand,
 } from "../hand";
 import type { DrawerHead, DrawerMember } from "./members";
-import { plainFailure } from "../surface/plainFailure";
+import { plainReason } from "../surface/plainFailure";
 import { registerProjectRepository, registrable, useProjectRepository } from "../projectRepository";
 import "./drawer.css";
 
@@ -228,7 +230,8 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
       await registerProjectRepository(projectId, toRegister);
       repository.reload();
     } catch (reason) {
-      setRegisterFailure(plainFailure("NOT REGISTERED", reason));
+      const why = plainReason(reason);
+      setRegisterFailure(`Not registered · ${why.charAt(0)}${why.slice(1).toLowerCase()}`);
     } finally {
       setRegistering(false);
     }
@@ -306,14 +309,29 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
           <Button dense variant="secondary" onClick={() => openProjectRoom(projectId)}>
             <ToolGlyph kind="project" />Room
           </Button>
-          <Button dense variant="ghost" data-testid="drawer-history" onClick={() => openProjectRoomAt(projectId, "history")}>
-            History
-          </Button>
+          {/* W6 (atlas pass 3, defect 13): the foot's verbs live here. Open
+              shows only for a selection that opens (never a ghost); at
+              phone width the quiet verbs fold into More ▾. */}
+          {selected && memberOpens(selected) ? (
+            <Button dense variant="secondary" onClick={() => open(selected)} title={selected.url || undefined}
+              data-testid="drawer-open">
+              <ToolGlyph kind="open" />Open
+            </Button>
+          ) : null}
           {data.failed.length ? (
             <Button dense variant="ghost" onClick={data.retry}>
               <ToolGlyph kind="retry" />Retry
             </Button>
           ) : null}
+          <ToolbarFold
+            data-testid="drawer-fold"
+            verbs={[
+              { key: "history", label: "History", testId: "drawer-history", onSelect: () => openProjectRoomAt(projectId, "history") },
+              ...(selectedHand ? [{ key: "hand", label: "Hand to agent", testId: "drawer-hand", onSelect: handSelected }] : []),
+              { key: "info", label: "Get Info", testId: "drawer-get-info", onSelect: () => info(selected) },
+              ...(toRegister ? [{ key: "register", label: "Register", testId: "drawer-register", busy: registering, onSelect: () => void register() }] : []),
+            ]}
+          />
         </Toolbar>
         <div className="drawer-scroll">
           <HandConfirmSlot host={host} />
@@ -392,9 +410,11 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
           ) : null}
         </div>
       </div>
-      <SurfaceFooter
-        receipt={
-          receipt ? (
+      <StatusBar
+        data-testid="drawer-status"
+        items={[{
+          key: "facts",
+          text: receipt ? (
             <ParkReceipt outcome={receipt} onRestore={(ids) => void restore(ids)} data-testid="drawer-park-receipt" />
           ) : registerFailure ? (
             <span className="drawer-receipt" data-tone="fail" role="status">{registerFailure}</span>
@@ -403,31 +423,8 @@ export function DrawerWindow({ drawer }: { drawer: OpenDrawer }) {
               <HeadFacts items={headItems(data.head, members.length || 0, data.failed)} />
               {selected ? <span className="kit-dotword drawer-head-fact">1 selected</span> : null}
             </span>
-          )
-        }
-        verbs={
-          <>
-            {toRegister ? (
-              <Button dense variant="ghost" loading={registering} onClick={() => void register()} data-testid="drawer-register">
-                Register
-              </Button>
-            ) : null}
-            <Button dense variant="ghost" onClick={() => info(selected)} data-testid="drawer-get-info">
-              Get Info
-            </Button>
-            {selectedHand ? (
-              <Button dense variant="ghost" onClick={handSelected} data-testid="drawer-hand">
-                Hand to agent
-              </Button>
-            ) : null}
-            {/* No host chip in the status bar (owner ruling 2026-10-25): a
-                link names its address in the verb's hover title. */}
-            <Button dense variant="secondary" disabled={!selected || !memberOpens(selected)} onClick={() => open(selected)}
-              title={selected?.url || undefined}>
-              Open
-            </Button>
-          </>
-        }
+          ),
+        }]}
       />
     </DeskWindowFrame>
   );
