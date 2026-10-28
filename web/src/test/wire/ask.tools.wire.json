@@ -900,11 +900,36 @@
     },
     "has_override": false,
     "effective": {
-     "status": "no_assignment",
+     "status": "assigned",
      "capability_id": "recipe.run",
-     "inherited_from": null,
-     "assignment": null,
-     "repair": "Choose default"
+     "inherited_from": "capability",
+     "assignment": {
+      "schema": "InferenceAssignmentProjection@1",
+      "id": "ia_936f234be5824766a6366c7cb834c678",
+      "revision": 2,
+      "sha256": "sha256:0b093c85b31bde05db8bdad9385bb70ffbc7c64f9766db3b2992cf64a1bca55a",
+      "scope": {
+       "capability_id": "ask.answer",
+       "kind": "capability"
+      },
+      "entries": [
+       {
+        "ordinal": 1,
+        "profile_id": "glass-lan",
+        "profile_revision": 1,
+        "profile_schema_version": 2,
+        "label": "Glass Lan",
+        "boundary": "private_network",
+        "readiness": "ready"
+       }
+      ],
+      "retry_policy_id": null,
+      "issues": [],
+      "created_at": "2026-10-28T04:12:38.561279Z",
+      "effective_retry_policy_id": "retry.text.standard",
+      "retry_policy_source": "capability_default"
+     },
+     "repair": null
     },
     "issues": [],
     "queue": null

@@ -151,6 +151,38 @@ describe("CadenceCore Runs on", () => {
   });
 });
 
+describe("W6-D: the remote sweep receipt in sentence case", () => {
+  it.each([[3, "Checked 3 rooms"], [1, "Checked 1 room"]])("a sweep of %i reads %s, never mono caps", async (rooms, words) => {
+    vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/api/settings/heartbeat/run-now") && init?.method === "POST")
+        return json({ rooms, duration_ms: 42 });
+      if (url.includes("/api/settings/heartbeat"))
+        return json({
+          sweep_every_minutes: 15,
+          quiet_hours: { start: 22, end: 8 },
+          notify: "edge",
+          muted_projects: [],
+          last_sweep_at: null,
+          next_sweep_at: null,
+          runs_on: "192.168.1.43",
+          last_remote_run_at: null,
+        });
+      if (url.includes("/api/brief/latest")) return json(null);
+      if (url.includes("/api/projects")) return json({ projects: [] });
+      if (url.includes("/api/cadence/status")) return json({ enabled: true });
+      if (url.includes("/api/cadence/loops")) return json({ loops: [] });
+      if (url.includes("/api/cadence/history")) return json({ nudges: [] });
+      return json({});
+    }));
+    render(<CadenceCore />);
+    fireEvent.click(await screen.findByTestId("rhythm-run-now"));
+    const checked = await screen.findByTestId("rhythm-runs-on-checked");
+    expect(checked.textContent).toBe(words);
+    expect(screen.getByTestId("rhythm-runs-on-facts").textContent).not.toMatch(/SWEEP ·/);
+  });
+});
+
 describe("PHILO-17 desk sweep: Rhythm holds still while its first reads land", () => {
   it("is drawn once every first read has ended, never row by row", async () => {
     let releaseLoops: () => void = () => undefined;
