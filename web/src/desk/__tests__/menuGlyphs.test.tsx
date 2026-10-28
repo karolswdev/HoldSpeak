@@ -174,7 +174,8 @@ describe("Go menu grouping separator (HS-148-02)", () => {
     expect(goVerbs.filter((v) => v.submenu === "Tools")).toEqual([]);
     // Betterment shell S1: every manifest Go row (Daily, Work, Builder).
     // Betterment P4: + Decisions (Projects is Go ▸ Projects ▸ All projects).
-    expect(goVerbs.filter((v) => !v.submenu)).toHaveLength(15);
+    // Calls (2026-10-28): + Calls (Go ▸ Work ▸ Calls).
+    expect(goVerbs.filter((v) => !v.submenu)).toHaveLength(16);
     for (const id of ["go.configure-settings", "go.configure-runs-on", "go.configure-integrations", "go.configure-setup", "go.change-places"])
       expect(goVerbs.some((v) => v.id === id), id).toBe(false);
   });

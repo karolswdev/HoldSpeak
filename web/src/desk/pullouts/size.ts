@@ -40,4 +40,7 @@ export const PULLOUT_SIZE: Partial<Record<string, { w: number; h: number }>> = {
   // Settings is hosted by SurfaceWindows, but stays in this table so the
   // first-open matrix has one source of truth for every desk room.
   settings: { w: 1040, h: 720 },
+  // Calls (2026-10-28): the call as a document and its toolbar on one row.
+  // A SurfaceWindows host: applications.ts carries the same size.
+  calls: { w: 720, h: 520 },
 };

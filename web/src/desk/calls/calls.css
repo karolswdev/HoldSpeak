@@ -1,0 +1,221 @@
+/* Calls (CALLS-DESIGN-2026-10-28 §6; canvas betterment/canvases/calls-2026-10-28.html).
+   The window: Toolbar → the body (the call as a document, or the dense list)
+   → the 24 px StatusBar. Sans 13 rows, 12 muted facts, a state is a dot and a
+   word; the held question is ONE warm plate. Nothing moves on hover. */
+.desk-next .calls-window {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  min-width: 0;
+}
+.desk-next .calls-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+.desk-next .calls-list { min-height: 100%; }
+.desk-next .calls-doc {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 780px;
+  padding: 12px 16px 14px 4px;
+}
+/* The caller's lines read plain; HoldSpeak's name wears the info ink. */
+.desk-next .calls-doc .live-doc-line[data-who="caller"] .live-doc-who { color: var(--wb-ink); }
+.desk-next .calls-doc .live-doc-line[data-who="holdspeak"] .live-doc-who { color: var(--wb-info-ink); }
+
+/* The held question: one warm plate row, the words and Yes / No. */
+.desk-next .calls-hold {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 64px;
+  min-height: 36px;
+  padding: 6px 8px 6px 12px;
+  border: 1px solid color-mix(in srgb, var(--wb-ember-ink) 30%, var(--wb-rule-soft));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--wb-ember-ink) 8%, var(--wb-paper));
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--wb-ember-ink) 72%, transparent);
+}
+.desk-next .calls-hold-words {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 500 13px / 1.4 var(--font-sans);
+  color: var(--wb-ink);
+}
+.desk-next .calls-hold-verbs { display: inline-flex; flex: none; gap: 6px; }
+
+/* Done on this call: dense rows, a kind mark, the label, the effect word. */
+.desk-next .calls-done { margin-left: 64px; }
+.desk-next .calls-done-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 2px;
+  font: 600 12px / 1.4 var(--font-sans);
+  color: var(--wb-muted);
+}
+.desk-next .calls-done-title::after { content: ""; flex: 1; border-top: 1px solid var(--wb-rule-soft); }
+.desk-next .calls-result {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 10px;
+  width: 100%;
+  min-height: 30px;
+  padding: 0 8px;
+  border: 0;
+  border-bottom: 1px solid var(--wb-rule-soft);
+  background: transparent;
+  color: var(--wb-ink);
+  text-align: left;
+  cursor: pointer;
+}
+.desk-next .calls-result:hover:not(:disabled) { background: var(--wb-row-hover); }
+.desk-next .calls-result:focus-visible { outline: 2px solid var(--wb-sel-vivid); outline-offset: -2px; }
+.desk-next .calls-result:disabled { cursor: default; }
+.desk-next .calls-result-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--wb-info-ink) 12%, var(--wb-paper));
+  color: var(--wb-info-ink);
+  font: 700 12px / 1 var(--font-sans);
+}
+.desk-next .calls-result[data-kind="action"] .calls-result-mark,
+.desk-next .calls-result[data-kind="task"] .calls-result-mark {
+  background: color-mix(in srgb, var(--wb-ok-ink) 14%, var(--wb-paper));
+  color: var(--wb-ok-ink);
+}
+.desk-next .calls-result[data-kind="send"] .calls-result-mark {
+  background: color-mix(in srgb, var(--wb-ember-ink) 14%, var(--wb-paper));
+  color: var(--wb-ember-ink);
+}
+.desk-next .calls-result-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 400 13px / 1.4 var(--font-sans);
+}
+.desk-next .calls-result-word { font: 400 12px / 1.4 var(--font-sans); color: var(--wb-muted); white-space: nowrap; }
+
+/* The status bar: the idle dot before a word, the clock in ink, the
+   Settings ▸ Calls link in the link ink. */
+.desk-next .calls-idle-word { display: inline-flex; align-items: center; gap: 6px; }
+.desk-next .calls-clock { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--wb-ink); }
+@container surface (min-width: 560px) {
+.desk-next .kit-statusbar .calls-status-link.btn {
+  min-height: 0;
+  height: auto;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--wb-link-ink);
+  font: 500 12px / 1.3 var(--font-sans);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+}
+.desk-next .calls-glyph[data-down] { transform: rotate(135deg); }
+.desk-next .btn--danger .calls-glyph,
+.desk-next .btn--primary .calls-glyph { color: inherit; }
+
+/* ── Settings ▸ Calls: one grid. name · state · verb; an open step's
+   command under it. ── */
+.desk-next .calls-settings { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.desk-next .calls-steps { display: flex; flex-direction: column; min-width: 0; }
+.desk-next .calls-step { border-bottom: 1px solid var(--wb-rule-soft); min-width: 0; }
+.desk-next .calls-step-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px 120px;
+  align-items: center;
+  gap: 0 12px;
+  min-height: 32px;
+  padding: 0 8px;
+}
+.desk-next .calls-step-name { min-width: 0; font: 500 13px / 1.3 var(--font-sans); color: var(--wb-ink); }
+.desk-next .calls-step-state { font: 500 12px / 1.35 var(--font-sans); }
+.desk-next .calls-step-verb { display: flex; justify-content: flex-end; min-width: 0; }
+.desk-next .calls-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 0 8px 10px 20px;
+}
+.desk-next .calls-field {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: 0 12px;
+  min-height: 32px;
+}
+.desk-next .calls-field-label { font: 400 13px / 1.3 var(--font-sans); color: var(--wb-muted); }
+.desk-next .calls-may { display: flex; flex-direction: column; }
+.desk-next .calls-may-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  align-items: center;
+  gap: 0 12px;
+  min-height: 32px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--wb-rule-soft);
+}
+.desk-next .calls-may-row > :first-child { font: 500 13px / 1.3 var(--font-sans); color: var(--wb-ink); }
+.desk-next .calls-step-say { margin: 2px 0 0; font: 400 13px / 1.45 var(--font-sans); color: var(--wb-text); }
+.desk-next .calls-step-quiet { font-size: 12px; color: var(--wb-muted); overflow-wrap: anywhere; }
+.desk-next .calls-step-quiet code { font: 400 12px / 1.45 var(--font-mono); color: var(--wb-ink); }
+.desk-next .calls-field-line { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.desk-next .calls-field-line > .gadget-string { flex: 1 1 auto; min-width: 0; max-width: 420px; }
+.desk-next .calls-set-word { font: 500 13px / 1.3 var(--font-sans); color: var(--wb-ink); }
+.desk-next .calls-numbers { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.desk-next .calls-number {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0 12px;
+  min-height: 30px;
+}
+.desk-next .calls-number-value { font: 500 13px / 1.3 var(--font-sans); font-variant-numeric: tabular-nums; color: var(--wb-ink); }
+.desk-next .calls-number-role { font: 400 12px / 1.3 var(--font-sans); color: var(--wb-muted); }
+.desk-next .calls-engine { display: flex; align-items: baseline; gap: 12px; font: 400 13px / 1.4 var(--font-sans); }
+.desk-next .calls-engine-model { color: var(--wb-ink); }
+.desk-next .calls-fact { font: 400 13px / 1.4 var(--font-sans); color: var(--wb-text); }
+.desk-next .calls-egress { margin: 0; padding: 0 8px; font: 400 13px / 1.5 var(--font-sans); color: var(--wb-text); }
+.desk-next .calls-refusal { margin: 0; padding: 0 8px; font: 500 13px / 1.4 var(--font-sans); color: var(--wb-danger-ink); }
+
+/* Phone and narrow windows: the rows stack; every verb is a 44 px target;
+   Yes and No are thumb-sized. */
+@container surface (max-width: 560px) {
+  .desk-next .calls-hold { flex-wrap: wrap; margin-left: 0; }
+  .desk-next .calls-hold-verbs { width: 100%; justify-content: flex-end; }
+  .desk-next .calls-hold-verbs .btn { min-height: 44px; min-width: 72px; font-size: 15px; }
+  .desk-next .calls-done { margin-left: 0; }
+  .desk-next .calls-result { min-height: 44px; }
+  .desk-next .calls-step-line {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas: "name verb" "state state";
+    gap: 2px 8px;
+    padding: 6px 8px;
+    min-height: 44px;
+  }
+  .desk-next .calls-step-name { grid-area: name; }
+  .desk-next .calls-step-state { grid-area: state; }
+  .desk-next .calls-step-verb { grid-area: verb; }
+  .desk-next .calls-step-body { padding-left: 8px; }
+  .desk-next .calls-settings .btn { min-height: 44px; }
+  .desk-next .calls-number { grid-template-columns: minmax(0, 1fr) auto; }
+  .desk-next .calls-number-role { grid-column: 1; grid-row: 2; }
+  .desk-next .calls-field { grid-template-columns: minmax(0, 1fr); gap: 4px; padding-top: 4px; }
+  .desk-next .calls-field-line { flex-wrap: wrap; }
+  .desk-next .calls-field-line > .gadget-string { flex-basis: 100%; max-width: none; }
+  .desk-next .calls-may-row { grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 6px 8px; min-height: 44px; }
+}
+/* The command well's Copy keeps its one word beside a long command. */
+.desk-next .calls-step-body .connections-command-row { align-items: flex-start; }
+.desk-next .calls-step-body .connections-command-row > .btn { flex: none; }

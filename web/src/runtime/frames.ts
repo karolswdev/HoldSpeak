@@ -19,6 +19,7 @@ export const RUNTIME_FRAME_TYPES = [
   "ask_text",
   "audio_level",
   "bookmark",
+  "call_state",
   "capture_recovery",
   "device_health",
   "dictation.journal.entry",

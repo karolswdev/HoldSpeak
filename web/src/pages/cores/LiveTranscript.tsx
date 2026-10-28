@@ -55,6 +55,9 @@ export function LiveTranscript({
           speaker: speaker && speaker !== previous ? speaker : "",
           text: String(segment.text ?? segment.transcript ?? ""),
           flagged: segment.is_bookmarked === true,
+          // Calls (2026-10-28): a call's line names its side (`caller`,
+          // `holdspeak`), so the Calls window colours the names.
+          who: typeof segment.who === "string" ? segment.who : undefined,
         };
       }),
     [segments],
@@ -84,6 +87,7 @@ export function LiveTranscript({
           key={line.key}
           className="live-doc-line"
           data-flagged={line.flagged || undefined}
+          data-who={line.who}
           data-testid="live-transcript-line"
         >
           <span className="live-doc-when">{line.mark}</span>
