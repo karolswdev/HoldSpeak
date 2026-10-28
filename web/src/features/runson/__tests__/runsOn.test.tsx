@@ -385,7 +385,7 @@ describe("Runs on — a drop writes", () => {
       ],
     });
     const receipt = await screen.findByTestId("runson-receipt");
-    expect(receipt.textContent).toMatch(/^PATCHED \d\d:\d\d · Answers and notes → qwen3.8 27B$/);
+    expect(receipt.textContent).toMatch(/^Changed at \d\d:\d\d · Answers and notes → qwen3.8 27B$/);
     expect(screen.getByTestId("runson-egress").textContent).toContain("192.168.1.43");
     fireEvent.click(screen.getByTestId("runson-undo"));
     await waitFor(() => expect(m.writeChain).toHaveBeenCalledTimes(2));
@@ -395,7 +395,7 @@ describe("Runs on — a drop writes", () => {
       expectedRevision: 7,
       entries: [{ profile_id: "q4b", profile_revision: 2 }],
     });
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Undone at/));
   });
 
   it("⌥ adds a fallback after the first", async () => {
@@ -404,7 +404,7 @@ describe("Runs on — a drop writes", () => {
     fireEvent.keyDown(screen.getByTestId("switchboard-engine-q27"), { key: "Enter", altKey: true });
     await waitFor(() => expect(m.writeChain).toHaveBeenCalled());
     expect(m.writeChain.mock.calls[0][0].entries.map((e: { profile_id: string }) => e.profile_id)).toEqual(["q4b", "q27"]);
-    expect((await screen.findByTestId("runson-receipt")).textContent).toContain("FALLBACK");
+    expect((await screen.findByTestId("runson-receipt")).textContent).toContain("· Fallback");
   });
 
   it("Meetings also writes the exact summary row the queue reads; Undo restores inheritance (C2)", async () => {
@@ -440,7 +440,7 @@ describe("Runs on — a drop writes", () => {
       expectedRevision: 5,
     });
     expect(m.summary).toHaveBeenCalledTimes(1);
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE \d\d:\d\d · Meeting summaries$/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Undone at \d\d:\d\d · Meeting summaries$/));
   });
 
   it("Meetings Undo of an OWN summary row gives it its own engine back, and says a refusal (C2, A.10)", async () => {
@@ -460,7 +460,7 @@ describe("Runs on — a drop writes", () => {
     await waitFor(() => expect(m.summary).toHaveBeenCalledTimes(2));
     expect(m.summary.mock.calls[1][0]).toMatchObject({ expectedAssignmentRevision: 5, profileId: "q4b", profileRevision: 2 });
     await waitFor(() =>
-      expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meeting summaries · SUMMARIES CHANGED ELSEWHERE$/),
+      expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Undone at .* · Meeting summaries · Summaries changed elsewhere$/),
     );
   });
 
@@ -496,7 +496,7 @@ describe("Runs on — a drop writes", () => {
     fireEvent.click(screen.getByTestId("runson-undo"));
     await waitFor(() => expect(m.summary).toHaveBeenCalledTimes(3));
     expect(m.summary.mock.calls[2][0]).toMatchObject({ expectedAssignmentRevision: 6, profileId: "openrouter" });
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meeting summaries$/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Undone at .* · Meeting summaries$/));
     fireEvent.click(screen.getByTestId("runson-undo"));
     await waitFor(() =>
       expect(m.clearChain).toHaveBeenCalledWith({
@@ -505,8 +505,8 @@ describe("Runs on — a drop writes", () => {
         expectedRevision: 9,
       }),
     );
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^UNDONE .* · Meeting summaries$/));
-    expect(screen.getByTestId("runson-receipt").textContent).not.toContain("CHANGED ELSEWHERE");
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Undone at .* · Meeting summaries$/));
+    expect(screen.getByTestId("runson-receipt").textContent?.toLowerCase()).not.toContain("changed elsewhere");
     expect(screen.queryByTestId("runson-undo")).toBeNull();
   });
 
@@ -908,7 +908,7 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     const found = await screen.findByTestId("switchboard-engine-lan:192.168.1.43:8080:qwen3.8-27b");
     expect(found.textContent).toContain("192.168.1.43:8080");
     expect(found.textContent?.match(/192\.168\.1\.43/g)).toHaveLength(1);
-    expect(screen.getByTestId("runson-receipt").textContent).toBe("FOUND ON LAN");
+    expect(screen.getByTestId("runson-receipt").textContent).toBe("Found on the LAN");
     fireEvent.click(within(found).getByRole("button", { name: "Use it" }));
     await waitFor(() => expect(m.define).toHaveBeenCalledWith(expect.objectContaining({
       endpoint: "http://192.168.1.43:8080/v1", model: "qwen3.8-27b",
@@ -919,7 +919,7 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     m.discoverLan.mockResolvedValue({ engines: [], checkedAt: "2026-10-13T10:00:00Z", partial: true, unavailable: false, hostsChecked: 254 });
     await board();
     fireEvent.click(screen.getByTestId("runson-find-lan"));
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("NO ENGINE FOUND ON LAN · PARTIAL"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("No engine found on the LAN · Partial"));
   });
 
   it("Find on LAN does not duplicate a saved endpoint with the same URL and model", async () => {
@@ -968,7 +968,7 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     m.discoverLan.mockRejectedValue(new Error("offline"));
     await board();
     fireEvent.click(screen.getByTestId("runson-find-lan"));
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("LAN DISCOVERY FAILED"));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toBe("LAN search failed"));
     expect(screen.getByTestId("runson-receipt").getAttribute("data-tone")).toBe("danger");
   });
 
@@ -982,7 +982,7 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     fireEvent.click(within(found).getByRole("button", { name: "Use it" }));
     await waitFor(() => expect(m.define).toHaveBeenCalledTimes(1));
     expect(m.define.mock.calls[0][0]).toMatchObject({ endpoint: "http://127.0.0.1:11434/v1", model: "llama3.3" });
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^ADDED \d\d:\d\d · Llama 3.3 8B$/));
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Added at \d\d:\d\d · Llama 3.3 8B$/));
     expect(m.readDetection.mock.calls.length).toBeGreaterThan(reads);
     expect(m.writeChain).not.toHaveBeenCalled();
   });
@@ -995,7 +995,7 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     await board();
     const plate = screen.getByTestId("switchboard-engine-preset:vision");
     expect(plate.textContent).toContain("HUGGINGFACE.CO");
-    expect(plate.textContent).not.toContain("THIS DEVICE");
+    expect(plate.textContent?.toLowerCase()).not.toContain("this device");
     fireEvent.click(within(plate).getByRole("button", { name: "Download" }));
     await waitFor(() => expect(m.download).toHaveBeenCalledWith("vision"));
     await waitFor(
@@ -1003,7 +1003,7 @@ describe("Runs on — FOUND, downloads, the add row", () => {
       { timeout: 4000 },
     );
     expect(screen.getByTestId("switchboard-lamp-preset:vision").getAttribute("data-lamp")).toBe("busy");
-    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^DOWNLOADED/), { timeout: 4000 });
+    await waitFor(() => expect(screen.getByTestId("runson-receipt").textContent).toMatch(/^Downloaded at/), { timeout: 4000 });
     expect(m.readAcquisition).toHaveBeenCalledWith("acq-1");
   }, 10_000);
 
@@ -1014,16 +1014,16 @@ describe("Runs on — FOUND, downloads, the add row", () => {
     const plate = screen.getByTestId("switchboard-engine-preset:vision");
     fireEvent.click(within(plate).getByRole("button", { name: "Download" }));
     await waitFor(
-      () => expect(screen.getByTestId("runson-receipt").textContent).toBe("DOWNLOAD STOPPED · Qwen 3.5 4B vision file · NETWORK"),
+      () => expect(screen.getByTestId("runson-receipt").textContent).toBe("Download stopped · Qwen 3.5 4B vision file · Network"),
       { timeout: 4000 },
     );
     expect(screen.getByTestId("switchboard-lamp-preset:vision").getAttribute("data-lamp")).toBe("broken");
-    expect(screen.getByTestId("switchboard-engine-preset:vision").textContent).toContain("STOPPED · NETWORK");
-    expect(screen.getByTestId("switchboard-engine-preset:vision").textContent).not.toContain("NOT DOWNLOADED");
+    expect(screen.getByTestId("switchboard-engine-preset:vision").textContent).toContain("Stopped · Network");
+    expect(screen.getByTestId("switchboard-engine-preset:vision").textContent).not.toContain("Not downloaded");
     // A retry clears the reason.
     m.readAcquisition.mockResolvedValue({ state: "downloading", percent: 30, error: null });
     fireEvent.click(within(screen.getByTestId("switchboard-engine-preset:vision")).getByRole("button", { name: "Download" }));
-    await waitFor(() => expect(screen.getByTestId("switchboard-engine-preset:vision").textContent).not.toContain("STOPPED"));
+    await waitFor(() => expect(screen.getByTestId("switchboard-engine-preset:vision").textContent?.toLowerCase()).not.toContain("stopped"));
   }, 10_000);
 
   it("the Add row's refusal is tokens, never the server's sentence (A.3)", async () => {

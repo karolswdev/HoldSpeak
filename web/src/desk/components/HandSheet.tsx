@@ -144,14 +144,14 @@ export function agentOfProfile(profile: string | null | undefined, fallback: Age
 /** The launch's delivery as one token: the brief is pending, held, sent or refused. */
 export function deliveryToken(launch: HandLaunch): { label: string; tone: "ok" | "warning" | "danger" | undefined; done: boolean; title?: string } {
   // Betterment AG5: at the working-at-once limit the hand waits in the queue.
-  if (launch.status === "queued") return { label: "WAITS FOR A FREE AGENT", tone: undefined, done: true };
+  if (launch.status === "queued") return { label: "Waits for a free agent", tone: undefined, done: true };
   const state = String(launch.instruction_state ?? "");
-  if (state === "sent") return { label: "LAUNCHED · BRIEF SENT", tone: "ok", done: true };
+  if (state === "sent") return { label: "Launched · Brief sent", tone: "ok", done: true };
   // Not known yet: the brief waits for the agent (pending), or its typing has
   // started and has no receipt yet (delivering, first_message.py). Retry is withheld.
-  if (state === "pending" || state === "") return { label: "LAUNCHED · BRIEF PENDING", tone: undefined, done: false };
-  if (state === "delivering") return { label: "LAUNCHED · BRIEF DELIVERING", tone: undefined, done: false };
-  if (state === "hooks_missing") return { label: "LAUNCHED · BRIEF HELD · NO HOOKS", tone: "warning", done: true };
+  if (state === "pending" || state === "") return { label: "Launched · Brief pending", tone: undefined, done: false };
+  if (state === "delivering") return { label: "Launched · Sending the brief", tone: undefined, done: false };
+  if (state === "hooks_missing") return { label: "Launched · Brief held · No hooks", tone: "warning", done: true };
   // W6-H words: what failed, what stayed, what next, in sentence case; the
   // hub's reason code rides the hover title.
   return { label: "Brief not sent to the agent · It stays on the hub · Send again", tone: "danger", done: true, title: codeWords(state).toLowerCase() };
@@ -624,7 +624,7 @@ function Sheet({ origin }: { origin: HandOrigin }) {
         receipt={
           delivery ? (
             <span className="surface-footer-receipt-line" data-tone={delivery.tone} role="status" data-testid="hand-launch-receipt"
-              data-words={delivery.title ? "" : undefined} title={delivery.title}>
+              data-words="" title={delivery.title}>
               {delivery.label}
             </span>
           ) : launchError ? (

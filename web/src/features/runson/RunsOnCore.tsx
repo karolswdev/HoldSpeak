@@ -3,7 +3,7 @@
 // COMPOSITOR.md §12 "The exemplar: Runs on", canvas Board 2. Composed from
 // the kit: the AppHead (the one fact `M engines` with its status
 // strip), the Switchboard (the app's one species), and the Foot (the
-// receipt `PATCHED <time> · <job> → <engine>`, the egress chip of the last
+// receipt `Changed at <time> · <job> → <engine>`, the egress chip of the last
 // engine used, Undo). A change applies on the drop; there is no Save.
 
 import { useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
@@ -370,11 +370,11 @@ function AgentSpend({ ctrl, engine }: { ctrl: RunsOnController; engine: BoardEng
 
 /** Betterment E4: the five kinds, named by where the prompt goes. */
 const KINDS: Array<{ kind: AddKind; name: string; hint: string }> = [
-  { kind: "agent", name: "An agent on this Mac", hint: "CLAUDE CODE · CODEX" },
-  { kind: "service", name: "A service", hint: "OPENROUTER · OPENAI · ANTHROPIC · GEMINI" },
-  { kind: "lan", name: "A server on my network", hint: "LLAMA.CPP · VLLM · OLLAMA" },
-  { kind: "local", name: "A model on this Mac", hint: "DOWNLOAD" },
-  { kind: "mesh", name: "Another HoldSpeak", hint: "MESH" },
+  { kind: "agent", name: "An agent on this Mac", hint: "Claude Code · Codex" },
+  { kind: "service", name: "A service", hint: "OpenRouter · OpenAI · Anthropic · Gemini" },
+  { kind: "lan", name: "A server on my network", hint: "llama.cpp · vLLM · Ollama" },
+  { kind: "local", name: "A model on this Mac", hint: "Download" },
+  { kind: "mesh", name: "Another HoldSpeak", hint: "Mesh" },
 ];
 
 /** Betterment E4: Add an engine unfolds in place into the five kinds; a
@@ -987,7 +987,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     checkedLine ? { key: "checked", text: <span className="runson-strip" data-testid="runson-strip" title={checked ? `Checked ${checked}` : undefined}>{checkedLine}</span> } : detection || !roster ? null : { key: "checked", text: "Checking" },
     ctrl.receipt ? {
       key: "receipt",
-      lamp: ctrl.receipt.tone === "danger" ? "fail" : undefined,
+      lamp: ctrl.receipt.tone === "danger" ? "fail" : ctrl.receipt.tone === "working" ? "info" : "ok",
       text: (
         <span className="runson-receipt" data-testid="runson-receipt" data-tone={ctrl.receipt.tone} title={ctrl.receipt.title}>
           {ctrl.receipt.text}
@@ -1004,7 +1004,7 @@ export function RunsOnCore({ scope, title, onBack }: CoreProps & { title?: strin
     } : null,
     ctrl.receipt ? {
       key: "receipt",
-      lamp: ctrl.receipt.tone === "danger" ? "fail" : undefined,
+      lamp: ctrl.receipt.tone === "danger" ? "fail" : ctrl.receipt.tone === "working" ? "info" : "ok",
       text: (
         <span className="runson-receipt" data-testid="runson-receipt" data-tone={ctrl.receipt.tone} title={ctrl.receipt.title}>
           {ctrl.receipt.text}

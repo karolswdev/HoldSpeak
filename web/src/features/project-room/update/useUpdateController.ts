@@ -506,7 +506,7 @@ export function useUpdateController(
       setCurrent(update);
       const at = reviewedAt ? new Date(reviewedAt) : new Date();
       const pad = (n: number) => String(n).padStart(2, "0");
-      setReviewReceipt(`REVIEWED · ${pad(at.getHours())}:${pad(at.getMinutes())}`);
+      setReviewReceipt(`Reviewed at ${pad(at.getHours())}:${pad(at.getMinutes())}`);
     } catch (reason) {
       fail("NOT REVIEWED", reason, () => void reviewClaim(spanId, acceptance));
     } finally {

@@ -202,7 +202,7 @@ describe("SurfaceSwitchboard (list, 393)", () => {
     render(<SurfaceSwitchboard layout="list" jobs={jobs} engines={ENGINES} wires={WIRES} selected="bg" />);
     expect(screen.getByText("Background · engine")).toBeTruthy();
     const current = screen.getByTestId("switchboard-engine-q27");
-    expect(current.textContent).toContain("FOLLOWS DEFAULT");
+    expect(current.textContent).toContain("Follows default");
     expect(screen.queryByTestId("switchboard-tap-q27")).toBeNull();
   });
 

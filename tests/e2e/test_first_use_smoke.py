@@ -432,8 +432,8 @@ def test_first_use_fence(tmp_path: Path, monkeypatch, width, height):
             assignment = assigned.value.request.post_data_json
             assert assignment["scope"] == {"kind": "capability", "capability_id": "meeting.deferred_analysis"}, assignment
             assert assignment["entries"][0]["profile_id"] == provider["profile_id"], assignment
-            runs_on.wait_receipt(page, r"^SET ")
-            assert runs_on.receipt(page).upper().startswith("SET "), runs_on.receipt(page)
+            runs_on.wait_receipt(page, r"^Set at ")
+            assert runs_on.receipt(page).startswith("Set at "), runs_on.receipt(page)
             assert page.locator("[data-testid='runson-undo']").count() == 1
             # The hub has its summary engine: no setup row asks for one.
             assert not any(b.get("key") == "summary" for b in

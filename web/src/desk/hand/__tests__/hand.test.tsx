@@ -287,7 +287,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     expect(brief.querySelector("pre")?.textContent).toBe(PREVIEW.text);
     expect(within(brief).getByText("ACCEPTANCE · 1 CHECK")).toBeTruthy();
     fireEvent.click(within(group).getByRole("button", { name: "Hand" }));
-    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("LAUNCHED · BRIEF SENT");
+    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("Launched · Brief sent");
     expect(posts("/api/agent/hand")[0].init?.json).toEqual({
       kind: "action", id: "a-comms", profile: "claude-default", project_id: "p-ledger",
     });
@@ -315,7 +315,7 @@ describe("PHILO-14 C3 YOLO: the confirm line", () => {
     expect(within(line).queryByText("AGENT LIMIT REACHED")).toBeNull();
     await waitFor(() => expect(start).not.toBeDisabled());
     fireEvent.click(start);
-    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("WAITS FOR A FREE AGENT");
+    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("Waits for a free agent");
     expect((posts("/api/agent/hand").at(-1)?.init?.json as { queue?: boolean }).queue).toBe(true);
   });
 
@@ -494,7 +494,7 @@ describe("PHILO-15 16 B39: the line's agent is a token the owner flips", () => {
     const previews = posts("/api/agent/hand/preview").map((c) => (c.init?.json as { profile: string }).profile);
     expect(previews).toEqual(["claude-default", "codex-default"]);
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
-    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("LAUNCHED · BRIEF SENT");
+    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("Launched · Brief sent");
     expect(posts("/api/agent/hand")[0].init?.json).toEqual({
       kind: "action", id: "a-comms", profile: "codex-default", project_id: "p-ledger",
     });
@@ -535,7 +535,7 @@ describe("pi spike #1020: pi is the third agent on the line", () => {
     const previews = posts("/api/agent/hand/preview").map((c) => (c.init?.json as { profile: string }).profile);
     expect(previews).toEqual(["claude-default", "codex-default", "pi-default"]);
     fireEvent.click(within(line).getByRole("button", { name: "Hand" }));
-    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("LAUNCHED · BRIEF SENT");
+    expect(await within(line).findByTestId("hand-confirm-receipt")).toHaveTextContent("Launched · Brief sent");
     expect((posts("/api/agent/hand")[0].init?.json as { profile: string }).profile).toBe("pi-default");
   });
 

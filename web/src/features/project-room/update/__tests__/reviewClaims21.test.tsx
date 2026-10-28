@@ -156,7 +156,7 @@ async function openEditor() {
 // PHILO-15 21 (Astra r1 P1-2): the owner reviews each claim in the editor.
 // Accept / Reject are library Buttons on every claim row, wired to the hub's
 // review route; the row that will not be sent reads OMITTED; a review leaves
-// REVIEWED · hh:mm.
+// Reviewed at hh:mm.
 function draft(acceptance: Record<string, string>) {
   const claim = (span: string, text: string) => ({
     span_id: span, text, refs: ["item:hygiene"], section: "progress", kind: "inference",
@@ -216,7 +216,7 @@ describe("PHILO-15 21: Accept / Reject on each claim", () => {
     expect(row("s0").querySelector("[data-testid='update-claim-omitted']")).toBeNull();
     const at = new Date("2026-10-08T13:12:00+00:00");
     const hhmm = `${String(at.getHours()).padStart(2, "0")}:${String(at.getMinutes()).padStart(2, "0")}`;
-    expect(screen.getByTestId("update-claim-receipt").textContent).toBe(`REVIEWED · ${hhmm}`);
+    expect(screen.getByTestId("update-claim-receipt").textContent).toBe(`Reviewed at ${hhmm}`);
 
     fireEvent.click(screen.getByRole("button", { name: "Reject: We ship Friday." }));
     await waitFor(() => expect(reviews).toHaveLength(2));

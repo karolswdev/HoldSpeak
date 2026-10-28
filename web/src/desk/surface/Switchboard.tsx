@@ -26,7 +26,17 @@ import {
 } from "react";
 import { Button } from "../../components/signal/Signal";
 import { plugPoint, wirePath, type Box } from "./switchboardGeometry";
+import { KEEP_CAPS, stateWords } from "./objects/NeedsRow";
 import "./switchboard.css";
+
+/** W6-J words: a plate's facts in sentence case (`Not downloaded`, `Key set`,
+ *  `512 ms`); runtimes, units and acronyms keep their capitals. The caps
+ *  tokens stay the plate's vocabulary. */
+let plateCaps: ReadonlySet<string> | null = null; // built on first use (the barrel imports NeedsRow after this file)
+export function plateWords(token: string): string {
+  plateCaps ??= new Set([...KEEP_CAPS, "MLX", "GGUF", "GB", "MB", "KB", "GPU", "CPU"]);
+  return stateWords(token, plateCaps);
+}
 
 /** The five state words, and nothing else (§12 rule 6). */
 export type SwitchState = "ready" | "limited" | "broken" | "waiting" | "off";
@@ -201,7 +211,7 @@ function EnginePlate({
       />
       <span className="switchboard-engine-tokens">
         {engine.tokens.filter(Boolean).map((token) => (
-          <span key={token}>{token}</span>
+          <span key={token}>{plateWords(token)}</span>
         ))}
       </span>
       {downloading ? (

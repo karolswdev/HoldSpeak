@@ -195,7 +195,7 @@ class TestDropToHandGlass:
                 receipt = line.get_by_test_id("hand-confirm-receipt")
                 receipt.wait_for(timeout=T)
                 page.wait_for_function(
-                    "() => (document.querySelector('[data-testid=hand-confirm-receipt]')?.textContent || '') === 'LAUNCHED · BRIEF SENT'",
+                    "() => (document.querySelector('[data-testid=hand-confirm-receipt]')?.textContent || '') === 'Launched · Brief sent'",
                     timeout=30_000,
                 )
                 page.screenshot(path=str(SHOTS / "c3-receipt-1440.png"))

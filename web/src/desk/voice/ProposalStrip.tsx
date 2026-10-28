@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Button } from "../../components/signal/Signal";
 import { EgressChip } from "../surface/gadgets";
+import { DotWord } from "../surface/kit";
 import type { VoiceProposal } from "./grammar";
 
 interface ProposalStripProps {
@@ -8,7 +9,7 @@ interface ProposalStripProps {
   onConfirm: () => void;
   onCancel: () => void;
   pending: boolean;
-  receipt?: { text: string; scope: string } | null;
+  receipt?: { text: string; scope: string; tone?: "ok" | "fail" } | null;
 }
 
 const INTENT_LABELS: Record<string, string> = {
@@ -71,7 +72,8 @@ export function VoiceProposalStrip({
         <EgressChip label="AI" scope="cloud" title="Intent classification used Ask AI." />
       ) : null}
       {receipt ? (
-        <span className="desk-voice-proposal-action">{receipt.text}</span>
+        // W6-J words: the receipt is a dot and a word in sentence case.
+        <span role="status" data-testid="voice-proposal-receipt"><DotWord tone={receipt.tone ?? "ok"}>{receipt.text}</DotWord></span>
       ) : pending ? null : (
         <>
           <Button dense variant="ghost" onClick={onConfirm}>Confirm</Button>

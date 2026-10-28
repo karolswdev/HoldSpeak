@@ -178,10 +178,11 @@
   display: flex;
   gap: 2px 8px;
   flex-wrap: wrap;
-  font: 500 var(--font-size-xs, 12px) / 16px var(--sb-mono);
+  /* W6-J words: the plate's facts are quiet sans in sentence case. */
+  font: 500 var(--font-size-xs, 12px) / 16px var(--font-sans);
   color: var(--sb-ink-dim);
-  text-transform: uppercase;
-  letter-spacing: .04em;
+  text-transform: none;
+  letter-spacing: 0;
 }
 .switchboard-lamp { width: 9px; height: 9px; border: 1px solid var(--sb-ink); justify-self: end; box-sizing: border-box; }
 .switchboard-lamp.is-ok { background: var(--sb-ok); }

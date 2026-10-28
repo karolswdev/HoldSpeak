@@ -6,7 +6,7 @@ import { ApiError, apiFetch } from "../../lib/api";
 import { Button } from "../../components/signal/Signal";
 import { openRef } from "../../desk/openObject";
 import { useRoomRead } from "./roomReads";
-import { ObjectList, SurfaceSection, StateChip, type ObjectSort, type ObjectSortKey } from "../../desk/surface";
+import { ObjectList, SurfaceSection, type ObjectSort, type ObjectSortKey } from "../../desk/surface";
 import { FoldGadget } from "../../desk/surface/gadgets";
 import type { DrawerMember } from "../../desk/drawer/members";
 import type { ResourcesRead, ResourcesState } from "../../desk/drawer/useDrawerData";
@@ -240,15 +240,16 @@ export function RoomFiledNotesSection({ projectId, resourceRefs, resourcesState,
     <FoldGadget title="Files" token={resourcesState === "ok" && noteRefs.length ? noteRefs.length : undefined}
       open={expanded || undefined} onToggle={setExpanded}>
       <SurfaceSection label="Files" data-testid="room-files" actions={<>
-        {retainedLoading ? <StateChip state="working" label="READING FILES · LAST READ" /> : null}
+        {/* W6-J words: a state is a dot and a word in sentence case. */}
+        {retainedLoading ? <span role="status" aria-label="Reading files · Last read"><DotWord tone="info">Reading files · Last read</DotWord></span> : null}
         {(resourcesState === "failed" || returnReceipt === RETURN.filesNotRead || returnReceipt === RETURN.noteNotRead || failedNote) ?
           <Button dense variant="ghost" onClick={retry} data-testid="room-files-retry">Retry</Button> : null}
         <Button dense variant="ghost" disabled={!canOpen} onClick={() => selectedRef && void open(selectedRef)} data-testid="room-files-open">Open note</Button>
       </>}>
-        {resourcesState === "loading" && !retainedLoading ? <StateChip state="working" label="READING FILES" /> : null}
+        {resourcesState === "loading" && !retainedLoading ? <span role="status" aria-label="Reading files"><DotWord tone="info">Reading files</DotWord></span> : null}
         {resourcesState === "failed" ? <DotWord tone="fail">Files not read</DotWord> : null}
         {returnReceipt ? <div role="status" data-testid="room-files-return"><DotWord tone={RETURN_TONE[returnReceipt] ?? "idle"}>{returnReceipt}</DotWord></div> : null}
-        {resourcesState !== "ok" && noteRefs.length && !retainedLoading ? <StateChip state="warning" label="LAST READ" /> : null}
+        {resourcesState !== "ok" && noteRefs.length && !retainedLoading ? <span role="status" aria-label="Last read"><DotWord tone="warn">Last read</DotWord></span> : null}
         {rows.length ? <ObjectList label="Filed notes" rows={rows} sort={sort} onSort={sortBy} visibleColumns={["name", "kind"]}
           selectedId={selectedRef} onSelect={(id) => setSelectedRef(isFiledNoteRef(id) ? id : null)} onOpen={(id) => void open(id)} /> : null}
       </SurfaceSection>

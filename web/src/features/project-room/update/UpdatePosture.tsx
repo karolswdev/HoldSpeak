@@ -174,7 +174,7 @@ function InlineClaimsView({
   return (
     <div className="update-inline-claims" data-testid="update-inline-claims">
       {review?.receipt ? (
-        <span className="surface-token" role="status" data-testid="update-claim-receipt">{review.receipt}</span>
+        <span role="status" data-testid="update-claim-receipt"><DotWord tone="ok">{review.receipt}</DotWord></span>
       ) : null}
       {claims.map((claim) => (
         <div key={claim.spanId} className="update-inline-claim" data-testid="update-inline-claim"

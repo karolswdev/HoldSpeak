@@ -254,21 +254,26 @@ def test_room_files_before_compact_sources_and_real_note_return(
 
             # A real Room read-marker write announces desk_changed; the
             # production Files hook then requests the real resource list.
-            # Hold only that response after it reaches the server to inspect
-            # the retained-loading face without inventing a successful read.
+            # Hold every such response after it reaches the server, until the
+            # test releases them, to inspect the retained-loading face without
+            # inventing a successful read. W6-J: holding only the first one let
+            # a second desk_changed read land unheld and end the loading state
+            # before the test looked (a race under load).
             expect(files.get_by_test_id("room-files-open")).to_be_enabled()
             before_refresh = _files_geometry(room)
             page.evaluate("""projectId => {
               const original=window.fetch.bind(window);
-              const hold={taken:false,serverRead:false,release:null};
+              const held=[];
+              const hold={taken:false,serverRead:false,release:null,done:false};
               window.__roomVisualResourceHold=hold;
               window.fetch=(...args)=>{
                 const url=String(typeof args[0]==='string'?args[0]:args[0].url);
-                if (!hold.taken && url.includes(`/api/projects/${projectId}/resources`)) {
+                if (!hold.done && url.includes(`/api/projects/${projectId}/resources`)) {
                   hold.taken=true;
                   return new Promise((resolve,reject)=>original(...args).then(response=>{
-                    hold.serverRead=response.ok;
-                    hold.release=()=>resolve(response);
+                    hold.serverRead=hold.serverRead||response.ok;
+                    held.push(()=>resolve(response));
+                    hold.release=()=>{ hold.done=true; held.splice(0).forEach((go)=>go()); };
                   },reject));
                 }
                 return original(...args);
@@ -277,9 +282,9 @@ def test_room_files_before_compact_sources_and_real_note_return(
             _api(page, "POST", f"/api/projects/{PROJECT_A}/room/read", {}, token=TOKEN)
             page.wait_for_function("() => !!window.__roomVisualResourceHold?.release")
             assert page.evaluate("window.__roomVisualResourceHold.serverRead")
-            chip = files.locator(".surface-section-head .surface-state-chip[aria-label='READING FILES · LAST READ']")
+            chip = files.locator(".surface-section-head [role=status][aria-label='Reading files · Last read']")
             expect(chip).to_be_visible()
-            assert files.locator(":scope > .surface-state-chip").count() == 0
+            assert files.locator("[role=status][aria-label^='Reading files']").count() == 1
             held_refresh = _files_geometry(room)
             _same_files_geometry(before_refresh, held_refresh)
             page.screenshot(path=str(shots / f"room-files-refresh-held-{width}.png"))

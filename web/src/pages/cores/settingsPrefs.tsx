@@ -26,6 +26,7 @@ import {
   Receipt,
 } from "../../desk/surface";
 import { ConfirmVerb, SurfaceSection } from "../../desk/surface/Surface";
+import { DotWord } from "../../desk/surface/kit";
 import { useDesk } from "../../desk/store";
 import "./settings.css";
 import { useAtmospherePreference } from "../../desk/gl/atmospherePreference";
@@ -411,7 +412,7 @@ export function DeskModule() {
       setRefused(true);
       return;
     }
-    setReceipt(`CLEARED ${counts.tombstoned} · ADDED ${counts.seeded}`);
+    setReceipt(`Cleared ${counts.tombstoned} · Added ${counts.seeded}`);
   };
   return (
     <GadgetGroup label="Desk" material="inset" actions={<>
@@ -427,8 +428,8 @@ export function DeskModule() {
             RESET REFUSED
           </span>
         ) : receipt ? (
-          <span className="gadget-fact" role="status">
-            {receipt}
+          <span role="status">
+            <DotWord tone="ok">{receipt}</DotWord>
           </span>
         ) : null}
       </>}>

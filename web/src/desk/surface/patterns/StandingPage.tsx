@@ -3,7 +3,7 @@
  *
  * StandingPage: one standing answer memory keeps (MEMORY-DESIGN.md §3.4).
  * The question as the title, the served sentences as a numbered list with
- * the refs each rests on, the BUILT time, and `STALE · N NEW SOURCES` with a
+ * the refs each rests on, the BUILT time, and `Stale · N new sources` with a
  * warn border when memory changed after the page saw it.  A withheld
  * sentence is simply not drawn: no gap, no counter, no marker.  No verb
  * rewrites a page (no on-demand rewrite exists).
@@ -17,7 +17,8 @@
 import { useState } from "react";
 import { Button } from "../../../components/signal/Signal";
 import { countToken } from "../count";
-import { StateChip } from "./StateChip";
+import { DotWord } from "../kit";
+import { stateWords } from "../objects/NeedsRow";
 import "./standing-page.css";
 
 export interface MemoryRefToken {
@@ -140,7 +141,8 @@ export function StandingPage({
         <h4 className="surface-primary standing-page-title">{title}</h4>
         <span className="standing-page-meta">
           {stale ? (
-            <StateChip state="warning" label={more ? `STALE · ${more}` : "STALE"} data-testid="standing-page-stale" />
+            // W6-J words: the state is a dot and a word (`Stale · 3 new sources`).
+            <DotWord tone="warn" data-testid="standing-page-stale">{stateWords(more ? `STALE · ${more}` : "STALE")}</DotWord>
           ) : null}
           <span className="surface-token" data-testid="standing-page-built">{built}</span>
         </span>

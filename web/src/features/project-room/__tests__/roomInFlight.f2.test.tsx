@@ -268,9 +268,9 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
     render(<WindowHarness scope="project:p1" />);
     await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(3), DRAWN);
     const rows = screen.getAllByTestId("needs-you-row");
-    expect(within(rows[0]).getByTestId("flight-chip").textContent).toContain("CLAUDE CODE · WAITING");
-    expect(within(rows[1]).getByTestId("flight-chip").textContent).toContain("CODEX · WORKING");
-    expect(within(rows[2]).getByTestId("flight-chip").textContent).toContain("PR #412 · OPEN");
+    expect(within(rows[0]).getByTestId("flight-chip").textContent).toContain("Claude Code · Waiting");
+    expect(within(rows[1]).getByTestId("flight-chip").textContent).toContain("Codex · Working");
+    expect(within(rows[2]).getByTestId("flight-chip").textContent).toContain("PR #412 · Open");
     expect(within(rows[0]).getByRole("button", { name: "Open session: Write the rollback runbook" })).toBeTruthy();
     // Owner ruling 2026-10-25: no host chip; Open PR names the link.
     expect(within(rows[2]).queryByText("GITHUB.COM")).toBeNull();
@@ -302,7 +302,7 @@ describe("Conductor F2 K4b: OPEN HERE rows wear their agent", () => {
     render(<WindowHarness scope="project:p1" />);
     await waitFor(() => expect(screen.getAllByTestId("flight-chip")).toHaveLength(3), DRAWN);
     expect(screen.queryAllByRole("button", { name: /^Hand to agent/ })).toHaveLength(0);
-    expect(screen.getAllByTestId("flight-chip")[0].textContent).toContain("CLAUDE CODE · STARTING");
+    expect(screen.getAllByTestId("flight-chip")[0].textContent).toContain("Claude Code · Starting");
   });
 });
 

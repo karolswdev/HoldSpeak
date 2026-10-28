@@ -598,7 +598,7 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     // The hub's event: the row goes, the receipt stays.
     act(() => useDesk.getState().applyScheduledRecordingEvent("scheduled_recording.cancelled", { schedule_id: "sch-9" }));
     expect(armed()).toBeNull();
-    expect(screen.getByTestId("needs-receipt").textContent).toMatch(/^CANCELLED · Ledger cutover sync · \d\d:\d\d$/);
+    expect(screen.getByTestId("needs-receipt").textContent).toMatch(/^Cancelled · Ledger cutover sync · \d\d:\d\d$/);
   });
 
   it("P1-3: one object, one count: an ask the hub folded into its item is its item's row, not a member", async () => {
