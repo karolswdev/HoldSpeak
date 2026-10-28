@@ -522,7 +522,8 @@ describe("Step rows: human labels and receipt refs", () => {
     fireEvent.click(updRef());
 
     const failure = await screen.findByTestId("steward-open-failure");
-    expect(failure.textContent).toContain("NOT OPENED · UPDATE DID NOT LOAD");
+    expect(failure.textContent).toContain("Could not open the update · The receipt stays here");
+    expect(failure.querySelector("[title]")?.getAttribute("title")).toContain("HTTP 500");
     expect(screen.getByTestId("steward-detail")).toBeTruthy();
     expect(screen.queryByTestId("update-posture")).toBeNull();
 
@@ -547,7 +548,7 @@ describe("Step rows: human labels and receipt refs", () => {
     fireEvent.click((await screen.findAllByTestId("steward-list-item"))[0]);
     await waitFor(() => screen.getByTestId("steward-detail"));
     fireEvent.click(screen.getAllByTestId("steward-receipt-ref").find((el) => el.getAttribute("data-ref") === `update:${updateId}`)!);
-    expect((await screen.findByTestId("steward-open-failure")).textContent).toContain("UPDATE NOT FOUND");
+    expect((await screen.findByTestId("steward-open-failure")).textContent).toContain("Could not open the update · It is not on the hub now");
   });
 
   it("the Door item receipt opens the action item it filed in Follow-through", async () => {

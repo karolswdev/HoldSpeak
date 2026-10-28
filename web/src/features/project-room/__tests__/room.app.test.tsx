@@ -632,7 +632,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
       let editor = await openEditor();
       fireEvent.change(editor, { target: { value: `${editor.value} AAA-saved-words` } });
       fireEvent.click(screen.getByTestId("update-verb-save"));
-      if (save === "failed") await screen.findByText(/NOT SAVED/);
+      if (save === "failed") await screen.findByText(/Could not save the update/);
       await waitFor(() => expect(puts()).toHaveLength(1));
       fireEvent.change(editor, { target: { value: `${editor.value} BBB-newer-words` } });
 
@@ -649,7 +649,7 @@ describe("PHILO-14 A5b: a proposal request over the Room", () => {
       expect(editor.value).toContain("AAA-saved-words");
       expect(editor.value).toContain("BBB-newer-words");
       expect(screen.getByTestId("update-footer-receipt").textContent).toContain("Not saved");
-      if (save === "failed") expect(screen.getByText(/NOT SAVED/)).toBeTruthy();
+      if (save === "failed") expect(screen.getByText(/Could not save the update/)).toBeTruthy();
       expect(puts()).toHaveLength(1);
     });
   }

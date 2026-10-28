@@ -15,10 +15,24 @@ export interface BrowserEntry {
   inspection: { path: string; content: string; retained: boolean } | null;
 }
 
+/* W6-F words: a refused read says what failed and what stayed, in plain
+   words; the code (`HTTP 404`, `READ REFUSED`) is the hover title only. */
+const isGone = (error: unknown) => error instanceof ApiError && error.status === 404;
+function readFailureWords(gone: boolean, path: string): string {
+  return `${gone ? "Could not find" : "Could not read"} ${path || "the top folder"} · The last view stays here`;
+}
+function readFailureReason(error: unknown): string {
+  if (error instanceof ApiError) return `HTTP ${error.status}${error.message ? ` · ${error.message}` : ""}`;
+  return error instanceof Error && error.message ? error.message : "READ REFUSED";
+}
+
 export interface BrowserFailure {
   kind: "tree" | "file";
   path: string;
+  /** W6-F words: one plain sentence (what failed · what stayed). */
   message: string;
+  /** The raw reason (`HTTP 404`, the hub's words), for the hover title only. */
+  reason?: string;
 }
 
 export interface RepositoryBrowserController {
@@ -75,13 +89,13 @@ export function useRepositoryBrowser(adapter: RepositoryReadAdapter, initialPath
           ? current.entries.map((entry, index) => index === current.index ? nextEntry : entry)
           : [...current.entries.slice(0, current.index + 1), nextEntry];
         return { entries, index: mode === "refresh" ? current.index : entries.length - 1, busy: null,
-          failure: missingInspection ? { kind: "file", path: inspectedPath!, message: `NOT FOUND · ${inspectedPath}` } : null };
+          failure: missingInspection ? { kind: "file", path: inspectedPath!, message: readFailureWords(true, inspectedPath!), reason: "NOT IN THE TREE" } : null };
       });
       if (inspectedPath && !missingInspection) inspect(inspectedPath);
     }).catch((error: unknown) => {
       if (!alive.current || request !== generation.current) return;
       update((current) => ({ ...current, busy: null, failure: { kind: "tree", path,
-        message: `${error instanceof ApiError && error.status === 404 ? "NOT FOUND" : "READ REFUSED"} · ${path || "root"}` } }));
+        message: readFailureWords(isGone(error), path), reason: readFailureReason(error) } }));
     });
   };
 
@@ -117,7 +131,7 @@ export function useRepositoryBrowser(adapter: RepositoryReadAdapter, initialPath
     }).catch((error: unknown) => {
       if (!alive.current || request !== generation.current) return;
       update((current) => ({ ...current, busy: null, failure: { kind: "file", path,
-        message: `${error instanceof ApiError && error.status === 404 ? "NOT FOUND" : "READ REFUSED"} · ${path}` } }));
+        message: readFailureWords(isGone(error), path), reason: readFailureReason(error) } }));
     });
   };
   const entry = entryAt(model);

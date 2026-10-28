@@ -23,10 +23,10 @@ import {
   SurfaceLedger,
   SurfaceLedgerRow,
   SurfaceSection,
-  StateChip,
   countLabel,
   countToken,
 } from "../../desk/surface";
+import { DotWord } from "../../desk/surface/kit";
 import { SurfaceFooter } from "../../desk/surface/SurfaceFooter";
 import { egressForEvent } from "../../desk/surface/egress";
 import {
@@ -89,16 +89,16 @@ type ProjectItem = {
 /* ── Option constants ───────────────────────────────────────────── */
 
 const SWEEP_OPTIONS = [
-  { value: "5", label: "EVERY 5 MIN" },
-  { value: "15", label: "EVERY 15 MIN" },
-  { value: "30", label: "EVERY 30 MIN" },
-  { value: "60", label: "EVERY 1 HR" },
+  { value: "5", label: "Every 5 min" },
+  { value: "15", label: "Every 15 min" },
+  { value: "30", label: "Every 30 min" },
+  { value: "60", label: "Every hour" },
 ];
 
 const NOTIFY_OPTIONS = [
-  { value: "off", label: "OFF" },
-  { value: "edge", label: "ON THE EDGE" },
-  { value: "every_sweep", label: "EVERY SWEEP" },
+  { value: "off", label: "Off" },
+  { value: "edge", label: "On the edge" },
+  { value: "every_sweep", label: "Every sweep" },
 ];
 
 /* ── Helpers ────────────────────────────────────────────────────── */
@@ -114,13 +114,13 @@ function fmtTime(iso: string | null | undefined): string | null {
   return wireClock(iso) || null;
 }
 
-/** Format a date as MON DD (e.g. SEP 04). */
+/** Format a date as Mon DD (e.g. Sep 04). */
 function fmtDate(iso: string | null | undefined): string | null {
   if (!iso) return null;
   try {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return null;
-    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     return `${months[d.getMonth()]} ${String(d.getDate()).padStart(2, "0")}`;
   } catch {
     return null;
@@ -128,8 +128,8 @@ function fmtDate(iso: string | null | undefined): string | null {
 }
 
 /** HS-175 counsel C9(a): the Rhythm summary line, honest at one and zero.
- * `1 MEETING · 1 ARMED · 1 WATCH ITEM · 1 COMMITMENT DUE`; null when no
- * part counts (A.8). */
+ * `1 meeting · 1 armed · 1 watch item · 1 commitment due`; null when no
+ * part counts (A.8). W6-F words: sentence case, sans. */
 export function briefSummaryLine(
   items: Array<{ source_ref?: string | null; text?: string | null }> | undefined,
 ): string | null {
@@ -145,10 +145,10 @@ export function briefSummaryLine(
     else if (ref === "meeting_watch:decisions") watch += lead(text);
   }
   const parts = [
-    countToken(meetings, "MEETING"),
-    countToken(armed, "ARMED", "ARMED"),
-    countToken(watch, "WATCH ITEM"),
-    countToken(due, "COMMITMENT DUE", "COMMITMENTS DUE"),
+    countToken(meetings, "meeting", "meetings"),
+    countToken(armed, "armed", "armed"),
+    countToken(watch, "watch item", "watch items"),
+    countToken(due, "commitment due", "commitments due"),
   ].filter((p): p is string => Boolean(p));
   return parts.length > 0 ? parts.join(" · ") : null;
 }
@@ -218,9 +218,14 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
   const [receipt, setReceipt] = useState<SweepReceipt | null>(null);
   const [writtenAt, setWrittenAt] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+  // W6-F words: a failure is one plain sentence (what failed · what stayed);
+  // the hub's reason is the hover title only (`*Reason`).
   const [saveError, setSaveError] = useState("");
+  const [saveReason, setSaveReason] = useState("");
   const [sweepError, setSweepError] = useState("");
+  const [sweepReason, setSweepReason] = useState("");
   const [briefError, setBriefError] = useState("");
+  const [briefReason, setBriefReason] = useState("");
 
   // Defensive: the wire may return a partial shape (especially in tests
   // where the fetch stub returns a catch-all).
@@ -251,7 +256,8 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
       setWrittenAt(Date.now() / 1000);
       await heartbeat.reload();
     } catch (error) {
-      setSaveError(`Settings save not confirmed · Shown settings kept · Reload · ${readableError(error)}`);
+      setSaveError("Could not confirm the save · The shown settings stay");
+      setSaveReason(readableError(error));
     } finally {
       setSaving(false);
     }
@@ -269,7 +275,8 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
       setReceipt(result);
       await heartbeat.reload();
     } catch (error) {
-      setSweepError(`Sweep failed · ${readableError(error)}`);
+      setSweepError("Could not run the sweep · Nothing changed");
+      setSweepReason(readableError(error));
     } finally {
       setSweeping(false);
     }
@@ -282,7 +289,8 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
       await apiFetch("/api/brief/generate", { method: "POST", json: {} });
       await briefRes.reload();
     } catch (error) {
-      setBriefError(`Brief not generated · ${readableError(error)}`);
+      setBriefError("Could not make the brief · The last brief stays");
+      setBriefReason(readableError(error));
     } finally {
       setGenerating(false);
     }
@@ -345,8 +353,8 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
       {embedded ? null : renderHeroSlot(hero, null, null)}
       <div className="cadence-body" data-settling={shown ? undefined : "true"} aria-busy={shown ? undefined : true}>
       {shown ? null : <div className="cadence-settling-line"><SurfaceState loading /></div>}
-      {saveError ? <SurfaceState error={saveError} onRetry={async () => { if (await heartbeat.reload()) setSaveError(""); }} /> : null}
-      {heartbeat.error ? <SurfaceState error={`Rhythm settings not loaded · ${heartbeat.error}`} onRetry={() => void heartbeat.reload()} /> : null}
+      {saveError ? <SurfaceState error={saveError} errorTitle={saveReason} onRetry={async () => { if (await heartbeat.reload()) setSaveError(""); }} /> : null}
+      {heartbeat.error ? <SurfaceState error="Could not load the Rhythm settings · Nothing changed · Check the hub" errorTitle={heartbeat.error} onRetry={() => void heartbeat.reload()} /> : null}
 
       {/* Display headline: accent when the sweep runs, muted when not */}
       {embedded ? null : <span
@@ -387,49 +395,29 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
           }
         />
       </SurfaceLedger>
+      {/* W6-F words: the facts are one quiet sans line in sentence case
+          (`Quiet 22:00–08:00 · Next 10:15 · Last 10:00 · Checked 3 rooms in
+          42 ms`); a state is a dot and a word. */}
       <div className="rhythm-facts" data-testid="rhythm-sweep-facts">
         {sweeping ? (
-          <StateChip state="active" label="RUNNING" />
+          <DotWord tone="info">Running</DotWord>
         ) : inQuiet ? (
-          <StateChip state="warning" label={`HELD · QUIET UNTIL ${fmtHour(settings.quiet_hours.end)}`} />
+          <DotWord tone="warn">{`Held · Quiet until ${fmtHour(settings.quiet_hours.end)}`}</DotWord>
         ) : null}
         {!sweeping && (
-          <>
-            <span className="surface-token" data-chip data-muted>
-              QUIET {fmtHour(settings.quiet_hours.start)}&ndash;{fmtHour(settings.quiet_hours.end)}
-            </span>
-            {settings.next_sweep_at ? (
-              <>
-                <span className="surface-token" data-chip data-muted>{"·"}</span>
-                <span className="surface-token" data-chip data-muted>
-                  NEXT {fmtTime(settings.next_sweep_at)}
-                </span>
-              </>
-            ) : null}
-            {settings.last_sweep_at ? (
-              <>
-                <span className="surface-token" data-chip data-muted>{"·"}</span>
-                <span className="surface-token" data-chip data-muted>
-                  LAST {fmtTime(settings.last_sweep_at)}
-                </span>
-              </>
-            ) : null}
-            {receipt ? (
-              <>
-                <span className="surface-token" data-chip data-muted>{"·"}</span>
-                <span className="surface-token" data-chip data-muted>
-                  {receipt.rooms} {receipt.rooms === 1 ? "ROOM" : "ROOMS"}
-                </span>
-                <span className="surface-token" data-chip data-muted>{"·"}</span>
-                <span className="surface-token" data-chip data-muted>
-                  {Math.round(receipt.duration_ms)} MS
-                </span>
-              </>
-            ) : null}
-          </>
+          <span className="rhythm-facts-line">
+            {[
+              `Quiet ${fmtHour(settings.quiet_hours.start)}–${fmtHour(settings.quiet_hours.end)}`,
+              settings.next_sweep_at ? `Next ${fmtTime(settings.next_sweep_at)}` : null,
+              settings.last_sweep_at ? `Last ${fmtTime(settings.last_sweep_at)}` : null,
+              receipt
+                ? `Checked ${receipt.rooms > 0 ? receipt.rooms : "no"} ${receipt.rooms === 1 ? "room" : "rooms"} in ${Math.round(receipt.duration_ms)} ms`
+                : null,
+            ].filter(Boolean).join(" · ")}
+          </span>
         )}
       </div>
-      {sweepError ? <SurfaceState error={sweepError} /> : null}
+      {sweepError ? <SurfaceState error={sweepError} errorTitle={sweepReason} /> : null}
       </div>{/* /rhythm-section sweep */}
 
       {/* ── RUNS ON row (HS-174-08) ────────────────────────────── */}
@@ -445,7 +433,7 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
               value={settings.runs_on || "local"}
               disabled={saving || sweeping}
               options={[
-                { value: "local", label: "THIS DEVICE" },
+                { value: "local", label: "This device" },
                 ...(settings.remote_hosts ?? []).map((h) => ({ value: h, label: h })),
               ]}
               onChange={(v) => void putSetting({ runs_on: v })}
@@ -457,30 +445,25 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
       <div className="rhythm-facts" data-testid="rhythm-runs-on-facts">
         {settings.runs_on && settings.runs_on !== "local" ? (
           <>
-            {settings.last_remote_run_at ? (
-              <span className="surface-token" data-chip data-muted>
-                LAST RUN {humanTime(settings.last_remote_run_at)}
-              </span>
-            ) : (
-              <span className="surface-token" data-chip data-muted data-testid="rhythm-runs-on-no-runs">
-                NO RUNS YET
-              </span>
-            )}
-            {receipt ? (
-              <>
-                {/* W6-D (2026-10-28): the receipt in sentence case, as Activity says it. */}
-                <span className="surface-token" data-chip data-muted data-testid="rhythm-runs-on-checked">
-                  Checked {receipt.rooms} {receipt.rooms === 1 ? "room" : "rooms"}
-                </span>
-                {settings.last_remote_run_at ? (
-                  <span className="surface-token" data-chip data-muted>
-                    {fmtTime(settings.last_remote_run_at)}
+            <span className="rhythm-facts-line">
+              {settings.last_remote_run_at ? (
+                <span>Last run {humanTime(settings.last_remote_run_at)}</span>
+              ) : (
+                <span data-testid="rhythm-runs-on-no-runs">No runs yet</span>
+              )}
+              {receipt ? (
+                <>
+                  {/* W6-D (2026-10-28): the receipt in sentence case, as Activity says it. */}
+                  {" · "}
+                  <span data-testid="rhythm-runs-on-checked">
+                    Checked {receipt.rooms} {receipt.rooms === 1 ? "room" : "rooms"}
                   </span>
-                ) : null}
-              </>
-            ) : null}
+                  {settings.last_remote_run_at ? <>{" · "}{fmtTime(settings.last_remote_run_at)}</> : null}
+                </>
+              ) : null}
+            </span>
             <span className="rhythm-runs-on-caption" data-testid="rhythm-runs-on-caption">
-              WHILE THIS MAC IS AWAKE
+              While this Mac is awake
             </span>
           </>
         ) : null}
@@ -514,16 +497,16 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
                   brief.  PHILO-15 05: the hour is the Brief job's own
                   (cadence.brief_hour, 06:00 by default), OFF when the job is
                   off; an older hub without it keeps the quiet-hours end. */}
-              <span className="surface-token" data-chip data-muted data-testid="rhythm-brief-cadence">
+              <span className="surface-token rhythm-fact" data-testid="rhythm-brief-cadence">
                 {briefJob
-                  ? briefJob.enabled ? `DAILY ${fmtHour(briefJob.hour)}` : "OFF"
-                  : `DAILY ${fmtHour(settings.quiet_hours.end)}`}
+                  ? briefJob.enabled ? `Daily ${fmtHour(briefJob.hour)}` : "Off"
+                  : `Daily ${fmtHour(settings.quiet_hours.end)}`}
               </span>
-              <span data-testid="rhythm-brief-last">
+              <span className="surface-token rhythm-fact" data-testid="rhythm-brief-last">
                 {briefDate ? (
-                  <StateChip state="success" label={`LAST ${briefDate}`} />
+                  <DotWord tone="ok">{`Last ${briefDate}`}</DotWord>
                 ) : (
-                  <StateChip state="idle" label="NEVER" />
+                  <DotWord>Never made</DotWord>
                 )}
               </span>
             </>
@@ -534,16 +517,16 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
       {/* HS-175: brief summary line -- absent when all zero (A.8) */}
       <div className="rhythm-facts" data-testid="rhythm-brief-facts">
         {generating ? (
-          <StateChip state="active" label="GENERATING" />
+          <DotWord tone="info">Making the brief</DotWord>
         ) : null}
         {!generating && briefSummary ? (
-          <span className="surface-token" data-chip data-muted data-testid="rhythm-brief-summary">
+          <span className="rhythm-facts-line" data-testid="rhythm-brief-summary">
             {briefSummary}
           </span>
         ) : null}
       </div>
-      {briefError ? <SurfaceState error={briefError} /> : null}
-      {briefRes.error ? <SurfaceState error={`Brief not loaded · ${briefRes.error}`} onRetry={() => void briefRes.reload()} /> : null}
+      {briefError ? <SurfaceState error={briefError} errorTitle={briefReason} /> : null}
+      {briefRes.error ? <SurfaceState error="Could not load the brief · Nothing changed · Check the hub" errorTitle={briefRes.error} onRetry={() => void briefRes.reload()} /> : null}
       </div>{/* /rhythm-section brief */}
 
       {/* ── NOTIFY row ─────────────────────────────────────────── */}
@@ -568,7 +551,7 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
               {/* Betterment daily D8 (decision 2): the quiet notice for a new
                   automation result. Notify off turns it off too. */}
               <CheckGadget
-                label="FINISHED WORK"
+                label="Finished work"
                 variant="token"
                 checked={settings.notify_finished !== false}
                 disabled={saving || sweeping || settings.notify === "off"}
@@ -578,7 +561,7 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
           }
           trailing={
             inQuiet ? (
-              <span className="surface-token" data-chip data-tone="warn">HELD</span>
+              <DotWord tone="warn">Held</DotWord>
             ) : null
           }
         />
@@ -587,7 +570,7 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
       {projects.length > 0 ? (
         <div className="rhythm-mutes" data-testid="rhythm-mute-toggles">
           {projects.map((p) => {
-            const name = (p.name || p.title || p.id).toUpperCase();
+            const name = p.name || p.title || p.id;
             const muted = (settings.muted_projects ?? []).includes(p.id);
             return (
               <CheckGadget
@@ -617,7 +600,7 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
         </p>
       ) : null}
       {loops.length > 0 ? (
-        <SurfaceSection label={countLabel("NOW", loops.length)} data-engine={cadenceStatus.data?.enabled ?? false}>
+        <SurfaceSection label={countLabel("Now", loops.length)} data-engine={cadenceStatus.data?.enabled ?? false}>
           <SurfaceRows>
             {loops.map((loop, index) => {
               const id = rowId(loop, index);
@@ -696,8 +679,8 @@ export function CadenceCore({ hero, embedded = false }: CoreProps & { embedded?:
       {/* ── Footer ─────────────────────────────────────────────── */}
       {embedded ? null : <SurfaceFooter
         receipt={saving || saveError || writtenAt ? (
-          <span className="surface-token" data-chip data-muted={!saveError || undefined} data-tone={saveError ? "fail" : undefined} role="status">
-            {saving ? "Saving" : saveError ? "Unconfirmed" : `Saved ${fmtEpoch(writtenAt)}`}
+          <span className="surface-footer-receipt-line" data-tone={saveError ? "fail" : undefined} role="status">
+            {saving ? "Saving" : saveError ? "Not confirmed" : `Saved ${fmtEpoch(writtenAt)}`}
           </span>
         ) : null}
       />}

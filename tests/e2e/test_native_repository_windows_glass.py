@@ -160,10 +160,10 @@ def test_two_views_keep_location_inspection_and_refusal_when_one_closes(
                 pattern = f"**/api/repositories/{resource_id}/file/docs/guide.md"
                 page.route(pattern, refuse_file, times=1)
                 _open_row(sibling, "docs/guide.md")
-                expect(sibling).to_contain_text("READ REFUSED · docs/guide.md")
+                expect(sibling).to_contain_text("Could not read docs/guide.md · The last view stays here")
                 assert sibling.get_by_role("button", name="docs", exact=True).is_disabled()
                 assert default.get_by_role("button", name="src", exact=True).is_disabled()
-                sibling.get_by_role("button", name="Retry", exact=True).click()
+                sibling.get_by_role("button", name="Try again", exact=True).click()
                 expect(sibling.get_by_test_id("repo-file-content")).to_contain_text("Guide for the second view")
 
                 # Back/Forward are local to the instance and restore its
@@ -342,14 +342,14 @@ def test_deleted_folder_is_not_empty_and_has_a_return_door(
                 (root / "docs" / "guide.md").unlink()
                 (root / "docs").rmdir()
                 _open_row(view, "docs")
-                expect(view).to_contain_text("NOT FOUND · docs")
+                expect(view).to_contain_text("Could not find docs · The last view stays here")
                 assert "Folder empty" not in view.inner_text()
-                expect(view.get_by_role("button", name="Retry", exact=True)).to_be_visible()
+                expect(view.get_by_role("button", name="Try again", exact=True)).to_be_visible()
                 back = view.get_by_role("button", name="Back", exact=True)
                 expect(back).to_be_enabled()
                 back.click()
                 expect(view.locator('tr[aria-label="src"]')).to_be_visible()
-                expect(view).not_to_contain_text("NOT FOUND · docs")
+                expect(view).not_to_contain_text("Could not find docs · The last view stays here")
             finally:
                 browser.close()
     finally:
@@ -393,8 +393,8 @@ def test_components_resource_specimen_uses_local_browser_seam(
 
                 state = page.get_by_role("combobox", name="Example state")
                 state.select_option("failed")
-                expect(specimen).to_contain_text("READ REFUSED · src")
-                expect(specimen.get_by_role("button", name="Retry", exact=True)).to_be_visible()
+                expect(specimen).to_contain_text("Could not read src · The last view stays here")
+                expect(specimen.get_by_role("button", name="Try again", exact=True)).to_be_visible()
                 state.select_option("empty")
                 expect(specimen).to_contain_text("Folder empty")
                 state.select_option("resumed")

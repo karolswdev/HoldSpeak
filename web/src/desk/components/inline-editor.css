@@ -89,7 +89,7 @@
 }
 
 .editor-save-receipt {
-  font: var(--desk-surface-detail-size, 12px)/1.4 var(--font-mono);
+  font: var(--desk-surface-detail-size, 12px)/1.4 var(--font-sans);
   white-space: normal;
   overflow-wrap: anywhere;
 }

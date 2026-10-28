@@ -33,6 +33,7 @@ import {
 import { openRef } from "../../../desk/openObject";
 import { ApiError } from "../../../lib/api";
 import { refusalWord } from "../../../desk/surface/egress";
+import { DotWord } from "../../../desk/surface/kit";
 import type { StewardController } from "./useStewardController";
 import type { StewardPreset, StewardRun, StewardStep } from "./model";
 import {
@@ -239,8 +240,9 @@ function buildPlanSteps(steps: StewardStep[], run: StewardRun): PlanResult {
 
 /* ── Run detail view: ProgressPlan + effect/receipt chips ── */
 
-/** A receipt that did not open: its ref and the plain reason. */
-type OpenFailure = { ref: string; reason: string };
+/** A receipt that did not open: its ref, the plain sentence on the face and
+ *  the raw reason for the hover title only (W6-F words). */
+type OpenFailure = { ref: string; words: string; reason: string };
 
 function RunDetail({
   ctrl,
@@ -340,9 +342,9 @@ function RunDetail({
       ) : null}
       {openFailure ? (
         <div className="steward-open-failure" role="alert" data-testid="steward-open-failure" data-ref={openFailure.ref}>
-          <StateChip state="failure" label={`NOT OPENED · ${openFailure.reason}`} />
+          <DotWord tone="fail" title={openFailure.reason}>{openFailure.words}</DotWord>
           <Button dense variant="ghost" data-testid="steward-open-retry" onClick={() => onOpenRef(openFailure.ref)}>
-            Retry
+            Try again
           </Button>
         </div>
       ) : null}
@@ -772,7 +774,14 @@ export function StewardPosture({
     onOpenUpdate(ref.slice("update:".length))
       .catch((err: unknown) => {
         const gone = err instanceof ApiError && err.status === 404;
-        setOpenFailure({ ref, reason: gone ? "UPDATE NOT FOUND" : "UPDATE DID NOT LOAD" });
+        const reason = err instanceof ApiError ? `HTTP ${err.status}${err.message ? ` · ${err.message}` : ""}` : String((err as Error)?.message || err);
+        setOpenFailure({
+          ref,
+          reason,
+          words: gone
+            ? "Could not open the update · It is not on the hub now · The receipt stays here"
+            : "Could not open the update · The receipt stays here",
+        });
       })
       .finally(() => setOpening(null));
   }, [onOpenUpdate]);

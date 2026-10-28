@@ -47,13 +47,13 @@ describe("repository read browser", () => {
       file: vi.fn(),
     };
     const { result } = renderHook(() => useRepositoryBrowser(adapter, "gone"));
-    await waitFor(() => expect(result.current.failure?.message).toBe("NOT FOUND · gone"));
+    await waitFor(() => expect(result.current.failure?.message).toBe("Could not find gone · The last view stays here"));
     expect(result.current.entry.path).toBe("gone");
     act(() => result.current.navigate(""));
     await waitFor(() => expect(result.current.entry.path).toBe(""));
     expect(result.current.entry.files).toEqual(rootFiles);
     act(() => result.current.back());
-    await waitFor(() => expect(result.current.failure?.message).toBe("NOT FOUND · gone"));
+    await waitFor(() => expect(result.current.failure?.message).toBe("Could not find gone · The last view stays here"));
   });
 
   it("rejects late success and late refusal after a newer location, and Back/Forward restore each entry", async () => {
@@ -90,7 +90,7 @@ describe("repository read browser", () => {
     await waitFor(() => expect(screen.getByTestId("repo-file-content").textContent).toBe("# exact source\n"));
     fireEvent.click(screen.getByRole("row", { name: "CHANGELOG.md" }));
     await act(async () => delayed.reject(new Error("refused")));
-    expect(screen.getByText("READ REFUSED · CHANGELOG.md")).toBeTruthy();
+    expect(screen.getByText("Could not read CHANGELOG.md · The last view stays here")).toBeTruthy();
     expect(screen.getByTestId("repo-file-content").textContent).toBe("# exact source\n");
     expect(screen.getByText("README.md · RETAINED COPY")).toBeTruthy();
     expect(file).toHaveBeenLastCalledWith("CHANGELOG.md");
@@ -128,7 +128,7 @@ describe("repository read browser", () => {
     act(() => result.current.inspect("README.md"));
     await waitFor(() => expect(result.current.entry.inspection?.content).toBe("former content"));
     act(() => result.current.refresh());
-    await waitFor(() => expect(result.current.failure?.message).toBe("NOT FOUND · README.md"));
+    await waitFor(() => expect(result.current.failure?.message).toBe("Could not find README.md · The last view stays here"));
     expect(result.current.entry.inspection).toMatchObject({ content: "former content", retained: true });
   });
 
@@ -156,7 +156,7 @@ describe("repository read browser", () => {
     fireEvent.click(within(screen.getByRole("navigation", { name: "Patterns" })).getByRole("button", { name: "Resources" }));
     await screen.findByRole("row", { name: "README.md" });
     fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: "failed" } });
-    await screen.findByText("READ REFUSED · src");
+    await screen.findByText("Could not read src · The last view stays here");
     expect(screen.getByRole("row", { name: "README.md" })).toBeTruthy();
     fireEvent.change(screen.getByRole("combobox", { name: "Example state" }), { target: { value: "resumed" } });
     await waitFor(() => expect(screen.getByTestId("repo-file-content").textContent).toBe("# HoldSpeak\n\nA registered repository.\nRead this file in the current view.\n"));

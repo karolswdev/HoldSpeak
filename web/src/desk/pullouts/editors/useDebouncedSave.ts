@@ -114,11 +114,13 @@ export function useEditorSession(onDone: () => void, registerClose?: RegisterClo
   const flush = useCallback(async () => writer.current ? writer.current.flush() : true, []);
   useEffect(() => registerClose?.(flush), [registerClose, flush]);
   const done = useCallback(async () => { if (await flush()) onDone(); }, [flush, onDone]);
-  const receipt = current && current.state !== "idle" ? createElement("span", { role: "status", className: "editor-save-receipt" },
-    current.state === "error" ? `Not saved · ${current.reason}` : current.state === "recovered" ? "Recovered changes" : current.state === "pending" || current.state === "saving" ? "Saving…" : current.savedAt ? `Saved ${new Date(current.savedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : null,
+  // W6-F words: a refused save says what failed, what stayed and what to do
+  // next in plain words; the hub's reason code is in the hover title only.
+  const receipt = current && current.state !== "idle" ? createElement("span", { role: "status", className: "editor-save-receipt", title: current.state === "error" && current.reason ? current.reason : undefined },
+    current.state === "error" ? "Could not save · Your changes stay here" : current.state === "recovered" ? "Recovered changes" : current.state === "pending" || current.state === "saving" ? "Saving…" : current.savedAt ? `Saved ${new Date(current.savedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}` : null,
   ) : null;
   const verbs = createElement(Fragment, null,
-    current?.state === "error" || current?.state === "recovered" ? createElement(Button, { dense: true, variant: "ghost", onClick: () => void writer.current?.retry() }, "Retry") : null,
+    current?.state === "error" || current?.state === "recovered" ? createElement(Button, { dense: true, variant: "ghost", onClick: () => void writer.current?.retry() }, "Try again") : null,
     createElement(Button, { dense: true, variant: "primary", disabled: current?.state === "saving", onClick: () => void done() }, "Done"),
   );
   return { onWriter, flush, done, receipt, verbs };

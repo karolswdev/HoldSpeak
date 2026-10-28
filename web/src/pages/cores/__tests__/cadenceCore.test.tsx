@@ -84,7 +84,7 @@ describe("CadenceCore reply", () => {
 /* ── HS-174-08: Runs on row — caption only when remote ── */
 
 describe("CadenceCore Runs on", () => {
-  it("shows the Runs on row with THIS DEVICE by default", async () => {
+  it("shows the Runs on row with This device by default", async () => {
     // Stub all fetches with sensible defaults
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       const url = String(input);
@@ -117,7 +117,7 @@ describe("CadenceCore Runs on", () => {
     expect(screen.queryByTestId("rhythm-runs-on-caption")).toBeNull();
   });
 
-  it("shows WHILE THIS MAC IS AWAKE caption when remote host selected", async () => {
+  it("shows the While this Mac is awake caption when remote host selected", async () => {
     vi.stubGlobal("fetch", vi.fn(async (input: string) => {
       const url = String(input);
       if (url.includes("/api/settings/heartbeat"))
@@ -146,7 +146,7 @@ describe("CadenceCore Runs on", () => {
     });
 
     expect(screen.getByTestId("rhythm-runs-on-caption").textContent).toBe(
-      "WHILE THIS MAC IS AWAKE",
+      "While this Mac is awake",
     );
   });
 });
@@ -228,7 +228,7 @@ describe("Rhythm action receipts", () => {
     expect(screen.queryByLabelText("Notification content")).toBeNull();
   });
 
-  it("shows Saving while PUT is pending, Unconfirmed on failure, then Saved after a successful retry", async () => {
+  it("shows Saving while PUT is pending, Not confirmed on failure, then Saved after a successful retry", async () => {
     let finish: (response: Response) => void = () => undefined;
     let current = { ...settings };
     let puts = 0;
@@ -250,8 +250,9 @@ describe("Rhythm action receipts", () => {
     expect(screen.getByRole("button", { name: "Run now" })).toBeDisabled();
     expect(screen.queryByText(/Saved \d|WRITTEN/)).toBeNull();
     await act(async () => finish(json({ detail: "Write refused" }, 409)));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Settings save not confirmed · Shown settings kept · Reload · Write refused");
-    expect(screen.getByText("Unconfirmed")).toBeVisible();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not confirm the save · The shown settings stay");
+    expect(screen.getByText("Could not confirm the save · The shown settings stay")).toHaveAttribute("title", "Write refused");
+    expect(screen.getByText("Not confirmed")).toBeVisible();
     expect(interval).toHaveValue("15");
     expect(interval).toBeEnabled();
     fireEvent.change(interval, { target: { value: "30" } });
@@ -272,7 +273,8 @@ describe("Rhythm action receipts", () => {
     await waitFor(() => expect(container.querySelector(".cadence-body[data-settling]")).toBeNull());
     fireEvent.change(screen.getByLabelText("Notification mode"), { target: { value: "off" } });
     expect(await screen.findByText(/^Saved \d{2}:\d{2}$/)).toBeVisible();
-    expect(await screen.findByRole("alert")).toHaveTextContent("Rhythm settings not loaded · Read unavailable");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not load the Rhythm settings · Nothing changed · Check the hub");
+    expect(screen.getByText("Could not load the Rhythm settings · Nothing changed · Check the hub")).toHaveAttribute("title", "Read unavailable");
     expect(screen.queryByText("Not saved")).toBeNull();
   });
 
@@ -291,19 +293,20 @@ describe("Rhythm action receipts", () => {
     const { container } = render(<CadenceCore />);
     await waitFor(() => expect(container.querySelector(".cadence-body[data-settling]")).toBeNull());
     fireEvent.change(screen.getByLabelText("Sweep interval"), { target: { value: "30" } });
-    expect(await screen.findByText("Unconfirmed")).toBeVisible();
-    expect(screen.getByRole("alert")).toHaveTextContent("Shown settings kept · Reload · Response lost");
+    expect(await screen.findByText("Not confirmed")).toBeVisible();
+    expect(screen.getByRole("alert")).toHaveTextContent("The shown settings stay");
+    expect(screen.getByText("Could not confirm the save · The shown settings stay")).toHaveAttribute("title", "Response lost");
     expect(screen.getByLabelText("Sweep interval")).toHaveValue("15");
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await waitFor(() => expect(screen.getByLabelText("Sweep interval")).toHaveValue("30"));
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(screen.queryByText("Unconfirmed")).toBeNull();
+    expect(screen.queryByText("Not confirmed")).toBeNull();
     expect(puts).toBe(1);
   });
 
   it.each([
-    ["Run now", "/api/settings/heartbeat/run-now", "Sweep failed"],
-    ["Generate", "/api/brief/generate", "Brief not generated"],
+    ["Run now", "/api/settings/heartbeat/run-now", "Could not run the sweep · Nothing changed"],
+    ["Generate", "/api/brief/generate", "Could not make the brief · The last brief stays"],
   ])("names a failed %s and releases its busy action", async (name, path, failure) => {
     let finish: (response: Response) => void = () => undefined;
     vi.stubGlobal("fetch", vi.fn(async (input: string, init?: RequestInit) => {
@@ -317,8 +320,9 @@ describe("Rhythm action receipts", () => {
     fireEvent.click(button);
     expect(button).toBeDisabled();
     await act(async () => finish(json({ detail: "Hub unavailable" }, 503)));
-    expect(await screen.findByRole("alert")).toHaveTextContent(`${failure} · Hub unavailable`);
+    expect(await screen.findByRole("alert")).toHaveTextContent(failure);
+    expect(screen.getByText(failure)).toHaveAttribute("title", "Hub unavailable");
     expect(button).toBeEnabled();
-    expect(screen.queryByText(/Saved \d|WRITTEN|\d MS/)).toBeNull();
+    expect(screen.queryByText(/Saved \d|WRITTEN|\d ms/)).toBeNull();
   });
 });
