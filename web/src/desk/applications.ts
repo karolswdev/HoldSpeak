@@ -201,7 +201,9 @@ export const DESK_APPLICATIONS: readonly DeskApplication[] = [
     glyph: "▦",
     href: "/",
     group: "tool",
-    go: { group: "daily", order: 5.5 },
+    // Not on the phone's Go: a Program is driven from the desk (its asks reach
+    // the phone through Needs you), and the phone's Go is at its 852 px limit.
+    go: { group: "daily", order: 5.5, desktop: true },
     shortcut: "⌃7",
     surface: {
       eyebrow: "Orchestration",

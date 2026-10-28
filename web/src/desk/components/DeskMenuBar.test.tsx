@@ -208,7 +208,7 @@ describe("DeskMenuBar at 393", () => {
     fireEvent.click(screen.getByRole("button", { name: /^Go$/ }), { detail: 0 });
     const menu = screen.getByRole("menu", { name: "Go menu" });
     expect(labels(menu)).toEqual([
-      "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents", "Programs", "Ask AI", "Speak",
+      "Today", "Needs you", "Capture", "Meetings", "People", "Projects", "Decisions", "Agents", "Ask AI", "Speak",
       "Automations", "Memory", "Calls", "Voice commands", "Archive",
       "New",
     ]);

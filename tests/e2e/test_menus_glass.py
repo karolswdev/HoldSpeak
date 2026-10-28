@@ -814,7 +814,8 @@ class TestSharedControlsAreSpecies:
                 page, ".thought-workspace-window .thought-note-toolbar .kit-toolbar-verbs button",
                 subject="the note toolbar",
             )
-            expected = {"Ask about this", "Find the tasks", "Send…"}
+            # Programs (2026-10-28): "Run as a program" is the Note's fourth verb.
+            expected = {"Ask about this", "Find the tasks", "Run as a program", "Send…"}
             if width > 720:
                 expected.add("Done")
             assert {row["label"] for row in rows} == expected, rows
