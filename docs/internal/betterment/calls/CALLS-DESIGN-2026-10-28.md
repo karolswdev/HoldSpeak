@@ -1,8 +1,9 @@
 # Calls: call HoldSpeak, and HoldSpeak calls
 
 Status: design for the owner, 2026-10-28. Lane CALLS. Canvas:
-`docs/internal/betterment/canvases/calls-2026-10-28.html`. Spike: slice 1
-below (built in this lane; no account, no key, nothing leaves the device).
+`docs/internal/betterment/canvases/calls-2026-10-28.html`. Slice 1 (the hub:
+`holdspeak/calls/`, routes, MCP, settings, `calls.turn`) is built in lane
+CALLS; no account, no key, nothing left the device. User doc: `docs/calls.md`.
 
 ## 1. The job
 
@@ -176,6 +177,17 @@ Measured tonight from this Mac to `100.118.33.80:8080` (llama.cpp
 | One tool call with 8 711 tokens of tool schemas, **cold** | 6.33 s | 6.59 s |
 | The same prefix, **warm** (llama.cpp keeps the prefix) | 0.61 s | 0.84 s |
 
+**A real call turn, recorded** (`scripts/record_call_turn_reply.py` →
+`tests/fixtures/call_turn_home.json`, 2026-10-28, the CALL prompt and the
+CALL palette, "Add a task for me: nudge Tomás about the runbook by Friday."):
+pass 1 read the prompt in 4.70 s (cold) and wrote the `door.add_item` call in
+3.41 s; pass 2 read 0.23 s and said "Done — "Nudge Tomás about the runbook" is
+on your list, due Friday." in 0.43 s. **A cold first turn: about 8.8 s; a warm
+one about 4 s.** The first CALL prompt (copied from Ask: "read memory pages
+first") made the model walk three reads (`today.get`, `desk.snapshot`,
+`follow_through.board`) before the write and run out of passes, about 14 s:
+the prompt now says "do it at once with the fewest tool calls".
+
 The ASK palette is 25 040 characters of schemas (about 6 000 tokens), so a
 cold first turn is about 4–5 s of prompt reading at ~1 400 tokens/s; every
 later turn on the same call is warm.
@@ -272,7 +284,7 @@ and the phone door from this contract (canvas: `canvases/calls-2026-10-28.html`)
   The face draws `steps` as Settings ▸ Calls's checklist and `aiphone.words` as a dot and a word. It reads ai-phone's `~/.ai-phone/state.json` and probes `control.sock`; it never reads `secrets.env`.
 - `GET /api/calls` → `{"calls": [<summary>…]}`, newest first (the last 20).
 - `GET /api/calls/{id}` → `<call>` (the summary plus `transcript`).
-- `POST /api/calls/place` `{"to"?: "+1…"|"sip:…"}` → `<summary>` (201). `to` defaults to `calls.allowed_numbers[0]` (Call me). 409 `{"reason":"busy"|"not_running"|"no_line"|"daily_limit"|"no_answer"|"rejected"}`.
+- `POST /api/calls/place` `{"to"?: "+1…"|"sip:…"}` → `<summary>` (201). `to` defaults to `calls.allowed_numbers[0]` (Call me). 409 `{"reason":"no_number"|"busy"|"not_found"|"not_running"|"no_line"|"daily_limit"|"no_answer"|"rejected"}`.
 - `POST /api/calls/{id}/hangup` → `<summary>`.
 - `POST /api/calls/{id}/decide` `{"decision":"approve"|"deny"}` → `<summary>` (the tap form of the spoken yes; 409 when nothing is held).
 
@@ -288,7 +300,7 @@ One frame per change; the window replaces its copy of the call.
 ### MCP (through the same service)
 
 `calls.status` and `calls.list` (WORK, reads), `calls.hangup` (WORK),
-`calls.place` (EGRESS: a real call; an agent's call holds for his press).
+`calls.place` (EGRESS: a real call; only the owner's principal may place one, an agent's call is refused).
 
 ### The faces
 
@@ -303,8 +315,7 @@ One frame per change; the window replaces its copy of the call.
   passphrase, the numbers, the switch. Egress is disclosed here.
 - **The phone**: a Calls tile on the phone home.
 - **A note on his desk** (the owner's ask): "Calls: sign up at Telnyx, then
-  Settings ▸ Calls", written once by the hub when `calls.enabled` is off and
-  no line exists.
+  Settings ▸ Calls". The orchestrator writes it on his desk; it is not hub code.
 
 ## 7. The slices
 

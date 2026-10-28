@@ -23,6 +23,7 @@ ARTIFACT = REPO / "docs/internal/surface-fallback-census.md"
 # each new private decision is a new authority until a reviewer says otherwise.
 # The value is (classification, one Phase 143 owner story).
 BACKEND_PRIVATE_DECISIONS: dict[tuple[str, str], tuple[str, str]] = {
+    ("holdspeak/calls/service.py", "_override_profile"): ("a call's default engine: the home engine profile as the call thread's profile_override (the existing next-run override) unless calls.turn is assigned; no new route law", "143-03"),
     ("holdspeak/memory/engine.py", "_resolve_selected_head"): ("canonical selected Memory assignment adapter; existing planner validation, no wider-head fallback", "143-04"),
     ("holdspeak/services/project_door_service.py", "_resolve_connection"): ("provider account identity; exact pasted site binding, no inference route", "143-01"),
     ("holdspeak/services/project_service.py", "_nudge_target"): ("exact stored outbound destination match; no inference route or dispatch", "143-01"),

@@ -1,12 +1,12 @@
 {
   "_": "The hub's own answer, captured by tests/integration/test_desk_agents_wire.py; HOLDSPEAK_WIRE_WRITE=1 rewrites it.",
-  "captured_at": "2026-10-28T02:01:28.287396Z",
+  "captured_at": "2026-10-28T04:13:38.522641Z",
   "wire": {
     "issue_count": 5,
     "rows": [
       {
         "assignment": {
-          "created_at": "2026-10-28T02:01:28.268250Z",
+          "created_at": "2026-10-28T04:13:38.503531Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
@@ -19,7 +19,7 @@
               "readiness": "ready"
             }
           ],
-          "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+          "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
           "issues": [
             {
               "capability_id": "agent.plan",
@@ -204,7 +204,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+          "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
         },
         "editor_capability_id": "agent.code",
         "expected_revision": 1,
@@ -216,7 +216,7 @@
       },
       {
         "assignment": {
-          "created_at": "2026-10-28T02:01:28.268250Z",
+          "created_at": "2026-10-28T04:13:38.503531Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
@@ -229,7 +229,7 @@
               "readiness": "ready"
             }
           ],
-          "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+          "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
           "issues": [
             {
               "capability_id": "thought.interview",
@@ -246,7 +246,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+          "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
         },
         "editor_capability_id": "ask.answer",
         "expected_revision": 0,
@@ -258,7 +258,7 @@
       },
       {
         "assignment": {
-          "created_at": "2026-10-28T02:01:28.268250Z",
+          "created_at": "2026-10-28T04:13:38.503531Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
@@ -271,7 +271,7 @@
               "readiness": "ready"
             }
           ],
-          "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+          "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
           "issues": [
             {
               "capability_id": "speech.intent_classify",
@@ -295,7 +295,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+          "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
         },
         "editor_capability_id": "speech.intent_classify",
         "expected_revision": 0,
@@ -317,7 +317,7 @@
       },
       {
         "assignment": {
-          "created_at": "2026-10-28T02:01:28.268250Z",
+          "created_at": "2026-10-28T04:13:38.503531Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
@@ -330,7 +330,7 @@
               "readiness": "ready"
             }
           ],
-          "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+          "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
           "issues": [
             {
               "capability_id": "meeting.deferred_analysis",
@@ -459,7 +459,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+          "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
         },
         "editor_capability_id": "meeting.auto_title",
         "expected_revision": 0,
@@ -471,7 +471,7 @@
       },
       {
         "assignment": {
-          "created_at": "2026-10-28T02:01:28.268250Z",
+          "created_at": "2026-10-28T04:13:38.503531Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
@@ -484,7 +484,7 @@
               "readiness": "ready"
             }
           ],
-          "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+          "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
           "issues": [
             {
               "capability_id": "agent.plan",
@@ -508,7 +508,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+          "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
         },
         "editor_capability_id": "agent.code",
         "expected_revision": 0,
@@ -520,7 +520,7 @@
       },
       {
         "assignment": {
-          "created_at": "2026-10-28T02:01:28.268250Z",
+          "created_at": "2026-10-28T04:13:38.503531Z",
           "effective_retry_policy_id": null,
           "entries": [
             {
@@ -533,7 +533,7 @@
               "readiness": "ready"
             }
           ],
-          "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+          "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
           "issues": [
             {
               "capability_id": "calendar.snapshot_extract",
@@ -557,7 +557,7 @@
           "scope": {
             "kind": "global"
           },
-          "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+          "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
         },
         "editor_capability_id": "background.cadence_draft",
         "expected_revision": 0,
@@ -573,7 +573,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -586,7 +586,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -595,7 +595,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "agent.code",
           "inherited_from": "global",
@@ -615,7 +615,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -628,7 +628,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "agent.plan",
@@ -645,7 +645,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "agent.plan",
           "inherited_from": "global",
@@ -673,7 +673,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.tool.turn",
             "entries": [
               {
@@ -686,7 +686,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "agent.tool_turn",
@@ -703,7 +703,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "agent.tool_turn",
           "inherited_from": "global",
@@ -731,7 +731,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -744,7 +744,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -753,7 +753,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "ask.answer",
           "inherited_from": "global",
@@ -773,7 +773,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.background.standard",
             "entries": [
               {
@@ -786,7 +786,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -795,7 +795,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "background.cadence_draft",
           "inherited_from": "global",
@@ -815,7 +815,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.background.standard",
             "entries": [
               {
@@ -828,7 +828,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -837,7 +837,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "background.rails_summary",
           "inherited_from": "global",
@@ -857,7 +857,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -870,7 +870,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "calendar.snapshot_extract",
@@ -887,7 +887,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "calendar.snapshot_extract",
           "inherited_from": "global",
@@ -915,7 +915,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -928,7 +928,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -937,7 +937,49 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
+          },
+          "capability_id": "calls.turn",
+          "inherited_from": "global",
+          "repair": null,
+          "status": "assigned"
+        },
+        "group": {
+          "id": "thoughts_notes",
+          "label": "Thoughts & notes"
+        },
+        "has_override": false,
+        "id": "calls.turn",
+        "issues": [],
+        "label": "Phone calls",
+        "queue": null
+      },
+      {
+        "effective": {
+          "assignment": {
+            "created_at": "2026-10-28T04:13:38.503531Z",
+            "effective_retry_policy_id": "retry.text.standard",
+            "entries": [
+              {
+                "boundary": "private_network",
+                "label": "Qwen3 8 27B",
+                "ordinal": 1,
+                "profile_id": "qwen3-8-27b",
+                "profile_revision": 1,
+                "profile_schema_version": 2,
+                "readiness": "ready"
+              }
+            ],
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
+            "issues": [],
+            "retry_policy_id": null,
+            "retry_policy_source": "capability_default",
+            "revision": 1,
+            "schema": "InferenceAssignmentProjection@1",
+            "scope": {
+              "kind": "global"
+            },
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "chat.turn",
           "inherited_from": "global",
@@ -957,7 +999,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.background.standard",
             "entries": [
               {
@@ -970,7 +1012,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -979,7 +1021,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "decision.promotion_draft",
           "inherited_from": "global",
@@ -999,7 +1041,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.background.standard",
             "entries": [
               {
@@ -1012,7 +1054,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1021,7 +1063,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "delivery.pr_review_draft",
           "inherited_from": "global",
@@ -1041,7 +1083,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -1054,7 +1096,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1063,7 +1105,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.auto_title",
           "inherited_from": "global",
@@ -1087,7 +1129,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -1100,7 +1142,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -1109,7 +1151,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.bookmark_label",
           "inherited_from": "global",
@@ -1133,7 +1175,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1146,7 +1188,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.deferred_analysis",
@@ -1163,7 +1205,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.deferred_analysis",
           "inherited_from": "global",
@@ -1195,7 +1237,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1208,7 +1250,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.live_analysis",
@@ -1225,7 +1267,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.live_analysis",
           "inherited_from": "global",
@@ -1253,7 +1295,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1266,7 +1308,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.action_owner_enforcer",
@@ -1283,7 +1325,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.action_owner_enforcer",
           "inherited_from": "global",
@@ -1315,7 +1357,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1328,7 +1370,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.adr_drafter",
@@ -1345,7 +1387,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.adr_drafter",
           "inherited_from": "global",
@@ -1377,7 +1419,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1390,7 +1432,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.customer_signal_extractor",
@@ -1407,7 +1449,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.customer_signal_extractor",
           "inherited_from": "global",
@@ -1439,7 +1481,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1452,7 +1494,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.decision_announcement_drafter",
@@ -1469,7 +1511,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.decision_announcement_drafter",
           "inherited_from": "global",
@@ -1501,7 +1543,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1514,7 +1556,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.decision_capture",
@@ -1531,7 +1573,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.decision_capture",
           "inherited_from": "global",
@@ -1563,7 +1605,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1576,7 +1618,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.dependency_mapper",
@@ -1593,7 +1635,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.dependency_mapper",
           "inherited_from": "global",
@@ -1625,7 +1667,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1638,7 +1680,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.incident_timeline",
@@ -1655,7 +1697,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.incident_timeline",
           "inherited_from": "global",
@@ -1687,7 +1729,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1700,7 +1742,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.mermaid_architecture",
@@ -1717,7 +1759,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.mermaid_architecture",
           "inherited_from": "global",
@@ -1749,7 +1791,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1762,7 +1804,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.milestone_planner",
@@ -1779,7 +1821,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.milestone_planner",
           "inherited_from": "global",
@@ -1811,7 +1853,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1824,7 +1866,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.project_detector",
@@ -1841,7 +1883,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.project_detector",
           "inherited_from": "global",
@@ -1873,7 +1915,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1886,7 +1928,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.requirements_extractor",
@@ -1903,7 +1945,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.requirements_extractor",
           "inherited_from": "global",
@@ -1935,7 +1977,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -1948,7 +1990,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.risk_heatmap",
@@ -1965,7 +2007,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.risk_heatmap",
           "inherited_from": "global",
@@ -1997,7 +2039,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -2010,7 +2052,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.runbook_delta",
@@ -2027,7 +2069,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.runbook_delta",
           "inherited_from": "global",
@@ -2059,7 +2101,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -2072,7 +2114,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.scope_guard",
@@ -2089,7 +2131,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.scope_guard",
           "inherited_from": "global",
@@ -2121,7 +2163,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -2134,7 +2176,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "meeting.plugin.stakeholder_update_drafter",
@@ -2151,7 +2193,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "meeting.plugin.stakeholder_update_drafter",
           "inherited_from": "global",
@@ -2183,7 +2225,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -2196,7 +2238,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2205,7 +2247,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "memory.consolidate",
           "inherited_from": "global",
@@ -2225,7 +2267,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.background.standard",
             "entries": [
               {
@@ -2238,7 +2280,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "memory.embed",
@@ -2255,7 +2297,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "memory.embed",
           "inherited_from": "global",
@@ -2283,7 +2325,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -2296,7 +2338,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2305,7 +2347,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "memory.extract",
           "inherited_from": "global",
@@ -2325,7 +2367,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -2338,7 +2380,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2347,7 +2389,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "memory.page",
           "inherited_from": "global",
@@ -2367,7 +2409,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -2380,7 +2422,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2389,7 +2431,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "project.brief_prepare",
           "inherited_from": "global",
@@ -2409,7 +2451,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -2422,7 +2464,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2431,7 +2473,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "project.update_draft",
           "inherited_from": "global",
@@ -2451,7 +2493,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -2464,7 +2506,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2473,7 +2515,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "project_doc.suggest_update",
           "inherited_from": "global",
@@ -2493,7 +2535,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -2506,7 +2548,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2515,7 +2557,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "recipe.run",
           "inherited_from": "global",
@@ -2535,7 +2577,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -2548,7 +2590,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2557,7 +2599,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "sequence.step",
           "inherited_from": "global",
@@ -2577,7 +2619,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -2590,7 +2632,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "speech.intent_classify",
@@ -2607,7 +2649,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "speech.intent_classify",
           "inherited_from": "global",
@@ -2635,7 +2677,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -2648,7 +2690,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2657,7 +2699,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "speech.rewrite",
           "inherited_from": "global",
@@ -2677,7 +2719,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.structured.standard",
             "entries": [
               {
@@ -2690,7 +2732,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "speech.target_classify",
@@ -2707,7 +2749,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "speech.target_classify",
           "inherited_from": "global",
@@ -2735,7 +2777,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:26.595897Z",
+            "created_at": "2026-10-28T04:13:36.809989Z",
             "effective_retry_policy_id": "retry.audio.transcription",
             "entries": [
               {
@@ -2748,7 +2790,7 @@
                 "readiness": "unavailable"
               }
             ],
-            "id": "ia_1d20376b98c640d3a81bbd296380ee43",
+            "id": "ia_a376172e9a8a459abeace5ee22e201da",
             "issues": [
               {
                 "code": "binding_not_ready",
@@ -2765,7 +2807,7 @@
               "capability_id": "speech.transcribe",
               "kind": "capability"
             },
-            "sha256": "sha256:ef46c4a0b3779db661124f6b6f1264df01423fa9c8bf1978d0974042f276ddd8"
+            "sha256": "sha256:015283cc8794e27325ba6b6dc54a8ec455b32e2cdfd51f4a9a1a0e0a29186a25"
           },
           "capability_id": "speech.transcribe",
           "inherited_from": "capability",
@@ -2792,7 +2834,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -2805,7 +2847,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [
               {
                 "capability_id": "thought.interview",
@@ -2822,7 +2864,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "thought.interview",
           "inherited_from": "global",
@@ -2850,7 +2892,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -2863,7 +2905,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2872,7 +2914,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "voice.reference_resolve",
           "inherited_from": "global",
@@ -2892,7 +2934,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -2905,7 +2947,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2914,7 +2956,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "workbench.item",
           "inherited_from": "global",
@@ -2934,7 +2976,7 @@
       {
         "effective": {
           "assignment": {
-            "created_at": "2026-10-28T02:01:28.268250Z",
+            "created_at": "2026-10-28T04:13:38.503531Z",
             "effective_retry_policy_id": "retry.text.standard",
             "entries": [
               {
@@ -2947,7 +2989,7 @@
                 "readiness": "ready"
               }
             ],
-            "id": "ia_abd6619f1b4249e3874bbc3ce8f93b49",
+            "id": "ia_ce73543ea9994a41816bf8b3f9609f72",
             "issues": [],
             "retry_policy_id": null,
             "retry_policy_source": "capability_default",
@@ -2956,7 +2998,7 @@
             "scope": {
               "kind": "global"
             },
-            "sha256": "sha256:1227d7936596e381a6faf5d19b9994dc858a5c2fd63789e90d126d48288e930c"
+            "sha256": "sha256:d92f4b6a2788968d18fdc41072c23476f702ecdbf4f872d991600f8c0a83c734"
           },
           "capability_id": "workflow.node",
           "inherited_from": "global",

@@ -748,11 +748,11 @@
     }
   ],
   "measurements": {
-    "residual_identities": 260,
-    "residual_mcp": 205,
+    "residual_identities": 264,
+    "residual_mcp": 209,
     "residual_http": 55,
     "http_constructions": 56,
-    "public_tools": 283
+    "public_tools": 289
   },
   "entries": [
     {
@@ -922,6 +922,30 @@
       "entry_point": "cadence.status",
       "discriminator": "",
       "reason": "hand-wired family dispatcher (holdspeak/mcp/families/cadence.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "calls.hangup",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/calls.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "calls.list",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/calls.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "calls.place",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/calls.py)"
+    },
+    {
+      "transport": "mcp",
+      "entry_point": "calls.status",
+      "discriminator": "",
+      "reason": "hand-wired family dispatcher (holdspeak/mcp/families/calls.py)"
     },
     {
       "transport": "mcp",

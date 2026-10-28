@@ -321,3 +321,11 @@ site or an ambiguous bare key.
 stored source to one exact active saved Send destination. Both are
 non-inference identity checks under 143-01: neither selects a model nor
 dispatches a send. Provider and destination mismatch checks cover both seams.
+
+**2026-10-28, Calls.**
+`holdspeak/calls/service.py::_override_profile` picks a phone call's default
+engine: the home engine profile (`engine-tailscale-karol-8080`) when it
+exists and the owner did not assign `calls.turn` himself. It writes nothing
+and adds no route law: the pick rides the call thread's `profile_override`,
+the existing invocation-scoped next-run override (143-03); without it the
+`calls.turn` assignment (following Answers) decides.

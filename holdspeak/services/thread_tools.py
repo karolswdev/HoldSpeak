@@ -352,6 +352,11 @@ _ALL_TOOL_CLASSES: dict[str, tuple[str, bool]] = {
     "channel.remove_destination": ("effect_proposal", False),
     "channel.discard": ("effect_proposal", False),
     "channel.send": ("effect_proposal", False),
+    # Calls (2026-10-28).
+    "calls.status": ("evidence_read", False),
+    "calls.list": ("evidence_read", False),
+    "calls.hangup": ("effect_proposal", False),
+    "calls.place": ("effect_proposal", False),
     "project.mark_update_delivered": ("effect_proposal", False),
 }
 # Betterment M3: the ``automation.*`` aliases, each in its Workbench tool's class.
@@ -604,9 +609,13 @@ class ThreadToolExecutor:
         broker: Optional[Any] = None,
         clock: Callable[[], float] = time.time,
         allowed_names: frozenset[str] | None = None,
+        held_egress: frozenset[str] = frozenset(),
     ) -> None:
         self._db = db
         self._dispatch = dispatch_fn
+        # Calls (2026-10-28): egress tools a call offers. Each call holds for
+        # the caller's spoken yes, whatever the policy or the control mode.
+        self._held_egress = frozenset(held_egress or ())
         self._principal = principal
         self._control_mode_fn = control_mode_fn
         self._broker = broker
@@ -657,14 +666,20 @@ class ThreadToolExecutor:
                 "authority, the owner's press, never a model's"
             )
 
-        # Fail closed on unclassified tool
-        cls = tool_class(name)
-        sensitive = tool_sensitive(name)
+        if name in self._held_egress and name in _ALL_TOOL_CLASSES:
+            # Calls: the truth table's "ask" row, always: his press is his
+            # spoken yes on the call (or the tap on the Calls window).
+            cls, sensitive = _ALL_TOOL_CLASSES[name]
+            decision = resolve_tool_decision("ask", self._control_mode_fn(), cls)
+        else:
+            # Fail closed on unclassified tool
+            cls = tool_class(name)
+            sensitive = tool_sensitive(name)
 
-        # Read per-thread policy
-        policy = self._db.threads.effective_tool_policy(thread_id, name)
-        control_mode = self._control_mode_fn()
-        decision = resolve_tool_decision(policy, control_mode, cls)
+            # Read per-thread policy
+            policy = self._db.threads.effective_tool_policy(thread_id, name)
+            control_mode = self._control_mode_fn()
+            decision = resolve_tool_decision(policy, control_mode, cls)
 
         # Create kernel child through the broker (no new admission path)
         child_id = ""

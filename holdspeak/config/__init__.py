@@ -52,6 +52,7 @@ from .ui import (  # noqa: F401
 from .owner import OwnerConfig  # noqa: F401
 from .people import PeopleConfig  # noqa: F401
 from .agents import AgentsConfig  # noqa: F401
+from .calls import CallsConfig  # noqa: F401
 
 # Device, presence, mesh, wake word
 from .device import (  # noqa: F401

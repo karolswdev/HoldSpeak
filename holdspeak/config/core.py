@@ -24,6 +24,7 @@ from .ui import HotkeyConfig, MacrosConfig, UIConfig
 from .owner import OwnerConfig
 from .people import PeopleConfig
 from .agents import AgentsConfig
+from .calls import CallsConfig
 from .device import DeviceConfig, MeshConfig, PresenceConfig, RemoteConfig, WakeWordConfig
 from .integrations import (
     CadenceConfig,
@@ -313,6 +314,8 @@ class Config:
     people: PeopleConfig = field(default_factory=PeopleConfig)
     # Betterment AG5: how many agents work at once (default 6).
     agents: AgentsConfig = field(default_factory=AgentsConfig)
+    # Calls (2026-10-28): HoldSpeak drives ai-phone and owns each turn.
+    calls: CallsConfig = field(default_factory=CallsConfig)
 
     @classmethod
     def load(cls, path: Optional[Path] = None) -> "Config":
@@ -392,6 +395,11 @@ class Config:
                     AgentsConfig,
                     data["agents"] if isinstance(data.get("agents"), dict) else {},
                     section="agents",
+                ),
+                calls=_coerce(
+                    CallsConfig,
+                    data["calls"] if isinstance(data.get("calls"), dict) else {},
+                    section="calls",
                 ),
             )
             # HS-112-01: the one-time legacy-endpoint migration runs only on

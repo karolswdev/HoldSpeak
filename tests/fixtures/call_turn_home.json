@@ -1,0 +1,125 @@
+{
+  "recorded_at": "2026-10-28T04:02:59+00:00",
+  "base_url": "http://100.118.33.80:8080/v1",
+  "model": "qwen3.8-27b",
+  "props_chat_template_caps": {
+    "supports_object_arguments": true,
+    "supports_parallel_tool_calls": true,
+    "supports_preserve_reasoning": true,
+    "supports_reasoning_effort": true,
+    "supports_string_content": true,
+    "supports_system_role": true,
+    "supports_tool_calls": true,
+    "supports_tools": true,
+    "supports_typed_content": true
+  },
+  "question": "Add a task for me: nudge Tomás about the runbook by Friday.",
+  "tool_results_sent": {
+    "memory.page": {
+      "pages": []
+    },
+    "memory.search": {
+      "results": []
+    },
+    "door.get": {
+      "items": []
+    },
+    "door.add_item": {
+      "id": "ai_recorded",
+      "task": "Nudge Tomás about the runbook",
+      "owner": "Me",
+      "due": "Friday",
+      "status": "open"
+    }
+  },
+  "passes": [
+    {
+      "choices": [
+        {
+          "finish_reason": "tool_calls",
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "",
+            "reasoning_content": "The user wants me to add a task: \"nudge Tomás about the runbook by Friday.\" I should use door.add_item with the task, owner \"Me\", and a due date. Friday — I need to figure out the date. I don't know today's date. Let me just set the due as Friday. I could use an ISO date but I don't know the current date. I'll set due to a reasonable Friday. Actually, I should be careful. Let me just add the task with due as \"Friday\" — but the parameter expects ISO-8601. I don't know today's date.\n\nI'll add the task with owner \"Me\" and a due. Since I can't determine the exact date, I could omit due or set it. The instruction says \"by Friday.\" Let me just add it. I'll set due to next Friday. But without knowing today's date, I'll just add the task and mention Friday in the task text to be safe.\n\nLet me add the task with the text including \"by Friday\" and owner Me.\n",
+            "tool_calls": [
+              {
+                "type": "function",
+                "function": {
+                  "name": "door.add_item",
+                  "arguments": "{\"task\":\"Nudge Tomás about the runbook\",\"owner\":\"Me\",\"source_type\":\"thought\"}"
+                },
+                "id": "hE0oxGSfe9kMhmr7NeQ4yM4jz8bqRZQ4"
+              }
+            ]
+          }
+        }
+      ],
+      "created": 1793160179,
+      "model": "qwen3.8-27b",
+      "system_fingerprint": "b1-11fe021",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 286,
+        "prompt_tokens": 7440,
+        "total_tokens": 7726,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "id": "chatcmpl-pNzORMOQ9q6rXXvjGUpJvE2u2z0P0jX4",
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 7440,
+        "prompt_ms": 4704.294,
+        "prompt_per_token_ms": 0.6322975806451613,
+        "prompt_per_second": 1581.5338071982746,
+        "predicted_n": 286,
+        "predicted_ms": 3411.603,
+        "predicted_per_token_ms": 11.970536842105263,
+        "predicted_per_second": 83.53844219271704,
+        "draft_n": 291,
+        "draft_n_accepted": 189
+      }
+    },
+    {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "Done — \"Nudge Tomás about the runbook\" is on your list, due Friday.",
+            "reasoning_content": "The task was added with a Friday due date. Done.\n"
+          }
+        }
+      ],
+      "created": 1793160179,
+      "model": "qwen3.8-27b",
+      "system_fingerprint": "b1-11fe021",
+      "object": "chat.completion",
+      "usage": {
+        "completion_tokens": 35,
+        "prompt_tokens": 7560,
+        "total_tokens": 7595,
+        "prompt_tokens_details": {
+          "cached_tokens": 7436
+        }
+      },
+      "id": "chatcmpl-TOlWizCitK1yMWlKLQlD7rNLWpWwyHA3",
+      "timings": {
+        "cache_n": 7436,
+        "prompt_n": 124,
+        "prompt_ms": 227.8,
+        "prompt_per_token_ms": 1.8370967741935484,
+        "prompt_per_second": 544.3371378402106,
+        "predicted_n": 35,
+        "predicted_ms": 425.895,
+        "predicted_per_token_ms": 12.526323529411764,
+        "predicted_per_second": 79.83188344545016,
+        "draft_n": 36,
+        "draft_n_accepted": 22
+      }
+    }
+  ]
+}
