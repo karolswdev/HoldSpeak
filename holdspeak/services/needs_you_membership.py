@@ -79,6 +79,31 @@ def _due_epoch_ms(due: Any) -> float | None:
     return parsed.timestamp() * 1000.0
 
 
+_WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+
+def door_due_word(due: Any, today: date) -> str:
+    """The wire reason of a Door card in the ``now`` window, by its due day.
+
+    ``DUE TODAY``, ``DUE TOMORROW``, ``DUE Thu`` (the weekday, in its own
+    case so the face keeps the capital), ``OVERDUE`` when the day is past.
+    The face says it in sentence case (``NeedsRow`` ``stateWords``).
+    """
+    day = _due_day(due)
+    if day is None:
+        return "DUE TODAY"
+    delta = (day - today).days
+    if delta < 0:
+        return "OVERDUE"
+    if delta == 0:
+        return "DUE TODAY"
+    if delta == 1:
+        return "DUE TOMORROW"
+    if delta < 7:
+        return f"DUE {_WEEKDAYS[day.weekday()]}"
+    return f"DUE {day.isoformat()}"
+
+
 def door_items(
     board: dict[str, Any], covered_action_items: set[str], now: datetime,
 ) -> list[dict[str, Any]]:
@@ -100,7 +125,11 @@ def door_items(
                 why = f"OVERDUE · {days}D" if days > 0 else "OVERDUE"
                 severity = "danger"
             elif column == "now":
-                why = "DUE TODAY"
+                # The "now" column is a two-day window
+                # (``FollowThroughService._lane``): the word says the day.
+                # ``compute_needs_you`` makes another person's item a wait on
+                # that person (``_dueWord`` keeps the word).
+                why = door_due_word(due_at, now.date())
                 severity = "warning"
             elif column == "waiting":
                 why = f"WAITING ON {str(owner).upper()}" if owner else "WAITING"
@@ -134,6 +163,7 @@ def door_items(
                 "_isDoor": True,
                 "_isUnassigned": column == "unassigned" and not has_owner,
                 "_toReview": column == "unassigned" and has_owner,
+                **({"_dueWord": door_due_word(due_at, now.date())} if column == "now" else {}),
             })
     return rows
 
@@ -593,7 +623,10 @@ def _is_self(owner: Any, self_names: Iterable[str]) -> bool:
 
 def _waiting_on(row: dict[str, Any]) -> bool:
     owner = str(row.get("owner") or "").strip()
-    return bool(owner) and str(row.get("why") or "").strip().upper() == f"WAITING ON {owner.upper()}"
+    # The head part decides: ``WAITING ON BEA · DUE TOMORROW`` (a Door card
+    # in the two-day window) waits on Bea as ``WAITING ON BEA`` does.
+    head = str(row.get("why") or "").split(" · ", 1)[0].strip().upper()
+    return bool(owner) and head == f"WAITING ON {owner.upper()}"
 
 
 def _person_identity(row: dict[str, Any]) -> str:
@@ -1085,6 +1118,11 @@ def compute_needs_you(
         return waits_on_other(row, names, personal, identified, persons)
 
     for row in combined:
+        # The Door's two-day window: another person's item there is a wait
+        # on that person, with its due word beside it; his own keeps the word.
+        if (row.get("_dueWord") and str(row.get("owner") or "").strip()
+                and not _is_me(row, names, personal, identified, persons)):
+            row["why"] = f"WAITING ON {str(row['owner']).strip().upper()} · {row['_dueWord']}"
         if _waiting_on(row) and _is_me(row, names, personal, identified, persons):
             row["why"] = YOURS
     # A People commitment never merges with another row. A merge would put
