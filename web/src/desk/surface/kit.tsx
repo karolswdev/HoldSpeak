@@ -282,8 +282,36 @@ export type StatusBarItem = {
    *  pulses the lamp once: its ring opens and fades (600 ms, a lamp is not
    *  a control, so the still fence holds); instant under reduced motion. */
   pulse?: string | number | null;
+  /** DELIGHT slice 2: the item's number. A change after the first paint
+   *  fades the item's words in once (TickNumber), with the dock's badge. */
+  tick?: number | null;
   testId?: string;
 };
+
+/** DELIGHT slice 2 (2026-10-27) — the count ticks down. A number that
+ *  changes after the first paint fades in once (160 ms, opacity only; the
+ *  box never moves, so the still fence holds; instant under reduced
+ *  motion). The dock's badge, a toolbar's count and the status bar's
+ *  number all wear it, so a Done changes the three together. */
+export function TickNumber({ value, className, children }: {
+  value: number | string;
+  className?: string;
+  /** What to draw when it is more than the number (a status item's words). */
+  children?: ReactNode;
+}) {
+  const seen = useRef(value);
+  const [beat, setBeat] = useState(0);
+  useEffect(() => {
+    if (value === seen.current) return;
+    seen.current = value;
+    setBeat((count) => count + 1);
+  }, [value]);
+  return (
+    <span key={beat} className={className ? `kit-tick ${className}` : "kit-tick"} data-tick={beat ? "" : undefined}>
+      {children ?? value}
+    </span>
+  );
+}
 
 /** The status bar's lamp: lit dots (ok, info, ask) glow (kit.css); a change
  *  of `pulse` after the first paint replays the pulse (a new key). */
@@ -334,7 +362,7 @@ export function StatusBar({
         {shown.map((item, index) => (
           <span key={item.key ?? index} className="kit-statusbar-item" data-testid={item.testId}>
             {item.lamp ? <StatusLamp tone={item.lamp} pulse={item.pulse} /> : null}
-            {item.text}
+            {item.tick != null ? <TickNumber value={item.tick}>{item.text}</TickNumber> : item.text}
             {item.value != null ? (
               <>
                 {item.text != null ? " " : null}

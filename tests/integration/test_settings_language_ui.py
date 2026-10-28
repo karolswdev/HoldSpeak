@@ -79,7 +79,8 @@ def test_settings_page_language_list_matches_the_registry():
     assert match, "the vendored WHISPER_LANGUAGES roster is gone"
     vendored = dict(re.findall(r'\["([a-z]+)", "([^"]+)"\]', match.group(1)))
     assert vendored == dict(WHISPER_LANGUAGES)
-    # "auto" (per-utterance detection) stays the sentinel option.
-    assert '{ value: "auto", label: "auto" }' in prefs
+    # "auto" (per-utterance detection) stays the sentinel value; Window
+    # Program W4 (the words) shows it as the sentence-case word "Automatic".
+    assert '{ value: "auto", label: "Automatic" }' in prefs
     page = (_REPO / "web/src/pages/cores/SettingsCore.tsx").read_text()
     assert 'cyc(["model", "language"], "Language", LANGUAGE_OPTIONS)' in page

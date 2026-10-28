@@ -22,6 +22,22 @@
   color: var(--wb-muted);
   white-space: nowrap;
 }
+/* DELIGHT slice 2 (2026-10-27, canvases/delight-2026-10-27.html "Today
+   knows the hour"): the day line greets by the hour ("Tuesday morning"),
+   then the date, quiet. The greeting is the window's one warm word. */
+.desk-next .today-greeting {
+  color: var(--wb-ink);
+  font-weight: 600;
+}
+/* The day's light: a warm wash falls from the toolbar in the morning, a
+   cool one in the evening and at night; the afternoon is plain paper.
+   Static colour (6 % at the top, gone by 120 px), never motion. */
+.desk-next .desk-pullout-body.today[data-light="warm"] .today-scroll {
+  background-image: linear-gradient(180deg, var(--today-light-warm) 0, transparent 120px);
+}
+.desk-next .desk-pullout-body.today[data-light="cool"] .today-scroll {
+  background-image: linear-gradient(180deg, var(--today-light-cool) 0, transparent 120px);
+}
 .desk-next .today-needs-count {
   margin-inline-start: 6px;
   padding: 0 6px;
@@ -608,6 +624,25 @@
   .desk-next .today-row { min-height: 44px; }
   .desk-next .today-fold-head,
   .desk-next .today-fold-row { min-height: 44px; }
+  /* W4-PHONE (2026-10-27): a To-finish row stays ONE row on the phone:
+     glyph · name over its state · the verb at the right; a route word (a
+     failed attempt, a route that cannot run) is a second line under the
+     name. The wrapping flex row put the glyph, the name and the verb on
+     three lines. */
+  .desk-next .today-node[data-kind="finish"] .today-row {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 10px;
+  }
+  .desk-next .today-node[data-kind="finish"] .today-row > .today-row-sprite { grid-column: 1; grid-row: 1; }
+  .desk-next .today-node[data-kind="finish"] .today-row > .today-row-text { grid-column: 2; grid-row: 1; }
+  .desk-next .today-node[data-kind="finish"] .today-row > .btn { grid-column: 3; grid-row: 1; }
+  .desk-next .today-node[data-kind="finish"] .today-row > .today-row-route {
+    grid-column: 2 / 4;
+    grid-row: 2;
+  }
+  .desk-next .today-node[data-kind="finish"] .today-row > .today-row-route:empty { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .desk-next .today-now-bead { animation: none; }

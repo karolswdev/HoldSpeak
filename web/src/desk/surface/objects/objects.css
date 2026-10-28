@@ -479,16 +479,18 @@
    selection wash of a list that does not hold focus (14 % and a 3 px kind
    rule), and the 3 px rule of a peek or margin card. Never on a Button,
    never as a text block. A focused list's selection stays the selection
-   blue. A row names its kind on `data-kind`. */
-:is(.object-list-row, .needs-row, .surface-state-object) { --row-kind: var(--kind-other); }
-:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="project"], [data-kind="room"]) { --row-kind: var(--kind-project); }
-:is(.object-list-row, .needs-row, .surface-state-object)[data-kind="meeting"] { --row-kind: var(--kind-meeting); }
-:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="person"], [data-kind="people"]) { --row-kind: var(--kind-person); }
-:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="decision"], [data-kind="decision_record"]) { --row-kind: var(--kind-decision); }
-:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="note"], [data-kind="thought"]) { --row-kind: var(--kind-note); }
-:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="pr"], [data-kind="pull-request"]) { --row-kind: var(--kind-pr); }
-:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="action"], [data-kind="action-item"], [data-kind="commitment"]) { --row-kind: var(--kind-action); }
-:is(.object-list-row, .needs-row, .surface-state-object):is([data-kind="agent"], [data-kind="coder"]) { --row-kind: var(--kind-agent); }
+   blue. A row names its kind on `data-kind`. Slice 2: the Note's object
+   tokens (their peek card), the margin's found rows and its cards read the
+   same map. */
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card) { --row-kind: var(--kind-other); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="project"], [data-kind="room"]) { --row-kind: var(--kind-project); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card)[data-kind="meeting"] { --row-kind: var(--kind-meeting); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="person"], [data-kind="people"]) { --row-kind: var(--kind-person); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="decision"], [data-kind="decision_record"]) { --row-kind: var(--kind-decision); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="note"], [data-kind="thought"]) { --row-kind: var(--kind-note); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="pr"], [data-kind="pull-request"]) { --row-kind: var(--kind-pr); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="action"], [data-kind="action-item"], [data-kind="commitment"], [data-kind="jira"]) { --row-kind: var(--kind-action); }
+:is(.object-list-row, .needs-row, .surface-state-object, .cm-lp-obj, .note-margin-row, .note-margin-card):is([data-kind="agent"], [data-kind="coder"]) { --row-kind: var(--kind-agent); }
 
 /* ── ObjectList density="dense": the native list view (window grammar,
    2026-10-24). 30 px rows on the desktop, 44 px in a surface of 520 px or

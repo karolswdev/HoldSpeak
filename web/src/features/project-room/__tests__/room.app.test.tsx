@@ -1260,6 +1260,9 @@ describe("History reader states", () => {
     wire({ [room(pid)]: () => roomWith({ changes: { state: "ok", recent: [] } }) });
     const history = await openHistory();
     expect(within(history).getByText("No history yet")).toBeInTheDocument();
+    // DELIGHT 2: the History wing's empty state is the project object, one line.
+    const object = history.querySelector('.surface-state[data-object="project"]') as HTMLElement;
+    expect(object.querySelector(".surface-state-sprite")?.getAttribute("src")).toMatch(/project-drawer\.png$/);
     expect(within(history).queryByText("History unavailable")).toBeNull();
     expect(within(history).queryByRole("button", { name: "Clear filters" })).toBeNull();
   });

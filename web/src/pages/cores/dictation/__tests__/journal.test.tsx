@@ -212,7 +212,7 @@ describe("the Journal's filter tokens", () => {
     // PHILO-17 refit r3 (coordinator): search and the filters fold.
     wire(() => ({ count: 0, items: [] }));
     const { unmount } = render(<Journal />);
-    await screen.findByText("Nothing said yet");
+    await screen.findByText("What you say shows here");
     expect(screen.queryByRole("button", { name: "All" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
     unmount();
@@ -231,7 +231,7 @@ describe("the Journal's two empty states and Clear", () => {
   it("reads NOTHING SPOKEN with no Clear when nothing was ever spoken", async () => {
     wire(() => ({ count: 0, items: [] }));
     render(<Journal />);
-    await screen.findByText("Nothing said yet");
+    await screen.findByText("What you say shows here");
     expect(screen.queryByText("Nothing matches")).toBeNull();
     // A verb that does nothing is a lie (A.11).
     expect(screen.queryByRole("button", { name: "Clear" })).toBeNull();
@@ -248,7 +248,7 @@ describe("the Journal's two empty states and Clear", () => {
       target: { value: "zzz nothing" },
     });
     expect(await screen.findByText("Nothing matches")).toBeInTheDocument();
-    expect(screen.queryByText("Nothing said yet")).toBeNull();
+    expect(screen.queryByText("What you say shows here")).toBeNull();
     expect(screen.getByRole("button", { name: "Clear" })).toBeInTheDocument();
   });
 

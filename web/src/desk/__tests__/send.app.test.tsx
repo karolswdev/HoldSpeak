@@ -111,6 +111,9 @@ const rowOf = async (name: string) =>
   (await screen.findAllByTestId("destination-row")).find((r) => r.querySelector(`[data-destination='${name}']`))!;
 const line = (el: Element) => (el.textContent ?? "").replace(/\s+/g, " ");
 const openOf = (name: string) => document.querySelector<HTMLElement>(`[data-testid=send-open][data-destination='${name}']`);
+// W4-PHONE (2026-10-27): the picked row's Send and Check are the sheet's
+// toolbar verbs; read them from the sheet that holds the open row.
+const sheetOf = (open: HTMLElement) => open.closest<HTMLElement>("[data-testid=send-well]")!;
 
 async function press(name: string) {
   const open = await waitFor(() => {
@@ -118,7 +121,7 @@ async function press(name: string) {
     expect(o).not.toBeNull();
     return o!;
   });
-  const verb = await within(open).findByTestId("send-verb");
+  const verb = await within(sheetOf(open)).findByTestId("send-verb");
   await waitFor(() => expect((verb as HTMLButtonElement).disabled).toBe(false));
   fireEvent.click(verb);
   return waitFor(() => {
@@ -143,7 +146,7 @@ describe("the built-in HoldSpeak folder on a fresh desk (owner ruling 2026-10-05
       expect(pv.textContent).toContain("Review decision: Freeze the old ledger on Nov 3");
       const words = line(row);
       expect(words).toContain(NAME);
-      expect(words).toContain("FILE");
+      expect(words).toContain("Folder");
       expect(words).not.toContain("THIS DEVICE");
       expect(words.includes("ICLOUD")).toBe(icloud);
       // The open destination leaves its target to the exact preview field.
@@ -228,7 +231,7 @@ async function openRow(name: string) {
   fireEvent.click((await rowOf(name)).querySelector<HTMLElement>(`.surface-primary[data-destination='${name}']`)!);
   return waitFor(() => {
     const o = openOf(name);
-    expect(o?.querySelector("[data-testid=send-verbs]")).toBeTruthy();
+    expect(o && sheetOf(o).querySelector("[data-testid=send-verbs]")).toBeTruthy();
     return o!;
   });
 }
@@ -255,7 +258,7 @@ describe("betterment send S1: the account chip says only a sign-in failure, and 
     }
     // After a send that worked, the verb stays "Send again".
     const open = await openRow("acme/payments #42");
-    expect(within(open).getByTestId("send-verb").textContent).toBe("Send again");
+    expect(within(sheetOf(open)).getByTestId("send-verb").textContent).toBe("Send again");
   });
 });
 
@@ -279,7 +282,7 @@ describe("betterment send S1: a failed send says Try again; a send with no answe
     render(<SendWells doc={docOf(NO_ANSWER as Recorded)} />);
     const open = await openRow("acme/payments #4242");
     expect(within(open).getByTestId("send-failed")).toBeTruthy();
-    expect(within(open).getByTestId("send-verb").textContent).toBe("Try again");
+    expect(within(sheetOf(open)).getByTestId("send-verb").textContent).toBe("Try again");
   });
 
   it.each([["first read", false], ["after a reload", true]] as const)(
@@ -291,10 +294,10 @@ describe("betterment send S1: a failed send says Try again; a send with no answe
       const open = await openRow("PAY-12 ticket");
       expect(within(open).getByTestId("send-no-answer").textContent)
         .toBe("No answer from Jira. Check PAY-12 before you try again.");
-      const check = within(open).getByTestId("send-check");
+      const check = within(sheetOf(open)).getByTestId("send-check");
       expect(check.textContent).toBe("Check PAY-12");
       expect(check.getAttribute("data-href")).toBe("https://acme.atlassian.net/browse/PAY-12");
-      const verb = within(open).getByTestId("send-verb") as HTMLButtonElement;
+      const verb = within(sheetOf(open)).getByTestId("send-verb") as HTMLButtonElement;
       expect(verb.textContent).toBe("Try again");
       expect(verb.disabled).toBe(false);
       expect(line(open)).not.toContain("SENDING");

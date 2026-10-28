@@ -192,6 +192,10 @@ describe("Q12 Memory", () => {
     expect(empty.textContent).toBe("Desk pages not written yet");
     expect(screen.getAllByText("Desk pages not written yet")).toHaveLength(1);
     expect(screen.getByTestId("memory-pages-line").textContent).toContain("No engine writes the desk pages");
+    // DELIGHT 2: no project and no person yet is the memory object and one line.
+    const nothing = screen.getByTestId("memory-nothing");
+    expect(nothing.querySelector('.surface-state[data-object="memory"] .surface-state-sprite')?.getAttribute("src")).toMatch(/memory\.png$/);
+    expect(nothing.textContent).toBe("No projects or people yet");
     // No RAW fold on this face (debug hides behind RAW on the desk floor).
     expect(screen.queryByRole("button", { name: /^RAW$/ })).toBeNull();
     fireEvent.click(within(screen.getByTestId("memory-pages-line")).getByRole("button", { name: "Choose engine" }));

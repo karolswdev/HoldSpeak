@@ -163,10 +163,15 @@ describe("PHILO-3-02 Arrival summary completion", () => {
       expect(snapshot.recovery.remaining.detail).toBe("PROVIDER FAILED");
       return;
     }
+    // W4 (the words): the producer's cause stays on the record as the hover
+    // title of the one quiet sentence (kept · not done); the state is a dot
+    // and a word, never the caps tokens.
     const cause = await screen.findByTitle("PROVIDER FAILED");
-    expect(cause).toHaveTextContent("NOT DONE");
+    expect(cause).toHaveAttribute("data-testid", "recovery-sentence");
+    expect(cause.textContent).toMatch(/^Kept 2 segments\. The .+ did not finish\.$/);
     const recovery = screen.getByRole("region", { name: "Meeting intelligence recovery" });
-    expect(recovery).toHaveTextContent("KEPT 2 SEGMENTS");
+    expect(within(recovery).getByTestId("recovery-state").textContent).toMatch(/^[A-Z][a-z]/);
+    expect(recovery.textContent ?? "").not.toMatch(/KEPT|NOT DONE/);
     expect(within(recovery).getByTestId("recovery-attempts")).not.toHaveTextContent("THIS DEVICE");
     // Window grammar: the recovery's verbs sit in the meeting window's toolbar.
     const toolbar = screen.getByRole("toolbar", { name: "Meeting" });

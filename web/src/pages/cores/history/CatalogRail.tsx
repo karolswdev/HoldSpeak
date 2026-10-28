@@ -85,6 +85,8 @@ function quiet(token: string): string {
 type MeetingRowView = {
   label: string;
   tone: ObjectTone;
+  /** A summary runs (queued or running): the dot breathes. */
+  live: boolean;
   /** The audio-only meeting with no transcript (no summary to run). */
   noTranscript: boolean;
   verb: string | null;
@@ -148,6 +150,13 @@ export function meetingRowView(
     displayLabel = "NOT DRAINING";
     displayTone = "danger";
   }
+  // DELIGHT 2 (small joys): a summary that runs is blue, never the ember of a
+  // warning. A failed row's Retry turns its red dot blue while the run is
+  // queued or running, then green when the summary is stored (the hub's
+  // state, polled by useSummaryRun). The meeting window's status bar uses
+  // the same lamp (MeetingHeader meetingSummaryState: info).
+  const runs = displayLabel === "RUNNING" || displayLabel === "QUEUED";
+  if (runs) displayTone = "info";
   const plannedRoute = refusal?.route ?? readPlannedRoute(row);
   const runReceipt = executedReceipt(String(row.id ?? ""), refusal?.receipt, readRunReceipt(row));
   let verb = state.verb;
@@ -162,6 +171,7 @@ export function meetingRowView(
   return {
     label,
     tone: audioOnly ? "warn" : toneOf(displayTone),
+    live: runs && !audioOnly,
     noTranscript: audioOnly,
     verb,
     plannedRoute,
@@ -294,6 +304,7 @@ export function CatalogRail({
       state: {
         label: view.label,
         tone: view.tone,
+        live: view.live,
         testId: view.noTranscript ? "no-transcript-token" : "state-token",
       },
     };

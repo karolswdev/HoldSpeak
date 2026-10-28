@@ -1871,7 +1871,7 @@ function HistoryWing({
       {!available ? (
         <SurfaceState error="History unavailable" onRetry={onRetry} />
       ) : !allEntries.length ? (
-        <SurfaceState empty emptyLabel="No history yet" />
+        <SurfaceState empty emptyLabel="No history yet" emptyImage={spriteUrl("project", room.projectId)} emptyKind="project" />
       ) : !searchFiltered.length ? (
         <SurfaceState empty
           emptyLabel={searchQuery.trim() ? "No matching changes" : `No changes from ${SOURCE_WORD[sourceFilter] ?? sourceFilter}`}

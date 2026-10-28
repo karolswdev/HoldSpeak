@@ -127,6 +127,10 @@ export interface NeedFace {
   projectId?: string;
   /** Betterment D3: kept on arrival, not seen yet: drawn NEW under its meeting. */
   arrival?: NeedsArrival;
+  /** Window Program W4 (the words): a meeting that says a Project's word
+   *  carries the word (`cutover`); the drawer folds the rows of one word
+   *  and one Project into one row (`13 mentions of cutover`). */
+  match?: string;
 }
 
 export type NeedDirection = "mine" | "theirs" | "decide" | "setup";
@@ -659,6 +663,10 @@ function memberFace(member: NeedsYouMember, ctx: NeedCtx): NeedFace {
   if (item.projectId) face.projectId = String(item.projectId);
   // Betterment D3: NEW under its meeting; a promise with no owner asks Whose?
   if (item.arrival?.meetingId) face.arrival = { ...item.arrival };
+  if (item.kind === "meeting_match") {
+    const word = String(item.title ?? "").replace(/^mentions\s+/i, "").trim();
+    if (word) face.match = word;
+  }
   if (face.verbs.kind === "confirm" && Array.isArray(item.whose) && item.whose.length > 0) {
     face.verbs = { kind: "whose", proposalId: face.verbs.proposalId, speakers: item.whose.map(String) };
   }
@@ -879,4 +887,38 @@ export function needsHead(count: number, complete: boolean): string {
   // PHILO-15-09 (B11): `1 needs you`, `3 need you`.
   if (count > 0) return needYouWords(count);
   return complete ? "Nothing needs you" : "Coverage incomplete";
+}
+
+/** Window Program W4 (the words): one entry of the drawer's list, a face or
+ *  the fold of the meetings that say one Project's word. */
+export type NeedEntry =
+  | { kind: "face"; face: NeedFace }
+  | { kind: "match"; key: string; word: string; project?: { id: string; name: string }; faces: NeedFace[] };
+
+/** Fold the meeting rows that say one word for one Project into one entry
+ *  at the place of the first; a word with one meeting keeps its own row. */
+export function foldMatches(faces: readonly NeedFace[]): NeedEntry[] {
+  const keyOf = (face: NeedFace) => (face.match ? `${face.projectId ?? ""}|${face.match.toLowerCase()}` : "");
+  const counts = new Map<string, number>();
+  for (const face of faces) {
+    const key = keyOf(face);
+    if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const out: NeedEntry[] = [];
+  const groups = new Map<string, Extract<NeedEntry, { kind: "match" }>>();
+  for (const face of faces) {
+    const key = keyOf(face);
+    if (!key || (counts.get(key) ?? 0) < 2) { out.push({ kind: "face", face }); continue; }
+    const group = groups.get(key);
+    if (group) { group.faces.push(face); continue; }
+    const entry = { kind: "match" as const, key, word: face.match ?? "", project: face.project, faces: [face] };
+    groups.set(key, entry);
+    out.push(entry);
+  }
+  return out;
+}
+
+/** The fold's name: `13 mentions of cutover`. */
+export function matchWords(count: number, word: string): string {
+  return `${count} ${count === 1 ? "mention" : "mentions"} of ${word}`;
 }

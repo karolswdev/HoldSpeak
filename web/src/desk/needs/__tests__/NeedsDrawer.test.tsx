@@ -242,6 +242,10 @@ describe("NeedsDrawer (PHILO-14 A5, board A-5)", () => {
     expect(drawer.querySelectorAll(".kit-disp").length).toBe(0);
     expect(screen.getByTestId("arrival-display").closest(".kit-statusbar")).toBeTruthy();
     expect(screen.getAllByText("8 need you")).toHaveLength(1);
+    // DELIGHT slice 2: the number wears the tick (it fades only on a change, never on the first paint).
+    const tick = screen.getByTestId("arrival-display").querySelector(".kit-tick");
+    expect(tick?.textContent).toBe("8 need you");
+    expect(tick?.hasAttribute("data-tick")).toBe(false);
   });
 
   it("draws every member as its object: icon, name, fact, one lamp, its verbs", async () => {
@@ -1210,3 +1214,35 @@ describe("W1-DOORS (atlas 2026-10-27): a meeting that names a Project", () => {
   });
 });
 
+
+describe("W4 (the words): the meetings that say one Project's word are one row", () => {
+  const match = (id: string, title: string, word: string) => ({
+    projectId: "p-ledger", projectName: "Payments ledger cutover", ref: `meeting:${id}`,
+    title: `mentions ${word}`, why: title, kind: "meeting_match", source: "meeting",
+    severity: "info", id: `p-ledger:meeting:meeting:${id}`, meetingId: id, openRef: `meeting:${id}`,
+    meetingTitle: title, since: "2026-10-27T00:57:26",
+  });
+  it("folds three cutover meetings into `3 mentions of cutover`; Show lists each by its title", async () => {
+    vi.mocked(apiFetch).mockImplementation(async (path: string) => {
+      if (String(path).startsWith("/api/desk/needs-you"))
+        return { ...ANSWER, items: [
+          ...ITEMS,
+          match("m-1", "Vendor sync", "cutover"),
+          match("m-2", "Q1 planning", "cutover"),
+          match("m-3", "Sprint retro", "cutover"),
+          match("m-4", "1:1 Avery", "ledger"),
+        ] } as never;
+      return { upcoming: [], calendar_configured: true } as never;
+    });
+    render(<NeedsDrawer />);
+    const list = await screen.findByTestId("needs-list");
+    expect(await within(list).findByText("3 mentions of cutover")).toBeTruthy();
+    // One meeting for a word keeps its own row, named after the meeting.
+    expect(within(list).getByText("1:1 Avery")).toBeTruthy();
+    expect(within(list).queryByText("Vendor sync")).toBeNull();
+    expect(within(list).queryAllByText("Mentions cutover")).toHaveLength(0);
+    fireEvent.click(within(list).getByTestId("needs-match-toggle"));
+    for (const title of ["Vendor sync", "Q1 planning", "Sprint retro"]) expect(within(list).getByText(title)).toBeTruthy();
+    expect(within(list).getByTestId("needs-match-toggle").getAttribute("aria-expanded")).toBe("true");
+  });
+});
